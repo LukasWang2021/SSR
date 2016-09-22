@@ -1,0 +1,143 @@
+[
+	{
+		"path": "root/Logic/state",
+		"id": 4739,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//OUTPUT_SIGNAL
+		"permission": 1,	//R
+		"user_level": 0,	//user_level_undefined
+		"unit": 0			//unit_undefined
+	},
+
+	{
+		 "path": "root/Logic/stateCommand",
+		 "id": 4740,
+		 "overwrite_active": 0,	//false
+		 "data_type": 5,		//int32
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 2,	//INPUT_SIGNAL
+		 "permission": 3,	//RW
+		 "user_level": 0,	//user_level_undefined
+		 "unit": 0			//unit_undefined
+	},
+
+	{
+		 "path": "root/Control/actualJointPositionsFiltered",
+		 "id": 4667,
+		 "overwrite_active": 0,
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 6,
+		 "param_type": 512,		//OUTPUT_SIGNAL
+		 "permission": 1,		//R
+		 "user_level": 0,		//user_level_undefined
+		 "unit": 0				//unit_undefined
+	},
+   
+	{
+		 "path": "root/Control/actualToolCoordinates",
+		 "id": 4670,
+		 "overwrite_active": 0,
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 6,
+		 "param_type": 512,		//OUTPUT_SIGNAL
+		 "permission": 1,		//R
+		 "user_level": 0,		//user_level_undefined
+		 "unit": 0				//unit_undefined
+   },
+
+	{
+		 "path": "root/Control/hostInJointTrajectory",
+		 "id": 4632,
+		 "overwrite_active": 0,		//false
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 6,
+		 "param_type": 2,		//INPUT_SIGNAL
+		 "permission": 3,		//RW
+		 "user_level": 0,		//user_level_undefined
+		 "unit": 0				//unit_undefined
+   },
+
+   {
+		 "path": "root/Control/hostInToolTrajectory",
+		 "id": 4633,
+		 "overwrite_active": 0,		//false
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 6,
+		 "param_type": 2,		//INPUT_SIGNAL
+		 "permission": 3,		//RW
+		 "user_level": 0,		//user_level_undefined
+		 "unit": 0				//unit_undefined
+   },
+
+   {
+		 "path": "root/Logic/mode",
+		 "id": 4737,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 512,		//OUTPUT_SIGNAL
+		 "permission": 1,		//R
+		 "user_level": 0,		//user_level_undefined
+		 "unit": 0				//unit_undefined
+   },
+   {
+		 "path": "root/Logic/modeCommand",
+		 "id": 4738,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 2,		//INPUT_SIGNAL
+		 "permission": 3,		//RW
+		 "user_level": 0,		//user_level_undefined
+		 "unit": 0				//unit_undefined
+	},
+
+	{
+		"path": "root/MotionInterpreter/previous_command_id",
+		"id": 4748,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,
+		"permission": 1,		
+		"user_level": 0,
+		"unit": 0
+	},
+   
+	{
+		"path": "root/MotionInterpreter/current_command_id",
+		"id": 4747,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,
+		"permission": 1,		
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/Control/forwardKinematics/toolCoordinates",
+		"id": 4581,
+		"overwrite_active": 0,
+		"data_type": 258,
+		"data_size": 8,
+		"number_of_elements": 6,
+		"param_type": 512,
+		"permission": 1,		
+		"user_level": 0,
+		"unit": 0
+	}
+]

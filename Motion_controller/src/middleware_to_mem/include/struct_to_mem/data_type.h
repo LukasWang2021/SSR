@@ -1,5 +1,5 @@
-#ifndef _DATA_TYPE_H_
-#define _DATA_TYPE_H_
+#ifndef DATA_TYPE_H_
+#define DATA_TYPE_H_
 
 #define MEM_NO_HANDSHAKE 0
 #define MEM_HANDSHAKE 1
@@ -21,4 +21,4 @@ typedef struct
     unsigned int latest;
 }AccessFlag;
 
-#endif
+#endif //DATA_TYPE_H_

@@ -20,8 +20,13 @@ include_directories(
 add_library(middleware_to_mem src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
 target_link_libraries(middleware_to_mem ${catkin_LIBRARIES})
 
-add_executable(send_trajectory_node src/trajectoryQueue.cpp src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
+add_executable(send_trajectory_node src/trajectory_queue.cpp src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
 target_link_libraries(send_trajectory_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(send_trajectory_fake src/trajectory_queue_fake.cpp src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
+target_link_libraries(send_trajectory_fake
   ${catkin_LIBRARIES}
 )
 
@@ -34,7 +39,7 @@ install(DIRECTORY include/
    PATTERN ".svn" EXCLUDE
  )
 
-install(TARGETS send_trajectory_node
+install(TARGETS send_trajectory_node send_trajectory_fake
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY launch

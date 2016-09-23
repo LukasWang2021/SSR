@@ -1,30 +1,29 @@
 /**********************************************
-File: TrajectoryQueue.h
+File: trajectory_queue_fake.h
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 Instruction: trajectory queue to be sent
-Author: 16-Aug-2016
+Author: Feng.Wu 16-Aug-2016
 Modifier:
 **********************************************/
 
-#ifndef _TRAJECTORY_QUEUE_H_
-#define _TRAJECTORY_QUEUE_H_
+#ifndef TRAJECTORY_QUEUE_FAKE_H_
+#define TRAJECTORY_QUEUE_FAKE_H_
 
 #include <vector>
 #include "middleware_to_mem/middleware_to_sharedmem.h"
 #include "struct_to_mem/struct_joint_command.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
 #include "struct_to_mem/struct_trajectory_segment.h"
-#include "struct_to_mem/struct_bare_core_version.h"
 
 namespace fst_trajectory_queue
 {
 /*fst trajectory being sent to the shared memory*/
 
-class TrajectoryQueue
+class TrajectoryQueueFake
 {
 public:
-    TrajectoryQueue();
-    ~TrajectoryQueue();
+    TrajectoryQueueFake();
+    ~TrajectoryQueueFake();
     int init();
     void initTrajectory();
     bool receivedTrajectory();
@@ -32,14 +31,14 @@ public:
     bool readJointStates();
     bool sendJointStates();
     void setTimeInterval(double interval);
-    void versionInfo();
+    int versionInfo();
     static const int FIFO_LEN = 50;
     static const int ATTEMPTS = 2;
     static const unsigned int SEC_TO_NSEC = 1000000000;
 
 private:
-    int handle_process;
-    int handle_core;
+    int handle_process_;
+    int handle_core_;
     std::vector<Points> joints_in_fifo_;
     JointCommand jc_;
     TrajectorySegment ts_;
@@ -50,6 +49,6 @@ private:
     unsigned int time_step_;
     int flag_;
 };
-}
+} //namespace fst_trajectory_queue
 
-#endif
+#endif //TRAJECTORY_QUEUE_FAKE_H_

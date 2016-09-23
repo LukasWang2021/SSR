@@ -1,5 +1,3 @@
-/*Author: Feng Wu*/
-
 #ifndef _STRUCT_BARE_CORE_VERSION_H_
 #define _STRUCT_BARE_CORE_VERSION_H_
 
@@ -16,5 +14,5 @@ typedef struct
 }BareCoreVersion;
 
 
-#endif
+#endif //STRUCT_BARE_CORE_VERSION_H_
 

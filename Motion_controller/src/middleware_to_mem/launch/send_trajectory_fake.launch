@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="send_trajectory_fake" pkg="middleware_to_mem" type="send_trajectory_fake" respawn="false" output="screen">
+  </node>
+
+</launch>

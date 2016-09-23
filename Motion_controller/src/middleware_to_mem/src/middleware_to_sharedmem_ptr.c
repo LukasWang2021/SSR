@@ -17,7 +17,14 @@ HandleTable handleTable[HANDLE_TABLE_LEN] =
 
 //------------------------------------------------------------
 // Function:    openMem
-// Summary: Initialize the mmap shared memory.
+// Summary: There are two shared memory area. One is for processes in linux 
+//          when passing MEM_PROCESS. The other memory area is for cores 
+//          when passing MEM_CORE or MEM_BARE(used in core1 only).
+// In:      type -> indicate which memory area will be open.
+//                  parameters are MEM_PROCESS/MEM_CORE/MEM_BARE.
+// Out:     None
+// Return:  hanlde -> hide the pointer and other info.
+//          -1 -> failed to map the memory area.
 //------------------------------------------------------------
 int openMem(int type)
 {
@@ -28,7 +35,7 @@ int openMem(int type)
     #ifndef CPU1_SHAREDMEM
 
     //to compile for processes communication in Linux
-    if(type == MEM_PROCESS)
+    if (type == MEM_PROCESS)
     {
         int fd = open("/opt/memfile", O_CREAT|O_RDWR, 00777);
         lseek(fd,MEM_MAP_SIZE_PROCESS-1, SEEK_SET);
@@ -42,7 +49,7 @@ int openMem(int type)
         }
         handleTable[type].ptr = ptr;
         handle = MEM_PROCESS;
-    }else if(type == MEM_CORE)
+    } else if (type == MEM_CORE)
     //to compile for cores communication in Linux
     {
         int fd = open("/dev/globalmem_device", O_RDWR);
@@ -55,7 +62,7 @@ int openMem(int type)
         }
         handleTable[type].ptr = ptr;
         handle = MEM_CORE;
-    }else
+    } else
     { 
         printf("\nError in openMem(): Please input 'MEM_PROCESS' or 'MEM_CORE'\n");
         return -1;
@@ -63,11 +70,11 @@ int openMem(int type)
 
     //to compile in bare-metal core 
     #else  
-    if(type == MEM_BARE)
+    if (type == MEM_BARE)
     { 
         handleTable[type].ptr = (char*)MEM_ADDRESS;
         handle = MEM_BARE;
-    }else
+    } else
     { 
         return -1;
     }
@@ -77,13 +84,17 @@ int openMem(int type)
 
 //------------------------------------------------------------
 // Function:  getPtrOfMem
-// Summary: Get the ptr of mem. 
+// Summary: Get the pointer according to the handle.
+// In:      handle -> Passing the handle got from openMem() function.
+// Out:     None
+// Return:  pointer -> success
+//          null -> failed.
 //------------------------------------------------------------
 char* getPtrOfMem(const int handle)
 {
-    if((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
+    if ((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
     {
-        printf("\nError in getPtrOfMem(): Wrong handle!\n");
+        printf("\nError in getPtrOfMem(): Bad mapping or wrong handle!\n");
         return NULL;
     }
     return handleTable[handle].ptr;
@@ -92,16 +103,20 @@ char* getPtrOfMem(const int handle)
 //------------------------------------------------------------
 // Function:  clearSharedmem
 // Summary: Set the shared memory to zero. 
+// In:      handle -> Passing the handle got from openMem() function.
+// Out:     None
+// Return:  1 -> success
+//          0 -> failed.
 //------------------------------------------------------------
 int clearSharedmem(const int handle)
 {
-    if((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
+    if ((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
     {
-        printf("\nError in clearSharedmem(): Wrong handle!\n");
+        printf("\nError in clearSharedmem(): Bad mapping or wrong handle!\n");
         return 0;
     }
     char *ptr = getPtrOfMem(handle);
-    if(NULL == ptr) return 0;
+    if (NULL == ptr) return 0;
     int size = handleTable[handle].map_size;
   
     memset(ptr, 0, size);

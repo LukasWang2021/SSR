@@ -1,11 +1,10 @@
-/*Author: Feng Wu*/
-
-#ifndef _STRUCT_TRAJECTORY_SEGMENT_H_
-#define _STRUCT_TRAJECTORY_SEGMENT_H_
+#ifndef STRUCT_TRAJECTORY_SEGMENT_H_
+#define STRUCT_TRAJECTORY_SEGMENT_H_
 
 #ifndef JOINT_NUM
 #define JOINT_NUM 6
 #endif
+
 #define TS_POINT_NUM 10
 #define POSITION_ONLY 1
 #define POS_VEL 2
@@ -38,4 +37,4 @@ typedef struct
 }TrajectorySegment;
 
 
-#endif
+#endif //STRUCT_TRAJECTORY_SEGMENT_H_

@@ -1,11 +1,10 @@
-/*Author: Feng Wu*/
-
-#ifndef _STRUCT_FEEDBACK_JOINT_STATES_H_
-#define _STRUCT_FEEDBACK_JOINT_STATES_H_
+#ifndef STRUCT_FEEDBACK_JOINT_STATES_H_
+#define STRUCT_FEEDBACK_JOINT_STATES_H_
 
 #ifndef JOINT_NUM
 #define JOINT_NUM 6
 #endif
+
 #define STATE_INIT 0
 #define STATE_READY 1
 #define STATE_RUNNING 2
@@ -20,5 +19,5 @@ typedef struct
 }FeedbackJointState;
 
 
-#endif
+#endif //STRUCT_FEEDBACK_JOINT_STATES_H_
 

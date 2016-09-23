@@ -1,5 +1,6 @@
-#ifndef _SHARED_MEM_PROCESS_H_
-#define _SHARED_MEM_PROCESS_H_
+#ifndef SHARED_MEM_PROCESS_H_
+#define SHARED_MEM_PROCESS_H_
+
 #include "data_type.h"
 
 #define OFFSET_OF(structure, member) (unsigned long)(&(((structure *)0)->member))
@@ -9,26 +10,36 @@
 
 //1.Bellow include the new message structure
 
-#include "struct_joint_command.h"
-#include "struct_feedback_joint_states.h"
-
+#include "struct_to_mem/struct_joint_command.h"
+#include "struct_to_mem/struct_feedback_joint_states.h"
+#include "struct_to_mem/struct_bare_core_version.h"
+#include "struct_to_mem/struct_debug_signal.h"
+#include "struct_to_mem/struct_io_signal.h"
+#include "struct_to_mem/struct_command_code.h"
 
 //2.Bellow add the new message structure to the big structure
 typedef struct
 {
     DECLARE_ITEM(JointCommand);
     DECLARE_ITEM(FeedbackJointState);
+    DECLARE_ITEM(BareCoreVersion);
+    DECLARE_ITEM(DebugSignal);
+    DECLARE_ITEM(IOSignal);
+    DECLARE_ITEM(MotionCommand);
 
 }SharedMemProcess;
 
 //3.Bellow modify MEM_TABLE_LEN and add the info of the new message to the table
-#define MEM_TABLE_PROCESS_LEN 2
+#define MEM_TABLE_PROCESS_LEN 6
 static const FunctionTable tableProcess[MEM_TABLE_PROCESS_LEN] = 
 {
     MEM_PROCESS_ITEM(JointCommand, MEM_HANDSHAKE, "JointCommand"),        
-    MEM_PROCESS_ITEM(FeedbackJointState, MEM_NO_HANDSHAKE, "FeedbackJointState"),   
+    MEM_PROCESS_ITEM(FeedbackJointState, MEM_NO_HANDSHAKE, "FeedbackJointState"), 
+    MEM_PROCESS_ITEM(BareCoreVersion, MEM_NO_HANDSHAKE, "BareCoreVersion"),
+    MEM_PROCESS_ITEM(DebugSignal, MEM_HANDSHAKE, "DebugSignal"),
+    MEM_PROCESS_ITEM(IOSignal, MEM_HANDSHAKE, "IOSignal"),
+    MEM_PROCESS_ITEM(MotionCommand, MEM_HANDSHAKE, "MotionCommand"),  
 
 };
 
-
-#endif
+#endif // SHARED_MEM_PROCESS_H_

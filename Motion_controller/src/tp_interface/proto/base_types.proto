@@ -1,0 +1,247 @@
+syntax = "proto2";
+
+package BaseTypes;
+
+enum Unit 
+{
+  unit_undefined = 0; 
+
+  Length       = 0xf;
+  mm           = 0x1;
+  m            = 0x2;
+  
+  Angle	       = 0xf1;
+  rad          = 0x31;
+  deg          = 0x41;
+
+  Time         = 0xf2;
+  nsec         = 0x12;
+  msec         = 0x22;
+  sec          = 0x32;
+
+  Weight       = 0xf3;
+  gramm        = 0x13;
+  kg           = 0x23;
+
+  Velocity     = 0xf4;
+  m_sec        = 0x14;
+  rad_sec      = 0x24;
+
+  Acceleration = 0xf5;
+  m_sec2       = 0x15;
+  rad_sec2     = 0x25;
+
+  Force        = 0xf6;
+  N	       = 0x16;
+  Nm	       = 0x26; 
+
+  percent      = 0x17;
+
+};
+
+enum Permission 
+{
+  permission_undefined = 0;
+
+  R	       = 0x1;
+  RW	       = 0x3;
+  FRW          = 0x7;
+};
+
+enum UserLevel
+{
+  user_level_undefined = 0;
+
+  GOD                  = 0x666;
+  ADMINISTRATOR        = 0x001;
+  OPERATOR             = 0x002;
+};
+
+enum DataType 
+{
+  data_type_undefined = 0x0;
+
+  INT8	        = 0x1;
+  UINT8	        = 0x2;
+  INT16         = 0x3;
+  UINT16        = 0x4;
+  INT32         = 0x5;
+  UINT32        = 0x6;
+  INT64         = 0x7;
+  UINT64        = 0x8;
+  BOOL          = 0x9;
+
+  FLOAT	       = 0x101;
+  DOUBLE       = 0x102;	
+  
+  CHAR         = 0x201;
+  STRING       = 0x202;
+
+  BYTES        = 0x301;	
+
+  USER_TYPE    = 0x500;
+
+  /*user types starts after 0x500*/
+};
+
+enum ParamType
+{
+  param_type_undefined 	= 0x0;
+  INPUT_MASK     	= 0xFF;
+  PARAMETER     	= 0x01;
+  INPUT_SIGNAL    	= 0x02;
+
+  OUTPUT_MASK          	= 0xFF00;
+  OUTPUT_SIGNAL   	= 0x0200;
+};
+
+enum CommandType
+{
+   sub_cmd_undefined = 0;
+
+   ADD				= 0x001;
+   ADD_LIST			= 0x002;
+   ADD_LIST_EXP 		= 0x003;
+   REMOVE			= 0x004;
+   REMOVE_ALL			= 0x005;
+   LIST				= 0x010;
+
+   RELEASE_OVERWRITE		= 0x100;
+   RELEASE_ALL_OVERWRITE	= 0x101;
+   
+};
+
+enum StatusCode 
+{
+   OK 			= 0x0;
+   FAILED 		= 0x100;
+   SUB_LIST_IS_FULL	= 0x101;
+};
+
+message ParamInfo
+{
+    required string path		  = 1;	// path (including name) of the parameter
+    required uint32 id                    = 2;  // unique id, assigned by parameter server
+    required bool overwrite_active        = 3;  // flag if overwrite is active
+    
+    required uint32 data_type	  	  = 4;	// tag of the data type
+    required uint32 data_size	          = 5;  // size of one data element
+    required uint32 number_of_elements    = 6;  // number of the elements
+    
+    required ParamType param_type         = 7;  // I/O type of the parameter
+    required Permission permission	  = 8;  // Read/Write permission
+    required UserLevel user_level	  = 9;  // Access user group
+    required Unit unit		          = 10;	
+    
+};
+
+message Header				      
+{
+    required uint32 frameCounter	= 1;  // frame counter counts number of parameter's updates
+    required uint64 timestamp		= 2;  // current server time in the format: time from 1 jan 2000 in microseconds ??
+};
+
+
+// Client/Server Messages
+// Parameter and parameter list messages
+message ParameterMsg
+{
+    optional Header header              = 1;
+    optional ParamInfo info             = 2;
+    required bytes param                = 3;
+}
+
+message ParameterListMsg
+{
+    optional Header header		= 1;
+    repeated ParameterMsg params	= 2;
+}
+
+// Parameter getter/setter messages
+message ParameterGetMsg
+{
+   optional Header header		= 1;
+   optional string path			= 2;	// path of the requested parameter
+   optional uint32 id                   = 3;
+}
+
+message ParameterGetListMsg
+{
+   optional Header header		= 1;
+   repeated ParameterGetMsg params	= 2;	// list of requested parameter
+}
+
+message ParameterSetMsg
+{
+   optional Header header		= 1;
+   optional string path			= 2;	// path of the requested parameter
+   optional uint32 id                   = 3;
+   required uint32 number_of_elements   = 4;	// number of values, if there are no values should be 0
+   required bytes param	 		= 5;    // new values
+}
+
+message ParameterSetListMsg
+{
+   optional Header header		= 1;
+   repeated ParameterSetMsg params	= 2;	// list of parameter set messages
+}
+
+message ParameterOverwriteMsg
+{
+   optional Header header		= 1;
+   optional string path			= 2;	// path of the requested parameter
+   optional uint32 id                   = 3;
+   required uint32 number_of_elements   = 4;	// number of values, if there are no values should be 0
+   required bytes param	 		= 5;    // new values
+}
+
+// Parameter command messages: subscribe/unsubscribe, update, list and etc.
+message ParameterCmdMsg
+{
+   optional Header header		= 1;
+   optional string path			= 2;			// path of the requested parameter
+   optional uint32 id                   = 3;
+   required CommandType cmd		= 4;			// command to perform
+   optional uint32 update_frq_devider 	= 5 [default = 1];	// diveder of the update frequency
+};
+
+message ParameterCmdListMsg
+{
+   optional Header header		= 1;
+   repeated ParameterCmdMsg cmds	= 2;
+};
+
+// Status message of parameter command execution
+message StatusMsg
+{
+    optional Header header		= 1;
+    optional ParamInfo info             = 2;
+    required StatusCode status		= 3;
+}
+
+// Console command message (the same as ParameterCmdMsg, where commands are sent as text)
+message ConsoleCmdMsg
+{
+    optional Header header		= 1;
+    required string val			= 2;
+};
+
+message ConsoleCmdListMsg
+{
+    optional Header header		= 1;
+    repeated ConsoleCmdMsg cmds		= 2;
+};
+
+// Logger message
+message LogMsg
+{
+   optional Header header		= 1;
+   required string val			= 2;
+};
+
+message LogListMsg
+{
+   optional Header header		= 1;
+   repeated LogMsg logs			= 2;
+};
+

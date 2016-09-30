@@ -306,8 +306,8 @@ int main(int argc, char** argv)
     int init_result = tq.init();
     if (init_result == -1) return false;
 
-    int info_result = tq.versionInfo();
-    if (info_result == false) return false;
+//    int info_result = tq.versionInfo();
+//    if (info_result == false) return false;
  
     while (true)
     {

@@ -29,6 +29,15 @@ int readWriteSharedMemByIndex(const int handle, void *structure, int index, int 
 
 int readWriteSharedMem(const int handle, void *structure, const char *name, int access_type);
 
+int clienSendRequest(const int handle, int req_id, char *req_buff, int req_size);
+
+int clientGetResponse(const int handle, int *res_id, char *res_buff);
+
+int serverGetRequest(const int handle, int *req_id, char *req_buff);
+
+int serverSendResponse(const int handle, int res_id, char *res_buff, int res_size);
+
+
 #ifdef __cplusplus
 }
 #endif

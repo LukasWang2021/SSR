@@ -1,5 +1,5 @@
-#ifndef _STRUCT_BARE_CORE_VERSION_H_
-#define _STRUCT_BARE_CORE_VERSION_H_
+#ifndef STRUCT_BARE_CORE_VERSION_H_
+#define STRUCT_BARE_CORE_VERSION_H_
 
 typedef struct
 {

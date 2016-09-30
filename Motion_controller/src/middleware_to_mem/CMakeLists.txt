@@ -30,6 +30,11 @@ target_link_libraries(send_trajectory_fake
   ${catkin_LIBRARIES}
 )
 
+add_executable(service_test test/service_test.c src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
+target_link_libraries(service_test
+  ${catkin_LIBRARIES}
+)
+
 install(TARGETS middleware_to_mem
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  )
@@ -39,7 +44,7 @@ install(DIRECTORY include/
    PATTERN ".svn" EXCLUDE
  )
 
-install(TARGETS send_trajectory_node send_trajectory_fake
+install(TARGETS send_trajectory_node send_trajectory_fake service_test
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY launch

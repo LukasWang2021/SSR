@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="service_test" pkg="middleware_to_mem" type="service_test" respawn="false" output="screen">
+  </node>
+
+</launch>

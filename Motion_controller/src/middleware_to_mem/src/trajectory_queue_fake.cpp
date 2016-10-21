@@ -5,6 +5,9 @@ Instruction: fake joint_States feedback
 Author: Feng.Wu 16-Aug-2016
 Modifier:
 **********************************************/
+#ifndef MIDDLEWARE_TO_MEM_TRAJECTORY_QUEUE_FAKE_CPP_
+#define MIDDLEWARE_TO_MEM_TRAJECTORY_QUEUE_FAKE_CPP_
+
 #include "send_trajectory/trajectory_queue_fake.h"
 #include <dlfcn.h>
 #include <sys/time.h>
@@ -36,12 +39,13 @@ int TrajectoryQueueFake::init()
 {
     handle_process_ = openMem(MEM_PROCESS);
     if (handle_process_ == -1) return(-1);
+    clearSharedmem(MEM_PROCESS);
 
     //init the TrajectorySegment ts.
     initTrajectory();
 
     //init the joint states fbjs_
-    for (int j = 0; j<JOINT_NUM; j++)
+    for (int j = 0; j<JOINT_NUM; ++j)
     {
         fbjs_.position[j] = 0;
         fbjs_.velocity[j] = 0;
@@ -63,9 +67,9 @@ int TrajectoryQueueFake::init()
 void TrajectoryQueueFake::initTrajectory()
 {
     //init the TrajectorySegment ts.
-    for (int i = 0; i < TS_POINT_NUM; i++)
+    for (int i = 0; i < TS_POINT_NUM; ++i)
     {
-        for (int j = 0; j < JOINT_NUM; j++)
+        for (int j = 0; j < JOINT_NUM; ++j)
         {
             ts_.points[i].positions[j] = 0;
             ts_.points[i].velocities[j] = 0;
@@ -96,9 +100,9 @@ bool TrajectoryQueueFake::receivedTrajectory()
     //====test JointCommand====
     //Writing Joint Command
 /*    JointCommand jc_w;
-    for(int i = 0; i<SEG_POINT_NUM; i++)
+    for(int i = 0; i<SEG_POINT_NUM; ++i)
     {   
-        for(int j = 0; j<JOINT_NUM; j++)
+        for(int j = 0; j<JOINT_NUM; ++j)
         {
             jc_w.points[i].positions[j] = 0.1*i*j;
         }
@@ -115,12 +119,13 @@ bool TrajectoryQueueFake::receivedTrajectory()
     if (read_result == true)
     {
         jc_r = jc_;  
-    } else
+    }
+    else
     {
         return false;
     }
     //push the data into fifo3.
-    for(int i = 0; i < jc_r.total_points; i++)
+    for(int i = 0; i < jc_r.total_points; ++i)
     {
         joints_in_fifo_.push_back(jc_r.points[i]);
     }
@@ -144,7 +149,7 @@ bool TrajectoryQueueFake::sendTrajectory()
         return false;
     }
   
-	 for (int i = 0; i < JOINT_NUM; i++)
+	 for (int i = 0; i < JOINT_NUM; ++i)
     {
         fbjs_.position[i] = joints_in_fifo_[0].positions[i];
     }
@@ -184,7 +189,7 @@ bool TrajectoryQueueFake::sendJointStates()
         if (write_result == true)
         {
             //Just for printing.
-//            for(int i=0;i<JOINT_NUM; i++){printf("fbjs_w.position[%d] = %f \n", i, fbjs_w.position[i]);}
+//            for(int i=0;i<JOINT_NUM; ++i){printf("fbjs_w.position[%d] = %f \n", i, fbjs_w.position[i]);}
 //            printf(" fbjs_w.state = %d\n\n", fbjs_w.state);
             printf("||====fifo3 left %u points====|| \n",joints_in_fifo_.size());
             return true;
@@ -213,6 +218,67 @@ int TrajectoryQueueFake::versionInfo()
 
 }
 
+int TrajectoryQueueFake::startServiceThread()
+{
+    pthread_t id;
+    int result = pthread_create(&id, NULL, threadHelper, this);
+    if (result != 0)
+    {
+        std::cout<<"Create pthread error!"<<std::endl;
+        return false;
+    }
+    return true;
+}
+
+
+void *TrajectoryQueueFake::threadHelper(void *self)
+{
+    TrajectoryQueueFake *ptr = (TrajectoryQueueFake *)self;
+    ptr->heartbeatService();
+}
+
+
+int TrajectoryQueueFake::heartbeatService()
+{
+    int req_result = false, res_result = false;
+    long cost_time = 0, start_time = 0, end_time = 0;
+    struct timeval t_start, t_end;
+    ServiceRequest heartbeat_request = {110, "heartbeat"};
+    ServiceResponse heartbeat_response;
+
+    while (true)
+    {
+        req_result = false;
+        gettimeofday(&t_start, NULL);
+        start_time = ((long)t_start.tv_sec) + (long)t_start.tv_usec/1000000; 
+        while (res_result == false)
+        {
+            if (req_result == false) 
+            {
+                req_result = clientSendRequest(handle_process_, &heartbeat_request);
+            }
+            //wait for one microsecond to get response.
+            usleep(1000);
+
+            if (req_result == true) 
+            {
+                res_result = clientGetResponse(handle_process_, &heartbeat_response);
+            }
+ 
+            gettimeofday(&t_end, NULL);
+            end_time = ((long)t_end.tv_sec) + (long)t_end.tv_usec/1000000;
+            cost_time = end_time - start_time;
+            if (cost_time > 1)
+            {
+                std::cout<<"\033[31m"<<"No heartbeat from core1"<<"\033[0m"<<std::endl;
+            }
+        }
+        //send a heartbeat signal every one second.
+        sleep(1);
+    }
+}
+
+
 TrajectoryQueueFake::~TrajectoryQueueFake()
 {
 
@@ -224,6 +290,9 @@ int main(int argc, char** argv)
     fst_trajectory_queue::TrajectoryQueueFake tq;
     int init_result = tq.init();
     if (init_result == -1) return false;
+
+    //start another thread for heartbeat.
+    tq.startServiceThread();
  
     while (true)
     {
@@ -236,4 +305,4 @@ int main(int argc, char** argv)
 }
 
 
-
+#endif //MIDDLEWARE_TO_MEM_TRAJECTORY_QUEUE_FAKE_CPP_

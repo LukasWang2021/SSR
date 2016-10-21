@@ -1,12 +1,22 @@
+/**********************************************
+File: middleware_to_sharedmem_ptr.c
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+Instruction: Init the middleware
+Author: Feng.Wu/Yan.He 16-Aug-2016
+Modifier:
+**********************************************/
+#ifndef MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_PTR_C_
+#define MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_PTR_C_
+
 #include "middleware_to_mem/middleware_to_sharedmem_ptr.h"
+#include "struct_to_mem/shared_mem_process.h" // for communication between processes 
+#include "struct_to_mem/shared_mem_core.h" //for communication between cores (running in linux)
 
 //for communication between processes
 #define MEM_MAP_SIZE_PROCESS 65536
-#define MEM_ADDRESS_PROCESS 0  
 //for communication between cores (running in linux)
 #define MEM_MAP_SIZE_CORE 65536
 #define MEM_ADDRESS_CORE 0x1D100000
-
 
 HandleTable handleTable[HANDLE_TABLE_LEN] = 
 {
@@ -37,19 +47,25 @@ int openMem(int type)
     //to compile for processes communication in Linux
     if (type == MEM_PROCESS)
     {
-        int fd = open("/opt/memfile", O_CREAT|O_RDWR, 00777);
-        lseek(fd,MEM_MAP_SIZE_PROCESS-1, SEEK_SET);
-        write(fd,"",1);
-        ptr = (char*) mmap(NULL, MEM_MAP_SIZE_PROCESS, PROT_READ|PROT_WRITE, MAP_SHARED, fd, MEM_ADDRESS_PROCESS);
+        int fd = shm_open("fst_process_shm", O_CREAT|O_RDWR, 00777);
+        if (fd == -1)
+        {
+            printf("\nError in openMem(): failed on opening sharedmem\n");
+            close(fd);
+            return -1;
+        }
+        ftruncate(fd, MEM_MAP_SIZE_PROCESS);
+        ptr = (char*) mmap(NULL, MEM_MAP_SIZE_PROCESS, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
         if (ptr == MAP_FAILED) 
         {
             close(fd);
-            printf("\nError in openMem(): Wrong mmapping for process\n");
+            printf("\nError in openMem(): failed on mapping process sharedmem\n");
             return -1;
         }
         handleTable[type].ptr = ptr;
         handle = MEM_PROCESS;
-    } else if (type == MEM_CORE)
+    }
+    else if (type == MEM_CORE)
     //to compile for cores communication in Linux
     {
         int fd = open("/dev/globalmem_device", O_RDWR);
@@ -57,12 +73,13 @@ int openMem(int type)
         if (ptr == MAP_FAILED) 
         {
             close(fd);
-            printf("\nError in openMem(): Wrong mmapping for core\n");
+            printf("\nError in openMem(): failed on mapping core sharedmem\n");
             return -1;
         }
         handleTable[type].ptr = ptr;
         handle = MEM_CORE;
-    } else
+    }
+    else
     { 
         printf("\nError in openMem(): Please input 'MEM_PROCESS' or 'MEM_CORE'\n");
         return -1;
@@ -74,7 +91,8 @@ int openMem(int type)
     { 
         handleTable[type].ptr = (char*)MEM_ADDRESS;
         handle = MEM_BARE;
-    } else
+    }
+    else
     { 
         return -1;
     }
@@ -90,7 +108,7 @@ int openMem(int type)
 // Return:  pointer -> success
 //          null -> failed.
 //------------------------------------------------------------
-char* getPtrOfMem(const int handle)
+char* getPtrOfMem(int handle)
 {
     if ((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
     {
@@ -108,7 +126,7 @@ char* getPtrOfMem(const int handle)
 // Return:  1 -> success
 //          0 -> failed.
 //------------------------------------------------------------
-int clearSharedmem(const int handle)
+int clearSharedmem(int handle)
 {
     if ((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
     {
@@ -123,4 +141,4 @@ int clearSharedmem(const int handle)
     return 1;
 }
 
-
+#endif // MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_PTR_C_

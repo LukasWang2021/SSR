@@ -5,41 +5,105 @@ Instruction: Main algorithm to operate on RAM
 Author: Feng.Wu 16-Aug-2016
 Modifier:
 **********************************************/
-#ifndef MIDDLEWARE_TO_SHAREDMEM_H_
-#define MIDDLEWARE_TO_SHAREDMEM_H_
+#ifndef MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_H_
+#define MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_H_
 
 #include "middleware_to_sharedmem_ptr.h"
+#include "struct_to_mem/struct_service_request.h"
+#include "struct_to_mem/struct_service_response.h"
 
-#define MEM_FALSE 0
-#define MEM_TRUE 1
 #define MEM_WRITE 0
 #define MEM_READ 1
-#define MEM_WRITE_TURN 11
-#define MEM_READ_TURN 12
-#define MEM_READ_ALREADY 0
-#define MEM_WRITE_ALREADY 1
 
 #ifdef __cplusplus
 	extern "C"{
 #endif
 
-int searchIndex(const int handle, const char *name);
+//------------------------------------------------------------
+// Function:  searchIndex
+// Summary: Search the index of function table. The function
+//          table records the whole data structure in the memory area.
+// In:      handle -> passing the handle got from openMem() function.
+//          *name -> the structure name of the variable
+// Out:     None
+// Return:  result -> the seq of structure in the memory area.
+//          -1 -> failed.
+//------------------------------------------------------------
+int searchIndex(int handle, const char *name);
 
-int readWriteSharedMemByIndex(const int handle, void *structure, int index, int access_type);
+//------------------------------------------------------------
+// Function:  readWriteSharedMemByIndex
+// Summary: Main API to read and write the data by table index. 
+// In:      handle -> passing the handle got from openMem() function.
+//          *structure -> the variable data which will be passed through 
+//                        the memory area.
+//          index -> the index number got from searchIndex() function.
+//          access_type -> MEM_WRITE/MEM_READ
+// Out:     None
+// Return:  1 -> success.
+//          0 -> failed.
+//------------------------------------------------------------
+int readWriteSharedMemByIndex(int handle, void *structure, int index, int access_type);
 
-int readWriteSharedMem(const int handle, void *structure, const char *name, int access_type);
+//------------------------------------------------------------
+// Function:  readWriteSharedMem
+// Summary: Main API to read and write the data by the structure name. 
+// In:      handle -> passing the handle got from openMem() function.
+//          *structure -> the variable data which will be passed through 
+//                        the memory area.
+//          *name -> the structure name of the variable
+//          access_type -> MEM_WRITE/MEM_READ
+// Out:     None
+// Return:  1 -> success.
+//          0 -> failed.
+//------------------------------------------------------------
+int readWriteSharedMem(int handle, void *structure, const char *name, int access_type);
 
-int clienSendRequest(const int handle, int req_id, char *req_buff, int req_size);
+//------------------------------------------------------------
+// Function:  clientSendRequest
+// Summary: The client sends the service request. 
+// In:      handle -> passing the handle got from openMem() function.
+//          *service_request 
+// Out:     None
+// Return:  1 -> success.
+//          0 -> failed.
+//------------------------------------------------------------
+int clientSendRequest(int handle, ServiceRequest *service_request);
 
-int clientGetResponse(const int handle, int *res_id, char *res_buff);
+//------------------------------------------------------------
+// Function:  clientGetResponse
+// Summary: The client gets the service response. 
+// In:      handle -> passing the handle got from openMem() function.
+// Out:     *service_response 
+// Return:  1 -> success.
+//          0 -> failed.
+//------------------------------------------------------------
+int clientGetResponse(int handle, ServiceResponse *service_response);
 
-int serverGetRequest(const int handle, int *req_id, char *req_buff);
+//------------------------------------------------------------
+// Function:  serverGetRequest
+// Summary: The server gets the service request. 
+// In:      handle -> passing the handle got from openMem() function.
+// Out:     *service_request
+// Return:  1 -> success.
+//          0 -> failed.
+//------------------------------------------------------------
+int serverGetRequest(int handle, ServiceRequest *service_request);
 
-int serverSendResponse(const int handle, int res_id, char *res_buff, int res_size);
+//------------------------------------------------------------
+// Function:  serverSendResponse
+// Summary: The server sends the service response. 
+// In:      handle -> passing the handle got from openMem() function.
+//          *service_response
+// Out:     None
+// Return:  1 -> success.
+//          0 -> failed.
+//------------------------------------------------------------
+int serverSendResponse(int handle, ServiceResponse *service_response);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //MIDDLEWARE_TO_SHAREDMEM_H_
+#endif //MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_H_

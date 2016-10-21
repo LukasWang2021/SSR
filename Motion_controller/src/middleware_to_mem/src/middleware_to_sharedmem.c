@@ -1,4 +1,21 @@
+/**********************************************
+File: middleware_to_sharedmem.c
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+Instruction: Main algorithm to operate on RAM
+Author: Feng.Wu/Yan.He 16-Aug-2016
+Modifier:
+**********************************************/
+#ifndef MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_C_
+#define MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_C_
+
 #include "middleware_to_mem/middleware_to_sharedmem.h"
+
+#define MEM_FALSE 0
+#define MEM_TRUE 1
+#define MEM_WRITE_TURN 11
+#define MEM_READ_TURN 12
+#define MEM_READ_ALREADY 0
+#define MEM_WRITE_ALREADY 1
 
 extern HandleTable handleTable[];
 
@@ -12,7 +29,7 @@ extern HandleTable handleTable[];
 // Return:  result -> the seq of structure in the memory area.
 //          -1 -> failed.
 //------------------------------------------------------------
-int searchIndex(const int handle, const char *name)
+int searchIndex(int handle, const char *name)
 { 
     int i;
     int result = -1; 
@@ -22,7 +39,7 @@ int searchIndex(const int handle, const char *name)
         return result;
     }
  
-    for (i = 0; i < handleTable[handle].table_length; i++)
+    for (i = 0; i < handleTable[handle].table_length; ++i)
     {
         if (strcmp(name, handleTable[handle].table[i].name) == 0)
         {
@@ -49,7 +66,7 @@ int searchIndex(const int handle, const char *name)
 // Return:  1 -> success.
 //          0 -> failed.
 //------------------------------------------------------------
-int readWriteSharedMemByIndex(const int handle, void *structure, int index, int access_type)
+int readWriteSharedMemByIndex(int handle, void *structure, int index, int access_type)
 {
     if ((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
     {
@@ -95,7 +112,8 @@ int readWriteSharedMemByIndex(const int handle, void *structure, int index, int 
         memcpy((ptr+table[index].offset) , structure, table[index].size);
         *(ptr_latest) = MEM_WRITE_ALREADY;
         *(ptr_write) = MEM_FALSE;       
-    } else if (access == MEM_READ && *(ptr_read) == MEM_FALSE && *(ptr_write)  ==  MEM_FALSE)
+    } 
+    else if (access == MEM_READ && *(ptr_read) == MEM_FALSE && *(ptr_write)  ==  MEM_FALSE)
     {
         *(ptr_read) = MEM_TRUE;  //Indicating that it is going to be the reading state
         *(ptr_turn) = MEM_READ_TURN; //mark that which process is using the memory
@@ -107,7 +125,8 @@ int readWriteSharedMemByIndex(const int handle, void *structure, int index, int 
         memcpy(structure, (ptr+table[index].offset), table[index].size);
         *(ptr_latest) = MEM_READ_ALREADY;
         *(ptr_read) = MEM_FALSE;
-    } else
+    }
+    else
     {
         return 0;
     } 
@@ -117,7 +136,7 @@ int readWriteSharedMemByIndex(const int handle, void *structure, int index, int 
 
 //------------------------------------------------------------
 // Function:  readWriteSharedMem
-// Summary: Main API to read and write the data. 
+// Summary: Main API to read and write the data by the structure name. 
 // In:      handle -> passing the handle got from openMem() function.
 //          *structure -> the variable data which will be passed through 
 //                        the memory area.
@@ -127,7 +146,7 @@ int readWriteSharedMemByIndex(const int handle, void *structure, int index, int 
 // Return:  1 -> success.
 //          0 -> failed.
 //------------------------------------------------------------
-int readWriteSharedMem(const int handle, void *structure, const char *name, int access_type)
+int readWriteSharedMem(int handle, void *structure, const char *name, int access_type)
 {   
     if ((handle < 0 )||(handle >= HANDLE_TABLE_LEN))
     {
@@ -152,49 +171,35 @@ int readWriteSharedMem(const int handle, void *structure, const char *name, int 
 // Function:  clientSendRequest
 // Summary: The client sends the service request. 
 // In:      handle -> passing the handle got from openMem() function.
-//          req_id -> every service has an id.
-//          *req_buff -> the parameters come with the service id.
-//          req_size -> the size of the *req_buff.
+//          *service_request 
 // Out:     None
 // Return:  1 -> success.
 //          0 -> failed.
 //------------------------------------------------------------
-int clientSendRequest(const int handle, int req_id, char *req_buff, int req_size)
+int clientSendRequest(int handle, ServiceRequest *service_request)
 {
     if ((handle < 0 ) || (handle >= HANDLE_TABLE_LEN))
     {
         printf("\nError in clientSendRequest(): Bad mapping or wrong handle!\n");
         return 0;
     }
-    if (req_id < 0)
+    if ((*service_request).req_id < 0)
     {
         printf("\nError in clientSendRequest(): Wrong request service ID!\n");
         return 0;
     }
-    if ((req_size > REQ_BUFF_LEN) || (req_size < 0)) 
-    {
-        printf("\nError in clientSendRequest(): Beyond request buff size!\n");
-        return 0;
-    }
-
-    //write the request data to the shared memory.
-    ServiceRequest service_request;
-    service_request.req_id = req_id;
-    memcpy(service_request.req_buff, req_buff, req_size);
-
-    return readWriteSharedMem(handle, &service_request, "ServiceRequest", MEM_WRITE);;
+    return readWriteSharedMem(handle, service_request, "ServiceRequest", MEM_WRITE);;
 }
 
 //------------------------------------------------------------
 // Function:  clientGetResponse
 // Summary: The client gets the service response. 
 // In:      handle -> passing the handle got from openMem() function.
-// Out:     *res_id -> the service id according to the response.
-//          *res_buff -> the parameters come with the response id.
+// Out:     *service_response 
 // Return:  1 -> success.
 //          0 -> failed.
 //------------------------------------------------------------
-int clientGetResponse(const int handle, int *res_id, char *res_buff)
+int clientGetResponse(int handle, ServiceResponse *service_response)
 {
     if ((handle < 0 ) || (handle >= HANDLE_TABLE_LEN))
     {
@@ -202,28 +207,18 @@ int clientGetResponse(const int handle, int *res_id, char *res_buff)
         return 0;
     }
     
-    //read the response service data from the shared memory.
-    ServiceResponse service_response;
-    int read_res = readWriteSharedMem(handle, &service_response, "ServiceResponse", MEM_READ);
-    if (read_res == 0) return 0;
-
-    //output.
-    *res_id = service_response.res_id;
-    memcpy(res_buff, service_response.res_buff, sizeof(service_response.res_buff));
-    
-    return 1;
+    return readWriteSharedMem(handle, service_response, "ServiceResponse", MEM_READ);
 }
 
 //------------------------------------------------------------
-// Function:  serveruGetRequest
+// Function:  serverGetRequest
 // Summary: The server gets the service request. 
 // In:      handle -> passing the handle got from openMem() function.
-// Out:     *req_id -> the request service id.
-//          *req_buff -> the parameters come with the request service id.
+// Out:     *service_request
 // Return:  1 -> success.
 //          0 -> failed.
 //------------------------------------------------------------
-int serverGetRequest(const int handle, int *req_id, char *req_buff)
+int serverGetRequest(int handle, ServiceRequest *service_request)
 {
     if ((handle < 0 ) ||  (handle >= HANDLE_TABLE_LEN))
     {
@@ -231,55 +226,34 @@ int serverGetRequest(const int handle, int *req_id, char *req_buff)
         return 0;
     }
 
-    //read the request service data from the shared memory.
-    ServiceRequest service_request;
-    int read_req = readWriteSharedMem(handle, &service_request, "ServiceRequest", MEM_READ);
-    if (read_req == 0) return 0;   
-
-    //output.
-    *req_id = service_request.req_id; 
-    memcpy(req_buff, &service_request.req_buff, sizeof(service_request.req_buff));
-
-    return 1;
+    return readWriteSharedMem(handle, service_request, "ServiceRequest", MEM_READ);
 }
 
 //------------------------------------------------------------
 // Function:  serverSendResponse
 // Summary: The server sends the service response. 
 // In:      handle -> passing the handle got from openMem() function.
-//          res_id -> the response service id.
-//          *res_buff -> the parameters come with the service id.
-//          res_size -> the size of the *res_buff.
+//          *service_response
 // Out:     None
 // Return:  1 -> success.
 //          0 -> failed.
 //------------------------------------------------------------
-int serverSendResponse(const int handle, int res_id, char *res_buff, int res_size)
+int serverSendResponse(int handle, ServiceResponse *service_response)
 {
     if ((handle < 0 ) || (handle >= HANDLE_TABLE_LEN))
     {
         printf("\nError in serverSendResponse(): Bad mapping or wrong handle!\n");
         return 0;
     }
-    if (res_id < 0)
+    if ((*service_response).res_id < 0)
     {
         printf("\nError in serverSendResponse(): Wrong response service ID!\n");
         return 0;
     }
-    if ((res_size > RES_BUFF_LEN) || (res_size < 0)) 
-    {
-        printf("\nError in serverSendResponse(): Beyond response buff size!\n");
-        return 0;
-    }
   
-    //Write the response data to the shared memory.
-    ServiceResponse service_response;
-    service_response.res_id = res_id;
-    memcpy(service_response.res_buff, res_buff, res_size);
-  
-    return readWriteSharedMem(handle, &service_response, "ServiceResponse", MEM_WRITE);;
+    return readWriteSharedMem(handle, service_response, "ServiceResponse", MEM_WRITE);;
 }
 
 
-
+#endif //MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_C_
 

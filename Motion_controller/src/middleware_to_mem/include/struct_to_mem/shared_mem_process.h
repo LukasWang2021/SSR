@@ -1,5 +1,5 @@
-#ifndef SHARED_MEM_PROCESS_H_
-#define SHARED_MEM_PROCESS_H_
+#ifndef MIDDLEWARE_TO_MEM_SHARED_MEM_PROCESS_H_
+#define MIDDLEWARE_TO_MEM_SHARED_MEM_PROCESS_H_
 
 #include "data_type.h"
 
@@ -11,7 +11,6 @@
 
 #include "struct_to_mem/struct_joint_command.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
-#include "struct_to_mem/struct_bare_core_version.h"
 #include "struct_to_mem/struct_io_signal.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
@@ -22,7 +21,6 @@ typedef struct
 {
     DECLARE_ITEM(JointCommand);
     DECLARE_ITEM(FeedbackJointState);
-    DECLARE_ITEM(BareCoreVersion);
     DECLARE_ITEM(IOSignal);
     DECLARE_ITEM(ServiceRequest);
     DECLARE_ITEM(ServiceResponse);
@@ -30,15 +28,14 @@ typedef struct
 }SharedMemProcess;
 
 //3.Bellow modify MEM_TABLE_LEN and add the info of the new message to the table
-#define MEM_TABLE_PROCESS_LEN 6
-static const FunctionTable tableProcess[MEM_TABLE_PROCESS_LEN] = 
+#define MEM_TABLE_PROCESS_LEN 5
+FunctionTable tableProcess[MEM_TABLE_PROCESS_LEN] = 
 {
     MEM_PROCESS_ITEM(JointCommand, MEM_HANDSHAKE, "JointCommand"),        
     MEM_PROCESS_ITEM(FeedbackJointState, MEM_NO_HANDSHAKE, "FeedbackJointState"), 
-    MEM_PROCESS_ITEM(BareCoreVersion, MEM_NO_HANDSHAKE, "BareCoreVersion"),
     MEM_PROCESS_ITEM(IOSignal, MEM_HANDSHAKE, "IOSignal"),
     MEM_PROCESS_ITEM(ServiceRequest, MEM_HANDSHAKE, "ServiceRequest"),
     MEM_PROCESS_ITEM(ServiceResponse, MEM_HANDSHAKE, "ServiceResponse"),
 };
 
-#endif // SHARED_MEM_PROCESS_H_
+#endif // MIDDLEWARE_TO_MEM_SHARED_MEM_PROCESS_H_

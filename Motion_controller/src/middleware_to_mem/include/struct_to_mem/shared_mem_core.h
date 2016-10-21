@@ -1,5 +1,5 @@
-#ifndef SHARED_MEM_CORE_H_
-#define SHARED_MEM_CORE_H_
+#ifndef MIDDLEWARE_TO_MEM_SHARED_MEM_CORE_H_
+#define MIDDLEWARE_TO_MEM_SHARED_MEM_CORE_H_
 
 #include "data_type.h"
 
@@ -11,7 +11,6 @@
 
 #include "struct_to_mem/struct_trajectory_segment.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
-#include "struct_to_mem/struct_bare_core_version.h"
 #include "struct_to_mem/struct_io_signal.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
@@ -21,7 +20,6 @@ typedef struct
 {
     DECLARE_ITEM(TrajectorySegment);
     DECLARE_ITEM(FeedbackJointState);
-    DECLARE_ITEM(BareCoreVersion);
     DECLARE_ITEM(IOSignal);
     DECLARE_ITEM(ServiceRequest);
     DECLARE_ITEM(ServiceResponse);
@@ -29,16 +27,15 @@ typedef struct
 }SharedMemCore;
 
 //3 Bellow modify MEM_TABLE_LEN and add the info of the new message to the table.
-#define MEM_TABLE_CORE_LEN 6
+#define MEM_TABLE_CORE_LEN 5
 static const FunctionTable tableCore[MEM_TABLE_CORE_LEN] = 
 {
     MEM_CORE_ITEM(TrajectorySegment, MEM_HANDSHAKE, "TrajectorySegment"),        //{   0,  2104, "TrajectorySegment"}
     MEM_CORE_ITEM(FeedbackJointState, MEM_NO_HANDSHAKE, "FeedbackJointState"),   //{2120,   152, "FeedbackJointState"}
-    MEM_CORE_ITEM(BareCoreVersion, MEM_NO_HANDSHAKE, "BareCoreVersion"),
     MEM_CORE_ITEM(IOSignal, MEM_HANDSHAKE, "IOSignal"),
     MEM_CORE_ITEM(ServiceRequest, MEM_HANDSHAKE, "ServiceRequest"),
     MEM_CORE_ITEM(ServiceResponse, MEM_HANDSHAKE, "ServiceResponse"),
 };
 
 
-#endif  //SHARED_MEM_CORE_H_
+#endif  //MIDDLEWARE_TO_MEM_SHARED_MEM_CORE_H_

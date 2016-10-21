@@ -1,5 +1,5 @@
-#ifndef STRUCT_IO_SIGNAL_H_
-#define STRUCT_IO_SIGNAL_H_
+#ifndef MIDDLEWARE_TO_MEM_STRUCT_IO_SIGNAL_H_
+#define MIDDLEWARE_TO_MEM_STRUCT_IO_SIGNAL_H_
 
 typedef struct 
 {
@@ -9,4 +9,4 @@ typedef struct
 }IOSignal;
 
 
-#endif //STRUCT_IO_SIGNAL_H_
+#endif //MIDDLEWARE_TO_MEM_STRUCT_IO_SIGNAL_H_

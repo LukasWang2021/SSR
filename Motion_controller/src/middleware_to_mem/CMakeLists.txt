@@ -18,22 +18,16 @@ include_directories(
 )
 
 add_library(middleware_to_mem src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
-target_link_libraries(middleware_to_mem ${catkin_LIBRARIES})
+target_link_libraries(middleware_to_mem ${catkin_LIBRARIES} librt.so)
 
-add_executable(send_trajectory_node src/trajectory_queue.cpp src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
-target_link_libraries(send_trajectory_node
-  ${catkin_LIBRARIES}
-)
+add_executable(send_trajectory_node src/trajectory_queue.cpp src/service_actions.c)
+target_link_libraries(send_trajectory_node ${catkin_LIBRARIES} librt.so middleware_to_mem)
 
-add_executable(send_trajectory_fake src/trajectory_queue_fake.cpp src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
-target_link_libraries(send_trajectory_fake
-  ${catkin_LIBRARIES}
-)
+add_executable(send_trajectory_fake src/trajectory_queue_fake.cpp)
+target_link_libraries(send_trajectory_fake ${catkin_LIBRARIES} librt.so middleware_to_mem)
 
-add_executable(service_test test/service_test.c src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
-target_link_libraries(service_test
-  ${catkin_LIBRARIES}
-)
+add_executable(service_test test/service_test.c)
+target_link_libraries(service_test ${catkin_LIBRARIES} librt.so middleware_to_mem)
 
 install(TARGETS middleware_to_mem
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

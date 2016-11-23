@@ -1,0 +1,9 @@
+syntax = "proto2";
+package commsg;
+
+message Heartbeat
+{
+    required int32 heartbeat = 1;
+    optional string info = 2;
+
+}

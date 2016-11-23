@@ -10,8 +10,8 @@
 //1.Bellow include the new message structure
 
 #include "struct_to_mem/struct_joint_command.h"
+//#include "struct_to_mem/struct_trajectory_segment.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
-#include "struct_to_mem/struct_io_signal.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 
@@ -20,20 +20,20 @@
 typedef struct
 {
     DECLARE_ITEM(JointCommand);
+//    DECLARE_ITEM(TrajectorySegment);
     DECLARE_ITEM(FeedbackJointState);
-    DECLARE_ITEM(IOSignal);
     DECLARE_ITEM(ServiceRequest);
     DECLARE_ITEM(ServiceResponse);
 
 }SharedMemProcess;
 
 //3.Bellow modify MEM_TABLE_LEN and add the info of the new message to the table
-#define MEM_TABLE_PROCESS_LEN 5
+#define MEM_TABLE_PROCESS_LEN 4 
 FunctionTable tableProcess[MEM_TABLE_PROCESS_LEN] = 
 {
     MEM_PROCESS_ITEM(JointCommand, MEM_HANDSHAKE, "JointCommand"),        
+//    MEM_PROCESS_ITEM(TrajectorySegment, MEM_HANDSHAKE, "TrajectorySegment"),
     MEM_PROCESS_ITEM(FeedbackJointState, MEM_NO_HANDSHAKE, "FeedbackJointState"), 
-    MEM_PROCESS_ITEM(IOSignal, MEM_HANDSHAKE, "IOSignal"),
     MEM_PROCESS_ITEM(ServiceRequest, MEM_HANDSHAKE, "ServiceRequest"),
     MEM_PROCESS_ITEM(ServiceResponse, MEM_HANDSHAKE, "ServiceResponse"),
 };

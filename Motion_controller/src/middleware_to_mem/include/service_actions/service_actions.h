@@ -17,31 +17,8 @@ typedef struct
     int sid;
     int (*function)(const ServiceResponse *res);
 
-}ServiceTable;
+}ResponseTable;
 
-//1.Bellow add the new service item, and modify SERVICE_TABLE_LEN.
-#define SERVICE_TABLE_LEN 4
-static const ServiceTable service_table[SERVICE_TABLE_LEN] = 
-{
-    CREATE_SERVICE_ITEM(0, interruptInfo),
-    CREATE_SERVICE_ITEM(0x10, versionInfo),
-    CREATE_SERVICE_ITEM(0x11, heartbeatResponse),    
-    CREATE_SERVICE_ITEM(0x01, resetCore),
-
-};
-
-//2.Bellow add the sevice id number.
-enum ServiceID
-{
-    INTERRUPT_SID = 0,
-    JTAC_RESET_SID = 0x01,
-    READ_VERSION_SID = 0x10,
-    HEARTBEAT_INFO_SID = 0x11,
-    READ_SERVO_DATA_BY_ADDR = 0x14,
-    READ_DATA_BY_ID = 0x1D,
-    WRITE_SERVO_DATA_BY_ADDR = 0x24,
-    WRTIE_DATA_BY_ID = 0x2D,
-};
 
 #ifdef __cplusplus
 	extern "C"{
@@ -64,7 +41,7 @@ int searchServiceTableIndex(const ServiceResponse *res);
 // Out:     None
 // Return:  1
 //------------------------------------------------------------
-int interruptInfo(const ServiceResponse *res);
+int abnormalInfo(const ServiceResponse *res);
 
 //------------------------------------------------------------
 // Function:  versionInfo
@@ -84,18 +61,32 @@ int versionInfo(const ServiceResponse *res);
 //------------------------------------------------------------
 int heartbeatResponse(const ServiceResponse *res);
 
-//------------------------------------------------------------
-// Function:  resetCore
-// Summary: do nothing.
-// In:      *res -> the address of the service response variable.
-// Out:     None
-// Return:  1
-//------------------------------------------------------------
-int resetCore(const ServiceResponse *res);
 
 #ifdef __cplusplus
 }
 #endif
 
+//1.Bellow add the sevice id number.
+enum ServiceID
+{
+    NEGATIVE_RESPONSE_SID = 0,
+    JTAC_CMD_SID = 0x01,
+    READ_VERSION_SID = 0x10,
+    HEARTBEAT_INFO_SID = 0x11,
+    READ_SERVO_DATA_BY_ADDR = 0x14,
+    READ_DATA_BY_ID = 0x1D,
+    WRITE_SERVO_DATA_BY_ADDR = 0x24,
+    WRTIE_DATA_BY_ID = 0x2D,
+};
+
+//2.Bellow add the new service item, and modify SERVICE_TABLE_LEN.
+#define SERVICE_TABLE_LEN 3
+static const ResponseTable response_table[SERVICE_TABLE_LEN] = 
+{
+    CREATE_SERVICE_ITEM(NEGATIVE_RESPONSE_SID, abnormalInfo),
+    CREATE_SERVICE_ITEM(READ_VERSION_SID, versionInfo),
+    CREATE_SERVICE_ITEM(HEARTBEAT_INFO_SID, heartbeatResponse),    
+
+};
 
 #endif  //MIDDLEWARE_TO_MEM_SERVICE_ACTIONS_H_

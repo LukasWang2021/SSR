@@ -49,7 +49,7 @@ int searchIndex(int handle, const char *name)
     }
     if (result == -1)
     {
-        printf("\nErorr in SearchIndex(): The structure name might be wrong!\n");
+        printf("\nErorr in SearchIndex(): The structure name might be wrong!%s\n",name);
     }
     return result;
 }
@@ -188,7 +188,7 @@ int clientSendRequest(int handle, ServiceRequest *service_request)
         printf("\nError in clientSendRequest(): Wrong request service ID!\n");
         return 0;
     }
-    return readWriteSharedMem(handle, service_request, "ServiceRequest", MEM_WRITE);;
+    return readWriteSharedMem(handle, service_request, "ServiceRequest", MEM_WRITE);
 }
 
 //------------------------------------------------------------
@@ -251,7 +251,7 @@ int serverSendResponse(int handle, ServiceResponse *service_response)
         return 0;
     }
   
-    return readWriteSharedMem(handle, service_response, "ServiceResponse", MEM_WRITE);;
+    return readWriteSharedMem(handle, service_response, "ServiceResponse", MEM_WRITE);
 }
 
 

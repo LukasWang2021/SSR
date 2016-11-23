@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="comm_monitor" pkg="middleware_to_mem" type="comm_monitor" respawn="false" output="screen">
+  </node>
+
+</launch>

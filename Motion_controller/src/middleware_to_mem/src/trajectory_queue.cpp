@@ -363,7 +363,7 @@ bool TrajectoryQueue::manageResponse()
     int index = searchServiceTableIndex(&temp_response);
     if (index != -1) 
     {
-        service_table[index].function(&temp_response);
+        response_table[index].function(&temp_response);
         response_fifo_.erase(response_fifo_.begin());
     }
     else
@@ -450,7 +450,6 @@ void TrajectoryQueue::runService()
         req_result = false;
         res_result = false;
         gettimeofday(&t_start, NULL);
-        start_time = ((long)t_start.tv_sec) + (long)t_start.tv_usec/1000000;
         //in the loop, the elapsed time is evaluated until the service is done successfully.
         while (res_result == false)
         {
@@ -460,8 +459,7 @@ void TrajectoryQueue::runService()
             if (req_result == true) res_result = getResponse();
 
             gettimeofday(&t_end, NULL);
-            end_time = ((long)t_end.tv_sec) + (long)t_end.tv_usec/1000000;
-            cost_time = end_time - start_time;
+            cost_time = (t_end.tv_sec - t_start.tv_sec)*1000000 + (t_end.tv_usec - t_start.tv_usec);
             if (cost_time > HEARTBEAT_LIMIT)
             {
                 std::cout<<"\033[31m"<<"||====No heartbeat from core1====||"<<"\033[0m"<<std::endl;

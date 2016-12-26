@@ -199,7 +199,7 @@ bool TrajectoryQueue::sendTrajectory()
         {
             joints_in_fifo_.erase(joints_in_fifo_.begin(), joints_in_fifo_.begin()+ts_.total_points);
             flag_ = 0;
-            printf("||====fifo3 left %u points====|| \n",joints_in_fifo_.size());
+            printf("||====fifo3 left %lu points====|| \n",joints_in_fifo_.size());
             return true;
         }
         flag_ = 1;
@@ -436,7 +436,7 @@ void *TrajectoryQueue::heartbeatThreadHelper(void *self)
 void TrajectoryQueue::runService()
 {
     int req_result = false, res_result = false;
-    long cost_time = 0, start_time = 0, end_time = 0;
+    long cost_time = 0;
     struct timeval t_start, t_end;
     //deal with the request which being sent to CORE1
     while (true)

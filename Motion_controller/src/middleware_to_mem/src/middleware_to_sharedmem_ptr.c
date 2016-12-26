@@ -1,9 +1,10 @@
 /**********************************************
-File: middleware_to_sharedmem_ptr.c
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-Instruction: Init the middleware
-Author: Feng.Wu/Yan.He 16-Aug-2016
-Modifier:
+File:       middleware_to_sharedmem_ptr.h
+Author:     Feng.Wu / Yan.He
+Create:     16-Aug-2016
+Modify:     03-Nov-2016
+Summary:    Init the middleware
 **********************************************/
 #ifndef MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_PTR_C_
 #define MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_PTR_C_
@@ -134,7 +135,8 @@ int clearSharedmem(int handle)
         return 0;
     }
     char *ptr = getPtrOfMem(handle);
-    if (NULL == ptr) return 0;
+    if (NULL == ptr) 
+        return 0;
     int size = handleTable[handle].map_size;
   
     memset(ptr, 0, size);

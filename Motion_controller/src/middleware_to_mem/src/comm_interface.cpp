@@ -1,15 +1,18 @@
 /**********************************************
-File: comm_interface.cpp
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-Instruction: lib to communicate with core1
-Author: Feng.Wu 04-Nov-2016
-Modifier:
+File:       comm_interface.cpp
+Author:     Feng.Wu 
+Create:     04-Nov-2016
+Modify:     08-Dec-2016
+Summary:    lib to communicate between processes
 **********************************************/
 #ifndef MIDDLEWARE_TO_MEM_COMM_INTERFACE_CPP_
 #define MIDDLEWARE_TO_MEM_COMM_INTERFACE_CPP_
 
 #include "comm_interface/comm_interface.h"
 #include <iostream>
+#include <sstream>
+#include <string.h>
 #include <nanomsg/nn.h>
 #include <nanomsg/reqrep.h>
 #include <nanomsg/pubsub.h>
@@ -17,190 +20,29 @@ Modifier:
 namespace fst_comm_interface
 {
 
+//------------------------------------------------------------
+// Function:  CommInterface
+// Summary: The constructor of class
+// In:      None
+// Out:     None
+// Return:  None 
+//------------------------------------------------------------
 CommInterface::CommInterface()
 {
-    handle_core_ = 0;
-    sec_ = 0;
-    nsec_ = 0;
-    prev_sec_ = 0;
-    prev_nsec_ = 0;
-    time_step_ = 1000000; //the unit is ns.
-    //init the joint states fbjs_ for fake
-    for (int j = 0; j<JOINT_NUM; ++j)
-    {
-        fbjs_.position[j] = 0;
-        fbjs_.velocity[j] = 0;
-        fbjs_.effort[j] = 0;
-    }
-    fbjs_.state = STATE_READY;
-
-}
-
-bool CommInterface::init()
-{
-    handle_core_ = openMem(MEM_CORE);
-    if (handle_core_ == -1) return false;
-    clearSharedmem(MEM_CORE);
-    return true;
+    fd_ = -1;
+    error_flag_ = CREATE_CHANNEL_FAIL;
 }
 
 //------------------------------------------------------------
-// Function:  initTrajectory
-// Summary: Initial the trajectory variable. 
+// Function:  ~CommInterface
+// Summary: The destructor of class
 // In:      None
 // Out:     None
-// Return:  None
+// Return:  None 
 //------------------------------------------------------------
-void CommInterface::initTrajectory(void)
+CommInterface::~CommInterface()
 {
-    //init the TrajectorySegment ts.
-    for (int i = 0; i < TS_POINT_NUM; ++i)
-    {
-        for (int j = 0; j < JOINT_NUM; ++j)
-        {
-            ts_.points[i].positions[j] = 0;
-            ts_.points[i].velocities[j] = 0;
-            ts_.points[i].accelerations[j] = 0;
-            ts_.points[i].effort[j] = 0;
-        }
-        ts_.points[i].valid_level = 1;
-        ts_.points[i].time_from_start.sec = 0;
-        ts_.points[i].time_from_start.nsec = 0;
-    }
-    ts_.stamp.sec = 0;
-    ts_.stamp.nsec = 0;
-    ts_.total_points = 0;
-    ts_.seq = 0;
-    ts_.last_fragment = 0;
-}
-
-//------------------------------------------------------------
-// Function:  sendBareCore
-// Summary: Add the time stamp for each points. 
-//          Send the trajectory segments to CORE1.
-// In:      jc -> the desired values of all joints
-// Out:     None
-// Return:  true -> success.
-//          false -> failed to send the trajectory to CORE1
-//------------------------------------------------------------
-bool CommInterface::sendBareCore(JointCommand jc)
-{   
-    prev_sec_ = sec_;
-    prev_nsec_ = nsec_;
-    initTrajectory();
-    for (int i = 0; i < jc.total_points; ++i)
-    {
-        for (int j = 0; j < JOINT_NUM; ++j)
-        {
-            ts_.points[i].positions[j] = jc.points[i].positions[j];
-        }
-        //Adding time stamp for trajectory. 
-        if (jc.points[i].point_position == START_POINT)
-        {
-            sec_ = 0;
-            nsec_ = time_step_; 
-        }
-        else
-        {
-            nsec_ += time_step_;
-            if (nsec_ >= SEC_TO_NSEC)
-            {
-                nsec_ -= SEC_TO_NSEC;
-                sec_ += 1;
-            }
-        }
-        ts_.points[i].time_from_start.sec = sec_;
-        ts_.points[i].time_from_start.nsec = nsec_;
-
-        //Set the flag last_fragment to indicate the last point of trajectory.  
-        if (jc.points[i].point_position == END_POINT) 
-        {
-            ts_.last_fragment = 1;
-            sec_ = 0;
-            nsec_ = 0;
-        }
-    } // end for (int i = 0; i < jc.total_points; ++i)
-    ts_.total_points = jc.total_points;
-
-    int write_result = readWriteSharedMem(handle_core_, &ts_, "TrajectorySegment", MEM_WRITE);
-    if (write_result == false)
-    {
-        sec_ = prev_sec_;
-        nsec_ = prev_nsec_;
-        return false;
-    }
-    return true;
-}
-
-//------------------------------------------------------------
-// Function:  recvBareCore
-// Summary: Read the actual joint states from CORE1
-// In:      None
-// Out:     fbjs -> the actual joint states.
-// Return:  true -> success.
-//          false -> failed to read the actural joint states from the servo core(lower level) 
-//------------------------------------------------------------
-bool CommInterface::recvBareCore(FeedbackJointState &fbjs)
-{
-    return readWriteSharedMem(handle_core_, &fbjs, "FeedbackJointState", MEM_READ);
-}
-
-
-//------------------------------------------------------------
-// Function:  sendBareCoreFake
-// Summary: Send the trajectory segments to CORE1. (fake for test) 
-// In:      jc -> the desired values of all joints
-// Out:     None
-// Return:  true -> success.
-//          false -> failed to send the trajectory to CORE1
-//------------------------------------------------------------
-bool CommInterface::sendBareCoreFake(JointCommand jc)
-{
-    if (joints_in_fifo_.size() > 40) return false;
-    //push the trajectory joint states into fifo.
-    for(int i = 0; i < jc.total_points; ++i)
-    {
-        joints_in_fifo_.push_back(jc.points[i]);
-    }
-    return true;
-}
-
-//------------------------------------------------------------
-// Function:  recvBareCoreFake
-// Summary: Read the actual joint states from CORE1 (fake for test)
-// In:      None
-// Out:     fbjs -> the actual joint states.
-// Return:  true -> success.
-//          false -> failed to read the actural joint states from the servo core(lower level) 
-//------------------------------------------------------------
-bool CommInterface::recvBareCoreFake(FeedbackJointState &fbjs)
-{
-    //if no trajectory, feedback the last states.
-    if (joints_in_fifo_.empty()) 
-    {
-        for (int i = 0; i < JOINT_NUM; ++i)
-        {
-            fbjs.position[i] = fbjs_.position[i];
-        }
-        fbjs_.state = STATE_READY;
-        fbjs.state = STATE_READY;
-        return true;
-    }
-
-    //set trajectory joint states as feedback joint states
-    for (int j = 0; j < JOINT_NUM; ++j)
-    {
-        fbjs_.position[j] = joints_in_fifo_[0].positions[j];
-        fbjs.position[j] = fbjs_.position[j];
-    }
-    int num;
-    if (joints_in_fifo_.size() > 10)
-        num = 10;
-    else
-        num = joints_in_fifo_.size();
-    joints_in_fifo_.erase(joints_in_fifo_.begin(), joints_in_fifo_.begin()+num-1);
-    fbjs.state = STATE_RUNNING;
-    return true;
+    closeChannel();
 }
 
 //------------------------------------------------------------
@@ -209,176 +51,215 @@ bool CommInterface::recvBareCoreFake(FeedbackJointState &fbjs)
 // In:      type -> REQ:request, REP:response, PUB:publisher, SUB:subscriber
 //          name -> name for each channel
 // Out:     None
-// Return:  fd -> succeed to get handle.
-//          -1 -> failed to create channel 
+// Return:  0 -> succeed to get handle.
+//          CREATE_CHANNEL_FAIL -> failed to create channel 
 //------------------------------------------------------------
-int CommInterface::createChannel(int type, const char *name)
+ERROR_CODE_TYPE CommInterface::createChannel(int type, const char *name)
 {
-    //create a socket.
-    int fd = nn_socket(AF_SP, type);
-    if(fd < 0)
+    if(type != IPC_REQ && type != IPC_REP && type != IPC_PUB && type != IPC_SUB)
     {
-        std::cout<<"Error in CommInterface::createChannel() for socket: "<<nn_strerror(nn_errno())<<std::endl;
-        return -1;
+        std::cout<<"Error in CommInterface::createChannel(): Please enter a type(IPC_REQ, IPC_REP, IPC_PUB, IPC_SUB)."<<std::endl;
+        return CREATE_CHANNEL_FAIL;
+    }
+    if (strlen(name) >= NAME_SIZE)
+    {
+        std::cout<<"Error in  CommInterface::createChannel(): Name exceeds 64 characters."<<std::endl;
+        return CREATE_CHANNEL_FAIL;
     }
 
+    //create a socket.
+    fd_ = nn_socket(AF_SP, type);
+    if (fd_ < 0)
+    {
+        std::cout<<"Error in CommInterface::createChannel() for <"<<name<<"> socket: "<<nn_strerror(nn_errno())<<std::endl;
+        return CREATE_CHANNEL_FAIL;
+    }
+   
     //bind or connect to url.
-    char url[64];
+/*    char url[NAME_SIZE];
     sprintf(url, "ipc:///tmp/msg_%s.ipc", name);
+*/
+    std::ostringstream oss;
+    oss << "ipc:///tmp/msg_" << name << ".ipc";
+    std::string ss = oss.str();
+    const char *url = ss.c_str();
+ 
     if (type == NN_REP || type == NN_PUB)
     {
-        if (nn_bind(fd, url) < 0)
+        if (nn_bind(fd_, url) < 0)
         {
-            std::cout<<"Error in CommInterface::createChannel() to bind: "<<nn_strerror(nn_errno())<<std::endl;
-            return -1;
+            std::cout<<"Error in CommInterface::createChannel() to bind <"<<name<<"> : "<<nn_strerror(nn_errno())<<std::endl;
+            return CREATE_CHANNEL_FAIL;
         }
-    } else if (type == NN_REQ || type == NN_SUB)
+    } 
+    else if (type == NN_REQ || type == NN_SUB)
     {
-        if (nn_connect(fd, url) < 0)
+        if (nn_connect(fd_, url) < 0)
         {
-            std::cout<<"Error in CommInterface::createChannel() to connect: "<<nn_strerror(nn_errno())<<std::endl;
-            return -1;
+            std::cout<<"Error in CommInterface::createChannel() to connect <"<<name<<"> : "<<nn_strerror(nn_errno())<<std::endl;
+            return CREATE_CHANNEL_FAIL;
         }
-    } else
-    {
-        std::cout<<"Info in CommInterface::createChannel(): Please enter a type(REQ, REP, PUB, SUB)."<<std::endl;
-        return -1;
-    }
-    //set sockopt specially for NN_SUB, otherwise no receive.
+    } 
+    //set sockopt specially for NN_SUB, otherwise can't receive.
     if (type == NN_SUB)
     {
-        if (nn_setsockopt(fd, NN_SUB, NN_SUB_SUBSCRIBE, "", 0) < 0)
+        if (nn_setsockopt(fd_, NN_SUB, NN_SUB_SUBSCRIBE, "", 0) < 0)
         {
-            std::cout<<"Error in CommInterface::createChannel() to set opt: "<<nn_strerror(nn_errno())<<std::endl;
-            return -1;
+            std::cout<<"Error in CommInterface::createChannel() to set <"<<name<<"> SUB: "<<nn_strerror(nn_errno())<<std::endl;
+            return CREATE_CHANNEL_FAIL;
         };
     }
 
-    return fd;
-}
-/*
-int CommInterface::waitForRep(int fd)
-{
-    int check = -1;
-    char send_buff[64] = "Is rep server started up???";
-    char recv_buff[64];
-    std::cout<<"CLIENT: Waiting for the response server to start up before sending msg"<<std::endl;
-    while (check == -1)
-    {
-        send(fd, send_buff, sizeof(send_buff));
-        usleep(100000);
-        check = recv(fd, recv_buff, sizeof(recv_buff));
-    }
-    std::cout<<recv_buff<<std::endl;
-    return true;
+    error_flag_ = 0;
+    return FST_SUCCESS;
 }
 
-int CommInterface::waitForReq(int fd)
-{
-    int check = -1;
-    char recv_buff[64];
-    char send_buff[64] = "CLINET: The response server is started up, msg can be sent.";
-    std::cout<<"SERVER: Waiting for the request client to start up."<<std::endl;
-    while (check == -1)
-    {
-        usleep(1000);
-        if (recv(fd, recv_buff, sizeof(recv_buff) >= 0))
-        {
-            check = send(fd, send_buff, sizeof(send_buff));
-        }
-    }
-    std::cout<<"SERVER: The request client is started up."<<std::endl;      
-    usleep(100000);
-
-    return true;
-}
-*/
 //------------------------------------------------------------
 // Function:  send
 // Summary: send data
-// In:      fd -> handle from method createChannel().
-//          buff -> data to be sent.
+// In:      buff -> data to be sent.
 //          buff_size -> date size
+//          flag -> block or not(IPC_WAIT/IPC_DONTWAIT).
 // Out:     None
-// Return:  1 -> succeed to send data.
-//          -1 -> failed to send data.
+// Return:  0 -> succeed to send data.
+//          SEND_MSG_FAIL -> failed to send data.
+//          CREATE_CHANNEL_FAIL -> didn't or failed to create channel 
 //------------------------------------------------------------
-int CommInterface::send(int fd, void *buff, int buff_size)
+ERROR_CODE_TYPE CommInterface::send(const void *buf, int buf_size, int flag)
 {
-    if (fd == -1)
+    if (error_flag_ != 0)
+        return error_flag_;
+
+    if(flag != IPC_WAIT && flag != IPC_DONTWAIT)
     {
-        std::cout<<"Error in CommInterface::send(): Wrong fd, please check createChannel()."<<std::endl;
-        return -1;
+        std::cout<<"Error in CommInterface::send(): Please enter a type(REQ, REP, PUB, SUB)."<<std::endl;
+        return SEND_MSG_FAIL;
     }
-    if (nn_send(fd, buff, buff_size, 0) < 0)
+
+    if (buf_size > MAX_MSG_SIZE)
+    {
+        std::cout<<"Warning in CommInterface::send(): The size value exceeds maximum message size."<<std::endl;
+    }
+
+    int result = nn_send(fd_, buf, buf_size, flag);
+    if (result < 0)
     {
         std::cout<<"Error in CommInterface::send(): "<<nn_strerror(nn_errno())<<std::endl;
-        return -1;
+        return SEND_MSG_FAIL;
     }
-    return 1;
+    return FST_SUCCESS;
+}
+
+//------------------------------------------------------------
+// Function:  send
+// Summary: send data by string
+// In:      str -> string to be sent.
+//          flag -> block or not(IPC_WAIT/IPC_DONTWAIT).
+// Out:     None
+// Return:  0 -> succeed to send data.
+//          SEND_MSG_FAIL -> failed to send data.
+//          CREATE_CHANNEL_FAIL -> didn't or failed to create channel 
+//------------------------------------------------------------
+ERROR_CODE_TYPE CommInterface::send(std::string str, int flag)
+{
+    if (error_flag_ != 0)
+        return error_flag_;
+
+    char *send_buf = new char[str.length() + 1];
+    strcpy(send_buf, str.c_str());
+
+    ERROR_CODE_TYPE result = send(send_buf, str.length() + 1, flag);
+
+    delete[] send_buf;
+    return result;
 }
 
 //------------------------------------------------------------
 // Function:  recv
 // Summary: receive data
-// In:      fd -> handle from method createChannel().
-//          buff -> data to be read.
+// In:      buff -> data to be read.
 //          buff_size -> date size
+//          flag -> block or not(IPC_WAIT/IPC_DONTWAIT).
 // Out:     None
-// Return:  1 -> succeed to get data.
-//          -1 -> failed to get data.
+// Return:  0 -> succeed to get data.
+//          RECV_MSG_FAIL -> failed to get data.
+//          CREATE_CHANNEL_FAIL -> didn't or failed to create channel
 //------------------------------------------------------------
-int CommInterface::recv(int fd, void *buff, int buff_size)
+ERROR_CODE_TYPE CommInterface::recv(void *buf, int buf_size, int flag)
 {
-    if (fd == -1)
+    if (error_flag_ != 0)
+        return error_flag_;
+
+    if(flag != IPC_WAIT && flag != IPC_DONTWAIT)
     {
-        std::cout<<"Error in CommInterface::recv(): Wrong fd, please check createChannel()."<<std::endl;
-        return -1;
+        std::cout<<"Error in CommInterface::recv(): Please enter a type(REQ, REP, PUB, SUB)."<<std::endl;
+        return RECV_MSG_FAIL;
     }
-/*    int recvfd;
-    size_t sz = sizeof(recvfd);
-    int ret = nn_getsockopt(fd, NN_SOL_SOCKET, NN_RCVFD, &recvfd, &sz);
-    std::cout<<"recvfd:"<<recvfd<<std::endl;
-*/         
-    if (nn_recv(fd, buff, buff_size, NN_DONTWAIT) < 0)
+    if (buf_size > MAX_MSG_SIZE)
+    {
+        std::cout<<"Warning in CommInterface::recv(): The size value exceeds maximum message size."<<std::endl;
+    } 
+    int result = nn_recv(fd_, buf, buf_size, flag);
+    if (result < 0)
     {
         if (nn_errno() != EAGAIN)
         {
             std::cout<<"Error in CommInterface::recv(): "<<nn_strerror(nn_errno())<<std::endl;
         }
-        return -1;
+        return RECV_MSG_FAIL;
+    }    
+    return FST_SUCCESS;
+}
+
+//------------------------------------------------------------
+// Function:  recv
+// Summary: receive data
+// In:      string -> string to be read.
+//          flag -> block or not(IPC_WAIT/IPC_DONTWAIT).
+// Out:     None
+// Return:  0 -> succeed to get data.
+//          RECV_MSG_FAIL -> failed to get data.
+//          CREATE_CHANNEL_FAIL -> didn't or failed to create channel
+//------------------------------------------------------------
+ERROR_CODE_TYPE CommInterface::recv(std::string *str, int flag)
+{
+    if (error_flag_ != 0)
+        return error_flag_;
+
+    if(flag != IPC_WAIT && flag != IPC_DONTWAIT)
+    {
+        std::cout<<"Error in CommInterface::recv(): Please enter a type(REQ, REP, PUB, SUB)."<<std::endl;
+        return RECV_MSG_FAIL;
     }
-    
-    return 1;
+
+    char *buf = NULL;
+    int result = nn_recv(fd_, &buf, NN_MSG, flag);
+    if (result < 0)
+    {
+        if (nn_errno() != EAGAIN)
+        {
+            std::cout<<"Error in CommInterface::recv(): "<<nn_strerror(nn_errno())<<std::endl;
+        }
+        return RECV_MSG_FAIL;
+    }    
+    *str = buf;
+    nn_freemsg(buf);
+    return FST_SUCCESS;
+
 }
 
 //------------------------------------------------------------
 // Function:  close
 // Summary: closeChannel
-// In:      fd -> handle from method createChannel().
+// In:      None.
 // Out:     None.
 // Return:  None.
 //------------------------------------------------------------
-void CommInterface::close(int fd)
+void CommInterface::closeChannel(void)
 {
-    nn_close(fd);
+    nn_close(fd_);
 }
 
-//------------------------------------------------------------
-// Function:  setTimeStamp
-// Summary: set the time stamp. default is 0.001s 
-// In:      interval -> 0.001 is default
-// Out:     None
-// Return:  None
-//------------------------------------------------------------
-void CommInterface::setTimeInterval(double interval)
-{
-    time_step_ = interval * SEC_TO_NSEC;
-}
-
-CommInterface::~CommInterface()
-{
-}
 
 } //namespace fst_comm_interface
 

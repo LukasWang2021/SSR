@@ -1,9 +1,22 @@
 syntax = "proto2";
-package commsg;
+//package commsg;
+//option optimize_for = LITE_RUNTIME;
 
-message Heartbeat
+message ProcessRequest
 {
-    required int32 heartbeat = 1;
-    optional string info = 2;
+    optional int32 id = 1;
 
+    optional bool need_reply = 2;
+    optional bool affix_info = 3;
+    optional string info = 4;
 }
+
+message ProcessResponse
+{
+    optional int32 id = 1;
+
+    optional bool affix_info = 2 [default = false];
+    optional string info = 3;
+}
+
+

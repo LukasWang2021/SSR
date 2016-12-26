@@ -55,6 +55,7 @@ int TrajectoryQueueFake::init()
 
     //init the time_step_
     time_step_ = interval_ * SEC_TO_NSEC;
+    return true;
 }
 
 //------------------------------------------------------------
@@ -191,7 +192,7 @@ bool TrajectoryQueueFake::sendJointStates()
             //Just for printing.
 //            for(int i=0;i<JOINT_NUM; ++i){printf("fbjs_w.position[%d] = %f \n", i, fbjs_w.position[i]);}
 //            printf(" fbjs_w.state = %d\n\n", fbjs_w.state);
-            printf("||====fifo3 left %u points====|| \n",joints_in_fifo_.size());
+            printf("||====fifo3 left %lu points====|| \n",joints_in_fifo_.size());
             return true;
         }     
         count++;
@@ -215,7 +216,7 @@ void TrajectoryQueueFake::setTimeInterval(double interval)
 
 int TrajectoryQueueFake::versionInfo()
 {
-
+    return true;
 }
 
 int TrajectoryQueueFake::startServiceThread()
@@ -276,6 +277,7 @@ int TrajectoryQueueFake::heartbeatService()
         //send a heartbeat signal every one second.
         sleep(1);
     }
+    return true;
 }
 
 

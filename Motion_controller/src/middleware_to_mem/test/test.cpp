@@ -10,101 +10,74 @@ Modifier:
 #define TEST_C_
 
 #include <iostream>
+#include <vector>
 #include <string.h>
-#include "comm_interface/comm_interface.h"
+#include <unistd.h>
+
+#include "error_code/error_code.h"
+#include "comm_monitor/service_wrapper.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 
+/*
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <time.h>
-#include <unistd.h>
 #include <sched.h>
-#include <string.h>
 #include <sys/time.h>
-#include <netinet/in.h>  /* For htonl and ntohl */
+#include <netinet/in.h>  // For htonl and ntohl
 #include <sys/mman.h>
-
+*/
 int main(int argc, char *argv[]) {
 
-  if (!fork()) { /* child */
-      char rec_buff[128];
-      fst_comm_interface::CommInterface comm;
-//      comm.init();
-      int fd = comm.createChannel(REQ, "client");
-      
-      if (fd == -1)
-      {
-          printf("Error when client createChannel.\n");
-          return -1;
-      }
-      for (int i = 0; i < 5; ++i)
-      {
-          char send_buff[128] = "From Client-hello world";
-          sprintf(send_buff, "%s+%d",send_buff, i);
-
-          int send = comm.send(fd, send_buff, 128);
-
-          if (send == -1)
-          {
-              printf("Error when client send.\n");
-              return -1;
-          }
-          
-          usleep(10000);
-/*          int rc = comm.recv(fd, rec_buff, 128);
-          if (rc == -1)
-          {
-              printf("Error when client recv.\n");
-              return -1;
-          }
-
-          printf("client recv msg: %s \n", rec_buff);
-*/      }
-//      comm.close(fd);
-      sleep(1);
-      printf("client  done\n");
-      return 0;
-          
-  } else { /* parent */
-      char send_buff[128] = "from server-hello world";
-      char rec_buff[128];
-      fst_comm_interface::CommInterface comm;
-      int fd = comm.createChannel(REP, "client");
-      if (fd == -1)
-      {
-          printf("Error when client createChannel.\n");
-          return -1;
-      }
-      for (int i = 0; i <5; ++i)
-      {
-          usleep(10000);
-          int rc = comm.recv(fd, rec_buff, 128);
-          if (rc == -1)
-          {
-              printf("Error when server recv.\n");
-//              return -1;
-          }
-          printf("server%d recv msg: %s \n", rc, rec_buff);
-          memset(rec_buff, 0, sizeof(rec_buff));
-
-/*
-          sprintf(send_buff, "%s+%d",send_buff, i);
-          int send = comm.send(fd, send_buff, 128);
-          if (send == -1)
-          {
-              printf("Error when client send.\n");
-              return -1;
-          }
+/*    std::cout<<"test1"<<std::endl;
+    vector<int> fifo;
+    fifo.erase(fifo.begin());
+    std::cout<<"end test"<<std::endl;
 */
-      }
-//      comm.close (fd);
-  }
-  sleep(1);
-  printf("server done\n");
-  return 0;
+    fst_service_wrapper::ServiceWrapper comm;
+    ERROR_CODE_TYPE result = comm.init();
+
+    if (result != 0)
+    {
+        std::cout<<"fail when init."<<std::endl;
+    }
+
+    ServiceResponse resp;
+    int i=0;
+    while (i<5)
+    {
+        if (comm.sendResetRequest() != 0)
+        {
+            std::cout<<"send reset fail"<<std::endl;
+            return 1;
+        }
+
+        if (comm.sendHeartbeatRequest(resp) != 0)
+        {
+            std::cout<<"recv heartbeat fail"<<std::endl;
+            return 1;
+        }
+
+        else
+        {
+            printf("recv heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", resp.res_id, (unsigned char)resp.res_buff[7+8],(unsigned char)resp.res_buff[6+8],(unsigned char)resp.res_buff[5+8],(unsigned char)resp.res_buff[4+8],(unsigned char)resp.res_buff[3+8],(unsigned char)resp.res_buff[2+8],(unsigned char)resp.res_buff[1+8],(unsigned char)resp.res_buff[0+8]); 
+        }
+
+        if (comm.sendStopRequest() != 0)
+        {
+            std::cout<<"send stop fail"<<std::endl;
+            return 1;
+        }
+
+
+        ++i;
+
+    }
+
+    return 0;
 }
 
 #endif

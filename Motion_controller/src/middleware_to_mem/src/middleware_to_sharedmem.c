@@ -1,9 +1,10 @@
 /**********************************************
-File: middleware_to_sharedmem.c
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-Instruction: Main algorithm to operate on RAM
-Author: Feng.Wu/Yan.He 16-Aug-2016
-Modifier:
+File:       middleware_to_sharedmem.h
+Author:     Feng.Wu / Yan.He 
+Create:     16-Aug-2016
+Modify:     04-Nov-2016
+Summary:    Main algorithm to operate on RAM
 **********************************************/
 #ifndef MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_C_
 #define MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_C_
@@ -88,7 +89,8 @@ int readWriteSharedMemByIndex(int handle, void *structure, int index, int access
     int access = access_type;  
     const FunctionTable *table = handleTable[handle].table;
     char *ptr = handleTable[handle].ptr;
-    if (ptr == NULL){return 0;}
+    if (ptr == NULL)
+        return 0;
 
     volatile unsigned int *ptr_read, *ptr_write, *ptr_turn, *ptr_latest;
     AccessFlag *flag = (AccessFlag *)(ptr + table[index].offset_flag);
@@ -160,7 +162,8 @@ int readWriteSharedMem(int handle, void *structure, const char *name, int access
     } 
 
     int index = searchIndex(handle, name);
-    if (index == -1) return 0;
+    if (index == -1) 
+        return 0;
 
     int result = readWriteSharedMemByIndex(handle, structure, index, access_type);
 

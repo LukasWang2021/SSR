@@ -1,9 +1,10 @@
 /**********************************************
-File: middleware_to_sharedmem.h
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-Instruction: Main algorithm to operate on RAM
-Author: Feng.Wu 16-Aug-2016
-Modifier:
+File:       middleware_to_sharedmem.h
+Author:     Feng.Wu / Yan.He 
+Create:     16-Aug-2016
+Modify:     04-Nov-2016
+Summary:    Main algorithm to operate on RAM
 **********************************************/
 #ifndef MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_H_
 #define MIDDLEWARE_TO_MEM_MIDDLEWARE_TO_SHAREDMEM_H_

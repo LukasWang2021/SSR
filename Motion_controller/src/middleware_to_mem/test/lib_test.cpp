@@ -11,9 +11,10 @@ Modifier:
 
 #include <iostream>
 #include <string.h>
-#include "comm_interface/comm_interface.h"
+#include "comm_interface/core_interface.h"
 #include "struct_to_mem/struct_joint_command.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
+#include "error_code/error_code.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -30,11 +31,12 @@ Modifier:
 int main(int argc, char *argv[]) {
 
     int i, j, k;
-    fst_comm_interface::CommInterface comm;
-    comm.init();
+    fst_core_interface::CoreInterface comm;
+    ERROR_CODE_TYPE init = comm.init();
+    std::cout<<"init "<<init<<std::endl;
 
-    for (k = 1; k < 5; ++k)
-    {
+  for (k = 1; k < 5; ++k)
+  {
 
     //Writing Joint Command
     JointCommand jc;
@@ -50,24 +52,27 @@ int main(int argc, char *argv[]) {
 
     jc.total_points = TS_POINT_NUM;
     
-    int result = comm.sendBareCore(jc);
-    if (result == false)
+    ERROR_CODE_TYPE result = comm.sendBareCore(jc);
+    if (result != 0)
     {
         printf("====Fail to send====\n");
-    } else if(result == true)
+    } else if(result == 0)
     {
         printf("==suceed to send==\n");
     }
-usleep(1000);
+usleep(100000);
     FeedbackJointState fbjs;
-    int rc = comm.recvBareCore(fbjs);
-    if (rc == true)
+    ERROR_CODE_TYPE rc = comm.recvBareCore(fbjs);
+    if (rc == 0)
     {
         for(i=0;i<JOINT_NUM; i++){printf("fbjs.position[%d] = %f \n", i, fbjs.position[i]);}
+    } else 
+    {
+        std::cout<<"fbjs result = "<<rc<<std::endl;
     }
     printf("\n");
 
-    }
+  }
 /*    FeedbackJointState fbjs;
     for (int m = 0;m<50; ++m)
     {

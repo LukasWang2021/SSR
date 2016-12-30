@@ -32,11 +32,6 @@ Modifier:
 */
 int main(int argc, char *argv[]) {
 
-/*    std::cout<<"test1"<<std::endl;
-    vector<int> fifo;
-    fifo.erase(fifo.begin());
-    std::cout<<"end test"<<std::endl;
-*/
     fst_service_wrapper::ServiceWrapper comm;
     ERROR_CODE_TYPE result = comm.init();
 
@@ -49,6 +44,7 @@ int main(int argc, char *argv[]) {
     int i=0;
     while (i<5)
     {
+        sleep(1);
         if (comm.sendResetRequest() != 0)
         {
             std::cout<<"send reset fail"<<std::endl;
@@ -63,7 +59,9 @@ int main(int argc, char *argv[]) {
 
         else
         {
-            printf("recv heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", resp.res_id, (unsigned char)resp.res_buff[7+8],(unsigned char)resp.res_buff[6+8],(unsigned char)resp.res_buff[5+8],(unsigned char)resp.res_buff[4+8],(unsigned char)resp.res_buff[3+8],(unsigned char)resp.res_buff[2+8],(unsigned char)resp.res_buff[1+8],(unsigned char)resp.res_buff[0+8]); 
+            unsigned int size = *(int*)(&resp.res_buff);
+            if (size > 0)
+                printf("recv heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", resp.res_id, (unsigned char)resp.res_buff[7+8],(unsigned char)resp.res_buff[6+8],(unsigned char)resp.res_buff[5+8],(unsigned char)resp.res_buff[4+8],(unsigned char)resp.res_buff[3+8],(unsigned char)resp.res_buff[2+8],(unsigned char)resp.res_buff[1+8],(unsigned char)resp.res_buff[0+8]); 
         }
 
         if (comm.sendStopRequest() != 0)

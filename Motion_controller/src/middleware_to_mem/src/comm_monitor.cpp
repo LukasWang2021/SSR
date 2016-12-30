@@ -32,6 +32,7 @@ CommMonitor::CommMonitor()
     loop_count_core_ = 0;
     loop_count_mcs_ = 0;
     check_mcs_enable_ = false;
+    running_sid_ = 0;
 }
 
 //------------------------------------------------------------
@@ -188,12 +189,14 @@ bool CommMonitor::receiveRequest(void)
 bool CommMonitor::addRequest(void)
 {  
     // Caculate the loop number, setup the stop request to BARE CORE.
-/*    if (loop_count_mcs_ >= HEARTBEAT_INTERVAL_MCS)
+    if (loop_count_mcs_ >= HEARTBEAT_INTERVAL_MCS)
     {
         ServiceRequest req = {JTAC_CMD_SID, ""};
         int stop = 1;
         memcpy(&req.req_buff[0], &stop, sizeof(stop));
         request_fifo_.push_back(req);
+        std::cout<<"||====No heartbeat from MCS, a stop command was sent.====||"<<std::endl;
+
                     
         //store the motion controller timeout error.
         ERROR_CODE_TYPE mcs_timeout = MCS_TIMEOUT;
@@ -204,7 +207,7 @@ bool CommMonitor::addRequest(void)
 
         return true;
     }
-*/  
+ 
     // Caculate the loop number, setup the heartbeat request to BARE CORE.
     if (loop_count_core_ >= HEARTBEAT_INTERVAL_CORE)
     {
@@ -356,23 +359,9 @@ bool CommMonitor::getResponse(void)
         return false;
 
     ServiceResponse response;  
-/*    
-    int count = 0;
-    do
-    {
-        int result = recvResponseFromBareCore(response);
-        if (result == true  && (response.res_id == running_sid_))
-        {
-            response_fifo_.push_back(response);
-            return true;
-        }
-        ++count;
-    } while(count < 2);
-*/
-
 
     int result = recvResponseFromBareCore(response);
-    if (result == true)
+    if (result == true && (response.res_id == running_sid_))
     {
         response_fifo_.push_back(response);
         return true;
@@ -391,8 +380,11 @@ bool CommMonitor::getResponse(void)
 //------------------------------------------------------------
 ERROR_CODE_TYPE CommMonitor::interactBareCore(void)
 {
-    if (request_fifo_.empty() || !response_fifo_.empty())
+    if (request_fifo_.empty())
         return FST_SUCCESS;  
+
+    if (!response_fifo_.empty())
+        return FST_SUCCESS;
 
     ServiceRequest request = request_fifo_[0];
     int req_result = false, res_result = false;

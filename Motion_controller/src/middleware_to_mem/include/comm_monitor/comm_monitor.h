@@ -259,8 +259,8 @@ public:
     // The max number of loops to send heartbeat request to BARE CORE.
     static const int HEARTBEAT_INTERVAL_CORE = 100; // 1ms * 100.
 
-    // The BARE CORE timeout is 5ms. The unit is usec.
-    static const int HEARTBEAT_CORE_TIMEOUT = 5000;
+    // The BARE CORE timeout is 50ms. The unit is usec.
+    static const int HEARTBEAT_CORE_TIMEOUT = 50000;
 
     // The max number of loops to recv heartbeat request from MCS.
     static const int HEARTBEAT_INTERVAL_MCS= 100; // 1ms * 100.
@@ -288,8 +288,10 @@ private:
     // To set the heartbeat interval limit of motion controller.
     int loop_count_mcs_;
 
+    // To be true when motion controller send the first heartbeat.
     bool check_mcs_enable_;
 
+    // The service ID which is dealing with.
     int running_sid_;
 
     // To indicate the response should be sent up or handled locally.

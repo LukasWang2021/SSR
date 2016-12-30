@@ -1,45 +1,53 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef TP_INTERFACE_TIMER_H_
+#define TP_INTERFACE_TIMER_H_
+/**
+ * @file tp_interface_timer.h
+ * @brief 
+ * @author WangWei
+ * @version 1.0.0
+ * @date 2016-11-02
+ */
+#include <map>
+#include <boost/asio.hpp>
+#include "lw_signal.h"
 
-#include <thread>
-#include <chrono>
+using std::map;
+
+typedef struct _TimeCntFlag
+{
+	int		count;
+	bool	expire_flag;
+}TimeCntFlag;
 
 class Timer
-{
-public:
-    typedef std::chrono::milliseconds Interval;
-    typedef std::function<void(void*)> Timeout;
+{	
+  public:
+	Timer(int mseconds);	
+	~Timer();
+	bool isTimeOut();
+	void start();
+	void stop();
+	bool isExpired(int id);
+	void add(int id, int mseconds);
+	void wait();
 
-    Timer(const Timeout &timeout);
-    Timer(const Timeout &timeout,
-          const Interval &interval,
-          bool singleShot = true);
+  private:
+	boost::asio::io_service		io_;  
+    boost::asio::deadline_timer *timer_;
+	unsigned int				count_;
+	int							msecond_;	
+	bool						timeout_flag_;
+	map<int, TimeCntFlag>		timer_id_list_;
+	Semaphore					*sem_;
 
-    void start(bool multiThread = false);
-    void stop();
 
-    bool running() const;
-
-    void setSingleShot(bool singleShot);
-    bool isSingleShot() const;
-
-    void setInterval(const Interval &interval);
-    const Interval &interval() const;
-
-    void setTimeout(const Timeout &timeout);
-    const Timeout &timeout() const;
-
-private:
-    std::thread _thread;
-
-    bool _running = false;
-    bool _isSingleShot = true;
-
-    Interval _interval = Interval(0);
-    Timeout _timeout = nullptr;
-
-    void _temporize();
-    void _sleepThenTimeout();
+	void handler();  
+	void IORun();
+	void setExpireFlag();
 };
 
-#endif // TIMER_H
+
+
+
+
+#endif // TP_INTERFACE_TIMER_H_

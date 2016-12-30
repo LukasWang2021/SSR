@@ -14,8 +14,12 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include "ip_address.h"
-
-std::string Get_Local_IP()
+/**
+ * @brief : get local ip address
+ *
+ * @return : the ip address in the form of string
+ */
+std::string getLocalIP()
 {
 	int fd;
     struct ifreq ifr;

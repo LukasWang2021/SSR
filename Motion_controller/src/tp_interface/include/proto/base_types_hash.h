@@ -170,7 +170,7 @@ inline const unsigned char* get_hash<BaseTypes_ParameterListMsg>()
     return type;
 }
 
-inline int get_hash_size()
+inline int get_hash_size_()
 {
     return 16;
 }

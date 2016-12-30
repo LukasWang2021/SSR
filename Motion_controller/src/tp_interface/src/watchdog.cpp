@@ -2,9 +2,9 @@
 #include <iostream>
 
 Watchdog::Watchdog() :
-    _interval(0),
-    _timer(0),
-    _running(false) 
+    interval_(0),
+    timer_(0),
+    running_(false) 
 {
 }
 
@@ -17,38 +17,56 @@ Watchdog::~Watchdog()
 {
 }
 
+/**
+ * @brief Watchdog start to set the time and callback function
+ *
+ * @param milliseconds :input>>Watchdog timer 
+ * @param callback: intput
+ * @param params
+ */
 void Watchdog::Start(unsigned int milliseconds, std::function<void(void*)> callback, void* params)
 {
-    _interval = milliseconds;
-    _timer = 0;
-    _callback = callback;
-    _running = true;
-    _thread = std::thread(&Watchdog::Loop, this,params);
-	_thread.detach();
+    interval_ = milliseconds;
+    timer_ = 0;
+    callback_ = callback;
+    running_ = true;
+    thread_ = std::thread(&Watchdog::Loop, this,params);
+	thread_.detach();
 }
 
+/**
+ * @brief stop Watchdog
+ */
 void Watchdog::Stop()
 {
-    _running = false;
-    _thread.join();
+    running_ = false;
+    thread_.join();
 }
 
+/**
+ * @brief if you don't want to trigger callback function,then use this function timely
+ */
 void Watchdog::Pet()
 {
-    _timer = 0;
+    timer_ = 0;
 }
 
+/**
+ * @brief 
+ *
+ * @param params :input
+ */
 void Watchdog::Loop(void* params)
 {
-    while (_running)
+    while (running_)
     {
-        _timer++;
-        if (_timer >= _interval)
+        timer_++;
+        if (timer_ >= interval_)
         {
-            _running = false;
-            _callback(params);
+            running_ = false;
+            callback_(params);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for (std::chrono::milliseconds(1));
     }
 }

@@ -1,164 +1,501 @@
 /**
- * @file robot_motion.h
+ * @file robot_motion_.h
  * @brief 
  * @author Wang Wei
  * @version 1.0.0
  * @date 2016-08-21
  */
-#ifndef _ROBOT_MOTION_H_
-#define	_ROBOT_MOTION_H_
+#ifndef TP_INTERFACE_ROBOT_MOTION_H_
+#define	TP_INTERFACE_ROBOT_MOTION_H_
 
-#include "lib_controller/fst_datatype.h"
-#include "lib_controller/lib_controller.h"
-#include "common.h"
+#include "motion_controller/fst_datatype.h"
+#include "motion_controller/arm_group.h"
+#include "parameter_manager/parameter_manager_param_group.h"
+#include "robot.h"
 #include "motionSL.pb.h"
 #include "threadsafe_queue.h"
+//#include "threadsafe_vector.h"
 #include "proto_define.h"
 #include "share_mem.h"
+#include "fst_error.h"
+#include "safety_interface.h"
+#include <boost/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <map>
 
-using namespace Error;
-
-using namespace std;
 using namespace fst_controller;
+using namespace fst_parameter;
 
 #define MAX_CNT_VAL		(100)
 
 #define MAX_PLANNED_POINTS_NUM		(20)
 #define NUM_OF_POINTS_TO_SHARE_MEM	(10)
 
-typedef struct _Command_Instruction
+#define TRAJ_LIMIT_NUM              (20)
+
+#define MANUAL_INSTRUCTION_DELAY	(150)	//in manual mode, after the first manual instruction, the delay
+
+#define MANUAL_COUNT_PER_STEP		(60)	//the time of TP is 50ms every time
+
+#define MANUAL_DEFAULT_ACC			(10000)
+
+typedef struct _CommandInstruction
 {
-	bool		has_smooth;
+	double		smoothDistance;
 	uint32_t	id;	
     motion_spec_MOTIONTYPE commandtype;	
 	string		command_arguments; //pointer of command
-}Command_Instruction;
+}CommandInstruction;
 
-typedef struct _MoveL_Param
+typedef struct _MoveLParam
 {
 	double vel_max;
 	double acc_max;
 	double smooth;
-}MoveL_Param;
+}MoveLParam;
 
-typedef struct _MoveJ_Param
+typedef struct _MoveJParam
 {
 	double vel_max;
 	double acc_max;
 	double smooth;
-}MoveJ_Param;
+}MoveJParam;
 
 
-typedef struct _Last_Position
+typedef struct _TargetPosition
 {
-	JointPoint	joint_point;
-	int			position;
-}Last_Position;
+	JointValues	joint_values;
+	PoseEuler	pose;
+}TargetPosition;
 
 
-class Robot_Motion
+class RobotMotion
 {
-public:
-	ArmGroup		*arm_group;
-	Share_Mem		share_mem;
-	JointValues		joint_values;
-	PoseEuler		pose;
-	FST_ROBOT_MODE	mode;
-	FST_ROBOT_STATE	state;
-	FST_ROBOT_MODE	prev_mode;
+  public:		
+	RobotMotion();	
+	~RobotMotion();
 
-	vector<JointPoint>	joint_traj;
-	Last_Position		last_pos;
-	Command_Instruction cur_instruction;
-	Command_Instruction next_move_instruction;
+    U64 initial();
+    void destroy();
 
-	bool id_changed_flag;
-	bool instruction_flag;
-	int	previous_command_id;
-	int current_command_id;
-	
+	/**
+	 * @brief: get ShareMem object 
+	 *
+	 * @return: &share_mem_ 
+	 */
+	ShareMem* getShareMemPtr();
+	/**
+	 * @brief: get the pointer of ArmGroup 
+	 *
+	 * @return: arm_group_ 
+	 */
+	ArmGroup* getArmGroupPtr();
 
-	int next_move_id;
-	
+    SafetyInterface* getSafetyInterfacePtr();
+	/**
+	 * @brief: get previous_command_id_ 
+	 *
+	 * @return: previous_command_id_ 
+	 */
+	int getPreviousCmdID();
+	/**
+	 * @brief: get current_command_id_ 
+	 *
+	 * @return: current_command_id_
+	 */
+	int getCurrentCmdID();
+	/**
+	 * @brief: get current logic mode
+	 *
+	 * @return: mode_ 
+	 */
+	RobotMode getLogicMode();
+	/**
+	 * @brief: Get current logic state
+	 *
+	 * @return: state_ 
+	 */
+	RobotState getLogicState();
+	/**
+	 * @brief: Get current joints
+	 *
+	 * @return: joints_
+	 */
+	JointValues getCurJointsValue();
+	/**
+	 * @brief: get the position
+	 *
+	 * @return: pose_
+	 */
+	PoseEuler getCurPosition();
 
-	Threadsafe_Queue<motion_spec_MotionCommand> motion_queue;
-	Threadsafe_Queue<motion_spec_MotionCommand> non_move_queue;
-	Threadsafe_Queue<Command_Instruction> manual_instruction_queue;
+	/**
+	 * @brief: get servo state, 0:init, 1:ready, 2:running, 3:error 
+	 *
+	 * @return: servo_state_ 
+	 */
+	unsigned int getServoState();
 
-	Robot_Motion()
-	{
-		id_changed_flag = false;
-		instruction_flag = false;
-		previous_command_id = -1;
-		current_command_id = -1;
-		next_move_id  = -1; //unknown next move id
-								
-		prev_mode = INIT_M;
-		mode = INIT_M;
+    /**
+     * @brief: set servo_state 
+     *
+     * @param servo_state: input
+     */
+    void setServoState(unsigned int servo_state);
 
-		pose.position.x = 2.1;
-		pose.position.y = 33;
+    /**
+     * @brief: jump to the state of ESTOP_S 
+     */
+    void jumpToEStop();
 
-		//joint_values = Get_Cur_Joints_Value(); //get current joint value to arm_group
-		joint_values.j1 = 0;
-		joint_values.j2 = 0;
-		joint_values.j3 = 0;
-		joint_values.j4 = 0;
-		joint_values.j5 = -1.5708;
-		joint_values.j6 = 0;
+	/**
+	 * @brief update the logic mode
+     *
+	 * @return: 0 if success
+	 */
+	 U64 updateLogicMode();
+     
+     /**
+      * @brief: update logic state 
+      *
+      * @return: 0 if success 
+      */
+     U64 updateLogicState();
+	/**
+	 * @brief: update current joints get value from the share memory 
+	 *
+	 * @return: 0 if success
+	 */
+	U64 updateJoints();
+	/**
+	 * @brief: set current joint to library and then get the position
+	 *
+	 * @return: 0 if success
+	 */
+	U64 updatePose();
+    
+    /**
+     * @brief: 
+     *
+     * @return: 0 if no errors
+     */
+    U64 updateSafetyStatus();
 
-		ErrorCode err;
-		
-		arm_group = new ArmGroup(joint_values,err);
-		if(err != Success)
-		{
-			printf("construct arm group failed\n");
-			exit(-1);
-		}
-		JointConstraints jnt_constraint = arm_group->getJointConstraints();
-		jnt_constraint.j1.max_omega = 20;
-		jnt_constraint.j2.max_omega = 20;
-		jnt_constraint.j3.max_omega = 20;
-		jnt_constraint.j4.max_omega = 20;
-		jnt_constraint.j5.max_omega = 20;
-		jnt_constraint.j6.max_omega = 20;
+    void setLogicMode(RobotMode mode);
+    void setLogicState(RobotState state);
+    void setCurJoints(JointValues joints);
+    void setCurPose(PoseEuler pose);
+	/**
+	 * @brief: set current mode
+	 *
+	 * @param: mode_cmd mode command
+	 *
+	 * @return: true if set Successfully
+	 */
+	bool setLogicModeCmd(RobotModeCmd mode_cmd);
+	/**
+	 * @brief: set current logic state
+	 *
+	 * @param state_cmd: input==> state command
+	 *
+	 * @return 
+	 */
+	bool setLogicStateCmd(RobotStateCmd state_cmd);	
+    /**
+     * @brief: motion resume
+     *
+     * @return: 0 is success 
+     */
+    U64 actionResume();
+	/**
+	 * @brief: motion pause
+     *
+	 * @return: 0 if success
+	 */
+	U64 actionPause();	
+	/**
+	 * @brief: add one manual instruction to the queue
+	 *
+	 * @param cmd_instruction: input==>the instruction to add
+	 * @param arguments: input==> the arguments of instruction
+	 */
+	void addManualQueue(motion_spec_MOTIONTYPE command_type, string arguments);
+	/**
+	 * @brief: add one command in to queue
+	 *
+	 * @param motion_command: input==>the command to push
+	 */
+	void addMotionQueue(CommandInstruction cmd_instruction);	
+	/**
+	 * @brief: pick instruction from instruction queue and execute the instruction
+     *
+     * @return: 0 if success
+	 */
+	U64 queueProcess();
+	/**
+	 * @brief :reset command queue
+     *
+     * @return: 0 is success 
+	 */
+	U64 clearMotionQueue();
+	/**
+	 * @brief check start state in auto run mode
+     *
+     * @return: 0 is success
+	 */
+	 U64 checkAutoStartState();
+    /**
+	 * @brief check start state in Manual mode
+     *
+     * @return: 0 is success
+	 */
+     U64 checkManualStartState();
 
-		arm_group->setJointConstraints(jnt_constraint);
+     /**
+      * @brief: judge if the joints from encoder changed 
+      *
+      * @return: true if the joints have changed 
+      */
+     bool isJointsChanged();
 
-		prev_mode = PAUSE_M;
-		mode = PAUSE_M;
-	}
+     /**
+      * @brief: heart beat 
+      *
+      * @param err_list: output==>error list from motion core1
+      *
+      * @return: 0 if success 
+      */
+     int motionHeartBeart(U64 *err_list);
 
-	~Robot_Motion()
-	{
-		delete arm_group;
-	}
+     /**
+      * @brief: backupErrorList 
+      *
+      * @param cmd_instruction: input
+      */
+     void backupErrorList(CommandInstruction cmd_instruction);
+    
+     /**
+      * @brief:clearErrorList 
+      */
+     void clearErrorList();
 
-	bool Get_Logic_Mode(FST_ROBOT_MODE &mode);
-	bool Get_Logic_State(FST_ROBOT_STATE &state);
-	JointValues Get_Cur_Joints_Value();
-	ErrorCode Get_Cur_Position(PoseEuler &pose);
-	bool Set_Logic_Mode(FST_ROBOT_MODE_CMD mode);
-	bool Set_Logic_State(FST_ROBOT_STATE_CMD state);
-	void Manual_Pause();
-	ErrorCode Auto_Motion();
-	void Unit_Convert(motion_spec_MoveL *src_moveL, PoseEuler& dst_pose, MoveL_Param &dst_movel_param);
-	void Unit_Convert(motion_spec_MoveJ *src_moveJ, JointValues &dst_joints, MoveJ_Param &dst_moveJ_param);
-	ErrorCode Move_Line(motion_spec_MoveL* current_moveL, int id, motion_spec_MoveL* next_moveL = NULL);
-	ErrorCode Move_Line(PoseEuler* cur_pose, PoseEuler* next_pose = NULL);
-	ErrorCode Move_Joints(JointValues *cur_joints, JointValues *next_joints = NULL);
-	void Clear_Motion_Queue();
-	void Add_Manual_Queue(motion_spec_MOTIONTYPE command_type, string arguments);
-	void Add_Motion_Queue(motion_spec_MotionCommand &motion_command);
-	bool Pick_Manual_Instruction();
-	bool Pick_Motion_Instruction();
-	bool Find_Next_Move_Command(motion_spec_MotionCommand &nex_motion_command);
-	
-//private:
-	ErrorCode Parse_Motion_Command(motion_spec_MotionCommand motion_command, Command_Instruction &cmd_instruction);
-	void Queue_Process();
-	bool Check_Command_ID(int joints_len);
+     /**
+      * @brief:get error state 
+      *
+      * @return: true if error occurs 
+      */
+     bool getErrorState();
 
+     /**
+      * @brief:setErrorState 
+      *
+      * @param flag: input
+      */
+     void setErrorState(bool flag);   
+
+  private:
+	ShareMem			share_mem_;
+    SafetyInterface     safety_interface_;
+    ParamGroup          *param_group_;
+	ArmGroup			*arm_group_;
+	JointValues			joints_;				//current joints
+	PoseEuler			pose_;					//current pose
+	RobotMode			mode_;					//current mode
+	RobotState			state_;					//current state
+	JointValues			prev_joints_;
+    RobotState          prev_state_;
+	RobotMode			prev_mode_;				//previous mode
+	int					previous_command_id_;	//previous command instruction id	
+	int					current_command_id_;	//current instruction id
+//	map<int, PoseEuler> inst_id_map_;			//a map to store the id
+	//vector<JointPoint>	joint_traj_;			//store the trajectory joints
+//	TargetPosition		previous_target_;		//record the previous target
+	CommandInstruction	cur_instruction_;		//current instruction
+	CommandInstruction	next_move_instruction_; //next instruction
+	ManualState			manual_state_;          //manual state used in manual mode 
+    AutoState           auto_state_;            //auto state used in auto mode
+	int					manual_inst_delay_cnt_;
+	unsigned int		servo_state_;
+
+	boost::mutex			mutex_;
+	boost::mutex	        g_mutex_;
+
+    bool    servo_ready_wait_;                  //if needs to wait for servo ready
+	int		next_move_id_;						//record next move id	
+
+	ThreadsafeQueue<CommandInstruction> motion_queue_;		//store motion instructions
+	ThreadsafeQueue<CommandInstruction> non_move_queue_;	//store DIO or other instructions
+    ThreadsafeQueue<CommandInstruction> picked_motion_queue_;       //store instructions already moved
+	ThreadsafeQueue<CommandInstruction> manual_instruction_queue_;	//stroe manual instructions	
+    ThreadsafeQueue<CommandInstruction>   bak_err_queue_; 
+
+    bool err_flag_;
+	/**
+	 * @brief: convert unit from params of TP to controller
+	 *
+	 * @param src_moveL: input==>struct  covert from
+	 * @param dst_pose: output==>struct covert to
+	 * @param dst_movel_param: output==> struct covert to
+	 */
+	void unitConvert(const motion_spec_MoveL *src_moveL, PoseEuler& dst_pose, MoveLParam &dst_movel_param);
+	/**
+	 * @brief convert unit from params of TP to controller
+	 *
+	 * @param src_moveL: input==>struct  covert from
+	 * @param dst_pose: output==>struct covert to
+	 * @param dst_movel_param: output==>struct covert to
+	 */
+	void unitConvert(const motion_spec_MoveJ *src_moveJ, JointValues &dst_joints, MoveJParam &dst_moveJ_param);
+	/**
+	 * @brief get max value from a buffer
+	 *
+	 * @param buffer: input
+	 * @param length: input
+	 *
+	 * @return :the max value
+	 */
+	double getMaxValue(const double *buffer, int length);
+	/**
+	 * @brief: get the ID of max value 
+	 *
+	 * @param max: input==>the max value
+	 * @param buffer: input
+	 * @param length: input
+	 *
+	 * @return: the ID 
+	 */
+	int getMaxValID(double max, const double *buffer, int length);
+	/**
+	 * @brief: get the max interval value between two joints
+	 *
+	 * @param pre_joints: input
+	 * @param cur_joints: input
+	 *
+	 * @return: the max value
+	 */
+	double getMaxJointInterval(JointValues pre_joints, JointValues cur_joints);    
+	/**
+	 * @brief: calculate max velocity between two joints
+	 *
+	 * @param pre_joints: input
+	 * @param cur_joints: input
+	 *
+	 * @return: max velocity
+	 */
+	double calcuManualJointVel(JointValues pre_joints, JointValues cur_joints);
+	/**
+	 * @brief: get the max interval value between two pose(x,y,z)
+	 *
+	 * @param pre_pose: input
+	 * @param cur_pose: input
+	 *
+	 * @return: the max value
+	 */
+	double getMaxLineInterval(PoseEuler pre_pose, PoseEuler cur_pose);
+
+    /**
+     * @brief: get max interval value between two pose(a,b,c) 
+     *
+     * @param pre_pose: input
+     * @param cur_pose: input
+     *
+     * @return: the max value 
+     */
+    double getMaxRotateInterval(PoseEuler pre_pose, PoseEuler cur_pose);
+	/**
+	 * @brief: calculate max velocity between two pose
+	 *
+	 * @param pre_pose: input
+	 * @param cur_pose: input
+	 *
+	 * @return: max velocity
+	 */
+	double calcuManualLineVel(PoseEuler pre_pose, PoseEuler cur_pose);
+	/**
+	 * @brief: convert unit from params of TP to controller
+	 *
+	 * @param pose: input&output
+	 */
+	void uintPoseTP2Ctle(PoseEuler *pose);
+	/**
+	 * @brief: convert unit from params of TP to controller
+	 *
+	 * @param pose: input&output
+	 */
+	void uintPoseCtle2TP(PoseEuler *pose);
+	/**
+	 * @brief: motion process in auto mode
+     *
+     * @return: 0 if success
+	 */
+	U64 autoMotion();
+	/**
+	 * @brief: move a line used for manual mode
+	 *
+	 * @param cur_pose: input==>current pose
+	 * @param next_pose: input==>next pose
+     *
+     * @return: 0 is success
+	 */
+	U64 moveLine(const PoseEuler* cur_pose, const PoseEuler* next_pose = NULL);
+	/**
+	 * @brief: move joints in manual mode
+	 *
+	 * @param cur_joints: input
+	 * @param next_joints: input
+     *
+     * @return: 0 is success
+	 */
+	U64 moveJoints(const JointValues *cur_joints, const JointValues *next_joints = NULL);
+	/**
+	 * @brief: pick one manual move instruction
+	 *
+	 * @return: 0 if success
+	 */
+	bool pickManualInstruction();
+	/**
+	 * @brief: pick one motion instruction from the queue and execute it
+	 *
+	 * @return: 0 if Success
+	 */
+	bool pickMotionInstruction();
+	/**
+	 * @brief: find next movable command joint or cart
+	 *
+	 * @param next_motion_command: output==>the result of the found
+	 *
+	 * @return: true if found one
+	 */
+	bool findNextMoveCommand(CommandInstruction &next_cmd_instruction);	
+	/**
+	 * @brief check if the joints changed within some values
+	 *
+	 * @param input==>src_joints
+	 * @param input==>dst_joints
+	 *
+	 * @return 
+	 */
+	bool compareJoints(JointValues src_joints, JointValues dst_joints);
+    /**
+      * @brief: judge if fifo1 and fifo2 is empty 
+      *
+      * @return: true if empty 
+      */
+    bool isFifoEmpty();
+
+    void resetQueue();
+
+    U64 clearPathFifo();
+
+    void resetInstructionID();
+
+    void setManualState(ManualState state);
+    ManualState getManualState();
+    void setAutoState(AutoState state);
+    AutoState getAutoState();
+
+    void emergencyStop();
+    void popupInstruction();
 };
 
 

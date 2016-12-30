@@ -1,10 +1,30 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tp_interface)
 
+#add_custom_command(OUTPUT vitual_target	
+#	COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_HOME_DIRECTORY}/../devel/${CONFIG_DIR}
+#	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_DIR} ${CMAKE_HOME_DIRECTORY}/../devel/${CONFIG_DIR}
+#	)
+#add_custom_target(vitual_target ALL DEPENDS ${CPY_CONF})
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp rospy std_msgs lib_controller middleware_to_mem)
+find_package(catkin REQUIRED roscpp rospy std_msgs motion_controller middleware_to_mem parameter_manager safety)
+
+set(CONFIG_DIR config)
+#execute_process(COMMAND rm -r ${CMAKE_HOME_DIRECTORY}/../devel/${CONFIG_DIR}
+#		COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_DIR} ${CMAKE_HOME_D#IRECTORY}/../devel)
+
+if(${catkin_CROSS})
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/motion_controller/include ${depend_PATH_INC}/middleware_to_mem/include ${depend_PATH_INC}/trajplan/include ${depend_PATH_INC}/parameter_manager/include ${depend_PATH_INC}/safety/include ${depend_PATH_INC}/log_manager/include)
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libmotion_controller.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/libcore_interface.so ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libsafety.so)
+	set(CMAKE_CXX_FLAGS "-DCROSS_PLATFORM")
+	set(CMAKE_C_FLAGS "-DCROSS_PLATFORM")
+else(${catkin_CROSS})
+    set(NANOPB_DIR ~/my_work/nanopb)
+	set(EXT_LIB nanomsg profiler)
+endif(${catkin_CROSS})
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -98,18 +118,21 @@ find_package(catkin REQUIRED roscpp rospy std_msgs lib_controller middleware_to_
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES fst_controller
-#  CATKIN_DEPENDS other_catkin_pkg
-  DEPENDS lib_controller 
-  DEPENDS middleware_to_mem
+  CATKIN_DEPENDS parameter_manager
+  DEPENDS motion_controller 
+  DEPENDS comm_interface
+  DEPENDS core_interface
+  DEPENDS safety
 )
 
 ###########
 ## Build ##
 ###########
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -O0 -DPB_FIELD_32BIT -DSIMMULATION")
-set(CMAKE_C_FLAGS "-g -O0 -DPB_FIELD_32BIT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -O0 -DPB_FIELD_32BIT -DSIMMULATION")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -DPB_FIELD_32BIT")
 
-set(NANOPB_DIR /home/ww/my_work/nanopb)
+message(${CMAKE_CXX_FLAGS})
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include ./include  ./include/proto ./include/common ${NANOPB_DIR})
@@ -119,6 +142,8 @@ include_directories(include ./include  ./include/proto ./include/common ${NANOPB
 # add_library(fst_controller
 #   src/${PROJECT_NAME}/fst_controller.cpp
 # )
+aux_source_directory(src BASE_SRCS)
+aux_source_directory(src/proto PROTO_SRCS)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -126,8 +151,8 @@ include_directories(include ./include  ./include/proto ./include/common ${NANOPB
 # add_dependencies(fst_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 include_directories(include ${catkin_INCLUDE_DIRS} /usr/include/eigen3/ )
 ## Declare a C++ executable
-add_executable(controller src/controller.cpp src/nn_socket.cpp src/proto_parse.cpp src/robot_motion.cpp src/json_parse.cpp src/share_mem.cpp src/watchdog.cpp src/ip_address.cpp ${NANOPB_DIR}/pb_decode.c  ${NANOPB_DIR}/pb_encode.c ${NANOPB_DIR}/pb_common.c  src/proto/motionSL.pb.cpp src/proto/base_types.pb.cpp)
-
+#add_executable(controller src/controller.cpp src/nn_socket.cpp src/proto_parse.cpp src/robot_motion.cpp src/json_parse.cpp src/share_mem.cpp src/watchdog.cpp src/ip_address.cpp src/timer.cpp src/ros_basic.cpp ${NANOPB_DIR}/pb_decode.c  ${NANOPB_DIR}/pb_encode.c ${NANOPB_DIR}/pb_common.c  src/proto/motionSL.pb.cpp src/proto/base_types.pb.cpp)
+add_executable(controller ${BASE_SRCS} ${PROTO_SRCS} ${NANOPB_DIR}/pb_decode.c  ${NANOPB_DIR}/pb_encode.c ${NANOPB_DIR}/pb_common.c)
 #target_link_libraries(fst_controller )
 
 
@@ -138,8 +163,7 @@ add_executable(controller src/controller.cpp src/nn_socket.cpp src/proto_parse.c
 ## Specify libraries to link a library or executable target against
 target_link_libraries(controller
   ${catkin_LIBRARIES}
-  nanomsg
-  protobuf
+  ${EXT_LIB}
  )
 
 #############
@@ -156,18 +180,20 @@ target_link_libraries(controller
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-## Mark executables and/or libraries for installation
-# install(TARGETS fst_controller fst_controller_node
+install(TARGETS controller 
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}    
+ )
 
+install(DIRECTORY ${CONFIG_DIR}
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY launch
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
 #   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 #   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)

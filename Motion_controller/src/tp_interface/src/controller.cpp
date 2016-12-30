@@ -5,273 +5,156 @@
  * @version 1.0.0
  * @date 2016-08-9
  */
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
 #include <signal.h>
-#include <boost/thread.hpp>
 #include "proto_parse.h"
 
-#include <iostream>
-#include <fstream>
-
+#ifndef CROSS_PLATFORM
+#include <gperftools/profiler.h>
+#endif
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include <sensor_msgs/JointState.h>
-#include <moveit/robot_state/robot_state.h>
-#include <moveit/move_group_interface/move_group.h>
-#include <moveit_msgs/DisplayTrajectory.h>
-#include <std_msgs/String.h>
+#include "sub_functions.h"
+#include "common.h"
+#include "rt_timer.h"
 
-using namespace boost;
+#define BASIC_INTERVAL_TIME		(1) //basic cycle time(ms)
 
-Proto_Parse proto_parse;
+#define STATE_TIMER_ID			(0)
+#define PROCESS_TIMER_ID		(1)
 
 
+#define MAIN_PRIORITY           (89)
+
+static bool gs_running_flag = true;
+
+inline void mSleep(int ms)
+{
+	usleep(ms*1000);
+}
+
+void rtMsSleep(int ms)
+{
+    struct timespec deadline;
+    clock_gettime(CLOCK_MONOTONIC, &deadline);
+
+    // Add the time you want to sleep
+    deadline.tv_nsec += 1000000*ms;
+
+    // Normalize the time to account for the second boundary
+    if(deadline.tv_nsec >= 1000000000) {
+        deadline.tv_nsec -= 1000000000;
+        deadline.tv_sec++;
+    }
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL);
+}
+
+/**
+ * @brief: callback of SIGINT 
+ *
+ * @param dunno
+ */
 void sigroutine(int dunno)
 {
-	ROS_INFO("stop!\n");
-	exit(0);
-}
-
-
-
-/**
- * @brief: new socket server thread for command
- */
-void Sock_Command_Server()
-{
-	while(1)
-	{
-		proto_parse.nn_socket->NN_Socket_Recieve();
-		proto_parse.Parse_Buffer(proto_parse.nn_socket->req_buffer, proto_parse.nn_socket->recv_req_data_size);
-		//usleep(100000);
-	}
+	FST_INFO("stop....\n");
+	gs_running_flag = false;
+//	exit(0);
 }
 
 /**
- * @brief Execute Instructions in instruction queue
+ * @brief: set thread priority 
  *
- * @param proto_parse
+ * @param prio: input==> priority
+ *
+ * @return: true if success 
  */
-void Execute_Instructions()
+bool setPriority(int prio)
 {
-	uint8_t buffer[1024];
-	boost::mutex mu;
-   /*FILE *fp = fopen("data.bin", "rb");*/
-	//size_t count = fread(buffer, 1, sizeof(buffer), fp);
-	//proto_parse.robot_motion.mode = AUTO_RUN_M;
-	//for(int i = 0; i < 3; i++)
-		/*proto_parse.Parse_Buffer(buffer, count);*/
+    struct sched_param param;
+    param.sched_priority = prio; 
+    if (sched_setscheduler(getpid(), SCHED_FIFO, &param) == -1) //set priority
+    { 
+        FST_ERROR("sched_setscheduler() failed"); 
+        return false;  
+    } 
+    return true;
 
-	/*int cnt = 0;*/
-	//FeedbackJointState fbjs;
-	//while(1)
-	//{
-		//cnt ++;
-		//if(cnt == 100)
-				//cnt = 0;
-		//proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.total_points = 10;
-		//for(int index = 0; index < proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.total_points; index++)
-		//{
-			//for(int i = 0; i < 6;i++)
-			//{
-				//proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.points[index].positions[i] = (index+1)*i*1.0+cnt;
-				//proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.points[index].point_position = MID_POINT;
-			//}
-		////	proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.points[0].point_position = START_POINT;
-		////	proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.points[9].point_position = START_POINT;
-		//}
-		//if(cnt == 1)
-			//proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.points[0].point_position = START_POINT;
-		//if(cnt == 30)
-			//proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd.points[9].point_position = END_POINT;
-		//bool result = proto_parse.robot_motion.share_mem.Set_Joint_Positions(proto_parse.robot_motion.share_mem.shm_jnt_cmd.joint_cmd);
-
-		//if(proto_parse.robot_motion.share_mem.Get_Feedback_Joint_State(fbjs)==true){
-		//for(int i=0;i<JOINT_NUM; i++){printf("%f ", fbjs.position[i]);}
-		//printf("\n");
-		//}
-		//usleep(100*1000);
-	/*}*/
-
-
-	while(1)
-	{
-		proto_parse.Check_Manual_Wdt();
-		mu.lock();
-		proto_parse.robot_motion.Queue_Process();
-		mu.unlock();
-
-		usleep(1000);
-	}
-}
-
-bool Compare_Joints(JointValues src_joints, JointValues dst_joints)
-{
-	if(src_joints.j1 != dst_joints.j1) return false;
-	if(src_joints.j2 != dst_joints.j2) return false;
-	if(src_joints.j3 != dst_joints.j3) return false;
-	if(src_joints.j4 != dst_joints.j4) return false;
-	if(src_joints.j5 != dst_joints.j5) return false;
-	if(src_joints.j6 != dst_joints.j6) return false;
-
-	return true;
 }
 
 
 /**
- * @brief Get current value of joints and publish them
- *
- * @param proto_parse
+ * @brief get message from TP and publish things that TP want to get repeatedly
  */
-void Shm_Recv_State()
+void commuProc(ProtoParse *proto_parse)
 {
-#ifdef SIMMULATION
-	ros::NodeHandle n;
-	//build this topic to publish current joint state, "/fst_feedback_joint_states" topic will subscribe this topic
-	ros::Publisher joint_state_pub = n.advertise<sensor_msgs::JointState>("fst_feedback_joint_states", 1);
-	//ros::Rate loop_rate(50);
-
-	vector<string> JointName;
-	JointName.resize(6);
-	JointName[0] = "j1";
-	JointName[1] = "j2";
-	JointName[2] = "j3";
-	JointName[3] = "j4";
-	JointName[4] = "j5";
-	JointName[5] = "j6";
-
-	sensor_msgs::JointState js;
-	js.name = JointName;
-	js.header.seq = 0;
-	js.position.resize(6);
-#endif
-	JointValues former_joints;
-	int cnt = 0;
-	int total_cnt = 0;
-	while(1)
+	while (gs_running_flag)
 	{
-		JointValues joint_values = proto_parse.robot_motion.Get_Cur_Joints_Value();
-		if(Compare_Joints(former_joints, joint_values) == false)
-		{
-			cnt++;
-			former_joints = joint_values;
-		//	printf("cnt:%d, joint:%f,%f,%f,%f,%f,%f\n", cnt,\
-				joint_values.j1,joint_values.j2,joint_values.j3,joint_values.j4,joint_values.j5,joint_values.j6);
-#ifdef SIMMULATION
-			js.position[0] = joint_values.j1;
-			js.position[1] = joint_values.j2;
-			js.position[2] = joint_values.j3;
-			js.position[3] = joint_values.j4;
-			js.position[4] = joint_values.j5;
-			js.position[5] = joint_values.j6;
-			ros::spinOnce();  //nessasery
-			joint_state_pub.publish(js);
+		proto_parse->StartParser(); //get message from TP and parse the message
 
-	//	loop_rate.sleep();
-#endif
-		}
-		else
-		{
-			if(cnt > 0)
-				printf("update count:%d\n",cnt);
-			cnt = 0;
-		}
+        proto_parse->updateParams();
+		proto_parse->pubParamList();	 // publish parameters the TP subscibed        
 
-		int joints_len = proto_parse.robot_motion.arm_group->getJointTrajectoryFIFOLength();
-		if(joints_len)
-		{
-			total_cnt++;
-			//printf("total_cnt:%d\n", total_cnt++);
-		}
-		else
-		{
-			//if(total_cnt >0)
-			//	printf("total_cnt:%d\n", total_cnt);
-			total_cnt = 0;
-		}
-
-		usleep(40*1000);
+		mSleep(INTERVAL_PROPERTY_UPDATE);
 	}
 }
 
-void Robot_Publisher()
-{
-	static int state_cnt = 0;
-	static int mode_cnt = 0;
-	static int jnt_cnt = 0;
-	static int coord_cnt = 0;
-
-	while(1)
+void heartBeatProc(ProtoParse *proto_parse)
+{	
+    int err_size;
+    U64 err_list[128];
+    while (gs_running_flag)
 	{
-		if(proto_parse.state_publish_tm)
-		{
-			state_cnt++;
-			if(state_cnt == proto_parse.state_publish_tm)
-			{
-				proto_parse.Pub_Cur_State();
-				state_cnt = 0;
-			}
-		}
-		if(proto_parse.mode_publish_tm)
-		{
-			mode_cnt++;
-			if(mode_cnt == proto_parse.mode_publish_tm)
-			{
-				proto_parse.Pub_Cur_Mode();
-				mode_cnt = 0;
-			}
-		}
-		if(proto_parse.joint_publish_tm)
-		{
-			jnt_cnt++;
-			if(jnt_cnt == proto_parse.joint_publish_tm)
-			{
-				proto_parse.Pub_Cur_Joint();
-				jnt_cnt = 0;
-			}
-		}
-		if(proto_parse.coord_publish_tm)
-		{
-			coord_cnt++;
-			if(coord_cnt == proto_parse.coord_publish_tm)
-			{
-				proto_parse.Pub_Cur_Coord();
-				coord_cnt = 0;
-			}
-		}
-
-		usleep(MIN_ROBOT_PUBLISH_TIME*1000);
-	}
+        proto_parse->getRobotMotionPtr()->motionHeartBeart(err_list);
+        mSleep(INTERVAL_HEART_BEAT_UPDATE); 
+    }
 }
-
-
-
 
 int main(int argc, char **argv)
-{
-	signal(SIGINT, sigroutine);
+{    
+	ros::init(argc, argv, "controller");	
+	ros::NodeHandle n;	
 
-	ROS_DEBUG("ssldfslfklskf");
-#ifdef SIMMULATION
-	ros::init(argc, argv, "controller");
-#endif
+    RosBasic ros_basic(&n); //init ros basic setting
 
-//	Execute_Instructions();
+	signal(SIGINT, sigroutine);	 
+	signal(SIGTERM, sigroutine);           
 
+    ProtoParse proto_parse(&ros_basic);
+    
+	//=========================================
+	//ProtoParse proto_parse; //init class ProtoParse
+//	ProfilerStart("my.prof"); //
 	//thread to receive and reply messages from TP
-	boost::thread thrd_sock_cmmand(&Sock_Command_Server);
-	boost::thread thrd_exc_instruction(&Execute_Instructions);
+	//publish message to TP
+	boost::thread thrd_Sock_Server(boost::bind(commuProc, &proto_parse));
+    boost::thread thrd_heart_beat(boost::bind(heartBeatProc, &proto_parse));
+	//======start timer========================
+    setPriority(MAIN_PRIORITY);
 
-	boost::thread thrd_recv_state(&Shm_Recv_State);
-	boost::thread thrd_robot_publisher(&Robot_Publisher);
-#ifdef SIMMULATION
-	ros::spin();
-#else
-	while(1){
-		sleep(1);
-	}
-#endif
+   // rtTimerStart();
+  //  rtTimerAdd(STATE_TIMER_ID, INTERVAL_TIME_STATE);
+   // rtTimerAdd(PROCESS_TIMER_ID, INTERVAL_TIME_PROCESS);    
+    
 
+    RobotMotion *robot_motion = proto_parse.getRobotMotionPtr(); //class RobotMotion
+    //long cur_time = getCurTime();
+    while (gs_running_flag)
+	{
+
+        proto_parse.checkManualWdt();	
+		U64 result = robot_motion->queueProcess();
+        if (result != FST_SUCCESS)
+        {
+            proto_parse.storeErrorCode(result);
+        }
+        rtMsSleep(INTERVAL_PROCESS_UPDATE);
+    }// while (gs_running_flag)
+    
+
+	thrd_Sock_Server.join();
+	thrd_heart_beat.join();
+
+//	ProfilerStop(); // stop profiling
+		
+	return 0;
 }

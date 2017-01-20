@@ -29,31 +29,7 @@ main(int argc, char** argv)
     }
 
 
-    //====test JointCommand====
-    //Writing Joint Command
-    JointCommand jc_w;
-    for(i = 0; i<SEG_POINT_NUM; i++)
-    {   
-        for(j = 0; j<JOINT_NUM; j++)
-        {
-            jc_w.points[i].positions[j] = i*j;
-        }
-    }
-    jc_w.total_points = SEG_POINT_NUM;
-    readWriteSharedMem(handle, &jc_w, "JointCommand", MEM_WRITE);
-
-    //Reading Joint Command
-    JointCommand jc_r;
-    readWriteSharedMem(handle, &jc_r, "JointCommand", MEM_READ);
-    for(i = 0; i<SEG_POINT_NUM; i++)
-    {   
-        for(j = 0; j<JOINT_NUM; j++)
-        {
-            printf("point[%d] positions[%d] = %f\n", i, j, jc_r.points[i].positions[j]);            
-        }
-    }
-    printf("total points = %d\n", jc_r.total_points); 
-    
+   
     return 0;
 }
 

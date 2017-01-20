@@ -11,7 +11,9 @@ Summary:    define error codes
 #define MIDDLEWARE_TO_MEM_ERROR_CODE_H_
 
 #define ERROR_CODE_TYPE unsigned long long int
+#ifndef FST_SUCCESS
 #define FST_SUCCESS (unsigned long long int)0
+#endif
 
 #define OPEN_CORE_MEM_FAIL (unsigned long long int)0x0000000B007103E9   /*fail to open sharedmem of cores*/
 #define WRITE_CORE_MEM_FAIL (unsigned long long int)0x00000002007103EA   /*fail to write sharedmem of cores*/

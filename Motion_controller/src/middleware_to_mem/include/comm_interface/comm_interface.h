@@ -135,10 +135,13 @@ public:
     // Return:  true -> succeed to get IP address.
     //          false -> failed to get IP address.
     //------------------------------------------------------------
-    static bool getLocalIP(char **ip, char *iface_name = "eth0");
+    static bool getLocalIP(char **ip, const char *iface_name = "eth0");
  
     //The maximum string length of the channel name
-    static const int NAME_SIZE = 64;
+    static const int NAME_SIZE = 32;
+
+    //the array size to store URL string. 
+    static const int URL_SIZE = 64;
 
     //The maximum size of the data to be delivered
     static const int MAX_MSG_SIZE = 2048;
@@ -157,7 +160,7 @@ private:
     // Out:     url -> an available url to bind or connect.
     // Return:  None.
     //------------------------------------------------------------
-    void convertIpcUrl(const char *name, char **url);
+    void convertIpcUrl(const char *name, char *url);
 
     //------------------------------------------------------------
     // Function:  convertTcpUrl
@@ -167,7 +170,7 @@ private:
     // Out:     url -> an available url to bind or connect.
     // Return:  None.
     //------------------------------------------------------------
-    void convertTcpUrl(const char *name, char **url);
+    void convertTcpUrl(const char *name, char *url);
 
     //------------------------------------------------------------
     // Function:  bind

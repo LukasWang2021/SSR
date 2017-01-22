@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 if(${catkin_CROSS})
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/tp_interface/include)
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC})
 	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
 else(${catkin_CROSS})
 	set(EXT_LIB nanomsg)

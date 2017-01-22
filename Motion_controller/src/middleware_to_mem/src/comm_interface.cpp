@@ -63,45 +63,45 @@ ERROR_CODE_TYPE CommInterface::createChannel(int type, const char *name)
 {
     if (strlen(name) >= NAME_SIZE || strlen(name) == 0)
     {
-        std::cout<<"Error in  CommInterface::createChannel(): Name exceeds 64 characters or empty."<<std::endl;
+        std::cout<<"Error in  CommInterface::createChannel(): Name exceeds 32 characters or empty."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
 
     int model = 0;
-    char *url = NULL;
+    char url[URL_SIZE];
     switch (type)
     {
         case IPC_REQ:
             model = NN_REQ;
-            convertIpcUrl(name, &url);
+            convertIpcUrl(name, url);
             break;
         case IPC_REP:
             model = NN_REP;
-            convertIpcUrl(name, &url);
+            convertIpcUrl(name, url);
             break;
         case IPC_PUB:
             model = NN_PUB;
-            convertIpcUrl(name, &url);
+            convertIpcUrl(name, url);
             break;
         case IPC_SUB:
             model = NN_SUB;
-            convertIpcUrl(name, &url);
+            convertIpcUrl(name, url);
             break;
         case TCP_REQ:
             model = NN_REQ;
-            convertTcpUrl(name, &url);
+            convertTcpUrl(name, url);
             break;
         case TCP_REP:
             model = NN_REP;
-            convertTcpUrl(name, &url);
+            convertTcpUrl(name, url);
             break;
         case TCP_PUB:
             model = NN_PUB;
-            convertTcpUrl(name, &url);
+            convertTcpUrl(name, url);
             break;
         case TCP_SUB:
             model = NN_SUB;
-            convertTcpUrl(name, &url);
+            convertTcpUrl(name, url);
             break;
         default:
             std::cout<<"Error in CommInterface::createChannel(): Please enter a type(IPC_REQ, IPC_REP, IPC_PUB, IPC_SUB, TCP_REQ, TCP_REP, TCP_PUB, TCP_SUB)."<<std::endl;
@@ -338,7 +338,7 @@ ERROR_CODE_TYPE CommInterface::recv(std::string *str, int flag)
 // Return:  true -> succeed to get IP address.
 //          false -> failed to get IP address.
 //------------------------------------------------------------
-bool CommInterface::getLocalIP(char **ip, char *iface_name)
+bool CommInterface::getLocalIP(char **ip, const char *iface_name)
 {
     if (strcmp(iface_name, "eth0") != 0 && strcmp(iface_name, "wlan0") != 0 && strcmp(iface_name, "lo") != 0)
     {
@@ -380,12 +380,12 @@ bool CommInterface::getLocalIP(char **ip, char *iface_name)
 // Out:     url -> an available url to bind or connect.
 // Return:  None.
 //------------------------------------------------------------
-void CommInterface::convertIpcUrl(const char *name, char **url)
+void CommInterface::convertIpcUrl(const char *name, char *url)
 {
     std::ostringstream oss;
     oss << "ipc:///tmp/msg_" << name << ".ipc";
-    static std::string ss = oss.str();
-    *url = const_cast<char*>(ss.c_str());
+    std::string ss = oss.str();
+    memcpy(url, ss.c_str(), ss.size());
 }
 
 //------------------------------------------------------------
@@ -396,12 +396,12 @@ void CommInterface::convertIpcUrl(const char *name, char **url)
 // Out:     url -> an available url to bind or connect.
 // Return:  None.
 //------------------------------------------------------------
-void CommInterface::convertTcpUrl(const char *name, char **url)
+void CommInterface::convertTcpUrl(const char *name, char *url)
 {
     std::ostringstream oss;
     oss << "tcp://" << name;
-    static std::string ss = oss.str();
-    *url = const_cast<char*>(ss.c_str());
+    std::string ss = oss.str();
+    memcpy(url, ss.c_str(), ss.size());
 }
 
 //------------------------------------------------------------

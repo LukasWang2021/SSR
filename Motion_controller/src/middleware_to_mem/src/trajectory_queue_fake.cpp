@@ -236,6 +236,7 @@ void *TrajectoryQueueFake::threadHelper(void *self)
 {
     TrajectoryQueueFake *ptr = (TrajectoryQueueFake *)self;
     ptr->heartbeatService();
+    return 0;
 }
 
 

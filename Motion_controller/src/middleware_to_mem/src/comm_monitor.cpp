@@ -116,14 +116,6 @@ response_fifo_.push_back(test);
 //------------------------------------------------------------
 bool CommMonitor::receiveRequest(void)
 {
-    // For debug
-    if (request_fifo_.capacity() > 2)
-        std::cout<<"request_fifo_ cap:"<<request_fifo_.capacity()<<std::endl;
-    if (response_fifo_.capacity() > 1)
-        std::cout<<"response_fifo_ cap:"<<response_fifo_.capacity()<<std::endl;
-    if (error_fifo_.capacity() > 20)
-        std::cout<<"error_fifo_ cap:"<<error_fifo_.capacity()<<std::endl;
-
     // Caculate the loop number for the heartbeat request to BARE CORE.
     ++loop_count_core_;
     // Caculate the loop number for the heartbeat check of motion controller.

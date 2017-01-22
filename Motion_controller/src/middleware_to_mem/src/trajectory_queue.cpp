@@ -411,6 +411,7 @@ void *TrajectoryQueue::serviceThreadHelper(void *self)
 {
     TrajectoryQueue *ptr = (TrajectoryQueue *)self;
     ptr->runService();
+    return 0;
 }
 
 //------------------------------------------------------------
@@ -424,6 +425,7 @@ void *TrajectoryQueue::heartbeatThreadHelper(void *self)
 {
     TrajectoryQueue *ptr = (TrajectoryQueue *)self;
     ptr->runHeartbeat();
+    return 0;
 }
 
 //------------------------------------------------------------

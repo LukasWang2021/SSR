@@ -31,25 +31,21 @@ Modifier:
 int main(int argc, char *argv[]) {
 
     int n = 2;
-    int max_size = 1024;
+
     if (!fork()) { /* child */
         //create communication channel.
         fst_comm_interface::CommInterface comm;
-//        comm.init(); //for Junlong shared memory.
-        ERROR_CODE_TYPE fd = comm.createChannel(IPC_REQ, "client");      
+        ERROR_CODE_TYPE fd = comm.createChannel(IPC_REQ, "testIPC");      
         if (fd == CREATE_CHANNEL_FAIL)
         {
             printf("Error when client createChannel.\n");
             return -1;
         }
-        //initialize the receive buff.
-        char rec_buff[max_size];
-        memset(rec_buff, 0, sizeof(rec_buff));
+        //set the request data
+        ServiceRequest req = {0x31, "hello this client request."};
+        ServiceResponse resp;
         for (int i = 0; i < n; ++i)
         {
-            //set the request data
-
-            ServiceRequest req = {0x31, "hello this client request."};
             ERROR_CODE_TYPE send = comm.send(&req, sizeof(req), IPC_DONTWAIT);
             if (send == SEND_MSG_FAIL)
             {
@@ -59,17 +55,15 @@ int main(int argc, char *argv[]) {
           
             usleep(10000);
             //receiving in BLOCK mode using string
-/*            std::string str_recv;
-            int rc = comm.recv(fd, &str_recv, IPC_WAIT);
+            int rc = comm.recv(&resp, sizeof(resp), IPC_WAIT);
             if (rc == -1)
             {
                 printf("Error when client recv.\n");
             }
             
-            std::cout<<i<<" Client: receive rep.id = "<<rep.id()<<". rep_info = "<<rep.info()<<std::endl;
-*/
+            std::cout<<i<<" Client: receive rep.id = "<<resp.res_id<<". rep_info = "<<resp.res_buff<<std::endl;
+
         }
-//      comm.close(fd);
         sleep(1);
         printf("Client: done\n");
         return 0;
@@ -77,37 +71,33 @@ int main(int argc, char *argv[]) {
     } else { /* parent */
         //create communication channel.
         fst_comm_interface::CommInterface comm;
-//      comm.init(); //for Junlong shared memory.
-        ERROR_CODE_TYPE fd = comm.createChannel(IPC_REP, "client");
+        ERROR_CODE_TYPE fd = comm.createChannel(IPC_REP, "testIPC");
         if (fd == CREATE_CHANNEL_FAIL)
         {
-            printf("Error when client createChannel.\n");
+            printf("Error when server createChannel.\n");
             return -1;
         }
-        //initialize the receive buff.
-        char rec_buff[max_size];
-        memset(rec_buff, 0, sizeof(rec_buff));
+        ServiceRequest req = {0, ""};
+        ServiceResponse resp = {0x31, "This is response"};
+
         for (int i = 0; i < n; ++i)
         {
             usleep(10000);
-            ServiceRequest req = {0, ""};
-            std::cout<<"test req sizefof req = "<<sizeof(req)<<std::endl;
             int rc = comm.recv(&req, sizeof(req), IPC_DONTWAIT);
             if (rc == RECV_MSG_FAIL)
             {
                 printf("Error when server recv.\n");
             }
-            std::cout<<"sizeof req = "<<sizeof(req)<<std::endl;
-            std::cout<<"req.req_id = 0x"<<std::hex<<req.req_id<<std::dec<<". req.req_buf = "<<req.req_buff<<std::endl;
+//            std::cout<<"sizeof req = "<<sizeof(req)<<std::endl;
+//            std::cout<<"req.req_id = 0x"<<std::hex<<req.req_id<<std::dec<<". req.req_buf = "<<req.req_buff<<std::endl;
        //send
-/*            int send = comm.send(fd, send_buff, strlen(send_buff) + 1);
+            int send = comm.send(&resp, sizeof(resp), IPC_DONTWAIT);
             if (send == -1)
             {
                 printf("Error when client send.\n");
                 return -1;
             }
-*/        }
-//      comm.close (fd);
+        }
     }
     sleep(1);
     printf("Server: done\n");

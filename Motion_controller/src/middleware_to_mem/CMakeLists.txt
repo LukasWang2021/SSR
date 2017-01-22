@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 if(${catkin_CROSS})
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/tp_interface/include)
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC})
 	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
 else(${catkin_CROSS})
 	set(EXT_LIB nanomsg)
@@ -14,7 +14,7 @@ endif(${catkin_CROSS})
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES middleware_to_mem comm_interface
+  LIBRARIES middleware_to_mem comm_interface core_interface
   CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
@@ -44,7 +44,7 @@ target_link_libraries(send_trajectory_node ${catkin_LIBRARIES} middleware_to_mem
 add_executable(send_trajectory_fake src/trajectory_queue_fake.cpp)
 target_link_libraries(send_trajectory_fake ${catkin_LIBRARIES} middleware_to_mem)
 
-add_executable(test_app test/test.cpp src/service_wrapper.cpp)
+add_executable(test_app test/comm_ipc_test.cpp)
 target_link_libraries(test_app ${catkin_LIBRARIES} comm_interface)
 
 install(TARGETS middleware_to_mem core_interface comm_interface

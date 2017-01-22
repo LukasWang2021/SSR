@@ -74,6 +74,7 @@ class ProtoParse
      */
     void storeErrorCode(U64 err_code);
 
+    bool isUpdatedSameError(U64 err);
 
   private:
 	Watchdog	wdt_;			//the Watchdog object	
@@ -81,10 +82,11 @@ class ProtoParse
 	JsonParse	*json_parse_;	//
 	RobotMotion robot_motion_;	//
 	int			hash_size_;		//size of hash bytes	
+    U64         prev_err_;
 
 	map<int, PublishUpdate>	param_pub_map_; //the map from parameter id to there publish time 
     ThreadsafeQueue<U64>    error_queue_;
-	boost::mutex	        mutex_;		//mutex lock
+	boost::mutex	        mutex_;		//mutex lock   
 
 	/**
 	 * @brief: parse the struct of set message
@@ -111,6 +113,7 @@ class ProtoParse
 	 * @return:true if success 
 	 */
 	void parseParamGetMsg(const uint8_t *field_buffer, int field_size);
+    void parseParamOverwriteMsg(const uint8_t *field_buffer, int field_size);
 	/**
 	 * @brief: parse the buffer input 
 	 *
@@ -269,7 +272,8 @@ class ProtoParse
      * @brief: return error status 
      */
     void retErrorStatus();
-	
+
+    void clearUpdatedError();	
 };
 
 #endif

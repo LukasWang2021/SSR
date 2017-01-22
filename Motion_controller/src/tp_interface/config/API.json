@@ -506,17 +506,30 @@
 		"unit": 0
 	},
 
+   
     {
-		"path": "root/Control/system/shutdown",
-		"id": 1000,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	}
-    
+		 "path": "root/Safety_IO/inputFrame1",
+		 "id": 1000,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 512,		//512
+		 "permission": 1,		//R
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   },
+   {
+		 "path": "root/Safety_IO/inputFrame2",
+		 "id": 1001,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 512,		//512
+		 "permission": 1,		//R
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   }
+
 ]

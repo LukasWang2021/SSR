@@ -10,7 +10,6 @@
 #include <ros/ros.h>
 
 
-
 #define FST_INFO(format, ...) \
 	do { \
 		ROS_INFO("\033[36m" format "\033[0m", ##__VA_ARGS__); \

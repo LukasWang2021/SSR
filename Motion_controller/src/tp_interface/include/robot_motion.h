@@ -98,6 +98,7 @@ class RobotMotion
 	 * @return: previous_command_id_ 
 	 */
 	int getPreviousCmdID();
+    void setPreviousCmdID(int id);
 	/**
 	 * @brief: get current_command_id_ 
 	 *
@@ -179,11 +180,33 @@ class RobotMotion
      *
      * @return: 0 if no errors
      */
-    U64 updateSafetyStatus();
-
+    U64 updateSafetyStatus();    
+    /**
+     * @brief: setLogicMode  
+     *
+     * @param mode: input
+     */
     void setLogicMode(RobotMode mode);
+
+    /**
+     * @brief: setLogicState 
+     *
+     * @param state:input
+     */
     void setLogicState(RobotState state);
+
+    /**
+     * @brief: setCurJoints
+     *
+     * @param joints: input
+     */
     void setCurJoints(JointValues joints);
+    
+    /**
+     * @brief: setCurPose 
+     *
+     * @param pose: input
+     */
     void setCurPose(PoseEuler pose);
 	/**
 	 * @brief: set current mode
@@ -192,7 +215,7 @@ class RobotMotion
 	 *
 	 * @return: true if set Successfully
 	 */
-	bool setLogicModeCmd(RobotModeCmd mode_cmd);
+	U64 setLogicModeCmd(RobotModeCmd mode_cmd);
 	/**
 	 * @brief: set current logic state
 	 *
@@ -200,7 +223,7 @@ class RobotMotion
 	 *
 	 * @return 
 	 */
-	bool setLogicStateCmd(RobotStateCmd state_cmd);	
+	U64 setLogicStateCmd(RobotStateCmd state_cmd);	
     /**
      * @brief: motion resume
      *
@@ -232,12 +255,22 @@ class RobotMotion
      * @return: 0 if success
 	 */
 	U64 queueProcess();
+    /**
+	 * @brief :reset motion queue
+     *
+     * @return: 0 is success 
+	 */
+    U64 resetMotionQueue();
 	/**
-	 * @brief :reset command queue
+	 * @brief :clear motion queue
      *
      * @return: 0 is success 
 	 */
 	U64 clearMotionQueue();
+    /**
+     * @brief: clear all manual queue 
+     */
+    void clearManualQueue();
 	/**
 	 * @brief check start state in auto run mode
      *
@@ -292,6 +325,12 @@ class RobotMotion
       * @param flag: input
       */
      void setErrorState(bool flag);   
+     /**
+     * @brief: clearPathFifo 
+     *
+     * @return: 0 if success 
+     */
+    U64 clearPathFifo();
 
   private:
 	ShareMem			share_mem_;
@@ -310,6 +349,7 @@ class RobotMotion
 //	map<int, PoseEuler> inst_id_map_;			//a map to store the id
 	//vector<JointPoint>	joint_traj_;			//store the trajectory joints
 //	TargetPosition		previous_target_;		//record the previous target
+    map<int, bool>      id_servowait_map_;
 	CommandInstruction	cur_instruction_;		//current instruction
 	CommandInstruction	next_move_instruction_; //next instruction
 	ManualState			manual_state_;          //manual state used in manual mode 
@@ -317,8 +357,8 @@ class RobotMotion
 	int					manual_inst_delay_cnt_;
 	unsigned int		servo_state_;
 
-	boost::mutex			mutex_;
-	boost::mutex	        g_mutex_;
+	boost::mutex		mutex_;
+	boost::mutex	    g_mutex_;
 
     bool    servo_ready_wait_;                  //if needs to wait for servo ready
 	int		next_move_id_;						//record next move id	
@@ -429,6 +469,13 @@ class RobotMotion
      * @return: 0 if success
 	 */
 	U64 autoMotion();
+
+    /**
+     * @brief: motion process in manual mode 
+     *
+     * @return: 0 if success 
+     */
+    U64 manualMotion();
 	/**
 	 * @brief: move a line used for manual mode
 	 *
@@ -483,19 +530,65 @@ class RobotMotion
       */
     bool isFifoEmpty();
 
-    void resetQueue();
-
-    U64 clearPathFifo();
-
+    /**
+     * @brief: put picked_motion_queue_ to motion_queue_ 
+     */
+    void resetQueue();    
+    /**
+     * @brief: clear all auto queue 
+     */
+    void clearAutoQueue();
+    /**
+     * @brief: reset the instruction id to -1 
+     */
     void resetInstructionID();
 
+    /**
+     * @brief: set ManualState 
+     *
+     * @param state: input
+     */
     void setManualState(ManualState state);
+
+    /**
+     * @brief: get ManualState 
+     *
+     * @return: ManualState 
+     */
     ManualState getManualState();
+    
+    /**
+     * @brief: setAutoState 
+     *
+     * @param state: input
+     */
     void setAutoState(AutoState state);
+    
+    /**
+     * @brief: getAutoState 
+     *
+     * @return: AutoState 
+     */
     AutoState getAutoState();
 
+    /**
+     * @brief: process of estop 
+     */
     void emergencyStop();
+
+    /**
+     * @brief: popup instruction from picked_motion_queue_
+     */
     void popupInstruction();
+
+    /**
+     * @brief: pick joints and send them to bare metal 
+     */
+    void sendJointsToRemote();
+    
+    void insertIDServoWait();
+
+    void forceChangeMode(RobotMode mode);
 };
 
 

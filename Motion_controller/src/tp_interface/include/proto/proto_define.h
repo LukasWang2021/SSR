@@ -37,8 +37,15 @@
 #define PATH_CTL_COMMAND    ("root/Control/fst/ControlCommand")
 #define PATH_ERROR_WARNINGS ("root/Logic/activeWarnings")
 
+#define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser1")
+#define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser2")
 #define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser3")
 #define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser4")
+#define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser5")
+#define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser6")
+#define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser7")
+#define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser8")
+
 
 #define PATH_CTL_SYSTEM_SHUTDOWN    ("root/Control/system/shutdown")
 
@@ -84,10 +91,14 @@
 #define CTL_COMMAND_ID          (9001)
 #define ERROR_WARNINGS_ID       (5107)
 
+#define ETHERCAT_SMNT_DIN1_ID   (363)
+#define ETHERCAT_SMNT_DIN2_ID   (364)
 #define ETHERCAT_SMNT_DIN3_ID   (365)
 #define ETHERCAT_SMNT_DIN4_ID   (366)
 
-#define SYSTEM_SHUTDOWN_ID      (1000)
+#define SAFETY_INPUT_FRAME1_ID  (1000)
+#define SAFETY_INPUT_FRAME2_ID  (1001)
+
 
 
 /**

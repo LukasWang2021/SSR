@@ -34,7 +34,7 @@
 
 
 
-
+typedef unsigned int U32;
 typedef unsigned long long int U64;
 //#define INT64 ErrorCode
 

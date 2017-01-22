@@ -164,7 +164,6 @@ bool JsonParse::getParamFromID(uint32_t id, ParamProperty &param_property)
 	}
 
 	param_property = it->second;		
-	//FST_INFO("get path:%s",param_property.param_info.path);
 	return true;
 }
 /**

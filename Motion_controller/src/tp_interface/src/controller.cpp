@@ -17,6 +17,7 @@
 #include "sub_functions.h"
 #include "common.h"
 #include "rt_timer.h"
+#include "version.h"
 
 #define BASIC_INTERVAL_TIME		(1) //basic cycle time(ms)
 
@@ -56,8 +57,16 @@ void rtMsSleep(int ms)
  */
 void sigroutine(int dunno)
 {
-	FST_INFO("stop....\n");
-	gs_running_flag = false;
+    if (dunno == SIGSEGV)
+    {
+        FST_INFO("SIGSEGV...");
+        gs_running_flag = false;
+    }
+    else
+    {
+	    FST_INFO("stop....\n");
+	    gs_running_flag = false;
+    }
 //	exit(0);
 }
 
@@ -104,7 +113,15 @@ void heartBeatProc(ProtoParse *proto_parse)
     U64 err_list[128];
     while (gs_running_flag)
 	{
-        proto_parse->getRobotMotionPtr()->motionHeartBeart(err_list);
+        err_size = proto_parse->getRobotMotionPtr()->motionHeartBeart(err_list);
+        for (int i = 0; i < err_size; i++)
+        {
+            U64 result = err_list[i];
+            if (!proto_parse->isUpdatedSameError(result))
+            {
+                proto_parse->storeErrorCode(result);
+            }
+        }
         mSleep(INTERVAL_HEART_BEAT_UPDATE); 
     }
 }
@@ -118,8 +135,12 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, sigroutine);	 
 	signal(SIGTERM, sigroutine);           
+   // signal(SIGSEGV, sigroutine);
 
-    ProtoParse proto_parse(&ros_basic);
+    FST_INFO("cur_version: %s",get_version());  
+    FST_INFO("compile time: %s", get_build_time());
+
+    ProtoParse proto_parse(&ros_basic);    
     
 	//=========================================
 	//ProtoParse proto_parse; //init class ProtoParse

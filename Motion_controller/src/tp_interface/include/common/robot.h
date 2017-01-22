@@ -91,9 +91,10 @@ typedef enum _ManualState
 
 typedef enum _AutoState
 {
-    AUTO_READY_S    = 1,
-    AUTO_RUNNING_S,
-    AUTO_SUSPEND_S
+    AUTO_IDLE_S         = 0,
+    AUTO_READY_S        = 1,
+    AUTO_RUNNING_S      = 2,
+    AUTO_SUSPEND_S      = 3
 }AutoState;
 
 

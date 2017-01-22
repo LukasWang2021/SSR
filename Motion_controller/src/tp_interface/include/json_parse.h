@@ -35,6 +35,8 @@ typedef struct _ParamProperty
     BaseTypes_UserLevel user_level;
     BaseTypes_Unit unit;
 	uint32_t update_freq;
+    void (*getparam)();
+    void (*setParam)(void* params);
 }ParamProperty;
 
 class JsonParse

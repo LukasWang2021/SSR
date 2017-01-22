@@ -29,7 +29,8 @@ void manualStop(void* params)
     boost::mutex::scoped_lock lock(mutex);
     RobotMotion *robot_motion = p_proto_parse->getRobotMotionPtr();
 	robot_motion->actionPause();
-	robot_motion->clearMotionQueue();
+	robot_motion->clearManualQueue();
+    robot_motion->clearPathFifo();
 	
 	p_proto_parse->wdt_start_flag_ = false;
 
@@ -124,6 +125,7 @@ void ProtoParse::checkManualWdt()
 void ProtoParse::updateParams()
 {
     U64 result;
+    static U64 prev_err;
     /*static int global_update_cnt = 0;*/
     //if (++global_update_cnt >= 500)
     //{
@@ -146,7 +148,10 @@ void ProtoParse::updateParams()
             }
             else
             {
-                storeErrorCode(result);
+                if (!isUpdatedSameError(result))
+                {
+                    storeErrorCode(result);
+                }
             }
 #ifdef SIMMULATION
             // ===update joints and publish to rviz===================
@@ -157,28 +162,47 @@ void ProtoParse::updateParams()
     }
     else
     {
-        storeErrorCode(result);
+        if (!isUpdatedSameError(result))                
+        {
+            storeErrorCode(result);
+        }
     }
     if ((result = robot_motion_.updateLogicMode()) != PARAMETER_NOT_UPDATED)
     {
         setUpdateFlagByID(LOGIC_MODE_ID, true);
         if (result != FST_SUCCESS)
         {
-            storeErrorCode(result);
+            if (!isUpdatedSameError(result))                
+            {
+                storeErrorCode(result);
+            }
         }
     }
     if ((result = robot_motion_.updateLogicState()) != PARAMETER_NOT_UPDATED)
     {
+/*        if (robot_motion_.getLogicState() == RESET_ESTOP_T)*/
+        //{
+            //if (robot_motion_.getErrorState() == false)
+            //{
+                //clearUpdatedError();
+            //}
+        /*}*/
         setUpdateFlagByID(LOGIC_STATE_ID, true);
         if (result != FST_SUCCESS)
         {
-            storeErrorCode(result);
+            if (!isUpdatedSameError(result))                
+            {
+                storeErrorCode(result);
+            }
         }
     }
 
     if ((result = robot_motion_.updateSafetyStatus()) != FST_SUCCESS)
     {
-        storeErrorCode(result);
+        if (!isUpdatedSameError(result))                
+        {
+            storeErrorCode(result);
+        }
     }
   
     if (!error_queue_.empty())
@@ -230,17 +254,39 @@ void ProtoParse::storeErrorCode(U64 err_code)
 
     if (err_code & 0x0001000000000000)
     {
-        //FST_ERROR("err_code:%llx",err_code);
-        robot_motion_.setErrorState(true);
+        //FST_ERROR("err_code:%llx",err_code);        
         int warning_level = (err_code & 0x0000FFFF00000000) >> 32;
-        if (warning_level > 2) //bigger than INFO level
+        if (warning_level > 4) //bigger than INFO level
         {
+            FST_ERROR("warning_level:%d",warning_level);
+            robot_motion_.setErrorState(true);
             robot_motion_.setLogicStateCmd(EMERGENCY_STOP_E);
+        }
+        else if (warning_level > 2)
+        {
+            robot_motion_.setLogicModeCmd(GOTO_PAUSE_E);
         }
        // if (prev_err != err_code)
         {
             error_queue_.push(err_code);
           //  prev_err = err_code;
+        }
+    }
+}
+
+bool ProtoParse::isUpdatedSameError(U64 err)
+{
+    boost::mutex::scoped_lock lock(mutex_);
+    if (err & 0x0001000000000000)
+    {
+        if (prev_err_ != err)
+        {
+            prev_err_ = err;
+            return false;
+        }
+        else
+        {
+            return true;
         }
     }
 }
@@ -306,12 +352,18 @@ void ProtoParse::parseParamSetMsg(const uint8_t *field_buffer, int field_size)
             RobotCtrlCmd cmd = *(RobotCtrlCmd*)param_set_msg.param.bytes;
             if(cmd == SHUTDOWN_CMD) //reset error
             {
+                robot_motion_.setLogicStateCmd(EMERGENCY_STOP_E);
                 retStatus(param_set_msg.path, param_set_msg.id, BaseTypes_StatusCode_OK);
             }
-        }
-        case SYSTEM_SHUTDOWN_ID:
-            retStatus(param_set_msg.path, param_set_msg.id, BaseTypes_StatusCode_OK);
             break;
+        }
+        case ID_PREVIOUS_COMMAND_ID:
+        {
+            int prev_id = *(int*)param_set_msg.param.bytes;
+            robot_motion_.setPreviousCmdID(prev_id);
+			retStatus(param_set_msg.path, param_set_msg.id, BaseTypes_StatusCode_OK);
+            break;
+        }
 		default:
 		{
 			//no id exist
@@ -430,10 +482,16 @@ void ProtoParse::parseParamGetMsg(const uint8_t *field_buffer, int field_size)
 		retErrorStatus();
 		return;  //need to define this error
 	}
-	FST_INFO("get_param_msg:%s, id:%d, param_id:%d", param_get_msg.path, msg_id, param_get_msg.id);
+//	FST_INFO("get_param_msg:%s, id:%d, param_id:%d", param_get_msg.path, msg_id, param_get_msg.id);
 
 	switch(msg_id)
 	{
+        case SAFETY_INPUT_FRAME1_ID:
+			retParamMsg(param_get_msg.path, msg_id, robot_motion_.getPreviousCmdID());
+			break;
+		case SAFETY_INPUT_FRAME2_ID:
+			retParamMsg(param_get_msg.path, msg_id, robot_motion_.getCurrentCmdID());
+			break;
 		case ID_PREVIOUS_COMMAND_ID:
 			retParamMsg(param_get_msg.path, msg_id, robot_motion_.getPreviousCmdID());
 			break;
@@ -443,13 +501,95 @@ void ProtoParse::parseParamGetMsg(const uint8_t *field_buffer, int field_size)
         case ETHERCAT_SMNT_DIN3_ID:
         {
             U64 result;
-            retParamMsg(param_get_msg.path, msg_id, robot_motion_.getSafetyInterfacePtr()->getDITPManual(result));
+            retParamMsg(param_get_msg.path, msg_id, robot_motion_.getSafetyInterfacePtr()->getDITPManual());
             break;
         }
         case ETHERCAT_SMNT_DIN4_ID:
         {
             U64 result;
-            retParamMsg(param_get_msg.path, msg_id, robot_motion_.getSafetyInterfacePtr()->getDITPAuto(result));
+            retParamMsg(param_get_msg.path, msg_id, robot_motion_.getSafetyInterfacePtr()->getDITPAuto());
+            break;
+        }
+        case LOGIC_STATE_ID:		
+		{
+			RobotState state = robot_motion_.getLogicState();
+			retParamMsg(param_get_msg.path, msg_id, state);
+			break;
+		}
+		case LOGIC_MODE_ID:
+		{
+			RobotMode mode = robot_motion_.getLogicMode();
+			retParamMsg(param_get_msg.path, msg_id, mode);
+			break;
+		}
+		case ACTUAL_JOINT_POS_ID:
+		{
+			JointValues jnt_val = robot_motion_.getCurJointsValue();
+			retParamMsg(param_get_msg.path, msg_id, jnt_val);
+			break;
+		}
+		case FK_TOOL_COORD_ID:
+		{
+            PoseEuler pose = robot_motion_.getCurPosition();
+			retParamMsg(param_get_msg.path, msg_id, pose);
+			break;
+		}
+        case ERROR_WARNINGS_ID:
+        {
+            U64 err[ERROR_NUM] = {0};
+            for (int i = 0; i < ERROR_NUM; ++i)
+            {
+                if (error_queue_.empty())
+                {
+                    break;
+                }
+                error_queue_.waitAndPop(err[i]);
+            }
+            retParamMsg(param_get_msg.path, msg_id, err[0]);
+            break;
+        }
+
+		default:
+            storeErrorCode(INVALID_PARAM_FROM_TP);
+			break;
+	}
+
+}
+
+void ProtoParse::parseParamOverwriteMsg(const uint8_t *field_buffer, int field_size)
+{
+	uint32_t msg_id = 0;
+	bool ret;
+	BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
+
+	BaseTypes_ParameterOverwriteMsg param_ovwrt_msg;
+	PARSE_FIELD(param_ovwrt_msg, BaseTypes_ParameterOverwriteMsg, field_buffer, field_size, ret);
+    if (json_parse_->getIDFromPath(param_ovwrt_msg.path, msg_id) == false)
+	{
+		FST_ERROR("ERROR:overwrite_param_msg:%s,", param_ovwrt_msg.path);
+        storeErrorCode(DECODE_MESSAGE_FAILED);
+		retErrorStatus();
+
+		return;  //need to define this error
+	}
+    switch(msg_id)
+	{
+		case SAFETY_INPUT_FRAME1_ID:
+			retParamMsg(param_ovwrt_msg.path, msg_id, robot_motion_.getPreviousCmdID());
+			break;
+		case SAFETY_INPUT_FRAME2_ID:
+			retParamMsg(param_ovwrt_msg.path, msg_id, robot_motion_.getCurrentCmdID());
+			break;
+        case ETHERCAT_SMNT_DIN3_ID:
+        {
+            U64 result;
+            retParamMsg(param_ovwrt_msg.path, msg_id, robot_motion_.getSafetyInterfacePtr()->getDITPManual());
+            break;
+        }
+        case ETHERCAT_SMNT_DIN4_ID:
+        {
+            U64 result;
+            retParamMsg(param_ovwrt_msg.path, msg_id, robot_motion_.getSafetyInterfacePtr()->getDITPAuto());
             break;
         }
 		default:
@@ -483,7 +623,11 @@ void ProtoParse::parseBuffer(const uint8_t *buffer, int count)
 	{
 		parseParamGetMsg(field_buffer, field_size);
 	}//end else if (HASH_CMP(ParameterGetMsg, buffer) == true)
-	else
+    else if (HASH_CMP(ParameterOverwriteMsg, buffer) == true)
+	{
+		parseParamOverwriteMsg(field_buffer, field_size);
+	}//
+    else
 	{
 		retErrorStatus();	
         storeErrorCode(INVALID_PARAM_FROM_TP);
@@ -778,6 +922,18 @@ void ProtoParse::pubParamByID(int id)
 		{
 			break;
 		}
+        case SAFETY_INPUT_FRAME1_ID:
+        {
+            U32 frm_data = robot_motion_.getSafetyInterfacePtr()->getDIFrm1();
+            param_ptr = (char*)&frm_data;
+            break;
+        }
+        case SAFETY_INPUT_FRAME2_ID:
+        {
+            U32 frm_data = robot_motion_.getSafetyInterfacePtr()->getDIFrm2();
+            param_ptr = (char*)&frm_data;
+            break;
+        }
 		default:
 			break;
 	}	
@@ -971,20 +1127,12 @@ void ProtoParse::setProtoLogicMode(int id, RobotModeCmd mode_cmd)
 
 	boost::mutex::scoped_lock lock(mutex_);
 
-	if (false == robot_motion_.setLogicModeCmd(mode_cmd))
+    U64 result = robot_motion_.setLogicModeCmd(mode_cmd);
+	if (result != FST_SUCCESS)
     {
-        storeErrorCode(SET_MODE_FAILED);
+        storeErrorCode(result);
     }
     
-	//======first publish the midddle mode==========		
-	/*if(param_pub_map_.find(id) != param_pub_map_.end())  //find the publish one*/
-	//{
-		//if(param_pub_map_[id].relative_time) //the msg_id is not the same as this id
-		//{
-			//pubParamByID(id);				
-		//}
-	//}
-	/*robot_motion_.updateLogicMode();*/
 	//==============================================
 	retParamMsg(PATH_LOGIC_MODE, id, robot_motion_.getLogicMode());
 }
@@ -1000,19 +1148,17 @@ void ProtoParse::setProtoLogicState(int id, RobotStateCmd state_cmd)
 
 	boost::mutex::scoped_lock lock(mutex_);
 
-	if (false == robot_motion_.setLogicStateCmd(state_cmd))
+    U64 result = robot_motion_.setLogicStateCmd(state_cmd);
+	if (result != FST_SUCCESS)
     {
+        //FST_ERROR("set state:%llx", result);
         storeErrorCode(SET_STATE_FAILED);
     }
-    //======first publish the midddle state==========		
-/*	if(param_pub_map_.find(id) != param_pub_map_.end())  //find the publish one*/
-	//{
-		//if(param_pub_map_[id].relative_time) //the msg_id is not the same as this id
-		//{
-			//pubParamByID(id);				
-		//}
-	//}
-	/*robot_motion_.updateLogicState();*/
+    if (state_cmd == ACKNOWLEDGE_ERROR)
+    {
+       FST_INFO("clear prev_err_..."); 
+       prev_err_ = FST_SUCCESS;
+    }
 	retParamMsg(PATH_LOGIC_STATE, id, robot_motion_.getLogicState());
 }
 /**
@@ -1150,4 +1296,12 @@ void ProtoParse::removeAllPubParams()
 void ProtoParse::retErrorStatus()
 {
     retStatus(PATH_ERROR_WARNINGS, ERROR_WARNINGS_ID, BaseTypes_StatusCode_FAILED);
+}
+
+void ProtoParse::clearUpdatedError()
+{
+     boost::mutex::scoped_lock lock(mutex_);
+
+     FST_INFO("clearUpdatedError.....");
+     prev_err_ = FST_SUCCESS;
 }

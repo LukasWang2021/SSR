@@ -125,7 +125,7 @@ U64 ShareMem::setJointPositions(JointCommand jc_w)
 	{
 		shm_jnt_cmd_.is_written = true;
         write_cnt_ = 0;
-      //  FST_INFO("Write memory successfullly");
+        //FST_INFO("Write memory successfullly");
 		return 0;
 	}
 	else 
@@ -141,7 +141,7 @@ U64 ShareMem::setJointPositions(JointCommand jc_w)
         }
         else 
         {
-           // FST_INFO("Write memory failed");
+            //FST_INFO("Write memory failed");
             return WRITE_SHARE_MEMORY_FAILED;
         }
 	}

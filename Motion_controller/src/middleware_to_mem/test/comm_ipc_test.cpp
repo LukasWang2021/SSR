@@ -27,35 +27,36 @@ Modifier:
 #include <sys/time.h>
 #include <netinet/in.h>  /* For htonl and ntohl */
 #include <sys/mman.h>
-
 int main(int argc, char *argv[]) {
 
-    int n = 2;
+    int n = 10;
+std::cout<<"hello0"<<std::endl;
 
     if (!fork()) { /* child */
         //create communication channel.
         fst_comm_interface::CommInterface comm;
-        ERROR_CODE_TYPE fd = comm.createChannel(IPC_REQ, "testIPC");      
+        ERROR_CODE_TYPE fd = comm.createChannel(COMM_REQ, COMM_IPC, "testIPC");      
         if (fd == CREATE_CHANNEL_FAIL)
         {
             printf("Error when client createChannel.\n");
             return -1;
         }
         //set the request data
+
         ServiceRequest req = {0x31, "hello this client request."};
         ServiceResponse resp;
+        usleep(100000);
         for (int i = 0; i < n; ++i)
         {
-            ERROR_CODE_TYPE send = comm.send(&req, sizeof(req), IPC_DONTWAIT);
+            ERROR_CODE_TYPE send = comm.send(&req, sizeof(req), COMM_DONTWAIT);
             if (send == SEND_MSG_FAIL)
             {
                 printf("Error when client send.\n");
                 return -1;
             }
-          
-            usleep(10000);
+            usleep(1000000);
             //receiving in BLOCK mode using string
-            int rc = comm.recv(&resp, sizeof(resp), IPC_WAIT);
+            int rc = comm.recv(&resp, sizeof(resp), COMM_WAIT);
             if (rc == -1)
             {
                 printf("Error when client recv.\n");
@@ -71,7 +72,7 @@ int main(int argc, char *argv[]) {
     } else { /* parent */
         //create communication channel.
         fst_comm_interface::CommInterface comm;
-        ERROR_CODE_TYPE fd = comm.createChannel(IPC_REP, "testIPC");
+        ERROR_CODE_TYPE fd = comm.createChannel(COMM_REP,  COMM_IPC, "testIPC");
         if (fd == CREATE_CHANNEL_FAIL)
         {
             printf("Error when server createChannel.\n");
@@ -80,10 +81,11 @@ int main(int argc, char *argv[]) {
         ServiceRequest req = {0, ""};
         ServiceResponse resp = {0x31, "This is response"};
 
+        usleep(100000);
         for (int i = 0; i < n; ++i)
         {
-            usleep(10000);
-            int rc = comm.recv(&req, sizeof(req), IPC_DONTWAIT);
+            
+            int rc = comm.recv(&req, sizeof(req), COMM_WAIT);
             if (rc == RECV_MSG_FAIL)
             {
                 printf("Error when server recv.\n");
@@ -91,7 +93,7 @@ int main(int argc, char *argv[]) {
 //            std::cout<<"sizeof req = "<<sizeof(req)<<std::endl;
 //            std::cout<<"req.req_id = 0x"<<std::hex<<req.req_id<<std::dec<<". req.req_buf = "<<req.req_buff<<std::endl;
        //send
-            int send = comm.send(&resp, sizeof(resp), IPC_DONTWAIT);
+            int send = comm.send(&resp, sizeof(resp), COMM_DONTWAIT);
             if (send == -1)
             {
                 printf("Error when client send.\n");

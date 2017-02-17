@@ -9,7 +9,7 @@ Summary:    lib to send service to BARE CORE
 #ifndef MIDDLEWARE_TO_MEM_SERVICE_WRAPPER_CPP_
 #define MIDDLEWARE_TO_MEM_SERVICE_WRAPPER_CPP_
 
-#include "comm_monitor/service_wrapper.h"
+#include "service_manager/service_wrapper.h"
 #include <string.h>
 #include <unistd.h>
 #include <iostream>

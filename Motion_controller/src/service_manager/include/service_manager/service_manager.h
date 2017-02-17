@@ -1,24 +1,24 @@
 /**********************************************
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-File:       comm_monitor.h
+File:       service_manager.h
 Author:     Feng.Wu 
 Create:     07-Nov-2016
 Modify:     08-Dec-2016
 Summary:    dealing with service
 **********************************************/
 
-#ifndef MIDDLEWARE_TO_MEM_COMM_MONITOR_H_
-#define MIDDLEWARE_TO_MEM_COMM_MONITOR_H_
+#ifndef SERVICE_MANAGER_SERVICE_MANAGER_H_
+#define SERVICE_MANAGER_SERVICE_MANAGER_H_
 
 #include <vector>
-#include "error_code/error_code.h"
+#include "service_manager_error_code.h"
 #include "middleware_to_mem/middleware_to_sharedmem.h"
 #include "comm_interface/comm_interface.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 #include "service_actions/response_actions.h"
 
-namespace fst_comm_monitor
+namespace fst_service_manager
 {
 
 enum ChannelStatus
@@ -29,26 +29,26 @@ enum ChannelStatus
     TEST_CHANNEL = 4,
 };
 
-class CommMonitor
+class ServiceManager
 {
 public:
     //------------------------------------------------------------
-    // Function:  CommMonitor
+    // Function:  ServiceManager
     // Summary: The constructor of class
     // In:      None
     // Out:     None
     // Return:  None 
     //------------------------------------------------------------
-    CommMonitor();
+    ServiceManager();
 
     //------------------------------------------------------------
-    // Function:  ~CommMonitor
+    // Function:  ~ServiceManager
     // Summary: The destructor of class
     // In:      None
     // Out:     None
     // Return:  None 
     //------------------------------------------------------------
-    ~CommMonitor();
+    ~ServiceManager();
 
     //------------------------------------------------------------
     // Function:    init
@@ -318,6 +318,6 @@ private:
     // Used to respond local services from BARE CORE.
     fst_response_action::ResponseAction response_action_;
 };
-} //namespace fst_comm_monitor
+} //namespace fst_service_manager
 
-#endif //MIDDLEWARE_TO_MEM_COMM_MONITOR_H_
+#endif //SERVICE_MANAGER_SERVICE_MANAGER_H_

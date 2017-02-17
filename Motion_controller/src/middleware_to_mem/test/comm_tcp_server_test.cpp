@@ -31,29 +31,29 @@ Modifier:
 #define SERVER_PORT "5558"
 int main(int argc, char *argv[]) {
 
-    int n = 1;
+    int n = 10;
     //create communication channel.
     fst_comm_interface::CommInterface comm;
     char *ip, ip_addr[32];
     if (!comm.getLocalIP(&ip)) return false;
-    std::cout<<"hello test1"<<std::endl;
     std::cout<<"ip="<<ip<<std::endl;
-    std::cout<<"hello test2"<<std::endl;
 
     sprintf(ip_addr,"%s:%s", ip, SERVER_PORT);
     std::cout<<ip_addr<<std::endl;
-    ERROR_CODE_TYPE fd = comm.createChannel(TCP_REP, ip_addr);
+    ERROR_CODE_TYPE fd = comm.createChannel(COMM_REP, COMM_TCP, ip_addr);
     if (fd == CREATE_CHANNEL_FAIL)
     {
         printf("Error when server createChannel.\n");
         return -1;
     }
+    std::cout<<"bind ok :"<<ip_addr<<std::endl;
+
     ServiceRequest req = {0, ""};
     ServiceResponse resp = {0x31, "This is response"};
     for (int i = 0; i < n; ++i)
     {
 //        usleep(100000);
-        int rc = comm.recv(&req, sizeof(req), IPC_WAIT);
+        int rc = comm.recv(&req, sizeof(req), COMM_WAIT);
         if (rc == RECV_MSG_FAIL)
         {
             printf("Error when server recv.\n");
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
 //         std::cout<<"req.req_id = 0x"<<std::hex<<req.req_id<<std::dec<<". req.req_buf = "<<req.req_buff<<std::endl;
        //send
-        int send = comm.send(&resp, sizeof(resp), IPC_DONTWAIT);
+        int send = comm.send(&resp, sizeof(resp), COMM_DONTWAIT);
         if (send == -1)        
         {   
             printf("Error when client send.\n");    

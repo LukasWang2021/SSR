@@ -53,13 +53,14 @@ CommInterface::~CommInterface()
 //------------------------------------------------------------
 // Function:  createChannel
 // Summary: Create the channel for IPC communication
-// In:      type -> REQ:request, REP:response, PUB:publisher, SUB:subscriber
+// In:      type -> COMM_REQ:request, COMM_REP:response, COMM_PUB:publisher, COMM_SUB:subscriber
+//          transport -> COMM_IPC, COMM_TCP, COMM_INPROC.
 //          name -> name for each channel
 // Out:     None
 // Return:  FST_SUCCESS -> succeed to get handle.
 //          CREATE_CHANNEL_FAIL -> failed to create channel 
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommInterface::createChannel(int type, const char *name)
+ERROR_CODE_TYPE CommInterface::createChannel(int protocol, int transport, const char *name)
 {
     if (strlen(name) >= NAME_SIZE || strlen(name) == 0)
     {
@@ -67,56 +68,51 @@ ERROR_CODE_TYPE CommInterface::createChannel(int type, const char *name)
         return CREATE_CHANNEL_FAIL;
     }
 
-    int model = 0;
+    int prot = 0 ;
     char url[URL_SIZE];
-    switch (type)
+    switch (protocol)
     {
-        case IPC_REQ:
-            model = NN_REQ;
-            convertIpcUrl(name, url);
+        case COMM_REQ:
+            prot = NN_REQ;
             break;
-        case IPC_REP:
-            model = NN_REP;
-            convertIpcUrl(name, url);
+        case COMM_REP:
+            prot = NN_REP;
             break;
-        case IPC_PUB:
-            model = NN_PUB;
-            convertIpcUrl(name, url);
+        case COMM_PUB:
+            prot = NN_PUB;
             break;
-        case IPC_SUB:
-            model = NN_SUB;
-            convertIpcUrl(name, url);
-            break;
-        case TCP_REQ:
-            model = NN_REQ;
-            convertTcpUrl(name, url);
-            break;
-        case TCP_REP:
-            model = NN_REP;
-            convertTcpUrl(name, url);
-            break;
-        case TCP_PUB:
-            model = NN_PUB;
-            convertTcpUrl(name, url);
-            break;
-        case TCP_SUB:
-            model = NN_SUB;
-            convertTcpUrl(name, url);
+        case COMM_SUB:
+            prot = NN_SUB;
             break;
         default:
-            std::cout<<"Error in CommInterface::createChannel(): Please enter a type(IPC_REQ, IPC_REP, IPC_PUB, IPC_SUB, TCP_REQ, TCP_REP, TCP_PUB, TCP_SUB)."<<std::endl;
+            std::cout<<"Error in CommInterface::createChannel(): Please enter a right protocol(COMM_REQ, COMM_REP, COMM_PUB, COMM_SUB)."<<std::endl;
+            return CREATE_CHANNEL_FAIL;
+    }
+
+    switch (transport)
+    {
+        case COMM_IPC:
+            convertIpcUrl(name, url);
+            break;
+        case COMM_TCP:
+            convertTcpUrl(name, url);
+            break;
+        case COMM_INPROC:
+            convertInprocUrl(name, url);
+            break;
+        default:
+            std::cout<<"Error in CommInterface::createChannel(): Please enter a right transport(COMM_IPC, COMM_TCP, COMM_INPROC)."<<std::endl;
             return CREATE_CHANNEL_FAIL;
     }
 
     //create a socket.
-    fd_ = nn_socket(AF_SP, model);
+    fd_ = nn_socket(AF_SP, prot);
     if (fd_ < 0)
     {
         std::cout<<"Error in CommInterface::createChannel() for <"<<name<<"> socket: "<<nn_strerror(nn_errno())<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
-
-    switch (model)
+    switch (prot)
     {
         case NN_REP:
         case NN_PUB:
@@ -137,61 +133,6 @@ ERROR_CODE_TYPE CommInterface::createChannel(int type, const char *name)
             break;
     }
 
-/*
-    if (type != IPC_REQ && type != IPC_REP && type != IPC_PUB && type != IPC_SUB)
-    {
-        std::cout<<"Error in CommInterface::createChannel(): Please enter a type(IPC_REQ, IPC_REP, IPC_PUB, IPC_SUB)."<<std::endl;
-        return CREATE_CHANNEL_FAIL;
-    }
-    if (strlen(name) >= NAME_SIZE)
-    {
-        std::cout<<"Error in  CommInterface::createChannel(): Name exceeds 64 characters."<<std::endl;
-        return CREATE_CHANNEL_FAIL;
-    }
-
-    //create a socket.
-    fd_ = nn_socket(AF_SP, type);
-    if (fd_ < 0)
-    {
-        std::cout<<"Error in CommInterface::createChannel() for <"<<name<<"> socket: "<<nn_strerror(nn_errno())<<std::endl;
-        return CREATE_CHANNEL_FAIL;
-    }
-   
-    //bind or connect to url.
-//    char url[NAME_SIZE];
-//    sprintf(url, "ipc:///tmp/msg_%s.ipc", name);
-
-    std::ostringstream oss;
-    oss << "ipc:///tmp/msg_" << name << ".ipc";
-    std::string ss = oss.str();
-    const char *url = ss.c_str();
- 
-    if (type == NN_REP || type == NN_PUB)
-    {
-        if (nn_bind(fd_, url) < 0)
-        {
-            std::cout<<"Error in CommInterface::createChannel() to bind <"<<name<<"> : "<<nn_strerror(nn_errno())<<std::endl;
-            return CREATE_CHANNEL_FAIL;
-        }
-    } 
-    else if (type == NN_REQ || type == NN_SUB)
-    {
-        if (nn_connect(fd_, url) < 0)
-        {
-            std::cout<<"Error in CommInterface::createChannel() to connect <"<<name<<"> : "<<nn_strerror(nn_errno())<<std::endl;
-            return CREATE_CHANNEL_FAIL;
-        }
-    } 
-    //set sockopt specially for NN_SUB, otherwise can't receive.
-    if (type == NN_SUB)
-    {
-        if (nn_setsockopt(fd_, NN_SUB, NN_SUB_SUBSCRIBE, "", 0) < 0)
-        {
-            std::cout<<"Error in CommInterface::createChannel() to set <"<<name<<"> SUB: "<<nn_strerror(nn_errno())<<std::endl;
-            return CREATE_CHANNEL_FAIL;
-        };
-    }
-*/
     error_flag_ = 0;
     return FST_SUCCESS;
 }
@@ -212,7 +153,7 @@ ERROR_CODE_TYPE CommInterface::send(const void *buf, int buf_size, int flag)
     if (error_flag_ != 0)
         return error_flag_;
 
-    if(flag != IPC_WAIT && flag != IPC_DONTWAIT)
+    if(flag != COMM_WAIT && flag != COMM_DONTWAIT)
     {
         std::cout<<"Error in CommInterface::send(): Please enter a type(IPC_DONTWAIT, IPC_WAIT)."<<std::endl;
         return SEND_MSG_FAIL;
@@ -272,7 +213,7 @@ ERROR_CODE_TYPE CommInterface::recv(void *buf, int buf_size, int flag)
     if (error_flag_ != 0)
         return error_flag_;
 
-    if(flag != IPC_WAIT && flag != IPC_DONTWAIT)
+    if(flag != COMM_WAIT && flag != COMM_DONTWAIT)
     {
         std::cout<<"Error in CommInterface::recv(): Please enter a type(IPC_DONTWAIT, IPC_WAIT)."<<std::endl;
         return RECV_MSG_FAIL;
@@ -308,7 +249,7 @@ ERROR_CODE_TYPE CommInterface::recv(std::string *str, int flag)
     if (error_flag_ != 0)
         return error_flag_;
 
-    if(flag != IPC_WAIT && flag != IPC_DONTWAIT)
+    if(flag != COMM_WAIT && flag != COMM_DONTWAIT)
     {
         std::cout<<"Error in CommInterface::recv(): Please enter a type(IPC_DONTWAIT, IPC_WAIT)."<<std::endl;
         return RECV_MSG_FAIL;
@@ -374,7 +315,7 @@ bool CommInterface::getLocalIP(char **ip, const char *iface_name)
 
 //------------------------------------------------------------
 // Function:  convertIpcUrl
-// Summary: convert the input string of user to an available url.
+// Summary: convert the input string to an available url.
 //          This function is called in createChannel().
 // In:      name -> the name of the channel. 
 // Out:     url -> an available url to bind or connect.
@@ -383,14 +324,14 @@ bool CommInterface::getLocalIP(char **ip, const char *iface_name)
 void CommInterface::convertIpcUrl(const char *name, char *url)
 {
     std::ostringstream oss;
-    oss << "ipc:///tmp/msg_" << name << ".ipc";
+    oss << "ipc:///tmp/ipc_msg_" << name << ".ipc";
     std::string ss = oss.str();
-    memcpy(url, ss.c_str(), ss.size());
+    memcpy(url, ss.c_str(), ss.size()+1);
 }
 
 //------------------------------------------------------------
 // Function:  convertTcpUrl
-// Summary: convert the input ip:port of user to an available url.
+// Summary: convert the input ip:port to an available url.
 //          This function is called in createChannel().
 // In:      name -> the ip:port of the channel. 
 // Out:     url -> an available url to bind or connect.
@@ -401,8 +342,26 @@ void CommInterface::convertTcpUrl(const char *name, char *url)
     std::ostringstream oss;
     oss << "tcp://" << name;
     std::string ss = oss.str();
-    memcpy(url, ss.c_str(), ss.size());
+    memcpy(url, ss.c_str(), ss.size()+1);
+
 }
+
+//------------------------------------------------------------
+// Function:  convertInprocUrl
+// Summary: convert the input string to an available url.
+//          This function is called in createChannel().
+// In:      name -> the name of the channel. 
+// Out:     url -> an available url to bind or connect.
+// Return:  None.
+//------------------------------------------------------------
+void CommInterface::convertInprocUrl(const char *name, char *url)
+{
+    std::ostringstream oss;
+    oss << "inproc://inproc_msg_" << name;
+    std::string ss = oss.str();
+    memcpy(url, ss.c_str(), ss.size()+1);
+}
+
 
 //------------------------------------------------------------
 // Function:  bind

@@ -1,32 +1,32 @@
 /**********************************************
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-File:       comm_monitor.cpp
+File:       service_manager.cpp
 Author:     Feng.Wu 
 Create:     07-Nov-2016
 Modify:     12-Dec-2016
 Summary:    dealing with service
 **********************************************/
-#ifndef MIDDLEWARE_TO_MEM_COMM_MONITOR_CPP_
-#define MIDDLEWARE_TO_MEM_COMM_MONITOR_CPP_
+#ifndef SERVICE_MANAGER_SERVICE_MANAGER_CPP_
+#define SERVICE_MANAGER_SERVICE_MANAGER_CPP_
 
-#include "comm_monitor/comm_monitor.h"
+#include "service_manager/service_manager.h"
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
 
 
-namespace fst_comm_monitor
+namespace fst_service_manager
 {
 
 //------------------------------------------------------------
-// Function:  CommMonitor
+// Function:  ServiceManager
 // Summary: The constructor of class
 // In:      None
 // Out:     None
 // Return:  None 
 //------------------------------------------------------------
-CommMonitor::CommMonitor()
+ServiceManager::ServiceManager()
 {
     handle_core_ = 0;
     loop_count_core_ = 0;
@@ -36,13 +36,13 @@ CommMonitor::CommMonitor()
 }
 
 //------------------------------------------------------------
-// Function:  ~CommMonitor
+// Function:  ~ServiceManager
 // Summary: The destructor of class
 // In:      None
 // Out:     None
 // Return:  None 
 //------------------------------------------------------------
-CommMonitor::~CommMonitor()
+ServiceManager::~ServiceManager()
 {
 }
 
@@ -54,26 +54,26 @@ CommMonitor::~CommMonitor()
 // Return:  0 -> success.
 //          ERROR_CODE -> failed.
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommMonitor::init(void)
+ERROR_CODE_TYPE ServiceManager::init(void)
 {
     handle_core_ = openMem(MEM_CORE);
     if (handle_core_ == -1) return OPEN_CORE_MEM_FAIL;
     clearSharedmem(MEM_CORE);
     
     // Establish the communication channel with other processes.
-    ERROR_CODE_TYPE result = comm_test_.createChannel(IPC_REP, "test");
+    ERROR_CODE_TYPE result = comm_test_.createChannel(COMM_REP, COMM_IPC, "test");
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error in CommMonito::init(): fail to create modbus channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
-    result = comm_mcs_.createChannel(IPC_REP, "mcs");
+    result = comm_mcs_.createChannel(COMM_REP, COMM_IPC, "mcs");
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error in CommMonito::init(): fail to create mcs channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
-    result = comm_param_.createChannel(IPC_REP, "servo_param");
+    result = comm_param_.createChannel(COMM_REP, COMM_IPC, "servo_param");
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error in CommMonito::init(): fail to create servo param channel."<<std::endl;
@@ -114,7 +114,7 @@ response_fifo_.push_back(test);
 // Return:  true -> a request needs to be deal with.
 //          false -> did nothing. 
 //------------------------------------------------------------
-bool CommMonitor::receiveRequest(void)
+bool ServiceManager::receiveRequest(void)
 {
     // Caculate the loop number for the heartbeat request to BARE CORE.
     ++loop_count_core_;
@@ -134,7 +134,7 @@ bool CommMonitor::receiveRequest(void)
     }
 
     ServiceRequest request;
-    ERROR_CODE_TYPE result = comm_mcs_.recv(&request, sizeof(request), IPC_DONTWAIT);
+    ERROR_CODE_TYPE result = comm_mcs_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
         //push the request into fifo.
@@ -145,7 +145,7 @@ bool CommMonitor::receiveRequest(void)
         }
     }
 
-    result = comm_param_.recv(&request, sizeof(request), IPC_DONTWAIT);
+    result = comm_param_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
         //push the request into fifo.
@@ -156,7 +156,7 @@ bool CommMonitor::receiveRequest(void)
         }
     }
 
-    result = comm_test_.recv(&request, sizeof(request), IPC_DONTWAIT);
+    result = comm_test_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
         //push the request into fifo.
@@ -178,7 +178,7 @@ bool CommMonitor::receiveRequest(void)
 // Return:  true -> a request to BARE CORE is setup.
 //          false -> didn't setup request.
 //------------------------------------------------------------
-bool CommMonitor::addRequest(void)
+bool ServiceManager::addRequest(void)
 {  
     // Caculate the loop number, setup the stop request to BARE CORE.
     if (loop_count_mcs_ >= HEARTBEAT_INTERVAL_MCS)
@@ -219,7 +219,7 @@ bool CommMonitor::addRequest(void)
 // Return:  true -> error codes are available.
 //          false -> no error codes.
 //------------------------------------------------------------
-bool CommMonitor::dtcSurvey(void)
+bool ServiceManager::dtcSurvey(void)
 {
     if (response_action_.getDtcFlag() == 0)
     {
@@ -242,7 +242,7 @@ bool CommMonitor::dtcSurvey(void)
 // Return:  true -> the request id is available.
 //          false -> invailid request id.
 //------------------------------------------------------------
-bool CommMonitor::checkRequest(ServiceRequest req)
+bool ServiceManager::checkRequest(ServiceRequest req)
 {
     // Check whether it is heartbeat request from the other process.
     if (isLocalRequest(req)) 
@@ -269,7 +269,7 @@ bool CommMonitor::checkRequest(ServiceRequest req)
 // Return:  true -> receive a heartbeat request.
 //          false -> not heartbeat request.
 //------------------------------------------------------------
-bool CommMonitor::isLocalRequest(ServiceRequest req)
+bool ServiceManager::isLocalRequest(ServiceRequest req)
 {
     if (req.req_id == MONITOR_HEARTBEAT_SID)
     {
@@ -291,7 +291,7 @@ bool CommMonitor::isLocalRequest(ServiceRequest req)
 // Return:  true -> error codes are filled into the response.
 //          false -> No error codes to be filled.
 //------------------------------------------------------------
-bool CommMonitor::fillLocalHeartbeat(void)
+bool ServiceManager::fillLocalHeartbeat(void)
 {
     size_t size = error_fifo_.size();
     if (size > 0)
@@ -321,7 +321,7 @@ bool CommMonitor::fillLocalHeartbeat(void)
 // Return:  true -> success.
 //          false -> failed. 
 //------------------------------------------------------------
-bool CommMonitor::sendRequest(void)
+bool ServiceManager::sendRequest(void)
 {
     if (request_fifo_.empty()) 
         return false;
@@ -345,7 +345,7 @@ bool CommMonitor::sendRequest(void)
 // Return:  true -> success.
 //          false -> failed. 
 //------------------------------------------------------------
-bool CommMonitor::getResponse(void)
+bool ServiceManager::getResponse(void)
 {
     if (!response_fifo_.empty()) 
         return false;
@@ -370,7 +370,7 @@ bool CommMonitor::getResponse(void)
 // Return:  0 -> success to send a request and receive a response.
 //          BARE_CORE_TIMEOUT -> timeout. 
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommMonitor::interactBareCore(void)
+ERROR_CODE_TYPE ServiceManager::interactBareCore(void)
 {
     if (request_fifo_.empty())
         return FST_SUCCESS;  
@@ -403,7 +403,7 @@ ERROR_CODE_TYPE CommMonitor::interactBareCore(void)
         }
     }// end while (res_result == false)
     // For debug
-    if (cost_time > 1000)
+    if (cost_time > 5000)
         std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us."<<std::endl;
     return FST_SUCCESS;
 }
@@ -417,7 +417,7 @@ ERROR_CODE_TYPE CommMonitor::interactBareCore(void)
 // Return:  true -> A error is pushed into error_fifo_.
 //          false -> did nothing. 
 //------------------------------------------------------------
-bool CommMonitor::storeError(ERROR_CODE_TYPE error)
+bool ServiceManager::storeError(ERROR_CODE_TYPE error)
 {
     if (error == 0 || doesErrorExist(error))
         return false;
@@ -433,7 +433,7 @@ bool CommMonitor::storeError(ERROR_CODE_TYPE error)
 // Return:  true -> the error code exists in fifo.
 //          false -> the error code doesn't exist in fifo. 
 //------------------------------------------------------------
-bool CommMonitor::doesErrorExist(ERROR_CODE_TYPE error)
+bool ServiceManager::doesErrorExist(ERROR_CODE_TYPE error)
 {
     for (std::vector<ERROR_CODE_TYPE>::iterator iter = error_fifo_.begin(); iter !=error_fifo_.end(); ++iter)
     {
@@ -453,7 +453,7 @@ bool CommMonitor::doesErrorExist(ERROR_CODE_TYPE error)
 // Return:  true -> a response is disposed.
 //          false -> did nothing. 
 //------------------------------------------------------------
-bool CommMonitor::manageResponse(void)
+bool ServiceManager::manageResponse(void)
 {
     if (response_fifo_.empty()) 
         return false;
@@ -486,7 +486,7 @@ bool CommMonitor::manageResponse(void)
 // Return:  true -> the local response is disposed.
 //          false -> did nothing. 
 //------------------------------------------------------------
-bool CommMonitor::manageLocalResponse(void)
+bool ServiceManager::manageLocalResponse(void)
 {
     ServiceResponse temp_response = response_fifo_[0];
     int index = response_action_.searchResponseLocalTableIndex(temp_response.res_id);
@@ -507,7 +507,7 @@ bool CommMonitor::manageLocalResponse(void)
 // Return:  true -> success to send msg.
 //          false -> fail to send msg.
 //------------------------------------------------------------
-bool CommMonitor::transmitResponse(fst_comm_interface::CommInterface &comm)
+bool ServiceManager::transmitResponse(fst_comm_interface::CommInterface &comm)
 {
     ServiceResponse temp_response = response_fifo_[0];
 
@@ -515,7 +515,7 @@ bool CommMonitor::transmitResponse(fst_comm_interface::CommInterface &comm)
     ERROR_CODE_TYPE send_result;
     do
     {
-        send_result = comm.send(&temp_response, sizeof(temp_response), IPC_DONTWAIT);
+        send_result = comm.send(&temp_response, sizeof(temp_response), COMM_DONTWAIT);
         ++count;
         if (count >= SEND_RESP_ATTEMPTS)
         {
@@ -538,7 +538,7 @@ bool CommMonitor::transmitResponse(fst_comm_interface::CommInterface &comm)
 // Return:  true -> success.
 //          false -> did nothing. 
 //------------------------------------------------------------
-bool CommMonitor::extractErrorCode(ServiceResponse resp)
+bool ServiceManager::extractErrorCode(ServiceResponse resp)
 {
     if (resp.res_id == READ_DTC_SID)
     {
@@ -565,7 +565,7 @@ bool CommMonitor::extractErrorCode(ServiceResponse resp)
 // Return:  true -> success.
 //          false -> failed. 
 //------------------------------------------------------------
-bool CommMonitor::sendRequestToBareCore(ServiceRequest &req)
+bool ServiceManager::sendRequestToBareCore(ServiceRequest &req)
 {
     return clientSendRequest(handle_core_, &req);
 }
@@ -578,7 +578,7 @@ bool CommMonitor::sendRequestToBareCore(ServiceRequest &req)
 // Return:  true -> success.
 //          false -> failed. 
 //------------------------------------------------------------
-bool CommMonitor::recvResponseFromBareCore(ServiceResponse &resp)
+bool ServiceManager::recvResponseFromBareCore(ServiceResponse &resp)
 {
     return clientGetResponse(handle_core_, &resp);
 }
@@ -592,7 +592,7 @@ bool CommMonitor::recvResponseFromBareCore(ServiceResponse &resp)
 //          false -> failed. 
 //------------------------------------------------------------
 template<typename T>
-bool CommMonitor::deleteFirstElement(T *fifo)
+bool ServiceManager::deleteFirstElement(T *fifo)
 {
     if (fifo->size() == 0)
     {
@@ -610,7 +610,7 @@ bool CommMonitor::deleteFirstElement(T *fifo)
 // Out:     None.
 // Return:  None.
 //------------------------------------------------------------
-void CommMonitor::runLoop(void)
+void ServiceManager::runLoop(void)
 {
     while (true)
     {
@@ -621,7 +621,7 @@ void CommMonitor::runLoop(void)
     }
 }
 
-} //namespace fst_trajectory_queue
+} //namespace fst_service_manager
 
 
 int main(int argc, char** argv)
@@ -664,7 +664,7 @@ int main(int argc, char** argv)
     }else
 */    {
 
-    fst_comm_monitor::CommMonitor cm;
+    fst_service_manager::ServiceManager cm;
     ERROR_CODE_TYPE init_result = cm.init();
     if (init_result != 0) 
         return false;
@@ -676,4 +676,4 @@ int main(int argc, char** argv)
 }
 
 
-#endif //MIDDLEWARE_TO_MEM_COMM_MONITOR_CPP_
+#endif //SERVICE_MANAGER_SERVICE_MANAGER_CPP_

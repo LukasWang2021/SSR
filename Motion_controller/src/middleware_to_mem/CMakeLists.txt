@@ -33,18 +33,9 @@ add_library(core_interface src/core_interface.cpp)
 target_link_libraries(core_interface ${catkin_LIBRARIES} middleware_to_mem)
 
 add_library(comm_interface src/comm_interface.cpp)
-target_link_libraries(comm_interface ${catkin_LIBRARIES} middleware_to_mem ${EXT_LIB})
+target_link_libraries(comm_interface ${catkin_LIBRARIES} ${EXT_LIB})
 
-add_executable(comm_monitor src/comm_monitor.cpp src/response_actions.cpp)
-target_link_libraries(comm_monitor ${catkin_LIBRARIES} middleware_to_mem comm_interface)
-
-add_executable(send_trajectory_node src/trajectory_queue.cpp src/service_actions.c)
-target_link_libraries(send_trajectory_node ${catkin_LIBRARIES} middleware_to_mem)
-
-add_executable(send_trajectory_fake src/trajectory_queue_fake.cpp)
-target_link_libraries(send_trajectory_fake ${catkin_LIBRARIES} middleware_to_mem)
-
-add_executable(test_app test/comm_ipc_test.cpp)
+add_executable(test_app test/comm_tcp_server_test.cpp)
 target_link_libraries(test_app ${catkin_LIBRARIES} comm_interface)
 
 install(TARGETS middleware_to_mem core_interface comm_interface
@@ -56,7 +47,7 @@ install(DIRECTORY include/
    PATTERN ".svn" EXCLUDE
  )
 
-install(TARGETS send_trajectory_node send_trajectory_fake test_app comm_monitor
+install(TARGETS test_app
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY launch

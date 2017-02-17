@@ -17,20 +17,30 @@ Summary:    lib to communicate between processes
 #include "struct_to_mem/struct_trajectory_segment.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
 
-#define IPC_REQ 1
-#define IPC_REP 2
-#define IPC_PUB 3
-#define IPC_SUB 4
-#define TCP_REQ 11
-#define TCP_REP 12
-#define TCP_PUB 13
-#define TCP_SUB 14
+//#define IPC_REQ 1
+//#define IPC_REP 2
+//#define IPC_PUB 3
+//#define IPC_SUB 4
+//#define TCP_REQ 11
+//#define TCP_REP 12
+//#define TCP_PUB 13
+//#define TCP_SUB 14
 //#define IPC_REQ 48 /*the type of createChannel(), stands for "request"*/
 //#define IPC_REP 49 /*the type of createChannel(), stands for "response"*/
 //#define IPC_PUB 32 /*the type of createChannel(), stands for "publisher"*/
 //#define IPC_SUB 33 /*the type of createChannel(), stands for "subsriber"*/
-#define IPC_WAIT 0 /*the flag for send() or recv()*/
-#define IPC_DONTWAIT 1 /*the flag for send() or recv()*/
+//#define IPC_WAIT 0 /*the flag for send() or recv()*/
+//#define IPC_DONTWAIT 1 /*the flag for send() or recv()*/
+
+#define COMM_REQ 1
+#define COMM_REP 2
+#define COMM_PUB 3
+#define COMM_SUB 4
+#define COMM_IPC 21
+#define COMM_TCP 22
+#define COMM_INPROC 23
+#define COMM_WAIT 0
+#define COMM_DONTWAIT 1
 
 namespace fst_comm_interface
 {
@@ -69,14 +79,15 @@ public:
 
     //------------------------------------------------------------
     // Function:  createChannel
-    // Summary: Create the channel for IPC communication
-    // In:      type -> REQ:request, REP:response, PUB:publisher, SUB:subscriber
+    // Summary: Create the channel for process communication
+    // In:      type -> COMM_REQ:request, COMM_REP:response, COMM_PUB:publisher, COMM_SUB:subscriber
+    //          transport -> COMM_IPC, COMM_TCP, COMM_INPROC.
     //          name -> name for each channel
     // Out:     None
     // Return:  FST_SUCCESS -> succeed to get handle.
     //          CREATE_CHANNEL_FAIL -> failed to create channel 
     //------------------------------------------------------------
-    ERROR_CODE_TYPE createChannel(int type, const char *name);
+    ERROR_CODE_TYPE createChannel(int protocol, int transport, const char *name);
 
     //------------------------------------------------------------
     // Function:  send
@@ -144,7 +155,7 @@ public:
     static const int URL_SIZE = 64;
 
     //The maximum size of the data to be delivered
-    static const int MAX_MSG_SIZE = 2048;
+    static const int MAX_MSG_SIZE = 1024*1024;
         
 private:
     int fd_;
@@ -154,7 +165,7 @@ private:
 
     //------------------------------------------------------------
     // Function:  convertIpcUrl
-    // Summary: convert the input string of user to an available url.
+    // Summary: convert the input string to an available url.
     //          This function is called in createChannel().
     // In:      name -> the name of the channel. 
     // Out:     url -> an available url to bind or connect.
@@ -164,13 +175,23 @@ private:
 
     //------------------------------------------------------------
     // Function:  convertTcpUrl
-    // Summary: convert the input ip:port of user to an available url.
+    // Summary: convert the input ip:port to an available url.
     //          This function is called in createChannel().
     // In:      name -> the ip:port of the channel. 
     // Out:     url -> an available url to bind or connect.
     // Return:  None.
     //------------------------------------------------------------
     void convertTcpUrl(const char *name, char *url);
+
+    //------------------------------------------------------------
+    // Function:  convertInprocUrl
+    // Summary: convert the input string to an available url.
+    //          This function is called in createChannel().
+    // In:      name -> the name of the channel. 
+    // Out:     url -> an available url to bind or connect.
+    // Return:  None.
+    //------------------------------------------------------------
+    void convertInprocUrl(const char *name, char *url);
 
     //------------------------------------------------------------
     // Function:  bind

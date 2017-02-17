@@ -30,7 +30,7 @@ Modifier:
 
 int main(int argc, char *argv[]) {
 
-    int n = 1000;
+    int n = 10;
     struct timespec start, stop;
     int64_t delta;
     int64_t sum=0, avg=0;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 
     fst_comm_interface::CommInterface comm;
 
-    ERROR_CODE_TYPE fd = comm.createChannel(TCP_REQ, "192.168.1.64:5558");      
+    ERROR_CODE_TYPE fd = comm.createChannel(COMM_REQ, COMM_TCP, "192.168.1.64:5558");      
     if (fd == CREATE_CHANNEL_FAIL)
     {
         printf("Error when client createChannel.\n");
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
             return -1;
         }
 
-        ERROR_CODE_TYPE send = comm.send(&req, sizeof(req), IPC_DONTWAIT);
+        ERROR_CODE_TYPE send = comm.send(&req, sizeof(req), COMM_DONTWAIT);
         if (send == SEND_MSG_FAIL)
         {
             printf("Error when client send.\n");
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 //        std::cout<<"start sec="<<sec<<". nsec="<<nsec<<std::endl;
           
         //receiving in BLOCK mode using string
-        int rc = comm.recv(&resp, sizeof(resp), IPC_WAIT);
+        int rc = comm.recv(&resp, sizeof(resp), COMM_WAIT);
         if (rc == -1)
         {
             printf("Error when client recv.\n");
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         delta =(stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_nsec - start.tv_nsec)/1000;
-        if (delta > 10000)
+//        if (delta > 10000)
             std::cout<<"|=====delta time = "<<delta<<"us"<<std::endl;
 
 //        std::cout<<i<<" Client: receive rep.id = "<<resp.res_id<<". rep_info = "<<resp.res_buff<<std::endl;

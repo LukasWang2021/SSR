@@ -29,12 +29,14 @@ enum ServiceID
     WRITE_SERVO_DATA_BY_ADDR = 0x24,
     WRTIE_DATA_BY_ID = 0x2D,
     READ_DTC_SID = 0x30,
+    LOG_CONTROL_SID = 0x40,
+    LOG_GETLIST_SID = 0x41,
     MONITOR_HEARTBEAT_SID = 0xA1,
 
 };
 //2.SERVICE_TABLE_LEN plus one if add new item.
 #define RESPONSE_LOCAL_TABLE_LEN 3
-#define SERVICE_TABLE_LEN 9
+#define SERVICE_TABLE_LEN 11
 namespace fst_response_action
 {
 

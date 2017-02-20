@@ -247,6 +247,10 @@ bool ServiceManager::checkRequest(ServiceRequest req)
     // Check whether it is heartbeat request from the other process.
     if (isLocalRequest(req)) 
         return true;
+
+    request_fifo_.push_back(req);
+    return true;
+/*
     // Push the non-heartbeat request into this fifo.
     if (response_action_.searchServiceTableIndex(req.req_id) != -1)
     {
@@ -258,6 +262,7 @@ bool ServiceManager::checkRequest(ServiceRequest req)
     storeError(invalid_sid);
     std::cout<<"Error in CommMonitor::checkRequest(): The request id(0x"<<std::hex<<req.req_id<<std::dec<<") is not available"<<std::endl;
     return false;
+*/
 }
 
 //------------------------------------------------------------

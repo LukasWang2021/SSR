@@ -26,7 +26,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(middleware_to_mem src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c)
+add_library(middleware_to_mem src/middleware_to_sharedmem.c src/middleware_to_sharedmem_ptr.c src/logfifo.c)
 target_link_libraries(middleware_to_mem ${catkin_LIBRARIES} librt.so)
 
 add_library(core_interface src/core_interface.cpp)
@@ -38,6 +38,9 @@ target_link_libraries(comm_interface ${catkin_LIBRARIES} ${EXT_LIB})
 add_executable(test_app test/comm_tcp_server_test.cpp)
 target_link_libraries(test_app ${catkin_LIBRARIES} comm_interface)
 
+add_executable(test_app2 test/comm_tcp_client_test.cpp)
+target_link_libraries(test_app2 ${catkin_LIBRARIES} comm_interface)
+
 install(TARGETS middleware_to_mem core_interface comm_interface
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  )
@@ -47,7 +50,7 @@ install(DIRECTORY include/
    PATTERN ".svn" EXCLUDE
  )
 
-install(TARGETS test_app
+install(TARGETS test_app test_app2
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(DIRECTORY launch

@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 
     fst_comm_interface::CommInterface comm;
 
-    ERROR_CODE_TYPE fd = comm.createChannel(COMM_REQ, COMM_TCP, "192.168.1.64:5558");      
+    ERROR_CODE_TYPE fd = comm.createChannel(COMM_REQ, COMM_TCP, "192.168.1.64");      
     if (fd == CREATE_CHANNEL_FAIL)
     {
         printf("Error when client createChannel.\n");

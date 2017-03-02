@@ -5,7 +5,7 @@
 #include <std_msgs/String.h>
 #include <time.h>
 
-#include <motion_controller/arm_group.h>
+#include <motion_controller/motion_controller_arm_group.h>
 #include <parameter_manager/parameter_manager_param_group.h>
 
 #include <vector>
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     group.initArmGroup(err);
     if(err != SUCCESS) {
         ROS_ERROR("Error while init algerithm, code=0x%llx", err);
-	    return              0;
+	    return 0;
     }
 
     unsigned int result;

@@ -10,7 +10,7 @@ zero_offset:
         - 0.0
         - 0.0
 
-transmission_ratio:
+gear_ratio:
     id: 272                 # ID = 0x0110
     data:
         - -92.3023255813953

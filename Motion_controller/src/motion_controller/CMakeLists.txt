@@ -130,10 +130,12 @@ include_directories(
 #link_directories(${catkin_LIBRARY_DIRS})
 
 ## Declare a C++ library
-add_library(calibrator  src/motion_controller_offset_calibration.cpp)
+add_library(calibrator  src/motion_controller_offset_calibrator.cpp)
 target_link_libraries(calibrator ${catkin_LIBRARIES})
 
-add_library(motion_controller  src/arm_group.cpp)
+add_library(motion_controller   src/motion_controller_arm_group.cpp
+                                src/motion_controller_arm_group_planning.cpp
+                                src/motion_controller_planning_interface.cpp)
 target_link_libraries(motion_controller calibrator ${catkin_LIBRARIES})
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -174,11 +176,11 @@ install(TARGETS calibrator
  )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+ install(DIRECTORY config
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
-# )
+ )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

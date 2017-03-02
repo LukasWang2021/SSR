@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     
     ROS_INFO("-----------------------------Test 3-------------------------------------------");
     bool res;
-    res = group.MoveJ(jnt3, 2000,16000,30,jnt2,2000,16000,0, 1061,err);
+    //res = group.MoveJ(jnt3, 2000,16000,30,jnt2,2000,16000,0, 1061,err);
     res = group.MoveJ(jnt2,4000,16000,1062,err);
     //res = group.MoveJ(jnt2, 2000,32000,10,posee1,500,32000,0, 1063,err);
     //res = group.MoveJ(jnt2, 2000,16000, 1062,err);
@@ -197,26 +197,26 @@ int main(int argc, char **argv)
     res = group.MoveL(posee2,100,16000, 1067,err);
     //res = group.MoveL(posee3,500,32000,40,jnt3,2000,32000,0,1065,err);
     //res = group.MoveL(posee2,600,32000,30,posee3,500,32000,0,1065,err);
-    //res = group.MoveL(posee3,500,16000,1066,err);
+    res = group.MoveL(posee3,500,16000,1066,err);
     
     
     //res = group.MoveJ(jnt1,2000,32000,0, group.transformPoseEuler2Pose(posee1),500,32000,50, 1062,err);
     //res = group.MoveL(posee1,500,32000,50,posee2,600,32000,0,1063,err);
     //res = group.MoveL(posee2,600,32000,1064,err);
 
-    ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
-    group.convertPathToTrajectory(90,err);
-    ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
+    //ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
+    group.convertPathToTrajectory(100,err);
+    //ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
     std::vector<fst_controller::JointPoint> traj;
-    ROS_INFO("get points from joint FIFO:%d", group.getPointsFromJointTrajectoryFIFO(traj,90,err));
+    ROS_INFO("get points from joint FIFO:%d", group.getPointsFromJointTrajectoryFIFO(traj,100,err));
     ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
-    group.convertPathToTrajectory(50,err);
-    ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
-    ROS_INFO("get points from joint FIFO:%d", group.getPointsFromJointTrajectoryFIFO(traj,50,err));
     group.convertPathToTrajectory(100,err);
     ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
-    group.suspendArmMotion();
-    ROS_INFO("get points from joint FIFO:%d", group.getPointsFromJointTrajectoryFIFO(traj,157,err));
+    ROS_INFO("get points from joint FIFO:%d", group.getPointsFromJointTrajectoryFIFO(traj,100,err));
+    group.convertPathToTrajectory(100,err);
+    ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());
+    //group.suspendArmMotion();
+    ROS_INFO("get points from joint FIFO:%d", group.getPointsFromJointTrajectoryFIFO(traj,100,err));
     //res = group.MoveJ(jnt1,2000,32000,1066,err);
     //group.convertPathToTrajectory(10000,err);
     ROS_INFO("planned-path:%d, joint_traj:%d", group.getPlannedPathFIFOLength(),group.getJointTrajectoryFIFOLength());

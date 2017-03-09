@@ -555,6 +555,59 @@ bool ParamGroup::getParam(const string &key, map<string, XmlRpc::XmlRpcValue> &v
     }
 }
 
+bool ParamGroup::getParam(const string &key, XmlRpc::XmlRpcValue &value) {
+    if (key.empty()) {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+    
+    vector<string> cooked_key;
+    split(key, cooked_key);
+    YAML::Node node = YAML::Clone(*root_);
+    vector<string>::iterator it;
+    for (it = cooked_key.begin(); it!=cooked_key.end(); ++it) {
+        if (node.IsMap() && node[*it]) {
+            node = node[*it];
+        }
+        else {
+            break;
+        }
+    }
+
+    if (it == cooked_key.end()) {
+        value.clear();
+        getXmlRpcValueFromNode(node, value);
+    }
+    else {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+}
+
+bool ParamGroup::getXmlRpcValueFromNode(YAML::Node node, XmlRpc::XmlRpcValue &value) {
+    value.clear();
+    if (node.IsMap()) {
+        for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
+            XmlRpc::XmlRpcValue temp_value;
+            getXmlRpcValueFromNode(it->second, temp_value);
+            value[it->first.Scalar()] = temp_value;
+        }
+    }
+    else if (node.IsSequence()) {
+        int cnt = 0;
+        for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
+            XmlRpc::XmlRpcValue temp_value;
+            getXmlRpcValueFromNode(*it, temp_value);
+            value[cnt] = temp_value;
+            cnt++;
+        }
+    }
+    else if(node.IsScalar()) {
+        parseScalar(node.Scalar(), value);
+        return true;
+    }
+}
+
 bool ParamGroup::hasParam(const string &key) {
     if (key.empty()) {
         last_error_ = PARAM_NOT_FOUND;
@@ -878,6 +931,7 @@ bool ParamGroup::loadParamFile(const string &file) {
     }
     else {
         yaml_file = file;
+        printInfo(yaml_file.c_str());
     }
     
     bool is_yaml_valid = false;
@@ -888,7 +942,7 @@ bool ParamGroup::loadParamFile(const string &file) {
                          std::istreambuf_iterator<char>());
         yaml_str = temp_str;
         yaml_handle_r.close();
-        if (yaml_str.substr(yaml_str.length() - 5) == "/n#END") {
+        if (yaml_str.substr(yaml_str.length() - 5, 4) == "#END") {
             try {
                 *root_ = YAML::Load(yaml_str);
                 is_yaml_valid = true;
@@ -966,7 +1020,7 @@ bool ParamGroup::loadParamFile(const string &file) {
                              std::istreambuf_iterator<char>());
             back_str = temp_str;
             back_handle_r.close();
-            if (back_str.substr(back_str.length() - 5) == "/n#END") {
+            if (back_str.substr(back_str.length() - 5, 4) == "#END") {
                 try {
                     *root_ = YAML::Load(back_str);
                     is_back_valid = true;

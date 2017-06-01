@@ -17,21 +17,6 @@ Summary:    lib to communicate between processes
 #include "struct_to_mem/struct_trajectory_segment.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
 
-//#define IPC_REQ 1
-//#define IPC_REP 2
-//#define IPC_PUB 3
-//#define IPC_SUB 4
-//#define TCP_REQ 11
-//#define TCP_REP 12
-//#define TCP_PUB 13
-//#define TCP_SUB 14
-//#define IPC_REQ 48 /*the type of createChannel(), stands for "request"*/
-//#define IPC_REP 49 /*the type of createChannel(), stands for "response"*/
-//#define IPC_PUB 32 /*the type of createChannel(), stands for "publisher"*/
-//#define IPC_SUB 33 /*the type of createChannel(), stands for "subsriber"*/
-//#define IPC_WAIT 0 /*the flag for send() or recv()*/
-//#define IPC_DONTWAIT 1 /*the flag for send() or recv()*/
-
 #define COMM_REQ 1
 #define COMM_REP 2
 #define COMM_PUB 3
@@ -49,7 +34,7 @@ namespace fst_comm_interface
 // The interface classs for communication between processes.
 // Sample usage:
 //   CommInterface comm;
-//   ERROR_CODE_TYPE result = comm.createChannel(IPC_REQ, "test");
+//   ERROR_CODE_TYPE result = comm.createChannel(COMM_REQ, COMM_IPC, "test");
 //   ServiceRequest req = {JTAC_CMD_SID, ""};
 //   ERROR_CODE_TYPE send = comm.send(&req, sizeof(req), IPC_DONTWAIT);
 //   ServiceResponse resp = {0, ""};
@@ -147,7 +132,20 @@ public:
     //          false -> failed to get IP address.
     //------------------------------------------------------------
     static bool getLocalIP(char **ip, const char *iface_name = "eth0");
- 
+
+    //------------------------------------------------------------
+    // Function:  setMaxMsgSize
+    // Summary: set the maximum size of the message if you have a message
+    //          bigger than 1024*1024 bytes.
+    //          This function can be called after createChannel().
+    // In:      size -> the unit is byte. 1024*1024*2 = 2M. 
+    // Out:     None.
+    // Return:  true -> succeed to set.
+    //          false-> failed to set.
+    //------------------------------------------------------------
+    bool setMaxMsgSize(int size);
+
+
     //The maximum string length of the channel name
     static const int NAME_SIZE = 32;
 
@@ -159,6 +157,8 @@ public:
         
 private:
     int fd_;
+
+    int max_msg_size;
 
     // Record error status.
     ERROR_CODE_TYPE error_flag_;

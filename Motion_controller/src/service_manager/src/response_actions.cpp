@@ -34,6 +34,8 @@ const int ResponseAction::service_table[SERVICE_TABLE_LEN] =
     WRITE_SERVO_DATA_BY_ADDR,
     WRTIE_DATA_BY_ID,
     READ_DTC_SID,
+    LOG_CONTROL_SID,
+    LOG_GETLIST_SID,
     MONITOR_HEARTBEAT_SID,
 
 };

@@ -1,36 +1,21 @@
 arm_group:
     enable_calibration: true
     joint_fifo_length_max: 100
-    #cartesian_velocity_min: 0.001
-    #cartesian_velocity_max: 4.0
-    #cartesian_acceleration_min: 0.001
-    #cartesian_acceleration_max: 16.0
-    #cycle_time_min: 0.0005
-    #cycle_time_max: 0.05
+    cartesian_velocity_min: 0.001
+    cartesian_velocity_max: 4.0
+    cartesian_acceleration_min: 0.001
+    cartesian_acceleration_max: 16.0
+    cycle_time_min: 0.0005
+    cycle_time_max: 0.05
+    cycle_time: 0.001
     #joint_alpha_overload: 1.0
     #joint_omega_overload: 1.0
-    #cartesian_velocity_scaling_factor_min: 0.01
-    #cartesian_velocity_scaling_factor_max: 1.0
-    #cartesian_acceleration_scaling_factor_min: 0.01
-    #cartesian_acceleration_scaling_factor_max: 1.0
-    #jump_threshold_scaling_factor_min: 0.01
-    #jump_threshold_scaling_factor_max: 1.0
-planning_interface:
-    cycle_time: 0.001
-    velocity: 1000.0
-    acceleration: 6000.0
-    velocity_scaling: 1.0
-    acceleration_scaling: 1.0
-    jerk: 10.0
-    joint_overshoot: 0.25
-    joint_errorangle: 0.15
-    omega_overload: 1.0
-    alpha_overload: 3.0
-    smooth_radius_coefficient: 1.2
-    smooth_curve:
-        quadratic: 1
-        cubic: 2
-    smooth_curve_mode: 'quadratic'
+    cartesian_velocity_scaling_factor_min: 0.01
+    cartesian_velocity_scaling_factor_max: 1.0
+    cartesian_acceleration_scaling_factor_min: 0.01
+    cartesian_acceleration_scaling_factor_max: 1.0
+    jump_threshold_scaling_factor_min: 0.01
+    jump_threshold_scaling_factor_max: 1.0
 
 calibrator:
     normal_offset_threshold: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
@@ -74,4 +59,4 @@ kinematics_limit:
         omega_max: 12.5664
         alpha_max: 31.4159
 
-#END
+

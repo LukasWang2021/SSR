@@ -452,6 +452,63 @@ bool ParamGroup::getParam(const string &key, vector<double> &value) {
     }
 }
 
+bool ParamGroup::getParam(const string &key, vector<string> &value) {
+    if (key.empty()) {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+    
+    vector<string> cooked_key;
+    split(key, cooked_key);
+    YAML::Node node = YAML::Clone(*root_);
+    vector<string>::iterator it;
+    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
+        if (node.IsMap() && node[*it]) {
+            node = node[*it];
+        }
+        else {
+            break;
+        }
+    }
+
+    if (it == cooked_key.end() && node.IsSequence()) {
+        YAML::const_iterator itr = node.begin();
+        if (judgeType(itr->Scalar()) == e_type_string) {
+            XmlRpc::XmlRpcValue v;
+            
+            for (itr = node.begin(); itr != node.end(); ++itr) {
+                if (judgeType(itr->Scalar()) != e_type_string) {
+                    break;
+                }
+                parseScalar(itr->Scalar(), v);
+                if (v.getType() == XmlRpc::XmlRpcValue::TypeString)
+                    value.push_back((string)v);
+                else
+                    break;
+            }  // for (itr = node.begin(); itr != node.end(); ++itr)
+            if (itr == node.end()) {
+                return true;
+            }
+            else {
+                last_error_ = PARAM_TYPE_ERROR;
+                return false;
+            }
+        }
+        else {
+            last_error_ = PARAM_TYPE_ERROR;
+            return false;
+        }
+    }
+    else if (it != cooked_key.end()) {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+    else {
+        last_error_ = PARAM_TYPE_ERROR;
+        return false;
+    }
+}
+
 bool ParamGroup::getParam(const string &key, map<string, XmlRpc::XmlRpcValue> &value) {
     if (key.empty()) {
         last_error_ = PARAM_NOT_FOUND;
@@ -495,6 +552,59 @@ bool ParamGroup::getParam(const string &key, map<string, XmlRpc::XmlRpcValue> &v
     else {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
+    }
+}
+
+bool ParamGroup::getParam(const string &key, XmlRpc::XmlRpcValue &value) {
+    if (key.empty()) {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+    
+    vector<string> cooked_key;
+    split(key, cooked_key);
+    YAML::Node node = YAML::Clone(*root_);
+    vector<string>::iterator it;
+    for (it = cooked_key.begin(); it!=cooked_key.end(); ++it) {
+        if (node.IsMap() && node[*it]) {
+            node = node[*it];
+        }
+        else {
+            break;
+        }
+    }
+
+    if (it == cooked_key.end()) {
+        value.clear();
+        getXmlRpcValueFromNode(node, value);
+    }
+    else {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+}
+
+bool ParamGroup::getXmlRpcValueFromNode(YAML::Node node, XmlRpc::XmlRpcValue &value) {
+    value.clear();
+    if (node.IsMap()) {
+        for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
+            XmlRpc::XmlRpcValue temp_value;
+            getXmlRpcValueFromNode(it->second, temp_value);
+            value[it->first.Scalar()] = temp_value;
+        }
+    }
+    else if (node.IsSequence()) {
+        int cnt = 0;
+        for (YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
+            XmlRpc::XmlRpcValue temp_value;
+            getXmlRpcValueFromNode(*it, temp_value);
+            value[cnt] = temp_value;
+            cnt++;
+        }
+    }
+    else if(node.IsScalar()) {
+        parseScalar(node.Scalar(), value);
+        return true;
     }
 }
 
@@ -578,6 +688,7 @@ bool ParamGroup::dumpParamFile(const string &file) {
         return false;
     }
     yaml_handle << YAML::Dump(*root_);
+    yaml_handle << "\n#END";
     yaml_handle.close();
 
     string backup_file = config_file + ".backup";
@@ -588,12 +699,14 @@ bool ParamGroup::dumpParamFile(const string &file) {
         return false;
     }
     backup_handle << YAML::Dump(*root_);
+    yaml_handle << "\n#END";
     backup_handle.close();
 
     printInfo("Success!");
     return true;
 }
 
+/*
 bool ParamGroup::loadParamFile(const string &file) {
     if (file.size() < 6) {
         printError("Bad file name");
@@ -658,6 +771,10 @@ bool ParamGroup::loadParamFile(const string &file) {
         string backup_str((std::istreambuf_iterator<char>(backup_handle)),
                            std::istreambuf_iterator<char>());
         if (yaml_str == backup_str) {
+            if (yaml_str.substr(yaml_str.length() - 5) != "/n#END") {
+                last_error_ = FAIL_BUILDING_PARAM_TREE;
+                return false;
+            }
             try {
                 *root_ = YAML::Load(yaml_str);
             }
@@ -771,6 +888,178 @@ bool ParamGroup::loadParamFile(const string &file) {
         printError("Bad YAML file! What the worse: we cannot restore the YAML file from backups!");
         last_error_ = FAIL_BUILDING_PARAM_TREE;
         return false;
+    }
+}
+*/
+
+bool ParamGroup::loadParamFile(const string &file) {
+    sub_namespace_ = "";
+    if (!root_->IsNull()) {
+        deleteParamTree();
+    }
+
+    printInfo("Loading YAML file ... ");
+    if (file.size() < 6) {
+        printError("Error: bad name");
+        last_error_ = BAD_FILE_NAME;
+        return false;
+    }
+    string extension = file.substr(file.size() - 5);
+    vector<string> path_vector;
+    split(file.substr(0, file.size() - 5), path_vector);
+    string file_name = path_vector.back();
+    if (extension != ".yaml" && extension != ".YAML" && extension != ".Yaml") {
+        printError("Error: Cannot open a non YAML file");
+        last_error_ = BAD_FILE_EXTENSION;
+        return false;
+    }
+    
+    string yaml_file;
+    if (file[0] != '/') {
+        char temp[1024] = {0};
+        int length = readlink("/proc/self/exe", temp, sizeof(temp));
+        if (length > 0 && length < sizeof(temp)) {
+            boost::filesystem::path executable(temp);
+            yaml_file = executable.parent_path().parent_path().parent_path().string() + "/" + file;
+            printInfo(yaml_file.c_str());
+        }
+        else {
+            printError("Error: bad path");
+            last_error_ = BAD_FILE_PATH;
+            return false;
+        }
+    }
+    else {
+        yaml_file = file;
+        printInfo(yaml_file.c_str());
+    }
+    
+    bool is_yaml_valid = false;
+    string yaml_str;
+    std::ifstream yaml_handle_r(yaml_file.c_str());
+    if (yaml_handle_r.is_open()) {
+        string temp_str((std::istreambuf_iterator<char>(yaml_handle_r)),
+                         std::istreambuf_iterator<char>());
+        yaml_str = temp_str;
+        yaml_handle_r.close();
+        if (yaml_str.substr(yaml_str.length() - 5, 4) == "#END") {
+            try {
+                *root_ = YAML::Load(yaml_str);
+                is_yaml_valid = true;
+            }
+            catch (YAML::Exception& exception) {
+                printError(exception.what());
+                is_yaml_valid = false;
+                last_error_ = FAIL_BUILDING_PARAM_TREE;
+            }
+        }
+        else {
+            is_yaml_valid = false;
+            last_error_ = FAIL_BUILDING_PARAM_TREE;
+        }
+    }
+    else {
+        is_yaml_valid = false;
+        last_error_ = FAIL_OPENNING_FILE;
+    }
+
+    if (is_yaml_valid == true) {
+        string back_file = yaml_file + ".backup";
+        std::ifstream back_handle_r(back_file.c_str());
+        if (back_handle_r.is_open()) {
+            string back_str((std::istreambuf_iterator<char>(back_handle_r)),
+                             std::istreambuf_iterator<char>());
+            back_handle_r.close();
+            if (back_str == yaml_str) {
+                sub_namespace_ = file_name;
+                printInfo("Success!");
+                return true;
+            }
+            else {
+                printInfo("Mismatch detected, updating backup file");
+                std::ofstream back_handle_w(back_file.c_str());
+                if (back_handle_w.is_open()) {
+                    back_handle_w << yaml_str;
+                    back_handle_w.close();
+                    sub_namespace_ = file_name;
+                    printInfo("Success!");
+                    return true;
+                }
+                else {
+                    printError("Updata backup file failed, loadParamFile abort");
+                    last_error_ = FAIL_OPENNING_FILE;
+                    return false;
+                }
+            }
+        }
+        else {
+            printError("Cannot read backup file, re-backing up ...");
+            std::ofstream back_handle_w(back_file.c_str());
+            if (back_handle_w.is_open()) {
+                back_handle_w << yaml_str;
+                back_handle_w.close();
+                sub_namespace_ = file_name;
+                printInfo("Success!");
+                return true;
+            }
+            else {
+                printError("Re-back up failed, loadParamFile abort");
+                last_error_ = FAIL_OPENNING_FILE;
+                return false;
+            }
+        }
+    }
+    else {  
+        printInfo("Cannot build parameter tree from YAML file, restoring from backup file ... ");
+        bool is_back_valid = false;
+        string back_str;
+        string back_file = yaml_file + ".backup";
+        std::ifstream back_handle_r(back_file.c_str());
+        if (back_handle_r.is_open()) {
+            string temp_str((std::istreambuf_iterator<char>(back_handle_r)),
+                             std::istreambuf_iterator<char>());
+            back_str = temp_str;
+            back_handle_r.close();
+            if (back_str.substr(back_str.length() - 5, 4) == "#END") {
+                try {
+                    *root_ = YAML::Load(back_str);
+                    is_back_valid = true;
+                }
+                catch (YAML::Exception& exception) {
+                    printError(exception.what());
+                    last_error_ = FAIL_BUILDING_PARAM_TREE;
+                    is_back_valid = false;
+                }
+            }
+            else {
+                is_back_valid = false;
+                last_error_ = FAIL_BUILDING_PARAM_TREE;
+            }
+        }
+        else {
+            printError("Cannot open backup file");
+            last_error_ = FAIL_OPENNING_FILE;
+            is_back_valid = false;
+        }
+        if (is_back_valid == true) {
+            std::ofstream yaml_handle_w(yaml_file.c_str());
+            if (yaml_handle_w.is_open()) {
+                yaml_handle_w << back_str;
+                yaml_handle_w.close();
+                sub_namespace_ = file_name;
+                printInfo("Success!");
+                return true;
+            }
+            else {
+                printError("Cannot restore YAML from backup file, loadParamFile abort");
+                last_error_ = FAIL_OPENNING_FILE;
+                return false;
+            }           
+        }
+        else {
+            printError("Cannot build parameter tree from backup file, loadParamFile abort");
+            return false;
+        }
     }
 }
 
@@ -980,6 +1269,49 @@ bool ParamGroup::setParam(const string &key, const vector<int> &value) {
 }
 
 bool ParamGroup::setParam(const string &key, const vector<double> &value) {
+    if (key.empty()) {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+
+    vector<string> cooked_key;
+    split(key, cooked_key);
+    vector<YAML::Node> v_node;
+    int vector_size = cooked_key.size();
+    v_node.resize(vector_size);
+    vector<YAML::Node>::iterator node_itr = v_node.begin();
+    vector<string>::iterator key_itr = cooked_key.begin();
+    if ((*root_)[cooked_key.front()]) {
+        v_node.front() = (*root_)[cooked_key.front()];
+        int loop = 1;
+        for (; loop < vector_size; ++loop) {
+            ++key_itr;
+            if ((*node_itr)[*key_itr]) {
+                *(node_itr + 1) = (*node_itr)[*key_itr];
+                ++node_itr;
+            }
+            else {
+                break;
+            }
+        }
+        if (loop == vector_size) {
+            *node_itr = value;
+            // cout << (*root_)["name"]["first"]["sdc"].IsSequence() << endl;
+            // cout << (*root_)["name"]["first"]["sdc"][0].as<double>() << endl;
+            return true;
+        }
+        else {
+            last_error_ = PARAM_NOT_FOUND;
+            return false;
+        }
+    }
+    else {
+        last_error_ = PARAM_NOT_FOUND;
+        return false;
+    }
+}
+
+bool ParamGroup::setParam(const string &key, const vector<string> &value) {
     if (key.empty()) {
         last_error_ = PARAM_NOT_FOUND;
         return false;

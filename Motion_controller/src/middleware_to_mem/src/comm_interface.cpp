@@ -10,13 +10,13 @@ Summary:    lib to communicate between processes
 #define MIDDLEWARE_TO_MEM_COMM_INTERFACE_CPP_
 
 #include "comm_interface/comm_interface.h"
-#include <iostream>
-#include <sstream>
 #include <unistd.h>
 #include <string.h>
 #include <net/if.h>  // socket()
 #include <sys/ioctl.h> // ioctl()
 #include <arpa/inet.h> // inet_ntoa()
+#include <iostream>
+#include <sstream>
 #include <nanomsg/nn.h>  
 #include <nanomsg/reqrep.h>
 #include <nanomsg/pubsub.h>
@@ -34,6 +34,7 @@ namespace fst_comm_interface
 CommInterface::CommInterface()
 {
     fd_ = -1;
+    max_msg_size = MAX_MSG_SIZE;
     error_flag_ = CREATE_CHANNEL_FAIL;
 }
 
@@ -134,6 +135,14 @@ ERROR_CODE_TYPE CommInterface::createChannel(int protocol, int transport, const 
     }
 
     error_flag_ = 0;
+
+    if (!setMaxMsgSize(max_msg_size))
+    {
+        std::cout<<"Error in CommInterface::createChannel() to set the max message size: "<<std::endl;
+        error_flag_ = CREATE_CHANNEL_FAIL;
+        return CREATE_CHANNEL_FAIL;
+    };
+
     return FST_SUCCESS;
 }
 
@@ -159,7 +168,7 @@ ERROR_CODE_TYPE CommInterface::send(const void *buf, int buf_size, int flag)
         return SEND_MSG_FAIL;
     }
 
-    if (buf_size > MAX_MSG_SIZE)
+    if (buf_size > max_msg_size)
     {
         std::cout<<"Warning in CommInterface::send(): The size value exceeds maximum message size."<<std::endl;
     }
@@ -218,7 +227,7 @@ ERROR_CODE_TYPE CommInterface::recv(void *buf, int buf_size, int flag)
         std::cout<<"Error in CommInterface::recv(): Please enter a type(IPC_DONTWAIT, IPC_WAIT)."<<std::endl;
         return RECV_MSG_FAIL;
     }
-    if (buf_size > MAX_MSG_SIZE)
+    if (buf_size > max_msg_size)
     {
         std::cout<<"Warning in CommInterface::recv(): The size value exceeds maximum message size."<<std::endl;
     } 
@@ -307,9 +316,30 @@ bool CommInterface::getLocalIP(char **ip, const char *iface_name)
     }
 
     *ip = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr); //convert ip to char*.
-    std::cout<<"Host "<<iface_name<<":"<<*ip<<std::endl;
+    std::cout<<"Host :"<<*ip<<std::endl;
 
     close(sockfd);
+    return true;
+}
+
+//------------------------------------------------------------
+// Function:  setMaxMsgSize
+// Summary: set the maximum size of the message if you have a message
+//          bigger than 1024*1024 bytes.
+//          This function can be called after createChannel().
+// In:      size -> the unit is byte. 1024*1024*2 = 2M. 
+// Out:     None.
+// Return:  true -> succeed to set.
+//          false-> failed to set.
+//------------------------------------------------------------
+bool CommInterface::setMaxMsgSize(int size)
+{
+    if (error_flag_ != 0)
+        return false;
+
+    if (nn_setsockopt(fd_, NN_SOL_SOCKET, NN_RCVMAXSIZE, &size, sizeof(size)) < 0)
+        return false;
+    max_msg_size = size;
     return true;
 }
 
@@ -429,7 +459,8 @@ bool CommInterface::setSubOpt(void)
 //------------------------------------------------------------
 void CommInterface::closeChannel(void)
 {
-    nn_close(fd_);
+    if (error_flag_ == 0)
+        nn_close(fd_);
 }
 
 

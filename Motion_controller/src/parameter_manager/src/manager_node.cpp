@@ -23,7 +23,19 @@ using std::vector;
 using std::map;
 
 
+int main(int argc, char **argv)
+{
+    string file_name = "share/parameter_manager/config/test.yaml";
+    //fst_parameter::ParamGroup params("/home/fst/ros_workspace/src/parameter_manager/config/test.yaml");
+    fst_parameter::ParamGroup params(file_name);
+    
+    XmlRpc::XmlRpcValue value;
+    params.getParam("house", value);
+}
 
+
+
+/*
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "parameter_manager");
@@ -154,7 +166,7 @@ int main(int argc, char **argv)
     cout<<"------------------- Dump File Test -------------------"<<endl;
     file_name = "config/motion_controller_dump.yaml";
     param_group.dumpParamFile(file_name);
-
+*/
     /*
     cout<<"------------------- Test 1-------------------------"<<endl;
     std::ifstream file(file_name.c_str());
@@ -226,7 +238,7 @@ int main(int argc, char **argv)
     std::string scalar = it->second.Scalar();
     cout << scalar << endl;
     */
-
+/*
     cout<<"------------------- At Last -------------------------"<<endl;
     param_group.deleteParamTree();
     XmlRpc::XmlRpcValue value;
@@ -244,7 +256,7 @@ int main(int argc, char **argv)
     cout << sizeof(value) << endl;
    
     return 0;
-}
+}*/
 
 /*
 std::ostream& operator<<(std::ostream& os, fst_parameter::Param& v)
@@ -272,3 +284,5 @@ std::ostream& operator<<(std::ostream& os, fst_parameter::Param& v)
     return os;
 }
 */
+
+

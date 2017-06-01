@@ -47,7 +47,9 @@ class ParamGroup {
     bool getParam(const std::string &key, std::string &value);
     bool getParam(const std::string &key, std::vector<int> &value);
     bool getParam(const std::string &key, std::vector<double> &value);
+    bool getParam(const std::string &key, std::vector<std::string> &value);
     bool getParam(const std::string &key, std::map<std::string, XmlRpc::XmlRpcValue> &value);
+    bool getParam(const std::string &key, XmlRpc::XmlRpcValue &value);
 
 //    bool getParamNames(std::vector<std::string> &keys);
     bool hasParam(const std::string &key);
@@ -64,7 +66,9 @@ class ParamGroup {
     bool setParam(const std::string &key, const std::string &value);
     bool setParam(const std::string &key, const std::vector<int> &value);
     bool setParam(const std::string &key, const std::vector<double> &value);
+    bool setParam(const std::string &key, const std::vector<std::string> &value);
     bool setParam(const std::string &key, const std::map<std::string, XmlRpc::XmlRpcValue> &value);
+    // bool setParam(const std::string &key, const XmlRpc::XmlRpcValue &value);
     
     bool getRemoteParam(const std::string &key, XmlRpc::XmlRpcValue &value);
     bool getRemoteParam(const std::string &key, int &value);
@@ -94,6 +98,8 @@ class ParamGroup {
     bool parseScalar(const std::string &scalar, XmlRpc::XmlRpcValue &value);
     void split(const std::string &raw, std::vector<std::string> &cooked);
     std::string resolve(const std::string &str);
+
+    bool getXmlRpcValueFromNode(YAML::Node node, XmlRpc::XmlRpcValue &value);
 
     inline void logMessage(const std::string &str);
     inline void printInfo(const char *str);

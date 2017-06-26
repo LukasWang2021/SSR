@@ -7,6 +7,32 @@ find_package(catkin REQUIRED COMPONENTS
   parameter_manager
 )
 
+# setting for include file.
+set(VERSION_MAJOR 1)
+set(VERSION_MINOR 0)
+set(VERSION_PATCH 0)
+string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
+
+# setting for package version file.
+set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+
+# configure a header file to pass some settings to the source code.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/include/version.h.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
+)
+
+# add the search path for include files.
+include_directories(${PROJECT_BINARY_DIR})
+
+# write the verson info to a file.
+file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
+
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+)
+
+
 if(${catkin_CROSS})
 	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/middleware_to_mem/include
             ${depend_PATH_INC}/parameter_manager/include)
@@ -29,12 +55,6 @@ include_directories(
 
 add_executable(servo_diag src/servo_diag.cpp src/servo_conf.cpp src/servo_service.cpp src/data_monitor.cpp)
 target_link_libraries(servo_diag ${catkin_LIBRARIES} middleware_to_mem comm_interface parameter_manager)
-
-install(DIRECTORY include/
-   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-   PATTERN ".svn" EXCLUDE
- )
 
 install(TARGETS servo_diag
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

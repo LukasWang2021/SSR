@@ -1,8 +1,8 @@
 /**********************************************
 File: test.c
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
-Instruction: test the service functions
-Author: Feng.Wu 10-oct-2016
+Instruction: test tcp/ip
+Author: Feng.Wu 27-03-2017
 Modifier:
 **********************************************/
 
@@ -10,28 +10,25 @@ Modifier:
 #define TEST_C_
 
 #include <iostream>
-#include <string.h>
 #include "error_code/error_code.h"
 #include "comm_interface/comm_interface.h"
-#include "struct_to_mem/struct_service_request.h"
-#include "struct_to_mem/struct_service_response.h"
 
+#define SERVER_PORT "5559"
+bool isLittleEndian(void)
+{
+	union FourByte{
+		uint32_t i;
+		char j;
+	}e;
+	e.i = 1;
+	if (e.j == 1)
+		return true;
+	return false;
+}
 
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <time.h>
-#include <unistd.h>
-#include <sched.h>
-#include <sys/time.h>
-#include <netinet/in.h>  /* For htonl and ntohl */
-#include <sys/mman.h>
-
-#define SERVER_PORT "5558"
 int main(int argc, char *argv[]) {
 
-
+    printf("System is %s - Endian.\n", isLittleEndian() ? "Little" : "Big");
     //create communication channel.
     fst_comm_interface::CommInterface comm;
     char *ip, ip_addr[32];
@@ -44,30 +41,22 @@ int main(int argc, char *argv[]) {
         std::cout<<"Error when server createChannel."<<std::endl;
         return -1;
     }
-    comm.setMaxMsgSize(1024*1024*5);
     std::cout<<"server bind ok :"<<ip_addr<<std::endl;
 
-    ServiceRequest req = {0, ""};
-    ServiceResponse resp = {0x31, "This is response"};
+    int req = 0, resp = 110;
     while (true)
     {
-//        usleep(100000);
         int rc = comm.recv(&req, sizeof(req), COMM_WAIT);
         if (rc == RECV_MSG_FAIL)
-            std::cout<<"Error when server recv."<<std::endl;
+            std::cout<<"Error when server recv."<<std::endl;;
 
-        std::cout<<"req.req_id = "<<req.req_id<<". req.req_buf = "<<req.req_buff<<std::endl;
-        resp.res_id = req.req_id + 1;
-       //send
+         std::cout<<"server recv = "<<req<<std::endl;
         int send = comm.send(&resp, sizeof(resp), COMM_DONTWAIT);
-        if (send == SEND_MSG_FAIL)        
+        if (send == SEND_MSG_FAIL)          
             std::cout<<"Error when client send."<<std::endl;    
     }
 
-    sleep(1);
-    std::cout<<"ip2="<<ip<<std::endl;
-
-    printf("Server: done\n");
+    std::cout<<"Server: done"<<std::endl;
     return 0;
 }
 

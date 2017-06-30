@@ -30,25 +30,26 @@ Modifier:
 
 int main(int argc, char *argv[]) {
 
-    int n = 10;
+    int n = 100;
     struct timespec start, stop;
     int64_t delta;
-    int64_t sum=0, avg=0;
+    int64_t sum=0;
 
 
     fst_comm_interface::CommInterface comm;
 
-    ERROR_CODE_TYPE fd = comm.createChannel(COMM_REQ, COMM_TCP, "192.168.1.64");      
+    ERROR_CODE_TYPE fd = comm.createChannel(COMM_REQ, COMM_TCP, "192.168.3.13:5558");      
     if (fd == CREATE_CHANNEL_FAIL)
     {
         printf("Error when client createChannel.\n");
         return -1;
     }
+//    comm.setMaxMsgSize(1024*1024*5);
     for (int i = 0; i < n; ++i)
     {
         //set the request data
 
-        ServiceRequest req = {0x31, "This is client request"};
+        ServiceRequest req = {10, "This is client request"};
         ServiceResponse resp;
         if (clock_gettime(CLOCK_MONOTONIC, &start) == -1)
         {
@@ -58,18 +59,14 @@ int main(int argc, char *argv[]) {
 
         ERROR_CODE_TYPE send = comm.send(&req, sizeof(req), COMM_DONTWAIT);
         if (send == SEND_MSG_FAIL)
-        {
-            printf("Error when client send.\n");
-            return -1;
-        }
+            std::cout<<"Error when client send."<<std::endl;
 //        std::cout<<"start sec="<<sec<<". nsec="<<nsec<<std::endl;
           
         //receiving in BLOCK mode using string
+        sleep(2);
         int rc = comm.recv(&resp, sizeof(resp), COMM_WAIT);
-        if (rc == -1)
-        {
+        if (rc == RECV_MSG_FAIL)
             printf("Error when client recv.\n");
-        }
           
         if (clock_gettime(CLOCK_MONOTONIC, &stop) == -1) {
             perror("clock_gettime");
@@ -77,9 +74,9 @@ int main(int argc, char *argv[]) {
         }
         delta =(stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_nsec - start.tv_nsec)/1000;
 //        if (delta > 10000)
-            std::cout<<"|=====delta time = "<<delta<<"us"<<std::endl;
+//            std::cout<<"|=====delta time = "<<delta<<"us"<<std::endl;
 
-//        std::cout<<i<<" Client: receive rep.id = "<<resp.res_id<<". rep_info = "<<resp.res_buff<<std::endl;
+        std::cout<<i<<" Client: receive rep.id = "<<resp.res_id<<". rep_info = "<<resp.res_buff<<std::endl;
 
 
         sum += delta;

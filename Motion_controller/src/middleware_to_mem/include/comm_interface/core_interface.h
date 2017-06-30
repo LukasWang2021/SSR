@@ -11,6 +11,7 @@ Summary:    lib to communicate with core1
 #define MIDDLEWARE_TO_MEM_CORE_INTERFACE_H_
 
 #include <vector>
+#include <string>
 #include "error_code/error_code.h"
 #include "middleware_to_mem/middleware_to_sharedmem.h"
 #include "struct_to_mem/struct_joint_command.h"
@@ -19,6 +20,15 @@ Summary:    lib to communicate with core1
 
 namespace fst_core_interface
 {
+
+//------------------------------------------------------------
+// Function:  getVersion
+// Summary: get the version. 
+// In:      None
+// Out:     None
+// Return:  std::string -> the version.
+//------------------------------------------------------------
+std::string getVersion(void);
 
 //------------------------------------------------------------
 // The interface classs for motion controller to send and receive
@@ -144,6 +154,7 @@ private:
     std::vector<Points> joints_in_fifo_;
     FeedbackJointState fbjs_;
 };
+
 } //namespace fst_core_interface
 
 #endif //MIDDLEWARE_TO_MEM_CORE_INTERFACE_H_

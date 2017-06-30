@@ -3,7 +3,7 @@ Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       service_manager.cpp
 Author:     Feng.Wu 
 Create:     07-Nov-2016
-Modify:     12-Dec-2016
+Modify:     09-Jun-2017
 Summary:    dealing with service
 **********************************************/
 #ifndef SERVICE_MANAGER_SERVICE_MANAGER_CPP_
@@ -14,10 +14,28 @@ Summary:    dealing with service
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
-
+#include <sstream>
+#include "service_manager_version.h"
 
 namespace fst_service_manager
 {
+
+//------------------------------------------------------------
+// Function:  getVersion
+// Summary: get the version. 
+// In:      None
+// Out:     None
+// Return:  std::string -> the version.
+//------------------------------------------------------------
+std::string getVersion(void)
+{
+    std::stringstream ss;
+    ss<<service_manager_VERSION_MAJOR<<"."
+        <<service_manager_VERSION_MINOR<<"."
+        <<service_manager_VERSION_PATCH;
+    std::string s = ss.str();
+    return s;
+}
 
 //------------------------------------------------------------
 // Function:  ServiceManager
@@ -33,8 +51,9 @@ ServiceManager::ServiceManager()
     loop_count_mcs_ = 0;
     check_mcs_enable_ = false;
     running_sid_ = 0;
+    std::cout<<"service_manager version:"<<fst_service_manager::getVersion()<<std::endl;
 }
-
+  
 //------------------------------------------------------------
 // Function:  ~ServiceManager
 // Summary: The destructor of class
@@ -77,6 +96,13 @@ ERROR_CODE_TYPE ServiceManager::init(void)
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error in CommMonito::init(): fail to create servo param channel."<<std::endl;
+        return CREATE_CHANNEL_FAIL;
+    }
+
+    result = comm_system_.createChannel(COMM_REP, COMM_IPC, "system_manager");
+    if (result == CREATE_CHANNEL_FAIL)
+    {
+        std::cout<<"Error in CommMonito::init(): fail to create system_manager channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
 
@@ -152,6 +178,17 @@ bool ServiceManager::receiveRequest(void)
         if (checkRequest(request)) 
         {
             channel_flag_ = PARAM_CHANNEL;
+            return true;
+        }
+    }
+
+    result = comm_system_.recv(&request, sizeof(request), COMM_DONTWAIT);
+    if (result == 0)
+    {
+        //push the request into fifo.
+        if (checkRequest(request)) 
+        {
+            channel_flag_ = SYSTEM_CHANNEL;
             return true;
         }
     }
@@ -408,8 +445,8 @@ ERROR_CODE_TYPE ServiceManager::interactBareCore(void)
         }
     }// end while (res_result == false)
     // For debug
-    if (cost_time > 5000)
-        std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us."<<std::endl;
+//    if (cost_time > 5000)
+//        std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us."<<std::endl;
     return FST_SUCCESS;
 }
 
@@ -668,7 +705,7 @@ int main(int argc, char** argv)
 
     }else
 */    {
-
+    
     fst_service_manager::ServiceManager cm;
     ERROR_CODE_TYPE init_result = cm.init();
     if (init_result != 0) 

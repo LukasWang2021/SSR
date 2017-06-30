@@ -31,6 +31,15 @@ namespace fst_comm_interface
 {
 
 //------------------------------------------------------------
+// Function:  getVersion
+// Summary: get the version. 
+// In:      None
+// Out:     None
+// Return:  std::string -> the version.
+//------------------------------------------------------------
+std::string getVersion(void);
+
+//------------------------------------------------------------
 // The interface classs for communication between processes.
 // Sample usage:
 //   CommInterface comm;
@@ -160,6 +169,8 @@ private:
 
     int max_msg_size;
 
+    static int obj_num_;
+
     // Record error status.
     ERROR_CODE_TYPE error_flag_;
 
@@ -236,6 +247,8 @@ private:
     void closeChannel(void);
        
 };
+
+
 } //namespace fst_comm_interface
 
 #endif //MIDDLEWARE_TO_MEM_COMM_INTERFACE_H_

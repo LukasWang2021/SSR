@@ -1,6 +1,0 @@
-<launch>
-
-  <node name="test_app" pkg="middleware_to_mem" type="test_app" respawn="false" output="screen">
-  </node>
-
-</launch>

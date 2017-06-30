@@ -3,7 +3,7 @@ Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       core_interface.cpp
 Author:     Feng.Wu 
 Create:     04-Nov-2016
-Modify:     08-Dec-2016
+Modify:     09-Jun-2017
 Summary:    lib to communicate with core1
 **********************************************/
 #ifndef MIDDLEWARE_TO_MEM_CORE_INTERFACE_CPP_
@@ -11,9 +11,29 @@ Summary:    lib to communicate with core1
 
 #include "comm_interface/core_interface.h"
 #include <iostream>
+#include <sstream>
+#include "middleware_to_mem_version.h"
 
 namespace fst_core_interface
 {
+
+//------------------------------------------------------------
+// Function:  getVersion
+// Summary: get the version. 
+// In:      None
+// Out:     None
+// Return:  std::string -> the version.
+//------------------------------------------------------------
+std::string getVersion(void)
+{
+     std::stringstream ss;
+    ss<<middleware_to_mem_VERSION_MAJOR<<"."
+        <<middleware_to_mem_VERSION_MINOR<<"."
+        <<middleware_to_mem_VERSION_PATCH;
+    std::string s = ss.str();
+
+    return s;
+}
 
 //------------------------------------------------------------
 // Function:  CoreInterface
@@ -39,7 +59,7 @@ CoreInterface::CoreInterface()
         fbjs_.effort[j] = 0;
     }
     fbjs_.state = STATE_READY;
-
+    std::cout<<"lib_core_interface version:"<<getVersion()<<std::endl;
 }
 
 //------------------------------------------------------------

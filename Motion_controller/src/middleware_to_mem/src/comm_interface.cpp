@@ -3,7 +3,7 @@ Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       comm_interface.cpp
 Author:     Feng.Wu 
 Create:     04-Nov-2016
-Modify:     08-Dec-2016
+Modify:     09-Jun-2017
 Summary:    lib to communicate between processes
 **********************************************/
 #ifndef MIDDLEWARE_TO_MEM_COMM_INTERFACE_CPP_
@@ -20,9 +20,30 @@ Summary:    lib to communicate between processes
 #include <nanomsg/nn.h>  
 #include <nanomsg/reqrep.h>
 #include <nanomsg/pubsub.h>
+#include "middleware_to_mem_version.h"
 
 namespace fst_comm_interface
 {
+
+int CommInterface::obj_num_;
+
+//------------------------------------------------------------
+// Function:  getVersion
+// Summary: get the version. 
+// In:      None
+// Out:     None
+// Return:  std::string -> the version.
+//------------------------------------------------------------
+std::string getVersion(void)
+{
+     std::stringstream ss;
+    ss<<middleware_to_mem_VERSION_MAJOR<<"."
+        <<middleware_to_mem_VERSION_MINOR<<"."
+        <<middleware_to_mem_VERSION_PATCH;
+    std::string s = ss.str();
+
+    return s;
+}
 
 //------------------------------------------------------------
 // Function:  CommInterface
@@ -35,7 +56,10 @@ CommInterface::CommInterface()
 {
     fd_ = -1;
     max_msg_size = MAX_MSG_SIZE;
+    obj_num_++;
     error_flag_ = CREATE_CHANNEL_FAIL;
+    if (obj_num_ == 1)
+        std::cout<<"lib_comm_interface version:"<<getVersion()<<std::endl;
 }
 
 //------------------------------------------------------------
@@ -462,7 +486,6 @@ void CommInterface::closeChannel(void)
     if (error_flag_ == 0)
         nn_close(fd_);
 }
-
 
 } //namespace fst_comm_interface
 

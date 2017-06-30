@@ -13,6 +13,7 @@ Summary:    Init the middleware
 #include "struct_to_mem/shared_mem_process.h" // for communication between processes 
 #include "struct_to_mem/shared_mem_core.h" //for communication between cores (running in linux)
 #include "logfifo.h"
+#include "middleware_to_mem_version.h"
 
 //for communication between processes
 #define MEM_MAP_SIZE_PROCESS 65536
@@ -100,6 +101,7 @@ int openMem(int type)
         return -1;
     }
     #endif
+
     return handle;
 }
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(service_manager)
+project(io_manager)
 
 # setting for include file.
 set(VERSION_MAJOR 1)
@@ -14,46 +14,56 @@ set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/version.h.in"
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
-#  "${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}_version.h"
 )
 
-# add the search path for include files.
+# add the search path for include files
 include_directories(${PROJECT_BINARY_DIR})
 
-# write the verson info to a file.
+# write the verson info to a file
 file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
+
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  middleware_to_mem
+  parameter_manager
+  ioboard
 )
 
 if(${catkin_CROSS})
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/middleware_to_mem/include)
-	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/libmiddleware_to_mem.so)
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/parameter_manager/include ${depend_PATH_INC}/ioboard/include)
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libioboard.so)
 endif(${catkin_CROSS})
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES 
-  CATKIN_DEPENDS roscpp middleware_to_mem comm_interface
-  DEPENDS libcomm_interface.so libmiddleware_to_mem.so
+  INCLUDE_DIRS include
+  LIBRARIES io_manager
+  CATKIN_DEPENDS roscpp parameter_manager ioboard
+  DEPENDS libparameter_manager.so libioboard.so
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -lrt -lpthread -O0 -DPB_FIELD_32BIT -DSIMMULATION")
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(service_manager src/service_manager.cpp src/response_actions.cpp)
-target_link_libraries(service_manager ${catkin_LIBRARIES} middleware_to_mem comm_interface)
-#set_target_properties(service_manager PROPERTIES VERSION ${service_manager_VERSION}
-#    SOVERSION ${service_manager_VERSION_MAJOR}
-# )
+add_library(io_manager src/io_manager.cpp)
+target_link_libraries(io_manager ${catkin_LIBRARIES} parameter_manager ioboard)
 
-install(TARGETS service_manager
+add_executable(io_manager_node src/io_manager_node.cpp)
+target_link_libraries(io_manager_node ${catkin_LIBRARIES} io_manager)
+
+install(TARGETS io_manager
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS io_manager_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY config
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 
   DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
+

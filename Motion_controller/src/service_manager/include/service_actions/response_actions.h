@@ -32,11 +32,12 @@ enum ServiceID
     LOG_CONTROL_SID = 0x40,
     LOG_GETLIST_SID = 0x41,
     MONITOR_HEARTBEAT_SID = 0xA1,
+    APP_VERSION_SID = 0xA2,
 
 };
 //2.SERVICE_TABLE_LEN plus one if add new item.
 #define RESPONSE_LOCAL_TABLE_LEN 3
-#define SERVICE_TABLE_LEN 11
+#define SERVICE_TABLE_LEN 12
 namespace fst_response_action
 {
 

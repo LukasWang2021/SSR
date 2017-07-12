@@ -11,6 +11,7 @@
 #include "json_parse.h"
 #include "common.h"
 
+ 
 /**
  * @brief: callback for encode param list msg  
  *
@@ -51,10 +52,54 @@ bool listCallback(pb_ostream_t *stream, const pb_field_t *field, void * const *a
         if (!pb_encode_submessage(stream, BaseTypes_ParameterMsg_fields, &param_msg))
             return false;
     }
-    
+    param_msg.has_info = true;
+    param_msg.info.overwrite_active = 0; //not active
+    param_msg.info.data_type = 2;  // uint8
+    param_msg.info.data_size = 1;  // 1 byte
+    param_msg.info.number_of_elements = 1;  
+    param_msg.info.param_type = BaseTypes_ParamType_INPUT_SIGNAL;  //input
+    param_msg.info.permission = BaseTypes_Permission_permission_undefined;
+    param_msg.info.user_level = BaseTypes_UserLevel_user_level_undefined;
+    param_msg.info.unit = BaseTypes_Unit_unit_undefined;
+    IOInterface *io_interface = json_paser->io_interface_;
+    fst_io_manager::IODeviceInfo *info = io_interface->getDevInfoPtr();
+    FST_INFO("the io num :%d", io_interface->getIODevNum());
+    for (int i = 0; i < io_interface->getIODevNum(); i++, info++)
+    {        
+        strcpy(param_msg.info.path, info->path.c_str());
+        param_msg.info.id = info->id;
+
+        if (!pb_encode_tag_for_field(stream, field))
+            return false;        
+        if (!pb_encode_submessage(stream, BaseTypes_ParameterMsg_fields, &param_msg))
+            return false;
+        
+        /*for (unsigned int j = 0; j < info->input; j++)*/
+        //{
+            //int di_id = info->id + j + 1;
+            //sprintf(param_msg.info.path, "%s/DI/%d", info->path.c_str(), di_id);
+            //param_msg.info.id = di_id;
+            //if (!pb_encode_tag_for_field(stream, field))
+                //return false;        
+            //if (!pb_encode_submessage(stream, BaseTypes_ParameterMsg_fields, &param_msg))
+                //return false;
+        //}
+        //int offset = info->input + 1;
+        //param_msg.info.param_type = BaseTypes_ParamType_OUTPUT_SIGNAL;  
+        //for (unsigned int j = 0; j < info->output; j++)
+        //{
+            //int do_id = info->id + j + offset;
+            //sprintf(param_msg.info.path, "%s/DO/%d", info->path.c_str(), do_id);
+            //param_msg.info.id = do_id;
+            //if (!pb_encode_tag_for_field(stream, field))
+                //return false;        
+            //if (!pb_encode_submessage(stream, BaseTypes_ParameterMsg_fields, &param_msg))
+                //return false;
+        /*}*/
+    }
+
     return true;
 }
-
 
 JsonParse::JsonParse(string path)
 {
@@ -73,10 +118,13 @@ JsonParse::JsonParse(string path)
 		FST_ERROR("Error parse json construction:%s", e.what());
 		exit(0);
 	}
+    
+    
 }
 
 JsonParse::~JsonParse()
 {
+
 }
 /**
  * @brief: parse the file to a map list
@@ -159,7 +207,7 @@ bool JsonParse::getParamFromID(uint32_t id, ParamProperty &param_property)
 	map<uint32_t, ParamProperty>::iterator it = params_list_map_.find(id);
 	if (it == params_list_map_.end())
 	{
-		FST_INFO("can't find ID:%d",id);
+		FST_INFO("getParamFromID:can't find ID:%d",id);
 		return false;
 	}
 
@@ -180,7 +228,7 @@ bool JsonParse::getIDFromPath(const char *path, uint32_t &id)
 	
 	if (it == path_id_map_.end())
 	{
-		FST_INFO("can't find ID:%d",id);
+		FST_INFO("getIDFromPath:can't find ID:%d",id);
 		return false;
 	}
 
@@ -188,37 +236,80 @@ bool JsonParse::getIDFromPath(const char *path, uint32_t &id)
 	return true;
 }
 
+ParamProperty* JsonParse::getParamProperty(uint32_t id)
+{
+    map<uint32_t, ParamProperty>::iterator it = params_list_map_.find(id);
+
+    if (it == params_list_map_.end())
+    {
+        FST_ERROR("can't find id:%d", id);
+        return NULL;
+    }
+
+    return &(it->second);
+}
+
 /**
  * @brief: getParamInfo from the struct of ParamProperty 
  *
- * @param param_info: output==> the parameter to to get
  * @param path: input==>the parameter path
- * @param id: input==>the parameter id
+ * @param param_property: input==>the parameter property
  *
- * @return: true if success 
+ * @return: the pointer of parameter infomation 
  */
-bool JsonParse::getParamInfo(BaseTypes_ParamInfo &param_info, const char *path, uint32_t id)
+BaseTypes_ParamInfo* JsonParse::getParamInfo(const char *path, uint32_t id, ParamProperty* param_property)
 {
-	map<uint32_t, ParamProperty>::iterator it = params_list_map_.find(id);
-	if (it == params_list_map_.end())
-	{
-		FST_INFO("can't find ID:%d",id);
-		return false;
-	}
+    static BaseTypes_ParamInfo param_info;
 
-	ParamProperty param_property = it->second;		
+    if (param_property == NULL)
+    {
+        return NULL;
+    }
 
-	strcpy(param_info.path, path);
+    strcpy(param_info.path, path);
 	param_info.id = id;
-	param_info.overwrite_active = param_property.overwrite_active;
-	param_info.data_type = param_property.data_type;
-	param_info.data_size = param_property.data_size;
-	param_info.number_of_elements = param_property.number_of_elements;
-	param_info.param_type = param_property.param_type;
-	param_info.permission = param_property.permission;
-	param_info.user_level = param_property.user_level;
-	param_info.unit = param_property.unit;
+	param_info.overwrite_active = param_property->overwrite_active;
+	param_info.data_type = param_property->data_type;
+	param_info.data_size = param_property->data_size;
+	param_info.number_of_elements = param_property->number_of_elements;
+	param_info.param_type = param_property->param_type;
+	param_info.permission = param_property->permission;
+	param_info.user_level = param_property->user_level;
+	param_info.unit = param_property->unit;
 
-	return true;
+	return &param_info;
+}
+
+void JsonParse::addIODevices()
+{
+    fst_io_manager::IODeviceInfo *info = io_interface_->getDevInfoPtr();
+    for (int i = 0; i < io_interface_->getIODevNum(); i++)
+    {
+        path_id_map_.insert(map<string, uint32_t>::value_type(info[i].path, info[i].id));
+        FST_INFO("path:%s,id:%d, input:%d, output:%d", \
+                info[i].path.c_str(), info[i].id, info[i].input, info[i].output);
+
+    }
+}
+
+
+void JsonParse::getDeviceList(motion_spec_DeviceList &dev_list)
+{
+    int num = io_interface_->getIODevNum();
+
+    boost::mutex::scoped_lock lock(mutex_);
+
+    fst_io_manager::IODeviceInfo* info = io_interface_->getDevInfoPtr();
+    dev_list.dev_info_count = num;
+
+    for (int i = 0; i < num; i++)
+    {
+        //FST_INFO("++input:%d,output:%d", info[i].input, info[i].output);
+        strcpy(dev_list.dev_info[i].communication_type, info[i].communication_type.c_str());
+        dev_list.dev_info[i].device_number = info[i].device_number;
+        dev_list.dev_info[i].device_type = (motion_spec_DeviceType)info[i].device_type;
+        dev_list.dev_info[i].input = info[i].input;
+        dev_list.dev_info[i].output = info[i].output;
+    }
 }
 

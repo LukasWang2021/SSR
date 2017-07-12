@@ -12,7 +12,11 @@
 
 #include <stdio.h>
 
+//void getDbDelta(double* from, double* to, double* target, int num);
+
+ 
 
 
+void printDbLine(const char* info, double* params, int len);
 
 #endif

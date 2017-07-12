@@ -16,11 +16,21 @@ void rtTimerStop();
 void rtTimerAdd(int id, int msec);
 void rtTimerWait();
 bool rtTimerIsExpired(int id);
+
+void rtMsSleep(int ms);
+
+inline void mSleep(int ms)
+{
+	usleep(ms*1000);
+}
+
 /**
  * @brief: get current time
  *
  * @return: the millisecond of time 
  */
 long getCurTime();
+long getCurTimeSecond();
+bool setTimeSecond(long seconds);
 
 #endif

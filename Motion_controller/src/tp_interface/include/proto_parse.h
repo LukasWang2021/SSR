@@ -1,8 +1,8 @@
 /**
  * @file proto_parse.h
- * @brief 
+ * @brief: change some of protocol 
  * @author Wang Wei
- * @version 1.0.0
+ * @version 2.0.1
  * @date 2016-08-21
  */
 #ifndef TP_INTERFACE_PROTO_PARSE_H_
@@ -23,20 +23,23 @@
 #define FORCE_PUBLISH_EXPIRE_TIME   (1000) //ms
 #define MANUAL_EXPIRE_TIME			(300) //ms
 
-#define ERROR_NUM               (10)
+#define ERROR_NUM                   (10)
+
+#define MIN_IO_BASE_ID              (100000)
 
 typedef struct _PublishUpdate
 {
-	int relative_time; //the unit is 10ms right now
-	int update_cnt;
+    int basic_freq;
+    int max_freq;
+	int count;
     bool update_flag;
+    uint8_t* buffer;
+    int buf_len;
 }PublishUpdate;
 
 class ProtoParse
 {
   public:
-	bool wdt_start_flag_;
-	long manual_start_time_;	
     RosBasic *ros_basic_;
 	
 	ProtoParse(RosBasic *ros_basic);
@@ -48,6 +51,8 @@ class ProtoParse
 	 * @return: the object 
 	 */
 	RobotMotion *getRobotMotionPtr();
+
+    JsonParse* getJsonParserPtr();
 	/**
 	 * @brief: the main process of parser 
 	 */
@@ -74,18 +79,14 @@ class ProtoParse
      */
     void storeErrorCode(U64 err_code);
 
-    bool isUpdatedSameError(U64 err);
-
   private:
-	Watchdog	wdt_;			//the Watchdog object	
 	NNSocket	*nn_socket_;	//socket object pointer
 	JsonParse	*json_parse_;	//
 	RobotMotion robot_motion_;	//
 	int			hash_size_;		//size of hash bytes	
-    U64         prev_err_;
 
 	map<int, PublishUpdate>	param_pub_map_; //the map from parameter id to there publish time 
-    ThreadsafeQueue<U64>    error_queue_;
+    ThreadSafeList<U64>     error_list_;
 	boost::mutex	        mutex_;		//mutex lock   
 
 	/**
@@ -113,6 +114,15 @@ class ProtoParse
 	 * @return:true if success 
 	 */
 	void parseParamGetMsg(const uint8_t *field_buffer, int field_size);
+
+    /**
+	 * @brief: parse the struct of overwrite message
+	 *
+	 * @param field_buffer: input==>the buffer pointer
+	 * @param field_size: input==>the length of buffer
+	 *
+	 * @return:true if success 
+	 */
     void parseParamOverwriteMsg(const uint8_t *field_buffer, int field_size);
 	/**
 	 * @brief: parse the buffer input 
@@ -130,49 +140,42 @@ class ProtoParse
 	 */
 	bool retParamListMsg(BaseTypes_ParameterListMsg param_list_msg);
 	/**
-	 * @brief: return status to TP
-	 *
-	 * @param: status_code: input==>status code
-	 *
-	 * @return: true if success
-	 */
-	bool retStatus(const char *path, int id, BaseTypes_StatusCode status_code);
+     * @brief: return status to TP
+     *
+     * @param param_info: input
+     * @param status_code: input
+     */
+    void retStatus(BaseTypes_ParamInfo *param_info, BaseTypes_StatusCode status_code);
+    void retStatus(BaseTypes_StatusCode status_code);
 	/**
-	 * @brief :return previous_command_id_ to TP
-	 *
-	 * @param id: input 
-	 *
-	 * @return: true if Success
-	 */
-	bool retPreviousCommandId(int id);
-	/**
-	 * @brief: return current_command_id_ to TP
-	 *
-	 * @param id: input
-	 *
-	 * @return: true if Success
-	 */
-	bool retCurrentCommandId(int id);
-	/**
-	 * @brief :return parameter to TP with a template name T
-	 *
-	 * @tparam T: input ==>the template
+     * @brief 
+     *
+     * @param param_info: input
+     * @param params: input
+     */
+    template<typename T> 
+    void retParamMsg(BaseTypes_ParamInfo* param_info, T params);	
+
+    /**
+     * @brief: return IO message 
+     *
+     * @param param_msg: input
+     */
+    void retIOMsg(BaseTypes_ParameterMsg *param_msg);
+    /**
+	 * @brief: publish parameter 
+     * 
 	 * @param param: input
-	 */
-	template<typename T> 
-	void retParamMsg(const char *path, int id, T param);
-	/**
-	 * @brief: set state publish time
-	 *
-	 * @param ms: input==> time in the form of millisecond
+     * @param len: input
 	 *
 	 * @return 
 	 */
-	bool pubParamMsg(int id, const char *param);
+    template<typename T>
+	bool pubParamMsg(int id, T param, int len);
 	/**
 	 * @brief: publish a parameter by the id
 	 *
-	 * @param id:input==>the uniq id of the parameter
+	 * @param id:input==>the unique id of the parameter
 	 */
 	void pubParamByID(int id);
 
@@ -201,15 +204,6 @@ class ProtoParse
 	 * @return true if Success
 	 */
 	bool parseMotionCommand(motion_spec_MotionCommand motion_command, CommandInstruction &cmd_instruction);
-	/**
-	 * @brief: compare two strings in the form of int
-	 *
-	 * @param cmp_a: input
-	 * @param cmp_b: input
-	 *
-	 * @return: true if they are the same 
-	 */
-	bool compareInt(const unsigned char *cmp_a, const uint8_t *cmp_b);
 
 	template<typename T>
 	bool checkPathAndID(T msg, uint32_t &id);
@@ -217,51 +211,46 @@ class ProtoParse
 	/**
 	 * @brief: set logic mode  
 	 *
-	 * @param id: input==>the parameter id
 	 * @param mode_cmd: input==>the mode command
 	 */
-	void setProtoLogicMode(int id, RobotModeCmd mode_cmd);
+	void setProtoLogicMode(RobotModeCmd mode_cmd);
 	
 	/**
 	 * @brief: set logic state 
 	 *
-	 * @param id: input==>the parameter id
 	 * @param state_cmd: input==>the state command
 	 */
-	void setProtoLogicState(int id, RobotStateCmd state_cmd);
+	void setProtoLogicState(RobotStateCmd state_cmd);
 	/**
 	 * @brief: set joints trajectory 
 	 *
-	 * @param id: input==>the parameter id
 	 * @param state_cmd: input==>joints pointer
 	 */
-	void setProtoJiontTraj(int id, string joints);
+	void setProtoJiontTraj(const uint8_t *buffer, int count);
 	/**
 	 * @brief: set coordinates trajectory 
 	 *
-	 * @param id: input==>the parameter id
 	 * @param state_cmd: input==>coordinates pointer
 	 */
-	void setProtoToolCoord(int id, string coordinates);
+	void setProtoToolCoord(const uint8_t *buffer, int count);
 
 	/**
 	 * @brief: add a parameter to publish list
 	 *
-	 * @param path: input==>the path of parameter
 	 * @param id: input==>the parameter id
 	 * @param has_freq: input==> if has frequency
 	 * @param update_freq: input==> the frequency value
+     * @param min_freq: input==> the min frequency value
+     * @param buf_len: input==> length of publish buffer
 	 */
-	void addPubParameter(const char *path, int id, bool has_freq, int update_freq);
+	bool addPubParameter(int id, int update_freq, int min_freq, int buf_len);
 
 	/**
 	 * @brief: remove a paramet from the publish list 
 	 *
-	 * @param path: input==>the path of parameter
 	 * @param  id: input==>the parameter id
 	 */
-	void removePubParameter(const char *path, int id);
-
+	void removePubParameter(int id);
 	
 	/**
 	 * @brief: remove all publish list 
@@ -269,11 +258,72 @@ class ProtoParse
 	void removeAllPubParams();
 
     /**
+     * @brief: compare two strings in the form of int
+     *
+     * @param cmp_a: input
+     * @param cmp_b: input
+     *
+     * @return: true if they are the same 
+     */
+    bool compareInt(const unsigned char *cmp_a, const uint8_t *cmp_b);
+
+    /**
      * @brief: return error status 
      */
     void retErrorStatus();
 
+    /**
+     * @brief: clear error flag 
+     */
     void clearUpdatedError();	
+
+    /**
+     * @brief: 
+     *
+     * @param buffer: input==>the buffer to parse
+	 * @param count: input==>the count of buffer
+     *
+     * @return : 0 if success
+     */
+    U64 parseToolFrame(const uint8_t *buffer, int count);
+     /**
+     * @brief: 
+     *
+     * @param buffer: input==>the buffer to parse
+	 * @param count: input==>the count of buffer
+     *
+     * @return : 0 if success
+     */
+    U64 parseUserFrame(const uint8_t *buffer, int count);
+
+    /**
+     * @brief 
+     *
+     * @param buffer: input==>the buffer to parse
+	 * @param count: input==>the count of buffer
+     *
+     * @return : 0 if success
+     */
+    U64 parseJointConstraint(const uint8_t *buffer, int count);
+
+    /**
+     * @brief 
+     *
+     * @param buffer: input==>the buffer to parse
+	 * @param count: input==>the count of buffer
+     *
+     * @return : 0 if success
+     */
+    U64 parseDHGroup(const uint8_t *buffer, int count);
+
+
+    /**
+     * @brief 
+     *
+     * @return: true if success 
+     */
+    bool retDeviceInfo(BaseTypes_ParamInfo* param_info);
+
 };
 
 #endif

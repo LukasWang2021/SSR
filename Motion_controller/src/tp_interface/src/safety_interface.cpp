@@ -155,7 +155,7 @@ U64 SafetyInterface::setDOSWAlarm(char data)
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm1 out = dout_frm1_;
@@ -167,24 +167,24 @@ U64 SafetyInterface::setBrakeOn()
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte4.disble_brake = 1;
-
+    return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
 U64 SafetyInterface::setBrakeOff()
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte4.disble_brake = 0;
-
+    return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
 
@@ -197,7 +197,7 @@ U64 SafetyInterface::setDOSafetyStopConf(char data)
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm2 out = dout_frm2_;
@@ -214,7 +214,7 @@ U64 SafetyInterface::setDOExtEStopConf(char data)
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm2 out = dout_frm2_;
@@ -231,27 +231,24 @@ U64 SafetyInterface::setDOLmtStopConf(char data)
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.sw_reset = data;
-    setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
+    return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
-U64 SafetyInterface::softwareReset()
+U64 SafetyInterface::setSoftwareReset(char data)
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm2 out = dout_frm2_;
     lock.unlock();
-    out.byte5.sw_reset = 1;
-    setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
-    usleep(300*1000); //6 cycles of safety board
-    out.byte5.sw_reset = 0;
+    out.byte5.sw_reset = data;
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
@@ -261,10 +258,10 @@ U64 SafetyInterface::setSafetyHeartBeat()
 {
     if (isSafetyValid() == false)
     {
-        return FST_SUCCESS;
+        return TPI_SUCCESS;
     }
     U64 result = autorunSafetyData(); 
-    if (result == FST_SUCCESS)
+    if (result == TPI_SUCCESS)
     {
         boost::mutex::scoped_lock lock(mutex_);
         U32 data = getSafety(SAFETY_INPUT_FIRSTFRAME, &result);

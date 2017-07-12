@@ -35,6 +35,6 @@
 
 #define FST_ASSERT	ROS_ASSERT
 
-#define PI  3.1415926
+//#define PI  3.1415926
 
 #endif

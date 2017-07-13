@@ -67,6 +67,16 @@ public:
     // In:      None
     // Out:     None
     // Return:  0 -> success.
+    //          SEND_MSG_FAIL -> fail to send a msg.
+    //          RECV_MSG_FAIL -> fail to recv a msg within limited time.
+    //------------------------------------------------------------
+    ERROR_CODE_TYPE sendResetSafetyRequest(void);
+    //------------------------------------------------------------
+    // Function:  sendResetRequest
+    // Summary: send a reset request to BARE CORE.
+    // In:      None
+    // Out:     None
+    // Return:  0 -> success.
     //          SEND_MSG_FAIL -> fail.
     //------------------------------------------------------------
     ERROR_CODE_TYPE sendResetRequest(void);

@@ -67,7 +67,7 @@ int NNSocket::getRequestBufLen()
  *
  * @return: true if success 
  */
-int NNSocket::nnSocketInit()
+void NNSocket::nnSocketInit()
 {
 	char cmd_addr[256];
 	char state_addr[256];

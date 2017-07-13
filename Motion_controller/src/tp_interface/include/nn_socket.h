@@ -66,9 +66,8 @@ class NNSocket
 	/**
 	 * @brief: socket init
 	 *
-	 * @return: true if success 
 	 */
-	int nnSocketInit();
+	void nnSocketInit();
 	/**
 	 * @brief: publish cotent of buffer
 	 *

@@ -11,42 +11,31 @@
 typedef enum _RobotMode
 {
 	INIT_M					= 0,	
-	PAUSE_M					= 1,
-	AUTO_RUN_M				= 2,
-	MANUAL_JOINT_MODE_M		= 3,
-	MANUAL_CART_MODE_M		= 4,
-	AUTO_RESET_M			= 5,
+	AUTO_RUN_M				= 1,
+	MANUAL_MODE_M		    = 2,
 
-	AUTO_RUN_TO_PAUSE_T				= 201,
-	PAUSE_TO_AUTO_RUN_T				= 102,
-	PAUSE_TO_MANUAL_JOINT_T			= 103,
-	PAUSE_TO_MANUAL_CART_T			= 104,
-	MANUAL_CART_TO_PAUSE_T			= 401,
-	MANUAL_JOINT_TO_PAUSE_T			= 301,
-	MANUAL_CART_TO_MANUAL_JOINT_T	= 403,
-	MANUAL_JOINT_TO_MANUAL_CART_T	= 304
+
+	AUTO_RUN_TO_MANUAL_T	= 101,
+	MANUAL_TO_AUTO_RUN_T	= 102,
 }RobotMode;
 
 typedef enum _RobotModeCmd
 {
-	GOTO_NONE_E					= -1,
-	GOTO_PAUSE_E				= 1,
-	GOTO_AUTO_RUN_E				= 2,
-	GOTO_MANUAL_JOINT_MODE_E	= 3,
-	GOTO_MANUAL_CART_MODE_E		= 4,
-	GOTO_AUTO_RESET_E			= 5
+	GOTO_NONE_E				= -1,
+	GOTO_AUTO_RUN_E			= 0,
+	GOTO_MANUAL_MODE_E	    = 1,
 }RobotModeCmd;
 
 typedef enum _RobotState
 {
-	INIT_S			= 0,
-	OFF_S			= 1,
-	DISENGAGED_S	= 2,
-	RETARCT_S		= 3,
-	ENGAGED_S		= 4,
-	CALIBRATE_S		= 5,
-    REFERENCING_S   = 6,
-    ESTOP_S         = 7,
+	INIT_S			    = 0,
+	OFF_S			    = 1,
+	DISENGAGED_S	    = 2,
+	RETARCT_S		    = 3,
+	ENGAGED_S		    = 4,
+	CALIBRATE_S		    = 5,
+    REFERENCING_S       = 6,
+    ESTOP_S             = 7,
 
 	OFF_TO_DISENGAGED_T		= 102,
 	OFF_TO_CALIBRATE_T		= 105,
@@ -57,8 +46,28 @@ typedef enum _RobotState
 	ENGAGED_TO_DISENGAGED_T = 402,
     TO_FORCEDDISENGAGE_T    = 600,
     TO_ESTOP_T              = 700,
-    RESET_ESTOP_T           = 701
+    RESET_ESTOP_T           = 701,
 }RobotState;
+
+
+typedef enum _ProgramState
+{
+    IDLE_R      = 0,
+    EXECUTE_R   = 1,
+    PAUSED_R    = 2,
+
+    IDLE_TO_EXECUTE_T   = 101,
+    EXECUTE_TO_PAUSE_T  = 102,
+    PAUSE_TO_IDLE_T     = 103,
+    PAUSE_TO_EXECUTE_T  = 104,
+}ProgramState;
+
+typedef enum _ProgramStateCmd
+{
+    GOTO_IDLE_E         = 0,
+    GOTO_EXECUTE_E      = 1,
+    GOTO_PAUSED_E       = 2
+}ProgramStateCmd;
 
 typedef enum _RobotStateCmd
 {
@@ -72,40 +81,40 @@ typedef enum _RobotStateCmd
     FORCE_DISENGAGE_E   = 10,
     EMERGENCY_STOP_E    = 20,
     SAVE_CONFIGURATION_E = 254,
-    ACKNOWLEDGE_ERROR   = 255
+    ACKNOWLEDGE_ERROR   = 255,
 }RobotStateCmd;
 
 typedef enum _RobotCtrlCmd
 {
     NONE                = -1,
-    SHUTDOWN_CMD        = 1
+    SHUTDOWN_CMD        = 1,
+    
+    PAUSE_CMD           = 10,
+    CONTINUE_CMD        = 11,
+    ABORT_CMD           = 12,
+
+    CALIBRATE_CMD       = 20,
+    SETTMPZERO_CMD		= 21
 }RobotCtrlCmd;
 
-typedef enum _ManualState
-{
-	MANUAL_IDLE_S		= 0,
-	MANUAL_READY_S		= 1,
-	MANUAL_RUNNING_S	= 2,
-    MANUAL_SUSPEND_S    = 3
-}ManualState;
 
-typedef enum _AutoState
+typedef enum _RunningMode
 {
-    AUTO_IDLE_S         = 0,
-    AUTO_READY_S        = 1,
-    AUTO_RUNNING_S      = 2,
-    AUTO_SUSPEND_S      = 3
-}AutoState;
+    NORMAL_R        = 0, 
+    CALIBRATE_R     = 0x1,
+    SOFTLIMITED_R   = 0x2,
+}RunningMode;
+
 
 
 #define MAX_JOINTS				(6)
-#define MAX_LINE_SPEED			(4000)
-#define MAX_MANUAL_SPEED        (1000)
+#define MAX_LINE_SPEED			(4000)      //ms/s
+#define MAX_RAD_SPEED           (10)        //rad/s
+#define MAX_MANUAL_SPEED        (1000)      //ms/s
 
 #define INTERVAL_PROPERTY_UPDATE   	(10)    //ms
-#define INTERVAL_REF_START_UPDATE	(3000)  //every 3000ms update start state
-#define INTERVAL_PROCESS_UPDATE	    (2)
-#define INTERVAL_HEART_BEAT_UPDATE  (50)
+#define INTERVAL_PROCESS_UPDATE	    (2)     //ms
+#define INTERVAL_HEART_BEAT_UPDATE  (50)    //ms
 
 
 #define MIN_ACCURATE_VALUE		(0.00001)

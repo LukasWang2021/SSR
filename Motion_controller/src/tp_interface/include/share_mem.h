@@ -93,6 +93,13 @@ class ShareMem
      * @return: 0 if success 
      */
     U64 resetBareMetal();
+
+    /**
+     * @brief: resetSafety 
+     *
+     * @return: 0 if success 
+     */
+    U64 resetSafety();
     
     /**
      * @brief: stopBareMetal 

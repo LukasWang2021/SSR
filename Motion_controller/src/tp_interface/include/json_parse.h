@@ -13,7 +13,12 @@
 #include <boost/property_tree/ptree.hpp>  
 #include <boost/property_tree/json_parser.hpp> 
 #include "base_types.pb.h"
+#include "motionSL.pb.h"
 #include <boost/filesystem.hpp>
+#include "io_manager/io_manager.h"
+#include "common.h"
+#include "io_interface.h"
+
 
 using std::map;
 using std::string;
@@ -21,7 +26,6 @@ using std::vector;
 
 #define MAX_LIST_NUM	(1024)
 #define FILE_API_PATH	("/share/tp_interface/config/API.json")
-
 
 typedef struct _ParamProperty
 {
@@ -42,6 +46,7 @@ typedef struct _ParamProperty
 class JsonParse
 {
   public:	
+    IOInterface *io_interface_;
 	map<string, uint32_t> path_id_map_;
 	map<uint32_t, ParamProperty> params_list_map_; // store the parameter list
 
@@ -82,20 +87,44 @@ class JsonParse
 	 * @return: true if success 
 	 */
 	bool getIDFromPath(const char *path, uint32_t &id);
+    /**
+     * @brief 
+     *
+     * @param id: input ==> parameter id
+     *
+     * @return 
+     */
+    ParamProperty* getParamProperty(uint32_t id);
 	/**
-	 * @brief: getParamInfo from the struct of ParamProperty 
-	 *
-	 * @param param_info: output==> the parameter to to get
-	 * @param path: input==>the parameter path
-	 * @param id: input==>the parameter id
-	 *
-	 * @return: true if success 
-	 */
-	bool getParamInfo(BaseTypes_ParamInfo &param_info, const char *path, uint32_t id);
+     * @brief: getParamInfo from the struct of ParamProperty 
+     *
+     * @param path: input==>the parameter path
+     * @param param_property: input==>the parameter property
+     *
+     * @return: the pointer of parameter infomation 
+     */
+	BaseTypes_ParamInfo* getParamInfo(const char *path, uint32_t id, ParamProperty* param_property);
+
+    /**
+     * @brief: add io device infomation to dev_info_ 
+     *
+     * @return: 0 if success 
+     */
+    void addIODevices();
+
+    /**
+     * @brief 
+     *
+     * @param dev_list: output
+     */
+    void getDeviceList(motion_spec_DeviceList &dev_list);
+
 
   private:
 	string file_API_path_; //path of API.txt file
 	uint32_t param_length_;
+
+    boost::mutex	mutex_;		//mutex lock
 };
 
 #endif

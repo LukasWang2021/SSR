@@ -7,7 +7,7 @@
  */
 #include <signal.h>
 #include "proto_parse.h"
-
+ 
 #ifndef CROSS_PLATFORM
 #include <gperftools/profiler.h>
 #endif
@@ -17,7 +17,7 @@
 #include "sub_functions.h"
 #include "common.h"
 #include "rt_timer.h"
-#include "version.h"
+#include "tp_interface_version.h"
 
 #define BASIC_INTERVAL_TIME		(1) //basic cycle time(ms)
 
@@ -28,27 +28,6 @@
 #define MAIN_PRIORITY           (89)
 
 static bool gs_running_flag = true;
-
-inline void mSleep(int ms)
-{
-	usleep(ms*1000);
-}
-
-void rtMsSleep(int ms)
-{
-    struct timespec deadline;
-    clock_gettime(CLOCK_MONOTONIC, &deadline);
-
-    // Add the time you want to sleep
-    deadline.tv_nsec += 1000000*ms;
-
-    // Normalize the time to account for the second boundary
-    if(deadline.tv_nsec >= 1000000000) {
-        deadline.tv_nsec -= 1000000000;
-        deadline.tv_sec++;
-    }
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL);
-}
 
 /**
  * @brief: callback of SIGINT 
@@ -110,22 +89,28 @@ void commuProc(ProtoParse *proto_parse)
 void heartBeatProc(ProtoParse *proto_parse)
 {	
     int err_size;
+    U64 result;
     U64 err_list[128];
+    RobotMotion *rob_motion = proto_parse->getRobotMotionPtr();
     while (gs_running_flag)
 	{
-        err_size = proto_parse->getRobotMotionPtr()->motionHeartBeart(err_list);
+        err_size = rob_motion->motionHeartBeart(err_list);
         for (int i = 0; i < err_size; i++)
         {
-            U64 result = err_list[i];
-            if (!proto_parse->isUpdatedSameError(result))
+            result = err_list[i];
+            if (!rob_motion->isUpdatedSameError(result))
             {
                 proto_parse->storeErrorCode(result);
             }
         }
+        result = rob_motion->getIOInterfacrPtr()->getIOError();
+        if (result != TPI_SUCCESS)
+        {
+            proto_parse->storeErrorCode(result);
+        }
         mSleep(INTERVAL_HEART_BEAT_UPDATE); 
     }
 }
-
 int main(int argc, char **argv)
 {    
 	ros::init(argc, argv, "controller");	
@@ -136,11 +121,11 @@ int main(int argc, char **argv)
 	signal(SIGINT, sigroutine);	 
 	signal(SIGTERM, sigroutine);           
    // signal(SIGSEGV, sigroutine);
-
-    FST_INFO("cur_version: %s",get_version());  
-    FST_INFO("compile time: %s", get_build_time());
+    FST_INFO("VERSION:%d.%d.%d", tp_interface_VERSION_MAJOR, tp_interface_VERSION_MINOR, tp_interface_VERSION_PATCH);
+    FST_INFO("BUILD TIME:%s", tp_interface_BUILD_TIME);
 
     ProtoParse proto_parse(&ros_basic);    
+    
     
 	//=========================================
 	//ProtoParse proto_parse; //init class ProtoParse
@@ -162,16 +147,17 @@ int main(int argc, char **argv)
     while (gs_running_flag)
 	{
 
-        proto_parse.checkManualWdt();	
-		U64 result = robot_motion->queueProcess();
-        if (result != FST_SUCCESS)
+		U64 result = robot_motion->checkProgramState();
+        if (result != TPI_SUCCESS)
         {
             proto_parse.storeErrorCode(result);
         }
         rtMsSleep(INTERVAL_PROCESS_UPDATE);
     }// while (gs_running_flag)
     
-
+    //==before exit, first estop to fault===========
+    robot_motion->setLogicStateCmd(EMERGENCY_STOP_E);
+    //==============================================
 	thrd_Sock_Server.join();
 	thrd_heart_beat.join();
 

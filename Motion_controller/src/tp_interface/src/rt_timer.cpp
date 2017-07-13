@@ -20,7 +20,7 @@ typedef struct _TimerInfo
 
 
 static map<int, TimeInfo> timer_info_list;
-static unsigned int count_;
+//static unsigned int count_;
 static timer_t timer;
 static Semaphore semaphore(0);
 
@@ -116,6 +116,24 @@ bool rtTimerIsExpired(int id)
 	return false;
 }
 
+void rtMsSleep(int ms)
+{
+    struct timespec deadline;
+    clock_gettime(CLOCK_MONOTONIC, &deadline);
+
+    // Add the time you want to sleep
+    deadline.tv_nsec += 1000000*ms;
+
+    // Normalize the time to account for the second boundary
+    if(deadline.tv_nsec >= 1000000000) 
+    {
+        deadline.tv_nsec -= 1000000000;
+        deadline.tv_sec++;
+    }
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL);
+}
+
+
 /**
  * @brief: get current time
  *
@@ -130,4 +148,24 @@ long getCurTime()
 	return cost_time;
 }
 
+long getCurTimeSecond()
+{
+    time_t seconds;
 
+    seconds = time((time_t *)NULL);
+
+    return seconds;
+}
+
+bool setTimeSecond(long seconds)
+{
+    struct timeval tv;
+    tv.tv_sec = seconds;  
+    tv.tv_usec = 0; 
+    if(settimeofday (&tv, (struct timezone *) 0) < 0)  
+    {  
+        printf("Set system datatime error!/n");  
+        return false;  
+    }  
+    return true;
+}

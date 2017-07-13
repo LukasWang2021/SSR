@@ -31,7 +31,7 @@
 		 "overwrite_active": 0,
 		 "data_type": 258,
 		 "data_size": 8,
-		 "number_of_elements": 6,
+		 "number_of_elements": 7,
 		 "param_type": 512,		//512
 		 "permission": 1,		//R
 		 "user_level": 0,		//0,
@@ -246,57 +246,6 @@
 		"unit": 0
 	},
 
-	{
-		"path": "root/IO/System/dInUser1",
-		"id": 4702,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
-	{
-		"path": "root/IO/System/dInUser2",
-		"id": 4703,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
-	{
-		"path": "root/IO/System/dInUser3",
-		"id": 4704,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
-	{
-		"path": "root/IO/System/dInUser4",
-		"id": 4705,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
 
 	{
 		"path": "root/IO/System/dOutEStop",
@@ -402,57 +351,6 @@
 		"unit": 0
 	},
 
-	{
-		"path": "root/IO/System/dOutUser1",
-		"id": 4714,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
-	{
-		"path": "root/IO/System/dOutUser2",
-		"id": 4715,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
-	{
-		"path": "root/IO/System/dOutUser3",
-		"id": 4716,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
-	{
-		"path": "root/IO/System/dOutUser4",
-		"id": 4717,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
 
     {
         "path": "root/Control/fst/ControlCommand",   
@@ -480,32 +378,6 @@
         "unit": 0
     },
 
-    {
-		"path": "root/Ethercat_IO/SomanetIO/dInUser3",
-		"id": 365,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
-	{
-		"path": "root/Ethercat_IO/SomanetIO/dInUser4",
-		"id": 366,
-		"overwrite_active": 0,
-		"data_type": 2,
-		"data_size": 1,
-		"number_of_elements": 1,
-		"param_type": 2,
-		"permission": 3,
-		"user_level": 0,
-		"unit": 0
-	},
-
    
     {
 		 "path": "root/Safety_IO/inputFrame1",
@@ -530,6 +402,187 @@
 		 "permission": 1,		//R
 		 "user_level": 0,		//0,
 		 "unit": 0				//0,
-   }
+   },
 
+    {
+		"path": "root/Logic/programState",
+		"id": 8000,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//512
+		"permission": 1,	//R
+		"user_level": 0,	//0,
+		"unit": 0			//0,
+	},
+    {
+		"path": "root/Logic/curveMode",
+		"id": 8300,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//512
+		"permission": 1,	//R
+		"user_level": 0,	//0,
+		"unit": 0			//0,
+	},
+
+    {
+		"path": "root/MotionInterpreter/instructionNum",
+		"id": 8100,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//512
+		"permission": 1,	//R
+		"user_level": 0,	//0,
+		"unit": 0			//0,
+	},
+
+    {
+		"path": "root/MotionInterpreter/motion_program",
+		"id": 8200,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Control/toolFrame",
+		"id": 10000,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Control/userFrame",
+		"id": 10001,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Config/IO/Info",
+		"id": 11000,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Calculate/ForwordKinematics",
+		"id": 12000,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Calculate/InverseKinematics",
+		"id": 12001,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Params/system/localTime",
+		"id": 13001,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 3,	
+		"permission": 512,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Params/equipment/jointConstraint",
+		"id": 13002,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Params/equipment/dh",
+		"id": 13003,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},    
+
+    {
+		"path": "root/Params/equipment/hardwareLimit",
+		"id": 13004,
+		"overwrite_active": 0,
+		"data_type": 258,
+		"data_size": 8,
+		"number_of_elements": 6,
+		"param_type": 3,	
+		"permission": 512,	
+		"user_level": 0,	
+		"unit": 0			
+	},   
+
+    {
+		"path": "root/Control/globalVelocity",
+		"id": 10101,
+		"overwrite_active": 0,
+		"data_type": 258,
+		"data_size": 8,
+		"number_of_elements": 1,
+		"param_type": 3,	
+		"permission": 512,	
+		"user_level": 0,	
+		"unit": 0			
+	}
+    
 ]

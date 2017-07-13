@@ -8,7 +8,8 @@
 #ifndef TP_INTERFACE_PROTO_DEFINE_H_
 #define TP_INTERFACE_PROTO_DEFINE_H_
 
-
+#define PATH_LOGIC_CURVEMODE       ("root/Logic/curveMode")
+#define PATH_LOGIC_RUNNINGSTATE		("root/Logic/programState")
 #define PATH_LOGIC_MODE		("root/Logic/mode")
 #define PATH_LOGIC_STATE	("root/Logic/state")
 #define PATH_LOGIC_MODECMD	("root/Logic/modeCommand")
@@ -20,6 +21,10 @@
 #define PATH_CTL_HOSTIN_JOINT_TRAJ		("root/Control/hostInJointTrajectory")
 #define PATH_CTL_KINEMATICS_TOOL_COORD	("root/Control/forwardKinematics/toolCoordinates")
 
+#define PATH_CTL_TOOLFRAME              ("root/Control/toolFrame")
+#define PATH_CTL_USERFRAME              ("root/Control/userFrame")
+
+#define PATH_INTERP_INSTRUCTION_NUM     ("root/MotionInterpreter/instructionNum")
 #define PATH_INTERP_PRE_CMD_ID			("root/MotionInterpreter/previous_command_id")
 #define PATH_INTERP_CUR_CMD_ID			("root/MotionInterpreter/current_command_id")
 #define PATH_INTERP_MOTION_PROGRAM		("root/MotionInterpreter/motion_program")
@@ -37,17 +42,27 @@
 #define PATH_CTL_COMMAND    ("root/Control/fst/ControlCommand")
 #define PATH_ERROR_WARNINGS ("root/Logic/activeWarnings")
 
-#define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser1")
-#define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser2")
+#define PATH_ETHERCAT_SMNTIO_IN1    ("root/Ethercat_IO/SomanetIO/dInUser1")
+#define PATH_ETHERCAT_SMNTIO_IN2    ("root/Ethercat_IO/SomanetIO/dInUser2")
 #define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser3")
 #define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser4")
-#define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser5")
-#define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser6")
-#define PATH_ETHERCAT_SMNTIO_IN3    ("root/Ethercat_IO/SomanetIO/dInUser7")
-#define PATH_ETHERCAT_SMNTIO_IN4    ("root/Ethercat_IO/SomanetIO/dInUser8")
+#define PATH_ETHERCAT_SMNTIO_IN5    ("root/Ethercat_IO/SomanetIO/dInUser5")
+#define PATH_ETHERCAT_SMNTIO_IN6    ("root/Ethercat_IO/SomanetIO/dInUser6")
+#define PATH_ETHERCAT_SMNTIO_IN7    ("root/Ethercat_IO/SomanetIO/dInUser7")
+#define PATH_ETHERCAT_SMNTIO_IN8    ("root/Ethercat_IO/SomanetIO/dInUser8")
 
 
 #define PATH_CTL_SYSTEM_SHUTDOWN    ("root/Control/system/shutdown")
+#define PATH_CONFIG_IO_INFO         ("root/Config/IO/Info")
+
+#define PATH_CACULATE_FORWORD_KINEMATICS    ("root/Calculate/ForwordKinematics")
+#define PATH_CACULATE_INVERSE_KINEMATICS    ("root/Calculate/InverseKinematics")
+
+#define PATH_PARAMS_LOCALTIME       ("root/Params/system/localTime")
+#define PATH_PARAMS_SOFTLIMIT       ("root/Params/equipment/jointConstraint")
+#define PATH_PARAMS_DH              ("root/Params/equipment/dh")
+#define PATH_PARAMS_HW_LIMIT        ("root/Params/equipment/hardwareLimit")
+#define PATH_CTL_GLOBAL_VELOCITY    ("root/Control/globalVelocity")
 
 
 #define	FK_TOOL_COORD_ID		(4581)
@@ -81,12 +96,18 @@
 #define DOUT_USER3_ID			(4716)
 #define DOUT_USER4_ID			(4717)
 
+#define LOGIC_PROGRAMSTATE_ID   (8000)
+#define LOGIC_CURVEMODE_ID     (8300)
+
+
 #define LOGIC_MODE_ID			(4737)
 #define MODE_COMMAND_ID			(4738)
 #define LOGIC_STATE_ID			(4739)
 #define STATE_COMMAND_ID		(4740)
 #define ID_CURRENT_COMMAND_ID	(4747)
 #define ID_PREVIOUS_COMMAND_ID	(4748)
+#define INSTRUCTION_NUM_ID      (8100)
+#define MOTION_PROGRAM_ID       (8200)
 
 #define CTL_COMMAND_ID          (9001)
 #define ERROR_WARNINGS_ID       (5107)
@@ -99,7 +120,18 @@
 #define SAFETY_INPUT_FRAME1_ID  (1000)
 #define SAFETY_INPUT_FRAME2_ID  (1001)
 
+#define TOOLFRAME_ID            (10000)
+#define USERFRAME_ID            (10001)
+#define CONFIG_IO_INFO_ID       (11000)
 
+#define CALCU_FK_ID             (12000)
+#define CALCU_IK_ID             (12001)
+
+#define PARAMS_LOCALTIME_ID     (13001)
+#define PARAMS_SOFTLIMIT_ID     (13002)
+#define PARAMS_DH_ID            (13003)
+#define PARAMS_HW_LIMIT_ID      (13004)
+#define CTL_GLOBAL_VELOCITY_ID  (10101) 
 
 /**
  * @brief 

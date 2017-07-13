@@ -308,7 +308,7 @@ class SafetyInterface
      * 
      * @return 
      */
-    U64 softwareReset();
+    U64 setSoftwareReset(char data);
 
     /**
      * @brief: heart_beat with safety board 

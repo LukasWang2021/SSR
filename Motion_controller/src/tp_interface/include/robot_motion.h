@@ -1,26 +1,28 @@
 /**
  * @file robot_motion_.h
- * @brief 
+ * @brief: changed the defination of state, mode and add ProgramState 
  * @author Wang Wei
- * @version 1.0.0
- * @date 2016-08-21
+ * @version 2.0.3
+ * @date 2017-03-13
  */
 #ifndef TP_INTERFACE_ROBOT_MOTION_H_
 #define	TP_INTERFACE_ROBOT_MOTION_H_
 
 #include "motion_controller/fst_datatype.h"
-#include "motion_controller/arm_group.h"
+#include "motion_controller/motion_controller_arm_group.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "robot.h"
 #include "motionSL.pb.h"
 #include "threadsafe_queue.h"
-//#include "threadsafe_vector.h"
+#include "threadsafe_list.h"
 #include "proto_define.h"
 #include "share_mem.h"
 #include "fst_error.h"
 #include "safety_interface.h"
+#include "io_interface.h"
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
+
 #include <map>
 
 using namespace fst_controller;
@@ -28,21 +30,41 @@ using namespace fst_parameter;
 
 #define MAX_CNT_VAL		(100)
 
+#define MIN_POINTS_FOR_NEXT_CMD     (150)
 #define MAX_PLANNED_POINTS_NUM		(20)
 #define NUM_OF_POINTS_TO_SHARE_MEM	(10)
 
-#define TRAJ_LIMIT_NUM              (20)
+#define TRAJ_LIMIT_NUM              (0)
 
-#define MANUAL_INSTRUCTION_DELAY	(150)	//in manual mode, after the first manual instruction, the delay
+#define RESET_SAFETY_DELAY          (200)   //delay for reset safety board  (ms)
+#define RESET_ERROR_TIMEOUT	        (5000)	//wait until to judge if errors are reset
 
-#define MANUAL_COUNT_PER_STEP		(60)	//the time of TP is 50ms every time
+#define MANUAL_COUNT_PER_STEP		(120)	//the time of TP is 50ms every time
 
-#define MANUAL_DEFAULT_ACC			(10000)
+#define DEFAULT_MOVEJ_ACC           (50.0)
+#define DEFAULT_ACC			        (7000)
+
+#define IDLE2EXE_DELAY              (50)  //wait from idle to execute(ms)
+
+#define MAX_TIME_IN_PUASE           (20*1000)  //
+
+
+#define CURVE_MODE_T    (1)
+#define CURVE_MODE_S    (2)
+
+typedef enum _PickStatus
+{
+    FRESH = 1,
+    ONCE,
+    USED
+}PickStatus;
 
 typedef struct _CommandInstruction
 {
-	double		smoothDistance;
-	uint32_t	id;	
+    PickStatus  pick_status;
+    uint32_t	id;
+    int         msecond;
+	double		smoothDistance;	
     motion_spec_MOTIONTYPE commandtype;	
 	string		command_arguments; //pointer of command
 }CommandInstruction;
@@ -61,23 +83,84 @@ typedef struct _MoveJParam
 	double smooth;
 }MoveJParam;
 
-
-typedef struct _TargetPosition
+typedef struct _MoveCParam
 {
-	JointValues	joint_values;
-	PoseEuler	pose;
-}TargetPosition;
+	double vel_max;
+	double acc_max;
+	double smooth;
+}MoveCParam;
+
+
+typedef union _VelocityReq
+{
+    double jnt_vel[MAX_JOINTS];
+    double pose_vel[MAX_JOINTS];
+}VelocityReq;
+
+typedef union _PointVal
+{
+    JointValues jnt_val;
+    PoseEuler   pose_val;
+}PointVal;
+
+typedef enum _ManualType
+{
+    JOINT_M,
+    CART_M
+}ManualType;
+
+typedef struct _ManuPoint
+{
+    bool        is_step;
+    ManualType  type;
+    PointVal    point;
+ }ManuPoint;
+
+typedef struct _ManualReq
+{
+    ManuPoint   pre_target;
+    double      vel_max;
+    ManuPoint   target;
+    double      ref_vmax;
+    ManuPoint   ref_target;
+}ManualReq;
 
 
 class RobotMotion
 {
-  public:		
+  public:		    
+    ThreadSafeList<CommandInstruction>  non_move_instructions_;
+
 	RobotMotion();	
 	~RobotMotion();
 
+    /**
+     * @brief: initial 
+     *
+     * @return: 0 if success 
+     */
     U64 initial();
+
+    /**
+     * @brief 
+     */
     void destroy();
 
+    /**
+     * @brief: state machine 
+     *
+     * @return: 0 if success 
+     */
+    U64 checkProgramState();
+
+    /**
+     * @brief 
+     *
+     * @return 
+     */
+    bool isProgramStateChanged();
+
+    IOInterface* getIOInterfacrPtr();
 	/**
 	 * @brief: get ShareMem object 
 	 *
@@ -90,14 +173,54 @@ class RobotMotion
 	 * @return: arm_group_ 
 	 */
 	ArmGroup* getArmGroupPtr();
-
+    /**
+     * @brief: 
+     *
+     * @return 
+     */
     SafetyInterface* getSafetyInterfacePtr();
+
+    RunningMode getRunningMode();
+    void setRunningMode(RunningMode rm);
+
+    int getCurveMode();
+    bool setCurveMode(int c_mode);
+
+    ProgramState getNMPrgmState();
+    void setNMPrgmState(ProgramState prgm_state);
+
+    /**
+     * @brief:get ProgramState 
+     *
+     * @return 
+     */
+    ProgramState getProgramState();
+
+    /**
+     * @brief: set ProgramState 
+     *
+     * @param prgm_state: input
+     */
+    void setProgramState(ProgramState prgm_state);
+
+    /**
+     * @brief: getInstructionListSize 
+     *
+     * @return: 
+     */
+    int getInstructionListSize();
 	/**
 	 * @brief: get previous_command_id_ 
 	 *
 	 * @return: previous_command_id_ 
 	 */
 	int getPreviousCmdID();
+    
+    /**
+     * @brief: setPreviousCmdID 
+     *
+     * @param id: input
+     */
     void setPreviousCmdID(int id);
 	/**
 	 * @brief: get current_command_id_ 
@@ -105,6 +228,13 @@ class RobotMotion
 	 * @return: current_command_id_
 	 */
 	int getCurrentCmdID();
+
+    /**
+     * @brief: setCurrentCmdID 
+     *
+     * @param id: input
+     */
+    void setCurrentCmdID(int id);
 	/**
 	 * @brief: get current logic mode
 	 *
@@ -149,19 +279,26 @@ class RobotMotion
      */
     void jumpToEStop();
 
+    /**
+     * @brief: update ProgramState 
+     *
+     * @return: 0 if success 
+     */
+    U64 updateProgramState();
+
 	/**
 	 * @brief update the logic mode
      *
-	 * @return: 0 if success
+     * @return: true if mode changed
 	 */
-	 U64 updateLogicMode();
+	 bool updateLogicMode();
      
      /**
       * @brief: update logic state 
       *
-      * @return: 0 if success 
+      * @return: true if state changed
       */
-     U64 updateLogicState();
+     bool updateLogicState();
 	/**
 	 * @brief: update current joints get value from the share memory 
 	 *
@@ -208,12 +345,20 @@ class RobotMotion
      * @param pose: input
      */
     void setCurPose(PoseEuler pose);
+    /**
+     * @brief: set running state cmd
+     *
+     * @param run_cmd: input
+     *
+     * @return: 0 if success
+     */
+    U64 setProgramStateCmd(ProgramStateCmd prgm_cmd);
 	/**
 	 * @brief: set current mode
 	 *
 	 * @param: mode_cmd mode command
 	 *
-	 * @return: true if set Successfully
+	 * @return: 0 if set Successfully
 	 */
 	U64 setLogicModeCmd(RobotModeCmd mode_cmd);
 	/**
@@ -236,41 +381,33 @@ class RobotMotion
 	 * @return: 0 if success
 	 */
 	U64 actionPause();	
-	/**
-	 * @brief: add one manual instruction to the queue
-	 *
-	 * @param cmd_instruction: input==>the instruction to add
-	 * @param arguments: input==> the arguments of instruction
-	 */
-	void addManualQueue(motion_spec_MOTIONTYPE command_type, string arguments);
+
+    U64 servoEStop();
+    /**
+     * @brief 
+     *
+     * @return 
+     */
+    U64 actionShutdown();
+
+    /**
+     * @brief 
+     *
+     * @return 
+     */
+    U64 actionCalibrate();
+
 	/**
 	 * @brief: add one command in to queue
 	 *
 	 * @param motion_command: input==>the command to push
 	 */
-	void addMotionQueue(CommandInstruction cmd_instruction);	
+	void addMotionInstruction(CommandInstruction cmd_instruction);	
 	/**
-	 * @brief: pick instruction from instruction queue and execute the instruction
-     *
-     * @return: 0 if success
+	 * @brief :clear instruction list
+     * 
 	 */
-	U64 queueProcess();
-    /**
-	 * @brief :reset motion queue
-     *
-     * @return: 0 is success 
-	 */
-    U64 resetMotionQueue();
-	/**
-	 * @brief :clear motion queue
-     *
-     * @return: 0 is success 
-	 */
-	U64 clearMotionQueue();
-    /**
-     * @brief: clear all manual queue 
-     */
-    void clearManualQueue();
+	void clearInstructionList();
 	/**
 	 * @brief check start state in auto run mode
      *
@@ -301,11 +438,11 @@ class RobotMotion
      int motionHeartBeart(U64 *err_list);
 
      /**
-      * @brief: backupErrorList 
+      * @brief: backupError 
       *
-      * @param cmd_instruction: input
+      * @param err: input
       */
-     void backupErrorList(CommandInstruction cmd_instruction);
+     void backupError(U64 err);
     
      /**
       * @brief:clearErrorList 
@@ -313,18 +450,20 @@ class RobotMotion
      void clearErrorList();
 
      /**
+      * @brief 
+      *
+      * @param err
+      *
+      * @return 
+      */
+     bool isUpdatedSameError(U64 err);
+     /**
       * @brief:get error state 
       *
       * @return: true if error occurs 
       */
-     bool getErrorState();
-
-     /**
-      * @brief:setErrorState 
-      *
-      * @param flag: input
-      */
-     void setErrorState(bool flag);   
+      bool isErrorExist();
+ 
      /**
      * @brief: clearPathFifo 
      *
@@ -332,9 +471,134 @@ class RobotMotion
      */
     U64 clearPathFifo();
 
+    /**
+     * @brief: moveJ in manual mode 
+     *
+     * @param tech_pose: input
+     */
+    U64 checkManualJntVel(const motion_spec_TeachPose *tech_pose);
+    /**
+     * @brief: moveL in manual mode 
+     *
+     * @param tech_pose: input
+     */
+    U64 checkManualPoseVel(const motion_spec_TeachPose *tech_pose);   
+
+    /**
+     * @brief: set pause in manual mode 
+     */
+    void zeroManualReqVel();
+
+    /**
+	 * @brief check if the joints changed within some values
+	 *
+	 * @param input==>src_joints
+	 * @param input==>dst_joints
+	 *
+	 * @return 
+	 */
+	bool compareJoints(JointValues src_joints, JointValues dst_joints);
+
+    /**
+     * @brief: getPoseFromJoint 
+     *
+     * @param joints: input
+     * @param pose: output
+     *
+     * @return: 0 if success 
+     */
+    U64 getPoseFromJoint(const JointValues &joints, PoseEuler &pose);
+
+    /**
+     * @brief: getJointFromPose 
+     *
+     * @param pose: input
+     * @param joints: output
+     *
+     * @return: 0 if success 
+     */
+    U64 getJointFromPose(const PoseEuler &pose, JointValues &joints);
+
+    /**
+     * @brief 
+     *
+     * @param user_frame
+     *
+     * @return 
+     */
+    U64 getUserFrame(motion_spec_userFrame *user_frame);
+    /**
+     * @brief 
+     *
+     * @param user_frame
+     *
+     * @return 
+     */
+    U64 setUserFrame(motion_spec_userFrame *user_frame);
+
+    /**
+     * @brief 
+     *
+     * @param tool_frame
+     *
+     * @return 
+     */
+    U64 getToolFrame(motion_spec_toolFrame *tool_frame);
+
+    /**
+     * @brief 
+     *
+     * @param tool_frame
+     *
+     * @return 
+     */
+    U64 setToolFrame(motion_spec_toolFrame *tool_frame);
+    /**
+     * @brief: getJointConstraint 
+     *
+     * @param jnt_constraint: output
+     *
+     * @return: 0 if success 
+     */
+    U64 getJointConstraint(motion_spec_JointConstraint *jnt_constraint);
+
+    /**
+     * @brief: setJointConstraint 
+     *
+     * @param jnt_constraint: input
+     *
+     * @return: 0 if success 
+     */
+    U64 setJointConstraint(motion_spec_JointConstraint *jnt_constraint);
+
+    /**
+     * @brief: getGlobalVelocity 
+     *
+     * @return: global_vel_ 
+     */
+    double getGlobalVelocity();
+
+    /**
+     * @brief: setGlobalVelocity 
+     *
+     * @param velocity: input
+     *
+     * @return: 0 if success 
+     */
+    U64 setGlobalVelocity(double factor);
+    U64 getDHGroup(motion_spec_DHGroup *dh_group);
+    U64 setDHGroup(motion_spec_DHGroup *dh_group);
+
+    U64 getHWLimit(double *hw_limit);
+    U64 setHWLimit(double *hw_limit);
+
+    U64 setTempZero();
+
+
   private:
 	ShareMem			share_mem_;
     SafetyInterface     safety_interface_;
+    IOInterface         *io_interface_;
     ParamGroup          *param_group_;
 	ArmGroup			*arm_group_;
 	JointValues			joints_;				//current joints
@@ -346,30 +610,26 @@ class RobotMotion
 	RobotMode			prev_mode_;				//previous mode
 	int					previous_command_id_;	//previous command instruction id	
 	int					current_command_id_;	//current instruction id
-//	map<int, PoseEuler> inst_id_map_;			//a map to store the id
-	//vector<JointPoint>	joint_traj_;			//store the trajectory joints
-//	TargetPosition		previous_target_;		//record the previous target
-    map<int, bool>      id_servowait_map_;
-	CommandInstruction	cur_instruction_;		//current instruction
-	CommandInstruction	next_move_instruction_; //next instruction
-	ManualState			manual_state_;          //manual state used in manual mode 
-    AutoState           auto_state_;            //auto state used in auto mode
-	int					manual_inst_delay_cnt_;
+    ProgramState        program_state_;
+    ProgramState        non_move_prgm_state_;   //non move ProgramState
 	unsigned int		servo_state_;
+    int                 curve_mdoe_;
+
+    JointValues         manu_refer_joints_; //the last target(joints)
+    PoseEuler           manu_refer_pose_;   //the last target(pose)
+
+    ManualReq           manu_req_;
+    
+    double              vel_factor_;        //global velocity for auto run mode
+    RunningMode         run_mode_;
 
 	boost::mutex		mutex_;
-	boost::mutex	    g_mutex_;
 
-    bool    servo_ready_wait_;                  //if needs to wait for servo ready
-	int		next_move_id_;						//record next move id	
-
-	ThreadsafeQueue<CommandInstruction> motion_queue_;		//store motion instructions
-	ThreadsafeQueue<CommandInstruction> non_move_queue_;	//store DIO or other instructions
-    ThreadsafeQueue<CommandInstruction> picked_motion_queue_;       //store instructions already moved
-	ThreadsafeQueue<CommandInstruction> manual_instruction_queue_;	//stroe manual instructions	
-    ThreadsafeQueue<CommandInstruction>   bak_err_queue_; 
-
-    bool err_flag_;
+    bool                servo_ready_wait_;                  //if needs to wait for servo ready
+    ThreadSafeList<CommandInstruction>  instruction_list_;     //store motion instructions
+    ThreadSafeList<U64> bak_err_list_; 
+    U64                 prev_err_;
+    unsigned int        zero_info_; //record which joint lose zero
 	/**
 	 * @brief: convert unit from params of TP to controller
 	 *
@@ -386,15 +646,18 @@ class RobotMotion
 	 * @param dst_movel_param: output==>struct covert to
 	 */
 	void unitConvert(const motion_spec_MoveJ *src_moveJ, JointValues &dst_joints, MoveJParam &dst_moveJ_param);
+    void unitConvert(const motion_spec_MoveC *moveC, PoseEuler& pose1, PoseEuler& pose2, MoveCParam &moveC_param);
+
 	/**
 	 * @brief get max value from a buffer
 	 *
 	 * @param buffer: input
 	 * @param length: input
+     * @param id: output
 	 *
 	 * @return :the max value
 	 */
-	double getMaxValue(const double *buffer, int length);
+	double getMaxValue(const double *buffer, int length/*, int &id*/);
 	/**
 	 * @brief: get the ID of max value 
 	 *
@@ -422,7 +685,7 @@ class RobotMotion
 	 *
 	 * @return: max velocity
 	 */
-	double calcuManualJointVel(JointValues pre_joints, JointValues cur_joints);
+//	double calcuManualJointVel(JointValues pre_joints, JointValues cur_joints);
 	/**
 	 * @brief: get the max interval value between two pose(x,y,z)
 	 *
@@ -450,7 +713,7 @@ class RobotMotion
 	 *
 	 * @return: max velocity
 	 */
-	double calcuManualLineVel(PoseEuler pre_pose, PoseEuler cur_pose);
+	//double calcuManualLineVel(PoseEuler pre_pose, PoseEuler cur_pose);
 	/**
 	 * @brief: convert unit from params of TP to controller
 	 *
@@ -463,66 +726,32 @@ class RobotMotion
 	 * @param pose: input&output
 	 */
 	void uintPoseCtle2TP(PoseEuler *pose);
-	/**
-	 * @brief: motion process in auto mode
-     *
-     * @return: 0 if success
-	 */
-	U64 autoMotion();
 
     /**
-     * @brief: motion process in manual mode 
+     * @brief: auto move without next_inst 
      *
-     * @return: 0 if success 
+     * @param target_inst: input==>target instruction
+     *
+     * @return: 0 if success
      */
-    U64 manualMotion();
-	/**
-	 * @brief: move a line used for manual mode
-	 *
-	 * @param cur_pose: input==>current pose
-	 * @param next_pose: input==>next pose
+    U64 moveInstructions(CommandInstruction target_inst);
+
+    /**
+     * @brief: auto move with next instruction
      *
-     * @return: 0 is success
-	 */
-	U64 moveLine(const PoseEuler* cur_pose, const PoseEuler* next_pose = NULL);
-	/**
-	 * @brief: move joints in manual mode
-	 *
-	 * @param cur_joints: input
-	 * @param next_joints: input
+     * @param target_inst: input==> target instruction
+     * @param next_inst: input==> next instruction
      *
-     * @return: 0 is success
-	 */
-	U64 moveJoints(const JointValues *cur_joints, const JointValues *next_joints = NULL);
-	/**
-	 * @brief: pick one manual move instruction
-	 *
-	 * @return: 0 if success
-	 */
-	bool pickManualInstruction();
+     * @return: 0 if success
+     */
+    U64 moveInstructions(CommandInstruction target_inst, CommandInstruction next_inst);
 	/**
 	 * @brief: pick one motion instruction from the queue and execute it
 	 *
 	 * @return: 0 if Success
 	 */
-	bool pickMotionInstruction();
-	/**
-	 * @brief: find next movable command joint or cart
-	 *
-	 * @param next_motion_command: output==>the result of the found
-	 *
-	 * @return: true if found one
-	 */
-	bool findNextMoveCommand(CommandInstruction &next_cmd_instruction);	
-	/**
-	 * @brief check if the joints changed within some values
-	 *
-	 * @param input==>src_joints
-	 * @param input==>dst_joints
-	 *
-	 * @return 
-	 */
-	bool compareJoints(JointValues src_joints, JointValues dst_joints);
+	U64 pickInstructions();
+
     /**
       * @brief: judge if fifo1 and fifo2 is empty 
       *
@@ -531,64 +760,224 @@ class RobotMotion
     bool isFifoEmpty();
 
     /**
-     * @brief: put picked_motion_queue_ to motion_queue_ 
-     */
-    void resetQueue();    
-    /**
-     * @brief: clear all auto queue 
-     */
-    void clearAutoQueue();
-    /**
-     * @brief: reset the instruction id to -1 
-     */
-    void resetInstructionID();
-
-    /**
-     * @brief: set ManualState 
+     * @brief: plan movement of fifo 
      *
-     * @param state: input
+     * @return: 0 if success 
      */
-    void setManualState(ManualState state);
-
-    /**
-     * @brief: get ManualState 
-     *
-     * @return: ManualState 
-     */
-    ManualState getManualState();
-    
-    /**
-     * @brief: setAutoState 
-     *
-     * @param state: input
-     */
-    void setAutoState(AutoState state);
-    
-    /**
-     * @brief: getAutoState 
-     *
-     * @return: AutoState 
-     */
-    AutoState getAutoState();
+    U64 planFifo();
 
     /**
      * @brief: process of estop 
+     *
+     * @return: 0 if success 
      */
-    void emergencyStop();
+    U64 emergencyStop();
 
     /**
      * @brief: popup instruction from picked_motion_queue_
      */
     void popupInstruction();
 
+    void resetInstructionList();
+    /**
+     * @brief: pick points from fifo1  
+     *
+     * @return: 0 if success 
+     */
+    U64 pickPointsFromPathFifo();
+
     /**
      * @brief: pick joints and send them to bare metal 
      */
-    void sendJointsToRemote();
-    
-    void insertIDServoWait();
+    void sendJointsToRemote();    
 
-    void forceChangeMode(RobotMode mode);
+    /**
+     * @brief: check if manual move is on 
+     *
+     * @return: true if manual is moving 
+     */
+    bool hasManualVel();
+   
+    /**
+     *
+     * @brief: calculate the target according to src and delta 
+     *
+     * @param src: input
+     * @param delta: input
+     * @param dst: output
+     */
+    void addTargetVal(double *src, double *delta, double *dst);
+
+    /**
+     * @brief:  
+     *
+     * @return 
+     */
+    ManualReq getManualReq();
+
+    /**
+     * @brief: move manual line 
+     *
+     * @return: 0 if success
+     */
+    U64 moveManually();
+   
+    /**
+     * @brief: pickMoveInstruction 
+     *
+     * @param cmd_instruction: output the picked instruction
+     *
+     * @return: pointer of next instruction, NULL if not exist
+     */
+    CommandInstruction* pickMoveInstruction();
+
+    /**
+     * @brief: pickNextMoveInstruction 
+     *
+     * @return: pointer of next instruction, NULL if not exist
+     */
+    CommandInstruction* pickNextMoveInstruction();
+    
+
+    /**
+     * @brief: getServoWaitFlag 
+     *
+     * @return 
+     */
+    bool getServoWaitFlag();
+    
+    /**
+     * @brief: setServoWaitFlag 
+     *
+     * @param flag: input
+     */
+    void setServoWaitFlag(bool flag);
+
+    /**
+     * @brief: do after move to the end
+     */
+    void processEndingMove();
+   
+    /**
+     * @brief: addNonMoveInstruction 
+     *
+     * @param instruction: input
+     *
+     * @return: 0 if success 
+     */
+    U64 addNonMoveInstruction(CommandInstruction instruction);
+   
+    /**
+     * @brief 
+     *
+     * @return 
+     */
+    RobotMode getPrevMode();
+
+    /**
+     * @brief 
+     *
+     * @param mode
+     */
+    void setPrevMode(RobotMode mode);
+
+    /**
+     * @brief 
+     *
+     * @return 
+     */
+    bool hasMoveCommand();
+
+    /**
+     * @brief: check if robot is ready to change to execute 
+     *
+     * @return: true if ready 
+     */
+    bool isReadyToMove();
+
+    /**
+     * @brief: check if the ProgramState transformed from execute to idle auto 
+     *
+     * @return: true if has transformed 
+     */
+    bool hasTransformedToIdle();
+    
+    /**
+     * @brief: clear manu move params 
+     */
+    void clearManuMove();
+
+    /**
+     * @brief: calcuManualJointVel when TP send manual Joint values 
+     *
+     * @param interval_jnts: input
+     *
+     * @return: 0 if success 
+     */
+    double calcuManualJointVel(const double *interval_jnts);
+    /**
+     * @brief: calcuManualLineVel when TP send manual position values 
+     *
+     * @param interval_pose: input
+     *
+     * @return: 0 if success 
+     */
+    double calcuManualLineVel(const double *interval_pose);
+
+    /**
+     * @brief: judge if servo ready  
+     *
+     * @return: true if ready 
+     */
+    bool isServoReady();
+
+    /**
+     * @brief: get delta value of two rads 
+     *
+     * @param value1: input
+     * @param value2: input
+     *
+     * @return 
+     */
+    double get2PIDeltaValue(double value1, double value2);
+    
+    /**
+     * @brief: get line delta between two values
+     *
+     * @param from: input==>Subtrahend 
+     * @param to: input==>minuend
+     * @param target: output==>target
+     * @param num: number in group
+     */
+    void getLineDelta(double* from, double* to, double* target, int num);
+    /**
+     * @brief: get rad delta between two values
+     *
+     * @param from: input==>Subtrahend 
+     * @param to: input==>minuend
+     * @param target: output==>target
+     * @param num: number in group
+     */
+    void getRadDelta(double* from, double* to, double* target, int num);
+    
+    /**
+     * @brief: add two value of line 
+     *
+     * @param src: input==>value1
+     * @param delta: input
+     * @param dst: output==>the total value
+     * @param num: number in group
+     */
+    void addLineDelta(double *src, double *delta, double *dst, int num);
+    /**
+     * @brief: add two value of rad 
+     *
+     * @param src: input==>value1
+     * @param delta: input
+     * @param dst: output==>the total value
+     * @param num: number in group
+     */
+    void addRadDelta(double *src, double *delta, double *dst, int num);
 };
 
 

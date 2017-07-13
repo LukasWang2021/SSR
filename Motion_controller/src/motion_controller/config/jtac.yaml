@@ -29,4 +29,4 @@ coupling_coefficient:
 trajectory_delay:
     id: 304                 # ID = 0x0130
     data: [0.05]
-
+#END

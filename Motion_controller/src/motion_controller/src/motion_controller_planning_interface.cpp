@@ -16,6 +16,8 @@ namespace fst_controller {
 
 PlanningInterface::PlanningInterface() {
     planner_    = NULL;
+    trajectory_segment_length_range_.min = 50;
+    trajectory_segment_length_range_.max = 5000;
     cycle_time_range_.min   = 0.0005;       // s
     cycle_time_range_.max   = 0.05;         // s
     velocity_range_.min     = 0.1;          // mm/s
@@ -39,6 +41,7 @@ PlanningInterface::PlanningInterface() {
     smooth_radius_coefficient_range_.min = 0.9999;
     smooth_radius_coefficient_range_.max = 5.0001;
 
+    trajectory_segment_length_ = 500;
     cycle_time_ = 0.001;
     velocity_   = 500.0;
     acceleration_   = 5000.0;
@@ -50,34 +53,44 @@ PlanningInterface::PlanningInterface() {
     omega_overload_     = 1.0;
     alpha_overload_     = 1.0;
     smooth_radius_coefficient_ = 1.0;
-    smooth_curve_mode_  = 1;
+    curve_mode_  = 1;
+    fifo_length_ = 0;
 }
 
-bool PlanningInterface::initPlanningInterface(XmlRpc::XmlRpcValue params) {
+bool PlanningInterface::initPlanningInterface(fst_parameter::ParamValue &params, ErrorCode &err) {
     if (planner_ != NULL) {
         delete planner_;
         planner_ = NULL;
     }
     planner_ = new fst_controller::TrajPlan();
     if (planner_ == NULL) {
+        err = MOTION_FAIL_IN_INIT;
         return false;
     }
-    
-    if (setCycleTime(params["cycle_time"]) &&
-        setVelocity(params["velocity"]) &&
-        setAcceleration(params["acceleration"]) &&
-        setVelocityScaling(params["velocity_scaling"]) &&
-        setAccelerationScaling(params["acceleration_scaling"]) &&
-        setJerk(params["jerk"]) &&
-        setJointOvershoot(params["joint_overshoot"]) &&
-        setJointErrorAngle(params["joint_errorangle"]) &&
-        setOmegaOverload(params["omega_overload"]) &&
-        setAlphaOverload(params["alpha_overload"]) &&
-        setSmoothRadiusCoefficient(params["smooth_radius_coefficient"]) &&
-        setSmoothCurveMode((params["smooth_curve"])[(string)params["smooth_curve_mode"]])) {
-            return true;
+    try {
+        if (setTrajectorySegmentLength((int)params["trajectory_segment_length"]) &&
+            setCycleTime(params["cycle_time"]) &&
+            setVelocity(params["velocity"]) &&
+            setAcceleration(params["acceleration"]) &&
+            setVelocityScaling(params["velocity_scaling"]) &&
+            setAccelerationScaling(params["acceleration_scaling"]) &&
+            setJerk(params["jerk"]) &&
+            setJointOvershoot(params["joint_overshoot"]) &&
+            setJointErrorAngle(params["joint_errorangle"]) &&
+            setOmegaOverload(params["omega_overload"]) &&
+            setAlphaOverload(params["alpha_overload"]) &&
+            setSmoothRadiusCoefficient(params["smooth_radius_coefficient"]) &&
+            setCurveMode((params["smooth_curve"])[(string)params["smooth_curve_mode"]])) {
+                return true;
+        }
+        else {
+            err = MOTION_FAIL_IN_INIT;
+            return false;
+        }
     }
-    else {
+    catch (fst_parameter::ParamException &e) {
+        err = e.getCode();
+        // std::cout << e.getMessage() << std::endl << "error_code=" << e.getCode() << std::endl;
         return false;
     }
 }
@@ -85,6 +98,10 @@ bool PlanningInterface::initPlanningInterface(XmlRpc::XmlRpcValue params) {
 PlanningInterface::~PlanningInterface() {
     delete planner_;
     planner_ = NULL;
+}
+
+string PlanningInterface::getAlgorithmVersion(void) {
+    return planner_->getVersion();
 }
 
 double PlanningInterface::getCycleTime(void) {
@@ -131,12 +148,35 @@ double PlanningInterface::getSmoothRadiusCoefficient(void) {
     return smooth_radius_coefficient_;
 }
 
-double PlanningInterface::getSmoothCurveMode(void) {
-    return smooth_curve_mode_;
+double PlanningInterface::getCurveMode(void) {
+    return curve_mode_;
 }
 
 const JointConstraints& PlanningInterface::getJointConstraints(void) {
     return joint_constraints_;
+}
+
+void PlanningInterface::clearFIFO(void) {
+    fifo_length_ = 0;
+}
+
+int PlanningInterface::getFIFOLength(void) {
+    return fifo_length_;
+}
+
+unsigned int PlanningInterface::getTrajectorySegmentLength(void) {
+    return trajectory_segment_length_;
+}
+
+bool PlanningInterface::setTrajectorySegmentLength(unsigned int length) {
+    if (length > trajectory_segment_length_range_.min && length < trajectory_segment_length_range_.max) {
+        this->trajectory_segment_length_ = length;
+        this->planner_->setVlength(length);
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -282,8 +322,8 @@ bool PlanningInterface::setSmoothRadiusCoefficient(double coeff) {
     }
 }
 
-bool PlanningInterface::setSmoothCurveMode(int mode) {
-    this->smooth_curve_mode_ = mode;
+bool PlanningInterface::setCurveMode(int mode) {
+    this->curve_mode_ = mode;
     this->planner_->setCurveMode(mode);
     return true;
 }
@@ -299,6 +339,31 @@ bool PlanningInterface::setSmoothCurveMode(int mode) {
 bool PlanningInterface::setJointConstraints(const JointConstraints &constraints) {
     joint_constraints_ = constraints;
     this->planner_->setAxisLimit(constraints);
+    return true;
+}
+
+bool PlanningInterface::setAlphaScaling(double percent) {
+    if (percent > 0.0 && percent < 100.0) {
+        percent = percent / 100.0;
+        JointConstraints temp_constraints = joint_constraints_;
+        temp_constraints.j1.max_alpha *= percent;
+        temp_constraints.j2.max_alpha *= percent;
+        temp_constraints.j3.max_alpha *= percent;
+        temp_constraints.j4.max_alpha *= percent;
+        temp_constraints.j5.max_alpha *= percent;
+        temp_constraints.j6.max_alpha *= percent;
+        this->planner_->setAxisLimit(temp_constraints);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool PlanningInterface::setDH(const DHGroup &dh) {
+    dh_parameter_ = dh;
+    this->planner_->setDH(dh_parameter_);
+    return true;
 }
 
 void PlanningInterface::setToolFrame(const Transformation &tool_frame) {
@@ -353,6 +418,31 @@ PoseEuler PlanningInterface::transformPose2PoseEuler(const Pose &pose) {
     else {
         // log.error("Error while transform Quaternion to Euler, error code=%d", result);
         return pose_e;
+    }
+}
+
+bool PlanningInterface::getJointFromPose(const Pose &pose, const JointValues &reference,
+                                         JointValues &joint, double time_interval, ErrorCode &err) {
+    computeInverseKinematics(pose, reference, joint, err);
+    if (err == SUCCESS) {
+        return true;
+    }
+    else if (err == IK_EXCESSIVE_DISTANCE) {
+        if (abs(reference.j1 - joint.j1) < joint_constraints_.j1.max_omega * time_interval &&
+            abs(reference.j2 - joint.j2) < joint_constraints_.j2.max_omega * time_interval &&
+            abs(reference.j3 - joint.j3) < joint_constraints_.j3.max_omega * time_interval &&
+            abs(reference.j4 - joint.j4) < joint_constraints_.j4.max_omega * time_interval &&
+            abs(reference.j5 - joint.j5) < joint_constraints_.j5.max_omega * time_interval &&
+            abs(reference.j6 - joint.j6) < joint_constraints_.j6.max_omega * time_interval) {
+                err = SUCCESS;
+                return true;
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        return false;
     }
 }
 
@@ -428,18 +518,32 @@ bool PlanningInterface::computeForwardKinematics(const JointValues &joint,
 //          error_code  -> error code
 // Return:  true        -> plan successfully
 //------------------------------------------------------------------------------
-bool PlanningInterface::MoveJ2J(JointPoint &jp_start, JointPoint &jp_target, JointPoint &jp_next,
-                                double v_ref, int cnt,
-                                std::vector<JointValues> &planned_path,
+bool PlanningInterface::MoveJ2J(JointPoint &jp_start,
+                                const JointValues &j_target, double v_target, int cnt_target,
+                                const JointValues &j_next,   double v_next,   int cnt_next,
                                 ErrorCode &err) {
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
-    }
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
 
-    int res = this->planner_->MoveJ2J_Jspace(jp_start, jp_target, jp_next, v_percent, cnt, planned_path);
+    if (v_target > 100.0)  v_target = 100.0;
+    if (v_next   > 100.0)  v_next   = 100.0;
+    v_target = v_target * velocity_scaling_;
+    v_next   = v_next   * velocity_scaling_;
+
+    JointPoint  jp_out;
+    JCommand    obj, next_obj;
+    obj.joints          = j_target;
+    obj.v_percentage    = v_target;
+    obj.cnt             = cnt_target;
+    next_obj.joints         = j_next;
+    next_obj.v_percentage   = v_next;
+    next_obj.cnt            = cnt_next;
+    int traj_length = 0;
+    int res = this->planner_->MoveJ2J(jp_start, obj, next_obj, jp_out, traj_length);
+    
     switch (res) {
         case 0:
+            fifo_length_ = traj_length;
+            jp_start = jp_out;
             err = SUCCESS;
             return true;
         case 1021:
@@ -457,7 +561,7 @@ bool PlanningInterface::MoveJ2J(JointPoint &jp_start, JointPoint &jp_target, Joi
     }
 }
 
-
+/*
 //------------------------------------------------------------------------------
 // Function:    MoveJ2J
 // Summary: To plan a path in joint space to touch target pose, with/without smooth.
@@ -499,6 +603,7 @@ bool PlanningInterface::MoveJ2J(JointPoint &jp_start,
             return false;
     }
 }
+*/
 
 
 //------------------------------------------------------------------------------
@@ -520,28 +625,37 @@ bool PlanningInterface::MoveJ2J(JointPoint &jp_start,
 // Return:  true        -> plan successfully
 //------------------------------------------------------------------------------
 bool PlanningInterface::MoveJ2L(const JointPoint &jp_start,
-                                JointValues &joint_target, double v_ref, int cnt,
+                                const JointValues &joint_target, double v_target, int cnt_target,
                                 const Pose &pose_next, double v_next, int cnt_next,
-                                std::vector<JointValues> &planned_path,
                                 Pose &pose_start, Pose &pose_previous,
                                 double &v_start, double &vu_start,
                                 ErrorCode &err) {
-    v_next = v_next * velocity_scaling_;
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
-    }
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
 
-    int res = this->planner_->MoveJ2L_Jspace(jp_start,
-                                        joint_target, v_percent, cnt,
-                                        pose_next, v_next,
-                                        planned_path,
-                                        pose_start, v_start, vu_start,
-                                        pose_previous);
+    if (v_target > 100.0)  v_target = 100.0;
+    v_next   = v_next * velocity_scaling_;
+    v_target = v_target * velocity_scaling_;
+
+    JCommand    obj_target;
+    LCommand    obj_next;
+    LInitial    line_out;
+    obj_target.v_percentage = v_target;
+    obj_target.joints   = joint_target;
+    obj_target.cnt  = cnt_target;
+    obj_next.velocity   = v_next;
+    obj_next.pose   = pose_next;
+    obj_next.cnt    = cnt_next;
+    int traj_length = 0;
+    int res = this->planner_->MoveJ2L(jp_start, obj_target, obj_next, line_out, traj_length);
 
     switch (res) {
         case 0:
-            err = SUCCESS;
+            fifo_length_    = traj_length;
+            pose_previous   = line_out.pose_prv;
+            pose_start      = line_out.pose;
+            vu_start    = line_out.vu;
+            v_start     = line_out.velocity;
+            err     = SUCCESS;
             return true;
         case 1021:
             err = TARGET_REPEATED;
@@ -558,7 +672,7 @@ bool PlanningInterface::MoveJ2L(const JointPoint &jp_start,
     }
 }
 
-
+/*
 //------------------------------------------------------------------------------
 // Function:    MoveJ2L
 // Summary: To plan a path in joint space to touch target pose, with/without smooth.
@@ -615,7 +729,7 @@ bool PlanningInterface::MoveJ2L(const JointPoint &jp_start,
             return false;
     }
 }
-
+*/
 
 //------------------------------------------------------------------------------
 // Function:    MoveJ2C
@@ -632,22 +746,34 @@ bool PlanningInterface::MoveJ2L(const JointPoint &jp_start,
 // Return:  true        -> plan successfully
 //------------------------------------------------------------------------------
 bool PlanningInterface::MoveJ2C(const JointPoint &jp_start,
-                                const JointValues &j_target, double v_ref, int cnt,
-                                const Pose &pose2_circle, const Pose &pose3_circle, double v_circle,
-                                std::vector<JointValues> &planned_path,
+                                const JointValues &j_target, double v_target, int cnt_target,
+                                const Pose &pose1_circle, const Pose &pose2_circle, double v_circle, int cnt_next,
                                 Pose &pose_start, double &v_start,
                                 ErrorCode &err) {
-    v_circle = v_circle * velocity_scaling_;
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
-    }
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
 
-    int res = this->planner_->MoveJ2C_Jspace(jp_start, j_target, v_percent, cnt,
-                                       pose2_circle, pose3_circle, v_circle,
-                                       planned_path, pose_start, v_start);
+    if (v_target > 100.0)  v_target = 100.0;
+    v_circle = v_circle * velocity_scaling_;
+    v_target = v_target * velocity_scaling_;
+
+    JCommand obj_target;
+    CCommand obj_next;
+    CInitial circle_out;
+    obj_target.v_percentage = v_target;
+    obj_target.joints   = j_target;
+    obj_target.cnt  = cnt_target;
+    obj_next.velocity   = v_circle;
+    obj_next.pose1  = pose1_circle;
+    obj_next.pose2  = pose2_circle;
+    obj_next.cnt    = cnt_next;
+    int traj_length = 0;
+    int res = this->planner_->MoveJ2C(jp_start, obj_target, obj_next, circle_out, traj_length);
+    
     switch (res) {
         case 0:
+            fifo_length_    = traj_length;
+            pose_start  = circle_out.pose;
+            v_start     = circle_out.velocity;
             err = SUCCESS;
             return true;
         case 1021:
@@ -689,15 +815,25 @@ bool PlanningInterface::MoveJ2C(const JointPoint &jp_start,
 //------------------------------------------------------------------------------
 bool PlanningInterface::MoveL2J(const Pose &pose_start, double v_start, double vu_start,
                                 const Pose &pose_target, double v_target, int cnt_target,
-                                Pose &pose_previous, std::vector<Pose> &planned_path,
-                                ErrorCode &err) {
+                                Pose &pose_previous, ErrorCode &err) {
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
+
     v_target = v_target * velocity_scaling_;
-    int res = this->planner_->MoveL2J(pose_start, v_start, vu_start,
-                                 pose_target, v_target, cnt_target,
-                                 pose_previous, planned_path);
+    LInitial line_start;
+    LCommand obj_target;
+    line_start.velocity = v_start;
+    line_start.pose_prv = pose_previous;
+    line_start.pose = pose_start;
+    line_start.vu   = vu_start;
+    obj_target.pose = pose_target;
+    obj_target.velocity = v_target;
+    obj_target.cnt  = cnt_target;
+    int traj_length = 0;
+    int res = this->planner_->MoveL2J(line_start, obj_target, traj_length);
 
     switch (res) {
         case 0:
+            fifo_length_ = traj_length;
             err = SUCCESS;
             return true;
         case 1021:
@@ -739,31 +875,27 @@ bool PlanningInterface::MoveL2J(const Pose &pose_start, double v_start, double v
 //------------------------------------------------------------------------------
 bool PlanningInterface::MoveL2L(Pose &pose_start, double &v_start, double &vu_start,
                                 const Pose &pose_target, double v_target, int cnt_target,
-                                const Pose &pose_next, double v_next,
-                                Pose &pose_previous,
-                                std::vector<Pose> &planned_path,
-                                ErrorCode &err) {
+                                const Pose &pose_next, double v_next, int cnt_next,
+                                Pose &pose_previous, ErrorCode &err) {
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
 
-    /*
-    ROS_INFO("Call planner_->MoveL");
-    ROS_INFO("pose start");
-    printPose(pose_start);
-    ROS_INFO("v0 = %f, vu0 = %f", v_start, vu_start);
-    ROS_INFO("pose target");
-    printPose(pose_target);
-    ROS_INFO("v_target = %f, cnt_target = %d", v_target, cnt_target);
-    ROS_INFO("pose next");
-    printPose(pose_next);
-    ROS_INFO("v_next = %f", v_next);
-    ROS_INFO("pose pre");
-    printPose(pose_previous);
-    */
     v_target = v_target * velocity_scaling_;
     v_next   = v_next   * velocity_scaling_;
-    int res = this->planner_->MoveL(pose_start, v_start, vu_start,
-                               pose_target, v_target, cnt_target,
-                               pose_next, v_next,
-                               pose_previous, planned_path);
+
+    LCommand obj_target, obj_next;
+    LInitial line_start, line_out;
+    obj_target.velocity = v_target;
+    obj_target.pose = pose_target;
+    obj_target.cnt  = cnt_target;
+    obj_next.velocity   = v_next;
+    obj_next.pose   = pose_next;
+    obj_next.cnt    = cnt_next;
+    line_start.velocity = v_start;
+    line_start.pose_prv = pose_previous;
+    line_start.pose = pose_start;
+    line_start.vu   = vu_start;
+    int traj_length = 0;
+    int res = this->planner_->MoveL2L(line_start, obj_target, obj_next, line_out, traj_length);
 
     /*
     // For test 
@@ -779,10 +911,14 @@ bool PlanningInterface::MoveL2L(Pose &pose_start, double &v_start, double &vu_st
     
     switch (res) {
         case 0:
+            fifo_length_    = traj_length;
+            pose_previous   = line_out.pose_prv;
+            pose_start  = line_out.pose;
+            vu_start    = line_out.vu;
+            v_start = line_out.velocity;
             err = SUCCESS;
             return true;
         case 1021:
-            // err = PLANNING_UNSMOOTHABLE;
             err = TARGET_REPEATED;
             return false;
         default:
@@ -807,20 +943,38 @@ bool PlanningInterface::MoveL2L(Pose &pose_start, double &v_start, double &vu_st
 // Return:  true        -> plan successfully
 //------------------------------------------------------------------------------
 bool PlanningInterface::MoveL2C(Pose &pose_start, double &v_start, double &vu_start,
-                                const Pose &pose_target, double v_target, int cnt,
-                                const Pose &pose2_circle, const Pose &pose3_circle, double v_circle,
-                                Pose &pose_previous, Pose &pose_start_past,
-                                std::vector<Pose> &planned_path,
-                                ErrorCode &err) {
+                                const Pose &pose_target, double v_target, int cnt_target,
+                                const Pose &pose1_circle, const Pose &pose2_circle, double v_circle, int cnt_next,
+                                Pose &pose_previous, ErrorCode &err) {
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
+
     v_target = v_target * velocity_scaling_;
     v_circle = v_circle * velocity_scaling_;
-    int res = this->planner_->MoveL2C_part1(pose_start, v_start, vu_start,
-                                      pose_target,v_target, cnt,
-                                      pose2_circle, pose3_circle, v_circle,
-                                      pose_previous, planned_path, pose_start_past);
+
+    LInitial line_start;
+    CInitial circle_out;
+    LCommand obj_target;
+    CCommand obj_next;
+    line_start.velocity = v_start;
+    line_start.pose_prv = pose_previous;
+    line_start.pose = pose_start;
+    line_start.vu   = vu_start;
+    obj_target.velocity = v_target;
+    obj_target.pose = pose_target;
+    obj_target.cnt  = cnt_target;
+    obj_next.velocity   = v_circle;
+    obj_next.pose1  = pose1_circle;
+    obj_next.pose2  = pose2_circle;
+    obj_next.cnt    = cnt_next;
+    int traj_length = 0;
+    int res = this->planner_->MoveL2C(line_start, obj_target, obj_next, circle_out, traj_length);
+
     switch (res) {
         case 0:
-            err = SUCCESS;
+            fifo_length_ = traj_length;
+            pose_start   = circle_out.pose;
+            v_start = circle_out.velocity;
+            err     = SUCCESS;
             return true;
         case 1021:
             err = TARGET_REPEATED;
@@ -837,6 +991,7 @@ bool PlanningInterface::MoveL2C(Pose &pose_start, double &v_start, double &vu_st
     }
 }
 
+/*
 bool PlanningInterface::MoveL2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
                                               const Pose &pose_start_past, vector<JointValues> &planned_path,
                                               ErrorCode &err) {
@@ -852,16 +1007,29 @@ bool PlanningInterface::MoveL2CAdditionSmooth(const JointPoint &jp_start, const 
             err = MOTION_INTERNAL_FAULT;
             return false;
     }
-}
+}*/
 
 
 bool PlanningInterface::MoveC2J(const Pose &pose_start, double v_start,
-                                const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                                std::vector<Pose> &planned_path, ErrorCode err) {
+                                const Pose &pose1, const Pose &pose2, double v_target, int cnt_target,
+                                ErrorCode err) {
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
+
     v_target = v_target * velocity_scaling_;
-    int res = this->planner_->MoveC2J(pose_start, v_start, pose_2nd, pose_3rd, v_target, cnt, planned_path);
+    CInitial circle_start;
+    CCommand obj_target;
+    circle_start.velocity   = v_start;
+    circle_start.pose   = pose_start;
+    obj_target.velocity = v_target;
+    obj_target.pose1    = pose1;
+    obj_target.pose2    = pose2;
+    obj_target.cnt  = cnt_target;
+    int traj_length = 0;
+    int res = this->planner_->MoveC2J(circle_start, obj_target, traj_length);
+
     switch (res) {
         case 0:
+            fifo_length_ = traj_length;
             err = SUCCESS;
             return true;
         case 1053:
@@ -878,16 +1046,36 @@ bool PlanningInterface::MoveC2J(const Pose &pose_start, double v_start,
 
 
 bool PlanningInterface::MoveC2L(Pose &pose_start, double &v_start,
-                                const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                                const Pose &pose_next, double v_next,
-                                Pose &pose_start_past, Pose &pose_previous, double &vu_start,
-                                std::vector<Pose> &planned_path, ErrorCode &err) {
+                                const Pose &pose1, const Pose &pose2, double v_target, int cnt_target,
+                                const Pose &pose_next, double v_next, int cnt_next,
+                                Pose &pose_previous, double &vu_start, ErrorCode &err) {
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
+
     v_target = v_target * velocity_scaling_;
     v_next   = v_next   * velocity_scaling_;
-    int res = this->planner_->MoveC2L_part1(pose_start, v_start, pose_2nd, pose_3rd, v_target, cnt,
-                                      pose_next, v_next, planned_path, pose_start_past, vu_start, pose_previous);
+    CInitial circle_start;
+    CCommand obj_target;
+    LCommand obj_next;
+    LInitial line_out;
+    circle_start.velocity   = v_start;
+    circle_start.pose   = pose_start;
+    obj_target.velocity = v_target;
+    obj_target.pose1    = pose1;
+    obj_target.pose2    = pose2;
+    obj_target.cnt      = cnt_target;
+    obj_next.velocity   = v_next;
+    obj_next.pose   = pose_next;
+    obj_next.cnt    = cnt_next;
+    int traj_length = 0;
+    int res = this->planner_->MoveC2L(circle_start, obj_target, obj_next, line_out, traj_length);
+    
     switch (res) {
         case 0:
+            fifo_length_    = traj_length;
+            pose_previous   = line_out.pose_prv;
+            pose_start  = line_out.pose;
+            vu_start    = line_out.vu;
+            v_start     = line_out.velocity;
             err = SUCCESS;
             return true;
         case 1053:
@@ -902,7 +1090,7 @@ bool PlanningInterface::MoveC2L(Pose &pose_start, double &v_start,
     }
 }
 
-
+/*
 bool PlanningInterface::MoveC2LAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
                                               const Pose &pose_start_past, std::vector<JointValues> &planned_path,
                                               ErrorCode &err) {
@@ -918,22 +1106,38 @@ bool PlanningInterface::MoveC2LAdditionSmooth(const JointPoint &jp_start, const 
             err = MOTION_INTERNAL_FAULT;
             return false;
     }
-}
+}*/
 
 
 bool PlanningInterface::MoveC2C(Pose &pose_start, double &v_start,
-                                const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                                const Pose &pose_2nd_next, const Pose &pose_3rd_next, double v_next,
-                                Pose &pose_start_ptc, std::vector<Pose> &planned_path, ErrorCode &err) {
+                                const Pose &pose1_target, const Pose &pose2_target, double v_target, int cnt_target,
+                                const Pose &pose1_next, const Pose &pose2_next, double v_next, int cnt_next,
+                                ErrorCode &err) {
+    if (fifo_length_ >0) {err = INVALID_SEQUENCE; return false;}
+
     v_target = v_target * velocity_scaling_;
     v_next   = v_next   * velocity_scaling_;
-    int res = this->planner_->MoveC2C_part1(pose_start, v_start,
-                                       pose_2nd, pose_3rd, v_target, cnt,
-                                       pose_2nd_next, pose_3rd_next, v_next,
-                                       planned_path, pose_start_ptc);
+
+    CInitial circle_start, circle_out;
+    CCommand obj_target, obj_next;
+    circle_start.velocity   = v_start;
+    circle_start.pose   = pose_start;
+    obj_target.velocity = v_target;
+    obj_target.pose1    = pose1_target;
+    obj_target.pose2    = pose2_target;
+    obj_target.cnt      = cnt_target;
+    obj_next.velocity   = v_next;
+    obj_next.pose1  = pose1_next;
+    obj_next.pose2  = pose2_next;
+    obj_next.cnt    = cnt_next;
+    int traj_length = 0;
+    int res = this->planner_->MoveC2C(circle_start, obj_target, obj_next, circle_out, traj_length);
 
     switch (res) {
         case 0:
+            fifo_length_ = traj_length;
+            pose_start   = circle_out.pose;
+            v_start = circle_out.velocity;
             err = SUCCESS;
             return true;
         case 1053:
@@ -948,7 +1152,7 @@ bool PlanningInterface::MoveC2C(Pose &pose_start, double &v_start,
     }
 }
 
-
+/*
 bool PlanningInterface::MoveC2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
                                               const Pose &pose_start_past, std::vector<JointValues> &planned_path,
                                               ErrorCode &err) {
@@ -964,8 +1168,56 @@ bool PlanningInterface::MoveC2CAdditionSmooth(const JointPoint &jp_start, const 
             err = MOTION_INTERNAL_FAULT;
             return false;
     }
+}*/
+
+bool PlanningInterface::pickPoints(vector<Pose> &points, ErrorCode &err) {
+    points.clear();
+    if (fifo_length_ <= 0) {err = MOTION_INTERNAL_FAULT; return false;}
+    
+    //std::cout << "call planner_->PickPoint()" << std::endl;
+    int res = this->planner_->PickPoint(points);
+    //std::cout << "planner_->PickPoint() returned" << std::endl;
+    switch (res) {
+        case 0:
+            fifo_length_ -= points.size();
+            err = SUCCESS;
+            return true;
+        default:
+            err = MOTION_INTERNAL_FAULT;
+            return false;
+    }
 }
 
+bool PlanningInterface::pickPoints(vector<JointValues> &points, ErrorCode &err) {
+    points.clear();
+    if (fifo_length_ <= 0) {err = MOTION_INTERNAL_FAULT; return false;}
+
+    //std::cout << "call planner_->PickPoint()" << std::endl;
+    int res = this->planner_->PickPoint(points);
+    //std::cout << "planner_->PickPoint() returned" << std::endl;
+    switch (res) {
+        case 0:
+            fifo_length_ -= points.size();
+            err = SUCCESS;
+            return true;
+        case 1021:
+            err = TARGET_REPEATED;
+            return false;
+        case 1031:
+            err = AXIS_OVERSHOOT;;
+            return false;
+        case 1032:
+            err = AXIS_APPROACHING_LIMIT;
+            return false;
+        default:
+            err = MOTION_INTERNAL_FAULT;
+            return false;
+    }
+}
+
+int PlanningInterface::estimateFIFOLength(JointValues joint1, JointValues joint2) {
+    return this->planner_->EstimateFIFOlength(joint1, joint2);
+}
 
 bool PlanningInterface::replanPauseTrajectory(std::vector<JointValues> &trajectory, ErrorCode &err) {
     int res = this->planner_->Pause(trajectory);
@@ -992,6 +1244,43 @@ bool PlanningInterface::replanRestartTrajectory(std::vector<JointValues> &trajec
             return false;
     }
 }
+
+bool PlanningInterface::isPointCoincident(const Pose &pose1, const Pose &pose2) {
+    if (0 == this->planner_->Check_coincidence_c(pose1, pose2))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
+bool PlanningInterface::isPointCoincident(const Pose &pose, const JointValues &joint) {
+    if (0 == this->planner_->Check_coincidence_jc(joint, pose))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
+bool PlanningInterface::isPointCoincident(const JointValues &joint, const Pose &pose) {
+    if (0 == this->planner_->Check_coincidence_jc(joint, pose))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
+bool PlanningInterface::isPointCoincident(const JointValues &joint1, const JointValues &joint2) {
+    if (0 == this->planner_->Check_coincidence_j(joint1, joint2))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
 
 
 }

@@ -52,17 +52,6 @@ int main(int argc, char **argv)
     ros::Publisher publisher = node.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1000);
     ros::Rate loop_rate(1);
 
-    fst_parameter::ParamGroup param("share/motion_controller/config/motion_controller.yaml");
-    if (!param.uploadParam()) {
-        printf("error code=0x%llx\n", param.getLastError());
-        return 0;
-    }
-    /*
-    std::vector<double> data;
-    bool ree = fst_parameter::ParamGroup::getRemoteParamImpl("/fst_param/motion_controller/calibrator/normal_offset_threshold", data);
-    cout << "ree=" << ree << "data=" << data[0] << ", " << data[1] << ", " << data[2] << ", " << data[3] << ", " << data[4] << ", " << data[5] << ", " << data[6] << ", " << data[7] << endl;
-    */
-
     fst_controller::JointValues jnt1,jnt2,jnt3,jnt4,jnt5;
     fst_controller::Pose pose1, pose2, pose3, pose4, pose5;
     fst_controller::PoseEuler posee1,posee2,posee3;
@@ -91,21 +80,15 @@ int main(int argc, char **argv)
 	    return 0;
     }
 
-    unsigned int result;
-    if (group.checkZeroOffset(result, err)) {
-        cout <<"check zero offset: " << result << endl;
-    }
-    
 
-    group.setCycleTime(0.01);
-    group.setToolFrame(transformation);
+    
     cout << "-----------------------------Test 1-------------------------------------------" << endl;
-    posee1.position.x = 330;
-    posee1.position.y = 0;
-    posee1.position.z = 567.5;
-    posee1.orientation.a = 0;
-    posee1.orientation.b = 0;
-    posee1.orientation.c = 3.14159;
+    posee1.position.x = 130;
+    posee1.position.y = 150;
+    posee1.position.z = 467.5;
+    posee1.orientation.a = -0.3;
+    posee1.orientation.b = -1.6;
+    posee1.orientation.c = 3.0;
     
     posee2.position.x = 430.0;
     posee2.position.y = 0;
@@ -144,14 +127,38 @@ int main(int argc, char **argv)
 
 
     bool res;
-    res = group.MoveJ(jnt3, 2000,16000,30,jnt2,2000,16000,0, 1061,err);
-    res = group.MoveJ(jnt2,4000,16000,1062,err);
+    time_t begin, end;
+    std::vector<fst_controller::JointPoint> traj;
+    //res = group.MoveJ(jnt3, 2000,16000,30,jnt2,2000,16000,0, 1061,err);
+    begin = clock();
+    res = group.MoveJ(jnt2,500,7000,1,err);
+    end = clock();
+    cout << "planned-path:" << group.getPlannedPathFIFOLength() << ", joint_traj:" << group.getJointTrajectoryFIFOLength() << endl;
+    int num = group.getPlannedPathFIFOLength();
+    cout << "Plan a joint path with " << num << " points, using time = " << double(end - begin) / CLOCKS_PER_SEC << "s" << endl;
+    begin = clock();
+    group.convertPathToTrajectory(num, err);
+    end = clock();
+    cout << "planned-path:" << group.getPlannedPathFIFOLength() << ", joint_traj:" << group.getJointTrajectoryFIFOLength() << endl;
+    cout << "Move " << num << " joints from FIFO1 to FIFO2, using time = " << double(end - begin) / CLOCKS_PER_SEC << "s" << endl;
+    cout << "get points from joint FIFO:" << group.getPointsFromJointTrajectoryFIFO(traj,num,err) << endl;;
     //res = group.MoveJ(jnt2, 2000,32000,10,posee1,500,32000,0, 1063,err);
     //res = group.MoveJ(jnt2, 2000,16000, 1062,err);
-    res = group.MoveC(posee1,posee2, 100,6000, 1064,err);
+    //res = group.MoveC(posee1,posee2, 100,6000, 1064,err);
     //res = group.MoveL(posee1,200,16000,50,posee2,100,16000,0,1064,err);
     //res = group.MoveL(posee2,600,16000,30,posee3,500,16000,40,1067,err);
-    //res = group.MoveL(posee2,100,16000, 1067,err);
+    begin = clock();
+    res = group.MoveL(posee2,10,7000,2,err);
+    end = clock();
+    cout << "planned-path:" << group.getPlannedPathFIFOLength() << ", joint_traj:" << group.getJointTrajectoryFIFOLength() << endl;
+    num = group.getPlannedPathFIFOLength();
+    cout << "Plan a cartesian path with " << num << " points, using time = " << double(end - begin) / CLOCKS_PER_SEC << "s" << endl;
+    begin = clock();
+    group.convertPathToTrajectory(num, err);
+    end = clock();
+    cout << "planned-path:" << group.getPlannedPathFIFOLength() << ", joint_traj:" << group.getJointTrajectoryFIFOLength() << endl;
+    cout << "Move " << num << " joints from FIFO1 to FIFO2, using time = " << double(end - begin) / CLOCKS_PER_SEC << "s" << endl;
+    cout << "get points from joint FIFO:" << group.getPointsFromJointTrajectoryFIFO(traj,num,err) << endl;;
     //res = group.MoveL(posee3,500,32000,40,jnt3,2000,32000,0,1065,err);
     //res = group.MoveL(posee2,600,32000,30,posee3,500,32000,0,1065,err);
     //res = group.MoveL(posee3,500,16000,1066,err);
@@ -161,7 +168,7 @@ int main(int argc, char **argv)
     //res = group.MoveL(posee1,500,32000,50,posee2,600,32000,0,1063,err);
     //res = group.MoveL(posee2,600,32000,1064,err);
 
-    cout << "planned-path:" << group.getPlannedPathFIFOLength() << ", joint_traj:" << group.getJointTrajectoryFIFOLength() << endl;
+    /*
     group.convertPathToTrajectory(190,err);
     cout << "planned-path:" << group.getPlannedPathFIFOLength() << ", joint_traj:" << group.getJointTrajectoryFIFOLength() << endl;
     std::vector<fst_controller::JointPoint> traj;
@@ -177,13 +184,8 @@ int main(int argc, char **argv)
     //res = group.MoveJ(jnt1,2000,32000,1066,err);
     //group.convertPathToTrajectory(10000,err);
     cout << "planned-path:" << group.getPlannedPathFIFOLength() << ", joint_traj:" << group.getJointTrajectoryFIFOLength() << endl;
-    
+    */
     //displayTrajectory(traj,publisher);
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    cout << tv.tv_sec << "-" << tv.tv_usec << endl;
-    gettimeofday(&tv, NULL);
-    cout << tv.tv_sec << "-" << tv.tv_usec << endl;
     
     while(ros::ok()) {
 //	displayTrajectory(traj,publisher);

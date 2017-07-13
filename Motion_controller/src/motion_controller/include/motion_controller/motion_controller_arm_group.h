@@ -57,6 +57,7 @@ class ArmGroup {
     bool initArmGroup(ErrorCode &err);
 
 
+    bool recordLastJoint(ErrorCode &err);
     bool checkZeroOffset(unsigned int &calibrate_result, ErrorCode &err);
     bool calibrateZeroOffset(unsigned int &calibrate_result, ErrorCode &err);
 
@@ -193,28 +194,6 @@ class ArmGroup {
 
 
     //------------------------------------------------------------
-    // Function:    setCycleTime
-    // Summary: To set cycle time of interpolation algorithm.
-    // In:      tc  -> desired cycle time
-    // Out:     None
-    // Return:  true    -> cycle time setted to given value
-    //          false   -> cycle time NOT changed
-    //------------------------------------------------------------
-    bool setCycleTime(double tc);
-
-
-    //------------------------------------------------------------
-    // Function:    setJointConstraints
-    // Summary: To set joint constraints in Kinematics algorithm.
-    // In:      constraints -> joint constraints
-    // Out:     None
-    // Return:  true    -> set successfully
-    //          false   -> set UNsuccessfully
-    //------------------------------------------------------------
-    bool setJointConstraints(const JointConstraints &constraints);
-
-
-    //------------------------------------------------------------
     // Function:    setMaxVelocity
     // Summary: To change max velocity settings.
     // In:      v       -> desired max velocity
@@ -258,83 +237,6 @@ class ArmGroup {
     bool setAccelerationScalingFactor(double factor);
 
 
-    //------------------------------------------------------------------------------
-    // Function:    setJerk
-    // Summary: To set the ratio of jerk to acceleration.
-    // In:      jerk    -> desired ratio
-    // Out:     None
-    // Return:  true    -> ratio changed to given value
-    //          false   -> ratio NOT changed
-    //------------------------------------------------------------------------------
-    bool setJerk(double jerk);
-
-
-    //------------------------------------------------------------------------------
-    // Function:    setJointOvershoot
-    // Summary: To set joint overshoot.
-    // In:      angle   -> desired angle
-    // Out:     None
-    // Return:  true    -> joint overshoot changed to given value
-    //          false   -> joint overshoot NOT changed
-    //------------------------------------------------------------------------------
-    bool setJointOvershoot(double angle);
-
-
-    //------------------------------------------------------------------------------
-    // Function:    setJointErrorAngle
-    // Summary: To set joint error angle.
-    // In:      angle   -> desired angle
-    // Out:     None
-    // Return:  true    -> joint error angle changed to given value
-    //          false   -> joint error angle NOT changed
-    //------------------------------------------------------------------------------
-    bool setJointErrorAngle(double angle);
-
-
-    //------------------------------------------------------------------------------
-    // Function:    setOmegaOverload
-    // Summary: To set omega overload.
-    // In:      value   -> desired value
-    // Out:     None
-    // Return:  true    -> omega overload changed to given value
-    //          false   -> omega overload NOT changed
-    //------------------------------------------------------------------------------
-    bool setOmegaOverload(double value);
-
-
-    //------------------------------------------------------------------------------
-    // Function:    setAlphaOverload
-    // Summary: To set alpha overload.
-    // In:      value   -> desired value
-    // Out:     None
-    // Return:  true    -> alpha overload changed to given value
-    //          false   -> alpha overload NOT changed
-    //------------------------------------------------------------------------------
-    bool setAlphaOverload(double value);
-
-
-    //------------------------------------------------------------------------------
-    // Function:    setSmoothRadiusCoefficient
-    // Summary: To set smooth radius coefficient.
-    // In:      coeff   -> desired value
-    // Out:     None
-    // Return:  true    -> smooth radius coefficient changed to given value
-    //          false   -> smooth radius coefficient NOT changed
-    //------------------------------------------------------------------------------
-    bool setSmoothRadiusCoefficient(double coeff);
-
-
-    //------------------------------------------------------------------------------
-    // Function:    setSmoothCurveMode
-    // Summary: To set smooth curve mode.
-    // In:      mode    -> desired smooth curve mode
-    // Out:     None
-    // Return:  true    -> desired smooth curve mode changed to given value
-    //          false   -> desired smooth curve mode NOT changed
-    //------------------------------------------------------------------------------
-    bool setSmoothCurveMode(int mode);
-
-
     //------------------------------------------------------------
     // Function:    setToolFrame
     // Summary: To set current tool frame.
@@ -354,6 +256,25 @@ class ArmGroup {
     //------------------------------------------------------------
     void setUserFrame(const Transformation &user_frame);
 
+    //------------------------------------------------------------------------------
+    // Function:    setJerk
+    // Summary: To set the ratio of jerk to acceleration.
+    // In:      jerk    -> desired ratio
+    // Out:     None
+    // Return:  true    -> ratio changed to given value
+    //          false   -> ratio NOT changed
+    //------------------------------------------------------------------------------
+    bool setJerk(double jerk);
+
+    //------------------------------------------------------------------------------
+    // Function:    setCurveMode
+    // Summary: To set smooth curve mode.
+    // In:      mode    -> desired smooth curve mode
+    // Out:     None
+    // Return:  true    -> desired smooth curve mode changed to given value
+    //          false   -> desired smooth curve mode NOT changed
+    //------------------------------------------------------------------------------
+    bool setCurveMode(int mode);
 
     //------------------------------------------------------------
     // Function:    setCurrentJointValues
@@ -400,6 +321,10 @@ class ArmGroup {
     bool clearJointTrajectoryFIFO(ErrorCode &err);
     */
 
+    bool getJointFromPose(const Pose &pose, JointValues &joint_result,
+                          double time_interval, ErrorCode &err);
+
+    bool getPoseFromJoint(const JointValues &joint, Pose &pose, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    computeIK
@@ -433,7 +358,7 @@ class ArmGroup {
     //          a_max   -> max acceleration
     //          cnt     -> smooth degree
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -454,7 +379,7 @@ class ArmGroup {
     //          a_next  -> max acceleration in the next path
     //          cnt_next    -> smooth degree in the next path
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -476,7 +401,7 @@ class ArmGroup {
     //          a_next  -> max acceleration in the next path
     //          cnt_next    -> smooth degree in the next path
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -498,7 +423,7 @@ class ArmGroup {
     //          a_next  -> max acceleration in the next path
     //          cnt_next    -> smooth degree in the next path
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -534,7 +459,7 @@ class ArmGroup {
     //          v_max   -> max velocity of endpoint
     //          a_max   -> max acceleration of endpoint
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -550,7 +475,7 @@ class ArmGroup {
     //          v_max   -> max velocity of endpoint
     //          a_max   -> max acceleration of endpoint
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -570,7 +495,7 @@ class ArmGroup {
     //          a_next  -> max acceleration of endpoint in the next path
     //          cnt_next    -> smooth degree in the next path
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -591,7 +516,7 @@ class ArmGroup {
     //          a_next  -> max acceleration of endpoint in the next path
     //          cnt_next    -> smooth degree in the next path
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -613,7 +538,7 @@ class ArmGroup {
     //          a_next  -> max acceleration of endpoint in the next path
     //          cnt_next-> smooth degree in the next path
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -635,7 +560,7 @@ class ArmGroup {
     //          a_next  -> max acceleration of endpoint in the next path
     //          cnt_next    -> smooth degree in the next path
     //          id      -> command id
-    // Out:     path(hidden)-> outputs added into m_planned_path_FIFO automaticly
+    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
     //          err     -> error code
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
@@ -731,7 +656,7 @@ class ArmGroup {
     //------------------------------------------------------------
     // Function:    convertPathToTrajectory
     // Summary: To convert numbers of posepoint in m_cartesian_path_FIFO
-    //          into jointpoint in m_joint_trajectory_FIFO.
+    //          into jointpoint in trajectory_fifo_.
     // In:      num -> number of points in planned_path_fifo that needed to be converted
     // Out:     err -> error code
     // Return:  <0  -> ERROR occurred during converting
@@ -790,24 +715,109 @@ class ArmGroup {
     // -----------------------------private functions---------------------------------------------
 
   private:
-    inline void printJointValues(const JointValues &joint);
-    inline void printJointValues(const char *str, const JointValues &joint);
-    inline void printJointLimit(const JointLimit &joint_limit);
-    inline void printJointLimit(const char *str, const JointLimit &joint_limit);
-    inline void printJointConstraints(const JointConstraints &constraint);
-    inline void printPose(const Pose &pose);
-    inline void printPose(const char *str, const Pose &pose);
-    inline void printPoseEuler(const PoseEuler &pose_euler);
-    inline void printPoseEuler(const char *str, const PoseEuler &pose_euler);
-    inline void printJointPoint(const JointPoint &point);
-    inline void printJointPoint(const char *str, const JointPoint &point);
-    inline void printPathPoint(const PathPoint &point);
-    inline void printPathPoint(const char *str, const PathPoint &point);
+    void printJointValues(const JointValues &joint);
+    void printJointValues(const char *str, const JointValues &joint);
+    void printJointLimit(const JointLimit &joint_limit);
+    void printJointLimit(const char *str, const JointLimit &joint_limit);
+    void printJointConstraints(const JointConstraints &constraint);
+    void printPose(const Pose &pose);
+    void printPose(const char *str, const Pose &pose);
+    void printPoseEuler(const PoseEuler &pose_euler);
+    void printPoseEuler(const char *str, const PoseEuler &pose_euler);
+    void printJointPoint(const JointPoint &point);
+    void printJointPoint(const char *str, const JointPoint &point);
+    void printPathPoint(const PathPoint &point);
+    void printPathPoint(const char *str, const PathPoint &point);
     
     void lockArmGroup(void);
     void unlockArmGroup(void);
 
+    //------------------------------------------------------------
+    // Function:    setCycleTime
+    // Summary: To set cycle time of interpolation algorithm.
+    // In:      tc  -> desired cycle time
+    // Out:     None
+    // Return:  true    -> cycle time setted to given value
+    //          false   -> cycle time NOT changed
+    //------------------------------------------------------------
+    bool setCycleTime(double tc);
 
+
+    //------------------------------------------------------------
+    // Function:    setJointConstraints
+    // Summary: To set joint constraints in Kinematics algorithm.
+    // In:      constraints -> joint constraints
+    // Out:     None
+    // Return:  true    -> set successfully
+    //          false   -> set UNsuccessfully
+    //------------------------------------------------------------
+    bool setJointConstraints(const JointConstraints &constraints);
+
+    //------------------------------------------------------------------------------
+    // Function:    setJointOvershoot
+    // Summary: To set joint overshoot.
+    // In:      angle   -> desired angle
+    // Out:     None
+    // Return:  true    -> joint overshoot changed to given value
+    //          false   -> joint overshoot NOT changed
+    //------------------------------------------------------------------------------
+    bool setJointOvershoot(double angle);
+
+    //------------------------------------------------------------------------------
+    // Function:    setJointErrorAngle
+    // Summary: To set joint error angle.
+    // In:      angle   -> desired angle
+    // Out:     None
+    // Return:  true    -> joint error angle changed to given value
+    //          false   -> joint error angle NOT changed
+    //------------------------------------------------------------------------------
+    bool setJointErrorAngle(double angle);
+
+    //------------------------------------------------------------------------------
+    // Function:    setOmegaOverload
+    // Summary: To set omega overload.
+    // In:      value   -> desired value
+    // Out:     None
+    // Return:  true    -> omega overload changed to given value
+    //          false   -> omega overload NOT changed
+    //------------------------------------------------------------------------------
+    bool setOmegaOverload(double value);
+
+    //------------------------------------------------------------------------------
+    // Function:    setAlphaOverload
+    // Summary: To set alpha overload.
+    // In:      value   -> desired value
+    // Out:     None
+    // Return:  true    -> alpha overload changed to given value
+    //          false   -> alpha overload NOT changed
+    //------------------------------------------------------------------------------
+    bool setAlphaOverload(double value);
+
+    //------------------------------------------------------------------------------
+    // Function:    setSmoothRadiusCoefficient
+    // Summary: To set smooth radius coefficient.
+    // In:      coeff   -> desired value
+    // Out:     None
+    // Return:  true    -> smooth radius coefficient changed to given value
+    //          false   -> smooth radius coefficient NOT changed
+    //------------------------------------------------------------------------------
+    bool setSmoothRadiusCoefficient(double coeff);
+
+    void setStartJointImpl(const JointValues &joint);
+
+    void setStartPoseImpl(const Pose &pose);
+
+    bool setStartStateImpl(const JointValues &joint, ErrorCode &err);
+
+    bool rebuildPlanningVariable(ErrorCode &err);
+
+    void abstractLastMotion(int id, MotionType motion_t, SmoothType smooth_t);
+
+    // bool fillPlannedPathFIFO(int id, MotionType motion_t, SmoothType smooth_t, std::vector<Pose> &path);
+
+    // bool fillPlannedPathFIFO(int id, MotionType motion_t, SmoothType smooth_t, std::vector<JointValues> &path);
+
+    bool managePlanningResult(int id, MotionType motion_t, SmoothType smooth_t, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    setLatestIKReference
@@ -818,10 +828,6 @@ class ArmGroup {
     //          false   -> failed to set latest IK reference
     //------------------------------------------------------------
     bool setLatestIKReference(const JointValues &joint_reference, ErrorCode &error_code);
-
-
-
-    bool setArmGroupParameters(XmlRpc::XmlRpcValue &params);
 
     //------------------------------------------------------------
     // Function:    checkJointBoundary
@@ -848,7 +854,7 @@ class ArmGroup {
     //------------------------------------------------------------
     // Function:    convertPath2Trajectory
     // Summary: To convert numbers of posepoint in m_cartesian_path_FIFO
-    //          into jointpoint in m_joint_trajectory_FIFO.
+    //          into jointpoint in trajectory_fifo_.
     // In:      num -> number of points in planned_path_fifo that needed to be converted
     // Out:     error_code  -> error code
     // Return:  <0  -> ERROR occurred during converting
@@ -856,13 +862,22 @@ class ArmGroup {
     //------------------------------------------------------------
     int convertPath2Trajectory(int num, ErrorCode &error_code);
 
-    bool isMotionExecutable(MotionType motion_type);
-    bool insertAdditionSmooth(ErrorCode &err);
+    bool isMotionExecutable(MotionType motion_type, ErrorCode &err);
+
+    bool pickPoints(ErrorCode &err);
+
+    bool resizeJointTrajectoryFIFO(void);
+    
+    //bool insertAdditionSmooth(ErrorCode &err);
+
+    bool resumeByReplan(ErrorCode &err);
+
+    bool resumeByOrigin(ErrorCode &err);
  
 
     // -----------------------------member variables---------------------------------------------
 
-    int    m_JOINT_FIFO_LEN;
+    int trajectory_fifo_dynamic_length_;
 
 
     // intermediate variable used during planning path with smooth
@@ -879,29 +894,24 @@ class ArmGroup {
 
 
     // joint constraints
-    JointConstraints m_joint_constraints;
+    JointConstraints joint_constraints_;
 
     // latest IK reference
-    JointValues m_latest_ik_reference;
+    JointValues latest_ik_reference_;
 
     // current state of the arm group in joint space and cartesian space
-    JointValues m_joint_state_current;
-    Pose m_pose_state_current;
+    JointValues current_joint_;
+    Pose        current_pose_;
 
     // tool frame and user frame
-    Transformation m_tool_frame;
-    Transformation m_user_frame;
+    Transformation tool_frame_;
+    Transformation user_frame_;
 
     // planned path FIFO (FIFO1)
-    std::vector<PathPoint> m_planned_path_fifo;
+    std::vector<PathPoint> planned_path_fifo_;
     // joint space trajectory FIFO (FIFO2)
-    std::vector<JointPoint> m_joint_trajectory_fifo;
+    std::vector<JointPoint> trajectory_fifo_;
     
-    /*
-    // joint FIFO lock. FIFO is locked when pause or IK failure event arised.
-    bool m_joint_trajectory_FIFO_islocked;
-    */
-
     enum SuspendPattern{
         e_suspend_pattern_origin = 0,
         e_suspend_pattern_replan = 1,
@@ -913,7 +923,7 @@ class ArmGroup {
         JointValues last_point;
         std::vector<JointPoint> fifo2_cache;
         std::vector<JointValues> replan_trajectory;
-    } m_suspend_state;
+    } suspend_state_;
 
     // algorithm pointer
     fst_controller::PlanningInterface   *planning_interface_;
@@ -921,16 +931,15 @@ class ArmGroup {
 
     unsigned int current_state_;
     bool enable_calibration_;
-    
 
     struct {
         int  id;
-        bool addition_smooth;
+        // bool addition_smooth;
         MotionType motion_type;
         SmoothType smooth_type;
     } last_motion_;
     
-    pthread_mutex_t m_group_mutex;
+    pthread_mutex_t group_mutex_;
 
     fst_log::Logger log;
     // std::string m_log_file_name;

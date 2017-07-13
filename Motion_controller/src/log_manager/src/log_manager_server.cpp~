@@ -1,0 +1,42 @@
+/*************************************************************************
+	> File Name: log_manager_fst_logger.cpp
+	> Author: 
+	> Mail: 
+	> Created Time: 2016年12月23日 星期五 18时01分09秒
+ ************************************************************************/
+
+#include <unistd.h>
+#include <stdio.h>
+#include <iostream>
+#include <string.h>
+#include "log_manager/log_manager_transmitter.h"
+
+#include <comm_interface/comm_interface.h>
+
+using std::cout;
+using std::endl;
+
+int main(int argc, char **argv)
+{
+    // fst_log::LogTransmitter logger;
+    fst_comm_interface::CommInterface server;
+    if (server.createChannel(IPC_REP, "log_public") != 0) {
+        cout << "Cannot setup log_public server." << endl;
+        return -1;
+    }
+
+    char buffer[2048];
+    memset(buffer, 0, sizeof(buffer));
+    while (true) {
+        usleep(50 * 1000);
+        if (server.recv(buffer, sizeof(buffer), IPC_DONTWAIT) == 0) {
+            cout << endl << "received:" << buffer << endl;
+            sprintf(buffer, "hello world");
+            if (server.send(buffer, sizeof(buffer), IPC_DONTWAIT) == 0) {
+                cout << "responsed" << endl;
+            }
+        }
+    }
+
+    return 0;
+}

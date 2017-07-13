@@ -7,6 +7,7 @@
 
 #include <unistd.h>
 #include <iostream>
+#include <stdio.h>
 #include "log_manager/log_manager_logger.h"
 
 #include <comm_interface/comm_interface.h>
@@ -16,6 +17,7 @@ using std::endl;
 
 int main(int argc, char **argv)
 {
+
     fst_log::Logger log;
     if (!log.initLogger("transmitter1")) {
         return 0;

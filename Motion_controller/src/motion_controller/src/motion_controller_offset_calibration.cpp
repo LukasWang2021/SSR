@@ -14,8 +14,7 @@
 #include <struct_to_mem/struct_service_request.h>
 #include <struct_to_mem/struct_service_request.h>
 
-using std::cout;
-using std::endl;
+
 using std::string;
 using std::vector;
 
@@ -28,10 +27,17 @@ static const unsigned char READ_BY_ID       = 0x1D;
 static const unsigned char WRITE_BY_ADDR    = 0x24;
 static const unsigned char WRITE_BY_ID      = 0x2D;
 
+// static fst_log::Logger private_log;
 
 namespace fst_controller {
-
-Calibrator::Calibrator(void) {
+/*
+Calibrator::Calibrator(void):log(private_log) {
+    current_state_ = UNDEFINED;
+    last_error_ = SUCCESS;
+    mem_handle_ = -1;
+}
+*/
+Calibrator::Calibrator(fst_log::Logger &inh_log):log(inh_log) {
     current_state_ = UNDEFINED;
     last_error_ = SUCCESS;
     mem_handle_ = -1;
@@ -138,24 +144,38 @@ bool Calibrator::setTemporaryZeroOffset(void) {
 
     if (getCurrentJoint(fbjs) && getZeroOffsetFromBareCore(old_offset_data)) {
         if (old_offset_data.size() == 8) {
-            cout << "old offset= " << old_offset_data[0] << ", " << old_offset_data[1] << ", " 
-                 << old_offset_data[2] << ", " << old_offset_data[3] << ", " 
-                 << old_offset_data[4] << ", " << old_offset_data[5] << endl;
-            cout << "joint= " << fbjs.position[0] << ", " << fbjs.position[1] << ", "
-                 << fbjs.position[2] << ", " << fbjs.position[3] << ", "
-                 << fbjs.position[4] << ", " << fbjs.position[5] << endl;
             new_offset_data.resize(8);
-            new_offset_data[0] = fbjs.position[0] - old_offset_data[0];
-            new_offset_data[1] = fbjs.position[1] - old_offset_data[1];
-            new_offset_data[2] = fbjs.position[2] - old_offset_data[2];
-            new_offset_data[3] = fbjs.position[3] - old_offset_data[3];
-            new_offset_data[4] = fbjs.position[4] - old_offset_data[4];
-            new_offset_data[5] = fbjs.position[5] - old_offset_data[5];
+            new_offset_data[0] = fbjs.position[0] + old_offset_data[0];
+            new_offset_data[1] = fbjs.position[1] + old_offset_data[1];
+            new_offset_data[2] = fbjs.position[2] + old_offset_data[2];
+            new_offset_data[3] = fbjs.position[3] + old_offset_data[3];
+            new_offset_data[4] = fbjs.position[4] + old_offset_data[4];
+            new_offset_data[5] = fbjs.position[5] + old_offset_data[5];
             new_offset_data[6] = old_offset_data[6];
             new_offset_data[7] = old_offset_data[7];
+            
+            log.info("old offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+                     old_offset_data[0], old_offset_data[1], old_offset_data[2],
+                     old_offset_data[3], old_offset_data[4], old_offset_data[5],
+                     old_offset_data[6], old_offset_data[7]);
+            log.info("joint=%lf, %lf, %lf, %lf, %lf, %lf",
+                     fbjs.position[0], fbjs.position[1], fbjs.position[2],
+                     fbjs.position[3], fbjs.position[4], fbjs.position[5]);
+            log.info("new offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+                     new_offset_data[0], new_offset_data[1], new_offset_data[2],
+                     new_offset_data[3], new_offset_data[4], new_offset_data[5],
+                     new_offset_data[6], new_offset_data[7]);
+            
             int id;
             fst_parameter::ParamGroup::getRemoteParamImpl("/fst_param/jtac/zero_offset/id", id);
-            return sendConfigData(id, new_offset_data);
+            
+            if (sendConfigData(id, new_offset_data)) {
+                current_state_ = NEED_CALIBRATE;
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
     return false;
@@ -164,7 +184,7 @@ bool Calibrator::setTemporaryZeroOffset(void) {
 bool Calibrator::recordZeroOffset(void) {
     if (current_state_ < INITIALIZED) {
         last_error_ = NEED_INITIALIZATION;
-    return false;
+        return false;
     }
     if (current_state_ == CALIBRATED) {
         last_error_ = 0x66666666;
@@ -179,11 +199,6 @@ bool Calibrator::recordZeroOffset(void) {
     std::vector<double> data(fbjs.position, fbjs.position + 6);
     data.push_back(0.0);
     data.push_back(0.0);
-    return recordZeroOffset(data);
-    // cout << "FeedbackJointState:" << fbjs.position[0] << ", " << fbjs.position[1] << ", " << fbjs.position[2]
-}
-
-bool Calibrator::recordZeroOffset(const std::vector<double> &data) {
     
     fst_parameter::ParamGroup param(jtac_param_file_);
     if (param.getLastError() != SUCCESS) {
@@ -196,14 +211,25 @@ bool Calibrator::recordZeroOffset(const std::vector<double> &data) {
     getZeroOffsetFromBareCore(old_offset_data);
     if (old_offset_data.size() == 8) {
         new_offset_data.resize(8);
-        new_offset_data[0] = data[0] - old_offset_data[0];
-        new_offset_data[1] = data[1] - old_offset_data[1];
-        new_offset_data[2] = data[2] - old_offset_data[2];
-        new_offset_data[3] = data[3] - old_offset_data[3];
-        new_offset_data[4] = data[4] - old_offset_data[4];
-        new_offset_data[5] = data[5] - old_offset_data[5];
-        new_offset_data[6] = data[6] - old_offset_data[6];
-        new_offset_data[7] = data[7] - old_offset_data[7];
+        new_offset_data[0] = data[0] + old_offset_data[0];
+        new_offset_data[1] = data[1] + old_offset_data[1];
+        new_offset_data[2] = data[2] + old_offset_data[2];
+        new_offset_data[3] = data[3] + old_offset_data[3];
+        new_offset_data[4] = data[4] + old_offset_data[4];
+        new_offset_data[5] = data[5] + old_offset_data[5];
+        new_offset_data[6] = data[6] + old_offset_data[6];
+        new_offset_data[7] = data[7] + old_offset_data[7];
+        log.info("old offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+                 old_offset_data[0], old_offset_data[1], old_offset_data[2],
+                 old_offset_data[3], old_offset_data[4], old_offset_data[5],
+                     old_offset_data[6], old_offset_data[7]);
+        log.info("joint=%lf, %lf, %lf, %lf, %lf, %lf",
+                 data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+        log.info("new offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+                 new_offset_data[0], new_offset_data[1], new_offset_data[2],
+                 new_offset_data[3], new_offset_data[4], new_offset_data[5],
+                 new_offset_data[6], new_offset_data[7]);
+            
     }
     else {
         last_error_ = INVALID_PARAMETER;
@@ -264,13 +290,13 @@ bool Calibrator::reviewCalibratedJoint(unsigned int &bitmap) {
         }
         else {
             current_state_ = NEED_CALIBRATE;
-            cout << "Expected    Current" << endl;
-            cout << " 0.0, " << fbjs.position[0] << endl;
-            cout << " 0.0, " << fbjs.position[1] << endl;
-            cout << " 0.0, " << fbjs.position[2] << endl;
-            cout << " 0.0, " << fbjs.position[3] << endl;
-            cout << " 0.0, " << fbjs.position[4] << endl;
-            cout << " 0.0, " << fbjs.position[5] << endl;
+            log.info("Expected  Current");
+            log.info("  0.0      %lf", fbjs.position[0]);
+            log.info("  0.0      %lf", fbjs.position[1]);
+            log.info("  0.0      %lf", fbjs.position[2]);
+            log.info("  0.0      %lf", fbjs.position[3]);
+            log.info("  0.0      %lf", fbjs.position[4]);
+            log.info("  0.0      %lf", fbjs.position[5]);
         }
         return true;
     }
@@ -320,13 +346,13 @@ bool Calibrator::reviewLastJoint(unsigned int &bitmap) {
         }
         else {
             current_state_ = NEED_CALIBRATE;
-            cout << "Expected    Current" << endl;
-            cout << last_joint[0] << ", " << fbjs.position[0] << endl;
-            cout << last_joint[1] << ", " << fbjs.position[1] << endl;
-            cout << last_joint[2] << ", " << fbjs.position[2] << endl;
-            cout << last_joint[3] << ", " << fbjs.position[3] << endl;
-            cout << last_joint[4] << ", " << fbjs.position[4] << endl;
-            cout << last_joint[5] << ", " << fbjs.position[5] << endl;
+            log.info("Expected  Current");
+            log.info(" %lf    %lf", last_joint[0], fbjs.position[0]);
+            log.info(" %lf    %lf", last_joint[1], fbjs.position[1]);
+            log.info(" %lf    %lf", last_joint[2], fbjs.position[2]);
+            log.info(" %lf    %lf", last_joint[3], fbjs.position[3]);
+            log.info(" %lf    %lf", last_joint[4], fbjs.position[4]);
+            log.info(" %lf    %lf", last_joint[5], fbjs.position[5]);
         }
         return true;
     }
@@ -410,15 +436,15 @@ bool Calibrator::sendConfigData(int id, const vector<double> &data) {
     service_request.req_id = WRITE_BY_ID;
     int len = data.size();
     memcpy(&service_request.req_buff[0], (char*)&id, sizeof(id));
-    // cout << "id=" << *((int*)&service_request.req_buff[0]) << endl;
+    // log.info("id=0x%x", *((int*)&service_request.req_buff[0]));
     memcpy(&service_request.req_buff[4], (char*)&len, sizeof(len));
-    // cout << "len=" << *((int*)&service_request.req_buff[4]) << endl;
+    // log.info("len=%d", *((int*)&service_request.req_buff[4]));
     memcpy(&service_request.req_buff[8], (char*)&data[0], len * sizeof(double));
     // for (int cnt = 0; cnt < 8; ++cnt)
-    //     cout << "data[" << cnt << "]=" << *((double*)&service_request.req_buff[8 + 8 * cnt]) << endl;
+    //     log.info("data[%d]=%lf", cnt, *((double*)&service_request.req_buff[8 + 8 * cnt]));
     //if (clientSendRequest(mem_handle_, &service_request) == true)
     if (comm_interface_.send(&service_request, sizeof(service_request), IPC_DONTWAIT) == SUCCESS) {
-        cout << "request id = " << service_request.req_id << endl;
+        log.info("Request ID=0x%x sended", service_request.req_id);
     }
     else {
         return false;
@@ -426,12 +452,12 @@ bool Calibrator::sendConfigData(int id, const vector<double> &data) {
     usleep(50 * 1000);
     ServiceResponse service_response;
     if (comm_interface_.recv(&service_response, sizeof(service_response), IPC_DONTWAIT) == SUCCESS) {
-        cout << "response id = " << service_response.res_id << endl;
+        log.info("Response ID=0x%x received", service_response.res_id);
         usleep(100 * 1000);
         return true;
     }
     else {
-        cout << "no response" << endl;
+        log.error("No response");
         return false;
     }
 }
@@ -447,28 +473,28 @@ bool Calibrator::readConfigData(const string &path, vector<double> &data) {
     service_request.req_id = READ_BY_ID;
     
     memcpy(&service_request.req_buff[0], (char*)&id, sizeof(id));
-    // cout << "id=" << *((int*)&service_request.req_buff[0]) << endl;
+    // log.info("id=0x%x", *((int*)&service_request.req_buff[0]));
     memcpy(&service_request.req_buff[4], (char*)&length, sizeof(length));
-    // cout << "len=" << *((int*)&service_request.req_buff[4]) << endl;
+    // log.info("len=%d", *((int*)&service_request.req_buff[4]));
     if (comm_interface_.send(&service_request, sizeof(service_request), IPC_DONTWAIT) == SUCCESS)
-        cout << "request id = " << service_request.req_id << endl;
+        log.info("Request ID=0x%x sended", service_request.req_id);
     usleep(100 * 1000);
     ServiceResponse service_response;
     if (comm_interface_.recv(&service_response, sizeof(service_response), IPC_DONTWAIT) == SUCCESS) {
-        cout << "response id = " << service_response.res_id << endl;
+        log.info("Response ID=0x%x received", service_response.res_id);
         if (*((int*)(&service_response.res_buff[0])) == id && *((int*)(&service_response.res_buff[4])) == length) {
             for (int i = 0; i < length; ++i) {
                 data[i] = *((double*)(&service_response.res_buff[8 + i * sizeof(double)]));
-                cout << "data[" << i << "]=" << data[i] << endl;
+                // log.info("data[%d]=%lf", i, data[i]);
             }
             return true;
         }
         else {
-            cout << "id or length mismatch" << endl;
+            log.error("id or length mismatch");
         }
     }
     else {
-        cout << "no response" << endl;
+        log.error("no response");
     }
     return false;
 }

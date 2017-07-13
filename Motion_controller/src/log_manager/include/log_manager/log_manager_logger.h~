@@ -1,0 +1,36 @@
+/*************************************************************************
+	> File Name: log_manager_logger.h
+	> Author: 
+	> Mail: 
+	> Created Time: 2016年12月23日 星期五 18时02分51秒
+ ************************************************************************/
+
+#ifndef _LOG_MANAGER_LOGGER_H
+#define _LOG_MANAGER_LOGGER_H
+
+#include <comm_interface/comm_interface.h>
+
+#define COMM_BUFFER_SIZE 2048
+
+namespace fst_log {
+
+class Logger {
+  public:
+    Logger(void);
+    bool initLogger(const char *log_file_name);
+    void info(const char *format, ...);
+    // void warn(const char *format, ...);
+    // void error(const char *format, ...);
+    // void info(std::string info);
+    // void warn(std::string warn);
+    // void error(std::string error);
+  private:
+    void logMessage(const char *msg);
+    
+    std::string log_content_;
+    fst_comm_interface::CommInterface comm_interface_;
+    char comm_buffer_[COMM_BUFFER_SIZE];
+};
+
+}
+#endif

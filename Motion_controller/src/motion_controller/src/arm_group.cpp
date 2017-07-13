@@ -132,6 +132,16 @@ bool fst_controller::ArmGroup::initArmGroup(ErrorCode &err) {
     else {
         log.info("Success!");
     }
+
+    /* 
+    log.warn("begin loop:");
+    for (int cnt = 0; cnt < 100; ++cnt) {
+        double cycle;
+        ros::param::get("/fst_param/motion_controller/arm_group/cycle_time", cycle);
+        log.info("Hello everyone,this is the %d line. cycle time=%lf", cnt, cycle);
+    }
+    log.warn("end!");
+    */
     
     current_state_ = INITIALIZED;
     pthread_mutex_init(&m_group_mutex, NULL);
@@ -161,7 +171,7 @@ bool fst_controller::ArmGroup::initArmGroup(ErrorCode &err) {
         delete planner_;
         planner_ = NULL;
     }
-    calibrator_ = new fst_controller::Calibrator();
+    calibrator_ = new fst_controller::Calibrator(log);
     planner_    = new fst_controller::TrajPlan();
     if (planner_ == NULL || calibrator_ == NULL) {
         err = MOTION_FAIL_IN_INIT;
@@ -207,51 +217,68 @@ bool fst_controller::ArmGroup::initArmGroup(ErrorCode &err) {
     }
     log.info("Success!");
     usleep(256 * 1000);
-    
-    log.info("Using current joint values to initialize ArmGroup:");
-    FeedbackJointState fbjs;
-    calibrator_->getCurrentJoint(fbjs);
-    JointValues joint;
-    joint.j1 = fbjs.position[0];
-    joint.j2 = fbjs.position[1];
-    joint.j3 = fbjs.position[2];
-    joint.j4 = fbjs.position[3];
-    joint.j5 = fbjs.position[4];
-    joint.j6 = fbjs.position[5];
-    printJointValues("  joints=", joint);
-    if (!setStartState(joint, err)) {
-        log.error("Cannot set start state with current joint values, error code=0x%llx", err);
-        if (err == JOINT_OUT_OF_CONSTRAINT) {
-            log.warn("Reset zero offset to a temporary position, need calibration.");
-            if (calibrator_->setTemporaryZeroOffset()) {
-                log.info("Success!");
-                calibrator_->getCurrentJoint(fbjs);
-                JointValues joint;
-                joint.j1 = fbjs.position[0];
-                joint.j2 = fbjs.position[1];
-                joint.j3 = fbjs.position[2];
-                joint.j4 = fbjs.position[3];
-                joint.j5 = fbjs.position[4];
-                joint.j6 = fbjs.position[5];
-                printJointValues("  joints=", joint);
-                if (!setStartState(joint, err)) {
+
+    unsigned int calibrate_result;
+    if (checkZeroOffset(calibrate_result, err)) {
+        log.info("Using current joint values to initialize ArmGroup:");
+        FeedbackJointState fbjs;
+        calibrator_->getCurrentJoint(fbjs);
+        JointValues joint;
+        memcpy(&joint, fbjs.position, 6 * sizeof(double));
+        printJointValues("  joints=", joint);
+        if (!setStartState(joint, err)) {
+            log.error("Cannot set start state with current joint values, error code=0x%llx", err);
+            if (err == JOINT_OUT_OF_CONSTRAINT) {
+                log.warn("Reset zero offset to a temporary position, need calibration.");
+                if (calibrator_->setTemporaryZeroOffset()) {
+                    log.info("Success!");
+                    log.info("Using temporary joint values to initialize start state:");
+                    calibrator_->getCurrentJoint(fbjs);
+                    JointValues joint;
+                    memcpy(&joint, fbjs.position, 6 * sizeof(double));
+                    printJointValues("  joints=", joint);
+                    if (!setStartState(joint, err)) {
+                        current_state_ = UNDEFINED;
+                        log.error("Cannot set start state with temporary joint values, error code=0x%llx", err);
+                        return false;
+                    }
+                }
+                else {
+                    log.error("Cannot set temporary zero offset");
                     current_state_ = UNDEFINED;
-                    log.error("Cannot set start state with current joint values, error code=0x%llx", err);
                     return false;
                 }
             }
             else {
-                log.error("Cannot set temporary zero offset");
                 current_state_ = UNDEFINED;
                 return false;
             }
         }
+    }
+    else {
+        // reset zero offset
+        log.warn("Reset zero offset to a temporary position, need calibration.");
+        if (calibrator_->setTemporaryZeroOffset()) {
+            log.info("Success!");
+            log.info("Using temporary joint values to initialize start state:");
+            FeedbackJointState fbjs;
+            calibrator_->getCurrentJoint(fbjs);
+            JointValues joint;
+            memcpy(&joint, fbjs.position, 6 * sizeof(double));
+            printJointValues("  joints=", joint);
+            if (!setStartState(joint, err)) {
+                current_state_ = UNDEFINED;
+                log.error("Cannot set start state with temporary joint values, error code=0x%llx", err);
+                return false;
+            }
+        }
         else {
+            log.error("Cannot set temporary zero offset");
             current_state_ = UNDEFINED;
             return false;
         }
     }
-    
+
     if (err == SUCCESS) {
         log.info("ArmGroup is ready to make life easier. Have a good time!");
         log.info("**********************************************************************************************");
@@ -270,7 +297,6 @@ bool fst_controller::ArmGroup::checkZeroOffset(unsigned int &calibrate_result, E
         return false;
     }
 
-    err = SUCCESS;
     if (enable_calibration_ == true) {
         log.info("Reviewing starting joint ...");
         unsigned int result;
@@ -278,6 +304,7 @@ bool fst_controller::ArmGroup::checkZeroOffset(unsigned int &calibrate_result, E
             calibrate_result = result;
             if (result == OFFSET_NORMAL) {
                 log.info("Success!");
+                err = SUCCESS;
             }
             else {
                 if ((result & OFFSET_LOST_MASK) != 0) {
@@ -304,6 +331,7 @@ bool fst_controller::ArmGroup::checkZeroOffset(unsigned int &calibrate_result, E
         log.error("Fail, calibration is disabled, error code=0x%llx", err);
     }
     
+    /*
     log.info("Using current joint values to initialize ArmGroup:");
     FeedbackJointState fbjs;
     calibrator_->getCurrentJoint(fbjs);
@@ -311,6 +339,7 @@ bool fst_controller::ArmGroup::checkZeroOffset(unsigned int &calibrate_result, E
     memcpy(&joint, fbjs.position, 6 * sizeof(double));
     printJointValues("  joints=", joint);
     setStartState(joint, err);
+    */
 
     if (err == SUCCESS)
         return true;
@@ -334,12 +363,13 @@ bool fst_controller::ArmGroup::calibrateZeroOffset(unsigned int &calibrate_resul
         err = calibrator_->getLastError();
         return false;
     }
+
     if (!calibrator_->reloadJTACParam()) {
         err = calibrator_->getLastError();
         return false;
     }
 
-    log.info("Downloading JTAC parameters ...");
+    log.info("Downloading zero offset parameters ...");
     if (!calibrator_->transmitJtacParam()) {
         err = calibrator_->getLastError();
         log.error("Download parameter failed, error code=0x%llx", err);
@@ -2405,6 +2435,7 @@ bool fst_controller::ArmGroup::resumeArmMotion(ErrorCode &err) {
     err = SUCCESS;
     switch (m_suspend_state.pattern) {
         case e_suspend_pattern_origin:
+            log.info("Resume pattern: origin.");
             m_joint_trajectory_fifo.insert(m_joint_trajectory_fifo.begin(),
                                            m_suspend_state.fifo2_cache.begin(),
                                            m_suspend_state.fifo2_cache.end());
@@ -2415,6 +2446,7 @@ bool fst_controller::ArmGroup::resumeArmMotion(ErrorCode &err) {
                 planner_->Restart()
             }
             */
+            log.info("Resume pattern: origin, trajectory length: %d", m_joint_trajectory_fifo.size());
             m_suspend_state.is_suspended = false;
             unlockArmGroup();
             log.info("Resume successfully.");
@@ -2422,20 +2454,32 @@ bool fst_controller::ArmGroup::resumeArmMotion(ErrorCode &err) {
         case e_suspend_pattern_replan:
             num = m_planned_path_fifo.size()<100 ? m_planned_path_fifo.size() : 100;
             if (convertPath2Trajectory(num, err) == num) {
+                bool last_point_is_ending_point = false;
                 m_suspend_state.replan_trajectory.clear();
                 for (std::vector<JointPoint>::iterator itr = m_joint_trajectory_fifo.begin();
                      itr != m_joint_trajectory_fifo.end(); ++itr) {
                     m_suspend_state.replan_trajectory.push_back(itr->joints);
+                    if ((itr->id & 0x3) == enum_Level_Ending) {
+                        log.info("The last point is ending point.");
+                        last_point_is_ending_point = true;
+                    }
                 }
                 int result = planner_->Restart(m_suspend_state.replan_trajectory, m_suspend_state.last_point);
                 if (0 == result) {
                     JointPoint jp;
                     jp.id = m_joint_trajectory_fifo.front().id;
+                    jp.id = jp.id & ~0x3 | enum_Level_Middle;
                     m_joint_trajectory_fifo.clear();
                     for (std::vector<JointValues>::iterator itr = m_suspend_state.replan_trajectory.begin();
                             itr != m_suspend_state.replan_trajectory.end(); ++itr) {
                         jp.joints = *itr;
                         m_joint_trajectory_fifo.push_back(jp);
+                    }
+                    log.info("Resume pattern: replan, trajectory length: %d", m_joint_trajectory_fifo.size());
+                    if (last_point_is_ending_point && !m_joint_trajectory_fifo.empty()) {
+                        m_joint_trajectory_fifo.back().id &= ~0x3;
+                        m_joint_trajectory_fifo.back().id |= enum_Level_Ending;
+                        log.info("Turning the last point to ending point.");
                     }
                 }
                 else {
@@ -2465,6 +2509,9 @@ bool fst_controller::ArmGroup::resumeArmMotion(ErrorCode &err) {
 }
 
 
+bool fst_controller::ArmGroup::isArmGroupSuspended(void) {
+    return m_suspend_state.is_suspended;
+}
 
 
 // ------------------------------------private function---------------------------------------------

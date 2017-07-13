@@ -13,7 +13,7 @@
 #include <motion_controller/fst_datatype.h>
 #include <comm_interface/comm_interface.h>
 #include <struct_to_mem/struct_feedback_joint_states.h>
-
+#include <log_manager/log_manager_logger.h>
 
 typedef int MemoryHandle;
 typedef unsigned long long int ErrorCode;
@@ -52,7 +52,8 @@ class Calibrator {
 
 
   public:
-    Calibrator(void);
+    // Calibrator(void);
+    Calibrator(fst_log::Logger &inh_log);
     ~Calibrator(void);
     
     const unsigned int& getCurrentState(void);
@@ -65,7 +66,6 @@ class Calibrator {
     bool getZeroOffsetFromBareCore(std::vector<double> &data);
     bool setTemporaryZeroOffset(void);
     bool recordZeroOffset(void);
-    bool recordZeroOffset(const std::vector<double> &data);
     bool reviewCalibratedJoint(unsigned int &bitmap);
     bool reviewLastJoint(unsigned int &bitmap);
     bool recordLastJoint(void);
@@ -83,6 +83,7 @@ class Calibrator {
     unsigned int current_state_;
     MemoryHandle mem_handle_;
     fst_comm_interface::CommInterface comm_interface_;
+    fst_log::Logger &log;
 };
 
 

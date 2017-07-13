@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 if(${catkin_CROSS})
 	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/trajplan/include ${depend_PATH_INC}/parameter_manager/include ${depend_PATH_INC}/middleware_to_mem/include ${depend_PATH_INC}/log_manager/include)
-	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libmiddleware_to_mem.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/liblogger.so)
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libparam_value.so ${depend_PATH_LIB}/libmiddleware_to_mem.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/liblogger.so)
 endif(${catkin_CROSS})
 
 
@@ -134,6 +134,7 @@ add_library(calibrator  src/motion_controller_offset_calibrator.cpp)
 target_link_libraries(calibrator ${catkin_LIBRARIES})
 
 add_library(motion_controller   src/motion_controller_arm_group.cpp
+                                src/motion_controller_arm_group_private.cpp
                                 src/motion_controller_arm_group_planning.cpp
                                 src/motion_controller_planning_interface.cpp)
 target_link_libraries(motion_controller calibrator ${catkin_LIBRARIES})

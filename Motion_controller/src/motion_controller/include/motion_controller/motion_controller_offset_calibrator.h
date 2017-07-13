@@ -14,6 +14,8 @@
 #include <comm_interface/comm_interface.h>
 #include <struct_to_mem/struct_feedback_joint_states.h>
 #include <log_manager/log_manager_logger.h>
+#include <parameter_manager/parameter_manager_param_group.h>
+#include <parameter_manager/parameter_manager_error_code.h>
 
 typedef int MemoryHandle;
 typedef unsigned long long int ErrorCode;
@@ -58,27 +60,28 @@ class Calibrator {
     
     const unsigned int& getCurrentState(void);
     const ErrorCode& getLastError(void);
-    bool initCalibrator(const std::string &jtac = "share/motion_controller/config/jtac.yaml",
-                        const std::string &record = "share/motion_controller/config/robot_recorder.yaml");
-    bool reloadJTACParam(void);
+    bool initCalibrator(const std::string &path = "config/");
     bool getCurrentJoint(FeedbackJointState &fbjs);
-    bool transmitJtacParam(void);
+    bool transmitJtacParam(const std::string &param = "all");
     bool getZeroOffsetFromBareCore(std::vector<double> &data);
-    bool setTemporaryZeroOffset(void);
+    bool setTempZeroOffset(void);
     bool recordZeroOffset(void);
     bool reviewCalibratedJoint(unsigned int &bitmap);
-    bool reviewLastJoint(unsigned int &bitmap);
+    bool reviewCurrentJoint(unsigned int &bitmap);
     bool recordLastJoint(void);
     bool recordLastJoint(const JointValues &joint);
 
   protected:
     bool sendConfigData(const std::string &path);
     bool sendConfigData(int id, const std::vector<double> &data);
-    bool readConfigData(const std::string &path, std::vector<double> &data);
+    bool readConfigData(int id, std::vector<double> &data);
     
   private:
-    std::string jtac_param_file_;
-    std::string record_file_;
+    std::string robot_parameter_path_;
+    fst_parameter::ParamGroup jtac_param_;
+    fst_parameter::ParamGroup robot_recorder_;
+    std::vector<double> offset_normal_threshold_;
+    std::vector<double> offset_lost_threshold_;
     ErrorCode last_error_;
     unsigned int current_state_;
     MemoryHandle mem_handle_;

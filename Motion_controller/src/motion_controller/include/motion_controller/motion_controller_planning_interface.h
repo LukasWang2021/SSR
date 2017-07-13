@@ -10,10 +10,10 @@
 
 #include <vector>
 #include <map>
-#include <XmlRpc.h>
 #include <motion_controller/fst_datatype.h>
 #include <trajplan/TrajPlan.h>
 #include <motion_controller/motion_controller_error_code.h>
+#include <parameter_manager/parameter_manager_param_group.h>
 
 namespace fst_controller {
 
@@ -23,7 +23,9 @@ class PlanningInterface {
 
     PlanningInterface();
     ~PlanningInterface();
-    bool initPlanningInterface(XmlRpc::XmlRpcValue params);
+    bool initPlanningInterface(fst_parameter::ParamValue &params, ErrorCode &err);
+
+    std::string getAlgorithmVersion(void);
 
     double getCycleTime(void);
 
@@ -47,9 +49,17 @@ class PlanningInterface {
 
     double getSmoothRadiusCoefficient(void);
 
-    double getSmoothCurveMode(void);
+    double getCurveMode(void);
 
     const JointConstraints& getJointConstraints(void);
+
+    void clearFIFO(void);
+
+    int getFIFOLength(void);
+
+    unsigned int getTrajectorySegmentLength(void);
+
+    bool setTrajectorySegmentLength(unsigned int length);
 
     //------------------------------------------------------------
     // Function:    setCycleTime
@@ -89,7 +99,7 @@ class PlanningInterface {
 
     bool setSmoothRadiusCoefficient(double coeff);
 
-    bool setSmoothCurveMode(int mode);
+    bool setCurveMode(int mode);
 
     //------------------------------------------------------------------------------
     // Function:    setJointConstraints
@@ -100,6 +110,10 @@ class PlanningInterface {
     //          false   -> joint constraints NOT changed
     //------------------------------------------------------------------------------
     bool setJointConstraints(const JointConstraints &constraints);
+
+    bool setAlphaScaling(double percent);
+
+    bool setDH(const DHGroup &dh);
 
     //------------------------------------------------------------
     // Function:    setToolFrame
@@ -136,6 +150,9 @@ class PlanningInterface {
     // Return:  poseEuler point
     //------------------------------------------------------------------------------
     PoseEuler transformPose2PoseEuler(const Pose &pose);
+
+    bool getJointFromPose(const Pose &pose, const JointValues &reference,
+                          JointValues &joint, double time_interval, ErrorCode &err);
 
     //------------------------------------------------------------------------------
     // Function:    computeInverseKinematics
@@ -176,10 +193,11 @@ class PlanningInterface {
     //          false       -> plan UNsuccessfully
     //------------------------------------------------------------------------------
     bool MoveJ2J(JointPoint &jp_start,
-                 JointPoint &jp_target, JointPoint &jp_next, double v_ref, int cnt,
-                 std::vector<JointValues> &planned_path,
+                 const JointValues &j_target, double v_target, int cnt_target,
+                 const JointValues &j_next, double v_next, int cnt_next,
                  ErrorCode &err);
 
+/*
     //------------------------------------------------------------------------------
     // Function:    MoveJ2J
     // Summary: To plan a path in joint space to touch target pose, with/without smooth.
@@ -197,7 +215,7 @@ class PlanningInterface {
     bool MoveJ2J(JointPoint &jp_start,
                  const Pose &pose_target, const Pose &pose_next, double v_ref, int cnt,
                  std::vector<JointValues> &planned_path,
-                 ErrorCode &err);
+                 ErrorCode &err);*/
 
     //------------------------------------------------------------------------------
     // Function:    MoveJ2L
@@ -219,13 +237,13 @@ class PlanningInterface {
     //          false       -> plan UNsuccessfully
     //------------------------------------------------------------------------------
     bool MoveJ2L(const JointPoint &jp_start,
-                 JointValues &joint_target, double v_ref, int cnt,
+                 const JointValues &joint_target, double v_target, int cnt_target,
                  const Pose &pose_next, double v_next, int cnt_next,
-                 std::vector<JointValues> &planned_path,
                  Pose &pose_start, Pose &pose_previous,
                  double &v_start, double &vu_start,
                  ErrorCode &err);
 
+/*
     //------------------------------------------------------------------------------
     // Function:    MoveJ2L
     // Summary: To plan a path in joint space to touch target pose, with/without smooth.
@@ -246,12 +264,11 @@ class PlanningInterface {
     //          false       -> plan UNsuccessfully
     //------------------------------------------------------------------------------
     bool MoveJ2L(const JointPoint &jp_start,
-                 const Pose &pose_target, double v_ref, int cnt,
+                 const Pose &pose_target, double v_ref, int cnt_target,
                  const Pose &pose_next, double v_next, int cnt_next,
-                 std::vector<JointValues> &planned_path,
                  Pose &pose_start, Pose &pose_previous,
                  double &v_start, double &vu_start,
-                 ErrorCode &err);
+                 ErrorCode &err);*/
 
     //------------------------------------------------------------------------------
     // Function:    MoveJ2C
@@ -268,9 +285,8 @@ class PlanningInterface {
     // Return:  true        -> plan successfully
     //------------------------------------------------------------------------------
     bool MoveJ2C(const JointPoint &jp_start,
-                 const JointValues &j_target, double v_ref, int cnt,
-                 const Pose &pose2_circle, const Pose &pose3_circle, double v_circle,
-                 std::vector<JointValues> &planned_path,
+                 const JointValues &j_target, double v_target, int cnt_target,
+                 const Pose &pose1_circle, const Pose &pose2_circle, double v_circle, int cnt_circle,
                  Pose &pose_start, double &v_start,
                  ErrorCode &err);
 
@@ -291,8 +307,7 @@ class PlanningInterface {
     //------------------------------------------------------------------------------
     bool MoveL2J(const Pose &pose_start, double v_start, double vu_start,
                  const Pose &pose_target, double v_target, int cnt_target,
-                 Pose &pose_previous, std::vector<Pose> &planned_path,
-                 ErrorCode &err);
+                 Pose &pose_previous, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    MoveL2L
@@ -318,51 +333,59 @@ class PlanningInterface {
     //------------------------------------------------------------
     bool MoveL2L(Pose &pose_start, double &v_start, double &vu_start,
                  const Pose &pose_target, double v_target, int cnt_target,
-                 const Pose &pose_next, double v_next,
-                 Pose &pose_previous,
-                 std::vector<Pose> &planned_path,
-                 ErrorCode &error_code);
+                 const Pose &pose_next, double v_next, int cnt_next,
+                 Pose &pose_previous, ErrorCode &error_code);
 
     bool MoveL2C(Pose &pose_start, double &v_start, double &vu_start,
-                 const Pose &pose_target, double v_target, int cnt,
-                 const Pose &pose2_circle, const Pose &pose3_circle, double v_circle,
-                 Pose &pose_previous, Pose &pose_start_past,
-                 std::vector<Pose> &planned_path,
-                 ErrorCode &err);
+                 const Pose &pose_target, double v_target, int cnt_target,
+                 const Pose &pose1_circle, const Pose &pose2_circle, double v_circle, int cnt_circle,
+                 Pose &pose_previous, ErrorCode &err);
 
+/*
     bool MoveL2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
                                const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                               ErrorCode &err);
+                               ErrorCode &err);*/
 
     bool MoveC2J(const Pose &pose_start, double v_start,
-                 const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                 std::vector<Pose> &planned_path, ErrorCode err);
+                 const Pose &pose1, const Pose &pose2, double v_target, int cnt_target,
+                 ErrorCode err);
 
     bool MoveC2L(Pose &pose_start, double &v_start,
-                 const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                 const Pose &pose_next, double v_next,
-                 Pose &pose_start_past, Pose &pose_previous, double &vu_start,
-                 std::vector<Pose> &planned_path, ErrorCode &err);
+                 const Pose &pose1, const Pose &pose2, double v_target, int cnt_target,
+                 const Pose &pose_next, double v_next, int cnt_next,
+                 Pose &pose_previous, double &vu_start, ErrorCode &err);
 
+/*
     bool MoveC2LAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
                                const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                               ErrorCode &err);
+                               ErrorCode &err);*/
 
     bool MoveC2C(Pose &pose_start, double &v_start,
-                 const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                 const Pose &pose_2nd_next, const Pose &pose_3rd_next, double v_next,
-                 Pose &pose_start_ptc, std::vector<Pose> &planned_path,
+                 const Pose &pose1_target, const Pose &pose2_target, double v_target, int cnt_target,
+                 const Pose &pose1_next, const Pose &pose2_next, double v_next, int cnt_next,
                  ErrorCode &err);
 
+/*
     bool MoveC2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
                                const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                               ErrorCode &err);
+                               ErrorCode &err);*/
+
+    bool pickPoints(vector<Pose> &points, ErrorCode &err);
+
+    bool pickPoints(vector<JointValues> &points, ErrorCode &err);
+
+    int estimateFIFOLength(JointValues joint1, JointValues joint2);
 
     bool replanPauseTrajectory(std::vector<JointValues> &trajectory, ErrorCode &err);
 
     bool replanRestartTrajectory(std::vector<JointValues> &trajectory,
                                  JointValues &start_point,
                                  ErrorCode &err);
+
+    bool isPointCoincident(const Pose &pose1, const Pose &pose2);
+    bool isPointCoincident(const Pose &pose, const JointValues &joint);
+    bool isPointCoincident(const JointValues &joint, const Pose &pose);
+    bool isPointCoincident(const JointValues &joint1, const JointValues &joint2);
 
   private:
     // cycle time between two points in the trajectory, Unit: s
@@ -382,15 +405,19 @@ class PlanningInterface {
     double  omega_overload_;
     double  alpha_overload_;
     double  smooth_radius_coefficient_;
-    int     smooth_curve_mode_;
+    int     curve_mode_;
+    int     fifo_length_;
+    unsigned int trajectory_segment_length_;
 
     JointConstraints joint_constraints_;
+    DHGroup dh_parameter_;
 
     // ultimate values
     struct {
         double min;
         double max;
     }
+    trajectory_segment_length_range_,
     cycle_time_range_,
     velocity_range_,
     acceleration_range_,

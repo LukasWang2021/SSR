@@ -82,7 +82,7 @@ bool buildLogStructure(const char *channel_name) {
             cout << " -Constructing communication interface exception:" << exc.what() << endl;
             return false;
         }
-        if (tmp_log_struct->comm_interface_ptr->createChannel(IPC_REP, channel_name) != 0) {
+        if (tmp_log_struct->comm_interface_ptr->createChannel(COMM_REP, COMM_IPC, channel_name) != 0) {
             cout << " -Cannot setup " << channel_name << " server" << endl;
             return false;
         }
@@ -147,7 +147,7 @@ void do_io(std::ofstream& handle, vector<char*> segments)
 void public_thread(void) {
     cout << "Constructing public server ..." << endl;
     fst_comm_interface::CommInterface server;
-    if (server.createChannel(IPC_REP, "log_public") != 0) {
+    if (server.createChannel(COMM_REP, COMM_IPC, "log_public") != 0) {
         cout << " -Cannot setup public server." << endl;
         g_running = false;
     }
@@ -158,10 +158,10 @@ void public_thread(void) {
     string channel_to_close = "";
     while (g_running) {
         usleep(50 * 1000);
-        if (server.recv(buffer, sizeof(buffer), IPC_DONTWAIT) == 0) {
+        if (server.recv(buffer, sizeof(buffer), COMM_DONTWAIT) == 0) {
             cout << "A new log request received: '" << buffer << "'" << endl;
             if (buildLogStructure(buffer)) {
-                if (server.send(buffer, sizeof(buffer), IPC_DONTWAIT) == 0) {
+                if (server.send(buffer, sizeof(buffer), COMM_DONTWAIT) == 0) {
                     cout << " -Log structure ready, logging '" << buffer << "'" << endl;
                 }
                 else {
@@ -205,7 +205,7 @@ void receive_thread(void) {
                 continue;
             }
 
-            if (g_log_structure_ptr_queue[i]->comm_interface_ptr->recv(recv_buffer, sizeof(recv_buffer), IPC_DONTWAIT) == 0) {
+            if (g_log_structure_ptr_queue[i]->comm_interface_ptr->recv(recv_buffer, sizeof(recv_buffer), COMM_DONTWAIT) == 0) {
                 // cout << "received" << endl;
                 char *buf = new char[LOG_BUFFER_SIZE];
                 memcpy(buf, recv_buffer, LOG_BUFFER_SIZE);

@@ -10,6 +10,8 @@
 #ifndef FST_DATATYPE_H
 #define FST_DATATYPE_H
 
+#define PI 3.1415926535897932384626433832795
+
 namespace fst_controller {
 
 /* Define a group of values in joint space */
@@ -146,6 +148,23 @@ struct JointPoint {
     JointOmegas omegas;
     JointValues joints;
 };
+
+struct CoordinateOffset {
+    double alpha;
+    double a;
+    double d;
+    double theta;
+};
+
+struct DHGroup {
+    CoordinateOffset j1;
+    CoordinateOffset j2;
+    CoordinateOffset j3;
+    CoordinateOffset j4;
+    CoordinateOffset j5;
+    CoordinateOffset j6;
+};
+
 
 
 }   // namespace fst_controller

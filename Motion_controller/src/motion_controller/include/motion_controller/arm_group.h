@@ -343,7 +343,6 @@ class ArmGroup {
     bool clearJointTrajectoryFIFO(ErrorCode &err);
     */
 
-    bool resetArmGroup(const JointValues &joint, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    computeIK
@@ -615,6 +614,9 @@ class ArmGroup {
     //------------------------------------------------------------
     bool resumeArmMotion(ErrorCode &err);
 
+    bool isArmGroupSuspended(void);
+
+    bool resetArmGroup(const JointValues &joint, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    transformPoseEuler2Pose

@@ -105,6 +105,8 @@ endif(${catkin_CROSS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
+  LIBRARIES param_value
+  LIBRARIES param_builder
   LIBRARIES parameter_manager
   CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
@@ -124,11 +126,27 @@ include_directories(
 )
 
 ## Declare a C++ library
+add_library(param_value
+  src/parameter_manager_param_value.cpp
+)
+target_link_libraries(param_value
+  ${catkin_LIBRARIES}
+)
+
+add_library(param_builder
+  src/parameter_manager_param_builder.cpp
+)
+target_link_libraries(param_builder
+  ${catkin_LIBRARIES}
+)
+
 add_library(parameter_manager
   src/parameter_manager_param_group.cpp
 )
 target_link_libraries(parameter_manager
   ${catkin_LIBRARIES}
+  param_value
+  param_builder
   yaml-cpp
 )
 
@@ -147,6 +165,8 @@ add_executable(manager_node src/manager_node.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(manager_node
   ${catkin_LIBRARIES}
+  param_value
+  param_builder
   parameter_manager
 #  yaml-cpp
 )
@@ -164,6 +184,14 @@ target_link_libraries(manager_node
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+
+install(TARGETS param_value
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS param_builder
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
 
 install(TARGETS parameter_manager
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

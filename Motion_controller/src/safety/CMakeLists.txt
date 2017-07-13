@@ -6,11 +6,6 @@ project(safety)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED)
 
-if(${catkin_CROSS})
-	set(CMAKE_C_FLAGS "-DCROSS_PLATFORM")
-endif(${catkin_CROSS})
-    
-
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -133,13 +128,14 @@ add_library(safety
 # add_dependencies(safety_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(safety
-	${catkin_LIBRARIES}
- )
+# target_link_libraries(safety_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
 #############
+
 # all install targets should use catkin DESTINATION variables
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 

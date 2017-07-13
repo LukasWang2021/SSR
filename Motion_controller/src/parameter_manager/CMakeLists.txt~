@@ -1,13 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(motion_controller)
+project(parameter_manager)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp 
-#  trajplan
 )
+
+if(${catkin_CROSS})
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
+endif(${catkin_CROSS})
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -100,10 +105,13 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES motion_controller
-#  CATKIN_DEPENDS roscpp trajplan
-#  DEPENDS trajplan
+  LIBRARIES param_value
+  LIBRARIES param_builder
+  LIBRARIES parameter_manager
+  CATKIN_DEPENDS roscpp
+#  DEPENDS system_lib
 )
+
 
 ###########
 ## Build ##
@@ -115,33 +123,53 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-#  ${Boost_INCLUDE_DIRS}
 )
 
-#link_directories(${Boost_LIBRARY_DIRS})
-link_directories(${catkin_LIBRARY_DIRS})
-
 ## Declare a C++ library
-add_library(motion_controller  src/arm_group.cpp)
-target_link_libraries(motion_controller TrajPlan ${catkin_LIBRARIES})
-#target_link_libraries(motion_controller ${catkin_LIBRARIES})
+add_library(param_value
+  src/parameter_manager_param_value.cpp
+)
+target_link_libraries(param_value
+  ${catkin_LIBRARIES}
+)
+
+add_library(param_builder
+  src/parameter_manager_param_builder.cpp
+)
+target_link_libraries(param_builder
+  ${catkin_LIBRARIES}
+)
+
+add_library(parameter_manager
+  src/parameter_manager_param_group.cpp
+)
+target_link_libraries(parameter_manager
+  ${catkin_LIBRARIES}
+  param_value
+  param_builder
+  yaml-cpp
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(fst_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(parameter_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(motion_demo src/demo.cpp)
-target_link_libraries(motion_demo motion_controller ${catkin_LIBRARIES})
+add_executable(manager_node src/manager_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(fst_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(parameter_manager_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(fst_controller_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(manager_node
+  ${catkin_LIBRARIES}
+  param_value
+  param_builder
+  parameter_manager
+#  yaml-cpp
+)
 
 #############
 ## Install ##
@@ -157,18 +185,27 @@ target_link_libraries(motion_demo motion_controller ${catkin_LIBRARIES})
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-## Mark executables and/or libraries for installation
-# install(TARGETS fst_controller fst_controller_node
+install(TARGETS param_value
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS param_builder
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS parameter_manager
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+ install(TARGETS manager_node 
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
+# install(DIRECTORY config 
 #   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
@@ -183,7 +220,7 @@ target_link_libraries(motion_demo motion_controller ${catkin_LIBRARIES})
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_fst_controller.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_parameter_manager.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

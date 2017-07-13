@@ -36,22 +36,25 @@ Logger::Logger(void) {
 
 Logger::~Logger(void) {
     if (current_state_ == INITIALIZED) {
+        cout << "Transmiting local cached logs to server ..." << endl;
         LOCK;
         while (log_content_.size() > LOG_BUFFER_SIZE) {
             string tmp;
             tmp.assign(log_content_, 0, LOG_BUFFER_SIZE - 1);
-            if (comm_interface_.send(tmp.c_str(), LOG_BUFFER_SIZE, IPC_DONTWAIT) == 0) {
+            if (comm_interface_.send(tmp.c_str(), LOG_BUFFER_SIZE, COMM_DONTWAIT) == 0) {
                 log_content_.erase(0, LOG_BUFFER_SIZE - 1);
+                usleep(20 * 1000);
             }
-            usleep(20 * 1000);
         }
 
         int length = log_content_.size();
         if (length > 0) {
             string tmp;
             tmp.assign(log_content_, 0, length);
-            if (comm_interface_.send(tmp.c_str(), length + 1, IPC_DONTWAIT) == 0) {
+            if (comm_interface_.send(tmp.c_str(), length + 1, COMM_DONTWAIT) == 0) {
                 log_content_.erase(0, length);
+                usleep(20 * 1000);
+                cout << "Done!" << endl;
             }
         }
 
@@ -60,11 +63,17 @@ Logger::~Logger(void) {
         }
         UNLOCK;
 
+        cout << "Send log-out request to server." << endl;
         char buf[8] = "\33CLOSE\33";
         buf[7] = 0;
-        comm_interface_.send(buf, sizeof(buf), IPC_DONTWAIT);
-        usleep(500 * 1000);
+        if (comm_interface_.send(buf, sizeof(buf), COMM_DONTWAIT)) {
+            usleep(200 * 1000);
+            cout << "Done!" << endl;
+        }
     }
+
+    pthread_mutex_destroy(&log_mutex_);
+    cout << "logger exit" << endl;
 }
 
 bool Logger::initLogger(const char *log_file_name) {
@@ -74,13 +83,13 @@ bool Logger::initLogger(const char *log_file_name) {
 
     info("Initializing log client ...");
     fst_comm_interface::CommInterface tmp_interface;
-    if (tmp_interface.createChannel(IPC_REQ, "log_public") != SUCCESS) {
+    if (tmp_interface.createChannel(COMM_REQ, COMM_IPC, "log_public") != SUCCESS) {
         error("Cannot create public channel.");
         return false;
     }
 
     string tmp(log_file_name);
-    if (tmp_interface.send(tmp.c_str(), tmp.size(), IPC_DONTWAIT) != SUCCESS) {
+    if (tmp_interface.send(tmp.c_str(), tmp.size(), COMM_DONTWAIT) != SUCCESS) {
         error("Cannot communicate with log server.");
         return false;
     }
@@ -88,12 +97,12 @@ bool Logger::initLogger(const char *log_file_name) {
 
     char buf[256];
     memset(buf, 0, sizeof(buf));
-    if(tmp_interface.recv(buf, sizeof(buf), IPC_DONTWAIT) == 0) {
+    if(tmp_interface.recv(buf, sizeof(buf), COMM_DONTWAIT) == 0) {
         if (tmp == buf) {
             info("channel name: '%s'", buf);
             info("Creating log communication channel ...");
             LOCK;
-            if (comm_interface_.createChannel(IPC_REQ, buf) == SUCCESS) {
+            if (comm_interface_.createChannel(COMM_REQ, COMM_IPC, buf) == SUCCESS) {
                 current_state_ = INITIALIZED;
                 UNLOCK;
                 info("Success! Logging message...");
@@ -138,9 +147,10 @@ void Logger::info(const char *format, ...) {
 
     va_list vp;
     va_start(vp, format);
-    len += vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 2, format, vp);
+    len = len + vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
     va_end(vp);
-    buf[len] = '\n';
+    if (len > SINGLE_LOG_SIZE - 2) len = SINGLE_LOG_SIZE - 2;
+    buf[len]     = '\n';
     buf[len + 1] = '\0';
     
     logMessage(buf);
@@ -154,8 +164,9 @@ void Logger::warn(const char *format, ...) {
 
     va_list vp;
     va_start(vp, format);
-    len += vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 2, format, vp);
+    len = len + vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
     va_end(vp);
+    if (len > SINGLE_LOG_SIZE - 2) len = SINGLE_LOG_SIZE - 2;
     buf[len] = '\n';
     buf[len + 1] = '\0';
     
@@ -170,8 +181,9 @@ void Logger::error(const char *format, ...) {
 
     va_list vp;
     va_start(vp, format);
-    len += vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 2, format, vp);
+    len += vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
     va_end(vp);
+    if (len > SINGLE_LOG_SIZE - 2) len = SINGLE_LOG_SIZE - 2;
     buf[len] = '\n';
     buf[len + 1] = '\0';
     
@@ -265,8 +277,8 @@ void Logger::logMessage(const string &msg) {
         if (current_state_ == INITIALIZED) {
             string tmp;
             tmp.assign(log_content_, 0, LOG_BUFFER_SIZE - 1);
-            if (comm_interface_.send(tmp.c_str(), LOG_BUFFER_SIZE, IPC_DONTWAIT) == 0) {
-                // cout << tmp;
+            if (comm_interface_.send(tmp.c_str(), LOG_BUFFER_SIZE, COMM_DONTWAIT) == 0) {
+                // cout << "sended!" << endl;
                 log_content_.erase(0, LOG_BUFFER_SIZE - 1);
             }
         }

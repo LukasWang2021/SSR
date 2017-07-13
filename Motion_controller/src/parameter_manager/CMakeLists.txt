@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(parameter_manager)
 
+# setting for include file.
+set(VERSION_MAJOR 2)
+set(VERSION_MINOR 0)
+set(VERSION_PATCH 0)
+string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
+
+# setting for package version file.
+set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+
+# configure a header file to pass some settings to the source code.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/include/version.h.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
+)
+
+# write the verson info to a file.
+file(WRITE ${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -105,6 +123,8 @@ endif(${catkin_CROSS})
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
+  LIBRARIES param_value
+  LIBRARIES param_builder
   LIBRARIES parameter_manager
   CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
@@ -121,14 +141,31 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${PROJECT_BINARY_DIR}
 )
 
 ## Declare a C++ library
+add_library(param_value
+  src/parameter_manager_param_value.cpp
+)
+target_link_libraries(param_value
+  ${catkin_LIBRARIES}
+)
+
+add_library(param_builder
+  src/parameter_manager_param_builder.cpp
+)
+target_link_libraries(param_builder
+  ${catkin_LIBRARIES}
+)
+
 add_library(parameter_manager
   src/parameter_manager_param_group.cpp
 )
 target_link_libraries(parameter_manager
   ${catkin_LIBRARIES}
+  param_value
+  param_builder
   yaml-cpp
 )
 
@@ -147,6 +184,8 @@ add_executable(manager_node src/manager_node.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(manager_node
   ${catkin_LIBRARIES}
+  param_value
+  param_builder
   parameter_manager
 #  yaml-cpp
 )
@@ -165,15 +204,27 @@ target_link_libraries(manager_node
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
+install(TARGETS param_value
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS param_builder
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
 install(TARGETS parameter_manager
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
- install(TARGETS manager_node 
+install(TARGETS manager_node 
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
+
+install(FILES ${PROJECT_NAME}_version 
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY config 

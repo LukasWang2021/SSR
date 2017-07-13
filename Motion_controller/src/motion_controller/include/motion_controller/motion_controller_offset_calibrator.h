@@ -10,10 +10,12 @@
 
 #include <string>
 #include <vector>
-#include <motion_controller/fst_datatype.h>
+#include <trajplan/fst_datatype.h>
 #include <comm_interface/comm_interface.h>
 #include <struct_to_mem/struct_feedback_joint_states.h>
 #include <log_manager/log_manager_logger.h>
+#include <parameter_manager/parameter_manager_param_group.h>
+#include <parameter_manager/parameter_manager_error_code.h>
 
 typedef int MemoryHandle;
 typedef unsigned long long int ErrorCode;
@@ -21,9 +23,9 @@ namespace fst_controller {
 static const unsigned int NEED_CALIBRATE    = 0x5A55;
 static const unsigned int CALIBRATED        = 0x5A56;
 
-static const unsigned int OFFSET_NORMAL     = 0;
-static const unsigned int OFFSET_DEVIATE    = 1;
-static const unsigned int OFFSET_LOST       = 2;
+static const unsigned int OFFSET_NORMAL     = 0x0;
+static const unsigned int OFFSET_DEVIATE    = 0x1;
+static const unsigned int OFFSET_LOST       = 0x2;
 
 static const unsigned int OFFSET_DEVIATE_MASK   = 0x111111;
 static const unsigned int OFFSET_LOST_MASK      = 0x222222;
@@ -56,29 +58,38 @@ class Calibrator {
     Calibrator(fst_log::Logger &inh_log);
     ~Calibrator(void);
     
+    bool initCalibrator(const std::string &path = "config/");
     const unsigned int& getCurrentState(void);
     const ErrorCode& getLastError(void);
-    bool initCalibrator(const std::string &jtac = "share/motion_controller/config/jtac.yaml",
-                        const std::string &record = "share/motion_controller/config/robot_recorder.yaml");
-    bool reloadJTACParam(void);
     bool getCurrentJoint(FeedbackJointState &fbjs);
-    bool transmitJtacParam(void);
-    bool getZeroOffsetFromBareCore(std::vector<double> &data);
-    bool setTemporaryZeroOffset(void);
-    bool recordZeroOffset(void);
-    bool reviewCalibratedJoint(unsigned int &bitmap);
-    bool reviewLastJoint(unsigned int &bitmap);
-    bool recordLastJoint(void);
-    bool recordLastJoint(const JointValues &joint);
+    bool sendConfigData(const std::string &path);
+    bool transmitJtacParam(const std::string &param = "all");
+    bool setTempZeroOffset(void);
+    bool setZeroOffset(void);
+    bool recordCurrentJoint(void);
+    bool recordGivenJoint(const Joint &joint);
+    bool reviewCurrentJoint(unsigned int &bitmap);
+    bool isUsingTempZeroOffset(void);
 
   protected:
-    bool sendConfigData(const std::string &path);
-    bool sendConfigData(int id, const std::vector<double> &data);
-    bool readConfigData(const std::string &path, std::vector<double> &data);
+    bool getZeroOffsetFromBareCore(std::vector<double> &data);
+    bool sendConfigDataImpl(int id, const std::vector<double> &data);
+    bool readConfigDataImpl(int id, std::vector<double> &data);
+    bool recordGivenJointImpl(std::vector<double> &joint);
+    bool recordJointToRobotRecorder(const std::vector<double> &joint);
+    bool recordJointToTempRecorder(const std::vector<double> &joint);
+    bool setTempZeroOffsetImpl(const Joint &target_joint);
+    bool setZeroOffsetImpl(const Joint &target_joint);
     
   private:
-    std::string jtac_param_file_;
-    std::string record_file_;
+    bool is_using_temp_zero_offset_;
+    std::vector<double> temp_zero_offset_;
+    std::vector<double> temp_robot_recorder_;
+
+    fst_parameter::ParamGroup jtac_param_;
+    fst_parameter::ParamGroup robot_recorder_;
+    std::vector<double> offset_normal_threshold_;
+    std::vector<double> offset_lost_threshold_;
     ErrorCode last_error_;
     unsigned int current_state_;
     MemoryHandle mem_handle_;

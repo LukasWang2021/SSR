@@ -7,10 +7,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <ctime>
 // #include <yaml-cpp/yaml.h>
 
 // #include <parameter_manager/parameter_manager_param_type.h>
 #include <parameter_manager/parameter_manager_param_group.h>
+#include <parameter_manager/parameter_manager_param_value.h>
+#include <parameter_manager/parameter_manager_param_builder.h>
+
 
 #include <ros/ros.h>
 #include <ros/param.h>
@@ -23,17 +27,147 @@ using std::vector;
 using std::map;
 
 
+void test_3(const string &file);
+
 int main(int argc, char **argv)
 {
-    string file_name = "share/parameter_manager/config/test.yaml";
+    ros::init(argc, argv, "test");
+    string file_name = "share/motion_controller/config/motion_controller.yaml";
     //fst_parameter::ParamGroup params("/home/fst/ros_workspace/src/parameter_manager/config/test.yaml");
-    fst_parameter::ParamGroup params(file_name);
+    //fst_parameter::ParamGroup param(file_name);
     
-    XmlRpc::XmlRpcValue value;
-    params.getParam("house", value);
+    string yaml_str;
+        char temp[1024] = {0};
+        int length = readlink("/proc/self/exe", temp, sizeof(temp));
+        if (length > 0 && length < sizeof(temp)) {
+            boost::filesystem::path executable(temp);
+            file_name = executable.parent_path().parent_path().parent_path().string() + "/" + file_name;
+        }
+        std::ifstream yaml_handle_r(file_name.c_str());
+        if (yaml_handle_r.is_open()) {
+            string temp_str((std::istreambuf_iterator<char>(yaml_handle_r)),
+                             std::istreambuf_iterator<char>());
+            yaml_str = temp_str;
+            yaml_handle_r.close();
+        }
+    cout << "yaml_str:\n" << yaml_str << endl;
+    fst_parameter::ParamValue pv;
+    fst_parameter::ParamBuilder builder;
+    builder.buildParamFromString(yaml_str, pv);
+
+    //builder.buildParamFromString("{arm_group:{enable_calibration:true,enable_logger:false,hello,trajectory_fifo_length:100},calibrator:{lost_offset_threshold:[0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1],normal_offset_threshold:[0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001]},planning_interface:{acceleration:6000,acceleration_scaling:1,alpha_overload:3,cycle_time:0.001,jerk:10,joint_errorangle:0.15,joint_overshoot:0.25,omega_overload:1,smooth_curve:{cubic:2,quadratic:1},smooth_curve_mode:quadratic,smooth_radius_coefficient:1.2,velocity:1000,velocity_scaling:1}}", pv);
+    //builder.buildParamFromString("  \r \r\n\n\rname : feng\nage:19\nsex   :           male\n\r\rfamily:\n  children: Tom\n  wife: huang\n  ", pv);
+    //builder.buildParamFromString("test:{age:19,family:{children:[[Tom, Jim],[Sunny, Jessy],[Sue]],wife:huang},name:feng,sex:male}", pv);
+    //builder.buildParamFromString("test:{age:19,family:{children:[Tom, Jim,Sunny, Jessy],wife:huang},name:feng,sex:male}", pv);
+
+    std::cout << pv << std::endl;
+
+    /*
+    time_t begin, end;
+    vector<int> vec(1000000, 5);
+    vector<int>::iterator it = vec.begin();
+
+    begin = clock();
+    for(it = vec.begin(); it != vec.end(); it++) {
+        *it = *it + 1;
+    }
+    end = clock();
+    cout << "it++ runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+
+    begin = clock();
+    for(it = vec.begin(); it != vec.end(); ++it) {
+        *it = *it + 1;
+    }
+    end = clock();
+    cout << "++it runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+
+    begin = clock();
+    for(it = vec.begin(); it != vec.end(); it = it + 1) {
+        *it = *it + 1;
+    }
+    end = clock();
+    cout << "it+1 runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+    */
+
+    //XmlRpc::XmlRpcValue v;
+    //ros::param::get("/fst_param", v);
+    //cout << v << endl;
+    //cout << v.toXml() << endl;
+
+    // test_1(params);
+    // test_2(params);
+    // test_3(file_name);
+
 }
 
+void test_3(const string &file) {
+    time_t begin, end;
+    ROS_INFO("begin to test loadParamFile");
+    for (int loop = 0; loop < 100; ++loop) {
+        begin = clock();
+        fst_parameter::ParamGroup param(file);
+        end = clock();
+        cout << "runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+    }
+    ROS_INFO("end");
+}
 
+/*
+void test_1(fst_parameter::ParamGroup &params) {
+    time_t begin, end;
+    int test;
+    ROS_INFO("get int value using ParamValue");
+    for (int loop = 0; loop < 100; ++loop) {
+        begin = clock();
+        for (int cnt = 0; cnt < 10000; ++cnt) {
+            params.getParam("house/address/number", test);
+        }
+        end = clock();
+        cout << "runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+    }
+    ROS_INFO("getted %d", test);
+    
+    ROS_INFO("get int value using YAML::Node");
+    for (int loop = 0; loop < 100; ++loop) {
+        begin = clock();
+        for (int cnt = 0; cnt < 10000; ++cnt) {
+            params.getParam_1("house/address/number", test);
+        }
+        end = clock();
+        cout << "runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+    }
+    ROS_INFO("getted %d", test);
+}
+
+void test_2(fst_parameter::ParamGroup &params) {
+    time_t begin, end;
+    int test = 50;
+    ROS_INFO("set int value using ParamValue");
+    for (int loop = 0; loop < 100; ++loop) {
+        begin = clock();
+        for (int cnt = 0; cnt < 10000; ++cnt) {
+            params.setParam("house/address/number", test);
+        }
+        end = clock();
+        cout << "runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+    }
+    test = 0;
+    params.getParam("house/address/number", test);
+    ROS_INFO("setted %d", test);
+    
+    ROS_INFO("set int value using YAML::Node");
+    for (int loop = 0; loop < 100; ++loop) {
+        begin = clock();
+        for (int cnt = 0; cnt < 10000; ++cnt) {
+            params.setParam_1("house/address/number", test);
+        }
+        end = clock();
+        cout << "runtime:" << double(end - begin) / CLOCKS_PER_SEC << endl;
+    }
+    test = 0;
+    params.getParam_1("house/address/number", test);
+    ROS_INFO("setted %d", test);
+}*/
 
 /*
 int main(int argc, char **argv)

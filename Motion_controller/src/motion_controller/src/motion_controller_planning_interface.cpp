@@ -6,6 +6,7 @@
  ************************************************************************/
 
 #include <motion_controller/motion_controller_planning_interface.h>
+#include <motion_controller/motion_controller_arm_group.h>
 
 using std::cout;
 using std::endl;
@@ -14,129 +15,223 @@ using std::string;
 
 namespace fst_controller {
 
-PlanningInterface::PlanningInterface() {
+PlanningInterface::PlanningInterface()
+{
     planner_    = NULL;
+    motion_list_front_  = NULL;
+    motion_list_back_   = NULL;
+    picking_command_    = NULL;
+    
+    initial_joint_valid_ = false;
+    memset(&tool_frame_, 0, sizeof(tool_frame_));
+    memset(&user_frame_, 0, sizeof(user_frame_));
+    memset(&dh_parameter_, 0, sizeof(dh_parameter_));
+    memset(&joint_constraint_, 0, sizeof(joint_constraint_));
+
+    trajectory_segment_length_range_.min = 50;
+    trajectory_segment_length_range_.max = 5000;
     cycle_time_range_.min   = 0.0005;       // s
     cycle_time_range_.max   = 0.05;         // s
     velocity_range_.min     = 0.1;          // mm/s
-    velocity_range_.max     = 4000.0001;    // mm/s
-    acceleration_range_.min = 999.9999;     // mm/s^2
-    acceleration_range_.max = 16000.0001;   // mm/s^2
+    velocity_range_.max     = 4000;    // mm/s
+    acceleration_range_.min = 1000;     // mm/s^2
+    acceleration_range_.max = 16000;   // mm/s^2
     velocity_scaling_range_.min = 0.01;
-    velocity_scaling_range_.max = 1.0001;
+    velocity_scaling_range_.max = 1;
     acceleration_scaling_range_.min = 0.01;
-    acceleration_scaling_range_.max = 1.0001;
-    jerk_range_.min = 5.0;
-    jerk_range_.max = 50.0; 
+    acceleration_scaling_range_.max = 1;
+    jerk_range_.min = 5;
+    jerk_range_.max = 50; 
     joint_overshoot_range_.min  = 0.001;        // 0.001 rad
     joint_overshoot_range_.max  = 1.571;        // Pi/2 rad
     joint_errorangle_range_.min = 0.001;        // 0.001 rad
     joint_errorangle_range_.max = 0.524;        // Pi/6 rad
     omega_overload_range_.min  = 0.01;
     omega_overload_range_.max  = 1.2;
-    alpha_overload_range_.min = 0.9999;
-    alpha_overload_range_.max = 3.0001;
-    smooth_radius_coefficient_range_.min = 0.9999;
-    smooth_radius_coefficient_range_.max = 5.0001;
+    alpha_overload_range_.min = 1.0;
+    alpha_overload_range_.max = 3.0;
+    smooth_radius_coefficient_range_.min = 1.0;
+    smooth_radius_coefficient_range_.max = 5.0;
 
+    trajectory_segment_length_ = 500;
     cycle_time_ = 0.001;
-    velocity_   = 500.0;
-    acceleration_   = 5000.0;
+    velocity_   = 500;
+    acceleration_   = 5000;
     velocity_scaling_       = 1.0;
     acceleration_scaling_   = 1.0;
-    jerk_   = 10.0;
+    jerk_   = 10;
     joint_overshoot_    = 0.25;
     joint_errorangle_   = 0.15;
     omega_overload_     = 1.0;
     alpha_overload_     = 1.0;
     smooth_radius_coefficient_ = 1.0;
-    smooth_curve_mode_  = 1;
+    curve_mode_  = T_CURVE;
+    smooth_mode_ = MODE_VELOCITY;
 }
 
-bool PlanningInterface::initPlanningInterface(XmlRpc::XmlRpcValue params) {
-    if (planner_ != NULL) {
-        delete planner_;
-        planner_ = NULL;
-    }
+bool PlanningInterface::initPlanningInterface(fst_parameter::ParamValue &params, ErrorCode &err)
+{
+    if (planner_ != NULL) {delete planner_; planner_ = NULL;}
     planner_ = new fst_controller::TrajPlan();
-    if (planner_ == NULL) {
-        return false;
-    }
-    
-    if (setCycleTime(params["cycle_time"]) &&
-        setVelocity(params["velocity"]) &&
-        setAcceleration(params["acceleration"]) &&
-        setVelocityScaling(params["velocity_scaling"]) &&
-        setAccelerationScaling(params["acceleration_scaling"]) &&
-        setJerk(params["jerk"]) &&
-        setJointOvershoot(params["joint_overshoot"]) &&
-        setJointErrorAngle(params["joint_errorangle"]) &&
-        setOmegaOverload(params["omega_overload"]) &&
-        setAlphaOverload(params["alpha_overload"]) &&
-        setSmoothRadiusCoefficient(params["smooth_radius_coefficient"]) &&
-        setSmoothCurveMode((params["smooth_curve"])[(string)params["smooth_curve_mode"]])) {
+    if (planner_ == NULL) {err = MOTION_FAIL_IN_INIT; return false;}
+    while (motion_list_front_) deleteFirstMotionCommand();
+
+    try {
+        if (setTrajectorySegmentLength(params["trajectory_segment_length"]) &&
+            setCycleTime(params["cycle_time"]) &&
+            //setVelocity(params["velocity"]) &&
+            setAcceleration(params["acceleration"]) &&
+            setVelocityScaling(params["velocity_scaling"]) &&
+            setAccelerationScaling(params["acceleration_scaling"]) &&
+            setJerk(params["jerk"]) &&
+            setJointOvershoot(params["joint_overshoot"]) &&
+            setJointErrorAngle(params["joint_errorangle"]) &&
+            //setOmegaOverload(params["omega_overload"]) &&
+            //setAlphaOverload(params["alpha_overload"]) &&
+            setSmoothRadiusCoefficient(params["smooth_radius_coefficient"]))
+        {
+            setCurveMode(params["smooth_curve_mode"] == "T_CURVE" ? T_CURVE : S_CURVE);
             return true;
+        }
+        else {
+            err = MOTION_FAIL_IN_INIT;
+            return false;
+        }
     }
-    else {
+    catch (fst_parameter::ParamException &e) {
+        err = e.getCode();
+        // std::cout << e.getMessage() << std::endl << "error_code=" << e.getCode() << std::endl;
         return false;
     }
 }
 
-PlanningInterface::~PlanningInterface() {
+PlanningInterface::~PlanningInterface()
+{
+    while (motion_list_front_) deleteFirstMotionCommand();
     delete planner_;
     planner_ = NULL;
 }
 
-double PlanningInterface::getCycleTime(void) {
+string PlanningInterface::getAlgorithmVersion(void)
+{
+    return planner_->getVersion();
+}
+
+double PlanningInterface::getCycleTime(void)
+{
     return cycle_time_;
 }
 
-double PlanningInterface::getVelocity(void) {
+/*
+double PlanningInterface::getVelocity(void)
+{
     return velocity_;
 }
+*/
 
-double PlanningInterface::getAcceleration(void) {
+double PlanningInterface::getAcceleration(void)
+{
     return acceleration_;
 }
 
-double PlanningInterface::getVelocityScaling(void) {
+double PlanningInterface::getVelocityScaling(void)
+{
     return velocity_scaling_;
 }
 
-double PlanningInterface::getAccelerationScaling(void) {
+double PlanningInterface::getAccelerationScaling(void)
+{
     return acceleration_scaling_;
 }
 
-double PlanningInterface::getJerk(void) {
+double PlanningInterface::getJerk(void)
+{
     return jerk_;
 }
 
-double PlanningInterface::getJointOvershoot(void) {
+double PlanningInterface::getJointOvershoot(void)
+{
     return joint_overshoot_;
 }
 
-double PlanningInterface::getJointErrorAngle(void) {
+double PlanningInterface::getJointErrorAngle(void)
+{
     return joint_errorangle_;
 }
 
-double PlanningInterface::getOmegaOverload(void) {
+double PlanningInterface::getOmegaOverload(void)
+{
     return omega_overload_;
 }
 
-double PlanningInterface::getAlphaOverload(void) {
+double PlanningInterface::getAlphaOverload(void)
+{
     return alpha_overload_;
 }
 
-double PlanningInterface::getSmoothRadiusCoefficient(void) {
+double PlanningInterface::getSmoothRadiusCoefficient(void)
+{
     return smooth_radius_coefficient_;
 }
 
-double PlanningInterface::getSmoothCurveMode(void) {
-    return smooth_curve_mode_;
+CurveMode PlanningInterface::getCurveMode(void)
+{
+    return curve_mode_;
 }
 
-const JointConstraints& PlanningInterface::getJointConstraints(void) {
-    return joint_constraints_;
+const JointConstraint& PlanningInterface::getJointConstraint(void)
+{
+    return joint_constraint_;
+}
+
+const DHGroup& PlanningInterface::getDH(void)
+{
+    return dh_parameter_;
+}
+
+const Transformation& PlanningInterface::getToolFrame(void)
+{
+    return tool_frame_;
+}
+
+const Transformation& PlanningInterface::getUserFrame(void)
+{
+    return user_frame_;
+}
+
+void PlanningInterface::clearMotionList(void)
+{
+    while (motion_list_back_)   deleteMotionCommand(motion_list_back_);
+    picking_command_ = NULL;
+}
+
+unsigned int PlanningInterface::getTrajectorySegmentLength(void)
+{
+    return trajectory_segment_length_;
+}
+
+int PlanningInterface::getAllCommandLength(void)
+{
+    int length = 0;
+    MoveCommand *cmd = picking_command_;
+
+    while (cmd) {
+        length += cmd->getTrajLength() - cmd->getPickedlength();
+        cmd = cmd->next;
+    }
+    return length;
+}
+
+bool PlanningInterface::setTrajectorySegmentLength(int length)
+{
+    if (length < trajectory_segment_length_range_.min || length > trajectory_segment_length_range_.max) {
+        return false;
+    }
+    else {
+        this->trajectory_segment_length_ = length;
+        this->planner_->setVlength(length);
+        return true;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -147,26 +242,30 @@ const JointConstraints& PlanningInterface::getJointConstraints(void) {
 // Return:  true        -> cycle time changed to new value
 //          false       -> cycle time NOT changed
 //------------------------------------------------------------------------------
-bool PlanningInterface::setCycleTime(double cycle_time) {
-    if (cycle_time > cycle_time_range_.min && cycle_time < cycle_time_range_.max) {
+bool PlanningInterface::setCycleTime(double cycle_time)
+{
+    if (cycle_time < cycle_time_range_.min || cycle_time > cycle_time_range_.max) {
+        return false;
+    }
+    else {
         this->cycle_time_ = cycle_time;
         this->planner_->setCycleTime(cycle_time);
         return true;
     }
-    else {
-        return false;
-    }
 }
 
-bool PlanningInterface::setVelocity(double vel) {
-    if (vel > velocity_range_.min && vel < velocity_range_.max) {
+/*
+bool PlanningInterface::setVelocity(double vel)
+{
+    if (vel < velocity_range_.min || vel > velocity_range_.max) {
+        return false;
+    }
+    else {
         this->velocity_ = vel;
         return true;
     }
-    else {
-        return false;
-    }
 }
+*/
 
 //------------------------------------------------------------------------------
 // Function:    setAcceleration
@@ -176,71 +275,78 @@ bool PlanningInterface::setVelocity(double vel) {
 // Return:  true    -> acceleration changed to new value
 //          false   -> acceleration NOT changed
 //------------------------------------------------------------------------------
-bool PlanningInterface::setAcceleration(double acce) {
-    if (acce > acceleration_range_.min && acce < acceleration_range_.max) {
+bool PlanningInterface::setAcceleration(double acce)
+{
+    if (acce < acceleration_range_.min || acce > acceleration_range_.max) {
+        return false;
+    }
+    else {
         this->acceleration_ = acce;
         this->planner_->setAcceleration(acce * acceleration_scaling_);
         return true;
     }
-    else {
-        return false;
-    }
 }
 
-bool PlanningInterface::setVelocityScaling(double scaling) {
-    if (scaling > velocity_scaling_range_.min && scaling < velocity_scaling_range_.max) {
+bool PlanningInterface::setVelocityScaling(double scaling)
+{
+    if (scaling < velocity_scaling_range_.min || scaling > velocity_scaling_range_.max) {
+        return false;
+    }
+    else {
         this->velocity_scaling_ = scaling;
         return true;
     }
-    else {
-        return false;
-    }
 }
 
-bool PlanningInterface::setAccelerationScaling(double scaling) {
-    if (scaling > acceleration_scaling_range_.min && scaling < acceleration_scaling_range_.max) {
+bool PlanningInterface::setAccelerationScaling(double scaling)
+{
+    if (scaling < acceleration_scaling_range_.min || scaling > acceleration_scaling_range_.max) {
+        return false;
+    }
+    else {
         this->acceleration_scaling_ = scaling;
         this->planner_->setAcceleration(acceleration_ * scaling);
         return true;
     }
-    else {
-        return false;
-    }
 }
 
-bool PlanningInterface::setJerk(double jerk) {
-    if (jerk > jerk_range_.min && jerk < jerk_range_.max) {
+bool PlanningInterface::setJerk(double jerk)
+{
+    if (jerk < jerk_range_.min || jerk > jerk_range_.max) {
+        return false;
+    }
+    else {
         this->jerk_ = jerk;
         this->planner_->setJaratio(jerk);
         return true;
     }
-    else {
-        return false;
-    }
 }
 
-bool PlanningInterface::setJointOvershoot(double angle) {
-    if (angle > joint_overshoot_range_.min && angle < joint_overshoot_range_.max) {
+bool PlanningInterface::setJointOvershoot(double angle)
+{
+    if (angle < joint_overshoot_range_.min || angle > joint_overshoot_range_.max) {
+        return false;
+    }
+    else {
         this->joint_overshoot_ = angle;
         this->planner_->setOvershoot(angle);
         return true;
     }
-    else {
-        return false;
-    }
 }
 
-bool PlanningInterface::setJointErrorAngle(double angle) {
-    if (angle > joint_errorangle_range_.min && angle < joint_errorangle_range_.max) {
+bool PlanningInterface::setJointErrorAngle(double angle)
+{
+    if (angle < joint_errorangle_range_.min || angle > joint_errorangle_range_.max) {
+        return false;
+    }
+    else {
         this->joint_errorangle_ = angle;
         this->planner_->seterrorangle(angle);
         return true;
     }
-    else {
-        return false;
-    }
 }
 
+/*
 //------------------------------------------------------------------------------
 // Function:    setOmegaOverload
 // Summary: To set omega overload scaling factor.
@@ -249,70 +355,109 @@ bool PlanningInterface::setJointErrorAngle(double angle) {
 // Return:  true    -> omega overload scaling factor changed to new value
 //          false   -> omega overload scaling factor NOT changed
 //------------------------------------------------------------------------------
-bool PlanningInterface::setOmegaOverload(double value) {
-    if (value > omega_overload_range_.min && value < omega_overload_range_.max) {
+bool PlanningInterface::setOmegaOverload(double value)
+{
+    if (value < omega_overload_range_.min || value > omega_overload_range_.max) {
+        return false;
+    }
+    else {
         this->omega_overload_ = value;
         this->planner_->setLimitScale(value);
         return true;
     }
-    else {
-        return false;
-    }
 }
 
-bool PlanningInterface::setAlphaOverload(double value) {
-    if (value > alpha_overload_range_.min && value < alpha_overload_range_.max) {
+bool PlanningInterface::setAlphaOverload(double value)
+{
+    if (value < alpha_overload_range_.min || value > alpha_overload_range_.max) {
+        return false;
+    }
+    else {
         this->alpha_overload_ = value;
         this->planner_->setoverload(value);
         return true;
     }
-    else {
+}*/
+
+bool PlanningInterface::setSmoothRadiusCoefficient(double coeff)
+{
+    if (coeff < smooth_radius_coefficient_range_.min || coeff > smooth_radius_coefficient_range_.max) {
         return false;
     }
-}
-
-bool PlanningInterface::setSmoothRadiusCoefficient(double coeff) {
-    if (coeff > smooth_radius_coefficient_range_.min && coeff < smooth_radius_coefficient_range_.max) {
+    else {
         this->smooth_radius_coefficient_ = coeff;
         this->planner_->setRadiusCoefficient(coeff);
         return true;
     }
-    else {
+}
+
+void PlanningInterface::setCurveMode(CurveMode mode)
+{
+    this->curve_mode_ = mode;
+    this->planner_->setCurveMode(mode);
+}
+
+//------------------------------------------------------------------------------
+// Function:    setJointConstraint
+// Summary: To set joint constraint in Kinematics algorithm.
+// In:      constraint -> joint constraint
+// Out:     None
+// Return:  true        -> joint constraint changed to new values
+//          false       -> joint constraint NOT changed
+//------------------------------------------------------------------------------
+void PlanningInterface::setJointConstraint(const JointConstraint &constraint)
+{
+    joint_constraint_ = constraint;
+    this->planner_->setAxisLimit(constraint);
+}
+
+bool PlanningInterface::setAlphaScaling(double percent)
+{
+    if (percent < 0.0 || percent > 100.0) {
         return false;
+    }
+    else {
+        percent = percent / 100.0;
+        JointConstraint temp_constraint = joint_constraint_;
+        temp_constraint.j1.max_alpha *= percent;
+        temp_constraint.j2.max_alpha *= percent;
+        temp_constraint.j3.max_alpha *= percent;
+        temp_constraint.j4.max_alpha *= percent;
+        temp_constraint.j5.max_alpha *= percent;
+        temp_constraint.j6.max_alpha *= percent;
+        this->planner_->setAxisLimit(temp_constraint);
+        return true;
     }
 }
 
-bool PlanningInterface::setSmoothCurveMode(int mode) {
-    this->smooth_curve_mode_ = mode;
-    this->planner_->setCurveMode(mode);
-    return true;
+void PlanningInterface::setDH(const DHGroup &dh)
+{
+    dh_parameter_ = dh;
+    this->planner_->setDH(dh_parameter_);
 }
 
-//------------------------------------------------------------------------------
-// Function:    setJointConstraints
-// Summary: To set joint constraints in Kinematics algorithm.
-// In:      constraints -> joint constraints
-// Out:     None
-// Return:  true        -> joint constraints changed to new values
-//          false       -> joint constraints NOT changed
-//------------------------------------------------------------------------------
-bool PlanningInterface::setJointConstraints(const JointConstraints &constraints) {
-    joint_constraints_ = constraints;
-    this->planner_->setAxisLimit(constraints);
+void PlanningInterface::setToolFrame(const Transformation &tool_frame)
+{
+    //PoseEuler pose;
+    //memcpy(&pose, &tool_frame, sizeof(PoseEuler));
+    //this->planner_->setToolFrame(pose);
+    this->tool_frame_ = tool_frame;
+    this->planner_->setToolFrame(tool_frame);
 }
 
-void PlanningInterface::setToolFrame(const Transformation &tool_frame) {
-    PoseEuler pose;
-    pose.position = tool_frame.position;
-    pose.orientation = tool_frame.orientation;
-    this->planner_->setToolFrame(pose);
+void PlanningInterface::setUserFrame(const Transformation &user_frame)
+{
+    //PoseEuler   pose;
+    //memcpy(&pose, &user_frame, sizeof(PoseEuler));
+    //this->planner_->setUserFrame(pose);
+    this->user_frame_ = user_frame;
+    this->planner_->setUserFrame(user_frame);
 }
 
-void PlanningInterface::setUserFrame(const Transformation &user_frame) {
-    PoseEuler pose;
-    pose.position = user_frame.position;
-    pose.orientation = user_frame.orientation;
-    this->planner_->setUserFrame(pose);
+void PlanningInterface::setInitialJoint(const Joint &joint)
+{
+    this->initial_joint_ = joint;
+    initial_joint_valid_ = true;
 }
 
 //------------------------------------------------------------------------------
@@ -322,19 +467,13 @@ void PlanningInterface::setUserFrame(const Transformation &user_frame) {
 // Out:     None
 // Return:  pose point
 //------------------------------------------------------------------------------
-Pose PlanningInterface::transformPoseEuler2Pose(const PoseEuler &pose_e) {
-    fst_controller::Pose pose;
-    
+Pose PlanningInterface::transformPoseEuler2Pose(const PoseEuler &pose_e)
+{
+    Pose    pose;
     memset(&pose, 0, sizeof(pose));
-    if (0 == this->planner_->Euler2Quatern(pose_e, pose)) {
-        return pose;
-    }
-    else {
-        // log.error("Error while transform Euler to Quaternion, error code=%d", result);
-        return pose;
-    }
+    this->planner_->Euler2Quatern(pose_e, pose);
+    return pose;
 }
-
 
 //------------------------------------------------------------------------------
 // Function:    transformPose2PoseEuler
@@ -343,16 +482,41 @@ Pose PlanningInterface::transformPoseEuler2Pose(const PoseEuler &pose_e) {
 // Out:     None
 // Return:  poseEuler point
 //------------------------------------------------------------------------------
-PoseEuler PlanningInterface::transformPose2PoseEuler(const Pose &pose) {
-    fst_controller::PoseEuler pose_e;
-    
+PoseEuler PlanningInterface::transformPose2PoseEuler(const Pose &pose)
+{
+    PoseEuler   pose_e;
     memset(&pose_e, 0, sizeof(pose_e));
-    if (0 == this->planner_->Quatern2Euler(pose, pose_e)) {
-        return pose_e;
+    this->planner_->Quatern2Euler(pose, pose_e);
+    return pose_e;
+}
+
+bool PlanningInterface::getJointFromPose(const  Pose &pose,
+                                         const  Joint &reference,
+                                         Joint  &joint,
+                                         double time_interval,
+                                         ErrorCode  &err)
+{
+    computeInverseKinematics(pose, reference, joint, err);
+    if (err == SUCCESS) {
+        return true;
+    }
+    else if (err == IK_EXCESSIVE_DISTANCE) {
+        if (fabs(reference.j1 - joint.j1) < joint_constraint_.j1.max_omega * time_interval &&
+            fabs(reference.j2 - joint.j2) < joint_constraint_.j2.max_omega * time_interval &&
+            fabs(reference.j3 - joint.j3) < joint_constraint_.j3.max_omega * time_interval &&
+            fabs(reference.j4 - joint.j4) < joint_constraint_.j4.max_omega * time_interval &&
+            fabs(reference.j5 - joint.j5) < joint_constraint_.j5.max_omega * time_interval &&
+            fabs(reference.j6 - joint.j6) < joint_constraint_.j6.max_omega * time_interval)
+        {
+            err = SUCCESS;
+            return true;
+        }
+        else {
+            return false;
+        }
     }
     else {
-        // log.error("Error while transform Quaternion to Euler, error code=%d", result);
-        return pose_e;
+        return false;
     }
 }
 
@@ -366,11 +530,11 @@ PoseEuler PlanningInterface::transformPose2PoseEuler(const Pose &pose) {
 // Return:  true         -> IK solution found
 //------------------------------------------------------------------------------
 bool PlanningInterface::computeInverseKinematics(const Pose &pose,
-                                                 const JointValues &joint_reference,
-                                                 JointValues &joint_result,
-                                                 ErrorCode &err) {
+                                                 const Joint &joint_reference,
+                                                 Joint &joint_result,
+                                                 ErrorCode &err)
+{
     int res = this->planner_->InverseKinematics(pose, joint_reference, joint_result);
-
     switch (res) {
         case 0:
             err = SUCCESS;
@@ -398,9 +562,10 @@ bool PlanningInterface::computeInverseKinematics(const Pose &pose,
 //          error_code   -> error code
 // Return:  true         -> FK computed successfully
 //------------------------------------------------------------------------------
-bool PlanningInterface::computeForwardKinematics(const JointValues &joint,
+bool PlanningInterface::computeForwardKinematics(const Joint &joint,
                                                  Pose &pose,
-                                                 ErrorCode &err) {
+                                                 ErrorCode &err)
+{
     int res = this->planner_->ForwardKinematics(joint, pose);
     switch (res) {
         case 0:
@@ -415,582 +580,488 @@ bool PlanningInterface::computeForwardKinematics(const JointValues &joint,
     }
 }
 
-//------------------------------------------------------------------------------
-// Function:    MoveJ2J
-// Summary: To plan a path in joint space to touch target pose, with/without smooth.
-// In:      jp_start    -> initial position and omega of six joints
-//          jp_target   -> joint target of the plan
-//          jp_next     -> the target joint of the next plan used for smoothing
-//          v_ref       -> reference velocity
-//          cnt         -> desired cnt value of the plan, range:0-100
-// Out:     jp_end      -> the ending position and omega of six joints in this plan
-//          planned_path-> planned path in joint space
-//          error_code  -> error code
-// Return:  true        -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveJ2J(JointPoint &jp_start, JointPoint &jp_target, JointPoint &jp_next,
-                                double v_ref, int cnt,
-                                std::vector<JointValues> &planned_path,
-                                ErrorCode &err) {
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
+MoveCommand* PlanningInterface::createMotionCommand(
+                int id,
+                MotionTarget &target,
+                MotionTarget &next,
+                ErrorCode &err)
+{
+    if (!checkMotionTarget(target) || !checkMotionTarget(next)) {
+        err = INVALID_PARAMETER;
+        return NULL;
     }
 
-    int res = this->planner_->MoveJ2J_Jspace(jp_start, jp_target, jp_next, v_percent, cnt, planned_path);
-    switch (res) {
-        case 0:
+    if (target.type == MOTION_JOINT)    target.percent_velocity *= velocity_scaling_;
+    else                                target.linear_velocity  *= velocity_scaling_;
+
+    if (next.type == MOTION_JOINT)      next.percent_velocity *= velocity_scaling_;
+    else                                next.linear_velocity  *= velocity_scaling_;
+
+    MoveCommand *new_motion = new MoveCommand(planner_, target, next, id);
+    if (new_motion == NULL) {err = MOTION_INTERNAL_FAULT; return NULL;}
+    cout << "motion address=" << new_motion << endl;
+
+
+
+    if (motion_list_back_ == NULL ||
+        motion_list_back_->getTrajLength() == 0 ||
+        motion_list_back_->getSmoothType() == SMOOTH_NONE)
+    {
+        if (initial_joint_valid_) {
+            new_motion->setInitialJoint(initial_joint_);
+        }
+        else {
+            delete new_motion;
+            err = INVALID_SEQUENCE;
+            return NULL;
+        }
+    }
+   
+    if (motion_list_back_ == NULL) {
+        // empty command list, insert the first command object
+        new_motion->next = NULL;
+        new_motion->prev = NULL;
+        picking_command_ = new_motion;
+        motion_list_front_  = new_motion;
+        motion_list_back_   = new_motion;
+        // new_motion->setInitialJoint(initial_joint_);
+    }
+    else {
+        // insert the command into the end of list
+        new_motion->next        = NULL;
+        new_motion->prev        = motion_list_back_;
+        motion_list_back_->next = new_motion;
+        motion_list_back_       = new_motion;
+        if (picking_command_ == NULL)   picking_command_ = new_motion;
+    }
+
+    MoveCommand *cmd = motion_list_front_;
+    int result = new_motion->PlanTraj();
+    switch (result) {
+        case SUCCESS:
+            cout << "command list:" << endl;
+            while (cmd) {cout << cmd << "<->"; cmd = cmd->next;}
+
+
+
+
             err = SUCCESS;
-            return true;
+            return new_motion;
         case 1021:
             err = TARGET_REPEATED;
-            return false;
-        case 1031:
-            err = AXIS_OVERSHOOT;
-            return false;
-        case 1032:
-            err = AXIS_APPROACHING_LIMIT;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// Function:    MoveJ2J
-// Summary: To plan a path in joint space to touch target pose, with/without smooth.
-// In:      jp_start    -> initial position and omega of six joints
-//          pose_target -> pose target of the plan
-//          pose_next   -> the target pose of the next plan used for smoothing 
-//          v_ref       -> reference velocity
-//          cnt         -> desired cnt value of the plan, range:0-100
-// Out:     jp_end      -> the ending position and omega of six joints in this plan
-//          planned_path-> planned path in joint space
-//          error_code  -> error code
-// Return:  true        -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveJ2J(JointPoint &jp_start,
-                                const Pose &pose_target, const Pose &pose_next, double v_ref, int cnt,
-                                std::vector<JointValues> &planned_path,
-                                ErrorCode &err) {
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
-    }
-
-    int res = this->planner_->MoveJ2J_Cspace(jp_start, pose_target, pose_next, v_percent, cnt, planned_path);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1021:
-            err = TARGET_REPEATED;
-            return false;
-        case 1031:
-            err = AXIS_OVERSHOOT;
-            return false;
-        case 1032:
-            err = AXIS_APPROACHING_LIMIT;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// Function:    MoveJ2L
-// Summary: To plan a path in joint space to touch target pose, with/without smooth.
-// In:      jp_start    -> initial position and omega of six joints
-//          joint_target-> joint target of the plan
-//          v_ref       -> reference velocity
-//          cnt         -> desired cnt value of the plan, range:0-100
-//          pose_next   -> the target pose of the next plan used for smoothing
-//          v_next      -> desired velocity of the next plan used for smoothing
-//          cnt_next    -> desired cnt value of the next plan used for smoothing
-// Out:     pose_start  -> the end pose of this plan, also the initial pose of the next plan
-//          pose_previous -> the pose_previous input in the next plan
-//          v_start     -> the end velocity of this plan, also the initial velocity of the next plan
-//          vu_start    -> the end value of intermediate-variable in this plan, also the initial value in next plan
-//          planned_path-> planned path in joint space
-//          error_code  -> error code
-// Return:  true        -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveJ2L(const JointPoint &jp_start,
-                                JointValues &joint_target, double v_ref, int cnt,
-                                const Pose &pose_next, double v_next, int cnt_next,
-                                std::vector<JointValues> &planned_path,
-                                Pose &pose_start, Pose &pose_previous,
-                                double &v_start, double &vu_start,
-                                ErrorCode &err) {
-    v_next = v_next * velocity_scaling_;
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
-    }
-
-    int res = this->planner_->MoveJ2L_Jspace(jp_start,
-                                        joint_target, v_percent, cnt,
-                                        pose_next, v_next,
-                                        planned_path,
-                                        pose_start, v_start, vu_start,
-                                        pose_previous);
-
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1021:
-            err = TARGET_REPEATED;
-            return false;
-        case 1031:
-            err = AXIS_OVERSHOOT;;
-            return false;
-        case 1032:
-            err = AXIS_APPROACHING_LIMIT;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// Function:    MoveJ2L
-// Summary: To plan a path in joint space to touch target pose, with/without smooth.
-// In:      jp_start    -> initial position and omega of six joints
-//          pose_target -> joint target of the plan
-//          v_ref       -> reference velocity
-//          cnt         -> desired cnt value of the plan, range:0-100
-//          pose_next   -> the target pose of the next plan used for smoothing
-//          v_next      -> desired velocity of the next plan used for smoothing
-//          cnt_next    -> desired cnt value of the next plan used for smoothing
-// Out:     pose_start  -> the end pose of this plan, also the initial pose of the next plan
-//          pose_previous -> the pose_previous input in the next plan
-//          v_start     -> the end velocity of this plan, also the initial velocity of the next plan
-//          vu_start    -> the end value of intermediate-variable in this plan, also the initial value in next plan
-//          planned_path-> planned path in joint space
-//          error_code  -> error code
-// Return:  true  -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveJ2L(const JointPoint &jp_start,
-                                const Pose &pose_target, double v_ref, int cnt,
-                                const Pose &pose_next, double v_next, int cnt_next,
-                                std::vector<JointValues> &planned_path,
-                                Pose &pose_start, Pose &pose_previous,
-                                double &v_start, double &vu_start,
-                                ErrorCode &err) {
-    v_next = v_next * velocity_scaling_;
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
-    }
-
-    int res = this->planner_->MoveJ2L_Cspace(jp_start,
-                                        pose_target, v_percent, cnt,
-                                        pose_next, v_next,
-                                        planned_path,
-                                        pose_start, v_start, vu_start,
-                                        pose_previous);
-
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1021:
-            err = TARGET_REPEATED;
-            return false;
-        case 1031:
-            err = AXIS_OVERSHOOT;
-            return false;
-        case 1032:
-            err = AXIS_APPROACHING_LIMIT;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// Function:    MoveJ2C
-// Summary: To plan a path in joint space to touch target pose, with/without smooth.
-// In:      jp_start    -> initial position and omega of six joints
-//          j_target    -> joint target of the plan
-//          v_ref       -> reference velocity
-//          cnt         -> desired cnt value of the plan, range:0-100
-//          pose2_circle-> the target pose of the next circle plan used for smoothing 
-//          pose3_circle-> the target pose of the next circle plan used for smoothing 
-// Out:     jp_end      -> the ending position and omega of six joints in this plan
-//          planned_path-> planned path in joint space
-//          error_code  -> error code
-// Return:  true        -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveJ2C(const JointPoint &jp_start,
-                                const JointValues &j_target, double v_ref, int cnt,
-                                const Pose &pose2_circle, const Pose &pose3_circle, double v_circle,
-                                std::vector<JointValues> &planned_path,
-                                Pose &pose_start, double &v_start,
-                                ErrorCode &err) {
-    v_circle = v_circle * velocity_scaling_;
-    double v_percent = v_ref * velocity_scaling_ / velocity_range_.max * 100;
-    if (v_percent > 100.0) {
-        v_percent = 100.0;
-    }
-
-    int res = this->planner_->MoveJ2C_Jspace(jp_start, j_target, v_percent, cnt,
-                                       pose2_circle, pose3_circle, v_circle,
-                                       planned_path, pose_start, v_start);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1021:
-            err = TARGET_REPEATED;
-            return false;
-        case 1031:
-            err = AXIS_OVERSHOOT;
-            return false;
-        case 1032:
-            err = AXIS_APPROACHING_LIMIT;
-            return false;
-        case 1053:
-            err = CURVE_PRECISION_TOO_LOW;
-            return false;
-        case 1054:
-            err = THREE_POINTS_COLINEAR;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// Function:    MoveL2J
-// Summary: To plan a linear path to touch target pose, with/without smooth.
-// In:      pose_start  -> initial pose of the plan
-//          v_start     -> initial velocity of the plan
-//          vu_start    -> initial value of the intermediate-variable
-//          pose_target -> target pose of the plan
-//          v_target    -> desired velocity of the plan
-//          cnt_target  -> desired cnt value of the plan
-//          pose_previous-> the previous pose used for interpolation
-// Out:     planned_path-> planned path in cartesian space
-//          jp          -> position and omega of six joints at the ending of this path
-//          error_code  -> error code
-// Return:  true  -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveL2J(const Pose &pose_start, double v_start, double vu_start,
-                                const Pose &pose_target, double v_target, int cnt_target,
-                                Pose &pose_previous, std::vector<Pose> &planned_path,
-                                ErrorCode &err) {
-    v_target = v_target * velocity_scaling_;
-    int res = this->planner_->MoveL2J(pose_start, v_start, vu_start,
-                                 pose_target, v_target, cnt_target,
-                                 pose_previous, planned_path);
-
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1021:
-            err = TARGET_REPEATED;
-            return false;
+            break;
         case 1024:
             err = CUBIC_CURVE_PLANNING_FAILED;
-            return false;
+            break;
         case 1025:
             err = MOTION_SPEED_TOO_LOW;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// Function:    MoveL2L
-// Summary: To plan a linear path to touch target pose, with/without smooth.
-// In:      pose_start  -> initial pose of the plan
-//          v_start     -> initial velocity of the plan
-//          vu_start    -> initial value of the intermediate-variable
-//          pose_target -> target pose of the plan
-//          v_target    -> desired velocity of the plan
-//          cnt_target  -> desired cnt value of the plan
-//          pose_next   -> the target pose of the next plan used for smoothing
-//          v_next      ->  desired velocity of the next plan used for smoothing
-//          cnt_next    -> desired cnt value of the next plan used for smoothing
-//          pose_previous -> the previous pose used for interpolation
-// Out:     pose_start  -> the end pose of this plan, also the initial pose of the next plan
-//          v_start     -> the end velocity of this plan, also the initial pose of the next plan
-//          vu_start    -> the end value of intermediate-variable in this plan, also the initial value in next plan
-//          pose_previous -> the pose_previous in the next plan
-//          planned_path-> planned path in cartesian space
-//          error_code  -> error code
-// Return:  true        -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveL2L(Pose &pose_start, double &v_start, double &vu_start,
-                                const Pose &pose_target, double v_target, int cnt_target,
-                                const Pose &pose_next, double v_next,
-                                Pose &pose_previous,
-                                std::vector<Pose> &planned_path,
-                                ErrorCode &err) {
-
-    /*
-    ROS_INFO("Call planner_->MoveL");
-    ROS_INFO("pose start");
-    printPose(pose_start);
-    ROS_INFO("v0 = %f, vu0 = %f", v_start, vu_start);
-    ROS_INFO("pose target");
-    printPose(pose_target);
-    ROS_INFO("v_target = %f, cnt_target = %d", v_target, cnt_target);
-    ROS_INFO("pose next");
-    printPose(pose_next);
-    ROS_INFO("v_next = %f", v_next);
-    ROS_INFO("pose pre");
-    printPose(pose_previous);
-    */
-    v_target = v_target * velocity_scaling_;
-    v_next   = v_next   * velocity_scaling_;
-    int res = this->planner_->MoveL(pose_start, v_start, vu_start,
-                               pose_target, v_target, cnt_target,
-                               pose_next, v_next,
-                               pose_previous, planned_path);
-
-    /*
-    // For test 
-    // print all planned points 
-    int cnt=0;
-    std::vector<fst_controller::Pose>::iterator itr=planned_path.begin();
-    for(;itr!=planned_path.end();++itr) {
-	ROS_INFO("Pose-%d: position(%f,%f,%f), orientation(%f,%f,%f,%f)",++cnt,
-		itr->position.x,itr->position.y,itr->position.z,
-		itr->orientation.w,itr->orientation.x,itr->orientation.y,itr->orientation.z);
-    }
-    */
-    
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1021:
-            // err = PLANNING_UNSMOOTHABLE;
-            err = TARGET_REPEATED;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-    }
-}
-
-
-//------------------------------------------------------------------------------
-// Function:    MoveL2C
-// Summary: To plan a linear path to touch target pose, with/without smooth.
-// In:      jp_start    -> initial position and omega of six joints
-//          j_target    -> joint target of the plan
-//          v_percent   -> percentage of velocity, range: 0.0-100.0
-//          cnt         -> desired cnt value of the plan, range:0-100
-//          pose2_circle-> the target pose of the next circle plan used for smoothing 
-//          pose3_circle-> the target pose of the next circle plan used for smoothing 
-// Out:     jp_end      -> the ending position and omega of six joints in this plan
-//          planned_path-> planned path in joint space
-//          error_code  -> error code
-// Return:  true        -> plan successfully
-//------------------------------------------------------------------------------
-bool PlanningInterface::MoveL2C(Pose &pose_start, double &v_start, double &vu_start,
-                                const Pose &pose_target, double v_target, int cnt,
-                                const Pose &pose2_circle, const Pose &pose3_circle, double v_circle,
-                                Pose &pose_previous, Pose &pose_start_past,
-                                std::vector<Pose> &planned_path,
-                                ErrorCode &err) {
-    v_target = v_target * velocity_scaling_;
-    v_circle = v_circle * velocity_scaling_;
-    int res = this->planner_->MoveL2C_part1(pose_start, v_start, vu_start,
-                                      pose_target,v_target, cnt,
-                                      pose2_circle, pose3_circle, v_circle,
-                                      pose_previous, planned_path, pose_start_past);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1021:
-            err = TARGET_REPEATED;
-            return false;
+            break;
+        case 1031:
+            err = AXIS_OVERSHOOT;
+            break;
+        case 1032:
+            err = AXIS_APPROACHING_LIMIT;
+            break;
         case 1053:
             err = CURVE_PRECISION_TOO_LOW;
-            return false;
+            break;
         case 1054:
             err = THREE_POINTS_COLINEAR;
-            return false;
+            break;
+        case 1055:
+            err = PLANNING_MAJOR_ARC;
+            break;
         default:
             err = MOTION_INTERNAL_FAULT;
-            return false;
+            break;
+    }
+
+    deleteLastMotionCommand();
+    return NULL;
+}
+
+void PlanningInterface::deleteFirstMotionCommand(void)
+{
+    deleteMotionCommand(motion_list_front_);
+}
+
+void PlanningInterface::deleteLastMotionCommand(void)
+{
+    deleteMotionCommand(motion_list_back_);
+}
+
+void PlanningInterface::deleteMotionCommandBefore(MoveCommand *command)
+{
+    MoveCommand *cmd = motion_list_back_;
+    while (cmd && cmd != command) cmd = cmd->prev;
+    if (cmd) {
+        MoveCommand *cmd_to_del = cmd;
+        while (cmd_to_del) {
+            cmd = cmd->prev;
+            deleteMotionCommand(cmd_to_del);
+            cmd_to_del = cmd;
+        }
+        return;
     }
 }
 
-bool PlanningInterface::MoveL2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
-                                              const Pose &pose_start_past, vector<JointValues> &planned_path,
-                                              ErrorCode &err) {
-    int res = planner_->MoveL2C_part2(jp_start, pose_start, pose_start_past, planned_path);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1003:
-            err = IK_EXCESSIVE_DISTANCE;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
+void PlanningInterface::deleteMotionCommand(MoveCommand *command)
+{
+    if (command != NULL) {
+        if (command == motion_list_front_ && command == motion_list_back_) {
+            // only one command in command list, delete it
+            motion_list_front_  = NULL;
+            motion_list_back_   = NULL;
+        }
+        else if (command == motion_list_front_) {
+            // two or more commands in the list, delete the first one
+            motion_list_front_ = motion_list_front_->next;
+            motion_list_front_->prev = NULL;
+        }
+        else if (command == motion_list_back_) {
+            // two or more commands in the list, delete the last one
+            motion_list_back_ = motion_list_back_->prev;
+            motion_list_back_->next = NULL;
+        }
+        else {
+            // three or more commands in the list, delete the command given by pointer
+            command->prev->next = command->next;
+            command->next->prev = command->prev;
+        }
+        delete command;
+        return;
     }
 }
 
 
-bool PlanningInterface::MoveC2J(const Pose &pose_start, double v_start,
-                                const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                                std::vector<Pose> &planned_path, ErrorCode err) {
-    v_target = v_target * velocity_scaling_;
-    int res = this->planner_->MoveC2J(pose_start, v_start, pose_2nd, pose_3rd, v_target, cnt, planned_path);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
+bool PlanningInterface::pickPoints(vector<PathPoint> &points)
+{
+    points.clear();
+    if (picking_command_ != NULL) {
+        picking_command_->PickPoint(points);
+        if (points.size() > 0) {
+            
+            vector<PathPoint>::iterator it = points.begin();
+            for (; it != points.end(); ++it)  cout << it->type << " ";
+            cout << endl;
+
+            if (points.back().level == POINT_ENDING) {
+                picking_command_ = picking_command_->next;
+                initial_joint_valid_ = false;
+            }
+            else if (points.back().level == POINT_LAST) {
+                picking_command_ = picking_command_->next;
+            }
             return true;
-        case 1053:
-            err = CURVE_PRECISION_TOO_LOW;
-            return false;
-        case 1054:
-            err = THREE_POINTS_COLINEAR;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
+        }
+        else {
+            if (picking_command_->getTrajLength() == 0) {
+                // is a empty command, target repeated?
+                picking_command_ = picking_command_->next;
+                while (picking_command_) {
+                    picking_command_->PickPoint(points);
+                    if (points.size() > 0) {
+                        if (points.back().level == POINT_ENDING) {
+                            picking_command_ = picking_command_->next;
+                            initial_joint_valid_ = false;
+                        }
+                        else if (points.back().level == POINT_LAST) {
+                            picking_command_ = picking_command_->next;
+                        }
+                        break;
+                    }
+                    else {
+                        picking_command_ = picking_command_->next;
+                        continue;
+                    }
+                }
+            }
+
+            if (picking_command_ != NULL && points.size() > 0)
+                return true;
+            else 
+                return false;
+        }
+    }
+    else {
         return false;
     }
 }
 
+int PlanningInterface::estimateFIFOLength(Joint joint1, Joint joint2)
+{
+    return this->planner_->EstimateFIFOlength(joint1, joint2);
+}
 
-bool PlanningInterface::MoveC2L(Pose &pose_start, double &v_start,
-                                const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                                const Pose &pose_next, double v_next,
-                                Pose &pose_start_past, Pose &pose_previous, double &vu_start,
-                                std::vector<Pose> &planned_path, ErrorCode &err) {
-    v_target = v_target * velocity_scaling_;
-    v_next   = v_next   * velocity_scaling_;
-    int res = this->planner_->MoveC2L_part1(pose_start, v_start, pose_2nd, pose_3rd, v_target, cnt,
-                                      pose_next, v_next, planned_path, pose_start_past, vu_start, pose_previous);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1053:
-            err = CURVE_PRECISION_TOO_LOW;
-            return false;
-        case 1054:
-            err = THREE_POINTS_COLINEAR;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
+void PlanningInterface::setPickPosition(const JointPoint &point)
+{
+    if (point.level == POINT_ENDING || point.level == POINT_LAST) {
+        picking_command_ = point.source->next;
+        MoveCommand *cmd = picking_command_;
+        while (cmd != NULL) cmd->setPickedlength(0);
+    }
+    else {
+        picking_command_ = point.source;
+        picking_command_->setPickedlength(point.stamp + 1);
+        MoveCommand *cmd = picking_command_->next;
+        while (cmd != NULL) cmd->setPickedlength(0);
     }
 }
 
-
-bool PlanningInterface::MoveC2LAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
-                                              const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                                              ErrorCode &err) {
-    int res = planner_->MoveC2L_part2(jp_start, pose_start, pose_start_past, planned_path);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1003:
-            err = IK_EXCESSIVE_DISTANCE;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
+bool PlanningInterface::replanPauseTrajectory(vector<JointPoint> &traj, JointPoint &joint_end)
+{
+    vector<JointPoint> new_traj;
+    int res = this->planner_->Pause(traj, new_traj, joint_end);
+    
+    if (res == 0) {
+        traj.assign(new_traj.begin(), new_traj.end());
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
+bool PlanningInterface::resumeFromPause(const Joint &pause_joint,
+                                        const JointPoint &point,
+                                        vector<JointPoint> &traj,
+                                        ErrorCode &err)
+{
+    traj.clear();
+    int res = 0;
+    vector<JointPoint> new_traj;
+    // point.source->setPickedlength(point.stamp + 1);
+    if (initial_joint_valid_) {
+        initial_joint_valid_ = false;
+        res = point.source->Resume(initial_joint_, point.joint, new_traj);
+    }
+    else {
+        res = point.source->Resume(pause_joint, point.joint, new_traj);
+    }
 
-bool PlanningInterface::MoveC2C(Pose &pose_start, double &v_start,
-                                const Pose &pose_2nd, const Pose &pose_3rd, double v_target, int cnt,
-                                const Pose &pose_2nd_next, const Pose &pose_3rd_next, double v_next,
-                                Pose &pose_start_ptc, std::vector<Pose> &planned_path, ErrorCode &err) {
-    v_target = v_target * velocity_scaling_;
-    v_next   = v_next   * velocity_scaling_;
-    int res = this->planner_->MoveC2C_part1(pose_start, v_start,
-                                       pose_2nd, pose_3rd, v_target, cnt,
-                                       pose_2nd_next, pose_3rd_next, v_next,
-                                       planned_path, pose_start_ptc);
+    if (res == 0) {
+        MoveCommand *cmd = point.source->next;
+        while (cmd != NULL && res == 0) {
+            res = cmd->PlanTraj();
+            cmd = cmd->next;
+        }
+    }
 
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1053:
-            err = CURVE_PRECISION_TOO_LOW;
-            return false;
-        case 1054:
-            err = THREE_POINTS_COLINEAR;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
+    if (res == 0) {
+        traj.assign(new_traj.begin(), new_traj.end());
+        
+        if (traj.size() == 0 || traj.back().level == POINT_LAST || traj.back().level == POINT_ENDING) {
+            picking_command_ = point.source->next;
+        }
+
+        err = SUCCESS;
+        return true;
+    }
+    else {
+        switch (res) {
+            case 1021:
+                err = TARGET_REPEATED;
+                return false;
+            case 1024:
+                err = CUBIC_CURVE_PLANNING_FAILED;
+                return false;
+            case 1025:
+                err = MOTION_SPEED_TOO_LOW;
+                return false;
+            case 1031:
+                err = AXIS_OVERSHOOT;
+                return false;
+            case 1032:
+                err = AXIS_APPROACHING_LIMIT;
+                return false;
+            case 1053:
+                err = CURVE_PRECISION_TOO_LOW;
+                return false;
+            case 1054:
+                err = THREE_POINTS_COLINEAR;
+                return false;
+            case 1055:
+                err = PLANNING_MAJOR_ARC;
+                return false;
+            default:
+                err = MOTION_INTERNAL_FAULT;
+                return false;
+        }
     }
 }
 
+bool PlanningInterface::resumeFromEstop(const JointPoint &point, vector<JointPoint> &traj, ErrorCode &err)
+{
+    traj.clear();
+    int res;
+    vector<JointPoint> new_traj;
+    // point.source->setPickedlength(point.stamp);
+    if (initial_joint_valid_) {
+        initial_joint_valid_ = false;
+        res = point.source->Resume(initial_joint_, point.joint, new_traj);
+    }
+    else {
+        err = INVALID_SEQUENCE;
+        return false;
+    }
 
-bool PlanningInterface::MoveC2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
-                                              const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                                              ErrorCode &err) {
-    int res = planner_->MoveC2C_part2(jp_start, pose_start, pose_start_past, planned_path);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        case 1003:
-            err = IK_EXCESSIVE_DISTANCE;
-            return false;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
+    if (res == 0) {
+        traj.assign(new_traj.begin(), new_traj.end());
+        
+        if (traj.size() == 0 || traj.back().level == POINT_LAST || traj.back().level == POINT_ENDING) {
+            picking_command_ = point.source->next;
+        }
+
+        err = SUCCESS;
+        return true;
+    }
+    else {
+        switch (res) {
+            case 1021:
+                err = TARGET_REPEATED;
+                return false;
+            case 1024:
+                err = CUBIC_CURVE_PLANNING_FAILED;
+                return false;
+            case 1025:
+                err = MOTION_SPEED_TOO_LOW;
+                return false;
+            case 1031:
+                err = AXIS_OVERSHOOT;
+                return false;
+            case 1032:
+                err = AXIS_APPROACHING_LIMIT;
+                return false;
+            case 1053:
+                err = CURVE_PRECISION_TOO_LOW;
+                return false;
+            case 1054:
+                err = THREE_POINTS_COLINEAR;
+                return false;
+            case 1055:
+                err = PLANNING_MAJOR_ARC;
+                return false;
+            default:
+                err = MOTION_INTERNAL_FAULT;
+                return false;
+        }
     }
 }
 
-
-bool PlanningInterface::replanPauseTrajectory(std::vector<JointValues> &trajectory, ErrorCode &err) {
-    int res = this->planner_->Pause(trajectory);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        default:
-            err = MOTION_INTERNAL_FAULT;
-            return false;
+bool PlanningInterface::isMotionExecutable(MotionType motion_t)
+{
+    if (motion_list_back_) {
+        SmoothType smooth_t = motion_list_back_->getSmoothType();
+        if (smooth_t != SMOOTH_NONE) {
+            if (motion_t == MOTION_LINE   && smooth_t != SMOOTH_2L ||
+                motion_t == MOTION_JOINT  && smooth_t != SMOOTH_2J ||
+                motion_t == MOTION_CIRCLE && smooth_t != SMOOTH_2C)
+            {
+                return false;
+            }
+        }
     }
+    return true;
 }
 
-bool PlanningInterface::replanRestartTrajectory(std::vector<JointValues> &trajectory,
-                                                JointValues &start_point,
-                                                ErrorCode &err) {
-    int res = this->planner_->Restart(trajectory, start_point);
-    switch (res) {
-        case 0:
-            err = SUCCESS;
-            return true;
-        default:
-            err = MOTION_INTERNAL_FAULT;
+bool PlanningInterface::isPointCoincident(const Pose &pose1, const Pose &pose2)
+{
+    if (0 == this->planner_->Check_coincidence(pose1, pose2))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
+bool PlanningInterface::isPointCoincident(const Pose &pose, const Joint &joint)
+{
+    if (0 == this->planner_->Check_coincidence(joint, pose))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
+bool PlanningInterface::isPointCoincident(const Joint &joint, const Pose &pose)
+{
+    if (0 == this->planner_->Check_coincidence(joint, pose))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
+bool PlanningInterface::isPointCoincident(const Joint &joint1, const Joint &joint2)
+{
+    if (0 == this->planner_->Check_coincidence(joint1, joint2))
+        // two points are not coincident
+        return false;
+    else
+        // two points are coincident
+        return true;
+}
+
+bool PlanningInterface::checkMotionTarget(const MotionTarget &target)
+{
+    if (target.type == MOTION_LINE) {
+        if (smooth_mode_ == MODE_VELOCITY && (target.cnt < 0 || target.cnt > 100))
             return false;
+        else if (smooth_mode_ == MODE_DISTANCE && (target.smooth_radius < 0 || target.smooth_radius > 300))
+            return false;
+        if (target.linear_velocity < velocity_range_.min || target.linear_velocity > velocity_range_.max)
+            return false;
+
+        Joint joint_ref, joint_out;
+        memset(&joint_ref, 0, sizeof(Joint));
+        ErrorCode err;
+        if (!getJointFromPose(target.pose_target, joint_ref, joint_out, 2.0, err)) {
+            return false;
+        }
     }
+    else if (target.type == MOTION_JOINT) {
+        if (smooth_mode_ == MODE_VELOCITY && (target.cnt < 0 || target.cnt > 100))
+            return false;
+        else if (smooth_mode_ == MODE_DISTANCE && (target.smooth_radius < 0 || target.smooth_radius > 300))
+            return false;
+        if (target.percent_velocity < 0.0 || target.percent_velocity > 100.0)
+            return false;
+        if (!checkJointBoundry(target.joint_target))
+            return  false;
+    }
+    else if (target.type == MOTION_CIRCLE) {
+        if (smooth_mode_ == MODE_VELOCITY && (target.cnt < 0 || target.cnt > 100))
+            return false;
+        else if (smooth_mode_ == MODE_DISTANCE && (target.smooth_radius < 0 || target.smooth_radius > 300))
+            return false;
+        if (target.linear_velocity < velocity_range_.min || target.linear_velocity > velocity_range_.max)
+            return false;
+        
+        Joint joint_ref, joint_out;
+        memset(&joint_ref, 0, sizeof(Joint));
+        ErrorCode err;
+        if (!getJointFromPose(target.circle_target.pose1, joint_ref, joint_out, 2.0, err) ||
+            !getJointFromPose(target.circle_target.pose2, joint_ref, joint_out, 2.0, err))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool PlanningInterface::checkJointBoundry(const Joint &joint)
+{
+    return  joint.j1 > joint_constraint_.j1.lower && joint.j1 < joint_constraint_.j1.upper &&
+            joint.j2 > joint_constraint_.j2.lower && joint.j2 < joint_constraint_.j2.upper &&
+            joint.j3 > joint_constraint_.j3.lower && joint.j3 < joint_constraint_.j3.upper &&
+            joint.j4 > joint_constraint_.j4.lower && joint.j4 < joint_constraint_.j4.upper &&
+            joint.j5 > joint_constraint_.j5.lower && joint.j5 < joint_constraint_.j5.upper &&
+            joint.j6 > joint_constraint_.j6.lower && joint.j6 < joint_constraint_.j6.upper;
+            //joint.j7 > joint_constraint_.j7.lower && joint.j7 < joint_constraint_.j7.upper &&
+            //joint.j8 > joint_constraint_.j8.lower && joint.j8 < joint_constraint_.j8.upper &&
+            //joint.j9 > joint_constraint_.j9.lower && joint.j9 < joint_constraint_.j9.upper;
 }
 
 

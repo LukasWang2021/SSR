@@ -16,9 +16,8 @@
 #include <stdexcept>
 #include <iostream>
 #include <comm_interface/comm_interface.h>
-#include <log_manager_version.h>
-#include <log_manager/log_manager_logger.h>
-#include <log_manager/log_manager_server.h>
+#include "log_manager/log_manager_logger.h"
+#include "log_manager/log_manager_server.h"
 
 using std::string;
 using std::vector;
@@ -292,10 +291,6 @@ static void sigintHandle(int num)
 
 int main(int argc, char **argv)
 {
-    cout << "Log Manager Version " << log_manager_VERSION_MAJOR
-         << "." << log_manager_VERSION_MINOR
-         << "." << log_manager_VERSION_PATCH << endl;
-
     signal(SIGINT, sigintHandle);
     pthread_mutex_init(&g_log_structure_ptr_queue_mutex, NULL);
     g_log_structure_ptr_queue.reserve(10);

@@ -2,7 +2,6 @@ arm_group:
     joint_fifo_length_max: 100
     cartesian_velocity_min: 0.001
     cartesian_velocity_max: 4.0
-    cartesian_acceleration_min: 0.001
     cartesian_acceleration_max: 16.0
     cycle_time_min: 0.0005
     cycle_time_max: 0.05
@@ -58,4 +57,4 @@ kinematics_limit:
         omega_max: 12.5664
         alpha_max: 31.4159
 
-
+#END

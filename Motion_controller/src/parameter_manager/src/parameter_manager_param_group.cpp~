@@ -28,9 +28,7 @@ using XmlRpc::XmlRpcValue;
 namespace fst_parameter {
 
 void ParamGroup::test(void) {
-    cout << "Parameter Manager Version " << parameter_manager_VERSION_MAJOR
-         << "." << parameter_manager_VERSION_MINOR
-         << "." << parameter_manager_VERSION_PATCH << endl;
+
     cout << "----------------Test begin: ---------------" << endl;
     cout << value_ << endl;
     string test = value_.toXml();

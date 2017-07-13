@@ -14,7 +14,7 @@
 
 #include <yaml-cpp/yaml.h>
 #include <ros/ros.h>
-
+#include <parameter_manager/parameter_manager_param_value.h>
 
 namespace fst_parameter {
 
@@ -29,47 +29,40 @@ enum ScalarType {
 
 class ParamGroup {
   public:
-    ParamGroup(const std::string &file = "", const std::string &ns = "/fst_param");
+    ParamGroup(const std::string &file = "");
     ~ParamGroup();
 
-    bool deleteParam(const std::string &key);
-    void deleteParamTree(void);
+    bool dumpParamFile(const std::string &file = "");
+    bool loadParamFile(const std::string &file);
 
-    const ErrorCode& getLastError(void);
+    bool deleteParam(const std::string &key = "");
+
     void clearLastError(void);
+    const ErrorCode& getLastError(void);
 
-    const std::string getNamespace(void);
-    // bool setNamespace(const std::string &space);
-    
+    bool getParam(const std::string &key, bool &value);
     bool getParam(const std::string &key, int &value);
     bool getParam(const std::string &key, double &value);
-    bool getParam(const std::string &key, bool &value);
     bool getParam(const std::string &key, std::string &value);
+    bool getParam(const std::string &key, std::vector<bool> &value);
     bool getParam(const std::string &key, std::vector<int> &value);
     bool getParam(const std::string &key, std::vector<double> &value);
     bool getParam(const std::string &key, std::vector<std::string> &value);
-    bool getParam(const std::string &key, std::map<std::string, XmlRpc::XmlRpcValue> &value);
-    bool getParam(const std::string &key, XmlRpc::XmlRpcValue &value);
+    bool getParam(const std::string &key, ParamValue &value);
 
-//    bool getParamNames(std::vector<std::string> &keys);
     bool hasParam(const std::string &key);
     
-    bool dumpParamFile(const std::string &file);
-    bool loadParamFile(const std::string &file);
-
-//    template<typename T>
-//    bool setParam(const std::string &key, const T &value);
-
+    bool setParam(const std::string &key, bool value);
     bool setParam(const std::string &key, int value);
     bool setParam(const std::string &key, double value);
-    bool setParam(const std::string &key, bool value);
     bool setParam(const std::string &key, const std::string &value);
+    bool setParam(const std::string &key, const char *value);
+    bool setParam(const std::string &key, const std::vector<bool> &value);
     bool setParam(const std::string &key, const std::vector<int> &value);
     bool setParam(const std::string &key, const std::vector<double> &value);
     bool setParam(const std::string &key, const std::vector<std::string> &value);
-    bool setParam(const std::string &key, const std::map<std::string, XmlRpc::XmlRpcValue> &value);
-    // bool setParam(const std::string &key, const XmlRpc::XmlRpcValue &value);
-    
+    bool setParam(const std::string &key, const ParamValue &value);
+    /*
     bool getRemoteParam(const std::string &key, XmlRpc::XmlRpcValue &value);
     bool getRemoteParam(const std::string &key, int &value);
     bool getRemoteParam(const std::string &key, double &value);
@@ -90,29 +83,24 @@ class ParamGroup {
 
     bool uploadParam();
     bool uploadParam(const YAML::Node &node, const std::string &path);
-    
-//    void test(void);
+    */
+    void test(void);
 
   private:
-    ScalarType judgeType(const std::string &scalar);
-    bool parseScalar(const std::string &scalar, XmlRpc::XmlRpcValue &value);
+    void resolve(std::string &str);
     void split(const std::string &raw, std::vector<std::string> &cooked);
-    std::string resolve(const std::string &str);
 
-    bool getXmlRpcValueFromNode(YAML::Node node, XmlRpc::XmlRpcValue &value);
+    bool getNodeFromParamValue(ParamValue &value, YAML::Node &node);
+    bool getParamValueFromNode(YAML::Node &node, ParamValue &value);
+    bool getParamValueFromString(const std::string &scalar, ParamValue &value);
 
-    inline void logMessage(const std::string &str);
-    inline void printInfo(const char *str);
-    template<typename T>
-    inline void printInfo(const char *str, T value);
-    inline void printError(const char *str);
-    inline void printError(const char *str, const ErrorCode &err);
+    void info(const char *format, ...);
+    void warn(const char *format, ...);
+    void error(const char *format, ...);
 
-    YAML::Node *root_;
-    std::string root_namespace_;
-    std::string sub_namespace_;
-    bool is_initialized_;
-    ErrorCode last_error_;
+    std::string file_name_;
+    ParamValue  value_;
+    ErrorCode   last_error_;
 };
 
 }

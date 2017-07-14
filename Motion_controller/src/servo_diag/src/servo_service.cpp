@@ -180,6 +180,25 @@ ERROR_CODE_TYPE fst_controller::ServoService::ReadIntVar(int size_of_varlist,con
     return err;
 }
 
+ERROR_CODE_TYPE fst_controller::ServoService::ReadErrCode(int size_of_codelist,int* res,int* numofres)
+{
+    ERROR_CODE_TYPE err;
+    client_service_request_.req_id = 0x31;
+
+    err = SendNRecv(this);
+    if(FST_SUCCESS == err)
+    {
+       *numofres = *(int*)&client_service_response_.res_buff[4];
+       *numofres = (size_of_codelist>*numofres)?*numofres:size_of_codelist;
+       memcpy((char *)res,&client_service_response_.res_buff[8],4*(*numofres)); 
+    } 
+    else
+    {
+       printf("Read ErrCode fail\n");
+    }     
+    return err;
+}
+
 ERROR_CODE_TYPE fst_controller::ServoService::SetTrig(const char *trigname,unsigned short ticks)
 {
     ERROR_CODE_TYPE err;

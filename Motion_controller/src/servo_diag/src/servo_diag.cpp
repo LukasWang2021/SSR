@@ -74,13 +74,28 @@ void ServoDiag::ServoDiag_Thread(Servconf *servconf,
             case 0x03:
             {
                 ERROR_CODE_TYPE err = service->ReadIntVar(*(int*)&pkg.data[0],&pkg.data[4],(int*)&pkg.data[0]);
-                if(FST_SUCCESS!=err)  std::cout<<"Read Int failed!"<<std::endl;
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Read Int failed!"<<std::endl;
+                }
                 break;
             }
             case 0x04:
             {
                 ERROR_CODE_TYPE err = service->SetTrig(&pkg.data[4],*(int*)&pkg.data[0]);
-                if(FST_SUCCESS!=err)  std::cout<<"Set trigger failed!"<<std::endl;
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Set trigger failed!"<<std::endl;
+                }
+                break;
+            }
+            case 0x07:
+            {
+                ERROR_CODE_TYPE err = service->ReadErrCode((int)(SERVO_CMD_SEG_LENGTH-sizeof(int))/4,(int*)&pkg.data[4],(int*)&pkg.data[0]);
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Read Err Code failed!"<<std::endl;
+                }
                 break;
             }
             case 0x11:
@@ -101,14 +116,17 @@ void ServoDiag::ServoDiag_Thread(Servconf *servconf,
             case 0x20:
             {
                 ERROR_CODE_TYPE err = service->ServoCMD(*(int*)&pkg.data[0],&pkg.data[4],1020,&pkg.data[4],1020);
-                if(FST_SUCCESS!=err)  std::cout<<"Servo CMD failed!"<<std::endl;
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Servo CMD failed!"<<std::endl;
+                }
                 break;
             }             
             default:
                 pkg.id = 0;
                 break;
             
-        }
+        } 
         comm_.send(&pkg, sizeof(pkg), COMM_DONTWAIT);
     }
   

@@ -92,6 +92,15 @@ class ServoService {
     ERROR_CODE_TYPE  ReadIntVar(int size_of_varlist,const char *varname,int* res);
 
     //------------------------------------------------------------
+    // Function:    ReadErrCode
+    // Summary: Read Errcode
+    // In:      size_of_codelist
+    // Out:      res,numofres
+    // Return:  ERROR Code
+    //------------------------------------------------------------   
+    ERROR_CODE_TYPE ReadErrCode(int size_of_codelist,int* res,int* numofres);
+
+    //------------------------------------------------------------
     // Function:    ServoCMD
     // Summary: service defined by servo software
     // In:      unsigned int i: servo command id; 

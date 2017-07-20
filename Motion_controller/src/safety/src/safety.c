@@ -35,8 +35,8 @@
 // #define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x00000001008E0021   /*Mutex unlock is failed*/
 // #define ERR_SAFETY_FRAME (unsigned long long int)0x00000001008E0029   /*The frame is out of range.*/
 
-int fd;
-void *ptr;
+static int fd;
+static void *ptr;
 
 struct	Safety {
 	int	fd;
@@ -48,13 +48,13 @@ struct	Safety {
 };
 
 
-struct Safety	xmit;
-struct Safety	recv;
+static struct Safety	xmit;
+static struct Safety	recv;
 
 unsigned long long int initSafety() {
 	int ret = 0;
 	fd = open("/dev/mem", O_RDWR);
-	if (fd = -1) {
+	if (fd == -1) {
 		return ERR_SAFETY_FILE_OPEN;
 	}
 	
@@ -69,7 +69,7 @@ unsigned long long int initSafety() {
 	if (pthread_mutex_init(&recv.mutex, NULL) != 0) {
 		printf("Failed to init mutex.\n");
 	}
-	if (pthread_mutex_init(&recv.mutex, NULL) != 0) {
+	if (pthread_mutex_init(&xmit.mutex, NULL) != 0) {
 		printf("Failed to init mutex.\n");
 	}
 
@@ -96,14 +96,16 @@ void closeSafety() {
 	close(fd);
 }
 
-char getSafety(int frame, unsigned long long int *err) {
+int getSafety(int frame, unsigned long long int *err) {
 	int mask;
 	int frame_mask;
-	struct Safety	*safety;
+    struct Safety	*safety;
+	int *pdata;
 	char ret;
 
 	*err = 0;
 
+    
 	mask = frame & RW_MASK;
 	switch (mask) {
 		case R_MASK:
@@ -118,8 +120,9 @@ char getSafety(int frame, unsigned long long int *err) {
 	}
 
 	frame_mask = frame & FRAME_MASK;
-	if ((frame_mask >= 0) & (frame_mask <= R_SAFETY_MAX_FRAME - 1)) {
+/*	if ((frame_mask >= 1) & (frame_mask <= R_SAFETY_MAX_FRAME)) {
 		pthread_mutex_lock(&safety->mutex);
+		frame_mask = frame_mask - 1;
 		ret = safety->data[frame_mask];
 		pthread_mutex_unlock(&safety->mutex);
 		return ret;
@@ -128,33 +131,80 @@ char getSafety(int frame, unsigned long long int *err) {
 		*err = ERR_SAFETY_FRAME;
 		return 0;
 	}
+*/
+	pthread_mutex_lock(&safety->mutex); 
+	if (frame_mask == 1)
+	  pdata = (int *)(&safety->data);
+	if (frame_mask == 2)
+	  pdata = (int *)(&safety->data) + 1;
+	pthread_mutex_unlock(&safety->mutex);
+
+	return *pdata;
 }
 
-unsigned long long int setSafety(char data, int frame) {
-	unsigned long long int ret = 0;
+unsigned long long int setSafety(int data, int frame) {
+    unsigned long long int ret = 0;
 	int frame_mask;
+	int mask;
+	char *pdata;
+
+	mask = frame & RW_MASK;
+	if (mask != W_MASK)
+	  return ERR_SAFETY_FRAME;
 
 	frame_mask = frame & FRAME_MASK;
-	if ((frame_mask >= 0) & (frame_mask < W_SAFETY_MAX_FRAME)) {
+/*	if ((frame_mask >= 1) & (frame_mask <= W_SAFETY_MAX_FRAME)) {
 		pthread_mutex_lock(&xmit.mutex);
+		frame_mask = frame_mask - 1;
 		xmit.data[frame_mask] = data;
 		pthread_mutex_unlock(&xmit.mutex);
 	}
 	else
 	  ret = ERR_SAFETY_FRAME;
+*/
 
+	pdata = (char *)(&data);
+	pthread_mutex_lock(&xmit.mutex);
+	if (frame_mask == 1) {
+		xmit.data[2] = *(pdata + 2);
+		xmit.data[3] = *(pdata + 3);
+	}
+	if (frame_mask == 2){
+		 xmit.data[4] = *(pdata + 0);
+		 xmit.data[5] = *(pdata + 1);
+		 xmit.data[6] = *(pdata + 2);
+		 xmit.data[7] = *(pdata + 3);
+	}
+	pthread_mutex_unlock(&xmit.mutex);
 	return ret;
 }
 
 void writeSafety() {
-	*xmit.ptr = *(int *)xmit.data;
+	int *pb = xmit.ptr;
+	int *p = (int *)(&xmit.data);
+	
+	*pb = *p;
+//printf("writeSafety: p[0] = %x\t", *p);
+	pb++;
+	p++;
+	*pb = *p;
+
+	
+//	*xmit.ptr = *(int *)xmit.data;
 //	printf("**** write ****\nwrite: %x\n",*(int *)xmit.data); // need to remove
 }
 
 void readSafety() {
-	int *p;
-	p = (int *)recv.data;
-	*p = *recv.ptr;
+	int *p = (int *)(&recv.data);
+	int *pb = recv.ptr;
+
+	*p = *pb;
+	p++;
+	pb++;
+	*p = *pb;
+
+//	p = (int *)recv.data;
+//	*p = *recv.ptr;
 
 //	printf("**** read ****\nread: %x\n",*(int *)recv.data); // need to remove
 }
@@ -185,7 +235,7 @@ void setHeartbeat() {
 	else
 	  xmit.count = 0;
 
-//	printf("setHeartbeat\n%x\n",(unsigned)xmit.heartbeat);
+//	printf("setHeartbeat\n,xmit.heartbeat = %x\txmit.data[W_HB_FRAME] = %x\n",xmit.heartbeat,xmit.data[W_HB_FRAME]);
 }
 
 int checkSafetyCmd(char cmd) {
@@ -199,6 +249,7 @@ int checkSafetyCmd(char cmd) {
 
 unsigned long long int autorunSafetyData() {
 	int err = 0;
+	unsigned long long int ret = 0;
 	
 	err = pthread_mutex_lock(&recv.mutex);
 	if (err == -1)
@@ -209,14 +260,20 @@ unsigned long long int autorunSafetyData() {
 	err = checkSafetyCmd(recv.data[FIRST_FRAME]);
 	if (err == -1) {
 		int *p = (int *)recv.data;
-		if (*p == (int)0)
-		  return ERR_SAFETY_NOT_CONNECT; //NOT_CONNECTED
-		return ERR_SAFETY_RECV_CMD; //NOT_SAFETY_CMD;
+		if (*p == (int)0){
+		  ret = ERR_SAFETY_NOT_CONNECT; //NOT_CONNECTED
+		 // break;
+		}
+		ret= ERR_SAFETY_RECV_CMD; //NOT_SAFETY_CMD;
+		//break;
 	}
 
 	err = getHeartbeat();
 	if (err == -1)
-	  return ERR_SAFETY_NOT_CONNECT; //NO_HEARTBEAT;
+    {
+        pthread_mutex_unlock(&recv.mutex);
+	    return ERR_SAFETY_NOT_CONNECT; //NO_HEARTBEAT;
+    }
 	
 	err = pthread_mutex_unlock(&recv.mutex);
 	if (err == -1)
@@ -228,12 +285,10 @@ unsigned long long int autorunSafetyData() {
 
 	setHeartbeat();
 	writeSafety();
-
-	err = pthread_mutex_unlock(&recv.mutex);
+	err = pthread_mutex_unlock(&xmit.mutex);
 	if (err == -1)
 	  printf("Failed to unlock mutex.\n"); //NOT_UNLOCK;
-
-	return 0;
+	return ret;
 }
 
 int fake_init() {

@@ -103,7 +103,10 @@ RobotMotion::RobotMotion()
 
 RobotMotion::~RobotMotion()
 {
-    share_mem_.stopBareMetal();
+    //==before exit, first estop to fault===========
+    servoEStop();
+    setLogicStateCmd(EMERGENCY_STOP_E);
+    //==============================================
     if (arm_group_)
     {
         delete arm_group_;
@@ -1026,8 +1029,11 @@ U64 RobotMotion::actionPause()
 
 U64 RobotMotion::servoEStop()
 {
+    U64 result;
     //stop bare metal, can't write fifo since
-    return share_mem_.stopBareMetal();
+    result = share_mem_.stopBareMetal();
+    usleep(500* 1000); //wait for brake on
+    FST_INFO("wait for brake on");
 }
 
 

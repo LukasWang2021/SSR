@@ -710,14 +710,17 @@ void ProtoParse::parseParamGetMsg(const uint8_t *field_buffer, int field_size)
         }
         case TOOLFRAME_ID:
         {
+            retStatus(BaseTypes_StatusCode_FAILED);
             break;
         }
         case USERFRAME_ID:
         {
+            retStatus(BaseTypes_StatusCode_FAILED);
             break;
         }
         case LOGIC_CURVEMODE_ID:
         {
+            retStatus(BaseTypes_StatusCode_FAILED);
             break;
         }
         case PARAMS_LOCALTIME_ID:
@@ -728,10 +731,12 @@ void ProtoParse::parseParamGetMsg(const uint8_t *field_buffer, int field_size)
         }
         case PARAMS_SOFTLIMIT_ID:
         {
+            retStatus(BaseTypes_StatusCode_FAILED);
             break;
         }
         case PARAMS_DH_ID:
         {
+            retStatus(BaseTypes_StatusCode_FAILED);
             break;
         }
         case CTL_GLOBAL_VELOCITY_ID:

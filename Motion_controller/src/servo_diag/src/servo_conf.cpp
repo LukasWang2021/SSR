@@ -6,26 +6,26 @@ fst_controller::Servconf::Servconf(const std::string &filename)
 {
     bool succ = false;
 
-    m_filename = filename;
+    filename_ = filename;
     std::vector<int> stored_conf;
-    p_paramgroup_ = new fst_parameter::ParamGroup(m_filename);
+    p_paramgroup_ = new fst_parameter::ParamGroup(filename_);
         
     if(NULL != p_paramgroup_)
     {
-        p_paramgroup_->getParam("servo.stored_start", m_startaddr_stored);
-        p_paramgroup_->getParam("servo.param_length", m_length);
-        p_paramgroup_->getParam("servo.stored_length", m_stored_length);
+        p_paramgroup_->getParam("servo.stored_start", startaddr_stored_);
+        p_paramgroup_->getParam("servo.param_length", paramlength_);
+        p_paramgroup_->getParam("servo.stored_length", stored_length_);
         p_paramgroup_->getParam("servo.stored_param", stored_conf);
-        m_datastr = new char[m_length];
+        datastr_ = new char[paramlength_];
         
-        if((NULL != m_datastr)&&\
-            (m_startaddr_stored+m_stored_length<=m_length)&&\
-            (stored_conf.size()*4==m_stored_length))
+        if((NULL != datastr_)&&\
+            (startaddr_stored_+stored_length_<=paramlength_)&&\
+            ((int)stored_conf.size()*4==stored_length_))
         {
             
-            for(int i = 0;i<m_stored_length/4;i++)
+            for(int i = 0;i<stored_length_/4;i++)
             {
-            	*(int *)&m_datastr[i*4+m_startaddr_stored] = stored_conf[i];
+            	*(int *)&datastr_[i*4+startaddr_stored_] = stored_conf[i];
             }
             succ = true;
 
@@ -40,9 +40,9 @@ fst_controller::Servconf::Servconf(const std::string &filename)
 
 fst_controller::Servconf::~Servconf(void)
 {
-    if(NULL!=m_datastr)
+    if(NULL!=datastr_)
     {
-        delete [] m_datastr;
+        delete [] datastr_;
     }
 	if(NULL != p_paramgroup_)
 	{
@@ -50,79 +50,78 @@ fst_controller::Servconf::~Servconf(void)
 	}
 }
 
-int fst_controller::Servconf::Setconf(unsigned int addr, const char *data, int length)
+int fst_controller::Servconf::setConf(unsigned int addr, const char *data, int length)
 {
     int l_len = 0;
-    if (NULL != m_datastr)
+    if (NULL != datastr_)
     {
-        if(addr<m_length)
+        if((int)addr<paramlength_)
         {
             l_len = length;
-            if(addr+l_len>m_length) 
-                l_len = m_length - addr;
-            memcpy(&m_datastr[addr],data,l_len);
+            if((int)addr+l_len>paramlength_) 
+                l_len = paramlength_ - (int)addr;
+            memcpy(&datastr_[addr],data,l_len);
         }
     }    
     return l_len;
 }
 
-int fst_controller::Servconf::Getconf(unsigned int addr, char *data, int length)
+int fst_controller::Servconf::getConf(unsigned int addr, char *data, int length)
 {
     int l_len = 0;    
-    if (NULL != m_datastr)
+    if (NULL != datastr_)
     {
-        if(addr<m_length)
+        if((int)addr<paramlength_)
         {
             l_len = length;
-            if(addr+l_len>m_length) 
-                l_len = m_length - addr;
-            memcpy(data,&m_datastr[addr],l_len);
+            if((int)addr+l_len>paramlength_) 
+                l_len = paramlength_ - (int)addr;
+            memcpy(data,&datastr_[addr],l_len);
         }
     }    
     return l_len;    
 }
 
-void fst_controller::Servconf::Saveconf(void)
+void fst_controller::Servconf::saveConf(void)
 {
-    if ((NULL != m_datastr)&&(NULL != p_paramgroup_))
+    if ((NULL != datastr_)&&(NULL != p_paramgroup_))
     {
         std::vector<int> stored_conf;
-        stored_conf.resize(m_stored_length/4);
-        if(m_startaddr_stored+m_stored_length<=m_length)
+        stored_conf.resize(stored_length_/4);
+        if(startaddr_stored_+stored_length_<=paramlength_)
         {
-            for(int i = 0;i<m_stored_length/4;i++)
+            for(int i = 0;i<stored_length_/4;i++)
             {
-            	stored_conf[i] = *(int *)&m_datastr[i*4+m_startaddr_stored];
+            	stored_conf[i] = *(int *)&datastr_[i*4+startaddr_stored_];
             }
         }
         p_paramgroup_->setParam("servo.stored_param", stored_conf);
-        p_paramgroup_->dumpParamFile(m_filename);
+        p_paramgroup_->dumpParamFile(filename_);
     }
 }
 
 
-void fst_controller::Servconf::DownloadConf(fst_controller::ServoService &serv,unsigned int 
+void fst_controller::Servconf::downloadConf(fst_controller::ServoService &serv,unsigned int 
 addr,int length)
 {
-    ServiceRequest client_service_request;
     char *data = new char[length];
-    int l_len = Getconf(addr, data,fst_controller::ServoService::SERVO_CONF_SEG);
+    int l_len = getConf(addr, data,fst_controller::ServoService::SERVO_CONF_SEG);
     if(l_len>0)
     {
-        serv.DownloadParam(addr,data,l_len);
+        serv.downloadParam(addr,data,l_len);
     }
     delete [] data;
 }
 
 
-int fst_controller::Servconf::UploadConf(fst_controller::ServoService &serv,int addr,int 
+int fst_controller::Servconf::uploadConf(fst_controller::ServoService &serv,int addr,int 
 length)
 {
     char *data = new char[length];
-    ERROR_CODE_TYPE err = serv.UploadParam(addr,data,length);
+    ERROR_CODE_TYPE err = serv.uploadParam(addr,data,length);
     if(FST_SUCCESS==err)
     {
-       Setconf(addr,data,length);
+       setConf(addr,data,length);
        //std::cout<<*((char *)data)<<std::endl;
     }
     else
@@ -135,33 +134,33 @@ length)
 
 }
 
-void fst_controller::Servconf::InitDownloadConf(fst_controller::ServoService &serv)
+void fst_controller::Servconf::initDownloadConf(fst_controller::ServoService &serv)
 {
     int l_len;
     int max_seg_len = fst_controller::ServoService::SERVO_CONF_SEG;
-    for(int addr = m_startaddr_stored;addr<m_startaddr_stored+m_stored_length;)
+    for(int addr = startaddr_stored_;addr<startaddr_stored_+stored_length_;)
     {
-        l_len = m_startaddr_stored+m_stored_length-addr;
+        l_len = startaddr_stored_+stored_length_-addr;
         l_len = (l_len>max_seg_len)?max_seg_len:l_len;
 
-        DownloadConf(serv, addr,l_len);
+        downloadConf(serv, addr,l_len);
         addr += l_len;
     }	
 }
 
-void fst_controller::Servconf::InitConfFile(fst_controller::ServoService &serv)
+void fst_controller::Servconf::initConfFile(fst_controller::ServoService &serv)
 {
     int l_len;
     int max_seg_len = fst_controller::ServoService::SERVO_CONF_SEG;
-    for(int addr = m_startaddr_stored;addr<m_startaddr_stored+m_stored_length;)
+    for(int addr = startaddr_stored_;addr<startaddr_stored_+stored_length_;)
     {
-        l_len = m_startaddr_stored+m_stored_length-addr;
+        l_len = startaddr_stored_+stored_length_-addr;
         l_len = (l_len>max_seg_len)?max_seg_len:l_len;
 
-        UploadConf(serv, addr,l_len);
+        uploadConf(serv, addr,l_len);
         addr += l_len;
     }	
-    Saveconf();
+    saveConf();
 }
 
 

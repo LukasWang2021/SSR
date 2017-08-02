@@ -19,6 +19,18 @@
 
 namespace fst_controller {
 // Brief class for controller. This class include many default settings and functions to make life easier.
+
+enum ServiceID
+{ 
+  READ_SERVO_DATA_BY_ADDR            =0x14,  
+  WRITE_SERVO_DATA_BY_ADDR         = 0x24,
+  READ_SERVO_DTC_SID                = 0x31,
+  LOG_CONTROL_SID                   =0x40,
+  LOG_GETLIST_SID                   =0x41,
+  SERVO_CMD_SID                     =0x60
+};
+
+
 class ServoService {
   // -----------------------------public functions---------------------------------------------
 
@@ -43,65 +55,65 @@ class ServoService {
     ~ServoService();
 
     //------------------------------------------------------------
-    // Function:    StartLog
+    // Function:    startLog
     // Summary: Start the data log for Core1
     // In:      size of varable list, varable name list
     // Out:      type list
     // Return:  ERROR Code
     //------------------------------------------------------------
 
-    ERROR_CODE_TYPE  StartLog(int size_of_varlist,const char *varlist,std::vector<int>& t_list);
+    ERROR_CODE_TYPE  startLog(int size_of_varlist,const char *varlist,std::vector<int>& t_list);
     
     //------------------------------------------------------------
-    // Function:    StopLog
+    // Function:    stopLog
     // Summary: Stop the data log for Core1
     // In:      None
     // Out:      None
     // Return:  ERROR Code
     //------------------------------------------------------------
-    ERROR_CODE_TYPE  StopLog(void);
+    ERROR_CODE_TYPE  stopLog(void);
     
     
     //------------------------------------------------------------
-    // Function:    DownloadParam
+    // Function:    downloadParam
     // Summary: Download Servo Configuration Param
     // In:      Address, data, length
     // Out:      None
     // Return:  ERROR Code
     //------------------------------------------------------------
-    ERROR_CODE_TYPE  DownloadParam(unsigned int addr,const char *data,int length);
+    ERROR_CODE_TYPE  downloadParam(unsigned int addr,const char *data,int length);
     
     
     //------------------------------------------------------------
-    // Function:    UploadParam
+    // Function:    uploadParam
     // Summary: Upload Servo Configuration Param
     // In:      Address, length
     // Out:      data
     // Return:  ERROR Code
     //------------------------------------------------------------
-    ERROR_CODE_TYPE  UploadParam(unsigned int addr,char *data,int& length);
+    ERROR_CODE_TYPE  uploadParam(unsigned int addr,char *data,int& length);
     
     
     //------------------------------------------------------------
-    // Function:    ReadIntVar
+    // Function:    readIntVar
     // Summary: Read Int Varable by name
     // In:      varname
     // Out:      res
     // Return:  ERROR Code
     //------------------------------------------------------------    
-    ERROR_CODE_TYPE  ReadIntVar(int size_of_varlist,const char *varname,int* res);
+    ERROR_CODE_TYPE  readIntVar(int size_of_varlist,const char *varname,int* res);
 
     //------------------------------------------------------------
-    // Function:    ReadErrCode
+    // Function:    readErrCode
     // Summary: Read Errcode
     // In:      size_of_codelist
     // Out:      res,numofres
     // Return:  ERROR Code
     //------------------------------------------------------------   
-    ERROR_CODE_TYPE ReadErrCode(int size_of_codelist,int* res,int* numofres);
+    ERROR_CODE_TYPE readErrCode(int size_of_codelist,int* res,int* numofres);
 
     //------------------------------------------------------------
-    // Function:    ServoCMD
+    // Function:    servoCmd
     // Summary: service defined by servo software
     // In:      unsigned int i: servo command id; 
     //          const char * req: request data
@@ -110,23 +122,23 @@ class ServoService {
     // Out:      char* res:       response data
     // Return:  ERROR Code
     //------------------------------------------------------------    
-    ERROR_CODE_TYPE  ServoCMD(unsigned int id,const char * req,int req_size,char* res,int res_size);
+    ERROR_CODE_TYPE  servoCmd(unsigned int id,const char * req,int req_size,char* res,int res_size);
     //------------------------------------------------------------
-    // Function:    SetTrig
+    // Function:    setTrig
     // Summary: Set log trigger function
     // In:      trigname ticks
-    // Out:     None
+    // Out:     res: 1 succeed
     // Return:  ERROR Code
     //------------------------------------------------------------  
-    ERROR_CODE_TYPE SetTrig(const char *trigname,unsigned short ticks);
+    ERROR_CODE_TYPE setTrig(const char *trigname,unsigned short ticks,int* res);
     //------------------------------------------------------------
-    // Function:    InitComm
+    // Function:    initComm
     // Summary: To Initialize communication with service manager
     // In:      channel name
     // Out:     None
     // Return:  ERROR Code
     //------------------------------------------------------------
-    static ERROR_CODE_TYPE InitComm(const char *channel);
+    static ERROR_CODE_TYPE initComm(const char *channel);
     
   public:
     static const int SERVO_CONF_SEG = 512;
@@ -134,13 +146,13 @@ class ServoService {
   private:
 
     //------------------------------------------------------------
-    // Function:    SendNRecv
+    // Function:    sendNRecv
     // Summary: Send request to Core1 and Receive response
     // In:      pointer to ServoService object
     // Out:     None
     // Return:  ERROR Code
     //------------------------------------------------------------    
-    static ERROR_CODE_TYPE SendNRecv(fst_controller::ServoService* serv);
+    static ERROR_CODE_TYPE sendNRecv(fst_controller::ServoService* serv);
 
     // -----------------------------private functions---------------------------------------------
 

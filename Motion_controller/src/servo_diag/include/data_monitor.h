@@ -53,21 +53,21 @@ class DataMonitor {
     //------------------------------------------------------------
     void initDataMonitor(void);
     //------------------------------------------------------------
-    // Function:    StartMonitor
+    // Function:    startMonitor
     // Summary: Start Monitor
     // In:      None
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    static void StartMonitor(DataMonitor* moni,std::vector<int>& t_list);
+    static void startMonitor(DataMonitor* moni,std::vector<int>& t_list);
     //------------------------------------------------------------
-    // Function:    StopMonitor
+    // Function:    stopMonitor
     // Summary: Stop Monitor
     // In:      None
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    static void StopMonitor(DataMonitor* moni);
+    static void stopMonitor(DataMonitor* moni);
     //------------------------------------------------------------
     // Function:    pcComm_Thread
     // Summary: To start server to communicate with PC
@@ -81,31 +81,31 @@ class DataMonitor {
     static bool alignNcheck(int & k,int bytesize,int totalsize);
 
     //------------------------------------------------------------
-    // Function:    Logdata2Databuf
+    // Function:    logdata2Databuf
     // Summary: put the Log data to Data buffer for TCP
     // In:      
     // Out:     None
     // Return:  int
     //------------------------------------------------------------
-    static int Logdata2Databuf(char *databuf,int pos,const data64b_t* record_data,int type);
+    static int logdata2Databuf(char *databuf,int pos,const data64b_t* record_data,int type);
 
     //------------------------------------------------------------
-    // Function:    DataMonitor_Thread
+    // Function:    dataMonitor_Thread
     // Summary: To start data monitor for core1
     // In:      None
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    static void DataMonitor_Thread(DataMonitor* moni);
+    static void dataMonitor_Thread(DataMonitor* moni);
 
   private:
 
     // -----------------------------member variables---------------------------------------------
 
     LimitedFifo<Servo_Data_Record_t> *record_fifo_;
-    fst_comm_interface::CommInterface* p_comm;
-    volatile bool start_monitor;
-    Servo_Data_Package_t data_package;
+    fst_comm_interface::CommInterface* p_comm_;
+    volatile bool start_monitor_;
+    Servo_Data_Package_t data_package_;
     std::vector<int> t_list_;
 };  // class ServcfComm
 }   // namespace fst_controller

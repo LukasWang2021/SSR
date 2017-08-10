@@ -178,12 +178,7 @@ void Log_trigger(int flag)
 
 int getRecord(LOG_RECORD_T* rec)
 {
-    if (1 == log_header->trigger_flag)
-    {
         return fetch_log(rec);
-    }
-
-    return -1;
 }
 
 int open_LOG_FIFO(void *ptr)

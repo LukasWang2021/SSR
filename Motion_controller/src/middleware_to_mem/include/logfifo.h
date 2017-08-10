@@ -25,7 +25,7 @@ static inline int atomic_cmpxchg(atomic_t *ptr, int old, int newv)
 
 }
 
-#define TOTAL_NUMBER_OF_VAR 100
+#define TOTAL_NUMBER_OF_VAR 256
 #define TOTAL_NUMBER_OF_TRIGER 32
 #define TOTAL_VAR_IN_RECORD 24
 

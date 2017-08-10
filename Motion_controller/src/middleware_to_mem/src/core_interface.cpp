@@ -182,6 +182,7 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
         nsec_ = prev_nsec_;
         return WRITE_CORE_MEM_FAIL;
     }
+
     return FST_SUCCESS;
 }
 

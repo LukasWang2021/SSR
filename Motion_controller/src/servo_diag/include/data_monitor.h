@@ -97,6 +97,40 @@ class DataMonitor {
     // Return:  None
     //------------------------------------------------------------
     static void dataMonitor_Thread(DataMonitor* moni);
+    //------------------------------------------------------------
+    // Function:   sendResponse
+    // Summary: send Response
+    // In:      None
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+
+    static bool sendResponse(fst_comm_interface::CommInterface* pcomm,const void *buf, int buf_size);
+
+    //------------------------------------------------------------
+    // Function:    onRecordRequest
+    // Summary: on data record request
+    // In:      None
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    static bool onRecordRequest(DataMonitor* moni);
+    //------------------------------------------------------------
+    // Function:    onGetdataRequest
+    // Summary: on get data request
+    // In:      None
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    static int onGetdataRequest(unsigned char seq,DataMonitor* moni);
+    //------------------------------------------------------------
+    // Function:    onFinishRecord
+    // Summary: on Finish Record
+    // In:      None
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    static void onFinishRecord(DataMonitor* moni);
 
   private:
 
@@ -107,6 +141,7 @@ class DataMonitor {
     volatile bool start_monitor_;
     Servo_Data_Package_t data_package_;
     std::vector<int> t_list_;
+    int data_state_;// -1: record data not required 0: record  is required 1: record fifo is locked
 };  // class ServcfComm
 }   // namespace fst_controller
 

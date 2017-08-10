@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 
     readlink("/proc/self/exe" , buf , sizeof(buf));
     boost::filesystem::path pa(buf);
-    std::string conffile(pa.parent_path().string()+"/cfg/servo_param.yaml");
+    std::string conffile(pa.parent_path().string()+"/config/servo_param.yaml");
     Servconf* pconf = new Servconf(conffile);
     
     DataMonitor* pmonitor = new DataMonitor(ip,ServoDiag::DATAMONITOR_PORT);

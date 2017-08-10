@@ -16,6 +16,18 @@
 
 namespace fst_controller {
 // Brief class for controller. This class include many default settings and functions to make life easier.
+enum PC_DiagnoseID
+{ 
+  PC_STARTRECORD            = 0x01,  
+  PC_STOPRECORD             = 0x02,
+  PC_READINT                = 0x03,
+  PC_SETTRIGGER             = 0x04,
+  PC_READSERVODTC           = 0x07,
+  PC_READSERVOPARA          = 0x11,
+  PC_WRITESERVOPARA         = 0x12,
+  PC_SERVOCMD               = 0x20,
+};
+
 class ServoDiag {
   // -----------------------------public functions---------------------------------------------
 
@@ -41,36 +53,38 @@ class ServoDiag {
 
 
     //------------------------------------------------------------
-    // Function:    InitComm
+    // Function:    initComm
     // Summary: Init communication for command with PC
     // In:      ip address, port
     // Out:     None
     // Return:  Error code
     //------------------------------------------------------------
-    static ERROR_CODE_TYPE InitComm(const char *ip_address, int port);
+    static ERROR_CODE_TYPE initComm(const char *ip_address, int port);
 
 
     //------------------------------------------------------------
-    // Function:    ServoDiag_Thread
+    // Function:    servoDiagThread
     // Summary: communication thread for command with PC
     // In:      Servconf *servconf,DataMonitor *monitor,ServoService* service
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    static void ServoDiag_Thread(Servconf *servconf,
+    static void servoDiagThread(Servconf *servconf,
                          DataMonitor *monitor,
                          ServoService* service);
     //------------------------------------------------------------
-    // Function:    Sig_handler
+    // Function:    sigHandler
     // Summary: linux system signal handler
     // In:      system signal
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    static void Sig_handler( int sig);
+    static void sigHandler( int sig);
 
     // -----------------------------private functions---------------------------------------------
   public:
+    static const int SERVODIAG_PORT = 5558;
+    static const int DATAMONITOR_PORT = 5559;
     static int exit_flag_;
   private:
 

@@ -21,7 +21,7 @@ fst_controller::ServoService::~ServoService(void)
         delete p_comm_;
 }
 
-ERROR_CODE_TYPE fst_controller::ServoService::InitComm(const char *channel)
+ERROR_CODE_TYPE fst_controller::ServoService::initComm(const char *channel)
 {
     ERROR_CODE_TYPE err = FST_SUCCESS;
     p_comm_ = new CommInterface;
@@ -41,7 +41,7 @@ ERROR_CODE_TYPE fst_controller::ServoService::InitComm(const char *channel)
     return err;
 }
 
-ERROR_CODE_TYPE fst_controller::ServoService::SendNRecv(fst_controller::ServoService* serv)
+ERROR_CODE_TYPE fst_controller::ServoService::sendNRecv(fst_controller::ServoService* serv)
 {
     const ServiceRequest* req = &serv->client_service_request_;
     ServiceResponse* resp = &serv->client_service_response_;
@@ -68,10 +68,10 @@ ERROR_CODE_TYPE fst_controller::ServoService::SendNRecv(fst_controller::ServoSer
     return err;
 }
 
-ERROR_CODE_TYPE fst_controller::ServoService::StartLog(int size_of_varlist,const char *varlist,std::vector<int>& t_list)
+ERROR_CODE_TYPE fst_controller::ServoService::startLog(int size_of_varlist,const char *varlist,std::vector<int>& t_list)
 {
     ERROR_CODE_TYPE err;
-    client_service_request_.req_id = 0x40;
+    client_service_request_.req_id = LOG_CONTROL_SID;
     unsigned int id = 0x11;
     memcpy(&client_service_request_.req_buff[0],(char *)&id,sizeof(id));
     std::cout<<*((unsigned int *)&client_service_request_.req_buff[0])<<std::endl;
@@ -81,7 +81,7 @@ ERROR_CODE_TYPE fst_controller::ServoService::StartLog(int size_of_varlist,const
 
     memcpy(&client_service_request_.req_buff[6],varlist,1024 - 6 - 1);
     std::cout<<"list size:"<<size_of_varlist<<std::endl;
-    err = SendNRecv(this);
+    err = sendNRecv(this);
     t_list.clear();
     if(FST_SUCCESS == err)
     {
@@ -96,21 +96,21 @@ ERROR_CODE_TYPE fst_controller::ServoService::StartLog(int size_of_varlist,const
     return err;
 }
 
-ERROR_CODE_TYPE fst_controller::ServoService::StopLog(void)
+ERROR_CODE_TYPE fst_controller::ServoService::stopLog(void)
 {
     ERROR_CODE_TYPE err;
-    client_service_request_.req_id = 0x40;
+    client_service_request_.req_id = LOG_CONTROL_SID;
     unsigned int id = 0x12;
     memcpy(&client_service_request_.req_buff[0],(char *)&id,sizeof(id));
-    err = SendNRecv(this);
+    err = sendNRecv(this);
     return err;
 }
 
 
-ERROR_CODE_TYPE fst_controller::ServoService::DownloadParam(unsigned int addr,const char *data,int length)
+ERROR_CODE_TYPE fst_controller::ServoService::downloadParam(unsigned int addr,const char *data,int length)
 {
     ERROR_CODE_TYPE err;
-    client_service_request_.req_id = 0x24;
+    client_service_request_.req_id = WRITE_SERVO_DATA_BY_ADDR;
     
     memcpy(&client_service_request_.req_buff[0],(char *)&addr,sizeof(addr));
     //std::cout<<*((unsigned int *)&client_service_request.req_buff[0])<<std::endl;
@@ -120,23 +120,23 @@ ERROR_CODE_TYPE fst_controller::ServoService::DownloadParam(unsigned int addr,co
     memcpy(&client_service_request_.req_buff[8],(char *)data,length);
     //std::cout<<*((unsigned short *)&client_service_request.req_buff[8])<<std::endl;
     
-    err = SendNRecv(this);
+    err = sendNRecv(this);
     return err;
 }
 
 
-ERROR_CODE_TYPE fst_controller::ServoService::UploadParam(unsigned int addr,char *data,int& length)
+ERROR_CODE_TYPE fst_controller::ServoService::uploadParam(unsigned int addr,char *data,int& length)
 {
     ERROR_CODE_TYPE err;
     if(length>SERVO_CONF_SEG) return 1;
-    client_service_request_.req_id = 0x14;
+    client_service_request_.req_id = READ_SERVO_DATA_BY_ADDR;
 
     memcpy(&client_service_request_.req_buff[0],(char *)&addr,sizeof(addr));
     //std::cout<<*((unsigned int *)&client_service_request.req_buff[0])<<std::endl;
     memcpy(&client_service_request_.req_buff[4],(char *)&length,sizeof(length));
     //std::cout<<*((unsigned int *)&client_service_request.req_buff[4])<<std::endl;
     
-    err = SendNRecv(this);
+    err = sendNRecv(this);
 
     if(FST_SUCCESS == err)
     {
@@ -151,10 +151,10 @@ ERROR_CODE_TYPE fst_controller::ServoService::UploadParam(unsigned int addr,char
 }
 
 
-ERROR_CODE_TYPE fst_controller::ServoService::ReadIntVar(int size_of_varlist,const char *varname,int* res)
+ERROR_CODE_TYPE fst_controller::ServoService::readIntVar(int size_of_varlist,const char *varname,int* res)
 {
     ERROR_CODE_TYPE err;
-    client_service_request_.req_id = 0x40;
+    client_service_request_.req_id = LOG_CONTROL_SID;
     unsigned int id = 0x20;
     short size = (short)size_of_varlist;
     memcpy(&client_service_request_.req_buff[0],(char *)&id,sizeof(id));
@@ -166,7 +166,7 @@ ERROR_CODE_TYPE fst_controller::ServoService::ReadIntVar(int size_of_varlist,con
     memcpy(&client_service_request_.req_buff[6],(char *)varname,1024-7);
     //std::cout<<&client_service_request_.req_buff[6]<<std::endl;
     
-    err = SendNRecv(this);
+    err = sendNRecv(this);
     if(FST_SUCCESS == err)
     {
        memcpy((char *)res,&client_service_response_.res_buff[0],4*(size_of_varlist+1)); 
@@ -180,11 +180,32 @@ ERROR_CODE_TYPE fst_controller::ServoService::ReadIntVar(int size_of_varlist,con
     return err;
 }
 
-ERROR_CODE_TYPE fst_controller::ServoService::SetTrig(const char *trigname,unsigned short ticks)
+ERROR_CODE_TYPE fst_controller::ServoService::readErrCode(int size_of_codelist,int* res,int* numofres)
 {
     ERROR_CODE_TYPE err;
-    client_service_request_.req_id = 0x40;
+    client_service_request_.req_id = READ_SERVO_DTC_SID;
+
+    err = sendNRecv(this);
+    if(FST_SUCCESS == err)
+    {
+       *numofres = *(int*)&client_service_response_.res_buff[4];
+       *numofres = (size_of_codelist>*numofres)?*numofres:size_of_codelist;
+       memcpy((char *)res,&client_service_response_.res_buff[8],4*(*numofres)); 
+    } 
+    else
+    {
+       printf("Read ErrCode fail\n");
+    }     
+    return err;
+}
+
+ERROR_CODE_TYPE fst_controller::ServoService::setTrig(const char *trigname,unsigned short ticks,int* res)
+{
+    ERROR_CODE_TYPE err;
+    unsigned short retticks;
+    client_service_request_.req_id = LOG_CONTROL_SID;
     unsigned int id = 0x10;
+    *res = 0;
     memcpy(&client_service_request_.req_buff[0],(char *)&id,sizeof(id));
     //std::cout<<*((unsigned int *)&client_service_request.req_buff[0])<<std::endl;
     memcpy(&client_service_request_.req_buff[4],(char *)&ticks,sizeof(ticks));
@@ -193,19 +214,30 @@ ERROR_CODE_TYPE fst_controller::ServoService::SetTrig(const char *trigname,unsig
     int len = strlen(trigname);
     memcpy(&client_service_request_.req_buff[6],trigname,len+1);
     
-    err = SendNRecv(this);     
+    err = sendNRecv(this);    
+    if(FST_SUCCESS == err)
+    {
+       memcpy((char *)&retticks,&client_service_response_.res_buff[0],sizeof(retticks));
+       std::cout<<retticks<<" "<<&client_service_response_.res_buff[4]<<std::endl;
+       if((0==strcmp(&client_service_response_.res_buff[4],trigname))&&(retticks==ticks))
+           *res = 1;
+    } 
+    else
+    {
+       printf("SetTrig response fail\n");
+    }  
     return err;
 }
 
-ERROR_CODE_TYPE fst_controller::ServoService::ServoCMD(unsigned int id,const char * req,int req_size,char* res,int res_size)
+ERROR_CODE_TYPE fst_controller::ServoService::servoCmd(unsigned int id,const char * req,int req_size,char* res,int res_size)
 {
     ERROR_CODE_TYPE err;
-    client_service_request_.req_id = 0x60;
+    client_service_request_.req_id = SERVO_CMD_SID;
     memcpy(&client_service_request_.req_buff[0],(char *)&id,sizeof(id));
     
     memcpy(&client_service_request_.req_buff[4],req,req_size);
    
-    err = SendNRecv(this);     
+    err = sendNRecv(this);     
     if(FST_SUCCESS == err)
     {
        memcpy(res,&client_service_response_.res_buff[4],res_size); 

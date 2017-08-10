@@ -427,7 +427,7 @@ class RobotMotion
       * @return: true if the joints have changed 
       */
      bool isJointsChanged();
-
+     bool isJointsOut(JointValues joints);
      /**
       * @brief: heart beat 
       *
@@ -789,7 +789,7 @@ class RobotMotion
     /**
      * @brief: pick joints and send them to bare metal 
      */
-    void sendJointsToRemote();    
+    U64 sendJointsToRemote();    
 
     /**
      * @brief: check if manual move is on 

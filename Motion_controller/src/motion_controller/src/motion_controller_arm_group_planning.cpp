@@ -706,6 +706,8 @@ bool ArmGroup::MoveL(const Pose &pose_target, double v_max, double a_max, int cn
         return MoveL(pose_target, v_max, a_max, id, err);
     }
 
+    printPose("pose start: ", m_pose_start);
+    printPose("pose target: ", pose_target);
     bool res = planning_interface_->MoveL2L(m_pose_start, m_v_start, m_vu_start,
                                             pose_target, v_max, cnt_target,
                                             pose_next, v_next, cnt_next,

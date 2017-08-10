@@ -48,7 +48,7 @@ class LimitedFifo
     // Out:     None
     // Return:  >0 OK  <0 err
     //------------------------------------------------------------    
-    int push_item(const T &x,bool force);
+    int push_item(const T &x,bool force,int limit_size = 0);
     
     //------------------------------------------------------------
     // Function:    fetch_item
@@ -221,19 +221,24 @@ int LimitedFifo<T>::increase_index(int index)
 }
 
 template<typename T >
-int LimitedFifo<T>::push_item(const T &x,bool force)
+int LimitedFifo<T>::push_item(const T &x,bool force,int limit_size)
 {
     int target;
     int temp_out;
     int next;
     int res = 0;
-    if(0 == capacity_) return -2;
+    int cap = capacity_;
+    if((limit_size>0)&&(limit_size<capacity_))
+    {
+        cap = limit_size;
+    }
+    if(0 == cap) return -2;
     if(!try_lock(forcepush_lock_)) return -1;
     while(1)
     {
         target = in_index_;
         temp_out = out_index_;
-        if(get_numof_item(target,temp_out)>=capacity_)
+        if(get_numof_item(target,temp_out)>=cap)
         {
             if(true == force)
             {

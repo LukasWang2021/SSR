@@ -155,9 +155,7 @@ int main(int argc, char **argv)
         rtMsSleep(INTERVAL_PROCESS_UPDATE);
     }// while (gs_running_flag)
     
-    //==before exit, first estop to fault===========
-    robot_motion->setLogicStateCmd(EMERGENCY_STOP_E);
-    //==============================================
+    
 	thrd_Sock_Server.join();
 	thrd_heart_beat.join();
 

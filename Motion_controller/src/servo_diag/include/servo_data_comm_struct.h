@@ -1,10 +1,9 @@
 #ifndef SERVO_DATA_COMM_STRUCT_H_
 #define SERVO_DATA_COMM_STRUCT_H_
 
-#define  SERVER_PORT 5588
-#define  PACKAGE_SIZE 25000
+#define  PACKAGE_SIZE 12500
 #define  SNAPSHOT_SIZE 50000
-#define  RECORD_SIZE 32
+#define  RECORD_SIZE 64
 #define  SERVO_DATA_SEG_LENGTH 512
 #define  SERVO_CMD_SEG_LENGTH 1024
 typedef enum
@@ -17,7 +16,7 @@ typedef enum
     TYPE_INT32 = 5,
     TYPE_FLOAT32 = 6,
     TYPE_FLOAT64 = 7,
-
+    TYPE_INT64 = 8,
 }E_DATA_TYPE_t;
 
 typedef struct 

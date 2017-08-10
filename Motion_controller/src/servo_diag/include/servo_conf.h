@@ -42,72 +42,72 @@ class Servconf {
 
 
     //------------------------------------------------------------
-    // Function:    Setconf
+    // Function:    setConf
     // Summary: To set the configuration Data.
     // In:      addr-> data start address; data->data to be set in conf; length -> length of data
     // Out:     None
     // Return:  Set length
     //------------------------------------------------------------
-    int Setconf(unsigned int addr, const char *data, int length);
+    int setConf(unsigned int addr, const char *data, int length);
 
 
     //------------------------------------------------------------
-    // Function:    Getconf
+    // Function:    getConf
     // Summary: To Get the configuration Data.
     // In:      addr-> data start address;  length -> length of data
     // Out:     data->data buf stored the configuration data;
     // Return:  Get length
     //------------------------------------------------------------
-    int Getconf(unsigned int addr, char *data, int length);
+    int getConf(unsigned int addr, char *data, int length);
 
 
     //------------------------------------------------------------
-    // Function:    Saveconf
+    // Function:    saveConf
     // Summary: To Save configuration Data to file.
     // In:      None
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void Saveconf(void);
+    void saveConf(void);
     
     //------------------------------------------------------------
-    // Function:   DownloadConf
+    // Function:   downloadConf
     // Summary: To Download configuration Data to Core1.
     // In:     core1 service interface, address ,length
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void DownloadConf(fst_controller::ServoService &serv,unsigned int addr,int length);
+    void downloadConf(fst_controller::ServoService &serv,unsigned int addr,int length);
     
     
     //------------------------------------------------------------
-    // Function:   UploadConf
+    // Function:   uploadConf
     // Summary: To upload configuration Data from Core1.
     // In:      core1 service interface, address ,lengt
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    int UploadConf(fst_controller::ServoService &serv,int addr,int length);
+    int uploadConf(fst_controller::ServoService &serv,int addr,int length);
 
 
     //------------------------------------------------------------
-    // Function:   InitDownloadConf
+    // Function:   initDownloadConf
     // Summary:  To Initial Download all configuration Data to Core1.
     // In:      core1 service interface
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void InitDownloadConf(fst_controller::ServoService &serv);    
+    void initDownloadConf(fst_controller::ServoService &serv);    
 
     //------------------------------------------------------------
-    // Function:   InitConfFile
+    // Function:   initConfFile
     // Summary:  Initialize conf file, ONLY for initial Conf FILE GENERATION
     // In:      core1 service interface
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
 
-    void InitConfFile(fst_controller::ServoService &serv);
+    void initConfFile(fst_controller::ServoService &serv);
 
     // -----------------------------private functions---------------------------------------------
 
@@ -116,11 +116,11 @@ class Servconf {
     // -----------------------------member variables---------------------------------------------
 
 
-    char * m_datastr;                    
-    int    m_length;
-    int    m_startaddr_stored;
-    int    m_stored_length;
-    std::string m_filename;
+    char * datastr_;                    
+    int    paramlength_;
+    int    startaddr_stored_;
+    int    stored_length_;
+    std::string filename_;
     fst_parameter::ParamGroup * p_paramgroup_;
     const int SERVO_CONF_SEG_SIZE = 512;
 

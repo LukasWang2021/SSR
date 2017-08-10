@@ -386,7 +386,18 @@ bool ArmGroup::checkJointBoundary(const JointValues &joint_values) {
            joint_values.j6 > joint_constraints_.j6.lower &&
            joint_values.j6 < joint_constraints_.j6.upper;
 }
+#define MAX_ACCURATE_VALUE 0.03
+bool isOutMax(JointValues src_joints, JointValues dst_joints)
+{
+	if (fabs(src_joints.j1 - dst_joints.j1) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j2 - dst_joints.j2) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j3 - dst_joints.j3) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j4 - dst_joints.j4) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j5 - dst_joints.j5) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j6 - dst_joints.j6) > MAX_ACCURATE_VALUE) return false;
 
+	return true;
+}	
 //------------------------------------------------------------------------------
 // Function:    convertPath2Trajectory
 // Summary: To convert numbers of posepoint in m_cartesian_path_FIFO
@@ -416,10 +427,18 @@ int ArmGroup::convertPath2Trajectory(int num, ErrorCode &err) {
     int conv_cnt = 0;
     vector<PathPoint>::iterator itr = planned_path_fifo_.begin();
     JointPoint jp;
-    
+    static JointValues pre_joints;
     for (conv_cnt = 0; conv_cnt < num; ++conv_cnt) {
         if (itr->type == MOTION_LINE || itr->type == MOTION_CIRCLE) {
             if (computeIK(itr->pose, jp.joints, err)) {
+                /*if (isOutMax(pre_joints, jp.joints) == false)*/
+                //{
+                    //printPose("cur_pose:", itr->pose);
+                    //printJointValues("pre_joints:", pre_joints);
+                    //printJointValues("cur_joints:", jp.joints);                    
+                //}
+                /*pre_joints = jp.joints;*/
+
                 if (itr == planned_path_fifo_.end() - 1) {
                     if (last_motion_.smooth_type == SMOOTH_NONE) {
                         setStartStateImpl(jp.joints, err);

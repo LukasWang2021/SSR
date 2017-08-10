@@ -58,7 +58,7 @@ message(${CMAKE_CXX_FLAGS})
 ##############version manager##############
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 0)
-set(VERSION_PATCH 6)
+set(VERSION_PATCH 7)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/version.h.in"

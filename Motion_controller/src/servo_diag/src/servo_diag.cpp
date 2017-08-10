@@ -6,6 +6,7 @@
 #include <vector>
 #include <boost/filesystem.hpp>
 #include <signal.h>  
+#include <servo_diag_version.h>
 
 using namespace fst_controller;
 
@@ -25,7 +26,7 @@ ServoDiag::~ServoDiag(void)
 }
 
 
-ERROR_CODE_TYPE ServoDiag::InitComm(const char *ip_address, int port)
+ERROR_CODE_TYPE ServoDiag::initComm(const char *ip_address, int port)
 {
     char ip_str[30];
 
@@ -39,82 +40,100 @@ ERROR_CODE_TYPE ServoDiag::InitComm(const char *ip_address, int port)
     return err;
 }
 
-void ServoDiag::ServoDiag_Thread(Servconf *servconf,
+void ServoDiag::servoDiagThread(Servconf *servconf,
                                      DataMonitor *monitor,
                                      ServoService* service)
 {
 
         
     ServoCommand_Pkg_t pkg;
-    ServoService::InitComm("test");
+    ServoService::initComm("test");
     while(comm_.recv(&pkg, sizeof(pkg), COMM_WAIT)!=RECV_MSG_FAIL)
     {
         switch(pkg.id)
         {
-            case 0x01:
+            case PC_STARTRECORD:
             {
                 std::vector<int> t_list;
                 int i;
-                service->StartLog(*(int*)&pkg.data[0],&pkg.data[4],t_list);
-                DataMonitor::StartMonitor(monitor,t_list);
+                service->startLog(*(int*)&pkg.data[0],&pkg.data[4],t_list);
+                DataMonitor::startMonitor(monitor,t_list);
                 
-                for(i = 0;i<t_list.size()&&i<SERVO_CMD_SEG_LENGTH/4;i++)
+                for(i = 0;i<(int)t_list.size()&&i<SERVO_CMD_SEG_LENGTH/4;i++)
                 {
                     *(int*)&pkg.data[i*4] = t_list[i];
                 }
 
                 break;
             }
-            case 0x02:
+            case PC_STOPRECORD:
             {
-                service->StopLog();
-                DataMonitor::StopMonitor(monitor);
+                service->stopLog();
+                DataMonitor::stopMonitor(monitor);
                 break;
             }    
-            case 0x03:
+            case PC_READINT:
             {
-                ERROR_CODE_TYPE err = service->ReadIntVar(*(int*)&pkg.data[0],&pkg.data[4],(int*)&pkg.data[0]);
-                if(FST_SUCCESS!=err)  std::cout<<"Read Int failed!"<<std::endl;
+                ERROR_CODE_TYPE err = service->readIntVar(*(int*)&pkg.data[0],&pkg.data[4],(int*)&pkg.data[0]);
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Read Int failed!"<<std::endl;
+                }
                 break;
             }
-            case 0x04:
+            case PC_SETTRIGGER:
             {
-                ERROR_CODE_TYPE err = service->SetTrig(&pkg.data[4],*(int*)&pkg.data[0]);
-                if(FST_SUCCESS!=err)  std::cout<<"Set trigger failed!"<<std::endl;
+                ERROR_CODE_TYPE err = service->setTrig(&pkg.data[4],*(int*)&pkg.data[0],(int*)&pkg.data[0]);
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Set trigger failed!"<<std::endl;
+                }
                 break;
             }
-            case 0x11:
+            case PC_READSERVODTC:
+            {
+                ERROR_CODE_TYPE err = service->readErrCode((int)(SERVO_CMD_SEG_LENGTH-sizeof(int))/4,(int*)&pkg.data[4],(int*)&pkg.data[0]);
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Read Err Code failed!"<<std::endl;
+                }
+                break;
+            }
+            case PC_READSERVOPARA:
             {
                 //read param
-                servconf->Getconf(*(unsigned int*)&pkg.data[0],&pkg.data[8],*(int*)&pkg.data[4]);
+                servconf->getConf(*(unsigned int*)&pkg.data[0],&pkg.data[8],*(int*)&pkg.data[4]);
                 
                 break;
             }          
 
-            case 0x12:
+            case PC_WRITESERVOPARA:
             {
                 //write param
-                servconf->Setconf(*(unsigned int*)&pkg.data[0],&pkg.data[8],*(int*)&pkg.data[4]);
-                servconf->DownloadConf(*service,*(unsigned int*)&pkg.data[0],*(int*)&pkg.data[4]);
+                servconf->setConf(*(unsigned int*)&pkg.data[0],&pkg.data[8],*(int*)&pkg.data[4]);
+                servconf->downloadConf(*service,*(unsigned int*)&pkg.data[0],*(int*)&pkg.data[4]);
                 break;
             }     
-            case 0x20:
+            case PC_SERVOCMD:
             {
-                ERROR_CODE_TYPE err = service->ServoCMD(*(int*)&pkg.data[0],&pkg.data[4],1020,&pkg.data[4],1020);
-                if(FST_SUCCESS!=err)  std::cout<<"Servo CMD failed!"<<std::endl;
+                ERROR_CODE_TYPE err = service->servoCmd(*(int*)&pkg.data[0],&pkg.data[4],1020,&pkg.data[4],1020);
+                if(FST_SUCCESS!=err)  
+                {
+                    std::cout<<"Servo CMD failed!"<<std::endl;
+                }
                 break;
             }             
             default:
                 pkg.id = 0;
                 break;
             
-        }
+        } 
         comm_.send(&pkg, sizeof(pkg), COMM_DONTWAIT);
     }
   
 }
 
-void ServoDiag::Sig_handler( int sig)
+void ServoDiag::sigHandler( int sig)
 {
        if(sig == SIGINT){
               exit_flag_ = 1;
@@ -127,32 +146,33 @@ int main(int argc, char** argv)
     char buf[1024] = { 0 };
     ros::init(argc, argv, "servo_diag");	
     if (!fst_comm_interface::CommInterface::getLocalIP(&ip)) return 0;
-    signal(SIGINT, ServoDiag::Sig_handler);
-    ServoDiag::InitComm(ip,5558);
+    std::cout<<"Servo Diag Version:"<<servo_diag_VERSION_MAJOR<<"."<<servo_diag_VERSION_MINOR<<"."<<servo_diag_VERSION_PATCH<<std::endl;
+    signal(SIGINT, ServoDiag::sigHandler);
+    ServoDiag::initComm(ip,ServoDiag::SERVODIAG_PORT);
 
     readlink("/proc/self/exe" , buf , sizeof(buf));
     boost::filesystem::path pa(buf);
     std::string conffile(pa.parent_path().string()+"/cfg/servo_param.yaml");
     Servconf* pconf = new Servconf(conffile);
     
-    DataMonitor* pmonitor = new DataMonitor(ip,5559);
+    DataMonitor* pmonitor = new DataMonitor(ip,ServoDiag::DATAMONITOR_PORT);
     pmonitor->initDataMonitor();
     ServoService* pservice = new ServoService();
-    pservice->InitComm("test");
+    pservice->initComm("test");
     if(1 == argc)
-        pconf->InitDownloadConf(*pservice);
+        pconf->initDownloadConf(*pservice);
     else
     {
         if(0==strcmp(argv[1],"upload"))
-            pconf->InitConfFile(*pservice);
+            pconf->initConfFile(*pservice);
     }
-    boost::thread thrd_diag(boost::bind(ServoDiag::ServoDiag_Thread, pconf,pmonitor,pservice));
+    boost::thread thrd_diag(boost::bind(ServoDiag::servoDiagThread, pconf,pmonitor,pservice));
     thrd_diag.detach();
     while(!ServoDiag::exit_flag_)
     {
         sleep(1);
     }
-    pservice->StopLog();
+    pservice->stopLog();
     std::cout<<std::endl<<"ctrl+c has been keydownd, and log is off"<<std::endl;
     return 0;
 }

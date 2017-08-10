@@ -94,7 +94,7 @@ void ProtoParse::updateParams()
     }
 
     if ((result = robot_motion_.updateJoints()) == TPI_SUCCESS) //get current joints from share memory
-    {        
+    {     
         if (robot_motion_.isJointsChanged())
         {
             setUpdateFlagByID(ACTUAL_JOINT_POS_ID, true);

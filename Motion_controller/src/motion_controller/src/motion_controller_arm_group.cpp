@@ -164,6 +164,7 @@ bool ArmGroup::initArmGroup(ErrorCode &err) {
         }
     }
 
+    log.setDisplayLevel(MSG_LEVEL_NONE);
     log.info("Constructing planning interface ...");
     if (planning_interface_ != NULL) {
         delete planning_interface_;
@@ -696,7 +697,18 @@ int ArmGroup::getJointTrajectoryFIFOLength(void) {
     return trajectory_fifo_.size();
 }
 
+#define MAX_ACCURATE_VALUE 0.03
+bool isOutMax1(JointValues src_joints, JointValues dst_joints)
+{
+	if (fabs(src_joints.j1 - dst_joints.j1) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j2 - dst_joints.j2) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j3 - dst_joints.j3) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j4 - dst_joints.j4) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j5 - dst_joints.j5) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j6 - dst_joints.j6) > MAX_ACCURATE_VALUE) return false;
 
+	return true;
+}	
 //------------------------------------------------------------------------------
 // Function:    getPointsFromJointTrajectoryFIFO
 // Summary: To get points from joitn_trajectory_FIFO.
@@ -716,8 +728,20 @@ int ArmGroup::getPointsFromJointTrajectoryFIFO(vector<JointPoint> &traj, int num
     int cnt;
     std::vector<JointPoint>::iterator itr = trajectory_fifo_.begin();
 
+    static JointValues pre_joints;
     for (cnt = 0; cnt < num; ++cnt) {
         if (itr != trajectory_fifo_.end()) {
+            /*if (isOutMax1(pre_joints, itr->joints) == false)*/
+                //{
+                    //printf("********************************\n");
+                    //printJointValues("111pre_joints:", pre_joints);
+                    //printJointValues("111cur_joints:", itr->joints);                    
+                //}
+            //if (fabs(itr->joints.j6 - 0.782269) < 0.01)
+            //{
+                //printJointValues("111joints:", itr->joints);  
+            /*}*/
+            pre_joints = itr->joints;
             traj.push_back(*itr);
             if ((itr->id & POINT_LEVEL_MASK) == POINT_ENDING) {
                 ++cnt;
@@ -933,7 +957,7 @@ bool ArmGroup::setCurrentJointValues(const JointValues &current_joint, ErrorCode
 bool ArmGroup::setStartState(const JointValues &joint_start, ErrorCode &err) {
     lockArmGroup();
     err = SUCCESS;
-
+    printf("=========setStartStateImpl=======\n");
     if (setStartStateImpl(joint_start, err)) {
         allowed_motion_type_ = MOTION_UNDEFINED;
         last_motion_.smooth_type = SMOOTH_NONE;

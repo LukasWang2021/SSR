@@ -9,12 +9,14 @@
 #define TP_INTERFACE_COMMON_H_
 #include <ros/ros.h>
 
-
+#ifdef PRINT
 #define FST_INFO(format, ...) \
 	do { \
 		ROS_INFO("\033[36m" format "\033[0m", ##__VA_ARGS__); \
 	} while (0) 
-
+#else
+#define FST_INFO(format, ...)
+#endif
 
 #ifdef _DEBUG
 	#define FST_DEBUG(format, ...)\
@@ -25,10 +27,14 @@
 	#define FST_DEBUG(format, ...)
 #endif
 
+#ifdef PRINT
 #define FST_PRINT(format, ...) \
 	do { \
 		printf("\033[33m" format "\033[0m", ##__VA_ARGS__); \
 	} while (0) 
+#else
+#define FST_PRINT(format, ...)
+#endif
 
 
 #define FST_ERROR ROS_ERROR

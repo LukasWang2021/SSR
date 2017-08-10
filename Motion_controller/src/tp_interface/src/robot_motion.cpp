@@ -33,7 +33,7 @@ void processNonMove(void* parameter)
                 {
                     rob_motion->setNMPrgmState(EXECUTE_R);
                     ThreadSafeList<CommandInstruction>::iterator it;
-                    for (it = rob_motion->non_move_instructions_.begin(); \
+                    for (it = rob_motion->non_move_instructions_.begin(); 
                         it != rob_motion->non_move_instructions_.end(); it++)
                     {
                         if (it->commandtype == motion_spec_MOTIONTYPE_WAIT)
@@ -186,7 +186,7 @@ U64 RobotMotion::checkProgramState()
             }
             break;
         case EXECUTE_TO_PAUSE_T:
-            sendJointsToRemote();     
+            result = sendJointsToRemote();     
             //FST_INFO("servo state:%d", getServoState());
             if ((getServoState() == STATE_READY) 
             || (getServoState() == STATE_ERROR))
@@ -1113,6 +1113,7 @@ U64 RobotMotion::checkAutoStartState()
     && (instruction_list_.empty()))     //instruction queue empty
     {
         boost::mutex::scoped_lock lock(mutex_);
+        FST_ERROR("=============setStartState==========");
 	    arm_group_->setStartState(getCurJointsValue(), result);
     }
 
@@ -1138,6 +1139,37 @@ U64 RobotMotion::checkManualStartState()
 
     return result;
 }
+#define MAX_ACCURATE_VALUE 0.03
+bool isOutMax(JointValues src_joints, JointValues dst_joints)
+{
+	if (fabs(src_joints.j1 - dst_joints.j1) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j2 - dst_joints.j2) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j3 - dst_joints.j3) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j4 - dst_joints.j4) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j5 - dst_joints.j5) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j6 - dst_joints.j6) > MAX_ACCURATE_VALUE) return false;
+
+	return true;
+}	
+
+bool RobotMotion::isJointsOut(JointValues joints)
+{
+    U64 result = TPI_SUCCESS;
+    static JointValues prev_joints = joints;
+
+    if (isOutMax(prev_joints, joints) == false)
+    {
+        prev_joints = joints;
+        printDbLine("prev_joints:", (double*)&prev_joints, 6);
+        printDbLine("cur_joints:", (double*)&joints, 6);
+        return true;
+    }
+		prev_joints = joints;
+
+
+    
+    return false;
+}
 
 
 bool RobotMotion::isJointsChanged()
@@ -1155,6 +1187,7 @@ bool RobotMotion::isJointsChanged()
 
         return true;
 	}
+
     
     return false;
 }
@@ -1478,6 +1511,8 @@ bool RobotMotion::compareJoints(JointValues src_joints, JointValues dst_joints)
 
 	return true;
 }	
+
+
 
 U64 RobotMotion::getPoseFromJoint(const JointValues &joints, PoseEuler &pose)
 {
@@ -2470,13 +2505,13 @@ U64 RobotMotion::pickPointsFromPathFifo()
     return result;
 }
 
-void RobotMotion::sendJointsToRemote()
+U64 RobotMotion::sendJointsToRemote()
 {
-    U64 result;
+    U64 result = TPI_SUCCESS;
     if (share_mem_.isJointCommandWritten() == false)
     {
         share_mem_.setJointPositions(share_mem_.getCurrentJointCmd().joint_cmd);
-        return;
+        return TPI_SUCCESS;
     }//end if (share_mem_.isJointCommandWritten() == false)
 
     int joints_len = arm_group_->getJointTrajectoryFIFOLength();    
@@ -2504,6 +2539,14 @@ void RobotMotion::sendJointsToRemote()
                 joint_command.points[i].positions[5] = joint_traj[i].joints.j6;
                 joint_command.points[i].point_position = joint_traj[i].id & 0x03;  //last three bits as point position
 
+                if (isJointsOut(joint_traj[i].joints))
+                {
+                    for (int k = 0; k < joints_in; k++)
+                    {
+                        printDbLine("+++", (double*)&joint_traj[k].joints, 6);
+                    }
+                    return SERVO_ESTOP;
+                }
             //	FST_INFO("%f,%f,%f,%f,%f,%f",\
             joint_traj_[i].joints.j1, joint_traj_[i].joints.j2,\
             joint_traj_[i].joints.j3, joint_traj_[i].joints.j4,\
@@ -2539,6 +2582,7 @@ void RobotMotion::sendJointsToRemote()
         }//end if (joints_in > 0)
     }//end  if (joints_len > 0)
 
+    return result;
 }
 
 bool RobotMotion::hasManualVel()

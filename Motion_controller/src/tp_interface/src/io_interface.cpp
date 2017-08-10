@@ -28,7 +28,7 @@ U64 IOInterface::initial()
 {
     U64 result = 0;
     io_manager_ = new fst_io_manager::IOManager;
-    result = io_manager_->init(0);
+    result = io_manager_->init(1);
     if (result != TPI_SUCCESS)
     {
         FST_ERROR("io_manager_ init failed:%llx", result);

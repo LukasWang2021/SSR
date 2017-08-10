@@ -119,7 +119,8 @@ bool rtTimerIsExpired(int id)
 void rtMsSleep(int ms)
 {
     struct timespec deadline;
-    clock_gettime(CLOCK_MONOTONIC, &deadline);
+    clockid_t clk = CLOCK_REALTIME;  //CLOCK_REALTIME or CLOCK_MONOTONIC
+    clock_gettime(clk, &deadline);
 
     // Add the time you want to sleep
     deadline.tv_nsec += 1000000*ms;
@@ -130,7 +131,7 @@ void rtMsSleep(int ms)
         deadline.tv_nsec -= 1000000000;
         deadline.tv_sec++;
     }
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL);
+    clock_nanosleep(clk, TIMER_ABSTIME, &deadline, NULL);
 }
 
 

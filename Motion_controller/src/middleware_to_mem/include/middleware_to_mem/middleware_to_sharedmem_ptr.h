@@ -23,6 +23,9 @@ Summary:    Init the middleware
 #define printf(arg,...)
 #endif //CPU1_SHAREDMEM
 
+#define MEM_ADDRESS_CORE 0x38100000 // 512M: 0x1D100000
+#define MEM_NAME "/dev/globalmem_device"
+
 typedef struct
 {
     char* ptr;

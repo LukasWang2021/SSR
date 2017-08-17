@@ -1,8 +1,8 @@
 
 #include "logfifo.h"
+#include "middleware_to_mem/middleware_to_sharedmem_ptr.h"
 
-
-#define FIFO_START_ADDRESS  0x1D102000   /*start at 8k*/
+#define FIFO_START_ADDRESS  (MEM_ADDRESS_CORE + 0x2000)   /*start at 8k*/
 
 #define FIFO_TOTAL_MEMSIZE  0xDD00      /*55k, end at 63k*/
 
@@ -126,13 +126,13 @@ static int push_log(LOG_RECORD_T * logrec)
 
 static void locateLogFifo(void * fifo_addr)
 {
-    unsigned int addr = (unsigned int)fifo_addr;
+    unsigned int addr = (intptr_t)fifo_addr;
     int i;
     for (i = 0;i<FIFO_RECORD_TOTALNUM+1;++i)
     {
-        log_buf[i] = (LOG_RECORD_T*)(addr + i*sizeof(LOG_RECORD_T));
+        log_buf[i] = (LOG_RECORD_T*)(intptr_t)(addr + i*sizeof(LOG_RECORD_T));
     }   
-    log_header = (LOG_HEADER_T *)(addr + FIFO_TOTAL_MEMSIZE);
+    log_header = (LOG_HEADER_T *)(intptr_t)(addr + FIFO_TOTAL_MEMSIZE);
     in_index = &log_header->in_index; 
     out_index = &log_header->out_index;     
 }
@@ -142,15 +142,23 @@ static void locateLogFifo(void * fifo_addr)
 
 int pushRecord(LOG_RECORD_T* rec)
 {
-    if (0 == log_header->trigger_flag)
-    {
-        if(get_numof_item(atomic_read(in_index),atomic_read(out_index))>=FIFO_RECORD_TOTALNUM/2)
-        {
-            fetch_log(NULL);
-        }        
-    }
+    //if (0 == log_header->trigger_flag)
+    //{
+        //if(get_numof_item(atomic_read(in_index),atomic_read(out_index))>=FIFO_RECORD_TOTALNUM/2)
+        //{
+            //fetch_log(NULL);
+        //}        
+    //}
     rec->time_flag = log_header->trigger_flag;
     return push_log(rec);
+}
+
+void clearRecord(void)
+{
+    while(get_numof_item(atomic_read(in_index),atomic_read(out_index))>0)
+    {
+        fetch_log(NULL);
+    }     
 }
 
 void init_LOG_FIFO(void)
@@ -170,7 +178,8 @@ void init_LOG_FIFO(void)
 
 void Log_trigger(int flag)
 {
-    log_header->trigger_flag = flag;
+    if (flag!=log_header->trigger_flag)
+        log_header->trigger_flag = flag;
 }
 
 
@@ -178,13 +187,13 @@ void Log_trigger(int flag)
 
 int getRecord(LOG_RECORD_T* rec)
 {
-        return fetch_log(rec);
+    return fetch_log(rec);
 }
 
 int open_LOG_FIFO(void *ptr)
 {
     if (NULL!=ptr)
-        locateLogFifo(ptr+(FIFO_START_ADDRESS - 0x1D100000));
+        locateLogFifo(ptr);
     return 0;
 }
 

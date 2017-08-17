@@ -13,13 +13,12 @@ Summary:    Init the middleware
 #include "struct_to_mem/shared_mem_process.h" // for communication between processes 
 #include "struct_to_mem/shared_mem_core.h" //for communication between cores (running in linux)
 #include "logfifo.h"
-#include "middleware_to_mem_version.h"
+//#include "middleware_to_mem_version.h"
 
 //for communication between processes
 #define MEM_MAP_SIZE_PROCESS 65536
 //for communication between cores (running in linux)
 #define MEM_MAP_SIZE_CORE 65536
-#define MEM_ADDRESS_CORE 0x1D100000
 
 HandleTable handleTable[HANDLE_TABLE_LEN] = 
 {
@@ -42,11 +41,9 @@ HandleTable handleTable[HANDLE_TABLE_LEN] =
 int openMem(int type)
 {
     int handle = 0;
-    char *ptr;
-
     //to compile in Linux
     #ifndef CPU1_SHAREDMEM
-
+    char *ptr;
     //to compile for processes communication in Linux
     if (type == MEM_PROCESS)
     {
@@ -71,7 +68,7 @@ int openMem(int type)
     else if (type == MEM_CORE)
     //to compile for cores communication in Linux
     {
-        int fd = open("/dev/globalmem_device", O_RDWR);
+        int fd = open(MEM_NAME, O_RDWR);
         ptr = (char*) mmap(NULL, MEM_MAP_SIZE_CORE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, MEM_ADDRESS_CORE);
         if (ptr == MAP_FAILED) 
         {
@@ -93,7 +90,7 @@ int openMem(int type)
     #else  
     if (type == MEM_BARE)
     { 
-        handleTable[type].ptr = (char*)MEM_ADDRESS;
+        handleTable[type].ptr = (char*)MEM_ADDRESS_CORE;
         handle = MEM_BARE;
     }
     else

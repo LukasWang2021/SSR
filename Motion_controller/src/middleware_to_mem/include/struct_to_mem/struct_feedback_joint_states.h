@@ -5,10 +5,13 @@
 #define JOINT_NUM 6
 #endif
 
-#define STATE_INIT 0
+#define STATE_INIT 10
 #define STATE_READY 1
 #define STATE_RUNNING 2
 #define STATE_ERROR 3
+#define STATE_WAIT_SERVOREADY 4
+#define STATE_WAIT_SERVODOWN 5
+
 
 typedef struct
 {

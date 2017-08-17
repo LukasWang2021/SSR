@@ -1,0 +1,588 @@
+[
+	{
+		"path": "root/Logic/state",
+		"id": 4739,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//512
+		"permission": 1,	//R
+		"user_level": 0,	//0,
+		"unit": 0			//0,
+	},
+
+	{
+		 "path": "root/Logic/stateCommand",
+		 "id": 4740,
+		 "overwrite_active": 0,	//false
+		 "data_type": 5,		//int32
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 2,	//2
+		 "permission": 3,	//RW
+		 "user_level": 0,	//0,
+		 "unit": 0			//0,
+	},
+
+	{
+		 "path": "root/Control/actualJointPositionsFiltered",
+		 "id": 4667,
+		 "overwrite_active": 0,
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 7,
+		 "param_type": 512,		//512
+		 "permission": 1,		//R
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+	},
+   
+	{
+		 "path": "root/Control/actualToolCoordinates",
+		 "id": 4670,
+		 "overwrite_active": 0,
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 6,
+		 "param_type": 512,		//512
+		 "permission": 1,		//R
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   },
+
+	{
+		 "path": "root/Control/hostInJointTrajectory",
+		 "id": 4632,
+		 "overwrite_active": 0,		//false
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 6,
+		 "param_type": 2,		//2
+		 "permission": 3,		//RW
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   },
+
+   {
+		 "path": "root/Control/hostInToolTrajectory",
+		 "id": 4633,
+		 "overwrite_active": 0,		//false
+		 "data_type": 258,
+		 "data_size": 8,
+		 "number_of_elements": 6,
+		 "param_type": 2,		//2
+		 "permission": 3,		//RW
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   },
+
+   {
+		 "path": "root/Logic/mode",
+		 "id": 4737,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 512,		//512
+		 "permission": 1,		//R
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   },
+   {
+		 "path": "root/Logic/modeCommand",
+		 "id": 4738,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 2,		//2
+		 "permission": 3,		//RW
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+	},
+
+	{
+		"path": "root/MotionInterpreter/previous_command_id",
+		"id": 4748,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,
+		"permission": 1,		
+		"user_level": 0,
+		"unit": 0
+	},
+   
+	{
+		"path": "root/MotionInterpreter/current_command_id",
+		"id": 4747,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,
+		"permission": 1,		
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/Control/forwardKinematics/toolCoordinates",
+		"id": 4581,
+		"overwrite_active": 0,
+		"data_type": 258,
+		"data_size": 8,
+		"number_of_elements": 6,
+		"param_type": 512,
+		"permission": 1,		
+		"user_level": 0,
+		"unit": 0
+	},
+	
+	{
+		"path": "root/IO/System/dInAcknowledge",
+		"id": 4701,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dInAutoMode",
+		"id": 4697,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+
+	{
+		"path": "root/IO/System/dInDeadmanEnabled",
+		"id": 4695,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dInEStopNotActive",
+		"id": 4694,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dInExternEnable",
+		"id": 4699,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dInInternalSpare",
+		"id": 4698,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dInManualMode",
+		"id": 4696,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dInStart",
+		"id": 4700,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+
+	{
+		"path": "root/IO/System/dOutEStop",
+		"id": 4706,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dOutEnableDrives",
+		"id": 4708,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dOutInternalSpare",
+		"id": 4710,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dOutNoErrorActive",
+		"id": 4712,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dOutProgramRunning",
+		"id": 4713,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dOutResetEStop",
+		"id": 4707,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dOutSlowSpeed",
+		"id": 4709,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/IO/System/dOutSystemRunning",
+		"id": 4711,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+
+    {
+        "path": "root/Control/fst/ControlCommand",   
+        "id": 9001,
+        "overwrite_active": 0,
+        "data_type": 1,
+        "data_size": 1,
+        "number_of_elements": 1,
+        "param_type": 2,
+        "permission": 1,
+        "user_level": 0,
+        "unit": 0
+    },
+
+    {
+        "path": "root/Logic/activeWarnings",   
+        "id": 5107,
+        "overwrite_active": 0,
+        "data_type": 8,
+        "data_size": 8,
+        "number_of_elements": 10,
+        "param_type": 2,
+        "permission": 1,
+        "user_level": 0,
+        "unit": 0
+    },
+
+   
+    {
+		 "path": "root/Safety_IO/inputFrame1",
+		 "id": 1000,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 512,		//512
+		 "permission": 1,		//R
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   },
+   {
+		 "path": "root/Safety_IO/inputFrame2",
+		 "id": 1001,
+		 "overwrite_active": 0,		//false
+		 "data_type": 5,
+		 "data_size": 4,
+		 "number_of_elements": 1,
+		 "param_type": 512,		//512
+		 "permission": 1,		//R
+		 "user_level": 0,		//0,
+		 "unit": 0				//0,
+   },
+
+    {
+		"path": "root/Logic/programState",
+		"id": 8000,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//512
+		"permission": 1,	//R
+		"user_level": 0,	//0,
+		"unit": 0			//0,
+	},
+    {
+		"path": "root/Logic/curveMode",
+		"id": 8300,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//512
+		"permission": 1,	//R
+		"user_level": 0,	//0,
+		"unit": 0			//0,
+	},
+
+    {
+		"path": "root/MotionInterpreter/instructionNum",
+		"id": 8100,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 512,	//512
+		"permission": 1,	//R
+		"user_level": 0,	//0,
+		"unit": 0			//0,
+	},
+
+    {
+		"path": "root/MotionInterpreter/motion_program",
+		"id": 8200,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Control/toolFrame",
+		"id": 10000,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Control/userFrame",
+		"id": 10001,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Config/IO/Info",
+		"id": 11000,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Calculate/ForwordKinematics",
+		"id": 12000,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Calculate/InverseKinematics",
+		"id": 12001,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Params/system/localTime",
+		"id": 13001,
+		"overwrite_active": 0,
+		"data_type": 5,
+		"data_size": 4,
+		"number_of_elements": 1,
+		"param_type": 3,	
+		"permission": 512,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Params/equipment/jointConstraint",
+		"id": 13002,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},
+
+    {
+		"path": "root/Params/equipment/dh",
+		"id": 13003,
+		"overwrite_active": 0,
+		"data_type": 0,
+		"data_size": 0,
+		"number_of_elements": 0,
+		"param_type": 0,	
+		"permission": 0,	
+		"user_level": 0,	
+		"unit": 0			
+	},    
+
+    {
+		"path": "root/Params/equipment/hardwareLimit",
+		"id": 13004,
+		"overwrite_active": 0,
+		"data_type": 258,
+		"data_size": 8,
+		"number_of_elements": 6,
+		"param_type": 3,	
+		"permission": 512,	
+		"user_level": 0,	
+		"unit": 0			
+	},   
+
+    {
+		"path": "root/Control/globalVelocity",
+		"id": 10101,
+		"overwrite_active": 0,
+		"data_type": 258,
+		"data_size": 8,
+		"number_of_elements": 1,
+		"param_type": 3,	
+		"permission": 512,	
+		"user_level": 0,	
+		"unit": 0			
+	}
+    
+]

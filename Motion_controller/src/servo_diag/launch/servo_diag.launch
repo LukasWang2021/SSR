@@ -1,0 +1,8 @@
+<launch>
+
+  <node name="service_manager" pkg="service_manager" type="service_manager" respawn="false" output="screen">
+  </node>
+  <node name="servo_diag" pkg="servo_diag" type="servo_diag" respawn="false" output="screen">
+  </node>
+
+</launch>

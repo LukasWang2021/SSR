@@ -25,6 +25,7 @@ enum PC_DiagnoseID
   PC_READSERVODTC           = 0x07,
   PC_READSERVOPARA          = 0x11,
   PC_WRITESERVOPARA         = 0x12,
+  PC_SAVESERVOPARA          = 0x13,
   PC_SERVOCMD               = 0x20,
 };
 

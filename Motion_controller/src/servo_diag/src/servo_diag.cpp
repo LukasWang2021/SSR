@@ -114,6 +114,12 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
                 servconf->downloadConf(*service,*(unsigned int*)&pkg.data[0],*(int*)&pkg.data[4]);
                 break;
             }     
+            case PC_SAVESERVOPARA:
+            {
+                //save param
+                servconf->saveConf();
+                break;
+            }    
             case PC_SERVOCMD:
             {
                 ERROR_CODE_TYPE err = service->servoCmd(*(int*)&pkg.data[0],&pkg.data[4],1020,&pkg.data[4],1020);

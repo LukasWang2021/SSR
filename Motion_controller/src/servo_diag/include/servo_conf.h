@@ -77,7 +77,7 @@ class Servconf {
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void downloadConf(fst_controller::ServoService &serv,unsigned int addr,int length);
+    int downloadConf(fst_controller::ServoService &serv, int startaddr,int length);
     
     
     //------------------------------------------------------------
@@ -87,7 +87,7 @@ class Servconf {
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    int uploadConf(fst_controller::ServoService &serv,int addr,int length);
+    int uploadConf(fst_controller::ServoService &serv,int startaddr,int length);
 
 
     //------------------------------------------------------------
@@ -122,10 +122,10 @@ class Servconf {
     int    stored_length_;
     std::string filename_;
     fst_parameter::ParamGroup * p_paramgroup_;
-    const int SERVO_CONF_SEG_SIZE = 512;
 
 };  // class Servconf
 }   // namespace fst_controller
 
 
 #endif  // #ifndef SERVO_CONF_H
+

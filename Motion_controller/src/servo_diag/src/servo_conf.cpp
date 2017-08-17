@@ -101,67 +101,102 @@ void fst_controller::Servconf::saveConf(void)
 }
 
 
-void fst_controller::Servconf::downloadConf(fst_controller::ServoService &serv,unsigned int 
-addr,int length)
+int fst_controller::Servconf::downloadConf(fst_controller::ServoService &serv, int 
+startaddr,int length)
 {
-    char *data = new char[length];
-    int l_len = getConf(addr, data,fst_controller::ServoService::SERVO_CONF_SEG);
+    int max_seg_len = fst_controller::ServoService::SERVO_CONF_SEG;
+    char *data;
+    int l_len;
+
+    if(startaddr<0||length<0) return 0;
+    
+    data = new char[length];
+    
+    int addr;
+    ERROR_CODE_TYPE err;
+    l_len = getConf(startaddr, data,length);
     if(l_len>0)
     {
-        serv.downloadParam(addr,data,l_len);
+        for(addr = startaddr;addr<startaddr+l_len;)
+        {
+            int seg_len;//calculate seg length
+            seg_len = startaddr+l_len-addr;
+            seg_len = (seg_len>max_seg_len)?max_seg_len:seg_len;
+            
+            err = serv.downloadParam(addr,&data[addr - startaddr],seg_len);
+            
+            if(FST_SUCCESS==err)
+                addr += seg_len;
+            else
+                break;
+        }  
+        //calculate how many bytes has been sent
+        l_len = addr - startaddr;
     }
     delete [] data;
+
+    return l_len;
+   
 }
 
 
-int fst_controller::Servconf::uploadConf(fst_controller::ServoService &serv,int addr,int 
+int fst_controller::Servconf::uploadConf(fst_controller::ServoService &serv,int startaddr,int 
 length)
 {
-    char *data = new char[length];
-    ERROR_CODE_TYPE err = serv.uploadParam(addr,data,length);
+    int max_seg_len = fst_controller::ServoService::SERVO_CONF_SEG;
+    char *data;
+    int l_len = length;
+    if(startaddr<0||length<0) return 0;
+    
+    data = new char[l_len];
+
+    int addr;
+    ERROR_CODE_TYPE err;
+    if(l_len>0)
+    {
+        for(addr = startaddr;addr<startaddr+l_len;)
+        {
+            int seg_len;//calculate seg length
+            seg_len = startaddr+l_len-addr;
+            seg_len = (seg_len>max_seg_len)?max_seg_len:seg_len;
+            
+            err = serv.uploadParam(addr,&data[addr - startaddr],seg_len);
+            if(FST_SUCCESS==err)
+                addr += seg_len;
+            else
+                break;
+        }  
+        //calculate how many bytes has been received
+        l_len = addr - startaddr;
+    }
+    
     if(FST_SUCCESS==err)
     {
-       setConf(addr,data,length);
+       l_len = setConf(startaddr,data,l_len);
        //std::cout<<*((char *)data)<<std::endl;
     }
     else
     {
-        length  = 0;
+        l_len  = 0;
     }
-    //sleep(1);
     delete [] data;
-    return length;
+    
+    return l_len;
 
 }
 
-void fst_controller::Servconf::initDownloadConf(fst_controller::ServoService &serv)
-{
-    int l_len;
-    int max_seg_len = fst_controller::ServoService::SERVO_CONF_SEG;
-    for(int addr = startaddr_stored_;addr<startaddr_stored_+stored_length_;)
-    {
-        l_len = startaddr_stored_+stored_length_-addr;
-        l_len = (l_len>max_seg_len)?max_seg_len:l_len;
 
-        downloadConf(serv, addr,l_len);
-        addr += l_len;
-    }	
+void fst_controller::Servconf::initDownloadConf(fst_controller::ServoService &serv)
+{	
+    downloadConf(serv,startaddr_stored_,stored_length_);
 }
 
 void fst_controller::Servconf::initConfFile(fst_controller::ServoService &serv)
 {
-    int l_len;
-    int max_seg_len = fst_controller::ServoService::SERVO_CONF_SEG;
-    for(int addr = startaddr_stored_;addr<startaddr_stored_+stored_length_;)
-    {
-        l_len = startaddr_stored_+stored_length_-addr;
-        l_len = (l_len>max_seg_len)?max_seg_len:l_len;
-
-        uploadConf(serv, addr,l_len);
-        addr += l_len;
-    }	
+    uploadConf(serv,startaddr_stored_,stored_length_);
     saveConf();
 }
+
 
 
 

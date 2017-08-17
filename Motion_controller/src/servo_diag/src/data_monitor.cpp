@@ -141,7 +141,7 @@ void fst_controller::DataMonitor::onFinishRecord(DataMonitor* moni)
     while(moni->record_fifo_->fetch_item(record)>0);// clear queue  , !!>0
     moni->data_state_ = -1;
     moni->record_fifo_->unlock_push();
-    printf("Push unlocked\n");
+    //printf("Push unlocked\n");
 }
 
 
@@ -157,7 +157,7 @@ int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor*
     {
         l_seq = -1;
         cnt = 0;
-        printf("Prepared to send fist package\n");
+        //printf("Prepared to send fist package\n");
     }
     if(moni->data_state_>0)
     {
@@ -175,11 +175,11 @@ int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor*
                                                            moni->data_package_.length);
             moni->data_package_.seq = reqst_seq;
             cnt_help = moni->data_package_.length;
-            printf("Get %d records from fifo, according to %dth sequence\n",cnt_help,reqst_seq);
+            //printf("Get %d records from fifo, according to %dth sequence\n",cnt_help,reqst_seq);
         }
         else if(reqst_seq != l_seq)
         {
-            printf("Wrong sequence number!!!\n");
+            //printf("Wrong sequence number!!!\n");
         }
         else
         {
@@ -196,7 +196,7 @@ int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor*
         {
             l_seq = moni->data_package_.seq;
             cnt += cnt_help;
-            printf("%d records has been sent\n",cnt);
+            //printf("%d records has been sent\n",cnt);
         }
 
 
@@ -243,7 +243,7 @@ void fst_controller::DataMonitor::pcComm_Thread(DataMonitor* moni)
                 {
                     moni->record_fifo_->lock_push();    
                     moni->data_state_ = 1;
-                    printf("data triggered and locked\n");
+                    //printf("data triggered and locked\n");
                 }
             }
             if(moni->p_comm_->recv(&req, 2, COMM_DONTWAIT)!=FST_SUCCESS)

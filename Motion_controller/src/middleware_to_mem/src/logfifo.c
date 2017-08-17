@@ -2,7 +2,9 @@
 #include "logfifo.h"
 #include "middleware_to_mem/middleware_to_sharedmem_ptr.h"
 
-#define FIFO_START_ADDRESS  (MEM_ADDRESS_CORE + 0x2000)   /*start at 8k*/
+#define FIFO_START_OFFSET 0x2000
+
+#define FIFO_START_ADDRESS  (MEM_ADDRESS_CORE + FIFO_START_OFFSET)   /*start at 8k*/
 
 #define FIFO_TOTAL_MEMSIZE  0xDD00      /*55k, end at 63k*/
 
@@ -193,8 +195,9 @@ int getRecord(LOG_RECORD_T* rec)
 int open_LOG_FIFO(void *ptr)
 {
     if (NULL!=ptr)
-        locateLogFifo(ptr);
+        locateLogFifo(ptr+FIFO_START_OFFSET);
     return 0;
 }
+
 
 

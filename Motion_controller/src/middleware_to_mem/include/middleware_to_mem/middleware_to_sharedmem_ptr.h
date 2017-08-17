@@ -24,7 +24,7 @@ Summary:    Init the middleware
 #endif //CPU1_SHAREDMEM
 
 #define MEM_ADDRESS_CORE 0x38100000 // 512M: 0x1D100000
-#define MEM_NAME "/dev/globalmem_device"
+#define MEM_NAME "/dev/fst_shmem"
 
 typedef struct
 {

@@ -9,8 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 # setting for include file.
 set(VERSION_MAJOR 1)
-set(VERSION_MINOR 1)
-set(VERSION_PATCH 0)
+set(VERSION_MINOR 3)
+set(VERSION_PATCH 2)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 
 # setting for package version file.
@@ -63,6 +63,6 @@ install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(DIRECTORY cfg
+install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

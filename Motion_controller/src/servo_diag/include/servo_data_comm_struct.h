@@ -28,6 +28,7 @@ typedef struct
 typedef struct 
 {
     int length;
+    int seq;
     Servo_Data_Record_t record[PACKAGE_SIZE];
 }Servo_Data_Package_t;
 

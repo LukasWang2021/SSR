@@ -60,7 +60,8 @@ void fst_controller::DataMonitor::startMonitor(DataMonitor* moni,std::vector<int
         while(moni->record_fifo_->fetch_item(record)>0);// clear queue  , !!>0
         moni->t_list_ = t_list;
         moni->start_monitor_ = true;
-        moni->record_fifo_->unlock_push();                
+        moni->data_state_ = -1;
+        moni->record_fifo_->unlock_push();              
     }
 }
 
@@ -83,9 +84,144 @@ bool fst_controller::DataMonitor::alignNcheck(int & k,int bytesize,int totalsize
     return true;
 }
 
+bool fst_controller::DataMonitor::sendResponse(fst_comm_interface::CommInterface* pcomm,const 
+void *buf, int buf_size)
+{
+    ERROR_CODE_TYPE rc;
+    bool res = false;
+    int retry = 6;
+    do
+    {
+        rc = pcomm->send(buf, 
+                buf_size, 
+                COMM_DONTWAIT);
+        retry--;
+    }while(FST_SUCCESS != rc && retry>0);  
+
+    if(FST_SUCCESS == rc)
+        res = true;
+    return res;
+}
+
+
+bool fst_controller::DataMonitor::onRecordRequest(DataMonitor* moni)
+{
+    bool res = false;
+    
+    unsigned char resp;
+    if(moni->data_state_>0)
+    {
+        resp = 0xA1;
+        if(true == sendResponse(moni->p_comm_,&resp,sizeof(resp)))
+        {
+            res = true;
+        }
+        // according to nanomsg request response communication mechanizm, if there was 
+        // no respose within one minutes, the sender will repeat sending
+        //Servo_Data_Record_t record;
+        //while(moni->record_fifo_->fetch_item(record)>0);// clear queue  , !!>0
+        //moni->record_fifo_->unlock_push();
+    }
+    else 
+    {
+        resp = 0xA0;
+        sendResponse(moni->p_comm_,&resp,sizeof(resp));
+        if(moni->data_state_<0)
+        {
+            moni->data_state_ = 0;
+        }
+    }
+    
+    return res;
+}
+
+void fst_controller::DataMonitor::onFinishRecord(DataMonitor* moni)
+{
+    Servo_Data_Record_t record;
+    while(moni->record_fifo_->fetch_item(record)>0);// clear queue  , !!>0
+    moni->data_state_ = -1;
+    moni->record_fifo_->unlock_push();
+    printf("Push unlocked\n");
+}
+
+
+
+int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor* moni)
+{
+    int res;
+    static int l_seq = -1;
+    static int cnt = 0;
+    int cnt_help = 0;
+    int reqst_seq = int(seq);
+    if((0==seq)&&(moni->record_fifo_->size()==SNAPSHOT_SIZE))
+    {
+        l_seq = -1;
+        cnt = 0;
+        printf("Prepared to send fist package\n");
+    }
+    if(moni->data_state_>0)
+    {
+        //data has prepared
+        
+        if(reqst_seq == l_seq + 1)
+        {
+            //right sequence
+            moni->data_package_.length = moni->record_fifo_->size();
+            if(moni->data_package_.length>PACKAGE_SIZE) 
+                moni->data_package_.length = PACKAGE_SIZE;
+
+            moni->data_package_.length = moni->record_fifo_->fetch_batch(
+                                                           moni->data_package_.record,
+                                                           moni->data_package_.length);
+            moni->data_package_.seq = reqst_seq;
+            cnt_help = moni->data_package_.length;
+            printf("Get %d records from fifo, according to %dth sequence\n",cnt_help,reqst_seq);
+        }
+        else if(reqst_seq != l_seq)
+        {
+            printf("Wrong sequence number!!!\n");
+        }
+        else
+        {
+            //retry
+            //do nothing
+            cnt_help = 0;
+        }
+
+        res = sendResponse(moni->p_comm_,
+                         &moni->data_package_, 
+                         sizeof(moni->data_package_));
+
+        if(true == res)
+        {
+            l_seq = moni->data_package_.seq;
+            cnt += cnt_help;
+            printf("%d records has been sent\n",cnt);
+        }
+
+
+        
+        if((moni->data_package_.length<=0)||(true != res))
+        {
+            onFinishRecord(moni);
+        }
+
+    }
+    else
+    {
+        moni->data_package_.length = 0;
+        moni->data_package_.seq = -1;
+        l_seq = moni->data_package_.seq;
+        moni->p_comm_->send(&moni->data_package_, 
+                    sizeof(moni->data_package_), 
+                    COMM_DONTWAIT);
+        printf("ERR: get data before data is ready!!!\n");
+    }    
+    return l_seq;
+}
+
 void fst_controller::DataMonitor::pcComm_Thread(DataMonitor* moni)
 {
-    static int cnt = 0;  
     if(NULL!=moni->p_comm_)
     {
         boost::thread thrd_data_moni(boost::bind(dataMonitor_Thread, moni));
@@ -93,7 +229,7 @@ void fst_controller::DataMonitor::pcComm_Thread(DataMonitor* moni)
         thrd_data_moni.detach();
 
         
-        unsigned char req;
+        unsigned char req[2];
         while(1)
         {
             if(false == moni->start_monitor_)
@@ -101,72 +237,34 @@ void fst_controller::DataMonitor::pcComm_Thread(DataMonitor* moni)
                 usleep(1000);
                 continue;
             }
-
-            if(moni->p_comm_->recv(&req, sizeof(req), COMM_DONTWAIT)!=FST_SUCCESS)
+            if(moni->record_fifo_->size()>=SNAPSHOT_SIZE)
+            {
+                if(0 == moni->data_state_)
+                {
+                    moni->record_fifo_->lock_push();    
+                    moni->data_state_ = 1;
+                    printf("data triggered and locked\n");
+                }
+            }
+            if(moni->p_comm_->recv(&req, 2, COMM_DONTWAIT)!=FST_SUCCESS)
             {
                 usleep(1000);
 
                 continue;
             }
-            switch(req)
+            switch(req[0])
             {
                 case 0xC1:   
+                {
+                    onRecordRequest(moni);
+                    break;
+                }
                 case 0xC2:
                 {
-                    if(0xC1 == req)
-                    {
-                        cnt = 0;
-                        if(moni->record_fifo_->is_push_locked())
-                        {
-                            Servo_Data_Record_t record;
-                            while(moni->record_fifo_->fetch_item(record)>0);// clear queue  , !!>0
-                            moni->record_fifo_->unlock_push();
-                        }
-                        //printf("C1 received\n");
-                        while((true == moni->start_monitor_)&&\
-                             (moni->record_fifo_->size()<SNAPSHOT_SIZE))
-                        {
-                           usleep(10000); 
-                        }
-                        //printf("fifo length: %d\n", moni->record_fifo_->size());//test
-                        moni->record_fifo_->lock_push();
-                    }
-                    
-                    if(moni->record_fifo_->is_push_locked())
-                    {
-                        moni->data_package_.length = moni->record_fifo_->size();
-                        if(moni->data_package_.length>PACKAGE_SIZE) 
-                            moni->data_package_.length = PACKAGE_SIZE;
-
-                        moni->data_package_.length = moni->record_fifo_->fetch_batch(
-                                                                           moni->data_package_.record,
-                                                                           moni->data_package_.length);
-                        if(moni->data_package_.length>0)
-                        {
-                            moni->p_comm_->send(&moni->data_package_, 
-                                        sizeof(moni->data_package_), 
-                                        COMM_DONTWAIT);
-                            cnt += moni->data_package_.length;
-                        }
-                        
-                        if(moni->data_package_.length<=0||cnt>=SNAPSHOT_SIZE)
-                        {
-                            Servo_Data_Record_t record;
-                            while(moni->record_fifo_->fetch_item(record)>0);// clear queue  , !!>0
-                            moni->record_fifo_->unlock_push();
-                        }
-
-                    }
-                    else
-                    {
-                        moni->data_package_.length = 0;
-                        moni->p_comm_->send(&moni->data_package_, 
-                                    sizeof(moni->data_package_), 
-                                    COMM_DONTWAIT);
-                        printf("C2 received before C1!!!\n");
-                    }
+                    onGetdataRequest(req[1],moni);
                     break;
-                }           
+                }
+        
                 default:
                     break;
                 
@@ -271,15 +369,5 @@ int fst_controller::DataMonitor::logdata2Databuf(char *databuf,
     return pos;
 }
 
-/*
-TYPE_UINT8 = 0,
-TYPE_INT8 = 1,
-TYPE_UINT16 = 2,
-TYPE_INT16 = 3,
-TYPE_UINT32 = 4,
-TYPE_INT32 = 5,
-TYPE_FLOAT32 = 6,
-TYPE_FLOAT64 = 7,
-*/
 
 

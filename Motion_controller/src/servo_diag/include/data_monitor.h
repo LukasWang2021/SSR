@@ -56,10 +56,19 @@ class DataMonitor {
     // Function:    startMonitor
     // Summary: Start Monitor
     // In:      None
-    // Out:     None
+    // Out:     size : snapshot size
     // Return:  None
     //------------------------------------------------------------
-    static void startMonitor(DataMonitor* moni,std::vector<int>& t_list);
+    static void startMonitor(DataMonitor* moni,std::vector<int>& t_list,unsigned int &ss_size);
+
+    //------------------------------------------------------------
+    // Function:    setSnapshotSize
+    // Summary: Set Snapshot Size
+    // In:      None
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------    
+    static void setSnapshotSize(DataMonitor* moni,unsigned int ss_size);
     //------------------------------------------------------------
     // Function:    stopMonitor
     // Summary: Stop Monitor
@@ -142,6 +151,7 @@ class DataMonitor {
     Servo_Data_Package_t data_package_;
     std::vector<int> t_list_;
     int data_state_;// -1: record data not required 0: record  is required 1: record fifo is locked
+    unsigned int snapshot_size_;
 };  // class ServcfComm
 }   // namespace fst_controller
 

@@ -38,10 +38,11 @@ fst_controller::DataMonitor::~DataMonitor(void)
 void fst_controller::DataMonitor::initDataMonitor(void)
 {
     if (NULL == record_fifo_)
-        record_fifo_ = new fst_controller::LimitedFifo<Servo_Data_Record_t>(SNAPSHOT_SIZE);
+        record_fifo_ = new fst_controller::LimitedFifo<Servo_Data_Record_t>(MAX_SNAPSHOT_SIZE);
     if (NULL!=record_fifo_)
     {
         boost::thread thrd_moni(boost::bind(pcComm_Thread, this));
+        snapshot_size_ = MAX_SNAPSHOT_SIZE/2; //default snapshot size
         thrd_moni.detach();
         printf("PC monitor start!\n");
     }
@@ -51,7 +52,9 @@ void fst_controller::DataMonitor::initDataMonitor(void)
     }
 }
 
-void fst_controller::DataMonitor::startMonitor(DataMonitor* moni,std::vector<int>& t_list)
+void fst_controller::DataMonitor::startMonitor(DataMonitor* moni,
+                                                std::vector<int>& t_list,
+                                                unsigned int &ss_size)
 {   
     if(false == moni->start_monitor_)
     {
@@ -62,6 +65,17 @@ void fst_controller::DataMonitor::startMonitor(DataMonitor* moni,std::vector<int
         moni->start_monitor_ = true;
         moni->data_state_ = -1;
         moni->record_fifo_->unlock_push();              
+    }
+    ss_size = moni->snapshot_size_;
+}
+
+void fst_controller::DataMonitor::setSnapshotSize(DataMonitor* moni,unsigned int ss_size)
+{   
+    if(false == moni->start_monitor_)
+    {
+        if(ss_size > MAX_SNAPSHOT_SIZE)
+            ss_size = MAX_SNAPSHOT_SIZE;
+        moni->snapshot_size_ = ss_size;            
     }
 }
 
@@ -153,7 +167,7 @@ int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor*
     static int cnt = 0;
     int cnt_help = 0;
     int reqst_seq = int(seq);
-    if((0==seq)&&(moni->record_fifo_->size()==SNAPSHOT_SIZE))
+    if((0==seq)&&(moni->record_fifo_->size()==(int)(moni->snapshot_size_)))
     {
         l_seq = -1;
         cnt = 0;
@@ -237,7 +251,7 @@ void fst_controller::DataMonitor::pcComm_Thread(DataMonitor* moni)
                 usleep(1000);
                 continue;
             }
-            if(moni->record_fifo_->size()>=SNAPSHOT_SIZE)
+            if(moni->record_fifo_->size()>=(int)(moni->snapshot_size_))
             {
                 if(0 == moni->data_state_)
                 {
@@ -294,11 +308,11 @@ void fst_controller::DataMonitor::dataMonitor_Thread(DataMonitor* moni)
             servo_record.flag = (int)record.time_flag;
             if(0==servo_record.flag)
             {
-                moni->record_fifo_->push_item(servo_record,true,SNAPSHOT_SIZE/2);//push anyway
+                moni->record_fifo_->push_item(servo_record,true,moni->snapshot_size_/2);//push anyway
             }
             else
             {
-                moni->record_fifo_->push_item(servo_record,true);//push anyway
+                moni->record_fifo_->push_item(servo_record,true,moni->snapshot_size_);//push anyway
             }
         }
         if(false == moni->start_monitor_)
@@ -316,6 +330,43 @@ int fst_controller::DataMonitor::logdata2Databuf(char *databuf,
 {
     switch(type)
     {
+        case TYPE_INT8:
+        {
+            if(alignNcheck(pos,1,RECORD_SIZE))
+            {
+                *(char *)&databuf[pos] = *(char *)record_data;
+                pos += 1;
+            }
+            break;
+        }  
+        case TYPE_UINT8:
+        {
+            if(alignNcheck(pos,1,RECORD_SIZE))
+            {
+                *(unsigned char *)&databuf[pos] = *(unsigned char *)record_data;
+                pos += 1;
+            }
+            break;
+        }
+        case TYPE_INT16:
+        {
+            if(alignNcheck(pos,2,RECORD_SIZE))
+            {
+                *(short *)&databuf[pos] = *(short *)record_data;
+                pos += 2;
+            }
+            break;
+        }    
+        case TYPE_UINT16:
+        {
+            if(alignNcheck(pos,2,RECORD_SIZE))
+            {
+                *(unsigned short *)&databuf[pos] = *(unsigned short *)record_data;
+                pos += 2;
+            }
+            break;
+        } 
+
         case TYPE_INT32:
         {
             if(alignNcheck(pos,4,RECORD_SIZE))

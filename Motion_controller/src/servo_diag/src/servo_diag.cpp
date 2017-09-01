@@ -56,12 +56,13 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             {
                 std::vector<int> t_list;
                 int i;
+                unsigned int ss_size;
                 service->startLog(*(int*)&pkg.data[0],&pkg.data[4],t_list);
-                DataMonitor::startMonitor(monitor,t_list);
-                
+                DataMonitor::startMonitor(monitor,t_list,ss_size);
+                *(unsigned int *)&pkg.data[0] = ss_size;
                 for(i = 0;i<(int)t_list.size()&&i<SERVO_CMD_SEG_LENGTH/4;i++)
                 {
-                    *(int*)&pkg.data[i*4] = t_list[i];
+                    *(int*)&pkg.data[i*4+4] = t_list[i];
                 }
 
                 break;
@@ -83,7 +84,8 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }
             case PC_SETTRIGGER:
             {
-                ERROR_CODE_TYPE err = service->setTrig(&pkg.data[4],*(int*)&pkg.data[0],(int*)&pkg.data[0]);
+                ERROR_CODE_TYPE err = service->setTrig(&pkg.data[8],*(int*)&pkg.data[0],(int*)&pkg.data[0]);
+                DataMonitor::setSnapshotSize(monitor,*(unsigned int*)&pkg.data[4]);
                 if(FST_SUCCESS!=err)  
                 {
                     std::cout<<"Set trigger failed!"<<std::endl;
@@ -158,7 +160,7 @@ int main(int argc, char** argv)
 
     readlink("/proc/self/exe" , buf , sizeof(buf));
     boost::filesystem::path pa(buf);
-    std::string conffile(pa.parent_path().string()+"/config/servo_param.yaml");
+    std::string conffile(pa.parent_path().parent_path().parent_path().string()+"/share/configuration/machine/servo_param.yaml");
     Servconf* pconf = new Servconf(conffile);
     
     DataMonitor* pmonitor = new DataMonitor(ip,ServoDiag::DATAMONITOR_PORT);

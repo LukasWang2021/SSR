@@ -81,7 +81,7 @@ int main(int argc, char** argv)
         if (result == FST_SUCCESS)
         {
             std::cout<<"id = "<<info[i].id<<". all port values = ";
-            for(int j = 0; j < num2; ++j)
+            for(unsigned int j = 0; j < (unsigned int)num2; ++j)
             {
                 std::cout<<int(arr[j]);
                 if ((j + 1) == info[i].input)

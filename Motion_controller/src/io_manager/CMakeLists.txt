@@ -4,7 +4,7 @@ project(io_manager)
 # setting for include file.
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 0)
-set(VERSION_PATCH 0)
+set(VERSION_PATCH 2)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 
 # setting for package version file.
@@ -48,7 +48,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(io_manager src/io_manager.cpp)
 target_link_libraries(io_manager ${catkin_LIBRARIES} parameter_manager ioboard)
 
-add_executable(io_manager_node src/io_manager_node.cpp)
+add_executable(io_manager_node test/io_manager_node.cpp)
 target_link_libraries(io_manager_node ${catkin_LIBRARIES} io_manager)
 
 install(TARGETS io_manager
@@ -59,8 +59,8 @@ install(TARGETS io_manager_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(DIRECTORY config/
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
 )
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 

@@ -53,6 +53,7 @@ IOManager::IOManager()
     seq_ = 1;
     read_counter_ = 0;
     write_counter_ = 0;
+    config_path_ = "share/configuration/model/io_";
     thread_error_ = THREAD_SUCCESS;
     last_error_ = THREAD_SUCCESS;
     thread_status_ = INIT_STATUS;
@@ -352,6 +353,7 @@ U64 IOManager::getIOError(void)
 {
 //    if (thread_error_ != 0)
 //        std::cout<<"Error in getThreadError(): error code = "<<thread_error_<<std::endl;
+  
     return error_map_[thread_error_];
 }
 
@@ -610,7 +612,8 @@ bool IOManager::loadConfigFile(int model)
 {
     // load configuration yaml file.
     std::ostringstream oss;
-    oss<<"share/io_manager/config/io_"<<model<<".yaml";
+//delete    oss<<"share/io_manager/config/io_"<<model<<".yaml";
+    oss<<config_path_<<model<<".yaml";
     std::string ss = oss.str();      
     if (!param_.loadParamFile(ss))
     {

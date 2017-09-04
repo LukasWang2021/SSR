@@ -94,7 +94,7 @@ int main(int argc, char** argv)
                     if (flag == true)
                     {
                         std::cout<<"id = "<<info[i].id<<". all port values = ";
-                        for(unsigned int j = 0; j < num2; ++j)
+                        for(int j = 0; j < num2; ++j)
                         {
 //                            std::cout<<int(arr[i][j])<<" ";
                             std::cout<<std::bitset<8>(arr[i][j])<<" ";
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
     result = io_manager.getModuleValues(info[0].id, 72, arr[0], num3);
     if (result == FST_SUCCESS)
     {
-        for(unsigned int j = 0; j < num3; ++j)
+        for(unsigned int j = 0; j < (unsigned int)num3; ++j)
         {
             std::cout<<int(arr[0][j]);
             if ((j + 1) == info[0].input)

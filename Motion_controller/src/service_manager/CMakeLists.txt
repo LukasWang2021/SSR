@@ -46,14 +46,18 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(service_manager src/service_manager.cpp src/response_actions.cpp)
 target_link_libraries(service_manager ${catkin_LIBRARIES} middleware_to_mem comm_interface)
-#set_target_properties(service_manager PROPERTIES VERSION ${service_manager_VERSION}
-#    SOVERSION ${service_manager_VERSION_MAJOR}
-# )
 
-install(TARGETS service_manager
+add_executable(mimic_mcs test/mimic_mcs.cpp)
+target_link_libraries(mimic_mcs ${catkin_LIBRARIES} comm_interface)
+
+install(TARGETS service_manager mimic_mcs
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 
   DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+)
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

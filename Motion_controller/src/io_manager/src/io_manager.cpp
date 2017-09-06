@@ -53,7 +53,7 @@ IOManager::IOManager()
     seq_ = 1;
     read_counter_ = 0;
     write_counter_ = 0;
-    config_path_ = "share/configuration/model/io_";
+    config_path_ = "share/configuration/configurable/io_";
     thread_error_ = THREAD_SUCCESS;
     last_error_ = THREAD_SUCCESS;
     thread_status_ = INIT_STATUS;

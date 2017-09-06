@@ -107,7 +107,7 @@ bool FileOperations::copyDir(const char *source, const char *destination)
     if ((dp = opendir(source)) == NULL)
     {
         std::cout<<"Error in FileOperations::copyDir():"
-            <<"Can't open directory."<<source<<std::endl;
+            <<"Can't open directory. "<<source<<std::endl;
         return false;
     } 
 
@@ -175,6 +175,15 @@ bool FileOperations::copy(const char *source, const char *destination)
     }
 }
 
+//------------------------------------------------------------
+// Function:  getExePath
+// Summary: get the executable path.
+// In:      buf -> the string to store the path.
+//          size -> the string size.
+// Out:     None
+// Return:  NULL -> fail.
+//          path -> the path string.
+//------------------------------------------------------------
 char* FileOperations::getExePath(char *buf, int size)
 {
     int len = readlink("/proc/self/exe", buf, size);
@@ -276,6 +285,7 @@ std::vector<std::string> FileOperations::getDirsName(std::string dir_path)
 // In:      None.
 // Out:     None
 // Return:  the size of the disk. The unit is Byte.
+//          -1 -> fail.
 //------------------------------------------------------------
 long long FileOperations::getFreeDiskSize(void)
 {
@@ -296,6 +306,7 @@ long long FileOperations::getFreeDiskSize(void)
 // In:      file_path -> the file path.
 // Out:     None
 // Return:  the size of the file. The unit is Byte.
+//          -1 -> fail.
 //------------------------------------------------------------
 long long FileOperations::getFileSize(const char *file_path)
 {
@@ -313,6 +324,7 @@ long long FileOperations::getFileSize(const char *file_path)
 // In:      dir_path -> the directory path.
 // Out:     None
 // Return:  the size of the directory. The unit is Byte.
+//          -1 -> fail.
 //------------------------------------------------------------
 long long FileOperations::getDirSize(const char *dir_path)
 {
@@ -404,9 +416,13 @@ U64 FileOperations::archiveCreate(const char **source, const char *destination)
         const char *currentFile = archive_entry_pathname(entry);
         archive_read_disk_descend(disk); // to get a full traversal.
         if (r == ARCHIVE_EOF)
+        {
+            archive_entry_free(entry);
             break;
+        }
         if (r != ARCHIVE_OK)
         {
+            archive_entry_free(entry);
             std::cout<<"Error in FileOperations::archiveCreate(): "
                 <<"Can't read the file header:"<<currentFile<<std::endl;
             result = SYS_COMPRESS_READ_FILE_HEADER_FAIL;
@@ -434,6 +450,7 @@ U64 FileOperations::archiveCreate(const char **source, const char *destination)
         }
         else
         {
+            archive_entry_free(entry);
             std::cout<<"Error in FileOperations::archiveCreate(): "
                 <<"Can't write the archive:"<<currentFile<<std::endl;
             result = SYS_COMPRESS_WRITE_FILE_FAIL;

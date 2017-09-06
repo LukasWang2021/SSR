@@ -37,7 +37,7 @@ const int ResponseAction::service_table[SERVICE_TABLE_LEN] =
     LOG_CONTROL_SID,
     LOG_GETLIST_SID,
     MONITOR_HEARTBEAT_SID,
-    APP_VERSION_SID,
+
 };
 
 int ResponseAction::dtc_flag = 0;

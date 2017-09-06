@@ -14,8 +14,14 @@ Summary:    test process
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 #include <iostream>
 
+volatile int exit_flag = 0;
+static void handler(int sig)
+{
+    exit_flag = 1;
+}
 int main(int argc, char** argv)
 {    
     fst_io_manager::IOManager io_manager;
@@ -56,8 +62,11 @@ int main(int argc, char** argv)
         }
     }
 
+    
+    signal(SIGINT, handler);
+
     unsigned char arr[4][10] = {0}, temp[4][10] = {0};
-    while (true)
+    while (!exit_flag)
     {
         // --------------------set port value.-----------------------//
         U64 error = io_manager.getIOError();

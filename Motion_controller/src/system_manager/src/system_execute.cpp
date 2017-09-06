@@ -83,7 +83,6 @@ SystemExecute::SystemExecute()
 //------------------------------------------------------------
 SystemExecute::~SystemExecute()
 {
-
 }
 
 //------------------------------------------------------------
@@ -125,35 +124,43 @@ U64 SystemExecute::init(void)
     }
 
     /* covert the relative path to absolute path. */
-    char path[256];
-    char *p = FileOperations::getExePath(path, sizeof(path));
-    if (p == NULL)
-        return SYS_INIT_FAIL;
-    boost::filesystem::path executable(path);
-    os_path_ = executable.parent_path().parent_path().parent_path().string(); // <absolute path>/install
-    config_path_ = os_path_ + "/" + config_path_;         // <absolute path>/install/share/configuration
-    version_path_ = os_path_ + "/" + version_path_;       // <absolute path>/install/share/version
-    config_backup_ = executable.parent_path().parent_path().parent_path().parent_path().string() + "/" + config_backup_; 
+    static bool init_only_once = false;
+    if (init_only_once == false)
+    {
+        char path[256];
+        char *p = FileOperations::getExePath(path, sizeof(path));
+        if (p == NULL)
+            return SYS_INIT_FAIL;
+        boost::filesystem::path executable(path);
+        os_path_ = executable.parent_path().parent_path().parent_path().string(); // <absolute path>/install
+        config_path_ = os_path_ + "/" + config_path_;         // <absolute path>/install/share/configuration
+        version_path_ = os_path_ + "/" + version_path_;       // <absolute path>/install/share/version
+        config_backup_ = executable.parent_path().parent_path().parent_path().parent_path().string() + "/" + config_backup_; 
  
-    /* map the source path to the archive in /tmp path. */
-    path_map_[os_path_] = temp_path_ + "/" + os_name_;         // /tmp/fst_backup/OS.tgz
-    path_map_[infra_path_] = temp_path_ + "/" + infra_name_;   // /mnt/infra <-> /tmp/fst_backup/infra.tgz
-    path_map_[config_path_] = temp_path_ + "/" + config_name_; // /tmp/fst_backup/config.tgz
+        /* map the source path to the archive in /tmp path. */
+        path_map_[os_path_] = temp_path_ + "/" + os_name_;         // /tmp/fst_backup/OS.tgz
+        path_map_[infra_path_] = temp_path_ + "/" + infra_name_;   // /mnt/infra <-> /tmp/fst_backup/infra.tgz
+        path_map_[config_path_] = temp_path_ + "/" + config_name_; // /tmp/fst_backup/config.tgz
 
-    /* map the archive name to the original path.*/
-    path_map_[os_name_] = os_path_;           // OS.tgz     <->  <absolute path>/install
-    path_map_[infra_name_] = infra_path_;     // infra.tgz  <->  /mnt/infra
-    path_map_[config_name_] = config_path_;   // config.tgz <->  <absolute path>/install/share/configuration
+        /* map the archive name to the original path.*/
+        path_map_[os_name_] = os_path_;           // OS.tgz     <->  <absolute path>/install
+        path_map_[infra_name_] = infra_path_;     // infra.tgz  <->  /mnt/infra
+        path_map_[config_name_] = config_path_;   // config.tgz <->  <absolute path>/install/share/configuration
+
+        init_only_once = true;
+    }
 
     /* disable ftp service. */
-    U64 result = stopFTP();
+/*    U64 result = stopFTP();
     if (result != FST_SUCCESS)
         return result;
-
+*/
     /* read the versions of all packages. */
-    result = getAllVersion();
+/*    result = getAllVersion();
     if (result != FST_SUCCESS)
         return result;
+*/
+
 
     return FST_SUCCESS;
 }
@@ -172,6 +179,10 @@ U64 SystemExecute::getAllVersion(void)
     std::string dir_path = version_path_;
     std::vector<std::string> files;
     files = FileOperations::getFilesName(dir_path);
+
+    if (files.size() == 0)
+        return SYS_READ_VERSION_FAIL;
+
     for (unsigned int i = 0; i < files.size(); i++)
     {
         /* read all the content in the file. */
@@ -253,6 +264,8 @@ bool SystemExecute::checkSize(std::vector<std::string> paths)
     long long total_size = 0;
     for (unsigned int i = 0; i < paths.size(); i++)
     {
+        if (access(paths[i].c_str(), 0) == -1)
+            return false;
         lstat(paths[i].c_str(), &info);
         if (S_ISDIR(info.st_mode))
             total_size += FileOperations::getDirSize(paths[i].c_str());

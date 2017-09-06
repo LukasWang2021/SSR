@@ -72,6 +72,15 @@ public:
     //------------------------------------------------------------
     static bool copy(const char *source, const char *destination);
 
+    //------------------------------------------------------------
+    // Function:  getExePath
+    // Summary: get the executable path.
+    // In:      buf -> the string to store the path.
+    //          size -> the string size.
+    // Out:     None
+    // Return:  NULL -> fail.
+    //          path -> the path string.
+    //------------------------------------------------------------
     static char* getExePath(char *buf, int size);
 
     //------------------------------------------------------------
@@ -98,6 +107,7 @@ public:
     // In:      None.
     // Out:     None
     // Return:  the size of the disk. The unit is Byte.
+    //          -1 -> fail.
     //------------------------------------------------------------
     static long long getFreeDiskSize(void);
 
@@ -107,6 +117,7 @@ public:
     // In:      file_path -> the file path.
     // Out:     None
     // Return:  the size of the file. The unit is Byte.
+    //          -1 -> fail.
     //------------------------------------------------------------
     static long long getFileSize(const char *file_path);
 
@@ -116,6 +127,7 @@ public:
     // In:      dir_path -> the directory path.
     // Out:     None
     // Return:  the size of the directory. The unit is Byte.
+    //          -1 -> fail.
     //------------------------------------------------------------
     static long long getDirSize(const char *dir_path);
 

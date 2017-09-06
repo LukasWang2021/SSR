@@ -31,6 +31,7 @@ SharedData SystemManager::shared_data_ = {NONE, FST_SUCCESS, false, false};
 boost::mutex SystemManager::mutex_;
 // channel to communicate with tp_interface.
 fst_comm_interface::CommInterface SystemManager::comm_system_;
+volatile int SystemManager::exit_flag_ = 0;
 
 //------------------------------------------------------------
 // Function:  SystemManager
@@ -74,6 +75,16 @@ void SystemManager::init(void)
             <<"Fail to create the communication channel."<<std::endl;
     }
     result = SystemExecute::init();
+    if (result != FST_SUCCESS)
+        shared_data_.error = SYS_INIT_FAIL;
+
+    /* disable ftp service. */
+    result = SystemExecute::stopFTP();
+    if (result != FST_SUCCESS)
+        shared_data_.error = SYS_INIT_FAIL;
+
+    /* read the versions of all packages. */
+    result = SystemExecute::getAllVersion();
     if (result != FST_SUCCESS)
         shared_data_.error = SYS_INIT_FAIL;
 
@@ -190,7 +201,7 @@ bool SystemManager::receiveCommand(SystemCommand &command)
 bool SystemManager::replyCommand(SystemCommand command)
 {
     /* set the response vaule. */
-    ServiceResponse response;
+    ServiceResponse response={0,""};
     response.res_id = command;
     U64 error;
     {
@@ -289,16 +300,41 @@ bool SystemManager::executeCommand(void)
 
     return true;
 }
+
+//------------------------------------------------------------
+// Function:  sigHandler
+// Summary: signal handler
+// In:      system signal
+// Out:     None
+// Return:  None
+//------------------------------------------------------------
+void SystemManager::sigHandler(int sig)
+{
+    if(sig == SIGINT)
+        exit_flag_ = 1;
+}
+
+
+void SystemManager::teardown(void)
+{
+    comm_thread_.interrupt();
+    comm_thread_.join();
+}
+
 }
 
 int main(int argc, char** argv)
 {
-    fst_system_manager::SystemManager::init();
-    while (true)
+    using namespace fst_system_manager;
+    SystemManager::init();
+    signal(SIGINT, SystemManager::sigHandler);
+    while (!SystemManager::exit_flag_)
     {
-        fst_system_manager::SystemManager::executeCommand();
-        usleep((fst_system_manager::SystemManager::COMM_LOOP));
+        SystemManager::executeCommand();
+        usleep(SystemManager::COMM_LOOP);
     }
+    SystemManager::teardown();
+    return 0;
 }
 
 #endif //SYSTEM_MANAGER_SYSTEM_MANAGER_CPP_

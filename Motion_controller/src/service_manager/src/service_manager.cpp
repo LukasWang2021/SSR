@@ -13,12 +13,15 @@ Summary:    dealing with service
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <signal.h>
 #include <iostream>
 #include <sstream>
 #include "service_manager_version.h"
 
 namespace fst_service_manager
 {
+
+volatile int ServiceManager::exit_flag_ = 0;
 
 //------------------------------------------------------------
 // Function:  getVersion
@@ -49,6 +52,7 @@ ServiceManager::ServiceManager()
     handle_core_ = 0;
     loop_count_core_ = 0;
     loop_count_mcs_ = 0;
+    check_sid_enable_ = false;
     check_mcs_enable_ = false;
     running_sid_ = 0;
     std::cout<<"service_manager version:"<<fst_service_manager::getVersion()<<std::endl;
@@ -83,26 +87,26 @@ ERROR_CODE_TYPE ServiceManager::init(void)
     ERROR_CODE_TYPE result = comm_test_.createChannel(COMM_REP, COMM_IPC, "test");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in CommMonito::init(): fail to create modbus channel."<<std::endl;
+        std::cout<<"Error in ServiceManager::init(): fail to create modbus channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
     result = comm_mcs_.createChannel(COMM_REP, COMM_IPC, "mcs");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in CommMonito::init(): fail to create mcs channel."<<std::endl;
+        std::cout<<"Error in ServiceManager::init(): fail to create mcs channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
     result = comm_param_.createChannel(COMM_REP, COMM_IPC, "servo_param");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in CommMonito::init(): fail to create servo param channel."<<std::endl;
+        std::cout<<"Error in ServiceManager::init(): fail to create servo param channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
 
     result = comm_system_.createChannel(COMM_REP, COMM_IPC, "system_manager");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in CommMonito::init(): fail to create system_manager channel."<<std::endl;
+        std::cout<<"Error in ServiceManager::init(): fail to create system_manager channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
 
@@ -285,21 +289,25 @@ bool ServiceManager::checkRequest(ServiceRequest req)
     if (isLocalRequest(req)) 
         return true;
 
-    request_fifo_.push_back(req);
-    return true;
-/*
-    // Push the non-heartbeat request into this fifo.
-    if (response_action_.searchServiceTableIndex(req.req_id) != -1)
+    if (check_sid_enable_ == false)
     {
         request_fifo_.push_back(req);
         return true;
     }
-    // Record the error if unexpected request is received.
-    ERROR_CODE_TYPE invalid_sid = INVALID_SERVICE_ID;
-    storeError(invalid_sid);
-    std::cout<<"Error in CommMonitor::checkRequest(): The request id(0x"<<std::hex<<req.req_id<<std::dec<<") is not available"<<std::endl;
-    return false;
-*/
+    else
+    {
+        // Push the non-heartbeat request into this fifo.
+        if (response_action_.searchServiceTableIndex(req.req_id) != -1)
+        {
+            request_fifo_.push_back(req);
+            return true;
+        }
+        // Record the error if unexpected request is received.
+        ERROR_CODE_TYPE invalid_sid = INVALID_SERVICE_ID;
+        storeError(invalid_sid);
+        std::cout<<"Error in CommMonitor::checkRequest(): The request id(0x"<<std::hex<<req.req_id<<std::dec<<") is not available"<<std::endl;
+        return false;
+    }
 }
 
 //------------------------------------------------------------
@@ -444,9 +452,6 @@ ERROR_CODE_TYPE ServiceManager::interactBareCore(void)
             return BARE_CORE_TIMEOUT;
         }
     }// end while (res_result == false)
-    // For debug
-//    if (cost_time > 5000)
-//        std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us."<<std::endl;
     return FST_SUCCESS;
 }
 
@@ -645,6 +650,12 @@ bool ServiceManager::deleteFirstElement(T *fifo)
     return true;
 }
 
+void ServiceManager::sigHandler(int sig)
+{
+    if(sig == SIGINT)
+        exit_flag_ = 1;
+}
+
 //------------------------------------------------------------
 // Function:  runLoop
 // Summary: The main loop to run this process. 
@@ -654,7 +665,7 @@ bool ServiceManager::deleteFirstElement(T *fifo)
 //------------------------------------------------------------
 void ServiceManager::runLoop(void)
 {
-    while (true)
+    while (!exit_flag_)
     {
         receiveRequest();
         interactBareCore();
@@ -668,53 +679,14 @@ void ServiceManager::runLoop(void)
 
 int main(int argc, char** argv)
 {
-/* //for independent test
-    if(!fork())//mimic the mcs process. 
-    {
-        fst_comm_interface::CommInterface comm;
-
-        int fd = comm.createChannel(IPC_REQ, "mcs");
-        if (fd == CREATE_CHANNEL_FAIL)
-        {
-            std::cout<<"Error in Child process: fail to create mcs channel."<<std::endl;
-        }
-        ServiceRequest req2 = {0x123, ""};
-        comm.send(&req2, sizeof(req2), IPC_DONTWAIT);
-
-        ServiceRequest req = {MONITOR_HEARTBEAT_SID, ""};
-        while (true)
-        {
-//            sleep(1);
-            usleep(50000);
-            ERROR_CODE_TYPE result = comm.send(&req, sizeof(req), IPC_DONTWAIT);
-            if (result == 0)
-            {
-//                std::cout<<"send heartbeat req ok."<<std::endl;
-            }
-
-            ServiceResponse resp;
-            ERROR_CODE_TYPE rec = comm.recv(&resp, sizeof(resp), IPC_WAIT);
-            if (rec == 0)
-            {
-                size_t size;
-                memcpy(&size, &resp.res_buff[0], sizeof(size));
-//                printf("recv size = %zu\n", (size_t)size);
-//                printf("recv heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", resp.res_id, (unsigned char)resp.res_buff[7+8],(unsigned char)resp.res_buff[6+8],(unsigned char)resp.res_buff[5+8],(unsigned char)resp.res_buff[4+8],(unsigned char)resp.res_buff[3+8],(unsigned char)resp.res_buff[2+8],(unsigned char)resp.res_buff[1+8],(unsigned char)resp.res_buff[0+8]);
-            }
-        }
-
-    }else
-*/    {
-    
-    fst_service_manager::ServiceManager cm;
-    ERROR_CODE_TYPE init_result = cm.init();
+    fst_service_manager::ServiceManager sm;
+    ERROR_CODE_TYPE init_result = sm.init();
     if (init_result != 0) 
-        return false;
+        return -1;
+    signal(SIGINT, (sm.sigHandler));
 
-    cm.runLoop();
-
-    }
-
+    sm.runLoop();
+    return 0;
 }
 
 

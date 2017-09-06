@@ -1,0 +1,8 @@
+<launch>
+
+  <node name="system_manager" pkg="system_manager" type="system_manager" 
+               respawn="false" output="screen"
+               launch-prefix="valgrind --leak-check=full --track-origins=yes">
+  </node>
+
+</launch>

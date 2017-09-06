@@ -1,0 +1,8 @@
+<launch>
+
+  <node name="io_manager_node" pkg="io_manager" type="io_manager_node" 
+               respawn="false" output="screen"
+               launch-prefix="valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all">
+  </node>
+
+</launch>

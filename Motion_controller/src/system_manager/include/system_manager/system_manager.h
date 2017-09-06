@@ -9,6 +9,7 @@ Summary:
 #ifndef SYSTEM_MANAGER_SYSTEM_MANAGER_H_
 #define SYSTEM_MANAGER_SYSTEM_MANAGER_H_
 
+#include <signal.h>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "system_manager/system_execute.h"
@@ -120,8 +121,28 @@ public:
     //------------------------------------------------------------
     static bool executeCommand(void);
 
+    //------------------------------------------------------------
+    // Function:  sigHandler
+    // Summary: signal handler
+    // In:      system signal
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    static void sigHandler(int sig);
+
+    //------------------------------------------------------------
+    // Function:  teardown
+    // Summary: The destructor
+    // In:      None
+    // Out:     None
+    // Return:  None 
+    //------------------------------------------------------------
+    static void teardown(void);
+
     // the loop time of the child thread.
     static const int COMM_LOOP = 100000;
+    
+    static volatile int exit_flag_;
 
 private:
 

@@ -266,6 +266,15 @@ public:
     //------------------------------------------------------------
     template<typename T>
     bool deleteFirstElement(T *fifo);
+
+    //------------------------------------------------------------
+    // Function:  sigHandler
+    // Summary: signal handler
+    // In:      system signal
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    static void sigHandler(int sig);
    
     //------------------------------------------------------------
     // Function:  runLoop
@@ -294,6 +303,8 @@ public:
     // The cycle time of the main loop. Then unit is usec.
     static const unsigned int LOOP_TIME = 1000;
 
+    static volatile int exit_flag_;
+
     static const int BYTE_LEN = 8;
 private:
 
@@ -307,6 +318,9 @@ private:
     // The number counts every loop
     // To set the heartbeat interval limit of motion controller.
     int loop_count_mcs_;
+
+    // check if service id is available. default is false.
+    bool check_sid_enable_;
 
     // To be true when motion controller send the first heartbeat.
     bool check_mcs_enable_;

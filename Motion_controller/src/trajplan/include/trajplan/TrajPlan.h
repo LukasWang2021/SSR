@@ -17,6 +17,7 @@ namespace fst_controller
     class TrajPlan
     {
         friend class MoveCommand;
+        friend class ManualTeach;
     public:
         TrajPlan();        //Initialize
 
@@ -43,18 +44,17 @@ namespace fst_controller
         void set_k_fifolength(double _k_fifolength);
 
         void setOverallSpeedRatio(double _speed_ratio);
-
-
+        
         int ForwardKinematics(const Joint &joint, Pose &pose);
         int ForwardKinematics_world(const Joint &joint, PoseEuler &pose_flange,PoseEuler &pose_tcp);
         int InverseKinematics(const Pose &pose, const Joint &joint_reference, Joint &joint_result);//Forward and Inverse Kinematics
         
         int EstimateFIFOlength(const Joint &J_2ndlast, const Joint &J_last);
-        
+
         // Pause and restart
         int Pause(const vector<JointPoint> &Joint_diff, vector<JointPoint> &Joint_out,JointPoint &J_end);
         int Pause2(const vector<JointPoint> &Joint_diff, vector<JointPoint> &Joint_out,  JointPoint &J_end);
-        int Resume(const Joint &Joint_current, const Joint &Joint_pause, MoveCommand *CurrentTraj, vector<JointPoint> &Joint_out);
+        //int Resume(const Joint &Joint_current, const Joint &Joint_pause, MoveCommand *CurrentTraj, vector<JointPoint> &Joint_out);
 
         //Translation of different pose expressions
         int PoseQuatern2Matrix(const Pose &P, double Pose_M[4][4]);
@@ -90,6 +90,7 @@ namespace fst_controller
         int Check_coincidence(const Joint &J1, const Joint &J2);
 
         void PrintPose(const Pose &P);
+        void PrintPoseEuler(const PoseEuler &P);
         void PrintJointValues(const Joint &J0);
         void PrintJointPoint(const JointPoint &J0);
         int IKandPrint(const vector<Pose> &Pose_out, Joint &J0, vector<Joint>&Joint_out, string filename);
@@ -145,7 +146,7 @@ namespace fst_controller
         
 
         int JudgeAxis(double THETA[6]);
-        double ReviseJoint(double t);
+        void ReviseJoint(double J[6],double Joint_ref[6]);
 
         //Move Command functions
         int MoveL2L(const LInitial &L_initial, const LCommand &L_objective,
@@ -204,7 +205,7 @@ namespace fst_controller
         double acc;
         double ja_ratio;
         double tc;
-        double limit_scale;
+        //double limit_scale;    delete 2017.08.24
         double overshoot;
         //double errorangle;
         double accelerationoverload;
@@ -220,7 +221,7 @@ namespace fst_controller
         SmoothMode smooth_mode;
 
         double overall_speed_ratio;
-        
+        double resume_speed_ratio;
 
         //un-configurable parameters
         double InvUF[4][4], InvTF[4][4], InvT66[4][4];
@@ -335,9 +336,36 @@ namespace fst_controller
 
     };
 
+    class ManualTeach
+    {
+        friend class TrajPlan;
+    public:
+        ManualTeach();
+        ManualTeach(TrajPlan *obj);
+        void ManualCartesian(vector<int> manual_button, vector<PathPoint> &P_out);
+        void ManualJoint(vector<int> manual_button, vector<PathPoint> &J_out);
+        void setManualLength(unsigned int _length);
+        void setCurrentStatus(Joint _joints);
+        void setManualSpeedRatio(double _ratio);
+        void setManualCartesianMode(ManualMode _mode);
+    private:
+        TrajPlan *ins;
 
+        void ManualSinglePosition(double &p0, double &v0, double acc, double v_obj);
+        
+        unsigned int manual_length;
+        JointPoint joint_status;     // value and omegas of robot
+        PoseVel pose_status;
+        double manual_speed_ratio;   // speed ratio of manual teach
+        ManualMode ManualCartesianMode;
+
+
+    };
 
 }
 
 
 #endif
+
+
+

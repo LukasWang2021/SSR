@@ -324,6 +324,29 @@ struct JCommand
 
 };
 
+struct VelCartesian
+{
+    double vx;
+    double vy;
+    double vz;
+    double omegax;
+    double omegay;
+    double omegaz;
+};
+
+struct PoseVel
+{
+    Pose pose;
+    VelCartesian velocity;
+};
+
+enum ManualMode
+{
+    WORLD,
+    USER,
+    TOOL,
+};
+
 
 
 }   // namespace fst_controller

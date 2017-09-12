@@ -9,7 +9,12 @@
 #define _LOG_MANAGER_COMMON_H
 
 #define SINGLE_LOG_SIZE    256
-#define LOG_BUFFER_SIZE    2048
+#define LOG_BUFFER_SIZE    ( 16 * 1024)
+#define MAX_BUFFER_SIZE    (256 * 1024)
+
+#define MAX_LOG_FILE_RETENTION_TIME (24 * 60 * 60)      // 24 Hour
+#define MAX_LOG_FILE_SIZE           (64 * 1024 * 1024)  // 64MB
+#define MAX_LOG_FILE_WRITE_COUNT    (MAX_LOG_FILE_SIZE / LOG_BUFFER_SIZE)
 
 #define MSG_LEVEL_INFO   0x35
 #define MSG_LEVEL_WARN   0x3A

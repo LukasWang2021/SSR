@@ -1,6 +1,24 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(motion_controller)
 
+# setting for include file.
+set(VERSION_MAJOR 4)
+set(VERSION_MINOR 1)
+set(VERSION_PATCH 0)
+string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
+
+# setting for package version file.
+set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+
+# configure a header file to pass some settings to the source code.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/include/version.h.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
+)
+
+# write the verson info to a file.
+file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -12,7 +30,7 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 if(${catkin_CROSS})
 	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/trajplan/include ${depend_PATH_INC}/parameter_manager/include ${depend_PATH_INC}/middleware_to_mem/include ${depend_PATH_INC}/log_manager/include)
-	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libparam_value.so ${depend_PATH_LIB}/libmiddleware_to_mem.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/liblogger.so)
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libparam_value.so ${depend_PATH_LIB}/libparam_builder.so ${depend_PATH_LIB}/libmiddleware_to_mem.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/liblogger.so)
 endif(${catkin_CROSS})
 
 
@@ -124,6 +142,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 #  ${Boost_INCLUDE_DIRS}
+  ${PROJECT_BINARY_DIR}
 )
 
 #link_directories(${Boost_LIBRARY_DIRS})
@@ -174,14 +193,39 @@ install(TARGETS calibrator
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+)
 
-## Mark cpp header files for installation
- install(DIRECTORY config
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
- )
+install(DIRECTORY config
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+#install(FILES config/dh.yaml
+#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+#)
+
+#install(FILES config/offset.yaml
+#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+#)
+
+#install(FILES config/jtac.yaml
+#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+#)
+
+#install(FILES config/soft_constraints.yaml
+#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+#)
+
+#install(FILES config/hard_constraints.yaml
+#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/model
+#)
+
+install(FILES config/motion_controller.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+)
+
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

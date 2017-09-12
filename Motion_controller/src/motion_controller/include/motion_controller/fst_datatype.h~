@@ -3,7 +3,7 @@
     File:   	fst_datatype.h
     Author:	Feng Yun
     Data:	Aug. 1 2016
-    Modify:	Jun. 1 2017
+    Modify:	Aug.23 2016
     Description:Define all datatypes used in ArmGroup
 **********************************************************************/
 
@@ -13,8 +13,6 @@
 #define PI 3.1415926535897932384626433832795
 
 namespace fst_controller {
-
-class MoveCommand;
 
 /* Define a group of values in joint space */
 struct Joint {
@@ -87,11 +85,10 @@ struct JointConstraint {
 };
 
 // Define a transformation type
-//struct Transformation {
-//    Point position;
-//    Euler orientation;
-//};
-typedef PoseEuler Transformation;
+struct Transformation {
+    Point position;
+    Euler orientation;
+};
 
 // point level: 0x0 -> middle point
 //              0x1 -> start  point
@@ -100,8 +97,6 @@ enum PointLevel {
     POINT_MIDDLE    = 0x0,
     POINT_START     = 0x1,
     POINT_ENDING    = 0x2,
-    POINT_LAST      = 0x3,
-    POINT_FIRST     = 0x4,
 };
 
 const unsigned int POINT_LEVEL_MASK  = 0x00000003;
@@ -117,45 +112,25 @@ enum MotionType {
 // A flag indicating the smooth type between two motions
 enum SmoothType {
     SMOOTH_NONE,
-    SMOOTH_2J,
-    SMOOTH_2L,
-    SMOOTH_2C,
-    //SMOOTH_J2J,
-    //SMOOTH_J2L,
-    //SMOOTH_J2C,
-    //SMOOTH_L2J,
-    //SMOOTH_L2L,
-    //SMOOTH_L2C,
-    //SMOOTH_C2J,
-    //SMOOTH_C2L,
-    //SMOOTH_C2C,
-};
-
-enum SmoothMode
-{
-    MODE_VELOCITY,
-    MODE_DISTANCE,
-};
-
-enum CurveMode
-{
-    T_CURVE,
-    S_CURVE,
+    SMOOTH_J2J,
+    SMOOTH_J2L,
+    SMOOTH_J2C,
+    SMOOTH_L2J,
+    SMOOTH_L2L,
+    SMOOTH_L2C,
+    SMOOTH_C2J,
+    SMOOTH_C2L,
+    SMOOTH_C2C,
 };
 
 // Define a pose/joint point structure used in planned path fifo
 struct PathPoint {
-    /*
     // Command ID
-    int id; 
-    // Command type, joint command or cartesian command*/
-    MotionType type; 
+    int id;
     // time stamp
     int stamp;
-    // point level, start/middle/ending point
-    PointLevel  level;
-    // the point generated from which command
-    MoveCommand *source;
+    // Command type, joint command or cartesian command
+    MotionType type;
     // value in cartesian space or joint space
     union {
         Pose    pose;
@@ -178,25 +153,14 @@ struct JointOmega {
 
 // Define a point structure used in joint trajectory fifo
 struct JointPoint {
+    // Command ID
+    int id;
     // time stamp
     int stamp;
-    // point level, start/middle/ending point
-    PointLevel  level;
-    // the point generated from which command
-    MoveCommand *source;
     // joint values of this point
     Joint       joint;
     // angular velocity of this point
     JointOmega  omega;
-};
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////
-struct JointOutput {
-    int id;
-    Joint       joint;
-    PointLevel  level;
 };
 
 // Define a group of coordinate offset
@@ -285,43 +249,6 @@ struct Parabola {
     double a2[3];
     double T;
     double lamda[3];
-};
-
-struct LCommand
-{
-    Pose    pose;
-    double  velocity;
-    union
-    {
-        int     cnt;
-        double  smooth_radius;
-    };
-    
-};
-
-struct CCommand
-{
-    Pose    pose1;
-    Pose    pose2;
-    double  velocity;
-    union
-    {
-        int     cnt;
-        double  smooth_radius;
-    };
-
-};
-
-struct JCommand
-{
-    Joint       joints;
-    double      v_percentage;
-    union
-    {
-        int         cnt;
-        double      smooth_radius;
-    };
-
 };
 
 

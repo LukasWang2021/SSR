@@ -929,11 +929,6 @@ bool ArmGroup::isJointFallInConstraint(const Joint &joint, const JointConstraint
     return  isJointInConstraint(joint, cons);
 }
 
-bool ArmGroup::isTrajectoryTotallyFinished(void)
-{
-    return planning_interface_->isMotionCommandListEmpty();
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -1048,27 +1043,12 @@ ErrorCode ArmGroup::convertPathToTrajectory(int num)
 bool ArmGroup::suspendArmMotion(ErrorCode &err)
 {
     if (current_state_ != INITIALIZED)  {err = NEED_INITIALIZATION; return false;}
-    
-    err = SUCCESS;
-    log.info("Suspend request accepted.");
-    if (suspend_state_.is_suspended == true) {
-        log.warn("already in pause state");
-        err = INVALID_SEQUENCE;
-        return false;
-    }
-
-    lockFIFO2();
-    log.info("  FIFO2 length = %d", trajectory_fifo_.size());
-    if (trajectory_fifo_.size() == 0) {
-        suspend_state_.is_suspended = true;
-        suspend_state_.fake_suspend = true;
-        suspend_state_.type = SUSPEND_BY_TRAJECTORY;
-        log.info("  fake pause executed.");
-        unlockFIFO2();
-        return true;
-    }
+    if (trajectory_fifo_.size() == 0)   {err = INVALID_SEQUENCE;    return false;}
     
     //lockArmGroup();
+    err = SUCCESS;
+    lockFIFO2();
+    log.info("Suspend request accepted. FIFO2 length = %d", trajectory_fifo_.size());
     vector<JointPoint>::iterator jp_it = trajectory_fifo_.begin();
     for (; jp_it != trajectory_fifo_.end(); ++jp_it) {
         if (jp_it->level == POINT_ENDING) {
@@ -1078,7 +1058,6 @@ bool ArmGroup::suspendArmMotion(ErrorCode &err)
     if (jp_it != trajectory_fifo_.end()) {
         log.info("An ending point found in FIFO2, prepareing slow-down trajectory ...");
         suspend_state_.is_suspended = true;
-        suspend_state_.fake_suspend = false;
         suspend_state_.type = SUSPEND_BY_TRAJECTORY;
         suspend_state_.last_point = *jp_it;
         trajectory_fifo_.erase(jp_it + 1, trajectory_fifo_.end());
@@ -1087,16 +1066,7 @@ bool ArmGroup::suspendArmMotion(ErrorCode &err)
     }
     else {
         log.info("Replanning slow-down trajectory in FIFO2 ...");
-        
-        while (trajectory_fifo_.size() > 0 && trajectory_fifo_.back().level == POINT_LAST) {
-            // if last point of fifo2 is a POINT-LAST, the command object will be deleted before resumeArmMotion
-            // which will cause a invalid pointer used by resume
-            trajectory_fifo_.pop_back();
-            log.info("last point of FIFO2 is last point of a command, it has been dropped.");
-        }
-
         suspend_state_.is_suspended = true;
-        suspend_state_.fake_suspend = false;
         suspend_state_.type = SUSPEND_BY_REPLAN;
         // replan use all points in FIFO2?
         planning_interface_->replanPauseTrajectory(trajectory_fifo_, suspend_state_.last_point);
@@ -1105,8 +1075,8 @@ bool ArmGroup::suspendArmMotion(ErrorCode &err)
         // set pick start position?
         planning_interface_->setPickPosition(suspend_state_.last_point);
     }
-    log.info("Slow-down trajectory ready, we will stop the robot in %zu points", trajectory_fifo_.size());
     unlockFIFO2();
+    log.info("Slow-down trajectory ready, we will stop the robot in %zu points", trajectory_fifo_.size());
     
     lockFIFO1();
     planned_path_fifo_.clear();
@@ -1153,50 +1123,21 @@ void ArmGroup::declareEstop(void)
 
 bool ArmGroup::resumeArmMotion(ErrorCode &err)
 {
-    if (current_state_ != INITIALIZED)  {err = NEED_INITIALIZATION; return false;}
-    
     err = SUCCESS;
-    log.info("Resume request accepted.");
-    
-    if (suspend_state_.is_suspended == false) {
-        err = INVALID_SEQUENCE;
-        log.error("  not in suspend or estop state.");
-        return false;
-    }
-
-    if (trajectory_fifo_.size() != 0) {
-        err = INVALID_SEQUENCE;
-        log.info("  fifo2 is not empty, maybe caused by pause trajectory is executing.");
-        return false;
-    }
-
-    if (suspend_state_.fake_suspend == true) {
-        suspend_state_.is_suspended = false;
-        suspend_state_.fake_suspend = false;
-        if (getPlannedPathFIFOLength() > 0) {
-            lockFIFO1();
-            lockFIFO2();
-            err = convertPath2Trajectory(20);
-            unlockFIFO2();
-            unlockFIFO1();
-        }
-        if (err != SUCCESS) return false;
-        log.info("  fake suspend detected, resume request return with success");
-        return true;
-    }
+    if (current_state_ != INITIALIZED)  {err = NEED_INITIALIZATION; return false;}
+    if (suspend_state_.is_suspended == false) {err = INVALID_SEQUENCE; return false;}
+    if (trajectory_fifo_.size() != 0) {err = INVALID_SEQUENCE; return false;}
+    if (suspend_state_.fake_suspend == true) { suspend_state_.is_suspended = false; return true;}
 
     lockArmGroup();
     lockFIFO1();
     lockFIFO2();
+    log.info("Resume request accepted.");
     if (suspend_state_.type == SUSPEND_BY_ESTOP) {
         log.info("  resume from Estop");
         planning_interface_->resumeFromEstop(suspend_state_.last_point, trajectory_fifo_, err);
     }
     else if (suspend_state_.type == SUSPEND_BY_TRAJECTORY) {
-        log.info("  fifo1 size: %d", planned_path_fifo_.size());
-        if (getPlannedPathFIFOLength() > 0) {
-            err = convertPath2Trajectory(20);
-        }
         log.info("  resume from pause, type = Trajectory");
     }
     else {
@@ -1211,34 +1152,8 @@ bool ArmGroup::resumeArmMotion(ErrorCode &err)
     if (err == SUCCESS) {
         suspend_state_.is_suspended = false;
         log.info("Resume trajectory with %d points ready.", trajectory_fifo_.size());
-        if (trajectory_fifo_.size() > 0) {
+        if (trajectory_fifo_.size() > 0)
             latest_ik_reference_ = trajectory_fifo_.back().joint;
-            printJoint("  new reference:", latest_ik_reference_);
-        }
-        else {
-            log.warn("  resumeFromPause got 0 points, picking from next command");
-            err = convertPath2Trajectory(20);
-            if (err != SUCCESS) {
-                log.error("  fail in convertPath2Trajectory, code=0x%llx", err);
-                unlockFIFO2();
-                unlockFIFO1();
-                unlockArmGroup();
-                return false;
-            }
-        }
-
-        if (planned_path_fifo_.size() < planning_interface_->getTrajectorySegmentLength()) {
-            err = pickPoints();
-            if (err != SUCCESS) {
-                unlockFIFO2();
-                unlockFIFO1();
-                unlockArmGroup();
-                return false;
-            }
-            else {
-                printPathPoint("first point after resume:", planned_path_fifo_.front());
-            }
-        }
     }
     else {
         log.error("Fail to construct resume trajectory, error code=0x%llx", err);
@@ -1248,7 +1163,7 @@ bool ArmGroup::resumeArmMotion(ErrorCode &err)
     unlockFIFO1();
     unlockArmGroup();
 
-    if (err == SUCCESS)  return true;
+    if (err == SUCCSEE)  return true;
     else                 return false;
 }
 

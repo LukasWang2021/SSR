@@ -15,8 +15,10 @@
 namespace fst_log {
 
 struct LogServerStruct {
-    bool                open_flag;
     std::string         channel_name;
+    bool                open_flag;
+    time_t              file_create_time;
+    int                 file_write_cnt;
     std::ofstream       file_handle;
     std::vector<char*>  buffer_pool;
     fst_comm_interface::CommInterface *comm_interface_ptr;

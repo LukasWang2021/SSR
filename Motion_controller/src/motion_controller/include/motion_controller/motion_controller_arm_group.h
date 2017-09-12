@@ -11,17 +11,24 @@
 #ifndef FST_CONTROLLER_H
 #define FST_CONTROLLER_H
 
+#define NUM_OF_JOINT 6
+#define FIFO1_BACKUP_BUFFER_SIZE    10000
+
 #include <vector>
 #include <map>
 #include <pthread.h>
-#include <motion_controller/fst_datatype.h>
+#include <trajplan/fst_datatype.h>
 #include <trajplan/TrajPlan.h>
 #include <log_manager/log_manager_logger.h>
 #include <motion_controller/motion_controller_error_code.h>
 #include <motion_controller/motion_controller_offset_calibrator.h>
 #include <motion_controller/motion_controller_planning_interface.h>
+#include <parameter_manager/parameter_manager_param_group.h>
+#include <parameter_manager/parameter_manager_param_value.h>
 
 namespace fst_controller {
+
+const double MINIMUM_ALLOWANCE = 0.000001;
 // Brief class for controller. This class include many default settings and functions to make life easier.
 class ArmGroup {
   // -----------------------------public functions---------------------------------------------
@@ -54,8 +61,11 @@ class ArmGroup {
     // Out:     error_code   -> error code
     // Return:  None
     //------------------------------------------------------------------------------
-    bool initArmGroup(ErrorCode &err);
+    bool initArmGroup(std::vector<ErrorCode> &err_list);
 
+    void startRecordingFIFO1(void);
+    void stopRecordingFIFO1(void);
+    void getFIFO1RecordingData(std::vector<Pose> &data);
 
     bool recordLastJoint(ErrorCode &err);
     bool checkZeroOffset(unsigned int &calibrate_result, ErrorCode &err);
@@ -72,25 +82,8 @@ class ArmGroup {
     double getCycleTime(void);
 
 
-    //------------------------------------------------------------
-    // Function:    getJointConstraints
-    // Summary: To get joint constraints from Kinematics algorithm.
-    // In:      None
-    // Out:     None
-    // Return:  joint constraints
-    //------------------------------------------------------------
-    const JointConstraints& getJointConstraints(void);
-
-
-    //------------------------------------------------------------
-    // Function:    getMaxVelocity
-    // Summary: To get max velocity settings.
-    // In:      None
-    // Out:     None
-    // Return:  value of max velocity
-    //------------------------------------------------------------
-    double getMaxVelocity(void);
-
+    Transformation getToolFrame(void);
+    Transformation getUserFrame(void);
 
     //------------------------------------------------------------
     // Function:    getMaxAcceleration
@@ -121,15 +114,33 @@ class ArmGroup {
     //------------------------------------------------------------
     double getAccelerationScalingFactor(void);
 
-
+    
     //------------------------------------------------------------
-    // Function:    getCurrentJointValues
+    // Function:    getJointConstraint
+    // Summary: To get joint constraint from Kinematics algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  joint constraint
+    //------------------------------------------------------------
+    const JointConstraint& getSoftConstraint(void);
+
+    const JointConstraint& getHardConstraint(void);
+
+    CurveMode getCurveMode(void);
+
+    const DHGroup getDH(void);
+
+
+
+    /*
+    //------------------------------------------------------------
+    // Function:    getCurrentJoint
     // Summary: To get current values of all joints in the robot.
     // In:      None
     // Out:     None
     // Return:  current values of all six joints
     //------------------------------------------------------------
-    const JointValues& getCurrentJointValues(void);
+    const Joint& getCurrentJoint(void);
 
 
     //------------------------------------------------------------
@@ -141,12 +152,12 @@ class ArmGroup {
     //------------------------------------------------------------
     const Pose& getCurrentPose(void);
 
-
     const JointPoint& getStartJoint(void);
 
     const Pose& getStartPose(void);
+    */
 
-
+    
     //------------------------------------------------------------
     // Function:    getPlannedPathFIFOLength
     // Summary: To get the length of planned_path_FIFO.
@@ -155,7 +166,7 @@ class ArmGroup {
     // Return:  length of the FIFO
     //------------------------------------------------------------
     int getPlannedPathFIFOLength(void);
-
+    
 
     //------------------------------------------------------------
     // Function:    getJointTrajectoryFIFOLength
@@ -164,8 +175,9 @@ class ArmGroup {
     // Out:     None
     // Return:  length of the FIFO
     //------------------------------------------------------------
-    int getJointTrajectoryFIFOLength(void);
+    int getTrajectoryFIFOLength(void);
 
+    int getTrajectoryFIFOReserveLength(void);
 
     /*
     //------------------------------------------------------------
@@ -189,10 +201,10 @@ class ArmGroup {
     // Return:  <0  -> joint_trajectory_fifo locked, or any other errors
     //          >=0 -> number of joint points get actually
     //------------------------------------------------------------
-    int getPointsFromJointTrajectoryFIFO(std::vector<JointPoint> &traj,
-                                         int num, ErrorCode &error_code);
+    ErrorCode getPointsFromJointTrajectoryFIFO(std::vector<JointOutput> &traj);
 
 
+    /*
     //------------------------------------------------------------
     // Function:    setMaxVelocity
     // Summary: To change max velocity settings.
@@ -202,7 +214,7 @@ class ArmGroup {
     //          false   -> max velocity NOT changed
     //------------------------------------------------------------
     bool setMaxVelocity(double v);
-
+    */
 
     //------------------------------------------------------------
     // Function:    setMaxAcceleration
@@ -274,10 +286,21 @@ class ArmGroup {
     // Return:  true    -> desired smooth curve mode changed to given value
     //          false   -> desired smooth curve mode NOT changed
     //------------------------------------------------------------------------------
-    bool setCurveMode(int mode);
+    void setCurveMode(CurveMode mode);
 
     //------------------------------------------------------------
-    // Function:    setCurrentJointValues
+    // Function:    setJointConstraint
+    // Summary: To set joint constraint in Kinematics algorithm.
+    // In:      constraint -> joint constraint
+    // Out:     None
+    // Return:  true    -> set successfully
+    //          false   -> set UNsuccessfully
+    //------------------------------------------------------------
+    ErrorCode setSoftConstraint(const JointConstraint &constraint);
+
+/*
+    //------------------------------------------------------------
+    // Function:    setCurrentJoint
     // Summary: To set current joint values using encoder data.
     //          Current pose values will be updated automaticly.
     // In:      current_joint-> joint values from the encoder
@@ -285,8 +308,8 @@ class ArmGroup {
     // Return:  true    -> current joint/pose values updated successfully
     //          false   -> either joint or pose values NOT updated
     //------------------------------------------------------------
-    bool setCurrentJointValues(const JointValues &current_joint, ErrorCode &error_code);
-
+    bool setCurrentJoint(const Joint &current_joint, ErrorCode &error_code);
+*/
 
     //------------------------------------------------------------
     // Function:    setStartState
@@ -296,8 +319,10 @@ class ArmGroup {
     // Return:  true    -> robot start state setted to joint_start scucessfully
     //          false   -> failed to set robot start state
     //------------------------------------------------------------
-    bool setStartState(const JointValues &joint_start, ErrorCode &error_code);
+    bool setStartState(const Joint &joint_start, ErrorCode &error_code);
 
+
+    bool setTempZeroOffset(ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    clearPlannedPathFIFO
@@ -307,7 +332,7 @@ class ArmGroup {
     // Return:  true    -> planned path FIFo is cleared successfully
     //          false   -> FIFO cleared with some errors
     //------------------------------------------------------------
-    bool clearPlannedPathFIFO(ErrorCode &err);
+    //bool clearPlannedPathFIFO(ErrorCode &err);
 
     /*
     //------------------------------------------------------------
@@ -321,10 +346,10 @@ class ArmGroup {
     bool clearJointTrajectoryFIFO(ErrorCode &err);
     */
 
-    bool getJointFromPose(const Pose &pose, JointValues &joint_result,
+    bool getJointFromPose(const Pose &pose, Joint &joint_result,
                           double time_interval, ErrorCode &err);
 
-    bool getPoseFromJoint(const JointValues &joint, Pose &pose, ErrorCode &err);
+    bool getPoseFromJoint(const Joint &joint, Pose &pose, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    computeIK
@@ -335,7 +360,7 @@ class ArmGroup {
     // Return:  true    -> IK solution found
     //          false   -> IK solution NOT found
     //------------------------------------------------------------
-    bool computeIK(const Pose &pose, JointValues &joint_result, ErrorCode &err);
+    bool computeIK(const Pose &pose, Joint &joint_result, ErrorCode &err);
 
 
     //------------------------------------------------------------
@@ -347,7 +372,7 @@ class ArmGroup {
     // Return:  true    -> FK computed successfully
     //          false   -> FK computed UNsuccessfully
     //------------------------------------------------------------
-    bool computeFK(const JointValues &joint, Pose &pose, ErrorCode &err);
+    bool computeFK(const Joint &joint, Pose &pose, ErrorCode &err);
 
 
     //------------------------------------------------------------
@@ -363,7 +388,7 @@ class ArmGroup {
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
     //------------------------------------------------------------
-    bool MoveJ(const JointValues &joint_target, double v_max, double a_max,
+    bool MoveJ(const Joint &joint_target, double v_max, double a_max,
                int id, ErrorCode &err);
 
 
@@ -384,8 +409,8 @@ class ArmGroup {
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
     //------------------------------------------------------------
-    bool MoveJ(const JointValues &joint_target, double v_max, double a_max, int cnt,
-               const JointValues &joint_next, double v_next, double a_next, int cnt_next,
+    bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
+               const Joint &joint_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
 
@@ -406,7 +431,7 @@ class ArmGroup {
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
     //------------------------------------------------------------
-    bool MoveJ(const JointValues &joint_target, double v_max, double a_max, int cnt,
+    bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
                const Pose &pose_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
@@ -428,7 +453,7 @@ class ArmGroup {
     // Return:  true    -> plan successfully
     //          false   -> plan UNsuccessfully
     //------------------------------------------------------------
-    bool MoveJ(const JointValues &joint_target, double v_max, double a_max, int cnt,
+    bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
                const PoseEuler &pose_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
@@ -437,7 +462,7 @@ class ArmGroup {
     // Function:    MoveJ (smooth to MoveC)
     // Summary: To plan a path in joint space to touch target pose, with smooth.
     //------------------------------------------------------------------------------
-    bool MoveJ(const JointValues &joint_target, double v_max, double a_max, int cnt,
+    bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
                const Pose &pose2_circle, const Pose &pose3_circle,
                double v_circle, double a_circle, int cnt_circle,
                int id, ErrorCode &err);
@@ -446,7 +471,7 @@ class ArmGroup {
     // Function:    MoveJ (smooth to MoveC)
     // Summary: To plan a path in joint space to touch target pose, with smooth.
     //------------------------------------------------------------------------------
-    bool MoveJ(const JointValues &joint_target, double v_max, double a_max, int cnt,
+    bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
                const PoseEuler &pose2_circle, const PoseEuler &pose3_circle,
                double v_circle, double a_circle, int cnt_circle,
                int id, ErrorCode &err);
@@ -501,7 +526,7 @@ class ArmGroup {
     //          false   -> plan UNsuccessfully
     //------------------------------------------------------------
     bool MoveL(const Pose &pose_target, double v_max, double a_max, int cnt_target,
-               const JointValues &joint_next, double v_next, double a_next, int cnt_next,
+               const Joint &joint_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
     //------------------------------------------------------------
@@ -522,7 +547,7 @@ class ArmGroup {
     //          false   -> plan UNsuccessfully
     //------------------------------------------------------------
     bool MoveL(const PoseEuler &pose_target, double v_max, double a_max, int cnt_target,
-               const JointValues &joint_next, double v_next, double a_next, int cnt_next,
+               const Joint &joint_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
 
@@ -602,7 +627,7 @@ class ArmGroup {
     //------------------------------------------------------------------------------
     bool MoveC(const Pose &pose2_circle, const Pose &pose3_circle,
                double v_max, double a_max, int cnt_target,
-               const JointValues &joint_next, double v_next, double a_next, int cnt_next,
+               const Joint &joint_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
     //------------------------------------------------------------------------------
@@ -611,7 +636,7 @@ class ArmGroup {
     //------------------------------------------------------------------------------
     bool MoveC(const PoseEuler &pose2_circle, const PoseEuler &pose3_circle,
                double v_max, double a_max, int cnt_target,
-               const JointValues &joint_next, double v_next, double a_next, int cnt_next,
+               const Joint &joint_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
     //------------------------------------------------------------------------------
@@ -662,7 +687,8 @@ class ArmGroup {
     // Return:  <0  -> ERROR occurred during converting
     //          >=0 -> number of pose that convered actually
     //------------------------------------------------------------
-    int convertPathToTrajectory(int num, ErrorCode &err);
+    //int convertPathToTrajectory(int num, ErrorCode &err);
+    ErrorCode convertPathToTrajectory(int num);
     
     
     //------------------------------------------------------------
@@ -676,6 +702,7 @@ class ArmGroup {
     //------------------------------------------------------------
     bool suspendArmMotion(ErrorCode &err);
 
+    void declareEstop(void);
 
     //------------------------------------------------------------
     // Function:    resumeArmMotion
@@ -689,7 +716,13 @@ class ArmGroup {
 
     bool isArmGroupSuspended(void);
 
-    bool resetArmGroup(const JointValues &joint, ErrorCode &err);
+    bool clearArmGroup(ErrorCode &err);
+
+    bool resetArmGroup(ErrorCode &err);
+
+    bool isJointFallInConstraint(const Joint &joint, const JointConstraint &cons);
+
+    bool isTrajectoryTotallyFinished(void);
 
     //------------------------------------------------------------
     // Function:    transformPoseEuler2Pose
@@ -715,22 +748,35 @@ class ArmGroup {
     // -----------------------------private functions---------------------------------------------
 
   private:
-    void printJointValues(const JointValues &joint);
-    void printJointValues(const char *str, const JointValues &joint);
+    void printJoint(const Joint &joint);
+    void printJoint(const char *str, const Joint &joint);
     void printJointLimit(const JointLimit &joint_limit);
     void printJointLimit(const char *str, const JointLimit &joint_limit);
-    void printJointConstraints(const JointConstraints &constraint);
+    void printJointConstraint(const char *str, const JointConstraint &constraint);
     void printPose(const Pose &pose);
     void printPose(const char *str, const Pose &pose);
     void printPoseEuler(const PoseEuler &pose_euler);
     void printPoseEuler(const char *str, const PoseEuler &pose_euler);
     void printJointPoint(const JointPoint &point);
     void printJointPoint(const char *str, const JointPoint &point);
+    void printJointOutput(const JointOutput &point);
+    void printJointOutput(const char *str, const JointOutput &point);
     void printPathPoint(const PathPoint &point);
     void printPathPoint(const char *str, const PathPoint &point);
     
     void lockArmGroup(void);
     void unlockArmGroup(void);
+    void lockFIFO1(void);
+    void unlockFIFO1(void);
+    void lockFIFO2(void);
+    void unlockFIFO2(void);
+    void lockFIFO1Backup(void);
+    void unlockFIFO1Backup(void);
+
+    ErrorCode constructPlanningInterface(fst_parameter::ParamValue &params);
+    ErrorCode constructCalibrator(const string &path);
+    ErrorCode loadJointConstraint(void);
+    ErrorCode loadDHParameter(void);
 
     //------------------------------------------------------------
     // Function:    setCycleTime
@@ -743,16 +789,6 @@ class ArmGroup {
     bool setCycleTime(double tc);
 
 
-    //------------------------------------------------------------
-    // Function:    setJointConstraints
-    // Summary: To set joint constraints in Kinematics algorithm.
-    // In:      constraints -> joint constraints
-    // Out:     None
-    // Return:  true    -> set successfully
-    //          false   -> set UNsuccessfully
-    //------------------------------------------------------------
-    bool setJointConstraints(const JointConstraints &constraints);
-
     //------------------------------------------------------------------------------
     // Function:    setJointOvershoot
     // Summary: To set joint overshoot.
@@ -763,6 +799,7 @@ class ArmGroup {
     //------------------------------------------------------------------------------
     bool setJointOvershoot(double angle);
 
+    /*
     //------------------------------------------------------------------------------
     // Function:    setJointErrorAngle
     // Summary: To set joint error angle.
@@ -792,6 +829,7 @@ class ArmGroup {
     //          false   -> alpha overload NOT changed
     //------------------------------------------------------------------------------
     bool setAlphaOverload(double value);
+    */
 
     //------------------------------------------------------------------------------
     // Function:    setSmoothRadiusCoefficient
@@ -803,22 +841,35 @@ class ArmGroup {
     //------------------------------------------------------------------------------
     bool setSmoothRadiusCoefficient(double coeff);
 
-    void setStartJointImpl(const JointValues &joint);
+    ErrorCode setCurrentJointToStartJoint();
 
+    ErrorCode setSoftConstraintImpl(const JointConstraint &constraint);
+/*
     void setStartPoseImpl(const Pose &pose);
 
-    bool setStartStateImpl(const JointValues &joint, ErrorCode &err);
+    bool setStartStateImpl(const Joint &joint, ErrorCode &err);
+*/
+    bool setTempConstraint(const Joint &joint);
+    
+    bool resetTempConstraint(const Joint &joint);
+    
+    void deleteTempConstraint(void);
 
-    bool rebuildPlanningVariable(ErrorCode &err);
+    bool isJointInConstraint(const Joint &joint, const JointConstraint &constraint);
 
-    void abstractLastMotion(int id, MotionType motion_t, SmoothType smooth_t);
+    bool isFirstConstraintCoveredBySecond(const JointConstraint &child, const JointConstraint &parent);
+
+    //bool rebuildPlanningVariable(ErrorCode &err);
+
+    //void abstractLastMotion(int id, MotionType motion_t, SmoothType smooth_t);
 
     // bool fillPlannedPathFIFO(int id, MotionType motion_t, SmoothType smooth_t, std::vector<Pose> &path);
 
-    // bool fillPlannedPathFIFO(int id, MotionType motion_t, SmoothType smooth_t, std::vector<JointValues> &path);
+    // bool fillPlannedPathFIFO(int id, MotionType motion_t, SmoothType smooth_t, std::vector<Joint> &path);
 
-    bool managePlanningResult(int id, MotionType motion_t, SmoothType smooth_t, ErrorCode &err);
+    //bool managePlanningResult(int id, MotionType motion_t, SmoothType smooth_t, ErrorCode &err);
 
+    /*
     //------------------------------------------------------------
     // Function:    setLatestIKReference
     // Summary: To set latest IK reference.
@@ -827,20 +878,21 @@ class ArmGroup {
     // Return:  true    -> latest IK reference setted to joint_reference scucessfully
     //          false   -> failed to set latest IK reference
     //------------------------------------------------------------
-    bool setLatestIKReference(const JointValues &joint_reference, ErrorCode &error_code);
+    void setLatestIKReference(const Joint &joint_reference);
+    */
 
     //------------------------------------------------------------
     // Function:    checkJointBoundary
     // Summary: To check whether a group of joint values are valid according to
-    //          joint constraints.
+    //          joint constraint.
     // In:      joint_values    -> joint_values needed to be checked
     // Out:     None
     // Return   true    -> valid
     //          false   -> INvalid
     //------------------------------------------------------------
-    bool checkJointBoundary(const JointValues &joint_values);
+    bool checkJointBoundary(const Joint &joint_values);
 
-
+    /*
     //------------------------------------------------------------
     // Function:    getLatestIKReference
     // Summary: To get latest IK reference values.
@@ -848,8 +900,8 @@ class ArmGroup {
     // Out:     None
     // Return:  a group of joint values used as IK reference
     //------------------------------------------------------------
-    const JointValues& getLatestIKReference(void);
-
+    const Joint& getLatestIKReference(void);
+    */
 
     //------------------------------------------------------------
     // Function:    convertPath2Trajectory
@@ -860,91 +912,99 @@ class ArmGroup {
     // Return:  <0  -> ERROR occurred during converting
     //          >=0 -> number of pose that convered actually
     //------------------------------------------------------------
-    int convertPath2Trajectory(int num, ErrorCode &error_code);
+    ErrorCode convertPath2Trajectory(int num);
+    
+    ErrorCode getPointsFromJointTrajectoryFIFOImpl(std::vector<JointOutput> &traj, int num);
 
-    bool isMotionExecutable(MotionType motion_type, ErrorCode &err);
+    bool isMotionExecutable(MotionType motion_t, ErrorCode &err);
 
-    bool pickPoints(ErrorCode &err);
+    ErrorCode pickPoints();
 
     bool resizeJointTrajectoryFIFO(void);
     
-    //bool insertAdditionSmooth(ErrorCode &err);
+    //bool resumeByReplan(ErrorCode &err);
 
-    bool resumeByReplan(ErrorCode &err);
-
-    bool resumeByOrigin(ErrorCode &err);
+    //bool resumeByOrigin(ErrorCode &err);
  
 
     // -----------------------------member variables---------------------------------------------
-
     int trajectory_fifo_dynamic_length_;
 
-
-    // intermediate variable used during planning path with smooth
-    Pose m_pose_previous;
-    Pose m_pose_start;
-    Pose m_pose_start_past;     // P_sta_ptc
-    JointPoint m_joint_start;
-    double m_vu_start;
-    double m_v_start;
-    MotionType allowed_motion_type_;
-
-    // point level: start-point, middle-point or ending-point
-    //PointLevel m_point_level;
-
-
-    // joint constraints
-    JointConstraints joint_constraints_;
+    // joint constraint
+    // JointConstraint joint_constraint_;
 
     // latest IK reference
-    JointValues latest_ik_reference_;
+    Joint latest_ik_reference_;
 
+    /*
     // current state of the arm group in joint space and cartesian space
-    JointValues current_joint_;
-    Pose        current_pose_;
+    Joint   current_joint_;
+    Pose    current_pose_;
+    */
 
     // tool frame and user frame
-    Transformation tool_frame_;
-    Transformation user_frame_;
+    // Transformation tool_frame_;
+    // Transformation user_frame_;
 
     // planned path FIFO (FIFO1)
     std::vector<PathPoint> planned_path_fifo_;
     // joint space trajectory FIFO (FIFO2)
     std::vector<JointPoint> trajectory_fifo_;
+    // FIFO1 backup used for diagnosis
+    Pose    fifo1_backup_[FIFO1_BACKUP_BUFFER_SIZE];
+    size_t  fifo1_backup_ptr_;
+    bool    fifo1_backup_enable_;
+
+    struct TempZeroOffset {
+        bool is_using_temp_zero_offset;
+        //Joint temp_zero_offset;
+        Joint temp_joint_recorder;
+    } temp_zero_offset_;
+
+    struct TempConstraint {
+        bool is_using_temp_constraint;
+        JointConstraint temp_constraint;
+        JointConstraint normal_constraint;
+    } temp_constraint_;
+
+    JointConstraint hard_constraint_;
     
-    enum SuspendPattern{
-        e_suspend_pattern_origin = 0,
-        e_suspend_pattern_replan = 1,
+    enum SuspendType{
+        SUSPEND_BY_TRAJECTORY,
+        SUSPEND_BY_REPLAN,
+        SUSPEND_BY_ESTOP,
     };
 
     struct SuspendState {
-        bool is_suspended;
-        SuspendPattern pattern;
-        JointValues last_point;
-        std::vector<JointPoint> fifo2_cache;
-        std::vector<JointValues> replan_trajectory;
+        bool        is_suspended;
+        bool        fake_suspend;
+        SuspendType type;
+        JointPoint  last_point;
+        Joint       pause_joint;
+        //std::vector<JointPoint> fifo2_cache;
     } suspend_state_;
+    
 
     // algorithm pointer
     fst_controller::PlanningInterface   *planning_interface_;
     fst_controller::Calibrator          *calibrator_;
 
+    string robot_recorder_path_;
     unsigned int current_state_;
     bool enable_calibration_;
-
-    struct {
-        int  id;
-        // bool addition_smooth;
-        MotionType motion_type;
-        SmoothType smooth_type;
-    } last_motion_;
+    bool allow_convert_;
     
     pthread_mutex_t group_mutex_;
+    pthread_mutex_t fifo1_mutex_;
+    pthread_mutex_t fifo2_mutex_;
+    pthread_mutex_t fifo1_backup_mutex_;
+
 
     fst_log::Logger log;
     // std::string m_log_file_name;
     // std::string m_log_file_content;
 };  // class ArmGroup
+
 }   // namespace fst_controller
 
 

@@ -29,4 +29,19 @@ DH_parameter:
         a:      0.0
         d:      77.5
         theta:  0.0
+    j7:
+        alpha:  0.0
+        a:      0.0
+        d:      0.0
+        theta:  0.0
+    j8:
+        alpha:  0.0
+        a:      0.0
+        d:      0.0
+        theta:  0.0
+    j9:
+        alpha:  0.0
+        a:      0.0
+        d:      0.0
+        theta:  0.0
 #END

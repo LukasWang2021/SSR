@@ -59,9 +59,7 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
     target.joint_target     = joint_target;
     target.percent_velocity = v_percent;
     next.type   = MOTION_NONE;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
 
     if (err == SUCCESS) {
         log.info("  Joint path generated successfully with %zd points.", motion->getTrajLength());
@@ -77,16 +75,13 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
         }
         unlockFIFO2();
         unlockFIFO1();
-        /*
         if (motion->getTrajLength() >0) {
             return true;
         }
         else {
             err = TARGET_REPEATED;
             return false;
-        }*/
-
-        return true;
+        }
     }
     else {
         log.error("  ERROR occurred during generating joint path, error code:0x%llx", err);
@@ -151,9 +146,7 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
     next.cnt    = cnt_next;
     next.joint_target       = joint_next;
     next.percent_velocity   = v_next;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
 
     if (err == SUCCESS) {
         log.info("  Joint path generated successfully with %zd points.", motion->getTrajLength());
@@ -166,15 +159,13 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
         }
         unlockFIFO2();
         unlockFIFO1();
-        /*
         if (motion->getTrajLength() > 0) {
             return true;
         }
         else {
             err = TARGET_REPEATED;
             return false;
-        }*/
-        return true;
+        }
     }
     //else if (err == TARGET_REPEATED) {
     //    log.warn("  Target repeated, error code=0x%llx, rebuild planning scene", err);
@@ -241,9 +232,7 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
     next.cnt    = cnt_next;
     next.pose_target        = pose_next;
     next.linear_velocity    = v_next;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
 
     if (err == SUCCESS) {
         log.info("  Joint path generated successfully with %zd points.", motion->getTrajLength());
@@ -256,7 +245,6 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
         }
         unlockFIFO2();
         unlockFIFO1();
-        /*
         if (motion->getTrajLength() > 0) {
             return true;
         }
@@ -264,8 +252,6 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
             err = TARGET_REPEATED;
             return false;
         }
-        */
-        return true;
     }
     else {
         log.error("  ERROR occurred during generating joint path, error code=0x%llx", err);
@@ -324,7 +310,7 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
         return false;
     }
 
-    if (!planning_interface_->setAlphaScaling(a_percent)) {
+    if (planning_interface_->setAlphaScaling(a_percent)) {
         err = INVALID_PARAMETER;
         log.error("  Get invalid acceleration, planning abort");
         return false;
@@ -340,10 +326,8 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
     next.circle_target.pose1    = pose1_circle;
     next.circle_target.pose2    = pose2_circle;
     next.linear_velocity        = v_circle;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
-
+ 
     if (err == SUCCESS) {
         log.info("  Joint path generated successfully with %zd points.", motion->getTrajLength());
         lockFIFO1();
@@ -355,7 +339,6 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
         }
         unlockFIFO2();
         unlockFIFO1();
-        /*
         if (motion->getTrajLength() > 0) {
             return true;
         }
@@ -363,8 +346,6 @@ bool ArmGroup::MoveJ(const Joint &joint_target, double v_percent, double a_perce
             err = TARGET_REPEATED;
             return false;
         }
-        */
-        return true;
     }
     else {
         log.error("  ERROR occurred during generating joint path, error code=0x%llx", err);
@@ -422,9 +403,7 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration,
     target.pose_target          = pose;
     target.linear_velocity      = velocity;
     next.type   = MOTION_NONE;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
 
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -437,10 +416,8 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration,
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);
@@ -512,9 +489,7 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration, int
     next.cnt                    = cnt_next;
     next.joint_target           = joint;
     next.percent_velocity        = v_percent;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
 
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -527,11 +502,8 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration, int
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-        
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);
@@ -610,9 +582,7 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration, int
     next.cnt                    = cnt_next;
     next.pose_target            = pose_next;
     next.linear_velocity        = v_next;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
     
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -625,11 +595,8 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration, int
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);
@@ -697,9 +664,7 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration, int
     next.circle_target.pose1    = pose1_circle;
     next.circle_target.pose2    = pose2_circle;
     next.linear_velocity        = v_circle;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
     
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -712,11 +677,8 @@ bool ArmGroup::MoveL(const Pose &pose, double velocity, double acceleration, int
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-        
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);
@@ -766,9 +728,7 @@ bool ArmGroup::MoveC(const Pose pose1, const Pose pose2, double velocity, double
     target.circle_target.pose2  = pose2;
     target.linear_velocity      = velocity;
     next.type                   = MOTION_NONE;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
     
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -781,11 +741,8 @@ bool ArmGroup::MoveC(const Pose pose1, const Pose pose2, double velocity, double
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-        
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);
@@ -841,9 +798,7 @@ bool ArmGroup::MoveC(const Pose &pose1, const Pose &pose2,
     next.cnt                    = cnt_next;
     next.joint_target           = joint;
     next.percent_velocity       = v_percent;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
     
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -856,11 +811,8 @@ bool ArmGroup::MoveC(const Pose &pose1, const Pose &pose2,
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-        
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);
@@ -917,9 +869,7 @@ bool ArmGroup::MoveC(const Pose &pose1, const Pose &pose2,
     next.cnt                    = cnt_next;
     next.pose_target            = pose_next;
     next.linear_velocity        = v_next;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
     
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -932,11 +882,8 @@ bool ArmGroup::MoveC(const Pose &pose1, const Pose &pose2,
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-        
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);
@@ -996,9 +943,7 @@ bool ArmGroup::MoveC(const Pose &pose1, const Pose &pose2,
     next.circle_target.pose1    = pose3;
     next.circle_target.pose2    = pose4;
     next.linear_velocity        = v_next;
-    lockArmGroup();
     MoveCommand *motion = planning_interface_->createMotionCommand(id, target, next, err);
-    unlockArmGroup();
     
     if (err == SUCCESS) {
         log.info("  Cartesian path generated successfully with %zd points.", motion->getTrajLength());
@@ -1011,11 +956,8 @@ bool ArmGroup::MoveC(const Pose &pose1, const Pose &pose2,
         }
         unlockFIFO2();
         unlockFIFO1();
-        
-        //if (motion->getTrajLength() > 0) {return true;}
-        //else {err = TARGET_REPEATED; return false;}
-        
-        return true;
+        if (motion->getTrajLength() > 0) {return true;}
+        else {err = TARGET_REPEATED; return false;}
     }
     else {
         log.error("  ERROR occurred during generating cartesian path, error code=0x%llx", err);

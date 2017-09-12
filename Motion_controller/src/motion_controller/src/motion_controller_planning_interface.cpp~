@@ -600,6 +600,21 @@ MoveCommand* PlanningInterface::createMotionCommand(
 
 
 
+    if (motion_list_back_ == NULL ||
+        motion_list_back_->getTrajLength() == 0 ||
+        motion_list_back_->getSmoothType() == SMOOTH_NONE)
+    {
+        if (initial_joint_valid_) {
+            initial_joint_valid_ = false;
+            new_motion->setInitialJoint(initial_joint_);
+        }
+        else {
+            delete new_motion;
+            err = INVALID_SEQUENCE;
+            return NULL;
+        }
+    }
+   
     if (motion_list_back_ == NULL) {
         // empty command list, insert the first command object
         new_motion->next = NULL;
@@ -607,7 +622,7 @@ MoveCommand* PlanningInterface::createMotionCommand(
         picking_command_ = new_motion;
         motion_list_front_  = new_motion;
         motion_list_back_   = new_motion;
-        new_motion->setInitialJoint(initial_joint_);
+        // new_motion->setInitialJoint(initial_joint_);
     }
     else {
         // insert the command into the end of list
@@ -724,11 +739,6 @@ void PlanningInterface::deleteMotionCommand(MoveCommand *command)
     }
 }
 
-bool PlanningInterface::isMotionCommandListEmpty(void)
-{
-    return motion_list_front_ == NULL;
-}
-
 
 ErrorCode PlanningInterface::pickPoints(vector<PathPoint> &points)
 {
@@ -757,16 +767,7 @@ ErrorCode PlanningInterface::pickPoints(vector<PathPoint> &points)
         else {
             if (picking_command_->getTrajLength() == 0) {
                 // is a empty command, target repeated?
-                //printf("PlanningInterface: insert a dummy point\n");
-                PathPoint pp;
-                pp.type   = MOTION_NONE;
-                pp.stamp  = 0;
-                pp.level  = POINT_ENDING;
-                pp.source = picking_command_;
-
-                points.push_back(pp);
                 picking_command_ = picking_command_->next;
-                /*
                 while (picking_command_) {
                     int res = picking_command_->PickPoint(points);
                     if (res == 1031)        return AXIS_OVERSHOOT;
@@ -788,10 +789,9 @@ ErrorCode PlanningInterface::pickPoints(vector<PathPoint> &points)
                         continue;
                     }
                 }
-                */
             }
 
-            if (points.size() > 0)
+            if (picking_command_ != NULL && points.size() > 0)
                 return SUCCESS;
             else 
                 return INVALID_SEQUENCE;     // undefine error code;

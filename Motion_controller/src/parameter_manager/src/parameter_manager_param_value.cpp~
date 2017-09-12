@@ -89,7 +89,7 @@ bool ParamValue::operator==(const ParamValue &other) const {
     switch (type_) {
         case TYPEBOOL:      return !value_.asBool && !other.value_.asBool || value_.asBool && other.value_.asBool;
         case TYPEINT:       return value_.asInt == other.value_.asInt;
-        case TYPEDOUBLE:    return fabs(value_.asDouble - other.value_.asDouble) < FLOATING_PRECISION;
+        case TYPEDOUBLE:    return fabs(value_.asDouble - other.value_.asDouble) < MINIMUM_DECIMAL;
         case TYPESTRING:    return *value_.asString == *other.value_.asString;
         case TYPEARRAY:     return *value_.asArray == *other.value_.asArray;
 

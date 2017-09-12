@@ -1,4 +1,4 @@
-kinematics_limit:
+soft_constraint:
     j1:
         home: 0.00
         upper: 2.9670
@@ -35,3 +35,22 @@ kinematics_limit:
         lower: -6.2832
         omega_max: 12.5664
         alpha_max: 31.4159
+    j7:
+        home: 0.0
+        upper: 0.0
+        lower: 0.0
+        omega_max: 0.0
+        alpha_max: 0.0
+    j8:
+        home: 0.0
+        upper: 0.0
+        lower: 0.0
+        omega_max: 0.0
+        alpha_max: 0.0
+    j9:
+        home: 0.0
+        upper: 0.0
+        lower: 0.0
+        omega_max: 0.0
+        alpha_max: 0.0
+#END

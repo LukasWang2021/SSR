@@ -6,16 +6,253 @@
  ************************************************************************/
 
 #include <motion_controller/motion_controller_arm_group.h>
+#include <unistd.h>
 
 using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
+using fst_parameter::ParamValue;
+using fst_parameter::ParamGroup;
 
 namespace fst_controller {
 
 static const unsigned int UNDEFINED     = 0x5555;
 static const unsigned int INITIALIZED   = 0x5556;
+
+
+ErrorCode ArmGroup::loadJointConstraint(void)
+{
+    log.info("Loading hard constraint ...");
+    fst_parameter::ParamGroup kinematic_constraint("share/configuration/model/hard_constraints.yaml");
+    ParamValue kinematics_limit;
+    if (kinematic_constraint.getLastError() == SUCCESS && 
+        kinematic_constraint.getParam("hard_constraint", kinematics_limit))
+    {
+        try {
+            hard_constraint_.j1.home     = kinematics_limit["j1"]["home"];
+            hard_constraint_.j1.upper    = kinematics_limit["j1"]["upper"];
+            hard_constraint_.j1.lower    = kinematics_limit["j1"]["lower"];
+            hard_constraint_.j1.max_omega= kinematics_limit["j1"]["omega_max"];
+            hard_constraint_.j1.max_alpha= kinematics_limit["j1"]["alpha_max"];
+            hard_constraint_.j2.home     = kinematics_limit["j2"]["home"];
+            hard_constraint_.j2.upper    = kinematics_limit["j2"]["upper"];
+            hard_constraint_.j2.lower    = kinematics_limit["j2"]["lower"];
+            hard_constraint_.j2.max_omega= kinematics_limit["j2"]["omega_max"];
+            hard_constraint_.j2.max_alpha= kinematics_limit["j2"]["alpha_max"];
+            hard_constraint_.j3.home     = kinematics_limit["j3"]["home"];
+            hard_constraint_.j3.upper    = kinematics_limit["j3"]["upper"];
+            hard_constraint_.j3.lower    = kinematics_limit["j3"]["lower"];
+            hard_constraint_.j3.max_omega= kinematics_limit["j3"]["omega_max"];
+            hard_constraint_.j3.max_alpha= kinematics_limit["j3"]["alpha_max"];
+            hard_constraint_.j4.home     = kinematics_limit["j4"]["home"];
+            hard_constraint_.j4.upper    = kinematics_limit["j4"]["upper"];
+            hard_constraint_.j4.lower    = kinematics_limit["j4"]["lower"];
+            hard_constraint_.j4.max_omega= kinematics_limit["j4"]["omega_max"];
+            hard_constraint_.j4.max_alpha= kinematics_limit["j4"]["alpha_max"];
+            hard_constraint_.j5.home     = kinematics_limit["j5"]["home"];
+            hard_constraint_.j5.upper    = kinematics_limit["j5"]["upper"];
+            hard_constraint_.j5.lower    = kinematics_limit["j5"]["lower"];
+            hard_constraint_.j5.max_omega= kinematics_limit["j5"]["omega_max"];
+            hard_constraint_.j5.max_alpha= kinematics_limit["j5"]["alpha_max"];
+            hard_constraint_.j6.home     = kinematics_limit["j6"]["home"];
+            hard_constraint_.j6.upper    = kinematics_limit["j6"]["upper"];
+            hard_constraint_.j6.lower    = kinematics_limit["j6"]["lower"];
+            hard_constraint_.j6.max_omega= kinematics_limit["j6"]["omega_max"];
+            hard_constraint_.j6.max_alpha= kinematics_limit["j6"]["alpha_max"];
+        }
+        catch (fst_parameter::ParamException &exception) {
+            log.error("Loading hard constraint exception:");
+            log.error(exception.getMessage().c_str());
+            return exception.getCode();
+        }
+        printJointConstraint("Hard constraint:", hard_constraint_);
+        log.info("Success!");
+    }
+    else {
+        log.error("Fail loading hard constraint");
+        return kinematic_constraint.getLastError();
+    }
+
+    log.info("Loading soft constraint ...");
+    kinematic_constraint.clearLastError();
+    kinematic_constraint.loadParamFile("share/configuration/configurable/soft_constraints.yaml");
+    if (kinematic_constraint.getLastError() == SUCCESS && 
+        kinematic_constraint.getParam("soft_constraint", kinematics_limit))
+    {
+        JointConstraint constraint;
+        memset(&constraint, 0, sizeof(constraint));
+        try {
+            constraint.j1.home     = kinematics_limit["j1"]["home"];
+            constraint.j1.upper    = kinematics_limit["j1"]["upper"];
+            constraint.j1.lower    = kinematics_limit["j1"]["lower"];
+            constraint.j1.max_omega= kinematics_limit["j1"]["omega_max"];
+            constraint.j1.max_alpha= kinematics_limit["j1"]["alpha_max"];
+            constraint.j2.home     = kinematics_limit["j2"]["home"];
+            constraint.j2.upper    = kinematics_limit["j2"]["upper"];
+            constraint.j2.lower    = kinematics_limit["j2"]["lower"];
+            constraint.j2.max_omega= kinematics_limit["j2"]["omega_max"];
+            constraint.j2.max_alpha= kinematics_limit["j2"]["alpha_max"];
+            constraint.j3.home     = kinematics_limit["j3"]["home"];
+            constraint.j3.upper    = kinematics_limit["j3"]["upper"];
+            constraint.j3.lower    = kinematics_limit["j3"]["lower"];
+            constraint.j3.max_omega= kinematics_limit["j3"]["omega_max"];
+            constraint.j3.max_alpha= kinematics_limit["j3"]["alpha_max"];
+            constraint.j4.home     = kinematics_limit["j4"]["home"];
+            constraint.j4.upper    = kinematics_limit["j4"]["upper"];
+            constraint.j4.lower    = kinematics_limit["j4"]["lower"];
+            constraint.j4.max_omega= kinematics_limit["j4"]["omega_max"];
+            constraint.j4.max_alpha= kinematics_limit["j4"]["alpha_max"];
+            constraint.j5.home     = kinematics_limit["j5"]["home"];
+            constraint.j5.upper    = kinematics_limit["j5"]["upper"];
+            constraint.j5.lower    = kinematics_limit["j5"]["lower"];
+            constraint.j5.max_omega= kinematics_limit["j5"]["omega_max"];
+            constraint.j5.max_alpha= kinematics_limit["j5"]["alpha_max"];
+            constraint.j6.home     = kinematics_limit["j6"]["home"];
+            constraint.j6.upper    = kinematics_limit["j6"]["upper"];
+            constraint.j6.lower    = kinematics_limit["j6"]["lower"];
+            constraint.j6.max_omega= kinematics_limit["j6"]["omega_max"];
+            constraint.j6.max_alpha= kinematics_limit["j6"]["alpha_max"];
+        }
+        catch (fst_parameter::ParamException &exception) {
+            log.error("Exception:");
+            log.error(exception.getMessage().c_str());
+            return exception.getCode();
+        }
+    
+        if (!isFirstConstraintCoveredBySecond(constraint, hard_constraint_)) {
+            log.error("Cannot set joint constraint, because it is INVALID");
+            return INVALID_PARAMETER;
+        }
+        planning_interface_->setJointConstraint(constraint);
+        temp_constraint_.normal_constraint = constraint;
+        printJointConstraint("Soft constraint:", constraint);
+        log.info("Success!");
+        return SUCCESS;
+    }
+    else {
+        log.error("Fail loading soft constraint");
+        return kinematic_constraint.getLastError();
+    }
+}
+
+ErrorCode ArmGroup::loadDHParameter(void)
+{
+    log.info("Loading DH parameters ...");
+    fst_parameter::ParamGroup dh_params("share/configuration/machine/dh.yaml");
+    ParamValue dh_param;
+    if (dh_params.getLastError() == SUCCESS && dh_params.getParam("DH_parameter", dh_param)) {
+        DHGroup dh;
+        try {
+            dh.j1.alpha = dh_param["j1"]["alpha"];
+            dh.j1.a     = dh_param["j1"]["a"];
+            dh.j1.d     = dh_param["j1"]["d"];
+            dh.j1.theta = dh_param["j1"]["theta"];
+            dh.j2.alpha = dh_param["j2"]["alpha"];
+            dh.j2.a     = dh_param["j2"]["a"];
+            dh.j2.d     = dh_param["j2"]["d"];
+            dh.j2.theta = dh_param["j2"]["theta"];
+            dh.j3.alpha = dh_param["j3"]["alpha"];
+            dh.j3.a     = dh_param["j3"]["a"];
+            dh.j3.d     = dh_param["j3"]["d"];
+            dh.j3.theta = dh_param["j3"]["theta"];
+            dh.j4.alpha = dh_param["j4"]["alpha"];
+            dh.j4.a     = dh_param["j4"]["a"];
+            dh.j4.d     = dh_param["j4"]["d"];
+            dh.j4.theta = dh_param["j4"]["theta"];
+            dh.j5.alpha = dh_param["j5"]["alpha"];
+            dh.j5.a     = dh_param["j5"]["a"];
+            dh.j5.d     = dh_param["j5"]["d"];
+            dh.j5.theta = dh_param["j5"]["theta"];
+            dh.j6.alpha = dh_param["j6"]["alpha"];
+            dh.j6.a     = dh_param["j6"]["a"];
+            dh.j6.d     = dh_param["j6"]["d"];
+            dh.j6.theta = dh_param["j6"]["theta"];
+            
+            planning_interface_->setDH(dh);
+            log.info("Success!");
+            return SUCCESS;
+        }
+        catch (fst_parameter::ParamException &exception) {
+            log.error("Exception:");
+            log.error(exception.getMessage().c_str());
+            return exception.getCode();
+        }
+    }
+    else {
+        log.error("Fail loading DH parameters");
+        return dh_params.getLastError();
+    }
+}
+
+ErrorCode ArmGroup::constructPlanningInterface(ParamValue &param)
+{
+    log.info("Constructing planning interface ...");
+    if (planning_interface_ != NULL) {delete planning_interface_; planning_interface_ = NULL;}
+    planning_interface_ = new fst_controller::PlanningInterface();
+
+    ErrorCode error = SUCCESS;
+    if (planning_interface_ != NULL) {
+        if (planning_interface_->initPlanningInterface(param, error)) {
+            log.info("  algorithm version: %s", planning_interface_->getAlgorithmVersion().c_str());
+            log.info("  set cycle time to %.4lf s", planning_interface_->getCycleTime());
+            //log.info("  set velocity to %.2lf mm/s", planning_interface_->getVelocity());
+            log.info("  set acceleration to %.2lf mm/s^2", planning_interface_->getAcceleration());
+            log.info("  set velocity scaling to %.2lf%%", planning_interface_->getVelocityScaling() * 100);
+            log.info("  set acceleration scaling to %.2lf%%", planning_interface_->getAccelerationScaling() * 100);
+            log.info("  set jerk to %.2lf", planning_interface_->getJerk());
+            log.info("  set joint overshoot to %.4lf rad", planning_interface_->getJointOvershoot());
+            //log.info("  set joint error angle to %.4lf rad", planning_interface_->getJointErrorAngle());
+            log.info("  set omega overload to %.2lf%%", planning_interface_->getOmegaOverload() * 100);
+            log.info("  set alpha overload to %.2lf%%", planning_interface_->getAlphaOverload() * 100);
+            log.info("  set smooth radius coefficient to %.2lf", planning_interface_->getSmoothRadiusCoefficient());
+            log.info("  set smooth curve mode to '%s'", ((string)param["smooth_curve_mode"]).c_str());
+            log.info("Success!");
+        }
+        else {
+            log.error("Fail to initialize planning_interface, error code=0x%llx", error);
+        }
+    }
+    else {
+        error = MOTION_FAIL_IN_INIT;
+        log.error("Cannot construct planning interface, error code=0x%llx", error);
+    }
+
+    return error;
+}
+
+ErrorCode ArmGroup::constructCalibrator(const string &path)
+{  
+    log.info("Constructing calibrator ...");
+    if (calibrator_ != NULL) {delete calibrator_; calibrator_ = NULL;}
+
+    calibrator_ = new fst_controller::Calibrator(log);
+    if (calibrator_ == NULL) {
+        log.error("Memory error, cannot construct calibrator");
+        return MOTION_FAIL_IN_INIT;
+    }
+    
+    if (calibrator_->initCalibrator(path)) {
+        log.info("Success!");
+    }
+    else {
+        log.error("Initialize calibrator failed");
+        return calibrator_->getLastError();
+    }
+
+    log.info("Downloading JTAC parameters ...");
+    if (calibrator_->transmitJtacParam("all")) {
+        log.info("Success!");
+        usleep(256 * 1000);
+    }
+    else {
+        log.error("Failed");
+        return calibrator_->getLastError();
+    }
+
+    return SUCCESS;
+}
+
 
 //------------------------------------------------------------------------------
 // Function:    setCycleTime
@@ -26,8 +263,6 @@ static const unsigned int INITIALIZED   = 0x5556;
 //          false   -> cycle time NOT changed
 //------------------------------------------------------------------------------
 bool ArmGroup::setCycleTime(double tc) {
-    // if (current_state_ != INITIALIZED)  return false;
-
     if (planning_interface_->setCycleTime(tc)) {
         log.info("Set cycle time to %.4fs", tc);
         return true;
@@ -36,22 +271,6 @@ bool ArmGroup::setCycleTime(double tc) {
         log.error("Cannot set cycle time to %.4fs", tc);
         return false;
     }
-}
-
-//------------------------------------------------------------------------------
-// Function:    setJointConstraints
-// Summary: To set joint constraints in Kinematics algorithm.
-// In:      constraints -> joint constraints
-// Out:     None
-// Return:  true    -> set successfully
-//          false   -> set UNsuccessfully
-//------------------------------------------------------------------------------
-bool ArmGroup::setJointConstraints(const JointConstraints &constraints) {
-    // if (current_state_ != INITIALIZED)  return false;
-    
-    joint_constraints_ = constraints;
-    printJointConstraints(constraints);
-    return planning_interface_->setJointConstraints(constraints);
 }
 
 
@@ -64,8 +283,6 @@ bool ArmGroup::setJointConstraints(const JointConstraints &constraints) {
 //          false   -> joint overshoot NOT changed
 //------------------------------------------------------------------------------
 bool ArmGroup::setJointOvershoot(double angle) {
-    // if (current_state_ != INITIALIZED)  return false;
-
     if (planning_interface_->setJointOvershoot(angle)) {
         log.info("Set joint overshoot to %.4f rad", angle);
         return true;
@@ -76,6 +293,7 @@ bool ArmGroup::setJointOvershoot(double angle) {
     }
 }
 
+/*
 //------------------------------------------------------------------------------
 // Function:    setJointErrorAngle
 // Summary: To set joint error angle.
@@ -85,8 +303,6 @@ bool ArmGroup::setJointOvershoot(double angle) {
 //          false   -> joint error angle NOT changed
 //------------------------------------------------------------------------------
 bool ArmGroup::setJointErrorAngle(double angle) {
-    // if (current_state_ != INITIALIZED)  return false;
-
     if (planning_interface_->setJointErrorAngle(angle)) {
         log.info("Set joint error angle to %.4f rad", angle);
         return true;
@@ -106,8 +322,6 @@ bool ArmGroup::setJointErrorAngle(double angle) {
 //          false   -> omega overload NOT changed
 //------------------------------------------------------------------------------
 bool ArmGroup::setOmegaOverload(double value) {
-    // if (current_state_ != INITIALIZED)  return false;
-
     if (planning_interface_->setOmegaOverload(value)) {
         log.info("Set omega overload to %.2f%%", value * 100);
         return true;
@@ -127,8 +341,6 @@ bool ArmGroup::setOmegaOverload(double value) {
 //          false   -> alpha overload NOT changed
 //------------------------------------------------------------------------------
 bool ArmGroup::setAlphaOverload(double value) {
-    // if (current_state_ != INITIALIZED)  return false;
-
     if (planning_interface_->setAlphaOverload(value)) {
         log.info("Set alpha overload to %.2f%%", value * 100);
         return true;
@@ -138,6 +350,7 @@ bool ArmGroup::setAlphaOverload(double value) {
         return false;
     }
 }
+*/
 
 //------------------------------------------------------------------------------
 // Function:    setSmoothRadiusCoefficient
@@ -148,8 +361,6 @@ bool ArmGroup::setAlphaOverload(double value) {
 //          false   -> smooth radius coefficient NOT changed
 //------------------------------------------------------------------------------
 bool ArmGroup::setSmoothRadiusCoefficient(double coeff) {
-    // if (current_state_ != INITIALIZED)  return false;
-
     if (planning_interface_->setSmoothRadiusCoefficient(coeff)) {
         log.info("Set smooth radius coefficient to %.2f", coeff);
         return true;
@@ -160,244 +371,222 @@ bool ArmGroup::setSmoothRadiusCoefficient(double coeff) {
     }
 }
 
-void ArmGroup::setStartJointImpl(const JointValues &joint) {
-    m_joint_start.joints = joint;
-    memset(&m_joint_start.omegas, 0, sizeof(JointOmegas));
+ErrorCode ArmGroup::setCurrentJointToStartJoint(void)
+{
+    ErrorCode err = SUCCESS;
+    FeedbackJointState fbjs;
+    if (!calibrator_->getCurrentJoint(fbjs)) {
+        err = calibrator_->getLastError();
+        log.error("Fail to get current joint. Error code=0x%llx", err);
+        return err;
+    }
+    Joint joint;
+    memset(&joint, 0, sizeof(joint));
+    memcpy(&joint, fbjs.position, NUM_OF_JOINT * sizeof(double));
+    printJoint("Using current joint values to set start state: joints=", joint);
+    
+    if (!checkJointBoundary(joint)) {
+        err = CURRENT_JOINT_OUT_OF_CONSTRAINT;
+        log.error("Given joint values out of constraint. Error code=0x%llx", JOINT_OUT_OF_CONSTRAINT);
+        log.info("Set temporary constraint using given joint.");
+        setTempConstraint(joint);
+    }
+        
+    planning_interface_->setInitialJoint(joint);
+    latest_ik_reference_ = joint;
+    log.info("Success!");
+    
+    return err;
 }
 
-void ArmGroup::setStartPoseImpl(const Pose &pose) {
-    m_pose_start    = pose;
-    m_pose_previous = pose;
-    m_v_start       = 0.0;
-    m_vu_start      = 0.0;
-}
+bool ArmGroup::setTempConstraint(const Joint &joint)
+{
+    if (!temp_constraint_.is_using_temp_constraint) {
+        // temp_constraint_.normal_constraint = joint_constraint_;
+        temp_constraint_.normal_constraint = planning_interface_->getJointConstraint();
+        temp_constraint_.is_using_temp_constraint = true;
+    }
 
-bool ArmGroup::setStartStateImpl(const JointValues &joint, ErrorCode &err) {
-    Pose pose;
-    if (planning_interface_->computeForwardKinematics(joint, pose, err)) {
-        setStartJointImpl(joint);
-        setStartPoseImpl(pose);
+    JointConstraint &cons = temp_constraint_.temp_constraint;
+    cons = temp_constraint_.normal_constraint;
+    if (cons.j1.upper < joint.j1) cons.j1.upper = joint.j1 + MINIMUM_ALLOWANCE;
+    if (cons.j1.lower > joint.j1) cons.j1.lower = joint.j1 - MINIMUM_ALLOWANCE;
+    if (cons.j2.upper < joint.j2) cons.j2.upper = joint.j2 + MINIMUM_ALLOWANCE;
+    if (cons.j2.lower > joint.j2) cons.j2.lower = joint.j2 - MINIMUM_ALLOWANCE;
+    if (cons.j3.upper < joint.j3) cons.j3.upper = joint.j3 + MINIMUM_ALLOWANCE;
+    if (cons.j3.lower > joint.j3) cons.j3.lower = joint.j3 - MINIMUM_ALLOWANCE;
+    if (cons.j4.upper < joint.j4) cons.j4.upper = joint.j4 + MINIMUM_ALLOWANCE;
+    if (cons.j4.lower > joint.j4) cons.j4.lower = joint.j4 - MINIMUM_ALLOWANCE;
+    if (cons.j5.upper < joint.j5) cons.j5.upper = joint.j5 + MINIMUM_ALLOWANCE;
+    if (cons.j5.lower > joint.j5) cons.j5.lower = joint.j5 - MINIMUM_ALLOWANCE;
+    if (cons.j6.upper < joint.j6) cons.j6.upper = joint.j6 + MINIMUM_ALLOWANCE;
+    if (cons.j6.lower > joint.j6) cons.j6.lower = joint.j6 - MINIMUM_ALLOWANCE;
+
+    if (isFirstConstraintCoveredBySecond(cons, hard_constraint_)) {
+        planning_interface_->setJointConstraint(cons);
+        printJointConstraint("Temp constraint:", cons);
         return true;
     }
     else {
+        temp_constraint_.is_using_temp_constraint = false;
         return false;
     }
 }
 
-bool ArmGroup::rebuildPlanningVariable(ErrorCode &err) {
-    //allowed_motion_type_ = MOTION_UNDEFINED;
-    if (!planned_path_fifo_.empty()) {
-        if (planned_path_fifo_.back().type == MOTION_JOINT) {
-            return setStartStateImpl(planned_path_fifo_.back().joints, err);
-        }
-        else if (planned_path_fifo_.back().type == MOTION_LINE
-                 || planned_path_fifo_.back().type == MOTION_CIRCLE) {
-            m_pose_start    = planned_path_fifo_.back().pose;
-            m_pose_previous = m_pose_start;
-            m_v_start   = 0.0;
-            m_vu_start  = 0.0;
-            return true;
-        }
-        else {
-            err = MOTION_INTERNAL_FAULT;
-            return false;
-        }
-    }
-    else if (!trajectory_fifo_.empty()) {
-        return setStartStateImpl(trajectory_fifo_.back().joints, err);
+bool ArmGroup::resetTempConstraint(const Joint &joint)
+{
+    JointConstraint &cons_t = temp_constraint_.temp_constraint;
+    JointConstraint  cons_n = temp_constraint_.normal_constraint;
+    if (cons_t.j1.upper > joint.j1 && cons_n.j1.upper < joint.j1)  cons_n.j1.upper = joint.j1 + MINIMUM_ALLOWANCE;
+    if (cons_t.j1.lower < joint.j1 && cons_n.j1.lower > joint.j1)  cons_n.j1.lower = joint.j1 - MINIMUM_ALLOWANCE;
+    if (cons_t.j2.upper > joint.j2 && cons_n.j2.upper < joint.j2)  cons_n.j2.upper = joint.j2 + MINIMUM_ALLOWANCE;
+    if (cons_t.j2.lower < joint.j2 && cons_n.j2.lower > joint.j2)  cons_n.j2.lower = joint.j2 - MINIMUM_ALLOWANCE;
+    if (cons_t.j3.upper > joint.j3 && cons_n.j3.upper < joint.j3)  cons_n.j3.upper = joint.j3 + MINIMUM_ALLOWANCE;
+    if (cons_t.j3.lower < joint.j3 && cons_n.j3.lower > joint.j3)  cons_n.j3.lower = joint.j3 - MINIMUM_ALLOWANCE;
+    if (cons_t.j4.upper > joint.j4 && cons_n.j4.upper < joint.j4)  cons_n.j4.upper = joint.j4 + MINIMUM_ALLOWANCE;
+    if (cons_t.j4.lower < joint.j4 && cons_n.j4.lower > joint.j4)  cons_n.j4.lower = joint.j4 - MINIMUM_ALLOWANCE;
+    if (cons_t.j5.upper > joint.j5 && cons_n.j5.upper < joint.j5)  cons_n.j5.upper = joint.j5 + MINIMUM_ALLOWANCE;
+    if (cons_t.j5.lower < joint.j5 && cons_n.j5.lower > joint.j5)  cons_n.j5.lower = joint.j5 - MINIMUM_ALLOWANCE;
+    if (cons_t.j6.upper > joint.j6 && cons_n.j6.upper < joint.j6)  cons_n.j6.upper = joint.j6 + MINIMUM_ALLOWANCE;
+    if (cons_t.j6.lower < joint.j6 && cons_n.j6.lower > joint.j6)  cons_n.j6.lower = joint.j6 - MINIMUM_ALLOWANCE;
+
+    if (isFirstConstraintCoveredBySecond(cons_n, hard_constraint_)) {
+        planning_interface_->setJointConstraint(cons_n);
+        printJointConstraint("Temp constraint", cons_n);
+        cons_t = cons_n;
+        return true;
     }
     else {
-        return setStartStateImpl(getLatestIKReference(), err);
+        log.error("new temp-constraint larger than hard-constraint");
+        return false;
     }
 }
 
-void ArmGroup::abstractLastMotion(int id, MotionType motion_t, SmoothType smooth_t) {
-    last_motion_.id = id;
-    last_motion_.smooth_type = smooth_t;
-    last_motion_.motion_type = motion_t;
+ErrorCode ArmGroup::setSoftConstraintImpl(const JointConstraint &cons)
+{
+    if (!isFirstConstraintCoveredBySecond(cons, hard_constraint_))
+    {
+        return INVALID_PARAMETER;
+    }
+
+    try {
+        ParamValue value;
+        ParamGroup group("share/configuration/configurable/soft_constraints.yaml");
+        group.getParam("soft_constraint", value);
+        if (group.getLastError() != SUCCESS) {
+            log.error("Error while loading kinematic_constraint.yaml");
+            return group.getLastError();
+        }
+
+        value["j1"]["home"]     = cons.j1.home;
+        value["j1"]["upper"]    = cons.j1.upper;
+        value["j1"]["lower"]    = cons.j1.lower;
+        value["j1"]["omega_max"]= cons.j1.max_omega;
+        value["j1"]["alpha_max"]= cons.j1.max_alpha;
+        value["j2"]["home"]     = cons.j2.home;
+        value["j2"]["upper"]    = cons.j2.upper;
+        value["j2"]["lower"]    = cons.j2.lower;
+        value["j2"]["omega_max"]= cons.j2.max_omega;
+        value["j2"]["alpha_max"]= cons.j2.max_alpha;
+        value["j3"]["home"]     = cons.j3.home;
+        value["j3"]["upper"]    = cons.j3.upper;
+        value["j3"]["lower"]    = cons.j3.lower;
+        value["j3"]["omega_max"]= cons.j3.max_omega;
+        value["j3"]["alpha_max"]= cons.j3.max_alpha;
+        value["j4"]["home"]     = cons.j4.home;
+        value["j4"]["upper"]    = cons.j4.upper;
+        value["j4"]["lower"]    = cons.j4.lower;
+        value["j4"]["omega_max"]= cons.j4.max_omega;
+        value["j4"]["alpha_max"]= cons.j4.max_alpha;
+        value["j5"]["home"]     = cons.j5.home;
+        value["j5"]["upper"]    = cons.j5.upper;
+        value["j5"]["lower"]    = cons.j5.lower;
+        value["j5"]["omega_max"]= cons.j5.max_omega;
+        value["j5"]["alpha_max"]= cons.j5.max_alpha;
+        value["j6"]["home"]     = cons.j6.home;
+        value["j6"]["upper"]    = cons.j6.upper;
+        value["j6"]["lower"]    = cons.j6.lower;
+        value["j6"]["omega_max"]= cons.j6.max_omega;
+        value["j6"]["alpha_max"]= cons.j6.max_alpha;
+        
+        if (!group.setParam("soft_constraint", value) || !group.dumpParamFile()) {
+            log.error("Error while dumping soft_constraint.yaml");
+            return group.getLastError();
+        }
+    }
+    catch (fst_parameter::ParamException &exception) {
+        log.error("YAML operation exception:");
+        log.error(exception.getMessage().c_str());
+        return exception.getCode();
+    }
+
+    planning_interface_->setJointConstraint(cons);
+    return SUCCESS;
 }
 
 /*
-bool ArmGroup::fillPlannedPathFIFO(int id, MotionType motion_t, SmoothType smooth_t, vector<Pose> &path) {
-    if (motion_t != MOTION_LINE && motion_t != MOTION_CIRCLE || path.empty()) {
-        return false;
-    }
+void ArmGroup::setSoftConstraintImpl(const JointConstraint &cons)
+{
+    planning_interface_->setJointConstraint(cons);
+}
+*/
 
-    PathPoint pp;
-    pp.type = motion_t;
-
-    if (last_motion_.smooth_type == SMOOTH_NONE) {
-        pp.id = (id << 2) + POINT_START;
-        pp.pose = path.front();
-        planned_path_fifo_.push_back(pp);
-        pp.id = (id << 2) + POINT_MIDDLE;
-
-        vector<Pose>::iterator itr = path.begin() + 1;
-        for ( ; itr != path.end(); ++itr) {
-            pp.pose = *itr;
-            planned_path_fifo_.push_back(pp);
+void ArmGroup::deleteTempConstraint()
+{
+    if (temp_constraint_.is_using_temp_constraint) {
+        log.info("Using back to normal constraint, remove temp constraint");
+        if (isFirstConstraintCoveredBySecond(temp_constraint_.normal_constraint, hard_constraint_)) {
+            planning_interface_->setJointConstraint(temp_constraint_.normal_constraint);
+            temp_constraint_.is_using_temp_constraint = false;
+            log.info("Success");
+        }
+        else {
+            log.error("Set normal constraint failed");
+            log.error("Set normal constraint failed, because it is larger than hard-constraint");
         }
     }
-    else {
-        pp.id = (id << 2) + POINT_MIDDLE;
-
-        vector<Pose>::iterator itr = path.begin();
-        for ( ; itr != path.end(); ++itr) {
-            pp.pose = *itr;
-            planned_path_fifo_.push_back(pp);
-        }
-    }
-
-    if (smooth_t == SMOOTH_NONE) {
-        planned_path_fifo_.back().id = (id << 2) + POINT_ENDING;
-    }
-
-    return true;
 }
 
-bool ArmGroup::fillPlannedPathFIFO(int id, MotionType motion_t, SmoothType smooth_t, vector<JointValues> &path) {
-    if (motion_t != MOTION_JOINT || path.empty()) {
-        return false;
-    }
-
-    PathPoint pp;
-    pp.type = motion_t;
-
-    if (last_motion_.smooth_type == SMOOTH_NONE) {
-        pp.id = (id << 2) + POINT_START;
-        pp.joints = path.front();
-        planned_path_fifo_.push_back(pp);
-        pp.id = (id << 2) + POINT_MIDDLE;
-
-        vector<JointValues>::iterator itr = path.begin() + 1;
-        for ( ; itr != path.end(); ++itr) {
-            pp.joints = *itr;
-            planned_path_fifo_.push_back(pp);
-        }
-    }
-    else {
-        pp.id = (id << 2) + POINT_MIDDLE;
-
-        vector<JointValues>::iterator itr = path.begin();
-        for ( ; itr != path.end(); ++itr) {
-            pp.joints = *itr;
-            planned_path_fifo_.push_back(pp);
-        }
-    }
-
-    if (smooth_t == SMOOTH_NONE) {
-        planned_path_fifo_.back().id = (id << 2) + POINT_ENDING;
-    }
-
-    return true;
-}*/
-
-bool ArmGroup::managePlanningResult(int id, MotionType motion_t, SmoothType smooth_t, ErrorCode &err) {
-    bool result = true;
-    switch (smooth_t) {
-        case SMOOTH_J2J:
-        case SMOOTH_L2J:
-        case SMOOTH_C2J:    
-                allowed_motion_type_ = MOTION_JOINT;
-                break;
-        case SMOOTH_J2L:
-        case SMOOTH_L2L:
-        case SMOOTH_C2L:
-                allowed_motion_type_ = MOTION_LINE;
-                break;
-        case SMOOTH_J2C:
-        case SMOOTH_L2C:
-        case SMOOTH_C2C:
-                allowed_motion_type_ = MOTION_CIRCLE;
-                break;
-        case SMOOTH_NONE:
-                allowed_motion_type_ = MOTION_UNDEFINED;
-                break;
-        default:
-                err    = MOTION_INTERNAL_FAULT;
-                result = false;
-    }
-
-    if (last_motion_.smooth_type == SMOOTH_NONE) {
-        size_t length = planned_path_fifo_.size();
-        abstractLastMotion(id, motion_t, smooth_t);
-        result = result && pickPoints(err);
-        if (result) planned_path_fifo_.at(length).id = last_motion_.id << 2 | POINT_START;
-    }
-    else {
-        abstractLastMotion(id, motion_t, smooth_t);
-        result = result && pickPoints(err);
-    }
-
-    return result;
+bool ArmGroup::isJointInConstraint(const Joint &joint, const JointConstraint &cons)
+{
+    return  joint.j1 > cons.j1.lower && joint.j1 < cons.j1.upper &&
+            joint.j2 > cons.j2.lower && joint.j2 < cons.j2.upper &&
+            joint.j3 > cons.j3.lower && joint.j3 < cons.j3.upper &&
+            joint.j4 > cons.j4.lower && joint.j4 < cons.j4.upper &&
+            joint.j5 > cons.j5.lower && joint.j5 < cons.j5.upper &&
+            joint.j6 > cons.j6.lower && joint.j6 < cons.j6.upper;
 }
 
-//------------------------------------------------------------------------------
-// Function:    setLatestIKReference
-// Summary: To set latest IK reference.
-// In:      joint_reference -> new IK reference
-// Out:     error_code  -> error code
-// Return:  true    -> latest IK reference setted to joint_reference scucessfully
-//          false   -> failed to set latest IK reference
-//------------------------------------------------------------------------------
-bool ArmGroup::setLatestIKReference(const JointValues &joint_reference, ErrorCode &err) {
-    // if (current_state_ != INITIALIZED) {err = NEED_INITIALIZATION; return false;}
-
-    if (checkJointBoundary(joint_reference)) {
-        latest_ik_reference_ = joint_reference;
+bool ArmGroup::isFirstConstraintCoveredBySecond(const JointConstraint &child, const JointConstraint &parent)
+{
+    if (child.j1.upper > parent.j1.upper || child.j1.lower < parent.j1.lower ||
+        child.j2.upper > parent.j2.upper || child.j2.lower < parent.j2.lower ||
+        child.j3.upper > parent.j3.upper || child.j3.lower < parent.j3.lower ||
+        child.j4.upper > parent.j4.upper || child.j4.lower < parent.j4.lower ||
+        child.j5.upper > parent.j5.upper || child.j5.lower < parent.j5.lower ||
+        child.j6.upper > parent.j6.upper || child.j6.lower < parent.j6.lower)
+    {
+        return false;
+    }
+    else {
         return true;
     }
-    else {
-        err = JOINT_OUT_OF_CONSTRAINT;
-        return false;
-    }
 }
 
-//------------------------------------------------------------------------------
-// Function:    getLatestIKReference
-// Summary: To get latest IK reference values.
-// In:      None
-// Out:     None
-// Return:  a group of joint values used as IK reference
-//------------------------------------------------------------------------------
-const JointValues& ArmGroup::getLatestIKReference(void) {
-    return latest_ik_reference_;
-}
 
 //------------------------------------------------------------------------------
 // Function:    checkJointBoundary
 // Summary: To check whether a group of joint values are valid according to
-//          joint constraints.
-// In:      joint_values -> joint_values needed to be checked
+//          joint constraint.
+// In:      joint -> joint_values needed to be checked
 // Out:     None
 // Return:  true  -> valid
 //------------------------------------------------------------------------------
-bool ArmGroup::checkJointBoundary(const JointValues &joint_values) {
-    return joint_values.j1 > joint_constraints_.j1.lower &&
-           joint_values.j1 < joint_constraints_.j1.upper &&
-           joint_values.j2 > joint_constraints_.j2.lower &&
-           joint_values.j2 < joint_constraints_.j2.upper &&
-           joint_values.j3 > joint_constraints_.j3.lower &&
-           joint_values.j3 < joint_constraints_.j3.upper &&
-           joint_values.j4 > joint_constraints_.j4.lower &&
-           joint_values.j4 < joint_constraints_.j4.upper &&
-           joint_values.j5 > joint_constraints_.j5.lower &&
-           joint_values.j5 < joint_constraints_.j5.upper &&
-           joint_values.j6 > joint_constraints_.j6.lower &&
-           joint_values.j6 < joint_constraints_.j6.upper;
+bool ArmGroup::checkJointBoundary(const Joint &joint) {
+    return planning_interface_->checkJointBoundry(joint);
 }
-#define MAX_ACCURATE_VALUE 0.03
-bool isOutMax(JointValues src_joints, JointValues dst_joints)
-{
-	if (fabs(src_joints.j1 - dst_joints.j1) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j2 - dst_joints.j2) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j3 - dst_joints.j3) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j4 - dst_joints.j4) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j5 - dst_joints.j5) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j6 - dst_joints.j6) > MAX_ACCURATE_VALUE) return false;
 
-	return true;
-}	
+
 //------------------------------------------------------------------------------
 // Function:    convertPath2Trajectory
 // Summary: To convert numbers of posepoint in m_cartesian_path_FIFO
@@ -407,205 +596,290 @@ bool isOutMax(JointValues src_joints, JointValues dst_joints)
 // Return:  <0         -> ERROR occurred during converting
 //          >=0        -> number of pose that convered actually
 //------------------------------------------------------------------------------
-int ArmGroup::convertPath2Trajectory(int num, ErrorCode &err) {
-    if (planned_path_fifo_.size() < planning_interface_->getTrajectorySegmentLength() &&
-            planning_interface_->getFIFOLength() > 0) {
-        pickPoints(err);
+ErrorCode ArmGroup::convertPath2Trajectory(int num)
+{
+    ErrorCode err = SUCCESS;
+    
+    if (planned_path_fifo_.size() < planning_interface_->getTrajectorySegmentLength()) {
+        err = pickPoints();
+        if (err != SUCCESS) return err;
     }
 
-    if (trajectory_fifo_dynamic_length_ <= getJointTrajectoryFIFOLength()) {
-        num = 0;
-    }
-    else if (num > trajectory_fifo_dynamic_length_ - getJointTrajectoryFIFOLength()) {
-        num = trajectory_fifo_dynamic_length_ - getJointTrajectoryFIFOLength();
-    }
+    if (num <= 0) return SUCCESS;
 
-    if (num > planned_path_fifo_.size()) {
-        num = planned_path_fifo_.size();
-    }
-
-    int conv_cnt = 0;
-    vector<PathPoint>::iterator itr = planned_path_fifo_.begin();
+    int cnt = 0;
+    vector<PathPoint>::iterator it = planned_path_fifo_.begin();
     JointPoint jp;
-    static JointValues pre_joints;
-    for (conv_cnt = 0; conv_cnt < num; ++conv_cnt) {
-        if (itr->type == MOTION_LINE || itr->type == MOTION_CIRCLE) {
-            if (computeIK(itr->pose, jp.joints, err)) {
-                /*if (isOutMax(pre_joints, jp.joints) == false)*/
-                //{
-                    //printPose("cur_pose:", itr->pose);
-                    //printJointValues("pre_joints:", pre_joints);
-                    //printJointValues("cur_joints:", jp.joints);                    
-                //}
-                /*pre_joints = jp.joints;*/
+    memset(&jp, 0, sizeof(JointPoint));
 
-                if (itr == planned_path_fifo_.end() - 1) {
-                    if (last_motion_.smooth_type == SMOOTH_NONE) {
-                        setStartStateImpl(jp.joints, err);
-                    }
-                    else if (last_motion_.smooth_type == SMOOTH_L2J ||
-                             last_motion_.smooth_type == SMOOTH_C2J) {
-                        m_joint_start.joints = jp.joints;
-                        JointValues joints = getLatestIKReference();
-                        double cycle_time = planning_interface_->getCycleTime();
-                        m_joint_start.omegas.j1 = (jp.joints.j1 - joints.j1) / cycle_time;
-                        m_joint_start.omegas.j2 = (jp.joints.j2 - joints.j2) / cycle_time;
-                        m_joint_start.omegas.j3 = (jp.joints.j3 - joints.j3) / cycle_time;
-                        m_joint_start.omegas.j4 = (jp.joints.j4 - joints.j4) / cycle_time;
-                        m_joint_start.omegas.j5 = (jp.joints.j5 - joints.j5) / cycle_time;
-                        m_joint_start.omegas.j6 = (jp.joints.j6 - joints.j6) / cycle_time;
-                    }
-                    else {
-                        // Nothing to do
-                    }
-                    /*
-                    if (last_motion_.addition_smooth) {
-                        insertAdditionSmooth(err);
-                        // last_motion_.smooth_type = SMOOTH_NONE;
-                        last_motion_.addition_smooth = false;
-                    }*/
-                }
-                jp.id = itr->id;
+    Pose    cache[num];
+    size_t  cache_ptr = 0;
+
+    for (; it != planned_path_fifo_.end(); ++it) {
+        if (it->type == MOTION_LINE || it->type == MOTION_CIRCLE) {
+            cache[cache_ptr] = it->pose;
+            cache_ptr++;
+
+            if (computeIK(it->pose, jp.joint, err)) {
+                jp.stamp    = it->stamp;
+                jp.level    = it->level;
+                jp.source   = it->source;
                 trajectory_fifo_.push_back(jp);
-                latest_ik_reference_ = jp.joints;
+                if (it->level == POINT_LAST) {
+                    // last point in a commond
+                    it->source->GetJointStatus(latest_ik_reference_, jp.joint);
+                }
+                else if (it->level == POINT_ENDING) {
+                    // last point in a commond and a motion
+                    it->source->GetJointStatus(latest_ik_reference_, jp.joint);
+                    planning_interface_->setInitialJoint(jp.joint);
+                }
+                latest_ik_reference_ = jp.joint;
+                cnt++;
+                if (cnt == num) break;
             }
             else {
                 log.error("Error while converting cartesian point to joint space, Error code=0x%llx", err);
-                log.error("%d points has been converted before the error", conv_cnt);
-                printJointValues("IK reference: ", latest_ik_reference_);
-                printJointValues("IK result:    ", jp.joints);
-                printPose(       "Target Pose:  ", itr->pose);
-                // ------------------- FOR TEST ONLY --------------------
-                /*
-                Pose tmp;
-                computeFK(m_latest_ik_reference, tmp, err);
-                printPose("reference: ", tmp);
-                computeFK(jp.joints, tmp, err);
-                printPose("result: ", tmp);
-                */
-                // ^^^^^^^^^^^^^^^^^^^ FOR TEST ONLY ^^^^^^^^^^^^^^^^^^^^
+                log.error("%d points has been converted before the error", cnt);
+                printPose("Target Pose:  ", it->pose);
+                printJoint("IK reference: ", latest_ik_reference_);
+                printJoint("IK result:    ", jp.joint);
                 break;
             }
         }
-        else if (itr->type == MOTION_JOINT) {
-            jp.id = itr->id;
-            jp.joints = itr->joints;
-            trajectory_fifo_.push_back(jp);
-            if (itr == planned_path_fifo_.end() - 1) {
-                if (last_motion_.smooth_type == SMOOTH_NONE) {
-                    setStartStateImpl(itr->joints, err);
-                }
-                else if (last_motion_.smooth_type == SMOOTH_J2J) {
-                    m_joint_start.joints = itr->joints;
-                    JointValues joints = getLatestIKReference();
-                    double cycle_time = planning_interface_->getCycleTime();
-                    m_joint_start.omegas.j1 = (jp.joints.j1 - joints.j1) / cycle_time;
-                    m_joint_start.omegas.j2 = (jp.joints.j2 - joints.j2) / cycle_time;
-                    m_joint_start.omegas.j3 = (jp.joints.j3 - joints.j3) / cycle_time;
-                    m_joint_start.omegas.j4 = (jp.joints.j4 - joints.j4) / cycle_time;
-                    m_joint_start.omegas.j5 = (jp.joints.j5 - joints.j5) / cycle_time;
-                    m_joint_start.omegas.j6 = (jp.joints.j6 - joints.j6) / cycle_time;
-                }
-                else {
-                    // Nothing to do
-                }
+        else if (it->type == MOTION_JOINT) {
+            jp.stamp    = it->stamp;
+            jp.level    = it->level;
+            jp.source   = it->source;
+            jp.joint    = it->joint;
+
+            if (it->level == POINT_ENDING) {
+                // last point in a commond and a motion
+                planning_interface_->setInitialJoint(jp.joint);
             }
-            latest_ik_reference_ = jp.joints;
+
+            trajectory_fifo_.push_back(jp);
+            latest_ik_reference_ = jp.joint;
+            cnt++;
+            if (cnt == num) break;
         }
         else {
-            err = MOTION_INTERNAL_FAULT;
-            break;
-        }
+            if (it->level == POINT_ENDING && it->stamp == 0) {
+                // is a dummy point from a empty command
+                jp.stamp = it->stamp;
+                jp.level    = it->level;
+                jp.source   = it->source;
+                jp.source   = it->source;
+                jp.joint    = latest_ik_reference_;
 
-        ++itr;
+                //log.info("A dummy point detected when convert, a point same to reference inserted to FIFO2.");
+                trajectory_fifo_.push_back(jp);
+                cnt++;
+                if (cnt == num) break;
+            }
+            else {
+                log.error("INVALID point type (%d) found while converting FIFO1 > FIFO2", it->type);
+                err = MOTION_INTERNAL_FAULT;
+                break;
+            }
+        }
+    }
+
+    if (cache_ptr > 0 && fifo1_backup_enable_) {
+        lockFIFO1Backup();
+        for (size_t i = 0; i < cache_ptr; ++i) {
+            if (fifo1_backup_ptr_ < FIFO1_BACKUP_BUFFER_SIZE) {
+                fifo1_backup_[fifo1_backup_ptr_] = cache[i];
+                fifo1_backup_ptr_++;
+            }
+            else {
+                log.warn("FIFO1 backup buffer overflow.");
+                break;
+            }
+        }
+        unlockFIFO1Backup();
     }
     
-    if (conv_cnt != 0) {
-        itr = planned_path_fifo_.begin();
-        planned_path_fifo_.erase(itr, itr + conv_cnt);
+    if (cnt != 0) {
+        it = planned_path_fifo_.begin();
+        planned_path_fifo_.erase(it, it + cnt);
     }
 
-    return conv_cnt;
+    return err;
 }
 
-bool ArmGroup::isMotionExecutable(MotionType motion_type, ErrorCode &err) {
+ErrorCode ArmGroup::getPointsFromJointTrajectoryFIFOImpl(vector<JointOutput> &traj, int num)
+{
+    if (num <= 0) return SUCCESS;
+
+    int cnt = 0;
+    int flg = 0;
+    JointOutput jout;
+    vector<JointPoint>::iterator itr = trajectory_fifo_.begin();
+    traj.clear();
+    ErrorCode err = SUCCESS;
+
+    for (; itr != trajectory_fifo_.end(); ++itr) {
+        jout.id     = itr->source->getMotionID();
+        jout.joint  = itr->joint;
+        jout.level  = itr->level;
+        traj.push_back(jout);
+        ++cnt;
+        if (itr->level == POINT_ENDING) {
+            if (itr->source->getFinishFlag()) {
+                if (itr + 1 != trajectory_fifo_.end()) {
+                    log.info("  ENDING-POINT, delete Object:%x", itr->source);
+                    log.info("    this->ID=%d, this->level=%d, next->ID=%d, next->level=%d",
+                             itr->source->getMotionID(), itr->level,
+                             (itr + 1)->source->getMotionID(), (itr + 1)->level);
+                }
+                else {
+                    log.info("  ENDING-POINT, delete Object:%x", itr->source);
+                    log.info("    this->ID=%d, this->level=%d, no next point",
+                             itr->source->getMotionID(), itr->level);
+                }
+                planning_interface_->deleteMotionCommandBefore(itr->source);
+                //planning_interface_->deleteMotionCommand(itr->source);
+                planning_interface_->setInitialJoint(itr->joint);
+            }
+            else {
+                log.warn("  ENDING-POINT, but motion object is not finished, cannot delete the object");
+                log.warn("  This may be caused by suspendArmGroup");
+                planning_interface_->setInitialJoint(itr->joint);
+            }
+
+            if (temp_constraint_.is_using_temp_constraint && 
+                isJointInConstraint(jout.joint, temp_constraint_.normal_constraint))
+            {
+                deleteTempConstraint();
+                log.info("  delete temporary constraint, using normal constraint instead.");
+            }
+            
+            flg = 1;
+            break;
+        }
+        else if (itr->level == POINT_LAST) {
+            if (itr + 1 != trajectory_fifo_.end()) {
+                log.info("  LAST-POINT, delete Object:%x", itr->source);
+                log.info("    this->ID=%d, this->level=%d, next->ID=%d, next->level=%d",
+                         itr->source->getMotionID(), itr->level,
+                         (itr + 1)->source->getMotionID(), (itr + 1)->level);
+            }
+            else {
+                log.info("  LAST-POINT, delete Object:%x", itr->source);
+                log.info("    this->ID=%d, this->level=%d, no next point",
+                         itr->source->getMotionID(), itr->level);
+            }
+            planning_interface_->deleteMotionCommandBefore(itr->source);
+            //planning_interface_->deleteMotionCommand(itr->source);
+
+            if (temp_constraint_.is_using_temp_constraint &&
+                isJointInConstraint(jout.joint, temp_constraint_.normal_constraint))
+            {
+                deleteTempConstraint();
+                log.info("  delete temporary constraint, using normal constraint instead.");
+            }
+        }
+        if (cnt == num) break;
+    }
+
+    if (cnt != 0) {
+        itr = trajectory_fifo_.begin();
+        trajectory_fifo_.erase(itr, itr + cnt);
+    
+        if (itr == trajectory_fifo_.end() && flg == 0) {
+            log.warn("  FIFO2 has burnt out, but there is no ending point.");
+            log.warn("  It might be a truble.");
+            err = MOTION_INTERNAL_FAULT;
+        }
+    }
+    
+    log.info("  %d points got from FIFO2", cnt);
+
+    return err;
+}
+
+bool ArmGroup::isMotionExecutable(MotionType motion_t, ErrorCode &err) {
+    /*
     if (planning_interface_->getFIFOLength() > planning_interface_->getTrajectorySegmentLength()) {
         err = INVALID_SEQUENCE;
         return false;
     }
     if (planning_interface_->getFIFOLength() > 0) {
-        if (pickPoints(err) != true)    return false;
+        if (pickPoints() != true)    return false;
     }
+    */
 
-    switch (motion_type) {
+    if (!planning_interface_->isMotionExecutable(motion_t)) {err = INVALID_SEQUENCE; return false;}
+    if (calibrator_->getCurrentState() < CALIBRATED && !calibrator_->isUsingTempZeroOffset()) {
+        err = NEED_CALIBRATION;
+        return false;
+    }
+    switch (motion_t) {
         case MOTION_JOINT:
-            if (allowed_motion_type_ != MOTION_JOINT && allowed_motion_type_ != MOTION_UNDEFINED) {
-                err = INVALID_SEQUENCE;
-                return false;
-            }
             if (!planned_path_fifo_.empty() &&
-                    (planned_path_fifo_.back().type == MOTION_LINE ||
-                     planned_path_fifo_.back().type == MOTION_CIRCLE)) {
-                err = CARTESIAN_PATH_EXIST;
+                (planned_path_fifo_.back().type == MOTION_LINE || planned_path_fifo_.back().type == MOTION_CIRCLE))
+            {
+                err = INVALID_SEQUENCE;
                 return false;
             }
             return true;
         case MOTION_LINE:
-            if (allowed_motion_type_ != MOTION_LINE && allowed_motion_type_ != MOTION_UNDEFINED) {
-                err = INVALID_SEQUENCE;
-                return false;
-            }
-            if (enable_calibration_ == true && calibrator_->getCurrentState() < CALIBRATED) {
-                err = NEED_CALIBRATION;
-                return false;
-            }
-            /*
-            if (last_motion_.addition_smooth && !planned_path_fifo_.empty()) {
-                err = CARTESIAN_PATH_EXIST;
-                return false;
-            }
-            else {
-                return true;
-            }*/
-            return true;
         case MOTION_CIRCLE:
-            if (allowed_motion_type_ != MOTION_CIRCLE && allowed_motion_type_ != MOTION_UNDEFINED) {
-                err = INVALID_SEQUENCE;
-                return false;
-            }
             if (enable_calibration_ == true && calibrator_->getCurrentState() < CALIBRATED) {
                 err = NEED_CALIBRATION;
                 return false;
             }
-            /*
-            if (last_motion_.addition_smooth && !planned_path_fifo_.empty()) {
-                err = CARTESIAN_PATH_EXIST;
-                return false;
-            }
-            else {
-                return true;
-            }*/
             return true;
         default:
             err = MOTION_INTERNAL_FAULT;
-            log.error("API:'isMotionExecutable' received an invalid motion type: %d", motion_type);
+            log.error("API:'isMotionExecutable' received an invalid motion type: %d", motion_t);
             return false;
     }
 }
 
+ErrorCode ArmGroup::pickPoints() {
+    resizeJointTrajectoryFIFO();
+    //log.info("Picking points ...");
+    vector<PathPoint> points;
+
+    ErrorCode err = planning_interface_->pickPoints(points);
+    
+    if (err == SUCCESS) {
+        planned_path_fifo_.insert(planned_path_fifo_.end(), points.begin(), points.end());
+        if (temp_constraint_.is_using_temp_constraint && points.size() > 0) {
+            if (points.back().level == POINT_ENDING || points.back().level == POINT_LAST) {
+                resetTempConstraint(points.back().joint);
+            }
+
+        }
+        // log.info("  Success, %d points have been picked into FIFO1", points.size());
+        return SUCCESS;
+    }
+    else if (err == INVALID_SEQUENCE) {
+        // log.warn("  motion-obj-list empty");
+        return SUCCESS;
+    }
+    else {
+        log.error("  error while picking point from motion-obj-list, code=0x%llx", err);
+        return err;
+    }
+}
+
+/*
 bool ArmGroup::pickPoints(ErrorCode &err) {
     resizeJointTrajectoryFIFO();
     log.info("Pick points ...");
     if (planning_interface_->getFIFOLength() > 0) {
         if (last_motion_.motion_type == MOTION_JOINT) {
-            vector<JointValues> points;
+            vector<Joint> points;
             if (planning_interface_->pickPoints(points, err)) {
                 PathPoint pp;
                 pp.id   = last_motion_.id << 2 | POINT_MIDDLE;
                 pp.type = last_motion_.motion_type;
-                vector<JointValues>::iterator it;
+                vector<Joint>::iterator it;
                 for(it = points.begin(); it != points.end(); ++it) {
-                    pp.joints = *it;
+                    pp.joint = *it;
                     planned_path_fifo_.push_back(pp);
                 }
                 if (planning_interface_->getFIFOLength() == 0 && last_motion_.smooth_type == SMOOTH_NONE)
@@ -646,122 +920,30 @@ bool ArmGroup::pickPoints(ErrorCode &err) {
         return false;
     }
 }
+*/
 
 bool ArmGroup::resizeJointTrajectoryFIFO(void) {
-    log.info("Resize FIFO2 ...");
+    // log.info("Resize FIFO2 ...");
     if (trajectory_fifo_.size() >= 2) {
         vector<JointPoint>::iterator it1 = trajectory_fifo_.end() - 1;
         vector<JointPoint>::iterator it2 = trajectory_fifo_.end() - 2;
-        int size = planning_interface_->estimateFIFOLength(it1->joints, it2->joints);
+        int size = planning_interface_->estimateFIFOLength(it1->joint, it2->joint);
         if      (size < 50)     size = 50;
         else if (size > 500)    size = 500;
         
-        trajectory_fifo_dynamic_length_ = size;
-        log.info("  success! FIFO2 resized to %d", trajectory_fifo_dynamic_length_);
+        if (size != trajectory_fifo_dynamic_length_) {
+            trajectory_fifo_dynamic_length_ = size;
+            log.info("Resie FIFO2 to %d", trajectory_fifo_dynamic_length_);
+        }
         return true;
     }
     else {
-        log.error("  failed: no enough points in FIFO2, need 2 but has %d only", trajectory_fifo_.size());
+        // log.error("  failed: no enough points in FIFO2, need 2 but has %d only", trajectory_fifo_.size());
         return false;
     }
 }
 
 /*
-bool ArmGroup::insertAdditionSmooth(ErrorCode &err) {
-    log.info("Insert additional smooth ...");
-    vector<JointValues> planned_path;
-
-    if (last_motion_.smooth_type == SMOOTH_L2C) {
-        log.info("  Planning smooth path from MoevL to MoveC");
-        if (planning_interface_->MoveL2CAdditionSmooth(m_joint_start, m_pose_start,
-                                                       m_pose_start_past, planned_path, err)) {
-            if (setLatestIKReference(planned_path.back(), err)) {
-                PathPoint pp;
-                pp.type = MOTION_JOINT;
-                pp.id = (last_motion_.id << 2) + POINT_MIDDLE;
-
-                vector<JointValues>::iterator itr = planned_path.begin();
-                for (; itr != planned_path.end(); ++itr) {
-                    pp.joints = *itr;
-                    planned_path_fifo_.push_back(pp);
-                }
-                log.info("  Smooth path generated successfully with %zd points, and added into planned_path_FIFO.",
-                         planned_path.size());
-                return true;
-            }
-            else {
-                log.error("  Cannot set new IK reference, error code=0x%llx", err);
-                return false;
-            }
-        }
-        else {
-            log.error("  Fail to plan additional smooth path, error code=0x%llx", err);
-            return false;
-        }
-    }
-    else if (last_motion_.smooth_type == SMOOTH_C2L) {
-        log.info("  Planning smooth path from MoevC to MoveL");
-        if (planning_interface_->MoveC2LAdditionSmooth(m_joint_start, m_pose_start,
-                                                       m_pose_start_past, planned_path, err)) {
-            if (setLatestIKReference(planned_path.back(), err)) {
-                PathPoint pp;
-                pp.type = MOTION_JOINT;
-                pp.id = (last_motion_.id << 2) + POINT_MIDDLE;
-
-                vector<JointValues>::iterator itr = planned_path.begin();
-                for (; itr != planned_path.end(); ++itr) {
-                    pp.joints = *itr;
-                    planned_path_fifo_.push_back(pp);
-                }
-                log.info("  Smooth path generated successfully with %zd points, and added into planned_path_FIFO.",
-                         planned_path.size());
-                return true;
-            }
-            else {
-                log.error("  Cannot set new IK reference, error code=0x%llx", err);
-                return false;
-            }
-        }
-        else {
-            log.error("  Fail to plan additional smooth path, error code=0x%llx", err);
-            return false;
-        }
-    }
-    else if (last_motion_.smooth_type == SMOOTH_C2C) {
-        log.info("  Planning smooth path from MoevC to MoveC");
-        if (planning_interface_->MoveC2CAdditionSmooth(m_joint_start, m_pose_start,
-                                                       m_pose_start_past, planned_path, err)) {
-            if (setLatestIKReference(planned_path.back(), err)) {
-                PathPoint pp;
-                pp.type = MOTION_JOINT;
-                pp.id = (last_motion_.id << 2) + POINT_MIDDLE;
-
-                vector<JointValues>::iterator itr = planned_path.begin();
-                for (; itr != planned_path.end(); ++itr) {
-                    pp.joints = *itr;
-                    planned_path_fifo_.push_back(pp);
-                }
-                log.info("  Smooth path generated successfully with %zd points,  and added into planned_path_FIFO.",
-                         planned_path.size());
-                return true;
-            }
-            else {
-                log.error("  Cannot set new IK reference, error code=0x%llx", err);
-                return false;
-            }
-        }
-        else {
-            log.error("  Fail to plan additional smooth path, error code=0x%llx", err);
-            return false;
-        }
-    }
-    else {
-        err = MOTION_INTERNAL_FAULT;
-        log.error("  Unexpected smooth type, error code=0x%llx", err);
-        return false;
-    }
-}*/
-
 bool ArmGroup::resumeByOrigin(ErrorCode &err) {
     trajectory_fifo_.insert(trajectory_fifo_.begin(),
                             suspend_state_.fifo2_cache.begin(),
@@ -778,7 +960,7 @@ bool ArmGroup::resumeByReplan(ErrorCode &err) {
         suspend_state_.replan_trajectory.clear();
         vector<JointPoint>::iterator itr = trajectory_fifo_.begin();
         for ( ; itr != trajectory_fifo_.end(); ++itr) {
-            suspend_state_.replan_trajectory.push_back(itr->joints);
+            suspend_state_.replan_trajectory.push_back(itr->joint);
             if ((itr->id & POINT_LEVEL_MASK) == POINT_ENDING) {
                 log.info("The last point is ending point.");
                 last_point_is_ending_point = true;
@@ -789,13 +971,13 @@ bool ArmGroup::resumeByReplan(ErrorCode &err) {
                                                                    err);
         if (result == true) {
             JointPoint jp;
-            memset(&jp.omegas, 0, sizeof(JointOmegas));
+            memset(&jp.omega, 0, sizeof(JointOmega));
             jp.id = trajectory_fifo_.front().id;
             jp.id = jp.id & ~POINT_LEVEL_MASK | POINT_MIDDLE;
             trajectory_fifo_.clear();
-            vector<JointValues>::iterator itr = suspend_state_.replan_trajectory.begin();
+            vector<Joint>::iterator itr = suspend_state_.replan_trajectory.begin();
             for ( ; itr != suspend_state_.replan_trajectory.end(); ++itr) {
-                jp.joints = *itr;
+                jp.joint = *itr;
                 trajectory_fifo_.push_back(jp);
             }
             log.info("Resume pattern: replan, trajectory length: %d", trajectory_fifo_.size());
@@ -820,15 +1002,16 @@ bool ArmGroup::resumeByReplan(ErrorCode &err) {
     log.info("Resume successfully.");
     return true;
 }
+*/
 
-void ArmGroup::printJointValues(const JointValues &joint) {
-    log.info("%lf, %lf, %lf, %lf, %lf, %lf",
-             joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6);
+void ArmGroup::printJoint(const Joint &joint) {
+    log.info("%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+             joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, joint.j7, joint.j8, joint.j9);
 }
 
-void ArmGroup::printJointValues(const char *str, const JointValues &joint) {
-    log.info("%s%lf, %lf, %lf, %lf, %lf, %lf", str,
-             joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6);
+void ArmGroup::printJoint(const char *str, const Joint &joint) {
+    log.info("%s%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", str,
+             joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, joint.j7, joint.j8, joint.j9);
 }
 
 void ArmGroup::printJointLimit(const JointLimit &joint_limit) {
@@ -843,14 +1026,17 @@ void ArmGroup::printJointLimit(const char *str, const JointLimit &joint_limit) {
              joint_limit.max_omega, joint_limit.max_alpha);
 }
 
-void ArmGroup::printJointConstraints(const JointConstraints &constraint) {
-    log.info("Joint constraints:");
+void ArmGroup::printJointConstraint(const char *str, const JointConstraint &constraint) {
+    log.info("%s", str);
     printJointLimit("  J1 limit: ", constraint.j1);
     printJointLimit("  J2 limit: ", constraint.j2);
     printJointLimit("  J3 limit: ", constraint.j3);
     printJointLimit("  J4 limit: ", constraint.j4);
     printJointLimit("  J5 limit: ", constraint.j5);
     printJointLimit("  J6 limit: ", constraint.j6);
+    printJointLimit("  J7 limit: ", constraint.j7);
+    printJointLimit("  J8 limit: ", constraint.j8);
+    printJointLimit("  J9 limit: ", constraint.j9);
 }
 
 void ArmGroup::printPose(const Pose &pose) {
@@ -878,13 +1064,16 @@ void ArmGroup::printPoseEuler(const char *str, const PoseEuler &pose_euler) {
 }
 
 void ArmGroup::printJointPoint(const JointPoint &point) {
-    log.info("Joint point: ID=%d", point.id);
-    log.info("  joints=%lf, %lf, %lf, %lf, %lf, %lf",
-             point.joints.j1, point.joints.j2, point.joints.j3, 
-             point.joints.j4, point.joints.j5, point.joints.j6);
-    log.info("  omegas=%lf, %lf, %lf, %lf, %lf, %lf",
-             point.omegas.j1, point.omegas.j2, point.omegas.j3,
-             point.omegas.j4, point.omegas.j5, point.omegas.j6);
+    log.info("Joint point: ID=%d, stamp=%d, level=%s", point.source->getMotionID(), point.stamp,
+             point.level == POINT_MIDDLE ? "middle point" : (point.level == POINT_START ? "start point" : "end point"));
+    log.info("  joint=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+             point.joint.j1, point.joint.j2, point.joint.j3, 
+             point.joint.j4, point.joint.j5, point.joint.j6,
+             point.joint.j7, point.joint.j8, point.joint.j9);
+    log.info("  omega=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+             point.omega.j1, point.omega.j2, point.omega.j3,
+             point.omega.j4, point.omega.j5, point.omega.j6,
+             point.omega.j7, point.omega.j8, point.omega.j9);
 }
 
 void ArmGroup::printJointPoint(const char *str, const JointPoint &point) {
@@ -892,32 +1081,56 @@ void ArmGroup::printJointPoint(const char *str, const JointPoint &point) {
     printJointPoint(point);
 }
 
+void ArmGroup::printJointOutput(const JointOutput &point)
+{
+    log.info("Joint output: ID=%d, level=%s", point.id,
+        point.level == POINT_MIDDLE ? "middle point" : (point.level == POINT_START ? "start point" : "end point"));
+    log.info("  joint=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+        point.joint.j1, point.joint.j2, point.joint.j3, 
+        point.joint.j4, point.joint.j5, point.joint.j6,
+        point.joint.j7, point.joint.j8, point.joint.j9);
+}
+
+void ArmGroup::printJointOutput(const char *str, const JointOutput &point) {
+    log.info(str);
+    printJointOutput(point);
+}
+
 void ArmGroup::printPathPoint(const PathPoint &point) {
-    switch (point.type) {
+    string point_t, motion_t;
+    if      (point.type == MOTION_JOINT)    point_t = "joint";
+    else if (point.type == MOTION_LINE)     point_t = "line";
+    else if (point.type == MOTION_CIRCLE)   point_t = "circle";
+    else {log.warn("get an INVALID path point in API:printPathPoint"); return;}
+
+    switch (point.source->getMotionType()) {
         case MOTION_JOINT:
-            log.info("Path point: ID=%d, type=Joint", point.id);
-            printJointValues("  joints=", point.joints);
+            motion_t = "joint";
             break;
-
         case MOTION_LINE:
-            log.info("Path point: ID=%d, type=Line", point.id);
-            printPose("  pose: ", point.pose);
+            motion_t = "line";
             break;
-
         case MOTION_CIRCLE:
-            log.info("Path point: ID=%d, type=Circle", point.id);
-            printPose("  pose: ", point.pose);
+            motion_t = "circle";
             break;
-
         default:
-            log.error("Type error: undefined point type.");
+            log.warn("get an INVALID motion type in API:printPathPoint");
+            return;
     }
+
+    log.info("PathPoint: ID=%d, stamp=%d, level=%s, point-type=%s, motion_type=%s",
+             point.source->getMotionID(), point.stamp,
+             point.level == POINT_MIDDLE ? "middle point" : (point.level == POINT_START ? "start point" : "end point"),
+             point_t.c_str(), motion_t.c_str());
+    if (point.type == MOTION_JOINT) printJoint("  joints=", point.joint);
+    else                            printPose("  pose: ", point.pose);
 }
 
 void ArmGroup::printPathPoint(const char *str, const PathPoint &point) {
     log.info(str);
     printPathPoint(point);
 }
+
 
 
 void ArmGroup::lockArmGroup(void) {
@@ -929,5 +1142,37 @@ void ArmGroup::unlockArmGroup(void) {
     pthread_mutex_unlock(&group_mutex_);
     //log.info("Arm group unlocked.");
 }
+
+void ArmGroup::lockFIFO1(void) {
+    //log.info("Try to lock FIFO1.");
+    pthread_mutex_lock(&fifo1_mutex_);
+}
+
+void ArmGroup::unlockFIFO1(void) {
+    pthread_mutex_unlock(&fifo1_mutex_);
+    //log.info("FIFO1 unlocked.");
+}
+
+void ArmGroup::lockFIFO2(void) {
+    //log.info("Try to lock FIFO2.");
+    pthread_mutex_lock(&fifo2_mutex_);
+}
+
+void ArmGroup::unlockFIFO2(void) {
+    pthread_mutex_unlock(&fifo2_mutex_);
+    //log.info("FIFO2 unlocked.");
+}
+
+void ArmGroup::lockFIFO1Backup(void) {
+    //log.info("Try to lock FIFO1 backup.");
+    pthread_mutex_lock(&fifo1_backup_mutex_);
+}
+
+void ArmGroup::unlockFIFO1Backup(void) {
+    pthread_mutex_unlock(&fifo1_backup_mutex_);
+    //log.info("FIFO1 backup unlocked.");
+}
+
+
 
 }

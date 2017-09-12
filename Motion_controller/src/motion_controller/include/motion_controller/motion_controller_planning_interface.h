@@ -9,8 +9,7 @@
 #define _MOTION_CONTROLLER_PLANNING_INTERFACE_H
 
 #include <vector>
-#include <map>
-#include <motion_controller/fst_datatype.h>
+#include <trajplan/fst_datatype.h>
 #include <trajplan/TrajPlan.h>
 #include <motion_controller/motion_controller_error_code.h>
 #include <parameter_manager/parameter_manager_param_group.h>
@@ -29,7 +28,7 @@ class PlanningInterface {
 
     double getCycleTime(void);
 
-    double getVelocity(void);
+    //double getVelocity(void);
 
     double getAcceleration(void);
 
@@ -41,7 +40,7 @@ class PlanningInterface {
 
     double getJointOvershoot(void);
 
-    double getJointErrorAngle(void);
+    //double getJointErrorAngle(void);
 
     double getOmegaOverload(void);
 
@@ -49,17 +48,25 @@ class PlanningInterface {
 
     double getSmoothRadiusCoefficient(void);
 
-    double getCurveMode(void);
+    CurveMode getCurveMode(void);
 
-    const JointConstraints& getJointConstraints(void);
+    const JointConstraint& getJointConstraint(void);
 
-    void clearFIFO(void);
+    const DHGroup& getDH(void);
 
-    int getFIFOLength(void);
+    const Transformation& getToolFrame(void);
+
+    const Transformation& getUserFrame(void);
+
+    void clearMotionList(void);
+
+    //int getFIFOLength(void);
 
     unsigned int getTrajectorySegmentLength(void);
 
-    bool setTrajectorySegmentLength(unsigned int length);
+    int getAllCommandLength(void);
+
+    bool setTrajectorySegmentLength(int length);
 
     //------------------------------------------------------------
     // Function:    setCycleTime
@@ -71,7 +78,7 @@ class PlanningInterface {
     //------------------------------------------------------------
     bool setCycleTime(double cycle_time);
 
-    bool setVelocity(double vel);
+    //bool setVelocity(double vel);
 
     //------------------------------------------------------------
     // Function:    setAcceleration
@@ -83,37 +90,37 @@ class PlanningInterface {
     //------------------------------------------------------------
     bool setAcceleration(double acce);
 
-    bool setVelocityScaling(double scaling);
+    bool setVelocityScaling(double percent);
 
-    bool setAccelerationScaling(double scaling);
+    bool setAccelerationScaling(double percent);
 
     bool setJerk(double jerk);
 
     bool setJointOvershoot(double angle);
 
-    bool setJointErrorAngle(double angle);
+    //bool setJointErrorAngle(double angle);
 
-    bool setOmegaOverload(double value);
+    //bool setOmegaOverload(double value);
 
-    bool setAlphaOverload(double value);
+    //bool setAlphaOverload(double value);
 
     bool setSmoothRadiusCoefficient(double coeff);
 
-    bool setCurveMode(int mode);
+    void setCurveMode(CurveMode mode);
 
     //------------------------------------------------------------------------------
-    // Function:    setJointConstraints
-    // Summary: To set joint constraints in Kinematics algorithm.
-    // In:      constraints -> joint constraints;
+    // Function:    setJointConstraint
+    // Summary: To set joint constraint in Kinematics algorithm.
+    // In:      constraint -> joint constraint;
     // Out:     None
-    // Return:  true    -> joint constraints changed to given value
-    //          false   -> joint constraints NOT changed
+    // Return:  true    -> joint constraint changed to given value
+    //          false   -> joint constraint NOT changed
     //------------------------------------------------------------------------------
-    bool setJointConstraints(const JointConstraints &constraints);
+    void setJointConstraint(const JointConstraint &constraint);
 
     bool setAlphaScaling(double percent);
 
-    bool setDH(const DHGroup &dh);
+    void setDH(const DHGroup &dh);
 
     //------------------------------------------------------------
     // Function:    setToolFrame
@@ -133,6 +140,12 @@ class PlanningInterface {
     //------------------------------------------------------------
     void setUserFrame(const Transformation &user_frame);
 
+    void setInitialJoint(const Joint &joint);
+
+    void displayMotionList(void);
+
+    void setPickPosition(const JointPoint &point);
+
     //------------------------------------------------------------------------------
     // Function:    transformPoseEuler2Pose
     // Summary: To transform a poseEuler point to a pose point.
@@ -151,8 +164,11 @@ class PlanningInterface {
     //------------------------------------------------------------------------------
     PoseEuler transformPose2PoseEuler(const Pose &pose);
 
-    bool getJointFromPose(const Pose &pose, const JointValues &reference,
-                          JointValues &joint, double time_interval, ErrorCode &err);
+    bool getJointFromPose(const Pose &pose,
+                          const Joint &reference,
+                          Joint &joint,
+                          double time_interval,
+                          ErrorCode &err);
 
     //------------------------------------------------------------------------------
     // Function:    computeInverseKinematics
@@ -164,8 +180,8 @@ class PlanningInterface {
     // Return:  true         -> IK solution found
     //------------------------------------------------------------------------------
     bool computeInverseKinematics(const Pose &pose,
-                                  const JointValues &joint_reference,
-                                  JointValues &joint_result,
+                                  const Joint &joint_reference,
+                                  Joint &joint_result,
                                   ErrorCode &err);
 
     //------------------------------------------------------------------------------
@@ -176,217 +192,38 @@ class PlanningInterface {
     //          error_code   -> error code
     // Return:  true         -> FK computed successfully
     //------------------------------------------------------------------------------
-    bool computeForwardKinematics(const JointValues &joint, Pose &pose, ErrorCode &err);
+    bool computeForwardKinematics(const Joint &joint, Pose &pose, ErrorCode &err);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveJ2J
-    // Summary: To plan a path in joint space to touch target pose, with/without smooth.
-    // In:      jp_start    -> initial position and omega of six joints
-    //          jp_target   -> joint target of the plan
-    //          jp_next     -> the target joint of the next plan used for smoothing
-    //          v_ref       -> reference velocity
-    //          cnt         -> desired cnt value of the plan, range:0-100
-    // Out:     jp_end      -> the ending position and omega of six joints in this plan
-    //          planned_path-> planned path in joint space
-    //          error_code  -> error code
-    // Return:  true        -> plan successfully
-    //          false       -> plan UNsuccessfully
-    //------------------------------------------------------------------------------
-    bool MoveJ2J(JointPoint &jp_start,
-                 const JointValues &j_target, double v_target, int cnt_target,
-                 const JointValues &j_next, double v_next, int cnt_next,
-                 ErrorCode &err);
+    MoveCommand* createMotionCommand(int id, MotionTarget &target, MotionTarget &next, ErrorCode &err);
 
-/*
-    //------------------------------------------------------------------------------
-    // Function:    MoveJ2J
-    // Summary: To plan a path in joint space to touch target pose, with/without smooth.
-    // In:      jp_start    -> initial position and omega of six joints
-    //          pose_target -> pose target of the plan
-    //          pose_next   -> the target pose of the next plan used for smoothing 
-    //          v_ref       -> reference velocity
-    //          cnt         -> desired cnt value of the plan, range:0-100
-    // Out:     jp_end      -> the ending position and omega of six joints in this plan
-    //          planned_path-> planned path in joint space
-    //          error_code  -> error code
-    // Return:  true        -> plan successfully
-    //          false       -> plan UNsuccessfully
-    //------------------------------------------------------------------------------
-    bool MoveJ2J(JointPoint &jp_start,
-                 const Pose &pose_target, const Pose &pose_next, double v_ref, int cnt,
-                 std::vector<JointValues> &planned_path,
-                 ErrorCode &err);*/
+    void deleteFirstMotionCommand(void);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveJ2L
-    // Summary: To plan a path in joint space to touch target pose, with/without smooth.
-    // In:      jp_start    -> initial position and omega of six joints
-    //          joint_target-> joint target of the plan
-    //          v_ref       -> reference velocity
-    //          cnt         -> desired cnt value of the plan, range:0-100
-    //          pose_next   -> the target pose of the next plan used for smoothing
-    //          v_next      -> desired velocity of the next plan used for smoothing
-    //          cnt_next    -> desired cnt value of the next plan used for smoothing
-    // Out:     pose_start  -> the end pose of this plan, also the initial pose of the next plan
-    //          pose_previous -> the pose_previous input in the next plan
-    //          v_start     -> the end velocity of this plan, also the initial velocity of the next plan
-    //          vu_start    -> the end value of intermediate-variable in this plan, also the initial value in next plan
-    //          planned_path-> planned path in joint space
-    //          error_code  -> error code
-    // Return:  true        -> plan successfully
-    //          false       -> plan UNsuccessfully
-    //------------------------------------------------------------------------------
-    bool MoveJ2L(const JointPoint &jp_start,
-                 const JointValues &joint_target, double v_target, int cnt_target,
-                 const Pose &pose_next, double v_next, int cnt_next,
-                 Pose &pose_start, Pose &pose_previous,
-                 double &v_start, double &vu_start,
-                 ErrorCode &err);
+    void deleteLastMotionCommand(void);
 
-/*
-    //------------------------------------------------------------------------------
-    // Function:    MoveJ2L
-    // Summary: To plan a path in joint space to touch target pose, with/without smooth.
-    // In:      jp_start    -> initial position and omega of six joints
-    //          pose_target -> joint target of the plan
-    //          v_ref       -> reference velocity
-    //          cnt         -> desired cnt value of the plan, range:0-100
-    //          pose_next   -> the target pose of the next plan used for smoothing
-    //          v_next      -> desired velocity of the next plan used for smoothing
-    //          cnt_next    -> desired cnt value of the next plan used for smoothing
-    // Out:     pose_start  -> the end pose of this plan, also the initial pose of the next plan
-    //          pose_previous -> the pose_previous input in the next plan
-    //          v_start     -> the end velocity of this plan, also the initial velocity of the next plan
-    //          vu_start    -> the end value of intermediate-variable in this plan, also the initial value in next plan
-    //          planned_path-> planned path in joint space
-    //          error_code  -> error code
-    // Return:  true        -> plan successfully
-    //          false       -> plan UNsuccessfully
-    //------------------------------------------------------------------------------
-    bool MoveJ2L(const JointPoint &jp_start,
-                 const Pose &pose_target, double v_ref, int cnt_target,
-                 const Pose &pose_next, double v_next, int cnt_next,
-                 Pose &pose_start, Pose &pose_previous,
-                 double &v_start, double &vu_start,
-                 ErrorCode &err);*/
+    void deleteMotionCommandBefore(MoveCommand *command);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveJ2C
-    // Summary: To plan a path in joint space to touch target pose, with/without smooth.
-    // In:      jp_start    -> initial position and omega of six joints
-    //          j_target    -> joint target of the plan
-    //          v_ref       -> reference velocity
-    //          cnt         -> desired cnt value of the plan, range:0-100
-    //          pose2_circle-> the target pose of the next circle plan used for smoothing 
-    //          pose3_circle-> the target pose of the next circle plan used for smoothing 
-    // Out:     jp_end      -> the ending position and omega of six joints in this plan
-    //          planned_path-> planned path in joint space
-    //          error_code  -> error code
-    // Return:  true        -> plan successfully
-    //------------------------------------------------------------------------------
-    bool MoveJ2C(const JointPoint &jp_start,
-                 const JointValues &j_target, double v_target, int cnt_target,
-                 const Pose &pose1_circle, const Pose &pose2_circle, double v_circle, int cnt_circle,
-                 Pose &pose_start, double &v_start,
-                 ErrorCode &err);
+    void deleteMotionCommand(MoveCommand *command);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveL2J
-    // Summary: To plan a linear path to touch target pose, with/without smooth.
-    // In:      pose_start  -> initial pose of the plan
-    //          v_start     -> initial velocity of the plan
-    //          vu_start    -> initial value of the intermediate-variable
-    //          pose_target -> target pose of the plan
-    //          v_target    -> desired velocity of the plan
-    //          cnt_target  -> desired cnt value of the plan
-    //          pose_previous-> the previous pose used for interpolation
-    // Out:     planned_path-> planned path in cartesian space
-    //          jp          -> position and omega of six joints at the ending of this path
-    //          error_code  -> error code
-    // Return:  true  -> plan successfully
-    //------------------------------------------------------------------------------
-    bool MoveL2J(const Pose &pose_start, double v_start, double vu_start,
-                 const Pose &pose_target, double v_target, int cnt_target,
-                 Pose &pose_previous, ErrorCode &err);
+    bool isMotionCommandListEmpty(void);
+    
+    ErrorCode pickPoints(vector<PathPoint> &points);
 
-    //------------------------------------------------------------
-    // Function:    MoveL2L
-    // Summary: To plan a linear path to touch target pose, with/without smooth.
-    // In:      pose_start  -> initial pose of the plan
-    //          v_start -> initial velocity of the plan
-    //          vu_start    -> initial value of the intermediate-variable
-    //          pose_target -> target pose of the plan
-    //          v_target    -> desired velocity of the plan
-    //          cnt_target  -> desired cnt value of the plan
-    //          pose_next   -> the target pose of the next plan used for smoothing
-    //          v_next  ->  desired velocity of the next plan used for smoothing
-    //          cnt_next    -> desired cnt value of the next plan used for smoothing
-    //          pose_previuos   -> the previous pose used for interpolation
-    // Out:     pose_start  -> the end pose of this plan, also the initial pose of the next plan
-    //          v_start -> the end velocity of this plan, also the initial velocity of the next plan
-    //          vu_start    -> the end value of intermediate-variable in this plan, also the initial value in next plan
-    //          pose_previous   -> the pose_previous in the next plan
-    //          planned_path-> planned path in cartesian space
-    //          error_code  -> error code
-    // Return:  true    -> plan successfully
-    //          false   -> plan UNsuccessfully
-    //------------------------------------------------------------
-    bool MoveL2L(Pose &pose_start, double &v_start, double &vu_start,
-                 const Pose &pose_target, double v_target, int cnt_target,
-                 const Pose &pose_next, double v_next, int cnt_next,
-                 Pose &pose_previous, ErrorCode &error_code);
+    int estimateFIFOLength(Joint joint1, Joint joint2);
 
-    bool MoveL2C(Pose &pose_start, double &v_start, double &vu_start,
-                 const Pose &pose_target, double v_target, int cnt_target,
-                 const Pose &pose1_circle, const Pose &pose2_circle, double v_circle, int cnt_circle,
-                 Pose &pose_previous, ErrorCode &err);
+    bool replanPauseTrajectory(std::vector<JointPoint> &traj, JointPoint &joint_end);
 
-/*
-    bool MoveL2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
-                               const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                               ErrorCode &err);*/
+    bool resumeFromPause(const Joint &pause_joint, const JointPoint &point, vector<JointPoint> &traj, ErrorCode &err);
 
-    bool MoveC2J(const Pose &pose_start, double v_start,
-                 const Pose &pose1, const Pose &pose2, double v_target, int cnt_target,
-                 ErrorCode err);
+    bool resumeFromEstop(const JointPoint &point, vector<JointPoint> &traj, ErrorCode &err);
 
-    bool MoveC2L(Pose &pose_start, double &v_start,
-                 const Pose &pose1, const Pose &pose2, double v_target, int cnt_target,
-                 const Pose &pose_next, double v_next, int cnt_next,
-                 Pose &pose_previous, double &vu_start, ErrorCode &err);
-
-/*
-    bool MoveC2LAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
-                               const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                               ErrorCode &err);*/
-
-    bool MoveC2C(Pose &pose_start, double &v_start,
-                 const Pose &pose1_target, const Pose &pose2_target, double v_target, int cnt_target,
-                 const Pose &pose1_next, const Pose &pose2_next, double v_next, int cnt_next,
-                 ErrorCode &err);
-
-/*
-    bool MoveC2CAdditionSmooth(const JointPoint &jp_start, const Pose &pose_start,
-                               const Pose &pose_start_past, std::vector<JointValues> &planned_path,
-                               ErrorCode &err);*/
-
-    bool pickPoints(vector<Pose> &points, ErrorCode &err);
-
-    bool pickPoints(vector<JointValues> &points, ErrorCode &err);
-
-    int estimateFIFOLength(JointValues joint1, JointValues joint2);
-
-    bool replanPauseTrajectory(std::vector<JointValues> &trajectory, ErrorCode &err);
-
-    bool replanRestartTrajectory(std::vector<JointValues> &trajectory,
-                                 JointValues &start_point,
-                                 ErrorCode &err);
-
+    bool isMotionExecutable(MotionType motion_t);
     bool isPointCoincident(const Pose &pose1, const Pose &pose2);
-    bool isPointCoincident(const Pose &pose, const JointValues &joint);
-    bool isPointCoincident(const JointValues &joint, const Pose &pose);
-    bool isPointCoincident(const JointValues &joint1, const JointValues &joint2);
+    bool isPointCoincident(const Pose &pose, const Joint &joint);
+    bool isPointCoincident(const Joint &joint, const Pose &pose);
+    bool isPointCoincident(const Joint &joint1, const Joint &joint2);
 
+    bool checkMotionTarget(const MotionTarget &target);
+    bool checkJointBoundry(const Joint &joint);
   private:
     // cycle time between two points in the trajectory, Unit: s
     double  cycle_time_;
@@ -399,40 +236,44 @@ class PlanningInterface {
     // acceleration scaling factor
     double  acceleration_scaling_;
 
-    double  jerk_;
-    double  joint_overshoot_;
-    double  joint_errorangle_;
-    double  omega_overload_;
-    double  alpha_overload_;
-    double  smooth_radius_coefficient_;
-    int     curve_mode_;
-    int     fifo_length_;
-    unsigned int trajectory_segment_length_;
+    double      jerk_;
+    double      joint_overshoot_;
+    //double      joint_errorangle_;
+    double      omega_overload_;
+    double      alpha_overload_;
+    double      smooth_radius_coefficient_;
+    CurveMode   curve_mode_;
+    SmoothMode  smooth_mode_;
+    int         trajectory_segment_length_;
 
-    JointConstraints joint_constraints_;
+    JointConstraint joint_constraint_;
     DHGroup dh_parameter_;
 
+    Transformation tool_frame_;
+    Transformation user_frame_;
+
     // ultimate values
-    struct {
-        double min;
-        double max;
-    }
-    trajectory_segment_length_range_,
-    cycle_time_range_,
-    velocity_range_,
-    acceleration_range_,
-    velocity_scaling_range_,
-    acceleration_scaling_range_,
-    jerk_range_,
-    joint_overshoot_range_,
-    joint_errorangle_range_,
-    alpha_overload_range_,
-    omega_overload_range_,
-    smooth_radius_coefficient_range_;
+    struct {double min; double max;}
+        trajectory_segment_length_range_,
+        smooth_radius_coefficient_range_,
+        acceleration_scaling_range_,
+        velocity_scaling_range_,
+        //joint_errorangle_range_,
+        joint_overshoot_range_,
+        alpha_overload_range_,
+        omega_overload_range_,
+        acceleration_range_,
+        cycle_time_range_,
+        velocity_range_,
+        jerk_range_;
 
+    bool  initial_joint_valid_;
+    Joint initial_joint_;
 
-    TrajPlan  *planner_;
-
+    TrajPlan    *planner_;
+    MoveCommand *motion_list_front_;
+    MoveCommand *motion_list_back_;
+    MoveCommand *picking_command_;
 };
 
 }

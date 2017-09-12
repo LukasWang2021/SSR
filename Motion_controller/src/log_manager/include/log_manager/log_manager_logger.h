@@ -39,6 +39,15 @@ class Logger {
     unsigned int display_level_;
     unsigned int logging_level_;
 
+    struct CommBuffer{
+        char buffer[LOG_BUFFER_SIZE];
+        bool isSend;
+        bool isAvailable;
+    } comm_buffer_;
+
+    bool overflow_flag_;
+    int  overflow_count_;
+
     std::string     log_content_;
     pthread_mutex_t log_mutex_;
     fst_comm_interface::CommInterface comm_interface_;

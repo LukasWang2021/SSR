@@ -228,7 +228,7 @@ bool JsonParse::getIDFromPath(const char *path, uint32_t &id)
 	
 	if (it == path_id_map_.end())
 	{
-		FST_INFO("getIDFromPath:can't find ID:%d",id);
+		FST_INFO("getIDFromPath:%s,can't find ID:%d",path, id);
 		return false;
 	}
 

@@ -252,6 +252,22 @@ U64 SafetyInterface::setSoftwareReset(char data)
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
+U64 SafetyInterface::resetSafetyBoard()
+{
+    //clear software alarm
+    setDOSWAlarm(0);
+    //send a pulse to reset signal
+    setSoftwareReset(1);
+    usleep(RESET_SAFETY_DELAY * 1000);
+    return setSoftwareReset(0);
+}
+
+U64 SafetyInterface::alarmSafetyBoard()
+{
+    //send alarm to safty board
+    return setDOSWAlarm(1);
+}
+
 
 
 U64 SafetyInterface::setSafetyHeartBeat()

@@ -79,9 +79,12 @@ ERROR_CODE_TYPE ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
         result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
+        {
+            printf("send failed heartbeat\n");
             return result;
+        }
     }
-//    std::cout<<"send heartbeat count = "<<count<<std::endl;
+    //std::cout<<"send heartbeat count = "<<count<<std::endl;
 
     // attempt to recv heartbeat response.
     count = 0;
@@ -92,9 +95,12 @@ ERROR_CODE_TYPE ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
         result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
+        {
+            printf("recv failed heartbeat:%llx\n", result);
             return result;
+        }
     }
-//    std::cout<<"recv heartbeat count = "<<count<<std::endl;
+    //std::cout<<"recv heartbeat count = "<<count<<std::endl;
     return result;
 }
 
@@ -162,6 +168,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
             return result;
     }
 
+    printf("send ok\n");
     // attempt to recv reset response
     count = 0;
     result = RECV_MSG_FAIL;
@@ -172,8 +179,12 @@ ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
         result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
-            return result;
+        {
+            printf("read service response failed :%llx\n", result);
+            return READ_SHARE_MEMORY_FAILED;
+        }
     }
+    printf("recv ok\n");
 //    std::cout<<"recv reset count = "<<count<<std::endl;
     return TPI_SUCCESS;
 }
@@ -200,7 +211,10 @@ ERROR_CODE_TYPE ServiceWrapper::sendStopRequest(void)
         result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
+        {
+            printf("stop:write servie failed:%llx\n", result);
             return result;
+        }
     }
 
     // attempt to recv reset response
@@ -213,7 +227,10 @@ ERROR_CODE_TYPE ServiceWrapper::sendStopRequest(void)
         result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
+        {
+            printf("stop:read servie failed:%llx\n", result);
             return result;
+        }
     }while (result != TPI_SUCCESS);
 //    std::cout<<"recv stop count = "<<count<<std::endl;
     return TPI_SUCCESS;

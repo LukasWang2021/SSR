@@ -65,6 +65,9 @@
 #define PATH_CTL_GLOBAL_VELOCITY    ("root/Control/globalVelocity")
 
 
+#define PATH_PLOT_FIFO2             ("root/Plot/fifo2")
+#define PATH_PLOT_FIFO1             ("root/Plot/fifo1")
+
 #define	FK_TOOL_COORD_ID		(4581)
 #define HOSTIN_JOINT_TRAJ_ID	(4632)
 #define HOSTIN_TOOL_COORD_ID	(4633)
@@ -132,6 +135,9 @@
 #define PARAMS_DH_ID            (13003)
 #define PARAMS_HW_LIMIT_ID      (13004)
 #define CTL_GLOBAL_VELOCITY_ID  (10101) 
+
+#define PLOT_FIFO2_ID           (112)
+#define PLOT_FIFO1_ID           (111)
 
 /**
  * @brief 

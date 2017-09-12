@@ -12,7 +12,7 @@
 #include "struct_to_mem/struct_joint_command.h" 
 #include "struct_to_mem/struct_feedback_joint_states.h"
 #include "comm_interface/core_interface.h"
-#include "motion_controller/fst_datatype.h"
+#include "trajplan/fst_datatype.h"
 #include "fst_error.h"
 #include "error_code/error_code.h"
 #include "service_wrapper.h"
@@ -111,11 +111,8 @@ class ShareMem
   private:	
 	fst_core_interface::CoreInterface   core_interface_;
     fst_service_wrapper::ServiceWrapper service_wrapper_;
+    fst_service_wrapper::ServiceWrapper service_wrapper1_;
 	ShmjointsCmd        shm_jnt_cmd_;		//current JointCommand
-	FeedbackJointState  servo_status_;      //FeedbackJointState	
-    uint32_t            read_cnt_;
-    uint32_t            write_cnt_;
-    ServiceResponse     resp_;
     boost::mutex		mutex_;
 };
 

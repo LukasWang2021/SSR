@@ -33,7 +33,7 @@ void RosBasic::rosRobotInit()
 {
 }
 
-void RosBasic::pubJointState(JointValues joint_values)
+void RosBasic::pubJointState(Joint joint_values)
 {
 	js_.position[0] = joint_values.j1;
 	js_.position[1] = joint_values.j2;

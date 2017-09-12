@@ -105,6 +105,8 @@ typedef struct _SafetyBoardDOFrm2
     char        byte8;
 }SafetyBoardDOFrm2;
 
+#define RESET_SAFETY_DELAY      (200)   //delay for reset safety board  (ms)
+
 
 class SafetyInterface
 {
@@ -310,6 +312,19 @@ class SafetyInterface
      */
     U64 setSoftwareReset(char data);
 
+    /**
+     * @brief: reset safety board 
+     *
+     * @return: 0 if success 
+     */
+    U64 resetSafetyBoard();
+
+    /**
+     * @brief 
+     *
+     * @return 
+     */
+    U64 alarmSafetyBoard();
     /**
      * @brief: heart_beat with safety board 
      *

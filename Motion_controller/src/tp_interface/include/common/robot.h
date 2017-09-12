@@ -113,7 +113,7 @@ typedef enum _RunningMode
 #define MAX_MANUAL_SPEED        (1000)      //ms/s
 
 #define INTERVAL_PROPERTY_UPDATE   	(10)    //ms
-#define INTERVAL_PROCESS_UPDATE	    (2)     //ms
+#define INTERVAL_PROCESS_UPDATE	    (6)     //ms
 #define INTERVAL_HEART_BEAT_UPDATE  (50)    //ms
 
 

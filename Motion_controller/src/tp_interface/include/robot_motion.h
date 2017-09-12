@@ -8,21 +8,21 @@
 #ifndef TP_INTERFACE_ROBOT_MOTION_H_
 #define	TP_INTERFACE_ROBOT_MOTION_H_
 
-#include "motion_controller/fst_datatype.h"
 #include "motion_controller/motion_controller_arm_group.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "robot.h"
 #include "motionSL.pb.h"
-#include "threadsafe_queue.h"
+#include "threadsafe_vector.h"
 #include "threadsafe_list.h"
 #include "proto_define.h"
 #include "share_mem.h"
 #include "fst_error.h"
+#include "common.h"
 #include "safety_interface.h"
 #include "io_interface.h"
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
-
+#include <atomic>
 #include <map>
 
 using namespace fst_controller;
@@ -36,34 +36,45 @@ using namespace fst_parameter;
 
 #define TRAJ_LIMIT_NUM              (0)
 
-#define RESET_SAFETY_DELAY          (200)   //delay for reset safety board  (ms)
 #define RESET_ERROR_TIMEOUT	        (5000)	//wait until to judge if errors are reset
 
-#define MANUAL_COUNT_PER_STEP		(120)	//the time of TP is 50ms every time
+#define MANUAL_COUNT_PER_STEP		(100)	//the time of TP is 50ms every time
 
 #define DEFAULT_MOVEJ_ACC           (50.0)
 #define DEFAULT_ACC			        (7000)
 
 #define IDLE2EXE_DELAY              (50)  //wait from idle to execute(ms)
 
-#define MAX_TIME_IN_PUASE           (20*1000)  //
+#define MAX_TIME_IN_PUASE           (20*1000)  //(ms)
+
+#define NON_MOVE_INTERVAL           (10)
 
 
-#define CURVE_MODE_T    (1)
-#define CURVE_MODE_S    (2)
+/*#define CURVE_MODE_T    (1)*/
+/*#define CURVE_MODE_S    (2)*/
+
+typedef enum _MoveStatus
+{
+    MS_READY = 1,
+    MS_WAIT,
+    MS_NM_WAIT,
+    MS_BUSY
+}MoveStatus;
 
 typedef enum _PickStatus
 {
     FRESH = 1,
     ONCE,
-    USED
+    USING,
+    PICKED,
+    NEVER
 }PickStatus;
 
 typedef struct _CommandInstruction
 {
     PickStatus  pick_status;
     uint32_t	id;
-    int         msecond;
+    int         count;
 	double		smoothDistance;	
     motion_spec_MOTIONTYPE commandtype;	
 	string		command_arguments; //pointer of command
@@ -99,47 +110,65 @@ typedef union _VelocityReq
 
 typedef union _PointVal
 {
-    JointValues jnt_val;
+    Joint       jnt_val;
     PoseEuler   pose_val;
 }PointVal;
 
-typedef enum _ManualType
+typedef enum _PointType
 {
     JOINT_M,
     CART_M
-}ManualType;
+}PointType;
 
 typedef struct _ManuPoint
 {
     bool        is_step;
-    ManualType  type;
+    PointType   type;
     PointVal    point;
  }ManuPoint;
 
+typedef struct _MotionPoint
+{
+    PointType   type;
+    PointVal    point; 
+}MotionPoint;
+
 typedef struct _ManualReq
 {
-    ManuPoint   pre_target;
+    //ManuPoint   pre_target;
     double      vel_max;
     ManuPoint   target;
     double      ref_vmax;
     ManuPoint   ref_target;
 }ManualReq;
 
+#define MAX_FIFO_LEN    (1024)
+typedef struct _FIFOData
+{
+    rwmutex rwmux;
+    int count;        
+    double  data[MAX_FIFO_LEN][MAX_JOINTS];
+}FIFOData;
+
 
 class RobotMotion
 {
   public:		    
     ThreadSafeList<CommandInstruction>  non_move_instructions_;
+    FIFOData            fifo1_;
+    FIFOData            fifo2_;
+    int                 dbcount;
+    std::atomic<bool>   shutdown_;
 
 	RobotMotion();	
 	~RobotMotion();
-
+    
     /**
      * @brief: initial 
      *
      * @return: 0 if success 
      */
-    U64 initial();
+    void initial(vector<U64>& err_list);
 
     /**
      * @brief 
@@ -153,6 +182,9 @@ class RobotMotion
      */
     U64 checkProgramState();
 
+    U64 stateEStopAction();
+
+    void errorAction(int warning_level);
     /**
      * @brief 
      *
@@ -160,6 +192,11 @@ class RobotMotion
      */
     bool isProgramStateChanged();
 
+    /**
+     * @brief 
+     *
+     * @return 
+     */
     IOInterface* getIOInterfacrPtr();
 	/**
 	 * @brief: get ShareMem object 
@@ -180,13 +217,52 @@ class RobotMotion
      */
     SafetyInterface* getSafetyInterfacePtr();
 
+    /**
+     * @brief: 
+     *
+     * @return 
+     */
     RunningMode getRunningMode();
+
+    /**
+     * @brief 
+     *
+     * @param rm
+     */
     void setRunningMode(RunningMode rm);
+    /**
+     * @brief 
+     *
+     * @param rm
+     */
+    void clearRunningMode(RunningMode rm);
 
+    /**
+     * @brief 
+     *
+     * @return 
+     */
     int getCurveMode();
-    bool setCurveMode(int c_mode);
 
+    /**
+     * @brief 
+     *
+     * @param c_mode
+     */
+    void setCurveMode(int c_mode);
+
+    /**
+     * @brief 
+     *
+     * @return 
+     */
     ProgramState getNMPrgmState();
+
+    /**
+     * @brief 
+     *
+     * @param prgm_state
+     */
     void setNMPrgmState(ProgramState prgm_state);
 
     /**
@@ -252,7 +328,7 @@ class RobotMotion
 	 *
 	 * @return: joints_
 	 */
-	JointValues getCurJointsValue();
+	Joint getCurJointsValue();
 	/**
 	 * @brief: get the position
 	 *
@@ -337,7 +413,7 @@ class RobotMotion
      *
      * @param joints: input
      */
-    void setCurJoints(JointValues joints);
+    void setCurJoints(Joint joints);
     
     /**
      * @brief: setCurPose 
@@ -366,7 +442,7 @@ class RobotMotion
 	 *
 	 * @param state_cmd: input==> state command
 	 *
-	 * @return 
+	 * @return: 0 if success 
 	 */
 	U64 setLogicStateCmd(RobotStateCmd state_cmd);	
     /**
@@ -381,19 +457,34 @@ class RobotMotion
 	 * @return: 0 if success
 	 */
 	U64 actionPause();	
+   
+    /**
+     * @brief 
+     *
+     * @param level
+     *
+     * @return 
+     */
+    U64 safetyStop(int level);
 
+
+    /**
+     * @brief: servo estop 
+     *
+     * @return: 0 if success 
+     */
     U64 servoEStop();
     /**
      * @brief 
      *
-     * @return 
+     * @return: 0 if success 
      */
     U64 actionShutdown();
 
     /**
      * @brief 
      *
-     * @return 
+     * @return: 0 if success 
      */
     U64 actionCalibrate();
 
@@ -407,7 +498,12 @@ class RobotMotion
 	 * @brief :clear instruction list
      * 
 	 */
-	void clearInstructionList();
+    U64 abortMotion();
+
+    /**
+     * @brief: clear instruction list 
+     */
+	void clearInstructions();
 	/**
 	 * @brief check start state in auto run mode
      *
@@ -427,7 +523,7 @@ class RobotMotion
       * @return: true if the joints have changed 
       */
      bool isJointsChanged();
-     bool isJointsOut(JointValues joints);
+
      /**
       * @brief: heart beat 
       *
@@ -497,7 +593,7 @@ class RobotMotion
 	 *
 	 * @return 
 	 */
-	bool compareJoints(JointValues src_joints, JointValues dst_joints);
+	bool compareJoints(Joint src_joints, Joint dst_joints);
 
     /**
      * @brief: getPoseFromJoint 
@@ -507,7 +603,7 @@ class RobotMotion
      *
      * @return: 0 if success 
      */
-    U64 getPoseFromJoint(const JointValues &joints, PoseEuler &pose);
+    U64 getPoseFromJoint(const Joint &joints, PoseEuler &pose);
 
     /**
      * @brief: getJointFromPose 
@@ -517,50 +613,46 @@ class RobotMotion
      *
      * @return: 0 if success 
      */
-    U64 getJointFromPose(const PoseEuler &pose, JointValues &joints);
+    U64 getJointFromPose(const PoseEuler &pose, Joint &joints, double time_val = 2);
 
     /**
-     * @brief 
+     * @brief: get user frame 
      *
-     * @param user_frame
      *
-     * @return 
+     * @return:  
      */
-    U64 getUserFrame(motion_spec_userFrame *user_frame);
+    motion_spec_userFrame getUserFrame();
     /**
-     * @brief 
+     * @brief: set user frame 
      *
-     * @param user_frame
+     * @param user_frame: input==>user frame
      *
-     * @return 
+     * @return: 0 if success 
      */
     U64 setUserFrame(motion_spec_userFrame *user_frame);
 
     /**
-     * @brief 
+     * @brief: get tool frame 
      *
-     * @param tool_frame
      *
-     * @return 
+     * @return:  
      */
-    U64 getToolFrame(motion_spec_toolFrame *tool_frame);
+    motion_spec_toolFrame getToolFrame();
 
     /**
-     * @brief 
+     * @brief: set tool frame 
      *
-     * @param tool_frame
+     * @param tool_frame: input
      *
-     * @return 
+     * @return: 0 if success 
      */
     U64 setToolFrame(motion_spec_toolFrame *tool_frame);
     /**
      * @brief: getJointConstraint 
      *
-     * @param jnt_constraint: output
-     *
      * @return: 0 if success 
      */
-    U64 getJointConstraint(motion_spec_JointConstraint *jnt_constraint);
+     motion_spec_JointConstraint getSoftConstraint();
 
     /**
      * @brief: setJointConstraint 
@@ -569,7 +661,23 @@ class RobotMotion
      *
      * @return: 0 if success 
      */
-    U64 setJointConstraint(motion_spec_JointConstraint *jnt_constraint);
+    U64 setSoftConstraint(motion_spec_JointConstraint *jnt_constraint);
+
+    /**
+     * @brief: get hard limit 
+     *
+     * @return: the hard limit  
+     */
+    motion_spec_JointConstraint getHardConstraint();
+    
+    /**
+     * @brief: set har limit
+     *
+     * @param jnt_constraint: input
+     *
+     * @return 
+     */
+    U64 setHardConstraint(motion_spec_JointConstraint *jnt_constraint);
 
     /**
      * @brief: getGlobalVelocity 
@@ -586,12 +694,28 @@ class RobotMotion
      * @return: 0 if success 
      */
     U64 setGlobalVelocity(double factor);
-    U64 getDHGroup(motion_spec_DHGroup *dh_group);
+
+    /**
+     * @brief: get DH group 
+     *
+     * @return: 0 if success 
+     */
+    motion_spec_DHGroup getDHGroup();
+
+    /**
+     * @brief 
+     *
+     * @param dh_group: intput
+     *
+     * @return: 0 if success 
+     */
     U64 setDHGroup(motion_spec_DHGroup *dh_group);
 
-    U64 getHWLimit(double *hw_limit);
-    U64 setHWLimit(double *hw_limit);
-
+    /**
+     * @brief: set a temporary zero 
+     *
+     * @return: 0 if success 
+     */
     U64 setTempZero();
 
 
@@ -601,35 +725,41 @@ class RobotMotion
     IOInterface         *io_interface_;
     ParamGroup          *param_group_;
 	ArmGroup			*arm_group_;
-	JointValues			joints_;				//current joints
+	Joint			    joints_;				//current joints
 	PoseEuler			pose_;					//current pose
-	RobotMode			mode_;					//current mode
-	RobotState			state_;					//current state
-	JointValues			prev_joints_;
-    RobotState          prev_state_;
-	RobotMode			prev_mode_;				//previous mode
-	int					previous_command_id_;	//previous command instruction id	
-	int					current_command_id_;	//current instruction id
-    ProgramState        program_state_;
-    ProgramState        non_move_prgm_state_;   //non move ProgramState
-	unsigned int		servo_state_;
-    int                 curve_mdoe_;
+    std::atomic<RobotMode>		mode_;					//current mode
+    std::atomic<RobotState>		state_;					//current state
+	Joint			    prev_joints_;
+    //RobotState          prev_state_;
+    std::atomic<RobotMode>		prev_mode_;				//previous mode
+    std::atomic<int>	previous_command_id_;	//previous command instruction id	
+    std::atomic<int>	current_command_id_;	//current instruction id
+    std::atomic<ProgramState>   program_state_;
+    
+    std::atomic<unsigned int>   servo_state_;
+    MotionPoint         pre_target_;
 
-    JointValues         manu_refer_joints_; //the last target(joints)
+    Joint               manu_refer_joints_; //the last target(joints)
     PoseEuler           manu_refer_pose_;   //the last target(pose)
-
+    
     ManualReq           manu_req_;
     
-    double              vel_factor_;        //global velocity for auto run mode
-    RunningMode         run_mode_;
+    std::atomic<double>              vel_factor_;        //global velocity for auto run mode
+    std::atomic<RunningMode>         run_mode_;
 
 	boost::mutex		mutex_;
+    std::atomic<MoveStatus>             move_status_;
 
-    bool                servo_ready_wait_;                  //if needs to wait for servo ready
+    std::atomic<bool>                   servo_ready_wait_;                  //if needs to wait for servo ready
+    std::atomic<ProgramState>           nm_prgm_state_;   //non move ProgramState
     ThreadSafeList<CommandInstruction>  instruction_list_;     //store motion instructions
-    ThreadSafeList<U64> bak_err_list_; 
-    U64                 prev_err_;
-    unsigned int        zero_info_; //record which joint lose zero
+    ThreadSafeList<U64> bak_err_list_;     
+    std::atomic<U64>    prev_err_;
+    //unsigned int        zero_info_; //record which joint lose zero
+
+    void processNonMove(); 
+    MoveStatus getMoveStatus();
+    void setMoveStatus(MoveStatus ms);
 	/**
 	 * @brief: convert unit from params of TP to controller
 	 *
@@ -645,8 +775,37 @@ class RobotMotion
 	 * @param dst_pose: output==>struct covert to
 	 * @param dst_movel_param: output==>struct covert to
 	 */
-	void unitConvert(const motion_spec_MoveJ *src_moveJ, JointValues &dst_joints, MoveJParam &dst_moveJ_param);
+	void unitConvert(const motion_spec_MoveJ *src_moveJ, Joint &dst_joints, MoveJParam &dst_moveJ_param);
+    /**
+	 * @brief convert unit from params of TP to controller
+	 *
+	 * @param src_moveL: input==>struct  covert from
+	 * @param dst_pose: output==>struct covert to
+	 * @param dst_movel_param: output==>struct covert to
+	 */
     void unitConvert(const motion_spec_MoveC *moveC, PoseEuler& pose1, PoseEuler& pose2, MoveCParam &moveC_param);
+
+    /**
+     * @brief: set previous target 
+     *
+     * @param type: intput
+     * @param point: input
+     */
+    void setPrevTarget(PointType type, PointVal point);
+
+    /**
+     * @brief: get start state in joints 
+     *
+     * @return: the start joints 
+     */
+    Joint getStartJoint();
+
+    /**
+     * @brief: get start state in pose 
+     *
+     * @return: the start pose 
+     */
+    PoseEuler getStartPose();
 
 	/**
 	 * @brief get max value from a buffer
@@ -676,7 +835,7 @@ class RobotMotion
 	 *
 	 * @return: the max value
 	 */
-	double getMaxJointInterval(JointValues pre_joints, JointValues cur_joints);    
+	double getMaxJointInterval(Joint pre_joints, Joint cur_joints);    
 	/**
 	 * @brief: calculate max velocity between two joints
 	 *
@@ -685,7 +844,7 @@ class RobotMotion
 	 *
 	 * @return: max velocity
 	 */
-//	double calcuManualJointVel(JointValues pre_joints, JointValues cur_joints);
+//	double calcuManualJointVel(Joint pre_joints, Joint cur_joints);
 	/**
 	 * @brief: get the max interval value between two pose(x,y,z)
 	 *
@@ -726,6 +885,13 @@ class RobotMotion
 	 * @param pose: input&output
 	 */
 	void uintPoseCtle2TP(PoseEuler *pose);
+
+    /**
+     * @brief 
+     *
+     * @param point: input
+     */
+    void setManualPrevTarget(ManuPoint point);
 
     /**
      * @brief: auto move without next_inst 
@@ -776,8 +942,12 @@ class RobotMotion
     /**
      * @brief: popup instruction from picked_motion_queue_
      */
-    void popupInstruction();
+    void popupInstruction(int id);
 
+    void popupInstEnd();
+    /**
+     * @brief: resetInstructionList 
+     */
     void resetInstructionList();
     /**
      * @brief: pick points from fifo1  
@@ -786,10 +956,22 @@ class RobotMotion
      */
     U64 pickPointsFromPathFifo();
 
+    void clearFIFO1Plot();
+
+    void clearFIFO2Plot();
+
+    void fillInFIFO1(const Pose pose);
+
+    void fillInFIFO2(const double *points);
+
+    void writePosToShm(JointCommand jc_w);
+
     /**
      * @brief: pick joints and send them to bare metal 
      */
     U64 sendJointsToRemote();    
+
+    void checkInstID(JointCommand joint_command);
 
     /**
      * @brief: check if manual move is on 
@@ -836,7 +1018,7 @@ class RobotMotion
      *
      * @return: pointer of next instruction, NULL if not exist
      */
-    CommandInstruction* pickNextMoveInstruction();
+    CommandInstruction* pickNextMoveInstruction(CommandInstruction *target_inst);
     
 
     /**

@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include "base_types_hash.h"
 #include "robot.h"
-#include "motion_controller/fst_datatype.h"
 #include "nn_socket.h"
 #include "json_parse.h"
 #include "robot_motion.h"
@@ -36,6 +35,13 @@ typedef struct _PublishUpdate
     uint8_t* buffer;
     int buf_len;
 }PublishUpdate;
+
+typedef struct _PlotPub
+{
+    uint32_t    frq_devider;
+    int         count;
+    vector<uint32_t> param_ids;
+}PlotPub;
 
 class ProtoParse
 {
@@ -89,6 +95,7 @@ class ProtoParse
     ThreadSafeList<U64>     error_list_;
 	boost::mutex	        mutex_;		//mutex lock   
 
+    map<int, PlotPub>       plot_pub_;    
 	/**
 	 * @brief: parse the struct of set message
 	 *
@@ -172,12 +179,14 @@ class ProtoParse
 	 */
     template<typename T>
 	bool pubParamMsg(int id, T param, int len);
+
+    void pubGroupMsg(motion_spec_SignalGroup sig_group);
 	/**
 	 * @brief: publish a parameter by the id
 	 *
 	 * @param id:input==>the unique id of the parameter
 	 */
-	void pubParamByID(int id);
+	string getParamBytes(int id);
 
     /**
      * @brief 
@@ -304,7 +313,9 @@ class ProtoParse
      *
      * @return : 0 if success
      */
-    U64 parseJointConstraint(const uint8_t *buffer, int count);
+    U64 parseSoftConstraint(const uint8_t *buffer, int count);
+
+    U64 parseHardConstraint(const uint8_t *buffer, int count);
 
     /**
      * @brief 
@@ -323,6 +334,19 @@ class ProtoParse
      * @return: true if success 
      */
     bool retDeviceInfo(BaseTypes_ParamInfo* param_info);
+
+    bool retToolFrame(BaseTypes_ParamInfo* param_info);
+
+    bool retUserFrame(BaseTypes_ParamInfo* param_info);
+
+    bool retSoftConstrait(BaseTypes_ParamInfo* param_info);
+
+    bool retHardConstrait(BaseTypes_ParamInfo* param_info);
+
+    bool retDHParams(BaseTypes_ParamInfo* param_info);
+
+    void parseCreatePlotMsg(const uint8_t *field_buffer, int field_size);
+    void parseRemovePlotMsg(const uint8_t *field_buffer, int field_size);
 
 };
 

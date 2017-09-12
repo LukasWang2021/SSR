@@ -11,66 +11,12 @@
 #include "sub_functions.h"
 #include "safety/safety.h" 
 #include "rt_timer.h"
+#include <future>
 #include <boost/algorithm/string.hpp>
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
-
-void processNonMove(void* parameter)
-{
-    RobotMotion *rob_motion = (RobotMotion*)parameter;
-    while(1)
-    {
-        ProgramState g_prgm_state = rob_motion->getProgramState();
-        switch (g_prgm_state)
-        {
-            case IDLE_R: //this thread should exit
-                return; 
-            case PAUSE_TO_EXECUTE_T:
-            case IDLE_TO_EXECUTE_T:
-            case EXECUTE_R:
-                if (!rob_motion->non_move_instructions_.empty())
-                {
-                    rob_motion->setNMPrgmState(EXECUTE_R);
-                    ThreadSafeList<CommandInstruction>::iterator it;
-                    for (it = rob_motion->non_move_instructions_.begin(); 
-                        it != rob_motion->non_move_instructions_.end(); it++)
-                    {
-                        if (it->commandtype == motion_spec_MOTIONTYPE_WAIT)
-                        {
-                            rtMsSleep(it->msecond);
-                        }
-                        else if (it->commandtype == motion_spec_MOTIONTYPE_SET)
-                        {
-                            motion_spec_Set *set = (motion_spec_Set*)it->command_arguments.c_str();
-                            
-                            
-                            if (it->msecond > 0)
-                            {
-                            
-                            }
-                            else
-                            {
-                               //rob_motion->getIOInterfacrPtr()->setIO( 
-                            }
-                        }
-                    }
-                }
-                break;
-            case EXECUTE_TO_PAUSE_T:          
-                break;
-            case PAUSE_TO_IDLE_T:
-                break;
-            case PAUSED_R:
-                break;
-            default:
-                break;
-        }
-        usleep(10*1000); //sleep 10ms
-    }
-}
-
-
+extern bool gs_running_flag;
 
 RobotMotion::RobotMotion()
 {
@@ -80,12 +26,12 @@ RobotMotion::RobotMotion()
 
     vel_factor_ = 100;
     run_mode_ = NORMAL_R;
-    non_move_prgm_state_ = IDLE_R;
+    nm_prgm_state_ = IDLE_R;
 
     prev_err_ = TPI_SUCCESS;							
 	prev_mode_ = INIT_M;
 	mode_ = INIT_M;
-    prev_state_ = ESTOP_S;
+    //prev_state_ = ESTOP_S;
     state_ = ESTOP_S;
     program_state_ = IDLE_R;
     memset((char*)&manu_req_, 0, sizeof(ManualReq));
@@ -93,19 +39,26 @@ RobotMotion::RobotMotion()
     io_interface_ = new IOInterface();
 
     arm_group_ = new ArmGroup();
-    curve_mdoe_ = CURVE_MODE_T;
         	
 	Transformation tool_frame;
 	memset(&tool_frame, 0, sizeof(tool_frame));
 	arm_group_->setToolFrame(tool_frame);  
+    
+    fifo1_.count = 0;
+    fifo2_.count = 0;
+    dbcount = 0;
+    shutdown_ = false;
+
+    boost::thread thrd_non_move(boost::bind(&RobotMotion::processNonMove, this));
 }
 
 
 RobotMotion::~RobotMotion()
 {
     //==before exit, first estop to fault===========
-    servoEStop();
-    setLogicStateCmd(EMERGENCY_STOP_E);
+    /*servoEStop();*/
+    //setLogicStateCmd(EMERGENCY_STOP_E);
+    /*usleep(100*1000);*/  
     //==============================================
     if (arm_group_)
     {
@@ -116,33 +69,30 @@ RobotMotion::~RobotMotion()
 }
 
 
-U64 RobotMotion::initial()
+void RobotMotion::initial(vector<U64>& err_list)
 {
     U64 result;
 
     if((result = share_mem_.initial()) != TPI_SUCCESS)
     {
         FST_ERROR("ShareMem init failed");
-        return result;
+        err_list.push_back(result);
     }
 
-    share_mem_.stopBareMetal();
+    share_mem_.stopBareMetal(); //disable baremetal first
 
-	arm_group_->initArmGroup(result);
-	if (result != TPI_SUCCESS)
+	if (arm_group_->initArmGroup(err_list) == false)
     {
-        FST_ERROR("create arm_group_ failed");
-        return result;
+        FST_ERROR("init arm_group_ failed");
+        //err_list.push_back(result);
     }
 
     if ((result = io_interface_->initial()) != TPI_SUCCESS)
     {
         FST_ERROR("io_interface_ init failed");
-        return result;
+        err_list.push_back(result);
     }
 
-
-    return TPI_SUCCESS;
 }
 
 void RobotMotion::destroy()
@@ -155,6 +105,7 @@ U64 RobotMotion::checkProgramState()
 {
     U64 result = TPI_SUCCESS;
     
+    static int pause_cnt = 0;
     
     ProgramState prgm_state = getProgramState();
 
@@ -172,6 +123,7 @@ U64 RobotMotion::checkProgramState()
             }
             break;
         case PAUSE_TO_EXECUTE_T:
+            pause_cnt = 0;
         case IDLE_TO_EXECUTE_T:
             //usleep(50*1000);   //sleep 50ms to wait until next program in auto mode
             result = planFifo();
@@ -182,7 +134,9 @@ U64 RobotMotion::checkProgramState()
             }
             else
             {
-                setProgramState(PAUSED_R);
+                abortMotion(); //abort the planned motion 
+                clearInstructions();
+                setProgramState(IDLE_R);
             }
             break;
         case EXECUTE_TO_PAUSE_T:
@@ -191,11 +145,17 @@ U64 RobotMotion::checkProgramState()
             if ((getServoState() == STATE_READY) 
             || (getServoState() == STATE_ERROR))
             {
+                fifo1_.count = 0;
+                fifo2_.count = 0;
                 setProgramState(PAUSED_R);
+                pause_cnt = 0;
             }            
             break;
         case PAUSE_TO_IDLE_T:
-            clearInstructionList();
+            //FST_INFO("pause to idle");
+            pause_cnt = 0;
+            result = abortMotion();
+            clearInstructions();
             setProgramState(IDLE_R);
             break;
         case EXECUTE_R:
@@ -203,23 +163,24 @@ U64 RobotMotion::checkProgramState()
             {
                 break;
             }
-            if (getLogicMode() == AUTO_RUN_M)
-            {
-                processEndingMove();
-            }
+            //processEndingMove();              
             if (hasTransformedToIdle())
             {
                 FST_INFO("EXECUTE_TO_idle");
+                fifo1_.count = 0;
+                fifo2_.count = 0;
                 setProgramState(IDLE_R);
                 boost::mutex::scoped_lock lock(mutex_);
                 manu_req_.vel_max = 0;
             }
             else
             {
-                sendJointsToRemote();
-                result = pickPointsFromPathFifo();
+                result = sendJointsToRemote();
                 if (result != TPI_SUCCESS)
+                {
+                    //FST_ERROR("======pick point failed====");
                     return result;    
+                }
                 result = planFifo();
                 if (result != TPI_SUCCESS)
                     return result;
@@ -228,51 +189,75 @@ U64 RobotMotion::checkProgramState()
         case PAUSED_R:       
         {
             static const int max_count = MAX_TIME_IN_PUASE / INTERVAL_PROCESS_UPDATE;
-            static int count = 0;
+            
             if (getLogicState() == ENGAGED_S)
             {
-                count++;
-                if (count >= max_count) //wait
+                pause_cnt++;
+                if (pause_cnt >= max_count) //wait
                 {
-                    count = 0;
+                    pause_cnt = 0;
                     setLogicStateCmd(EMERGENCY_STOP_E);
                     // then we need to return this info
                 }
             }
-            else
-            {
-                
-                    count = 0;
-            }
             //timeout to set logic state estop
             RobotMode mode = getLogicMode();
-            if (mode == AUTO_RUN_M)
+            /*if (mode == AUTO_RUN_M)*/
+            //{
+                //if (instruction_list_.empty())
+                //{
+                    //count = 0;
+                    //setProgramState(IDLE_R);
+                //}
+            //}
+            /*else*/ if (mode == MANUAL_MODE_M)
             {
-                if (instruction_list_.empty())
-                {
-                    count = 0;
-                    setProgramState(IDLE_R);
-                }
-            }
-            else if (mode == MANUAL_MODE_M)
-            {
-                count = 0;
-                clearPathFifo();
+                pause_cnt = 0;
+                result = abortMotion();
+                //setServoWaitFlag(false);
                 setProgramState(IDLE_R);
                 boost::mutex::scoped_lock lock(mutex_);
                 manu_req_.vel_max = 0;
             }
-            else
-            {
-                setProgramState(IDLE_R);
-            }
+            /*else*/
+            //{
+                //setProgramState(IDLE_R);
+            /*}*/
             break;  
-        }
+        }//end switch (prgm_state)
         default:
             break;
     }
 
     return result;
+}
+
+U64 RobotMotion::stateEStopAction()
+{
+    servoEStop();
+    setProgramStateCmd(GOTO_PAUSED_E); //set mode to pause
+    clearManuMove();
+
+    return TPI_SUCCESS;
+}
+
+void RobotMotion::errorAction(int warning_level)
+{
+    FST_INFO("warning_level is:%d", warning_level);
+    if (warning_level > 4)
+    {
+        safetyStop(warning_level);
+        servoEStop();
+        setProgramStateCmd(GOTO_PAUSED_E); //set mode to pause
+        clearManuMove();
+        setLogicStateCmd(EMERGENCY_STOP_E);
+    }
+    else if (warning_level > 2)
+    {
+        FST_INFO("in pause process...");
+        setProgramStateCmd(GOTO_PAUSED_E);
+        setLogicStateCmd(EMERGENCY_STOP_E);
+    }
 }
 
 bool RobotMotion::isProgramStateChanged()
@@ -292,7 +277,6 @@ bool RobotMotion::isProgramStateChanged()
 }
 IOInterface* RobotMotion::getIOInterfacrPtr()
 {
-    boost::mutex::scoped_lock lock(mutex_);
 	return this->io_interface_;
 }
 /**
@@ -302,7 +286,6 @@ IOInterface* RobotMotion::getIOInterfacrPtr()
  */
 ShareMem* RobotMotion::getShareMemPtr()
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	return &(this->share_mem_);
 }
 
@@ -313,28 +296,25 @@ ShareMem* RobotMotion::getShareMemPtr()
  */
 ArmGroup* RobotMotion::getArmGroupPtr()
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	return this->arm_group_;
 }
 
 SafetyInterface* RobotMotion::getSafetyInterfacePtr()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return &(this->safety_interface_);
 }
 
 RunningMode RobotMotion::getRunningMode()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return this->run_mode_;
 }
 
 void RobotMotion::setRunningMode(RunningMode rm)
 {
-    boost::mutex::scoped_lock lock(mutex_);
     if (rm == NORMAL_R)
     {
-        run_mode_ = NORMAL_R;
+        return;
+        //run_mode_ = NORMAL_R;
     }
     else
     {
@@ -342,51 +322,45 @@ void RobotMotion::setRunningMode(RunningMode rm)
     }
 }
 
-int RobotMotion::getCurveMode()
+void RobotMotion::clearRunningMode(RunningMode rm)
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return this->curve_mdoe_;
+    if (rm == NORMAL_R)
+    {
+        return;
+    }
+    else
+    {
+        run_mode_ = (RunningMode)(run_mode_ & (~rm));
+    }
 }
 
-bool RobotMotion::setCurveMode(int c_mode)
+int RobotMotion::getCurveMode()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    if (curve_mdoe_ != c_mode)
-    {
-        if (arm_group_->setCurveMode(c_mode))
-        {
-            curve_mdoe_ = c_mode;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    return true;
+    return (int)arm_group_->getCurveMode();
+}
+
+void RobotMotion::setCurveMode(int c_mode)
+{
+    arm_group_->setCurveMode((CurveMode)c_mode);
 }
 
 ProgramState RobotMotion::getNMPrgmState()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return non_move_prgm_state_; 
+    return nm_prgm_state_; 
 }
 
 void RobotMotion::setNMPrgmState(ProgramState prgm_state)
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    non_move_prgm_state_ = prgm_state;
+    nm_prgm_state_ = prgm_state;
 }
 
 
 ProgramState RobotMotion::getProgramState()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return this->program_state_;
 }
 void RobotMotion::setProgramState(ProgramState prgm_state)
 {
-    boost::mutex::scoped_lock lock(mutex_);
     this->program_state_ = prgm_state;
 }
 
@@ -404,6 +378,14 @@ int RobotMotion::getInstructionListSize()
             }
         } 
     }
+    else if (size > 0)
+    {
+        CommandInstruction instruction = instruction_list_.back();
+        if ((instruction.pick_status == PICKED) && (instruction.smoothDistance >= 0))
+        {
+            size = -1;
+        }
+    }
 
     return size;
 }
@@ -414,13 +396,11 @@ int RobotMotion::getInstructionListSize()
  */
 int RobotMotion::getPreviousCmdID()
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	return this->previous_command_id_;
 }
 
 void RobotMotion::setPreviousCmdID(int id)
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	this->previous_command_id_ = id;
 }
 
@@ -431,13 +411,11 @@ void RobotMotion::setPreviousCmdID(int id)
  */
 int RobotMotion::getCurrentCmdID()
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	return this->current_command_id_;
 }
 
 void RobotMotion::setCurrentCmdID(int id)
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	this->current_command_id_ = id;
 }
 
@@ -449,7 +427,6 @@ void RobotMotion::setCurrentCmdID(int id)
  */
 RobotMode RobotMotion::getLogicMode()
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	return this->mode_;
 }
 
@@ -460,7 +437,6 @@ RobotMode RobotMotion::getLogicMode()
  */
 RobotState RobotMotion::getLogicState()
 {
-	boost::mutex::scoped_lock lock(mutex_);
 	return this->state_;
 }
 
@@ -469,7 +445,7 @@ RobotState RobotMotion::getLogicState()
  *
  * @return: joints_
  */
-JointValues RobotMotion::getCurJointsValue()
+Joint RobotMotion::getCurJointsValue()
 {
 	boost::mutex::scoped_lock lock(mutex_);
 	return this->joints_;
@@ -493,13 +469,11 @@ PoseEuler RobotMotion::getCurPosition()
  */
 unsigned int RobotMotion::getServoState()
 {
-    boost::mutex::scoped_lock lock(mutex_);
 	return this->servo_state_;
 }
 
 void RobotMotion::setServoState(unsigned int servo_state)
 {
-    boost::mutex::scoped_lock lock(mutex_);
     this->servo_state_ = servo_state;
 }
 
@@ -542,28 +516,18 @@ bool RobotMotion::updateLogicState()
     
     switch (state)
     {
-        /*case DISENGAGED_TO_OFF_T:*/
-            //setLogicState(OFF_S);
-            /*break;*/
-        /*case OFF_TO_DISENGAGED_T:            */
-            //state = DISENGAGED_S;
-            /*break;*/
-        /*case OFF_TO_CALIBRATE_T:*/
-            //setLogicState(OFF_S);
-            //break;
-        //case ENGAGED_TO_DISENGAGED_T:                        
-            //setLogicState(DISENGAGED_S);
-            /*break;*/
-        /*case DISENGAGED_TO_ENGAGED_T:*/
-            //if (getServoState() == STATE_READY)
-            //{
-                //setLogicState(ENGAGED_S);
-            //}
-            //else
-            //{
-                //setLogicState(DISENGAGED_S);
-            //}
-            /*break;*/
+        case ESTOP_S:
+            if (gs_running_flag == false)
+            {
+                shutdown_ = true;
+            }
+            break;
+        case ENGAGED_S:
+            if (gs_running_flag == false)
+            {
+                setLogicStateCmd(EMERGENCY_STOP_E);
+            }
+            break;
         case TO_ESTOP_T:
         {
             ProgramState ps = getProgramState();
@@ -571,53 +535,49 @@ bool RobotMotion::updateLogicState()
             if ((ps == IDLE_R) 
             || (ps == PAUSED_R))
             {
+                //==record current joints for calibrate==
+                U64 ret;
+                arm_group_->recordLastJoint(ret);
+                if (ret != TPI_SUCCESS)
+                {
+                    FST_ERROR("recordLastJoint failed:%llx", ret);
+                }
                 setLogicState(ESTOP_S);
             }
             break;
         }
         case RESET_ESTOP_T:
-        {            
+        {
+            // FST_INFO("estop to off");            
             //===wait RESET_ERROR_DELAY ms=========================
             static int count = RESET_ERROR_TIMEOUT / INTERVAL_PROPERTY_UPDATE;
             //FST_INFO("the count is :%d", count);
-            if (getServoState() != STATE_READY)
+            if (count-- > 0) //hasn't arrived timeout, during wait
             {
-                if (isErrorExist() || count <= 1)
+                //===check if error exist again====
+                //if error accurs again, return ESTOP_S==
+                if (isErrorExist())
                 {
-                    FST_INFO("cur state:%d", getServoState());
                     share_mem_.stopBareMetal();
                     setLogicState(ESTOP_S);
+                    //====set the count to default===
                     count = RESET_ERROR_TIMEOUT / INTERVAL_PROPERTY_UPDATE;
                     break;
                 }
-                if (count-- > 0)
-                    break;
-                count = RESET_ERROR_TIMEOUT / INTERVAL_PROPERTY_UPDATE;
+                //=====servo hasn't ready========
+                //===need keep on wait============
+                if (getServoState() != STATE_READY)     
+                    break;                
             }
 
-           /*while(1)*/
-            //{
-                //usleep(10*1000);
-                //if (getServoState() == STATE_READY)
-                    //break;
-                //else
-                   //FST_INFO("state:%d",getServoState());
-            /*}*/            
-            //===================================================
-            //FST_INFO("after delay...");
-            //if there are still errors can't change state
-            //FST_INFO("cur state:%d", getServoState());
-            /*if ((!isErrorExist()) //no errors exist*/
-            //&& (getServoState() == STATE_READY)) //servo ready
-            /*{   */             
+            if (count <= 0)
+            {
+                FST_ERROR("error: reset timeout");
+            }
+            //====set the count to default===
+            count = RESET_ERROR_TIMEOUT / INTERVAL_PROPERTY_UPDATE;
+           
             setLogicState(ENGAGED_S);
-            /*}*/
-            //else
-            //{
-                //FST_INFO("cur state:%d", getServoState());
-                //share_mem_.stopBareMetal();
-                //setLogicState(ESTOP_S);
-            /*}*/
             break;
         }
         default:
@@ -635,6 +595,19 @@ bool RobotMotion::updateLogicState()
     }
 }
 
+#define MAX_ACCURATE_VALUE 0.1
+bool isOutMax(Joint src_joints, Joint dst_joints)
+{
+	if (fabs(src_joints.j1 - dst_joints.j1) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j2 - dst_joints.j2) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j3 - dst_joints.j3) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j4 - dst_joints.j4) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j5 - dst_joints.j5) > MAX_ACCURATE_VALUE) return false;
+	if (fabs(src_joints.j6 - dst_joints.j6) > MAX_ACCURATE_VALUE) return false;
+
+	return true;
+}	
+
 /**
  * @brief: update current joints get value from the share memory 
  *
@@ -643,7 +616,8 @@ bool RobotMotion::updateLogicState()
 U64 RobotMotion::updateJoints()
 {
 	FeedbackJointState fbjs;
-	JointValues joints_val;
+	Joint joints_val;
+  //  static Joint prev_joints = {-1,-1,-1,-1,-1,-1};
 
 //	int count = 0;
     U64 result = share_mem_.getFeedbackJointState(fbjs);
@@ -655,6 +629,12 @@ U64 RobotMotion::updateJoints()
         joints_val.j4 = fbjs.position[3];
         joints_val.j5 = fbjs.position[4];
         joints_val.j6 = fbjs.position[5];
+        /*if (isOutMax(prev_joints, joints_val) == false)*/
+        //{
+            //printDbLine("+++prev_joints:", (double*)&prev_joints, 6);
+            //printDbLine("+++cur_joints:", (double*)&joints_val, 6);
+        //}
+        /*prev_joints = joints_val;*/
 
         unsigned int servo_state = getServoState();
         /*static int cnt = 40;*/
@@ -663,26 +643,56 @@ U64 RobotMotion::updateJoints()
             //FST_INFO("update joints:%d", fbjs.state); 
             //cnt = 40;
         /*}*/
+        if (getRunningMode() != NORMAL_R)
+        {
+            if (arm_group_->isJointFallInConstraint(joints_val, arm_group_->getSoftConstraint()))
+            {
+                clearRunningMode(SOFTLIMITED_R);
+            }
+        }
         if (fbjs.state == STATE_READY) 
         {
-            if (servo_state == STATE_RUNNING)
+            if (servo_state != fbjs.state)
             {
-                FST_INFO("state translate from running to ready");
+                FST_INFO("==========diffrent===========current:%d, pre:%d", fbjs.state, servo_state);
+            }
+            if ((servo_state == STATE_RUNNING) || (servo_state == STATE_WAIT_SERVOREADY))
+            {
+                FST_INFO("state translate from running/(wait running) to ready");
+                //==set servo wait ready flag to false========
+                if (arm_group_->isTrajectoryTotallyFinished())
+                {
+                    setServoWaitFlag(false);
+                }
+                else
+                {
+                    FST_INFO("====this is not end of trajectory====");
+                }
             }    
 
-        //	FST_INFO("cur_joints:%f,%f,%f,%f,%f,%f", joints_.j1,joints_.j2,joints_.j3\
-                    ,joints_.j4,joints_.j5,joints_.j6);
-        }
+        //	FST_INFO("cur_joints:%f,%f,%f,%f,%f,%f", joints_.j1,joints_.j2,joints_.j3
+         //           ,joints_.j4,joints_.j5,joints_.j6);
+        }//if (fbjs.state == STATE_READY)
         else if (fbjs.state == STATE_ERROR)
         {
-            if (servo_state == STATE_RUNNING)
+            if ((servo_state == STATE_RUNNING) || (servo_state == STATE_WAIT_SERVODOWN))
             {
-                FST_INFO("state translate from running to error");
+                FST_INFO("state translate from running/(wait running) to error");
+                if (arm_group_->isTrajectoryTotallyFinished())
+                {
+                    setServoWaitFlag(false);
+                }
+                else
+                {
+                    FST_INFO("====this is not end of trajectory====");
+                }
             }   
-        }
+        }// else if (fbjs.state == STATE_ERROR)
         setCurJoints(joints_val);
-	}
-    setServoState(fbjs.state);
+
+        setServoState(fbjs.state);
+	}// if (result == TPI_SUCCESS)
+    
 	
 	return result;
 }
@@ -697,16 +707,13 @@ U64 RobotMotion::updatePose()
 	U64 result;
 	PoseEuler pose;
 	//boost::recursive_mutex::scoped_lock lock(recu_mutex_);
-    boost::mutex::scoped_lock lock(mutex_);
 	  //set the current joint to lib
-	if (arm_group_->setCurrentJointValues(joints_, result) == false)
-    {
-		return result;
-    }
+    result = getPoseFromJoint(getCurJointsValue(), pose);
+	if (result != TPI_SUCCESS)
+        return result;
     
-	pose = arm_group_->transformPose2PoseEuler(arm_group_->getCurrentPose()); // get current position from lib
 	uintPoseCtle2TP(&pose);
-	this->pose_ = pose;
+    setCurPose(pose);
     return TPI_SUCCESS;
 }
 
@@ -722,12 +729,10 @@ U64 RobotMotion::updateSafetyStatus()
     || safety_interface_.getDIEStop()
     || safety_interface_.getDIDeadmanPanic()
     || safety_interface_.getDIServoAlarm()
-    || safety_interface_.getDISafetyDoorStop()) 
-    {        
-        //FST_ERROR("detected estop...");
+    || safety_interface_.getDISafetyDoorStop())
+    {
         return SERVO_ESTOP;
     }
-
 
     return TPI_SUCCESS;
 }
@@ -736,19 +741,17 @@ U64 RobotMotion::updateSafetyStatus()
 
 void RobotMotion::setLogicMode(RobotMode mode)
 {
-    boost::mutex::scoped_lock lock(mutex_);
     this->mode_ = mode;
 }
 
 void RobotMotion::setLogicState(RobotState state)
 {
-    boost::mutex::scoped_lock lock(mutex_);
     /*if (state_ != state)*/
         /*FST_INFO("state_:%d",state);*/
     this->state_ = state;
 }
 
-void RobotMotion::setCurJoints(JointValues joints)
+void RobotMotion::setCurJoints(Joint joints)
 {
     boost::mutex::scoped_lock lock(mutex_);
     this->joints_ = joints;
@@ -788,7 +791,9 @@ U64 RobotMotion::setProgramStateCmd(ProgramStateCmd prgm_cmd)
             else if (prgm_state == PAUSED_R)
             {
                 setProgramState(PAUSE_TO_EXECUTE_T);
+                result = actionResume();
             }
+            setNMPrgmState(EXECUTE_R);
             break;
         case GOTO_PAUSED_E:
             if (getLogicState() != ENGAGED_S)
@@ -797,29 +802,33 @@ U64 RobotMotion::setProgramStateCmd(ProgramStateCmd prgm_cmd)
                 setProgramState(PAUSED_R); 
                 break;
             }
-            if (prgm_state == EXECUTE_R)
+            if (prgm_state == IDLE_R)
             {
+                break;
+            }
+            if (prgm_state == EXECUTE_R)
+            {                
                 setProgramState(EXECUTE_TO_PAUSE_T);
-                result = actionPause();
             }
             else if (prgm_state == IDLE_TO_EXECUTE_T)
             {                
                 setProgramState(IDLE_R);
-                result = actionPause();
             }
             else if (prgm_state == PAUSE_TO_EXECUTE_T)
             {
-                setProgramState(PAUSED_R);
-                result = actionPause();
+                setProgramState(PAUSED_R);                
             }
-            /*else if (prgm_state == IDLE_R)*/
-            //{
-               //result = SET_STATE_FAILED; 
-            /*}*/
+            else if (prgm_state == EXECUTE_TO_PAUSE_T)
+            {
+                result = INVALID_ACTION_IN_CURRENT_STATE;
+                break;
+            }
+            setNMPrgmState(PAUSED_R);
+            result = actionPause();
             break;
         default:
             break;
-    }
+    }//end switch (prgm_cmd)
 
     FST_INFO("current Program State:%d", getProgramState());
 
@@ -849,8 +858,9 @@ U64 RobotMotion::setLogicModeCmd(RobotModeCmd mode_cmd)
 	switch (mode_cmd)
 	{
 		case GOTO_AUTO_RUN_E:
+            arm_group_->setVelocityScalingFactor(getGlobalVelocity());
             if (mode == MANUAL_MODE_M)
-            {
+            {                
                 setLogicMode(MANUAL_TO_AUTO_RUN_T);
             }
             else
@@ -859,6 +869,7 @@ U64 RobotMotion::setLogicModeCmd(RobotModeCmd mode_cmd)
             }
 			break;
 		case GOTO_MANUAL_MODE_E:
+            arm_group_->setVelocityScalingFactor(100);
             if (mode == AUTO_RUN_M)
             {
                 setLogicMode(AUTO_RUN_TO_MANUAL_T);
@@ -871,7 +882,13 @@ U64 RobotMotion::setLogicModeCmd(RobotModeCmd mode_cmd)
 		default:
 			result = SET_MODE_FAILED;
 			break;
-	}
+	}//end switch (mode_cmd)
+
+    //==========set previous target=============
+    PointVal point;
+    point.jnt_val = getCurJointsValue();
+    setPrevTarget(JOINT_M, point);
+    //////////////////////////////////////////
 
 	FST_INFO("current mode:%d", mode);
 
@@ -891,67 +908,16 @@ U64 RobotMotion::setLogicStateCmd(RobotStateCmd state_cmd)
     U64 result = TPI_SUCCESS;
 
 	RobotState state = getLogicState();
-    if ((state == TO_ESTOP_T) 
-    || (state == RESET_ESTOP_T))
-        return TPI_SUCCESS;
         
     //FST_INFO("state_cmd:%d",state_cmd);
 	switch (state_cmd)
 	{
-        /*case GOTO_OFF:*/
-            //if (state == OFF_S)
-            //{
-                //break;
-            //}
-            //else if (state == DISENGAGED_S)
-            //{
-                //setLogicState(DISENGAGED_TO_OFF_T); 
-            //}
-            //else
-            //{
-                //result = SET_STATE_FAILED;
-            //}
-            //break;
-        //case GOTO_DISENGAGED_E:
-            //if (state == DISENGAGED_S)
-            //{
-                //break;
-            //}
-            //else if (state == OFF_S)
-            //{
-                //setLogicState(OFF_TO_DISENGAGED_T);
-            //}
-            //else if (state ==  ENGAGED_S)
-            //{
-                //setLogicState(ENGAGED_TO_DISENGAGED_T);
-                //emergencyStop();                
-            //}
-            //else
-            //{
-                //result = SET_STATE_FAILED;
-            //}
-            //break;
-        /*case GOTO_ENGAGED_E:*/
-            //if (state == ENGAGED_S)
-            //{
-                //break;
-            //}
-            //else if (state == LIMITED_RUNNING_S)
-            //{
-                //setLogicState(DISENGAGED_TO_ENGAGED_T);
-                //result = share_mem_.resetBareMetal(); //servo reset
-            //}
-            //else 
-            //{
-                //result = SET_STATE_FAILED;
-            //}
-            /*break;*/
         case EMERGENCY_STOP_E:
             if (state == ESTOP_S)
             {
                 break;
             }
-            result = emergencyStop();//some status need to set in ENGAGED_S
+            //result = emergencyStop();//some status need to set in ENGAGED_S                
             setLogicState(TO_ESTOP_T);                        
             break; 
         case ACKNOWLEDGE_ERROR:
@@ -961,22 +927,50 @@ U64 RobotMotion::setLogicStateCmd(RobotStateCmd state_cmd)
             }
             else if (state == ESTOP_S)
             {
-                //FST_INFO("reset controller...");
                 setLogicState(RESET_ESTOP_T);
+                //first clear error list 
+                clearErrorList();
+                //====reset core1==========
                 share_mem_.resetBareMetal();
-                safety_interface_.setSoftwareReset(1);  //reset safety board
-                usleep(200*1000);       //sleep 200ms for safety reset
-                safety_interface_.setSoftwareReset(0);  //clear softwareReset
-                clearErrorList(); 
-            }
+                if (result != TPI_SUCCESS)
+                {
+                    setLogicState(ESTOP_S);
+                    break;
+                }
+                //=======reset safety board==================
+                result = safety_interface_.resetSafetyBoard();  //reset safety board
+                if (result != TPI_SUCCESS)
+                {
+                    setLogicState(ESTOP_S);
+                    break;
+                }
+                //==========reset ArmGroup=============
+                arm_group_->resetArmGroup(result);
+                if (result != TPI_SUCCESS)
+                {
+                    if (result == CURRENT_JOINT_OUT_OF_CONSTRAINT)
+                    {
+                        result = TPI_SUCCESS;
+                        setRunningMode(SOFTLIMITED_R);
+                    }
+                    else
+                    {
+                        FST_ERROR("reset ArmGroup failed:%llx", result);        
+                        setLogicState(ESTOP_S);
+                        break;
+                    }
+                }                  
+            }//end else if (state == ESTOP_S)
             else 
             {
+                FST_ERROR("invalid action in state:%d", state);
                 result = SET_STATE_FAILED;
             }
             break;
         default:
             break;
-    }
+    }//end switch (state_cmd)
+    FST_INFO("current state:%d", getLogicState());
 
     return result;
 }
@@ -984,14 +978,15 @@ U64 RobotMotion::setLogicStateCmd(RobotStateCmd state_cmd)
 U64 RobotMotion::actionResume()
 {
     U64 result = TPI_SUCCESS;
-    boost::mutex::scoped_lock lock(mutex_);
 
-	int traj_len = arm_group_->getPlannedPathFIFOLength();
-	int joints_len = arm_group_->getJointTrajectoryFIFOLength();
-	if ((traj_len != 0) && (joints_len == 0))
-	{        
-		arm_group_->resumeArmMotion(result);
-	}
+    FST_INFO("resumeArmMotion...");
+	arm_group_->resumeArmMotion(result);
+    int fifo2_len = arm_group_->getTrajectoryFIFOLength();
+    /*if (fifo2_len == 0) //in case last time almost ready, then disable servo */
+    //{
+        //setServoWaitFlag(false); 
+    /*}*/
+    //FST_INFO("wait flag:%d, traj_len:%d, fifo2:%d", getServoWaitFlag(), arm_group_->getPlannedPathFIFOLength(), fifo2_len);
     //do not process the event when joints_len is not zero
 
 	return result;
@@ -1003,37 +998,60 @@ U64 RobotMotion::actionResume()
  */
 U64 RobotMotion::actionPause()
 {
-    U64 result = TPI_SUCCESS;
-	int traj_len = arm_group_->getPlannedPathFIFOLength();
-	int joints_len = arm_group_->getJointTrajectoryFIFOLength();
-	if ((traj_len != 0) || (joints_len != 0))
-	{
-		if ((traj_len != 0) && (joints_len == 0))
-		{
-			FST_ERROR("traj_len is %d, but joints_len is 0 !", traj_len);
-			return WRONG_FIFO_STATE;
-		}
-        FST_INFO("pause:traj_len:%d, joint_len:%d",traj_len, joints_len);             
+    U64 result = TPI_SUCCESS;            
         
-        if (!arm_group_->suspendArmMotion(result))
-        {
-            FST_ERROR("suspendArmMotion error:%llx", result);
-        }
-
-        clearPathFifo();        
-        resetInstructionList();
+    if (arm_group_->suspendArmMotion(result))
+    {
+        //resetInstructionList();            
     }
 
+    
 	return result;
 }
 
-U64 RobotMotion::servoEStop()
+U64 RobotMotion::safetyStop(int level)
 {
-    U64 result;
+    switch (level)
+    {
+        case 5:
+        case 6:
+            safety_interface_.alarmSafetyBoard();
+            break;
+        case 7:
+            safety_interface_.alarmSafetyBoard();
+            break;
+        case 8:
+        case 9:
+            safety_interface_.alarmSafetyBoard();
+            break;
+        case 10:
+            safety_interface_.alarmSafetyBoard();
+            break;
+        case 11:
+            safety_interface_.alarmSafetyBoard();
+            break;
+        default:
+            break;
+    }
+    return TPI_SUCCESS;
+}
+
+U64 RobotMotion::servoEStop()
+{    
     //stop bare metal, can't write fifo since
-    result = share_mem_.stopBareMetal();
-    usleep(500* 1000); //wait for brake on
-    FST_INFO("wait for brake on");
+    U64 result = share_mem_.stopBareMetal();
+    if (result == TPI_SUCCESS)
+    {
+        //if there is no point, then do not call declareEstop
+        if (getProgramState() != IDLE_R)
+        //if (getServoState() != STATE_READY)
+            arm_group_->declareEstop();
+    }
+
+    share_mem_.setWritenFlag(true);
+    usleep(500*1000);   //wait for brake on
+
+    return result;
 }
 
 
@@ -1043,26 +1061,18 @@ U64 RobotMotion::emergencyStop()
     
     setProgramStateCmd(GOTO_PAUSED_E); //set mode to pause
     clearManuMove();
-    //clear all the fifos
-    arm_group_->resetArmGroup(getCurJointsValue(), result);
-    if (result != TPI_SUCCESS)
-    {
-        FST_ERROR("reset ArmGroup failed:%llx", result);
-    }
-    share_mem_.setWritenFlag(true); //don't write share_mem any more
-          
-    //==record current joints for calibrate==
-    arm_group_->recordLastJoint(result);
-    if (result != TPI_SUCCESS)
-    {
-        FST_ERROR("recordLastJoint failed:%llx", result);
-    }
+    
+    
 
+    
     return result;
 }
 
 U64 RobotMotion::actionShutdown()
 {
+    gs_running_flag = false;
+    setProgramStateCmd(GOTO_PAUSED_E);
+    setLogicStateCmd(EMERGENCY_STOP_E);
     return TPI_SUCCESS;
 }
 
@@ -1070,8 +1080,11 @@ U64 RobotMotion::actionCalibrate()
 {
     U64 result;    
     unsigned int caliborate_val;
-    arm_group_->calibrateZeroOffset(caliborate_val, result); 
-
+    if (arm_group_->calibrateZeroOffset(caliborate_val, result))
+    {
+        clearRunningMode(CALIBRATE_R);
+        setProgramStateCmd(GOTO_IDLE_E);
+    }
     return result;
 }
 
@@ -1086,12 +1099,31 @@ void RobotMotion::addMotionInstruction(CommandInstruction cmd_instruction)
    FST_INFO("instruction num:%d", instruction_list_.size());
 }
 
-void RobotMotion::clearInstructionList()
+U64 RobotMotion::abortMotion()
 {
-    FST_INFO("clear instruction list...");
+    U64 result;
+    //=====clear all the fifos=======
+    arm_group_->clearArmGroup(result);
+    if (result != TPI_SUCCESS)
+    {
+        FST_ERROR("reset ArmGroup failed:%llx", result);
+    }
+    share_mem_.setWritenFlag(true); //don't write share_mem any more
+    setServoWaitFlag(false);    //don't wait any flag
+
+    return result;
+}
+
+void RobotMotion::clearInstructions()
+{
+        FST_INFO("clear instruction list...");
     while (!instruction_list_.empty())
     {
        instruction_list_.pop_front();
+    }
+    while (!non_move_instructions_.empty())
+    {
+        non_move_instructions_.pop_front();
     }
     setPreviousCmdID(-1);
     setCurrentCmdID(-1);
@@ -1112,9 +1144,8 @@ U64 RobotMotion::checkAutoStartState()
     && isFifoEmpty()                    //fifo is empty
     && (instruction_list_.empty()))     //instruction queue empty
     {
-        boost::mutex::scoped_lock lock(mutex_);
-        FST_ERROR("=============setStartState==========");
 	    arm_group_->setStartState(getCurJointsValue(), result);
+        dbcount = 0;
     }
 
     return result;
@@ -1130,72 +1161,57 @@ U64 RobotMotion::checkManualStartState()
     && (manu_req.vel_max == 0))    
     {
         FST_INFO("setStartState...");
-       // printDbLine("start joints_", (double*)&joints_,6);
+        //printDbLine("start joints_", (double*)&joints_,6);
         boost::mutex::scoped_lock lock(mutex_);
 	    arm_group_->setStartState(joints_, result);
         manu_refer_joints_ = joints_;
-        manu_refer_pose_ = arm_group_->transformPose2PoseEuler(arm_group_->getStartPose());
+        pre_target_.point.jnt_val = joints_;
+        pre_target_.type = JOINT_M;
+        manu_refer_pose_ = pose_;
+        manu_refer_pose_.position.x= pose_.position.x * 1000;  //m --> mm
+        manu_refer_pose_.position.y= pose_.position.y * 1000;
+        manu_refer_pose_.position.z= pose_.position.z * 1000;
+        dbcount = 0;
     }
 
     return result;
-}
-#define MAX_ACCURATE_VALUE 0.03
-bool isOutMax(JointValues src_joints, JointValues dst_joints)
-{
-	if (fabs(src_joints.j1 - dst_joints.j1) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j2 - dst_joints.j2) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j3 - dst_joints.j3) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j4 - dst_joints.j4) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j5 - dst_joints.j5) > MAX_ACCURATE_VALUE) return false;
-	if (fabs(src_joints.j6 - dst_joints.j6) > MAX_ACCURATE_VALUE) return false;
-
-	return true;
-}	
-
-bool RobotMotion::isJointsOut(JointValues joints)
-{
-    U64 result = TPI_SUCCESS;
-    static JointValues prev_joints = joints;
-
-    if (isOutMax(prev_joints, joints) == false)
-    {
-        prev_joints = joints;
-        printDbLine("prev_joints:", (double*)&prev_joints, 6);
-        printDbLine("cur_joints:", (double*)&joints, 6);
-        return true;
-    }
-		prev_joints = joints;
-
-
-    
-    return false;
 }
 
 
 bool RobotMotion::isJointsChanged()
 {
     static int cnt = 0;
-    static JointValues prev_joints = {-1,-1,-1,-1,-1,-1};
+    static Joint prev_joints = {-1,-1,-1,-1,-1,-1};
 
-    JointValues cur_joints = getCurJointsValue();
+    Joint cur_joints = getCurJointsValue();
+    if (isOutMax(prev_joints, cur_joints) == false)
+    {
+        printDbLine("prev_joints:", (double*)&prev_joints, 6);
+        printDbLine("cur_joints:", (double*)&cur_joints, 6);
+    }
     if (compareJoints(prev_joints, cur_joints) == false)
 	{
 		cnt++;
 		prev_joints = cur_joints;
-		FST_INFO("cnt:%d, joint:%f,%f,%f,%f,%f,%f", cnt,\
+		//FST_INFO("cnt:%d, joint:%f,%f,%f,%f,%f,%f", cnt,\
 			joints_.j1,joints_.j2,joints_.j3,joints_.j4,joints_.j5,joints_.j6);
 
         return true;
 	}
-
     
     return false;
 }
-
+#include <thread> 
+#include <chrono>
 int RobotMotion::motionHeartBeart(U64 *err_list)
 {
-    boost::mutex::scoped_lock lock(mutex_);    
+   // auto t1 = std::chrono::system_clock::now();
     int err_size = share_mem_.monitorHearBeat(err_list);
+    /*auto t2 = std::chrono::system_clock::now();*/
+        //int x = std::chrono::duration_cast<std::chrono::milliseconds>( t2-t1 ).count();
+        //if (x > 10)
+            /*FST_ERROR("222delay too much=====+:%d", x);*/
+
     U64 result = safety_interface_.setSafetyHeartBeat();
     if (result != TPI_SUCCESS)
     {
@@ -1209,7 +1225,6 @@ int RobotMotion::motionHeartBeart(U64 *err_list)
 void RobotMotion::backupError(U64 err)
 {    
     bak_err_list_.push_back(err);
-    boost::mutex::scoped_lock lock(mutex_);
     prev_err_ = err;
 }
 
@@ -1217,16 +1232,16 @@ void RobotMotion::clearErrorList()
 {
     while (!bak_err_list_.empty())
     {
+        if (bak_err_list_.front() & 0x0010000000000000)
+            return;
         bak_err_list_.pop_front();
     }
 
-    boost::mutex::scoped_lock lock(mutex_);
     prev_err_ = TPI_SUCCESS;
 }
 
 bool RobotMotion::isUpdatedSameError(U64 err)
 {
-    boost::mutex::scoped_lock lock(mutex_);
     if (prev_err_ != err)
     {
         return false;
@@ -1237,7 +1252,6 @@ bool RobotMotion::isUpdatedSameError(U64 err)
 
 bool RobotMotion::isErrorExist()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     if (bak_err_list_.empty())
         return false;
     else
@@ -1248,16 +1262,16 @@ U64 RobotMotion::clearPathFifo()
 {
     U64 result = TPI_SUCCESS;
 
-	int traj_len = arm_group_->getPlannedPathFIFOLength();
-	//int joints_len = arm_group_->getJointTrajectoryFIFOLength();
+	//int traj_len = arm_group_->getPlannedPathFIFOLength();
+	//int joints_len = arm_group_->getTrajectoryFIFOLength();
 //	FST_ERROR("current traj_len:%d, joints_len:%d", traj_len, joints_len);
     
-    if ((traj_len != 0) /*|| (joints_len != 0)*/)
-    {		
-        //maybe wrong when setStartState failed
-        FST_ERROR("clear fifo....");
-        arm_group_->clearPlannedPathFIFO(result); 
-    }
+    /*if ((traj_len != 0) [>|| (joints_len != 0)<])*/
+    //{		
+        ////maybe wrong when setStartState failed
+        //FST_ERROR("clear fifo....");
+       //// arm_group_->clearPlannedPathFIFO(result); 
+    /*}*/
 
     return result;
 }
@@ -1266,7 +1280,10 @@ U64 RobotMotion::checkManualJntVel(const motion_spec_TeachPose *tech_pose)
 {
     U64 result;    
     
-    JointValues *joints = (JointValues*)tech_pose->pose.coordinates;
+    if (getServoWaitFlag())
+        return TPI_SUCCESS;
+
+    Joint *joints = (Joint*)tech_pose->pose.coordinates;
 
     printDbLine("manual joint values:", (double*)joints, MAX_JOINTS);    
 
@@ -1274,9 +1291,11 @@ U64 RobotMotion::checkManualJntVel(const motion_spec_TeachPose *tech_pose)
     if (result != TPI_SUCCESS)
         return result;
 
+    Joint start_joints = getStartJoint();
     boost::mutex::scoped_lock lock(mutex_);
     if (tech_pose->has_velocity) //must be step mode
     {
+        FST_INFO("cur run_mode_:%d", getRunningMode());
         if (run_mode_ != NORMAL_R)  //only normal mode can use this function
             return INVALID_ACTION_IN_LIMITED_STATE;
 
@@ -1287,7 +1306,7 @@ U64 RobotMotion::checkManualJntVel(const motion_spec_TeachPose *tech_pose)
         manu_req_.target.point.jnt_val = *joints;
         manu_req_.vel_max = tech_pose->velocity;
         manu_req_.ref_vmax = 0;
-    }
+    }//end if (tech_pose->has_velocity)
     else
     {
         if ((manu_req_.vel_max > 0) && (manu_req_.target.type == CART_M))
@@ -1301,8 +1320,8 @@ U64 RobotMotion::checkManualJntVel(const motion_spec_TeachPose *tech_pose)
         double interval_jnts[MAX_JOINTS];
         getRadDelta((double*)&manu_refer_joints_, (double*)joints, interval_jnts, MAX_JOINTS);   
         //printDbLine("manu_refer_joints_:", (double*)&manu_refer_joints_, 6);
-        //printDbLine("interval_jnts:", interval_jnts, 6);        
-        JointValues start_joints = arm_group_->getStartJoint().joints;  //get the start state
+        //printDbLine("interval_jnts:", interval_jnts, 6);   
+        
         if ((tech_pose->has_step) && (tech_pose->step == true))  //in step mode
         {
             if (manu_req_.target.is_step == false) 
@@ -1333,7 +1352,7 @@ U64 RobotMotion::checkManualJntVel(const motion_spec_TeachPose *tech_pose)
                     addTargetVal((double*)&manu_req_.target.point.jnt_val, (double*)interval_jnts, (double*)&manu_req_.ref_target.point.jnt_val);                
                     manu_req_.ref_vmax = calcuManualJointVel((double*)interval_jnts);
                 }
-            }
+            }//end else
         }//end if ((tech_pose->has_step) && (tech_pose->step == true))    
         else 
         {
@@ -1368,17 +1387,19 @@ U64 RobotMotion::checkManualJntVel(const motion_spec_TeachPose *tech_pose)
 U64 RobotMotion::checkManualPoseVel(const motion_spec_TeachPose *tech_pose)
 {
     U64 result;    
+    if (getServoWaitFlag())
+        return TPI_SUCCESS;
+
     static PoseEuler pre_pose = getCurPosition();
     PoseEuler *pose = (PoseEuler*)tech_pose->pose.coordinates;
 
     printDbLine("manual pose values:", (double*)pose, 6);  
     
-    PoseEuler start_pose =  arm_group_->transformPose2PoseEuler(arm_group_->getStartPose());
     result = checkManualStartState();
     if (result != TPI_SUCCESS)
         return result;
     
-
+    PoseEuler start_pose = getStartPose();
     boost::mutex::scoped_lock lock(mutex_);
     if (tech_pose->has_velocity) //must be step mode
     {
@@ -1388,7 +1409,7 @@ U64 RobotMotion::checkManualPoseVel(const motion_spec_TeachPose *tech_pose)
         tmp_pose.position.x= pose->position.x * 1000;
         tmp_pose.position.y= pose->position.y * 1000;
         tmp_pose.position.z= pose->position.z * 1000;
-        JointValues tmp_joints;
+        Joint tmp_joints;
         result = getJointFromPose(tmp_pose, tmp_joints);
         if (result != TPI_SUCCESS)
             return result;
@@ -1399,10 +1420,10 @@ U64 RobotMotion::checkManualPoseVel(const motion_spec_TeachPose *tech_pose)
         manu_req_.ref_vmax = 0;
         manu_refer_pose_ = tmp_pose;
         manu_refer_joints_ = tmp_joints;
-        printDbLine("pose:",(double*)&tmp_pose, 6);
-        printDbLine("joints:",(double*)&tmp_joints, 6);
+        //printDbLine("pose:",(double*)&tmp_pose, 6);
+      //  printDbLine("joints:",(double*)&tmp_joints, 6);
         return TPI_SUCCESS;
-    }
+    }//end if (tech_pose->has_velocity)
     if ((manu_req_.vel_max > 0) && (manu_req_.target.type == JOINT_M))
     {
         //====set manu_refer_joints_ and manu_refer_pose_ again======      
@@ -1416,8 +1437,8 @@ U64 RobotMotion::checkManualPoseVel(const motion_spec_TeachPose *tech_pose)
     getLineDelta((double*)&manu_refer_pose_, (double*)pose, interval_pose, 3);
     getRadDelta((double*)&manu_refer_pose_.orientation, (double*)&pose->orientation,\
             &interval_pose[3], 3);
-    printDbLine("manu_refer_pose_:", (double*)&manu_refer_pose_, 6);
-    printDbLine("interval_pose:", interval_pose, 6);
+    //printDbLine("manu_refer_pose_:", (double*)&manu_refer_pose_, 6);
+    //printDbLine("interval_pose:", interval_pose, 6);
 
     if ((tech_pose->has_step) && (tech_pose->step == true))  //in step mode
     {
@@ -1436,7 +1457,7 @@ U64 RobotMotion::checkManualPoseVel(const motion_spec_TeachPose *tech_pose)
                 manu_req_.vel_max = calcuManualLineVel((double*)interval_pose);
                // FST_INFO("max vel is:%f", manu_req_.vel_max);                
             }
-        }
+        }//end if if (manu_req_.target.is_step == false)
         else
         {
             manu_req_.ref_target.is_step = true;
@@ -1450,8 +1471,8 @@ U64 RobotMotion::checkManualPoseVel(const motion_spec_TeachPose *tech_pose)
                 manu_req_.ref_target.type = CART_M;
                 manu_req_.ref_vmax = calcuManualLineVel((double*)interval_pose);
             }
-        }
-    }
+        }//end else
+    }//end if ((tech_pose->has_step) && (tech_pose->step == true))
     else
     {
         if (manu_req_.vel_max > 0)  //use manu_refer_joints_ instead of start state
@@ -1473,8 +1494,8 @@ U64 RobotMotion::checkManualPoseVel(const motion_spec_TeachPose *tech_pose)
             manu_req_.ref_target.type = CART_M;
             addTargetVal((double*)&manu_req_.target.point.pose_val, (double*)interval_pose, (double*)&manu_req_.ref_target.point.pose_val);
             manu_req_.ref_vmax = manu_req_.vel_max;
-        }
-    }
+        }//end else
+    }//end else
 
     //====set manu_refer_joints_ and manu_refer_pose_ again======
     manu_refer_pose_ = *pose;
@@ -1500,7 +1521,7 @@ void RobotMotion::zeroManualReqVel()
  *
  * @return true if they are the same
  */
-bool RobotMotion::compareJoints(JointValues src_joints, JointValues dst_joints)
+bool RobotMotion::compareJoints(Joint src_joints, Joint dst_joints)
 {
 	if (fabs(src_joints.j1 - dst_joints.j1) > MIN_ACCURATE_VALUE) return false;
 	if (fabs(src_joints.j2 - dst_joints.j2) > MIN_ACCURATE_VALUE) return false;
@@ -1512,24 +1533,22 @@ bool RobotMotion::compareJoints(JointValues src_joints, JointValues dst_joints)
 	return true;
 }	
 
-
-
-U64 RobotMotion::getPoseFromJoint(const JointValues &joints, PoseEuler &pose)
+U64 RobotMotion::getPoseFromJoint(const Joint &joints, PoseEuler &pose)
 {
     U64 result;
     Pose p;
-    if (arm_group_->computeFK(joints, p, result))        
+    if (arm_group_->getPoseFromJoint(joints, p, result))        
         pose = arm_group_->transformPose2PoseEuler(p);
 
     return result;
 }
 
-U64 RobotMotion::getJointFromPose(const PoseEuler &pose, JointValues &joints)
+U64 RobotMotion::getJointFromPose(const PoseEuler &pose, Joint &joints, double time_val)
 {
     U64 result;
     Pose p = arm_group_->transformPoseEuler2Pose(pose);
     
-    arm_group_->computeIK(p, joints, result);
+    arm_group_->getJointFromPose(p, joints, time_val, result);
     //printDbLine("new is:", (double*)&joints, 6);
     if (result != TPI_SUCCESS)
     {
@@ -1542,12 +1561,22 @@ U64 RobotMotion::getJointFromPose(const PoseEuler &pose, JointValues &joints)
         }
     }
 
-    //return TPI_SUCCESS;
+    return TPI_SUCCESS;
 }
 
-U64 RobotMotion::getUserFrame(motion_spec_userFrame *user_frame)
+motion_spec_userFrame RobotMotion::getUserFrame()
 {
-    return TPI_SUCCESS;
+    Transformation transform = arm_group_->getUserFrame();
+    motion_spec_userFrame user_frame;
+    user_frame.X = transform.position.x;
+    user_frame.Y = transform.position.y;
+    user_frame.Z = transform.position.z;
+    
+    user_frame.A = transform.orientation.a;
+    user_frame.B = transform.orientation.b;
+    user_frame.C = transform.orientation.c;
+
+    return user_frame;
 }
 
 U64 RobotMotion::setUserFrame(motion_spec_userFrame *user_frame)
@@ -1566,9 +1595,19 @@ U64 RobotMotion::setUserFrame(motion_spec_userFrame *user_frame)
     return TPI_SUCCESS;
 }
 
-U64 RobotMotion::getToolFrame(motion_spec_toolFrame *tool_frame)
+motion_spec_toolFrame RobotMotion::getToolFrame()
 {
-    return TPI_SUCCESS;
+    Transformation transform = arm_group_->getToolFrame();
+    motion_spec_toolFrame too_frame;
+    too_frame.X = transform.position.x;
+    too_frame.Y = transform.position.y;
+    too_frame.Z = transform.position.z;
+    
+    too_frame.A = transform.orientation.a;
+    too_frame.B = transform.orientation.b;
+    too_frame.C = transform.orientation.c;
+
+    return too_frame;
 }
 
 U64 RobotMotion::setToolFrame(motion_spec_toolFrame *tool_frame)
@@ -1588,82 +1627,84 @@ U64 RobotMotion::setToolFrame(motion_spec_toolFrame *tool_frame)
 }
 
 
-U64 RobotMotion::getJointConstraint(motion_spec_JointConstraint *jnt_constraint)
+motion_spec_JointConstraint RobotMotion::getSoftConstraint()
 {
-    JointConstraints jc;
-    jnt_constraint->jnt_lmt_count = MAX_JOINTS;
+    JointConstraint jc = arm_group_->getSoftConstraint();
+    //FST_INFO("J1=>maxv:%f, maxa:%f", jc.j1.max_omega, jc.j1.max_alpha);
+    motion_spec_JointConstraint jnt_constraint;
+    jnt_constraint.jnt_lmt_count = MAX_JOINTS;
 
-    jnt_constraint->jnt_lmt[0].has_zero = true;
-    jnt_constraint->jnt_lmt[0].zero = jc.j1.home;
-    jnt_constraint->jnt_lmt[0].has_upper = true;
-    jnt_constraint->jnt_lmt[0].upper = jc.j1.upper;
-    jnt_constraint->jnt_lmt[0].has_lower = true;
-    jnt_constraint->jnt_lmt[0].lower = jc.j1.lower;
-    jnt_constraint->jnt_lmt[0].has_max_omega = true;
-    jnt_constraint->jnt_lmt[0].max_omega = jc.j1.max_omega;
-    jnt_constraint->jnt_lmt[0].has_max_alpha = true;
-    jnt_constraint->jnt_lmt[0].max_alpha = jc.j1.max_alpha;
+    jnt_constraint.jnt_lmt[0].has_zero = true;
+    jnt_constraint.jnt_lmt[0].zero = jc.j1.home;
+    jnt_constraint.jnt_lmt[0].has_upper = true;
+    jnt_constraint.jnt_lmt[0].upper = jc.j1.upper;
+    jnt_constraint.jnt_lmt[0].has_lower = true;
+    jnt_constraint.jnt_lmt[0].lower = jc.j1.lower;
+    jnt_constraint.jnt_lmt[0].has_max_omega = true;
+    jnt_constraint.jnt_lmt[0].max_omega = jc.j1.max_omega;
+    jnt_constraint.jnt_lmt[0].has_max_alpha = true;
+    jnt_constraint.jnt_lmt[0].max_alpha = jc.j1.max_alpha;
 
-    jnt_constraint->jnt_lmt[1].has_zero = true;
-    jnt_constraint->jnt_lmt[1].zero = jc.j2.home;
-    jnt_constraint->jnt_lmt[1].has_upper = true;
-    jnt_constraint->jnt_lmt[1].upper = jc.j2.upper;
-    jnt_constraint->jnt_lmt[1].has_lower = true;
-    jnt_constraint->jnt_lmt[1].lower = jc.j2.lower;
-    jnt_constraint->jnt_lmt[1].has_max_omega = true;
-    jnt_constraint->jnt_lmt[1].max_omega = jc.j2.max_omega;
-    jnt_constraint->jnt_lmt[1].has_max_alpha = true;
-    jnt_constraint->jnt_lmt[1].max_alpha = jc.j2.max_alpha;
+    jnt_constraint.jnt_lmt[1].has_zero = true;
+    jnt_constraint.jnt_lmt[1].zero = jc.j2.home;
+    jnt_constraint.jnt_lmt[1].has_upper = true;
+    jnt_constraint.jnt_lmt[1].upper = jc.j2.upper;
+    jnt_constraint.jnt_lmt[1].has_lower = true;
+    jnt_constraint.jnt_lmt[1].lower = jc.j2.lower;
+    jnt_constraint.jnt_lmt[1].has_max_omega = true;
+    jnt_constraint.jnt_lmt[1].max_omega = jc.j2.max_omega;
+    jnt_constraint.jnt_lmt[1].has_max_alpha = true;
+    jnt_constraint.jnt_lmt[1].max_alpha = jc.j2.max_alpha;
 
-    jnt_constraint->jnt_lmt[2].has_zero = true;
-    jnt_constraint->jnt_lmt[2].zero = jc.j3.home;
-    jnt_constraint->jnt_lmt[2].has_upper = true;
-    jnt_constraint->jnt_lmt[2].upper = jc.j3.upper;
-    jnt_constraint->jnt_lmt[2].has_lower = true;
-    jnt_constraint->jnt_lmt[2].lower = jc.j3.lower;
-    jnt_constraint->jnt_lmt[2].has_max_omega = true;
-    jnt_constraint->jnt_lmt[2].max_omega = jc.j3.max_omega;
-    jnt_constraint->jnt_lmt[2].has_max_alpha = true;
-    jnt_constraint->jnt_lmt[2].max_alpha = jc.j3.max_alpha;
+    jnt_constraint.jnt_lmt[2].has_zero = true;
+    jnt_constraint.jnt_lmt[2].zero = jc.j3.home;
+    jnt_constraint.jnt_lmt[2].has_upper = true;
+    jnt_constraint.jnt_lmt[2].upper = jc.j3.upper;
+    jnt_constraint.jnt_lmt[2].has_lower = true;
+    jnt_constraint.jnt_lmt[2].lower = jc.j3.lower;
+    jnt_constraint.jnt_lmt[2].has_max_omega = true;
+    jnt_constraint.jnt_lmt[2].max_omega = jc.j3.max_omega;
+    jnt_constraint.jnt_lmt[2].has_max_alpha = true;
+    jnt_constraint.jnt_lmt[2].max_alpha = jc.j3.max_alpha;
 
-    jnt_constraint->jnt_lmt[3].has_zero = true;
-    jnt_constraint->jnt_lmt[3].zero = jc.j4.home;
-    jnt_constraint->jnt_lmt[3].has_upper = true;
-    jnt_constraint->jnt_lmt[3].upper = jc.j4.upper;
-    jnt_constraint->jnt_lmt[3].has_lower = true;
-    jnt_constraint->jnt_lmt[3].lower = jc.j4.lower;
-    jnt_constraint->jnt_lmt[3].has_max_omega = true;
-    jnt_constraint->jnt_lmt[3].max_omega = jc.j4.max_omega;
-    jnt_constraint->jnt_lmt[3].has_max_alpha = true;
-    jnt_constraint->jnt_lmt[3].max_alpha = jc.j4.max_alpha;
+    jnt_constraint.jnt_lmt[3].has_zero = true;
+    jnt_constraint.jnt_lmt[3].zero = jc.j4.home;
+    jnt_constraint.jnt_lmt[3].has_upper = true;
+    jnt_constraint.jnt_lmt[3].upper = jc.j4.upper;
+    jnt_constraint.jnt_lmt[3].has_lower = true;
+    jnt_constraint.jnt_lmt[3].lower = jc.j4.lower;
+    jnt_constraint.jnt_lmt[3].has_max_omega = true;
+    jnt_constraint.jnt_lmt[3].max_omega = jc.j4.max_omega;
+    jnt_constraint.jnt_lmt[3].has_max_alpha = true;
+    jnt_constraint.jnt_lmt[3].max_alpha = jc.j4.max_alpha;
 
-    jnt_constraint->jnt_lmt[4].has_zero = true;
-    jnt_constraint->jnt_lmt[4].zero = jc.j5.home;
-    jnt_constraint->jnt_lmt[4].has_upper = true;
-    jnt_constraint->jnt_lmt[4].upper = jc.j5.upper;
-    jnt_constraint->jnt_lmt[4].has_lower = true;
-    jnt_constraint->jnt_lmt[4].lower = jc.j5.lower;
-    jnt_constraint->jnt_lmt[4].has_max_omega = true;
-    jnt_constraint->jnt_lmt[4].max_omega = jc.j5.max_omega;
-    jnt_constraint->jnt_lmt[4].has_max_alpha = true;
-    jnt_constraint->jnt_lmt[4].max_alpha = jc.j5.max_alpha;
+    jnt_constraint.jnt_lmt[4].has_zero = true;
+    jnt_constraint.jnt_lmt[4].zero = jc.j5.home;
+    jnt_constraint.jnt_lmt[4].has_upper = true;
+    jnt_constraint.jnt_lmt[4].upper = jc.j5.upper;
+    jnt_constraint.jnt_lmt[4].has_lower = true;
+    jnt_constraint.jnt_lmt[4].lower = jc.j5.lower;
+    jnt_constraint.jnt_lmt[4].has_max_omega = true;
+    jnt_constraint.jnt_lmt[4].max_omega = jc.j5.max_omega;
+    jnt_constraint.jnt_lmt[4].has_max_alpha = true;
+    jnt_constraint.jnt_lmt[4].max_alpha = jc.j5.max_alpha;
 
-    jnt_constraint->jnt_lmt[5].has_zero = true;
-    jnt_constraint->jnt_lmt[5].zero = jc.j6.home;
-    jnt_constraint->jnt_lmt[5].has_upper = true;
-    jnt_constraint->jnt_lmt[5].upper = jc.j6.upper;
-    jnt_constraint->jnt_lmt[5].has_lower = true;
-    jnt_constraint->jnt_lmt[5].lower = jc.j6.lower;
-    jnt_constraint->jnt_lmt[5].has_max_omega = true;
-    jnt_constraint->jnt_lmt[5].max_omega = jc.j6.max_omega;
-    jnt_constraint->jnt_lmt[5].has_max_alpha = true;
-    jnt_constraint->jnt_lmt[5].max_alpha = jc.j6.max_alpha;
+    jnt_constraint.jnt_lmt[5].has_zero = true;
+    jnt_constraint.jnt_lmt[5].zero = jc.j6.home;
+    jnt_constraint.jnt_lmt[5].has_upper = true;
+    jnt_constraint.jnt_lmt[5].upper = jc.j6.upper;
+    jnt_constraint.jnt_lmt[5].has_lower = true;
+    jnt_constraint.jnt_lmt[5].lower = jc.j6.lower;
+    jnt_constraint.jnt_lmt[5].has_max_omega = true;
+    jnt_constraint.jnt_lmt[5].max_omega = jc.j6.max_omega;
+    jnt_constraint.jnt_lmt[5].has_max_alpha = true;
+    jnt_constraint.jnt_lmt[5].max_alpha = jc.j6.max_alpha;
 
-    return TPI_SUCCESS;
+    return jnt_constraint;
 }
-U64 RobotMotion::setJointConstraint(motion_spec_JointConstraint *jnt_constraint)
+U64 RobotMotion::setSoftConstraint(motion_spec_JointConstraint *jnt_constraint)
 {
-    JointConstraints jc;
+    JointConstraint jc = arm_group_->getSoftConstraint();
     if (jnt_constraint->jnt_lmt_count < 6)
         return INVALID_PARAM_FROM_TP;
 
@@ -1733,45 +1774,145 @@ U64 RobotMotion::setJointConstraint(motion_spec_JointConstraint *jnt_constraint)
     if (jnt_constraint->jnt_lmt[5].has_max_alpha)
         jc.j6.max_alpha = jnt_constraint->jnt_lmt[5].max_alpha;
 
+    if (arm_group_->setSoftConstraint(jc) == false)
+        return INVALID_PARAM_FROM_TP; 
+
     return TPI_SUCCESS;
 }
 
-U64 RobotMotion::getDHGroup(motion_spec_DHGroup *dh_group)
+motion_spec_JointConstraint RobotMotion::getHardConstraint()
 {
-    DHGroup dh;
-    dh_group->coord_offset_count = 6;
-    dh_group->coord_offset[0].alpha = dh.j1.alpha;
-    dh_group->coord_offset[0].a = dh.j1.a;
-    dh_group->coord_offset[0].d = dh.j1.d;
-    dh_group->coord_offset[0].theta = dh.j1.theta;
+    JointConstraint jc = arm_group_->getHardConstraint();
+    motion_spec_JointConstraint jnt_constraint;
+    jnt_constraint.jnt_lmt_count = MAX_JOINTS;
 
-    dh_group->coord_offset[1].alpha = dh.j2.alpha;
-    dh_group->coord_offset[1].a = dh.j2.a;
-    dh_group->coord_offset[1].d = dh.j2.d;
-    dh_group->coord_offset[1].theta = dh.j2.theta;
+    jnt_constraint.jnt_lmt[0].has_upper = true;
+    jnt_constraint.jnt_lmt[0].upper = jc.j1.upper;
+    jnt_constraint.jnt_lmt[0].has_lower = true;
+    jnt_constraint.jnt_lmt[0].lower = jc.j1.lower;
 
-    dh_group->coord_offset[2].alpha = dh.j3.alpha;
-    dh_group->coord_offset[2].a = dh.j3.a;
-    dh_group->coord_offset[2].d = dh.j3.d;
-    dh_group->coord_offset[2].theta = dh.j3.theta;
+    jnt_constraint.jnt_lmt[1].has_upper = true;
+    jnt_constraint.jnt_lmt[1].upper = jc.j2.upper;
+    jnt_constraint.jnt_lmt[1].has_lower = true;
+    jnt_constraint.jnt_lmt[1].lower = jc.j2.lower;
 
-    dh_group->coord_offset[3].alpha = dh.j4.alpha;
-    dh_group->coord_offset[3].a = dh.j4.a;
-    dh_group->coord_offset[3].d = dh.j4.d;
-    dh_group->coord_offset[3].theta = dh.j4.theta;
-    
-    dh_group->coord_offset[4].alpha = dh.j5.alpha;
-    dh_group->coord_offset[4].a = dh.j5.a;
-    dh_group->coord_offset[4].d = dh.j5.d;
-    dh_group->coord_offset[4].theta = dh.j5.theta;
+    jnt_constraint.jnt_lmt[2].has_upper = true;
+    jnt_constraint.jnt_lmt[2].upper = jc.j3.upper;
+    jnt_constraint.jnt_lmt[2].has_lower = true;
+    jnt_constraint.jnt_lmt[2].lower = jc.j3.lower;
 
-    dh_group->coord_offset[5].alpha = dh.j6.alpha;
-    dh_group->coord_offset[5].a = dh.j6.a;
-    dh_group->coord_offset[5].d = dh.j6.d;
-    dh_group->coord_offset[5].theta = dh.j6.theta;
+    jnt_constraint.jnt_lmt[3].has_upper = true;
+    jnt_constraint.jnt_lmt[3].upper = jc.j4.upper;
+    jnt_constraint.jnt_lmt[3].has_lower = true;
+    jnt_constraint.jnt_lmt[3].lower = jc.j4.lower;
+
+    jnt_constraint.jnt_lmt[4].has_upper = true;
+    jnt_constraint.jnt_lmt[4].upper = jc.j5.upper;
+    jnt_constraint.jnt_lmt[4].has_lower = true;
+    jnt_constraint.jnt_lmt[4].lower = jc.j5.lower;
+
+    jnt_constraint.jnt_lmt[5].has_upper = true;
+    jnt_constraint.jnt_lmt[5].upper = jc.j6.upper;
+    jnt_constraint.jnt_lmt[5].has_lower = true;
+    jnt_constraint.jnt_lmt[5].lower = jc.j6.lower;
+
+    return jnt_constraint;
+}
+
+
+/**
+ * @brief : right now this function isn't used 
+ *
+ * @param jnt_constraint
+ *
+ * @return 
+ */
+U64 RobotMotion::setHardConstraint(motion_spec_JointConstraint *jnt_constraint)
+{
+    JointConstraint jc;
+    if (jnt_constraint->jnt_lmt_count < 6)
+        return INVALID_PARAM_FROM_TP;
+
+    if (jnt_constraint->jnt_lmt[0].has_upper)
+        jc.j1.upper = jnt_constraint->jnt_lmt[0].upper;
+    if (jnt_constraint->jnt_lmt[0].has_lower)
+        jc.j1.lower = jnt_constraint->jnt_lmt[0].lower;
+
+    if (jnt_constraint->jnt_lmt[1].has_upper)
+        jc.j2.upper = jnt_constraint->jnt_lmt[1].upper;
+    if (jnt_constraint->jnt_lmt[1].has_lower)
+        jc.j2.lower = jnt_constraint->jnt_lmt[1].lower;
+
+    if (jnt_constraint->jnt_lmt[2].has_upper)
+        jc.j3.upper = jnt_constraint->jnt_lmt[2].upper;
+    if (jnt_constraint->jnt_lmt[2].has_lower)
+        jc.j3.lower = jnt_constraint->jnt_lmt[2].lower;
+
+    if (jnt_constraint->jnt_lmt[3].has_upper)
+        jc.j4.upper = jnt_constraint->jnt_lmt[3].upper;
+    if (jnt_constraint->jnt_lmt[3].has_lower)
+        jc.j4.lower = jnt_constraint->jnt_lmt[3].lower;
+
+    if (jnt_constraint->jnt_lmt[4].has_upper)
+        jc.j5.upper = jnt_constraint->jnt_lmt[4].upper;
+    if (jnt_constraint->jnt_lmt[4].has_lower)
+        jc.j5.lower = jnt_constraint->jnt_lmt[4].lower;
+
+    if (jnt_constraint->jnt_lmt[5].has_upper)
+        jc.j6.upper = jnt_constraint->jnt_lmt[5].upper;
+    if (jnt_constraint->jnt_lmt[5].has_lower)
+        jc.j6.lower = jnt_constraint->jnt_lmt[5].lower;
 
     return TPI_SUCCESS;
 }
+
+
+motion_spec_DHGroup RobotMotion::getDHGroup()
+{
+    DHGroup dh = arm_group_->getDH();
+    motion_spec_DHGroup dh_group;
+    dh_group.coord_offset_count = 6;
+    dh_group.coord_offset[0].alpha = dh.j1.alpha;
+    dh_group.coord_offset[0].a = dh.j1.a;
+    dh_group.coord_offset[0].d = dh.j1.d;
+    dh_group.coord_offset[0].theta = dh.j1.theta;
+
+    dh_group.coord_offset[1].alpha = dh.j2.alpha;
+    dh_group.coord_offset[1].a = dh.j2.a;
+    dh_group.coord_offset[1].d = dh.j2.d;
+    dh_group.coord_offset[1].theta = dh.j2.theta;
+
+    dh_group.coord_offset[2].alpha = dh.j3.alpha;
+    dh_group.coord_offset[2].a = dh.j3.a;
+    dh_group.coord_offset[2].d = dh.j3.d;
+    dh_group.coord_offset[2].theta = dh.j3.theta;
+
+    dh_group.coord_offset[3].alpha = dh.j4.alpha;
+    dh_group.coord_offset[3].a = dh.j4.a;
+    dh_group.coord_offset[3].d = dh.j4.d;
+    dh_group.coord_offset[3].theta = dh.j4.theta;
+    
+    dh_group.coord_offset[4].alpha = dh.j5.alpha;
+    dh_group.coord_offset[4].a = dh.j5.a;
+    dh_group.coord_offset[4].d = dh.j5.d;
+    dh_group.coord_offset[4].theta = dh.j5.theta;
+
+    dh_group.coord_offset[5].alpha = dh.j6.alpha;
+    dh_group.coord_offset[5].a = dh.j6.a;
+    dh_group.coord_offset[5].d = dh.j6.d;
+    dh_group.coord_offset[5].theta = dh.j6.theta;
+
+    return dh_group;
+}
+
+
+/**
+ * @brief : right now this function isn't used 
+ *
+ * @param dh_group
+ *
+ * @return 
+ */
 U64 RobotMotion::setDHGroup(motion_spec_DHGroup *dh_group)
 {
     DHGroup dh;
@@ -1808,42 +1949,133 @@ U64 RobotMotion::setDHGroup(motion_spec_DHGroup *dh_group)
     return TPI_SUCCESS;
 }
 
-U64 RobotMotion::getHWLimit(double *hw_limit)
-{
-   return TPI_SUCCESS; 
-}
 
-U64 RobotMotion::setHWLimit(double *hw_limit)
-{
-    return TPI_SUCCESS;
-}
 
 double RobotMotion::getGlobalVelocity()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return vel_factor_;
 }
 U64 RobotMotion::setGlobalVelocity(double factor)
 {
-    if ((factor <= 0) || (factor > 100))
+    /*if ((factor <= 0) || (factor > 100))*/
+        //return INVALID_PARAM_FROM_TP;
+
+    //boost::mutex::scoped_lock lock(mutex_);
+    //vel_factor_ = factor;
+
+    /*return TPI_SUCCESS;*/
+    if (arm_group_->setVelocityScalingFactor(factor) == false)
+    {
         return INVALID_PARAM_FROM_TP;
-
-    boost::mutex::scoped_lock lock(mutex_);
+    }
+    
     vel_factor_ = factor;
-
     return TPI_SUCCESS;
 }
 
 
-U64 setTempZero()
+U64 RobotMotion::setTempZero()
 {
-    return TPI_SUCCESS;
+    U64 result;
+    if(arm_group_->setTempZeroOffset(result))
+    {
+        setRunningMode(CALIBRATE_R);
+        setProgramStateCmd(GOTO_IDLE_E);
+    }
+    return result;
+}
+
+
+void RobotMotion::processNonMove()
+{
+    
+    while(1)
+    {        
+        switch (getNMPrgmState())
+        {
+            case IDLE_R: //this thread should exit
+                if (getLogicMode() != AUTO_RUN_M)
+                    break;
+                if (!non_move_instructions_.empty())
+                {
+                    setNMPrgmState(EXECUTE_R);
+                }
+                break; 
+            case PAUSED_R:
+                if (non_move_instructions_.empty()) 
+                {
+                    setNMPrgmState(IDLE_R);
+                    break;
+                }
+                if (non_move_instructions_.front().commandtype != motion_spec_MOTIONTYPE_WAIT)
+                {
+                    setNMPrgmState(EXECUTE_R);
+                }
+                break;
+            case EXECUTE_R:
+                if (non_move_instructions_.empty())
+                {
+                    setNMPrgmState(IDLE_R);
+                    FST_INFO("non move changed IDLE_R");
+                    break;
+                }
+               // if (!non_move_instructions_.empty())
+                {                    
+                    
+                    ThreadSafeList<CommandInstruction>::iterator it;
+                    for (it = non_move_instructions_.begin(); it != non_move_instructions_.end(); it++)
+                    {
+                        if (it->commandtype == motion_spec_MOTIONTYPE_WAIT)
+                        {
+                            if (it->count-- > 0)  //continue state machine
+                                break;
+                            it->pick_status = PICKED;
+                            setServoWaitFlag(false);
+                        }
+                        else if (it->commandtype == motion_spec_MOTIONTYPE_SET)
+                        {
+                            motion_spec_Set *set = (motion_spec_Set*)it->command_arguments.c_str();                            
+                            io_interface_->setDO(set->path,  set->value);
+                            it->pick_status = USING;
+                            if (it->count-- <= 0)
+                            {
+                                int new_val = !set->value;
+                                io_interface_->setDO(set->path, new_val);
+                                it->pick_status = PICKED;
+                            }
+                        }
+                    }//end for (it = rob_motion
+                }//end if (!non_move_instructions_.empty())
+                //////////////////////////////////////////////////////////////////////
+                //delete all the used instructions
+                //////////////////////////////////////////////////////////////////////
+                while(!non_move_instructions_.empty())
+                {
+                    if (non_move_instructions_.front().pick_status == PICKED)
+                    {
+                        non_move_instructions_.pop_front();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                break;
+            //case EXECUTE_TO_PAUSE_T:          
+            //    break;
+            //case PAUSE_TO_IDLE_T:
+            //    break;
+            default:
+                break;
+        }
+        usleep(NON_MOVE_INTERVAL*1000); //sleep 10ms
+    }
 }
 
 /**
  * @brief: convert unit from params of TP to controller
  *
- * @param src_moveL: input==>st\ruct  covert from
+ * @param src_moveL: input==>struct  covert from
  * @param dst_pose: output==>struct covert to
  * @param dst_movel_param: output==> struct covert to
  */
@@ -1870,7 +2102,7 @@ void RobotMotion::unitConvert(const motion_spec_MoveL *src_moveL, PoseEuler& dst
  * @param dst_pose: output==>struct covert to
  * @param dst_movel_param: output==>struct covert to
  */
-void RobotMotion::unitConvert(const motion_spec_MoveJ *src_moveJ, JointValues &dst_joints, MoveJParam &dst_movej_param)
+void RobotMotion::unitConvert(const motion_spec_MoveJ *src_moveJ, Joint &dst_joints, MoveJParam &dst_movej_param)
 {
 	dst_joints.j1 = src_moveJ->targetJointCoordinates[0];
 	dst_joints.j2 = src_moveJ->targetJointCoordinates[1];
@@ -1906,39 +2138,45 @@ void RobotMotion::unitConvert(const motion_spec_MoveC *moveC, PoseEuler& pose1, 
     moveC_param.smooth = moveC->smoothPercent;
 }
 
-/**
- * @brief get max value from a buffer
- *
- * @param buffer: input
- * @param length: input
- *
- * @return :the max value
- */
-/*double RobotMotion::getMaxValue(const double *buffer, int length, int &id)*/
-//{
-	//double cmp1, cmp2;
+void RobotMotion::setPrevTarget(PointType type, PointVal point)
+{
+    boost::mutex::scoped_lock lock(mutex_);
+    pre_target_.type = type;
+    pre_target_.point = point;
+}
 
-	//double max = 0;
+Joint RobotMotion::getStartJoint()
+{
+    Joint start_joints;
+    boost::mutex::scoped_lock lock(mutex_);
+    if (pre_target_.type == JOINT_M)    
+    {
+        start_joints = pre_target_.point.jnt_val;  //get the start joints
+    }
+    else
+    {
+        getJointFromPose(pre_target_.point.pose_val, start_joints);
+    }
+    return start_joints;
+}
 
-	//for (int i = 0; i < length; i++)
-	//{
-		//cmp1 = max;
-		//cmp2 = fabs(buffer[i]);
+PoseEuler RobotMotion::getStartPose()
+{
+    PoseEuler start_pose; 
+    boost::mutex::scoped_lock lock(mutex_);
+    if (pre_target_.type == JOINT_M)    
+    {
+        getPoseFromJoint(pre_target_.point.jnt_val, start_pose);
+    }
+    else
+    {
+        start_pose = pre_target_.point.pose_val;
+    } 
 
-		//if (cmp1 <= cmp2)
-        //{
-            //id = i;
-            //max = cmp2;
-        //}
-        //else
-        //{
-            //max = cmp1;
-        //}
-    //}
+    return start_pose;
+}
 
-	
-	//return max;
-/*}*/
+
 double RobotMotion::getMaxValue(const double *buffer, int length)
 {
 	double cmp1, cmp2;
@@ -2027,7 +2265,6 @@ double RobotMotion::getMaxRotateInterval(PoseEuler pre_pose, PoseEuler cur_pose)
 }
 
 
-
 /**
  * @brief: convert unit from params of TP to controller
  *
@@ -2066,14 +2303,15 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst)
         {                
             motion_spec_MoveJ* moveJ =  (motion_spec_MoveJ*)target_inst.command_arguments.c_str();
             moveJ->smoothPercent = target_inst.smoothDistance; //first rewrite this value
-            JointValues target_jnts;
+            Joint target_jnts;
             MoveJParam movej_param;
             unitConvert(moveJ, target_jnts, movej_param);
             FST_INFO("target joints:%f,%f,%f,%f,%f,%f", target_jnts.j1, target_jnts.j2, target_jnts.j3, target_jnts.j4, target_jnts.j5, target_jnts.j6);                
+            
             if (target_inst.smoothDistance >= 0)
             {
-                JointValues start_jnts = arm_group_->getStartJoint().joints;  //get the start state
-                JointValues new_target;
+                Joint start_jnts = getStartJoint();
+                Joint new_target;
                 new_target.j1 = (start_jnts.j1 + target_jnts.j1) / 2;
                 new_target.j2 = (start_jnts.j2 + target_jnts.j2) / 2;
                 new_target.j3 = (start_jnts.j3 + target_jnts.j3) / 2;
@@ -2085,23 +2323,29 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst)
                         MAX_CNT_VAL, target_jnts, movej_param.vel_max, movej_param.acc_max,\
                         MAX_CNT_VAL, target_inst.id, result);
 
-                setServoWaitFlag(false);
+                //setServoWaitFlag(false);
             }//end if (target_inst.smoothDistance >= 0)
             else
             {
                 arm_group_->MoveJ(target_jnts, movej_param.vel_max, \
                             movej_param.acc_max, target_inst.id, result);
+                target_inst.smoothDistance = -1;
                 setServoWaitFlag(true);
 
             }//end else
+            //==========set previous target=============
+            PointVal point;
+            point.jnt_val = target_jnts;
+            setPrevTarget(JOINT_M, point);
+            ////////////////////////////////////////// 
             break;
-        }
+        }//end case motion_spec_MOTIONTYPE_JOINTMOTION:
         case motion_spec_MOTIONTYPE_CARTMOTION:
         {
             motion_spec_MoveL* moveL = (motion_spec_MoveL*)target_inst.command_arguments.c_str();
             moveL->waypoints[0].smoothPercent = target_inst.smoothDistance; //first rewrite this value
-            PoseEuler start_pose =  arm_group_->transformPose2PoseEuler(arm_group_->getStartPose());
-            printDbLine("start_pose:", (double*)&start_pose, 6);
+            PoseEuler start_pose = getStartPose();
+            //printDbLine("start_pose:", (double*)&start_pose, 6);
             PoseEuler target_pose;
             MoveLParam movel_param;
             unitConvert(moveL, target_pose, movel_param);
@@ -2128,16 +2372,22 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst)
                         MAX_CNT_VAL, target_pose, movel_param.vel_max, movel_param.acc_max,\
                        MAX_CNT_VAL, target_inst.id, result);
 
-                setServoWaitFlag(false);
+               // setServoWaitFlag(false);
             }//end if (target_inst.smoothDistance >= 0)
             else
             {
                 arm_group_->MoveL(target_pose, movel_param.vel_max, \
                             movel_param.acc_max, target_inst.id, result);
+                target_inst.smoothDistance = -1;
                 setServoWaitFlag(true);
             }
+            //==========set previous target=============
+            PointVal point;
+            point.pose_val = target_pose;
+            setPrevTarget(CART_M, point);
+            ////////////////////////////////////////// 
             break;
-        }
+        }//end case motion_spec_MOTIONTYPE_CARTMOTION:
         case motion_spec_MOTIONTYPE_CIRCLEMOTION:
         {
             motion_spec_MoveC *moveC = (motion_spec_MoveC*)target_inst.command_arguments.c_str();
@@ -2148,8 +2398,14 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst)
             arm_group_->MoveC(target_pose1, target_pose2, target_param.vel_max, \
                             target_param.acc_max, target_inst.id, result);
             setServoWaitFlag(true);
+            target_inst.smoothDistance = -1;
+            //==========set previous target=============
+            PointVal point;
+            point.pose_val = target_pose2;
+            setPrevTarget(CART_M, point);
+            ////////////////////////////////////////// 
             break;
-        }
+        }//end case motion_spec_MOTIONTYPE_CIRCLEMOTION:
         default:
             break;
     }
@@ -2167,15 +2423,15 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst, CommandInstruc
         {                
             motion_spec_MoveJ* moveJ =  (motion_spec_MoveJ*)target_inst.command_arguments.c_str();
             moveJ->smoothPercent = target_inst.smoothDistance; //first rewrite this value
-            JointValues target_jnts;
+            Joint target_jnts;
             MoveJParam target_param;
             unitConvert(moveJ, target_jnts, target_param);
-            FST_INFO("target joints:%f,%f,%f,%f,%f,%f, smmoth:%f", target_jnts.j1, target_jnts.j2, target_jnts.j3, target_jnts.j4, target_jnts.j5, target_jnts.j6, target_inst.smoothDistance);     
+            FST_INFO("target joints:%f,%f,%f,%f,%f,%f, smmoth:%f", target_jnts.j1, target_jnts.j2, target_jnts.j3, target_jnts.j4, target_jnts.j5, target_jnts.j6, target_inst.smoothDistance);                 
             
             if (next_inst.commandtype == motion_spec_MOTIONTYPE_JOINTMOTION)
             {
                 motion_spec_MoveJ* moveJ_next =  (motion_spec_MoveJ*)next_inst.command_arguments.c_str();
-                JointValues next_jnts;
+                Joint next_jnts;
                 MoveJParam next_param;
                 unitConvert(moveJ_next, next_jnts, next_param);
 
@@ -2205,14 +2461,14 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst, CommandInstruc
                         next_param.acc_max, next_param.smooth, target_inst.id, result);
             }
 
-            setServoWaitFlag(false);
+            //setServoWaitFlag(false);
             break;
         }//end case motion_spec_MOTIONTYPE_JOINTMOTION:     
         case motion_spec_MOTIONTYPE_CARTMOTION:
         {
             motion_spec_MoveL* moveL = (motion_spec_MoveL*)target_inst.command_arguments.c_str();
             moveL->waypoints[0].blendInDistance = target_inst.smoothDistance; //first rewrite this value
-            PoseEuler start_pose =  arm_group_->transformPose2PoseEuler(arm_group_->getStartPose());
+            //PoseEuler start_pose = getStartPose();
             PoseEuler target_pose;
             MoveLParam target_param;
             unitConvert(moveL, target_pose, target_param);
@@ -2220,7 +2476,7 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst, CommandInstruc
             if (next_inst.commandtype == motion_spec_MOTIONTYPE_JOINTMOTION)
             {
                 motion_spec_MoveJ* moveJ_next =  (motion_spec_MoveJ*)next_inst.command_arguments.c_str();
-                JointValues next_jnts;
+                Joint next_jnts;
                 MoveJParam next_param;
                 unitConvert(moveJ_next, next_jnts, next_param);
 
@@ -2249,7 +2505,7 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst, CommandInstruc
                         target_param.smooth,next_pose1, next_pose2, next_param.vel_max, \
                         next_param.acc_max, next_param.smooth, target_inst.id, result);
             }
-            setServoWaitFlag(false);
+            //setServoWaitFlag(false);
             break;
         }//end case motion_spec_MOTIONTYPE_CARTMOTION:
         case motion_spec_MOTIONTYPE_CIRCLEMOTION:
@@ -2263,7 +2519,7 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst, CommandInstruc
             if (next_inst.commandtype == motion_spec_MOTIONTYPE_JOINTMOTION)
             {
                 motion_spec_MoveJ* moveJ_next =  (motion_spec_MoveJ*)next_inst.command_arguments.c_str();
-                JointValues next_jnts;
+                Joint next_jnts;
                 MoveJParam next_param;
                 unitConvert(moveJ_next, next_jnts, next_param);
                 arm_group_->MoveC(target_pose1, target_pose2, target_param.vel_max, \
@@ -2278,7 +2534,8 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst, CommandInstruc
                 unitConvert(moveL_next, next_pose, next_param);
                 arm_group_->MoveC(target_pose1, target_pose2, target_param.vel_max, \
                         target_param.acc_max, target_param.smooth, next_pose, next_param.vel_max,\
-                        next_param.acc_max, next_param.smooth, target_inst.id, result);           }  
+                        next_param.acc_max, next_param.smooth, target_inst.id, result);
+            }  
             else if (next_inst.commandtype == motion_spec_MOTIONTYPE_CIRCLEMOTION)
             {
                 motion_spec_MoveC *moveC_next = (motion_spec_MoveC*)next_inst.command_arguments.c_str();
@@ -2289,7 +2546,7 @@ U64 RobotMotion::moveInstructions(CommandInstruction target_inst, CommandInstruc
                         target_param.acc_max, target_param.smooth, next_pose1, next_pose2, \
                         next_param.vel_max, next_param.acc_max, next_param.smooth, target_inst.id, result);
             }
-            setServoWaitFlag(false);
+           // setServoWaitFlag(false);
             break;
         }//end case motion_spec_MOTIONTYPE_CIRCLEMOTION:
         default:
@@ -2318,85 +2575,50 @@ U64 RobotMotion::pickInstructions()
         return TPI_SUCCESS;
     }
 
-    CommandInstruction *target_instruction = pickMoveInstruction();
-    if (target_instruction == NULL)
+    CommandInstruction *target_instruction; 
+
+    target_instruction = pickMoveInstruction();
+    if (target_instruction == NULL) 
     {
         return TPI_SUCCESS;
     }
 
-    
+
     if (target_instruction->smoothDistance >= 0)
     {
-        CommandInstruction *next_instruction = pickNextMoveInstruction();
+        CommandInstruction *next_instruction = pickNextMoveInstruction(target_instruction);
         if (next_instruction) //find next_instruction
         {
-            result = moveInstructions(*target_instruction, *next_instruction);      
+            result = moveInstructions(*target_instruction, *next_instruction); 
         }
-        else
+        else 
         {
             //after moving to the middle still no next instruction
             //move as fine
-
-            //push front target_instruction to use it next time
             result = moveInstructions(*target_instruction);
-            if (result == TARGET_REPEATED)
-            {
-                result = TPI_SUCCESS;
-                instruction_list_.pop_front();
-                setPreviousCmdID(target_instruction->id);
-                setCurrentCmdID(-1);
-            }
         }
     }//end if (target_instruction->smoothDistance >= 0)
     else
     {
-        result = moveInstructions(*target_instruction);         
-        if (result == TARGET_REPEATED)
-        {
-            result = TPI_SUCCESS;
-            FST_INFO("8888888888");
-            if (isServoReady())  //it's the first one
-            {FST_INFO("ooooooooooooooo");
-                instruction_list_.pop_front();
-                setPreviousCmdID(target_instruction->id);
-                setCurrentCmdID(-1);
-
-            }
-            else 
-            {
-                if ((instruction_list_.size() == 1) //it's the last one
-                && isServoReady())
-                {
-                    instruction_list_.pop_front();
-                    setPreviousCmdID(target_instruction->id);
-                    setCurrentCmdID(-1);
-                }
-                else
-                {
-                    target_instruction->pick_status = FRESH; //not execute this instruction
-                }
-            }//end else            
-        }//end if (result == TARGET_REPEATED)            
-    }//end else    
+        result = moveInstructions(*target_instruction);     
+    }//end else
+    
     if (result != TPI_SUCCESS)
     {
-        target_instruction->pick_status = FRESH;
+        FST_ERROR("error move instruction:%d, %llx", target_instruction->id, result);
+        target_instruction->pick_status = FRESH;          
     }
 
-    //setInstruction(target_instruction);
-    //FST_INFO("pick result:%llx", result);
-
-	return result;
+    return result;
 }
 
 
 bool RobotMotion::isFifoEmpty()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-
     int traj_len = arm_group_->getPlannedPathFIFOLength();
-	int joints_len = arm_group_->getJointTrajectoryFIFOLength();
+	int joints_len = arm_group_->getTrajectoryFIFOLength();
 
+    //FST_INFO("the fifo size:%d, joints:%d", traj_len, joints_len);
     if ((traj_len == 0) && (joints_len == 0))
     {
         return true;
@@ -2421,46 +2643,91 @@ U64 RobotMotion::planFifo()
     return result;
 }
 
-
-void RobotMotion::popupInstruction()
+//pop until current id
+void RobotMotion::popupInstruction(int id)
 {
-    int id, cur_id;
+    int cur_id = id, next_id;
+    FST_INFO("pop until id:%d", id);
     while (!instruction_list_.empty())
     {
         CommandInstruction inst = instruction_list_.front();
-        id = inst.id;
-        //instruction_list_.pop_front();        
-        cur_id = getCurrentCmdID();
-        FST_INFO("poped instruction id:%d, cur_id:%d", id, cur_id);
-        if(id != cur_id)
-        {
-            FST_INFO("non move instructions...");
-            //this instruction should setio or other non move instruction
-            //===run this instruction===     
-            if ((inst.commandtype != motion_spec_MOTIONTYPE_JOINTMOTION) 
-            && (inst.commandtype != motion_spec_MOTIONTYPE_CARTMOTION)
-            && (inst.commandtype != motion_spec_MOTIONTYPE_CIRCLEMOTION))
-            {    
-                setPreviousCmdID(getCurrentCmdID());            
-                setCurrentCmdID(id);
-                addNonMoveInstruction(inst);
-                setPreviousCmdID(id);
-            }
+        next_id = inst.id;        
+        if(id != next_id)
+        {            
+
+            FST_INFO("1poped instruction id:%d", next_id);
             instruction_list_.pop_front();
+            cur_id = next_id;
         }
         else
         {
-            setCurrentCmdID(cur_id); //set id to the next move id
             break;
-        }        
-    }
+        }
+  
+    }//end while (!instruction_list_.empty())
 
-    cur_id = getCurrentCmdID();
-    if(id != cur_id)
+    if(id != next_id)
     {
         FST_ERROR("pop instruction id:%d is not the same as current id:%d",id, cur_id);
     }
+    else
+    {
+        if (!instruction_list_.empty())
+        {
+            if (instruction_list_.front().pick_status != ONCE)
+            {
+                FST_INFO("pop up id:%d", instruction_list_.front().id);
+                instruction_list_.pop_front();
+            }
+        }
+    }
 }
+
+ void RobotMotion::popupInstEnd()
+{
+    int cur_id = getCurrentCmdID(), next_id;
+
+    while (!instruction_list_.empty())
+    {
+        CommandInstruction inst = instruction_list_.front();
+        next_id = inst.id;        
+
+        //===pop up zero instructions=====
+        if (inst.pick_status == NEVER)
+        {    
+            FST_INFO("poped instruction id:%d", next_id);
+            setPreviousCmdID(cur_id);
+            setCurrentCmdID(next_id);  
+            instruction_list_.pop_front();
+            cur_id = next_id;
+            continue;
+        }
+    
+        //this instruction should setio or other non move instruction
+        //===run this instruction===     
+        if ((inst.commandtype != motion_spec_MOTIONTYPE_JOINTMOTION) 
+        && (inst.commandtype != motion_spec_MOTIONTYPE_CARTMOTION)
+        && (inst.commandtype != motion_spec_MOTIONTYPE_CIRCLEMOTION))
+        {    
+            FST_INFO("non move instructions...");                
+            addNonMoveInstruction(inst);
+            setPreviousCmdID(cur_id);
+            setCurrentCmdID(next_id);
+            instruction_list_.pop_front();
+            cur_id = next_id;
+            continue;
+        }
+        else
+        {
+            break;
+        }
+    }//end while (!instruction_list_.empty())
+
+    setPreviousCmdID(getCurrentCmdID());            
+    setCurrentCmdID(-1);
+    //setServoWaitFlag(false);
+}
+
 
 void RobotMotion::resetInstructionList()
 {
@@ -2479,7 +2746,7 @@ U64 RobotMotion::pickPointsFromPathFifo()
     U64 result = TPI_SUCCESS;
 
     /*int traj_len = arm_group_->getPlannedPathFIFOLength();*/
-	//int joints_len = arm_group_->getJointTrajectoryFIFOLength();
+	//int joints_len = arm_group_->getTrajectoryFIFOLength();
     //if (traj_len > 0) //there are points left for us to pick
 	//{
 		//if (joints_len < MAX_CNT_VAL)
@@ -2501,88 +2768,198 @@ U64 RobotMotion::pickPointsFromPathFifo()
 		//}// end if (joints_len < MAX_CNT_VAL)
 	/*}//end if (traj_len > 0) */ 
 
-    arm_group_->convertPathToTrajectory(MAX_PLANNED_POINTS_NUM, result);
+    //arm_group_->convertPathToTrajectory(MAX_PLANNED_POINTS_NUM, result);
     return result;
 }
+
+void RobotMotion::clearFIFO1Plot()
+{
+    
+}
+
+void RobotMotion::clearFIFO2Plot()
+{
+
+}
+
+void RobotMotion::fillInFIFO1(const Pose pose)
+{
+    PoseEuler epose;
+	//set the current joint to lib
+    epose = arm_group_->transformPose2PoseEuler(pose);
+    int count = fifo1_.count++;
+    writeLock wlock(fifo1_.rwmux); 
+    memcpy(fifo1_.data+count, (char*)&epose, sizeof(PoseEuler));    
+}
+
+
+void RobotMotion::fillInFIFO2(const double *points)
+{
+    writeLock wlock(fifo2_.rwmux);
+    int count = fifo2_.count++;
+    if (count >= MAX_FIFO_LEN)
+    {
+        FST_INFO("fifo2_ full");
+        fifo2_.count = 0;
+        return;
+    }
+     
+    memcpy(fifo2_.data+count, points, sizeof(double)*MAX_JOINTS);    
+}
+
+void RobotMotion::writePosToShm(JointCommand jc_w)
+{
+    if (TPI_SUCCESS == share_mem_.setJointPositions(jc_w))
+    {
+        if (jc_w.total_points < JC_POINT_NUM)   //in case can't detect running state
+        {
+            if (getServoState() == STATE_READY)
+            {
+                setServoState(STATE_RUNNING);
+            }
+        }
+    }
+}
+
 
 U64 RobotMotion::sendJointsToRemote()
 {
     U64 result = TPI_SUCCESS;
+
     if (share_mem_.isJointCommandWritten() == false)
     {
-        share_mem_.setJointPositions(share_mem_.getCurrentJointCmd().joint_cmd);
+        writePosToShm(share_mem_.getCurrentJointCmd().joint_cmd);
+
         return TPI_SUCCESS;
     }//end if (share_mem_.isJointCommandWritten() == false)
 
-    int joints_len = arm_group_->getJointTrajectoryFIFOLength();    
+    
+    int joints_len = arm_group_->getTrajectoryFIFOLength();  
     if (joints_len > 0)
     {
-    //	FST_INFO("joints fifo length:%d,points:%d", joints_len, arm_group_->getPlannedPathFIFOLength());
-        int joints_in = (joints_len < NUM_OF_POINTS_TO_SHARE_MEM)?joints_len:NUM_OF_POINTS_TO_SHARE_MEM;
+    	//FST_INFO("joints fifo length:%d, traj_len:%d", joints_len, arm_group_->getPlannedPathFIFOLength());
+        if (getServoState() == STATE_READY)
+            setServoState(STATE_RUNNING);
 
-        vector<JointPoint> joint_traj;
-        joints_in = arm_group_->getPointsFromJointTrajectoryFIFO(joint_traj, joints_in, result);
-        //FST_INFO("joint in :%d",joints_in);		
-        if (joints_in > 0)
+        vector<JointOutput> joint_traj;
+        U64 result = arm_group_->getPointsFromJointTrajectoryFIFO(joint_traj);
+        
+        if (result != TPI_SUCCESS)
         {
-            //joints_len = arm_group_->getJointTrajectoryFIFOLength();
+           // FST_ERROR("=======pick point failed ==========");
+            return result;
+        }
+        //FST_INFO("joint in :%d",joints_in);		
+        //if (result == TPI_SUCCESS)
+        //{
+            int joints_in = joint_traj.size();
+            dbcount+=joints_in;
+            //printDbLine("joints:", (double*)&joint_traj[joints_in-1].joint, 6);
+            //joints_len = arm_group_->getTrajectoryFIFOLength();
             //FST_INFO("joints fifo length:%d", joints_len);
             JointCommand joint_command;
             joint_command.total_points = joints_in;
             for (int i = 0; i < joints_in; i++)
             {
-                joint_command.points[i].positions[0] = joint_traj[i].joints.j1;
-                joint_command.points[i].positions[1] = joint_traj[i].joints.j2;
-                joint_command.points[i].positions[2] = joint_traj[i].joints.j3;
-                joint_command.points[i].positions[3] = joint_traj[i].joints.j4;
-                joint_command.points[i].positions[4] = joint_traj[i].joints.j5;
-                joint_command.points[i].positions[5] = joint_traj[i].joints.j6;
-                joint_command.points[i].point_position = joint_traj[i].id & 0x03;  //last three bits as point position
+                joint_command.points[i].positions[0] = joint_traj[i].joint.j1;
+                joint_command.points[i].positions[1] = joint_traj[i].joint.j2;
+                joint_command.points[i].positions[2] = joint_traj[i].joint.j3;
+                joint_command.points[i].positions[3] = joint_traj[i].joint.j4;
+                joint_command.points[i].positions[4] = joint_traj[i].joint.j5;
+                joint_command.points[i].positions[5] = joint_traj[i].joint.j6;
 
-                if (isJointsOut(joint_traj[i].joints))
-                {
-                    for (int k = 0; k < joints_in; k++)
-                    {
-                        printDbLine("+++", (double*)&joint_traj[k].joints, 6);
-                    }
-                    return SERVO_ESTOP;
-                }
-            //	FST_INFO("%f,%f,%f,%f,%f,%f",\
-            joint_traj_[i].joints.j1, joint_traj_[i].joints.j2,\
-            joint_traj_[i].joints.j3, joint_traj_[i].joints.j4,\
-            joint_traj_[i].joints.j5, joint_traj_[i].joints.j6);
+                fillInFIFO2(joint_command.points[i].positions);
+                
+                joint_command.points[i].point_position = joint_traj[i].level; //point position: start\middle\ending
+                
+               // printDbLine("joints:", joint_command.points[i].positions, 6);
                 if (getLogicMode() == AUTO_RUN_M)
                 {
-                    int traj_id = joint_traj[i].id >> 2;   
-                               
+                    int traj_id = joint_traj[i].id;
                     int cur_id = getCurrentCmdID();
-                    if (cur_id == -1)
-                    {                    
-                        setCurrentCmdID(traj_id);
-                       // FST_ERROR("prev_id:%d,traj_id:%d", previous_command_id_, traj_id);
-                    }                
-                    else if (cur_id != traj_id) //id changed
-                    {  
+                    if (cur_id != traj_id)
+                    {
                         setPreviousCmdID(cur_id);
-                        setCurrentCmdID(traj_id);
-                        popupInstruction();
-                    }    
+                        setCurrentCmdID(traj_id);  
+                    }
+
+                    int level = joint_command.points[i].point_position;
+                    if (level == POINT_LAST)
+                    {
+                        printDbLine("the last joints:", joint_command.points[i].positions, 6);                   
+                    }
+                    if (level == POINT_ENDING)  
+                    {
+                        if (getProgramState() == EXECUTE_R) //in case for pausing
+                        {
+                            popupInstruction(traj_id);
+                        }
+                        printDbLine("the end joints:", joint_command.points[i].positions, 6);
+                                 
+                        FST_INFO("traj_id is :%d", cur_id);
+                    } 
+                    else if (joint_command.points[i].point_position == POINT_START)
+                    {
+                        printDbLine("the start joints:", joint_command.points[i].positions, 6);
+                        //FST_INFO("traj_id is :%d, cur_id:%d", traj_id, cur_id);
+                    }
+                    else if (joint_command.points[i].point_position == POINT_FIRST)
+                    {
+                        printDbLine("the first joints:", joint_command.points[i].positions, 6);
+                        //FST_INFO("traj_id is :%d, cur_id:%d", traj_id, cur_id);
+                    }
                 }
-               // FST_PRINT("position:%d===", joint_command.points[i].point_position);
-              //  printDbLine("joints:", joint_command.points[i].positions, 6);
-                if (joint_command.points[i].point_position == END_POINT)
-                {
-                    printDbLine("the last joints:", joint_command.points[i].positions, 6);
-                    //FST_INFO("traj_id is :%d, cur_id:%d", traj_id, cur_id);
-                } 
             }// end for (int i = 0; i < joints_in; i++)
-        	//FST_INFO("=====>position:%d--%d,id:%d",joint_command.points[0].point_position, joint_command.points[joints_in-1].point_position,joint_traj[0].id >> 2);
+
+
+
             share_mem_.setCurrentJointCmd(joint_command); //store this command in case it can't write Success
-            share_mem_.setJointPositions(joint_command); //send joints to bare metal         
-        }//end if (joints_in > 0)
+            writePosToShm(joint_command); //send joints to bare metal
+        //}//end if (joints_in > 0)
     }//end  if (joints_len > 0)
 
+
     return result;
+}
+
+void RobotMotion::checkInstID(JointCommand joint_command)
+{
+    if (getLogicMode() != AUTO_RUN_M)
+        return;
+    int cur_id = getCurrentCmdID();
+    for (int i = 0; i < joint_command.total_points; i++)
+    {
+        int level = joint_command.points[i].point_position;   
+                   
+        if (level == POINT_LAST)
+        {
+            printDbLine("the last joints:", joint_command.points[i].positions, 6);
+            popupInstruction(cur_id);
+            setPreviousCmdID(cur_id);
+            setCurrentCmdID(cur_id);
+            
+        }
+        if (level == POINT_ENDING)  
+        {
+            printDbLine("the end joints:", joint_command.points[i].positions, 6);
+            popupInstruction(cur_id);
+            //setServoWaitFlag(false); 
+            setPreviousCmdID(cur_id);
+            setCurrentCmdID(cur_id);            
+            FST_INFO("traj_id is :%d", cur_id);
+        } 
+        else if (joint_command.points[i].point_position == POINT_START)
+        {
+            printDbLine("the start joints:", joint_command.points[i].positions, 6);
+            //FST_INFO("traj_id is :%d, cur_id:%d", traj_id, cur_id);
+        }
+        else if (joint_command.points[i].point_position == POINT_FIRST)
+        {
+            printDbLine("the first joints:", joint_command.points[i].positions, 6);
+            //FST_INFO("traj_id is :%d, cur_id:%d", traj_id, cur_id);
+        }
+
+    }//end if (getLogicMode() == AUTO_RUN_M)
 }
 
 bool RobotMotion::hasManualVel()
@@ -2630,7 +3007,9 @@ U64 RobotMotion::moveManually()
     }   
     
     ManualReq manu_req = getManualReq();
-    manu_req.pre_target = manu_req.target;
+    //========setPrevTarget====================================
+    setPrevTarget(manu_req.target.type, manu_req.target.point);
+    //////////////////////////////////////////////////////////
     if (manu_req.vel_max == 0) 
     {
         manu_req.target.is_step = false;
@@ -2640,8 +3019,9 @@ U64 RobotMotion::moveManually()
     {
         manu_req.target.is_step = true;
         /*setProgramStateCmd(GOTO_PAUSED_E);*/
+        setServoWaitFlag(true);
         boost::mutex::scoped_lock lock(mutex_);
-        manu_req_.vel_max = 0;
+        manu_req_.vel_max = 0;        
         /*return TPI_SUCCESS;*/
     }
     printDbLine("manu target:", (double*)&manu_req_.target.point, 6);
@@ -2717,48 +3097,79 @@ U64 RobotMotion::moveManually()
 CommandInstruction* RobotMotion::pickMoveInstruction()
 {
     CommandInstruction *instruction;
+
+    if (instruction_list_.empty())
+    {
+       /*if (isServoReady() && isFifoEmpty())*/
+       //{
+            //setPreviousCmdID(getCurrentCmdID());            
+            //setCurrentCmdID(-1);
+            //setServoWaitFlag(false);
+       /*}*/
+       return NULL;
+    }
     static ThreadSafeList<CommandInstruction>::iterator it;
     for (it = instruction_list_.begin(); it != instruction_list_.end(); it++)
     {
+        if (it->pick_status == USING) 
+        {
+            //FST_INFO("this has picked:%d", it->id);
+            continue;
+        }
         if ((it->commandtype == motion_spec_MOTIONTYPE_JOINTMOTION)
         || (it->commandtype == motion_spec_MOTIONTYPE_CARTMOTION)
         || (it->commandtype == motion_spec_MOTIONTYPE_CIRCLEMOTION))
         {
-            if (it->pick_status != USED)
+            if ((it->pick_status == PICKED) /*|| (it->pick_status == NEVER)*/)
             {
-                FST_INFO("find one:id==>%d, smooth:%f", it->id, it->smoothDistance);
-                
-                if (it-> pick_status == FRESH)
+                continue;
+            }
+            FST_INFO("find one:id==>%d, smooth:%f, pick_status:%d", it->id, it->smoothDistance, it->pick_status);
+            
+            if (it-> pick_status == FRESH)
+            {
+                ThreadSafeList<CommandInstruction>::iterator next_it = it;
+                if ((it->smoothDistance > 0) 
+                && (++next_it == instruction_list_.end())
+                && (it->commandtype != motion_spec_MOTIONTYPE_CIRCLEMOTION))
                 {
-                    ThreadSafeList<CommandInstruction>::iterator next_it = it;
-                    if ((it->smoothDistance > 0) && (++next_it == instruction_list_.end()))
-                    {
-                        it->pick_status = ONCE;
-                    }
-                    else
-                    {
-                        it->pick_status = USED;
-                    }
+                    it->pick_status = ONCE;
                 }
-                else if (it->pick_status == ONCE)
+                else
                 {
-                    it->pick_status = USED;
-                    it->smoothDistance = -1;
+                    it->pick_status = USING;
                 }
-                instruction = &(*it);
-                return instruction;
-            }//end if (it->pick_status != USED)
+            }
+            else if (it->pick_status == ONCE)
+            {
+                it->pick_status = USING;
+                it->smoothDistance = -1;
+            }
+            FST_INFO("pick status is:%d", it->pick_status);
+            instruction = &(*it);
+            return instruction;
         }// end if ((it->commandtype == motion_spec_MOTIONTYPE_JOINTMOTION)
         else
         {
             addNonMoveInstruction(*it); //process starting non move instructions
+            it->pick_status = USING;
+            setPreviousCmdID(getCurrentCmdID());
+            setCurrentCmdID(it->id); 
+            FST_INFO("non move instruction type:%d", it->commandtype);
+            if (it->commandtype == motion_spec_MOTIONTYPE_WAIT) //
+            {
+                setServoWaitFlag(true);
+                return NULL;
+            }
         }
     }// end for (it = instruction_list_.begin(); it != instruction_list_.end(); it++)
 
+    if (getNMPrgmState() == IDLE_R)
+        popupInstruction(getCurrentCmdID());
     return NULL;
 }    
 
-CommandInstruction* RobotMotion::pickNextMoveInstruction()
+CommandInstruction* RobotMotion::pickNextMoveInstruction(CommandInstruction *target_inst)
 {
     CommandInstruction *instruction;
     static ThreadSafeList<CommandInstruction>::iterator it;
@@ -2777,9 +3188,11 @@ CommandInstruction* RobotMotion::pickNextMoveInstruction()
         }
         else if (it->commandtype == motion_spec_MOTIONTYPE_WAIT) //if wait, then must be fine
         {
+            target_inst->pick_status = USING;
+            target_inst->smoothDistance = -1;
             return NULL;
         }
-    }
+    }//end for (it = instruction_list_.begin()
 
     return NULL;
 }  
@@ -2787,55 +3200,69 @@ CommandInstruction* RobotMotion::pickNextMoveInstruction()
 
 bool RobotMotion::getServoWaitFlag()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return servo_ready_wait_;
 }
 
 void RobotMotion::setServoWaitFlag(bool flag)
 {
-    FST_INFO("servo flag :%d", flag);
-    boost::mutex::scoped_lock lock(mutex_);    
+    //FST_INFO("servo flag :%d", flag);
     servo_ready_wait_ = flag;
 }
 
 void RobotMotion::processEndingMove()
 {
-    if (getServoWaitFlag())
+    if (getLogicMode() != AUTO_RUN_M)
+        return;    
+    /*if (!getServoWaitFlag())*/
+        /*return;*/
+    if (!isServoReady())
+        return;
+    if (!isFifoEmpty()) 
+        return;
+    
+    int cur_id = getCurrentCmdID(), next_id;
+
+    while (!instruction_list_.empty())
     {
-        if (isServoReady() && isFifoEmpty())                     
+        CommandInstruction inst = instruction_list_.front();
+        next_id = inst.id;        
+
+        //===pop up zero instructions=====
+        if (inst.pick_status == NEVER)
+        {    
+            FST_INFO("2poped instruction id:%d", next_id);
+            setPreviousCmdID(cur_id);
+            setCurrentCmdID(next_id);  
+            instruction_list_.pop_front();
+            cur_id = next_id;
+            continue;
+        }
+    
+        //this instruction should setio or other non move instruction
+        //===run this instruction===     
+        if ((inst.commandtype != motion_spec_MOTIONTYPE_JOINTMOTION) 
+        && (inst.commandtype != motion_spec_MOTIONTYPE_CARTMOTION)
+        && (inst.commandtype != motion_spec_MOTIONTYPE_CIRCLEMOTION))
+        {    
+            FST_INFO("non move instructions...");                
+            addNonMoveInstruction(inst);
+            setPreviousCmdID(cur_id);
+            setCurrentCmdID(next_id);
+            instruction_list_.pop_front();
+            cur_id = next_id;
+            continue;
+        }
+        else
         {
-            int id;
-            if (getCurrentCmdID() != (int)instruction_list_.front().id)
-            {
-                FST_ERROR("current_command_id_ is not the same as list front");
-            }
-            else
-            {
-                instruction_list_.pop_front();
-            }
-            while (!instruction_list_.empty())
-            {
-                CommandInstruction inst = instruction_list_.front();
-                id = inst.id;                
-                if ((inst.commandtype != motion_spec_MOTIONTYPE_JOINTMOTION) 
-                && (inst.commandtype != motion_spec_MOTIONTYPE_CARTMOTION)
-                && (inst.commandtype != motion_spec_MOTIONTYPE_CIRCLEMOTION))
-                {    
-                    setPreviousCmdID(getCurrentCmdID());            
-                    setCurrentCmdID(id);
-                    addNonMoveInstruction(inst);
-                    instruction_list_.pop_front();                                    
-                }
-                else
-                {
-                    break;
-                }                
-            }//end while (!instruction_list_.empty())
-            setPreviousCmdID(getCurrentCmdID());            
-            setCurrentCmdID(-1);
-            setServoWaitFlag(false);
-        }// end 
+            break;
+        }
+    }//end while (!instruction_list_.empty())
+    if (instruction_list_.empty())
+    {
+        setPreviousCmdID(getCurrentCmdID());            
+        setCurrentCmdID(-1);
     }
+    //setServoWaitFlag(false);
     //FST_INFO("prev_id:%d, cur_id:%d", previous_command_id_, current_command_id_);
 }
 
@@ -2843,18 +3270,17 @@ void RobotMotion::processEndingMove()
 U64 RobotMotion::addNonMoveInstruction(CommandInstruction instruction)
 {
     non_move_instructions_.push_back(instruction); 
+
     return TPI_SUCCESS;
 }
 
 RobotMode RobotMotion::getPrevMode()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return prev_mode_;
 }
 
 void RobotMotion::setPrevMode(RobotMode mode)
 {
-    boost::mutex::scoped_lock lock(mutex_);
     prev_mode_ = mode;
 }
 
@@ -2873,7 +3299,7 @@ bool RobotMotion::hasMoveCommand()
     {
         if (!instruction_list_.empty())
         {
-            boost::thread thrd_non_move(boost::bind(processNonMove, this));
+            //boost::thread thrd_non_move(boost::bind(processNonMove, this));
             return true;
         }
     }
@@ -2913,7 +3339,8 @@ bool RobotMotion::hasTransformedToIdle()
         && isFifoEmpty()
         && (req.vel_max == 0))
         {
-            clearPathFifo();
+            //clearPathFifo();
+            setServoWaitFlag(false);
             return true;   
         }
     }
@@ -2921,26 +3348,20 @@ bool RobotMotion::hasTransformedToIdle()
     {
         if ((getServoState() == STATE_READY)
         && isFifoEmpty()
-        && instruction_list_.empty())
+        && instruction_list_.empty()
+        && (getNMPrgmState() == IDLE_R))
         {
-            //processEndingMove();
+            setPreviousCmdID(getCurrentCmdID());
+            setCurrentCmdID(-1);
+            //in case pused motion changes to idle,
+            //next motion need to be clear or resume
+            abortMotion();   
             return true;
         }
     }
 
     return false;
 }
-
-
-/*void RobotMotion::checkNextManualRequest()*/
-//{
-    //boost::mutex::scoped_lock lock(mutex_);
-    //if (manu_req_next_.is_valid == false)
-    //{
-        //manu_req_next_.is_valid = true;
-        //addTargetVal((double*)&manu_req_.target, (double*)&manu_req_.vel_req, (double*)&manu_req_next_.target);
-    //}
-/*}*/
 
 
 void RobotMotion::clearManuMove()
@@ -2954,7 +3375,7 @@ double RobotMotion::calcuManualJointVel(const double *interval_jnts)
     double max_interval = getMaxValue(interval_jnts, MAX_JOINTS);
     int id = getMaxValID(max_interval, interval_jnts, MAX_JOINTS);
     
-    JointConstraints jnt_constraints = arm_group_->getJointConstraints();
+    JointConstraint jnt_constraints = arm_group_->getSoftConstraint();
     double constraint_vel;
     switch (id)
     {

@@ -36,7 +36,7 @@ U64 IOInterface::initial()
     }
     //-----------------get num of devices.----------------------//
     io_num_ = io_manager_->getDevicesNum();
-    FST_INFO("io_num_:%d",io_num_);
+    FST_INFO("io_num_:%d",io_num_.load());
 
     dev_info_ = new fst_io_manager::IODeviceInfo[io_num_];
 
@@ -54,7 +54,6 @@ U64 IOInterface::initial()
 
 int IOInterface::getIODevNum()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return io_num_;
 }
 

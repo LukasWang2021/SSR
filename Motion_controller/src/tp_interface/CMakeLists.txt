@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tp_interface)
+set(VERSION_MAJOR 2)
+set(VERSION_MINOR 0)
+set(VERSION_PATCH 7)
 
 #add_custom_command(OUTPUT vitual_target	
 #	COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_HOME_DIRECTORY}/../devel/${CONFIG_DIR}
@@ -16,7 +19,7 @@ set(CONFIG_DIR config)
 #		COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_DIR} ${CMAKE_HOME_D#IRECTORY}/../devel)
 if(${catkin_CROSS})
 	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/motion_controller/include ${depend_PATH_INC}/middleware_to_mem/include ${depend_PATH_INC}/trajplan/include ${depend_PATH_INC}/parameter_manager/include ${depend_PATH_INC}/safety/include ${depend_PATH_INC}/log_manager/include ${depend_PATH_INC}/service_manager/include ${depend_PATH_INC}/io_manager/include ${depend_PATH_INC}/ioboard/include)
-	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libmotion_controller.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/libcore_interface.so ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libsafety.so ${depend_PATH_LIB}/libio_manager.so)
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libmotion_controller.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/libcore_interface.so ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libsafety.so ${depend_PATH_LIB}/libio_manager.so ${depend_PATH_LIB}/liblogger.so)
 	set(CMAKE_CXX_FLAGS "-DCROSS_PLATFORM")
 	set(CMAKE_C_FLAGS "-DCROSS_PLATFORM")
 else(${catkin_CROSS})
@@ -50,15 +53,13 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -DPB_FIELD_32BIT -DSIMMULATION")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -DPB_FIELD_32BIT")
 
 message(${CMAKE_CXX_FLAGS})
 
 ##############version manager##############
-set(VERSION_MAJOR 2)
-set(VERSION_MINOR 0)
-set(VERSION_PATCH 7)
+
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/version.h.in"

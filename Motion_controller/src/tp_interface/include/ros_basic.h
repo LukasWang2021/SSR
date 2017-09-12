@@ -7,7 +7,7 @@
  * @version 1.0.0
  * @date 2016-11-02
  */
-#include "motion_controller/fst_datatype.h"
+#include "trajplan/fst_datatype.h"
 #include <sensor_msgs/JointState.h>
 #include <ros/ros.h>
 
@@ -21,7 +21,7 @@ class RosBasic
 	~RosBasic();
 
 	void rosRobotInit();
-	void pubJointState(JointValues joint_values);
+	void pubJointState(Joint joint_values);
 	void setStartTimeStamp();
 
   private:

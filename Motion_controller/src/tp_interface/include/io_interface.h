@@ -9,6 +9,7 @@
 #define TP_INTERFACE_IO_INTERFACE_H_
 
 #include <string>
+#include <atomic>
 #include <boost/filesystem.hpp>
 #include "io_manager/io_manager.h"
 
@@ -57,7 +58,7 @@ class IOInterface
 
   private:
     fst_io_manager::IOManager *io_manager_;
-    int io_num_;
+    std::atomic<int> io_num_;
     fst_io_manager::IODeviceInfo *dev_info_;
 
     boost::mutex	mutex_;		//mutex lock

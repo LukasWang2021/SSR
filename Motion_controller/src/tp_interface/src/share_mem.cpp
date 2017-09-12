@@ -7,8 +7,6 @@
 ShareMem::ShareMem()
 {
 	shm_jnt_cmd_.is_written = true;  //has not writen any joint command
-    read_cnt_ = 0;
-    write_cnt_ = 0;
 }
 
 ShareMem::~ShareMem()
@@ -26,6 +24,10 @@ U64 ShareMem::initial()
         return result;
     }    
     if ((result = service_wrapper_.init()) != TPI_SUCCESS)
+    {
+        return result;
+    }
+    if ((result = service_wrapper1_.init()) != TPI_SUCCESS)
     {
         return result;
     }
@@ -70,8 +72,8 @@ void ShareMem::setCurrentJointCmd(JointCommand joint_cmd)
  */
 U64 ShareMem::getFeedbackJointState(FeedbackJointState &fbjs)
 {    
-    boost::mutex::scoped_lock lock(mutex_);
-    read_cnt_++;
+    uint32_t read_cnt = 0;
+    read_cnt++;
 
 	memset(&fbjs, 0, sizeof(FeedbackJointState));
 #ifdef CROSS_PLATFORM
@@ -79,21 +81,20 @@ U64 ShareMem::getFeedbackJointState(FeedbackJointState &fbjs)
 #else
 	U64 result = core_interface_.recvBareCoreFake(fbjs);
 #endif
-    if ((result == TPI_SUCCESS) || (fbjs.state != STATE_INIT))
+    if ((result == TPI_SUCCESS)/* || (fbjs.state != STATE_INIT)*/)
     {        
-        servo_status_ = fbjs;
-        read_cnt_ = 0;
+        read_cnt = 0;
         return TPI_SUCCESS;
     }		
-    else if (read_cnt_ >= READ_COUNT_LIMIT)
+    else if (read_cnt >= READ_COUNT_LIMIT)
     {
         FST_ERROR("read share memory timeout");        
-        read_cnt_ = 0;
+        read_cnt = 0;
         return READ_SHARE_MEMORY_TIMEOUT;
     }
     else
     {
-       //FST_ERROR("read memory failed:%d times, error:0x%x",read_cnt_,result);
+       //FST_ERROR("read memory failed:%d times, error:0x%x",read_cnt,result);
        return READ_SHARE_MEMORY_FAILED;
     }
 }
@@ -107,7 +108,7 @@ U64 ShareMem::getFeedbackJointState(FeedbackJointState &fbjs)
  */
 U64 ShareMem::setJointPositions(JointCommand jc_w)
 {
-    boost::mutex::scoped_lock lock(mutex_);
+    uint32_t write_cnt = 0;
    // FST_INFO("write share memory:%f,%f,%f,%f,%f,%f", \
             jc_w.points[0].positions[0],\
             jc_w.points[0].positions[1],\
@@ -115,7 +116,7 @@ U64 ShareMem::setJointPositions(JointCommand jc_w)
             jc_w.points[0].positions[3],\
             jc_w.points[0].positions[4],\
             jc_w.points[0].positions[5]);
-    write_cnt_++;
+    write_cnt++;
 #ifdef CROSS_PLATFORM
 	U64 result = core_interface_.sendBareCore(jc_w);
 #else
@@ -124,24 +125,24 @@ U64 ShareMem::setJointPositions(JointCommand jc_w)
 	if (result == TPI_SUCCESS)
 	{
 		shm_jnt_cmd_.is_written = true;
-        write_cnt_ = 0;
-        //FST_INFO("Write memory successfullly");
-		return 0;
+        write_cnt = 0;
+        //FST_INFO("Write memory successfully");
+		return TPI_SUCCESS;
 	}
 	else 
 	{
 		shm_jnt_cmd_.is_written = false;
        // if(write_cnt_ <= 5)
            // FST_ERROR("write share memory error:%d times", write_cnt_);
-        if (write_cnt_ >= WRITE_COUNT_LIMIT)
+        if (write_cnt >= WRITE_COUNT_LIMIT)
         {
-            write_cnt_ = 0;
+            write_cnt = 0;
             //FST_ERROR("write share memory timeout");
             return WRITE_SHARE_MEMORY_TIMEOUT;
         }
         else 
         {
-            //FST_INFO("Write memory failed");
+           // FST_INFO("Write memory failed");
             return WRITE_SHARE_MEMORY_FAILED;
         }
 	}
@@ -162,14 +163,14 @@ bool ShareMem::isJointCommandWritten()
 int ShareMem::monitorHearBeat(U64 *err_list)
 {
     int err_size = 0;
+    ServiceResponse     resp;
 #ifdef CROSS_PLATFORM
-    boost::mutex::scoped_lock lock(mutex_);
-    memset(&resp_, 0, sizeof(ServiceResponse));
-    U64 result = service_wrapper_.sendHeartbeatRequest(resp_);
+    memset(&resp, 0, sizeof(ServiceResponse));
+    U64 result = service_wrapper1_.sendHeartbeatRequest(resp);
     if (result == TPI_SUCCESS)
     {
-        err_size = *(int*)resp_.res_buff;
-        memcpy(err_list, &resp_.res_buff[8], err_size*sizeof(U64));           
+        err_size = *(int*)resp.res_buff;
+        memcpy(err_list, &resp.res_buff[8], err_size*sizeof(U64));           
     }
     else
     {
@@ -184,7 +185,6 @@ U64 ShareMem::resetBareMetal()
 {
 #ifdef CROSS_PLATFORM
     FST_INFO("reset servo ...");
-    boost::mutex::scoped_lock lock(mutex_);
     return service_wrapper_.sendResetRequest();
 #else
     return TPI_SUCCESS;
@@ -194,7 +194,6 @@ U64 ShareMem::resetBareMetal()
 U64 ShareMem::resetSafety()
 {
 #ifdef CROSS_PLATFORM 
-    boost::mutex::scoped_lock lock(mutex_);
     return service_wrapper_.sendResetSafetyRequest();
 #else
     return TPI_SUCCESS;
@@ -206,7 +205,6 @@ U64 ShareMem::stopBareMetal()
 {
 #ifdef CROSS_PLATFORM
     FST_INFO("stop servo ...");
-    boost::mutex::scoped_lock lock(mutex_);
     return service_wrapper_.sendStopRequest();
 #else
     return TPI_SUCCESS;

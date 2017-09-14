@@ -7,7 +7,7 @@
 #include <boost/filesystem.hpp>
 #include <signal.h>  
 #include <servo_diag_version.h>
-
+#include <ros/ros.h>
 using namespace fst_controller;
 
 fst_comm_interface::CommInterface ServoDiag::comm_;

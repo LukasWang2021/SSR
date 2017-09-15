@@ -199,25 +199,25 @@ install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-#install(FILES config/dh.yaml
-#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
-#)
+install(FILES config/dh.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
 
-#install(FILES config/offset.yaml
-#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
-#)
+install(FILES config/offset.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
 
-#install(FILES config/jtac.yaml
-#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
-#)
+install(FILES config/jtac.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
 
-#install(FILES config/soft_constraints.yaml
-#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
-#)
+install(FILES config/soft_constraints.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+)
 
-#install(FILES config/hard_constraints.yaml
-#  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/model
-#)
+install(FILES config/hard_constraints.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/model
+)
 
 install(FILES config/motion_controller.yaml
   DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable

@@ -1,3 +1,12 @@
+/**********************************************
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+File:       safety.c
+Author:     Shuguo.Zhang Feng.Wu 
+Create:     20-Sep-2017
+Modify:     22-Sep-2017
+Summary:    dealing with safety board
+**********************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -8,32 +17,19 @@
 #include <sys/mman.h>
 #include "safety/safety.h"
 
-#define LEN	0X40
-// #define SAFETY_MAX_FRAME 4
+#define SAFETY_LEN	0x80    //modified by Feng.Wu
 #define SAFETY_BASE		0xC1013000
-// #define R_SAFETY_BASE	0X10
-// #define W_SAFETY_BASE	0X14
+#define W_SEQ_SAFETY_BASE   0x78    // add by Feng.Wu
+#define R_SEQ_SAFETY_BASE   0x60    // add by Feng.Wu
 
-// #define FIRST_FRAME		3
-// #define	SECOND_FRAME	2
-// #define	THIRD_FRAME		1
-// #define	FOURTH_FRAME	0
-
-// #define SAFETY_CMD	0XF5
+#define	R_SAFETY_BASE	0x08	/* the address of date that read from safety MCU1, and 0x08 is a offset with a base 0xC1013000. by Feng.Wu*/
+#define RR_SAFETY_BASE  0x10    /* the address of date that read from safety MCU2, and 0x10 is a offset with a base 0xC1013000. by Feng.Wu*/
+#define	W_SAFETY_BASE	0x18	/* the address of date that written to safety, and 0x18 is a offset with a base C1013000. */
 
 #define RW_MASK	0XFF00
 #define R_MASK	0X0100
 #define W_MASK	0X0200
 #define	FRAME_MASK 0X00FF
-
-// #define ERR_SAFETY_FILE_OPEN (unsigned long long int)0x00010002008E0001   /*can't open file when initializing safety board*/
-// #define ERR_SAFETY_FILE_MAP (unsigned long long int)0x00010002008E0002   /*Mapping is failed.*/
-// #define ERR_SAFETY_RECV_CMD (unsigned long long int)0x00010002008E0015   /*Command is not received from the safety board*/
-// #define ERR_SAFETY_NOT_CONNECT (unsigned long long int)0x00010002008E0016   /*Safety board is not connected with, and there is not heartbeat from the safety board.*/
-// #define ERR_SAFETY_PTHREAD_INIT (unsigned long long int)0x00000001008E001F   /*Mutex initialization is failed.*/
-// #define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x00000001008E0020   /*Mutex lock is failed*/
-// #define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x00000001008E0021   /*Mutex unlock is failed*/
-// #define ERR_SAFETY_FRAME (unsigned long long int)0x00000001008E0029   /*The frame is out of range.*/
 
 static int fd;
 static void *ptr;
@@ -42,64 +38,77 @@ struct	Safety {
 	int	fd;
 	int	*ptr;
 	pthread_mutex_t	mutex;
-	char	data[SAFETY_MAX_FRAME];
+	char data[SAFETY_MAX_FRAME];
 	char heartbeat;
 	char count;
 };
 
 
 static struct Safety	xmit;
-static struct Safety	recv;
+static struct Safety    recv_one;   // add by Feng.Wu
+static struct Safety    recv_two;   // add by Feng.Wu
+static char *write_ptr;
+static char *read_ptr;
 
-unsigned long long int initSafety() {
+unsigned long long int initSafety(void) {
 	int ret = 0;
 	fd = open("/dev/mem", O_RDWR);
 	if (fd == -1) {
 		return ERR_SAFETY_FILE_OPEN;
 	}
 	
-	ptr = mmap(NULL, LEN, PROT_WRITE|PROT_READ, MAP_SHARED, fd, SAFETY_BASE);
+	ptr = mmap(NULL, SAFETY_LEN, PROT_WRITE|PROT_READ, MAP_SHARED, fd, SAFETY_BASE);
 	if (ptr == (void *)-1) {
 		return ERR_SAFETY_FILE_MAP;
 	}
 
-	recv.ptr = (int *)(ptr + R_SAFETY_BASE);
+    recv_one.ptr = (int *)(ptr + R_SAFETY_BASE);    // add by Feng.Wu
+    recv_two.ptr = (int *)(ptr + RR_SAFETY_BASE);   // add by Feng.Wu
 	xmit.ptr = (int *)(ptr + W_SAFETY_BASE);
+    write_ptr = (char *)ptr + W_SEQ_SAFETY_BASE;
+    read_ptr = (char*)ptr + R_SEQ_SAFETY_BASE;
 
-	if (pthread_mutex_init(&recv.mutex, NULL) != 0) {
+	if (pthread_mutex_init(&recv_one.mutex, NULL) != 0) {
+		printf("Failed to init mutex.\n");
+	}
+    if (pthread_mutex_init(&recv_two.mutex, NULL) != 0) {
 		printf("Failed to init mutex.\n");
 	}
 	if (pthread_mutex_init(&xmit.mutex, NULL) != 0) {
 		printf("Failed to init mutex.\n");
 	}
 
-	xmit.data[FIRST_FRAME] = (char)SAFETY_CMD;
-	xmit.data[SECOND_FRAME] = 0;
+	xmit.data[FIRST_FRAME] = (char)SAFETY_CMD_SEND;
+	xmit.data[SECOND_FRAME] = (char)SAFETY_CORE_SEND;
 	xmit.data[THIRD_FRAME] = 0;
 	xmit.data[FOURTH_FRAME] = 0;
 	xmit.data[FIFTH_FRAME] = 0;
+    xmit.data[SIXTH_FRAME] = 0; // add by Feng.Wu
 	xmit.heartbeat = 0;
 	xmit.count = 0x9;
 
-	recv.heartbeat = 0;
-	recv.count = 0;
+	recv_one.heartbeat = 0;
+	recv_one.count = 0;
+
+    recv_two.heartbeat = 0; // add by Feng.Wu
+    recv_two.count = 0;     // add by Feng.Wu
 
 	return (unsigned long long int)ret;
 }
 
-unsigned long long int openSafety() {
+unsigned long long int openSafety(void) {
 	return initSafety();
 }
 
-void closeSafety() {
-	munmap(ptr, LEN);
+void closeSafety(void) {
+	munmap(ptr, SAFETY_LEN);
 	close(fd);
 }
 
 int getSafety(int frame, unsigned long long int *err) {
 	int mask;
 	int frame_mask;
-    struct Safety	*safety;
+    struct Safety   *safety;
 	int *pdata;
 	char ret;
 
@@ -109,7 +118,7 @@ int getSafety(int frame, unsigned long long int *err) {
 	mask = frame & RW_MASK;
 	switch (mask) {
 		case R_MASK:
-			safety = &recv;
+			safety = &recv_one;
 			break;
 		case W_MASK:
 			safety = &xmit;
@@ -165,10 +174,6 @@ unsigned long long int setSafety(int data, int frame) {
 
 	pdata = (char *)(&data);
 	pthread_mutex_lock(&xmit.mutex);
-	if (frame_mask == 1) {
-		xmit.data[2] = *(pdata + 2);
-		xmit.data[3] = *(pdata + 3);
-	}
 	if (frame_mask == 2){
 		 xmit.data[4] = *(pdata + 0);
 		 xmit.data[5] = *(pdata + 1);
@@ -177,53 +182,6 @@ unsigned long long int setSafety(int data, int frame) {
 	}
 	pthread_mutex_unlock(&xmit.mutex);
 	return ret;
-}
-
-void writeSafety() {
-	int *pb = xmit.ptr;
-	int *p = (int *)(&xmit.data);
-	
-	*pb = *p;
-//printf("writeSafety: p[0] = %x\t", *p);
-	pb++;
-	p++;
-	*pb = *p;
-
-	
-//	*xmit.ptr = *(int *)xmit.data;
-//	printf("**** write ****\nwrite: %x\n",*(int *)xmit.data); // need to remove
-}
-
-void readSafety() {
-	int *p = (int *)(&recv.data);
-	int *pb = recv.ptr;
-
-	*p = *pb;
-	p++;
-	pb++;
-	*p = *pb;
-
-//	p = (int *)recv.data;
-//	*p = *recv.ptr;
-
-//	printf("**** read ****\nread: %x\n",*(int *)recv.data); // need to remove
-}
-
-int getHeartbeat() {
-	int err = 0;
-//	pthread_mutex_lock(&recv.mutex);
-	if (recv.heartbeat == recv.data[R_HB_FRAME])
-	  recv.count++;
-	else
-	  recv.count = 0;
-	recv.heartbeat = recv.data[R_HB_FRAME];
-//	pthread_mutex_unlock(&recv.mutex);
-//	printf("getHeartbeat\n%x\n",(unsigned)recv.heartbeat);
-	if (recv.count >= NO_HB_TIMES) {
-		recv.count = NO_HB_TIMES;
-		err = -1;
-	}
-	return err;
 }
 
 void setHeartbeat() {
@@ -235,87 +193,228 @@ void setHeartbeat() {
 	else
 	  xmit.count = 0;
 
-//	printf("setHeartbeat\n,xmit.heartbeat = %x\txmit.data[W_HB_FRAME] = %x\n",xmit.heartbeat,xmit.data[W_HB_FRAME]);
+	//printf("\nsetHeartbea: xmit.heartbeat = %x\txmit.data[W_HB_FRAME] = %x\n",xmit.heartbeat,xmit.data[W_HB_FRAME]);
+}
+
+void writeSafety(void) {
+	int *pb = xmit.ptr;
+	int *p = (int *)(&xmit.data);
+	
+    //printf("writeSafety: p[0] = %x\t", *p);
+    *pb = *p;
+	pb++;
+	p++;
+	*pb = *p;
+
+    //printf("writeSafety: p[1] = %x\t", *p);
+	//printf("**** write **** write: %x\n",*(int *)xmit.data); // need to remove
+}
+
+void safetyWriteDownload(void)  // add by Feng.Wu
+{
+    int err = 0;
+    err = pthread_mutex_lock(&xmit.mutex);
+	if (err == -1)
+	  printf("Failed to lock mutex.\n"); //NOT_LOCK;
+
+    setHeartbeat();
+    writeSafety();
+
+    err = pthread_mutex_unlock(&xmit.mutex);
+	if (err == -1)
+	  printf("Failed to unlock mutex.\n"); //NOT_UNLOCK;
+
+}
+
+void safetySetSeq(char seq)
+{
+    *write_ptr = seq;
+    //printf("safetysetseq, safety_seq = %x, write_seq = %x\n", *write_ptr, seq);
+}
+
+void safetyGetSeq(char *seq)
+{
+    *seq = *(char *)read_ptr;
 }
 
 int checkSafetyCmd(char cmd) {
 	int err;
-	if (cmd == 0xf5)
+	if (cmd == 0x5f)
 	  err = 0;
 	else
 	  err = -1;
 	return err;
 }
 
-unsigned long long int autorunSafetyData() {
-	int err = 0;
-	unsigned long long int ret = 0;
-	
-	err = pthread_mutex_lock(&recv.mutex);
-	if (err == -1)
-	  printf("Failed to lock mutex.\n"); //NOT_LOCK;
-	
-	readSafety();
+unsigned long long int readSafety(void) {
+	int *p = (int *)(&recv_one.data);
+	int *pb_one = recv_one.ptr;
+    int *pb_two = recv_two.ptr;
 
-	err = checkSafetyCmd(recv.data[FIRST_FRAME]);
+    // check CMD.
+    char cmd = *((char *)pb_one);
+    int err = checkSafetyCmd(cmd);
 	if (err == -1) {
-		int *p = (int *)recv.data;
-		if (*p == (int)0){
-		  ret = ERR_SAFETY_NOT_CONNECT; //NOT_CONNECTED
-		 // break;
+		if (*pb_one == (int)0){
+            return ERR_SAFETY_NOT_CONNECT; //NOT_CONNECTED
 		}
-		ret= ERR_SAFETY_RECV_CMD; //NOT_SAFETY_CMD;
-		//break;
+		return ERR_SAFETY_RECV_CMD; //NOT_SAFETY_CMD;
+	}
+    cmd = *((char *)pb_two);
+    err = checkSafetyCmd(cmd);
+	if (err == -1) {
+		if (*pb_two == (int)0){
+            return ERR_SAFETY_NOT_CONNECT; //NOT_CONNECTED
+		}
+		return ERR_SAFETY_RECV_CMD; //NOT_SAFETY_CMD;
 	}
 
-	err = getHeartbeat();
-	if (err == -1)
-    {
-        pthread_mutex_unlock(&recv.mutex);
-	    return ERR_SAFETY_NOT_CONNECT; //NO_HEARTBEAT;
-    }
-	
-	err = pthread_mutex_unlock(&recv.mutex);
-	if (err == -1)
-	  printf("Failed to unlock mutex.\n"); //NOT_UNLOCK;
 
-	err = pthread_mutex_lock(&xmit.mutex);
+    // check if data from MCU1 and MCU2 are same.
+    pb_one++;
+    pb_two++;
+    if (*pb_one != *pb_two){
+        //printf("mcu1 = %x, mcu2 = %x\n", *pb_one, *pb_two);
+        return ERR_SAFETY_RECV_DIFF;
+    }
+    pb_one--;
+
+    // update data if everything is ok.
+	*p = *pb_one;
+	p++;
+	pb_one++;
+	*p = *pb_one;
+
+	//printf("**** read ****\nread: %x\n",*(int *)recv_one.data); // need to remove
+    return 0;
+}
+
+int getHeartbeat(void) {
+	int err = 0;
+	if (recv_one.heartbeat == recv_one.data[R_HB_FRAME])
+	  recv_one.count++;
+	else
+	  recv_one.count = 0;
+	recv_one.heartbeat = recv_one.data[R_HB_FRAME];
+	//printf("getHeartbeat: %x\n",(unsigned)recv_one.heartbeat);
+	if (recv_one.count >= NO_HB_TIMES) {
+		recv_one.count = NO_HB_TIMES;
+		err = -1;
+	}
+	return err;
+}
+
+unsigned long long int safetyReadUpload(void)  // add by Feng.Wu
+{
+    int err = 0;
+    unsigned long long int ret = 0;
+    err = pthread_mutex_lock(&recv_one.mutex);
 	if (err == -1)
 	  printf("Failed to lock mutex.\n"); //NOT_LOCK;
+	
+	ret = readSafety();
+    if (ret != 0){
+        pthread_mutex_unlock(&recv_one.mutex);
+        return ret;
+    }
 
-	setHeartbeat();
-	writeSafety();
-	err = pthread_mutex_unlock(&xmit.mutex);
+	err = getHeartbeat();
+	if (err == -1){
+        pthread_mutex_unlock(&recv_one.mutex);
+	    return ERR_SAFETY_NOT_CONNECT; //NO_HEARTBEAT;
+    }
+
+    err = pthread_mutex_unlock(&recv_one.mutex);
 	if (err == -1)
 	  printf("Failed to unlock mutex.\n"); //NOT_UNLOCK;
-	return ret;
+
+    return ret;
+}
+
+unsigned long long int autorunSafetyData() {
+	unsigned long long int ret = 0;
+    static char seq = 0;
+    static char read_counter = 0;
+    static char write_counter = 0;
+
+    // step1: write download data.
+    safetyWriteDownload();
+
+    // step2: write Safety_Seq.
+    seq++;
+    if (seq >= 15)
+        seq = 0x01;
+    safetySetSeq(seq);
+
+    // wait for data update.
+    usleep(150);
+
+    // step3: get upload and download seq.
+    char read_seq = 0;
+    safetyGetSeq(&read_seq);
+    char upload_seq = read_seq & 0x0F;
+    char download_seq = (read_seq >> 4) & 0x0F;
+    //printf("readseq=%x, uploadseq=%x, downloadseq=%x\n", read_seq, upload_seq, download_seq);
+
+    // step4: update data.
+    if (upload_seq == seq){
+        ret = safetyReadUpload();
+        if (ret != 0){
+            return ret;
+        }
+        read_counter = 0;
+    }
+    else{
+        read_counter++;
+    }
+
+    if (download_seq == seq)
+        write_counter = 0;
+    else
+        write_counter++;
+    if (read_counter > NO_HB_TIMES || write_counter > NO_HB_TIMES)
+        return ERR_SAFETY_NOT_CONNECT;
+		
+    return ret;
 }
 
 int fake_init() {
 	int ret;
-	ptr = malloc(40);
-	recv.ptr = (int *)(ptr + R_SAFETY_BASE);
+	ptr = malloc(80);
+	recv_one.ptr = (int *)(ptr + R_SAFETY_BASE);    // modified by Feng.Wu
+    recv_two.ptr = (int *)(ptr + RR_SAFETY_BASE);   // modified by Feng.Wu
 	xmit.ptr = (int *)(ptr + W_SAFETY_BASE);
-	if (pthread_mutex_init(&recv.mutex, NULL) != 0) {
+	if (pthread_mutex_init(&recv_one.mutex, NULL) != 0) {
 		ret = -1;
 		return ret;
 	}
-	if (pthread_mutex_init(&recv.mutex, NULL) != 0) {
+	if (pthread_mutex_init(&recv_two.mutex, NULL) != 0) {
 		ret = -1;
 		return ret;
 	}
-	xmit.data[FIRST_FRAME] = (char)SAFETY_CMD;
+    if (pthread_mutex_init(&xmit.mutex, NULL) != 0) {
+		ret = -1;
+		return ret;
+	}
+
+	xmit.data[FIRST_FRAME] = (char)SAFETY_CMD_SEND; // modified by Feng,Wu
 	xmit.data[SECOND_FRAME] = 0;
 	xmit.data[THIRD_FRAME] = 0;
 	xmit.data[FOURTH_FRAME] = 0;
 	xmit.data[FIFTH_FRAME] = 0;
+    xmit.data[SIXTH_FRAME] = 0;
 	xmit.count = 0x9;
 	xmit.heartbeat = 0xa0;
-*recv.ptr = 0xf5abcd11;
-	recv.heartbeat = 0;
-	recv.count = 0;
+
+    *recv_one.ptr = 0xf5abcd11;
+	recv_one.heartbeat = 0;
+	recv_one.count = 0;
+
+    recv_one.heartbeat = 0;
+	recv_one.count = 0;
+    return ret;
 }
 
 int fake_connection() {
-	*recv.ptr = *xmit.ptr;
+	*recv_one.ptr = *xmit.ptr;
 }

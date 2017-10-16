@@ -1,6 +1,27 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(safety)
 
+# setting for include file.
+set(VERSION_MAJOR 2)
+set(VERSION_MINOR 0)
+set(VERSION_PATCH 0)
+string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
+
+# setting for package version file.
+set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+
+# configure a header file to pass some settings to the source code.
+configure_file(
+  "${PROJECT_SOURCE_DIR}/include/version.h.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
+)
+
+# add the search path for include files.
+include_directories(${PROJECT_BINARY_DIR})
+
+# write the verson info to a file.
+file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -121,14 +142,15 @@ add_library(safety
 # add_dependencies(safety ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(safety_node src/safety_node.cpp)
+add_executable(safety_node test/safety_node.cpp)
+target_link_libraries(safety_node ${catkin_LIBRARIES} safety)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(safety_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(safety_node
+#target_link_libraries(safety_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -152,7 +174,13 @@ install(TARGETS safety # safety_node
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+install(TARGETS safety_node
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+)
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
 #   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
@@ -179,3 +207,14 @@ install(TARGETS safety # safety_node
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+if(GTEST)
+add_executable(utest_safety test/utest/utest_main.cpp test/utest/utest_safety.cpp src/safety.c)
+target_link_libraries(utest_safety ${catkin_LIBRARIES} ${GTEST_LIBRARIES} pthread)
+install(TARGETS utest_safety
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+endif()
+
+
+

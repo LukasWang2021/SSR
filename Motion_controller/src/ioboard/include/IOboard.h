@@ -29,7 +29,7 @@ struct IODeviceData {
 #define ADDR_DATA_READ 0x40
 
 #define IO_DATA_WORD 4
-#define IO_DATA_BYTE ((IO_DATA_BYTE) * 4)
+#define IO_DATA_BYTE ((IO_DATA_WORD) * 4)
 
 #define OF_ID 0x4
 #define OF_ENABLE 0x11

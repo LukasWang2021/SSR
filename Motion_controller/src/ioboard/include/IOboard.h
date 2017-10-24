@@ -31,18 +31,22 @@ struct IODeviceData {
 #define IO_DATA_WORD 4
 #define IO_DATA_BYTE ((IO_DATA_WORD) * 4)
 
-#define OF_ID 0x4
-#define OF_ENABLE 0x11
-#define OF_VERIFY 0x10
-#define OF_MODEL 0x0
+#define START_FRAME_VALUE 0x3C
+
+#define OF_START 0x0
+#define OF_ID 0xC
+#define OF_ENABLE 0x19
+#define OF_VERIFY 0x18
+#define OF_MODEL 0x8
 
 #define OF_FRAME_INPUT 0x4
 #define OF_FRAME_OUTPUT 0xB
 
-#define MASK_ID 0x000000f0
-#define MASK_ENABLE	0x00020000
-#define MASK_VERIFY 0x00010000
-#define MASK_MODEL 0x0000000f
+
+#define MASK_ID (0x0f << OF_ID)
+#define MASK_ENABLE	(0x01 << OF_ENABLE)
+#define MASK_VERIFY (0x01 << OF_VERIFY)
+#define MASK_MODEL (0x0f << OF_MODEL)
 int ioInit(uint8_t fake);
 
 int ioSetIdSeq(uint8_t idseq);

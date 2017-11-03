@@ -8,10 +8,6 @@
 #ifndef _LOG_MANAGER_COMMON_H
 #define _LOG_MANAGER_COMMON_H
 
-#define SINGLE_LOG_SIZE    256
-#define LOG_BUFFER_SIZE    ( 16 * 1024)
-#define MAX_BUFFER_SIZE    (256 * 1024)
-
 #define _1H                              ( 1 * 60 * 60) // 1 Hour
 #define _2H                              ( 2 * 60 * 60) // 2 Hour
 #define _4H                              ( 4 * 60 * 60) // 4 Hour
@@ -26,6 +22,16 @@
 #define _24D                        (24 * 24 * 60 * 60) // 24 Day
 #define _32D                        (32 * 24 * 60 * 60) // 32 Day
 
+#define _1KB                                (   1 * 1024)  // 1KB
+#define _2KB                                (   2 * 1024)  // 2KB
+#define _4KB                                (   4 * 1024)  // 4KB
+#define _8KB                                (   8 * 1024)  // 8KB
+#define _16KB                               (  16 * 1024)  // 16KB
+#define _32KB                               (  32 * 1024)  // 32KB
+#define _64KB                               (  64 * 1024)  // 64KB
+#define _128KB                              ( 128 * 1024)  // 128KB
+#define _256KB                              ( 256 * 1024)  // 256KB
+#define _512KB                              ( 512 * 1024)  // 512KB
 #define _1MB                         (   1 * 1024 * 1024)  // 1MB
 #define _2MB                         (   2 * 1024 * 1024)  // 2MB
 #define _4MB                         (   4 * 1024 * 1024)  // 4MB
@@ -41,18 +47,23 @@
 #define _4GB                     (4 * 1024 * 1024 * 1024)  // 4GB
 #define _8GB                     (8 * 1024 * 1024 * 1024)  // 8GB
 
-#define MAX_LOG_FILE_RETENTION_TIME     _1D
-#define MAX_LOG_FILE_SIZE               _16MB
-#define MAX_LOG_FILE_SPACE              _1GB
+#define DIRECTORY_BUF_SIZE  256
+#define LOG_MEM_SIZE        _1MB       // 1MB share memory
 
-#define MAX_LOG_FILE_WRITE_COUNT    (MAX_LOG_FILE_SIZE / LOG_BUFFER_SIZE)
-#define NO_ENOUGH_LOG_SPACE_WARNING (MAX_LOG_FILE_SPACE * 0.9)
+#include <log_manager/log_manager_shm_structure.h>
 
-#define MSG_LEVEL_INFO   0x35
-#define MSG_LEVEL_WARN   0x3A
-#define MSG_LEVEL_ERROR  0x45
-#define MSG_LEVEL_NONE   0x4A
-#define MSG_DISPLAY_LEVEL  MSG_LEVEL_INFO
-#define MSG_LOGGING_LEVEL  MSG_LEVEL_INFO
+namespace fst_log {
+
+enum MessageLevel {
+    MSG_LEVEL_LOG   = 0,
+    MSG_LEVEL_INFO  = 1,
+    MSG_LEVEL_WARN  = 2,
+    MSG_LEVEL_ERROR = 3,
+    MSG_LEVEL_NONE  = 4,
+};
+
+
+}
+
 
 #endif

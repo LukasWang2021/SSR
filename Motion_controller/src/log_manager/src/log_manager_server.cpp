@@ -17,92 +17,144 @@
 #include <iostream>
 #include <comm_interface/comm_interface.h>
 #include <log_manager_version.h>
-#include <log_manager/log_manager_logger.h>
 #include <log_manager/log_manager_server.h>
+
+#include <stdlib.h>  
+#include <sys/mman.h>  
+#include <fcntl.h>
+#include <sys/stat.h> 
+#include <sys/file.h> 
 
 using std::string;
 using std::vector;
 using std::cout;
 using std::endl;
 
+using fst_log::ControlArea;
+using fst_log::LogFlag;
+using fst_log::LogItem;
+using fst_log::LogControlBlock;
+using fst_log::MSG_LEVEL_LOG;
+using fst_log::MSG_LEVEL_INFO;
+using fst_log::MSG_LEVEL_WARN;
+using fst_log::MSG_LEVEL_ERROR;
 
 // global running flag:
 //      true->running
 //      false->quit
 bool g_running = true;
 
-// log structure queue
-vector<fst_log::LogServerStruct*>   g_log_structure_ptr_queue;
 
-// lock on g_log_structure_ptr_queue
-pthread_mutex_t g_log_structure_ptr_queue_mutex;
+ControlArea *ctrl_area;
+LogFlag     *flag_area;
+LogItem     *text_area;
+
+LogControlBlock    g_server_log;
+LogControlBlock    *g_lcb_ptr_queue[MAX_LOG_CONTROL_BLOCK];
+
+LogItem g_item_pool[SERVER_ITEM_POOL_SIZE];
+int     pool_in, pool_out;
+
+// protect g_item_pool
+pthread_mutex_t g_item_pool_mutex;
+
+void log(const char *format, ...)
+{
+    char buf[LOG_ITEM_SIZE];
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    int len = sprintf(buf, "[  LOG][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+
+    va_list vp;
+    va_start(vp, format);
+    len = len + vsnprintf(buf + len, LOG_ITEM_SIZE - len - 1, format, vp);
+    va_end(vp);
+    
+    if (len > LOG_ITEM_SIZE - 2)
+        len = LOG_ITEM_SIZE - 2;
+    
+    buf[len]     = '\n';
+    buf[len + 1] = '\0';
+    
+    //printf("\033[0m%s", buf);
+    if (g_server_log.working)
+        g_server_log.file_handle << buf;
+}
 
 void info(const char *format, ...)
 {
-    char buf[SINGLE_LOG_SIZE];
+    char buf[LOG_ITEM_SIZE];
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
     int len = sprintf(buf, "[ INFO][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
-    len = len + vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
+    len = len + vsnprintf(buf + len, LOG_ITEM_SIZE - len - 1, format, vp);
     va_end(vp);
     
-    if (len > SINGLE_LOG_SIZE - 2)
-        len = SINGLE_LOG_SIZE - 2;
+    if (len > LOG_ITEM_SIZE - 2)
+        len = LOG_ITEM_SIZE - 2;
     
     buf[len]     = '\n';
     buf[len + 1] = '\0';
     
-    printf("%s", buf);
+    printf("\033[0m%s", buf);
+    if (g_server_log.working)
+        g_server_log.file_handle << buf;
 }
 
 void warn(const char *format, ...)
 {
-    char buf[SINGLE_LOG_SIZE] = {0};
+    char buf[LOG_ITEM_SIZE] = {0};
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
     int len = sprintf(buf, "[ WARN][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
-    len = len + vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
+    len = len + vsnprintf(buf + len, LOG_ITEM_SIZE - len - 1, format, vp);
     va_end(vp);
     
-    if (len > SINGLE_LOG_SIZE - 2)
-        len = SINGLE_LOG_SIZE - 2;
+    if (len > LOG_ITEM_SIZE - 2)
+        len = LOG_ITEM_SIZE - 2;
     
     buf[len] = '\n';
     buf[len + 1] = '\0';
     
     printf("\033[33m%s\033[0m", buf);
+    if (g_server_log.working)
+        g_server_log.file_handle << buf;
 }
 
 void error(const char *format, ...)
 {
-    char buf[SINGLE_LOG_SIZE] = {0};
+    char buf[LOG_ITEM_SIZE] = {0};
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
     int len = sprintf(buf, "[ERROR][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
-    len += vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
+    len += vsnprintf(buf + len, LOG_ITEM_SIZE - len - 1, format, vp);
     va_end(vp);
     
-    if (len > SINGLE_LOG_SIZE - 2)
-        len = SINGLE_LOG_SIZE - 2;
+    if (len > LOG_ITEM_SIZE - 2)
+        len = LOG_ITEM_SIZE - 2;
     
     buf[len] = '\n';
     buf[len + 1] = '\0';
     
     printf("\033[31m%s\033[0m", buf);
+    if (g_server_log.working)
+        g_server_log.file_handle << buf;
 }
 
 uintmax_t totalLogFileSize(boost::filesystem::path &path)
 {
     uintmax_t total = 0;
+    int reg_cnt = 0;
+    int oth_cnt = 0;
 
     boost::filesystem::directory_iterator beg_iter(path);
     boost::filesystem::directory_iterator end_iter;
@@ -110,14 +162,19 @@ uintmax_t totalLogFileSize(boost::filesystem::path &path)
     for (; beg_iter != end_iter; ++beg_iter) {
         if (boost::filesystem::is_regular_file(*beg_iter)) {
             total += file_size(*beg_iter);
+            reg_cnt++;
+        }
+        else {
+            oth_cnt++;
         }
     }
 
-    // info("total log file size: %d", total);
+    log("%d regular files, %d other files", reg_cnt, oth_cnt);
+    log("Total log file size: %d", total);
     return total;
 }
 
-uintmax_t delOldestLogFile(boost::filesystem::path &path)
+bool delOldestLogFile(boost::filesystem::path &path)
 {
     time_t old_time = 0x7FFFFFFF;
 
@@ -129,16 +186,19 @@ uintmax_t delOldestLogFile(boost::filesystem::path &path)
     for (; beg_iter != end_iter; ++beg_iter) {
         if (boost::filesystem::is_regular_file(*beg_iter)) {
             if (last_write_time(*beg_iter) < old_time) {
+
                 int i = 0;
                 bool in_use = false;
                 
                 tmp = *beg_iter;
                 string name = tmp.string();
 
-                while (i < g_log_structure_ptr_queue.size()) {
-                    if (name == g_log_structure_ptr_queue[i]->log_file_name) {
-                        in_use = true;
-                        break;
+                while (i < MAX_LOG_CONTROL_BLOCK) {
+                    if (NULL != g_lcb_ptr_queue[i]) {
+                        if (name == g_lcb_ptr_queue[i]->file_name) {
+                            in_use = true;
+                            break;
+                        }
                     }
 
                     i++;
@@ -153,13 +213,18 @@ uintmax_t delOldestLogFile(boost::filesystem::path &path)
     }
 
     if (old_time < 0x7FFFFFFF) {
-        uintmax_t size = file_size(old_file);
+        double size_in_MB = file_size(old_file) / 1024 / 1024;
+
         remove(old_file);
-        warn("delete log file: %s", old_file.c_str());
-        return size;
+        
+        log("Delete log file: %s", old_file.c_str());
+        log("Free %.1fMB of log space", size_in_MB);
+
+        return true;
     }
     else {
-        return 0;
+        error("Fail to find out the oldest log file");
+        return false;
     }
 }
 
@@ -169,390 +234,469 @@ void checkLogSpace(boost::filesystem::path &path)
         warn("Log space is full, please clear useless log files manually.");
         warn("Otherwise, the oldest log file will be deleted automatically.");
 
-        if (totalLogFileSize(path) > MAX_LOG_FILE_SPACE)
-            while (totalLogFileSize(path) > NO_ENOUGH_LOG_SPACE_WARNING)
-                delOldestLogFile(path);
+        if (totalLogFileSize(path) > MAX_LOG_FILE_SPACE) {
+            while (totalLogFileSize(path) > NO_ENOUGH_LOG_SPACE_WARNING) {
+                if (!delOldestLogFile(path)) break;
+            }
+
+            if (totalLogFileSize(path) > NO_ENOUGH_LOG_SPACE_WARNING) {
+                error("Error while checking log space.");
+                error(" -No enough space and fail to delete old files in log space");
+            }
+        }
     }
 }
 
-bool buildLogStructure(const char *channel_name)
+char buildLogControlBlock(string &name)
 {
-    LOCK;
+    info(" -Constructing log-control-block ...");
 
-    for (int i = 0; i < g_log_structure_ptr_queue.size(); ++i) {
-        if (g_log_structure_ptr_queue[i]->channel_name == channel_name) {
-            UNLOCK;
-            error(" -Channel already exist, cannot construct a communication interface with name '%s'");        
-            return false;
-        }
-    }
+    for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i) {
+        if (NULL == g_lcb_ptr_queue[i]) {
+            g_lcb_ptr_queue[i] = new fst_log::LogControlBlock();
+            
+            if (NULL != g_lcb_ptr_queue[i]) {
+                g_lcb_ptr_queue[i]->id      = i + 1;
+                g_lcb_ptr_queue[i]->working = false;
+                g_lcb_ptr_queue[i]->name    = name;
 
-    UNLOCK;
-
-    info(" -Constructing log structure ...");
-
-    char buf[DIRECTOTY_BUF_SIZE] = {0};
-    int length = readlink("/proc/self/exe", buf, sizeof(buf));
+                char buf[DIRECTORY_BUF_SIZE] = {0};
+                int length = readlink("/proc/self/exe", buf, sizeof(buf));
     
-    if (length > 0 && length < sizeof(buf)) {
-        boost::filesystem::path path(buf);
-        path = path.parent_path().parent_path().parent_path();
-        string file_name = path.string() + "/log/";
+                if (length > 0 && length < sizeof(buf)) {
+                    boost::filesystem::path path(buf);
+                    path = path.parent_path().parent_path().parent_path();
+                    path = path / "/log/";
+                    string file_name = path.string();
                 
-        memset(buf, 0, sizeof(buf));
+                    memset(buf, 0, sizeof(buf));
         
-        time_t time_now = time(NULL);
-        tm *local = localtime(&time_now);
-        strftime(buf, 64, "_%Y_%m_%d_%H_%M_%S", local);
-        file_name = file_name + channel_name + buf + ".log";
+                    time_t time_now = time(NULL);
+                    tm *local = localtime(&time_now);
+                    strftime(buf, 64, "_%Y%m%d%H%M%S", local);
+                    file_name = file_name + name + buf + ".log";
     
-        path = path / "/log/";
-        checkLogSpace(path);
+                    checkLogSpace(path);
 
-        fst_log::LogServerStruct *tmp_log_struct = NULL;
-        try {
-            tmp_log_struct = new fst_log::LogServerStruct;
-        }
-        catch (std::exception exc) {
-            error(" -Constructing log structure exception: %s", exc.what());
-            delete tmp_log_struct;
+                    g_lcb_ptr_queue[i]->file_name = file_name;
+                    g_lcb_ptr_queue[i]->character_cnt = 0;
+                    g_lcb_ptr_queue[i]->file_create_time = time_now;
+                    g_lcb_ptr_queue[i]->file_handle.open(file_name.c_str(), std::ios::app);
+                    g_lcb_ptr_queue[i]->serial_num = 0;
 
-            return false;
-        }
-        
-        try {
-            tmp_log_struct->comm_interface_ptr = new fst_comm_interface::CommInterface;
-        }
-        catch (std::exception exc) {
-            error(" -Constructing communication interface exception: %s", exc.what());
+                    if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
+                        g_lcb_ptr_queue[i]->working = true;
+                        lockFile(g_lcb_ptr_queue[i]->file_name);
+                        info(" -Success!");
+                        return g_lcb_ptr_queue[i]->id;
+                    }
+                    else {
+                        error(" -Fail to open a log file");
+                        delete g_lcb_ptr_queue[i];
+                        g_lcb_ptr_queue[i] = NULL;
 
-            delete tmp_log_struct->comm_interface_ptr;
-            delete tmp_log_struct;
-
-            return false;
-        }
-
-        if (tmp_log_struct->comm_interface_ptr->createChannel(COMM_REP, COMM_IPC, channel_name) != 0) {
-            error(" -Cannot setup %s server", channel_name);
-
-            delete tmp_log_struct->comm_interface_ptr;
-            delete tmp_log_struct;
-
-            return false;
-        }
-
-        tmp_log_struct->channel_name = channel_name;
-        tmp_log_struct->log_file_name = file_name;
-        tmp_log_struct->open_flag = true;
-        tmp_log_struct->buffer_pool.reserve(10);
-        tmp_log_struct->file_handle.open(file_name.c_str(), std::ios::app);
-        tmp_log_struct->file_write_cnt = 0;
-        tmp_log_struct->file_create_time = time_now;
-
-        if (tmp_log_struct->file_handle.is_open()) {
-            LOCK;
-            g_log_structure_ptr_queue.push_back(tmp_log_struct);
-            UNLOCK;
-            
-            info(" -Success!");
-            return true;
-        }
-        else {
-            error(" -Cannot construct log file");
-
-            delete tmp_log_struct->comm_interface_ptr;
-            delete tmp_log_struct;
-
-            return false;
-        }
-    }
-    else {
-        error(" -Cannot construct log file");
-        return false;
-    }
-}
-
-void deleteLogStructure(const char *channel_name) {
-    LOCK;
-
-    for (int i = 0; i < g_log_structure_ptr_queue.size(); ++i) {
-        if (g_log_structure_ptr_queue[i]->channel_name == channel_name) {
-            vector<char*> segments;
-            
-            info("Delete log structure: '%s'", g_log_structure_ptr_queue[i]->channel_name.c_str());
-            
-            segments.assign(g_log_structure_ptr_queue[i]->buffer_pool.begin(),
-                            g_log_structure_ptr_queue[i]->buffer_pool.end());
-            g_log_structure_ptr_queue[i]->buffer_pool.clear();
-            g_log_structure_ptr_queue[i]->open_flag = false;
-            
-            std::ofstream &handle = g_log_structure_ptr_queue[i]->file_handle;
-            
-            UNLOCK;
-            
-            do_io(handle, segments);
-            
-            LOCK;
-
-            g_log_structure_ptr_queue[i]->file_handle.close();
-            delete g_log_structure_ptr_queue[i]->comm_interface_ptr;
-            delete g_log_structure_ptr_queue[i];
-            g_log_structure_ptr_queue.erase(g_log_structure_ptr_queue.begin() + i);
-            
-            UNLOCK;
-            
-            break;
-        }
-    }
-
-    UNLOCK;
-    
-    info(" -Success!");
-}
-
-void do_io(std::ofstream& handle, vector<char*> segments)
-{
-    for (int cnt = 0; cnt < segments.size(); ++cnt) {
-        handle << segments[cnt];
-        delete[] segments[cnt];
-    }
-}
-
-void public_thread(void) {
-    fst_comm_interface::CommInterface server;
-    
-    info("Constructing public server ...");
-    
-    if (server.createChannel(COMM_REP, COMM_IPC, "log_public") != 0) {
-        error(" -Cannot setup public server.");
-        g_running = false;
-    }
-
-    info(" -Success!");
-
-    char buffer[DIRECTOTY_BUF_SIZE] = {0};
-    string channel_to_close = "";
-    
-    while (g_running) {
-        usleep(50 * 1000);
-        
-        memset(buffer, 0, sizeof(buffer));
-        
-        if (server.recv(buffer, sizeof(buffer), COMM_DONTWAIT) == 0) {
-            info("A new log request received, name='%s'", buffer);
-            
-            if (buildLogStructure(buffer)) {
-                if (server.send(buffer, sizeof(buffer), COMM_DONTWAIT) == 0) {
-                    info(" -Log structure ready, logging '%s'", buffer);
+                        return 0;
+                    }
                 }
                 else {
-                    deleteLogStructure(buffer);
-                    error(" -Lost communication with remote log client, the log structure removed.");
+                    error(" -Fail to read link");
+                    delete g_lcb_ptr_queue[i];
+                    g_lcb_ptr_queue[i] = NULL;
+
+                    return 0;
                 }
             }
             else {
-                error(" -Cannot construct log structure");
+                error(" -Fail to construct log-control-block");
+                log(" -Get a NULL pointer while new a LCB");
             }
         }
+        else {
+            continue;
+        }
+    }
 
-        LOCK;
+    error(" -No LCB available ...");
+    return 0;
+}
 
-        for (int i = 0; i < g_log_structure_ptr_queue.size(); ++i) {
-            if (g_log_structure_ptr_queue[i]->open_flag == false) {
-                channel_to_close = g_log_structure_ptr_queue[i]->channel_name;
-                break;
+string getNameFromID(char id)
+{
+    string name;
+
+    if (NULL != g_lcb_ptr_queue[id - 1])
+        name = g_lcb_ptr_queue[id - 1]->name;
+    else {
+        log("Fail to get channel name from ID=%d", id);
+        log("Could not find corresponding LCB from this ID");
+        name = "";
+    }
+
+    return name;
+}
+
+void public_thread(void)
+{
+    log("Constructing log-in server ...");
+
+    ctrl_area->register_block.flag_out  = false;
+    ctrl_area->register_block.id        = 0x00;
+
+    info(" -Success!");
+
+    char buffer[DIRECTORY_BUF_SIZE] = {0};
+   
+    info("Waiting for Log-in request ...");
+
+    int loop = 0;
+    int cnt_down = 10;
+
+    while (g_running) {
+        if (true == ctrl_area->register_block.flag_in) {
+            ctrl_area->register_block.flag_in   = false;
+
+            if (0 == ctrl_area->register_block.id) {
+                // Log-in request
+                warn("Log-in request received, client name='%s'", ctrl_area->register_block.name);
+                string name = ctrl_area->register_block.name;
+                ctrl_area->register_block.id    = buildLogControlBlock(name);
+                info(" -ID=%d assigned to the client", ctrl_area->register_block.id);
+                ctrl_area->register_block.flag_out  = true;
+            }
+            else {
+                // Log-out request
+                warn("Log-out request received, id=%d, client name='%s'",
+                     ctrl_area->register_block.id, getNameFromID(ctrl_area->register_block.id).c_str());
+                
+                if (NULL != g_lcb_ptr_queue[ctrl_area->register_block.id - 1]) {
+                    g_lcb_ptr_queue[ctrl_area->register_block.id - 1]->working    = false;
+                    cnt_down = 10;
+                    log("The corresponding LCB will be deleted in about 10 seconds");
+                    ctrl_area->register_block.flag_out  = true;
+                }
             }
         }
+        else {
+            usleep(20 * 1000);
+        }
 
-        UNLOCK;
+        loop++;
+        if (loop > 50) {
+            loop = 0;
+            cnt_down--;
 
-        if (channel_to_close != "") {
-            deleteLogStructure(channel_to_close.c_str());
-            channel_to_close = "";
+            if (cnt_down == 0) {
+                cnt_down = 10;
+
+                for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i) {
+                    if (g_lcb_ptr_queue[i] != NULL) {
+                        if (g_lcb_ptr_queue[i]->working == false) {
+                            warn("Free useless LCB, id = %d, channel-name=%s",
+                                 g_lcb_ptr_queue[i]->id, g_lcb_ptr_queue[i]->name.c_str());
+
+                            if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
+                                unlockFile(g_lcb_ptr_queue[i]->file_name);
+                                g_lcb_ptr_queue[i]->file_handle.close();
+                            }
+                        
+                            delete g_lcb_ptr_queue[i];
+                            g_lcb_ptr_queue[i] = NULL;
+                        }
+                    }
+                }
+            }
+
         }
     }  // while (g_running)
 
-    warn(" -Public thread terminated.");
+    log("Public-thread terminated.");
 }
 
-void receive_thread(void) {
-    char recv_buffer[LOG_BUFFER_SIZE] = {0};
+void receive_thread(void)
+{
+    log("Receive-thread running ...");
+
+    int out, next, cnt;
+    char buf[LOG_ITEM_SIZE];
 
     while (g_running) {
-        usleep(5 * 1000);
+        out = ctrl_area->index_out;
+        
+        if (flag_area[out] == ITEM_INUSE) {
+            next = out + 1;
+            if (next == LOG_ITEM_COUNT) next = 0;
 
-        LOCK;
-
-        for (int i = 0; i < g_log_structure_ptr_queue.size(); ++i) {
-            if (g_log_structure_ptr_queue[i]->open_flag == false) {
-                continue;
-            }
-
-            memset(recv_buffer, 0, sizeof(recv_buffer));
-            
-            if (g_log_structure_ptr_queue[i]->comm_interface_ptr->recv(recv_buffer, sizeof(recv_buffer), COMM_DONTWAIT) == 0) {
-                char *buf = new char[LOG_BUFFER_SIZE];
-                memcpy(buf, recv_buffer, LOG_BUFFER_SIZE);
-
-                if (buf[0] == '\33' && buf[6] == '\33') {
-                    if (buf[1] == 'C' && buf[2] == 'L' && buf[3] == 'O' && buf[4] == 'S' && buf[5] == 'E' ) {
-                        memset(buf, 0, sizeof(buf));
-                        buf[0] = 'O';   buf[1] = 'K';
-                        
-                        if (g_log_structure_ptr_queue[i]->comm_interface_ptr->send(buf, sizeof(buf), COMM_DONTWAIT) != 0)
-                            error("Fail to response to client log-out request");
-                        
-                        g_log_structure_ptr_queue[i]->open_flag = false;
-                        
-                        delete[] buf;
-                        
-                        continue;
-                    }
+            if (true == ctrl_area->index_out.compare_exchange_weak(out, next)) {
+                pthread_mutex_lock(&g_item_pool_mutex);
+                if ((pool_in + 1) % SERVER_ITEM_POOL_SIZE != pool_out) {
+                    // item pool has space for new item
+                    g_item_pool[pool_in] = text_area[out];
+                    pool_in = (pool_in + 1) % SERVER_ITEM_POOL_SIZE;
+                    cnt++;
                 }
+                pthread_mutex_unlock(&g_item_pool_mutex);
 
-                g_log_structure_ptr_queue[i]->buffer_pool.push_back(buf);
-
-                char tmp[SINGLE_LOG_SIZE] = {0};
-                tmp[0] = 'O';
-                tmp[1] = 'K';
-
-                if (g_log_structure_ptr_queue[i]->comm_interface_ptr->send(tmp, sizeof(tmp), COMM_DONTWAIT) != 0) {
-                    error("Fail to response to client '%s' received-flag",
-                          g_log_structure_ptr_queue[i]->channel_name.c_str());
-                }
+                flag_area[out] = ITEM_FREE;
             }
         }
-
-        UNLOCK;
+        else {
+            // log("Get %d items from share-mem", cnt);
+            cnt = 0;
+            usleep(10 * 1000);
+        }
     }
 
-    warn(" -Receive thread terminated.");
+    log("Receive-thread terminated.");
 }
 
 
 void io_thread(void)
 {
-    bool no_io_task = true;
+    log("IO-thread running ...");
+    
+    int len  = 0;
+    int loop = 0;
+    char buf[LOG_ITEM_SIZE];
 
-    while(g_running) {
-        no_io_task = true;
-        
-        LOCK;
+    LogItem items[100];
+    int num_of_item;
 
-        for (int i = 0; i < g_log_structure_ptr_queue.size(); ++i) {
-            if (g_log_structure_ptr_queue[i]->buffer_pool.size() > 0) {
-                vector<char*> segments;
-                std::ofstream &handle = g_log_structure_ptr_queue[i]->file_handle;
-                
-                segments.assign(g_log_structure_ptr_queue[i]->buffer_pool.begin(),
-                                g_log_structure_ptr_queue[i]->buffer_pool.end());
-                g_log_structure_ptr_queue[i]->buffer_pool.clear();
-                
-                UNLOCK;
-                
-                do_io(handle, segments);
-                    
-                time_t time_now = time(NULL);
-                g_log_structure_ptr_queue[i]->file_write_cnt += segments.size();
-                
-                if (g_log_structure_ptr_queue[i]->file_write_cnt > MAX_LOG_FILE_WRITE_COUNT ||
-                    time_now - g_log_structure_ptr_queue[i]->file_create_time > MAX_LOG_FILE_RETENTION_TIME )
+    while (g_running) {
+        if (pool_in != pool_out) {
+            // something need to do
+            num_of_item = 0;
+            pthread_mutex_lock(&g_item_pool_mutex);
+            
+            while (pool_in != pool_out) {
+                items[num_of_item] = g_item_pool[pool_out];
+                num_of_item++;
+                pool_out = (pool_out + 1) % SERVER_ITEM_POOL_SIZE;
+
+                if (num_of_item > 99)  break;
+            }
+
+            pthread_mutex_unlock(&g_item_pool_mutex);
+
+            // log("Get %d items from item-pool", num_of_item);
+
+            for (int i = 0; i < num_of_item; ++i) {
+                memset(buf, 0, sizeof(buf));
+
+                switch (items[i].level)
                 {
-                    char buf[DIRECTOTY_BUF_SIZE] = {0};
-                    
-                    
-                    readlink("/proc/self/exe", buf, sizeof(buf));
-                    
-                    boost::filesystem::path path(buf);
-                    path = path.parent_path().parent_path().parent_path();
-                    string file = path.string() + "/log/";
-                
-                    memset(buf, 0, sizeof(buf));
-                    
-                    tm *local = localtime(&time_now);
-                    strftime(buf, 64, "_%Y_%m_%d_%H_%M_%S", local);
-                    
-                    file = file + g_log_structure_ptr_queue[i]->channel_name + buf + ".log";
+                    case MSG_LEVEL_LOG:
+                        len = sprintf(buf, "[  LOG][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
+                        break;
 
-                    path = path / "/log/";
-                    checkLogSpace(path);
+                    case MSG_LEVEL_INFO:
+                        len = sprintf(buf, "[ INFO][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
+                        break;
 
-                    g_log_structure_ptr_queue[i]->file_handle.close();
-                    g_log_structure_ptr_queue[i]->log_file_name = file;
-                    g_log_structure_ptr_queue[i]->file_handle.open(file.c_str(), std::ios::app);
-                    
-                    if (g_log_structure_ptr_queue[i]->file_handle.is_open()) {
-                        g_log_structure_ptr_queue[i]->file_create_time = time_now;
-                        g_log_structure_ptr_queue[i]->file_write_cnt = 0;
-                    }
+                    case MSG_LEVEL_WARN:
+                        len = sprintf(buf, "[ WARN][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
+                        break;
+
+                    case MSG_LEVEL_ERROR:
+                        len = sprintf(buf, "[ERROR][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
+                        break;
+
+                    default:
+                        len = sprintf(buf, "[OTHER][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
                 }
 
-                no_io_task = false;
-                break;
+                len = len + sprintf(buf + len, "%s", items[i].text);
+
+                if (NULL != g_lcb_ptr_queue[items[i].id - 1]) {
+                    LogControlBlock *plcb = g_lcb_ptr_queue[items[i].id - 1];
+
+                    if (plcb->serial_num + 1 != items[i].number) {
+                        // Some log items were lost beyond this item
+                        int num;
+
+                        if (items[i].number > plcb->serial_num + 1)
+                            num = items[i].number - (plcb->serial_num + 1);
+                        else
+                            num = 65536 + items[i].number - (plcb->serial_num + 1);
+
+                        char tmp[LOG_ITEM_SIZE] = {0};
+                        int tmp_len = sprintf(tmp, "[  LOG][%ld.%6ld]",
+                                        items[i].stamp.tv_sec, items[i].stamp.tv_usec);
+                        tmp_len = tmp_len + sprintf(tmp + tmp_len, "<<<%d items have been lost here>>>\n", num);
+                        
+                        plcb->file_handle << tmp;
+                        plcb->character_cnt += len;
+                    }
+
+                    plcb->file_handle << buf;
+                    plcb->character_cnt += len;
+                    plcb->serial_num = items[i].number;
+                }
+                else {
+                    log("Could not find corresponding LCB from ID=%d", items[i].id);
+                    log("It may caused by unregistered client or abnormal aborts");
+                }
             }
-            /*
-            while (g_log_structure_ptr_queue[i]->buffer_pool.size() > 0) {
-                char *segment = g_log_structure_ptr_queue[i]->buffer_pool.front();
-                g_log_structure_ptr_queue[i]->buffer_pool.erase(g_log_structure_ptr_queue[i]->buffer_pool.begin());
-                g_log_structure_ptr_queue[i]->file_handle << segment;
-                delete[] segment;
-            }
-            */
         }
-        if (no_io_task) {
-            UNLOCK;
+        else {
             usleep(50 * 1000);
         }
-    }  // while (g_running)
 
-    usleep(200 * 1000);
-    info(" -IO thread is logging the logs in buffer pool.");
+        loop++;
 
-    LOCK;
+        if (loop > 200) {
+            loop = 0;
+         
+            for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i)
+                if (g_lcb_ptr_queue[i] != NULL)
+                    g_lcb_ptr_queue[i]->file_handle.flush();
 
-    for (int i = 0; i < g_log_structure_ptr_queue.size(); ++i) {
-        while (g_log_structure_ptr_queue[i]->buffer_pool.size() > 0) {
-                char *segment = g_log_structure_ptr_queue[i]->buffer_pool.front();
-                g_log_structure_ptr_queue[i]->buffer_pool.erase(g_log_structure_ptr_queue[i]->buffer_pool.begin());
-                g_log_structure_ptr_queue[i]->file_handle << segment;
-                delete[] segment;
+            for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i) {
+                if (g_lcb_ptr_queue[i] != NULL) {
+                    time_t time_now = time(NULL);
+                    
+                    if (g_lcb_ptr_queue[i]->character_cnt > MAX_LOG_FILE_SIZE || 
+                        time_now - g_lcb_ptr_queue[i]->file_create_time > MAX_LOG_FILE_RETENTION_TIME)
+                    {
+                        log("Log file reach its limit, open a new file automatically ...");
+                        log(" -Channel=%s, ID=%d", g_lcb_ptr_queue[i]->name.c_str(), g_lcb_ptr_queue[i]->id);
+                        log(" -File:%s", g_lcb_ptr_queue[i]->file_name.c_str());
+
+                        char buf[DIRECTORY_BUF_SIZE] = {0};
+
+                        readlink("/proc/self/exe", buf, sizeof(buf));
+
+                        boost::filesystem::path path(buf);
+                        path = path.parent_path().parent_path().parent_path();
+                        path = path / "/log/";
+                        string file_name = path.string();
+
+                        memset(buf, 0, sizeof(buf));
+
+                        tm *local = localtime(&time_now);
+                        strftime(buf, 64, "_%Y%m%d%H%M%S", local);
+                        file_name = file_name + g_lcb_ptr_queue[i]->name + buf + ".log";
+
+                        checkLogSpace(path);
+
+                        unlockFile(g_lcb_ptr_queue[i]->file_name);
+
+                        g_lcb_ptr_queue[i]->file_name = file_name;
+                        g_lcb_ptr_queue[i]->character_cnt = 0;
+                        g_lcb_ptr_queue[i]->file_create_time = time_now;
+                        g_lcb_ptr_queue[i]->file_handle.close();
+                        g_lcb_ptr_queue[i]->file_handle.open(file_name.c_str(), std::ios::app);
+
+                        if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
+                            lockFile(g_lcb_ptr_queue[i]->file_name);
+                            log(" -Success!");
+                        }
+                        else {
+                            error(" -Fail to open log file");
+                            delete g_lcb_ptr_queue[i];
+                            g_lcb_ptr_queue[i] = NULL;
+                        }
+                    }
+                }
+            }
         }
-        // g_log_structure_ptr_queue[i]->file_handle.close();
     }
 
-    UNLOCK;
+    while (pool_in != pool_out) {
+        // write items to their files before exit
+        memset(buf, 0, sizeof(buf));
 
-    while (g_log_structure_ptr_queue.size() > 0) {
-        deleteLogStructure(g_log_structure_ptr_queue.front()->channel_name.c_str());
+        switch (g_item_pool[pool_out].level)
+        {
+            case MSG_LEVEL_LOG:
+                len = sprintf(buf, "[  LOG][%ld.%6ld]",
+                              g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
+                break;
+
+            case MSG_LEVEL_INFO:
+                len = sprintf(buf, "[ INFO][%ld.%6ld]",
+                              g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
+                break;
+
+            case MSG_LEVEL_WARN:
+                len = sprintf(buf, "[ WARN][%ld.%6ld]",
+                              g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
+                break;
+
+            case MSG_LEVEL_ERROR:
+                len = sprintf(buf, "[ERROR][%ld.%6ld]",
+                              g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
+                break;
+
+            default:
+                len = sprintf(buf, "[OTHER][%ld.%6ld]",
+                              g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
+        }
+
+        len = len + sprintf(buf + len, "%s", g_item_pool[pool_out].text);
+
+        if (NULL != g_lcb_ptr_queue[g_item_pool[pool_out].id - 1]) {
+            LogControlBlock *plcb = g_lcb_ptr_queue[g_item_pool[pool_out].id - 1];
+
+            if (plcb->serial_num + 1 != g_item_pool[pool_out].number) {
+                // Some log items were lost beyond this item
+                int num;
+
+                if (g_item_pool[pool_out].number > plcb->serial_num + 1)
+                    num = g_item_pool[pool_out].number - (plcb->serial_num + 1);
+                else
+                    num = 65536 + g_item_pool[pool_out].number - (plcb->serial_num + 1);
+
+                char tmp[LOG_ITEM_SIZE] = {0};
+                int tmp_len = sprintf(tmp, "[  LOG][%ld.%6ld]",
+                                      g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
+                tmp_len = tmp_len + sprintf(tmp + tmp_len, "<<<%d items have been lost here>>>\n", num);
+
+                plcb->file_handle << tmp;
+                plcb->character_cnt += tmp_len;
+            }
+
+            plcb->file_handle << buf;
+            plcb->character_cnt += len;
+            plcb->serial_num = g_item_pool[pool_out].number;
+        }
+        else {
+            log("Could not find corresponding LCB from ID=%d", g_item_pool[pool_out].id);
+            log("It may caused by unregistered client or abnormal aborts");
+        }
+        
+        pool_out = (pool_out + 1) % SERVER_ITEM_POOL_SIZE;
     }
+    /*
+    for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i)
+        if (g_lcb_ptr_queue[i] != NULL)
+            printf("id=%d, char=%ld\n", i + 1, g_lcb_ptr_queue[i]->character_cnt);
+    */
+    
+    log("IO-thread terminated.");
+}
 
-    warn(" -IO thread terminated.");
+void buildLogControlArea(ControlArea *ptr)
+{
+    new (ptr) ControlArea;
 }
 
 static void sigintHandle(int num)
 {
-    warn("Interrupt request catched.");
+    log("Interrupt request catched.");
+    
     g_running = false;
     
-    usleep(500 * 1000);
+    usleep(50 * 1000);
 }
 
-uintmax_t max(uintmax_t a, uintmax_t b)
+int initLogSpace(void)
 {
-    return a > b ? a : b;
-}
-
-int main(int argc, char **argv)
-{
-    info("Log Manager Version %d.%d.%d",  log_manager_VERSION_MAJOR,
-                                            log_manager_VERSION_MINOR,
-                                            log_manager_VERSION_PATCH);
-
-    signal(SIGINT, sigintHandle);
-    g_log_structure_ptr_queue.reserve(32);
-    pthread_mutex_init(&g_log_structure_ptr_queue_mutex, NULL);
-    
-    char buf[DIRECTOTY_BUF_SIZE] = {0};
+    char buf[DIRECTORY_BUF_SIZE] = {0};
     int length = readlink("/proc/self/exe", buf, sizeof(buf));
 
     if (length > 0 && length < sizeof(buf)) {
@@ -567,11 +711,9 @@ int main(int argc, char **argv)
             warn("log directory not exist ... created");
         }
 
-        uintmax_t used = totalLogFileSize(path);
-        info("Log space usage (used / total): %dMB / %dMB",
-             used / 1024 / 1024,
-             max(MAX_LOG_FILE_SPACE, used) / 1024 / 1024
-        );
+        double used = (double)totalLogFileSize(path) / 1024 / 1024;
+        int total   = MAX_LOG_FILE_SPACE / 1024 / 1024;
+        info("Log space usage (used / total): %.1fMB / %dMB", used, total);
         
         checkLogSpace(path);
         
@@ -579,32 +721,234 @@ int main(int argc, char **argv)
             used = totalLogFileSize(path);
             info("Log space usage (used / total): %dMB / %dMB",
                  used / 1024 / 1024,
-                 max(MAX_LOG_FILE_SPACE, used) / 1024 / 1024
+                 MAX_LOG_FILE_SPACE / 1024 / 1024
             );
+        }
+
+        return 0;
+    }
+    else if (length >= sizeof(buf)) {
+        buf[DIRECTORY_BUF_SIZE] = 0;
+
+        error("Log path=%s", buf);
+        error("Path overflow");
+        log("The length of log-path too long, %d characters permitted but %d characters in fact",
+           DIRECTORY_BUF_SIZE - 1, length);
+        
+        return -2;
+    }
+    else {
+        error("internal fault while getting work directory");
+        log("'Readlink()' returns a negative num: %d", length);
+
+        return -3;
+    }
+}
+
+int initShareMemory(void)
+{
+    info("Prepare share memory ...");
+
+    int fd = shm_open("fst_log_shm", O_CREAT|O_RDWR, 00777);
+    
+    if (-1 == fd) {
+        error(" -Error in openMem(): failed on opening sharedmem");
+        return -1;
+    }
+
+    int lock = flock(fd, LOCK_EX | LOCK_NB);
+    
+    if (lock == -1) {
+        error(" -Fail to take over the 'fst_log_shm', it has controlled by another server");
+        return -2;
+    }
+
+    ftruncate(fd, LOG_MEM_SIZE);
+    
+    char *ptr = (char*) mmap(NULL, LOG_MEM_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    
+    if (ptr == MAP_FAILED) {
+        close(fd);
+        error(" -Error in openMem(): failed on mapping process sharedmem");
+        return -3;
+    }
+
+    memset(ptr, 0, LOG_MEM_SIZE);
+
+    //buildLogControlArea(ctrl_area);
+   
+    ctrl_area = GET_CONTROL_AREA_PTR(ptr);
+    flag_area = GET_FLAG_AREA_PTR(ptr);
+    text_area = GET_TEXT_AREA_PTR(ptr);
+
+    info(" -Success!");
+    return 0;
+}
+
+int initServerLog(void)
+{
+    g_server_log.name    = "log_server";
+    g_server_log.working = false;
+
+    char buf[DIRECTORY_BUF_SIZE] = {0};
+    int length = readlink("/proc/self/exe", buf, sizeof(buf));
+
+    if (length > 0 && length < sizeof(buf)) {
+        boost::filesystem::path path(buf);
+        path = path.parent_path().parent_path().parent_path();
+        path = path / "/log/";
+        string file_name = path.string();
+
+        memset(buf, 0, sizeof(buf));
+
+        time_t time_now = time(NULL);
+        tm *local = localtime(&time_now);
+        strftime(buf, 64, "_%Y%m%d%H%M%S", local);
+        file_name = file_name + g_server_log.name + buf + ".log";
+
+        g_server_log.file_name = file_name;
+        g_server_log.character_cnt = 0;
+        g_server_log.file_create_time = time_now;
+        g_server_log.file_handle.open(file_name.c_str(), std::ios::app);
+
+        if (g_server_log.file_handle.is_open()) {
+            g_server_log.working = true;
+            info("Server log initialized, logging to file:");
+            info("%s", g_server_log.file_name.c_str());
+            lockFile(g_server_log.file_name);
+            return 0;
+        }
+        else {
+            g_server_log.working = false;
+            error("Fail to open server log file, all logs from server will lost");
+
+            return -1;
         }
     }
     else if (length >= sizeof(buf)) {
-        buf[DIRECTOTY_BUF_SIZE] = 0;
-        error("log path=%s", buf);
-        error("path overflow");
+        buf[DIRECTORY_BUF_SIZE] = 0;
+
+        error("Log path=%s", buf);
+        error("Path overflow");
+        log("The length of log-path too long, %d characters permitted but %d characters in fact",
+           DIRECTORY_BUF_SIZE - 1, length);
         
-        return -1;
+        return -2;
     }
     else {
-        error("internal fault while getting working directory");
+        error("Fail to initialize server log, all logs from server will lost");
+        g_server_log.working = false;
+        error("internal fault while getting work directory");
+        log("'Readlink()' returns a negative num: %d", length);
 
+        return -3;
+    }
+}
+
+bool lockFile(string &file)
+{
+    string cmd;
+    cmd = "chattr +a " + file;
+    FILE *ptr = popen(cmd.c_str(), "r");
+    if (ptr != NULL) {
+        string  ret;
+        int     cnt = 256;
+        char    con[cnt];
+
+        while(fgets(con, cnt, ptr))
+            ret += con;
+
+        log("Lock file: %s.", file.c_str());
+        if (ret != "")
+            warn("%s", ret.c_str());
+        
+        pclose(ptr);
+        return true;
+    }
+    else {
+        warn("Fail to lock file: %s.", file.c_str());
+        return false;
+    }
+}
+
+bool unlockFile(string &file)
+{
+    string cmd;
+    cmd = "chattr -a " + file;
+    
+    FILE *ptr = popen(cmd.c_str(), "r");
+
+    if (ptr != NULL) {
+        string  ret;
+        int     cnt = 256;
+        char    con[cnt];
+
+        while(fgets(con, cnt, ptr))
+            ret += con;
+
+        log("Unlock file: %s.", file.c_str());
+        if (ret != "")
+            warn("%s", ret.c_str());
+        
+        pclose(ptr);
+        return true;
+    }
+    else {
+        warn("Fail to unlock file: %s.", file.c_str());
+        return false;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    signal(SIGINT, sigintHandle);
+
+    initServerLog();
+
+    info("Log Manager Version %d.%d.%d",  log_manager_VERSION_MAJOR,
+                                            log_manager_VERSION_MINOR,
+                                            log_manager_VERSION_PATCH);
+
+    if (initShareMemory() != 0) {
+        error("Fail to initialize share memory");
         return -1;
     }
+
+    if (initLogSpace() != 0) {
+        error("Fail to initialize log space");
+        return -1;
+    }
+
+    for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i) {
+        g_lcb_ptr_queue[i] = NULL;
+    }
+
+    memset(&g_item_pool, 0, sizeof(g_item_pool));
+    pool_in  = 0;
+    pool_out = 0;
+    pthread_mutex_init(&g_item_pool_mutex, NULL);
 
     boost::thread log_public(&public_thread);
     boost::thread log_receive(&receive_thread);
     boost::thread log_io(&io_thread);
-    
+
     log_public.join();
     log_receive.join();
     log_io.join();
-  
-    //usleep(5000 * 1000);
+
+    for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i) {
+        if (g_lcb_ptr_queue[i] != NULL) {
+            if (g_lcb_ptr_queue[i]->file_handle.is_open())
+                g_lcb_ptr_queue[i]->file_handle.close();
+            unlockFile(g_lcb_ptr_queue[i]->file_name);
+            delete g_lcb_ptr_queue[i];
+            g_lcb_ptr_queue[i] = NULL;
+        }
+    }
+
     warn("Log server exit.");
+    unlockFile(g_server_log.file_name);
+    g_server_log.file_handle.close();
+    
     return 0;
 }

@@ -11,11 +11,13 @@
 #include <string.h>
 #include <iostream>
 #include <sys/time.h>
-#include "log_manager/log_manager_logger.h"
+#include <stdlib.h>  
+#include <sys/mman.h>  
+#include <fcntl.h>  
+#include <sys/stat.h> 
 
-#define SUCCESS (unsigned long long int)0
-#define LOCK    pthread_mutex_lock(&log_mutex_);
-#define UNLOCK  pthread_mutex_unlock(&log_mutex_);
+#include <log_manager/log_manager_shm_structure.h>
+#include "log_manager/log_manager_logger.h"
 
 using std::string;
 using std::cout;
@@ -29,381 +31,320 @@ static const unsigned int INITIALIZED   = 0x5556;
 Logger::Logger(void)
 {
     current_state_ = UNDEFINED;
-    display_level_ = MSG_DISPLAY_LEVEL;
-    logging_level_ = MSG_LOGGING_LEVEL;
-    log_content_.clear();
-    pthread_mutex_init(&log_mutex_, NULL);
-    memset(comm_buffer_.buffer, 0, sizeof(comm_buffer_.buffer));
-    comm_buffer_.isSend = false;
-    comm_buffer_.isAvailable = true;
-    overflow_flag_  = false;
-    overflow_count_ = 0;
+    display_level_ = MSG_LEVEL_INFO;
+    logging_level_ = MSG_LEVEL_LOG;
+    serial_num_ = 0;
+
+    ctrl_area_ = NULL;
+    flag_area_ = NULL;
+    text_area_ = NULL;
+
+    id_ = 0;
 }
 
 Logger::~Logger(void)
 {
-    if (current_state_ == INITIALIZED) {
-        //printf("Transmiting local cached logs to server ... ");
-        LOCK;
-        while (log_content_.size() > LOG_BUFFER_SIZE) {
-            string tmp;
-            tmp.assign(log_content_, 0, LOG_BUFFER_SIZE - 1);
-            if (comm_interface_.send(tmp.c_str(), LOG_BUFFER_SIZE, COMM_DONTWAIT) == 0) {
-                log_content_.erase(0, LOG_BUFFER_SIZE - 1);
-                usleep(20 * 1000);
-            }
-        }
+    if (current_state_ != INITIALIZED) {return;}
 
-        int length = log_content_.size();
-        if (length > 0) {
-            string tmp;
-            tmp.assign(log_content_, 0, length);
-            if (comm_interface_.send(tmp.c_str(), length + 1, COMM_DONTWAIT) == 0) {
-                log_content_.erase(0, length);
-                usleep(20 * 1000);
-                //printf("Done.\n");
-            }
-        }
+    info("Log client log-out ...");
+    
+    int exp = 0;
+    int cnt = 0;
 
-        if (log_content_.size() != 0) {
-            printf("\033[31mThe end of log is lost, lost length=%zu.\033[0m\n", log_content_.size());
-        }
-        UNLOCK;
-
-        // printf("Send log-out request to server ...\n");
-        char buf[SINGLE_LOG_SIZE] = "\33CLOSE\33";
-        buf[7] = 0;
-        if (comm_interface_.send(buf, sizeof(buf), COMM_DONTWAIT) == 0) {
-            usleep(10 * 1000);
-            int loop_cnt = 5;
-            memset(buf, 0, sizeof(buf));
-            // printf("Done!\n");
-            while (loop_cnt > 0) {
-                loop_cnt--;
-                if (comm_interface_.recv(buf, sizeof(buf), COMM_DONTWAIT) == 0) {
-                    // exit successfully
-                    if (buf[0] == 'O' && buf[1] == 'K') {
-                        pthread_mutex_destroy(&log_mutex_);
-                        return;
-                    }
-                }
-                usleep(10 * 1000);
-            }
-            printf("\033[31mLogger error: cannot receive response from server.\033[0m\n");
-        }
-        else {
-            printf("\033[31mLogger error: fail to send log-out signal to server.\033[0m\n");
-        }
+    while (!ctrl_area_->register_block.reg_in.compare_exchange_weak(exp, 1)) {
+        exp = 0;
+        cnt++;
+        usleep(10 * 1000);
+        
+        if (cnt > 50)
+            break;
     }
-    else {
-        pthread_mutex_destroy(&log_mutex_);
+
+    if (cnt > 50) {
+        error(" -Conmunication time-out when sending request");
+        return;
+    }
+    
+    ctrl_area_->register_block.id = id_;
+    ctrl_area_->register_block.flag_in  = true;
+
+    cnt = 0;
+    while (!ctrl_area_->register_block.flag_out) {
+        cnt++;
+        usleep(10 * 1000);
+        
+        if (cnt > 10)
+            break;
+    }
+
+    if (cnt > 10) {
+        error(" -Conmunication time-out when wating response");
+        ctrl_area_->register_block.flag_in  = false;
+        ctrl_area_->register_block.reg_in = 0;
         return;
     }
 
-    printf("\033[31mLogger terminated with errors.\033[0m\n");
-    return;
+    ctrl_area_->register_block.flag_out = false;
+    ctrl_area_->register_block.reg_in = 0;
+
+    info(" -Success");
 }
 
-bool Logger::initLogger(const char *log_file_name)
+bool Logger::initLogger(const char *name)
 {
     if (current_state_ != UNDEFINED) {return false;}
 
-    info("Initializing log client ...");
-    fst_comm_interface::CommInterface tmp_interface;
-    if (tmp_interface.createChannel(COMM_REQ, COMM_IPC, "log_public") != SUCCESS) {
-        error("Cannot create public channel.");
+    info("Initializing log client (%s) ...", name);
+
+    int fd = shm_open("fst_log_shm", O_RDWR, 00777);
+    
+    if (-1 == fd) {
+        error(" -Error in openMem(): failed on opening sharedmem");
         return false;
     }
 
-    string tmp(log_file_name);
-    if (tmp_interface.send(tmp.c_str(), tmp.size(), COMM_DONTWAIT) != SUCCESS) {
-        error("Cannot communicate with log server.");
+    char *ptr = (char*) mmap(NULL, LOG_MEM_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    
+    if (ptr == MAP_FAILED) {
+        close(fd);
+        error(" -Error in openMem(): failed on mapping process sharedmem");
         return false;
     }
-    usleep(200 * 1000);
 
-    char buf[256];
-    memset(buf, 0, sizeof(buf));
-    if(tmp_interface.recv(buf, sizeof(buf), COMM_DONTWAIT) == 0) {
-        if (tmp == buf) {
-            info("channel name: '%s'", buf);
-            info("Creating log communication channel ...");
-            LOCK;
-            if (comm_interface_.createChannel(COMM_REQ, COMM_IPC, buf) == SUCCESS) {
-                current_state_ = INITIALIZED;
-                UNLOCK;
-                info("Success! Logging message...");
-                return true;
-            }
-            else {
-                error("Cannot create communication channel.");
-                UNLOCK;
-                return false;
+    ctrl_area_ = GET_CONTROL_AREA_PTR(ptr);
+    flag_area_ = GET_FLAG_AREA_PTR(ptr);
+    text_area_ = GET_TEXT_AREA_PTR(ptr);
+
+    int exp = 0;
+    int cnt = 0;
+    while (!ctrl_area_->register_block.reg_in.compare_exchange_weak(exp, 1)) {
+        cnt++;
+        exp = 0;
+        usleep(10 * 1000);
+        
+        if (cnt > 50)
+            break;
+    }
+
+    if (cnt > 50) {
+        error(" -Conmunication time-out");
+        return false;
+    }
+    
+    if (strlen(name) > 255) {
+        memcpy(ctrl_area_->register_block.name, name, 255);
+        ctrl_area_->register_block.name[255] = '\0';
+    }
+    else {
+        memset(ctrl_area_->register_block.name, 0, 256);
+        strcpy(ctrl_area_->register_block.name, name);
+    }
+
+    ctrl_area_->register_block.id = 0;
+    ctrl_area_->register_block.flag_out = false;
+    ctrl_area_->register_block.flag_in  = true;
+
+    cnt = 0;
+    while (!ctrl_area_->register_block.flag_out) {
+        cnt++;
+        usleep(10 * 1000);
+        
+        if (cnt > 10)
+            break;
+    }
+
+    if (cnt > 10) {
+        error(" -Conmunication time-out");
+        ctrl_area_->register_block.flag_in  = false;
+        ctrl_area_->register_block.reg_in = 0;
+        return false;
+    }
+
+    id_ = ctrl_area_->register_block.id;
+    ctrl_area_->register_block.id = 0;
+    ctrl_area_->register_block.flag_out = false;
+    ctrl_area_->register_block.flag_in  = false;
+    ctrl_area_->register_block.reg_in   = 0;
+
+    if (0 != id_) {
+        current_state_ = INITIALIZED;
+        info("Log client initialize Success, ID=%d, logging message...", id_);
+        return true;
+    }
+    else {
+        error(" -Log-in request refused: cannot get channel ID");
+        return false;
+    }
+}
+
+void Logger::setDisplayLevel(MessageLevel level)
+{
+    display_level_ = level;
+}
+
+void Logger::setLoggingLevel(MessageLevel level)
+{
+    logging_level_ = level;
+}
+
+void Logger::displayItem(LogItem *pitem)
+{
+    if (pitem->level < display_level_)
+        return;
+    
+    switch (pitem->level) {
+        case MSG_LEVEL_LOG:
+        case MSG_LEVEL_INFO:
+            printf("\033[0m%s", pitem->text);
+            break;
+
+        case MSG_LEVEL_WARN:
+            printf("\033[33m%s\033[0m", pitem->text);
+            break;
+        
+        case MSG_LEVEL_ERROR:
+            printf("\033[31m%s\033[0m", pitem->text);
+            break;
+        
+        default:
+            printf("\033[41mLog client internal fault\033[0m\n");
+    }
+}
+
+void Logger::writeShareMemory(LogItem *pitem)
+{
+    if (current_state_ != INITIALIZED) return;
+
+    if (pitem->level < logging_level_) return;
+    
+    int cnt = 0;
+    int target, tmp_out, next;
+
+    serial_num_++;
+    pitem->number = serial_num_;
+
+    for (;;) {
+        target  = ctrl_area_->index_in;
+        tmp_out = ctrl_area_->index_out;
+
+        if (flag_area_[target] == ITEM_FREE) {
+            next    = target + 1;
+            if (next == LOG_ITEM_COUNT) next = 0;
+            
+            if (true == ctrl_area_->index_in.compare_exchange_weak(target, next)) {
+                memcpy(&text_area_[target], pitem, sizeof(LogItem));
+                flag_area_[target]  = ITEM_INUSE;
+                break;
             }
         }
         else {
-            error("Cannot create communication channel.");
-            return false;
+            // shm full
+            next    = tmp_out + 1;
+            if (next == LOG_ITEM_COUNT) next = 0;
+
+            if (true == ctrl_area_->index_out.compare_exchange_weak(tmp_out, next)) {
+                // drop a log item
+                flag_area_[tmp_out] = ITEM_FREE;
+            }
         }
-    }
-    else {
-        error("Cannot receive server response");
-        return false;
+
+        cnt++;
+        if (cnt > 10)     break;
     }
 }
 
-void Logger::setDisplayLevel(unsigned int level)
+void Logger::log(const char *format, ...)
 {
-    if      (level == MSG_LEVEL_INFO)   display_level_ = MSG_LEVEL_INFO;
-    else if (level == MSG_LEVEL_WARN)   display_level_ = MSG_LEVEL_WARN;
-    else if (level == MSG_LEVEL_ERROR)  display_level_ = MSG_LEVEL_ERROR;
-    else if (level == MSG_LEVEL_NONE)   display_level_ = MSG_LEVEL_NONE;
-}
+    LogItem item;
 
-void Logger::setLoggingLevel(unsigned int level)
-{
-    if      (level == MSG_LEVEL_INFO)   logging_level_ = MSG_LEVEL_INFO;
-    else if (level == MSG_LEVEL_WARN)   logging_level_ = MSG_LEVEL_WARN;
-    else if (level == MSG_LEVEL_ERROR)  logging_level_ = MSG_LEVEL_ERROR;
-    else if (level == MSG_LEVEL_NONE)   logging_level_ = MSG_LEVEL_NONE;
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+
+    item.id    = id_;
+    item.level = MSG_LEVEL_LOG;
+    item.stamp = time_now;
+
+    va_list vp;
+    va_start(vp, format);
+    int len = vsnprintf(item.text, LOG_TEXT_SIZE, format, vp);
+    va_end(vp);
+    if (len >= LOG_TEXT_SIZE - 1)   len = LOG_TEXT_SIZE - 2;
+    item.text[len++] = '\n';
+    item.text[len]   = '\0';
+
+    displayItem(&item);
+    writeShareMemory(&item);
 }
 
 void Logger::info(const char *format, ...)
 {
-    char buf[SINGLE_LOG_SIZE];
-    memset(buf, 0, SINGLE_LOG_SIZE);
+    LogItem item;
+
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ INFO][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+
+    item.id    = id_;
+    item.level = MSG_LEVEL_INFO;
+    item.stamp = time_now;
 
     va_list vp;
     va_start(vp, format);
-    len = len + vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
+    int len = vsnprintf(item.text, LOG_TEXT_SIZE, format, vp);
     va_end(vp);
-    if (len > SINGLE_LOG_SIZE - 2) len = SINGLE_LOG_SIZE - 2;
-    buf[len]     = '\n';
-    buf[len + 1] = '\0';
-    
-    logMessage(buf);
+    if (len >= LOG_TEXT_SIZE - 1)   len = LOG_TEXT_SIZE - 2;
+    item.text[len++] = '\n';
+    item.text[len]   = '\0';
+
+    displayItem(&item);
+    writeShareMemory(&item);
 }
 
 void Logger::warn(const char *format, ...)
 {
-    char buf[SINGLE_LOG_SIZE];
-    memset(buf, 0, SINGLE_LOG_SIZE);
+    LogItem item;
+
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ WARN][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+
+    item.id    = id_;
+    item.level = MSG_LEVEL_WARN;
+    item.stamp = time_now;
 
     va_list vp;
     va_start(vp, format);
-    len = len + vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
+    int len = vsnprintf(item.text, LOG_TEXT_SIZE, format, vp);
     va_end(vp);
-    if (len > SINGLE_LOG_SIZE - 2) len = SINGLE_LOG_SIZE - 2;
-    buf[len] = '\n';
-    buf[len + 1] = '\0';
-    
-    logMessage(buf);
+    if (len >= LOG_TEXT_SIZE - 1)   len = LOG_TEXT_SIZE - 2;
+    item.text[len++] = '\n';
+    item.text[len]   = '\0';
+
+    displayItem(&item);
+    writeShareMemory(&item);
 }
 
 void Logger::error(const char *format, ...)
 {
-    char buf[SINGLE_LOG_SIZE];
-    memset(buf, 0, SINGLE_LOG_SIZE);
+    LogItem item;
+
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ERROR][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+
+    item.id    = id_;
+    item.level = MSG_LEVEL_ERROR;
+    item.stamp = time_now;
 
     va_list vp;
     va_start(vp, format);
-    len += vsnprintf(buf + len, SINGLE_LOG_SIZE - len - 1, format, vp);
+    int len = vsnprintf(item.text, LOG_TEXT_SIZE, format, vp);
     va_end(vp);
-    if (len > SINGLE_LOG_SIZE - 2) len = SINGLE_LOG_SIZE - 2;
-    buf[len] = '\n';
-    buf[len + 1] = '\0';
-    
-    logMessage(buf);
+    if (len >= LOG_TEXT_SIZE - 1)   len = LOG_TEXT_SIZE - 2;
+    item.text[len++] = '\n';
+    item.text[len]   = '\0';
+
+    displayItem(&item);
+    writeShareMemory(&item);
 }
 
-void Logger::info(const string &info)
-{
-    char buf[SINGLE_LOG_SIZE];
-    memset(buf, 0, SINGLE_LOG_SIZE);
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
-    sprintf(buf, "[ INFO][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
-
-    string tmp = buf;
-    tmp = tmp + info + '\n';
-    if (tmp.size() > SINGLE_LOG_SIZE) {
-        tmp.erase(SINGLE_LOG_SIZE);
-    }
-
-    logMessage(tmp);
-}
-
-void Logger::warn(const string &warn)
-{
-    char buf[SINGLE_LOG_SIZE];
-    memset(buf, 0, SINGLE_LOG_SIZE);
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
-    sprintf(buf, "[ WARN][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
-
-    string tmp = buf;
-    tmp = tmp + warn + '\n';
-    if (tmp.size() > SINGLE_LOG_SIZE) {
-        tmp.erase(SINGLE_LOG_SIZE);
-    }
-
-    logMessage(tmp);
-}
-
-void Logger::error(const string &error)
-{
-    char buf[SINGLE_LOG_SIZE];
-    memset(buf, 0, SINGLE_LOG_SIZE);
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
-    sprintf(buf, "[ERROR][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
-
-    string tmp = buf;
-    tmp = tmp + error + '\n';
-    if (tmp.size() > SINGLE_LOG_SIZE) {
-        tmp.erase(SINGLE_LOG_SIZE);
-    }
-
-    logMessage(tmp);
-}
-
-void Logger::logMessage(const char *msg)
-{
-    string tmp = msg;
-    logMessage(tmp);
-}
-
-void Logger::logMessage(const string &msg)
-{
-    if (msg[5] == 'O') {
-        if (display_level_ <= MSG_LEVEL_INFO) {
-            printf("%s", msg.c_str());
-        }
-        if (current_state_ == INITIALIZED && logging_level_ <= MSG_LEVEL_INFO) {
-            LOCK;
-            if (log_content_.size() < MAX_BUFFER_SIZE) {
-                if (overflow_flag_) {
-                    char buf[SINGLE_LOG_SIZE];
-                    memset(buf, 0, SINGLE_LOG_SIZE);
-                    struct timeval time_now;
-                    gettimeofday(&time_now, NULL);
-                    sprintf(buf, "[ WARN][%ld.%6ld]%d log messages above this line has been dropped, caused by buffer overflow\n",
-                            time_now.tv_sec, time_now.tv_usec, overflow_count_);
-                    log_content_ += buf;
-                    overflow_flag_  = false;
-                    overflow_count_ = 0;
-                }
-                log_content_ += msg;
-            }
-            else {
-                overflow_count_++;
-                if (overflow_flag_ == false)
-                    overflow_flag_ = true;
-            }
-            UNLOCK;
-        }
-    }
-    else if (msg[5] == 'N') {
-        if (display_level_ <= MSG_LEVEL_WARN) {
-            printf("\033[33m%s\033[0m", msg.c_str());
-        }
-        if (current_state_ == INITIALIZED && logging_level_ <= MSG_LEVEL_WARN) {
-            LOCK;
-            if (log_content_.size() < MAX_BUFFER_SIZE) {
-                if (overflow_flag_) {
-                    char buf[SINGLE_LOG_SIZE];
-                    memset(buf, 0, SINGLE_LOG_SIZE);
-                    struct timeval time_now;
-                    gettimeofday(&time_now, NULL);
-                    sprintf(buf, "[ WARN][%ld.%6ld]%d log messages above this line has been dropped, caused by buffer overflow\n",
-                            time_now.tv_sec, time_now.tv_usec, overflow_count_);
-                    log_content_ += buf;
-                    overflow_flag_  = false;
-                    overflow_count_ = 0;
-                }
-                log_content_ += msg;
-            }
-            else {
-                overflow_count_++;
-                if (overflow_flag_ == false)
-                    overflow_flag_ = true;
-            }
-            UNLOCK;
-        }
-    }
-    else if (msg[5] == 'R') {
-        if (display_level_ <= MSG_LEVEL_ERROR) {
-            printf("\033[31m%s\033[0m", msg.c_str());
-        }
-        if (current_state_ == INITIALIZED && logging_level_ <= MSG_LEVEL_ERROR) {
-            LOCK;
-            if (log_content_.size() < MAX_BUFFER_SIZE) {
-                if (overflow_flag_) {
-                    char buf[SINGLE_LOG_SIZE];
-                    memset(buf, 0, SINGLE_LOG_SIZE);
-                    struct timeval time_now;
-                    gettimeofday(&time_now, NULL);
-                    sprintf(buf, "[ WARN][%ld.%6ld]%d log messages above this line has been dropped, caused by buffer overflow\n",
-                            time_now.tv_sec, time_now.tv_usec, overflow_count_);
-                    log_content_ += buf;
-                    overflow_flag_  = false;
-                    overflow_count_ = 0;
-                }
-                log_content_ += msg;
-            }
-            else {
-                overflow_count_++;
-                if (overflow_flag_ == false)
-                    overflow_flag_ = true;
-            }
-            UNLOCK;
-        }
-    }
-
-    if (current_state_ == INITIALIZED) {
-        LOCK;
-        if (log_content_.size() >= LOG_BUFFER_SIZE) {
-            if (comm_buffer_.isAvailable == true) {
-                memset(comm_buffer_.buffer, 0, LOG_BUFFER_SIZE);
-                size_t len = log_content_.copy(comm_buffer_.buffer, LOG_BUFFER_SIZE);
-                log_content_.erase(0, len);
-                if (comm_interface_.send(comm_buffer_.buffer, LOG_BUFFER_SIZE, COMM_DONTWAIT) == 0) {
-                    comm_buffer_.isSend = true;
-                    comm_buffer_.isAvailable = false;
-                }
-                else {
-                    comm_buffer_.isSend = false;
-                    comm_buffer_.isAvailable = false;
-                }
-            }
-        }
-
-        if (comm_buffer_.isAvailable == false) {
-            if (comm_buffer_.isSend == true) {
-                char buf[SINGLE_LOG_SIZE];
-                memset(buf, 0, SINGLE_LOG_SIZE);
-                if (comm_interface_.recv(buf, SINGLE_LOG_SIZE, COMM_DONTWAIT) == 0) {
-                    comm_buffer_.isAvailable = true;
-                }
-            }
-            else {
-                if (comm_interface_.send(comm_buffer_.buffer, LOG_BUFFER_SIZE, COMM_DONTWAIT) == 0) {
-                    comm_buffer_.isSend = true;
-                }
-            }
-        }
-        UNLOCK;
-    }
-}
 
 }
 

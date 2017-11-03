@@ -9,7 +9,6 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "log_manager/log_manager_logger.h"
 #include <stdarg.h>
 #include <signal.h>
 #include <string.h>
@@ -18,12 +17,20 @@
 #include <boost/filesystem.hpp>
 #include <map>
 #include <stdexcept>
+#include <sys/time.h>
+#include <sys/mman.h>  
+#include <fcntl.h>  
+#include <sys/stat.h> 
 #include <log_manager_version.h>
+#include "log_manager/log_manager_logger.h"
 
 #define random(x) (rand()%x)
 
 using std::cout;
 using std::endl;
+
+using fst_log::ControlArea;
+using fst_log::LogItem;
 
 bool g_running = true;
 fst_log::Logger log_0_1;
@@ -32,16 +39,18 @@ fst_log::Logger log_7;
 fst_log::Logger log_8;
 fst_log::Logger log_9;
 
+fst_log::Logger log_10;
+
 
 void thread0(void)
 {
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_0_1.info("Thread0 is running loop cnt=%d", loop);
+        log_0_1.log("Thread0 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_0_1.info("  sleep %d ms", sleep);
+        sleep = random(10);
+        log_0_1.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_0_1.warn("Thread0 is terminated");
@@ -52,10 +61,10 @@ void thread1(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_0_1.info("Thread1 is running loop cnt=%d", loop);
+        log_0_1.log("Thread1 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_0_1.info("  sleep %d ms", sleep);
+        sleep = random(10);
+        log_0_1.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_0_1.warn("Thread1 is terminated");
@@ -66,10 +75,10 @@ void thread2(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_2_6.info("Thread2 is running loop cnt=%d", loop);
+        log_2_6.log("Thread2 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_2_6.info("  sleep %d ms", sleep);
+        sleep = random(10);
+        log_2_6.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_2_6.warn("Thread2 is terminated");
@@ -80,10 +89,10 @@ void thread3(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_2_6.info("Thread3 is running loop cnt=%d", loop);
+        log_2_6.log("Thread3 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_2_6.info("  sleep %d ms", sleep);
+        sleep = random(50);
+        log_2_6.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_2_6.warn("Thread3 is terminated");
@@ -94,10 +103,10 @@ void thread4(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_2_6.info("Thread4 is running loop cnt=%d", loop);
+        log_2_6.log("Thread4 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_2_6.info("  sleep %d ms", sleep);
+        sleep = random(10);
+        log_2_6.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_2_6.warn("Thread4 is terminated");
@@ -108,10 +117,10 @@ void thread5(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_2_6.info("Thread5 is running loop cnt=%d", loop);
+        log_2_6.log("Thread5 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_2_6.info("  sleep %d ms", sleep);
+        sleep = random(5);
+        log_2_6.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_2_6.warn("Thread5 is terminated");
@@ -122,10 +131,10 @@ void thread6(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_2_6.info("Thread6 is running loop cnt=%d", loop);
+        log_2_6.log("Thread6 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_2_6.info("  sleep %d ms", sleep);
+        sleep = random(10);
+        log_2_6.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_2_6.warn("Thread6 is terminated");
@@ -136,10 +145,10 @@ void thread7(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_7.info("Thread7 is running loop cnt=%d", loop);
+        log_7.log("Thread7 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_7.info("  sleep %d ms", sleep);
+        sleep = random(3);
+        log_7.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_7.warn("Thread7 is terminated");
@@ -150,10 +159,10 @@ void thread8(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_8.info("Thread8 is running loop cnt=%d", loop);
+        log_8.log("Thread8 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_8.info("  sleep %d ms", sleep);
+        sleep = random(5);
+        log_8.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_8.warn("Thread8 is terminated");
@@ -164,31 +173,73 @@ void thread9(void)
     int loop = 0;
     int sleep;
     while (g_running) {
-        log_9.info("Thread9 is running loop cnt=%d", loop);
+        log_9.log("Thread9 is running loop cnt=%d", loop);
         loop++;
-        sleep = random(100);
-        log_9.info("  sleep %d ms", sleep);
+
+        /*
+        if (loop == 50) {
+            log_9.warn("do something bad");
+            int *p = new int[10];
+            memset(p - 200, 178, 1000);
+            delete[] p;
+            log_9.error("done");
+        }
+        */
+        
+        sleep = random(6);
+        log_9.log("  sleep %d ms", sleep);
         usleep(sleep * 1000);
     }
     log_9.warn("Thread9 is terminated");
 }
+
+void thread10(void)
+{
+    int loop = 0;
+    int rept = 25;
+    int sleep = 1;
+
+    while (g_running) {
+        for (int tmp = 0; tmp < rept; ++tmp)
+            log_10.log("%dk items per sec: %d", rept * 10, tmp);
+
+        usleep(sleep * 100);
+    }
+
+    log_9.warn("Thread10 is terminated");
+}
+
 
 static void sigintHandle(int num)
 {
     g_running = false;
 }
 
+void test(void);
+
 int main(int argc, char **argv)
 {
+
     signal(SIGINT, sigintHandle);
     printf("Start log-manager TEST program.\n");
 
-    log_0_1.initLogger("log_0_1");
-    log_2_6.initLogger("log_2_6");
-    log_7.initLogger("log_7");
-    log_8.initLogger("log_8");
-    log_9.initLogger("log_9");
+    struct timeval time_now;
+    printf("here\n");
 
+    log_0_1.initLogger("log_0_1");
+    printf("init log_0_1 done\n");
+    log_2_6.initLogger("log_2_6");
+    printf("init log_2_6 done\n");
+    log_7.initLogger("log_7");
+    printf("init log_7 done\n");
+    log_8.initLogger("log_8");
+    printf("init log_8 done\n");
+    log_9.initLogger("log_9");
+    printf("init log_9 done\n");
+    log_10.initLogger("log10");
+    printf("init log_10 done\n");
+
+    /*
     boost::thread t0(&thread0);
     boost::thread t1(&thread1);
     boost::thread t2(&thread2);
@@ -199,7 +250,10 @@ int main(int argc, char **argv)
     boost::thread t7(&thread7);
     boost::thread t8(&thread8);
     boost::thread t9(&thread9);
+    */
+    boost::thread t10(&thread10);
 
+    /*
     t0.join();
     t1.join();
     t2.join();
@@ -210,6 +264,8 @@ int main(int argc, char **argv)
     t7.join();
     t8.join();
     t9.join();
+    */
+    t10.join();
 
     printf("Test end.\n");
     return 0;

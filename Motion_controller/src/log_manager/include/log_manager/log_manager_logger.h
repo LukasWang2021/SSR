@@ -8,7 +8,6 @@
 #ifndef _LOG_MANAGER_LOGGER_H
 #define _LOG_MANAGER_LOGGER_H
 
-#include <comm_interface/comm_interface.h>
 #include <log_manager/log_manager_common.h>
 #include <pthread.h>
 
@@ -18,39 +17,32 @@ class Logger {
   public:
     Logger(void);
     ~Logger(void);
-    bool initLogger(const char *log_file_name);
     
-    void setDisplayLevel(unsigned int level);
-    void setLoggingLevel(unsigned int level);
+    bool initLogger(const char *name);
     
+    void setDisplayLevel(MessageLevel level);
+    void setLoggingLevel(MessageLevel level);
+    
+    void log(const char *format, ...);
     void info(const char *format, ...);
     void warn(const char *format, ...);
     void error(const char *format, ...);
-    
-    void info(const std::string &info);
-    void warn(const std::string &warn);
-    void error(const std::string &error);
   
   private:
-    void logMessage(const char *msg);
-    void logMessage(const std::string &msg);
+    void writeShareMemory(LogItem *pitem);
+    void displayItem(LogItem *pitem);
     
     unsigned int current_state_;
     unsigned int display_level_;
     unsigned int logging_level_;
 
-    struct CommBuffer{
-        char buffer[LOG_BUFFER_SIZE];
-        bool isSend;
-        bool isAvailable;
-    } comm_buffer_;
 
-    bool overflow_flag_;
-    int  overflow_count_;
+    ControlArea *ctrl_area_;
+    LogFlag     *flag_area_;
+    LogItem     *text_area_;
 
-    std::string     log_content_;
-    pthread_mutex_t log_mutex_;
-    fst_comm_interface::CommInterface comm_interface_;
+    char            id_;
+    unsigned short  serial_num_;
 };
 
 }

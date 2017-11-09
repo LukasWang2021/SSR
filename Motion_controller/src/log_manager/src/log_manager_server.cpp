@@ -513,8 +513,11 @@ void io_thread(void)
 
                 if (NULL != g_lcb_ptr_queue[items[i].id - 1]) {
                     LogControlBlock *plcb = g_lcb_ptr_queue[items[i].id - 1];
+                    
+                    unsigned short tmp_num = plcb->serial_num;
+                    tmp_num++;
 
-                    if (plcb->serial_num + 1 != items[i].number) {
+                    if (tmp_num != items[i].number) {
                         // Some log items were lost beyond this item
                         int num;
 

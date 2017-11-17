@@ -193,6 +193,7 @@ class PlanningInterface {
     // Return:  true         -> FK computed successfully
     //------------------------------------------------------------------------------
     bool computeForwardKinematics(const Joint &joint, Pose &pose, ErrorCode &err);
+    bool computeForwardKinematicsWorld(const Joint &joint, PoseEuler &flange, PoseEuler &tcp, ErrorCode &err);
 
     MoveCommand* createMotionCommand(int id, MotionTarget &target, MotionTarget &next, ErrorCode &err);
 

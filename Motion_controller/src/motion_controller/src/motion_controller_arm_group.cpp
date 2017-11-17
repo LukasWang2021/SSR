@@ -251,6 +251,7 @@ bool ArmGroup::initArmGroup(vector<ErrorCode> &err_list)
             return false;
         }
     }
+    log.setDisplayLevel(fst_log::MSG_LEVEL_ERROR);
 
     if (err.empty()) {
         log.info("ArmGroup is ready to make life easier. Have a good time!");
@@ -580,7 +581,8 @@ const DHGroup ArmGroup::getDH(void)
 int ArmGroup::getPlannedPathFIFOLength(void)
 {
     if (current_state_ != INITIALIZED)  return 0;
-    return planned_path_fifo_.size() + planning_interface_->getAllCommandLength();
+    int len = planned_path_fifo_.size() + planning_interface_->getAllCommandLength();
+    return len;
 }
 
 
@@ -989,6 +991,13 @@ bool ArmGroup::computeFK(const Joint &joint, Pose &pose, ErrorCode &err)
     err = SUCCESS;
     if (current_state_ != INITIALIZED) {err = NEED_INITIALIZATION; return false;}
     return planning_interface_->computeForwardKinematics(joint, pose, err);
+}
+
+bool ArmGroup::computeFKInWorldCoordinate(const Joint &joint, PoseEuler &flange, PoseEuler &tcp, ErrorCode &err)
+{
+    err = SUCCESS;
+    if (current_state_ != INITIALIZED) {err = NEED_INITIALIZATION; return false;}
+    return planning_interface_->computeForwardKinematicsWorld(joint, flange, tcp, err);
 }
 
 //------------------------------------------------------------

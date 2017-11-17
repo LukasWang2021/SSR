@@ -58,18 +58,43 @@ bool Calibrator::initCalibrator(const string &path)
 {
     if (current_state_ != UNDEFINED) {last_error_ = CALIBRATION_FAIL_IN_INIT; return false;}
 
+    log.info("Initializing offset calibrator ...");
     offset_param_.loadParamFile("share/configuration/machine/offset.yaml");
     if (offset_param_.getLastError() != SUCCESS) {
         last_error_ = offset_param_.getLastError();
         return false;
     }
-    string record_file = path + "robot_recorder.yaml";
-    if (!robot_recorder_.loadParamFile(record_file.c_str())) {
-        buildRecorderFromTemplate(record_file);
-        robot_recorder_.clearLastError();
-        robot_recorder_.loadParamFile(record_file.c_str());
+
+    // if directory given by 'path' is not found, create it
+    boost::filesystem::path pa(path);
+    if (!boost::filesystem::is_directory(pa)) {
+        log.warn("  Directory: %s not found", path.c_str());
+        if (boost::filesystem::create_directory(pa)) {
+            log.info("  Directory: %s created", path.c_str());
+        }
+        else {
+            log.error("  Failed to create directory: %s", path.c_str());
+            last_error_ = MOTION_FAIL_IN_INIT;
+            return false;
+        }
     }
-    if (robot_recorder_.getLastError() != SUCCESS) {
+
+    // if record file is not found, re-create it from template in 'share/motion_controller/config'
+    string record_file = path + "robot_recorder.yaml";
+    boost::filesystem::path fi(record_file);
+    if (!boost::filesystem::exists(fi)) {
+        log.warn("  File: %s not found", record_file.c_str());
+        if (buildRecorderFromTemplate(record_file)) {
+            log.info("  Record file build from template");
+        }
+        else {
+            log.error("  Fail to build record file");
+            last_error_ = MOTION_FAIL_IN_INIT;
+            return false;
+        }
+    }
+
+    if (!robot_recorder_.loadParamFile(record_file.c_str())) {
         last_error_ = robot_recorder_.getLastError();
         return false;
     }

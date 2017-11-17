@@ -34,7 +34,7 @@ PlanningInterface::PlanningInterface()
     cycle_time_range_.max   = 0.05;         // s
     velocity_range_.min     = 0.1;          // mm/s
     velocity_range_.max     = 4000;    // mm/s
-    acceleration_range_.min = 1000;     // mm/s^2
+    acceleration_range_.min = 10;   // mm/s^2
     acceleration_range_.max = 16000;   // mm/s^2
     velocity_scaling_range_.min = 0.1;
     velocity_scaling_range_.max = 100.0;
@@ -579,6 +579,29 @@ bool PlanningInterface::computeForwardKinematics(const Joint &joint,
             return false;
         default:
             err = MOTION_INTERNAL_FAULT;
+        return false;
+    }
+}
+
+bool PlanningInterface::computeForwardKinematicsWorld(const Joint &joint,
+                                                      PoseEuler &flange,
+                                                      PoseEuler &tcp,
+                                                      ErrorCode &err)
+{
+    int res = this->planner_->ForwardKinematics_world(joint, flange, tcp);
+
+    switch (res) {
+        case 0:
+            err = SUCCESS;
+            return true;
+
+        case 1011:
+            err = FK_JOINT_OUT_OF_LIMIT;
+            return false;
+        
+        default:
+            err = MOTION_INTERNAL_FAULT;
+        
         return false;
     }
 }

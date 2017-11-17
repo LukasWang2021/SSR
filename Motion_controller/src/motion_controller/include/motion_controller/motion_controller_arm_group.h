@@ -28,7 +28,7 @@
 
 namespace fst_controller {
 
-const double MINIMUM_ALLOWANCE = 0.000001;
+const double MINIMUM_ALLOWANCE = 0.0001;
 // Brief class for controller. This class include many default settings and functions to make life easier.
 class ArmGroup {
   // -----------------------------public functions---------------------------------------------
@@ -374,6 +374,7 @@ class ArmGroup {
     //------------------------------------------------------------
     bool computeFK(const Joint &joint, Pose &pose, ErrorCode &err);
 
+    bool computeFKInWorldCoordinate(const Joint &joint, PoseEuler &flange, PoseEuler &tcp, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    MoveJ

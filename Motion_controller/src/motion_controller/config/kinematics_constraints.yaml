@@ -1,0 +1,77 @@
+soft_constraint:
+    j1:
+        home: 0.00
+        upper: 2.9670
+        lower: -2.9670
+        omega_max: 5.5851
+        alpha_max: 6.9813
+    j2:
+        home: 0.0
+        upper: 1.3083
+        lower: -2.2678
+        omega_max: 6.2832
+        alpha_max: 7.8504
+    j3:
+        home: 0.0
+        upper: 3.2272
+        lower: -1.1688
+        omega_max: 6.9813
+        alpha_max: 13.9626
+    j4:
+        home: 0.0
+        upper: 3.3161
+        lower: -3.3161
+        omega_max: 6.2832
+        alpha_max: 12.5664
+    j5:
+        home: 0.0
+        upper: 1.8491
+        lower: -1.8491
+        omega_max: 4.1888
+        alpha_max: 10.4720
+    j6:
+        home: 0.0
+        upper: 6.2832
+        lower: -6.2832
+        omega_max: 12.5664
+        alpha_max: 31.4159
+
+hard_constraint:
+    j1:
+        home: 0.00
+        upper: 2.9970
+        lower: -2.9970
+        omega_max: 5.5851
+        alpha_max: 6.9813
+    j2:
+        home: 0.0
+        upper: 1.5083
+        lower: -2.5678
+        omega_max: 6.2832
+        alpha_max: 7.8504
+    j3:
+        home: 0.0
+        upper: 3.5272
+        lower: -1.5688
+        omega_max: 6.9813
+        alpha_max: 13.9626
+    j4:
+        home: 0.0
+        upper: 3.5161
+        lower: -3.5161
+        omega_max: 6.2832
+        alpha_max: 12.5664
+    j5:
+        home: 0.0
+        upper: 1.9491
+        lower: -1.9491
+        omega_max: 4.1888
+        alpha_max: 10.4720
+    j6:
+        home: 0.0
+        upper: 6.5832
+        lower: -6.5832
+        omega_max: 12.5664
+        alpha_max: 31.4159
+
+#END

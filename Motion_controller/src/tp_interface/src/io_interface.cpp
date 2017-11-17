@@ -13,7 +13,7 @@
 
 IOInterface::IOInterface()
 {
-    
+    dev_info_ = NULL;
 }
 
 IOInterface::~IOInterface()
@@ -28,7 +28,7 @@ U64 IOInterface::initial()
 {
     U64 result = 0;
     io_manager_ = new fst_io_manager::IOManager;
-    result = io_manager_->init(1);
+    result = io_manager_->init(0); //0: real 1:fake
     if (result != TPI_SUCCESS)
     {
         FST_ERROR("io_manager_ init failed:%llx", result);
@@ -38,8 +38,11 @@ U64 IOInterface::initial()
     io_num_ = io_manager_->getDevicesNum();
     FST_INFO("io_num_:%d",io_num_.load());
 
+    if (io_num_ <= 0)
+    {
+        return TPI_SUCCESS;
+    }
     dev_info_ = new fst_io_manager::IODeviceInfo[io_num_];
-
     for (int i = 0; i < io_num_; i++)
     {
         result = io_manager_->getDeviceInfo(i, dev_info_[i]);
@@ -80,7 +83,8 @@ U64 IOInterface::setDO(const char *path, char value)
         && (stoi(vc_path[3]) == info[i].device_number))
         {
             FST_INFO("id:%d, port:%d, value:%d", info[i].id, stoi(vc_path[5]), value);
-            return io_manager_->setModuleValue(info[i].id, stoi(vc_path[5]), value);        }
+            return io_manager_->setModuleValue(info[i].id, stoi(vc_path[5]), value);        
+        }
     }
     return PARSE_IO_PATH_FAILED;
 }
@@ -99,7 +103,7 @@ U64 IOInterface::getDIO(const char *path, unsigned char *buffer, int buf_len, in
     std::vector<std::string> vc_path;
     boost::split(vc_path, path, boost::is_any_of("/"));
     
-    if ((vc_path[0] != "root") || (vc_path[1] != "IO"))
+    if ((vc_path[0] != "root") || (vc_path[1] != "IO") || (getIODevNum() <= 0))
     {
         return INVALID_PATH_FROM_TP;        
     }
@@ -126,7 +130,7 @@ U64 IOInterface::getDIO(const char *path, unsigned char *buffer, int buf_len, in
                 io_bytes_len = 1;
                 if (vc_path[4] == "DI")
                 {
-                    FST_INFO("get module value input:id:%d, index:%d",info[i].id, stoi(vc_path[5]));
+                   // FST_INFO("get module value input:id:%d, index:%d",info[i].id, stoi(vc_path[5]));
                     return io_manager_->getModuleValue(info[i].id, IO_INPUT, stoi(vc_path[5]), buffer[0]);
                 }
                 else if (vc_path[4] == "DO")
@@ -187,7 +191,7 @@ U64 IOInterface::checkIO(const char *path, int& buf_len, uint32_t& msg_id)
     std::vector<std::string> vc_path;
     boost::split(vc_path, path, boost::is_any_of("/"));
     
-    if ((vc_path[0] != "root") || (vc_path[1] != "IO"))
+    if ((vc_path[0] != "root") || (vc_path[1] != "IO") || (getIODevNum() <= 0))
     {
         return INVALID_PATH_FROM_TP;        
     }

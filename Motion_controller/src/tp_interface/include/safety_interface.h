@@ -9,92 +9,99 @@
 #ifndef TP_INTERFACE_SAFETY_INTERFACE_H_
 #define TP_INTERFACE_SAFETY_INTERFACE_H_
 #include "fst_error.h"
-#include <boost/thread/mutex.hpp>
+#include <atomic>
 
+typedef struct _Core1Status
+{
+    char id:4;
+    char status:4;
+}Core1Status;
 
-typedef struct _InputByte4
+typedef struct _InputByte5
 {
     char brake1:1;
     char brake2:1;
     char brake3:1;
     char outage0:1;
     char outage1:1;
-    char decelerate:1;
+    char D5:1;
     char D6:1;
     char D7:1;
-}InputByte4;
-
-typedef struct _InputByte5
-{
-    char deadman_panic:1;
-    char deadman_normal:1;
-    char manual:1;
-    char lmt_manual:1;
-    char automatic:1;
-    char estop:1;
-    char lmt_stop:1;
-    char ext_estop:1;
 }InputByte5;
 
 typedef struct _InputByte6
 {
-    char safety_door_stop:1;
-    char contactor_feadback:1;
-    char servo_alarm:1;
-    char hw_reset:1;
-    char D4:1;
-    char D5:1;
-    char D6:1;
+    char core1_reset:1;
+    char user_reset:1;
+    char cabinet_reset:1;
+    char decelerate:1;
+    char manual:1;
+    char lmt_manual:1;
+    char automatic:1;
     char D7:1;
 }InputByte6;
 
-
-typedef struct _OutputByte4
+typedef struct _InputByte7
 {
-    char sw_alarm:1;
-    char disble_brake:1;
+    char tp_estop:1;
+    char safetydoor_stop:1;
+    char lmt_stop:1;
+    char ext_estop:1;
+    char deadman_normal:1;
+    char deadman_panic:1;
+    char mode_signal:1;
+    char contactor:1;
+}InputByte7;
+
+typedef struct _InputByte8
+{
+    char core0_alarm:1;
+    char core1_alarm:1;
     char D2:1;
     char D3:1;
     char D4:1;
     char D5:1;
     char D6:1;
-    char D7:1;
-}OutputByte4;
+    char alarming:1;
+}InputByte8;
+
+
 
 typedef struct _OutputByte5
 {
-    char safety_stop_config:1;
+    char core0_sw0:1;
+    char core0_sw1:1;
+    char core0_sw2:1;
+    char safedoor_stop_config:1;
     char ext_estop_config:1;
     char lmt_stop_config:1;
-    char sw_reset:1;
-    char D4:1;
-    char D5:1;
     char D6:1;
     char D7:1;
 }OutputByte5;
 
+
 typedef struct _SafetyBoardDIFrm1
 {
     char        start_data;
+    Core1Status core1_status;
     char        heart_beat;
     char        crc_data;
-    InputByte4  byte4; 
 }SafetyBoardDIFrm1;
 
 typedef struct _SafetyBoardDIFrm2
 {
     InputByte5  byte5;
     InputByte6  byte6;
-    char        byte7;
-    char        byte8;
+    InputByte7  byte7;
+    InputByte8  byte8;
 }SafetyBoardDIFrm2;
 
 typedef struct _SafetyBoardDOFrm1
 {
     char        start_data;
+    char        byte2;
     char        heart_beat;
     char        crc_data;
-    OutputByte4 byte4; 
 }SafetyBoardDOFrm1;
 
 typedef struct _SafetyBoardDOFrm2
@@ -223,7 +230,7 @@ class SafetyInterface
      *
      * @return 
      */
-    char getDIEStop();
+    char getDITPEStop();
 
     /**
      * @brief: in hardware limit
@@ -244,21 +251,21 @@ class SafetyInterface
      *
      * @return 
      */
-    char getDIHWReset();
+    char getDICore1Reset();
 
     /**
      * @brief: Servo alarm 
      *
      * @return 
      */
-    char getDIServoAlarm();
+    char getDICore1Alarm();
 
     /**
      * @brief: feadback of another outage1 and outage0  
      *
      * @return 
      */
-    char getDIContactorFeadback();
+    char getDIAlarm();
      
     /**
      * @brief: safety door stop 
@@ -268,15 +275,29 @@ class SafetyInterface
     char getDISafetyDoorStop();
 
     /**
-     * @brief: sofeware alarm from core0 
+     * @brief: type 0 stop from core0 
      *
      * @return 
      */
-    char getDOSWAlarm();
-    U64 setDOSWAlarm(char data);
+    char getDOType0Stop();
+    U64 setDOType0Stop(char data);
+
+    /**
+     * @brief: type 0 stop from core0 
+     *
+     * @return 
+     */
+    char getDOType1Stop();
+    U64 setDOType1Stop(char data);
+
+    /**
+     * @brief: type 0 stop from core0 
+     *
+     * @return 
+     */
+    char getDOType2Stop();
+    U64 setDOType2Stop(char data);
     
-    U64 setBrakeOn();  
-    U64 setBrakeOff();
     /**
      * @brief: safety board stop config 
      * 0: class 0 stop; 1:class 1 stop
@@ -304,27 +325,8 @@ class SafetyInterface
     char getDOLmtStopConf();
     U64 setDOLmtStopConf(char data);
 
-    /**
-     * @brief: safety board sofeware reset 
-     * 1s pulse high
-     * 
-     * @return 
-     */
-    U64 setSoftwareReset(char data);
+    U64 reset();
 
-    /**
-     * @brief: reset safety board 
-     *
-     * @return: 0 if success 
-     */
-    U64 resetSafetyBoard();
-
-    /**
-     * @brief 
-     *
-     * @return 
-     */
-    U64 alarmSafetyBoard();
     /**
      * @brief: heart_beat with safety board 
      *
@@ -338,15 +340,14 @@ class SafetyInterface
      * @return 
      */
     bool isSafetyValid();
+    bool isSafetyAlarm();
   private:
-    bool                valid_flag_;
+    std::atomic<bool>               valid_flag_;
 
-    SafetyBoardDIFrm1    din_frm1_;
-    SafetyBoardDIFrm2    din_frm2_;
-    SafetyBoardDOFrm1    dout_frm1_;
-    SafetyBoardDOFrm2    dout_frm2_;
-
-    boost::mutex        mutex_;
+    std::atomic<SafetyBoardDIFrm1>  din_frm1_;
+    std::atomic<SafetyBoardDIFrm2>  din_frm2_;
+    std::atomic<SafetyBoardDOFrm1>  dout_frm1_;
+    std::atomic<SafetyBoardDOFrm2>  dout_frm2_;
 };
 
 #endif

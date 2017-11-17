@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(tp_interface)
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 0)
-set(VERSION_PATCH 7)
+set(VERSION_PATCH 11)
 
 #add_custom_command(OUTPUT vitual_target	
 #	COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_HOME_DIRECTORY}/../devel/${CONFIG_DIR}
@@ -53,7 +53,7 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -DPB_FIELD_32BIT -DSIMMULATION -DPRINT ") #-DLOGGER
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -DPB_FIELD_32BIT")
 
 message(${CMAKE_CXX_FLAGS})

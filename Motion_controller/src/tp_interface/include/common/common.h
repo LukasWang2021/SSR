@@ -13,7 +13,11 @@
 
 extern fst_log::Logger glog;
 
-#define LOG_INIT()    do {glog.initLogger("robot controller");}while(0)
+#define LOG_INIT()    \
+    do {\
+            glog.initLogger("robot controller");\
+            glog.setDisplayLevel(fst_log::MSG_LEVEL_ERROR);\
+    }while(0)
 
 #ifdef PRINT
 #ifndef LOGGER

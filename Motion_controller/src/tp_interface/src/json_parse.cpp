@@ -238,11 +238,12 @@ bool JsonParse::getIDFromPath(const char *path, uint32_t &id)
 
 ParamProperty* JsonParse::getParamProperty(uint32_t id)
 {
+    
     map<uint32_t, ParamProperty>::iterator it = params_list_map_.find(id);
 
     if (it == params_list_map_.end())
     {
-        FST_ERROR("can't find id:%d", id);
+       // FST_ERROR("can't find id:%d", id);
         return NULL;
     }
 
@@ -263,20 +264,38 @@ BaseTypes_ParamInfo* JsonParse::getParamInfo(const char *path, uint32_t id, Para
 
     if (param_property == NULL)
     {
-        return NULL;
+        if (id > IO_BASE_ADDRESS)
+        {
+            strcpy(param_info.path, path);
+            param_info.id = id;
+            param_info.overwrite_active = 0; //not active
+            param_info.data_type = 2;  // uint8
+            param_info.data_size = 1;  // 1 byte
+            param_info.number_of_elements = 1;  
+            param_info.param_type = BaseTypes_ParamType_INPUT_SIGNAL;  //input
+            param_info.permission = BaseTypes_Permission_permission_undefined;
+            param_info.user_level = BaseTypes_UserLevel_user_level_undefined;
+            param_info.unit = BaseTypes_Unit_unit_undefined;
+
+        }
+        else
+        {
+            return NULL;
+        }
     }
-
-    strcpy(param_info.path, path);
-	param_info.id = id;
-	param_info.overwrite_active = param_property->overwrite_active;
-	param_info.data_type = param_property->data_type;
-	param_info.data_size = param_property->data_size;
-	param_info.number_of_elements = param_property->number_of_elements;
-	param_info.param_type = param_property->param_type;
-	param_info.permission = param_property->permission;
-	param_info.user_level = param_property->user_level;
-	param_info.unit = param_property->unit;
-
+    else
+    {
+        strcpy(param_info.path, path);
+        param_info.id = id;
+        param_info.overwrite_active = param_property->overwrite_active;
+        param_info.data_type = param_property->data_type;
+        param_info.data_size = param_property->data_size;
+        param_info.number_of_elements = param_property->number_of_elements;
+        param_info.param_type = param_property->param_type;
+        param_info.permission = param_property->permission;
+        param_info.user_level = param_property->user_level;
+        param_info.unit = param_property->unit;
+    }
 	return &param_info;
 }
 
@@ -296,6 +315,11 @@ void JsonParse::addIODevices()
 void JsonParse::getDeviceList(motion_spec_DeviceList &dev_list)
 {
     int num = io_interface_->getIODevNum();
+    if (num <= 0)
+    {
+        dev_list.dev_info_count = 0;
+        return;
+    }
 
     boost::mutex::scoped_lock lock(mutex_);
 

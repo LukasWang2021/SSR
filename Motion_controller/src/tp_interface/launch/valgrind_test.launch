@@ -1,7 +1,7 @@
 <launch>
 
   <node name="controller" pkg="tp_interface" type="controller" respawn="false" output="screen"
-  launch-prefix="valgrind --leak-check=full --show-leak-kinds=all --show-reachable=no --track-origins=yes">
+  launch-prefix="valgrind --leak-check=full --show-leak-kinds=all --show-reachable=no --max-stackframe=6581408 --track-origins=yes">
   </node>
 
 </launch>

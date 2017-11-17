@@ -143,8 +143,8 @@ namespace fst_controller
         double Angle_Qs(double q0[4], double q1[4]);
         void ModifyQ2(const Quaternion &q1, Quaternion &q2);
         double CalUAcc(double ORT_0[4], double ORT_obj[4]);
-        
-
+        //double CalUAcc(double ORT_prv[4], double ORT_0[4], double ORT_obj[4]);
+        double CalUAcc(vector<Quaternion> Orientation);
         int JudgeAxis(double THETA[6]);
         void ReviseJoint(double J[6],double Joint_ref[6]);
 
@@ -180,11 +180,11 @@ namespace fst_controller
         int Arc_3points(double P1[3], double P2[3], double P3[3], double T[4][4], double &r, double &theta3, double &theta2, double O[3]);
 
         int Interpolation_mode(double d, double v0, double v_obj, double &v_cnt1, double a, ElementSmooth &Time_Polyn);
-        int Interpolation_mode_t(double d, double v0, double v1, double t, double a, ElementSmooth &Time_Polyn);
+        int Interpolation_mode_t(double d, double v0, double &v1, double t, double a, ElementSmooth &Time_Polyn);
         int TrapeCurve(double d, double v0, double v_obj, double &v_cnt1, double a, double T[8], double P[7][4]);
-        int TrapeCurve_t(double d, double v0, double v1, double t, double a, double T[8], double P[7][4]);
+        int TrapeCurve_t(double d, double v0, double &v1, double t, double a, double T[8], double P[7][4]);
         int SCurve(double d, double v0, double v_obj, double &v_cnt1, double a, double T[8], double P[7][4]);
-        int SCurve_t(double d, double v0, double v1, double t, double a, double T[8], double P[7][4]);
+        int SCurve_t(double d, double v0, double &v1, double t, double a, double T[8], double P[7][4]);
         void SquadCondition(const vector<Quaternion> &Orientation, orienttrans &orient);
         int MoveJ(const JointPoint &J0, JointPoint &J1, double v_percentage, vector<ElementSmooth> &E);
         int Circle(const Pose &P0, double &v0,const Pose &P1, const Pose &P2, double vc, int &cnt, ElementSmooth &Time_Polyn);

@@ -9,12 +9,11 @@
 #include "safety/safety.h"
 #include "safety_interface.h"
 #include "common/common.h"
-#include <boost/thread/mutex.hpp>
 
 
 SafetyInterface::SafetyInterface()
 {
-    valid_flag_ = false;
+    valid_flag_ = true;
     memset((char*)&din_frm1_, 0, sizeof(din_frm1_));
     memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
     memset((char*)&dout_frm1_, 0, sizeof(dout_frm1_));
@@ -33,165 +32,149 @@ SafetyInterface::~SafetyInterface()
 
 U32 SafetyInterface::getDIFrm1()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return *(U32*)&din_frm1_;
 }
 U32 SafetyInterface::getDIFrm2()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return *(U32*)&din_frm2_;
 }
 U32 SafetyInterface::getDOFrm1()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return *(U32*)&dout_frm1_;
 }
 U32 SafetyInterface::getDOFrm2()
 {
-    boost::mutex::scoped_lock lock(mutex_);
     return *(U32*)&dout_frm2_;
 }
 
 
 char SafetyInterface::getDIDec()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm1_.byte4.decelerate;
+    return din_frm2_.load().byte6.decelerate;
 }
 char SafetyInterface::getDIOutage1()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm1_.byte4.outage1;
+    return din_frm2_.load().byte5.outage1;
 }
 char SafetyInterface::getDIOutage0()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm1_.byte4.outage0;
+    return din_frm2_.load().byte5.outage0;
 }
 
 char SafetyInterface::getDIBrake3()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm1_.byte4.brake3;
+    return din_frm2_.load().byte5.brake3;
 }
 char SafetyInterface::getDIBrake2()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm1_.byte4.brake2;
+    return din_frm2_.load().byte5.brake2;
 }
 char SafetyInterface::getDIBrake1()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm1_.byte4.brake1;
+    if (isSafetyValid() == false)
+    {
+        return 0;
+    }
+    return din_frm2_.load().byte5.brake1;
 }
 char SafetyInterface::getDIDeadmanPanic()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.deadman_panic;
+    return din_frm2_.load().byte7.deadman_panic;
 }
 char SafetyInterface::getDIDeadmanNormal()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.deadman_normal;
+    return din_frm2_.load().byte7.deadman_normal;
 }
 
 char SafetyInterface::getDITPManual()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.manual;
+    return din_frm2_.load().byte6.manual;
 }
 char SafetyInterface::getDITPLimitedManual()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.lmt_manual;
+    return din_frm2_.load().byte6.lmt_manual;
 }
 char SafetyInterface::getDITPAuto()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.automatic;
+    return din_frm2_.load().byte6.automatic;
 }
 
-char SafetyInterface::getDIEStop()
+char SafetyInterface::getDITPEStop()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.estop;
+    return din_frm2_.load().byte7.tp_estop;
 }
 char SafetyInterface::getDILimitedStop()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.lmt_stop;
+    return din_frm2_.load().byte7.lmt_stop;
 }
 char SafetyInterface::getDIExtEStop()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte5.ext_estop;
+    return din_frm2_.load().byte7.ext_estop;
 }
-char SafetyInterface::getDIHWReset()
+char SafetyInterface::getDICore1Reset()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte6.hw_reset;
+    return din_frm2_.load().byte6.core1_reset;
 }
-char SafetyInterface::getDIServoAlarm()
+char SafetyInterface::getDICore1Alarm()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte6.hw_reset;
+    return din_frm2_.load().byte8.core1_alarm;
 }
-char SafetyInterface::getDIContactorFeadback()
+char SafetyInterface::getDIAlarm()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte6.hw_reset;
+    return din_frm2_.load().byte8.alarming;
 }
 char SafetyInterface::getDISafetyDoorStop()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return din_frm2_.byte6.hw_reset;
+    return din_frm2_.load().byte7.safetydoor_stop;
 }
-char SafetyInterface::getDOSWAlarm()
+char SafetyInterface::getDOType0Stop()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return dout_frm1_.byte4.sw_alarm;
+    return dout_frm2_.load().byte5.core0_sw0;
 }
-U64 SafetyInterface::setDOSWAlarm(char data)
+U64 SafetyInterface::setDOType0Stop(char data)
 {
     if (isSafetyValid() == false)
     {
         return TPI_SUCCESS;
     }
-    boost::mutex::scoped_lock lock(mutex_);
-    SafetyBoardDOFrm1 out = dout_frm1_;
-    out.byte4.sw_alarm = data;
-    return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
+    SafetyBoardDOFrm2 out = dout_frm2_;
+    out.byte5.core0_sw0 = data;
+    return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
-U64 SafetyInterface::setBrakeOn()
+char SafetyInterface::getDOType1Stop()
+{
+    return dout_frm2_.load().byte5.core0_sw1;
+}
+U64 SafetyInterface::setDOType1Stop(char data)
 {
     if (isSafetyValid() == false)
     {
         return TPI_SUCCESS;
     }
-    boost::mutex::scoped_lock lock(mutex_);
-    SafetyBoardDOFrm1 out = dout_frm1_;
-    out.byte4.disble_brake = 1;
-    return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
+    SafetyBoardDOFrm2 out = dout_frm2_;
+    out.byte5.core0_sw1 = data;
+    return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
-U64 SafetyInterface::setBrakeOff()
+char SafetyInterface::getDOType2Stop()
+{
+    return dout_frm2_.load().byte5.core0_sw2;
+}
+U64 SafetyInterface::setDOType2Stop(char data)
 {
     if (isSafetyValid() == false)
     {
         return TPI_SUCCESS;
     }
-    boost::mutex::scoped_lock lock(mutex_);
-    SafetyBoardDOFrm1 out = dout_frm1_;
-    out.byte4.disble_brake = 0;
-    return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
+    SafetyBoardDOFrm2 out = dout_frm2_;
+    out.byte5.core0_sw2 = data;
+    return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
-
 
 char SafetyInterface::getDOSafetyStopConf()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return dout_frm2_.byte5.safety_stop_config;
+    return dout_frm2_.load().byte5.safedoor_stop_config;
 }
 U64 SafetyInterface::setDOSafetyStopConf(char data)
 {
@@ -199,16 +182,14 @@ U64 SafetyInterface::setDOSafetyStopConf(char data)
     {
         return TPI_SUCCESS;
     }
-    boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm2 out = dout_frm2_;
-    out.byte5.safety_stop_config = data;
+    out.byte5.safedoor_stop_config = data;
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
 char SafetyInterface::getDOExtEStopConf()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return dout_frm2_.byte5.ext_estop_config;
+    return dout_frm2_.load().byte5.ext_estop_config;
 }
 U64 SafetyInterface::setDOExtEStopConf(char data)
 {
@@ -216,7 +197,6 @@ U64 SafetyInterface::setDOExtEStopConf(char data)
     {
         return TPI_SUCCESS;
     }
-    boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.ext_estop_config = data;
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
@@ -224,8 +204,7 @@ U64 SafetyInterface::setDOExtEStopConf(char data)
 
 char SafetyInterface::getDOLmtStopConf()
 {
-    boost::mutex::scoped_lock lock(mutex_);
-    return dout_frm2_.byte5.lmt_stop_config;
+    return dout_frm2_.load().byte5.lmt_stop_config;
 }
 U64 SafetyInterface::setDOLmtStopConf(char data)
 {
@@ -233,41 +212,17 @@ U64 SafetyInterface::setDOLmtStopConf(char data)
     {
         return TPI_SUCCESS;
     }
-    boost::mutex::scoped_lock lock(mutex_);
     SafetyBoardDOFrm2 out = dout_frm2_;
-    out.byte5.sw_reset = data;
+    out.byte5.lmt_stop_config = data;
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
-U64 SafetyInterface::setSoftwareReset(char data)
+U64 SafetyInterface::reset()
 {
-    if (isSafetyValid() == false)
-    {
-        return TPI_SUCCESS;
-    }
-    boost::mutex::scoped_lock lock(mutex_);
-    SafetyBoardDOFrm2 out = dout_frm2_;
-    lock.unlock();
-    out.byte5.sw_reset = data;
-    return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
+    setDOType0Stop(0);
+    setDOType1Stop(0);
+    setDOType2Stop(0);
 }
-
-U64 SafetyInterface::resetSafetyBoard()
-{
-    //clear software alarm
-    setDOSWAlarm(0);
-    //send a pulse to reset signal
-    setSoftwareReset(1);
-    usleep(RESET_SAFETY_DELAY * 1000);
-    return setSoftwareReset(0);
-}
-
-U64 SafetyInterface::alarmSafetyBoard()
-{
-    //send alarm to safty board
-    return setDOSWAlarm(1);
-}
-
 
 
 U64 SafetyInterface::setSafetyHeartBeat()
@@ -279,7 +234,6 @@ U64 SafetyInterface::setSafetyHeartBeat()
     U64 result = autorunSafetyData(); 
     if (result == TPI_SUCCESS)
     {
-        boost::mutex::scoped_lock lock(mutex_);
         U32 data = getSafety(SAFETY_INPUT_FIRSTFRAME, &result);
         //din_frm1_ = *(SafetyBoardDIFrm1*)&data;
         memcpy((char*)&din_frm1_, (char*)&data, sizeof(U32));
@@ -298,8 +252,25 @@ U64 SafetyInterface::setSafetyHeartBeat()
 
 bool SafetyInterface::isSafetyValid()
 {
-   boost::mutex::scoped_lock lock(mutex_);
-
    return valid_flag_;
 }
 
+bool SafetyInterface::isSafetyAlarm()
+{
+    static char pre_alarm = 0;
+
+    char alarm = getDIAlarm();    
+    if (alarm != pre_alarm)
+    {
+        FST_INFO("cur alarm:%d, pre_alarm:%d",alarm, pre_alarm);
+    }
+
+    if ((pre_alarm == 0) && (alarm == 1))
+    {
+        pre_alarm = alarm;
+        return true;
+    }
+
+    pre_alarm = alarm;
+    return false;
+}

@@ -91,6 +91,7 @@ class ThreadSafeList
 
         const iterator begin() const noexcept
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.begin();
         }
 
@@ -98,12 +99,14 @@ class ThreadSafeList
         /*wrapper for cbegin() function*/
         const iterator cbegin()
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.cbegin();
         }
 
         /*wrapper for cend() function*/
         const iterator cend()
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.cend();
         }
 
@@ -118,12 +121,14 @@ class ThreadSafeList
         /*wrapper for crbegin() function*/
         const_reverse_iterator crbegin() const noexcept
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.crbegin();
         }
 
         /*wrapper for crend() function*/
         const_reverse_iterator crend() const noexcept
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.crend();
         }
 
@@ -171,18 +176,19 @@ class ThreadSafeList
 
         const iterator end() const noexcept
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.end();
         }
 
         /*wrapper functions for erase()*/
-        iterator erase(const_iterator position)
+        iterator erase(iterator position)
         {
             std::lock_guard<std::mutex> listLockGuard(list_mutex_);
 
             threadSafeList.erase(position);
         }
 
-        iterator erase(const_iterator first, const_iterator last)
+        iterator erase(iterator first, iterator last)
         {
             std::lock_guard<std::mutex> listLockGuard(list_mutex_);
 
@@ -199,6 +205,7 @@ class ThreadSafeList
 
         const reference front() const
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.front();
         }
 
@@ -209,14 +216,14 @@ class ThreadSafeList
         }
 
         /*wrapper functions for insert*/
-        iterator insert(const_iterator position, const value_type& val)
+        iterator insert(iterator position, const value_type& val)
         {
             std::lock_guard<std::mutex> listLockGuard(list_mutex_);
 
             threadSafeList.insert(position, val); 
         }
 
-        iterator insert(const_iterator position, size_type n, const value_type& val)
+        iterator insert(iterator position, size_type n, const value_type& val)
         {
             std::lock_guard<std::mutex> listLockGuard(list_mutex_);
 
@@ -224,21 +231,21 @@ class ThreadSafeList
         }
 
         template <class InputIterator>
-        iterator insert(const_iterator position, InputIterator first, InputIterator last)
+        iterator insert(iterator position, InputIterator first, InputIterator last)
         {
             std::lock_guard<std::mutex> listLockGuard(list_mutex_);
 
             threadSafeList.insert(position, first, last);
         }
 
-        iterator insert(const_iterator position, value_type&& val)
+        iterator insert(iterator position, value_type&& val)
         {
             std::lock_guard<std::mutex> listLockGuard(list_mutex_);
 
             threadSafeList.insert(position, val);
         }
 
-        iterator insert(const_iterator position, std::initializer_list<value_type> il)
+        iterator insert(iterator position, std::initializer_list<value_type> il)
         {
             std::lock_guard<std::mutex> listLockGuard(list_mutex_);
 
@@ -278,11 +285,13 @@ class ThreadSafeList
         /*wrapper functions for operator []*/
         reference operator[] (size_type n)
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return std::ref(n);
         }
 
         const_reference operator[] (size_type n) const
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return std::cref(n);
         }
 		
@@ -355,6 +364,7 @@ class ThreadSafeList
 
         const_reverse_iterator rbegin() const noexcept
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.rbegin();
         }
 
@@ -367,6 +377,7 @@ class ThreadSafeList
         }		
         const_reverse_iterator rend() const noexcept
         {
+            std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.rend();
         }
 		
@@ -402,8 +413,9 @@ class ThreadSafeList
 
 
         //add function for size
-        size_type size() const noexcept
+        size_type size() const //noexcept
         {
+            //std::lock_guard<std::mutex> listLockGuard(list_mutex_);
             return threadSafeList.size();
         }
 		

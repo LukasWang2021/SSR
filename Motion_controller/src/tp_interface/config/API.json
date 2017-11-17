@@ -140,6 +140,45 @@
 		"user_level": 0,
 		"unit": 0
 	},
+
+    {
+		"path": "root/Control/forwardKinematics/flangeCoordinates",
+		"id": 4582,
+		"overwrite_active": 0,
+		"data_type": 258,
+		"data_size": 8,
+		"number_of_elements": 6,
+		"param_type": 512,
+		"permission": 1,		
+		"user_level": 0,
+		"unit": 0
+	},
+
+    {
+		"path": "root/Ethercat_IO/SomanetIO/dInUser3",
+		"id": 365,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
+
+	{
+		"path": "root/Ethercat_IO/SomanetIO/dInUser4",
+		"id": 366,
+		"overwrite_active": 0,
+		"data_type": 2,
+		"data_size": 1,
+		"number_of_elements": 1,
+		"param_type": 2,
+		"permission": 3,
+		"user_level": 0,
+		"unit": 0
+	},
 	
 	{
 		"path": "root/IO/System/dInAcknowledge",

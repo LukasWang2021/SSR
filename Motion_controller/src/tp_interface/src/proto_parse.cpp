@@ -99,7 +99,6 @@ void ProtoParse::updateParams()
     {
         setUpdateFlagByID(LOGIC_PROGRAMSTATE_ID, true);
     }
-
     if ((result = robot_motion_.updateJoints()) == TPI_SUCCESS) //get current joints from share memory
     {        
         if (robot_motion_.isJointsChanged())
@@ -116,6 +115,14 @@ void ProtoParse::updateParams()
                     storeErrorCode(result);
                 }
             }
+            if ((result = robot_motion_.updateFlangePose()) == TPI_SUCCESS)
+            {
+                setUpdateFlagByID(FK_FLGE_COORD_ID, true);
+            }
+            else
+            {
+                storeErrorCode(result);
+            }
 #ifdef SIMMULATION
             // ===update joints and publish to rviz===================
             Joint cur_joints = robot_motion_.getCurJointsValue();
@@ -130,7 +137,6 @@ void ProtoParse::updateParams()
             storeErrorCode(result);
         }
     }
-
     if (robot_motion_.updateLogicMode())
     {
         setUpdateFlagByID(LOGIC_MODE_ID, true);
@@ -142,7 +148,6 @@ void ProtoParse::updateParams()
             }
         }
     }
-
     if (robot_motion_.updateLogicState()) 
     {
         setUpdateFlagByID(LOGIC_STATE_ID, true);
@@ -154,7 +159,10 @@ void ProtoParse::updateParams()
             }
         }
     }
-    
+    if (robot_motion_.updateInstructionSize())
+    {
+        setUpdateFlagByID(INSTRUCTION_NUM_ID, true);
+    }
     if ((result = robot_motion_.updateSafetyStatus()) != TPI_SUCCESS)
     {
         //if (!robot_motion_.isUpdatedSameError(result))                
@@ -193,6 +201,7 @@ void ProtoParse::pubParamList()
 	{
 		sig.id = it->first;
 		PublishUpdate pub_update = it->second;
+        //FST_INFO("id:%d, count:%d", sig.id, pub_update.count);
         if (pub_update.count++ >= pub_update.basic_freq)
 		{
             if ((pub_update.count >= pub_update.max_freq)
@@ -210,7 +219,6 @@ void ProtoParse::pubParamList()
         }// if (pub_update.count++ >= pub_update.basic_freq)
         it->second = pub_update;
 	}// for (; it != param_pub_map_.end(); ++it)
-
     //====================================
     sig_group.sig_param_count = cnt;
     if (cnt > 0)
@@ -224,7 +232,6 @@ void ProtoParse::pubParamList()
 
     //===add plot msg==================
     cnt = 0;
-
     boost::mutex::scoped_lock lock(mutex_);
     map<int, PlotPub>::iterator itr = plot_pub_.begin();
     for(;itr != plot_pub_.end(); ++itr)
@@ -281,7 +288,7 @@ void ProtoParse::pubParamList()
     sig_group.sig_param_count = cnt;
     if (cnt > 0)
     {
-       // FST_INFO("publish %d signal", cnt);
+        //FST_INFO("publish %d signal", cnt);
         pubGroupMsg(sig_group);
     }// if (cnt > 0)
 
@@ -718,7 +725,7 @@ void ProtoParse::parseParamGetMsg(const uint8_t *field_buffer, int field_size)
     }//end else if (param_set_msg.has_path)
 
 
-	//FST_INFO("get_param_msg:%s, id:%d, param_id:%d", param_get_msg.path, msg_id, param_get_msg.id);
+//	FST_INFO("get_param_msg:%s, id:%d, param_id:%d", param_get_msg.path, msg_id, param_get_msg.id);
     ParamProperty* param_property = json_parse_->getParamProperty(msg_id);
     BaseTypes_ParamInfo* param_info = json_parse_->getParamInfo(param_get_msg.path, msg_id, param_property);
 
@@ -795,6 +802,12 @@ void ProtoParse::parseParamGetMsg(const uint8_t *field_buffer, int field_size)
         case FK_TOOL_COORD_ID:
         {
             PoseEuler pose = robot_motion_.getCurPosition();
+            retParamMsg(param_info, &pose);
+            break;
+        }
+        case FK_FLGE_COORD_ID:
+        {
+            PoseEuler pose = robot_motion_.getFlangePose();
             retParamMsg(param_info, &pose);
             break;
         }
@@ -1066,8 +1079,17 @@ void ProtoParse::retParamMsg(BaseTypes_ParamInfo* param_info, T params)
 void ProtoParse::retIOMsg(BaseTypes_ParameterMsg *param_msg)
 {
     bool ret;
-    param_msg->has_info = false;
+    //param_msg->has_info = false;
     uint8_t *buffer = nn_socket_->getReplyBufPtr();
+    param_msg->has_info = true;
+    param_msg->info.overwrite_active = 0; //not active
+    param_msg->info.data_type = 2;  // uint8
+    param_msg->info.data_size = 1;  // 1 byte
+    param_msg->info.number_of_elements = 1;  
+    param_msg->info.param_type = BaseTypes_ParamType_INPUT_SIGNAL;  //input
+    param_msg->info.permission = BaseTypes_Permission_permission_undefined;
+    param_msg->info.user_level = BaseTypes_UserLevel_user_level_undefined;
+    param_msg->info.unit = BaseTypes_Unit_unit_undefined;
 
     int length;
 	SET_FIELD(*param_msg, BaseTypes_ParameterMsg, buffer, MAX_BUFFER_SIZE, hash_size_, length, ret);
@@ -1171,6 +1193,12 @@ string ProtoParse::getParamBytes(int id)
             param_bytes = string((char*)&pose, sizeof(pose));
 			break;
 		}
+        case FK_FLGE_COORD_ID:
+		{
+            PoseEuler pose = robot_motion_.getFlangePose();
+            param_bytes = string((char*)&pose, sizeof(pose));
+			break;
+		}
         case ID_PREVIOUS_COMMAND_ID:
         {
             int prev_id = robot_motion_.getPreviousCmdID();
@@ -1204,6 +1232,7 @@ string ProtoParse::getParamBytes(int id)
                 error_list_.pop_front();
             }
             param_bytes = string((char*)err, ERROR_NUM*sizeof(U64));
+            //FST_INFO("param_bytes size:%d", param_bytes.size());
             break;
         }
         case SAFETY_INPUT_FRAME1_ID:
@@ -1396,6 +1425,9 @@ bool ProtoParse::parseMotionCommand(motion_spec_MotionCommand motion_command, Co
 			}
            
             //FST_INFO("wait has_timeout:%d, timeout:%f", wait.has_timeout, wait.timeout);
+            if (((wait.has_path) && (!wait.has_value))
+            || ((!wait.has_path) && (wait.has_value)))
+                return false;
             if ((wait.has_timeout) && (wait.timeout > 0))
                  cmd_instruction.count = (wait.timeout+NON_MOVE_INTERVAL-1) / NON_MOVE_INTERVAL;
             //FST_INFO("wait count:%d", cmd_instruction.count);

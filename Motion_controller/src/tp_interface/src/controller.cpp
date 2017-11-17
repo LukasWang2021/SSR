@@ -19,6 +19,7 @@
 #include "rt_timer.h"
 #include "tp_interface_version.h"
 #include "log_manager/log_manager_logger.h"
+#include "gpio_control.h"
 
 
 
@@ -32,6 +33,7 @@
 
 fst_log::Logger glog;
 bool gs_running_flag = true;
+bool g_inter_flag = false;
 
 /**
  * @brief: callback of SIGINT 
@@ -40,6 +42,7 @@ bool gs_running_flag = true;
  */
 void sigroutine(int dunno)
 {
+    g_inter_flag = true;
     if (dunno == SIGSEGV)
     {
         FST_INFO("SIGSEGV...");
@@ -79,6 +82,7 @@ bool setPriority(int prio)
  */
 void commuProc(ProtoParse *proto_parse)
 {	
+    RobotMotion *robot_motion = proto_parse->getRobotMotionPtr();
     while (!proto_parse->getRobotMotionPtr()->shutdown_)
 	{
        //auto t1 = std::chrono::system_clock::now(); 
@@ -110,13 +114,11 @@ void heartBeatProc(ProtoParse *proto_parse)
 
             proto_parse->storeErrorCode(result);
         }
-                
         result = rob_motion->getIOInterfacrPtr()->getIOError();
         if (result != TPI_SUCCESS)
         {
             proto_parse->storeErrorCode(result);
         }
-        
         mSleep(INTERVAL_HEART_BEAT_UPDATE);         
     }
 }
@@ -160,7 +162,7 @@ void* stateMachine(void *params)
         //usleep(5000);
         rtMsSleep(INTERVAL_PROCESS_UPDATE);
     }// while (gs_running_flag)
-
+    
 }
 
 int main(int argc, char **argv)
@@ -178,7 +180,7 @@ int main(int argc, char **argv)
     FST_INFO("BUILD TIME:%s", tp_interface_BUILD_TIME);
 
     ProtoParse proto_parse(&ros_basic);    
-    
+    openGPIO();
     
 	//=========================================
 	//ProtoParse proto_parse; //init class ProtoParse
@@ -188,18 +190,17 @@ int main(int argc, char **argv)
 	boost::thread thrd_Sock_Server(boost::bind(commuProc, &proto_parse));
     boost::thread thrd_heart_beat(boost::bind(heartBeatProc, &proto_parse));
 	//======start timer========================
-    
 
     RobotMotion *robot_motion = proto_parse.getRobotMotionPtr(); //class RobotMotion
     //long cur_time = getCurTime();
     /* Lock memory */
     if(mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
     {
-            printf("mlockall failed: %m\n");
+        printf("mlockall failed: %m\n");
     }
     setPriority(MAIN_PRIORITY);
     using mseconds = std::chrono::duration<int, std::chrono::milliseconds::period>;
-    
+
     struct timeval t1, t2, tre;
     gettimeofday(&t1, NULL);
     while (!robot_motion->shutdown_)
@@ -213,6 +214,9 @@ int main(int argc, char **argv)
             proto_parse.storeErrorCode(result);
         }
 
+        if (gs_running_flag == false)
+            robot_motion->setLogicStateCmd(EMERGENCY_STOP_E);
+
         gettimeofday(&t2, NULL);
         timeval_subtract(&tre, &t1, &t2);
         if (tre.tv_usec > 5000)
@@ -220,18 +224,21 @@ int main(int argc, char **argv)
 
             FST_ERROR("+++++++main delay too much===:%d, %ld, %ld,%ld, %ld", tre.tv_usec/1000, t1.tv_sec, t1.tv_usec, t2.tv_sec, t2.tv_usec);
         }
-
         //std::this_thread::sleep_until(next_cycle);
         //usleep(5000);
         rtMsSleep(5);
         //rtMsSleep(INTERVAL_PROCESS_UPDATE);
     }// while (gs_running_flag)
 
-        
+    FST_INFO("inter flag:%d", g_inter_flag);
     //==============================================
 	thrd_Sock_Server.join();
 	thrd_heart_beat.join();
 
+    if (!g_inter_flag)
+    {
+        shutdownPower();
+    }
     //	ProfilerStop(); // stop profiling
 		
 	return 0;

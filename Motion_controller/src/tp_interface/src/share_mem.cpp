@@ -72,7 +72,7 @@ void ShareMem::setCurrentJointCmd(JointCommand joint_cmd)
  */
 U64 ShareMem::getFeedbackJointState(FeedbackJointState &fbjs)
 {    
-    uint32_t read_cnt = 0;
+    static uint32_t read_cnt = 0;
     read_cnt++;
 
 	memset(&fbjs, 0, sizeof(FeedbackJointState));
@@ -108,7 +108,7 @@ U64 ShareMem::getFeedbackJointState(FeedbackJointState &fbjs)
  */
 U64 ShareMem::setJointPositions(JointCommand jc_w)
 {
-    uint32_t write_cnt = 0;
+    static uint32_t write_cnt = 0;
    // FST_INFO("write share memory:%f,%f,%f,%f,%f,%f", \
             jc_w.points[0].positions[0],\
             jc_w.points[0].positions[1],\

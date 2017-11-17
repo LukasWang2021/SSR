@@ -38,7 +38,7 @@ using namespace fst_parameter;
 
 #define RESET_ERROR_TIMEOUT	        (5000)	//wait until to judge if errors are reset
 
-#define MANUAL_COUNT_PER_STEP		(100)	//the time of TP is 50ms every time
+#define MANUAL_COUNT_PER_STEP		(120)	//the time of TP is 50ms every time
 
 #define DEFAULT_MOVEJ_ACC           (50.0)
 #define DEFAULT_ACC			        (7000)
@@ -285,6 +285,8 @@ class RobotMotion
      * @return: 
      */
     int getInstructionListSize();
+
+    bool updateInstructionSize();
 	/**
 	 * @brief: get previous_command_id_ 
 	 *
@@ -335,6 +337,8 @@ class RobotMotion
 	 * @return: pose_
 	 */
 	PoseEuler getCurPosition();
+
+    PoseEuler getFlangePose();
 
 	/**
 	 * @brief: get servo state, 0:init, 1:ready, 2:running, 3:error 
@@ -388,6 +392,7 @@ class RobotMotion
 	 */
 	U64 updatePose();
     
+    U64 updateFlangePose();
     /**
      * @brief: 
      *
@@ -421,6 +426,7 @@ class RobotMotion
      * @param pose: input
      */
     void setCurPose(PoseEuler pose);
+    void setFlangePose(PoseEuler pose);
     /**
      * @brief: set running state cmd
      *
@@ -727,6 +733,7 @@ class RobotMotion
 	ArmGroup			*arm_group_;
 	Joint			    joints_;				//current joints
 	PoseEuler			pose_;					//current pose
+    PoseEuler           flange_pose_;
     std::atomic<RobotMode>		mode_;					//current mode
     std::atomic<RobotState>		state_;					//current state
 	Joint			    prev_joints_;
@@ -753,6 +760,7 @@ class RobotMotion
     std::atomic<bool>                   servo_ready_wait_;                  //if needs to wait for servo ready
     std::atomic<ProgramState>           nm_prgm_state_;   //non move ProgramState
     ThreadSafeList<CommandInstruction>  instruction_list_;     //store motion instructions
+    boost::mutex		inst_mtx_;
     ThreadSafeList<U64> bak_err_list_;     
     std::atomic<U64>    prev_err_;
     //unsigned int        zero_info_; //record which joint lose zero
@@ -760,6 +768,7 @@ class RobotMotion
     void processNonMove(); 
     MoveStatus getMoveStatus();
     void setMoveStatus(MoveStatus ms);
+    void resetSafetyBoard();
 	/**
 	 * @brief: convert unit from params of TP to controller
 	 *

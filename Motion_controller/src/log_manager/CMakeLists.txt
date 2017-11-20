@@ -27,7 +27,7 @@ file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PR
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  middleware_to_mem
+    roscpp
 )
 
 if(${catkin_CROSS})
@@ -77,6 +77,7 @@ add_library(logger
 )
 target_link_libraries(logger
   ${catkin_LIBRARIES}
+  rt
 )
 
 
@@ -96,6 +97,7 @@ add_executable(fst_logger_demo src/log_manager_demo.cpp)
 target_link_libraries(log_server
   ${catkin_LIBRARIES}
   logger
+  rt
 )
 target_link_libraries(fst_logger_demo
   ${catkin_LIBRARIES}

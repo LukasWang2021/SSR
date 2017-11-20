@@ -164,7 +164,7 @@ class PlanningInterface {
     //------------------------------------------------------------------------------
     PoseEuler transformPose2PoseEuler(const Pose &pose);
 
-    bool getJointFromPose(const Pose &pose,
+    bool getJointFromPose(const PoseEuler &pose,
                           const Joint &reference,
                           Joint &joint,
                           double time_interval,
@@ -179,7 +179,7 @@ class PlanningInterface {
     //          error_code   -> error code
     // Return:  true         -> IK solution found
     //------------------------------------------------------------------------------
-    bool computeInverseKinematics(const Pose &pose,
+    bool computeInverseKinematics(const PoseEuler &pose,
                                   const Joint &joint_reference,
                                   Joint &joint_result,
                                   ErrorCode &err);
@@ -192,7 +192,7 @@ class PlanningInterface {
     //          error_code   -> error code
     // Return:  true         -> FK computed successfully
     //------------------------------------------------------------------------------
-    bool computeForwardKinematics(const Joint &joint, Pose &pose, ErrorCode &err);
+    bool computeForwardKinematics(const Joint &joint, PoseEuler &pose, ErrorCode &err);
     bool computeForwardKinematicsWorld(const Joint &joint, PoseEuler &flange, PoseEuler &tcp, ErrorCode &err);
 
     MoveCommand* createMotionCommand(int id, MotionTarget &target, MotionTarget &next, ErrorCode &err);
@@ -209,6 +209,20 @@ class PlanningInterface {
     
     ErrorCode pickPoints(vector<PathPoint> &points);
 
+    void setManualFrameMode(ManualFrameMode frame);
+
+    void setManualMotionMode(ManualMotionMode mode);
+
+    void setManualStepLength(double step);
+
+    bool startManualTeach(void);
+
+    bool stopManualTeach(void);
+
+    bool isManualTeaching(void);
+
+    void stepManualTeach(std::vector<int> &button, std::vector<PathPoint> &out);
+
     int estimateFIFOLength(Joint joint1, Joint joint2);
 
     bool replanPauseTrajectory(std::vector<JointPoint> &traj, JointPoint &joint_end);
@@ -218,9 +232,9 @@ class PlanningInterface {
     bool resumeFromEstop(const JointPoint &point, vector<JointPoint> &traj, ErrorCode &err);
 
     bool isMotionExecutable(MotionType motion_t);
-    bool isPointCoincident(const Pose &pose1, const Pose &pose2);
-    bool isPointCoincident(const Pose &pose, const Joint &joint);
-    bool isPointCoincident(const Joint &joint, const Pose &pose);
+    bool isPointCoincident(const PoseEuler &pose1, const PoseEuler &pose2);
+    bool isPointCoincident(const PoseEuler &pose, const Joint &joint);
+    bool isPointCoincident(const Joint &joint, const PoseEuler &pose);
     bool isPointCoincident(const Joint &joint1, const Joint &joint2);
 
     bool checkMotionTarget(const MotionTarget &target);
@@ -272,9 +286,16 @@ class PlanningInterface {
     Joint initial_joint_;
 
     TrajPlan    *planner_;
+    
     MoveCommand *motion_list_front_;
     MoveCommand *motion_list_back_;
     MoveCommand *picking_command_;
+
+    ManualTeach *manual_teach_;
+    bool  manual_teaching_;
+    ManualFrameMode     manual_frame_mode_;
+    ManualMotionMode    manual_motion_mode_;
+    
 };
 
 }

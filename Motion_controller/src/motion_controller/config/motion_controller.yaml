@@ -1,0 +1,33 @@
+arm_group:
+    enable_logger: false
+    enable_calibration: true
+    default_trajectory_fifo_length: 50
+    trajectory_fifo_length: 500
+    robot_recorder_path: '/opt/fst_controller/runtime/'
+
+planning_interface:
+    trajectory_segment_length: 100
+    cycle_time: 0.001
+    #velocity: 1000.0
+    acceleration: 6000.0
+    velocity_scaling: 100.0
+    acceleration_scaling: 100.0
+    jerk: 10.0
+    joint_overshoot: 0.25
+    #joint_errorangle: 0.0
+    omega_overload: 100.0
+    alpha_overload: 100.0
+    smooth_radius_coefficient: 1.2
+    smooth_curve_list:
+        - 'T_CURVE'
+        - 'S_CURVE'
+    smooth_curve_mode: 'T_CURVE'
+    manual_max_speed_scaling: 0.5
+    manual_length_per_pick: 20
+
+calibrator:
+    normal_offset_threshold: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
+    lost_offset_threshold: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+
+
+#END

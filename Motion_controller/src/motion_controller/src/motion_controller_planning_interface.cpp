@@ -21,8 +21,11 @@ PlanningInterface::PlanningInterface()
     motion_list_front_  = NULL;
     motion_list_back_   = NULL;
     picking_command_    = NULL;
-    
+    manual_teach_       = NULL;
+
+    manual_teaching_     = false;
     initial_joint_valid_ = false;
+
     memset(&tool_frame_, 0, sizeof(tool_frame_));
     memset(&user_frame_, 0, sizeof(user_frame_));
     memset(&dh_parameter_, 0, sizeof(dh_parameter_));
@@ -71,10 +74,28 @@ PlanningInterface::PlanningInterface()
 
 bool PlanningInterface::initPlanningInterface(fst_parameter::ParamValue &params, ErrorCode &err)
 {
-    if (planner_ != NULL) {delete planner_; planner_ = NULL;}
+    if (planner_ != NULL)
+        delete planner_;
+    
     planner_ = new fst_controller::TrajPlan();
-    if (planner_ == NULL) {err = MOTION_FAIL_IN_INIT; return false;}
-    while (motion_list_front_) deleteFirstMotionCommand();
+    
+    if (planner_ == NULL) {
+        err = MOTION_FAIL_IN_INIT;
+        return false;
+    }
+
+    while (motion_list_front_)
+        deleteFirstMotionCommand();
+    
+    if (manual_teach_ != NULL)
+        delete manual_teach_;
+
+    manual_teach_ = new fst_controller::ManualTeach(planner_);
+    
+    if (manual_teach_ == NULL) {
+        err = MOTION_FAIL_IN_INIT;
+        return false;
+    }
 
     try {
         if (setTrajectorySegmentLength(params["trajectory_segment_length"]) &&
@@ -91,6 +112,15 @@ bool PlanningInterface::initPlanningInterface(fst_parameter::ParamValue &params,
             setSmoothRadiusCoefficient(params["smooth_radius_coefficient"]))
         {
             setCurveMode(params["smooth_curve_mode"] == "T_CURVE" ? T_CURVE : S_CURVE);
+            
+            manual_frame_mode_  = JOINT;
+            manual_motion_mode_ = STEP;
+            manual_teach_->setManualFrameMode(JOINT);
+            manual_teach_->setManualMotionMode(STEP);
+            manual_teach_->setManualStepLength(0.01);   // 0.01 rad
+            manual_teach_->setManualMaxSpeedRatio(params["manual_max_speed_scaling"]);
+            manual_teach_->setManualLength((int)params["manual_length_per_pick"]);
+
             return true;
         }
         else {
@@ -108,8 +138,8 @@ bool PlanningInterface::initPlanningInterface(fst_parameter::ParamValue &params,
 PlanningInterface::~PlanningInterface()
 {
     while (motion_list_front_) deleteFirstMotionCommand();
-    delete planner_;
-    planner_ = NULL;
+    delete planner_;        planner_ = NULL;
+    delete manual_teach_;   manual_teach_ = NULL;
 }
 
 string PlanningInterface::getAlgorithmVersion(void)
@@ -493,7 +523,7 @@ PoseEuler PlanningInterface::transformPose2PoseEuler(const Pose &pose)
     return pose_e;
 }
 
-bool PlanningInterface::getJointFromPose(const  Pose &pose,
+bool PlanningInterface::getJointFromPose(const  PoseEuler &pose,
                                          const  Joint &reference,
                                          Joint  &joint,
                                          double time_interval,
@@ -532,7 +562,7 @@ bool PlanningInterface::getJointFromPose(const  Pose &pose,
 //          error_code   -> error code
 // Return:  true         -> IK solution found
 //------------------------------------------------------------------------------
-bool PlanningInterface::computeInverseKinematics(const Pose &pose,
+bool PlanningInterface::computeInverseKinematics(const PoseEuler &pose,
                                                  const Joint &joint_reference,
                                                  Joint &joint_result,
                                                  ErrorCode &err)
@@ -566,7 +596,7 @@ bool PlanningInterface::computeInverseKinematics(const Pose &pose,
 // Return:  true         -> FK computed successfully
 //------------------------------------------------------------------------------
 bool PlanningInterface::computeForwardKinematics(const Joint &joint,
-                                                 Pose &pose,
+                                                 PoseEuler &pose,
                                                  ErrorCode &err)
 {
     int res = this->planner_->ForwardKinematics(joint, pose);
@@ -605,6 +635,7 @@ bool PlanningInterface::computeForwardKinematicsWorld(const Joint &joint,
         return false;
     }
 }
+
 
 MoveCommand* PlanningInterface::createMotionCommand(
                 int id,
@@ -825,6 +856,67 @@ ErrorCode PlanningInterface::pickPoints(vector<PathPoint> &points)
     }
 }
 
+void PlanningInterface::setManualFrameMode(ManualFrameMode frame)
+{
+    if (frame != manual_frame_mode_) {
+        manual_frame_mode_ = frame;
+        manual_teach_->setManualFrameMode(manual_frame_mode_);
+    }
+}
+
+void PlanningInterface::setManualMotionMode(ManualMotionMode mode)
+{
+    if (mode != manual_motion_mode_) {
+        manual_motion_mode_ = mode;
+        manual_teach_->setManualMotionMode(manual_motion_mode_);
+    }
+}
+
+void PlanningInterface::setManualStepLength(double step)
+{
+    manual_teach_->setManualStepLength(step);
+}
+
+bool PlanningInterface::startManualTeach()
+{
+    if (isMotionCommandListEmpty()) {
+        if (!manual_teaching_ && initial_joint_valid_) {
+            manual_teach_->setCurrentStatus(initial_joint_);
+            manual_teaching_ = true;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        return false;
+    }
+}
+
+bool PlanningInterface::stopManualTeach()
+{
+    if (manual_teaching_ == true) {
+        manual_teaching_ = false;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool PlanningInterface::isManualTeaching(void)
+{
+    return manual_teaching_;
+}
+
+void PlanningInterface::stepManualTeach(vector<int> &button, vector<PathPoint> &out)
+{
+    if (manual_teaching_) {
+        manual_teach_->Manual_run(button, out);
+    }
+}
+
 int PlanningInterface::estimateFIFOLength(Joint joint1, Joint joint2)
 {
     return this->planner_->EstimateFIFOlength(joint1, joint2);
@@ -1028,7 +1120,7 @@ bool PlanningInterface::isMotionExecutable(MotionType motion_t)
     return true;
 }
 
-bool PlanningInterface::isPointCoincident(const Pose &pose1, const Pose &pose2)
+bool PlanningInterface::isPointCoincident(const PoseEuler &pose1, const PoseEuler &pose2)
 {
     if (0 == this->planner_->Check_coincidence(pose1, pose2))
         // two points are not coincident
@@ -1038,7 +1130,7 @@ bool PlanningInterface::isPointCoincident(const Pose &pose1, const Pose &pose2)
         return true;
 }
 
-bool PlanningInterface::isPointCoincident(const Pose &pose, const Joint &joint)
+bool PlanningInterface::isPointCoincident(const PoseEuler &pose, const Joint &joint)
 {
     if (0 == this->planner_->Check_coincidence(joint, pose))
         // two points are not coincident
@@ -1048,7 +1140,7 @@ bool PlanningInterface::isPointCoincident(const Pose &pose, const Joint &joint)
         return true;
 }
 
-bool PlanningInterface::isPointCoincident(const Joint &joint, const Pose &pose)
+bool PlanningInterface::isPointCoincident(const Joint &joint, const PoseEuler &pose)
 {
     if (0 == this->planner_->Check_coincidence(joint, pose))
         // two points are not coincident

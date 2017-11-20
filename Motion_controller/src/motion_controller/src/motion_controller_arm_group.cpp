@@ -39,7 +39,8 @@ static const unsigned int INITIALIZED   = 0x5556;
 //------------------------------------------------------------------------------
 ArmGroup::ArmGroup(void)
 {
-    log.info("ArmGroup Version %d.%d.%d",   motion_controller_VERSION_MAJOR,
+    log.info("ArmGroup Version %d.%d.%d",   
+                                            motion_controller_VERSION_MAJOR,
                                             motion_controller_VERSION_MINOR,
                                             motion_controller_VERSION_PATCH);
 
@@ -138,17 +139,45 @@ bool ArmGroup::initArmGroup(vector<ErrorCode> &err_list)
     log.info("Loading ArmGroup parameters ...");
     ParamGroup arm_param("share/configuration/configurable/motion_controller.yaml");
     if (arm_param.getLastError() == SUCCESS) {
-        bool result = true;
+        bool    result = true;
+        int     size;
+
         result = result && arm_param.getParam("arm_group/enable_logger", enable_logger);
         result = result && arm_param.getParam("arm_group/enable_calibration", enable_calibration_);
         result = result && arm_param.getParam("arm_group/default_trajectory_fifo_length", trajectory_fifo_dynamic_length_);
         result = result && arm_param.getParam("arm_group/robot_recorder_path", robot_recorder_path_);
+        result = result && arm_param.getParam("arm_group/trajectory_fifo_length", size);
+
+        
         if (result == true) {
             log.info("  initial FIFO2 size to %d", trajectory_fifo_dynamic_length_);
+
+            if (size > 0) {
+                traj_fifo_.initLockFreeFIFO(size);
+                
+                if (traj_fifo_.capacity() == size) {
+                    log.info("  initial FIFO2 (lokc free FIFO) size to %d", size);
+                }
+                else {
+                    log.error("FIFO2 (lock free FIFO) size not as expected, actual=%d, expect=%d", traj_fifo_.capacity(), size);
+                    err.push_back(MOTION_FAIL_IN_INIT);
+                    current_state_ = UNDEFINED;
+                    return false;
+                }
+            }
+            else {
+                log.error("Configuration value of FIFO2 size invalid, size=%d", size);
+                err.push_back(INVALID_PARAMETER);
+                current_state_ = UNDEFINED;
+                return false;
+            }
+            
             enable_logger       ? log.info("  log service: enabled")
                                 : log.info("  log service: disabled");
+
             enable_calibration_ ? log.info("  zero offset calibration: enabled")
                                 : log.info("  zero offset calibration: disabled");
+            
             log.info("  robot recorder path: %s", robot_recorder_path_.c_str());
             log.info("Success!");
         }
@@ -251,7 +280,6 @@ bool ArmGroup::initArmGroup(vector<ErrorCode> &err_list)
             return false;
         }
     }
-    log.setDisplayLevel(fst_log::MSG_LEVEL_ERROR);
 
     if (err.empty()) {
         log.info("ArmGroup is ready to make life easier. Have a good time!");
@@ -266,6 +294,41 @@ bool ArmGroup::initArmGroup(vector<ErrorCode> &err_list)
         }
         log.info("**********************************************************************************************");
         return false;
+    }
+}
+
+bool ArmGroup::startManualTeach(ManualFrameMode frame, ManualMotionMode mode)
+{
+    if (current_state_ != INITIALIZED)  {return false;}
+
+    if (trajectory_fifo_.empty() && planned_path_fifo_.empty()) {
+        if (setCurrentJointToStartJoint() == SUCCESS) {
+            planning_interface_->setManualFrameMode(frame);
+            planning_interface_->setManualMotionMode(mode);
+            return planning_interface_->startManualTeach();
+        }
+    }
+    else {
+        return false;
+    }
+}
+
+bool ArmGroup::stopManualTeach(void)
+{
+    return planning_interface_->stopManualTeach();
+}
+
+void ArmGroup::setManualStepLength(double step)
+{
+    planning_interface_->setManualStepLength(step);
+}
+
+void ArmGroup::stepManualTeach(vector<int> &button)
+{
+    if (planning_interface_->isManualTeaching()) {
+        vector<PathPoint> traj;
+        planning_interface_->stepManualTeach(button, traj);
+        planned_path_fifo_.insert(planned_path_fifo_.end(), traj.begin(), traj.end());
     }
 }
 
@@ -288,7 +351,7 @@ void ArmGroup::stopRecordingFIFO1(void)
     unlockFIFO1Backup();
 }
 
-void ArmGroup::getFIFO1RecordingData(vector<Pose> &data)
+void ArmGroup::getFIFO1RecordingData(vector<PoseEuler> &data)
 {
     data.clear();
 
@@ -581,8 +644,7 @@ const DHGroup ArmGroup::getDH(void)
 int ArmGroup::getPlannedPathFIFOLength(void)
 {
     if (current_state_ != INITIALIZED)  return 0;
-    int len = planned_path_fifo_.size() + planning_interface_->getAllCommandLength();
-    return len;
+    return planned_path_fifo_.size() + planning_interface_->getAllCommandLength();
 }
 
 
@@ -947,7 +1009,7 @@ bool ArmGroup::isTrajectoryTotallyFinished(void)
 // Return:  true    -> IK solution found
 //          false   -> IK solution NOT found
 //------------------------------------------------------------------------------
-bool ArmGroup::getJointFromPose(const Pose &pose, Joint &joint_result,
+bool ArmGroup::getJointFromPose(const PoseEuler &pose, Joint &joint_result,
                                 double time_interval, ErrorCode &err)
 {
     err = SUCCESS;
@@ -955,7 +1017,7 @@ bool ArmGroup::getJointFromPose(const Pose &pose, Joint &joint_result,
     return planning_interface_->getJointFromPose(pose, latest_ik_reference_, joint_result, time_interval, err);
 }
 
-bool ArmGroup::getPoseFromJoint(const Joint &joint, Pose &pose, ErrorCode &err)
+bool ArmGroup::getPoseFromJoint(const Joint &joint, PoseEuler &pose, ErrorCode &err)
 {
     return computeFK(joint, pose, err);
 }
@@ -969,7 +1031,7 @@ bool ArmGroup::getPoseFromJoint(const Joint &joint, Pose &pose, ErrorCode &err)
 // Return:  true    -> IK solution found
 //          false   -> IK solution NOT found
 //------------------------------------------------------------------------------
-bool ArmGroup::computeIK(const Pose &pose, Joint &joint_result, ErrorCode &err)
+bool ArmGroup::computeIK(const PoseEuler &pose, Joint &joint_result, ErrorCode &err)
 {
     err = SUCCESS;
     if (current_state_ != INITIALIZED) {err = NEED_INITIALIZATION; return false;}
@@ -986,7 +1048,7 @@ bool ArmGroup::computeIK(const Pose &pose, Joint &joint_result, ErrorCode &err)
 // Return:  true  -> FK computed successfully
 //          false -> FK computed UNsuccessfully
 //------------------------------------------------------------------------------
-bool ArmGroup::computeFK(const Joint &joint, Pose &pose, ErrorCode &err)
+bool ArmGroup::computeFK(const Joint &joint, PoseEuler &pose, ErrorCode &err)
 {
     err = SUCCESS;
     if (current_state_ != INITIALIZED) {err = NEED_INITIALIZATION; return false;}

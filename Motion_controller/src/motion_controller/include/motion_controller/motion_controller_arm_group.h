@@ -21,6 +21,7 @@
 #include <trajplan/TrajPlan.h>
 #include <log_manager/log_manager_logger.h>
 #include <motion_controller/motion_controller_error_code.h>
+#include <motion_controller/motion_controller_lockfree_fifo.h>
 #include <motion_controller/motion_controller_offset_calibrator.h>
 #include <motion_controller/motion_controller_planning_interface.h>
 #include <parameter_manager/parameter_manager_param_group.h>
@@ -28,7 +29,7 @@
 
 namespace fst_controller {
 
-const double MINIMUM_ALLOWANCE = 0.0001;
+const double MINIMUM_ALLOWANCE = 0.000001;
 // Brief class for controller. This class include many default settings and functions to make life easier.
 class ArmGroup {
   // -----------------------------public functions---------------------------------------------
@@ -65,7 +66,7 @@ class ArmGroup {
 
     void startRecordingFIFO1(void);
     void stopRecordingFIFO1(void);
-    void getFIFO1RecordingData(std::vector<Pose> &data);
+    void getFIFO1RecordingData(std::vector<PoseEuler> &data);
 
     bool recordLastJoint(ErrorCode &err);
     bool checkZeroOffset(unsigned int &calibrate_result, ErrorCode &err);
@@ -346,10 +347,10 @@ class ArmGroup {
     bool clearJointTrajectoryFIFO(ErrorCode &err);
     */
 
-    bool getJointFromPose(const Pose &pose, Joint &joint_result,
+    bool getJointFromPose(const PoseEuler &pose, Joint &joint_result,
                           double time_interval, ErrorCode &err);
 
-    bool getPoseFromJoint(const Joint &joint, Pose &pose, ErrorCode &err);
+    bool getPoseFromJoint(const Joint &joint, PoseEuler &pose, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    computeIK
@@ -360,7 +361,7 @@ class ArmGroup {
     // Return:  true    -> IK solution found
     //          false   -> IK solution NOT found
     //------------------------------------------------------------
-    bool computeIK(const Pose &pose, Joint &joint_result, ErrorCode &err);
+    bool computeIK(const PoseEuler &pose, Joint &joint_result, ErrorCode &err);
 
 
     //------------------------------------------------------------
@@ -372,7 +373,7 @@ class ArmGroup {
     // Return:  true    -> FK computed successfully
     //          false   -> FK computed UNsuccessfully
     //------------------------------------------------------------
-    bool computeFK(const Joint &joint, Pose &pose, ErrorCode &err);
+    bool computeFK(const Joint &joint, PoseEuler &pose, ErrorCode &err);
 
     bool computeFKInWorldCoordinate(const Joint &joint, PoseEuler &flange, PoseEuler &tcp, ErrorCode &err);
 
@@ -433,28 +434,6 @@ class ArmGroup {
     //          false   -> plan UNsuccessfully
     //------------------------------------------------------------
     bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
-               const Pose &pose_next, double v_next, double a_next, int cnt_next,
-               int id, ErrorCode &err);
-
-
-    //------------------------------------------------------------
-    // Function:    MoveJ (smooth to MoveL)
-    // Summary: To plan a path in joint space to touch target pose, with smooth.
-    // In:      joint_target-> target in joint space
-    //          v_max   -> max velocity
-    //          a_max   -> max acceleration
-    //          cnt     -> smooth degree
-    //          pose_next   -> next target in Cartesian space
-    //          v_next  -> max velocity in the next path
-    //          a_next  -> max acceleration in the next path
-    //          cnt_next    -> smooth degree in the next path
-    //          id      -> command id
-    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
-    //          err     -> error code
-    // Return:  true    -> plan successfully
-    //          false   -> plan UNsuccessfully
-    //------------------------------------------------------------
-    bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
                const PoseEuler &pose_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
@@ -464,33 +443,8 @@ class ArmGroup {
     // Summary: To plan a path in joint space to touch target pose, with smooth.
     //------------------------------------------------------------------------------
     bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
-               const Pose &pose2_circle, const Pose &pose3_circle,
-               double v_circle, double a_circle, int cnt_circle,
-               int id, ErrorCode &err);
-
-    //------------------------------------------------------------------------------
-    // Function:    MoveJ (smooth to MoveC)
-    // Summary: To plan a path in joint space to touch target pose, with smooth.
-    //------------------------------------------------------------------------------
-    bool MoveJ(const Joint &joint_target, double v_max, double a_max, int cnt,
                const PoseEuler &pose2_circle, const PoseEuler &pose3_circle,
                double v_circle, double a_circle, int cnt_circle,
-               int id, ErrorCode &err);
-
-
-    //------------------------------------------------------------
-    // Function:    MoveL (without smooth)
-    // Summary: To plan a linear path to touch target pose, without smooth.
-    // In:      pose_target -> target pose of the linear path
-    //          v_max   -> max velocity of endpoint
-    //          a_max   -> max acceleration of endpoint
-    //          id      -> command id
-    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
-    //          err     -> error code
-    // Return:  true    -> plan successfully
-    //          false   -> plan UNsuccessfully
-    //------------------------------------------------------------
-    bool MoveL(const Pose &pose_target, double v_max, double a_max,
                int id, ErrorCode &err);
 
 
@@ -509,26 +463,6 @@ class ArmGroup {
     bool MoveL(const PoseEuler &pose_target, double v_max, double a_max,
                int id, ErrorCode &err);
 
-    //------------------------------------------------------------
-    // Function:    MoveL (smooth to MoveJ)
-    // Summary: To plan a linear path to touch target pose, with smooth.
-    // In:      pose_target -> target pose of the linear path
-    //          v_max   -> max velocity of endpoint
-    //          a_max   -> max acceleration of endpoint
-    //          cnt_target  -> smooth degree
-    //          joint_next  -> target pose in joint space of the next path
-    //          v_next  -> max velocity of endpoint in the next path
-    //          a_next  -> max acceleration of endpoint in the next path
-    //          cnt_next    -> smooth degree in the next path
-    //          id      -> command id
-    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
-    //          err     -> error code
-    // Return:  true    -> plan successfully
-    //          false   -> plan UNsuccessfully
-    //------------------------------------------------------------
-    bool MoveL(const Pose &pose_target, double v_max, double a_max, int cnt_target,
-               const Joint &joint_next, double v_next, double a_next, int cnt_next,
-               int id, ErrorCode &err);
 
     //------------------------------------------------------------
     // Function:    MoveL (smooth to MoveJ)
@@ -549,28 +483,6 @@ class ArmGroup {
     //------------------------------------------------------------
     bool MoveL(const PoseEuler &pose_target, double v_max, double a_max, int cnt_target,
                const Joint &joint_next, double v_next, double a_next, int cnt_next,
-               int id, ErrorCode &err);
-
-
-    //------------------------------------------------------------
-    // Function:    MoveL (smooth to MoveL)
-    // Summary: To plan a linear path to touch target pose, with smooth.
-    // In:      pose_target -> target pose of the linear path
-    //          v_max   -> max velocity of endpoint
-    //          a_max   -> max acceleration of endpoint
-    //          cnt_target  -> smooth degree
-    //          pose_next   -> target pose of the next path
-    //          v_next  -> max velocity of endpoint in the next path
-    //          a_next  -> max acceleration of endpoint in the next path
-    //          cnt_next-> smooth degree in the next path
-    //          id      -> command id
-    // Out:     path(hidden)-> outputs added into planned_path_fifo_ automaticly
-    //          err     -> error code
-    // Return:  true    -> plan successfully
-    //          false   -> plan UNsuccessfully
-    //------------------------------------------------------------
-    bool MoveL(const Pose &pose_target, double v_max, double a_max, int cnt_target,
-               const Pose &pose_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
 
@@ -595,14 +507,6 @@ class ArmGroup {
                const PoseEuler &pose_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveL (smooth to MoveC)
-    // Summary: To plan a linear path to touch target pose, with smooth.
-    //------------------------------------------------------------------------------
-    bool MoveL(const Pose &pose_target, double v_max, double a_max, int cnt_target,
-               const Pose &pose2_circle, const Pose &pose3_circle,
-               double v_circle, double a_circle, int cnt_circle,
-               int id, ErrorCode &err);
 
     //------------------------------------------------------------------------------
     // Function:    MoveL (smooth to MoveC)
@@ -615,21 +519,11 @@ class ArmGroup {
 
     //------------------------------------------------------------------------------
     // Function:    MoveC (without smooth)
-    bool MoveC(const Pose pose_2nd, const Pose pose_3rd,
-               double v_target, double a_target,
-               int id, ErrorCode &err);
+    //------------------------------------------------------------------------------
     bool MoveC(const PoseEuler pose_2nd, const PoseEuler pose_3rd,
                double v_target, double a_target,
                int id, ErrorCode &err);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveC (smooth to MoveJ)
-    // Summary: To plan a circle path to touch target pose, with smooth.
-    //------------------------------------------------------------------------------
-    bool MoveC(const Pose &pose2_circle, const Pose &pose3_circle,
-               double v_max, double a_max, int cnt_target,
-               const Joint &joint_next, double v_next, double a_next, int cnt_next,
-               int id, ErrorCode &err);
 
     //------------------------------------------------------------------------------
     // Function:    MoveC (smooth to MoveJ)
@@ -640,14 +534,6 @@ class ArmGroup {
                const Joint &joint_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveC (smooth to MoveL)
-    // Summary: To plan a circle path to touch target pose, with smooth.
-    //------------------------------------------------------------------------------
-    bool MoveC(const Pose &pose2_circle, const Pose &pose3_circle,
-               double v_max, double a_max, int cnt_target,
-               const Pose &pose_next, double v_next, double a_next, int cnt_next,
-               int id, ErrorCode &err);
 
     //------------------------------------------------------------------------------
     // Function:    MoveC (smooth to MoveL)
@@ -658,15 +544,6 @@ class ArmGroup {
                const PoseEuler &pose_next, double v_next, double a_next, int cnt_next,
                int id, ErrorCode &err);
 
-    //------------------------------------------------------------------------------
-    // Function:    MoveC (smooth to MoveC)
-    // Summary: To plan a circle path to touch target pose, with smooth.
-    //------------------------------------------------------------------------------
-    bool MoveC(const Pose &pose2_circle, const Pose &pose3_circle,
-               double v_max, double a_max, int cnt_target,
-               const Pose &pose4_circle, const Pose &pose5_circle,
-               double v_next, double a_next, int cnt_next,
-               int id, ErrorCode &err);
 
     //------------------------------------------------------------------------------
     // Function:    MoveC (smooth to MoveC)
@@ -744,6 +621,10 @@ class ArmGroup {
     //------------------------------------------------------------
     PoseEuler transformPose2PoseEuler(const Pose &pose);
 
+    bool startManualTeach(ManualFrameMode frame, ManualMotionMode mode);
+    bool stopManualTeach(void);
+    void setManualStepLength(double step);
+    void stepManualTeach(vector<int> &button);
 
 
     // -----------------------------private functions---------------------------------------------
@@ -947,14 +828,15 @@ class ArmGroup {
     // Transformation tool_frame_;
     // Transformation user_frame_;
 
+    LockFreeFIFO<JointPoint> traj_fifo_;
     // planned path FIFO (FIFO1)
     std::vector<PathPoint> planned_path_fifo_;
     // joint space trajectory FIFO (FIFO2)
     std::vector<JointPoint> trajectory_fifo_;
     // FIFO1 backup used for diagnosis
-    Pose    fifo1_backup_[FIFO1_BACKUP_BUFFER_SIZE];
-    size_t  fifo1_backup_ptr_;
-    bool    fifo1_backup_enable_;
+    PoseEuler   fifo1_backup_[FIFO1_BACKUP_BUFFER_SIZE];
+    size_t      fifo1_backup_ptr_;
+    bool        fifo1_backup_enable_;
 
     struct TempZeroOffset {
         bool is_using_temp_zero_offset;

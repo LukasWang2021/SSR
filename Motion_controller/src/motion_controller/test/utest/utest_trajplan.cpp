@@ -237,8 +237,8 @@ class IKandFKTest : public ::testing::Test
 
 TEST_F(IKandFKTest, IKAndFK)
 {
-    Joint   jnt, ref, res;
-    Pose    pose;
+    Joint       jnt, ref, res;
+    PoseEuler   pose;
 
     double tmp1[] = {2.96, 1.3, 3.22, 3.31, 1.84, 6.28};
     double tmp2[] = {-2.96,-2.26,-1.16,-3.31,-1.84,-6.28};
@@ -264,9 +264,9 @@ TEST_F(IKandFKTest, IKAndFK)
 
 TEST_F(IKandFKTest, CarpetTest)
 {
-    Joint   jnt, res;
-    Pose    pose;
-    int     cnt = 0;
+    Joint       jnt, res;
+    PoseEuler   pose;
+    int         cnt = 0;
     
     double tmp_floor[] = {-2.6, -2.0, -1.0, -3.0, -1.5, -3.0};
     double tmp_ceil[]  = {2.6, 1.2, 3.0, 3.0, 1.5, 3.0};
@@ -277,12 +277,12 @@ TEST_F(IKandFKTest, CarpetTest)
                 for (jnt.j4 = tmp_floor[3]; jnt.j4 < tmp_ceil[3]; jnt.j4 += 0.4) {
                     for (jnt.j5 = tmp_floor[4]; jnt.j5 < tmp_ceil[4]; jnt.j5 += 0.2) {
                         for (jnt.j6 = tmp_floor[5]; jnt.j6 < tmp_ceil[5]; jnt.j6 += 0.4) {
-                            //printf("\r%1.2f\t%1.2f\t%1.2f\t%1.2f\t%1.2f\t%1.2f      ",
-                            //      jnt.j1, jnt.j2, jnt.j3, jnt.j4, jnt.j5, jnt.j6);
+                            printf("\r%1.2f\t%1.2f\t%1.2f\t%1.2f\t%1.2f\t%1.2f      ",
+                                  jnt.j1, jnt.j2, jnt.j3, jnt.j4, jnt.j5, jnt.j6);
 
-                            //ASSERT_EQ(0, planner_->ForwardKinematics(jnt, pose));
-                            //ASSERT_EQ(0, planner_->InverseKinematics(pose, jnt, res));
-                            //ASSERT_GT(0.00001, ComputeJointVariance(jnt, res));
+                            ASSERT_EQ(0, planner_->ForwardKinematics(jnt, pose));
+                            ASSERT_EQ(0, planner_->InverseKinematics(pose, jnt, res));
+                            ASSERT_GT(0.00001, ComputeJointVariance(jnt, res));
 
                             cnt++;
                         }
@@ -346,8 +346,7 @@ TEST_F(PlanningTest, MoveJ)
 
     MotionTarget    t1, t2, t3;
     Joint           joint;
-    Pose            pose;
-    PoseEuler       pose_e;
+    PoseEuler       pose;
 
     // (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) -> (0.0, 0.0, 0.0, 0.0, -1.57, 0.0)
     memcpy(&joint, tmp2, sizeof(joint));
@@ -549,8 +548,7 @@ TEST_F(PlanningTest, MoveJ)
     t1.percent_velocity = 100;
     t1.joint_target     = joint;
 
-    memcpy(&pose_e, tmp11, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp11, sizeof(pose));
     t2.type             = MOTION_LINE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
@@ -584,8 +582,7 @@ TEST_F(PlanningTest, MoveJ)
     t1.percent_velocity = 50;
     t1.joint_target     = joint;
 
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
     t2.type             = MOTION_LINE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
@@ -619,8 +616,7 @@ TEST_F(PlanningTest, MoveJ)
     t1.percent_velocity = 50;
     t1.joint_target     = joint;
 
-    memcpy(&pose_e, tmp13, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp13, sizeof(pose));
     t2.type             = MOTION_LINE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
@@ -654,14 +650,12 @@ TEST_F(PlanningTest, MoveJ)
     t1.percent_velocity = 50;
     t1.joint_target     = joint;
 
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
     t2.type             = MOTION_CIRCLE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
     t2.circle_target.pose1  = pose;
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -692,14 +686,12 @@ TEST_F(PlanningTest, MoveJ)
     t1.percent_velocity = 50;
     t1.joint_target     = joint;
 
-    memcpy(&pose_e, tmp16, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp16, sizeof(pose));
     t2.type             = MOTION_CIRCLE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
     t2.circle_target.pose1  = pose;
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -730,14 +722,12 @@ TEST_F(PlanningTest, MoveJ)
     t1.percent_velocity = 50;
     t1.joint_target     = joint;
 
-    memcpy(&pose_e, tmp18, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp18, sizeof(pose));
     t2.type             = MOTION_CIRCLE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
     t2.circle_target.pose1  = pose;
-    memcpy(&pose_e, tmp19, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp19, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -780,13 +770,11 @@ TEST_F(PlanningTest, MoveL)
 
     MotionTarget    t1, t2, t3;
     Joint           joint;
-    Pose            pose;
-    PoseEuler       pose_e;
+    PoseEuler       pose;
 
 
     // (0.0, 0.0, 0.0, 0.0, -1.5708, 0.0) -> [400.0, 400.0, 400.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp11, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp11, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -807,8 +795,7 @@ TEST_F(PlanningTest, MoveL)
     ASSERT_EQ(0, motion1->PlanTraj());
     
     // [400.0, 400.0, 400.0, 0.0, 0.0, 3.1416] -> [400.0,-400.0,500.0,0.0,0.0,3.1416]
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -827,8 +814,7 @@ TEST_F(PlanningTest, MoveL)
     ASSERT_EQ(0, motion2->PlanTraj());
 
     // [400.0,-400.0,500.0,0.0,0.0,3.1416] -> [380.0,0.0,617.5,0.0,0.0,3.1416]
-    memcpy(&pose_e, tmp13, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp13, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -851,8 +837,7 @@ TEST_F(PlanningTest, MoveL)
     delete motion3;     motion3 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [400.0, 400.0, 400.0, 0.0, 0.0, 3.1416] -> (0.0, 0.0, 0.0, 0.0, -1.5708, 0.0)
-    memcpy(&pose_e, tmp11, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp11, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 100;
@@ -886,8 +871,7 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> (0.2, -0.5, 0.0, 0.0, -1.0, 0.0)
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 50;
@@ -922,8 +906,7 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [250.0, -250.0, 450.0, 0.2, 0.2, 2.8] -> (0.0, 0.0, 0.0, 0.0, -1.5708, 0.0)
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 100;
@@ -957,16 +940,14 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [400.0, 400.0, 400.0, 0.0, 0.0, 3.1416] -> [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp11, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp11, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 100;
     t1.linear_velocity  = 800;
     t1.pose_target      = pose;
     
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
 
     t2.type             = MOTION_LINE;
     t2.cnt              = 0;
@@ -995,16 +976,14 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, 400.0, 400.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 50;
     t1.linear_velocity  = 800;
     t1.pose_target      = pose;
     
-    memcpy(&pose_e, tmp11, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp11, sizeof(pose));
 
     t2.type             = MOTION_LINE;
     t2.cnt              = 0;
@@ -1033,16 +1012,14 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [250.0, -250.0, 450.0, 0.2, 0.2, 2.8] -> [400.0, 400.0, 400.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 10;
     t1.linear_velocity  = 800;
     t1.pose_target      = pose;
     
-    memcpy(&pose_e, tmp11, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp11, sizeof(pose));
 
     t2.type             = MOTION_LINE;
     t2.cnt              = 0;
@@ -1071,24 +1048,21 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 600.0, 0.0, 0.0, 3.1416]/[400.0, 0.0, 300.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 100;
     t1.linear_velocity  = 500;
     t1.pose_target      = pose;
     
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
 
     t2.type             = MOTION_CIRCLE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp16, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp16, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -1113,24 +1087,21 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 450.0, 0.0, 0.0, 3.1416]/[400.0, -100.0, 700.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 50;
     t1.linear_velocity  = 500;
     t1.pose_target      = pose;
     
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
 
     t2.type             = MOTION_CIRCLE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp18, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp18, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -1155,24 +1126,21 @@ TEST_F(PlanningTest, MoveL)
     delete motion2;     motion2 = NULL;
 
     // [380.0,0.0,617.5,0.0,0.0,3.1416] -> [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 450.0, 0.0, 0.0, 3.1416]/[400.0, -100.0, 700.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp19, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp19, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 10;
     t1.linear_velocity  = 500;
     t1.pose_target      = pose;
     
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
 
     t2.type             = MOTION_CIRCLE;
     t2.cnt              = 0;
     t2.linear_velocity  = 500;
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp18, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp18, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -1218,8 +1186,7 @@ TEST_F(PlanningTest, MoveC)
 
     MotionTarget    t1, t2, t3, t4;
     Joint           joint;
-    Pose            pose;
-    PoseEuler       pose_e;
+    PoseEuler       pose;
 
 
     // [380.0, 0.0, 617.5, 0.0, 0.0, 3.1416] -> [400.0, 240.0, 650.0, 0.0, 0.0, 3.1416]/[400.0, 360.0, 350.0, 0.0, 0.0, 3.1416]
@@ -1227,12 +1194,10 @@ TEST_F(PlanningTest, MoveC)
     t1.cnt              = 0;
     t1.linear_velocity  = 800;
     
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
     t1.circle_target.pose1  = pose;
     
-    memcpy(&pose_e, tmp13, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp13, sizeof(pose));
     t1.circle_target.pose2  = pose;
 
     t2.type             = MOTION_NONE;
@@ -1251,8 +1216,7 @@ TEST_F(PlanningTest, MoveC)
     delete motion1;     motion1 = NULL;
     
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 600.0, 0.0, 0.0, 3.1416]/[400.0, 0.0, 300.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1263,12 +1227,10 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 0;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp16, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp16, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -1296,8 +1258,7 @@ TEST_F(PlanningTest, MoveC)
     delete motion2;     motion2 = NULL;
 
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 600.0, 0.0, 0.0, 3.1416]/[400.0, -100.0, 600.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1308,12 +1269,10 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 0;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_NONE;
@@ -1345,12 +1304,10 @@ TEST_F(PlanningTest, MoveC)
     t1.cnt              = 100;
     t1.linear_velocity  = 800;
     
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
     t1.circle_target.pose1  = pose;
     
-    memcpy(&pose_e, tmp13, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp13, sizeof(pose));
     t1.circle_target.pose2  = pose;
 
     t2.type             = MOTION_JOINT;
@@ -1381,8 +1338,7 @@ TEST_F(PlanningTest, MoveC)
     delete motion2;     motion2 = NULL;
 
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 600.0, 0.0, 0.0, 3.1416]/[400.0, 0.0, 300.0, 0.0, 0.0, 3.1416] -> (0.0, 1.0, -1.0, 2.1, 1.5708, 0.3)
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1393,12 +1349,10 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 50;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp16, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp16, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     memcpy(&joint, tmp2, sizeof(joint));
@@ -1435,8 +1389,7 @@ TEST_F(PlanningTest, MoveC)
     delete motion3;     motion3 = NULL;
 
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 600.0, 0.0, 0.0, 3.1416]/[400.0, -100.0, 600.0, 0.0, 0.0, 3.1416] -> (0.8, 0.2, 0.3, -0.5, 0.7, -1.0)
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1447,12 +1400,10 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 50;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     memcpy(&joint, tmp3, sizeof(joint));
@@ -1493,20 +1444,17 @@ TEST_F(PlanningTest, MoveC)
     t1.cnt              = 100;
     t1.linear_velocity  = 800;
     
-    memcpy(&pose_e, tmp12, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp12, sizeof(pose));
     t1.circle_target.pose1  = pose;
     
-    memcpy(&pose_e, tmp13, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp13, sizeof(pose));
     t1.circle_target.pose2  = pose;
 
     t2.type             = MOTION_LINE;
     t2.cnt              = 0;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
     t2.pose_target      = pose;
 
     t3.type             = MOTION_NONE;
@@ -1531,8 +1479,7 @@ TEST_F(PlanningTest, MoveC)
     delete motion2;     motion2 = NULL;
 
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 600.0, 0.0, 0.0, 3.1416]/[400.0, 0.0, 300.0, 0.0, 0.0, 3.1416] -> [380.0, 0.0, 617.5, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1543,20 +1490,17 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 50;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp16, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp16, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_LINE;
     t3.cnt              = 0;
     t3.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp11, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp11, sizeof(pose));
     t3.pose_target      = pose;
 
     t4.type             = MOTION_NONE;
@@ -1587,8 +1531,7 @@ TEST_F(PlanningTest, MoveC)
     delete motion3;     motion3 = NULL;
 
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 600.0, 0.0, 0.0, 3.1416]/[400.0, -100.0, 600.0, 0.0, 0.0, 3.1416] -> [400.0, 400.0, 400.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1599,20 +1542,17 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 10;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp15, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp15, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_LINE;
     t3.cnt              = 0;
     t3.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp18, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp18, sizeof(pose));
     t3.pose_target      = pose;
 
     t4.type             = MOTION_NONE;
@@ -1644,8 +1584,7 @@ TEST_F(PlanningTest, MoveC)
 
 
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 450.0, 0.0, 0.0, 3.1416]/[400.0, -100.0, 600.0, 0.0, 0.0, 3.1416] -> [400.0, 100.0, 650.0, 0.0, 0.0, 3.1416]/[400.0, 300.0, 400.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1656,24 +1595,20 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 100;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp19, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp19, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_CIRCLE;
     t3.cnt              = 0;
     t3.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp20, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp20, sizeof(pose));
     t3.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp21, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp21, sizeof(pose));
     t3.circle_target.pose2  = pose;
 
     t4.type             = MOTION_NONE;
@@ -1705,8 +1640,7 @@ TEST_F(PlanningTest, MoveC)
 
 
     // [400.0, -400.0, 500.0, 0.0, 0.0, 3.1416] -> [400.0, -240.0, 450.0, 0.0, 0.0, 3.1416]/[400.0, -100.0, 600.0, 0.0, 0.0, 3.1416] -> [400.0, 100.0, 650.0, 0.0, 0.0, 3.1416]/[400.0, 300.0, 400.0, 0.0, 0.0, 3.1416]
-    memcpy(&pose_e, tmp21, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp21, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1717,24 +1651,20 @@ TEST_F(PlanningTest, MoveC)
     t2.cnt              = 50;
     t2.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp20, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp20, sizeof(pose));
     t2.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp17, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp17, sizeof(pose));
     t2.circle_target.pose2  = pose;
 
     t3.type             = MOTION_CIRCLE;
     t3.cnt              = 0;
     t3.linear_velocity  = 800;
 
-    memcpy(&pose_e, tmp19, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp19, sizeof(pose));
     t3.circle_target.pose1  = pose;
 
-    memcpy(&pose_e, tmp14, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp14, sizeof(pose));
     t3.circle_target.pose2  = pose;
 
     t4.type             = MOTION_NONE;
@@ -1771,12 +1701,10 @@ TEST_F(PlanningTest, PickPoint)
     double tmp2[] = {400.0, 400.0, 400.0, 0.0, 0.0, 3.1416};
 
     MotionTarget    t1, t2;
-    PoseEuler       pose_e;
-    Pose            pose;
+    PoseEuler       pose;
     Joint           joint;
     
-    memcpy(&pose_e, tmp2, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp2, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 0;
@@ -1850,20 +1778,17 @@ TEST_F(PlanningTest, PauseAndResume_1)
     double tmp3[] = {400.0, -400.0, 500.0, 0.0, 0.0, 3.1416};
 
     MotionTarget    t1, t2, t3, t4;
-    PoseEuler       pose_e;
-    Pose            pose;
+    PoseEuler       pose;
     Joint           joint;
     
-    memcpy(&pose_e, tmp2, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp2, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 50;
     t1.linear_velocity  = 500;
     t1.pose_target      = pose;
 
-    memcpy(&pose_e, tmp3, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp3, sizeof(pose));
 
     t2.type             = MOTION_LINE;
     t2.cnt              = 50;
@@ -1945,20 +1870,17 @@ TEST_F(PlanningTest, PauseAndResume_2)
     double tmp3[] = {400.0, -400.0, 500.0, 0.0, 0.0, 3.1416};
 
     MotionTarget    t1, t2, t3, t4;
-    PoseEuler       pose_e;
-    Pose            pose;
+    PoseEuler       pose;
     Joint           joint;
     
-    memcpy(&pose_e, tmp2, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp2, sizeof(pose));
 
     t1.type             = MOTION_LINE;
     t1.cnt              = 50;
     t1.linear_velocity  = 500;
     t1.pose_target      = pose;
 
-    memcpy(&pose_e, tmp3, sizeof(pose_e));
-    ASSERT_EQ(0, planner_->Euler2Quatern(pose_e, pose));
+    memcpy(&pose, tmp3, sizeof(pose));
 
     t2.type             = MOTION_LINE;
     t2.cnt              = 50;

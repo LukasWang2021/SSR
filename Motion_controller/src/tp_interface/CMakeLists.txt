@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tp_interface)
-set(VERSION_MAJOR 2)
-set(VERSION_MINOR 0)
-set(VERSION_PATCH 11)
 
 #add_custom_command(OUTPUT vitual_target	
 #	COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_HOME_DIRECTORY}/../devel/${CONFIG_DIR}
@@ -12,19 +9,19 @@ set(VERSION_PATCH 11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED roscpp rospy std_msgs motion_controller middleware_to_mem parameter_manager safety io_manager)
+find_package(catkin REQUIRED roscpp rospy std_msgs motion_plan middleware_to_mem parameter_manager safety io_manager mem_share)
  
 set(CONFIG_DIR config)
 #execute_process(COMMAND rm -r ${CMAKE_HOME_DIRECTORY}/../devel/${CONFIG_DIR}
 #		COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_DIR} ${CMAKE_HOME_D#IRECTORY}/../devel)
 if(${catkin_CROSS})
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/motion_controller/include ${depend_PATH_INC}/middleware_to_mem/include ${depend_PATH_INC}/trajplan/include ${depend_PATH_INC}/parameter_manager/include ${depend_PATH_INC}/safety/include ${depend_PATH_INC}/log_manager/include ${depend_PATH_INC}/service_manager/include ${depend_PATH_INC}/io_manager/include ${depend_PATH_INC}/ioboard/include)
-	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libmotion_controller.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/libcore_interface.so ${depend_PATH_LIB}/libtrajplan.so ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libsafety.so ${depend_PATH_LIB}/libio_manager.so ${depend_PATH_LIB}/liblogger.so)
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/motion_plan/include ${depend_PATH_INC}/middleware_to_mem/include  ${depend_PATH_INC}/parameter_manager/include ${depend_PATH_INC}/safety/include ${depend_PATH_INC}/log_manager/include ${depend_PATH_INC}/service_manager/include ${depend_PATH_INC}/io_manager/include ${depend_PATH_INC}/ioboard/include ${depend_PATH_INC}/mem_share/include)
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libmotion_plan.so ${depend_PATH_LIB}/libcomm_interface.so ${depend_PATH_LIB}/libcore_interface.so  ${depend_PATH_LIB}/libparameter_manager.so ${depend_PATH_LIB}/libsafety.so ${depend_PATH_LIB}/libio_manager.so ${depend_PATH_LIB}/liblogger.so ${depend_PATH_LIB}/libmem_share.so)
 	set(CMAKE_CXX_FLAGS "-DCROSS_PLATFORM")
 	set(CMAKE_C_FLAGS "-DCROSS_PLATFORM")
 else(${catkin_CROSS})
     set(NANOPB_DIR ~/my_work/nanopb)
-	set(EXT_LIB nanomsg profiler)
+	set(EXT_LIB nanomsg profiler pthread)
     include_directories(/home/fst/fst_ros/src/service_manager/include /home/fst/fst_ros/src/trajplan/include/)
 endif(${catkin_CROSS})
 
@@ -43,7 +40,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES fst_controller
   CATKIN_DEPENDS parameter_manager
-  DEPENDS motion_controller 
+  DEPENDS motion_plan 
   DEPENDS comm_interface
   DEPENDS core_interface
   DEPENDS safety
@@ -53,13 +50,15 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -DPB_FIELD_32BIT -DSIMMULATION -DPRINT ") #-DLOGGER
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT -lpthread")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -DPB_FIELD_32BIT")
 
 message(${CMAKE_CXX_FLAGS})
 
 ##############version manager##############
-
+set(VERSION_MAJOR 2)
+set(VERSION_MINOR 1)
+set(VERSION_PATCH 1)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/version.h.in"
@@ -71,7 +70,7 @@ file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PR
 ####################################################
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include ./include  ./include/proto ./include/common ${NANOPB_DIR})
+include_directories(include ./include  ./include/proto ./include/service ./include/common include/tp_interface/ ${NANOPB_DIR})
 
 #set(CMAKE_LD_FLAGS "-std=c++11")
 ## Declare a C++ library
@@ -79,7 +78,9 @@ include_directories(include ./include  ./include/proto ./include/common ${NANOPB
 #   src/${PROJECT_NAME}/fst_controller.cpp
 # ) 
 aux_source_directory(src BASE_SRCS)
+aux_source_directory(src/service SERV_SRCS)
 aux_source_directory(src/proto PROTO_SRCS)
+aux_source_directory(src/tp_interface/ TPI_SRCS)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -87,14 +88,9 @@ aux_source_directory(src/proto PROTO_SRCS)
 # add_dependencies(fst_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 include_directories(include ${catkin_INCLUDE_DIRS} /usr/include/eigen3/ )
 ## Declare a C++ executable
-#add_executable(controller src/controller.cpp src/nn_socket.cpp src/proto_parse.cpp src/robot_motion.cpp src/json_parse.cpp src/share_mem.cpp src/watchdog.cpp src/ip_address.cpp src/timer.cpp src/ros_basic.cpp ${NANOPB_DIR}/pb_decode.c  ${NANOPB_DIR}/pb_encode.c ${NANOPB_DIR}/pb_common.c  src/proto/motionSL.pb.cpp src/proto/base_types.pb.cpp)
-add_executable(controller ${BASE_SRCS} ${PROTO_SRCS} ${NANOPB_DIR}/pb_decode.c  ${NANOPB_DIR}/pb_encode.c ${NANOPB_DIR}/pb_common.c)
+add_executable(controller ${BASE_SRCS} ${PROTO_SRCS} ${SERV_SRCS} ${TPI_SRCS} ${NANOPB_DIR}/pb_decode.c  ${NANOPB_DIR}/pb_encode.c ${NANOPB_DIR}/pb_common.c)
 #target_link_libraries(fst_controller )
 
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(fst_controller_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(controller
@@ -155,3 +151,12 @@ install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
+if(GTEST)
+message("GTest==>" ${GTEST_LIBRARIES})
+# Link utest with what we want to test and the GTest and pthread library.
+add_executable(ti_test test/unit/main.cpp)
+target_link_libraries(ti_test ${catkin_LIBRARIES} ${GTEST_LIBRARIES})
+install(TARGETS ti_test
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+endif()

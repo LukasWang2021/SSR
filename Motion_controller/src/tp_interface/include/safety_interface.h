@@ -8,8 +8,9 @@
 
 #ifndef TP_INTERFACE_SAFETY_INTERFACE_H_
 #define TP_INTERFACE_SAFETY_INTERFACE_H_
-#include "fst_error.h"
+#include "error_code.h"
 #include <atomic>
+#include "common.h"
 
 typedef struct _Core1Status
 {
@@ -122,23 +123,18 @@ class SafetyInterface
     ~SafetyInterface();
 
     /**
-     * @brief: get input frame 1 
-     *
-     * @return 
-     */
-    U32 getDIFrm1();
-    /**
      * @brief: get input frame 2
      *
      * @return 
      */
     U32 getDIFrm2();
+    
     /**
-     * @brief: get output frame 1 
+     * @brief 
      *
      * @return 
      */
-    U32 getDOFrm1();
+    bool isDIFrmChanged();
     /**
      * @brief: get output frame 2
      *
@@ -280,6 +276,14 @@ class SafetyInterface
      * @return 
      */
     char getDOType0Stop();
+
+    /**
+     * @brief: estop 0 
+     *
+     * @param data
+     *
+     * @return 
+     */
     U64 setDOType0Stop(char data);
 
     /**
@@ -288,6 +292,14 @@ class SafetyInterface
      * @return 
      */
     char getDOType1Stop();
+
+    /**
+     * @brief: estop 1 
+     *
+     * @param data
+     *
+     * @return 
+     */
     U64 setDOType1Stop(char data);
 
     /**
@@ -296,6 +308,14 @@ class SafetyInterface
      * @return 
      */
     char getDOType2Stop();
+
+    /**
+     * @brief 
+     *
+     * @param data
+     *
+     * @return 
+     */
     U64 setDOType2Stop(char data);
     
     /**
@@ -305,6 +325,14 @@ class SafetyInterface
      * @return 
      */
     char getDOSafetyStopConf();
+
+    /**
+     * @brief 
+     *
+     * @param data
+     *
+     * @return 
+     */
     U64 setDOSafetyStopConf(char data);
 
     /**
@@ -314,6 +342,14 @@ class SafetyInterface
      * @return 
      */
     char getDOExtEStopConf();
+
+    /**
+     * @brief 
+     *
+     * @param data
+     *
+     * @return 
+     */
     U64 setDOExtEStopConf(char data);
 
     /**
@@ -323,9 +359,20 @@ class SafetyInterface
      * @return 
      */
     char getDOLmtStopConf();
+
+    /**
+     * @brief 
+     *
+     * @param data
+     *
+     * @return 
+     */
     U64 setDOLmtStopConf(char data);
 
-    U64 reset();
+    /**
+     * @brief 
+     */
+    void reset();
 
     /**
      * @brief: heart_beat with safety board 
@@ -340,13 +387,17 @@ class SafetyInterface
      * @return 
      */
     bool isSafetyValid();
+
+    /**
+     * @brief 
+     *
+     * @return 
+     */
     bool isSafetyAlarm();
   private:
     std::atomic<bool>               valid_flag_;
 
-    std::atomic<SafetyBoardDIFrm1>  din_frm1_;
     std::atomic<SafetyBoardDIFrm2>  din_frm2_;
-    std::atomic<SafetyBoardDOFrm1>  dout_frm1_;
     std::atomic<SafetyBoardDOFrm2>  dout_frm2_;
 };
 

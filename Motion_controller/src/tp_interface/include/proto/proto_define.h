@@ -19,8 +19,7 @@
 #define PATH_CTL_ACTUAL_JOINT_POS		("root/Control/actualJointPositionsFiltered")
 #define PATH_CTL_HOSTIN_TOOL_TRAJ		("root/Control/hostInToolTrajectory")
 #define PATH_CTL_HOSTIN_JOINT_TRAJ		("root/Control/hostInJointTrajectory")
-#define PATH_CTL_FK_TOOL_COORD	        ("root/Control/forwardKinematics/toolCoordinates")
-#define PATH_CTL_FK_FLGE_COORD	        ("root/Control/forwardKinematics/flangeCoordinates")
+#define PATH_CTL_KINEMATICS_TOOL_COORD	("root/Control/forwardKinematics/toolCoordinates")
 
 #define PATH_CTL_TOOLFRAME              ("root/Control/toolFrame")
 #define PATH_CTL_USERFRAME              ("root/Control/userFrame")
@@ -70,7 +69,6 @@
 #define PATH_PLOT_FIFO1             ("root/Plot/fifo1")
 
 #define	FK_TOOL_COORD_ID		(4581)
-#define	FK_FLGE_COORD_ID		(4582)
 #define HOSTIN_JOINT_TRAJ_ID	(4632)
 #define HOSTIN_TOOL_COORD_ID	(4633)
 #define ACTUAL_JOINT_POS_ID		(4667)
@@ -182,5 +180,7 @@
 
 
 #define HASH_CMP(field, buffer)	compareInt(get_hash<BaseTypes_##field>(), buffer)
+
+
 
 #endif

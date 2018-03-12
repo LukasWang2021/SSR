@@ -11,7 +11,6 @@
 
 
 #include <stdio.h>
-#include <chrono>
 
 //void getDbDelta(double* from, double* to, double* target, int num);
 
@@ -19,7 +18,10 @@
 
 
 void printDbLine(const char* info, double* params, int len);
+bool waitSignalTimeout(bool sig, int timeout);
+double get2PIDeltaValue(double value1, double value2);
+long getCurTimeSecond();
+bool setTimeSecond(long seconds);
 
-int timeval_subtract(struct timeval* result, struct timeval* x, struct timeval* y);
 
 #endif

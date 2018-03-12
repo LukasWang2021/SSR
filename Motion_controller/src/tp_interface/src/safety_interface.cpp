@@ -8,15 +8,12 @@
 
 #include "safety/safety.h"
 #include "safety_interface.h"
-#include "common/common.h"
 
 
 SafetyInterface::SafetyInterface()
 {
-    valid_flag_ = true;
-    memset((char*)&din_frm1_, 0, sizeof(din_frm1_));
+    valid_flag_ = false;
     memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
-    memset((char*)&dout_frm1_, 0, sizeof(dout_frm1_));
     memset((char*)&dout_frm2_, 0, sizeof(dout_frm2_));
 #ifdef CROSS_PLATFORM
     openSafety();
@@ -30,23 +27,27 @@ SafetyInterface::~SafetyInterface()
 #endif
 }
 
-U32 SafetyInterface::getDIFrm1()
-{
-    return *(U32*)&din_frm1_;
-}
 U32 SafetyInterface::getDIFrm2()
 {
     return *(U32*)&din_frm2_;
-}
-U32 SafetyInterface::getDOFrm1()
-{
-    return *(U32*)&dout_frm1_;
 }
 U32 SafetyInterface::getDOFrm2()
 {
     return *(U32*)&dout_frm2_;
 }
 
+bool SafetyInterface::isDIFrmChanged()
+{
+    static U32 pre_frame_data;
+    U32 frm_data = getDIFrm2();
+    if (pre_frame_data == frm_data)
+    {
+        return false;
+    }
+    
+    pre_frame_data = frm_data;
+    return true;
+}
 
 char SafetyInterface::getDIDec()
 {
@@ -217,7 +218,7 @@ U64 SafetyInterface::setDOLmtStopConf(char data)
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
-U64 SafetyInterface::reset()
+void SafetyInterface::reset()
 {
     setDOType0Stop(0);
     setDOType1Stop(0);
@@ -234,10 +235,10 @@ U64 SafetyInterface::setSafetyHeartBeat()
     U64 result = autorunSafetyData(); 
     if (result == TPI_SUCCESS)
     {
-        U32 data = getSafety(SAFETY_INPUT_FIRSTFRAME, &result);
+        //U32 data = getSafety(SAFETY_INPUT_FIRSTFRAME, &result);
         //din_frm1_ = *(SafetyBoardDIFrm1*)&data;
-        memcpy((char*)&din_frm1_, (char*)&data, sizeof(U32));
-        data = getSafety(SAFETY_INPUT_SECONDFRAME, &result);
+        //memcpy((char*)&din_frm1_, (char*)&data, sizeof(U32));
+        U32 data = getSafety(SAFETY_INPUT_SECONDFRAME, &result);
         //din_frm2_ = *(SafetyBoardDIFrm2*)&data;
         memcpy((char*)&din_frm2_, (char*)&data, sizeof(U32));
         /*data = getSafety(SAFETY_OUTPUT_FIRSTFRAME, &result);*/
@@ -257,7 +258,7 @@ bool SafetyInterface::isSafetyValid()
 
 bool SafetyInterface::isSafetyAlarm()
 {
-    static char pre_alarm = 0;
+    static char pre_alarm = 1;
 
     char alarm = getDIAlarm();    
     if (alarm != pre_alarm)

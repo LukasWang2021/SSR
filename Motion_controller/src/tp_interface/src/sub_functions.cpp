@@ -1,6 +1,8 @@
 #include "sub_functions.h"
 #include "common.h"
-//nclude <thread> 
+#include <fst_datatype.h>
+#include <unistd.h>
+#include <sys/time.h>
 
 
 void printDbLine(const char* info, double* params, int len)
@@ -13,22 +15,47 @@ void printDbLine(const char* info, double* params, int len)
     FST_PRINT("\n");	
 }
 
-int timeval_subtract(struct timeval* result, struct timeval* x, struct timeval* y)   
-{   
-    if ( x->tv_sec>y->tv_sec )   
-              return -1;   
-  
-    if ( (x->tv_sec==y->tv_sec) && (x->tv_usec>y->tv_usec) )   
-              return -1;   
-  
-    result->tv_sec = ( y->tv_sec-x->tv_sec );   
-    result->tv_usec = ( y->tv_usec-x->tv_usec );   
-  
-    if (result->tv_usec<0)   
-    {   
-              result->tv_sec--;   
-              result->tv_usec+=1000000;   
-    }   
-  
-    return 0;   
+bool waitSignalTimeout(bool sig, int timeout)
+{
+    int interval = 100;
+    int count = timeout / interval;
+    while (!sig)
+    {
+        usleep (interval);
+        if (count-- <= 0)
+        {
+            FST_ERROR("requeset timeout");
+            return false;
+        }
+    }
+    return true;
+}
+
+
+double get2PIDeltaValue(double value1, double value2)
+{
+    //FST_INFO("value1:%f, value2:%f", value1, value2);
+    return round((value1 - value2) / (2 * PI)) * (2 * PI); 
+}
+
+long getCurTimeSecond()
+{
+    time_t seconds;
+
+    seconds = time((time_t *)NULL);
+
+    return seconds;
+}
+
+bool setTimeSecond(long seconds)
+{
+    struct timeval tv;
+    tv.tv_sec = seconds;  
+    tv.tv_usec = 0; 
+    if(settimeofday (&tv, (struct timezone *) 0) < 0)  
+    {  
+        printf("Set system datatime error!/n");  
+        return false;  
+    }  
+    return true;
 }

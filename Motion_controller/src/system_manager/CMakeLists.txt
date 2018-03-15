@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(system_manager)
 
+#############
+## Version ##
+#############
 # setting for include file.
 set(VERSION_MAJOR 1)
-set(VERSION_MINOR 1)
-set(VERSION_PATCH 0)
+set(VERSION_MINOR 2)
+set(VERSION_PATCH 1)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 
 # setting for package version file.
@@ -22,7 +25,9 @@ include_directories(${PROJECT_BINARY_DIR})
 # write the verson info to a file.
 file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
 
-
+###########
+## Setup ##
+###########
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   middleware_to_mem
@@ -34,6 +39,9 @@ if(${catkin_CROSS})
 	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libcomm_interface.so)
 endif(${catkin_CROSS})
 
+###################################
+## catkin specific configuration ##
+###################################
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES file_operations
@@ -42,8 +50,10 @@ catkin_package(
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -lrt -lpthread -O0 -DPB_FIELD_32BIT -DSIMMULATION")
-#add_subdirectory(test)
 
+###########
+## Build ##
+###########
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_library(file_operations src/file_operations.cpp)
@@ -63,6 +73,9 @@ target_link_libraries(one_command ${catkin_LIBRARIES} comm_interface)
 add_executable(loop_command test/loop_command.cpp)
 target_link_libraries(loop_command ${catkin_LIBRARIES} comm_interface file_operations)
 
+#############
+## Install ##
+#############
 install(TARGETS file_operations
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
@@ -79,4 +92,20 @@ install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+#############
+## Testing ##
+#############
+message(STATUS "GTEST = " ${GTEST})
+message(STATUS "gTEST LIB = " ${GTEST_LIBRARIES})
+if(GTEST)
+# Locate GTest.
+#find_package(GTest REQUIRED)
+#include_directories(${GTEST_INCLUDE_DIRS})
+# Link utest_all with what we want to test and the GTest and pthread library.
+add_executable(utest_system test/utest/utest_main.cpp test/utest/utest_file_operations.cpp test/utest/utest_system_execute.cpp src/file_operations.cpp src/system_execute.cpp)
+target_link_libraries(utest_system ${catkin_LIBRARIES} ${GTEST_LIBRARIES} libarchive.so)
+install(TARGETS utest_system
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+endif(GTEST)
 

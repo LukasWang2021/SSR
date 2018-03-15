@@ -168,12 +168,45 @@ public:
     //------------------------------------------------------------
     static int copyData(struct archive *ar, struct archive *aw);
 
-
 private:
     // the passphrase to the zip.
     static const char *passphrase_;
 
 };
+
+    // The string length for printing.
+    const int MSG_BUFFER_SIZE = 256;
+
+    //------------------------------------------------------------
+    // Function:  info
+    // Summary: format is [INFO][time] description 
+    // In:      format  -> string.
+    //          ...     -> variable args.
+    // Out:     None.
+    // Return:  None.
+    //------------------------------------------------------------
+    void info(const char *format, ...);
+
+    //------------------------------------------------------------
+    // Function:  warn
+    // Summary: format is [WARN][time] description 
+    // In:      format  -> string.
+    //          ...     -> variable args.
+    // Out:     None.
+    // Return:  None.
+    //------------------------------------------------------------
+    void warn(const char *fromat, ...);
+
+    //------------------------------------------------------------
+    // Function:  error
+    // Summary: format is [ERROR][time] description 
+    // In:      format  -> string.
+    //          ...     -> variable args.
+    // Out:     None.
+    // Return:  None.
+    //------------------------------------------------------------
+    void error(const char *format, ...);
+
 }
 
 #endif

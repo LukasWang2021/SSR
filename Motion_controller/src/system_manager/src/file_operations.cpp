@@ -20,6 +20,8 @@ Summary:    compress, extract...
 #include <sys/statfs.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <stdarg.h>
 
 namespace fst_file_operations
 {
@@ -66,12 +68,18 @@ bool FileOperations::copyFile(const char *source, const char *destination)
     /*  open input file. */
     FILE *in = fopen(source, "r");
     if (in == NULL)
+    {
+        error("FileOperations::copyFile: Can't open source file -> %s", source);
         return false;
+    }
 
     /* open output file. */
     FILE *out = fopen(destination, "w");
     if (out == NULL)
+    {
+        error("FileOperations::copyFile: Can't open destination file -> %s", destination);
         return false;
+    }
 
     /* copy data between. */
     while ((size = fread(buf, 1, sizeof(buf), in)) > 0)
@@ -106,8 +114,7 @@ bool FileOperations::copyDir(const char *source, const char *destination)
     /* check the source directory. */
     if ((dp = opendir(source)) == NULL)
     {
-        std::cout<<"Error in FileOperations::copyDir():"
-            <<"Can't open directory. "<<source<<std::endl;
+        error("FileOperations::copyDir: Can't open source directory -> %s", source);
         return false;
     } 
 
@@ -116,8 +123,7 @@ bool FileOperations::copyDir(const char *source, const char *destination)
     {
         if (mkdir(destination, 0777) != 0)
         {
-            std::cout<<"Error in FileOperations::copyDir():"
-                <<"Can't open new directory. "<<destination<<std::endl;
+            error("FileOperations::copyDir: Can't open destination directory -> %s", destination);
             return false;
         }
     }
@@ -189,21 +195,11 @@ char* FileOperations::getExePath(char *buf, int size)
     int len = readlink("/proc/self/exe", buf, size);
     if (len < 0 || len >= size)
     {
-        std::cout<<"Error in FileOperations::getExePath(): fail to get self path."<<std::endl;
+        error("FileOperations::getExePath: Failed to get executable path.");
         return NULL;
     }
 
     buf[len] = '\0';
-/*    for (int i = len; i >= 0; i--)
-    {
-        printf("buf[%d] %c\n", i, buf[i]);
-        if (buf[i] == '/')
-        {
-            buf[i + 1] = '\0';
-            break;
-        }
-    }
-    */
     return buf;
 }
 
@@ -223,8 +219,7 @@ std::vector<std::string> FileOperations::getFilesName(std::string dir_path)
     /* open the directory. */
     if ((dp = opendir(dir_path.c_str())) == NULL)
     {
-        std::cout<<"Error in FileOperations::getFilesName():"
-            <<"no such directory path "<<dir_path<<std::endl;
+        error("FileOperations::getFilesName: No such directory path -> %s", dir_path.c_str());
         return files;
     }
 
@@ -259,8 +254,7 @@ std::vector<std::string> FileOperations::getDirsName(std::string dir_path)
     /* open the directory. */
     if ((dp = opendir(dir_path.c_str())) == NULL)
     {
-        std::cout<<"Error in FileOperations::getDirName():"
-            <<"no such directory path "<<dir_path<<std::endl;
+        error("FileOperations::getDirsName: No such directory path -> %s", dir_path.c_str());
         return dirs;
     }
 
@@ -388,8 +382,7 @@ U64 FileOperations::archiveCreate(const char **source, const char *destination)
     /* set the form of encryption and the passphrase. */
 	if (ARCHIVE_OK != archive_write_set_options(a, "zip:encryption=aes128")) // other option is zipcrypt, aes256.
     {
-        std::cout<<"Error in FileOperations::archiveCreate() "
-            <<"when setting passphrase:No cryptographic library"<<std::endl;
+        error("FileOperations::archiveCreate: Can't set passphrase because no cryptographic library.");
 	}
     archive_write_set_passphrase(a, passphrase_);
     archive_write_open_filename(a, destination);
@@ -399,8 +392,9 @@ U64 FileOperations::archiveCreate(const char **source, const char *destination)
     int r = archive_read_disk_open(disk, *source);
     if (r != ARCHIVE_OK)
     {
-        std::cout<<"Error in FileOperations::archiveCreate(): "
-            <<"Can't open the file:"<<archive_error_string(disk)<<std::endl;
+        //std::cout<<"Error in FileOperations::archiveCreate(): "
+        //    <<"Can't open the file:"<<archive_error_string(disk)<<std::endl;
+        error("FileOperations::archiveCreate: Can't open source files -> %s", source);
         return SYS_COMPRESS_OPEN_FILE_FAIL;
     }  
 
@@ -423,8 +417,7 @@ U64 FileOperations::archiveCreate(const char **source, const char *destination)
         if (r != ARCHIVE_OK)
         {
             archive_entry_free(entry);
-            std::cout<<"Error in FileOperations::archiveCreate(): "
-                <<"Can't read the file header:"<<currentFile<<std::endl;
+            error("FileOperations::archiveCreate: Can't read the file header -> %s", currentFile);
             result = SYS_COMPRESS_READ_FILE_HEADER_FAIL;
             break;
         }
@@ -451,8 +444,7 @@ U64 FileOperations::archiveCreate(const char **source, const char *destination)
         else
         {
             archive_entry_free(entry);
-            std::cout<<"Error in FileOperations::archiveCreate(): "
-                <<"Can't write the archive:"<<currentFile<<std::endl;
+            error("FileOperations::archiveCreate: Can't write the archive -> %s", currentFile);
             result = SYS_COMPRESS_WRITE_FILE_FAIL;
             break;
         }
@@ -496,8 +488,7 @@ U64 FileOperations::archiveExtract(const char *source, const char *destination)
     archive_read_add_passphrase(a, passphrase_);
     if ((r = archive_read_open_filename(a, source, 10240))) // "10240" is the block size.
     {
-        std::cout<<"Error in FileOperations::archiveExtract(): "
-            <<"Can't open the archive:"<<archive_error_string(a)<<std::endl;
+        error("FileOperations::archiveExtract: Can't open the archive -> %s", source);
         return SYS_EXTRACT_OPEN_ARCHIVE_FAIL;
     }
 
@@ -519,8 +510,7 @@ U64 FileOperations::archiveExtract(const char *source, const char *destination)
             break;
         if (r != ARCHIVE_OK)
         {
-            std::cout<<"Error in FileOperations::archiveExtract(): "
-                <<"Can't read files of the archive:"<<currentFile<<std::endl;
+            error("FileOperations::archiveExtract: Can't read the files of the archive -> %s", currentFile);
             result = SYS_EXTRACT_READ_ARCHIVE_FAIL;
             break;
         }
@@ -540,8 +530,7 @@ U64 FileOperations::archiveExtract(const char *source, const char *destination)
         r = archive_write_header(ext, entry);
         if (r != ARCHIVE_OK)
         {
-            std::cout<<"Error in FileOperations::archiveExtract(): "
-                <<"Can't write the file header."<<fullOutputPath<<std::endl;
+            error("FileOperations::archiveExtract: Can't write the file header -> %s", fullOutputPath.c_str());
             result = SYS_EXTRACT_WRITE_FILE_HEADER_FAIL;
             break;
         }
@@ -551,16 +540,14 @@ U64 FileOperations::archiveExtract(const char *source, const char *destination)
             r = copyData(a, ext);
             if (r != ARCHIVE_OK)
             {
-                 std::cout<<"Error in FileOperations::archiveExtract(): "
-                     <<"Can't write the file data."<<fullOutputPath<<std::endl;
+                 error("FileOperations::archiveExtract: Can't write the file data -> %s", fullOutputPath.c_str());
                  result = SYS_EXTRACT_WRITE_FILE_DATA_FAIL;
                  break;
             }
             r = archive_write_finish_entry(ext);
             if (r != ARCHIVE_OK)
             {
-                std::cout<<"Info in FileOperations::archiveExtract(): "
-                    <<"can't finish writing entry. "<<fullOutputPath<<std::endl;
+                info("FileOperations::archiveExtract: Can't finish writing entry -> %s", fullOutputPath.c_str());
             }
         }
     }
@@ -594,8 +581,7 @@ int FileOperations::copyData(struct archive *ar, struct archive *aw)
 			return (ARCHIVE_OK);
 		if (result != ARCHIVE_OK) 
         {
-            std::cout<<"Error in FileOperations::copyData() when reading:"
-                <<archive_error_string(ar)<<std::endl;
+            error("FileOperations::copyData: Can't read the data -> %s", archive_error_string(ar));
 			return result;
 		}
 
@@ -603,13 +589,83 @@ int FileOperations::copyData(struct archive *ar, struct archive *aw)
 		result = archive_write_data_block(aw, buff, size, offset);
 		if (result != ARCHIVE_OK) 
         {
-            std::cout<<"Error in FileOperations::copyData() when writing:"
-                <<archive_error_string(ar)<<std::endl;
+            error("FileOperations::copyData: Can't write the data -> %s", archive_error_string(ar));
 			return result;
 		}
 	}
 }
 
+//------------------------------------------------------------
+// Function:  info
+// Summary: format is [INFO][time] description 
+// In:      format  -> string.
+//          ...     -> variable args.
+// Out:     None.
+// Return:  None.
+//------------------------------------------------------------
+void info(const char *format, ...)
+{
+    char buf[MSG_BUFFER_SIZE];
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    int len = sprintf(buf, "[ INFO][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+
+    va_list vp;
+    va_start(vp, format);
+    len += vsnprintf(buf + len, MSG_BUFFER_SIZE - len - 2, format, vp);
+    va_end(vp);
+    buf[len] = '\0';
+    
+    std::cout<<buf<<std::endl;
+}
+
+//------------------------------------------------------------
+// Function:  warn
+// Summary: format is [WARN][time] description 
+// In:      format  -> string.
+//          ...     -> variable args.
+// Out:     None.
+// Return:  None.
+//------------------------------------------------------------
+void warn(const char *format, ...)
+{
+    char buf[MSG_BUFFER_SIZE];
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    int len = sprintf(buf, "[ WARN][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+
+    va_list vp;
+    va_start(vp, format);
+    len += vsnprintf(buf + len, MSG_BUFFER_SIZE - len - 2, format, vp);
+    va_end(vp);
+    buf[len] = '\0';
+
+    std::cout<<"\033[33m" <<buf<<"\033[0m"<<std::endl;
+}
+
+//------------------------------------------------------------
+// Function:  error
+// Summary: format is [ERROR][time] description 
+// In:      format  -> string.
+//          ...     -> variable args.
+// Out:     None.
+// Return:  None.
+//------------------------------------------------------------
+void error(const char *format, ...)
+{
+    char buf[256];
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    int len = sprintf(buf, "[ERROR][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+
+    va_list vp;
+    va_start(vp, format);
+    len += vsnprintf(buf + len, MSG_BUFFER_SIZE - len - 2, format, vp);
+    va_end(vp);
+    buf[len + 1] = '\0';
+
+    std::cout<<"\033[31m"<<buf<<"\033[0m"<<std::endl;
+}
 
 
 }

@@ -155,6 +155,56 @@ void Controller::updateCurveMode(int id)
 {
     //static pre_curv_mode;
 }
+
+//20180313: qianjin add begin
+void Controller:: getRunningMode(void* params)
+{
+    int rep_run_mode = (int)run_mode_;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&rep_run_mode, sizeof(rep_run_mode));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(rep_run_mode);
+        memcpy(param->bytes, (char*)&rep_run_mode, param->size);
+    }
+
+}
+void Controller:: getServoState(void* params)
+{
+    int rep_servo_state = (int)ShareMem::instance()->getServoState();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&rep_servo_state, sizeof(rep_servo_state));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(rep_servo_state);
+        memcpy(param->bytes, (char*)&rep_servo_state, param->size);
+    }
+}
+
+// call back for running mode
+void  Controller:: updateRunningMode(int id)
+{
+}
+// call back for servo state
+void  Controller:: updateServoState(int id)
+{
+}
+
+//20180313: qianjin add end
+
+
 void Controller::getWorkStatus(void* params)
 {
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
@@ -194,7 +244,7 @@ void Controller::updateWorkStatus(int id)
                 }
                 work_status_ = IDLE_TO_RUNNING_T;
             }
-            else if (PAUSED_R == state)
+            else if (PAUSED_R == state || WAITING_R == state  )
             {
                 static const int max_count = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;            
                 if (ctrl_state_ == ENGAGED_S)
@@ -233,7 +283,7 @@ void Controller::updateWorkStatus(int id)
             break;
         case RUNNING_TO_IDLE_T:
             if ((intprt_state_ != IDLE_R)
-            && (intprt_state_ != PAUSED_R))
+            && (intprt_state_ != WAITING_R))
                 break;
         case TEACHING_TO_IDLE_T:        
             //FST_INFO("servo state:%d", getServoState());
@@ -245,16 +295,20 @@ void Controller::updateWorkStatus(int id)
             break;
         case RUNNING_W:
         {
+            int i;
             InterpreterState state = ShareMem::instance()->getIntprtState();
+            i = state;
+            printf("check intprtState=%d\n",i);
             if (state == IDLE_R)
             {
                 FST_INFO("EXECUTE_TO_idle");
                 work_status_ = IDLE_W;
             }
-            /*else if (state == PAUSED_R)*/
-            //{
-                //work_status_ = RUNNING_TO_IDLE_T;
-            /*}*/
+            else if (state == WAITING_R)
+            {
+                FST_INFO("RUNNING_TO_IDLE_T");
+                work_status_ = RUNNING_TO_IDLE_T;
+            }
             break;
         }
         default:
@@ -664,7 +718,12 @@ void Controller::jumpLine(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W) /*|| (!debug_ready_)*/)
     {
-        FST_ERROR("cant jump line!!");
+        int sta_c, sta_w;
+        sta_c = ctrl_state_;
+        sta_w = work_status_;
+
+        
+        FST_ERROR("jumpLine: cant jump line when ctrl_state = %d && work_status = %d!!", sta_c,sta_w);
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
@@ -1704,7 +1763,7 @@ void Controller::pauseMotion()
 
 bool Controller::resumeMotion()
 {
-    if ((intprt_state_ == PAUSED_R) && (auto_motion_->getDoneFlag() == false))
+    if ( ( (intprt_state_ == PAUSED_R) ||  (intprt_state_ == WAITING_R)  )  && (auto_motion_->getDoneFlag() == false))
     {
         auto_motion_->resume();
         FST_INFO("fsssssssssssssssssss\n");

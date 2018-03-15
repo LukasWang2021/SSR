@@ -26,7 +26,7 @@ TEST(CopyDirTest, ShouldTrue){
     ASSERT_TRUE(FileOperations::copyDir("/etc/default", "/tmp/default_copy_dir_test"));
 }
 
-TEST(CopyDirTest, ShouldFalse){
+TEST(CopyDirTest, CopyNotExistDir){
     ASSERT_FALSE(FileOperations::copyDir("/not_exist", "/tmp/default_copy_dir_test"));
 }
 
@@ -34,13 +34,29 @@ TEST(CopyTest, ShouldTrue){
     ASSERT_TRUE(FileOperations::copy("/etc/legal", "/tmp/legal_copy_test"));
 }
 
-TEST(CopyTest, ShouldFalse){
+TEST(CopyTest, CopyNotExist){
     ASSERT_FALSE(FileOperations::copy("/not_exist", "/tmp/legal_copy_test"));
 }
 
 TEST(GetExePathTest, ShouldNotNull){
     char path[128];
     ASSERT_STRNE(NULL, FileOperations::getExePath(path, sizeof(path)));
+//    printf("my path = %s\n", path);
+//    EXPECT_STREQ("/home/fst/tutorial/myros3/fst2/install/lib/system_manager/utest", path);
+}
+
+TEST(getFilesNameTest, ShouldNotZero){
+    std::vector<std::string> v = FileOperations::getFilesName("/etc");
+    int num = v.size();
+//    printf("the files number = %d.\n", num);
+    ASSERT_NE(0, num);
+}
+
+TEST(getDirsNameTest, ShouldNotZero){
+    std::vector<std::string> v = FileOperations::getDirsName("/etc");
+    int num = v.size();
+//    printf("the diretory number = %d.\n", num);
+    ASSERT_NE(0, num);
 }
 
 TEST(GetFreeDiskSizeTest, ShouldNotNegative){

@@ -49,7 +49,7 @@ ServiceWrapper::~ServiceWrapper()
 //------------------------------------------------------------
 ERROR_CODE_TYPE ServiceWrapper::init(void)
 {
-    ERROR_CODE_TYPE result = comm_.createChannel(IPC_REQ, "mcs");
+    ERROR_CODE_TYPE result = comm_.createChannel(COMM_REQ, COMM_IPC, "mcs");
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error in ServiceWrapper::init(): fail to create mcs channel."<<std::endl;
@@ -75,12 +75,15 @@ ERROR_CODE_TYPE ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
     ServiceRequest req = {MONITOR_HEARTBEAT_SID, ""};
     while (result != FST_SUCCESS)
     {
-        result = comm_.send(&req, sizeof(req), IPC_DONTWAIT);
+        result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
+        {
+            printf("write heartbeat out\n");
             return result;
+        }
     }
-//    std::cout<<"send heartbeat count = "<<count<<std::endl;
+    std::cout<<"send heartbeat count = "<<count<<std::endl;
 
     // attempt to recv heartbeat response.
     count = 0;
@@ -88,12 +91,15 @@ ERROR_CODE_TYPE ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
     while (result != FST_SUCCESS)
     {
         usleep(500);
-        result = comm_.recv(&resp, sizeof(resp), IPC_DONTWAIT);
+        result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
+        {
+            printf("read heartbeat out\n");
             return result;
+        }
     }
-//    std::cout<<"recv heartbeat count = "<<count<<std::endl;
+    std::cout<<"recv heartbeat count = "<<count<<std::endl;
     return result;
 }
 
@@ -114,7 +120,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
     ServiceRequest req = {JTAC_CMD_SID, ""};
     while (result != FST_SUCCESS)
     {
-        result = comm_.send(&req, sizeof(req), IPC_DONTWAIT);
+        result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
             return result;
@@ -127,7 +133,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
     while (result != FST_SUCCESS)
     {
         usleep(500);
-        result = comm_.recv(&resp, sizeof(resp), IPC_DONTWAIT);
+        result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
             return result;
@@ -155,7 +161,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendStopRequest(void)
     memcpy(&req.req_buff[0], &stop, sizeof(stop));
     while (result != FST_SUCCESS)
     {
-        result = comm_.send(&req, sizeof(req), IPC_DONTWAIT);
+        result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
             return result;
@@ -168,7 +174,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendStopRequest(void)
     while (result != FST_SUCCESS)
     {
         usleep(500);
-        result = comm_.recv(&resp, sizeof(resp), IPC_DONTWAIT);
+        result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
         ++count;
         if (count > ATTEMPTS)
             return result;

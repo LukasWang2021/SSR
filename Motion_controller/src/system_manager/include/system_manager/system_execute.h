@@ -10,6 +10,7 @@ Summary:
 #define SYSTEM_MANAGER_SYSTEM_EXECUTE_H_
 
 #include "system_manager_error_code.h"
+#include "system_manager/file_operations.h"
 #include <vector>
 #include <string>
 #include <map>

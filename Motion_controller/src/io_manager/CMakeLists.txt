@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 2.8.3)
 project(io_manager)
 
 # setting for include file.
-set(VERSION_MAJOR 1)
-set(VERSION_MINOR 1)
-set(VERSION_PATCH 0)
+set(${PROJECT_NAME}_VERSION_MAJOR 1)
+set(${PROJECT_NAME}_VERSION_MINOR 0)
+set(${PROJECT_NAME}_VERSION_PATCH 0)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 
 # setting for package version file.
-set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+set(${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH})
 
 # configure a header file to pass some settings to the source code.
 configure_file(
@@ -20,7 +20,7 @@ configure_file(
 include_directories(${PROJECT_BINARY_DIR})
 
 # write the verson info to a file
-file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
+file(WRITE ${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -48,7 +48,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(io_manager src/io_manager.cpp)
 target_link_libraries(io_manager ${catkin_LIBRARIES} parameter_manager ioboard)
 
-add_executable(io_manager_node test/io_manager_node.cpp)
+add_executable(io_manager_node src/io_manager_node.cpp)
 target_link_libraries(io_manager_node ${catkin_LIBRARIES} io_manager)
 
 install(TARGETS io_manager
@@ -59,15 +59,11 @@ install(TARGETS io_manager_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY config/
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
-)
-
-install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
-)
-
-install(DIRECTORY launch
+install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(FILES ${PROJECT_NAME}_version 
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
 

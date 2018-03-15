@@ -10,7 +10,6 @@ Summary:
 #define SYSTEM_MANAGER_SYSTEM_EXECUTE_CPP_
 
 #include "system_manager/system_execute.h"
-#include "system_manager/file_operations.h"
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <iostream>
 #include <fstream>
@@ -101,7 +100,7 @@ U64 SystemExecute::init(void)
     {
         if (mkdir(ftp_path_.c_str(), 0777) != 0)
             return SYS_INIT_FAIL;
-//        chmod(ftp_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+        //chmod(ftp_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
         chmod(ftp_path_.c_str(), 0777);
     }
     if (access(usb_path_.c_str(), 0) == -1)
@@ -150,18 +149,6 @@ U64 SystemExecute::init(void)
         init_only_once = true;
     }
 
-    /* disable ftp service. */
-/*    U64 result = stopFTP();
-    if (result != FST_SUCCESS)
-        return result;
-*/
-    /* read the versions of all packages. */
-/*    result = getAllVersion();
-    if (result != FST_SUCCESS)
-        return result;
-*/
-
-
     return FST_SUCCESS;
 }
 
@@ -191,8 +178,7 @@ U64 SystemExecute::getAllVersion(void)
         std::string line;
         if (!in.is_open())
         {
-            std::cout<<"Error in SystemExecute::getALlVersion():"
-                <<"Fail open file<"<<file<<">"<<std::endl;
+            error(" SystemExecute::getALlVersion: Failed to open file -> %s", file.c_str());
             return SYS_READ_VERSION_FAIL;
         }
         while (!in.eof())
@@ -318,8 +304,7 @@ bool SystemExecute::checkConfigIntact(void)
             path += "/" + files[j];
             if (!param.loadParamFile(path))
             {
-                std::cout<<"Error in SystemExecute::checkConfigIntact():"
-                    <<"Bad configuration file -> "<<path<<std::endl;
+                error(" SystemExecute::checkConfigIntact: Bad configuration file -> %s", path.c_str());
                 return false;
             }
         }
@@ -361,8 +346,7 @@ bool SystemExecute::updateParameters(std::string old_dir, std::string new_dir)
         std::string old_path = old_dir + "/" + old_files[i];
         if (!old_param.loadParamFile(old_path))
         {
-            std::cout<<"Error in SystemExecute::updateParameters():"
-                <<"Bad configuration file -> "<<old_path<<std::endl;
+            error(" SystemExecute::updateParameters: Bad old configuration file -> %s", old_path.c_str());
             return false;
         }
         std::vector<std::string> old_list;
@@ -372,8 +356,7 @@ bool SystemExecute::updateParameters(std::string old_dir, std::string new_dir)
         std::string new_path = new_dir + "/" + old_files[i];
         if (!new_param.loadParamFile(new_path))
         {
-            std::cout<<"Error in SystemExecute::updateParameters():"
-                <<"Bad configuration file -> "<<new_path<<std::endl;
+            error(" SystemExecute::updateParameters: Bad new configuration file -> %s", new_path.c_str());
             return false;
         }
         std::vector<std::string> new_list;
@@ -391,37 +374,35 @@ bool SystemExecute::updateParameters(std::string old_dir, std::string new_dir)
                     fst_parameter::ParamValue value;
                     if (!old_param.getParam(par, value))
                     {
-                        std::cout<<"Error in SystemExecute::updateParameters():failed to read old "<<par<<std::endl;
+                        error(" SystemExecute::updateParameters: Failed to read old %s", par.c_str());
                         return false;
                     }
                     fst_parameter::ParamValue default_value;
                     if (!new_param.getParam(par, default_value))
                     {
-                        std::cout<<"Error in SystemExecute::updateParameters():failed to read new "<<par<<std::endl;
+                        error(" SystemExecute::updateParameters: Failed to read new %s", par.c_str());
                         return false;
                     }
                     if (value.getType() != default_value.getType())
                     {
-                        std::cout<<"Error in SystemExecute::updateParameters():value type changed in "<<par<<std::endl;
+                        error(" SystemExecute::updateParameters: Value type chaned in %s", par.c_str());
                         return false;
                     }
                     if (!new_param.setParam(par, value))
                     {
-                        std::cout<<"Error in SystemExecute::updateParameters():failed to set new "<<par<<std::endl;
+                        error(" SystemExecute::updateParameters: Failed to set new %s", par.c_str());
                         return false;
                     }
                     if (!new_param.dumpParamFile(new_path))
                     {
-                        std::cout<<"Error in SystemExecute::updateParameters():failed to dump parameters."<<std::endl;
+                        error(" SystemExecute::updateParameters: Failed to dump parameters.");
                         return false;
                     }
                     break;
                 }
-                /* error if the old list has the parameter the new list doesn't have. */
+                /* error if the old list has the parameter the new list doesn't. */
                 if ((iter + 1) == new_list.end())
-                {
-                    std::cout<<"Warning in SystemExecute::updateParameters():missing parameter "<<par<<" in "<<new_path<<std::endl;
-                }
+                    warn(" SystemExecute::updateParameters: Missing parameter %s in %s", par.c_str(), new_path.c_str());
             }
 
         }
@@ -454,8 +435,7 @@ bool SystemExecute::compareParameters(std::string old_dir, std::string new_dir)
         std::string old_path = old_dir + "/" + old_files[i];
         if (!old_param.loadParamFile(old_path))
         {
-            std::cout<<"Error in SystemExecute::compareParameters():"
-                <<"Bad configuration file -> "<<old_path<<std::endl;
+            error(" SystemExecute::compareParameters: Bad old configuration file -> %s", old_path.c_str());
             return false;
         }
         std::vector<std::string> old_list;
@@ -465,8 +445,7 @@ bool SystemExecute::compareParameters(std::string old_dir, std::string new_dir)
         std::string new_path = new_dir + "/" + old_files[i];
         if (!new_param.loadParamFile(new_path))
         {
-            std::cout<<"Error in SystemExecute::compareParameters():"
-                <<"Bad configuration file -> "<<new_path<<std::endl;
+            error(" SystemExecute::compareParameters: Bad new configuration file -> %s", new_path.c_str());
             return false;
         }
         std::vector<std::string> new_list;
@@ -475,8 +454,7 @@ bool SystemExecute::compareParameters(std::string old_dir, std::string new_dir)
         /* compare the two yaml files.*/
         if (old_list != new_list)
         {
-            std::cout<<"Error in SystemExecute::compareParameters():"
-                <<"the two machine configuratioin files are different."<<new_path<<std::endl;
+            error(" SystemExecute::compareParameters: Two machine configuration files are different. -> %s", new_path.c_str());
             return false;
         }
     }
@@ -498,8 +476,7 @@ U64 SystemExecute::compress(std::vector<std::string> sources, std::string destin
     /*check the available disk size for compression. */
     if (!checkSize(sources))
     {
-        std::cout<<"Error in SystemExecute::compress(): "
-            <<"No enough space."<<std::endl;
+        error(" SystemExecute::compress: No enough space.");
         return SYS_NO_FREE_DISK;
     }
 
@@ -520,8 +497,7 @@ U64 SystemExecute::compress(std::vector<std::string> sources, std::string destin
         {
             if (!checkConfigIntact())
             {
-                std::cout<<"Error in SystemExecute::compress(): "
-                    <<"Bad configuration file."<<std::endl;
+                error(" SystemExecute::compress: Bad configuration file.");
                 return SYS_CONFIG_DAMAGED;
             }
         }
@@ -571,7 +547,7 @@ U64 SystemExecute::compress(std::vector<std::string> sources, std::string destin
         remove(path_map_[sources[i]].c_str());               // /tmp/fst_backup/<name>.tgz
     remove(temp_path_.c_str());                              // /tmp/fst_backup
 
-    std::cout<<"compress success."<<std::endl;
+    info(" Backup success.");
     return FST_SUCCESS;
 }
 
@@ -591,8 +567,7 @@ U64 SystemExecute::extract(std::string source)
     src += "/" +source;                        // /media/ftp/fst_extract/fst_control.tgz
     if (access(src.c_str(), 0) == -1)
     {
-        std::cout<<"Error in SystemExecute::extract(): "
-            <<"Can't find file in "<<src<<std::endl;
+        error(" SystemExecute::extract: Can't find archive in %s", src.c_str());
         return SYS_EXTRACT_ARCHIVE_FAIL;
     }
 
@@ -601,8 +576,7 @@ U64 SystemExecute::extract(std::string source)
     srcs.push_back(src);
     if (!checkSize(srcs))
     {
-        std::cout<<"Error in SystemExecute::extract(): "
-            <<"No enough space."<<std::endl;
+        error(" SystemExecute::extract: No enough space.");
         return SYS_NO_FREE_DISK;
     }
 
@@ -656,7 +630,7 @@ U64 SystemExecute::extract(std::string source)
     }
     remove(temp_path_.c_str());                            // /tmp/fst_backup
 
-    std::cout<<"extract success."<<std::endl;
+    info(" Extract success.");
     return FST_SUCCESS;
 }
 
@@ -699,7 +673,7 @@ U64 SystemExecute::upgrade(std::string source)
     if (ret == false)
         return SYS_CONFIGURABLE_FILE_ERROR;
 
-    std::cout<<"upgrade success."<<std::endl;
+    info(" Upgrade success.");
     return FST_SUCCESS;
 }
 
@@ -737,10 +711,9 @@ U64 SystemExecute::stopFTP(void)
     std::size_t found = str.find(str_key);
     if (found != std::string::npos)
     {
-        std::cout<<"ftp is off."<<std::endl;
         return FST_SUCCESS;
     }
-    std::cout<<"Error in SystemExecute::stopFTP(): fail to stop ftp service."<<std::endl;
+    error(" SystemExecute::stopFTP: Failed to stop ftp service.");
     return SYS_FTP_OFF_FAIL;
 
     /*
@@ -793,25 +766,10 @@ U64 SystemExecute::startFTP(void)
     std::size_t found = str.find(str_key);
     if (found != std::string::npos)
     {
-        std::cout<<"ftp is on."<<std::endl;
         return FST_SUCCESS;
     }
-    std::cout<<"Error in SystemExecute::startFTP(): failed to start ftp service."<<std::endl;
+    error(" SystemExecute::startFTP: Failed to start ftp service.");
     return SYS_FTP_ON_FAIL;
-
-    /*
-    pid_t pid = fork();
-    if (pid < 0)
-    {
-        return SYS_FTP_ON_FAIL;
-    }
-    else if (pid == 0)
-    {
-        if (execl("/bin/sh", "sh", "-c", "sudo /usr/sbin/service vsftpd restart", NULL) < 0)
-            exit(0);
-    }
-    return FST_SUCCESS;
-    */
 }
 
 }

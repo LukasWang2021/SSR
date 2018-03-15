@@ -16,42 +16,58 @@ using namespace fst_system_execute;
 
 class ExecuteTest:public ::testing::Test{
     protected:
-        //SystemExecute  e;
-        virtual void SetUp()
-        {
-            SystemExecute::init();
+        /*
+        virtual void SetUp(){
+            e.init();
         }
-
         virtual void TearDown(){}
+        SystemExecute e;
+        */
+        static void SetUpTestCase(){
+            shared_ptr_ = new SystemExecute();
+            //printf("set up once in a case.\n");
+        }
+        static void TearDownTestCase(){
+            delete shared_ptr_;
+            shared_ptr_ = nullptr;
+            //printf("tear down once in a case.\n");
+        }
+        static SystemExecute *shared_ptr_;
+
 };
+SystemExecute * ExecuteTest::shared_ptr_ = nullptr;
 
 // TEST_F(the name of the test fixture class, test_name)
+TEST_F(ExecuteTest, init){
+    EXPECT_EQ(0, shared_ptr_->init());
+}
+
 TEST_F(ExecuteTest, GetAllVersion){
-    EXPECT_EQ(0, SystemExecute::getAllVersion());
+    EXPECT_EQ(0, shared_ptr_->getAllVersion());
 }
 
 TEST_F(ExecuteTest, CheckSizeTrue){
     std::vector<std::string> v;
     v.push_back("/tmp");
-    EXPECT_TRUE(SystemExecute::checkSize(v));
+    EXPECT_TRUE(shared_ptr_->checkSize(v));
 }
 
 TEST_F(ExecuteTest, CheckSizeFalse){
     std::vector<std::string> v;
     v.push_back("/not_exist");
-    EXPECT_FALSE(SystemExecute::checkSize(v));
+    EXPECT_FALSE(shared_ptr_->checkSize(v));
 }
 
 TEST_F(ExecuteTest, CheckConfigIntact){
-    EXPECT_TRUE(SystemExecute::checkConfigIntact());
+    EXPECT_TRUE(shared_ptr_->checkConfigIntact());
 }
-
+/*
 TEST_F(ExecuteTest, FtpOn){
-    EXPECT_EQ(0, SystemExecute::startFTP());
+    EXPECT_EQ(0, shared_ptr_->startFTP());
 }
 
 TEST_F(ExecuteTest, FtpOff){
-    EXPECT_EQ(0, SystemExecute::stopFTP());
+    EXPECT_EQ(0, shared_ptr_->stopFTP());
 }
-
+*/
 #endif

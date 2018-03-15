@@ -83,7 +83,7 @@ public:
     ERROR_CODE_TYPE sendStopRequest(void);
 
     // The attempt number to send a request or receive a response.
-    static const int ATTEMPTS = 20;
+    static const int ATTEMPTS = 100;
 
 private:
     // Used to communicate with monitor.

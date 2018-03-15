@@ -24,14 +24,14 @@ namespace fst_system_manager
 enum SystemCommand
 {
     NONE = 0xB0,
-    CHECK_STATUS_SID = 0xB1,
+    CHECK_STATUS_SID = 0xB1,    //use to check if done, SYS_OPS_UNFINISHED if unfinished
     FTP_ON = 0xB2,
     FTP_OFF = 0xB3,
     CONFIG_BACKUP = 0xB4,
-    RESTORE = 0xB5,
+    RESTORE = 0xB5,     //config files
     ALL_UPGRADE = 0xB6,
-    ALL_BACKUP = 0xB7,
-    LAST_ITEM = 0xB8,
+    ALL_BACKUP = 0xB7, //kernel file system ...
+    LAST_ITEM = 0xB8,   //no use
 };
 
 struct SharedData

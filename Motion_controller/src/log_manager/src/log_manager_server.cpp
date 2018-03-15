@@ -15,6 +15,7 @@
 #include <map>
 #include <stdexcept>
 #include <iostream>
+#include <comm_interface/comm_interface.h>
 #include <log_manager_version.h>
 #include <log_manager/log_manager_server.h>
 
@@ -285,7 +286,6 @@ char buildLogControlBlock(string &name)
 
                     if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
                         g_lcb_ptr_queue[i]->working = true;
-                        lockFile(g_lcb_ptr_queue[i]->file_name);
                         info(" -Success!");
                         return g_lcb_ptr_queue[i]->id;
                     }
@@ -344,6 +344,7 @@ void public_thread(void)
     info(" -Success!");
 
     char buffer[DIRECTORY_BUF_SIZE] = {0};
+    string channel_to_close = "";
    
     info("Waiting for Log-in request ...");
 
@@ -393,10 +394,8 @@ void public_thread(void)
                             warn("Free useless LCB, id = %d, channel-name=%s",
                                  g_lcb_ptr_queue[i]->id, g_lcb_ptr_queue[i]->name.c_str());
 
-                            if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
-                                unlockFile(g_lcb_ptr_queue[i]->file_name);
+                            if (g_lcb_ptr_queue[i]->file_handle.is_open())
                                 g_lcb_ptr_queue[i]->file_handle.close();
-                            }
                         
                             delete g_lcb_ptr_queue[i];
                             g_lcb_ptr_queue[i] = NULL;
@@ -484,39 +483,36 @@ void io_thread(void)
                 switch (items[i].level)
                 {
                     case MSG_LEVEL_LOG:
-                        len = sprintf(buf, "[  LOG][%ld.%6ld]%s",
-                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
+                        len = sprintf(buf, "[  LOG][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
                         break;
 
                     case MSG_LEVEL_INFO:
-                        len = sprintf(buf, "[ INFO][%ld.%6ld]%s",
-                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
+                        len = sprintf(buf, "[ INFO][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
                         break;
 
                     case MSG_LEVEL_WARN:
-                        len = sprintf(buf, "[ WARN][%ld.%6ld]%s",
-                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
+                        len = sprintf(buf, "[ WARN][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
                         break;
 
                     case MSG_LEVEL_ERROR:
-                        len = sprintf(buf, "[ERROR][%ld.%6ld]%s",
-                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
+                        len = sprintf(buf, "[ERROR][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
                         break;
 
                     default:
-                        len = sprintf(buf, "[OTHER][%ld.%6ld]%s",
-                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
+                        len = sprintf(buf, "[OTHER][%ld.%6ld]",
+                                      items[i].stamp.tv_sec, items[i].stamp.tv_usec);
                 }
 
-                // len = len + sprintf(buf + len, "%s", items[i].text);
+                len = len + sprintf(buf + len, "%s", items[i].text);
 
                 if (NULL != g_lcb_ptr_queue[items[i].id - 1]) {
                     LogControlBlock *plcb = g_lcb_ptr_queue[items[i].id - 1];
-                    
-                    unsigned short tmp_num = plcb->serial_num;
-                    tmp_num++;
 
-                    if (tmp_num != items[i].number) {
+                    if (plcb->serial_num + 1 != items[i].number) {
                         // Some log items were lost beyond this item
                         int num;
 
@@ -585,8 +581,6 @@ void io_thread(void)
 
                         checkLogSpace(path);
 
-                        unlockFile(g_lcb_ptr_queue[i]->file_name);
-
                         g_lcb_ptr_queue[i]->file_name = file_name;
                         g_lcb_ptr_queue[i]->character_cnt = 0;
                         g_lcb_ptr_queue[i]->file_create_time = time_now;
@@ -594,7 +588,6 @@ void io_thread(void)
                         g_lcb_ptr_queue[i]->file_handle.open(file_name.c_str(), std::ios::app);
 
                         if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
-                            lockFile(g_lcb_ptr_queue[i]->file_name);
                             log(" -Success!");
                         }
                         else {
@@ -696,7 +689,7 @@ static void sigintHandle(int num)
     usleep(50 * 1000);
 }
 
-int initLogSpace(void)
+bool initLogSpace(void)
 {
     char buf[DIRECTORY_BUF_SIZE] = {0};
     int length = readlink("/proc/self/exe", buf, sizeof(buf));
@@ -727,7 +720,7 @@ int initLogSpace(void)
             );
         }
 
-        return 0;
+        return true;
     }
     else if (length >= sizeof(buf)) {
         buf[DIRECTORY_BUF_SIZE] = 0;
@@ -737,17 +730,17 @@ int initLogSpace(void)
         log("The length of log-path too long, %d characters permitted but %d characters in fact",
            DIRECTORY_BUF_SIZE - 1, length);
         
-        return -2;
+        return false;
     }
     else {
         error("internal fault while getting work directory");
         log("'Readlink()' returns a negative num: %d", length);
 
-        return -3;
+        return false;
     }
 }
 
-int initShareMemory(void)
+bool initShareMemory(void)
 {
     info("Prepare share memory ...");
 
@@ -755,14 +748,13 @@ int initShareMemory(void)
     
     if (-1 == fd) {
         error(" -Error in openMem(): failed on opening sharedmem");
-        return -1;
+        return false;
     }
 
     int lock = flock(fd, LOCK_EX | LOCK_NB);
     
     if (lock == -1) {
-        error(" -Fail to take over the 'fst_log_shm', it has controlled by another server");
-        return -2;
+        return false;
     }
 
     ftruncate(fd, LOG_MEM_SIZE);
@@ -772,7 +764,7 @@ int initShareMemory(void)
     if (ptr == MAP_FAILED) {
         close(fd);
         error(" -Error in openMem(): failed on mapping process sharedmem");
-        return -3;
+        return false;
     }
 
     memset(ptr, 0, LOG_MEM_SIZE);
@@ -784,10 +776,10 @@ int initShareMemory(void)
     text_area = GET_TEXT_AREA_PTR(ptr);
 
     info(" -Success!");
-    return 0;
+    return true;
 }
 
-int initServerLog(void)
+bool initServerLog(void)
 {
     g_server_log.name    = "log_server";
     g_server_log.working = false;
@@ -817,14 +809,13 @@ int initServerLog(void)
             g_server_log.working = true;
             info("Server log initialized, logging to file:");
             info("%s", g_server_log.file_name.c_str());
-            lockFile(g_server_log.file_name);
-            return 0;
+            return true;
         }
         else {
             g_server_log.working = false;
             error("Fail to open server log file, all logs from server will lost");
 
-            return -1;
+            return false;
         }
     }
     else if (length >= sizeof(buf)) {
@@ -835,7 +826,7 @@ int initServerLog(void)
         log("The length of log-path too long, %d characters permitted but %d characters in fact",
            DIRECTORY_BUF_SIZE - 1, length);
         
-        return -2;
+        return false;
     }
     else {
         error("Fail to initialize server log, all logs from server will lost");
@@ -843,60 +834,6 @@ int initServerLog(void)
         error("internal fault while getting work directory");
         log("'Readlink()' returns a negative num: %d", length);
 
-        return -3;
-    }
-}
-
-bool lockFile(string &file)
-{
-    string cmd;
-    cmd = "chattr +a " + file;
-    FILE *ptr = popen(cmd.c_str(), "r");
-    if (ptr != NULL) {
-        string  ret;
-        int     cnt = 256;
-        char    con[cnt];
-
-        while(fgets(con, cnt, ptr))
-            ret += con;
-
-        log("Lock file: %s.", file.c_str());
-        if (ret != "")
-            warn("%s", ret.c_str());
-        
-        pclose(ptr);
-        return true;
-    }
-    else {
-        warn("Fail to lock file: %s.", file.c_str());
-        return false;
-    }
-}
-
-bool unlockFile(string &file)
-{
-    string cmd;
-    cmd = "chattr -a " + file;
-    
-    FILE *ptr = popen(cmd.c_str(), "r");
-
-    if (ptr != NULL) {
-        string  ret;
-        int     cnt = 256;
-        char    con[cnt];
-
-        while(fgets(con, cnt, ptr))
-            ret += con;
-
-        log("Unlock file: %s.", file.c_str());
-        if (ret != "")
-            warn("%s", ret.c_str());
-        
-        pclose(ptr);
-        return true;
-    }
-    else {
-        warn("Fail to unlock file: %s.", file.c_str());
         return false;
     }
 }
@@ -911,12 +848,12 @@ int main(int argc, char **argv)
                                             log_manager_VERSION_MINOR,
                                             log_manager_VERSION_PATCH);
 
-    if (initShareMemory() != 0) {
+    if (!initShareMemory()) {
         error("Fail to initialize share memory");
         return -1;
     }
 
-    if (initLogSpace() != 0) {
+    if (!initLogSpace()) {
         error("Fail to initialize log space");
         return -1;
     }
@@ -938,18 +875,7 @@ int main(int argc, char **argv)
     log_receive.join();
     log_io.join();
 
-    for (int i = 0; i < MAX_LOG_CONTROL_BLOCK; ++i) {
-        if (g_lcb_ptr_queue[i] != NULL) {
-            if (g_lcb_ptr_queue[i]->file_handle.is_open())
-                g_lcb_ptr_queue[i]->file_handle.close();
-            unlockFile(g_lcb_ptr_queue[i]->file_name);
-            delete g_lcb_ptr_queue[i];
-            g_lcb_ptr_queue[i] = NULL;
-        }
-    }
-
     warn("Log server exit.");
-    unlockFile(g_server_log.file_name);
     g_server_log.file_handle.close();
     
     return 0;

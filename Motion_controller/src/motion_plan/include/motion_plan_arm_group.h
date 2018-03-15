@@ -1,0 +1,502 @@
+/*************************************************************************
+	> File Name: motion_plan_arm_group.h
+	> Author: 
+	> Mail: 
+	> Created Time: 2017年12月11日 星期一 09时14分31秒
+ ************************************************************************/
+
+#ifndef _MOTION_PLAN_ARM_GROUP_H
+#define _MOTION_PLAN_ARM_GROUP_H
+
+#include <fst_datatype.h>
+#include <motion_plan_error_code.h>
+#include <string>
+#include <vector>
+
+namespace fst_controller
+{
+    using std::vector;
+class ArmGroup
+{
+  public:
+    ArmGroup();
+    ~ArmGroup();
+
+    //------------------------------------------------------------------------------
+    // Function:    initArmGroup
+    // Summary: Initial all the resources in this class
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------------------------
+    ErrorCode initArmGroup();
+
+    //------------------------------------------------------------
+    // Function:    getVersion
+    // Summary: To get current version of motion_plan.
+    // In:      None
+    // Out:     None
+    // Return:  version string
+    //------------------------------------------------------------
+    std::string getVersion(void);
+
+    //------------------------------------------------------------
+    // Function:    getCycleTime
+    // Summary: To get cycle time of interpolation algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  cycle time
+    //------------------------------------------------------------
+    double getCycleTime(void);
+
+    //------------------------------------------------------------
+    // Function:    getCartesianAccMax
+    // Summary: To get max acceleration in cartesian space.
+    // In:      None
+    // Out:     None
+    // Return:  value of max acceleration in cartesian space
+    //------------------------------------------------------------
+    double getCartesianAccMax(void);
+
+    /*
+    //------------------------------------------------------------
+    // Function:    setCartesianAccMax
+    // Summary: To set max acceleration in cartesian space.
+    // In:      acc -> max acceleration in cartesian space
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setCartesianAccMax(double acc);
+    */
+
+    //------------------------------------------------------------
+    // Function:    getCartesianVelMax
+    // Summary: To get max velocity in cartesian space.
+    // In:      None
+    // Out:     None
+    // Return:  value of max velocity in cartesian space
+    //------------------------------------------------------------
+    double getCartesianVelMax(void);
+
+    int getLatestCommandLength(void);
+
+    /*
+    //------------------------------------------------------------
+    // Function:    setCartesianVelMax
+    // Summary: To set max velocity in cartesian space.
+    // In:      acc -> max velocity in cartesian space
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setCartesianVelMax(double vel);
+    */
+
+    //------------------------------------------------------------
+    // Function:    getGlobalVelRatio
+    // Summary: To get global velocity ratio in cartesian and joint space.
+    // In:      None
+    // Out:     None
+    // Return:  global velocity ratio in cartesian space
+    //          range: 0.0 ~ 1.0
+    //------------------------------------------------------------
+    double getGlobalVelRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    setGlobalVelRatio
+    // Summary: To set global velocity ratio in cartesian and joint space.
+    // In:      ratio -> global velocity ratio in cartesian space
+    //                   range: 0.0 ~ 1.0
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setGlobalVelRatio(double ratio);
+
+    //------------------------------------------------------------
+    // Function:    getGlobalAccRatio
+    // Summary: To get global acceleration ratio in cartesian and joint space.
+    // In:      None
+    // Out:     None
+    // Return:  global acceleration ratio in cartesian space
+    //          range: 0.0 ~ 3.0
+    //------------------------------------------------------------
+  //  double getGlobalAccRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    setGlobalAccRatio
+    // Summary: To set global acceleration ratio in cartesian and joint space.
+    // In:      ratio -> global acceleration ratio in cartesian space
+    //                   range: 0.0 ~ 3.0
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+   // ErrorCode setGlobalVelRatio(double ratio);
+
+    //------------------------------------------------------------
+    // Function:    getCartesianAcc
+    // Summary: To get acceleration in cartesian space.
+    // In:      None
+    // Out:     None
+    // Return:  cartesian acc, unit: mm/(s*s)
+    //------------------------------------------------------------
+    double getCartesianAcc(void);
+
+    //------------------------------------------------------------
+    // Function:    setCartesianAcc
+    // Summary: To set acceleration in cartesian space.
+    // In:      acc -> cartesian acceleration, unit: mm/(s*s)
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setCartesianAcc(double acc);
+
+    //------------------------------------------------------------
+    // Function:    getJerk
+    // Summary: To get jerk ratio.
+    // In:      None
+    // Out:     None
+    // Return:  jerk ratio
+    //------------------------------------------------------------
+    double getJerk(void);
+
+    //------------------------------------------------------------
+    // Function:    getCurveMode
+    // Summary: To get velocity curve mode.
+    // In:      None
+    // Out:     None
+    // Return:  curve mode in current:
+    //            T_CURVE -> Trapezoidal curve
+    //            S_CURVE -> S-Shape curve
+    //------------------------------------------------------------
+    const CurveMode& getCurveMode(void);
+
+    //------------------------------------------------------------
+    // Function:    getSoftConstraint
+    // Summary: To get soft joint constraint from algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  soft constraint
+    //------------------------------------------------------------
+    const JointConstraint& getSoftConstraint(void);
+
+    //------------------------------------------------------------
+    // Function:    setSoftConstraint
+    // Summary: To set soft joint constraint to algorithm and config file.
+    // In:      cons -> soft joint constraint
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setSoftConstraint(const JointConstraint &cons);
+
+    //------------------------------------------------------------
+    // Function:    getHardConstraint
+    // Summary: To get hard joint constraint from algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  hard constraint
+    //------------------------------------------------------------
+    const JointConstraint& getHardConstraint(void);
+
+    //------------------------------------------------------------
+    // Function:    getDH
+    // Summary: To get DH parameter group from algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  DH parameter group
+    //------------------------------------------------------------
+    const DHGroup& getDH(void);
+
+/*
+    //------------------------------------------------------------
+    // Function:    setDH
+    // Summary: To set DH parameter group to algorithm and config file.
+    // In:      dh -> DH parameter group
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    void setDH(const DHGroup &dh);
+*/
+
+    //------------------------------------------------------------
+    // Function:    getFIFOLength
+    // Summary: To get the length of trajectory FIFO.
+    // In:      None
+    // Out:     None
+    // Return:  length of the FIFO
+    //------------------------------------------------------------
+    int getFIFOLength(void);
+
+    //------------------------------------------------------------
+    // Function:    getFIFOCapacity
+    // Summary: To get the capacity of trajectory FIFO.
+    // In:      None
+    // Out:     None
+    // Return:  capacity of the FIFO
+    //------------------------------------------------------------
+    int getFIFOCapacity(void);
+
+    //------------------------------------------------------------
+    // Function:    getPointFromFIFO
+    // Summary: To get points from trajectory FIFO.
+    // In:      num -> number of joint points want to get
+    // Out:     points -> points from trajectory FIFO
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode getPointFromFIFO(std::vector<JointPoint> &points);
+
+    //------------------------------------------------------------
+    // Function:    getPointFromFIFO
+    // Summary: To get points from trajectory FIFO.
+    // In:      num -> number of joint points want to get
+    // Out:     points -> points from trajectory FIFO
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode getPointFromFIFO(int &num, JointPoint *points);
+
+    //------------------------------------------------------------
+    // Function:    pickPointToFIFO
+    // Summary: To pick points from motion command and put the points 
+    //          into trajectory FIFO.
+    // In:      num -> number of points want to pick
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode pickPointToFIFO(int num);
+
+    //------------------------------------------------------------
+    // Function:    getToolFrame
+    // Summary: To get current tool frame in algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  current tool frame
+    //------------------------------------------------------------
+    const Transformation& getToolFrame(void);
+
+    //------------------------------------------------------------
+    // Function:    setToolFrame
+    // Summary: To set current tool frame.
+    // In:      frame -> current tool frame
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    void setToolFrame(const Transformation &frame);
+
+    //------------------------------------------------------------
+    // Function:    getUserFrame
+    // Summary: To get current user frame in algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  current user frame
+    //------------------------------------------------------------
+    const Transformation& getUserFrame(void);
+
+    //------------------------------------------------------------
+    // Function:    setUserFrame
+    // Summary: To set current user frame.
+    // In:      frame -> current user frame
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    void setUserFrame(const Transformation &frame);
+
+    //------------------------------------------------------------
+    // Function:    setStartState
+    // Summary: To set robot start state.
+    // In:      joint -> robot start state
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setStartState(const Joint &joint);
+
+    //------------------------------------------------------------
+    // Function:    getJointFromPose
+    // Summary: To compute IK with a given pose in cartesian space,
+    //          without reference joint and accessibility check.
+    // In:      poes    -> the pose in cartesian space needed to compute IK
+    // Out:     joint   -> IK result
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode getJointFromPose(const PoseEuler &pose, Joint &joint);
+
+    //------------------------------------------------------------
+    // Function:    getPoseFromJoint
+    // Summary: To compute FK with a given point in joint space.
+    // In:      joint   -> the point in joint space needed to compute FK.
+    // Out:     pose    -> FK result
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode getPoseFromJoint(const Joint &joint, PoseEuler &pose);
+
+    //------------------------------------------------------------
+    // Function:    getPoseFromJointInWorld
+    // Summary: To get the pose of flange and tcp from a given point
+    //          in joint space in world coordinate.
+    // In:      joint   -> the point in joint space needed to compute FK.
+    // Out:     flange  -> flange pose in world coordinate
+    //          tcp     -> tcp pose in world coordinate
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode getPoseFromJointInWorld(const Joint &joint, PoseEuler &flange, PoseEuler &tcp);
+
+    //------------------------------------------------------------
+    // Function:    suspendMotion
+    // Summary: To replan a slow-down trajectory upon trajectory FIFO
+    //          and stop the robot motion. Used when pause event or IK
+    //          failure raised etc.
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode suspendMotion(void);
+
+    //------------------------------------------------------------
+    // Function:    declareESTOP
+    // Summary: Declare an ESTOP event to arm_group, this function
+    //          should be called after the robot is stopped.
+    // In:      joint   -> stopped robot is standing on this joint
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode declareESTOP(/*const Joint &joint*/);
+
+    //------------------------------------------------------------
+    // Function:    resumeMotion
+    // Summary: To replan a start-up trajectory and resume robot
+    //          motion from suspend or ESTOP state.
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode resumeMotion(void);
+
+    //------------------------------------------------------------
+    // Function:    resetArmGroup
+    // Summary: To reset resources in arm group.
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode resetArmGroup(void);
+    ErrorCode clearArmGroup(void);
+
+    //------------------------------------------------------------
+    // Function:    isJointInConstraint
+    // Summary: Retrun true if given joint fall into the soft constraint
+    // In:      joint -> joint to be compared with soft constraint
+    // Out:     None
+    // Return:  true  -> joint in soft constraint
+    //          false -> joint not in soft constraint
+    //------------------------------------------------------------
+    bool isJointInSoftConstraint(const Joint &joint);
+
+    //------------------------------------------------------------
+    // Function:    autoMove
+    // Summary: Plan an auto move command (moveJ/moveL/moveC) to reach
+    //          the target without smooth. If FIFO is empty at the
+    //          moment, then fill the FIFO with points from this command.
+    // In:      target -> motion target
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode autoMove(const MotionTarget &target, int id);
+
+    //------------------------------------------------------------
+    // Function:    manualMove
+    // Summary: Plan a manual move trajectory (Joint/Line) with given
+    //          direction. If FIFO is empty at the moment, fill it.
+    // In:      button -> manual direction
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode manualMove(const std::vector<ManualDirection> &button);
+
+    //------------------------------------------------------------
+    // Function:    manualMove
+    // Summary: Plan a manual move trajectory (Joint/Line) with given
+    //          point. If FIFO is empty at the moment, then fill it.
+    // In:      joint -> manual target in joint space
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode manualMove(const Joint &joint);
+
+    //------------------------------------------------------------
+    // Function:    manualMove
+    // Summary: Plan a manual move trajectory (Joint/Line) with given
+    //          point. If FIFO is empty at the moment, then fill it.
+    // In:      pose  -> manual target in cartesian space
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode manualMove(const PoseEuler &pose);
+
+    //------------------------------------------------------------
+    // Function:    setManualFrameMode
+    // Summary: To set manual frame mode.
+    // In:      frame   -> manual frame mode, JOINT/WORLD/USER/TOOL
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    void setManualFrameMode(ManualFrameMode frame);
+
+    //------------------------------------------------------------
+    // Function:    setManualMotionMode
+    // Summary: To set manual motion mode.
+    // In:      motion  -> manual motion mode, STEP/CONTINUOUS/POINT
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    void setManualMotionMode(ManualMotionMode mode);
+
+    //------------------------------------------------------------
+    // Function:    setManualJointStepLength
+    // Summary: To set step length in manual joint step working mode.
+    // In:      step    -> step length, unit: rad
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setManualJointStepLength(double step);
+
+    //------------------------------------------------------------
+    // Function:    setManualCartesianStepLength
+    // Summary: To set step length in manual cartesian step working mode.
+    // In:      step    -> step length, unit: mm
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setManualCartesianStepLength(double step);
+
+    //------------------------------------------------------------
+    // Function:    getManualMaxSpeedRatio
+    // Summary: To get manual max speed ratio to max-auto-speed.
+    // In:      None
+    // Out:     None
+    // Return:  manual max speed ratio, range: 0.0 ~ 1.0
+    //------------------------------------------------------------
+    double getManualMaxSpeedRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    getManualSpeedRatio
+    // Summary: To get manual speed ratio to max-manual-speed.
+    // In:      None
+    // Out:     None
+    // Return:  manual speed ratio, range: 0.0 ~ 1.0
+    //------------------------------------------------------------
+    double getManualSpeedRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    setManualSpeedRatio
+    // Summary: To set manual speed ratio to max-manual-speed.
+    // In:      ratio   -> manual speed to max-manual-speed
+    //                      range: 0.0 ~ 1.0
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setManualSpeedRatio(double ratio);
+};
+
+
+
+
+}
+
+#endif

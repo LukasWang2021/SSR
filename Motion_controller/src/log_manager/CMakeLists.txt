@@ -7,7 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 # setting for include file.
 set(VERSION_MAJOR 1)
-set(VERSION_MINOR 3)
+set(VERSION_MINOR 2)
 set(VERSION_PATCH 0)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 
@@ -27,12 +27,12 @@ file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PR
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-    roscpp
+  middleware_to_mem
 )
 
 if(${catkin_CROSS})
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
-	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS} ${depend_PATH_INC}/middleware_to_mem/include)
+	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS} ${depend_PATH_LIB}/libcomm_interface.so)
 endif(${catkin_CROSS})
 
 
@@ -52,6 +52,7 @@ endif(${catkin_CROSS})
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES logger
+  DEPENDS roscpp middleware_to_mem
   CATKIN_DEPENDS roscpp
 )
 
@@ -77,7 +78,6 @@ add_library(logger
 )
 target_link_libraries(logger
   ${catkin_LIBRARIES}
-  rt
 )
 
 
@@ -97,7 +97,6 @@ add_executable(fst_logger_demo src/log_manager_demo.cpp)
 target_link_libraries(log_server
   ${catkin_LIBRARIES}
   logger
-  rt
 )
 target_link_libraries(fst_logger_demo
   ${catkin_LIBRARIES}

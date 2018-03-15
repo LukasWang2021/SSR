@@ -22,6 +22,7 @@ namespace fst_system_manager
 {
 
 using namespace fst_system_execute;
+using namespace fst_file_operations;
 
 // child thread to communicate with tp_interface.
 boost::thread SystemManager::comm_thread_;
@@ -71,8 +72,7 @@ void SystemManager::init(void)
     U64 result = comm_system_.createChannel(COMM_REP, COMM_IPC, "system");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in SystemManager::init():"
-            <<"Fail to create the communication channel."<<std::endl;
+        error(" SystemManager::init: Failed to create the communication channel.");
     }
     result = SystemExecute::init();
     if (result != FST_SUCCESS)
@@ -144,50 +144,45 @@ bool SystemManager::receiveCommand(SystemCommand &command)
     /* try to receive request from tp_interface. */
     ServiceRequest request;
     U64 result = comm_system_.recv(&request, sizeof(request), COMM_DONTWAIT);
+    if (result != FST_SUCCESS)
+        return false;
 
-    if (result == FST_SUCCESS)
-    {
-        command = (SystemCommand)request.req_id;
-        boost::mutex::scoped_lock lock(mutex_); //------lock mutex-----//
+    command = (SystemCommand)request.req_id;
+    boost::mutex::scoped_lock lock(mutex_); //------lock mutex-----//
         
-        /* reply immediately if init fail. */
-        if (shared_data_.error == SYS_INIT_FAIL)
-            return true;
+    /* reply immediately if init fail. */
+    if (shared_data_.error == SYS_INIT_FAIL)
+        return true;
 
-        /* reply if unrecognize service id. */
-        if (command <= NONE || command >= LAST_ITEM)
-        {
-            shared_data_.error = SYS_UNRECOGNIZED_SERVICE_ID;
-            return true;
-        }
-        /* check and execute the command from tp. */
-        if (command != CHECK_STATUS_SID)
-        {
-            /* ftp should be ON before other execution commands. */
-            if (shared_data_.ftp_enable  == false && command != FTP_ON && command != FTP_OFF)
-            {
-                shared_data_.error = SYS_FTP_ON_FAIL;
-                return true;
-            }
-            /* a new execute command should not be sent before
-               the last execution is finished. */
-            if (shared_data_.execute_enable == true)
-            {
-                shared_data_.error = SYS_OPS_BUSY;
-                return true;
-            }
-            /* execute commmand by setting enbale. */
-            shared_data_.command = command;
-            shared_data_.execute_enable = true;
-            shared_data_.error = SYS_OPS_UNFINISHED;
-        }
-        //delete
-//        std::cout<<"||--recv command="<<command<<". shared_Data command="<<shared_data_.command<<". error="
-//            <<shared_data_.error<<". enable="<<shared_data_.execute_enable<<". ftp enable="<<shared_data_.ftp_enable<<std::endl;
-
+    /* reply if unrecognize service id. */
+    if (command <= NONE || command >= LAST_ITEM)
+    {
+        shared_data_.error = SYS_UNRECOGNIZED_SERVICE_ID;
         return true;
     }
-    return false;
+    /* check and execute the command from tp. */
+    if (command != CHECK_STATUS_SID)
+    {
+        /* ftp should be ON before other execution commands. */
+        if (shared_data_.ftp_enable  == false && command != FTP_ON && command != FTP_OFF)
+        {
+            shared_data_.error = SYS_FTP_ON_FAIL;
+            return true;
+        }
+        /* a new execute command should not be sent before
+            the last execution is finished. */
+        if (shared_data_.execute_enable == true)
+        {
+            shared_data_.error = SYS_OPS_BUSY;
+            return true;
+        }
+        /* execute commmand by setting enbale. */
+        shared_data_.command = command;
+        shared_data_.execute_enable = true;
+        shared_data_.error = SYS_OPS_UNFINISHED;
+    }
+
+    return true;
 }
 
 //------------------------------------------------------------
@@ -201,15 +196,12 @@ bool SystemManager::receiveCommand(SystemCommand &command)
 bool SystemManager::replyCommand(SystemCommand command)
 {
     /* set the response vaule. */
-    ServiceResponse response={0,""};
+    ServiceResponse response = {0, ""};
     response.res_id = command;
     U64 error;
     {
         boost::mutex::scoped_lock lock(mutex_); //------lock mutex-----//
         error = shared_data_.error;
-        //delete
-//        std::cout<<"||--reply command="<<command<<". shared_Data command="<<shared_data_.command<<". error="<<shared_data_.error
-//            <<". enable="<<shared_data_.execute_enable<<". ftp enable="<<shared_data_.ftp_enable<<std::endl;
     }
     size_t size = 1;
     memcpy(&(response.res_buff[0]), &size, sizeof(size));
@@ -219,7 +211,7 @@ bool SystemManager::replyCommand(SystemCommand command)
     U64 result = comm_system_.send(&response, sizeof(response), COMM_DONTWAIT);
     if (result != FST_SUCCESS)
         return false;
-//    printf("system manager error:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", response.res_id, (unsigned char)response.res_buff[7+8],(unsigned char)response.res_buff[6+8],(unsigned char)response.res_buff[5+8],(unsigned char)response.res_buff[4+8],(unsigned char)response.res_buff[3+8],(unsigned char)response.res_buff[2+8],(unsigned char)response.res_buff[1+8],(unsigned char)response.res_buff[0+8]);
+
     return true;
 }
 
@@ -241,9 +233,6 @@ bool SystemManager::executeCommand(void)
             return false;
         command = shared_data_.command;
         ftp_enable = shared_data_.ftp_enable;
-        //delete
-//        std::cout<<"||--execute shared_Data command="<<shared_data_.command<<". error="<<shared_data_.error
-//            <<". enable="<<shared_data_.execute_enable<<". ftp enable="<<shared_data_.ftp_enable<<std::endl;
     }
 
     std::vector<std::string> sources;
@@ -285,19 +274,16 @@ bool SystemManager::executeCommand(void)
 
     /* end time measurement. */
     t_end = clock();
-    std::cout<<"The execute time cost = "<<(double)(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<std::endl;
+    info(" The excute time is %f s.", (double)(t_end - t_start)/CLOCKS_PER_SEC);
 
     {
         boost::mutex::scoped_lock lock(mutex_); //------lock mutex-----//
         shared_data_.command = NONE;
         shared_data_.error = result;
         shared_data_.execute_enable = false;
-        shared_data_.ftp_enable = ftp_enable;
-        //delete
-        std::cout<<"||--execute2 shared_Data command="<<shared_data_.command<<". error="<<shared_data_.error
-            <<". enable="<<shared_data_.execute_enable<<". ftp enable="<<shared_data_.ftp_enable<<std::endl;
+        shared_data_.ftp_enable = ftp_enable;        
     }
-
+    info(" The execute command is %x, error is %x.", command, shared_data_.error);
     return true;
 }
 

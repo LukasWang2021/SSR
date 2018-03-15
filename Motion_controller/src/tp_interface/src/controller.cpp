@@ -244,7 +244,7 @@ void Controller::updateWorkStatus(int id)
                 }
                 work_status_ = IDLE_TO_RUNNING_T;
             }
-            else if (PAUSED_R == state || WAITING_R == state  )
+            else if ( (PAUSED_R == state) || (state == WAITING_R))
             {
                 static const int max_count = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;            
                 if (ctrl_state_ == ENGAGED_S)
@@ -283,6 +283,7 @@ void Controller::updateWorkStatus(int id)
             break;
         case RUNNING_TO_IDLE_T:
             if ((intprt_state_ != IDLE_R)
+            && (intprt_state_ != PAUSED_R)
             && (intprt_state_ != WAITING_R))
                 break;
         case TEACHING_TO_IDLE_T:        
@@ -304,7 +305,7 @@ void Controller::updateWorkStatus(int id)
                 FST_INFO("EXECUTE_TO_idle");
                 work_status_ = IDLE_W;
             }
-            else if (state == WAITING_R)
+            else if ((state == PAUSED_R) || (state == WAITING_R))
             {
                 FST_INFO("RUNNING_TO_IDLE_T");
                 work_status_ = RUNNING_TO_IDLE_T;
@@ -760,6 +761,7 @@ void Controller::step(void* params, int len)
     
     if (resumeMotion())
     {
+        FST_ERROR("resumeMotion !!");
         work_status_ = RUNNING_TO_IDLE_T;
         return;
     }
@@ -767,6 +769,7 @@ void Controller::step(void* params, int len)
 
     InterpreterControl ctrl;
     ctrl.cmd = FORWARD;
+        FST_ERROR("ctrl.cmd = FORWARD !!");
     ShareMem::instance()->intprtControl(ctrl);
 }
 void Controller::backward(void* params, int len)
@@ -1763,7 +1766,9 @@ void Controller::pauseMotion()
 
 bool Controller::resumeMotion()
 {
-    if ( ( (intprt_state_ == PAUSED_R) ||  (intprt_state_ == WAITING_R)  )  && (auto_motion_->getDoneFlag() == false))
+    if (  // ( 
+        (intprt_state_ == PAUSED_R) //  || (intprt_state_ == WAITING_R))
+            && (auto_motion_->getDoneFlag() == false))
     {
         auto_motion_->resume();
         FST_INFO("fsssssssssssssssssss\n");
@@ -1796,7 +1801,7 @@ void Controller::setTempZero()
 
     auto_motion_->abort();
     //set prgm_state_ to IDLE_R
-    if (intprt_state_ == PAUSED_R)
+    if ((intprt_state_ == PAUSED_R) || (intprt_state_ == WAITING_R))
     {
         InterpreterControl ctrl;
         ctrl.cmd = ABORT;

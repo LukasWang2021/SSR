@@ -122,3 +122,23 @@ install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
   DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
 
+install(FILES config/motion_plan.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+)
+
+install(FILES config/hard_constraints.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/model
+)
+
+install(FILES config/soft_constraints.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+)
+
+install(FILES config/dh.yaml
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(DIRECTORY config
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+

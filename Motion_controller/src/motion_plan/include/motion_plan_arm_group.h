@@ -554,7 +554,6 @@ class ArmGroup
 
 
   private:
-    bool isFirstConstraintCoveredBySecond(const JointConstraint &first, const JointConstraint &second);
     MotionCommand* getFreeMotionCommand(void);
     MotionCommand* releaseMotionCommand(MotionCommand *cmd);
 

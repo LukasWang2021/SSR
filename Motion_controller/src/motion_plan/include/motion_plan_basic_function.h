@@ -1107,6 +1107,23 @@ static inline int contrastJointWithConstraint(const fst_controller::Joint jnt, c
     return res;
 }
 
+static inline bool isFirstConstraintCoveredBySecond(const fst_controller::JointConstraint &child,
+                                                    const fst_controller::JointConstraint &parent)
+{
+    return !(child.j1.upper > parent.j1.upper || child.j1.lower < parent.j1.lower ||
+             child.j2.upper > parent.j2.upper || child.j2.lower < parent.j2.lower ||
+             child.j3.upper > parent.j3.upper || child.j3.lower < parent.j3.lower ||
+             child.j4.upper > parent.j4.upper || child.j4.lower < parent.j4.lower ||
+             child.j5.upper > parent.j5.upper || child.j5.lower < parent.j5.lower ||
+             child.j6.upper > parent.j6.upper || child.j6.lower < parent.j6.lower ||
+             child.j1.max_omega > parent.j1.max_omega || child.j1.max_alpha > parent.j1.max_alpha ||
+             child.j2.max_omega > parent.j2.max_omega || child.j2.max_alpha > parent.j2.max_alpha ||
+             child.j3.max_omega > parent.j3.max_omega || child.j3.max_alpha > parent.j3.max_alpha ||
+             child.j4.max_omega > parent.j4.max_omega || child.j4.max_alpha > parent.j4.max_alpha ||
+             child.j5.max_omega > parent.j5.max_omega || child.j5.max_alpha > parent.j5.max_alpha ||
+             child.j6.max_omega > parent.j6.max_omega || child.j6.max_alpha > parent.j6.max_alpha);
+}
+
 
 
 }

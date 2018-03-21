@@ -480,7 +480,7 @@ ErrorCode MotionCommand::planLinePath(void)
     line_coeff_.position_coeff_z  = (pose_ending_.position.z - pose_starting_.position.z) / max_stamp_;
     line_coeff_.orientation_angle = getOrientationAngle(pose_starting_, pose_ending_);
 
-    if (rotation > g_ort_linear_polation_threshold_)
+    if (rotation > g_ort_linear_polation_threshold)
     {
         // Spherical interpolation
         line_coeff_.spherical_flag = true;

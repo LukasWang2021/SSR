@@ -1,0 +1,28 @@
+cycle_time: 0.001                           # s
+cycle_distance: 1.0                         # mm
+
+cartesian:
+    velocity:
+        min: 1.0                            # mm/s
+        max: 4000.0                         # mm/s
+        default: 500.0                      # mm/s
+    acceleration:
+        min: 1.0                            # mm/s^2
+        max: 32000.0                        # mm/s^2
+        default: 7000.0                     # mm/s^2
+        reference: 4000.0                   # mm/s^2
+    orientation:
+        omega_reference: 1.0                # rad/s
+        linear_polation_threshold: 0.1      # rad
+
+joint:
+    omega:
+        default: 1.0                        # 0% - 100%
+    alpha:
+        default: 1.0                        # 0% - 100%
+
+orientation_omega_reference: 1.0            # rad/s
+orientation_linear_polation_threshold: 0.01 # rad
+
+
+#END

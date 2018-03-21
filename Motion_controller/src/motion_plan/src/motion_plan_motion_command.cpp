@@ -467,11 +467,11 @@ ErrorCode MotionCommand::planLinePath(void)
     // Get position move reference time and orientateion rotate reference time
     double distance = getDistance(pose_starting_, pose_ending_);
     double rotation = getOrientationAngle(pose_starting_, pose_ending_);
-    Time   move_tm = distance / vel_;
-    Time rotate_tm = rotation / g_orientation_omega_reference;
+    MotionTime  move_tm = distance / vel_;
+    MotionTime  rotate_tm = rotation / g_orientation_omega_reference;
 
     // Use the larger time to plan path.
-    Time  time = move_tm > rotate_tm ? move_tm : rotate_tm;
+    MotionTime  time = move_tm > rotate_tm ? move_tm : rotate_tm;
 
     max_stamp_ = ceil(time / (g_cycle_distance / vel_));
 

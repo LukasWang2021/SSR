@@ -20,7 +20,7 @@ class MotionCommand;
 
 typedef unsigned int    Tick;
 typedef unsigned int    Size;
-typedef double          Time;
+typedef double          MotionTime;
 typedef double          Angle;
 typedef double          Omega;
 typedef double          Alpha;
@@ -91,8 +91,8 @@ struct Spline {
 };
 
 struct JointSegment {
-    Time        time_from_start;
-    Time        duration;
+    MotionTime  time_from_start;
+    MotionTime  duration;
     JointGroup  start;
     JointGroup  end;
     Spline      coeff[NUM_OF_JOINT];
@@ -246,12 +246,12 @@ struct ControlPoint {
 
     // time from start
     // time < 0 means this point has not been converted to a trajectory point
-    Time        time_from_start;
+    MotionTime  time_from_start;
 
     // time duration from prev point to this point
     // duration < 0 means this point has not been converted to a trajectory point
-    Time        duration;
-    Time        expect_duration;
+    MotionTime  duration;
+    MotionTime  expect_duration;
 
     // brake flag
     bool        brake;

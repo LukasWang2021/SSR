@@ -606,7 +606,7 @@ private:
     size_t          t_head_;
     size_t          t_tail_;
 
-    Time            pick_time_;
+    MotionTime      pick_time_;
     size_t          pick_segment_;
 
     Joint           motion_start_joint_;

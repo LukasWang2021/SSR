@@ -614,7 +614,7 @@ size_t ArmGroup::getFIFOCapacity(void)
 //------------------------------------------------------------
 ErrorCode ArmGroup::getPointFromFIFO(size_t num, std::vector<JointOutput> &points)
 {
-    Time tm;
+    MotionTime   tm;
     JointOutput  jout;
     JointState  *js;
     points.clear();

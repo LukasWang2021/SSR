@@ -244,7 +244,7 @@ void Controller::updateWorkStatus(int id)
                 }
                 work_status_ = IDLE_TO_RUNNING_T;
             }
-            else if (PAUSED_R == state || WAITING_R == state  )
+            else if (PAUSED_R == state)
             {
                 static const int max_count = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;            
                 if (ctrl_state_ == ENGAGED_S)
@@ -283,7 +283,7 @@ void Controller::updateWorkStatus(int id)
             break;
         case RUNNING_TO_IDLE_T:
             if ((intprt_state_ != IDLE_R)
-            && (intprt_state_ != WAITING_R))
+            && (intprt_state_ != PAUSED_R))
                 break;
         case TEACHING_TO_IDLE_T:        
             //FST_INFO("servo state:%d", getServoState());
@@ -304,7 +304,7 @@ void Controller::updateWorkStatus(int id)
                 FST_INFO("EXECUTE_TO_idle");
                 work_status_ = IDLE_W;
             }
-            else if (state == WAITING_R)
+            else if (state == PAUSED_R)
             {
                 FST_INFO("RUNNING_TO_IDLE_T");
                 work_status_ = RUNNING_TO_IDLE_T;
@@ -659,6 +659,45 @@ void Controller::updateUserRegs(int id)
     
 }
 
+void Controller::setRegister(void* params, int len)
+{
+    RegMap* mod_reg = (RegMap*)params;
+    
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_REG;
+    ctrl.reg = *mod_reg;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(true);
+}
+
+void Controller::getRegister(void * params)
+{
+	RegIOInfo * reg = (RegIOInfo*)params;
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+		return ;
+	ShareMem::instance()->getRegIOInfo(reg);
+}
+
+void Controller::setDIO(void* params, int len)
+{
+    DIOMap* mod_dio = (DIOMap*)params;
+    
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_DIO;
+    ctrl.dio = *mod_dio;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(true);
+}
+
+void Controller::getDIO(void * params)
+{
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+		return ;
+	// ShareMem::instance()->getRegIOInfo(params);
+}
+
 void Controller::startRun(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
@@ -740,9 +779,10 @@ void Controller::jumpLine(void* params, int len)
     int line = *(int*)params;
     InterpreterControl ctrl;
     ctrl.cmd = JUMP;
-    ctrl.id = line;
+    ctrl.line = line;
     ShareMem::instance()->intprtControl(ctrl);
 }
+
 void Controller::step(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S)/* || (work_status_ != IDLE_W) || (!debug_ready_)*/)
@@ -769,6 +809,7 @@ void Controller::step(void* params, int len)
     ctrl.cmd = FORWARD;
     ShareMem::instance()->intprtControl(ctrl);
 }
+
 void Controller::backward(void* params, int len)
 {
    // ProgramState state = auto_motion_->getPrgmState();
@@ -1763,7 +1804,7 @@ void Controller::pauseMotion()
 
 bool Controller::resumeMotion()
 {
-    if ( ( (intprt_state_ == PAUSED_R) ||  (intprt_state_ == WAITING_R)  )  && (auto_motion_->getDoneFlag() == false))
+    if ( (intprt_state_ == PAUSED_R)  && (auto_motion_->getDoneFlag() == false))
     {
         auto_motion_->resume();
         FST_INFO("fsssssssssssssssssss\n");

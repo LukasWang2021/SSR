@@ -1,5 +1,5 @@
 /*************************************************************************
-	> File Name: motion_plan_demo1.cpp
+	> File Name: motion_plan_demo4.cpp
 	> Author: 
 	> Mail: 
 	> Created Time: 2018年01月09日 星期二 10时15分23秒
@@ -30,17 +30,9 @@ int main(int argc, char **argv)
     g_cycle_time = 0.001;                   // s
     g_global_speed_ratio = 1.0;
     g_global_acc_ratio = 1.0;
-    g_cart_vel_default = 1000.0;            // mm/s
-    g_cart_acc_default = 16000.0;           // mm/s2
-    g_cart_vel_max = 4000.0;                // mm/s
-    g_cart_acc_max = 48000.0;               // mm/s2
-    g_cart_acc_reference = 4000.0;          // mm/s2
-    g_orientation_omega_reference = 1.0;    // rad
-    g_cycle_distance = 1.0;                 // mm
 
     g_joint_vel_default = 1;
-    
-    g_ort_linear_polation_threshold_ = 0.01;    // rad
+    g_joint_acc_default = 1;
 
     g_user_frame.identityMatrix();
     g_tool_frame.identityMatrix();
@@ -102,15 +94,6 @@ int main(int argc, char **argv)
     param.getParam("soft_constraint.j6.omega_max", g_soft_constraint.j6.max_omega);
     param.getParam("soft_constraint.j6.alpha_max", g_soft_constraint.j6.max_alpha);
 
-    Joint       jnt;
-    PoseEuler   pose;
-
-    jnt.j1 = 0.1;
-    jnt.j2 = -0.2;
-    jnt.j3 = 0.25;
-    jnt.j4 = 0.17;
-    jnt.j5 = -1.5708;
-    jnt.j6 = -0.38;
 /////////////////////////////////////////////////////////////////////////////////////
     
 
@@ -119,20 +102,20 @@ int main(int argc, char **argv)
     start_joint.j2 = 0.0;
     start_joint.j3 = 0.0;
     start_joint.j4 = 0.0;
-    start_joint.j5 = -1.5708;
+    start_joint.j5 = 0.0;
     start_joint.j6 = 0.0;
 
     MotionTarget target;
-    target.type = MOTION_LINE;
+    target.type = MOTION_JOINT;
     target.cnt = 0;
-    target.vel = 1500.0;
-    target.acc = 16000.0;
-    target.pose_target.position.x = 480.0;
-    target.pose_target.position.y = 160.0;
-    target.pose_target.position.z = 450.0;
-    target.pose_target.orientation.a = 0.3;
-    target.pose_target.orientation.b = 0.2;
-    target.pose_target.orientation.c = 3.0;
+    target.vel = 1;
+    target.acc = 1;
+    target.joint_target.j1 = 1.57;
+    target.joint_target.j2 = -3.14;
+    target.joint_target.j3 = 0.78;
+    target.joint_target.j4 = 0;
+    target.joint_target.j5 = 0;
+    target.joint_target.j6 = 0;
 
     ErrorCode err = SUCCESS;
 
@@ -141,37 +124,10 @@ int main(int argc, char **argv)
     
     arm.setStartState(start_joint);
     arm.autoMove(target, 5);
-    //arm.speedup();
-
-    std::ofstream os("jout.csv");
-    std::vector<JointOutput> points;
-
-    arm.getPointFromFIFO(300, points);
-    FST_INFO("get %d points", points.size());
-
-    for (size_t i = 0; i < points.size(); i++)
-    {
-        FST_INFO("%.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                 points[i].joint.j1,
-                 points[i].joint.j2,
-                 points[i].joint.j3,
-                 points[i].joint.j4,
-                 points[i].joint.j5,
-                 points[i].joint.j6);
-
-        os  << i + 1 << ","
-            << points[i].joint.j1 << ","
-            << points[i].joint.j2 << ","
-            << points[i].joint.j3 << ","
-            << points[i].joint.j4 << ","
-            << points[i].joint.j5 << ","
-            << points[i].joint.j6 << endl;
-            
-    }
-
-
-    cout << "end" << endl;
 
     return 0;
 }
+
+
+
 

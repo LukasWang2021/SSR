@@ -97,6 +97,13 @@ target_link_libraries(motion_plan_demo3
     ${catkin_LIBRARIES}
     motion_plan
 )
+add_executable(motion_plan_demo4
+    src/motion_plan_demo4.cpp
+)
+target_link_libraries(motion_plan_demo4
+    ${catkin_LIBRARIES}
+    motion_plan
+)
 
 #############
 ## Install ##
@@ -115,6 +122,10 @@ install(TARGETS motion_plan_demo2
 )
 
 install(TARGETS motion_plan_demo3
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS motion_plan_demo4
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

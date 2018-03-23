@@ -11,8 +11,10 @@
 #include <motion_plan_kinematics.h>
 #include <motion_plan_variable.h>
 #include <motion_plan_reuse.h>
+#include <iostream>
+#include <fstream>
 
-
+using namespace std;
 using std::vector;
 using namespace fst_algorithm;
 
@@ -134,7 +136,7 @@ ErrorCode MotionCommand::planPath(void)
     switch (motion_type_)
     {
         case MOTION_JOINT:
-            //planJointPath();
+            //err = planJointPath();
             break;
 
         case MOTION_LINE:
@@ -156,6 +158,246 @@ ErrorCode MotionCommand::planPath(void)
     }
 
     return err;
+}
+
+ErrorCode MotionCommand::planPathAndTrajectory(ControlPoint* traj_path, size_t& traj_head, size_t& traj_tail)
+{
+    FST_INFO("running planPathAndTrajectory----------");
+    ErrorCode err = SUCCESS;
+
+    // set end point
+    joint_ending_ = target_joint_;
+
+    // set start point
+    if(begin_from_given_joint_){
+        joint_starting_ = beginning_joint_;
+    }
+    else{
+        // FIXME: current getJointEnding() only support MOVJ, except MOVL and MOVC
+        joint_starting_ = prev_ptr_->getJointEnding();
+    }
+
+    // set joint limits
+    Omega velocity_max[AXIS_IN_ALGORITHM];
+    Alpha acc_max[AXIS_IN_ALGORITHM];
+    velocity_max[0] = vel_*g_soft_constraint.j1.max_omega;
+    velocity_max[1] = vel_*g_soft_constraint.j2.max_omega;
+    velocity_max[2] = vel_*g_soft_constraint.j3.max_omega;
+    velocity_max[3] = vel_*g_soft_constraint.j4.max_omega;
+    velocity_max[4] = vel_*g_soft_constraint.j5.max_omega;
+    velocity_max[5] = vel_*g_soft_constraint.j6.max_omega;
+    acc_max[0] = acc_*g_soft_constraint.j1.max_alpha;
+    acc_max[1] = acc_*g_soft_constraint.j2.max_alpha;
+    acc_max[2] = acc_*g_soft_constraint.j3.max_alpha;
+    acc_max[3] = acc_*g_soft_constraint.j4.max_alpha;
+    acc_max[4] = acc_*g_soft_constraint.j5.max_alpha;
+    acc_max[5] = acc_*g_soft_constraint.j6.max_alpha;
+    FST_INFO("velocity_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
+                g_soft_constraint.j1.max_omega, g_soft_constraint.j2.max_omega,
+                g_soft_constraint.j3.max_omega, g_soft_constraint.j4.max_omega,
+                g_soft_constraint.j5.max_omega, g_soft_constraint.j6.max_omega);
+    FST_INFO("acc_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
+                g_soft_constraint.j1.max_alpha, g_soft_constraint.j2.max_alpha,
+                g_soft_constraint.j3.max_alpha, g_soft_constraint.j4.max_alpha,
+                g_soft_constraint.j5.max_alpha, g_soft_constraint.j6.max_alpha);
+    
+    // compute minimum time of axes
+    MotionTime duration_max = -1;
+    int duration_max_index = 0;
+    MotionTime duration[AXIS_IN_ALGORITHM];
+    Angle delta_joint[AXIS_IN_ALGORITHM];
+    Angle* joint_start_ptr = (Angle*)&joint_starting_;
+    Angle* joint_end_ptr = (Angle*)&joint_ending_;
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        delta_joint[i] = joint_end_ptr[i] - joint_start_ptr[i];
+        Angle delta_joint_fabs = fabs(delta_joint[i]);
+        if(fabs(delta_joint_fabs) < DOUBLE_MINIMUM) // deal with the problem of computational accuracy
+        {
+            delta_joint[i] = 0;
+            delta_joint_fabs = 0;
+        }
+        double condition = velocity_max[i] * velocity_max[i] / acc_max[i];
+        if(condition >= delta_joint_fabs)    // triangle velocity curve
+        {
+            duration[i] = 2*sqrt(delta_joint_fabs / acc_max[i]);
+        }
+        else    // trapezoid velocity curve
+        {
+            duration[i] = delta_joint_fabs / velocity_max[i] + velocity_max[i] / acc_max[i];
+        }
+
+        if(duration[i] > duration_max)
+        {
+            duration_max = duration[i];
+            duration_max_index = i;
+        }
+    }
+
+    FST_INFO("delta_joint: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f", 
+                delta_joint[0], delta_joint[1], delta_joint[2], delta_joint[3], delta_joint[4], delta_joint[5]);
+    FST_INFO("duration: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f", 
+                duration[0], duration[1], duration[2], duration[3], duration[4], duration[5]);
+    FST_INFO("duration_max = %f, duration_max_index = %d", duration_max, duration_max_index);
+
+    // rescale the velocity and acc/deacc time of axes according to duration_max
+    Omega velocity_actual[AXIS_IN_ALGORITHM];
+    MotionTime acc_duration[AXIS_IN_ALGORITHM];
+    bool is_triangle[AXIS_IN_ALGORITHM];
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        Angle delta_joint_fabs = fabs(delta_joint[i]);
+        double condition = pow(acc_max[i] * duration_max, 2) - 4 * acc_max[i] * delta_joint_fabs;
+        if(condition > 0)   // trapezoid velocity curve
+        {
+            acc_duration[i] = duration_max / 2 - sqrt(condition) / (2 * acc_max[i]);
+            velocity_actual[i] = acc_max[i] * acc_duration[i];
+            is_triangle[i] = false;
+        }
+        else    // triangle velocity curve
+        {
+            acc_duration[i] = duration_max / 2;
+            velocity_actual[i] = 2 * delta_joint_fabs / duration_max;
+            is_triangle[i] = true;
+        }
+    }
+    FST_INFO("velocity_actual: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f", 
+             velocity_actual[0], velocity_actual[1], velocity_actual[2], velocity_actual[3], velocity_actual[4], velocity_actual[5]);
+    FST_INFO("acc_duration: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f", 
+             acc_duration[0], acc_duration[1], acc_duration[2], acc_duration[3], acc_duration[4], acc_duration[5]);
+    FST_INFO("is_triangle: axis1 =%d, axis2 =%d, axis3 =%d, axis4 =%d, axis5 =%d, axis6 =%d", 
+             is_triangle[0], is_triangle[1], is_triangle[2], is_triangle[3], is_triangle[4], is_triangle[5]);
+
+    // compute joint function coefficient
+    JointPathCoeff coeff[AXIS_IN_ALGORITHM];
+    memset(coeff, 0, AXIS_IN_ALGORITHM*sizeof(JointPathCoeff));
+    FST_INFO("coeffs are:");
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        coeff[i].coeff1 = acc_max[i] / 2;
+        if(is_triangle[i])
+        {
+            coeff[i].coeff2 = velocity_actual[i] * duration_max / 2;
+            FST_INFO("axis%d: coeff1 = %f, coeff2 = %f", i, coeff[i].coeff1, coeff[i].coeff2);
+        }
+        else
+        {
+            coeff[i].coeff3 = acc_duration[i] * (coeff[i].coeff1 * acc_duration[i] - velocity_actual[i]);
+            coeff[i].coeff4 = velocity_actual[i] * (duration_max - acc_duration[i]);
+            FST_INFO("axis%d: coeff1 = %f, coeff3 = %f, coeff4 = %f", i, coeff[i].coeff1, coeff[i].coeff3, coeff[i].coeff4); 
+        }
+    }
+
+    // discrete the joint function with sample rate g_cycle_time, compute angle/velocity/acc
+    traj_head = 0;
+    traj_tail = 0;
+    for(double t = 0; t <= duration_max; t += g_cycle_time, ++traj_tail)
+    {
+        for(int j = 0; j < AXIS_IN_ALGORITHM; ++j)
+        {
+            if(is_triangle[j])
+            {
+                if(t <= duration_max / 2)
+                {
+                    traj_path[traj_tail].point.joint[j] = coeff[j].coeff1 * t * t;
+                    traj_path[traj_tail].point.omega[j] = acc_max[j] * t;
+                    traj_path[traj_tail].point.alpha[j] = acc_max[j];
+                }
+                else
+                {
+                    traj_path[traj_tail].point.joint[j] = coeff[j].coeff2 - coeff[j].coeff1 * (duration_max - t);
+                    traj_path[traj_tail].point.omega[j] = coeff[j].coeff2 - acc_max[j] * (t - duration_max / 2);
+                    traj_path[traj_tail].point.alpha[j] = -acc_max[j];
+                }
+            }
+            else
+            {
+                if(t <= acc_duration[j])
+                {
+                    traj_path[traj_tail].point.joint[j] = coeff[j].coeff1 * t * t;
+                    traj_path[traj_tail].point.omega[j] = acc_max[j] * t;
+                    traj_path[traj_tail].point.alpha[j] = acc_max[j];
+                }
+                else if(t > duration_max - acc_duration[j])
+                {
+                    traj_path[traj_tail].point.joint[j] = coeff[j].coeff4 - coeff[j].coeff1 * pow((duration_max - t), 2);
+                    traj_path[traj_tail].point.omega[j] = velocity_actual[j] - acc_max[j] * (t - (duration_max - acc_duration[j]));
+                    traj_path[traj_tail].point.alpha[j] = -acc_max[j];
+                }
+                else
+                {
+                    traj_path[traj_tail].point.joint[j] = coeff[j].coeff3 + velocity_actual[j] * t;
+                    traj_path[traj_tail].point.omega[j] = velocity_actual[j];
+                    traj_path[traj_tail].point.alpha[j] = 0;
+                }
+            }
+            
+            // judge signal of angle/velocity/acc
+            if(delta_joint[j] >=  0)
+            {
+                traj_path[traj_tail].point.joint[j] = joint_start_ptr[j] + traj_path[traj_tail].point.joint[j];
+            }
+            else
+            {
+                traj_path[traj_tail].point.joint[j] = joint_start_ptr[j] - traj_path[traj_tail].point.joint[j];
+                traj_path[traj_tail].point.omega[j] = -traj_path[traj_tail].point.omega[j];
+                traj_path[traj_tail].point.alpha[j] = -traj_path[traj_tail].point.alpha[j];
+            }
+        }
+        traj_path[traj_tail].time_from_start = t;
+    }
+
+    // deal with the first time piece problem
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        traj_path[0].point.joint[i] = joint_start_ptr[i];
+        traj_path[0].point.omega[i] = 0;
+        traj_path[0].point.alpha[i] = 0;
+    }
+    
+    // deal with the last time piece if it exists
+    if(traj_path[traj_tail].time_from_start < duration_max)
+    {
+        ++traj_tail;
+        for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+        {
+            traj_path[traj_tail].point.joint[i] = joint_end_ptr[i];
+            traj_path[traj_tail].point.omega[i] = 0;
+            traj_path[traj_tail].point.alpha[i] = 0;
+        }
+        traj_path[traj_tail].time_from_start = duration_max;
+    }
+
+    // output to file
+    std::ofstream os("/home/fst/myworkspace/jout.txt");
+
+    for (size_t i = 0; i < traj_tail + 1; ++i)
+    {
+        os  << traj_path[i].point.joint[0] << " "
+            << traj_path[i].point.joint[1] << " "
+            << traj_path[i].point.joint[2] << " "
+            << traj_path[i].point.joint[3] << " "
+            << traj_path[i].point.joint[4] << " "
+            << traj_path[i].point.joint[5] << " "
+            << traj_path[i].point.omega[0] << " "
+            << traj_path[i].point.omega[1] << " "
+            << traj_path[i].point.omega[2] << " "
+            << traj_path[i].point.omega[3] << " "
+            << traj_path[i].point.omega[4] << " "
+            << traj_path[i].point.omega[5] << " "
+            << traj_path[i].point.alpha[0] << " "
+            << traj_path[i].point.alpha[1] << " "
+            << traj_path[i].point.alpha[2] << " "
+            << traj_path[i].point.alpha[3] << " "
+            << traj_path[i].point.alpha[4] << " "
+            << traj_path[i].point.alpha[5] << endl;            
+    }
+
+    os.close();
+    
+    cout << "end" << endl;
+
+    return SUCCESS;
 }
 
 ErrorCode MotionCommand::pickPathPoint(Tick stamp, PathPoint &point)
@@ -377,8 +619,7 @@ bool MotionCommand::isCommandFinished(void)
 
 Joint MotionCommand::getJointEnding(void)
 {
-    Joint j;
-    return j;
+    joint_ending_;
 }
 
 Pose MotionCommand::getCartesianEnding(void)
@@ -420,8 +661,6 @@ void MotionCommand::setNextCommandPtr(MotionCommand *ptr)
 {
     next_ptr_ = ptr;
 }
-
-
 
 ErrorCode MotionCommand::planLinePath(void)
 {
@@ -467,8 +706,8 @@ ErrorCode MotionCommand::planLinePath(void)
     // Get position move reference time and orientateion rotate reference time
     double distance = getDistance(pose_starting_, pose_ending_);
     double rotation = getOrientationAngle(pose_starting_, pose_ending_);
-    MotionTime  move_tm = distance / vel_;
-    MotionTime  rotate_tm = rotation / g_orientation_omega_reference;
+    MotionTime move_tm = distance / vel_;
+    MotionTime rotate_tm = rotation / g_orientation_omega_reference;
 
     // Use the larger time to plan path.
     MotionTime  time = move_tm > rotate_tm ? move_tm : rotate_tm;
@@ -480,7 +719,7 @@ ErrorCode MotionCommand::planLinePath(void)
     line_coeff_.position_coeff_z  = (pose_ending_.position.z - pose_starting_.position.z) / max_stamp_;
     line_coeff_.orientation_angle = getOrientationAngle(pose_starting_, pose_ending_);
 
-    if (rotation > g_ort_linear_polation_threshold)
+    if (rotation > g_ort_linear_polation_threshold_)
     {
         // Spherical interpolation
         line_coeff_.spherical_flag = true;

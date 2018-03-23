@@ -27,6 +27,79 @@ using namespace fst_algorithm;
 
 int main(int argc, char **argv)
 {
+    g_cycle_time = 0.001;                   // s
+    g_global_speed_ratio = 1.0;
+    g_global_acc_ratio = 1.0;
+    g_cart_vel_default = 1000.0;            // mm/s
+    g_cart_acc_default = 16000.0;           // mm/s2
+    g_cart_vel_max = 4000.0;                // mm/s
+    g_cart_acc_max = 48000.0;               // mm/s2
+    g_cart_acc_reference = 4000.0;          // mm/s2
+    g_orientation_omega_reference = 1.0;    // rad
+    g_cycle_distance = 1.0;                 // mm
+    
+    g_ort_linear_polation_threshold_ = 0.01;    // rad
+
+    g_user_frame.identityMatrix();
+    g_tool_frame.identityMatrix();
+    g_user_frame_inverse.identityMatrix();
+    g_tool_frame_inverse.identityMatrix();
+
+    fst_parameter::ParamGroup param;
+
+    g_dh_mat[0][0] = 0;
+    g_dh_mat[0][1] = 0;
+    g_dh_mat[0][2] = 330;
+    g_dh_mat[0][3] = 0;
+    g_dh_mat[1][0] = PI/2;
+    g_dh_mat[1][1] = 50;
+    g_dh_mat[1][2] = 0;
+    g_dh_mat[1][3] = PI/2;
+    g_dh_mat[2][0] = 0;
+    g_dh_mat[2][1] = 330;
+    g_dh_mat[2][2] = 0;
+    g_dh_mat[2][3] = 0;
+    g_dh_mat[3][0] = PI/2;
+    g_dh_mat[3][1] = 35;
+    g_dh_mat[3][2] = 330;
+    g_dh_mat[3][3] = 0;
+    g_dh_mat[4][0] = -PI/2;
+    g_dh_mat[4][1] = 0;
+    g_dh_mat[4][2] = 0;
+    g_dh_mat[4][3] = 0;
+    g_dh_mat[5][0] = PI/2;
+    g_dh_mat[5][1] = 0;
+    g_dh_mat[5][2] = 77.5;
+    g_dh_mat[5][3] = 0;
+
+    param.loadParamFile("share/configuration/configurable/soft_constraints.yaml");
+
+    param.getParam("soft_constraint.j1.upper", g_soft_constraint.j1.upper);
+    param.getParam("soft_constraint.j1.lower", g_soft_constraint.j1.lower);
+    param.getParam("soft_constraint.j2.upper", g_soft_constraint.j2.upper);
+    param.getParam("soft_constraint.j2.lower", g_soft_constraint.j2.lower);
+    param.getParam("soft_constraint.j3.upper", g_soft_constraint.j3.upper);
+    param.getParam("soft_constraint.j3.lower", g_soft_constraint.j3.lower);
+    param.getParam("soft_constraint.j4.upper", g_soft_constraint.j4.upper);
+    param.getParam("soft_constraint.j4.lower", g_soft_constraint.j4.lower);
+    param.getParam("soft_constraint.j5.upper", g_soft_constraint.j5.upper);
+    param.getParam("soft_constraint.j5.lower", g_soft_constraint.j5.lower);
+    param.getParam("soft_constraint.j6.upper", g_soft_constraint.j6.upper);
+    param.getParam("soft_constraint.j6.lower", g_soft_constraint.j6.lower);
+
+    param.getParam("soft_constraint.j1.omega_max", g_soft_constraint.j1.max_omega);
+    param.getParam("soft_constraint.j1.alpha_max", g_soft_constraint.j1.max_alpha);
+    param.getParam("soft_constraint.j2.omega_max", g_soft_constraint.j2.max_omega);
+    param.getParam("soft_constraint.j2.alpha_max", g_soft_constraint.j2.max_alpha);
+    param.getParam("soft_constraint.j3.omega_max", g_soft_constraint.j3.max_omega);
+    param.getParam("soft_constraint.j3.alpha_max", g_soft_constraint.j3.max_alpha);
+    param.getParam("soft_constraint.j4.omega_max", g_soft_constraint.j4.max_omega);
+    param.getParam("soft_constraint.j4.alpha_max", g_soft_constraint.j4.max_alpha);
+    param.getParam("soft_constraint.j5.omega_max", g_soft_constraint.j5.max_omega);
+    param.getParam("soft_constraint.j5.alpha_max", g_soft_constraint.j5.max_alpha);
+    param.getParam("soft_constraint.j6.omega_max", g_soft_constraint.j6.max_omega);
+    param.getParam("soft_constraint.j6.alpha_max", g_soft_constraint.j6.max_alpha);
+
     Joint       jnt;
     PoseEuler   pose;
 

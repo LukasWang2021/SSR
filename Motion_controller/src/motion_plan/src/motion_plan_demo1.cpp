@@ -19,6 +19,49 @@ using namespace fst_algorithm;
 
 int main(int argc, char **argv)
 {
+    g_user_frame.identityMatrix();
+    g_tool_frame.identityMatrix();
+    g_user_frame_inverse.identityMatrix();
+    g_tool_frame_inverse.identityMatrix();
+
+    g_dh_mat[0][0] = 0;
+    g_dh_mat[0][1] = 0;
+    g_dh_mat[0][2] = 330;
+    g_dh_mat[0][3] = 0;
+    g_dh_mat[1][0] = PI/2;
+    g_dh_mat[1][1] = 50;
+    g_dh_mat[1][2] = 0;
+    g_dh_mat[1][3] = PI/2;
+    g_dh_mat[2][0] = 0;
+    g_dh_mat[2][1] = 330;
+    g_dh_mat[2][2] = 0;
+    g_dh_mat[2][3] = 0;
+    g_dh_mat[3][0] = PI/2;
+    g_dh_mat[3][1] = 35;
+    g_dh_mat[3][2] = 330;
+    g_dh_mat[3][3] = 0;
+    g_dh_mat[4][0] = -PI/2;
+    g_dh_mat[4][1] = 0;
+    g_dh_mat[4][2] = 0;
+    g_dh_mat[4][3] = 0;
+    g_dh_mat[5][0] = PI/2;
+    g_dh_mat[5][1] = 0;
+    g_dh_mat[5][2] = 77.5;
+    g_dh_mat[5][3] = 0;
+
+    g_soft_constraint.j1.lower = -2.9671;
+    g_soft_constraint.j1.upper = 2.9671;
+    g_soft_constraint.j2.lower = -2.2689;
+    g_soft_constraint.j2.upper = 1.309;
+    g_soft_constraint.j3.lower = -1.1694;
+    g_soft_constraint.j3.upper = 3.2289;
+    g_soft_constraint.j4.lower = -3.3161;
+    g_soft_constraint.j4.upper = 3.3161;
+    g_soft_constraint.j5.lower = -1.85;
+    g_soft_constraint.j5.upper = 1.85;
+    g_soft_constraint.j6.lower = -6.2832;
+    g_soft_constraint.j6.upper = 6.2832;
+
     Joint       jnt;
     PoseEuler   pose;
 

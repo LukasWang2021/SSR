@@ -97,10 +97,44 @@ typedef enum _DIOType
 
 typedef enum _RegType
 {
-    POSE = 1,
-    NUM = 2,
-    STR = 3,
-    PLT = 4,
+    POSE_REG           = 101,
+    POSE_REG_POSE      = 102,
+    POSE_REG_JOINT     = 103,
+    POSE_REG_TYPE      = 104,
+    POSE_REG_ID        = 105,
+    POSE_REG_COMMENT   = 106,
+    
+    STR_REG            = 201,
+    STR_REG_VALUE      = 202,
+    STR_REG_ID         = 203,
+    STR_REG_COMMENT    = 204,
+		
+    NUM_REG            = 301,
+    NUM_REG_VALUE      = 302,
+    NUM_REG_ID         = 303,
+    NUM_REG_COMMENT    = 304,
+    
+    MOT_REG            = 401,
+    MOT_REG_VALUE      = 402,
+    MOT_REG_ID         = 403,
+    MOT_REG_COMMENT    = 404,
+    
+    UF_REG             = 501,
+    UF_REG_COORD       = 502,
+    UF_REG_ID          = 503,
+    UF_REG_COMMENT     = 504,
+    
+    TF_REG             = 601,
+    TF_REG_COORD       = 602,
+    TF_REG_ID          = 603,
+    TF_REG_COMMENT     = 604,
+    
+    PL_REG             = 701,
+    PL_REG_POSE        = 702,
+    PL_REG_PALLET      = 703,
+    PL_REG_FLAG        = 704,
+    PL_REG_ID          = 705,
+    PL_REG_COMMENT     = 706,
 }RegType;
 
 

@@ -136,7 +136,7 @@ ErrorCode MotionCommand::planPath(void)
     switch (motion_type_)
     {
         case MOTION_JOINT:
-            //err = planJointPath();
+            err = planJointPath();
             break;
 
         case MOTION_LINE:
@@ -533,6 +533,19 @@ ErrorCode MotionCommand::pickAllPoint(vector<PathPoint> &points)
     switch (motion_type_)
     {
         case MOTION_JOINT:
+            points.resize(max_stamp_);
+            for (size_t i = 0; i < max_stamp_; i++)
+            {
+                points[i].type   = MOTION_JOINT;
+                points[i].stamp  = i + 1;
+                points[i].source = this;
+                interpolateJoint(i + 1, points[i].joint);
+
+                if (i < transition_stamp_)
+                    points[i].style  = POINT_COMMON;
+                else
+                    points[i].style  = POINT_TRANSITION;
+            }          
             break;
 
         case MOTION_LINE:
@@ -642,6 +655,11 @@ double MotionCommand::getCommandVelocity(void)
     return vel_;
 }
 
+double MotionCommand::getCommandAcc(void)
+{
+    return acc_;
+}
+
 MotionCommand* MotionCommand::getPrevCommandPtr(void)
 {
     return prev_ptr_;
@@ -660,6 +678,96 @@ void MotionCommand::setPrevCommandPtr(MotionCommand *ptr)
 void MotionCommand::setNextCommandPtr(MotionCommand *ptr)
 {
     next_ptr_ = ptr;
+}
+
+ErrorCode MotionCommand::planJointPath(void)
+{
+    FST_INFO("running planJointPath----------");
+    ErrorCode err = SUCCESS;
+
+    // set end point
+    joint_ending_ = target_joint_;
+
+    // set start point
+    if(begin_from_given_joint_){
+        joint_starting_ = beginning_joint_;
+    }
+    else{
+        // FIXME: current getJointEnding() only support MOVJ, except MOVL and MOVC
+        joint_starting_ = prev_ptr_->getJointEnding();
+    }
+
+    // set joint limits
+    Omega velocity_max[AXIS_IN_ALGORITHM];
+    Alpha acc_max[AXIS_IN_ALGORITHM];
+    velocity_max[0] = vel_*g_soft_constraint.j1.max_omega;
+    velocity_max[1] = vel_*g_soft_constraint.j2.max_omega;
+    velocity_max[2] = vel_*g_soft_constraint.j3.max_omega;
+    velocity_max[3] = vel_*g_soft_constraint.j4.max_omega;
+    velocity_max[4] = vel_*g_soft_constraint.j5.max_omega;
+    velocity_max[5] = vel_*g_soft_constraint.j6.max_omega;
+    acc_max[0] = acc_*g_soft_constraint.j1.max_alpha;
+    acc_max[1] = acc_*g_soft_constraint.j2.max_alpha;
+    acc_max[2] = acc_*g_soft_constraint.j3.max_alpha;
+    acc_max[3] = acc_*g_soft_constraint.j4.max_alpha;
+    acc_max[4] = acc_*g_soft_constraint.j5.max_alpha;
+    acc_max[5] = acc_*g_soft_constraint.j6.max_alpha;
+    FST_INFO("velocity_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
+                g_soft_constraint.j1.max_omega, g_soft_constraint.j2.max_omega,
+                g_soft_constraint.j3.max_omega, g_soft_constraint.j4.max_omega,
+                g_soft_constraint.j5.max_omega, g_soft_constraint.j6.max_omega);
+    FST_INFO("acc_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
+                g_soft_constraint.j1.max_alpha, g_soft_constraint.j2.max_alpha,
+                g_soft_constraint.j3.max_alpha, g_soft_constraint.j4.max_alpha,
+                g_soft_constraint.j5.max_alpha, g_soft_constraint.j6.max_alpha);
+    
+    // compute minimum time of axes
+    MotionTime duration_max = -1;
+    int duration_max_index = 0;
+    MotionTime duration[AXIS_IN_ALGORITHM];
+    Angle delta_joint[AXIS_IN_ALGORITHM];
+    Angle* joint_start_ptr = (Angle*)&joint_starting_;
+    Angle* joint_end_ptr = (Angle*)&joint_ending_;
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        delta_joint[i] = joint_end_ptr[i] - joint_start_ptr[i];
+        Angle delta_joint_fabs = fabs(delta_joint[i]);
+        if(fabs(delta_joint_fabs) < DOUBLE_MINIMUM) // deal with the problem of computational accuracy
+        {
+            delta_joint[i] = 0;
+            delta_joint_fabs = 0;
+        }
+        double condition = velocity_max[i] * velocity_max[i] / acc_max[i];
+        if(condition >= delta_joint_fabs)    // triangle velocity curve
+        {
+            duration[i] = 2*sqrt(delta_joint_fabs / acc_max[i]);
+        }
+        else    // trapezoid velocity curve
+        {
+            duration[i] = delta_joint_fabs / velocity_max[i] + velocity_max[i] / acc_max[i];
+        }
+
+        if(duration[i] > duration_max)
+        {
+            duration_max = duration[i];
+            duration_max_index = i;
+        }
+    }
+
+    // compute max_stamp
+    max_stamp_ = ceil(duration_max / (0.01 / velocity_max[duration_max_index]));
+    FST_INFO("max_stamp_ = %d", max_stamp_);
+
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        joint_coeff_[i] = delta_joint[i] / max_stamp_;
+    }
+    FST_INFO("joint_coeff: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
+                joint_coeff_[0], joint_coeff_[1], joint_coeff_[2],
+                joint_coeff_[3], joint_coeff_[4], joint_coeff_[5]);
+
+    transition_stamp_ = max_stamp_;
+    return SUCCESS;
 }
 
 ErrorCode MotionCommand::planLinePath(void)
@@ -719,7 +827,7 @@ ErrorCode MotionCommand::planLinePath(void)
     line_coeff_.position_coeff_z  = (pose_ending_.position.z - pose_starting_.position.z) / max_stamp_;
     line_coeff_.orientation_angle = getOrientationAngle(pose_starting_, pose_ending_);
 
-    if (rotation > g_ort_linear_polation_threshold_)
+    if (rotation > g_ort_linear_polation_threshold)
     {
         // Spherical interpolation
         line_coeff_.spherical_flag = true;
@@ -739,6 +847,16 @@ ErrorCode MotionCommand::planLinePath(void)
     transition_stamp_ = max_stamp_ - stop_tick;
 
     return SUCCESS;
+}
+
+void MotionCommand::interpolateJoint(Tick stamp, Joint &joint)
+{
+    joint.j1 = joint_starting_.j1 + joint_coeff_[0] * stamp;
+    joint.j2 = joint_starting_.j2 + joint_coeff_[1] * stamp;
+    joint.j3 = joint_starting_.j3 + joint_coeff_[2] * stamp;
+    joint.j4 = joint_starting_.j4 + joint_coeff_[3] * stamp;
+    joint.j5 = joint_starting_.j5 + joint_coeff_[4] * stamp;
+    joint.j6 = joint_starting_.j6 + joint_coeff_[5] * stamp;
 }
 
 void MotionCommand::interpolateLine(Tick stamp, Pose &pose)

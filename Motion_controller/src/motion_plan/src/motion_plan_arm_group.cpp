@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <fstream>
+#include <float.h>
 
 #include <motion_plan_version.h>
 #include <motion_plan_arm_group.h>
@@ -101,6 +102,7 @@ ErrorCode ArmGroup::initArmGroup(void)
         ptr = &motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY - 2];
         motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY - 1].setPrevCommandPtr(ptr);
         motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY - 1].setNextCommandPtr(NULL);
+        FST_INFO("Command pool capacity: %d", MOTION_COMMAND_POOL_CAPACITY);
     }
     else
     {
@@ -125,10 +127,220 @@ ErrorCode ArmGroup::initArmGroup(void)
     memset(prev_traj_point_.point.joint, 0, NUM_OF_JOINT * sizeof(double));
     memset(prev_traj_point_.point.omega, 0, NUM_OF_JOINT * sizeof(double));
     memset(prev_traj_point_.point.alpha, 0, NUM_OF_JOINT * sizeof(double));
+    
+    memset(&g_ik_reference, 0, NUM_OF_JOINT * sizeof(double));
 
+    g_global_vel_ratio = 1.0;
+    g_global_acc_ratio = 1.0;
+
+    g_user_frame.identityMatrix();
+    g_tool_frame.identityMatrix();
+    g_user_frame_inverse.identityMatrix();
+    g_tool_frame_inverse.identityMatrix();
+
+    ParamGroup param;
+    if (param.loadParamFile("share/configuration/configurable/motion_plan.yaml"))
+    {
+        param.getParam("cycle_time", g_cycle_time);
+        param.getParam("cycle_distance", g_cycle_distance);
+        param.getParam("cartesian/velocity/min", g_cart_vel_min);
+        param.getParam("cartesian/velocity/max", g_cart_vel_max);
+        param.getParam("cartesian/velocity/default", g_cart_vel_default);
+        param.getParam("cartesian/acceleration/min", g_cart_acc_min);
+        param.getParam("cartesian/acceleration/max", g_cart_acc_max);
+        param.getParam("cartesian/acceleration/default", g_cart_acc_default);
+        param.getParam("cartesian/acceleration/reference", g_cart_acc_reference);
+        param.getParam("joint/omega/default", g_joint_vel_default);
+        param.getParam("joint/alpha/default", g_joint_acc_default);
+        param.getParam("cartesian/orientation/omega_reference", g_orientation_omega_reference);
+        param.getParam("cartesian/orientation/linear_polation_threshold", g_ort_linear_polation_threshold);
+
+
+
+        FST_INFO("cycle time=%.4f, cycle distance=%.2f", g_cycle_time, g_cycle_distance);
+        FST_INFO("cartesian velocity: min=%.2f, max=%.2f, default=%.2f",\
+                 g_cart_vel_min, g_cart_vel_max, g_cart_vel_default);
+        FST_INFO("cartesian acceleration: min=%.2f, max=%.2f, default=%.2f",\
+                 g_cart_acc_min, g_cart_acc_max, g_cart_acc_default);
+        FST_INFO("cartesian acceleration reference: %.2f", g_cart_acc_reference);
+        FST_INFO("cartesian orientation omega reference: %.2f", g_orientation_omega_reference);
+        FST_INFO("cartesian orientation linear polation threshold: %.2f", g_ort_linear_polation_threshold);
+        FST_INFO("joint: omega default=%.2f, alpha default=%.2f", g_joint_vel_default, g_joint_acc_default);
+    }
+    else
+    {
+        FST_ERROR("Lost config file: motion_plan.yaml");
+        return param.getLastError();
+    }
+
+    if (param.loadParamFile("share/configuration/machine/dh.yaml"))
+    {
+        param.getParam("DH_parameter/j1/alpha", g_dh_mat[0][0]);
+        param.getParam("DH_parameter/j1/a",     g_dh_mat[0][1]);
+        param.getParam("DH_parameter/j1/d",     g_dh_mat[0][2]);
+        param.getParam("DH_parameter/j1/theta", g_dh_mat[0][3]);
+        param.getParam("DH_parameter/j2/alpha", g_dh_mat[1][0]);
+        param.getParam("DH_parameter/j2/a",     g_dh_mat[1][1]);
+        param.getParam("DH_parameter/j2/d",     g_dh_mat[1][2]);
+        param.getParam("DH_parameter/j2/theta", g_dh_mat[1][3]);
+        param.getParam("DH_parameter/j3/alpha", g_dh_mat[2][0]);
+        param.getParam("DH_parameter/j3/a",     g_dh_mat[2][1]);
+        param.getParam("DH_parameter/j3/d",     g_dh_mat[2][2]);
+        param.getParam("DH_parameter/j3/theta", g_dh_mat[2][3]);
+        param.getParam("DH_parameter/j4/alpha", g_dh_mat[3][0]);
+        param.getParam("DH_parameter/j4/a",     g_dh_mat[3][1]);
+        param.getParam("DH_parameter/j4/d",     g_dh_mat[3][2]);
+        param.getParam("DH_parameter/j4/theta", g_dh_mat[3][3]);
+        param.getParam("DH_parameter/j5/alpha", g_dh_mat[4][0]);
+        param.getParam("DH_parameter/j5/a",     g_dh_mat[4][1]);
+        param.getParam("DH_parameter/j5/d",     g_dh_mat[4][2]);
+        param.getParam("DH_parameter/j5/theta", g_dh_mat[4][3]);
+        param.getParam("DH_parameter/j6/alpha", g_dh_mat[5][0]);
+        param.getParam("DH_parameter/j6/a",     g_dh_mat[5][1]);
+        param.getParam("DH_parameter/j6/d",     g_dh_mat[5][2]);
+        param.getParam("DH_parameter/j6/theta", g_dh_mat[5][3]);
+
+        FST_INFO("DH parameters:");
+        FST_INFO("  J1: %.6f, %.6f, %.6f, %.6f", g_dh_mat[0][0], g_dh_mat[0][1], g_dh_mat[0][2], g_dh_mat[0][3]);
+        FST_INFO("  J2: %.6f, %.6f, %.6f, %.6f", g_dh_mat[1][0], g_dh_mat[1][1], g_dh_mat[1][2], g_dh_mat[1][3]);
+        FST_INFO("  J3: %.6f, %.6f, %.6f, %.6f", g_dh_mat[2][0], g_dh_mat[2][1], g_dh_mat[2][2], g_dh_mat[2][3]);
+        FST_INFO("  J4: %.6f, %.6f, %.6f, %.6f", g_dh_mat[3][0], g_dh_mat[3][1], g_dh_mat[3][2], g_dh_mat[3][3]);
+        FST_INFO("  J5: %.6f, %.6f, %.6f, %.6f", g_dh_mat[4][0], g_dh_mat[4][1], g_dh_mat[4][2], g_dh_mat[4][3]);
+        FST_INFO("  J6: %.6f, %.6f, %.6f, %.6f", g_dh_mat[5][0], g_dh_mat[5][1], g_dh_mat[5][2], g_dh_mat[5][3]);
+    }
+    else
+    {
+        FST_ERROR("Lost config file: dh.yaml");
+        return param.getLastError();
+    }
+
+    if (param.loadParamFile("share/configuration/model/hard_constraints.yaml"))
+    {
+        param.getParam("hard_constraint/j1/home", g_hard_constraint.j1.home);
+        param.getParam("hard_constraint/j1/upper", g_hard_constraint.j1.upper);
+        param.getParam("hard_constraint/j1/lower", g_hard_constraint.j1.lower);
+        param.getParam("hard_constraint/j1/omega_max", g_hard_constraint.j1.max_omega);
+        param.getParam("hard_constraint/j1/alpha_max", g_hard_constraint.j1.max_alpha);
+        param.getParam("hard_constraint/j2/home", g_hard_constraint.j2.home);
+        param.getParam("hard_constraint/j2/upper", g_hard_constraint.j2.upper);
+        param.getParam("hard_constraint/j2/lower", g_hard_constraint.j2.lower);
+        param.getParam("hard_constraint/j2/omega_max", g_hard_constraint.j2.max_omega);
+        param.getParam("hard_constraint/j2/alpha_max", g_hard_constraint.j2.max_alpha);
+        param.getParam("hard_constraint/j3/home", g_hard_constraint.j3.home);
+        param.getParam("hard_constraint/j3/upper", g_hard_constraint.j3.upper);
+        param.getParam("hard_constraint/j3/lower", g_hard_constraint.j3.lower);
+        param.getParam("hard_constraint/j3/omega_max", g_hard_constraint.j3.max_omega);
+        param.getParam("hard_constraint/j3/alpha_max", g_hard_constraint.j3.max_alpha);
+        param.getParam("hard_constraint/j4/home", g_hard_constraint.j4.home);
+        param.getParam("hard_constraint/j4/upper", g_hard_constraint.j4.upper);
+        param.getParam("hard_constraint/j4/lower", g_hard_constraint.j4.lower);
+        param.getParam("hard_constraint/j4/omega_max", g_hard_constraint.j4.max_omega);
+        param.getParam("hard_constraint/j4/alpha_max", g_hard_constraint.j4.max_alpha);
+        param.getParam("hard_constraint/j5/home", g_hard_constraint.j5.home);
+        param.getParam("hard_constraint/j5/upper", g_hard_constraint.j5.upper);
+        param.getParam("hard_constraint/j5/lower", g_hard_constraint.j5.lower);
+        param.getParam("hard_constraint/j5/omega_max", g_hard_constraint.j5.max_omega);
+        param.getParam("hard_constraint/j5/alpha_max", g_hard_constraint.j5.max_alpha);
+        param.getParam("hard_constraint/j6/home", g_hard_constraint.j6.home);
+        param.getParam("hard_constraint/j6/upper", g_hard_constraint.j6.upper);
+        param.getParam("hard_constraint/j6/lower", g_hard_constraint.j6.lower);
+        param.getParam("hard_constraint/j6/omega_max", g_hard_constraint.j6.max_omega);
+        param.getParam("hard_constraint/j6/alpha_max", g_hard_constraint.j6.max_alpha);
+    }
+    else
+    {
+        FST_ERROR("Lost config file: hard_constraints.yaml");
+        return param.getLastError();
+    }
+
+    if (param.loadParamFile("share/configuration/configurable/soft_constraints.yaml"))
+    {
+        param.getParam("soft_constraint/j1/home", g_soft_constraint.j1.home);
+        param.getParam("soft_constraint/j1/upper", g_soft_constraint.j1.upper);
+        param.getParam("soft_constraint/j1/lower", g_soft_constraint.j1.lower);
+        param.getParam("soft_constraint/j1/omega_max", g_soft_constraint.j1.max_omega);
+        param.getParam("soft_constraint/j1/alpha_max", g_soft_constraint.j1.max_alpha);
+        param.getParam("soft_constraint/j2/home", g_soft_constraint.j2.home);
+        param.getParam("soft_constraint/j2/upper", g_soft_constraint.j2.upper);
+        param.getParam("soft_constraint/j2/lower", g_soft_constraint.j2.lower);
+        param.getParam("soft_constraint/j2/omega_max", g_soft_constraint.j2.max_omega);
+        param.getParam("soft_constraint/j2/alpha_max", g_soft_constraint.j2.max_alpha);
+        param.getParam("soft_constraint/j3/home", g_soft_constraint.j3.home);
+        param.getParam("soft_constraint/j3/upper", g_soft_constraint.j3.upper);
+        param.getParam("soft_constraint/j3/lower", g_soft_constraint.j3.lower);
+        param.getParam("soft_constraint/j3/omega_max", g_soft_constraint.j3.max_omega);
+        param.getParam("soft_constraint/j3/alpha_max", g_soft_constraint.j3.max_alpha);
+        param.getParam("soft_constraint/j4/home", g_soft_constraint.j4.home);
+        param.getParam("soft_constraint/j4/upper", g_soft_constraint.j4.upper);
+        param.getParam("soft_constraint/j4/lower", g_soft_constraint.j4.lower);
+        param.getParam("soft_constraint/j4/omega_max", g_soft_constraint.j4.max_omega);
+        param.getParam("soft_constraint/j4/alpha_max", g_soft_constraint.j4.max_alpha);
+        param.getParam("soft_constraint/j5/home", g_soft_constraint.j5.home);
+        param.getParam("soft_constraint/j5/upper", g_soft_constraint.j5.upper);
+        param.getParam("soft_constraint/j5/lower", g_soft_constraint.j5.lower);
+        param.getParam("soft_constraint/j5/omega_max", g_soft_constraint.j5.max_omega);
+        param.getParam("soft_constraint/j5/alpha_max", g_soft_constraint.j5.max_alpha);
+        param.getParam("soft_constraint/j6/home", g_soft_constraint.j6.home);
+        param.getParam("soft_constraint/j6/upper", g_soft_constraint.j6.upper);
+        param.getParam("soft_constraint/j6/lower", g_soft_constraint.j6.lower);
+        param.getParam("soft_constraint/j6/omega_max", g_soft_constraint.j6.max_omega);
+        param.getParam("soft_constraint/j6/alpha_max", g_soft_constraint.j6.max_alpha);
+    }
+    else
+    {
+        FST_ERROR("Lost config file: soft_constraints.yaml");
+        return param.getLastError();
+    }
+
+    FST_INFO("Hard constraint:");
+    FST_INFO("J1 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_hard_constraint.j1.lower, g_hard_constraint.j1.home, g_hard_constraint.j1.upper,\
+             g_hard_constraint.j1.max_omega, g_hard_constraint.j1.max_alpha);
+    FST_INFO("J2 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_hard_constraint.j2.lower, g_hard_constraint.j2.home, g_hard_constraint.j2.upper,\
+             g_hard_constraint.j2.max_omega, g_hard_constraint.j2.max_alpha);
+    FST_INFO("J3 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_hard_constraint.j3.lower, g_hard_constraint.j3.home, g_hard_constraint.j3.upper,\
+             g_hard_constraint.j3.max_omega, g_hard_constraint.j3.max_alpha);
+    FST_INFO("J4 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_hard_constraint.j4.lower, g_hard_constraint.j4.home, g_hard_constraint.j4.upper,\
+             g_hard_constraint.j4.max_omega, g_hard_constraint.j4.max_alpha);
+    FST_INFO("J5 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_hard_constraint.j5.lower, g_hard_constraint.j5.home, g_hard_constraint.j5.upper,\
+             g_hard_constraint.j5.max_omega, g_hard_constraint.j5.max_alpha);
+    FST_INFO("J6 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_hard_constraint.j6.lower, g_hard_constraint.j6.home, g_hard_constraint.j6.upper,\
+             g_hard_constraint.j6.max_omega, g_hard_constraint.j6.max_alpha);
+
+    FST_INFO("Soft constraint:");
+    FST_INFO("J1 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_soft_constraint.j1.lower, g_soft_constraint.j1.home, g_soft_constraint.j1.upper,\
+             g_soft_constraint.j1.max_omega, g_soft_constraint.j1.max_alpha);
+    FST_INFO("J2 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_soft_constraint.j2.lower, g_soft_constraint.j2.home, g_soft_constraint.j2.upper,\
+             g_soft_constraint.j2.max_omega, g_soft_constraint.j2.max_alpha);
+    FST_INFO("J3 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_soft_constraint.j3.lower, g_soft_constraint.j3.home, g_soft_constraint.j3.upper,\
+             g_soft_constraint.j3.max_omega, g_soft_constraint.j3.max_alpha);
+    FST_INFO("J4 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_soft_constraint.j4.lower, g_soft_constraint.j4.home, g_soft_constraint.j4.upper,\
+             g_soft_constraint.j4.max_omega, g_soft_constraint.j4.max_alpha);
+    FST_INFO("J5 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_soft_constraint.j5.lower, g_soft_constraint.j5.home, g_soft_constraint.j5.upper,\
+             g_soft_constraint.j5.max_omega, g_soft_constraint.j5.max_alpha);
+    FST_INFO("J6 - lower=%.6f, home=%.6f, upper=%.6f, omega=%.6f, alpha=%.6f",\
+             g_soft_constraint.j6.lower, g_soft_constraint.j6.home, g_soft_constraint.j6.upper,\
+             g_soft_constraint.j6.max_omega, g_soft_constraint.j6.max_alpha);
+
+    if (!isFirstConstraintCoveredBySecond(g_soft_constraint, g_hard_constraint))
+    {
+        FST_ERROR("Soft constraint out of hard constraint.");
+        return INVALID_PARAMETER;
+    }
 
     FST_INFO("ArmGroup is ready to make life easier. Have a good time!");
     FST_WARN("**********************************************************************************************");
+    
     return SUCCESS;
 }
 
@@ -190,7 +402,7 @@ double ArmGroup::getCartesianVelMax(void)
 //------------------------------------------------------------
 double ArmGroup::getGlobalVelRatio(void)
 {
-    return g_global_speed_ratio;
+    return g_global_vel_ratio;
 }
 
 //------------------------------------------------------------
@@ -209,7 +421,7 @@ ErrorCode ArmGroup::setGlobalVelRatio(double ratio)
     }
     else
     {
-        g_global_speed_ratio = ratio;
+        g_global_vel_ratio = ratio;
         return SUCCESS;
     }
 }
@@ -377,7 +589,8 @@ const DHGroup& ArmGroup::getDH(void)
 //------------------------------------------------------------
 size_t ArmGroup::getFIFOLength(void)
 {
-    return getFifoSize();
+    // TODO
+    return 0;
 }
 
 //------------------------------------------------------------
@@ -389,7 +602,8 @@ size_t ArmGroup::getFIFOLength(void)
 //------------------------------------------------------------
 size_t ArmGroup::getFIFOCapacity(void)
 {
-    return getFifoCapacity();
+    // TODO
+    return 0;
 }
 
 //------------------------------------------------------------
@@ -401,7 +615,7 @@ size_t ArmGroup::getFIFOCapacity(void)
 //------------------------------------------------------------
 ErrorCode ArmGroup::getPointFromFIFO(size_t num, std::vector<JointOutput> &points)
 {
-    MotionTime tm;
+    MotionTime   tm;
     JointOutput  jout;
     JointState  *js;
     points.clear();
@@ -928,19 +1142,6 @@ ErrorCode ArmGroup::setManualSpeedRatio(double ratio)
 
 
 
-//------------------------------------------------------------
-// Function:    isFirstConstraintCoveredBySecond
-// Summary: To check wether first constraint is covered by the second.
-// In:      first   -> the first joint constraint
-//          second  -> the second joint constraint
-// Out:     None
-// Return:  true    -> first one is covered by the second one
-//          false   -> first one is NOT covered by the second one
-//------------------------------------------------------------
-bool ArmGroup::isFirstConstraintCoveredBySecond(const JointConstraint &first, const JointConstraint &second)
-{
-    return true;
-}
 
 MotionCommand* ArmGroup::getFreeMotionCommand(void)
 {
@@ -1021,6 +1222,7 @@ ErrorCode ArmGroup::autoJoint(const MotionTarget &target, int id)
     MotionTarget tar = target;
 
     FST_INFO("autoJoint: checking joint parameters ...");
+
     if (tar.vel < 0)
     {
         tar.vel = g_joint_vel_default;
@@ -1085,7 +1287,8 @@ ErrorCode ArmGroup::autoJoint(const MotionTarget &target, int id)
     }
     if (err == SUCCESS)
     {
-        err = cmd->planPathAndTrajectory(t_path_, t_head_, t_tail_);
+        //err = cmd->planPathAndTrajectory(t_path_, t_head_, t_tail_);
+        err = cmd->planPath();
     }
 
     if (err != SUCCESS)
@@ -1107,139 +1310,33 @@ ErrorCode ArmGroup::autoJoint(const MotionTarget &target, int id)
         return err;
     }
 
-    FST_INFO("Path plan and trajectory plan finished successfully");
+    //FST_INFO("Path plan and trajectory plan finished successfully");
+    FST_INFO("Path plan finished successfully, picking point ...");
+   
+    FST_INFO("Path consisted of %d common points and %d trasition points.",
+             cmd->getCommonLength(), cmd->getTransitionLength());
 
-/*  vector<PathPoint> points;
+    vector<PathPoint> points;
 
-    err = cmd->pickCommonPoint(points);
+    err = cmd->pickAllPoint(points);
 
-    size_t next_tail;
+    if (points.size() > PATH_FIFO_CAPACITY)
+    {
+        FST_ERROR("Path point overload, point num=%d, FIFO capacity=%d.", points.size(), PATH_FIFO_CAPACITY);
+        err = MOTION_INTERNAL_FAULT;
+    }
 
+    t_head_ = 0;
+    t_tail_ = 0;
     for (vector<PathPoint>::iterator it = points.begin(); it != points.end(); ++it)
     {
-        next_tail = (path_tail_ + 1) & (PATH_FIFO_CAPACITY - 1);
-        if (next_tail != path_head_)
-        {
-            path_fifo_[path_tail_] = *it;
-            path_tail_ = next_tail;
-        }
-    }
-*/    
-
-/*
-    if (err != SUCCESS)
+        t_path_[t_tail_].path_point = *it;
+        t_tail_++;
+    }    
+    if (t_head_ != t_tail_)
     {
-        FST_ERROR("Get an error while picking point, %d points picked befor this error, err=%x.",
-                  points.size(), err);
-        FST_INFO("Release the motion object.");
-
-        MotionCommand *ptr = cmd->getPrevCommandPtr();
-        releaseMotionCommand(cmd);
-        
-        if (ptr != NULL)
-        {
-            ptr->setNextCommandPtr(NULL);
-        }
-        else
-        {
-            used_command_list_ptr_ = NULL;
-        }
-
-        FST_INFO("Computing inverse kinematics of %d points ...");
+        err = planJointTraj();
     }
-    else
-    {
-        FST_INFO("All common points picked out successfully, computing inverse kinematics ...");
-    }
-    
-    ErrorCode   ik_err = SUCCESS;
-    size_t      ik_cnt = 0;
-
-    while (path_head_ != path_tail_)
-    {
-        next_tail = (traj_tail_ + 1) & (TRAJECTORY_FIFO_CAPACITY - 1);
-        if (next_tail != traj_head_)
-        {
-            ik_err = chainIK(path_fifo_[path_head_].pose,\
-                             g_ik_reference,\
-                             traj_fifo_[traj_tail_].point.joint);
-            
-            if (ik_err == SUCCESS)
-            {
-                traj_fifo_[traj_tail_].path_point = path_fifo_[path_head_];
-                path_head_ = (path_head_ + 1) & (PATH_FIFO_CAPACITY - 1);
-                traj_tail_ = next_tail;
-                ik_cnt++;
-            }
-            else
-            {
-                FST_ERROR("IK failed: source=%p, stamp=%d",
-                          path_fifo_[path_head_].source, path_fifo_[path_head_].stamp);
-                FST_INFO("Pose: (%.4f, %.4f, %.4f) - (%.4f, %.4f, %.4f, %.4f)",
-                         path_fifo_[path_head_].pose.position.x,
-                         path_fifo_[path_head_].pose.position.y,
-                         path_fifo_[path_head_].pose.position.z,
-                         path_fifo_[path_head_].pose.orientation.w,
-                         path_fifo_[path_head_].pose.orientation.x,
-                         path_fifo_[path_head_].pose.orientation.y,
-                         path_fifo_[path_head_].pose.orientation.z);
-                FST_INFO("Reference: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                         g_ik_reference.j1, g_ik_reference.j2, g_ik_reference.j3,
-                         g_ik_reference.j4, g_ik_reference.j5, g_ik_reference.j6);
-                FST_INFO("Joint:     %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                        traj_fifo_[traj_tail_].point.joint[0],
-                        traj_fifo_[traj_tail_].point.joint[1],
-                        traj_fifo_[traj_tail_].point.joint[2],
-                        traj_fifo_[traj_tail_].point.joint[3],
-                        traj_fifo_[traj_tail_].point.joint[4],
-                        traj_fifo_[traj_tail_].point.joint[5]);
-                break;
-            }
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    FST_INFO("traj points:");
-    for (size_t j = traj_head_; j != traj_tail_; j = (j + 1) & (TRAJECTORY_FIFO_CAPACITY - 1))
-        FST_INFO("%d - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                 traj_fifo_[j].path_point.stamp,
-                 traj_fifo_[j].point.joint[0],
-                 traj_fifo_[j].point.joint[1],
-                 traj_fifo_[j].point.joint[2],
-                 traj_fifo_[j].point.joint[3],
-                 traj_fifo_[j].point.joint[4],
-                 traj_fifo_[j].point.joint[5]);
-
-    if (err == SUCCESS)
-    {
-        if (ik_err == SUCCESS)
-        {
-            if (path_head_ == path_tail_)
-            {
-                FST_INFO("All points inversed to joint space successfully.");
-                return SUCCESS;
-            }
-            else
-            {
-                FST_INFO("%d points inversed to joint space, trajectory FIFO is full.", ik_cnt);
-
-                return SUCCESS;
-            }
-        }
-        else
-        {
-            FST_ERROR("Computing IK failed, last stamp=%d", traj_fifo_[traj_tail_].path_point.stamp);
-            return ik_err;
-        }
-    }
-    else
-    {
-        return err;
-    }
-    */
 }
 
 //------------------------------------------------------------
@@ -1768,6 +1865,125 @@ ErrorCode ArmGroup::planTraj()
         */
 
     }
+}
+                                
+//std::ofstream tos("/home/fst/myworkspace/jout.txt");
+ErrorCode ArmGroup::planJointTraj(void)
+{
+    ErrorCode err;
+
+    // this should not be set here, fix it later
+    pick_time_    = g_cycle_time;
+    pick_segment_ = 0;
+    // setting joint limits
+    Omega velocity_max[AXIS_IN_ALGORITHM];
+    Alpha acc_max[AXIS_IN_ALGORITHM]; //acc limits
+    Alpha acc_backward[AXIS_IN_ALGORITHM];   //acc limits used by backward loop
+    double vel =  t_path_[t_head_].path_point.source->getCommandVelocity();
+    double acc =  t_path_[t_head_].path_point.source->getCommandAcc();
+    velocity_max[0] = vel*g_soft_constraint.j1.max_omega;
+    velocity_max[1] = vel*g_soft_constraint.j2.max_omega;
+    velocity_max[2] = vel*g_soft_constraint.j3.max_omega;
+    velocity_max[3] = vel*g_soft_constraint.j4.max_omega;
+    velocity_max[4] = vel*g_soft_constraint.j5.max_omega;
+    velocity_max[5] = vel*g_soft_constraint.j6.max_omega;
+    acc_max[0] = acc*g_soft_constraint.j1.max_alpha;
+    acc_max[1] = acc*g_soft_constraint.j2.max_alpha;
+    acc_max[2] = acc*g_soft_constraint.j3.max_alpha;
+    acc_max[3] = acc*g_soft_constraint.j4.max_alpha;
+    acc_max[4] = acc*g_soft_constraint.j5.max_alpha;
+    acc_max[5] = acc*g_soft_constraint.j6.max_alpha;  
+
+    // trajectory generation
+    double forward_duration = DBL_MAX, backward_duration = DBL_MAX;
+    size_t forward_tick = t_head_, backward_tick = t_tail_ - 1;
+    while(forward_tick < backward_tick)
+    {
+        MotionTime duration[AXIS_IN_ALGORITHM] = {0};
+        MotionTime duration_max = 0;
+        Angle* start_joint_ptr = NULL;
+        Angle* end_joint_ptr = NULL;
+        Omega* start_omega_ptr = NULL;
+        MotionTime prev_time_from_start = 0;
+        size_t target_tick = 0;
+        if(forward_duration >= backward_duration) // do forward integration preparation
+        {
+            // set start and end points and start omega
+            target_tick = forward_tick;
+            if(forward_tick == t_head_)
+            {
+                start_joint_ptr = (Angle*)&prev_traj_point_.point.joint;
+                start_omega_ptr = (Omega*)&prev_traj_point_.point.omega;
+                prev_time_from_start = prev_traj_point_.time_from_start;
+            }
+            else
+            {
+                start_joint_ptr = (Angle*)&t_path_[target_tick - 1].path_point.joint;
+                start_omega_ptr = (Omega*)&t_path_[target_tick - 1].point.omega;
+                prev_time_from_start = t_path_[target_tick - 1].time_from_start;
+            }
+            end_joint_ptr = (Angle*)&t_path_[target_tick].path_point.joint;
+        }
+        else    // do backward integration preparation
+        {      
+            // set start and end points and start omega
+            target_tick = backward_tick - 1;
+            start_joint_ptr = (Angle*)&t_path_[target_tick].path_point.joint;
+            start_omega_ptr = (Omega*)&t_path_[target_tick + 1].point.omega;
+            prev_time_from_start = 0;
+            end_joint_ptr = (Angle*)&t_path_[target_tick + 1].path_point.joint;
+        }
+
+        // compute axes maximum durations for a piece of path
+        computeDurationMax(start_joint_ptr, end_joint_ptr, start_omega_ptr, acc_max, duration_max);
+        // compute current omega and alpha according to duration_max for all axes
+        computeTrajectory(target_tick, start_joint_ptr, end_joint_ptr, start_omega_ptr, duration_max, t_path_);   
+
+        if(forward_duration >= backward_duration)
+        {
+            forward_duration = duration_max;
+            t_path_[target_tick].time_from_start = prev_time_from_start + duration_max;
+            ++forward_tick;
+        }
+        else
+        {
+            backward_duration = duration_max;
+            t_path_[target_tick].time_from_start = duration_max;
+            --backward_tick;
+        }
+    }
+
+    // complete time_from_start in backward direction
+    for(size_t i = forward_tick; i < t_tail_; ++i)
+    {
+         t_path_[i].time_from_start += t_path_[i - 1].time_from_start;
+    }
+
+    /*for(size_t i = t_head_; i < t_tail_; i++)
+    {
+        tos  << t_path_[i].point.joint[0] << " "
+            << t_path_[i].point.joint[1] << " "
+            << t_path_[i].point.joint[2] << " "
+            << t_path_[i].point.joint[3] << " "
+            << t_path_[i].point.joint[4] << " "
+            << t_path_[i].point.joint[5] << " "
+            << t_path_[i].point.omega[0] << " "
+            << t_path_[i].point.omega[1] << " "
+            << t_path_[i].point.omega[2] << " "
+            << t_path_[i].point.omega[3] << " "
+            << t_path_[i].point.omega[4] << " "
+            << t_path_[i].point.omega[5] << " "
+            << t_path_[i].point.alpha[0] << " "
+            << t_path_[i].point.alpha[1] << " "
+            << t_path_[i].point.alpha[2] << " "
+            << t_path_[i].point.alpha[3] << " "
+            << t_path_[i].point.alpha[4] << " "
+            << t_path_[i].point.alpha[5] << " "
+            << t_path_[i].time_from_start << std::endl;       
+    }
+    tos.close();*/
+
+    return SUCCESS;
 }
 
 ErrorCode ArmGroup::speedup(void)

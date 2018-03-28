@@ -554,7 +554,6 @@ class ArmGroup
 
 
   private:
-    bool isFirstConstraintCoveredBySecond(const JointConstraint &first, const JointConstraint &second);
     MotionCommand* getFreeMotionCommand(void);
     MotionCommand* releaseMotionCommand(MotionCommand *cmd);
 
@@ -585,6 +584,8 @@ class ArmGroup
     ErrorCode convertPath2Trajectory(ControlPoint &cp);
 
     ErrorCode planTraj(void);
+    
+    ErrorCode planJointTraj(void);
 
 public:
     ErrorCode speedup(void);

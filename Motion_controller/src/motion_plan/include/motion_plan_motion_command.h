@@ -2,7 +2,7 @@
 	> File Name: motion_plan_motion_command.h
 	> Author:   Feng Yun
 	> Mail:     yun.feng@foresight-robotics.com
-	> Created Time: 2017å¹?2æœ?3æ—?æ˜ŸæœŸä¸?13æ—?7åˆ?2ç§? ************************************************************************/
+	> Created Time: 2017/12/13-13:27:32************************************************************************/
 
 #ifndef _MOTION_PLAN_MOTION_COMMAND_H
 #define _MOTION_PLAN_MOTION_COMMAND_H
@@ -308,6 +308,15 @@ class MotionCommand
     double getCommandVelocity(void);
 
     //------------------------------------------------------------------------------
+    // Function:    getCommandAcc
+    // Summary: To get the accelaration given by the command.
+    // In:      None
+    // Out:     None
+    // Return:  this commnad's target accelaration expressed in percent
+    //------------------------------------------------------------------------------
+    double getCommandAcc(void);
+
+    //------------------------------------------------------------------------------
     // Function:    getPrevCommandPtr
     // Summary: Get a pointer to the previous command.
     // In:      None
@@ -347,6 +356,15 @@ class MotionCommand
 ////////////////////////////////////////////////////////////////////////////////////////////////////
   private:
     //------------------------------------------------------------------------------
+    // Function:    planJointPath
+    // Summary: To plan a joint path from starting-joint to ending-joint.
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------------------------
+    ErrorCode planJointPath(void);
+
+    //------------------------------------------------------------------------------
     // Function:    planLinePath
     // Summary: To plan a line path from starting-pose to ending-pose.
     // In:      None
@@ -354,6 +372,15 @@ class MotionCommand
     // Return:  error code
     //------------------------------------------------------------------------------
     ErrorCode planLinePath(void);
+
+    //------------------------------------------------------------------------------
+    // Function:    interpolateJoint
+    // Summary: To interpolate a pose in the joint path planned before.
+    // In:      stamp -> to tell which pose you want to pickout from this path
+    // Out:     pose  -> pose in the path which pointed out by given stamp
+    // Return:  error code
+    //------------------------------------------------------------------------------
+    void interpolateJoint(Tick stamp, Joint &joint);
 
     //------------------------------------------------------------------------------
     // Function:    interpolateLine
@@ -392,6 +419,7 @@ class MotionCommand
     //----- MOVE JOINT --------------------------------
     Joint joint_starting_;
     Joint joint_ending_;
+    double joint_coeff_[AXIS_IN_ALGORITHM];
 
     //----- MOVE LINE --------------------------------
     Pose    pose_starting_;

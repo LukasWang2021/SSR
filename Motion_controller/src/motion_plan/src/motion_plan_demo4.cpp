@@ -28,7 +28,7 @@ using namespace fst_algorithm;
 int main(int argc, char **argv)
 {
     g_cycle_time = 0.001;                   // s
-    g_global_speed_ratio = 1.0;
+    g_global_vel_ratio = 1.0;
     g_global_acc_ratio = 1.0;
 
     g_joint_vel_default = 1;
@@ -125,6 +125,21 @@ int main(int argc, char **argv)
     arm.setStartState(start_joint);
     arm.autoMove(target, 5);
 
+    std::vector<JointOutput> points;
+    arm.getPointFromFIFO(500, points);
+    FST_INFO("get %d points", points.size());
+
+    /*std::ofstream os("/home/fst/myworkspace/jout.txt");
+    for (size_t i = 0; i < points.size(); i++)
+    {
+        os  << points[i].joint.j1 << ","
+            << points[i].joint.j2 << ","
+            << points[i].joint.j3 << ","
+            << points[i].joint.j4 << ","
+            << points[i].joint.j5 << ","
+            << points[i].joint.j6 << endl;      
+    }
+    os.close();*/
     return 0;
 }
 

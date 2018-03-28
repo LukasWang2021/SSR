@@ -20,6 +20,14 @@ ErrorCode createTrajFromPath(const ControlPoint &prev_point, ControlPoint &this_
 ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, int flg);
 
 ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg);
+
+void computeDurationMax(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                                Alpha* acc_limit, MotionTime& duration_max);
+
+void computeTrajectory(size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                            MotionTime duration_max, ControlPoint* target);
+
+
 }
 
 #endif

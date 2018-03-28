@@ -27,8 +27,17 @@ namespace fst_algorithm
 //          0   -> x = 0
 //          -1  -> x < 0
 //------------------------------------------------------------------------------
-//static inline int SIGN(double x) {return x > MINIMUM_E9 ? 1 : (x < -MINIMUM_E9 ? -1 : 0);}
-static inline int SIGN(double x) {return x < 0 ? -1 : 1;}
+static inline int SIGN(double x) {return x > MINIMUM_E9 ? 1 : (x < -MINIMUM_E9 ? -1 : 0);}
+
+//------------------------------------------------------------------------------
+// Function:    POLAR
+// Summary: To judge the sign of a number.
+// In:      x   -> number to judge
+// Out:     None
+// Return:  1   -> x >= 0
+//          -1  -> x < 0
+//------------------------------------------------------------------------------
+static inline int POLAR(double x) {return x < 0 ? -1 : 1;}
 
 //------------------------------------------------------------------------------
 // Function:    MIN

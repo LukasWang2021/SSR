@@ -51,8 +51,17 @@ ArmGroup::ArmGroup(void)
 
     path_head_  = 0;
     path_tail_  = 0;
+    
+    t_traj_ready_   = false;
+    manual_running_ = false;
 
     using_start_joint_ = false;
+    motion_start_joint_.j1 = 0;
+    motion_start_joint_.j2 = 0;
+    motion_start_joint_.j3 = 0;
+    motion_start_joint_.j4 = 0;
+    motion_start_joint_.j5 = -1.5708;
+    motion_start_joint_.j6 = 0;
 }
 
 
@@ -85,7 +94,9 @@ ErrorCode ArmGroup::initArmGroup(void)
     }
 
     //g_log.setDisplayLevel(fst_log::MSG_LEVEL_ERROR);
-    FST_INFO("Initializing ArmGroup ...");
+    FST_INFO("Initializing ArmGroup ver%d.%d.%d ...",   motion_plan_VERSION_MAJOR,\
+                                                        motion_plan_VERSION_MINOR,\
+                                                        motion_plan_VERSION_PATCH);
 
     if (MOTION_COMMAND_POOL_CAPACITY > 1)
     {
@@ -154,6 +165,13 @@ ErrorCode ArmGroup::initArmGroup(void)
         param.getParam("cartesian/orientation/omega_reference", g_orientation_omega_reference);
         param.getParam("cartesian/orientation/linear_polation_threshold", g_ort_linear_polation_threshold);
 
+        param.getParam("manual/step_length/joint", g_manual_step_joint);
+        param.getParam("manual/step_length/position", g_manual_step_position);
+        param.getParam("manual/step_length/orientation", g_manual_step_orientation);
+        param.getParam("manual/speed_ratio/top", g_manual_top_speed_ratio);
+        param.getParam("manual/speed_ratio/sub", g_manual_sub_speed_ratio);
+        param.getParam("manual/acceleration_ratio/top", g_manual_top_acc_ratio);
+        param.getParam("manual/acceleration_ratio/sub", g_manual_sub_acc_ratio);
 
 
         FST_INFO("cycle time=%.4f, cycle distance=%.2f", g_cycle_time, g_cycle_distance);
@@ -165,6 +183,13 @@ ErrorCode ArmGroup::initArmGroup(void)
         FST_INFO("cartesian orientation omega reference: %.2f", g_orientation_omega_reference);
         FST_INFO("cartesian orientation linear polation threshold: %.2f", g_ort_linear_polation_threshold);
         FST_INFO("joint: omega default=%.2f, alpha default=%.2f", g_joint_vel_default, g_joint_acc_default);
+
+        FST_INFO("manual step length: joint=%.4f rad, position=%.4f mm, orientation=%.4f rad",
+                 g_manual_step_joint, g_manual_step_position, g_manual_step_orientation);
+        FST_INFO("manual speed ratio: top=%.0f%%, sub=%.0f%%",
+                 g_manual_top_speed_ratio * 100, g_manual_sub_speed_ratio * 100);
+        FST_INFO("manual acceleration ratio: top=%.0f%%, sub=%.0f%%",
+                 g_manual_top_acc_ratio * 100, g_manual_sub_acc_ratio * 100);
     }
     else
     {
@@ -588,8 +613,7 @@ const DHGroup& ArmGroup::getDH(void)
 //------------------------------------------------------------
 size_t ArmGroup::getFIFOLength(void)
 {
-    // TODO
-    return 0;
+    return t_tail_ - pick_segment_;
 }
 
 //------------------------------------------------------------
@@ -614,62 +638,18 @@ size_t ArmGroup::getFIFOCapacity(void)
 //------------------------------------------------------------
 ErrorCode ArmGroup::getPointFromFIFO(size_t num, std::vector<JointOutput> &points)
 {
-    MotionTime   tm;
-    JointOutput  jout;
-    JointState  *js;
     points.clear();
 
-
-    for (size_t i = 0; i < num; i++)
+    if (manual_running_)
     {
-        if (pick_time_ < t_path_[t_tail_ - 1].time_from_start)
-        {
-            while (pick_time_ > t_path_[pick_segment_].time_from_start)
-            {
-                pick_segment_++;
-                if (pick_segment_ >= t_tail_)
-                {
-                    break;
-                }
-            }
-            //FST_WARN("pick t=%f seg=%d", pick_time_, pick_segment_);
-            //FST_WARN("time_from_start=%f, duration=%f", t_path_[pick_segment_].time_from_start, t_path_[pick_segment_].duration);
-
-            if (pick_time_ <= t_path_[pick_segment_].time_from_start)
-            {
-                js = &t_path_[pick_segment_].point;
-                tm = t_path_[pick_segment_].time_from_start - pick_time_;
-
-                jout.id = t_path_[pick_segment_].path_point.id;
-                jout.joint.j1 = js->joint[0] - js->omega[0] * tm + 0.5 * js->alpha[0] * tm * tm;
-                jout.joint.j2 = js->joint[1] - js->omega[1] * tm + 0.5 * js->alpha[1] * tm * tm;
-                jout.joint.j3 = js->joint[2] - js->omega[2] * tm + 0.5 * js->alpha[2] * tm * tm;
-                jout.joint.j4 = js->joint[3] - js->omega[3] * tm + 0.5 * js->alpha[3] * tm * tm;
-                jout.joint.j5 = js->joint[4] - js->omega[4] * tm + 0.5 * js->alpha[4] * tm * tm;
-                jout.joint.j6 = js->joint[5] - js->omega[5] * tm + 0.5 * js->alpha[5] * tm * tm;
-
-                points.push_back(jout);
-                pick_time_ += g_cycle_time;
-            }
-            else
-            {
-                break;
-            }
-        }
-        else
-        {
-            jout.id = t_path_[t_tail_ - 1].path_point.id;
-            jout.joint.j1 = t_path_[t_tail_ - 1].point.joint[0];
-            jout.joint.j2 = t_path_[t_tail_ - 1].point.joint[1];
-            jout.joint.j3 = t_path_[t_tail_ - 1].point.joint[2];
-            jout.joint.j4 = t_path_[t_tail_ - 1].point.joint[3];
-            jout.joint.j5 = t_path_[t_tail_ - 1].point.joint[4];
-            jout.joint.j6 = t_path_[t_tail_ - 1].point.joint[5];
-            points.push_back(jout);
-            break;
-        }
+        return pickFromManual(num, points);
     }
-    return SUCCESS;
+    else
+    {
+        return pickFromTrajectory(num, points);
+    }
+
+
 }
 
 //------------------------------------------------------------
@@ -779,9 +759,10 @@ ErrorCode ArmGroup::setStartState(const Joint &joint)
 
     if (isJointInConstraint(joint, g_soft_constraint))
     {
+        g_start_joint       = joint;
         motion_start_joint_ = joint;
         using_start_joint_  = true;
-        g_ik_reference = joint;
+        g_ik_reference      = joint;
 
         memcpy(prev_traj_point_.point.joint, &joint, NUM_OF_JOINT * sizeof(double));
         memset(prev_traj_point_.point.omega, 0, NUM_OF_JOINT * sizeof(double));
@@ -789,7 +770,7 @@ ErrorCode ArmGroup::setStartState(const Joint &joint)
 
         forwardKinematics(joint, prev_traj_point_.path_point.pose);
 
-        FST_INFO("setStartState: joint - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
+        FST_INFO("setStartState: joint=%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f",
                  prev_traj_point_.point.joint[0],
                  prev_traj_point_.point.joint[1],
                  prev_traj_point_.point.joint[2],
@@ -800,7 +781,7 @@ ErrorCode ArmGroup::setStartState(const Joint &joint)
                  prev_traj_point_.point.joint[7],
                  prev_traj_point_.point.joint[8]);
         
-        FST_INFO("setStartState: omega - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
+        FST_INFO("setStartState: omega=%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f",
                  prev_traj_point_.point.omega[0],
                  prev_traj_point_.point.omega[1],
                  prev_traj_point_.point.omega[2],
@@ -811,7 +792,7 @@ ErrorCode ArmGroup::setStartState(const Joint &joint)
                  prev_traj_point_.point.omega[7],
                  prev_traj_point_.point.omega[8]);
 
-        FST_INFO("setStartState: alpha - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
+        FST_INFO("setStartState: alpha=%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f",
                  prev_traj_point_.point.alpha[0],
                  prev_traj_point_.point.alpha[1],
                  prev_traj_point_.point.alpha[2],
@@ -885,6 +866,25 @@ ErrorCode ArmGroup::getPoseFromJoint(const Joint &joint, PoseEuler &pose)
 ErrorCode ArmGroup::getPoseFromJointInWorld(const Joint &joint, PoseEuler &flange, PoseEuler &tcp)
 {
     return SUCCESS;
+}
+
+//------------------------------------------------------------
+// Function:    getRemainingTime
+// Summary: To get the remaining time of current motion.
+// In:      None
+// Out:     None
+// Return:  remaining time
+//------------------------------------------------------------
+MotionTime ArmGroup::getRemainingTime(void)
+{
+    if (pick_segment_ < t_tail_ && pick_time_ < t_path_[t_tail_ - 1].time_from_start)
+    {
+        return t_path_[t_tail_ - 1].time_from_start - pick_time_;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 //------------------------------------------------------------
@@ -1007,13 +1007,36 @@ ErrorCode ArmGroup::autoMove(const MotionTarget &target, int id)
 // Function:    manualMove
 // Summary: Plan a manual move trajectory (Joint/Line) with given
 //          direction. If FIFO is empty at the moment, fill it.
-// In:      button -> manual direction
+// In:      directions -> manual direction
 // Out:     None
 // Return:  error code
 //------------------------------------------------------------
-ErrorCode ArmGroup::manualMove(const std::vector<ManualDirection> &button)
+ErrorCode ArmGroup::manualMove(const vector<ManualDirection> &directions)
 {
-    return SUCCESS;
+    if (directions.size() == 6)
+    {
+        ManualDirection dirs[6] = {directions[0], directions[1], directions[2], directions[3], directions[4], directions[5]};
+        FST_INFO("manualMove: directions = %d %d %d %d %d %d", dirs[0], dirs[1], dirs[2], dirs[3], dirs[4], dirs[5]);
+        
+        ErrorCode err = manual_.stepTeach(dirs);
+        
+        if (err == SUCCESS)
+        {
+            manual_running_ = true;
+            FST_INFO("success");
+            return SUCCESS;
+        }
+        else
+        {
+            FST_ERROR("failed, err=0x%x", err);
+            return err;
+        }
+    }
+    else
+    {
+        FST_ERROR("manualMove: 6 manual directions needed, %d given", directions.size());
+        return INVALID_PARAMETER;
+    }
 }
 
 //------------------------------------------------------------
@@ -1043,24 +1066,28 @@ ErrorCode ArmGroup::manualMove(const PoseEuler &pose)
 }
 
 //------------------------------------------------------------
-// Function:    setManualFrameMode
+// Function:    setManualFrame
 // Summary: To set manual frame mode.
 // In:      frame   -> manual frame mode, JOINT/WORLD/USER/TOOL
 // Out:     None
 // Return:  None
 //------------------------------------------------------------
-void ArmGroup::setManualFrameMode(ManualFrameMode frame)
-{}
+void ArmGroup::setManualFrame(ManualFrame frame)
+{
+    manual_.setFrame(frame);
+}
 
 //------------------------------------------------------------
-// Function:    setManualMotionMode
+// Function:    setManualMode
 // Summary: To set manual motion mode.
 // In:      motion  -> manual motion mode, STEP/CONTINUOUS/POINT
 // Out:     None
 // Return:  None
 //------------------------------------------------------------
-void ArmGroup::setManualMotionMode(ManualMotionMode mode)
-{}
+void ArmGroup::setManualMode(ManualMode mode)
+{
+    manual_.setMode(mode);
+}
 
 //------------------------------------------------------------
 // Function:    setManualJointStepLength
@@ -1488,6 +1515,14 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         return INVALID_PARAMETER;
     }
 
+    FST_INFO("  target pose: %f %f %f - %f %f %f",  target.pose_target.position.x,
+                                                    target.pose_target.position.y,
+                                                    target.pose_target.position.z,
+                                                    target.pose_target.orientation.a,
+                                                    target.pose_target.orientation.b,
+                                                    target.pose_target.orientation.c);
+    FST_INFO("  velocity=%.2f, acceleration=%.2f, cnt=%.2f", tar.vel, tar.acc, tar.cnt);
+
     FST_INFO("Parameter check passed, planning path ...");
 
     MotionCommand *cmd = getFreeMotionCommand();
@@ -1548,9 +1583,10 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         return err;
     }
 
-    FST_INFO("Path plan finished successfully, picking point ...");
-    FST_INFO("Path consisted of %d common points and %d trasition points.",
+    FST_INFO("Path plan finished successfully.");
+    FST_INFO("  path point num: %d common %d trasition",
              cmd->getCommonLength(), cmd->getTransitionLength());
+    FST_INFO("Picking point ...");
 
     vector<PathPoint> points;
 
@@ -1562,32 +1598,54 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         err = MOTION_INTERNAL_FAULT;
     }
 
+    FST_INFO("  %d points picked out", points.size());
+
     t_head_ = 0;
     t_tail_ = 0;
+
+    FST_INFO("Converting path point to joint space ...");
 
     for (vector<PathPoint>::iterator it = points.begin(); it != points.end(); ++it)
     {
         t_path_[t_tail_].path_point = *it;
         err = convertPath2Trajectory(t_path_[t_tail_]);
 
-        FST_INFO("%d - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                 t_path_[t_tail_].path_point.stamp,
-                 t_path_[t_tail_].point.joint[0],
-                 t_path_[t_tail_].point.joint[1],
-                 t_path_[t_tail_].point.joint[2],
-                 t_path_[t_tail_].point.joint[3],
-                 t_path_[t_tail_].point.joint[4],
+        //FST_INFO("%d - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
+                 t_path_[t_tail_].path_point.stamp,\
+                 t_path_[t_tail_].point.joint[0],\
+                 t_path_[t_tail_].point.joint[1],\
+                 t_path_[t_tail_].point.joint[2],\
+                 t_path_[t_tail_].point.joint[3],\
+                 t_path_[t_tail_].point.joint[4],\
                  t_path_[t_tail_].point.joint[5]);
 
-        if (err != SUCCESS) break;
+        if (err != SUCCESS)
+        {
+            FST_ERROR("fail to convert path point to joint space: stamp=%d", t_path_[t_tail_].path_point.stamp);
+            break;
+        }
 
         t_tail_++;
     }
 
+    FST_INFO("  %d points converted", t_tail_ - t_head_);
+    FST_INFO("Create trajectory ...");
+
     if (t_head_ != t_tail_)
     {
         err = planTraj();
+        if (err == SUCCESS)
+        {
+            t_traj_ready_ = true;
+            FST_INFO("  create traj success");
+        }
+        else
+        {
+            FST_ERROR("  fail to create trajectory");
+        }
     }
+
+    return err;
 
 /*
     size_t next_tail;
@@ -1817,6 +1875,7 @@ ErrorCode ArmGroup::convertPath2Trajectory(ControlPoint &cp)
 
 ErrorCode ArmGroup::planTraj()
 {
+    std::ofstream os("analysis.csv");
     ErrorCode err;
 
     size_t  head = t_head_;
@@ -1947,12 +2006,22 @@ ErrorCode ArmGroup::planTraj()
         {
             pp = &t_path_[j];
             p = &pp->point;
-            FST_WARN("stamp=%d, time_from_start=%.6f", pp->path_point.stamp, pp->time_from_start);
-            FST_INFO("duration=%.6f, exp_duration=%.6f", pp->duration, pp->expect_duration);
-            FST_INFO("j1-j6: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", p->joint[0], p->joint[1], p->joint[2], p->joint[3], p->joint[4], p->joint[5]);
-            FST_INFO("w1-w6: %.f, %.6f, %.6f, %.6f, %.6f, %.6f", p->omega[0], p->omega[1], p->omega[2], p->omega[3], p->omega[4], p->omega[5]);
-            FST_INFO("a1-a6: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", p->alpha[0], p->alpha[1], p->alpha[2], p->alpha[3], p->alpha[4], p->alpha[5]);
-
+            //FST_WARN("stamp=%d, time_from_start=%.6f", pp->path_point.stamp, pp->time_from_start);
+            //FST_INFO("duration=%.6f, exp_duration=%.6f", pp->duration, pp->expect_duration);
+            //FST_INFO("j1-j6: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", p->joint[0], p->joint[1], p->joint[2], p->joint[3], p->joint[4], p->joint[5]);
+            //FST_INFO("w1-w6: %.f, %.6f, %.6f, %.6f, %.6f, %.6f", p->omega[0], p->omega[1], p->omega[2], p->omega[3], p->omega[4], p->omega[5]);
+            //FST_INFO("a1-a6: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", p->alpha[0], p->alpha[1], p->alpha[2], p->alpha[3], p->alpha[4], p->alpha[5]);
+            
+            os << pp->path_point.stamp << "," << pp->time_from_start << ","
+               << pp->path_point.pose.position.x << "," << pp->path_point.pose.position.y << ","
+               << pp->path_point.pose.position.z << "," << pp->path_point.pose.orientation.w << ","
+               << pp->path_point.pose.orientation.x << "," << pp->path_point.pose.orientation.y << ","
+               << pp->path_point.pose.orientation.z << "," << p->joint[0] << ","
+               << p->joint[1] << "," << p->joint[2] << "," << p->joint[3] << "," << p->joint[4] << ","
+               << p->joint[5] << "," << p->omega[0] << "," << p->omega[1] << "," << p->omega[2] << ","
+               << p->omega[3] << "," << p->omega[4] << "," << p->omega[5] << "," << p->alpha[0] << ","
+               << p->alpha[1] << "," << p->alpha[2] << "," << p->alpha[3] << "," << p->alpha[4] << ","
+               << p->alpha[5] << std::endl;
         }
     
         pick_time_    = g_cycle_time;
@@ -1969,6 +2038,8 @@ ErrorCode ArmGroup::planTraj()
         */
 
     }
+
+    return err;
 }
 
 ErrorCode ArmGroup::speedup(void)
@@ -2020,5 +2091,186 @@ ErrorCode ArmGroup::speedup(void)
 
     return err;
 }
+
+ErrorCode ArmGroup::pickFromTrajectory(size_t num, vector<JointOutput> &points)
+{
+    MotionTime   tm;
+    JointOutput  jout;
+    JointState  *js;
+
+    FST_WARN("pick from traj:");
+
+    if (t_traj_ready_ == false)
+    {
+        FST_WARN("trajectory not ready");
+        return SUCCESS;
+    }
+
+    for (size_t i = 0; i < num; i++)
+    {
+        //FST_INFO("pick time=%f, total time=%f", pick_time_, t_path_[t_tail_ - 1].time_from_start);
+        //FST_INFO("pick segment=%d, segment time from start=%f", pick_segment_, t_path_[pick_segment_].time_from_start);
+        if (pick_time_ < t_path_[t_tail_ - 1].time_from_start)
+        {
+            while (pick_time_ > t_path_[pick_segment_].time_from_start)
+            {
+                pick_segment_++;
+                if (pick_segment_ >= t_tail_)
+                {
+                    break;
+                }
+            }
+            //FST_WARN("pick t=%f seg=%d", pick_time_, pick_segment_);
+            //FST_WARN("time_from_start=%f, duration=%f", t_path_[pick_segment_].time_from_start, t_path_[pick_segment_].duration);
+
+            if (pick_time_ <= t_path_[pick_segment_].time_from_start)
+            {
+                js = &t_path_[pick_segment_].point;
+                tm = t_path_[pick_segment_].time_from_start - pick_time_;
+
+                if (pick_time_ < g_cycle_time + MINIMUM_E9)
+                {
+                    jout.level = POINT_START;
+                }
+                else
+                {
+                    jout.level = POINT_MIDDLE;
+                }
+                jout.id = t_path_[pick_segment_].path_point.id;
+                jout.joint.j1 = js->joint[0] - js->omega[0] * tm + 0.5 * js->alpha[0] * tm * tm;
+                jout.joint.j2 = js->joint[1] - js->omega[1] * tm + 0.5 * js->alpha[1] * tm * tm;
+                jout.joint.j3 = js->joint[2] - js->omega[2] * tm + 0.5 * js->alpha[2] * tm * tm;
+                jout.joint.j4 = js->joint[3] - js->omega[3] * tm + 0.5 * js->alpha[3] * tm * tm;
+                jout.joint.j5 = js->joint[4] - js->omega[4] * tm + 0.5 * js->alpha[4] * tm * tm;
+                jout.joint.j6 = js->joint[5] - js->omega[5] * tm + 0.5 * js->alpha[5] * tm * tm;
+
+                FST_INFO("%d - %f,%f,%f,%f,%f,%f",  jout.level, jout.joint.j1, jout.joint.j2, jout.joint.j3,\
+                                                    jout.joint.j4, jout.joint.j5, jout.joint.j6);
+                points.push_back(jout);
+                pick_time_ += g_cycle_time;
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            jout.id = t_path_[t_tail_ - 1].path_point.id;
+            jout.level = POINT_ENDING;
+            jout.joint.j1 = t_path_[t_tail_ - 1].point.joint[0];
+            jout.joint.j2 = t_path_[t_tail_ - 1].point.joint[1];
+            jout.joint.j3 = t_path_[t_tail_ - 1].point.joint[2];
+            jout.joint.j4 = t_path_[t_tail_ - 1].point.joint[3];
+            jout.joint.j5 = t_path_[t_tail_ - 1].point.joint[4];
+            jout.joint.j6 = t_path_[t_tail_ - 1].point.joint[5];
+
+            FST_INFO("%d - %f,%f,%f,%f,%f,%f", jout.level, jout.joint.j1, jout.joint.j2, jout.joint.j3,\
+                                               jout.joint.j4, jout.joint.j5, jout.joint.j6);
+            points.push_back(jout);
+
+            FST_INFO("delete obj: %p", t_path_[t_tail_].path_point.source);
+            releaseMotionCommand(t_path_[t_tail_].path_point.source);
+            t_traj_ready_ = false;
+            break;
+        }
+    }
+
+    return SUCCESS;
+}
+
+ErrorCode ArmGroup::pickFromManual(size_t num, vector<JointOutput> &points)
+{
+    if (g_manual_frame == JOINT)
+    {
+        return pickManualJoint(num, points);
+    }
+    else
+    {
+        // return pickManualCartesian(num, points);
+        return SUCCESS;
+    }
+
+}
+
+ErrorCode ArmGroup::pickManualJoint(size_t num, vector<JointOutput> &points)
+{
+    JointOutput jout;
+
+    if (g_manual_mode == STEP || g_manual_mode == CONTINUOUS)
+    {
+        if (g_manual_pick_time < g_manual_joint_coeff[0].duration_3)
+        {
+            size_t index;
+            double *angle;
+            double *start;
+
+            for (index = 0; index < num; index++)
+            {
+                angle = &jout.joint.j1;
+                start = &g_manual_joint_start.j1;
+                g_manual_pick_time += g_cycle_time;
+                
+                for (size_t jnt = 0; jnt < 6; jnt++)
+                {
+                    if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_1)
+                    {
+                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_pick_time * g_manual_pick_time / 2;
+                    }
+                    else if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_2)
+                    {
+                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
+                                 g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_1);
+                    }
+                    else if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_3)
+                    {
+                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
+                                 g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * (g_manual_joint_coeff[jnt].duration_2 - g_manual_joint_coeff[jnt].duration_1) -
+                                 g_manual_joint_coeff[jnt].alpha_3 * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_2) * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_2) / 2;
+                    }
+                    else
+                    {
+                        if (g_manual_direction[jnt] == STANDBY)
+                        {
+                            *angle = *(start + jnt);
+                        }
+                        else if (g_manual_direction[jnt] == INCREASE)
+                        {
+                            *angle = *(start + jnt) + g_manual_step_joint;
+                        }
+                        else
+                        {
+                            *angle = *(start + jnt) - g_manual_step_joint;
+                        }
+                    }
+
+                    ++ angle;
+                    ++ start;
+                }
+
+                points.push_back(jout);
+
+                if (g_manual_pick_time >= g_manual_joint_coeff[0].duration_3)
+                {
+                    break;
+                }
+            }
+
+            return SUCCESS;
+        }
+        else
+        {
+            return SUCCESS;
+        }
+    }
+    else
+    {
+        // TODO
+        return SUCCESS;
+    }
+
+}
+
+
 
 }

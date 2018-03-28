@@ -337,12 +337,6 @@ struct MotionTarget {
     };
 };
 
-enum ManualDirection {
-    STANDBY,
-    UPWARD,
-    DOWNWARD,
-};
-
 // initial state of a line motion
 struct LInitial {
     Pose    pose_prv;
@@ -442,7 +436,7 @@ struct PoseVel
     VelCartesian velocity;
 };
 
-enum ManualFrameMode
+enum ManualFrame
 {
     JOINT,
     WORLD,
@@ -450,10 +444,27 @@ enum ManualFrameMode
     TOOL,
 };
 
-enum ManualMotionMode
+enum ManualMode
 {
     STEP,
     CONTINUOUS,
+    APOINT,
+};
+
+enum ManualDirection
+{
+    STANDBY  = 0,
+    INCREASE = 1,
+    DECREASE = 2,
+};
+
+struct ManualJointCoeff
+{
+    double duration_1;
+    double duration_2;
+    double duration_3;
+    double alpha_1;
+    double alpha_3;
 };
 
 

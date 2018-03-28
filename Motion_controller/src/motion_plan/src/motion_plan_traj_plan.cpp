@@ -395,7 +395,7 @@ void forwardMaximumDuration(const JointState je, const JointState js, double *al
     double a2max = alpha_max[0];
     double a2min = alpha_min[0];
 
-    FST_WARN("j=%.6f, w=%.6f, a_min=%.6f, a_max=%.6f", dj, ww, a2min, a2max);
+    //FST_WARN("j=%.6f, w=%.6f, a_min=%.6f, a_max=%.6f", dj, ww, a2min, a2max);
     //FST_WARN("alpha max: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
              alpha_max[0], alpha_max[1], alpha_max[2], alpha_max[3], alpha_max[4], alpha_max[5]);
     //FST_WARN("alpha min: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
@@ -554,7 +554,7 @@ ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, in
 {
     ErrorCode err;
 
-    FST_INFO("--------------------------fore cycle----------------------------------------");
+    //FST_INFO("--------------------------fore cycle----------------------------------------");
     // determin expect duration time
     double distance = getDistance(prev_point.path_point.pose, this_point.path_point.pose);
     this_point.expect_duration = distance / this_point.path_point.source->getCommandVelocity();
@@ -761,7 +761,7 @@ ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg)
         }
     }
 
-    FST_INFO("--------------------------back cycle----------------------------------------");
+    //FST_INFO("--------------------------back cycle----------------------------------------");
     //FST_WARN("alpha:     %.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
              next_point.point.alpha[0], next_point.point.alpha[1], next_point.point.alpha[2],\
              next_point.point.alpha[3], next_point.point.alpha[4], next_point.point.alpha[5]);
@@ -787,7 +787,7 @@ ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg)
 
     forwardMinimumDuration(this_point.point, next_point.point, alpha_min, alpha_max, t_min);
 
-    FST_INFO("min duration: %f,%f,%f,%f,%f,%f", t_min[0], t_min[1], t_min[2], t_min[3], t_min[4], t_min[5]);
+    //FST_INFO("min duration: %f,%f,%f,%f,%f,%f", t_min[0], t_min[1], t_min[2], t_min[3], t_min[4], t_min[5]);
 
     forwardMaximumDuration(this_point.point, next_point.point, alpha_min, alpha_max, t_max);
 

@@ -13,6 +13,7 @@
 #include <fst_datatype.h>
 #include <motion_plan_error_code.h>
 #include <motion_plan_motion_command.h>
+#include <motion_plan_manual_teach.h>
 
 #define     MOTION_COMMAND_POOL_CAPACITY    10
 #define     PATH_FIFO_CAPACITY              16384       // must be setted to 2~N
@@ -389,6 +390,15 @@ class ArmGroup
     ErrorCode getPoseFromJointInWorld(const Joint &joint, PoseEuler &flange, PoseEuler &tcp);
 
     //------------------------------------------------------------
+    // Function:    getRemainingTime
+    // Summary: To get the remaining time of current motion.
+    // In:      None
+    // Out:     None
+    // Return:  remaining time
+    //------------------------------------------------------------
+    MotionTime getRemainingTime(void);
+
+    //------------------------------------------------------------
     // Function:    suspendMotion
     // Summary: To replan a slow-down trajectory upon trajectory FIFO
     //          and stop the robot motion. Used when pause event or IK
@@ -462,11 +472,11 @@ class ArmGroup
     // Function:    manualMove
     // Summary: Plan a manual move trajectory (Joint/Line) with given
     //          direction. If FIFO is empty at the moment, fill it.
-    // In:      button -> manual direction
+    // In:      directions -> manual direction
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode manualMove(const std::vector<ManualDirection> &button);
+    ErrorCode manualMove(const std::vector<ManualDirection> &directions);
 
     //------------------------------------------------------------
     // Function:    manualMove
@@ -489,22 +499,22 @@ class ArmGroup
     ErrorCode manualMove(const PoseEuler &pose);
 
     //------------------------------------------------------------
-    // Function:    setManualFrameMode
+    // Function:    setManualFrame
     // Summary: To set manual frame mode.
     // In:      frame   -> manual frame mode, JOINT/WORLD/USER/TOOL
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void setManualFrameMode(ManualFrameMode frame);
+    void setManualFrame(ManualFrame frame);
 
     //------------------------------------------------------------
-    // Function:    setManualMotionMode
+    // Function:    setManualMode
     // Summary: To set manual motion mode.
     // In:      motion  -> manual motion mode, STEP/CONTINUOUS/POINT
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void setManualMotionMode(ManualMotionMode mode);
+    void setManualMode(ManualMode mode);
 
     //------------------------------------------------------------
     // Function:    setManualJointStepLength
@@ -589,6 +599,15 @@ public:
     ErrorCode speedup(void);
 private:
 
+    ErrorCode pickFromManual(size_t num, std::vector<JointOutput> &points);
+    ErrorCode pickFromTrajectory(size_t num, std::vector<JointOutput> &points);
+
+    ErrorCode pickManualJoint(size_t num, std::vector<JointOutput> &points);
+
+
+    ManualTeach     manual_;
+    bool            manual_running_;
+
     MotionCommand   motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY];
     MotionCommand  *free_command_list_ptr_;
     MotionCommand  *used_command_list_ptr_;
@@ -605,12 +624,14 @@ private:
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;
     size_t          t_tail_;
+    bool            t_traj_ready_;
 
     MotionTime      pick_time_;
     size_t          pick_segment_;
 
     Joint           motion_start_joint_;
     bool            using_start_joint_;
+
 };
 
 

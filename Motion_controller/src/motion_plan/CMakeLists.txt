@@ -63,6 +63,7 @@ add_library(motion_plan
     src/motion_plan_matrix.cpp
     src/motion_plan_kinematics.cpp
     src/motion_plan_motion_command.cpp
+    src/motion_plan_manual_teach.cpp
     src/motion_plan_traj_plan.cpp
 
     # include motion FIFO functions here:
@@ -97,6 +98,13 @@ target_link_libraries(motion_plan_demo3
     ${catkin_LIBRARIES}
     motion_plan
 )
+add_executable(motion_plan_demo4
+    src/motion_plan_demo4.cpp
+)
+target_link_libraries(motion_plan_demo4
+    ${catkin_LIBRARIES}
+    motion_plan
+)
 
 #############
 ## Install ##
@@ -115,6 +123,10 @@ install(TARGETS motion_plan_demo2
 )
 
 install(TARGETS motion_plan_demo3
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS motion_plan_demo4
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

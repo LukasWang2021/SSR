@@ -51,7 +51,8 @@ namespace fst_algorithm
 
     Matrix& Matrix::operator=(const Matrix &rhs)
     {
-        if (this != &rhs)   *this = rhs;
+        if (this != &rhs)
+            memcpy(matrix_, rhs.matrix_, sizeof(matrix_));
         return *this;
     }
 

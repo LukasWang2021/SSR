@@ -1026,5 +1026,35 @@ ErrorCode createTrajFromPath(const ControlPoint &prev_point, ControlPoint &this_
     return SUCCESS;
 }
 
+void computeDurationMax(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                                Alpha* acc_limit, MotionTime& duration_max)
+{
+    MotionTime duration[AXIS_IN_ALGORITHM] = {0};
+    double cond_part1 = 0, cond_part2 = 0;
+    duration_max = 0;
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        cond_part1 = pow(start_omega_ptr[i], 2);
+        cond_part2 = 2 * acc_limit[i] * fabs(end_joint_ptr[i] - start_joint_ptr[i]);
+        duration[i] = (-fabs(start_omega_ptr[i]) + sqrt(cond_part1 + cond_part2)) / acc_limit[i];
+        if(duration_max < duration[i])
+        {
+            duration_max = duration[i];
+        }  
+    }
+}
+
+void computeTrajectory(size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                            MotionTime duration_max, ControlPoint* target)
+{
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        target[target_tick].point.joint[i] = ((Angle*)&target[target_tick].path_point.joint)[i];
+        target[target_tick].point.alpha[i] = 2 * (end_joint_ptr[i] - start_joint_ptr[i] - start_omega_ptr[i] * duration_max) / duration_max / duration_max;
+        target[target_tick].point.omega[i] = start_omega_ptr[i] + target[target_tick].point.alpha[i] * duration_max;
+    }
+}
+
+
 }
 

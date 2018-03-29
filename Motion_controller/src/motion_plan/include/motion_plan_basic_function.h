@@ -1133,8 +1133,6 @@ static inline bool isFirstConstraintCoveredBySecond(const fst_controller::JointC
              child.j6.max_omega > parent.j6.max_omega || child.j6.max_alpha > parent.j6.max_alpha);
 }
 
-
-
 }
 
 #endif

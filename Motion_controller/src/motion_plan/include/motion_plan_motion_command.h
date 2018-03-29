@@ -2,8 +2,7 @@
 	> File Name: motion_plan_motion_command.h
 	> Author:   Feng Yun
 	> Mail:     yun.feng@foresight-robotics.com
-	> Created Time: 2017年12月13日 星期三 13时27分32秒
- ************************************************************************/
+	> Created Time: 2017/12/13-13:27:32************************************************************************/
 
 #ifndef _MOTION_PLAN_MOTION_COMMAND_H
 #define _MOTION_PLAN_MOTION_COMMAND_H
@@ -22,6 +21,26 @@ struct LinePathCoeff {
 
     bool   spherical_flag;
     Angle  orientation_angle;
+};
+
+// for triangle case:
+//      J = coeff1 * t^2                                0 < t < duration_max/2
+//      J = coeff2 - coeff1 * (duration_max - t)        duration_max/2 < t < duration_max
+// where:
+//      coeff1 = acc_max/2
+//      coeff2 = velocity_actual * duration_max / 2
+// for trapezoid case:
+//      J = coeff1 * t^2                                0 < t < acc_duration
+//      J = coeff3 + velocity_actual * t                acc_duration < t < duration_max - acc_duration
+//      J = coeff4 - coeff1 * (duration_max - t)^2      duration_max - acc_duration < t < duration_max
+//where:
+//      coeff3 = coeff1 * acc_duration^2 - velocity_actual * acc_duration
+//      coeff4 = velocity_actual * (duration_max - acc_duration)
+struct JointPathCoeff{
+    double coeff1;
+    double coeff2;
+    double coeff3;
+    double coeff4;
 };
 
 class MotionCommand
@@ -75,6 +94,17 @@ class MotionCommand
     // Return:  error code
     //------------------------------------------------------------------------------
     ErrorCode planPath(void);
+
+    //------------------------------------------------------------------------------
+    // Function:    planPathAndTrajectory
+    // Summary: Plan a MOVJ path and trajectory to get the point given through the constructor.
+    // In:      None
+    // Out:     traj_path  ->  trajectory output fifo
+    //          traj_head  ->  trajectory fifo head index
+    //          traj_tail  ->  trajectory fifo tail index
+    // Return:  error code
+    //------------------------------------------------------------------------------
+    ErrorCode planPathAndTrajectory(ControlPoint* traj_path, size_t& traj_head, size_t& traj_tail);    
 
     //------------------------------------------------------------------------------
     // Function:    pickPathPoint
@@ -278,6 +308,15 @@ class MotionCommand
     double getCommandVelocity(void);
 
     //------------------------------------------------------------------------------
+    // Function:    getCommandAcc
+    // Summary: To get the accelaration given by the command.
+    // In:      None
+    // Out:     None
+    // Return:  this commnad's target accelaration expressed in percent
+    //------------------------------------------------------------------------------
+    double getCommandAcc(void);
+
+    //------------------------------------------------------------------------------
     // Function:    getPrevCommandPtr
     // Summary: Get a pointer to the previous command.
     // In:      None
@@ -317,6 +356,15 @@ class MotionCommand
 ////////////////////////////////////////////////////////////////////////////////////////////////////
   private:
     //------------------------------------------------------------------------------
+    // Function:    planJointPath
+    // Summary: To plan a joint path from starting-joint to ending-joint.
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------------------------
+    ErrorCode planJointPath(void);
+
+    //------------------------------------------------------------------------------
     // Function:    planLinePath
     // Summary: To plan a line path from starting-pose to ending-pose.
     // In:      None
@@ -324,6 +372,15 @@ class MotionCommand
     // Return:  error code
     //------------------------------------------------------------------------------
     ErrorCode planLinePath(void);
+
+    //------------------------------------------------------------------------------
+    // Function:    interpolateJoint
+    // Summary: To interpolate a pose in the joint path planned before.
+    // In:      stamp -> to tell which pose you want to pickout from this path
+    // Out:     pose  -> pose in the path which pointed out by given stamp
+    // Return:  error code
+    //------------------------------------------------------------------------------
+    void interpolateJoint(Tick stamp, Joint &joint);
 
     //------------------------------------------------------------------------------
     // Function:    interpolateLine
@@ -358,6 +415,11 @@ class MotionCommand
     
     bool    is_planned_;
     bool    begin_from_given_joint_;
+
+    //----- MOVE JOINT --------------------------------
+    Joint joint_starting_;
+    Joint joint_ending_;
+    double joint_coeff_[AXIS_IN_ALGORITHM];
 
     //----- MOVE LINE --------------------------------
     Pose    pose_starting_;

@@ -594,6 +594,8 @@ class ArmGroup
     ErrorCode convertPath2Trajectory(ControlPoint &cp);
 
     ErrorCode planTraj(void);
+    
+    ErrorCode planJointTraj(void);
 
 public:
     ErrorCode speedup(void);

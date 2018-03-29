@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <fstream>
+#include <float.h>
 
 #include <motion_plan_version.h>
 #include <motion_plan_arm_group.h>
@@ -1313,6 +1314,7 @@ ErrorCode ArmGroup::autoJoint(const MotionTarget &target, int id)
     }
     if (err == SUCCESS)
     {
+        //err = cmd->planPathAndTrajectory(t_path_, t_head_, t_tail_);
         err = cmd->planPath();
     }
 
@@ -1335,139 +1337,33 @@ ErrorCode ArmGroup::autoJoint(const MotionTarget &target, int id)
         return err;
     }
 
+    //FST_INFO("Path plan and trajectory plan finished successfully");
     FST_INFO("Path plan finished successfully, picking point ...");
+   
     FST_INFO("Path consisted of %d common points and %d trasition points.",
              cmd->getCommonLength(), cmd->getTransitionLength());
 
     vector<PathPoint> points;
 
-    err = cmd->pickCommonPoint(points);
+    err = cmd->pickAllPoint(points);
 
-    size_t next_tail;
+    if (points.size() > PATH_FIFO_CAPACITY)
+    {
+        FST_ERROR("Path point overload, point num=%d, FIFO capacity=%d.", points.size(), PATH_FIFO_CAPACITY);
+        err = MOTION_INTERNAL_FAULT;
+    }
 
+    t_head_ = 0;
+    t_tail_ = 0;
     for (vector<PathPoint>::iterator it = points.begin(); it != points.end(); ++it)
     {
-        next_tail = (path_tail_ + 1) & (PATH_FIFO_CAPACITY - 1);
-        if (next_tail != path_head_)
-        {
-            path_fifo_[path_tail_] = *it;
-            path_tail_ = next_tail;
-        }
-    }
-/*
-    if (err != SUCCESS)
+        t_path_[t_tail_].path_point = *it;
+        t_tail_++;
+    }    
+    if (t_head_ != t_tail_)
     {
-        FST_ERROR("Get an error while picking point, %d points picked befor this error, err=%x.",
-                  points.size(), err);
-        FST_INFO("Release the motion object.");
-
-        MotionCommand *ptr = cmd->getPrevCommandPtr();
-        releaseMotionCommand(cmd);
-        
-        if (ptr != NULL)
-        {
-            ptr->setNextCommandPtr(NULL);
-        }
-        else
-        {
-            used_command_list_ptr_ = NULL;
-        }
-
-        FST_INFO("Computing inverse kinematics of %d points ...");
+        err = planJointTraj();
     }
-    else
-    {
-        FST_INFO("All common points picked out successfully, computing inverse kinematics ...");
-    }
-    
-    ErrorCode   ik_err = SUCCESS;
-    size_t      ik_cnt = 0;
-
-    while (path_head_ != path_tail_)
-    {
-        next_tail = (traj_tail_ + 1) & (TRAJECTORY_FIFO_CAPACITY - 1);
-        if (next_tail != traj_head_)
-        {
-            ik_err = chainIK(path_fifo_[path_head_].pose,\
-                             g_ik_reference,\
-                             traj_fifo_[traj_tail_].point.joint);
-            
-            if (ik_err == SUCCESS)
-            {
-                traj_fifo_[traj_tail_].path_point = path_fifo_[path_head_];
-                path_head_ = (path_head_ + 1) & (PATH_FIFO_CAPACITY - 1);
-                traj_tail_ = next_tail;
-                ik_cnt++;
-            }
-            else
-            {
-                FST_ERROR("IK failed: source=%p, stamp=%d",
-                          path_fifo_[path_head_].source, path_fifo_[path_head_].stamp);
-                FST_INFO("Pose: (%.4f, %.4f, %.4f) - (%.4f, %.4f, %.4f, %.4f)",
-                         path_fifo_[path_head_].pose.position.x,
-                         path_fifo_[path_head_].pose.position.y,
-                         path_fifo_[path_head_].pose.position.z,
-                         path_fifo_[path_head_].pose.orientation.w,
-                         path_fifo_[path_head_].pose.orientation.x,
-                         path_fifo_[path_head_].pose.orientation.y,
-                         path_fifo_[path_head_].pose.orientation.z);
-                FST_INFO("Reference: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                         g_ik_reference.j1, g_ik_reference.j2, g_ik_reference.j3,
-                         g_ik_reference.j4, g_ik_reference.j5, g_ik_reference.j6);
-                FST_INFO("Joint:     %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                        traj_fifo_[traj_tail_].point.joint[0],
-                        traj_fifo_[traj_tail_].point.joint[1],
-                        traj_fifo_[traj_tail_].point.joint[2],
-                        traj_fifo_[traj_tail_].point.joint[3],
-                        traj_fifo_[traj_tail_].point.joint[4],
-                        traj_fifo_[traj_tail_].point.joint[5]);
-                break;
-            }
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    FST_INFO("traj points:");
-    for (size_t j = traj_head_; j != traj_tail_; j = (j + 1) & (TRAJECTORY_FIFO_CAPACITY - 1))
-        FST_INFO("%d - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                 traj_fifo_[j].path_point.stamp,
-                 traj_fifo_[j].point.joint[0],
-                 traj_fifo_[j].point.joint[1],
-                 traj_fifo_[j].point.joint[2],
-                 traj_fifo_[j].point.joint[3],
-                 traj_fifo_[j].point.joint[4],
-                 traj_fifo_[j].point.joint[5]);
-
-    if (err == SUCCESS)
-    {
-        if (ik_err == SUCCESS)
-        {
-            if (path_head_ == path_tail_)
-            {
-                FST_INFO("All points inversed to joint space successfully.");
-                return SUCCESS;
-            }
-            else
-            {
-                FST_INFO("%d points inversed to joint space, trajectory FIFO is full.", ik_cnt);
-
-                return SUCCESS;
-            }
-        }
-        else
-        {
-            FST_ERROR("Computing IK failed, last stamp=%d", traj_fifo_[traj_tail_].path_point.stamp);
-            return ik_err;
-        }
-    }
-    else
-    {
-        return err;
-    }
-    */
 }
 
 //------------------------------------------------------------
@@ -2040,6 +1936,125 @@ ErrorCode ArmGroup::planTraj()
     }
 
     return err;
+}
+                                
+//std::ofstream tos("/home/fst/myworkspace/jout.txt");
+ErrorCode ArmGroup::planJointTraj(void)
+{
+    ErrorCode err;
+
+    // this should not be set here, fix it later
+    pick_time_    = g_cycle_time;
+    pick_segment_ = 0;
+    // setting joint limits
+    Omega velocity_max[AXIS_IN_ALGORITHM];
+    Alpha acc_max[AXIS_IN_ALGORITHM]; //acc limits
+    Alpha acc_backward[AXIS_IN_ALGORITHM];   //acc limits used by backward loop
+    double vel =  t_path_[t_head_].path_point.source->getCommandVelocity();
+    double acc =  t_path_[t_head_].path_point.source->getCommandAcc();
+    velocity_max[0] = vel*g_soft_constraint.j1.max_omega;
+    velocity_max[1] = vel*g_soft_constraint.j2.max_omega;
+    velocity_max[2] = vel*g_soft_constraint.j3.max_omega;
+    velocity_max[3] = vel*g_soft_constraint.j4.max_omega;
+    velocity_max[4] = vel*g_soft_constraint.j5.max_omega;
+    velocity_max[5] = vel*g_soft_constraint.j6.max_omega;
+    acc_max[0] = acc*g_soft_constraint.j1.max_alpha;
+    acc_max[1] = acc*g_soft_constraint.j2.max_alpha;
+    acc_max[2] = acc*g_soft_constraint.j3.max_alpha;
+    acc_max[3] = acc*g_soft_constraint.j4.max_alpha;
+    acc_max[4] = acc*g_soft_constraint.j5.max_alpha;
+    acc_max[5] = acc*g_soft_constraint.j6.max_alpha;  
+
+    // trajectory generation
+    double forward_duration = DBL_MAX, backward_duration = DBL_MAX;
+    size_t forward_tick = t_head_, backward_tick = t_tail_ - 1;
+    while(forward_tick < backward_tick)
+    {
+        MotionTime duration[AXIS_IN_ALGORITHM] = {0};
+        MotionTime duration_max = 0;
+        Angle* start_joint_ptr = NULL;
+        Angle* end_joint_ptr = NULL;
+        Omega* start_omega_ptr = NULL;
+        MotionTime prev_time_from_start = 0;
+        size_t target_tick = 0;
+        if(forward_duration >= backward_duration) // do forward integration preparation
+        {
+            // set start and end points and start omega
+            target_tick = forward_tick;
+            if(forward_tick == t_head_)
+            {
+                start_joint_ptr = (Angle*)&prev_traj_point_.point.joint;
+                start_omega_ptr = (Omega*)&prev_traj_point_.point.omega;
+                prev_time_from_start = prev_traj_point_.time_from_start;
+            }
+            else
+            {
+                start_joint_ptr = (Angle*)&t_path_[target_tick - 1].path_point.joint;
+                start_omega_ptr = (Omega*)&t_path_[target_tick - 1].point.omega;
+                prev_time_from_start = t_path_[target_tick - 1].time_from_start;
+            }
+            end_joint_ptr = (Angle*)&t_path_[target_tick].path_point.joint;
+        }
+        else    // do backward integration preparation
+        {      
+            // set start and end points and start omega
+            target_tick = backward_tick - 1;
+            start_joint_ptr = (Angle*)&t_path_[target_tick].path_point.joint;
+            start_omega_ptr = (Omega*)&t_path_[target_tick + 1].point.omega;
+            prev_time_from_start = 0;
+            end_joint_ptr = (Angle*)&t_path_[target_tick + 1].path_point.joint;
+        }
+
+        // compute axes maximum durations for a piece of path
+        computeDurationMax(start_joint_ptr, end_joint_ptr, start_omega_ptr, acc_max, duration_max);
+        // compute current omega and alpha according to duration_max for all axes
+        computeTrajectory(target_tick, start_joint_ptr, end_joint_ptr, start_omega_ptr, duration_max, t_path_);   
+
+        if(forward_duration >= backward_duration)
+        {
+            forward_duration = duration_max;
+            t_path_[target_tick].time_from_start = prev_time_from_start + duration_max;
+            ++forward_tick;
+        }
+        else
+        {
+            backward_duration = duration_max;
+            t_path_[target_tick].time_from_start = duration_max;
+            --backward_tick;
+        }
+    }
+
+    // complete time_from_start in backward direction
+    for(size_t i = forward_tick; i < t_tail_; ++i)
+    {
+         t_path_[i].time_from_start += t_path_[i - 1].time_from_start;
+    }
+
+    /*for(size_t i = t_head_; i < t_tail_; i++)
+    {
+        tos  << t_path_[i].point.joint[0] << " "
+            << t_path_[i].point.joint[1] << " "
+            << t_path_[i].point.joint[2] << " "
+            << t_path_[i].point.joint[3] << " "
+            << t_path_[i].point.joint[4] << " "
+            << t_path_[i].point.joint[5] << " "
+            << t_path_[i].point.omega[0] << " "
+            << t_path_[i].point.omega[1] << " "
+            << t_path_[i].point.omega[2] << " "
+            << t_path_[i].point.omega[3] << " "
+            << t_path_[i].point.omega[4] << " "
+            << t_path_[i].point.omega[5] << " "
+            << t_path_[i].point.alpha[0] << " "
+            << t_path_[i].point.alpha[1] << " "
+            << t_path_[i].point.alpha[2] << " "
+            << t_path_[i].point.alpha[3] << " "
+            << t_path_[i].point.alpha[4] << " "
+            << t_path_[i].point.alpha[5] << " "
+            << t_path_[i].time_from_start << std::endl;       
+    }
+    tos.close();*/
+
+    return SUCCESS;
 }
 
 ErrorCode ArmGroup::speedup(void)

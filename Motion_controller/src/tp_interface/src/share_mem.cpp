@@ -16,6 +16,7 @@ ShareMem::ShareMem(RosBasic *ros_basic):ros_basic_(ros_basic)
 
     createShm(SHM_INTPRT_CMD, SHM_INTPRTCMD_SIZE);
     createShm(SHM_INTPRT_STATUS, SHM_INTPRTSTATUS_SIZE);
+    createShm(SHM_REG_IO_INFO, SHM_INTPRTSTATUS_SIZE);
     createShm(SHM_CTRL_CMD, SHM_CTRLCMD_SIZE);
     createShm(SHM_CTRL_STATUS, SHM_CTRLSTATUS_SIZE);
 
@@ -223,11 +224,24 @@ bool ShareMem::intprtControl(InterpreterControl ctrl)
     return tryWrite(SHM_CTRL_CMD, 0, (void*)&ctrl, sizeof(ctrl));
 }
 
-
 void ShareMem::setIntprtSendFlag(bool flag)
 {
     int offset = &((CtrlStatus*)0)->is_permitted;
     writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
+}
+
+void ShareMem::setIntprtDataFlag(bool flag)
+{
+    int offset = &((CtrlStatus*)0)->is_data_ready;
+    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
+}
+
+bool ShareMem::getIntprtDataFlag()
+{
+    bool is_data_ready;
+    int offset = &((CtrlStatus*)0)->is_data_ready;     
+    readShm(SHM_CTRL_STATUS, offset, (void*)&is_data_ready, sizeof(is_data_ready));
+    return is_data_ready;
 }
 
 void ShareMem::setUserOpMode(UserOpMode mode)
@@ -242,7 +256,6 @@ void ShareMem::setUserOpMode(UserOpMode mode)
     //writeShm(SHM_CTRL_STATUS, offset, (void*)&mode, sizeof(mode));
 /*}*/
 
-
 int ShareMem::getCurLine()
 {
     int line;
@@ -256,6 +269,12 @@ InterpreterState ShareMem::getIntprtState()
     int offset = &((IntprtStatus*)0)->state;
     readShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
     return state;
+}
+
+bool ShareMem::getRegIOInfo(RegIOInfo * info)
+{
+    readShm(SHM_REG_IO_INFO, 0, (void*)info, sizeof(RegIOInfo));
+    return true;
 }
 
 bool ShareMem::isServoDone()

@@ -140,6 +140,8 @@ class IOInterface
      */
     void updateIOError();
 
+	fst_io_manager::IODeviceInfo* getDevInfoPtr(){ return dev_info_ ; }
+
   private:
     fst_io_manager::IOManager *io_manager_;
     std::atomic<fst_io_manager::IODeviceInfo*>  dev_info_;  //

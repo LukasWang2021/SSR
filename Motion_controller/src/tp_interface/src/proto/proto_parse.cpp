@@ -141,6 +141,7 @@ void ProtoParse::decTeachTarget(const uint8_t *in_buf, int in_len, void *out_buf
 int ProtoParse::checkPath(char *path)
 {
     int i;
+    char p_buf[256];
 
     if(path == NULL) {
         FST_ERROR("Command with NULL path\n");
@@ -154,6 +155,10 @@ int ProtoParse::checkPath(char *path)
     i= sizeof(g_param_info)/sizeof(g_param_info[0]);
     for(;i>=0;i--){
         if(strcmp(path,g_param_info[i].path) ==0) break;
+        strcpy(p_buf,path);
+        p_buf[7] = '\0';
+        if(strcmp(p_buf,"root/IO") == 0 
+                || strcmp(p_buf,"root/re") ) break;
     }
     if(i<0){
         printf("No such path named:%s",path);

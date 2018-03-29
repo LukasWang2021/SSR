@@ -112,9 +112,9 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
 
         path = param_set_msg.path;
         //qianjin: add path check 20180329
-        if(proto_parser_->checkPath(path)!=0){
-            goto exception;
-        }
+        //if(proto_parser_->checkPath(path)!=0){
+        //    goto exception;
+        //}
 
         id = ELFHash(path, strlen(path));
         FST_INFO("setMsg:path:%s, %d", path, *(int*)param_set_msg.param.bytes);
@@ -191,9 +191,9 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
         }
         path = param_get_msg.path;
         //qianjin: add path check 20180329
-        if(proto_parser_->checkPath(path)!=0){
-            goto exception;
-        }
+        //if(proto_parser_->checkPath(path)!=0){
+        //    goto exception;
+        //}
         id = ELFHash(path, strlen(path));
         //FST_INFO("getMsg_path:%s", path);
         if (request_.update(GET, path, id))

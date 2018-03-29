@@ -1393,7 +1393,11 @@ void Controller::requestProc()
                 //FST_INFO("request id:%d", id);
                 void* pointer = tp_interface_->getReqDataPtr()->getParamBufPtr();
                 int len = tp_interface_->getReqDataPtr()->getParamLen();
-                (this->*g_ctrl_funcs_mp[id].setValue)(pointer, len);
+                if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
+                    (this->*g_ctrl_funcs_mp[id].setValue)(pointer, len);
+                }else{
+                    FST_ERROR("SET:: not exist id :%d with %s", id, str_path.c_str()); 
+                }
             }
             tp_interface_->setReply(BaseTypes_StatusCode_OK);
             break;
@@ -1425,7 +1429,11 @@ void Controller::requestProc()
                 TPIParamBuf param_buf;
                 param_buf.type = REPLY;
                 param_buf.params = tp_interface_->getRepDataPtr();
-                (this->*g_ctrl_funcs_mp[id].getValue)(&param_buf);
+                if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
+                    (this->*g_ctrl_funcs_mp[id].getValue)(&param_buf);
+                }else{
+                    FST_ERROR("GET:: not exist id :%d with %s", id, str_path.c_str()); 
+                }
             }
             tp_interface_->setReply(PARAM, id);
             break;

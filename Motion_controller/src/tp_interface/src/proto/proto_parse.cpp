@@ -138,6 +138,36 @@ void ProtoParse::decTeachTarget(const uint8_t *in_buf, int in_len, void *out_buf
     req->fillData((char*)&target, sizeof(target));
 }
 
+int ProtoParse::checkPath(char *path)
+{
+    int i;
+
+    if(path == NULL) {
+        FST_ERROR("Command with NULL path\n");
+        return -1;
+    }
+    if(strlen(path)<9 || strlen(path)>511) {
+        FST_ERROR("Command path too short or too long\n");
+        return -1;
+    }
+    //compare the path in head file;
+    i= sizeof(g_param_info)/sizeof(g_param_info[0]);
+    for(;i>=0;i--){
+        if(strcmp(path,g_param_info[i].path) ==0) break;
+    }
+    if(i<0){
+        printf("No such path named:%s",path);
+        FST_ERROR("Command with unkown path\n");
+        return -1;
+    }
+
+    return 0;
+
+}
+
+
+
+
 bool ProtoParse::decParamSetMsg(const uint8_t *in_buf, int in_len, BaseTypes_ParameterSetMsg &param_set_msg)
 {
 	bool ret;

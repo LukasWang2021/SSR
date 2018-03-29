@@ -13,6 +13,8 @@
 #include "sub_functions.h"				
 #include "service_heartbeat.h"
 
+using std::vector;
+
 
 Controller* Controller::instance_ = NULL;
 Controller::Controller()
@@ -21,8 +23,8 @@ Controller::Controller()
     ctrl_state_ = ESTOP_S;
     debug_ready_ = false;
 
-    memset(&servo_joints_, 0.001, sizeof(servo_joints_));
-
+    memset(&servo_joints_, 0.000, sizeof(servo_joints_));
+    
     arm_group_ = new fst_controller::ArmGroup();
     if ((result = arm_group_->initArmGroup()) != FST_SUCCESS)
     {
@@ -137,7 +139,8 @@ void Controller::updateWarnings(int id)
 void Controller::getCurveMode(void* params)
 {
     //FST_INFO("controller:===this is getting curve mode===");
-    int curve_mode = (int)arm_group_->getCurveMode();
+    //!!!qj!!! ArmGroup not support any more.
+    int curve_mode = -1;//(int)arm_group_->getCurveMode();
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
@@ -244,7 +247,7 @@ void Controller::updateWorkStatus(int id)
                 }
                 work_status_ = IDLE_TO_RUNNING_T;
             }
-            else if (PAUSED_R == state)
+            else if (PAUSED_R == state || WAITING_R == state  )
             {
                 static const int max_count = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;            
                 if (ctrl_state_ == ENGAGED_S)
@@ -283,7 +286,7 @@ void Controller::updateWorkStatus(int id)
             break;
         case RUNNING_TO_IDLE_T:
             if ((intprt_state_ != IDLE_R)
-            && (intprt_state_ != PAUSED_R))
+            && (intprt_state_ != WAITING_R))
                 break;
         case TEACHING_TO_IDLE_T:        
             //FST_INFO("servo state:%d", getServoState());
@@ -302,9 +305,10 @@ void Controller::updateWorkStatus(int id)
             if (state == IDLE_R)
             {
                 FST_INFO("EXECUTE_TO_idle");
-                work_status_ = IDLE_W;
+                //work_status_ = IDLE_W;
+                work_status_ = RUNNING_TO_IDLE_T;
             }
-            else if (state == PAUSED_R)
+            else if (state == PAUSED_R ||  state == WAITING_R)
             {
                 FST_INFO("RUNNING_TO_IDLE_T");
                 work_status_ = RUNNING_TO_IDLE_T;
@@ -454,10 +458,35 @@ void Controller::updateCtrlState(int id)
     }
  
 }
+
 void Controller::setUserOpMode(void* params, int len)
 {
-    user_op_mode_  = *(UserOpMode*)params;
-    ShareMem::instance()->setUserOpMode(user_op_mode_);
+     user_op_mode_  = *(UserOpMode*)params;
+     ShareMem::instance()->setUserOpMode(user_op_mode_);
+}
+
+//qianjin change from setUserOpMode 
+void Controller::getUserOpMode(void* params)
+{
+
+
+    int opmode = safety_interface_.getDITPUserMode();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&opmode, sizeof(opmode));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(opmode);
+        memcpy(param->bytes, (char*)&opmode, param->size);
+    }
+
+
+
 }
 /*void Controller::setMotionModeCmd(void* params, int len)*/
 //{
@@ -659,45 +688,6 @@ void Controller::updateUserRegs(int id)
     
 }
 
-void Controller::setRegister(void* params, int len)
-{
-    RegMap* mod_reg = (RegMap*)params;
-    
-    InterpreterControl ctrl;
-    ctrl.cmd = MOD_REG;
-    ctrl.reg = *mod_reg;
-    ShareMem::instance()->intprtControl(ctrl);
-    ShareMem::instance()->setIntprtDataFlag(true);
-}
-
-void Controller::getRegister(void * params)
-{
-	RegIOInfo * reg = (RegIOInfo*)params;
-	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
-	if(is_ready == false)
-		return ;
-	ShareMem::instance()->getRegIOInfo(reg);
-}
-
-void Controller::setDIO(void* params, int len)
-{
-    DIOMap* mod_dio = (DIOMap*)params;
-    
-    InterpreterControl ctrl;
-    ctrl.cmd = MOD_DIO;
-    ctrl.dio = *mod_dio;
-    ShareMem::instance()->intprtControl(ctrl);
-    ShareMem::instance()->setIntprtDataFlag(true);
-}
-
-void Controller::getDIO(void * params)
-{
-	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
-	if(is_ready == false)
-		return ;
-	// ShareMem::instance()->getRegIOInfo(params);
-}
-
 void Controller::startRun(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
@@ -779,10 +769,9 @@ void Controller::jumpLine(void* params, int len)
     int line = *(int*)params;
     InterpreterControl ctrl;
     ctrl.cmd = JUMP;
-    ctrl.line = line;
+    ctrl.id = line;
     ShareMem::instance()->intprtControl(ctrl);
 }
-
 void Controller::step(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S)/* || (work_status_ != IDLE_W) || (!debug_ready_)*/)
@@ -809,7 +798,6 @@ void Controller::step(void* params, int len)
     ctrl.cmd = FORWARD;
     ShareMem::instance()->intprtControl(ctrl);
 }
-
 void Controller::backward(void* params, int len)
 {
    // ProgramState state = auto_motion_->getPrgmState();
@@ -1092,8 +1080,9 @@ void Controller::setLocalTime(void* params, int len)
 
 void Controller::setManualCmd(void* params, int len)
 {
-     //command must be set in idle or pause state
-    if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
+     //command must be set in idle or pause state_cmd
+     //Qianjin
+    if ((ctrl_state_ != ENGAGED_S) ||( (work_status_ != IDLE_W)&&(work_status_ != TEACHING_W)     ))
     {
         FST_ERROR("cant manual run!!");
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
@@ -1173,20 +1162,21 @@ void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
                 //=======reset safety board==================
                 safety_interface_.reset();  //reset safety board*/
                 //==========reset ArmGroup=============
-                U64 result = arm_group_->resetArmGroup();
-                if (result != TPI_SUCCESS)
-                {
-                    if (result == CURRENT_JOINT_OUT_OF_CONSTRAINT)
-                    {
-                        run_mode_ = SOFTLIMITED_R;
-                    }
-                    else
-                    {
-                        FST_ERROR("reset ArmGroup failed:%llx", result);   
-                        rcs::Error::instance()->add(result);
-                        break;
-                    }
-                }                  
+                //!!!!qj!!!!!No need any more. 
+                //U64 result = 0;// arm_group_->resetArmGroup();
+                //if (result != TPI_SUCCESS)
+                //{
+                //    if (result == CURRENT_JOINT_OUT_OF_CONSTRAINT)
+                //    {
+                //        run_mode_ = SOFTLIMITED_R;
+                //    }
+                //    else
+                //    {
+                //        FST_ERROR("reset ArmGroup failed:%llx", result);   
+                //        rcs::Error::instance()->add(result);
+                //        break;
+                //    }
+                //}                  
             }//end else if (state == ESTOP_S)
             else 
             {
@@ -1278,8 +1268,10 @@ void Controller::rtTrajFlow(void* params)
 
     //FST_INFO("joints fifo length:%d, traj_len:%d", joints_len, arm_group_->getPlannedPathFIFOLength());
 
-    vector<fst_controller::JointPoint> joint_traj;
-    result = arm_group_->getPointFromFIFO(joint_traj);
+    //!!!!!qj!!!!!!!update arguments!!!!!!
+    //vector<fst_controller::JointPoint> joint_traj;
+    vector<fst_controller::JointOutput> joint_traj;
+    result = arm_group_->getPointFromFIFO(10,joint_traj);
     
     if (result != TPI_SUCCESS)
     {
@@ -1295,6 +1287,7 @@ void Controller::rtTrajFlow(void* params)
    // FST_INFO("joints fifo length:%d", joints_in);
     JointCommand joint_command;
     joint_command.total_points = joints_in;
+    printf("Qianjin: Send joint cmd%d!\n", joints_in);
     for (int i = 0; i < joints_in; i++)
     {
         joint_command.points[i].positions[0] = joint_traj[i].joint.j1;
@@ -1349,7 +1342,6 @@ void Controller::rtTrajFlow(void* params)
             /*}*/
         }
     }// end for (int i = 0; i < joints_in; i++)
-
 
 
     ShareMem::instance()->setCurrentJointCmd(joint_command); //store this command in case it can't write Success
@@ -1804,7 +1796,7 @@ void Controller::pauseMotion()
 
 bool Controller::resumeMotion()
 {
-    if ( (intprt_state_ == PAUSED_R)  && (auto_motion_->getDoneFlag() == false))
+    if ( ( (intprt_state_ == PAUSED_R) ||  (intprt_state_ == WAITING_R)  )  && (auto_motion_->getDoneFlag() == false))
     {
         auto_motion_->resume();
         FST_INFO("fsssssssssssssssssss\n");
@@ -1881,7 +1873,8 @@ void Controller::servoEStop()
     {
         //if there is no point, then do not call declareEstop
         if (work_status_ == IDLE_W)
-            arm_group_->declareESTOP();
+            //!!!!!!!!qj!update function argument!!!!!!!!!
+            arm_group_->declareESTOP( servo_joints_);
     }
     ShareMem::instance()->setEmptyFlag(true);
     usleep(500*1000);   //wait for brake on, need to ask ??

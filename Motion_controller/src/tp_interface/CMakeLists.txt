@@ -22,7 +22,7 @@ if(${catkin_CROSS})
 else(${catkin_CROSS})
     set(NANOPB_DIR ~/my_work/nanopb)
 	set(EXT_LIB nanomsg profiler pthread)
-    include_directories(/home/fst/cross_workspace/src/service_manager/include )
+    include_directories(/home/fst/fst_ros/src/service_manager/include /home/fst/fst_ros/src/trajplan/include/)
 endif(${catkin_CROSS})
 
 
@@ -86,11 +86,7 @@ aux_source_directory(src/tp_interface/ TPI_SRCS)
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(fst_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-include_directories(
-    include 
-    ${catkin_INCLUDE_DIRS} 
-    /usr/include/eigen3/ 
-)
+include_directories(include ${catkin_INCLUDE_DIRS} /usr/include/eigen3/ )
 ## Declare a C++ executable
 add_executable(controller ${BASE_SRCS} ${PROTO_SRCS} ${SERV_SRCS} ${TPI_SRCS} ${NANOPB_DIR}/pb_decode.c  ${NANOPB_DIR}/pb_encode.c ${NANOPB_DIR}/pb_common.c)
 #target_link_libraries(fst_controller )
@@ -100,7 +96,6 @@ add_executable(controller ${BASE_SRCS} ${PROTO_SRCS} ${SERV_SRCS} ${TPI_SRCS} ${
 target_link_libraries(controller
   ${catkin_LIBRARIES}
   ${EXT_LIB}
-  motion_plan
  )
 
 #############

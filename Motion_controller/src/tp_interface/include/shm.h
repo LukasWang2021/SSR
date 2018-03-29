@@ -32,9 +32,6 @@ typedef struct _FuncTable
 
 #define SHM_INTPRT_CMD      ("interpreter_command")
 #define SHM_INTPRT_STATUS   ("interpreter_status")
-// Lujiaming add at 0323
-#define SHM_REG_IO_INFO        ("register_io_info")
-// Lujiaming add at 0323 end
 #define SHM_CTRL_CMD        ("controller_command")
 #define SHM_CTRL_STATUS     ("constroller_status")
 

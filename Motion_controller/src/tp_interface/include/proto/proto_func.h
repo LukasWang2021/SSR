@@ -92,6 +92,7 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	17993,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	11892,	{	&ProtoParse::decTeachTarget,	&ProtoParse::encDefault	}	},
 	{	94965,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	}
+
 };							
 
 

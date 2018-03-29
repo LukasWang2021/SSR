@@ -2,6 +2,9 @@
 #include "error_monitor.h"
 #include "error_code.h"
 
+//!!!!qj!!!!!
+using std::vector;
+
 ManualMotion::ManualMotion(Robot *robot, ArmGroup *arm_group):robot_(robot),arm_group_(arm_group)
 {
    // manu_state_ = IDLE_R;
@@ -73,7 +76,9 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
             return;
         }
         manu_type_ = command.type;
-        arm_group_->setManualMotionMode((ManualMotionMode)manu_type_);
+        //qianjin
+        //arm_group_->setManualMotionMode((ManualMotionMode)manu_type_);
+        arm_group_->setManualMode((ManualMode)manu_type_);
     }
     if (command.has_frame)
     {
@@ -85,7 +90,9 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
             return;
         }
         manu_frame_ = command.frame;
-        arm_group_->setManualFrameMode((ManualFrameMode)manu_frame_);
+        //qianjin
+        //arm_group_->setManualFrameMode((ManualFrameMode)manu_frame_);
+        arm_group_->setManualFrame((ManualFrame)manu_frame_);
     }
 
     if (command.has_target)

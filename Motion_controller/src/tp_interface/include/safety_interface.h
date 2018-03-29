@@ -17,28 +17,34 @@ typedef struct _Core1Status
     char id:4;
     char status:4;
 }Core1Status;
-
+//qianjin update with new register def
 typedef struct _InputByte5
 {
-    char brake1:1;
-    char brake2:1;
-    char brake3:1;
-    char outage0:1;
-    char outage1:1;
+    char brake1:1;//brake base
+    char brake2:1;//brake aux1
+    char brake3:1;//brake aux2
     char D5:1;
     char D6:1;
     char D7:1;
+    char outage0:1;
+    char outage1:1;
 }InputByte5;
 
 typedef struct _InputByte6
 {
     char core1_reset:1;
-    char user_reset:1;
-    char cabinet_reset:1;
-    char decelerate:1;
-    char manual:1;
-    char lmt_manual:1;
-    char automatic:1;
+    //char user_reset:1;
+    char usermode_man:1;
+    //char cabinet_reset:1;
+    char usermode_limit:1;
+    //char decelerate:1;
+    char usermode_auto:1;
+    //char manual:1;
+    char slowdown:1;
+    //char lmt_manual:1;
+    char D5:1;
+    //char automatic:1;
+    char D6:1;
     char D7:1;
 }InputByte6;
 
@@ -221,6 +227,12 @@ class SafetyInterface
      */
     char getDITPAuto();
     
+    /*
+     * qianjin:add for mode 
+     *
+     *
+     */
+    int getDITPUserMode();
     /**
      * @brief: TP estop
      *

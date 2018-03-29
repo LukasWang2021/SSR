@@ -59,7 +59,10 @@ void InstructionParser::setCurrentCmdID(int id)
 
 void InstructionParser::updateTrajRemainCount()
 {
-    if (arm_group_->getLatestCommandLength() == 0)
+    //!!!qj!!!!!!!!!!!!
+    //!!!Do nothing, just disable it.
+    //if (arm_group_->getLatestCommandLength() == 0)
+    if (0)
     {
         if (mot_target_.cnt >= 0)   //wait until fifo len < 50
         {

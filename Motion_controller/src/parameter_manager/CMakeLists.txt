@@ -16,9 +16,6 @@ configure_file(
   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
 )
 
-# add the search path for include files
-include_directories(${PROJECT_BINARY_DIR})
-
 # write the verson info to a file.
 file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
 
@@ -33,6 +30,12 @@ if(${catkin_CROSS})
 	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
 	set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
 endif(${catkin_CROSS})
+
+
+## System dependencies are found with CMake's conventions
+# find_package(Boost REQUIRED COMPONENTS system)
+
+
 
 ###################################
 ## catkin specific configuration ##
@@ -52,6 +55,7 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 
 ###########
 ## Build ##
@@ -70,7 +74,6 @@ include_directories(
 add_library(param_value
   src/parameter_manager_param_value.cpp
 )
-
 target_link_libraries(param_value
   ${catkin_LIBRARIES}
 )
@@ -85,18 +88,25 @@ target_link_libraries(param_builder
 add_library(parameter_manager
   src/parameter_manager_param_group.cpp
 )
-
 target_link_libraries(parameter_manager
   ${catkin_LIBRARIES}
   param_value
   param_builder
 )
 
-## Declare a C++ executable
-add_executable(manager_node
-  src/manager_node.cpp
-)
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+# add_dependencies(parameter_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+## Declare a C++ executable
+add_executable(manager_node src/manager_node.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+# add_dependencies(parameter_manager_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
 target_link_libraries(manager_node
   ${catkin_LIBRARIES}
   param_value
@@ -131,11 +141,36 @@ install(TARGETS parameter_manager
 )
 
 install(TARGETS manager_node 
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+ )
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
   DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
 
+## Mark cpp header files for installation
+# install(DIRECTORY config 
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# )
 
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_parameter_manager.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)

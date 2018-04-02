@@ -24,6 +24,7 @@ namespace fst_algorithm
 {
 
 double  g_cycle_time;
+double  g_cycle_radian;
 double  g_cycle_distance;
 
 double  g_global_vel_ratio, g_global_acc_ratio;
@@ -77,7 +78,12 @@ ManualFrame         g_manual_frame;
 ManualDirection     g_manual_direction[6];
 
 Joint               g_manual_joint_start;
-ManualJointCoeff    g_manual_joint_coeff[6];
+Joint               g_manual_joint_target;
+ManualCoeff         g_manual_joint_coeff[6];
+
+PoseEuler           g_manual_cartesian_start;
+PoseEuler           g_manual_cartesian_target;
+ManualCoeff         g_manual_cartesian_coeff[6];
 
 MotionTime          g_manual_pick_time;
 

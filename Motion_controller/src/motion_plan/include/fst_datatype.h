@@ -458,7 +458,7 @@ enum ManualDirection
     DECREASE = 2,
 };
 
-struct ManualJointCoeff
+struct ManualCoeff
 {
     double duration_1;
     double duration_2;
@@ -466,6 +466,8 @@ struct ManualJointCoeff
     double alpha_1;
     double alpha_3;
 };
+
+
 
 
 

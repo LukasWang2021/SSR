@@ -552,9 +552,8 @@ std::ofstream os("cart_vel.csv");
 
 ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, int flg)
 {
-    ErrorCode err;
+    ErrorCode err = SUCCESS;
 
-    //FST_INFO("--------------------------fore cycle----------------------------------------");
     // determin expect duration time
     double distance = getDistance(prev_point.path_point.pose, this_point.path_point.pose);
     this_point.expect_duration = distance / this_point.path_point.source->getCommandVelocity();
@@ -622,6 +621,23 @@ ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, in
     alpha_min[4] = alpha_min[4] > -g_soft_constraint.j5.max_alpha ? alpha_min[4] : -g_soft_constraint.j1.max_alpha;
     alpha_min[5] = alpha_min[5] > -g_soft_constraint.j6.max_alpha ? alpha_min[5] : -g_soft_constraint.j1.max_alpha;
 
+    //FST_INFO("--------------------------fore cycle----------------------------------------");
+    //FST_WARN("prev alpha:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
+             prev_point.point.alpha[0], prev_point.point.alpha[1], prev_point.point.alpha[2],\
+             prev_point.point.alpha[3], prev_point.point.alpha[4], prev_point.point.alpha[5]);
+    //FST_WARN("prev omega:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
+             prev_point.point.omega[0], prev_point.point.omega[1], prev_point.point.omega[2],\
+             prev_point.point.omega[3], prev_point.point.omega[4], prev_point.point.omega[5]);
+    //FST_WARN("prev joint:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
+             prev_point.point.joint[0], prev_point.point.joint[1], prev_point.point.joint[2],\
+             prev_point.point.joint[3], prev_point.point.joint[4], prev_point.point.joint[5]);
+    //FST_WARN("this joint:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
+             this_point.point.joint[0], this_point.point.joint[1], this_point.point.joint[2],\
+             this_point.point.joint[3], this_point.point.joint[4], this_point.point.joint[5]);
+    //FST_WARN("alpha max: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
+             alpha_max[0], alpha_max[1], alpha_max[2], alpha_max[3], alpha_max[4], alpha_max[5]);
+    //FST_WARN("alpha min: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
+             alpha_min[0], alpha_min[1], alpha_min[2], alpha_min[3], alpha_min[4], alpha_min[5]);
 
     forwardMinimumDuration(this_point.point, prev_point.point, alpha_min, alpha_max, t_min);
 
@@ -691,7 +707,9 @@ ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, in
     else
     {
         FST_ERROR("duration error, fail to create trajectory !!!");
+        err = MOTION_INTERNAL_FAULT;
     }
+
 
     this_point.time_from_start = prev_point.time_from_start + this_point.duration;
 
@@ -728,12 +746,12 @@ ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, in
     << max_duration_min << ","
     << std::endl;
     */
-    return SUCCESS;
+    return err;
 }
 
 ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg)
 {
-    ErrorCode err;
+    ErrorCode err = SUCCESS;
 
     // determin expect duration time
     double distance = getDistance(this_point.path_point.pose, next_point.path_point.pose);
@@ -851,6 +869,7 @@ ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg)
     else
     {
         FST_ERROR("duration error, fail to create trajectory !!!");
+        err = MOTION_INTERNAL_FAULT;
     }
 
     next_point.time_from_start = -1;
@@ -895,7 +914,7 @@ ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg)
     //FST_INFO("w1-w6: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", p.omega[0], p.omega[1], p.omega[2], p.omega[3], p.omega[4], p.omega[5]);
     //FST_INFO("a1-a6: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", p.alpha[0], p.alpha[1], p.alpha[2], p.alpha[3], p.alpha[4], p.alpha[5]);
 
-    return SUCCESS;
+    return err;
 }
 
 ErrorCode createTrajFromPath(const ControlPoint &prev_point, ControlPoint &this_point)
@@ -1044,14 +1063,27 @@ void computeDurationMax(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* sta
     }
 }
 
-void computeTrajectory(size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
-                            MotionTime duration_max, ControlPoint* target)
+void computeTrajectory(bool is_forward, size_t target_tick, Angle* start_joint_ptr,
+                       Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                       MotionTime duration, ControlPoint* target)
 {
+    Alpha acc = 0;
     for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
     {
         target[target_tick].point.joint[i] = ((Angle*)&target[target_tick].path_point.joint)[i];
-        target[target_tick].point.alpha[i] = 2 * (end_joint_ptr[i] - start_joint_ptr[i] - start_omega_ptr[i] * duration_max) / duration_max / duration_max;
-        target[target_tick].point.omega[i] = start_omega_ptr[i] + target[target_tick].point.alpha[i] * duration_max;
+
+        acc = 2 * (end_joint_ptr[i] - start_joint_ptr[i] - start_omega_ptr[i] * duration) / duration / duration;
+
+        if(is_forward)
+        {
+            target[target_tick].point.alpha[i] = acc;
+            target[target_tick].point.omega[i] = start_omega_ptr[i] + target[target_tick].point.alpha[i] * duration;
+        }
+        else
+        {
+            target[target_tick + 1].point.alpha[i] = -acc;
+            target[target_tick].point.omega[i] = start_omega_ptr[i] - target[target_tick + 1].point.alpha[i] * duration;
+        }
     }
 }
 

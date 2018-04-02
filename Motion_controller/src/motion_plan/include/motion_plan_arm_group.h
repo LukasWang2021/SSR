@@ -48,12 +48,30 @@ class ArmGroup
 
     //------------------------------------------------------------
     // Function:    getCycleTime
-    // Summary: To get cycle time of interpolation algorithm.
+    // Summary: To get the cycle time used in interpolation.
     // In:      None
     // Out:     None
     // Return:  cycle time
     //------------------------------------------------------------
     double getCycleTime(void);
+
+    //------------------------------------------------------------
+    // Function:    getCycleRadian
+    // Summary: To get the cycle radian used in path plan.
+    // In:      None
+    // Out:     None
+    // Return:  cycle radian
+    //------------------------------------------------------------
+    double getCycleRadian(void);
+
+    //------------------------------------------------------------
+    // Function:    getCycleDistance
+    // Summary: To get the cycle distance used in path plan.
+    // In:      None
+    // Out:     None
+    // Return:  cycle distance
+    //------------------------------------------------------------
+    double getCycleDistance(void);
 
     //------------------------------------------------------------
     // Function:    getCartesianAccMax
@@ -312,7 +330,7 @@ class ArmGroup
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode pickPointToFIFO(size_t num);
+    //ErrorCode pickPointToFIFO(size_t num);
 
     //------------------------------------------------------------
     // Function:    getToolFrame
@@ -517,22 +535,31 @@ class ArmGroup
     void setManualMode(ManualMode mode);
 
     //------------------------------------------------------------
-    // Function:    setManualJointStepLength
+    // Function:    setManualJointStep
     // Summary: To set step length in manual joint step working mode.
     // In:      step    -> step length, unit: rad
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode setManualJointStepLength(double step);
+    ErrorCode setManualJointStep(double step);
 
     //------------------------------------------------------------
-    // Function:    setManualCartesianStepLength
+    // Function:    setManualCartesianPositionStep
     // Summary: To set step length in manual cartesian step working mode.
     // In:      step    -> step length, unit: mm
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode setManualCartesianStepLength(double step);
+    ErrorCode setManualCartesianPositionStep(double step);
+
+    //------------------------------------------------------------
+    // Function:    setManualCartesianOrientationStep
+    // Summary: To set step length in manual cartesian step working mode.
+    // In:      step    -> step length, unit: mm
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setManualCartesianOrientationStep(double step);
 
     //------------------------------------------------------------
     // Function:    getManualMaxSpeedRatio
@@ -561,6 +588,34 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode setManualSpeedRatio(double ratio);
+
+    //------------------------------------------------------------
+    // Function:    getManualMaxAccRatio
+    // Summary: To get manual max acc ratio to max-auto-acc.
+    // In:      None
+    // Out:     None
+    // Return:  manual max acc ratio, range: 0.0 ~ 1.0
+    //------------------------------------------------------------
+    double getManualMaxAccRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    getManualAccRatio
+    // Summary: To get manual acc ratio to max-manual-acc.
+    // In:      None
+    // Out:     None
+    // Return:  manual acc ratio, range: 0.0 ~ 1.0
+    //------------------------------------------------------------
+    double getManualAccRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    setManualAccRatio
+    // Summary: To set manual acc ratio to max-manual-acc.
+    // In:      ratio   -> manual acc to max-manual-acc
+    //                      range: 0.0 ~ 1.0
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setManualAccRatio(double ratio);
 
 
   private:
@@ -594,21 +649,19 @@ class ArmGroup
     ErrorCode convertPath2Trajectory(ControlPoint &cp);
 
     ErrorCode planTraj(void);
-    
+
     ErrorCode planJointTraj(void);
 
-public:
-    ErrorCode speedup(void);
+//public:
+//    ErrorCode speedup(void);
 private:
 
     ErrorCode pickFromManual(size_t num, std::vector<JointOutput> &points);
-    ErrorCode pickFromTrajectory(size_t num, std::vector<JointOutput> &points);
+    ErrorCode pickFromAuto(size_t num, std::vector<JointOutput> &points);
 
     ErrorCode pickManualJoint(size_t num, std::vector<JointOutput> &points);
+    ErrorCode pickManualCartesian(size_t num, std::vector<JointOutput> &points);
 
-
-    ManualTeach     manual_;
-    bool            manual_running_;
 
     MotionCommand   motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY];
     MotionCommand  *free_command_list_ptr_;
@@ -626,13 +679,12 @@ private:
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;
     size_t          t_tail_;
-    bool            t_traj_ready_;
 
     MotionTime      pick_time_;
     size_t          pick_segment_;
-
-    Joint           motion_start_joint_;
-    bool            using_start_joint_;
+    bool            auto_running_;
+    bool            manual_running_;
+    ManualTeach     manual_;
 
 };
 

@@ -19,13 +19,16 @@ namespace fst_algorithm
 void    forwardKinematics(const fst_controller::Joint &jnt, fst_controller::Pose      &pose);
 void    forwardKinematics(const fst_controller::Joint &jnt, fst_controller::PoseEuler &pose);
 
-//fst_controller::PoseEuler   forwardKinematics(const fst_controller::Joint &jnt);
+fst_controller::PoseEuler   forwardKinematics2PoseEuler(const fst_controller::Joint &jnt);
 fst_controller::Pose        forwardKinematics(const fst_controller::Joint &jnt);
 
 ErrorCode   inverseKinematics(const fst_controller::PoseEuler &pose, const fst_controller::Joint &ref, fst_controller::Joint &res);
 ErrorCode   inverseKinematics(const fst_controller::Pose &pose, const fst_controller::Joint &ref, fst_controller::Joint &res);
 ErrorCode   inverseKinematics(const fst_controller::Pose &pose, const fst_controller::Angle *ref, fst_controller::Angle *res);
 ErrorCode   chainIK(const fst_controller::Pose &pose, fst_controller::Joint &ref, fst_controller::Angle *res);
+ErrorCode   chainIK(const fst_controller::Pose &pose, fst_controller::Joint &ref, fst_controller::Joint &res);
+ErrorCode   chainIK(const fst_controller::PoseEuler &pose, fst_controller::Joint &ref, fst_controller::Angle *res);
+ErrorCode   chainIK(const fst_controller::PoseEuler &pose, fst_controller::Joint &ref, fst_controller::Joint &res);
 
 
 }

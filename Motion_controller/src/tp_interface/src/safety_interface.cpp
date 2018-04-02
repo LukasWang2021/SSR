@@ -51,7 +51,7 @@ bool SafetyInterface::isDIFrmChanged()
 
 char SafetyInterface::getDIDec()
 {
-    return din_frm2_.load().byte6.decelerate;
+    return din_frm2_.load().byte6.slowdown;
 }
 char SafetyInterface::getDIOutage1()
 {
@@ -89,15 +89,31 @@ char SafetyInterface::getDIDeadmanNormal()
 
 char SafetyInterface::getDITPManual()
 {
-    return din_frm2_.load().byte6.manual;
+    return din_frm2_.load().byte6.usermode_man;
 }
 char SafetyInterface::getDITPLimitedManual()
 {
-    return din_frm2_.load().byte6.lmt_manual;
+    return din_frm2_.load().byte6.usermode_limit;
 }
 char SafetyInterface::getDITPAuto()
 {
-    return din_frm2_.load().byte6.automatic;
+    return din_frm2_.load().byte6.usermode_auto;
+}
+//
+//qianjin add for user mode
+int SafetyInterface::getDITPUserMode()
+{
+    int val;
+
+    val = 0;
+    if( din_frm2_.load().byte6.usermode_auto) val |= 0x1;
+    if( din_frm2_.load().byte6.usermode_man) val |= 0x2;
+    if( din_frm2_.load().byte6.usermode_limit) val |= 0x4;
+
+    if(val == 0x1) return 1;
+    if(val == 0x2) return 3;
+    if(val == 0x4) return 2;
+    return 0;
 }
 
 char SafetyInterface::getDITPEStop()

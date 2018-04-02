@@ -1,9 +1,9 @@
-#ifndef @PROJECT_NAME@_VERSION_H_
-#define @PROJECT_NAME@_VERSION_H_
+#ifndef IO_MANAGER_VERSION_H_
+#define IO_MANAGER_VERSION_H_
 
-#define @PROJECT_NAME@_VERSION_MAJOR @VERSION_MAJOR@
-#define @PROJECT_NAME@_VERSION_MINOR @VERSION_MINOR@
-#define @PROJECT_NAME@_VERSION_PATCH @VERSION_PATCH@
+#define io_manager_VERSION_MAJOR @io_manager_VERSION_MAJOR@
+#define io_manager_VERSION_MINOR @io_manager_VERSION_MINOR@
+#define io_manager_VERSION_PATCH @io_manager_VERSION_PATCH@
 
 #endif
 

@@ -18,6 +18,8 @@ namespace fst_algorithm
 {
 
 extern double   g_cycle_time;
+extern double   g_cycle_radian;
+extern double   g_cycle_distance;
 extern double   g_global_vel_ratio, g_global_acc_ratio;
 extern double   g_cart_vel_default, g_cart_acc_default;
 extern double   g_cart_vel_min, g_cart_acc_min;
@@ -30,7 +32,6 @@ extern double   g_cart_vel_reference;
 extern double   g_cart_acc_reference;
 extern double   g_orientation_omega_reference;
 extern double   g_orientation_alpha_reference;
-extern double   g_cycle_distance;
 extern double   g_ort_linear_polation_threshold;
 
 extern double  g_manual_top_speed_ratio;
@@ -64,7 +65,12 @@ extern fst_controller::ManualFrame      g_manual_frame;
 extern fst_controller::ManualDirection  g_manual_direction[6];
 
 extern fst_controller::Joint            g_manual_joint_start;
-extern fst_controller::ManualJointCoeff g_manual_joint_coeff[6];
+extern fst_controller::Joint            g_manual_joint_target;
+extern fst_controller::ManualCoeff      g_manual_joint_coeff[6];
+
+extern fst_controller::PoseEuler        g_manual_cartesian_start;
+extern fst_controller::PoseEuler        g_manual_cartesian_target;
+extern fst_controller::ManualCoeff      g_manual_cartesian_coeff[6];
 
 extern fst_controller::MotionTime       g_manual_pick_time;
     

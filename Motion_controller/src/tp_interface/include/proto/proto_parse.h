@@ -36,6 +36,7 @@ class ProtoParse
     void decSoftConstraint(const uint8_t *in_buf, int in_len, void *out_buf);
     void decManualCmd(const uint8_t *in_buf, int in_len, void *out_buf);
     void decTeachTarget(const uint8_t *in_buf, int in_len, void *out_buf);
+    int checkPath(char *path);
 
     void encIOInfo(const uint8_t *in_buf, int in_len, void *out_buf);
     void encToolFrame(const uint8_t *in_buf, int in_len, void *out_buf);

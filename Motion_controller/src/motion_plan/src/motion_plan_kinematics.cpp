@@ -55,8 +55,7 @@ void forwardKinematics(const Joint &jnt, PoseEuler &pose)
     mat.leftMultiply(g_user_frame_inverse).rightMultiply(g_tool_frame).toPoseEuler(pose);
 }
 
-/*
-PoseEuler forwardKinematics(const Joint &jnt)
+PoseEuler forwardKinematics2PoseEuler(const Joint &jnt)
 {
     Matrix mat;
     mat.identityMatrix();
@@ -68,12 +67,8 @@ PoseEuler forwardKinematics(const Joint &jnt)
     mat.transFromDH(g_dh_mat[4], jnt.j5);
     mat.transFromDH(g_dh_mat[5], jnt.j6);
 
-    mat.leftMultiply(g_user_frame_inverse);
-    mat.rightMultiply(g_tool_frame);
-    
-    return toPoseEuler();
+    return mat.leftMultiply(g_user_frame_inverse).rightMultiply(g_tool_frame).toPoseEuler();
 }
-*/
 
 Pose forwardKinematics(const Joint &jnt)
 {
@@ -276,12 +271,45 @@ ErrorCode inverseKinematics(const Pose &pose, const Angle *ref, Angle *res)
     return inverseKinematics(pose, *((Joint*)ref), *((Joint*)res));
 }
 
-ErrorCode chainIK(const fst_controller::Pose &pose, fst_controller::Joint &ref, fst_controller::Angle *res)
+ErrorCode chainIK(const Pose &pose, Joint &ref, Angle *res)
 {
     ErrorCode err = inverseKinematics(pose, ref, *((Joint*)res));
     
     if (err == SUCCESS) {
         memcpy(&ref, res, NUM_OF_JOINT * sizeof(Angle));
+    }
+
+    return err;
+}
+
+ErrorCode chainIK(const Pose &pose, Joint &ref, Joint &res)
+{
+    ErrorCode err = inverseKinematics(pose, ref, res);
+    
+    if (err == SUCCESS) {
+        ref = res;
+    }
+
+    return err;
+}
+
+ErrorCode chainIK(const PoseEuler &pose, Joint &ref, Angle *res)
+{
+    ErrorCode err = inverseKinematics(pose, ref, *((Joint*)res));
+    
+    if (err == SUCCESS) {
+        memcpy(&ref, res, NUM_OF_JOINT * sizeof(Angle));
+    }
+
+    return err;
+}
+
+ErrorCode chainIK(const PoseEuler &pose, Joint &ref, Joint &res)
+{
+    ErrorCode err = inverseKinematics(pose, ref, res);
+    
+    if (err == SUCCESS) {
+        ref = res;
     }
 
     return err;

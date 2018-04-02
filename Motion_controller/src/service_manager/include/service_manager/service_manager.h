@@ -3,22 +3,20 @@ Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       service_manager.h
 Author:     Feng.Wu 
 Create:     07-Nov-2016
-Modify:     09-Jun-2017
+Modify:     08-Dec-2016
 Summary:    dealing with service
 **********************************************/
-  
+
 #ifndef SERVICE_MANAGER_SERVICE_MANAGER_H_
 #define SERVICE_MANAGER_SERVICE_MANAGER_H_
 
 #include <vector>
-#include <string>
 #include "service_manager_error_code.h"
 #include "middleware_to_mem/middleware_to_sharedmem.h"
 #include "comm_interface/comm_interface.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 #include "service_actions/response_actions.h"
-
 
 namespace fst_service_manager
 {
@@ -28,18 +26,8 @@ enum ChannelStatus
     LOCAL_CHANNEL = 1,
     MCS_CHANNEL = 2,
     PARAM_CHANNEL = 3,
-    SYSTEM_CHANNEL = 4,
-    TEST_CHANNEL = 5,
+    TEST_CHANNEL = 4,
 };
-
-//------------------------------------------------------------
-// Function:  getVersion
-// Summary: get the version. 
-// In:      None
-// Out:     None
-// Return:  std::string -> the version.
-//------------------------------------------------------------
-std::string getVersion(void);  
 
 class ServiceManager
 {
@@ -218,15 +206,6 @@ public:
     bool transmitResponse(fst_comm_interface::CommInterface &comm);
 
     //------------------------------------------------------------
-    // Function:  showVersion
-    // Summary: show the version.
-    // In:      None
-    // Out:     None
-    // Return:  None 
-    //------------------------------------------------------------
-    static void showVersion(void);
-
-    //------------------------------------------------------------
     // Function:  extractErrorCode
     // Summary: Extract error codes from dtc response.. 
     // In:      None
@@ -235,6 +214,7 @@ public:
     //          false -> did nothing. 
     //------------------------------------------------------------
     bool extractErrorCode(ServiceResponse resp);
+
 
     //------------------------------------------------------------
     // Function:  sendRequestToBareCore
@@ -266,16 +246,7 @@ public:
     //------------------------------------------------------------
     template<typename T>
     bool deleteFirstElement(T *fifo);
-
-    //------------------------------------------------------------
-    // Function:  sigHandler
-    // Summary: signal handler
-    // In:      system signal
-    // Out:     None
-    // Return:  None
-    //------------------------------------------------------------
-    static void sigHandler(int sig);
-   
+    
     //------------------------------------------------------------
     // Function:  runLoop
     // Summary: The main loop to run this process. 
@@ -303,8 +274,6 @@ public:
     // The cycle time of the main loop. Then unit is usec.
     static const unsigned int LOOP_TIME = 1000;
 
-    static volatile int exit_flag_;
-
     static const int BYTE_LEN = 8;
 private:
 
@@ -319,9 +288,6 @@ private:
     // To set the heartbeat interval limit of motion controller.
     int loop_count_mcs_;
 
-    // check if service id is available. default is false.
-    bool check_sid_enable_;
-
     // To be true when motion controller send the first heartbeat.
     bool check_mcs_enable_;
 
@@ -334,7 +300,6 @@ private:
     // Used to communicate with other processes.
     fst_comm_interface::CommInterface comm_mcs_;
     fst_comm_interface::CommInterface comm_param_;
-    fst_comm_interface::CommInterface comm_system_;
     fst_comm_interface::CommInterface comm_test_;
 
     // The heartbeat request to BARE CORE.

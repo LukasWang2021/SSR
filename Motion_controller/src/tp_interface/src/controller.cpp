@@ -6,12 +6,15 @@
  * @date 2017-07-14
  */
 #include <stdio.h>
+#include <sys/time.h>
 #include "ctrl_func.h"
 #include "io_interface.h"
 #include "error_monitor.h"
 #include "error_code.h"
 #include "sub_functions.h"				
 #include "service_heartbeat.h"
+
+using std::vector;
 
 
 Controller* Controller::instance_ = NULL;
@@ -21,8 +24,8 @@ Controller::Controller()
     ctrl_state_ = ESTOP_S;
     debug_ready_ = false;
 
-    memset(&servo_joints_, 0.001, sizeof(servo_joints_));
-
+    memset(&servo_joints_, 0.000, sizeof(servo_joints_));
+    
     arm_group_ = new fst_controller::ArmGroup();
     if ((result = arm_group_->initArmGroup()) != FST_SUCCESS)
     {
@@ -137,7 +140,8 @@ void Controller::updateWarnings(int id)
 void Controller::getCurveMode(void* params)
 {
     //FST_INFO("controller:===this is getting curve mode===");
-    int curve_mode = (int)arm_group_->getCurveMode();
+    //!!!qj!!! ArmGroup not support any more.
+    int curve_mode = -1;//(int)arm_group_->getCurveMode();
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
@@ -155,6 +159,56 @@ void Controller::updateCurveMode(int id)
 {
     //static pre_curv_mode;
 }
+
+//20180313: qianjin add begin
+void Controller:: getRunningMode(void* params)
+{
+    int rep_run_mode = (int)run_mode_;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&rep_run_mode, sizeof(rep_run_mode));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(rep_run_mode);
+        memcpy(param->bytes, (char*)&rep_run_mode, param->size);
+    }
+
+}
+void Controller:: getServoState(void* params)
+{
+    int rep_servo_state = (int)ShareMem::instance()->getServoState();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&rep_servo_state, sizeof(rep_servo_state));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(rep_servo_state);
+        memcpy(param->bytes, (char*)&rep_servo_state, param->size);
+    }
+}
+
+// call back for running mode
+void  Controller:: updateRunningMode(int id)
+{
+}
+// call back for servo state
+void  Controller:: updateServoState(int id)
+{
+}
+
+//20180313: qianjin add end
+
+
 void Controller::getWorkStatus(void* params)
 {
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
@@ -194,7 +248,7 @@ void Controller::updateWorkStatus(int id)
                 }
                 work_status_ = IDLE_TO_RUNNING_T;
             }
-            else if (PAUSED_R == state)
+            else if (PAUSED_R == state || WAITING_R == state  )
             {
                 static const int max_count = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;            
                 if (ctrl_state_ == ENGAGED_S)
@@ -233,7 +287,7 @@ void Controller::updateWorkStatus(int id)
             break;
         case RUNNING_TO_IDLE_T:
             if ((intprt_state_ != IDLE_R)
-            && (intprt_state_ != PAUSED_R))
+            && (intprt_state_ != WAITING_R))
                 break;
         case TEACHING_TO_IDLE_T:        
             //FST_INFO("servo state:%d", getServoState());
@@ -245,16 +299,21 @@ void Controller::updateWorkStatus(int id)
             break;
         case RUNNING_W:
         {
+            int i;
             InterpreterState state = ShareMem::instance()->getIntprtState();
+            i = state;
+            printf("check intprtState=%d\n",i);
             if (state == IDLE_R)
             {
                 FST_INFO("EXECUTE_TO_idle");
-                work_status_ = IDLE_W;
+                //work_status_ = IDLE_W;
+                work_status_ = RUNNING_TO_IDLE_T;
             }
-            /*else if (state == PAUSED_R)*/
-            //{
-                //work_status_ = RUNNING_TO_IDLE_T;
-            /*}*/
+            else if (state == PAUSED_R ||  state == WAITING_R)
+            {
+                FST_INFO("RUNNING_TO_IDLE_T");
+                work_status_ = RUNNING_TO_IDLE_T;
+            }
             break;
         }
         default:
@@ -400,10 +459,35 @@ void Controller::updateCtrlState(int id)
     }
  
 }
+
 void Controller::setUserOpMode(void* params, int len)
 {
-    user_op_mode_  = *(UserOpMode*)params;
-    ShareMem::instance()->setUserOpMode(user_op_mode_);
+     user_op_mode_  = *(UserOpMode*)params;
+     ShareMem::instance()->setUserOpMode(user_op_mode_);
+}
+
+//qianjin change from setUserOpMode 
+void Controller::getUserOpMode(void* params)
+{
+
+
+    int opmode = safety_interface_.getDITPUserMode();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&opmode, sizeof(opmode));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(opmode);
+        memcpy(param->bytes, (char*)&opmode, param->size);
+    }
+
+
+
 }
 /*void Controller::setMotionModeCmd(void* params, int len)*/
 //{
@@ -664,7 +748,12 @@ void Controller::jumpLine(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W) /*|| (!debug_ready_)*/)
     {
-        FST_ERROR("cant jump line!!");
+        int sta_c, sta_w;
+        sta_c = ctrl_state_;
+        sta_w = work_status_;
+
+        
+        FST_ERROR("jumpLine: cant jump line when ctrl_state = %d && work_status = %d!!", sta_c,sta_w);
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
@@ -992,8 +1081,9 @@ void Controller::setLocalTime(void* params, int len)
 
 void Controller::setManualCmd(void* params, int len)
 {
-     //command must be set in idle or pause state
-    if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
+     //command must be set in idle or pause state_cmd
+     //Qianjin
+    if ((ctrl_state_ != ENGAGED_S) ||( (work_status_ != IDLE_W)&&(work_status_ != TEACHING_W)     ))
     {
         FST_ERROR("cant manual run!!");
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
@@ -1073,20 +1163,21 @@ void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
                 //=======reset safety board==================
                 safety_interface_.reset();  //reset safety board*/
                 //==========reset ArmGroup=============
-                U64 result = arm_group_->resetArmGroup();
-                if (result != TPI_SUCCESS)
-                {
-                    if (result == CURRENT_JOINT_OUT_OF_CONSTRAINT)
-                    {
-                        run_mode_ = SOFTLIMITED_R;
-                    }
-                    else
-                    {
-                        FST_ERROR("reset ArmGroup failed:%llx", result);   
-                        rcs::Error::instance()->add(result);
-                        break;
-                    }
-                }                  
+                //!!!!qj!!!!!No need any more. 
+                //U64 result = 0;// arm_group_->resetArmGroup();
+                //if (result != TPI_SUCCESS)
+                //{
+                //    if (result == CURRENT_JOINT_OUT_OF_CONSTRAINT)
+                //    {
+                //        run_mode_ = SOFTLIMITED_R;
+                //    }
+                //    else
+                //    {
+                //        FST_ERROR("reset ArmGroup failed:%llx", result);   
+                //        rcs::Error::instance()->add(result);
+                //        break;
+                //    }
+                //}                  
             }//end else if (state == ESTOP_S)
             else 
             {
@@ -1162,6 +1253,19 @@ void Controller::stateMachine(void* params)
 
 void Controller::rtTrajFlow(void* params)
 {
+    struct timeval time_now;
+    static int ms_old, ms_new;
+    int ms_delay;
+    
+    gettimeofday(&time_now, NULL);
+    ms_new = (time_now.tv_usec)/1000;
+    ms_delay = ms_new - ms_old;
+    ms_old = ms_new;
+    if(ms_delay <0) ms_delay += 1000;
+    if(ms_delay > 8){
+        printf("Controller:Get point not fast enough!\n");
+    }
+
     if (work_status_ == IDLE_W)
         return;// NULL;
 
@@ -1178,8 +1282,10 @@ void Controller::rtTrajFlow(void* params)
 
     //FST_INFO("joints fifo length:%d, traj_len:%d", joints_len, arm_group_->getPlannedPathFIFOLength());
 
-    vector<fst_controller::JointPoint> joint_traj;
-    result = arm_group_->getPointFromFIFO(joint_traj);
+    //!!!!!qj!!!!!!!update arguments!!!!!!
+    //vector<fst_controller::JointPoint> joint_traj;
+    vector<fst_controller::JointOutput> joint_traj;
+    result = arm_group_->getPointFromFIFO(10,joint_traj);
     
     if (result != TPI_SUCCESS)
     {
@@ -1195,6 +1301,7 @@ void Controller::rtTrajFlow(void* params)
    // FST_INFO("joints fifo length:%d", joints_in);
     JointCommand joint_command;
     joint_command.total_points = joints_in;
+    printf("Qianjin: Send joint cmd%d!\n", joints_in);
     for (int i = 0; i < joints_in; i++)
     {
         joint_command.points[i].positions[0] = joint_traj[i].joint.j1;
@@ -1251,7 +1358,6 @@ void Controller::rtTrajFlow(void* params)
     }// end for (int i = 0; i < joints_in; i++)
 
 
-
     ShareMem::instance()->setCurrentJointCmd(joint_command); //store this command in case it can't write Success
 
         //return NULL;
@@ -1301,7 +1407,11 @@ void Controller::requestProc()
                 //FST_INFO("request id:%d", id);
                 void* pointer = tp_interface_->getReqDataPtr()->getParamBufPtr();
                 int len = tp_interface_->getReqDataPtr()->getParamLen();
-                (this->*g_ctrl_funcs_mp[id].setValue)(pointer, len);
+                if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
+                    (this->*g_ctrl_funcs_mp[id].setValue)(pointer, len);
+                }else{
+                    FST_ERROR("SET:: not exist id :%d with %s", id, str_path.c_str()); 
+                }
             }
             tp_interface_->setReply(BaseTypes_StatusCode_OK);
             break;
@@ -1333,7 +1443,11 @@ void Controller::requestProc()
                 TPIParamBuf param_buf;
                 param_buf.type = REPLY;
                 param_buf.params = tp_interface_->getRepDataPtr();
-                (this->*g_ctrl_funcs_mp[id].getValue)(&param_buf);
+                if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
+                    (this->*g_ctrl_funcs_mp[id].getValue)(&param_buf);
+                }else{
+                    FST_ERROR("GET:: not exist id :%d with %s", id, str_path.c_str()); 
+                }
             }
             tp_interface_->setReply(PARAM, id);
             break;
@@ -1704,7 +1818,7 @@ void Controller::pauseMotion()
 
 bool Controller::resumeMotion()
 {
-    if ((intprt_state_ == PAUSED_R) && (auto_motion_->getDoneFlag() == false))
+    if ( ( (intprt_state_ == PAUSED_R) ||  (intprt_state_ == WAITING_R)  )  && (auto_motion_->getDoneFlag() == false))
     {
         auto_motion_->resume();
         FST_INFO("fsssssssssssssssssss\n");
@@ -1781,7 +1895,8 @@ void Controller::servoEStop()
     {
         //if there is no point, then do not call declareEstop
         if (work_status_ == IDLE_W)
-            arm_group_->declareESTOP();
+            //!!!!!!!!qj!update function argument!!!!!!!!!
+            arm_group_->declareESTOP( servo_joints_);
     }
     ShareMem::instance()->setEmptyFlag(true);
     usleep(500*1000);   //wait for brake on, need to ask ??

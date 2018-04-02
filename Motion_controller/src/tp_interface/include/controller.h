@@ -144,11 +144,36 @@ class Controller
      */
     void getCtrlState(void* params);
 
+//     * qj: 20180312 add function begin
+    /**
+     * @brief: callback function for updating running mode
+     * @param id
+     */
+    void getRunningMode(void* params);
+
+    /**
+     * @brief: callback function for updating ServoState
+     * @param id
+     */
+    void getServoState(void* params);
+
+
+	// call back for running mode
+	void  updateRunningMode(int id);
+	// call back for servo state
+	void  updateServoState(int id);
+
+
+	//	   * qj: 20180312 add function end
+
+
     /**
      * @brief: callback function for updating robot state 
      *
      * @param id
      */
+
+	
     void updateCtrlState(int id);
 
     /**
@@ -158,6 +183,8 @@ class Controller
      * @param len
      */
     void setUserOpMode(void* params, int len);
+    //qianjin change from setUserOpMode
+    void getUserOpMode(void* params);
 
     /**
      * @brief: callback function for setting MotionModeCmd 
@@ -677,4 +704,5 @@ class Controller
 
 
 #endif //RCS_CONTROLLER_H_
+
 

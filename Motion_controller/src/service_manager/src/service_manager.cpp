@@ -3,7 +3,7 @@ Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       service_manager.cpp
 Author:     Feng.Wu 
 Create:     07-Nov-2016
-Modify:     09-Jun-2017
+Modify:     12-Dec-2016
 Summary:    dealing with service
 **********************************************/
 #ifndef SERVICE_MANAGER_SERVICE_MANAGER_CPP_
@@ -13,32 +13,11 @@ Summary:    dealing with service
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <signal.h>
 #include <iostream>
-#include <sstream>
-#include "service_manager_version.h"
+
 
 namespace fst_service_manager
 {
-
-volatile int ServiceManager::exit_flag_ = 0;
-
-//------------------------------------------------------------
-// Function:  getVersion
-// Summary: get the version. 
-// In:      None
-// Out:     None
-// Return:  std::string -> the version.
-//------------------------------------------------------------
-std::string getVersion(void)
-{
-    std::stringstream ss;
-    ss<<service_manager_VERSION_MAJOR<<"."
-        <<service_manager_VERSION_MINOR<<"."
-        <<service_manager_VERSION_PATCH;
-    std::string s = ss.str();
-    return s;
-}
 
 //------------------------------------------------------------
 // Function:  ServiceManager
@@ -52,12 +31,10 @@ ServiceManager::ServiceManager()
     handle_core_ = 0;
     loop_count_core_ = 0;
     loop_count_mcs_ = 0;
-    check_sid_enable_ = false;
     check_mcs_enable_ = false;
     running_sid_ = 0;
-    std::cout<<"service_manager version:"<<fst_service_manager::getVersion()<<std::endl;
 }
-  
+
 //------------------------------------------------------------
 // Function:  ~ServiceManager
 // Summary: The destructor of class
@@ -87,26 +64,19 @@ ERROR_CODE_TYPE ServiceManager::init(void)
     ERROR_CODE_TYPE result = comm_test_.createChannel(COMM_REP, COMM_IPC, "test");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in ServiceManager::init(): fail to create modbus channel."<<std::endl;
+        std::cout<<"Error in CommMonito::init(): fail to create modbus channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
-    result = comm_mcs_.createChannel(COMM_REP, COMM_IPC, "mcs");
+    result = comm_mcs_.createChannel(COMM_REP, COMM_IPC, "JTAC");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in ServiceManager::init(): fail to create mcs channel."<<std::endl;
+        std::cout<<"Error in CommMonito::init(): fail to create mcs channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
     result = comm_param_.createChannel(COMM_REP, COMM_IPC, "servo_param");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in ServiceManager::init(): fail to create servo param channel."<<std::endl;
-        return CREATE_CHANNEL_FAIL;
-    }
-
-    result = comm_system_.createChannel(COMM_REP, COMM_IPC, "system_manager");
-    if (result == CREATE_CHANNEL_FAIL)
-    {
-        std::cout<<"Error in ServiceManager::init(): fail to create system_manager channel."<<std::endl;
+        std::cout<<"Error in CommMonito::init(): fail to create servo param channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
 
@@ -152,6 +122,8 @@ bool ServiceManager::receiveRequest(void)
     if (check_mcs_enable_ == true)
         ++loop_count_mcs_;
 
+    if (request_fifo_.size())
+    printf("request size:%d\n", request_fifo_.size());
     // Stop receive any request if there is any service in fifo.
     if (!response_fifo_.empty() || !request_fifo_.empty()) 
         return false;
@@ -178,21 +150,11 @@ bool ServiceManager::receiveRequest(void)
     result = comm_param_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
+        printf("recv servo param success\n");
         //push the request into fifo.
         if (checkRequest(request)) 
         {
             channel_flag_ = PARAM_CHANNEL;
-            return true;
-        }
-    }
-
-    result = comm_system_.recv(&request, sizeof(request), COMM_DONTWAIT);
-    if (result == 0)
-    {
-        //push the request into fifo.
-        if (checkRequest(request)) 
-        {
-            channel_flag_ = SYSTEM_CHANNEL;
             return true;
         }
     }
@@ -288,26 +250,21 @@ bool ServiceManager::checkRequest(ServiceRequest req)
     // Check whether it is heartbeat request from the other process.
     if (isLocalRequest(req)) 
         return true;
-
-    if (check_sid_enable_ == false)
+    request_fifo_.push_back(req);
+    return true;
+    
+    // Push the non-heartbeat request into this fifo.
+/*    if (response_action_.searchServiceTableIndex(req.req_id) != -1)
     {
         request_fifo_.push_back(req);
         return true;
     }
-    else
-    {
-        // Push the non-heartbeat request into this fifo.
-        if (response_action_.searchServiceTableIndex(req.req_id) != -1)
-        {
-            request_fifo_.push_back(req);
-            return true;
-        }
-        // Record the error if unexpected request is received.
-        ERROR_CODE_TYPE invalid_sid = INVALID_SERVICE_ID;
-        storeError(invalid_sid);
-        std::cout<<"Error in CommMonitor::checkRequest(): The request id(0x"<<std::hex<<req.req_id<<std::dec<<") is not available"<<std::endl;
-        return false;
-    }
+    // Record the error if unexpected request is received.
+    ERROR_CODE_TYPE invalid_sid = INVALID_SERVICE_ID;
+    storeError(invalid_sid);
+    std::cout<<"Error in CommMonitor::checkRequest(): The request id(0x"<<std::hex<<req.req_id<<std::dec<<") is not available"<<std::endl;
+    return false;
+*/
 }
 
 //------------------------------------------------------------
@@ -376,8 +333,13 @@ bool ServiceManager::sendRequest(void)
     if (request_fifo_.empty()) 
         return false;
 
-    ServiceRequest temp_request = request_fifo_[0];   
-    int result = sendRequestToBareCore(temp_request);
+    ServiceRequest temp_request = request_fifo_[0];
+    //if (temp_request.req_id == JTAC_CMD_SID)
+    //{
+        //int *a = (int*)(temp_request.req_buff);
+        //std::cout<<"==service to core1 id = "<<*a<<std::endl;
+    /*}*/
+    bool result = sendRequestToBareCore(temp_request);
     if (result == true)
     {
         running_sid_ = temp_request.req_id;
@@ -399,10 +361,10 @@ bool ServiceManager::getResponse(void)
 {
     if (!response_fifo_.empty()) 
         return false;
-
     ServiceResponse response;  
 
-    int result = recvResponseFromBareCore(response);
+    bool result = recvResponseFromBareCore(response);
+    //printf("response resul:%d\n", result);
     if (result == true && (response.res_id == running_sid_))
     {
         response_fifo_.push_back(response);
@@ -452,6 +414,9 @@ ERROR_CODE_TYPE ServiceManager::interactBareCore(void)
             return BARE_CORE_TIMEOUT;
         }
     }// end while (res_result == false)
+    // For debug
+    if (cost_time > 5000)
+        std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us."<<std::endl;
     return FST_SUCCESS;
 }
 
@@ -650,12 +615,6 @@ bool ServiceManager::deleteFirstElement(T *fifo)
     return true;
 }
 
-void ServiceManager::sigHandler(int sig)
-{
-    if(sig == SIGINT)
-        exit_flag_ = 1;
-}
-
 //------------------------------------------------------------
 // Function:  runLoop
 // Summary: The main loop to run this process. 
@@ -665,7 +624,7 @@ void ServiceManager::sigHandler(int sig)
 //------------------------------------------------------------
 void ServiceManager::runLoop(void)
 {
-    while (!exit_flag_)
+    while (true)
     {
         receiveRequest();
         interactBareCore();
@@ -679,14 +638,53 @@ void ServiceManager::runLoop(void)
 
 int main(int argc, char** argv)
 {
-    fst_service_manager::ServiceManager sm;
-    ERROR_CODE_TYPE init_result = sm.init();
-    if (init_result != 0) 
-        return -1;
-    signal(SIGINT, (sm.sigHandler));
+/* //for independent test
+    if(!fork())//mimic the mcs process. 
+    {
+        fst_comm_interface::CommInterface comm;
 
-    sm.runLoop();
-    return 0;
+        int fd = comm.createChannel(IPC_REQ, "mcs");
+        if (fd == CREATE_CHANNEL_FAIL)
+        {
+            std::cout<<"Error in Child process: fail to create mcs channel."<<std::endl;
+        }
+        ServiceRequest req2 = {0x123, ""};
+        comm.send(&req2, sizeof(req2), IPC_DONTWAIT);
+
+        ServiceRequest req = {MONITOR_HEARTBEAT_SID, ""};
+        while (true)
+        {
+//            sleep(1);
+            usleep(50000);
+            ERROR_CODE_TYPE result = comm.send(&req, sizeof(req), IPC_DONTWAIT);
+            if (result == 0)
+            {
+//                std::cout<<"send heartbeat req ok."<<std::endl;
+            }
+
+            ServiceResponse resp;
+            ERROR_CODE_TYPE rec = comm.recv(&resp, sizeof(resp), IPC_WAIT);
+            if (rec == 0)
+            {
+                size_t size;
+                memcpy(&size, &resp.res_buff[0], sizeof(size));
+//                printf("recv size = %zu\n", (size_t)size);
+//                printf("recv heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", resp.res_id, (unsigned char)resp.res_buff[7+8],(unsigned char)resp.res_buff[6+8],(unsigned char)resp.res_buff[5+8],(unsigned char)resp.res_buff[4+8],(unsigned char)resp.res_buff[3+8],(unsigned char)resp.res_buff[2+8],(unsigned char)resp.res_buff[1+8],(unsigned char)resp.res_buff[0+8]);
+            }
+        }
+
+    }else
+*/    {
+
+    fst_service_manager::ServiceManager cm;
+    ERROR_CODE_TYPE init_result = cm.init();
+    if (init_result != 0) 
+        return false;
+
+    cm.runLoop();
+
+    }
+
 }
 
 

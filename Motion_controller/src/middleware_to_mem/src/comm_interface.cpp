@@ -258,6 +258,7 @@ ERROR_CODE_TYPE CommInterface::recv(void *buf, int buf_size, int flag)
     int result = nn_recv(fd_, buf, buf_size, flag);
     if (result < 0)
     {
+        //printf("error:%d\n", result);
         if (nn_errno() != EAGAIN)
         {
             std::cout<<"Error in CommInterface::recv(): "<<nn_strerror(nn_errno())<<std::endl;
@@ -281,7 +282,6 @@ ERROR_CODE_TYPE CommInterface::recv(std::string *str, int flag)
 {
     if (error_flag_ != 0)
         return error_flag_;
-
     if(flag != COMM_WAIT && flag != COMM_DONTWAIT)
     {
         std::cout<<"Error in CommInterface::recv(): Please enter a type(IPC_DONTWAIT, IPC_WAIT)."<<std::endl;
@@ -297,7 +297,7 @@ ERROR_CODE_TYPE CommInterface::recv(std::string *str, int flag)
             std::cout<<"Error in CommInterface::recv(): "<<nn_strerror(nn_errno())<<std::endl;
         }
         return RECV_MSG_FAIL;
-    }    
+    }   
     *str = buf;
     nn_freemsg(buf);
     return FST_SUCCESS;

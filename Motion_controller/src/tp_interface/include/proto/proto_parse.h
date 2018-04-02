@@ -26,6 +26,8 @@ class ProtoParse
     static ProtoParse* instance();
 
     BaseTypes_ParamInfo* getIOInfo();
+    BaseTypes_ParamInfo* getRegInfo();
+
     BaseTypes_ParamInfo* getInfoByID(uint32_t id);
 
     void decDefault(const uint8_t *in_buf, int in_len, void *out_buf);

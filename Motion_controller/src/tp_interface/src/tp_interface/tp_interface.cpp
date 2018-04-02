@@ -251,7 +251,16 @@ void TPInterface::sendReply()
             BaseTypes_ParamInfo *info;
             if (id < IO_BASE_ADDRESS)
             {
-                (proto_parser_->*g_proto_funcs_mp[id].getMsg)(reply_.getParamBufPtr(), reply_.getParamLen(), &param_msg.param);  
+				if(g_proto_funcs_mp.find(id) != g_proto_funcs_mp.end() )
+				{
+               		 (proto_parser_->*g_proto_funcs_mp[id].getMsg)(
+					 	reply_.getParamBufPtr(), reply_.getParamLen(), &param_msg.param);  
+				}
+				else
+				{
+					FST_INFO("sendReply:: not exist id :%d ", id); 
+				}
+					
                 info = proto_parser_->getInfoByID(id);
             }
             else

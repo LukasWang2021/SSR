@@ -44,6 +44,16 @@ BaseTypes_ParamInfo* ProtoParse::getIOInfo()
     return &io_info;
 }
 
+BaseTypes_ParamInfo* ProtoParse::getRegInfo()
+{
+    static BaseTypes_ParamInfo io_info = {"", 0, 0, 2, 1, 1, 
+                    BaseTypes_ParamType_INPUT_SIGNAL,
+                    BaseTypes_Permission_permission_undefined,
+                    BaseTypes_UserLevel_user_level_undefined,
+                    BaseTypes_Unit_unit_undefined};
+    return &io_info;
+}
+
 BaseTypes_ParamInfo* ProtoParse::getInfoByID(uint32_t id)
 {
     int num = sizeof(g_param_info) / sizeof(BaseTypes_ParamInfo);

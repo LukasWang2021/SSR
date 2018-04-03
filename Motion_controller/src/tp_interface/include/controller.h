@@ -522,7 +522,14 @@ class Controller
      *
      * @param params
      */
-    int getRegister(void* params);
+    int getRegisterReply(void* params);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    void getRegister(void* params);
 	
     /**
      * @brief: callback for setting user registers 

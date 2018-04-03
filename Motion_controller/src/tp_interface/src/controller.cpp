@@ -709,6 +709,26 @@ void Controller::setRegister(void* params, int len)
     ShareMem::instance()->intprtControl(ctrl);
 }
 
+
+void Controller::getRegister(void* params)
+{
+    RegMap* reg = (RegMap*)params;
+	sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
+	usleep(10000);
+	int iRet = getRegisterReply((void *)&reg);
+	int iCount = 0 ;
+	while(iRet == -1)
+	{
+		usleep(100000);
+		iRet = getRegisterReply((void *)&reg);
+		if(iCount++ > 20)
+		{
+			FST_INFO("getRegisterReply Failed");
+			break;
+		}
+	}
+}
+
 void Controller::sendGetRegisterRequest(void * params, int len)
 {
     RegMap* reg = (RegMap*)params;
@@ -721,7 +741,7 @@ void Controller::sendGetRegisterRequest(void * params, int len)
     ShareMem::instance()->setIntprtDataFlag(false);
 }
 
-int Controller::getRegister(void * params)
+int Controller::getRegisterReply(void * params)
 {
 	RegMap * reg = (RegMap*)params;
 	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
@@ -1538,15 +1558,15 @@ void Controller::requestProc()
                 }
 				sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
 				usleep(10000);
-				int iRet = getRegister((void *)&reg);
+				int iRet = getRegisterReply((void *)&reg);
 				int iCount = 0 ;
 				while(iRet == -1)
 				{
 					usleep(100000);
-					iRet = getRegister((void *)&reg);
+					iRet = getRegisterReply((void *)&reg);
 					if(iCount++ > 20)
 					{
-						FST_INFO("getRegister Failed");
+						FST_INFO("getRegisterReply Failed");
 						break;
 					}
 				}

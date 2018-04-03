@@ -37,7 +37,7 @@ RegInterface* RegInterface::instance()
 U64 RegInterface::initial()
 {
     reg_info_ = new RegTypeInfo[REG_TYPE_NUM];
-	memset(reg_info_, 0x00, sizeof(RegTypeInfo) * REG_TYPE_NUM);
+	// memset(reg_info_, 0x00, sizeof(RegTypeInfo) * REG_TYPE_NUM);
 	reg_info_[0].path= "pr" ,        reg_info_[0].type = POSE_REG ;
 	reg_info_[1].path= "pr_pose" ,   reg_info_[1].type = POSE_REG_POSE ;
 	reg_info_[2].path= "pr_joint" ,  reg_info_[2].type = POSE_REG_JOINT ;

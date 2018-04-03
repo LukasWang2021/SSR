@@ -8,14 +8,20 @@
 #ifndef _MOTION_PLAN_ARM_GROUP_H
 #define _MOTION_PLAN_ARM_GROUP_H
 
-#include <fst_datatype.h>
-#include <motion_plan_error_code.h>
 #include <string>
 #include <vector>
+#include <fst_datatype.h>
+#include <motion_plan_error_code.h>
+#include <motion_plan_motion_command.h>
+#include <motion_plan_manual_teach.h>
+
+#define     MOTION_COMMAND_POOL_CAPACITY    10
+#define     PATH_FIFO_CAPACITY              16384       // must be setted to 2~N
+#define     TRAJECTORY_FIFO_CAPACITY        512         // must be setted to 2^N
 
 namespace fst_controller
 {
-    using std::vector;
+
 class ArmGroup
 {
   public:
@@ -42,12 +48,30 @@ class ArmGroup
 
     //------------------------------------------------------------
     // Function:    getCycleTime
-    // Summary: To get cycle time of interpolation algorithm.
+    // Summary: To get the cycle time used in interpolation.
     // In:      None
     // Out:     None
     // Return:  cycle time
     //------------------------------------------------------------
     double getCycleTime(void);
+
+    //------------------------------------------------------------
+    // Function:    getCycleRadian
+    // Summary: To get the cycle radian used in path plan.
+    // In:      None
+    // Out:     None
+    // Return:  cycle radian
+    //------------------------------------------------------------
+    double getCycleRadian(void);
+
+    //------------------------------------------------------------
+    // Function:    getCycleDistance
+    // Summary: To get the cycle distance used in path plan.
+    // In:      None
+    // Out:     None
+    // Return:  cycle distance
+    //------------------------------------------------------------
+    double getCycleDistance(void);
 
     //------------------------------------------------------------
     // Function:    getCartesianAccMax
@@ -77,8 +101,6 @@ class ArmGroup
     // Return:  value of max velocity in cartesian space
     //------------------------------------------------------------
     double getCartesianVelMax(void);
-
-    int getLatestCommandLength(void);
 
     /*
     //------------------------------------------------------------
@@ -119,7 +141,7 @@ class ArmGroup
     // Return:  global acceleration ratio in cartesian space
     //          range: 0.0 ~ 3.0
     //------------------------------------------------------------
-  //  double getGlobalAccRatio(void);
+    double getGlobalAccRatio(void);
 
     //------------------------------------------------------------
     // Function:    setGlobalAccRatio
@@ -129,8 +151,45 @@ class ArmGroup
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-   // ErrorCode setGlobalVelRatio(double ratio);
+    ErrorCode setGlobalAccRatio(double ratio);
 
+    //------------------------------------------------------------
+    // Function:    getCartesianAccDefault
+    // Summary: To get default acceleration in cartesian space.
+    // In:      None
+    // Out:     None
+    // Return:  cartesian acc, unit: mm/(s*s)
+    //------------------------------------------------------------
+    double getCartesianAccDefault(void);
+
+    //------------------------------------------------------------
+    // Function:    setCartesianAccDefault
+    // Summary: To set default acceleration in cartesian space.
+    // In:      acc -> cartesian acceleration, unit: mm/(s*s)
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setCartesianAccDefault(double acc);
+
+    //------------------------------------------------------------
+    // Function:    getCartesianVelDefault
+    // Summary: To get default velocity in cartesian space.
+    // In:      None
+    // Out:     None
+    // Return:  cartesian vel, unit: mm/s
+    //------------------------------------------------------------
+    double getCartesianVelDefault(void);
+
+    //------------------------------------------------------------
+    // Function:    setCartesianVelDefault
+    // Summary: To set default velocity in cartesian space.
+    // In:      vel -> cartesian acceleration, unit: mm/s
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setCartesianVelDefault(double vel);
+
+/*
     //------------------------------------------------------------
     // Function:    getCartesianAcc
     // Summary: To get acceleration in cartesian space.
@@ -148,6 +207,7 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode setCartesianAcc(double acc);
+
 
     //------------------------------------------------------------
     // Function:    getJerk
@@ -168,6 +228,7 @@ class ArmGroup
     //            S_CURVE -> S-Shape curve
     //------------------------------------------------------------
     const CurveMode& getCurveMode(void);
+*/
 
     //------------------------------------------------------------
     // Function:    getSoftConstraint
@@ -223,7 +284,7 @@ class ArmGroup
     // Out:     None
     // Return:  length of the FIFO
     //------------------------------------------------------------
-    int getFIFOLength(void);
+    size_t getFIFOLength(void);
 
     //------------------------------------------------------------
     // Function:    getFIFOCapacity
@@ -232,7 +293,7 @@ class ArmGroup
     // Out:     None
     // Return:  capacity of the FIFO
     //------------------------------------------------------------
-    int getFIFOCapacity(void);
+    size_t getFIFOCapacity(void);
 
     //------------------------------------------------------------
     // Function:    getPointFromFIFO
@@ -241,7 +302,7 @@ class ArmGroup
     // Out:     points -> points from trajectory FIFO
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode getPointFromFIFO(std::vector<JointPoint> &points);
+    ErrorCode getPointFromFIFO(size_t num, std::vector<JointOutput> &points);
 
     //------------------------------------------------------------
     // Function:    getPointFromFIFO
@@ -250,7 +311,16 @@ class ArmGroup
     // Out:     points -> points from trajectory FIFO
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode getPointFromFIFO(int &num, JointPoint *points);
+    ErrorCode getPointFromFIFO(size_t num, JointOutput *points);
+
+    //------------------------------------------------------------
+    // Function:    getPointFromFIFO
+    // Summary: To get 10 points from trajectory FIFO.
+    // In:      None
+    // Out:     points -> points from trajectory FIFO
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode getPointFromFIFO(std::vector<JointOutput> &points);
 
     //------------------------------------------------------------
     // Function:    pickPointToFIFO
@@ -260,7 +330,7 @@ class ArmGroup
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode pickPointToFIFO(int num);
+    //ErrorCode pickPointToFIFO(size_t num);
 
     //------------------------------------------------------------
     // Function:    getToolFrame
@@ -269,16 +339,16 @@ class ArmGroup
     // Out:     None
     // Return:  current tool frame
     //------------------------------------------------------------
-    const Transformation& getToolFrame(void);
+    const Transformation getToolFrame(void);
 
     //------------------------------------------------------------
     // Function:    setToolFrame
     // Summary: To set current tool frame.
-    // In:      frame -> current tool frame
+    // In:      tf  -> new tool frame
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void setToolFrame(const Transformation &frame);
+    void setToolFrame(const Transformation &tf);
 
     //------------------------------------------------------------
     // Function:    getUserFrame
@@ -287,16 +357,16 @@ class ArmGroup
     // Out:     None
     // Return:  current user frame
     //------------------------------------------------------------
-    const Transformation& getUserFrame(void);
+    const Transformation getUserFrame(void);
 
     //------------------------------------------------------------
     // Function:    setUserFrame
     // Summary: To set current user frame.
-    // In:      frame -> current user frame
+    // In:      uf -> new user frame
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void setUserFrame(const Transformation &frame);
+    void setUserFrame(const Transformation &uf);
 
     //------------------------------------------------------------
     // Function:    setStartState
@@ -338,6 +408,15 @@ class ArmGroup
     ErrorCode getPoseFromJointInWorld(const Joint &joint, PoseEuler &flange, PoseEuler &tcp);
 
     //------------------------------------------------------------
+    // Function:    getRemainingTime
+    // Summary: To get the remaining time of current motion.
+    // In:      None
+    // Out:     None
+    // Return:  remaining time
+    //------------------------------------------------------------
+    MotionTime getRemainingTime(void);
+
+    //------------------------------------------------------------
     // Function:    suspendMotion
     // Summary: To replan a slow-down trajectory upon trajectory FIFO
     //          and stop the robot motion. Used when pause event or IK
@@ -356,7 +435,7 @@ class ArmGroup
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode declareESTOP(/*const Joint &joint*/);
+    ErrorCode declareESTOP(const Joint &joint);
 
     //------------------------------------------------------------
     // Function:    resumeMotion
@@ -370,12 +449,20 @@ class ArmGroup
 
     //------------------------------------------------------------
     // Function:    resetArmGroup
-    // Summary: To reset resources in arm group.
+    // Summary: Return wether joint is in soft constraint or not.
+    // In:      joint   ->
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode resetArmGroup(const Joint &joint);
+
+    //------------------------------------------------------------
+    // Function:    clearArmGroup
+    // Summary: To reset resources in arm group, FIFO and state etc.
     // In:      None
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode resetArmGroup(void);
     ErrorCode clearArmGroup(void);
 
     //------------------------------------------------------------
@@ -403,11 +490,11 @@ class ArmGroup
     // Function:    manualMove
     // Summary: Plan a manual move trajectory (Joint/Line) with given
     //          direction. If FIFO is empty at the moment, fill it.
-    // In:      button -> manual direction
+    // In:      directions -> manual direction
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode manualMove(const std::vector<ManualDirection> &button);
+    ErrorCode manualMove(const std::vector<ManualDirection> &directions);
 
     //------------------------------------------------------------
     // Function:    manualMove
@@ -430,40 +517,49 @@ class ArmGroup
     ErrorCode manualMove(const PoseEuler &pose);
 
     //------------------------------------------------------------
-    // Function:    setManualFrameMode
+    // Function:    setManualFrame
     // Summary: To set manual frame mode.
     // In:      frame   -> manual frame mode, JOINT/WORLD/USER/TOOL
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void setManualFrameMode(ManualFrameMode frame);
+    void setManualFrame(ManualFrame frame);
 
     //------------------------------------------------------------
-    // Function:    setManualMotionMode
+    // Function:    setManualMode
     // Summary: To set manual motion mode.
     // In:      motion  -> manual motion mode, STEP/CONTINUOUS/POINT
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void setManualMotionMode(ManualMotionMode mode);
+    void setManualMode(ManualMode mode);
 
     //------------------------------------------------------------
-    // Function:    setManualJointStepLength
+    // Function:    setManualJointStep
     // Summary: To set step length in manual joint step working mode.
     // In:      step    -> step length, unit: rad
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode setManualJointStepLength(double step);
+    ErrorCode setManualJointStep(double step);
 
     //------------------------------------------------------------
-    // Function:    setManualCartesianStepLength
+    // Function:    setManualCartesianPositionStep
     // Summary: To set step length in manual cartesian step working mode.
     // In:      step    -> step length, unit: mm
     // Out:     None
     // Return:  error code
     //------------------------------------------------------------
-    ErrorCode setManualCartesianStepLength(double step);
+    ErrorCode setManualCartesianPositionStep(double step);
+
+    //------------------------------------------------------------
+    // Function:    setManualCartesianOrientationStep
+    // Summary: To set step length in manual cartesian step working mode.
+    // In:      step    -> step length, unit: mm
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setManualCartesianOrientationStep(double step);
 
     //------------------------------------------------------------
     // Function:    getManualMaxSpeedRatio
@@ -492,6 +588,104 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode setManualSpeedRatio(double ratio);
+
+    //------------------------------------------------------------
+    // Function:    getManualMaxAccRatio
+    // Summary: To get manual max acc ratio to max-auto-acc.
+    // In:      None
+    // Out:     None
+    // Return:  manual max acc ratio, range: 0.0 ~ 1.0
+    //------------------------------------------------------------
+    double getManualMaxAccRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    getManualAccRatio
+    // Summary: To get manual acc ratio to max-manual-acc.
+    // In:      None
+    // Out:     None
+    // Return:  manual acc ratio, range: 0.0 ~ 1.0
+    //------------------------------------------------------------
+    double getManualAccRatio(void);
+
+    //------------------------------------------------------------
+    // Function:    setManualAccRatio
+    // Summary: To set manual acc ratio to max-manual-acc.
+    // In:      ratio   -> manual acc to max-manual-acc
+    //                      range: 0.0 ~ 1.0
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode setManualAccRatio(double ratio);
+
+
+  private:
+    MotionCommand* getFreeMotionCommand(void);
+    MotionCommand* releaseMotionCommand(MotionCommand *cmd);
+
+    //------------------------------------------------------------
+    // Function:    autoJoint
+    // Summary: Plan a path in joint space to reach the target
+    //          without smooth.
+    // In:      target -> motion target
+    //          id     -> motion id
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode autoJoint(const MotionTarget &target, int id);
+
+    //------------------------------------------------------------
+    // Function:    autoLine
+    // Summary: Plan a line path to reach the target given by auto move command 
+    //          without smooth.
+    // In:      target -> motion target
+    //          id     -> motion id
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode autoLine(const MotionTarget &target, int id);
+
+    ErrorCode fillTrajectoryFIFO(size_t num);
+
+    ErrorCode convertPath2Trajectory(ControlPoint &cp);
+
+    ErrorCode planTraj(void);
+
+    ErrorCode planJointTraj(void);
+
+//public:
+//    ErrorCode speedup(void);
+private:
+
+    ErrorCode pickFromManual(size_t num, std::vector<JointOutput> &points);
+    ErrorCode pickFromAuto(size_t num, std::vector<JointOutput> &points);
+
+    ErrorCode pickManualJoint(size_t num, std::vector<JointOutput> &points);
+    ErrorCode pickManualCartesian(size_t num, std::vector<JointOutput> &points);
+
+
+    MotionCommand   motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY];
+    MotionCommand  *free_command_list_ptr_;
+    MotionCommand  *used_command_list_ptr_;
+
+    ControlPoint    prev_traj_point_;
+    ControlPoint    traj_fifo_[TRAJECTORY_FIFO_CAPACITY];
+    size_t          traj_head_;
+    size_t          traj_tail_;
+
+    PathPoint       path_fifo_[PATH_FIFO_CAPACITY];
+    size_t          path_head_;
+    size_t          path_tail_;
+
+    ControlPoint    t_path_[PATH_FIFO_CAPACITY];
+    size_t          t_head_;
+    size_t          t_tail_;
+
+    MotionTime      pick_time_;
+    size_t          pick_segment_;
+    bool            auto_running_;
+    bool            manual_running_;
+    ManualTeach     manual_;
+
 };
 
 

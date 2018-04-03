@@ -6,6 +6,7 @@
  * @date 2017-07-14
  */
 #include <stdio.h>
+#include <sys/time.h>
 #include "ctrl_func.h"
 #include "io_interface.h"
 #include "error_monitor.h"
@@ -1252,6 +1253,19 @@ void Controller::stateMachine(void* params)
 
 void Controller::rtTrajFlow(void* params)
 {
+    struct timeval time_now;
+    static int ms_old, ms_new;
+    int ms_delay;
+    
+    gettimeofday(&time_now, NULL);
+    ms_new = (time_now.tv_usec)/1000;
+    ms_delay = ms_new - ms_old;
+    ms_old = ms_new;
+    if(ms_delay <0) ms_delay += 1000;
+    if(ms_delay > 8){
+        printf("Controller:Get point not fast enough!\n");
+    }
+
     if (work_status_ == IDLE_W)
         return;// NULL;
 

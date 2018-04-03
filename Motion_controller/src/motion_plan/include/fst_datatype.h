@@ -10,23 +10,92 @@
 #ifndef FST_DATATYPE_H
 #define FST_DATATYPE_H
 
-#define PI 3.1415926535897932384626433832795
+#define                 PI      3.1415926535897932384626433832795
+#define       NUM_OF_JOINT      9
+#define  AXIS_IN_ALGORITHM      6
 
 namespace fst_controller {
 
-class MoveCommand1;
+class MotionCommand;
+
+typedef unsigned int    Tick;
+typedef unsigned int    Size;
+typedef double          MotionTime;
+typedef double          Angle;
+typedef double          Omega;
+typedef double          Alpha;
+
+
 
 /* Define a group of values in joint space */
 struct Joint {
-    double j1;
-    double j2;
-    double j3;
-    double j4;
-    double j5;
-    double j6;
-    double j7;
-    double j8;
-    double j9;
+    Angle   j1;
+    Angle   j2;
+    Angle   j3;
+    Angle   j4;
+    Angle   j5;
+    Angle   j6;
+    Angle   j7;
+    Angle   j8;
+    Angle   j9;
+};
+
+// Define a angular velocity structure
+struct JointOmega {
+    Omega   j1;
+    Omega   j2;
+    Omega   j3;
+    Omega   j4;
+    Omega   j5;
+    Omega   j6;
+    Omega   j7;
+    Omega   j8;
+    Omega   j9;
+};
+
+struct JointAlpha {
+    Alpha   j1;
+    Alpha   j2;
+    Alpha   j3;
+    Alpha   j4;
+    Alpha   j5;
+    Alpha   j6;
+    Alpha   j7;
+    Alpha   j8;
+    Alpha   j9;
+};
+
+struct JointState
+{
+    Angle   joint[NUM_OF_JOINT];
+    Omega   omega[NUM_OF_JOINT];
+    Alpha   alpha[NUM_OF_JOINT];
+};
+
+struct JointGroup {
+    Tick        stamp;
+    JointState  j1;
+    JointState  j2;
+    JointState  j3;
+    JointState  j4;
+    JointState  j5;
+    JointState  j6;
+    JointState  j7;
+    JointState  j8;
+    JointState  j9;
+};
+
+
+struct Spline {
+    double  coeff[6];
+};
+
+struct JointSegment {
+    MotionTime  time_from_start;
+    MotionTime  duration;
+    JointGroup  start;
+    JointGroup  end;
+    Spline      coeff[NUM_OF_JOINT];
 };
 
 // Define a point in cartesian space
@@ -62,6 +131,9 @@ struct PoseEuler {
     Point position;
     Euler orientation;
 };
+
+
+
 
 // Define the home position, upper limit and lower limit of a joint
 struct JointLimit {
@@ -120,15 +192,7 @@ enum SmoothType {
     SMOOTH_2J,
     SMOOTH_2L,
     SMOOTH_2C,
-    //SMOOTH_J2J,
-    //SMOOTH_J2L,
-    //SMOOTH_J2C,
-    //SMOOTH_L2J,
-    //SMOOTH_L2L,
-    //SMOOTH_L2C,
-    //SMOOTH_C2J,
-    //SMOOTH_C2L,
-    //SMOOTH_C2C,
+    SMOOTH_UNKNOWN,
 };
 
 enum SmoothMode
@@ -143,37 +207,63 @@ enum CurveMode
     S_CURVE,
 };
 
-// Define a pose/joint point structure used in planned path fifo
+enum PointStyle
+{
+    POINT_COMMON = 0,
+    POINT_TRANSITION = 1,
+};
+
+// PathPoint structure defines what does path-plan should give out.
 struct PathPoint {
-    /*
-    // Command ID
-    int id; 
     // Command type, joint command or cartesian command*/
-    MotionType type; 
-    // time stamp
-    int stamp;
-    // point level, start/middle/ending point
-    PointLevel  level;
+    MotionType  type;
+
+    int         id;
+
+    // point stamp
+    Tick        stamp;
+
+    // flag for ready to reduce speed
+    bool        speed_down;
+
+    // path point style: common or transition
+    PointStyle  style;
+
     // the point generated from which command
-    MoveCommand1 *source;
+    MotionCommand *source;
+
     // value in cartesian space or joint space
     union {
-        PoseEuler    pose;
+        Pose    pose;
         Joint   joint;
     };
 };
 
-// Define a angular velocity structure
-struct JointOmega {
-    double j1;
-    double j2;
-    double j3;
-    double j4;
-    double j5;
-    double j6;
-    double j7;
-    double j8;
-    double j9;
+// ControlPoint structure used in trajectory-create.
+struct ControlPoint {
+    // point from path plan
+    PathPoint   path_point;
+
+    // time from start
+    // time < 0 means this point has not been converted to a trajectory point
+    MotionTime  time_from_start;
+
+    // time duration from prev point to this point
+    // duration < 0 means this point has not been converted to a trajectory point
+    MotionTime  duration;
+    MotionTime  expect_duration;
+
+    // brake flag
+    bool        brake;
+
+    // point is what trajectory-create should give out
+    JointState  point;
+};
+
+struct TrajectoryPoint {
+    Tick            stamp;
+    JointState      point;
+    MotionCommand  *source;
 };
 
 // Define a point structure used in joint trajectory fifo
@@ -183,7 +273,7 @@ struct JointPoint {
     // point level, start/middle/ending point
     PointLevel  level;
     // the point generated from which command
-    MoveCommand1 *source;
+    MotionCommand *source;
     // joint values of this point
     Joint       joint;
     // angular velocity of this point
@@ -230,26 +320,21 @@ struct MotionTarget {
     // 0.0 - 1.0
     double cnt;
 
-    // percent velocity in move Joint
-    // linear velocity in move cartesian
-    double velocity;
+    // percent velocity in move Joint, range: 0.0-1.0
+    // linear velocity in move cartesian, range 0.0-MAC_VEL
+    // velocity < 0 means using default velocity
+    double vel;
 
-    // percent accleration in move Joint
-    // linear accleration in move cartesian
-    // accleration < 0.000001 means using default accleration
-    double accleration;
+    // percent accleration in move Joint, range: 0.0-1.0
+    // linear accleration in move cartesian, range: 0.0-MAX_ACC
+    // accleration < 0 means using default accleration
+    double acc;
 
     union {
         PoseEuler       pose_target;
         Joint           joint_target;
         CircleTarget    circle_target;
     };
-};
-
-enum ManualDirection {
-    STANDBY,
-    UPWARD,
-    DOWNWARD,
 };
 
 // initial state of a line motion
@@ -351,7 +436,7 @@ struct PoseVel
     VelCartesian velocity;
 };
 
-enum ManualFrameMode
+enum ManualFrame
 {
     JOINT,
     WORLD,
@@ -359,11 +444,30 @@ enum ManualFrameMode
     TOOL,
 };
 
-enum ManualMotionMode
+enum ManualMode
 {
     STEP,
     CONTINUOUS,
+    APOINT,
 };
+
+enum ManualDirection
+{
+    STANDBY  = 0,
+    INCREASE = 1,
+    DECREASE = 2,
+};
+
+struct ManualCoeff
+{
+    double duration_1;
+    double duration_2;
+    double duration_3;
+    double alpha_1;
+    double alpha_3;
+};
+
+
 
 
 

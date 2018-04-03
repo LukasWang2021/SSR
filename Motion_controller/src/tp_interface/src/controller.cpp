@@ -1471,6 +1471,7 @@ void Controller::requestProc()
     uint32_t id;
     if (!tp_interface_->getReqDataPtr()->isFilled())
         return;
+	// FST_INFO("Start:: requestProc tp_interface_ %d", tp_interface_->getReqDataPtr()->getType());
     switch (tp_interface_->getReqDataPtr()->getType())
     {
         case SET:
@@ -1503,10 +1504,10 @@ void Controller::requestProc()
                     tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
                     break;
                 }
-				FST_INFO("SET:: getParamBufLen:%d", tp_interface_->getRepDataPtr()->getParamBufLen());
-				memcpy(reg.value, tp_interface_->getRepDataPtr()->getParamBufPtr(),
+				FST_INFO("SET:: getParamBufLen:%d", tp_interface_->getReqDataPtr()->getParamBufLen());
+				memcpy(reg.value, tp_interface_->getReqDataPtr()->getParamBufPtr(),
                         sizeof(reg.value));
-				FST_INFO("SET OVER :: getParamBufLen:%d", tp_interface_->getRepDataPtr()->getParamBufLen());
+				FST_INFO("SET OVER :: getParamBufLen:%d", tp_interface_->getReqDataPtr()->getParamBufLen());
 				setRegister((void *)&reg, sizeof(RegMap));
             }
             else

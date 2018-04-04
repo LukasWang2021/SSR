@@ -116,15 +116,6 @@ class MotionCommand
     ErrorCode  pickPathPoint(Tick stamp, PathPoint &point);
 
     //------------------------------------------------------------------------------
-    // Function:    pickCommonPoint
-    // Summary: Pick all of the common point on the path.
-    // In:      None
-    // Out:     points  -> point picked out from this command
-    // Return:  error code
-    //------------------------------------------------------------------------------
-    ErrorCode pickCommonPoint(std::vector<PathPoint> &points);
-
-    //------------------------------------------------------------------------------
     // Function:    pickAllPoint
     // Summary: Pick all of the points on the path.
     // In:      None
@@ -135,47 +126,12 @@ class MotionCommand
 
     //------------------------------------------------------------------------------
     // Function:    pickPathPoint
-    // Summary: Pick points on the path from this command, with default number of points.
-    // In:      None
-    // Out:     points  -> points picked out from this command
-    // Return:  error code
-    //------------------------------------------------------------------------------
-    //ErrorCode  pickPathPoint(std::vector<PathPoint> &points);
-
-    //------------------------------------------------------------------------------
-    // Function:    pickPathPoint
     // Summary: Pick points on the path from this command, with given number of points.
     // In:      num     -> number of points want to pick from the command
     // Out:     points  -> points picked out from the command
     // Return:  error code
     //------------------------------------------------------------------------------
     ErrorCode pickPathPoint(size_t num, std::vector<PathPoint> &points);
-
-/*
-    //------------------------------------------------------------------------------
-    // Function:    updateEndingStatus
-    // Summary: Update the ending state(including position/velocity in joint space)
-    //          of the command, using the last 2 points in joint space of this command.
-    //          Usefull in L2J and C2J, call this func after all points converted to
-    //          joint space, before planning next command.
-    // In:      prev    -> point before the last point
-    //          last    -> the last point of this command
-    // Out:     None
-    // Return:  error code
-    //------------------------------------------------------------------------------
-    ErrorCode updateEndingState(const Joint &prev, const Joint &last);
-
-    //------------------------------------------------------------------------------
-    // Function:    resume
-    // Summary: Resume robot motion from this command, with given start position.
-    // In:      joint_start -> resume start from this point
-    //          joint_pause -> the point in origin trajectory, moveJ from Joint_start
-    //                         to this point before resume onto origin trajectory
-    // Out:     points      -> points of resume trajectory segment
-    // Return:  error code
-    //------------------------------------------------------------------------------
-    ErrorCode resume(const Joint &joint_current, const Joint &joint_pause, std::vector<JointPoint> &points);
-*/
 
     //------------------------------------------------------------------------------
     // Function:    getMotionID
@@ -194,24 +150,6 @@ class MotionCommand
     // Return:  path length of this command
     //------------------------------------------------------------------------------
     size_t getPathLength(void);
-
-    //------------------------------------------------------------------------------
-    // Function:    getCommonLength
-    // Summary: To get number of common points.
-    // In:      None
-    // Out:     None
-    // Return:  number of common points
-    //------------------------------------------------------------------------------
-    size_t getCommonLength(void);
-
-    //------------------------------------------------------------------------------
-    // Function:    getTransitionLength
-    // Summary: To get number of transition points.
-    // In:      None
-    // Out:     None
-    // Return:  number of transition points
-    //------------------------------------------------------------------------------
-    size_t getTransitionLength(void);
 
     //------------------------------------------------------------------------------
     // Function:    getNextStamp
@@ -411,7 +349,7 @@ class MotionCommand
     MotionCommand *prev_ptr_;
     MotionCommand *next_ptr_;
 
-    Tick    max_stamp_, pick_stamp_, transition_stamp_;
+    Tick    max_stamp_, pick_stamp_;
     
     bool    is_planned_;
     bool    begin_from_given_joint_;

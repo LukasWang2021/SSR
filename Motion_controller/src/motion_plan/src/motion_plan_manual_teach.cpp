@@ -28,6 +28,16 @@ ManualTeach::ManualTeach()
 ManualTeach::~ManualTeach()
 {};
 
+ManualMode ManualTeach::getMode(void)
+{
+    return manual_mode_;
+}
+
+ManualFrame ManualTeach::getFrame(void)
+{
+    return manual_frame_;
+}
+
 void ManualTeach::setMode(const ManualMode mode)
 {
     manual_mode_ = mode;
@@ -51,11 +61,6 @@ void ManualTeach::setManualDirection(const ManualDirection *directions)
 void ManualTeach::setManualTarget(const Joint &target)
 {
     manual_target_joint_ = target;
-}
-
-void ManualTeach::setManualTarget(const PoseEuler &target)
-{
-    manual_target_pose_ = target;
 }
 
 ErrorCode ManualTeach::stepTeach(void)
@@ -84,10 +89,29 @@ ErrorCode ManualTeach::stepTeach(const Joint &target)
     return stepTeach();
 }
 
-ErrorCode ManualTeach::stepTeach(const PoseEuler &target)
+ErrorCode ManualTeach::stopTeach(MotionTime time)
 {
-    setManualTarget(target);
-    return stepTeach();
+    time += g_cycle_time * 50;
+
+    if (manual_mode_ == CONTINUOUS)
+    {
+        if (manual_frame_ == JOINT)
+        {
+            return stopJointContinuous(time);
+        }
+        else
+        {
+            return stopCartesianContinuous(time);
+        }
+    }
+    else if (manual_mode_ == APOINT)
+    {
+        // TODO
+    }
+    else
+    {
+        return SUCCESS;
+    }
 }
 
 ErrorCode ManualTeach::manualJoint(void)
@@ -111,7 +135,6 @@ ErrorCode ManualTeach::manualJoint(void)
     {
         g_manual_mode = manual_mode_;
         g_manual_frame = manual_frame_;
-        g_manual_pick_time = 0;
         memcpy(&g_manual_joint_start, &g_start_joint, sizeof(Joint));
     }
 
@@ -261,24 +284,24 @@ ErrorCode ManualTeach::manualJointContinuous(void)
             g_manual_joint_coeff[i].alpha_1 = 0;
             g_manual_joint_coeff[i].alpha_3 = 0;
             g_manual_joint_coeff[i].duration_1 = 0;
-            g_manual_joint_coeff[i].duration_2 = DBL_MAX;
-            g_manual_joint_coeff[i].duration_3 = DBL_MAX;
+            g_manual_joint_coeff[i].duration_2 = 99999;
+            g_manual_joint_coeff[i].duration_3 = 99999;
         }
         else if (manual_direction_[i] == INCREASE)
         {
             g_manual_joint_coeff[i].alpha_1 = alpha[i];
             g_manual_joint_coeff[i].alpha_3 = -alpha[i];
             g_manual_joint_coeff[i].duration_1 = omega[i] / alpha[i];
-            g_manual_joint_coeff[i].duration_2 = DBL_MAX;
-            g_manual_joint_coeff[i].duration_3 = DBL_MAX;
+            g_manual_joint_coeff[i].duration_2 = 99999 - g_manual_joint_coeff[i].duration_1;
+            g_manual_joint_coeff[i].duration_3 = 99999;
         }
         else
         {
             g_manual_joint_coeff[i].alpha_1 = -alpha[i];
             g_manual_joint_coeff[i].alpha_3 = alpha[i];
             g_manual_joint_coeff[i].duration_1 = omega[i] / alpha[i];
-            g_manual_joint_coeff[i].duration_2 = DBL_MAX;
-            g_manual_joint_coeff[i].duration_3 = DBL_MAX;
+            g_manual_joint_coeff[i].duration_2 = 99999 - g_manual_joint_coeff[i].duration_1;
+            g_manual_joint_coeff[i].duration_3 = 99999;
         }
         FST_INFO("  J%d: d1=%f, d2=%f, d3=%f, alpha1=%f, alpha3=%f", i + 1, g_manual_joint_coeff[i].duration_1,
                  g_manual_joint_coeff[i].duration_2, g_manual_joint_coeff[i].duration_3,
@@ -399,7 +422,7 @@ ErrorCode ManualTeach::manualJointAPoint(void)
 
 ErrorCode ManualTeach::manualCartesian(void)
 {
-    ErrorCode err;
+    ErrorCode err = SUCCESS;
     
     if (manual_mode_ == STEP)
     {
@@ -409,19 +432,13 @@ ErrorCode ManualTeach::manualCartesian(void)
     {
         err = manualCartesianContinuous();
     }
-    else
-    {
-        err = manualCartesianAPoint();
-    }
 
     if (err == SUCCESS)
     {
         g_manual_mode = manual_mode_;
         g_manual_frame = manual_frame_;
-        g_manual_pick_time = 0;
         memcpy(g_manual_direction, manual_direction_, 6 * sizeof(ManualDirection));
         forwardKinematics(g_start_joint, g_manual_cartesian_start);
-
     }
 
     return err;
@@ -573,7 +590,6 @@ ErrorCode ManualTeach::manualCartesianStep(void)
 
     g_manual_mode = manual_mode_;
     g_manual_frame = manual_frame_;
-    g_manual_pick_time = 0;
     g_manual_cartesian_start = start;
     memcpy(g_manual_direction, manual_direction_, 6 * sizeof(ManualDirection));
 
@@ -583,13 +599,193 @@ ErrorCode ManualTeach::manualCartesianStep(void)
 
 ErrorCode ManualTeach::manualCartesianContinuous(void)
 {
-    // TODO
+    ErrorCode err = SUCCESS;
+
+    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
+    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+
+    PoseEuler start  = forwardKinematics2PoseEuler(g_start_joint);
+
+    FST_INFO("manual-Cartesian-CONTINUOUS: directions = %d %d %d %d %d %d, planning trajectory ...",
+             manual_direction_[0], manual_direction_[1], manual_direction_[2],
+             manual_direction_[3], manual_direction_[4], manual_direction_[5]);
+    FST_INFO("  speed_ratio = %.0f%%, acc_ratio=%.0f%%",
+             g_manual_step_position, g_manual_step_orientation, speed_ratio * 100, acc_ratio * 100);
+    FST_INFO("  start  pose  = %.2f %.2f %.2f - %.4f %.4f %.4f",
+             start.position.x, start.position.y, start.position.z,
+             start.orientation.a, start.orientation.b, start.orientation.c);
+
+    double spd, acc;
+    double duration;
+    size_t i;
+
+    for (i = 0; i < 6; i++)
+    {
+        if (manual_direction_[i] != STANDBY)
+        {
+            if (i < 3)
+            {
+                spd = g_cart_vel_reference * speed_ratio;
+                acc = g_cart_acc_reference * acc_ratio;
+            }
+            else
+            {
+                spd = g_orientation_omega_reference * speed_ratio;
+                acc = g_orientation_alpha_reference * acc_ratio;
+            }
+
+            g_manual_cartesian_coeff[i].duration_1 = spd / acc;
+            g_manual_cartesian_coeff[i].duration_2 = 99999 - g_manual_cartesian_coeff[i].duration_1;
+            g_manual_cartesian_coeff[i].duration_3 = 99999;
+
+            g_manual_cartesian_coeff[i].alpha_1 = manual_direction_[i] == INCREASE ? acc : -acc;
+            g_manual_cartesian_coeff[i].alpha_3 = -g_manual_cartesian_coeff[i].alpha_1;
+            
+            break;
+        }
+        else
+        {
+            g_manual_cartesian_coeff[i].duration_1 = 0;
+            g_manual_cartesian_coeff[i].duration_2 = 99999;
+            g_manual_cartesian_coeff[i].duration_3 = 99999;
+            g_manual_cartesian_coeff[i].alpha_1 = 0;
+            g_manual_cartesian_coeff[i].alpha_3 = 0;
+        }
+    }
+
+    for (i = i + 1; i < 6; i++)
+    {
+        g_manual_cartesian_coeff[i].duration_1 = 0;
+        g_manual_cartesian_coeff[i].duration_2 = 99999;
+        g_manual_cartesian_coeff[i].duration_3 = 99999;
+        g_manual_cartesian_coeff[i].alpha_1 = 0;
+        g_manual_cartesian_coeff[i].alpha_3 = 0;
+    }
+
+    g_manual_mode = manual_mode_;
+    g_manual_frame = manual_frame_;
+    g_manual_cartesian_start = start;
+    memcpy(g_manual_direction, manual_direction_, 6 * sizeof(ManualDirection));
+
+    FST_INFO("Success !");
     return SUCCESS;
 }
 
-ErrorCode ManualTeach::manualCartesianAPoint(void)
+ErrorCode ManualTeach::stopJointContinuous(MotionTime time)
 {
-    // TODO
+    FST_INFO("stopJointContinuous: time = %.4f", time);
+
+    double omega[6] = {0, 0, 0, 0, 0, 0};
+    double alpha[6] = {g_manual_joint_coeff[0].alpha_1, g_manual_joint_coeff[1].alpha_1,
+                       g_manual_joint_coeff[2].alpha_1, g_manual_joint_coeff[3].alpha_1,
+                       g_manual_joint_coeff[4].alpha_1, g_manual_joint_coeff[5].alpha_1};
+    double duration[6] = {0, 0, 0, 0, 0, 0};
+    double duration_max = 0;
+
+    for (size_t i = 0; i < 6; i++)
+    {
+        if (manual_direction_[i] != STANDBY)
+        {
+            if (time < g_manual_joint_coeff[i].duration_1)
+            {
+                duration[i] = time * 2;
+            }
+            else
+            {
+                duration[i] = time + g_manual_joint_coeff[i].duration_1;
+            }
+        }
+        duration_max = duration[i] > duration_max ? duration[i] : duration_max;
+    }
+
+    for (size_t i = 0; i < 6; i++)
+    {
+        if (duration[i] + MINIMUM_E12 < duration_max)
+        {
+            if (time < g_manual_joint_coeff[i].duration_1)
+            {
+                g_manual_joint_coeff[i].duration_1 = time;
+                g_manual_joint_coeff[i].duration_2 = duration_max - time;
+                g_manual_joint_coeff[i].duration_3 = duration_max;
+                g_manual_joint_coeff[i].alpha_3 = -g_manual_joint_coeff[i].alpha_1;
+            }
+            else
+            {
+                g_manual_joint_coeff[i].duration_2 = duration_max - g_manual_joint_coeff[i].duration_1;
+                g_manual_joint_coeff[i].duration_3 = duration_max;
+                g_manual_joint_coeff[i].alpha_3 = -g_manual_joint_coeff[i].alpha_1;
+            }
+        }
+        else
+        {
+            if (time < g_manual_joint_coeff[i].duration_1)
+            {
+                g_manual_joint_coeff[i].duration_1 = time;
+                g_manual_joint_coeff[i].duration_2 = time;
+                g_manual_joint_coeff[i].duration_3 = duration_max;
+                g_manual_joint_coeff[i].alpha_3 = -g_manual_joint_coeff[i].alpha_1;
+            }
+            else
+            {
+                g_manual_joint_coeff[i].duration_2 = time;
+                g_manual_joint_coeff[i].duration_3 = duration_max;
+                g_manual_joint_coeff[i].alpha_3 = -g_manual_joint_coeff[i].alpha_1;
+            }
+        }
+
+        FST_INFO("  J%d: d1=%.4f, d2=%.4f, d3=%.4f, a1=%.6f, a3=%.6f", i + 1, g_manual_joint_coeff[i].duration_1,
+                 g_manual_joint_coeff[i].duration_2, g_manual_joint_coeff[i].duration_3,
+                 g_manual_joint_coeff[i].alpha_1, g_manual_joint_coeff[i].alpha_3);
+    }
+
+    FST_INFO("stopJointContinuous: success");
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::stopCartesianContinuous(MotionTime time)
+{
+    FST_INFO("stopCartesianContinuous: time = %.4f", time);
+
+    size_t index;
+
+    for (index = 0; index < 6; index++)
+    {
+        if (manual_direction_[index] != STANDBY)
+        {
+            if (time < g_manual_cartesian_coeff[index].duration_1)
+            {
+                g_manual_cartesian_coeff[index].duration_1 = time;
+                g_manual_cartesian_coeff[index].duration_2 = time;
+                g_manual_cartesian_coeff[index].duration_3 = time * 2;
+                g_manual_cartesian_coeff[index].alpha_3 = -g_manual_cartesian_coeff[index].alpha_1;
+            }
+            else
+            {
+                g_manual_cartesian_coeff[index].duration_2 = time;
+                g_manual_cartesian_coeff[index].duration_3 = time + g_manual_cartesian_coeff[index].duration_1;
+                g_manual_cartesian_coeff[index].alpha_3 = -g_manual_cartesian_coeff[index].alpha_1;
+            }
+
+            break;
+        }
+    }
+
+    for (size_t i = 0; i < 6; i++)
+    {
+        if (i != index)
+        {
+            g_manual_cartesian_coeff[i].duration_1 = 0;
+            g_manual_cartesian_coeff[i].duration_2 = g_manual_cartesian_coeff[index].duration_3;
+            g_manual_cartesian_coeff[i].duration_3 = g_manual_cartesian_coeff[index].duration_3;
+            g_manual_cartesian_coeff[i].alpha_3 = 0;
+        }
+
+        FST_INFO("  P%d: t1=%.4f, t2=%.4f, t3=%.4f, a1=%.4f, a3=%.4f", i + 1, g_manual_cartesian_coeff[index].duration_1,
+                 g_manual_cartesian_coeff[index].duration_2, g_manual_cartesian_coeff[index].duration_3,
+                 g_manual_cartesian_coeff[index].alpha_1, g_manual_cartesian_coeff[index].alpha_3);
+    }
+
+    FST_INFO("stopCartesianContinuous: success");
     return SUCCESS;
 }
 

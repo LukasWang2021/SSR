@@ -21,20 +21,21 @@ public:
     ManualTeach();
     ~ManualTeach();
 
+    ManualMode  getMode(void);
+    ManualFrame getFrame(void);
+
     void setMode(const ManualMode mode);
     void setFrame(const ManualFrame frame);
     void setManualDirection(const ManualDirection *directions);
     void setManualTarget(const Joint &target);
-    void setManualTarget(const PoseEuler &target);
 
-    ErrorCode stepTeach(void);
     ErrorCode stepTeach(const ManualDirection *directions);
     ErrorCode stepTeach(const Joint &target);
-    ErrorCode stepTeach(const PoseEuler &target);
 
-    
+    ErrorCode stopTeach(MotionTime time);
 
 private:
+    ErrorCode   stepTeach(void);
     ErrorCode   manualJoint(void);
     ErrorCode   manualCartesian(void);
 
@@ -45,8 +46,10 @@ private:
     ErrorCode   manualCartesianContinuous(void);
     ErrorCode   manualCartesianAPoint(void);
 
+    ErrorCode   stopJointContinuous(MotionTime time);
+    ErrorCode   stopCartesianContinuous(MotionTime time);
+
     Joint       manual_target_joint_;
-    PoseEuler   manual_target_pose_;
 
     ManualDirection manual_direction_[6];
     ManualMode      manual_mode_;

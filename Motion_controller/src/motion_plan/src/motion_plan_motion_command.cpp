@@ -211,7 +211,7 @@ ErrorCode MotionCommand::planPathAndTrajectory(ControlPoint* traj_path, size_t& 
     {
         delta_joint[i] = joint_end_ptr[i] - joint_start_ptr[i];
         Angle delta_joint_fabs = fabs(delta_joint[i]);
-        if(fabs(delta_joint_fabs) < DOUBLE_MINIMUM) // deal with the problem of computational accuracy
+        if(fabs(delta_joint_fabs) < MINIMUM_E6) // deal with the problem of computational accuracy
         {
             delta_joint[i] = 0;
             delta_joint_fabs = 0;
@@ -402,7 +402,7 @@ ErrorCode MotionCommand::planPathAndTrajectory(ControlPoint* traj_path, size_t& 
 ErrorCode MotionCommand::pickPathPoint(Tick stamp, PathPoint &point)
 {
     if (!is_planned_) {
-        FST_ERROR("pickPathPoint: cannot pick point before the command is planned");
+        FST_ERROR("pickPathPoint: cannot pick before plan");
         return INVALID_SEQUENCE;
     }
 
@@ -422,9 +422,6 @@ ErrorCode MotionCommand::pickPathPoint(Tick stamp, PathPoint &point)
             point.source = this;
             interpolateLine(stamp, point.pose);
             
-            if (pick_stamp_ > transition_stamp_)   point.speed_down = true;
-            else                                   point.speed_down = false;
-            
             return SUCCESS;
 
         case MOTION_CIRCLE:
@@ -441,12 +438,12 @@ ErrorCode MotionCommand::pickPathPoint(size_t num, vector<PathPoint> &points)
     points.clear();
 
     if (!is_planned_) {
-        FST_ERROR("Cannot pickPathPoint before the command is planned.");
+        FST_ERROR("pickPathPoint: cannot pick before plan.");
         return INVALID_SEQUENCE;
     }
 
     if (pick_stamp_ > max_stamp_) {
-        FST_ERROR("Cannot pickPathPoint from this command, it has burnt out. pick_stamp = %d, max_stamp = %d",
+        FST_ERROR("pickPathPoint: command has burnt out. pick_stamp = %d, max_stamp = %d",
                     pick_stamp_, max_stamp_);
         return INVALID_SEQUENCE;
     }
@@ -466,10 +463,6 @@ ErrorCode MotionCommand::pickPathPoint(size_t num, vector<PathPoint> &points)
                 points[i].stamp  = pick_stamp_;
                 points[i].source = this;
                 interpolateLine(pick_stamp_, points[i].pose);
-                
-                if (pick_stamp_ > transition_stamp_)   points[i].speed_down = true;
-                else                                   points[i].speed_down = false;
-
                 pick_stamp_++;
             }
             
@@ -485,47 +478,10 @@ ErrorCode MotionCommand::pickPathPoint(size_t num, vector<PathPoint> &points)
     return SUCCESS;
 }
 
-ErrorCode MotionCommand::pickCommonPoint(vector<PathPoint> &points)
-{
-    if (!is_planned_) {
-        FST_ERROR("pickCommonPoint: cannot pickPathPoint before the command is planned.");
-        return INVALID_SEQUENCE;
-    }
-
-    switch (motion_type_)
-    {
-        case MOTION_JOINT:
-            break;
-
-        case MOTION_LINE:
-            points.resize(transition_stamp_);
-            for (size_t i = 0; i < transition_stamp_; i++)
-            {
-                points[i].type   = MOTION_LINE;
-                points[i].stamp  = i + 1;
-                points[i].source = this;
-                interpolateLine(i + 1, points[i].pose);
-
-                points[i].style  = POINT_COMMON;
-            }
-            
-            break;
-
-        case MOTION_CIRCLE:
-            break;
-
-        default:
-            FST_ERROR("pickCommonPoint: cannot pick point, cause motion type = %d is unsupported.", motion_type_);
-            return INVALID_SEQUENCE;
-    }
-
-    return SUCCESS;
-}
-
 ErrorCode MotionCommand::pickAllPoint(vector<PathPoint> &points)
 {
     if (!is_planned_) {
-        FST_ERROR("pickAllPoint: cannot pickPathPoint before the command is planned.");
+        FST_ERROR("pickAllPoint: cannot pick before plan.");
         return INVALID_SEQUENCE;
     }
 
@@ -539,11 +495,6 @@ ErrorCode MotionCommand::pickAllPoint(vector<PathPoint> &points)
                 points[i].stamp  = i + 1;
                 points[i].source = this;
                 interpolateJoint(i + 1, points[i].joint);
-
-                if (i < transition_stamp_)
-                    points[i].style  = POINT_COMMON;
-                else
-                    points[i].style  = POINT_TRANSITION;
             }          
             break;
 
@@ -555,16 +506,12 @@ ErrorCode MotionCommand::pickAllPoint(vector<PathPoint> &points)
                 points[i].stamp  = i + 1;
                 points[i].source = this;
                 interpolateLine(i + 1, points[i].pose);
-
-                if (i < transition_stamp_)
-                    points[i].style  = POINT_COMMON;
-                else
-                    points[i].style  = POINT_TRANSITION;
             }
             
             break;
 
         case MOTION_CIRCLE:
+            // TODO
             break;
 
         default:
@@ -583,16 +530,6 @@ int MotionCommand::getMotionID(void)
 size_t MotionCommand::getPathLength(void)
 {
     return is_planned_ ? max_stamp_ : 0;
-}
-
-size_t MotionCommand::getCommonLength(void)
-{
-    return transition_stamp_;
-}
-
-size_t MotionCommand::getTransitionLength(void)
-{
-    return max_stamp_ - transition_stamp_;
 }
 
 Tick MotionCommand::getNextStamp(void)
@@ -679,98 +616,6 @@ void MotionCommand::setNextCommandPtr(MotionCommand *ptr)
     next_ptr_ = ptr;
 }
 
-/*
-ErrorCode MotionCommand::planJointPath(void)
-{
-    FST_INFO("running planJointPath----------");
-    ErrorCode err = SUCCESS;
-
-    // set end point
-    joint_ending_ = target_joint_;
-
-    // set start point
-    if(begin_from_given_joint_){
-        joint_starting_ = beginning_joint_;
-    }
-    else{
-        // FIXME: current getJointEnding() only support MOVJ, except MOVL and MOVC
-        joint_starting_ = prev_ptr_->getJointEnding();
-    }
-
-    // set joint limits
-    Omega velocity_max[AXIS_IN_ALGORITHM];
-    Alpha acc_max[AXIS_IN_ALGORITHM];
-    velocity_max[0] = vel_*g_soft_constraint.j1.max_omega;
-    velocity_max[1] = vel_*g_soft_constraint.j2.max_omega;
-    velocity_max[2] = vel_*g_soft_constraint.j3.max_omega;
-    velocity_max[3] = vel_*g_soft_constraint.j4.max_omega;
-    velocity_max[4] = vel_*g_soft_constraint.j5.max_omega;
-    velocity_max[5] = vel_*g_soft_constraint.j6.max_omega;
-    acc_max[0] = acc_*g_soft_constraint.j1.max_alpha;
-    acc_max[1] = acc_*g_soft_constraint.j2.max_alpha;
-    acc_max[2] = acc_*g_soft_constraint.j3.max_alpha;
-    acc_max[3] = acc_*g_soft_constraint.j4.max_alpha;
-    acc_max[4] = acc_*g_soft_constraint.j5.max_alpha;
-    acc_max[5] = acc_*g_soft_constraint.j6.max_alpha;
-    FST_INFO("velocity_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
-                g_soft_constraint.j1.max_omega, g_soft_constraint.j2.max_omega,
-                g_soft_constraint.j3.max_omega, g_soft_constraint.j4.max_omega,
-                g_soft_constraint.j5.max_omega, g_soft_constraint.j6.max_omega);
-    FST_INFO("acc_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
-                g_soft_constraint.j1.max_alpha, g_soft_constraint.j2.max_alpha,
-                g_soft_constraint.j3.max_alpha, g_soft_constraint.j4.max_alpha,
-                g_soft_constraint.j5.max_alpha, g_soft_constraint.j6.max_alpha);
-    
-    // compute minimum time of axes
-    MotionTime duration_max = -1;
-    int duration_max_index = 0;
-    MotionTime duration[AXIS_IN_ALGORITHM];
-    Angle delta_joint[AXIS_IN_ALGORITHM];
-    Angle* joint_start_ptr = (Angle*)&joint_starting_;
-    Angle* joint_end_ptr = (Angle*)&joint_ending_;
-    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
-    {
-        delta_joint[i] = joint_end_ptr[i] - joint_start_ptr[i];
-        Angle delta_joint_fabs = fabs(delta_joint[i]);
-        if(fabs(delta_joint_fabs) < DOUBLE_MINIMUM) // deal with the problem of computational accuracy
-        {
-            delta_joint[i] = 0;
-            delta_joint_fabs = 0;
-        }
-        double condition = velocity_max[i] * velocity_max[i] / acc_max[i];
-        if(condition >= delta_joint_fabs)    // triangle velocity curve
-        {
-            duration[i] = 2*sqrt(delta_joint_fabs / acc_max[i]);
-        }
-        else    // trapezoid velocity curve
-        {
-            duration[i] = delta_joint_fabs / velocity_max[i] + velocity_max[i] / acc_max[i];
-        }
-
-        if(duration[i] > duration_max)
-        {
-            duration_max = duration[i];
-            duration_max_index = i;
-        }
-    }
-
-    // compute max_stamp
-    max_stamp_ = ceil(duration_max / (g_cycle_radian / velocity_max[duration_max_index]));
-    FST_INFO("max_stamp_ = %d", max_stamp_);
-
-    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
-    {
-        joint_coeff_[i] = delta_joint[i] / max_stamp_;
-    }
-    FST_INFO("joint_coeff: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
-                joint_coeff_[0], joint_coeff_[1], joint_coeff_[2],
-                joint_coeff_[3], joint_coeff_[4], joint_coeff_[5]);
-
-    transition_stamp_ = max_stamp_;
-    return SUCCESS;
-}
-*/
-
 ErrorCode MotionCommand::planJointPath(void)
 {
     ErrorCode err = SUCCESS;
@@ -822,7 +667,7 @@ ErrorCode MotionCommand::planJointPath(void)
     {
         delta_joint[i] = joint_end_ptr[i] - joint_start_ptr[i];
         Angle delta_joint_fabs = fabs(delta_joint[i]);
-        if(fabs(delta_joint_fabs) < DOUBLE_MINIMUM) // deal with the problem of computational accuracy
+        if(fabs(delta_joint_fabs) < MINIMUM_E6) // deal with the problem of computational accuracy
         {
             delta_joint[i] = 0;
             delta_joint_fabs = 0;
@@ -855,7 +700,6 @@ ErrorCode MotionCommand::planJointPath(void)
                 joint_coeff_[0], joint_coeff_[1], joint_coeff_[2],
                 joint_coeff_[3], joint_coeff_[4], joint_coeff_[5]);*/
 
-    transition_stamp_ = max_stamp_;
     return SUCCESS;
 }
 
@@ -900,21 +744,18 @@ ErrorCode MotionCommand::planLinePath(void)
         pose_starting_.orientation.z = -pose_starting_.orientation.z;
     }
 
-    // Get position move reference time and orientateion rotate reference time
+    // Get position distance and orientateion rotate angle
+    // Resolve the max stamp of this path
     double distance = getDistance(pose_starting_, pose_ending_);
     double rotation = getOrientationAngle(pose_starting_, pose_ending_);
-    MotionTime move_tm = distance / vel_;
-    MotionTime rotate_tm = rotation / g_orientation_omega_reference;
-
-    // Use the larger time to plan path.
-    MotionTime  time = move_tm > rotate_tm ? move_tm : rotate_tm;
-
-    max_stamp_ = ceil(time / (g_cycle_distance / vel_));
+    double stamp_position    = distance / g_cycle_distance;
+    double stamp_orientation = rotation / g_cycle_radian;
+    max_stamp_ = stamp_position > stamp_orientation ? ceil(stamp_position) : ceil(stamp_orientation);
 
     line_coeff_.position_coeff_x  = (pose_ending_.position.x - pose_starting_.position.x) / max_stamp_;
     line_coeff_.position_coeff_y  = (pose_ending_.position.y - pose_starting_.position.y) / max_stamp_;
     line_coeff_.position_coeff_z  = (pose_ending_.position.z - pose_starting_.position.z) / max_stamp_;
-    line_coeff_.orientation_angle = getOrientationAngle(pose_starting_, pose_ending_);
+    line_coeff_.orientation_angle = rotation;
 
     if (rotation > g_ort_linear_polation_threshold)
     {
@@ -926,14 +767,6 @@ ErrorCode MotionCommand::planLinePath(void)
         // Linear interpolation
         line_coeff_.spherical_flag = false;
     }
-
-    // find where is stop-point, at this point we begin to back-step
-    double transition_velocity = vel_ * cnt_;
-    double transition_distance = transition_velocity * transition_velocity / g_cart_acc_reference / 2;
-    transition_distance = transition_distance < distance / 2 ? transition_distance : distance / 2;
-    
-    Tick stop_tick = ceil(transition_distance / (distance / max_stamp_));
-    transition_stamp_ = max_stamp_ - stop_tick;
 
     return SUCCESS;
 }

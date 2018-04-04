@@ -223,12 +223,6 @@ struct PathPoint {
     // point stamp
     Tick        stamp;
 
-    // flag for ready to reduce speed
-    bool        speed_down;
-
-    // path point style: common or transition
-    PointStyle  style;
-
     // the point generated from which command
     MotionCommand *source;
 

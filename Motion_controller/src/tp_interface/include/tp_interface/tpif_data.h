@@ -42,7 +42,7 @@ class TPIFData
 
     virtual void fillData(const char* buffer, int len)
     {
-        memset(param_buffer_, 0, buf_len_);
+        memset(param_buffer_, 0, ParamBufLen);
         memcpy(param_buffer_, buffer, len);
         param_len_ = len;
     }

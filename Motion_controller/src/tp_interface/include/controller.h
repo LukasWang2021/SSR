@@ -501,6 +501,59 @@ class Controller
      */
     static void exit();
   
+    /**
+     * @brief: callback for setting register
+     *
+     * @param params
+     * @param len
+     */
+    void setRegister(void* params, int len);
+
+    /**
+     * @brief: try to get Register
+     *
+     * @param params
+     * @param len
+     */
+    void sendGetRegisterRequest(void* params, int len);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    int getRegisterReply(void* params);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    void getRegister(void* params);
+	
+    /**
+     * @brief: callback for setting user registers 
+     *
+     * @param params
+     * @param len
+     */
+    void setDIO(void* params, int len);
+
+    /**
+     * @brief: try to get dio
+     *
+     * @param params
+     * @param len
+     */
+    void sendGetIORequest(void* params, int len);	
+
+    /**
+     * @brief: callback for getting user registers 
+     *
+     * @param params
+     */
+    void getDIO(void* params);
+	
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class

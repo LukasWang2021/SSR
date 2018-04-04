@@ -95,7 +95,6 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
     int hash_size = get_hash_size();
     const uint8_t *field_buffer = buffer+hash_size;
 	int field_size = len - hash_size;
-	
 	if (HASH_CMP(ParameterSetMsg, buffer) == true)
 	{        
         BaseTypes_ParameterSetMsg param_set_msg;
@@ -117,7 +116,7 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
         //}
 
         id = ELFHash(path, strlen(path));
-        FST_INFO("setMsg:path:%s, %d", path, *(int*)param_set_msg.param.bytes);
+        FST_INFO("setMsg:path: %s, id: %d, %d\n", path, id, param_set_msg.param.size);
         if (request_.update(SET, path, id))
         {
             std::map<int, ProtoFunctions>::iterator it = g_proto_funcs_mp.find(id);
@@ -127,6 +126,12 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
             }            
             else
             {
+                if ((string(path).substr(0, 7) == "root/IO") ||
+					(string(path).substr(0, 13) == "root/register"))
+				{
+				     proto_parser_->decDefault(param_set_msg.param.bytes, 
+					 					param_set_msg.param.size, (void *)&request_);
+                }
                 FST_ERROR("can't find this proto functions");
             }
         }
@@ -179,7 +184,6 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
 	}//end else if (HASH_CMP(ParameterCmdMsg, buffer) == true)
 	else if (HASH_CMP(ParameterGetMsg, buffer) == true)
 	{
-        
         BaseTypes_ParameterGetMsg param_get_msg;
         if (!proto_parser_->decParamGetMsg(field_buffer, field_size, param_get_msg))
         {
@@ -251,7 +255,16 @@ void TPInterface::sendReply()
             BaseTypes_ParamInfo *info;
             if (id < IO_BASE_ADDRESS)
             {
-                (proto_parser_->*g_proto_funcs_mp[id].getMsg)(reply_.getParamBufPtr(), reply_.getParamLen(), &param_msg.param);  
+				if(g_proto_funcs_mp.find(id) != g_proto_funcs_mp.end() )
+				{
+               		 (proto_parser_->*g_proto_funcs_mp[id].getMsg)(
+					 	reply_.getParamBufPtr(), reply_.getParamLen(), &param_msg.param);  
+				}
+				else
+				{
+					FST_INFO("sendReply:: not exist id :%d ", id); 
+				}
+					
                 info = proto_parser_->getInfoByID(id);
             }
             else

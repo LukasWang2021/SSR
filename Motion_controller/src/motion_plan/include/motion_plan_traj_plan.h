@@ -22,11 +22,14 @@ ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, in
 ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg);
 
 void computeDurationMax(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
-                                Alpha* acc_limit, MotionTime& duration_max);
+                                Alpha* acc_limit, Omega* velocity_limit, MotionTime& duration_max);
 
-void computeTrajectory(bool is_forward, size_t target_tick, Angle* start_joint_ptr,
-                       Angle* end_joint_ptr, Omega* start_omega_ptr, 
-                       MotionTime duration_max, ControlPoint* target);
+void computeDurationMin(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                                Alpha* acc_limit, Omega* velocity_limit, MotionTime& duration_min);
+
+void computeTrajectory(bool is_pause, bool is_forward, size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr,
+                            Omega* start_omega_ptr, MotionTime duration, Alpha* acc_limit, Omega* velocity_limit, ControlPoint* target);
+
 
 
 }

@@ -1046,34 +1046,102 @@ ErrorCode createTrajFromPath(const ControlPoint &prev_point, ControlPoint &this_
 }
 
 void computeDurationMax(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
-                                Alpha* acc_limit, MotionTime& duration_max)
+                                Alpha* acc_limit, Omega* velocity_limit, MotionTime& duration_max)
 {
     MotionTime duration[AXIS_IN_ALGORITHM] = {0};
     double cond_part1 = 0, cond_part2 = 0;
+    Omega fabs_start_omega;
     duration_max = 0;
     for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
     {
-        cond_part1 = pow(start_omega_ptr[i], 2);
-        cond_part2 = 2 * acc_limit[i] * fabs(end_joint_ptr[i] - start_joint_ptr[i]);
-        duration[i] = (-fabs(start_omega_ptr[i]) + sqrt(cond_part1 + cond_part2)) / acc_limit[i];
+        fabs_start_omega = fabs(start_omega_ptr[i]);
+        if(fabs(fabs_start_omega - velocity_limit[i]) < MINIMUM_E9
+            || fabs_start_omega > velocity_limit[i]) // omega reach maximum
+        {
+            duration[i] = fabs(end_joint_ptr[i] - start_joint_ptr[i]) / fabs_start_omega;
+        }
+        else    // omega is under maximum
+        {
+            cond_part1 = pow(fabs_start_omega, 2);
+            cond_part2 = 2 * acc_limit[i] * fabs(end_joint_ptr[i] - start_joint_ptr[i]);
+            duration[i] = (-fabs_start_omega + sqrt(cond_part1 + cond_part2)) / acc_limit[i];
+        }
+        
         if(duration_max < duration[i])
         {
             duration_max = duration[i];
         }  
     }
+/*if(is_pause)
+    FST_INFO("duration: %f, %f, %f, %f, %f, %f", duration[0], duration[1], duration[2], duration[3], duration[4], duration[5]);*/
 }
 
-void computeTrajectory(bool is_forward, size_t target_tick, Angle* start_joint_ptr,
-                       Angle* end_joint_ptr, Omega* start_omega_ptr, 
-                       MotionTime duration, ControlPoint* target)
+void computeDurationMin(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                                Alpha* acc_limit, Omega* velocity_limit, MotionTime& duration_min)
+{
+    MotionTime duration[AXIS_IN_ALGORITHM] = {0};
+    double cond_part1 = 0, cond_part2 = 0;
+    Omega fabs_start_omega;
+    duration_min = DBL_MAX;
+    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        fabs_start_omega = fabs(start_omega_ptr[i]);
+        cond_part1 = pow(fabs_start_omega, 2);
+        cond_part2 = 2 * acc_limit[i] * fabs(end_joint_ptr[i] - start_joint_ptr[i]);
+        if(cond_part1 >= cond_part2 
+            && fabs(end_joint_ptr[i] - start_joint_ptr[i]) > MINIMUM_E9)
+        {
+            duration[i] = (fabs_start_omega - sqrt(cond_part1 - cond_part2)) / acc_limit[i];
+        }
+        else
+        {
+            duration[i] = DBL_MAX;
+        }
+
+        if(duration_min > duration[i])
+        {
+            duration_min = duration[i];
+        }  
+    }
+
+    // if all axes reach the last step of pause, it might cause duration_min goes to DBL_MAX.
+    // take the maximum duration of all axes needed to by applying under-limit acceleration.
+    if(duration_min == DBL_MAX)
+    {
+        duration_min = 0;
+        for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
+        {
+            duration[i] = 2 * fabs((end_joint_ptr[i] - start_joint_ptr[i]) / start_omega_ptr[i]);
+            if(duration_min < duration[i])
+            {
+                duration_min = duration[i];
+            }
+        }
+    }
+}
+
+void computeTrajectory(bool is_pause, bool is_forward, size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
+                            MotionTime duration, Alpha* acc_limit, Omega* velocity_limit, ControlPoint* target)
 {
     Alpha acc = 0;
     for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
     {
-        target[target_tick].point.joint[i] = ((Angle*)&target[target_tick].path_point.joint)[i];
+        if(target->path_point.type == MOTION_JOINT)
+        {
+            target[target_tick].point.joint[i] = ((Angle*)&target[target_tick].path_point.joint)[i];
+        }
 
         acc = 2 * (end_joint_ptr[i] - start_joint_ptr[i] - start_omega_ptr[i] * duration) / duration / duration;
-
+        if(acc > acc_limit[i])
+        {
+            acc = acc_limit[i];
+        }
+        else if(acc < -acc_limit[i])
+        {
+            acc = -acc_limit[i];
+        }
+        else{}
+        
         if(is_forward)
         {
             target[target_tick].point.alpha[i] = acc;
@@ -1084,8 +1152,29 @@ void computeTrajectory(bool is_forward, size_t target_tick, Angle* start_joint_p
             target[target_tick + 1].point.alpha[i] = -acc;
             target[target_tick].point.omega[i] = start_omega_ptr[i] - target[target_tick + 1].point.alpha[i] * duration;
         }
+
+        if(target[target_tick].point.omega[i] > velocity_limit[i])
+        {
+            target[target_tick].point.omega[i] = velocity_limit[i];
+        }
+        else if(target[target_tick].point.omega[i] < -velocity_limit[i])
+        {
+            target[target_tick].point.omega[i] = -velocity_limit[i];
+        }
+        else{}
+        
+        if(is_pause)
+        {
+            // this condition maybe not reached for all axes at the same time, fix it later
+            if(fabs(target[target_tick].point.omega[i]) < MINIMUM_E9
+                || target[target_tick].point.omega[i] * target[target_tick - 1].point.omega[i] < 0)
+            {
+                target[target_tick].point.omega[i] = 0;
+            }
+        }
     }
 }
+
 
 
 }

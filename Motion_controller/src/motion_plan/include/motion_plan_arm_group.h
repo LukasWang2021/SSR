@@ -487,6 +487,25 @@ class ArmGroup
     ErrorCode autoMove(const MotionTarget &target, int id);
 
     //------------------------------------------------------------
+    // Function:    pauseMove
+    // Summary: Plan a pause trajectory to all axes to stop on the path
+    // In:      pick_segment -> the path point index of starting pause action
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode pauseMove(size_t pick_segment);
+
+    //------------------------------------------------------------
+    // Function:    continueMove
+    // Summary: Plan a trajectory to let all axes continue moving,
+    //          first MOVJ to the paused point, then finish the remaining path.
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode continueMove(void);
+    
+    //------------------------------------------------------------
     // Function:    manualMove
     // Summary: Plan a manual move trajectory (Joint/Line) with given
     //          direction. If FIFO is empty at the moment, fill it.
@@ -616,9 +635,8 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode setManualAccRatio(double ratio);
-
-
-  private:
+    
+private:
     MotionCommand* getFreeMotionCommand(void);
     MotionCommand* releaseMotionCommand(MotionCommand *cmd);
 
@@ -652,9 +670,9 @@ class ArmGroup
 
     ErrorCode planJointTraj(void);
 
-//public:
-//    ErrorCode speedup(void);
-private:
+    bool isJointStop(size_t pick);
+       
+    void moveFIFO(size_t start_index, int size, int offset);        
 
     ErrorCode pickFromManual(size_t num, std::vector<JointOutput> &points);
     ErrorCode pickFromAuto(size_t num, std::vector<JointOutput> &points);
@@ -679,6 +697,8 @@ private:
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;
     size_t          t_tail_;
+    size_t          t_real_start_;
+    size_t          t_real_end_;
 
     MotionTime      pick_time_;
     size_t          pick_segment_;

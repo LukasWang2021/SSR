@@ -651,6 +651,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			// intprt_ctrl.RegMap.
 			reg = intprt_ctrl.reg ;
 			forgesight_mod_reg(reg);
+  	                printf("reg.type = %d end.\n", reg.type);
             break;
         case READ_DIO:
 			// intprt_ctrl.RegMap.

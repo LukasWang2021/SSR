@@ -869,6 +869,13 @@ int forgesight_read_reg(RegMap & reg)
 int forgesight_mod_reg(RegMap & reg)
 {
   	 printf("reg.type = %d.\n", reg.type);
+         printf("reg.value = (");
+         for(int iRet = 0 ; iRet < 100 ; iRet++)
+         {
+              printf("%08X, ", reg.value[iRet]);
+         }
+         printf(") \n");
+
 	 switch(reg.type)
 	 {
 	 // pose register
@@ -975,6 +982,7 @@ int forgesight_mod_reg(RegMap & reg)
 	    setCommentPl(reg.value, reg.index);
 	 	break;
  	 }
+  	 printf("reg.type = %d end.\n", reg.type);
 	 return 1;
 }
 

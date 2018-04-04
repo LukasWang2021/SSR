@@ -85,8 +85,6 @@ PoseEuler           g_manual_cartesian_start;
 PoseEuler           g_manual_cartesian_target;
 ManualCoeff         g_manual_cartesian_coeff[6];
 
-MotionTime          g_manual_pick_time;
-
 /*
 JointPoint g_trajectory_fifo[TRAJECTORY_FIFO_CAPACITY];
 bool g_trajectory_fifo_flag[TRAJECTORY_FIFO_CAPACITY];

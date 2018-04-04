@@ -266,17 +266,6 @@ class ArmGroup
     //------------------------------------------------------------
     const DHGroup& getDH(void);
 
-/*
-    //------------------------------------------------------------
-    // Function:    setDH
-    // Summary: To set DH parameter group to algorithm and config file.
-    // In:      dh -> DH parameter group
-    // Out:     None
-    // Return:  None
-    //------------------------------------------------------------
-    void setDH(const DHGroup &dh);
-*/
-
     //------------------------------------------------------------
     // Function:    getFIFOLength
     // Summary: To get the length of trajectory FIFO.
@@ -652,8 +641,6 @@ class ArmGroup
 
     ErrorCode planJointTraj(void);
 
-//public:
-//    ErrorCode speedup(void);
 private:
 
     ErrorCode pickFromManual(size_t num, std::vector<JointOutput> &points);
@@ -683,6 +670,8 @@ private:
     MotionTime      pick_time_;
     size_t          pick_segment_;
     bool            auto_running_;
+
+    MotionTime      manual_pick_time_;
     bool            manual_running_;
     ManualTeach     manual_;
 

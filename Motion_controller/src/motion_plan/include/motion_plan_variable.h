@@ -12,8 +12,6 @@
 #include <motion_plan_matrix.h>
 #include <log_manager/log_manager_logger.h>
 
-#define DOUBLE_MINIMUM          0.000001
-
 namespace fst_algorithm
 {
 
@@ -48,11 +46,6 @@ extern Matrix   g_tool_frame;
 extern Matrix   g_user_frame_inverse;
 extern Matrix   g_tool_frame_inverse;
 
-//extern fst_controller::CurveMode    g_curve_mode;
-//extern fst_controller::SmoothMode   g_smooth_mode;
-
-//extern size_t   g_pick_len;
-
 extern fst_controller::Joint    g_ik_reference;
 extern fst_controller::Joint    g_start_joint;
 extern fst_controller::DHGroup  g_dh;
@@ -72,16 +65,9 @@ extern fst_controller::PoseEuler        g_manual_cartesian_start;
 extern fst_controller::PoseEuler        g_manual_cartesian_target;
 extern fst_controller::ManualCoeff      g_manual_cartesian_coeff[6];
 
-extern fst_controller::MotionTime       g_manual_pick_time;
-    
-//extern fst_controller::JointPoint g_trajectory_fifo[];
-    
 extern fst_log::Logger  g_log;
 
 
-
-//size_t getFifoCapacity(void);
-//size_t getFifoSize(void);
 
 }
 

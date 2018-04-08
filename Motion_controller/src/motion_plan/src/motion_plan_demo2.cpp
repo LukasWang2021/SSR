@@ -175,38 +175,33 @@ int main(int argc, char **argv)
         << traj[0].point.alpha[5] << endl;
 
     for (i = 0; i + 1 < traj.size(); i++) {
-        if (traj[i + 1].path_point.speed_down == false) {
-            createTrajectoryFromPath(traj[i], traj[i + 1]);
-                os  << i + 1 << ","\
-                    << traj[i+1].path_point.pose.position.x << ","\
-                    << traj[i+1].path_point.pose.position.y << ","\
-                    << traj[i+1].path_point.pose.position.z << ","\
-                    << traj[i+1].path_point.pose.orientation.w << ","\
-                    << traj[i+1].path_point.pose.orientation.x << ","\
-                    << traj[i+1].path_point.pose.orientation.y << ","\
-                    << traj[i+1].path_point.pose.orientation.z << ","\
-                    << traj[i+1].point.joint[0] << ","\
-                    << traj[i+1].point.joint[1] << ","\
-                    << traj[i+1].point.joint[2] << ","\
-                    << traj[i+1].point.joint[3] << ","\
-                    << traj[i+1].point.joint[4] << ","\
-                    << traj[i+1].point.joint[5] << ","\
-                    << traj[i+1].point.omega[0] << ","\
-                    << traj[i+1].point.omega[1] << ","\
-                    << traj[i+1].point.omega[2] << ","\
-                    << traj[i+1].point.omega[3] << ","\
-                    << traj[i+1].point.omega[4] << ","\
-                    << traj[i+1].point.omega[5] << ","\
-                    << traj[i+1].point.alpha[0] << ","\
-                    << traj[i+1].point.alpha[1] << ","\
-                    << traj[i+1].point.alpha[2] << ","\
-                    << traj[i+1].point.alpha[3] << ","\
-                    << traj[i+1].point.alpha[4] << ","\
-                    << traj[i+1].point.alpha[5] << endl;
-        }
-        else {
-            FST_INFO("stamp=%d, speed-down=%d", i + 1, traj[i + 1].path_point.speed_down); 
-        }
+        createTrajectoryFromPath(traj[i], traj[i + 1]);
+        os  << i + 1 << ","\
+            << traj[i+1].path_point.pose.position.x << ","\
+            << traj[i+1].path_point.pose.position.y << ","\
+            << traj[i+1].path_point.pose.position.z << ","\
+            << traj[i+1].path_point.pose.orientation.w << ","\
+            << traj[i+1].path_point.pose.orientation.x << ","\
+            << traj[i+1].path_point.pose.orientation.y << ","\
+            << traj[i+1].path_point.pose.orientation.z << ","\
+            << traj[i+1].point.joint[0] << ","\
+            << traj[i+1].point.joint[1] << ","\
+            << traj[i+1].point.joint[2] << ","\
+            << traj[i+1].point.joint[3] << ","\
+            << traj[i+1].point.joint[4] << ","\
+            << traj[i+1].point.joint[5] << ","\
+            << traj[i+1].point.omega[0] << ","\
+            << traj[i+1].point.omega[1] << ","\
+            << traj[i+1].point.omega[2] << ","\
+            << traj[i+1].point.omega[3] << ","\
+            << traj[i+1].point.omega[4] << ","\
+            << traj[i+1].point.omega[5] << ","\
+            << traj[i+1].point.alpha[0] << ","\
+            << traj[i+1].point.alpha[1] << ","\
+            << traj[i+1].point.alpha[2] << ","\
+            << traj[i+1].point.alpha[3] << ","\
+            << traj[i+1].point.alpha[4] << ","\
+            << traj[i+1].point.alpha[5] << endl;
     }
     os.close();
 

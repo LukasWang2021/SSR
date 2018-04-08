@@ -118,6 +118,20 @@ class ShareMem
     void setIntprtSendFlag(bool flag);    
     
     /**
+     * @brief: set data flag (Reg or IO)
+     *
+     * @param flag: send flag 
+     */
+    void setIntprtDataFlag(bool flag); 
+	
+    /**
+     * @brief: get data flag
+     *
+     * @return: data OK flag 
+     */
+    bool getIntprtDataFlag();
+	
+    /**
      * @brief: set user operation mode 
      *
      * @param mode
@@ -153,6 +167,24 @@ class ShareMem
      */
     bool isJointUpdated();
      
+    /**
+     * @brief: get Info of Reg and IO 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    bool getRegInfo(RegMap * info);
+	
+    /**
+     * @brief: get Info of Reg and IO 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    bool getDIOInfo(DIOMap * info);
+	
   private:	
 	fst_core_interface::CoreInterface   core_interface_;
 	ShmjointsCmd        shm_jnt_cmd_;		//current JointCommand    

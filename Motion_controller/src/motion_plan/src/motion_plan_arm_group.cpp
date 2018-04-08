@@ -661,9 +661,9 @@ size_t ArmGroup::getFIFOLength(void)
     {
         if (g_manual_frame == JOINT)
         {
-            if (g_manual_pick_time < g_manual_joint_coeff[0].duration_3)
+            if (manual_pick_time_ < g_manual_joint_coeff[0].duration_3)
             {
-                len = ceil((g_manual_joint_coeff[0].duration_3 - g_manual_pick_time) / g_cycle_time);
+                len = ceil((g_manual_joint_coeff[0].duration_3 - manual_pick_time_) / g_cycle_time);
             }
             else
             {
@@ -672,14 +672,14 @@ size_t ArmGroup::getFIFOLength(void)
         }
         else
         {
-            if (g_manual_pick_time < g_manual_cartesian_coeff[0].duration_3)
+            if (manual_pick_time_ < g_manual_cartesian_coeff[0].duration_3)
             {
-                //FST_INFO("cartesian: pick time=%f, duration=%f", g_manual_pick_time, g_manual_cartesian_coeff[0].duration_3);
-                len = ceil((g_manual_cartesian_coeff[0].duration_3 - g_manual_pick_time) / g_cycle_time);
+                //FST_INFO("cartesian: pick time=%f, duration=%f", manual_pick_time_, g_manual_cartesian_coeff[0].duration_3);
+                len = ceil((g_manual_cartesian_coeff[0].duration_3 - manual_pick_time_) / g_cycle_time);
             }
             else
             {
-                //FST_INFO("cartesian: pick time=%f, duration=%f", g_manual_pick_time, g_manual_cartesian_coeff[0].duration_3);
+                //FST_INFO("cartesian: pick time=%f, duration=%f", manual_pick_time_, g_manual_cartesian_coeff[0].duration_3);
                 len = 0;
             }
         }
@@ -689,7 +689,7 @@ size_t ArmGroup::getFIFOLength(void)
     {
         FST_INFO("pick seg=%d, t_tail=%d", pick_segment_, t_tail_);
         FST_INFO("auto: pick time=%f, last seg time=%f, len=%d", pick_time_, t_path_[t_tail_ - 1].time_from_start, len);
-        FST_INFO("manual: pick time=%f, total time=%f, len=%d", g_manual_pick_time, g_manual_joint_coeff[0].duration_3, len);
+        FST_INFO("manual: pick time=%f, total time=%f, len=%d", manual_pick_time_, g_manual_joint_coeff[0].duration_3, len);
     }
     
     return len;
@@ -976,17 +976,17 @@ MotionTime ArmGroup::getRemainingTime(void)
     {
         if (g_manual_frame == JOINT)
         {
-            if (g_manual_pick_time < g_manual_joint_coeff[0].duration_3)
+            if (manual_pick_time_ < g_manual_joint_coeff[0].duration_3)
             {
-                tm = g_manual_joint_coeff[0].duration_3 - g_manual_pick_time;
+                tm = g_manual_joint_coeff[0].duration_3 - manual_pick_time_;
             }
         }
         else
         {
-            if (g_manual_pick_time < g_manual_cartesian_coeff[0].duration_3)
+            if (manual_pick_time_ < g_manual_cartesian_coeff[0].duration_3)
             {
-                //FST_INFO("cartesian: pick time=%f, duration=%f", g_manual_pick_time, g_manual_cartesian_coeff[0].duration_3);
-                tm = g_manual_cartesian_coeff[0].duration_3 - g_manual_pick_time;
+                //FST_INFO("cartesian: pick time=%f, duration=%f", manual_pick_time_, g_manual_cartesian_coeff[0].duration_3);
+                tm = g_manual_cartesian_coeff[0].duration_3 - manual_pick_time_;
             }
         }
     }
@@ -1060,8 +1060,16 @@ ErrorCode ArmGroup::resetArmGroup(const Joint &joint)
 //------------------------------------------------------------
 ErrorCode ArmGroup::clearArmGroup(void)
 {
-    //TODO
     FST_INFO("clearArmGroup -------------");
+
+    t_head_ = 0;
+    t_tail_ = 0;
+
+    pick_time_ = 0;
+    pick_segment_ = 0;
+
+    auto_running_ = false;
+    manual_running_ = false;
 
     return SUCCESS;
 }
@@ -1117,6 +1125,7 @@ ErrorCode ArmGroup::autoMove(const MotionTarget &target, int id)
     if (err == SUCCESS)
     {
         auto_running_ = true;
+        pick_time_ = g_cycle_time;
         prev_traj_point_ = t_path_[t_tail_ - 1];
         prev_traj_point_.time_from_start = 0;
         if (prev_traj_point_.path_point.type == MOTION_JOINT)
@@ -1140,22 +1149,80 @@ ErrorCode ArmGroup::autoMove(const MotionTarget &target, int id)
 //------------------------------------------------------------
 ErrorCode ArmGroup::manualMove(const vector<ManualDirection> &directions)
 {
-    FST_INFO("manual_running_=%d", manual_running_);
-    if (manual_running_)
+    //FST_INFO("manual_running_=%d", manual_running_);
+    if (directions.size() != 6)
     {
-        FST_WARN("manualMove: last manual command is running, waiting before its finishing ...");
-        return SUCCESS;
+        FST_ERROR("manualMove: 6 manual directions needed, %d given", directions.size());
+        return INVALID_PARAMETER;
     }
 
-    if (directions.size() == 6)
+    ErrorCode err = SUCCESS;
+    ManualDirection dirs[6] = {directions[0], directions[1], directions[2],
+                               directions[3], directions[4], directions[5]};
+
+    if (g_manual_mode == CONTINUOUS)
     {
-        ManualDirection dirs[6] = {directions[0], directions[1], directions[2], directions[3], directions[4], directions[5]};
+        if (manual_running_)
+        {
+            if (dirs[0] == STANDBY && dirs[1] == STANDBY && dirs[2] == STANDBY &&
+                dirs[3] == STANDBY && dirs[4] == STANDBY && dirs[5] == STANDBY)
+            {
+                err = manual_.stopTeach(manual_pick_time_);
+                if (err != SUCCESS)
+                {
+                    FST_ERROR("manualMove: fail to stop in manual continuous mode");
+                }
+                return err;
+            }
+            else
+            {
+                return SUCCESS;
+            }
+        }
+        else
+        {
+            if (dirs[0] == STANDBY && dirs[1] == STANDBY && dirs[2] == STANDBY &&
+                dirs[3] == STANDBY && dirs[4] == STANDBY && dirs[5] == STANDBY)
+            {
+                return SUCCESS;
+            }
+            else
+            {
+                err = manual_.stepTeach(dirs);
+                if (err == SUCCESS)
+                {
+                    manual_running_ = true;
+                    manual_pick_time_ = 0;
+                    return SUCCESS;
+                }
+                else
+                {
+                    FST_ERROR("manualMove: failed, err=0x%llx", err);
+                    return err;
+                }
+            }
+        }
+    }
+    else
+    {
+        if (manual_running_)
+        {
+            FST_WARN("manualMove: last manual command is running, waiting before it finish ...");
+            return SUCCESS;
+        }
+
+        if (dirs[0] == STANDBY && dirs[1] == STANDBY && dirs[2] == STANDBY &&
+            dirs[3] == STANDBY && dirs[4] == STANDBY && dirs[5] == STANDBY)
+        {
+            return SUCCESS;
+        }
         
         ErrorCode err = manual_.stepTeach(dirs);
         
         if (err == SUCCESS)
         {
             manual_running_ = true;
+            manual_pick_time_ = 0;
             return SUCCESS;
         }
         else
@@ -1164,11 +1231,7 @@ ErrorCode ArmGroup::manualMove(const vector<ManualDirection> &directions)
             return err;
         }
     }
-    else
-    {
-        FST_ERROR("manualMove: 6 manual directions needed, %d given", directions.size());
-        return INVALID_PARAMETER;
-    }
+
 }
 
 //------------------------------------------------------------
@@ -1188,6 +1251,7 @@ ErrorCode ArmGroup::manualMove(const Joint &joint)
         if (err == SUCCESS)
         {
             manual_running_ = true;
+            manual_pick_time_ = 0;
             return SUCCESS;
         }
         else
@@ -1213,8 +1277,36 @@ ErrorCode ArmGroup::manualMove(const Joint &joint)
 //------------------------------------------------------------
 ErrorCode ArmGroup::manualMove(const PoseEuler &pose)
 {
-    // TODO
-    return SUCCESS;
+    FST_INFO("asdfsdafdsfsdaf");
+    if (manual_running_ == false)
+    {
+        Joint jnt;
+        ErrorCode err = inverseKinematics(pose, g_ik_reference, jnt);
+        FST_INFO("manualMove: pose=%.2f %.2f %.2f - %.4f %.4f %.4f",
+                 pose.position.x, pose.position.y, pose.position.z,
+                 pose.orientation.a, pose.orientation.b, pose.orientation.c);
+
+        if (err == SUCCESS)
+        {
+            FST_INFO("           joint=%.6f %.6f %.6f %.6f %.6f %.6f",
+                     jnt.j1, jnt.j2, jnt.j3, jnt.j4, jnt.j5, jnt.j6);
+            ManualFrame frame = manual_.getFrame();
+            manual_.setFrame(JOINT);
+            err = manualMove(jnt);
+            manual_.setFrame(frame);
+        }
+        else
+        {
+            FST_ERROR("Fail to find a valid IK result with given pose");
+        }
+
+        return err;
+    }
+    else
+    {
+        FST_ERROR("manualMove: last manual command is running");
+        return INVALID_SEQUENCE;
+    }
 }
 
 //------------------------------------------------------------
@@ -1575,9 +1667,7 @@ ErrorCode ArmGroup::autoJoint(const MotionTarget &target, int id)
     }
 
     //FST_INFO("Path plan and trajectory plan finished successfully");
-    FST_INFO("Path plan finished successfully, picking point ...");
-    FST_INFO("Path consisted of %d common points and %d trasition points.",
-             cmd->getCommonLength(), cmd->getTransitionLength());
+    FST_INFO("Path plan finished successfully with %d points, picking point ...", cmd->getPathLength());
 
     vector<PathPoint> points;
 
@@ -1786,10 +1876,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         return err;
     }
 
-    FST_INFO("Path plan finished successfully.");
-    FST_INFO("  path point num: %d common %d trasition",
-             cmd->getCommonLength(), cmd->getTransitionLength());
-    FST_INFO("Picking point ...");
+    FST_INFO("Path plan finished successfully with %d points, picking point ...", cmd->getPathLength());
 
     vector<PathPoint> points;
 
@@ -2094,7 +2181,6 @@ ErrorCode ArmGroup::planTraj()
                << p->alpha[5] << std::endl;
         }
     
-        pick_time_    = g_cycle_time;
         pick_segment_ = 0;
 /*
         for (size_t i = head - 2; i < tail + 2; i++)
@@ -2118,7 +2204,6 @@ ErrorCode ArmGroup::planJointTraj(void)
     ErrorCode err;
 
     // this should not be set here, fix it later
-    pick_time_    = g_cycle_time;
     pick_segment_ = 0;
     // setting joint limits
     Omega velocity_max[AXIS_IN_ALGORITHM];
@@ -2484,6 +2569,7 @@ ErrorCode ArmGroup::continueMove(void)
     return SUCCESS;
 }
 
+<<<<<<< HEAD
 void ArmGroup::moveFIFO(size_t start_index, int size, int offset)
 {
     size_t end_index = start_index + size;
@@ -2504,6 +2590,8 @@ void ArmGroup::moveFIFO(size_t start_index, int size, int offset)
     else
     {}    
 }
+=======
+>>>>>>> 10582014cb61128a20506997373f6aca962f0d64
 
 ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
 {
@@ -2549,7 +2637,7 @@ ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
             //         js->joint[4], js->omega[4], js->alpha[4],
             //         tm, t_path_[pick_segment_].time_from_start, t_path_[pick_segment_].duration,
             //         jout.joint.j5);
-            FST_INFO("%d - %.4f - %f,%f,%f,%f,%f,%f", jout.level, pick_time_,
+            FST_INFO("%d - %.3f - %f,%f,%f,%f,%f,%f", jout.level, pick_time_,
                      jout.joint.j1, jout.joint.j2, jout.joint.j3,
                      jout.joint.j4, jout.joint.j5, jout.joint.j6);
             points.push_back(jout);
@@ -2566,7 +2654,7 @@ ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
             jout.joint.j5 = t_path_[t_tail_ - 1].point.joint[4];
             jout.joint.j6 = t_path_[t_tail_ - 1].point.joint[5];
 
-            FST_INFO("%d - %.4f - %f,%f,%f,%f,%f,%f", jout.level, pick_time_,
+            FST_INFO("%d - %.3f - %f,%f,%f,%f,%f,%f", jout.level, pick_time_,
                      jout.joint.j1, jout.joint.j2, jout.joint.j3,
                      jout.joint.j4, jout.joint.j5, jout.joint.j6);
             points.push_back(jout);
@@ -2602,45 +2690,54 @@ ErrorCode ArmGroup::pickManualJoint(size_t num, vector<JointOutput> &points)
 
     FST_WARN("pickManualJoint: pick point");
 
-    if (g_manual_mode == STEP || g_manual_mode == CONTINUOUS)
+    if (manual_pick_time_ < g_manual_joint_coeff[0].duration_3)
     {
-        if (g_manual_pick_time < g_manual_joint_coeff[0].duration_3)
+        size_t index;
+        double *angle;
+        double *start;
+        double *target;
+
+        for (index = 0; index < num; index++)
         {
-            size_t index;
-            double *angle;
-            double *start;
+            manual_pick_time_ += g_cycle_time;
+            angle  = &jout.joint.j1;
+            start  = &g_manual_joint_start.j1;
+            target = &g_manual_joint_target.j1;
 
-            for (index = 0; index < num; index++)
+            jout.id = -1;
+            jout.level = POINT_MIDDLE;
+            if (manual_pick_time_ < g_cycle_time + MINIMUM_E9)
             {
-                angle = &jout.joint.j1;
-                start = &g_manual_joint_start.j1;
-                g_manual_pick_time += g_cycle_time;
-
-                jout.id = -1;
-                jout.level = POINT_MIDDLE;
-                if (g_manual_pick_time < g_cycle_time + MINIMUM_E9)
+                jout.level = POINT_START;
+            }
+            
+            for (size_t jnt = 0; jnt < 6; jnt++)
+            {
+                if (manual_pick_time_ < g_manual_joint_coeff[jnt].duration_1)
                 {
-                    jout.level = POINT_START;
+                    *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * manual_pick_time_ *
+                             manual_pick_time_ / 2;
                 }
-                
-                for (size_t jnt = 0; jnt < 6; jnt++)
+                else if (manual_pick_time_ < g_manual_joint_coeff[jnt].duration_2)
                 {
-                    if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_1)
-                    {
-                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_pick_time * g_manual_pick_time / 2;
-                    }
-                    else if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_2)
-                    {
-                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
-                                 g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_1);
-                    }
-                    else if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_3)
-                    {
-                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
-                                 g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * (g_manual_joint_coeff[jnt].duration_2 - g_manual_joint_coeff[jnt].duration_1) -
-                                 g_manual_joint_coeff[jnt].alpha_3 * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_2) * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_2) / 2;
-                    }
-                    else
+                    *angle = *start + g_manual_joint_coeff[jnt].alpha_1 *
+                             g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
+                             g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 *
+                            (manual_pick_time_ - g_manual_joint_coeff[jnt].duration_1);
+                }
+                else if (manual_pick_time_ < g_manual_joint_coeff[jnt].duration_3)
+                {
+                    *angle = *start + g_manual_joint_coeff[jnt].alpha_1 *
+                             g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
+                             g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 *
+                            (g_manual_joint_coeff[jnt].duration_2 - g_manual_joint_coeff[jnt].duration_1) -
+                             g_manual_joint_coeff[jnt].alpha_3 *
+                            (manual_pick_time_ - g_manual_joint_coeff[jnt].duration_2) *
+                            (manual_pick_time_ - g_manual_joint_coeff[jnt].duration_2) / 2;
+                }
+                else
+                {
+                    if (g_manual_mode == STEP)
                     {
                         if (g_manual_direction[jnt] == STANDBY)
                         {
@@ -2655,115 +2752,58 @@ ErrorCode ArmGroup::pickManualJoint(size_t num, vector<JointOutput> &points)
                             *angle = *start - g_manual_step_joint;
                         }
                     }
-
-                    ++ angle;
-                    ++ start;
-                }
-
-                points.push_back(jout);
-
-                if (g_manual_pick_time >= g_manual_joint_coeff[0].duration_3)
-                {
-                    points.back().level = POINT_ENDING;
-                    FST_INFO("%d - %f %f %f %f %f %f", points.back().level, points.back().joint.j1,
-                              points.back().joint.j2,  points.back().joint.j3,  points.back().joint.j4, 
-                              points.back().joint.j5,  points.back().joint.j6);
-
-                    manual_running_ = false;
-                    break;
-                }
-
-                FST_INFO("%d - %f %f %f %f %f %f", points.back().level, points.back().joint.j1,
-                          points.back().joint.j2,  points.back().joint.j3,  points.back().joint.j4, 
-                          points.back().joint.j5,  points.back().joint.j6);
-            }
-
-            return SUCCESS;
-        }
-        else
-        {
-            FST_INFO("pick time=%f, duration=%f", g_manual_pick_time, g_manual_joint_coeff[0].duration_3);
-            return SUCCESS;
-        }
-    }
-    else
-    {
-        if (g_manual_pick_time < g_manual_joint_coeff[0].duration_3)
-        {
-            size_t index;
-            double *angle;
-            double *start;
-            double *target;
-
-            for (index = 0; index < num; index++)
-            {
-                angle = &jout.joint.j1;
-                start = &g_manual_joint_start.j1;
-                target = &g_manual_joint_target.j1;
-                g_manual_pick_time += g_cycle_time;
-
-                jout.id = -1;
-                jout.level = POINT_MIDDLE;
-                if (g_manual_pick_time < g_cycle_time + MINIMUM_E9)
-                {
-                    jout.level = POINT_START;
-                }
-                
-                for (size_t jnt = 0; jnt < 6; jnt++)
-                {
-                    if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_1)
+                    else if (g_manual_mode == CONTINUOUS)
                     {
-                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_pick_time * g_manual_pick_time / 2;
-                    }
-                    else if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_2)
-                    {
-                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
-                                 g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_1);
-                    }
-                    else if (g_manual_pick_time < g_manual_joint_coeff[jnt].duration_3)
-                    {
-                        *angle = *start + g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
-                                 g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 * (g_manual_joint_coeff[jnt].duration_2 - g_manual_joint_coeff[jnt].duration_1) -
-                                 g_manual_joint_coeff[jnt].alpha_3 * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_2) * (g_manual_pick_time - g_manual_joint_coeff[jnt].duration_2) / 2;
+                        if (g_manual_direction[jnt] != STANDBY)
+                        {
+                            *angle = *start + g_manual_joint_coeff[jnt].alpha_1 *
+                                g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2 +
+                                g_manual_joint_coeff[jnt].alpha_1 * g_manual_joint_coeff[jnt].duration_1 *
+                               (g_manual_joint_coeff[jnt].duration_2 - g_manual_joint_coeff[jnt].duration_1) -
+                                g_manual_joint_coeff[jnt].alpha_3 *
+                                g_manual_joint_coeff[jnt].duration_1 * g_manual_joint_coeff[jnt].duration_1 / 2;
+                        }
+                        else
+                        {
+                            *angle = *start;
+                        }
                     }
                     else
                     {
                         *angle = *target;
                     }
-
-                    ++ angle;
-                    ++ start;
-                    ++ target;
                 }
 
-                points.push_back(jout);
-
-                if (g_manual_pick_time >= g_manual_joint_coeff[0].duration_3)
-                {
-                    points.back().level = POINT_ENDING;
-                    FST_INFO("%d - %f %f %f %f %f %f", points.back().level, points.back().joint.j1,
-                              points.back().joint.j2,  points.back().joint.j3,  points.back().joint.j4, 
-                              points.back().joint.j5,  points.back().joint.j6);
-
-                    manual_running_ = false;
-                    break;
-                }
-
-                FST_INFO("%d - %f %f %f %f %f %f", points.back().level, points.back().joint.j1,
-                          points.back().joint.j2,  points.back().joint.j3,  points.back().joint.j4, 
-                          points.back().joint.j5,  points.back().joint.j6);
+                ++ angle;
+                ++ start;
+                ++ target;
             }
 
-            return SUCCESS;
+            points.push_back(jout);
+
+            if (manual_pick_time_ >= g_manual_joint_coeff[0].duration_3)
+            {
+                points.back().level = POINT_ENDING;
+                FST_INFO("%d - %.3f - %f %f %f %f %f %f", points.back().level, manual_pick_time_,
+                          points.back().joint.j1, points.back().joint.j2,  points.back().joint.j3,
+                          points.back().joint.j4, points.back().joint.j5,  points.back().joint.j6);
+
+                manual_running_ = false;
+                break;
+            }
+
+            FST_INFO("%d - %.3f - %f %f %f %f %f %f", points.back().level, manual_pick_time_,
+                      points.back().joint.j1, points.back().joint.j2, points.back().joint.j3,
+                      points.back().joint.j4, points.back().joint.j5, points.back().joint.j6);
         }
-        else
-        {
-            FST_INFO("pick time=%f, duration=%f", g_manual_pick_time, g_manual_joint_coeff[0].duration_3);
-            return SUCCESS;
-        }
+
         return SUCCESS;
     }
-
+    else
+    {
+        FST_INFO("pick time=%f, duration=%f", manual_pick_time_, g_manual_joint_coeff[0].duration_3);
+        return SUCCESS;
+    }
 }
 
 
@@ -2774,45 +2814,52 @@ ErrorCode ArmGroup::pickManualCartesian(size_t num, vector<JointOutput> &points)
 
     FST_WARN("pickManualCartesian: pick point");
 
-    if (g_manual_mode == STEP || g_manual_mode == CONTINUOUS)
+    if (manual_pick_time_ < g_manual_cartesian_coeff[0].duration_3)
     {
-        if (g_manual_pick_time < g_manual_cartesian_coeff[0].duration_3)
+        size_t index;
+        double *value;
+        double *start;
+
+        for (index = 0; index < num; index++)
         {
-            size_t index;
-            double *value;
-            double *start;
+            manual_pick_time_ += g_cycle_time;
+            value  = &pose.position.x;
+            start  = &g_manual_cartesian_start.position.x;
 
-            for (index = 0; index < num; index++)
+            jout.id = -1;
+            jout.level = POINT_MIDDLE;
+            if (manual_pick_time_ < g_cycle_time + MINIMUM_E9)
             {
-                value = &pose.position.x;
-                start = &g_manual_cartesian_start.position.x;
-                g_manual_pick_time += g_cycle_time;
-
-                jout.id = -1;
-                jout.level = POINT_MIDDLE;
-                if (g_manual_pick_time < g_cycle_time + MINIMUM_E9)
+                jout.level = POINT_START;
+            }
+            
+            for (size_t i = 0; i < 6; i++)
+            {
+                if (manual_pick_time_ < g_manual_cartesian_coeff[i].duration_1)
                 {
-                    jout.level = POINT_START;
+                    *value = *start + g_manual_cartesian_coeff[i].alpha_1 * manual_pick_time_ *
+                             manual_pick_time_ / 2;
                 }
-                
-                for (size_t i = 0; i < 6; i++)
+                else if (manual_pick_time_ < g_manual_cartesian_coeff[i].duration_2)
                 {
-                    if (g_manual_pick_time < g_manual_cartesian_coeff[i].duration_1)
-                    {
-                        *value = *start + g_manual_cartesian_coeff[i].alpha_1 * g_manual_pick_time * g_manual_pick_time / 2;
-                    }
-                    else if (g_manual_pick_time < g_manual_cartesian_coeff[i].duration_2)
-                    {
-                        *value = *start + g_manual_cartesian_coeff[i].alpha_1 * g_manual_cartesian_coeff[i].duration_1 * g_manual_cartesian_coeff[i].duration_1 / 2 +
-                                 g_manual_cartesian_coeff[i].alpha_1 * g_manual_cartesian_coeff[i].duration_1 * (g_manual_pick_time - g_manual_cartesian_coeff[i].duration_1);
-                    }
-                    else if (g_manual_pick_time < g_manual_cartesian_coeff[i].duration_3)
-                    {
-                        *value = *start + g_manual_cartesian_coeff[i].alpha_1 * g_manual_cartesian_coeff[i].duration_1 * g_manual_cartesian_coeff[i].duration_1 / 2 +
-                                 g_manual_cartesian_coeff[i].alpha_1 * g_manual_cartesian_coeff[i].duration_1 * (g_manual_cartesian_coeff[i].duration_2 - g_manual_cartesian_coeff[i].duration_1) -
-                                 g_manual_cartesian_coeff[i].alpha_3 * (g_manual_pick_time - g_manual_cartesian_coeff[i].duration_2) * (g_manual_pick_time - g_manual_cartesian_coeff[i].duration_2) / 2;
-                    }
-                    else
+                    *value = *start + g_manual_cartesian_coeff[i].alpha_1 *
+                             g_manual_cartesian_coeff[i].duration_1 * g_manual_cartesian_coeff[i].duration_1 / 2 +
+                             g_manual_cartesian_coeff[i].alpha_1 * g_manual_cartesian_coeff[i].duration_1 *
+                            (manual_pick_time_ - g_manual_cartesian_coeff[i].duration_1);
+                }
+                else if (manual_pick_time_ < g_manual_cartesian_coeff[i].duration_3)
+                {
+                    *value = *start + g_manual_cartesian_coeff[i].alpha_1 *
+                             g_manual_cartesian_coeff[i].duration_1 * g_manual_cartesian_coeff[i].duration_1 / 2 +
+                             g_manual_cartesian_coeff[i].alpha_1 * g_manual_cartesian_coeff[i].duration_1 *
+                            (g_manual_cartesian_coeff[i].duration_2 - g_manual_cartesian_coeff[i].duration_1) -
+                             g_manual_cartesian_coeff[i].alpha_3 *
+                            (manual_pick_time_ - g_manual_cartesian_coeff[i].duration_2) *
+                            (manual_pick_time_ - g_manual_cartesian_coeff[i].duration_2) / 2;
+                }
+                else
+                {
+                    if (g_manual_mode == STEP)
                     {
                         if (g_manual_direction[i] == STANDBY)
                         {
@@ -2827,48 +2874,58 @@ ErrorCode ArmGroup::pickManualCartesian(size_t num, vector<JointOutput> &points)
                             *value = *start - (i < 3 ? g_manual_step_position : g_manual_step_orientation);
                         }
                     }
-
-                    ++ value;
-                    ++ start;
+                    else if (g_manual_mode == CONTINUOUS)
+                    {
+                        if (g_manual_direction[i] == STANDBY)
+                        {
+                            *value = *start;
+                        }
+                        else
+                        {
+                            *value = *start + g_manual_cartesian_coeff[i].alpha_1 *
+                                 g_manual_cartesian_coeff[i].duration_1 * g_manual_cartesian_coeff[i].duration_1 / 2 +
+                                 g_manual_cartesian_coeff[i].alpha_1 * g_manual_cartesian_coeff[i].duration_1 *
+                                (g_manual_cartesian_coeff[i].duration_2 - g_manual_cartesian_coeff[i].duration_1) -
+                                 g_manual_cartesian_coeff[i].alpha_3 *
+                                (manual_pick_time_ - g_manual_cartesian_coeff[i].duration_2) *
+                                (manual_pick_time_ - g_manual_cartesian_coeff[i].duration_2) / 2;
+                        }
+                    }
                 }
 
-                //FST_INFO("# - %f %f %f %f %f %f", pose.position.x, pose.position.y, pose.position.z,
-                //         pose.orientation.a, pose.orientation.b, pose.orientation.c);
-
-                if (chainIK(pose, g_ik_reference, jout.joint) == SUCCESS)
-                {
-                    points.push_back(jout);
-                }
-
-
-                if (g_manual_pick_time >= g_manual_cartesian_coeff[0].duration_3)
-                {
-                    points.back().level = POINT_ENDING;
-                    //FST_INFO("%d - %f %f %f %f %f %f", points.back().level, points.back().joint.j1,
-                    //          points.back().joint.j2,  points.back().joint.j3,  points.back().joint.j4,
-                    //          points.back().joint.j5,  points.back().joint.j6);
-
-                    manual_running_ = false;
-                    break;
-                }
-
-                //FST_INFO("%d - %f %f %f %f %f %f", points.back().level, points.back().joint.j1,
-                //          points.back().joint.j2,  points.back().joint.j3,  points.back().joint.j4, 
-                //          points.back().joint.j5,  points.back().joint.j6);
+                ++ value;
+                ++ start;
             }
 
-            return SUCCESS;
+            //FST_INFO("# - %f %f %f %f %f %f", pose.position.x, pose.position.y, pose.position.z,
+            //         pose.orientation.a, pose.orientation.b, pose.orientation.c);
+
+            if (chainIK(pose, g_ik_reference, jout.joint) == SUCCESS)
+            {
+                points.push_back(jout);
+            }
+
+            if (manual_pick_time_ >= g_manual_cartesian_coeff[0].duration_3)
+            {
+                points.back().level = POINT_ENDING;
+                FST_INFO("%d - %.3f - %f %f %f %f %f %f", points.back().level, manual_pick_time_,
+                         points.back().joint.j1, points.back().joint.j2,  points.back().joint.j3,
+                         points.back().joint.j4, points.back().joint.j5,  points.back().joint.j6);
+
+                manual_running_ = false;
+                break;
+            }
+
+            FST_INFO("%d - %.3f - %f %f %f %f %f %f", points.back().level, manual_pick_time_,
+                     points.back().joint.j1, points.back().joint.j2,  points.back().joint.j3,
+                     points.back().joint.j4, points.back().joint.j5,  points.back().joint.j6);
         }
-        else
-        {
-            FST_INFO("pick time=%f, duration=%f", g_manual_pick_time, g_manual_cartesian_coeff[0].duration_3);
-            return SUCCESS;
-        }
+
+        return SUCCESS;
     }
     else
     {
-        // TODO
-        FST_INFO("mode is not STEP CONTINUOUS");
+        FST_INFO("pick time=%f, duration=%f", manual_pick_time_, g_manual_cartesian_coeff[0].duration_3);
         return SUCCESS;
     }
 

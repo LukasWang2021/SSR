@@ -691,7 +691,6 @@ ErrorCode MotionCommand::planJointPath(void)
 
     // compute max_stamp
     max_stamp_ = ceil(duration_max / (g_cycle_radian / velocity_max[duration_max_index]));
-
     for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
     {
         joint_coeff_[i] = delta_joint[i] / max_stamp_;

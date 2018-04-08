@@ -523,13 +523,6 @@ class Controller
      * @param params
      */
     int getRegisterReply(void* params);
-
-    /**
-     * @brief: callback for getting register 
-     *
-     * @param params
-     */
-    void getRegister(void* params);
 	
     /**
      * @brief: callback for setting user registers 
@@ -553,6 +546,20 @@ class Controller
      * @param params
      */
     void getDIO(void* params);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    void getRegister(void* params);
+	
+    /**
+     * @brief: callback for setting user registers 
+     *
+     * @param params
+     */
+    void getRegisterInfo(void* params_info);
 	
   private:
     static Controller           *instance_;     //this class 

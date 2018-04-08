@@ -68,6 +68,8 @@
 #define PATH_PLOT_FIFO2             ("root/Plot/fifo2")
 #define PATH_PLOT_FIFO1             ("root/Plot/fifo1")
 
+#define PATH_REGISTER             ("root/Register")
+
 #define	FK_TOOL_COORD_ID		(4581)
 #define HOSTIN_JOINT_TRAJ_ID	(4632)
 #define HOSTIN_TOOL_COORD_ID	(4633)

@@ -658,8 +658,6 @@ private:
     ErrorCode planTraj(void);
 
     ErrorCode planJointTraj(void);
-
-    bool isJointStop(size_t pick);
   
     void moveFIFO(size_t start_index, int size, int offset);        
 

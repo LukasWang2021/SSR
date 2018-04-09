@@ -469,7 +469,8 @@ void forwardMaximumDuration(const JointState je, const JointState js, double *al
 
 std::ofstream os("cart_vel.csv");
 
-
+extern bool tflag;
+int cc = 0;
 ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, int flg)
 {
     ErrorCode err = SUCCESS;
@@ -541,19 +542,6 @@ ErrorCode foreCycle(const ControlPoint &prev_point, ControlPoint &this_point, in
     alpha_min[4] = alpha_min[4] > -g_soft_constraint.j5.max_alpha ? alpha_min[4] : -g_soft_constraint.j1.max_alpha;
     alpha_min[5] = alpha_min[5] > -g_soft_constraint.j6.max_alpha ? alpha_min[5] : -g_soft_constraint.j1.max_alpha;
 
-    //FST_INFO("--------------------------fore cycle----------------------------------------");
-    //FST_WARN("prev alpha:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
-             prev_point.point.alpha[0], prev_point.point.alpha[1], prev_point.point.alpha[2],\
-             prev_point.point.alpha[3], prev_point.point.alpha[4], prev_point.point.alpha[5]);
-    //FST_WARN("prev omega:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
-             prev_point.point.omega[0], prev_point.point.omega[1], prev_point.point.omega[2],\
-             prev_point.point.omega[3], prev_point.point.omega[4], prev_point.point.omega[5]);
-    //FST_WARN("prev joint:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
-             prev_point.point.joint[0], prev_point.point.joint[1], prev_point.point.joint[2],\
-             prev_point.point.joint[3], prev_point.point.joint[4], prev_point.point.joint[5]);
-    //FST_WARN("this joint:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
-             this_point.point.joint[0], this_point.point.joint[1], this_point.point.joint[2],\
-             this_point.point.joint[3], this_point.point.joint[4], this_point.point.joint[5]);
     //FST_WARN("alpha max: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
              alpha_max[0], alpha_max[1], alpha_max[2], alpha_max[3], alpha_max[4], alpha_max[5]);
     //FST_WARN("alpha min: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
@@ -699,7 +687,6 @@ ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg)
         }
     }
 
-    //FST_INFO("--------------------------back cycle----------------------------------------");
     //FST_WARN("alpha:     %.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
              next_point.point.alpha[0], next_point.point.alpha[1], next_point.point.alpha[2],\
              next_point.point.alpha[3], next_point.point.alpha[4], next_point.point.alpha[5]);
@@ -707,6 +694,9 @@ ErrorCode backCycle(ControlPoint &next_point, ControlPoint &this_point, int flg)
              alpha_max[0], alpha_max[1], alpha_max[2], alpha_max[3], alpha_max[4], alpha_max[5]);
     //FST_WARN("alpha min: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
              alpha_min[0], alpha_min[1], alpha_min[2], alpha_min[3], alpha_min[4], alpha_min[5]);
+    //FST_WARN("this joint:%.4f, %.4f, %.4f,  %.4f, %.4f, %.4f",\
+             this_point.point.joint[0], this_point.point.joint[1], this_point.point.joint[2],\
+             this_point.point.joint[3], this_point.point.joint[4], this_point.point.joint[5]);    
 
     alpha_max[0] = alpha_max[0] < g_soft_constraint.j1.max_alpha ? alpha_max[0] : g_soft_constraint.j1.max_alpha;
     alpha_max[1] = alpha_max[1] < g_soft_constraint.j2.max_alpha ? alpha_max[1] : g_soft_constraint.j2.max_alpha;
@@ -1023,22 +1013,30 @@ void computeDurationMin(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* sta
             duration_min = duration[i];
         }  
     }
+}
 
+void computeLastDurationMin(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, MotionTime& duration_min)
+{
+    MotionTime duration[AXIS_IN_ALGORITHM] = {0};
     // if all axes reach the last step of pause, it might cause duration_min goes to DBL_MAX.
-    // take the maximum duration of all axes needed to by applying under-limit acceleration.
+    // take the minimum duration of all axes needed to by applying under-limit acceleration.
     if(duration_min == DBL_MAX)
     {
-        duration_min = 0;
+        //duration_min = 0;
         for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
         {
-            duration[i] = 2 * fabs((end_joint_ptr[i] - start_joint_ptr[i]) / start_omega_ptr[i]);
-            if(duration_min < duration[i])
+            if(fabs(start_omega_ptr[i]) > MINIMUM_E9)
             {
-                duration_min = duration[i];
+                duration[i] = 2 * fabs((end_joint_ptr[i] - start_joint_ptr[i]) / start_omega_ptr[i]);
+                if(duration_min > duration[i])
+                {
+                    duration_min = duration[i];
+                }
             }
         }
     }
 }
+
 
 void computeTrajectory(bool is_pause, bool is_forward, size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
                             MotionTime duration, Alpha* acc_limit, Omega* velocity_limit, ControlPoint* target)

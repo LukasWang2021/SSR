@@ -1727,7 +1727,7 @@ ErrorCode ArmGroup::autoJoint(const MotionTarget &target, int id)
             for(size_t i = 0; i < t_tail_; ++i)
             {
                 FST_INFO("point[%d]: joint = %f, omega = %f, alpha = %f, time = %f", 
-                    i, t_path_[i].point.joint[0], t_path_[i].point.omega[0], t_path_[i].point.alpha[0], t_path_[i].time_from_start);
+                    i, t_path_[i].point.joint[4], t_path_[i].point.omega[4], t_path_[i].point.alpha[4], t_path_[i].time_from_start);
                 tos  << t_path_[i].point.joint[0] << " "
                     << t_path_[i].point.joint[1] << " "
                     << t_path_[i].point.joint[2] << " "
@@ -1772,7 +1772,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
 {
     MotionTarget tar = target;
 
-    FST_INFO("autoLine: checking line parameters ...");
+    //FST_INFO("autoLine: checking line parameters ...");
 
     if (tar.vel < 0)
     {
@@ -1808,7 +1808,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         return INVALID_PARAMETER;
     }
 
-    FST_INFO("  target pose: %f %f %f - %f %f %f",  target.pose_target.position.x,
+    /*FST_INFO("  target pose: %f %f %f - %f %f %f",  target.pose_target.position.x,
                                                     target.pose_target.position.y,
                                                     target.pose_target.position.z,
                                                     target.pose_target.orientation.a,
@@ -1816,7 +1816,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
                                                     target.pose_target.orientation.c);
     FST_INFO("  velocity=%.2f, acceleration=%.2f, cnt=%.2f", tar.vel, tar.acc, tar.cnt);
 
-    FST_INFO("Parameter check passed, planning path ...");
+    FST_INFO("Parameter check passed, planning path ...");*/
 
     MotionCommand *cmd = getFreeMotionCommand();
 
@@ -1876,7 +1876,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         return err;
     }
 
-    FST_INFO("Path plan finished successfully with %d points, picking point ...", cmd->getPathLength());
+    //FST_INFO("Path plan finished successfully with %d points, picking point ...", cmd->getPathLength());
 
     vector<PathPoint> points;
 
@@ -1888,7 +1888,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         err = MOTION_INTERNAL_FAULT;
     }
 
-    for (vector<PathPoint>::iterator it = points.begin(); it != points.end(); ++it)
+    /*for (vector<PathPoint>::iterator it = points.begin(); it != points.end(); ++it)
     {
         FST_INFO("%d - %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f",\
                  it->stamp,\
@@ -1901,26 +1901,26 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
                  it->pose.orientation.z);
     }
 
-    FST_INFO("  %d points picked out", points.size());
+    FST_INFO("  %d points picked out", points.size());*/
 
     t_head_ = 0;
     t_tail_ = 0;
 
-    FST_INFO("Converting path point to joint space ...");
+    //FST_INFO("Converting path point to joint space ...");
 
     for (vector<PathPoint>::iterator it = points.begin(); it != points.end(); ++it)
     {
         t_path_[t_tail_].path_point = *it;
         err = convertPath2Trajectory(t_path_[t_tail_]);
 
-        FST_INFO("%d - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
+        /*FST_INFO("%d - %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",\
                  t_path_[t_tail_].path_point.stamp,\
                  t_path_[t_tail_].point.joint[0],\
                  t_path_[t_tail_].point.joint[1],\
                  t_path_[t_tail_].point.joint[2],\
                  t_path_[t_tail_].point.joint[3],\
                  t_path_[t_tail_].point.joint[4],\
-                 t_path_[t_tail_].point.joint[5]);
+                 t_path_[t_tail_].point.joint[5]);*/
 
         if (err != SUCCESS)
         {
@@ -1931,8 +1931,8 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         t_tail_++;
     }
 
-    FST_INFO("  %d points converted", t_tail_ - t_head_);
-    FST_INFO("Create trajectory ...");
+    //FST_INFO("  %d points converted", t_tail_ - t_head_);
+    //FST_INFO("Create trajectory ...");
 
     if (t_head_ != t_tail_)
     {
@@ -1940,7 +1940,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
         if (err == SUCCESS)
         {
             memcpy(&g_start_joint, t_path_[t_tail_ - 1].point.joint, sizeof(Joint));
-            FST_INFO("  create traj success");
+            //FST_INFO("  create traj success");
         }
         else
         {
@@ -2011,14 +2011,14 @@ ErrorCode ArmGroup::convertPath2Trajectory(ControlPoint &cp)
         else
         {
             FST_ERROR("IK failed: source=%p, stamp=%d", pp.source, pp.stamp);
-            FST_INFO("Pose: (%.4f, %.4f, %.4f) - (%.4f, %.4f, %.4f, %.4f)",
+            /*FST_INFO("Pose: (%.4f, %.4f, %.4f) - (%.4f, %.4f, %.4f, %.4f)",
                      pp.pose.position.x, pp.pose.position.y, pp.pose.position.z,
                      pp.pose.orientation.w, pp.pose.orientation.x, pp.pose.orientation.y, pp.pose.orientation.z);
             FST_INFO("Reference: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
                      g_ik_reference.j1, g_ik_reference.j2, g_ik_reference.j3,
                      g_ik_reference.j4, g_ik_reference.j5, g_ik_reference.j6);
             FST_INFO("Joint:     %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                    jp.joint[0], jp.joint[1], jp.joint[2], jp.joint[3], jp.joint[4], jp.joint[5]);
+                    jp.joint[0], jp.joint[1], jp.joint[2], jp.joint[3], jp.joint[4], jp.joint[5]);*/
         }
     }
     else
@@ -2047,6 +2047,7 @@ ErrorCode ArmGroup::planTraj()
         double fore_vel = 0;
         double back_vel = 0;
         memset(t_path_[tail - 1].point.omega, 0, NUM_OF_JOINT * sizeof(double));
+        memset(t_path_[tail - 1].point.alpha, 0, NUM_OF_JOINT * sizeof(double));
 
         while (tail > head + 2)
         {
@@ -2163,7 +2164,7 @@ ErrorCode ArmGroup::planTraj()
         {
             pp = &t_path_[j];
             p = &pp->point;
-            FST_WARN("stamp=%d, time_from_start=%.6f", pp->path_point.stamp, pp->time_from_start);
+            //FST_WARN("stamp=%d, time_from_start=%.6f", pp->path_point.stamp, pp->time_from_start);
             //FST_INFO("duration=%.6f, exp_duration=%.6f", pp->duration, pp->expect_duration);
             //FST_INFO("j1-j6: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", p->joint[0], p->joint[1], p->joint[2], p->joint[3], p->joint[4], p->joint[5]);
             //FST_INFO("w1-w6: %.f, %.6f, %.6f, %.6f, %.6f, %.6f", p->omega[0], p->omega[1], p->omega[2], p->omega[3], p->omega[4], p->omega[5]);
@@ -2300,23 +2301,6 @@ ErrorCode ArmGroup::planJointTraj(void)
     return SUCCESS;
 }
 
-bool ArmGroup::isJointStop(size_t pick)
-{
-    if(fabs(t_path_[pick].point.omega[0]) > MINIMUM_E9
-            || fabs(t_path_[pick].point.omega[1]) > MINIMUM_E9
-            || fabs(t_path_[pick].point.omega[2]) > MINIMUM_E9
-            || fabs(t_path_[pick].point.omega[3]) > MINIMUM_E9
-            || fabs(t_path_[pick].point.omega[4]) > MINIMUM_E9
-            || fabs(t_path_[pick].point.omega[5]) > MINIMUM_E9)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
 ErrorCode ArmGroup::pauseMove(size_t pick_segment)
 {
     ErrorCode err;
@@ -2352,15 +2336,26 @@ ErrorCode ArmGroup::pauseMove(size_t pick_segment)
     Angle* start_joint_ptr = NULL;
     Angle* end_joint_ptr = NULL;
     Omega* start_omega_ptr = NULL;
-    MotionTime duration_min = 0;
-    while(!isJointStop(pick_current))
+    MotionTime duration_min = 0, last_duration_min = 0;
+    bool isLastStep = false;
+    while(!isLastStep)
     {
         start_joint_ptr = (Angle*)&t_path_[pick_current].point.joint;
         end_joint_ptr = (Angle*)&t_path_[pick_current + 1].point.joint;
         start_omega_ptr = (Angle*)&t_path_[pick_current].point.omega;
         computeDurationMin(start_joint_ptr, end_joint_ptr, start_omega_ptr, acc_max, velocity_max, duration_min);
+        if(duration_min == DBL_MAX)
+        {
+            isLastStep = true;
+            computeLastDurationMin(start_joint_ptr, end_joint_ptr, start_omega_ptr, duration_min);
+            if(duration_min > 2 * last_duration_min)
+            {
+                break;
+            }
+        }
         computeTrajectory(true, true, pick_current + 1, start_joint_ptr, end_joint_ptr, start_omega_ptr, duration_min, acc_max, velocity_max, t_path_);
         t_path_[pick_current + 1].time_from_start = t_path_[pick_current].time_from_start + duration_min;
+        last_duration_min = duration_min;
         ++pick_current;
     }
     t_real_start_ = pick_current + 1;
@@ -2374,7 +2369,7 @@ ErrorCode ArmGroup::pauseMove(size_t pick_segment)
     for(size_t i = 0; i < t_tail_; ++i)
     {
         FST_INFO("point[%d]: joint = %f, omega = %f, alpha = %f, time = %f", 
-            i, t_path_[i].point.joint[0], t_path_[i].point.omega[0], t_path_[i].point.alpha[0], t_path_[i].time_from_start);
+            i, t_path_[i].point.joint[4], t_path_[i].point.omega[4], t_path_[i].point.alpha[4], t_path_[i].time_from_start);
         tos1  << t_path_[i].point.joint[0] << " "
             << t_path_[i].point.joint[1] << " "
             << t_path_[i].point.joint[2] << " "
@@ -2465,7 +2460,7 @@ ErrorCode ArmGroup::continueMove(void)
     if(t_tail_ < t_real_start_) // the pause action happened in continue MOVJ phase
     {
         size = t_real_end_ - t_real_start_;
-        offset = cmd->getPathLength() - t_real_start_;
+        offset = cmd->getPathLength() - t_real_start_ + 1;  // +1 is for the insertion of static point
         moveFIFO(t_real_start_, size, offset);
         t_real_start_ = t_real_start_ + offset;
         t_real_end_ = t_real_start_ + size;
@@ -2473,7 +2468,7 @@ ErrorCode ArmGroup::continueMove(void)
     else    // the pause action happened in command motion phase
     {
         size = t_real_end_ - t_tail_;
-        offset = cmd->getPathLength() - t_tail_;
+        offset = cmd->getPathLength() - t_tail_ + 1;    // +1 is for the insertion of static point
         moveFIFO(t_tail_, size, offset);
         t_real_start_ = t_tail_ + offset;
         t_real_end_ = t_real_start_ + size;
@@ -2509,13 +2504,25 @@ ErrorCode ArmGroup::continueMove(void)
         err = planJointTraj();
     }
 
+    // insert a static point which confirms omega=0, alpha=0
+    memcpy(t_path_[t_tail_].point.joint, t_path_[t_tail_ - 1].point.joint, NUM_OF_JOINT * sizeof(double));
+    memset(t_path_[t_tail_].point.omega, 0, NUM_OF_JOINT * sizeof(double));
+    memset(t_path_[t_tail_].point.alpha, 0, NUM_OF_JOINT * sizeof(double));
+    t_path_[t_tail_].time_from_start = t_path_[t_tail_ - 1].time_from_start + g_cycle_time;
+    ++t_tail_;
+
     // regenerate the trajectory of the remaining path of paused motion
+    memcpy(&g_start_joint, t_path_[t_tail_ - 1].point.joint, sizeof(Joint));
+    prev_traj_point_.point = t_path_[t_tail_ - 1].point;
+    prev_traj_point_.time_from_start = t_path_[t_tail_ - 1].time_from_start;
     t_head_ = t_tail_;
     t_tail_ = t_tail_ + size;
     auto_running_ = true;
-    memcpy(&g_start_joint, t_path_[t_tail_ - 1].point.joint, sizeof(Joint));
-    prev_traj_point_.point = t_path_[t_tail_ - 1].point;
-    prev_traj_point_.time_from_start = t_path_[t_head_ - 1].time_from_start;
+
+FST_INFO("t_head = %d, t_tail = %d", t_head_, t_tail_);
+FST_INFO("g_start_joint: joint = %f", g_start_joint.j1);
+FST_INFO("prev_point: joint = %f, omega = %f, alpha = %f, time = %f", 
+    prev_traj_point_.point.joint[0], prev_traj_point_.point.omega[0], prev_traj_point_.point.alpha[0], prev_traj_point_.time_from_start);
     
     if (t_head_ != t_tail_)
     {
@@ -2543,7 +2550,7 @@ ErrorCode ArmGroup::continueMove(void)
     for(size_t i = 0; i < t_tail_; ++i)
     {
         FST_INFO("point[%d]: joint = %f, omega = %f, alpha = %f, time = %f", 
-            i, t_path_[i].point.joint[0], t_path_[i].point.omega[0], t_path_[i].point.alpha[0], t_path_[i].time_from_start);
+            i, t_path_[i].point.joint[4], t_path_[i].point.omega[4], t_path_[i].point.alpha[4], t_path_[i].time_from_start);
         tos2  << t_path_[i].point.joint[0] << " "
             << t_path_[i].point.joint[1] << " "
             << t_path_[i].point.joint[2] << " "
@@ -2569,7 +2576,6 @@ ErrorCode ArmGroup::continueMove(void)
     return SUCCESS;
 }
 
-<<<<<<< HEAD
 void ArmGroup::moveFIFO(size_t start_index, int size, int offset)
 {
     size_t end_index = start_index + size;
@@ -2590,8 +2596,6 @@ void ArmGroup::moveFIFO(size_t start_index, int size, int offset)
     else
     {}    
 }
-=======
->>>>>>> 10582014cb61128a20506997373f6aca962f0d64
 
 ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
 {

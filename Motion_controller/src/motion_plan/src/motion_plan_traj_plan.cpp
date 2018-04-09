@@ -238,13 +238,13 @@ void forwardMinimumDuration(const JointState je, const JointState js, double *al
                 // caculate t_min:
                 // j <-
                 // w <-
-                if (alpha_min[i] < 0)
+                if (alpha_min[i] < -MINIMUM_E9)
                 {
                     a = alpha_min[i];
                     delta = w * w + a * j * 2;
                     t_min[i] = (-sqrt(delta) - w) / a;
                 }
-                else if (alpha_min[i] > 0)
+                else if (alpha_min[i] > MINIMUM_E9)
                 {
                     a = alpha_min[i];
                     delta = w * w + a * j * 2;

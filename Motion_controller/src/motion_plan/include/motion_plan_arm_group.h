@@ -483,6 +483,7 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode pauseMove(size_t pick_segment);
+    ErrorCode pauseMove(void);
 
     //------------------------------------------------------------
     // Function:    continueMove
@@ -493,6 +494,17 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode continueMove(void);
+    
+    //------------------------------------------------------------
+    // Function:    emcyStop
+    // Summary: Record the running status of trajectory when emergency button is pressed.
+    //          User can continue running the remaining trajectory by calling continueMove().
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode emcyStop(size_t pick_segment);
+    ErrorCode emcyStop(void);
     
     //------------------------------------------------------------
     // Function:    manualMove

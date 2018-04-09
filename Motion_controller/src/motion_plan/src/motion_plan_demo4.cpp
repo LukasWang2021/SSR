@@ -68,6 +68,7 @@ int main(int argc, char **argv)
     arm.autoMove(target, 5);
 
     arm.pauseMove(7);
+    //arm.emcyStop(7);
     g_start_joint.j1 = 0;
     g_start_joint.j2 = 0;
     g_start_joint.j3 = 0;
@@ -78,7 +79,4 @@ int main(int argc, char **argv)
     
     return 0;
 }
-
-
-
 

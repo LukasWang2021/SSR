@@ -1126,6 +1126,8 @@ ErrorCode ArmGroup::autoMove(const MotionTarget &target, int id)
     {
         auto_running_ = true;
         pick_time_ = g_cycle_time;
+        t_real_start_ = t_head_;
+        t_real_end_ = t_tail_;
         prev_traj_point_ = t_path_[t_tail_ - 1];
         prev_traj_point_.time_from_start = 0;
         if (prev_traj_point_.path_point.type == MOTION_JOINT)
@@ -1952,7 +1954,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
     for(size_t i = 0; i < t_tail_; ++i)
     {
         FST_INFO("point[%d]: joint = %f, omega = %f, alpha = %f, time = %f",
-                    i, t_path_[i].point.joint[0], t_path_[i].point.omega[0], t_path_[i].point.alpha[0], t_path_[i].time_from_start);
+                    i, t_path_[i].point.joint[4], t_path_[i].point.omega[4], t_path_[i].point.alpha[4], t_path_[i].time_from_start);
         tos3  << t_path_[i].point.joint[0] << " "
             << t_path_[i].point.joint[1] << " "
             << t_path_[i].point.joint[2] << " "
@@ -2358,9 +2360,17 @@ ErrorCode ArmGroup::pauseMove(size_t pick_segment)
         last_duration_min = duration_min;
         ++pick_current;
     }
-    t_real_start_ = pick_current + 1;
-    t_real_end_ = t_tail_;
-    t_tail_ = pick_current + 1;
+    
+    if(pick_current + 1 >= t_real_start_)   // pause happened in command path
+    {
+        t_real_start_ = pick_current + 1;
+        t_real_end_ = t_tail_;
+        t_tail_ = pick_current + 1;
+    }
+    else    // pause happened in intermediate MOVJ path
+    {
+        t_tail_ = t_real_start_;
+    }
 
     auto_running_ = true;
     memcpy(&g_start_joint, t_path_[t_tail_ - 1].point.joint, sizeof(Joint));
@@ -2393,6 +2403,11 @@ ErrorCode ArmGroup::pauseMove(size_t pick_segment)
     tos1.close();
     
     return SUCCESS;
+}
+
+ErrorCode ArmGroup::pauseMove(void)
+{
+    return pauseMove(pick_segment_);
 }
 
 ErrorCode ArmGroup::continueMove(void)
@@ -2456,23 +2471,13 @@ ErrorCode ArmGroup::continueMove(void)
     cmd->planPath();
 
     // judge if the remaining path points after the pause point need to be moved forward or backward
+    // t_tail_ always points to the recover path point
     int size = 0, offset = 0;
-    if(t_tail_ < t_real_start_) // the pause action happened in continue MOVJ phase
-    {
-        size = t_real_end_ - t_real_start_;
-        offset = cmd->getPathLength() - t_real_start_ + 1;  // +1 is for the insertion of static point
-        moveFIFO(t_real_start_, size, offset);
-        t_real_start_ = t_real_start_ + offset;
-        t_real_end_ = t_real_start_ + size;
-    }
-    else    // the pause action happened in command motion phase
-    {
-        size = t_real_end_ - t_tail_;
-        offset = cmd->getPathLength() - t_tail_ + 1;    // +1 is for the insertion of static point
-        moveFIFO(t_tail_, size, offset);
-        t_real_start_ = t_tail_ + offset;
-        t_real_end_ = t_real_start_ + size;
-    }  
+    size = t_real_end_ - t_tail_;
+    offset = cmd->getPathLength() - t_tail_ + 1;
+    moveFIFO(t_tail_, size, offset);
+    t_real_start_ = t_real_start_ + offset;
+    t_real_end_ = t_real_start_ + size;
     FST_INFO("move remaining paused path from %d with size %d to offset %d", t_tail_, size, offset);
     
     // generate MOVJ trajectory from t_path_[0] to t_path_[max_stamp_ - 1]
@@ -2503,7 +2508,7 @@ ErrorCode ArmGroup::continueMove(void)
         }
         err = planJointTraj();
     }
-
+    
     // insert a static point which confirms omega=0, alpha=0
     memcpy(t_path_[t_tail_].point.joint, t_path_[t_tail_ - 1].point.joint, NUM_OF_JOINT * sizeof(double));
     memset(t_path_[t_tail_].point.omega, 0, NUM_OF_JOINT * sizeof(double));
@@ -2518,11 +2523,6 @@ ErrorCode ArmGroup::continueMove(void)
     t_head_ = t_tail_;
     t_tail_ = t_tail_ + size;
     auto_running_ = true;
-
-FST_INFO("t_head = %d, t_tail = %d", t_head_, t_tail_);
-FST_INFO("g_start_joint: joint = %f", g_start_joint.j1);
-FST_INFO("prev_point: joint = %f, omega = %f, alpha = %f, time = %f", 
-    prev_traj_point_.point.joint[0], prev_traj_point_.point.omega[0], prev_traj_point_.point.alpha[0], prev_traj_point_.time_from_start);
     
     if (t_head_ != t_tail_)
     {
@@ -2574,6 +2574,27 @@ FST_INFO("prev_point: joint = %f, omega = %f, alpha = %f, time = %f",
     tos2.close();
 
     return SUCCESS;
+}
+
+ErrorCode ArmGroup::emcyStop(size_t pick_segment)
+{
+    if(pick_segment + 1 >= t_real_start_)   // emergency happened in command path
+    {
+        t_real_start_ = pick_segment + 1;
+        t_real_end_ = t_tail_;
+        t_tail_ = pick_segment + 1;
+    }
+    else
+    {
+        t_tail_ = t_real_start_;
+    }
+
+    return SUCCESS;
+}
+
+ErrorCode ArmGroup::emcyStop(void)
+{
+    return emcyStop(pick_segment_);
 }
 
 void ArmGroup::moveFIFO(size_t start_index, int size, int offset)

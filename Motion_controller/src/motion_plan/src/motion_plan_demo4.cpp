@@ -40,11 +40,11 @@ int main(int argc, char **argv)
     target.cnt = 0;
     target.vel = 1;
     target.acc = 1;
-    target.joint_target.j1 = 1.57;
+    target.joint_target.j1 = 0;
     target.joint_target.j2 = 0;
     target.joint_target.j3 = 0;
     target.joint_target.j4 = 0;
-    target.joint_target.j5 = 0;
+    target.joint_target.j5 = 1.57;
     target.joint_target.j6 = 0;
 
     MotionTarget target2;
@@ -65,9 +65,10 @@ int main(int argc, char **argv)
     arm.initArmGroup();
     
     arm.setStartState(start_joint);
-    arm.autoMove(target2, 5);
+    arm.autoMove(target, 5);
 
-    arm.pauseMove(15);
+    arm.pauseMove(7);
+    //arm.emcyStop(7);
     g_start_joint.j1 = 0;
     g_start_joint.j2 = 0;
     g_start_joint.j3 = 0;
@@ -76,24 +77,6 @@ int main(int argc, char **argv)
     g_start_joint.j6 = 0;
     arm.continueMove();
     
-    /*std::vector<JointOutput> points;
-    arm.getPointFromFIFO(500, points);
-    FST_INFO("get %d points", points.size());*/
-
-    /*std::ofstream os("/home/fst/myworkspace/jout.txt");
-    for (size_t i = 0; i < points.size(); i++)
-    {
-        os  << points[i].joint.j1 << ","
-            << points[i].joint.j2 << ","
-            << points[i].joint.j3 << ","
-            << points[i].joint.j4 << ","
-            << points[i].joint.j5 << ","
-            << points[i].joint.j6 << endl;      
-    }
-    os.close();*/
     return 0;
 }
-
-
-
 

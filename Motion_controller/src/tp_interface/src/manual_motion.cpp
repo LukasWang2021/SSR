@@ -123,7 +123,7 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
         }
         else if (target->coordinates_count > 0)
         {
-            Joint target_jnts;
+            U64 result = TPI_SUCCESS;
             if (manu_type_ != motion_spec_ManualType_APPOINT)
             {
                 FST_ERROR("manu_type_ is not the same as command:%d", manu_type_);
@@ -132,18 +132,20 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
             }
             if (manu_frame_ == motion_spec_ManualFrame_JOINT)
             {
-                target_jnts = *(Joint*)target->coordinates;
+                Joint target_jnts = *(Joint*)target->coordinates;
+                result = arm_group_->manualMove(target_jnts);
             }
             else if (manu_frame_ == motion_spec_ManualFrame_USER)
             {
-                robot_->getJointFromPose(*(PoseEuler*)target->coordinates, target_jnts);
+                //robot_->getJointFromPose(*(PoseEuler*)target->coordinates, target_jnts);
+                PoseEuler target_pose = *(PoseEuler*)target->coordinates;
+                result = arm_group_->manualMove(target_pose);
             }
             else
             {
                 rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
                 return;
             }
-            U64 result = arm_group_->manualMove(target_jnts);
             if (TPI_SUCCESS != result)
             {
                 rcs::Error::instance()->add(result);

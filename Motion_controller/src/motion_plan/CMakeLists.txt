@@ -1,50 +1,48 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(motion_plan)
 
-# setting for include file.
 set(VERSION_MAJOR 4)
 set(VERSION_MINOR 1)
 set(VERSION_PATCH 0)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 
-# setting for package version file.
 set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
-# configure a header file to pass some settings to the source code.
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
 )
 
-# write the verson info to a file.
-file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
+file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
+    "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n"
+)
 
 find_package(catkin REQUIRED COMPONENTS
     parameter_manager
     log_manager
 )
 
-if(${catkin_CROSS})
-	set(catkin_INCLUDE_DIRS 
-        ${depend_PATH_INC}/parameter_manager/include
-        ${depend_PATH_INC}/log_manager/include
-    )
-	set(catkin_LIBRARIES
-        ${catkin_LIBRARYS_CROSS}
-        ${depend_PATH_LIB}/libparameter_manager.so
-        ${depend_PATH_LIB}/libparam_value.so
-        ${depend_PATH_LIB}/liblogger.so
-    )
-endif(${catkin_CROSS})
+if(catkin_CROSS)
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
+    set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
+    message(STATUS "ARM-Cross")
+else()
+	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_x86})
+    set(catkin_LIBRARIES ${catkin_LIBRARYS_x86})
+    message(STATUS "x86-64")
+endif()
 
-catkin_package(
-    INCLUDE_DIRS include
-    LIBRARIES motion_plan
-    DEPENDS parameter_manager
-    DEPENDS log_manager
+set(catkin_INCLUDE_DIRS
+    ${catkin_INCLUDE_DIRS}
+    ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/log_manager/include
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+catkin_package(
+    LIBRARIES motion_plan
+)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0")
 
 include_directories(
     include
@@ -55,8 +53,6 @@ include_directories(
 ###########
 ## Build ##
 ###########
-
-## Declare a C++ library
 add_library(motion_plan
     # include algerithm functions here:
     src/motion_plan_variable.cpp
@@ -70,36 +66,40 @@ add_library(motion_plan
     src/motion_plan_arm_group.cpp
 )
 
+## Declare a C++ executable
+add_executable(motion_plan_demo1
+    src/motion_plan_demo1.cpp
+)
+
+add_executable(motion_plan_demo2
+    src/motion_plan_demo2.cpp
+)
+
+add_executable(motion_plan_demo3
+    src/motion_plan_demo3.cpp
+)
+
+add_executable(motion_plan_demo4
+    src/motion_plan_demo4.cpp
+)
+
 target_link_libraries(motion_plan
     ${catkin_LIBRARIES}
     parameter_manager
     logger
 )
 
-## Declare a C++ executable
-add_executable(motion_plan_demo1
-    src/motion_plan_demo1.cpp
-)
 target_link_libraries(motion_plan_demo1 
     ${catkin_LIBRARIES}
     motion_plan
-)
-add_executable(motion_plan_demo2
-    src/motion_plan_demo2.cpp
 )
 target_link_libraries(motion_plan_demo2
     ${catkin_LIBRARIES}
     motion_plan
 )
-add_executable(motion_plan_demo3
-    src/motion_plan_demo3.cpp
-)
 target_link_libraries(motion_plan_demo3
     ${catkin_LIBRARIES}
     motion_plan
-)
-add_executable(motion_plan_demo4
-    src/motion_plan_demo4.cpp
 )
 target_link_libraries(motion_plan_demo4
     ${catkin_LIBRARIES}
@@ -109,48 +109,47 @@ target_link_libraries(motion_plan_demo4
 #############
 ## Install ##
 #############
-
 install(TARGETS motion_plan
-   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 install(TARGETS motion_plan_demo1
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(TARGETS motion_plan_demo2
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(TARGETS motion_plan_demo3
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(TARGETS motion_plan_demo4
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
 
 install(FILES config/motion_plan.yaml
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
 )
 
 install(FILES config/hard_constraints.yaml
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/model
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/model
 )
 
 install(FILES config/soft_constraints.yaml
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
 )
 
 install(FILES config/dh.yaml
-  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
 )
 
 install(DIRECTORY config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

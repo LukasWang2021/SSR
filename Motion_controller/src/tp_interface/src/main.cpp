@@ -8,7 +8,7 @@
 #include <signal.h>
  
 #ifndef CROSS_PLATFORM
-#include <gperftools/profiler.h>
+//#include <gperftools/profiler.h>
 #endif
 
 #include "controller.h"

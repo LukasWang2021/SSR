@@ -16,8 +16,6 @@
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roscpp</build_depend>
-  <run_depend>roscpp</run_depend>
   <build_depend>parameter_manager</build_depend>
   <run_depend>parameter_manager</run_depend>
   <build_depend>ioboard</build_depend>

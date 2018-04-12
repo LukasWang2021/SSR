@@ -50,9 +50,12 @@ void checkLogSpace(boost::filesystem::path &path);
 char buildLogControlBlock(std::string &name);
 std::string getNameFromID(char id);
 
-bool initLogSpace(void);
-bool initShareMemory(void);
-bool initServerLog(void);
+int initLogSpace(void);
+int initShareMemory(void);
+int initServerLog(void);
+
+bool lockFile(std::string &file);
+bool unlockFile(std::string &file);
 
 void public_thread(void);
 void receive_thread(void);

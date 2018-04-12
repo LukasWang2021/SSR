@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 {
     char *ip;
     char buf[1024] = { 0 };
-    ros::init(argc, argv, "servo_diag");	
+    //ros::init(argc, argv, "servo_diag");	
     if (!fst_comm_interface::CommInterface::getLocalIP(&ip)) return 0;
     std::cout<<"Servo Diag Version:"<<servo_diag_VERSION_MAJOR<<"."<<servo_diag_VERSION_MINOR<<"."<<servo_diag_VERSION_PATCH<<std::endl;
     signal(SIGINT, ServoDiag::sigHandler);

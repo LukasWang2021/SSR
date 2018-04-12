@@ -41,8 +41,6 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>middleware_to_mem</build_depend>
-  <run_depend>middleware_to_mem</run_depend>
   <run_depend>roscpp</run_depend>
 
 

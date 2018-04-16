@@ -685,13 +685,6 @@ private:
     MotionCommand  *used_command_list_ptr_;
 
     ControlPoint    prev_traj_point_;
-    ControlPoint    traj_fifo_[TRAJECTORY_FIFO_CAPACITY];
-    size_t          traj_head_;
-    size_t          traj_tail_;
-
-    PathPoint       path_fifo_[PATH_FIFO_CAPACITY];
-    size_t          path_head_;
-    size_t          path_tail_;
 
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;

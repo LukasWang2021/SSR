@@ -47,12 +47,7 @@ ArmGroup::ArmGroup(void)
     free_command_list_ptr_ = NULL;
     used_command_list_ptr_ = NULL;
 
-    traj_head_ = 0;
-    traj_tail_ = 0;
-
-    path_head_  = 0;
-    path_tail_  = 0;
-    
+    auto_running_ = false;
     manual_running_ = false;
 }
 
@@ -114,11 +109,6 @@ ErrorCode ArmGroup::initArmGroup(void)
 
     free_command_list_ptr_ = &motion_command_pool_[0];
     used_command_list_ptr_ = NULL;
-
-    path_head_ = 0;
-    path_tail_ = 0;
-    traj_head_ = 0;
-    traj_tail_ = 0;
 
     t_head_ = 0;
     t_tail_ = 0;
@@ -835,7 +825,7 @@ void ArmGroup::setUserFrame(const Transformation &uf)
 //------------------------------------------------------------
 ErrorCode ArmGroup::setStartState(const Joint &joint)
 {
-    if (traj_head_ != traj_tail_ || path_head_ != path_tail_)
+    if (auto_running_ || manual_running_)
     {
         FST_ERROR("setStartState: cannot set start state until ArmGroup is standing by.");
         return INVALID_SEQUENCE;

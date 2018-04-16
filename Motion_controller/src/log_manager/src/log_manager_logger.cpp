@@ -17,7 +17,7 @@
 #include <sys/stat.h> 
 
 #include <log_manager/log_manager_shm_structure.h>
-#include "log_manager/log_manager_logger.h"
+#include <log_manager/log_manager_logger.h>
 
 using std::string;
 using std::cout;
@@ -194,20 +194,24 @@ void Logger::displayItem(LogItem *pitem)
     
     switch (pitem->level) {
         case MSG_LEVEL_LOG:
+            printf("\033[0m[  LOG][%ld.%6ld]%s", pitem->stamp.tv_sec, pitem->stamp.tv_usec, pitem->text);
+            break;
+
         case MSG_LEVEL_INFO:
-            printf("\033[0m%s", pitem->text);
+            printf("\033[0m[ INFO][%ld.%6ld]%s", pitem->stamp.tv_sec, pitem->stamp.tv_usec, pitem->text);
             break;
 
         case MSG_LEVEL_WARN:
-            printf("\033[33m%s\033[0m", pitem->text);
+            printf("\033[33m[ WARN][%ld.%6ld]%s\033[0m", pitem->stamp.tv_sec, pitem->stamp.tv_usec, pitem->text);
             break;
         
         case MSG_LEVEL_ERROR:
-            printf("\033[31m%s\033[0m", pitem->text);
+            printf("\033[31m[ERROR][%ld.%6ld]%s\033[0m", pitem->stamp.tv_sec, pitem->stamp.tv_usec, pitem->text);
             break;
         
         default:
-            printf("\033[41mLog client internal fault\033[0m\n");
+            printf("\033[41m[OTHER][%ld.%6ld]Log client internal fault\033[0m\n",
+                   pitem->stamp.tv_sec, pitem->stamp.tv_usec);
     }
 }
 

@@ -7,7 +7,12 @@
 #include "math.h"
 #include "ctype.h"
 #include "stdlib.h"
+
+#ifdef WIN32
+#pragma warning(disable : 4786)
+#endif
 #include <vector>
+#include <map>
 #include <stack>
 
 #ifdef WIN32
@@ -16,7 +21,7 @@
 #else
 #include <pthread.h>
 #endif
-#include "interpreter_common.h"
+#include "common/interpreter_common.h"
 #include "forsight_eval_type.h"
 
 using namespace std;
@@ -41,6 +46,9 @@ const int NUM_OF_PARAMS = 31;    // max number of parameters
 #define BUILTINFUNC  9
 #define OUTSIDEFUNC  10
 #define COMMENT      11
+
+#define MONITOR_THREAD     0
+#define MAIN_THREAD        1
 
 enum double_ops {
 	LT=1,    // value < partial_value
@@ -130,7 +138,7 @@ struct thread_control_block {
 	vector<prog_line_info> prog_jmp_line;
 	ProgMode  prog_mode ; // = 0;   /* 0 - run to end, 1 - step  */
 	bool is_abort , is_paused; 
-	int  is_main_thread ; // = 0;   /* 0 - run to end, 1 - step  */
+	int  is_main_thread ; // = 0;   /* 0 - Monitor, 1 - Main  */
 	
 	char token[80];
 	char token_type, tok;
@@ -150,6 +158,9 @@ struct thread_control_block {
 	// LineNum and Update flag
 	int               iLineNum ;
 //	LineNumState      stateLineNum ;
+
+// IO Map
+    map<string, string> io_mapper;
 } ;
 
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);
@@ -174,7 +185,7 @@ int calc_conditions(
 int exec_call(struct thread_control_block * objThreadCntrolBlock);
 
 void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value);
-eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s);
+eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s, int raise_unkown_error = 0);
 
 void find_eol(struct thread_control_block * objThreadCntrolBlock);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);

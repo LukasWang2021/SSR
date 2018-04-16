@@ -2,6 +2,7 @@
 #define INTERPRETER_COMMON_H_
 
 #include "fst_datatype.h"
+#include "stdint.h"
 using namespace fst_controller;
 
 #define ADD_INFO_NUM    10
@@ -140,6 +141,7 @@ typedef enum _RegType
 
 #define REG_TYPE_NUM    32
 
+/*
 typedef struct _DIOMap
 {
     int     card_seq;
@@ -148,6 +150,18 @@ typedef struct _DIOMap
     bool has_value;
     int     value;
 }DIOMap;
+*/
+
+typedef struct _IOMapPortInfo
+{
+    uint32_t    msg_id;
+    uint32_t    dev_id;
+    int         port_type;
+    int         port_index;
+    int         bytes_len;
+    char        value;
+}IOMapPortInfo;
+
 
 typedef struct _Reg
 {
@@ -190,7 +204,7 @@ typedef struct _InterpreterControl
     int             line;
 #endif
         RegMap      reg;
-        DIOMap      dio;
+        IOMapPortInfo  dio;
     };
 }InterpreterControl;
 

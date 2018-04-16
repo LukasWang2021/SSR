@@ -48,14 +48,14 @@ U64 IOInterface::initial()
     }
     //-----------------get num of devices.----------------------//
     io_num_.store(io_manager_->getDevicesNum());
-    FST_INFO("io_num_:%d",io_num_.load());
+    FST_INFO("IOInterface::initial io_num_:%d",io_num_.load());
 
     dev_info_ = new fst_io_manager::IODeviceInfo[io_num_];
 
     for (int i = 0; i < io_num_; i++)
     {
         result = io_manager_->getDeviceInfo(i, dev_info_[i]);
-        //FST_INFO("input:%d,output:%d", dev_info_[i].input, dev_info_[i].output);
+        FST_INFO("IOInterface::initial input:%d,output:%d", dev_info_[i].input, dev_info_[i].output);
         if (result != TPI_SUCCESS)
             return result;
     }
@@ -242,7 +242,10 @@ U64 IOInterface::getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len)
     }
     else
     {
-        return io_manager_->getModuleValue(io_info->dev_id, io_info->port_type, io_info->port_index, buffer[0]);
+        U64 iRet = 0 ;
+        iRet = io_manager_->getModuleValue(io_info->dev_id, io_info->port_type, io_info->port_index, buffer[0]);
+        printf("IOInterface::getDIO (%d) at %d\n", buffer[0], io_info->port_index);
+		return iRet ;
     }
 
 }

@@ -78,7 +78,7 @@ int openShm(const char* name, int size)
     if (fd == 0)
 #else
     int fd = shm_open(name,  O_RDWR, 00777);
-    printf("shm_open(%s) return %d\n",name, fd);
+    // printf("shm_open(%s) return %d\n",name, fd);
     if (fd == -1)
 #endif
     {

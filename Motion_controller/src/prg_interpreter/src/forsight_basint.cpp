@@ -9,6 +9,15 @@
 #include "forsight_auto_lock.h"
 #include "forsight_xml_reader.h"
 #include "reg-shmi/forsight_registers.h"
+#include "forsight_io_mapping.h"
+
+#ifndef WIN32
+#include "io_interface.h"
+// #include "error_code.h"
+
+#define TPI_SUCCESS				(0)
+
+#endif
 
 // #define NUM_LAB 100
 #define LINE_CONTENT_LEN   2046
@@ -310,6 +319,7 @@ void printProgJmpLine(struct thread_control_block* objThreadCntrolBlock)
 
 int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode)
 {
+  int isExecuteEmptyLine ;
   int iRet = 0;
   int iLinenum;
   char * cLineContentPtr = 0 ;
@@ -434,8 +444,10 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 // #ifdef WIN32
 //   objThreadCntrolBlock->prog_mode = STEP_MODE;
 // #endif
+  isExecuteEmptyLine = 0 ;
   do {
-  	if(objThreadCntrolBlock->prog_mode == STEP_MODE)
+  	if((objThreadCntrolBlock->prog_mode == STEP_MODE)
+		&& (isExecuteEmptyLine == 0))
   	{
 	    memset(cLineContent, 0x00, LINE_CONTENT_LEN);
 		cLineContentPtr = cLineContent ;
@@ -530,6 +542,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		    setPrgmState(EXECUTE_R);
 		}
   	}
+	isExecuteEmptyLine = 0 ;
     objThreadCntrolBlock->token_type = get_token(objThreadCntrolBlock);
 	// Deal abort
 	if(objThreadCntrolBlock->is_abort == true)
@@ -539,7 +552,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
         break ; // return 0 ; // NULL ;
 	}
     /* check for assignment statement */
-    printf("objThreadCntrolBlock->token_type = %d\n", objThreadCntrolBlock->token_type);
+    printf("objThreadCntrolBlock->token_type = %d at line %d \n", 
+    	objThreadCntrolBlock->token_type, calc_line_from_prog(objThreadCntrolBlock));
     if(objThreadCntrolBlock->token_type==VARIABLE) {
       putback(objThreadCntrolBlock); /* return the var to the input stream */
       assignment(objThreadCntrolBlock); /* must be assignment statement */
@@ -564,7 +578,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		int iLineNum = calc_line_from_prog(objThreadCntrolBlock);
 		// We had eaten MOV* as token. 
 		// iLineNum = iLineNum - 1 ;
-		if(objThreadCntrolBlock->is_main_thread == 0)  // not main
+		if(objThreadCntrolBlock->is_main_thread == MONITOR_THREAD)  // not main
 		{
 			if(call_internal_cmd_exec_sub_thread(iIdx) == 0) // 0 - mov 1 - nonmov
 			{
@@ -685,6 +699,9 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		  break;
       }
 	}
+	else {
+		isExecuteEmptyLine = 1 ;
+	}
   } while (objThreadCntrolBlock->tok != FINISHED);
   
   printf("call_interpreter execution over\n");
@@ -721,10 +738,15 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   char fname[128];
   FILE *fp = 0 ;
   int i=0;
-  
+#ifdef WIN32
   sprintf(fname, "%s.xml", pname);
   parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
   sprintf(fname, "%s.bas", pname);
+#else
+  sprintf(fname, "\/data\/programs\/%s.xml", pname);
+  parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
+  sprintf(fname, "\/data\/programs\/%s.bas", pname);
+#endif
   if(!(fp=fopen(fname, "r"))) return 0;
 
   i = 0;
@@ -2309,7 +2331,9 @@ void serror(int error)
     "RETURN without GOSUB"
     "Use Call in exp"
   };
-  printf("%s\n", e[error]);
+  printf("-----------------ERR----------------------\n");
+  printf("\t NOTICE : %s\n", e[error]);
+  printf("-----------------ERR----------------------\n");
   longjmp(e_buf, 1); /* return to save point */
 }
 
@@ -2718,7 +2742,7 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
 			putback(objThreadCntrolBlock);
 		}
 
-		*result = find_var(objThreadCntrolBlock, var);
+		*result = find_var(objThreadCntrolBlock, var, 1);
 		get_token(objThreadCntrolBlock);
 		// No deal unexist array type element
 		// if(objThreadCntrolBlock->g_variable_error == 0)
@@ -2821,12 +2845,46 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 	memset(reg_name, 0x00, 256);
 	temp = reg_name ;
 	get_char_token(vname, temp);
-    if(strstr(REGSITER_NAMES, reg_name))
+	// deal "pr;sr;r;mr;uf;tf;pl" except p
+    if(strstr(REGSITER_NAMES, reg_name) && reg_name[0] != 'p')
     {
 		if(strchr(vname, '['))
 		{
 			int iRet = forgesight_set_register(
 				objThreadCntrolBlock, vname, &value);
+			if(iRet == 0)
+			{
+				return ;
+			}
+		}
+    }
+	else if(strstr(IO_NAMES, reg_name))
+    {
+		if(strchr(vname, '['))
+		{
+			int iRet = 0 ;
+			printf("\t SET FROM :: %s : %s\n", vname, 
+				objThreadCntrolBlock->io_mapper[vname].c_str());
+#ifndef WIN32
+            IOPortInfo info;
+			memset(&info, 0x00, sizeof(IOPortInfo));
+
+            U64 result = IOInterface::instance()->checkIO(
+				objThreadCntrolBlock->io_mapper[vname].c_str(), &info);
+            if (result != TPI_SUCCESS)
+            {
+            //    rcs::Error::instance()->add(result);
+            //    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
+				printf("IOInterface::instance()->checkIO Failed:: %s\n", 
+						objThreadCntrolBlock->io_mapper[vname].c_str());
+				return ;
+            }
+#endif
+            char val = (char)value.getFloatValue();
+#ifndef WIN32
+			printf("\t SET:: %s : %d = %d\n", vname, info.port_index, val);
+            IOInterface::instance()->setDO(&info, val);
+#endif
 			if(iRet == 0)
 			{
 				return ;
@@ -2850,7 +2908,8 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 
 
 /* Reverse Find the value of a variable. */
-eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
+eval_value find_var(struct thread_control_block * objThreadCntrolBlock, 
+					char *vname, int raise_unkown_error)
 {
 	eval_value value ;
 	char reg_name[256] ;
@@ -2873,7 +2932,8 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *vn
 	memset(reg_name, 0x00, 256);
 	temp = reg_name ;
 	get_char_token(vname, temp);
-    if(strstr(REGSITER_NAMES, reg_name))
+	// deal "pr;sr;r;mr;uf;tf;pl" except p
+    if(strstr(REGSITER_NAMES, reg_name) && strcmp("p", reg_name))
     {
 		if(strchr(vname, '['))
 		{
@@ -2885,6 +2945,48 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *vn
 			}
 		}
     }
+	else if(strstr(IO_NAMES, reg_name))
+    {
+		if(strchr(vname, '['))
+		{
+			int iRet = 0 ;
+			int iValue = -1;
+			printf("\t GET FROM :: %s : %s\n", vname, 
+				objThreadCntrolBlock->io_mapper[vname].c_str());
+#ifndef WIN32
+			char valueBuf[8];
+            IOPortInfo info;
+            IOMapPortInfo infoMap;
+			memset(&info, 0x00, sizeof(IOPortInfo));
+
+            U64 result = IOInterface::instance()->checkIO(
+				objThreadCntrolBlock->io_mapper[vname].c_str(), &info);
+            if (result != TPI_SUCCESS)
+            {
+				printf("IOInterface::instance()->checkIO Failed:: %s\n", 
+						objThreadCntrolBlock->io_mapper[vname].c_str());
+				return ;
+            }
+			
+            IOInterface::instance()->getDIO(&info, valueBuf, 8);
+			printf("\t GET:: %s : (", vname);
+			for(int iRet = 0 ; iRet < 8 ; iRet++)
+			{
+			    printf("%04X, ", valueBuf[iRet]);
+			}
+			printf(") \n");
+			
+			iValue = atoi(valueBuf);
+#endif
+			value.setFloatValue(iValue) ;
+			if(iRet == 0)
+			{
+				return value;
+			}
+			
+		}
+	}
+	
 	// First, try local vars.
 	for(it
 		= objThreadCntrolBlock->local_var_stack.rbegin();
@@ -2905,10 +3007,12 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *vn
         }
 	}
 
-	// printf("not defined variable (%s).\n", vname);
-    // serror(4);
+	if (raise_unkown_error == 1)
+	{
+		printf("not defined variable (%s).\n", vname);
+		serror(4);
+	}
 	objThreadCntrolBlock->g_variable_error = 1 ;
-	value.setFloatValue(-1) ;
 	return value ;
 }
 
@@ -2943,7 +3047,7 @@ int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 	        return 1;
         }
 	}
-	printf("not defined variable.");
+	printf("not defined variable.\n");
 	return -1 ;
 }
 

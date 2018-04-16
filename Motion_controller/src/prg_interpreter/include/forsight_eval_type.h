@@ -1,10 +1,12 @@
 #ifndef FORSIGHT_EVAL_TYPE_H
 #define FORSIGHT_EVAL_TYPE_H
 #include <stdlib.h>
+#include "reg-shmi/forsight_fst_datatype.h" 
 #include "reg-shmi/forsight_regs_shmi.h"
 
 typedef enum _EvalValueType
 {
+	TYPE_NONE   = 0x00,
 	TYPE_INT    = 0x01,
 	TYPE_FLOAT  = 0x02,
 	TYPE_STRING = 0x04,
@@ -13,12 +15,19 @@ typedef enum _EvalValueType
 	TYPE_PL     = 0x20,
 }EvalValueType;
 
+typedef struct _AdditionalE {
+    double e1;
+    double e2;
+    double e3;
+} AdditionalE;
+
 class eval_value {
 public:
 	eval_value() 
 	{
 		memset((void *)&poseFake, 0x00, sizeof(poseFake));
 		memset((void *)&jointFake, 0x00, sizeof(jointFake));
+		resetNoneValue() ;
 	}
 	EvalValueType getType(){
 		return evalType ;
@@ -41,7 +50,12 @@ private:
 			return -1;
 		}
 	}
+
 public:
+	void resetNoneValue(){
+		evalType = TYPE_NONE ;
+		fValue = -1 ;
+	}
 	// TYPE_FLOAT
 	void setFloatValue(float fVal){
 		evalType = TYPE_FLOAT ;
@@ -111,6 +125,61 @@ public:
 		}
 	}
 	
+	void setUFIndex(int ufParam){
+		if((evalType == TYPE_JOINT) 
+			|| (evalType == TYPE_POSE)) {
+			ufIndex = ufParam ;
+		}
+		else {
+			noticeErrorType(TYPE_JOINT) ;
+			return ;
+		}
+	}
+	
+	int getUFIndex(){
+		if((evalType == TYPE_JOINT) 
+			|| (evalType == TYPE_POSE)) {
+			return ufIndex ;
+		}
+		else {
+			noticeErrorType(TYPE_JOINT) ;
+			return -1;
+		}
+	}
+	
+	void setTFIndex(int tfParam){
+		if((evalType == TYPE_JOINT) 
+			|| (evalType == TYPE_POSE)) {
+			tfIndex = tfParam ;
+		}
+		else {
+			noticeErrorType(TYPE_JOINT) ;
+			return ;
+		}
+	}
+	
+	int getTFIndex(){
+		if((evalType == TYPE_JOINT) 
+			|| (evalType == TYPE_POSE)) {
+			return tfIndex ;
+		}
+		else {
+			noticeErrorType(TYPE_JOINT) ;
+			return -1;
+		}
+	}
+	
+	void updateAdditionalE(AdditionalE additionParam){
+		if((evalType == TYPE_JOINT) 
+			|| (evalType == TYPE_POSE)) {
+			addition = additionParam ;
+		}
+		else {
+			noticeErrorType(TYPE_JOINT) ;
+			return ;
+		}
+	}
+
 	// TYPE_PL
 	void setPLValue(pl_t * jointVal){
 		evalType = TYPE_PL ;
@@ -126,6 +195,7 @@ public:
 			return palletFake;
 		}
 	}
+
 public:
 	void calcAdd(eval_value * operand)
 	{
@@ -264,6 +334,12 @@ private:
 		Coordinate c; 
 		pl_t pallet;
 		pl_t     palletFake;
+		// additionalE
+		AdditionalE addition ;
+		// tf Index & uf Index
+		int tfIndex ;
+		int ufIndex ;
+#if 0
 		// All of register
 		pr_shmi_t reg_pr ;
 		sr_shmi_t reg_sr ;
@@ -271,6 +347,7 @@ private:
 		mr_shmi_t reg_mr ;
 		uf_shmi_t reg_ur ;
 		tf_shmi_t reg_tf ;
+#endif
 	};
 };
 

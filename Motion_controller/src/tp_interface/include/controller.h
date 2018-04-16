@@ -21,6 +21,7 @@
 #include "service_jtac.h"
 #include "safety_interface.h"
 #include "offset_calibrator.h"
+#include "launch_code_mgr.h"
 
 #define MAX_PLANNED_POINTS_NUM		(20)
 #define IDLE2EXE_DELAY              (50)  //wait from idle to execute(ms)
@@ -537,7 +538,7 @@ class Controller
      * @param params
      * @param len
      */
-    void setDIO(void* params, int len);
+    void setDIO(void* params, char value);
 
     /**
      * @brief: try to get dio
@@ -545,14 +546,14 @@ class Controller
      * @param params
      * @param len
      */
-    void sendGetIORequest(void* params, int len);	
+    // void sendGetIORequest(void* params, int len);	
 
     /**
      * @brief: callback for getting user registers 
      *
      * @param params
      */
-    void getDIO(void* params);
+    // void getDIO(void* params);
 	
   private:
     static Controller           *instance_;     //this class 
@@ -585,6 +586,8 @@ class Controller
 
 
     std::map<int, PublishUpdate>	    id_pub_map_; //the map from parameter id to there publish time
+
+    LaunchCodeMgr               launch_code_mgr_;  //instance of SafetyInterface
 
 	/**
 	 * @brief: set current mode

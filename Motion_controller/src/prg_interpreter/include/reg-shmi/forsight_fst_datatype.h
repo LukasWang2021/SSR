@@ -13,9 +13,6 @@
 #define PI 3.1415926535897932384626433832795
 
 
-
-
-
 /* Define a group of values in joint space */
 typedef struct {
     double j1;
@@ -50,6 +47,13 @@ typedef struct {
     double b;
     double c;
 }Euler;
+
+// Define an additional E
+typedef struct _AdditionalE {
+    double e1;
+    double e2;
+    double e3;
+} AdditionalE;
 
 // Define a pose in cartesian space
 typedef struct {

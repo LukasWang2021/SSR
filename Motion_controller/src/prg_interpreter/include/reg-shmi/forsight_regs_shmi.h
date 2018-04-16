@@ -23,6 +23,9 @@
 #define COMMENT_SIZE 16
 #define SR_VALUE_SIZE 254
 
+#define PR_TYPE_POSE_EULER 1
+#define PR_TYPE_JOINT      2
+
 // pose register
 typedef struct 
 {

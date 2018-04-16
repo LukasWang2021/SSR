@@ -86,7 +86,7 @@ bool Error::updated()
     bool flag = updated_flag_;
     updated_flag_ = false;
     if(flag) {
-        printf("ErrorMonitor: Check Error state updated!");
+        printf("ErrorMonitor: Check Error state updated!\n");
     }
     return flag;
 }

@@ -441,27 +441,45 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	printf("call_MoveJ XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.joint_target.j1 = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.joint_target.j2 = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.joint_target.j3 = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.joint_target.j4 = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.joint_target.j5 = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.joint_target.j6 = value.getFloatValue();
+	if(value.getType() == TYPE_NONE)
+	{
+		find_eol(objThreadCntrolBlock);
+		return 0;
+	}
+	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+	{
+		instr.target.joint_target.j1 = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.joint_target.j2 = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.joint_target.j3 = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.joint_target.j4 = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.joint_target.j5 = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.joint_target.j6 = value.getFloatValue();
+	}
+	else if(value.getType() == TYPE_POSE)
+	{
+		// instr.target.pose_target = value.getPoseValue();
+		find_eol(objThreadCntrolBlock);
+    	return 0;
+	}
+	else if(value.getType() == TYPE_JOINT)
+	{
+		instr.target.joint_target = value.getJointValue();
+	}
 	get_token(objThreadCntrolBlock);
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
@@ -546,29 +564,47 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.pose_target.position.x    = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
+	if(value.getType() == TYPE_NONE)
+	{
+		find_eol(objThreadCntrolBlock);
+		return 0;
+	}
+	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+	{
+		instr.target.pose_target.position.x    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.pose_target.position.y    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.pose_target.position.z    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.pose_target.orientation.a = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.pose_target.orientation.b = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.pose_target.orientation.c = value.getFloatValue();
+	}
+	else if(value.getType() == TYPE_POSE)
+	{
+		instr.target.pose_target = value.getPoseValue();
+	}
+	else if(value.getType() == TYPE_JOINT)
+	{
+		// instr.target.joint_target = value.getJointValue();
+		find_eol(objThreadCntrolBlock);
+    	return 0;
+	}
 	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.pose_target.position.y    = value.getFloatValue();
 	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.pose_target.position.z    = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.pose_target.orientation.a = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.pose_target.orientation.b = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.pose_target.orientation.c = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-
     get_exp(objThreadCntrolBlock, &value, &boolValue);
     instr.target.velocity                  = value.getFloatValue();
 
@@ -653,51 +689,87 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose1.position.x    = value.getFloatValue();
+	if(value.getType() == TYPE_NONE)
+	{
+		find_eol(objThreadCntrolBlock);
+    	return 0;
+	}
+	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+	{
+		instr.target.circle_target.pose1.position.x    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose1.position.y    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose1.position.z    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose1.orientation.a = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose1.orientation.b = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose1.orientation.c = value.getFloatValue();
+	}
+	else if(value.getType() == TYPE_POSE)
+	{
+		instr.target.pose_target = value.getPoseValue();
+	}
+	else if(value.getType() == TYPE_JOINT)
+	{
+		// instr.target.joint_target = value.getJointValue();
+		find_eol(objThreadCntrolBlock);
+    	return 0;
+	}
 	get_token(objThreadCntrolBlock);
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose1.position.y    = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose1.position.z    = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose1.orientation.a = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose1.orientation.b = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose1.orientation.c = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
+	if(value.getType() == TYPE_NONE)
+	{
+		find_eol(objThreadCntrolBlock);
+		return 0;
+	}
+	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+	{
+		instr.target.circle_target.pose2.position.x    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
 
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose2.position.x    = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose2.position.y    = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose2.position.z    = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose2.orientation.a = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose2.orientation.b = value.getFloatValue();
-	get_token(objThreadCntrolBlock);
-	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	instr.target.circle_target.pose2.orientation.c = value.getFloatValue();
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose2.position.y    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose2.position.z    = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose2.orientation.a = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose2.orientation.b = value.getFloatValue();
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+		instr.target.circle_target.pose2.orientation.c = value.getFloatValue();
+	}
+	else if(value.getType() == TYPE_POSE)
+	{
+		instr.target.pose_target = value.getPoseValue();
+	}
+	else if(value.getType() == TYPE_JOINT)
+	{
+		// instr.target.joint_target = value.getJointValue();
+		find_eol(objThreadCntrolBlock);
+    	return 0;
+	}
 	get_token(objThreadCntrolBlock);
 	
     get_exp(objThreadCntrolBlock, &value, &boolValue);
@@ -1003,9 +1075,14 @@ void mergeImportXPathToProjectXPath(
 	FILE *xpath_main_file ;
 	
 	memset(xpath_import_file_name, 0x00, FILE_PATH_LEN);
-	sprintf(xpath_import_file_name, "%s_xpath.txt", fname);
 	memset(xpath_main_file_name, 0x00, FILE_PATH_LEN);
+#ifdef WIN32
+	sprintf(xpath_import_file_name, "%s_xpath.txt", fname);
 	sprintf(xpath_main_file_name, "%s_xpath.txt", objThreadCntrolBlock->project_name);
+#else
+	sprintf(xpath_import_file_name, "\/data\/programs\/%s_xpath.txt", fname);
+	sprintf(xpath_main_file_name, "\/data\/programs\/%s_xpath.txt", objThreadCntrolBlock->project_name);
+#endif
 	iMainLineCount = getXPathLinenum(xpath_main_file_name);
 	
 	if((xpath_import_file = fopen(xpath_import_file_name, "r"))==NULL){
@@ -1050,7 +1127,11 @@ void generateXPathVector(char * fname)
 	FILE *xpath_file ;
 
 	memset(xpath_file_name, 0x00, FILE_PATH_LEN);
+#ifdef WIN32
 	sprintf(xpath_file_name, "%s_xpath.txt", fname);
+#else
+	sprintf(xpath_file_name, "\/data\/programs\/%s_xpath.txt", fname);
+#endif
 
 	if((xpath_file = fopen(xpath_file_name, "r"))==NULL){
 		perror("open file failed\n");  

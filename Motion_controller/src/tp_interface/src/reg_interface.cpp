@@ -96,6 +96,10 @@ U64 RegInterface::checkReg(const char *path, RegMap* reg_info)
     boost::split(vc_path, path, boost::is_any_of("/"));
     
     int size = vc_path.size();
+	if(size != 4)
+	{
+    	return PARSE_IO_PATH_FAILED;
+	}
     for (int i = 0; i < REG_TYPE_NUM; i++)
     {
     	if(vc_path[2] == reg_info_[i].path)

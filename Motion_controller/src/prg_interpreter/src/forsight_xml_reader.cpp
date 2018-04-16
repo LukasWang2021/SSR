@@ -148,6 +148,7 @@ void serializeFunctionParam(vector<Label> labels, char * result)
 int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char * label_str)
 {
     char label_output[1024];
+    char label_temp[1024];
     Label labelParam ;
 	vector<Label> label_vector;
 
@@ -165,6 +166,19 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 		if(xmlStrcasecmp(name, BAD_CAST"num")==0){ 
 			value = xmlNodeGetContent(nodeValueElement);
 			sprintf(label_str, "%s%s", label_str, (char*)value);
+		}
+		else if(xmlStrcasecmp(name, BAD_CAST"motion_register")==0){ 
+			value = xmlNodeGetContent(nodeValueElement);
+			memset(label_temp, 0x00, 1024);
+			for(nodeSubValueElement = nodeValueElement->children; 
+				nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
+				if(xmlStrcasecmp(nodeSubValueElement->name, BAD_CAST"element")==0){
+					objLineInfoTemp.indentValue = objLineInfo.indentValue ;
+					generateElementStr(nodeSubValueElement, objLineInfoTemp, label_str);
+				}
+			}
+			sprintf(label_temp, "MR[%s]", label_str);
+			sprintf(label_str, "%s", label_temp);
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"operation")==0){ 
 			value = xmlNodeGetContent(nodeValueElement);
@@ -310,6 +324,24 @@ int generateElement(xmlNodePtr nodeValueElement, LineInfo objLineInfo)
 	memset(label_params, 0x00, 1024);
 	generateElementStr(nodeValueElement, objLineInfo, label_params);
 	printBASCode(objLineInfo, "%s", (char*)label_params);
+	return 1 ;
+}
+
+int generatePoseRegElement(xmlNodePtr nodeValueElement, LineInfo objLineInfo)
+{
+    char label_params[1024];
+	memset(label_params, 0x00, 1024);
+	generateElementStr(nodeValueElement, objLineInfo, label_params);
+	printBASCode(objLineInfo, "PR[%s]", (char*)label_params);
+	return 1 ;
+}
+
+int generatePoseElement(xmlNodePtr nodeValueElement, LineInfo objLineInfo)
+{
+    char label_params[1024];
+	memset(label_params, 0x00, 1024);
+	generateElementStr(nodeValueElement, objLineInfo, label_params);
+	printBASCode(objLineInfo, "P[%s]", (char*)label_params);
 	return 1 ;
 }
 
@@ -813,7 +845,7 @@ int generateTimerInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLi
 int generateMoveInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLineInfo)
 {
     xmlNodePtr nodeInstructionParam, nodeElement;
-    xmlChar *name, *value;
+    xmlChar *name, *nameType, *value;
 	name = xmlGetProp(nodeInstructionStatement,BAD_CAST"type");
 	
 	// sprintf(currentChildPath, "%s", currentXPath);
@@ -836,13 +868,38 @@ int generateMoveInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 			// All of parameters should have spaces after them . 
 			// Without the space, it would cause the expression analyzer work failed
 			if(xmlStrcasecmp(name, BAD_CAST"pose")==0){
-				for(nodeElement = nodeInstructionParam->children; 
-						nodeElement; nodeElement = nodeElement->next){
-					if(xmlStrcasecmp(nodeElement->name, BAD_CAST"element")==0){
-					//	value = xmlNodeGetContent(nodeElement);
-					//	printBASCode(objLineInfo, "%s ", (char*)value);
-						generateElement(nodeElement, objLineInfo);
-						printBASCode(objLineInfo, ", ", "");
+				nameType = xmlGetProp(nodeInstructionParam, BAD_CAST"type");
+				if(xmlStrcasecmp(nameType, BAD_CAST"num")==0){
+					for(nodeElement = nodeInstructionParam->children; 
+							nodeElement; nodeElement = nodeElement->next){
+						if(xmlStrcasecmp(nodeElement->name, BAD_CAST"element")==0){
+						//	value = xmlNodeGetContent(nodeElement);
+						//	printBASCode(objLineInfo, "%s ", (char*)value);
+							generateElement(nodeElement, objLineInfo);
+							printBASCode(objLineInfo, ", ", "");
+						}
+					}
+				}
+				else if(xmlStrcasecmp(nameType, BAD_CAST"pose_register")==0){
+					for(nodeElement = nodeInstructionParam->children; 
+							nodeElement; nodeElement = nodeElement->next){
+						if(xmlStrcasecmp(nodeElement->name, BAD_CAST"element")==0){
+						//	value = xmlNodeGetContent(nodeElement);
+						//	printBASCode(objLineInfo, "%s ", (char*)value);
+							generatePoseRegElement(nodeElement, objLineInfo);
+							printBASCode(objLineInfo, ", ", "");
+						}
+					}
+				}
+				else if(xmlStrcasecmp(nameType, BAD_CAST"pose")==0){
+					for(nodeElement = nodeInstructionParam->children; 
+							nodeElement; nodeElement = nodeElement->next){
+						if(xmlStrcasecmp(nodeElement->name, BAD_CAST"element")==0){
+						//	value = xmlNodeGetContent(nodeElement);
+						//	printBASCode(objLineInfo, "%s ", (char*)value);
+							generatePoseElement(nodeElement, objLineInfo);
+							printBASCode(objLineInfo, ", ", "");
+						}
 					}
 				}
 			}
@@ -1615,9 +1672,22 @@ int parse_xml_file(char * file_name){
 	sprintf(objLineInfo.xPath,    "/%s", rootProg->name) ;
 	
 	memset(objLineInfo.fileName, 0x00, FILE_PATH_LEN);
-	char * fileNamePtr = strrchr(file_name, '.');
-	memcpy(objLineInfo.fileName, file_name, 
-		fileNamePtr - file_name);
+#ifdef WIN32
+	char * fileNameStartPtr = strrchr(file_name, '\\');
+	if (fileNameStartPtr == NULL)
+		fileNameStartPtr = file_name ;
+	else 
+		fileNameStartPtr++ ;
+#else
+	char * fileNameStartPtr = strrchr(file_name, '/');
+	if (fileNameStartPtr == NULL)
+		fileNameStartPtr = file_name ;
+	else 
+		fileNameStartPtr++ ;
+#endif
+	char * fileNameEndPtr = strrchr(file_name, '.');
+	memcpy(objLineInfo.fileName, fileNameStartPtr, 
+		fileNameEndPtr - fileNameStartPtr);
 
     g_lineNum = 1 ;
     // generate Include File
@@ -1637,11 +1707,6 @@ int parse_xml_file(char * file_name){
 	if(isNodeExist == 0)   {
         printf("\t\t\t\t ERROR: no node = head\n");
     }
-    
-	memset(&objLineInfo, 0x00, sizeof(LineInfo));
-	fileNamePtr = strrchr(file_name, '.');
-	memcpy(objLineInfo.fileName, file_name, 
-		fileNamePtr - file_name);
 
 	// generate prog_body 
 	isNodeExist = 0 ;

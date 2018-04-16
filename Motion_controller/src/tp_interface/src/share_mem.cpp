@@ -278,11 +278,13 @@ bool ShareMem::getRegInfo(RegMap * info)
     return true;
 }
 
-bool ShareMem::getDIOInfo(DIOMap * info)
+/*
+bool ShareMem::getDIOInfo(IOMapPortInfo * info)
 {
-    readShm(SHM_REG_IO_INFO, 0, (void*)info, sizeof(DIOMap));
+    readShm(SHM_REG_IO_INFO, 0, (void*)info, sizeof(IOMapPortInfo));
     return true;
 }
+*/
 
 bool ShareMem::isServoDone()
 {

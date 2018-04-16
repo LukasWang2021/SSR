@@ -44,11 +44,15 @@ int transData(void *ptr, struct shmi_info *info, uint8_t op) {
         return WRONG_OPERATION_SHMI;
     }
 
-    tryLockPts(&info->pts, op);
+	printf("tryLockPts: operation = 0x%u\n", (uint8_t)op);
+    // tryLockPts(&info->pts, op);
+	printf("tryLockPts Over: operation = 0x%u\n", (uint8_t)op);
 // #ifndef WIN32
     memcpy(dst, src, info->size);
 // #endif
-    unlockPts(&info->pts, op);
+	printf("unlockPts: operation = 0x%u\n", (uint8_t)op);
+    // unlockPts(&info->pts, op);
+	printf("unlockPts Over: operation = 0x%u\n", (uint8_t)op);
 
     return SUCCESS_SHMI;
 }

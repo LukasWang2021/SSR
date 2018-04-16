@@ -9,7 +9,7 @@
 #include "forsight_innercmd.h"
 #include "reg-shmi/forsight_op_regs_shmi.h"
 #include "reg-shmi/forsight_registers.h"
-#include "interpreter_common.h"
+#include "common/interpreter_common.h"
 
 // Register name
 #define TXT_PR    "pr"
@@ -67,20 +67,22 @@ static int get_num_token(char * src, char * dst)
 	return src - tmp ;
 }
 
+#ifdef WIN32
 #define USE_FAKE_DATA 
+#endif
 int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock, 
 							char *name, eval_value * value)
-{
-	PoseEuler pose ;
-	Joint joint ;
-	pl_t  plt ;
-	
+{	
 	char reg_name[16] ;
 	char reg_idx[16] ;
 	char reg_member[16] ;
 	int  iRegIdx = 0 ;
 	char * namePtr = name ;
 	char *temp = NULL ;
+	char reg_content_buffer[512] ;
+	
+	memset(reg_member, 0x00, 16);
+	memset(reg_content_buffer, 0x00, 512);
 
 	memset(reg_name, 0x00, 16);
 	temp = reg_name ;
@@ -112,242 +114,210 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		temp = reg_member ;
 		get_char_token(namePtr, temp);
 	}
+	memset(reg_content_buffer, 0x00, sizeof(reg_content_buffer));
 
 	if(!strcmp(reg_name, TXT_PR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			getPr(value, iRegIdx);
+			getPr(reg_content_buffer, iRegIdx);
+			pr_shmi_t * ptr = (pr_shmi_t *)reg_content_buffer ;
+			if (ptr->type == PR_TYPE_POSE_EULER)
+			{
+				value->setPoseValue(&(ptr->pose));
+			}
+			else
+			{
+				value->setJointValue(&(ptr->joint));
+			}
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
-#ifdef USE_FAKE_DATA
-			pose.position.x = pose.position.y = pose.position.z = 1.1 ;
-			pose.orientation.a = pose.orientation.b = pose.orientation.c = 2.2 ;
-			value->setPoseValue(&pose);
-#endif
-			getPosePr(value, iRegIdx);
+			getPosePr(reg_content_buffer, iRegIdx);
+			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_PL_JOINT))
 		{
-#ifdef USE_FAKE_DATA
-			joint.j1 = joint.j2 = joint.j3 = 1.1 ;
-			joint.j4 = joint.j5 = joint.j6 = 2.2 ;
-			value->setJointValue(&joint);
-#endif
-			getJointPr(value, iRegIdx);
-
+			getJointPr(reg_content_buffer, iRegIdx);
+			Joint * ptr = (Joint *)reg_content_buffer ;
+			value->setJointValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_TYPE))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getTypePr(value, iRegIdx);
-
+			getTypePr(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getIdPr(value, iRegIdx);
+			getIdPr(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-#ifdef USE_FAKE_DATA
-			value->setStringValue("Test Comment");
-#endif
-			getCommentPr(value, iRegIdx);
+			getCommentPr(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_SR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			getSr(value, iRegIdx);
+			getSr(reg_content_buffer, iRegIdx);
+			sr_shmi_t * ptr = (sr_shmi_t *)reg_content_buffer ;
+			value->setStringValue(ptr->value);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-#ifdef USE_FAKE_DATA
-			value->setStringValue("string register");
-#endif
-			getValueSr(value, iRegIdx);
+			getValueSr(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getIdSr(value, iRegIdx);
+			getIdSr(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-#ifdef USE_FAKE_DATA
-			value->setStringValue("Test Comment");
-#endif
-			getCommentSr(value, iRegIdx);
+			getCommentSr(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_R))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			getR(value, iRegIdx);
+            // Use TXT_REG_VALUE
+			getR(reg_content_buffer, iRegIdx);
+			r_shmi_t * ptr = (r_shmi_t *)reg_content_buffer ;
+			value->setFloatValue(ptr->value);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getValueR(value, iRegIdx);
+			getValueR(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atof(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getIdR(value, iRegIdx);
+			getIdR(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-#ifdef USE_FAKE_DATA
-			value->setStringValue("Test Comment");
-#endif
-			getCommentR(value, iRegIdx);
+			getCommentR(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_MR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			getMr(value, iRegIdx);
+			getMr(reg_content_buffer, iRegIdx);
+			mr_shmi_t * ptr = (mr_shmi_t *)reg_content_buffer ;
+			value->setFloatValue(ptr->value);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue(1);
-#endif
-			getValueMr(value, iRegIdx);
+			getValueMr(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getIdMr(value, iRegIdx);
+			getIdMr(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-#ifdef USE_FAKE_DATA
-			value->setStringValue("Test Comment");
-#endif
-			getCommentMr(value, iRegIdx);
+			getCommentMr(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_UF))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			getUf(value, iRegIdx);
+            // Use TXT_UF_TF_COORDINATE
+			getUf(reg_content_buffer, iRegIdx);
+			uf_shmi_t * ptr = (uf_shmi_t *)reg_content_buffer ;
+			value->setPoseValue(&(ptr->c));
 		}
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
-#ifdef USE_FAKE_DATA
-			pose.position.x = pose.position.y = pose.position.z = 1.1 ;
-			pose.orientation.a = pose.orientation.b = pose.orientation.c = 2.2 ;
-			value->setPoseValue(&pose);
-#endif
-			getCoordinateUf(value, iRegIdx);
+			getCoordinateUf(reg_content_buffer, iRegIdx);
+			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getIdUf(value, iRegIdx);
+			getIdUf(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-#ifdef WIN32
-			value->setStringValue("Test Comment");
-#endif
-			getCommentUf(value, iRegIdx);
+			getCommentUf(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_TF))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			getTf(value, iRegIdx);
+			getTf(reg_content_buffer, iRegIdx);
+			tf_shmi_t * ptr = (tf_shmi_t *)reg_content_buffer ;
+			value->setPoseValue(&(ptr->c));
 		}
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
-#ifdef USE_FAKE_DATA
-			pose.position.x = pose.position.y = pose.position.z = 1.1 ;
-			pose.orientation.a = pose.orientation.b = pose.orientation.c = 2.2 ;
-			value->setPoseValue(&pose);
-#endif
-			getCoordinateTf(value, iRegIdx);
+			getCoordinateTf(reg_content_buffer, iRegIdx);
+			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getIdTf(value, iRegIdx);
+			getIdTf(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-#ifdef WIN32
-			value->setStringValue("Test Comment");
-#endif
-			getCommentTf(value, iRegIdx);
+			getCommentTf(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_PL))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			getPl(value, iRegIdx);
+            // Use TXT_PL_POSE
+			getPl(reg_content_buffer, iRegIdx);
+			pl_shmi_t * ptr = (pl_shmi_t *)reg_content_buffer ;
+			value->setPLValue(&(ptr->pallet));
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
-#ifdef USE_FAKE_DATA
-			pose.position.x = pose.position.y = pose.position.z = 1.1 ;
-			pose.orientation.a = pose.orientation.b = pose.orientation.c = 2.2 ;
-			value->setPoseValue(&pose);
-#endif
-			getPalletPl(value, iRegIdx);
+			getPalletPl(reg_content_buffer, iRegIdx);
+			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_PL_PALLET))
 		{
-#ifdef USE_FAKE_DATA
-			plt.column = plt.layer = plt.row = 0 ;
-			value->setPLValue(&plt);
-#endif
-			getPalletPl(value, iRegIdx);
+			getPalletPl(reg_content_buffer, iRegIdx);
+			pl_t * ptr = (pl_t *)reg_content_buffer ;
+			value->setPLValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getFlagPl(value, iRegIdx);
+			getFlagPl(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-#ifdef USE_FAKE_DATA
-			value->setFloatValue((float)1.1);
-#endif
-			getIdPl(value, iRegIdx);
+			getIdPl(reg_content_buffer, iRegIdx);
+			value->setFloatValue(atoi(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-#ifdef USE_FAKE_DATA
-			value->setStringValue("Test Comment");
-#endif
-			getCommentPl(value, iRegIdx);
+			getCommentPl(reg_content_buffer, iRegIdx);
+			value->setStringValue(reg_content_buffer);
 		}
 	}
 	return 0 ;

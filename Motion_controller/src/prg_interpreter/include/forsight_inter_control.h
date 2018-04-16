@@ -19,7 +19,7 @@
 #endif
 
 #include "forsight_interpreter_shm.h"
-#include "interpreter_common.h"
+#include "common/interpreter_common.h"
 #include "forsight_basint.h"
 
 // #define USE_WAITING_R
@@ -36,7 +36,7 @@ void setWarning(long long int warn);
 #endif 
 void getSendPermission();
 void returnRegInfo(RegMap info);
-void returnDIOInfo(DIOMap info);
+void returnDIOInfo(IOMapPortInfo info);
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction);
 bool getIntprtCtrl();
 void executeBlock();

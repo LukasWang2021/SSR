@@ -5,6 +5,8 @@
 #ifndef WIN32
 #include "io_interface.h"
 #endif
+#include "forsight_program_property.h"
+#include "forsight_io_mapping.h"
 
 #define VELOCITY    (500)
 using namespace std;
@@ -193,10 +195,10 @@ void returnRegInfo(RegMap info)
 	setIntprtDataFlag(true);
 }
 
-void returnDIOInfo(DIOMap info)
+void returnDIOInfo(IOMapPortInfo info)
 {
-    printf("returnDIOInfo to %d\n", (int)info.type);
-    writeShm(SHM_REG_IO_INFO, 0, (void*)&info, sizeof(DIOMap));
+    printf("returnDIOInfo to %d\n", (int)info.port_type);
+    writeShm(SHM_REG_IO_INFO, 0, (void*)&info, sizeof(IOMapPortInfo));
 	setIntprtDataFlag(true);
 }
 
@@ -364,11 +366,14 @@ bool getIntprtCtrl()
 }
 
 void startFile(struct thread_control_block * objThdCtrlBlockPtr, 
-	char * proj_name, int idx, int isMainThread)
+	char * proj_name, int idx)
 {
 	strcpy(objThdCtrlBlockPtr->project_name, proj_name); // "prog_demo_dec"); // "BAS-EX1.BAS") ; // 
-	objThdCtrlBlockPtr->is_main_thread = isMainThread;
+	// objThdCtrlBlockPtr->is_main_thread = isMainThread;
 	objThdCtrlBlockPtr->iThreadIdx = idx ;
+	objThdCtrlBlockPtr->io_mapper.clear();
+	append_program_prop_mapper(objThdCtrlBlockPtr, proj_name);
+	append_io_mapping(objThdCtrlBlockPtr);
 	base_thread_create(idx, objThdCtrlBlockPtr);
 	intprt_ctrl.cmd = LOAD ;
 }
@@ -462,8 +467,10 @@ void waitInterpreterStateToPaused(
 void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 {
 	RegMap reg ;
-	DIOMap dio ;
-	
+	IOMapPortInfo dioMap ;
+#ifndef WIN32
+	IOPortInfo    dio ;
+#endif
 	int iLineNum = 0 ;
 	static InterpreterCommand lastCmd ;
 	UserOpMode mode ;
@@ -502,7 +509,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_demo_dec");
 			}
             startFile(objThdCtrlBlockPtr, 
-				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq, 1);
+				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
 	        // g_iCurrentThreadSeq++ ;
             break;
         case START:
@@ -518,7 +525,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_demo_dec");
 			}
 			startFile(objThdCtrlBlockPtr, 
-				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq, 1);
+				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
 	        // g_iCurrentThreadSeq++ ;
             break;
         case FORWARD:
@@ -651,21 +658,26 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			// intprt_ctrl.RegMap.
 			reg = intprt_ctrl.reg ;
 			forgesight_mod_reg(reg);
-  	                printf("reg.type = %d end.\n", reg.type);
+  	        printf("reg.type = %d end.\n", reg.type);
             break;
         case READ_DIO:
 			// intprt_ctrl.RegMap.
-			dio = intprt_ctrl.dio ;
+			dioMap  = intprt_ctrl.dio ;
 			// forgesight_read_dio(regIOInfo.dio);
-			returnDIOInfo(dio);
+			returnDIOInfo(dioMap);
             break;
         case MOD_DIO:
 			// intprt_ctrl.RegMap.
-			dio = intprt_ctrl.dio ;
+			dioMap = intprt_ctrl.dio ;
+			printf("MOD_DIO: dio::msg_id: %d, dev_id: %d, port_type: %d, "
+				"port_index: %d, bytes_len: %d, value: %d.\n", 
+				dioMap.msg_id, dioMap.dev_id, dioMap.port_type, 
+				dioMap.port_index, dioMap.bytes_len, dioMap.value);
 #ifndef WIN32
-            IOInterface::instance()->setDO(&dio, dio.value);
-#else
-			// forgesight_mod_dio(regIOInfo.dio);
+			dio.msg_id = dioMap.msg_id , dio.dev_id = dioMap.dev_id ;
+			dio.port_type = dioMap.port_type , dio.port_index = dioMap.port_index ;
+			dio.bytes_len = dioMap.bytes_len ;
+            IOInterface::instance()->setDO(&dio, dioMap.value);
 #endif
             break;
         default:

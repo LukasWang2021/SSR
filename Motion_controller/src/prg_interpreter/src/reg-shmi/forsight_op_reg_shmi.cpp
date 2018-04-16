@@ -36,7 +36,7 @@ int initShmi(int size) {
 	{
 		printf("REG_SHMI: init failed with = %d\n", fdRegShmi);
 	}
-	printf("REG_SHMI: init shm_open(reg_shmi) with = %d\n", fdRegShmi);
+	// printf("REG_SHMI: init shm_open(reg_shmi) with = %d\n", fdRegShmi);
 #endif
 	
 #ifdef WIN32

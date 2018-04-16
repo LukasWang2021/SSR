@@ -767,10 +767,10 @@ int Controller::getRegisterReply(void * params)
 	return 1;
 }
 
-void Controller::setDIO(void* params, int len)
+void Controller::setDIO(void* params, char value)
 {
-    DIOMap* dio = (DIOMap*)params;
-    
+    IOMapPortInfo* dio = (IOMapPortInfo*)params;
+    dio->value = value ;
     InterpreterControl ctrl;
     ctrl.cmd = MOD_DIO;
     ctrl.dio = *dio;
@@ -778,6 +778,7 @@ void Controller::setDIO(void* params, int len)
     ShareMem::instance()->setIntprtDataFlag(false);
 }
 
+/*
 void Controller::sendGetIORequest(void * params, int len)
 {	
     DIOMap* dio = (DIOMap*)params;
@@ -797,6 +798,7 @@ void Controller::getDIO(void * params)
 		return ;
 	ShareMem::instance()->getDIOInfo(params);
 }
+*/
 
 void Controller::startRun(void* params, int len)
 {
@@ -1196,7 +1198,9 @@ void Controller::setManualCmd(void* params, int len)
      //Qianjin
     if ((ctrl_state_ != ENGAGED_S) ||( (work_status_ != IDLE_W)&&(work_status_ != TEACHING_W)     ))
     {
-        FST_ERROR("cant manual run!!");
+        int iCtrlState = ctrl_state_ , iWorkStatus = work_status_;
+        FST_ERROR("cant manual run!! ctrl_state_= %d and work_status_ = %d", 
+			iCtrlState, iWorkStatus);
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
@@ -1506,6 +1510,7 @@ void Controller::requestProc()
                 //int buf_len;             
                 //U64 result = IOInterface::instance()->checkIO(str_path.c_str(), buf_len, id);
                 IOPortInfo info;
+                IOMapPortInfo infoMap;
                 U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
                 if (result != TPI_SUCCESS)
                 {
@@ -1514,7 +1519,10 @@ void Controller::requestProc()
                     break;
                 }
                 char val = *tp_interface_->getReqDataPtr()->getParamBufPtr();
-                IOInterface::instance()->setDO(&info, val);
+ //             IOInterface::instance()->setDO(&info, val);
+ 				memcpy(&infoMap, &info, sizeof(IOPortInfo));
+                setDIO(&infoMap, val);
+				FST_INFO("SET:: reg.index:%d\n", info.port_index);
             }
             else if (str_path.substr(0, 13) == "root/register")
             {
@@ -1528,10 +1536,12 @@ void Controller::requestProc()
                     tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
                     break;
                 }
-				FST_INFO("SET:: getParamBufLen:%d", tp_interface_->getReqDataPtr()->getParamBufLen());
+				FST_INFO("SET:: getParamBufLen:%d\n", 
+					tp_interface_->getReqDataPtr()->getParamBufLen());
 				memcpy(reg.value, tp_interface_->getReqDataPtr()->getParamBufPtr(),
                         sizeof(reg.value));
-				FST_INFO("SET OVER :: getParamBufLen:%d", tp_interface_->getReqDataPtr()->getParamBufLen());
+				FST_INFO("SET OVER :: getParamBufLen:%d\n", 
+					tp_interface_->getReqDataPtr()->getParamBufLen());
 				setRegister((void *)&reg, sizeof(RegMap));
             }
             else
@@ -1543,7 +1553,7 @@ void Controller::requestProc()
                 if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
                     (this->*g_ctrl_funcs_mp[id].setValue)(pointer, len);
                 }else{
-                    FST_ERROR("SET:: not exist id :%d with %s", id, str_path.c_str()); 
+                    FST_ERROR("SET:: not exist id :%d with %s\n", id, str_path.c_str()); 
                 }
             }
             tp_interface_->setReply(BaseTypes_StatusCode_OK);

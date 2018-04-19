@@ -31,6 +31,7 @@ typedef struct
 {
 	PoseEuler pose;
 	Joint     joint;
+	int group;
 	int type;
 	int id;
 	char comment[COMMENT_SIZE];

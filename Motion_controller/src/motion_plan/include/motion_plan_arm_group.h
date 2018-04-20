@@ -15,12 +15,26 @@
 #include <motion_plan_motion_command.h>
 #include <motion_plan_manual_teach.h>
 
-#define     MOTION_COMMAND_POOL_CAPACITY    10
-#define     PATH_FIFO_CAPACITY              16384       // must be setted to 2~N
+#define     PATH_FIFO_CAPACITY              2048        // must be setted to 2~N
 #define     TRAJECTORY_FIFO_CAPACITY        512         // must be setted to 2^N
+#define     MOTION_POOL_CAPACITY            4           // must be setted to 2^N
 
 namespace fst_controller
 {
+
+struct ControlPointCache
+{
+    bool    valid;
+    size_t  head;
+    size_t  tail;
+    size_t  smooth_in_stamp;
+    size_t  smooth_out_stamp;
+    double  deadline;
+    ControlPoint path[PATH_FIFO_CAPACITY];
+    ControlPointCache   *prev;
+    ControlPointCache   *next;
+};
+
 
 class ArmGroup
 {
@@ -265,6 +279,15 @@ class ArmGroup
     // Return:  DH parameter group
     //------------------------------------------------------------
     const DHGroup& getDH(void);
+
+    //------------------------------------------------------------
+    // Function:    timeBeforeDeadline
+    // Summary: To get remaining time before deadline of the trajectory.
+    // In:      None
+    // Out:     None
+    // Return:  remaining time
+    //------------------------------------------------------------
+    double timeBeforeDeadline(void);
 
     //------------------------------------------------------------
     // Function:    getFIFOLength
@@ -638,8 +661,9 @@ class ArmGroup
     ErrorCode setManualAccRatio(double ratio);
     
 private:
-    MotionCommand* getFreeMotionCommand(void);
-    MotionCommand* releaseMotionCommand(MotionCommand *cmd);
+    MotionCommand* getMotionCommandPtr(void);
+    //MotionCommand* getFreeMotionCommand(void);
+    //MotionCommand* releaseMotionCommand(MotionCommand *cmd);
 
     //------------------------------------------------------------
     // Function:    autoJoint
@@ -665,9 +689,16 @@ private:
 
     ErrorCode fillTrajectoryFIFO(size_t num);
 
+    ErrorCode planSmoothPath(const fst_controller::ControlPoint &ps,
+                             const fst_controller::ControlPoint &pe,
+                             std::vector<PathPoint> &path);
+
+    ErrorCode smoothJoint2Joint(const ControlPoint &ps, const ControlPoint &pe, ControlPoint &traj);
+    
     ErrorCode convertPath2Trajectory(ControlPoint &cp);
 
     ErrorCode planTraj(void);
+    ErrorCode planTraj2(ControlPoint *path, size_t head, size_t tail);
 
     ErrorCode planJointTraj(void);
   
@@ -680,11 +711,15 @@ private:
     ErrorCode pickManualCartesian(size_t num, std::vector<JointOutput> &points);
 
 
-    MotionCommand   motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY];
-    MotionCommand  *free_command_list_ptr_;
-    MotionCommand  *used_command_list_ptr_;
+    MotionCommand   motion_command_pool_[MOTION_POOL_CAPACITY];
+    size_t          motion_command_index_;
+    //MotionCommand  *free_command_list_ptr_;
+    //MotionCommand  *used_command_list_ptr_;
 
     ControlPoint    prev_traj_point_;
+
+    ControlPointCache    path_cache_[MOTION_POOL_CAPACITY];
+    ControlPointCache   *pick_path_ptr_;
 
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;
@@ -701,7 +736,6 @@ private:
     ManualTeach     manual_;
 
 };
-
 
 
 

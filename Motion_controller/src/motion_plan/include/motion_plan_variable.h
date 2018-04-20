@@ -32,10 +32,6 @@ extern double   g_orientation_omega_reference;
 extern double   g_orientation_alpha_reference;
 extern double   g_ort_linear_polation_threshold;
 
-extern double  g_manual_top_speed_ratio;
-extern double  g_manual_sub_speed_ratio;
-extern double  g_manual_top_acc_ratio;
-extern double  g_manual_sub_acc_ratio;
 extern double  g_manual_step_joint;
 extern double  g_manual_step_position;
 extern double  g_manual_step_orientation;

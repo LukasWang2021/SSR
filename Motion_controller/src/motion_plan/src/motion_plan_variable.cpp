@@ -42,10 +42,6 @@ double  g_orientation_omega_reference;
 double  g_orientation_alpha_reference;
 double  g_ort_linear_polation_threshold;
 
-double  g_manual_top_speed_ratio;
-double  g_manual_sub_speed_ratio;
-double  g_manual_top_acc_ratio;
-double  g_manual_sub_acc_ratio;
 double  g_manual_step_joint;
 double  g_manual_step_position;
 double  g_manual_step_orientation;
@@ -71,7 +67,6 @@ DHGroup g_dh;
 
 JointConstraint g_soft_constraint;
 JointConstraint g_hard_constraint;
-
 
 ManualMode          g_manual_mode;
 ManualFrame         g_manual_frame;

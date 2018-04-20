@@ -27,6 +27,10 @@ using namespace fst_algorithm;
 
 int main(int argc, char **argv)
 {    
+    cout << "hello" << endl;
+    cout << "hello" << endl;
+    cout << "hello" << endl;
+    cout << "hello" << endl;
     Joint start_joint;
     start_joint.j1 = 0.0;
     start_joint.j2 = 0.0;

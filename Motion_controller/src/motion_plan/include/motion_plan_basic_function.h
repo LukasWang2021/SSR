@@ -1070,6 +1070,15 @@ static inline void DHMatrix(const double l[4], double q, double m[4][4])
     rightMultiplyMat2Mat(m, tmp);
 }
 
+static inline double getDistance(const fst_controller::Point &p1, const fst_controller::Point &p2)
+{
+    double x = p2.x - p1.x;
+    double y = p2.y - p1.y;
+    double z = p2.z - p1.z;
+    
+    return sqrt(x * x + y * y + z * z);
+}
+
 static inline double getDistance(const fst_controller::Pose &pose1, const fst_controller::Pose &pose2)
 {
     double x = pose2.position.x - pose1.position.x;
@@ -1082,6 +1091,16 @@ static inline double getDistance(const fst_controller::Pose &pose1, const fst_co
 static inline double innerProductQuatern(const fst_controller::Quaternion q1, const fst_controller::Quaternion q2)
 {
     return q1.w * q2.w + q1.x * q2.x + q1.y * q2.y + q1.z * q2.z;
+}
+
+static inline double getOrientationAngle(const fst_controller::Quaternion &q1, const fst_controller::Quaternion &q2)
+{
+    double t = innerProductQuatern(q1, q2);
+    
+    if (t > 1.0)        t =  1.0;
+    else if (t < -1.0)  t = -1.0;
+    
+    return acos(t);
 }
 
 static inline double getOrientationAngle(const fst_controller::Pose &pose1, const fst_controller::Pose &pose2)

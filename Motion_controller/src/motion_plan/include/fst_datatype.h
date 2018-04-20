@@ -244,14 +244,20 @@ struct ControlPoint {
 
     // time duration from prev point to this point
     // duration < 0 means this point has not been converted to a trajectory point
-    MotionTime  duration;
+    // command_duration = cycle_step / v_command
+    // expect_duration = command_duration / global_vei_ratio
+    // duration = actual dutation
+    MotionTime  command_duration;
     MotionTime  expect_duration;
-
-    // brake flag
-    bool        brake;
-
+    MotionTime  duration;
+    
+    bool        smooth;
     // point is what trajectory-create should give out
-    JointState  point;
+    union
+    {
+        double      coeff[AXIS_IN_ALGORITHM][6];
+        JointState  point;
+    };
 };
 
 struct TrajectoryPoint {

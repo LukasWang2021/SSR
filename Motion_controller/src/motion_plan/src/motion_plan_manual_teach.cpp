@@ -143,8 +143,8 @@ ErrorCode ManualTeach::manualJoint(void)
 
 ErrorCode ManualTeach::manualJointStep(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     FST_INFO("manual-Joint-Step: directions = %d %d %d %d %d %d, planning trajectory ...",
              manual_direction_[0], manual_direction_[1], manual_direction_[2],
@@ -254,8 +254,8 @@ ErrorCode ManualTeach::manualJointStep(void)
 
 ErrorCode ManualTeach::manualJointContinuous(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     FST_INFO("manual-Joint-Continuous: directions = %d %d %d %d %d %d, planning trajectory ...",
              manual_direction_[0], manual_direction_[1], manual_direction_[2],
@@ -315,8 +315,8 @@ ErrorCode ManualTeach::manualJointContinuous(void)
 
 ErrorCode ManualTeach::manualJointAPoint(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     FST_INFO("manual-Joint-APOINT: planning trajectory ...");
     FST_INFO("  speed_ratio=%.0f%%, acc_ratio=%.0f%%", speed_ratio * 100, acc_ratio * 100);
@@ -432,6 +432,10 @@ ErrorCode ManualTeach::manualCartesian(void)
     {
         err = manualCartesianContinuous();
     }
+    else
+    {
+        err = MOTION_INTERNAL_FAULT;
+    }
 
     if (err == SUCCESS)
     {
@@ -446,8 +450,8 @@ ErrorCode ManualTeach::manualCartesian(void)
 
 ErrorCode ManualTeach::manualCartesianStep(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     PoseEuler start  = forwardKinematics2PoseEuler(g_start_joint);
     PoseEuler target = start;
@@ -507,8 +511,8 @@ ErrorCode ManualTeach::manualCartesianStep(void)
 
     double dis = (manual_direction_[0] != STANDBY || manual_direction_[1] != STANDBY ||
                   manual_direction_[2] != STANDBY) ? g_manual_step_position : 0;
-    double spd = g_cart_vel_reference * speed_ratio;
-    double acc = g_cart_acc_reference * acc_ratio;
+    double spd = g_cart_vel_max * speed_ratio;
+    double acc = g_cart_acc_max * acc_ratio;
 
     double angle = (manual_direction_[3] != STANDBY || manual_direction_[4] != STANDBY ||
                     manual_direction_[5] != STANDBY) ? g_manual_step_orientation : 0;
@@ -601,8 +605,8 @@ ErrorCode ManualTeach::manualCartesianContinuous(void)
 {
     ErrorCode err = SUCCESS;
 
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     PoseEuler start  = forwardKinematics2PoseEuler(g_start_joint);
 
@@ -610,7 +614,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(void)
              manual_direction_[0], manual_direction_[1], manual_direction_[2],
              manual_direction_[3], manual_direction_[4], manual_direction_[5]);
     FST_INFO("  speed_ratio = %.0f%%, acc_ratio=%.0f%%",
-             g_manual_step_position, g_manual_step_orientation, speed_ratio * 100, acc_ratio * 100);
+             speed_ratio * 100, acc_ratio * 100);
     FST_INFO("  start  pose  = %.2f %.2f %.2f - %.4f %.4f %.4f",
              start.position.x, start.position.y, start.position.z,
              start.orientation.a, start.orientation.b, start.orientation.c);
@@ -625,8 +629,8 @@ ErrorCode ManualTeach::manualCartesianContinuous(void)
         {
             if (i < 3)
             {
-                spd = g_cart_vel_reference * speed_ratio;
-                acc = g_cart_acc_reference * acc_ratio;
+                spd = g_cart_vel_max * speed_ratio;
+                acc = g_cart_acc_max * acc_ratio;
             }
             else
             {

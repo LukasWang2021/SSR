@@ -32,7 +32,8 @@ void computeLastDurationMin(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega*
 void computeTrajectory(bool is_pause, bool is_forward, size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr,
                             Omega* start_omega_ptr, MotionTime duration, Alpha* acc_limit, Omega* velocity_limit, ControlPoint* target);
 
-
+ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next, Alpha *alpha_limit, Omega *omega_limit);
+ErrorCode backwardTrajectory(ControlPoint &prev, ControlPoint &next, Alpha *alpha_limit, Omega *omega_limit);
 
 }
 

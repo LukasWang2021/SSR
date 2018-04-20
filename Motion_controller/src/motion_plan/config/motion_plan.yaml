@@ -1,6 +1,6 @@
 cycle_time: 0.001                           # s
 cycle_distance: 10.0                         # mm
-cycle_radian: 0.1                           # rad
+cycle_radian: 0.01                           # rad
 
 cartesian:
     velocity:

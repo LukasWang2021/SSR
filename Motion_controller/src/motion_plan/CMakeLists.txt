@@ -64,6 +64,7 @@ add_library(motion_plan
 
     # include motion FIFO functions here:
     src/motion_plan_arm_group.cpp
+    src/motion_plan_frame_manager.cpp
 )
 
 ## Declare a C++ executable
@@ -147,6 +148,14 @@ install(FILES config/soft_constraints.yaml
 
 install(FILES config/dh.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(FILES config/user_frame.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+)
+
+install(FILES config/tool_frame.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
 )
 
 install(DIRECTORY config

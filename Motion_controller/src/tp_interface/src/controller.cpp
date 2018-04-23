@@ -14,6 +14,7 @@
 #include "error_code.h"
 #include "sub_functions.h"				
 #include "service_heartbeat.h"
+#include "version.h"
 
 using std::vector;
 
@@ -1816,7 +1817,7 @@ void Controller::addPubParameter(string str_path, PublishUpdate *pub_update)
     else
     {
         pub_update->base_interval = pub_update->base_interval / (ctrl_task_->period() * 10);
-        pub_update->max_interval = pub_update->max_interval / (ctrl_task_->period() * 10;
+        pub_update->max_interval = pub_update->max_interval / (ctrl_task_->period() * 10);
         pub_update->count = pub_update->max_interval;
         id = tp_interface_->getReqDataPtr()->getID();
     }
@@ -2137,3 +2138,18 @@ void Controller::shutdown()
 
 }
 
+void Controller::getVersion(void* params)
+{
+    base_types_VersionInfo version;
+    version.major = get_ver_major();
+    version.minor = get_ver_minor();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+
+        rep->fillData((char*)&version, sizeof(version));
+    }
+}

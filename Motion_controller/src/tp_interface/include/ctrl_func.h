@@ -94,6 +94,7 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	17993,	{	&Controller::setGlobalVel,	&Controller::getGlobalVel,	&Controller::updateDefault	}	},
 	{	11892,	{	&Controller::setTeachTarget,	&Controller::getError,	&Controller::updateDefault	}	},
 	{	94965,	{	&Controller::setError,	&Controller::getSafetyInFrame,	&Controller::updateSafetyFrame	}	},
+	{	10478,	{	&Controller::setError,	&Controller::getVersion,	&Controller::updateDefault	}	},
 	{	87442,	{	&Controller::setRegister,	&Controller::getRegister,	&Controller::updateDefault	}	},
 };							
 

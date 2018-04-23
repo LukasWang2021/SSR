@@ -13,7 +13,8 @@
 #include "base_types_hash.h"
 #include "motionSL.pb.h"
 #include "proto_define.h"
-#include "instruction.h"							
+#include "instruction.h"
+#include "version.pb.h"
 
 
 
@@ -61,6 +62,7 @@ class ProtoParse
 
     bool encParamListMsg(uint8_t *buf_out, int buf_len, int& bytes_written);
 
+    void encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf);
   private:
     int hash_size_;
     std::vector<CommandInstruction> inst_list_;

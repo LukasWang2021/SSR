@@ -561,6 +561,13 @@ class Controller
      * @param params
      */
     void getRegisterInfo(void* params_info);
+
+    /**
+     * @brief: callback for getting version data 
+     *
+     * @param params
+     */
+    void getVersion(void* params);
 	
   private:
     static Controller           *instance_;     //this class 

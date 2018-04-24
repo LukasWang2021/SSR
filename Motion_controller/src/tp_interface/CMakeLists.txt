@@ -93,7 +93,7 @@ add_library(io_interface
 
 add_executable(controller
     ${BASE_SRCS}
-    #${PROTO_SRCS}
+    ${PROTO_SRCS}
     ${SERV_SRCS}
     ${TPI_SRCS}
     #${NANOPB_DIR}/pb_decode.c

@@ -570,6 +570,27 @@ bool encListCallback(pb_ostream_t *stream, const pb_field_t *field, void * const
     return IOInterface::instance()->encDevList(&param_msg, stream, field);
 }
 
+void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    base_types_VersionInfo *version = (base_types_VersionInfo*)in_buf;
 
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+
+    FST_INFO("param is : %d", param);
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, base_types_VersionInfo_fields, version);
+
+    if(ret != true)
+    {
+        FST_ERROR("error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+
+    FST_INFO("bytes_written:%d", ostream.bytes_written);
+}
 
 

@@ -1674,68 +1674,64 @@ void Controller::requestProc()
     tp_interface_->getReqDataPtr()->setFilledFlag(false);
 }
 
+
 void Controller::updateProc()
 {
-    std::map<int, PublishUpdate>::iterator itr;
-    std::map<int, CtrlFunctions>::iterator it = g_ctrl_funcs_mp.begin();
-    for (; it != g_ctrl_funcs_mp.end(); ++it)
-    {
-        (this->*it->second.updateValue)(it->first);
-    }
+    std::map<int, CtrlFunctions>::iterator it;
 
-    if (tp_interface_->getPubDataPtr()->isFilled())        
-        return;
+    for (it = g_ctrl_funcs_mp.begin(); it != g_ctrl_funcs_mp.end(); ++it)
+        (this->*it->second.updateValue)(it->first);
+
+    if (tp_interface_->getPubDataPtr()->isFilled()) return;
+
     motion_spec_SignalGroup *sig_gp = tp_interface_->getPubDataPtr()->getParamBufPtr();
     sig_gp->sig_param_count = 0;
 
-    int base_property_count = 0;
-    itr = id_pub_map_.begin();
-    for (; itr != id_pub_map_.end(); ++itr)
+    std::map<int, PublishUpdate>::iterator itr;
+
+    for (itr = id_pub_map_.begin(); itr != id_pub_map_.end(); ++itr)
     {
-        int id = itr->first;        
+        int id = itr->first;
         PublishUpdate *pub_update = &itr->second;
+
         motion_spec_Signal *sig = &sig_gp->sig_param[sig_gp->sig_param_count];
+
         if (id >= IO_BASE_ADDRESS)
-        {               
-            sig_gp->sig_param_count++;
+        {
             sig->id = id;
-            IOInterface::instance()->getDIO(id, sig->param.bytes, sizeof(sig->param.bytes), pub_update->buf_len); 
+            sig_gp->sig_param_count++;
+            IOInterface::instance()->getDIO(id, sig->param.bytes, sizeof(sig->param.bytes), pub_update->buf_len);
         }
         else
         {
-            if (pub_update->count++ >= pub_update->base_interval)
+            FST_INFO("Here publish id : %d\n", id);
+
+            itr->second.count++;
+
+            if (itr->second.count >= itr->second.base_interval)
             {
-                if ((pub_update->count >= pub_update->max_interval)
-                || (pub_update->update_flag == true))
+                if ((itr->second.count >= itr->second.max_interval)
+                    || (itr->second.update_flag == true))
                 {
-                    base_property_count++;
-                    pub_update->count = 0;
-                    sig_gp->sig_param_count++;
+                    itr->second.count = 0;
+                    itr->second.update_flag = false;
+
                     sig->id = id;
-                    //FST_INFO("pub id:%d", id);
+                    sig_gp->sig_param_count++;
+
                     TPIParamBuf param_buf;
                     param_buf.type = PUBLISH;
-                    param_buf.params = (void*)&sig->param;
+                    param_buf.params = (void *)&sig->param;
                     (this->*g_ctrl_funcs_mp[itr->first].getValue)(&param_buf);
-                    //FST_INFO("param len:%d", sig->param.size);
-                    pub_update->update_flag = false;
                 }
             }
         }
     }
+
     if (sig_gp->sig_param_count > 0)
-    {
-        //FST_INFO("signal count :%d", sig_gp->sig_param_count);
-        if (base_property_count > 0)
-        {
-            for (itr = id_pub_map_.begin(); itr != id_pub_map_.end(); ++itr)
-            {
-                itr->second.count = 0;
-            }
-        }
         tp_interface_->getPubDataPtr()->setFilledFlag(true);
-    }
 }
+
 
 void Controller::parseCmdMsg()
 {
@@ -1791,37 +1787,42 @@ void Controller::parseCmdMsg()
 
 void Controller::addPubParameter(string str_path, PublishUpdate *pub_update)
 {
-    uint32_t id;
+    uint32_t id = tp_interface_->getReqDataPtr()->getID();
+
     std::map<int, PublishUpdate>::iterator it = id_pub_map_.find(id);
+
     if (it != id_pub_map_.end())
     {
         it->second.base_interval = pub_update->base_interval / ctrl_task_->period();
         it->second.max_interval = pub_update->max_interval / ctrl_task_->period();
-        it->second.count = pub_update->max_interval;                
+        it->second.count = it->second.max_interval;
         it->second.update_flag = true;
         return;
     }
 
     if (str_path.substr(0, 7) == "root/IO")
     {
-        //int buf_len;
         IOPortInfo info;
         U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+
         if (result != TPI_SUCCESS)
         {
             rcs::Error::instance()->add(result);
             return;
         }
+
         id = info.msg_id;
     }
     else
     {
-        pub_update->base_interval = pub_update->base_interval / (ctrl_task_->period() * 10);
-        pub_update->max_interval = pub_update->max_interval / (ctrl_task_->period() * 10);
+        pub_update->base_interval = pub_update->base_interval / (ctrl_task_->period() * 12.5);
+        pub_update->max_interval = pub_update->max_interval / (ctrl_task_->period() * 12.5);
         pub_update->count = pub_update->max_interval;
-        id = tp_interface_->getReqDataPtr()->getID();
+        pub_update->update_flag = true;
+        FST_INFO("Here pub count : %d", pub_update->count);
+
+        id_pub_map_.insert(std::map<int, PublishUpdate>::value_type(id, *pub_update));
     }
-    id_pub_map_.insert(std::map<int, PublishUpdate>::value_type(id, *pub_update));
 }
 
 void Controller::removePubParameter(string str_path)

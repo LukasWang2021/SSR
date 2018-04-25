@@ -20,6 +20,7 @@ file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
 find_package(catkin REQUIRED COMPONENTS 
     log_manager
     io_manager
+    parameter_manager
     mem_share
 )
 
@@ -72,6 +73,7 @@ add_executable(prg_interpreter
     src/forsight_innerfunc.cpp
     src/base_thread.cpp
     src/forsight_inter_control.cpp
+    src/forsight_io_controller.cpp
               src/forsight_io_mapping.cpp
               src/forsight_program_property.cpp
               src/forsight_cJSON.cpp
@@ -81,6 +83,7 @@ target_link_libraries(prg_interpreter
     ${catkin_LIBRARIES}
     io_manager
     io_interface
+    parameter_manager
     xml2
 )
 

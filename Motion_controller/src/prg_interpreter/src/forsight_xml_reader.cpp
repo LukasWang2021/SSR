@@ -1498,12 +1498,13 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 			}
         }
 		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"comment")==0){ 
-            // printf("%s, ", (char*)nodeStatement->name);
-            // objLineInfoTemp.xPathIdx = iCommentIdx++;
+        //    // printf("%s, ", (char*)nodeStatement->name);
+        //    // objLineInfoTemp.xPathIdx = iCommentIdx++;
 			value = xmlNodeGetContent(nodeStatement);
 			sprintf(objLineInfoTemp.xPath, "%s", 
 					 (char *)xmlGetNodePath(nodeStatement));
-			exportBASCode(objLineInfoTemp, "EXPORT: ", "# %s \n", (char*)value);
+			printf("Omit comment - %s\n", (char *)value);
+		//	exportBASCode(objLineInfoTemp, "EXPORT: ", "# %s \n", (char*)value);
         }
 		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"nop")==0){ 
             // printf("%s, ", (char*)nodeStatement->name);

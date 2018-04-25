@@ -10,10 +10,9 @@
 #include "forsight_xml_reader.h"
 #include "reg-shmi/forsight_registers.h"
 #include "forsight_io_mapping.h"
+#include "forsight_io_controller.h"
 
 #ifndef WIN32
-#include "io_interface.h"
-// #include "error_code.h"
 
 #define TPI_SUCCESS				(0)
 
@@ -743,11 +742,15 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
   sprintf(fname, "%s.bas", pname);
 #else
-  sprintf(fname, "\/data\/programs\/%s.xml", pname);
+  sprintf(fname, "%s\/programs\/%s.xml", DATA_PATH, pname);
   parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
-  sprintf(fname, "\/data\/programs\/%s.bas", pname);
+  sprintf(fname, "%s\/programs\/%s.bas", DATA_PATH, pname);
 #endif
-  if(!(fp=fopen(fname, "r"))) return 0;
+  if(!(fp=fopen(fname, "r"))) 
+  {
+      serror(14);
+      return 0;
+  }
 
   i = 0;
   do {
@@ -2315,25 +2318,28 @@ void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * re
 void serror(int error)
 {
   static const char *e[]= {
-    "syntax error",
-    "unbalanced parentheses",
-    "no expression present",
-    "equals sign expected",
-    "not a variable",
-    "Label table full",
-    "duplicate sub_label",
-    "undefined sub_label",
-    "THEN expected",
-    "TO expected",
-    "too many nested FOR loops",
-    "NEXT without FOR",
-    "too many nested GOSUBs",
-    "RETURN without GOSUB"
-    "Use Call in exp"
+    "syntax error",                // 0 
+    "unbalanced parentheses",      // 1 
+    "no expression present",       // 2 
+    "equals sign expected",        // 3 
+    "not a variable",              // 4 
+    "Label table full",            // 5 
+    "duplicate sub_label",         // 6 
+    "undefined sub_label",         // 7 
+    "THEN expected",               // 8 
+    "TO expected",                 // 9 
+    "too many nested FOR loops",   // 10 
+    "NEXT without FOR",            // 11
+    "too many nested GOSUBs",      // 12 
+    "RETURN without GOSUB",        // 13 
+    "file not found"               // 14
   };
   printf("-----------------ERR----------------------\n");
   printf("\t NOTICE : %s\n", e[error]);
   printf("-----------------ERR----------------------\n");
+  
+  setPrgmState((InterpreterState)(ERROR_SYNTAX_ERROR_T + error)) ; 
+
   longjmp(e_buf, 1); /* return to save point */
 }
 
@@ -2863,28 +2869,12 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		if(strchr(vname, '['))
 		{
 			int iRet = 0 ;
-			printf("\t SET FROM :: %s : %s\n", vname, 
-				objThreadCntrolBlock->io_mapper[vname].c_str());
-#ifndef WIN32
-            IOPortInfo info;
-			memset(&info, 0x00, sizeof(IOPortInfo));
-
-            U64 result = IOInterface::instance()->checkIO(
-				objThreadCntrolBlock->io_mapper[vname].c_str(), &info);
-            if (result != TPI_SUCCESS)
-            {
-            //    rcs::Error::instance()->add(result);
-            //    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
-				printf("IOInterface::instance()->checkIO Failed:: %s\n", 
-						objThreadCntrolBlock->io_mapper[vname].c_str());
-				return ;
-            }
-#endif
-            char val = (char)value.getFloatValue();
-#ifndef WIN32
-			printf("\t SET:: %s : %d = %d\n", vname, info.port_index, val);
-            IOInterface::instance()->setDO(&info, val);
-#endif
+			if(g_io_mapper.find(vname) != g_io_mapper.end() )
+			{
+				printf("\t SET FROM :: %s : %s\n", vname, 
+					g_io_mapper[vname].c_str());
+			}
+			iRet = forgesight_set_io_status(vname, value);
 			if(iRet == 0)
 			{
 				return ;
@@ -2949,41 +2939,15 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
     {
 		if(strchr(vname, '['))
 		{
-			int iRet = 0 ;
 			int iValue = -1;
-			printf("\t GET FROM :: %s : %s\n", vname, 
-				objThreadCntrolBlock->io_mapper[vname].c_str());
-#ifndef WIN32
-			char valueBuf[8];
-            IOPortInfo info;
-            IOMapPortInfo infoMap;
-			memset(&info, 0x00, sizeof(IOPortInfo));
-
-            U64 result = IOInterface::instance()->checkIO(
-				objThreadCntrolBlock->io_mapper[vname].c_str(), &info);
-            if (result != TPI_SUCCESS)
-            {
-				printf("IOInterface::instance()->checkIO Failed:: %s\n", 
-						objThreadCntrolBlock->io_mapper[vname].c_str());
-				return ;
-            }
 			
-            IOInterface::instance()->getDIO(&info, valueBuf, 8);
-			printf("\t GET:: %s : (", vname);
-			for(int iRet = 0 ; iRet < 8 ; iRet++)
+			if(g_io_mapper.find(vname) != g_io_mapper.end() )
 			{
-			    printf("%04X, ", valueBuf[iRet]);
+					printf("\t GET FROM :: %s : %s\n", vname, 
+						g_io_mapper[vname].c_str());
 			}
-			printf(") \n");
-			
-			iValue = atoi(valueBuf);
-#endif
-			value.setFloatValue(iValue) ;
-			if(iRet == 0)
-			{
-				return value;
-			}
-			
+			value = forgesight_get_io_status(vname);
+			return value;
 		}
 	}
 	

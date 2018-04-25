@@ -894,7 +894,11 @@ bool ParamGroup::setParam(const string &key, bool value)
 
 bool ParamGroup::setParam(const string &key, int value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) {
+		last_error_ = PARAM_NOT_FOUND; 
+		printf("ParamGroup::setParam:: PARAM_NOT_FOUND with key = %s\n", key.c_str());
+		return false;
+	}
 
     vector<string> cooked_key;
     split(key, cooked_key);
@@ -905,16 +909,20 @@ bool ParamGroup::setParam(const string &key, int value)
             pv = &(*pv)[*it];
         }
         else {
+		    printf("ParamGroup::setParam:: PARAM_NOT_FOUND\n");
             last_error_ = PARAM_NOT_FOUND;
             return false;
         }
     }
+    printf("ParamGroup::setParam:: %s:%d\n", 
+    				key.c_str(), (int)value);
 
     if (pv->isInt()) {
         *pv = value;
         return true;
     }
     else {
+		printf("ParamGroup::setParam:: PARAM_TYPE_ERROR\n");
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }

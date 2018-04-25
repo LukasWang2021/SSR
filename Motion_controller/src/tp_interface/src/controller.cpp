@@ -15,6 +15,7 @@
 #include "sub_functions.h"				
 #include "service_heartbeat.h"
 #include "version.h"
+#include <boost/algorithm/string.hpp>
 
 using std::vector;
 
@@ -268,6 +269,11 @@ void Controller::updateWorkStatus(int id)
                     pause_cnt = 0;
                 }
             }
+			else if (state >= ERROR_EXEC_BASE_T)
+			{
+				rcs::Error::instance()->add(
+					FAIL_DUMPING_PARAM + state - ERROR_EXEC_BASE_T);
+			}
             break;
         }
         case IDLE_TO_TEACHING_T:
@@ -316,6 +322,11 @@ void Controller::updateWorkStatus(int id)
                 FST_INFO("RUNNING_TO_IDLE_T");
                 work_status_ = RUNNING_TO_IDLE_T;
             }
+			else if (state >= ERROR_EXEC_BASE_T)
+			{
+				rcs::Error::instance()->add(
+					FAIL_DUMPING_PARAM + state - ERROR_EXEC_BASE_T);
+			}
             break;
         }
         default:
@@ -415,10 +426,18 @@ void Controller::updateCtrlState(int id)
                 {
                     //=====servo hasn't ready========
                     //===need keep on wait============
-                    if (ShareMem::instance()->getServoState() != STATE_READY)     
-                        break;                
+                    if (ShareMem::instance()->getServoState() != STATE_READY)  
+                    {
+                        FST_ERROR("updateCtrlState: ShareMem::instance()->getServoState(): %d", 
+							ShareMem::instance()->getServoState());  
+                        break;          
+                    }
                     if (safety_interface_.getDIAlarm())
+                    {
+                        FST_ERROR("updateCtrlState: safety_interface_.getDIAlarm(): %d", 
+							safety_interface_.getDIAlarm());  
                         break;
+                    }
                 }
             }// if (count-- > 0)
 
@@ -724,39 +743,8 @@ void Controller::setRegister(void* params, int len)
 
 void Controller::getRegister(void* params)
 {
-    RegMap reg_param;
-
-    memcpy(&reg_param, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(RegMap));
-    FST_INFO("GET:: getParamLen:%d", 
-        tp_interface_->getReqDataPtr()->getParamLen());
-
-    getRegisterInfo(&reg_param);
-
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&reg_param, sizeof(reg_param));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(reg_param);
-        memcpy(param->bytes, (char*)&reg_param, param->size);
-    }
-}
-
-
-void Controller::getRegisterInfo(void* params_info)
-{
-    RegMap* reg = (RegMap*)params_info;
-
-    FST_INFO("getRegister: RegMap::type: %d, idx: %d,", 
-        reg->type, reg->index);
-
-	sendGetRegisterRequest((void *)reg, sizeof(RegMap));
+    RegMap* reg = (RegMap*)params;
+	sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
 	usleep(10000);
 	int iRet = getRegisterReply((void *)&reg);
 	int iCount = 0 ;
@@ -771,7 +759,6 @@ void Controller::getRegisterInfo(void* params_info)
 		}
 	}
 }
-
 
 void Controller::sendGetRegisterRequest(void * params, int len)
 {
@@ -800,38 +787,74 @@ int Controller::getRegisterReply(void * params)
 	return 1;
 }
 
-void Controller::setDIO(void* params, char value)
+void Controller::setIOStatus(char* params, char value)
 {
-    IOMapPortInfo* dio = (IOMapPortInfo*)params;
-    dio->value = value ;
     InterpreterControl ctrl;
-    ctrl.cmd = MOD_DIO;
-    ctrl.dio = *dio;
+    ctrl.cmd = MOD_IO;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+	ctrl.dioPathInfo.value = value ;
     ShareMem::instance()->intprtControl(ctrl);
     ShareMem::instance()->setIntprtDataFlag(false);
 }
 
-/*
-void Controller::sendGetIORequest(void * params, int len)
+
+void Controller::sendGetIORequest(char * params, int len)
 {	
-    DIOMap* dio = (DIOMap*)params;
-	
     InterpreterControl ctrl;
-    ctrl.cmd = READ_DIO ;
-    ctrl.dio = *dio;
+    ctrl.cmd = READ_IO ;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
     ShareMem::instance()->intprtControl(ctrl);
     ShareMem::instance()->setIntprtDataFlag(false);
 }
 
-void Controller::getDIO(void * params)
+int Controller::getIOReply(char * params)
 {
-	DIOMap * dio = (DIOMap*)params;
 	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
 	if(is_ready == false)
-		return ;
+		return -1;
 	ShareMem::instance()->getDIOInfo(params);
+	return 1;
 }
-*/
+
+void Controller::sendIOSimulateStatusRequest(char* params, int len)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = READ_SMLT_STS;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+void Controller::setIOSimulateStatus(char* params, char value)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_SMLT_STS;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+	ctrl.dioPathInfo.value = value ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+void Controller::setIOSimulateValue(char* params, char value)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_SMLT_VAL;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+	ctrl.dioPathInfo.value = value ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
 
 void Controller::startRun(void* params, int len)
 {
@@ -1529,6 +1552,8 @@ void Controller::heartBeat(void* params)
 
 void Controller::requestProc()
 {
+    char tempParam[32];
+	char * tempPathPtr = NULL ;
     uint32_t id;
     if (!tp_interface_->getReqDataPtr()->isFilled())
         return;
@@ -1543,7 +1568,7 @@ void Controller::requestProc()
                 //int buf_len;             
                 //U64 result = IOInterface::instance()->checkIO(str_path.c_str(), buf_len, id);
                 IOPortInfo info;
-                IOMapPortInfo infoMap;
+                // IOMapPortInfo infoMap;
                 U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
                 if (result != TPI_SUCCESS)
                 {
@@ -1553,9 +1578,43 @@ void Controller::requestProc()
                 }
                 char val = *tp_interface_->getReqDataPtr()->getParamBufPtr();
  //             IOInterface::instance()->setDO(&info, val);
- 				memcpy(&infoMap, &info, sizeof(IOPortInfo));
-                setDIO(&infoMap, val);
-				FST_INFO("SET:: reg.index:%d\n", info.port_index);
+ //				memcpy(&infoMap, &info, sizeof(IOPortInfo));
+                setIOStatus(str_path.c_str(), val);
+				FST_INFO("SET:: %s\n", str_path.c_str());
+            }
+            else if (str_path.substr(0, 23) == "root/simulate_IO_status")
+            {
+			    std::vector<std::string> vc_path;
+				tempPathPtr = str_path.c_str() ;
+			    boost::split(vc_path,  tempPathPtr, boost::is_any_of("/"));
+                if(vc_path.size() == 5)
+                {
+                    // root/simulate_IO_status/dio/all/1
+                	if (vc_path[3] == "all")
+                	{
+                	    sprintf(tempParam, "%s_all", vc_path[2].c_str()); 
+                	}
+                    // root/simulate_IO/di/2/1
+					else 
+                	{
+                	    sprintf(tempParam, "%s[%s]", vc_path[2].c_str(), vc_path[3].c_str());
+                	}
+					int iValue = atoi(vc_path[4].c_str());
+            	    setIOSimulateStatus(tempParam, (char)iValue);
+                }
+            }
+            else if (str_path.substr(0, 22) == "root/simulate_IO_value")
+            {
+			    std::vector<std::string> vc_path;
+				tempPathPtr = str_path.c_str() ;
+			    boost::split(vc_path, tempPathPtr, boost::is_any_of("/"));
+				// root/simulate_IO_value/di/77/1
+                if(vc_path.size() == 5)
+                {
+            	    sprintf(tempParam, "%s[%s]", vc_path[2].c_str(), vc_path[3].c_str());
+					int iValue = atoi(vc_path[4].c_str());
+            	    setIOSimulateValue(tempParam, (char)iValue); 
+                }
             }
             else if (str_path.substr(0, 13) == "root/register")
             {
@@ -1606,11 +1665,86 @@ void Controller::requestProc()
                     tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
                     break;
                 }
-
+#if 0
                 IOInterface::instance()->getDIO(&info, 
                         tp_interface_->getRepDataPtr()->getParamBufPtr(),
                         tp_interface_->getRepDataPtr()->getParamBufLen());
                 tp_interface_->getRepDataPtr()->setParamLen(info.bytes_len);
+				
+#endif
+				sendGetIORequest(str_path.c_str(), str_path.length());
+				usleep(10000);
+				int iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
+				int iCount = 0 ;
+				while(iRet == -1)
+				{
+					usleep(100000);
+					iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
+					if(iCount++ > 20)
+					{
+						FST_INFO("getRegisterReply Failed");
+						break;
+					}
+				}
+				FST_INFO("getIOReply:: getParamLen:%d", 
+					tp_interface_->getRepDataPtr()->getParamLen());
+				char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr() ;
+				for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
+					FST_INFO("GET:: data:%d", dataChar[i]);
+				
+                tp_interface_->getRepDataPtr()->setParamLen(info.bytes_len);
+				FST_INFO("GET:: truncate data to %d", info.bytes_len);
+				for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
+					FST_INFO("GET:: truncate data:%d", dataChar[i]);
+
+				FST_INFO("GET:: id : %d getParamLen:%d", 
+					tp_interface_->getRepDataPtr()->getID(),
+					tp_interface_->getRepDataPtr()->getParamLen());
+                tp_interface_->getRepDataPtr()->setParamLen(2);
+				
+            }
+            else if (str_path.substr(0, 23) == "root/simulate_IO_status")
+            {
+			    std::vector<std::string> vc_path;
+				tempPathPtr = str_path.c_str() ;
+			    boost::split(vc_path, tempPathPtr, boost::is_any_of("/"));
+                if(vc_path.size() == 4)
+                {
+                    // root/simulate_IO_status/dio/all
+                	if (vc_path[3] == "all")
+                	{
+                	    sprintf(tempParam, "%s_all", vc_path[2].c_str());
+                	}
+                    // root/simulate_IO/di/2
+					else 
+                	{
+                	    sprintf(tempParam, "%s[%s]", vc_path[2].c_str(), vc_path[3].c_str());
+                	}
+				
+					sendIOSimulateStatusRequest(tempParam, strlen(tempParam));
+					usleep(10000);
+					int iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
+					int iCount = 0 ;
+					while(iRet == -1)
+					{
+						usleep(100000);
+						iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
+						if(iCount++ > 20)
+						{
+							FST_INFO("getRegisterReply Failed");
+							break;
+						}
+					}
+					FST_INFO("getIOReply:: getParamLen:%d", 
+						tp_interface_->getRepDataPtr()->getParamLen());
+					char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr() ;
+					for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
+						FST_INFO("GET:: data:%d", dataChar[i]);
+
+					FST_INFO("GET:: id : %d getParamLen:%d", 
+						tp_interface_->getRepDataPtr()->getID(),
+						tp_interface_->getRepDataPtr()->getParamLen());
+                }
             }
             else if (str_path.substr(0, 13) == "root/register")
             {

@@ -183,7 +183,7 @@ class ShareMem
      *
      * @return: Info of Reg and IO
      */
-    // bool getDIOInfo(DIOMap * info);
+    bool getDIOInfo(char * info);
 	
   private:	
 	fst_core_interface::CoreInterface   core_interface_;

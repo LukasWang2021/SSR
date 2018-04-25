@@ -100,7 +100,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
     if ((dir=opendir(basePath)) == NULL)
     {
         perror("Open dir error...");
-        exit(1);
+        return;
     }
 
     while ((ptr=readdir(dir)) != NULL)

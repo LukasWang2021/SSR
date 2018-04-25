@@ -243,6 +243,8 @@ U64 IOInterface::getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len)
     else
     {
         return io_manager_->getModuleValue(io_info->dev_id, io_info->port_type, io_info->port_index, buffer[0]);
+        printf("IOInterface::getDIO (%d) at %d with %d\n", 
+			buffer[0], io_info->port_index, io_info->bytes_len);
     }
 
 }

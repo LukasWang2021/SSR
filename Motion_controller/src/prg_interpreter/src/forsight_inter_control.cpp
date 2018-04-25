@@ -1,12 +1,13 @@
+#ifdef WIN32
+#pragma warning(disable : 4786)
+#endif
 #include "forsight_inter_control.h"
 #include "forsight_innercmd.h"
 #include "reg-shmi/forsight_registers.h"
 #include "reg-shmi/forsight_op_regs_shmi.h"
-#ifndef WIN32
-#include "io_interface.h"
-#endif
 #include "forsight_program_property.h"
 #include "forsight_io_mapping.h"
+#include "forsight_io_controller.h"
 
 #define VELOCITY    (500)
 using namespace std;
@@ -195,10 +196,10 @@ void returnRegInfo(RegMap info)
 	setIntprtDataFlag(true);
 }
 
-void returnDIOInfo(IOMapPortInfo info)
+void returnDIOInfo(IOPathInfo& info)
 {
-    printf("returnDIOInfo to %d\n", (int)info.port_type);
-    writeShm(SHM_REG_IO_INFO, 0, (void*)&info, sizeof(IOMapPortInfo));
+    printf("returnDIOInfo to %s:%d\n", info.dio_path, (int)info.value);
+    writeShm(SHM_REG_IO_INFO, 0, (char*)&info.value, sizeof(char));
 	setIntprtDataFlag(true);
 }
 
@@ -371,9 +372,7 @@ void startFile(struct thread_control_block * objThdCtrlBlockPtr,
 	strcpy(objThdCtrlBlockPtr->project_name, proj_name); // "prog_demo_dec"); // "BAS-EX1.BAS") ; // 
 	// objThdCtrlBlockPtr->is_main_thread = isMainThread;
 	objThdCtrlBlockPtr->iThreadIdx = idx ;
-	objThdCtrlBlockPtr->io_mapper.clear();
 	append_program_prop_mapper(objThdCtrlBlockPtr, proj_name);
-	append_io_mapping(objThdCtrlBlockPtr);
 	base_thread_create(idx, objThdCtrlBlockPtr);
 	intprt_ctrl.cmd = LOAD ;
 }
@@ -467,10 +466,9 @@ void waitInterpreterStateToPaused(
 void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 {
 	RegMap reg ;
-	IOMapPortInfo dioMap ;
-#ifndef WIN32
-	IOPortInfo    dio ;
-#endif
+	eval_value objValue ;
+	IOPathInfo  dioPathInfo ;
+	
 	int iLineNum = 0 ;
 	static InterpreterCommand lastCmd ;
 	UserOpMode mode ;
@@ -506,7 +504,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             setPrgmState(PAUSED_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_demo_dec");
+			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_tp");
 			}
             startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
@@ -522,7 +520,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             setPrgmState(EXECUTE_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_demo_dec");
+			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_1");
 			}
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
@@ -660,25 +658,66 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			forgesight_mod_reg(reg);
   	        printf("reg.type = %d end.\n", reg.type);
             break;
-        case READ_DIO:
+        case READ_IO:
 			// intprt_ctrl.RegMap.
-			dioMap  = intprt_ctrl.dio ;
+			// dioMap  = intprt_ctrl.dio ;
 			// forgesight_read_dio(regIOInfo.dio);
-			returnDIOInfo(dioMap);
+			dioPathInfo = intprt_ctrl.dioPathInfo;
+		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+
+			if(g_io_mapper.find(dioPathInfo.dio_path) != g_io_mapper.end() )
+			{
+				char dio_name[128];
+				strcpy(dio_name, g_io_mapper[dioPathInfo.dio_path].c_str());
+
+				objValue = forgesight_get_io_status(dio_name);
+				dioPathInfo.value = (int)objValue.getFloatValue();
+				returnDIOInfo(dioPathInfo);
+			}
+			else{
+                printf("MOD_IO:: not exist path : %s\n", dioPathInfo.dio_path); 
+            }
             break;
-        case MOD_DIO:
-			// intprt_ctrl.RegMap.
-			dioMap = intprt_ctrl.dio ;
-			printf("MOD_DIO: dio::msg_id: %d, dev_id: %d, port_type: %d, "
-				"port_index: %d, bytes_len: %d, value: %d.\n", 
-				dioMap.msg_id, dioMap.dev_id, dioMap.port_type, 
-				dioMap.port_index, dioMap.bytes_len, dioMap.value);
+        case MOD_IO:
+			dioPathInfo = intprt_ctrl.dioPathInfo;
+			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			if(g_io_mapper.find(dioPathInfo.dio_path) 
+				!= g_io_mapper.end() )
+			{
+				printf("MOD_IO: %s:%d (%s).\n", 
+						dioPathInfo.dio_path, 
+						dioPathInfo.value, 
+						g_io_mapper[dioPathInfo.dio_path].c_str());
 #ifndef WIN32
-			dio.msg_id = dioMap.msg_id , dio.dev_id = dioMap.dev_id ;
-			dio.port_type = dioMap.port_type , dio.port_index = dioMap.port_index ;
-			dio.bytes_len = dioMap.bytes_len ;
-            IOInterface::instance()->setDO(&dio, dioMap.value);
+	            // IOInterface::instance()->setDO(&dio, dioMap.value);
+				objValue.setFloatValue(dioPathInfo.value);
+				forgesight_set_io_status(
+					g_io_mapper[dioPathInfo.dio_path].c_str(),
+					objValue);
 #endif
+			}
+			else{
+                printf("MOD_IO:: not exist path : %s\n", dioPathInfo.dio_path); 
+            }
+            break;
+        case READ_SMLT_STS:
+			dioPathInfo = intprt_ctrl.dioPathInfo;
+			printf("READ_SMLT_STS: %s:%d .\n", dioPathInfo.dio_path, dioPathInfo.value);
+			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			forgesight_read_io_emulate_status(dioPathInfo.dio_path, (int &)dioPathInfo.value);
+			returnDIOInfo(dioPathInfo);
+            break;
+        case MOD_SMLT_STS:
+			dioPathInfo = intprt_ctrl.dioPathInfo;
+			printf("MOD_SMLT_STS: %s:%d .\n", dioPathInfo.dio_path, dioPathInfo.value);
+			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			forgesight_mod_io_emulate_status(dioPathInfo.dio_path, dioPathInfo.value);
+            break;
+        case MOD_SMLT_VAL:
+			dioPathInfo = intprt_ctrl.dioPathInfo;
+			printf("MOD_SMLT_VAL: %s:%d .\n", dioPathInfo.dio_path, dioPathInfo.value);
+			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			forgesight_mod_io_emulate_value(dioPathInfo.dio_path, dioPathInfo.value);
             break;
         default:
             break;

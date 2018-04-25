@@ -59,6 +59,24 @@ typedef enum _InterpreterState
     EXECUTE_TO_PAUSE_T  = 102,
     PAUSE_TO_IDLE_T     = 103,
     PAUSE_TO_EXECUTE_T  = 104,
+	
+    ERROR_EXEC_BASE_T    = 200,                 
+    ERROR_SYNTAX_ERROR_T = 201,                // 0 
+    ERROR_UNBALANCED_PARENTHESES_T = 202,      // 1 
+    ERROR_NO_EXPRESSION_PRESENT_T = 203,       // 2 
+    ERROR_EQUALS_SIGN_EXPECTED_T = 204,        // 3 
+    ERROR_NOT_VARIABLE_T = 205,                // 4 
+    ERROR_LABEL_TABLE_FULL_T = 206,            // 5 
+    ERROR_DUPLICATE_SUB_LABEL_T = 207,         // 6 
+    ERROR_UNDEFINED_SUB_LABEL_T = 208,         // 7 
+    ERROR_THEN_EXPECTED_T = 209,               // 8 
+    ERROR_TO_EXPECTED_T = 210,                 // 9 
+    ERROR_TOO_MANY_NESTED_FOR_LOOPS_T = 211,   // 10 
+    ERROR_NEXT_WITHOUT_FOR_T = 212,            // 11
+    ERROR_TOO_MANY_NESTED_GOSUBS_T = 213,      // 12 
+    ERROR_RETURN_WITHOUT_GOSUB_T = 214,        // 13 
+    ERROR_FILE_NOT_FOUND_T = 215               // 14
+
 }InterpreterState;
 
 typedef enum _InterpreterCommand
@@ -75,8 +93,12 @@ typedef enum _InterpreterCommand
 		
     MOD_REG  = 201,
 	READ_REG = 202,
-    MOD_DIO  = 203,
-    READ_DIO = 204,
+    MOD_IO   = 203,
+    READ_IO  = 204,
+    
+    READ_SMLT_STS  = 205,
+	MOD_SMLT_STS   = 206,
+    MOD_SMLT_VAL   = 207,
 
 }InterpreterCommand;
 
@@ -162,6 +184,11 @@ typedef struct _IOMapPortInfo
     char        value;
 }IOMapPortInfo;
 
+typedef struct _IOPathInfo
+{
+    char        dio_path[128];
+    char        value;
+}IOPathInfo;
 
 typedef struct _Reg
 {
@@ -204,7 +231,8 @@ typedef struct _InterpreterControl
     int             line;
 #endif
         RegMap      reg;
-        IOMapPortInfo  dio;
+        // IOMapPortInfo  dio;
+        IOPathInfo  dioPathInfo;
     };
 }InterpreterControl;
 

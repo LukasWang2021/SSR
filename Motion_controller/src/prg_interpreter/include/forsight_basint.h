@@ -18,13 +18,16 @@
 #ifdef WIN32
 #include <Windows.h>
 #include <process.h>
+#include "interpreter_common.h"
 #else
 #include <pthread.h>
-#endif
 #include "common/interpreter_common.h"
+#endif
 #include "forsight_eval_type.h"
 
 using namespace std;
+
+#define DATA_PATH        "\/root\/files_manager_python27\/data"
 
 #define NUM_SUBROUTINE 64
 #define NUM_THREAD     32
@@ -158,9 +161,6 @@ struct thread_control_block {
 	// LineNum and Update flag
 	int               iLineNum ;
 //	LineNumState      stateLineNum ;
-
-// IO Map
-    map<string, string> io_mapper;
 } ;
 
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);

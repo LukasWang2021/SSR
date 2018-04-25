@@ -103,7 +103,7 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
             if ((manu_type_ != motion_spec_ManualType_STEP)
             && (manu_type_ != motion_spec_ManualType_CONTINUE))
             {
-                FST_ERROR("manu_type_ is not the same as command:%d", manu_type_);
+                FST_ERROR("setManuCommand manu_type_ is not the same as command:%d", manu_type_);
                 rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
                 return;
             }
@@ -126,7 +126,7 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
             U64 result = TPI_SUCCESS;
             if (manu_type_ != motion_spec_ManualType_APPOINT)
             {
-                FST_ERROR("manu_type_ is not the same as command:%d", manu_type_);
+                FST_ERROR("APPOINT manu_type_ is not the same as command:%d", manu_type_);
                 rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
                 return;
             }

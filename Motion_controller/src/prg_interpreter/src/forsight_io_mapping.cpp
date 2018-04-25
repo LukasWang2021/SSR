@@ -32,11 +32,22 @@ typedef struct _IOMapVarInfo
     char        out[8];
 }IOMapVarInfo;
 
-int generateIOInfo(struct thread_control_block * objThreadCntrolBlock, 
-				  IOMapJsonInfo &objInfo, char * strIOType)
+map<string, string> g_io_mapper;
+
+int generateIOInfo(IOMapJsonInfo &objInfo, char * strIOType)
 {
 	char cTemp[128];
+	char cUpperType[16];
+    char *pUpper;
 	string strKey, strValue ;
+	
+    strcpy(cUpperType, strIOType);
+	pUpper = cUpperType;
+	while(*pUpper){ 
+		*pUpper = toupper(*pUpper); 
+		pUpper++; 
+	}
+  
 	int iDIRange = objInfo.to - objInfo.from + 1 ;
 	for (int i = objInfo.from ; i <= objInfo.to ; i++)
 	{
@@ -46,18 +57,20 @@ int generateIOInfo(struct thread_control_block * objThreadCntrolBlock,
 		
         vector<string> result=split(objInfo.module, "/"); //use space to split
 		sprintf(cTemp, "root/IO/%s/%s/%s/%d", 
-			result[0].c_str(), result[2].c_str(), "DI", 
+			result[0].c_str(), result[2].c_str(), cUpperType, 
 			objInfo.index + i - objInfo.from);
 		strValue.assign(cTemp);
 
-		objThreadCntrolBlock->io_mapper.insert(
+		g_io_mapper.insert(
 			map<string, string>::value_type(strKey, strValue));
+		// Add revert element
+		g_io_mapper.insert(
+			map<string, string>::value_type(strValue, strKey));
 	}
 	return 1;
 }
 
-int parseIOObject(struct thread_control_block * objThreadCntrolBlock, 
-				  cJSON *jsonIObject, char * strIOType)
+int parseIOObject(cJSON *jsonIObject, char * strIOType)
 {
 	IOMapJsonInfo objInfo ;
 	int numentries=0,i=0,fail=0;
@@ -87,12 +100,11 @@ int parseIOObject(struct thread_control_block * objThreadCntrolBlock,
 		child=child->next;
 	}
 	
-	generateIOInfo(objThreadCntrolBlock, objInfo, strIOType);
+	generateIOInfo(objInfo, strIOType);
 	return 1;
 }
 
-int parseIO(struct thread_control_block * objThreadCntrolBlock, 
-			cJSON *jsonDI, char * strIOType)
+int parseIO(cJSON *jsonDI, char * strIOType)
 {
 	int numentries=0,i=0,fail=0;
 	cJSON *child=jsonDI->child;
@@ -113,7 +125,7 @@ int parseIO(struct thread_control_block * objThreadCntrolBlock,
 			break;
 		case cJSON_Object:	
 			// printf("cJSON_Object\n"); 
-			parseIOObject(objThreadCntrolBlock, child, strIOType);
+			parseIOObject(child, strIOType);
 			break;
 		}
 		child=child->next;
@@ -121,8 +133,7 @@ int parseIO(struct thread_control_block * objThreadCntrolBlock,
 	return 1;
 }
 
-int parseIOMap(struct thread_control_block * objThreadCntrolBlock, 
-			   char * data, IOMapVarInfo &varInfo)
+int parseIOMap(char * data, IOMapVarInfo &varInfo)
 {
 	cJSON *json;
 	json=cJSON_Parse(data);
@@ -147,9 +158,9 @@ int parseIOMap(struct thread_control_block * objThreadCntrolBlock,
 			{
 				// printf("parseIOMap: cJSON_Array %s\n", child->string);
 				if(stricmp(child->string, varInfo.in) == 0)
-					parseIO(objThreadCntrolBlock, child, varInfo.in);
+					parseIO(child, varInfo.in);
 				else if(stricmp(child->string, varInfo.out) == 0)
-					parseIO(objThreadCntrolBlock, child, varInfo.out);
+					parseIO(child, varInfo.out);
 				break;
 			}
 		case cJSON_Object:	
@@ -162,13 +173,16 @@ int parseIOMap(struct thread_control_block * objThreadCntrolBlock,
 	return 1;
 }
 
-int print_io_mapper(struct thread_control_block * objThreadCntrolBlock)
+int print_io_mapper()
 {
 	map<string, string>::iterator it;
 
-	it = objThreadCntrolBlock->io_mapper.begin();
+	it = g_io_mapper.begin();
+	
+	printf("\t\tobjThreadCntrolBlock->io_mapper has %d elements \n", 
+			g_io_mapper.size());
 
-	while(it != objThreadCntrolBlock->io_mapper.end())
+	while(it != g_io_mapper.end())
 	{
 		// it->first;  // it->second;
 		printf("\t\t%s :: %s \n", 
@@ -179,7 +193,6 @@ int print_io_mapper(struct thread_control_block * objThreadCntrolBlock)
 }
 
 int append_single_io_mapper(
-		struct thread_control_block * objThreadCntrolBlock, 
 		char *filename, IOMapVarInfo &varInfo)
 {
 	FILE *f;long len;char *data;
@@ -190,60 +203,50 @@ int append_single_io_mapper(
 	    fseek(f,0,SEEK_END); len=ftell(f); fseek(f,0,SEEK_SET);
 	    data=(char*)malloc(len+1); fread(data,1,len,f); 
 		fclose(f);
-		parseIOMap(objThreadCntrolBlock, data, varInfo);
+		parseIOMap(data, varInfo);
 		free(data);
 	}
 	return 1;
 }
 
-int append_io_mapping(struct thread_control_block * objThreadCntrolBlock)
+int append_io_mapping()
 {
 	IOMapVarInfo varInfo ;
+	g_io_mapper.clear();
 #ifdef WIN32
 	// AI/AO
 	strcpy(varInfo.in , "ai") ;  strcpy(varInfo.out , "ao") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"data\\io\\io_mapping\\ai_ao_mapping.json", varInfo);
+	append_single_io_mapper("data\\io\\io_mapping\\ai_ao_mapping.json", varInfo);
 	// DI/DO
 	strcpy(varInfo.in , "di") ;  strcpy(varInfo.out , "do") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"data\\io\\io_mapping\\di_do_mapping.json", varInfo);
+	append_single_io_mapper("data\\io\\io_mapping\\di_do_mapping.json", varInfo);
 	// RI/RO
 	strcpy(varInfo.in , "ri") ;  strcpy(varInfo.out , "ro") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"data\\io\\io_mapping\\ri_ro_mapping.json", varInfo);
+	append_single_io_mapper("data\\io\\io_mapping\\ri_ro_mapping.json", varInfo);
 	// SI/SO
 	strcpy(varInfo.in , "si") ;  strcpy(varInfo.out , "so") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"data\\io\\io_mapping\\si_so_mapping.json", varInfo);
+	append_single_io_mapper("data\\io\\io_mapping\\si_so_mapping.json", varInfo);
 	// UI/UO
 	strcpy(varInfo.in , "ui") ;  strcpy(varInfo.out , "uo") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"data\\io\\io_mapping\\ui_uo_mapping.json", varInfo);
-    print_io_mapper(objThreadCntrolBlock);
+	append_single_io_mapper("data\\io\\io_mapping\\ui_uo_mapping.json", varInfo);
 #else
 	// AI/AO
 	strcpy(varInfo.in , "ai") ;  strcpy(varInfo.out , "ao") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"\/data\/io\/io_mapping\/ai_ao_mapping.json", varInfo);
+	append_single_io_mapper("\/data\/io\/io_mapping\/ai_ao_mapping.json", varInfo);
 	// DI/DO
 	strcpy(varInfo.in , "di") ;  strcpy(varInfo.out , "do") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"\/data\/io\/io_mapping\/di_do_mapping.json", varInfo);
+	append_single_io_mapper("\/data\/io\/io_mapping\/di_do_mapping.json", varInfo);
 	// RI/RO
 	strcpy(varInfo.in , "ri") ;  strcpy(varInfo.out , "ro") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"\/data\/io\/io_mapping\/ri_ro_mapping.json", varInfo);
+	append_single_io_mapper("\/data\/io\/io_mapping\/ri_ro_mapping.json", varInfo);
 	// SI/SO
 	strcpy(varInfo.in , "si") ;  strcpy(varInfo.out , "so") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"\/data\/io\/io_mapping\/si_so_mapping.json", varInfo);
+	append_single_io_mapper("\/data\/io\/io_mapping\/si_so_mapping.json", varInfo);
 	// UI/UO
 	strcpy(varInfo.in , "ui") ;  strcpy(varInfo.out , "uo") ;
-	append_single_io_mapper(objThreadCntrolBlock, 
-		"\/data\/io\/io_mapping\/ui_uo_mapping.json", varInfo);
-    // print_io_mapper(objThreadCntrolBlock);
+	append_single_io_mapper("\/data\/io\/io_mapping\/ui_uo_mapping.json", varInfo);
 #endif
+    print_io_mapper();
 	return 1;
 }
 

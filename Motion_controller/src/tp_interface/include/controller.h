@@ -524,6 +524,13 @@ class Controller
      * @param params
      */
     int getRegisterReply(void* params);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    void getRegister(void* params);
 	
     /**
      * @brief: callback for setting user registers 
@@ -531,7 +538,15 @@ class Controller
      * @param params
      * @param len
      */
-    void setDIO(void* params, char value);
+    void setIOStatus(char* params, char value);
+
+    /**
+     * @brief: try to get IO
+     *
+     * @param params
+     * @param len
+     */
+    void sendGetIORequest(char* params, int len);
 
     /**
      * @brief: try to get dio
@@ -546,22 +561,31 @@ class Controller
      *
      * @param params
      */
-    void getDIO(void* params);
-
-    /**
-     * @brief: callback for getting register 
-     *
-     * @param params
-     */
-    void getRegister(void* params);
+    int getIOReply(char* params);
 	
     /**
-     * @brief: callback for setting user registers 
+     * @brief: send IO Simulate Status Request  
      *
      * @param params
+     * @param len
      */
-    void getRegisterInfo(void* params_info);
-
+    void sendIOSimulateStatusRequest(char* params, int len);
+	
+    /**
+     * @brief: set IO Simulate Status
+     *
+     * @param params
+     * @param len
+     */
+    void setIOSimulateStatus(char* params, char value);
+	
+    /**
+     * @brief: set IO Simulate Value
+     *
+     * @param params
+     * @param len
+     */
+    void setIOSimulateValue(char* params, char value);
     /**
      * @brief: callback for getting version data 
      *

@@ -260,10 +260,10 @@ void TPInterface::sendReply()
                		 (proto_parser_->*g_proto_funcs_mp[id].getMsg)(
 					 	reply_.getParamBufPtr(), reply_.getParamLen(), &param_msg.param);  
 				}
-				else
-				{
-					FST_INFO("sendReply:: not exist id :%d ", id); 
-				}
+			//	else
+			//	{
+			//		FST_INFO("sendReply:: not exist id :%d ", id); 
+			//	}
 					
                 info = proto_parser_->getInfoByID(id);
             }

@@ -78,6 +78,12 @@ std::string Error::getErrorBytes()
             break;
         }
     }
+
+    for (int i = 0; i < MAX_ERRORS; ++i)
+    {
+        if (0 != err[i]) err_queue_.push(err[i]);
+    }
+
     return std::string((const char*)err, cnt*sizeof(U64));
 }
 

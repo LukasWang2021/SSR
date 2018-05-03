@@ -15,7 +15,7 @@
 #include "proto_define.h"
 #include "instruction.h"
 #include "version.pb.h"
-
+#include "registerSL.pb.h"
 
 
 class ProtoParse 
@@ -48,6 +48,10 @@ class ProtoParse
     void encDHParameters(const uint8_t *in_buf, int in_len, void *out_buf);
     void encHardConstraint(const uint8_t *in_buf, int in_len, void *out_buf);
     //void encManualCmd(const uint8_t *in_buf, int in_len, void *out_buf){}
+    void encString(const uint8_t *in_buf, int in_len, void *out_buf);
+
+    void encRegister(const uint8_t *in_buf, int in_len, void *out_buf);
+    void decRegister(const uint8_t *in_buf, int in_len, void *out_buf);
 
     bool decParamSetMsg(const uint8_t *in_buf, int in_len, BaseTypes_ParameterSetMsg &param_set_msg);
 

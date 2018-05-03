@@ -145,6 +145,20 @@ bool FrameManager::updateFrame(Frame& frame)
     return true;
 }
 
+bool FrameManager::getFrame(int id, Frame& frame)
+{
+    if(frame.id >= frame_set_.size())
+    {
+        return false;
+    }
+
+    frame.id = frame_set_[id].id;
+    frame.is_valid = frame_set_[id].is_valid;
+    frame.data = frame_set_[id].data;
+    memcpy(frame.comment, frame_set_[id].comment, MAX_COMMENT_LENGTH);
+    return true;
+}
+
 std::string FrameManager::getFramePath(int frame_index)
 {
     std::string index_str;

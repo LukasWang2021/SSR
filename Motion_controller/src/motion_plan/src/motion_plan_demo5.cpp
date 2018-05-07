@@ -75,15 +75,45 @@ int main(int argc, char **argv)
     target3.joint_target.j5 = -1;
     target3.joint_target.j6 = 0.8;
 
+    MotionTarget target4;
+    target4.type = MOTION_JOINT;
+    target4.cnt = 0.5;
+    target4.vel = 1;
+    target4.acc = 1;
+    target4.joint_target.j1 = 0;
+    target4.joint_target.j2 = 0;
+    target4.joint_target.j3 = 0;
+    target4.joint_target.j4 = 0;
+    target4.joint_target.j5 = -1.5708;
+    target4.joint_target.j6 = 0;
+
     ArmGroup arm;
     ErrorCode err = arm.initArmGroup();
 
     arm.setStartState(start_joint);
-    arm.autoMove(target3, 5);
-    arm.autoMove(target1, 7);
+    arm.autoMove(target3, 1);
 
+    std::vector<JointOutput> points;
+    while (arm.getFIFOLength() > 0)
+    {
+        arm.getPointFromFIFO(10, points);
+        if (arm.timeBeforeDeadline() < 0.001)
+            break;
+    }
     
-
+    arm.autoMove(target4, 2);
+    while (arm.getFIFOLength() > 0)
+    {
+        arm.getPointFromFIFO(10, points);
+        if (arm.timeBeforeDeadline() < 0.001)
+            break;
+    }
+    
+    arm.autoMove(target2, 3);
+    while (arm.getFIFOLength() > 0)
+    {
+        arm.getPointFromFIFO(10, points);
+    }
 
 
     cout << "end" << endl;

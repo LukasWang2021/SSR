@@ -24,7 +24,6 @@ MotionCommand::MotionCommand(void)
 {
     motion_id_      = -1;
     motion_type_    = MOTION_NONE;
-    //smooth_type_    = SMOOTH_NONE;
 
     memset(&beginning_joint_, 0, sizeof(beginning_joint_));
     memset(&target_joint_, 0, sizeof(target_joint_));
@@ -35,12 +34,8 @@ MotionCommand::MotionCommand(void)
     vel_ = -1;
     acc_ = -1;
 
-    //prev_ptr_ = NULL;
-    //next_ptr_ = NULL;
-
     average_duration_ = -1;
     max_stamp_  = 0;
-    //pick_stamp_ = 0;
 
     is_planned_ = false;
 }
@@ -49,7 +44,6 @@ ErrorCode MotionCommand::setTarget(const MotionTarget &target, int id)
 {
     motion_id_   = id;
     motion_type_ = target.type;
-    //smooth_type_ = SMOOTH_UNKNOWN;
 
     cnt_ = target.cnt;
     vel_ = target.vel;
@@ -57,7 +51,6 @@ ErrorCode MotionCommand::setTarget(const MotionTarget &target, int id)
 
     average_duration_ = -1;
     max_stamp_  = 0;
-    //pick_stamp_ = 0;
     is_planned_ = false;
     
     if (motion_type_ == MOTION_JOINT) {
@@ -71,64 +64,14 @@ ErrorCode MotionCommand::setTarget(const MotionTarget &target, int id)
         PoseEuler2Pose(target.circle_target.pose2, target_pose2_);
     }
 
-    /*
-    if (motion_type_ == MOTION_JOINT) {
-        if (vel_ < 0.0 || vel_ > 1.0) {
-            FST_ERROR("Target vel = %.4f, valid joint vel should between 0.0 - 1.0", vel_);
-            return INVALID_PARAMETER;
-        }
-
-        if (acc_ < 0.0 || acc_ > 1.0) {
-            FST_ERROR("Target acc = %.4f, valid joint acc should between 0.0 - 1.0", acc_);
-            return INVALID_PARAMETER;
-        }
-    }
-    else {
-        FST_ERROR("Target motion type unsupported, type = %d", motion_type_);
-        return INVALID_PARAMETER;
-    }
-    */
-
     return SUCCESS;
 }
 
 ErrorCode MotionCommand::setStartJoint(const Joint &joint)
 {
     beginning_joint_        = joint;
-    //begin_from_given_joint_ = true;
 
     return SUCCESS;
-    
-    /*
-    if (isJointInConstraint(joint, g_soft_constraint)) {
-        beginning_joint_        = joint;
-        begin_from_given_joint_ = true;
-
-        return SUCCESS;
-    }
-    else {
-        FST_ERROR("Cannot setStartJoint, cause given joint is out of soft constraint");
-        
-        JointConstraint &cons = g_soft_constraint;
-        int res = contrastJointWithConstraint(joint, g_soft_constraint);
-        
-        if ((res >> 0) % 2 == 0)    FST_INFO ("  j1=%.6f - (%.6f, %.6f)", joint.j1, cons.j1.lower, cons.j1.upper);
-        else                        FST_ERROR("  j1=%.6f - (%.6f, %.6f)", joint.j1, cons.j1.lower, cons.j1.upper);
-        if ((res >> 1) % 2 == 0)    FST_INFO ("  j2=%.6f - (%.6f, %.6f)", joint.j2, cons.j2.lower, cons.j2.upper);
-        else                        FST_ERROR("  j2=%.6f - (%.6f, %.6f)", joint.j2, cons.j2.lower, cons.j2.upper);
-        if ((res >> 2) % 2 == 0)    FST_INFO ("  j3=%.6f - (%.6f, %.6f)", joint.j3, cons.j3.lower, cons.j3.upper);
-        else                        FST_ERROR("  j3=%.6f - (%.6f, %.6f)", joint.j3, cons.j3.lower, cons.j3.upper);
-        if ((res >> 3) % 2 == 0)    FST_INFO ("  j4=%.6f - (%.6f, %.6f)", joint.j4, cons.j4.lower, cons.j4.upper);
-        else                        FST_ERROR("  j4=%.6f - (%.6f, %.6f)", joint.j4, cons.j4.lower, cons.j4.upper);
-        if ((res >> 4) % 2 == 0)    FST_INFO ("  j5=%.6f - (%.6f, %.6f)", joint.j5, cons.j5.lower, cons.j5.upper);
-        else                        FST_ERROR("  j5=%.6f - (%.6f, %.6f)", joint.j5, cons.j5.lower, cons.j5.upper);
-        if ((res >> 5) % 2 == 0)    FST_INFO ("  j6=%.6f - (%.6f, %.6f)", joint.j6, cons.j6.lower, cons.j6.upper);
-        else                        FST_ERROR("  j6=%.6f - (%.6f, %.6f)", joint.j6, cons.j6.lower, cons.j6.upper);
-        
-        begin_from_given_joint_ = false;
-        return JOINT_OUT_OF_CONSTRAINT;
-    }
-    */
 }
 
 ErrorCode MotionCommand::planPath(void)
@@ -146,6 +89,7 @@ ErrorCode MotionCommand::planPath(void)
             break;
             
         case MOTION_CIRCLE:
+            // TODO
             //planCirclePath();
             break;
 
@@ -154,23 +98,21 @@ ErrorCode MotionCommand::planPath(void)
             err = MOTION_INTERNAL_FAULT;
     }
 
-    if (err == SUCCESS)
-    {
-        is_planned_ = true;
-        //pick_stamp_ = 1;
-    }
+    is_planned_ = (err == SUCCESS);
 
     return err;
 }
 
 ErrorCode MotionCommand::pickPathPoint(Tick stamp, PathPoint &point)
 {
-    if (!is_planned_) {
+    if (!is_planned_)
+    {
         FST_ERROR("pickPathPoint: cannot pick before plan");
         return INVALID_SEQUENCE;
     }
 
-    if (stamp > max_stamp_) {
+    if (stamp > max_stamp_)
+    {
         FST_ERROR("pickPathPoint: given stamp (=%d) invalid, max-stamp = %d", stamp, max_stamp_);
         return INVALID_PARAMETER;
     }
@@ -228,6 +170,7 @@ ErrorCode MotionCommand::pickPathPoint(Tick stamp, PathPoint &point)
             break;
 
         case MOTION_CIRCLE:
+            // TODO
             break;
 
         default:
@@ -240,7 +183,8 @@ ErrorCode MotionCommand::pickPathPoint(Tick stamp, PathPoint &point)
 
 ErrorCode MotionCommand::pickAllPoint(vector<PathPoint> &points)
 {
-    if (!is_planned_) {
+    if (!is_planned_)
+    {
         FST_ERROR("pickAllPoint: cannot pick before plan.");
         return INVALID_SEQUENCE;
     }
@@ -454,7 +398,7 @@ ErrorCode MotionCommand::planJointPath(void)
 
     for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
     {
-        durations[i] = fabs(je[i] - js[i]) / jnt_limit[i].max_omega;
+        durations[i] = fabs(je[i] - js[i]) / g_omega_limit[i];
         if (durations[i] > duration_max)
         {
             duration_max = durations[i];
@@ -471,7 +415,7 @@ ErrorCode MotionCommand::planJointPath(void)
     joint_coeff_[4] = (je[4] - js[4]) / max_stamp_;
     joint_coeff_[5] = (je[5] - js[5]) / max_stamp_;
 
-    average_duration_ = fabs(joint_coeff_[duration_index]) / jnt_limit[duration_index].max_omega / vel_;
+    average_duration_ = fabs(joint_coeff_[duration_index]) / g_omega_limit[duration_index] / vel_;
     /*
     max_stamp_ = ceil(duration_max / (g_cycle_radian / velocity_max[duration_max_index]));
     for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)

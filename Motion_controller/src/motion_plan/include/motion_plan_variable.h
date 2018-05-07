@@ -11,6 +11,7 @@
 #include <fst_datatype.h>
 #include <motion_plan_matrix.h>
 #include <log_manager/log_manager_logger.h>
+#include <dynamics_interface.h>
 
 namespace fst_algorithm
 {
@@ -46,6 +47,11 @@ extern fst_controller::Joint    g_ik_reference;
 extern fst_controller::Joint    g_start_joint;
 extern fst_controller::DHGroup  g_dh;
 
+extern double  g_alpha_limit_upper[9];
+extern double  g_alpha_limit_lower[9];
+extern double  g_omega_limit[9];
+extern double  g_alpha_limit[9];
+
 extern fst_controller::JointConstraint  g_soft_constraint;
 extern fst_controller::JointConstraint  g_hard_constraint;
 
@@ -60,6 +66,8 @@ extern fst_controller::ManualCoeff      g_manual_joint_coeff[6];
 extern fst_controller::PoseEuler        g_manual_cartesian_start;
 extern fst_controller::PoseEuler        g_manual_cartesian_target;
 extern fst_controller::ManualCoeff      g_manual_cartesian_coeff[6];
+
+extern DynamicsInterface                g_dynamics_interface;
 
 extern fst_log::Logger  g_log;
 

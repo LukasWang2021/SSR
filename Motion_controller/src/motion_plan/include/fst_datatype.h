@@ -141,8 +141,8 @@ struct JointLimit {
     double upper;
     double lower;
 
-    double max_omega;
-    double max_alpha;
+    //double max_omega;
+    //double max_alpha;
 };
 
 // Define all joint limits of a robot
@@ -245,19 +245,24 @@ struct ControlPoint {
     // time duration from prev point to this point
     // duration < 0 means this point has not been converted to a trajectory point
     // command_duration = cycle_step / v_command
-    // expect_duration = command_duration / global_vei_ratio
     // duration = actual dutation
     MotionTime  command_duration;
-    MotionTime  expect_duration;
+    MotionTime  forward_duration;
+    MotionTime  backward_duration;
     MotionTime  duration;
+
     
-    bool        smooth;
     // point is what trajectory-create should give out
-    union
-    {
-        double      coeff[AXIS_IN_ALGORITHM][6];
-        JointState  point;
-    };
+    JointState  point;
+    JointState  forward_point;
+    JointState  backward_point;
+
+    double  coeff[AXIS_IN_ALGORITHM][6];
+
+    bool    smooth;
+    bool    alpha_valid;
+    double  alpha_upper[6];
+    double  alpha_lower[6];
 };
 
 struct TrajectoryPoint {

@@ -9,6 +9,7 @@
 #include <fst_datatype.h>
 #include <motion_plan_matrix.h>
 #include <log_manager/log_manager_logger.h>
+#include <dynamics_interface.h>
 //#include <motion_plan_variable.h>
 
 
@@ -65,6 +66,11 @@ Joint   g_start_joint;
 double  g_dh_mat[6][4];
 DHGroup g_dh;
 
+double  g_alpha_limit_upper[9];
+double  g_alpha_limit_lower[9];
+double  g_omega_limit[9];
+double  g_alpha_limit[9];
+
 JointConstraint g_soft_constraint;
 JointConstraint g_hard_constraint;
 
@@ -80,6 +86,7 @@ PoseEuler           g_manual_cartesian_start;
 PoseEuler           g_manual_cartesian_target;
 ManualCoeff         g_manual_cartesian_coeff[6];
 
+DynamicsInterface   g_dynamics_interface;
 /*
 JointPoint g_trajectory_fifo[TRAJECTORY_FIFO_CAPACITY];
 bool g_trajectory_fifo_flag[TRAJECTORY_FIFO_CAPACITY];

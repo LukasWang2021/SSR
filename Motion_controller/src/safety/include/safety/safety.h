@@ -1,5 +1,12 @@
-#define	R_SAFETY_BASE	0X20	/* the address of date that read from safety, and 0x10 is a offset with a base 0xC1013000. */
-#define	W_SAFETY_BASE	0X18	/* the address of date that written to safety, and 0x18 is a offset with a base C1013000. */
+/**********************************************
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+File:       safety.h
+Author:     Shuguo.Zhang Feng.Wu 
+Create:     20-Sep-2017
+Modify:     22-Sep-2017
+Summary:    dealing with safety board
+**********************************************/
+
 #define SAFETY_MAX_FRAME	8
 #define R_SAFETY_MAX_FRAME	SAFETY_MAX_FRAME
 #define W_SAFETY_MAX_FRAME	SAFETY_MAX_FRAME
@@ -13,34 +20,25 @@
 #define	SEVENTH_FRAME	6
 #define EIGHTH_FRAME	7
 
-#define R_HB_FRAME		SECOND_FRAME
-#define	W_HB_FRAME		SECOND_FRAME
+#define R_HB_FRAME		THIRD_FRAME    // modified by Feng.Wu
+#define	W_HB_FRAME		THIRD_FRAME    // modified by Feng.Wu
 #define NO_HB_TIMES		3	/* NO_HB_TIMES means the times that there is no heartbeat continually. Each time expends 50ms. If it is matched, the error, ERR_SAFETY_NOT_CONNECT is reported. */
 
-#define SAFETY_CMD   0XF5
+#define SAFETY_CMD_RECV 0X5F    // add by Feng.Wu
+#define SAFETY_CMD_SEND 0XF5    // add by Feng.Wu
+#define SAFETY_CORE_SEND    0X0100
 
 #define SAFETY_INPUT_FIRSTFRAME     0x0101
 #define SAFETY_INPUT_SECONDFRAME    0x0102
-// #define SAFETY_INPUT_THIRDFRAME     0x0103
-// #define SAFETY_INPUT_FOURTHFRAME    0x0104
-// #define	SAFETY_INPUT_FIFTHFRAME		0x0105
-// #define SAFETY_INPUT_SIXTHFRAME		0x0106
-// #define SAFETY_INPUT_SEVENTHFRAME	0x0107
-// #define SAFETY_INPUT_EIGHTHFRAME	0x0108
 
 #define SAFETY_OUTPUT_FIRSTFRAME    0x0201
 #define SAFETY_OUTPUT_SECONDFRAME	0x0202
-// #define SAFETY_OUTPUT_THIRDFRAME    0x0203
-// #define SAFETY_OUTPUT_FOURTHFRAME   0x0204
-// #define SAFETY_OUTPUT_FIFTHFRAME    0x0205
-// #define SAFETY_OUTPUT_SIXTHFRAME    0x0206
-// #define SAFETY_OUTPUT_SEVENFRAME    0x0207
-// #define SAFETY_OUTPUT_EIGHTHFRAME   0x0208
 
 #define ERR_SAFETY_FILE_OPEN (unsigned long long int)0x00010002008E0001   /*can't open file when initializing safety board*/
 #define ERR_SAFETY_FILE_MAP (unsigned long long int)0x00010002008E0002   /*Mapping is failed.*/
 #define ERR_SAFETY_RECV_CMD (unsigned long long int)0x00010002008E0015   /*Command is not received from the safety board*/
 #define ERR_SAFETY_NOT_CONNECT (unsigned long long int)0x00010002008E0016   /*Safety board is not connected with, and there is not heartbeat from the safety board.*/
+#define ERR_SAFETY_RECV_DIFF (unsigned long long int)0x00010007008E0017   /*The data from two safety MCUs are different.*/
 #define ERR_SAFETY_PTHREAD_INIT (unsigned long long int)0x00000001008E001F   /*Mutex initialization is failed.*/
 #define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x00000001008E0020   /*Mutex lock is failed*/
 #define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x00000001008E0021   /*Mutex unlock is failed*/
@@ -97,9 +95,14 @@ void closeSafety(void);
 //					ERR_SAFETY_NOT_CONNECT: SafetyBoard is not connected or 
 //					there is no heartbeat from safetyboard.
 //					ERR_SAFETY_RECV_CMD:	Command received is not from safety.
+//                  ERR_SAFETY_RECV_DIFF:   data from two MCUs are different.
 //  -----------------------------------------------------------------------
 unsigned long long int autorunSafetyData(void);
-void setSafetyTimer(void);
+
+//void safetyWriteDownload(void);
+//void safetySetSeq(char seq);
+//void safetyGetSeq(char *seq);
+//unsigned long long int safetyReadUpload(void);
 
 #ifdef __cplusplus
 }

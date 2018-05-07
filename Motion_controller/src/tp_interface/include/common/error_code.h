@@ -46,10 +46,16 @@
 #define ZERO_OFFSET_DEVIATE                     (unsigned long long int)0x00010004006607D3   /*axis zero offset deviated*/
 #define NEED_CALIBRATION                        (unsigned long long int)0x0001000400660412   /*ArmGroup need to calibrate*/
 
-#define FAIL_GET_REGISTER_TYPE                  (unsigned long long int)0x000100020067000B   /*The type does not match the path.*/
-#define FAIL_GET_REGISTER_ID                    (unsigned long long int)0x000100030067000B   /*fail get register id*/
-#define FAIL_SET_REGISTER_TYPE                  (unsigned long long int)0x0001000400670015   /*fail set register type*/
-#define FAIL_SET_REGISTER_ID                    (unsigned long long int)0x0001000500670015   /*fail set register id*/
+#define FALT_GET_FRAME                          (unsigned long long int)0x000100020067000B   /*fail get frame*/
+#define FALT_UPDATE_FRAME                       (unsigned long long int)0x0001000200670015   /*fail update frame*/
+#define FALT_DELETE_FRAME                       (unsigned long long int)0x0001000200670015   /*fail delete frame*/
+#define FALT_ADD_FRAME                          (unsigned long long int)0x0001000200670015   /*fail_add_frame*/
+#define FALT_ACTIVATE_FRAME                     (unsigned long long int)0x0001000200670015   /*fail_activate_frame*/
+#define FALT_INIT_USER_FRAME                    (unsigned long long int)0x001100010067001F   /*fail_init_user_frame*/
+#define FALT_INIT_TOOL_FRAME                    (unsigned long long int)0x001100010067001F   /*fail_init_tool_frame*/
+#define FALT_SET_FRAME                          (unsigned long long int)0x0001000200670015   /*fail_set_frame*/
+
+
 
 
 //#define INT64 ErrorCode

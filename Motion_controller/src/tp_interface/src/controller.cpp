@@ -58,6 +58,26 @@ Controller::Controller()
     heartbeat_task_->function(std::bind(&Controller::heartBeat, this, (void*)NULL));
     heartbeat_task_->run();
 
+    user_frame_manager_ = new FrameManager("user_frame", MAX_USER_FRAME_NUM,
+        "share/configuration/configurable/user_frame.yaml",
+        g_user_frame, g_user_frame_inverse);
+
+    if(!user_frame_manager_->isReady())
+    {
+        FST_ERROR("User frame parameters are invalid.");
+        rcs::Error::instance()->add(FALT_INIT_USER_FRAME);
+    }
+
+    tool_frame_manager_ = new FrameManager("tool_frame", MAX_TOOL_FRAME_NUM,
+        "share/configuration/configurable/tool_frame.yaml",
+        g_tool_frame, g_tool_frame_inverse);
+
+    if(!user_frame_manager_->isReady())
+    {
+        FST_ERROR("Tool frame parameters are invalid.");
+        rcs::Error::instance()->add(FALT_INIT_TOOL_FRAME);
+    }
+
     instance_ = this;
 }
 
@@ -65,25 +85,29 @@ Controller::Controller()
 Controller::~Controller()
 {
     heartbeat_task_->stop();
-    if (heartbeat_task_ != NULL)
-        delete heartbeat_task_;
+    if (heartbeat_task_ != NULL) delete heartbeat_task_;
+
     rt_traj_task_->stop();
-    if (rt_traj_task_ != NULL)
-        delete rt_traj_task_;
+    if (rt_traj_task_ != NULL) delete rt_traj_task_;
+
     tp_interface_->destroy();
+
     ctrl_task_->stop();
-    if (ctrl_task_ != NULL)
-        delete ctrl_task_;    
-    if (tp_interface_ != NULL)
-        delete tp_interface_;
-    if (inst_parser_ != NULL)
-        delete inst_parser_;
-    if (manu_motion_)
-        delete manu_motion_;
-    if (robot_ != NULL)
-        delete robot_;
-    if (arm_group_ != NULL)
-        delete arm_group_;
+    if (ctrl_task_ != NULL) delete ctrl_task_;
+
+    if (tp_interface_ != NULL) delete tp_interface_;
+
+    if (inst_parser_ != NULL) delete inst_parser_;
+
+    if (manu_motion_ != NULL) delete manu_motion_;
+
+    if (robot_ != NULL) delete robot_;
+
+    if (arm_group_ != NULL) delete arm_group_;
+
+    if (user_frame_manager_ != NULL) delete user_frame_manager_;
+
+    if (tool_frame_manager_ != NULL) delete tool_frame_manager_;
 }
 
 void Controller::setError(void* params, int len)
@@ -631,48 +655,7 @@ void Controller::updateFlangePose(int id)
 //void Controller::setToolCoord(void* params, int len)
 //{
 /*}*/
-void Controller::setToolFrame(void* params, int len)
-{
-    motion_spec_toolFrame *tool_frame = (motion_spec_toolFrame*)params;
-    robot_->setToolFrame(tool_frame);
-}
-void Controller::setUserFrame(void* params, int len)
-{
-    motion_spec_userFrame *user_frame = (motion_spec_userFrame*)params;
-    robot_->setUserFrame(user_frame);
-}
-void Controller::getToolFrame(void* params)
-{
-    motion_spec_toolFrame tool_frame = robot_->getToolFrame();
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&tool_frame, sizeof(tool_frame));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(tool_frame);
-        memcpy(param->bytes, (char*)&tool_frame, param->size);
-    }
-}
-void Controller::getUserFrame(void* params)
-{
-    motion_spec_userFrame user_frame = robot_->getUserFrame();
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&user_frame, sizeof(user_frame));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(user_frame);
-        memcpy(param->bytes, (char*)&user_frame, param->size);
-    }
-}
+
 void Controller::getLineID(void* params)
 {
     int line = ShareMem::instance()->getCurLine();
@@ -2230,311 +2213,286 @@ void Controller::getVersion(void* params)
     }
 }
 
-
-void Controller::getString(void* params)
+void Controller::setToolFrame(void* params, int len)
 {
-    //string string_test = "abqqqqqqqqqqqqqqq";
-    //int string_test = 100;
+    frame_spec_Interface frame_interface = *(frame_spec_Interface*)params;
 
-    BaseTypes_CommonString string_test;
+    bool add_success = true;
+    bool delete_success = true;
+    bool update_success = true;
 
-    char data_temp[1024] = "ababababababab";
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    memcpy(&frame.comment, &frame_interface.frame.comment,
+            sizeof(frame_interface.frame.comment));
+    memcpy(&frame.data, &frame_interface.frame.data,
+            sizeof(frame_interface.frame.data));
 
-    strcpy(string_test.data, data_temp);
+    FST_INFO("Here set tool frame id is : %d", frame_interface.frame.id);
+    FST_INFO("Here set tool frame operation : %d", frame_interface.operation);
+
+    switch(frame_interface.operation)
+    {
+        case frame_spec_Set_ADD:
+            add_success = tool_frame_manager_->addFrame(frame);
+            break;
+        case frame_spec_Set_DELETE:
+            delete_success = tool_frame_manager_->deleteFrame(frame.id);
+            break;
+        case frame_spec_Set_UPDATE:
+            update_success = tool_frame_manager_->updateFrame(frame);
+            break;
+        default:
+        {
+            FST_INFO("Set Operating configuration error");
+            rcs::Error::instance()->add(FALT_SET_FRAME);
+        }
+    };
+
+    if (!add_success)
+    {
+        FST_ERROR("Add Operation error : Frame existed");
+        rcs::Error::instance()->add(FALT_ADD_FRAME);
+    }
+
+    if (!delete_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_DELETE_FRAME);
+    }
+
+    if (!update_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_UPDATE_FRAME);
+    }
+}
+
+
+void Controller::getToolFrame(void* params)
+{
+    frame_spec_Interface frame_interface;
+
+    memcpy(&frame_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+            sizeof(frame_interface));
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    frame.is_valid = false;
+    char* comment = "test frame";
+    strcpy(frame.comment, comment);
+    frame.data.position.x = 10.1;
+    frame.data.position.y = 10.2;
+    frame.data.position.z = 10.3;
+    frame.data.orientation.a = 10.4;
+    frame.data.orientation.b = 10.5;
+    frame.data.orientation.c = 10.6;
+
+    bool get_success = tool_frame_manager_->getFrame(frame_interface.frame.id, frame);
+
+    if(!get_success)
+    {
+        FST_ERROR("Get Frame error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_GET_FRAME);
+    }
+
+    frame_interface.frame.has_is_valid = true;
+    frame_interface.frame.has_comment = true;
+    frame_interface.frame.has_data = true;
+    frame_interface.frame.id = frame_interface.frame.id;
+    frame_interface.frame.is_valid = false;
+    memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
+    memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
+    frame_interface.has_operation = false;
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&string_test, sizeof(string_test));
+        rep->fillData((char*)&frame_interface, sizeof(frame_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(frame_interface);
+        memcpy(param->bytes, (char*)&frame_interface, param->size);
+    }
+}
+
+
+void Controller::setActivateToolFrame(void* params, int len)
+{
+    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)params;
+
+    if (!tool_frame_manager_->activateFrame(activate_frame.id))
+    {
+        FST_ERROR("ActivateToolFrame : The id out of range.");
+        rcs::Error::instance()->add(FALT_ACTIVATE_FRAME);
+    }
+}
+
+
+void Controller::getActivateToolFrame(void* params)
+{
+    frame_spec_ActivateInterface activate_frame;
+    activate_frame.id = tool_frame_manager_->getActivatedFrame();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&activate_frame, sizeof(activate_frame));
     }
     else
     {
         motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(string_test);
-        FST_INFO("error size:%d", param->size);
-        memcpy(param->bytes, (char*)&string_test, param->size);
+        param->size = sizeof(activate_frame);
+        memcpy(param->bytes, (char*)&activate_frame, param->size);
     }
-
-    FST_INFO("Here string_test string is : %s", string_test.data);
 }
 
 
-void Controller::updateString(int id)
+void Controller::setUserFrame(void* params, int len)
 {
-    //setUpdateFlagByID(id, true);
-}
+    frame_spec_Interface frame_interface = *(frame_spec_Interface*)params;
 
+    bool add_success = true;
+    bool delete_success = true;
+    bool update_success = true;
 
-void Controller::setRegister(void* params, int len)
-{
-    RegMap* mod_reg = (RegMap*)params;
-        FST_INFO("setRegister: RegMap::type: %d, idx: %d,", 
-			mod_reg->type, mod_reg->index, mod_reg->type);
-    
-    InterpreterControl ctrl;
-    ctrl.cmd = MOD_REG;
-    ctrl.reg = *mod_reg;
-    ShareMem::instance()->intprtControl(ctrl);
-}
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    memcpy(&frame.comment, &frame_interface.frame.comment,
+            sizeof(frame_interface.frame.comment));
+    memcpy(&frame.data, &frame_interface.frame.data,
+            sizeof(frame_interface.frame.data));
 
+    FST_INFO("Here set user frame id is : %d", frame_interface.frame.id);
+    FST_INFO("Here set user frame operation : %d", frame_interface.operation);
 
-void Controller::getRegister(void* params)
-{
-    RegMap* reg = (RegMap*)params;
-	sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
-	usleep(10000);
-	int iRet = getRegisterReply((void *)&reg);
-	int iCount = 0 ;
-	while(iRet == -1)
-	{
-		usleep(100000);
-		iRet = getRegisterReply((void *)&reg);
-		if(iCount++ > 20)
-		{
-			FST_INFO("getRegisterReply Failed");
-			break;
-		}
-	}
-}
-
-void Controller::sendGetRegisterRequest(void * params, int len)
-{
-    RegMap* reg = (RegMap*)params;
-        FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
-    InterpreterControl ctrl;
-    ctrl.cmd = READ_REG ;
-    ctrl.reg = *reg;
-    ShareMem::instance()->intprtControl(ctrl);
-    ShareMem::instance()->setIntprtDataFlag(false);
-}
-
-int Controller::getRegisterReply(void * params)
-{
-	RegMap * reg = (RegMap*)params;
-	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
-	if(is_ready == false)
-	{
-        FST_INFO("is_ready == false");
-		return -1;
-	}
-        FST_INFO("getUserRegs: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
-	ShareMem::instance()->getRegInfo(reg);
-	return 1;
-}
-
-
-bool Controller::isSetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
+    switch(frame_interface.operation)
     {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_SET_REGISTER_TYPE);
-        return true;
+        case frame_spec_Set_ADD:
+            add_success = user_frame_manager_->addFrame(frame);
+            break;
+        case frame_spec_Set_DELETE:
+            delete_success = user_frame_manager_->deleteFrame(frame.id);
+            break;
+        case frame_spec_Set_UPDATE:
+            update_success = user_frame_manager_->updateFrame(frame);
+            break;
+        default:
+        {
+            FST_ERROR("Set Operating configuration error");
+            rcs::Error::instance()->add(FALT_SET_FRAME);
+        }
     }
 
-    return false;
-}
-
-bool Controller::isSetRegisterIndexError(int &send_index, int &reg_total)
-{
-    if((1 > send_index) || (send_index > reg_total))
+    if (!add_success)
     {
-        FST_ERROR("Register : The index out of range.");
-        rcs::Error::instance()->add(FAIL_SET_REGISTER_ID);
-        return true;
+        FST_ERROR("Add Operation error : Frame existed");
+        rcs::Error::instance()->add(FALT_ADD_FRAME);
     }
 
-    return false;
-}
-
-
-bool Controller::isGetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
+    if (!delete_success)
     {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_TYPE);
-        return true;
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_DELETE_FRAME);
     }
 
-    return false;
-}
-
-
-bool Controller::isGetRegisterIndexError(int &send_index, int &reg_total)
-{
-    if((1 > send_index) || (send_index > reg_total))
+    if (!update_success)
     {
-        FST_ERROR("Register : The index out of range.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_ID);
-        return true;
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_UPDATE_FRAME);
+    }
+}
+
+
+void Controller::getUserFrame(void* params)
+{
+    frame_spec_Interface frame_interface;
+
+    memcpy(&frame_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+            sizeof(frame_interface));
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    frame.is_valid = false;
+    char* comment = "test frame";
+    strcpy(frame.comment, comment);
+    frame.data.position.x = 10.1;
+    frame.data.position.y = 10.2;
+    frame.data.position.z = 10.3;
+    frame.data.orientation.a = 10.4;
+    frame.data.orientation.b = 10.5;
+    frame.data.orientation.c = 10.6;
+
+    bool get_success = user_frame_manager_->getFrame(frame_interface.frame.id, frame);
+
+    if(!get_success)
+    {
+        FST_ERROR("Get Frame error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_GET_FRAME);
     }
 
-    return false;
-}
-
-
-void Controller::setPoseRegister(void* params, int len)
-{
-    register_spec_RegMap set_pose_reg = *(register_spec_RegMap*)params;
-
-    int send_type = static_cast<register_spec_RegType>(set_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(set_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegMap set_reg;
-    set_reg.index = set_pose_reg.index;
-    memcpy(&set_reg.type, &set_pose_reg.type, sizeof(set_pose_reg.type));
-    memcpy(&set_reg.value, (char*)&set_pose_reg.value, sizeof(set_pose_reg.value));
- 
-    int reg_size = sizeof(set_reg);
-
-    setRegister(&set_reg, reg_size);
-}
-
-
-void Controller::getPoseRegister(void* params)
-{
-    register_spec_RegMap get_pose_reg;
-
-    memcpy(&get_pose_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_pose_reg));
-
-    int send_type = static_cast<register_spec_RegType>(get_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(get_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegType reg_type_temp = static_cast<int>(send_type);
-
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_pose_reg.value, sizeof(get_pose_reg.value));
-
-    getRegister(&reg_param);
-
-    get_pose_reg.has_value = true;
-    get_pose_reg.index = reg_param.index;
-    memcpy(&get_pose_reg.type, &reg_param.type, sizeof(reg_param.type));
-    memcpy(&get_pose_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
-
-    FST_INFO("GET:: getParamLen : %d", 
-        tp_interface_->getReqDataPtr()->getParamLen());
+    frame_interface.frame.has_is_valid = true;
+    frame_interface.frame.has_comment = true;
+    frame_interface.frame.has_data = true;
+    frame_interface.frame.id = frame.id;
+    frame_interface.frame.is_valid = frame.is_valid;
+    memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
+    memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
+    frame_interface.has_operation = false;
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_pose_reg, sizeof(get_pose_reg));
+        rep->fillData((char*)&frame_interface, sizeof(frame_interface));
     }
     else
     {
         motion_spec_Signal_param_t *param =
             (motion_spec_Signal_param_t*)param_ptr->params;
 
-        param->size = sizeof(get_pose_reg);
-        memcpy(param->bytes, (char*)&get_pose_reg, param->size);
+        param->size = sizeof(frame_interface);
+        memcpy(param->bytes, (char*)&frame_interface, param->size);
+    }
+}
+
+void Controller::setActivateUserFrame(void* params, int len)
+{
+    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)params;
+
+    if (!user_frame_manager_->activateFrame(activate_frame.id))
+    {
+        FST_ERROR("ActivateToolFrame : The id out of range.");
+        rcs::Error::instance()->add(FALT_ACTIVATE_FRAME);
     }
 }
 
 
-void Controller::setNumberRegister(void* params, int len)
+void Controller::getActivateUserFrame(void* params)
 {
-    register_spec_RegMap set_number_reg = *(register_spec_RegMap*)params;
-
-    int send_type = static_cast<register_spec_RegType>(set_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(set_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegMap set_reg;
-    set_reg.index = set_number_reg.index;
-    memcpy(&set_reg.type, &set_number_reg.type, sizeof(set_number_reg.type));
-    memcpy(&set_reg.value, (char*)&set_number_reg.value, sizeof(set_number_reg.value));
- 
-    int reg_size = sizeof(set_reg);
-
-    setRegister(&set_reg, reg_size);
-}
-
-
-void Controller::getNumberRegister(void* params)
-{
-    register_spec_RegMap get_number_reg;
-
-    memcpy(&get_number_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_number_reg));
-
-    int send_type = static_cast<register_spec_RegType>(get_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(get_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegType reg_type_temp = static_cast<int>(send_type);
-
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_number_reg.value, sizeof(get_number_reg.value));
-
-    getRegister(&reg_param);
-
-    get_number_reg.has_value = true;
-    get_number_reg.index = send_index;
-    memcpy(&get_number_reg.type, &reg_type_temp, sizeof(reg_type_temp));
-    memcpy(&get_number_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
-
-    FST_INFO("GET:: getParamLen : %d",
-        tp_interface_->getReqDataPtr()->getParamLen());
+    frame_spec_ActivateInterface activate_frame;
+    activate_frame.id = user_frame_manager_->getActivatedFrame();
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_number_reg, sizeof(get_number_reg));
+        rep->fillData((char*)&activate_frame, sizeof(activate_frame));
     }
     else
     {
-        motion_spec_Signal_param_t *param =
-            (motion_spec_Signal_param_t*)param_ptr->params;
-
-        param->size = sizeof(get_number_reg);
-        memcpy(param->bytes, (char*)&get_number_reg, param->size);
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(activate_frame);
+        memcpy(param->bytes, (char*)&activate_frame, param->size);
     }
 }

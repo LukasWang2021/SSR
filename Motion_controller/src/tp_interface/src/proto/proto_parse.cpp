@@ -594,3 +594,70 @@ void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf
 }
 
 
+void ProtoParse::encString(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    BaseTypes_CommonString *string_data = (BaseTypes_CommonString*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+
+    FST_INFO("param is : %d", param);
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, BaseTypes_CommonString_fields, string_data);
+
+    if(ret != true)
+    {
+        FST_ERROR("error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+
+    FST_INFO("bytes_written:%d", ostream.bytes_written);
+}
+
+
+void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_RegMap *reg_param = (register_spec_RegMap*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+
+    FST_INFO("param is : %d", param);
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, register_spec_RegMap_fields, reg_param);
+
+    if(ret != true)
+    {
+        FST_ERROR("error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+
+    FST_INFO("bytes_written:%d", ostream.bytes_written);
+}
+
+
+void ProtoParse::decRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    bool ret;
+    register_spec_RegMap reg;
+
+    FST_INFO("Here decode : buffer length is : %d", in_len);
+
+    PARSE_FIELD(reg, register_spec_RegMap, in_buf, in_len, ret);
+
+    if (ret == false)
+    {
+        FST_ERROR("error decode pose register");
+        return;
+    }
+
+    TPIFReqData<> *req = (TPIFReqData<>*)out_buf;
+
+    req->fillData((char*)&reg, sizeof(reg));
+}

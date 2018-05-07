@@ -46,7 +46,10 @@
 #define ZERO_OFFSET_DEVIATE                     (unsigned long long int)0x00010004006607D3   /*axis zero offset deviated*/
 #define NEED_CALIBRATION                        (unsigned long long int)0x0001000400660412   /*ArmGroup need to calibrate*/
 
-
+#define FAIL_GET_REGISTER_TYPE                  (unsigned long long int)0x000100020067000B   /*The type does not match the path.*/
+#define FAIL_GET_REGISTER_ID                    (unsigned long long int)0x000100030067000B   /*fail get register id*/
+#define FAIL_SET_REGISTER_TYPE                  (unsigned long long int)0x0001000400670015   /*fail set register type*/
+#define FAIL_SET_REGISTER_ID                    (unsigned long long int)0x0001000500670015   /*fail set register id*/
 
 
 //#define INT64 ErrorCode

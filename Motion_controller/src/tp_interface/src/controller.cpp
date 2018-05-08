@@ -728,6 +728,65 @@ void Controller::updateUserRegs(int id)
 
 }
 
+void Controller::setRegister(void* params, int len)
+{
+    RegMap* mod_reg = (RegMap*)params;
+        FST_INFO("setRegister: RegMap::type: %d, idx: %d,", 
+			mod_reg->type, mod_reg->index, mod_reg->type);
+    
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_REG;
+    ctrl.reg = *mod_reg;
+    ShareMem::instance()->intprtControl(ctrl);
+}
+
+
+void Controller::getRegister(void* params)
+{
+    RegMap* reg = (RegMap*)params;
+	sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
+	usleep(10000);
+	int iRet = getRegisterReply((void *)&reg);
+	int iCount = 0 ;
+	while(iRet == -1)
+	{
+		usleep(100000);
+		iRet = getRegisterReply((void *)&reg);
+		if(iCount++ > 20)
+		{
+			FST_INFO("getRegisterReply Failed");
+			break;
+		}
+	}
+}
+
+void Controller::sendGetRegisterRequest(void * params, int len)
+{
+    RegMap* reg = (RegMap*)params;
+        FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
+			reg->type, reg->index, reg->type);
+    InterpreterControl ctrl;
+    ctrl.cmd = READ_REG ;
+    ctrl.reg = *reg;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+int Controller::getRegisterReply(void * params)
+{
+	RegMap * reg = (RegMap*)params;
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+	{
+        FST_INFO("is_ready == false");
+		return -1;
+	}
+        FST_INFO("getUserRegs: RegMap::type: %d, idx: %d,", 
+			reg->type, reg->index, reg->type);
+	ShareMem::instance()->getRegInfo(reg);
+	return 1;
+}
+
 void Controller::setIOStatus(char* params, char value)
 {
     InterpreterControl ctrl;
@@ -2227,314 +2286,5 @@ void Controller::getVersion(void* params)
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
 
         rep->fillData((char*)&version, sizeof(version));
-    }
-}
-
-
-void Controller::getString(void* params)
-{
-    //string string_test = "abqqqqqqqqqqqqqqq";
-    //int string_test = 100;
-
-    BaseTypes_CommonString string_test;
-
-    char data_temp[1024] = "ababababababab";
-
-    strcpy(string_test.data, data_temp);
-
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&string_test, sizeof(string_test));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(string_test);
-        FST_INFO("error size:%d", param->size);
-        memcpy(param->bytes, (char*)&string_test, param->size);
-    }
-
-    FST_INFO("Here string_test string is : %s", string_test.data);
-}
-
-
-void Controller::updateString(int id)
-{
-    //setUpdateFlagByID(id, true);
-}
-
-
-void Controller::setRegister(void* params, int len)
-{
-    RegMap* mod_reg = (RegMap*)params;
-        FST_INFO("setRegister: RegMap::type: %d, idx: %d,", 
-			mod_reg->type, mod_reg->index, mod_reg->type);
-    
-    InterpreterControl ctrl;
-    ctrl.cmd = MOD_REG;
-    ctrl.reg = *mod_reg;
-    ShareMem::instance()->intprtControl(ctrl);
-}
-
-
-void Controller::getRegister(void* params)
-{
-    RegMap* reg = (RegMap*)params;
-	sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
-	usleep(10000);
-	int iRet = getRegisterReply((void *)&reg);
-	int iCount = 0 ;
-	while(iRet == -1)
-	{
-		usleep(100000);
-		iRet = getRegisterReply((void *)&reg);
-		if(iCount++ > 20)
-		{
-			FST_INFO("getRegisterReply Failed");
-			break;
-		}
-	}
-}
-
-void Controller::sendGetRegisterRequest(void * params, int len)
-{
-    RegMap* reg = (RegMap*)params;
-        FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
-    InterpreterControl ctrl;
-    ctrl.cmd = READ_REG ;
-    ctrl.reg = *reg;
-    ShareMem::instance()->intprtControl(ctrl);
-    ShareMem::instance()->setIntprtDataFlag(false);
-}
-
-int Controller::getRegisterReply(void * params)
-{
-	RegMap * reg = (RegMap*)params;
-	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
-	if(is_ready == false)
-	{
-        FST_INFO("is_ready == false");
-		return -1;
-	}
-        FST_INFO("getUserRegs: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
-	ShareMem::instance()->getRegInfo(reg);
-	return 1;
-}
-
-
-bool Controller::isSetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
-    {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_SET_REGISTER_TYPE);
-        return true;
-    }
-
-    return false;
-}
-
-bool Controller::isSetRegisterIndexError(int &send_index, int &reg_total)
-{
-    if((1 > send_index) || (send_index > reg_total))
-    {
-        FST_ERROR("Register : The index out of range.");
-        rcs::Error::instance()->add(FAIL_SET_REGISTER_ID);
-        return true;
-    }
-
-    return false;
-}
-
-
-bool Controller::isGetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
-    {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_TYPE);
-        return true;
-    }
-
-    return false;
-}
-
-
-bool Controller::isGetRegisterIndexError(int &send_index, int &reg_total)
-{
-    if((1 > send_index) || (send_index > reg_total))
-    {
-        FST_ERROR("Register : The index out of range.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_ID);
-        return true;
-    }
-
-    return false;
-}
-
-
-void Controller::setPoseRegister(void* params, int len)
-{
-    register_spec_RegMap set_pose_reg = *(register_spec_RegMap*)params;
-
-    int send_type = static_cast<register_spec_RegType>(set_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(set_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegMap set_reg;
-    set_reg.index = set_pose_reg.index;
-    memcpy(&set_reg.type, &set_pose_reg.type, sizeof(set_pose_reg.type));
-    memcpy(&set_reg.value, (char*)&set_pose_reg.value, sizeof(set_pose_reg.value));
- 
-    int reg_size = sizeof(set_reg);
-
-    setRegister(&set_reg, reg_size);
-}
-
-
-void Controller::getPoseRegister(void* params)
-{
-    register_spec_RegMap get_pose_reg;
-
-    memcpy(&get_pose_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_pose_reg));
-
-    int send_type = static_cast<register_spec_RegType>(get_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(get_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegType reg_type_temp = static_cast<int>(send_type);
-
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_pose_reg.value, sizeof(get_pose_reg.value));
-
-    getRegister(&reg_param);
-
-    get_pose_reg.has_value = true;
-    get_pose_reg.index = reg_param.index;
-    memcpy(&get_pose_reg.type, &reg_param.type, sizeof(reg_param.type));
-    memcpy(&get_pose_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
-
-    FST_INFO("GET:: getParamLen : %d", 
-        tp_interface_->getReqDataPtr()->getParamLen());
-
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_pose_reg, sizeof(get_pose_reg));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param =
-            (motion_spec_Signal_param_t*)param_ptr->params;
-
-        param->size = sizeof(get_pose_reg);
-        memcpy(param->bytes, (char*)&get_pose_reg, param->size);
-    }
-}
-
-
-void Controller::setNumberRegister(void* params, int len)
-{
-    register_spec_RegMap set_number_reg = *(register_spec_RegMap*)params;
-
-    int send_type = static_cast<register_spec_RegType>(set_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(set_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegMap set_reg;
-    set_reg.index = set_number_reg.index;
-    memcpy(&set_reg.type, &set_number_reg.type, sizeof(set_number_reg.type));
-    memcpy(&set_reg.value, (char*)&set_number_reg.value, sizeof(set_number_reg.value));
- 
-    int reg_size = sizeof(set_reg);
-
-    setRegister(&set_reg, reg_size);
-}
-
-
-void Controller::getNumberRegister(void* params)
-{
-    register_spec_RegMap get_number_reg;
-
-    memcpy(&get_number_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_number_reg));
-
-    int send_type = static_cast<register_spec_RegType>(get_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(get_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
-    if (index_error) return;
-
-    RegType reg_type_temp = static_cast<int>(send_type);
-
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_number_reg.value, sizeof(get_number_reg.value));
-
-    getRegister(&reg_param);
-
-    get_number_reg.has_value = true;
-    get_number_reg.index = send_index;
-    memcpy(&get_number_reg.type, &reg_type_temp, sizeof(reg_type_temp));
-    memcpy(&get_number_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
-
-    FST_INFO("GET:: getParamLen : %d",
-        tp_interface_->getReqDataPtr()->getParamLen());
-
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_number_reg, sizeof(get_number_reg));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param =
-            (motion_spec_Signal_param_t*)param_ptr->params;
-
-        param->size = sizeof(get_number_reg);
-        memcpy(param->bytes, (char*)&get_number_reg, param->size);
     }
 }

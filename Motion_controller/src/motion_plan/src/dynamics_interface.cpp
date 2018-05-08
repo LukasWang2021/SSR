@@ -2,7 +2,7 @@
 	> File Name: dynamics_interface.cpp
 	> Author: 
 	> Mail: 
-	> Created Time: 2018�?4�?9�?星期�?09�?5�?8�? ************************************************************************/
+	> Created Time: 2018???4???9???星期???09???5???8??? ************************************************************************/
 
 #include <iostream>
 #include <math.h>
@@ -5164,7 +5164,7 @@ s4*(s1*s2*s3-c2*c3*s1)));;
         clock_t start, finish;
         double Total_time;  
         
-        start = clock();   
+        //start = clock();   
         getMiddleArray(q);           
         /*for (int i=0;i<MAXAXES;i++)
         {   
@@ -5184,11 +5184,11 @@ s4*(s1*s2*s3-c2*c3*s1)));;
         }*/
         getSymbolicM(q);
         getSymbolicG(q);
-        finish = clock();
-        Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
-        FST_INFO( "compute G & M:%f seconds/n", Total_time);
+        //finish = clock();
+        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //FST_INFO( "compute G & M:%f seconds/n", Total_time);
 
-        start = clock(); 
+        //start = clock(); 
         getSymbolicC(q);
         /*
         for(int i=0;i<MAXAXES;i++)
@@ -5323,9 +5323,9 @@ s4*(s1*s2*s3-c2*c3*s1)));;
 
         }*/
 
-        finish = clock();
-        Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
-        FST_INFO( "compute C %f seconds/n", Total_time);
+        //finish = clock();
+        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //FST_INFO( "compute C %f seconds/n", Total_time);
         return true;
     }
     /*compute the torque of each joint*/
@@ -5354,12 +5354,12 @@ s4*(s1*s2*s3-c2*c3*s1)));;
         clock_t start, finish;
         double Total_time;
 
-        start = clock();        
+        //start = clock();        
         if(!computeMCG(q))
             return false;        
-        finish = clock();
-        Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
-        FST_INFO( "compute MCG %f seconds/n", Total_time);
+        //finish = clock();
+        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //FST_INFO( "compute MCG %f seconds/n", Total_time);
         for(int i=0;i<MAXAXES;i++)
         {
             Tm[i]=c_[i][0][0]*dq[0]*dq[0]+c_[i][1][1]*dq[1]*dq[1]+c_[i][2][2]*dq[2]*dq[2]+c_[i][3][3]*dq[3]*dq[3]+c_[i][4][4]*dq[4]*dq[4]+c_[i][5][5]*dq[5]*dq[5]+\
@@ -5373,9 +5373,9 @@ s4*(s1*s2*s3-c2*c3*s1)));;
         return true;        
     }
     //-----------------------------------------------  
-    //功能: 求矩�?n*n)的行列式  
+    //功能: 求矩???n*n)的行列式  
     //入口参数: 矩阵的首地址，矩阵的行数  
-    //返回�? 矩阵的行列式�? 
+    //返回??? 矩阵的行列式??? 
     //----------------------------------------------  
     float DynamicsInterface::MatDet(float *p, int n)  
     {  
@@ -5386,7 +5386,7 @@ s4*(s1*s2*s3-c2*c3*s1)));;
       
         if (n != 1)  
         {  
-            lop = (n == 2) ? 1 : n;            //控制求和循环次数,若为2阶，则循�?次，否则为n�? 
+            lop = (n == 2) ? 1 : n;            //控制求和循环次数,若为2阶，则循???次，否则为n??? 
             for (m = 0; m < lop; m++)  
             {  
                 mid = 1;            //顺序求和, 主对角线元素相乘之和  
@@ -5413,7 +5413,7 @@ s4*(s1*s2*s3-c2*c3*s1)));;
     //----------------------------------------------------------------------------  
     //功能: 求k*k矩阵中元素A(m, n)的代数余之式  
     //入口参数: k*k矩阵的首地址，矩阵元素A的下标m,n,矩阵行数k  
-    //返回�? k*k矩阵中元素A(m, n)的代数余之式  
+    //返回??? k*k矩阵中元素A(m, n)的代数余之式  
     //----------------------------------------------------------------------------  
     float DynamicsInterface::Creat_M(float *p, int m, int n, int k)  
     {  
@@ -5423,20 +5423,20 @@ s4*(s1*s2*s3-c2*c3*s1)));;
         int sign = 1;  
         float *p_creat, *p_mid;  
       
-        len = (k - 1)*(k - 1);            //k阶矩阵的代数余之式为k-1阶矩�? 
+        len = (k - 1)*(k - 1);            //k阶矩阵的代数余之式为k-1阶矩??? 
         p_creat = (float*)calloc(len, sizeof(float)); //分配内存单元  
         p_mid = p_creat;  
         for (i = 0; i < k; i++)  
         {  
             for (j = 0; j < k; j++)  
             {  
-                if (i != m && j != n) //将除第i行和第j列外的所有元素存储到以p_mid为首地址的内存单�? 
+                if (i != m && j != n) //将除第i行和第j列外的所有元素存储到以p_mid为首地址的内存单??? 
                 {  
                     *p_mid++ = *(p + i*k + j);  
                 }  
             }  
         }  
-        sign = (m + n) % 2 == 0 ? 1 : -1;    //代数余之式前面的正、负�? 
+        sign = (m + n) % 2 == 0 ? 1 : -1;    //代数余之式前面的正、负??? 
         mid_result = (float)sign*MatDet(p_creat, k - 1);  
         free(p_creat);  
         return mid_result;  
@@ -5444,14 +5444,14 @@ s4*(s1*s2*s3-c2*c3*s1)));;
     //------------------------------------------------------------------  
     //功能: 采用部分主元的高斯消去法求方阵A的逆矩阵B  
     //入口参数: 输入方阵，输出方阵，方阵阶数  
-    //返回�? true or false  
+    //返回??? true or false  
     //-------------------------------------------------------------------  
     bool DynamicsInterface::Gauss(const double A[MAX_AXES][MAX_AXES], double B[MAX_AXES][MAX_AXES])  
     {  
         int i, j, k;  
         double max, temp;  
         double t[MAX_AXES][MAX_AXES];                //临时矩阵  
-        //将A矩阵存放在临时矩阵t[n][n]�? 
+        //将A矩阵存放在临时矩阵t[n][n]??? 
         for (i = 0; i < MAX_AXES; i++)  
         {  
             for (j = 0; j < MAX_AXES; j++)  
@@ -5480,7 +5480,7 @@ s4*(s1*s2*s3-c2*c3*s1)));;
                     k = j;  
                 }  
             }  
-            //如果主元所在行不是第i行，进行行交�? 
+            //如果主元所在行不是第i行，进行行交??? 
             if (k != i)  
             {  
                 for (j = 0; j < MAX_AXES; j++)  
@@ -5494,7 +5494,7 @@ s4*(s1*s2*s3-c2*c3*s1)));;
                     B[k][j] = temp;  
                 }  
             }  
-            //判断主元是否�?, 若是, 则矩阵A不是满秩矩阵,不存在逆矩�? 
+            //判断主元是否???, 若是, 则矩阵A不是满秩矩阵,不存在逆矩??? 
             if (t[i][i] == 0)  
             {  
                 cout << "There is no inverse matrix!";  
@@ -5507,12 +5507,12 @@ s4*(s1*s2*s3-c2*c3*s1)));;
                 t[i][j] = t[i][j] / temp;        //主对角线上的元素变为1  
                 B[i][j] = B[i][j] / temp;        //伴随计算  
             }  
-            for (j = 0; j < MAX_AXES; j++)        //�?�?>第n�? 
+            for (j = 0; j < MAX_AXES; j++)        //??????>第n??? 
             {  
-                if (j != i)                //不是第i�? 
+                if (j != i)                //不是第i??? 
                 {  
                     temp = t[j][i];  
-                    for (k = 0; k < MAX_AXES; k++)        //第j行元�?- i行元�?j列i行元�? 
+                    for (k = 0; k < MAX_AXES; k++)        //第j行元???- i行元???j列i行元??? 
                     {  
                         t[j][k] = t[j][k] - t[i][k] * temp;  
                         B[j][k] = B[j][k] - B[i][k] * temp;  
@@ -5672,13 +5672,13 @@ s4*(s1*s2*s3-c2*c3*s1)));;
         }
         //FST_INFO("---2");
 
-        start = clock();
+        //start = clock();
         if(!getTm(q_,dq_,Tm))
             return false;
         //FST_INFO("---3");
-        finish = clock();
-        Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
-        FST_INFO( "getTm:%f seconds/n", Total_time);
+        //finish = clock();
+        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //FST_INFO( "getTm:%f seconds/n", Total_time);
 
         for(int i=0;i<MAXAXES;i++)
         {
@@ -5686,23 +5686,23 @@ s4*(s1*s2*s3-c2*c3*s1)));;
             diffT[1][i]=-servo_model_[i].rated_torque-Tm[i];
         }
         //FST_INFO("---4");
-        start = clock();
+        //start = clock();
         if(!getInverseM(m_,IB))
             return false;
-        finish = clock();
-        Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
-        FST_INFO( "getInverseM:%f seconds/n", Total_time);        
+        //finish = clock();
+        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //FST_INFO( "getInverseM:%f seconds/n", Total_time);        
         //FST_INFO("---5");
 
-        start=clock();
+        //start=clock();
         if(!getMtxMulVec(IB,diffT[0],alpha_max[0]))
             return false;
         if(!getMtxMulVec(IB,diffT[1],alpha_max[1]))
             return false;
         //FST_INFO("---6");
-        finish = clock();
-        Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
-        FST_INFO( "getMtxMulVec:%f seconds/n", Total_time);
+        //finish = clock();
+        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //FST_INFO( "getMtxMulVec:%f seconds/n", Total_time);
         //for(int j=0;j<2;j++)
         //{
         //    for(int i=0;i<MAX_AXES;i++)

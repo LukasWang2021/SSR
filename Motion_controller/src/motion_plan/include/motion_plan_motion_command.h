@@ -255,13 +255,31 @@ class MotionCommand
     double getCommandAcc(void);
 
     //------------------------------------------------------------------------------
+    // Function:    getCommandCNT
+    // Summary: To get the smooth ratio given by the command.
+    // In:      None
+    // Out:     None
+    // Return:  this commnad's CNT expressed in percent: [0, 1]
+    //------------------------------------------------------------------------------
+    double getCommandCNT(void);
+
+    //------------------------------------------------------------------------------
+    // Function:    getCommandDuration
+    // Summary: To get the average duration according to cycle_step and command vel.
+    // In:      None
+    // Out:     None
+    // Return:  average duration between 2 path points according to command velocity
+    //------------------------------------------------------------------------------
+    double getCommandDuration(void);
+
+    //------------------------------------------------------------------------------
     // Function:    getPrevCommandPtr
     // Summary: Get a pointer to the previous command.
     // In:      None
     // Out:     None
     // Return:  pointer to the previous command
     //------------------------------------------------------------------------------
-    MotionCommand* getPrevCommandPtr(void);
+    //MotionCommand* getPrevCommandPtr(void);
 
     //------------------------------------------------------------------------------
     // Function:    getNextCommandPtr
@@ -270,7 +288,7 @@ class MotionCommand
     // Out:     None
     // Return:  pointer to the next command
     //------------------------------------------------------------------------------
-    MotionCommand* getNextCommandPtr(void);
+    //MotionCommand* getNextCommandPtr(void);
 
     //------------------------------------------------------------------------------
     // Function:    setPrevCommandPtr
@@ -279,7 +297,7 @@ class MotionCommand
     // Out:     None
     // Return:  None
     //------------------------------------------------------------------------------
-    void setPrevCommandPtr(MotionCommand *ptr);
+    //void setPrevCommandPtr(MotionCommand *ptr);
 
     //------------------------------------------------------------------------------
     // Function:    setNextCommandPtr
@@ -288,7 +306,7 @@ class MotionCommand
     // Out:     None
     // Return:  None
     //------------------------------------------------------------------------------
-    void setNextCommandPtr(MotionCommand *ptr);
+    //void setNextCommandPtr(MotionCommand *ptr);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,7 +349,7 @@ class MotionCommand
 
     int         motion_id_;
     MotionType  motion_type_;
-    SmoothType  smooth_type_;
+    //SmoothType  smooth_type_;
 
     Joint       beginning_joint_;
 
@@ -339,25 +357,26 @@ class MotionCommand
     Pose        target_pose1_;
     Pose        target_pose2_;
     
-    Joint       next_joint_;
-    Pose        next_pose1_;
-    Pose        next_pose2_;
+    //Joint       next_joint_;
+    //Pose        next_pose1_;
+    //Pose        next_pose2_;
 
     double      cnt_, vel_, acc_;
-    double      next_cnt_, next_vel_, next_acc_;
+    //double      next_cnt_, next_vel_, next_acc_;
 
-    MotionCommand *prev_ptr_;
-    MotionCommand *next_ptr_;
+    //MotionCommand *prev_ptr_;
+    //MotionCommand *next_ptr_;
 
-    Tick    max_stamp_, pick_stamp_;
+    double  average_duration_;
+
+    Tick    max_stamp_;
     
     bool    is_planned_;
-    bool    begin_from_given_joint_;
 
     //----- MOVE JOINT --------------------------------
-    Joint joint_starting_;
-    Joint joint_ending_;
-    double joint_coeff_[AXIS_IN_ALGORITHM];
+    Joint   joint_starting_;
+    Joint   joint_ending_;
+    double  joint_coeff_[AXIS_IN_ALGORITHM];
 
     //----- MOVE LINE --------------------------------
     Pose    pose_starting_;

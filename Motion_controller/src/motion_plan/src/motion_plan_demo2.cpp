@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     vector<PathPoint> path;
     
     int len = cmd.getPathLength();
-    err = cmd.pickPathPoint(len, path);
+    err = cmd.pickAllPoint(path);
     FST_INFO("path_len=%d, pick_len=%d", len, path.size());
 
     FST_INFO("type=%d, ID=%d, source=%lp", path[0].type, path[0].source->getMotionID(), path[0].source);
@@ -112,7 +112,6 @@ int main(int argc, char **argv)
             traj[i].time_from_start = -1;
             traj[i].duration = -1;
             traj[i].expect_duration = -1;
-            traj[i].brake = false;
 
             //FST_INFO("%3d: %f,%f,%f,%f,%f,%f", i,\
                         traj[i].point.joint[0], traj[i].point.joint[1],\
@@ -132,7 +131,6 @@ int main(int argc, char **argv)
     start_ctl_pnt.time_from_start = 0;
     start_ctl_pnt.duration = 0;
     start_ctl_pnt.expect_duration = 0;
-    start_ctl_pnt.brake = false;
     memset(start_ctl_pnt.point.joint, 0, 9 * sizeof(double));
     memset(start_ctl_pnt.point.omega, 0, 9 * sizeof(double));
     memset(start_ctl_pnt.point.alpha, 0, 9 * sizeof(double));

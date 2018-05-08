@@ -1070,6 +1070,15 @@ static inline void DHMatrix(const double l[4], double q, double m[4][4])
     rightMultiplyMat2Mat(m, tmp);
 }
 
+static inline double getDistance(const fst_controller::Point &p1, const fst_controller::Point &p2)
+{
+    double x = p2.x - p1.x;
+    double y = p2.y - p1.y;
+    double z = p2.z - p1.z;
+    
+    return sqrt(x * x + y * y + z * z);
+}
+
 static inline double getDistance(const fst_controller::Pose &pose1, const fst_controller::Pose &pose2)
 {
     double x = pose2.position.x - pose1.position.x;
@@ -1082,6 +1091,16 @@ static inline double getDistance(const fst_controller::Pose &pose1, const fst_co
 static inline double innerProductQuatern(const fst_controller::Quaternion q1, const fst_controller::Quaternion q2)
 {
     return q1.w * q2.w + q1.x * q2.x + q1.y * q2.y + q1.z * q2.z;
+}
+
+static inline double getOrientationAngle(const fst_controller::Quaternion &q1, const fst_controller::Quaternion &q2)
+{
+    double t = innerProductQuatern(q1, q2);
+    
+    if (t > 1.0)        t =  1.0;
+    else if (t < -1.0)  t = -1.0;
+    
+    return acos(t);
 }
 
 static inline double getOrientationAngle(const fst_controller::Pose &pose1, const fst_controller::Pose &pose2)
@@ -1124,13 +1143,7 @@ static inline bool isFirstConstraintCoveredBySecond(const fst_controller::JointC
              child.j3.upper > parent.j3.upper || child.j3.lower < parent.j3.lower ||
              child.j4.upper > parent.j4.upper || child.j4.lower < parent.j4.lower ||
              child.j5.upper > parent.j5.upper || child.j5.lower < parent.j5.lower ||
-             child.j6.upper > parent.j6.upper || child.j6.lower < parent.j6.lower ||
-             child.j1.max_omega > parent.j1.max_omega || child.j1.max_alpha > parent.j1.max_alpha ||
-             child.j2.max_omega > parent.j2.max_omega || child.j2.max_alpha > parent.j2.max_alpha ||
-             child.j3.max_omega > parent.j3.max_omega || child.j3.max_alpha > parent.j3.max_alpha ||
-             child.j4.max_omega > parent.j4.max_omega || child.j4.max_alpha > parent.j4.max_alpha ||
-             child.j5.max_omega > parent.j5.max_omega || child.j5.max_alpha > parent.j5.max_alpha ||
-             child.j6.max_omega > parent.j6.max_omega || child.j6.max_alpha > parent.j6.max_alpha);
+             child.j6.upper > parent.j6.upper || child.j6.lower < parent.j6.lower);
 }
 
 }

@@ -42,7 +42,7 @@ catkin_package(
     LIBRARIES motion_plan
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 
 include_directories(
     include
@@ -62,18 +62,14 @@ add_library(motion_plan
     src/motion_plan_manual_teach.cpp
     src/motion_plan_traj_plan.cpp
 
-    # include motion FIFO functions here:
     src/motion_plan_arm_group.cpp
     src/motion_plan_frame_manager.cpp
+    src/dynamics_interface.cpp
 )
 
 ## Declare a C++ executable
 add_executable(motion_plan_demo1
     src/motion_plan_demo1.cpp
-)
-
-add_executable(motion_plan_demo2
-    src/motion_plan_demo2.cpp
 )
 
 add_executable(motion_plan_demo3
@@ -82,6 +78,10 @@ add_executable(motion_plan_demo3
 
 add_executable(motion_plan_demo4
     src/motion_plan_demo4.cpp
+)
+
+add_executable(motion_plan_demo5
+    src/motion_plan_demo5.cpp
 )
 
 target_link_libraries(motion_plan
@@ -94,15 +94,18 @@ target_link_libraries(motion_plan_demo1
     ${catkin_LIBRARIES}
     motion_plan
 )
-target_link_libraries(motion_plan_demo2
-    ${catkin_LIBRARIES}
-    motion_plan
-)
+
 target_link_libraries(motion_plan_demo3
     ${catkin_LIBRARIES}
     motion_plan
 )
+
 target_link_libraries(motion_plan_demo4
+    ${catkin_LIBRARIES}
+    motion_plan
+)
+
+target_link_libraries(motion_plan_demo5
     ${catkin_LIBRARIES}
     motion_plan
 )
@@ -118,15 +121,15 @@ install(TARGETS motion_plan_demo1
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS motion_plan_demo2
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
 install(TARGETS motion_plan_demo3
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(TARGETS motion_plan_demo4
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS motion_plan_demo5
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

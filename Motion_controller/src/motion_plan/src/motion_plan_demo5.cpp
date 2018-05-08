@@ -27,100 +27,95 @@ using namespace fst_algorithm;
 
 int main(int argc, char **argv)
 {
-    Joint       jnt;
-    PoseEuler   pose;
-
-    jnt.j1 = 0.1;
-    jnt.j2 = -0.2;
-    jnt.j3 = 0.25;
-    jnt.j4 = 0.17;
-    jnt.j5 = -1.5708;
-    jnt.j6 = -0.38;
-/////////////////////////////////////////////////////////////////////////////////////
-    
-    ArmGroup arm;
-    arm.initArmGroup();
-
-    ErrorCode err;
-    ManualTeach manual;
+    cout << "hello" << endl;
+    cout << "hello" << endl;
+    cout << "hello" << endl;
+    cout << "hello" << endl;
     Joint start_joint;
-    vector<JointOutput> points;
-
-    ManualDirection dir[6] = {INCREASE, INCREASE, DECREASE, STANDBY, INCREASE, STANDBY};
-    vector<ManualDirection> dirs;
-    dirs.push_back(INCREASE);
-    dirs.push_back(INCREASE);
-    dirs.push_back(DECREASE);
-    dirs.push_back(STANDBY);
-    dirs.push_back(INCREASE);
-    dirs.push_back(STANDBY);
-
-    start_joint.j1 = 1.1;
-    start_joint.j2 = -0.7;
+    start_joint.j1 = 0.0;
+    start_joint.j2 = 0.0;
     start_joint.j3 = 0.0;
     start_joint.j4 = 0.0;
     start_joint.j5 = -1.5708;
     start_joint.j6 = 0.0;
 
-    arm.setStartState(start_joint);
+    MotionTarget target1;
+    target1.type = MOTION_JOINT;
+    target1.cnt = 0.5;
+    target1.vel = 1;
+    target1.acc = 1;
+    target1.joint_target.j1 = 0;
+    target1.joint_target.j2 = 0;
+    target1.joint_target.j3 = 0;
+    target1.joint_target.j4 = 0;
+    target1.joint_target.j5 = 1.57;
+    target1.joint_target.j6 = 0;
 
-    arm.setManualMode(STEP);
-    arm.setManualFrame(JOINT);
-    err = arm.manualMove(dirs);
-    cout << "manualMove return " << err << endl;
+    MotionTarget target2;
+    target2.type = MOTION_LINE;
+    target2.cnt = 0;
+    target2.vel = 1500.0;
+    target2.acc = 16000.0;
+    target2.pose_target.position.x = 480.0;
+    target2.pose_target.position.y = 160.0;
+    target2.pose_target.position.z = 450.0;
+    target2.pose_target.orientation.a = 0.3;
+    target2.pose_target.orientation.b = 0.2;
+    target2.pose_target.orientation.c = 3.0;
 
-    do {
-        err = arm.getPointFromFIFO(50, points);
-        cout << "pick return " << err << endl;
+    MotionTarget target3;
+    target3.type = MOTION_JOINT;
+    target3.cnt = 0.5;
+    target3.vel = 1;
+    target3.acc = 1;
+    target3.joint_target.j1 = 1.0;
+    target3.joint_target.j2 = 0.3;
+    target3.joint_target.j3 = 0.8;
+    target3.joint_target.j4 = 1.40;
+    target3.joint_target.j5 = -1;
+    target3.joint_target.j6 = 0.8;
 
-        for (vector<JointOutput>::iterator it = points.begin(); it != points.end(); ++it)
-        {
-            cout << it->joint.j1 << "," << it->joint.j2 << "," << it->joint.j3 << ","
-                 << it->joint.j4 << "," << it->joint.j5 << "," << it->joint.j6 << endl;
-        }
-    } while (err == SUCCESS && points.size() != 0);
+    MotionTarget target4;
+    target4.type = MOTION_JOINT;
+    target4.cnt = 0.5;
+    target4.vel = 1;
+    target4.acc = 1;
+    target4.joint_target.j1 = 0;
+    target4.joint_target.j2 = 0;
+    target4.joint_target.j3 = 0;
+    target4.joint_target.j4 = 0;
+    target4.joint_target.j5 = -1.5708;
+    target4.joint_target.j6 = 0;
 
-    cout << "err=" << err << ", size=" << points.size() << endl;
-
-
-    /*
     ArmGroup arm;
     ErrorCode err = arm.initArmGroup();
 
-    if (err != SUCCESS)
-        return err;
-    
     arm.setStartState(start_joint);
-    arm.autoMove(target, 5);
-    //arm.speedup();
+    arm.autoMove(target3, 1);
 
-    std::ofstream os("jout.csv");
     std::vector<JointOutput> points;
-
-    arm.getPointFromFIFO(300, points);
-    FST_INFO("get %d points", points.size());
-
-    for (size_t i = 0; i < points.size(); i++)
+    while (arm.getFIFOLength() > 0)
     {
-        FST_INFO("%.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                 points[i].joint.j1,
-                 points[i].joint.j2,
-                 points[i].joint.j3,
-                 points[i].joint.j4,
-                 points[i].joint.j5,
-                 points[i].joint.j6);
-
-        os  << i + 1 << ","
-            << points[i].joint.j1 << ","
-            << points[i].joint.j2 << ","
-            << points[i].joint.j3 << ","
-            << points[i].joint.j4 << ","
-            << points[i].joint.j5 << ","
-            << points[i].joint.j6 << endl;
-            
+        arm.getPointFromFIFO(10, points);
+        if (arm.timeBeforeDeadline() < 0.001)
+            break;
+    }
+    
+    arm.autoMove(target4, 2);
+    while (arm.getFIFOLength() > 0)
+    {
+        arm.getPointFromFIFO(10, points);
+        if (arm.timeBeforeDeadline() < 0.001)
+            break;
+    }
+    
+    arm.autoMove(target2, 3);
+    while (arm.getFIFOLength() > 0)
+    {
+        arm.getPointFromFIFO(10, points);
     }
 
-*/
+
     cout << "end" << endl;
 
     return 0;

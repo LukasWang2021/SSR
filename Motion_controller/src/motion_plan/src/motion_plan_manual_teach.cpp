@@ -143,8 +143,8 @@ ErrorCode ManualTeach::manualJoint(void)
 
 ErrorCode ManualTeach::manualJointStep(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     FST_INFO("manual-Joint-Step: directions = %d %d %d %d %d %d, planning trajectory ...",
              manual_direction_[0], manual_direction_[1], manual_direction_[2],
@@ -156,7 +156,6 @@ ErrorCode ManualTeach::manualJointStep(void)
              g_start_joint.j4, g_start_joint.j5, g_start_joint.j6);
 
     Joint target = g_start_joint;
-    JointConstraint &cons = g_soft_constraint;
 
     if      (manual_direction_[0] == INCREASE) target.j1 += g_manual_step_joint;
     else if (manual_direction_[0] == DECREASE) target.j1 -= g_manual_step_joint;
@@ -175,17 +174,15 @@ ErrorCode ManualTeach::manualJointStep(void)
              target.j1, target.j2, target.j3, 
              target.j4, target.j5, target.j6);
 
-    if (!isJointInConstraint(target, cons))
+    if (!isJointInConstraint(target, g_soft_constraint))
     {
         FST_ERROR("Target out of soft constraint.");
         return TARGET_OUT_OF_CONSTRAINT;
     }
 
+    double *omega = g_omega_limit;
+    double *alpha = g_alpha_limit;
     double trips[6];
-    double omega[6] = {cons.j1.max_omega, cons.j2.max_omega, cons.j3.max_omega,
-                       cons.j4.max_omega, cons.j5.max_omega, cons.j6.max_omega};
-    double alpha[6] = {cons.j1.max_alpha * 3, cons.j2.max_alpha * 3, cons.j3.max_alpha * 3,
-                       cons.j4.max_alpha * 3, cons.j5.max_alpha * 3, cons.j6.max_alpha * 3};;
     double t_min[6];
     double delta[6];
     
@@ -254,8 +251,8 @@ ErrorCode ManualTeach::manualJointStep(void)
 
 ErrorCode ManualTeach::manualJointContinuous(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     FST_INFO("manual-Joint-Continuous: directions = %d %d %d %d %d %d, planning trajectory ...",
              manual_direction_[0], manual_direction_[1], manual_direction_[2],
@@ -265,17 +262,13 @@ ErrorCode ManualTeach::manualJointContinuous(void)
              g_start_joint.j1, g_start_joint.j2, g_start_joint.j3, 
              g_start_joint.j4, g_start_joint.j5, g_start_joint.j6);
 
-    JointConstraint &cons = g_soft_constraint;
-
     // TODO
     // check soft constraint
 
-    double omega[6] = {cons.j1.max_omega * speed_ratio, cons.j2.max_omega * speed_ratio,
-                       cons.j3.max_omega * speed_ratio, cons.j4.max_omega * speed_ratio,
-                       cons.j5.max_omega * speed_ratio, cons.j6.max_omega * speed_ratio};
-    double alpha[6] = {cons.j1.max_alpha * 3 * acc_ratio, cons.j2.max_alpha * 3 * acc_ratio,
-                       cons.j3.max_alpha * 3 * acc_ratio, cons.j4.max_alpha * 3 * acc_ratio,
-                       cons.j5.max_alpha * 3 * acc_ratio, cons.j6.max_alpha * 3 * acc_ratio};
+    double *alpha = g_alpha_limit;
+    double omega[6] = {g_omega_limit[0] * speed_ratio, g_omega_limit[1] * speed_ratio,
+                       g_omega_limit[2] * speed_ratio, g_omega_limit[3] * speed_ratio,
+                       g_omega_limit[4] * speed_ratio, g_omega_limit[5] * speed_ratio};
 
     for (size_t i = 0; i < 6; i++)
     {
@@ -315,8 +308,8 @@ ErrorCode ManualTeach::manualJointContinuous(void)
 
 ErrorCode ManualTeach::manualJointAPoint(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     FST_INFO("manual-Joint-APOINT: planning trajectory ...");
     FST_INFO("  speed_ratio=%.0f%%, acc_ratio=%.0f%%", speed_ratio * 100, acc_ratio * 100);
@@ -342,14 +335,10 @@ ErrorCode ManualTeach::manualJointAPoint(void)
                         fabs(manual_target_joint_.j5 - g_start_joint.j5),
                         fabs(manual_target_joint_.j6 - g_start_joint.j6)
                       };
-    double omega[6] = { cons.j1.max_omega * speed_ratio, cons.j2.max_omega * speed_ratio,
-                        cons.j3.max_omega * speed_ratio, cons.j4.max_omega * speed_ratio,
-                        cons.j5.max_omega * speed_ratio, cons.j6.max_omega * speed_ratio
-                      };
-    double alpha[6] = { cons.j1.max_alpha * 3 * acc_ratio, cons.j2.max_alpha * 3 * acc_ratio,
-                        cons.j3.max_alpha * 3 * acc_ratio, cons.j4.max_alpha * 3 * acc_ratio,
-                        cons.j5.max_alpha * 3 * acc_ratio, cons.j6.max_alpha * 3 * acc_ratio
-                      };
+    double *alpha = g_alpha_limit;
+    double omega[6] = {g_omega_limit[0] * speed_ratio, g_omega_limit[1] * speed_ratio,
+                       g_omega_limit[2] * speed_ratio, g_omega_limit[3] * speed_ratio,
+                       g_omega_limit[4] * speed_ratio, g_omega_limit[5] * speed_ratio};
 
     double t_min[6];
 
@@ -432,6 +421,10 @@ ErrorCode ManualTeach::manualCartesian(void)
     {
         err = manualCartesianContinuous();
     }
+    else
+    {
+        err = MOTION_INTERNAL_FAULT;
+    }
 
     if (err == SUCCESS)
     {
@@ -446,8 +439,8 @@ ErrorCode ManualTeach::manualCartesian(void)
 
 ErrorCode ManualTeach::manualCartesianStep(void)
 {
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     PoseEuler start  = forwardKinematics2PoseEuler(g_start_joint);
     PoseEuler target = start;
@@ -507,8 +500,8 @@ ErrorCode ManualTeach::manualCartesianStep(void)
 
     double dis = (manual_direction_[0] != STANDBY || manual_direction_[1] != STANDBY ||
                   manual_direction_[2] != STANDBY) ? g_manual_step_position : 0;
-    double spd = g_cart_vel_reference * speed_ratio;
-    double acc = g_cart_acc_reference * acc_ratio;
+    double spd = g_cart_vel_max * speed_ratio;
+    double acc = g_cart_acc_max * acc_ratio;
 
     double angle = (manual_direction_[3] != STANDBY || manual_direction_[4] != STANDBY ||
                     manual_direction_[5] != STANDBY) ? g_manual_step_orientation : 0;
@@ -601,8 +594,8 @@ ErrorCode ManualTeach::manualCartesianContinuous(void)
 {
     ErrorCode err = SUCCESS;
 
-    double speed_ratio  = g_manual_top_speed_ratio * g_manual_sub_speed_ratio;
-    double acc_ratio    = g_manual_top_acc_ratio * g_manual_sub_acc_ratio;
+    double speed_ratio  = g_global_vel_ratio;
+    double acc_ratio    = g_global_acc_ratio;
 
     PoseEuler start  = forwardKinematics2PoseEuler(g_start_joint);
 
@@ -610,7 +603,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(void)
              manual_direction_[0], manual_direction_[1], manual_direction_[2],
              manual_direction_[3], manual_direction_[4], manual_direction_[5]);
     FST_INFO("  speed_ratio = %.0f%%, acc_ratio=%.0f%%",
-             g_manual_step_position, g_manual_step_orientation, speed_ratio * 100, acc_ratio * 100);
+             speed_ratio * 100, acc_ratio * 100);
     FST_INFO("  start  pose  = %.2f %.2f %.2f - %.4f %.4f %.4f",
              start.position.x, start.position.y, start.position.z,
              start.orientation.a, start.orientation.b, start.orientation.c);
@@ -625,8 +618,8 @@ ErrorCode ManualTeach::manualCartesianContinuous(void)
         {
             if (i < 3)
             {
-                spd = g_cart_vel_reference * speed_ratio;
-                acc = g_cart_acc_reference * acc_ratio;
+                spd = g_cart_vel_max * speed_ratio;
+                acc = g_cart_acc_max * acc_ratio;
             }
             else
             {

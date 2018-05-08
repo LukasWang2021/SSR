@@ -55,7 +55,10 @@
 #define FALT_INIT_TOOL_FRAME                    (unsigned long long int)0x001100010067001F   /*fail_init_tool_frame*/
 #define FALT_SET_FRAME                          (unsigned long long int)0x0001000200670015   /*fail_set_frame*/
 
-
+#define FAIL_GET_REGISTER_TYPE                  (unsigned long long int)0x000100020067000B   /*The type does not match the path.*/
+#define FAIL_GET_REGISTER_ID                    (unsigned long long int)0x000100030067000B   /*fail get register id*/
+#define FAIL_SET_REGISTER_TYPE                  (unsigned long long int)0x0001000400670015   /*fail set register type*/
+#define FAIL_SET_REGISTER_ID                    (unsigned long long int)0x0001000500670015   /*fail set register id*/
 
 //#define INT64 ErrorCode
 

@@ -97,9 +97,13 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	53909,	{	&Controller::setToolFrame,	&Controller::getToolFrame,	&Controller::updateDefault	}	},
 	{	24293,	{	&Controller::setUserFrame,	&Controller::getUserFrame,	&Controller::updateDefault	}	},
 	{	49429,	{	&Controller::setActivateToolFrame,	&Controller::getActivateToolFrame,	&Controller::updateDefault	}	},
-	{	67525,	{	&Controller::setActivateUserFrame,	&Controller::getActivateUserFrame,	&Controller::updateDefault	}	},};							
-
+	{	67525,	{	&Controller::setActivateUserFrame,	&Controller::getActivateUserFrame,	&Controller::updateDefault	}	},						
+	{	34069,	{	&Controller::setPoseRegister,	&Controller::getPoseRegister,	&Controller::updateDefault	}	},
+	{	32882,	{	&Controller::setNumberRegister,	&Controller::getNumberRegister,	&Controller::updateDefault	}	},
+	{	4855,	{	&Controller::setError,	&Controller::getString,	&Controller::updateString	}	},
 		
+
+};
 
 							
 #endif

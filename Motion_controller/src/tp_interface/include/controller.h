@@ -489,36 +489,6 @@ class Controller
     static void exit();
   
     /**
-     * @brief: callback for setting register
-     *
-     * @param params
-     * @param len
-     */
-    void setRegister(void* params, int len);
-
-    /**
-     * @brief: try to get Register
-     *
-     * @param params
-     * @param len
-     */
-    void sendGetRegisterRequest(void* params, int len);
-
-    /**
-     * @brief: callback for getting register 
-     *
-     * @param params
-     */
-    int getRegisterReply(void* params);
-
-    /**
-     * @brief: callback for getting register 
-     *
-     * @param params
-     */
-    void getRegister(void* params);
-	
-    /**
      * @brief: callback for setting user registers 
      *
      * @param params
@@ -640,6 +610,103 @@ class Controller
      * @param params
      */
     void getActivateUserFrame(void* params);
+
+    /************* The Follow function for string data ************/
+    /*
+     * @brief: callback for getting string data 
+     *
+     * @param params
+     */
+    void getString(void* params);
+
+    /**
+     * @brief: update string data 
+     *
+     * @param id
+     */
+    void updateString(int id);
+
+
+    /************* The Follow function for register **************/
+    /*
+     * @brief: callback for setting register
+     *
+     * @param params
+     * @param len
+     */
+    void setRegister(void* params, int len);
+
+    /**
+     * @brief: try to get Register
+     *
+     * @param params
+     * @param len
+     */
+    void sendGetRegisterRequest(void* params, int len);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    int getRegisterReply(void* params);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    void getRegister(void* params);
+
+    /**
+     * @brief: Judge whether there is a index error for setting
+     */
+    bool isSetRegisterIndexError(int &send_index, int &reg_total);
+
+    /**
+     * @brief: Judge whether there is a type error for setting
+     */
+    bool isSetRegisterTypeError(int &send_type, int &reg_type);
+
+    /**
+     * @brief: Judge whether there is a index error for getting
+     */
+    bool isGetRegisterIndexError(int &send_index, int &reg_total);
+
+    /**
+     * @brief: Judge whether there is a type error for getting
+     */
+    bool isGetRegisterTypeError(int &send_type, int &reg_type);
+
+   /**
+     * @brief: callback for setting pose register : PR
+     *
+     * @param params
+     * @param len
+     */
+    void setPoseRegister(void* params, int len);
+
+    /**
+     * @brief: callback for getting pose register : PR
+     *
+     * @param params
+     */
+    void getPoseRegister(void* params);
+
+   /**
+     * @brief: callback for setting number register: R
+     *
+     * @param params
+     * @param len
+     */
+    void setNumberRegister(void* params, int len);
+
+    /**
+     * @brief: callback for getting number register: R
+     *
+     * @param params
+     */
+    void getNumberRegister(void* params);
 
   private:
     static Controller           *instance_;     //this class 

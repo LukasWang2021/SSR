@@ -68,8 +68,6 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	1284,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	77427,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	44979,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
-	{	53909,	{	&ProtoParse::decToolFrame,	&ProtoParse::encToolFrame	}	},
-	{	24293,	{	&ProtoParse::decUserFrame,	&ProtoParse::encUserFrame	}	},
 	{	80242,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	94084,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	45710,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},

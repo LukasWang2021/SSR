@@ -58,6 +58,26 @@ Controller::Controller()
     heartbeat_task_->function(std::bind(&Controller::heartBeat, this, (void*)NULL));
     heartbeat_task_->run();
 
+    user_frame_manager_ = new FrameManager("user_frame", MAX_USER_FRAME_NUM,
+        "share/configuration/configurable/user_frame.yaml",
+        g_user_frame, g_user_frame_inverse);
+
+    if(!user_frame_manager_->isReady())
+    {
+        FST_ERROR("User frame parameters are invalid.");
+        rcs::Error::instance()->add(FALT_INIT_USER_FRAME);
+    }
+
+    tool_frame_manager_ = new FrameManager("tool_frame", MAX_TOOL_FRAME_NUM,
+        "share/configuration/configurable/tool_frame.yaml",
+        g_tool_frame, g_tool_frame_inverse);
+
+    if(!user_frame_manager_->isReady())
+    {
+        FST_ERROR("Tool frame parameters are invalid.");
+        rcs::Error::instance()->add(FALT_INIT_TOOL_FRAME);
+    }
+
     instance_ = this;
 }
 
@@ -65,25 +85,29 @@ Controller::Controller()
 Controller::~Controller()
 {
     heartbeat_task_->stop();
-    if (heartbeat_task_ != NULL)
-        delete heartbeat_task_;
+    if (heartbeat_task_ != NULL) delete heartbeat_task_;
+
     rt_traj_task_->stop();
-    if (rt_traj_task_ != NULL)
-        delete rt_traj_task_;
+    if (rt_traj_task_ != NULL) delete rt_traj_task_;
+
     tp_interface_->destroy();
+
     ctrl_task_->stop();
-    if (ctrl_task_ != NULL)
-        delete ctrl_task_;    
-    if (tp_interface_ != NULL)
-        delete tp_interface_;
-    if (inst_parser_ != NULL)
-        delete inst_parser_;
-    if (manu_motion_)
-        delete manu_motion_;
-    if (robot_ != NULL)
-        delete robot_;
-    if (arm_group_ != NULL)
-        delete arm_group_;
+    if (ctrl_task_ != NULL) delete ctrl_task_;
+
+    if (tp_interface_ != NULL) delete tp_interface_;
+
+    if (inst_parser_ != NULL) delete inst_parser_;
+
+    if (manu_motion_ != NULL) delete manu_motion_;
+
+    if (robot_ != NULL) delete robot_;
+
+    if (arm_group_ != NULL) delete arm_group_;
+
+    if (user_frame_manager_ != NULL) delete user_frame_manager_;
+
+    if (tool_frame_manager_ != NULL) delete tool_frame_manager_;
 }
 
 void Controller::setError(void* params, int len)
@@ -631,48 +655,7 @@ void Controller::updateFlangePose(int id)
 //void Controller::setToolCoord(void* params, int len)
 //{
 /*}*/
-void Controller::setToolFrame(void* params, int len)
-{
-    motion_spec_toolFrame *tool_frame = (motion_spec_toolFrame*)params;
-    robot_->setToolFrame(tool_frame);
-}
-void Controller::setUserFrame(void* params, int len)
-{
-    motion_spec_userFrame *user_frame = (motion_spec_userFrame*)params;
-    robot_->setUserFrame(user_frame);
-}
-void Controller::getToolFrame(void* params)
-{
-    motion_spec_toolFrame tool_frame = robot_->getToolFrame();
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&tool_frame, sizeof(tool_frame));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(tool_frame);
-        memcpy(param->bytes, (char*)&tool_frame, param->size);
-    }
-}
-void Controller::getUserFrame(void* params)
-{
-    motion_spec_userFrame user_frame = robot_->getUserFrame();
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-    if (param_ptr->type == REPLY)
-    {
-        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&user_frame, sizeof(user_frame));
-    }
-    else
-    {
-        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(user_frame);
-        memcpy(param->bytes, (char*)&user_frame, param->size);
-    }
-}
+
 void Controller::getLineID(void* params)
 {
     int line = ShareMem::instance()->getCurLine();
@@ -2286,5 +2269,290 @@ void Controller::getVersion(void* params)
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
 
         rep->fillData((char*)&version, sizeof(version));
+    }
+}
+
+
+void Controller::setToolFrame(void* params, int len)
+{
+    frame_spec_Interface frame_interface = *(frame_spec_Interface*)params;
+
+    bool add_success = true;
+    bool delete_success = true;
+    bool update_success = true;
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    memcpy(&frame.comment, &frame_interface.frame.comment,
+            sizeof(frame_interface.frame.comment));
+    memcpy(&frame.data, &frame_interface.frame.data,
+            sizeof(frame_interface.frame.data));
+
+    FST_INFO("Here set tool frame id is : %d", frame_interface.frame.id);
+    FST_INFO("Here set tool frame operation : %d", frame_interface.operation);
+
+    switch(frame_interface.operation)
+    {
+        case frame_spec_Set_ADD:
+            add_success = tool_frame_manager_->addFrame(frame);
+            break;
+        case frame_spec_Set_DELETE:
+            delete_success = tool_frame_manager_->deleteFrame(frame.id);
+            break;
+        case frame_spec_Set_UPDATE:
+            update_success = tool_frame_manager_->updateFrame(frame);
+            break;
+        default:
+        {
+            FST_INFO("Set Operating configuration error");
+            rcs::Error::instance()->add(FALT_SET_FRAME);
+        }
+    };
+
+    if (!add_success)
+    {
+        FST_ERROR("Add Operation error : Frame existed");
+        rcs::Error::instance()->add(FALT_ADD_FRAME);
+    }
+
+    if (!delete_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_DELETE_FRAME);
+    }
+
+    if (!update_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_UPDATE_FRAME);
+    }
+}
+
+
+void Controller::getToolFrame(void* params)
+{
+    frame_spec_Interface frame_interface;
+
+    memcpy(&frame_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+            sizeof(frame_interface));
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    frame.is_valid = false;
+    char* comment = "test frame";
+    strcpy(frame.comment, comment);
+    frame.data.position.x = 10.1;
+    frame.data.position.y = 10.2;
+    frame.data.position.z = 10.3;
+    frame.data.orientation.a = 10.4;
+    frame.data.orientation.b = 10.5;
+    frame.data.orientation.c = 10.6;
+
+    bool get_success = tool_frame_manager_->getFrame(frame_interface.frame.id, frame);
+
+    if(!get_success)
+    {
+        FST_ERROR("Get Frame error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_GET_FRAME);
+    }
+
+    frame_interface.frame.has_is_valid = true;
+    frame_interface.frame.has_comment = true;
+    frame_interface.frame.has_data = true;
+    frame_interface.frame.id = frame_interface.frame.id;
+    frame_interface.frame.is_valid = false;
+    memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
+    memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
+    frame_interface.has_operation = false;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&frame_interface, sizeof(frame_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(frame_interface);
+        memcpy(param->bytes, (char*)&frame_interface, param->size);
+    }
+}
+
+
+void Controller::setActivateToolFrame(void* params, int len)
+{
+    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)params;
+
+    if (!tool_frame_manager_->activateFrame(activate_frame.id))
+    {
+        FST_ERROR("ActivateToolFrame : The id out of range.");
+        rcs::Error::instance()->add(FALT_ACTIVATE_FRAME);
+    }
+}
+
+
+void Controller::getActivateToolFrame(void* params)
+{
+    frame_spec_ActivateInterface activate_frame;
+    activate_frame.id = tool_frame_manager_->getActivatedFrame();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&activate_frame, sizeof(activate_frame));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(activate_frame);
+        memcpy(param->bytes, (char*)&activate_frame, param->size);
+    }
+}
+
+
+void Controller::setUserFrame(void* params, int len)
+{
+    frame_spec_Interface frame_interface = *(frame_spec_Interface*)params;
+
+    bool add_success = true;
+    bool delete_success = true;
+    bool update_success = true;
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    memcpy(&frame.comment, &frame_interface.frame.comment,
+            sizeof(frame_interface.frame.comment));
+    memcpy(&frame.data, &frame_interface.frame.data,
+            sizeof(frame_interface.frame.data));
+
+    FST_INFO("Here set user frame id is : %d", frame_interface.frame.id);
+    FST_INFO("Here set user frame operation : %d", frame_interface.operation);
+
+    switch(frame_interface.operation)
+    {
+        case frame_spec_Set_ADD:
+            add_success = user_frame_manager_->addFrame(frame);
+            break;
+        case frame_spec_Set_DELETE:
+            delete_success = user_frame_manager_->deleteFrame(frame.id);
+            break;
+        case frame_spec_Set_UPDATE:
+            update_success = user_frame_manager_->updateFrame(frame);
+            break;
+        default:
+        {
+            FST_ERROR("Set Operating configuration error");
+            rcs::Error::instance()->add(FALT_SET_FRAME);
+        }
+    }
+
+    if (!add_success)
+    {
+        FST_ERROR("Add Operation error : Frame existed");
+        rcs::Error::instance()->add(FALT_ADD_FRAME);
+    }
+
+    if (!delete_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_DELETE_FRAME);
+    }
+
+    if (!update_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_UPDATE_FRAME);
+    }
+}
+
+
+void Controller::getUserFrame(void* params)
+{
+    frame_spec_Interface frame_interface;
+
+    memcpy(&frame_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+            sizeof(frame_interface));
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    frame.is_valid = false;
+    char* comment = "test frame";
+    strcpy(frame.comment, comment);
+    frame.data.position.x = 10.1;
+    frame.data.position.y = 10.2;
+    frame.data.position.z = 10.3;
+    frame.data.orientation.a = 10.4;
+    frame.data.orientation.b = 10.5;
+    frame.data.orientation.c = 10.6;
+
+    bool get_success = user_frame_manager_->getFrame(frame_interface.frame.id, frame);
+
+    if(!get_success)
+    {
+        FST_ERROR("Get Frame error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_GET_FRAME);
+    }
+
+    frame_interface.frame.has_is_valid = true;
+    frame_interface.frame.has_comment = true;
+    frame_interface.frame.has_data = true;
+    frame_interface.frame.id = frame.id;
+    frame_interface.frame.is_valid = frame.is_valid;
+    memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
+    memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
+    frame_interface.has_operation = false;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&frame_interface, sizeof(frame_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(frame_interface);
+        memcpy(param->bytes, (char*)&frame_interface, param->size);
+    }
+}
+
+void Controller::setActivateUserFrame(void* params, int len)
+{
+    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)params;
+
+    if (!user_frame_manager_->activateFrame(activate_frame.id))
+    {
+        FST_ERROR("ActivateToolFrame : The id out of range.");
+        rcs::Error::instance()->add(FALT_ACTIVATE_FRAME);
+    }
+}
+
+
+void Controller::getActivateUserFrame(void* params)
+{
+    frame_spec_ActivateInterface activate_frame;
+    activate_frame.id = user_frame_manager_->getActivatedFrame();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&activate_frame, sizeof(activate_frame));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(activate_frame);
+        memcpy(param->bytes, (char*)&activate_frame, param->size);
     }
 }

@@ -71,8 +71,6 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	77427,	{	&Controller::setError,	&Controller::getTCPPose,	&Controller::updateTCPPose	}	},
 	{	44979,	{	&Controller::setError,	&Controller::getFlangePose,	&Controller::updateFlangePose	}	},
 	{	53909,	{	&Controller::setToolFrame,	&Controller::getToolFrame,	&Controller::updateDefault	}	},
-	{	24293,	{	&Controller::setUserFrame,	&Controller::getUserFrame,	&Controller::updateDefault	}	},
-	{	80242,	{	&Controller::setUserRegs,	&Controller::getUserRegs,	&Controller::updateUserRegs	}	},
 	{	94084,	{	&Controller::setError,	&Controller::getLineID,	&Controller::updateLineID	}	},
 	{	45710,	{	&Controller::startRun,	&Controller::getError,	&Controller::updateDefault	}	},
 	{	33367,	{	&Controller::startDebug,	&Controller::getError,	&Controller::updateDefault	}	},
@@ -96,7 +94,10 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	94965,	{	&Controller::setError,	&Controller::getSafetyInFrame,	&Controller::updateSafetyFrame	}	},
 	{	10478,	{	&Controller::setError,	&Controller::getVersion,	&Controller::updateDefault	}	},
 	{	87442,	{	&Controller::setRegister,	&Controller::getRegister,	&Controller::updateDefault	}	},
-};							
+	{	53909,	{	&Controller::setToolFrame,	&Controller::getToolFrame,	&Controller::updateDefault	}	},
+	{	24293,	{	&Controller::setUserFrame,	&Controller::getUserFrame,	&Controller::updateDefault	}	},
+	{	49429,	{	&Controller::setActivateToolFrame,	&Controller::getActivateToolFrame,	&Controller::updateDefault	}	},
+	{	67525,	{	&Controller::setActivateUserFrame,	&Controller::getActivateUserFrame,	&Controller::updateDefault	}	},};							
 
 		
 

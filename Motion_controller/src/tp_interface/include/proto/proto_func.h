@@ -68,6 +68,8 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	1284,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	77427,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	44979,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
+	{	53909,	{	&ProtoParse::decToolFrame,	&ProtoParse::encToolFrame	}	},
+	{	24293,	{	&ProtoParse::decUserFrame,	&ProtoParse::encUserFrame	}	},
 	{	80242,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	94084,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	45710,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
@@ -92,10 +94,10 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	94965,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	10478,	{	&ProtoParse::decDefault,	&ProtoParse::encVersionInfo	}	},
 	{	87442,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
-	{	53909,	{	&ProtoParse::decFrame,	&ProtoParse::encFrame	}	},
-	{	24293,	{	&ProtoParse::decFrame,	&ProtoParse::encFrame	}	},
-	{	49429,	{	&ProtoParse::decActivateFrame,	&ProtoParse::encActivateFrame	}	},
-	{	67525,	{	&ProtoParse::decActivateFrame,	&ProtoParse::encActivateFrame	}	},
+	{	34069,	{	&ProtoParse::decRegister,	&ProtoParse::encRegister	}	},
+	{	32882,	{	&ProtoParse::decRegister,	&ProtoParse::encRegister	}	},
+	{	4855,	{	&ProtoParse::decDefault,	&ProtoParse::encString	}	},
+
 };
 
 

@@ -9,14 +9,7 @@
 #define RCS_CONTROLLER_H_
 
 #include <map>
-#include <iostream>
-#include <string.h>
-#include <cstring>
-#include <fstream>
 #include "motion_plan_arm_group.h"
-#include "motion_plan_frame_manager.h"
-#include "motion_plan_reuse.h"
-#include "motion_plan_variable.h"
 #include "tp_interface.h"
 #include "proto_parse.h"
 #include "share_mem.h"
@@ -34,15 +27,6 @@
 #define IDLE2EXE_DELAY              (50)  //wait from idle to execute(ms)
 #define MAX_TIME_IN_PUASE           (20*1000)  //(ms)
 #define RESET_ERROR_TIMEOUT	        (5000)	//wait until to judge if errors are reset
-
-using namespace std;
-using namespace fst_controller;
-using namespace fst_algorithm;
-
-extern Matrix   fst_algorithm::g_user_frame;
-extern Matrix   fst_algorithm::g_tool_frame;
-extern Matrix   fst_algorithm::g_user_frame_inverse;
-extern Matrix   fst_algorithm::g_tool_frame_inverse;
 
 typedef enum _BufType
 {
@@ -260,6 +244,36 @@ class Controller
      * @param id
      */
     void updateFlangePose(int id);
+   
+    /**
+     * @brief: callback for setting current tool frame
+     *
+     * @param params
+     * @param len
+     */
+    void setToolFrame(void* params, int len);
+
+    /**
+     * @brief: callback for setting current user frame 
+     *
+     * @param params
+     * @param len
+     */
+    void setUserFrame(void* params, int len);
+
+    /**
+     * @brief: callback for getting current tool frame 
+     *
+     * @param params
+     */
+    void getToolFrame(void* params);
+
+    /**
+     * @brief: callback for getting current user frame 
+     *
+     * @param params
+     */
+    void getUserFrame(void* params);
 
     /**
      * @brief: callback for getting program line id 
@@ -648,70 +662,9 @@ class Controller
      *
      * @param params
      */
-    void getVersion(void* params);
+    void getNumberRegister(void* params);
 
-    /************* The Follow functions for tool frame **************/
-    /**
-     * @brief: callback for setting a ordirary tool frame
-     *
-     * @param params
-     * @param len
-     */
-    void setToolFrame(void* params, int len);
-    
-    /**
-     * @brief: callback for getting a ordirary tool frame 
-     *
-     * @param params
-     */
-    void getToolFrame(void* params);
 
-    /**
-     * @brief: callback for setting current tool frame
-     *
-     * @param params
-     * @param len
-     */
-    void setActivateToolFrame(void* params, int len);
-
-    /**
-     * @brief: callback for getting current tool frame 
-     *
-     * @param params
-     */
-    void getActivateToolFrame(void* params);
-
-    /************* The Follow functions for user frame **************/
-    /**
-     * @brief: callback for setting a ordirary user frame 
-     *
-     * @param params
-     * @param len
-     */
-    void setUserFrame(void* params, int len);
-
-    /**
-     * @brief: callback for getting a ordirary user frame 
-     *
-     * @param params
-     */
-    void getUserFrame(void* params);
-
-    /**
-     * @brief: callback for setting current user frame 
-     *
-     * @param params
-     * @param len
-     */
-    void setActivateUserFrame(void* params, int len);
-
-    /**
-     * @brief: callback for getting current user frame 
-     *
-     * @param params
-     */
-    void getActivateUserFrame(void* params);
-	
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class
@@ -745,9 +698,6 @@ class Controller
     std::map<int, PublishUpdate>	    id_pub_map_; //the map from parameter id to there publish time
 
     LaunchCodeMgr               launch_code_mgr_;  //instance of SafetyInterface
-
-    FrameManager *user_frame_manager_;
-    FrameManager *tool_frame_manager_;
 
 	/**
 	 * @brief: set current mode

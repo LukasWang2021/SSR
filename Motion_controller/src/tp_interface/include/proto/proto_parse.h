@@ -15,7 +15,7 @@
 #include "proto_define.h"
 #include "instruction.h"
 #include "version.pb.h"
-#include "frameSL.pb.h"
+#include "registerSL.pb.h"
 
 
 class ProtoParse 
@@ -33,6 +33,8 @@ class ProtoParse
 
     void decDefault(const uint8_t *in_buf, int in_len, void *out_buf);
     void encDefault(const uint8_t *in_buf, int in_len, void *out_buf);
+    void decToolFrame(const uint8_t *in_buf, int in_len, void *out_buf);
+    void decUserFrame(const uint8_t *in_buf, int in_len, void *out_buf);
    // void decMotionProgram(const uint8_t *in_buf, int in_len, void *out_buf);
     void decSoftConstraint(const uint8_t *in_buf, int in_len, void *out_buf);
     void decManualCmd(const uint8_t *in_buf, int in_len, void *out_buf);
@@ -40,14 +42,11 @@ class ProtoParse
     int checkPath(char *path);
 
     void encIOInfo(const uint8_t *in_buf, int in_len, void *out_buf);
+    void encToolFrame(const uint8_t *in_buf, int in_len, void *out_buf);
+    void encUserFrame(const uint8_t *in_buf, int in_len, void *out_buf);
     void encSoftConstraint(const uint8_t *in_buf, int in_len, void *out_buf);
     void encDHParameters(const uint8_t *in_buf, int in_len, void *out_buf);
     void encHardConstraint(const uint8_t *in_buf, int in_len, void *out_buf);
-
-    void decFrame(const uint8_t *in_buf, int in_len, void *out_buf);
-    void encFrame(const uint8_t *in_buf, int in_len, void *out_buf);
-    void decActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf);
-    void encActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf);
     //void encManualCmd(const uint8_t *in_buf, int in_len, void *out_buf){}
     void encString(const uint8_t *in_buf, int in_len, void *out_buf);
 

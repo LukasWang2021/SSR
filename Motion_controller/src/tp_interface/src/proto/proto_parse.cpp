@@ -79,6 +79,33 @@ void ProtoParse::encDefault(const uint8_t *in_buf, int in_len, void *out_buf)
 }
 
 
+void ProtoParse::decToolFrame(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    bool ret;
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;    
+	motion_spec_toolFrame tool_frame;
+	PARSE_FIELD(tool_frame, motion_spec_toolFrame, in_buf, in_len, ret);
+	if (ret == false)
+    {
+    	FST_ERROR("error decode tool frame");
+        return;
+    }
+    req->fillData((char*)&tool_frame, sizeof(tool_frame));
+}
+void ProtoParse::decUserFrame(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    bool ret;
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
+	motion_spec_userFrame user_frame;
+	PARSE_FIELD(user_frame, motion_spec_userFrame, in_buf, in_len, ret);
+	if (ret == false)
+    {
+        FST_ERROR("error decode user frame");
+		return;
+    } 
+    req->fillData((char*)&user_frame, sizeof(user_frame));
+}
+
 void ProtoParse::decSoftConstraint(const uint8_t *in_buf, int in_len, void *out_buf)
 {
     bool ret;
@@ -192,6 +219,36 @@ void ProtoParse::encIOInfo(const uint8_t *in_buf, int in_len, void *out_buf)
     }
     param->size = ostream.bytes_written;
     FST_INFO("bytes_written:%d", ostream.bytes_written);
+}
+
+void ProtoParse::encToolFrame(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    motion_spec_toolFrame *tool_frame = (motion_spec_toolFrame*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+	bool ret = pb_encode(&ostream, motion_spec_toolFrame_fields, tool_frame);
+	if(ret != true)
+    {
+        FST_ERROR("error encode tool frame");
+		return;
+    }
+    param->size = ostream.bytes_written;
+}
+void ProtoParse::encUserFrame(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    motion_spec_userFrame *user_frame = (motion_spec_userFrame*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+	bool ret = pb_encode(&ostream, motion_spec_userFrame_fields, user_frame);
+	if(ret != true)
+    {
+        FST_ERROR("error encode user frame");
+		return;
+    }
+    param->size = ostream.bytes_written;
+
 }
 
 void ProtoParse::encSoftConstraint(const uint8_t *in_buf, int in_len, void *out_buf)
@@ -537,73 +594,3 @@ void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf
 }
 
 
-void ProtoParse::decFrame(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    bool ret;
-    frame_spec_Interface frame_interface;
-    PARSE_FIELD(frame_interface, frame_spec_Interface, in_buf, in_len, ret);
-
-    if (!ret)
-    {
-        FST_ERROR("error decode frame");
-        return;
-    }
-
-    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
-    req->fillData((char*)&frame_interface, sizeof(frame_interface));
-}
-
-
-void ProtoParse::encFrame(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    frame_spec_Interface *frame_interface = (frame_spec_Interface*)in_buf;
-
-    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf;
-    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
-
-	bool ret = pb_encode(&ostream, frame_spec_Interface_fields, frame_interface);
-
-	if(!ret)
-    {
-        FST_ERROR("error encode frame");
-        return;
-    }
-
-    param->size = ostream.bytes_written;
-}
-
-
-void ProtoParse::decActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    bool ret;
-    frame_spec_ActivateInterface activate_frame;
-    PARSE_FIELD(activate_frame, frame_spec_ActivateInterface, in_buf, in_len, ret);
-
-    if (!ret)
-    {
-        FST_ERROR("error decode activate frame");
-        return;
-    }
-
-    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
-    req->fillData((char*)&activate_frame, sizeof(activate_frame));
-}
-
-
-void ProtoParse::encActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    frame_spec_ActivateInterface *activate_frame = (frame_spec_ActivateInterface*)in_buf;
-
-    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf;
-    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
-
-    bool ret = pb_encode(&ostream, frame_spec_ActivateInterface_fields, activate_frame);
-
-    if(!ret)
-    {
-        FST_ERROR("error encode activate frame");
-        return;
-    }
-
-    param->size = ostream.bytes_written;
-}

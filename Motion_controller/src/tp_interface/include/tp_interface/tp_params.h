@@ -88,9 +88,6 @@ BaseTypes_ParamInfo g_param_info[] =
 	{	"root/Safety_IO/inputFrame",	94965,	0,	5,	4,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Control/version",	10478,	0,	5,	8,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Register",	87442,	0,	7,	8,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Register/pose",	34069,	0,	1280,	524,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Register/number",	32882,	0,	1280,	524,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Test/string",	4855,	0,	514,	1024,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 
 };												
 

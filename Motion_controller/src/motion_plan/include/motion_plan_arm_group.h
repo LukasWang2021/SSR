@@ -10,17 +10,33 @@
 
 #include <string>
 #include <vector>
+#include <atomic>
 #include <fst_datatype.h>
 #include <motion_plan_error_code.h>
 #include <motion_plan_motion_command.h>
 #include <motion_plan_manual_teach.h>
 
-#define     MOTION_COMMAND_POOL_CAPACITY    10
-#define     PATH_FIFO_CAPACITY              16384       // must be setted to 2~N
-#define     TRAJECTORY_FIFO_CAPACITY        512         // must be setted to 2^N
+#define     PATH_FIFO_CAPACITY              2048        // must be setted to 2~N
+#define     TRAJECTORY_FIFO_CAPACITY        64         // must be setted to 2^N
+#define     MOTION_POOL_CAPACITY            4           // must be setted to 2^N
 
 namespace fst_controller
 {
+
+struct ControlPointCache
+{
+    bool    valid;
+    size_t  head;
+    size_t  tail;
+    size_t  smooth_in_stamp;
+    size_t  smooth_out_stamp;
+    double  deadline;
+
+    ControlPoint path[PATH_FIFO_CAPACITY];
+    ControlPointCache   *prev;
+    ControlPointCache   *next;
+};
+
 
 class ArmGroup
 {
@@ -267,6 +283,15 @@ class ArmGroup
     const DHGroup& getDH(void);
 
     //------------------------------------------------------------
+    // Function:    timeBeforeDeadline
+    // Summary: To get remaining time before deadline of the trajectory.
+    // In:      None
+    // Out:     None
+    // Return:  remaining time
+    //------------------------------------------------------------
+    double timeBeforeDeadline(void);
+
+    //------------------------------------------------------------
     // Function:    getFIFOLength
     // Summary: To get the length of trajectory FIFO.
     // In:      None
@@ -395,15 +420,6 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode getPoseFromJointInWorld(const Joint &joint, PoseEuler &flange, PoseEuler &tcp);
-
-    //------------------------------------------------------------
-    // Function:    getRemainingTime
-    // Summary: To get the remaining time of current motion.
-    // In:      None
-    // Out:     None
-    // Return:  remaining time
-    //------------------------------------------------------------
-    MotionTime getRemainingTime(void);
 
     //------------------------------------------------------------
     // Function:    suspendMotion
@@ -638,8 +654,9 @@ class ArmGroup
     ErrorCode setManualAccRatio(double ratio);
     
 private:
-    MotionCommand* getFreeMotionCommand(void);
-    MotionCommand* releaseMotionCommand(MotionCommand *cmd);
+    MotionCommand* getMotionCommandPtr(void);
+    //MotionCommand* getFreeMotionCommand(void);
+    //MotionCommand* releaseMotionCommand(MotionCommand *cmd);
 
     //------------------------------------------------------------
     // Function:    autoJoint
@@ -663,16 +680,19 @@ private:
     //------------------------------------------------------------
     ErrorCode autoLine(const MotionTarget &target, int id);
 
-    ErrorCode fillTrajectoryFIFO(size_t num);
+    size_t getTrajFIFOLength(void);
 
-    ErrorCode convertPath2Trajectory(ControlPoint &cp);
+    ErrorCode smoothJoint2Joint(const ControlPoint &ps, const ControlPoint &pe,
+                                MotionTime smooth_time, ControlPoint &traj);
+    
+    ErrorCode convertPathPoint(ControlPoint &cp);
 
-    ErrorCode planTraj(void);
+    ErrorCode planFirstStageTraj(ControlPoint *path, size_t head, size_t tail);
+    ErrorCode preTrajPlan(ControlPointCache *cache);
 
-    ErrorCode planJointTraj(void);
-  
     void moveFIFO(size_t start_index, int size, int offset);        
 
+    ErrorCode createTrajectory(void);
     ErrorCode pickFromManual(size_t num, std::vector<JointOutput> &points);
     ErrorCode pickFromAuto(size_t num, std::vector<JointOutput> &points);
 
@@ -680,11 +700,19 @@ private:
     ErrorCode pickManualCartesian(size_t num, std::vector<JointOutput> &points);
 
 
-    MotionCommand   motion_command_pool_[MOTION_COMMAND_POOL_CAPACITY];
-    MotionCommand  *free_command_list_ptr_;
-    MotionCommand  *used_command_list_ptr_;
+    MotionCommand   motion_command_pool_[MOTION_POOL_CAPACITY];
+    size_t          motion_command_index_;
+    //MotionCommand  *free_command_list_ptr_;
+    //MotionCommand  *used_command_list_ptr_;
 
     ControlPoint    prev_traj_point_;
+
+    ControlPointCache    path_cache_[MOTION_POOL_CAPACITY];
+    ControlPointCache   *pick_path_ptr_;
+
+    ControlPoint    traj_fifo_[TRAJECTORY_FIFO_CAPACITY];
+    size_t          traj_head_;
+    size_t          traj_tail_;
 
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;
@@ -701,8 +729,6 @@ private:
     ManualTeach     manual_;
 
 };
-
-
 
 
 }

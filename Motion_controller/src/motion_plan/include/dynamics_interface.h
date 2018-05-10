@@ -80,6 +80,8 @@ public:
     */
     bool initRobotModel(const RobotModel& rob_model);
 
+    void setRatedTorque(double torque[6]);
+
     /*
     Description: if the dynamics interface can work correctly.
                  judgement condition is (is_robot_model_ready && is_servo_model_ready)

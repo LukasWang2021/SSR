@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <atomic>
+#include <pthread.h>
 #include <fst_datatype.h>
 #include <motion_plan_error_code.h>
 #include <motion_plan_motion_command.h>
@@ -698,6 +699,7 @@ private:
 
     ErrorCode pickManualJoint(size_t num, std::vector<JointOutput> &points);
     ErrorCode pickManualCartesian(size_t num, std::vector<JointOutput> &points);
+    ErrorCode interpolateManualCart(MotionTime time, PoseEuler &pose);
 
 
     MotionCommand   motion_command_pool_[MOTION_POOL_CAPACITY];
@@ -728,6 +730,10 @@ private:
     bool            manual_running_;
     ManualTeach     manual_;
 
+    ManualTrajectory    manual_traj_;
+
+
+    pthread_mutex_t manual_mutex_;
 };
 
 

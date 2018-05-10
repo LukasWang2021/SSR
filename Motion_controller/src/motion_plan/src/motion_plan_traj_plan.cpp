@@ -784,18 +784,18 @@ ErrorCode computeAlphaLimit(const double *joint, const double *omega, double *a_
     double alpha_limit[2][6];
     if (g_dynamics_interface.computeAccMax(joint, omega, alpha_limit))
     {
-        a_upper[0] = alpha_limit[0][0] * 0.8;
-        a_upper[1] = alpha_limit[0][1] * 0.8;
-        a_upper[2] = alpha_limit[1][2] * 0.8;
-        a_upper[3] = alpha_limit[0][3] * 0.8;
-        a_upper[4] = alpha_limit[0][4] * 0.8;
-        a_upper[5] = alpha_limit[0][5] * 0.8;
-        a_lower[0] = alpha_limit[1][0] * 0.8;
-        a_lower[1] = alpha_limit[1][1] * 0.8;
-        a_lower[2] = alpha_limit[0][2] * 0.8;
-        a_lower[3] = alpha_limit[1][3] * 0.8;
-        a_lower[4] = alpha_limit[1][4] * 0.8;
-        a_lower[5] = alpha_limit[1][5] * 0.8;
+        a_upper[0] = alpha_limit[0][0] * g_global_acc_ratio;
+        a_upper[1] = alpha_limit[0][1] * g_global_acc_ratio;
+        a_upper[2] = alpha_limit[1][2] * g_global_acc_ratio;
+        a_upper[3] = alpha_limit[0][3] * g_global_acc_ratio;
+        a_upper[4] = alpha_limit[0][4] * g_global_acc_ratio;
+        a_upper[5] = alpha_limit[0][5] * g_global_acc_ratio;
+        a_lower[0] = alpha_limit[1][0] * g_global_acc_ratio;
+        a_lower[1] = alpha_limit[1][1] * g_global_acc_ratio;
+        a_lower[2] = alpha_limit[0][2] * g_global_acc_ratio;
+        a_lower[3] = alpha_limit[1][3] * g_global_acc_ratio;
+        a_lower[4] = alpha_limit[1][4] * g_global_acc_ratio;
+        a_lower[5] = alpha_limit[1][5] * g_global_acc_ratio;
 
         //FST_INFO("alpha_upper: %.4f,%.4f,%.4f,%.4f,%.4f,%.4f",
         //        a_upper[0], a_upper[1], a_upper[2], a_upper[3], a_upper[4], a_upper[5]);

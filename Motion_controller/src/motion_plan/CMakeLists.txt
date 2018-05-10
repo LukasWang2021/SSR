@@ -84,6 +84,10 @@ add_executable(motion_plan_demo5
     src/motion_plan_demo5.cpp
 )
 
+add_executable(motion_plan_demo_manual
+    src/motion_plan_demo_manual.cpp
+)
+
 target_link_libraries(motion_plan
     ${catkin_LIBRARIES}
     parameter_manager
@@ -106,6 +110,11 @@ target_link_libraries(motion_plan_demo4
 )
 
 target_link_libraries(motion_plan_demo5
+    ${catkin_LIBRARIES}
+    motion_plan
+)
+
+target_link_libraries(motion_plan_demo_manual
     ${catkin_LIBRARIES}
     motion_plan
 )
@@ -133,6 +142,10 @@ install(TARGETS motion_plan_demo5
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(TARGETS motion_plan_demo_manual
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
@@ -150,6 +163,10 @@ install(FILES config/soft_constraints.yaml
 )
 
 install(FILES config/dh.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(FILES config/dynamics.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
 )
 

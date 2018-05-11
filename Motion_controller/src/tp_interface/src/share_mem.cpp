@@ -257,11 +257,10 @@ void ShareMem::setUserOpMode(UserOpMode mode)
     //writeShm(SHM_CTRL_STATUS, offset, (void*)&mode, sizeof(mode));
 /*}*/
 
-int ShareMem::getCurLine()
+void ShareMem::getCurLine(char * line)
 {
-    int line;
     int offset = &((Instruction*)0)->line;     
-    readShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
+    readShm(SHM_INTPRT_STATUS, offset, (void*)line, TP_XPATH_LEN);
     return line;
 }
 InterpreterState ShareMem::getIntprtState()

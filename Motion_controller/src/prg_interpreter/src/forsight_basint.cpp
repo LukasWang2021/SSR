@@ -9,6 +9,7 @@
 #include "forsight_auto_lock.h"
 #include "forsight_xml_reader.h"
 #include "reg-shmi/forsight_registers.h"
+// #include "reg_manager/forsight_registers_manager.h"
 #include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
 
@@ -136,7 +137,7 @@ void greturn(struct thread_control_block * objThreadCntrolBlock),
 	 label_init(struct thread_control_block * objThreadCntrolBlock),
 //	 exec_call(struct thread_control_block * objThreadCntrolBlock), 
 	 exec_import(struct thread_control_block * objThreadCntrolBlock);
-void serror(int error),
+void serror(struct thread_control_block * objThreadCntrolBlock, int error),
 	 get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * result, int* boolValue),
 	 putback(struct thread_control_block * objThreadCntrolBlock);
 void    level1(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue),
@@ -189,10 +190,15 @@ void* basic_interpreter(void* arg)
   iRet = call_interpreter(objThreadCntrolBlock, 1);
   printf("Left  call_interpreter.\n");
   setPrgmState(IDLE_R);
+  // clear line path
+  setCurLine("");
 
   // free(objThreadCntrolBlock->instrSet);
   objThreadCntrolBlock->instrSet = 0 ;
-  iIdx = g_thread_control_block[0].iThreadIdx ;
+  
+  // iIdx = g_thread_control_block[0].iThreadIdx ;
+  iIdx = objThreadCntrolBlock->iThreadIdx ;
+  
 #ifdef WIN32
   CloseHandle( g_basic_interpreter_handle[iIdx] );  
   g_basic_interpreter_handle[iIdx] = NULL; 
@@ -270,7 +276,8 @@ void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 {
     printf("setLinenum : %d\n", iLinenum);
 	objThreadCntrolBlock->iLineNum = iLinenum;
-	setCurLine(iLinenum);
+    printf("setLinenum: setCurLine (%d) at %s\n", iLinenum, g_vecXPath[iLinenum].c_str());
+	setCurLine((char *)g_vecXPath[iLinenum].c_str());
 }
 
 int getLinenum(
@@ -391,7 +398,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
       char * loc = find_label(objThreadCntrolBlock, cLineContent); // "main");
 	  if(loc=='\0')
 	  {
-		  serror(7); /* label not defined */
+		  serror(objThreadCntrolBlock, 7); /* label not defined */
 		  printf("label not defined.");
 		  return 1;
 	  }
@@ -541,6 +548,12 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		    setPrgmState(EXECUTE_R);
 		}
   	}
+	else if(objThreadCntrolBlock->prog_mode == ERROR_MODE)
+    {
+	    iLinenum = calc_line_from_prog(objThreadCntrolBlock);
+	    printf("objThreadCntrolBlock crash at line %d \n", iLinenum);
+        return 0 ; // NULL ;
+	}
 	isExecuteEmptyLine = 0 ;
     objThreadCntrolBlock->token_type = get_token(objThreadCntrolBlock);
 	// Deal abort
@@ -551,8 +564,10 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
         break ; // return 0 ; // NULL ;
 	}
     /* check for assignment statement */
+	iLinenum = calc_line_from_prog(objThreadCntrolBlock);
     printf("objThreadCntrolBlock->token_type = %d at line %d \n", 
-    	objThreadCntrolBlock->token_type, calc_line_from_prog(objThreadCntrolBlock));
+    	objThreadCntrolBlock->token_type, iLinenum);
+	setLinenum(objThreadCntrolBlock, iLinenum);
     if(objThreadCntrolBlock->token_type==VARIABLE) {
       putback(objThreadCntrolBlock); /* return the var to the input stream */
       assignment(objThreadCntrolBlock); /* must be assignment statement */
@@ -582,6 +597,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			if(call_internal_cmd_exec_sub_thread(iIdx) == 0) // 0 - mov 1 - nonmov
 			{
 				printf("Non execution permissions : %s\n", objThreadCntrolBlock->token);
+				find_eol(objThreadCntrolBlock);
 			}
 			else
 			{
@@ -748,7 +764,7 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
 #endif
   if(!(fp=fopen(fname, "r"))) 
   {
-      serror(14);
+      serror(objThreadCntrolBlock, 14);
       return 0;
   }
 
@@ -778,7 +794,7 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 	  // Jump ']'
       get_token(objThreadCntrolBlock);
 	  if(objThreadCntrolBlock->token[0] != ']'){
-		 serror(4);
+		 serror(objThreadCntrolBlock, 4);
 		 return -1;
 	  }
 	  return (int)value.getFloatValue() ;
@@ -807,7 +823,7 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 
 	  get_token(objThreadCntrolBlock);
 	  if(objThreadCntrolBlock->token[0] != ']') {
-	    serror(4);
+	    serror(objThreadCntrolBlock, 4);
 	    return -1;
 	  }
 	  else {
@@ -835,7 +851,7 @@ void deal_array_element(struct thread_control_block * objThreadCntrolBlock)
 //	{
        get_token(objThreadCntrolBlock);
 	   if(!isalpha(objThreadCntrolBlock->token[0])) {
-	     serror(4);
+	     serror(objThreadCntrolBlock, 4);
 	     return;
 	   }
 	   get_token(objThreadCntrolBlock);
@@ -843,7 +859,7 @@ void deal_array_element(struct thread_control_block * objThreadCntrolBlock)
 	   	  array_value = release_array_element(objThreadCntrolBlock);
 		  if(array_value < 0) {
 	   	     putback(objThreadCntrolBlock);
-		     serror(4);
+		     serror(objThreadCntrolBlock, 4);
 		     return;
 		  }
           sprintf(objThreadCntrolBlock->token, "%s[%d]", array_variable, (int)array_value);
@@ -868,7 +884,7 @@ void assignment(struct thread_control_block * objThreadCntrolBlock)
   tempProg = objThreadCntrolBlock->prog ;
   get_token(objThreadCntrolBlock);
   if(!isalpha(objThreadCntrolBlock->token[0])) {
-    serror(4);
+    serror(objThreadCntrolBlock, 4);
     return;
   }
 
@@ -885,7 +901,7 @@ void assignment(struct thread_control_block * objThreadCntrolBlock)
 	// Eat ]
 	get_token(objThreadCntrolBlock);
 	if(objThreadCntrolBlock->token[0] != ']') { /* is string */
-      serror(3);
+      serror(objThreadCntrolBlock, 3);
       return;
 	}
 	// Check the Member of the structure
@@ -908,7 +924,7 @@ void assignment(struct thread_control_block * objThreadCntrolBlock)
   /* get the equals sign */
   get_token(objThreadCntrolBlock);
   if(*(objThreadCntrolBlock->token)!=EQ) {
-    serror(3);
+    serror(objThreadCntrolBlock, 3);
     return;
   }
 
@@ -957,14 +973,14 @@ void print(struct thread_control_block * objThreadCntrolBlock)
     }
     else if(*(objThreadCntrolBlock->token)==',') /* do nothing */;
     else if(objThreadCntrolBlock->tok!=EOL
-		&& objThreadCntrolBlock->tok!=FINISHED) serror(0);
+		&& objThreadCntrolBlock->tok!=FINISHED) serror(objThreadCntrolBlock, 0);
   } while (*(objThreadCntrolBlock->token)==';'
   			|| *(objThreadCntrolBlock->token)==',');
 
   if(objThreadCntrolBlock->tok==EOL || objThreadCntrolBlock->tok==FINISHED) {
     if(last_delim != ';' && last_delim!=',') printf("\n");
   }
-  else serror(0); /* error is not , or ; */
+  else serror(objThreadCntrolBlock, 0); /* error is not , or ; */
 
 }
 
@@ -997,7 +1013,7 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 	objLabel.p = objThreadCntrolBlock->prog;
 	addr = add_label(objThreadCntrolBlock, objLabel);
       if(addr==-1 || addr==-2) {
-          (addr==-1) ?serror(5):serror(6);
+          (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
       }
   }
   else if(objThreadCntrolBlock->token_type==COMMAND) {
@@ -1015,7 +1031,7 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 		  bisFindEOL = 1 ;
 		  addr = add_label(objThreadCntrolBlock, objLabel);
 		  if(addr==-1 || addr==-2) {
-			  (addr==-1) ?serror(5):serror(6);
+			  (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
 		  }
 	  }
   }
@@ -1063,7 +1079,7 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 
 		  addr = add_label(objThreadCntrolBlock, objLabel);
 		  if(addr==-1 || addr==-2) {
-			  (addr==-1) ?serror(5):serror(6);
+			  (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
 		  }
     }
 	else if(objThreadCntrolBlock->token_type==COMMAND) {
@@ -1079,7 +1095,7 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 		    bisFindEOL = 1 ;
 	        addr = add_label(objThreadCntrolBlock, objLabel);
 	        if(addr==-1 || addr==-2) {
-	          (addr==-1) ?serror(5):serror(6);
+	          (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
 	        }
 		}
 	}
@@ -1216,7 +1232,7 @@ static int jumpout_one_block_in_loc(struct thread_control_block * objThreadCntro
 			  {
 				return JUMP_OUT_OK ;
 			  }
-			  serror(1);
+			  serror(objThreadCntrolBlock, 1);
 			  exit(0);
 			}
 			return JUMP_OUT_OK ;
@@ -1272,7 +1288,7 @@ void exec_goto(struct thread_control_block * objThreadCntrolBlock)
   loc = find_label(objThreadCntrolBlock, objThreadCntrolBlock->token);
   if(loc=='\0')
   {
-     serror(7); /* label not defined */
+     serror(objThreadCntrolBlock, 7); /* label not defined */
   }
   else
   {
@@ -1314,7 +1330,7 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock)
   if(cond) { /* is true so process target of IF */
     get_token(objThreadCntrolBlock);
     if(objThreadCntrolBlock->tok!=THEN) {
-      serror(8);
+      serror(objThreadCntrolBlock, 8);
       return;
     }/* else program execution starts on next line */
     if_stack.itokentype = IF ;
@@ -1378,19 +1394,19 @@ void exec_else(struct thread_control_block * objThreadCntrolBlock)
 	}
 	else if(objThreadCntrolBlock->tok==ELSE)  // Execute else
 	{
-	    serror(1); /* not a legal operator */
+	    serror(objThreadCntrolBlock, 1); /* not a legal operator */
 		break ;
     }
 	else if(objThreadCntrolBlock->tok==ELSEIF)  // Execute else
 	{
-	    serror(1); /* not a legal operator */
+	    serror(objThreadCntrolBlock, 1); /* not a legal operator */
 		break ;
     }
  	else if (objThreadCntrolBlock->tok==ENDIF) // Finish if
 	{
  	    if_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
  	    if(if_stack.itokentype != IF){
-		   serror(4);
+		   serror(objThreadCntrolBlock, 4);
 		   return;
  	    }
 		break ;
@@ -1411,7 +1427,7 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
   if(cond) { /* is true so process target of IF */
     get_token(objThreadCntrolBlock);
     if(objThreadCntrolBlock->tok!=THEN) {
-      serror(8);
+      serror(objThreadCntrolBlock, 8);
       return;
     }/* else program execution starts on next line */
     if_stack.itokentype = IF ;
@@ -1464,7 +1480,7 @@ void exec_for(struct thread_control_block * objThreadCntrolBlock)
 
   get_token(objThreadCntrolBlock); /* read the control variable */
   if(!isalpha(*(objThreadCntrolBlock->token))) {
-    serror(4);
+    serror(objThreadCntrolBlock, 4);
     return;
   }
 
@@ -1474,7 +1490,7 @@ void exec_for(struct thread_control_block * objThreadCntrolBlock)
 
   get_token(objThreadCntrolBlock); /* read the equals sign */
   if(*(objThreadCntrolBlock->token)!=EQ) {
-    serror(3);
+    serror(objThreadCntrolBlock, 3);
     return;
   }
 
@@ -1484,7 +1500,7 @@ void exec_for(struct thread_control_block * objThreadCntrolBlock)
   assign_var(objThreadCntrolBlock, for_stack.var, value) ;
 
   get_token(objThreadCntrolBlock);
-  if(objThreadCntrolBlock->tok!=TO) serror(9); /* read and discard the TO */
+  if(objThreadCntrolBlock->tok!=TO) serror(objThreadCntrolBlock, 9); /* read and discard the TO */
 
   get_exp(objThreadCntrolBlock, &for_stack.target, &boolValue); /* get target value */
 
@@ -1530,7 +1546,7 @@ void exec_next(struct thread_control_block * objThreadCntrolBlock)
 
   for_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
   if(for_stack.itokentype != FOR){
-     serror(4);
+     serror(objThreadCntrolBlock, 4);
      return;
   }
   // variables[for_stack.var]++; /* increment control variable */
@@ -1583,7 +1599,7 @@ void exec_endloop(struct thread_control_block * objThreadCntrolBlock)
 
   loop_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
   if(loop_stack.itokentype != LOOP){
-     serror(4);
+     serror(objThreadCntrolBlock, 4);
      return;
   }
   // variables[for_stack.var]++; /* increment control variable */
@@ -1663,7 +1679,7 @@ void exec_wend(struct thread_control_block * objThreadCntrolBlock)
 
   while_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
   if(while_stack.itokentype != WHILE){
-     serror(4);
+     serror(objThreadCntrolBlock, 4);
      return;
   }
   objThreadCntrolBlock->prog = while_stack.while_loc;  /* loop */
@@ -1781,7 +1797,7 @@ void exec_break(struct thread_control_block * objThreadCntrolBlock)
 	  {
 		  get_token(objThreadCntrolBlock);
 		  if(objThreadCntrolBlock->tok != SELECT){
-			  serror(4);
+			  serror(objThreadCntrolBlock, 4);
 			  return;
 		  }
           find_eol(objThreadCntrolBlock);
@@ -1799,7 +1815,7 @@ void exec_select(struct thread_control_block * objThreadCntrolBlock)
   get_token(objThreadCntrolBlock);
   /* get next list item */
   if(objThreadCntrolBlock->tok != CASE) { /* is string */
-      serror(3);
+      serror(objThreadCntrolBlock, 3);
       return;
   }
   // get exp
@@ -1858,7 +1874,7 @@ void exec_case(struct thread_control_block * objThreadCntrolBlock)
 		{
 	        get_token(objThreadCntrolBlock);
 	  	    if(objThreadCntrolBlock->tok!=SELECT) {
-			   serror(4);
+			   serror(objThreadCntrolBlock, 4);
 			   return;
 			}
             find_eol(objThreadCntrolBlock);
@@ -1874,7 +1890,7 @@ void exec_endif(struct thread_control_block * objThreadCntrolBlock)
 
   select_stack = select_and_cycle_pop(objThreadCntrolBlock);
   if(IF != select_stack.itokentype) {
-     serror(4);
+     serror(objThreadCntrolBlock, 4);
      return;
   }
   find_eol(objThreadCntrolBlock);
@@ -1890,7 +1906,7 @@ int exec_end(struct thread_control_block * objThreadCntrolBlock)
   {
     select_stack = select_and_cycle_pop(objThreadCntrolBlock);
 	if(objThreadCntrolBlock->tok!=select_stack.itokentype) {
-	   serror(4);
+	   serror(objThreadCntrolBlock, 4);
 	   return 0;
 	}
     find_eol(objThreadCntrolBlock);
@@ -1911,7 +1927,7 @@ int exec_end(struct thread_control_block * objThreadCntrolBlock)
 		return ;
 	}
 	else {
-	   serror(4);
+	   serror(objThreadCntrolBlock, 4);
 	   return;
 	}
   }
@@ -1925,7 +1941,7 @@ void select_and_cycle_push(struct thread_control_block * objThreadCntrolBlock,
 		struct select_and_cycle_stack i)
 {
    if(objThreadCntrolBlock->select_and_cycle_tos>SELECT_AND_CYCLE_NEST)
-    serror(10);
+    serror(objThreadCntrolBlock, 10);
 
   objThreadCntrolBlock->selcyclstack[objThreadCntrolBlock->select_and_cycle_tos]=i;
   objThreadCntrolBlock->select_and_cycle_tos++;
@@ -1940,7 +1956,7 @@ struct select_and_cycle_stack select_and_cycle_pop(
   objThreadCntrolBlock->select_and_cycle_tos--;
   if(objThreadCntrolBlock->select_and_cycle_tos<0)
   {
-	  serror(11);
+	  serror(objThreadCntrolBlock, 11);
   }
 //    printf("\t\t\t\t\t select_and_cycle_pop with %d\n", objThreadCntrolBlock->select_and_cycle_tos);
 
@@ -1959,7 +1975,7 @@ void input(struct thread_control_block * objThreadCntrolBlock)
   if(objThreadCntrolBlock->token_type==QUOTE) {
     printf("%s", objThreadCntrolBlock->token); /* if so, print it and check for comma */
     get_token(objThreadCntrolBlock);
-    if(*(objThreadCntrolBlock->token)!=',') serror(1);
+    if(*(objThreadCntrolBlock->token)!=',') serror(objThreadCntrolBlock, 1);
     get_token(objThreadCntrolBlock);
   }
   else printf("? "); /* otherwise, prompt with / */
@@ -1991,7 +2007,7 @@ double call_inner_func(struct thread_control_block * objThreadCntrolBlock)
 		return 0.0;
     if(*(objThreadCntrolBlock->token) != '(')
     {
-    	serror(2);
+    	serror(objThreadCntrolBlock, 2);
 		return 0.0;
 	}
 
@@ -2034,7 +2050,7 @@ void get_args(struct thread_control_block * objThreadCntrolBlock)
 		return ;
     if(*(objThreadCntrolBlock->token) != '(')
     {
-    	serror(2);
+    	serror(objThreadCntrolBlock, 2);
 		return;
 	}
 
@@ -2065,14 +2081,14 @@ void get_params(struct thread_control_block * objThreadCntrolBlock)
 	if(i < 0)
     {
 		// No parameter
-    	// serror(2);
+    	// serror(objThreadCntrolBlock, 2);
 		return;
 	}
 
     get_token(objThreadCntrolBlock);
     if(*(objThreadCntrolBlock->token) != '(')
     {
-	    serror(7); /* label not defined */
+	    serror(objThreadCntrolBlock, 7); /* label not defined */
 		return;
     }
 
@@ -2088,7 +2104,7 @@ void get_params(struct thread_control_block * objThreadCntrolBlock)
             get_token(objThreadCntrolBlock);
 			if(i < 0)
 		    {
-		    	serror(2);
+		    	serror(objThreadCntrolBlock, 2);
 				return;
 			}
             i--;
@@ -2099,7 +2115,7 @@ void get_params(struct thread_control_block * objThreadCntrolBlock)
 
     if(*(objThreadCntrolBlock->token) != ')')
     {
-	    serror(7); /* label not defined */
+	    serror(objThreadCntrolBlock, 7); /* label not defined */
 		return;
     }
 }
@@ -2144,7 +2160,7 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
 /*
  *	  addr = add_label(objThreadCntrolBlock, objLabel);
  *    if(addr==-1 || addr==-2) {
- *        (addr==-1) ?serror(5):serror(6);
+ *        (addr==-1) ?serror(objThreadCntrolBlock, 5):serror(objThreadCntrolBlock, 6);
  *    }
  */
 }
@@ -2160,7 +2176,7 @@ int exec_call_submain(struct thread_control_block * objThreadCntrolBlock)
 	loc = find_label(objThreadCntrolBlock, objThreadCntrolBlock->token);
 	if(loc=='\0')
 	{
-		serror(7); /* label not defined */
+		serror(objThreadCntrolBlock, 7); /* label not defined */
 		return 1;
 	}
 	// Save local var stack index.
@@ -2196,7 +2212,7 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock)
 	  loc = find_label(objThreadCntrolBlock, func_name);
 	  if(loc=='\0')
 	  {
-		  serror(7); /* label not defined */
+		  serror(objThreadCntrolBlock, 7); /* label not defined */
 		  return 0;
 	  }
   }
@@ -2231,7 +2247,7 @@ int gosub(struct thread_control_block * objThreadCntrolBlock)
   /* find the label to call */
   loc = find_label(objThreadCntrolBlock, objThreadCntrolBlock->token);
   if(loc=='\0')
-    serror(7); /* label not defined */
+    serror(objThreadCntrolBlock, 7); /* label not defined */
   else {
     gosub_push(objThreadCntrolBlock, objThreadCntrolBlock->prog); /* save place to return to */
     objThreadCntrolBlock->prog = loc;  /* start program running at that loc */
@@ -2250,7 +2266,7 @@ void greturn(struct thread_control_block * objThreadCntrolBlock)
   char* progTemp  ;
   progTemp = gosub_pop(objThreadCntrolBlock);
   if(objThreadCntrolBlock->func_call_stack.empty()) {
-    // serror(2);
+    // serror(objThreadCntrolBlock, 2);
 	objThreadCntrolBlock->prog = progTemp ;
     return;
   }
@@ -2282,7 +2298,7 @@ void gosub_push(struct thread_control_block * objThreadCntrolBlock, char *s)
   objThreadCntrolBlock->gosub_tos++;
 
   if(objThreadCntrolBlock->gosub_tos==SUB_NEST) {
-    serror(12);
+    serror(objThreadCntrolBlock, 12);
     return;
   }
 
@@ -2294,7 +2310,7 @@ void gosub_push(struct thread_control_block * objThreadCntrolBlock, char *s)
 char *gosub_pop(struct thread_control_block * objThreadCntrolBlock)
 {
   if(objThreadCntrolBlock->gosub_tos==0) {
-    serror(13);
+    serror(objThreadCntrolBlock, 13);
     return 0;
   }
 
@@ -2306,7 +2322,7 @@ void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * re
 {
   get_token(objThreadCntrolBlock);
   if(!objThreadCntrolBlock->token[0]) {
-    serror(2);
+    serror(objThreadCntrolBlock, 2);
     return;
   }
   level1(objThreadCntrolBlock, result, boolValue);
@@ -2315,7 +2331,7 @@ void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * re
 
 
 /* display an error message */
-void serror(int error)
+void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 {
   static const char *e[]= {
     "syntax error",                // 0 
@@ -2339,8 +2355,26 @@ void serror(int error)
   printf("-----------------ERR----------------------\n");
   
   setPrgmState((InterpreterState)(ERROR_SYNTAX_ERROR_T + error)) ; 
-
-  longjmp(e_buf, 1); /* return to save point */
+  objThreadCntrolBlock->prog_mode = ERROR_MODE;
+  
+//  longjmp(e_buf, 1); /* return to save point */
+#if 0
+	  // iIdx = g_thread_control_block[0].iThreadIdx ;
+	  int iIdx = objThreadCntrolBlock->iThreadIdx ;
+	  
+#ifdef WIN32
+	  ExitThread
+	  CloseHandle( g_basic_interpreter_handle[iIdx] );  
+	  g_basic_interpreter_handle[iIdx] = NULL; 
+#else
+	  printf("Enter pthread_join.\n");
+	  pthread_join(g_basic_interpreter_handle[iIdx], NULL);
+	  printf("Left  pthread_join.\n");
+	  fflush(stdout);
+	  g_basic_interpreter_handle[iIdx] = 0;
+	  pthread_exit(g_basic_interpreter_handle[iIdx]);
+#endif // WIN32
+#endif
 }
 
 /* Get a token. */
@@ -2445,7 +2479,7 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
 		&& *objThreadCntrolBlock->prog != '\n') 
 		*temp++=*(objThreadCntrolBlock->prog)++;
     if(*(objThreadCntrolBlock->prog)=='\r') 
-		serror(1);
+		serror(objThreadCntrolBlock, 1);
     objThreadCntrolBlock->prog++;*temp=0;
     return(objThreadCntrolBlock->token_type=QUOTE);
   }
@@ -2706,7 +2740,7 @@ void level7(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
     get_token(objThreadCntrolBlock);
     level1(objThreadCntrolBlock, result, boolValue);
     if(*(objThreadCntrolBlock->token) != ')')
-      serror(1);
+      serror(objThreadCntrolBlock, 1);
     get_token(objThreadCntrolBlock);
   }
   else
@@ -2734,7 +2768,7 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
 		get_token(objThreadCntrolBlock);
 		if(objThreadCntrolBlock->token[0] != ']')
 		{
-			serror(0);
+			serror(objThreadCntrolBlock, 0);
 		}
 
 		get_token(objThreadCntrolBlock);
@@ -2782,7 +2816,7 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
     // get_token(objThreadCntrolBlock);
     return;
   default:
-    serror(0);
+    serror(objThreadCntrolBlock, 0);
   }
 }
 
@@ -2858,6 +2892,8 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		{
 			int iRet = forgesight_set_register(
 				objThreadCntrolBlock, vname, &value);
+//			int iRet = forgesight_registers_manager_set_register(
+//				objThreadCntrolBlock, vname, &value);
 			if(iRet == 0)
 			{
 				return ;
@@ -2908,7 +2944,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
     vector<var_type>::reverse_iterator it ;
 	  objThreadCntrolBlock->g_variable_error = 0 ;
 //	  if(!isalpha(*s)){
-//	    serror(4); /* not a variable */
+//	    serror(objThreadCntrolBlock, 4); /* not a variable */
 //	    return 0;
 //	  }
 //	  return variables[toupper(*s)-'A'];
@@ -2929,6 +2965,8 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 		{
     		int iRet = forgesight_get_register(
 				objThreadCntrolBlock, vname, &value);
+//    		int iRet = forgesight_registers_manager_get_register(
+//				objThreadCntrolBlock, vname, &value);
 			if(iRet == 0)
 			{
 				return value ;
@@ -2974,7 +3012,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 	if (raise_unkown_error == 1)
 	{
 		printf("not defined variable (%s).\n", vname);
-		serror(4);
+		serror(objThreadCntrolBlock, 4);
 	}
 	objThreadCntrolBlock->g_variable_error = 1 ;
 	return value ;
@@ -2986,7 +3024,7 @@ int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 {
         vector<var_type>::iterator it ;
 //	  if(!isalpha(*s)){
-//	    serror(4); /* not a variable */
+//	    serror(objThreadCntrolBlock, 4); /* not a variable */
 //	    return 0;
 //	  }
 //	  return variables[toupper(*s)-'A'];

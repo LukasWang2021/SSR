@@ -659,39 +659,68 @@ void Controller::updateFlangePose(int id)
 void Controller::getLineID(void* params)
 {
     BaseTypes_CommonString line_id;
-
-    char data_temp[1024] = "string line id";
-
-    strcpy(line_id.data, data_temp);
-
+    char line_xpath[TP_XPATH_LEN];
+	memset(line_xpath, 0x00, TP_XPATH_LEN);
+	ShareMem::instance()->getCurLine(line_xpath);
+	if(strlen(line_xpath) > 0)
+	{
+//	    FST_INFO("getLineID: rep::line_xpath: %s(%d)", 
+//					line_xpath, strlen(line_xpath));
+	}
+	strcpy(line_id.data, (char*)line_xpath);
+	
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&line_id, sizeof(line_id));
+		if(rep)
+		{
+        	rep->fillData((char *)&line_id, sizeof(line_id));
+        	// int line = 0x12 ;
+        	// rep->fillData((char *)&line, sizeof(line));
+	        if(strlen(line_xpath) > 0)
+			{
+//			    FST_INFO("getLineID:  rep::getParamBufPtr %s(%d) ", 
+//					rep->getParamBufPtr(), rep->getParamLen());
+//				
+//			    FST_INFO("getLineID: fillData rep::line_xpath: %s(%d)", 
+//					line_xpath, strlen(line_xpath));
+	        }
+		}
+		else
+	        FST_INFO("getLineID: rep::line: %s", line_xpath);
     }
-    else
+    else 
     {
         motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(line_id);
-        FST_INFO("error size:%d", param->size);
-        memcpy(param->bytes, (char*)&line_id, param->size);
+		if(!param)
+		{
+		    FST_INFO("getLineID: !param::line: %s", line_xpath);
+			return ;
+	    }
+        int line = 0x12 ;
+        // param->size = sizeof(line_id);
+        param->size = sizeof(line);
+		// memcpy(param->bytes, (char*)&line_id, param->size);
+        memcpy(param->bytes, (char*)&line, param->size);
+	    if(strlen(line_xpath) > 0)
+	    {
+//		    FST_INFO("getLineID: fillData rep::line: %s", line_xpath);
+        }
     }
 
-    FST_INFO("Here line_id string is : %s", line_id.data);
 }
 
 
 void Controller::updateLineID(int id)
 {
-    static int prev_line_id;
+    static char prev_line_id_xpath[TP_XPATH_LEN];
+    char line_xpath[TP_XPATH_LEN];
+    ShareMem::instance()->getCurLine(line_xpath);
 
-    int line_id = ShareMem::instance()->getCurLine();
+    if (strcmp(prev_line_id_xpath, line_xpath) == 0) return;
 
-    if (prev_line_id == line_id) return;
-
-    prev_line_id = line_id;
+    strcpy(prev_line_id_xpath, line_xpath);
 
     setUpdateFlagByID(id, true);
 }
@@ -783,13 +812,15 @@ void Controller::startRun(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
     {
-        FST_ERROR("cant start run!!");
+        int ctlState   = ctrl_state_ ;
+        int workStatus = work_status_ ;
+        FST_ERROR("cant start run!! for ctrl_state_ = %d and work_status_ = %d", 
+			ctlState, workStatus);
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
     StartCtrl* start = (StartCtrl*)params;
 
-    
     InterpreterControl ctrl;
     ctrl.cmd = START;
     ctrl.start_ctrl = *start;
@@ -857,10 +888,10 @@ void Controller::jumpLine(void* params, int len)
     //if (state == PAUSED_R)
     abortMotion();
     //----------------
-    int line = *(int*)params;
+    char * line = (char *)params;
     InterpreterControl ctrl;
     ctrl.cmd = JUMP;
-    ctrl.line = line;
+    strcpy(ctrl.line, line);
     ShareMem::instance()->intprtControl(ctrl);
 }
 
@@ -1189,15 +1220,23 @@ void Controller::setManualCmd(void* params, int len)
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
+	 
+    motion_spec_ManualCommand command = *(motion_spec_ManualCommand*)params;
+	if (work_status_ == TEACHING_W)
+	{
+		FST_ERROR("cant manual run!! work_status_ in TEACHING_W");
+		return;
+	}
+	
     work_status_ = TEACHING_W;
     U64 result = arm_group_->setStartState(servo_joints_);
     if (result != TPI_SUCCESS)
     {
         rcs::Error::instance()->add(result);
     }
-    motion_spec_ManualCommand command = *(motion_spec_ManualCommand*)params;
     manu_motion_->setManuCommand(command);
 }
+
 void Controller::setTeachTarget(void* params, int len)
 {
     if ((ctrl_state_ != ENGAGED_S)
@@ -1208,7 +1247,27 @@ void Controller::setTeachTarget(void* params, int len)
         return;
     }
     motion_spec_TeachTarget target = *(motion_spec_TeachTarget*)params;
-    manu_motion_->setTeachTarget(target);
+	
+    if((target.directions_count == 6)
+	 &&(target.directions[0] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[1] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[2] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[3] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[4] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[5] == motion_spec_Direction_STANDBY))
+     {
+	    FST_INFO("target.directions = (0, 0, 0, 0, 0, 0) .\n");
+	    if (work_status_ == TEACHING_W)
+	        work_status_ = TEACHING_TO_IDLE_T;
+     }
+     else
+     {
+	    FST_INFO("command.target.directions = (%d, %d, %d, %d, %d, %d) .\n", 
+			target.directions[0], target.directions[1], 
+			target.directions[2], target.directions[3], 
+			target.directions[4], target.directions[5]);
+     }
+     manu_motion_->setTeachTarget(target);
 }
 
 bool Controller::isTerminated()
@@ -1343,6 +1402,20 @@ void Controller::stateMachine(void* params)
 	        }
         }
     }
+
+	if (work_status_ == TEACHING_W)
+	{
+	   if(manu_motion_->getManuType() == motion_spec_ManualType_STEP)
+	   {
+		   FST_INFO("SET OVER :: fifo_len:%d\n", fifo_len);
+           if (fifo_len == 0)
+           {
+			   FST_INFO("SET OVER :: work_status_ = TEACHING_TO_IDLE_T\n");
+               work_status_ = TEACHING_TO_IDLE_T ;
+           }
+	   }
+    }
+	
     static int count = 0;
     if (++count >= SM_INTERVAL_COUNT)
     {
@@ -1767,7 +1840,7 @@ void Controller::updateProc()
         }
         else
         {
-            //FST_INFO("Here publish id : %d\n", id);
+            // FST_INFO("Here publish id : %d\n", id);
 
             itr->second.count++;
 
@@ -1910,8 +1983,10 @@ void Controller::removePubParameter(string str_path)
         id = tp_interface_->getReqDataPtr()->getID();        
     }
     std::map<int, PublishUpdate>::iterator it = id_pub_map_.find(id);
-    id_pub_map_.erase(it);
-
+	if(it != id_pub_map_.end() )
+	{
+       id_pub_map_.erase(it);
+	}
 }
 
 void Controller::removeAllPubParams()

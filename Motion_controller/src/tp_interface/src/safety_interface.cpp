@@ -8,17 +8,23 @@
 
 #include "safety/safety.h"
 #include "safety_interface.h"
+#include "error_monitor.h"
 
-
+#define CROSS_PLATFORM
 SafetyInterface::SafetyInterface()
 {
+    int iRet = 0 ;
     valid_flag_ = false;
     memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
     memset((char*)&dout_frm2_, 0, sizeof(dout_frm2_));
 #ifdef CROSS_PLATFORM
-    openSafety();
+    iRet = openSafety();
 #endif
-
+	if(iRet != 0)
+	{
+        FST_ERROR("init SafetyInterface failed");
+        rcs::Error::instance()->add(iRet);
+	}
 }
 SafetyInterface::~SafetyInterface()
 {
@@ -74,6 +80,7 @@ char SafetyInterface::getDIBrake1()
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("getDIBrake1 Error \n");
         return 0;
     }
     return din_frm2_.load().byte5.brake1;
@@ -152,10 +159,12 @@ U64 SafetyInterface::setDOType0Stop(char data)
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("setDOType0Stop Error set %c\n", data);
         return TPI_SUCCESS;
     }
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.core0_sw0 = data;
+        FST_INFO("setSafety set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
@@ -167,10 +176,12 @@ U64 SafetyInterface::setDOType1Stop(char data)
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("setDOType1Stop Error set %c\n", data);
         return TPI_SUCCESS;
     }
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.core0_sw1 = data;
+        FST_INFO("setSafety set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
@@ -182,10 +193,12 @@ U64 SafetyInterface::setDOType2Stop(char data)
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("setDOType2Stop Error set %c\n", data);
         return TPI_SUCCESS;
     }
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.core0_sw2 = data;
+        FST_INFO("setDOType1Stop set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
@@ -197,10 +210,12 @@ U64 SafetyInterface::setDOSafetyStopConf(char data)
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("setDOSafetyStopConf Error set %c\n", data);
         return TPI_SUCCESS;
     }
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.safedoor_stop_config = data;
+        FST_INFO("setDOSafetyStopConf set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
@@ -212,10 +227,12 @@ U64 SafetyInterface::setDOExtEStopConf(char data)
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("setDOExtEStopConf Error set %c\n", data);
         return TPI_SUCCESS;
     }
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.ext_estop_config = data;
+        FST_INFO("setSafety set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
@@ -227,10 +244,12 @@ U64 SafetyInterface::setDOLmtStopConf(char data)
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("setDOLmtStopConf Error set %c\n", data);
         return TPI_SUCCESS;
     }
     SafetyBoardDOFrm2 out = dout_frm2_;
     out.byte5.lmt_stop_config = data;
+        FST_INFO("setSafety set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_SECONDFRAME);
 }
 
@@ -246,6 +265,7 @@ U64 SafetyInterface::setSafetyHeartBeat()
 {
     if (isSafetyValid() == false)
     {
+        // FST_INFO("setSafetyHeartBeat Error \n");
         return TPI_SUCCESS;
     }
     U64 result = autorunSafetyData(); 
@@ -255,6 +275,8 @@ U64 SafetyInterface::setSafetyHeartBeat()
         //din_frm1_ = *(SafetyBoardDIFrm1*)&data;
         //memcpy((char*)&din_frm1_, (char*)&data, sizeof(U32));
         U32 data = getSafety(SAFETY_INPUT_SECONDFRAME, &result);
+        // FST_INFO("getSafety return 0x%X", data);
+        // printf("getSafety set 0x%X", data);
         //din_frm2_ = *(SafetyBoardDIFrm2*)&data;
         memcpy((char*)&din_frm2_, (char*)&data, sizeof(U32));
         /*data = getSafety(SAFETY_OUTPUT_FIRSTFRAME, &result);*/
@@ -279,7 +301,7 @@ bool SafetyInterface::isSafetyAlarm()
     char alarm = getDIAlarm();    
     if (alarm != pre_alarm)
     {
-        FST_INFO("cur alarm:%d, pre_alarm:%d",alarm, pre_alarm);
+        FST_INFO("cur alarm:%d, pre_alarm:%d\n",alarm, pre_alarm);
     }
 
     if ((pre_alarm == 0) && (alarm == 1))

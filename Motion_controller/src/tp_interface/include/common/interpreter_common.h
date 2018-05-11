@@ -9,6 +9,8 @@ using namespace fst_controller;
 
 #define TP_XPATH_LEN     1024
 
+#define USE_XPATH
+
 typedef enum _AdditionalInfomationType
 {
     ACC, 

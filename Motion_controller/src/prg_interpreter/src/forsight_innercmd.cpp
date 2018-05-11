@@ -1153,7 +1153,15 @@ void generateXPathVector(char * fname)
 		{
 			memcpy(contentLineNum, contentLine, 
 				contentSepPtr - contentLine);
-			strcpy(contentXPath,   contentSepPtr + 1);
+			char * strEnter = strchr(contentSepPtr + 1, '\n');
+			if(strEnter)
+			{
+			    memcpy(contentXPath, contentSepPtr + 1, strlen(contentSepPtr + 1) - 1);
+			}
+			else
+			{
+				strcpy(contentXPath,   contentSepPtr + 1);
+			}
 			iLineNum = atoi(contentLineNum);
 			g_vecXPath[iLineNum] = string(contentXPath) ;
 		}

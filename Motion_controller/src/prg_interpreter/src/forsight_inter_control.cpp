@@ -221,7 +221,7 @@ void setPrgmState(InterpreterState state)
     writeShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
 }
 
-void setCurLine(int line)
+void setCurLine(char * line)
 {
 #ifdef WIN32
 	Instruction temp,  * tempPtr = &temp;
@@ -230,8 +230,9 @@ void setCurLine(int line)
    // int offset = (int)&intprt_status.line - (int)&intprt_status;
     int offset = &((Instruction*)0)->line;   
 #endif  
-    printf("setCurLine (%d) at %d\n", line, offset);
-    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));    
+    printf("setCurLine %s(%d) at %d\n", line, strlen(line), offset);
+//    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
+	writeShm(SHM_INTPRT_STATUS, offset, (void*)line, strlen(line) + 1); 
 }
 
 #ifdef WIN32
@@ -370,7 +371,7 @@ void startFile(struct thread_control_block * objThdCtrlBlockPtr,
 	char * proj_name, int idx)
 {
 	strcpy(objThdCtrlBlockPtr->project_name, proj_name); // "prog_demo_dec"); // "BAS-EX1.BAS") ; // 
-	// objThdCtrlBlockPtr->is_main_thread = isMainThread;
+	objThdCtrlBlockPtr->is_main_thread = MAIN_THREAD ;
 	objThdCtrlBlockPtr->iThreadIdx = idx ;
 	append_program_prop_mapper(objThdCtrlBlockPtr, proj_name);
 	base_thread_create(idx, objThdCtrlBlockPtr);
@@ -504,7 +505,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             setPrgmState(PAUSED_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_tp");
+			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_1");
 			}
             startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
@@ -520,7 +521,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             setPrgmState(EXECUTE_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "prog_1");
+			   strcpy(intprt_ctrl.start_ctrl.file_name, "fy_line");
 			}
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
@@ -738,6 +739,8 @@ void initShm()
     openShm(SHM_CTRL_STATUS, 1024);
     intprt_ctrl.cmd = START;
 	g_privateInterpreterState = IDLE_R ;
+	
+	setPrgmState(IDLE_R);
 #ifdef WIN32
 	generateFakeData();
 #else

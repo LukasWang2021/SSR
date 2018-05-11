@@ -43,6 +43,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/mem_share/include
     ${depend_PATH_INC}/tp_interface/include
     ${depend_PATH_INC}/tp_interface/include/proto
+    ${depend_PATH_INC}/prg_interpreter/include/reg_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fpermissive -O0")

@@ -155,7 +155,7 @@ void refresh_io_config_emulated()
 		g_io_config_emulated.is_uio_emulated = true ;
 	else
 		g_io_config_emulated.is_uio_emulated = false ;
-	
+#if 0	
 	printf("is_aio_emulated:: %s , is_dio_emulated:: %s , "
 		   "is_rio_emulated:: %s , is_sio_emulated:: %s , "
 		   "is_uio_emulated:: %s .\n", 
@@ -164,6 +164,7 @@ void refresh_io_config_emulated()
 		g_io_config_emulated.is_rio_emulated ? "true" : "false", 
 		g_io_config_emulated.is_sio_emulated ? "true" : "false", 
 		g_io_config_emulated.is_uio_emulated ? "true" : "false");
+#endif
 }
 
 int forgesight_load_io_config()

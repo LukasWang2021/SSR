@@ -101,6 +101,7 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	34069,	{	&Controller::setPoseRegister,	&Controller::getPoseRegister,	&Controller::updateDefault	}	},
 	{	32882,	{	&Controller::setNumberRegister,	&Controller::getNumberRegister,	&Controller::updateDefault	}	},
 	{	4855,	{	&Controller::setError,	&Controller::getString,	&Controller::updateString	}	},
+	{	22462,	{	&Controller::setGlobalAcc,	&Controller::getGlobalAcc,	&Controller::updateDefault	}	},
 		
 
 };

@@ -2887,3 +2887,39 @@ void Controller::getNumberRegister(void* params)
 }
 
 
+void Controller::setGlobalAcc(void* params, int len)
+{
+    motion_spec_GlobalParams global = *(motion_spec_GlobalParams*)params;
+
+    U64 error_code = arm_group_->setGlobalAccRatio(global.acc);
+
+    if (FST_SUCCESS != error_code)
+    {
+        FST_INFO("Global Acc : Parameter is invalid");
+        rcs::Error::instance()->add(error_code);
+    }
+}
+
+
+void Controller::getGlobalAcc(void* params)
+{
+    motion_spec_GlobalParams global;
+
+    global.acc = arm_group_->getGlobalAccRatio();
+    global.has_acc = true;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&global, sizeof(global));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(double);
+        memcpy(param->bytes, (char*)&global, param->size);
+    }
+}
+

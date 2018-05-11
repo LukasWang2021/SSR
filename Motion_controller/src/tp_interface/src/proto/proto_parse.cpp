@@ -653,3 +653,26 @@ void ProtoParse::encString(const uint8_t *in_buf, int in_len, void *out_buf)
 
     FST_INFO("bytes_written:%d", ostream.bytes_written);
 }
+
+void ProtoParse::encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    motion_spec_GlobalParams *global = (motion_spec_GlobalParams*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+
+    FST_INFO("param is : %d", param);
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, motion_spec_GlobalParams_fields, global);
+
+    if(ret != true)
+    {
+        FST_ERROR("error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+
+    FST_INFO("bytes_written:%d", ostream.bytes_written);
+}

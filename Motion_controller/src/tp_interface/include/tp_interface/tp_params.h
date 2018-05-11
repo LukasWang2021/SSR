@@ -63,7 +63,7 @@ BaseTypes_ParamInfo g_param_info[] =
 	{	"root/Control/forwardKinematics/toolCoordinates",	77427,	0,	258,	8,	6,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Control/forwardKinematics/flangeCoordinates",	44979,	0,	258,	8,	6,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/MotionInterpreter/register",	80242,	0,	0,	0,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/MotionInterpreter/line_id",	94084,	0,	514,	1024,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/MotionInterpreter/line_id",	94084,	0,	514,	128,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/MotionInterpreter/startRun",	45710,	0,	5,	4,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/MotionInterpreter/startDebug",	33367,	0,	5,	4,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/MotionInterpreter/jumpLine",	8837,	0,	5,	4,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
@@ -92,7 +92,7 @@ BaseTypes_ParamInfo g_param_info[] =
 	{	"root/Control/activateUserFrame",	67525,	0,	5,	4,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Register/pose",	34069,	0,	1280,	524,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Register/number",	32882,	0,	1280,	524,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Test/string",	4855,	0,	514,	1024,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/Test/string",	4855,	0,	1280,	128,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 };												
 
 

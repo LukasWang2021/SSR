@@ -1006,10 +1006,16 @@ void Controller::getSoftLimit(void* params)
         memcpy(param->bytes, (char*)&slmt, param->size);
     }
 }
+
+
 void Controller::setJointConstraint(void* params, int len)
 {
     motion_spec_JointConstraint slmt = *(motion_spec_JointConstraint*)params;
+
+    robot_->setSoftConstraint(&slmt);
 }
+
+
 void Controller::getDH(void* params)
 {
     motion_spec_DHGroup dh = robot_->getDHGroup();

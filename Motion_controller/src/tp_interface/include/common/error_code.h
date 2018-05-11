@@ -46,25 +46,22 @@
 #define ZERO_OFFSET_DEVIATE                     (unsigned long long int)0x00010004006607D3   /*axis zero offset deviated*/
 #define NEED_CALIBRATION                        (unsigned long long int)0x0001000400660412   /*ArmGroup need to calibrate*/
 
-#define FALT_GET_FRAME                          (unsigned long long int)0x000100020067000B   /*fail get frame*/
-#define FALT_UPDATE_FRAME                       (unsigned long long int)0x0001000200670015   /*fail update frame*/
-#define FALT_DELETE_FRAME                       (unsigned long long int)0x0001000200670015   /*fail delete frame*/
-#define FALT_ADD_FRAME                          (unsigned long long int)0x0001000200670015   /*fail_add_frame*/
-#define FALT_ACTIVATE_FRAME                     (unsigned long long int)0x0001000200670015   /*fail_activate_frame*/
-#define FALT_INIT_USER_FRAME                    (unsigned long long int)0x001100010067001F   /*fail_init_user_frame*/
-#define FALT_INIT_TOOL_FRAME                    (unsigned long long int)0x001100010067001F   /*fail_init_tool_frame*/
-#define FALT_SET_FRAME                          (unsigned long long int)0x0001000200670015   /*fail_set_frame*/
+#define FAIL_GET_REGISTER_TYPE                  (unsigned long long int)0x00010002006707EF   /*fail get register type*/
+#define FAIL_GET_REGISTER_ID                    (unsigned long long int)0x00010002006707F0   /*fail get register id*/
+#define FAIL_SET_REGISTER_TYPE                  (unsigned long long int)0x00010002006707F1   /*fail set register type*/
+#define FAIL_SET_REGISTER_ID                    (unsigned long long int)0x00010002006707F2   /*fail set register id*/
 
-#define FAIL_GET_REGISTER_TYPE                  (unsigned long long int)0x000100020067000B   /*The type does not match the path.*/
-#define FAIL_GET_REGISTER_ID                    (unsigned long long int)0x000100030067000B   /*fail get register id*/
-#define FAIL_SET_REGISTER_TYPE                  (unsigned long long int)0x0001000400670015   /*fail set register type*/
-#define FAIL_SET_REGISTER_ID                    (unsigned long long int)0x0001000500670015   /*fail set register id*/
-
-//#define INT64 ErrorCode
-
+#define FALT_GET_FRAME                          (unsigned long long int)0x00010002006707F9   /*fail get frame*/
+#define FALT_UPDATE_FRAME                       (unsigned long long int)0x00010002006707FA   /*fail update frame*/
+#define FALT_DELETE_FRAME                       (unsigned long long int)0x00010002006707FB   /*fail delete frame*/
+#define FALT_ADD_FRAME                          (unsigned long long int)0x00010002006707FC   /*fail_add_frame*/
+#define FALT_ACTIVATE_FRAME                     (unsigned long long int)0x00010002006707FD   /*fail_activate_frame*/
+#define FALT_INIT_USER_FRAME                    (unsigned long long int)0x00110001006707FE   /*fail_init_user_frame*/
+#define FALT_INIT_TOOL_FRAME                    (unsigned long long int)0x00110001006707FF   /*fail_init_tool_frame*/
+#define FALT_SET_FRAME                          (unsigned long long int)0x0001000200670800   /*fail_set_frame*/
 
 #define TPI_SUCCESS				(0)
-
+//#define INT64 ErrorCode
 
 
 #endif

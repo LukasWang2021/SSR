@@ -4,6 +4,7 @@
 #include "forsight_basint.h"
 
 #define   END_COMMND_RET      0x400    // 1024
+extern vector<string> g_vecXPath ;
 
 int find_internal_cmd(char *s);
 int call_internal_cmd_exec_sub_thread(int index);

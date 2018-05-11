@@ -229,6 +229,7 @@ int append_io_mapping()
 	// UI/UO
 	strcpy(varInfo.in , "ui") ;  strcpy(varInfo.out , "uo") ;
 	append_single_io_mapper("data\\io\\io_mapping\\ui_uo_mapping.json", varInfo);
+    print_io_mapper();
 #else
 	// AI/AO
 	strcpy(varInfo.in , "ai") ;  strcpy(varInfo.out , "ao") ;
@@ -246,7 +247,6 @@ int append_io_mapping()
 	strcpy(varInfo.in , "ui") ;  strcpy(varInfo.out , "uo") ;
 	append_single_io_mapper("\/data\/io\/io_mapping\/ui_uo_mapping.json", varInfo);
 #endif
-    print_io_mapper();
 	return 1;
 }
 

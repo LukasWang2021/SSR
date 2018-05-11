@@ -144,7 +144,7 @@ class ShareMem
      *
      * @return: current line id 
      */
-    int getCurLine();
+    void getCurLine(char * line);
 
     /**
      * @brief: get interpreter state 

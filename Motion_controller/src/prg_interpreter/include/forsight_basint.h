@@ -82,6 +82,7 @@ typedef enum _ProgMode
 {
     FULL_MODE = 0,
     STEP_MODE,
+    ERROR_MODE,
 }ProgMode;
 
 struct sub_label {

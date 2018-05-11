@@ -9,7 +9,9 @@ ManualMotion::ManualMotion(Robot *robot, ArmGroup *arm_group):robot_(robot),arm_
 {
    // manu_state_ = IDLE_R;
     ready_ = false;
-    vel_ratio_ = arm_group_->getManualMaxSpeedRatio();
+    // fengyun
+    // vel_ratio_ = arm_group_->getManualMaxSpeedRatio();
+    vel_ratio_ = arm_group_->getGlobalVelRatio();
 }
 
 ManualMotion::~ManualMotion()
@@ -63,7 +65,13 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
 
         vel_ratio_ = command.velocity;
         FST_INFO("vel_ratio_:%f", vel_ratio_);
-        arm_group_->setManualSpeedRatio(vel_ratio_/100);
+        // fengyun
+        // we should use global-velocity-ratio to control manual speed according to Gong Shaoqiu
+        // TODO
+        // global-vel-ratio should lower than 6.25% in limited manual mode
+        //                         lower than 100% in unlimited manual mode
+        // arm_group_->setManualSpeedRatio(vel_ratio_/100);
+        arm_group_->setGlobalVelRatio(vel_ratio_ / 100);
     }
     //FST_INFO("has_type:%d, has_frame:%d", command.has_type, command.has_frame);
     if (command.has_type)
@@ -108,9 +116,11 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
                 return;
             }
             vector<ManualDirection> button;
+            ManualDirection dir;
             for (int i = 0; i < target->directions_count; i++)
             {
-                button.push_back((ManualDirection)target->directions[i]);
+                dir = target->directions[i] == 0 ? STANDBY : (target->directions[i] == 1 ? INCREASE : DECREASE);
+                button.push_back(dir);
             }
             FST_INFO("type:%d, frame:%d", manu_type_, manu_frame_);
             U64 result = arm_group_->manualMove(button);

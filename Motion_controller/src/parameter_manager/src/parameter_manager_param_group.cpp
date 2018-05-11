@@ -340,6 +340,19 @@ bool ParamGroup::getParam(const string &key, vector<int> &value)
     }
 }
 
+bool ParamGroup::getParam(const string &key, size_t size, int *value)
+{
+    vector<int> tmp;
+    if (getParam(key, tmp))
+    {
+        if (tmp.size() < size) size = tmp.size();
+        for (size_t i = 0; i < size; i++)
+            value[i] = tmp[i];
+        return true;
+    }
+    return false;
+}
+
 bool ParamGroup::getParam(const string &key, vector<double> &value)
 {
     value.clear();
@@ -379,6 +392,19 @@ bool ParamGroup::getParam(const string &key, vector<double> &value)
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
+}
+
+bool ParamGroup::getParam(const string &key, size_t size, double *value)
+{
+    vector<double> tmp;
+    if (getParam(key, tmp))
+    {
+        if (tmp.size() < size) size = tmp.size();
+        for (size_t i = 0; i < size; i++)
+            value[i] = tmp[i];
+        return true;
+    }
+    return false;
 }
 
 bool ParamGroup::getParam(const string &key, vector<string> &value)
@@ -518,7 +544,7 @@ bool ParamGroup::dumpParamFile(const string &file)
 
 #ifdef C_STYLE_FILE_OPERATION
     out = fopen(config_file.c_str(), "w");
-    info("  -> open file done");
+    //info("  -> open file done");
     if (out == NULL) {
         error("Fail to open %s", config_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
@@ -526,12 +552,12 @@ bool ParamGroup::dumpParamFile(const string &file)
     }
     fwrite(param_string.c_str(), sizeof(char), param_string.length(), out);
     fflush(out);
-    info("  -> write file done");
+    //info("  -> write file done");
     fclose(out);
-    info("  -> close file done");
+    //info("  -> close file done");
 #else
     out.open(config_file.c_str());
-    info("  -> open file done");
+    //info("  -> open file done");
     if (!out.is_open()) {
         error("Fail to open %s", config_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
@@ -539,14 +565,14 @@ bool ParamGroup::dumpParamFile(const string &file)
     }
     out << param_string;
     out.flush();
-    info("  -> write file done");
+    //info("  -> write file done");
     out.close();
-    info("  -> close file done");
+    //info("  -> close file done");
 #endif
 
 #ifdef C_STYLE_FILE_OPERATION
     out = fopen(backup_file.c_str(), "w");
-    info("  -> open file done");
+    //info("  -> open file done");
     if (out == NULL) {
         error("Fail to open %s", backup_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
@@ -554,12 +580,12 @@ bool ParamGroup::dumpParamFile(const string &file)
     }
     fwrite(param_string.c_str(), sizeof(char), param_string.length(), out);
     fflush(out);
-    info("  -> write file done");
+    //info("  -> write file done");
     fclose(out);
-    info("  -> close file done");
+    //info("  -> close file done");
 #else
     out.open(backup_file.c_str());
-    info("  -> open file done");
+    //info("  -> open file done");
     if (!out.is_open()) {
         error("Fail to open %s", backup_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
@@ -567,9 +593,9 @@ bool ParamGroup::dumpParamFile(const string &file)
     }
     out << param_string;
     out.flush();
-    info("  -> write file done");
+    //info("  -> write file done");
     out.close();
-    info("  -> close file done");
+    //info("  -> close file done");
 #endif
 
     end = clock();
@@ -639,24 +665,24 @@ bool ParamGroup::loadParamFile(const string &file)
     
 #ifdef C_STYLE_FILE_OPERATION
     in = fopen(yaml_file.c_str(), "r");
-    info("  -> open file done");
+    //info("  -> open file done");
     if (in != NULL) {
         memset(buffer, 0, sizeof(buffer));
         fread(buffer, sizeof(char), CONFIG_FILE_SIZE_MAX, in);
         yaml_str = buffer;
-        info("  -> read file done");
+        //info("  -> read file done");
         fclose(in);
-        info("  -> close file done");
+        //info("  -> close file done");
 #else
     in.open(yaml_file.c_str());
-    info("  -> open file done");
+    //info("  -> open file done");
     if (in.is_open()) {
         string temp_str((std::istreambuf_iterator<char>(in)),
                          std::istreambuf_iterator<char>());
         yaml_str = temp_str;
-        info("  -> read file done");
+        //info("  -> read file done");
         in.close();
-        info("  -> close file done");
+        //info("  -> close file done");
 #endif
 
         size_t pos = yaml_str.find_last_of("#");
@@ -688,24 +714,24 @@ bool ParamGroup::loadParamFile(const string &file)
     if (is_yaml_valid == true) {
 #ifdef C_STYLE_FILE_OPERATION
         in = fopen(back_file.c_str(), "r");
-        info("  -> open file done");
+        //info("  -> open file done");
         if (in != NULL) {
             memset(buffer, 0, sizeof(buffer));
             fread(buffer, sizeof(char), CONFIG_FILE_SIZE_MAX, in);
             back_str = buffer;
-            info("  -> read file done");
+            //info("  -> read file done");
             fclose(in);
-            info("  -> close file done");
+            //info("  -> close file done");
 #else
         in.open(back_file.c_str());
-        info("  -> open file done");
+        //info("  -> open file done");
         if (in.is_open()) {
             string temp_str((std::istreambuf_iterator<char>(in)),
                              std::istreambuf_iterator<char>());
             back_str = temp_str;
-            info("  -> read file done");
+            //info("  -> read file done");
             in.close();
-            info("  -> close file done");
+            //info("  -> close file done");
 #endif
 
             if (back_str == yaml_str) {
@@ -717,22 +743,22 @@ bool ParamGroup::loadParamFile(const string &file)
                 warn("Mismatch detected, updating backup file");
 #ifdef C_STYLE_FILE_OPERATION
                 out = fopen(back_file.c_str(), "w");
-                info("  -> open file done");
+                //info("  -> open file done");
                 if (out != NULL) {
                     fwrite(yaml_str.c_str(), sizeof(char), yaml_str.length(), out);
                     fflush(out);
-                    info("  -> write file done");
+                    //info("  -> write file done");
                     fclose(out);
-                    info("  -> close file done");
+                    //info("  -> close file done");
 #else
                 out.open(back_file.c_str());
-                info("  -> open file done");
+                //info("  -> open file done");
                 if (out.is_open()) {
                     out << yaml_str;
                     out.flush();
-                    info("  -> write file done");
+                    //info("  -> write file done");
                     out.close();
-                    info("  -> close file done");
+                    //info("  -> close file done");
 #endif
 
                     end = clock();
@@ -750,22 +776,22 @@ bool ParamGroup::loadParamFile(const string &file)
             warn("Cannot read backup file, re-backing up ...");
 #ifdef C_STYLE_FILE_OPERATION
             out = fopen(back_file.c_str(), "w");
-            info("  -> open file done");
+            //info("  -> open file done");
             if (out != NULL) {
                 fwrite(yaml_str.c_str(), sizeof(char), yaml_str.length(), out);
                 fflush(out);
-                info("  -> write file done");
+                //info("  -> write file done");
                 fclose(out);
-                info("  -> close file done");
+                //info("  -> close file done");
 #else
             out.open(back_file.c_str());
-            info("  -> open file done");
+            //info("  -> open file done");
             if (out.is_open()) {
                 out << yaml_str;
                 out.flush();
-                info("  -> write file done");
+                //info("  -> write file done");
                 out.close();
-                info("  -> close file done");
+                //info("  -> close file done");
 #endif
                 end = clock();
                 info("Success! runtime = %f", double(end - begin) / CLOCKS_PER_SEC);
@@ -782,25 +808,25 @@ bool ParamGroup::loadParamFile(const string &file)
         warn("Cannot build parameter tree from YAML file, restoring from backup file ... ");
 #ifdef C_STYLE_FILE_OPERATION
         in = fopen(back_file.c_str(), "r");
-        info("  -> open file done");
+        //info("  -> open file done");
         if (in != NULL) {
             memset(buffer, 0, sizeof(buffer));
             fread(buffer, sizeof(char), CONFIG_FILE_SIZE_MAX, in);
             back_str = buffer;
-            info("  -> read file done");
+            //info("  -> read file done");
             fclose(in);
-            info("  -> close file done");
+            //info("  -> close file done");
 
 #else
         in.open(back_file.c_str());
-        info("  -> open file done");
+        //info("  -> open file done");
         if (in.is_open()) {
             string temp_str((std::istreambuf_iterator<char>(in)),
                              std::istreambuf_iterator<char>());
             back_str = temp_str;
-            info("  -> read file done");
+            //info("  -> read file done");
             in.close();
-            info("  -> close file done");
+            //info("  -> close file done");
 #endif
             if (back_str.substr(back_str.length() - 5, 4) == "#END") {
                 try {
@@ -830,22 +856,22 @@ bool ParamGroup::loadParamFile(const string &file)
         if (is_back_valid == true) {
 #ifdef C_STYLE_FILE_OPERATION
             out = fopen(yaml_file.c_str(), "w");
-            info("  -> open file done");
+            //info("  -> open file done");
             if (out != NULL) {
                 fwrite(back_str.c_str(), sizeof(char), back_str.length(), out);
                 fflush(out);
-                info("  -> write file done");
+                //info("  -> write file done");
                 fclose(out);
-                info("  -> close file done");
+                //info("  -> close file done");
 #else
             out.open(yaml_file.c_str());
-            info("  -> open file done");
+            //info("  -> open file done");
             if (out.is_open()) {
                 out << back_str;
                 out.flush();
-                info("  -> write file done");
+                //info("  -> write file done");
                 out.close();
-                info("  -> close file done");
+                //info("  -> close file done");
 #endif
                 end = clock();
                 info("Success! runtime = %f", double(end - begin) / CLOCKS_PER_SEC);

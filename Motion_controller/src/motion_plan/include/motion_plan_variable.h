@@ -19,6 +19,7 @@ namespace fst_algorithm
 extern double   g_cycle_time;
 extern double   g_cycle_radian;
 extern double   g_cycle_distance;
+
 extern double   g_global_vel_ratio, g_global_acc_ratio;
 extern double   g_cart_vel_default, g_cart_acc_default;
 extern double   g_cart_vel_min, g_cart_acc_min;
@@ -37,7 +38,6 @@ extern double  g_manual_step_joint;
 extern double  g_manual_step_position;
 extern double  g_manual_step_orientation;
 
-extern double   g_dh_mat[6][4];
 extern Matrix   g_user_frame;
 extern Matrix   g_tool_frame;
 extern Matrix   g_user_frame_inverse;
@@ -46,32 +46,17 @@ extern Matrix   g_tool_frame_inverse;
 extern fst_controller::Joint    g_ik_reference;
 extern fst_controller::Joint    g_start_joint;
 extern fst_controller::DHGroup  g_dh;
+extern double   g_dh_mat[AXIS_IN_ALGORITHM][4];
 
-extern double  g_alpha_limit_upper[9];
-extern double  g_alpha_limit_lower[9];
-extern double  g_omega_limit[9];
-extern double  g_alpha_limit[9];
+extern double   g_omega_limit[AXIS_IN_ALGORITHM];
+extern double   g_alpha_limit[AXIS_IN_ALGORITHM];
 
 extern fst_controller::JointConstraint  g_soft_constraint;
+extern fst_controller::JointConstraint  g_soft_constraint_limit;
 extern fst_controller::JointConstraint  g_hard_constraint;
 
-extern fst_controller::ManualMode       g_manual_mode;
-extern fst_controller::ManualFrame      g_manual_frame;
-extern fst_controller::ManualDirection  g_manual_direction[6];
-
-extern fst_controller::Joint            g_manual_joint_start;
-extern fst_controller::Joint            g_manual_joint_target;
-extern fst_controller::ManualCoeff      g_manual_joint_coeff[6];
-
-extern fst_controller::PoseEuler        g_manual_cartesian_start;
-extern fst_controller::PoseEuler        g_manual_cartesian_target;
-extern fst_controller::ManualCoeff      g_manual_cartesian_coeff[6];
-
 extern DynamicsInterface                g_dynamics_interface;
-
-extern fst_log::Logger  g_log;
-
-
+extern fst_log::Logger                  g_log;
 
 }
 

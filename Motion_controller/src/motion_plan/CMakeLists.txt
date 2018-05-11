@@ -88,6 +88,10 @@ add_executable(motion_plan_demo_manual
     src/motion_plan_demo_manual.cpp
 )
 
+add_executable(motion_plan_demo_constraint
+    src/motion_plan_demo_constraint.cpp
+)
+
 target_link_libraries(motion_plan
     ${catkin_LIBRARIES}
     parameter_manager
@@ -119,6 +123,11 @@ target_link_libraries(motion_plan_demo_manual
     motion_plan
 )
 
+target_link_libraries(motion_plan_demo_constraint
+    ${catkin_LIBRARIES}
+    motion_plan
+)
+
 #############
 ## Install ##
 #############
@@ -143,6 +152,10 @@ install(TARGETS motion_plan_demo5
 )
 
 install(TARGETS motion_plan_demo_manual
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS motion_plan_demo_constraint
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

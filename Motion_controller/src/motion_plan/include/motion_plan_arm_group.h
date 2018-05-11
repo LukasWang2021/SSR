@@ -257,6 +257,15 @@ class ArmGroup
     const JointConstraint& getSoftConstraint(void);
 
     //------------------------------------------------------------
+    // Function:    getSoftConstraintLimit
+    // Summary: To get soft joint constraint limit from algorithm.
+    // In:      None
+    // Out:     None
+    // Return:  soft constraint
+    //------------------------------------------------------------
+    const JointConstraint& getSoftConstraintLimit(void);
+
+    //------------------------------------------------------------
     // Function:    setSoftConstraint
     // Summary: To set soft joint constraint to algorithm and config file.
     // In:      cons -> soft joint constraint
@@ -552,6 +561,17 @@ class ArmGroup
     // Return:  error code
     //------------------------------------------------------------
     ErrorCode manualMove(const PoseEuler &pose);
+
+    //------------------------------------------------------------
+    // Function:    manualStop
+    // Summary: Plan a slow-down trajectory (Joint/Line) based on 
+    //          current manual motion state.
+    //          This interface works in STEP mode or APOINT mode.
+    // In:      None
+    // Out:     None
+    // Return:  error code
+    //------------------------------------------------------------
+    ErrorCode manualStop(void);
 
     //------------------------------------------------------------
     // Function:    setManualFrame

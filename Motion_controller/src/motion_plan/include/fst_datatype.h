@@ -254,8 +254,8 @@ struct ControlPoint {
     
     // point is what trajectory-create should give out
     JointState  point;
-    JointState  forward_point;
-    JointState  backward_point;
+    //JointState  forward_point;
+    //JointState  backward_point;
 
     double  coeff[AXIS_IN_ALGORITHM][6];
 

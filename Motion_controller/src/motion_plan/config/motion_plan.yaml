@@ -31,7 +31,7 @@ manual:
     step_length:
         joint: 0.1                          # rad
         position: 1.0                       # mm
-        orientation: 0.1                    # rad
+        orientation: 0.01                   # rad
     speed_ratio:
         top: 0.9                            # 90%
         sub: 0.8                            # 80%

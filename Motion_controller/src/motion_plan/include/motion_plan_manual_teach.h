@@ -14,6 +14,32 @@
 namespace fst_controller
 {
 
+struct ManualCoef
+{
+    MotionTime start_time;
+    MotionTime stable_time;
+    MotionTime brake_time;
+    MotionTime stop_time;
+
+    double  start_alpha;
+    double  brake_alpha;
+};
+
+struct ManualTrajectory
+{
+    ManualMode      mode;
+    ManualFrame     frame;
+    ManualDirection direction[6];
+
+    Joint       joint_start;
+    Joint       joint_ending;
+
+    PoseEuler   cart_start;
+    PoseEuler   cart_ending;
+
+    MotionTime      duration;
+    ManualCoef      coeff[6];
+};
 
 class ManualTeach
 {
@@ -21,39 +47,26 @@ public:
     ManualTeach();
     ~ManualTeach();
 
-    ManualMode  getMode(void);
-    ManualFrame getFrame(void);
+    ErrorCode stepTeach(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
+    ErrorCode stepTeach(const Joint &target, MotionTime time, ManualTrajectory &traj);
 
-    void setMode(const ManualMode mode);
-    void setFrame(const ManualFrame frame);
-    void setManualDirection(const ManualDirection *directions);
-    void setManualTarget(const Joint &target);
-
-    ErrorCode stepTeach(const ManualDirection *directions);
-    ErrorCode stepTeach(const Joint &target);
-
-    ErrorCode stopTeach(MotionTime time);
+    ErrorCode stopTeach(MotionTime time, ManualTrajectory &traj);
+    ErrorCode repairCartesianContinuous(MotionTime time, MotionTime front, ManualTrajectory &traj);
 
 private:
-    ErrorCode   stepTeach(void);
-    ErrorCode   manualJoint(void);
-    ErrorCode   manualCartesian(void);
+    ErrorCode   manualJoint(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualCartesian(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
 
-    ErrorCode   manualJointStep(void);
-    ErrorCode   manualJointContinuous(void);
-    ErrorCode   manualJointAPoint(void);
-    ErrorCode   manualCartesianStep(void);
-    ErrorCode   manualCartesianContinuous(void);
-    ErrorCode   manualCartesianAPoint(void);
+    ErrorCode   manualJointStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualCartesianStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
 
-    ErrorCode   stopJointContinuous(MotionTime time);
-    ErrorCode   stopCartesianContinuous(MotionTime time);
+    //ErrorCode   stopJointContinuous(MotionTime time);
+    //ErrorCode   stopCartesianContinuous(MotionTime time);
 
     Joint       manual_target_joint_;
-
-    ManualDirection manual_direction_[6];
-    ManualMode      manual_mode_;
-    ManualFrame     manual_frame_;
 };
 
 

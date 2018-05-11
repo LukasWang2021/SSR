@@ -5634,6 +5634,14 @@ s4*(s1*s2*s3-c2*c3*s1)));;
 
         return is_robot_model_ready_;
     }
+
+    void DynamicsInterface::setRatedTorque(double torque[6])
+    {
+        for(int i=0; i<6; ++i)
+        {
+            servo_model_[i].rated_torque = torque[i];
+        }
+    }
     /*
     Description: if the dynamics interface can work correctly.
                  judgement condition is (is_robot_model_ready && is_servo_model_ready)

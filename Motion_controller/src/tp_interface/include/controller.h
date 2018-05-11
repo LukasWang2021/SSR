@@ -708,6 +708,20 @@ class Controller
      */
     void getNumberRegister(void* params);
 
+    /**
+     * @brief: callback for setting global Acc
+     *
+     * @param params
+     * @param len
+     */
+    void setGlobalAcc(void* params, int len);
+
+    /**
+     * @brief: callback for getting global Acc
+     *
+     * @param params
+     */
+    void getGlobalAcc(void* params);
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class

@@ -93,33 +93,6 @@ ErrorCode ArmGroup::initArmGroup(void)
                                                         motion_plan_VERSION_MINOR,\
                                                         motion_plan_VERSION_PATCH);
 
-    /*
-    if (MOTION_POOL_CAPACITY > 1)
-    {
-        MotionCommand *ptr = NULL;
-        motion_command_pool_[0].setPrevCommandPtr(ptr);
-        motion_command_pool_[0].setNextCommandPtr(&motion_command_pool_[1]);
-
-        for (int i = 1 ; i < MOTION_POOL_CAPACITY - 1; i++) {
-            motion_command_pool_[i].setPrevCommandPtr(&motion_command_pool_[i - 1]);
-            motion_command_pool_[i].setNextCommandPtr(&motion_command_pool_[i + 1]);
-        }
-
-        ptr = &motion_command_pool_[MOTION_POOL_CAPACITY - 2];
-        motion_command_pool_[MOTION_POOL_CAPACITY - 1].setPrevCommandPtr(ptr);
-        motion_command_pool_[MOTION_POOL_CAPACITY - 1].setNextCommandPtr(NULL);
-        FST_INFO("Command pool capacity: %d", MOTION_POOL_CAPACITY);
-    }
-    else
-    {
-        FST_ERROR("The capacity (=%d) of motion command pool should greater than 1.", MOTION_POOL_CAPACITY);
-        return INVALID_PARAMETER;
-    }
-
-    free_command_list_ptr_ = &motion_command_pool_[0];
-    used_command_list_ptr_ = NULL;
-    */
-
     for (size_t i = 0; i < MOTION_POOL_CAPACITY; i++)
     {
         path_cache_[i].head = 0;
@@ -130,14 +103,14 @@ ErrorCode ArmGroup::initArmGroup(void)
 
     pick_path_ptr_ = &path_cache_[MOTION_POOL_CAPACITY - 1];
 
-    t_head_ = 0;
-    t_tail_ = 0;
+    //t_head_ = 0;
+    //t_tail_ = 0;
 
-    prev_traj_point_.time_from_start = 0;
-    prev_traj_point_.duration = 0;
-    memset(prev_traj_point_.point.joint, 0, NUM_OF_JOINT * sizeof(double));
-    memset(prev_traj_point_.point.omega, 0, NUM_OF_JOINT * sizeof(double));
-    memset(prev_traj_point_.point.alpha, 0, NUM_OF_JOINT * sizeof(double));
+    //prev_traj_point_.time_from_start = 0;
+    //prev_traj_point_.duration = 0;
+    //memset(prev_traj_point_.point.joint, 0, NUM_OF_JOINT * sizeof(double));
+    //memset(prev_traj_point_.point.omega, 0, NUM_OF_JOINT * sizeof(double));
+    //memset(prev_traj_point_.point.alpha, 0, NUM_OF_JOINT * sizeof(double));
     
     memset(&g_ik_reference, 0, NUM_OF_JOINT * sizeof(double));
 
@@ -163,8 +136,6 @@ ErrorCode ArmGroup::initArmGroup(void)
         param.getParam("cartesian/acceleration/max", g_cart_acc_max);
         param.getParam("cartesian/acceleration/default", g_cart_acc_default);
         param.getParam("cartesian/acceleration/reference", g_cart_acc_reference);
-        param.getParam("joint/omega/default", g_joint_vel_default);
-        param.getParam("joint/alpha/default", g_joint_acc_default);
         param.getParam("cartesian/orientation/omega_reference", g_orientation_omega_reference);
         param.getParam("cartesian/orientation/alpha_reference", g_orientation_alpha_reference);
         param.getParam("cartesian/orientation/linear_polation_threshold", g_ort_linear_polation_threshold);
@@ -173,16 +144,27 @@ ErrorCode ArmGroup::initArmGroup(void)
         param.getParam("manual/step_length/position", g_manual_step_position);
         param.getParam("manual/step_length/orientation", g_manual_step_orientation);
 
+        param.getParam("joint/omega/default", g_joint_vel_default);
+        param.getParam("joint/alpha/default", g_joint_acc_default);
+        param.getParam("joint/omega/limit", AXIS_IN_ALGORITHM, g_omega_limit);
+        param.getParam("joint/alpha/limit", AXIS_IN_ALGORITHM, g_alpha_limit);
 
         FST_INFO("cycle: time=%.4f, radian=%.4f, distance=%.4f", g_cycle_time, g_cycle_radian, g_cycle_distance);
-        FST_INFO("cartesian velocity: min=%.2f, max=%.2f, default=%.2f",\
-                 g_cart_vel_min, g_cart_vel_max, g_cart_vel_default);
-        FST_INFO("cartesian acceleration: min=%.2f, max=%.2f, default=%.2f",\
-                 g_cart_acc_min, g_cart_acc_max, g_cart_acc_default);
-        FST_INFO("cartesian acceleration reference: %.2f", g_cart_acc_reference);
+        FST_INFO("cartesian velocity: min=%.2f, max=%.2f, default=%.2f, reference=%.2f",\
+                 g_cart_vel_min, g_cart_vel_max, g_cart_vel_default, g_cart_vel_reference);
+        FST_INFO("cartesian acceleration: min=%.2f, max=%.2f, default=%.2f, reference=%.2f",\
+                 g_cart_acc_min, g_cart_acc_max, g_cart_acc_default, g_cart_acc_reference);
         FST_INFO("cartesian orientation omega reference: %.2f", g_orientation_omega_reference);
+        FST_INFO("cartesian orientation alpha reference: %.2f", g_orientation_alpha_reference);
         FST_INFO("cartesian orientation linear polation threshold: %.2f", g_ort_linear_polation_threshold);
+
         FST_INFO("joint: omega default=%.2f, alpha default=%.2f", g_joint_vel_default, g_joint_acc_default);
+        FST_INFO("       omega limit=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+                 g_omega_limit[0], g_omega_limit[1], g_omega_limit[2],
+                 g_omega_limit[3], g_omega_limit[4], g_omega_limit[5]);
+        FST_INFO("       alpha limit=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+                 g_alpha_limit[0], g_alpha_limit[1], g_alpha_limit[2],
+                 g_alpha_limit[3], g_alpha_limit[4], g_alpha_limit[5]);
 
         FST_INFO("manual step length: joint=%.4f rad, position=%.4f mm, orientation=%.4f rad",
                  g_manual_step_joint, g_manual_step_position, g_manual_step_orientation);
@@ -279,6 +261,13 @@ ErrorCode ArmGroup::initArmGroup(void)
         param.getParam("hard_constraint/j5/lower", g_hard_constraint.j5.lower);
         param.getParam("hard_constraint/j6/upper", g_hard_constraint.j6.upper);
         param.getParam("hard_constraint/j6/lower", g_hard_constraint.j6.lower);
+
+        g_hard_constraint.j1.home = 0;
+        g_hard_constraint.j2.home = 0;
+        g_hard_constraint.j3.home = 0;
+        g_hard_constraint.j4.home = 0;
+        g_hard_constraint.j5.home = 0;
+        g_hard_constraint.j6.home = 0;
     }
     else
     {
@@ -291,38 +280,41 @@ ErrorCode ArmGroup::initArmGroup(void)
         param.getParam("soft_constraint/j1/home", g_soft_constraint.j1.home);
         param.getParam("soft_constraint/j1/upper", g_soft_constraint.j1.upper);
         param.getParam("soft_constraint/j1/lower", g_soft_constraint.j1.lower);
-        param.getParam("soft_constraint/j1/omega", g_omega_limit[0]);
-        param.getParam("soft_constraint/j1/alpha", g_alpha_limit[0]);
-
         param.getParam("soft_constraint/j2/home", g_soft_constraint.j2.home);
         param.getParam("soft_constraint/j2/upper", g_soft_constraint.j2.upper);
         param.getParam("soft_constraint/j2/lower", g_soft_constraint.j2.lower);
-        param.getParam("soft_constraint/j2/omega", g_omega_limit[1]);
-        param.getParam("soft_constraint/j2/alpha", g_alpha_limit[1]);
-
         param.getParam("soft_constraint/j3/home", g_soft_constraint.j3.home);
         param.getParam("soft_constraint/j3/upper", g_soft_constraint.j3.upper);
         param.getParam("soft_constraint/j3/lower", g_soft_constraint.j3.lower);
-        param.getParam("soft_constraint/j3/omega", g_omega_limit[2]);
-        param.getParam("soft_constraint/j3/alpha", g_alpha_limit[2]);
-
         param.getParam("soft_constraint/j4/home", g_soft_constraint.j4.home);
         param.getParam("soft_constraint/j4/upper", g_soft_constraint.j4.upper);
         param.getParam("soft_constraint/j4/lower", g_soft_constraint.j4.lower);
-        param.getParam("soft_constraint/j4/omega", g_omega_limit[3]);
-        param.getParam("soft_constraint/j4/alpha", g_alpha_limit[3]);
-
         param.getParam("soft_constraint/j5/home", g_soft_constraint.j5.home);
         param.getParam("soft_constraint/j5/upper", g_soft_constraint.j5.upper);
         param.getParam("soft_constraint/j5/lower", g_soft_constraint.j5.lower);
-        param.getParam("soft_constraint/j5/omega", g_omega_limit[4]);
-        param.getParam("soft_constraint/j5/alpha", g_alpha_limit[4]);
-
         param.getParam("soft_constraint/j6/home", g_soft_constraint.j6.home);
         param.getParam("soft_constraint/j6/upper", g_soft_constraint.j6.upper);
         param.getParam("soft_constraint/j6/lower", g_soft_constraint.j6.lower);
-        param.getParam("soft_constraint/j6/omega", g_omega_limit[5]);
-        param.getParam("soft_constraint/j6/alpha", g_alpha_limit[5]);
+
+        param.getParam("soft_constraint_limit/j1/upper", g_soft_constraint_limit.j1.upper);
+        param.getParam("soft_constraint_limit/j1/lower", g_soft_constraint_limit.j1.lower);
+        param.getParam("soft_constraint_limit/j2/upper", g_soft_constraint_limit.j2.upper);
+        param.getParam("soft_constraint_limit/j2/lower", g_soft_constraint_limit.j2.lower);
+        param.getParam("soft_constraint_limit/j3/upper", g_soft_constraint_limit.j3.upper);
+        param.getParam("soft_constraint_limit/j3/lower", g_soft_constraint_limit.j3.lower);
+        param.getParam("soft_constraint_limit/j4/upper", g_soft_constraint_limit.j4.upper);
+        param.getParam("soft_constraint_limit/j4/lower", g_soft_constraint_limit.j4.lower);
+        param.getParam("soft_constraint_limit/j5/upper", g_soft_constraint_limit.j5.upper);
+        param.getParam("soft_constraint_limit/j5/lower", g_soft_constraint_limit.j5.lower);
+        param.getParam("soft_constraint_limit/j6/upper", g_soft_constraint_limit.j6.upper);
+        param.getParam("soft_constraint_limit/j6/lower", g_soft_constraint_limit.j6.lower);
+
+        g_soft_constraint_limit.j1.home = 0;
+        g_soft_constraint_limit.j2.home = 0;
+        g_soft_constraint_limit.j3.home = 0;
+        g_soft_constraint_limit.j4.home = 0;
+        g_soft_constraint_limit.j5.home = 0;
+        g_soft_constraint_limit.j6.home = 0;
     }
     else
     {
@@ -331,52 +323,43 @@ ErrorCode ArmGroup::initArmGroup(void)
     }
 
     FST_INFO("Hard constraint:");
-    FST_INFO("J1 - lower=%.6f, upper=%.6f", g_hard_constraint.j1.lower, g_hard_constraint.j1.upper);
-    FST_INFO("J2 - lower=%.6f, upper=%.6f", g_hard_constraint.j2.lower, g_hard_constraint.j2.upper);
-    FST_INFO("J3 - lower=%.6f, upper=%.6f", g_hard_constraint.j3.lower, g_hard_constraint.j3.upper);
-    FST_INFO("J4 - lower=%.6f, upper=%.6f", g_hard_constraint.j4.lower, g_hard_constraint.j4.upper);
-    FST_INFO("J5 - lower=%.6f, upper=%.6f", g_hard_constraint.j5.lower, g_hard_constraint.j5.upper);
-    FST_INFO("J6 - lower=%.6f, upper=%.6f", g_hard_constraint.j6.lower, g_hard_constraint.j6.upper);
+    FST_INFO("J1 - %.6f ~ %.6f", g_hard_constraint.j1.lower, g_hard_constraint.j1.upper);
+    FST_INFO("J2 - %.6f ~ %.6f", g_hard_constraint.j2.lower, g_hard_constraint.j2.upper);
+    FST_INFO("J3 - %.6f ~ %.6f", g_hard_constraint.j3.lower, g_hard_constraint.j3.upper);
+    FST_INFO("J4 - %.6f ~ %.6f", g_hard_constraint.j4.lower, g_hard_constraint.j4.upper);
+    FST_INFO("J5 - %.6f ~ %.6f", g_hard_constraint.j5.lower, g_hard_constraint.j5.upper);
+    FST_INFO("J6 - %.6f ~ %.6f", g_hard_constraint.j6.lower, g_hard_constraint.j6.upper);
 
     FST_INFO("Soft constraint:");
-    FST_INFO("J1 - lower=%.6f, upper=%.6f, home=%.6f, omega=%.6f",\
-             g_soft_constraint.j1.lower, g_soft_constraint.j1.upper,\
-             g_soft_constraint.j1.home, g_omega_limit[0]);
-    FST_INFO("J2 - lower=%.6f, upper=%.6f, home=%.6f, omega=%.6f",\
-             g_soft_constraint.j2.lower, g_soft_constraint.j2.upper,\
-             g_soft_constraint.j2.home, g_omega_limit[1]);
-    FST_INFO("J3 - lower=%.6f, upper=%.6f, home=%.6f, omega=%.6f",\
-             g_soft_constraint.j3.lower, g_soft_constraint.j3.upper,\
-             g_soft_constraint.j3.home, g_omega_limit[2]);
-    FST_INFO("J4 - lower=%.6f, upper=%.6f, home=%.6f, omega=%.6f",\
-             g_soft_constraint.j4.lower, g_soft_constraint.j4.upper,\
-             g_soft_constraint.j4.home, g_omega_limit[3]);
-    FST_INFO("J5 - lower=%.6f, upper=%.6f, home=%.6f, omega=%.6f",\
-             g_soft_constraint.j5.lower, g_soft_constraint.j5.upper,\
-             g_soft_constraint.j5.home, g_omega_limit[4]);
-    FST_INFO("J6 - lower=%.6f, upper=%.6f, home=%.6f, omega=%.6f",\
-             g_soft_constraint.j6.lower, g_soft_constraint.j6.upper,\
-             g_soft_constraint.j6.home, g_omega_limit[5]);
+    FST_INFO("J1 - [%.6f - %.6f ~ %.6f - %.6f]",\
+             g_soft_constraint_limit.j1.lower, g_soft_constraint.j1.lower,
+             g_soft_constraint.j1.upper, g_soft_constraint_limit.j1.upper);
+    FST_INFO("J2 - [%.6f - %.6f ~ %.6f - %.6f]",\
+             g_soft_constraint_limit.j2.lower, g_soft_constraint.j2.lower,
+             g_soft_constraint.j2.upper, g_soft_constraint_limit.j2.upper);
+    FST_INFO("J3 - [%.6f - %.6f ~ %.6f - %.6f]",\
+             g_soft_constraint_limit.j3.lower, g_soft_constraint.j3.lower,
+             g_soft_constraint.j3.upper, g_soft_constraint_limit.j3.upper);
+    FST_INFO("J4 - [%.6f - %.6f ~ %.6f - %.6f]",\
+             g_soft_constraint_limit.j4.lower, g_soft_constraint.j4.lower,
+             g_soft_constraint.j4.upper, g_soft_constraint_limit.j4.upper);
+    FST_INFO("J5 - [%.6f - %.6f ~ %.6f - %.6f]",\
+             g_soft_constraint_limit.j5.lower, g_soft_constraint.j5.lower,
+             g_soft_constraint.j5.upper, g_soft_constraint_limit.j5.upper);
+    FST_INFO("J6 - [%.6f - %.6f ~ %.6f - %.6f]",\
+             g_soft_constraint_limit.j6.lower, g_soft_constraint.j6.lower,
+             g_soft_constraint.j6.upper, g_soft_constraint_limit.j6.upper);
 
-
-    if (!isFirstConstraintCoveredBySecond(g_soft_constraint, g_hard_constraint))
+    if (!isFirstConstraintCoveredBySecond(g_soft_constraint_limit, g_hard_constraint))
     {
-        FST_ERROR("Soft constraint out of hard constraint.");
+        FST_ERROR("Soft constraint limit out of hard constraint.");
         return INVALID_PARAMETER;
     }
-
-    g_alpha_limit_upper[0] = 6.98;
-    g_alpha_limit_upper[1] = 7.85;
-    g_alpha_limit_upper[2] = 13.96;
-    g_alpha_limit_upper[3] = 12.57;
-    g_alpha_limit_upper[4] = 10.47;
-    g_alpha_limit_upper[5] = 31.42;
-    g_alpha_limit_lower[0] = -6.98;
-    g_alpha_limit_lower[1] = -7.85;
-    g_alpha_limit_lower[2] = -13.96;
-    g_alpha_limit_lower[3] = -12.57;
-    g_alpha_limit_lower[4] = -10.47;
-    g_alpha_limit_lower[5] = -31.42;
+    if (!isFirstConstraintCoveredBySecond(g_soft_constraint, g_soft_constraint_limit))
+    {
+        FST_ERROR("Soft constraint out of limit.");
+        return INVALID_PARAMETER;
+    }
 
     manual_pick_time_ = 0;
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
@@ -617,15 +600,37 @@ const JointConstraint& ArmGroup::getSoftConstraint(void)
 //------------------------------------------------------------
 ErrorCode ArmGroup::setSoftConstraint(const JointConstraint &cons)
 {
-    if (isFirstConstraintCoveredBySecond(cons, g_hard_constraint))
+    FST_INFO("setSoftConstraint:");
+    FST_INFO("  J1 - %.6f ~ %.6f", cons.j1.lower, cons.j1.upper);
+    FST_INFO("  J2 - %.6f ~ %.6f", cons.j2.lower, cons.j2.upper);
+    FST_INFO("  J3 - %.6f ~ %.6f", cons.j3.lower, cons.j3.upper);
+    FST_INFO("  J4 - %.6f ~ %.6f", cons.j4.lower, cons.j4.upper);
+    FST_INFO("  J5 - %.6f ~ %.6f", cons.j5.lower, cons.j5.upper);
+    FST_INFO("  J6 - %.6f ~ %.6f", cons.j6.lower, cons.j6.upper);
+
+    if (isFirstConstraintCoveredBySecond(cons, g_soft_constraint_limit))
     {
         g_soft_constraint = cons;
+        FST_INFO("Success!");
         return SUCCESS;
     }
     else
     {
+        FST_ERROR("Failed: new constraint out of limit");
         return INVALID_PARAMETER;
     }
+}
+
+//------------------------------------------------------------
+// Function:    getSoftConstraintLimit
+// Summary: To get soft joint constraint limit from algorithm.
+// In:      None
+// Out:     None
+// Return:  soft constraint
+//------------------------------------------------------------
+const JointConstraint& ArmGroup::getSoftConstraintLimit(void)
+{
+    return g_soft_constraint_limit;
 }
 
 //------------------------------------------------------------
@@ -1069,6 +1074,13 @@ ErrorCode ArmGroup::autoMove(const MotionTarget &target, int id)
 {
     ErrorCode err = SUCCESS;
 
+    if (!isJointInConstraint(g_start_joint, g_soft_constraint))
+    {
+        err = JOINT_OUT_OF_CONSTRAINT;
+        FST_ERROR("autoMove: start-joint is out of soft constraint, autoMove is disabled");
+        return err;
+    }
+
     if (target.type == MOTION_JOINT)
     {
         err = autoJoint(target, id);
@@ -1347,6 +1359,19 @@ ErrorCode ArmGroup::manualMove(const PoseEuler &pose)
         FST_ERROR("manualMove: last manual command is running");
         return INVALID_SEQUENCE;
     }
+}
+
+ErrorCode ArmGroup::manualStop(void)
+{
+    FST_INFO("manualStop: stop request accepted.");
+    MANUAL_LOCK;
+    if (manual_running_)
+    {
+        manual_.stopTeach(manual_pick_time_, manual_traj_);
+    }
+    MANUAL_UNLOCK;
+
+    return SUCCESS;
 }
 
 //------------------------------------------------------------

@@ -864,8 +864,6 @@ ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next,
 
     //FST_WARN("forward----------------------------");
 
-    //double *a_upper = g_alpha_limit_upper;
-    //double *a_lower = g_alpha_limit_lower;
     static size_t dynamics_update_cnt = 0;
     static double a_upper[6], a_lower[6];
     if (dynamics_update_cnt == 0)
@@ -952,9 +950,6 @@ ErrorCode backwardTrajectory(ControlPoint &prev, ControlPoint &next,
     MotionTime dmax, dmin;
 
     //FST_WARN("backward---------------------------");
-
-    //double *a_upper = g_alpha_limit_upper;
-    //double *a_lower = g_alpha_limit_lower;
 
     double omega[6] = {-next.point.omega[0], -next.point.omega[1], -next.point.omega[2], 
                        -next.point.omega[3], -next.point.omega[4], -next.point.omega[5]};

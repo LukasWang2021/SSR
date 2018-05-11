@@ -48,70 +48,26 @@ double  g_manual_step_position;
 double  g_manual_step_orientation;
 
 
-//double  g_cart_omega_ref, g_cart_vel_ref;
-//double  g_k_radius;
-
 Matrix  g_user_frame;
 Matrix  g_tool_frame;
 Matrix  g_user_frame_inverse;
 Matrix  g_tool_frame_inverse;
 
-//CurveMode   g_curve_mode;
-//SmoothMode  g_smooth_mode;
-
-//size_t  g_pick_len;
 Joint   g_ik_reference;
 Joint   g_start_joint;
 
-double  g_dh_mat[6][4];
 DHGroup g_dh;
+double  g_dh_mat[6][4];
 
-double  g_alpha_limit_upper[9];
-double  g_alpha_limit_lower[9];
 double  g_omega_limit[9];
 double  g_alpha_limit[9];
 
-JointConstraint g_soft_constraint;
-JointConstraint g_hard_constraint;
-
-ManualMode          g_manual_mode;
-ManualFrame         g_manual_frame;
-ManualDirection     g_manual_direction[6];
-
-Joint               g_manual_joint_start;
-Joint               g_manual_joint_target;
-ManualCoeff         g_manual_joint_coeff[6];
-
-PoseEuler           g_manual_cartesian_start;
-PoseEuler           g_manual_cartesian_target;
-ManualCoeff         g_manual_cartesian_coeff[6];
+JointConstraint     g_soft_constraint;
+JointConstraint     g_soft_constraint_limit;
+JointConstraint     g_hard_constraint;
 
 DynamicsInterface   g_dynamics_interface;
-/*
-JointPoint g_trajectory_fifo[TRAJECTORY_FIFO_CAPACITY];
-bool g_trajectory_fifo_flag[TRAJECTORY_FIFO_CAPACITY];
-
-std::atomic<size_t>  index_in;
-std::atomic<size_t>  index_out;
-*/
-fst_log::Logger g_log;
-
-/*
-size_t getFifoCapacity(void)
-{
-    return TRAJECTORY_FIFO_CAPACITY;
-}
-
-size_t getFifoSize(void)
-{
-    size_t  in = index_in;
-    size_t out = index_out;
-
-    return in >= out ? in - out : in + TRAJECTORY_FIFO_CAPACITY - out;
-}
-*/
-
-
+fst_log::Logger     g_log;
 
 }
 

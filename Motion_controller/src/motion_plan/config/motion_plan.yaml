@@ -21,23 +21,28 @@ cartesian:
 joint:
     omega:
         default: 1.0                        # 0% - 100%
+        limit:
+            - 5.5851
+            - 6.2832
+            - 6.9813
+            - 6.2832
+            - 4.1888
+            - 12.5664
     alpha:
         default: 1.0                        # 0% - 100%
-
-orientation_omega_reference: 1.0            # rad/s
-orientation_linear_polation_threshold: 0.01 # rad
+        limit:
+            - 6.9813
+            - 7.8504
+            - 13.9626
+            - 12.5664
+            - 10.4720
+            - 31.4159
 
 manual:
     step_length:
         joint: 0.1                          # rad
         position: 1.0                       # mm
         orientation: 0.01                   # rad
-    speed_ratio:
-        top: 0.9                            # 90%
-        sub: 0.8                            # 80%
-    acceleration_ratio:
-        top: 0.5
-        sub: 0.8
 
 
 #END

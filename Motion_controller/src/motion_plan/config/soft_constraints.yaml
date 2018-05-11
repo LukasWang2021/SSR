@@ -3,54 +3,65 @@ soft_constraint:
         home: 0.00
         upper: 2.9670
         lower: -2.9670
-        omega: 5.5851
-        alpha: 6.9813
     j2:
         home: 0.0
         upper: 1.3083
         lower: -2.2678
-        omega: 6.2832
-        alpha: 7.8504
     j3:
         home: 0.0
         upper: 3.2272
         lower: -1.1688
-        omega: 6.9813
-        alpha: 13.9626
     j4:
         home: 0.0
         upper: 3.3161
         lower: -3.3161
-        omega: 6.2832
-        alpha: 12.5664
     j5:
         home: 0.0
         upper: 1.8491
         lower: -1.8491
-        omega: 4.1888
-        alpha: 10.4720
     j6:
         home: 0.0
         upper: 6.2832
         lower: -6.2832
-        omega: 12.5664
-        alpha: 31.4159
     j7:
         home: 0.0
         upper: 0.0
         lower: 0.0
-        omega: 0.0
-        alpha: 0.0
     j8:
         home: 0.0
         upper: 0.0
         lower: 0.0
-        omega: 0.0
-        alpha: 0.0
     j9:
         home: 0.0
         upper: 0.0
         lower: 0.0
-        omega: 0.0
-        alpha: 0.0
+
+soft_constraint_limit:
+    j1:
+        upper: 2.97
+        lower: -2.97
+    j2:
+        upper: 1.4
+        lower: -2.3
+    j3:
+        upper: 3.3
+        lower: -1.2
+    j4:
+        upper: 3.4
+        lower: -3.4
+    j5:
+        upper: 1.9
+        lower: -1.9
+    j6:
+        upper: 6.3
+        lower: -6.3
+    j7:
+        upper: 0.0
+        lower: 0.0
+    j8:
+        upper: 0.0
+        lower: 0.0
+    j9:
+        upper: 0.0
+        lower: 0.0
 #END

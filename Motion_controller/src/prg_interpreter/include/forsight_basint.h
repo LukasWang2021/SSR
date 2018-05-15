@@ -8,6 +8,8 @@
 #include "ctype.h"
 #include "stdlib.h"
 
+#define USE_FORSIGHT_REGISTERS_MANAGER
+
 #ifdef WIN32
 #pragma warning(disable : 4786)
 #endif

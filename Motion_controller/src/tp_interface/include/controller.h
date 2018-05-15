@@ -722,6 +722,28 @@ class Controller
      * @param params
      */
     void getGlobalAcc(void* params);
+    
+    /**
+     * @brief: try to get Register
+     *
+     * @param params
+     * @param len
+     */
+    void sendGetChangeRegListRequest(InterpreterCommand cmd, void* params, int len);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    int getChangeRegListReply(void* params);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    void getChangeRegList(InterpreterCommand cmd, void* params);
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class

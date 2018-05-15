@@ -1,17 +1,20 @@
 // Forsight_BASINT.cpp : Defines the entry point for the console application.
 //
 /* A tiny BASIC interpreter */
-
 #include "forsight_basint.h"
 #include "forsight_innercmd.h"
 #include "forsight_innerfunc.h"
 #include "forsight_inter_control.h"
 #include "forsight_auto_lock.h"
 #include "forsight_xml_reader.h"
-#include "reg-shmi/forsight_registers.h"
-// #include "reg_manager/forsight_registers_manager.h"
 #include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
+
+#ifdef USE_FORSIGHT_REGISTERS_MANAGER
+#include "reg_manager/forsight_registers_manager.h"
+#else
+#include "reg-shmi/forsight_registers.h"
+#endif
 
 #ifndef WIN32
 
@@ -2890,10 +2893,13 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
     {
 		if(strchr(vname, '['))
 		{
-			int iRet = forgesight_set_register(
+#ifdef USE_FORSIGHT_REGISTERS_MANAGER
+			int iRet = forgesight_registers_manager_set_register(
 				objThreadCntrolBlock, vname, &value);
-//			int iRet = forgesight_registers_manager_set_register(
-//				objThreadCntrolBlock, vname, &value);
+#else
+            int iRet = forgesight_set_register(
+				objThreadCntrolBlock, vname, &value);
+#endif
 			if(iRet == 0)
 			{
 				return ;
@@ -2963,10 +2969,13 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
     {
 		if(strchr(vname, '['))
 		{
+#ifdef USE_FORSIGHT_REGISTERS_MANAGER
+    		int iRet = forgesight_registers_manager_get_register(
+				objThreadCntrolBlock, vname, &value);
+#else
     		int iRet = forgesight_get_register(
 				objThreadCntrolBlock, vname, &value);
-//    		int iRet = forgesight_registers_manager_get_register(
-//				objThreadCntrolBlock, vname, &value);
+#endif
 			if(iRet == 0)
 			{
 				return value ;

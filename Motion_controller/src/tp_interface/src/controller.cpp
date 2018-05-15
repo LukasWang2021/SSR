@@ -514,10 +514,12 @@ void Controller::setUserOpMode(void* params, int len)
 //qianjin change from setUserOpMode 
 void Controller::getUserOpMode(void* params)
 {
-
-
-    int opmode = safety_interface_.getDITPUserMode();
-
+    int opmode = 0 ;
+	if(safety_interface_.isSafetyValid() == true)
+		opmode = safety_interface_.getDITPUserMode();
+    else
+		opmode = user_op_mode_ ;
+	
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
@@ -2670,6 +2672,49 @@ int Controller::getRegisterReply(void * params)
         FST_INFO("getUserRegs: RegMap::type: %d, idx: %d,", 
 			reg->type, reg->index, reg->type);
 	ShareMem::instance()->getRegInfo(reg);
+	return 1;
+}
+
+void Controller::getChangeRegList(InterpreterCommand cmd, void* params)
+{
+	sendGetChangeRegListRequest(cmd, (void *)params, sizeof(RegMap));
+	usleep(10000);
+	int iRet = getChangeRegListReply((void *)params);
+	int iCount = 0 ;
+	while(iRet == -1)
+	{
+		usleep(100000);
+		iRet = getChangeRegListReply((void *)params);
+		if(iCount++ > 20)
+		{
+			FST_INFO("getChangeRegListReply Failed");
+			break;
+		}
+	}
+}
+
+void Controller::sendGetChangeRegListRequest(InterpreterCommand cmd, void * params, int len)
+{
+    RegMap* reg = (RegMap*)params;
+        FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
+			reg->type, reg->index, reg->type);
+    InterpreterControl ctrl;
+    ctrl.cmd = cmd ;
+    ctrl.reg = *reg;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+int Controller::getChangeRegListReply(void * params)
+{
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+	{
+        FST_INFO("is_ready == false");
+		return -1;
+	}
+	ShareMem::instance()->getChangeRegList(params);
+    FST_INFO("getChangeRegListReply: %s.", (char *)params);
 	return 1;
 }
 

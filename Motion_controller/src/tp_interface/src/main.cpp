@@ -11,6 +11,7 @@
 //#include <gperftools/profiler.h>
 #endif
 
+#include "version.h"
 #include "controller.h"
 #include "tp_interface_version.h"
 
@@ -50,7 +51,9 @@ int main(int argc, char **argv)
 	signal(SIGINT, sigroutine);	 
 	signal(SIGTERM, sigroutine);           
    // signal(SIGSEGV, sigroutine);
-    FST_INFO("VERSION:%d.%d.%d", tp_interface_VERSION_MAJOR, tp_interface_VERSION_MINOR, tp_interface_VERSION_PATCH);
+    FST_INFO("VERSION:%d.%d.%d (%s)", 
+    	tp_interface_VERSION_MAJOR, tp_interface_VERSION_MINOR, tp_interface_VERSION_PATCH, 
+    	get_version());
     FST_INFO("BUILD TIME:%s", tp_interface_BUILD_TIME);
 
     Controller controller;  

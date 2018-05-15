@@ -37,6 +37,7 @@ endif()
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/motion_plan/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/ioboard/include
     ${depend_PATH_INC}/io_manager/include
@@ -62,10 +63,18 @@ include_directories(
 ## Build ##
 ###########
 add_executable(prg_interpreter
-    src/reg-shmi/forsight_op_reg_shmi.cpp
-    src/reg-shmi/forsight_registers.cpp
-    src/reg-shmi/forsight_op_shmi.cpp
-    src/reg-shmi/forsight_peterson.cpp
+#    src/reg-shmi/forsight_op_reg_shmi.cpp
+#    src/reg-shmi/forsight_registers.cpp
+#    src/reg-shmi/forsight_op_shmi.cpp
+#    src/reg-shmi/forsight_peterson.cpp
+    src/reg_manager/r_reg.cpp
+    src/reg_manager/base_reg.cpp
+    src/reg_manager/forsight_registers_manager.cpp
+    src/reg_manager/pr_reg.cpp
+    src/reg_manager/sr_reg.cpp
+    src/reg_manager/mr_reg.cpp
+    src/reg_manager/reg_manager_interface.cpp
+    src/reg_manager/reg_manager_interface_wrapper.cpp
     src/forsight_interpreter_shm.cpp
     src/forsight_innercmd.cpp
     src/forsight_xml_reader.cpp

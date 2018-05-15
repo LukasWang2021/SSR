@@ -14,11 +14,12 @@ ShareMem::ShareMem(RosBasic *ros_basic):ros_basic_(ros_basic)
 	shm_jnt_cmd_.empty = true;  //has not writen any joint command
     initial();
 
-    createShm(SHM_INTPRT_CMD, SHM_INTPRTCMD_SIZE);
-    createShm(SHM_INTPRT_STATUS, SHM_INTPRTSTATUS_SIZE);
-    createShm(SHM_REG_IO_INFO, SHM_INTPRTSTATUS_SIZE);
-    createShm(SHM_CTRL_CMD, SHM_CTRLCMD_SIZE);
-    createShm(SHM_CTRL_STATUS, SHM_CTRLSTATUS_SIZE);
+    createShm(SHM_INTPRT_CMD,        SHM_INTPRTCMD_SIZE);
+    createShm(SHM_INTPRT_STATUS,     SHM_INTPRTSTATUS_SIZE);
+    createShm(SHM_REG_IO_INFO,       SHM_INTPRTSTATUS_SIZE);
+    createShm(SHM_CHG_REG_LIST_INFO, SHM_INTPRTSTATUS_SIZE);
+    createShm(SHM_CTRL_CMD,          SHM_CTRLCMD_SIZE);
+    createShm(SHM_CTRL_STATUS,       SHM_CTRLSTATUS_SIZE);
 
     shm_instance_ = this;
 }
@@ -277,10 +278,15 @@ bool ShareMem::getRegInfo(RegMap * info)
     return true;
 }
 
-
 bool ShareMem::getDIOInfo(char * info)
 {
     readShm(SHM_REG_IO_INFO, 0, (void*)info, sizeof(char));
+    return true;
+}
+
+bool ShareMem::getChangeRegList(char * strChgRegLst)
+{
+    readShm(SHM_CHG_REG_LIST_INFO, 0, (void*)strChgRegLst, 1024);
     return true;
 }
 

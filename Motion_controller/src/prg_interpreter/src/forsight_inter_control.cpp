@@ -3,11 +3,20 @@
 #endif
 #include "forsight_inter_control.h"
 #include "forsight_innercmd.h"
-#include "reg-shmi/forsight_registers.h"
-#include "reg-shmi/forsight_op_regs_shmi.h"
 #include "forsight_program_property.h"
 #include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
+
+#ifdef USE_FORSIGHT_REGISTERS_MANAGER
+#include "reg_manager/reg_manager_interface.h"
+#include "reg_manager/forsight_registers_manager.h"
+
+using namespace fst_reg ;
+
+#else
+#include "reg-shmi/forsight_registers.h"
+#include "reg-shmi/forsight_op_regs_shmi.h"
+#endif
 
 #define VELOCITY    (500)
 using namespace std;
@@ -466,6 +475,7 @@ void waitInterpreterStateToPaused(
 
 void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 {
+	char temp[1024];
 	RegMap reg ;
 	eval_value objValue ;
 	IOPathInfo  dioPathInfo ;
@@ -474,6 +484,9 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 	static InterpreterCommand lastCmd ;
 	UserOpMode mode ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
+
+	RegManagerInterface objRegManagerInterface("/install/config/");
+	std::vector<int> vecRet ; 
 #ifndef WIN32
     printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
@@ -720,6 +733,55 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			forgesight_mod_io_emulate_value(dioPathInfo.dio_path, dioPathInfo.value);
             break;
+        case READ_CHG_PR_LST:
+			vecRet.clear(); 
+			vecRet = objRegManagerInterface.getPrRegChangedIdList(0, 255);
+			memset(temp, 0x00, 1024);
+			strcpy(temp, "PR:");
+			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			{
+				sprintf(temp, "%s%d;", temp, *it);
+			}
+			printf("temp: %s  (%d) .\n", temp, vecRet.size());
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+	        setIntprtDataFlag(true);
+            break;
+        case READ_CHG_SR_LST:
+			vecRet.clear(); 
+			vecRet = objRegManagerInterface.getSrRegChangedIdList(0, 255);
+			memset(temp, 0x00, 1024);
+			strcpy(temp, "SR:");
+			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			{
+				sprintf(temp, "%s%d;", temp, *it);
+			}
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+	        setIntprtDataFlag(true);
+            break;
+        case READ_CHG_R_LST:
+			vecRet.clear(); 
+			vecRet = objRegManagerInterface.getRRegChangedIdList(0, 255);
+			memset(temp, 0x00, 1024);
+			strcpy(temp, "R:");
+			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			{
+				sprintf(temp, "%s%d;", temp, *it);
+			}
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+	        setIntprtDataFlag(true);
+            break;
+        case READ_CHG_MR_LST:
+			vecRet.clear(); 
+			vecRet = objRegManagerInterface.getMrRegChangedIdList(0, 255);
+			memset(temp, 0x00, 1024);
+			strcpy(temp, "MR:");
+			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			{
+				sprintf(temp, "%s%d;", temp, *it);
+			}
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+	        setIntprtDataFlag(true);
+            break;
         default:
             break;
 
@@ -732,9 +794,15 @@ void initShm()
 {
     openShm(SHM_INTPRT_CMD, 1024);
     openShm(SHM_INTPRT_STATUS, 1024);
+	
 	// Lujiaming add at 0323
     openShm(SHM_REG_IO_INFO, 1024);
 	// Lujiaming add at 0323 end
+	
+	// Lujiaming add at 0514
+    openShm(SHM_CHG_REG_LIST_INFO, 1024);
+	// Lujiaming add at 0514 end
+	
     openShm(SHM_CTRL_CMD, 1024);
     openShm(SHM_CTRL_STATUS, 1024);
     intprt_ctrl.cmd = START;
@@ -744,7 +812,10 @@ void initShm()
 #ifdef WIN32
 	generateFakeData();
 #else
+	
+#ifndef USE_FORSIGHT_REGISTERS_MANAGER
 	initRegShmi();
+#endif
 //	initShmi(1024);
 #endif
 }

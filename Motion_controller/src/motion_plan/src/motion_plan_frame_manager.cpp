@@ -160,6 +160,20 @@ bool FrameManager::getFrame(int id, Frame& frame)
     return true;
 }
 
+std::vector<int> FrameManager::getAllValidFrameId()
+{
+    std::vector<int> id_list;
+    std::vector<Frame>::iterator it;
+    for(it = frame_set_.begin(); it != frame_set_.end(); it++)
+    {
+        if(it->is_valid)
+        {
+            id_list.push_back(it->id);
+        }
+    }
+    return id_list;
+}
+
 std::string FrameManager::getFramePath(int frame_index)
 {
     std::string index_str;

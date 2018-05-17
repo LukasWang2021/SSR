@@ -185,6 +185,15 @@ class ShareMem
      */
     bool getDIOInfo(char * info);
 	
+    /**
+     * @brief: get Info of Reg and IO 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    bool getChangeRegList(char * strChgRegLst);
+	
   private:	
 	fst_core_interface::CoreInterface   core_interface_;
 	ShmjointsCmd        shm_jnt_cmd_;		//current JointCommand    

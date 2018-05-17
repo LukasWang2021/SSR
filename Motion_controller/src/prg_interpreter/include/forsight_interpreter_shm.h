@@ -40,6 +40,11 @@ typedef struct _FuncTable
 // Lujiaming add at 0323
 #define SHM_REG_IO_INFO        ("register_io_info")
 // Lujiaming add at 0323 end
+
+// Lujiaming add at 0514
+#define SHM_CHG_REG_LIST_INFO  ("chg_reg_list_info")
+// Lujiaming add at 0514 end
+
 #define SHM_CTRL_CMD        ("controller_command")
 #define SHM_CTRL_STATUS     ("constroller_status")
 

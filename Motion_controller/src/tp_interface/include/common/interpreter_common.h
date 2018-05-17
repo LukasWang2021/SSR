@@ -101,6 +101,11 @@ typedef enum _InterpreterCommand
     READ_SMLT_STS  = 205,
 	MOD_SMLT_STS   = 206,
     MOD_SMLT_VAL   = 207,
+    
+    READ_CHG_PR_LST   = 208,
+    READ_CHG_SR_LST   = 209,
+    READ_CHG_R_LST   = 210,
+    READ_CHG_MR_LST   = 211,
 
 }InterpreterCommand;
 

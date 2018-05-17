@@ -473,12 +473,18 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	else if(value.getType() == TYPE_POSE)
 	{
 		// instr.target.pose_target = value.getPoseValue();
+	    printf("value.getType() == TYPE_POSE in MovJ\n");
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}
 	else if(value.getType() == TYPE_JOINT)
 	{
 		instr.target.joint_target = value.getJointValue();
+		
+	    printf("move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ\n", 
+			instr.target.joint_target.j1, instr.target.joint_target.j2, 
+			instr.target.joint_target.j3, instr.target.joint_target.j4, 
+			instr.target.joint_target.j5, instr.target.joint_target.j6);
 	}
 	get_token(objThreadCntrolBlock);
 
@@ -596,10 +602,16 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	else if(value.getType() == TYPE_POSE)
 	{
 		instr.target.pose_target = value.getPoseValue();
+		
+	    printf("move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
+			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
+			instr.target.pose_target.position.z, instr.target.pose_target.orientation.a, 
+			instr.target.pose_target.orientation.b, instr.target.pose_target.orientation.c);
 	}
 	else if(value.getType() == TYPE_JOINT)
 	{
 		// instr.target.joint_target = value.getJointValue();
+	    printf("value.getType() == TYPE_JOINT in MovL\n");
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}
@@ -721,10 +733,16 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	else if(value.getType() == TYPE_POSE)
 	{
 		instr.target.pose_target = value.getPoseValue();
+		
+	    printf("move to POSE:(%f, %f, %f, %f, %f, %f) in MovC\n", 
+			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
+			instr.target.pose_target.position.z, instr.target.pose_target.orientation.a, 
+			instr.target.pose_target.orientation.b, instr.target.pose_target.orientation.c);
 	}
 	else if(value.getType() == TYPE_JOINT)
 	{
 		// instr.target.joint_target = value.getJointValue();
+	    printf("value.getType() == TYPE_JOINT in MovC\n");
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}

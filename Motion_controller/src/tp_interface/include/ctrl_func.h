@@ -86,6 +86,7 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	43859,	{	&Controller::setError,	&Controller::getIK,	&Controller::updateDefault	}	},
 	{	53925,	{	&Controller::setLocalTime,	&Controller::getLocalTime,	&Controller::updateDefault	}	},
 	{	50980,	{	&Controller::setJointConstraint,	&Controller::getSoftLimit,	&Controller::updateDefault	}	},
+	{	35940,	{	&Controller::setError,	&Controller::getSoftConstraintLimit,	&Controller::updateDefault	}	},
 	{	32184,	{	&Controller::setError,	&Controller::getDH,	&Controller::updateDefault	}	},
 	{	57668,	{	&Controller::setError,	&Controller::getHardLimit,	&Controller::updateDefault	}	},
 	{	77076,	{	&Controller::setManualCmd,	&Controller::getError,	&Controller::updateDefault	}	},

@@ -84,6 +84,7 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	43859,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	53925,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	50980,	{	&ProtoParse::decSoftConstraint,	&ProtoParse::encSoftConstraint	}	},
+	{	35940,	{	&ProtoParse::decSoftConstraint,	&ProtoParse::encSoftConstraint	}	},
 	{	32184,	{	&ProtoParse::decDefault,	&ProtoParse::encDHParameters	}	},
 	{	57668,	{	&ProtoParse::decDefault,	&ProtoParse::encHardConstraint	}	},
 	{	77076,	{	&ProtoParse::decManualCmd,	&ProtoParse::encDefault	}	},

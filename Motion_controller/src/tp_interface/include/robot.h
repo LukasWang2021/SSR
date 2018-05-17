@@ -88,6 +88,13 @@ class Robot
      motion_spec_JointConstraint getSoftConstraint();
 
     /**
+     * @brief: getJointConstraintLimit
+     *
+     * @return: motion_spec_JointConstraint 
+     */
+     motion_spec_JointConstraint getSoftConstraintLimit();
+
+    /**
      * @brief: setJointConstraint 
      *
      * @param jnt_constraint: input

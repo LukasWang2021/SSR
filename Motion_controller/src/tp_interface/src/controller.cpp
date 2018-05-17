@@ -514,11 +514,14 @@ void Controller::setUserOpMode(void* params, int len)
 //qianjin change from setUserOpMode 
 void Controller::getUserOpMode(void* params)
 {
-
-
-    int opmode = safety_interface_.getDITPUserMode();
-
+    int opmode = 0;
+    if(safety_interface_.isSafetyValid() == true)
+        opmode = safety_interface_.getDITPUserMode();
+    else
+        opmode = user_op_mode_;
+ 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
@@ -530,10 +533,9 @@ void Controller::getUserOpMode(void* params)
         param->size = sizeof(opmode);
         memcpy(param->bytes, (char*)&opmode, param->size);
     }
-
-
-
 }
+
+
 /*void Controller::setMotionModeCmd(void* params, int len)*/
 //{
     //MotionModeCmd mode_cmd = *(MotionModeCmd*)params;
@@ -1840,8 +1842,6 @@ void Controller::updateProc()
         }
         else
         {
-            // FST_INFO("Here publish id : %d\n", id);
-
             itr->second.count++;
 
             if (itr->second.count >= itr->second.base_interval)
@@ -1859,6 +1859,8 @@ void Controller::updateProc()
                     param_buf.type = PUBLISH;
                     param_buf.params = (void *)&sig->param;
                     (this->*g_ctrl_funcs_mp[itr->first].getValue)(&param_buf);
+
+                    FST_INFO("Here publish id : %d\n", id);
                 }
             }
         }
@@ -2304,6 +2306,15 @@ void Controller::setToolFrame(void* params, int len)
 
     Frame frame;
     frame.id = frame_interface.frame.id;
+
+    char test[32] = "";
+    FST_INFO("Here set tool frame comment is : %s", frame_interface.frame.comment);
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(frame_interface.frame.comment)))
+    {
+        char test_comment[32] = "set frame";
+        memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
+    }
+
     memcpy(&frame.comment, &frame_interface.frame.comment,
             sizeof(frame_interface.frame.comment));
     memcpy(&frame.data, &frame_interface.frame.data,
@@ -2447,6 +2458,15 @@ void Controller::setUserFrame(void* params, int len)
 
     Frame frame;
     frame.id = frame_interface.frame.id;
+
+    char test[32] = "";
+    FST_INFO("Here set user frame comment is : %s", frame_interface.frame.comment);
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(frame_interface.frame.comment)))
+    {
+        char test_comment[32] = "set frame";
+        memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
+    }
+
     memcpy(&frame.comment, &frame_interface.frame.comment,
             sizeof(frame_interface.frame.comment));
     memcpy(&frame.data, &frame_interface.frame.data,
@@ -2603,8 +2623,6 @@ void Controller::getString(void* params)
         FST_INFO("error size:%d", param->size);
         memcpy(param->bytes, (char*)&string_test, param->size);
     }
-
-    FST_INFO("Here string_test string is : %s", string_test.data);
 }
 
 
@@ -2923,3 +2941,22 @@ void Controller::getGlobalAcc(void* params)
     }
 }
 
+
+void Controller::getSoftConstraintLimit(void* params)
+{
+    motion_spec_JointConstraint slmt =  robot_->getSoftConstraintLimit();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&slmt, sizeof(slmt));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(slmt);
+        memcpy(param->bytes, (char*)&slmt, param->size);
+    }
+}

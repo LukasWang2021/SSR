@@ -84,8 +84,9 @@ std::string Error::getErrorBytes()
         if (0 != err[i]) err_queue_.push(err[i]);
     }
 
-    return std::string((const char*)err, cnt*sizeof(U64));
+    return std::string((const char*)err, MAX_ERRORS*sizeof(U64));
 }
+
 
 bool Error::updated()
 {

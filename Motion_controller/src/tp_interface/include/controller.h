@@ -386,6 +386,13 @@ class Controller
     void getSoftLimit(void* params);
 
     /**
+     * @brief: callback for getting soft Constraint limit
+     *
+     * @param params
+     */
+    void getSoftConstraintLimit(void* params);
+
+    /**
      * @brief: callback for setting soft limit 
      *
      * @param params

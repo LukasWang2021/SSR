@@ -358,6 +358,81 @@ motion_spec_DHGroup Robot::getDHGroup()
     return dh_group;
 }
 
+motion_spec_JointConstraint Robot::getSoftConstraintLimit()
+{
+    JointConstraint jc = arm_group_->getSoftConstraintLimit();
+    //FST_INFO("J1=>maxv:%f, maxa:%f", jc.j1.max_omega, jc.j1.max_alpha);
+    motion_spec_JointConstraint jnt_constraint;
+    jnt_constraint.jntLmt_count = MAX_JOINTS;
+
+    jnt_constraint.jntLmt[0].has_zero = true;
+    jnt_constraint.jntLmt[0].zero = jc.j1.home;
+    jnt_constraint.jntLmt[0].has_upper = true;
+    jnt_constraint.jntLmt[0].upper = jc.j1.upper;
+    jnt_constraint.jntLmt[0].has_lower = true;
+    jnt_constraint.jntLmt[0].lower = jc.j1.lower;
+    //jnt_constraint.jntLmt[0].has_max_omega = true;
+    //jnt_constraint.jntLmt[0].max_omega = jc.j1.max_omega;
+    //jnt_constraint.jntLmt[0].has_max_alpha = true;
+    //jnt_constraint.jntLmt[0].max_alpha = jc.j1.max_alpha;
+
+    jnt_constraint.jntLmt[1].has_zero = true;
+    jnt_constraint.jntLmt[1].zero = jc.j2.home;
+    jnt_constraint.jntLmt[1].has_upper = true;
+    jnt_constraint.jntLmt[1].upper = jc.j2.upper;
+    jnt_constraint.jntLmt[1].has_lower = true;
+    jnt_constraint.jntLmt[1].lower = jc.j2.lower;
+    //jnt_constraint.jntLmt[1].has_max_omega = true;
+    //jnt_constraint.jntLmt[1].max_omega = jc.j2.max_omega;
+    //jnt_constraint.jntLmt[1].has_max_alpha = true;
+    //jnt_constraint.jntLmt[1].max_alpha = jc.j2.max_alpha;
+
+    jnt_constraint.jntLmt[2].has_zero = true;
+    jnt_constraint.jntLmt[2].zero = jc.j3.home;
+    jnt_constraint.jntLmt[2].has_upper = true;
+    jnt_constraint.jntLmt[2].upper = jc.j3.upper;
+    jnt_constraint.jntLmt[2].has_lower = true;
+    jnt_constraint.jntLmt[2].lower = jc.j3.lower;
+    //jnt_constraint.jntLmt[2].has_max_omega = true;
+    //jnt_constraint.jntLmt[2].max_omega = jc.j3.max_omega;
+    //jnt_constraint.jntLmt[2].has_max_alpha = true;
+    //jnt_constraint.jntLmt[2].max_alpha = jc.j3.max_alpha;
+
+    jnt_constraint.jntLmt[3].has_zero = true;
+    jnt_constraint.jntLmt[3].zero = jc.j4.home;
+    jnt_constraint.jntLmt[3].has_upper = true;
+    jnt_constraint.jntLmt[3].upper = jc.j4.upper;
+    jnt_constraint.jntLmt[3].has_lower = true;
+    jnt_constraint.jntLmt[3].lower = jc.j4.lower;
+    //jnt_constraint.jntLmt[3].has_max_omega = true;
+    //jnt_constraint.jntLmt[3].max_omega = jc.j4.max_omega;
+    //jnt_constraint.jntLmt[3].has_max_alpha = true;
+    //jnt_constraint.jntLmt[3].max_alpha = jc.j4.max_alpha;
+
+    jnt_constraint.jntLmt[4].has_zero = true;
+    jnt_constraint.jntLmt[4].zero = jc.j5.home;
+    jnt_constraint.jntLmt[4].has_upper = true;
+    jnt_constraint.jntLmt[4].upper = jc.j5.upper;
+    jnt_constraint.jntLmt[4].has_lower = true;
+    jnt_constraint.jntLmt[4].lower = jc.j5.lower;
+    //jnt_constraint.jntLmt[4].has_max_omega = true;
+    //jnt_constraint.jntLmt[4].max_omega = jc.j5.max_omega;
+    //jnt_constraint.jntLmt[4].has_max_alpha = true;
+    //jnt_constraint.jntLmt[4].max_alpha = jc.j5.max_alpha;
+
+    jnt_constraint.jntLmt[5].has_zero = true;
+    jnt_constraint.jntLmt[5].zero = jc.j6.home;
+    jnt_constraint.jntLmt[5].has_upper = true;
+    jnt_constraint.jntLmt[5].upper = jc.j6.upper;
+    jnt_constraint.jntLmt[5].has_lower = true;
+    jnt_constraint.jntLmt[5].lower = jc.j6.lower;
+    //jnt_constraint.jntLmt[5].has_max_omega = true;
+    //jnt_constraint.jntLmt[5].max_omega = jc.j6.max_omega;
+    //jnt_constraint.jntLmt[5].has_max_alpha = true;
+    //jnt_constraint.jntLmt[5].max_alpha = jc.j6.max_alpha;
+
+    return jnt_constraint;
+}
 
 
 

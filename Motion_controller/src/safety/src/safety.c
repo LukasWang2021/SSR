@@ -51,16 +51,25 @@ static char *write_ptr;
 static char *read_ptr;
 
 unsigned long long int initSafety(void) {
-	int ret = 0;
-	fd = open("/dev/mem", O_RDWR);
-	if (fd == -1) {
-		return ERR_SAFETY_FILE_OPEN;
-	}
-	
-	ptr = mmap(NULL, SAFETY_LEN, PROT_WRITE|PROT_READ, MAP_SHARED, fd, SAFETY_BASE);
-	if (ptr == (void *)-1) {
-		return ERR_SAFETY_FILE_MAP;
-	}
+   int ret = 0;
+   fd = open("/dev/mem", O_RDWR);
+   if (fd == -1) {
+        printf("Failed to open /dev/mem .\n");
+        return ERR_SAFETY_FILE_OPEN;
+   }
+   else {
+        printf("Open /dev/mem OK .\n");
+   }
+                
+   ptr = mmap(NULL, SAFETY_LEN, PROT_WRITE|PROT_READ, 
+                               MAP_SHARED, fd, SAFETY_BASE);
+    if (ptr == (void *)-1) {
+        printf("Failed to mmap /dev/mem .\n");
+        return ERR_SAFETY_FILE_MAP;
+    }
+    else {
+        printf("mmap /dev/mem OK .\n");
+    }
 
     recv_one.ptr = (int *)(ptr + R_SAFETY_BASE);    // add by Feng.Wu
     recv_two.ptr = (int *)(ptr + RR_SAFETY_BASE);   // add by Feng.Wu

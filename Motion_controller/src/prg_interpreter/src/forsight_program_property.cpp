@@ -27,11 +27,11 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 
 	while (child && !fail)
 	{
-		printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			printf("cJSON_Number %f\n", child->valuedouble); 
+			// printf("cJSON_Number %f\n", child->valuedouble); 
 			if(strcmp(child->string, "a") == 0)
 				cart.orientation.a = child->valuedouble;
 			else if(strcmp(child->string, "b") == 0)
@@ -64,11 +64,11 @@ int parseJoint(struct thread_control_block * objThreadCntrolBlock,
 	
 	while (child && !fail)
 	{
-		printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			printf("cJSON_Number %f\n", child->valuedouble); 
+			// printf("cJSON_Number %f\n", child->valuedouble); 
 			if(strcmp(child->string, "j1") == 0)
 				joint.j1 = child->valuedouble;
 			else if(strcmp(child->string, "j2") == 0)
@@ -101,11 +101,11 @@ int parseAdditionalE(struct thread_control_block * objThreadCntrolBlock,
 	
 	while (child && !fail)
 	{
-		printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			printf("cJSON_Number %f\n", child->valuedouble); 
+			// printf("cJSON_Number %f\n", child->valuedouble); 
 			if(strcmp(child->string, "e1") == 0)
 				additionalE.e1 = child->valuedouble;
 			else if(strcmp(child->string, "e2") == 0)
@@ -143,11 +143,11 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 	child=jsonPoseContent->child;
 	while (child && !fail)
 	{
-		printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			printf("cJSON_Number %d\n", child->valueint);
+			// printf("cJSON_Number %d\n", child->valueint);
 			if(strcmp(child->string, "id") == 0)
 			{
 				id = child->valueint ;
@@ -220,15 +220,15 @@ int parsePoses(struct thread_control_block * objThreadCntrolBlock,
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			printf("cJSON_Number %s : %d\n", 
-				child->string, child->valueint); 
+			// printf("cJSON_Number %s : %d\n", 
+			//   	child->string, child->valueint); 
 			break;
 		case cJSON_String:	
 			printf("cJSON_String %s : %s\n", 
 				child->string, child->valuestring); 
 			break;
 		case cJSON_Object:	
-			printf("cJSON_Object %s \n", child->string); 
+			// printf("cJSON_Object %s \n", child->string); 
 			parsePosesContent(objThreadCntrolBlock, child);
 			break;
 		}

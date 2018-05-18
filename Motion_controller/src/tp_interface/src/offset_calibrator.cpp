@@ -94,7 +94,7 @@ bool Calibrator::initCalibrator(const string &path)
             return false;
         }
     }
-    if (data.size() < 9) {
+    if (data.size() < 6) {
         FST_ERROR("invalid parameter of last joint");
         return false;
     }
@@ -105,12 +105,12 @@ bool Calibrator::initCalibrator(const string &path)
             return false;
         }
     }
-    if (data.size() < 9) {
+    if (data.size() < 6) {
         FST_ERROR("invalid parameter of flag");
         return false;
     }
 
-    fst_parameter::ParamGroup params("share/configuration/configurable/motion_controller.yaml");
+    fst_parameter::ParamGroup params("share/configuration/configurable/motion_plan.yaml");
     if (params.getLastError() == SUCCESS) {
         params.getParam("calibrator/normal_offset_threshold", offset_normal_threshold_);
         params.getParam("calibrator/lost_offset_threshold", offset_lost_threshold_);
@@ -118,7 +118,7 @@ bool Calibrator::initCalibrator(const string &path)
             rcs::Error::instance()->add(params.getLastError());
             return false;
         } 
-        if (offset_normal_threshold_.size() < 9 || offset_lost_threshold_.size() < 9) {
+        if (offset_normal_threshold_.size() < 6 || offset_lost_threshold_.size() < 6) {
             FST_ERROR("invalid parameter of offset_normal_threshold_");
             return false;
         }
@@ -179,7 +179,7 @@ bool Calibrator::buildRecorderFromTemplate(const string &file)
     char buf[256] = {0};
     int length = readlink("/proc/self/exe", buf, sizeof(buf));
     boost::filesystem::path executable(buf);
-    string temp = executable.parent_path().parent_path().parent_path().string() + "/share/motion_controller/config/robot_recorder.yaml";
+    string temp = executable.parent_path().parent_path().parent_path().string() + "/share/motion_plan/config/robot_recorder.yaml";
     std::ifstream  in(temp.c_str());
     std::ofstream out(file.c_str());
     if (!in.is_open() || !out.is_open()) {
@@ -231,34 +231,31 @@ bool Calibrator::setTempZeroOffsetImpl(const Joint &target_joint)
 {
     Joint cur_jnt;
     vector<double> old_offset_data;
+    old_offset_data.resize(6);
 
     if (ShareMem::instance()->getLatestJoint(cur_jnt)
     && getZeroOffsetFromBareCore(old_offset_data)) 
     {
-        temp_zero_offset_.resize(8);
+        temp_zero_offset_.resize(6);
         temp_zero_offset_[0] = cur_jnt.j1 + old_offset_data[0] - target_joint.j1;
         temp_zero_offset_[1] = cur_jnt.j2 + old_offset_data[1] - target_joint.j2;
         temp_zero_offset_[2] = cur_jnt.j3 + old_offset_data[2] - target_joint.j3;
         temp_zero_offset_[3] = cur_jnt.j4 + old_offset_data[3] - target_joint.j4;
         temp_zero_offset_[4] = cur_jnt.j5 + old_offset_data[4] - target_joint.j5;
         temp_zero_offset_[5] = cur_jnt.j6 + old_offset_data[5] - target_joint.j6;
-        temp_zero_offset_[6] = old_offset_data[6];
-        temp_zero_offset_[7] = old_offset_data[7];
 
-        FST_INFO("old offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+        FST_INFO("old offset=%lf, %lf, %lf, %lf, %lf, %lf", 
                  old_offset_data[0], old_offset_data[1], old_offset_data[2],
-                 old_offset_data[3], old_offset_data[4], old_offset_data[5],
-                 old_offset_data[6], old_offset_data[7]);
+                 old_offset_data[3], old_offset_data[4], old_offset_data[5]);
         FST_INFO("old joint=%lf, %lf, %lf, %lf, %lf, %lf",
                  cur_jnt.j1, cur_jnt.j2, cur_jnt.j3, cur_jnt.j4
                  , cur_jnt.j5, cur_jnt.j6);
         FST_INFO("target joint=%lf, %lf, %lf, %lf, %lf, %lf",
                  target_joint.j1, target_joint.j2, target_joint.j3,
                  target_joint.j4, target_joint.j5, target_joint.j6);
-        FST_INFO("new offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+        FST_INFO("new offset=%lf, %lf, %lf, %lf, %lf, %lf", 
                  temp_zero_offset_[0], temp_zero_offset_[1], temp_zero_offset_[2],
-                 temp_zero_offset_[3], temp_zero_offset_[4], temp_zero_offset_[5],
-                 temp_zero_offset_[6], temp_zero_offset_[7]);
+                 temp_zero_offset_[3], temp_zero_offset_[4], temp_zero_offset_[5]);
 
         int id;
         offset_param_.getParam("zero_offset/id", id);
@@ -271,8 +268,6 @@ bool Calibrator::setTempZeroOffsetImpl(const Joint &target_joint)
             temp_robot_recorder_.push_back(target_joint.j4);
             temp_robot_recorder_.push_back(target_joint.j5);
             temp_robot_recorder_.push_back(target_joint.j6);
-            temp_robot_recorder_.push_back(0.0);
-            temp_robot_recorder_.push_back(0.0);
             return true;
         }
         else {
@@ -289,42 +284,37 @@ bool Calibrator::setZeroOffsetImpl(const Joint &target_joint)
     Joint cur_jnt;
     vector<double> old_offset_data;
     vector<double> new_offset_data;
+    old_offset_data.resize(6);
+    new_offset_data.resize(6);
+
     if (ShareMem::instance()->getLatestJoint(cur_jnt)
     && getZeroOffsetFromBareCore(old_offset_data)) 
     {
-        new_offset_data.resize(8);
         new_offset_data[0] = cur_jnt.j1 + old_offset_data[0] - target_joint.j1;
         new_offset_data[1] = cur_jnt.j2 + old_offset_data[1] - target_joint.j2;
         new_offset_data[2] = cur_jnt.j3 + old_offset_data[2] - target_joint.j3;
         new_offset_data[3] = cur_jnt.j4 + old_offset_data[3] - target_joint.j4;
         new_offset_data[4] = cur_jnt.j5 + old_offset_data[4] - target_joint.j5;
         new_offset_data[5] = cur_jnt.j6 + old_offset_data[5] - target_joint.j6;
-        new_offset_data[6] = old_offset_data[6];
-        new_offset_data[7] = old_offset_data[7];
 
-        FST_INFO("old offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+        FST_INFO("old offset=%lf, %lf, %lf, %lf, %lf, %lf", 
                  old_offset_data[0], old_offset_data[1], old_offset_data[2],
-                 old_offset_data[3], old_offset_data[4], old_offset_data[5],
-                     old_offset_data[6], old_offset_data[7]);
+                 old_offset_data[3], old_offset_data[4], old_offset_data[5]);
         FST_INFO("old joint=%lf, %lf, %lf, %lf, %lf, %lf",
                  cur_jnt.j1, cur_jnt.j2, cur_jnt.j3, cur_jnt.j4
                  , cur_jnt.j5, cur_jnt.j6);
         FST_INFO("target joint=%lf, %lf, %lf, %lf, %lf, %lf",
                  target_joint.j1, target_joint.j2, target_joint.j3,
                  target_joint.j4, target_joint.j5, target_joint.j6);
-        FST_INFO("new offset=%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf", 
+        FST_INFO("new offset=%lf, %lf, %lf, %lf, %lf, %lf", 
                  new_offset_data[0], new_offset_data[1], new_offset_data[2],
-                 new_offset_data[3], new_offset_data[4], new_offset_data[5],
-                 new_offset_data[6], new_offset_data[7]);
+                 new_offset_data[3], new_offset_data[4], new_offset_data[5]);
         
         int id;
         offset_param_.getParam("zero_offset/id", id);
         if (ServiceParam::instance()->setConfigData(id, new_offset_data)) {
-            vector<int> flag(9, OFFSET_NORMAL);
+            vector<int> flag(6, OFFSET_NORMAL);
             vector<double> recorder((double*)(&target_joint), (double*)(&target_joint) + 6);
-            recorder.push_back(0.0);
-            recorder.push_back(0.0);
-            recorder.push_back(0.0);
             
             time_t time_now = time(NULL);
             tm *local = localtime(&time_now);
@@ -365,7 +355,6 @@ bool Calibrator::reviewCurrentJoint(unsigned int &bitmap)
     bool result = true;
     Joint cur_jnt;
     vector<double> last_joint;
-    FST_INFO("sfdsssfddddd");
     if (ShareMem::instance()->getLatestJoint(cur_jnt)) {
         double *position = (double*)&cur_jnt;
         // if using normal zero-offset, compare robot_recorder with current joint
@@ -449,7 +438,7 @@ bool Calibrator::reviewCurrentJoint(unsigned int &bitmap)
 bool Calibrator::recordCurrentJoint(void) {
     Joint cur_jnt;
     if (ShareMem::instance()->getLatestJoint(cur_jnt)) {
-        vector<double> data((double*)(&cur_jnt), (double*)(&cur_jnt) + sizeof(cur_jnt) / sizeof(double));
+        vector<double> data((double*)(&cur_jnt), (double*)(&cur_jnt) + 6);
         FST_INFO("size:%d", data.size());
         return recordGivenJointImpl(data);
     }
@@ -459,14 +448,13 @@ bool Calibrator::recordCurrentJoint(void) {
 }
 bool Calibrator::recordGivenJoint(const Joint &joint)
 {
-    vector<double> data((double*)(&joint), (double*)(&joint) + sizeof(joint) / sizeof(double));
+    vector<double> data((double*)(&joint), (double*)(&joint) + 6);
     return recordGivenJointImpl(data);
 }
 
 bool Calibrator::recordGivenJointImpl(vector<double> &joint)
 {
-    if (joint.size() == 6) {joint.push_back(0.0); joint.push_back(0.0); joint.push_back(0.0);}
-    if (joint.size() == 9) {
+    if (joint.size() == 6) {
         if (!is_using_temp_zero_offset_) {
             return recordJointToRobotRecorder(joint);
         }

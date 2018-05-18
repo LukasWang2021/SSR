@@ -225,6 +225,27 @@ int set_io_status_to_io_mananger(
 	return 1 ;
 }
 
+int set_io_interface_status(char *vname, char val)
+{
+#ifndef WIN32
+	IOPortInfo info;
+	memset(&info, 0x00, sizeof(IOPortInfo));
+	
+	U64 result = IOInterface::instance()->checkIO(
+		vname, &info);
+	if (result != TPI_SUCCESS)
+	{
+		//    rcs::Error::instance()->add(result);
+		//    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
+		printf("IOInterface::instance()->checkIO Failed:: %s\n", vname);
+		return ;
+	}
+	printf("\t SET:: %s : %d = %d\n", vname, info.port_index, val);
+	IOInterface::instance()->setDO(&info, val);
+#endif
+	return 1 ;
+}
+
 eval_value get_io_status_from_io_mananger(
 		char *vname)
 {
@@ -263,6 +284,34 @@ eval_value get_io_status_from_io_mananger(
 #endif
 	value.setFloatValue(iValue) ;
 	return value;
+}
+
+int get_io_interface_status(char *vname)
+{
+	int iValue = -1;
+#ifndef WIN32
+	char valueBuf[8];
+	IOPortInfo info;
+	memset(&info, 0x00, sizeof(IOPortInfo));
+	
+	U64 result = IOInterface::instance()->checkIO(vname, &info);
+	if (result != TPI_SUCCESS)
+	{
+		printf("IOInterface::instance()->checkIO Failed:: %s\n", vname);
+		return ;
+	}
+	
+	IOInterface::instance()->getDIO(&info, valueBuf, 8);
+	printf("\t GET:: %s : (", vname);
+	for(int iRet = 0 ; iRet < 8 ; iRet++)
+	{
+		printf("%04X, ", valueBuf[iRet]);
+	}
+	printf(") \n");
+	
+	iValue = atoi(valueBuf);
+#endif
+	return iValue;
 }
 
 eval_value forgesight_get_io_status(char *name)
@@ -456,7 +505,7 @@ int forgesight_set_io_status(char *name, eval_value& valueStart)
 	}
 	else if((!strcmp(io_name, TXT_DI)) || (!strcmp(io_name, TXT_DO)))
 	{
-		printf("set_io_status: %s:%d (%s).\n", 
+		printf("set_io status: %s:%d (%s).\n", 
 				io_name, iIOIdx, name);
 		if (g_io_config_emulated.is_dio_emulated == false)
 		{

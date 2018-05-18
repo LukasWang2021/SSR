@@ -522,7 +522,7 @@ void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf
 
     BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
 
-    FST_INFO("param is : %d", param);
+    // FST_INFO("param is : %d", param);
 
     pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
 
@@ -536,7 +536,7 @@ void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf
 
     param->size = ostream.bytes_written;
 
-    FST_INFO("bytes_written:%d", ostream.bytes_written);
+    // FST_INFO("bytes_written:%d", ostream.bytes_written);
 }
 
 
@@ -603,7 +603,7 @@ void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 
     BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
 
-    FST_INFO("param is : %d", param);
+    // FST_INFO("encRegister param is : %d", param);
 
     pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
 
@@ -611,13 +611,13 @@ void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 
     if(ret != true)
     {
-        FST_ERROR("error encode io info");
+        FST_ERROR("encRegister error encode io info");
         return;
     }
 
     param->size = ostream.bytes_written;
 
-    FST_INFO("bytes_written:%d", ostream.bytes_written);
+    // FST_INFO("encRegisterbytes_written:%d", ostream.bytes_written);
 }
 
 
@@ -637,7 +637,7 @@ void ProtoParse::encString(const uint8_t *in_buf, int in_len, void *out_buf)
 
     BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
 
-    FST_INFO("param is : %d", param);
+    // FST_INFO("encString param is : %d", param);
 
     pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
 
@@ -651,7 +651,7 @@ void ProtoParse::encString(const uint8_t *in_buf, int in_len, void *out_buf)
 
     param->size = ostream.bytes_written;
 
-    FST_INFO("bytes_written:%d", ostream.bytes_written);
+    // FST_INFO("encString bytes_written:%d", ostream.bytes_written);
 }
 
 void ProtoParse::encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf)

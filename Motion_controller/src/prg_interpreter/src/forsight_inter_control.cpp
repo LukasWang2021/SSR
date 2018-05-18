@@ -475,7 +475,6 @@ void waitInterpreterStateToPaused(
 
 void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 {
-	char temp[1024];
 	RegMap reg ;
 	eval_value objValue ;
 	IOPathInfo  dioPathInfo ;
@@ -485,9 +484,10 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 	UserOpMode mode ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
+#ifndef WIN32
+	char temp[1024];
 	RegManagerInterface objRegManagerInterface("/install/config/");
 	std::vector<int> vecRet ; 
-#ifndef WIN32
     printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
     switch (intprt_ctrl.cmd)
@@ -534,7 +534,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             setPrgmState(EXECUTE_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "fy_line");
+			   strcpy(intprt_ctrl.start_ctrl.file_name, "ad_v");
 			}
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
@@ -677,42 +677,17 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			// dioMap  = intprt_ctrl.dio ;
 			// forgesight_read_dio(regIOInfo.dio);
 			dioPathInfo = intprt_ctrl.dioPathInfo;
-		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+            printf("READ_IO:: path : %s\n", dioPathInfo.dio_path); 
 
-			if(g_io_mapper.find(dioPathInfo.dio_path) != g_io_mapper.end() )
-			{
-				char dio_name[128];
-				strcpy(dio_name, g_io_mapper[dioPathInfo.dio_path].c_str());
-
-				objValue = forgesight_get_io_status(dio_name);
-				dioPathInfo.value = (int)objValue.getFloatValue();
-				returnDIOInfo(dioPathInfo);
-			}
-			else{
-                printf("MOD_IO:: not exist path : %s\n", dioPathInfo.dio_path); 
-            }
+			dioPathInfo.value = get_io_interface_status(dioPathInfo.dio_path);
+			returnDIOInfo(dioPathInfo);
             break;
         case MOD_IO:
 			dioPathInfo = intprt_ctrl.dioPathInfo;
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
-			if(g_io_mapper.find(dioPathInfo.dio_path) 
-				!= g_io_mapper.end() )
-			{
-				printf("MOD_IO: %s:%d (%s).\n", 
-						dioPathInfo.dio_path, 
-						dioPathInfo.value, 
-						g_io_mapper[dioPathInfo.dio_path].c_str());
-#ifndef WIN32
-	            // IOInterface::instance()->setDO(&dio, dioMap.value);
-				objValue.setFloatValue(dioPathInfo.value);
-				forgesight_set_io_status(
-					g_io_mapper[dioPathInfo.dio_path].c_str(),
-					objValue);
-#endif
-			}
-			else{
-                printf("MOD_IO:: not exist path : %s\n", dioPathInfo.dio_path); 
-            }
+			printf("MOD_IO: %s:%d.\n", 
+						dioPathInfo.dio_path, dioPathInfo.value);
+			set_io_interface_status(
+					dioPathInfo.dio_path, dioPathInfo.value);
             break;
         case READ_SMLT_STS:
 			dioPathInfo = intprt_ctrl.dioPathInfo;
@@ -733,6 +708,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			forgesight_mod_io_emulate_value(dioPathInfo.dio_path, dioPathInfo.value);
             break;
+#ifndef WIN32
         case READ_CHG_PR_LST:
 			vecRet.clear(); 
 			vecRet = objRegManagerInterface.getPrRegChangedIdList(0, 255);
@@ -782,6 +758,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
 	        setIntprtDataFlag(true);
             break;
+#endif
         default:
             break;
 

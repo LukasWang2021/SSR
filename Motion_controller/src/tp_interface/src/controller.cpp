@@ -452,7 +452,8 @@ void Controller::updateCtrlState(int id)
                     //===need keep on wait============
                     if (ShareMem::instance()->getServoState() != STATE_READY)  
                     {
-                        FST_ERROR("updateCtrlState: ShareMem::instance()->getServoState(): %d", 
+                        FST_ERROR("updateCtrlState: ShareMem::instance()->getServoState(): %d .\n"
+							      "Please check the ESTOP button or fix it.", 
 							ShareMem::instance()->getServoState());  
                         break;          
                     }
@@ -507,8 +508,12 @@ void Controller::updateCtrlState(int id)
 
 void Controller::setUserOpMode(void* params, int len)
 {
-     user_op_mode_  = *(UserOpMode*)params;
-     ShareMem::instance()->setUserOpMode(user_op_mode_);
+    int opmode = 0 ;
+    user_op_mode_  = *(UserOpMode*)params;
+    ShareMem::instance()->setUserOpMode(user_op_mode_);
+	
+	opmode = user_op_mode_ ;
+	FST_INFO("setUserOpMode: opmode: %d", opmode);
 }
 
 //qianjin change from setUserOpMode 
@@ -516,12 +521,17 @@ void Controller::getUserOpMode(void* params)
 {
     int opmode = 0 ;
 	if(safety_interface_.isSafetyValid() == true)
-		opmode = safety_interface_.getDITPUserMode();
+	{
+	   opmode = safety_interface_.getDITPUserMode();
+	   // FST_INFO("getUserOpMode: safety_interface_ :: opmode: %d", opmode);
+    }
     else
+	{
 		opmode = user_op_mode_ ;
+	    FST_INFO("getUserOpMode: user_op_mode_ :: opmode: %d", opmode);
+    }
 	
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
-
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
@@ -1786,6 +1796,20 @@ void Controller::requestProc()
 					tp_interface_->getRepDataPtr()->getID(),
 					tp_interface_->getRepDataPtr()->getParamLen());
             }
+            else if (str_path.substr(0, 27) == "root/get_change_pr_register")
+            {
+                char result_list[1024];
+				getChangeRegList(READ_CHG_PR_LST, result_list);
+
+				memcpy(tp_interface_->getRepDataPtr()->getParamBufPtr(), &result_list, 
+                        strlen(result_list));
+				FST_INFO("GET:: get_change_pr_register:%d", tp_interface_->getRepDataPtr()->getParamLen());
+				
+                tp_interface_->getRepDataPtr()->setParamLen(strlen(result_list));
+				FST_INFO("GET:: id : %d get_change_pr_register:%d", 
+					tp_interface_->getRepDataPtr()->getID(),
+					tp_interface_->getRepDataPtr()->getParamLen());
+            }
             else
             {
                 id = tp_interface_->getReqDataPtr()->getID();           
@@ -1860,7 +1884,7 @@ void Controller::updateProc()
                     param_buf.params = (void *)&sig->param;
                     (this->*g_ctrl_funcs_mp[itr->first].getValue)(&param_buf);
 
-                    FST_INFO("Here publish id : %d\n", id);
+                    // FST_INFO("Here publish id : %d\n", id);
                 }
             }
         }

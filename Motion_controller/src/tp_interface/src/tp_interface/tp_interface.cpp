@@ -270,6 +270,11 @@ void TPInterface::sendReply()
             else
             {
                 proto_parser_->encDefault(reply_.getParamBufPtr(), reply_.getParamLen(), &param_msg.param);
+				FST_INFO("sendReply:: proto_parser_->getIOInfo with %d", id); 
+				for(int i = 0 ; i < reply_.getParamLen() ; i++)
+				{
+				    FST_INFO("sendReply:: param_msg.param[%d] = %d", i, param_msg.param.bytes[i]);
+				}
                 info = proto_parser_->getIOInfo();
             }
             

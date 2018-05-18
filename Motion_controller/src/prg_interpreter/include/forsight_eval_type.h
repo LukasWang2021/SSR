@@ -320,7 +320,7 @@ private:
 private:
 	EvalValueType evalType ;
 	// use the union or malloc in the future.
-	union {
+	// union {
 		// Basic type ;
 		int iValue ;
 		float fValue ;
@@ -348,7 +348,7 @@ private:
 		uf_shmi_t reg_ur ;
 		tf_shmi_t reg_tf ;
 #endif
-	};
+	// };
 };
 
 #endif

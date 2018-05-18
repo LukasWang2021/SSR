@@ -542,10 +542,17 @@ void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf
 
 void ProtoParse::decFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    frame_spec_Interface frame_interface = *(frame_spec_Interface*)in_buf;
+    frame_spec_Interface frame_interface;
+    bool ret = false;
+    PARSE_FIELD(frame_interface, frame_spec_Interface, in_buf, in_len, ret);
 
-    TPIFReqData<> *req = (TPIFReqData<>*)out_buf;
+    if (ret == false)
+    {
+        FST_ERROR("error decode frame interface");
+        return;
+    }
 
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
     req->fillData((char*)&frame_interface, sizeof(frame_interface));
 }
 
@@ -571,10 +578,17 @@ void ProtoParse::encFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 
 void ProtoParse::decActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)in_buf;
+    frame_spec_ActivateInterface activate_frame;
+    bool ret = false;
+    PARSE_FIELD(activate_frame, frame_spec_ActivateInterface, in_buf, in_len, ret);
+
+    if (ret == false)
+    {
+        FST_ERROR("error decode frame interface");
+        return;
+    }
 
     TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
-
     req->fillData((char*)&activate_frame, sizeof(activate_frame));
 }
 
@@ -623,10 +637,17 @@ void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 
 void ProtoParse::decRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    register_spec_RegMap register_interface = *(register_spec_RegMap*)in_buf;
+    register_spec_RegMap register_interface;
+    bool ret = false;
+    PARSE_FIELD(register_interface, register_spec_RegMap, in_buf, in_len, ret);
 
-    TPIFReqData<> *req = (TPIFReqData<>*)out_buf;
+    if (ret == false)
+    {
+        FST_ERROR("error decode frame interface");
+        return;
+    }
 
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
     req->fillData((char*)&register_interface, sizeof(register_interface));
 }
 

@@ -2332,10 +2332,9 @@ void Controller::setToolFrame(void* params, int len)
     frame.id = frame_interface.frame.id;
 
     char test[32] = "";
-    FST_INFO("Here set tool frame comment is : %s", frame_interface.frame.comment);
-    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(frame_interface.frame.comment)))
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(test)))
     {
-        char test_comment[32] = "set frame";
+        char test_comment[32] = "\"\"";
         memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
     }
 
@@ -2343,9 +2342,6 @@ void Controller::setToolFrame(void* params, int len)
             sizeof(frame_interface.frame.comment));
     memcpy(&frame.data, &frame_interface.frame.data,
             sizeof(frame_interface.frame.data));
-
-    FST_INFO("Here set tool frame id is : %d", frame_interface.frame.id);
-    FST_INFO("Here set tool frame operation : %d", frame_interface.operation);
 
     switch(frame_interface.operation)
     {
@@ -2415,11 +2411,18 @@ void Controller::getToolFrame(void* params)
     frame_interface.frame.has_is_valid = true;
     frame_interface.frame.has_comment = true;
     frame_interface.frame.has_data = true;
-    frame_interface.frame.id = frame_interface.frame.id;
-    frame_interface.frame.is_valid = false;
+    frame_interface.frame.id = frame.id;
+    frame_interface.frame.is_valid = frame.is_valid;
     memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
     memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
     frame_interface.has_operation = false;
+
+    char none_commemt[32] = "\"\"";
+    if(0 == memcmp(frame_interface.frame.comment, none_commemt, sizeof(none_commemt)))
+    {
+        char null_char[32] = "";
+        memcpy(frame_interface.frame.comment, null_char, sizeof(null_char));
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -2484,10 +2487,9 @@ void Controller::setUserFrame(void* params, int len)
     frame.id = frame_interface.frame.id;
 
     char test[32] = "";
-    FST_INFO("Here set user frame comment is : %s", frame_interface.frame.comment);
-    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(frame_interface.frame.comment)))
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(test)))
     {
-        char test_comment[32] = "set frame";
+        char test_comment[32] = "\"\"";
         memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
     }
 
@@ -2495,9 +2497,6 @@ void Controller::setUserFrame(void* params, int len)
             sizeof(frame_interface.frame.comment));
     memcpy(&frame.data, &frame_interface.frame.data,
             sizeof(frame_interface.frame.data));
-
-    FST_INFO("Here set user frame id is : %d", frame_interface.frame.id);
-    FST_INFO("Here set user frame operation : %d", frame_interface.operation);
 
     switch(frame_interface.operation)
     {
@@ -2572,6 +2571,13 @@ void Controller::getUserFrame(void* params)
     memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
     memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
     frame_interface.has_operation = false;
+
+    char none_commemt[32] = "\"\"";
+    if(0 == memcmp(frame_interface.frame.comment, none_commemt, sizeof(none_commemt)))
+    {
+        char null_char[32] = "";
+        memcpy(frame_interface.frame.comment, null_char, sizeof(null_char));
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 

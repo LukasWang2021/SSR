@@ -204,8 +204,12 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
         {
             if (param_get_msg.has_param)
             {
-                request_.fillData((char*)param_get_msg.param.bytes, param_get_msg.param.size);
-            }            
+                std::map<int, ProtoFunctions>::iterator it = g_proto_funcs_mp.find(id);
+                if (it != g_proto_funcs_mp.end())
+                {
+                    (proto_parser_->*it->second.setMsg)(param_get_msg.param.bytes, param_get_msg.param.size, &request_);
+                }
+            }
         }
         else
         {

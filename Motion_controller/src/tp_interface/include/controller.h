@@ -524,7 +524,7 @@ class Controller
      *
      * @param params
      */
-    int getIOReply(char* params);
+    int getIOReply(void* params);
 	
     /**
      * @brief: send IO Simulate Status Request  

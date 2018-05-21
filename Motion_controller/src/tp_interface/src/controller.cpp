@@ -758,7 +758,7 @@ void Controller::setIOStatus(char* params, char value)
     // ctrl.dio = *dio;
     memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
     sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
-	ctrl.dioPathInfo.value = value ;
+	ctrl.dioPathInfo.value = value;
     ShareMem::instance()->intprtControl(ctrl);
     ShareMem::instance()->setIntprtDataFlag(false);
 }
@@ -775,13 +775,23 @@ void Controller::sendGetIORequest(char * params, int len)
     ShareMem::instance()->setIntprtDataFlag(false);
 }
 
-int Controller::getIOReply(char * params)
+int Controller::getIOReply(void* params)
 {
-	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
-	if(is_ready == false)
-		return -1;
-	ShareMem::instance()->getDIOInfo(params);
-	return 1;
+    bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+    if(is_ready == false) return -1;
+
+    uint8_t io_info = 0;
+
+    ShareMem::instance()->getDIOInfo(&io_info);
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&io_info, sizeof(io_info));
+    }
+
+    return 1;
 }
 
 void Controller::sendIOSimulateStatusRequest(char* params, int len)
@@ -1676,46 +1686,39 @@ void Controller::requestProc()
                 if (result != TPI_SUCCESS)
                 {
                     rcs::Error::instance()->add(result);
-                    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
                     break;
                 }
-#if 0
-                IOInterface::instance()->getDIO(&info, 
-                        tp_interface_->getRepDataPtr()->getParamBufPtr(),
-                        tp_interface_->getRepDataPtr()->getParamBufLen());
-                tp_interface_->getRepDataPtr()->setParamLen(info.bytes_len);
-				
-#endif
+
 				sendGetIORequest(str_path.c_str(), str_path.length());
 				usleep(10000);
-				int iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
-				int iCount = 0 ;
-				while(iRet == -1)
-				{
-					usleep(100000);
-					iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
-					if(iCount++ > 20)
-					{
-						FST_INFO("getRegisterReply Failed");
-						break;
-					}
-				}
-				FST_INFO("getIOReply:: getParamLen:%d", 
-					tp_interface_->getRepDataPtr()->getParamLen());
-				char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr() ;
-				for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
-					FST_INFO("GET:: data:%d", dataChar[i]);
-				
-                tp_interface_->getRepDataPtr()->setParamLen(info.bytes_len);
-				FST_INFO("GET:: truncate data to %d", info.bytes_len);
-				for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
-					FST_INFO("GET:: truncate data:%d", dataChar[i]);
 
-				FST_INFO("GET:: id : %d getParamLen:%d", 
-					tp_interface_->getRepDataPtr()->getID(),
-					tp_interface_->getRepDataPtr()->getParamLen());
-                tp_interface_->getRepDataPtr()->setParamLen(2);
-				
+                TPIParamBuf param_buf;
+                param_buf.type = REPLY;
+                param_buf.params = tp_interface_->getRepDataPtr();
+
+                int iRet = getIOReply(&param_buf);
+                int iCount = 0;
+
+                while(iRet == -1)
+                {
+                    usleep(100000);
+                    iRet = getIOReply(&param_buf);
+                    if(iCount++ > 20)
+                    {
+                        FST_INFO("getRegisterReply Failed");
+                        break;
+                    }
+                }
+                FST_INFO("getIOReply:: getParamLen:%d", 
+                    tp_interface_->getRepDataPtr()->getParamLen());
+
+                char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr();
+                for (int i = 0; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
+                    FST_INFO("GET:: data:%d", dataChar[i]);
+
+                FST_INFO("GET:: id : %d getParamLen:%d",
+                    tp_interface_->getRepDataPtr()->getID(),
+                    tp_interface_->getRepDataPtr()->getParamLen());
             }
             else if (str_path.substr(0, 23) == "root/simulate_IO_status")
             {

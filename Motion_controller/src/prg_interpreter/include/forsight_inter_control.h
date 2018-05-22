@@ -36,6 +36,7 @@ void setWarning(__int64 warn);
 #else
 void setWarning(long long int warn);
 #endif 
+void setSendPermission(bool flag);
 void getSendPermission();
 void returnRegInfo(RegMap info);
 void returnDIOInfo(IOPathInfo& info);

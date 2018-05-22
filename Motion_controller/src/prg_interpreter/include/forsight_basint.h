@@ -194,5 +194,8 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s,
 
 void find_eol(struct thread_control_block * objThreadCntrolBlock);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
+void serror(struct thread_control_block * objThreadCntrolBlock, int error);
+	 
+
 #endif
 

@@ -28,6 +28,8 @@
 #define FAIL_UPDATING_BACKUP (unsigned long long int)0x00010002007907DE   /*update backup file falled*/
 #define FAIL_DUMPING_PARAM (unsigned long long int)0x00010002007907DF   /*fail to dump parameter into a file*/
 
+#define FAIL_INTERPRETER_BASE (unsigned long long int)0x0001000900B50000   /*fail to dump parameter into a file*/
+
 #ifndef ERRORCODE
 #define ERRORCODE
 typedef unsigned long long int ErrorCode;

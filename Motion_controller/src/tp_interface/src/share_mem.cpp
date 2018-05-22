@@ -225,6 +225,14 @@ bool ShareMem::intprtControl(InterpreterControl ctrl)
     return tryWrite(SHM_CTRL_CMD, 0, (void*)&ctrl, sizeof(ctrl));
 }
 
+bool ShareMem::getIntprtSendFlag()
+{
+    bool is_permitted = false ;
+    int offset = &((CtrlStatus*)0)->is_permitted;
+	readShm(SHM_CTRL_STATUS, offset, (void*)&is_permitted, sizeof(is_permitted));
+	return is_permitted ;
+}
+
 
 void ShareMem::setIntprtSendFlag(bool flag)
 {

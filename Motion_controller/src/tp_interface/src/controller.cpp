@@ -3045,3 +3045,62 @@ void Controller::getSoftConstraintLimit(void* params)
         memcpy(param->bytes, (char*)&slmt, param->size);
     }
 }
+
+void Controller::getUserValidFrameIDList(void* params)
+{
+    frame_spec_IdListInterface id_list_interface;
+    id_list_interface.id_count = 0;
+    id_list_interface.has_total_id = true;
+    id_list_interface.total_id = 0;
+
+    std::vector<int> id_list;
+
+    id_list = user_frame_manager_->getAllValidFrameId();
+
+    std::vector<int>::iterator it;
+
+    for(it = id_list.begin(); it != id_list.end(); it++)
+    {
+        id_list_interface.id[id_list_interface.total_id] = *it;
+        id_list_interface.total_id++;
+        id_list_interface.id_count++;
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&id_list_interface, sizeof(id_list_interface));
+    }
+}
+
+
+void Controller::getToolValidFrameIDList(void* params)
+{
+    frame_spec_IdListInterface id_list_interface;
+    id_list_interface.id_count = 0;
+    id_list_interface.has_total_id = true;
+    id_list_interface.total_id = 0;
+
+    std::vector<int> id_list;
+
+    id_list = tool_frame_manager_->getAllValidFrameId();
+
+    std::vector<int>::iterator it;
+
+    for(it = id_list.begin(); it != id_list.end(); it++)
+    {
+        id_list_interface.id[id_list_interface.total_id] = *it;
+        id_list_interface.total_id++;
+        id_list_interface.id_count++;
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&id_list_interface, sizeof(id_list_interface));
+    }
+}

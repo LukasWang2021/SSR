@@ -14,7 +14,7 @@
 SafetyInterface::SafetyInterface()
 {
     int iRet = 0 ;
-    valid_flag_ = false;
+    valid_flag_ = true;
     memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
     memset((char*)&dout_frm2_, 0, sizeof(dout_frm2_));
 #ifdef CROSS_PLATFORM

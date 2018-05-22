@@ -697,3 +697,43 @@ void ProtoParse::encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf)
 
     FST_INFO("bytes_written:%d", ostream.bytes_written);
 }
+
+void ProtoParse::decFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    frame_spec_IdListInterface id_list;
+    bool ret = false;
+    PARSE_FIELD(id_list, frame_spec_IdListInterface, in_buf, in_len, ret);
+
+    if (ret == false)
+    {
+        FST_ERROR("error decode frame interface");
+        return;
+    }
+
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
+    req->fillData((char*)&id_list, sizeof(id_list));
+}
+
+
+void ProtoParse::encFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    frame_spec_IdListInterface *id_list = (frame_spec_IdListInterface*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf;
+
+    FST_INFO("param is : %d", param);
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream,frame_spec_IdListInterface_fields, id_list);
+
+    if(ret != true)
+    {
+        FST_ERROR("error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+
+    FST_INFO("bytes_written:%d", ostream.bytes_written);
+}

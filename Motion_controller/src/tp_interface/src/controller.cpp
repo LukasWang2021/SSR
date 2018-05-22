@@ -296,7 +296,7 @@ void Controller::updateWorkStatus(int id)
 			else if (state >= ERROR_EXEC_BASE_T)
 			{
 				rcs::Error::instance()->add(
-					FAIL_DUMPING_PARAM + state - ERROR_EXEC_BASE_T);
+					FAIL_INTERPRETER_BASE + state - ERROR_EXEC_BASE_T);
 			}
             break;
         }
@@ -1437,7 +1437,16 @@ void Controller::stateMachine(void* params)
            }
 	   }
     }
-	
+    double left_time =  arm_group_->timeBeforeDeadline();
+	if(left_time <= 0.001)
+	{
+         bool bRet = ShareMem::instance()->getIntprtSendFlag();
+		 if(bRet == false)
+		 {
+             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
+		     ShareMem::instance()->setIntprtSendFlag(true);
+		 }
+	}
     static int count = 0;
     if (++count >= SM_INTERVAL_COUNT)
     {

@@ -140,8 +140,7 @@ void greturn(struct thread_control_block * objThreadCntrolBlock),
 	 label_init(struct thread_control_block * objThreadCntrolBlock),
 //	 exec_call(struct thread_control_block * objThreadCntrolBlock), 
 	 exec_import(struct thread_control_block * objThreadCntrolBlock);
-void serror(struct thread_control_block * objThreadCntrolBlock, int error),
-	 get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * result, int* boolValue),
+void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * result, int* boolValue),
 	 putback(struct thread_control_block * objThreadCntrolBlock);
 void    level1(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue),
         level2(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue),
@@ -565,6 +564,18 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		// setPrgmState(PAUSE_TO_IDLE_T) ;
   		printf("objThreadCntrolBlock->is_abort == true.\n");
         break ; // return 0 ; // NULL ;
+	}
+	// Deal PAUSED_R
+	InterpreterState interpreterState  = getPrgmState();
+	while(interpreterState == PAUSED_R)
+	{
+		printf("interpreterState is PAUSED_R.\n");
+#ifdef WIN32
+		Sleep(1000);
+#else
+		sleep(1);
+#endif
+		interpreterState  = getPrgmState();
 	}
     /* check for assignment statement */
 	iLinenum = calc_line_from_prog(objThreadCntrolBlock);
@@ -2352,7 +2363,10 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
     "too many nested GOSUBs",      // 12 
     "RETURN without GOSUB",        // 13 
     "file not found"               // 14
+    "movl with joint"              // 15
+    "movj with point"              // 16
   };
+  
   printf("-----------------ERR----------------------\n");
   printf("\t NOTICE : %s\n", e[error]);
   printf("-----------------ERR----------------------\n");

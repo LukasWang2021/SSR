@@ -474,6 +474,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		// instr.target.pose_target = value.getPoseValue();
 	    printf("value.getType() == TYPE_POSE in MovJ\n");
+		serror(objThreadCntrolBlock, 16);
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}
@@ -612,6 +613,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		// instr.target.joint_target = value.getJointValue();
 	    printf("value.getType() == TYPE_JOINT in MovL\n");
+		serror(objThreadCntrolBlock, 15);
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}

@@ -142,13 +142,27 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
             }
             if (manu_frame_ == motion_spec_ManualFrame_JOINT)
             {
-                Joint target_jnts = *(Joint*)target->coordinates;
+                // Joint target_jnts = *(Joint*)target->coordinates;
+                Joint target_jnts ;
+                target_jnts.j1 = target->coordinates[0] * PI / 180 ;
+                target_jnts.j2 = target->coordinates[1] * PI / 180 ;
+                target_jnts.j3 = target->coordinates[2] * PI / 180 ;
+                target_jnts.j4 = target->coordinates[3] * PI / 180 ;
+                target_jnts.j5 = target->coordinates[4] * PI / 180 ;
+                target_jnts.j6 = target->coordinates[5] * PI / 180 ;
                 result = arm_group_->manualMove(target_jnts);
             }
             else if (manu_frame_ == motion_spec_ManualFrame_USER)
             {
                 //robot_->getJointFromPose(*(PoseEuler*)target->coordinates, target_jnts);
-                PoseEuler target_pose = *(PoseEuler*)target->coordinates;
+                // PoseEuler target_pose = *(PoseEuler*)target->coordinates;
+				PoseEuler target_pose ;
+				target_pose.position.x = target->coordinates[0];
+				target_pose.position.y = target->coordinates[1];
+				target_pose.position.z = target->coordinates[2];
+				target_pose.orientation.a = target->coordinates[3] * PI / 180 ;
+				target_pose.orientation.b = target->coordinates[4] * PI / 180 ;
+				target_pose.orientation.c = target->coordinates[5] * PI / 180 ;
                 result = arm_group_->manualMove(target_pose);
             }
             else

@@ -111,6 +111,13 @@ class ShareMem
     void sendingPermitted();
 
     /**
+     * @brief: get Send flag
+     *
+     * @return: Send OK flag 
+     */
+    bool getIntprtSendFlag();
+
+    /**
      * @brief: set send flag 
      *
      * @param flag: send flag 

@@ -259,6 +259,17 @@ void setWarning(long long int warn)
     writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
 }
 
+void setSendPermission(bool flag)
+{
+#ifdef WIN32
+	CtrlStatus temp,  * tempPtr = &temp;
+    int offset = (int)&(tempPtr->is_permitted) - (int)tempPtr ;
+#else
+    int offset = &((CtrlStatus*)0)->is_permitted;
+#endif  
+    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
+}
+
 void getSendPermission()
 {
 #ifdef WIN32
@@ -306,6 +317,9 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
         printf("not permitted\n");
         return false;
     }
+	
+	setSendPermission(false);
+	
     int count = 0;
     bool ret;
     //printf("cur state:%d\n", prgm_state);
@@ -317,6 +331,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
             printf("check if step is done in setInstruction\n");
             setPrgmState(PAUSED_R);
         }
+		// printf("cur state:%d in STEP_MODE \n", prgm_state);
         return false;
     }
 
@@ -351,8 +366,9 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 		        //    iLineNum++;
 		        //    setCurLine(iLineNum);
 		        //}   
-			iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
-            setLinenum(objThdCtrlBlockPtr, iLineNum);
+		//	iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
+		//  printf("set line in setInstruction\n");
+        //    setLinenum(objThdCtrlBlockPtr, iLineNum);
 
 	        if (objThdCtrlBlockPtr->prog_mode == STEP_MODE)
 	            setPrgmState(EXECUTE_TO_PAUSE_T);   //wait until this Instruction end
@@ -367,6 +383,21 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
      //   if (count++ > 500)
      //       return false;
     }while(!ret);
+
+    // Wait until finish 
+    getSendPermission();
+    printf("wait ctrl_status.is_permitted == false\n");
+    while (ctrl_status.is_permitted == false)
+    {
+#ifdef WIN32
+		Sleep(1);
+		break ;
+#else
+        usleep(1000);
+#endif
+        getSendPermission();
+    }
+    printf("ctrl_status.is_permitted == true\n");
 
     return true;
 }

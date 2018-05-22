@@ -101,7 +101,7 @@ target_link_libraries(prg_interpreter
 ## Install ##
 #############
 install(TARGETS prg_interpreter
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(DIRECTORY config

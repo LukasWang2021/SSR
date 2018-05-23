@@ -20,7 +20,7 @@
 #define TF_NUM_MAX 10
 #define PL_NUM_MAX 100
 
-#define COMMENT_SIZE 16
+#define COMMENT_SIZE 32
 #define SR_VALUE_SIZE 254
 
 #define PR_TYPE_POSE_EULER 1

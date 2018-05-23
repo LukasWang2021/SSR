@@ -517,7 +517,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 
 #ifndef WIN32
 	char temp[1024];
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	std::vector<int> vecRet ; 
     printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif

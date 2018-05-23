@@ -1388,6 +1388,7 @@ void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
 
 void Controller::stateMachine(void* params)
 {
+    U64 result = SUCCESS; 
     Instruction inst;
     int fifo_len =  arm_group_->getFIFOLength();
     /*if (auto_motion_->getPrgmState() == EXECUTE_R)*/
@@ -1429,7 +1430,17 @@ void Controller::stateMachine(void* params)
         	if(inst.line > 0)
 	        {
 	            printf("get instruction, line:%d\n", inst.line);
-	            auto_motion_->moveTarget(inst.target);
+	            result = auto_motion_->moveTarget(inst.target);
+				if(result != SUCCESS)
+        		{
+	                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+        			rcs::Error::instance()->add(result);
+					setLogicStateCmd(EMERGENCY_STOP_E);
+					
+					InterpreterControl ctrl;
+					ctrl.cmd = ABORT;
+					ShareMem::instance()->intprtControl(ctrl);
+	        	}
 	        }
         }
     }

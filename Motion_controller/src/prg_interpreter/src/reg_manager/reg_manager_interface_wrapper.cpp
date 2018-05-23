@@ -77,7 +77,7 @@ static int get_num_token(char * src, char * dst)
 
 bool reg_manager_interface_getPr(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, ptr);
 	return bRet ;
@@ -85,7 +85,7 @@ bool reg_manager_interface_getPr(void *ptr, uint16_t num)
 
 bool reg_manager_interface_setPr(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	PrRegData objPrRegData ;
 	memcpy(&objPrRegData, ptr, sizeof(PrRegData));
 	objPrRegData.id = num ;
@@ -104,7 +104,7 @@ bool reg_manager_interface_setPr(void *ptr, uint16_t num)
 bool reg_manager_interface_getPosePr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -118,7 +118,7 @@ bool reg_manager_interface_getPosePr(void *ptr, uint16_t num)
 bool reg_manager_interface_setPosePr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -133,7 +133,7 @@ bool reg_manager_interface_setPosePr(void *ptr, uint16_t num)
 bool reg_manager_interface_getJointPr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -147,7 +147,7 @@ bool reg_manager_interface_getJointPr(void *ptr, uint16_t num)
 bool reg_manager_interface_setJointPr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -162,7 +162,7 @@ bool reg_manager_interface_setJointPr(void *ptr, uint16_t num)
 bool reg_manager_interface_getTypePr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -176,7 +176,7 @@ bool reg_manager_interface_getTypePr(void *ptr, uint16_t num)
 bool reg_manager_interface_setTypePr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -191,7 +191,7 @@ bool reg_manager_interface_setTypePr(void *ptr, uint16_t num)
 bool reg_manager_interface_getIdPr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -204,7 +204,7 @@ bool reg_manager_interface_getIdPr(void *ptr, uint16_t num)
 bool reg_manager_interface_setIdPr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -218,7 +218,7 @@ bool reg_manager_interface_setIdPr(void *ptr, uint16_t num)
 bool reg_manager_interface_getCommentPr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -231,7 +231,7 @@ bool reg_manager_interface_getCommentPr(void *ptr, uint16_t num)
 bool reg_manager_interface_setCommentPr(void *ptr, uint16_t num)
 {
 	PrRegData objPrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, &objPrRegData);
 	if(bRet)
@@ -249,7 +249,7 @@ bool reg_manager_interface_setCommentPr(void *ptr, uint16_t num)
 
 bool reg_manager_interface_getSr(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getSrReg(num, ptr);
 	return bRet ;
@@ -257,7 +257,7 @@ bool reg_manager_interface_getSr(void *ptr, uint16_t num)
 
 bool reg_manager_interface_setSr(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	SrRegData objSrRegData ;
 	memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
 	objSrRegData.id = num ;
@@ -273,7 +273,7 @@ bool reg_manager_interface_setSr(void *ptr, uint16_t num)
 bool reg_manager_interface_getValueSr(void *ptr, uint16_t num)
 {
 	SrRegData objSrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getSrReg(num, &objSrRegData);
 	if(bRet)
@@ -287,7 +287,7 @@ bool reg_manager_interface_getValueSr(void *ptr, uint16_t num)
 bool reg_manager_interface_setValueSr(void *ptr, uint16_t num)
 {
 	SrRegData objSrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getSrReg(num, &objSrRegData);
 	if(bRet)
@@ -301,7 +301,7 @@ bool reg_manager_interface_setValueSr(void *ptr, uint16_t num)
 bool reg_manager_interface_getIdSr(void *ptr, uint16_t num)
 {
 	SrRegData objSrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getSrReg(num, &objSrRegData);
 	if(bRet)
@@ -314,7 +314,7 @@ bool reg_manager_interface_getIdSr(void *ptr, uint16_t num)
 bool reg_manager_interface_setIdSr(void *ptr, uint16_t num)
 {
 	SrRegData objSrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getSrReg(num, &objSrRegData);
 	if(bRet)
@@ -328,7 +328,7 @@ bool reg_manager_interface_setIdSr(void *ptr, uint16_t num)
 bool reg_manager_interface_getCommentSr(void *ptr, uint16_t num)
 {
 	SrRegData objSrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getSrReg(num, &objSrRegData);
 	if(bRet)
@@ -341,7 +341,7 @@ bool reg_manager_interface_getCommentSr(void *ptr, uint16_t num)
 bool reg_manager_interface_setCommentSr(void *ptr, uint16_t num)
 {
 	SrRegData objSrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getSrReg(num, &objSrRegData);
 	if(bRet)
@@ -356,7 +356,7 @@ bool reg_manager_interface_setCommentSr(void *ptr, uint16_t num)
  **********************/
 bool reg_manager_interface_getR(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getRReg(num, ptr);
 	return bRet ;
@@ -364,7 +364,7 @@ bool reg_manager_interface_getR(void *ptr, uint16_t num)
 
 bool reg_manager_interface_setR(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	RRegData objRRegData ;
 	memcpy(&objRRegData, ptr, sizeof(objRRegData));
 	objRRegData.id = num ;
@@ -380,7 +380,7 @@ bool reg_manager_interface_setR(void *ptr, uint16_t num)
 bool reg_manager_interface_getValueR(void *ptr, uint16_t num)
 {
 	RRegData objRRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getRReg(num, &objRRegData);
 	if(bRet)
@@ -394,7 +394,7 @@ bool reg_manager_interface_getValueR(void *ptr, uint16_t num)
 bool reg_manager_interface_setValueR(void *ptr, uint16_t num)
 {
 	RRegData objRRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getRReg(num, &objRRegData);
 	if(bRet)
@@ -408,7 +408,7 @@ bool reg_manager_interface_setValueR(void *ptr, uint16_t num)
 bool reg_manager_interface_getIdR(void *ptr, uint16_t num)
 {
 	RRegData objRRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getRReg(num, &objRRegData);
 	if(bRet)
@@ -421,7 +421,7 @@ bool reg_manager_interface_getIdR(void *ptr, uint16_t num)
 bool reg_manager_interface_setIdR(void *ptr, uint16_t num)
 {
 	RRegData objRRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getRReg(num, &objRRegData);
 	if(bRet)
@@ -435,7 +435,7 @@ bool reg_manager_interface_setIdR(void *ptr, uint16_t num)
 bool reg_manager_interface_getCommentR(void *ptr, uint16_t num)
 {
 	RRegData objRRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getRReg(num, &objRRegData);
 	if(bRet)
@@ -448,7 +448,7 @@ bool reg_manager_interface_getCommentR(void *ptr, uint16_t num)
 bool reg_manager_interface_setCommentR(void *ptr, uint16_t num)
 {
 	RRegData objRRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getRReg(num, &objRRegData);
 	if(bRet)
@@ -463,7 +463,7 @@ bool reg_manager_interface_setCommentR(void *ptr, uint16_t num)
  **********************/
 bool reg_manager_interface_getMr(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getMrReg(num, ptr);
 	return bRet ;
@@ -471,7 +471,7 @@ bool reg_manager_interface_getMr(void *ptr, uint16_t num)
 
 bool reg_manager_interface_setMr(void *ptr, uint16_t num)
 {
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	MrRegData objMrRegData ;
 	memcpy(&objMrRegData, ptr, sizeof(objMrRegData));
 	objMrRegData.id = num ;
@@ -487,7 +487,7 @@ bool reg_manager_interface_setMr(void *ptr, uint16_t num)
 bool reg_manager_interface_getValueMr(void *ptr, uint16_t num)
 {
 	MrRegData objMrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getMrReg(num, &objMrRegData);
 	if(bRet)
@@ -501,7 +501,7 @@ bool reg_manager_interface_getValueMr(void *ptr, uint16_t num)
 bool reg_manager_interface_setValueMr(void *ptr, uint16_t num)
 {
 	MrRegData objMrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getMrReg(num, &objMrRegData);
 	if(bRet)
@@ -515,7 +515,7 @@ bool reg_manager_interface_setValueMr(void *ptr, uint16_t num)
 bool reg_manager_interface_getIdMr(void *ptr, uint16_t num)
 {
 	MrRegData objMrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getMrReg(num, &objMrRegData);
 	if(bRet)
@@ -528,7 +528,7 @@ bool reg_manager_interface_getIdMr(void *ptr, uint16_t num)
 bool reg_manager_interface_setIdMr(void *ptr, uint16_t num)
 {
 	MrRegData objMrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getMrReg(num, &objMrRegData);
 	if(bRet)
@@ -542,7 +542,7 @@ bool reg_manager_interface_setIdMr(void *ptr, uint16_t num)
 bool reg_manager_interface_getCommentMr(void *ptr, uint16_t num)
 {
 	MrRegData objMrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getMrReg(num, &objMrRegData);
 	if(bRet)
@@ -555,7 +555,7 @@ bool reg_manager_interface_getCommentMr(void *ptr, uint16_t num)
 bool reg_manager_interface_setCommentMr(void *ptr, uint16_t num)
 {
 	MrRegData objMrRegData ;
-	RegManagerInterface objRegManagerInterface("/install/config/");
+	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getMrReg(num, &objMrRegData);
 	if(bRet)

@@ -104,7 +104,7 @@ class AutoMotion
      *
      * @param target
      */
-    void moveTarget(MotionTarget target);
+    ErrorCode moveTarget(MotionTarget target);
   private:
     ArmGroup		    *arm_group_;
     MotionTarget        mot_target_;    //target of this instruction

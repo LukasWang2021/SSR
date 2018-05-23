@@ -611,9 +611,10 @@ void ProtoParse::encActivateFrame(const uint8_t *in_buf, int in_len, void *out_b
     param->size = ostream.bytes_written;
 }
 
-void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+
+void ProtoParse::encPoseRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    register_spec_RegMap *reg_param = (register_spec_RegMap*)in_buf;
+    register_spec_PRInterface *pr_interface = (register_spec_PRInterface*)in_buf;
 
     BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
 
@@ -621,7 +622,7 @@ void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 
     pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
 
-    bool ret = pb_encode(&ostream, register_spec_RegMap_fields, reg_param);
+    bool ret = pb_encode(&ostream, register_spec_PRInterface_fields, pr_interface);
 
     if(ret != true)
     {
@@ -635,11 +636,48 @@ void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 }
 
 
-void ProtoParse::decRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+void ProtoParse::decPoseRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    register_spec_RegMap register_interface;
+    register_spec_PRInterface pr_interface;
     bool ret = false;
-    PARSE_FIELD(register_interface, register_spec_RegMap, in_buf, in_len, ret);
+    PARSE_FIELD(pr_interface, register_spec_PRInterface, in_buf, in_len, ret);
+
+    if (ret == false)
+    {
+        FST_ERROR("error decode frame interface");
+        return;
+    }
+
+    TPIFReqData<> *req = (TPIFReqData<>*)out_buf;
+    req->fillData((char*)&pr_interface, sizeof(pr_interface));
+}
+
+
+void ProtoParse::encNumberRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_NRInterface *nr_interface = (register_spec_NRInterface*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, register_spec_NRInterface_fields, nr_interface);
+
+    if(ret != true)
+    {
+        FST_ERROR("encRegister error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+}
+
+
+void ProtoParse::decNumberRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_NRInterface nr_interface;
+    bool ret = false;
+    PARSE_FIELD(nr_interface, register_spec_NRInterface, in_buf, in_len, ret);
 
     if (ret == false)
     {
@@ -648,7 +686,7 @@ void ProtoParse::decRegister(const uint8_t *in_buf, int in_len, void *out_buf)
     }
 
     TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
-    req->fillData((char*)&register_interface, sizeof(register_interface));
+    req->fillData((char*)&nr_interface, sizeof(nr_interface));
 }
 
 

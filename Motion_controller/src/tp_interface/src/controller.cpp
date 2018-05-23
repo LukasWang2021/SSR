@@ -2678,7 +2678,7 @@ void Controller::setRegister(void* params, int len)
 {
     RegMap* mod_reg = (RegMap*)params;
         FST_INFO("setRegister: RegMap::type: %d, idx: %d,", 
-			mod_reg->type, mod_reg->index, mod_reg->type);
+			mod_reg->type, mod_reg->index);
     
     InterpreterControl ctrl;
     ctrl.cmd = MOD_REG;
@@ -2690,14 +2690,14 @@ void Controller::setRegister(void* params, int len)
 void Controller::getRegister(void* params)
 {
     RegMap* reg = (RegMap*)params;
-	sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
+	sendGetRegisterRequest((void *)reg, sizeof(RegMap));
 	usleep(10000);
-	int iRet = getRegisterReply((void *)&reg);
+	int iRet = getRegisterReply((void *)reg);
 	int iCount = 0 ;
 	while(iRet == -1)
 	{
 		usleep(100000);
-		iRet = getRegisterReply((void *)&reg);
+		iRet = getRegisterReply((void *)reg);
 		if(iCount++ > 20)
 		{
 			FST_INFO("getRegisterReply Failed");
@@ -2710,7 +2710,7 @@ void Controller::sendGetRegisterRequest(void * params, int len)
 {
     RegMap* reg = (RegMap*)params;
         FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
+			reg->type, reg->index);
     InterpreterControl ctrl;
     ctrl.cmd = READ_REG ;
     ctrl.reg = *reg;
@@ -2755,7 +2755,7 @@ void Controller::sendGetChangeRegListRequest(InterpreterCommand cmd, void * para
 {
     RegMap* reg = (RegMap*)params;
         FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
+			reg->type, reg->index);
     InterpreterControl ctrl;
     ctrl.cmd = cmd ;
     ctrl.reg = *reg;
@@ -2777,19 +2777,7 @@ int Controller::getChangeRegListReply(void * params)
 }
 
 
-bool Controller::isSetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
-    {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_SET_REGISTER_TYPE);
-        return true;
-    }
-
-    return false;
-}
-
-bool Controller::isSetRegisterIndexError(int &send_index, int &reg_total)
+bool Controller::isRegisterIndexError(int &send_index, int &reg_total)
 {
     if((1 > send_index) || (send_index > reg_total))
     {
@@ -2802,53 +2790,20 @@ bool Controller::isSetRegisterIndexError(int &send_index, int &reg_total)
 }
 
 
-bool Controller::isGetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
-    {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_TYPE);
-        return true;
-    }
-
-    return false;
-}
-
-
-bool Controller::isGetRegisterIndexError(int &send_index, int &reg_total)
-{
-    if((1 > send_index) || (send_index > reg_total))
-    {
-        FST_ERROR("Register : The index out of range.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_ID);
-        return true;
-    }
-
-    return false;
-}
-
-
 void Controller::setPoseRegister(void* params, int len)
 {
-    register_spec_RegMap set_pose_reg = *(register_spec_RegMap*)params;
+    register_spec_PRInterface pr_interface = *(register_spec_PRInterface*)params;
 
-    int send_type = static_cast<register_spec_RegType>(set_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(set_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
+    int pr_id = pr_interface.id;
+    int pr_total = 200;
+    bool index_error = isRegisterIndexError(pr_id, pr_total);
     if (index_error) return;
 
     RegMap set_reg;
-    set_reg.index = set_pose_reg.index;
-    memcpy(&set_reg.type, &set_pose_reg.type, sizeof(set_pose_reg.type));
-    memcpy(&set_reg.value, (char*)&set_pose_reg.value, sizeof(set_pose_reg.value));
- 
+    set_reg.index = pr_interface.id;
+    set_reg.type = POSE_REG;
+    memcpy(&set_reg.value, (char*)&pr_interface, sizeof(pr_interface));
+
     int reg_size = sizeof(set_reg);
 
     setRegister(&set_reg, reg_size);
@@ -2857,78 +2812,56 @@ void Controller::setPoseRegister(void* params, int len)
 
 void Controller::getPoseRegister(void* params)
 {
-    register_spec_RegMap get_pose_reg;
+     register_spec_PRInterface pr_interface;
 
-    memcpy(&get_pose_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_pose_reg));
+    memcpy(&pr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(pr_interface));
 
-    int send_type = static_cast<register_spec_RegType>(get_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(get_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
+    int pr_id = pr_interface.id;
+    int pr_total = 200;
+    bool index_error = isRegisterIndexError(pr_id, pr_total);
     if (index_error) return;
 
-    RegType reg_type_temp = static_cast<int>(send_type);
+    RegMap get_reg;
+    get_reg.index = pr_interface.id;
+    get_reg.type = POSE_REG;
+    memcpy(&get_reg.value, (char*)&pr_interface, sizeof(pr_interface));
 
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_pose_reg.value, sizeof(get_pose_reg.value));
+    getRegister(&get_reg);
 
-    getRegister(&reg_param);
-
-    get_pose_reg.has_value = true;
-    get_pose_reg.index = reg_param.index;
-    memcpy(&get_pose_reg.type, &reg_param.type, sizeof(reg_param.type));
-    memcpy(&get_pose_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
-
-    FST_INFO("GET:: getParamLen : %d", 
-        tp_interface_->getReqDataPtr()->getParamLen());
+    memcpy(&pr_interface, &get_reg.value, sizeof(get_reg.value));
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_pose_reg, sizeof(get_pose_reg));
+        rep->fillData((char*)&pr_interface, sizeof(pr_interface));
     }
     else
     {
         motion_spec_Signal_param_t *param =
             (motion_spec_Signal_param_t*)param_ptr->params;
 
-        param->size = sizeof(get_pose_reg);
-        memcpy(param->bytes, (char*)&get_pose_reg, param->size);
+        param->size = sizeof(pr_interface);
+        memcpy(param->bytes, (char*)&pr_interface, param->size);
     }
 }
 
 
 void Controller::setNumberRegister(void* params, int len)
 {
-    register_spec_RegMap set_number_reg = *(register_spec_RegMap*)params;
+    register_spec_NRInterface nr_interface = *(register_spec_NRInterface*)params;
 
-    int send_type = static_cast<register_spec_RegType>(set_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(set_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
+    int nr_id = nr_interface.id;
+    int nr_total = 1500;
+    bool index_error = isRegisterIndexError(nr_id, nr_total);
     if (index_error) return;
 
     RegMap set_reg;
-    set_reg.index = set_number_reg.index;
-    memcpy(&set_reg.type, &set_number_reg.type, sizeof(set_number_reg.type));
-    memcpy(&set_reg.value, (char*)&set_number_reg.value, sizeof(set_number_reg.value));
+    set_reg.index = nr_interface.id;
+    set_reg.type = NUM_REG;
+    memcpy(&set_reg.value, (char*)&nr_interface, sizeof(nr_interface));
  
     int reg_size = sizeof(set_reg);
 
@@ -2938,54 +2871,39 @@ void Controller::setNumberRegister(void* params, int len)
 
 void Controller::getNumberRegister(void* params)
 {
-    register_spec_RegMap get_number_reg;
+     register_spec_NRInterface nr_interface;
 
-    memcpy(&get_number_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_number_reg));
+    memcpy(&nr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(nr_interface));
 
-    int send_type = static_cast<register_spec_RegType>(get_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(get_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
+    int nr_id = nr_interface.id;
+    int nr_total = 1500;
+    bool index_error = isRegisterIndexError(nr_id, nr_total);
     if (index_error) return;
 
-    RegType reg_type_temp = static_cast<int>(send_type);
+    RegMap get_reg;
+    get_reg.index = nr_interface.id;
+    get_reg.type = NUM_REG;
+    memcpy(&get_reg.value, (char*)&nr_interface, sizeof(nr_interface));
 
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_number_reg.value, sizeof(get_number_reg.value));
+    getRegister(&get_reg);
 
-    getRegister(&reg_param);
-
-    get_number_reg.has_value = true;
-    get_number_reg.index = send_index;
-    memcpy(&get_number_reg.type, &reg_type_temp, sizeof(reg_type_temp));
-    memcpy(&get_number_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
-
-    FST_INFO("GET:: getParamLen : %d",
-        tp_interface_->getReqDataPtr()->getParamLen());
+    memcpy(&nr_interface, (char*)&get_reg.value, sizeof(get_reg.value));
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_number_reg, sizeof(get_number_reg));
+        rep->fillData((char*)&nr_interface, sizeof(nr_interface));
     }
     else
     {
         motion_spec_Signal_param_t *param =
             (motion_spec_Signal_param_t*)param_ptr->params;
 
-        param->size = sizeof(get_number_reg);
-        memcpy(param->bytes, (char*)&get_number_reg, param->size);
+        param->size = sizeof(nr_interface);
+        memcpy(param->bytes, (char*)&nr_interface, param->size);
     }
 }
 

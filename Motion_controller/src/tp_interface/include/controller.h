@@ -669,24 +669,9 @@ class Controller
     /**
      * @brief: Judge whether there is a index error for setting
      */
-    bool isSetRegisterIndexError(int &send_index, int &reg_total);
+    bool isRegisterIndexError(int &send_index, int &reg_total);
 
     /**
-     * @brief: Judge whether there is a type error for setting
-     */
-    bool isSetRegisterTypeError(int &send_type, int &reg_type);
-
-    /**
-     * @brief: Judge whether there is a index error for getting
-     */
-    bool isGetRegisterIndexError(int &send_index, int &reg_total);
-
-    /**
-     * @brief: Judge whether there is a type error for getting
-     */
-    bool isGetRegisterTypeError(int &send_type, int &reg_type);
-
-   /**
      * @brief: callback for setting pose register : PR
      *
      * @param params

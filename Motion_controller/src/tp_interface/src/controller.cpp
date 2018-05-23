@@ -2799,29 +2799,44 @@ bool Controller::isRegisterIndexError(int &send_index, int &reg_total)
 }
 
 
+
 void Controller::setPoseRegister(void* params, int len)
 {
-    register_spec_PRInterface pr_interface = *(register_spec_PRInterface*)params;
+    register_spec_PRInterface pr_interface =
+        *(register_spec_PRInterface*)params;
 
     int pr_id = pr_interface.id;
     int pr_total = 200;
     bool index_error = isRegisterIndexError(pr_id, pr_total);
     if (index_error) return;
 
+    char test[32] = "";
+    if(0 == memcmp(pr_interface.comment, test, sizeof(pr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(pr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    pr_shmi_t pr_struct;
+    pr_struct.type = 101;
+    pr_struct.id = pr_interface.id;
+    memcpy(&pr_struct.pose, &pr_interface.pose, sizeof(pr_interface.pose));
+    memcpy(&pr_struct.joint, &pr_interface.joint, sizeof(pr_interface.joint));
+    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
+
     RegMap set_reg;
     set_reg.index = pr_interface.id;
     set_reg.type = POSE_REG;
-    memcpy(&set_reg.value, (char*)&pr_interface, sizeof(pr_interface));
+    memcpy(&set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
     int reg_size = sizeof(set_reg);
-
     setRegister(&set_reg, reg_size);
 }
 
 
 void Controller::getPoseRegister(void* params)
 {
-     register_spec_PRInterface pr_interface;
+    register_spec_PRInterface pr_interface;
 
     memcpy(&pr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
         sizeof(pr_interface));
@@ -2831,14 +2846,32 @@ void Controller::getPoseRegister(void* params)
     bool index_error = isRegisterIndexError(pr_id, pr_total);
     if (index_error) return;
 
+    int init_value = 0;
+    pr_shmi_t pr_struct;
+    memcpy(&pr_struct.pose, &pr_interface.pose, sizeof(pr_interface.pose));
+    memcpy(&pr_struct.joint, &pr_interface.joint, sizeof(pr_interface.joint));
+    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
+    pr_struct.type = 101;
+    pr_struct.id = pr_interface.id;
+
     RegMap get_reg;
     get_reg.index = pr_interface.id;
     get_reg.type = POSE_REG;
-    memcpy(&get_reg.value, (char*)&pr_interface, sizeof(pr_interface));
+    memcpy(&get_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
     getRegister(&get_reg);
 
-    memcpy(&pr_interface, &get_reg.value, sizeof(get_reg.value));
+    memcpy(&pr_struct, &get_reg.value, sizeof(pr_struct));
+
+    pr_interface.has_pose = true;
+    memcpy(&pr_interface.pose, &pr_struct.pose, sizeof(pr_struct.pose));
+    pr_interface.has_joint = true;
+    memcpy(&pr_interface.joint, &pr_struct.joint, sizeof(pr_struct.joint));
+    pr_interface.has_comment = true;
+    memcpy(&pr_interface.comment, &pr_struct.comment, sizeof(pr_struct.comment));
+    pr_interface.has_type = true;
+    pr_interface.type = 101;
+    pr_interface.id = pr_struct.id;
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -2867,20 +2900,31 @@ void Controller::setNumberRegister(void* params, int len)
     bool index_error = isRegisterIndexError(nr_id, nr_total);
     if (index_error) return;
 
+    char test[32] = "";
+    if(0 == memcmp(nr_interface.comment, test, sizeof(nr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(nr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    r_shmi_t nr_struct;
+    nr_struct.value = nr_interface.value;
+    nr_struct.id = nr_interface.id;
+    memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
+
     RegMap set_reg;
     set_reg.index = nr_interface.id;
     set_reg.type = NUM_REG;
-    memcpy(&set_reg.value, (char*)&nr_interface, sizeof(nr_interface));
+    memcpy(&set_reg.value, (char*)&nr_struct, sizeof(nr_struct));
  
     int reg_size = sizeof(set_reg);
-
     setRegister(&set_reg, reg_size);
 }
 
 
 void Controller::getNumberRegister(void* params)
 {
-     register_spec_NRInterface nr_interface;
+    register_spec_NRInterface nr_interface;
 
     memcpy(&nr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
         sizeof(nr_interface));
@@ -2890,14 +2934,25 @@ void Controller::getNumberRegister(void* params)
     bool index_error = isRegisterIndexError(nr_id, nr_total);
     if (index_error) return;
 
+    r_shmi_t nr_struct;
+    memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
+    nr_struct.id =  nr_interface.id;
+    nr_struct.value =  nr_interface.value;
+
     RegMap get_reg;
     get_reg.index = nr_interface.id;
     get_reg.type = NUM_REG;
-    memcpy(&get_reg.value, (char*)&nr_interface, sizeof(nr_interface));
+    memcpy(&get_reg.value, (char*)&nr_struct, sizeof(nr_struct));
 
     getRegister(&get_reg);
 
-    memcpy(&nr_interface, (char*)&get_reg.value, sizeof(get_reg.value));
+    memcpy(&nr_struct, &get_reg.value, sizeof(nr_struct));
+
+    nr_interface.has_value = true;
+    nr_interface.value = nr_struct.value;
+    nr_interface.id = nr_struct.id;
+    nr_interface.has_comment = true;
+    memcpy(nr_interface.comment, nr_struct.comment, sizeof(nr_struct.comment));
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 

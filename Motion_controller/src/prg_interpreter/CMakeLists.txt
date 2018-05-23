@@ -112,3 +112,19 @@ install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
 
+install(FILES config/mr_reg.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(FILES config/pr_reg.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(FILES config/r_reg.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(FILES config/sr_reg.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+

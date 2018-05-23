@@ -777,14 +777,23 @@ void Controller::sendGetIORequest(char * params, int len)
 
 int Controller::getIOReply(void* params)
 {
-    bool is_ready = ShareMem::instance()->getIntprtDataFlag();
-    if(is_ready == false) return -1;
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    uint8_t io_info = 255;
 
-    uint8_t io_info = 0;
+    bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+
+    if(is_ready == false)
+    {
+        if (param_ptr->type == REPLY)
+        {
+            TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+            rep->fillData((char*)&io_info, sizeof(io_info));
+        }
+        return -1;
+    }
 
     ShareMem::instance()->getDIOInfo(&io_info);
 
-    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;

@@ -100,16 +100,7 @@ public:
     // Return:  true: get successfully
     //          false:get operation is terminated because of some reason
     //------------------------------------------------------------        
-    bool getFrame(int id, Frame& frame);
-
-    //------------------------------------------------------------
-    // Function:    getAllValidFrameId
-    // Summary: get all ids of the valid frames
-    // In:      None
-    // Out:     None
-    // Return:  list of id of valid frames
-    //------------------------------------------------------------  
-    std::vector<int> getAllValidFrameId();
+    bool getFrame(int id, Frame& frame);    
     
 private:
     std::string getFramePath(int frame_index);

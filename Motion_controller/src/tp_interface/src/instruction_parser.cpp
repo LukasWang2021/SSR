@@ -68,7 +68,7 @@ void InstructionParser::updateTrajRemainCount()
         {
             if (arm_group_->getFIFOLength() < 50)
             {
-                //ShareMem::instance()->setIntprtSendFlag(true);
+                // ShareMem::instance()->setIntprtSendFlag(true);
             }
         }
         else    //fine wait servo ready

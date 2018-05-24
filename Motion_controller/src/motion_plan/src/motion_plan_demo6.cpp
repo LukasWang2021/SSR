@@ -20,6 +20,7 @@
 #include <motion_plan_traj_plan.h>
 #include <motion_plan_reuse.h>
 #include <motion_plan_manual_teach.h>
+#include <lock_free_fifo.h>
 
 using namespace std;
 using namespace fst_controller;
@@ -30,6 +31,8 @@ namespace fst_controller
 
 void forwardMaximumDuration(const JointState je, const JointState js, double *alpha_min, double *alpha_max, double *t_max);
 }
+
+
 
 int main(int argc, char **argv)
 {

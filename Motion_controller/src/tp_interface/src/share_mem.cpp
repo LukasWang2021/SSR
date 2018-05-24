@@ -268,7 +268,7 @@ void ShareMem::setUserOpMode(UserOpMode mode)
 
 void ShareMem::getCurLine(char * line)
 {
-    int offset = &((IntprtStatus*)0)->line;     
+    int offset = &((Instruction*)0)->line;     
     readShm(SHM_INTPRT_STATUS, offset, (void*)line, TP_XPATH_LEN);
     return line;
 }

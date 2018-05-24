@@ -466,6 +466,13 @@ ErrorCode MotionCommand::planLinePath(void)
     }
     */
 
+    double cycle_distance, cycle_radian;
+
+    if      (vel_ < 1000)   {cycle_distance = g_cycle_distance;     cycle_radian = g_cycle_radian;      }
+    else if (vel_ < 2000)   {cycle_distance = g_cycle_distance * 2; cycle_radian = g_cycle_radian * 2;  }
+    else if (vel_ < 3000)   {cycle_distance = g_cycle_distance * 3; cycle_radian = g_cycle_radian * 3;  }
+    else                    {cycle_distance = g_cycle_distance * 4; cycle_radian = g_cycle_radian * 4;  }
+
     if (innerProductQuatern(pose_starting_.orientation, pose_ending_.orientation) < 0)
     {
         pose_starting_.orientation.w = -pose_starting_.orientation.w;
@@ -478,8 +485,8 @@ ErrorCode MotionCommand::planLinePath(void)
     // Resolve the max stamp of this path
     double distance = getDistance(pose_starting_.position, pose_ending_.position);
     double rotation = getOrientationAngle(pose_starting_.orientation, pose_ending_.orientation);
-    double stamp_position    = distance / g_cycle_distance;
-    double stamp_orientation = rotation / g_cycle_radian;
+    double stamp_position    = distance / cycle_distance;
+    double stamp_orientation = rotation / cycle_radian;
     max_stamp_ = stamp_position > stamp_orientation ? ceil(stamp_position) : ceil(stamp_orientation);
 
     line_coeff_.position_coeff_x  = (pose_ending_.position.x - pose_starting_.position.x) / max_stamp_;

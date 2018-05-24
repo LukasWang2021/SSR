@@ -1,28 +1,28 @@
 soft_constraint:
     j1:
         home: 0.00
-        upper: 2.9670
-        lower: -2.9670
+        upper: 2.8
+        lower: -2.8
     j2:
         home: 0.0
-        upper: 1.3083
-        lower: -2.2678
+        upper: 1.6
+        lower: -2.2
     j3:
         home: 0.0
-        upper: 3.2272
-        lower: -1.1688
+        upper: 3.3
+        lower: -1.0
     j4:
         home: 0.0
-        upper: 3.3161
-        lower: -3.3161
+        upper: 3.1
+        lower: -3.1
     j5:
         home: 0.0
-        upper: 1.8491
-        lower: -1.8491
+        upper: 1.8
+        lower: -1.8
     j6:
         home: 0.0
-        upper: 6.2832
-        lower: -6.2832
+        upper: 6.0
+        lower: -6.0
     j7:
         home: 0.0
         upper: 0.0
@@ -38,23 +38,23 @@ soft_constraint:
 
 soft_constraint_limit:
     j1:
-        upper: 2.97
-        lower: -2.97
+        upper: 2.9020
+        lower: -2.9020
     j2:
-        upper: 1.4
-        lower: -2.3
+        upper: 1.6977
+        lower: -2.2911
     j3:
-        upper: 3.3
-        lower: -1.2
+        upper: 3.3906
+        lower: -1.1217
     j4:
-        upper: 3.4
-        lower: -3.4
+        upper: 3.2161
+        lower: -3.2161
     j5:
-        upper: 1.9
-        lower: -1.9
+        upper: 1.9246
+        lower: -1.9246
     j6:
-        upper: 6.3
-        lower: -6.3
+        upper: 6.1832
+        lower: -6.1832
     j7:
         upper: 0.0
         lower: 0.0

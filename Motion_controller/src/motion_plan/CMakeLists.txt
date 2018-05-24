@@ -62,6 +62,7 @@ add_library(motion_plan
     src/motion_plan_manual_teach.cpp
     src/motion_plan_traj_plan.cpp
 
+    src/motion_plan_traj_fifo.cpp
     src/motion_plan_arm_group.cpp
     src/motion_plan_frame_manager.cpp
     src/dynamics_interface.cpp
@@ -82,6 +83,10 @@ add_executable(motion_plan_demo4
 
 add_executable(motion_plan_demo5
     src/motion_plan_demo5.cpp
+)
+
+add_executable(motion_plan_demo6
+    src/motion_plan_demo6.cpp
 )
 
 add_executable(motion_plan_demo_manual
@@ -118,6 +123,11 @@ target_link_libraries(motion_plan_demo5
     motion_plan
 )
 
+target_link_libraries(motion_plan_demo6
+    ${catkin_LIBRARIES}
+    motion_plan
+)
+
 target_link_libraries(motion_plan_demo_manual
     ${catkin_LIBRARIES}
     motion_plan
@@ -148,6 +158,10 @@ install(TARGETS motion_plan_demo4
 )
 
 install(TARGETS motion_plan_demo5
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS motion_plan_demo6
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

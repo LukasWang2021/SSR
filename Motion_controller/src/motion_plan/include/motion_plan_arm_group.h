@@ -8,14 +8,15 @@
 #ifndef _MOTION_PLAN_ARM_GROUP_H
 #define _MOTION_PLAN_ARM_GROUP_H
 
+#include <fstream>
 #include <string>
 #include <vector>
-#include <atomic>
 #include <pthread.h>
 #include <fst_datatype.h>
 #include <motion_plan_error_code.h>
 #include <motion_plan_motion_command.h>
 #include <motion_plan_manual_teach.h>
+#include <motion_plan_traj_fifo.h>
 
 #define     PATH_FIFO_CAPACITY              2048        // must be setted to 2~N
 #define     TRAJECTORY_FIFO_CAPACITY        64         // must be setted to 2^N
@@ -23,6 +24,17 @@
 
 namespace fst_controller
 {
+
+enum MotionState
+{
+    IDLE = 0x0,
+    AUTO_RUNNING = 0x100,
+    AUTO_RUNNING_TO_PAUSE = 0x101,
+    AUTO_PAUSE = 0x110,
+    AUTO_RESUME = 0x120,
+    AUTO_RESUME_TO_PAUSE = 0x121,
+    AUTO_READY = 0x130,
+};
 
 struct ControlPointCache
 {
@@ -37,6 +49,7 @@ struct ControlPointCache
     ControlPointCache   *prev;
     ControlPointCache   *next;
 };
+
 
 
 class ArmGroup
@@ -701,10 +714,8 @@ private:
     //------------------------------------------------------------
     ErrorCode autoLine(const MotionTarget &target, int id);
 
-    size_t getTrajFIFOLength(void);
-
-    ErrorCode smoothJoint2Joint(const ControlPoint &ps, const ControlPoint &pe,
-                                MotionTime smooth_time, ControlPoint &traj);
+    ErrorCode smoothJoint2Joint(const JointState &ps, const JointState &pe,
+                                MotionTime smooth_time, TrajSegment &traj);
     
     ErrorCode convertPathPoint(ControlPoint &cp);
 
@@ -732,9 +743,10 @@ private:
     ControlPointCache    path_cache_[MOTION_POOL_CAPACITY];
     ControlPointCache   *pick_path_ptr_;
 
-    ControlPoint    traj_fifo_[TRAJECTORY_FIFO_CAPACITY];
-    size_t          traj_head_;
-    size_t          traj_tail_;
+    TrajectoryFifo  traj_fifo_;
+    //ControlPoint    traj_fifo_[TRAJECTORY_FIFO_CAPACITY];
+    //size_t          traj_head_;
+    //size_t          traj_tail_;
 
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;
@@ -744,7 +756,7 @@ private:
 
     MotionTime      pick_time_;
     size_t          pick_segment_;
-    bool            auto_running_;
+    //bool            auto_running_;
 
     MotionTime      manual_pick_time_;
     bool            manual_running_;
@@ -752,8 +764,11 @@ private:
 
     ManualTrajectory    manual_traj_;
 
+    MotionState     motion_state_;
+
 
     pthread_mutex_t manual_mutex_;
+    pthread_mutex_t auto_mutex_;
 };
 
 

@@ -201,18 +201,6 @@ enum SmoothMode
     MODE_DISTANCE,
 };
 
-enum CurveMode
-{
-    T_CURVE,
-    S_CURVE,
-};
-
-enum PointStyle
-{
-    POINT_COMMON = 0,
-    POINT_TRANSITION = 1,
-};
-
 // PathPoint structure defines what does path-plan should give out.
 struct PathPoint {
     // Command type, joint command or cartesian command*/
@@ -249,26 +237,30 @@ struct ControlPoint {
     MotionTime  command_duration;
     MotionTime  forward_duration;
     MotionTime  backward_duration;
-    MotionTime  duration;
 
     
     // point is what trajectory-create should give out
-    JointState  point;
-    //JointState  forward_point;
-    //JointState  backward_point;
+    JointState  forward_point;
+    JointState  backward_point;
 
     double  coeff[AXIS_IN_ALGORITHM][6];
 
-    bool    smooth;
-    bool    alpha_valid;
-    double  alpha_upper[6];
-    double  alpha_lower[6];
+    //bool    alpha_valid;
+    //double  alpha_upper[6];
+    //double  alpha_lower[6];
 };
 
-struct TrajectoryPoint {
-    Tick            stamp;
-    JointState      point;
-    MotionCommand  *source;
+struct TrajSegment
+{
+    int         id;
+    MotionTime  time_from_start;
+    MotionTime  duration;
+
+    //bool    quadratic;
+    //bool    quintic;
+    //bool    t_curve;
+
+    double      coeff[AXIS_IN_ALGORITHM][6];
 };
 
 // Define a point structure used in joint trajectory fifo

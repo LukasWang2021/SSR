@@ -13,7 +13,7 @@
 //#include <motion_plan_variable.h>
 
 
-#define TRAJECTORY_FIFO_CAPACITY    500
+#define TRAJECTORY_FIFO_CAPACITY    256
 
 #define ITEM_USED                   1
 #define ITEM_UNUSED                 0

@@ -77,9 +77,7 @@ typedef enum _InterpreterState
     ERROR_NEXT_WITHOUT_FOR_T = 212,            // 11
     ERROR_TOO_MANY_NESTED_GOSUBS_T = 213,      // 12 
     ERROR_RETURN_WITHOUT_GOSUB_T = 214,        // 13 
-    ERROR_FILE_NOT_FOUND_T = 215,              // 14
-    ERROR_MOVL_TO_JOINT_T = 216,               // 15
-    ERROR_MOVJ_TO_POINT_T = 217                // 16
+    ERROR_FILE_NOT_FOUND_T = 215               // 14
 
 }InterpreterState;
 

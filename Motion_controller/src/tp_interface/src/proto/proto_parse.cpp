@@ -542,17 +542,10 @@ void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf
 
 void ProtoParse::decFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    frame_spec_Interface frame_interface;
-    bool ret = false;
-    PARSE_FIELD(frame_interface, frame_spec_Interface, in_buf, in_len, ret);
+    frame_spec_Interface frame_interface = *(frame_spec_Interface*)in_buf;
 
-    if (ret == false)
-    {
-        FST_ERROR("error decode frame interface");
-        return;
-    }
+    TPIFReqData<> *req = (TPIFReqData<>*)out_buf;
 
-    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
     req->fillData((char*)&frame_interface, sizeof(frame_interface));
 }
 
@@ -578,17 +571,10 @@ void ProtoParse::encFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 
 void ProtoParse::decActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    frame_spec_ActivateInterface activate_frame;
-    bool ret = false;
-    PARSE_FIELD(activate_frame, frame_spec_ActivateInterface, in_buf, in_len, ret);
-
-    if (ret == false)
-    {
-        FST_ERROR("error decode frame interface");
-        return;
-    }
+    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)in_buf;
 
     TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
+
     req->fillData((char*)&activate_frame, sizeof(activate_frame));
 }
 
@@ -611,10 +597,9 @@ void ProtoParse::encActivateFrame(const uint8_t *in_buf, int in_len, void *out_b
     param->size = ostream.bytes_written;
 }
 
-
-void ProtoParse::encPoseRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+void ProtoParse::encRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    register_spec_PRInterface *pr_interface = (register_spec_PRInterface*)in_buf;
+    register_spec_RegMap *reg_param = (register_spec_RegMap*)in_buf;
 
     BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
 
@@ -622,7 +607,7 @@ void ProtoParse::encPoseRegister(const uint8_t *in_buf, int in_len, void *out_bu
 
     pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
 
-    bool ret = pb_encode(&ostream, register_spec_PRInterface_fields, pr_interface);
+    bool ret = pb_encode(&ostream, register_spec_RegMap_fields, reg_param);
 
     if(ret != true)
     {
@@ -636,57 +621,13 @@ void ProtoParse::encPoseRegister(const uint8_t *in_buf, int in_len, void *out_bu
 }
 
 
-void ProtoParse::decPoseRegister(const uint8_t *in_buf, int in_len, void *out_buf)
+void ProtoParse::decRegister(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    register_spec_PRInterface pr_interface;
-    bool ret = false;
-    PARSE_FIELD(pr_interface, register_spec_PRInterface, in_buf, in_len, ret);
-
-    if (ret == false)
-    {
-        FST_ERROR("error decode frame interface");
-        return;
-    }
+    register_spec_RegMap register_interface = *(register_spec_RegMap*)in_buf;
 
     TPIFReqData<> *req = (TPIFReqData<>*)out_buf;
-    req->fillData((char*)&pr_interface, sizeof(pr_interface));
-}
 
-
-void ProtoParse::encNumberRegister(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    register_spec_NRInterface *nr_interface = (register_spec_NRInterface*)in_buf;
-
-    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
-
-    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
-
-    bool ret = pb_encode(&ostream, register_spec_NRInterface_fields, nr_interface);
-
-    if(ret != true)
-    {
-        FST_ERROR("encRegister error encode io info");
-        return;
-    }
-
-    param->size = ostream.bytes_written;
-}
-
-
-void ProtoParse::decNumberRegister(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    register_spec_NRInterface nr_interface;
-    bool ret = false;
-    PARSE_FIELD(nr_interface, register_spec_NRInterface, in_buf, in_len, ret);
-
-    if (ret == false)
-    {
-        FST_ERROR("error decode frame interface");
-        return;
-    }
-
-    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
-    req->fillData((char*)&nr_interface, sizeof(nr_interface));
+    req->fillData((char*)&register_interface, sizeof(register_interface));
 }
 
 
@@ -724,46 +665,6 @@ void ProtoParse::encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf)
     pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
 
     bool ret = pb_encode(&ostream, motion_spec_GlobalParams_fields, global);
-
-    if(ret != true)
-    {
-        FST_ERROR("error encode io info");
-        return;
-    }
-
-    param->size = ostream.bytes_written;
-
-    FST_INFO("bytes_written:%d", ostream.bytes_written);
-}
-
-void ProtoParse::decFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    frame_spec_IdListInterface id_list;
-    bool ret = false;
-    PARSE_FIELD(id_list, frame_spec_IdListInterface, in_buf, in_len, ret);
-
-    if (ret == false)
-    {
-        FST_ERROR("error decode frame interface");
-        return;
-    }
-
-    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
-    req->fillData((char*)&id_list, sizeof(id_list));
-}
-
-
-void ProtoParse::encFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf)
-{
-    frame_spec_IdListInterface *id_list = (frame_spec_IdListInterface*)in_buf;
-
-    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf;
-
-    FST_INFO("param is : %d", param);
-
-    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
-
-    bool ret = pb_encode(&ostream,frame_spec_IdListInterface_fields, id_list);
 
     if(ret != true)
     {

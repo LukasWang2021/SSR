@@ -60,8 +60,6 @@
 #define FALT_INIT_TOOL_FRAME                    (unsigned long long int)0x00110001006707FF   /*fail_init_tool_frame*/
 #define FALT_SET_FRAME                          (unsigned long long int)0x0001000200670800   /*fail_set_frame*/
 
-#define FAIL_INTERPRETER_BASE                   (unsigned long long int)0x0001000900B50000   /*fail to dump parameter into a file*/
-
 #define TPI_SUCCESS				(0)
 //#define INT64 ErrorCode
 

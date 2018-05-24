@@ -3,10 +3,6 @@
 
 char *get_version();  
 
-char *get_build_date();
-
-char *get_build_time();
-
 int get_ver_major();
 
 int get_ver_minor();

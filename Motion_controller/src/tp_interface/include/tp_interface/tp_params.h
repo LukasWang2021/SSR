@@ -91,8 +91,10 @@ BaseTypes_ParamInfo g_param_info[] =
 	{	"root/Control/userFrame",	24293,	0,	1280,	96,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Control/activateToolFrame",	49429,	0,	5,	4,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Control/activateUserFrame",	67525,	0,	5,	4,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Register/pose",	34069,	0,	1280,	524,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Register/number",	32882,	0,	1280,	524,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/Control/userValidFrameIDList",	65444,	0,	1280,	363,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/Control/toolValidFrameIDList",	37812,	0,	1280,	363,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/Register/pose",	34069,	0,	1280,	188,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/Register/number",	32882,	0,	1280,	54,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Test/string",	4855,	0,	1280,	128,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Control/globalAcceleration",	22462,	0,	1280,	9,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 

@@ -116,6 +116,7 @@ bool FrameManager::deleteFrame(int id)
     return writeFrameToYaml(frame_set_[id]);
 }
 
+
 bool FrameManager::updateFrame(Frame& frame)
 {
     if(frame.id >= frame_set_.size()
@@ -159,6 +160,20 @@ bool FrameManager::getFrame(int id, Frame& frame)
     return true;
 }
 
+std::vector<int> FrameManager::getAllValidFrameId()
+{
+    std::vector<int> id_list;
+    std::vector<Frame>::iterator it;
+    for(it = frame_set_.begin(); it != frame_set_.end(); it++)
+    {
+        if(it->is_valid)
+        {
+            id_list.push_back(it->id);
+        }
+    }
+    return id_list;
+}
+
 std::string FrameManager::getFramePath(int frame_index)
 {
     std::string index_str;
@@ -199,11 +214,13 @@ bool FrameManager::readAllFrameFromYaml(int frame_set_size)
             frame_set_.push_back(frame);
         }
         is_ready_ = true;
+	return true;
     }
     else
     {
         FST_ERROR("Lost config file: %s", file_path_.c_str());
-        return param_.getLastError();
+        is_ready_ = false;
+	return false;
     }
 }
 

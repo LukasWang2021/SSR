@@ -97,8 +97,10 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	24293,	{	&ProtoParse::decFrame,	&ProtoParse::encFrame	}	},
 	{	49429,	{	&ProtoParse::decActivateFrame,	&ProtoParse::encActivateFrame	}	},
 	{	67525,	{	&ProtoParse::decActivateFrame,	&ProtoParse::encActivateFrame	}	},
-	{	34069,	{	&ProtoParse::decRegister,	&ProtoParse::encRegister	}	},
-	{	32882,	{	&ProtoParse::decRegister,	&ProtoParse::encRegister	}	},
+	{	65444,	{	&ProtoParse::decFrameIDList,	&ProtoParse::encFrameIDList	}	},
+	{	37812,	{	&ProtoParse::decFrameIDList,	&ProtoParse::encFrameIDList	}	},
+	{	34069,	{	&ProtoParse::decPoseRegister,	&ProtoParse::encPoseRegister	}	},
+	{	32882,	{	&ProtoParse::decNumberRegister,	&ProtoParse::encNumberRegister	}	},
 	{	4855,	{	&ProtoParse::decDefault,	&ProtoParse::encString	}	},
 	{	22462,	{	&ProtoParse::decDefault,	&ProtoParse::encGlobalAcc	}	},
 

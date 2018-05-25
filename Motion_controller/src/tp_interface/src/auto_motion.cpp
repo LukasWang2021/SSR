@@ -127,9 +127,11 @@ bool AutoMotion::abort()
     ShareMem::instance()->getInstruction(inst); //read out all instructions
 }
 
-void AutoMotion::moveTarget(MotionTarget target)
+ErrorCode AutoMotion::moveTarget(MotionTarget target)
 {
-    arm_group_->autoMove(target, 0);
+    ErrorCode err = SUCCESS;
+    err = arm_group_->autoMove(target, 0);
     mot_target_ = target;
     is_done_ = false;
+	return err;
 }

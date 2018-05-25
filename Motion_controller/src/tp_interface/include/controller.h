@@ -13,6 +13,7 @@
 #include <string.h>
 #include <cstring>
 #include <fstream>
+#include <vector>
 #include "motion_plan_arm_group.h"
 #include "motion_plan_frame_manager.h"
 #include "motion_plan_reuse.h"
@@ -524,7 +525,7 @@ class Controller
      *
      * @param params
      */
-    int getIOReply(char* params);
+    int getIOReply(void* params);
 	
     /**
      * @brief: send IO Simulate Status Request  
@@ -668,24 +669,9 @@ class Controller
     /**
      * @brief: Judge whether there is a index error for setting
      */
-    bool isSetRegisterIndexError(int &send_index, int &reg_total);
+    bool isRegisterIndexError(int &send_index, int &reg_total);
 
     /**
-     * @brief: Judge whether there is a type error for setting
-     */
-    bool isSetRegisterTypeError(int &send_type, int &reg_type);
-
-    /**
-     * @brief: Judge whether there is a index error for getting
-     */
-    bool isGetRegisterIndexError(int &send_index, int &reg_total);
-
-    /**
-     * @brief: Judge whether there is a type error for getting
-     */
-    bool isGetRegisterTypeError(int &send_type, int &reg_type);
-
-   /**
      * @brief: callback for setting pose register : PR
      *
      * @param params
@@ -751,6 +737,21 @@ class Controller
      * @param params
      */
     void getChangeRegList(InterpreterCommand cmd, void* params);
+
+
+    /**
+     * @brief: callback for getting user valid frame id list
+     *
+     * @param params
+     */
+    void getUserValidFrameIDList(void* params);
+
+    /**
+     * @brief: callback for getting tool valid frame id list
+     *
+     * @param params
+     */
+    void getToolValidFrameIDList(void* params);
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class

@@ -1,27 +1,42 @@
-#include <stdio.h>
-#include <tp_interface_version.h>
+#include "stdio.h"
+#include "version.h"
 
-char ver_buf[128];
-
+#define VER_MAJOR 2
+#define VER_MINOR 0
+#define VER_REVISION 5
+  
+#define VER_BUILD_DATE "20180525"  
+#define VER_BUILD_TIME "09:41:23"    
+  
+#define VERSION_ALL  "2.0.5.20180525"  
+  
 char *get_version()
 {
-    snprintf(ver_buf, sizeof(ver_buf), "%d.%d.%d", 
-            tp_interface_VERSION_MAJOR, tp_interface_VERSION_MINOR, tp_interface_VERSION_PATCH);
-    return ver_buf;
+    return VERSION_ALL;
 }  
+  
+char *get_build_date()
+{
+    return VER_BUILD_DATE;
+}
+  
+char *get_build_time()
+{
+    return VER_BUILD_TIME;
+}
   
 int get_ver_major()
 {
-    return tp_interface_VERSION_MAJOR;
+    return VER_MAJOR;
 }
   
 int get_ver_minor()
 {
-    return tp_interface_VERSION_MINOR;
+    return VER_MINOR;
 }
   
 int get_ver_rev()
 {  
-    return tp_interface_VERSION_PATCH;
+    return VER_REVISION;
 }
   

@@ -296,7 +296,7 @@ void Controller::updateWorkStatus(int id)
 			else if (state >= ERROR_EXEC_BASE_T)
 			{
 				rcs::Error::instance()->add(
-					FAIL_DUMPING_PARAM + state - ERROR_EXEC_BASE_T);
+					FAIL_INTERPRETER_BASE + state - ERROR_EXEC_BASE_T);
 			}
             break;
         }
@@ -758,7 +758,7 @@ void Controller::setIOStatus(char* params, char value)
     // ctrl.dio = *dio;
     memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
     sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
-	ctrl.dioPathInfo.value = value ;
+	ctrl.dioPathInfo.value = value;
     ShareMem::instance()->intprtControl(ctrl);
     ShareMem::instance()->setIntprtDataFlag(false);
 }
@@ -775,13 +775,32 @@ void Controller::sendGetIORequest(char * params, int len)
     ShareMem::instance()->setIntprtDataFlag(false);
 }
 
-int Controller::getIOReply(char * params)
+int Controller::getIOReply(void* params)
 {
-	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
-	if(is_ready == false)
-		return -1;
-	ShareMem::instance()->getDIOInfo(params);
-	return 1;
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    uint8_t io_info = 255;
+
+    bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+
+    if(is_ready == false)
+    {
+        if (param_ptr->type == REPLY)
+        {
+            TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+            rep->fillData((char*)&io_info, sizeof(io_info));
+        }
+        return -1;
+    }
+
+    ShareMem::instance()->getDIOInfo(&io_info);
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&io_info, sizeof(io_info));
+    }
+
+    return 1;
 }
 
 void Controller::sendIOSimulateStatusRequest(char* params, int len)
@@ -1369,6 +1388,7 @@ void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
 
 void Controller::stateMachine(void* params)
 {
+    U64 result = SUCCESS; 
     Instruction inst;
     int fifo_len =  arm_group_->getFIFOLength();
     /*if (auto_motion_->getPrgmState() == EXECUTE_R)*/
@@ -1410,7 +1430,17 @@ void Controller::stateMachine(void* params)
         	if(inst.line > 0)
 	        {
 	            printf("get instruction, line:%d\n", inst.line);
-	            auto_motion_->moveTarget(inst.target);
+	            result = auto_motion_->moveTarget(inst.target);
+				if(result != SUCCESS)
+        		{
+	                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+        			rcs::Error::instance()->add(result);
+					setLogicStateCmd(EMERGENCY_STOP_E);
+					
+					InterpreterControl ctrl;
+					ctrl.cmd = ABORT;
+					ShareMem::instance()->intprtControl(ctrl);
+	        	}
 	        }
         }
     }
@@ -1433,13 +1463,6 @@ void Controller::stateMachine(void* params)
          bool bRet = ShareMem::instance()->getIntprtSendFlag();
 		 if(bRet == false)
 		 {
-             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
-             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
-             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
-             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
-             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
-             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
-             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
              FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
 		     ShareMem::instance()->setIntprtSendFlag(true);
 		 }
@@ -1692,46 +1715,39 @@ void Controller::requestProc()
                 if (result != TPI_SUCCESS)
                 {
                     rcs::Error::instance()->add(result);
-                    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
                     break;
                 }
-#if 0
-                IOInterface::instance()->getDIO(&info, 
-                        tp_interface_->getRepDataPtr()->getParamBufPtr(),
-                        tp_interface_->getRepDataPtr()->getParamBufLen());
-                tp_interface_->getRepDataPtr()->setParamLen(info.bytes_len);
-				
-#endif
+
 				sendGetIORequest(str_path.c_str(), str_path.length());
 				usleep(10000);
-				int iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
-				int iCount = 0 ;
-				while(iRet == -1)
-				{
-					usleep(100000);
-					iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
-					if(iCount++ > 20)
-					{
-						FST_INFO("getRegisterReply Failed");
-						break;
-					}
-				}
-				FST_INFO("getIOReply:: getParamLen:%d", 
-					tp_interface_->getRepDataPtr()->getParamLen());
-				char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr() ;
-				for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
-					FST_INFO("GET:: data:%d", dataChar[i]);
-				
-                tp_interface_->getRepDataPtr()->setParamLen(info.bytes_len);
-				FST_INFO("GET:: truncate data to %d", info.bytes_len);
-				for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
-					FST_INFO("GET:: truncate data:%d", dataChar[i]);
 
-				FST_INFO("GET:: id : %d getParamLen:%d", 
-					tp_interface_->getRepDataPtr()->getID(),
-					tp_interface_->getRepDataPtr()->getParamLen());
-                tp_interface_->getRepDataPtr()->setParamLen(2);
-				
+                TPIParamBuf param_buf;
+                param_buf.type = REPLY;
+                param_buf.params = tp_interface_->getRepDataPtr();
+
+                int iRet = getIOReply(&param_buf);
+                int iCount = 0;
+
+                while(iRet == -1)
+                {
+                    usleep(100000);
+                    iRet = getIOReply(&param_buf);
+                    if(iCount++ > 20)
+                    {
+                        FST_INFO("getRegisterReply Failed");
+                        break;
+                    }
+                }
+                FST_INFO("getIOReply:: getParamLen:%d", 
+                    tp_interface_->getRepDataPtr()->getParamLen());
+
+                char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr();
+                for (int i = 0; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
+                    FST_INFO("GET:: data:%d", dataChar[i]);
+
+                FST_INFO("GET:: id : %d getParamLen:%d",
+                    tp_interface_->getRepDataPtr()->getID(),
+                    tp_interface_->getRepDataPtr()->getParamLen());
             }
             else if (str_path.substr(0, 23) == "root/simulate_IO_status")
             {
@@ -2348,10 +2364,9 @@ void Controller::setToolFrame(void* params, int len)
     frame.id = frame_interface.frame.id;
 
     char test[32] = "";
-    FST_INFO("Here set tool frame comment is : %s", frame_interface.frame.comment);
-    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(frame_interface.frame.comment)))
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(test)))
     {
-        char test_comment[32] = "set frame";
+        char test_comment[32] = "\"\"";
         memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
     }
 
@@ -2359,9 +2374,6 @@ void Controller::setToolFrame(void* params, int len)
             sizeof(frame_interface.frame.comment));
     memcpy(&frame.data, &frame_interface.frame.data,
             sizeof(frame_interface.frame.data));
-
-    FST_INFO("Here set tool frame id is : %d", frame_interface.frame.id);
-    FST_INFO("Here set tool frame operation : %d", frame_interface.operation);
 
     switch(frame_interface.operation)
     {
@@ -2431,11 +2443,18 @@ void Controller::getToolFrame(void* params)
     frame_interface.frame.has_is_valid = true;
     frame_interface.frame.has_comment = true;
     frame_interface.frame.has_data = true;
-    frame_interface.frame.id = frame_interface.frame.id;
-    frame_interface.frame.is_valid = false;
+    frame_interface.frame.id = frame.id;
+    frame_interface.frame.is_valid = frame.is_valid;
     memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
     memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
     frame_interface.has_operation = false;
+
+    char none_commemt[32] = "\"\"";
+    if(0 == memcmp(frame_interface.frame.comment, none_commemt, sizeof(none_commemt)))
+    {
+        char null_char[32] = "";
+        memcpy(frame_interface.frame.comment, null_char, sizeof(null_char));
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -2500,10 +2519,9 @@ void Controller::setUserFrame(void* params, int len)
     frame.id = frame_interface.frame.id;
 
     char test[32] = "";
-    FST_INFO("Here set user frame comment is : %s", frame_interface.frame.comment);
-    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(frame_interface.frame.comment)))
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(test)))
     {
-        char test_comment[32] = "set frame";
+        char test_comment[32] = "\"\"";
         memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
     }
 
@@ -2511,9 +2529,6 @@ void Controller::setUserFrame(void* params, int len)
             sizeof(frame_interface.frame.comment));
     memcpy(&frame.data, &frame_interface.frame.data,
             sizeof(frame_interface.frame.data));
-
-    FST_INFO("Here set user frame id is : %d", frame_interface.frame.id);
-    FST_INFO("Here set user frame operation : %d", frame_interface.operation);
 
     switch(frame_interface.operation)
     {
@@ -2588,6 +2603,13 @@ void Controller::getUserFrame(void* params)
     memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
     memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
     frame_interface.has_operation = false;
+
+    char none_commemt[32] = "\"\"";
+    if(0 == memcmp(frame_interface.frame.comment, none_commemt, sizeof(none_commemt)))
+    {
+        char null_char[32] = "";
+        memcpy(frame_interface.frame.comment, null_char, sizeof(null_char));
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -2676,7 +2698,7 @@ void Controller::setRegister(void* params, int len)
 {
     RegMap* mod_reg = (RegMap*)params;
         FST_INFO("setRegister: RegMap::type: %d, idx: %d,", 
-			mod_reg->type, mod_reg->index, mod_reg->type);
+			mod_reg->type, mod_reg->index);
     
     InterpreterControl ctrl;
     ctrl.cmd = MOD_REG;
@@ -2688,14 +2710,14 @@ void Controller::setRegister(void* params, int len)
 void Controller::getRegister(void* params)
 {
     RegMap* reg = (RegMap*)params;
-	sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
+	sendGetRegisterRequest((void *)reg, sizeof(RegMap));
 	usleep(10000);
-	int iRet = getRegisterReply((void *)&reg);
+	int iRet = getRegisterReply((void *)reg);
 	int iCount = 0 ;
 	while(iRet == -1)
 	{
 		usleep(100000);
-		iRet = getRegisterReply((void *)&reg);
+		iRet = getRegisterReply((void *)reg);
 		if(iCount++ > 20)
 		{
 			FST_INFO("getRegisterReply Failed");
@@ -2708,7 +2730,7 @@ void Controller::sendGetRegisterRequest(void * params, int len)
 {
     RegMap* reg = (RegMap*)params;
         FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
+			reg->type, reg->index);
     InterpreterControl ctrl;
     ctrl.cmd = READ_REG ;
     ctrl.reg = *reg;
@@ -2753,7 +2775,7 @@ void Controller::sendGetChangeRegListRequest(InterpreterCommand cmd, void * para
 {
     RegMap* reg = (RegMap*)params;
         FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
-			reg->type, reg->index, reg->type);
+			reg->type, reg->index);
     InterpreterControl ctrl;
     ctrl.cmd = cmd ;
     ctrl.reg = *reg;
@@ -2775,19 +2797,7 @@ int Controller::getChangeRegListReply(void * params)
 }
 
 
-bool Controller::isSetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
-    {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_SET_REGISTER_TYPE);
-        return true;
-    }
-
-    return false;
-}
-
-bool Controller::isSetRegisterIndexError(int &send_index, int &reg_total)
+bool Controller::isRegisterIndexError(int &send_index, int &reg_total)
 {
     if((1 > send_index) || (send_index > reg_total))
     {
@@ -2800,190 +2810,175 @@ bool Controller::isSetRegisterIndexError(int &send_index, int &reg_total)
 }
 
 
-bool Controller::isGetRegisterTypeError(int &send_type, int &reg_type)
-{
-    if (send_type != reg_type)
-    {
-        FST_ERROR("Register : The type does not match the path.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_TYPE);
-        return true;
-    }
-
-    return false;
-}
-
-
-bool Controller::isGetRegisterIndexError(int &send_index, int &reg_total)
-{
-    if((1 > send_index) || (send_index > reg_total))
-    {
-        FST_ERROR("Register : The index out of range.");
-        rcs::Error::instance()->add(FAIL_GET_REGISTER_ID);
-        return true;
-    }
-
-    return false;
-}
-
 
 void Controller::setPoseRegister(void* params, int len)
 {
-    register_spec_RegMap set_pose_reg = *(register_spec_RegMap*)params;
+    register_spec_PRInterface pr_interface =
+        *(register_spec_PRInterface*)params;
 
-    int send_type = static_cast<register_spec_RegType>(set_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(set_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
+    int pr_id = pr_interface.id;
+    int pr_total = 200;
+    bool index_error = isRegisterIndexError(pr_id, pr_total);
     if (index_error) return;
 
-    RegMap set_reg;
-    set_reg.index = set_pose_reg.index;
-    memcpy(&set_reg.type, &set_pose_reg.type, sizeof(set_pose_reg.type));
-    memcpy(&set_reg.value, (char*)&set_pose_reg.value, sizeof(set_pose_reg.value));
- 
-    int reg_size = sizeof(set_reg);
+    char test[32] = "";
+    if(0 == memcmp(pr_interface.comment, test, sizeof(pr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(pr_interface.comment, test_comment, sizeof(test_comment));
+    }
 
+    pr_shmi_t pr_struct;
+    pr_struct.type = 101;
+    pr_struct.id = pr_interface.id;
+    memcpy(&pr_struct.pose, &pr_interface.pose, sizeof(pr_interface.pose));
+    memcpy(&pr_struct.joint, &pr_interface.joint, sizeof(pr_interface.joint));
+    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
+
+    RegMap set_reg;
+    set_reg.index = pr_interface.id;
+    set_reg.type = POSE_REG;
+    memcpy(&set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
+
+    int reg_size = sizeof(set_reg);
     setRegister(&set_reg, reg_size);
 }
 
 
 void Controller::getPoseRegister(void* params)
 {
-    register_spec_RegMap get_pose_reg;
+    register_spec_PRInterface pr_interface;
 
-    memcpy(&get_pose_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_pose_reg));
+    memcpy(&pr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(pr_interface));
 
-    int send_type = static_cast<register_spec_RegType>(get_pose_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_POSE);
-
-    int send_index = static_cast<int32_t>(get_pose_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_POSE_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
+    int pr_id = pr_interface.id;
+    int pr_total = 200;
+    bool index_error = isRegisterIndexError(pr_id, pr_total);
     if (index_error) return;
 
-    RegType reg_type_temp = static_cast<int>(send_type);
+    int init_value = 0;
+    pr_shmi_t pr_struct;
+    memcpy(&pr_struct.pose, &pr_interface.pose, sizeof(pr_interface.pose));
+    memcpy(&pr_struct.joint, &pr_interface.joint, sizeof(pr_interface.joint));
+    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
+    pr_struct.type = 101;
+    pr_struct.id = pr_interface.id;
 
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_pose_reg.value, sizeof(get_pose_reg.value));
+    RegMap get_reg;
+    get_reg.index = pr_interface.id;
+    get_reg.type = POSE_REG;
+    memcpy(&get_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
-    getRegister(&reg_param);
+    getRegister(&get_reg);
 
-    get_pose_reg.has_value = true;
-    get_pose_reg.index = reg_param.index;
-    memcpy(&get_pose_reg.type, &reg_param.type, sizeof(reg_param.type));
-    memcpy(&get_pose_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
+    memcpy(&pr_struct, &get_reg.value, sizeof(pr_struct));
 
-    FST_INFO("GET:: getParamLen : %d", 
-        tp_interface_->getReqDataPtr()->getParamLen());
+    pr_interface.has_pose = true;
+    memcpy(&pr_interface.pose, &pr_struct.pose, sizeof(pr_struct.pose));
+    pr_interface.has_joint = true;
+    memcpy(&pr_interface.joint, &pr_struct.joint, sizeof(pr_struct.joint));
+    pr_interface.has_comment = true;
+    memcpy(&pr_interface.comment, &pr_struct.comment, sizeof(pr_struct.comment));
+    pr_interface.has_type = true;
+    pr_interface.type = 101;
+    pr_interface.id = pr_struct.id;
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_pose_reg, sizeof(get_pose_reg));
+        rep->fillData((char*)&pr_interface, sizeof(pr_interface));
     }
     else
     {
         motion_spec_Signal_param_t *param =
             (motion_spec_Signal_param_t*)param_ptr->params;
 
-        param->size = sizeof(get_pose_reg);
-        memcpy(param->bytes, (char*)&get_pose_reg, param->size);
+        param->size = sizeof(pr_interface);
+        memcpy(param->bytes, (char*)&pr_interface, param->size);
     }
 }
 
 
 void Controller::setNumberRegister(void* params, int len)
 {
-    register_spec_RegMap set_number_reg = *(register_spec_RegMap*)params;
+    register_spec_NRInterface nr_interface = *(register_spec_NRInterface*)params;
 
-    int send_type = static_cast<register_spec_RegType>(set_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(set_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isSetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isSetRegisterIndexError(send_index, reg_total);
+    int nr_id = nr_interface.id;
+    int nr_total = 1500;
+    bool index_error = isRegisterIndexError(nr_id, nr_total);
     if (index_error) return;
 
+    char test[32] = "";
+    if(0 == memcmp(nr_interface.comment, test, sizeof(nr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(nr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    r_shmi_t nr_struct;
+    nr_struct.value = nr_interface.value;
+    nr_struct.id = nr_interface.id;
+    memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
+
     RegMap set_reg;
-    set_reg.index = set_number_reg.index;
-    memcpy(&set_reg.type, &set_number_reg.type, sizeof(set_number_reg.type));
-    memcpy(&set_reg.value, (char*)&set_number_reg.value, sizeof(set_number_reg.value));
+    set_reg.index = nr_interface.id;
+    set_reg.type = NUM_REG;
+    memcpy(&set_reg.value, (char*)&nr_struct, sizeof(nr_struct));
  
     int reg_size = sizeof(set_reg);
-
     setRegister(&set_reg, reg_size);
 }
 
 
 void Controller::getNumberRegister(void* params)
 {
-    register_spec_RegMap get_number_reg;
+    register_spec_NRInterface nr_interface;
 
-    memcpy(&get_number_reg, tp_interface_->getReqDataPtr()->getParamBufPtr(),
-        sizeof(get_number_reg));
+    memcpy(&nr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(nr_interface));
 
-    int send_type = static_cast<register_spec_RegType>(get_number_reg.type);
-    int reg_type = static_cast<register_spec_RegType>(register_spec_RegType_NUM);
-
-    int send_index = static_cast<int32_t>(get_number_reg.index);
-    int reg_total = static_cast<register_spec_RegTotal>(register_spec_RegTotal_NUMBER_TOTAL);
-
-    bool type_error = isGetRegisterTypeError(send_type, reg_type);
-    if (type_error) return;
-
-    bool index_error = isGetRegisterIndexError(send_index, reg_total);
+    int nr_id = nr_interface.id;
+    int nr_total = 1500;
+    bool index_error = isRegisterIndexError(nr_id, nr_total);
     if (index_error) return;
 
-    RegType reg_type_temp = static_cast<int>(send_type);
+    r_shmi_t nr_struct;
+    memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
+    nr_struct.id =  nr_interface.id;
+    nr_struct.value =  nr_interface.value;
 
-    RegMap reg_param;
-    reg_param.index = send_index;
-    reg_param.type = reg_type_temp;
-    memcpy(&reg_param.value, (char*)&get_number_reg.value, sizeof(get_number_reg.value));
+    RegMap get_reg;
+    get_reg.index = nr_interface.id;
+    get_reg.type = NUM_REG;
+    memcpy(&get_reg.value, (char*)&nr_struct, sizeof(nr_struct));
 
-    getRegister(&reg_param);
+    getRegister(&get_reg);
 
-    get_number_reg.has_value = true;
-    get_number_reg.index = send_index;
-    memcpy(&get_number_reg.type, &reg_type_temp, sizeof(reg_type_temp));
-    memcpy(&get_number_reg.value, (char*)&reg_param.value, sizeof(reg_param.value));
+    memcpy(&nr_struct, &get_reg.value, sizeof(nr_struct));
 
-    FST_INFO("GET:: getParamLen : %d",
-        tp_interface_->getReqDataPtr()->getParamLen());
+    nr_interface.has_value = true;
+    nr_interface.value = nr_struct.value;
+    nr_interface.id = nr_struct.id;
+    nr_interface.has_comment = true;
+    memcpy(nr_interface.comment, nr_struct.comment, sizeof(nr_struct.comment));
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&get_number_reg, sizeof(get_number_reg));
+        rep->fillData((char*)&nr_interface, sizeof(nr_interface));
     }
     else
     {
         motion_spec_Signal_param_t *param =
             (motion_spec_Signal_param_t*)param_ptr->params;
 
-        param->size = sizeof(get_number_reg);
-        memcpy(param->bytes, (char*)&get_number_reg, param->size);
+        param->size = sizeof(nr_interface);
+        memcpy(param->bytes, (char*)&nr_interface, param->size);
     }
 }
 
@@ -3041,5 +3036,64 @@ void Controller::getSoftConstraintLimit(void* params)
         motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
         param->size = sizeof(slmt);
         memcpy(param->bytes, (char*)&slmt, param->size);
+    }
+}
+
+void Controller::getUserValidFrameIDList(void* params)
+{
+    frame_spec_IdListInterface id_list_interface;
+    id_list_interface.id_count = 0;
+    id_list_interface.has_total_id = true;
+    id_list_interface.total_id = 0;
+
+    std::vector<int> id_list;
+
+    id_list = user_frame_manager_->getAllValidFrameId();
+
+    std::vector<int>::iterator it;
+
+    for(it = id_list.begin(); it != id_list.end(); it++)
+    {
+        id_list_interface.id[id_list_interface.total_id] = *it;
+        id_list_interface.total_id++;
+        id_list_interface.id_count++;
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&id_list_interface, sizeof(id_list_interface));
+    }
+}
+
+
+void Controller::getToolValidFrameIDList(void* params)
+{
+    frame_spec_IdListInterface id_list_interface;
+    id_list_interface.id_count = 0;
+    id_list_interface.has_total_id = true;
+    id_list_interface.total_id = 0;
+
+    std::vector<int> id_list;
+
+    id_list = tool_frame_manager_->getAllValidFrameId();
+
+    std::vector<int>::iterator it;
+
+    for(it = id_list.begin(); it != id_list.end(); it++)
+    {
+        id_list_interface.id[id_list_interface.total_id] = *it;
+        id_list_interface.total_id++;
+        id_list_interface.id_count++;
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&id_list_interface, sizeof(id_list_interface));
     }
 }

@@ -29,6 +29,12 @@ typedef struct
     PoseEuler data;
 }Frame;
 
+typedef struct
+{
+    int id;
+    char comment[MAX_COMMENT_LENGTH];
+}FrameSimple;
+
 class FrameManager
 {
 public:
@@ -110,6 +116,15 @@ public:
     // Return:  list of id of valid frames
     //------------------------------------------------------------  
     std::vector<int> getAllValidFrameId();
+
+    //------------------------------------------------------------
+    // Function:    getValidFrameSimpleList
+    // Summary: get all ids & comments of the valid frames
+    // In:      None
+    // Out:     None
+    // Return:  list of FrameSimple of valid frames
+    //------------------------------------------------------------  
+    std::vector<FrameSimple> getValidFrameSimpleList();
     
 private:
     std::string getFramePath(int frame_index);

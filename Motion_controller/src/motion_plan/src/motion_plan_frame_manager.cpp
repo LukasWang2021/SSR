@@ -174,6 +174,23 @@ std::vector<int> FrameManager::getAllValidFrameId()
     return id_list;
 }
 
+std::vector<FrameSimple> FrameManager::getValidFrameSimpleList()
+{
+    std::vector<FrameSimple> frame_list;
+    std::vector<Frame>::iterator it;
+    for(it = frame_set_.begin(); it != frame_set_.end(); it++)
+    {
+        if(it->is_valid)
+        {
+            FrameSimple frame;
+            frame.id = it->id;
+            memcpy(frame.comment, it->comment, MAX_COMMENT_LENGTH);
+            frame_list.push_back(frame);
+        }
+    }
+    return frame_list;
+}
+
 std::string FrameManager::getFramePath(int frame_index)
 {
     std::string index_str;

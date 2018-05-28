@@ -9,6 +9,7 @@
  */
 #include "fst_datatype.h"
 #include <sensor_msgs/JointState.h>
+#include <moveit_msgs/DisplayRobotState.h>
 #include <ros/ros.h>
 
 
@@ -39,7 +40,7 @@ class RosBasic
 
   private:
 	ros::Time start_time_stamp_;    //start time stamp
-	sensor_msgs::JointState js_;    //joint state
+        moveit_msgs::DisplayRobotState js_; //joint state
 	ros::Publisher joint_state_pub_;    //Publisher
 };
 

@@ -81,8 +81,8 @@ BaseTypes_ParamInfo g_param_info[] =
 	{	"root/Params/equipment/jointConstraintLimit",	35940,	0,	1280,	1024,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Params/equipment/dh",	32184,	0,	1280,	1024,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Params/equipment/hardwareLimit",	57668,	0,	1280,	1024,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Params/manualCommand",	77076,	0,	0,	0,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
-	{	"root/Control/globalVelocity",	17993,	0,	258,	8,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/Params/manualCommand",	77076,	0,	1280,	162,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
+	{	"root/Control/globalVelocity",	17993,	0,	258,	8,	1,	BaseTypes_ParamType_INPUT_SIGNAL,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Control/hostInTeachTarget",	11892,	0,	258,	8,	6,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Safety_IO/inputFrame",	94965,	0,	5,	4,	1,	BaseTypes_ParamType_PARAMETER,	BaseTypes_Permission_RW,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
 	{	"root/Control/version",	10478,	0,	5,	8,	1,	BaseTypes_ParamType_OUTPUT_SIGNAL,	BaseTypes_Permission_R,	BaseTypes_UserLevel_user_level_undefined,	BaseTypes_Unit_unit_undefined,	},
@@ -101,8 +101,6 @@ BaseTypes_ParamInfo g_param_info[] =
 };												
 
 
-										
-											
 
 #endif //RCS_TP_PARAMS_H_
 

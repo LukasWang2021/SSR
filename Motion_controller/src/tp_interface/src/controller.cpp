@@ -1243,28 +1243,37 @@ void Controller::setManualCmd(void* params, int len)
 {
      //command must be set in idle or pause state_cmd
      //Qianjin
-    if ((ctrl_state_ != ENGAGED_S) ||( (work_status_ != IDLE_W)&&(work_status_ != TEACHING_W)     ))
+    if ((ctrl_state_ != ENGAGED_S) || ((work_status_ != IDLE_W)
+        && (work_status_ != TEACHING_W)))
     {
-        int iCtrlState = ctrl_state_ , iWorkStatus = work_status_;
-        FST_ERROR("cant manual run!! ctrl_state_= %d and work_status_ = %d", 
-			iCtrlState, iWorkStatus);
+        int iCtrlState = ctrl_state_;
+        int iWorkStatus = work_status_;
+
+        FST_ERROR("Controller : can not manual run! \
+            ctrl_state_= %d and work_status_ = %d",
+            iCtrlState, iWorkStatus);
+
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
-	 
+
     motion_spec_ManualCommand command = *(motion_spec_ManualCommand*)params;
-	if (work_status_ == TEACHING_W)
-	{
-		FST_ERROR("cant manual run!! work_status_ in TEACHING_W");
-		return;
-	}
-	
+
+    if (work_status_ == TEACHING_W)
+    {
+        FST_ERROR("cant manual run!! work_status_ in TEACHING_W");
+        return;
+    }
     work_status_ = TEACHING_W;
+
     U64 result = arm_group_->setStartState(servo_joints_);
     if (result != TPI_SUCCESS)
     {
         rcs::Error::instance()->add(result);
+        FST_INFO("Controller : set start state error");
+        return;
     }
+
     manu_motion_->setManuCommand(command);
 }
 
@@ -2682,7 +2691,7 @@ void Controller::getString(void* params)
     {
         motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
         param->size = sizeof(string_test);
-        FST_INFO("error size:%d", param->size);
+        //FST_INFO("error size:%d", param->size);
         memcpy(param->bytes, (char*)&string_test, param->size);
     }
 }

@@ -23,12 +23,12 @@ TPInterface::TPInterface()
 	FST_ASSERT(nn_socket_);
 
     proto_parser_ = new ProtoParse;
-    
+
     task_ = new rcs::Task(10);
     task_->function(std::bind(&TPInterface::updateInterface, this, (void*)nn_socket_));
     task_->run();
 }
- 
+
 TPInterface::~TPInterface()
 {
     if (nn_socket_ != NULL)

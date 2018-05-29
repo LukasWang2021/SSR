@@ -62,6 +62,9 @@
 
 #define FAIL_INTERPRETER_BASE                   (unsigned long long int)0x0001000900B50000   /*fail to dump parameter into a file*/
 
+#define FALT_SET_STEP                           (unsigned long long int)0x000100020067041B   /*fail_set_step*/
+#define FALT_SET_TARGET                         (unsigned long long int)0x000100020067041C   /*fail_set_target*/
+
 #define TPI_SUCCESS				(0)
 //#define INT64 ErrorCode
 

@@ -26,24 +26,6 @@
 
 #define COMMENT_SIZE 32
 
-// pose register
-typedef struct 
-{
-	PoseEuler pose;
-	Joint     joint;
-	int type;
-	int id;
-	char comment[COMMENT_SIZE];
-}pr_shmi_t;
-
-// number register
-typedef struct  
-{
-	double value;
-	int id;
-	char comment[COMMENT_SIZE];
-}r_shmi_t;
-
 struct RegTypeInfo
 {
     std::string path;

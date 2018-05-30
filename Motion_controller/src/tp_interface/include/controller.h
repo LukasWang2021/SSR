@@ -729,14 +729,14 @@ class Controller
      *
      * @param params
      */
-    int getChangeRegListReply(void* params);
+    int getChangeRegListReply(std::vector<ChgFrameSimple>& vecRet);
 
     /**
      * @brief: callback for getting register 
      *
      * @param params
      */
-    void getChangeRegList(InterpreterCommand cmd, void* params);
+    std::vector<ChgFrameSimple> getChangeRegList(InterpreterCommand cmd, void* params);
 
 
     /**
@@ -919,6 +919,16 @@ class Controller
      * @brief: continue running 
      */
      bool resumeMotion();
+
+    /**
+     * @brief: calc Motion Dst
+     */
+     bool calcMotionDst(MotionTarget target);
+
+    /**
+     * @brief: calc Motion Dst
+     */
+     bool setMotionStartPos();
 
     /**
      * @brief: calibrate 

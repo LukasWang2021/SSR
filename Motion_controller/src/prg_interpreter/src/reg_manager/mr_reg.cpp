@@ -86,6 +86,7 @@ bool MrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
+	    printf("MrReg::getReg isGetInputValid failed at %d\n", id);
         return false;
     }
 
@@ -93,6 +94,7 @@ bool MrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
+	    printf("MrReg::getReg getRegList failed at %d\n", id);
         return false;
     }
     reg_ptr->id = reg_data.id;

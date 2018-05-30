@@ -70,28 +70,28 @@ public:
     // Out:     none
     // Return:  index list of changed pr regs
     //------------------------------------------------------------
-    std::vector<int> getPrRegChangedIdList(int start_id, int size);
+    std::vector<BaseRegData> getPrRegChangedIdList(int start_id, int size);
 
     // MrReg APIgroup: the same as PrReg API group
     bool addMrReg(MrRegData* data_ptr);
     bool deleteMrReg(int id);
     bool getMrReg(int id, MrRegData* data_ptr);
     bool setMrReg(MrRegData* data_ptr);    
-    std::vector<int> getMrRegChangedIdList(int start_id, int size);
+    std::vector<BaseRegData> getMrRegChangedIdList(int start_id, int size);
 
     // SrReg APIgroup: the same as PrReg API group
     bool addSrReg(SrRegData* data_ptr);
     bool deleteSrReg(int id);
     bool getSrReg(int id, SrRegData* data_ptr);
     bool setSrReg(SrRegData* data_ptr);    
-    std::vector<int> getSrRegChangedIdList(int start_id, int size);
+    std::vector<BaseRegData> getSrRegChangedIdList(int start_id, int size);
 
     // RReg APIgroup: the same as PrReg API group
     bool addRReg(RRegData* data_ptr);
     bool deleteRReg(int id);
     bool getRReg(int id, RRegData* data_ptr);
     bool setRReg(RRegData* data_ptr);    
-    std::vector<int> getRRegChangedIdList(int start_id, int size);    
+    std::vector<BaseRegData> getRRegChangedIdList(int start_id, int size);    
 private:
     RegManagerInterface();      // default allocator is not used
     

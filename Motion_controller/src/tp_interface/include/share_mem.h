@@ -115,6 +115,20 @@ class ShareMem
      *
      * @return: Send OK flag 
      */
+    void getMoveCommandDestination(MoveCommandDestination& movCmdDst);
+
+    /**
+     * @brief: set send flag 
+     *
+     * @param flag: send flag 
+     */
+    void setMoveCommandDestination(MoveCommandDestination& movCmdDst);    
+
+    /**
+     * @brief: get Send flag
+     *
+     * @return: Send OK flag 
+     */
     bool getIntprtSendFlag();
 
     /**
@@ -199,7 +213,7 @@ class ShareMem
      *
      * @return: Info of Reg and IO
      */
-    bool getChangeRegList(char * strChgRegLst);
+    std::vector<ChgFrameSimple>  getChangeRegList();
 	
   private:	
 	fst_core_interface::CoreInterface   core_interface_;

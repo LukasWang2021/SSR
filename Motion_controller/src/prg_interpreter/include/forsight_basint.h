@@ -28,6 +28,7 @@
 #include "common/interpreter_common.h"
 #endif
 #include "forsight_eval_type.h"
+#include "motion_plan_arm_group.h"
 
 using namespace std;
 
@@ -81,6 +82,12 @@ typedef enum _SubLabelType
     INSIDE_FUNC, 
     OUTSIDE_FUNC,
 }SubLabelType;
+
+typedef enum _ExecuteDirection
+{
+    EXECUTE_FORWARD = 0,
+    EXECUTE_BACKWARD
+}ExecuteDirection;
 
 typedef enum _ProgMode
 {
@@ -145,6 +152,7 @@ struct thread_control_block {
 	
 	vector<prog_line_info> prog_jmp_line;
 	ProgMode  prog_mode ; // = 0;   /* 0 - run to end, 1 - step  */
+	ExecuteDirection  execute_direction ;  /* 0 - FORWARD, 1 - BACKWARD  */
 	bool is_abort , is_paused; 
 	int  is_main_thread ; // = 0;   /* 0 - Monitor, 1 - Main  */
 	
@@ -166,6 +174,8 @@ struct thread_control_block {
 	// LineNum and Update flag
 	int               iLineNum ;
 //	LineNumState      stateLineNum ;
+//    MotionTarget      currentMotionTarget ;
+    map<string, MoveCommandDestination>  start_mov_position ;
 } ;
 
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);

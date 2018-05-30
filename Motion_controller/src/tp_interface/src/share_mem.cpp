@@ -225,6 +225,16 @@ bool ShareMem::intprtControl(InterpreterControl ctrl)
     return tryWrite(SHM_CTRL_CMD, 0, (void*)&ctrl, sizeof(ctrl));
 }
 
+void ShareMem::setMoveCommandDestination(MoveCommandDestination& movCmdDst)
+{ 
+    writeShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
+}
+
+void ShareMem::getMoveCommandDestination(MoveCommandDestination& movCmdDst)
+{
+    readShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
+}
+
 bool ShareMem::getIntprtSendFlag()
 {
     bool is_permitted = false ;
@@ -292,10 +302,30 @@ bool ShareMem::getDIOInfo(char * info)
     return true;
 }
 
-bool ShareMem::getChangeRegList(char * strChgRegLst)
+std::vector<ChgFrameSimple> ShareMem::getChangeRegList()
 {
+    char strChgRegLst[1024];
+	std::vector<ChgFrameSimple> vecRet ; 
+	char tempDebug[1024];
+	int iSeq = 0 ;
+	RegChgList  * regChgList ;
+	ChgFrameSimple * chgFrameSimple ;
     readShm(SHM_CHG_REG_LIST_INFO, 0, (void*)strChgRegLst, 1024);
-    return true;
+	regChgList  = (RegChgList  *)strChgRegLst ;
+	chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
+
+	for (int i = 0 ; i < sizeof(RegChgList) + 1 * sizeof(ChgFrameSimple) ; i++)
+		printf("GET:: data: %d\n", strChgRegLst[i]);
+			
+	printf("tempDebug: %d  (%d) .\n", regChgList->command, regChgList->count);
+	for(int i = 0 ; i < regChgList->count ;i++)
+	{
+		printf("%d : %s \n", 
+			chgFrameSimple[i].id, chgFrameSimple[i].comment);
+		vecRet.push_back(chgFrameSimple[i]);
+	}
+
+    return vecRet;
 }
 
 bool ShareMem::isServoDone()

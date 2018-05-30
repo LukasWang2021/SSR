@@ -106,7 +106,7 @@ typedef enum _InterpreterCommand
     
     READ_CHG_PR_LST   = 208,
     READ_CHG_SR_LST   = 209,
-    READ_CHG_R_LST   = 210,
+    READ_CHG_R_LST    = 210,
     READ_CHG_MR_LST   = 211,
 
 }InterpreterCommand;
@@ -209,7 +209,7 @@ typedef struct _RegMap
 {
     RegType type;
     int     index;
-    char    value[512];
+    char    value[1024];
 }RegMap;
 
 typedef enum _UserOpMode
@@ -324,5 +324,25 @@ typedef struct _Instruction
     //.....
     //.....
 }Instruction;
+
+typedef struct _MoveCommandDestination
+{
+    PoseEuler       pose_target;
+    Joint           joint_target;
+} MoveCommandDestination;
+
+
+typedef struct _RegChgList
+{
+    InterpreterCommand  command;
+    int             count;
+	char            additional[0]; //malloc other memory
+}RegChgList;
+
+typedef struct _ChgFrameSimple
+{
+	int id;
+	char comment[32];
+} ChgFrameSimple;
 
 #endif

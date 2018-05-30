@@ -43,6 +43,10 @@ typedef struct _FuncTable
 #define SHM_CTRL_CMD        ("controller_command")
 #define SHM_CTRL_STATUS     ("constroller_status")
 
+// Lujiaming add at 0528
+#define SHM_INTPRT_DST      ("interpreter_cmd_dst")
+// Lujiaming add at 0528 end
+
 #define SHM_INTPRTCMD_SIZE  (8192)
 #define SHM_INTPRTSTATUS_SIZE (1024)
 #define SHM_CTRLCMD_SIZE    (1024)

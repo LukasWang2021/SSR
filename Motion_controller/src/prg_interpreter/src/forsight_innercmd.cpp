@@ -422,6 +422,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 // MovJ P[1] P[1] 30% Fine +¸½¼Ó²ÎÊý
 int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
+    MoveCommandDestination movCmdDst ;
 	eval_value value;
 	int boolValue;
     
@@ -440,6 +441,12 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	instr.line = iLineNum;
 	printf("call_MoveJ XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
+	// Save start position
+	getMoveCommandDestination(movCmdDst);
+	objThreadCntrolBlock->start_mov_position.insert(
+		map<string, MoveCommandDestination>::value_type(g_vecXPath[iLineNum], 
+							movCmdDst));
+
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	if(value.getType() == TYPE_NONE)
 	{
@@ -487,10 +494,17 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			instr.target.joint_target.j3, instr.target.joint_target.j4, 
 			instr.target.joint_target.j5, instr.target.joint_target.j6);
 	}
+	// Use start point in revert mode  
+	if(objThreadCntrolBlock->execute_direction == EXECUTE_BACKWARD)
+	{
+	     printf("Use start point in revert mode.\n");
+	     instr.target.joint_target = 
+		 	objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]].joint_target;
+	}
 	get_token(objThreadCntrolBlock);
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-    instr.target.velocity        = value.getFloatValue();
+    instr.target.vel        = value.getFloatValue();
 	
 	get_token(objThreadCntrolBlock);
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
@@ -510,7 +524,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.accleration = -1 ;
+	instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	
@@ -534,7 +548,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		}
 	}
 	
-	
+	// objThreadCntrolBlock->currentMotionTarget = instr.target ;
 // 	#ifdef USE_XPATH
 // 		printf("setInstruction MOTION_JOINT at %s\n", instr.line);
 // 	#else
@@ -550,6 +564,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
 int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
+    MoveCommandDestination movCmdDst ;
 	eval_value value;
 	int boolValue;
 	
@@ -568,6 +583,11 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	instr.line = iLineNum;
 	printf("call_MoveL XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
+	// Save start position
+	getMoveCommandDestination(movCmdDst);
+	objThreadCntrolBlock->start_mov_position.insert(
+		map<string, MoveCommandDestination>::value_type(g_vecXPath[iLineNum], 
+							movCmdDst));
 	
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
@@ -617,10 +637,17 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}
+	// Use start point in revert mode  
+	if(objThreadCntrolBlock->execute_direction == EXECUTE_BACKWARD)
+	{
+	     printf("Use start point in revert mode.\n");
+	     instr.target.pose_target
+		 	= objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]].pose_target;
+	}
 	
 	get_token(objThreadCntrolBlock);
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-    instr.target.velocity                  = value.getFloatValue();
+    instr.target.vel                  = value.getFloatValue();
 
 	get_token(objThreadCntrolBlock);
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
@@ -640,7 +667,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.accleration = -1 ;
+	instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	
@@ -663,7 +690,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			objThreadCntrolBlock->instrSet->add_num    = 0 ;
 		}
 	}
-	printf("MOVL: instr.target.accleration = %f .\n", instr.target.accleration);
+	printf("MOVL: instr.target.accleration = %f .\n", instr.target.acc);
 	
 // 	#ifdef USE_XPATH
 // 		printf("setInstruction MOTION_LINE at %s\n", instr.line);
@@ -682,6 +709,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
 int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
+    MoveCommandDestination movCmdDst ;
 	eval_value value;
 	int boolValue;
 	
@@ -700,6 +728,11 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	instr.line = iLineNum;
 	printf("call_MoveC XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
+	// Save start position
+	getMoveCommandDestination(movCmdDst);
+	objThreadCntrolBlock->start_mov_position.insert(
+		map<string, MoveCommandDestination>::value_type(g_vecXPath[iLineNum], 
+							movCmdDst));
 
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
@@ -790,10 +823,17 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}
+	// Use start point in revert mode  
+	if(objThreadCntrolBlock->execute_direction == EXECUTE_BACKWARD)
+	{
+	     printf("Use start point in revert mode.\n");
+		 // Wait for revert
+	     // instr.target.circle_target.pose2 = objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]];
+	}
 	get_token(objThreadCntrolBlock);
 	
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-    instr.target.velocity                  = value.getFloatValue();
+    instr.target.vel                  = value.getFloatValue();
 
 	get_token(objThreadCntrolBlock);
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
@@ -813,7 +853,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.accleration = -1 ;
+	instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	

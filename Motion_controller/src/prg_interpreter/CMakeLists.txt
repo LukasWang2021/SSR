@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(prg_interpreter)
 
+
+find_package(catkin REQUIRED COMPONENTS 
+    log_manager
+    io_manager
+    motion_plan
+    parameter_manager
+    mem_share
+)
 set(VERSION_MAJOR ?)
 set(VERSION_MINOR ?)
 set(VERSION_PATCH ?)
@@ -17,13 +25,6 @@ file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
     "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n"
 )
 
-find_package(catkin REQUIRED COMPONENTS 
-    log_manager
-    io_manager
-    parameter_manager
-    mem_share
-)
-
 if(catkin_CROSS)
 	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
     set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
@@ -36,8 +37,9 @@ endif()
 
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
-    ${depend_PATH_INC}/parameter_manager/include
+
     ${depend_PATH_INC}/motion_plan/include
+    ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/ioboard/include
     ${depend_PATH_INC}/io_manager/include
@@ -50,6 +52,7 @@ set(catkin_INCLUDE_DIRS
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fpermissive -O0")
 
 catkin_package(
+#    DEPENDS motion_plan 
 )
  
 
@@ -95,6 +98,7 @@ target_link_libraries(prg_interpreter
     io_interface
     parameter_manager
     xml2
+    motion_plan
 )
 
 #############

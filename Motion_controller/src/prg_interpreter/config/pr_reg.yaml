@@ -35,7 +35,7 @@ PrReg1:
         axis_c: 0
 PrReg2:
     comment: empty
-    id: 1
+    id: 2
     is_valid: false
     cartesian:
         position:
@@ -70,7 +70,7 @@ PrReg2:
         axis_c: 0
 PrReg3:
     comment: empty
-    id: 1
+    id: 3
     is_valid: false
     cartesian:
         position:
@@ -105,7 +105,7 @@ PrReg3:
         axis_c: 0
 PrReg4:
     comment: empty
-    id: 1
+    id: 4
     is_valid: false
     cartesian:
         position:
@@ -140,7 +140,7 @@ PrReg4:
         axis_c: 0
 PrReg5:
     comment: empty
-    id: 1
+    id: 5
     is_valid: false
     cartesian:
         position:
@@ -175,7 +175,7 @@ PrReg5:
         axis_c: 0
 PrReg6:
     comment: empty
-    id: 1
+    id: 6
     is_valid: false
     cartesian:
         position:
@@ -210,7 +210,7 @@ PrReg6:
         axis_c: 0
 PrReg7:
     comment: empty
-    id: 1
+    id: 7
     is_valid: false
     cartesian:
         position:
@@ -245,7 +245,7 @@ PrReg7:
         axis_c: 0
 PrReg8:
     comment: empty
-    id: 1
+    id: 8
     is_valid: false
     cartesian:
         position:
@@ -280,7 +280,7 @@ PrReg8:
         axis_c: 0
 PrReg9:
     comment: empty
-    id: 1
+    id: 9
     is_valid: false
     cartesian:
         position:
@@ -315,7 +315,7 @@ PrReg9:
         axis_c: 0
 PrReg10:
     comment: empty
-    id: 1
+    id: 10
     is_valid: false
     cartesian:
         position:

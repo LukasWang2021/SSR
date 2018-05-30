@@ -62,6 +62,8 @@ void waitInterpreterStateleftPaused(
 void waitInterpreterStateToPaused(
 	struct thread_control_block * objThdCtrlBlockPtr);
 
+void getMoveCommandDestination(MoveCommandDestination& movCmdDst);
+
 #endif
 
 

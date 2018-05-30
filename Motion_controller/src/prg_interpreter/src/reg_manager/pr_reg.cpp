@@ -87,6 +87,7 @@ bool PrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
+	    printf("PrReg::getReg isGetInputValid failed at %d\n", id);
         return false;
     }
 
@@ -94,9 +95,14 @@ bool PrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
+	    printf("PrReg::getReg getRegList failed at %d\n", id);
         return false;
     }
+	printf("PrReg::getReg getRegList at %d, %d with %s\n", 
+		id, reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
+	
     reg_ptr->id = reg_data.id;
+	    printf("PrReg::getReg getRegList reg_ptr at %d\n", reg_ptr->id);
     memcpy(reg_ptr->comment, reg_data.comment, MAX_REG_COMMENT_LENGTH * sizeof(char));
     memcpy(&reg_ptr->value, &data_list_[reg_data.id], sizeof(PrValue));
     return true;
@@ -118,8 +124,10 @@ bool PrReg::setReg(void* data_ptr)
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->comment);
+	printf("PrReg::setReg setRegList at %d with %s\n", reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
     if(!setRegList(reg_data))
     {
+	    printf("PrReg::setReg setRegList failed at %d\n", reg_data.id);
         return false;
     }
     memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(PrValue));

@@ -86,6 +86,7 @@ bool RReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
+	    printf("RReg::getReg isGetInputValid failed at %d\n", id);
         return false;
     }
 
@@ -93,11 +94,16 @@ bool RReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
+	    printf("RReg::getReg getRegList failed at %d\n", id);
         return false;
     }
     reg_ptr->id = reg_data.id;
+	    printf("RReg::getReg id reg_ptr at %d\n", reg_ptr->id);
     memcpy(reg_ptr->comment, reg_data.comment, MAX_REG_COMMENT_LENGTH * sizeof(char));
+	    printf("RReg::getReg comment reg_ptr at %s\n", reg_ptr->comment);
+	    printf("RReg::getReg comment reg_ptr at %s\n", reg_data.comment);
     reg_ptr->value = data_list_[id];
+	    printf("RReg::getReg value reg_ptr at %f\n", data_list_[id]);
     return true;
 }
 

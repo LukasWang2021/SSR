@@ -80,6 +80,13 @@ bool reg_manager_interface_getPr(void *ptr, uint16_t num)
 	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	
 	bool bRet = objRegManagerInterface.getPrReg(num, ptr);
+	PrRegData* data_ptr = ptr ;
+	
+	printf("data_ptr: id = %d, comment = %s\n", data_ptr->id, data_ptr->comment);
+	printf("data_ptr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		data_ptr->value.joint_pos[0], data_ptr->value.joint_pos[1], 
+		data_ptr->value.joint_pos[2], data_ptr->value.joint_pos[3], 
+		data_ptr->value.joint_pos[4], data_ptr->value.joint_pos[5]);
 	return bRet ;
 }
 
@@ -88,6 +95,11 @@ bool reg_manager_interface_setPr(void *ptr, uint16_t num)
 	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	PrRegData objPrRegData ;
 	memcpy(&objPrRegData, ptr, sizeof(PrRegData));
+	printf("PrRegData: id = %d, comment = %s\n", objPrRegData.id, objPrRegData.comment);
+	printf("PrRegData: id = (%f, %f, %f, %f, %f, %f) \n", 
+		objPrRegData.value.joint_pos[0], objPrRegData.value.joint_pos[1], 
+		objPrRegData.value.joint_pos[2], objPrRegData.value.joint_pos[3], 
+		objPrRegData.value.joint_pos[4], objPrRegData.value.joint_pos[5]);
 	objPrRegData.id = num ;
 	
 	bool bRet = objRegManagerInterface.setPrReg(&objPrRegData);

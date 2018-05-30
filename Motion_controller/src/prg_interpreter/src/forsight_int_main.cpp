@@ -20,7 +20,7 @@ int main(int  argc, char *argv[])
 #ifdef WIN32
 		Sleep(100);
 #else
-		sleep(1);
+		usleep(1000);
 #endif
 	}
 	return 1;

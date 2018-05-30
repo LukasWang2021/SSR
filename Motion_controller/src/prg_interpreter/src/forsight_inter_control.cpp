@@ -166,6 +166,16 @@ void findLoopEnd(int index)
     block_end = g_script.size() - 1;
 }
 
+void setMoveCommandDestination(MoveCommandDestination movCmdDst)
+{ 
+    writeShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
+}
+
+void getMoveCommandDestination(MoveCommandDestination& movCmdDst)
+{
+    readShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
+}
+
 void setIntprtDataFlag(bool flag)
 {
 #ifdef WIN32
@@ -516,9 +526,13 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
 #ifndef WIN32
-	char temp[1024];
+	char tempDebug[1024];
+	int iSeq = 0 ;
+	char * testDebug = 0 ;
+	RegChgList  * regChgList ;
+	ChgFrameSimple * chgFrameSimple ;
 	RegManagerInterface objRegManagerInterface("share/configuration/machine");
-	std::vector<int> vecRet ; 
+	std::vector<BaseRegData> vecRet ; 
     printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
     switch (intprt_ctrl.cmd)
@@ -546,6 +560,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			
             objThdCtrlBlockPtr->prog_mode = STEP_MODE;
+			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
             setPrgmState(PAUSED_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
@@ -562,6 +577,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			
             objThdCtrlBlockPtr->prog_mode = FULL_MODE;
+			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
             setPrgmState(EXECUTE_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
@@ -582,6 +598,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			}
 			
             objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
             // target_line++;
             iLineNum = getLinenum(objThdCtrlBlockPtr);
             printf("step forward to %d \n", iLineNum);
@@ -635,6 +652,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             is_backward = true;
             // else {  perror("can't back\n");  break;      }
             objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+			objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
             setPrgmState(EXECUTE_R);
 
             printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
@@ -743,50 +761,60 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
         case READ_CHG_PR_LST:
 			vecRet.clear(); 
 			vecRet = objRegManagerInterface.getPrRegChangedIdList(0, 255);
-			memset(temp, 0x00, 1024);
-			strcpy(temp, "PR:");
-			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			
+			memset(tempDebug, 0x00, 1024);
+			strcpy(tempDebug, "PR:");
+			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));
+			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
+			regChgList->command = intprt_ctrl.cmd ;
+			regChgList->count   = vecRet.size();
+			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
 			{
-				sprintf(temp, "%s%d;", temp, *it);
+				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
+				chgFrameSimple[iSeq].id = it->id ;
+				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
+				printf("             %d:%s;\n", it->id, it->comment);
 			}
-			printf("temp: %s  (%d) .\n", temp, vecRet.size());
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
+			
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
+				sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));
 	        setIntprtDataFlag(true);
             break;
         case READ_CHG_SR_LST:
 			vecRet.clear(); 
 			vecRet = objRegManagerInterface.getSrRegChangedIdList(0, 255);
-			memset(temp, 0x00, 1024);
-			strcpy(temp, "SR:");
-			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			memset(tempDebug, 0x00, 1024);
+			strcpy(tempDebug, "SR:");
+			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
 			{
-				sprintf(temp, "%s%d;", temp, *it);
+				sprintf(tempDebug, "%s%d;", tempDebug, it->id);
 			}
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)tempDebug, sizeof(tempDebug));
 	        setIntprtDataFlag(true);
             break;
         case READ_CHG_R_LST:
 			vecRet.clear(); 
 			vecRet = objRegManagerInterface.getRRegChangedIdList(0, 255);
-			memset(temp, 0x00, 1024);
-			strcpy(temp, "R:");
-			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			memset(tempDebug, 0x00, 1024);
+			strcpy(tempDebug, "R:");
+			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
 			{
-				sprintf(temp, "%s%d;", temp, *it);
+				sprintf(tempDebug, "%s%d;", tempDebug, it->id);
 			}
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)tempDebug, sizeof(tempDebug));
 	        setIntprtDataFlag(true);
             break;
         case READ_CHG_MR_LST:
 			vecRet.clear(); 
 			vecRet = objRegManagerInterface.getMrRegChangedIdList(0, 255);
-			memset(temp, 0x00, 1024);
-			strcpy(temp, "MR:");
-			for(vector<int>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
+			memset(tempDebug, 0x00, 1024);
+			strcpy(tempDebug, "MR:");
+			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
 			{
-				sprintf(temp, "%s%d;", temp, *it);
+				sprintf(tempDebug, "%s%d;", tempDebug, it->id);
 			}
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)temp, sizeof(temp));
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)tempDebug, sizeof(tempDebug));
 	        setIntprtDataFlag(true);
             break;
 #endif

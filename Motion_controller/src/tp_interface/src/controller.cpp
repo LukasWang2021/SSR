@@ -3048,61 +3048,69 @@ void Controller::getSoftConstraintLimit(void* params)
     }
 }
 
-void Controller::getUserValidFrameIDList(void* params)
+void Controller::getUserValidSimpleFrame(void* params)
 {
-    frame_spec_IdListInterface id_list_interface;
-    id_list_interface.id_count = 0;
-    id_list_interface.has_total_id = true;
-    id_list_interface.total_id = 0;
+    frame_spec_SimpleFrameInterface simple_frame;
+    simple_frame.has_total_frame = true;
 
-    std::vector<int> id_list;
+    std::vector<FrameSimple> frame_list = 
+        user_frame_manager_->getValidFrameSimpleList();
 
-    id_list = user_frame_manager_->getAllValidFrameId();
+    std::vector<FrameSimple>::iterator it;
 
-    std::vector<int>::iterator it;
-
-    for(it = id_list.begin(); it != id_list.end(); it++)
+    int frame_index = 0;
+    for(it = frame_list.begin(); it != frame_list.end(); it++)
     {
-        id_list_interface.id[id_list_interface.total_id] = *it;
-        id_list_interface.total_id++;
-        id_list_interface.id_count++;
+        simple_frame.frame[frame_index].id = it->id;
+        simple_frame.frame[frame_index].has_id = true;
+        simple_frame.frame[frame_index].has_comment = true;
+        memcpy(simple_frame.frame[frame_index].comment,
+            it->comment, sizeof(it->comment));
+        frame_index++;
     }
+
+    simple_frame.total_frame = frame_index;
+    simple_frame.frame_count = frame_index;
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&id_list_interface, sizeof(id_list_interface));
+        rep->fillData((char*)&simple_frame, sizeof(simple_frame));
     }
 }
 
 
-void Controller::getToolValidFrameIDList(void* params)
+void Controller::getToolValidSimpleFrame(void* params)
 {
-    frame_spec_IdListInterface id_list_interface;
-    id_list_interface.id_count = 0;
-    id_list_interface.has_total_id = true;
-    id_list_interface.total_id = 0;
+    frame_spec_SimpleFrameInterface simple_frame;
+    simple_frame.has_total_frame = true;
 
-    std::vector<int> id_list;
+    std::vector<FrameSimple> frame_list = 
+        tool_frame_manager_->getValidFrameSimpleList();
 
-    id_list = tool_frame_manager_->getAllValidFrameId();
+    std::vector<FrameSimple>::iterator it;
 
-    std::vector<int>::iterator it;
-
-    for(it = id_list.begin(); it != id_list.end(); it++)
+    int frame_index = 0;
+    for(it = frame_list.begin(); it != frame_list.end(); it++)
     {
-        id_list_interface.id[id_list_interface.total_id] = *it;
-        id_list_interface.total_id++;
-        id_list_interface.id_count++;
+        simple_frame.frame[frame_index].id = it->id;
+        simple_frame.frame[frame_index].has_id = true;
+        simple_frame.frame[frame_index].has_comment = true;
+        memcpy(simple_frame.frame[frame_index].comment,
+            it->comment, sizeof(it->comment));
+        frame_index++;
     }
+
+    simple_frame.total_frame = frame_index;
+    simple_frame.frame_count = frame_index;
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&id_list_interface, sizeof(id_list_interface));
+        rep->fillData((char*)&simple_frame, sizeof(simple_frame));
     }
 }

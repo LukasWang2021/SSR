@@ -48,8 +48,8 @@ class ProtoParse
     void encFrame(const uint8_t *in_buf, int in_len, void *out_buf);
     void decActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf);
     void encActivateFrame(const uint8_t *in_buf, int in_len, void *out_buf);
-    void decFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf);
-    void encFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf);
+    void decValidSimpleFrame(const uint8_t *in_buf, int in_len, void *out_buf);
+    void encValidSimpleFrame(const uint8_t *in_buf, int in_len, void *out_buf);
 
     void encString(const uint8_t *in_buf, int in_len, void *out_buf);
 

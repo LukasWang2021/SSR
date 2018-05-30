@@ -736,11 +736,11 @@ void ProtoParse::encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf)
     FST_INFO("bytes_written:%d", ostream.bytes_written);
 }
 
-void ProtoParse::decFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf)
+void ProtoParse::decValidSimpleFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    frame_spec_IdListInterface id_list;
+    frame_spec_SimpleFrameInterface simple_frame;
     bool ret = false;
-    PARSE_FIELD(id_list, frame_spec_IdListInterface, in_buf, in_len, ret);
+    PARSE_FIELD(simple_frame, frame_spec_SimpleFrameInterface, in_buf, in_len, ret);
 
     if (ret == false)
     {
@@ -748,14 +748,14 @@ void ProtoParse::decFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf
         return;
     }
 
-    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
-    req->fillData((char*)&id_list, sizeof(id_list));
+    TPIFReqData<> *req = (TPIFReqData<>*)out_buf;
+    req->fillData((char*)&simple_frame, sizeof(simple_frame));
 }
 
 
-void ProtoParse::encFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf)
+void ProtoParse::encValidSimpleFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 {
-    frame_spec_IdListInterface *id_list = (frame_spec_IdListInterface*)in_buf;
+    frame_spec_SimpleFrameInterface *simple_frame = (frame_spec_SimpleFrameInterface*)in_buf;
 
     BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf;
 
@@ -763,7 +763,7 @@ void ProtoParse::encFrameIDList(const uint8_t *in_buf, int in_len, void *out_buf
 
     pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
 
-    bool ret = pb_encode(&ostream,frame_spec_IdListInterface_fields, id_list);
+    bool ret = pb_encode(&ostream,frame_spec_SimpleFrameInterface_fields, simple_frame);
 
     if(ret != true)
     {

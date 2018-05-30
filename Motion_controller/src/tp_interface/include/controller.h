@@ -744,14 +744,14 @@ class Controller
      *
      * @param params
      */
-    void getUserValidFrameIDList(void* params);
+    void getUserValidSimpleFrame(void* params);
 
     /**
      * @brief: callback for getting tool valid frame id list
      *
      * @param params
      */
-    void getToolValidFrameIDList(void* params);
+    void getToolValidSimpleFrame(void* params);
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class

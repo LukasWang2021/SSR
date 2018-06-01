@@ -2890,13 +2890,6 @@ void Controller::setPoseRegister(void* params, int len)
         memcpy(pr_interface.comment, test_comment, sizeof(test_comment));
     }
 
-//    pr_shmi_t pr_struct;
-//    pr_struct.type = 101;
-//    pr_struct.id = pr_interface.id;
-//    memcpy(&pr_struct.pose, &pr_interface.pose, sizeof(pr_interface.pose));
-//    memcpy(&pr_struct.joint, &pr_interface.joint, sizeof(pr_interface.joint));
-//    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
-
 	PrRegData  pr_struct;
 	pr_struct.id = pr_interface.id;
 	if(strlen(pr_interface.comment) != 0)
@@ -2932,17 +2925,10 @@ void Controller::getPoseRegister(void* params)
     if (index_error) return;
 
     int init_value = 0;
-//    pr_shmi_t pr_struct;
-//    memcpy(&pr_struct.pose, &pr_interface.pose, sizeof(pr_interface.pose));
-//    memcpy(&pr_struct.joint, &pr_interface.joint, sizeof(pr_interface.joint));
-//    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
-//    pr_struct.type = 101;
-//    pr_struct.id = pr_interface.id;
 
     RegMap get_reg;
     get_reg.index = pr_interface.id;
     get_reg.type = POSE_REG;
-//    memcpy(&get_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
     getRegister(&get_reg);
 
@@ -3002,7 +2988,6 @@ void Controller::setNumberRegister(void* params, int len)
         memcpy(nr_interface.comment, test_comment, sizeof(test_comment));
     }
 
-//    r_shmi_t nr_struct;
     RRegData nr_struct ;
     nr_struct.value = nr_interface.value;
     nr_struct.id = nr_interface.id;
@@ -3034,11 +3019,7 @@ void Controller::getNumberRegister(void* params)
     bool index_error = isRegisterIndexError(nr_id, nr_total);
     if (index_error) return;
 
-//    r_shmi_t nr_struct;
     RRegData nr_struct ;
-//    memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
-//    nr_struct.id =  nr_interface.id;
-//    nr_struct.value =  nr_interface.value;
 
     RegMap get_reg;
     get_reg.index = nr_interface.id;
@@ -3049,9 +3030,9 @@ void Controller::getNumberRegister(void* params)
 
     memcpy(&nr_struct, &get_reg.value, sizeof(nr_struct));
 
-	    printf("getNumberRegister id nr_struct at %d\n", nr_struct.id);
-	    printf("getNumberRegister comment nr_struct at %s\n", nr_struct.comment);
-	    printf("getNumberRegister value nr_struct at %f\n", nr_struct.value);
+    printf("getNumberRegister id nr_struct at %d\n", nr_struct.id);
+    printf("getNumberRegister comment nr_struct at %s\n", nr_struct.comment);
+    printf("getNumberRegister value nr_struct at %f\n", nr_struct.value);
 
     nr_interface.has_value = true;
     nr_interface.value = nr_struct.value;
@@ -3198,5 +3179,84 @@ void Controller::getToolValidSimpleFrame(void* params)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
         rep->fillData((char*)&simple_frame, sizeof(simple_frame));
+    }
+}
+
+void Controller::getValidSimplePR(void* params)
+{
+    register_spec_SimpleRegInterface simple_reg;
+
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_PR_LST, (void*) params);
+
+    std::vector<ChgFrameSimple>::iterator it;
+    int reg_index = 0;
+
+    if (!simple_reg_struct.empty())
+    {
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+        FST_INFO("Controller : all simple PR is invalid");
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+
+void Controller::getValidSimpleNR(void* params)
+{
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_R_LST, (void*) params);
+
+    register_spec_SimpleRegInterface simple_reg;
+
+    std::vector<ChgFrameSimple>::iterator it;
+    int reg_index = 0;
+
+    if (!simple_reg_struct.empty())
+    {
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+        FST_INFO("Controller : All simple R is invalid");
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
     }
 }

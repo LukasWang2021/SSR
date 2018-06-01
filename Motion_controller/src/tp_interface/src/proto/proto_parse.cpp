@@ -775,3 +775,26 @@ void ProtoParse::encValidSimpleFrame(const uint8_t *in_buf, int in_len, void *ou
 
     FST_INFO("bytes_written:%d", ostream.bytes_written);
 }
+
+void ProtoParse::encValidSimpleReg(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_SimpleRegInterface *simple_reg = (register_spec_SimpleRegInterface*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf;
+
+    //FST_INFO("param is : %d", param);
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, register_spec_SimpleRegInterface_fields, simple_reg);
+
+    if(ret != true)
+    {
+        FST_ERROR("error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+
+    FST_INFO("bytes_written:%d", ostream.bytes_written);
+}

@@ -752,6 +752,21 @@ class Controller
      * @param params
      */
     void getToolValidSimpleFrame(void* params);
+
+    /**
+     * @brief: callback for getting valid pose register list
+     *
+     * @param params
+     */
+    void getValidSimplePR(void* params);
+
+    /**
+     * @brief: callback for  getting valid number register list
+     *
+     * @param params
+     */
+    void getValidSimpleNR(void* params);
+
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class

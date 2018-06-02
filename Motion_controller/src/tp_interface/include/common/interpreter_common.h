@@ -79,8 +79,9 @@ typedef enum _InterpreterState
     ERROR_RETURN_WITHOUT_GOSUB_T = 214,        // 13 
     ERROR_FILE_NOT_FOUND_T = 215,              // 14
     ERROR_MOVL_TO_JOINT_T = 216,               // 15
-    ERROR_MOVJ_TO_POINT_T = 217                // 16
-
+    ERROR_MOVJ_TO_POINT_T = 217,               // 16
+    
+    ALARM_EXEC_BASE_T       = 1000
 }InterpreterState;
 
 typedef enum _InterpreterCommand
@@ -336,7 +337,11 @@ typedef struct _RegChgList
 {
     InterpreterCommand  command;
     int             count;
-	char            additional[0]; //malloc other memory
+#ifdef WIN32
+    char additional; //malloc other memory
+#else
+    char additional[0]; //malloc other memory
+#endif
 }RegChgList;
 
 typedef struct _ChgFrameSimple

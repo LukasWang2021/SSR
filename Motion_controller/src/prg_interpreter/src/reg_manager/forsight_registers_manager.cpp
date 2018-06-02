@@ -7,13 +7,17 @@
 #include "ctype.h"
 #include "stdlib.h" 
 #include "forsight_innercmd.h"
-#include "reg_manager/reg_manager_interface_wrapper.h"
-#include "reg_manager/forsight_registers_manager.h"
+#include "motion_plan_frame_manager.h"
+#include "reg_manager_interface.h"
+#include "reg_manager_interface_wrapper.h"
+
 #ifdef WIN32
 #include "interpreter_common.h"
 #else
 #include "common/interpreter_common.h"
 #endif
+
+using namespace fst_reg ;
 
 // Register name
 #define TXT_PR    "pr"
@@ -121,21 +125,16 @@ int forgesight_registers_manager_get_register(
 	}
 	memset(reg_content_buffer, 0x00, sizeof(reg_content_buffer));
 
+	printf("forgesight_registers_manager_get_register at %s \n", reg_name);
+
 	if(!strcmp(reg_name, TXT_PR))
 	{
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_getPr(
 				(void *)reg_content_buffer, iRegIdx);
-			pr_shmi_t * ptr = (pr_shmi_t *)reg_content_buffer ;
-			if (ptr->type == PR_TYPE_POSE_EULER)
-			{
-				value->setPoseValue(&(ptr->pose));
-			}
-			else
-			{
-				value->setJointValue(&(ptr->joint));
-			}
+			PrRegData * ptr = (PrRegData *)reg_content_buffer ;
+			value->setPrRegDataValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
@@ -170,8 +169,9 @@ int forgesight_registers_manager_get_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_getSr(reg_content_buffer, iRegIdx);
-			sr_shmi_t * ptr = (sr_shmi_t *)reg_content_buffer ;
-			value->setStringValue(ptr->value);
+			SrRegData * ptr = (SrRegData *)reg_content_buffer ;
+			// value->setStringValue(ptr->value.c_str());
+			value->setSrRegDataValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
@@ -191,12 +191,16 @@ int forgesight_registers_manager_get_register(
 	}
 	else if(!strcmp(reg_name, TXT_R))
 	{
+	
+	    printf("forgesight_registers_manager_get_register at TXT_R \n");
 		if(strlen(reg_member) == 0)
 		{
+	        printf("reg_manager_interface_getR at TXT_R \n");
             // Use TXT_REG_VALUE
 			reg_manager_interface_getR(reg_content_buffer, iRegIdx);
-			r_shmi_t * ptr = (r_shmi_t *)reg_content_buffer ;
-			value->setFloatValue(ptr->value);
+			RRegData * ptr = (RRegData *)reg_content_buffer ;
+			// value->setFloatValue(ptr->value);
+			value->setRRegDataValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
@@ -219,8 +223,9 @@ int forgesight_registers_manager_get_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_getMr(reg_content_buffer, iRegIdx);
-			mr_shmi_t * ptr = (mr_shmi_t *)reg_content_buffer ;
-			value->setFloatValue(ptr->value);
+			MrRegData * ptr = (MrRegData *)reg_content_buffer ;
+			// value->setFloatValue(ptr->value);
+			value->setMrRegDataValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
@@ -240,14 +245,15 @@ int forgesight_registers_manager_get_register(
 	}
 	else if(!strcmp(reg_name, TXT_UF))
 	{
-		if(strlen(reg_member) == 0)
-		{
-            // Use TXT_UF_TF_COORDINATE
-			reg_manager_interface_getUf(reg_content_buffer, iRegIdx);
-			uf_shmi_t * ptr = (uf_shmi_t *)reg_content_buffer ;
-			value->setPoseValue(&(ptr->c));
-		}
-		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
+//		if(strlen(reg_member) == 0)
+//		{
+//            // Use TXT_UF_TF_COORDINATE
+//			reg_manager_interface_getUf(reg_content_buffer, iRegIdx);
+//			uf_shmi_t * ptr = (uf_shmi_t *)reg_content_buffer ;
+//			value->setPoseValue(&(ptr->c));
+//		}
+//		else 
+		if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
 			reg_manager_interface_getCoordinateUf(reg_content_buffer, iRegIdx);
 			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
@@ -266,13 +272,14 @@ int forgesight_registers_manager_get_register(
 	}
 	else if(!strcmp(reg_name, TXT_TF))
 	{
-		if(strlen(reg_member) == 0)
-		{
-			reg_manager_interface_getTf(reg_content_buffer, iRegIdx);
-			tf_shmi_t * ptr = (tf_shmi_t *)reg_content_buffer ;
-			value->setPoseValue(&(ptr->c));
-		}
-		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
+//		if(strlen(reg_member) == 0)
+//		{
+//			reg_manager_interface_getTf(reg_content_buffer, iRegIdx);
+//			tf_shmi_t * ptr = (tf_shmi_t *)reg_content_buffer ;
+//			value->setPoseValue(&(ptr->c));
+//		}
+//		else 
+		if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
 			reg_manager_interface_getCoordinateTf(reg_content_buffer, iRegIdx);
 			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
@@ -291,25 +298,26 @@ int forgesight_registers_manager_get_register(
 	}
 	else if(!strcmp(reg_name, TXT_PL))
 	{
-		if(strlen(reg_member) == 0)
-		{
-            // Use TXT_PL_POSE
-			reg_manager_interface_getPl(reg_content_buffer, iRegIdx);
-			pl_shmi_t * ptr = (pl_shmi_t *)reg_content_buffer ;
-			value->setPLValue(&(ptr->pallet));
-		}
-		else if (!strcmp(reg_member, TXT_PL_POSE))
+//		if(strlen(reg_member) == 0)
+//		{
+//            // Use TXT_PL_POSE
+//			reg_manager_interface_getPl(reg_content_buffer, iRegIdx);
+//			pl_shmi_t * ptr = (pl_shmi_t *)reg_content_buffer ;
+//			value->setPLValue(&(ptr->pallet));
+//		}
+//		else 
+		if (!strcmp(reg_member, TXT_PL_POSE))
 		{
 			reg_manager_interface_getPalletPl(reg_content_buffer, iRegIdx);
 			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
 			value->setPoseValue(ptr);
 		}
-		else if (!strcmp(reg_member, TXT_PL_PALLET))
-		{
-			reg_manager_interface_getPalletPl(reg_content_buffer, iRegIdx);
-			pl_t * ptr = (pl_t *)reg_content_buffer ;
-			value->setPLValue(ptr);
-		}
+//		else if (!strcmp(reg_member, TXT_PL_PALLET))
+//		{
+//			reg_manager_interface_getPalletPl(reg_content_buffer, iRegIdx);
+//			pl_t * ptr = (pl_t *)reg_content_buffer ;
+//			value->setPLValue(ptr);
+//		}
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
 			reg_manager_interface_getFlagPl(reg_content_buffer, iRegIdx);
@@ -375,6 +383,7 @@ int forgesight_registers_manager_set_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_setPr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
@@ -402,6 +411,7 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setPosePr(&pose, iRegIdx);
+	 	      	return 0 ;
 			}
 			else if (valueStart->getType() == TYPE_POSE)
 			{
@@ -411,6 +421,7 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setPosePr(&pose, iRegIdx);
+	    	   	return 0 ;
 			}
 		}
 		else if (!strcmp(reg_member, TXT_PL_JOINT))
@@ -438,6 +449,7 @@ int forgesight_registers_manager_set_register(
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				reg_manager_interface_setJointPr(&joint, iRegIdx);
+	    	   	return 0 ;
 			}
 			else if (valueStart->getType() == TYPE_JOINT)
 			{
@@ -446,6 +458,7 @@ int forgesight_registers_manager_set_register(
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				reg_manager_interface_setJointPr(&joint, iRegIdx);
+	    	  	return 0 ;
 			}
 			
 		}
@@ -454,12 +467,14 @@ int forgesight_registers_manager_set_register(
 			int iType = (int)atof((char *)valueStart);
 			printf("Set TYPE:(%d) to PR[%s]\n", iType, reg_idx);
 			reg_manager_interface_setTypePr(&iType, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to PR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdPr(&iID, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
@@ -467,6 +482,7 @@ int forgesight_registers_manager_set_register(
 			printf("Set COMMENT:(%s) to PR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentPr(objThreadCntrolBlock->token, iRegIdx);
+	       	return 0 ;
 		}
 	}
 	else if(!strcmp(reg_name, TXT_SR))
@@ -474,6 +490,7 @@ int forgesight_registers_manager_set_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_setSr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
@@ -481,12 +498,14 @@ int forgesight_registers_manager_set_register(
 			printf("Set VALUE:(%s) to SR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setValueSr(objThreadCntrolBlock->token, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdSr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
@@ -494,25 +513,29 @@ int forgesight_registers_manager_set_register(
 			printf("Set COMMENT:(%s) to SR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentSr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 	}
 	else if(!strcmp(reg_name, TXT_R))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setR(valueStart, iRegIdx);
+			reg_manager_interface_setR(&(valueStart->getRRegDataValue()), iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			float fValue = atof((char *)valueStart);
 			printf("Set VALUE:(%f) to SR[%s]\n", fValue, reg_idx);
 			reg_manager_interface_setValueR(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdR(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
@@ -520,6 +543,7 @@ int forgesight_registers_manager_set_register(
 			printf("Set COMMENT:(%s) to SR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentR(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 	}
 	else if(!strcmp(reg_name, TXT_MR))
@@ -527,18 +551,21 @@ int forgesight_registers_manager_set_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_setMr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			int iValue = atof((char *)valueStart);
 			printf("Set VALUE:(%f) to MR[%s]\n", iValue, reg_idx);
 			reg_manager_interface_setValueMr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdMr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
@@ -546,6 +573,7 @@ int forgesight_registers_manager_set_register(
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentMr(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 	}
 	else if(!strcmp(reg_name, TXT_UF))
@@ -553,6 +581,7 @@ int forgesight_registers_manager_set_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_setUf(valueStart, iRegIdx);
+	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
@@ -580,6 +609,7 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setCoordinateUf(&pose, iRegIdx);
+	       		return 0 ;
 			}
 			else if (valueStart->getType() == TYPE_POSE)
 			{
@@ -589,6 +619,7 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setCoordinateUf(&pose, iRegIdx);
+	        	return 0 ;
 			}
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
@@ -596,6 +627,7 @@ int forgesight_registers_manager_set_register(
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdUf(valueStart, iRegIdx);
+	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
@@ -603,6 +635,7 @@ int forgesight_registers_manager_set_register(
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentUf(valueStart, iRegIdx);
+	        return 0 ;
 		}
 	}
 	else if(!strcmp(reg_name, TXT_TF))
@@ -610,6 +643,7 @@ int forgesight_registers_manager_set_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_setTf(valueStart, iRegIdx);
+	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
@@ -637,6 +671,7 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setCoordinateTf(&pose, iRegIdx);
+	        	return 0 ;
 			}
 			else if (valueStart->getType() == TYPE_POSE)
 			{
@@ -646,6 +681,7 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setCoordinateTf(&pose, iRegIdx);
+	        	return 0 ;
 			}
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
@@ -653,6 +689,7 @@ int forgesight_registers_manager_set_register(
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdTf(valueStart, iRegIdx);
+	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
@@ -660,6 +697,7 @@ int forgesight_registers_manager_set_register(
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentTf(valueStart, iRegIdx);
+	        return 0 ;
 		}
 	}
 	else if(!strcmp(reg_name, TXT_PL))
@@ -667,6 +705,7 @@ int forgesight_registers_manager_set_register(
 		if(strlen(reg_member) == 0)
 		{
 			reg_manager_interface_setPl(valueStart, iRegIdx);
+	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
@@ -694,6 +733,7 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setPosePl(pose, iRegIdx);
+	        	return 0 ;
 			}
 			else if (valueStart->getType() == TYPE_POSE)
 			{
@@ -703,23 +743,27 @@ int forgesight_registers_manager_set_register(
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
 				reg_manager_interface_setPosePl(pose, iRegIdx);
+	        	return 0 ;
 			}
 		}
 		else if (!strcmp(reg_member, TXT_PL_PALLET))
 		{
 			reg_manager_interface_setPalletPl(valueStart, iRegIdx);
+	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setFlagPl(valueStart, iRegIdx);
+	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdPl(valueStart, iRegIdx);
+	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
@@ -727,6 +771,7 @@ int forgesight_registers_manager_set_register(
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentPl(valueStart, iRegIdx);
+	        return 0 ;
 		}
 	}
 	return 0 ;
@@ -961,5 +1006,25 @@ int forgesight_mod_reg(RegMap & reg)
  	 }
   	 printf("reg.type = %d end.\n", reg.type);
 	 return 1;
+}
+
+std::vector<BaseRegData> forgesight_read_chg_pr_lst(int start_id, int size)
+{
+	return reg_manager_interface_read_chg_pr_lst(start_id, size);
+}
+
+std::vector<BaseRegData> forgesight_read_chg_sr_lst(int start_id, int size)
+{
+	return reg_manager_interface_read_chg_sr_lst(start_id, size);
+}
+
+std::vector<BaseRegData> forgesight_read_chg_r_lst(int start_id, int size)
+{
+	return reg_manager_interface_read_chg_r_lst(start_id, size);
+}
+
+std::vector<BaseRegData> forgesight_read_chg_mr_lst(int start_id, int size)
+{
+	return reg_manager_interface_read_chg_mr_lst(start_id, size);
 }
 

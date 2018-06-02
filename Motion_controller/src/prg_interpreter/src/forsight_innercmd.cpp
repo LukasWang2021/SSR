@@ -1,4 +1,8 @@
 // #include "stdafx.h"
+
+#ifdef WIN32
+#pragma warning(disable : 4786)
+#endif
 #include "stdio.h"
 #include "string.h"
 #include "setjmp.h"
@@ -388,7 +392,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 					return 0 ;
 				}
                 get_exp(objThreadCntrolBlock, &value, &boolValue);
-				sprintf(additionalInfomation.execute.assignment.value, "%f", value);
+				sprintf(additionalInfomation.execute.assignment.value, "%f", value.getFloatValue());
 			}
 			else if(strcmp(objThreadCntrolBlock->token, "call") == 0)
 			{
@@ -489,7 +493,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.joint_target = value.getJointValue();
 		
-	    printf("move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ\n", 
+	    printf("Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ\n", 
 			instr.target.joint_target.j1, instr.target.joint_target.j2, 
 			instr.target.joint_target.j3, instr.target.joint_target.j4, 
 			instr.target.joint_target.j5, instr.target.joint_target.j6);
@@ -500,6 +504,11 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	     printf("Use start point in revert mode.\n");
 	     instr.target.joint_target = 
 		 	objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]].joint_target;
+		 
+	    printf("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ\n", 
+			instr.target.joint_target.j1, instr.target.joint_target.j2, 
+			instr.target.joint_target.j3, instr.target.joint_target.j4, 
+			instr.target.joint_target.j5, instr.target.joint_target.j6);
 	}
 	get_token(objThreadCntrolBlock);
 
@@ -624,7 +633,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.pose_target = value.getPoseValue();
 		
-	    printf("move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
+	    printf("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
 			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
 			instr.target.pose_target.position.z, instr.target.pose_target.orientation.a, 
 			instr.target.pose_target.orientation.b, instr.target.pose_target.orientation.c);
@@ -643,7 +652,13 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	     printf("Use start point in revert mode.\n");
 	     instr.target.pose_target
 		 	= objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]].pose_target;
+		 
+	    printf("Backward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
+			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
+			instr.target.pose_target.position.z, instr.target.pose_target.orientation.a, 
+			instr.target.pose_target.orientation.b, instr.target.pose_target.orientation.c);
 	}
+	
 	
 	get_token(objThreadCntrolBlock);
     get_exp(objThreadCntrolBlock, &value, &boolValue);
@@ -697,12 +712,16 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 // 	#else
 // 		printf("setInstruction MOTION_LINE at %d\n", instr.line);
 // 	#endif
+	
+#ifndef WIN32
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
         printf("setInstruction return false\n");
 		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	}
+#endif
+
 //    printf("setInstruction return true\n");
     return 1;   
 }
@@ -912,25 +931,30 @@ int call_Timer(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	timerNumber = (int)value.getFloatValue() ;
+        printf("%d: call_Timer  enter %d \n", __LINE__, timerNumber);
 	if(timerNumber >= MAX_STOPWATCH_NUM)
     	return 0;
 	
 	sprintf(var, "Timer[%d]", timerNumber);
 	get_token(objThreadCntrolBlock);
-	if(strcmp(objThreadCntrolBlock->token, "start") != 0)
+        printf("%d: call_Timer  enter %s \n", __LINE__, objThreadCntrolBlock->token);
+	if(strcmp(objThreadCntrolBlock->token, "start") == 0)
     {
+        printf("%d: call_Timer  start\n", __LINE__);
 		g_structStopWatch[timerNumber].start_time = time(0);
 		value.setFloatValue(0); // 0.0; 
 		assign_var(objThreadCntrolBlock, var, value); // 0.0);
 	}
-	else if(strcmp(objThreadCntrolBlock->token, "stop") != 0)
+	else if(strcmp(objThreadCntrolBlock->token, "stop") == 0)
     {
+        printf("%d: call_Timer  stop\n", __LINE__);
 		g_structStopWatch[timerNumber].diff_time = time(0) - 
 			g_structStopWatch[timerNumber].start_time ;
 		
     	eval_value value;
 		value.setFloatValue(g_structStopWatch[timerNumber].diff_time)  ;
 		assign_var(objThreadCntrolBlock, var, value);
+	    printf("Time elapse : %d .\n", g_structStopWatch[timerNumber].diff_time);
 	}
 	else 
     {

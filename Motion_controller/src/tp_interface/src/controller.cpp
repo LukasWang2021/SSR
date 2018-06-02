@@ -349,7 +349,14 @@ void Controller::updateWorkStatus(int id)
 			else if (state >= ERROR_EXEC_BASE_T)
 			{
 				rcs::Error::instance()->add(
-					FAIL_DUMPING_PARAM + state - ERROR_EXEC_BASE_T);
+					FAIL_INTERPRETER_BASE + state - ERROR_EXEC_BASE_T);
+			}
+
+			long long int warn = ShareMem::instance()->getWarning();
+			if (warn >= ERROR_EXEC_BASE_T)
+			{
+				rcs::Error::instance()->add(
+					FAIL_INTERPRETER_BASE + ALARM_EXEC_BASE_T + state);
 			}
             break;
         }
@@ -1425,7 +1432,7 @@ void Controller::stateMachine(void* params)
             if ((ShareMem::instance()->getServoState() == STATE_READY)
             && (fifo_len == 0))
             {
-                if ((work_status_ == RUNNING_W) || (RUNNING_TO_IDLE_T))
+                if ((work_status_ == RUNNING_W) || (work_status_ == RUNNING_TO_IDLE_T))
                 {
                     ShareMem::instance()->sendingPermitted();
                     auto_motion_->setDoneFlag(true);
@@ -1435,6 +1442,7 @@ void Controller::stateMachine(void* params)
             }
         }
     }
+
     if ((work_status_ == IDLE_W)
     || (work_status_ == IDLE_TO_RUNNING_T)
     || (work_status_ == RUNNING_W))
@@ -2284,6 +2292,8 @@ bool Controller::setMotionStartPos()
 {
     MoveCommandDestination  movCmdDst ;
 	movCmdDst.joint_target = servo_joints_ ;
+        FST_INFO("%d: setMotionStartPos  start", __LINE__);
+    robot_->updatePose(servo_joints_);
 	movCmdDst.pose_target  = *(robot_->getTCPPosePtr()) ;
 	ShareMem::instance()->setMoveCommandDestination(movCmdDst);
     return true;
@@ -2899,10 +2909,7 @@ void Controller::setPoseRegister(void* params, int len)
 
 	PrRegData  pr_struct;
 	pr_struct.id = pr_interface.id;
-	if(strlen(pr_interface.comment) != 0)
-      memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
-	else
-      strcpy(pr_struct.comment, "Empty");
+    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
 	
 	memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
     pr_struct.value.pos_type = pr_interface.type;

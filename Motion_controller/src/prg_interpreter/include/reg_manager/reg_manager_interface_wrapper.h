@@ -1,8 +1,14 @@
 #ifndef REG_MANAGER_INTERFACE_WRAPPER_H
 #define REG_MANAGER_INTERFACE_WRAPPER_H
 
+#include "reg_manager/reg_manager_interface.h"
+#include "reg_manager/forsight_registers_manager.h"
+
+using namespace fst_reg ;
+
 #define REGSITER_NAMES   "pr;sr;r;mr;uf;tf;pl"
 
+void load_register_data();
 
 bool reg_manager_interface_getPr(void *ptr, uint16_t num);
 bool reg_manager_interface_setPr(void *ptr, uint16_t num);
@@ -122,5 +128,10 @@ bool reg_manager_interface_setIdPl(void *ptr, uint16_t num);
 
 bool reg_manager_interface_getCommentPl(void *ptr, uint16_t num);
 bool reg_manager_interface_setCommentPl(void *ptr, uint16_t num);
+
+std::vector<BaseRegData> reg_manager_interface_read_chg_pr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_chg_sr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_chg_r_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_chg_mr_lst(int start_id, int size);
 
 #endif

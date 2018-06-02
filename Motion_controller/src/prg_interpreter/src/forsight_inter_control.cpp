@@ -517,7 +517,6 @@ void waitInterpreterStateToPaused(
 void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 {
 	RegMap reg ;
-	eval_value objValue ;
 	IOPathInfo  dioPathInfo ;
 	
 	int iLineNum = 0 ;
@@ -531,7 +530,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 	char * testDebug = 0 ;
 	RegChgList  * regChgList ;
 	ChgFrameSimple * chgFrameSimple ;
-	RegManagerInterface objRegManagerInterface("share/configuration/machine");
+//	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	std::vector<BaseRegData> vecRet ; 
     printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
@@ -581,7 +580,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             setPrgmState(EXECUTE_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "ad_v");
+			   strcpy(intprt_ctrl.start_ctrl.file_name, "wait_test");
 			}
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
@@ -760,7 +759,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 #ifndef WIN32
         case READ_CHG_PR_LST:
 			vecRet.clear(); 
-			vecRet = objRegManagerInterface.getPrRegChangedIdList(0, 255);
+			vecRet = forgesight_read_chg_pr_lst(0, 255);
 			
 			memset(tempDebug, 0x00, 1024);
 			strcpy(tempDebug, "PR:");
@@ -783,38 +782,68 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
             break;
         case READ_CHG_SR_LST:
 			vecRet.clear(); 
-			vecRet = objRegManagerInterface.getSrRegChangedIdList(0, 255);
+			vecRet = forgesight_read_chg_sr_lst(0, 255);
+			
 			memset(tempDebug, 0x00, 1024);
 			strcpy(tempDebug, "SR:");
+			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));
+			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
+			regChgList->command = intprt_ctrl.cmd ;
+			regChgList->count   = vecRet.size();
 			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
 			{
-				sprintf(tempDebug, "%s%d;", tempDebug, it->id);
+				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
+				chgFrameSimple[iSeq].id = it->id ;
+				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
+				printf("             %d:%s;\n", it->id, it->comment);
 			}
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)tempDebug, sizeof(tempDebug));
+			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
+				
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
+				sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));;
 	        setIntprtDataFlag(true);
             break;
         case READ_CHG_R_LST:
 			vecRet.clear(); 
-			vecRet = objRegManagerInterface.getRRegChangedIdList(0, 255);
+			vecRet = forgesight_read_chg_r_lst(0, 255);
 			memset(tempDebug, 0x00, 1024);
 			strcpy(tempDebug, "R:");
+			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));
+			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
+			regChgList->command = intprt_ctrl.cmd ;
+			regChgList->count   = vecRet.size();
 			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
 			{
-				sprintf(tempDebug, "%s%d;", tempDebug, it->id);
+				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
+				chgFrameSimple[iSeq].id = it->id ;
+				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
+				printf("             %d:%s;\n", it->id, it->comment);
 			}
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)tempDebug, sizeof(tempDebug));
+			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
+				sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));
 	        setIntprtDataFlag(true);
             break;
         case READ_CHG_MR_LST:
 			vecRet.clear(); 
-			vecRet = objRegManagerInterface.getMrRegChangedIdList(0, 255);
+			vecRet = forgesight_read_chg_mr_lst(0, 255);
 			memset(tempDebug, 0x00, 1024);
 			strcpy(tempDebug, "MR:");
+			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));
+			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
+			regChgList->command = intprt_ctrl.cmd ;
+			regChgList->count   = vecRet.size();
 			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
 			{
-				sprintf(tempDebug, "%s%d;", tempDebug, it->id);
+				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
+				chgFrameSimple[iSeq].id = it->id ;
+				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
+				printf("             %d:%s;\n", it->id, it->comment);
 			}
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)tempDebug, sizeof(tempDebug));
+			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
+				
+            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
+				sizeof(RegChgList) + vecRet.size() * sizeof(ChgFrameSimple));
 	        setIntprtDataFlag(true);
             break;
 #endif
@@ -841,6 +870,7 @@ void initShm()
 	
     openShm(SHM_CTRL_CMD, 1024);
     openShm(SHM_CTRL_STATUS, 1024);
+    openShm(SHM_INTPRT_DST, 1024);
     intprt_ctrl.cmd = START;
 	g_privateInterpreterState = IDLE_R ;
 	

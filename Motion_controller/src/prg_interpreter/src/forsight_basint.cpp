@@ -500,7 +500,9 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			if(iLinenum == 0)
 			{
 				printf("illegal line number: %d.\n", iLinenum);
-				exit(1);
+				// exit(1);
+				// serror(objThreadCntrolBlock, 17);
+				continue ;
 			}
 			if(iOldLinenum != iLinenum - 1)
 			{
@@ -2028,7 +2030,7 @@ double call_inner_func(struct thread_control_block * objThreadCntrolBlock)
     // Process a comma-separated list of values.
     do {
         get_exp(objThreadCntrolBlock, &value, &boolValue);
-        sprintf(temp[count], "%f", value); // save temporarily
+        sprintf(temp[count], "%f", value.getFloatValue()); // save temporarily
         get_token(objThreadCntrolBlock);
         count++;
     } while(*(objThreadCntrolBlock->token) == ',');
@@ -2067,6 +2069,12 @@ void get_args(struct thread_control_block * objThreadCntrolBlock)
     	serror(objThreadCntrolBlock, 2);
 		return;
 	}
+    get_token(objThreadCntrolBlock);
+    if(*(objThreadCntrolBlock->token) == ')')
+    {
+		return;
+	}
+	putback(objThreadCntrolBlock);
 
     // Process a comma-separated list of values.
     do {
@@ -2365,10 +2373,11 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
     "file not found"               // 14
     "movl with joint"              // 15
     "movj with point"              // 16
+    "illegal line number"          // 17
   };
   
   printf("-----------------ERR----------------------\n");
-  printf("\t NOTICE : %s\n", e[error]);
+  printf("\t NOTICE : %d - %s\n", error, e[error]);
   printf("-----------------ERR----------------------\n");
   
   setPrgmState((InterpreterState)(ERROR_SYNTAX_ERROR_T + error)) ; 
@@ -2908,6 +2917,9 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		if(strchr(vname, '['))
 		{
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
+			printf("data_ptr: id = %d, comment = %s\n", 
+					value.getRRegDataValue().id, value.getRRegDataValue().comment);
+            printf("assign_var vname = %s and value = %f.\n", vname, value.getFloatValue());
 			int iRet = forgesight_registers_manager_set_register(
 				objThreadCntrolBlock, vname, &value);
 #else
@@ -3076,6 +3088,7 @@ int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 	return -1 ;
 }
 
+
 bool base_thread_create(int iIdx, void * args)
 {
 	bool ret = false;
@@ -3094,6 +3107,7 @@ bool base_thread_create(int iIdx, void * args)
 	}
 	else
 	{
+      printf("start base_thread_create Failed..\n", iIdx);
 		g_basic_interpreter_handle[iIdx] = 0;
 	}
 #endif

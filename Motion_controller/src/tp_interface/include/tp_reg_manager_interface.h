@@ -55,7 +55,7 @@ typedef struct
 {
     fst_controller::PoseEuler cartesian_pos;
     double joint_pos[MAX_AXIS_NUM];
-    int pos_type;
+    PosType pos_type;
     double ext_pos[MAX_EXT_AXIS_NUM];   // not used
     int group_id;           // not used
     bool posture[4];        // not used

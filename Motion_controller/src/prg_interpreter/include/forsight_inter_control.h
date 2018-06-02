@@ -17,6 +17,7 @@
 #ifndef WIN32
 #include <unistd.h>
 #include "common/interpreter_common.h"
+#include "reg_manager/reg_manager_interface_wrapper.h"
 #else
 #include "interpreter_common.h"
 #endif

@@ -17,14 +17,18 @@ RReg::RReg(int size, std::string file_dir):
     data_list_.resize(size + 1);    // id=0 is not used, id start from 1
     // check if r_reg.yaml exist? if not, create a new one
     file_path_.append("/r_reg.yaml");
+	printf("RReg::RReg Enter %s\n", file_path_.c_str());
     if(access(file_path_.c_str(), 0) != 0)
     {
+	    printf("RReg::RReg access %s\n", file_path_.c_str());
         if(!createYaml())
         {
+	        printf("RReg::RReg createYaml %s\n", file_path_.c_str());
             setReady(false);
             return;
         }
     }
+	printf("RReg::RReg readAllRegDataFromYaml \n");
     // read yaml, load data to data_list_ and reg_list_
     if(!readAllRegDataFromYaml())
     {
@@ -121,6 +125,11 @@ bool RReg::setReg(void* data_ptr)
     {
         return false;
     }
+	if(strlen(reg_ptr->comment) == 0)
+    {
+        strcpy(reg_ptr->comment, "EMPTY");
+	    printf("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
+	}
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->comment);
@@ -129,6 +138,7 @@ bool RReg::setReg(void* data_ptr)
         return false;
     }
     data_list_[reg_data.id] = reg_ptr->value;
+	    printf("RReg::setReg value reg_ptr at %f\n", data_list_[reg_data.id]);
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }
 
@@ -170,6 +180,10 @@ bool RReg::readAllRegDataFromYaml()
         std::string comment;
         param_.getParam(reg_path + "/id", base_data.id);
         param_.getParam(reg_path + "/is_valid", base_data.is_valid);
+		if(base_data.is_valid)
+			printf("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
+		else
+			printf("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
         param_.getParam(reg_path + "/comment", comment);
         comment.resize(MAX_REG_COMMENT_LENGTH - 1, 0);
         memcpy(base_data.comment, comment.c_str(), MAX_REG_COMMENT_LENGTH);
@@ -186,9 +200,13 @@ bool RReg::readAllRegDataFromYaml()
 bool RReg::writeRegDataToYaml(const BaseRegData& base_data, const double& data)
 {
     std::string reg_path = getRegPath(base_data.id);
+	    printf("RReg::writeRegDataToYaml id at %d\n", base_data.id);
     param_.setParam(reg_path + "/id", base_data.id);
+	    printf("RReg::writeRegDataToYaml is_valid at %d\n", base_data.is_valid);
     param_.setParam(reg_path + "/is_valid", base_data.is_valid);
+	    printf("RReg::writeRegDataToYaml comment at %s\n", base_data.comment);
     param_.setParam(reg_path + "/comment", base_data.comment);
+	    printf("RReg::writeRegDataToYaml data at %f\n", data);
     param_.setParam(reg_path + "/value", data);
     return param_.dumpParamFile(file_path_.c_str());
 }

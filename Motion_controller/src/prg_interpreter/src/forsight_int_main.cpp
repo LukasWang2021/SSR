@@ -10,6 +10,9 @@ int main(int  argc, char *argv[])
 	initShm();
 	append_io_mapping();
 	forgesight_load_io_config();
+#ifndef WIN32
+	load_register_data();
+#endif
 	while(1)
 	{
 		bool ret = getIntprtCtrl();

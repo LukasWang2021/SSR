@@ -219,7 +219,13 @@ int set_io_status_to_io_mananger(
 #endif
 	char val = (char)value.getFloatValue();
 #ifndef WIN32
-	printf("\t SET:: %s : %d = %d\n", vname, info.port_index, val);
+	printf("\t SET:: %s \n", vname);
+    printf("\t msg_id: %d\n", info.msg_id);
+    printf("\t dev_id: %d\n", info.dev_id);
+    printf("\t port_type: %d\n", info.port_type);
+    printf("\t port_index: %d\n", info.port_index);
+    printf("\t bytes_len: %d\n", info.bytes_len);
+    printf("\t val: %d \n", val);
 	IOInterface::instance()->setDO(&info, val);
 #endif
 	return 1 ;
@@ -271,9 +277,9 @@ eval_value get_io_status_from_io_mananger(
         printf("MOD_IO:: not exist path : %s\n", vname); 
 		return ;
     }
-	
+	memset(valueBuf, 0x00, 8);
 	IOInterface::instance()->getDIO(&info, valueBuf, 8);
-	printf("\t GET:: %s : (", vname);
+	printf("\t get_io_status_from_io_mananger:: %s : (", vname);
 	for(int iRet = 0 ; iRet < 8 ; iRet++)
 	{
 		printf("%04X, ", valueBuf[iRet]);
@@ -301,8 +307,9 @@ int get_io_interface_status(char *vname)
 		return ;
 	}
 	
+	memset(valueBuf, 0x00, 8);
 	IOInterface::instance()->getDIO(&info, valueBuf, 8);
-	printf("\t GET:: %s : (", vname);
+	printf("\t get_io_interface_status:: %s : (", vname);
 	for(int iRet = 0 ; iRet < 8 ; iRet++)
 	{
 		printf("%04X, ", valueBuf[iRet]);

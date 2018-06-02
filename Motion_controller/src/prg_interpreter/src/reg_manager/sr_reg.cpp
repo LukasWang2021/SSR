@@ -112,6 +112,11 @@ bool SrReg::setReg(void* data_ptr)
     {
         return false;
     }
+	if(strlen(reg_ptr->comment) == 0)
+    {
+        strcpy(reg_ptr->comment, "EMPTY");
+	    printf("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
+	}
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->comment);

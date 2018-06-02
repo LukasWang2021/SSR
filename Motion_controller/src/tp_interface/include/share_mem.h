@@ -173,6 +173,12 @@ class ShareMem
      * @return: interpreter state 
      */
     InterpreterState getIntprtState();
+    /**
+     * @brief: get interpreter Warning 
+     *
+     * @return: interpreter Warning 
+     */
+	long long int getWarning();
 
     /**
      * @brief: check if servo is done 

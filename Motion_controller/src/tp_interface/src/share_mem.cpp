@@ -21,6 +21,8 @@ ShareMem::ShareMem(RosBasic *ros_basic):ros_basic_(ros_basic)
     createShm(SHM_CTRL_CMD,          SHM_CTRLCMD_SIZE);
     createShm(SHM_CTRL_STATUS,       SHM_CTRLSTATUS_SIZE);
 
+    createShm(SHM_INTPRT_DST,        SHM_CTRLSTATUS_SIZE);
+
     shm_instance_ = this;
 }
 
@@ -288,6 +290,13 @@ InterpreterState ShareMem::getIntprtState()
     int offset = &((IntprtStatus*)0)->state;
     readShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
     return state;
+}
+long long int ShareMem::getWarning()
+{
+    long long int warn;
+    int offset = &((IntprtStatus*)0)->warn;
+    readShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
+    return warn;
 }
 
 bool ShareMem::getRegInfo(RegMap * info)

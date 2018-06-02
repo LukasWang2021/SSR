@@ -26,9 +26,9 @@
 #else
 #include <pthread.h>
 #include "common/interpreter_common.h"
+#include "motion_plan_arm_group.h"
 #endif
 #include "forsight_eval_type.h"
-#include "motion_plan_arm_group.h"
 
 using namespace std;
 

@@ -101,15 +101,14 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	10277,	{	&ProtoParse::decValidSimpleFrame,	&ProtoParse::encValidSimpleFrame	}	},
 	{	34069,	{	&ProtoParse::decPoseRegister,	&ProtoParse::encPoseRegister	}	},
 	{	32882,	{	&ProtoParse::decNumberRegister,	&ProtoParse::encNumberRegister	}	},
+	{	16261,	{	&ProtoParse::decDefault,	&ProtoParse::encValidSimpleReg	}	},
+	{	76642,	{	&ProtoParse::decDefault,	&ProtoParse::encValidSimpleReg	}	},
 	{	4855,	{	&ProtoParse::decDefault,	&ProtoParse::encString	}	},
 	{	22462,	{	&ProtoParse::decDefault,	&ProtoParse::encGlobalAcc	}	},
 
 };
 
 
-	
-
-	
 
 
 #endif //#ifndef PROTO_FUNC_H_

@@ -1,65 +1,50 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ioboard)
 
-set(VERSION_MAJOR ?)
-set(VERSION_MINOR ?)
-set(VERSION_PATCH ?)
+# setting for include file.
+set(VERSION_MAJOR 1)
+set(VERSION_MINOR 1)
+set(VERSION_PATCH 0)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 
+# setting for package version file.
 set(${PROJECT_NAME}_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
+# configure a header file to pass some settings to the source code.
 configure_file(
-    "${PROJECT_SOURCE_DIR}/include/version.h.in"
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
+  "${PROJECT_SOURCE_DIR}/include/version.h.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
 )
 
-file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
-    "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n"
-)
+# add the search path for include files.
+include_directories(${PROJECT_BINARY_DIR})
 
-if(catkin_CROSS)
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
-    set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
-    message(STATUS "ARM-Cross")
-else()
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_x86})
-    set(catkin_LIBRARIES ${catkin_LIBRARYS_x86})
-    message(STATUS "x86-64")
-endif()
+# write the verson info to a file.
+file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
 
+find_package(catkin REQUIRED)
 
 catkin_package(
-    LIBRARIES ioboard
+  INCLUDE_DIRS include
+  LIBRARIES ioboard
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0")
+include_directories(include)
 
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-    ${PROJECT_BINARY_DIR}
-)
-
-#############
-##  Build  ##
-#############
 add_library(${PROJECT_NAME}
-    src/IOboard.c
-    src/fakeio.c
+   src/IOboard.c src/fakeio.c
 )
-target_link_libraries(${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-#############
-## Install ##
-#############
 install(TARGETS ioboard # ioboard_node 
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#       TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version 
+  DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
-
-

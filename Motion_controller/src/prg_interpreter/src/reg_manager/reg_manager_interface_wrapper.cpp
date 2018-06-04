@@ -78,7 +78,7 @@ static int get_num_token(char * src, char * dst)
 
 void load_register_data()
 {
-	g_objRegManagerInterface = new RegManagerInterface("share/configuration/machine");
+	g_objRegManagerInterface = new RegManagerInterface("/root/install/share/configuration/machine");
 }
 
 bool reg_manager_interface_getPr(void *ptr, uint16_t num)

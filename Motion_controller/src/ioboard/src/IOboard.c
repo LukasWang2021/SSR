@@ -107,7 +107,7 @@ int ioGetSeq(uint8_t *seq) {
 }
 
 void ioIntegParameter(uint32_t *parameter, struct IODeviceData *idd) {
-	uint32_t param = 0;
+	uint32_t param = START_FRAME_VALUE;
 	
 	param |= INTEGDATA((uint32_t)idd->id, MASK_ID, OF_ID);
 	param |= INTEGDATA((uint32_t)idd->enable, MASK_ENABLE, OF_ENABLE);

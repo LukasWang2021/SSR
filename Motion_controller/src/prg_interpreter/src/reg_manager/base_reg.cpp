@@ -34,6 +34,22 @@ std::vector<BaseRegData> BaseReg::getChangedIdList(int start_id, int size)
     return list;
 }
 
+std::vector<BaseRegData> BaseReg::getValidIdList(int start_id, int size)
+{
+    std::vector<BaseRegData> list;
+    int end_id = start_id + size;
+    start_id = (start_id <= 0 ? 1 : start_id);
+    end_id = (end_id < reg_list_.size() ? end_id : reg_list_.size());
+    for(int i = start_id; i < end_id; ++i)
+    {
+        if(reg_list_[i].is_valid)
+        {
+            list.push_back(reg_list_[i]);
+        }
+    }
+    return list;
+}
+
 RegType BaseReg::getRegType()
 {
     return type_;

@@ -68,16 +68,28 @@ public:
     // In:      start_id: start index of pr reg
     //          size: the scope of scanning
     // Out:     none
-    // Return:  index list of changed pr regs
+    // Return:  list of changed pr regs
     //------------------------------------------------------------
     std::vector<BaseRegData> getPrRegChangedIdList(int start_id, int size);
 
+    //------------------------------------------------------------
+    // Function:    getPrRegValidIdList
+    // Summary: list all valid indexes of pr regs in the given index range,
+    //          calling this API will not change the corresponding is_changed flag of PrRegs
+    // In:      start_id: start index of pr reg
+    //          size: the scope of scanning
+    // Out:     none
+    // Return:  list of valid pr regs
+    //------------------------------------------------------------
+    std::vector<BaseRegData> getPrRegValidIdList(int start_id, int size);
+    
     // MrReg APIgroup: the same as PrReg API group
     bool addMrReg(MrRegData* data_ptr);
     bool deleteMrReg(int id);
     bool getMrReg(int id, MrRegData* data_ptr);
     bool setMrReg(MrRegData* data_ptr);    
     std::vector<BaseRegData> getMrRegChangedIdList(int start_id, int size);
+    std::vector<BaseRegData> getMrRegValidIdList(int start_id, int size);
 
     // SrReg APIgroup: the same as PrReg API group
     bool addSrReg(SrRegData* data_ptr);
@@ -85,13 +97,16 @@ public:
     bool getSrReg(int id, SrRegData* data_ptr);
     bool setSrReg(SrRegData* data_ptr);    
     std::vector<BaseRegData> getSrRegChangedIdList(int start_id, int size);
+    std::vector<BaseRegData> getSrRegValidIdList(int start_id, int size);
 
     // RReg APIgroup: the same as PrReg API group
     bool addRReg(RRegData* data_ptr);
     bool deleteRReg(int id);
     bool getRReg(int id, RRegData* data_ptr);
     bool setRReg(RRegData* data_ptr);    
-    std::vector<BaseRegData> getRRegChangedIdList(int start_id, int size);    
+    std::vector<BaseRegData> getRRegChangedIdList(int start_id, int size);
+    std::vector<BaseRegData> getRRegValidIdList(int start_id, int size);
+    
 private:
     RegManagerInterface();      // default allocator is not used
     

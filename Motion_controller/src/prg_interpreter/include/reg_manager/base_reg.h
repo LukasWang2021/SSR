@@ -46,6 +46,7 @@ public:
     virtual bool getReg(int id, void* data_ptr) = 0;
     virtual bool setReg(void* data_ptr) = 0;
     std::vector<BaseRegData> getChangedIdList(int start_id, int size);
+    std::vector<BaseRegData> getValidIdList(int start_id, int size);
 
     RegType getRegType();
     void setReady(bool is_ready);

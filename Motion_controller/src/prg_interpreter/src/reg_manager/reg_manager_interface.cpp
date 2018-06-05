@@ -70,6 +70,11 @@ std::vector<BaseRegData> RegManagerInterface::getPrRegChangedIdList(int start_id
     return reg_ptr_[REG_TYPE_PR]->getChangedIdList(start_id, size);
 }
 
+std::vector<BaseRegData> RegManagerInterface::getPrRegValidIdList(int start_id, int size)
+{
+    return reg_ptr_[REG_TYPE_PR]->getValidIdList(start_id, size);
+}
+
 bool RegManagerInterface::addMrReg(MrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_MR]->addReg(reinterpret_cast<void*>(data_ptr));
@@ -93,6 +98,11 @@ bool RegManagerInterface::setMrReg(MrRegData* data_ptr)
 std::vector<BaseRegData> RegManagerInterface::getMrRegChangedIdList(int start_id, int size)
 {
     return reg_ptr_[REG_TYPE_MR]->getChangedIdList(start_id, size);
+}
+
+std::vector<BaseRegData> RegManagerInterface::getMrRegValidIdList(int start_id, int size)
+{
+    return reg_ptr_[REG_TYPE_MR]->getValidIdList(start_id, size);
 }
 
 bool RegManagerInterface::addSrReg(SrRegData* data_ptr)
@@ -120,6 +130,11 @@ std::vector<BaseRegData> RegManagerInterface::getSrRegChangedIdList(int start_id
     return reg_ptr_[REG_TYPE_SR]->getChangedIdList(start_id, size);
 }
 
+std::vector<BaseRegData> RegManagerInterface::getSrRegValidIdList(int start_id, int size)
+{
+    return reg_ptr_[REG_TYPE_SR]->getValidIdList(start_id, size);
+}
+
 bool RegManagerInterface::addRReg(RRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_R]->addReg(reinterpret_cast<void*>(data_ptr));
@@ -143,6 +158,11 @@ bool RegManagerInterface::setRReg(RRegData* data_ptr)
 std::vector<BaseRegData> RegManagerInterface::getRRegChangedIdList(int start_id, int size)
 {
     return reg_ptr_[REG_TYPE_R]->getChangedIdList(start_id, size);
+}
+
+std::vector<BaseRegData> RegManagerInterface::getRRegValidIdList(int start_id, int size)
+{
+    return reg_ptr_[REG_TYPE_R]->getValidIdList(start_id, size);
 }
 
 RegManagerInterface::RegManagerInterface()

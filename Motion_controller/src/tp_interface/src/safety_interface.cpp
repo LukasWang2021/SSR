@@ -9,6 +9,7 @@
 #include "safety/safety.h"
 #include "safety_interface.h"
 #include "error_monitor.h"
+#include "ip_address.h"
 
 #define CROSS_PLATFORM
 SafetyInterface::SafetyInterface()
@@ -16,10 +17,21 @@ SafetyInterface::SafetyInterface()
     int iRet = 0 ;
     
     // enable safty
-    valid_flag_ = true;
+    //valid_flag_ = true;
     
     // disable safty
-    //valid_flag_ = false;
+    // 
+    std::string str_addr = getLocalIP();
+	if(str_addr.substr(0,3) == "192")
+	{
+    	FST_INFO("Use Fake Safety");
+        valid_flag_ = false;
+	}
+    else
+	{
+    	FST_INFO("Use True Safety");
+	    valid_flag_ = true;
+	}
     
     memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
     memset((char*)&dout_frm2_, 0, sizeof(dout_frm2_));

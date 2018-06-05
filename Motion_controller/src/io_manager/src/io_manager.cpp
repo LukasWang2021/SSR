@@ -340,7 +340,7 @@ U64 IOManager::setModuleValue(unsigned int id, unsigned int port_seq, unsigned c
             io_r_[index].output[frame] |= 1 << shift;
     }
 
-    //printf("io_r:%x,%x,%x,%x,%x\n", io_r_[index].output[0], io_r_[index].output[1], io_r_[index].output[2], io_r_[index].output[3],io_r_[index].output[4]);
+    printf("io_r:%x,%x,%x,%x,%x\n", io_r_[index].output[0], io_r_[index].output[1], io_r_[index].output[2], io_r_[index].output[3],io_r_[index].output[4]);
 
     return FST_SUCCESS;
 }

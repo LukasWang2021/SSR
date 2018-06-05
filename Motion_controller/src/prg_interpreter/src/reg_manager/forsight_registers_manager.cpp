@@ -1008,23 +1008,23 @@ int forgesight_mod_reg(RegMap & reg)
 	 return 1;
 }
 
-std::vector<BaseRegData> forgesight_read_chg_pr_lst(int start_id, int size)
+std::vector<BaseRegData> forgesight_read_valid_pr_lst(int start_id, int size)
 {
-	return reg_manager_interface_read_chg_pr_lst(start_id, size);
+	return reg_manager_interface_read_valid_pr_lst(start_id, size);
 }
 
-std::vector<BaseRegData> forgesight_read_chg_sr_lst(int start_id, int size)
+std::vector<BaseRegData> forgesight_read_valid_sr_lst(int start_id, int size)
 {
-	return reg_manager_interface_read_chg_sr_lst(start_id, size);
+	return reg_manager_interface_read_valid_sr_lst(start_id, size);
 }
 
-std::vector<BaseRegData> forgesight_read_chg_r_lst(int start_id, int size)
+std::vector<BaseRegData> forgesight_read_valid_r_lst(int start_id, int size)
 {
-	return reg_manager_interface_read_chg_r_lst(start_id, size);
+	return reg_manager_interface_read_valid_r_lst(start_id, size);
 }
 
-std::vector<BaseRegData> forgesight_read_chg_mr_lst(int start_id, int size)
+std::vector<BaseRegData> forgesight_read_valid_mr_lst(int start_id, int size)
 {
-	return reg_manager_interface_read_chg_mr_lst(start_id, size);
+	return reg_manager_interface_read_valid_mr_lst(start_id, size);
 }
 

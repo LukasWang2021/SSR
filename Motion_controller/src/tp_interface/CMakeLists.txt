@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 1)
-set(VERSION_PATCH 9)
+set(VERSION_PATCH 10)
 string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
@@ -89,6 +89,7 @@ add_library(io_interface
     ${PROTO_SRCS}
     src/io_interface.cpp
     src/error_monitor.cpp
+    src/ip_address.cpp
 )
 
 add_executable(controller

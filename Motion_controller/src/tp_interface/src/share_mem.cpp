@@ -323,8 +323,15 @@ std::vector<ChgFrameSimple> ShareMem::getChangeRegList()
 	regChgList  = (RegChgList  *)strChgRegLst ;
 	chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
 
-	for (int i = 0 ; i < sizeof(RegChgList) + 1 * sizeof(ChgFrameSimple) ; i++)
-		printf("GET:: data: %d\n", strChgRegLst[i]);
+//    printf("GET:: data: \n\t");
+//	for (int i = 0 ; i < sizeof(RegChgList) + regChgList->count * sizeof(ChgFrameSimple) ; i++)
+//	{
+//	    printf("%d ", strChgRegLst[i]);
+//		if(i+1 == sizeof(RegChgList))
+//	    	printf("\n\t");
+//		if((i+1 - sizeof(RegChgList))%sizeof(ChgFrameSimple) == 0)
+//	    	printf("\n\t");
+//	}
 			
 	printf("tempDebug: %d  (%d) .\n", regChgList->command, regChgList->count);
 	for(int i = 0 ; i < regChgList->count ;i++)

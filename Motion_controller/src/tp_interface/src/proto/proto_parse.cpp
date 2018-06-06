@@ -512,7 +512,7 @@ bool encListCallback(pb_ostream_t *stream, const pb_field_t *field, void * const
         if (!pb_encode_submessage(stream, BaseTypes_ParameterMsg_fields, &param_msg))
             return false;
     }
-    
+    // FST_INFO("encListCallback Call IOInterface::instance");
     return IOInterface::instance()->encDevList(&param_msg, stream, field);
 }
 

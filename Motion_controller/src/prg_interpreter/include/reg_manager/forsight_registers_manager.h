@@ -24,10 +24,10 @@ int forgesight_read_reg(RegMap & reg);
 int forgesight_mod_reg(RegMap & reg);
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
-std::vector<BaseRegData> forgesight_read_chg_pr_lst(int start_id, int size);
-std::vector<BaseRegData> forgesight_read_chg_sr_lst(int start_id, int size);
-std::vector<BaseRegData> forgesight_read_chg_r_lst(int start_id, int size);
-std::vector<BaseRegData> forgesight_read_chg_mr_lst(int start_id, int size);
+std::vector<BaseRegData> forgesight_read_valid_pr_lst(int start_id, int size);
+std::vector<BaseRegData> forgesight_read_valid_sr_lst(int start_id, int size);
+std::vector<BaseRegData> forgesight_read_valid_r_lst(int start_id, int size);
+std::vector<BaseRegData> forgesight_read_valid_mr_lst(int start_id, int size);
 #endif
 
 #endif

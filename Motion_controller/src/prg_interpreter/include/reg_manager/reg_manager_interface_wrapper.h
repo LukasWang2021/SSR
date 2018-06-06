@@ -129,9 +129,9 @@ bool reg_manager_interface_setIdPl(void *ptr, uint16_t num);
 bool reg_manager_interface_getCommentPl(void *ptr, uint16_t num);
 bool reg_manager_interface_setCommentPl(void *ptr, uint16_t num);
 
-std::vector<BaseRegData> reg_manager_interface_read_chg_pr_lst(int start_id, int size);
-std::vector<BaseRegData> reg_manager_interface_read_chg_sr_lst(int start_id, int size);
-std::vector<BaseRegData> reg_manager_interface_read_chg_r_lst(int start_id, int size);
-std::vector<BaseRegData> reg_manager_interface_read_chg_mr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, int size);
 
 #endif

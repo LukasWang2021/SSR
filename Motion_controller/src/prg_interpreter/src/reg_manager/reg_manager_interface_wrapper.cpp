@@ -1027,14 +1027,14 @@ bool reg_manager_interface_setCommentPl(void *ptr, uint16_t num)
 	return 0 ;
 }
 
-std::vector<BaseRegData> reg_manager_interface_read_chg_pr_lst(int start_id, int size)
+std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
 	bool bRet = false ;
 	vecRet.clear();
 	if(g_objRegManagerInterface)
 	{
-		vecRet = g_objRegManagerInterface->getPrRegChangedIdList(0, 255);
+		vecRet = g_objRegManagerInterface->getPrRegValidIdList(0, 255);
 	}
 	else
 	{
@@ -1043,14 +1043,14 @@ std::vector<BaseRegData> reg_manager_interface_read_chg_pr_lst(int start_id, int
 	return vecRet ;
 }
 
-std::vector<BaseRegData> reg_manager_interface_read_chg_sr_lst(int start_id, int size)
+std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
 	bool bRet = false ;
 	vecRet.clear();
 	if(g_objRegManagerInterface)
 	{
-		vecRet = g_objRegManagerInterface->getSrRegChangedIdList(0, 255);
+		vecRet = g_objRegManagerInterface->getSrRegValidIdList(0, 255);
 	}
 	else
 	{
@@ -1059,14 +1059,14 @@ std::vector<BaseRegData> reg_manager_interface_read_chg_sr_lst(int start_id, int
 	return vecRet ;
 }
 
-std::vector<BaseRegData> reg_manager_interface_read_chg_r_lst(int start_id, int size)
+std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
 	bool bRet = false ;
 	vecRet.clear();
 	if(g_objRegManagerInterface)
 	{
-		vecRet = g_objRegManagerInterface->getRRegChangedIdList(0, 255);
+		vecRet = g_objRegManagerInterface->getRRegValidIdList(0, 255);
 	}
 	else
 	{
@@ -1075,14 +1075,14 @@ std::vector<BaseRegData> reg_manager_interface_read_chg_r_lst(int start_id, int 
 	return vecRet ;
 }
 
-std::vector<BaseRegData> reg_manager_interface_read_chg_mr_lst(int start_id, int size)
+std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
 	bool bRet = false ;
 	vecRet.clear();
 	if(g_objRegManagerInterface)
 	{
-		vecRet = g_objRegManagerInterface->getMrRegChangedIdList(0, 255);
+		vecRet = g_objRegManagerInterface->getMrRegValidIdList(0, 255);
 	}
 	else
 	{

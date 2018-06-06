@@ -11,6 +11,7 @@
 #include "error_code.h"
 #include "error_monitor.h"
 #include <boost/algorithm/string.hpp>
+#include "ip_address.h"
 
 IOInterface::IOInterface()
 {
@@ -40,7 +41,17 @@ U64 IOInterface::initial()
 {
     U64 result = 0;
     io_manager_ = new fst_io_manager::IOManager;
-    result = io_manager_->init(1);
+    std::string str_addr = getLocalIP();
+	if(str_addr.substr(0,3) == "192")
+	{
+    	FST_INFO("Use Fake io_manager_");
+        result = io_manager_->init(1);
+	}
+    else
+	{
+    	FST_INFO("Use True io_manager_");
+	    result = io_manager_->init(0);
+	}
     if (result != TPI_SUCCESS)
     {
         FST_ERROR("io_manager_ init failed:%llx", result);
@@ -238,14 +249,15 @@ U64 IOInterface::getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len)
     if (io_info->port_index == 0)
     {
         int io_len;
+        printf("io_info->port_index == 0 with %d.\n", io_info->dev_id);
         return io_manager_->getModuleValues(io_info->dev_id, buf_len, buffer, io_len);
     }
     else
     {
+		printf("IOInterface::getDIO (%d) at %d with %d\n", 
+			 buffer[0], io_info->port_index, io_info->bytes_len);
         return io_manager_->getModuleValue(io_info->dev_id, io_info->port_type, io_info->port_index, buffer[0]);
-        printf("IOInterface::getDIO (%d) at %d with %d\n", 
-			buffer[0], io_info->port_index, io_info->bytes_len);
-    }
+     }
 
 }
 
@@ -255,8 +267,12 @@ U64 IOInterface::checkIO(const char *path, IOPortInfo* io_info)
     boost::split(vc_path, path, boost::is_any_of("/"));
     
     int size = vc_path.size();
+    printf("\t getIODevNum: %d\n", getIODevNum());
     for (int i = 0; i < getIODevNum(); i++)
     {
+    		printf("\t device_number: %s\n", dev_info_[i].path.c_str());
+    		printf("\t id: %d\n", dev_info_[i].id);
+    		printf("\t device_number: %d\n", dev_info_[i].device_number);
         if ((vc_path[2] == dev_info_[i].communication_type) 
         && (stoi(vc_path[3]) == dev_info_[i].device_number))
         {

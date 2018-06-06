@@ -51,6 +51,9 @@ extern double   g_dh_mat[AXIS_IN_ALGORITHM][4];
 extern double   g_omega_limit[AXIS_IN_ALGORITHM];
 extern double   g_alpha_limit[AXIS_IN_ALGORITHM];
 
+extern double   g_alpha_upper[6];
+extern double   g_alpha_lower[6];
+
 extern fst_controller::JointConstraint  g_soft_constraint;
 extern fst_controller::JointConstraint  g_soft_constraint_limit;
 extern fst_controller::JointConstraint  g_hard_constraint;

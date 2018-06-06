@@ -62,6 +62,9 @@ double  g_dh_mat[6][4];
 double  g_omega_limit[9];
 double  g_alpha_limit[9];
 
+double  g_alpha_upper[6];
+double  g_alpha_lower[6];
+
 JointConstraint     g_soft_constraint;
 JointConstraint     g_soft_constraint_limit;
 JointConstraint     g_hard_constraint;

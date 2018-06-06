@@ -21,6 +21,7 @@
 #include <motion_plan_reuse.h>
 #include <motion_plan_kinematics.h>
 #include <motion_plan_traj_plan.h>
+#include <motion_plan_additional.h>
 
 
 
@@ -37,7 +38,7 @@ using fst_parameter::ParamValue;
 using namespace fst_algorithm;
 
 std::ofstream tos("./jout.csv");
-//std::ofstream tos1("/home/fst/myworkspace/jout1.txt");
+std::ofstream jos("./path.csv");
 //std::ofstream tos2("/home/fst/myworkspace/jout2.txt");
 //std::ofstream tos3("/home/fst/myworkspace/jout3.txt");
 
@@ -77,6 +78,7 @@ ArmGroup::ArmGroup(void)
 ArmGroup::~ArmGroup(void)
 {
     tos.close();
+    jos.close();
 }
 
 
@@ -197,9 +199,9 @@ ErrorCode ArmGroup::initArmGroup(void)
             tor[3] = torque[3];
             tor[4] = torque[4];
             tor[5] = torque[5];
-            g_dynamics_interface.setRatedTorque(tor);
-            FST_INFO("input torque: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
-                    tor[0], tor[1], tor[2], tor[3], tor[4], tor[5]);
+            //g_dynamics_interface.setRatedTorque(tor);
+            //FST_INFO("input torque: %.4f, %.4f, %.4f, %.4f, %.4f, %.4f",
+            //        tor[0], tor[1], tor[2], tor[3], tor[4], tor[5]);
         }
         else
         {
@@ -696,7 +698,6 @@ double ArmGroup::timeBeforeDeadline(void)
             }
         }
 
-        // How to compute deadline ?????
         if (ptr->deadline > 0)
         {
             deadline = ptr->deadline;
@@ -705,7 +706,7 @@ double ArmGroup::timeBeforeDeadline(void)
         time = deadline > pick_time_ ? deadline - pick_time_ : 0;
     }
 
-    //FST_WARN("time before deadline: %.4ff", time);
+    //FST_LOG("time before deadline: %.6f", time);
     return time;
 }
 
@@ -1183,16 +1184,33 @@ ErrorCode ArmGroup::autoMove(const MotionTarget &target, int id)
 //------------------------------------------------------------
 ErrorCode ArmGroup::manualMove(const vector<ManualDirection> &directions)
 {
-    //FST_INFO("manual_running_=%d", manual_running_);
+    ErrorCode err = SUCCESS;
+    ManualDirection dirs[6];
+
     if (directions.size() != 6)
     {
         FST_ERROR("manualMove: 6 manual directions needed, %d given", directions.size());
         return INVALID_PARAMETER;
     }
 
-    ErrorCode err = SUCCESS;
-    ManualDirection dirs[6] = {directions[0], directions[1], directions[2],
-                               directions[3], directions[4], directions[5]};
+    for (size_t i = 0; i < 6; i++)
+    {
+        if (directions[i] != STANDBY && directions[i] != INCREASE && directions[i] != DECREASE)
+        {
+            FST_ERROR("manualMove: unsupported direction, dir[%d] = %d", i, directions[i]);
+            err = INVALID_PARAMETER;
+        }
+        else
+        {
+            dirs[i] = directions[i];
+        }
+    }
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("manualMove: given directions invalid, manual abort");
+        return err;
+    }
     
     MANUAL_LOCK;
     if (manual_traj_.mode == CONTINUOUS)
@@ -2000,7 +2018,7 @@ ErrorCode ArmGroup::autoLine(const MotionTarget &target, int id)
 
 ErrorCode ArmGroup::preTrajPlan(ControlPointCache *cache)
 {
-    FST_INFO("Create first stage trajectory ...");
+    FST_INFO("Create first stage trajectory head=%d, tail=%d...", cache->head, cache->tail);
     ErrorCode err = SUCCESS;
 
     ControlPoint *path = cache->path;
@@ -2044,7 +2062,7 @@ ErrorCode ArmGroup::preTrajPlan(ControlPointCache *cache)
                 FST_INFO("  last-SV=%.4f, command-duration=%.4f, smooth-in-duration=%.4f",
                          cnt, command_duration, smooth_duration);
                                                 
-                for (index = 1; index < tail / 2; index++)
+                for (index = 1; index < tail - 1; index++)
                 {
                     if (path[index + 1].forward_duration > smooth_duration)
                     {
@@ -2055,10 +2073,6 @@ ErrorCode ArmGroup::preTrajPlan(ControlPointCache *cache)
                         smooth_in = index;
                         break;
                     }
-                }
-                if (index == tail / 2)
-                {
-                    smooth_in = tail / 2;
                 }
             }
             else
@@ -2080,7 +2094,7 @@ ErrorCode ArmGroup::preTrajPlan(ControlPointCache *cache)
         FST_INFO("  curr-SV=%.4f, command-duration=%.4f, smooth-out-duration=%.4f",
                  cnt, command_duration, smooth_duration);
 
-        for (index = tail - 1; index > tail / 2; index--)
+        for (index = tail - 1; index > 1; index--)
         {
             if (path[index - 1].backward_duration < smooth_duration)
             {
@@ -2093,10 +2107,6 @@ ErrorCode ArmGroup::preTrajPlan(ControlPointCache *cache)
             }
         }
 
-        if (index == tail / 2)
-        {
-            smooth_out = tail / 2 + 1 < tail ? tail / 2 + 1 : tail - 1;
-        }
 
         cache->deadline = -1;
         cache->valid = true;
@@ -2309,6 +2319,9 @@ ErrorCode ArmGroup::convertPathPoint(ControlPoint &cp)
         err = MOTION_INTERNAL_FAULT;
     }
 
+    jos << fp.joint[0] << "," << fp.joint[1] << "," << fp.joint[2] << ","
+        << fp.joint[3] << "," << fp.joint[4] << "," << fp.joint[5] << endl;
+
     return err;
 }
 
@@ -2317,42 +2330,87 @@ ErrorCode ArmGroup::planFirstStageTraj(ControlPoint *path, size_t head, size_t t
     ErrorCode err = SUCCESS;
 
     Omega   vel_max[AXIS_IN_ALGORITHM];
+    Alpha   f_upper[AXIS_IN_ALGORITHM];
+    Alpha   f_lower[AXIS_IN_ALGORITHM];
+    Alpha   b_upper[AXIS_IN_ALGORITHM];
+    Alpha   b_lower[AXIS_IN_ALGORITHM];
 
     double vel_ratio = 1;
-    double acc_ratio = 1;
+    //double acc_ratio = 1;
 
     if (path[0].path_point.source->getMotionType() == MOTION_JOINT)
     {
         vel_ratio = path[0].path_point.source->getCommandVelocity();
-        acc_ratio = path[0].path_point.source->getCommandAcc();
+        //acc_ratio = path[0].path_point.source->getCommandAcc();
     }
 
-    vel_max[0] = vel_ratio * g_omega_limit[0];
-    vel_max[1] = vel_ratio * g_omega_limit[1];
-    vel_max[2] = vel_ratio * g_omega_limit[2];
-    vel_max[3] = vel_ratio * g_omega_limit[3];
-    vel_max[4] = vel_ratio * g_omega_limit[4];
-    vel_max[5] = vel_ratio * g_omega_limit[5];
+    trimArray(g_omega_limit, AXIS_IN_ALGORITHM, vel_ratio, vel_max);
 
-    size_t ind;
     size_t spd_up = 0, spd_down = tail;
+    size_t ind_f = head + 1;
+    size_t ind_b = tail - 1;
+    MotionTime  duration_f = 99.99;
+    MotionTime  duration_b = 99.99;
+    MotionTime  cmd_duration = path[0].command_duration;
 
     // trajectory generation
-    FST_WARN("forward-------------");
-    for (ind = head + 1; ind < tail / 2; ind++)
+    computeAlphaLimit(path[0].forward_point.joint, path[0].forward_point.omega, f_upper, f_lower);
+    computeAlphaLimit(path[tail - 1].backward_point.joint, path[tail - 1].backward_point.omega, b_upper, b_lower);
+
+    /*
+    double *joint = path[0].forward_point.joint;
+    double *omega = path[0].forward_point.omega;
+    FST_INFO("input-joint:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", 
+             joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
+    FST_INFO("input-omega:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", 
+             omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
+    FST_INFO("alpha-upper:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+             f_upper[0], f_upper[1], f_upper[2], f_upper[3], f_upper[4], f_upper[5]);
+    FST_INFO("alpha-lower:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+             f_lower[0], f_lower[1], f_lower[2], f_lower[3], f_lower[4], f_lower[5]);
+    joint = path[tail - 1].backward_point.joint;
+    omega = path[tail - 1].backward_point.omega;
+    FST_INFO("input-joint:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+             joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
+    FST_INFO("input-omega:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+             omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
+    FST_INFO("alpha-upper:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+             b_upper[0], b_upper[1], b_upper[2], b_upper[3], b_upper[4], b_upper[5]);
+    FST_INFO("alpha-lower:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+             b_lower[0], b_lower[1], b_lower[2], b_lower[3], b_lower[4], b_lower[5]);
+    FST_INFO("omega-limit:%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+             vel_max[0], vel_max[1], vel_max[2], vel_max[3], vel_max[4], vel_max[5]);
+    */
+
+    double  last_duration = 99.99;
+
+    while (duration_b > cmd_duration + MINIMUM_E6 && ind_b > 0)
     {
-        err = forwardTrajectory(path[ind - 1], path[ind], path[ind].command_duration, vel_max);
+        err = backwardTrajectory(path[ind_b - 1], path[ind_b], cmd_duration, vel_max, b_upper, b_lower);
+
         if (err == SUCCESS)
         {
-            //FST_INFO("stamp=%d, duration=%.6f, command_duration=%.6f",
-            //         path[ind].path_point.stamp, path[ind].duration, path[ind].command_duration);
-            if (path[ind].forward_duration > path[ind].command_duration + MINIMUM_E6)
+            duration_b = path[ind_b].backward_duration;
+            //FST_LOG("back-index=%d, duration=%.6f, last-duration=%.6f, cmd-duration=%.6f",
+            //        ind_b, duration_b, last_duration, cmd_duration);
+
+            if (duration_b + MINIMUM_E6 > last_duration)
             {
-                continue;
+                break;
             }
             else
             {
-                spd_up = ind;
+                last_duration = duration_b;
+            }
+
+            if (duration_b > cmd_duration + MINIMUM_E6)
+            {
+                spd_down = ind_b;
+                ind_b --;
+            }
+            else
+            {
+                spd_down = ind_b;
                 break;
             }
         }
@@ -2362,34 +2420,35 @@ ErrorCode ArmGroup::planFirstStageTraj(ControlPoint *path, size_t head, size_t t
         }
     }
 
-    if (err != SUCCESS)
-    {
-        FST_ERROR("Fail to build startup trajectory, err=0x%llx", err);
-        return err;
-    }
-    else
-    {
-        if (ind == tail / 2)
-        {
-            spd_up = ind - 1;
-        }
-    }
+    last_duration = 99.99;
 
-    FST_WARN("backward-------------");
-    for (ind = tail - 1; ind >= tail / 2; ind--)
+    while (duration_f > cmd_duration + MINIMUM_E6 && ind_f < tail)
     {
-        err = backwardTrajectory(path[ind - 1], path[ind], path[ind].command_duration, vel_max);
+        err = forwardTrajectory(path[ind_f - 1], path[ind_f], cmd_duration, vel_max, f_upper, f_lower);
+
         if (err == SUCCESS)
         {
-            //FST_INFO("stamp=%d, duration=%.6f, command_duration=%.6f",
-            //         path[ind].path_point.stamp, path[ind].duration, path[ind].command_duration);
-            if (path[ind].backward_duration > path[ind].command_duration + MINIMUM_E6)
+            duration_f = path[ind_f].forward_duration;
+            //FST_LOG("fore-index=%d, duration=%.6f, last-duration=%.6f, cmd-duration=%.6f",
+            //        ind_f, duration_f, last_duration, cmd_duration);
+
+            if (duration_f + MINIMUM_E6 > last_duration)
             {
-                continue;
+                break;
             }
             else
             {
-                spd_down = ind;
+                last_duration = duration_f;
+            }
+
+            if (duration_f > cmd_duration + MINIMUM_E6)
+            {
+                spd_up = ind_f;
+                ind_f ++;
+            }
+            else
+            {
+                spd_up = ind_f;
                 break;
             }
         }
@@ -2399,17 +2458,147 @@ ErrorCode ArmGroup::planFirstStageTraj(ControlPoint *path, size_t head, size_t t
         }
     }
 
+    ind_f = head + 1;
+    ind_b = tail - 1;
+    duration_f = path[ind_f].forward_duration;
+    duration_b = path[ind_b].backward_duration;
+
+    while (ind_f != ind_b)
+    {
+        //FST_LOG("ind-f=%d, ind-b=%d, duration-f=%.6f, duration-nf=%.6f, duration-b=%.6f, duration-nb=%.6f",
+        //        ind_f, ind_b, duration_f, path[ind_f + 1].forward_duration, duration_b, path[ind_b - 1].backward_duration);
+
+        if (duration_f > duration_b)
+        {
+            if (path[ind_f + 1].forward_duration > 0)
+            {
+                ind_f ++;
+                duration_f = path[ind_f].forward_duration;
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            if (path[ind_b - 1].backward_duration > 0)
+            {
+                ind_b --;
+                duration_b = path[ind_b].backward_duration;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    if (ind_f == ind_b)
+    {
+        if (path[ind_f].forward_duration < path[ind_b].backward_duration)
+        {
+            ind_f --;
+        }
+        else
+        {
+            ind_b ++;
+        }
+    }
+
+    spd_up = ind_f;
+    spd_down = ind_b;
+
+    ind_f ++;
+    ind_b --;
+
+    while (path[ind_f].forward_duration > 0 && ind_f < tail)
+    {
+        path[ind_f ++].forward_duration = -1;
+    }
+
+    while (path[ind_b].backward_duration > 0 && ind_b > 0)
+    {
+        path[ind_b --].backward_duration = -1;
+    }
+
+    /*
+    for (size_t i = 0; i < tail; i++)
+    {
+        FST_LOG("stamp-%d: forward=%.6f, backward=%.6f",
+                i, path[i].forward_duration, path[i].backward_duration);
+    }
+     */
+
+
+
+    /*
+    while (ind_f != ind_b)
+    {
+        if (duration_f > duration_b)
+        {
+            // Vel-forward < Vel-backward, forward move a step
+            err = forwardTrajectory(path[ind_f - 1], path[ind_f], cmd_duration, vel_max, f_upper, f_lower);
+
+            if (err == SUCCESS)
+            {
+                duration_f = path[ind_f].forward_duration;
+
+                if (path[ind_f].forward_duration > cmd_duration + MINIMUM_E6)
+                {
+                    spd_up = ind_f;
+                    ind_f ++;
+                    continue;
+                }
+                else
+                {
+                    spd_up = ind_f;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            // Vel-forward <= Vel-backward, backward move a step
+            err = backwardTrajectory(path[ind_b - 1], path[ind_b], cmd_duration, vel_max, b_upper, b_lower);
+
+            if (err == SUCCESS)
+            {
+                duration_b = path[ind_b].backward_duration;
+
+                if (path[ind_b].backward_duration > cmd_duration + MINIMUM_E6)
+                {
+                    spd_down = ind_b;
+                    ind_b --;
+                    continue;
+                }
+                else
+                {
+                    spd_down = ind_b;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (duration_f < cmd_duration + MINIMUM_E6 && duration_b < cmd_duration + MINIMUM_E6)
+            break;
+    }
+
+    if (err == SUCCESS && ind_f == ind_b)
+    {
+
+    }
+    */
+
     if (err != SUCCESS)
     {
-        FST_ERROR("Fail to build stop trajectory, err=0x%llx", err);
-        return err;
-    }
-    else
-    {
-        if (ind == tail / 2 - 1)
-        {
-            spd_down = ind + 1;
-        }
+        FST_ERROR("Fail to build startup and stop trajectory, err=0x%llx", err);
     }
 
     FST_INFO("spd-up-index=%d, spd-down-index=%d", spd_up, spd_down);
@@ -2417,9 +2606,9 @@ ErrorCode ArmGroup::planFirstStageTraj(ControlPoint *path, size_t head, size_t t
     /*
     for (size_t i = head; i < tail; i++)
     {
-        FST_INFO("stamp=%d, id=%d, duration=%.4f, cmd_duration=%.4f, exp_duration=%.4f",
-                 path[i].path_point.stamp, path[i].path_point.id,
-                 path[i].duration, path[i].command_duration, path[i].expect_duration);
+        FST_LOG("stamp=%d, duration_f=%.6f, duration_b=%.6f, cmd_duration=%.6f",
+                 path[i].path_point.stamp, path[i].forward_duration,
+                 path[i].backward_duration, path[i].command_duration);
     }
     */
 
@@ -2884,113 +3073,75 @@ ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
 */
 
 
+
 ErrorCode ArmGroup::createTrajectory(void)
 {
     ErrorCode err = SUCCESS;
     MotionTime exp_duration;
 
+    double tolerance = 0.05;
+    double vel_ratio = 1;
     double vel_max[6];
     TrajSegment seg;
+    ControlPoint *cp;
+
+    static int state = 0;
 
     // FST_INFO("createTrajectory: traj-duration=%.4f, traj-fifo-size=%d", traj_fifo_.duration(), traj_fifo_.size());
     
     if (motion_state_ == AUTO_RUNNING)
     {
-        while (traj_fifo_.duration() < 0.05 && !traj_fifo_.full() || traj_fifo_.size() < 3)
+        while (traj_fifo_.duration() < 0.1 && !traj_fifo_.full() || traj_fifo_.size() < 3)
         {
             if (pick_segment_ < pick_path_ptr_->tail)
             {
                 if (pick_segment_ <= pick_path_ptr_->smooth_out_stamp)
                 {
-                    ControlPoint *cp = &pick_path_ptr_->path[pick_segment_];
+                    cp = &pick_path_ptr_->path[pick_segment_];
+                    //FST_LOG("---> forward-duration=%.6f, backward-duration=%.6f", cp->forward_duration, cp->backward_duration);
 
                     if (cp->path_point.type == MOTION_JOINT)
-                    {
-                        double vel_ratio = cp->path_point.source->getCommandVelocity();
-                        vel_max[0] = g_omega_limit[0] * vel_ratio;
-                        vel_max[1] = g_omega_limit[1] * vel_ratio;
-                        vel_max[2] = g_omega_limit[2] * vel_ratio;
-                        vel_max[3] = g_omega_limit[3] * vel_ratio;
-                        vel_max[4] = g_omega_limit[4] * vel_ratio;
-                        vel_max[5] = g_omega_limit[5] * vel_ratio;
-                    }
-                    else
-                    {
-                        vel_max[0] = g_omega_limit[0];
-                        vel_max[1] = g_omega_limit[1];
-                        vel_max[2] = g_omega_limit[2];
-                        vel_max[3] = g_omega_limit[3];
-                        vel_max[4] = g_omega_limit[4];
-                        vel_max[5] = g_omega_limit[5];
-                    }
+                        vel_ratio = cp->path_point.source->getCommandVelocity();
 
-                    if (cp->backward_duration < 0)
+                    trimArray(g_omega_limit, AXIS_IN_ALGORITHM, vel_ratio, vel_max);
+
+                    if (cp->forward_duration < 0 && cp->backward_duration < 0)
                     {
                         exp_duration = cp->command_duration / g_global_vel_ratio;
-                        forwardTrajectory(*(cp - 1), *cp, exp_duration, vel_max);
+
+                        forwardUniformTrajectory(*(cp - 1), *cp, exp_duration, vel_max, seg);
+                        cp->forward_duration = seg.duration;
                         cp->time_from_start = (cp - 1)->time_from_start + cp->forward_duration;
                         seg.time_from_start = cp->time_from_start;
-                        seg.duration = cp->forward_duration;
+
                         for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
                         {
-                            seg.coeff[i][0] = (cp - 1)->forward_point.joint[i];
-                            seg.coeff[i][1] = (cp - 1)->forward_point.omega[i];
-                            seg.coeff[i][2] = cp->forward_point.alpha[i] / 2;
-                            seg.coeff[i][3] = 0;
-                            seg.coeff[i][4] = 0;
-                            seg.coeff[i][5] = 0;
+                            cp->forward_point.omega[i] = seg.coeff[i][1] + seg.coeff[i][2] * 2 * seg.duration + seg.coeff[i][3] * 3 * seg.duration * seg.duration;
                         }
-                        traj_fifo_.push(seg);
-                        
-                        FST_LOG("stamp-%d, time_from_start=%.6f, duration=%.6f",
-                                cp->path_point.stamp, seg.time_from_start, seg.duration);
-                        for (size_t i = 0; i < 6; i++)
-                        {
-                            FST_LOG("  %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                                seg.coeff[i][5],seg.coeff[i][4],seg.coeff[i][3],
-                                seg.coeff[i][2],seg.coeff[i][1],seg.coeff[i][0]);
-                        }
-                    }
-                    else
-                    {
-                        // meet with slow down trajectory
+                        /*
                         exp_duration = cp->command_duration / g_global_vel_ratio;
-                        exp_duration = exp_duration < cp->backward_duration ? cp->backward_duration : exp_duration;
-                        forwardTrajectory(*(cp - 1), *cp, exp_duration, vel_max);
 
-                        if (cp->forward_duration + MINIMUM_E6 < cp->backward_duration)
+                        if (fabs((cp - 1)->forward_duration - exp_duration) < exp_duration * tolerance)
                         {
-                            // re-caculate *(cp - 1) and *cp
-                            FST_WARN("link forward-traj with backward-traj, rebuild last segment");
-                            FST_WARN("cp.back_dur=%.6f, cp-1.for_dur=%.6f", cp->backward_duration, (cp - 1)->forward_duration);
-                            traj_fifo_.dropBack();
-                            
-                            MotionTime tm = cp->backward_duration + (cp - 1)->forward_duration;
+                            FST_LOG("!!!expect-duration=%.6f, last-duration=%.6f", exp_duration, (cp - 1)->forward_duration);
+                            forwardUniformTrajectory(*(cp - 1), *cp, exp_duration, vel_max, seg);
+                            cp->forward_duration = seg.duration;
+                            cp->time_from_start = (cp - 1)->time_from_start + cp->forward_duration;
+                            seg.time_from_start = cp->time_from_start;
 
-                            smoothJoint2Joint((cp - 2)->forward_point, cp->backward_point, tm, seg);
-                            seg.time_from_start = (cp - 2)->time_from_start + tm;
-                            cp->time_from_start = seg.time_from_start;
-                            traj_fifo_.push(seg);
-
-                            cp->forward_point = cp->backward_point;
-
-                            FST_LOG("stamp-smooth: time_from_start=%.6f, duration=%.6f",
-                                    seg.time_from_start, seg.duration);
-                            for (size_t i = 0; i < 6; i++)
+                            for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
                             {
-                                FST_LOG("  %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                                    seg.coeff[i][5],seg.coeff[i][4],seg.coeff[i][3],
-                                    seg.coeff[i][2],seg.coeff[i][1],seg.coeff[i][0]);
+                                cp->forward_point.omega[i] = seg.coeff[i][1] + seg.coeff[i][2] * 2 * seg.duration + seg.coeff[i][3] * 3 * seg.duration * seg.duration;
                             }
-
                         }
                         else
                         {
+                            FST_LOG(">>>expect-duration=%.6f, last-duration=%.6f", exp_duration, (cp - 1)->forward_duration);
+                            forwardTrajectory(*(cp - 1), *cp, exp_duration, vel_max, seg);
                             cp->time_from_start = (cp - 1)->time_from_start + cp->forward_duration;
-                            //traj_fifo_[traj_tail_] = *cp;
-                            //traj_fifo_[traj_tail_].smooth = false;
                             seg.time_from_start = cp->time_from_start;
                             seg.duration = cp->forward_duration;
+
                             for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
                             {
                                 seg.coeff[i][0] = (cp - 1)->forward_point.joint[i];
@@ -3000,42 +3151,165 @@ ErrorCode ArmGroup::createTrajectory(void)
                                 seg.coeff[i][4] = 0;
                                 seg.coeff[i][5] = 0;
                             }
-                            traj_fifo_.push(seg);
+                        }
+                         */
+
+                        //logTrajSegment("stamp", cp->path_point.stamp, seg);
+                        traj_fifo_.push(seg);
+                        pick_segment_ ++;
+                    }
+                    else if (cp->forward_duration > 0 && cp->backward_duration < 0)
+                    {
+                        // speed-up trajectory
+                        double global_vel_ratio = g_global_vel_ratio;
+
+                        while (cp->forward_duration + MINIMUM_E6 > cp->command_duration / global_vel_ratio)
+                        {
+                            seg.duration = cp->forward_duration;
+                            seg.time_from_start = (cp - 1)->time_from_start + seg.duration;
+                            cp->time_from_start = seg.time_from_start;
                             
-                            FST_LOG("stamp-%d, time_from_start=%.6f, duration=%.6f",
-                                    cp->path_point.stamp, seg.time_from_start, seg.duration);
-                            for (size_t i = 0; i < 6; i++)
+                            for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
                             {
-                                FST_LOG("  %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                                    seg.coeff[i][5],seg.coeff[i][4],seg.coeff[i][3],
-                                    seg.coeff[i][2],seg.coeff[i][1],seg.coeff[i][0]);
+                                seg.coeff[i][0] = (cp - 1)->forward_point.joint[i];
+                                seg.coeff[i][1] = (cp - 1)->forward_point.omega[i];
+                                seg.coeff[i][2] = cp->forward_point.alpha[i] / 2;
+                                seg.coeff[i][3] = 0;
+                                seg.coeff[i][4] = 0;
+                                seg.coeff[i][5] = 0;
+                            }
+
+                            //logTrajSegment("stamp", cp->path_point.stamp, seg);
+                            traj_fifo_.push(seg);
+                            pick_segment_ ++;
+                            cp ++;
+
+                            if (cp->backward_duration > 0)
+                                break;
+                        }
+
+                        ControlPoint *tmp = cp;
+                        while (tmp->forward_duration > 0)
+                        {
+                            tmp->forward_duration = -1;
+                            tmp ++;
+                        }
+                    }
+                    else if (cp->backward_duration > 0)
+                    {
+                        // meet with slow down trajectory
+                        exp_duration = cp->command_duration / g_global_vel_ratio;
+                        exp_duration = exp_duration < cp->backward_duration ? cp->backward_duration : exp_duration;
+                        forwardTrajectory(*(cp - 1), *cp, exp_duration, vel_max, seg);
+
+                        if (cp->forward_duration + MINIMUM_E6 < cp->backward_duration)
+                        {
+                            // Vel-forward > Vel-backward
+                            // re-caculate *(cp - 1) and *cp
+                            /*
+                            FST_WARN("link forward-traj with backward-traj, rebuild last segment");
+                            FST_WARN("cp.back_dur=%.6f, cp-1.for_dur=%.6f", cp->backward_duration, (cp - 1)->forward_duration);
+                            traj_fifo_.dropBack();
+                            
+                            MotionTime tm = cp->backward_duration + (cp - 1)->forward_duration;
+
+                            smoothJoint2Joint((cp - 2)->forward_point, cp->backward_point, tm, seg);
+
+                            seg.time_from_start = (cp - 2)->time_from_start + tm;
+                            cp->time_from_start = seg.time_from_start;
+                             */
+
+                            FST_WARN("link forward-traj with backward-traj, rebuild curr segment");
+                            MotionTime tm = cp->backward_duration;
+                            smoothJoint2Joint((cp - 1)->forward_point, cp->backward_point, tm, seg);
+                            seg.time_from_start = (cp - 1)->time_from_start + tm;
+                            cp->time_from_start = seg.time_from_start;
+
+                            traj_fifo_.push(seg);
+                            pick_segment_ ++;
+                            cp->forward_point = cp->backward_point;
+                            //logTrajSegment("smooth", 0, seg);
+
+                            while (pick_segment_ <= pick_path_ptr_->smooth_out_stamp)
+                            {
+                                cp = &pick_path_ptr_->path[pick_segment_];
+                                cp->time_from_start = (cp - 1)->time_from_start + cp->backward_duration;
+                                seg.time_from_start = cp->time_from_start;
+                                seg.duration = cp->backward_duration;
+                                for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+                                {
+                                    seg.coeff[i][0] = (cp - 1)->backward_point.joint[i];
+                                    seg.coeff[i][1] = (cp - 1)->backward_point.omega[i];
+                                    seg.coeff[i][2] = cp->backward_point.alpha[i] / 2;
+                                    seg.coeff[i][3] = 0;
+                                    seg.coeff[i][4] = 0;
+                                    seg.coeff[i][5] = 0;
+                                }
+
+                                //logTrajSegment("stamp", cp->path_point.stamp, seg);
+                                traj_fifo_.push(seg);
+                                pick_segment_ ++;
+                            }
+                        }                       
+                        else if (cp->forward_duration - MINIMUM_E6 > cp->backward_duration)
+                        {
+                            // Vel-forward < Vel-backward
+                            seg.duration = cp->forward_duration;
+                            seg.time_from_start = (cp - 1)->time_from_start + seg.duration;
+                            cp->time_from_start = seg.time_from_start;
+
+                            for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+                            {
+                                seg.coeff[i][0] = (cp - 1)->forward_point.joint[i];
+                                seg.coeff[i][1] = (cp - 1)->forward_point.omega[i];
+                                seg.coeff[i][2] = cp->forward_point.alpha[i] / 2;
+                                seg.coeff[i][3] = 0;
+                                seg.coeff[i][4] = 0;
+                                seg.coeff[i][5] = 0;
+                            }
+
+                            //logTrajSegment("stamp", cp->path_point.stamp, seg);
+                            traj_fifo_.push(seg);
+                            pick_segment_ ++;
+                        }
+                        else
+                        {
+                            // Vel-forward = Vel-backward
+                            while (pick_segment_ <= pick_path_ptr_->smooth_out_stamp)
+                            {
+                                cp = &pick_path_ptr_->path[pick_segment_];
+                                cp->time_from_start = (cp - 1)->time_from_start + cp->backward_duration;
+                                seg.time_from_start = cp->time_from_start;
+                                seg.duration = cp->backward_duration;
+                                for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+                                {
+                                    seg.coeff[i][0] = (cp - 1)->backward_point.joint[i];
+                                    seg.coeff[i][1] = (cp - 1)->backward_point.omega[i];
+                                    seg.coeff[i][2] = cp->backward_point.alpha[i] / 2;
+                                    seg.coeff[i][3] = 0;
+                                    seg.coeff[i][4] = 0;
+                                    seg.coeff[i][5] = 0;
+                                }
+
+                                //logTrajSegment("stamp", cp->path_point.stamp, seg);
+                                traj_fifo_.push(seg);
+                                pick_segment_ ++;
                             }
                         }
                     }
-
-                    if (pick_segment_ == pick_path_ptr_->smooth_out_stamp)
+                    else
                     {
-                        double time_tmp = cp->time_from_start - 0.05;
+                        FST_ERROR("forward and backward crash!!! forward=%.6f, backward=%.6f",
+                                  cp->forward_duration, cp->backward_duration);
+                    }
+
+                    if (pick_segment_ - 1 == pick_path_ptr_->smooth_out_stamp)
+                    {
+                        double time_tmp = pick_path_ptr_->path[pick_segment_ - 1].time_from_start - 0.075;
                         pick_path_ptr_->deadline = time_tmp < 0 ? MINIMUM_E6 : time_tmp;
                         FST_INFO("time-from-start of smooth out point: %.4f, deadline=%.4f",
                                  cp->time_from_start, pick_path_ptr_->deadline);
                     }
-
-                    pick_segment_ ++;
-
-                    /*
-                    FST_INFO("stamp - %d: time_from_start:%.4f duration:%.4f",
-                             cp->path_point.stamp, cp->time_from_start, cp->duration);
-                    FST_INFO("    joint: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             cp->point.joint[0], cp->point.joint[1], cp->point.joint[2],
-                             cp->point.joint[3], cp->point.joint[4], cp->point.joint[5]);
-                    FST_INFO("    omega: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             cp->point.omega[0], cp->point.omega[1], cp->point.omega[2],
-                             cp->point.omega[3], cp->point.omega[4], cp->point.omega[5]);
-                    FST_INFO("    alpha: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             cp->point.alpha[0], cp->point.alpha[1], cp->point.alpha[2],
-                             cp->point.alpha[3], cp->point.alpha[4], cp->point.alpha[5]);
-                    */
                 }
                 else
                 {
@@ -3173,264 +3447,6 @@ ErrorCode ArmGroup::createTrajectory(void)
     }
 
     return SUCCESS;
-
-    /*
-    while (traj_fifo_.duration() < 0.05 && !traj_fifo_.full() || traj_fifo_.size() < 3)
-    {
-        //FST_INFO("  tim=%.4f, head=%d, tail=%d", tim, traj_head_, traj_tail_);
-        //FST_INFO("  pick-seg=%d, pick-path-tail=%d, pick-path-smooth-out=%d",
-        //         pick_segment_, pick_path_ptr_->tail, pick_path_ptr_->smooth_out_stamp);
-
-        //FST_INFO("pick_path_ptr valid=%d %d %d %d", pick_path_ptr_->valid,
-        //        pick_path_ptr_->next->valid, pick_path_ptr_->next->next->valid, 
-        //        pick_path_ptr_->next->next->next->valid);
-
-        if (pick_segment_ < pick_path_ptr_->tail)
-        {
-            if (pick_segment_ <= pick_path_ptr_->smooth_out_stamp)
-            {
-                ControlPoint *cp = &pick_path_ptr_->path[pick_segment_];
-
-                if (cp->path_point.type = MOTION_JOINT)
-                {
-                    double vel_ratio = cp->path_point.source->getCommandVelocity();
-                    double acc_ratio = cp->path_point.source->getCommandAcc();
-                    vel_max[0] *= vel_ratio;
-                    vel_max[1] *= vel_ratio;
-                    vel_max[2] *= vel_ratio;
-                    vel_max[3] *= vel_ratio;
-                    vel_max[4] *= vel_ratio;
-                    vel_max[5] *= vel_ratio;
-                }
-
-                if (cp->backward_duration < 0)
-                {
-                    exp_duration = cp->command_duration / g_global_vel_ratio;
-                    forwardTrajectory(*(cp - 1), *cp, exp_duration, vel_max);
-                }
-                else
-                {
-                    // meet with slow down trajectory
-                    //FST_INFO("meet with slow down traj");
-                    ControlPoint back_cp = *cp;
-                    MotionTime back_tm = cp->backward_duration;
-                    exp_duration = cp->command_duration / g_global_vel_ratio;
-                    if (exp_duration < back_tm)
-                    {
-                        exp_duration = back_tm;
-                    }
-                    forwardTrajectory(*(cp - 1), *cp, exp_duration, vel_max);
-                    if (cp->duration + MINIMUM_E6 < back_tm)
-                    {
-                        // re-caculate *(cp - 1) and *cp
-                        *cp = back_cp;
-                        traj_tail_ = (traj_tail_ - 1) & (TRAJECTORY_FIFO_CAPACITY - 1);
-                        FST_WARN("link forward-traj with backward-traj, rebuild segment: %d",
-                                traj_fifo_[traj_tail_].path_point.stamp);
-                        
-                        Omega   vel_max[AXIS_IN_ALGORITHM];
-
-                        double vel_ratio = 1;
-
-                        if (cp->path_point.source->getMotionType() == MOTION_JOINT)
-                        {
-                            vel_ratio = cp->path_point.source->getCommandVelocity();
-                        }
-
-                        vel_max[0] = vel_ratio * g_omega_limit[0];
-                        vel_max[1] = vel_ratio * g_omega_limit[1];
-                        vel_max[2] = vel_ratio * g_omega_limit[2];
-                        vel_max[3] = vel_ratio * g_omega_limit[3];
-                        vel_max[4] = vel_ratio * g_omega_limit[4];
-                        vel_max[5] = vel_ratio * g_omega_limit[5];
-                        
-                        backwardTrajectory(*(cp - 1), *cp, cp->command_duration, vel_max);
-                        backwardTrajectory(*(cp - 2), *(cp - 1), (cp - 1)->command_duration, vel_max);
-
-                        ControlPoint smooth = *cp;
-                        MotionTime tm = cp->duration + (cp - 1)->duration;
-
-                        smoothJoint2Joint(*(cp - 2), *cp, tm, smooth);
-
-                        smooth.duration = tm;
-                        smooth.smooth = true;
-                        smooth.time_from_start = (cp - 2)->time_from_start + tm;
-
-                        cp->time_from_start = smooth.time_from_start;
-                        traj_fifo_[traj_tail_] = smooth;
-                        cp = &traj_fifo_[traj_tail_];
-                    }
-                }
-
-                if (cp->smooth == false)
-                {
-                    cp->time_from_start = (cp - 1)->time_from_start + cp->duration;
-                    traj_fifo_[traj_tail_] = *cp;
-                    traj_fifo_[traj_tail_].smooth = false;
-                }
-
-                if (pick_segment_ == pick_path_ptr_->smooth_out_stamp)
-                {
-                    double time_tmp = cp->time_from_start - 0.05;
-                    pick_path_ptr_->deadline = time_tmp < 0 ? MINIMUM_E6 : time_tmp;
-                    FST_INFO("time-from-start of smooth out point: %.4f, deadline=%.4f",
-                             cp->time_from_start, pick_path_ptr_->deadline);
-                }
-
-                tim += cp->duration;
-                traj_tail_ = (traj_tail_ + 1) & (TRAJECTORY_FIFO_CAPACITY - 1);
-                pick_segment_ ++;
-
-                FST_INFO("stamp - %d: time_from_start:%.4f duration:%.4f",
-                         cp->path_point.stamp, cp->time_from_start, cp->duration);
-                FST_INFO("    joint: %.6f %.6f %.6f %.6f %.6f %.6f",
-                         cp->point.joint[0], cp->point.joint[1], cp->point.joint[2],
-                         cp->point.joint[3], cp->point.joint[4], cp->point.joint[5]);
-                FST_INFO("    omega: %.6f %.6f %.6f %.6f %.6f %.6f",
-                         cp->point.omega[0], cp->point.omega[1], cp->point.omega[2],
-                         cp->point.omega[3], cp->point.omega[4], cp->point.omega[5]);
-                FST_INFO("    alpha: %.6f %.6f %.6f %.6f %.6f %.6f",
-                         cp->point.alpha[0], cp->point.alpha[1], cp->point.alpha[2],
-                         cp->point.alpha[3], cp->point.alpha[4], cp->point.alpha[5]);
-            }
-            else
-            {
-                if (pick_path_ptr_->next->valid)
-                {
-                    FST_INFO("smooth to next traj");
-                    ControlPoint *smooth_in  = &pick_path_ptr_->next->path[pick_path_ptr_->next->smooth_in_stamp];
-                    ControlPoint *smooth_out = &pick_path_ptr_->path[pick_path_ptr_->smooth_out_stamp];
-                    ControlPoint smooth_traj;
-                    MotionTime exp_duration = smooth_in->command_duration / g_global_vel_ratio;
-
-                    if (smooth_in->forward_duration < exp_duration)
-                    {
-                        // velocity of smooth_in > expect velocity
-                        FST_INFO("rebuild omegas and alphas of smooth-in point");
-                        double *jnt_s = smooth_in->point.joint;
-                        double *jnt_e = (smooth_in + 1)->point.joint;
-                        double *omega = smooth_in->point.omega;
-                        double *alpha = smooth_in->point.alpha;
-
-                        omega[0] = (jnt_e[0] - jnt_s[0]) / exp_duration;
-                        omega[1] = (jnt_e[1] - jnt_s[1]) / exp_duration;
-                        omega[2] = (jnt_e[2] - jnt_s[2]) / exp_duration;
-                        omega[3] = (jnt_e[3] - jnt_s[3]) / exp_duration;
-                        omega[4] = (jnt_e[4] - jnt_s[4]) / exp_duration;
-                        omega[5] = (jnt_e[5] - jnt_s[5]) / exp_duration;
-
-                        alpha[0] = 0;
-                        alpha[1] = 0;
-                        alpha[2] = 0;
-                        alpha[3] = 0;
-                        alpha[4] = 0;
-                        alpha[5] = 0;
-                    }
-
-                    ControlPoint smooth;
-                    MotionTime tm = smooth_out->duration * 
-                                   (smooth_out->path_point.source->getPathLength() - smooth_out->path_point.stamp) +
-                                    smooth_in->forward_duration * smooth_in->path_point.stamp;
-                    FST_INFO("smooth time: %.6f, adjust to: %.6f", tm, tm * 1.2);
-                    tm *= 1.2;
-
-                    smoothJoint2Joint(*smooth_out, *smooth_in, tm, smooth_traj);
-
-                    traj_fifo_[traj_tail_] = smooth_traj;
-                    traj_fifo_[traj_tail_].smooth = true;
-                    traj_fifo_[traj_tail_].path_point = smooth_in->path_point;
-                    traj_fifo_[traj_tail_].time_from_start = smooth_out->time_from_start + smooth_traj.duration;
-                    smooth_in->time_from_start = traj_fifo_[traj_tail_].time_from_start;
-                    
-                    FST_INFO("smooth-out: stamp=%d, time_from_start=%.4f duration=%.4f",
-                             smooth_out->path_point.stamp, smooth_out->time_from_start, smooth_out->duration);
-                    FST_INFO("    joint: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_out->point.joint[0], smooth_out->point.joint[1], smooth_out->point.joint[2],
-                             smooth_out->point.joint[3], smooth_out->point.joint[4], smooth_out->point.joint[5]);
-                    FST_INFO("    omega: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_out->point.omega[0], smooth_out->point.omega[1], smooth_out->point.omega[2],
-                             smooth_out->point.omega[3], smooth_out->point.omega[4], smooth_out->point.omega[5]);
-                    FST_INFO("    alpha: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_out->point.alpha[0], smooth_out->point.alpha[1], smooth_out->point.alpha[2],
-                             smooth_out->point.alpha[3], smooth_out->point.alpha[4], smooth_out->point.alpha[5]);
-
-                    FST_INFO("smooth-in: stamp=%d, time_from_start=%.4f duration=%.4f",
-                             smooth_in->path_point.stamp, smooth_in->time_from_start, smooth_in->duration);
-                    FST_INFO("    joint: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_in->point.joint[0], smooth_in->point.joint[1], smooth_in->point.joint[2],
-                             smooth_in->point.joint[3], smooth_in->point.joint[4], smooth_in->point.joint[5]);
-                    FST_INFO("    omega: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_in->point.omega[0], smooth_in->point.omega[1], smooth_in->point.omega[2],
-                             smooth_in->point.omega[3], smooth_in->point.omega[4], smooth_in->point.omega[5]);
-                    FST_INFO("    alpha: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_in->point.alpha[0], smooth_in->point.alpha[1], smooth_in->point.alpha[2],
-                             smooth_in->point.alpha[3], smooth_in->point.alpha[4], smooth_in->point.alpha[5]);
-
-                    FST_INFO("smooth - %d: time_from_start:%.4f duration:%.4f",
-                             traj_fifo_[traj_tail_].path_point.stamp, traj_fifo_[traj_tail_].time_from_start,
-                             traj_fifo_[traj_tail_].duration);
-                    FST_INFO("    J1: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_traj.coeff[0][5], smooth_traj.coeff[0][4], smooth_traj.coeff[0][3],
-                             smooth_traj.coeff[0][2], smooth_traj.coeff[0][1], smooth_traj.coeff[0][0]);
-                    FST_INFO("    J2: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_traj.coeff[1][5], smooth_traj.coeff[1][4], smooth_traj.coeff[1][3],
-                             smooth_traj.coeff[1][2], smooth_traj.coeff[1][1], smooth_traj.coeff[1][0]);
-                    FST_INFO("    J3: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_traj.coeff[2][5], smooth_traj.coeff[2][4], smooth_traj.coeff[2][3],
-                             smooth_traj.coeff[2][2], smooth_traj.coeff[2][1], smooth_traj.coeff[2][0]);
-                    FST_INFO("    J4: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_traj.coeff[3][5], smooth_traj.coeff[3][4], smooth_traj.coeff[3][3],
-                             smooth_traj.coeff[3][2], smooth_traj.coeff[3][1], smooth_traj.coeff[3][0]);
-                    FST_INFO("    J5: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_traj.coeff[4][5], smooth_traj.coeff[4][4], smooth_traj.coeff[4][3],
-                             smooth_traj.coeff[4][2], smooth_traj.coeff[4][1], smooth_traj.coeff[4][0]);
-                    FST_INFO("    J6: %.6f %.6f %.6f %.6f %.6f %.6f",
-                             smooth_traj.coeff[5][5], smooth_traj.coeff[5][4], smooth_traj.coeff[5][3],
-                             smooth_traj.coeff[5][2], smooth_traj.coeff[5][1], smooth_traj.coeff[5][0]);
-
-                    tim += smooth_traj.duration;
-                    traj_tail_ = (traj_tail_ + 1) & (TRAJECTORY_FIFO_CAPACITY - 1);
-                    pick_path_ptr_->valid = false;
-                    pick_path_ptr_ = pick_path_ptr_->next;
-                    pick_segment_  = pick_path_ptr_->smooth_in_stamp + 1;
-                }
-                else
-                {
-                    if (pick_time_ + MINIMUM_E6 > pick_path_ptr_->path[pick_path_ptr_->smooth_out_stamp].time_from_start)
-                    {
-                        FST_WARN("Next command is not ready, use fine instead of smooth");
-                        FST_INFO("  smooth-out-stamp changed from %d to %d",
-                                 pick_path_ptr_->smooth_out_stamp, pick_path_ptr_->tail - 1);
-                        pick_path_ptr_->smooth_out_stamp = pick_path_ptr_->tail - 1;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            pick_path_ptr_->valid = false;
-            if (pick_path_ptr_->next->valid)
-            {
-                size_t stamp = (traj_tail_ - 1) & (TRAJECTORY_FIFO_CAPACITY - 1);
-                pick_path_ptr_ = pick_path_ptr_->next;
-                pick_segment_ = 1;
-                pick_path_ptr_->path[0].time_from_start = traj_fifo_[stamp].time_from_start;
-                FST_INFO("pick_path_ptr_ switch to next, seg=%d, time_from_start=%.4f", 
-                         pick_segment_, pick_path_ptr_->path[0].time_from_start);
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-    */
-
-    //FST_INFO("  tim=%.4f, head=%d, tail=%d", tim, traj_head_, traj_tail_);
 }
 
 ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
@@ -3487,24 +3503,18 @@ ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
                                 coeff[4][2] * t[2] + coeff[4][1] * t[1] + coeff[4][0] * t[0];
                 jout.joint.j6 = coeff[5][5] * t[5] + coeff[5][4] * t[4] + coeff[5][3] * t[3] +
                                 coeff[5][2] * t[2] + coeff[5][1] * t[1] + coeff[5][0] * t[0];
-                
-                tos << pick_time_ << "," << jout.joint.j1 << "," << jout.joint.j2 << ","
-                    << jout.joint.j3 << "," << jout.joint.j4 << ","
-                    << jout.joint.j5 << "," << jout.joint.j6 << endl;
+
+                PoseEuler pe;
+                forwardKinematics(jout.joint, pe);
+                //tos << pick_time_ << "," << jout.joint.j1 << "," << jout.joint.j2 << ","
+                //    << jout.joint.j3 << "," << jout.joint.j4 << ","
+                //    << jout.joint.j5 << "," << jout.joint.j6 << "," << pe.position.x << ","
+                //    << pe.position.y << "," << pe.position.z << "," << pe.orientation.a << ","
+                //    << pe.orientation.b << "," << pe.orientation.c << endl;
                 FST_LOG("%d - %.3f - %f,%f,%f,%f,%f,%f", jout.level, pick_time_,
                          jout.joint.j1, jout.joint.j2, jout.joint.j3,
                          jout.joint.j4, jout.joint.j5, jout.joint.j6);
 
-                if (pick_time_ > 0.328 && pick_time_ < 0.335)
-                {
-                    FST_WARN("pick-time=%.6f, tm=%.6f, coeff:", pick_time_, tm);
-                    for (size_t i = 0; i < 6; i++)
-                    {
-                        FST_LOG("  %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                            coeff[i][5], coeff[i][4], coeff[i][3],
-                            coeff[i][2], coeff[i][1], coeff[i][0]);
-                    }
-                }
                 if (pick_time_ < g_cycle_time + MINIMUM_E9)
                 {
                     last_joint = jout.joint;
@@ -3513,7 +3523,7 @@ ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
                 {
                     for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
                     {
-                        if (fabs(*((double*)(&jout.joint.j1) + i) - *((double*)(&last_joint.j1) + i)) / g_cycle_time > g_omega_limit[i] + 0.1)
+                        if (fabs(*((double*)(&jout.joint.j1) + i) - *((double*)(&last_joint.j1) + i)) / g_cycle_time > g_omega_limit[i] + 0.4)
                         {
                             FST_ERROR("J%d omega beyond limit: prev=%.6f, next=%.6f, omega=%.4f", i + 1,
                             *((double*)(&last_joint.j1) + i), *((double*)(&jout.joint.j1) + i),
@@ -3563,9 +3573,9 @@ ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
             jout.joint.j6 = coeff[5][5] * t[5] + coeff[5][4] * t[4] + coeff[5][3] * t[3] +
                             coeff[5][2] * t[2] + coeff[5][1] * t[1] + coeff[5][0] * t[0];
 
-            tos << pick_time_ << "," << jout.joint.j1 << "," << jout.joint.j2 << ","
-                << jout.joint.j3 << "," << jout.joint.j4 << ","
-                << jout.joint.j5 << "," << jout.joint.j6 << endl;
+            //tos << pick_time_ << "," << jout.joint.j1 << "," << jout.joint.j2 << ","
+            //    << jout.joint.j3 << "," << jout.joint.j4 << ","
+            //    << jout.joint.j5 << "," << jout.joint.j6 << endl;
             FST_INFO("%d - %.3f - %f,%f,%f,%f,%f,%f", jout.level, pick_time_,
                      jout.joint.j1, jout.joint.j2, jout.joint.j3,
                      jout.joint.j4, jout.joint.j5, jout.joint.j6);
@@ -3599,6 +3609,19 @@ ErrorCode ArmGroup::pickFromManual(size_t num, vector<JointOutput> &points)
         err = pickManualCartesian(num, points);
     }
     MANUAL_UNLOCK;
+
+
+    PoseEuler pe;
+    for (size_t i = 0; i < points.size(); i++)
+    {
+        forwardKinematics(points[i].joint, pe);
+        tos << points[i].joint.j1 << "," << points[i].joint.j2 << ","
+            << points[i].joint.j3 << "," << points[i].joint.j4 << ","
+            << points[i].joint.j5 << "," << points[i].joint.j6 << "," << pe.position.x << ","
+            << pe.position.y << "," << pe.position.z << "," << pe.orientation.a << ","
+            << pe.orientation.b << "," << pe.orientation.c << endl;
+    }
+
 
     return err;
 }

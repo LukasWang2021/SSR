@@ -264,7 +264,8 @@ struct TrajSegment
 };
 
 // Define a point structure used in joint trajectory fifo
-struct JointPoint {
+struct JointPoint
+{
     // time stamp
     int stamp;
     // point level, start/middle/ending point

@@ -92,6 +92,26 @@ ErrorCode ManualTeach::stepTeach(const ManualDirection *directions, MotionTime t
 
 ErrorCode ManualTeach::stepTeach(const Joint &target, MotionTime time, ManualTrajectory &traj)
 {
+    if (!isJointInConstraint(traj.joint_start, g_soft_constraint))
+    {
+        if (traj.frame != JOINT)
+        {
+            FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
+            return INVALID_SEQUENCE;
+        }
+        if (traj.mode == APOINT)
+        {
+            FST_ERROR("start-joint is out of soft constraint, manual-mode-apoint is disabled.");
+            return INVALID_SEQUENCE;
+        }
+    }
+    if (!isJointInConstraint(target, g_soft_constraint))
+    {
+        FST_ERROR("manual target out of constraint: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+                  target.j1, target.j2, target.j3, target.j4, target.j5, target.j6);
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
     return manualJointAPoint(target, time, traj);
 }
 
@@ -508,7 +528,7 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
     FST_INFO("  target joint: %.4f %.4f %.4f %.4f %.4f %.4f",
                 target.j1, target.j2, target.j3, target.j4, target.j5, target.j6);
 
-    JointConstraint &cons = g_soft_constraint;
+    //JointConstraint &cons = g_soft_constraint;
 
     double trips[6] = { fabs(target.j1 - traj.joint_start.j1), fabs(target.j2 - traj.joint_start.j2),
                         fabs(target.j3 - traj.joint_start.j3), fabs(target.j4 - traj.joint_start.j4),

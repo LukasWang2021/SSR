@@ -695,36 +695,46 @@ MotionTime computeDurationMin(Angle *js, Angle *je, Omega *ws, Alpha *acc_limit,
 }
 
 
-MotionTime computeDurationMax(Angle *js, Angle *je, Omega *ws, Alpha *a_top, Alpha *a_bottom, Omega *w_limit)
+MotionTime computeDurationMax(Angle *js, Angle *je, Omega *ws, Alpha *a_top, Alpha *a_bottom, Omega *w_limit, char *fallback)
 {
     //FST_LOG("compute d-min --------------------------");
 
-    double alpha, delta, trip, duration;
-    double duration_max = 0;
+    double  alpha, delta, duration;
+    double  trip_max = 0;
+    double  trip[AXIS_IN_ALGORITHM];
+    double  duration_max = 0;
 
     for (size_t i = 0; i < AXIS_IN_ALGORITHM; ++i)
     {
-        if (ws[i] > w_limit[i] - MINIMUM_E6 && je[i] > js[i] || ws[i] < MINIMUM_E6 -w_limit[i] && je[i] < js[i])
+        trip[i] = je[i] - js[i];
+        if (fabs(trip[i]) > trip_max)
+            trip_max = fabs(trip[i]);
+    }
+
+    for (size_t i = 0; i < AXIS_IN_ALGORITHM; ++i)
+    {
+        if (ws[i] > w_limit[i] - MINIMUM_E6 && trip[i] > 0 || ws[i] < MINIMUM_E6 -w_limit[i] && trip[i] < 0)
         {
-            duration = (je[i] - js[i]) / ws[i];
+            duration = trip[i] / ws[i];
         }
         else
         {
-            trip = je[i] - js[i];
-            if (fabs(trip) > MINIMUM_E9)
+            if (fabs(trip[i]) < trip_max * 0.05 && fabs(ws[i]) < 0.1)
             {
-                alpha = trip > 0 ? a_top[i] : a_bottom[i];
-                delta = ws[i] * ws[i] + alpha * trip * 2;
+                fallback[i] = 1;
+                duration = 0;
+            }
+            else
+            {
+                fallback[i] = 0;
+                alpha = trip[i] > 0 ? a_top[i] : a_bottom[i];
+                delta = ws[i] * ws[i] + alpha * trip[i] * 2;
                 duration = alpha > 0 ? (sqrt(delta) - ws[i]) / alpha : (-sqrt(delta) - ws[i]) / alpha;
 
                 if (fabs(ws[i] + alpha * duration) > w_limit[i])
                 {
-                    duration = trip * 2 / (trip > 0 ? ws[i] + w_limit[i] : ws[i] - w_limit[i]);
+                    duration = trip[i] * 2 / (trip[i] > 0 ? ws[i] + w_limit[i] : ws[i] - w_limit[i]);
                 }
-            }
-            else
-            {
-                duration = 0;
             }
         }
         
@@ -740,7 +750,7 @@ MotionTime computeDurationMax(Angle *js, Angle *je, Omega *ws, Alpha *a_top, Alp
     return duration_max;
 }
 
-MotionTime computeDurationMin(Angle *js, Angle *je, Omega *ws, Alpha *a_top, Alpha *a_bottom, Omega *w_limit)
+MotionTime computeDurationMin(Angle *js, Angle *je, Omega *ws, Alpha *a_top, Alpha *a_bottom, Omega *w_limit, char *fallback)
 {
     //FST_LOG("compute d-max --------------------------");
 
@@ -750,12 +760,14 @@ MotionTime computeDurationMin(Angle *js, Angle *je, Omega *ws, Alpha *a_top, Alp
     for (size_t i = 0; i < AXIS_IN_ALGORITHM; ++i)
     {
         trip  = je[i] - js[i];
-        if (trip > 0 && ws[i] < 0 || trip < 0 && ws[i] > 0 || fabs(ws[i]) < MINIMUM_E6 || fabs(trip) < 0.001)
+        if (trip > 0 && ws[i] < 0 || trip < 0 && ws[i] > 0 || fabs(ws[i]) < 0.1 && fabs(trip) < 0.0001)
         {
+            fallback[i] = 1;
             duration = 99.99;
         }
         else
         {
+            fallback[i] = 0;
             alpha = trip < 0 ? a_top[i] : a_bottom[i];
             delta = ws[i] * ws[i] + alpha * trip * 2;
             if (delta < 0)
@@ -878,30 +890,65 @@ MotionTime computeDurationMinDebug(Angle *js, Angle *je, Omega *ws, Alpha *a_top
     return duration_min;
 }
 
-ErrorCode computeAlphaLimit(const double *joint, const double *omega, double *a_upper, double *a_lower)
+ErrorCode computeAlphaLimit(const double *joint, const double *omega, double *alpha_upper, double *alpha_lower)
 {
+    ErrorCode err = SUCCESS;
     double alpha_limit[2][6];
     if (g_dynamics_interface.computeAccMax(joint, omega, alpha_limit))
     {
-        a_upper[0] = alpha_limit[0][0] * g_global_acc_ratio;
-        a_upper[1] = alpha_limit[0][1] * g_global_acc_ratio;
-        a_upper[2] = alpha_limit[1][2] * g_global_acc_ratio;
-        a_upper[3] = alpha_limit[0][3] * g_global_acc_ratio;
-        a_upper[4] = alpha_limit[0][4] * g_global_acc_ratio;
-        a_upper[5] = alpha_limit[0][5] * g_global_acc_ratio;
-        a_lower[0] = alpha_limit[1][0] * g_global_acc_ratio;
-        a_lower[1] = alpha_limit[1][1] * g_global_acc_ratio;
-        a_lower[2] = alpha_limit[0][2] * g_global_acc_ratio;
-        a_lower[3] = alpha_limit[1][3] * g_global_acc_ratio;
-        a_lower[4] = alpha_limit[1][4] * g_global_acc_ratio;
-        a_lower[5] = alpha_limit[1][5] * g_global_acc_ratio;
 
-        //FST_INFO("alpha_upper: %.4f,%.4f,%.4f,%.4f,%.4f,%.4f",
-        //        a_upper[0], a_upper[1], a_upper[2], a_upper[3], a_upper[4], a_upper[5]);
-        //FST_INFO("alpha_lower: %.4f,%.4f,%.4f,%.4f,%.4f,%.4f",
-        //        a_lower[0], a_lower[1], a_lower[2], a_lower[3], a_lower[4], a_lower[5]);
 
-        return SUCCESS;
+        alpha_upper[0] = alpha_limit[0][0] * g_global_acc_ratio;
+        alpha_upper[1] = alpha_limit[0][1] * g_global_acc_ratio;
+        alpha_upper[2] = alpha_limit[0][2] * g_global_acc_ratio;
+        alpha_upper[3] = alpha_limit[0][3] * g_global_acc_ratio;
+        alpha_upper[4] = alpha_limit[0][4] * g_global_acc_ratio;
+        alpha_upper[5] = alpha_limit[0][5] * g_global_acc_ratio;
+        alpha_lower[0] = alpha_limit[1][0] * g_global_acc_ratio;
+        alpha_lower[1] = alpha_limit[1][1] * g_global_acc_ratio;
+        alpha_lower[2] = alpha_limit[1][2] * g_global_acc_ratio;
+        alpha_lower[3] = alpha_limit[1][3] * g_global_acc_ratio;
+        alpha_lower[4] = alpha_limit[1][4] * g_global_acc_ratio;
+        alpha_lower[5] = alpha_limit[1][5] * g_global_acc_ratio;
+
+        /*
+        alpha_upper[0] = alpha_limit[0][0];
+        alpha_upper[1] = alpha_limit[0][1];
+        alpha_upper[2] = alpha_limit[0][2];
+        alpha_upper[3] = alpha_limit[0][3];
+        alpha_upper[4] = alpha_limit[0][4];
+        alpha_upper[5] = alpha_limit[0][5];
+        alpha_lower[0] = alpha_limit[1][0];
+        alpha_lower[1] = alpha_limit[1][1];
+        alpha_lower[2] = alpha_limit[1][2];
+        alpha_lower[3] = alpha_limit[1][3];
+        alpha_lower[4] = alpha_limit[1][4];
+        alpha_lower[5] = alpha_limit[1][5];
+         */
+
+        for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+        {
+            if (alpha_upper[i] < 0 || alpha_lower[i] > 0)
+            {
+                err = MOTION_INTERNAL_FAULT;
+                break;
+            }
+        }
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("ERROR while resolving dynamics:");
+            FST_ERROR("input-joint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+                      joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
+            FST_ERROR("input-omega: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+                      omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
+            FST_ERROR("output-alpha-upper: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+                      alpha_upper[0], alpha_upper[1], alpha_upper[2], alpha_upper[3], alpha_upper[4], alpha_upper[5]);
+            FST_ERROR("output-alpha-lower: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+                      alpha_lower[0], alpha_lower[1], alpha_lower[2], alpha_lower[3], alpha_lower[4], alpha_lower[5]);
+        }
+
+        return err;
     }
     else
     {
@@ -912,17 +959,25 @@ ErrorCode computeAlphaLimit(const double *joint, const double *omega, double *a_
 
 
 
-void createForwardTraj(ControlPoint &prev, ControlPoint &next)
+void createForwardTraj(ControlPoint &prev, ControlPoint &next, char *fallback)
 {
     MotionTime d = next.forward_duration;
     double alpha;
 
     for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
     {
-        alpha = 2 * (next.forward_point.joint[i] - prev.forward_point.joint[i] - prev.forward_point.omega[i] * d) / d / d;
+        if (fallback[i] == 0)
+        {
+            alpha = 2 * (next.forward_point.joint[i] - prev.forward_point.joint[i] - prev.forward_point.omega[i] * d) / d / d;
 
-        next.forward_point.alpha[i] = alpha;
-        next.forward_point.omega[i] = prev.forward_point.omega[i] + alpha * d;
+            next.forward_point.alpha[i] = alpha;
+            next.forward_point.omega[i] = prev.forward_point.omega[i] + alpha * d;
+        }
+        else
+        {
+            next.forward_point.alpha[i] = 0;
+            next.forward_point.omega[i] = (next.forward_point.joint[i] - prev.forward_point.joint[i]) / d;
+        }
     }
     /*
     FST_INFO("duration=%.6f", d);
@@ -935,7 +990,7 @@ void createForwardTraj(ControlPoint &prev, ControlPoint &next)
     */
 }
 
-void createBackwardTraj(ControlPoint &prev, ControlPoint &next)
+void createBackwardTraj(ControlPoint &prev, ControlPoint &next, char *fallback)
 {
     MotionTime d = next.backward_duration;
     double alpha;
@@ -956,44 +1011,37 @@ void createBackwardTraj(ControlPoint &prev, ControlPoint &next)
     //         next.point.alpha[3], next.point.alpha[4], next.point.alpha[5]);
 }
 
-ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next,
-                            MotionTime expect_duration, Omega *omega_limit)
+ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
+                            Omega *omega_limit, Alpha *alpha_upper, Alpha *alpha_lower)
 {
     ErrorCode err = SUCCESS;
     MotionTime dmax, dmin;
-
-    static size_t dynamics_update_cnt = 0;
-    static double a_upper[6], a_lower[6];
-    if (dynamics_update_cnt == 0)
-    {
-        computeAlphaLimit(prev.forward_point.joint, prev.forward_point.omega, a_upper, a_lower);
-        dynamics_update_cnt ++;
-        if (dynamics_update_cnt == 10)
-        {
-            dynamics_update_cnt = 0;
-        }
-    }
+    char fallback[6];
 
     //FST_LOG("forward----------------------------");
     double *js = prev.forward_point.joint;
     double *ws = prev.forward_point.omega;
     double *je = next.forward_point.joint;
-    //FST_LOG("js=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", js[0],js[1],js[2],js[3],js[4],js[5]);
-    //FST_LOG("ws=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", ws[0],ws[1],ws[2],ws[3],ws[4],ws[5]);
-    //FST_LOG("je=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", je[0],je[1],je[2],je[3],je[4],je[5]);
-    //FST_LOG("wli=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", omega_limit[0],omega_limit[1],omega_limit[2],
-    //        omega_limit[3],omega_limit[4],omega_limit[5]);
-    //FST_LOG("a-top=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-    //        a_upper[0], a_upper[1], a_upper[2], a_upper[3], a_upper[4], a_upper[5]);
-    //FST_LOG("a-bot=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-    //        a_lower[0], a_lower[1], a_lower[2], a_lower[3], a_lower[4], a_lower[5]);
+
+    /*
+    FST_LOG("js=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", js[0],js[1],js[2],js[3],js[4],js[5]);
+    FST_LOG("ws=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", ws[0],ws[1],ws[2],ws[3],ws[4],ws[5]);
+    FST_LOG("je=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", je[0],je[1],je[2],je[3],je[4],je[5]);
+    FST_LOG("wli=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", omega_limit[0],omega_limit[1],omega_limit[2],
+            omega_limit[3],omega_limit[4],omega_limit[5]);
+    FST_LOG("a-top=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+            alpha_upper[0], alpha_upper[1], alpha_upper[2], alpha_upper[3], alpha_upper[4], alpha_upper[5]);
+    FST_LOG("a-bot=%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+            alpha_lower[0], alpha_lower[1], alpha_lower[2], alpha_lower[3], alpha_lower[4], alpha_lower[5]);
+    */
 
     dmin = computeDurationMax(prev.forward_point.joint, next.forward_point.joint, prev.forward_point.omega,
-                              a_upper, a_lower, omega_limit);
+                              alpha_upper, alpha_lower, omega_limit, fallback);
     dmax = computeDurationMin(prev.forward_point.joint, next.forward_point.joint, prev.forward_point.omega,
-                              a_upper, a_lower, omega_limit);
+                              alpha_upper, alpha_lower, omega_limit, fallback);
 
-    if (dmax > dmin)
+    //if (dmax * 1.05 > dmin)
+    if (true)
     {
         if (expect_duration < dmin)
         {
@@ -1008,10 +1056,10 @@ ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next,
             next.forward_duration = expect_duration;
         }
 
-        //FST_INFO("stamp=%d, ID=%d  duration: min=%.4f, max=%.4f, expect=%.4f, res=%.6f",
-        //         next.path_point.stamp, next.path_point.id, dmin, dmax, expect_duration, next.duration);
+        //FST_LOG("fore-stamp=%d, ID=%d  duration: min=%.4f, max=%.4f, expect=%.4f, res=%.6f",
+        //         next.path_point.stamp, next.path_point.id, dmin, dmax, expect_duration, next.forward_duration);
 
-        createForwardTraj(prev, next);
+        createForwardTraj(prev, next, fallback);
         
         /*
         JointState *js = &prev.forward_point;
@@ -1030,13 +1078,15 @@ ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next,
                 je->alpha[0], je->alpha[1], je->alpha[2], je->alpha[3], je->alpha[4], je->alpha[5]);
         */
     }
+    /*
     else
     {
         err = MOTION_INTERNAL_FAULT;
         FST_ERROR("stamp=%d, fore duration error: dmin=%.6f, dmax=%.6f", next.path_point.stamp, dmin, dmax);
 
-        //computeDurationMaxDebug(prev.forward_point.joint, next.forward_point.joint, prev.forward_point.omega, a_upper, a_lower, omega_limit);
-        //computeDurationMinDebug(prev.forward_point.joint, next.forward_point.joint, prev.forward_point.omega, a_upper, a_lower, omega_limit);
+
+        computeDurationMaxDebug(prev.forward_point.joint, next.forward_point.joint, prev.forward_point.omega, alpha_upper, alpha_lower, omega_limit);
+        computeDurationMinDebug(prev.forward_point.joint, next.forward_point.joint, prev.forward_point.omega, alpha_upper, alpha_lower, omega_limit);
 
         JointState *js = &prev.forward_point;
         JointState *je = &next.forward_point;
@@ -1050,46 +1100,37 @@ ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next,
                 omega_limit[0], omega_limit[1], omega_limit[2], 
                 omega_limit[3], omega_limit[4], omega_limit[5]);
         FST_INFO("alpha upper - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                a_upper[0], a_upper[1], a_upper[2], 
-                a_upper[3], a_upper[4], a_upper[5]);
+                alpha_upper[0], alpha_upper[1], alpha_upper[2], 
+                alpha_upper[3], alpha_upper[4], alpha_upper[5]);
         FST_INFO("      lower - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                a_lower[0], a_lower[1], a_lower[2], 
-                a_lower[3], a_lower[4], a_lower[5]);
+                alpha_lower[0], alpha_lower[1], alpha_lower[2], 
+                alpha_lower[3], alpha_lower[4], alpha_lower[5]);
+
     }
+    */
 
     return err;
 }
 
-ErrorCode backwardTrajectory(ControlPoint &prev, ControlPoint &next,
-                             MotionTime expect_duration, Omega *omega_limit)
+ErrorCode backwardTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
+                             Omega *omega_limit, Alpha *alpha_upper, Alpha *alpha_lower)
 {
     ErrorCode err = SUCCESS;
     MotionTime dmax, dmin;
+    char fallback[6];
 
     //FST_WARN("backward---------------------------");
 
     double omega[6] = {-next.backward_point.omega[0], -next.backward_point.omega[1], -next.backward_point.omega[2], 
                        -next.backward_point.omega[3], -next.backward_point.omega[4], -next.backward_point.omega[5]};
 
-    static size_t dynamics_update_cnt = 0;
-    static double a_upper[6], a_lower[6];
-
-    if (dynamics_update_cnt == 0)
-    {
-        computeAlphaLimit(prev.backward_point.joint, omega, a_upper, a_lower);
-        dynamics_update_cnt ++;
-        if (dynamics_update_cnt == 10)
-        {
-            dynamics_update_cnt = 0;
-        }
-    }
-
     dmin = computeDurationMax(next.backward_point.joint, prev.backward_point.joint,
-                              omega, a_upper, a_lower, omega_limit);
+                              omega, alpha_upper, alpha_lower, omega_limit, fallback);
     dmax = computeDurationMin(next.backward_point.joint, prev.backward_point.joint,
-                              omega, a_upper, a_lower, omega_limit);
+                              omega, alpha_upper, alpha_lower, omega_limit, fallback);
 
-    if (dmax > dmin)
+    //if (dmax * 1.05 > dmin)
+    if (true)
     {
         if (expect_duration < dmin)
         {
@@ -1104,11 +1145,11 @@ ErrorCode backwardTrajectory(ControlPoint &prev, ControlPoint &next,
             next.backward_duration = expect_duration;
         }
 
-        //FST_INFO("stamp=%d, ID=%d  duration: min=%.4f, max=%.4f, expect=%.4f, res=%.6f",
-        //         next.path_point.stamp, next.path_point.id, dmin, dmax, expect_duration, next.duration);
+        //FST_LOG("back-stamp=%d, ID=%d  duration: min=%.4f, max=%.4f, expect=%.4f, res=%.6f",
+        //         next.path_point.stamp, next.path_point.id, dmin, dmax, expect_duration, next.backward_duration);
 
         //FST_INFO("dmin=%.6f, dmax=%.6f, dexp=%.6f, dres=%.6f", dmin, dmax, next.expect_duration, next.duration);
-        createBackwardTraj(prev, next);
+        createBackwardTraj(prev, next, fallback);
 
         /*
         JointState *js = &prev.point;
@@ -1127,6 +1168,7 @@ ErrorCode backwardTrajectory(ControlPoint &prev, ControlPoint &next,
                 je->alpha[0], je->alpha[1], je->alpha[2], je->alpha[3], je->alpha[4], je->alpha[5]);
         */
     }
+    /*
     else
     {
         err = MOTION_INTERNAL_FAULT;
@@ -1149,16 +1191,133 @@ ErrorCode backwardTrajectory(ControlPoint &prev, ControlPoint &next,
                 omega_limit[0], omega_limit[1], omega_limit[2], 
                 omega_limit[3], omega_limit[4], omega_limit[5]);
         FST_INFO("alpha upper - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                a_upper[0], a_upper[1], a_upper[2], 
-                a_upper[3], a_upper[4], a_upper[5]);
+                alpha_upper[0], alpha_upper[1], alpha_upper[2], 
+                alpha_upper[3], alpha_upper[4], alpha_upper[5]);
         FST_INFO("      lower - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-                a_lower[0], a_lower[1], a_lower[2], 
-                a_lower[3], a_lower[4], a_lower[5]);
+                alpha_lower[0], alpha_lower[1], alpha_lower[2], 
+                alpha_lower[3], alpha_lower[4], alpha_lower[5]);
     }
+     */
 
     return err;
 }
 
+ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
+                            Omega *omega_limit, TrajSegment &seg)
+{
+    Alpha alpha_upper[AXIS_IN_ALGORITHM];
+    Alpha alpha_lower[AXIS_IN_ALGORITHM];
+
+    computeAlphaLimit(prev.forward_point.joint, prev.forward_point.omega, alpha_upper, alpha_lower);
+    return forwardTrajectory(prev, next, expect_duration, omega_limit, alpha_upper, alpha_lower);
+}
+
+ErrorCode forwardUniformTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
+                                   Omega *omega_limit, TrajSegment &seg)
+{
+    double  trip[AXIS_IN_ALGORITHM];
+    MotionTime duration = prev.forward_duration;
+
+    for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+    {
+        trip[i] = next.forward_point.joint[i] - prev.forward_point.joint[i];
+        if (fabs(trip[i]) / omega_limit[i] > duration)
+        {
+            duration = fabs(trip[i]) / omega_limit[i];
+        }
+    }
+
+    //FST_INFO("forward-Uniform-Traj: exp-duration=%.6f, duration=%.6f", expect_duration, duration);
+
+    for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+    {
+        seg.coeff[i][0] = prev.forward_point.joint[i];
+        seg.coeff[i][1] = trip[i] / duration;
+        seg.coeff[i][2] = 0;
+        seg.coeff[i][3] = 0;
+        seg.coeff[i][4] = 0;
+        seg.coeff[i][5] = 0;
+    }
+
+    seg.duration = duration;
+
+    return SUCCESS;
+}
+
+/*
+ErrorCode forwardUniformTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
+                                   Omega *omega_limit, TrajSegment &seg)
+{
+    //FST_INFO("forward-Uniform-Traj: exp-duration=%.6f", expect_duration);
+    MotionTime duration;
+    size_t  ind = 0;
+    Omega   omg = prev.forward_point.omega[0];
+
+    for (size_t i = 1; i < AXIS_IN_ALGORITHM; i++)
+    {
+        if (fabs(prev.forward_point.omega[i]) > fabs(omg))
+        {
+            ind = i;
+            omg = prev.forward_point.omega[i];
+        }
+    }
+
+    duration = (next.forward_point.joint[ind] - prev.forward_point.joint[ind]) / prev.forward_point.omega[ind];
+
+    //FST_INFO("jnt_start=%.6f, jnt_end=%.6f, omega_start=%.6f, duration=%.6f, index=%d", prev.forward_point.joint[ind],
+    //         next.forward_point.joint[ind], prev.forward_point.omega[ind], duration, ind);
+
+    if (fabs(duration - expect_duration) < expect_duration * 0.05)
+    {
+        seg.duration = duration;
+
+        seg.coeff[ind][0] = prev.forward_point.joint[ind];
+        seg.coeff[ind][1] = prev.forward_point.omega[ind];
+        seg.coeff[ind][2] = 0;
+        seg.coeff[ind][3] = 0;
+        seg.coeff[ind][4] = 0;
+        seg.coeff[ind][5] = 0;
+
+        double omge, trip;
+        for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+        {
+            if (i != ind)
+            {
+                trip = next.forward_point.joint[i] - prev.forward_point.joint[i];
+                omge = trip / expect_duration;
+                seg.coeff[i][0] = prev.forward_point.joint[i];
+                seg.coeff[i][1] = prev.forward_point.omega[i];
+                seg.coeff[i][2] = (trip * 3 - (prev.forward_point.omega[i] * 2 + omge) * duration) / duration / duration;
+                seg.coeff[i][3] = ((omge + prev.forward_point.omega[i]) * duration - trip * 2) / (duration * duration * duration);
+                seg.coeff[i][4] = 0;
+                seg.coeff[i][5] = 0;
+            }
+        }
+    }
+    else
+    {
+        Alpha alpha_upper[AXIS_IN_ALGORITHM];
+        Alpha alpha_lower[AXIS_IN_ALGORITHM];
+        computeAlphaLimit(prev.forward_point.joint, prev.forward_point.omega, alpha_upper, alpha_lower);
+
+        forwardTrajectory(prev, next, expect_duration, omega_limit, alpha_upper, alpha_lower);
+
+        seg.duration = next.forward_duration;
+
+        for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
+        {
+            seg.coeff[i][0] = prev.forward_point.joint[i];
+            seg.coeff[i][1] = prev.forward_point.omega[i];
+            seg.coeff[i][2] = next.forward_point.alpha[i] / 2;
+            seg.coeff[i][3] = 0;
+            seg.coeff[i][4] = 0;
+            seg.coeff[i][5] = 0;
+        }
+    }
+
+    return SUCCESS;
+}
+ */
 
 
 }

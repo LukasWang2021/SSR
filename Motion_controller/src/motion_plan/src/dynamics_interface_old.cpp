@@ -1144,10 +1144,10 @@ namespace fst_algorithm
         }
         rne_M(mq,mdq,mddq,m_);
         //FST_INFO("M");
-        //for (int i=0;i<6;i++)
-        //{
-        //    FST_INFO("%f %f %f %f %f %f",m_[i][0],m_[i][1],m_[i][2],m_[i][3],m_[i][4],m_[i][5]);
-        //}
+        for (int i=0;i<6;i++)
+        {
+            //FST_INFO("%f %f %f %f %f %f",m_[i][0],m_[i][1],m_[i][2],m_[i][3],m_[i][4],m_[i][5]);
+        } 
         //FST_INFO("---2");
 
         //start = clock();
@@ -1175,7 +1175,7 @@ namespace fst_algorithm
         if(!getInverseM(m_,IB))
             return false;
         //for (int i=0;i<6;i++)
-        //       FST_INFO("%f %f %f %f %f %f",IB[i][0],IB[i][1],IB[i][2],IB[i][3],IB[i][4],IB[i][5]);
+        //        FST_INFO("%f %f %f %f %f %f",IB[i][0],IB[i][1],IB[i][2],IB[i][3],IB[i][4],IB[i][5]);
         
         //for (int i=0;i<6;i++)
         //    FST_INFO("diff0[%d]=%f",i,diffT[0][i]);
@@ -1196,13 +1196,13 @@ namespace fst_algorithm
         //finish = clock();
         //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
         //FST_INFO( "getMtxMulVec:%f seconds/n", Total_time);
-        //for(int j=0;j<2;j++)
-        //{
-        //    for(int i=0;i<MAX_AXES;i++)
-        //    {
-        //       FST_INFO("acc[%d][%d]=%f\n",j,i,alpha_max[j][i]);
-        //   }
-       // }
+        for(int j=0;j<2;j++)
+        {
+            for(int i=0;i<MAX_AXES;i++)
+            {
+               //FST_INFO("acc[%d][%d]=%f\n",j,i,alpha_max[j][i]);
+           }            
+        }
 
 
         return true;
@@ -1436,10 +1436,9 @@ namespace fst_algorithm
 
             Cross(wd,pstar,crosswdpstar);
             Cross(w,pstar,crosswpstar);
-            pstar[0]=pstarm[0][j];
+                        pstar[0]=pstarm[0][j];
             pstar[1]=pstarm[1][j];
-            pstar[2]=pstarm[2][j];
-            Cross(w,crosswpstar,crosswwpstar);
+            pstar[2]=pstarm[2][j];Cross(w,crosswpstar,crosswwpstar);
             Multiply3331(Rt,vd,Rtvd);
 
             vd[0]=crosswdpstar[0]+crosswwpstar[0]+Rtvd[0];
@@ -1563,7 +1562,8 @@ namespace fst_algorithm
             Multiply3331(RT,z0,RTz0);
             nnRTz0=nn[0]*RTz0[0]+nn[1]*RTz0[1]+nn[2]*RTz0[2];
             t=nnRTz0+pow(servo_model_[j].gr,2)*servo_model_[j].jm*ddq[j];
-            //FST_INFO("t %f ",t);
+
+            //FST_INFO("t =%f",t);
             T[j]=t;
         }
 
@@ -1728,10 +1728,9 @@ namespace fst_algorithm
 
                 Cross(wd,pstar,crosswdpstar);
                 Cross(w,pstar,crosswpstar);
-                pstar[0]=pstarm[0][j];
+                            pstar[0]=pstarm[0][j];
                 pstar[1]=pstarm[1][j];
-                pstar[2]=pstarm[2][j];
-                Cross(w,crosswpstar,crosswwpstar);
+                pstar[2]=pstarm[2][j];Cross(w,crosswpstar,crosswwpstar);
                 Multiply3331(Rt,vd,Rtvd);
 
                 vd[0]=crosswdpstar[0]+crosswwpstar[0]+Rtvd[0];
@@ -2023,38 +2022,32 @@ namespace fst_algorithm
         robot_model_.m[2]=9.092074;
         robot_model_.m[3]=5.305265;
         robot_model_.m[4]=2.036364;
-        robot_model_.m[5]=1.126446;
+        robot_model_.m[5]=0.126446;
 
         robot_model_.mdh=true;
         memset(robot_model_.b,0,sizeof(robot_model_.b));  
         memset(robot_model_.tc,0,sizeof(robot_model_.tc));   
     
-        //servo_model_[0].rated_torque=289;
         servo_model_[0].rated_torque=7.16*81;
         servo_model_[0].jm=0.00013;
         servo_model_[0].gr=81;
         //servo_model_[0].b=0; //friction factor
-        //servo_model_[1].rated_torque=316;
         servo_model_[1].rated_torque=5.73*101;
         servo_model_[1].jm=0.000059;
         servo_model_[1].gr=101;  
         //servo_model_[1].b=0; //friction factor
-        //servo_model_[2].rated_torque=130;
         servo_model_[2].rated_torque=3.82*81;
         servo_model_[2].jm=0.000044;
         servo_model_[2].gr=81;   
         //servo_model_[2].b=0; //friction factor   
-        //servo_model_[3].rated_torque=53;
         servo_model_[3].rated_torque=1.91*60;
         servo_model_[3].jm=0.000018;
         servo_model_[3].gr=60;
         //servo_model_[3].b=0; //friction factor
-        //servo_model_[4].rated_torque=29;
         servo_model_[4].rated_torque=1.11*66.7;
         servo_model_[4].jm=0.000017;
         servo_model_[4].gr=66.7;
         //servo_model_[4].b=0; //friction factor
-        //servo_model_[5].rated_torque=23;
         servo_model_[5].rated_torque=1.11*44.6;
         servo_model_[5].jm=0.000017;
         servo_model_[5].gr=44.6;

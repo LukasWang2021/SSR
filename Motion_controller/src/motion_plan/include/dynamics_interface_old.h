@@ -42,7 +42,6 @@ typedef struct
     double d[MAXAXES]; //d
     double ap[MAXAXES]; //alpha
     double offset[MAXAXES];//offset
-    double qlim[MAXAXES][2]; //joint limit
     double r[MAXAXES][3]; //centre of link
     double i[MAXAXES][3][3]; //tensor of inertia
     double m[MAXAXES]; //mass of link
@@ -80,6 +79,8 @@ public:
             false-> one or more parameters are invalid
     */
     bool initRobotModel(const RobotModel& rob_model);
+
+    void setRatedTorque(double torque[6]);
 
     /*
     Description: if the dynamics interface can work correctly.
@@ -121,7 +122,6 @@ public:
     */  
     bool getCounterTorque(const double alpha[MAX_AXES], double counter_torque[MAX_AXES]);
     
-    bool getkineJacobian(const double q[MAX_AXES],double jacob[MAX_AXES][MAX_AXES]);
 public:
     /* vector cross */
     bool Cross(double a[3],double b[3],double c[3]);
@@ -133,10 +133,6 @@ public:
     bool Multiply4444(double a[4][4],double b[4][4],double c[4][4]);
     /*get the Jacobian*/
     bool getJacobian(const double q[MAX_AXES],double jacob[MAX_AXES][6][MAX_AXES]);
-    /*get forward kinematics solve*/
-    bool getforwardkinematics(const double q[MAX_AXES],double t[4][4]);
-    /*algebraic inverse kinematics solve*/
-    bool getinversekinematics(double t[4][4],double solve[8][6],int &ns);
     /*this method to compute the link homogeneous transformation matrix*/
     bool getA(int ni,const double q[MAX_AXES],double a[4][4]);
     /*get the link rotation matrix*/
@@ -149,12 +145,9 @@ public:
     bool getM(int idx_i,int idx_j,const double q[MAX_AXES],double &M);
     /*get the dynamic equation C*/
     bool getC(int idx_i,int idx_j,int idx_k,const double q[MAX_AXES],double &C);
-	/* newton-euler recurive algorithm */
-    bool rne_tau(const double q[MAX_AXES],const double dq[MAX_AXES],const double ddq[MAX_AXES],double T[MAX_AXES]);
-    bool rne_M(const double mq[MAX_AXES][MAX_AXES],const double mdq[MAX_AXES][MAX_AXES],const double mddq[MAX_AXES][MAX_AXES],double M[MAX_AXES][MAX_AXES]);
-    //bool getSymbolicG(const double q[MAX_AXES]);
-	//bool getSymbolicM(const double q[MAX_AXES]);
-    //bool getSymbolicC(const double q[MAX_AXES]);
+	bool getSymbolicG(const double q[MAX_AXES]);
+	bool getSymbolicM(const double q[MAX_AXES]);
+    bool getSymbolicC(const double q[MAX_AXES]);
     /*get the dynamic equation G*/
     bool getG(int idx_i,const double q[MAX_AXES],double& G);
     /* get mcg matrix and refresh class variable*/
@@ -169,7 +162,6 @@ public:
     bool getMtxMulVec(const double IM[MAX_AXES][MAX_AXES],const double V[MAX_AXES],double Res[MAX_AXES]);
     /* transpose matrix*/
     bool getTranspose(const double M[4][4],double TM[4][4]);
-    bool getTranspose33(const double M[3][3],double TM[3][3]);
     /* trace */
     double TraceMatrix(const double M[4][4]);
     float MatDet(float *p, int n);                    //求矩阵的行列式  
@@ -207,8 +199,8 @@ private:
     double I41,I42,I43,I44,I45,I46,I51,I52,I53,I54,I55,I56,I61,I62,I63,I64,I65,I66;
     double x1,x2,x3,x4,x5,x6,y1,y2,y3,y4,y5,y6,z1,z2,z3,z4,z5,z6;
     double c1,s1,c2,s2,c3,s3,c4,s4,c5,s5,c6,s6;
-    double g0;
-
+    double g0=-9.81;
+    double G1,G2,G3,G4,G5,G6;
 };
 
 }

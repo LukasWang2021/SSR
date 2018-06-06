@@ -19,7 +19,6 @@
 #include <motion_plan_traj_fifo.h>
 
 #define     PATH_FIFO_CAPACITY              2048        // must be setted to 2~N
-#define     TRAJECTORY_FIFO_CAPACITY        64         // must be setted to 2^N
 #define     MOTION_POOL_CAPACITY            4           // must be setted to 2^N
 
 namespace fst_controller
@@ -49,6 +48,7 @@ struct ControlPointCache
     ControlPointCache   *prev;
     ControlPointCache   *next;
 };
+
 
 
 
@@ -744,9 +744,6 @@ private:
     ControlPointCache   *pick_path_ptr_;
 
     TrajectoryFifo  traj_fifo_;
-    //ControlPoint    traj_fifo_[TRAJECTORY_FIFO_CAPACITY];
-    //size_t          traj_head_;
-    //size_t          traj_tail_;
 
     ControlPoint    t_path_[PATH_FIFO_CAPACITY];
     size_t          t_head_;

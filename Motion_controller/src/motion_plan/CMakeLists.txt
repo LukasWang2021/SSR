@@ -66,6 +66,7 @@ add_library(motion_plan
     src/motion_plan_arm_group.cpp
     src/motion_plan_frame_manager.cpp
     src/dynamics_interface.cpp
+    src/motion_plan_additional.cpp
 )
 
 ## Declare a C++ executable
@@ -87,6 +88,10 @@ add_executable(motion_plan_demo5
 
 add_executable(motion_plan_demo6
     src/motion_plan_demo6.cpp
+)
+
+add_executable(motion_plan_demo7
+    src/motion_plan_demo7.cpp
 )
 
 add_executable(motion_plan_demo_manual
@@ -128,6 +133,11 @@ target_link_libraries(motion_plan_demo6
     motion_plan
 )
 
+target_link_libraries(motion_plan_demo7
+    ${catkin_LIBRARIES}
+    motion_plan
+)
+
 target_link_libraries(motion_plan_demo_manual
     ${catkin_LIBRARIES}
     motion_plan
@@ -162,6 +172,10 @@ install(TARGETS motion_plan_demo5
 )
 
 install(TARGETS motion_plan_demo6
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS motion_plan_demo7
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

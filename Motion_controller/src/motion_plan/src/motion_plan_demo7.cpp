@@ -27,7 +27,7 @@ extern Matrix   fst_algorithm::g_tool_frame_inverse;
 
 int main(int argc, char **argv)
 {
-    
+    //std::cout<<"----------1"<<std::endl;
     clock_t start, finish;
     double Total_time;
     /* 测量一个事件持续的时间*/
@@ -37,36 +37,44 @@ int main(int argc, char **argv)
     g_tool_frame_inverse.identityMatrix();
 
     DynamicsInterface di;
-
-    //double q[6]={M_PI/2,M_PI/3,M_PI/2,M_PI/2,M_PI,M_PI/2};
-    double q[6]={0, M_PI/2, 0, 0,M_PI/2,0};
+    //jnt.j1 = 0.1;
+    //jnt.j2 = -0.2;
+    //jnt.j3 = 0.25;
+    //jnt.j4 = 0.17;
+    //jnt.j5 = -1.5708;
+    //jnt.j6 = -0.38;
+    double q[6]={0,0,0,0,-PI/2,0};
+    double T[4][4];
+    double s[8][6];
+    int ns;
     double dq[6]={0,0,0,0,0,0};
-    double ddq[6]={5,5,5,5,5,5};
-    double maxddq[2][6];
-    double it[6];
+    double ddq[6]={0,0,0,0,0,0};
+    double maxddq[2][6];  
+    //double it[6];
     double tau[6];
-    double C[6][6][6];
-    double M[6][6];
-    double G[6];
-    start = clock();
+   
+    //di.rne_tau(q,dq,ddq,tau);
+    //double C[6][6][6];
+    //double M[6][6];
+    //double G[6];
+    //start = clock();
+    //di.getforwardkinematics(q,T);
+ 
+    //di.getinversekinematics(T,s,ns);
     //di.getMiddleArray(q);
     //di.getM(4,2,q,M[0][0]);
     //FST_INFO("m11=%f\n",M[0][0]);
     di.computeAccMax(q,dq,maxddq);
+    //di.getT(q,dq,ddq,tau);
+    //for (int i=0;i<6;i++)
+    //{
+    //   FST_INFO("%f \n",tau[i]);
+    //}
     //di.getInertia(q,it);
     //di.getCounterTorque(ddq,tau);
-    finish = clock();
-    Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
-    FST_INFO( "%f seconds/n", Total_time);
-    for(int i = 0; i < 2; ++i)
-    {
-        if(i == 0)
-            FST_INFO("Positive Motor Torque:");
-        else
-            FST_INFO("Negative Motor Torque:");
-        FST_INFO("acc0 = %f, acc1 = %f, acc2 = %f, acc3 = %f, acc4 = %f, acc5 = %f",
-                   maxddq[i][0], maxddq[i][1], maxddq[i][2], maxddq[i][3], maxddq[i][4], maxddq[i][5]);
-    }
+    //finish = clock();
+    //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+    //FST_INFO( "%f seconds/n", Total_time);
 #if 0
     FrameManager user_frame_manager("user_frame", MAX_USER_FRAME_NUM, "share/configuration/configurable/user_frame.yaml",
                                     g_user_frame, g_user_frame_inverse);

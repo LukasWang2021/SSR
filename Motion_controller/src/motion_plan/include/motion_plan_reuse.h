@@ -10,9 +10,9 @@
 
 #include <motion_plan_variable.h>
 
-#define FST_LOG(fmt, ...)       g_log.log(fmt, ##__VA_ARGS__)
-#define FST_INFO(fmt, ...)      g_log.info(fmt, ##__VA_ARGS__)
-#define FST_WARN(fmt, ...)      g_log.warn(fmt, ##__VA_ARGS__)
-#define FST_ERROR(fmt, ...)     g_log.error(fmt, ##__VA_ARGS__)
+#define FST_LOG(fmt, ...)       fst_algorithm::g_log.log(fmt, ##__VA_ARGS__)
+#define FST_INFO(fmt, ...)      fst_algorithm::g_log.info(fmt, ##__VA_ARGS__)
+#define FST_WARN(fmt, ...)      fst_algorithm::g_log.warn(fmt, ##__VA_ARGS__)
+#define FST_ERROR(fmt, ...)     fst_algorithm::g_log.error(fmt, ##__VA_ARGS__)
 
 #endif

@@ -11,7 +11,7 @@
 #include <fst_datatype.h>
 #include <motion_plan_error_code.h>
 
-#define     TRAJECTORY_FIFO_CAPACITY        64         // must be setted to 2^N
+#define     TRAJECTORY_FIFO_CAPACITY        256         // must be setted to 2^N
 
 namespace fst_controller
 {

@@ -6,6 +6,9 @@
 #include "forsight_program_property.h"
 #include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
+#ifndef WIN32
+#include "io_interface.h"
+#endif
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 #include "reg_manager/reg_manager_interface.h"
@@ -219,6 +222,12 @@ void returnDIOInfo(IOPathInfo& info)
 {
     printf("returnDIOInfo to %s:%d\n", info.dio_path, (int)info.value);
     writeShm(SHM_REG_IO_INFO, 0, (char*)&info.value, sizeof(char));
+	setIntprtDataFlag(true);
+}
+
+void returnIODeviceInfo(char * info, int iNum)
+{
+    writeShm(SHM_REG_IO_INFO, 0, (char*)info, sizeof(IODeviceInfoShm) * iNum);
 	setIntprtDataFlag(true);
 }
 
@@ -516,6 +525,11 @@ void waitInterpreterStateToPaused(
 
 void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 {
+    int iIONum = 0 ;
+	fst_io_manager::IODeviceInfo * objIODeviceInfoPtr ;
+	char * objCharPtr ;
+	IODeviceInfoShm * objIODeviceInfoShmPtr ;
+	
 	RegMap reg ;
 	IOPathInfo  dioPathInfo ;
 	
@@ -737,6 +751,29 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 						dioPathInfo.dio_path, dioPathInfo.value);
 			set_io_interface_status(
 					dioPathInfo.dio_path, dioPathInfo.value);
+            break;
+        case READ_IO_DEV_INFO:
+			iIONum = IOInterface::instance()->getIODevNum();
+ 			objIODeviceInfoPtr = IOInterface::instance()->getDevInfoPtr();
+			objCharPtr = (char *)malloc(sizeof(int) + sizeof(IODeviceInfoShm) * iIONum);
+			objIODeviceInfoShmPtr = (IODeviceInfoShm *)(objCharPtr + sizeof(int));
+			memcpy(objCharPtr, iIONum, sizeof(int));
+			memset(objIODeviceInfoShmPtr, 0x00, sizeof(IODeviceInfoShm) * iIONum);
+			for(int i = 0 ; i < iIONum ; i++)
+			{
+			    memcpy(objIODeviceInfoShmPtr[i].path, objIODeviceInfoPtr[i].path.c_str(), 
+					objIODeviceInfoPtr[i].path.length());
+				objIODeviceInfoShmPtr[i].id = objIODeviceInfoPtr[i].id;
+				
+			    memcpy(objIODeviceInfoShmPtr[i].communication_type, 
+					objIODeviceInfoPtr[i].communication_type.c_str(), 
+					objIODeviceInfoPtr[i].communication_type.length());
+				objIODeviceInfoShmPtr[i].device_number = objIODeviceInfoPtr[i].device_number;
+				objIODeviceInfoShmPtr[i].device_type   = objIODeviceInfoPtr[i].device_type;
+				objIODeviceInfoShmPtr[i].input         = objIODeviceInfoPtr[i].input;
+				objIODeviceInfoShmPtr[i].output        = objIODeviceInfoPtr[i].output;
+		    }
+			returnIODeviceInfo(objCharPtr, iIONum);
             break;
         case READ_SMLT_STS:
 			dioPathInfo = intprt_ctrl.dioPathInfo;

@@ -33,18 +33,18 @@ typedef struct _InputByte5
 typedef struct _InputByte6
 {
     char core1_reset:1;
-    //char user_reset:1;
+    char user_reset:1;
+    char cabinet_reset:1;
+    char decelerate:1;
     char usermode_man:1;
-    //char cabinet_reset:1;
     char usermode_limit:1;
-    //char decelerate:1;
     char usermode_auto:1;
     //char manual:1;
-    char slowdown:1;
+    //char slowdown:1;
     //char lmt_manual:1;
-    char D5:1;
+    //char D5:1;
     //char automatic:1;
-    char D6:1;
+    //char D6:1;
     char D7:1;
 }InputByte6;
 

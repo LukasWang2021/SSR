@@ -2370,17 +2370,17 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
     "NEXT without FOR",            // 11
     "too many nested GOSUBs",      // 12 
     "RETURN without GOSUB",        // 13 
-    "file not found"               // 14
-    "movl with joint"              // 15
-    "movj with point"              // 16
+    "file not found",              // 14
+    "movl with joint",             // 15
+    "movj with point",             // 16
     "illegal line number"          // 17
   };
   
-  printf("-----------------ERR----------------------\n");
+  printf("-----------------ERR:%d----------------------\n", error);
   printf("\t NOTICE : %d - %s\n", error, e[error]);
-  printf("-----------------ERR----------------------\n");
+  printf("-----------------ERR:%d----------------------\n", error);
   
-  setPrgmState((InterpreterState)(ERROR_SYNTAX_ERROR_T + error)) ; 
+  setWarning((InterpreterState)(ERROR_SYNTAX_ERROR_T + error)) ; 
   objThreadCntrolBlock->prog_mode = ERROR_MODE;
   
 //  longjmp(e_buf, 1); /* return to save point */

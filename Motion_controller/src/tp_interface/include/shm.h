@@ -52,6 +52,8 @@ typedef struct _FuncTable
 #define SHM_CTRLCMD_SIZE    (1024)
 #define SHM_CTRLSTATUS_SIZE (1024)
 
+#define SHM_REG_IO_INFO_SIZE (4096)
+
 
 int createShm(const char* name, int size);
 int openShm(const char* name, int size);

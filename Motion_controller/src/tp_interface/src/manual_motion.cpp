@@ -47,8 +47,6 @@ motion_spec_ManualType& ManualMotion::getManuType()
 
 void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
 {
-    step_counter_ = 0;
-
     if (command.has_velocity)
     {
         if ((0 <= command.velocity) && (command.velocity <= 100))
@@ -229,7 +227,9 @@ void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
             target_jnts.j6 = target->coordinates[5];
             result = arm_group_->manualMove(target_jnts);
         }
-        else if (manu_frame_ == motion_spec_ManualFrame_USER)
+        else if ((manu_frame_ == motion_spec_ManualFrame_USER)
+            || (manu_frame_ == motion_spec_ManualFrame_TOOL)
+            || (manu_frame_ == motion_spec_ManualFrame_WORLD))
         {
             PoseEuler target_pose ;
             target_pose.position.x = target->coordinates[0];
@@ -282,14 +282,15 @@ void ManualMotion::setTeachTarget(motion_spec_TeachTarget target)
             FST_INFO("================");
         }
         vector<ManualDirection> button;
+        ManualDirection dir;
         for (int i = 0; i < target.directions_count; i++)
         {
-            button.push_back((ManualDirection)target.directions[i]);
+            dir = target.directions[i] == 0 ? STANDBY : (target.directions[i] == 1 ? INCREASE : DECREASE);
+            button.push_back(dir);
         }
         arm_group_->manualMove(button);
     }
 }
-
 void ManualMotion::pause()
 {
     step_counter_ = 0;

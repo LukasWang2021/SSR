@@ -150,6 +150,13 @@ void Controller::updateWarnings(int id)
     if (warning_level > 4)
     {
         FST_INFO("in estop process...");
+		
+		if((work_status_ == TEACHING_TO_IDLE_T) 
+			|| (work_status_ == TEACHING_W))
+		{
+			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup in updateWarnings");
+			arm_group_->clearArmGroup();
+		}
         safetyStop(warning_level);
         servoEStop();
         pauseMotion(); //set mode to pause
@@ -284,6 +291,12 @@ void Controller::updateWorkStatus(int id)
                     if (pause_cnt >= max_count) //wait
                     {
                         pause_cnt = 0;
+						if((work_status_ == TEACHING_TO_IDLE_T) 
+							|| (work_status_ == TEACHING_W))
+						{
+                			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup before PAUSED_R");
+							arm_group_->clearArmGroup();
+						}
                         ctrl_state_ = ESTOP_S;
                         // then we need to return this info
                     }
@@ -293,11 +306,30 @@ void Controller::updateWorkStatus(int id)
                     pause_cnt = 0;
                 }
             }
-			else if (state >= ERROR_EXEC_BASE_T)
+
+			long long int warn = ShareMem::instance()->getWarning();
+			if (warn >= ERROR_EXEC_BASE_T)
 			{
 				rcs::Error::instance()->add(
-					FAIL_INTERPRETER_BASE + state - ERROR_EXEC_BASE_T);
+					FAIL_INTERPRETER_BASE + ALARM_EXEC_BASE_T + state);
 			}
+#if 1
+            int iServoState = ShareMem::instance()->getServoState();
+			if(iServoState == STATE_ERROR)
+            {
+                if(ENGAGED_S == ctrl_state_)
+                {
+					if((work_status_ == TEACHING_TO_IDLE_T) 
+						|| (work_status_ == TEACHING_W))
+					{
+            			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup in STATE_ERROR");
+						arm_group_->clearArmGroup();
+					}
+                    FST_INFO("IDLE TO ESTOP_S...");
+                    ctrl_state_ = ESTOP_S;
+                }
+			}
+#endif
             break;
         }
         case IDLE_TO_TEACHING_T:
@@ -346,11 +378,6 @@ void Controller::updateWorkStatus(int id)
                 FST_INFO("RUNNING_TO_IDLE_T");
                 work_status_ = RUNNING_TO_IDLE_T;
             }
-			else if (state >= ERROR_EXEC_BASE_T)
-			{
-				rcs::Error::instance()->add(
-					FAIL_INTERPRETER_BASE + state - ERROR_EXEC_BASE_T);
-			}
 
 			long long int warn = ShareMem::instance()->getWarning();
 			if (warn >= ERROR_EXEC_BASE_T)
@@ -530,12 +557,12 @@ void Controller::getUserOpMode(void* params)
 	if(safety_interface_.isSafetyValid() == true)
 	{
 	   opmode = safety_interface_.getDITPUserMode();
-	   // FST_INFO("getUserOpMode: safety_interface_ :: opmode: %d", opmode);
+//	   FST_INFO("getUserOpMode: safety_interface_ :: opmode: %d", opmode);
     }
     else
 	{
 		opmode = user_op_mode_ ;
-	    FST_INFO("getUserOpMode: user_op_mode_ :: opmode: %d", opmode);
+//	    FST_INFO("getUserOpMode: user_op_mode_ :: opmode: %d", opmode);
     }
 	
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
@@ -1294,7 +1321,9 @@ void Controller::setTeachTarget(void* params, int len)
     if ((ctrl_state_ != ENGAGED_S)
     || (work_status_ != TEACHING_W))
     {
-        FST_ERROR("cant manual !!");
+        int ctlState = ctrl_state_ ;
+        int workStatus = work_status_ ;
+        FST_ERROR("cant manual !! --- with %d and %d.", ctlState, workStatus);
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
@@ -2888,9 +2917,8 @@ void Controller::setPoseRegister(void* params, int len)
     register_spec_PRInterface pr_interface =
         *(register_spec_PRInterface*)params;
 
-    int pr_id = pr_interface.id;
-    int pr_total = 200;
-    bool index_error = isRegisterIndexError(pr_id, pr_total);
+    int pr_total = 10;
+    bool index_error = isRegisterIndexError(pr_interface.id, pr_total);
     if (index_error) return;
 
     char test[32] = "";
@@ -2900,20 +2928,21 @@ void Controller::setPoseRegister(void* params, int len)
         memcpy(pr_interface.comment, test_comment, sizeof(test_comment));
     }
 
-	PrRegData  pr_struct;
-	pr_struct.id = pr_interface.id;
+    PrRegData pr_struct;
+    pr_struct.id = pr_interface.id;
     memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
-	
-	memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
+
+    memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
     pr_struct.value.pos_type = pr_interface.type;
-	memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(pr_interface.joint));
-		
+    memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(pr_interface.joint));
+
     RegMap set_reg;
-    set_reg.index = pr_interface.id;
+    set_reg.index = pr_struct.id;
     set_reg.type = POSE_REG;
     memcpy(set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
-	printf("PrRegData: id = %d, comment = %s", pr_struct.id, pr_struct.comment);
+    printf("PrRegData: id = %d, comment = %s", pr_struct.id, pr_struct.comment);
+
     int reg_size = sizeof(set_reg);
     setRegister(&set_reg, reg_size);
 }
@@ -2926,12 +2955,9 @@ void Controller::getPoseRegister(void* params)
     memcpy(&pr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
         sizeof(pr_interface));
 
-    int pr_id = pr_interface.id;
-    int pr_total = 200;
-    bool index_error = isRegisterIndexError(pr_id, pr_total);
+    int pr_total = 10;
+    bool index_error = isRegisterIndexError(pr_interface.id, pr_total);
     if (index_error) return;
-
-    int init_value = 0;
 
     RegMap get_reg;
     get_reg.index = pr_interface.id;
@@ -2939,15 +2965,15 @@ void Controller::getPoseRegister(void* params)
 
     getRegister(&get_reg);
 
-	PrRegData  pr_struct;
+    PrRegData  pr_struct;
     memcpy(&pr_struct, &get_reg.value, sizeof(pr_struct));
 
     pr_interface.has_pose = true;
-    memcpy(&pr_interface.pose, &pr_struct.value.cartesian_pos, 
-						 sizeof(pr_struct.value.cartesian_pos));
+    memcpy(&pr_interface.pose, &pr_struct.value.cartesian_pos,
+        sizeof(pr_struct.value.cartesian_pos));
     pr_interface.has_joint = true;
-    memcpy(&pr_interface.joint, &pr_struct.value.joint_pos, 
-						  sizeof(pr_struct.value.joint_pos));
+    memcpy(&pr_interface.joint, &pr_struct.value.joint_pos,
+        sizeof(pr_struct.value.joint_pos));
     pr_interface.has_comment = true;
     memcpy(&pr_interface.comment, &pr_struct.comment, sizeof(pr_struct.comment));
 	
@@ -2955,11 +2981,11 @@ void Controller::getPoseRegister(void* params)
     pr_interface.type = pr_struct.value.pos_type;
     pr_interface.id = pr_struct.id;
 
-	printf("PrRegData: id = %d, comment = %s\n", pr_struct.id, pr_struct.comment);
-	printf("pr_struct: id = (%f, %f, %f, %f, %f, %f) \n", 
-		pr_struct.value.joint_pos[0], pr_struct.value.joint_pos[1], 
-		pr_struct.value.joint_pos[2], pr_struct.value.joint_pos[3], 
-		pr_struct.value.joint_pos[4], pr_struct.value.joint_pos[5]);
+    printf("PrRegData: id = %d, comment = %s\n", pr_struct.id, pr_struct.comment);
+    printf("pr_struct: id = (%f, %f, %f, %f, %f, %f) \n", 
+        pr_struct.value.joint_pos[0], pr_struct.value.joint_pos[1], 
+        pr_struct.value.joint_pos[2], pr_struct.value.joint_pos[3], 
+        pr_struct.value.joint_pos[4], pr_struct.value.joint_pos[5]);
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -2983,9 +3009,8 @@ void Controller::setNumberRegister(void* params, int len)
 {
     register_spec_NRInterface nr_interface = *(register_spec_NRInterface*)params;
 
-    int nr_id = nr_interface.id;
-    int nr_total = 1500;
-    bool index_error = isRegisterIndexError(nr_id, nr_total);
+    int nr_total = 10;
+    bool index_error = isRegisterIndexError(nr_interface.id, nr_total);
     if (index_error) return;
 
     char test[32] = "";
@@ -2998,14 +3023,14 @@ void Controller::setNumberRegister(void* params, int len)
     RRegData nr_struct ;
     nr_struct.value = nr_interface.value;
     nr_struct.id = nr_interface.id;
-	
-	if(strlen(nr_interface.comment) != 0)
+
+    if(strlen(nr_interface.comment) != 0)
       memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
-	else
+    else
       strcpy(nr_struct.comment, "Empty");
 
     RegMap set_reg;
-    set_reg.index = nr_interface.id;
+    set_reg.index = nr_struct.id;
     set_reg.type = NUM_REG;
     memcpy(&set_reg.value, (char*)&nr_struct, sizeof(nr_struct));
  
@@ -3021,17 +3046,19 @@ void Controller::getNumberRegister(void* params)
     memcpy(&nr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
         sizeof(nr_interface));
 
-    int nr_id = nr_interface.id;
-    int nr_total = 1500;
-    bool index_error = isRegisterIndexError(nr_id, nr_total);
+    int nr_total = 10;
+    bool index_error = isRegisterIndexError(nr_interface.id, nr_total);
     if (index_error) return;
 
-    RRegData nr_struct ;
+    RRegData nr_struct;
+    nr_struct.id = nr_interface.id;
+    nr_struct.value = nr_interface.value;
+    memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
 
     RegMap get_reg;
-    get_reg.index = nr_interface.id;
+    get_reg.index = nr_struct.id;
     get_reg.type = NUM_REG;
-    memcpy(&get_reg.value, (char*)&nr_interface, sizeof(nr_interface));
+    memcpy(&get_reg.value, (char*)&nr_struct, sizeof(nr_struct));
 
     getRegister(&get_reg);
 
@@ -3046,7 +3073,6 @@ void Controller::getNumberRegister(void* params)
     nr_interface.id = nr_struct.id;
     nr_interface.has_comment = true;
     memcpy(nr_interface.comment, nr_struct.comment, sizeof(nr_struct.comment));
-    memcpy(&nr_interface, &get_reg.value, sizeof(nr_interface));
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -3125,26 +3151,33 @@ void Controller::getSoftConstraintLimit(void* params)
 void Controller::getUserValidSimpleFrame(void* params)
 {
     frame_spec_SimpleFrameInterface simple_frame;
-    simple_frame.has_total_frame = true;
 
     std::vector<FrameSimple> frame_list = 
         user_frame_manager_->getValidFrameSimpleList();
 
     std::vector<FrameSimple>::iterator it;
 
-    int frame_index = 0;
-    for(it = frame_list.begin(); it != frame_list.end(); it++)
+    if (!frame_list.empty())
     {
-        simple_frame.frame[frame_index].id = it->id;
-        simple_frame.frame[frame_index].has_id = true;
-        simple_frame.frame[frame_index].has_comment = true;
-        memcpy(simple_frame.frame[frame_index].comment,
-            it->comment, sizeof(it->comment));
-        frame_index++;
-    }
+        int frame_index = 0;
+        for(it = frame_list.begin(); it != frame_list.end(); it++)
+        {
+            simple_frame.frame[frame_index].id = it->id;
+            simple_frame.frame[frame_index].has_id = true;
+            simple_frame.frame[frame_index].has_comment = true;
+            memcpy(simple_frame.frame[frame_index].comment,
+                it->comment, sizeof(it->comment));
+            frame_index++;
+        }
 
-    simple_frame.total_frame = frame_index;
-    simple_frame.frame_count = frame_index;
+        simple_frame.has_total_frame = true;
+        simple_frame.total_frame = frame_index;
+        simple_frame.frame_count = frame_index;
+    }
+    else
+    {
+        FST_INFO("Controller : all simple UF is invalid");
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -3159,26 +3192,33 @@ void Controller::getUserValidSimpleFrame(void* params)
 void Controller::getToolValidSimpleFrame(void* params)
 {
     frame_spec_SimpleFrameInterface simple_frame;
-    simple_frame.has_total_frame = true;
 
     std::vector<FrameSimple> frame_list = 
         tool_frame_manager_->getValidFrameSimpleList();
 
     std::vector<FrameSimple>::iterator it;
 
-    int frame_index = 0;
-    for(it = frame_list.begin(); it != frame_list.end(); it++)
+    if (!frame_list.empty())
     {
-        simple_frame.frame[frame_index].id = it->id;
-        simple_frame.frame[frame_index].has_id = true;
-        simple_frame.frame[frame_index].has_comment = true;
-        memcpy(simple_frame.frame[frame_index].comment,
-            it->comment, sizeof(it->comment));
-        frame_index++;
-    }
+        int frame_index = 0;
+        for(it = frame_list.begin(); it != frame_list.end(); it++)
+        {
+            simple_frame.frame[frame_index].id = it->id;
+            simple_frame.frame[frame_index].has_id = true;
+            simple_frame.frame[frame_index].has_comment = true;
+            memcpy(simple_frame.frame[frame_index].comment,
+                it->comment, sizeof(it->comment));
+            frame_index++;
+        }
 
-    simple_frame.total_frame = frame_index;
-    simple_frame.frame_count = frame_index;
+        simple_frame.has_total_frame = true;
+        simple_frame.total_frame = frame_index;
+        simple_frame.frame_count = frame_index;
+    }
+    else
+    {
+        FST_INFO("Controller : all simple TF is invalid");
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -3193,14 +3233,15 @@ void Controller::getValidSimplePR(void* params)
 {
     register_spec_SimpleRegInterface simple_reg;
 
+    void* p;
     std::vector<ChgFrameSimple> simple_reg_struct = 
-        getChangeRegList(READ_CHG_PR_LST, (void*) params);
+        getChangeRegList(READ_CHG_PR_LST, p);
 
     std::vector<ChgFrameSimple>::iterator it;
-    int reg_index = 0;
 
     if (!simple_reg_struct.empty())
     {
+        int reg_index = 0;
         for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
         {
             simple_reg.reg[reg_index].has_id = true;
@@ -3217,7 +3258,11 @@ void Controller::getValidSimplePR(void* params)
         simple_reg.reg_count = reg_index;
     }
     else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
         FST_INFO("Controller : all simple PR is invalid");
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
 
@@ -3237,10 +3282,10 @@ void Controller::getValidSimpleNR(void* params)
     register_spec_SimpleRegInterface simple_reg;
 
     std::vector<ChgFrameSimple>::iterator it;
-    int reg_index = 0;
 
     if (!simple_reg_struct.empty())
     {
+        int reg_index = 0;
         for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
         {
             simple_reg.reg[reg_index].has_id = true;
@@ -3257,7 +3302,11 @@ void Controller::getValidSimpleNR(void* params)
         simple_reg.reg_count = reg_index;
     }
     else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
         FST_INFO("Controller : All simple R is invalid");
+    }
 
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     

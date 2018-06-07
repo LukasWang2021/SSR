@@ -101,14 +101,17 @@ typedef enum _InterpreterCommand
     MOD_IO   = 203,
     READ_IO  = 204,
     
-    READ_SMLT_STS  = 205,
-	MOD_SMLT_STS   = 206,
-    MOD_SMLT_VAL   = 207,
+    READ_IO_DEV_INFO  = 205,
     
-    READ_CHG_PR_LST   = 208,
-    READ_CHG_SR_LST   = 209,
-    READ_CHG_R_LST    = 210,
-    READ_CHG_MR_LST   = 211,
+    // Jump to 210 for adding IO feature
+    READ_SMLT_STS  = 211,
+	MOD_SMLT_STS   = 212,
+    MOD_SMLT_VAL   = 213,
+    
+    READ_CHG_PR_LST   = 214,
+    READ_CHG_SR_LST   = 215,
+    READ_CHG_R_LST    = 226,
+    READ_CHG_MR_LST   = 227,
 
 }InterpreterCommand;
 
@@ -349,5 +352,18 @@ typedef struct _ChgFrameSimple
 	int id;
 	char comment[32];
 } ChgFrameSimple;
+
+// This is output info.
+typedef struct _IODeviceInfoShm
+{
+    char path[128];
+    unsigned int id;
+    char communication_type[128];
+    int device_number;
+    int    device_type;
+    unsigned int input;
+    unsigned int output;
+} IODeviceInfoShm;
+
 
 #endif

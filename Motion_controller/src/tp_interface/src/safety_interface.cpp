@@ -73,10 +73,10 @@ bool SafetyInterface::isDIFrmChanged()
     return true;
 }
 
-char SafetyInterface::getDIDec()
-{
-    return din_frm2_.load().byte6.slowdown;
-}
+// char SafetyInterface::getDIDec()
+// {
+//    return din_frm2_.load().byte6.slowdown;
+// }
 char SafetyInterface::getDIOutage1()
 {
     return din_frm2_.load().byte5.outage1;
@@ -134,6 +134,9 @@ int SafetyInterface::getDITPUserMode()
     if( din_frm2_.load().byte6.usermode_auto) val |= 0x1;
     if( din_frm2_.load().byte6.usermode_man) val |= 0x2;
     if( din_frm2_.load().byte6.usermode_limit) val |= 0x4;
+	
+//	FST_INFO("getDITPUserMode: safety_interface_ :: din_frm2_: %08X", *(U32*)&din_frm2_);
+//	FST_INFO("getDITPUserMode: safety_interface_ :: val: %d", val);
 
     if(val == 0x1) return 1;
     if(val == 0x2) return 3;

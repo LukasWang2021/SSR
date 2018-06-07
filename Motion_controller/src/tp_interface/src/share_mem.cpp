@@ -16,7 +16,7 @@ ShareMem::ShareMem(RosBasic *ros_basic):ros_basic_(ros_basic)
 
     createShm(SHM_INTPRT_CMD,        SHM_INTPRTCMD_SIZE);
     createShm(SHM_INTPRT_STATUS,     SHM_INTPRTSTATUS_SIZE);
-    createShm(SHM_REG_IO_INFO,       SHM_INTPRTSTATUS_SIZE);
+    createShm(SHM_REG_IO_INFO,       SHM_REG_IO_INFO_SIZE);
     createShm(SHM_CHG_REG_LIST_INFO, SHM_INTPRTSTATUS_SIZE);
     createShm(SHM_CTRL_CMD,          SHM_CTRLCMD_SIZE);
     createShm(SHM_CTRL_STATUS,       SHM_CTRLSTATUS_SIZE);

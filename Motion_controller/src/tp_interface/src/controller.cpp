@@ -150,6 +150,13 @@ void Controller::updateWarnings(int id)
     if (warning_level > 4)
     {
         FST_INFO("in estop process...");
+		
+		if((work_status_ == TEACHING_TO_IDLE_T) 
+			|| (work_status_ == TEACHING_W))
+		{
+			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup in updateWarnings");
+			arm_group_->clearArmGroup();
+		}
         safetyStop(warning_level);
         servoEStop();
         pauseMotion(); //set mode to pause
@@ -284,6 +291,12 @@ void Controller::updateWorkStatus(int id)
                     if (pause_cnt >= max_count) //wait
                     {
                         pause_cnt = 0;
+						if((work_status_ == TEACHING_TO_IDLE_T) 
+							|| (work_status_ == TEACHING_W))
+						{
+                			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup before PAUSED_R");
+							arm_group_->clearArmGroup();
+						}
                         ctrl_state_ = ESTOP_S;
                         // then we need to return this info
                     }
@@ -293,11 +306,30 @@ void Controller::updateWorkStatus(int id)
                     pause_cnt = 0;
                 }
             }
-			else if (state >= ERROR_EXEC_BASE_T)
+
+			long long int warn = ShareMem::instance()->getWarning();
+			if (warn >= ERROR_EXEC_BASE_T)
 			{
 				rcs::Error::instance()->add(
-					FAIL_INTERPRETER_BASE + state - ERROR_EXEC_BASE_T);
+					FAIL_INTERPRETER_BASE + ALARM_EXEC_BASE_T + state);
 			}
+#if 1
+            int iServoState = ShareMem::instance()->getServoState();
+			if(iServoState == STATE_ERROR)
+            {
+                if(ENGAGED_S == ctrl_state_)
+                {
+					if((work_status_ == TEACHING_TO_IDLE_T) 
+						|| (work_status_ == TEACHING_W))
+					{
+            			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup in STATE_ERROR");
+						arm_group_->clearArmGroup();
+					}
+                    FST_INFO("IDLE TO ESTOP_S...");
+                    ctrl_state_ = ESTOP_S;
+                }
+			}
+#endif
             break;
         }
         case IDLE_TO_TEACHING_T:
@@ -346,11 +378,6 @@ void Controller::updateWorkStatus(int id)
                 FST_INFO("RUNNING_TO_IDLE_T");
                 work_status_ = RUNNING_TO_IDLE_T;
             }
-			else if (state >= ERROR_EXEC_BASE_T)
-			{
-				rcs::Error::instance()->add(
-					FAIL_INTERPRETER_BASE + state - ERROR_EXEC_BASE_T);
-			}
 
 			long long int warn = ShareMem::instance()->getWarning();
 			if (warn >= ERROR_EXEC_BASE_T)
@@ -530,12 +557,12 @@ void Controller::getUserOpMode(void* params)
 	if(safety_interface_.isSafetyValid() == true)
 	{
 	   opmode = safety_interface_.getDITPUserMode();
-	   // FST_INFO("getUserOpMode: safety_interface_ :: opmode: %d", opmode);
+//	   FST_INFO("getUserOpMode: safety_interface_ :: opmode: %d", opmode);
     }
     else
 	{
 		opmode = user_op_mode_ ;
-	    FST_INFO("getUserOpMode: user_op_mode_ :: opmode: %d", opmode);
+//	    FST_INFO("getUserOpMode: user_op_mode_ :: opmode: %d", opmode);
     }
 	
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
@@ -1294,7 +1321,9 @@ void Controller::setTeachTarget(void* params, int len)
     if ((ctrl_state_ != ENGAGED_S)
     || (work_status_ != TEACHING_W))
     {
-        FST_ERROR("cant manual !!");
+        int ctlState = ctrl_state_ ;
+        int workStatus = work_status_ ;
+        FST_ERROR("cant manual !! --- with %d and %d.", ctlState, workStatus);
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }

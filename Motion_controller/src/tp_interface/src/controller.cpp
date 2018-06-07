@@ -310,8 +310,9 @@ void Controller::updateWorkStatus(int id)
 			long long int warn = ShareMem::instance()->getWarning();
 			if (warn >= ERROR_EXEC_BASE_T)
 			{
-				rcs::Error::instance()->add(
-					FAIL_INTERPRETER_BASE + ALARM_EXEC_BASE_T + state);
+                FST_INFO("warn >= ERROR_EXEC_BASE_T in IDLE_W");
+				rcs::Error::instance()->add(FAIL_INTERPRETER_BASE + warn);
+				ShareMem::instance()->setWarning(0);
 			}
 #if 1
             int iServoState = ShareMem::instance()->getServoState();
@@ -382,8 +383,10 @@ void Controller::updateWorkStatus(int id)
 			long long int warn = ShareMem::instance()->getWarning();
 			if (warn >= ERROR_EXEC_BASE_T)
 			{
+                FST_INFO("warn >= ERROR_EXEC_BASE_T in RUNNING_W");
 				rcs::Error::instance()->add(
-					FAIL_INTERPRETER_BASE + ALARM_EXEC_BASE_T + state);
+					FAIL_INTERPRETER_BASE + warn);
+				ShareMem::instance()->setWarning(0);
 			}
             break;
         }

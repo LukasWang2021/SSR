@@ -299,6 +299,12 @@ long long int ShareMem::getWarning()
     return warn;
 }
 
+void ShareMem::setWarning(long long int warn)
+{
+    int offset = &((IntprtStatus*)0)->warn;
+    writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
+}
+
 bool ShareMem::getRegInfo(RegMap * info)
 {
     readShm(SHM_REG_IO_INFO, 0, (void*)info, sizeof(RegMap));

@@ -917,7 +917,7 @@ int call_UserAlarm(int iLineNum, struct thread_control_block* objThreadCntrolBlo
 	
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	alarmNumber = (int)value.getFloatValue() ;
-	setWarning(alarmNumber);
+	setWarning(ALARM_EXEC_BASE_T + alarmNumber);
     find_eol(objThreadCntrolBlock);
     return 1;
 }

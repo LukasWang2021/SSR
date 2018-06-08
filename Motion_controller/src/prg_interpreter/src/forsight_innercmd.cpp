@@ -12,6 +12,11 @@
 #include "stdlib.h" 
 #include "forsight_innercmd.h"
 
+#ifndef WIN32
+#include "common/error_code.h"
+#endif
+
+
 #define FILE_PATH_LEN       1024
 #define MAX_WAIT_SECOND     30
 #define MAX_STOPWATCH_NUM   128
@@ -917,7 +922,7 @@ int call_UserAlarm(int iLineNum, struct thread_control_block* objThreadCntrolBlo
 	
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	alarmNumber = (int)value.getFloatValue() ;
-	setWarning(ALARM_EXEC_BASE_T + alarmNumber);
+	setWarning(FAIL_INTERPRETER_ALARM_EXEC_BASE + alarmNumber);
     find_eol(objThreadCntrolBlock);
     return 1;
 }

@@ -10,6 +10,10 @@
 #include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
 
+#ifndef WIN32
+#include "common/error_code.h"
+#endif
+
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 #include "reg_manager/forsight_registers_manager.h"
 #else
@@ -17,9 +21,7 @@
 #endif
 
 #ifndef WIN32
-
 #define TPI_SUCCESS				(0)
-
 #endif
 
 // #define NUM_LAB 100
@@ -102,6 +104,15 @@ static struct commands table[] = { /* Commands must be entered lowercase */
   "import",      IMPORT,
   "", END  /* mark end of table */
 };
+
+typedef struct _ErrInfo {
+#ifdef WIN32
+	__int64         warn;
+#else
+    long long int   warn;
+#endif
+    char desc[1024];
+} ErrInfo;
 
 
 char * gosub_pop(struct thread_control_block * objThreadCntrolBlock);
@@ -2355,32 +2366,32 @@ void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * re
 /* display an error message */
 void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 {
-  static const char *e[]= {
-    "syntax error",                // 0 
-    "unbalanced parentheses",      // 1 
-    "no expression present",       // 2 
-    "equals sign expected",        // 3 
-    "not a variable",              // 4 
-    "Label table full",            // 5 
-    "duplicate sub_label",         // 6 
-    "undefined sub_label",         // 7 
-    "THEN expected",               // 8 
-    "TO expected",                 // 9 
-    "too many nested FOR loops",   // 10 
-    "NEXT without FOR",            // 11
-    "too many nested GOSUBs",      // 12 
-    "RETURN without GOSUB",        // 13 
-    "file not found",              // 14
-    "movl with joint",             // 15
-    "movj with point",             // 16
-    "illegal line number"          // 17
+  static const ErrInfo e[]= {
+     FAIL_INTERPRETER_SYNTAX_ERROR             ,     "syntax error",                // 0 
+     FAIL_INTERPRETER_UNBALANCED_PARENTHESES   ,     "unbalanced parentheses",      // 1 
+     FAIL_INTERPRETER_NO_EXPRESSION_PRESENT    ,     "no expression present",       // 2 
+     FAIL_INTERPRETER_EQUALS_SIGN_EXPECTED     ,     "equals sign expected",        // 3 
+     FAIL_INTERPRETER_NOT_A_VARIABLE           ,     "not a variable",              // 4 
+     FAIL_INTERPRETER_LABEL_TABLE_FULL         ,     "Label table full",            // 5 
+     FAIL_INTERPRETER_DUPLICATE_SUB_LABEL      ,     "duplicate sub_label",         // 6 
+     FAIL_INTERPRETER_UNDEFINED_SUB_LABEL      ,     "undefined sub_label",         // 7 
+     FAIL_INTERPRETER_THEN_EXPECTED            ,     "THEN expected",               // 8 
+     FAIL_INTERPRETER_TO_EXPECTED              ,     "TO expected",                 // 9 
+     FAIL_INTERPRETER_TOO_MANY_NESTED_FOR_LOOPS,     "too many nested FOR loops",   // 10 
+     FAIL_INTERPRETER_NEXT_WITHOUT_FOR         ,     "NEXT without FOR",            // 11
+     FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB    ,     "too many nested GOSUBs",      // 12 
+     FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB     ,     "RETURN without GOSUB",        // 13 
+     FAIL_INTERPRETER_FILE_NOT_FOUND           ,     "file not found",              // 14
+     FAIL_INTERPRETER_MOVL_WITH_JOINT          ,     "movl with joint",             // 15
+     FAIL_INTERPRETER_MOVJ_WITH_POINT          ,     "movj with point",             // 16
+     FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER      ,     "illegal line number"          // 17
   };
   
   printf("-----------------ERR:%d----------------------\n", error);
-  printf("\t NOTICE : %d - %s\n", error, e[error]);
+  printf("\t NOTICE : %d -  %llx(%s)\n", error, e[error].warn, e[error].desc);
   printf("-----------------ERR:%d----------------------\n", error);
   
-  setWarning((InterpreterState)(ERROR_SYNTAX_ERROR_T + error)) ; 
+  setWarning(e[error].warn) ; 
   objThreadCntrolBlock->prog_mode = ERROR_MODE;
   
 //  longjmp(e_buf, 1); /* return to save point */

@@ -60,28 +60,8 @@ typedef enum _InterpreterState
     IDLE_TO_EXECUTE_T   = 101,
     EXECUTE_TO_PAUSE_T  = 102,
     PAUSE_TO_IDLE_T     = 103,
-    PAUSE_TO_EXECUTE_T  = 104,
-	
-    ERROR_EXEC_BASE_T    = 200,                 
-    ERROR_SYNTAX_ERROR_T = 201,                // 0 
-    ERROR_UNBALANCED_PARENTHESES_T = 202,      // 1 
-    ERROR_NO_EXPRESSION_PRESENT_T = 203,       // 2 
-    ERROR_EQUALS_SIGN_EXPECTED_T = 204,        // 3 
-    ERROR_NOT_VARIABLE_T = 205,                // 4 
-    ERROR_LABEL_TABLE_FULL_T = 206,            // 5 
-    ERROR_DUPLICATE_SUB_LABEL_T = 207,         // 6 
-    ERROR_UNDEFINED_SUB_LABEL_T = 208,         // 7 
-    ERROR_THEN_EXPECTED_T = 209,               // 8 
-    ERROR_TO_EXPECTED_T = 210,                 // 9 
-    ERROR_TOO_MANY_NESTED_FOR_LOOPS_T = 211,   // 10 
-    ERROR_NEXT_WITHOUT_FOR_T = 212,            // 11
-    ERROR_TOO_MANY_NESTED_GOSUBS_T = 213,      // 12 
-    ERROR_RETURN_WITHOUT_GOSUB_T = 214,        // 13 
-    ERROR_FILE_NOT_FOUND_T = 215,              // 14
-    ERROR_MOVL_TO_JOINT_T = 216,               // 15
-    ERROR_MOVJ_TO_POINT_T = 217,               // 16
+    PAUSE_TO_EXECUTE_T  = 104
     
-    ALARM_EXEC_BASE_T       = 1000
 }InterpreterState;
 
 typedef enum _InterpreterCommand

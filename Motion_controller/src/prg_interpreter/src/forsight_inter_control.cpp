@@ -8,6 +8,7 @@
 #include "forsight_io_controller.h"
 #ifndef WIN32
 #include "io_interface.h"
+#include "common/error_code.h"
 #endif
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
@@ -689,7 +690,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 	            setPrgmState(EXECUTE_R);
 			}
 			else
-			    setWarning(1);
+			    setWarning(FAIL_INTERPRETER_NOT_IN_PAUSE);
             break;
         case PAUSE:
 			if(g_iCurrentThreadSeq < 0) break ;

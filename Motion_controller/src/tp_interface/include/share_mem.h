@@ -210,6 +210,15 @@ class ShareMem
     bool getRegInfo(RegMap * info);
 	
     /**
+     * @brief: get IO Device Info 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    bool getIODevInfoInfo(void * info);
+	
+    /**
      * @brief: get Info of Reg and IO 
      *
      * @param inst: 

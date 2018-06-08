@@ -88,7 +88,7 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	32184,	{	&ProtoParse::decDefault,	&ProtoParse::encDHParameters	}	},
 	{	57668,	{	&ProtoParse::decDefault,	&ProtoParse::encHardConstraint	}	},
 	{	77076,	{	&ProtoParse::decManualCmd,	&ProtoParse::encDefault	}	},
-	{	17993,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
+	{	17993,	{	&ProtoParse::decGlobalAcc,	&ProtoParse::encGlobalAcc	}	},
 	{	11892,	{	&ProtoParse::decTeachTarget,	&ProtoParse::encDefault	}	},
 	{	94965,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 	{	10478,	{	&ProtoParse::decDefault,	&ProtoParse::encVersionInfo	}	},
@@ -104,7 +104,8 @@ std::map<int, ProtoFunctions> g_proto_funcs_mp =
 	{	16261,	{	&ProtoParse::decDefault,	&ProtoParse::encValidSimpleReg	}	},
 	{	76642,	{	&ProtoParse::decDefault,	&ProtoParse::encValidSimpleReg	}	},
 	{	4855,	{	&ProtoParse::decDefault,	&ProtoParse::encString	}	},
-	{	22462,	{	&ProtoParse::decDefault,	&ProtoParse::encGlobalAcc	}	},
+	{	22462,	{	&ProtoParse::decGlobalAcc,	&ProtoParse::encGlobalAcc	}	},
+	//{	22462,	{	&ProtoParse::decDefault,	&ProtoParse::encDefault	}	},
 
 };
 

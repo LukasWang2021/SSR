@@ -317,6 +317,12 @@ bool ShareMem::getDIOInfo(char * info)
     return true;
 }
 
+bool ShareMem::getIODevInfoInfo(void * info)
+{
+    readShm(SHM_REG_IO_INFO, 0, (void*)info, SHM_REG_IO_INFO_SIZE);
+    return true;
+}
+
 std::vector<ChgFrameSimple> ShareMem::getChangeRegList()
 {
     char strChgRegLst[1024];

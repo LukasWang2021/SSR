@@ -18,6 +18,7 @@
 #include <boost/algorithm/string.hpp>
 
 using std::vector;
+#define REG_IO_INFO_SIZE (4096)
 
 
 Controller* Controller::instance_ = NULL;
@@ -888,6 +889,8 @@ void Controller::startRun(void* params, int len)
         return;
     }
     StartCtrl* start = (StartCtrl*)params;
+	
+	FST_INFO("start run %s ------------------------", start->file_name);
 
     InterpreterControl ctrl;
     ctrl.cmd = START;
@@ -1156,22 +1159,32 @@ void Controller::getGlobalVel(void* params)
 {    
     double factor = arm_group_->getGlobalVelRatio();
 
+    motion_spec_GlobalParams global = *(motion_spec_GlobalParams*)params;
+
+	global.has_acc = true;
+	global.acc = factor;
+
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
-        rep->fillData((char*)&factor, sizeof(factor));
+        rep->fillData((char*)&global, sizeof(global));
     }
     else
     {
         motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
-        param->size = sizeof(factor);
-        memcpy(param->bytes, (char*)&factor, param->size);
+        param->size = sizeof(global);
+        memcpy(param->bytes, (char*)&global, param->size);
     }
 }
 void Controller::setGlobalVel(void* params, int len)
 {
-    double factor = *(double*)params;
+    motion_spec_GlobalParams global = *(motion_spec_GlobalParams*)params;
+
+    FST_INFO("factor: Set global vel ratio to: %.4f", global.acc);
+
+	double factor = global.acc * 0.01;
+
     if (arm_group_->setGlobalVelRatio(factor) == false)
     {
         rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
@@ -2900,6 +2913,59 @@ int Controller::getChangeRegListReply(std::vector<ChgFrameSimple>& vecRet)
 	return 1;
 }
 
+int Controller::getIODevInfo()
+{
+    int iCount = 0 ;
+    char * params = (char *)malloc(REG_IO_INFO_SIZE);
+	IODeviceInfoShm * objInfoPtr = (IODeviceInfoShm *)(params + sizeof(int));
+	sendGetIODevInfoRequest();
+	usleep(10000);
+	int iRet = getIODevInfoReply((void *)params);
+	while(iRet == -1)
+	{
+		usleep(10000);
+		iRet = getIODevInfoReply((void *)params);
+		if(iCount++ > 200)
+		{
+			FST_INFO("getRegisterReply Failed");
+			break;
+		}
+	}
+	iCount = 0 ;
+	memcpy(&iCount, params, sizeof(int));
+    FST_INFO("getIODevInfo = %d", iCount);
+	if(iCount > 0)
+	{
+		vecIODeviceInfoShm.clear();
+		for(int i = 0 ; i < iCount ; i++)
+		{
+    		FST_INFO("getIODevInfo = %s", objInfoPtr[i].path);
+			vecIODeviceInfoShm.push_back(objInfoPtr[i]);
+		}
+	}
+}
+
+void Controller::sendGetIODevInfoRequest()
+{
+    FST_INFO("sendGetIODevInfoRequest");
+    InterpreterControl ctrl;
+    ctrl.cmd = READ_IO_DEV_INFO ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+int Controller::getIODevInfoReply(void * params)
+{
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+	{
+        FST_INFO("is_ready == false");
+		return -1;
+	}
+    FST_INFO("getIODevInfoReply");
+	ShareMem::instance()->getIODevInfoInfo(params);
+	return 1;
+}
 
 bool Controller::isRegisterIndexError(int &send_index, int &reg_total)
 {
@@ -3098,8 +3164,9 @@ void Controller::getNumberRegister(void* params)
 void Controller::setGlobalAcc(void* params, int len)
 {
     motion_spec_GlobalParams global = *(motion_spec_GlobalParams*)params;
+	FST_INFO("Controller : Set global acc is %f", global.acc);
 
-    U64 error_code = arm_group_->setGlobalAccRatio(global.acc);
+    U64 error_code = arm_group_->setGlobalAccRatio(global.acc * 0.01);
 
     if (FST_SUCCESS != error_code)
     {

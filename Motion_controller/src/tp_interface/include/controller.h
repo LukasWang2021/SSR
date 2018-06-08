@@ -665,6 +665,27 @@ class Controller
      * @param params
      */
     void getRegister(void* params);
+    /**
+     * @brief: try to get Register
+     *
+     * @param params
+     * @param len
+     */
+    void sendGetIODevInfoRequest();
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    int getIODevInfoReply(void* params);
+
+    /**
+     * @brief: callback for getting register 
+     *
+     * @param params
+     */
+    int getIODevInfo();
 
     /**
      * @brief: Judge whether there is a index error for setting
@@ -804,6 +825,7 @@ class Controller
     FrameManager *user_frame_manager_;
     FrameManager *tool_frame_manager_;
 
+	vector<IODeviceInfoShm> vecIODeviceInfoShm ;
 	/**
 	 * @brief: set current mode
 	 *

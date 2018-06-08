@@ -736,6 +736,22 @@ void ProtoParse::encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf)
     FST_INFO("bytes_written:%d", ostream.bytes_written);
 }
 
+void ProtoParse::decGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    motion_spec_GlobalParams global;
+    bool ret = false;
+    PARSE_FIELD(global, motion_spec_GlobalParams, in_buf, in_len, ret);
+
+    if (ret == false)
+    {
+        FST_ERROR("error decode global acc");
+        return;
+    }
+
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
+    req->fillData((char*)&global, sizeof(global));
+}
+
 void ProtoParse::decValidSimpleFrame(const uint8_t *in_buf, int in_len, void *out_buf)
 {
     frame_spec_SimpleFrameInterface simple_frame;

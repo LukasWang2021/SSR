@@ -59,6 +59,7 @@ class ProtoParse
     void decNumberRegister(const uint8_t *in_buf, int in_len, void *out_buf);
 
     void encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf);
+	void decGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf);
 
     void encValidSimpleReg(const uint8_t *in_buf, int in_len, void *out_buf);
 

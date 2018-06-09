@@ -148,6 +148,7 @@ void Controller::updateWarnings(int id)
         return; 
     int warning_level = rcs::Error::instance()->getWarningLevel();
     
+    FST_INFO("updateWarnings: warning_level is:%d", warning_level);
     if (warning_level > 4)
     {
         FST_INFO("in estop process...");
@@ -155,8 +156,17 @@ void Controller::updateWarnings(int id)
 		if((work_status_ == TEACHING_TO_IDLE_T) 
 			|| (work_status_ == TEACHING_W))
 		{
-			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup in updateWarnings");
+			FST_INFO("TEACHING TO ESTOP_S and call clearArmGroup in updateWarnings");
 			arm_group_->clearArmGroup();
+		}
+		else if(work_status_ == RUNNING_W) 
+		{
+			FST_INFO("RUNNING TO ESTOP_S and call clearArmGroup in updateWarnings");
+			
+            InterpreterControl ctrl;
+            ctrl.cmd = ABORT;
+            ShareMem::instance()->intprtControl(ctrl);
+            abortMotion();
 		}
         safetyStop(warning_level);
         servoEStop();
@@ -1297,8 +1307,8 @@ void Controller::setManualCmd(void* params, int len)
 {
      //command must be set in idle or pause state_cmd
      //Qianjin
-    if ((ctrl_state_ != ENGAGED_S) || ((work_status_ != IDLE_W)
-        && (work_status_ != TEACHING_W)))
+    if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
+        // && (work_status_ != TEACHING_W)))
     {
         int iCtrlState = ctrl_state_;
         int iWorkStatus = work_status_;
@@ -1355,6 +1365,15 @@ void Controller::setTeachTarget(void* params, int len)
 	    FST_INFO("target.directions = (0, 0, 0, 0, 0, 0) .\n");
 	    if (work_status_ == TEACHING_W)
 	        work_status_ = TEACHING_TO_IDLE_T;
+		
+		if (work_status_ == TEACHING_TO_IDLE_T)
+		{
+            if ((ShareMem::instance()->getServoState() == STATE_READY) 
+            || (ShareMem::instance()->getServoState() == STATE_ERROR))
+            {
+                work_status_ = IDLE_W;
+            }            
+		}
      }
      else
      {
@@ -1575,6 +1594,13 @@ void Controller::rtTrajFlow(void* params)
     U64 result = ShareMem::instance()->setJointPositions();
     if (result != TPI_SUCCESS)
     {
+        int iCtrlState = ctrl_state_;
+        int iWorkStatus = work_status_;
+
+        FST_INFO(
+			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
+            iCtrlState, iWorkStatus);
+		
         rcs::Error::instance()->add(result);
         return;// NULL;
     }//end if (share_mem_.isJointCommandWritten() == false)
@@ -2431,10 +2457,10 @@ void Controller::servoEStop()
 
 void Controller::errorAction(int warning_level)
 {
-    FST_INFO("warning_level is:%d", warning_level);
+    FST_INFO("errorAction: warning_level is:%d", warning_level);
     if (warning_level > 4)
     {
-        FST_INFO("in estop process...");
+        FST_INFO("in estop process in the errorAction...");
         safetyStop(warning_level);
         servoEStop();
         pauseMotion(); //set mode to pause

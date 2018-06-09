@@ -309,10 +309,10 @@ void Controller::updateWorkStatus(int id)
             }
 
 			long long int warn = ShareMem::instance()->getWarning();
-			if (warn >= ERROR_EXEC_BASE_T)
+			if (warn >= FAIL_INTERPRETER_BASE)
 			{
-                FST_INFO("warn >= ERROR_EXEC_BASE_T in IDLE_W");
-				rcs::Error::instance()->add(FAIL_INTERPRETER_BASE + warn);
+                FST_INFO("warn >= ERROR_EXEC_BASE_T in IDLE_W with %llx", warn);
+				rcs::Error::instance()->add(warn);
 				ShareMem::instance()->setWarning(0);
 			}
 #if 1
@@ -382,11 +382,10 @@ void Controller::updateWorkStatus(int id)
             }
 
 			long long int warn = ShareMem::instance()->getWarning();
-			if (warn >= ERROR_EXEC_BASE_T)
+			if (warn >= FAIL_INTERPRETER_BASE)
 			{
-                FST_INFO("warn >= ERROR_EXEC_BASE_T in RUNNING_W");
-				rcs::Error::instance()->add(
-					FAIL_INTERPRETER_BASE + warn);
+                FST_INFO("warn >= ERROR_EXEC_BASE_T in RUNNING_W with %llx", warn);
+				rcs::Error::instance()->add(warn);
 				ShareMem::instance()->setWarning(0);
 			}
             break;

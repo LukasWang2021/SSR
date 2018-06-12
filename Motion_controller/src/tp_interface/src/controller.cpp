@@ -116,7 +116,7 @@ void Controller::setError(void* params, int len)
 }
 void Controller::getError(void* params)
 {
-    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);    
+    //tp_interface_->setReply(BaseTypes_StatusCode_FAILED, id);
 }
 
 void Controller::updateDefault(int id)
@@ -1805,7 +1805,7 @@ void Controller::requestProc()
                     FST_ERROR("SET:: not exist id :%d with %s\n", id, str_path.c_str()); 
                 }
             }
-            tp_interface_->setReply(BaseTypes_StatusCode_OK);
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, id);
             break;
         }
         case GET:
@@ -2042,7 +2042,7 @@ void Controller::parseCmdMsg()
 		case BaseTypes_CommandType_LIST:
 		{
 			FST_INFO("list...\n");
-            tp_interface_->setReply(LIST);
+            tp_interface_->setReply(LIST, tp_interface_->getReqDataPtr()->getID());
 			break;
 		}			
         case BaseTypes_CommandType_ADD:
@@ -2062,7 +2062,7 @@ void Controller::parseCmdMsg()
             string str_path = (const char*)tp_interface_->getReqDataPtr()->getPathBufPtr();
 			removePubParameter(str_path);
             //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
-            tp_interface_->setReply(BaseTypes_StatusCode_OK);
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, tp_interface_->getReqDataPtr()->getID());
             
             break;
 		} 
@@ -2071,7 +2071,7 @@ void Controller::parseCmdMsg()
             FST_INFO("remove all...");
             removeAllPubParams();
             //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
-            tp_interface_->setReply(BaseTypes_StatusCode_OK);
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, tp_interface_->getReqDataPtr()->getID());
             break;
         } 
         default:
@@ -2079,7 +2079,7 @@ void Controller::parseCmdMsg()
             FST_ERROR("ERROR command:%d", cmd_param.cmd);
             rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
             //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_FAILED;
-            tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
+            tp_interface_->setReply(BaseTypes_StatusCode_FAILED, tp_interface_->getReqDataPtr()->getID());
             break;
         }
 	}//end switch (cmd_param.cmd)
@@ -3026,16 +3026,30 @@ void Controller::setPoseRegister(void* params, int len)
     pr_struct.id = pr_interface.id;
     memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
 
-    memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
     pr_struct.value.pos_type = pr_interface.type;
-    memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(pr_interface.joint));
+    if (0 == pr_interface.type)
+    {
+        memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
+        memset(&pr_struct.value.joint_pos, 0, sizeof(double) * 6);
+    }
+    else if (1 == pr_interface.type)
+    {
+        memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(double) * 6);
+        memset(&pr_struct.value.cartesian_pos, 0, sizeof(pr_struct.value.cartesian_pos));
+    }
+    else
+    {
+        FST_ERROR("Controller : Value Tye Error from TP");
+        rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+        return;
+    }
 
     RegMap set_reg;
     set_reg.index = pr_struct.id;
     set_reg.type = POSE_REG;
     memcpy(set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
-    printf("PrRegData: id = %d, comment = %s", pr_struct.id, pr_struct.comment);
+    FST_INFO("PrRegData: id = %d, comment = %s", pr_struct.id, pr_struct.comment);
 
     int reg_size = sizeof(set_reg);
     setRegister(&set_reg, reg_size);
@@ -3075,8 +3089,8 @@ void Controller::getPoseRegister(void* params)
     pr_interface.type = pr_struct.value.pos_type;
     pr_interface.id = pr_struct.id;
 
-    printf("PrRegData: id = %d, comment = %s\n", pr_struct.id, pr_struct.comment);
-    printf("pr_struct: id = (%f, %f, %f, %f, %f, %f) \n", 
+    FST_INFO("PrRegData: id = %d, comment = %s\n", pr_struct.id, pr_struct.comment);
+    FST_INFO("pr_struct: id = (%f, %f, %f, %f, %f, %f) \n", 
         pr_struct.value.joint_pos[0], pr_struct.value.joint_pos[1], 
         pr_struct.value.joint_pos[2], pr_struct.value.joint_pos[3], 
         pr_struct.value.joint_pos[4], pr_struct.value.joint_pos[5]);
@@ -3158,9 +3172,9 @@ void Controller::getNumberRegister(void* params)
 
     memcpy(&nr_struct, &get_reg.value, sizeof(nr_struct));
 
-    printf("getNumberRegister id nr_struct at %d\n", nr_struct.id);
-    printf("getNumberRegister comment nr_struct at %s\n", nr_struct.comment);
-    printf("getNumberRegister value nr_struct at %f\n", nr_struct.value);
+    FST_INFO("getNumberRegister id nr_struct at %d\n", nr_struct.id);
+    FST_INFO("getNumberRegister comment nr_struct at %s\n", nr_struct.comment);
+    FST_INFO("getNumberRegister value nr_struct at %f\n", nr_struct.value);
 
     nr_interface.has_value = true;
     nr_interface.value = nr_struct.value;

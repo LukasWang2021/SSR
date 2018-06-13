@@ -428,6 +428,58 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 	return iCount;
 }
 
+
+int set_global_TF(int iLineNum, int iTFNum, struct thread_control_block* objThreadCntrolBlock)
+{
+    Instruction instr;
+	instr.type = SET_TF ;
+#ifdef USE_XPATH
+	if(iLineNum <= g_vecXPath.size())
+		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	else
+		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+#else
+	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	instr.line = iLineNum;
+	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+#endif
+	instr.current_tf = iTFNum ;
+	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
+	printf("set_global_TF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	while(bRet == false)
+	{
+		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	}
+    return 1;
+}
+
+int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThreadCntrolBlock)
+{
+    Instruction instr;
+	instr.type = SET_UF ;
+#ifdef USE_XPATH
+	if(iLineNum <= g_vecXPath.size())
+		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	else
+		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+#else
+	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	instr.line = iLineNum;
+	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+#endif
+	instr.current_uf = iUFNum ;
+	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
+	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	while(bRet == false)
+	{
+		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	}
+    return 1;
+}
+
+
 // MovJ P[1] P[1] 30% Fine +¸½¼Ó²ÎÊý
 int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
@@ -438,7 +490,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	char commandParam[1024];
     Instruction instr;
     char * commandParamPtr = commandParam;
-	
+	instr.type = MOTION ;
 	instr.target.type = MOTION_JOINT;
 #ifdef USE_XPATH
 	if(iLineNum <= g_vecXPath.size())
@@ -518,7 +570,8 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	get_token(objThreadCntrolBlock);
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-    instr.target.vel        = value.getFloatValue();
+	// Divide 100 as percent.
+    instr.target.vel        = value.getFloatValue() / 100;
 	
 	get_token(objThreadCntrolBlock);
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
@@ -585,7 +638,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	char commandParam[1024];
     Instruction instr;
     char * commandParamptr = commandParam;
-	
+	instr.type = MOTION ;
 	instr.target.type = MOTION_LINE;
 #ifdef USE_XPATH
 	if(iLineNum <= g_vecXPath.size())
@@ -633,10 +686,14 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		
 		get_exp(objThreadCntrolBlock, &value, &boolValue);
 		instr.target.pose_target.orientation.c = value.getFloatValue();
+
+		instr.current_tf = instr.current_uf = -1 ;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
 		instr.target.pose_target = value.getPoseValue();
+		instr.current_tf = value.getTFIndex();
+		instr.current_uf = value.getUFIndex();
 		
 	    printf("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
 			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
@@ -740,7 +797,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	char commandParam[1024];
     Instruction instr;
     char * commandParamptr = commandParam;
-		
+	instr.type = MOTION ;
 	instr.target.type = MOTION_CIRCLE;
 #ifdef USE_XPATH
 	if(iLineNum <= g_vecXPath.size())

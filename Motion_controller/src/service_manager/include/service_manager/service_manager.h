@@ -27,6 +27,7 @@ enum ChannelStatus
     MCS_CHANNEL = 2,
     PARAM_CHANNEL = 3,
     TEST_CHANNEL = 4,
+    TP_HEARTBEAT_CHANNEL = 5,
 };
 
 class ServiceManager
@@ -300,6 +301,7 @@ private:
     // Used to communicate with other processes.
     fst_comm_interface::CommInterface comm_mcs_;
     fst_comm_interface::CommInterface comm_param_;
+    fst_comm_interface::CommInterface comm_tp_heartbeat_;
     fst_comm_interface::CommInterface comm_test_;
 
     // The heartbeat request to BARE CORE.

@@ -116,7 +116,7 @@ void Controller::setError(void* params, int len)
 }
 void Controller::getError(void* params)
 {
-    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);    
+    //tp_interface_->setReply(BaseTypes_StatusCode_FAILED, id);
 }
 
 void Controller::updateDefault(int id)
@@ -1074,6 +1074,7 @@ void Controller::getIOInfo(void* params)
 {
     motion_spec_DeviceList dev_list;
     IOInterface::instance()->getIODevices(dev_list);
+	// getIODevInfo();
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
@@ -1521,19 +1522,36 @@ void Controller::stateMachine(void* params)
 	        {
 	            printf("get instruction, line:%d\n", inst.line);
 #endif		
-	            result = auto_motion_->moveTarget(inst.target);
-				if(result != SUCCESS)
-        		{
-	                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
-        			rcs::Error::instance()->add(result);
-					setLogicStateCmd(EMERGENCY_STOP_E);
-					
-					InterpreterControl ctrl;
-					ctrl.cmd = ABORT;
-					ShareMem::instance()->intprtControl(ctrl);
-	        	}
-				else{
-					calcMotionDst(inst.target);
+				if(inst.type == MOTION)
+				{
+		            result = auto_motion_->moveTarget(inst.target);
+					if(result != SUCCESS)
+	        		{
+		                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+	        			rcs::Error::instance()->add(result);
+						setLogicStateCmd(EMERGENCY_STOP_E);
+						
+						InterpreterControl ctrl;
+						ctrl.cmd = ABORT;
+						ShareMem::instance()->intprtControl(ctrl);
+		        	}
+					else{
+						calcMotionDst(inst.target);
+					}
+				}
+				else if(inst.type == SET_UF)
+				{
+		            printf("NOTICE: SET_UF to %d.\n", inst.current_uf);
+	                int iOldUserFrame = user_frame_manager_->getActivatedFrame();
+					if(iOldUserFrame != inst.current_uf)
+	                   user_frame_manager_->activateFrame(inst.current_uf);
+				}
+				else if(inst.type == SET_TF)
+				{
+		            printf("NOTICE: SET_TF to %d.\n", inst.current_uf);
+	                int iOldToolFrame = tool_frame_manager_->getActivatedFrame();
+					if(iOldToolFrame != inst.current_tf)
+	                   tool_frame_manager_->activateFrame(inst.current_tf);
 				}
 	        }
         }
@@ -1594,12 +1612,12 @@ void Controller::rtTrajFlow(void* params)
     U64 result = ShareMem::instance()->setJointPositions();
     if (result != TPI_SUCCESS)
     {
-        int iCtrlState = ctrl_state_;
-        int iWorkStatus = work_status_;
+//        int iCtrlState = ctrl_state_;
+//        int iWorkStatus = work_status_;
 
-        FST_INFO(
-			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
-            iCtrlState, iWorkStatus);
+//        FST_INFO(
+//			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
+//            iCtrlState, iWorkStatus);
 		
         rcs::Error::instance()->add(result);
         return;// NULL;
@@ -1696,7 +1714,7 @@ void Controller::rtTrajFlow(void* params)
 void Controller::heartBeat(void* params)
 {
     IOInterface::instance()->updateIOError(); 
-    //ServiceHeartbeat::instance()->sendRequest();
+    ServiceHeartbeat::instance()->sendRequest();
     U64 result = safety_interface_.setSafetyHeartBeat();
     if (result != TPI_SUCCESS)
     {
@@ -1805,7 +1823,7 @@ void Controller::requestProc()
                     FST_ERROR("SET:: not exist id :%d with %s\n", id, str_path.c_str()); 
                 }
             }
-            tp_interface_->setReply(BaseTypes_StatusCode_OK);
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, id);
             break;
         }
         case GET:
@@ -2042,7 +2060,7 @@ void Controller::parseCmdMsg()
 		case BaseTypes_CommandType_LIST:
 		{
 			FST_INFO("list...\n");
-            tp_interface_->setReply(LIST);
+            tp_interface_->setReply(LIST, tp_interface_->getReqDataPtr()->getID());
 			break;
 		}			
         case BaseTypes_CommandType_ADD:
@@ -2062,7 +2080,7 @@ void Controller::parseCmdMsg()
             string str_path = (const char*)tp_interface_->getReqDataPtr()->getPathBufPtr();
 			removePubParameter(str_path);
             //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
-            tp_interface_->setReply(BaseTypes_StatusCode_OK);
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, tp_interface_->getReqDataPtr()->getID());
             
             break;
 		} 
@@ -2071,7 +2089,7 @@ void Controller::parseCmdMsg()
             FST_INFO("remove all...");
             removeAllPubParams();
             //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
-            tp_interface_->setReply(BaseTypes_StatusCode_OK);
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, tp_interface_->getReqDataPtr()->getID());
             break;
         } 
         default:
@@ -2079,7 +2097,7 @@ void Controller::parseCmdMsg()
             FST_ERROR("ERROR command:%d", cmd_param.cmd);
             rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
             //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_FAILED;
-            tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
+            tp_interface_->setReply(BaseTypes_StatusCode_FAILED, tp_interface_->getReqDataPtr()->getID());
             break;
         }
 	}//end switch (cmd_param.cmd)
@@ -3026,16 +3044,31 @@ void Controller::setPoseRegister(void* params, int len)
     pr_struct.id = pr_interface.id;
     memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
 
-    memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
     pr_struct.value.pos_type = pr_interface.type;
-    memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(pr_interface.joint));
+    if (POS_TYPE_CARTESIAN == pr_interface.type)
+    {
+        memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
+        memset(&pr_struct.value.joint_pos, 0, sizeof(double) * 6);
+    }
+    else if (POS_TYPE_JOINT == pr_interface.type)
+    {
+        memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(double) * 6);
+        memset(&pr_struct.value.cartesian_pos, 0, sizeof(pr_struct.value.cartesian_pos));
+    }
+    else
+    {
+        FST_ERROR("Controller : Value Tye Error from TP");
+        rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+        return;
+    }
 
     RegMap set_reg;
     set_reg.index = pr_struct.id;
     set_reg.type = POSE_REG;
     memcpy(set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
-    printf("PrRegData: id = %d, comment = %s", pr_struct.id, pr_struct.comment);
+    FST_INFO("PrRegData: id = %d, comment = %s, type = %d, type1 = %d",
+        pr_struct.id, pr_struct.comment, pr_interface.type, pr_struct.value.pos_type);
 
     int reg_size = sizeof(set_reg);
     setRegister(&set_reg, reg_size);
@@ -3075,8 +3108,8 @@ void Controller::getPoseRegister(void* params)
     pr_interface.type = pr_struct.value.pos_type;
     pr_interface.id = pr_struct.id;
 
-    printf("PrRegData: id = %d, comment = %s\n", pr_struct.id, pr_struct.comment);
-    printf("pr_struct: id = (%f, %f, %f, %f, %f, %f) \n", 
+    FST_INFO("PrRegData: id = %d, comment = %s\n", pr_struct.id, pr_struct.comment);
+    FST_INFO("pr_struct: id = (%f, %f, %f, %f, %f, %f) \n", 
         pr_struct.value.joint_pos[0], pr_struct.value.joint_pos[1], 
         pr_struct.value.joint_pos[2], pr_struct.value.joint_pos[3], 
         pr_struct.value.joint_pos[4], pr_struct.value.joint_pos[5]);
@@ -3158,9 +3191,9 @@ void Controller::getNumberRegister(void* params)
 
     memcpy(&nr_struct, &get_reg.value, sizeof(nr_struct));
 
-    printf("getNumberRegister id nr_struct at %d\n", nr_struct.id);
-    printf("getNumberRegister comment nr_struct at %s\n", nr_struct.comment);
-    printf("getNumberRegister value nr_struct at %f\n", nr_struct.value);
+    FST_INFO("getNumberRegister id nr_struct at %d\n", nr_struct.id);
+    FST_INFO("getNumberRegister comment nr_struct at %s\n", nr_struct.comment);
+    FST_INFO("getNumberRegister value nr_struct at %f\n", nr_struct.value);
 
     nr_interface.has_value = true;
     nr_interface.value = nr_struct.value;

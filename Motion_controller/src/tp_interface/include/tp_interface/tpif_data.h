@@ -26,6 +26,7 @@ typedef enum _TPRepType
     STATUS, 
     PARAM,
     LIST,
+    DEFAULT,
 }TPRepType;
 
 

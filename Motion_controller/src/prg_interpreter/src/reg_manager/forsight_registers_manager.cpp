@@ -88,11 +88,27 @@ int forgesight_registers_manager_get_register(
 	int  iRegIdx = 0 ;
 	char * namePtr = name ;
 	char *temp = NULL ;
-	char reg_content_buffer[512] ;
+	// char reg_content_buffer[512] ;
 	
-	memset(reg_member, 0x00, 16);
-	memset(reg_content_buffer, 0x00, 512);
+	PrRegData objPrRegData ;
+	SrRegData objSrRegData ;
+	MrRegData objMrRegData ;
+	RRegData objRRegData ;
 
+    int       iID ;
+    char      cComment[MAX_REG_COMMENT_LENGTH];
+
+	PoseEuler objPoseEuler ;
+    Joint     objJoint;
+    int       iType ;
+    
+    char      cSrValue[1024];
+    double    dRValue;
+    int       iMrValue;
+	
+    int       iPlFlag ;
+	pl_t      pltValue ;
+	
 	memset(reg_name, 0x00, 16);
 	temp = reg_name ;
 	get_char_token(namePtr, temp);
@@ -123,7 +139,7 @@ int forgesight_registers_manager_get_register(
 		temp = reg_member ;
 		get_char_token(namePtr, temp);
 	}
-	memset(reg_content_buffer, 0x00, sizeof(reg_content_buffer));
+	// memset(reg_content_buffer, 0x00, sizeof(reg_content_buffer));
 
 	printf("forgesight_registers_manager_get_register at %s \n", reg_name);
 
@@ -131,116 +147,118 @@ int forgesight_registers_manager_get_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_getPr(
-				(void *)reg_content_buffer, iRegIdx);
-			PrRegData * ptr = (PrRegData *)reg_content_buffer ;
-			value->setPrRegDataValue(ptr);
+			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			// PrRegData * ptr = (PrRegData *)reg_content_buffer ;
+			value->setPrRegDataValue(&objPrRegData);
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
-			reg_manager_interface_getPosePr(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(ptr);
+			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			// PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(&objPoseEuler);
 		}
 		else if (!strcmp(reg_member, TXT_PL_JOINT))
 		{
-			reg_manager_interface_getJointPr(reg_content_buffer, iRegIdx);
-			Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setJointValue(ptr);
+			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			// Joint * ptr = (Joint *)reg_content_buffer ;
+			value->setJointValue(&objJoint);
 		}
 		else if (!strcmp(reg_member, TXT_REG_TYPE))
 		{
-			reg_manager_interface_getTypePr(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getTypePr(&iType, iRegIdx);
+			value->setFloatValue(iType);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdPr(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getIdPr(&iID, iRegIdx);
+			value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentPr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getCommentPr(cComment, iRegIdx);
+			value->setStringValue(cComment);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_SR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_getSr(reg_content_buffer, iRegIdx);
-			SrRegData * ptr = (SrRegData *)reg_content_buffer ;
+			printf("TXT_SR at (%d), (%s), (%s) \n", 
+				objSrRegData.id, objSrRegData.comment, objSrRegData.value.c_str());
+			reg_manager_interface_getSr(&objSrRegData, iRegIdx);
+			// SrRegData * ptr = (SrRegData *)reg_content_buffer ;
 			// value->setStringValue(ptr->value.c_str());
-			value->setSrRegDataValue(ptr);
+			value->setSrRegDataValue(&objSrRegData);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			reg_manager_interface_getValueSr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getValueSr(cSrValue, iRegIdx);
+			value->setStringValue(cSrValue);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdSr(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getIdSr(&iID, iRegIdx);
+			value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentSr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getCommentSr(cComment, iRegIdx);
+			value->setStringValue(cComment);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_R))
 	{
-	
 	    printf("forgesight_registers_manager_get_register at TXT_R \n");
 		if(strlen(reg_member) == 0)
 		{
 	        printf("reg_manager_interface_getR at TXT_R \n");
             // Use TXT_REG_VALUE
-			reg_manager_interface_getR(reg_content_buffer, iRegIdx);
-			RRegData * ptr = (RRegData *)reg_content_buffer ;
+			reg_manager_interface_getR(&objRRegData, iRegIdx);
+			// RRegData * ptr = (RRegData *)reg_content_buffer ;
 			// value->setFloatValue(ptr->value);
-			value->setRRegDataValue(ptr);
+			value->setRRegDataValue(&objRRegData);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			reg_manager_interface_getValueR(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atof(reg_content_buffer));
+			reg_manager_interface_getValueR(&dRValue, iRegIdx);
+			value->setFloatValue(dRValue);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdR(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getIdR(&iID, iRegIdx);
+			value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentR(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getCommentR(cComment, iRegIdx);
+			value->setStringValue(cComment);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_MR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_getMr(reg_content_buffer, iRegIdx);
-			MrRegData * ptr = (MrRegData *)reg_content_buffer ;
+			reg_manager_interface_getMr(&objMrRegData, iRegIdx);
+			// MrRegData * ptr = (MrRegData *)reg_content_buffer ;
+	    	printf("Get at TXT_MR with %d (%s) %d \n", 
+	    			objMrRegData.id, objMrRegData.comment, objMrRegData.value);
 			// value->setFloatValue(ptr->value);
-			value->setMrRegDataValue(ptr);
+			value->setMrRegDataValue(&objMrRegData);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			reg_manager_interface_getValueMr(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getValueMr(&iMrValue, iRegIdx);
+			value->setFloatValue(iMrValue);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdMr(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getIdMr(&iID, iRegIdx);
+			value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentMr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getCommentMr(cComment, iRegIdx);
+			value->setStringValue(cComment);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_UF))
@@ -255,19 +273,19 @@ int forgesight_registers_manager_get_register(
 //		else 
 		if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
-			reg_manager_interface_getCoordinateUf(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(ptr);
+			reg_manager_interface_getCoordinateUf(&objPoseEuler, iRegIdx);
+			// PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(&objPoseEuler);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdUf(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getIdUf(&iID, iRegIdx);
+			value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentUf(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getCommentUf(cComment, iRegIdx);
+			value->setStringValue(cComment);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_TF))
@@ -281,19 +299,19 @@ int forgesight_registers_manager_get_register(
 //		else 
 		if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
-			reg_manager_interface_getCoordinateTf(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(ptr);
+			reg_manager_interface_getCoordinateTf(&objPoseEuler, iRegIdx);
+			// PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(&objPoseEuler);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdTf(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getIdTf(&iID, iRegIdx);
+			value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentTf(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getCommentTf(cComment, iRegIdx);
+			value->setStringValue(cComment);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_PL))
@@ -308,9 +326,9 @@ int forgesight_registers_manager_get_register(
 //		else 
 		if (!strcmp(reg_member, TXT_PL_POSE))
 		{
-			reg_manager_interface_getPalletPl(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(ptr);
+			reg_manager_interface_getPalletPl(&pltValue, iRegIdx);
+			// PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			value->setPoseValue(&objPoseEuler);
 		}
 //		else if (!strcmp(reg_member, TXT_PL_PALLET))
 //		{
@@ -320,18 +338,18 @@ int forgesight_registers_manager_get_register(
 //		}
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
-			reg_manager_interface_getFlagPl(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getFlagPl(&iPlFlag, iRegIdx);
+			value->setFloatValue(iPlFlag);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdPl(reg_content_buffer, iRegIdx);
-			value->setFloatValue(atoi(reg_content_buffer));
+			reg_manager_interface_getIdPl(&iID, iRegIdx);
+			value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentPl(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			reg_manager_interface_getCommentPl(cComment, iRegIdx);
+			value->setStringValue(cComment);
 		}
 	}
 	return 0 ;
@@ -353,6 +371,7 @@ int forgesight_registers_manager_set_register(
 	
 	PoseEuler pose ;
 	Joint joint ;
+	pl_t pltValue ;
 	
 	memset(reg_name, 0x00, 16);
 	temp = reg_name ;
@@ -382,7 +401,7 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setPr(valueStart, iRegIdx);
+			reg_manager_interface_setPr(&(valueStart->getPrRegDataValue()), iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
@@ -464,14 +483,14 @@ int forgesight_registers_manager_set_register(
 		}
 		else if (!strcmp(reg_member, TXT_REG_TYPE))
 		{
-			int iType = (int)atof((char *)valueStart);
+			int iType = (int)valueStart->getFloatValue();
 			printf("Set TYPE:(%d) to PR[%s]\n", iType, reg_idx);
 			reg_manager_interface_setTypePr(&iType, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			int iID = (int)atof((char *)valueStart);
+			int iID = (int)valueStart->getFloatValue();
 			printf("Set ID:(%d) to PR[%s]\n", iID, reg_idx);
 			reg_manager_interface_setIdPr(&iID, iRegIdx);
 	       	return 0 ;
@@ -489,7 +508,20 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setSr(valueStart, iRegIdx);
+			char cStringValue[512];
+			valueStart->getStringValue(cStringValue) ;
+			if(valueStart->getType() == TYPE_STRING)
+			{
+				printf("Set TYPE_STRING token:(%s) to %s\n", 
+						objThreadCntrolBlock->token, cStringValue);
+			   reg_manager_interface_setValueSr(cStringValue, iRegIdx);
+			}
+			else if(valueStart->getType() == TYPE_STRING | TYPE_SR)
+			{
+				printf("Set TYPE_SR token:(%s) to %s\n", 
+						objThreadCntrolBlock->token, cStringValue);
+				reg_manager_interface_setSr(&(valueStart->getSrRegDataValue()), iRegIdx);
+			}
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
@@ -502,9 +534,9 @@ int forgesight_registers_manager_set_register(
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			int iID = (int)atof((char *)valueStart);
+			int iID = (int)valueStart->getFloatValue();
 			printf("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
-			reg_manager_interface_setIdSr(valueStart, iRegIdx);
+			reg_manager_interface_setIdSr(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -512,7 +544,7 @@ int forgesight_registers_manager_set_register(
 			get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to SR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentSr(valueStart, iRegIdx);
+			reg_manager_interface_setCommentSr(objThreadCntrolBlock->token, iRegIdx);
 	       	return 0 ;
 		}
 	}
@@ -520,21 +552,34 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setR(&(valueStart->getRRegDataValue()), iRegIdx);
+			if(valueStart->getType() == TYPE_FLOAT)
+			{    
+				double fValue = valueStart->getFloatValue();
+			    reg_manager_interface_setValueR(&fValue, iRegIdx);
+			}
+			else if(valueStart->getType() == TYPE_FLOAT | TYPE_MR)
+			{    
+				double dValue = valueStart->getFloatValue();
+			    reg_manager_interface_setValueR(&dValue, iRegIdx);
+			}
+			else if(valueStart->getType() == TYPE_FLOAT | TYPE_R)
+			{    
+				reg_manager_interface_setR(&(valueStart->getRRegDataValue()), iRegIdx);
+			}
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			float fValue = atof((char *)valueStart);
+			double fValue = valueStart->getFloatValue();
 			printf("Set VALUE:(%f) to SR[%s]\n", fValue, reg_idx);
-			reg_manager_interface_setValueR(valueStart, iRegIdx);
+			reg_manager_interface_setValueR(&fValue, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			int iID = (int)atof((char *)valueStart);
+			int iID = (int)valueStart->getFloatValue();
 			printf("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
-			reg_manager_interface_setIdR(valueStart, iRegIdx);
+			reg_manager_interface_setIdR(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -542,7 +587,7 @@ int forgesight_registers_manager_set_register(
 			get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to SR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentR(valueStart, iRegIdx);
+			reg_manager_interface_setCommentR(objThreadCntrolBlock->token, iRegIdx);
 	       	return 0 ;
 		}
 	}
@@ -550,21 +595,34 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setMr(valueStart, iRegIdx);
+			if(valueStart->getType() == TYPE_FLOAT)
+			{    
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMr(&iValue, iRegIdx);
+			}
+			else if(valueStart->getType() == TYPE_FLOAT | TYPE_R)
+			{    
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMr(&iValue, iRegIdx);
+			}
+			else if(valueStart->getType() == TYPE_FLOAT | TYPE_MR)
+			{    
+				reg_manager_interface_setMr(&(valueStart->getMrRegDataValue()), iRegIdx);
+			}
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			int iValue = atof((char *)valueStart);
+			int iValue = (int)valueStart->getFloatValue();
 			printf("Set VALUE:(%f) to MR[%s]\n", iValue, reg_idx);
-			reg_manager_interface_setValueMr(valueStart, iRegIdx);
+			reg_manager_interface_setValueMr(&iValue, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			int iID = (int)atof((char *)valueStart);
+			int iID = (int)valueStart->getFloatValue();
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
-			reg_manager_interface_setIdMr(valueStart, iRegIdx);
+			reg_manager_interface_setIdMr(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -572,7 +630,7 @@ int forgesight_registers_manager_set_register(
 			get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentMr(valueStart, iRegIdx);
+			reg_manager_interface_setCommentMr(objThreadCntrolBlock->token, iRegIdx);
 	       	return 0 ;
 		}
 	}
@@ -580,14 +638,15 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setUf(valueStart, iRegIdx);
+			// reg_manager_interface_setUf(valueStart->getUFRegValue(), iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
 			if (valueStart->getType() == TYPE_FLOAT)
 			{
-				pose.position.x = (double)(atof((char *)valueStart));
+				// pose.position.x = (double)(atof((char *)valueStart));
+				pose.position.x = (double)value.getFloatValue();
 				
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.position.y = (double)value.getFloatValue();
@@ -624,9 +683,9 @@ int forgesight_registers_manager_set_register(
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			int iID = (int)atof((char *)valueStart);
+			int iID = (int)value.getFloatValue();
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
-			reg_manager_interface_setIdUf(valueStart, iRegIdx);
+			reg_manager_interface_setIdUf(&iID, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -634,7 +693,7 @@ int forgesight_registers_manager_set_register(
 			get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentUf(valueStart, iRegIdx);
+			reg_manager_interface_setCommentUf(objThreadCntrolBlock->token, iRegIdx);
 	        return 0 ;
 		}
 	}
@@ -642,14 +701,15 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setTf(valueStart, iRegIdx);
+			// reg_manager_interface_setTf(valueStart->getTFRegValue(), iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
 			if (valueStart->getType() == TYPE_FLOAT)
 			{
-				pose.position.x = (double)(atof((char *)valueStart));
+				// pose.position.x = (double)(atof((char *)valueStart));
+				pose.position.x = (double)value.getFloatValue();
 				
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.position.y = (double)value.getFloatValue();
@@ -686,9 +746,9 @@ int forgesight_registers_manager_set_register(
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			int iID = (int)atof((char *)valueStart);
+			int iID = (int)value.getFloatValue();
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
-			reg_manager_interface_setIdTf(valueStart, iRegIdx);
+			reg_manager_interface_setIdTf(&iID, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -696,7 +756,7 @@ int forgesight_registers_manager_set_register(
 			get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentTf(valueStart, iRegIdx);
+			reg_manager_interface_setCommentTf(objThreadCntrolBlock->token, iRegIdx);
 	        return 0 ;
 		}
 	}
@@ -704,14 +764,15 @@ int forgesight_registers_manager_set_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_setPl(valueStart, iRegIdx);
+			// reg_manager_interface_setPl(valueStart->getPLRegValue(), iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
 			if (valueStart->getType() == TYPE_FLOAT)
 			{
-				pose.position.x = (double)(atof((char *)valueStart));
+				// pose.position.x = (double)(atof((char *)valueStart));
+				pose.position.x = (double)value.getFloatValue();
 				
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.position.y = (double)value.getFloatValue();
@@ -732,7 +793,7 @@ int forgesight_registers_manager_set_register(
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
-				reg_manager_interface_setPosePl(pose, iRegIdx);
+				reg_manager_interface_setPosePl(&pose, iRegIdx);
 	        	return 0 ;
 			}
 			else if (valueStart->getType() == TYPE_POSE)
@@ -742,27 +803,28 @@ int forgesight_registers_manager_set_register(
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
-				reg_manager_interface_setPosePl(pose, iRegIdx);
+				reg_manager_interface_setPosePl(&pose, iRegIdx);
 	        	return 0 ;
 			}
 		}
 		else if (!strcmp(reg_member, TXT_PL_PALLET))
 		{
-			reg_manager_interface_setPalletPl(valueStart, iRegIdx);
+			pltValue = valueStart->getPLValue();
+			reg_manager_interface_setPalletPl(&pltValue, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
-			int iID = (int)atof((char *)valueStart);
-			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
-			reg_manager_interface_setFlagPl(valueStart, iRegIdx);
+			int iFlagPl = (int)value.getFloatValue();
+			printf("Set ID:(%d) to MR[%s]\n", iFlagPl, reg_idx);
+			reg_manager_interface_setFlagPl(&iFlagPl, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			int iID = (int)atof((char *)valueStart);
+			int iID = (int)value.getFloatValue();
 			printf("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
-			reg_manager_interface_setIdPl(valueStart, iRegIdx);
+			reg_manager_interface_setIdPl(&iID, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -770,7 +832,7 @@ int forgesight_registers_manager_set_register(
 			get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentPl(valueStart, iRegIdx);
+			reg_manager_interface_setCommentPl(objThreadCntrolBlock->token, iRegIdx);
 	        return 0 ;
 		}
 	}
@@ -783,58 +845,58 @@ int forgesight_read_reg(RegMap & reg)
 	 {
 	 // pose register
 	 case POSE_REG:
-		 reg_manager_interface_getPr(reg.value, reg.index);
+		 reg_manager_interface_getPr((PrRegData *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_POSE:
-		 reg_manager_interface_getPosePr(reg.value, reg.index);
+		 reg_manager_interface_getPosePr((PoseEuler *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_JOINT:
-		 reg_manager_interface_getJointPr(reg.value, reg.index);
+		 reg_manager_interface_getJointPr((Joint *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_TYPE:
-		 reg_manager_interface_getTypePr(reg.value, reg.index);
+		 reg_manager_interface_getTypePr((int *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_ID:
-		 reg_manager_interface_getIdPr(reg.value, reg.index);
+		 reg_manager_interface_getIdPr((int *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_COMMENT:
 		 reg_manager_interface_getCommentPr(reg.value, reg.index);
 		 break;
 	 // string register
 	 case STR_REG:
-	     reg_manager_interface_getSr(reg.value, reg.index);
+	     reg_manager_interface_getSr((SrRegData *)reg.value, reg.index);
 	 	 break;
 	 case STR_REG_VALUE:
 	     reg_manager_interface_getValueSr(reg.value, reg.index);
 	 	 break;
 	 case STR_REG_ID:
-	     reg_manager_interface_getIdSr(reg.value, reg.index);
+	     reg_manager_interface_getIdSr((int *)reg.value, reg.index);
 	 	 break;
 	 case STR_REG_COMMENT:
 	    reg_manager_interface_getCommentSr(reg.value, reg.index);
 	 	break;
 	 // number register
 	 case NUM_REG:
-	    reg_manager_interface_getR(reg.value, reg.index);
+	    reg_manager_interface_getR((RRegData *)reg.value, reg.index);
 	 	break;
 	 case NUM_REG_VALUE:
-	    reg_manager_interface_getValueR(reg.value, reg.index);
+	    reg_manager_interface_getValueR((double *)reg.value, reg.index);
 	 	break;
 	 case NUM_REG_ID:
-	    reg_manager_interface_getIdR(reg.value, reg.index);
+	    reg_manager_interface_getIdR((int *)reg.value, reg.index);
 	 	break;
 	 case NUM_REG_COMMENT:
 	    reg_manager_interface_getCommentR(reg.value, reg.index);
 	 	break;
 	 // Special register for motion instruction
 	 case MOT_REG:
-	    reg_manager_interface_getMr(reg.value, reg.index);
+	    reg_manager_interface_getMr((MrRegData *)reg.value, reg.index);
 	 	break;
 	 case MOT_REG_VALUE:
-	    reg_manager_interface_getValueMr(reg.value, reg.index);
+	    reg_manager_interface_getValueMr((int *)reg.value, reg.index);
 	 	break;
 	 case MOT_REG_ID:
-	    reg_manager_interface_getIdMr(reg.value, reg.index);
+	    reg_manager_interface_getIdMr((int *)reg.value, reg.index);
 	 	break;
 	 case MOT_REG_COMMENT:
 	    reg_manager_interface_getCommentMr(reg.value, reg.index);
@@ -847,7 +909,7 @@ int forgesight_read_reg(RegMap & reg)
 	    reg_manager_interface_getCoordinateUf(reg.value, reg.index);
 	 	break;
 	 case UF_REG_ID:
-	    reg_manager_interface_getIdUf(reg.value, reg.index);
+	    reg_manager_interface_getIdUf((int *)reg.value, reg.index);
 	 	break;
 	 case UF_REG_COMMENT:
 	    reg_manager_interface_getCommentUf(reg.value, reg.index);
@@ -860,7 +922,7 @@ int forgesight_read_reg(RegMap & reg)
 	    reg_manager_interface_getCoordinateTf(reg.value, reg.index);
 	 	break;
 	 case TF_REG_ID:
-	    reg_manager_interface_getIdTf(reg.value, reg.index);
+	    reg_manager_interface_getIdTf((int *)reg.value, reg.index);
 	 	break;
 	 case TF_REG_COMMENT:
 	    reg_manager_interface_getCommentTf(reg.value, reg.index);
@@ -870,16 +932,16 @@ int forgesight_read_reg(RegMap & reg)
 	    reg_manager_interface_getPl(reg.value, reg.index);
 	 	break;
 	 case PL_REG_POSE:
-	    reg_manager_interface_getPosePl((PoseEuler &)(reg.value), reg.index);
+	    reg_manager_interface_getPosePl((PoseEuler *)(reg.value), reg.index);
 	 	break;
 	 case PL_REG_PALLET:
-	    reg_manager_interface_getPalletPl(reg.value, reg.index);
+	    reg_manager_interface_getPalletPl((pl_t *)(reg.value), reg.index);
 	 	break;
 	 case PL_REG_FLAG:
-	    reg_manager_interface_getFlagPl(reg.value, reg.index);
+	    reg_manager_interface_getFlagPl((int *)reg.value, reg.index);
 	 	break;
 	 case PL_REG_ID:
-	    reg_manager_interface_getIdPl(reg.value, reg.index);
+	    reg_manager_interface_getIdPl((int *)reg.value, reg.index);
 	 	break;
 	 case PL_REG_COMMENT:
 	    reg_manager_interface_getCommentPl(reg.value, reg.index);
@@ -902,58 +964,58 @@ int forgesight_mod_reg(RegMap & reg)
 	 {
 	 // pose register
 	 case POSE_REG:
-		 reg_manager_interface_setPr(reg.value, reg.index);
+		 reg_manager_interface_setPr((PrRegData *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_POSE:
-		 reg_manager_interface_setPosePr(reg.value, reg.index);
+		 reg_manager_interface_setPosePr((PoseEuler *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_JOINT:
-		 reg_manager_interface_setJointPr(reg.value, reg.index);
+		 reg_manager_interface_setJointPr((Joint *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_TYPE:
-		 reg_manager_interface_setTypePr(reg.value, reg.index);
+		 reg_manager_interface_setTypePr((int *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_ID:
-		 reg_manager_interface_setIdPr(reg.value, reg.index);
+		 reg_manager_interface_setIdPr((int *)reg.value, reg.index);
 		 break;
 	 case POSE_REG_COMMENT:
 		 reg_manager_interface_setCommentPr(reg.value, reg.index);
 		 break;
 	 // string register
 	 case STR_REG:
-	    reg_manager_interface_setSr(reg.value, reg.index);
+	    reg_manager_interface_setSr((SrRegData *)reg.value, reg.index);
 	 	break;
 	 case STR_REG_VALUE:
 	    reg_manager_interface_setValueSr(reg.value, reg.index);
 	 	break;
 	 case STR_REG_ID:
-	    reg_manager_interface_setIdSr(reg.value, reg.index);
+	    reg_manager_interface_setIdSr((int *)reg.value, reg.index);
 	 	break;
 	 case STR_REG_COMMENT:
 	    reg_manager_interface_setCommentSr(reg.value, reg.index);
 	 	break;
 	 // number register
 	 case NUM_REG:
-	    reg_manager_interface_setR(reg.value, reg.index);
+	    reg_manager_interface_setR((RRegData *)reg.value, reg.index);
 	 	break;
 	 case NUM_REG_VALUE:
-	    reg_manager_interface_setValueR(reg.value, reg.index);
+	    reg_manager_interface_setValueR((double *)reg.value, reg.index);
 	 	break;
 	 case NUM_REG_ID:
-	    reg_manager_interface_setIdR(reg.value, reg.index);
+	    reg_manager_interface_setIdR((int *)reg.value, reg.index);
 	 	break;
 	 case NUM_REG_COMMENT:
 	    reg_manager_interface_setCommentR(reg.value, reg.index);
 	 	break;
 	 // Special register for motion instruction
 	 case MOT_REG:
-	    reg_manager_interface_setMr(reg.value, reg.index);
+	    reg_manager_interface_setMr((MrRegData *)reg.value, reg.index);
 	 	break;
 	 case MOT_REG_VALUE:
-	    reg_manager_interface_setValueMr(reg.value, reg.index);
+	    reg_manager_interface_setValueMr((int *)(reg.value), reg.index);
 	 	break;
 	 case MOT_REG_ID:
-	    reg_manager_interface_setIdMr(reg.value, reg.index);
+	    reg_manager_interface_setIdMr((int *)(reg.value), reg.index);
 	 	break;
 	 case MOT_REG_COMMENT:
 	    reg_manager_interface_setCommentMr(reg.value, reg.index);
@@ -966,7 +1028,7 @@ int forgesight_mod_reg(RegMap & reg)
 	    reg_manager_interface_setCoordinateUf(reg.value, reg.index);
 	 	break;
 	 case UF_REG_ID:
-	    reg_manager_interface_setIdUf(reg.value, reg.index);
+	    reg_manager_interface_setIdUf((int *)reg.value, reg.index);
 	 	break;
 	 case UF_REG_COMMENT:
 	    reg_manager_interface_setCommentUf(reg.value, reg.index);
@@ -979,7 +1041,7 @@ int forgesight_mod_reg(RegMap & reg)
 	    reg_manager_interface_setCoordinateTf(reg.value, reg.index);
 	 	break;
 	 case TF_REG_ID:
-	    reg_manager_interface_setIdTf(reg.value, reg.index);
+	    reg_manager_interface_setIdTf((int *)reg.value, reg.index);
 	 	break;
 	 case TF_REG_COMMENT:
 	    reg_manager_interface_setCommentTf(reg.value, reg.index);
@@ -992,13 +1054,13 @@ int forgesight_mod_reg(RegMap & reg)
 	    // reg_manager_interface_setPosePl(reg.value, reg.index);
 	 	break;
 	 case PL_REG_PALLET:
-	    reg_manager_interface_setPalletPl(reg.value, reg.index);
+	    reg_manager_interface_setPalletPl((pl_t *)reg.value, reg.index);
 	 	break;
 	 case PL_REG_FLAG:
-	    reg_manager_interface_setFlagPl(reg.value, reg.index);
+	    reg_manager_interface_setFlagPl((int *)reg.value, reg.index);
 	 	break;
 	 case PL_REG_ID:
-	    reg_manager_interface_setIdPl(reg.value, reg.index);
+	    reg_manager_interface_setIdPl((int *)reg.value, reg.index);
 	 	break;
 	 case PL_REG_COMMENT:
 	    reg_manager_interface_setCommentPl(reg.value, reg.index);

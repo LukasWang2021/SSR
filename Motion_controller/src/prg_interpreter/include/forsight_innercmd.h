@@ -16,4 +16,9 @@ void generateXPathVector(char * fname);
 int getLineNumFromXPathVector(char * xPath);
 int getMaxLineNum();
 
+int set_global_TF(int iLineNum, int iTFNum, struct thread_control_block* objThreadCntrolBlock);
+int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThreadCntrolBlock);
+
+
+
 #endif

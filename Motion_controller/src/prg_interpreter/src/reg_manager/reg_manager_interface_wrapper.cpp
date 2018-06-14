@@ -81,7 +81,7 @@ void load_register_data()
 	g_objRegManagerInterface = new RegManagerInterface("/root/install/share/configuration/machine");
 }
 
-bool reg_manager_interface_getPr(void *ptr, uint16_t num)
+bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
@@ -89,8 +89,8 @@ bool reg_manager_interface_getPr(void *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getPrReg(num, ptr);
 		PrRegData* data_ptr = ptr ;
 		
-		printf("data_ptr: id = %d, comment = %s\n", data_ptr->id, data_ptr->comment);
-		printf("data_ptr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		printf("getPr: id = %d, comment = %s\n", data_ptr->id, data_ptr->comment);
+		printf("getPr: id = (%f, %f, %f, %f, %f, %f) \n", 
 			data_ptr->value.joint_pos[0], data_ptr->value.joint_pos[1], 
 			data_ptr->value.joint_pos[2], data_ptr->value.joint_pos[3], 
 			data_ptr->value.joint_pos[4], data_ptr->value.joint_pos[5]);
@@ -102,15 +102,15 @@ bool reg_manager_interface_getPr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setPr(void *ptr, uint16_t num)
+bool reg_manager_interface_setPr(PrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
 		memcpy(&objPrRegData, ptr, sizeof(PrRegData));
-		printf("PrRegData: id = %d, comment = %s\n", objPrRegData.id, objPrRegData.comment);
-		printf("PrRegData: id = (%f, %f, %f, %f, %f, %f) \n", 
+		printf("setPr: id = %d, comment = %s\n", objPrRegData.id, objPrRegData.comment);
+		printf("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
 			objPrRegData.value.joint_pos[0], objPrRegData.value.joint_pos[1], 
 			objPrRegData.value.joint_pos[2], objPrRegData.value.joint_pos[3], 
 			objPrRegData.value.joint_pos[4], objPrRegData.value.joint_pos[5]);
@@ -132,14 +132,12 @@ bool reg_manager_interface_setPr(void *ptr, uint16_t num)
 /*
  * The operated object is an individual member of PR.
  */
-bool reg_manager_interface_getPosePr(void *ptr, uint16_t num)
+bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
@@ -154,14 +152,12 @@ bool reg_manager_interface_getPosePr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setPosePr(void *ptr, uint16_t num)
+bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
@@ -177,14 +173,12 @@ bool reg_manager_interface_setPosePr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getJointPr(void *ptr, uint16_t num)
+bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
@@ -199,14 +193,12 @@ bool reg_manager_interface_getJointPr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setJointPr(void *ptr, uint16_t num)
+bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
@@ -222,19 +214,16 @@ bool reg_manager_interface_setJointPr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getTypePr(void *ptr, uint16_t num)
+bool reg_manager_interface_getTypePr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
-		   memcpy(ptr, &(objPrRegData.value.pos_type), 
-		   	      sizeof(objPrRegData.value.pos_type));
+		   *ptr = objPrRegData.value.pos_type;
 		}
 	}
 	else
@@ -244,19 +233,16 @@ bool reg_manager_interface_getTypePr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setTypePr(void *ptr, uint16_t num)
+bool reg_manager_interface_setTypePr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
-		    memcpy(&(objPrRegData.value.pos_type), ptr, 
-				sizeof(objPrRegData.value.pos_type));
+		    objPrRegData.value.pos_type = *ptr;
 			reg_manager_interface_setPr(&objPrRegData, num);
 		}
 	}
@@ -267,18 +253,16 @@ bool reg_manager_interface_setTypePr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getIdPr(void *ptr, uint16_t num)
+bool reg_manager_interface_getIdPr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
-		   memcpy(ptr, &(objPrRegData.id), sizeof(objPrRegData.id));
+		   *ptr = objPrRegData.id;
 		}
 	}
 	else
@@ -288,18 +272,16 @@ bool reg_manager_interface_getIdPr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setIdPr(void *ptr, uint16_t num)
+bool reg_manager_interface_setIdPr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
-		    memcpy(&(objPrRegData.id), ptr, sizeof(objPrRegData.id));
+		    objPrRegData.id = *ptr;
 			reg_manager_interface_setPr(&objPrRegData, num);
 		}
 	}
@@ -310,14 +292,12 @@ bool reg_manager_interface_setIdPr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getCommentPr(void *ptr, uint16_t num)
+bool reg_manager_interface_getCommentPr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
@@ -331,14 +311,12 @@ bool reg_manager_interface_getCommentPr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setCommentPr(void *ptr, uint16_t num)
+bool reg_manager_interface_setCommentPr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		PrRegData objPrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegData);
 		if(bRet)
 		{
@@ -358,14 +336,14 @@ bool reg_manager_interface_setCommentPr(void *ptr, uint16_t num)
  ********* SR *********
  **********************/
 
-bool reg_manager_interface_getSr(void *ptr, uint16_t num)
+bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
-		
-		
+		printf("getSr[%d]\n", num);
 		bRet = g_objRegManagerInterface->getSrReg(num, ptr);
+		printf("getSr[%d]:(%s)\n", num, ptr->value.c_str());
 	}
 	else
 	{
@@ -374,15 +352,18 @@ bool reg_manager_interface_getSr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setSr(void *ptr, uint16_t num)
+bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		
 		SrRegData objSrRegData ;
-		memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
+		// memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
 		objSrRegData.id = num ;
+		memcpy(objSrRegData.comment, ptr->comment, MAX_REG_COMMENT_LENGTH);
+		objSrRegData.value = ptr->value ;
+		printf("setSr:(%s)\n", objSrRegData.value.c_str());
 		
 		bRet = g_objRegManagerInterface->setSrReg(&objSrRegData);
 		if(bRet == false)
@@ -397,14 +378,12 @@ bool reg_manager_interface_setSr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getValueSr(void *ptr, uint16_t num)
+bool reg_manager_interface_getValueSr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		SrRegData objSrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
 		if(bRet)
 		{
@@ -419,18 +398,62 @@ bool reg_manager_interface_getValueSr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setValueSr(void *ptr, uint16_t num)
+bool reg_manager_interface_setValueSr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		SrRegData objSrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
 		if(bRet)
 		{
 		    objSrRegData.value = string((char *)ptr);
+		}
+		else    // Not exist
+		{
+		    objSrRegData.id    = num ;
+            strcpy(objSrRegData.comment, "Empty");
+		    objSrRegData.value = string((char *)ptr);
+		}
+		printf("setValueSr:(%s)\n", objSrRegData.value.c_str());
+		reg_manager_interface_setSr(&objSrRegData, num);
+	}
+	else
+	{
+		printf("g_objRegManagerInterface is NULL\n");
+	}
+	return bRet ;
+}
+
+bool reg_manager_interface_getIdSr(int *ptr, uint16_t num)
+{
+	bool bRet = false ;
+	if(g_objRegManagerInterface)
+	{
+		SrRegData objSrRegData ;
+		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
+		if(bRet)
+		{
+		   *ptr = objSrRegData.id;
+		}
+	}
+	else
+	{
+		printf("g_objRegManagerInterface is NULL\n");
+	}
+	return bRet ;
+}
+
+bool reg_manager_interface_setIdSr(int *ptr, uint16_t num)
+{
+	bool bRet = false ;
+	if(g_objRegManagerInterface)
+	{
+		SrRegData objSrRegData ;
+		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
+		if(bRet)
+		{
+		    objSrRegData.id = *ptr;
 			reg_manager_interface_setSr(&objSrRegData, num);
 		}
 	}
@@ -441,57 +464,12 @@ bool reg_manager_interface_setValueSr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getIdSr(void *ptr, uint16_t num)
+bool reg_manager_interface_getCommentSr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		SrRegData objSrRegData ;
-		
-		
-		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
-		if(bRet)
-		{
-		   memcpy(ptr, &(objSrRegData.id), sizeof(objSrRegData.id));
-		}
-	}
-	else
-	{
-		printf("g_objRegManagerInterface is NULL\n");
-	}
-	return bRet ;
-}
-
-bool reg_manager_interface_setIdSr(void *ptr, uint16_t num)
-{
-	bool bRet = false ;
-	if(g_objRegManagerInterface)
-	{
-		SrRegData objSrRegData ;
-		
-		
-		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
-		if(bRet)
-		{
-		    memcpy(&(objSrRegData.id), ptr, sizeof(objSrRegData.id));
-			reg_manager_interface_setSr(&objSrRegData, num);
-		}
-	}
-	else
-	{
-		printf("g_objRegManagerInterface is NULL\n");
-	}
-	return bRet ;
-}
-
-bool reg_manager_interface_getCommentSr(void *ptr, uint16_t num)
-{
-	bool bRet = false ;
-	if(g_objRegManagerInterface)
-	{
-		SrRegData objSrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
 		if(bRet)
 		{
@@ -505,19 +483,17 @@ bool reg_manager_interface_getCommentSr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setCommentSr(void *ptr, uint16_t num)
+bool reg_manager_interface_setCommentSr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		SrRegData objSrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegData);
 		if(bRet)
 		{
 		    memcpy(objSrRegData.comment, ptr, sizeof(objSrRegData.comment));
-			reg_manager_interface_setPr(&objSrRegData, num);
+			reg_manager_interface_setSr(&objSrRegData, num);
 		}
 	}
 	else
@@ -530,7 +506,7 @@ bool reg_manager_interface_setCommentSr(void *ptr, uint16_t num)
 /**********************
  ********* R **********
  **********************/
-bool reg_manager_interface_getR(void *ptr, uint16_t num)
+bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
@@ -540,8 +516,8 @@ bool reg_manager_interface_getR(void *ptr, uint16_t num)
 		
 		RRegData* data_ptr = ptr ;
 		
-		printf("data_ptr: id = %d, comment = %s\n", data_ptr->id, data_ptr->comment);
-		printf("data_ptr: value = (%f) \n", data_ptr->value);
+		printf("getR: id = %d, comment = %s\n", data_ptr->id, data_ptr->comment);
+		printf("getR: value = (%f) \n", data_ptr->value);
 	}
 	else
 	{
@@ -550,7 +526,7 @@ bool reg_manager_interface_getR(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setR(void *ptr, uint16_t num)
+bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
@@ -577,19 +553,16 @@ bool reg_manager_interface_setR(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getValueR(void *ptr, uint16_t num)
+bool reg_manager_interface_getValueR(double *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		RRegData objRRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
 		if(bRet)
 		{
-		   memcpy(ptr, &(objRRegData.value), 
-		   	    sizeof(objRRegData.value));
+		   *ptr = objRRegData.value;
 		}
 	}
 	else
@@ -599,17 +572,61 @@ bool reg_manager_interface_getValueR(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setValueR(void *ptr, uint16_t num)
+bool reg_manager_interface_setValueR(double *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		RRegData objRRegData ;
-		
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
 		if(bRet)
 		{
-		    objRRegData.value = *(double *)ptr;
+		    objRRegData.value = *ptr;
+		}
+		else    // Not exist
+		{
+		    objRRegData.id    = num ;
+            strcpy(objRRegData.comment, "Empty");
+		    objRRegData.value = *ptr;
+		}
+		reg_manager_interface_setR(&objRRegData, num);
+	}
+	else
+	{
+		printf("g_objRegManagerInterface is NULL\n");
+	}
+	return bRet ;
+}
+
+bool reg_manager_interface_getIdR(int *ptr, uint16_t num)
+{
+	bool bRet = false ;
+	if(g_objRegManagerInterface)
+	{
+		RRegData objRRegData ;
+		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
+		if(bRet)
+		{
+		   *ptr = objRRegData.id;
+		}
+	}
+	else
+	{
+		printf("g_objRegManagerInterface is NULL\n");
+	}
+	return bRet ;
+}
+
+bool reg_manager_interface_setIdR(int *ptr, uint16_t num)
+{
+	bool bRet = false ;
+	if(g_objRegManagerInterface)
+	{
+		RRegData objRRegData ;
+		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
+		if(bRet)
+		{
+		    objRRegData.id = *ptr;
 			reg_manager_interface_setR(&objRRegData, num);
 		}
 	}
@@ -620,57 +637,12 @@ bool reg_manager_interface_setValueR(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getIdR(void *ptr, uint16_t num)
+bool reg_manager_interface_getCommentR(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		RRegData objRRegData ;
-		
-		
-		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
-		if(bRet)
-		{
-		   memcpy(ptr, &(objRRegData.id), sizeof(objRRegData.id));
-		}
-	}
-	else
-	{
-		printf("g_objRegManagerInterface is NULL\n");
-	}
-	return bRet ;
-}
-
-bool reg_manager_interface_setIdR(void *ptr, uint16_t num)
-{
-	bool bRet = false ;
-	if(g_objRegManagerInterface)
-	{
-		RRegData objRRegData ;
-		
-		
-		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
-		if(bRet)
-		{
-		    memcpy(&(objRRegData.id), ptr, sizeof(objRRegData.id));
-			reg_manager_interface_setR(&objRRegData, num);
-		}
-	}
-	else
-	{
-		printf("g_objRegManagerInterface is NULL\n");
-	}
-	return bRet ;
-}
-
-bool reg_manager_interface_getCommentR(void *ptr, uint16_t num)
-{
-	bool bRet = false ;
-	if(g_objRegManagerInterface)
-	{
-		RRegData objRRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
 		if(bRet)
 		{
@@ -684,14 +656,12 @@ bool reg_manager_interface_getCommentR(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setCommentR(void *ptr, uint16_t num)
+bool reg_manager_interface_setCommentR(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		RRegData objRRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegData);
 		if(bRet)
 		{
@@ -709,12 +679,11 @@ bool reg_manager_interface_setCommentR(void *ptr, uint16_t num)
 /**********************
  ********* MR *********
  **********************/
-bool reg_manager_interface_getMr(void *ptr, uint16_t num)
+bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
-		
 		bRet = g_objRegManagerInterface->getMrReg(num, ptr);
 	}
 	else
@@ -724,12 +693,11 @@ bool reg_manager_interface_getMr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setMr(void *ptr, uint16_t num)
+bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
-		
 		MrRegData objMrRegData ;
 		memcpy(&objMrRegData, ptr, sizeof(objMrRegData));
 		objMrRegData.id = num ;
@@ -747,19 +715,16 @@ bool reg_manager_interface_setMr(void *ptr, uint16_t num)
 	return bRet ;
 }
  
-bool reg_manager_interface_getValueMr(void *ptr, uint16_t num)
+bool reg_manager_interface_getValueMr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		MrRegData objMrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
 		if(bRet)
 		{
-		   memcpy(ptr, &(objMrRegData.value), 
-		   	    sizeof(objMrRegData.value));
+		   *ptr = objMrRegData.value;
 		}
 	}
 	else
@@ -769,40 +734,70 @@ bool reg_manager_interface_getValueMr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setValueMr(void *ptr, uint16_t num)
+bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		MrRegData objMrRegData ;
-		
-		
+		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
+		if(bRet)  
+		{
+		    objMrRegData.value = *ptr;
+		}
+		else    // Not exist
+		{
+		    objMrRegData.id    = num ;
+            strcpy(objMrRegData.comment, "Empty");
+		    objMrRegData.value = *ptr;
+		}
+		reg_manager_interface_setMr(&objMrRegData, num);
+	}
+	else
+	{
+		printf("g_objRegManagerInterface is NULL\n");
+	}
+	return bRet ;
+}
+
+bool reg_manager_interface_getIdMr(int *ptr, uint16_t num)
+{
+	bool bRet = false ;
+	if(g_objRegManagerInterface)
+	{
+		MrRegData objMrRegData ;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
 		if(bRet)
 		{
-		    objMrRegData.value = *(int *)ptr;
+		   *ptr = objMrRegData.id;
+		}
+		else
+		{
+			printf("MrReg[%d] is NULL\n", num);
+		}
+	}
+	else
+	{
+		printf("g_objRegManagerInterface is NULL\n");
+	}
+	return bRet ;
+}
+
+bool reg_manager_interface_setIdMr(int *ptr, uint16_t num)
+{
+	bool bRet = false ;
+	if(g_objRegManagerInterface)
+	{
+		MrRegData objMrRegData ;
+		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
+		if(bRet)
+		{
+		    objMrRegData.id = *ptr;
 			reg_manager_interface_setMr(&objMrRegData, num);
 		}
-	}
-	else
-	{
-		printf("g_objRegManagerInterface is NULL\n");
-	}
-	return bRet ;
-}
-
-bool reg_manager_interface_getIdMr(void *ptr, uint16_t num)
-{
-	bool bRet = false ;
-	if(g_objRegManagerInterface)
-	{
-		MrRegData objMrRegData ;
-		
-		
-		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
-		if(bRet)
+		else
 		{
-		   memcpy(ptr, &(objMrRegData.id), sizeof(objMrRegData.id));
+			printf("MrReg[%d] is NULL\n", num);
 		}
 	}
 	else
@@ -812,36 +807,12 @@ bool reg_manager_interface_getIdMr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setIdMr(void *ptr, uint16_t num)
+bool reg_manager_interface_getCommentMr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		MrRegData objMrRegData ;
-		
-		
-		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
-		if(bRet)
-		{
-		    memcpy(&(objMrRegData.id), ptr, sizeof(objMrRegData.id));
-			reg_manager_interface_setMr(&objMrRegData, num);
-		}
-	}
-	else
-	{
-		printf("g_objRegManagerInterface is NULL\n");
-	}
-	return bRet ;
-}
-
-bool reg_manager_interface_getCommentMr(void *ptr, uint16_t num)
-{
-	bool bRet = false ;
-	if(g_objRegManagerInterface)
-	{
-		MrRegData objMrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
 		if(bRet)
 		{
@@ -855,19 +826,17 @@ bool reg_manager_interface_getCommentMr(void *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setCommentMr(void *ptr, uint16_t num)
+bool reg_manager_interface_setCommentMr(char *ptr, uint16_t num)
 {
 	bool bRet = false ;
 	if(g_objRegManagerInterface)
 	{
 		MrRegData objMrRegData ;
-		
-		
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegData);
 		if(bRet)
 		{
 		    memcpy(objMrRegData.comment, ptr, sizeof(objMrRegData.comment));
-			reg_manager_interface_setR(&objMrRegData, num);
+			reg_manager_interface_setMr(&objMrRegData, num);
 		}
 	}
 	else
@@ -901,22 +870,22 @@ bool reg_manager_interface_setCoordinateUf(void *ptr, uint16_t num)
 	return 0 ;
 }
 
-bool reg_manager_interface_getIdUf(void *ptr, uint16_t num)
+bool reg_manager_interface_getIdUf(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setIdUf(void *ptr, uint16_t num)
+bool reg_manager_interface_setIdUf(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_getCommentUf(void *ptr, uint16_t num)
+bool reg_manager_interface_getCommentUf(char *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setCommentUf(void *ptr, uint16_t num)
+bool reg_manager_interface_setCommentUf(char *ptr, uint16_t num)
 {
 	return 0 ;
 }
@@ -944,22 +913,22 @@ bool reg_manager_interface_setCoordinateTf(void *ptr, uint16_t num)
 	return 0 ;
 }
 
-bool reg_manager_interface_getIdTf(void *ptr, uint16_t num)
+bool reg_manager_interface_getIdTf(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setIdTf(void *ptr, uint16_t num)
+bool reg_manager_interface_setIdTf(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_getCommentTf(void *ptr, uint16_t num)
+bool reg_manager_interface_getCommentTf(char *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setCommentTf(void *ptr, uint16_t num)
+bool reg_manager_interface_setCommentTf(char *ptr, uint16_t num)
 {
 	return 0 ;
 }
@@ -977,52 +946,52 @@ bool reg_manager_interface_setPl(void *ptr, uint16_t num)
 	return 0 ;
 }
 
-bool reg_manager_interface_getPosePl(PoseEuler& pose, int index)
+bool reg_manager_interface_getPosePl(PoseEuler* pose, int index)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setPosePl(PoseEuler pose, int index)
+bool reg_manager_interface_setPosePl(PoseEuler* pose, int index)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_getPalletPl(void *ptr, uint16_t num)
+bool reg_manager_interface_getPalletPl(pl_t *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setPalletPl(void *ptr, uint16_t num)
+bool reg_manager_interface_setPalletPl(pl_t *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_getFlagPl(void *ptr, uint16_t num)
+bool reg_manager_interface_getFlagPl(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setFlagPl(void *ptr, uint16_t num)
+bool reg_manager_interface_setFlagPl(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_getIdPl(void *ptr, uint16_t num)
+bool reg_manager_interface_getIdPl(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setIdPl(void *ptr, uint16_t num)
+bool reg_manager_interface_setIdPl(int *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_getCommentPl(void *ptr, uint16_t num)
+bool reg_manager_interface_getCommentPl(char *ptr, uint16_t num)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setCommentPl(void *ptr, uint16_t num)
+bool reg_manager_interface_setCommentPl(char *ptr, uint16_t num)
 {
 	return 0 ;
 }

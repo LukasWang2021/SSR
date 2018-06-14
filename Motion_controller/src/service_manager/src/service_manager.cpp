@@ -80,6 +80,13 @@ ERROR_CODE_TYPE ServiceManager::init(void)
         return CREATE_CHANNEL_FAIL;
     }
 
+    result = comm_tp_heartbeat_.createChannel(COMM_REP, COMM_IPC, "heartbeat");
+    if (result == CREATE_CHANNEL_FAIL)
+    {
+        std::cout<<"Error in ServiceManager::init(): fail to create tp heartBeat channel."<<std::endl;
+        return CREATE_CHANNEL_FAIL;
+    }
+
     // Init the heartbeat_info request
     heartbeat_core_.req_id = HEARTBEAT_INFO_SID;
     request_fifo_.push_back(heartbeat_core_);
@@ -139,6 +146,7 @@ bool ServiceManager::receiveRequest(void)
     ERROR_CODE_TYPE result = comm_mcs_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
+        printf("recv servo mcs success with %X\n", request.req_id);
         //push the request into fifo.
         if (checkRequest(request)) 
         {
@@ -150,7 +158,7 @@ bool ServiceManager::receiveRequest(void)
     result = comm_param_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
-        printf("recv servo param success\n");
+        printf("recv servo param success with %X\n", request.req_id);
         //push the request into fifo.
         if (checkRequest(request)) 
         {
@@ -158,10 +166,23 @@ bool ServiceManager::receiveRequest(void)
             return true;
         }
     }
+	
+    result = comm_tp_heartbeat_.recv(&request, sizeof(request), COMM_DONTWAIT);
+    if (result == 0)
+    {
+        // printf("recv servo heartbeat success with %X\n", request.req_id);
+        //push the request into fifo.
+        if (checkRequest(request)) 
+        {
+            channel_flag_ = TP_HEARTBEAT_CHANNEL;
+            return true;
+        }
+    }
 
     result = comm_test_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
+        printf("recv servo test success with %X\n", request.req_id);
         //push the request into fifo.
         if (checkRequest(request)) 
         {
@@ -484,6 +505,9 @@ bool ServiceManager::manageResponse(void)
         case TEST_CHANNEL:
             transmitResponse(comm_test_);
             break;
+        case TP_HEARTBEAT_CHANNEL:
+            transmitResponse(comm_tp_heartbeat_);
+            break;
         default:
             break;
     }
@@ -560,7 +584,7 @@ bool ServiceManager::extractErrorCode(ServiceResponse resp)
         for (unsigned int i = 0;  i < size; ++i)
         {
             memcpy(&error_code, &resp.res_buff[8 + i*8], 8);
-//            printf("extract error code = %016llX\n", error_code);
+            printf("extract error code = %016llX\n", error_code);
             storeError(error_code);
         }
         return true;

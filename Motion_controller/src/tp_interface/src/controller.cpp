@@ -1074,6 +1074,7 @@ void Controller::getIOInfo(void* params)
 {
     motion_spec_DeviceList dev_list;
     IOInterface::instance()->getIODevices(dev_list);
+	// getIODevInfo();
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
@@ -1521,19 +1522,36 @@ void Controller::stateMachine(void* params)
 	        {
 	            printf("get instruction, line:%d\n", inst.line);
 #endif		
-	            result = auto_motion_->moveTarget(inst.target);
-				if(result != SUCCESS)
-        		{
-	                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
-        			rcs::Error::instance()->add(result);
-					setLogicStateCmd(EMERGENCY_STOP_E);
-					
-					InterpreterControl ctrl;
-					ctrl.cmd = ABORT;
-					ShareMem::instance()->intprtControl(ctrl);
-	        	}
-				else{
-					calcMotionDst(inst.target);
+				if(inst.type == MOTION)
+				{
+		            result = auto_motion_->moveTarget(inst.target);
+					if(result != SUCCESS)
+	        		{
+		                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+	        			rcs::Error::instance()->add(result);
+						setLogicStateCmd(EMERGENCY_STOP_E);
+						
+						InterpreterControl ctrl;
+						ctrl.cmd = ABORT;
+						ShareMem::instance()->intprtControl(ctrl);
+		        	}
+					else{
+						calcMotionDst(inst.target);
+					}
+				}
+				else if(inst.type == SET_UF)
+				{
+		            printf("NOTICE: SET_UF to %d.\n", inst.current_uf);
+	                int iOldUserFrame = user_frame_manager_->getActivatedFrame();
+					if(iOldUserFrame != inst.current_uf)
+	                   user_frame_manager_->activateFrame(inst.current_uf);
+				}
+				else if(inst.type == SET_TF)
+				{
+		            printf("NOTICE: SET_TF to %d.\n", inst.current_uf);
+	                int iOldToolFrame = tool_frame_manager_->getActivatedFrame();
+					if(iOldToolFrame != inst.current_tf)
+	                   tool_frame_manager_->activateFrame(inst.current_tf);
 				}
 	        }
         }
@@ -1594,12 +1612,12 @@ void Controller::rtTrajFlow(void* params)
     U64 result = ShareMem::instance()->setJointPositions();
     if (result != TPI_SUCCESS)
     {
-        int iCtrlState = ctrl_state_;
-        int iWorkStatus = work_status_;
+//        int iCtrlState = ctrl_state_;
+//        int iWorkStatus = work_status_;
 
-        FST_INFO(
-			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
-            iCtrlState, iWorkStatus);
+//        FST_INFO(
+//			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
+//            iCtrlState, iWorkStatus);
 		
         rcs::Error::instance()->add(result);
         return;// NULL;
@@ -1696,7 +1714,7 @@ void Controller::rtTrajFlow(void* params)
 void Controller::heartBeat(void* params)
 {
     IOInterface::instance()->updateIOError(); 
-    //ServiceHeartbeat::instance()->sendRequest();
+    ServiceHeartbeat::instance()->sendRequest();
     U64 result = safety_interface_.setSafetyHeartBeat();
     if (result != TPI_SUCCESS)
     {
@@ -3027,12 +3045,12 @@ void Controller::setPoseRegister(void* params, int len)
     memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
 
     pr_struct.value.pos_type = pr_interface.type;
-    if (0 == pr_interface.type)
+    if (POS_TYPE_CARTESIAN == pr_interface.type)
     {
         memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
         memset(&pr_struct.value.joint_pos, 0, sizeof(double) * 6);
     }
-    else if (1 == pr_interface.type)
+    else if (POS_TYPE_JOINT == pr_interface.type)
     {
         memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(double) * 6);
         memset(&pr_struct.value.cartesian_pos, 0, sizeof(pr_struct.value.cartesian_pos));
@@ -3049,7 +3067,8 @@ void Controller::setPoseRegister(void* params, int len)
     set_reg.type = POSE_REG;
     memcpy(set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
-    FST_INFO("PrRegData: id = %d, comment = %s", pr_struct.id, pr_struct.comment);
+    FST_INFO("PrRegData: id = %d, comment = %s, type = %d, type1 = %d",
+        pr_struct.id, pr_struct.comment, pr_interface.type, pr_struct.value.pos_type);
 
     int reg_size = sizeof(set_reg);
     setRegister(&set_reg, reg_size);

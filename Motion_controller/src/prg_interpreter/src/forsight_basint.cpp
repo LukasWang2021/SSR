@@ -2849,8 +2849,8 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
     get_token(objThreadCntrolBlock);
     return;
   case QUOTE:
-	result->setFloatValue(0.0);
-    // get_token(objThreadCntrolBlock);
+	result->setStringValue(objThreadCntrolBlock->token);
+    get_token(objThreadCntrolBlock);
     return;
   default:
     serror(objThreadCntrolBlock, 0);
@@ -2916,6 +2916,7 @@ static int get_char_token(char * src, char * dst)
 // Declare a global variable.
 void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value)
 {
+    int iLineNum = 0 ;
 	char reg_name[256] ;
 	char *temp = NULL ;
 	
@@ -2927,10 +2928,17 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
     {
 		if(strchr(vname, '['))
 		{
+			if((value.getType() & TYPE_FLOAT) == TYPE_FLOAT)
+			{
+				printf("assign_var vname = %s and value = %f.\n", vname, value.getFloatValue());
+			}
+			if ((value.getType() & TYPE_STRING) == TYPE_STRING)
+			{
+				char cTmp[512];
+				value.getStringValue(cTmp) ;
+				printf("assign_var vname = %s and value = (%s).\n", vname, cTmp);
+			}
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
-			printf("data_ptr: id = %d, comment = %s\n", 
-					value.getRRegDataValue().id, value.getRRegDataValue().comment);
-            printf("assign_var vname = %s and value = %f.\n", vname, value.getFloatValue());
 			int iRet = forgesight_registers_manager_set_register(
 				objThreadCntrolBlock, vname, &value);
 #else
@@ -2959,6 +2967,21 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 				return ;
 			}
 		}
+    }
+	
+	if(strcmp("tf_no", vname) == 0)
+    {
+        printf("set_global_TF vname = %s and value = %f.\n", vname, value.getFloatValue());
+		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
+		set_global_TF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		return ;
+    }
+	else if(strcmp("uf_no", vname) == 0)
+    {
+        printf("set_global_UF vname = %s and value = %f.\n", vname, value.getFloatValue());
+		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
+		set_global_UF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		return ;
     }
 
     var_type vt;
@@ -3006,6 +3029,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
     {
 		if(strchr(vname, '['))
 		{
+			printf("find_var vname = %s .\n", vname);
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
     		int iRet = forgesight_registers_manager_get_register(
 				objThreadCntrolBlock, vname, &value);

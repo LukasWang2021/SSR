@@ -139,7 +139,6 @@ void Controller::getWarnings(void* params)
         param->size = err_str.size();
         //FST_INFO("error size:%d", param->size);
         memcpy(param->bytes, err_str.c_str(), param->size);
-        
     }
 }
 void Controller::updateWarnings(int id)
@@ -1074,7 +1073,6 @@ void Controller::getIOInfo(void* params)
 {
     motion_spec_DeviceList dev_list;
     IOInterface::instance()->getIODevices(dev_list);
-	// getIODevInfo();
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
@@ -1522,36 +1520,19 @@ void Controller::stateMachine(void* params)
 	        {
 	            printf("get instruction, line:%d\n", inst.line);
 #endif		
-				if(inst.type == MOTION)
-				{
-		            result = auto_motion_->moveTarget(inst.target);
-					if(result != SUCCESS)
-	        		{
-		                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
-	        			rcs::Error::instance()->add(result);
-						setLogicStateCmd(EMERGENCY_STOP_E);
-						
-						InterpreterControl ctrl;
-						ctrl.cmd = ABORT;
-						ShareMem::instance()->intprtControl(ctrl);
-		        	}
-					else{
-						calcMotionDst(inst.target);
-					}
-				}
-				else if(inst.type == SET_UF)
-				{
-		            printf("NOTICE: SET_UF to %d.\n", inst.current_uf);
-	                int iOldUserFrame = user_frame_manager_->getActivatedFrame();
-					if(iOldUserFrame != inst.current_uf)
-	                   user_frame_manager_->activateFrame(inst.current_uf);
-				}
-				else if(inst.type == SET_TF)
-				{
-		            printf("NOTICE: SET_TF to %d.\n", inst.current_uf);
-	                int iOldToolFrame = tool_frame_manager_->getActivatedFrame();
-					if(iOldToolFrame != inst.current_tf)
-	                   tool_frame_manager_->activateFrame(inst.current_tf);
+	            result = auto_motion_->moveTarget(inst.target);
+				if(result != SUCCESS)
+        		{
+	                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+        			rcs::Error::instance()->add(result);
+					setLogicStateCmd(EMERGENCY_STOP_E);
+					
+					InterpreterControl ctrl;
+					ctrl.cmd = ABORT;
+					ShareMem::instance()->intprtControl(ctrl);
+	        	}
+				else{
+					calcMotionDst(inst.target);
 				}
 	        }
         }
@@ -1612,12 +1593,12 @@ void Controller::rtTrajFlow(void* params)
     U64 result = ShareMem::instance()->setJointPositions();
     if (result != TPI_SUCCESS)
     {
-//        int iCtrlState = ctrl_state_;
-//        int iWorkStatus = work_status_;
+        int iCtrlState = ctrl_state_;
+        int iWorkStatus = work_status_;
 
-//        FST_INFO(
-//			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
-//            iCtrlState, iWorkStatus);
+        FST_INFO(
+			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
+            iCtrlState, iWorkStatus);
 		
         rcs::Error::instance()->add(result);
         return;// NULL;
@@ -1714,7 +1695,7 @@ void Controller::rtTrajFlow(void* params)
 void Controller::heartBeat(void* params)
 {
     IOInterface::instance()->updateIOError(); 
-    ServiceHeartbeat::instance()->sendRequest();
+    //ServiceHeartbeat::instance()->sendRequest();
     U64 result = safety_interface_.setSafetyHeartBeat();
     if (result != TPI_SUCCESS)
     {
@@ -2111,8 +2092,8 @@ void Controller::addPubParameter(string str_path, PublishUpdate *pub_update)
 
     if (it != id_pub_map_.end())
     {
-        it->second.base_interval = pub_update->base_interval / ctrl_task_->period();
-        it->second.max_interval = pub_update->max_interval / ctrl_task_->period();
+        it->second.base_interval = pub_update->base_interval / (ctrl_task_->period() * 5.75);
+        it->second.max_interval = pub_update->max_interval / (ctrl_task_->period() * 5.75);
         it->second.count = it->second.max_interval;
         it->second.update_flag = true;
         return;
@@ -2130,17 +2111,16 @@ void Controller::addPubParameter(string str_path, PublishUpdate *pub_update)
         }
 
         id = info.msg_id;
+        return;
     }
-    else
-    {
-        pub_update->base_interval = pub_update->base_interval / (ctrl_task_->period() * 12.5);
-        pub_update->max_interval = pub_update->max_interval / (ctrl_task_->period() * 12.5);
-        pub_update->count = pub_update->max_interval;
-        pub_update->update_flag = true;
-        FST_INFO("Here pub count : %d", pub_update->count);
 
-        id_pub_map_.insert(std::map<int, PublishUpdate>::value_type(id, *pub_update));
-    }
+    pub_update->base_interval = pub_update->base_interval / (ctrl_task_->period() * 5.75);
+    pub_update->max_interval = pub_update->max_interval / (ctrl_task_->period() * 5.75);
+    pub_update->count = pub_update->max_interval;
+    pub_update->update_flag = true;
+    FST_INFO("Here pub count : %d", pub_update->count);
+    id_pub_map_.insert(std::map<int, PublishUpdate>::value_type(id, *pub_update));
+
 }
 
 void Controller::removePubParameter(string str_path)
@@ -2151,7 +2131,7 @@ void Controller::removePubParameter(string str_path)
         return;
     if (str_path.substr(0, 7) == "root/IO")
     {
-        IOPortInfo info;        
+        IOPortInfo info;
         U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
         if (result != TPI_SUCCESS)
         {
@@ -3045,12 +3025,12 @@ void Controller::setPoseRegister(void* params, int len)
     memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
 
     pr_struct.value.pos_type = pr_interface.type;
-    if (POS_TYPE_CARTESIAN == pr_interface.type)
+    if (0 == pr_interface.type)
     {
         memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
         memset(&pr_struct.value.joint_pos, 0, sizeof(double) * 6);
     }
-    else if (POS_TYPE_JOINT == pr_interface.type)
+    else if (1 == pr_interface.type)
     {
         memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(double) * 6);
         memset(&pr_struct.value.cartesian_pos, 0, sizeof(pr_struct.value.cartesian_pos));
@@ -3067,8 +3047,7 @@ void Controller::setPoseRegister(void* params, int len)
     set_reg.type = POSE_REG;
     memcpy(set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
 
-    FST_INFO("PrRegData: id = %d, comment = %s, type = %d, type1 = %d",
-        pr_struct.id, pr_struct.comment, pr_interface.type, pr_struct.value.pos_type);
+    FST_INFO("PrRegData: id = %d, comment = %s", pr_struct.id, pr_struct.comment);
 
     int reg_size = sizeof(set_reg);
     setRegister(&set_reg, reg_size);
@@ -3442,5 +3421,276 @@ void Controller::getValidSimpleNR(void* params)
     {
         TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
         rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+
+void Controller::getValidSimpleSR(void* params)
+{
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_SR_LST, (void*) params);
+
+    register_spec_SimpleRegInterface simple_reg;
+
+    std::vector<ChgFrameSimple>::iterator it;
+
+    if (!simple_reg_struct.empty())
+    {
+        int reg_index = 0;
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
+        FST_INFO("Controller : All simple SR is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+
+void Controller::getValidSimpleMR(void* params)
+{
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_MR_LST, (void*) params);
+
+    register_spec_SimpleRegInterface simple_reg;
+
+    std::vector<ChgFrameSimple>::iterator it;
+
+    if (!simple_reg_struct.empty())
+    {
+        int reg_index = 0;
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
+        FST_INFO("Controller : All simple SR is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+void Controller::setSR(void* params, int len)
+{
+    if (params == NULL)
+    {
+        FST_INFO("Controller : param is null");
+        return;
+    }
+
+    register_spec_SRInterface sr_interface =
+        *(register_spec_SRInterface*)params;
+
+    int sr_total = 10;
+    bool index_error = isRegisterIndexError(sr_interface.id, sr_total);
+    if (index_error) return;
+
+    char test[32] = "";
+    if(0 == memcmp(sr_interface.comment, test, sizeof(sr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(sr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    FST_INFO("Controller : Set SR : comment = %s, id = %d, value = %s",
+        sr_interface.comment, sr_interface.id, sr_interface.value);
+
+    FST_INFO("Controller : Set SR :id = %d", sr_interface.id);
+
+    string sr_value(sr_interface.comment);
+
+    SrRegData sr_struct;
+    sr_struct.id = sr_interface.id;
+    sr_struct.value = sr_value;
+    memcpy(sr_struct.comment, sr_interface.comment, sizeof(sr_interface.comment));
+
+    RegMap set_reg;
+    set_reg.index = sr_struct.id;
+    set_reg.type = STR_REG;
+    memcpy(set_reg.value, &sr_struct, sizeof(sr_struct));
+
+    FST_INFO("SrRegData: id = %d, comment = %s, value = %s",
+        sr_struct.id, sr_struct.comment, sr_struct.value.c_str());
+
+
+
+    int reg_size = sizeof(set_reg);
+    //setRegister(&set_reg, reg_size);
+}
+
+void Controller::getSR(void* params)
+{
+    register_spec_SRInterface sr_interface;
+    memcpy(&sr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(sr_interface));
+
+    int sr_total = 10;
+    bool index_error = isRegisterIndexError(sr_interface.id, sr_total);
+    if (index_error) return;
+
+    RegMap get_reg;
+    get_reg.index = sr_interface.id;
+    get_reg.type = STR_REG;
+
+    getRegister(&get_reg);
+
+    SrRegData sr_struct;
+    sr_struct.id = sr_interface.id;
+    string sr_value("get SR");
+    sr_struct.value = sr_value;
+    memcpy(sr_struct.comment, sr_interface.comment, sizeof(sr_interface.comment));
+
+    char* p = get_reg.value;
+    sr_struct.id = *((int*)p);
+    p = p + sizeof(int);
+    memcpy(sr_struct.comment, p, sizeof(sr_struct.comment));
+    p = p + sizeof(sr_struct.comment);
+    strcpy(p, sr_struct.value.c_str());
+
+    sr_interface.id = sr_struct.id;
+    sr_interface.has_value = true;
+    sr_interface.has_comment = true;
+    strcpy(sr_interface.value, sr_struct.value.c_str());
+    memcpy(sr_interface.comment, sr_struct.comment, sizeof(sr_struct.comment));
+
+    FST_INFO("SrRegData: id = %d, comment = %s, value = %s\n", 
+        sr_struct.id, sr_struct.comment, sr_struct.value.c_str());
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&sr_interface, sizeof(sr_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(sr_interface);
+        memcpy(param->bytes, (char*)&sr_interface, param->size);
+    }
+}
+
+
+void Controller::setMR(void* params, int len)
+{
+    register_spec_MRInterface mr_interface =
+        *(register_spec_MRInterface*)params;
+
+    int mr_total = 10;
+    bool index_error = isRegisterIndexError(mr_interface.id, mr_total);
+    if (index_error) return;
+
+    char test[32] = "";
+    if(0 == memcmp(mr_interface.comment, test, sizeof(mr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(mr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    MrRegData mr_struct;
+    mr_struct.id = mr_interface.id;
+    mr_struct.value = mr_interface.value;
+    memcpy(mr_struct.comment, mr_interface.comment, sizeof(mr_interface.comment));
+
+    RegMap set_reg;
+    set_reg.index = mr_struct.id;
+    set_reg.type = MOT_REG;
+    memcpy(set_reg.value, (char*)&mr_struct, sizeof(mr_struct));
+
+    FST_INFO("MrRegData: id = %d, comment = %s, value = %d",
+        mr_struct.id, mr_struct.comment, mr_struct.value);
+
+    int reg_size = sizeof(set_reg);
+    setRegister(&set_reg, reg_size);
+}
+
+void Controller::getMR(void* params)
+{
+    register_spec_MRInterface mr_interface;
+
+    memcpy(&mr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(mr_interface));
+
+    int mr_total = 10;
+    bool index_error = isRegisterIndexError(mr_interface.id, mr_total);
+    if (index_error) return;
+
+    RegMap get_reg;
+    get_reg.index = mr_interface.id;
+    get_reg.type = MOT_REG;
+
+    getRegister(&get_reg);
+
+    MrRegData mr_struct;
+    memcpy(&mr_struct, &get_reg.value, sizeof(mr_struct));
+
+    mr_interface.id = mr_struct.id;
+    mr_interface.has_value = true;
+    mr_interface.value = mr_struct.value;
+    mr_interface.has_comment = true;
+    memcpy(&mr_interface.comment, &mr_struct.comment, sizeof(mr_struct.comment));
+
+    FST_INFO("MrRegData: id = %d, comment = %s, value = %d\n", 
+        mr_struct.id, mr_struct.comment, mr_struct.value);
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&mr_interface, sizeof(mr_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(mr_interface);
+        memcpy(param->bytes, (char*)&mr_interface, param->size);
     }
 }

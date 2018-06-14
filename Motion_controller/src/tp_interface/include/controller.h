@@ -788,6 +788,50 @@ class Controller
      */
     void getValidSimpleNR(void* params);
 
+    /**
+     * @brief: callback for  getting valid string register list
+     *
+     * @param params
+     */
+    void getValidSimpleSR(void* params);
+
+    /**
+     * @brief: callback for  getting valid motion register list
+     *
+     * @param params
+     */
+    void getValidSimpleMR(void* params);
+
+    /**
+     * @brief: callback for setting string register: SR
+     *
+     * @param params
+     * @param len
+     */
+    void setSR(void* params, int len);
+
+    /**
+     * @brief: callback for getting string register: SR
+     *
+     * @param params
+     */
+    void getSR(void* params);
+
+    /**
+     * @brief: callback for setting motion register: MR
+     *
+     * @param params
+     * @param len
+     */
+    void setMR(void* params, int len);
+
+    /**
+     * @brief: callback for getting motion register: MR
+     *
+     * @param params
+     */
+    void getMR(void* params);
+
   private:
     static Controller           *instance_;     //this class 
     fst_controller::ArmGroup    *arm_group_;    //pointer of ArmGroup class

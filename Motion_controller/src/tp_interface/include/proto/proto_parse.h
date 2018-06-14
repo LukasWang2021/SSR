@@ -57,6 +57,10 @@ class ProtoParse
     void decPoseRegister(const uint8_t *in_buf, int in_len, void *out_buf);
     void encNumberRegister(const uint8_t *in_buf, int in_len, void *out_buf);
     void decNumberRegister(const uint8_t *in_buf, int in_len, void *out_buf);
+    void encSR(const uint8_t *in_buf, int in_len, void *out_buf);
+    void decSR(const uint8_t *in_buf, int in_len, void *out_buf);
+    void encMR(const uint8_t *in_buf, int in_len, void *out_buf);
+    void decMR(const uint8_t *in_buf, int in_len, void *out_buf);
 
     void encGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf);
 	void decGlobalAcc(const uint8_t *in_buf, int in_len, void *out_buf);
@@ -69,7 +73,7 @@ class ProtoParse
 
     bool decParamGetMsg(const uint8_t *in_buf, int in_len, BaseTypes_ParameterGetMsg &param_get_msg);
     bool decParamCmdMsg(const uint8_t *in_buf, int in_len, BaseTypes_ParameterCmdMsg &param_cmd_msg);
-    
+
     bool encStatus(BaseTypes_StatusCode status_code, BaseTypes_ParamInfo *param_info, uint8_t* buf_out, int buf_len, int& bytes_written);
 
 

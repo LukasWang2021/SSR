@@ -57,7 +57,7 @@ BaseTypes_ParamInfo* ProtoParse::getRegInfo()
 BaseTypes_ParamInfo* ProtoParse::getInfoByID(uint32_t id)
 {
     int num = sizeof(g_param_info) / sizeof(BaseTypes_ParamInfo);
-	for (int i = 0; i < num; i++)    
+	for (int i = 0; i < num; i++)
     {
         if (g_param_info[i].id == id)
             return &g_param_info[i];
@@ -813,4 +813,74 @@ void ProtoParse::encValidSimpleReg(const uint8_t *in_buf, int in_len, void *out_
     param->size = ostream.bytes_written;
 
     FST_INFO("bytes_written:%d", ostream.bytes_written);
+}
+
+void ProtoParse::encSR(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_SRInterface *sr_interface = (register_spec_SRInterface*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, register_spec_SRInterface_fields, sr_interface);
+
+    if(ret != true)
+    {
+        FST_ERROR("encRegister error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+}
+
+void ProtoParse::decSR(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_SRInterface sr_interface;
+    bool ret = false;
+    PARSE_FIELD(sr_interface, register_spec_SRInterface, in_buf, in_len, ret);
+
+    if (ret == false)
+    {
+        FST_ERROR("error decode frame interface");
+        return;
+    }
+
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
+    req->fillData((char*)&sr_interface, sizeof(sr_interface));
+}
+
+void ProtoParse::encMR(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_MRInterface *mr_interface = (register_spec_MRInterface*)in_buf;
+
+    BaseTypes_ParameterMsg_param_t *param = (BaseTypes_ParameterMsg_param_t*)out_buf; 
+
+    pb_ostream_t ostream = pb_ostream_from_buffer(param->bytes, sizeof(param->bytes));
+
+    bool ret = pb_encode(&ostream, register_spec_MRInterface_fields, mr_interface);
+
+    if(ret != true)
+    {
+        FST_ERROR("encRegister error encode io info");
+        return;
+    }
+
+    param->size = ostream.bytes_written;
+}
+
+void ProtoParse::decMR(const uint8_t *in_buf, int in_len, void *out_buf)
+{
+    register_spec_MRInterface mr_interface;
+    bool ret = false;
+    PARSE_FIELD(mr_interface, register_spec_MRInterface, in_buf, in_len, ret);
+
+    if (ret == false)
+    {
+        FST_ERROR("error decode frame interface");
+        return;
+    }
+
+    TPIFReqData<>   *req = (TPIFReqData<>*)out_buf;
+    req->fillData((char*)&mr_interface, sizeof(mr_interface));
 }

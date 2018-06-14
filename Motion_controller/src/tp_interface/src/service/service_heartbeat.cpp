@@ -25,7 +25,6 @@ void ServiceHeartbeat::sendRequest()
         int err_size = *(int*)resp.res_buff;
         if (err_size > 0)
         {
-        	printf("recvTimeout and err_size = %llx.\n", err_size);
             U64 *err_list = (U64*)&resp.res_buff[8];
             for (int i = 0; i < err_size; i++)
             {

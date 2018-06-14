@@ -103,8 +103,12 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	10277,	{	&Controller::setError,	&Controller::getToolValidSimpleFrame,	&Controller::updateDefault	}	},
 	{	34069,	{	&Controller::setPoseRegister,	&Controller::getPoseRegister,	&Controller::updateDefault	}	},
 	{	32882,	{	&Controller::setNumberRegister,	&Controller::getNumberRegister,	&Controller::updateDefault	}	},
+	{	76247,	{	&Controller::setSR,	&Controller::getSR,	&Controller::updateDefault	}	},
+	{	4270,	{	&Controller::setMR,	&Controller::getMR,	&Controller::updateDefault	}	},
 	{	16261,	{	&Controller::setError,	&Controller::getValidSimplePR,	&Controller::updateDefault	}	},
 	{	76642,	{	&Controller::setError,	&Controller::getValidSimpleNR,	&Controller::updateDefault	}	},
+	{	71378,	{	&Controller::setError,	&Controller::getValidSimpleSR,	&Controller::updateDefault	}	},
+	{	72242,	{	&Controller::setError,	&Controller::getValidSimpleMR,	&Controller::updateDefault	}	},
 	{	4855,	{	&Controller::setError,	&Controller::getString,	&Controller::updateString	}	},
 	{	22462,	{	&Controller::setGlobalAcc,	&Controller::getGlobalAcc,	&Controller::updateDefault	}	},
 		

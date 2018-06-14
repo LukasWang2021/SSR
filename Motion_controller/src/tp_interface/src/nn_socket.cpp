@@ -99,9 +99,9 @@ void NNSocket::nnSocketInit()
 	FST_ASSERT(nn_bind(state_socket_, state_addr) >= 0);
 
 	usleep(100000); // wait for connections
-	 
+
 	pfd_[0].fd = command_socket_;
-	pfd_ [0].events = NN_POLLIN | NN_POLLOUT;
+	pfd_[0].events = NN_POLLIN | NN_POLLOUT;
 	pfd_[1].fd = state_socket_;
 	pfd_[1].events = NN_POLLOUT;
 }

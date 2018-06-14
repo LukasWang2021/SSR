@@ -209,7 +209,7 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
         path = param_get_msg.path;
 
         id = ELFHash(path, strlen(path));
-        // FST_INFO("TP Interface : getMsg path : %s", path);
+        FST_INFO("TP Interface : getMsg path : %s", path);
 
         if (request_.update(GET, path, id))
         {
@@ -225,7 +225,7 @@ void TPInterface::parseTPCommand(const uint8_t* buffer, int len)
             }
             else
             {
-                FST_ERROR("TP Interface Get: can't find request path");
+                FST_ERROR("TP Interface Get: can't find request path, id is %d", id);
                 setReply(BaseTypes_StatusCode_FAILED, id);
             }
         }
@@ -270,6 +270,9 @@ void TPInterface::sendReply()
             BaseTypes_ParamInfo *info = proto_parser_->getInfoByID(reply_.getID());
             proto_parser_->encStatus(*status_code, info, nn_socket_->getReplyBufPtr(), MAX_BUFFER_SIZE, buf_len);
             FST_INFO("Here : send set reply path is : %s , id is %d", info->path, reply_.getID());
+        
+            nn_socket_->nnSocketReply(nn_socket_->getReplyBufPtr(), buf_len);
+            setReply(BaseTypes_StatusCode_FAILED);
         }
             break;
         case PARAM:
@@ -310,21 +313,25 @@ void TPInterface::sendReply()
             }
 
             proto_parser_->encParamMsg(param_msg, nn_socket_->getReplyBufPtr(), MAX_BUFFER_SIZE, buf_len); 
-            // FST_INFO("sendReply : send reply path is : %s", param_msg.info.path);
+            FST_INFO("sendReply : send reply path is : %s", param_msg.info.path);
+
+            nn_socket_->nnSocketReply(nn_socket_->getReplyBufPtr(), buf_len);
+            setReply(PARAM);
         }
             break;
         case LIST:
         {
             bool ret = proto_parser_->encParamListMsg(nn_socket_->getReplyBufPtr(), MAX_BUFFER_SIZE, buf_len);
             FST_INFO("list buf_len:%d",buf_len);
+
+            nn_socket_->nnSocketReply(nn_socket_->getReplyBufPtr(), buf_len);
+            setReply(LIST);
         }
             break;
         default:
             FST_ERROR("sendReply : send reply param error");
             break;
     }
-    nn_socket_->nnSocketReply(nn_socket_->getReplyBufPtr(), buf_len);
-    setReply(DEFAULT);
     reply_.setFilledFlag(false);
 }
 
@@ -334,10 +341,10 @@ void TPInterface::sendPublish()
     int len = 0;
     proto_parser_->encPubGroupMsg(publish_.getParamBufPtr(), nn_socket_->getPublishBufPtr(), MAX_BUFFER_SIZE, len);
     motion_spec_SignalGroup *sig_gp = publish_.getParamBufPtr();
+
     nn_socket_->nnSocketPublish(nn_socket_->getPublishBufPtr(), len);
     publish_.setFilledFlag(false);
-
-    // FST_INFO("Pub : len:%d, size:%d", len, sig_gp->sig_param_count);
+    FST_INFO("Pub : len:%d, size:%d", len, sig_gp->sig_param_count);
 }
 
 void TPInterface::setReply(BaseTypes_StatusCode status_code, int id)

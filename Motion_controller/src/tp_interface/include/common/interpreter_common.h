@@ -47,6 +47,8 @@ typedef enum _InstType
     LOGIC_TOK,
     END_TOK,
     MOTION,
+    SET_UF,
+    SET_TF,
     END_PROG,
 }InstType;
 
@@ -297,6 +299,8 @@ typedef struct _Instruction
         MotionTarget    target;
         int             loop_cnt;
     };
+	int  current_uf ;
+	int  current_tf ;
     bool is_additional;
     int add_num;
 #ifdef WIN32

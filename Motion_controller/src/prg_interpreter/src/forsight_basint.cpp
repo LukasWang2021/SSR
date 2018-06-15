@@ -2353,6 +2353,7 @@ char *gosub_pop(struct thread_control_block * objThreadCntrolBlock)
 /* Entry point into parser. */
 void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * result, int* boolValue)
 {
+  result->resetNoneValue();
   get_token(objThreadCntrolBlock);
   if(!objThreadCntrolBlock->token[0]) {
     serror(objThreadCntrolBlock, 2);

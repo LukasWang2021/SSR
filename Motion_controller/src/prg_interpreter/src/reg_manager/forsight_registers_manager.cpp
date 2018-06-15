@@ -841,65 +841,127 @@ int forgesight_registers_manager_set_register(
 
 int forgesight_read_reg(RegMap & reg)
 {
+
+	PrRegData objPrRegData ;
+	PrRegData * objPrRegDataPtr ;
+	
+	SrRegData objSrRegData ;
+	// SrRegData * objSrRegDataPtr ;
+	
+	MrRegData objMrRegData ;
+	MrRegData * objMrRegDataPtr ;
+	
+	RRegData objRRegData ;
+	RRegData * objRRegDataPtr ;
+
+
+    int       iID ;
+    char      cComment[MAX_REG_COMMENT_LENGTH];
+
+	PoseEuler objPoseEuler ;
+    Joint     objJoint;
+    int       iType ;
+    
+    char      cSrValue[1024];
+    double    dRValue;
+    int       iMrValue;
+	
+    int       iPlFlag ;
+	pl_t      pltValue ;
+	
 	 switch(reg.type)
 	 {
 	 // pose register
 	 case POSE_REG:
-		 reg_manager_interface_getPr((PrRegData *)reg.value, reg.index);
+		 reg_manager_interface_getPr(&objPrRegData, reg.index);
+		 objPrRegDataPtr = (PrRegData *)reg.value;
+		 objPrRegDataPtr->id = objPrRegData.id;
+		 memcpy(objPrRegDataPtr->comment, 
+		 		objPrRegData.comment, sizeof(objPrRegData.comment));
+ 		 objPrRegDataPtr->value = objPrRegData.value;
 		 break;
 	 case POSE_REG_POSE:
-		 reg_manager_interface_getPosePr((PoseEuler *)reg.value, reg.index);
+		 reg_manager_interface_getPosePr(&objPoseEuler, reg.index);
+		 memcpy(reg.value, &objPoseEuler, sizeof(objPoseEuler));
 		 break;
 	 case POSE_REG_JOINT:
-		 reg_manager_interface_getJointPr((Joint *)reg.value, reg.index);
+		 reg_manager_interface_getJointPr(&objJoint, reg.index);
+		 memcpy(reg.value, &objJoint, sizeof(objJoint));
 		 break;
 	 case POSE_REG_TYPE:
-		 reg_manager_interface_getTypePr((int *)reg.value, reg.index);
+		 reg_manager_interface_getTypePr(&iType, reg.index);
+		 memcpy(reg.value, &iType, sizeof(iType));
 		 break;
 	 case POSE_REG_ID:
-		 reg_manager_interface_getIdPr((int *)reg.value, reg.index);
+		 reg_manager_interface_getIdPr(&iID, reg.index);
+		 memcpy(reg.value, &iID, sizeof(iID));
 		 break;
 	 case POSE_REG_COMMENT:
 		 reg_manager_interface_getCommentPr(reg.value, reg.index);
+		 // memcpy(reg.value, cComment, sizeof(cComment));
 		 break;
 	 // string register
 	 case STR_REG:
-	     reg_manager_interface_getSr((SrRegData *)reg.value, reg.index);
-	 	 break;
+	     reg_manager_interface_getSr(&objSrRegData, reg.index);
+		 memcpy(reg.value, &objSrRegData.id, sizeof(objSrRegData.id));
+		 memcpy(reg.value + sizeof(objSrRegData.id), 
+		 		objSrRegData.comment, sizeof(objSrRegData.comment));
+		 memcpy(reg.value + sizeof(objSrRegData.id) + sizeof(objPrRegData.comment), 
+		 		objSrRegData.value.c_str(), objSrRegData.value.length());
+	 	break;
 	 case STR_REG_VALUE:
-	     reg_manager_interface_getValueSr(reg.value, reg.index);
+	     reg_manager_interface_getValueSr(cSrValue, reg.index);
+		 memcpy(reg.value, cSrValue, sizeof(cSrValue));
 	 	 break;
 	 case STR_REG_ID:
-	     reg_manager_interface_getIdSr((int *)reg.value, reg.index);
+	     reg_manager_interface_getIdSr(&iID, reg.index);
+		 memcpy(reg.value, &iID, sizeof(iID));
 	 	 break;
 	 case STR_REG_COMMENT:
 	    reg_manager_interface_getCommentSr(reg.value, reg.index);
+		// memcpy(reg.value, cComment, sizeof(cComment));
 	 	break;
 	 // number register
 	 case NUM_REG:
-	    reg_manager_interface_getR((RRegData *)reg.value, reg.index);
+	    reg_manager_interface_getR(&objRRegData, reg.index);
+		objRRegDataPtr = (RRegData *)reg.value;
+	    objRRegDataPtr->id = objRRegData.id;
+		memcpy(objRRegDataPtr->comment, objRRegData.comment, 
+						sizeof(objRRegData.comment));
+		objRRegDataPtr->value  = objRRegData.value;
 	 	break;
 	 case NUM_REG_VALUE:
-	    reg_manager_interface_getValueR((double *)reg.value, reg.index);
+	    reg_manager_interface_getValueR(&dRValue, reg.index);
+		memcpy(reg.value, &dRValue, sizeof(dRValue));
 	 	break;
 	 case NUM_REG_ID:
-	    reg_manager_interface_getIdR((int *)reg.value, reg.index);
+	    reg_manager_interface_getIdR(&iID, reg.index);
+		memcpy(reg.value, &iID, sizeof(iID));
 	 	break;
 	 case NUM_REG_COMMENT:
 	    reg_manager_interface_getCommentR(reg.value, reg.index);
+		// memcpy(reg.value, cComment, sizeof(cComment));
 	 	break;
 	 // Special register for motion instruction
 	 case MOT_REG:
-	    reg_manager_interface_getMr((MrRegData *)reg.value, reg.index);
+	    reg_manager_interface_getMr(&objMrRegData, reg.index);
+		objMrRegDataPtr = (MrRegData *)reg.value;
+	    objMrRegDataPtr->id = objMrRegData.id;
+		memcpy(objMrRegDataPtr->comment, objMrRegData.comment, 
+						sizeof(objMrRegData.comment));
+		objMrRegDataPtr->value  = objMrRegData.value;
 	 	break;
 	 case MOT_REG_VALUE:
-	    reg_manager_interface_getValueMr((int *)reg.value, reg.index);
+	    reg_manager_interface_getValueMr(&iMrValue, reg.index);
+		memcpy(reg.value, &iMrValue, sizeof(iMrValue));
 	 	break;
 	 case MOT_REG_ID:
-	    reg_manager_interface_getIdMr((int *)reg.value, reg.index);
+	    reg_manager_interface_getIdMr(&iID, reg.index);
+		memcpy(reg.value, &iID, sizeof(iID));
 	 	break;
 	 case MOT_REG_COMMENT:
 	    reg_manager_interface_getCommentMr(reg.value, reg.index);
+		// memcpy(reg.value, cComment, sizeof(cComment));
 	 	break;
 	 // register of user coordinate offset
 	 case UF_REG:
@@ -909,7 +971,8 @@ int forgesight_read_reg(RegMap & reg)
 	    reg_manager_interface_getCoordinateUf(reg.value, reg.index);
 	 	break;
 	 case UF_REG_ID:
-	    reg_manager_interface_getIdUf((int *)reg.value, reg.index);
+	    reg_manager_interface_getIdUf(&iID, reg.index);
+	    memcpy(reg.value, &iID, sizeof(iID));
 	 	break;
 	 case UF_REG_COMMENT:
 	    reg_manager_interface_getCommentUf(reg.value, reg.index);
@@ -922,7 +985,8 @@ int forgesight_read_reg(RegMap & reg)
 	    reg_manager_interface_getCoordinateTf(reg.value, reg.index);
 	 	break;
 	 case TF_REG_ID:
-	    reg_manager_interface_getIdTf((int *)reg.value, reg.index);
+	    reg_manager_interface_getIdTf(&iID, reg.index);
+	    memcpy(reg.value, &iID, sizeof(iID));
 	 	break;
 	 case TF_REG_COMMENT:
 	    reg_manager_interface_getCommentTf(reg.value, reg.index);
@@ -932,16 +996,20 @@ int forgesight_read_reg(RegMap & reg)
 	    reg_manager_interface_getPl(reg.value, reg.index);
 	 	break;
 	 case PL_REG_POSE:
-	    reg_manager_interface_getPosePl((PoseEuler *)(reg.value), reg.index);
+	    reg_manager_interface_getPosePl(&objPoseEuler, reg.index);
+		 memcpy(reg.value, &objPoseEuler, sizeof(objPoseEuler));
 	 	break;
 	 case PL_REG_PALLET:
-	    reg_manager_interface_getPalletPl((pl_t *)(reg.value), reg.index);
+	    reg_manager_interface_getPalletPl(&pltValue, reg.index);
+		memcpy(reg.value, &pltValue, sizeof(pltValue));
 	 	break;
 	 case PL_REG_FLAG:
-	    reg_manager_interface_getFlagPl((int *)reg.value, reg.index);
+	    reg_manager_interface_getFlagPl(&iPlFlag, reg.index);
+		 memcpy(reg.value, &iPlFlag, sizeof(iPlFlag));
 	 	break;
 	 case PL_REG_ID:
-	    reg_manager_interface_getIdPl((int *)reg.value, reg.index);
+	    reg_manager_interface_getIdPl(&iID, reg.index);
+	    memcpy(reg.value, &iID, sizeof(iID));
 	 	break;
 	 case PL_REG_COMMENT:
 	    reg_manager_interface_getCommentPl(reg.value, reg.index);
@@ -952,72 +1020,140 @@ int forgesight_read_reg(RegMap & reg)
 
 int forgesight_mod_reg(RegMap & reg)
 {
-  	 printf("reg.type = %d.\n", reg.type);
-         printf("reg.value = (");
-         for(int iRet = 0 ; iRet < 100 ; iRet++)
-         {
-              printf("%08X, ", reg.value[iRet]);
-         }
-         printf(") \n");
+	PrRegData objPrRegData ;
+	PrRegData * objPrRegDataPtr ;
+	
+	SrRegData objSrRegData ;
+	SrRegData * objSrRegDataPtr ;
+	
+	MrRegData objMrRegData ;
+	MrRegData * objMrRegDataPtr ;
+	
+	RRegData objRRegData ;
+	RRegData * objRRegDataPtr ;
 
+    int       iID ;
+    char      cComment[MAX_REG_COMMENT_LENGTH];
+
+	PoseEuler objPoseEuler ;
+    Joint     objJoint;
+    int       iType ;
+    
+    char      cSrValue[1024];
+    double    dRValue;
+    int       iMrValue;
+	
+    int       iPlFlag ;
+	pl_t      pltValue ;
+	
+  	 printf("reg.type = %d.\n", reg.type);
+	 
 	 switch(reg.type)
 	 {
 	 // pose register
 	 case POSE_REG:
-		 reg_manager_interface_setPr((PrRegData *)reg.value, reg.index);
+	 	 objPrRegDataPtr = (PrRegData *)reg.value;
+		 objPrRegData.id = objPrRegDataPtr->id;
+		 memcpy(objPrRegData.comment, objPrRegDataPtr->comment, 
+		 		sizeof(objPrRegData.comment));
+		 objPrRegData.value = objPrRegDataPtr->value;
+		 reg_manager_interface_setPr(&objPrRegData, reg.index);
 		 break;
 	 case POSE_REG_POSE:
-		 reg_manager_interface_setPosePr((PoseEuler *)reg.value, reg.index);
+		 memcpy(&objPoseEuler, reg.value, sizeof(objPoseEuler));
+		 reg_manager_interface_setPosePr(&objPoseEuler, reg.index);
 		 break;
 	 case POSE_REG_JOINT:
-		 reg_manager_interface_setJointPr((Joint *)reg.value, reg.index);
+		 memcpy(&objJoint, reg.value, sizeof(objJoint));
+		 reg_manager_interface_setJointPr(&objJoint, reg.index);
 		 break;
 	 case POSE_REG_TYPE:
-		 reg_manager_interface_setTypePr((int *)reg.value, reg.index);
+		 memcpy(&iType, reg.value, sizeof(iType));
+		 reg_manager_interface_setTypePr(&iType, reg.index);
 		 break;
 	 case POSE_REG_ID:
-		 reg_manager_interface_setIdPr((int *)reg.value, reg.index);
+		 memcpy(&iID, reg.value, sizeof(iID));
+		 reg_manager_interface_setIdPr(&iID, reg.index);
 		 break;
 	 case POSE_REG_COMMENT:
+		 // memcpy(cComment, reg.value, sizeof(cComment));
 		 reg_manager_interface_setCommentPr(reg.value, reg.index);
 		 break;
 	 // string register
 	 case STR_REG:
-	    reg_manager_interface_setSr((SrRegData *)reg.value, reg.index);
+		 memcpy(&objSrRegData.id, reg.value, sizeof(objSrRegData.id));
+		 memcpy(objSrRegData.comment, 
+		 	    reg.value + sizeof(objSrRegData.id), 
+		 		sizeof(objSrRegData.comment));
+		 objSrRegData.value = string(reg.value + 
+		 						sizeof(objSrRegData.id) + 
+		 						sizeof(objPrRegData.comment)); 
+	    reg_manager_interface_setSr(&objSrRegData, reg.index);
 	 	break;
 	 case STR_REG_VALUE:
-	    reg_manager_interface_setValueSr(reg.value, reg.index);
+		memcpy(cSrValue, reg.value, sizeof(cSrValue));
+	    reg_manager_interface_setValueSr(cSrValue, reg.index);
 	 	break;
 	 case STR_REG_ID:
-	    reg_manager_interface_setIdSr((int *)reg.value, reg.index);
+		memcpy(&iID, reg.value, sizeof(iID));
+	    reg_manager_interface_setIdSr(&iID, reg.index);
 	 	break;
 	 case STR_REG_COMMENT:
+		 // memcpy(cComment, reg.value, sizeof(cComment));
 	    reg_manager_interface_setCommentSr(reg.value, reg.index);
 	 	break;
 	 // number register
 	 case NUM_REG:
-	    reg_manager_interface_setR((RRegData *)reg.value, reg.index);
+	 	objRRegDataPtr = (RRegData *)reg.value;
+		 
+		printf("objRRegDataPtr: id = %d, comment = %s\n", objRRegDataPtr->id, objRRegDataPtr->comment);
+		printf("objRRegDataPtr: id = (%f) \n", objRRegDataPtr->value);
+		 
+ 		objRRegData.id = objRRegDataPtr->id ;
+		memcpy(objRRegData.comment, objRRegDataPtr->comment, 
+		 		                 sizeof(objRRegData.comment));
+		objRRegData.value = objRRegDataPtr->value ;
+		printf("objRRegData: id = (%f) \n", objRRegData.value);
+
+	    reg_manager_interface_setR(&objRRegData, reg.index);
 	 	break;
 	 case NUM_REG_VALUE:
-	    reg_manager_interface_setValueR((double *)reg.value, reg.index);
+		memcpy(&dRValue, reg.value, sizeof(dRValue));
+	    reg_manager_interface_setValueR(&dRValue, reg.index);
 	 	break;
 	 case NUM_REG_ID:
-	    reg_manager_interface_setIdR((int *)reg.value, reg.index);
+		memcpy(&iID, reg.value, sizeof(iID));
+	    reg_manager_interface_setIdR(&iID, reg.index);
 	 	break;
 	 case NUM_REG_COMMENT:
+		// memcpy(Comment, reg.value, csizeof(cComment));
 	    reg_manager_interface_setCommentR(reg.value, reg.index);
 	 	break;
 	 // Special register for motion instruction
 	 case MOT_REG:
-	    reg_manager_interface_setMr((MrRegData *)reg.value, reg.index);
+	 	 objMrRegDataPtr = (MrRegData *)reg.value;
+		 
+		 printf("objMrRegDataPtr: id = %d, comment = %s\n", objMrRegDataPtr->id, objMrRegDataPtr->comment);
+		 printf("objMrRegDataPtr: id = (%f) \n", objMrRegDataPtr->value);
+
+		objMrRegData.id = objMrRegDataPtr->id;
+		memcpy(objMrRegData.comment, objMrRegDataPtr->comment, 
+		 		sizeof(objMrRegData.comment));
+		objMrRegData.value = objMrRegDataPtr->value;
+		printf("MrRegData: id = (%d) \n", objMrRegData.value);
+
+	    reg_manager_interface_setMr(&objMrRegData, reg.index);
 	 	break;
 	 case MOT_REG_VALUE:
-	    reg_manager_interface_setValueMr((int *)(reg.value), reg.index);
+		memcpy(&iMrValue, reg.value, sizeof(iMrValue));
+	    reg_manager_interface_setValueMr(&iMrValue, reg.index);
 	 	break;
 	 case MOT_REG_ID:
-	    reg_manager_interface_setIdMr((int *)(reg.value), reg.index);
+		memcpy(&iID, reg.value, sizeof(iID));
+	    reg_manager_interface_setIdMr(&iID, reg.index);
 	 	break;
 	 case MOT_REG_COMMENT:
+		// memcpy(cComment, reg.value, sizeof(cComment));
 	    reg_manager_interface_setCommentMr(reg.value, reg.index);
 	 	break;
 	 // register of user coordinate offset
@@ -1028,7 +1164,8 @@ int forgesight_mod_reg(RegMap & reg)
 	    reg_manager_interface_setCoordinateUf(reg.value, reg.index);
 	 	break;
 	 case UF_REG_ID:
-	    reg_manager_interface_setIdUf((int *)reg.value, reg.index);
+	    memcpy(&iID, reg.value, sizeof(iID));
+	    reg_manager_interface_setIdUf(&iID, reg.index);
 	 	break;
 	 case UF_REG_COMMENT:
 	    reg_manager_interface_setCommentUf(reg.value, reg.index);
@@ -1041,7 +1178,8 @@ int forgesight_mod_reg(RegMap & reg)
 	    reg_manager_interface_setCoordinateTf(reg.value, reg.index);
 	 	break;
 	 case TF_REG_ID:
-	    reg_manager_interface_setIdTf((int *)reg.value, reg.index);
+	    memcpy(&iID, reg.value, sizeof(iID));
+	    reg_manager_interface_setIdTf(&iID, reg.index);
 	 	break;
 	 case TF_REG_COMMENT:
 	    reg_manager_interface_setCommentTf(reg.value, reg.index);
@@ -1054,13 +1192,16 @@ int forgesight_mod_reg(RegMap & reg)
 	    // reg_manager_interface_setPosePl(reg.value, reg.index);
 	 	break;
 	 case PL_REG_PALLET:
-	    reg_manager_interface_setPalletPl((pl_t *)reg.value, reg.index);
+		memcpy(&pltValue, reg.value, sizeof(pltValue));
+	    reg_manager_interface_setPalletPl(&pltValue, reg.index);
 	 	break;
 	 case PL_REG_FLAG:
-	    reg_manager_interface_setFlagPl((int *)reg.value, reg.index);
+		memcpy(&iPlFlag, reg.value, sizeof(iPlFlag));
+	    reg_manager_interface_setFlagPl(&iPlFlag, reg.index);
 	 	break;
 	 case PL_REG_ID:
-	    reg_manager_interface_setIdPl((int *)reg.value, reg.index);
+	    memcpy(&iID, reg.value, sizeof(iID));
+	    reg_manager_interface_setIdPl(&iID, reg.index);
 	 	break;
 	 case PL_REG_COMMENT:
 	    reg_manager_interface_setCommentPl(reg.value, reg.index);

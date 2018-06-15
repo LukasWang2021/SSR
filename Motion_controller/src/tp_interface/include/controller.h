@@ -856,6 +856,7 @@ class Controller
     std::atomic<WorkStatus>     work_status_;
     std::atomic<RobotState>     ctrl_state_;    //fault and running
     std::atomic<RunningMode>    run_mode_;      //normal and limited running
+    double                         current_cnt_ ;
     
 
     SafetyInterface             safety_interface_;  //instance of SafetyInterface

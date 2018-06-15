@@ -361,11 +361,13 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     {
 		if (instruction->is_additional == false)
 		{
+	     	printf("instr.target.cnt = %f .\n", instruction->target.cnt);
 			ret = tryWrite(SHM_INTPRT_CMD, 0, 
 				(void*)instruction, sizeof(Instruction));
 		}
 		else
 		{
+	     	printf("instr.target.cnt = %f .\n", instruction->target.cnt);
 			ret = tryWrite(SHM_INTPRT_CMD, 0, 
 				(void*)instruction, 
 				sizeof(Instruction) 

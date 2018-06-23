@@ -1069,10 +1069,12 @@ void Controller::getSafetyTPAuto(void* params)
         memcpy(param->bytes, (char*)&di, param->size);
     }
 }
+
 void Controller::getIOInfo(void* params)
 {
     motion_spec_DeviceList dev_list;
-    IOInterface::instance()->getIODevices(dev_list);
+    // IOInterface::instance()->getIODevices(dev_list);
+	getIODevInfo(dev_list);
     TPIParamBuf *param_ptr = (TPIParamBuf*)params;
     if (param_ptr->type == REPLY)
     {
@@ -1479,6 +1481,7 @@ void Controller::stateMachine(void* params)
         //FST_INFO("fifo_len:%d, smooth:%d, servo_state:%d", fifo_len, auto_motion_->getSmooth(), ShareMem::instance()->getServoState());
     /*}*/
 
+#if 0
     if (auto_motion_->getSmooth() >= 0) //must full speed mode
     {
         if (fifo_len < 50)
@@ -1504,7 +1507,7 @@ void Controller::stateMachine(void* params)
             }
         }
     }
-
+#endif
     if ((work_status_ == IDLE_W)
     || (work_status_ == IDLE_TO_RUNNING_T)
     || (work_status_ == RUNNING_W))
@@ -1733,7 +1736,9 @@ void Controller::rtTrajFlow(void* params)
 
 void Controller::heartBeat(void* params)
 {
-    IOInterface::instance()->updateIOError(); 
+	// Lujiaming comment at 0619
+    // IOInterface::instance()->updateIOError();
+    updateIODevError();
     ServiceHeartbeat::instance()->sendRequest();
     U64 result = safety_interface_.setSafetyHeartBeat();
     if (result != TPI_SUCCESS)
@@ -1762,7 +1767,9 @@ void Controller::requestProc()
                 //U64 result = IOInterface::instance()->checkIO(str_path.c_str(), buf_len, id);
                 IOPortInfo info;
                 // IOMapPortInfo infoMap;
-                U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+				// Lujiaming comment at 0619
+                // U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+				U64 result = checkIODevInfo(str_path.c_str(), &info);
                 if (result != TPI_SUCCESS)
                 {
                     rcs::Error::instance()->add(result);
@@ -1852,7 +1859,9 @@ void Controller::requestProc()
             if (str_path.substr(0, 7) == "root/IO")
             {
                 IOPortInfo info;
-                U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+				// Lujiaming comment at 0619
+			    // U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+			    U64 result = checkIODevInfo(str_path.c_str(), &info);
 
                 if (result != TPI_SUCCESS)
                 {
@@ -1923,7 +1932,7 @@ void Controller::requestProc()
 							break;
 						}
 					}
-					FST_INFO("getIOReply:: getParamLen:%d", 
+					FST_INFO("getIOReply:: IO simulate_IO_status getParamLen:%d", 
 						tp_interface_->getRepDataPtr()->getParamLen());
 					char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr() ;
 					for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
@@ -2038,7 +2047,9 @@ void Controller::updateProc()
         {
             sig->id = id;
             sig_gp->sig_param_count++;
-            IOInterface::instance()->getDIO(id, sig->param.bytes, sizeof(sig->param.bytes), pub_update->buf_len);
+            FST_INFO("NOTICE: IOInterface::instance()->getDIO -> id : %d\n", id);
+			// Lujiaming comment at 0619
+            // IOInterface::instance()->getDIO(id, sig->param.bytes, sizeof(sig->param.bytes), pub_update->buf_len);
         }
         else
         {
@@ -2141,7 +2152,10 @@ void Controller::addPubParameter(string str_path, PublishUpdate *pub_update)
     if (str_path.substr(0, 7) == "root/IO")
     {
         IOPortInfo info;
-        U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+		
+		// Lujiaming comment at 0619
+		// U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+		U64 result = checkIODevInfo(str_path.c_str(), &info);
 
         if (result != TPI_SUCCESS)
         {
@@ -2171,7 +2185,10 @@ void Controller::removePubParameter(string str_path)
     if (str_path.substr(0, 7) == "root/IO")
     {
         IOPortInfo info;
-        U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+		// Lujiaming comment at 0619
+		// U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+		U64 result = checkIODevInfo(str_path.c_str(), &info);
+        
         if (result != TPI_SUCCESS)
         {
             rcs::Error::instance()->add(result);
@@ -2368,9 +2385,32 @@ void Controller::pauseMotion()
     auto_motion_->pause(); 
 }
 
+bool Controller::calcFineDst()
+{
+    MoveCommandDestination  movCmdDst ;
+    PoseEuler               servo_pose_;
+	double                  dRange ;
+	double                  dX, dY, dZ ;
+	ShareMem::instance()->getMoveCommandDestination(movCmdDst);
+	
+    arm_group_->getPoseFromJoint(servo_joints_, servo_pose_);
+	dX = movCmdDst.pose_target.position.x - servo_pose_.position.x ;
+	dY = movCmdDst.pose_target.position.y - servo_pose_.position.y ;
+	dZ = movCmdDst.pose_target.position.z - servo_pose_.position.z ;
+	dRange = sqrt( pow(dX, 2) + pow(dY, 2) + pow(dY, 2) );
+	if (dRange <= 0.05)
+    {
+        FST_INFO("autoMove: dRange is %f <= 0.05", dRange);
+		ShareMem::instance()->setMoveCommandDestination(movCmdDst);
+        return true;
+    }
+    return false;
+}
+
 bool Controller::calcMotionDst(MotionTarget target)
 {
     MoveCommandDestination  movCmdDst ;
+	movCmdDst.type = target.type ;
     if (target.type == MOTION_JOINT)
     {
         movCmdDst.joint_target = target.joint_target ;
@@ -2975,7 +3015,76 @@ int Controller::getChangeRegListReply(std::vector<ChgFrameSimple>& vecRet)
 	return 1;
 }
 
-int Controller::getIODevInfo()
+int Controller::updateIODevError()
+{
+    // FST_INFO("sendGetIODevInfoRequest");
+    InterpreterControl ctrl;
+    ctrl.cmd = UPDATE_IO_DEV_ERROR ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+int Controller::checkIODevInfo(const char *path, IOPortInfo* io_info)
+{
+    std::vector<std::string> vc_path;
+    boost::split(vc_path, path, boost::is_any_of("/"));
+    
+    int size = vc_path.size();
+    printf("\t checkIODevInfo::getIODevNum: %d\n", vecIODeviceInfoShm.size());
+    for (int i = 0; i < vecIODeviceInfoShm.size(); i++)
+    {
+    		printf("\t device_number: %s\n", vecIODeviceInfoShm[i].path);
+    		printf("\t id: %d\n", vecIODeviceInfoShm[i].id);
+    		printf("\t device_number: %d\n", vecIODeviceInfoShm[i].device_number);
+        if ((vc_path[2] == vecIODeviceInfoShm[i].communication_type) 
+        && (stoi(vc_path[3]) == vecIODeviceInfoShm[i].device_number))
+        {
+            io_info->dev_id = vecIODeviceInfoShm[i].id;
+            if (size == 4)
+            {
+                io_info->msg_id = io_info->dev_id;
+                io_info->port_index = 0;
+                io_info->port_type = IO_INPUT;
+                io_info->bytes_len = ((vecIODeviceInfoShm[i].input + 7) >> 3)
+								   + ((vecIODeviceInfoShm[i].output + 7) >> 3);
+                return TPI_SUCCESS;
+            }
+            else if (size == 6)       
+            {
+                int index = stoi(vc_path[5]);
+                if (vc_path[4] == "DI")
+                {   
+                    if (index > (int)vecIODeviceInfoShm[i].input)
+                        return INVALID_PATH_FROM_TP;
+                    io_info->port_index = index;
+                    io_info->port_type = IO_INPUT;
+                    io_info->msg_id = io_info->dev_id + index;
+                }
+                else if (vc_path[4] == "DO")
+                {   
+                    if (index > (int)vecIODeviceInfoShm[i].output)
+                        return INVALID_PATH_FROM_TP;
+                    io_info->port_index = index;
+                    io_info->port_type = IO_OUTPUT;
+                    io_info->msg_id = io_info->dev_id + vecIODeviceInfoShm[i].input + index;
+                }
+                else
+                {
+                    return INVALID_PATH_FROM_TP;
+                }
+                io_info->bytes_len =  1;
+                return TPI_SUCCESS;
+            }
+            else 
+            {
+                return PARSE_IO_PATH_FAILED;
+            }
+        }
+    }
+    return PARSE_IO_PATH_FAILED;
+}
+
+int Controller::getIODevInfo(motion_spec_DeviceList & dev_list)
 {
     int iCount = 0 ;
     char * params = (char *)malloc(REG_IO_INFO_SIZE);
@@ -3004,6 +3113,18 @@ int Controller::getIODevInfo()
     		FST_INFO("getIODevInfo = %s", objInfoPtr[i].path);
 			vecIODeviceInfoShm.push_back(objInfoPtr[i]);
 		}
+        // Fills motion_spec_DeviceList
+		dev_list.dev_info_count = iCount;
+	    for (int i = 0; i < iCount; i++)
+	    {
+	        strcpy(dev_list.dev_info[i].communication_type, 
+					vecIODeviceInfoShm[i].communication_type);
+	        dev_list.dev_info[i].device_number = vecIODeviceInfoShm[i].device_number;
+	        dev_list.dev_info[i].device_type = 
+					(motion_spec_DeviceType)vecIODeviceInfoShm[i].device_type;
+	        dev_list.dev_info[i].input = vecIODeviceInfoShm[i].input;
+	        dev_list.dev_info[i].output = vecIODeviceInfoShm[i].output;
+	    }
 	}
 }
 
@@ -3033,15 +3154,13 @@ bool Controller::isRegisterIndexError(int &send_index, int &reg_total)
 {
     if((1 > send_index) || (send_index > reg_total))
     {
-        FST_ERROR("Register : The index out of range.");
+        FST_ERROR("Register : The index out of range with (%d - %d).", send_index, reg_total);
         rcs::Error::instance()->add(FAIL_SET_REGISTER_ID);
         return true;
     }
 
     return false;
 }
-
-
 
 void Controller::setPoseRegister(void* params, int len)
 {
@@ -3060,6 +3179,8 @@ void Controller::setPoseRegister(void* params, int len)
     }
 
     PrRegData pr_struct;
+	memset(&pr_struct, 0x00, sizeof(PrRegData));
+	
     pr_struct.id = pr_interface.id;
     memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
 
@@ -3076,11 +3197,10 @@ void Controller::setPoseRegister(void* params, int len)
     }
     else
     {
-        FST_ERROR("Controller : Value Tye Error from TP");
+        FST_ERROR("Controller : Value Type(%d) Error from TP", pr_interface.type);
         rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
         return;
     }
-
     RegMap set_reg;
     set_reg.index = pr_struct.id;
     set_reg.type = POSE_REG;
@@ -3167,6 +3287,7 @@ void Controller::setNumberRegister(void* params, int len)
     }
 
     RRegData nr_struct ;
+	memset(&nr_struct, 0x00, sizeof(RRegData));
     nr_struct.value = nr_interface.value;
     nr_struct.id = nr_interface.id;
 
@@ -3673,6 +3794,8 @@ void Controller::setMR(void* params, int len)
     }
 
     MrRegData mr_struct;
+	memset(&mr_struct, 0x00, sizeof(MrRegData));
+	
     mr_struct.id = mr_interface.id;
     mr_struct.value = mr_interface.value;
     memcpy(mr_struct.comment, mr_interface.comment, sizeof(mr_interface.comment));

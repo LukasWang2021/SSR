@@ -138,7 +138,7 @@ class IOInterface
     /**
      * @brief: update IO error 
      */
-    void updateIOError();
+    U64 updateIOError();
 
 	fst_io_manager::IODeviceInfo* getDevInfoPtr(){ return dev_info_ ; }
 

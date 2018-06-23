@@ -30,6 +30,7 @@
 #include "safety_interface.h"
 #include "offset_calibrator.h"
 #include "launch_code_mgr.h"
+#include "io_interface.h"
 
 #define MAX_PLANNED_POINTS_NUM		(20)
 #define IDLE2EXE_DELAY              (50)  //wait from idle to execute(ms)
@@ -681,11 +682,25 @@ class Controller
     int getIODevInfoReply(void* params);
 
     /**
-     * @brief: callback for getting register 
+     * @brief: check for IO device info 
      *
      * @param params
      */
-    int getIODevInfo();
+    int updateIODevError();
+
+    /**
+     * @brief: check for IO device info 
+     *
+     * @param params
+     */
+    int checkIODevInfo(const char *path, IOPortInfo* io_info);
+
+    /**
+     * @brief: callback for IO device info 
+     *
+     * @param params
+     */
+    int getIODevInfo(motion_spec_DeviceList & dev_list);
 
     /**
      * @brief: Judge whether there is a index error for setting
@@ -1011,6 +1026,11 @@ class Controller
      * @brief: calc Motion Dst
      */
      bool setMotionStartPos();
+
+    /**
+     * @brief: calc Motion Dst
+     */
+     bool calcFineDst();
 
     /**
      * @brief: calibrate 

@@ -267,7 +267,7 @@ U64 IOInterface::checkIO(const char *path, IOPortInfo* io_info)
     boost::split(vc_path, path, boost::is_any_of("/"));
     
     int size = vc_path.size();
-    printf("\t getIODevNum: %d\n", getIODevNum());
+    printf("\t Io_interface::getIODevNum: %d\n", getIODevNum());
     for (int i = 0; i < getIODevNum(); i++)
     {
     		printf("\t device_number: %s\n", dev_info_[i].path.c_str());
@@ -336,12 +336,13 @@ int IOInterface::getIODevIndex(int dev_address)
 }
 
 
-void IOInterface::updateIOError()
+U64 IOInterface::updateIOError()
 {
     static U64 result = io_manager_->getIOError();
     if (result != TPI_SUCCESS)
     {
         rcs::Error::instance()->add(result);
     }
+	return result ;
 }
 

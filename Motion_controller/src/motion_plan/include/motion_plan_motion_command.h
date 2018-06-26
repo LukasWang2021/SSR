@@ -11,6 +11,7 @@
 #include <fst_datatype.h>
 #include <motion_plan_error_code.h>
 
+
 namespace fst_controller
 {
 
@@ -20,7 +21,7 @@ struct LinePathCoeff {
     double position_coeff_z;
 
     bool   spherical_flag;
-    Angle  orientation_angle;
+    double orientation_angle;
 };
 
 // for triangle case:

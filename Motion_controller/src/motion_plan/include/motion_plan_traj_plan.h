@@ -13,20 +13,20 @@
 namespace fst_controller
 {
 
+
 ErrorCode computeAlphaLimit(const double *joint, const double *omega, double *alpha_upper, double *alpha_lower);
 
-ErrorCode createTrajectoryFromPath(const ControlPoint &prev_point, ControlPoint &this_point);
+ErrorCode createSpeedUpTraj(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
+                            Alpha *alpha_upper, Alpha *alpha_lower);
 
-void computeDurationMax(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
-                                Alpha* acc_limit, Omega* velocity_limit, MotionTime& duration_max);
+ErrorCode createSpeedUpTraj(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration);
 
-void computeDurationMin(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, 
-                                Alpha* acc_limit, Omega* velocity_limit, MotionTime& duration_min);
+ErrorCode createBackwardSpeedUpTraj(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
+                                    Alpha *alpha_upper, Alpha *alpha_lower);
 
-void computeLastDurationMin(Angle* start_joint_ptr, Angle* end_joint_ptr, Omega* start_omega_ptr, MotionTime& duration_min);
+ErrorCode uniformTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration, TrajSegment &seg);
 
-void computeTrajectory(bool is_pause, bool is_forward, size_t target_tick, Angle* start_joint_ptr, Angle* end_joint_ptr,
-                            Omega* start_omega_ptr, MotionTime duration, Alpha* acc_limit, Omega* velocity_limit, ControlPoint* target);
+
 
 ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
                             Omega *omega_limit, Alpha *alpha_upper, Alpha *alpha_lower);
@@ -40,6 +40,8 @@ ErrorCode forwardTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime e
 
 ErrorCode forwardUniformTrajectory(ControlPoint &prev, ControlPoint &next, MotionTime expect_duration,
                                    Omega *omega_limit, TrajSegment &seg);
+
+
 }
 
 #endif

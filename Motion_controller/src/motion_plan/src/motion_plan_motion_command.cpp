@@ -309,96 +309,18 @@ ErrorCode MotionCommand::planJointPath(void)
 
     // set start point
     joint_starting_ = beginning_joint_;
-    
-    /*
-    if(begin_from_given_joint_){
-        joint_starting_ = beginning_joint_;
-    }
-    else{
-        // FIXME: current getJointEnding() only support MOVJ, except MOVL and MOVC
-        joint_starting_ = prev_ptr_->getJointEnding();
-    }
-    */
 
-    /*
-    // set joint limits
-    Omega velocity_max[AXIS_IN_ALGORITHM];
-    Alpha acc_max[AXIS_IN_ALGORITHM];
-    velocity_max[0] = g_soft_constraint.j1.max_omega;
-    velocity_max[1] = g_soft_constraint.j2.max_omega;
-    velocity_max[2] = g_soft_constraint.j3.max_omega;
-    velocity_max[3] = g_soft_constraint.j4.max_omega;
-    velocity_max[4] = g_soft_constraint.j5.max_omega;
-    velocity_max[5] = g_soft_constraint.j6.max_omega;
-    velocity_max[0] = vel_*g_soft_constraint.j1.max_omega;
-    velocity_max[1] = vel_*g_soft_constraint.j2.max_omega;
-    velocity_max[2] = vel_*g_soft_constraint.j3.max_omega;
-    velocity_max[3] = vel_*g_soft_constraint.j4.max_omega;
-    velocity_max[4] = vel_*g_soft_constraint.j5.max_omega;
-    velocity_max[5] = vel_*g_soft_constraint.j6.max_omega;
-
-    acc_max[0] = acc_*g_soft_constraint.j1.max_alpha;
-    acc_max[1] = acc_*g_soft_constraint.j2.max_alpha;
-    acc_max[2] = acc_*g_soft_constraint.j3.max_alpha;
-    acc_max[3] = acc_*g_soft_constraint.j4.max_alpha;
-    acc_max[4] = acc_*g_soft_constraint.j5.max_alpha;
-    acc_max[5] = acc_*g_soft_constraint.j6.max_alpha;
-    */
-    /*FST_INFO("velocity_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
-                g_soft_constraint.j1.max_omega, g_soft_constraint.j2.max_omega,
-                g_soft_constraint.j3.max_omega, g_soft_constraint.j4.max_omega,
-                g_soft_constraint.j5.max_omega, g_soft_constraint.j6.max_omega);
-    FST_INFO("acc_max: axis1 =%f, axis2 =%f, axis3 =%f, axis4 =%f, axis5 =%f, axis6 =%f",
-                g_soft_constraint.j1.max_alpha, g_soft_constraint.j2.max_alpha,
-                g_soft_constraint.j3.max_alpha, g_soft_constraint.j4.max_alpha,
-                g_soft_constraint.j5.max_alpha, g_soft_constraint.j6.max_alpha);*/
-    
-    // compute minimum time of axes
-    /*
-    MotionTime duration_max = -1;
-    int duration_max_index = 0;
-
-    MotionTime duration[AXIS_IN_ALGORITHM];
-    Angle delta_joint[AXIS_IN_ALGORITHM];
-    Angle* joint_start_ptr = (Angle*)&joint_starting_;
-    Angle* joint_end_ptr = (Angle*)&joint_ending_;
-    for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)
-    {
-        delta_joint[i] = joint_end_ptr[i] - joint_start_ptr[i];
-        Angle delta_joint_fabs = fabs(delta_joint[i]);
-        if(fabs(delta_joint_fabs) < MINIMUM_E6) // deal with the problem of computational accuracy
-        {
-            delta_joint[i] = 0;
-            delta_joint_fabs = 0;
-        }
-        double condition = velocity_max[i] * velocity_max[i] / acc_max[i];
-        if(condition >= delta_joint_fabs)    // triangle velocity curve
-        {
-            duration[i] = 2*sqrt(delta_joint_fabs / acc_max[i]);
-        }
-        else    // trapezoid velocity curve
-        {
-            duration[i] = delta_joint_fabs / velocity_max[i] + velocity_max[i] / acc_max[i];
-        }
-
-        if(duration[i] > duration_max)
-        {
-            duration_max = duration[i];
-            duration_max_index = i;
-        }
-    }
-    */
-
-    size_t duration_index = 0;
+    size_t      duration_index = 0;
     MotionTime  duration_max = -1;
     MotionTime  durations[AXIS_IN_ALGORITHM];
-    JointLimit  *jnt_limit = &g_soft_constraint.j1;
+
     double  *js = &joint_starting_.j1;
     double  *je = &joint_ending_.j1;
 
     for (size_t i = 0; i < AXIS_IN_ALGORITHM; i++)
     {
-        durations[i] = fabs(je[i] - js[i]) / g_omega_limit[i];
+        durations[i] = fabs(je[i] - js[i]) / (g_omega_limit[i] * vel_);
+
         if (durations[i] > duration_max)
         {
             duration_max = durations[i];
@@ -407,7 +329,13 @@ ErrorCode MotionCommand::planJointPath(void)
     }
 
     // compute max_stamp
-    max_stamp_ = ceil(fabs(je[duration_index] - js[duration_index]) / g_cycle_radian);
+    double cycle_radian;
+    if      (vel_ < 0.25)   {cycle_radian = g_cycle_radian;    }
+    else if (vel_ < 0.50)   {cycle_radian = g_cycle_radian * 2;}
+    else if (vel_ < 0.75)   {cycle_radian = g_cycle_radian * 3;}
+    else                    {cycle_radian = g_cycle_radian * 4;}
+
+    max_stamp_ = ceil(fabs(je[duration_index] - js[duration_index]) / cycle_radian);
     joint_coeff_[0] = (je[0] - js[0]) / max_stamp_;
     joint_coeff_[1] = (je[1] - js[1]) / max_stamp_;
     joint_coeff_[2] = (je[2] - js[2]) / max_stamp_;
@@ -415,7 +343,7 @@ ErrorCode MotionCommand::planJointPath(void)
     joint_coeff_[4] = (je[4] - js[4]) / max_stamp_;
     joint_coeff_[5] = (je[5] - js[5]) / max_stamp_;
 
-    average_duration_ = fabs(joint_coeff_[duration_index]) / g_omega_limit[duration_index] / vel_;
+    average_duration_ = fabs(joint_coeff_[duration_index]) / (g_omega_limit[duration_index] * vel_);
     /*
     max_stamp_ = ceil(duration_max / (g_cycle_radian / velocity_max[duration_max_index]));
     for(int i = 0; i < AXIS_IN_ALGORITHM; ++i)

@@ -146,6 +146,8 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
         for (int j = 0; j < JOINT_NUM; ++j)
         {
             ts_.points[i].positions[j] = jc.points[i].positions[j];
+            ts_.points[i].velocities[j] = jc.points[i].omega[j];
+            ts_.points[i].effort[j] = jc.points[i].inertia[j];
         }
         //Adding time stamp for trajectory. 
         if (jc.points[i].point_position == START_POINT)

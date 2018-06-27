@@ -47,6 +47,8 @@ typedef enum _InstType
     LOGIC_TOK,
     END_TOK,
     MOTION,
+    SET_UF,
+    SET_TF,
     END_PROG,
 }InstType;
 
@@ -78,10 +80,13 @@ typedef enum _InterpreterCommand
 		
     MOD_REG  = 201,
 	READ_REG = 202,
-    MOD_IO   = 203,
-    READ_IO  = 204,
+    DEL_REG  = 203,
     
-    READ_IO_DEV_INFO  = 205,
+    MOD_IO   = 204,
+    READ_IO  = 205,
+    
+    READ_IO_DEV_INFO  = 206,
+    UPDATE_IO_DEV_ERROR  = 207,
     
     // Jump to 210 for adding IO feature
     READ_SMLT_STS  = 211,
@@ -297,6 +302,8 @@ typedef struct _Instruction
         MotionTarget    target;
         int             loop_cnt;
     };
+	int  current_uf ;
+	int  current_tf ;
     bool is_additional;
     int add_num;
 #ifdef WIN32
@@ -311,6 +318,7 @@ typedef struct _Instruction
 
 typedef struct _MoveCommandDestination
 {
+    InstType        type;
     PoseEuler       pose_target;
     Joint           joint_target;
 } MoveCommandDestination;

@@ -1681,6 +1681,20 @@ void Controller::rtTrajFlow(void* params)
         joint_command.points[i].positions[4] = joint_traj[i].joint.j5;
         joint_command.points[i].positions[5] = joint_traj[i].joint.j6;
 
+        joint_command.points[i].omega[0] = joint_traj[i].omega.j1;
+        joint_command.points[i].omega[1] = joint_traj[i].omega.j2;
+        joint_command.points[i].omega[2] = joint_traj[i].omega.j3;
+        joint_command.points[i].omega[3] = joint_traj[i].omega.j4;
+        joint_command.points[i].omega[4] = joint_traj[i].omega.j5;
+        joint_command.points[i].omega[5] = joint_traj[i].omega.j6;
+
+        joint_command.points[i].inertia[0] = joint_traj[i].inertia.j1;
+        joint_command.points[i].inertia[1] = joint_traj[i].inertia.j2;
+        joint_command.points[i].inertia[2] = joint_traj[i].inertia.j3;
+        joint_command.points[i].inertia[3] = joint_traj[i].inertia.j4;
+        joint_command.points[i].inertia[4] = joint_traj[i].inertia.j5;
+        joint_command.points[i].inertia[5] = joint_traj[i].inertia.j6;
+
         //fillInFIFO2(joint_command.points[i].positions);
         
         joint_command.points[i].point_position = joint_traj[i].level; //point position: start\middle\ending

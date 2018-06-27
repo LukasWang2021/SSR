@@ -3514,13 +3514,7 @@ void Controller::getValidSimpleMR(void* params)
 
 void Controller::setSR(void* params, int len)
 {
-    if (params == NULL)
-    {
-        FST_INFO("Controller : param is null");
-        return;
-    }
-
-    register_spec_SRInterface sr_interface =
+     register_spec_SRInterface sr_interface =
         *(register_spec_SRInterface*)params;
 
     int sr_total = 10;
@@ -3534,30 +3528,29 @@ void Controller::setSR(void* params, int len)
         memcpy(sr_interface.comment, test_comment, sizeof(test_comment));
     }
 
-    FST_INFO("Controller : Set SR : comment = %s, id = %d, value = %s",
-        sr_interface.comment, sr_interface.id, sr_interface.value);
-
-    FST_INFO("Controller : Set SR :id = %d", sr_interface.id);
-
-    string sr_value(sr_interface.comment);
-
     SrRegData sr_struct;
     sr_struct.id = sr_interface.id;
-    sr_struct.value = sr_value;
+    sr_struct.value = sr_interface.value;
     memcpy(sr_struct.comment, sr_interface.comment, sizeof(sr_interface.comment));
 
     RegMap set_reg;
     set_reg.index = sr_struct.id;
     set_reg.type = STR_REG;
-    memcpy(set_reg.value, &sr_struct, sizeof(sr_struct));
+
+    char sr_value[254];
+    strcpy(sr_value, sr_struct.value.c_str());
+
+    int data_size = sizeof(sr_struct.id);
+    memcpy(set_reg.value, &sr_struct.id, data_size);
+    memcpy(&set_reg.value[data_size], sr_struct.comment, sizeof(sr_struct.comment));
+    data_size += sizeof(sr_struct.comment);
+    memcpy(&set_reg.value[data_size], sr_value, sizeof(sr_value));
 
     FST_INFO("SrRegData: id = %d, comment = %s, value = %s",
         sr_struct.id, sr_struct.comment, sr_struct.value.c_str());
 
-
-
     int reg_size = sizeof(set_reg);
-    //setRegister(&set_reg, reg_size);
+    setRegister(&set_reg, reg_size);
 }
 
 void Controller::getSR(void* params)

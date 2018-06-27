@@ -180,10 +180,10 @@ bool RReg::readAllRegDataFromYaml()
         std::string comment;
         param_.getParam(reg_path + "/id", base_data.id);
         param_.getParam(reg_path + "/is_valid", base_data.is_valid);
-		if(base_data.is_valid)
-			printf("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
-		else
-			printf("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
+//		if(base_data.is_valid)
+//			printf("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
+//		else
+//			printf("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
         param_.getParam(reg_path + "/comment", comment);
         comment.resize(MAX_REG_COMMENT_LENGTH - 1, 0);
         memcpy(base_data.comment, comment.c_str(), MAX_REG_COMMENT_LENGTH);

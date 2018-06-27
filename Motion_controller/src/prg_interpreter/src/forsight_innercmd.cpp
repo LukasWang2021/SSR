@@ -583,7 +583,13 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	}
 	    else
 	    {
-	        instr.target.cnt = value.getFloatValue() / 100;
+	        if(value.getFloatValue() < 0) // == -1
+	    	{
+	        	instr.target.cnt = -1;
+	     		printf("instr.target.cnt = %f in the FINE.\n", instr.target.cnt);
+	    	}
+	        else 
+				instr.target.cnt = value.getFloatValue() / 100;
 	    }
     }
     else
@@ -621,6 +627,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 // 	#else
 // 		printf("setInstruction MOTION_JOINT at %d\n", instr.line);
 // 	#endif
+	     		printf("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
@@ -730,13 +737,20 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
     {
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
+	     printf("instr.target.cnt = %f setInstruction.\n", value.getFloatValue());
     	if(objThreadCntrolBlock->prog_mode == STEP_MODE)
     	{
         	instr.target.cnt = -1;
     	}
 	    else
 	    {
-	        instr.target.cnt = value.getFloatValue() / 100;
+	        if(value.getFloatValue() < 0) // == -1
+	    	{
+	        	instr.target.cnt = -1.0000;
+	     		printf("instr.target.cnt = %f in the FINE.\n", instr.target.cnt);
+	    	}
+	        else 
+	            instr.target.cnt = value.getFloatValue() / 100;
 	    }
     }
     else
@@ -775,6 +789,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 // 		printf("setInstruction MOTION_LINE at %d\n", instr.line);
 // 	#endif
 	
+	 printf("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
 #ifndef WIN32
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)

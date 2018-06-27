@@ -61,9 +61,9 @@ int forgesight_io_config_get_value(string key, int& value)
     g_io_config_->clearLastError();
 	value = DEFAULT_IO_VALUE;
 	g_io_config_->getParam(key, value);
-    printf("forgesight_io_config_get_value:: %s:%d with 0x%llx\n", 
-    				key.c_str(), value, 
-    				g_io_config_->getLastError());
+//    printf("forgesight_io_config_get_value:: %s:%d with 0x%llx\n", 
+//    				key.c_str(), value, 
+//    				g_io_config_->getLastError());
 #else
     std::map<std::string, int>::iterator it = g_io_config_.find(key);
 	if (it != g_io_config_.end())

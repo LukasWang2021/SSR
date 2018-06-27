@@ -513,7 +513,21 @@ bool encListCallback(pb_ostream_t *stream, const pb_field_t *field, void * const
             return false;
     }
     // FST_INFO("encListCallback Call IOInterface::instance");
-    return IOInterface::instance()->encDevList(&param_msg, stream, field);
+
+	// Lujiaming comment at 0619
+    // return IOInterface::instance()->encDevList(&param_msg, stream, field);
+    
+    param_msg.has_info = true;
+    param_msg.info.overwrite_active = 0; //not active
+    param_msg.info.data_type = 2;  // uint8
+    param_msg.info.data_size = 1;  // 1 byte
+    param_msg.info.number_of_elements = 0;  
+    param_msg.info.param_type = BaseTypes_ParamType_INPUT_SIGNAL;  //input
+    param_msg.info.permission = BaseTypes_Permission_permission_undefined;
+    param_msg.info.user_level = BaseTypes_UserLevel_user_level_undefined;
+    param_msg.info.unit = BaseTypes_Unit_unit_undefined;
+
+    return true;
 }
 
 void ProtoParse::encVersionInfo(const uint8_t *in_buf, int in_len, void *out_buf)

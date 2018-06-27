@@ -54,7 +54,11 @@ class ServiceBase
         do
         {
             result = comm_.send(req, sizeof(ServiceRequest), COMM_DONTWAIT);
-            //FST_INFO("id:%x,buf:%x,%x,%x,%x,%x", req->req_id, *(int*)&req->req_buff[0], *(int*)&req->req_buff[4], *(int*)&req->req_buff[8],*(int*)&req->req_buff[12],*(int*)&req->req_buff[16]);
+            // FST_INFO("result:%d", result);
+            // FST_INFO("id:%x,buf:%x,%x,%x,%x,%x", req->req_id, 
+			//	    *(int*)&req->req_buff[0], *(int*)&req->req_buff[4], 
+			//	    *(int*)&req->req_buff[8],*(int*)&req->req_buff[12],
+			//  	*(int*)&req->req_buff[16]);
             ++count;
             if (count > attempts)
             {
@@ -78,8 +82,8 @@ class ServiceBase
             ++count;
             if (count > attempts)
             {
-                FST_ERROR("service recv timeout:%d", count);
-                rcs::Error::instance()->add(READ_SERVICE_TIMEOUT);
+            //   FST_ERROR("service recv timeout:%d", count);
+            //    rcs::Error::instance()->add(READ_SERVICE_TIMEOUT);
                 return false;
             }
             //FST_INFO("result:%llx", result);

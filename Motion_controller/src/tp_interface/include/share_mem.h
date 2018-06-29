@@ -13,7 +13,7 @@
 #include "common.h"
 #include "error_code.h"
 #include "ros_basic.h"
-#include "interpreter_common.h"
+#include "common/interpreter_common.h"
 #include <atomic>
 
 #define READ_COUNT_LIMIT    (50)

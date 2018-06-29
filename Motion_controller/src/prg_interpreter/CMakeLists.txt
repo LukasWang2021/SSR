@@ -87,15 +87,15 @@ add_executable(prg_interpreter
     src/base_thread.cpp
     src/forsight_inter_control.cpp
     src/forsight_io_controller.cpp
-              src/forsight_io_mapping.cpp
-              src/forsight_program_property.cpp
-              src/forsight_cJSON.cpp
+    src/forsight_io_mapping.cpp
+    src/forsight_program_property.cpp
+    src/forsight_cJSON.cpp
+    src/io_interface.cpp
 )
 
 target_link_libraries(prg_interpreter
     ${catkin_LIBRARIES}
     io_manager
-    io_interface
     parameter_manager
     xml2
     motion_plan

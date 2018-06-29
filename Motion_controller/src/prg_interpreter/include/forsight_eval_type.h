@@ -1,7 +1,7 @@
 #ifndef FORSIGHT_EVAL_TYPE_H
 #define FORSIGHT_EVAL_TYPE_H
 #include <stdlib.h>
-#include "reg-shmi/forsight_fst_datatype.h" 
+#include "fst_datatype.h" 
 
 #ifdef WIN32
 #include "tp_reg_manager_interface.h"

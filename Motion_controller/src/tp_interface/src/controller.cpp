@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include "ctrl_func.h"
-#include "io_interface.h"
 #include "tp_reg_manager_interface.h"
 #include "error_monitor.h"
 #include "error_code.h"

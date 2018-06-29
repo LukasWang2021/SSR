@@ -16,7 +16,6 @@
 #include <vector>
 #include "motion_plan_arm_group.h"
 #include "motion_plan_frame_manager.h"
-#include "motion_plan_reuse.h"
 #include "motion_plan_variable.h"
 #include "tp_interface.h"
 #include "proto_parse.h"
@@ -30,7 +29,6 @@
 #include "safety_interface.h"
 #include "offset_calibrator.h"
 #include "launch_code_mgr.h"
-#include "io_interface.h"
 
 #define MAX_PLANNED_POINTS_NUM		(20)
 #define IDLE2EXE_DELAY              (50)  //wait from idle to execute(ms)

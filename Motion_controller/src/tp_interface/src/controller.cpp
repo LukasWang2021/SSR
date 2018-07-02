@@ -19,6 +19,7 @@
 using std::vector;
 #define REG_IO_INFO_SIZE (4096)
 
+fst_log::Logger glog;
 
 Controller* Controller::instance_ = NULL;
 Controller::Controller()

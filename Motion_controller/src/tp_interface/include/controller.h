@@ -35,6 +35,40 @@
 #define MAX_TIME_IN_PUASE           (20*1000)  //(ms)
 #define RESET_ERROR_TIMEOUT	        (5000)	//wait until to judge if errors are reset
 
+// IO Macro and structure begin
+#ifndef IO_BASE_ADDRESS
+#define IO_BASE_ADDRESS (100000)
+#endif
+
+#ifndef IO_MAX_NUM
+#define IO_MAX_NUM      (1000)
+#endif
+
+#ifndef IO_INPUT
+#define IO_INPUT 0
+#endif
+
+#ifndef IO_OUTPUT
+#define IO_OUTPUT 1
+#endif
+
+#ifndef IO_DATAFRAME_MAX
+#define IO_DATAFRAME_MAX 5
+#endif
+
+#ifndef IOPortInfo
+typedef struct _IOPortInfo
+{
+    uint32_t    msg_id;
+    uint32_t    dev_id;
+    int         port_type;
+    int         port_index;
+    int         bytes_len;
+}IOPortInfo;
+#endif
+
+// IO Macro and structure end
+
 using namespace std;
 using namespace fst_controller;
 using namespace fst_algorithm;

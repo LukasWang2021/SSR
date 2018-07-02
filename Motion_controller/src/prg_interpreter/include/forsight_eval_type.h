@@ -2,13 +2,15 @@
 #define FORSIGHT_EVAL_TYPE_H
 #include <stdlib.h>
 #include "fst_datatype.h" 
+using namespace fst_controller;
 
 #ifdef WIN32
 #include "tp_reg_manager_interface.h"
-#include "reg-shmi/forsight_regs_shmi.h"
+// #include "reg-shmi/forsight_regs_shmi.h"
 #else
 #include "reg_manager/reg_manager_interface.h"
 using namespace fst_reg;
+#endif
 
 typedef struct
 {
@@ -16,9 +18,6 @@ typedef struct
 	int column;
 	int layer;
 }pl_t;
-
-#endif
-
 
 typedef enum _EvalValueType
 {

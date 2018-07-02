@@ -10,12 +10,7 @@
 #include "motion_plan_frame_manager.h"
 #include "reg_manager_interface.h"
 #include "reg_manager_interface_wrapper.h"
-
-#ifdef WIN32
 #include "interpreter_common.h"
-#else
-#include "common/interpreter_common.h"
-#endif
 
 using namespace fst_reg ;
 

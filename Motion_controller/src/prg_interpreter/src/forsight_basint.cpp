@@ -11,7 +11,7 @@
 #include "forsight_io_controller.h"
 
 #ifndef WIN32
-#include "common/error_code.h"
+#include "error_code.h"
 #endif
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER

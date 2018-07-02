@@ -1,5 +1,5 @@
-#ifndef INTERPRETER_COMMON_H_
-#define INTERPRETER_COMMON_H_
+#ifndef PRG_INTERPRETER_COMMON_H_
+#define PRG_INTERPRETER_COMMON_H_
 
 #include "fst_datatype.h"
 #include "stdint.h"

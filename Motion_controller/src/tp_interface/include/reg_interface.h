@@ -29,7 +29,7 @@
 struct RegTypeInfo
 {
     std::string path;
-    RegType type;
+    RegOperateType type;
 };
 
 class RegInterface

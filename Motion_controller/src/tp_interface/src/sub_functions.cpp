@@ -7,12 +7,11 @@
 
 void printDbLine(const char* info, double* params, int len)
 {
-    FST_PRINT("%s:", info);
+    FST_INFO("%s:", info);
     for (int i = 0; i < len; i++)
     {
-        FST_PRINT("%f ", params[i]);
+        FST_INFO("%f ", params[i]);
     }
-    FST_PRINT("\n");	
 }
 
 bool waitSignalTimeout(bool sig, int timeout)

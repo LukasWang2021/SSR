@@ -9,11 +9,7 @@
 #include "forsight_innercmd.h"
 #include "reg-shmi/forsight_op_regs_shmi.h"
 #include "reg-shmi/forsight_registers.h"
-#ifdef WIN32
 #include "interpreter_common.h"
-#else
-#include "common/interpreter_common.h"
-#endif
 
 // Register name
 #define TXT_PR    "pr"

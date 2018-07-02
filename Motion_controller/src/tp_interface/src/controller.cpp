@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include "ctrl_func.h"
-#include "io_interface.h"
 #include "tp_reg_manager_interface.h"
 #include "error_monitor.h"
 #include "error_code.h"
@@ -20,6 +19,7 @@
 using std::vector;
 #define REG_IO_INFO_SIZE (4096)
 
+fst_log::Logger glog;
 
 Controller* Controller::instance_ = NULL;
 Controller::Controller()

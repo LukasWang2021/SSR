@@ -11,7 +11,7 @@
 
 #include "motion_plan_arm_group.h"
 #include "fst_datatype.h"
-#include "interpreter_common.h"
+#include "common/interpreter_common.h"
 #include "base.h"
 #include <atomic>
 

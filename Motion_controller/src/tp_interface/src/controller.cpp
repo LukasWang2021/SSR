@@ -16,6 +16,7 @@
 #include "service_heartbeat.h"
 #include "version.h"
 #include <boost/algorithm/string.hpp>
+#include "struct_to_mem/struct_trajectory_segment.h"
 
 using std::vector;
 #define REG_IO_INFO_SIZE (4096)
@@ -377,7 +378,7 @@ void Controller::updateWorkStatus(int id)
             int i;
             InterpreterState state = ShareMem::instance()->getIntprtState();
             i = state;
-            printf("check intprtState=%d\n",i);
+            //printf("check intprtState=%d\n",i);
             if (state == IDLE_R)
             {
                 FST_INFO("EXECUTE_TO_idle");
@@ -1590,7 +1591,11 @@ void Controller::rtTrajFlow(void* params)
     if (work_status_ == IDLE_W)
         return;// NULL;
 
-    U64 result = ShareMem::instance()->setJointPositions();
+    U64 result;
+    if (work_status_ == RUNNING_W || work_status_ == IDLE_TO_RUNNING_T || work_status_ == RUNNING_TO_IDLE_T)
+        result = ShareMem::instance()->setJointPositions(POS_VEL);
+    else
+        result = ShareMem::instance()->setJointPositions(POSITION_ONLY);
     if (result != TPI_SUCCESS)
     {
         int iCtrlState = ctrl_state_;
@@ -1623,13 +1628,14 @@ void Controller::rtTrajFlow(void* params)
     }
 
     int joints_in = joint_traj.size();
+
     //dbcount+=joints_in;
     //printDbLine("joints:", (double*)&joint_traj[joints_in-1].joint, 6);
     //joints_len = arm_group_->getTrajectoryFIFOLength();
    // FST_INFO("joints fifo length:%d", joints_in);
     JointCommand joint_command;
     joint_command.total_points = joints_in;
-    printf("Qianjin: Send joint cmd%d!\n", joints_in);
+    //printf("Qianjin: Send joint cmd%d!\n", joints_in);
     for (int i = 0; i < joints_in; i++)
     {
         joint_command.points[i].positions[0] = joint_traj[i].joint.j1;

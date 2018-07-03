@@ -1435,8 +1435,17 @@ void ArmGroup::setManualMode(ManualMode mode)
 //------------------------------------------------------------
 ErrorCode ArmGroup::setManualJointStep(double step)
 {
-    g_manual_step_joint = step;
-    return SUCCESS;
+    if (step < MINIMUM_E6)
+    {
+        FST_ERROR("setManualJointStep: error, given step is %.6f rad", step);
+        return INVALID_PARAMETER;
+    }
+    else
+    {
+        FST_INFO("setManualJointStep: %.6f rad", step);
+        g_manual_step_joint = step;
+        return SUCCESS;
+    }
 }
 
 //------------------------------------------------------------
@@ -1448,9 +1457,17 @@ ErrorCode ArmGroup::setManualJointStep(double step)
 //------------------------------------------------------------
 ErrorCode ArmGroup::setManualCartesianPositionStep(double step)
 {
-    FST_INFO("setManualCartPosStep: %.4f", step);
-    g_manual_step_position = step;
-    return SUCCESS;
+    if (step < MINIMUM_E6)
+    {
+        FST_ERROR("setManualCartPosStep: error, given step is %.6f mm", step);
+        return INVALID_PARAMETER;
+    }
+    else
+    {
+        FST_INFO("setManualCartPosStep: %.6f mm", step);
+        g_manual_step_position = step;
+        return SUCCESS;
+    }
 }
 
 //------------------------------------------------------------
@@ -1462,8 +1479,17 @@ ErrorCode ArmGroup::setManualCartesianPositionStep(double step)
 //------------------------------------------------------------
 ErrorCode ArmGroup::setManualCartesianOrientationStep(double step)
 {
-    g_manual_step_orientation = step;
-    return SUCCESS;
+    if (step < MINIMUM_E6)
+    {
+        FST_ERROR("setManualCartOrtStep: error, given step is %.6f rad", step);
+        return INVALID_PARAMETER;
+    }
+    else
+    {
+        FST_INFO("setManualCartOrtStep: %.6f rad", step);
+        g_manual_step_orientation = step;
+        return SUCCESS;
+    }
 }
 
 /*
@@ -3633,6 +3659,7 @@ ErrorCode ArmGroup::pickFromAuto(size_t num, vector<JointOutput> &points)
             break;
         }
     }
+
 
     return SUCCESS;
 }

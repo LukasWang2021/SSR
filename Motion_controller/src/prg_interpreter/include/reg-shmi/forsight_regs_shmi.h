@@ -1,7 +1,8 @@
 #ifndef REGS_SHMI_
 #define REGS_SHMI_
 
-#include "forsight_fst_datatype.h"  
+#include "fst_datatype.h"  
+using namespace fst_controller;
 
 #define REGS_TYPE_NUM 7
 #define PR_REGS 0 
@@ -83,13 +84,13 @@ typedef struct
 	int row;
 	int column;
 	int layer;
-}pl_t;
+}pallet_t;
 
 // stack register
 typedef struct
 {
 	PoseEuler pose;
-	pl_t pallet;
+	pallet_t pallet;
 	int flag;
 	int id;
 	char comment[COMMENT_SIZE];

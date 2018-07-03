@@ -52,15 +52,30 @@ bool PrReg::addReg(void* data_ptr)
     if(!isAddInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
+		printf("addReg::isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
+		printf("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(PrValue));
+
+#if 0
+	PrRegData objPrRegData = * reg_ptr;
+		printf("setPr: id = %d, comment = %s\n", objPrRegData.id, objPrRegData.comment);
+		printf("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
+			objPrRegData.value.joint_pos[0], objPrRegData.value.joint_pos[1], 
+			objPrRegData.value.joint_pos[2], objPrRegData.value.joint_pos[3], 
+			objPrRegData.value.joint_pos[4], objPrRegData.value.joint_pos[5]);
+		printf("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
+			objPrRegData.value.cartesian_pos.position.x, objPrRegData.value.cartesian_pos.position.y, 
+			objPrRegData.value.cartesian_pos.position.z, objPrRegData.value.cartesian_pos.orientation.a, 
+			objPrRegData.value.cartesian_pos.orientation.b, objPrRegData.value.cartesian_pos.orientation.c);
+#endif	
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }
 
@@ -119,6 +134,7 @@ bool PrReg::setReg(void* data_ptr)
     if(!isSetInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
+		printf("setReg::isSetInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
 	if(strlen(reg_ptr->comment) == 0)
@@ -163,6 +179,7 @@ bool PrReg::isOutOfPosLimit(const PrValue& data)
                 || data.cartesian_pos.orientation.c > MAX_PR_REG_POS_VALUE
                 || data.cartesian_pos.orientation.c < -MAX_PR_REG_POS_VALUE)
             {
+				printf("isOutOfPosLimit::cartesian_pos return false \n");
                 return true;
             }
             break;
@@ -172,6 +189,7 @@ bool PrReg::isOutOfPosLimit(const PrValue& data)
                 if(data.joint_pos[i] > MAX_PR_REG_POS_VALUE
                     || data.joint_pos[i] < -MAX_PR_REG_POS_VALUE)
                 {
+					printf("isOutOfPosLimit::joint_pos[%d]=%f return false \n", i, data.joint_pos[i]);
                     return true;
                 }
             }
@@ -185,6 +203,7 @@ bool PrReg::isOutOfPosLimit(const PrValue& data)
         if(data.ext_pos[i] > MAX_PR_REG_POS_VALUE
             || data.ext_pos[i] < -MAX_PR_REG_POS_VALUE)
         {
+			printf("isOutOfPosLimit::ext_pos[%d]=%f return false \n", i, data.ext_pos[i]);
             return true;
         }
     }

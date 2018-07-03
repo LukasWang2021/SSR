@@ -479,6 +479,56 @@ int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThre
     return 1;
 }
 
+int set_OVC(int iLineNum, int iOVCNum, struct thread_control_block* objThreadCntrolBlock)
+{
+    Instruction instr;
+	instr.type = SET_OVC ;
+#ifdef USE_XPATH
+	if(iLineNum <= g_vecXPath.size())
+		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	else
+		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+#else
+	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	instr.line = iLineNum;
+	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+#endif
+	instr.current_ovc = iOVCNum ;
+	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
+	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	while(bRet == false)
+	{
+		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	}
+    return 1;
+}
+
+int set_OAC(int iLineNum, int iOACNum, struct thread_control_block* objThreadCntrolBlock)
+{
+    Instruction instr;
+	instr.type = SET_OVC ;
+#ifdef USE_XPATH
+	if(iLineNum <= g_vecXPath.size())
+		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	else
+		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+#else
+	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	instr.line = iLineNum;
+	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+#endif
+	instr.current_oac = iOACNum ;
+	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
+	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	while(bRet == false)
+	{
+		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	}
+    return 1;
+}
+
 
 // MovJ P[1] P[1] 30% Fine +¸½¼Ó²ÎÊý
 int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)

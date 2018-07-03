@@ -45,6 +45,7 @@
 #define ZERO_OFFSET_LOST                        (unsigned long long int)0x00010004006607D2   /*one or more axis lost its zero offset*/
 #define ZERO_OFFSET_DEVIATE                     (unsigned long long int)0x00010004006607D3   /*axis zero offset deviated*/
 #define NEED_CALIBRATION                        (unsigned long long int)0x0001000400660412   /*ArmGroup need to calibrate*/
+#define IN_LIMIT_RUNNING_MODE                   (unsigned long long int)0x0001000400660413   /*ArmGroup need to calibrate*/
 
 #define FAIL_GET_REGISTER_TYPE                  (unsigned long long int)0x00010002006707EF   /*fail get register type*/
 #define FAIL_GET_REGISTER_ID                    (unsigned long long int)0x00010002006707F0   /*fail get register id*/

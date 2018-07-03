@@ -49,6 +49,8 @@ class Calibrator {
     bool reviewCurrentJoint(unsigned int &bitmap);
     bool isUsingTempZeroOffset(void);
 
+    bool checkZeroOffset(unsigned int &calibrate_result);
+
   protected:
     bool getZeroOffsetFromBareCore(std::vector<double> &data);
     bool recordGivenJointImpl(std::vector<double> &joint);
@@ -69,7 +71,6 @@ class Calibrator {
     std::vector<double> offset_lost_threshold_;
     unsigned int current_state_;
    // U64 last_error_;
-    bool checkZeroOffset(unsigned int &calibrate_result);
 };
 
 

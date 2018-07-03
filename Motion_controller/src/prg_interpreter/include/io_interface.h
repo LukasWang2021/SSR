@@ -8,8 +8,10 @@
 #ifndef TP_INTERFACE_IO_INTERFACE_H_
 #define TP_INTERFACE_IO_INTERFACE_H_
 
+#ifndef WIN32
 #include <atomic>
 #include "io_manager/io_manager.h"
+#endif
 #include "motionSL.pb.h"
 
 #define IO_BASE_ADDRESS (100000)

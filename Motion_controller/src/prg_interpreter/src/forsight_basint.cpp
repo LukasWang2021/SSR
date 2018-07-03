@@ -60,8 +60,17 @@
 enum var_inner_type { FORSIGHT_CHAR, FORSIGHT_INT, FORSIGHT_FLOAT };
 
 #define FORSIGHT_RETURN_VALUE   "forsight_return_value_"
+#define FORSIGHT_CURRENT_JOINT  "j_pos"
+#define FORSIGHT_CURRENT_POS    "c_pos"
+	
+#define FORSIGHT_TF_NO    "tf_no"
+#define FORSIGHT_UF_NO    "uf_no"
+#define FORSIGHT_OVC      "ovc"
+#define FORSIGHT_OAC      "oac"
+
 #define STR_AND   "and"
 #define STR_OR    "or"
+
 // Enumeration of two-character operators, such as <=.
 
 //	int variables[26]= {    /* 26 user variables,  A-Z */
@@ -2017,7 +2026,7 @@ void input(struct thread_control_block * objThreadCntrolBlock)
   assign_var(objThreadCntrolBlock, var, value); // i) ;
 }
 
-double call_inner_func(struct thread_control_block * objThreadCntrolBlock)
+bool call_inner_func(struct thread_control_block * objThreadCntrolBlock, eval_value *result)
 {
     eval_value value;
     int boolValue;
@@ -2031,32 +2040,63 @@ double call_inner_func(struct thread_control_block * objThreadCntrolBlock)
 	// Fit for circumstance without parameter
 	if((*(objThreadCntrolBlock->token) == '\r')
 		|| (*(objThreadCntrolBlock->token) == '\n'))
-		return 0.0;
+	{
+		result->setFloatValue(0.0);
+		return false;
+	}
     if(*(objThreadCntrolBlock->token) != '(')
     {
-    	serror(objThreadCntrolBlock, 2);
-		return 0.0;
+		serror(objThreadCntrolBlock, 2);
+		result->setFloatValue(0.0);
+		return false;
 	}
 
     // Process a comma-separated list of values.
     do {
         get_exp(objThreadCntrolBlock, &value, &boolValue);
-        sprintf(temp[count], "%f", value.getFloatValue()); // save temporarily
+		if( (value.getType() == (int)(TYPE_STRING | TYPE_SR))
+		  ||(value.getType() == (int)(TYPE_STRING)))
+		{
+			sprintf(temp[count], "%s", value.getStringValue().c_str()); // save temporarily
+		}
+		else if( (value.getType() == (int)(TYPE_JOINT | TYPE_PR))
+		       ||(value.getType() ==  (int)(TYPE_POSE | TYPE_PR)))
+		{
+			// sprintf(temp[count], "%f", value.getFloatValue()); // save temporarily
+		}
+		else // It is number in most times
+		{
+			sprintf(temp[count], "%f", value.getFloatValue()); // save temporarily
+		}
         get_token(objThreadCntrolBlock);
         count++;
     } while(*(objThreadCntrolBlock->token) == ',');
     // count--;
-
+	
+	if(count != get_func_params_num(funcIdx))
+	{
+		serror(objThreadCntrolBlock, 18);
+		return false;
+    }
     // Now, push on local_var_stack in reverse order.
-    if(count == 1)
+    if(count == PARAM_NUM_ONE)
 	{
-		return call_internal_func(funcIdx, temp[0]);
+		return call_internal_func(funcIdx, result, temp[0]);
     }
-	else if(count == 2)
+	else if(count == PARAM_NUM_TWO)
 	{
-		return call_internal_func(funcIdx, temp[0], temp[1]);
+		return call_internal_func(funcIdx, result, temp[0], temp[1]);
     }
-	return 0.0;
+	else if(count == PARAM_NUM_THR)
+	{
+		return call_internal_func(funcIdx, result, temp[0], temp[1], temp[2]);
+    }
+	else 
+	{
+		serror(objThreadCntrolBlock, 18);
+		return false;
+    }
+	return true;
 }
 
 // Push the arguments to a function onto the local
@@ -2385,8 +2425,13 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
      FAIL_INTERPRETER_FILE_NOT_FOUND           ,     "file not found",              // 14
      FAIL_INTERPRETER_MOVL_WITH_JOINT          ,     "movl with joint",             // 15
      FAIL_INTERPRETER_MOVJ_WITH_POINT          ,     "movj with point",             // 16
-     FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER      ,     "illegal line number"          // 17
+     FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER      ,     "illegal line number",         // 17
+     FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH     ,     "func params mismatching"      // 18
   };
+  if(error > sizeof(e)/sizeof(ErrInfo)) {
+  	printf("\t NOTICE : Error out of range %d \n", error);
+    return;
+  }
   
   printf("-----------------ERR:%d----------------------\n", error);
   printf("\t NOTICE : %d -  %llx(%s)\n", error, e[error].warn, e[error].desc);
@@ -2788,6 +2833,7 @@ void level7(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
 /* Find value of number or variable. */
 void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *result)
 {
+  std::string strValue ;
   char var[80];
   int iRet = 0 ;
   char *progFuncCall; 
@@ -2846,11 +2892,12 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
     return;
   case BUILTINFUNC:
   	// use objThreadCntrolBlock->token
-  	result->setFloatValue(call_inner_func(objThreadCntrolBlock));
+  	call_inner_func(objThreadCntrolBlock, result);
     get_token(objThreadCntrolBlock);
     return;
   case QUOTE:
-	result->setStringValue(objThreadCntrolBlock->token);
+  	strValue = std::string(objThreadCntrolBlock->token);
+	result->setStringValue(strValue);
     get_token(objThreadCntrolBlock);
     return;
   default:
@@ -2925,7 +2972,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 	temp = reg_name ;
 	get_char_token(vname, temp);
 	// deal "pr;sr;r;mr;uf;tf;pl" except p
-    if(strstr(REGSITER_NAMES, reg_name) && reg_name[0] != 'p')
+    if(strstr(REGSITER_NAMES, reg_name) && (strcmp(reg_name, "p") != 0))
     {
 		if(strchr(vname, '['))
 		{
@@ -2935,9 +2982,8 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			}
 			if ((value.getType() & TYPE_STRING) == TYPE_STRING)
 			{
-				char cTmp[512];
-				value.getStringValue(cTmp) ;
-				printf("assign_var vname = %s and value = (%s).\n", vname, cTmp);
+				string strTmp = value.getStringValue() ;
+				printf("assign_var vname = %s and value = (%s).\n", vname, strTmp.c_str());
 			}
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 			int iRet = forgesight_registers_manager_set_register(
@@ -2969,19 +3015,33 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			}
 		}
     }
-	
-	if(strcmp("tf_no", vname) == 0)
+
+	if(strcmp(FORSIGHT_TF_NO, vname) == 0)
     {
         printf("set_global_TF vname = %s and value = %f.\n", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
 		set_global_TF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
-	else if(strcmp("uf_no", vname) == 0)
+	else if(strcmp(FORSIGHT_UF_NO, vname) == 0)
     {
         printf("set_global_UF vname = %s and value = %f.\n", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
 		set_global_UF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		return ;
+    }
+	else if(strcmp(FORSIGHT_OVC, vname) == 0)
+    {
+        printf("set_OVC vname = %s and value = %f.\n", vname, value.getFloatValue());
+		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
+		set_OVC(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		return ;
+    }
+	else if(strcmp(FORSIGHT_OAC, vname) == 0)
+    {
+        printf("set_OAC vname = %s and value = %f.\n", vname, value.getFloatValue());
+		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
+		set_OVC(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
 
@@ -3004,6 +3064,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 eval_value find_var(struct thread_control_block * objThreadCntrolBlock, 
 					char *vname, int raise_unkown_error)
 {
+	MoveCommandDestination movCmdDst ;
 	eval_value value ;
 	char reg_name[256] ;
 	char *temp = NULL ;
@@ -3021,12 +3082,29 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 		value.setFloatValue(objThreadCntrolBlock->ret_value);
 		return value ;
 	}
+
+	if(!strcmp(vname, FORSIGHT_CURRENT_JOINT))
+	{
+		copyMoveCommandDestination(movCmdDst);
+	    value.setJointValue(&movCmdDst.joint_target);
+		
+		value.setPrRegDataWithJointValue(&movCmdDst.joint_target);
+		return value ;
+	}
+	else if(!strcmp(vname, FORSIGHT_CURRENT_POS))
+	{
+		copyMoveCommandDestination(movCmdDst);
+		value.setPoseValue(&movCmdDst.pose_target);
+		
+		value.setPrRegDataWithPoseEulerValue(&movCmdDst.pose_target);
+		return value ;
+	}
 	
 	memset(reg_name, 0x00, 256);
 	temp = reg_name ;
 	get_char_token(vname, temp);
 	// deal "pr;sr;r;mr;uf;tf;pl" except p
-    if(strstr(REGSITER_NAMES, reg_name) && strcmp("p", reg_name))
+    if(strstr(REGSITER_NAMES, reg_name) && (strcmp(reg_name, "p") != 0))
     {
 		if(strchr(vname, '['))
 		{

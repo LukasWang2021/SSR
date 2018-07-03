@@ -50,12 +50,14 @@ bool SrReg::addReg(void* data_ptr)
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
     if(!isAddInputValid(reg_ptr->id))
     {
+		printf("isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
+		printf("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     data_list_[reg_data.id] = reg_ptr->value.substr(0, MAX_SR_REG_STRING_LENGTH);

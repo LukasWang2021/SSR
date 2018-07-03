@@ -718,7 +718,7 @@ class Controller
      *
      * @param params
      */
-    int updateIODevError();
+    // int updateIODevError();
 
     /**
      * @brief: check for IO device info 
@@ -894,6 +894,7 @@ class Controller
     rcs::Task   *heartbeat_task_;   //thread for heartBeat
         
     Joint       servo_joints_;      //current servo joints
+    // bool        limit_running_mode_;
 
     int         inst_num_;          //no use any more 
     bool        debug_ready_;       //if it is ready to step or jump line

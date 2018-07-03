@@ -28,6 +28,7 @@
 #define FAIL_INTERPRETER_MOVL_WITH_JOINT            (unsigned long long int)0x0001000900B50010
 #define FAIL_INTERPRETER_MOVJ_WITH_POINT            (unsigned long long int)0x0001000900B50011 
 #define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER        (unsigned long long int)0x0001000900B50012 
+#define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH       (unsigned long long int)0x0001000900B50013 
 
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE            (unsigned long long int)0x0001000900B50100 
 #define FAIL_INTERPRETER_USER_ALARM1                (unsigned long long int)0x0001000900B50101

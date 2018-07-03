@@ -1,10 +1,11 @@
 #ifndef REG_MANAGER_INTERFACE_WRAPPER_H
 #define REG_MANAGER_INTERFACE_WRAPPER_H
 
+#ifndef WIN32
 #include "reg_manager/reg_manager_interface.h"
-#include "reg_manager/forsight_registers_manager.h"
-
 using namespace fst_reg ;
+#endif
+#include "reg_manager/forsight_registers_manager.h"
 
 #define REGSITER_NAMES   "pr;sr;r;mr;uf;tf;pl"
 
@@ -12,6 +13,7 @@ void load_register_data();
 
 bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num);
 bool reg_manager_interface_setPr(PrRegData *ptr, uint16_t num);
+bool reg_manager_interface_delPr(uint16_t num);
 
 /*
  * The operated object is an individual member of PR.
@@ -37,9 +39,10 @@ bool reg_manager_interface_setCommentPr(char *ptr, uint16_t num);
 
 bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num);
 bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num);
+bool reg_manager_interface_delSr(uint16_t num);
 
-bool reg_manager_interface_getValueSr(char* ptr, uint16_t num);
-bool reg_manager_interface_setValueSr(char* ptr, uint16_t num);
+bool reg_manager_interface_getValueSr(string &strVal, uint16_t num);
+bool reg_manager_interface_setValueSr(string &strVal, uint16_t num);
 
 bool reg_manager_interface_getIdSr(int *ptr, uint16_t num);
 bool reg_manager_interface_setIdSr(int *ptr, uint16_t num);
@@ -52,6 +55,7 @@ bool reg_manager_interface_setCommentSr(char *ptr, uint16_t num);
  **********************/
 bool reg_manager_interface_getR(RRegData *ptr, uint16_t num);
 bool reg_manager_interface_setR(RRegData *ptr, uint16_t num);
+bool reg_manager_interface_delR(uint16_t num);
 
 bool reg_manager_interface_getValueR(double *ptr, uint16_t num);
 bool reg_manager_interface_setValueR(double *ptr, uint16_t num);
@@ -67,6 +71,7 @@ bool reg_manager_interface_setCommentR(char *ptr, uint16_t num);
  **********************/
 bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num);
 bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num);
+bool reg_manager_interface_delMr(uint16_t num);
  
 bool reg_manager_interface_getValueMr(int *ptr, uint16_t num);
 bool reg_manager_interface_setValueMr(int *ptr, uint16_t num);

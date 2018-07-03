@@ -41,7 +41,7 @@ typedef struct _AdditionalE {
     double e3;
 } AdditionalE;
 
-#define STR_VALUE_SIZE 254
+#define STR_VALUE_SIZE 1024
 
 class eval_value {
 public:
@@ -106,23 +106,19 @@ public:
 	}
 	
 	// TYPE_STRING
-	void setStringValue(char * cVal){
+	void setStringValue(std::string& strVal){
 		evalType |= TYPE_STRING ;
-		if(strlen(cVal) <= STR_VALUE_SIZE)
-		{
-			strcpy(cContent, cVal);
-		}
+		strContent = strVal;
 	}
 
-	int getStringValue(char * cVal){
+	std::string getStringValue(){
 		int iType = evalType & TYPE_STRING;
 		if(iType != 0) {
-			strcpy(cVal, cContent);
-			return 1 ;
+			return strContent ;
 		}
 		else {
 			noticeErrorType(TYPE_STRING) ;
-			return -1;
+			return std::string("");
 		}
 	}
 	
@@ -237,6 +233,24 @@ public:
 		reg_pr     = * prRegDataVal ;
 	}
 	
+	void setPrRegDataWithJointValue(Joint * jointVal){
+		evalType  |= TYPE_PR ;
+		reg_pr.value.pos_type     = POS_TYPE_JOINT ;
+		reg_pr.value.joint_pos[0] = jointVal->j1;
+		reg_pr.value.joint_pos[1] = jointVal->j2;
+		reg_pr.value.joint_pos[2] = jointVal->j3;
+		reg_pr.value.joint_pos[3] = jointVal->j4;
+		reg_pr.value.joint_pos[4] = jointVal->j5;
+		reg_pr.value.joint_pos[5] = jointVal->j6;
+	}
+	
+	void setPrRegDataWithPoseEulerValue(PoseEuler * pointEulerVal){
+		evalType  |= TYPE_PR ;
+		reg_pr.value.pos_type      = POS_TYPE_CARTESIAN ;
+		reg_pr.value.cartesian_pos.position    = pointEulerVal->position;
+		reg_pr.value.cartesian_pos.orientation = pointEulerVal->orientation;
+	}
+	
 	PrRegData getPrRegDataValue(){
 		int iType = evalType & TYPE_PR ;
 		if(iType != 0) {
@@ -251,6 +265,8 @@ public:
 	void setSrRegDataValue(SrRegData * srRegDataVal){
 		evalType  |= TYPE_SR ;
 		reg_sr     = * srRegDataVal ;
+		evalType  |= TYPE_STRING ;
+		strContent = srRegDataVal->value ;
 	}
 	
 	SrRegData getSrRegDataValue(){
@@ -305,10 +321,58 @@ public:
 	{
 		if(evalType == TYPE_INT){
 			iValue = iValue + operand->getIntValue();
-			return ;
 		}else if(evalType == TYPE_FLOAT){
 			fValue = fValue + operand->getFloatValue();
-			return ;
+		}else if(evalType == (int)(TYPE_PR | TYPE_JOINT)){
+		    if(operand->getType() == TYPE_JOINT)
+		    {
+		    	Joint jointOperand = operand->getJointValue();
+				joint.j1 += jointOperand.j1;
+				joint.j2 += jointOperand.j2;
+				joint.j3 += jointOperand.j3;
+				joint.j4 += jointOperand.j4;
+				joint.j5 += jointOperand.j5;
+				joint.j6 += jointOperand.j6;
+				
+				reg_pr.value.joint_pos[0] += jointOperand.j1;
+				reg_pr.value.joint_pos[1] += jointOperand.j2;
+				reg_pr.value.joint_pos[2] += jointOperand.j3;
+				reg_pr.value.joint_pos[3] += jointOperand.j4;
+				reg_pr.value.joint_pos[4] += jointOperand.j5;
+				reg_pr.value.joint_pos[5] += jointOperand.j6;
+		    }
+			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
+		    {
+		    	Joint jointOperand = operand->getJointValue();
+				joint.j1 += jointOperand.j1;
+				joint.j2 += jointOperand.j2;
+				joint.j3 += jointOperand.j3;
+				joint.j4 += jointOperand.j4;
+				joint.j5 += jointOperand.j5;
+				joint.j6 += jointOperand.j6;
+				
+				reg_pr.value.joint_pos[0] += jointOperand.j1;
+				reg_pr.value.joint_pos[1] += jointOperand.j2;
+				reg_pr.value.joint_pos[2] += jointOperand.j3;
+				reg_pr.value.joint_pos[3] += jointOperand.j4;
+				reg_pr.value.joint_pos[4] += jointOperand.j5;
+				reg_pr.value.joint_pos[5] += jointOperand.j6;
+		    }
+		}else if(evalType == (int)(TYPE_PR | TYPE_POSE)){
+		    if(operand->getType() == TYPE_POSE)
+		    {
+		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	pose = calcCartesianPosAdd(pose, poseOperand);
+				reg_pr.value.cartesian_pos.position    = pose.position;
+				reg_pr.value.cartesian_pos.orientation = pose.orientation;
+		    }
+			else if(operand->getType() == (int)(TYPE_PR | TYPE_POSE))
+		    {
+		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	pose = calcCartesianPosAdd(pose, poseOperand);
+				reg_pr.value.cartesian_pos.position    = pose.position;
+				reg_pr.value.cartesian_pos.orientation = pose.orientation;
+		    }
 		}else if(evalType == (int)(TYPE_R | TYPE_FLOAT)){
 		    if(operand->getType() == TYPE_FLOAT)
 		    {
@@ -328,7 +392,6 @@ public:
 				reg_r.value = reg_r.value + operand->getMrRegDataValue().value;
 				fValue = fValue + operand->getMrRegDataValue().value;
 		    }
-			return ;
 		}else if(evalType == (int)(TYPE_MR | TYPE_FLOAT)){
 		    if(operand->getType() == TYPE_FLOAT)
 		    {
@@ -348,11 +411,24 @@ public:
 				reg_mr.value = reg_mr.value + operand->getMrRegDataValue().value;
 				fValue = fValue + operand->getMrRegDataValue().value;
 		    }
-			return ;
+		}else if(evalType == (int)(TYPE_SR | TYPE_STRING)){
+		    if(operand->getType() == TYPE_STRING)
+		    {
+		    	std::string strTmp;
+		    	strTmp = operand->getStringValue();
+				reg_sr.value += strTmp;
+				strContent   += strTmp;
+			}
+			else if(operand->getType() == (int)(TYPE_SR | TYPE_STRING))
+		    {
+		    	std::string strTmp;
+		    	strTmp = operand->getStringValue();
+				reg_sr.value += strTmp;
+				strContent   += strTmp;
+		    }
 		}
 		else {
 			noticeErrorType(operand->getType()) ;
-			return ;
 		}
 	}
 	
@@ -364,6 +440,56 @@ public:
 		}else if(evalType == TYPE_FLOAT){
 			fValue = fValue - operand->getFloatValue();
 			return ;
+		}else if(evalType == (int)(TYPE_PR | TYPE_JOINT)){
+		    if(operand->getType() == TYPE_JOINT)
+		    {
+		    	Joint jointOperand = operand->getJointValue();
+				joint.j1 -= jointOperand.j1;
+				joint.j2 -= jointOperand.j2;
+				joint.j3 -= jointOperand.j3;
+				joint.j4 -= jointOperand.j4;
+				joint.j5 -= jointOperand.j5;
+				joint.j6 -= jointOperand.j6;
+				
+				reg_pr.value.joint_pos[0] -= jointOperand.j1;
+				reg_pr.value.joint_pos[1] -= jointOperand.j2;
+				reg_pr.value.joint_pos[2] -= jointOperand.j3;
+				reg_pr.value.joint_pos[3] -= jointOperand.j4;
+				reg_pr.value.joint_pos[4] -= jointOperand.j5;
+				reg_pr.value.joint_pos[5] -= jointOperand.j6;
+		    }
+			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
+		    {
+		    	Joint jointOperand = operand->getJointValue();
+				joint.j1 -= jointOperand.j1;
+				joint.j2 -= jointOperand.j2;
+				joint.j3 -= jointOperand.j3;
+				joint.j4 -= jointOperand.j4;
+				joint.j5 -= jointOperand.j5;
+				joint.j6 -= jointOperand.j6;
+				
+				reg_pr.value.joint_pos[0] -= jointOperand.j1;
+				reg_pr.value.joint_pos[1] -= jointOperand.j2;
+				reg_pr.value.joint_pos[2] -= jointOperand.j3;
+				reg_pr.value.joint_pos[3] -= jointOperand.j4;
+				reg_pr.value.joint_pos[4] -= jointOperand.j5;
+				reg_pr.value.joint_pos[5] -= jointOperand.j6;
+		    }
+		}else if(evalType == (int)(TYPE_PR | TYPE_POSE)){
+		    if(operand->getType() == TYPE_POSE)
+		    {
+		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	pose = calcCartesianPosSubtract(pose, poseOperand);
+				reg_pr.value.cartesian_pos.position    = pose.position;
+				reg_pr.value.cartesian_pos.orientation = pose.orientation;
+		    }
+			else if(operand->getType() == (int)(TYPE_PR | TYPE_POSE))
+		    {
+		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	pose = calcCartesianPosSubtract(pose, poseOperand);
+				reg_pr.value.cartesian_pos.position    = pose.position;
+				reg_pr.value.cartesian_pos.orientation = pose.orientation;
+		    }
 		}else if(evalType == (int)(TYPE_R | TYPE_FLOAT)){
 		    if(operand->getType() == TYPE_FLOAT)
 		    {
@@ -411,6 +537,31 @@ public:
 	        	printf("reg_mr.value = %d and operand = %d\n", reg_mr.value, operand->getMrRegDataValue().value);
 		    }
 			return ;
+		}else if(evalType == (int)(TYPE_SR | TYPE_STRING)){
+		    if(operand->getType() == TYPE_STRING)
+		    {
+		    	std::string testKey;
+		    	testKey = operand->getStringValue();
+				std::string testFind = std::string(strContent);
+				
+				if (strContent.rfind(testKey) != std::string::npos)
+				{
+					strContent = strContent.substr(0, strContent.length() - testKey.length());
+				}
+				reg_sr.value = strContent;
+			}
+			else if(operand->getType() == (int)(TYPE_SR | TYPE_STRING))
+		    {
+		    	std::string testKey;
+		    	testKey = operand->getStringValue();
+				std::string testFind = std::string(strContent);
+				
+				if (strContent.rfind(testKey) != std::string::npos)
+				{
+					strContent = strContent.substr(0, strContent.length() - testKey.length());
+				}
+				reg_sr.value = strContent;
+		    }
 		}
 		else {
 			noticeErrorType(operand->getType()) ;
@@ -466,6 +617,19 @@ public:
 				fValue = fValue * operand->getMrRegDataValue().value;
 		    }
 			return ;
+		}else if(evalType == (int)(TYPE_SR | TYPE_STRING)){
+		    if(operand->getType() == TYPE_FLOAT)
+		    {
+		    	std::string strOpt;
+		    	strOpt = strContent;
+				
+		    	int iTmp = (int)operand->getFloatValue();
+				for(int i = 0 ; i < iTmp ; i++)
+				{
+					strContent += strOpt;	
+				}
+				reg_sr.value = strContent;
+			}
 		}
 		else {
 			noticeErrorType(operand->getType()) ;
@@ -635,24 +799,30 @@ public:
 	{
 		if(evalType == TYPE_INT){
 			iValue = -(iValue);
-			return ;
 		}else if(evalType == TYPE_FLOAT){
 			fValue = -(fValue);
-			return ;
 		}else if(evalType == (int)(TYPE_R | TYPE_FLOAT)){
 			reg_r.value = -(reg_r.value);
 			fValue  = reg_r.value;
-			return ;
 		}else if(evalType == (int)(TYPE_MR | TYPE_FLOAT)){
 			reg_mr.value = -(reg_mr.value);
 			fValue  = reg_mr.value;
-			return ;
 		}
 		else {
 			noticeErrorType(TYPE_FLOAT | TYPE_INT) ;
 			return ;
 		}
 	}
+
+	PoseEuler calcCartesianPosAdd(PoseEuler & opt, PoseEuler & optAnd) 
+	{
+		return opt ;
+	}
+	PoseEuler calcCartesianPosSubtract(PoseEuler & opt, PoseEuler & optAnd) 
+	{
+		return opt ;
+	}
+	
 private:
 	void noticeErrorType(int type){
 		printf("TypeError: call %04X in the %04X\n", type, evalType);
@@ -665,7 +835,7 @@ private:
 		// Basic type ;
 		int iValue ;
 		float fValue ;
-		char cContent[STR_VALUE_SIZE];
+		std::string strContent;
 		
 		// All member of register
 		PoseEuler pose;

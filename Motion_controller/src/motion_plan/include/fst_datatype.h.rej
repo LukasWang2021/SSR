@@ -1,0 +1,44 @@
+--- Motion_controller/src/motion_plan/include/fst_datatype.h
++++ Motion_controller/src/motion_plan/include/fst_datatype.h
+@@ -256,6 +268,7 @@
+     JointState  backward_point;
+ 
+     double  coeff[AXIS_IN_ALGORITHM][6];
++    double  inertia[NUM_OF_JOINT];
+ 
+     //bool    alpha_valid;
+     //double  alpha_upper[6];
+@@ -272,7 +285,8 @@
+     //bool    quintic;
+     //bool    t_curve;
+ 
+-    double      coeff[AXIS_IN_ALGORITHM][6];
++    double  coeff[AXIS_IN_ALGORITHM][6];
++    double  inertia[NUM_OF_JOINT];
+ };
+ 
+ // Define a point structure used in joint trajectory fifo
+@@ -295,8 +309,22 @@
+ ////////////////////////////////////////////////////////////////////////////////////////////
+ struct JointOutput {
+     int id;
+-    Joint       joint;
+     PointLevel  level;
++
++    Joint           joint;
++    JointOmega      omega;
++    JointAlpha      alpha;
++    JointInertia    inertia;
++};
++
++struct JointOut {
++    int id;
++    PointLevel  level;
++
++    double joint[NUM_OF_JOINT];
++    double omega[NUM_OF_JOINT];
++    double alpha[NUM_OF_JOINT];
++    double inertia[NUM_OF_JOINT];
+ };
+ 
+ // Define a group of coordinate offset

@@ -49,6 +49,8 @@ typedef enum _InstType
     MOTION,
     SET_UF,
     SET_TF,
+    SET_OVC,
+    SET_OAC,
     END_PROG,
 }InstType;
 
@@ -86,7 +88,7 @@ typedef enum _InterpreterCommand
     READ_IO  = 205,
     
     READ_IO_DEV_INFO  = 206,
-    UPDATE_IO_DEV_ERROR  = 207,
+//    UPDATE_IO_DEV_ERROR  = 207,
     
     // Jump to 210 for adding IO feature
     READ_SMLT_STS  = 211,
@@ -301,9 +303,12 @@ typedef struct _Instruction
     {
         MotionTarget    target;
         int             loop_cnt;
+		
+		int  current_uf ;
+		int  current_tf ;
+		int  current_ovc ;
+		int  current_oac ;
     };
-	int  current_uf ;
-	int  current_tf ;
     bool is_additional;
     int add_num;
 #ifdef WIN32

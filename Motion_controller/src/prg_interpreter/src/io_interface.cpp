@@ -18,7 +18,9 @@
 #include "io_interface.h"
 #include "common.h"
 #include "error_code.h"
+#ifndef WIN32
 #include "common/error_code.h"
+#endif
 #include "error_monitor.h"
 #include <boost/algorithm/string.hpp>
 #include "forsight_inter_control.h"
@@ -99,7 +101,7 @@ U64 IOInterface::initial()
     }
     //-----------------get num of devices.----------------------//
     io_num_.store(io_manager_->getDevicesNum());
-    FST_INFO("io_num_:%d",io_num_.load());
+    FST_INFO("IOInterface::initial io_num_:%d",io_num_.load());
 
     dev_info_ = new fst_io_manager::IODeviceInfo[io_num_];
 

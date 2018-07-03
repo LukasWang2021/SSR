@@ -16,7 +16,9 @@
 #include <string.h>
 #include <fstream>
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include "interpreter_common.h"
 #include "reg_manager/reg_manager_interface_wrapper.h"
 
@@ -51,6 +53,7 @@ void* script_func(void* arg);
 #endif
 void parseCtrlComand(); // (struct thread_control_block * objThdCtrlBlock);
 void initShm();
+void updateIOError();
 vector<string> split(string str,string pattern);
 
 void waitInterpreterStateleftWaiting(
@@ -61,7 +64,9 @@ void waitInterpreterStateleftPaused(
 void waitInterpreterStateToPaused(
 	struct thread_control_block * objThdCtrlBlockPtr);
 
+void setMoveCommandDestination(MoveCommandDestination movCmdDst);
 void getMoveCommandDestination(MoveCommandDestination& movCmdDst);
+void copyMoveCommandDestination(MoveCommandDestination& movCmdDst);
 
 #endif
 

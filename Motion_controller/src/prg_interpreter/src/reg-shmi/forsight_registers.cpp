@@ -29,8 +29,8 @@
 #define TXT_REG_VALUE   "value"
 
 // member name of PR
-#define TXT_PL_POSE    "pose"
-#define TXT_PL_JOINT   "joint"
+#define TXT_PR_POSE    "pose"
+#define TXT_PR_JOINT   "joint"
 // member name of UF/TF
 #define TXT_UF_TF_COORDINATE    "coordinate"
 // member name of PL
@@ -131,13 +131,13 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 				value->setJointValue(&(ptr->joint));
 			}
 		}
-		else if (!strcmp(reg_member, TXT_PL_POSE))
+		else if (!strcmp(reg_member, TXT_PR_POSE))
 		{
 			getPosePr(reg_content_buffer, iRegIdx);
 			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
 			value->setPoseValue(ptr);
 		}
-		else if (!strcmp(reg_member, TXT_PL_JOINT))
+		else if (!strcmp(reg_member, TXT_PR_JOINT))
 		{
 			getJointPr(reg_content_buffer, iRegIdx);
 			Joint * ptr = (Joint *)reg_content_buffer ;
@@ -156,7 +156,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			getCommentPr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 	}
 	else if(!strcmp(reg_name, TXT_SR))
@@ -165,12 +165,12 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		{
 			getSr(reg_content_buffer, iRegIdx);
 			sr_shmi_t * ptr = (sr_shmi_t *)reg_content_buffer ;
-			value->setStringValue(ptr->value);
+			value->setStringValue(std::string(ptr->value));
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			getValueSr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
@@ -180,7 +180,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			getCommentSr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 	}
 	else if(!strcmp(reg_name, TXT_R))
@@ -205,7 +205,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			getCommentR(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 	}
 	else if(!strcmp(reg_name, TXT_MR))
@@ -229,7 +229,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			getCommentMr(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 	}
 	else if(!strcmp(reg_name, TXT_UF))
@@ -255,7 +255,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			getCommentUf(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 	}
 	else if(!strcmp(reg_name, TXT_TF))
@@ -280,7 +280,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			getCommentTf(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 	}
 	else if(!strcmp(reg_name, TXT_PL))
@@ -290,7 +290,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
             // Use TXT_PL_POSE
 			getPl(reg_content_buffer, iRegIdx);
 			pl_shmi_t * ptr = (pl_shmi_t *)reg_content_buffer ;
-			value->setPLValue(&(ptr->pallet));
+			value->setPLValue((pl_t *)&(ptr->pallet));
 		}
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
@@ -317,7 +317,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			getCommentPl(reg_content_buffer, iRegIdx);
-			value->setStringValue(reg_content_buffer);
+			value->setStringValue(std::string(reg_content_buffer));
 		}
 	}
 	return 0 ;
@@ -369,7 +369,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		{
 			setPr(valueStart, iRegIdx);
 		}
-		else if (!strcmp(reg_member, TXT_PL_POSE))
+		else if (!strcmp(reg_member, TXT_PR_POSE))
 		{
 			if (valueStart->getType() == TYPE_FLOAT)
 			{
@@ -406,7 +406,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 				setPosePr(&pose, iRegIdx);
 			}
 		}
-		else if (!strcmp(reg_member, TXT_PL_JOINT))
+		else if (!strcmp(reg_member, TXT_PR_JOINT))
 		{
 			if (valueStart->getType() == TYPE_FLOAT)
 			{
@@ -456,10 +456,10 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			get_token(objThreadCntrolBlock);
+			// get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to PR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			setCommentPr(objThreadCntrolBlock->token, iRegIdx);
+			setCommentPr((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_SR))
@@ -483,10 +483,10 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			get_token(objThreadCntrolBlock);
+			// get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to SR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			setCommentSr(valueStart, iRegIdx);
+			setCommentSr((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_R))
@@ -509,10 +509,10 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			get_token(objThreadCntrolBlock);
+			// get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to SR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			setCommentR(valueStart, iRegIdx);
+			setCommentR((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_MR))
@@ -535,10 +535,10 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			get_token(objThreadCntrolBlock);
+			// get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			setCommentMr(valueStart, iRegIdx);
+			setCommentMr((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_UF))
@@ -592,10 +592,10 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			get_token(objThreadCntrolBlock);
+			// get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			setCommentUf(valueStart, iRegIdx);
+			setCommentUf((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_TF))
@@ -649,10 +649,10 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			get_token(objThreadCntrolBlock);
+			// get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			setCommentTf(valueStart, iRegIdx);
+			setCommentTf((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
 	}
 	else if(!strcmp(reg_name, TXT_PL))
@@ -716,10 +716,10 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			get_token(objThreadCntrolBlock);
+			// get_token(objThreadCntrolBlock);
 			printf("Set COMMENT:(%s) to MR[%s]\n", 
 				objThreadCntrolBlock->token, reg_idx);
-			setCommentPl(valueStart, iRegIdx);
+			setCommentPl((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
 	}
 	return 0 ;
@@ -950,6 +950,29 @@ int forgesight_mod_reg(RegMap & reg)
 	 	break;
 	 case PL_REG_COMMENT:
 	    setCommentPl(reg.value, reg.index);
+	 	break;
+ 	 }
+  	 printf("reg.type = %d end.\n", reg.type);
+	 return 1;
+}
+
+int forgesight_del_reg(RegMap & reg)
+{	
+  	 printf("reg.type = %d.\n", reg.type);
+	 
+	 switch(reg.type)
+	 {
+	 // pose register
+	 case POSE_REG:
+		 break;
+	 // string register
+	 case STR_REG:
+	 	break;
+	 // number register
+	 case NUM_REG:
+	 	break;
+	 // Special register for motion instruction
+	 case MOT_REG:
 	 	break;
  	 }
   	 printf("reg.type = %d end.\n", reg.type);

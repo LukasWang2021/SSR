@@ -26,10 +26,15 @@ Controller::Controller()
 {
     U64 result;
     ctrl_state_ = ESTOP_S;
+    work_status_ = IDLE_W;
     debug_ready_ = false;
+    run_mode_ = NORMAL_R ;
 
     memset(&servo_joints_, 0.000, sizeof(servo_joints_));
     
+    glog.initLogger("interpreter");\
+    glog.setDisplayLevel(fst_log::MSG_LEVEL_INFO);\
+	
     arm_group_ = new fst_controller::ArmGroup();
     if ((result = arm_group_->initArmGroup()) != FST_SUCCESS)
     {
@@ -476,6 +481,7 @@ void Controller::updateCtrlState(int id)
             //FST_INFO("the count is :%d", count);
             if (count-- > 0) //hasn't arrived timeout, during wait
             {
+                // No error and timeout occur
                 //===check if error exist again====
                 //if error accurs again, return ESTOP_S==
                 if (rcs::Error::instance()->updated() 
@@ -494,6 +500,7 @@ void Controller::updateCtrlState(int id)
                 }
                 else
                 {
+                    // Wait for servo ready with TimeOut time is 5 seconds
                     //=====servo hasn't ready========
                     //===need keep on wait============
                     if (ShareMem::instance()->getServoState() != STATE_READY)  
@@ -1339,6 +1346,28 @@ void Controller::setManualCmd(void* params, int len)
         return;
     }
 
+	// In the SOFTLIMITED_R, Only step move and continue move 
+	// of manual joint are supported.
+	// By this means, automove and position move are not supported, 
+	// point move of manual joint is also not supported.
+	if(run_mode_ != NORMAL_R)
+	{
+		if((command.has_stepPosition))
+	    {
+            printf("NOTICE: run_mode_ != NORMAL_R \n");
+			rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+	        return;
+	    }
+	    else if((command.has_stepJoint))
+	    {
+			if(command.type == motion_spec_ManualType_APPOINT)
+		    {
+	            printf("NOTICE: run_mode_ != NORMAL_R \n");
+				rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+		        return;
+		    }
+	    }
+	}
     manu_motion_->setManuCommand(command);
 }
 
@@ -1439,6 +1468,7 @@ void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
                 safety_interface_.reset();  //reset safety board*/
                 //==========reset ArmGroup=============
                 //!!!!qj!!!!!No need any more. 
+                // reset ArmGroup
                 //U64 result = 0;// arm_group_->resetArmGroup();
                 //if (result != TPI_SUCCESS)
                 //{
@@ -1452,7 +1482,16 @@ void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
                 //        rcs::Error::instance()->add(result);
                 //        break;
                 //    }
-                //}                  
+                //}      
+                // Out of SoftConstraint or lost ZeroOffset would enter SOFTLIMITED_R
+                run_mode_ = NORMAL_R ;
+			    unsigned int caliborate_val;
+			    if ((calib_.checkZeroOffset(caliborate_val) == false)
+					||(arm_group_->isJointInSoftConstraint(servo_joints_) == false))
+			    {
+                	FST_ERROR("run_mode_ = SOFTLIMITED_R in state:%d", state);
+			        run_mode_ = SOFTLIMITED_R ;
+			    }
             }//end else if (state == ESTOP_S)
             else 
             {
@@ -1508,6 +1547,7 @@ void Controller::stateMachine(void* params)
         }
     }
 #endif
+
     if ((work_status_ == IDLE_W)
     || (work_status_ == IDLE_TO_RUNNING_T)
     || (work_status_ == RUNNING_W))
@@ -1525,21 +1565,29 @@ void Controller::stateMachine(void* params)
 #endif		
 				if(inst.type == MOTION)
 				{
-		            result = auto_motion_->moveTarget(inst.target);
-					if(result != SUCCESS)
-	        		{
-		                printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
-	        			rcs::Error::instance()->add(result);
-						setLogicStateCmd(EMERGENCY_STOP_E);
-						
-						InterpreterControl ctrl;
-						ctrl.cmd = ABORT;
-						ShareMem::instance()->intprtControl(ctrl);
-		        	}
-					else{
-	     				printf("instr.target.cnt = %f .\n", inst.target.cnt);
-						current_cnt_ = inst.target.cnt;
-						calcMotionDst(inst.target);
+					if(run_mode_ == NORMAL_R)
+					{
+			            result = auto_motion_->moveTarget(inst.target);
+						if(result != SUCCESS)
+		        		{
+		                    printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+		        			rcs::Error::instance()->add(result);
+							setLogicStateCmd(EMERGENCY_STOP_E);
+							
+							InterpreterControl ctrl;
+							ctrl.cmd = ABORT;
+							ShareMem::instance()->intprtControl(ctrl);
+			        	}
+						else{
+		     				printf("instr.target.cnt = %f .\n", inst.target.cnt);
+							current_cnt_ = inst.target.cnt;
+							calcMotionDst(inst.target);
+						}
+					}
+					else
+					{
+			            printf("NOTICE: run_mode_ != NORMAL_R \n");
+						rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
 					}
 				}
 				else if(inst.type == SET_UF)
@@ -1555,6 +1603,26 @@ void Controller::stateMachine(void* params)
 	                int iOldToolFrame = tool_frame_manager_->getActivatedFrame();
 					if(iOldToolFrame != inst.current_tf)
 	                   tool_frame_manager_->activateFrame(inst.current_tf);
+				}
+				else if(inst.type == SET_OVC)
+				{
+		            printf("NOTICE: SET_OVC to %d percent.\n", inst.current_ovc);
+					double factor = inst.current_ovc * 0.01;
+	                int iOldGlobalVel = arm_group_->getGlobalVelRatio();
+					if(iOldGlobalVel != inst.current_ovc)
+					{
+	                   arm_group_->setGlobalVelRatio(factor);
+					}
+				}
+				else if(inst.type == SET_OAC)
+				{
+		            printf("NOTICE: SET_OAC to %d percent.\n", inst.current_oac);
+					double factor = inst.current_oac * 0.01;
+	                int iOldGlobalAcc = arm_group_->getGlobalAccRatio();
+					if(iOldGlobalAcc != inst.current_oac)
+					{
+	                   arm_group_->setGlobalAccRatio(factor);
+					}
 				}
 	        }
         }
@@ -1585,12 +1653,15 @@ void Controller::stateMachine(void* params)
 		     // printf("current_cnt_ change to %f .\n", current_cnt_);
 	         if (ShareMem::instance()->getServoState() == STATE_READY)
 			 {
-		         bool bRet = ShareMem::instance()->getIntprtSendFlag();
-				 if(bRet == false)
-				 {
-		             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with FINE .");
-				     ShareMem::instance()->setIntprtSendFlag(true);
-				 }
+			 	 if(calcFineDst() == true)
+		 	 	 {
+			         bool bRet = ShareMem::instance()->getIntprtSendFlag();
+					 if(bRet == false)
+					 {
+			             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with FINE .");
+					     ShareMem::instance()->setIntprtSendFlag(true);
+					 }
+		 	 	 }
 			 }
 		}
 		else  // Not FINE
@@ -1751,8 +1822,9 @@ void Controller::rtTrajFlow(void* params)
 void Controller::heartBeat(void* params)
 {
 	// Lujiaming comment at 0619
+	// Interpretor would report error automatically
     // IOInterface::instance()->updateIOError();
-    updateIODevError();
+    // updateIODevError();
     ServiceHeartbeat::instance()->sendRequest();
     U64 result = safety_interface_.setSafetyHeartBeat();
     if (result != TPI_SUCCESS)
@@ -3029,14 +3101,14 @@ int Controller::getChangeRegListReply(std::vector<ChgFrameSimple>& vecRet)
 	return 1;
 }
 
-int Controller::updateIODevError()
-{
-    // FST_INFO("sendGetIODevInfoRequest");
-    InterpreterControl ctrl;
-    ctrl.cmd = UPDATE_IO_DEV_ERROR ;
-    ShareMem::instance()->intprtControl(ctrl);
-    ShareMem::instance()->setIntprtDataFlag(false);
-}
+//	int Controller::updateIODevError()
+//	{
+//	    // FST_INFO("sendGetIODevInfoRequest");
+//	    InterpreterControl ctrl;
+//	    ctrl.cmd = UPDATE_IO_DEV_ERROR ;
+//	    ShareMem::instance()->intprtControl(ctrl);
+//	    ShareMem::instance()->setIntprtDataFlag(false);
+//	}
 
 int Controller::checkIODevInfo(const char *path, IOPortInfo* io_info)
 {

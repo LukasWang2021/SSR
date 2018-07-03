@@ -161,6 +161,7 @@ bool BaseReg::isAddInputValid(int id)
         || id >= reg_list_.size()
         || reg_list_[id].is_valid)   // can't add some exist reg
     {
+		printf("isAddInputValid: id = %d is inValid \n", id);
         return false;
     }
     else

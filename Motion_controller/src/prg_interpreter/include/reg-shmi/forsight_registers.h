@@ -11,5 +11,6 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 							char *name, eval_value * value);
 int forgesight_read_reg(RegMap & reg);
 int forgesight_mod_reg(RegMap & reg);
+int forgesight_del_reg(RegMap & reg);
 
 #endif

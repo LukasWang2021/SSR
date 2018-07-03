@@ -57,12 +57,14 @@ bool RReg::addReg(void* data_ptr)
         || reg_ptr->value > MAX_R_REG_VALUE
         || reg_ptr->value < -MAX_R_REG_VALUE)
     {
+		printf("isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
+		printf("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     data_list_[reg_data.id] = reg_ptr->value;

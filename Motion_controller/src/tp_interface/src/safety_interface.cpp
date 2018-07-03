@@ -11,6 +11,7 @@
 #include "error_monitor.h"
 #include "ip_address.h"
 
+#define CROSS_PLATFORM
 SafetyInterface::SafetyInterface()
 {
     int iRet = 0 ;

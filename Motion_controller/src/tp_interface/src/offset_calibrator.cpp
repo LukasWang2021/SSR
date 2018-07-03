@@ -569,10 +569,12 @@ bool Calibrator::checkZeroOffset(unsigned int &calibrate_result)
         if ((result & OFFSET_LOST_MASK) != 0) {
             rcs::Error::instance()->add(ZERO_OFFSET_LOST);
             FST_ERROR("Fault: zero offset lost, need calibration. ");
+            return false;
         }
         else if ((result & OFFSET_DEVIATE_MASK) != 0) {
             rcs::Error::instance()->add(ZERO_OFFSET_DEVIATE);
             FST_ERROR("Fault: zero offset deviated, need calibration.");
+            return false;
         }
         else {
             //rcs::Error::instance()->add(MOTION_INTERNAL_FAULT);

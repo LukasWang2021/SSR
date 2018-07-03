@@ -12,10 +12,11 @@
 #endif
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
+#ifndef WIN32
 #include "reg_manager/reg_manager_interface.h"
-#include "reg_manager/forsight_registers_manager.h"
-
 using namespace fst_reg ;
+#endif
+#include "reg_manager/forsight_registers_manager.h"
 
 #else
 #include "reg-shmi/forsight_registers.h"
@@ -178,6 +179,12 @@ void setMoveCommandDestination(MoveCommandDestination movCmdDst)
 void getMoveCommandDestination(MoveCommandDestination& movCmdDst)
 {
     readShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
+}
+
+void copyMoveCommandDestination(MoveCommandDestination& movCmdDst)
+{
+    getMoveCommandDestination(movCmdDst);
+    setMoveCommandDestination(movCmdDst);
 }
 
 void setIntprtDataFlag(bool flag)
@@ -528,6 +535,12 @@ void waitInterpreterStateToPaused(
 
 void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 {
+#ifdef WIN32
+	__int64 result = 0 ;
+#else
+	U64 result = SUCCESS ;
+#endif
+
 	RegMap reg ;
 	IOPathInfo  dioPathInfo ;
 	
@@ -550,6 +563,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 //	RegManagerInterface objRegManagerInterface("share/configuration/machine");
 	std::vector<BaseRegData> vecRet ; 
     char * strChgRegLst ;
+	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
     printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
     switch (intprt_ctrl.cmd)
@@ -739,6 +753,12 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			forgesight_mod_reg(reg);
   	        printf("reg.type = %d end.\n", reg.type);
             break;
+        case DEL_REG:
+			// intprt_ctrl.RegMap.
+			reg = intprt_ctrl.reg ;
+			forgesight_del_reg(reg);
+  	        printf("reg.type = %d end.\n", reg.type);
+            break;
         case READ_IO:
 			// intprt_ctrl.RegMap.
 			// dioMap  = intprt_ctrl.dio ;
@@ -759,7 +779,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 #ifndef WIN32
         case READ_IO_DEV_INFO:
 			iIONum = IOInterface::instance()->getIODevNum();
-			printf("getIODevNum: %d.\n", iIONum);
+			printf("READ_IO_DEV_INFO::getIODevNum: start: %d.\n", iIONum);
  			objIODeviceInfoPtr = IOInterface::instance()->getDevInfoPtr();
 			objCharPtr = (char *)malloc(sizeof(int) + sizeof(IODeviceInfoShm) * (iIONum + 1));
 			objIODeviceInfoShmPtr = (IODeviceInfoShm *)(objCharPtr + sizeof(int));
@@ -781,22 +801,30 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 				objIODeviceInfoShmPtr[i].input         = objIODeviceInfoPtr[i].input;
 				objIODeviceInfoShmPtr[i].output        = objIODeviceInfoPtr[i].output;
 		    }
-			printf("%d: getIODevNum: %d.\n", __LINE__, iIONum);
-		    memcpy(objIODeviceInfoShmPtr[iIONum].path, "root/IO/RS485/1/DO/1", strlen("root/IO/RS485/1/DO/1"));
-			printf("%d: getIODevNum: %d.\n", __LINE__, iIONum);
-			objIODeviceInfoShmPtr[iIONum].id = 1;
-			printf("%d: getIODevNum: %d.\n", __LINE__, iIONum);
-		    memcpy(objIODeviceInfoShmPtr[iIONum].communication_type, "RS485", strlen("RS485"));
-			printf("%d: getIODevNum: %d.\n", __LINE__, iIONum);
-			objIODeviceInfoShmPtr[iIONum].device_number = 1;
-			printf("%d: getIODevNum: %d.\n", __LINE__, iIONum);
-			objIODeviceInfoShmPtr[iIONum].device_type   = 2;
-			objIODeviceInfoShmPtr[iIONum].input         = 0x22;
-			objIODeviceInfoShmPtr[iIONum].output        = 0x33;
-			printf("%d: getIODevNum: %d.\n", __LINE__, iIONum);
-			
-			returnIODeviceInfo(objCharPtr, iIONum);
+
+			if(iIONum == 0)
+			{
+			    memcpy(objIODeviceInfoShmPtr[iIONum].path, 
+							"root/IO/RS485/1/DO/1", strlen("root/IO/RS485/1/DO/1"));
+				objIODeviceInfoShmPtr[iIONum].id = 1;
+			    memcpy(objIODeviceInfoShmPtr[iIONum].communication_type, "RS485", strlen("RS485"));
+				objIODeviceInfoShmPtr[iIONum].device_number = 1;
+				objIODeviceInfoShmPtr[iIONum].device_type   = 2;
+				objIODeviceInfoShmPtr[iIONum].input         = 0x22;
+				objIODeviceInfoShmPtr[iIONum].output        = 0x33;
+				printf("%d: READ_IO_DEV_INFO::getIODevNum with Fack Data: end: %d.\n", __LINE__, iIONum);
+				returnIODeviceInfo(objCharPtr, iIONum + 1);
+			}
+			else
+			{
+				printf("%d: READ_IO_DEV_INFO::getIODevNum with Real Data: end: %d.\n", __LINE__, iIONum);
+				returnIODeviceInfo(objCharPtr, iIONum);
+			}
             break;
+//        case UPDATE_IO_DEV_ERROR:
+//			result = IOInterface::instance()->updateIOError();
+// 			setWarning(result) ; 
+//          break;
 #endif
         case READ_SMLT_STS:
 			dioPathInfo = intprt_ctrl.dioPathInfo;
@@ -969,13 +997,26 @@ void initShm()
 	
 	setPrgmState(IDLE_R);
 #ifdef WIN32
-	generateFakeData();
+//	generateFakeData();
 #else
 	
 #ifndef USE_FORSIGHT_REGISTERS_MANAGER
 	initRegShmi();
 #endif
 //	initShmi(1024);
+#endif
+}
+
+
+void updateIOError()
+{
+#ifndef WIN32
+	U64 result = SUCCESS ;
+	result = IOInterface::instance()->updateIOError();
+    if (result != SUCCESS)
+    {
+		setWarning(result) ; 
+    }
 #endif
 }
 

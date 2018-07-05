@@ -74,7 +74,7 @@ class ShareMem
 	 *
 	 * @return: 0 if successfullly set JointCommand 
 	 */
-	U64 setJointPositions();
+	U64 setJointPositions(unsigned int valid_level);
 	/**
 	 * @brief: judge if the JointCommand has successfullly written to Share memory 
 	 *

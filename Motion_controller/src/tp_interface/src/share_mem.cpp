@@ -163,14 +163,14 @@ U64 ShareMem::getFeedbackJoint(Joint &servo_joint)
  *
  * @return: true if successfullly set JointCommand 
  */
-U64 ShareMem::setJointPositions()
+U64 ShareMem::setJointPositions(unsigned int valid_level)
 {
     if (shm_jnt_cmd_.empty)
         return TPI_SUCCESS;
     static uint32_t write_cnt = 0;
     write_cnt++;
 #ifdef CROSS_PLATFORM
-	U64 result = core_interface_.sendBareCore(shm_jnt_cmd_.joint_cmd);
+	    U64 result = core_interface_.sendBareCore(shm_jnt_cmd_.joint_cmd, valid_level);
 #else
 	U64 result = core_interface_.sendBareCoreFake(shm_jnt_cmd_.joint_cmd);
 #endif

@@ -12,6 +12,7 @@ Summary:    lib to communicate with core1
 #include "comm_interface/core_interface.h"
 #include <iostream>
 #include <sstream>
+#include <struct_to_mem/struct_joint_command.h>
 #include "middleware_to_mem_version.h"
 
 namespace fst_core_interface
@@ -133,7 +134,7 @@ void CoreInterface::initTrajectory(void)
 //          WRITE_CORE_MEM_FAIL -> failed.
 //          OPEN_CORE_MEM_FAIL -> failed
 //------------------------------------------------------------
-ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
+ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_level)
 {   
     if (error_flag_ != 0)
         return error_flag_;
@@ -143,6 +144,7 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
     initTrajectory();
     for (int i = 0; i < jc.total_points; ++i)
     {
+        ts_.points[i].valid_level = valid_level;
         for (int j = 0; j < JOINT_NUM; ++j)
         {
             ts_.points[i].positions[j] = jc.points[i].positions[j];

@@ -154,7 +154,7 @@ struct thread_control_block {
 	vector<prog_line_info> prog_jmp_line;
 	ProgMode  prog_mode ; // = 0;   /* 0 - run to end, 1 - step  */
 	ExecuteDirection  execute_direction ;  /* 0 - FORWARD, 1 - BACKWARD  */
-	bool is_abort , is_paused; 
+	bool is_abort , is_paused, is_in_macro; 
 	int  is_main_thread ; // = 0;   /* 0 - Monitor, 1 - Main  */
 	
 	char token[80];
@@ -190,15 +190,15 @@ unsigned __stdcall basic_interpreter(void* arg);
 void* basic_interpreter(void* arg);
 #endif
 
-bool base_thread_create(int iIdx, void * args);
-void base_thread_wait(int iIdx);
+bool basic_thread_create(int iIdx, void * args);
+void basic_thread_destroy(int iIdx);
 
 int get_token(struct thread_control_block * objThreadCntrolBlock);
 void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * result, int* boolValue);
 void putback(struct thread_control_block * objThreadCntrolBlock);
 int calc_conditions(
 		struct thread_control_block * objThreadCntrolBlock);
-int exec_call(struct thread_control_block * objThreadCntrolBlock);
+int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro = false);
 
 void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value);
 eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s, int raise_unkown_error = 0);

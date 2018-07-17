@@ -8,20 +8,23 @@
 	 
 #include <stdlib.h>
 #include <string.h>
+#ifndef WIN32
 #include <dirent.h>
 #include <unistd.h>
-
-#include "launch_code_mgr.h"
+#include <boost/algorithm/string.hpp>
 #include "common.h"
 #include "error_code.h"
-#include "error_monitor.h"
-#include <boost/algorithm/string.hpp>
+#endif
+
+#include "launch_code_mgr.h"
 #include "forsight_cJSON.h"
+
+#define INVALID_LAUNCHCODE   -1
 
 LaunchCodeMgr::LaunchCodeMgr()
 {
-    U64 result = initial();
-    if (result != TPI_SUCCESS)
+    int result = initial();
+    if (result != 0)
     {
         // rcs::Error::instance()->add(result);
     }
@@ -35,6 +38,7 @@ LaunchCodeMgr::~LaunchCodeMgr()
 
 int LaunchCodeMgr::parseLaunchCode(char * data)
 {
+	int iRet = 0 ;
 	cJSON *json;
 	json=cJSON_Parse(data);
 	if(json == NULL)
@@ -51,8 +55,15 @@ int LaunchCodeMgr::parseLaunchCode(char * data)
 			{
 				if(strcmp(child->string, "launchCode") == 0)
 				{
+					iRet = (int)child->valuedouble ;
 					cJSON_Delete(json);
-					return child->valueint ;
+					return iRet;
+				}
+				else if(strcmp(child->string, "codeNumber") == 0)
+				{
+					iRet = (int)child->valuedouble ;
+					cJSON_Delete(json);
+					return iRet;
 				}
 			}
 			break;
@@ -67,7 +78,7 @@ int LaunchCodeMgr::parseLaunchCode(char * data)
 		child = child->next ;
 	}
 	cJSON_Delete(json);
-	return -1;
+	return INVALID_LAUNCHCODE;
 }
 
 
@@ -83,7 +94,10 @@ int LaunchCodeMgr::parseProgramPropFile(char *filename, char * progName)
 	    data=(char*)malloc(len+1); fread(data,1,len,f); 
 		fclose(f);
 		iCode = parseLaunchCode(data);
-		launchCodeList.insert(std::pair<int, std::string>(iCode, progName));
+		if(iCode != INVALID_LAUNCHCODE)
+		{
+			launchCodeList.insert(std::pair<int, std::string>(iCode, progName));
+		}
 		free(data);
 	}
 	return 1;
@@ -91,9 +105,12 @@ int LaunchCodeMgr::parseProgramPropFile(char *filename, char * progName)
 
 int LaunchCodeMgr::readFileList(char *basePath)
 {
+#ifdef WIN32
+	parseProgramPropFile("ProgramProp.json", "ProgramProp");
+#else
+    char base[1000];
     DIR *dir;
     struct dirent *ptr;
-    char base[1000];
     char filename[256];
 	char * strExtPtr ;
 
@@ -142,24 +159,34 @@ int LaunchCodeMgr::readFileList(char *basePath)
         }
     }
     closedir(dir);
+#endif
     return 1;
 }
 
-U64 LaunchCodeMgr::initial()
+int LaunchCodeMgr::initial()
 {
-	readFileList("\/data\/programs\/");
+#ifdef WIN32
+	int iRet = readFileList("\\data\\programs\\");
+#else
+	int iRet = readFileList("\/data\/programs\/");
+#endif
 	// printLaunchCodeList();
-	return TPI_SUCCESS;
+	return iRet;
 }
 	
-U64 LaunchCodeMgr::updateAll()
+int LaunchCodeMgr::updateAll()
 {	
+	launchCodeList.clear();
     return initial();
 }
 
 std::string LaunchCodeMgr::getProgramByCode(int iLaunchCode)
 {
-    return launchCodeList[iLaunchCode];
+	std::map<int, std::string>::iterator it =launchCodeList.find(iLaunchCode);
+	if (it==launchCodeList.end())
+		return std::string("");
+    else
+    	return launchCodeList[iLaunchCode];
 }
 
 int LaunchCodeMgr::printLaunchCodeList()

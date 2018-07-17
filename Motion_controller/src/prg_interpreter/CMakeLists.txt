@@ -83,6 +83,10 @@ add_executable(prg_interpreter
     src/forsight_innercmd.cpp
     src/forsight_xml_reader.cpp
     src/forsight_int_main.cpp
+    src/launch_code_mgr.cpp
+    src/forsight_launch_code_startup.cpp
+    src/macro_instr_mgr.cpp
+    src/forsight_macro_instr_startup.cpp
     src/forsight_basint.cpp
     src/forsight_innerfunc.cpp
     src/base_thread.cpp
@@ -131,5 +135,9 @@ install(FILES config/r_reg.yaml
 
 install(FILES config/sr_reg.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(FILES config/io_emulator.json
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
 )
 

@@ -118,7 +118,7 @@ U64 ShareMem::getFeedbackJoint(Joint &servo_joint)
     if ((result == TPI_SUCCESS)/* || (fbjs.state != STATE_INIT)*/)
     {        
         read_cnt = 0;
-        if (servo_state_ != fbjs.state)
+        if (servo_state_ != (int)fbjs.state)
         {
             FST_INFO("servo_state_:%d", fbjs.state);
             pre_servo_state_ = servo_state_.load();
@@ -240,7 +240,7 @@ void ShareMem::getMoveCommandDestination(MoveCommandDestination& movCmdDst)
 bool ShareMem::getIntprtSendFlag()
 {
     bool is_permitted = false ;
-    int offset = &((CtrlStatus*)0)->is_permitted;
+    int offset = (int)&((CtrlStatus*)0)->is_permitted;
 	readShm(SHM_CTRL_STATUS, offset, (void*)&is_permitted, sizeof(is_permitted));
 	return is_permitted ;
 }
@@ -248,27 +248,27 @@ bool ShareMem::getIntprtSendFlag()
 
 void ShareMem::setIntprtSendFlag(bool flag)
 {
-    int offset = &((CtrlStatus*)0)->is_permitted;
+    int offset = (int)&((CtrlStatus*)0)->is_permitted;
     writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
 }
 
 void ShareMem::setIntprtDataFlag(bool flag)
 {
-    int offset = &((CtrlStatus*)0)->is_data_ready;
+    int offset = (int)&((CtrlStatus*)0)->is_data_ready;
     writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
 }
 
 bool ShareMem::getIntprtDataFlag()
 {
     bool is_data_ready;
-    int offset = &((CtrlStatus*)0)->is_data_ready;     
+    int offset = (int)&((CtrlStatus*)0)->is_data_ready;     
     readShm(SHM_CTRL_STATUS, offset, (void*)&is_data_ready, sizeof(is_data_ready));
     return is_data_ready;
 }
 
 void ShareMem::setUserOpMode(UserOpMode mode)
 {
-    int offset = &((CtrlStatus*)0)->user_op_mode;
+    int offset = (int)&((CtrlStatus*)0)->user_op_mode;
     writeShm(SHM_CTRL_STATUS, offset, (void*)&mode, sizeof(mode));
 }
 
@@ -280,28 +280,28 @@ void ShareMem::setUserOpMode(UserOpMode mode)
 
 void ShareMem::getCurLine(char * line)
 {
-    int offset = &((IntprtStatus*)0)->line;     
+    int offset = (int)&((IntprtStatus*)0)->line;     
     readShm(SHM_INTPRT_STATUS, offset, (void*)line, TP_XPATH_LEN);
-    return line;
+    // return line;
 }
 InterpreterState ShareMem::getIntprtState()
 {
     InterpreterState state;
-    int offset = &((IntprtStatus*)0)->state;
+    int offset = (int)&((IntprtStatus*)0)->state;
     readShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
     return state;
 }
-long long int ShareMem::getWarning()
+U64 ShareMem::getWarning()
 {
     long long int warn;
-    int offset = &((IntprtStatus*)0)->warn;
+    int offset = (int)&((IntprtStatus*)0)->warn;
     readShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
     return warn;
 }
 
-void ShareMem::setWarning(long long int warn)
+void ShareMem::setWarning(U64 warn)
 {
-    int offset = &((IntprtStatus*)0)->warn;
+    int offset = (int)&((IntprtStatus*)0)->warn;
     writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
 }
 
@@ -327,8 +327,8 @@ std::vector<ChgFrameSimple> ShareMem::getChangeRegList()
 {
     char strChgRegLst[1024];
 	std::vector<ChgFrameSimple> vecRet ; 
-	char tempDebug[1024];
-	int iSeq = 0 ;
+//	char tempDebug[1024];
+//	int iSeq = 0 ;
 	RegChgList  * regChgList ;
 	ChgFrameSimple * chgFrameSimple ;
     readShm(SHM_CHG_REG_LIST_INFO, 0, (void*)strChgRegLst, 1024);

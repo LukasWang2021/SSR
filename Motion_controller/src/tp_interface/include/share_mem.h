@@ -178,13 +178,13 @@ class ShareMem
      *
      * @return: interpreter Warning 
      */
-	long long int getWarning();
+	U64 getWarning();
     /**
      * @brief: get interpreter Warning 
      *
      * @return: interpreter Warning 
      */
-	void setWarning(long long int warn);
+	void setWarning(U64 warn);
 
     /**
      * @brief: check if servo is done 

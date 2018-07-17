@@ -8,27 +8,28 @@
 #ifndef LAUNCH_CODE_MGR_H_
 #define LAUNCH_CODE_MGR_H_
 
+#ifdef WIN32
+#pragma warning(disable : 4786)
+#endif
+#ifndef WIN32
 #include <atomic>
 #include <string>
 #include <pb_encode.h>
-#include "motionSL.pb.h"
-#include "base_types.pb.h"
 #include "common.h"
-#include "interpreter_common.h"
-#include "error_code.h"
+#include "common/interpreter_common.h"
+#include "common/error_code.h"
+#endif
 
 #include <vector>
 #include <string>
 #include <map>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
 
 class LaunchCodeMgr
 {
   public:	 
     LaunchCodeMgr();
     ~LaunchCodeMgr();
-    U64 initial();
+    int initial();
     
     /**
      * @brief: get Program by Code
@@ -46,14 +47,15 @@ class LaunchCodeMgr
      *
      * @return: 0 if success 
      */
-    U64 updateAll();
+    int updateAll();
 
+    std::map<int, std::string>  getAllProgramByCode(){ return launchCodeList; }
+	int printLaunchCodeList();
 
   private:
   	int readFileList(char *basePath);
 	int parseProgramPropFile(char *filename, char * progName);
 	int parseLaunchCode(char * data);
-	int printLaunchCodeList();
 	
     std::map<int, std::string>  launchCodeList; 
 };

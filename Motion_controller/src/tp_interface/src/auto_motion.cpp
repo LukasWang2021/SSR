@@ -101,6 +101,7 @@ bool AutoMotion::step()
     /*InterpreterControl ctrl;*/
     //ctrl.cmd = FORWARD;
     /*ShareMem::instance()->intprtControl(ctrl);*/
+	return true ;
 }
 bool AutoMotion::jump(int id)
 {
@@ -108,11 +109,12 @@ bool AutoMotion::jump(int id)
     //ctrl.cmd = JUMP;
     //ctrl.line = id;
     /*ShareMem::instance()->intprtControl(ctrl);*/
+	return true ;
 
 }
 bool AutoMotion::backwords()
 {
-
+	return true ;
 }
 
 bool AutoMotion::abort()
@@ -125,6 +127,7 @@ bool AutoMotion::abort()
     usleep(20*1000);
     Instruction inst;
     ShareMem::instance()->getInstruction(inst); //read out all instructions
+	return true ;
 }
 
 ErrorCode AutoMotion::moveTarget(MotionTarget target)

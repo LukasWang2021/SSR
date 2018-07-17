@@ -725,7 +725,7 @@ class Controller
      *
      * @param params
      */
-    int checkIODevInfo(const char *path, IOPortInfo* io_info);
+    U64 checkIODevInfo(const char *path, IOPortInfo* io_info);
 
     /**
      * @brief: callback for IO device info 
@@ -912,8 +912,7 @@ class Controller
 
 
     std::map<int, PublishUpdate>	    id_pub_map_; //the map from parameter id to there publish time
-
-    LaunchCodeMgr               launch_code_mgr_;  //instance of SafetyInterface
+    // LaunchCodeMgr               launch_code_mgr_; 
 
     FrameManager *user_frame_manager_;
     FrameManager *tool_frame_manager_;

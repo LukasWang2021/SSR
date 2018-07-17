@@ -613,7 +613,7 @@ bool IOManager::loadConfigFile(int model)
 {
     // load configuration yaml file.
     std::ostringstream oss;
-    oss<<"share/io_manager/config/io_"<<model<<".yaml";
+    oss<<"share/configuration/machine/io_"<<model<<".yaml";
     std::string ss = oss.str();      
     if (!param_.loadParamFile(ss))
     {

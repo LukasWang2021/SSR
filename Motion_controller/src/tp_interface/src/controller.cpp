@@ -323,7 +323,7 @@ void Controller::updateWorkStatus(int id)
                 }
             }
 
-			long long int warn = ShareMem::instance()->getWarning();
+			U64 warn = ShareMem::instance()->getWarning();
 			if (warn >= FAIL_INTERPRETER_BASE)
 			{
                 FST_INFO("warn >= ERROR_EXEC_BASE_T in IDLE_W with %llx", warn);
@@ -396,12 +396,18 @@ void Controller::updateWorkStatus(int id)
                 work_status_ = RUNNING_TO_IDLE_T;
             }
 
-			long long int warn = ShareMem::instance()->getWarning();
+			U64 warn = ShareMem::instance()->getWarning();
 			if (warn >= FAIL_INTERPRETER_BASE)
 			{
                 FST_INFO("warn >= ERROR_EXEC_BASE_T in RUNNING_W with %llx", warn);
 				rcs::Error::instance()->add(warn);
 				ShareMem::instance()->setWarning(0);
+			}
+			// Deal safety_interface_ signal
+			if(safety_interface_.getDITPEStop())
+			{
+                FST_INFO("safety_interface_.getDITPEStop = true and pauseMotion");
+				pauseMotion();
 			}
             break;
         }
@@ -846,7 +852,7 @@ int Controller::getIOReply(void* params)
         return -1;
     }
 
-    ShareMem::instance()->getDIOInfo(&io_info);
+    ShareMem::instance()->getDIOInfo((char *)&io_info);
 
     if (param_ptr->type == REPLY)
     {
@@ -904,6 +910,13 @@ void Controller::startRun(void* params, int len)
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
+
+	if(run_mode_ != NORMAL_R)
+	{
+        printf("NOTICE: run_mode_ != NORMAL_R \n");
+		rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+        return;
+	}
     StartCtrl* start = (StartCtrl*)params;
 	
 	FST_INFO("start run %s ------------------------", start->file_name);
@@ -933,6 +946,14 @@ void Controller::startDebug(void* params, int len)
         rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
         return;
     }
+
+	if(run_mode_ != NORMAL_R)
+	{
+        printf("NOTICE: run_mode_ != NORMAL_R \n");
+		rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+        return;
+	}
+	
     if (user_op_mode_ == AUTO_MODE_U)
     {
         FST_ERROR("cant debug run!!");
@@ -1487,10 +1508,16 @@ void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
                 // Out of SoftConstraint or lost ZeroOffset would enter SOFTLIMITED_R
                 run_mode_ = NORMAL_R ;
 			    unsigned int caliborate_val;
-			    if ((calib_.checkZeroOffset(caliborate_val) == false)
-					||(arm_group_->isJointInSoftConstraint(servo_joints_) == false))
+			    if (calib_.checkZeroOffset(caliborate_val) == false)
 			    {
-                	FST_ERROR("run_mode_ = SOFTLIMITED_R in state:%d", state);
+                	FST_ERROR("run_mode_ = SOFTLIMITED_R (checkZeroOffset(%08X) Failed) in state:%d", 
+						caliborate_val, state);
+			        run_mode_ = SOFTLIMITED_R ;
+			    }
+				if (arm_group_->isJointInSoftConstraint(servo_joints_) == false)
+			    {
+                	FST_ERROR("run_mode_ = SOFTLIMITED_R (isJointInSoftConstraint Failed) in state:%d", 
+						state);
 			        run_mode_ = SOFTLIMITED_R ;
 			    }
             }//end else if (state == ESTOP_S)
@@ -1571,7 +1598,11 @@ void Controller::stateMachine(void* params)
 			            result = auto_motion_->moveTarget(inst.target);
 						if(result != SUCCESS)
 		        		{
+#ifdef USE_XPATH
+		                    printf("NOTICE: moveTarget failed, line:%s\n", inst.line);
+#else
 		                    printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+#endif		
 		        			rcs::Error::instance()->add(result);
 							setLogicStateCmd(EMERGENCY_STOP_E);
 							
@@ -1659,6 +1690,8 @@ void Controller::stateMachine(void* params)
 			         bool bRet = ShareMem::instance()->getIntprtSendFlag();
 					 if(bRet == false)
 					 {
+			             ShareMem::instance()->sendingPermitted();
+			             auto_motion_->setDoneFlag(true);
 			             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with FINE .");
 					     ShareMem::instance()->setIntprtSendFlag(true);
 					 }
@@ -1670,6 +1703,8 @@ void Controller::stateMachine(void* params)
 	         bool bRet = ShareMem::instance()->getIntprtSendFlag();
 			 if(bRet == false)
 			 {
+	             ShareMem::instance()->sendingPermitted();
+	             auto_motion_->setDoneFlag(true);
 	             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
 			     ShareMem::instance()->setIntprtSendFlag(true);
 			 }
@@ -1741,7 +1776,6 @@ void Controller::rtTrajFlow(void* params)
     }
 
     int joints_in = joint_traj.size();
-
     //dbcount+=joints_in;
     //printDbLine("joints:", (double*)&joint_traj[joints_in-1].joint, 6);
     //joints_len = arm_group_->getTrajectoryFIFOLength();
@@ -1871,13 +1905,13 @@ void Controller::requestProc()
                 char val = *tp_interface_->getReqDataPtr()->getParamBufPtr();
  //             IOInterface::instance()->setDO(&info, val);
  //				memcpy(&infoMap, &info, sizeof(IOPortInfo));
-                setIOStatus(str_path.c_str(), val);
+                setIOStatus((char *)str_path.c_str(), val);
 				FST_INFO("SET:: %s\n", str_path.c_str());
             }
             else if (str_path.substr(0, 23) == "root/simulate_IO_status")
             {
 			    std::vector<std::string> vc_path;
-				tempPathPtr = str_path.c_str() ;
+				tempPathPtr = (char *)str_path.c_str() ;
 			    boost::split(vc_path,  tempPathPtr, boost::is_any_of("/"));
                 if(vc_path.size() == 5)
                 {
@@ -1898,7 +1932,7 @@ void Controller::requestProc()
             else if (str_path.substr(0, 22) == "root/simulate_IO_value")
             {
 			    std::vector<std::string> vc_path;
-				tempPathPtr = str_path.c_str() ;
+				tempPathPtr = (char *)str_path.c_str() ;
 			    boost::split(vc_path, tempPathPtr, boost::is_any_of("/"));
 				// root/simulate_IO_value/di/77/1
                 if(vc_path.size() == 5)
@@ -1961,7 +1995,7 @@ void Controller::requestProc()
                     break;
                 }
 
-				sendGetIORequest(str_path.c_str(), str_path.length());
+				sendGetIORequest((char *)str_path.c_str(), str_path.length());
 				usleep(10000);
 
                 TPIParamBuf param_buf;
@@ -1995,7 +2029,7 @@ void Controller::requestProc()
             else if (str_path.substr(0, 23) == "root/simulate_IO_status")
             {
 			    std::vector<std::string> vc_path;
-				tempPathPtr = str_path.c_str() ;
+				tempPathPtr = (char *)str_path.c_str() ;
 			    boost::split(vc_path, tempPathPtr, boost::is_any_of("/"));
                 if(vc_path.size() == 4)
                 {
@@ -2097,7 +2131,8 @@ void Controller::requestProc()
                 if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
                     (this->*g_ctrl_funcs_mp[id].getValue)(&param_buf);
                 }else{
-                    FST_ERROR("GET:: not exist id :%d with %s", id, str_path.c_str()); 
+                    FST_ERROR("GET:: not exist id :%d with %s", 
+									id, (char *)str_path.c_str()); 
                 }
             }
             tp_interface_->setReply(PARAM, id);
@@ -2131,7 +2166,7 @@ void Controller::updateProc()
     for (itr = id_pub_map_.begin(); itr != id_pub_map_.end(); ++itr)
     {
         int id = itr->first;
-        PublishUpdate *pub_update = &itr->second;
+    //    PublishUpdate *pub_update = &itr->second;
 
         motion_spec_Signal *sig = &sig_gp->sig_param[sig_gp->sig_param_count];
 
@@ -2247,7 +2282,7 @@ void Controller::addPubParameter(string str_path, PublishUpdate *pub_update)
 		
 		// Lujiaming comment at 0619
 		// U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
-		U64 result = checkIODevInfo(str_path.c_str(), &info);
+		U64 result = checkIODevInfo((char *)str_path.c_str(), &info);
 
         if (result != TPI_SUCCESS)
         {
@@ -2279,7 +2314,7 @@ void Controller::removePubParameter(string str_path)
         IOPortInfo info;
 		// Lujiaming comment at 0619
 		// U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
-		U64 result = checkIODevInfo(str_path.c_str(), &info);
+		U64 result = checkIODevInfo((char *)str_path.c_str(), &info);
         
         if (result != TPI_SUCCESS)
         {
@@ -2736,7 +2771,7 @@ void Controller::getToolFrame(void* params)
     Frame frame;
     frame.id = frame_interface.frame.id;
     frame.is_valid = false;
-    char* comment = "test frame";
+    char* comment = (char *)"test frame";
     strcpy(frame.comment, comment);
     frame.data.position.x = 10.1;
     frame.data.position.y = 10.2;
@@ -2891,7 +2926,7 @@ void Controller::getUserFrame(void* params)
     Frame frame;
     frame.id = frame_interface.frame.id;
     frame.is_valid = false;
-    char* comment = "test frame";
+    char* comment = (char *)"test frame";
     strcpy(frame.comment, comment);
     frame.data.position.x = 10.1;
     frame.data.position.y = 10.2;
@@ -3116,14 +3151,14 @@ int Controller::getChangeRegListReply(std::vector<ChgFrameSimple>& vecRet)
 //	    ShareMem::instance()->setIntprtDataFlag(false);
 //	}
 
-int Controller::checkIODevInfo(const char *path, IOPortInfo* io_info)
+U64 Controller::checkIODevInfo(const char *path, IOPortInfo* io_info)
 {
     std::vector<std::string> vc_path;
     boost::split(vc_path, path, boost::is_any_of("/"));
     
     int size = vc_path.size();
     printf("\t checkIODevInfo::getIODevNum: %d\n", vecIODeviceInfoShm.size());
-    for (int i = 0; i < vecIODeviceInfoShm.size(); i++)
+    for (int i = 0; i < (int)vecIODeviceInfoShm.size(); i++)
     {
     		printf("\t device_number: %s\n", vecIODeviceInfoShm[i].path);
     		printf("\t id: %d\n", vecIODeviceInfoShm[i].id);
@@ -3218,6 +3253,7 @@ int Controller::getIODevInfo(motion_spec_DeviceList & dev_list)
 	        dev_list.dev_info[i].output = vecIODeviceInfoShm[i].output;
 	    }
 	}
+	return 0;
 }
 
 void Controller::sendGetIODevInfoRequest()
@@ -3276,7 +3312,7 @@ void Controller::setPoseRegister(void* params, int len)
     pr_struct.id = pr_interface.id;
     memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
 
-    pr_struct.value.pos_type = pr_interface.type;
+    pr_struct.value.pos_type = (PosType)pr_interface.type;
     if (POS_TYPE_CARTESIAN == pr_interface.type)
     {
         memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
@@ -3593,7 +3629,7 @@ void Controller::getValidSimplePR(void* params)
 {
     register_spec_SimpleRegInterface simple_reg;
 
-    void* p;
+    void* p = NULL;
     std::vector<ChgFrameSimple> simple_reg_struct = 
         getChangeRegList(READ_CHG_PR_LST, p);
 

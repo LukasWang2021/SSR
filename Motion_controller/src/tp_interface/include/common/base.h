@@ -87,6 +87,16 @@ typedef enum _PointType
     CART_M
 }PointType;
 
+// XX STATE MACHINE
+typedef enum _ServoStatus
+{
+    SERVO_STATE_INIT = 10,
+    SERVO_STATE_READY = 1,
+    SERVO_STATE_RUNNING = 2,
+    SERVO_STATE_ERROR = 3,
+    SERVO_STATE_WAIT_SERVOREADY = 4,
+    SERVO_STATE_WAIT_SERVODOWN = 5,
+}ServoStatus;
 
 
 #define MAX_JOINTS				(6)

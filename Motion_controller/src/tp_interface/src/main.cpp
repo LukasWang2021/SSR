@@ -35,7 +35,9 @@ void sigroutine(int dunno)
 	    FST_INFO("stop....\n");
 	    gs_running_flag = false;
     }
-    Controller::exit();
+    // XX STATE MACHINE
+    Controller::XXexit();
+    //Controller::exit();
 }
 
 
@@ -56,8 +58,10 @@ int main(int argc, char **argv)
     	get_version());
     FST_INFO("BUILD TIME:%s", tp_interface_BUILD_TIME);
 
-    Controller controller;  
-    while (!controller.isTerminated())
+    Controller controller;
+    // XX STATE MACHINE
+    while (!controller.XXisTerminated())
+    //while (!controller.isTerminated())
     {
         usleep(100);
     }

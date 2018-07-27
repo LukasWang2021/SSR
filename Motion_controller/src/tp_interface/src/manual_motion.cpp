@@ -47,6 +47,11 @@ motion_spec_ManualType& ManualMotion::getManuType()
 
 void ManualMotion::setManuCommand(motion_spec_ManualCommand command)
 {
+    // XX STATE MACHINE: fix me later
+    command.stepJoint = 0.1;
+    command.stepPosition = 1;
+    command.stepOrientation = 0;
+
     if (command.has_velocity)
     {
         if ((0 <= command.velocity) && (command.velocity <= 100))

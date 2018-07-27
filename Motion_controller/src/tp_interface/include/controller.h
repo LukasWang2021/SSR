@@ -905,7 +905,21 @@ class Controller
     std::atomic<RobotState>     ctrl_state_;    //fault and running
     std::atomic<RunningMode>    run_mode_;      //normal and limited running
     double                         current_cnt_ ;
-    
+
+    // XX STATE MACHINE
+    UserOpMode xx_user_op_mode_;
+    RunningMode xx_run_mode_;    
+    InterpreterState xx_intrp_status_;
+    WorkStatus xx_work_status_;
+    RobotState xx_ctrl_status_;
+    ServoStatus xx_servo_status_;
+    long long int xx_intrp_warn_;
+    int xx_error_level_;
+    int xx_safety_status_;
+    int xx_ctrl_reset_count_;
+    int xx_intrp_pause_count_;
+    bool xx_is_error_exist_;
+    bool xx_is_init_error_exist;
 
     SafetyInterface             safety_interface_;  //instance of SafetyInterface
     ServiceJTAC                 serv_jtac_;     //instance of ServiceJTAC
@@ -1097,6 +1111,44 @@ class Controller
      * @brief: no use 
      */
     void shutdown();
+
+    // XX STATE MACHINE
+public:
+    // communication handler
+    void XXgetWarnings(void* params);
+    void XXupdateWarnings(int id);
+    void XXgetRunningMode(void* params);
+    void XXupdateRunningMode(int id);
+    void XXgetServoState(void* params);
+    void XXupdateServoState(int id);
+    void XXgetWorkStatus(void* params);
+    void XXupdateWorkStatus(int id);
+    void XXgetInterpreterState(void* params);
+    void XXupdateInterpreterState(int id);
+    void XXgetCtrlState(void* params);
+    void XXupdateCtrlState(int id);
+    void XXsetUserOpMode(void* params, int len);
+    void XXgetUserOpMode(void* params);
+    // state machine driven
+    void XXsetCtrlCmd(void* params, int len);
+    void XXsetStateCmd(void* params, int len);
+    void XXstartRun(void* params, int len);
+    void XXstartDebug(void* params, int len);
+    void XXsetManualCmd(void* params, int len);
+    void XXsetTeachTarget(void* params, int len);
+    bool XXisTerminated();
+    static void XXexit();
+
+    // state machine transfer
+    void XXprocessInterp();  
+    void XXprocessError();
+    void XXtransferServoStatus();
+    void XXtransferCtrlStatus();
+    void XXtransferWorkStatus();    
+    void XXprocessStateMachine();
+    // state machine thread func
+    void XXstateMachine(void *params);
+    void XXrtTrajFlow(void* params);    
 };
 
 

@@ -54,11 +54,15 @@ Controller::Controller()
     tp_interface_ = new TPInterface();
 
     ctrl_task_ = new rcs::Task(STATE_MACHINE_INTERVAL);
-    ctrl_task_->function(std::bind(&Controller::stateMachine, this, (void*)NULL));
+    //ctrl_task_->function(std::bind(&Controller::stateMachine, this, (void*)NULL));
+    /* XX STATE MACHINE*/
+    ctrl_task_->function(std::bind(&Controller::XXstateMachine, this, (void*)NULL));
     ctrl_task_->run();
     
     rt_traj_task_ = new rcs::Task(TRAJ_FLOW_INTERVAL, 80, true); 
-    rt_traj_task_->function(std::bind(&Controller::rtTrajFlow, this, (void*)NULL));
+    //rt_traj_task_->function(std::bind(&Controller::rtTrajFlow, this, (void*)NULL));
+    /* XX STATE MACHINE*/
+    rt_traj_task_->function(std::bind(&Controller::XXrtTrajFlow, this, (void*)NULL));
     rt_traj_task_->run();
 
     heartbeat_task_ = new rcs::Task(HEART_BEAT_INTERVAL);
@@ -1723,6 +1727,7 @@ void Controller::stateMachine(void* params)
 
 void Controller::rtTrajFlow(void* params)
 {
+#if 0
     struct timeval time_now;
     static int ms_old, ms_new;
     int ms_delay;
@@ -1854,7 +1859,7 @@ void Controller::rtTrajFlow(void* params)
 
 
     ShareMem::instance()->setCurrentJointCmd(joint_command); //store this command in case it can't write Success
-
+#endif
         //return NULL;
 }
 
@@ -3979,3 +3984,752 @@ void Controller::getMR(void* params)
         memcpy(param->bytes, (char*)&mr_interface, param->size);
     }
 }
+
+// XX STATE MACHINE
+void Controller::XXgetWarnings(void* params)
+{
+    string err_str = rcs::Error::instance()->getErrorBytes();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData(err_str.c_str(), err_str.size());
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = err_str.size();
+        memcpy(param->bytes, err_str.c_str(), param->size);
+    }
+}
+
+void Controller::XXupdateWarnings(int id)
+{
+    if (rcs::Error::instance()->updated())
+    {
+        setUpdateFlagByID(id, true);
+    }
+}
+
+void Controller::XXgetRunningMode(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_run_mode_, sizeof(xx_run_mode_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_run_mode_);
+        memcpy(param->bytes, (char*)&xx_run_mode_, param->size);
+    }
+}
+
+void  Controller::XXupdateRunningMode(int id)
+{
+    static RunningMode prev = NORMAL_R;
+    if(xx_run_mode_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_run_mode_;        
+    }
+}
+
+void Controller::XXgetServoState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_servo_status_, sizeof(xx_servo_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_servo_status_);
+        memcpy(param->bytes, (char*)&xx_servo_status_, param->size);
+    }
+}
+
+void  Controller::XXupdateServoState(int id)
+{
+    static ServoStatus prev = SERVO_STATE_INIT;
+    if(xx_servo_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_servo_status_;        
+    }
+}
+
+void Controller::XXgetWorkStatus(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_work_status_, sizeof(xx_work_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_work_status_);
+        memcpy(param->bytes, (char*)&xx_work_status_, param->size);
+    }
+}
+
+void Controller::XXupdateWorkStatus(int id)
+{
+    static WorkStatus prev = IDLE_W;
+    if(xx_work_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_work_status_;        
+    }
+}
+
+void Controller::XXgetInterpreterState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_intrp_status_, sizeof(xx_intrp_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_intrp_status_);
+        memcpy(param->bytes, (char*)&xx_intrp_status_, param->size);
+    }
+}
+
+void Controller::XXupdateInterpreterState(int id)
+{
+    static InterpreterState prev = IDLE_R;
+    if(xx_intrp_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_intrp_status_;        
+    }
+}
+
+void Controller::XXgetCtrlState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_ctrl_status_, sizeof(xx_ctrl_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_ctrl_status_);
+        memcpy(param->bytes, (char*)&xx_ctrl_status_, param->size);
+    }
+}
+
+void Controller::XXupdateCtrlState(int id)
+{
+    static RobotState prev = INIT_S;
+    if(xx_ctrl_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_ctrl_status_;        
+    }
+}
+
+void Controller::XXsetUserOpMode(void* params, int len)
+{
+    xx_user_op_mode_  = *(UserOpMode*)params;
+    ShareMem::instance()->setUserOpMode(xx_user_op_mode_);
+}
+
+void Controller::XXgetUserOpMode(void* params)
+{	
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_user_op_mode_, sizeof(xx_user_op_mode_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_user_op_mode_);
+        memcpy(param->bytes, (char*)&xx_user_op_mode_, param->size);
+    }
+}
+
+void Controller::XXsetCtrlCmd(void* params, int len)
+{
+    RobotCtrlCmd cmd = *(RobotCtrlCmd*)params;
+    InterpreterControl ctrl;
+    switch(cmd)
+    {
+        case PAUSE_CMD:
+            if(xx_intrp_status_ == EXECUTE_R)
+            {
+                ctrl.cmd = PAUSE;
+                ShareMem::instance()->intprtControl(ctrl);
+                auto_motion_->pause();
+                xx_intrp_pause_count_ = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;
+                FST_INFO("---XXsetCtrlCmd: PAUSE_CMD: work_status-->RUNNING_TO_IDLE_T");
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case CONTINUE_CMD:
+            if(xx_intrp_status_ == PAUSED_R)
+            {
+                U64 result = arm_group_->setStartState(servo_joints_);
+                if (result != TPI_SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    return;
+                }
+                
+                ctrl.cmd = CONTINUE;
+                ShareMem::instance()->intprtControl(ctrl);
+                auto_motion_->resume();
+                FST_INFO("---XXsetCtrlCmd: CONTINUE_CMD: work_status-->IDLE_TO_RUNNING_T");
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case ABORT_CMD:
+        {
+            if(xx_intrp_status_ != IDLE_R)
+            {
+                ctrl.cmd = ABORT;
+                ShareMem::instance()->intprtControl(ctrl);
+                ShareMem::instance()->setEmptyFlag(true);
+                auto_motion_->abort();
+                if(xx_work_status_ == RUNNING_W
+                    || xx_work_status_ == IDLE_TO_RUNNING_T)
+                {
+                    FST_INFO("---XXsetCtrlCmd: ABORT_CMD: work_status-->RUNNING_TO_IDLE_T");
+                    xx_work_status_ == RUNNING_TO_IDLE_T;
+                }
+                else if(xx_work_status_ == TEACHING_W
+                    || xx_work_status_ == IDLE_TO_TEACHING_T)
+                {
+                    FST_INFO("---XXsetCtrlCmd: ABORT_CMD: work_status-->TEACHING_TO_IDLE_T");
+                    xx_work_status_ == TEACHING_TO_IDLE_T;
+                }
+                else{}
+            }
+            break;
+        }
+        case CALIBRATE_CMD:
+            if(xx_work_status_ == IDLE_W
+                && xx_ctrl_status_ == ESTOP_S)
+            {
+                calibrate();
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case SETTMPZERO_CMD:
+            if(xx_work_status_ == IDLE_W
+                && xx_ctrl_status_ == ESTOP_S)
+            {
+                setTempZero();
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case SHUTDOWN_CMD:
+            break;
+        default:
+            rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+    } 
+}
+
+void Controller::XXsetStateCmd(void* params, int len)
+{
+    RobotStateCmd state_cmd = *(RobotStateCmd*)params;
+	switch(state_cmd)
+	{
+        case EMERGENCY_STOP_E:
+            if(xx_ctrl_status_ == ENGAGED_S
+                || xx_ctrl_status_ == RESET_ESTOP_T)
+            {
+                RobotCtrlCmd cmd = ABORT_CMD;
+                XXsetCtrlCmd(&cmd, 0);
+                FST_INFO("---XXsetStateCmd: EMERGENCY_STOP_E: ctrl_status-->TO_ESTOP_T");
+                xx_ctrl_status_ = TO_ESTOP_T;
+            }                        
+            break; 
+        case ACKNOWLEDGE_ERROR:
+            if(xx_ctrl_status_ == ESTOP_S
+                || xx_ctrl_status_ == INIT_S)
+            {                
+                rcs::Error::instance()->clear();
+                serv_jtac_.resetBareMetal();
+                safety_interface_.reset();
+                xx_ctrl_reset_count_ = RESET_ERROR_TIMEOUT / STATE_MACHINE_INTERVAL;
+                FST_INFO("---XXsetStateCmd: ACKNOWLEDGE_ERROR: ctrl_status-->RESET_ESTOP_T");
+                xx_ctrl_status_ = RESET_ESTOP_T;
+            }
+            break;
+        case GOTO_TERMINATED:
+            if(xx_ctrl_status_ == ESTOP_S)
+            {
+                RobotCtrlCmd cmd = ABORT_CMD;
+                XXsetCtrlCmd(&cmd, 0);
+                FST_INFO("---XXsetStateCmd: GOTO_TERMINATED: ctrl_status-->TERMINATING_T");
+                xx_ctrl_status_ = TERMINATING_T;
+            }
+            break;
+        default:
+            ;
+    }
+}
+
+void Controller::XXstartRun(void* params, int len)
+{
+    if(xx_work_status_ == IDLE_W
+        && xx_ctrl_status_ == ENGAGED_S)
+    {
+        U64 result = arm_group_->setStartState(servo_joints_);
+        if (result != TPI_SUCCESS)
+        {
+            rcs::Error::instance()->add(result);
+            return;
+        }
+
+        StartCtrl* start = (StartCtrl*)params;
+        InterpreterControl ctrl;
+        ctrl.cmd = START;
+        ctrl.start_ctrl = *start;
+        ShareMem::instance()->intprtControl(ctrl);
+        setMotionStartPos();
+        ShareMem::instance()->setIntprtSendFlag(true);
+        FST_INFO("---XXstartRun: work_status-->IDLE_TO_RUNNING_T");
+        xx_work_status_ = IDLE_TO_RUNNING_T;
+    }
+    else
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+    }
+}
+
+void Controller::XXstartDebug(void* params, int len)
+{
+    if(xx_work_status_ == IDLE_W
+        && xx_ctrl_status_ == ENGAGED_S
+        && (xx_user_op_mode_ == SLOWLY_MANUAL_MODE_U || xx_user_op_mode_ == UNLIMITED_MANUAL_MODE_U))
+    {
+        U64 result = arm_group_->setStartState(servo_joints_);
+        if (result != TPI_SUCCESS)
+        {
+            rcs::Error::instance()->add(result);
+            return;
+        }
+    
+        auto_motion_->setDoneFlag(true);
+        StartCtrl* start = (StartCtrl*)params;
+        InterpreterControl ctrl;
+        ctrl.cmd = DEBUG;
+        ctrl.start_ctrl = *start;
+        ShareMem::instance()->intprtControl(ctrl);
+        setMotionStartPos();
+        ShareMem::instance()->setIntprtSendFlag(true);
+        // this will not drive work status to running, until step cmd is called
+    }
+    else
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+    }
+}
+
+void Controller::XXsetManualCmd(void* params, int len)
+{
+    FST_INFO("---XXsetManualCmd");
+    if (xx_ctrl_status_ != ENGAGED_S
+        || xx_work_status_ != IDLE_W)
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+
+    motion_spec_ManualCommand command = *(motion_spec_ManualCommand*)params;
+
+    U64 result = arm_group_->setStartState(servo_joints_);
+    if (result != TPI_SUCCESS)
+    {
+        rcs::Error::instance()->add(result);
+        FST_INFO("Controller : set start state error");
+        return;
+    }
+
+    /*FST_INFO("joint step = %d, cart step = %d, orientation = %d", 
+        command.has_stepJoint, command.has_stepPosition, command.has_stepOrientation);
+
+    FST_INFO("Vjoint step = %d, Vcart step = %d, Vorientation = %d", 
+        command.stepJoint, command.stepPosition, command.stepOrientation);*/
+    if(xx_user_op_mode_ == SLOWLY_MANUAL_MODE_U)
+    {
+        if(command.has_velocity && command.velocity > 62.5)
+        {
+            command.velocity = 62.5;
+        }
+    }
+
+    manu_motion_->setManuCommand(command);
+    xx_work_status_ = IDLE_TO_TEACHING_T;
+}
+
+void Controller::XXsetTeachTarget(void* params, int len)
+{
+    FST_INFO("---XXsetTeachTarget");
+    if (xx_ctrl_status_ != ENGAGED_S
+        || xx_work_status_ != TEACHING_W)
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        xx_work_status_ = TEACHING_TO_IDLE_T;
+        return;
+    }
+
+    motion_spec_TeachTarget target = *(motion_spec_TeachTarget*)params;
+    manu_motion_->setTeachTarget(target);
+}
+
+bool Controller::XXisTerminated()
+{
+   if (xx_ctrl_status_ == TERMINATED_S)
+       return true;
+
+   return false;
+}
+
+void Controller::XXexit()
+{
+    Controller* ctrl = instance_;
+    if (ctrl)
+    {
+        RobotStateCmd cmd = GOTO_TERMINATED;
+        ctrl->XXsetStateCmd(&cmd, 0);//ready to terminate process
+    }
+}
+
+void Controller::XXprocessInterp()
+{    
+    U64 result = SUCCESS; 
+    Instruction inst;
+
+    xx_intrp_status_ = ShareMem::instance()->getIntprtState();
+    if (xx_intrp_status_ == EXECUTE_R)
+    {
+        if (ShareMem::instance()->getInstruction(inst))
+        {
+            if(strlen(inst.line) > 0)
+            {
+                result = auto_motion_->moveTarget(inst.target);
+                if(result != SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    RobotStateCmd cmd = EMERGENCY_STOP_E;
+                    XXsetStateCmd(&cmd, 0);
+                    
+                    InterpreterControl ctrl;
+                    ctrl.cmd = ABORT;
+                    ShareMem::instance()->intprtControl(ctrl);
+                    FST_INFO("---XXprocessInterp: moveTarget Failed: intrp_status-->ABORT");
+                }
+                else
+                {
+                    current_cnt_ = inst.target.cnt;
+                    calcMotionDst(inst.target);
+                }
+            }
+        }
+
+        xx_intrp_warn_ = ShareMem::instance()->getWarning();
+        if (xx_intrp_warn_ >= FAIL_INTERPRETER_BASE)
+        {
+            rcs::Error::instance()->add(xx_intrp_warn_);
+            ShareMem::instance()->setWarning(0);
+            FST_INFO("---XXprocessInterp: report intrp error code = %ld", xx_intrp_warn_);
+        }
+    }
+
+    double left_time =  arm_group_->timeBeforeDeadline();
+    if(left_time <= 0.001)
+    {
+        if(current_cnt_ < 0 
+            && xx_servo_status_ != SERVO_STATE_READY)
+        {
+            return;
+        }
+
+        if(!ShareMem::instance()->getIntprtSendFlag())
+        {
+            ShareMem::instance()->sendingPermitted();
+            ShareMem::instance()->setIntprtSendFlag(true);
+        }
+    }
+}
+
+void Controller::XXprocessError()
+{
+    xx_error_level_ = rcs::Error::instance()->getWarningLevel();
+    xx_is_init_error_exist = rcs::Error::instance()->isInitError();
+    xx_safety_status_ = safety_interface_.getDIAlarm();
+    if(xx_error_level_ > 4
+        || xx_is_init_error_exist
+        || xx_safety_status_ != 0)
+    {
+        xx_is_error_exist_ = true;
+    }
+    else
+    {
+        xx_is_error_exist_ = false;
+    }
+}
+
+void Controller::XXtransferServoStatus()
+{
+    xx_servo_status_ = (ServoStatus)ShareMem::instance()->getServoState();
+    if(xx_ctrl_status_ == ENGAGED_S
+        && xx_servo_status_ != SERVO_STATE_READY
+        && xx_servo_status_ != SERVO_STATE_RUNNING)
+    {
+        // this is ugly, because of lacking status in ctrl status definition
+        if(xx_work_status_ == TEACHING_W
+            || xx_work_status_ == IDLE_TO_TEACHING_T
+            || xx_work_status_ == TEACHING_TO_IDLE_T)
+        {
+            FST_INFO("---XXtransferServoStatus: in teaching mode: clearArmGroup");
+            arm_group_->clearArmGroup();
+        }
+        RobotCtrlCmd cmd = ABORT_CMD;
+        XXsetCtrlCmd(&cmd, 0);
+        FST_INFO("---XXtransferServoStatus: servo in error: ctrl_status-->TO_ESTOP_T");
+        xx_ctrl_status_ = TO_ESTOP_T;
+    }
+}
+
+void Controller::XXtransferCtrlStatus()
+{
+    switch(xx_ctrl_status_)
+    {
+        case TO_ESTOP_T:
+            if(xx_work_status_ == IDLE_W)
+            {
+                recordJoints();
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->ESTOP_S");
+                xx_ctrl_status_ = ESTOP_S;
+            }
+            break;
+        case RESET_ESTOP_T:
+            if(xx_work_status_ == IDLE_W
+                && !xx_is_error_exist_)
+            {
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->ENGAGED_S");
+                xx_ctrl_status_ = ENGAGED_S;
+            }
+            else if((--xx_ctrl_reset_count_) < 0)
+            {
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->ESTOP_S");
+                xx_ctrl_status_ = ESTOP_S;
+            }
+            break;
+        case TERMINATING_T:
+            if(xx_work_status_ == IDLE_W)
+            {
+                recordJoints();
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->TERMINATED_S");
+                xx_ctrl_status_ = TERMINATED_S;
+            }
+            break;
+        default:
+            ;
+    }
+}
+
+void Controller::XXtransferWorkStatus()
+{
+    if(xx_work_status_ == IDLE_W
+        && xx_intrp_status_ == PAUSED_R)
+    {
+        if((--xx_intrp_pause_count_) < 0)
+        {
+            rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            arm_group_->clearArmGroup();
+            FST_INFO("---XXtransferWorkStatus: pause timeout, report error: clearArmGroup");
+            return;
+        }
+    }
+    
+    switch(xx_work_status_)
+    {
+        case IDLE_TO_RUNNING_T:
+            if(xx_intrp_status_ == EXECUTE_R)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->RUNNING_W");
+                xx_work_status_ = RUNNING_W;
+            }
+            break;
+        case IDLE_TO_TEACHING_T:
+            xx_work_status_ = TEACHING_W;
+            FST_INFO("---XXtransferWorkStatus: work_status-->TEACHING_W");
+            break;
+        case RUNNING_TO_IDLE_T:
+            if(xx_intrp_status_ != EXECUTE_R
+                && xx_servo_status_ != SERVO_STATE_RUNNING)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->IDLE_W");
+                xx_work_status_ = IDLE_W;
+            }
+            break;
+        case TEACHING_TO_IDLE_T:
+            if(xx_servo_status_ != SERVO_STATE_RUNNING)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->IDLE_W");
+                xx_work_status_ = IDLE_W;
+            }
+            break;
+        case RUNNING_W:
+            if(xx_intrp_status_ != EXECUTE_R)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->RUNNING_TO_IDLE_T");
+                xx_work_status_ = RUNNING_TO_IDLE_T;
+            }
+            break;
+        case TEACHING_W:
+            if (arm_group_->getFIFOLength() == 0)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->TEACHING_TO_IDLE_T");
+                xx_work_status_ = TEACHING_TO_IDLE_T ;
+            }
+            break;
+        case IDLE_W:
+            if(xx_intrp_status_ == EXECUTE_R)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->IDLE_TO_RUNNING_T");
+                xx_work_status_ = IDLE_TO_RUNNING_T;
+            }
+            break;
+        default:
+            ;
+    }
+}
+
+void Controller::XXprocessStateMachine()
+{
+    XXprocessInterp();
+    XXprocessError();
+    XXtransferServoStatus();
+    XXtransferCtrlStatus();
+    XXtransferWorkStatus();
+}
+
+//static int time_count_t = 0;
+void Controller::XXstateMachine(void *params)
+{
+    XXprocessStateMachine();
+    /*time_count_t++;
+    if(time_count_t%10000 == 0)
+    {
+        FST_INFO("servo_status_ = %d, ctrl_status_ = %d, intrp_status_ = %d, work_status_ = %d, SendFlag = %d",
+                    xx_servo_status_, xx_ctrl_status_, xx_intrp_status_, xx_work_status_, ShareMem::instance()->getIntprtSendFlag());
+        time_count_t = 0;
+    }*/
+
+    static int count = 0;
+    if (++count >= SM_INTERVAL_COUNT)
+    {
+        requestProc();
+        updateProc();
+        count = 0;
+    }
+}
+
+void Controller::XXrtTrajFlow(void* params)
+{
+    struct timeval time_now;
+    static int ms_old, ms_new;
+    int ms_delay;
+    
+    gettimeofday(&time_now, NULL);
+    ms_new = (time_now.tv_usec)/1000;
+    ms_delay = ms_new - ms_old;
+    ms_old = ms_new;
+    if(ms_delay <0) ms_delay += 1000;
+    if(ms_delay > 8){
+        FST_INFO("Controller:Get point not fast enough!\n");
+    }
+
+    if (xx_work_status_ == IDLE_W)
+        return;// NULL;
+
+    U64 result;
+    if (xx_work_status_ == RUNNING_W || xx_work_status_ == IDLE_TO_RUNNING_T || xx_work_status_ == RUNNING_TO_IDLE_T)
+        result = ShareMem::instance()->setJointPositions(POS_VEL);
+    else
+        result = ShareMem::instance()->setJointPositions(POSITION_ONLY);
+    if (result != TPI_SUCCESS)
+    {    
+        rcs::Error::instance()->add(result);
+        return;// NULL;
+    }
+
+    int joints_len = arm_group_->getFIFOLength();  
+    if (joints_len <= 0)
+        return;// NULL;
+
+    vector<fst_controller::JointOutput> joint_traj;
+    result = arm_group_->getPointFromFIFO(10,joint_traj);
+    
+    if (result != TPI_SUCCESS)
+    {
+        rcs::Error::instance()->add(result);
+        return;// NULL;
+    }
+
+    int joints_in = joint_traj.size();
+    JointCommand joint_command;
+    joint_command.total_points = joints_in;
+
+    for (int i = 0; i < joints_in; i++)
+    {
+        joint_command.points[i].positions[0] = joint_traj[i].joint.j1;
+        joint_command.points[i].positions[1] = joint_traj[i].joint.j2;
+        joint_command.points[i].positions[2] = joint_traj[i].joint.j3;
+        joint_command.points[i].positions[3] = joint_traj[i].joint.j4;
+        joint_command.points[i].positions[4] = joint_traj[i].joint.j5;
+        joint_command.points[i].positions[5] = joint_traj[i].joint.j6;
+
+        joint_command.points[i].omega[0] = joint_traj[i].omega.j1;
+        joint_command.points[i].omega[1] = joint_traj[i].omega.j2;
+        joint_command.points[i].omega[2] = joint_traj[i].omega.j3;
+        joint_command.points[i].omega[3] = joint_traj[i].omega.j4;
+        joint_command.points[i].omega[4] = joint_traj[i].omega.j5;
+        joint_command.points[i].omega[5] = joint_traj[i].omega.j6;
+
+        joint_command.points[i].inertia[0] = joint_traj[i].inertia.j1;
+        joint_command.points[i].inertia[1] = joint_traj[i].inertia.j2;
+        joint_command.points[i].inertia[2] = joint_traj[i].inertia.j3;
+        joint_command.points[i].inertia[3] = joint_traj[i].inertia.j4;
+        joint_command.points[i].inertia[4] = joint_traj[i].inertia.j5;
+        joint_command.points[i].inertia[5] = joint_traj[i].inertia.j6;
+        
+        joint_command.points[i].point_position = joint_traj[i].level; //point position: start\middle\ending
+    }
+
+    ShareMem::instance()->setCurrentJointCmd(joint_command); //store this command in case it can't write Success
+}
+
+

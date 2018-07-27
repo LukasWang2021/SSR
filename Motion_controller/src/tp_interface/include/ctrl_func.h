@@ -60,27 +60,44 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 std::map<int, CtrlFunctions> g_ctrl_funcs_mp = 
 {								
 	{	32965,	{	&Controller::setError,	&Controller::getCurveMode,	&Controller::updateCurveMode	}	},
-	{	31619,	{	&Controller::setError,	&Controller::getWorkStatus,	&Controller::updateWorkStatus	}	},
+	/*{	31619,	{	&Controller::setError,	&Controller::getWorkStatus,	&Controller::updateWorkStatus	}	},
 	{	48981,	{	&Controller::setError,	&Controller::getInterpreterState,	&Controller::updateInterpreterState	}	},
 	{	40629,	{	&Controller::setError,	&Controller::getCtrlState,	&Controller::updateCtrlState	}	},
 	{	69397,	{	&Controller::setError,	&Controller::getRunningMode,	&Controller::updateRunningMode	}	},
 	{	50277,	{	&Controller::setError,	&Controller::getServoState,	&Controller::updateServoState	}	},
 	{	36933,	{	&Controller::setUserOpMode,	&Controller::getUserOpMode,	&Controller::updateDefault	}	},
-	{	7076,	{	&Controller::setStateCmd,	&Controller::getError,	&Controller::updateDefault	}	},
+	{	7076,	{	&Controller::setStateCmd,	&Controller::getError,	&Controller::updateDefault	}	},*/
+    /* XX STATE MACHINE*/
+    {   31619,  {   &Controller::setError,  &Controller::XXgetWorkStatus,   &Controller::XXupdateWorkStatus }   },
+    {   48981,  {   &Controller::setError,  &Controller::XXgetInterpreterState, &Controller::XXupdateInterpreterState   }   },
+    {   40629,  {   &Controller::setError,  &Controller::XXgetCtrlState,    &Controller::XXupdateCtrlState  }   },
+    {   69397,  {   &Controller::setError,  &Controller::XXgetRunningMode,  &Controller::XXupdateRunningMode    }   },
+    {   50277,  {   &Controller::setError,  &Controller::XXgetServoState,   &Controller::XXupdateServoState }   },
+    {   36933,  {   &Controller::XXsetUserOpMode,   &Controller::XXgetUserOpMode,   &Controller::updateDefault  }   },
+    {   7076,   {   &Controller::XXsetStateCmd, &Controller::getError,  &Controller::updateDefault  }   },
+    
 	{	1284,	{	&Controller::setError,	&Controller::getCurJoints,	&Controller::updateCurJoints	}	},
 	{	77427,	{	&Controller::setError,	&Controller::getTCPPose,	&Controller::updateTCPPose	}	},
 	{	44979,	{	&Controller::setError,	&Controller::getFlangePose,	&Controller::updateFlangePose	}	},
 	{	53909,	{	&Controller::setToolFrame,	&Controller::getToolFrame,	&Controller::updateDefault	}	},
 	{	94084,	{	&Controller::setError,	&Controller::getLineID,	&Controller::updateLineID	}	},
-	{	45710,	{	&Controller::startRun,	&Controller::getError,	&Controller::updateDefault	}	},
-	{	33367,	{	&Controller::startDebug,	&Controller::getError,	&Controller::updateDefault	}	},
+	/*{	45710,	{	&Controller::startRun,	&Controller::getError,	&Controller::updateDefault	}	},
+	{	33367,	{	&Controller::startDebug,	&Controller::getError,	&Controller::updateDefault	}	},*/
+    /* XX STATE MACHINE*/
+    {   45710,  {   &Controller::XXstartRun,    &Controller::getError,  &Controller::updateDefault  }   },
+    {   33367,  {   &Controller::XXstartDebug,  &Controller::getError,  &Controller::updateDefault  }   },
+
 	{	8837,	{	&Controller::jumpLine,	&Controller::getError,	&Controller::updateDefault	}	},
 	{	99488,	{	&Controller::step,	&Controller::getError,	&Controller::updateDefault	}	},
 	{	4276,	{	&Controller::backward,	&Controller::getError,	&Controller::updateDefault	}	},
 	{	9523,	{	&Controller::setError,	&Controller::getSafetyTPManual,	&Controller::updateDefault	}	},
 	{	9524,	{	&Controller::setError,	&Controller::getSafetyTPAuto,	&Controller::updateDefault	}	},
-	{	79844,	{	&Controller::setCtrlCmd,	&Controller::getError,	&Controller::updateDefault	}	},
-	{	75299,	{	&Controller::setError,	&Controller::getWarnings,	&Controller::updateWarnings	}	},
+	/*{	79844,	{	&Controller::setCtrlCmd,	&Controller::getError,	&Controller::updateDefault	}	},
+	{	75299,	{	&Controller::setError,	&Controller::getWarnings,	&Controller::updateWarnings	}	},*/
+    /* XX STATE MACHINE*/
+    {   79844,  {   &Controller::XXsetCtrlCmd,  &Controller::getError,  &Controller::updateDefault  }   },
+    {   75299,  {   &Controller::setError,  &Controller::XXgetWarnings, &Controller::XXupdateWarnings   }   },
+
 	{	97967,	{	&Controller::setError,	&Controller::getIOInfo,	&Controller::updateDefault	}	},
 	{	15923,	{	&Controller::setError,	&Controller::getFK,	&Controller::updateDefault	}	},
 	{	43859,	{	&Controller::setError,	&Controller::getIK,	&Controller::updateDefault	}	},
@@ -89,9 +106,15 @@ std::map<int, CtrlFunctions> g_ctrl_funcs_mp =
 	{	35940,	{	&Controller::setError,	&Controller::getSoftConstraintLimit,	&Controller::updateDefault	}	},
 	{	32184,	{	&Controller::setError,	&Controller::getDH,	&Controller::updateDefault	}	},
 	{	57668,	{	&Controller::setError,	&Controller::getHardLimit,	&Controller::updateDefault	}	},
-	{	77076,	{	&Controller::setManualCmd,	&Controller::getError,	&Controller::updateDefault	}	},
+	/*{	77076,	{	&Controller::setManualCmd,	&Controller::getError,	&Controller::updateDefault	}	},*/
+    /* XX STATE MACHINE*/
+    {	77076,	{	&Controller::XXsetManualCmd,	&Controller::getError,	&Controller::updateDefault	}	},
+    
 	{	17993,	{	&Controller::setGlobalVel,	&Controller::getGlobalVel,	&Controller::updateDefault	}	},
-	{	11892,	{	&Controller::setTeachTarget,	&Controller::getError,	&Controller::updateDefault	}	},
+	/*{	11892,	{	&Controller::setTeachTarget,	&Controller::getError,	&Controller::updateDefault	}	},*/
+    /* XX STATE MACHINE*/
+    {	11892,	{	&Controller::XXsetTeachTarget,	&Controller::getError,	&Controller::updateDefault	}	},
+    
 	{	94965,	{	&Controller::setError,	&Controller::getSafetyInFrame,	&Controller::updateSafetyFrame	}	},
 	{	10478,	{	&Controller::setError,	&Controller::getVersion,	&Controller::updateDefault	}	},
 	{	87442,	{	&Controller::setRegister,	&Controller::getRegister,	&Controller::updateDefault	}	},

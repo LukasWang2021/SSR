@@ -270,14 +270,12 @@ unsigned long long int readSafety(void) {
 	}
 
 
-	unsigned long long int err = 0; // this is used to debug for LiRuiqing.
     // check if data from MCU1 and MCU2 are same.
     pb_one++;
     pb_two++;
     if (*pb_one != *pb_two){
         //printf("mcu1 = %x, mcu2 = %x\n", *pb_one, *pb_two);
-        //return ERR_SAFETY_RECV_DIFF;
-		err = ERR_SAFETY_RECV_DIFF; // this is used to debug for LiRuiqing.
+        return ERR_SAFETY_RECV_DIFF;
     }
     pb_one--;
 
@@ -288,8 +286,7 @@ unsigned long long int readSafety(void) {
 	*p = *pb_one;
 
 	//printf("**** read ****\nread: %x\n",*(int *)recv_one.data); // need to remove
-    //return 0;
-	return err; // this is used to debug for LiRuiqing.
+    return 0;
 }
 
 int getHeartbeat(void) {

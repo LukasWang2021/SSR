@@ -620,7 +620,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 
 #ifndef WIN32
     int iIONum = 0 ;
-	fst_io_manager::IODeviceInfo * objIODeviceInfoPtr ;
+//	fst_io_manager::IODeviceInfo * objIODeviceInfoPtr ;
 	char * objCharPtr ;
 	IODeviceInfoShm * objIODeviceInfoShmPtr ;
 	
@@ -872,6 +872,7 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 					dioPathInfo.dio_path, dioPathInfo.value);
             break;
 #ifndef WIN32
+/*
         case READ_IO_DEV_INFO:
 			iIONum = IOInterface::instance()->getIODevNum();
 			printf("READ_IO_DEV_INFO::getIODevNum: start: %d.\n", iIONum);
@@ -916,6 +917,8 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 				returnIODeviceInfo(objCharPtr, iIONum);
 			}
             break;
+*/
+
 //        case UPDATE_IO_DEV_ERROR:
 //			result = IOInterface::instance()->updateIOError();
 // 			setWarning(result) ; 

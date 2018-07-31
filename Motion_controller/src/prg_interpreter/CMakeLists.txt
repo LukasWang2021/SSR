@@ -4,10 +4,10 @@ project(prg_interpreter)
 
 find_package(catkin REQUIRED COMPONENTS 
     log_manager
-    io_manager
-    motion_plan
+#    io_manager
+#    motion_plan
     parameter_manager
-    mem_share
+#    mem_share
 )
 set(VERSION_MAJOR ?)
 set(VERSION_MINOR ?)
@@ -100,10 +100,10 @@ add_executable(prg_interpreter
 
 target_link_libraries(prg_interpreter
     ${catkin_LIBRARIES}
-    io_manager
+#    io_manager
     parameter_manager
     xml2
-    motion_plan
+#    motion_plan
 )
 
 #############

@@ -9,9 +9,9 @@ using namespace fst_log;
 
 #define IO_ERROR_INTERVAL_COUNT           (5)  //2ms*5=10ms
 
-#ifndef WIN32
-Logger glog;
-#endif
+// #ifndef WIN32
+// Logger glog;
+// #endif
 
 int main(int  argc, char *argv[])
 {
@@ -21,10 +21,10 @@ int main(int  argc, char *argv[])
 #ifndef WIN32
 	load_register_data();
 #endif
-#ifndef WIN32
-    glog.initLogger("interpreter");\
-    glog.setDisplayLevel(fst_log::MSG_LEVEL_INFO);
-#endif
+// #ifndef WIN32
+//     glog.initLogger("interpreter");\
+//     glog.setDisplayLevel(fst_log::MSG_LEVEL_INFO);
+// #endif
 	while(1)
 	{
 		bool ret = getIntprtCtrl();

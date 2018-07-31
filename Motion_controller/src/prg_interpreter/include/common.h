@@ -9,6 +9,7 @@
 #define INTERPRETER_COMMON_H_
 #include "log_manager/log_manager_logger.h"
 
+#if 0
 extern fst_log::Logger glog;
 
 #define LOG_INIT()    \
@@ -20,6 +21,11 @@ extern fst_log::Logger glog;
 #define FST_INFO    glog.info
 #define FST_ERROR   glog.error
 #define FST_WARN    glog.warn
+#else 
+#define FST_INFO    printf
+#define FST_ERROR   printf
+#define FST_WARN    printf
+#endif
 
 
 #endif

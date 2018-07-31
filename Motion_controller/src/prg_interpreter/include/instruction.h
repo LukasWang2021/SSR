@@ -9,7 +9,7 @@
 #define INSTRUCTION_H_
 
 #include <string>
-#include "motionSL.pb.h"
+// #include "motionSL.pb.h"
 
 
 typedef enum _PickStatus

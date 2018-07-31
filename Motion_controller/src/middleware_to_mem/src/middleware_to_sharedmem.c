@@ -191,6 +191,8 @@ int clientSendRequest(int handle, ServiceRequest *service_request)
         printf("\nError in clientSendRequest(): Wrong request service ID!\n");
         return 0;
     }
+    //if (service_request->req_id != 0x11)
+    //printf("handle:%d, service_id:%x, sub id:%x, len:%d\n", handle, service_request->req_id, *(int*)&service_request->req_buff[0], *(int*)&service_request->req_buff[4]);
     return readWriteSharedMem(handle, service_request, "ServiceRequest", MEM_WRITE);
 }
 

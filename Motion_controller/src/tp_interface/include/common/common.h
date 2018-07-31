@@ -16,45 +16,19 @@ extern fst_log::Logger glog;
 #define LOG_INIT()    \
     do {\
             glog.initLogger("robot controller");\
-            glog.setDisplayLevel(fst_log::MSG_LEVEL_ERROR);\
+            glog.setDisplayLevel(fst_log::MSG_LEVEL_INFO);\
     }while(0)
 
-#ifdef PRINT
-#ifndef LOGGER
-#define FST_INFO(format, ...) \
-	do { \
-		ROS_INFO("\033[36m" format "\033[0m", ##__VA_ARGS__); \
-	} while (0) 
-#else
-#define FST_INFO(format, ...) do {glog.info("\033[36m" format "\033[0m", ##__VA_ARGS__);}while(0)
-#endif
-#else
-    #define FST_INFO(format, ...)
-#endif
+#define FST_INFO    glog.info
+#define FST_ERROR   glog.error
+#define FST_WARN    glog.warn
 
-#ifdef _DEBUG
-	#define FST_DEBUG(format, ...)\
-		do{\
-			ROS_INFO("\033[1m\033[34m" format "\033[0m", __func__, ##__VA_ARGS__); \
-		} while (0) 
-#else
-	#define FST_DEBUG(format, ...)
-#endif
+#define FST_ASSERT  ROS_ASSERT
 
-#define FST_PRINT(format, ...) \
-	do { \
-		printf("\033[33m" format "\033[0m", ##__VA_ARGS__); \
-	} while (0) 
-
-
-typedef boost::shared_mutex rwmutex;
-typedef boost::shared_lock<rwmutex> readLock;
-typedef boost::unique_lock<rwmutex> writeLock;
-
-#define FST_ERROR ROS_ERROR
-
-#define FST_ASSERT	ROS_ASSERT
 
 //#define PI  3.1415926
+//
+typedef unsigned int U32;
+typedef unsigned long long int U64;
 
 #endif

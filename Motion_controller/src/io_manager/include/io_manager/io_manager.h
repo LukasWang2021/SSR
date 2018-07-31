@@ -206,9 +206,6 @@ private:
     // the counter for the error times of writing FPGA.
     int write_counter_;
 
-    // the path to the io device configuration.
-    std::string config_path_;
-
     // to record the last error when thread runs.
     ThreadError last_error_;
 

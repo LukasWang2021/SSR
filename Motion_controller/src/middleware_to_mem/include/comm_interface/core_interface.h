@@ -91,7 +91,7 @@ public:
     // Return:  0 -> success to send the trajectory to CORE1.
     //          WRITE_CORE_MEM_FAIL -> failed.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE sendBareCore(JointCommand jc);
+    ERROR_CODE_TYPE sendBareCore(JointCommand jc, unsigned int valid_level);
 
     //------------------------------------------------------------
     // Function:  recvBareCore

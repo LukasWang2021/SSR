@@ -7,7 +7,6 @@
 #include <boost/filesystem.hpp>
 #include <signal.h>  
 #include <servo_diag_version.h>
-#include <ros/ros.h>
 using namespace fst_controller;
 
 fst_comm_interface::CommInterface ServoDiag::comm_;
@@ -152,8 +151,11 @@ int main(int argc, char** argv)
 {
     char *ip;
     char buf[1024] = { 0 };
-    ros::init(argc, argv, "servo_diag");	
+
+    
+
     if (!fst_comm_interface::CommInterface::getLocalIP(&ip)) return 0;
+
     std::cout<<"Servo Diag Version:"<<servo_diag_VERSION_MAJOR<<"."<<servo_diag_VERSION_MINOR<<"."<<servo_diag_VERSION_PATCH<<std::endl;
     signal(SIGINT, ServoDiag::sigHandler);
     ServoDiag::initComm(ip,ServoDiag::SERVODIAG_PORT);
@@ -167,21 +169,36 @@ int main(int argc, char** argv)
     pmonitor->initDataMonitor();
     ServoService* pservice = new ServoService();
     pservice->initComm("test");
-    if(1 == argc)
+    
+    if (1 == argc)
+    {
         pconf->initDownloadConf(*pservice);
+        std::cout << "initDownloadConf: done" << std::endl;
+    }
     else
     {
-        if(0==strcmp(argv[1],"upload"))
+        if (0 == strcmp(argv[1], "upload"))
+        {
             pconf->initConfFile(*pservice);
+            std::cout << "initConfFile: done" << std::endl;
+        }
+        else
+        {
+            std::cout << "command unknown" << std::endl;
+        }
     }
+
     boost::thread thrd_diag(boost::bind(ServoDiag::servoDiagThread, pconf,pmonitor,pservice));
     thrd_diag.detach();
+    
     while(!ServoDiag::exit_flag_)
     {
         sleep(1);
     }
+    
     pservice->stopLog();
     std::cout<<std::endl<<"ctrl+c has been keydownd, and log is off"<<std::endl;
+    
     return 0;
 }
 

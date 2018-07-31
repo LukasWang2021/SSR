@@ -1,0 +1,134 @@
+tool_frame0:
+    comment: default frame, can not be modified
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 0
+    is_valid: true
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame1:
+    comment: user defined frame 1
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 1
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame10:
+    comment: user defined frame 10
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 10
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame2:
+    comment: user defined frame 2
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 2
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame3:
+    comment: user defined frame 3
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 3
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame4:
+    comment: user defined frame 4
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 4
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame5:
+    comment: user defined frame 5
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 5
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame6:
+    comment: user defined frame 6
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 6
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame7:
+    comment: user defined frame 7
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 7
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame8:
+    comment: user defined frame 8
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 8
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+tool_frame9:
+    comment: user defined frame 9
+    euler:
+        a: 0.0
+        b: 0.0
+        c: 0.0
+    id: 9
+    is_valid: false
+    point:
+        x: 0.0
+        y: 0.0
+        z: 0.0
+
+#END

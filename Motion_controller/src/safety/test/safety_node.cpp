@@ -20,7 +20,7 @@ int main(int argc, char** argv)
 {  
     if (argc != 2)
     {
-        std::cout<<"There should be 1 argument."<<std::endl;
+        std::cout<<"There should be one argument."<<std::endl;
         return 0;
     }
     int cmd;
@@ -39,15 +39,28 @@ int main(int argc, char** argv)
     else if (strcmp(argv[1], "RESET") == 0)
         cmd = 0;
 
-    openSafety();
-
     unsigned long long int ret = 0;
+
+    std::cout<< "write data = " << cmd << std::endl;
+    ret = openSafety();
+	if(ret != 0)
+    { 
+       std::cout<< "open safety return  " << ret << std::endl;
+	   return 1;
+    }
+    else
+    {
+       std::cout<< "open safety return OK. " << std::endl;
+    }
+
 
     // --------------------set value.-----------------------//
     ret = setSafety(cmd, SAFETY_OUTPUT_SECONDFRAME);
     if (ret != 0)
-        printf("set safety error.\n");
-
+        std::cout<< "set safety error. " << std::endl;
+    else 
+        std::cout<< "set safety OK. " << std::endl;
+		
     // --------------------get value.-----------------------//
     while(true)
 //    for (int i = 0; i < 10; i++)

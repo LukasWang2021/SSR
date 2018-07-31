@@ -53,7 +53,6 @@ IOManager::IOManager()
     seq_ = 1;
     read_counter_ = 0;
     write_counter_ = 0;
-    config_path_ = "share/configuration/configurable/io_";
     thread_error_ = THREAD_SUCCESS;
     last_error_ = THREAD_SUCCESS;
     thread_status_ = INIT_STATUS;
@@ -97,6 +96,7 @@ U64 IOManager::init(int fake)
             result = ioInit(1);
             break;
     }
+    
     if (result != 0)
         return IO_INIT_FAIL;
     startThread();
@@ -199,7 +199,7 @@ U64 IOManager::getModuleValue(unsigned int id, int port_type, unsigned int port_
 
     if (port_type == IO_INPUT)
     {
-        if(port_seq > io[index].info.input || port_seq == 0)
+        if((port_seq > io[index].info.input) || (port_seq == 0))
         {
             std::cout<<"Error in IOManager::getModuleValue():invalid port seq for input."<<std::endl;
             return IO_INVALID_PORT_SEQ;
@@ -268,11 +268,11 @@ U64 IOManager::getModuleValues(unsigned int id, int len, unsigned char *ptr, int
         std::cout<<"Error in IOManager::getModuleValues(): Invalid port len."<<std::endl;
         return IO_INVALID_PORT_LEN;
     }
+
     memcpy(ptr, &(io[index].data.input), input_num);
     ptr = ptr + input_num;
     memcpy(ptr, &(io[index].data.output), output_num);
     ptr = ptr - input_num;
-
 /*
     int frame, shift;
     for (unsigned int i = 0; i < io[index].info.input; ++i)
@@ -308,6 +308,7 @@ U64 IOManager::setModuleValue(unsigned int id, unsigned int port_seq, unsigned c
 {      
     if (thread_status_ != RUNNING_STATUS)
         return IO_THREAD_INIT_STATUS;
+    //printf("the id:%d, port_seq:%d, port_value:%d\n", id, port_seq, port_value);
 
     std::vector<IOTable> io;
     {
@@ -339,6 +340,8 @@ U64 IOManager::setModuleValue(unsigned int id, unsigned int port_seq, unsigned c
             io_r_[index].output[frame] |= 1 << shift;
     }
 
+    printf("io_r:%x,%x,%x,%x,%x\n", io_r_[index].output[0], io_r_[index].output[1], io_r_[index].output[2], io_r_[index].output[3],io_r_[index].output[4]);
+
     return FST_SUCCESS;
 }
 
@@ -353,7 +356,6 @@ U64 IOManager::getIOError(void)
 {
 //    if (thread_error_ != 0)
 //        std::cout<<"Error in getThreadError(): error code = "<<thread_error_<<std::endl;
-  
     return error_map_[thread_error_];
 }
 
@@ -452,18 +454,18 @@ void IOManager::initDevicesData(void)
     {
         initIOTableVar(io);
         io.data.id = id;
-//        std::cout<<"|=== before data.id="<<int(io.data.id)<<". result="<<result<<std::endl;
+        //std::cout<<"|=== before data.id="<<int(io.data.id)<<". result="<<result<<std::endl;
         result = getDeviceDataBy485(io.data);
-//        std::cout<<"|==== data.id="<<int(io.data.id)<<". data.enable="<<int(io.data.enable)<<". result="<<result<<std::endl<<std::endl;
+        //std::cout<<"|==== data.id="<<int(io.data.id)<<". data.enable="<<int(io.data.enable)<<". result="<<result<<std::endl<<std::endl;
 
 
         if (result == FST_SUCCESS)
         {
             // implement the info for tp.
             io.info.communication_type = "RS485";
-            io.info.device_number = id;
+            io.info.device_number = id;            
             io.info.path = getPathOfDevice("RS485", id);
-            io.info.id = id * MULTIPLIER + ID_DIFF;  
+            io.info.id = id * MULTIPLIER + ID_DIFF;             
             implementConfigFile(io);
             {
                 boost::mutex::scoped_lock lock(mutex_); //------locak mutex-----//
@@ -474,7 +476,6 @@ void IOManager::initDevicesData(void)
         {
             last_error_ = THREAD_GET_IO_FAIL;
         }
-
     }
 }
 
@@ -612,8 +613,7 @@ bool IOManager::loadConfigFile(int model)
 {
     // load configuration yaml file.
     std::ostringstream oss;
-//delete    oss<<"share/io_manager/config/io_"<<model<<".yaml";
-    oss<<config_path_<<model<<".yaml";
+    oss<<"share/configuration/machine/io_"<<model<<".yaml";
     std::string ss = oss.str();      
     if (!param_.loadParamFile(ss))
     {
@@ -679,16 +679,15 @@ std::string IOManager::getPathOfDevice(std::string type, int device_number)
 U64 IOManager::getDeviceDataBy485(IODeviceData &data)
 {
     uint8_t id = data.id;
-    // call io driver.
+    // call io driver.    
     if (!readWriteBy485Driver(data))
         return GET_IO_FAIL;
     // check enable and id.
-    
     if (data.enable == 0x0 || id != data.id)
     {
 //        std::cout<<"data.enable="<<int(data.enable)<<". id="<<int(id)<<". data.id="<<int(data.id)<<std::endl;
         return IO_DEVICE_CHANGED;
-    }
+    }    
     if (data.verify == 0)
     {
 //        std::cout<<"data.verify="<<int(data.verify)<<std::endl;

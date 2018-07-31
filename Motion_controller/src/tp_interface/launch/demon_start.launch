@@ -1,6 +1,0 @@
-<launch>
-
-  <node name="controller" pkg="tp_interface" type="controller" respawn="false" output="screen">
-  </node>
-
-</launch>

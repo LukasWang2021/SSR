@@ -12,6 +12,7 @@ Summary:    lib to communicate with core1
 #include "comm_interface/core_interface.h"
 #include <iostream>
 #include <sstream>
+#include <struct_to_mem/struct_joint_command.h>
 #include "middleware_to_mem_version.h"
 
 namespace fst_core_interface
@@ -133,7 +134,7 @@ void CoreInterface::initTrajectory(void)
 //          WRITE_CORE_MEM_FAIL -> failed.
 //          OPEN_CORE_MEM_FAIL -> failed
 //------------------------------------------------------------
-ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
+ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_level)
 {   
     if (error_flag_ != 0)
         return error_flag_;
@@ -143,9 +144,12 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
     initTrajectory();
     for (int i = 0; i < jc.total_points; ++i)
     {
+        ts_.points[i].valid_level = valid_level;
         for (int j = 0; j < JOINT_NUM; ++j)
         {
             ts_.points[i].positions[j] = jc.points[i].positions[j];
+            ts_.points[i].velocities[j] = jc.points[i].omega[j];
+            ts_.points[i].effort[j] = jc.points[i].inertia[j];
         }
         //Adding time stamp for trajectory. 
         if (jc.points[i].point_position == START_POINT)
@@ -174,7 +178,7 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
         }
     } // end for (int i = 0; i < jc.total_points; ++i)
     ts_.total_points = jc.total_points;
-
+    
     int write_result = readWriteSharedMem(handle_core_, &ts_, "TrajectorySegment", MEM_WRITE);
     if (write_result == false)
     {
@@ -182,6 +186,8 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc)
         nsec_ = prev_nsec_;
         return WRITE_CORE_MEM_FAIL;
     }
+    //printf("first:%d, level:%d, last:%d, level:%d\n", (ts_.points[0].time_from_start.sec*1000 +ts_.points[0].time_from_start.nsec/1000000),jc.points[0].point_position, (ts_.points[ts_.total_points-1].time_from_start.sec*1000 +ts_.points[ts_.total_points-1].time_from_start.nsec/1000000),jc.points[ts_.total_points-1].point_position);
+
 
     return FST_SUCCESS;
 }

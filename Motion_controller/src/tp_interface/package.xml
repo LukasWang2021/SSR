@@ -36,20 +36,22 @@
   <!-- Use buildtool_depend for build tool packages: -->
   <!--   <buildtool_depend>catkin</buildtool_depend> -->
   <!-- Use run_depend for packages you need at runtime: -->
-    <run_depend>motion_controller</run_depend> 
+    <run_depend>motion_plan</run_depend> 
 	<run_depend>comm_interface</run_depend>
     <run_depend>core_interface</run_depend>
 	<run_depend>parameter_manager</run_depend>
     <run_depend>safety</run_depend>
     <run_depend>io_manager</run_depend>
+    <run_depend>mem_share</run_depend>
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
-  <build_depend>motion_controller</build_depend>
+  <build_depend>motion_plan</build_depend>
   <build_depend>comm_interface</build_depend>
   <build_depend>core_interface</build_depend>
   <build_depend>parameter_manager</build_depend>
   <build_depend>safety</build_depend>
   <build_depend>io_manager</build_depend>
+  <build_depend>mem_share</build_depend>
   <buildtool_depend>catkin</buildtool_depend>
 
 

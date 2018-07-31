@@ -1,5 +1,5 @@
 /**********************************************
-Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+Copyright 漏 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       safety.c
 Author:     Shuguo.Zhang Feng.Wu 
 Create:     20-Sep-2017
@@ -51,16 +51,25 @@ static char *write_ptr;
 static char *read_ptr;
 
 unsigned long long int initSafety(void) {
-	int ret = 0;
-	fd = open("/dev/mem", O_RDWR);
-	if (fd == -1) {
-		return ERR_SAFETY_FILE_OPEN;
-	}
-	
-	ptr = mmap(NULL, SAFETY_LEN, PROT_WRITE|PROT_READ, MAP_SHARED, fd, SAFETY_BASE);
-	if (ptr == (void *)-1) {
-		return ERR_SAFETY_FILE_MAP;
-	}
+   int ret = 0;
+   fd = open("/dev/mem", O_RDWR);
+   if (fd == -1) {
+        printf("Failed to open /dev/mem .\n");
+        return ERR_SAFETY_FILE_OPEN;
+   }
+   else {
+        printf("Open /dev/mem OK .\n");
+   }
+                
+   ptr = mmap(NULL, SAFETY_LEN, PROT_WRITE|PROT_READ, 
+                               MAP_SHARED, fd, SAFETY_BASE);
+    if (ptr == (void *)-1) {
+        printf("Failed to mmap /dev/mem .\n");
+        return ERR_SAFETY_FILE_MAP;
+    }
+    else {
+        printf("mmap /dev/mem OK .\n");
+    }
 
     recv_one.ptr = (int *)(ptr + R_SAFETY_BASE);    // add by Feng.Wu
     recv_two.ptr = (int *)(ptr + RR_SAFETY_BASE);   // add by Feng.Wu
@@ -141,6 +150,12 @@ int getSafety(int frame, unsigned long long int *err) {
 		return 0;
 	}
 */
+ //       printf("mask = %d. \n", mask);
+  //        printf("frame_mask = %d. \n", frame_mask);
+  //     printf("0502 read %08X(%08X) and %08X(%08X) at %d. \n", 
+  //                  (int *)(&safety->data), *(int *)(&safety->data), 
+  //                  (int *)(&safety->data) + 1, *((int *)(&safety->data) + 1), 
+  //                      frame_mask);
 	pthread_mutex_lock(&safety->mutex); 
 	if (frame_mask == 1)
 	  pdata = (int *)(&safety->data);
@@ -200,14 +215,14 @@ void writeSafety(void) {
 	int *pb = xmit.ptr;
 	int *p = (int *)(&xmit.data);
 	
-    //printf("writeSafety: p[0] = %x\t", *p);
+//    printf("writeSafety: p[0] = %x\t", *p);
     *pb = *p;
 	pb++;
 	p++;
 	*pb = *p;
 
-    //printf("writeSafety: p[1] = %x\t", *p);
-	//printf("**** write **** write: %x\n",*(int *)xmit.data); // need to remove
+//    printf("writeSafety: p[1] = %x\t", *p);
+//    printf("**** write **** write: %x\n",*(int *)xmit.data); // need to remove
 }
 
 void safetyWriteDownload(void)  // add by Feng.Wu
@@ -247,6 +262,7 @@ int checkSafetyCmd(char cmd) {
 }
 
 unsigned long long int readSafety(void) {
+    static int show_diff = 0 ;
 	int *p = (int *)(&recv_one.data);
 	int *pb_one = recv_one.ptr;
     int *pb_two = recv_two.ptr;
@@ -274,16 +290,18 @@ unsigned long long int readSafety(void) {
     pb_one++;
     pb_two++;
     if (*pb_one != *pb_two){
-        //printf("mcu1 = %x, mcu2 = %x\n", *pb_one, *pb_two);
-        return ERR_SAFETY_RECV_DIFF;
+        if(show_diff < 10)
+           printf("mcu1 = %08x, mcu2 = %08x\n", *pb_one, *pb_two);
+        show_diff++ ;
+        // return ERR_SAFETY_RECV_DIFF;
     }
-    pb_one--;
+    pb_two--; // pb_one--;
 
     // update data if everything is ok.
-	*p = *pb_one;
-	p++;
-	pb_one++;
-	*p = *pb_one;
+     *p = *pb_two; // 	*p = *pb_one;
+   p++;  //	p++;
+   pb_two++;  //	pb_one++;
+   *p = *pb_two;  // *p = *pb_one;
 
 	//printf("**** read ****\nread: %x\n",*(int *)recv_one.data); // need to remove
     return 0;
@@ -418,3 +436,4 @@ int fake_init() {
 int fake_connection() {
 	*recv_one.ptr = *xmit.ptr;
 }
+

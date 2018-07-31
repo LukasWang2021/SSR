@@ -3,243 +3,4733 @@
  * @brief
  * @author WangWei
  * @version 1.0.0
- * @date 2016-08-9
+ * @date 2017-07-14
  */
-#include <signal.h>
-#include "proto_parse.h"
+#include <stdio.h>
+#include <sys/time.h>
+#include "ctrl_func.h"
+#include "tp_reg_manager_interface.h"
+#include "error_monitor.h"
+#include "error_code.h"
+#include "sub_functions.h"				
+#include "service_heartbeat.h"
+#include "version.h"
+#include <boost/algorithm/string.hpp>
+#include "struct_to_mem/struct_trajectory_segment.h"
 
-#ifndef CROSS_PLATFORM
-#include <gperftools/profiler.h>
-#endif
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-
-#include "sub_functions.h"
-#include "common.h"
-#include "rt_timer.h"
-#include "tp_interface_version.h"
-#include "log_manager/log_manager_logger.h"
-#include "gpio_control.h"
-
-
-
-#define BASIC_INTERVAL_TIME		(1) //basic cycle time(ms)
-
-#define STATE_TIMER_ID			(0)
-#define PROCESS_TIMER_ID		(1)
-
-
-#define MAIN_PRIORITY           (80)
+using std::vector;
+#define REG_IO_INFO_SIZE (4096)
 
 fst_log::Logger glog;
-bool gs_running_flag = true;
-bool g_inter_flag = false;
 
-/**
- * @brief: callback of SIGINT 
- *
- * @param dunno
- */
-void sigroutine(int dunno)
+Controller* Controller::instance_ = NULL;
+Controller::Controller()
 {
-    g_inter_flag = true;
-    if (dunno == SIGSEGV)
+    U64 result;
+    ctrl_state_ = ESTOP_S;
+    work_status_ = IDLE_W;
+    debug_ready_ = false;
+    run_mode_ = NORMAL_R ;
+
+    memset(&servo_joints_, 0.000, sizeof(servo_joints_));
+    
+    glog.initLogger("interpreter");\
+    glog.setDisplayLevel(fst_log::MSG_LEVEL_INFO);\
+	
+    arm_group_ = new fst_controller::ArmGroup();
+    if ((result = arm_group_->initArmGroup()) != FST_SUCCESS)
     {
-        FST_INFO("SIGSEGV...");
-        gs_running_flag = false;
+        FST_ERROR("init arm_group_ failed");
+        rcs::Error::instance()->add(result);
+    }
+    robot_ = new Robot(arm_group_);
+    manu_motion_ = new ManualMotion(robot_, arm_group_);
+    auto_motion_ = new AutoMotion(arm_group_);
+    inst_parser_ = new InstructionParser(arm_group_);
+
+    Transformation tool_frame;
+	memset(&tool_frame, 0, sizeof(tool_frame));
+	arm_group_->setToolFrame(tool_frame);  
+
+    tp_interface_ = new TPInterface();
+
+    ctrl_task_ = new rcs::Task(STATE_MACHINE_INTERVAL);
+    //ctrl_task_->function(std::bind(&Controller::stateMachine, this, (void*)NULL));
+    /* XX STATE MACHINE*/
+    ctrl_task_->function(std::bind(&Controller::XXstateMachine, this, (void*)NULL));
+    ctrl_task_->run();
+    
+    rt_traj_task_ = new rcs::Task(TRAJ_FLOW_INTERVAL, 80, true); 
+    //rt_traj_task_->function(std::bind(&Controller::rtTrajFlow, this, (void*)NULL));
+    /* XX STATE MACHINE*/
+    rt_traj_task_->function(std::bind(&Controller::XXrtTrajFlow, this, (void*)NULL));
+    rt_traj_task_->run();
+
+    heartbeat_task_ = new rcs::Task(HEART_BEAT_INTERVAL);
+    heartbeat_task_->function(std::bind(&Controller::heartBeat, this, (void*)NULL));
+    heartbeat_task_->run();
+
+    user_frame_manager_ = new FrameManager("user_frame", MAX_USER_FRAME_NUM,
+        "share/configuration/configurable/user_frame.yaml",
+        g_user_frame, g_user_frame_inverse);
+
+    if(!user_frame_manager_->isReady())
+    {
+        FST_ERROR("User frame parameters are invalid.");
+        rcs::Error::instance()->add(FALT_INIT_USER_FRAME);
+    }
+
+    tool_frame_manager_ = new FrameManager("tool_frame", MAX_TOOL_FRAME_NUM,
+        "share/configuration/configurable/tool_frame.yaml",
+        g_tool_frame, g_tool_frame_inverse);
+
+    if(!user_frame_manager_->isReady())
+    {
+        FST_ERROR("Tool frame parameters are invalid.");
+        rcs::Error::instance()->add(FALT_INIT_TOOL_FRAME);
+    }
+
+    instance_ = this;
+}
+
+
+Controller::~Controller()
+{
+    heartbeat_task_->stop();
+    if (heartbeat_task_ != NULL) delete heartbeat_task_;
+
+    rt_traj_task_->stop();
+    if (rt_traj_task_ != NULL) delete rt_traj_task_;
+
+    tp_interface_->destroy();
+
+    ctrl_task_->stop();
+    if (ctrl_task_ != NULL) delete ctrl_task_;
+
+    if (tp_interface_ != NULL) delete tp_interface_;
+
+    if (inst_parser_ != NULL) delete inst_parser_;
+
+    if (manu_motion_ != NULL) delete manu_motion_;
+
+    if (robot_ != NULL) delete robot_;
+
+    if (arm_group_ != NULL) delete arm_group_;
+
+    if (user_frame_manager_ != NULL) delete user_frame_manager_;
+
+    if (tool_frame_manager_ != NULL) delete tool_frame_manager_;
+}
+
+void Controller::setError(void* params, int len)
+{    
+}
+void Controller::getError(void* params)
+{
+    //tp_interface_->setReply(BaseTypes_StatusCode_FAILED, id);
+}
+
+void Controller::updateDefault(int id)
+{
+    //no actions in this function
+}
+
+void Controller::getWarnings(void* params)
+{
+    string err_str = rcs::Error::instance()->getErrorBytes();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData(err_str.c_str(), err_str.size());
     }
     else
     {
-	    FST_INFO("stop....\n");
-	    gs_running_flag = false;
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = err_str.size();
+        //FST_INFO("error size:%d", param->size);
+        memcpy(param->bytes, err_str.c_str(), param->size);
     }
-//	exit(0);
 }
-
-/**
- * @brief: set thread priority 
- *
- * @param prio: input==> priority
- *
- * @return: true if success 
- */
-bool setPriority(int prio)
+void Controller::updateWarnings(int id)
 {
-    struct sched_param param;
-    param.sched_priority = prio; 
-    if (sched_setscheduler(getpid(), SCHED_FIFO, &param) == -1) //set priority
-    { 
-        FST_ERROR("sched_setscheduler() failed"); 
-        return false;  
-    } 
-    return true;
+    if (!rcs::Error::instance()->updated())
+        return; 
+    int warning_level = rcs::Error::instance()->getWarningLevel();
+    
+    FST_INFO("updateWarnings: warning_level is:%d", warning_level);
+    if (warning_level > 4)
+    {
+        FST_INFO("in estop process...");
+		
+		if((work_status_ == TEACHING_TO_IDLE_T) 
+			|| (work_status_ == TEACHING_W))
+		{
+			FST_INFO("TEACHING TO ESTOP_S and call clearArmGroup in updateWarnings");
+			arm_group_->clearArmGroup();
+		}
+		else if(work_status_ == RUNNING_W) 
+		{
+			FST_INFO("RUNNING TO ESTOP_S and call clearArmGroup in updateWarnings");
+			
+            InterpreterControl ctrl;
+            ctrl.cmd = ABORT;
+            ShareMem::instance()->intprtControl(ctrl);
+            abortMotion();
+		}
+        safetyStop(warning_level);
+        servoEStop();
+        pauseMotion(); //set mode to pause
+        setLogicStateCmd(EMERGENCY_STOP_E);
+    }
+    else if (warning_level > 2)
+    {
+        FST_INFO("in pause process...");
+        pauseMotion();
+        setLogicStateCmd(EMERGENCY_STOP_E);
+    }
+    setUpdateFlagByID(id, true);
+}
+
+void Controller::getCurveMode(void* params)
+{
+    //FST_INFO("controller:===this is getting curve mode===");
+    //!!!qj!!! ArmGroup not support any more.
+    int curve_mode = -1;//(int)arm_group_->getCurveMode();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&curve_mode, sizeof(curve_mode));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(curve_mode);
+        memcpy(param->bytes, (char*)&curve_mode, param->size);
+    }
+}
+void Controller::updateCurveMode(int id)
+{
+    //static pre_curv_mode;
+}
+
+//20180313: qianjin add begin
+void Controller:: getRunningMode(void* params)
+{
+    int rep_run_mode = (int)run_mode_;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&rep_run_mode, sizeof(rep_run_mode));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(rep_run_mode);
+        memcpy(param->bytes, (char*)&rep_run_mode, param->size);
+    }
+
+}
+void Controller:: getServoState(void* params)
+{
+    int rep_servo_state = (int)ShareMem::instance()->getServoState();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&rep_servo_state, sizeof(rep_servo_state));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(rep_servo_state);
+        memcpy(param->bytes, (char*)&rep_servo_state, param->size);
+    }
+}
+
+// call back for running mode
+void  Controller:: updateRunningMode(int id)
+{
+}
+// call back for servo state
+void  Controller:: updateServoState(int id)
+{
+}
+
+//20180313: qianjin add end
+
+
+void Controller::getWorkStatus(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&work_status_, sizeof(work_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(work_status_);
+        memcpy(param->bytes, (char*)&work_status_, param->size);
+    }
+}
+void Controller::updateWorkStatus(int id)
+{
+    static WorkStatus prev_work_status;
+    static int idle2exe_cnt = 0;
+    static int pause_cnt = 0;
+    
+    WorkStatus status = work_status_;
+    switch (status)
+    {
+        case IDLE_W:
+        {
+            // judge state of program interpreter 
+            // if the state changed to exe??????
+            // ====================================
+            InterpreterState state = ShareMem::instance()->getIntprtState();
+            if (EXECUTE_R == state)
+            {
+                U64 result = arm_group_->setStartState(servo_joints_);
+                if (result != TPI_SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                }
+                work_status_ = IDLE_TO_RUNNING_T;
+            }
+            else if (PAUSED_R == state)
+            {
+                static const int max_count = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;            
+                if (ctrl_state_ == ENGAGED_S)
+                {
+                    pause_cnt++;
+                    if (pause_cnt >= max_count) //wait
+                    {
+                        pause_cnt = 0;
+						if((work_status_ == TEACHING_TO_IDLE_T) 
+							|| (work_status_ == TEACHING_W))
+						{
+                			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup before PAUSED_R");
+							arm_group_->clearArmGroup();
+						}
+                        ctrl_state_ = ESTOP_S;
+                        // then we need to return this info
+                    }
+                }
+                else
+                {
+                    pause_cnt = 0;
+                }
+            }
+
+			U64 warn = ShareMem::instance()->getWarning();
+			if (warn >= FAIL_INTERPRETER_BASE)
+			{
+                FST_INFO("warn >= ERROR_EXEC_BASE_T in IDLE_W with %llx", warn);
+				rcs::Error::instance()->add(warn);
+				ShareMem::instance()->setWarning(0);
+			}
+#if 1
+            int iServoState = ShareMem::instance()->getServoState();
+			if(iServoState == STATE_ERROR)
+            {
+                if(ENGAGED_S == ctrl_state_)
+                {
+					if((work_status_ == TEACHING_TO_IDLE_T) 
+						|| (work_status_ == TEACHING_W))
+					{
+            			FST_INFO("ENGAGED_S TO ESTOP_S and call clearArmGroup in STATE_ERROR");
+						arm_group_->clearArmGroup();
+					}
+                    FST_INFO("IDLE TO ESTOP_S...");
+                    ctrl_state_ = ESTOP_S;
+                }
+			}
+#endif
+            break;
+        }
+        case IDLE_TO_TEACHING_T:
+            pause_cnt = 0;
+            break;
+        case IDLE_TO_RUNNING_T:  
+            pause_cnt = 0;
+            if (idle2exe_cnt++ >= 2)    //run twice (delay 20ms)
+            {
+                idle2exe_cnt = 0;
+                FST_INFO("IDLE TO RUNNING...");
+                work_status_ = RUNNING_W;
+            }
+            if (rcs::Error::instance()->getWarningLevel() >= 4) 
+            {
+                abortMotion(); //abort the planned motion 
+                work_status_ = IDLE_W;
+            }
+            break;
+        case RUNNING_TO_IDLE_T:
+            if ((intprt_state_ != IDLE_R)
+            && (intprt_state_ != PAUSED_R))
+                break;
+        case TEACHING_TO_IDLE_T:        
+            //FST_INFO("servo state:%d", getServoState());
+            if ((ShareMem::instance()->getServoState() == STATE_READY) 
+            || (ShareMem::instance()->getServoState() == STATE_ERROR))
+            {
+                work_status_ = IDLE_W;
+            }            
+            break;
+        case RUNNING_W:
+        {
+            int i;
+            InterpreterState state = ShareMem::instance()->getIntprtState();
+            i = state;
+            //printf("check intprtState=%d\n",i);
+            if (state == IDLE_R)
+            {
+                FST_INFO("EXECUTE_TO_idle");
+                //work_status_ = IDLE_W;
+                work_status_ = RUNNING_TO_IDLE_T;
+            }
+            else if (state == PAUSED_R)
+            {
+                FST_INFO("RUNNING_TO_IDLE_T");
+                work_status_ = RUNNING_TO_IDLE_T;
+            }
+
+			U64 warn = ShareMem::instance()->getWarning();
+			if (warn >= FAIL_INTERPRETER_BASE)
+			{
+                FST_INFO("warn >= ERROR_EXEC_BASE_T in RUNNING_W with %llx", warn);
+				rcs::Error::instance()->add(warn);
+				ShareMem::instance()->setWarning(0);
+			}
+			// Deal safety_interface_ signal
+			if(safety_interface_.getDITPEStop())
+			{
+                FST_INFO("safety_interface_.getDITPEStop = true and pauseMotion");
+				pauseMotion();
+			}
+            break;
+        }
+        default:
+            break;
+    }//end switch (prgm_state)
+
+ 
+    if (prev_work_status != work_status_)
+    {
+        prev_work_status = work_status_;
+        setUpdateFlagByID(id, true);
+    }
+} 
+
+
+void Controller::getInterpreterState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&intprt_state_, sizeof(intprt_state_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(intprt_state_);
+        memcpy(param->bytes, (char*)&intprt_state_, param->size);
+    }
+}
+void Controller::updateInterpreterState(int id)
+{
+    static InterpreterState prev_state;    
+    intprt_state_ = ShareMem::instance()->getIntprtState();
+    if (prev_state == intprt_state_)
+        return;
+    prev_state = intprt_state_;
+    setUpdateFlagByID(id, true);
+}
+void Controller::getCtrlState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&ctrl_state_, sizeof(RobotState));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(RobotState);
+        memcpy(param->bytes, (char*)&ctrl_state_, param->size);
+    }
+}
+void Controller::updateCtrlState(int id)
+{
+    static RobotState pre_state;
+    RobotState state = ctrl_state_;
+    int i,j;
+    
+    i= ctrl_state_;
+    switch (state)
+    {
+        case TO_ESTOP_T:
+        {
+           // FST_INFO("cur ProgramState:%d", ps);
+            if (recordJoints())
+            {
+                ctrl_state_ = ESTOP_S;
+            }
+            break;
+        }
+        case RESET_ESTOP_T:
+        {
+            //===wait RESET_ERROR_DELAY ms=========================
+            static int count = RESET_ERROR_TIMEOUT / STATE_MACHINE_INTERVAL;
+            //FST_INFO("the count is :%d", count);
+            if (count-- > 0) //hasn't arrived timeout, during wait
+            {
+                // No error and timeout occur
+                //===check if error exist again====
+                //if error accurs again, return ESTOP_S==
+                if (rcs::Error::instance()->updated() 
+                || rcs::Error::instance()->isInitError())
+                {   
+                    int i;
+                    if(rcs::Error::instance()->isInitError()) {
+                        i=1;
+                    }else{
+                        i=0;
+                    }
+                    //!!!qj!!!
+                    FST_ERROR("updateCtrlState: estop to off: New error found while reset!");  
+                    FST_ERROR("updateCtrlState: isInitError:%d",i );
+                    count = 0;
+                }
+                else
+                {
+                    // Wait for servo ready with TimeOut time is 5 seconds
+                    //=====servo hasn't ready========
+                    //===need keep on wait============
+                    if (ShareMem::instance()->getServoState() != STATE_READY)  
+                    {
+                        FST_ERROR("updateCtrlState: ShareMem::instance()->getServoState(): %d .\n"
+							      "Please check the ESTOP button or fix it.", 
+							ShareMem::instance()->getServoState());  
+                        break;          
+                    }
+                    if (safety_interface_.getDIAlarm())
+                    {
+                        FST_ERROR("updateCtrlState: safety_interface_.getDIAlarm(): %d", 
+							safety_interface_.getDIAlarm());  
+                        break;
+                    }
+                }
+            }// if (count-- > 0)
+
+            if (count <= 0)
+            {
+                FST_ERROR("updateCtrlState: estop to off: error: reset timeout");            
+                serv_jtac_.stopBareMetal();
+                ctrl_state_ = ESTOP_S;
+            }            
+            else
+            {
+                ctrl_state_ = ENGAGED_S;
+            }
+            //====set the count to default===
+            count = RESET_ERROR_TIMEOUT / STATE_MACHINE_INTERVAL;
+            break;
+        }
+        case TERMINATING_T:
+        {
+            if (recordJoints())
+            {
+                ctrl_state_ = TERMINATED_S;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    if (pre_state != state)
+    {
+        pre_state = state;
+        setUpdateFlagByID(id, true);
+    }
+    
+    j= ctrl_state_;
+
+    if(i!=j) {
+        FST_INFO("Controller::updateCtrlState: updateCtrlState udpated:old->new is:%d->%d",i,j);            
+    }
+ 
+}
+
+void Controller::setUserOpMode(void* params, int len)
+{
+    int opmode = 0 ;
+    user_op_mode_  = *(UserOpMode*)params;
+    ShareMem::instance()->setUserOpMode(user_op_mode_);
+	
+	opmode = user_op_mode_ ;
+	FST_INFO("setUserOpMode: opmode: %d", opmode);
+}
+
+//qianjin change from setUserOpMode 
+void Controller::getUserOpMode(void* params)
+{
+    int opmode = 0 ;
+	if(safety_interface_.isSafetyValid() == true)
+	{
+	   opmode = safety_interface_.getDITPUserMode();
+//	   FST_INFO("getUserOpMode: safety_interface_ :: opmode: %d", opmode);
+    }
+    else
+	{
+		opmode = user_op_mode_ ;
+//	    FST_INFO("getUserOpMode: user_op_mode_ :: opmode: %d", opmode);
+    }
+	
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&opmode, sizeof(opmode));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(opmode);
+        memcpy(param->bytes, (char*)&opmode, param->size);
+    }
+}
+
+
+/*void Controller::setMotionModeCmd(void* params, int len)*/
+//{
+    //MotionModeCmd mode_cmd = *(MotionModeCmd*)params;
+    //ProgramState state = auto_motion_->getPrgmState();
+    //if ((state != IDLE_R) && (state != PAUSED_R))
+    //{
+        //FST_ERROR("cant change mode!!");
+        //rcs::Error::instance()->add(SET_MODE_FAILED);
+        //return;
+    //}
+
+    //FST_INFO("mode_cmd:%d", mode_cmd);
+	//switch (mode_cmd)
+	//{
+		//case GOTO_PROGRAM_EXE_E:
+            //motion_mode_ = PROGRAM_EXE_M;
+			//break;
+        //case GOTO_TEACH_E:
+
+            //motion_mode_ = TEACH_M;
+		//default:
+            //rcs::Error::instance()->add(SET_MODE_FAILED);
+			//break;
+	//}//end switch (mode_cmd)
+
+	//FST_INFO("current mode:%d", motion_mode_.load());
+
+/*}*/
+
+void Controller::setStateCmd(void* params, int len)
+{
+    RobotStateCmd state_cmd = *(RobotStateCmd*)params;
+    if (state_cmd == EMERGENCY_STOP_E)
+    {
+        servoEStop();
+        pauseMotion(); //set mode to pause 
+    }
+    setLogicStateCmd(state_cmd);
+}
+void Controller::getCurJoints(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&servo_joints_, MAX_JOINTS*sizeof(double));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = MAX_JOINTS*sizeof(double);
+        memcpy(param->bytes, (char*)&servo_joints_, param->size);
+    }
+}
+void Controller::updateCurJoints(int id)
+{
+    U64 result = ShareMem::instance()->getFeedbackJoint(servo_joints_);
+    if (result != TPI_SUCCESS)
+    {
+        rcs::Error::instance()->add(result);
+        return;
+    }
+
+    setUpdateFlagByID(id, true);
+}
+void Controller::getTCPPose(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)robot_->getTCPPosePtr(), sizeof(PoseEuler));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(PoseEuler);
+        memcpy(param->bytes, (char*)robot_->getTCPPosePtr(), param->size);
+    }
+}
+void Controller::updateTCPPose(int id)
+{
+    if (ShareMem::instance()->isJointUpdated())
+    {
+        //FST_INFO("updated");
+        robot_->updatePose(servo_joints_);
+        setUpdateFlagByID(id, true);
+    }
+}
+void Controller::getFlangePose(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)robot_->getFlangePosePtr(servo_joints_), sizeof(PoseEuler));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(PoseEuler);
+        memcpy(param->bytes, (char*)robot_->getFlangePosePtr(servo_joints_), param->size);
+    }
+}
+
+void Controller::updateFlangePose(int id)
+{
+    /*if (ShareMem::instance()->isJointUpdated())*/
+    //{
+        //robot_->updatePose(servo_joints_);
+        //setUpdateFlagByID(id, true);
+    /*}*/
+}
+
+/*void Controller::setJointTraj(void* params, int len)*/
+//{
+    
+//}
+//void Controller::setToolCoord(void* params, int len)
+//{
+/*}*/
+
+void Controller::getLineID(void* params)
+{
+    BaseTypes_CommonString line_id;
+    char line_xpath[TP_XPATH_LEN];
+	memset(line_xpath, 0x00, TP_XPATH_LEN);
+	ShareMem::instance()->getCurLine(line_xpath);
+	if(strlen(line_xpath) > 0)
+	{
+//	    FST_INFO("getLineID: rep::line_xpath: %s(%d)", 
+//					line_xpath, strlen(line_xpath));
+	}
+	strcpy(line_id.data, (char*)line_xpath);
+	
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+		if(rep)
+		{
+        	rep->fillData((char *)&line_id, sizeof(line_id));
+        	// int line = 0x12 ;
+        	// rep->fillData((char *)&line, sizeof(line));
+	        if(strlen(line_xpath) > 0)
+			{
+//			    FST_INFO("getLineID:  rep::getParamBufPtr %s(%d) ", 
+//					rep->getParamBufPtr(), rep->getParamLen());
+//				
+//			    FST_INFO("getLineID: fillData rep::line_xpath: %s(%d)", 
+//					line_xpath, strlen(line_xpath));
+	        }
+		}
+		else
+	        FST_INFO("getLineID: rep::line: %s", line_xpath);
+    }
+    else 
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+		if(!param)
+		{
+		    FST_INFO("getLineID: !param::line: %s", line_xpath);
+			return ;
+	    }
+        int line = 0x12 ;
+        // param->size = sizeof(line_id);
+        param->size = sizeof(line);
+		// memcpy(param->bytes, (char*)&line_id, param->size);
+        memcpy(param->bytes, (char*)&line, param->size);
+	    if(strlen(line_xpath) > 0)
+	    {
+//		    FST_INFO("getLineID: fillData rep::line: %s", line_xpath);
+        }
+    }
 
 }
 
 
-/**
- * @brief get message from TP and publish things that TP want to get repeatedly
- */
-void commuProc(ProtoParse *proto_parse)
+void Controller::updateLineID(int id)
+{
+    static char prev_line_id_xpath[TP_XPATH_LEN];
+    char line_xpath[TP_XPATH_LEN];
+    ShareMem::instance()->getCurLine(line_xpath);
+
+    if (strcmp(prev_line_id_xpath, line_xpath) == 0) return;
+
+    strcpy(prev_line_id_xpath, line_xpath);
+
+    setUpdateFlagByID(id, true);
+}
+
+
+void Controller::setUserRegs(void* params, int len)
+{
+}
+void Controller::getUserRegs(void* params)
+{
+}
+
+void Controller::updateUserRegs(int id)
+{
+
+}
+
+
+void Controller::setIOStatus(char* params, char value)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_IO;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+	ctrl.dioPathInfo.value = value;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+
+void Controller::sendGetIORequest(char * params, int len)
 {	
-    RobotMotion *robot_motion = proto_parse->getRobotMotionPtr();
-    while (!proto_parse->getRobotMotionPtr()->shutdown_)
+    InterpreterControl ctrl;
+    ctrl.cmd = READ_IO ;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+int Controller::getIOReply(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    uint8_t io_info = 255;
+
+    bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+
+    if(is_ready == false)
+    {
+        if (param_ptr->type == REPLY)
+        {
+            TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+            rep->fillData((char*)&io_info, sizeof(io_info));
+        }
+        return -1;
+    }
+
+    ShareMem::instance()->getDIOInfo((char *)&io_info);
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&io_info, sizeof(io_info));
+    }
+
+    return 1;
+}
+
+void Controller::sendIOSimulateStatusRequest(char* params, int len)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = READ_SMLT_STS;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+void Controller::setIOSimulateStatus(char* params, char value)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_SMLT_STS;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+	ctrl.dioPathInfo.value = value ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+void Controller::setIOSimulateValue(char* params, char value)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_SMLT_VAL;
+    // ctrl.dio = *dio;
+    memset(ctrl.dioPathInfo.dio_path, 0x00, sizeof(ctrl.dioPathInfo.dio_path));
+    sprintf(ctrl.dioPathInfo.dio_path, "%s", params);
+	ctrl.dioPathInfo.value = value ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+
+void Controller::startRun(void* params, int len)
+{
+    if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
+    {
+        int ctlState   = ctrl_state_ ;
+        int workStatus = work_status_ ;
+        FST_ERROR("cant start run!! for ctrl_state_ = %d and work_status_ = %d", 
+			ctlState, workStatus);
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+
+	if(run_mode_ != NORMAL_R)
 	{
-       //auto t1 = std::chrono::system_clock::now(); 
-		proto_parse->StartParser(); //get message from TP and parse the message
-/*auto t2 = std::chrono::system_clock::now();*/
-        //int x = std::chrono::duration_cast<std::chrono::milliseconds>( t2-t1 ).count();
-        //if (x > 10)
-            /*FST_ERROR("111delay too much===:%d", x);*/
-        proto_parse->updateParams();
-		proto_parse->pubParamList();	 // publish parameters the TP subscibed  
-		//mSleep(INTERVAL_PROPERTY_UPDATE);
-        rtMsSleep(INTERVAL_PROPERTY_UPDATE);
+        printf("NOTICE: run_mode_ != NORMAL_R \n");
+		rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+        return;
+	}
+    StartCtrl* start = (StartCtrl*)params;
+	
+	FST_INFO("start run %s ------------------------", start->file_name);
+
+    InterpreterControl ctrl;
+    ctrl.cmd = START;
+    ctrl.start_ctrl = *start;
+    //start_mode_ = start->mode;
+    ShareMem::instance()->intprtControl(ctrl);
+	// Set Start Pos 
+	setMotionStartPos();
+    //permit sending command
+    ShareMem::instance()->setIntprtSendFlag(true);
+    return true;
+}
+
+void Controller::startDebug(void* params, int len)
+{
+    int t1,t2;
+
+    if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
+    {
+        FST_ERROR("cant debug run!!");
+        t1 = ctrl_state_;
+        t2 = work_status_;
+        printf("INVALID_ACTION_IN_CURRENT_STATE: ctrl_state is: %d; work_status_ is: %d", t1, t2);
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+
+	if(run_mode_ != NORMAL_R)
+	{
+        printf("NOTICE: run_mode_ != NORMAL_R \n");
+		rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+        return;
+	}
+	
+    if (user_op_mode_ == AUTO_MODE_U)
+    {
+        FST_ERROR("cant debug run!!");
+        t1 = user_op_mode_;
+        printf("user_op_mode_ is: %d", t1);
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+
+    auto_motion_->setDoneFlag(true);
+    StartCtrl* start = (StartCtrl*)params;
+
+    InterpreterControl ctrl;
+    ctrl.cmd = DEBUG;
+    ctrl.start_ctrl = *start;
+    //start_mode_ = start->mode;
+    ShareMem::instance()->intprtControl(ctrl);
+	// Set Start Pos 
+	setMotionStartPos();
+    //permit sending command
+    ShareMem::instance()->setIntprtSendFlag(true);
+}
+
+
+void Controller::jumpLine(void* params, int len)
+{
+    if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W) /*|| (!debug_ready_)*/)
+    {
+        int sta_c, sta_w;
+        sta_c = ctrl_state_;
+        sta_w = work_status_;
+
+        
+        FST_ERROR("jumpLine: cant jump line when ctrl_state = %d && work_status = %d!!", sta_c,sta_w);
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+    if (user_op_mode_ == AUTO_MODE_U)
+    {
+        FST_ERROR("cant jumpline in auto mode!!");
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+    //first abort motion
+    //if (state == PAUSED_R)
+    abortMotion();
+    //----------------
+    char * line = (char *)params;
+    InterpreterControl ctrl;
+    ctrl.cmd = JUMP;
+    strcpy(ctrl.line, line);
+    ShareMem::instance()->intprtControl(ctrl);
+}
+
+void Controller::step(void* params, int len)
+{
+    if ((ctrl_state_ != ENGAGED_S)/* || (work_status_ != IDLE_W) || (!debug_ready_)*/)
+    {
+        FST_ERROR("cant step!!");
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+    if (user_op_mode_ == AUTO_MODE_U)
+    {
+        FST_ERROR("cant step in auto mode!!");
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+    
+    if (resumeMotion())
+    {
+        work_status_ = RUNNING_TO_IDLE_T;
+        return;
+    }
+    //   debug_ready_ = true;    //set debug flag
+
+    InterpreterControl ctrl;
+    ctrl.cmd = FORWARD;
+    ShareMem::instance()->intprtControl(ctrl);
+}
+
+void Controller::backward(void* params, int len)
+{
+   // ProgramState state = auto_motion_->getPrgmState();
+    if ((ctrl_state_ != ENGAGED_S)/* || (work_status_ != IDLE_W) || (!debug_ready_)*/)
+    {
+        FST_ERROR("cant backward!!");
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+    if (user_op_mode_ == AUTO_MODE_U)
+    {
+        FST_ERROR("cant backward in auto mode!!");
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+    
+    if (resumeMotion())
+    {
+        work_status_ = RUNNING_TO_IDLE_T;
+        return;
+    }
+   
+    // debug_ready_ = true;    //set debug flag
+
+    InterpreterControl ctrl;
+    ctrl.cmd = BACKWARD;
+    ShareMem::instance()->intprtControl(ctrl);
+}
+
+
+
+void Controller::getSafetyTPManual(void* params)
+{
+    char di = safety_interface_.getDITPManual();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&di, sizeof(di));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(di);
+        memcpy(param->bytes, (char*)&di, param->size);
+    }
+}
+void Controller::getSafetyTPAuto(void* params)
+{
+    char di = safety_interface_.getDITPAuto();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&di, sizeof(di));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(di);
+        memcpy(param->bytes, (char*)&di, param->size);
+    }
+}
+
+void Controller::getIOInfo(void* params)
+{
+    motion_spec_DeviceList dev_list;
+    // IOInterface::instance()->getIODevices(dev_list);
+	getIODevInfo(dev_list);
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        FST_INFO("dev size:%d", sizeof(dev_list));
+        rep->fillData((char*)&dev_list, sizeof(dev_list));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(dev_list);
+        memcpy(param->bytes, (char*)&dev_list, param->size);
+    }
+}
+void Controller::getFK(void* params){}
+void Controller::getIK(void* params){}
+void Controller::getLocalTime(void* params)
+{
+    long time = getCurTimeSecond();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&time, sizeof(time));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(time);
+        memcpy(param->bytes, (char*)&time, param->size);
+    }
+}
+void Controller::getSoftLimit(void* params)
+{
+    motion_spec_JointConstraint slmt =  robot_->getSoftConstraint();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&slmt, sizeof(slmt));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(slmt);
+        memcpy(param->bytes, (char*)&slmt, param->size);
+    }
+}
+
+
+void Controller::setJointConstraint(void* params, int len)
+{
+    motion_spec_JointConstraint slmt = *(motion_spec_JointConstraint*)params;
+
+    robot_->setSoftConstraint(&slmt);
+}
+
+
+void Controller::getDH(void* params)
+{
+    motion_spec_DHGroup dh = robot_->getDHGroup();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&dh, sizeof(dh));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(dh);
+        memcpy(param->bytes, (char*)&dh, param->size);
+    }
+}
+void Controller::getHardLimit(void* params)
+{
+    motion_spec_JointConstraint jc = robot_->getHardConstraint();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&jc, sizeof(jc));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(jc);
+        memcpy(param->bytes, (char*)&jc, param->size);
+    }
+}
+void Controller::getGlobalVel(void* params)
+{    
+    double factor = arm_group_->getGlobalVelRatio();
+
+    motion_spec_GlobalParams global = *(motion_spec_GlobalParams*)params;
+
+	global.has_acc = true;
+	global.acc = factor;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&global, sizeof(global));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(global);
+        memcpy(param->bytes, (char*)&global, param->size);
+    }
+}
+void Controller::setGlobalVel(void* params, int len)
+{
+    motion_spec_GlobalParams global = *(motion_spec_GlobalParams*)params;
+
+    FST_INFO("factor: Set global vel ratio to: %.4f", global.acc);
+
+	double factor = global.acc * 0.01;
+
+    if (arm_group_->setGlobalVelRatio(factor) == false)
+    {
+        rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+    }
+}
+
+void Controller::getSafetyInFrame(void* params)
+{    
+    U32 frm_data = safety_interface_.getDIFrm2();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&frm_data, sizeof(frm_data));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(frm_data);
+        memcpy(param->bytes, (char*)&frm_data, param->size);
+    }
+}
+
+void Controller::updateSafetyFrame(int id)
+{    
+    if (safety_interface_.isDIFrmChanged())
+    {
+        setUpdateFlagByID(id, true);
+    }
+}
+
+
+void Controller::setCtrlCmd(void* params, int len)
+{
+    RobotCtrlCmd cmd = *(RobotCtrlCmd*)params;
+   // ProgramState prgm_state = auto_motion_->getPrgmState();
+    switch (cmd)
+    {
+        case SHUTDOWN_CMD:
+            break;
+        case PAUSE_CMD:         
+            if (work_status_ == IDLE_W)             
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+                break;
+            }                        
+            pauseMotion();
+            break;
+        case CONTINUE_CMD:
+            if (ctrl_state_ != ENGAGED_S)
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+                break;
+            }
+            InterpreterControl ctrl;
+            ctrl.cmd = CONTINUE;
+            ShareMem::instance()->intprtControl(ctrl);
+
+            work_status_ = IDLE_TO_RUNNING_T;
+            //if (auto_motion_->getDoneFlag() == false)
+            {
+                resumeMotion();
+            }
+            break;
+        case ABORT_CMD:
+        {
+            InterpreterControl ctrl;
+            ctrl.cmd = ABORT;
+            ShareMem::instance()->intprtControl(ctrl);
+            abortMotion();
+            break;
+        }
+        case CALIBRATE_CMD:
+            if (ctrl_state_ != ESTOP_S)
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            else
+            {
+                calibrate();
+            }
+            break;
+        case SETTMPZERO_CMD:
+            if (ctrl_state_ != ESTOP_S)
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            else
+            {
+                setTempZero();
+            }
+            break;
+        default:
+            rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+            break;
+    }//end switch (cmd)
+
+    return;
+ 
+}
+
+void Controller::systemShutdown(void* params){}
+void Controller::setLocalTime(void* params, int len)
+{
+    int time = *(int*)params;
+    setTimeSecond(time);
+}
+
+void Controller::setManualCmd(void* params, int len)
+{
+     //command must be set in idle or pause state_cmd
+     //Qianjin
+    if ((ctrl_state_ != ENGAGED_S) || (work_status_ != IDLE_W))
+        // && (work_status_ != TEACHING_W)))
+    {
+        int iCtrlState = ctrl_state_;
+        int iWorkStatus = work_status_;
+
+        FST_ERROR("Controller : can not manual run! \
+            ctrl_state_= %d and work_status_ = %d",
+            iCtrlState, iWorkStatus);
+
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+
+    motion_spec_ManualCommand command = *(motion_spec_ManualCommand*)params;
+
+    if (work_status_ == TEACHING_W)
+    {
+        FST_ERROR("cant manual run!! work_status_ in TEACHING_W");
+        return;
+    }
+    work_status_ = TEACHING_W;
+
+    U64 result = arm_group_->setStartState(servo_joints_);
+    if (result != TPI_SUCCESS)
+    {
+        rcs::Error::instance()->add(result);
+        FST_INFO("Controller : set start state error");
+        return;
+    }
+
+	// In the SOFTLIMITED_R, Only step move and continue move 
+	// of manual joint are supported.
+	// By this means, automove and position move are not supported, 
+	// point move of manual joint is also not supported.
+	if(run_mode_ != NORMAL_R)
+	{
+		if((command.has_stepPosition))
+	    {
+            printf("NOTICE: run_mode_ != NORMAL_R \n");
+			rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+	        return;
+	    }
+	    else if((command.has_stepJoint))
+	    {
+			if(command.type == motion_spec_ManualType_APPOINT)
+		    {
+	            printf("NOTICE: run_mode_ != NORMAL_R \n");
+				rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+		        return;
+		    }
+	    }
+	}
+    manu_motion_->setManuCommand(command);
+}
+
+void Controller::setTeachTarget(void* params, int len)
+{
+    if ((ctrl_state_ != ENGAGED_S)
+    || (work_status_ != TEACHING_W))
+    {
+        int ctlState = ctrl_state_ ;
+        int workStatus = work_status_ ;
+        FST_ERROR("cant manual !! --- with %d and %d.", ctlState, workStatus);
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+    motion_spec_TeachTarget target = *(motion_spec_TeachTarget*)params;
+	
+    if((target.directions_count == 6)
+	 &&(target.directions[0] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[1] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[2] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[3] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[4] == motion_spec_Direction_STANDBY)
+	 &&(target.directions[5] == motion_spec_Direction_STANDBY))
+     {
+	    FST_INFO("target.directions = (0, 0, 0, 0, 0, 0) .\n");
+	    if (work_status_ == TEACHING_W)
+	        work_status_ = TEACHING_TO_IDLE_T;
+		
+		if (work_status_ == TEACHING_TO_IDLE_T)
+		{
+            if ((ShareMem::instance()->getServoState() == STATE_READY) 
+            || (ShareMem::instance()->getServoState() == STATE_ERROR))
+            {
+                work_status_ = IDLE_W;
+            }            
+		}
+     }
+     else
+     {
+	    FST_INFO("command.target.directions = (%d, %d, %d, %d, %d, %d) .\n", 
+			target.directions[0], target.directions[1], 
+			target.directions[2], target.directions[3], 
+			target.directions[4], target.directions[5]);
+     }
+     manu_motion_->setTeachTarget(target);
+}
+
+bool Controller::isTerminated()
+{
+   if (ctrl_state_ == TERMINATED_S)
+       return true;
+
+   return false;
+}
+
+void Controller::exit()
+{
+    Controller* ctrl = instance_;
+    if (ctrl)
+    {
+        ctrl->setLogicStateCmd(GOTO_TERMINATED);//ready to terminate process
+    }
+}
+
+
+void Controller::setLogicStateCmd(RobotStateCmd state_cmd)
+{
+    FST_INFO("setLogicStateCmd:aim_state:%d",state_cmd);
+    RobotState state = ctrl_state_;
+	switch (state_cmd)
+	{
+        case EMERGENCY_STOP_E:
+            if (state == ESTOP_S)
+            {
+                break;
+            }
+            ctrl_state_ = TO_ESTOP_T;                        
+            break; 
+        case ACKNOWLEDGE_ERROR:
+            if (state == ENGAGED_S)
+            {
+                break;
+            }
+            else if (state == ESTOP_S)
+            {
+                bool  res_t;
+                ctrl_state_ = RESET_ESTOP_T;
+                //first clear error list 
+                rcs::Error::instance()->clear();
+                //====reset core1==========
+                res_t=serv_jtac_.resetBareMetal();
+                if(res_t == false) {
+                        FST_ERROR("Send serv_jtac_.resetBareMetal command failed!");   
+
+                }
+            
+                //=======reset safety board==================
+                safety_interface_.reset();  //reset safety board*/
+                //==========reset ArmGroup=============
+                //!!!!qj!!!!!No need any more. 
+                // reset ArmGroup
+                //U64 result = 0;// arm_group_->resetArmGroup();
+                //if (result != TPI_SUCCESS)
+                //{
+                //    if (result == CURRENT_JOINT_OUT_OF_CONSTRAINT)
+                //    {
+                //        run_mode_ = SOFTLIMITED_R;
+                //    }
+                //    else
+                //    {
+                //        FST_ERROR("reset ArmGroup failed:%llx", result);   
+                //        rcs::Error::instance()->add(result);
+                //        break;
+                //    }
+                //}      
+                // Out of SoftConstraint or lost ZeroOffset would enter SOFTLIMITED_R
+                run_mode_ = NORMAL_R ;
+			    unsigned int caliborate_val;
+			    if (calib_.checkZeroOffset(caliborate_val) == false)
+			    {
+                	FST_ERROR("run_mode_ = SOFTLIMITED_R (checkZeroOffset(%08X) Failed) in state:%d", 
+						caliborate_val, state);
+			        run_mode_ = SOFTLIMITED_R ;
+			    }
+				if (arm_group_->isJointInSoftConstraint(servo_joints_) == false)
+			    {
+                	FST_ERROR("run_mode_ = SOFTLIMITED_R (isJointInSoftConstraint Failed) in state:%d", 
+						state);
+			        run_mode_ = SOFTLIMITED_R ;
+			    }
+            }//end else if (state == ESTOP_S)
+            else 
+            {
+                FST_ERROR("invalid action in state:%d", state);
+                rcs::Error::instance()->add(SET_STATE_FAILED);
+            }
+            break;
+        case GOTO_TERMINATED:
+            servoEStop();   //disable servo
+            pauseMotion(); //set mode to pause
+            ctrl_state_ = TERMINATING_T;
+        default:
+            break;
+    }//end switch (state_cmd)
+    FST_INFO("current state:%d", ctrl_state_.load());
+
+}
+
+void Controller::stateMachine(void* params)
+{
+    U64 result = SUCCESS; 
+    Instruction inst;
+    int fifo_len =  arm_group_->getFIFOLength();
+    /*if (auto_motion_->getPrgmState() == EXECUTE_R)*/
+    //{ 
+        //FST_INFO("fifo_len:%d, smooth:%d, servo_state:%d", fifo_len, auto_motion_->getSmooth(), ShareMem::instance()->getServoState());
+    /*}*/
+
+#if 0
+    if (auto_motion_->getSmooth() >= 0) //must full speed mode
+    {
+        if (fifo_len < 50)
+        {
+            ShareMem::instance()->sendingPermitted();
+            auto_motion_->setDoneFlag(true);
+        }
+    }
+    else
+    {
+        //StartMode mode = auto_motion_->getStartMode();
+       {
+            if ((ShareMem::instance()->getServoState() == STATE_READY)
+            && (fifo_len == 0))
+            {
+                if ((work_status_ == RUNNING_W) || (work_status_ == RUNNING_TO_IDLE_T))
+                {
+                    ShareMem::instance()->sendingPermitted();
+                    auto_motion_->setDoneFlag(true);
+                    if (debug_ready_ == false)
+                        debug_ready_ = true;
+                }
+            }
+        }
+    }
+#endif
+
+    if ((work_status_ == IDLE_W)
+    || (work_status_ == IDLE_TO_RUNNING_T)
+    || (work_status_ == RUNNING_W))
+    {
+        if (ShareMem::instance()->getInstruction(inst))
+        {
+#ifdef USE_XPATH
+        	if(strlen(inst.line) > 0)
+	        {
+	            printf("get instruction, line:%s\n", inst.line);
+#else
+        	if(inst.line > 0)
+	        {
+	            printf("get instruction, line:%d\n", inst.line);
+#endif		
+				if(inst.type == MOTION)
+				{
+					if(run_mode_ == NORMAL_R)
+					{
+			            result = auto_motion_->moveTarget(inst.target);
+						if(result != SUCCESS)
+		        		{
+#ifdef USE_XPATH
+		                    printf("NOTICE: moveTarget failed, line:%s\n", inst.line);
+#else
+		                    printf("NOTICE: moveTarget failed, line:%d\n", inst.line);
+#endif		
+		        			rcs::Error::instance()->add(result);
+							setLogicStateCmd(EMERGENCY_STOP_E);
+							
+							InterpreterControl ctrl;
+							ctrl.cmd = ABORT;
+							ShareMem::instance()->intprtControl(ctrl);
+			        	}
+						else{
+		     				printf("instr.target.cnt = %f .\n", inst.target.cnt);
+							current_cnt_ = inst.target.cnt;
+							calcMotionDst(inst.target);
+						}
+					}
+					else
+					{
+			            printf("NOTICE: run_mode_ != NORMAL_R \n");
+						rcs::Error::instance()->add(IN_LIMIT_RUNNING_MODE);
+					}
+				}
+				else if(inst.type == SET_UF)
+				{
+		            printf("NOTICE: SET_UF to %d.\n", inst.current_uf);
+	                int iOldUserFrame = user_frame_manager_->getActivatedFrame();
+					if(iOldUserFrame != inst.current_uf)
+	                   user_frame_manager_->activateFrame(inst.current_uf);
+				}
+				else if(inst.type == SET_TF)
+				{
+		            printf("NOTICE: SET_TF to %d.\n", inst.current_uf);
+	                int iOldToolFrame = tool_frame_manager_->getActivatedFrame();
+					if(iOldToolFrame != inst.current_tf)
+	                   tool_frame_manager_->activateFrame(inst.current_tf);
+				}
+				else if(inst.type == SET_OVC)
+				{
+		            printf("NOTICE: SET_OVC to %d percent.\n", inst.current_ovc);
+					double factor = inst.current_ovc * 0.01;
+	                int iOldGlobalVel = arm_group_->getGlobalVelRatio();
+					if(iOldGlobalVel != inst.current_ovc)
+					{
+	                   arm_group_->setGlobalVelRatio(factor);
+					}
+				}
+				else if(inst.type == SET_OAC)
+				{
+		            printf("NOTICE: SET_OAC to %d percent.\n", inst.current_oac);
+					double factor = inst.current_oac * 0.01;
+	                int iOldGlobalAcc = arm_group_->getGlobalAccRatio();
+					if(iOldGlobalAcc != inst.current_oac)
+					{
+	                   arm_group_->setGlobalAccRatio(factor);
+					}
+				}
+	        }
+        }
+    }
+
+	if (work_status_ == TEACHING_W)
+	{
+	   if( (manu_motion_->getManuType() == motion_spec_ManualType_STEP)
+	   	|| (manu_motion_->getManuType() == motion_spec_ManualType_APPOINT))
+	   {
+		   FST_INFO("SET OVER :: fifo_len:%d in the %d\n", fifo_len, manu_motion_->getManuType());
+           if (fifo_len == 0)
+           {
+			   FST_INFO("SET OVER :: work_status_ = TEACHING_TO_IDLE_T\n");
+               work_status_ = TEACHING_TO_IDLE_T ;
+           }
+	   }
+    }
+	
+    double left_time =  arm_group_->timeBeforeDeadline();
+	if(left_time <= 0.001)
+	{
+		// printf("left_time makes current_cnt_ change to %f .\n", current_cnt_);
+	    // FINE
+		// if(current_cnt_ == -1.000000)
+		if(current_cnt_ < 0)
+		{
+		     // printf("current_cnt_ change to %f .\n", current_cnt_);
+	         if (ShareMem::instance()->getServoState() == STATE_READY)
+			 {
+			 	 if(calcFineDst() == true)
+		 	 	 {
+			         bool bRet = ShareMem::instance()->getIntprtSendFlag();
+					 if(bRet == false)
+					 {
+			             ShareMem::instance()->sendingPermitted();
+			             auto_motion_->setDoneFlag(true);
+			             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with FINE .");
+					     ShareMem::instance()->setIntprtSendFlag(true);
+					 }
+		 	 	 }
+			 }
+		}
+		else  // Not FINE
+		{
+	         bool bRet = ShareMem::instance()->getIntprtSendFlag();
+			 if(bRet == false)
+			 {
+	             ShareMem::instance()->sendingPermitted();
+	             auto_motion_->setDoneFlag(true);
+	             FST_INFO("ShareMem::instance()->setIntprtSendFlag(true) with left_time <= 0.001 .");
+			     ShareMem::instance()->setIntprtSendFlag(true);
+			 }
+		}
+	}
+    static int count = 0;
+    if (++count >= SM_INTERVAL_COUNT)
+    {
+        requestProc();
+        updateProc();
+        count = 0;
+    }
+
+    return;// NULL;
+}
+
+void Controller::rtTrajFlow(void* params)
+{
+#if 0
+    struct timeval time_now;
+    static int ms_old, ms_new;
+    int ms_delay;
+    
+    gettimeofday(&time_now, NULL);
+    ms_new = (time_now.tv_usec)/1000;
+    ms_delay = ms_new - ms_old;
+    ms_old = ms_new;
+    if(ms_delay <0) ms_delay += 1000;
+    if(ms_delay > 8){
+        printf("Controller:Get point not fast enough!\n");
+    }
+
+    if (work_status_ == IDLE_W)
+        return;// NULL;
+
+    U64 result;
+    if (work_status_ == RUNNING_W || work_status_ == IDLE_TO_RUNNING_T || work_status_ == RUNNING_TO_IDLE_T)
+        result = ShareMem::instance()->setJointPositions(POS_VEL);
+    else
+        result = ShareMem::instance()->setJointPositions(POSITION_ONLY);
+    if (result != TPI_SUCCESS)
+    {
+//        int iCtrlState = ctrl_state_;
+//        int iWorkStatus = work_status_;
+
+//        FST_INFO(
+//			"Controller : setJointPositions ctrl_state_= %d and work_status_ = %d",
+//            iCtrlState, iWorkStatus);
+		
+        rcs::Error::instance()->add(result);
+        return;// NULL;
+    }//end if (share_mem_.isJointCommandWritten() == false)
+
+    int joints_len = arm_group_->getFIFOLength();  
+    if (joints_len <= 0)
+        return;// NULL;
+
+    //FST_INFO("joints fifo length:%d, traj_len:%d", joints_len, arm_group_->getPlannedPathFIFOLength());
+
+    //!!!!!qj!!!!!!!update arguments!!!!!!
+    //vector<fst_controller::JointPoint> joint_traj;
+    vector<fst_controller::JointOutput> joint_traj;
+    result = arm_group_->getPointFromFIFO(10,joint_traj);
+    
+    if (result != TPI_SUCCESS)
+    {
+       // FST_ERROR("=======pick point failed ==========");
+        rcs::Error::instance()->add(result);
+        return;// NULL;
+    }
+
+    int joints_in = joint_traj.size();
+    //dbcount+=joints_in;
+    //printDbLine("joints:", (double*)&joint_traj[joints_in-1].joint, 6);
+    //joints_len = arm_group_->getTrajectoryFIFOLength();
+   // FST_INFO("joints fifo length:%d", joints_in);
+    JointCommand joint_command;
+    joint_command.total_points = joints_in;
+    //printf("Qianjin: Send joint cmd%d!\n", joints_in);
+    for (int i = 0; i < joints_in; i++)
+    {
+        joint_command.points[i].positions[0] = joint_traj[i].joint.j1;
+        joint_command.points[i].positions[1] = joint_traj[i].joint.j2;
+        joint_command.points[i].positions[2] = joint_traj[i].joint.j3;
+        joint_command.points[i].positions[3] = joint_traj[i].joint.j4;
+        joint_command.points[i].positions[4] = joint_traj[i].joint.j5;
+        joint_command.points[i].positions[5] = joint_traj[i].joint.j6;
+
+        joint_command.points[i].omega[0] = joint_traj[i].omega.j1;
+        joint_command.points[i].omega[1] = joint_traj[i].omega.j2;
+        joint_command.points[i].omega[2] = joint_traj[i].omega.j3;
+        joint_command.points[i].omega[3] = joint_traj[i].omega.j4;
+        joint_command.points[i].omega[4] = joint_traj[i].omega.j5;
+        joint_command.points[i].omega[5] = joint_traj[i].omega.j6;
+
+        joint_command.points[i].inertia[0] = joint_traj[i].inertia.j1;
+        joint_command.points[i].inertia[1] = joint_traj[i].inertia.j2;
+        joint_command.points[i].inertia[2] = joint_traj[i].inertia.j3;
+        joint_command.points[i].inertia[3] = joint_traj[i].inertia.j4;
+        joint_command.points[i].inertia[4] = joint_traj[i].inertia.j5;
+        joint_command.points[i].inertia[5] = joint_traj[i].inertia.j6;
+
+        //fillInFIFO2(joint_command.points[i].positions);
+        
+        joint_command.points[i].point_position = joint_traj[i].level; //point position: start\middle\ending
+       //FST_INFO("level:%d", joint_traj[i].level); 
+       // printDbLine("joints:", joint_command.points[i].positions, 6);
+      //  if (ctrl_mode_ == AUTO_RUN_M)
+        {
+            
+            /*int cur_id = inst_parser_->getCurrentCmdID();*/
+            //int traj_id = joint_traj[i].id;
+            //inst_parser_->updateID(traj_id);
+            
+
+            //int level = joint_command.points[i].point_position;
+            //if (level == POINT_LAST)
+            //{
+                ////printDbLine("the last joints:", joint_command.points[i].positions, 6);                   
+            //}
+            //else if (level == POINT_ENDING)  
+            //{
+                ////if (prgm_state_ == EXECUTE_R) //in case for pausing
+                //if (arm_group_->isTrajectoryTotallyFinished())
+                //{                    
+                    //inst_parser_->rmMoveInstruction();
+                //}
+                ////printDbLine("the end joints:", joint_command.points[i].positions, 6);
+                         
+               //// FST_INFO("traj_id is :%d", cur_id);
+            //} 
+            //else if (level == POINT_START)
+            //{
+                ////printDbLine("the start joints:", joint_command.points[i].positions, 6);
+                ////FST_INFO("traj_id is :%d, cur_id:%d", traj_id, cur_id);
+            //}
+            //else if (level == POINT_FIRST)
+            //{
+                //if (traj_id != cur_id) //in case in middle of path
+                //{
+                    //inst_parser_->rmMoveInstruction();
+                //}
+                ////printDbLine("the first joints:", joint_command.points[i].positions, 6);
+                ////FST_INFO("traj_id is :%d, cur_id:%d", traj_id, cur_id);
+            /*}*/
+        }
+    }// end for (int i = 0; i < joints_in; i++)
+
+
+    ShareMem::instance()->setCurrentJointCmd(joint_command); //store this command in case it can't write Success
+#endif
+        //return NULL;
+}
+
+
+void Controller::heartBeat(void* params)
+{
+	// Lujiaming comment at 0619
+	// Interpretor would report error automatically
+    // IOInterface::instance()->updateIOError();
+    // updateIODevError();
+    ServiceHeartbeat::instance()->sendRequest();
+    U64 result = safety_interface_.setSafetyHeartBeat();
+    if (result != TPI_SUCCESS)
+    {
+        rcs::Error::instance()->add(result);
+    }
+}
+
+
+void Controller::requestProc()
+{
+    char tempParam[32];
+	char * tempPathPtr = NULL ;
+    uint32_t id;
+    if (!tp_interface_->getReqDataPtr()->isFilled())
+        return;
+	// FST_INFO("Start:: requestProc tp_interface_ %d", tp_interface_->getReqDataPtr()->getType());
+    switch (tp_interface_->getReqDataPtr()->getType())
+    {
+        case SET:
+        {
+            string str_path = (const char*)tp_interface_->getReqDataPtr()->getPathBufPtr();
+            if (str_path.substr(0, 7) == "root/IO")
+            {
+                //int buf_len;             
+                //U64 result = IOInterface::instance()->checkIO(str_path.c_str(), buf_len, id);
+                IOPortInfo info;
+                // IOMapPortInfo infoMap;
+				// Lujiaming comment at 0619
+                // U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+				U64 result = checkIODevInfo(str_path.c_str(), &info);
+                if (result != TPI_SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
+                    break;
+                }
+                char val = *tp_interface_->getReqDataPtr()->getParamBufPtr();
+ //             IOInterface::instance()->setDO(&info, val);
+ //				memcpy(&infoMap, &info, sizeof(IOPortInfo));
+                setIOStatus((char *)str_path.c_str(), val);
+				FST_INFO("SET:: %s\n", str_path.c_str());
+            }
+            else if (str_path.substr(0, 23) == "root/simulate_IO_status")
+            {
+			    std::vector<std::string> vc_path;
+				tempPathPtr = (char *)str_path.c_str() ;
+			    boost::split(vc_path,  tempPathPtr, boost::is_any_of("/"));
+                if(vc_path.size() == 5)
+                {
+                    // root/simulate_IO_status/dio/all/1
+                	if (vc_path[3] == "all")
+                	{
+                	    sprintf(tempParam, "%s_all", vc_path[2].c_str()); 
+                	}
+                    // root/simulate_IO/di/2/1
+					else 
+                	{
+                	    sprintf(tempParam, "%s[%s]", vc_path[2].c_str(), vc_path[3].c_str());
+                	}
+					int iValue = atoi(vc_path[4].c_str());
+            	    setIOSimulateStatus(tempParam, (char)iValue);
+                }
+            }
+            else if (str_path.substr(0, 22) == "root/simulate_IO_value")
+            {
+			    std::vector<std::string> vc_path;
+				tempPathPtr = (char *)str_path.c_str() ;
+			    boost::split(vc_path, tempPathPtr, boost::is_any_of("/"));
+				// root/simulate_IO_value/di/77/1
+                if(vc_path.size() == 5)
+                {
+            	    sprintf(tempParam, "%s[%s]", vc_path[2].c_str(), vc_path[3].c_str());
+					int iValue = atoi(vc_path[4].c_str());
+            	    setIOSimulateValue(tempParam, (char)iValue); 
+                }
+            }
+/*
+            else if (str_path.substr(0, 13) == "root/register")
+            {
+            	RegMap reg ;
+                U64 result = RegInterface::instance()->checkReg(str_path.c_str(), &reg);
+				// FST_INFO("SET:: reg.index:%d", reg.index);
+
+                if (result != TPI_SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
+                    break;
+                }
+				FST_INFO("SET:: getParamBufLen:%d\n", 
+					tp_interface_->getReqDataPtr()->getParamBufLen());
+				memcpy(reg.value, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+                        sizeof(reg.value));
+				FST_INFO("SET OVER :: getParamBufLen:%d\n", 
+					tp_interface_->getReqDataPtr()->getParamBufLen());
+				setRegister((void *)&reg, sizeof(RegMap));
+            }
+ */
+            else
+            {
+                id = tp_interface_->getReqDataPtr()->getID();
+                //FST_INFO("request id:%d", id);
+                void* pointer = tp_interface_->getReqDataPtr()->getParamBufPtr();
+                int len = tp_interface_->getReqDataPtr()->getParamLen();
+                if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
+                    (this->*g_ctrl_funcs_mp[id].setValue)(pointer, len);
+                }else{
+                    FST_ERROR("SET:: not exist id :%d with %s\n", id, str_path.c_str()); 
+                }
+            }
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, id);
+            break;
+        }
+        case GET:
+        {
+            string str_path = (const char*)tp_interface_->getReqDataPtr()->getPathBufPtr();
+            if (str_path.substr(0, 7) == "root/IO")
+            {
+                IOPortInfo info;
+				// Lujiaming comment at 0619
+			    // U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+			    U64 result = checkIODevInfo(str_path.c_str(), &info);
+
+                if (result != TPI_SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    break;
+                }
+
+				sendGetIORequest((char *)str_path.c_str(), str_path.length());
+				usleep(10000);
+
+                TPIParamBuf param_buf;
+                param_buf.type = REPLY;
+                param_buf.params = tp_interface_->getRepDataPtr();
+
+                int iRet = getIOReply(&param_buf);
+                int iCount = 0;
+
+                while(iRet == -1)
+                {
+                    usleep(100000);
+                    iRet = getIOReply(&param_buf);
+                    if(iCount++ > 20)
+                    {
+                        FST_INFO("getRegisterReply Failed");
+                        break;
+                    }
+                }
+                FST_INFO("getIOReply:: getParamLen:%d", 
+                    tp_interface_->getRepDataPtr()->getParamLen());
+
+                char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr();
+                for (int i = 0; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
+                    FST_INFO("GET:: data:%d", dataChar[i]);
+
+                FST_INFO("GET:: id : %d getParamLen:%d",
+                    tp_interface_->getRepDataPtr()->getID(),
+                    tp_interface_->getRepDataPtr()->getParamLen());
+            }
+            else if (str_path.substr(0, 23) == "root/simulate_IO_status")
+            {
+			    std::vector<std::string> vc_path;
+				tempPathPtr = (char *)str_path.c_str() ;
+			    boost::split(vc_path, tempPathPtr, boost::is_any_of("/"));
+                if(vc_path.size() == 4)
+                {
+                    // root/simulate_IO_status/dio/all
+                	if (vc_path[3] == "all")
+                	{
+                	    sprintf(tempParam, "%s_all", vc_path[2].c_str());
+                	}
+                    // root/simulate_IO/di/2
+					else 
+                	{
+                	    sprintf(tempParam, "%s[%s]", vc_path[2].c_str(), vc_path[3].c_str());
+                	}
+				
+					sendIOSimulateStatusRequest(tempParam, strlen(tempParam));
+					usleep(1000);
+					int iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
+					int iCount = 0 ;
+					while(iRet == -1)
+					{
+						usleep(1000);
+						iRet = getIOReply((char *)tp_interface_->getRepDataPtr()->getParamBufPtr());
+						if(iCount++ > 200)
+						{
+							FST_INFO("getRegisterReply Failed");
+							break;
+						}
+					}
+					FST_INFO("getIOReply:: IO simulate_IO_status getParamLen:%d", 
+						tp_interface_->getRepDataPtr()->getParamLen());
+					char * dataChar = (char *)tp_interface_->getRepDataPtr()->getParamBufPtr() ;
+					for (int i = 0 ; i < tp_interface_->getRepDataPtr()->getParamLen() ; i++)
+						FST_INFO("GET:: data:%d", dataChar[i]);
+
+					FST_INFO("GET:: id : %d getParamLen:%d", 
+						tp_interface_->getRepDataPtr()->getID(),
+						tp_interface_->getRepDataPtr()->getParamLen());
+                }
+            }
+/*
+            else if (str_path.substr(0, 13) == "root/register")
+            {
+            	RegMap reg ;
+                U64 result = RegInterface::instance()->checkReg(str_path.c_str(), &reg);
+				// FST_INFO("GET:: reg.index:%d", reg.index);
+
+                if (result != TPI_SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    tp_interface_->setReply(BaseTypes_StatusCode_FAILED);
+                    break;
+                }
+				sendGetRegisterRequest((void *)&reg, sizeof(RegMap));
+				usleep(10000);
+				int iRet = getRegisterReply((void *)&reg);
+				int iCount = 0 ;
+				while(iRet == -1)
+				{
+					usleep(1000);
+					iRet = getRegisterReply((void *)&reg);
+					if(iCount++ > 200)
+					{
+						FST_INFO("getRegisterReply Failed");
+						break;
+					}
+				}
+
+				memcpy(tp_interface_->getRepDataPtr()->getParamBufPtr(), &reg, 
+                        sizeof(RegMap));
+				FST_INFO("GET:: getParamLen:%d", tp_interface_->getRepDataPtr()->getParamLen());
+				
+                tp_interface_->getRepDataPtr()->setParamLen(sizeof(RegMap));
+				FST_INFO("GET:: id : %d getParamLen:%d", 
+					tp_interface_->getRepDataPtr()->getID(),
+					tp_interface_->getRepDataPtr()->getParamLen());
+            }
+ */
+            else if (str_path.substr(0, 27) == "root/get_change_pr_register")
+            {
+                char result_list[1024];
+				std::vector<ChgFrameSimple> vecRet = getChangeRegList(READ_CHG_PR_LST, result_list);
+
+				memcpy(tp_interface_->getRepDataPtr()->getParamBufPtr(), &result_list, 
+                        strlen(result_list));
+				FST_INFO("GET:: get_change_pr_register:%d", tp_interface_->getRepDataPtr()->getParamLen());
+				
+                tp_interface_->getRepDataPtr()->setParamLen(strlen(result_list));
+				FST_INFO("GET:: id : %d get_change_pr_register:%d", 
+					tp_interface_->getRepDataPtr()->getID(),
+					tp_interface_->getRepDataPtr()->getParamLen());
+            }
+            else
+            {
+                id = tp_interface_->getReqDataPtr()->getID();           
+                //FST_INFO("request id:%d", id);
+                TPIParamBuf param_buf;
+                param_buf.type = REPLY;
+                param_buf.params = tp_interface_->getRepDataPtr();
+                if(g_ctrl_funcs_mp.find(id) != g_ctrl_funcs_mp.end() ){
+                    (this->*g_ctrl_funcs_mp[id].getValue)(&param_buf);
+                }else{
+                    FST_ERROR("GET:: not exist id :%d with %s", 
+									id, (char *)str_path.c_str()); 
+                }
+            }
+            tp_interface_->setReply(PARAM, id);
+            break;
+        }
+        case CMD:
+            parseCmdMsg();
+            break;
+        default:
+            break;
+    }
+
+    tp_interface_->getReqDataPtr()->setFilledFlag(false);
+}
+
+
+void Controller::updateProc()
+{
+    std::map<int, CtrlFunctions>::iterator it;
+
+    for (it = g_ctrl_funcs_mp.begin(); it != g_ctrl_funcs_mp.end(); ++it)
+        (this->*it->second.updateValue)(it->first);
+
+    if (tp_interface_->getPubDataPtr()->isFilled()) return;
+
+    motion_spec_SignalGroup *sig_gp = tp_interface_->getPubDataPtr()->getParamBufPtr();
+    sig_gp->sig_param_count = 0;
+
+    std::map<int, PublishUpdate>::iterator itr;
+
+    for (itr = id_pub_map_.begin(); itr != id_pub_map_.end(); ++itr)
+    {
+        int id = itr->first;
+    //    PublishUpdate *pub_update = &itr->second;
+
+        motion_spec_Signal *sig = &sig_gp->sig_param[sig_gp->sig_param_count];
+
+        if (id >= IO_BASE_ADDRESS)
+        {
+            sig->id = id;
+            sig_gp->sig_param_count++;
+            FST_INFO("NOTICE: IOInterface::instance()->getDIO -> id : %d\n", id);
+			// Lujiaming comment at 0619
+            // IOInterface::instance()->getDIO(id, sig->param.bytes, sizeof(sig->param.bytes), pub_update->buf_len);
+        }
+        else
+        {
+            itr->second.count++;
+
+            if (itr->second.count >= itr->second.base_interval)
+            {
+                if ((itr->second.count >= itr->second.max_interval)
+                    || (itr->second.update_flag == true))
+                {
+                    itr->second.count = 0;
+                    itr->second.update_flag = false;
+
+                    sig->id = id;
+                    sig_gp->sig_param_count++;
+
+                    TPIParamBuf param_buf;
+                    param_buf.type = PUBLISH;
+                    param_buf.params = (void *)&sig->param;
+                    (this->*g_ctrl_funcs_mp[itr->first].getValue)(&param_buf);
+
+                    // FST_INFO("Here publish id : %d\n", id);
+                }
+            }
+        }
+    }
+
+    if (sig_gp->sig_param_count > 0)
+        tp_interface_->getPubDataPtr()->setFilledFlag(true);
+}
+
+
+void Controller::parseCmdMsg()
+{
+    CmdParams cmd_param;
+    memcpy((void*)&cmd_param, tp_interface_->getReqDataPtr()->getParamBufPtr(), sizeof(cmd_param));
+    switch (cmd_param.cmd)
+	{
+		case BaseTypes_CommandType_LIST:
+		{
+			FST_INFO("list...\n");
+            tp_interface_->setReply(LIST, tp_interface_->getReqDataPtr()->getID());
+			break;
+		}			
+        case BaseTypes_CommandType_ADD:
+        {
+            
+            string str_path = (const char*)tp_interface_->getReqDataPtr()->getPathBufPtr();            
+            PublishUpdate *pub_update = &cmd_param.pub_update;
+            FST_INFO("add path:%s, freq:%d,%d", str_path.c_str(), pub_update->base_interval, pub_update->max_interval);
+            addPubParameter(str_path, pub_update);
+            //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, tp_interface_->getReqDataPtr()->getID());
+            break;
+        }
+		case BaseTypes_CommandType_REMOVE:
+		{
+            FST_INFO("remove...");
+            string str_path = (const char*)tp_interface_->getReqDataPtr()->getPathBufPtr();
+			removePubParameter(str_path);
+            //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, tp_interface_->getReqDataPtr()->getID());
+            
+            break;
+		} 
+        case BaseTypes_CommandType_REMOVE_ALL:
+        {
+            FST_INFO("remove all...");
+            removeAllPubParams();
+            //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_OK;
+            tp_interface_->setReply(BaseTypes_StatusCode_OK, tp_interface_->getReqDataPtr()->getID());
+            break;
+        } 
+        default:
+        {
+            FST_ERROR("ERROR command:%d", cmd_param.cmd);
+            rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+            //BaseTypes_StatusCode status_code = BaseTypes_StatusCode_FAILED;
+            tp_interface_->setReply(BaseTypes_StatusCode_FAILED, tp_interface_->getReqDataPtr()->getID());
+            break;
+        }
+	}//end switch (cmd_param.cmd)
+}
+
+void Controller::addPubParameter(string str_path, PublishUpdate *pub_update)
+{
+    uint32_t id = tp_interface_->getReqDataPtr()->getID();
+
+    std::map<int, PublishUpdate>::iterator it = id_pub_map_.find(id);
+
+    if (it != id_pub_map_.end())
+    {
+        it->second.base_interval = pub_update->base_interval / (ctrl_task_->period() * 5.75);
+        it->second.max_interval = pub_update->max_interval / (ctrl_task_->period() * 5.75);
+        it->second.count = it->second.max_interval;
+        it->second.update_flag = true;
+        return;
+    }
+
+    if (str_path.substr(0, 7) == "root/IO")
+    {
+        IOPortInfo info;
+		
+		// Lujiaming comment at 0619
+		// U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+		U64 result = checkIODevInfo((char *)str_path.c_str(), &info);
+
+        if (result != TPI_SUCCESS)
+        {
+            rcs::Error::instance()->add(result);
+            return;
+        }
+
+        id = info.msg_id;
+        return;
+    }
+
+    pub_update->base_interval = pub_update->base_interval / (ctrl_task_->period() * 5.75);
+    pub_update->max_interval = pub_update->max_interval / (ctrl_task_->period() * 5.75);
+    pub_update->count = pub_update->max_interval;
+    pub_update->update_flag = true;
+    FST_INFO("Here pub count : %d", pub_update->count);
+    id_pub_map_.insert(std::map<int, PublishUpdate>::value_type(id, *pub_update));
+
+}
+
+void Controller::removePubParameter(string str_path)
+{
+    uint32_t id;
+    //FST_INFO("move path:%s", str_path.c_str());
+    if (str_path.size() <= 8)
+        return;
+    if (str_path.substr(0, 7) == "root/IO")
+    {
+        IOPortInfo info;
+		// Lujiaming comment at 0619
+		// U64 result = IOInterface::instance()->checkIO(str_path.c_str(), &info);
+		U64 result = checkIODevInfo((char *)str_path.c_str(), &info);
+        
+        if (result != TPI_SUCCESS)
+        {
+            rcs::Error::instance()->add(result);
+            return;
+        }
+        id = info.msg_id;
+    }
+    else
+    {
+        id = tp_interface_->getReqDataPtr()->getID();        
+    }
+    std::map<int, PublishUpdate>::iterator it = id_pub_map_.find(id);
+	if(it != id_pub_map_.end() )
+	{
+       id_pub_map_.erase(it);
 	}
 }
 
-void heartBeatProc(ProtoParse *proto_parse)
-{	
-    int err_size;
-    U64 result;
-    U64 err_list[128];
-    RobotMotion *rob_motion = proto_parse->getRobotMotionPtr(); 
-    
-    while (!rob_motion->shutdown_)
-	{
-        err_size = rob_motion->motionHeartBeart(err_list);
-        for (int i = 0; i < err_size; i++)
-        {
-            result = err_list[i];
-
-            proto_parse->storeErrorCode(result);
-        }
-        result = rob_motion->getIOInterfacrPtr()->getIOError();
-        if (result != TPI_SUCCESS)
-        {
-            proto_parse->storeErrorCode(result);
-        }
-        mSleep(INTERVAL_HEART_BEAT_UPDATE);         
-    }
-}
-
-
-void* stateMachine(void *params)
+void Controller::removeAllPubParams()
 {
-    ProtoParse * proto_parse = (ProtoParse*)params;
-    RobotMotion *robot_motion = proto_parse->getRobotMotionPtr(); //class RobotMotion
-    //long cur_time = getCurTime();
-    /* Lock memory */
-    if(mlockall(MCL_CURRENT|MCL_FUTURE) == -1) {
-            printf("mlockall failed: %m\n");
-            exit(-2);
-    }
-    setPriority(MAIN_PRIORITY);
-    using mseconds = std::chrono::duration<int, std::chrono::milliseconds::period>;
-    
-    struct timeval t1, t2, tre;
-    gettimeofday(&t1, NULL);
-    while (!robot_motion->shutdown_)
-	{
-        gettimeofday(&t1, NULL);
-                //t1 = t2;
-        //auto next_cycle = std::chrono::steady_clock::now() + mseconds(6);
-		U64 result = robot_motion->checkProgramState();
-        if (result != TPI_SUCCESS)
-        {
-            proto_parse->storeErrorCode(result);
-        }
-
-        gettimeofday(&t2, NULL);
-        timeval_subtract(&tre, &t1, &t2);
-        if (tre.tv_usec > 5000)
-        {
-
-            FST_ERROR("+++++++main delay too much===:%d, %ld, %ld,%ld, %ld", tre.tv_usec/1000, t1.tv_sec, t1.tv_usec, t2.tv_sec, t2.tv_usec);
-        }
-
-        //std::this_thread::sleep_until(next_cycle);
-        //usleep(5000);
-        rtMsSleep(INTERVAL_PROCESS_UPDATE);
-    }// while (gs_running_flag)
-    
+    id_pub_map_.erase(id_pub_map_.begin(), id_pub_map_.end());
 }
 
-int main(int argc, char **argv)
+
+void Controller::setUpdateFlagByID(int id, bool flag)
+{
+    std::map<int, PublishUpdate>::iterator it = id_pub_map_.find(id);
+    if (it != id_pub_map_.end())
+    {
+        it->second.update_flag = flag;
+    }    
+}
+
+#if 0
+bool Controller::planFifo()
+{
+    /*U64 result = arm_group_->convertPathToTrajectory(MAX_PLANNED_POINTS_NUM);*/
+    //if (result != TPI_SUCCESS)
+    //{
+        //rcs::Error::instance()->add(result);
+    /*} */   
+    if (ctrl_mode_ == MANUAL_MODE_M) 
+    {
+        manu_motion_->stepCounter();        
+    }
+    else if (ctrl_mode_ == AUTO_RUN_M)
+    {
+        //inst_parser_->runNMInstructions();
+        /*U64 result = inst_parser_->pickInstructions();*/
+        //if (result != TPI_SUCCESS)
+        //{
+            //rcs::Error::instance()->add(result);
+            //return false;
+        /*}*/
+    }
+    return true;
+}
+
+
+bool Controller::hasMoveCommand()
+{
+    if (ctrl_mode_ == MANUAL_MODE_M) 
+    {
+       return manu_motion_->isReady();
+    }
+    else if (ctrl_mode_ == AUTO_RUN_M)
+    {
+        // judge state of program interpreter 
+        // if the state changed to exe??????
+        // ====================================
+        if (EXECUTE_R == ShareMem::instance()->getIntprtState())
+        {
+            U64 result = arm_group_->setStartState(servo_joints_);
+            if (result != TPI_SUCCESS)
+            {
+                rcs::Error::instance()->add(result);
+            }
+            return true;
+        }
+        //return ret;
+    }    
+
+    return false;
+}
+
+bool Controller::hasTransformedToIdle()
+{
+
+    if (ctrl_mode_ == MANUAL_MODE_M) 
+    {
+        if ((ShareMem::instance()->getServoState() == STATE_READY)
+        && isFifoEmpty()
+        /*&& arm_group_->isTrajectoryTotallyFinished()*/)
+        {
+            return true;
+        }
+    }
+    else if (ctrl_mode_ == AUTO_RUN_M)
+    {
+        if (ShareMem::instance()->getIntprtState() == IDLE_R)
+            return true;
+/*        if (ShareMem::instance()->isServoDone())*/
+        //{
+            ////==set servo wait ready flag to false========
+            //return true; 
+        //}
+        //if ((ShareMem::instance()->getServoState() == STATE_READY)
+        //&& isFifoEmpty()[> && 
+        //(!inst_parser_->isInstructionExist())*/)
+        //{
+            //return true;
+        /*}  */      
+    }
+
+    return false;
+}
+#endif
+bool Controller::isFifoEmpty()
+{
+    //FST_INFO("the fifo size:%d, joints:%d", traj_len, joints_len);
+    if (arm_group_->getFIFOLength() == 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+void Controller::setRunningMode(RunningMode rm)
+{
+    if (rm == NORMAL_R)
+    {
+        return;
+    }
+    else
+    {
+        run_mode_ = (RunningMode)(run_mode_ | rm);
+    }
+}
+
+void Controller::clearRunningMode(RunningMode rm)
+{
+    if (rm == NORMAL_R)
+    {
+        return;
+    }
+    else
+    {
+        run_mode_ = (RunningMode)(run_mode_ & (~rm));
+    }
+}
+
+bool Controller::recordJoints()
+{
+    if (work_status_ != IDLE_W)
+        return false;
+
+    //==record current joints for calibrate==
+    return calib_.recordCurrentJoint();
+}
+
+void Controller::abortMotion()
+{
+
+    FST_INFO("abortMotion...");
+    U64 result = arm_group_->clearArmGroup();
+    //=====clear all the fifos=======
+    if (TPI_SUCCESS != result)
+    {
+        FST_ERROR("reset ArmGroup failed");
+        rcs::Error::instance()->add(result);
+    }
+    ShareMem::instance()->setEmptyFlag(true); //don't write share_mem any more
+
+    auto_motion_->abort();
+}
+
+void Controller::pauseMotion()
 {    
-	ros::init(argc, argv, "controller");	
-	ros::NodeHandle n;	
-    LOG_INIT();
+    if (work_status_ == TEACHING_W)
+        work_status_ = TEACHING_TO_IDLE_T;
+    else if (work_status_ == RUNNING_W)
+        work_status_ = RUNNING_TO_IDLE_T;
+    else
+    {
+        work_status_ = IDLE_W;
+        return;
+    }
+    InterpreterControl ctrl;
+    ctrl.cmd = PAUSE;
+    ShareMem::instance()->intprtControl(ctrl);
 
-    RosBasic ros_basic(&n); //init ros basic setting
+    auto_motion_->pause(); 
+}
 
-	signal(SIGINT, sigroutine);	 
-	signal(SIGTERM, sigroutine);           
-   // signal(SIGSEGV, sigroutine);
-    FST_INFO("VERSION:%d.%d.%d", tp_interface_VERSION_MAJOR, tp_interface_VERSION_MINOR, tp_interface_VERSION_PATCH);
-    FST_INFO("BUILD TIME:%s", tp_interface_BUILD_TIME);
+bool Controller::calcFineDst()
+{
+    MoveCommandDestination  movCmdDst ;
+    PoseEuler               servo_pose_;
+	double                  dRange ;
+	double                  dX, dY, dZ ;
+	ShareMem::instance()->getMoveCommandDestination(movCmdDst);
+	
+    arm_group_->getPoseFromJoint(servo_joints_, servo_pose_);
+	dX = movCmdDst.pose_target.position.x - servo_pose_.position.x ;
+	dY = movCmdDst.pose_target.position.y - servo_pose_.position.y ;
+	dZ = movCmdDst.pose_target.position.z - servo_pose_.position.z ;
+	dRange = sqrt( pow(dX, 2) + pow(dY, 2) + pow(dY, 2) );
+	if (dRange <= 0.05)
+    {
+        FST_INFO("autoMove: dRange is %f <= 0.05", dRange);
+		ShareMem::instance()->setMoveCommandDestination(movCmdDst);
+        return true;
+    }
+    return false;
+}
 
-    ProtoParse proto_parse(&ros_basic);    
-    openGPIO();
+bool Controller::calcMotionDst(MotionTarget target)
+{
+    MoveCommandDestination  movCmdDst ;
+	movCmdDst.type = target.type ;
+    if (target.type == MOTION_JOINT)
+    {
+        movCmdDst.joint_target = target.joint_target ;
+    	arm_group_->getPoseFromJoint(movCmdDst.joint_target, target.pose_target);
+    }
+    else if (target.type == MOTION_LINE)
+    {
+        movCmdDst.pose_target = target.pose_target ;
+    	arm_group_->getJointFromPose(movCmdDst.pose_target, target.joint_target);
+    }
+    else if (target.type == MOTION_CIRCLE)
+    {
+        movCmdDst.pose_target = target.pose_target ;
+    	arm_group_->getJointFromPose(movCmdDst.pose_target, target.joint_target);
+    }
+    else
+    {
+        FST_ERROR("autoMove: unsupported motion type (=%d)", target.type);
+        return false;
+    }
+	ShareMem::instance()->setMoveCommandDestination(movCmdDst);
+    return true;
+}
+
+bool Controller::setMotionStartPos()
+{
+    MoveCommandDestination  movCmdDst ;
+	movCmdDst.joint_target = servo_joints_ ;
+        FST_INFO("%d: setMotionStartPos  start", __LINE__);
+    robot_->updatePose(servo_joints_);
+	movCmdDst.pose_target  = *(robot_->getTCPPosePtr()) ;
+	ShareMem::instance()->setMoveCommandDestination(movCmdDst);
+    return true;
+}
+
+bool Controller::resumeMotion()
+{
+    if ( (intprt_state_ == PAUSED_R)  && (auto_motion_->getDoneFlag() == false))
+    {
+        auto_motion_->resume();
+        FST_INFO("fsssssssssssssssssss\n");
+        return true;
+    }
+
+    FST_INFO("DONE FLAG:%d", auto_motion_->getDoneFlag());
+
+    return false;
+}
+
+void Controller::calibrate()
+{
+    unsigned int caliborate_val;
+    if (calib_.calibrateZeroOffset(caliborate_val))
+    {
+        clearRunningMode(CALIBRATE_R);        
+    }
+}
+
+void Controller::setTempZero()
+{
+    if (false == calib_.setTempZeroOffset())
+    {
+        rcs::Error::instance()->add(FAILED_TO_SET_TEMP_ZERO);
+        return;
+    }
+
+    setRunningMode(CALIBRATE_R);
+
+    auto_motion_->abort();
+    //set prgm_state_ to IDLE_R
+    if (intprt_state_ == PAUSED_R)
+    {
+        InterpreterControl ctrl;
+        ctrl.cmd = ABORT;
+        ShareMem::instance()->intprtControl(ctrl);
+
+    }
+
+}
+
+void Controller::safetyStop(int level)
+{
+    FST_INFO("safetyStop ...");
+    switch (level)
+    {
+        case 5:
+        case 6:
+            safety_interface_.setDOType1Stop(1);
+            break;
+        case 7:
+            safety_interface_.setDOType0Stop(1);
+            break;
+        case 8:
+        case 9:
+            safety_interface_.setDOType2Stop(1);
+            break;
+        case 10:
+            safety_interface_.setDOType0Stop(1);
+            break;
+        case 11:
+            safety_interface_.setDOType0Stop(1);
+            break;
+        default:
+            break;
+    }
+}
+
+void Controller::servoEStop()
+{    
+    //stop bare metal, can't write fifo since
+    if (serv_jtac_.stopBareMetal())
+    {
+        //if there is no point, then do not call declareEstop
+        if (work_status_ == IDLE_W)
+            //!!!!!!!!qj!update function argument!!!!!!!!!
+            arm_group_->declareESTOP( servo_joints_);
+    }
+    ShareMem::instance()->setEmptyFlag(true);
+    usleep(500*1000);   //wait for brake on, need to ask ??
+}
+
+void Controller::errorAction(int warning_level)
+{
+    FST_INFO("errorAction: warning_level is:%d", warning_level);
+    if (warning_level > 4)
+    {
+        FST_INFO("in estop process in the errorAction...");
+        safetyStop(warning_level);
+        servoEStop();
+        pauseMotion(); //set mode to pause
+        setLogicStateCmd(EMERGENCY_STOP_E);
+    }
+    else if (warning_level > 2)
+    {
+        FST_INFO("in pause process...");
+        pauseMotion();
+        setLogicStateCmd(EMERGENCY_STOP_E);
+    }
+}
+
+void Controller::shutdown()
+{
+
+}
+
+void Controller::getVersion(void* params)
+{
+    base_types_VersionInfo version;
+    version.major = get_ver_major();
+    version.minor = get_ver_minor();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+
+        rep->fillData((char*)&version, sizeof(version));
+    }
+}
+
+
+void Controller::setToolFrame(void* params, int len)
+{
+    frame_spec_Interface frame_interface = *(frame_spec_Interface*)params;
+
+    bool add_success = true;
+    bool delete_success = true;
+    bool update_success = true;
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+
+    char test[32] = "";
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(test)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
+    }
+
+    memcpy(&frame.comment, &frame_interface.frame.comment,
+            sizeof(frame_interface.frame.comment));
+    memcpy(&frame.data, &frame_interface.frame.data,
+            sizeof(frame_interface.frame.data));
+
+    switch(frame_interface.operation)
+    {
+        case frame_spec_Set_ADD:
+            add_success = tool_frame_manager_->addFrame(frame);
+            break;
+        case frame_spec_Set_DELETE:
+            delete_success = tool_frame_manager_->deleteFrame(frame.id);
+            break;
+        case frame_spec_Set_UPDATE:
+            update_success = tool_frame_manager_->updateFrame(frame);
+            break;
+        default:
+        {
+            FST_INFO("Set Operating configuration error");
+            rcs::Error::instance()->add(FALT_SET_FRAME);
+        }
+    };
+
+    if (!add_success)
+    {
+        FST_ERROR("Add Operation error : Frame existed");
+        rcs::Error::instance()->add(FALT_ADD_FRAME);
+    }
+
+    if (!delete_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_DELETE_FRAME);
+    }
+
+    if (!update_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_UPDATE_FRAME);
+    }
+}
+
+
+void Controller::getToolFrame(void* params)
+{
+    frame_spec_Interface frame_interface;
+
+    memcpy(&frame_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+            sizeof(frame_interface));
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    frame.is_valid = false;
+    char* comment = (char *)"test frame";
+    strcpy(frame.comment, comment);
+    frame.data.position.x = 10.1;
+    frame.data.position.y = 10.2;
+    frame.data.position.z = 10.3;
+    frame.data.orientation.a = 10.4;
+    frame.data.orientation.b = 10.5;
+    frame.data.orientation.c = 10.6;
+
+    bool get_success = tool_frame_manager_->getFrame(frame_interface.frame.id, frame);
+
+    if(!get_success)
+    {
+        FST_ERROR("Get Frame error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_GET_FRAME);
+    }
+
+    frame_interface.frame.has_is_valid = true;
+    frame_interface.frame.has_comment = true;
+    frame_interface.frame.has_data = true;
+    frame_interface.frame.id = frame.id;
+    frame_interface.frame.is_valid = frame.is_valid;
+    memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
+    memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
+    frame_interface.has_operation = false;
+
+    char none_commemt[32] = "\"\"";
+    if(0 == memcmp(frame_interface.frame.comment, none_commemt, sizeof(none_commemt)))
+    {
+        char null_char[32] = "";
+        memcpy(frame_interface.frame.comment, null_char, sizeof(null_char));
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&frame_interface, sizeof(frame_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(frame_interface);
+        memcpy(param->bytes, (char*)&frame_interface, param->size);
+    }
+}
+
+
+void Controller::setActivateToolFrame(void* params, int len)
+{
+    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)params;
+
+    if (!tool_frame_manager_->activateFrame(activate_frame.id))
+    {
+        FST_ERROR("ActivateToolFrame : The id out of range.");
+        rcs::Error::instance()->add(FALT_ACTIVATE_FRAME);
+    }
+}
+
+
+void Controller::getActivateToolFrame(void* params)
+{
+    frame_spec_ActivateInterface activate_frame;
+    activate_frame.id = tool_frame_manager_->getActivatedFrame();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&activate_frame, sizeof(activate_frame));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(activate_frame);
+        memcpy(param->bytes, (char*)&activate_frame, param->size);
+    }
+}
+
+
+void Controller::setUserFrame(void* params, int len)
+{
+    frame_spec_Interface frame_interface = *(frame_spec_Interface*)params;
+
+    bool add_success = true;
+    bool delete_success = true;
+    bool update_success = true;
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+
+    char test[32] = "";
+    if(0 == memcmp(frame_interface.frame.comment, test, sizeof(test)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(frame_interface.frame.comment, test_comment, sizeof(test_comment));
+    }
+
+    memcpy(&frame.comment, &frame_interface.frame.comment,
+            sizeof(frame_interface.frame.comment));
+    memcpy(&frame.data, &frame_interface.frame.data,
+            sizeof(frame_interface.frame.data));
+
+    switch(frame_interface.operation)
+    {
+        case frame_spec_Set_ADD:
+            add_success = user_frame_manager_->addFrame(frame);
+            break;
+        case frame_spec_Set_DELETE:
+            delete_success = user_frame_manager_->deleteFrame(frame.id);
+            break;
+        case frame_spec_Set_UPDATE:
+            update_success = user_frame_manager_->updateFrame(frame);
+            break;
+        default:
+        {
+            FST_ERROR("Set Operating configuration error");
+            rcs::Error::instance()->add(FALT_SET_FRAME);
+        }
+    }
+
+    if (!add_success)
+    {
+        FST_ERROR("Add Operation error : Frame existed");
+        rcs::Error::instance()->add(FALT_ADD_FRAME);
+    }
+
+    if (!delete_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_DELETE_FRAME);
+    }
+
+    if (!update_success)
+    {
+        FST_ERROR("Add Operation error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_UPDATE_FRAME);
+    }
+}
+
+
+void Controller::getUserFrame(void* params)
+{
+    frame_spec_Interface frame_interface;
+
+    memcpy(&frame_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+            sizeof(frame_interface));
+
+    Frame frame;
+    frame.id = frame_interface.frame.id;
+    frame.is_valid = false;
+    char* comment = (char *)"test frame";
+    strcpy(frame.comment, comment);
+    frame.data.position.x = 10.1;
+    frame.data.position.y = 10.2;
+    frame.data.position.z = 10.3;
+    frame.data.orientation.a = 10.4;
+    frame.data.orientation.b = 10.5;
+    frame.data.orientation.c = 10.6;
+
+    bool get_success = user_frame_manager_->getFrame(frame_interface.frame.id, frame);
+
+    if(!get_success)
+    {
+        FST_ERROR("Get Frame error : Frame non-existent");
+        rcs::Error::instance()->add(FALT_GET_FRAME);
+    }
+
+    frame_interface.frame.has_is_valid = true;
+    frame_interface.frame.has_comment = true;
+    frame_interface.frame.has_data = true;
+    frame_interface.frame.id = frame.id;
+    frame_interface.frame.is_valid = frame.is_valid;
+    memcpy(&frame_interface.frame.comment, &frame.comment, sizeof(frame.comment));
+    memcpy(&frame_interface.frame.data, &frame.data, sizeof(frame.data));
+    frame_interface.has_operation = false;
+
+    char none_commemt[32] = "\"\"";
+    if(0 == memcmp(frame_interface.frame.comment, none_commemt, sizeof(none_commemt)))
+    {
+        char null_char[32] = "";
+        memcpy(frame_interface.frame.comment, null_char, sizeof(null_char));
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&frame_interface, sizeof(frame_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(frame_interface);
+        memcpy(param->bytes, (char*)&frame_interface, param->size);
+    }
+}
+
+void Controller::setActivateUserFrame(void* params, int len)
+{
+    frame_spec_ActivateInterface activate_frame = *(frame_spec_ActivateInterface*)params;
+
+    if (!user_frame_manager_->activateFrame(activate_frame.id))
+    {
+        FST_ERROR("ActivateToolFrame : The id out of range.");
+        rcs::Error::instance()->add(FALT_ACTIVATE_FRAME);
+    }
+}
+
+
+void Controller::getActivateUserFrame(void* params)
+{
+    frame_spec_ActivateInterface activate_frame;
+    activate_frame.id = user_frame_manager_->getActivatedFrame();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&activate_frame, sizeof(activate_frame));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(activate_frame);
+        memcpy(param->bytes, (char*)&activate_frame, param->size);
+    }
+}
+
+void Controller::getString(void* params)
+{
+    //string string_test = "abqqqqqqqqqqqqqqq";
+    //int string_test = 100;
+
+    BaseTypes_CommonString string_test;
+
+    char data_temp[1024] = "ababababababab";
+
+    strcpy(string_test.data, data_temp);
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&string_test, sizeof(string_test));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(string_test);
+        //FST_INFO("error size:%d", param->size);
+        memcpy(param->bytes, (char*)&string_test, param->size);
+    }
+}
+
+
+void Controller::updateString(int id)
+{
+    //setUpdateFlagByID(id, true);
+}
+
+
+void Controller::setRegister(void* params, int len)
+{
+    RegMap* mod_reg = (RegMap*)params;
+        FST_INFO("setRegister: RegMap::type: %d, idx: %d,", 
+			mod_reg->type, mod_reg->index);
     
-	//=========================================
-	//ProtoParse proto_parse; //init class ProtoParse
-//	ProfilerStart("my.prof"); //
-	//thread to receive and reply messages from TP
-	//publish message to TP
-	boost::thread thrd_Sock_Server(boost::bind(commuProc, &proto_parse));
-    boost::thread thrd_heart_beat(boost::bind(heartBeatProc, &proto_parse));
-	//======start timer========================
+    InterpreterControl ctrl;
+    ctrl.cmd = MOD_REG;
+    ctrl.reg = *mod_reg;
+    ShareMem::instance()->intprtControl(ctrl);
+}
 
-    RobotMotion *robot_motion = proto_parse.getRobotMotionPtr(); //class RobotMotion
-    //long cur_time = getCurTime();
-    /* Lock memory */
-    if(mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
-    {
-        printf("mlockall failed: %m\n");
-    }
-    setPriority(MAIN_PRIORITY);
-    using mseconds = std::chrono::duration<int, std::chrono::milliseconds::period>;
 
-    struct timeval t1, t2, tre;
-    gettimeofday(&t1, NULL);
-    while (!robot_motion->shutdown_)
+void Controller::getRegister(void* params)
+{
+    RegMap* reg = (RegMap*)params;
+	sendGetRegisterRequest((void *)reg, sizeof(RegMap));
+	usleep(10000);
+	int iRet = getRegisterReply((void *)reg);
+	int iCount = 0 ;
+	while(iRet == -1)
 	{
-        gettimeofday(&t1, NULL);
-                //t1 = t2;
-        //auto next_cycle = std::chrono::steady_clock::now() + mseconds(6);
-		U64 result = robot_motion->checkProgramState();
-        if (result != TPI_SUCCESS)
-        {
-            proto_parse.storeErrorCode(result);
-        }
+		usleep(10000);
+		iRet = getRegisterReply((void *)reg);
+		if(iCount++ > 200)
+		{
+			FST_INFO("getRegisterReply Failed");
+			break;
+		}
+	}
+}
 
-        if (gs_running_flag == false)
-            robot_motion->setLogicStateCmd(EMERGENCY_STOP_E);
+void Controller::sendGetRegisterRequest(void * params, int len)
+{
+    RegMap* reg = (RegMap*)params;
+        FST_INFO("sendGetRegisterRequest: RegMap::type: %d, idx: %d,", 
+			reg->type, reg->index);
+    InterpreterControl ctrl;
+    ctrl.cmd = READ_REG ;
+    ctrl.reg = *reg;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
 
-        gettimeofday(&t2, NULL);
-        timeval_subtract(&tre, &t1, &t2);
-        if (tre.tv_usec > 5000)
-        {
+int Controller::getRegisterReply(void * params)
+{
+	RegMap * reg = (RegMap*)params;
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+	{
+        FST_INFO("is_ready == false");
+		return -1;
+	}
+        FST_INFO("getUserRegs: RegMap::type: %d, idx: %d,", 
+			reg->type, reg->index, reg->type);
+	ShareMem::instance()->getRegInfo(reg);
+	return 1;
+}
 
-            FST_ERROR("+++++++main delay too much===:%d, %ld, %ld,%ld, %ld", tre.tv_usec/1000, t1.tv_sec, t1.tv_usec, t2.tv_sec, t2.tv_usec);
-        }
-        //std::this_thread::sleep_until(next_cycle);
-        //usleep(5000);
-        rtMsSleep(5);
-        //rtMsSleep(INTERVAL_PROCESS_UPDATE);
-    }// while (gs_running_flag)
+std::vector<ChgFrameSimple> Controller::getChangeRegList(InterpreterCommand cmd, void* params)
+{
+	std::vector<ChgFrameSimple> vecRet ;
+	sendGetChangeRegListRequest(cmd, (void *)params, sizeof(RegMap));
+	usleep(10000);
+	int iRet = getChangeRegListReply(vecRet);
+	int iCount = 0 ;
+	while(iRet == -1)
+	{
+		usleep(10000);
+		iRet = getChangeRegListReply(vecRet);
+		if(iCount++ > 200)
+		{
+			FST_INFO("getChangeRegListReply Failed");
+			break;
+		}
+	}
+	return vecRet ;
+}
 
-    FST_INFO("inter flag:%d", g_inter_flag);
-    //==============================================
-	thrd_Sock_Server.join();
-	thrd_heart_beat.join();
+void Controller::sendGetChangeRegListRequest(InterpreterCommand cmd, void * params, int len)
+{
+    InterpreterControl ctrl;
+    ctrl.cmd = cmd ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
 
-    if (!g_inter_flag)
+int Controller::getChangeRegListReply(std::vector<ChgFrameSimple>& vecRet)
+{
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+	{
+        FST_INFO("is_ready == false");
+		return -1;
+	}
+	vecRet = ShareMem::instance()->getChangeRegList();
+    // FST_INFO("getChangeRegListReply: %s.", (char *)params);
+	return 1;
+}
+
+//	int Controller::updateIODevError()
+//	{
+//	    // FST_INFO("sendGetIODevInfoRequest");
+//	    InterpreterControl ctrl;
+//	    ctrl.cmd = UPDATE_IO_DEV_ERROR ;
+//	    ShareMem::instance()->intprtControl(ctrl);
+//	    ShareMem::instance()->setIntprtDataFlag(false);
+//	}
+
+U64 Controller::checkIODevInfo(const char *path, IOPortInfo* io_info)
+{
+    std::vector<std::string> vc_path;
+    boost::split(vc_path, path, boost::is_any_of("/"));
+    
+    int size = vc_path.size();
+    printf("\t checkIODevInfo::getIODevNum: %d\n", vecIODeviceInfoShm.size());
+    for (int i = 0; i < (int)vecIODeviceInfoShm.size(); i++)
     {
-        shutdownPower();
+    		printf("\t device_number: %s\n", vecIODeviceInfoShm[i].path);
+    		printf("\t id: %d\n", vecIODeviceInfoShm[i].id);
+    		printf("\t device_number: %d\n", vecIODeviceInfoShm[i].device_number);
+        if ((vc_path[2] == vecIODeviceInfoShm[i].communication_type) 
+        && (stoi(vc_path[3]) == vecIODeviceInfoShm[i].device_number))
+        {
+            io_info->dev_id = vecIODeviceInfoShm[i].id;
+            if (size == 4)
+            {
+                io_info->msg_id = io_info->dev_id;
+                io_info->port_index = 0;
+                io_info->port_type = IO_INPUT;
+                io_info->bytes_len = ((vecIODeviceInfoShm[i].input + 7) >> 3)
+								   + ((vecIODeviceInfoShm[i].output + 7) >> 3);
+                return TPI_SUCCESS;
+            }
+            else if (size == 6)       
+            {
+                int index = stoi(vc_path[5]);
+                if (vc_path[4] == "DI")
+                {   
+                    if (index > (int)vecIODeviceInfoShm[i].input)
+                        return INVALID_PATH_FROM_TP;
+                    io_info->port_index = index;
+                    io_info->port_type = IO_INPUT;
+                    io_info->msg_id = io_info->dev_id + index;
+                }
+                else if (vc_path[4] == "DO")
+                {   
+                    if (index > (int)vecIODeviceInfoShm[i].output)
+                        return INVALID_PATH_FROM_TP;
+                    io_info->port_index = index;
+                    io_info->port_type = IO_OUTPUT;
+                    io_info->msg_id = io_info->dev_id + vecIODeviceInfoShm[i].input + index;
+                }
+                else
+                {
+                    return INVALID_PATH_FROM_TP;
+                }
+                io_info->bytes_len =  1;
+                return TPI_SUCCESS;
+            }
+            else 
+            {
+                return PARSE_IO_PATH_FAILED;
+            }
+        }
     }
-    //	ProfilerStop(); // stop profiling
-		
+    return PARSE_IO_PATH_FAILED;
+}
+
+int Controller::getIODevInfo(motion_spec_DeviceList & dev_list)
+{
+    int iCount = 0 ;
+    char * params = (char *)malloc(REG_IO_INFO_SIZE);
+	IODeviceInfoShm * objInfoPtr = (IODeviceInfoShm *)(params + sizeof(int));
+	sendGetIODevInfoRequest();
+	usleep(10000);
+	int iRet = getIODevInfoReply((void *)params);
+	while(iRet == -1)
+	{
+		usleep(10000);
+		iRet = getIODevInfoReply((void *)params);
+		if(iCount++ > 200)
+		{
+			FST_INFO("getRegisterReply Failed");
+			break;
+		}
+	}
+	iCount = 0 ;
+	memcpy(&iCount, params, sizeof(int));
+    FST_INFO("getIODevInfo = %d", iCount);
+	if(iCount > 0)
+	{
+		vecIODeviceInfoShm.clear();
+		for(int i = 0 ; i < iCount ; i++)
+		{
+    		FST_INFO("getIODevInfo = %s", objInfoPtr[i].path);
+			vecIODeviceInfoShm.push_back(objInfoPtr[i]);
+		}
+        // Fills motion_spec_DeviceList
+		dev_list.dev_info_count = iCount;
+	    for (int i = 0; i < iCount; i++)
+	    {
+	        strcpy(dev_list.dev_info[i].communication_type, 
+					vecIODeviceInfoShm[i].communication_type);
+	        dev_list.dev_info[i].device_number = vecIODeviceInfoShm[i].device_number;
+	        dev_list.dev_info[i].device_type = 
+					(motion_spec_DeviceType)vecIODeviceInfoShm[i].device_type;
+	        dev_list.dev_info[i].input = vecIODeviceInfoShm[i].input;
+	        dev_list.dev_info[i].output = vecIODeviceInfoShm[i].output;
+	    }
+	}
 	return 0;
 }
+
+void Controller::sendGetIODevInfoRequest()
+{
+    FST_INFO("sendGetIODevInfoRequest");
+    InterpreterControl ctrl;
+    ctrl.cmd = READ_IO_DEV_INFO ;
+    ShareMem::instance()->intprtControl(ctrl);
+    ShareMem::instance()->setIntprtDataFlag(false);
+}
+
+int Controller::getIODevInfoReply(void * params)
+{
+	bool is_ready = ShareMem::instance()->getIntprtDataFlag();
+	if(is_ready == false)
+	{
+        FST_INFO("is_ready == false");
+		return -1;
+	}
+    FST_INFO("getIODevInfoReply");
+	ShareMem::instance()->getIODevInfoInfo(params);
+	return 1;
+}
+
+bool Controller::isRegisterIndexError(int &send_index, int &reg_total)
+{
+    if((1 > send_index) || (send_index > reg_total))
+    {
+        FST_ERROR("Register : The index out of range with (%d - %d).", send_index, reg_total);
+        rcs::Error::instance()->add(FAIL_SET_REGISTER_ID);
+        return true;
+    }
+
+    return false;
+}
+
+void Controller::setPoseRegister(void* params, int len)
+{
+    register_spec_PRInterface pr_interface =
+        *(register_spec_PRInterface*)params;
+
+    int pr_total = 10;
+    bool index_error = isRegisterIndexError(pr_interface.id, pr_total);
+    if (index_error) return;
+
+    char test[32] = "";
+    if(0 == memcmp(pr_interface.comment, test, sizeof(pr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(pr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    PrRegData pr_struct;
+	memset(&pr_struct, 0x00, sizeof(PrRegData));
+	
+    pr_struct.id = pr_interface.id;
+    memcpy(pr_struct.comment, pr_interface.comment, sizeof(pr_interface.comment));
+
+    pr_struct.value.pos_type = (PosType)pr_interface.type;
+    if (POS_TYPE_CARTESIAN == pr_interface.type)
+    {
+        memcpy(&pr_struct.value.cartesian_pos, &pr_interface.pose, sizeof(pr_interface.pose));
+        memset(&pr_struct.value.joint_pos, 0, sizeof(double) * 6);
+    }
+    else if (POS_TYPE_JOINT == pr_interface.type)
+    {
+        memcpy(&pr_struct.value.joint_pos, &pr_interface.joint, sizeof(double) * 6);
+        memset(&pr_struct.value.cartesian_pos, 0, sizeof(pr_struct.value.cartesian_pos));
+    }
+    else
+    {
+        FST_ERROR("Controller : Value Type(%d) Error from TP", pr_interface.type);
+        rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+        return;
+    }
+    RegMap set_reg;
+    set_reg.index = pr_struct.id;
+    set_reg.type = POSE_REG;
+    memcpy(set_reg.value, (char*)&pr_struct, sizeof(pr_struct));
+
+    FST_INFO("PrRegData: id = %d, comment = %s, type = %d, type1 = %d",
+        pr_struct.id, pr_struct.comment, pr_interface.type, pr_struct.value.pos_type);
+
+    int reg_size = sizeof(set_reg);
+    setRegister(&set_reg, reg_size);
+}
+
+
+void Controller::getPoseRegister(void* params)
+{
+    register_spec_PRInterface pr_interface;
+
+    memcpy(&pr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(pr_interface));
+
+    int pr_total = 10;
+    bool index_error = isRegisterIndexError(pr_interface.id, pr_total);
+    if (index_error) return;
+
+    RegMap get_reg;
+    get_reg.index = pr_interface.id;
+    get_reg.type = POSE_REG;
+
+    getRegister(&get_reg);
+
+    PrRegData  pr_struct;
+    memcpy(&pr_struct, &get_reg.value, sizeof(pr_struct));
+
+    pr_interface.has_pose = true;
+    memcpy(&pr_interface.pose, &pr_struct.value.cartesian_pos,
+        sizeof(pr_struct.value.cartesian_pos));
+    pr_interface.has_joint = true;
+    memcpy(&pr_interface.joint, &pr_struct.value.joint_pos,
+        sizeof(pr_struct.value.joint_pos));
+    pr_interface.has_comment = true;
+    memcpy(&pr_interface.comment, &pr_struct.comment, sizeof(pr_struct.comment));
+	
+    pr_interface.has_type = true;
+    pr_interface.type = pr_struct.value.pos_type;
+    pr_interface.id = pr_struct.id;
+
+    FST_INFO("PrRegData: id = %d, comment = %s\n", pr_struct.id, pr_struct.comment);
+    FST_INFO("pr_struct: id = (%f, %f, %f, %f, %f, %f) \n", 
+        pr_struct.value.joint_pos[0], pr_struct.value.joint_pos[1], 
+        pr_struct.value.joint_pos[2], pr_struct.value.joint_pos[3], 
+        pr_struct.value.joint_pos[4], pr_struct.value.joint_pos[5]);
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&pr_interface, sizeof(pr_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(pr_interface);
+        memcpy(param->bytes, (char*)&pr_interface, param->size);
+    }
+}
+
+
+void Controller::setNumberRegister(void* params, int len)
+{
+    register_spec_NRInterface nr_interface = *(register_spec_NRInterface*)params;
+
+    int nr_total = 10;
+    bool index_error = isRegisterIndexError(nr_interface.id, nr_total);
+    if (index_error) return;
+
+    char test[32] = "";
+    if(0 == memcmp(nr_interface.comment, test, sizeof(nr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(nr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    RRegData nr_struct ;
+	memset(&nr_struct, 0x00, sizeof(RRegData));
+    nr_struct.value = nr_interface.value;
+    nr_struct.id = nr_interface.id;
+
+    if(strlen(nr_interface.comment) != 0)
+      memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
+    else
+      strcpy(nr_struct.comment, "Empty");
+
+    RegMap set_reg;
+    set_reg.index = nr_struct.id;
+    set_reg.type = NUM_REG;
+    memcpy(&set_reg.value, (char*)&nr_struct, sizeof(nr_struct));
+ 
+    int reg_size = sizeof(set_reg);
+    setRegister(&set_reg, reg_size);
+}
+
+
+void Controller::getNumberRegister(void* params)
+{
+    register_spec_NRInterface nr_interface;
+
+    memcpy(&nr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(nr_interface));
+
+    int nr_total = 10;
+    bool index_error = isRegisterIndexError(nr_interface.id, nr_total);
+    if (index_error) return;
+
+    RRegData nr_struct;
+    nr_struct.id = nr_interface.id;
+    nr_struct.value = nr_interface.value;
+    memcpy(nr_struct.comment, nr_interface.comment, sizeof(nr_interface.comment));
+
+    RegMap get_reg;
+    get_reg.index = nr_struct.id;
+    get_reg.type = NUM_REG;
+    memcpy(&get_reg.value, (char*)&nr_struct, sizeof(nr_struct));
+
+    getRegister(&get_reg);
+
+    memcpy(&nr_struct, &get_reg.value, sizeof(nr_struct));
+
+    FST_INFO("getNumberRegister id nr_struct at %d\n", nr_struct.id);
+    FST_INFO("getNumberRegister comment nr_struct at %s\n", nr_struct.comment);
+    FST_INFO("getNumberRegister value nr_struct at %f\n", nr_struct.value);
+
+    nr_interface.has_value = true;
+    nr_interface.value = nr_struct.value;
+    nr_interface.id = nr_struct.id;
+    nr_interface.has_comment = true;
+    memcpy(nr_interface.comment, nr_struct.comment, sizeof(nr_struct.comment));
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&nr_interface, sizeof(nr_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(nr_interface);
+        memcpy(param->bytes, (char*)&nr_interface, param->size);
+    }
+}
+
+
+void Controller::setGlobalAcc(void* params, int len)
+{
+    motion_spec_GlobalParams global = *(motion_spec_GlobalParams*)params;
+	FST_INFO("Controller : Set global acc is %f", global.acc);
+
+    U64 error_code = arm_group_->setGlobalAccRatio(global.acc * 0.01);
+
+    if (FST_SUCCESS != error_code)
+    {
+        FST_INFO("Global Acc : Parameter is invalid");
+        rcs::Error::instance()->add(error_code);
+    }
+}
+
+
+void Controller::getGlobalAcc(void* params)
+{
+    motion_spec_GlobalParams global;
+
+    global.acc = arm_group_->getGlobalAccRatio();
+    global.has_acc = true;
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&global, sizeof(global));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(double);
+        memcpy(param->bytes, (char*)&global, param->size);
+    }
+}
+
+
+void Controller::getSoftConstraintLimit(void* params)
+{
+    motion_spec_JointConstraint slmt =  robot_->getSoftConstraintLimit();
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&slmt, sizeof(slmt));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(slmt);
+        memcpy(param->bytes, (char*)&slmt, param->size);
+    }
+}
+
+void Controller::getUserValidSimpleFrame(void* params)
+{
+    frame_spec_SimpleFrameInterface simple_frame;
+
+    std::vector<FrameSimple> frame_list = 
+        user_frame_manager_->getValidFrameSimpleList();
+
+    std::vector<FrameSimple>::iterator it;
+
+    if (!frame_list.empty())
+    {
+        int frame_index = 0;
+        for(it = frame_list.begin(); it != frame_list.end(); it++)
+        {
+            simple_frame.frame[frame_index].id = it->id;
+            simple_frame.frame[frame_index].has_id = true;
+            simple_frame.frame[frame_index].has_comment = true;
+            memcpy(simple_frame.frame[frame_index].comment,
+                it->comment, sizeof(it->comment));
+            frame_index++;
+        }
+
+        simple_frame.has_total_frame = true;
+        simple_frame.total_frame = frame_index;
+        simple_frame.frame_count = frame_index;
+    }
+    else
+    {
+        FST_INFO("Controller : all simple UF is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_frame, sizeof(simple_frame));
+    }
+}
+
+
+void Controller::getToolValidSimpleFrame(void* params)
+{
+    frame_spec_SimpleFrameInterface simple_frame;
+
+    std::vector<FrameSimple> frame_list = 
+        tool_frame_manager_->getValidFrameSimpleList();
+
+    std::vector<FrameSimple>::iterator it;
+
+    if (!frame_list.empty())
+    {
+        int frame_index = 0;
+        for(it = frame_list.begin(); it != frame_list.end(); it++)
+        {
+            simple_frame.frame[frame_index].id = it->id;
+            simple_frame.frame[frame_index].has_id = true;
+            simple_frame.frame[frame_index].has_comment = true;
+            memcpy(simple_frame.frame[frame_index].comment,
+                it->comment, sizeof(it->comment));
+            frame_index++;
+        }
+
+        simple_frame.has_total_frame = true;
+        simple_frame.total_frame = frame_index;
+        simple_frame.frame_count = frame_index;
+    }
+    else
+    {
+        FST_INFO("Controller : all simple TF is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_frame, sizeof(simple_frame));
+    }
+}
+
+void Controller::getValidSimplePR(void* params)
+{
+    register_spec_SimpleRegInterface simple_reg;
+
+    void* p = NULL;
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_PR_LST, p);
+
+    std::vector<ChgFrameSimple>::iterator it;
+
+    if (!simple_reg_struct.empty())
+    {
+        int reg_index = 0;
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
+        FST_INFO("Controller : all simple PR is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+
+void Controller::getValidSimpleNR(void* params)
+{
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_R_LST, (void*) params);
+
+    register_spec_SimpleRegInterface simple_reg;
+
+    std::vector<ChgFrameSimple>::iterator it;
+
+    if (!simple_reg_struct.empty())
+    {
+        int reg_index = 0;
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
+        FST_INFO("Controller : All simple R is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+
+void Controller::getValidSimpleSR(void* params)
+{
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_SR_LST, (void*) params);
+
+    register_spec_SimpleRegInterface simple_reg;
+
+    std::vector<ChgFrameSimple>::iterator it;
+
+    if (!simple_reg_struct.empty())
+    {
+        int reg_index = 0;
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
+        FST_INFO("Controller : All simple SR is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+
+void Controller::getValidSimpleMR(void* params)
+{
+    std::vector<ChgFrameSimple> simple_reg_struct = 
+        getChangeRegList(READ_CHG_MR_LST, (void*) params);
+
+    register_spec_SimpleRegInterface simple_reg;
+
+    std::vector<ChgFrameSimple>::iterator it;
+
+    if (!simple_reg_struct.empty())
+    {
+        int reg_index = 0;
+        for(it = simple_reg_struct.begin(); it != simple_reg_struct.end(); it++)
+        {
+            simple_reg.reg[reg_index].has_id = true;
+            simple_reg.reg[reg_index].id = it->id;
+            simple_reg.reg[reg_index].has_comment = true;
+            memcpy(simple_reg.reg[reg_index].comment,
+                it->comment, sizeof(it->comment));
+
+            reg_index++;
+        }
+
+        simple_reg.has_reg_total = true;
+        simple_reg.reg_total = reg_index;
+        simple_reg.reg_count = reg_index;
+    }
+    else
+    {
+        simple_reg.has_reg_total = false;
+        simple_reg.reg_count = 0;
+        FST_INFO("Controller : All simple SR is invalid");
+    }
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&simple_reg, sizeof(simple_reg));
+    }
+}
+
+void Controller::setSR(void* params, int len)
+{
+     register_spec_SRInterface sr_interface =
+        *(register_spec_SRInterface*)params;
+
+    int sr_total = 10;
+    bool index_error = isRegisterIndexError(sr_interface.id, sr_total);
+    if (index_error) return;
+
+    char test[32] = "";
+    if(0 == memcmp(sr_interface.comment, test, sizeof(sr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(sr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    SrRegData sr_struct;
+    sr_struct.id = sr_interface.id;
+    sr_struct.value = sr_interface.value;
+    memcpy(sr_struct.comment, sr_interface.comment, sizeof(sr_interface.comment));
+
+    RegMap set_reg;
+    set_reg.index = sr_struct.id;
+    set_reg.type = STR_REG;
+
+    char sr_value[254];
+    strcpy(sr_value, sr_struct.value.c_str());
+
+    int data_size = sizeof(sr_struct.id);
+    memcpy(set_reg.value, &sr_struct.id, data_size);
+    memcpy(&set_reg.value[data_size], sr_struct.comment, sizeof(sr_struct.comment));
+    data_size += sizeof(sr_struct.comment);
+    memcpy(&set_reg.value[data_size], sr_value, sizeof(sr_value));
+
+    FST_INFO("SrRegData: id = %d, comment = %s, value = %s",
+        sr_struct.id, sr_struct.comment, sr_struct.value.c_str());
+
+    int reg_size = sizeof(set_reg);
+    setRegister(&set_reg, reg_size);
+}
+
+void Controller::getSR(void* params)
+{
+    register_spec_SRInterface sr_interface;
+    memcpy(&sr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(sr_interface));
+
+    int sr_total = 10;
+    bool index_error = isRegisterIndexError(sr_interface.id, sr_total);
+    if (index_error) return;
+
+    RegMap get_reg;
+    get_reg.index = sr_interface.id;
+    get_reg.type = STR_REG;
+
+    getRegister(&get_reg);
+
+    SrRegData sr_struct;
+    sr_struct.id = sr_interface.id;
+    string sr_value("get SR");
+    sr_struct.value = sr_value;
+    memcpy(sr_struct.comment, sr_interface.comment, sizeof(sr_interface.comment));
+
+    char* p = get_reg.value;
+    sr_struct.id = *((int*)p);
+    p = p + sizeof(int);
+    memcpy(sr_struct.comment, p, sizeof(sr_struct.comment));
+    p = p + sizeof(sr_struct.comment);
+    // strcpy(p, sr_struct.value.c_str());
+    sr_struct.value = string(p);
+
+    sr_interface.id = sr_struct.id;
+    sr_interface.has_value = true;
+    sr_interface.has_comment = true;
+    strcpy(sr_interface.value, sr_struct.value.c_str());
+    memcpy(sr_interface.comment, sr_struct.comment, sizeof(sr_struct.comment));
+
+    FST_INFO("SrRegData: id = %d, comment = %s, value = %s\n", 
+        sr_struct.id, sr_struct.comment, sr_struct.value.c_str());
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&sr_interface, sizeof(sr_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(sr_interface);
+        memcpy(param->bytes, (char*)&sr_interface, param->size);
+    }
+}
+
+
+void Controller::setMR(void* params, int len)
+{
+    register_spec_MRInterface mr_interface =
+        *(register_spec_MRInterface*)params;
+
+    int mr_total = 10;
+    bool index_error = isRegisterIndexError(mr_interface.id, mr_total);
+    if (index_error) return;
+
+    char test[32] = "";
+    if(0 == memcmp(mr_interface.comment, test, sizeof(mr_interface.comment)))
+    {
+        char test_comment[32] = "\"\"";
+        memcpy(mr_interface.comment, test_comment, sizeof(test_comment));
+    }
+
+    MrRegData mr_struct;
+	memset(&mr_struct, 0x00, sizeof(MrRegData));
+	
+    mr_struct.id = mr_interface.id;
+    mr_struct.value = mr_interface.value;
+    memcpy(mr_struct.comment, mr_interface.comment, sizeof(mr_interface.comment));
+
+    RegMap set_reg;
+    set_reg.index = mr_struct.id;
+    set_reg.type = MOT_REG;
+    memcpy(set_reg.value, (char*)&mr_struct, sizeof(mr_struct));
+
+    FST_INFO("MrRegData: id = %d, comment = %s, value = %d",
+        mr_struct.id, mr_struct.comment, mr_struct.value);
+
+    int reg_size = sizeof(set_reg);
+    setRegister(&set_reg, reg_size);
+}
+
+void Controller::getMR(void* params)
+{
+    register_spec_MRInterface mr_interface;
+
+    memcpy(&mr_interface, tp_interface_->getReqDataPtr()->getParamBufPtr(),
+        sizeof(mr_interface));
+
+    int mr_total = 10;
+    bool index_error = isRegisterIndexError(mr_interface.id, mr_total);
+    if (index_error) return;
+
+    RegMap get_reg;
+    get_reg.index = mr_interface.id;
+    get_reg.type = MOT_REG;
+
+    getRegister(&get_reg);
+
+    MrRegData mr_struct;
+    memcpy(&mr_struct, &get_reg.value, sizeof(mr_struct));
+
+    mr_interface.id = mr_struct.id;
+    mr_interface.has_value = true;
+    mr_interface.value = mr_struct.value;
+    mr_interface.has_comment = true;
+    memcpy(&mr_interface.comment, &mr_struct.comment, sizeof(mr_struct.comment));
+
+    FST_INFO("MrRegData: id = %d, comment = %s, value = %d\n", 
+        mr_struct.id, mr_struct.comment, mr_struct.value);
+
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&mr_interface, sizeof(mr_interface));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param =
+            (motion_spec_Signal_param_t*)param_ptr->params;
+
+        param->size = sizeof(mr_interface);
+        memcpy(param->bytes, (char*)&mr_interface, param->size);
+    }
+}
+
+// XX STATE MACHINE
+void Controller::XXgetWarnings(void* params)
+{
+    string err_str = rcs::Error::instance()->getErrorBytes();
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData(err_str.c_str(), err_str.size());
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = err_str.size();
+        memcpy(param->bytes, err_str.c_str(), param->size);
+    }
+}
+
+void Controller::XXupdateWarnings(int id)
+{
+    if (rcs::Error::instance()->updated())
+    {
+        setUpdateFlagByID(id, true);
+    }
+}
+
+void Controller::XXgetRunningMode(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_run_mode_, sizeof(xx_run_mode_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_run_mode_);
+        memcpy(param->bytes, (char*)&xx_run_mode_, param->size);
+    }
+}
+
+void  Controller::XXupdateRunningMode(int id)
+{
+    static RunningMode prev = NORMAL_R;
+    if(xx_run_mode_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_run_mode_;        
+    }
+}
+
+void Controller::XXgetServoState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_servo_status_, sizeof(xx_servo_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_servo_status_);
+        memcpy(param->bytes, (char*)&xx_servo_status_, param->size);
+    }
+}
+
+void  Controller::XXupdateServoState(int id)
+{
+    static ServoStatus prev = SERVO_STATE_INIT;
+    if(xx_servo_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_servo_status_;        
+    }
+}
+
+void Controller::XXgetWorkStatus(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_work_status_, sizeof(xx_work_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_work_status_);
+        memcpy(param->bytes, (char*)&xx_work_status_, param->size);
+    }
+}
+
+void Controller::XXupdateWorkStatus(int id)
+{
+    static WorkStatus prev = IDLE_W;
+    if(xx_work_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_work_status_;        
+    }
+}
+
+void Controller::XXgetInterpreterState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_intrp_status_, sizeof(xx_intrp_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_intrp_status_);
+        memcpy(param->bytes, (char*)&xx_intrp_status_, param->size);
+    }
+}
+
+void Controller::XXupdateInterpreterState(int id)
+{
+    static InterpreterState prev = IDLE_R;
+    if(xx_intrp_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_intrp_status_;        
+    }
+}
+
+void Controller::XXgetCtrlState(void* params)
+{
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_ctrl_status_, sizeof(xx_ctrl_status_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_ctrl_status_);
+        memcpy(param->bytes, (char*)&xx_ctrl_status_, param->size);
+    }
+}
+
+void Controller::XXupdateCtrlState(int id)
+{
+    static RobotState prev = INIT_S;
+    if(xx_ctrl_status_ != prev)
+    {
+        setUpdateFlagByID(id, true);
+        prev = xx_ctrl_status_;        
+    }
+}
+
+void Controller::XXsetUserOpMode(void* params, int len)
+{
+    xx_user_op_mode_  = *(UserOpMode*)params;
+    ShareMem::instance()->setUserOpMode(xx_user_op_mode_);
+}
+
+void Controller::XXgetUserOpMode(void* params)
+{	
+    TPIParamBuf *param_ptr = (TPIParamBuf*)params;
+    if (param_ptr->type == REPLY)
+    {
+        TPIFRepData* rep = (TPIFRepData*)param_ptr->params;
+        rep->fillData((char*)&xx_user_op_mode_, sizeof(xx_user_op_mode_));
+    }
+    else
+    {
+        motion_spec_Signal_param_t *param = (motion_spec_Signal_param_t*)param_ptr->params;
+        param->size = sizeof(xx_user_op_mode_);
+        memcpy(param->bytes, (char*)&xx_user_op_mode_, param->size);
+    }
+}
+
+void Controller::XXsetCtrlCmd(void* params, int len)
+{
+    RobotCtrlCmd cmd = *(RobotCtrlCmd*)params;
+    InterpreterControl ctrl;
+    switch(cmd)
+    {
+        case PAUSE_CMD:
+            if(xx_intrp_status_ == EXECUTE_R)
+            {
+                ctrl.cmd = PAUSE;
+                ShareMem::instance()->intprtControl(ctrl);
+                auto_motion_->pause();
+                xx_intrp_pause_count_ = MAX_TIME_IN_PUASE / STATE_MACHINE_INTERVAL;
+                FST_INFO("---XXsetCtrlCmd: PAUSE_CMD: work_status-->RUNNING_TO_IDLE_T");
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case CONTINUE_CMD:
+            if(xx_intrp_status_ == PAUSED_R)
+            {
+                U64 result = arm_group_->setStartState(servo_joints_);
+                if (result != TPI_SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    return;
+                }
+                
+                ctrl.cmd = CONTINUE;
+                ShareMem::instance()->intprtControl(ctrl);
+                auto_motion_->resume();
+                FST_INFO("---XXsetCtrlCmd: CONTINUE_CMD: work_status-->IDLE_TO_RUNNING_T");
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case ABORT_CMD:
+        {
+            if(xx_intrp_status_ != IDLE_R)
+            {
+                ctrl.cmd = ABORT;
+                ShareMem::instance()->intprtControl(ctrl);
+                ShareMem::instance()->setEmptyFlag(true);
+                auto_motion_->abort();
+                if(xx_work_status_ == RUNNING_W
+                    || xx_work_status_ == IDLE_TO_RUNNING_T)
+                {
+                    FST_INFO("---XXsetCtrlCmd: ABORT_CMD: work_status-->RUNNING_TO_IDLE_T");
+                    xx_work_status_ == RUNNING_TO_IDLE_T;
+                }
+                else if(xx_work_status_ == TEACHING_W
+                    || xx_work_status_ == IDLE_TO_TEACHING_T)
+                {
+                    FST_INFO("---XXsetCtrlCmd: ABORT_CMD: work_status-->TEACHING_TO_IDLE_T");
+                    xx_work_status_ == TEACHING_TO_IDLE_T;
+                }
+                else{}
+            }
+            break;
+        }
+        case CALIBRATE_CMD:
+            if(xx_work_status_ == IDLE_W
+                && xx_ctrl_status_ == ESTOP_S)
+            {
+                calibrate();
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case SETTMPZERO_CMD:
+            if(xx_work_status_ == IDLE_W
+                && xx_ctrl_status_ == ESTOP_S)
+            {
+                setTempZero();
+            }
+            else
+            {
+                rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            }
+            break;
+        case SHUTDOWN_CMD:
+            break;
+        default:
+            rcs::Error::instance()->add(INVALID_PARAM_FROM_TP);
+    } 
+}
+
+void Controller::XXsetStateCmd(void* params, int len)
+{
+    RobotStateCmd state_cmd = *(RobotStateCmd*)params;
+	switch(state_cmd)
+	{
+        case EMERGENCY_STOP_E:
+            if(xx_ctrl_status_ == ENGAGED_S
+                || xx_ctrl_status_ == RESET_ESTOP_T)
+            {
+                RobotCtrlCmd cmd = ABORT_CMD;
+                XXsetCtrlCmd(&cmd, 0);
+                FST_INFO("---XXsetStateCmd: EMERGENCY_STOP_E: ctrl_status-->TO_ESTOP_T");
+                xx_ctrl_status_ = TO_ESTOP_T;
+            }                        
+            break; 
+        case ACKNOWLEDGE_ERROR:
+            if(xx_ctrl_status_ == ESTOP_S
+                || xx_ctrl_status_ == INIT_S)
+            {                
+                rcs::Error::instance()->clear();
+                serv_jtac_.resetBareMetal();
+                safety_interface_.reset();
+                xx_ctrl_reset_count_ = RESET_ERROR_TIMEOUT / STATE_MACHINE_INTERVAL;
+                FST_INFO("---XXsetStateCmd: ACKNOWLEDGE_ERROR: ctrl_status-->RESET_ESTOP_T");
+                xx_ctrl_status_ = RESET_ESTOP_T;
+            }
+            break;
+        case GOTO_TERMINATED:
+            if(xx_ctrl_status_ == ESTOP_S)
+            {
+                RobotCtrlCmd cmd = ABORT_CMD;
+                XXsetCtrlCmd(&cmd, 0);
+                FST_INFO("---XXsetStateCmd: GOTO_TERMINATED: ctrl_status-->TERMINATING_T");
+                xx_ctrl_status_ = TERMINATING_T;
+            }
+            break;
+        default:
+            ;
+    }
+}
+
+void Controller::XXstartRun(void* params, int len)
+{
+    if(xx_work_status_ == IDLE_W
+        && xx_ctrl_status_ == ENGAGED_S)
+    {
+        U64 result = arm_group_->setStartState(servo_joints_);
+        if (result != TPI_SUCCESS)
+        {
+            rcs::Error::instance()->add(result);
+            return;
+        }
+
+        StartCtrl* start = (StartCtrl*)params;
+        InterpreterControl ctrl;
+        ctrl.cmd = START;
+        ctrl.start_ctrl = *start;
+        ShareMem::instance()->intprtControl(ctrl);
+        setMotionStartPos();
+        ShareMem::instance()->setIntprtSendFlag(true);
+        FST_INFO("---XXstartRun: work_status-->IDLE_TO_RUNNING_T");
+        xx_work_status_ = IDLE_TO_RUNNING_T;
+    }
+    else
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+    }
+}
+
+void Controller::XXstartDebug(void* params, int len)
+{
+    if(xx_work_status_ == IDLE_W
+        && xx_ctrl_status_ == ENGAGED_S
+        && (xx_user_op_mode_ == SLOWLY_MANUAL_MODE_U || xx_user_op_mode_ == UNLIMITED_MANUAL_MODE_U))
+    {
+        U64 result = arm_group_->setStartState(servo_joints_);
+        if (result != TPI_SUCCESS)
+        {
+            rcs::Error::instance()->add(result);
+            return;
+        }
+    
+        auto_motion_->setDoneFlag(true);
+        StartCtrl* start = (StartCtrl*)params;
+        InterpreterControl ctrl;
+        ctrl.cmd = DEBUG;
+        ctrl.start_ctrl = *start;
+        ShareMem::instance()->intprtControl(ctrl);
+        setMotionStartPos();
+        ShareMem::instance()->setIntprtSendFlag(true);
+        // this will not drive work status to running, until step cmd is called
+    }
+    else
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+    }
+}
+
+void Controller::XXsetManualCmd(void* params, int len)
+{
+    FST_INFO("---XXsetManualCmd");
+    if (xx_ctrl_status_ != ENGAGED_S
+        || xx_work_status_ != IDLE_W)
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        return;
+    }
+
+    motion_spec_ManualCommand command = *(motion_spec_ManualCommand*)params;
+
+    U64 result = arm_group_->setStartState(servo_joints_);
+    if (result != TPI_SUCCESS)
+    {
+        rcs::Error::instance()->add(result);
+        FST_INFO("Controller : set start state error");
+        return;
+    }
+
+    /*FST_INFO("joint step = %d, cart step = %d, orientation = %d", 
+        command.has_stepJoint, command.has_stepPosition, command.has_stepOrientation);
+
+    FST_INFO("Vjoint step = %d, Vcart step = %d, Vorientation = %d", 
+        command.stepJoint, command.stepPosition, command.stepOrientation);*/
+    if(xx_user_op_mode_ == SLOWLY_MANUAL_MODE_U)
+    {
+        if(command.has_velocity && command.velocity > 62.5)
+        {
+            command.velocity = 62.5;
+        }
+    }
+
+    manu_motion_->setManuCommand(command);
+    xx_work_status_ = IDLE_TO_TEACHING_T;
+}
+
+void Controller::XXsetTeachTarget(void* params, int len)
+{
+    FST_INFO("---XXsetTeachTarget");
+    if (xx_ctrl_status_ != ENGAGED_S
+        || xx_work_status_ != TEACHING_W)
+    {
+        rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+        xx_work_status_ = TEACHING_TO_IDLE_T;
+        return;
+    }
+
+    motion_spec_TeachTarget target = *(motion_spec_TeachTarget*)params;
+    manu_motion_->setTeachTarget(target);
+}
+
+bool Controller::XXisTerminated()
+{
+   if (xx_ctrl_status_ == TERMINATED_S)
+       return true;
+
+   return false;
+}
+
+void Controller::XXexit()
+{
+    Controller* ctrl = instance_;
+    if (ctrl)
+    {
+        RobotStateCmd cmd = GOTO_TERMINATED;
+        ctrl->XXsetStateCmd(&cmd, 0);//ready to terminate process
+    }
+}
+
+void Controller::XXprocessInterp()
+{    
+    U64 result = SUCCESS; 
+    Instruction inst;
+
+    xx_intrp_status_ = ShareMem::instance()->getIntprtState();
+    if (xx_intrp_status_ == EXECUTE_R)
+    {
+        if (ShareMem::instance()->getInstruction(inst))
+        {
+            if(strlen(inst.line) > 0)
+            {
+                result = auto_motion_->moveTarget(inst.target);
+                if(result != SUCCESS)
+                {
+                    rcs::Error::instance()->add(result);
+                    RobotStateCmd cmd = EMERGENCY_STOP_E;
+                    XXsetStateCmd(&cmd, 0);
+                    
+                    InterpreterControl ctrl;
+                    ctrl.cmd = ABORT;
+                    ShareMem::instance()->intprtControl(ctrl);
+                    FST_INFO("---XXprocessInterp: moveTarget Failed: intrp_status-->ABORT");
+                }
+                else
+                {
+                    current_cnt_ = inst.target.cnt;
+                    calcMotionDst(inst.target);
+                }
+            }
+        }
+
+        xx_intrp_warn_ = ShareMem::instance()->getWarning();
+        if (xx_intrp_warn_ >= FAIL_INTERPRETER_BASE)
+        {
+            rcs::Error::instance()->add(xx_intrp_warn_);
+            ShareMem::instance()->setWarning(0);
+            FST_INFO("---XXprocessInterp: report intrp error code = %ld", xx_intrp_warn_);
+        }
+    }
+
+    double left_time =  arm_group_->timeBeforeDeadline();
+    if(left_time <= 0.001)
+    {
+        if(current_cnt_ < 0 
+            && xx_servo_status_ != SERVO_STATE_READY)
+        {
+            return;
+        }
+
+        if(!ShareMem::instance()->getIntprtSendFlag())
+        {
+            ShareMem::instance()->sendingPermitted();
+            ShareMem::instance()->setIntprtSendFlag(true);
+        }
+    }
+}
+
+void Controller::XXprocessError()
+{
+    xx_error_level_ = rcs::Error::instance()->getWarningLevel();
+    xx_is_init_error_exist = rcs::Error::instance()->isInitError();
+    xx_safety_status_ = safety_interface_.getDIAlarm();
+    if(xx_error_level_ > 4
+        || xx_is_init_error_exist
+        || xx_safety_status_ != 0)
+    {
+        xx_is_error_exist_ = true;
+    }
+    else
+    {
+        xx_is_error_exist_ = false;
+    }
+}
+
+void Controller::XXtransferServoStatus()
+{
+    xx_servo_status_ = (ServoStatus)ShareMem::instance()->getServoState();
+    if(xx_ctrl_status_ == ENGAGED_S
+        && xx_servo_status_ != SERVO_STATE_READY
+        && xx_servo_status_ != SERVO_STATE_RUNNING)
+    {
+        // this is ugly, because of lacking status in ctrl status definition
+        if(xx_work_status_ == TEACHING_W
+            || xx_work_status_ == IDLE_TO_TEACHING_T
+            || xx_work_status_ == TEACHING_TO_IDLE_T)
+        {
+            FST_INFO("---XXtransferServoStatus: in teaching mode: clearArmGroup");
+            arm_group_->clearArmGroup();
+        }
+        RobotCtrlCmd cmd = ABORT_CMD;
+        XXsetCtrlCmd(&cmd, 0);
+        FST_INFO("---XXtransferServoStatus: servo in error: ctrl_status-->TO_ESTOP_T");
+        xx_ctrl_status_ = TO_ESTOP_T;
+    }
+}
+
+void Controller::XXtransferCtrlStatus()
+{
+    switch(xx_ctrl_status_)
+    {
+        case TO_ESTOP_T:
+            if(xx_work_status_ == IDLE_W)
+            {
+                recordJoints();
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->ESTOP_S");
+                xx_ctrl_status_ = ESTOP_S;
+            }
+            break;
+        case RESET_ESTOP_T:
+            if(xx_work_status_ == IDLE_W
+                && !xx_is_error_exist_)
+            {
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->ENGAGED_S");
+                xx_ctrl_status_ = ENGAGED_S;
+            }
+            else if((--xx_ctrl_reset_count_) < 0)
+            {
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->ESTOP_S");
+                xx_ctrl_status_ = ESTOP_S;
+            }
+            break;
+        case TERMINATING_T:
+            if(xx_work_status_ == IDLE_W)
+            {
+                recordJoints();
+                FST_INFO("---XXtransferCtrlStatus: ctrl_status-->TERMINATED_S");
+                xx_ctrl_status_ = TERMINATED_S;
+            }
+            break;
+        default:
+            ;
+    }
+}
+
+void Controller::XXtransferWorkStatus()
+{
+    if(xx_work_status_ == IDLE_W
+        && xx_intrp_status_ == PAUSED_R)
+    {
+        if((--xx_intrp_pause_count_) < 0)
+        {
+            rcs::Error::instance()->add(INVALID_ACTION_IN_CURRENT_STATE);
+            arm_group_->clearArmGroup();
+            FST_INFO("---XXtransferWorkStatus: pause timeout, report error: clearArmGroup");
+            return;
+        }
+    }
+    
+    switch(xx_work_status_)
+    {
+        case IDLE_TO_RUNNING_T:
+            if(xx_intrp_status_ == EXECUTE_R)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->RUNNING_W");
+                xx_work_status_ = RUNNING_W;
+            }
+            break;
+        case IDLE_TO_TEACHING_T:
+            xx_work_status_ = TEACHING_W;
+            FST_INFO("---XXtransferWorkStatus: work_status-->TEACHING_W");
+            break;
+        case RUNNING_TO_IDLE_T:
+            if(xx_intrp_status_ != EXECUTE_R
+                && xx_servo_status_ != SERVO_STATE_RUNNING)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->IDLE_W");
+                xx_work_status_ = IDLE_W;
+            }
+            break;
+        case TEACHING_TO_IDLE_T:
+            if(xx_servo_status_ != SERVO_STATE_RUNNING)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->IDLE_W");
+                xx_work_status_ = IDLE_W;
+            }
+            break;
+        case RUNNING_W:
+            if(xx_intrp_status_ != EXECUTE_R)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->RUNNING_TO_IDLE_T");
+                xx_work_status_ = RUNNING_TO_IDLE_T;
+            }
+            break;
+        case TEACHING_W:
+            if (arm_group_->getFIFOLength() == 0)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->TEACHING_TO_IDLE_T");
+                xx_work_status_ = TEACHING_TO_IDLE_T ;
+            }
+            break;
+        case IDLE_W:
+            if(xx_intrp_status_ == EXECUTE_R)
+            {
+                FST_INFO("---XXtransferWorkStatus: work_status-->IDLE_TO_RUNNING_T");
+                xx_work_status_ = IDLE_TO_RUNNING_T;
+            }
+            break;
+        default:
+            ;
+    }
+}
+
+void Controller::XXprocessStateMachine()
+{
+    XXprocessInterp();
+    XXprocessError();
+    XXtransferServoStatus();
+    XXtransferCtrlStatus();
+    XXtransferWorkStatus();
+}
+
+//static int time_count_t = 0;
+void Controller::XXstateMachine(void *params)
+{
+    XXprocessStateMachine();
+    /*time_count_t++;
+    if(time_count_t%10000 == 0)
+    {
+        FST_INFO("servo_status_ = %d, ctrl_status_ = %d, intrp_status_ = %d, work_status_ = %d, SendFlag = %d",
+                    xx_servo_status_, xx_ctrl_status_, xx_intrp_status_, xx_work_status_, ShareMem::instance()->getIntprtSendFlag());
+        time_count_t = 0;
+    }*/
+
+    static int count = 0;
+    if (++count >= SM_INTERVAL_COUNT)
+    {
+        requestProc();
+        updateProc();
+        count = 0;
+    }
+}
+
+void Controller::XXrtTrajFlow(void* params)
+{
+    struct timeval time_now;
+    static int ms_old, ms_new;
+    int ms_delay;
+    
+    gettimeofday(&time_now, NULL);
+    ms_new = (time_now.tv_usec)/1000;
+    ms_delay = ms_new - ms_old;
+    ms_old = ms_new;
+    if(ms_delay <0) ms_delay += 1000;
+    if(ms_delay > 8){
+        FST_INFO("Controller:Get point not fast enough!\n");
+    }
+
+    if (xx_work_status_ == IDLE_W)
+        return;// NULL;
+
+    U64 result;
+    if (xx_work_status_ == RUNNING_W || xx_work_status_ == IDLE_TO_RUNNING_T || xx_work_status_ == RUNNING_TO_IDLE_T)
+        result = ShareMem::instance()->setJointPositions(POS_VEL);
+    else
+        result = ShareMem::instance()->setJointPositions(POSITION_ONLY);
+    if (result != TPI_SUCCESS)
+    {    
+        rcs::Error::instance()->add(result);
+        return;// NULL;
+    }
+
+    int joints_len = arm_group_->getFIFOLength();  
+    if (joints_len <= 0)
+        return;// NULL;
+
+    vector<fst_controller::JointOutput> joint_traj;
+    result = arm_group_->getPointFromFIFO(10,joint_traj);
+    
+    if (result != TPI_SUCCESS)
+    {
+        rcs::Error::instance()->add(result);
+        return;// NULL;
+    }
+
+    int joints_in = joint_traj.size();
+    JointCommand joint_command;
+    joint_command.total_points = joints_in;
+
+    for (int i = 0; i < joints_in; i++)
+    {
+        joint_command.points[i].positions[0] = joint_traj[i].joint.j1;
+        joint_command.points[i].positions[1] = joint_traj[i].joint.j2;
+        joint_command.points[i].positions[2] = joint_traj[i].joint.j3;
+        joint_command.points[i].positions[3] = joint_traj[i].joint.j4;
+        joint_command.points[i].positions[4] = joint_traj[i].joint.j5;
+        joint_command.points[i].positions[5] = joint_traj[i].joint.j6;
+
+        joint_command.points[i].omega[0] = joint_traj[i].omega.j1;
+        joint_command.points[i].omega[1] = joint_traj[i].omega.j2;
+        joint_command.points[i].omega[2] = joint_traj[i].omega.j3;
+        joint_command.points[i].omega[3] = joint_traj[i].omega.j4;
+        joint_command.points[i].omega[4] = joint_traj[i].omega.j5;
+        joint_command.points[i].omega[5] = joint_traj[i].omega.j6;
+
+        joint_command.points[i].inertia[0] = joint_traj[i].inertia.j1;
+        joint_command.points[i].inertia[1] = joint_traj[i].inertia.j2;
+        joint_command.points[i].inertia[2] = joint_traj[i].inertia.j3;
+        joint_command.points[i].inertia[3] = joint_traj[i].inertia.j4;
+        joint_command.points[i].inertia[4] = joint_traj[i].inertia.j5;
+        joint_command.points[i].inertia[5] = joint_traj[i].inertia.j6;
+        
+        joint_command.points[i].point_position = joint_traj[i].level; //point position: start\middle\ending
+    }
+
+    ShareMem::instance()->setCurrentJointCmd(joint_command); //store this command in case it can't write Success
+}
+
+

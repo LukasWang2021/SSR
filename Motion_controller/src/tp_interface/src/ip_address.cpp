@@ -23,7 +23,7 @@ std::string getLocalIP()
 {
 	int fd;
     struct ifreq ifr;
-     
+
     char iface[] = "eth0";
      
     fd = socket(AF_INET, SOCK_DGRAM, 0);

@@ -5,51 +5,57 @@
  * @version 1.1.0
  * @date 2016-12-20
  */
-#ifndef TP_INTERFACE_SHARE_MEM_H_
-#define TP_INTERFACE_SHARE_MEM_H_
+#ifndef SHARE_MEM_H_
+#define SHARE_MEM_H_
 
 
-#include "struct_to_mem/struct_joint_command.h" 
-#include "struct_to_mem/struct_feedback_joint_states.h"
 #include "comm_interface/core_interface.h"
-#include "trajplan/fst_datatype.h"
-#include "fst_error.h"
-#include "error_code/error_code.h"
-#include "service_wrapper.h"
-#include <boost/thread/mutex.hpp>
+#include "common.h"
+#include "error_code.h"
+#include "ros_basic.h"
+#include "common/interpreter_common.h"
+#include <atomic>
 
 #define READ_COUNT_LIMIT    (50)
 #define WRITE_COUNT_LIMIT   (50)
 
 typedef struct _Shm_Joints_Cmd
 {
-	JointCommand	joint_cmd;
-	bool			is_written;
+	JointCommand	    joint_cmd;
+    std::atomic_bool	empty;
 }ShmjointsCmd;
 
 
-class ShareMem
+
+typedef struct _InterpreterStatus
+{
+    int line_id;
+    int prgm_state;
+}InterpreterStatus;
+
+
+class ShareMem 
 {
   public:	
 	
-	ShareMem();
+	ShareMem(RosBasic *ros_basic);
 	~ShareMem();
 
+
+    static ShareMem* instance();
     /**
      * @brief: initialization 
      *
      * @return: 0 if success 
      */
-    U64 initial();
+    void initial();
 
-    void setWritenFlag(bool flag);
+    bool getLatestJoint(Joint &servo_joint);
 
-	/**
-	 * @brief: get current share memory JointCommand
-	 *
-	 * @return 
-	 */
-	ShmjointsCmd getCurrentJointCmd();
+
+
+    void setEmptyFlag(bool flag);
+
 	/**
 	 * @brief: set current share memory JointCommand
 	 *
@@ -62,58 +68,204 @@ class ShareMem
 	 *
 	 * @return: 0 if successfullly get the joint state 
 	 */
-	U64 getFeedbackJointState(FeedbackJointState &fbjs);
+	U64 getFeedbackJoint(Joint &servo_joint);
 	/**
 	 * @brief: set JointCommand to share memory
 	 *
-	 * @param jc_w: input==> the JointCommand
-	 *
 	 * @return: 0 if successfullly set JointCommand 
 	 */
-	U64 setJointPositions(JointCommand jc_w);
+	U64 setJointPositions(unsigned int valid_level);
 	/**
 	 * @brief: judge if the JointCommand has successfullly written to Share memory 
 	 *
 	 * @return: true if success 
 	 */
-	bool isJointCommandWritten();
+    int getServoState();
 
     /**
-     * @brief: heart beat from bare metal 
+     * @brief: get Instruction from interpreter 
      *
-     * @param err_list: output==>error list of bare metal
+     * @param inst: input==> the Instruction from interpreter
      *
-     * @return: number of errors 
+     * @return: true if success 
      */
-    int monitorHearBeat(U64 *err_list);
+    bool getInstruction(Instruction &inst);
 
     /**
-     * @brief: resetBareMetal 
-     *
-     * @return: 0 if success 
+     * @brief: not used 
      */
-    U64 resetBareMetal();
+    void setInstEmpty();
 
     /**
-     * @brief: resetSafety 
+     * @brief: control command to interpreter 
      *
-     * @return: 0 if success 
+     * @param ctrl: control command
+     *
+     * @return: true if success 
      */
-    U64 resetSafety();
+    bool intprtControl(InterpreterControl ctrl);
+
+    /**
+     * @brief: permit interrpreter sending Instruction 
+     */
+    void sendingPermitted();
+
+    /**
+     * @brief: get Send flag
+     *
+     * @return: Send OK flag 
+     */
+    void getMoveCommandDestination(MoveCommandDestination& movCmdDst);
+
+    /**
+     * @brief: set send flag 
+     *
+     * @param flag: send flag 
+     */
+    void setMoveCommandDestination(MoveCommandDestination& movCmdDst);    
+
+    /**
+     * @brief: get Send flag
+     *
+     * @return: Send OK flag 
+     */
+    bool getIntprtSendFlag();
+
+    /**
+     * @brief: set send flag 
+     *
+     * @param flag: send flag 
+     */
+    void setIntprtSendFlag(bool flag);    
     
     /**
-     * @brief: stopBareMetal 
+     * @brief: set data flag (Reg or IO)
      *
-     * @return: 0 if success 
+     * @param flag: send flag 
      */
-    U64 stopBareMetal();
+    void setIntprtDataFlag(bool flag); 
+	
+    /**
+     * @brief: get data flag
+     *
+     * @return: data OK flag 
+     */
+    bool getIntprtDataFlag();
+	
+    /**
+     * @brief: set user operation mode 
+     *
+     * @param mode
+     */
+    void setUserOpMode(UserOpMode mode);
+   // void setSysCtrlMode(SysCtrlMode mode);
+    
+    /**
+     * @brief: get current line from interpreter 
+     *
+     * @return: current line id 
+     */
+    void getCurLine(char * line);
+
+    /**
+     * @brief: get interpreter state 
+     *
+     * @return: interpreter state 
+     */
+    InterpreterState getIntprtState();
+    /**
+     * @brief: get interpreter Warning 
+     *
+     * @return: interpreter Warning 
+     */
+	U64 getWarning();
+    /**
+     * @brief: get interpreter Warning 
+     *
+     * @return: interpreter Warning 
+     */
+	void setWarning(U64 warn);
+
+    /**
+     * @brief: check if servo is done 
+     *
+     * @return: true is success 
+     */
+    bool isServoDone();
+
+    /**
+     * @brief: check if joint is updated 
+     *
+     * @return: true if updated 
+     */
+    bool isJointUpdated();
      
+    /**
+     * @brief: get Info of Reg and IO 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    bool getRegInfo(RegMap * info);
+	
+    /**
+     * @brief: get IO Device Info 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    bool getIODevInfoInfo(void * info);
+	
+    /**
+     * @brief: get Info of Reg and IO 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    bool getDIOInfo(char * info);
+	
+    /**
+     * @brief: get Info of Reg and IO 
+     *
+     * @param inst: 
+     *
+     * @return: Info of Reg and IO
+     */
+    std::vector<ChgFrameSimple>  getChangeRegList();
+	
   private:	
 	fst_core_interface::CoreInterface   core_interface_;
-    fst_service_wrapper::ServiceWrapper service_wrapper_;
-    fst_service_wrapper::ServiceWrapper service_wrapper1_;
-	ShmjointsCmd        shm_jnt_cmd_;		//current JointCommand
-    boost::mutex		mutex_;
+	ShmjointsCmd        shm_jnt_cmd_;		//current JointCommand    
+    std::atomic_int     servo_state_;       //current servo state
+    std::atomic_int     pre_servo_state_;   //previous servo state
+    std::atomic_bool    jnt_updated_;       //joint updated flag
+    RosBasic            *ros_basic_;        //
+    static ShareMem     *shm_instance_;     //instance own
+
+
+    /**
+     * @brief: check if the intervals between two joints are too big
+     *
+     * @param src_joints:
+     * @param dst_joints:
+     *
+     * @return: true if the interval is too big
+     */
+    bool isOutMax(Joint *src_joints, Joint *dst_joints);
+
+    /**
+     * @brief: check if the joints has changed 
+     *
+     * @param src_joints
+     * @param dst_joints
+     *
+     * @return: true if joints changed 
+     */
+    bool isJointChanged(Joint *src_joints, Joint *dst_joints);
+
 };
 
-#endif
+#endif //#ifndef SHARE_MEM_H_

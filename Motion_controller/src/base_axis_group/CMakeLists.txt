@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(base_axis_group)
 
 find_package(catkin REQUIRED COMPONENTS
-    base_device
-    fst_axis_device
-    virtual_axis_device 
+#    base_device
+#    fst_axis_device
+#    virtual_axis_device 
 )
 
 if(catkin_CROSS)

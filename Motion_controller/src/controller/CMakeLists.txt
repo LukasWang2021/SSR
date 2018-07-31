@@ -7,9 +7,9 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     middleware_to_mem
     parameter_manager
-    service_manager
-    protos
-    tp_comm
+#    service_manager
+#    protos
+#    tp_comm
 )
 
 set(VERSION_MAJOR 2)

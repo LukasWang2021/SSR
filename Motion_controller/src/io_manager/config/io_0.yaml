@@ -1,9 +1,0 @@
-io:
-    name: device1
-    model: 0
-    type: 3
-    input: 36
-    output: 36
-
-#END
-

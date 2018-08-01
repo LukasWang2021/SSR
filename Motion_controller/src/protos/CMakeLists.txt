@@ -24,25 +24,50 @@ catkin_package(
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -D PB_FIELD_32BIT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_CXX11_ABI=0")
+
 
 include_directories(
   include
   include/message_type/
-  include/protocal/ 
+  include/protocal/
   include/request/
   include/response/
   ${NANOPB_DIR}
 )
 
 add_library(protos
-  src/protocal/comm.pb.cpp 
-  src/protocal/publish.pb.cpp 
-  src/protocal/request_header.pb.cpp 
-  src/protocal/response_header.pb.cpp 
-  src/message_type/base.pb.cpp
-  src/message_type/test.pb.cpp
-  src/request/request_base.pb.cpp
-  src/response/response_base.pb.cpp
+  src/protocal/comm.pb.c
+  src/protocal/publish.pb.c
+  src/protocal/request_header.pb.c
+  src/protocal/response_header.pb.c
+
+  src/message_type/base.pb.c
+  src/message_type/publish_topic.pb.c
+  src/message_type/publish_table.pb.c
+  src/message_type/rpc_table.pb.c
+  src/message_type/joint_list.pb.c
+  src/message_type/pose_euler.pb.c
+  src/message_type/register_mr.pb.c
+  src/message_type/register_pr.pb.c
+  src/message_type/register_r.pb.c
+  src/message_type/register_sr.pb.c
+
+  src/request/request_base.pb.c
+  src/request/request_publish_topic.pb.c
+  src/request/request_register_pr.pb.c
+  src/request/request_register_r.pb.c
+  src/request/request_register_mr.pb.c
+  src/request/request_register_sr.pb.c
+
+
+  src/response/response_base.pb.c
+  src/response/response_publish_table.pb.c
+  src/response/response_rpc_table.pb.c
+  src/response/response_register_pr.pb.c
+  src/response/response_register_r.pb.c
+  src/response/response_register_mr.pb.c
+  src/response/response_register_sr.pb.c
 )
 
 target_link_libraries(protos

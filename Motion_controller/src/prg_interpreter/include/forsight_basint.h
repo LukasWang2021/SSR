@@ -33,10 +33,16 @@
 
 using namespace std;
 
+#ifdef WIN32
+#define DATA_PATH        "\\root\\files_manager_python27\\data"
+#else
 #define DATA_PATH        "\/root\/files_manager_python27\/data"
+#endif
 
 #define NUM_SUBROUTINE 64
 #define NUM_THREAD     32
+
+#define PROGRAM_START_LINE_NUM     2
 
 #define LAB_LEN 128
 #define SELECT_AND_CYCLE_NEST 64
@@ -176,7 +182,7 @@ struct thread_control_block {
 	int               iLineNum ;
 //	LineNumState      stateLineNum ;
 //    MotionTarget      currentMotionTarget ;
-    map<string, MoveCommandDestination>  start_mov_position ;
+    map<int, MoveCommandDestination>  start_mov_position ;  // iLineNum :: movCmdDst
 } ;
 
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);
@@ -204,6 +210,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s, int raise_unkown_error = 0);
 
 void find_eol(struct thread_control_block * objThreadCntrolBlock);
+int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 void serror(struct thread_control_block * objThreadCntrolBlock, int error);
 	 

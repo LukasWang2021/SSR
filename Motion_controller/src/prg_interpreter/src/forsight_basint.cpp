@@ -28,6 +28,7 @@
 // #define NUM_LAB 100
 #define LINE_CONTENT_LEN   2046
 
+#define ILLTOK     0
 #define PRINT      1
 #define INPUT      2
 #define IF         3
@@ -225,6 +226,7 @@ void* basic_interpreter(void* arg)
   //  	setRunningMacroInstr(objThreadCntrolBlock->project_name);
   //  }
   iRet = call_interpreter(objThreadCntrolBlock, 1);
+  printf("Left  call_interpreter.\n");
   //  if(objThreadCntrolBlock->is_in_macro)
   //  {
   //  	resetRunningMacroInstr(objThreadCntrolBlock->project_name);
@@ -411,6 +413,11 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  objThreadCntrolBlock->iSubProgNum = 0 ;
 	  memset(objThreadCntrolBlock->sub_prog, 0x00, sizeof(char *) * NUM_SUBROUTINE);
 	  
+	  if(objThreadCntrolBlock->start_mov_position.size() > 0)
+	  {
+	      printf("start_mov_position = %d\n", objThreadCntrolBlock->start_mov_position.size());
+		  // objThdCtrlBlockPtr->start_mov_position.clear();
+	  }
       label_init(objThreadCntrolBlock);  /* zero all labels */
 	  /* load the program to execute */
 	  if(!load_program(objThreadCntrolBlock, objThreadCntrolBlock->p_buf,objThreadCntrolBlock->project_name)) 
@@ -532,30 +539,15 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
             printf("call_interpreter : Enter waitInterpreterStateleftPaused %d \n", iLinenum);
 			waitInterpreterStateleftPaused(objThreadCntrolBlock);
             printf("call_interpreter : Left  waitInterpreterStateleftPaused %d \n", iLinenum);
-
-/*
-			while(interpreterState == PAUSED_R)
-			{
-#ifdef WIN32
-				Sleep(100);
-				// interpreterState = EXECUTE_R ;
-#else
-				sleep(1);
-				interpreterState = getPrgmState();
-#endif
-			}
- */
-#ifdef WIN32
-			objThreadCntrolBlock->iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-#endif
+			
+			// use the iLineNum which had been set in the BACKWARD/FORWARD/JUMP
 			iLinenum = objThreadCntrolBlock->iLineNum ;
 			// 
   			printf("interpreterState : Line number(%d) with %d\n", iLinenum, iOldLinenum);
 			if(iLinenum == 0)
 			{
 				printf("illegal line number: %d.\n", iLinenum);
-				// exit(1);
-				// serror(objThreadCntrolBlock, 17);
+				// serror(objThreadCntrolBlock, 17); // exit(1);
 				continue ;
 			}
 			if(iOldLinenum != iLinenum - 1)
@@ -575,7 +567,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			}
 			// scanf("%s", cLinenum);
 			// iLinenum = atoi(cLinenum);
-			if((iLinenum >0) && (iLinenum < 1024))
+			if(iLinenum > 0) // ((iLinenum > 0) && (iLinenum < 1024))
 			{
 				if(objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos!= 0)
 				{
@@ -702,6 +694,10 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
     else if(objThreadCntrolBlock->token_type==COMMAND) /* is command */
 	{
       switch(objThreadCntrolBlock->tok) {
+        case SUB:
+		  // Skip Function declaration by jiaming.lu at 180717
+		  find_eol(objThreadCntrolBlock);
+  		  break;
         case PRINT:
 		  print(objThreadCntrolBlock);
   		  break;
@@ -809,6 +805,15 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
   return 0 ; // NULL ;
 }
 
+int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum)
+{
+	if(iNum < objThreadCntrolBlock->prog_jmp_line.size())
+	{
+		objThreadCntrolBlock->prog = objThreadCntrolBlock->prog_jmp_line[iNum].start_prog_pos;
+		return iNum ;
+	}
+	return 0;
+}
 
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 {
@@ -844,9 +849,9 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
   sprintf(fname, "%s.bas", pname);
 #else
-  sprintf(fname, "%s\/programs\/%s.xml", DATA_PATH, pname);
+  sprintf(fname, "%s\/programs\/%s.xml", forgesight_get_programs_path(), pname);
   parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
-  sprintf(fname, "%s\/programs\/%s.bas", DATA_PATH, pname);
+  sprintf(fname, "%s\/programs\/%s.bas", forgesight_get_programs_path(), pname);
 #endif
   if(!(fp=fopen(fname, "r"))) 
   {
@@ -1921,6 +1926,11 @@ void exec_case(struct thread_control_block * objThreadCntrolBlock)
   // char op;
 
   select_stack = select_and_cycle_pop(objThreadCntrolBlock);
+  // Wait for test
+  if(select_stack.itokentype != SELECT){
+     serror(objThreadCntrolBlock, 4);
+     return;
+  }
 
   get_exp(objThreadCntrolBlock, &x, &boolValue); /* get expression */
 
@@ -2042,11 +2052,17 @@ struct select_and_cycle_stack select_and_cycle_pop(
   objThreadCntrolBlock->select_and_cycle_tos--;
   if(objThreadCntrolBlock->select_and_cycle_tos<0)
   {
+      select_and_cycle_stack fake ;
 	  serror(objThreadCntrolBlock, 11);
+      memset(&fake, 0x00, sizeof(select_and_cycle_stack));
+	  return fake ;
+  }
+  else 
+  {
+  	 return(objThreadCntrolBlock->selcyclstack[objThreadCntrolBlock->select_and_cycle_tos]);
   }
 //    printf("\t\t\t\t\t select_and_cycle_pop with %d\n", objThreadCntrolBlock->select_and_cycle_tos);
-
-  return(objThreadCntrolBlock->selcyclstack[objThreadCntrolBlock->select_and_cycle_tos]);
+  
 }
 
 /* Execute a simple form of the BASIC INPUT command */

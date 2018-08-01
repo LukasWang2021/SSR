@@ -1,5 +1,5 @@
-#ifndef PR_REG_H
-#define PR_REG_H
+#ifndef HR_REG_H
+#define HR_REG_H
 
 #include "base_reg.h"
 #include "fst_datatype.h"
@@ -9,43 +9,35 @@
 namespace fst_reg
 {
 
-#define MAX_PR_REG_POS_VALUE 99999999.999
+#define MAX_HR_REG_POS_VALUE 99999999.999
 
 enum
 {
-    MAX_PR_AXIS_NUM = 6,
-    MAX_PR_EXT_AXIS_NUM = 3,
+    MAX_HR_AXIS_NUM = 6,
+    MAX_HR_EXT_AXIS_NUM = 3,
 };
-
-typedef enum
-{
-    POS_TYPE_CARTESIAN = 0,
-    POS_TYPE_JOINT = 1,
-}PosType;
 
 typedef struct
 {
-    fst_controller::PoseEuler cartesian_pos;
-    double joint_pos[MAX_PR_AXIS_NUM];
-    int pos_type;
-    double ext_pos[MAX_PR_EXT_AXIS_NUM];   // not used
+    double joint_pos[MAX_HR_AXIS_NUM];
+    double ext_pos[MAX_HR_EXT_AXIS_NUM];   // not used
     int group_id;           // not used
     bool posture[4];        // not used
     int multiturn[3];       // not used
-}PrValue;
+}HrValue;
 
 typedef struct
 {
     int id;
     char comment[MAX_REG_COMMENT_LENGTH];
-    PrValue value;
-}PrRegData;
+    HrValue value;
+}HrRegData;
 
-class PrReg:public BaseReg
+class HrReg:public BaseReg
 {
 public:
-    PrReg(int size, std::string file_dir);
-    ~PrReg();
+    HrReg(int size, std::string file_dir);
+    ~HrReg();
 
     virtual bool addReg(void* data_ptr);
     virtual bool deleteReg(int id);
@@ -53,16 +45,16 @@ public:
     virtual bool setReg(void* data_ptr);
     
 private:
-    PrReg();
-    bool isOutOfPosLimit(const PrValue& data);
+    HrReg();
+    bool isOutOfPosLimit(const HrValue& data);
     bool createYaml();
     bool readAllRegDataFromYaml();
-    bool writeRegDataToYaml(const BaseRegData& base_data, const PrValue& data);
+    bool writeRegDataToYaml(const BaseRegData& base_data, const HrValue& data);
     std::string getRegPath(int reg_id);
 
     std::string file_path_;
     fst_parameter::ParamGroup param_;
-    std::vector<PrValue> data_list_;   
+    std::vector<HrValue> data_list_;   
 };
 
 }

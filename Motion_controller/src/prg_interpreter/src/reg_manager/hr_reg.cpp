@@ -1,4 +1,4 @@
-#include "pr_reg.h"
+#include "hr_reg.h"
 #include <cstddef>
 #include <cstring>
 #include <unistd.h>
@@ -11,12 +11,12 @@ using namespace fst_reg;
 using namespace fst_controller;
 
 
-PrReg::PrReg(int size, std::string file_dir):
-    BaseReg(REG_TYPE_PR, size), file_path_(file_dir)
+HrReg::HrReg(int size, std::string file_dir):
+    BaseReg(REG_TYPE_HR, size), file_path_(file_dir)
 {
     data_list_.resize(size + 1);    // id=0 is not used, id start from 1
     // check if sr_reg.yaml exist? if not, create a new one
-    file_path_.append("/pr_reg.yaml");
+    file_path_.append("/Hr_reg.yaml");
     if(access(file_path_.c_str(), 0) != 0)
     {
         if(!createYaml())
@@ -36,19 +36,19 @@ PrReg::PrReg(int size, std::string file_dir):
     }
 }
 
-PrReg::~PrReg()
+HrReg::~HrReg()
 {
 
 }
 
-bool PrReg::addReg(void* data_ptr)
+bool HrReg::addReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
         return false;
     }
 
-    PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
+    HrRegData* reg_ptr = reinterpret_cast<HrRegData*>(data_ptr);
     if(!isAddInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
@@ -62,24 +62,24 @@ bool PrReg::addReg(void* data_ptr)
 		printf("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
-    memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(PrValue));
+    memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(HrValue));
 
 #if 0
-	PrRegData objPrRegData = * reg_ptr;
-		printf("setPr: id = %d, comment = %s\n", objPrRegData.id, objPrRegData.comment);
-		printf("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
-			objPrRegData.value.joint_pos[0], objPrRegData.value.joint_pos[1], 
-			objPrRegData.value.joint_pos[2], objPrRegData.value.joint_pos[3], 
-			objPrRegData.value.joint_pos[4], objPrRegData.value.joint_pos[5]);
-		printf("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
-			objPrRegData.value.cartesian_pos.position.x, objPrRegData.value.cartesian_pos.position.y, 
-			objPrRegData.value.cartesian_pos.position.z, objPrRegData.value.cartesian_pos.orientation.a, 
-			objPrRegData.value.cartesian_pos.orientation.b, objPrRegData.value.cartesian_pos.orientation.c);
+	HrRegData objHrRegData = * reg_ptr;
+		printf("setHr: id = %d, comment = %s\n", objHrRegData.id, objHrRegData.comment);
+		printf("setHr: id = (%f, %f, %f, %f, %f, %f) \n", 
+			objHrRegData.value.joint_pos[0], objHrRegData.value.joint_pos[1], 
+			objHrRegData.value.joint_pos[2], objHrRegData.value.joint_pos[3], 
+			objHrRegData.value.joint_pos[4], objHrRegData.value.joint_pos[5]);
+		printf("setHr: id = (%f, %f, %f, %f, %f, %f) \n", 
+			objHrRegData.value.cartesian_pos.position.x, objHrRegData.value.cartesian_pos.position.y, 
+			objHrRegData.value.cartesian_pos.position.z, objHrRegData.value.cartesian_pos.orientation.a, 
+			objHrRegData.value.cartesian_pos.orientation.b, objHrRegData.value.cartesian_pos.orientation.c);
 #endif	
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }
 
-bool PrReg::deleteReg(int id)
+bool HrReg::deleteReg(int id)
 {
     if(!isDeleteInputValid(id))
     {
@@ -92,45 +92,45 @@ bool PrReg::deleteReg(int id)
     {
         return false;
     }
-    PrValue data;
-    memset(&data, 0, sizeof(PrValue));
-    memcpy(&data_list_[reg_data.id], &data, sizeof(PrValue));
+    HrValue data;
+    memset(&data, 0, sizeof(HrValue));
+    memcpy(&data_list_[reg_data.id], &data, sizeof(HrValue));
     return writeRegDataToYaml(reg_data, data_list_[id]);
 }
 
-bool PrReg::getReg(int id, void* data_ptr)
+bool HrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-	    printf("PrReg::getReg isGetInputValid failed at %d\n", id);
+	    printf("HrReg::getReg isGetInputValid failed at %d\n", id);
         return false;
     }
 
-    PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
+    HrRegData* reg_ptr = reinterpret_cast<HrRegData*>(data_ptr);
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-	    printf("PrReg::getReg getRegList failed at %d\n", id);
+	    printf("HrReg::getReg getRegList failed at %d\n", id);
         return false;
     }
-	printf("PrReg::getReg getRegList at %d, %d with %s\n", 
+	printf("HrReg::getReg getRegList at %d, %d with %s\n", 
 		id, reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
 	
     reg_ptr->id = reg_data.id;
-	    printf("PrReg::getReg getRegList reg_ptr at %d\n", reg_ptr->id);
+	    printf("HrReg::getReg getRegList reg_ptr at %d\n", reg_ptr->id);
     memcpy(reg_ptr->comment, reg_data.comment, MAX_REG_COMMENT_LENGTH * sizeof(char));
-    memcpy(&reg_ptr->value, &data_list_[reg_data.id], sizeof(PrValue));
+    memcpy(&reg_ptr->value, &data_list_[reg_data.id], sizeof(HrValue));
     return true;
 }
 
-bool PrReg::setReg(void* data_ptr)
+bool HrReg::setReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
         return false;
     }
 
-    PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
+    HrRegData* reg_ptr = reinterpret_cast<HrRegData*>(data_ptr);
     if(!isSetInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
@@ -145,63 +145,38 @@ bool PrReg::setReg(void* data_ptr)
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->comment);
-	printf("PrReg::setReg setRegList at %d with %s\n", reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
+	printf("HrReg::setReg setRegList at %d with %s\n", reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
     if(!setRegList(reg_data))
     {
-	    printf("PrReg::setReg setRegList failed at %d\n", reg_data.id);
+	    printf("HrReg::setReg setRegList failed at %d\n", reg_data.id);
         return false;
     }
-    memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(PrValue));
+    memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(HrValue));
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }
 
-PrReg::PrReg():
+HrReg::HrReg():
     BaseReg(REG_TYPE_INVALID, 0)
 {
 
 }
 
-bool PrReg::isOutOfPosLimit(const PrValue& data)
+bool HrReg::isOutOfPosLimit(const HrValue& data)
 {
-    switch(data.pos_type)
+    for(int i = 0; i < MAX_HR_AXIS_NUM; ++i)
     {
-        case POS_TYPE_CARTESIAN:
-            if(data.cartesian_pos.position.x > MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.position.x < -MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.position.y > MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.position.y < -MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.position.z > MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.position.z < -MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.orientation.a > MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.orientation.a < -MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.orientation.b > MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.orientation.b < -MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.orientation.c > MAX_PR_REG_POS_VALUE
-                || data.cartesian_pos.orientation.c < -MAX_PR_REG_POS_VALUE)
-            {
-				printf("isOutOfPosLimit::cartesian_pos return false \n");
-                return true;
-            }
-            break;
-        case POS_TYPE_JOINT:
-            for(int i = 0; i < MAX_PR_AXIS_NUM; ++i)
-            {
-                if(data.joint_pos[i] > MAX_PR_REG_POS_VALUE
-                    || data.joint_pos[i] < -MAX_PR_REG_POS_VALUE)
-                {
-					printf("isOutOfPosLimit::joint_pos[%d]=%f return false \n", i, data.joint_pos[i]);
-                    return true;
-                }
-            }
-            break;
-        default:
+        if(data.joint_pos[i] > MAX_HR_REG_POS_VALUE
+            || data.joint_pos[i] < -MAX_HR_REG_POS_VALUE)
+        {
+			printf("isOutOfPosLimit::joint_pos[%d]=%f return false \n", i, data.joint_pos[i]);
             return true;
+        }
     }
 
-    for(int i = 0; i < MAX_PR_EXT_AXIS_NUM; ++i)
+    for(int i = 0; i < MAX_HR_EXT_AXIS_NUM; ++i)
     {
-        if(data.ext_pos[i] > MAX_PR_REG_POS_VALUE
-            || data.ext_pos[i] < -MAX_PR_REG_POS_VALUE)
+        if(data.ext_pos[i] > MAX_HR_REG_POS_VALUE
+            || data.ext_pos[i] < -MAX_HR_REG_POS_VALUE)
         {
 			printf("isOutOfPosLimit::ext_pos[%d]=%f return false \n", i, data.ext_pos[i]);
             return true;
@@ -210,7 +185,7 @@ bool PrReg::isOutOfPosLimit(const PrValue& data)
     return false;
 }
 
-bool PrReg::createYaml()
+bool HrReg::createYaml()
 {
     std::ofstream fd;
     fd.open(file_path_.c_str(), std::ios::out);
@@ -228,15 +203,6 @@ bool PrReg::createYaml()
         param_.setParam(reg_path + "/is_valid", false);
         param_.setParam(reg_path + "/comment", "empty");
         
-        std::string cartesian_path = reg_path + "/cartesian";
-        std::string position_path = cartesian_path + "/position";
-        param_.setParam(position_path + "/x", (double)0);
-        param_.setParam(position_path + "/y", (double)0);
-        param_.setParam(position_path + "/z", (double)0);
-        std::string orientation_path = cartesian_path + "/orientation";
-        param_.setParam(orientation_path + "/a", (double)0);
-        param_.setParam(orientation_path + "/b", (double)0);
-        param_.setParam(orientation_path + "/c", (double)0);
         std::string joint_path = reg_path + "/joint";
         param_.setParam(joint_path + "/j1", (double)0);
         param_.setParam(joint_path + "/j2", (double)0);
@@ -244,8 +210,6 @@ bool PrReg::createYaml()
         param_.setParam(joint_path + "/j4", (double)0);
         param_.setParam(joint_path + "/j5", (double)0);
         param_.setParam(joint_path + "/j6", (double)0);
-
-        param_.setParam(reg_path + "/pos_type", (int)0);
 
         std::string ext_pos_path = reg_path + "/ext_pos";
         param_.setParam(ext_pos_path + "/ext1", (double)0);
@@ -268,7 +232,7 @@ bool PrReg::createYaml()
     return param_.dumpParamFile(file_path_.c_str());
 }
 
-bool PrReg::readAllRegDataFromYaml()
+bool HrReg::readAllRegDataFromYaml()
 {
     param_.loadParamFile(file_path_.c_str());
     for(int i = 1; i < data_list_.size(); ++i)
@@ -287,15 +251,6 @@ bool PrReg::readAllRegDataFromYaml()
             return false;
         }
         
-        std::string cartesian_path = reg_path + "/cartesian";
-        std::string position_path = cartesian_path + "/position";
-        param_.getParam(position_path + "/x", data_list_[i].cartesian_pos.position.x);
-        param_.getParam(position_path + "/y", data_list_[i].cartesian_pos.position.y);
-        param_.getParam(position_path + "/z", data_list_[i].cartesian_pos.position.z);
-        std::string orientation_path = cartesian_path + "/orientation";
-        param_.getParam(orientation_path + "/a", data_list_[i].cartesian_pos.orientation.a);
-        param_.getParam(orientation_path + "/b", data_list_[i].cartesian_pos.orientation.b);
-        param_.getParam(orientation_path + "/c", data_list_[i].cartesian_pos.orientation.c);
         std::string joint_path = reg_path + "/joint";
         param_.getParam(joint_path + "/j1", data_list_[i].joint_pos[0]);
         param_.getParam(joint_path + "/j2", data_list_[i].joint_pos[1]);
@@ -303,8 +258,6 @@ bool PrReg::readAllRegDataFromYaml()
         param_.getParam(joint_path + "/j4", data_list_[i].joint_pos[3]);
         param_.getParam(joint_path + "/j5", data_list_[i].joint_pos[4]);
         param_.getParam(joint_path + "/j6", data_list_[i].joint_pos[5]);
-
-        param_.getParam(reg_path + "/pos_type", data_list_[i].pos_type);
 
         std::string ext_pos_path = reg_path + "/ext_pos";
         param_.getParam(ext_pos_path + "/ext1", data_list_[i].ext_pos[0]);
@@ -327,22 +280,13 @@ bool PrReg::readAllRegDataFromYaml()
     return true;
 }
 
-bool PrReg::writeRegDataToYaml(const BaseRegData& base_data, const PrValue& data)
+bool HrReg::writeRegDataToYaml(const BaseRegData& base_data, const HrValue& data)
 {
     std::string reg_path = getRegPath(base_data.id);
     param_.setParam(reg_path + "/id", base_data.id);
     param_.setParam(reg_path + "/is_valid", base_data.is_valid);
     param_.setParam(reg_path + "/comment", base_data.comment);
     
-    std::string cartesian_path = reg_path + "/cartesian";
-    std::string position_path = cartesian_path + "/position";
-    param_.setParam(position_path + "/x", data_list_[base_data.id].cartesian_pos.position.x);
-    param_.setParam(position_path + "/y", data_list_[base_data.id].cartesian_pos.position.y);
-    param_.setParam(position_path + "/z", data_list_[base_data.id].cartesian_pos.position.z);
-    std::string orientation_path = cartesian_path + "/orientation";
-    param_.setParam(orientation_path + "/a", data_list_[base_data.id].cartesian_pos.orientation.a);
-    param_.setParam(orientation_path + "/b", data_list_[base_data.id].cartesian_pos.orientation.b);
-    param_.setParam(orientation_path + "/c", data_list_[base_data.id].cartesian_pos.orientation.c);
     std::string joint_path = reg_path + "/joint";
     param_.setParam(joint_path + "/j1", data_list_[base_data.id].joint_pos[0]);
     param_.setParam(joint_path + "/j2", data_list_[base_data.id].joint_pos[1]);
@@ -350,8 +294,6 @@ bool PrReg::writeRegDataToYaml(const BaseRegData& base_data, const PrValue& data
     param_.setParam(joint_path + "/j4", data_list_[base_data.id].joint_pos[3]);
     param_.setParam(joint_path + "/j5", data_list_[base_data.id].joint_pos[4]);
     param_.setParam(joint_path + "/j6", data_list_[base_data.id].joint_pos[5]);
-    
-    param_.setParam(reg_path + "/pos_type", data_list_[base_data.id].pos_type);
     
     std::string ext_pos_path = reg_path + "/ext_pos";
     param_.setParam(ext_pos_path + "/ext1", data_list_[base_data.id].ext_pos[0]);
@@ -374,13 +316,13 @@ bool PrReg::writeRegDataToYaml(const BaseRegData& base_data, const PrValue& data
     return param_.dumpParamFile(file_path_.c_str());
 }
 
-std::string PrReg::getRegPath(int reg_id)
+std::string HrReg::getRegPath(int reg_id)
 {
     std::string id_str;
     std::stringstream stream;
     stream << reg_id;
     stream >> id_str;
-    return (std::string("PrReg") + id_str);
+    return (std::string("HrReg") + id_str);
 }
 
 

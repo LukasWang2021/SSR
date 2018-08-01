@@ -3,7 +3,7 @@
 
 
 #include "controller_param.h"
-#include "tp_comm_component.h"
+#include "tp_comm.h"
 #include "common_log.h"
 
 
@@ -24,7 +24,7 @@ private:
     static Controller* instance_;
     fst_log::Logger log_;
     ControllerParam param_;
-    TpCommComponent tp_comm_;
+    TpComm tp_comm_;
     bool is_exit_;
 };
 

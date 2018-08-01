@@ -1,6 +1,6 @@
 rpc_ip: "ws://192.168.1.166:5600"
 pub_ip: "ws://192.168.1.166:5601"
-recv_buffer_size: 1024
-send_buffer_size: 1024
+recv_buffer_size: 65535
+send_buffer_size: 65535
 cycle_time: 10 #ms
 #END

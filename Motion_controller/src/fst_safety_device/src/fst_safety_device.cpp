@@ -5,9 +5,12 @@ using namespace fst_hal;
 
 
 FstSafetyDevice::FstSafetyDevice(int address):
-    BaseDevice(address, fst_hal::DEVICE_TYPE_FST_SAFETY)
+    BaseDevice(address, fst_hal::DEVICE_TYPE_FST_SAFETY),
+    log_ptr_(NULL),
+    param_ptr_(NULL)
 {
-
+    log_ptr_ = new fst_log::Logger();
+    param_ptr_ = new FstSafetyDeviceParam();
 }
 
 FstSafetyDevice::~FstSafetyDevice()

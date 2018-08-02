@@ -66,8 +66,8 @@ public:
     double convertEncoderPulseToAppUnit(int encoder_pulse);
 
 private:
-    FstAxisDeviceParam param_;
-    fst_log::Logger log_;
+    FstAxisDeviceParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     std::vector<FstAxisDeviceTx> tx_data_;
     FstAxisDeviceRx rx_data_;
     int rt_tx_buffer_size_;

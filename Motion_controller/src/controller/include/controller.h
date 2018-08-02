@@ -5,7 +5,11 @@
 #include "controller_param.h"
 #include "tp_comm.h"
 #include "common_log.h"
-
+#include "thread_help.h"
+#include "controller_sm.h"
+#include "controller_rpc.h"
+// for test only
+#include "virtual_core1.h"
 
 
 namespace fst_ctrl
@@ -20,15 +24,29 @@ public:
     bool init();
     bool isExit();
     
+    void runRoutineThreadFunc();
+    
 private: 
     static Controller* instance_;
-    fst_log::Logger log_;
-    ControllerParam param_;
+    fst_log::Logger* log_ptr_;
+    ControllerParam* param_ptr_;
+    ControllerSm state_machine_;
     TpComm tp_comm_;
+    ControllerRpc rpc_;
+    VirtualCore1 virtual_core1_; // for test only
+    
+    // thread related
     bool is_exit_;
+    fst_base::ThreadHelp routine_thread_;
+    
 };
 
 }
+
+
+// thread function
+void controllerRoutineThreadFunc(void* arg);
+
 
 #endif
 

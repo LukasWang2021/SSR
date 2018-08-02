@@ -1,6 +1,8 @@
 #include "controller.h"
 #include <unistd.h>
+#include <iostream>
 
+using namespace std;
 using namespace fst_ctrl;
 
 int main(int argc, char **argv)
@@ -10,6 +12,7 @@ int main(int argc, char **argv)
     {
         if(!controller_ptr->init())
         {
+            std::cout<<"failed to init controller"<<std::endl;
             return -1;
         }
         else

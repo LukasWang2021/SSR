@@ -15,7 +15,7 @@ public:
 
 private:
     ProcessCommParam param_;
-    fst_log::Logger log_;
+    fst_log::Logger* log_ptr_;
  
 };
 

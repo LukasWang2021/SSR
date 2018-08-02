@@ -8,9 +8,12 @@
 using namespace fst_hal;
 
 
-DeviceManager::DeviceManager()
+DeviceManager::DeviceManager():
+    log_ptr_(NULL),
+    param_ptr_(NULL)
 {
-
+    log_ptr_ = new fst_log::Logger();
+    param_ptr_ = new DeviceManagerParam();
 }
 
 DeviceManager::~DeviceManager()

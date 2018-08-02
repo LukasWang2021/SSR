@@ -17,10 +17,11 @@ public:
 
     // param to load & save
     int log_level_;
-    int routine_cycle_time_;    // ms
-    int rt_cycle_time_;         // ms
-    int heartbeat_cycle_time_;  // ms
-
+    int routine_cycle_time_;    // us
+    int rt_cycle_time_;         // us
+    int heartbeat_cycle_time_;  // us
+    int routine_thread_priority_;
+    int reset_max_time_;        // us
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

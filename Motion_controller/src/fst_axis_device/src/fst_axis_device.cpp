@@ -5,9 +5,12 @@ using namespace fst_hal;
 
 
 FstAxisDevice::FstAxisDevice(int address):
-    BaseDevice(address, fst_hal::DEVICE_TYPE_FST_AXIS)            
+    BaseDevice(address, fst_hal::DEVICE_TYPE_FST_AXIS),
+    log_ptr_(NULL),
+    param_ptr_(NULL)
 {
-
+    log_ptr_ = new fst_log::Logger();
+    param_ptr_ = new FstAxisDeviceParam();
 }
 
 FstAxisDevice::~FstAxisDevice()

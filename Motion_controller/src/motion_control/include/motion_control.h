@@ -28,9 +28,12 @@ public:
     // API for Axis Group Enable/Disable/Halt/Stop/Reset
     // ...
 
+    // parameter access
+    // ...
+    
 private:
-    MotionControlParam param_;
-    fst_log::Logger log_;
+    MotionControlParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     fst_hal::DeviceManager* device_manager_ptr_;
     AxisGroupManager* axis_group_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;

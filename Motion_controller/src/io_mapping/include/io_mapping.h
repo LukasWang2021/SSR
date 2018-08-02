@@ -14,8 +14,8 @@ public:
     ~IoMapping();
 
 private:
-    IoMappingParam param_;
-    fst_log::Logger log_;
+    IoMappingParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
  
 };
 

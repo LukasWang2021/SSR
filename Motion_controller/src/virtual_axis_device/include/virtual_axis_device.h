@@ -34,8 +34,8 @@ public:
     VirtualAxisDeviceStatus getStatus();
 
 private:
-    VirtualAxisDeviceParam param_;
-    fst_log::Logger log_;
+    VirtualAxisDeviceParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     VirtualAxisDeviceStatus status_;
     double target_position_;
     double feedback_position_;    

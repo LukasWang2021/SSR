@@ -14,8 +14,8 @@ public:
     ~ToolManager();
 
 private:
-    ToolManagerParam param_;
-    fst_log::Logger log_;
+    ToolManagerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
  
 };
 

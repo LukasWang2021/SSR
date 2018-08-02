@@ -36,8 +36,8 @@ public:
     bool setInputByBit(int bit_offset, uint8_t data);
     bool setOutputByBit(int bit_offset, uint8_t data);
 private:
-    FstIoDeviceParam param_;
-    fst_log::Logger log_;
+    FstIoDeviceParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     std::vector<uint8_t> input_;
     std::vector<uint8_t> output_;
     std::thread update_thread_;

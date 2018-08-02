@@ -21,8 +21,8 @@ public:
 
     
 private:
-    FstSafetyDeviceParam param_;
-    fst_log::Logger log_;
+    FstSafetyDeviceParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     int input[8];   //maybe 8 bytes?
     int output[8];  //maybe 8 bytes?
 

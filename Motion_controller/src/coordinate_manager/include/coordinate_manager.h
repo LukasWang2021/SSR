@@ -14,8 +14,8 @@ public:
     ~CoordinateManager();
 
 private:
-    CoordinateManagerParam param_;
-    fst_log::Logger log_;
+    CoordinateManagerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
  
 };
 

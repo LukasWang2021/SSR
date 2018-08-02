@@ -14,8 +14,8 @@ public:
     ~RegManager();
 
 private:
-    RegManagerParam param_;
-    fst_log::Logger log_;
+    RegManagerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
  
 };
 

@@ -16,8 +16,8 @@ public:
     ~DeviceManager();
 
 private:
-    DeviceManagerParam param_;
-    fst_log::Logger log_;
+    DeviceManagerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     fst_base::XmlHelp xml_help_;
 };
 

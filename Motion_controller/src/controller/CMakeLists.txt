@@ -44,6 +44,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/prg_interpreter/include
     ${depend_PATH_INC}/protos/include 
     ${depend_PATH_INC}/tp_comm/include 
+    ${depend_PATH_INC}/thread_help/include 
     ${depend_PATH_INC}/common/ 
 )
 
@@ -52,6 +53,7 @@ catkin_package(
     DEPENDS comm_interface
     DEPENDS core_interface
     DEPENDS log_manager
+    DEPENDS thread_help 
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -78,6 +80,7 @@ target_link_libraries(controller
     core_interface
     protos 
     tp_comm 
+    thread_help 
 )
 
 #############
@@ -85,6 +88,10 @@ target_link_libraries(controller
 #############
 install(TARGETS controller 
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}    
+)
+
+install(FILES config/controller.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
 install(DIRECTORY config

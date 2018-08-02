@@ -29,8 +29,8 @@ public:
     BaseAxisGroup* getAxisGroupByIndex(int axis_group_index);   
 
 private:
-    AxisGroupManagerParam param_;
-    fst_log::Logger log_;
+    AxisGroupManagerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     fst_base::XmlHelp xml_help_;
     std::map<int, BaseAxisGroup*> axis_group_map_;  // map for axis_group_index & BaseAxisGroup*
 };

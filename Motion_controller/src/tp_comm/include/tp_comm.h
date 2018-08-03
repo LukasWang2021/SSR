@@ -1,5 +1,5 @@
-#ifndef TP_COMM_COMPONENT_H
-#define TP_COMM_COMPONENT_H
+#ifndef TP_COMM_H
+#define TP_COMM_H
 
 
 #include <thread>
@@ -94,185 +94,68 @@ private:
     bool encodePublishElement(Comm_PublishElement_data_t& element, const pb_field_t fields[], void* element_data_ptr);
     bool encodePublishPackage(Comm_Publish& package, unsigned int hash, struct timeval& current_time_val, int& send_buffer_size);
 
-    // request & response handler
-    void handleRequest0xcf0be243(int recv_bytes); // "/tp_comm/test_request"
-    void handleResponse0xcf0be243(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x0000F933(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x0000E9D3(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
+    /********GetUserOpMode, ResponseMessageType_Int32**********/	
+    void handleRequest0x00000C05(int recv_bytes);
+    /********GetRunningStatus, ResponseMessageType_Int32**********/	
     void handleRequest0x00000AB3(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x00010945(int recv_bytes);
-    /********"RequestMessageType_Int32",**********/
-    void handleRequest0x000067A4(int recv_bytes);
-    /********"RequestMessageType_Int32",**********/
-    void handleRequest0x00010685(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x00010AB3(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x00017C25(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x000093EE(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x0000FC15(int recv_bytes);
-    /********"RequestMessageType_Topic",**********/
-    void handleRequest0x00013EA3(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    void handleRequest0x00009BC5(int recv_bytes);
-
-    /********"RequestMessageType_RegisterR",**********/	
-    void handleRequest0x00007CF2(int recv_bytes);
-    /********"RequestMessageType_RegisterR",**********/	
-    void handleRequest0x000031B2(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x00013062(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x000116F2(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x000098C2(int recv_bytes);
-    /********"RequestMessageType_Void",**********/
-    	void handleRequest0x00005602(int recv_bytes);
-
-    /********"RequestMessageType_RegisterPR",**********/	
-    void handleRequest0x0000F862(int recv_bytes);
-    /********"RequestMessageType_RegisterPR",**********/	
-    void handleRequest0x0000C032(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x00005392(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x000170A2(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x000116B2(int recv_bytes);
-    /********"RequestMessageType_Void",**********/	
-    void handleRequest0x0000F402(int recv_bytes);
-
-    /********"RequestMessageType_RegisterMR",**********/	
-    void handleRequest0x0000F892(int recv_bytes);
-    /********"RequestMessageType_RegisterMR",**********/
-    void handleRequest0x0000C1C2(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x000053E2(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x000170D2(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x00011642(int recv_bytes);
-    /********"RequestMessageType_Void",**********/	
-    void handleRequest0x0000F3B2(int recv_bytes);
-
-    /********"RequestMessageType_RegisterSR",**********/	
-    void handleRequest0x0000F932(int recv_bytes);
-    /********"RequestMessageType_RegisterSR",**********/	
-    void handleRequest0x0000BF62(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x00005342(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x00017172(int recv_bytes);
-    /********"RequestMessageType_UnsignedInt32",**********/	
-    void handleRequest0x000115E2(int recv_bytes);
-    /********"RequestMessageType_Void",**********/	
-    void handleRequest0x0000F352(int recv_bytes);
+    /********GetInterpreterStatus, ResponseMessageType_Int32**********/	
+    void handleRequest0x00016483(int recv_bytes);
+    /********GetRobotStatus, ResponseMessageType_Int32**********/	
+    void handleRequest0x00006F83(int recv_bytes);
+    /********GetCtrlStatus, ResponseMessageType_Int32**********/	
+    void handleRequest0x0000E9D3(int recv_bytes);
+    /********GetServoStatus, ResponseMessageType_Int32**********/	
+    void handleRequest0x0000D113(int recv_bytes);
+    /********GetSafetyAlarm, ResponseMessageType_Int32**********/	
+    void handleRequest0x0000C00D(int recv_bytes);
+    /********CallEstop, ResponseMessageType_Bool**********/	        
+    void handleRequest0x00013940(int recv_bytes);
+    /********CallReset, ResponseMessageType_Bool**********/     	
+    void handleRequest0x000161E4(int recv_bytes);
+    /********SetUserOpMode, ResponseMessageType_Bool**********/	    
+    void handleRequest0x00002ED5(int recv_bytes);
+    /********addTopic, ResponseMessageType_Bool**********/	
+    void handleRequest0x00000773(int recv_bytes);
 
 
-
-    /********"ResponseMessageType_Int32",**********/
-    void handleResponse0x0000F933(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Int32",**********/
-    void handleResponse0x0000E9D3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Int32",**********/
+    /********GetUserOpMode, ResponseMessageType_Int32**********/	
+    void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********GetRunningStatus, ResponseMessageType_Int32**********/	
     void handleResponse0x00000AB3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Int32",**********/
-    void handleResponse0x00010945(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/
-    void handleResponse0x000067A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/
-    void handleResponse0x00010685(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_String",**********/
-    void handleResponse0x00010AB3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Int32",**********/
-    void handleResponse0x00017C25(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Int32List",**********/
-    void handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_PublishTable",**********/
-    void handleResponse0x0000FC15(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/
-    void handleResponse0x00013EA3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_RpcTable",**********/
-    void handleResponse0x00009BC5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x00007CF2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x000031B2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x00013062(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_RegisterR",**********/	
-    void handleResponse0x000116F2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x000098C2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_UnsignedInt32",**********/	
-    void handleResponse0x00005602(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x0000F862(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x0000C032(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x00005392(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"RespnseMessageType_RegistePR",**********/	
-    void handleResponse0x000170A2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x000116B2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_UnsignedInt32",**********/	
-    void handleResponse0x0000F402(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x0000F892(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x0000C1C2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x000053E2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"RespnseMessageType_RegisteMR",**********/	
-    void handleResponse0x000170D2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/
-    void handleResponse0x00011642(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_UnsignedInt32",**********/	
-    void handleResponse0x0000F3B2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x0000F932(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x0000BF62(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	
-    void handleResponse0x00005342(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"RespnseMessageType_RegisteSR",**********/	
-    void handleResponse0x00017172(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_Bool",**********/	    
-    void handleResponse0x000115E2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********"ResponseMessageType_UnsignedInt32",**********/	
-    void handleResponse0x0000F352(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********GetInterpreterStatus, ResponseMessageType_Int32**********/	
+    void handleResponse0x00016483(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********GetRobotStatus, ResponseMessageType_Int32**********/	
+    void handleResponse0x00006F83(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********GetCtrlStatus, ResponseMessageType_Int32**********/	
+    void handleResponse0x0000E9D3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********GetServoStatus, ResponseMessageType_Int32**********/	
+    void handleResponse0x0000D113(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********GetSafetyAlarm, ResponseMessageType_Int32**********/	
+    void handleResponse0x0000C00D(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********CallEstop, ResponseMessageType_Bool**********/	        
+    void handleResponse0x00013940(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********CallReset, ResponseMessageType_Bool**********/	        
+    void handleResponse0x000161E4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********SetUserOpMode, ResponseMessageType_Bool**********/	    
+    void handleResponse0x00002ED5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********addTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x00000773(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
 
-
-
-
-
-
-    // publish element handler
-    void handlePublishElement0x7622aa34(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    /********"MessageType_Int32",**********/
-    void handlePublishElement0x00011423(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    /********"MessageType_Int32",**********/
-    void handlePublishElement0x00010363(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    /********"MessageType_Int32",**********/
-    void handlePublishElement0x00001F13(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    /********"MessageType_Int32",**********/
-    void handlePublishElement0x0000D175(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    /********"MessageType_String",**********/
-    void handlePublishElement0x00015453(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    /********"MessageType_Int32",**********/
-    void handlePublishElement0x0000AB25(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-
+    /********UserOpMode, MessageType_Int32**********/  
+    void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    /********RunningStatus, MessageType_Int32**********/
+    void handlePublishElement0x00001F33(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    /********InterpreterStatus, MessageType_Int32**********/
+    void handlePublishElement0x00003203(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    /********RobotStatus, MessageType_Int32**********/
+    void handlePublishElement0x00012943(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    /********CtrlStatus, MessageType_Int32**********/
+    void handlePublishElement0x0000E8E3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    /********ServoStatus, MessageType_Int32**********/
+    void handlePublishElement0x00002053(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    /********SafetyAlarm, MessageType_Int32**********/
+    void handlePublishElement0x0000D0AD(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     // component parameters
     bool is_running_;

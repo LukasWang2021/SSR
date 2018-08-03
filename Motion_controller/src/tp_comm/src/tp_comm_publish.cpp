@@ -3,61 +3,66 @@
 
 using namespace std;
 
-// “comm/basetype/int32”
-void TpComm::handlePublishElement0x7622aa34(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+// UserOpMode, MessageType_Int32
+void TpComm::handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x7622aa34: failed to encode /comm/basetype/int32");
+        FST_ERROR("handlePublishElement0x00015255: failed to encode UserOpMode");
     }
 }
 
-void TpComm::handlePublishElement0x00011423(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+//RunningStatus, MessageType_Int32
+void TpComm::handlePublishElement0x00001F33(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x00011423: failed to encode ...");
+        FST_ERROR("handlePublishElement0x00015255: failed to encode RunningStatus");
     }
 }
 
-void TpComm::handlePublishElement0x00010363(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+//InterpreterStatus, MessageType_Int32
+void TpComm::handlePublishElement0x00003203(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x00010363: failed to encode ...");
+        FST_ERROR("handlePublishElement0x00015255: failed to encode InterpreterStatus");
     }
 }
 
-void TpComm::handlePublishElement0x00001F13(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+// RobotStatus, MessageType_Int32
+void TpComm::handlePublishElement0x00012943(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x00001F13: failed to encode ...");
+        FST_ERROR("handlePublishElement0x00015255: failed to encode RobotStatus");
     }
 }
 
-void TpComm::handlePublishElement0x0000D175(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+// CtrlStatus, MessageType_Int32
+void TpComm::handlePublishElement0x0000E8E3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x0000D175: failed to encode ...");
+        FST_ERROR("handlePublishElement0x00015255: failed to encode RobotStatus");
     }
 }
 
-void TpComm::handlePublishElement0x00015453(Comm_Publish& package, int element_index, TpPublishElement& list_element)
-{
-    if(!encodePublishElement(package.element[element_index].data, MessageType_String_fields, list_element.data_ptr))
-    {
-        FST_ERROR("handlePublishElement0x00015453: failed to encode ...");
-    }
-}
-
-void TpComm::handlePublishElement0x0000AB25(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+//ServoStatus, MessageType_Int32
+void TpComm::handlePublishElement0x00002053(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x0000AB25: failed to encode ...");
+        FST_ERROR("handlePublishElement0x00015255: failed to encode ServoStatus");
     }
 }
 
+//SafetyAlarm, MessageType_Int32
+void TpComm::handlePublishElement0x0000D0AD(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x00015255: failed to encode SafetyAlarm");
+    }
+}
 

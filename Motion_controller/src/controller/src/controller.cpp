@@ -38,33 +38,31 @@ Controller* Controller::getInstance()
 
 bool Controller::init()
 {
-    FST_ERROR("---1");
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load controller component parameters");
         return false;
     } 
-    FST_ERROR("---2");
-    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);       
-    FST_ERROR("---3");
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
+    
     virtual_core1_.init(log_ptr_);
-    FST_ERROR("---4");
     state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
-    FST_ERROR("---5");
     rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_);
-    FST_ERROR("---6");
+    
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
     {
         return false;
     }
-    FST_ERROR("---7");
-    if(!tp_comm_.init()
-        || !tp_comm_.open())
+
+    if(!tp_comm_.init())
     {
         return false;
     }
-    FST_ERROR("---8");
-
+    
+    if(!tp_comm_.open())
+    {
+        return false;
+    }
 
     return true;    
 }

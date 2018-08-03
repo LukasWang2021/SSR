@@ -6,6 +6,7 @@ using namespace fst_ctrl;
 void ControllerRpc::initRpcTable()
 {
     RpcService rpc_service;
+    rpc_service = {"/rpc/controller/addTopic", 0x00000773, &ControllerRpc::handleRpc0x00000773}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getUserOpMode", 0x00000C05, &ControllerRpc::handleRpc0x00000C05}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getRunningStatus", 0x00000AB3, &ControllerRpc::handleRpc0x00000AB3}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getInterpreterStatus", 0x00016483, &ControllerRpc::handleRpc0x00016483}; rpc_table_.push_back(rpc_service);

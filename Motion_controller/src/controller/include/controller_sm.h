@@ -82,6 +82,15 @@ public:
     bool setUserOpMode(UserOpMode mode);
     bool callEstop();
     bool callReset();
+
+    // for publish data
+    UserOpMode* getUserOpModePtr();
+    RunningStatus* getRunningStatusPtr();
+    InterpreterStatus* getInterpreterStatusPtr();
+    RobotStatus* getRobotStatusPtr();
+    CtrlStatus* getCtrlStatusPtr();
+    ServoStatus* getServoStatusPtr();
+    int* getSafetyAlarmPtr();    
     
 private:
     fst_log::Logger* log_ptr_;

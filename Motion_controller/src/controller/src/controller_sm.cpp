@@ -126,6 +126,41 @@ bool ControllerSm::callReset()
     return true;
 }
 
+UserOpMode* ControllerSm::getUserOpModePtr()
+{
+    return &user_op_mode_;
+}
+
+RunningStatus* ControllerSm::getRunningStatusPtr()
+{
+    return &running_status_;
+}
+
+InterpreterStatus* ControllerSm::getInterpreterStatusPtr()
+{
+    return &interpreter_status_;
+}
+
+RobotStatus* ControllerSm::getRobotStatusPtr()
+{
+    return &robot_status_;
+}
+
+CtrlStatus* ControllerSm::getCtrlStatusPtr()
+{
+    return &ctrl_status_;
+}
+
+ServoStatus* ControllerSm::getServoStatusPtr()
+{
+    return &servo_status_;
+}
+
+int* ControllerSm::getSafetyAlarmPtr()
+{
+    return &safety_alarm_;
+}
+
 void ControllerSm::processInterpreter()
 {
 #if 0

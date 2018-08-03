@@ -6,6 +6,7 @@
 #include "virtual_core1.h"
 #include "tp_comm.h"
 #include "controller_sm.h"
+#include "controller_publish.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -27,6 +28,7 @@ private:
     VirtualCore1* virtual_core1_ptr_;
     TpComm* tp_comm_ptr_;
     ControllerSm* state_machine_ptr_;
+    ControllerPublish publish_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -47,6 +49,8 @@ private:
     HandleRpcFuncPtr getRpcHandlerByHash(unsigned int hash);
 
     /* controller rpc */
+    // "/rpc/controller/addTopic"
+    void handleRpc0x00000773(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getUserOpMode"
     void handleRpc0x00000C05(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getRunningStatus"

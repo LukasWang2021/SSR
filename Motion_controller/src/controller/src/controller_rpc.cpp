@@ -27,9 +27,9 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, V
     virtual_core1_ptr_ = virtual_core1_ptr;
     tp_comm_ptr_ = tp_comm_ptr;
     state_machine_ptr_ = state_machine_ptr;
-
     initRpcTable();
     initRpcQuickSearchTable();
+    publish_.init(log_ptr, param_ptr, virtual_core1_ptr, tp_comm_ptr, state_machine_ptr);
 }
 
 void ControllerRpc::processRpc()
@@ -73,4 +73,5 @@ ControllerRpc::HandleRpcFuncPtr ControllerRpc::getRpcHandlerByHash(unsigned int 
     }
     return NULL;
 }
+
 

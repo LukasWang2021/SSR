@@ -56,6 +56,10 @@ install(FILES config/coordinate_manager.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
+install(FILES config/coord_info.yaml 
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/coord/
+)
+
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

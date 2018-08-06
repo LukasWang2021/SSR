@@ -1,0 +1,141 @@
+tool1:
+    id: 1
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool2:
+    id: 2
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool3:
+    id: 3
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool4:
+    id: 4
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool5:
+    id: 5
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool6:
+    id: 6
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool7:
+    id: 7
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool8:
+    id: 8
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool9:
+    id: 9
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+tool10:
+    id: 10
+    is_valid: false
+    name: default
+    comment: default
+    group_id: -1
+    point:
+        x: 0
+        y: 0
+        z: 0
+    euler:
+        a: 0
+        b: 0
+        c: 0
+#END

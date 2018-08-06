@@ -17,7 +17,7 @@ Controller::Controller():
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ControllerParam();
-    FST_LOG_INIT("controller");
+    FST_LOG_INIT("Controller");
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
@@ -48,18 +48,24 @@ bool Controller::init()
     virtual_core1_.init(log_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
     rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_);
-    
+
+    if(!tool_manager_.init())
+    {
+        return false;
+    }
+
+    if(!coordinate_manager_.init())
+    {
+        return false;
+    }
+
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
     {
         return false;
     }
 
-    if(!tp_comm_.init())
-    {
-        return false;
-    }
-    
-    if(!tp_comm_.open())
+    if(!tp_comm_.init()
+        || !tp_comm_.open())
     {
         return false;
     }

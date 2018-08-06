@@ -10,6 +10,11 @@
 #define AXIS_GROUP_MODEL_DIR        "share/runtime/model/axis_group/"
 #define AXIS_DIR                    "share/runtime/axis/"
 #define AXIS_GROUP_DIR              "share/runtime/axis_group/"
+#define TOOL_DIR                    "share/runtime/tool/"
+#define COORD_DIR                   "share/runtime/coord/"
+#define REG_DIR                     "share/runtime/reg/"
+
+
 
 
 #endif

@@ -56,6 +56,10 @@ install(FILES config/tool_manager.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
+install(FILES config/tool_info.yaml 
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/tool/ 
+)
+
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

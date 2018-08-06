@@ -72,6 +72,33 @@ private:
     // "/rpc/controller/setUserOpMode"
     void handleRpc0x00002ED5(void* request_data_ptr, void* response_data_ptr);
 
+    /* tool manager rpc */
+    // "/rpc/tool_manager/addTool"
+    void handleRpc0x0000A22C(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/tool_manager/deleteTool"
+    void handleRpc0x00010E4C(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/tool_manager/updateTool"
+    void handleRpc0x0000C78C(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/tool_manager/moveTool"
+    void handleRpc0x000085FC(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/tool_manager/getToolInfoById"
+    void handleRpc0x00009E34(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/tool_manager/getAllValidToolSummaryInfo"
+    void handleRpc0x0001104F(void* request_data_ptr, void* response_data_ptr);
+
+    /* coordinate manager rpc */
+    // "/rpc/coordinate_manager/addUserCoord"
+    void handleRpc0x00016764(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/coordinate_manager/deleteUserCoord"
+    void handleRpc0x0000BAF4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/coordinate_manager/updateUserCoord"
+    void handleRpc0x0000EC14(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/coordinate_manager/moveUserCoord"
+    void handleRpc0x0000E104(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/coordinate_manager/getUserCoordInfoById"
+    void handleRpc0x00004324(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"
+    void handleRpc0x0001838F(void* request_data_ptr, void* response_data_ptr);       
 };
 
 }

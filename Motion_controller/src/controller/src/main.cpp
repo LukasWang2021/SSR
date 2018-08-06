@@ -19,7 +19,7 @@ int main(int argc, char **argv)
         {
             while(!controller_ptr->isExit())
             {
-                usleep(100);
+                usleep(500000);
             }
         }
     }

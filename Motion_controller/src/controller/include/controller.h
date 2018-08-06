@@ -8,6 +8,8 @@
 #include "thread_help.h"
 #include "controller_sm.h"
 #include "controller_rpc.h"
+#include "tool_manager.h"
+#include "coordinate_manager.h"
 // for test only
 #include "virtual_core1.h"
 
@@ -33,6 +35,8 @@ private:
     ControllerSm state_machine_;
     TpComm tp_comm_;
     ControllerRpc rpc_;
+    ToolManager tool_manager_;
+    CoordinateManager coordinate_manager_;
     VirtualCore1 virtual_core1_; // for test only
     
     // thread related

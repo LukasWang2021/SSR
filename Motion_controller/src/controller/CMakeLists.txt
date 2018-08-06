@@ -45,7 +45,9 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/protos/include 
     ${depend_PATH_INC}/tp_comm/include 
     ${depend_PATH_INC}/thread_help/include 
-    ${depend_PATH_INC}/common/ 
+    ${depend_PATH_INC}/common/
+    ${depend_PATH_INC}/tool_manager/include 
+    ${depend_PATH_INC}/coordinate_manager/include 
 )
 
 catkin_package(
@@ -72,6 +74,9 @@ aux_source_directory(src BASE_SRCS)
 
 add_executable(controller
     ${BASE_SRCS}
+    ${NANOPB_DIR}/pb_decode.c 
+    ${NANOPB_DIR}/pb_encode.c 
+    ${NANOPB_DIR}/pb_common.c
 )
 
 target_link_libraries(controller
@@ -80,7 +85,9 @@ target_link_libraries(controller
     core_interface
     protos 
     tp_comm 
-    thread_help 
+    thread_help
+    tool_manager 
+    coordinate_manager 
 )
 
 #############

@@ -17,6 +17,9 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/controller/addTopic",	0x00000773,	"RequestMessageType_Topic",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00000773,	&TpComm::handleResponse0x00000773,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/deleteTopic",	0x0000BB93,	"RequestMessageType_UnsignedInt32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000BB93,	&TpComm::handleResponse0x0000BB93,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 
+	rpc_service =	{	"/rpc/tp_comm/getRpcTable",	0x00004FA5,	"RequestMessageType_Void",	"ResponseMessageType_RpcTable",	&TpComm::handleRequest0x00004FA5,	&TpComm::handleResponse0x00004FA5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/tp_comm/getPublishTable",	0x000147A5,	"RequestMessageType_Void",	"ResponseMessageType_PublishTable",	&TpComm::handleRequest0x000147A5,	&TpComm::handleResponse0x000147A5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+
 	rpc_service =	{	"/rpc/tool_manager/addTool",	0x0000A22C,	"RequestMessageType_ToolInfo",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000A22C,	&TpComm::handleResponse0x0000A22C,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/tool_manager/deleteTool",	0x00010E4C,	"RequestMessageType_Int32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00010E4C,	&TpComm::handleResponse0x00010E4C,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/tool_manager/updateTool",	0x0000C78C,	"RequestMessageType_ToolInfo",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000C78C,	&TpComm::handleResponse0x0000C78C,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);

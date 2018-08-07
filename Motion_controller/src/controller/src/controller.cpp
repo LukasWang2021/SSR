@@ -47,7 +47,7 @@ bool Controller::init()
     
     virtual_core1_.init(log_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
-    rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_);
+    rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &tool_manager_, &coordinate_manager_);
 
     if(!tool_manager_.init())
     {

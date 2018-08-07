@@ -152,7 +152,8 @@ bool CoordinateManager::moveCoord(int expect_id, int original_id)
 bool CoordinateManager::getCoordInfoById(int id, CoordInfo& info)
 {
     if(info.id >= coord_set_.size()
-        || info.id <= 0)
+        || info.id <= 0
+        || !info.is_valid)
     {
         return false;
     }

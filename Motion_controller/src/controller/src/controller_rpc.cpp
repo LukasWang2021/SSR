@@ -9,7 +9,9 @@ ControllerRpc::ControllerRpc():
     param_ptr_(NULL),
     virtual_core1_ptr_(NULL),
     tp_comm_ptr_(NULL),
-    state_machine_ptr_(NULL)
+    state_machine_ptr_(NULL),
+    tool_manager_ptr_(NULL),
+    coordinate_manager_ptr_(NULL)
 {
 
 }
@@ -20,13 +22,15 @@ ControllerRpc::~ControllerRpc()
 }
 
 void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr)
+                    ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
     virtual_core1_ptr_ = virtual_core1_ptr;
     tp_comm_ptr_ = tp_comm_ptr;
     state_machine_ptr_ = state_machine_ptr;
+    tool_manager_ptr_ = tool_manager_ptr;
+    coordinate_manager_ptr_ = coordinate_manager_ptr;
     initRpcTable();
     initRpcQuickSearchTable();
     publish_.init(log_ptr, param_ptr, virtual_core1_ptr, tp_comm_ptr, state_machine_ptr);

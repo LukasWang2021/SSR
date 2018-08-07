@@ -56,6 +56,22 @@ install(FILES config/reg_manager.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
+install(FILES config/r_reg.yaml 
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/reg/
+)
+
+install(FILES config/sr_reg.yaml 
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/reg/
+)
+
+install(FILES config/mr_reg.yaml 
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/reg/
+)
+
+install(FILES config/pr_reg.yaml 
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/reg/
+)
+
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

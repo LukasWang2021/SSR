@@ -101,7 +101,7 @@ void TpComm::handleRequest0x00009E34(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Bool_ToolInfo* response_data_ptr = new ResponseMessageType_Bool_ToolInfo;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");

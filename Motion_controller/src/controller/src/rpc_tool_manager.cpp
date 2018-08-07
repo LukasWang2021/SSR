@@ -1,4 +1,6 @@
 #include "controller_rpc.h"
+#include <unistd.h>
+#include <stdlib.h>
 
 using namespace fst_ctrl;
 

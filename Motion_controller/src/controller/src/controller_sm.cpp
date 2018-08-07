@@ -103,6 +103,7 @@ bool ControllerSm::callEstop()
     if(ctrl_status_ == CTRL_ENGAGED
         || ctrl_status_ == CTRL_ESTOP_TO_ENGAGED)
     {
+        //serv_jtac_.stopBareMetal();
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
         FST_INFO("---callEstop: ctrl_status-->CTRL_ANY_TO_ESTOP");
@@ -276,6 +277,7 @@ void ControllerSm::transferCtrlStatus()
             break;
         case CTRL_ESTOP_TO_ENGAGED:
             if(robot_status_ == ROBOT_IDLE
+                && servo_status_ == SERVO_READY
                 && !is_error_exist_)
             {
                 FST_INFO("---transferCtrlStatus: ctrl_status-->CTRL_ENGAGED");

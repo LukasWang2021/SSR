@@ -151,13 +151,23 @@ bool ToolManager::moveTool(int expect_id, int original_id)
 
 bool ToolManager::getToolInfoById(int id, ToolInfo& info)
 {
-    if(info.id >= tool_set_.size()
-        || info.id <= 0)
+    if(id >= tool_set_.size()
+        || id <= 0)
     {
         return false;
     }
 
-    info = tool_set_[id];
+    info.id = tool_set_[id].id;
+    info.is_valid = tool_set_[id].is_valid;
+    info.name = tool_set_[id].name;
+    info.comment = tool_set_[id].comment;
+    info.group_id = tool_set_[id].group_id;
+    info.data.position.x = tool_set_[id].data.position.x;
+    info.data.position.y = tool_set_[id].data.position.y;
+    info.data.position.z = tool_set_[id].data.position.z;
+    info.data.orientation.a = tool_set_[id].data.orientation.a;
+    info.data.orientation.b = tool_set_[id].data.orientation.b;
+    info.data.orientation.c = tool_set_[id].data.orientation.c;
     return true;
 }
 

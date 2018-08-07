@@ -335,7 +335,6 @@ void TpComm::handleResponseList()
     }
     response_list_.clear();
     response_list_mutex_.unlock();
-    cout << "Here : response msg over" << endl;
 }
 
 void TpComm::handlePublishList()
@@ -382,7 +381,6 @@ void TpComm::handlePublishList()
     }
 
     publish_list_mutex_.unlock();
-    cout << "Here : pub over" << endl;
 }
 
 long TpComm::computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val)

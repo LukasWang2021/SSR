@@ -144,6 +144,10 @@ private:
     void handleRequest0x00004324(int recv_bytes);
     /********coordinate_manager/getAllValidUserCoordSummaryInfo, RequestMessageType_Void**********/
     void handleRequest0x0001838F(int recv_bytes);
+    /********getRpcTable, RequestMessageType_Void**********/
+    void handleRequest0x00004FA5(int recv_bytes);
+    /********getPublishTable, RequestMessageType_Void**********/
+    void handleRequest0x000147A5(int recv_bytes);
 
 
 
@@ -171,6 +175,12 @@ private:
     void handleResponse0x00000773(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********deleteTopicResponseMessageType_Bool**********/
     void handleResponse0x0000BB93(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********getRpcTable, ResponseMessageType_RpcTable**********/
+    void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********getPublishTable, ResponseMessageType_PublishTable**********/
+    void handleResponse0x000147A5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
 
     /********tool_manager/addTool, ResponseMessageType_Bool**********/
     void handleResponse0x0000A22C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

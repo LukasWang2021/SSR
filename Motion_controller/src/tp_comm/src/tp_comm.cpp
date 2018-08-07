@@ -44,39 +44,23 @@ bool TpComm::initParamsFromYaml()
 
 bool TpComm::init()
 {
-    // load parameter from yaml
-    if (!initParamsFromYaml())
-    {
-        return false;
-    }
+    if (!initParamsFromYaml()) return false;
 
-    // initialize runtime variables
     req_resp_socket_ = nn_socket(AF_SP, NN_REP);
-    if(req_resp_socket_ == -1)
-    {
-        return false;
-    }
-    
+    if(req_resp_socket_ == -1) return false;
+
     req_resp_endpoint_id_ = nn_bind(req_resp_socket_, req_resp_ip_.c_str());
-    if(req_resp_endpoint_id_ == -1)
-    {
-        return false;
-    }
-    
+    if(req_resp_endpoint_id_ == -1) return false;
+
     publish_socket_ = nn_socket(AF_SP, NN_PUB);
-    if(publish_socket_ == -1)
-    {
-        return false;
-    }
+    if(publish_socket_ == -1) return false;
+
     publish_endpoint_id_ = nn_bind(publish_socket_, publish_ip_.c_str());
-    if(publish_endpoint_id_ == -1)
-    {
-        return false;
-    }
+    if(publish_endpoint_id_ == -1) return false;
 
     // it is critical to set poll fd here to make the model work correctly
 	poll_fd_.fd = req_resp_socket_;
-	poll_fd_.events = NN_POLLIN | NN_POLLOUT;    
+	poll_fd_.events = NN_POLLIN | NN_POLLOUT;
 
     recv_buffer_ptr_ = new uint8_t[recv_buffer_size_]();
     send_buffer_ptr_ = new uint8_t[send_buffer_size_]();
@@ -278,10 +262,8 @@ void TpComm::tpCommThreadFunc()
 }
 
 void TpComm::handleRequest()
-
 {
 
-    //FST_INFO("Here : start recv");
     if(nn_poll (&poll_fd_, 1, 0) == -1)
     {
         return;
@@ -325,7 +307,6 @@ void TpComm::pushTaskToRequestList(unsigned int hash, void* request_data_ptr, vo
 
 void TpComm::handleResponseList()
 {
-    // it is tricky here, if no usleep, nn_send will fail. fix me later
     int send_buffer_size = 1024;
     std::vector<TpRequestResponse>::iterator it;
     HandleResponseFuncPtr func_ptr;
@@ -354,6 +335,7 @@ void TpComm::handleResponseList()
     }
     response_list_.clear();
     response_list_mutex_.unlock();
+    cout << "Here : response msg over" << endl;
 }
 
 void TpComm::handlePublishList()
@@ -398,7 +380,9 @@ void TpComm::handlePublishList()
             it->last_publish_time = time_val;
         }
     }
+
     publish_list_mutex_.unlock();
+    cout << "Here : pub over" << endl;
 }
 
 long TpComm::computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val)
@@ -560,4 +544,18 @@ ResponseMessageType_PublishTable TpComm::getResponseSucceedPublishTable()
     response_data_ptr.data.element_count = element_index;
 
     return response_data_ptr;
+}
+
+void TpComm::eraseTaskFromPublishList(unsigned int &topic_hash)
+{
+    std::vector<TpPublish>::iterator it;  //publish_list_;
+    publish_list_mutex_.lock();
+    for(it = publish_list_.begin(); it != publish_list_.end();)
+    {
+        if(topic_hash == it->hash)
+            it = publish_list_.erase(it);
+        else 
+            ++it;
+    }
+    publish_list_mutex_.unlock();
 }

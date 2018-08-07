@@ -52,6 +52,8 @@ add_library(protos
   src/message_type/register_pr.pb.c
   src/message_type/register_r.pb.c
   src/message_type/register_sr.pb.c
+  src/message_type/tool_frame.pb.c
+  src/message_type/user_frame.pb.c
 
   src/request/request_base.pb.c
   src/request/request_publish_topic.pb.c
@@ -59,7 +61,8 @@ add_library(protos
   src/request/request_register_r.pb.c
   src/request/request_register_mr.pb.c
   src/request/request_register_sr.pb.c
-
+  src/request/request_tool_frame.pb.c
+  src/request/request_user_frame.pb.c
 
   src/response/response_base.pb.c
   src/response/response_publish_table.pb.c
@@ -68,6 +71,8 @@ add_library(protos
   src/response/response_register_r.pb.c
   src/response/response_register_mr.pb.c
   src/response/response_register_sr.pb.c
+  src/response/response_tool_frame.pb.c
+  src/response/response_user_frame.pb.c
 )
 
 target_link_libraries(protos

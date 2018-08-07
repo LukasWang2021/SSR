@@ -179,7 +179,7 @@ void TpComm::handleRequest0x00013940(int recv_bytes)
         delete request_data_ptr;
         return;
     }
-    
+
     handleRequestPackage(0x00013940, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Void_fields, -1);
 }
@@ -248,4 +248,50 @@ void TpComm::handleRequest0x00000773(int recv_bytes)
 
     handleRequestPackage(0x00000773, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Topic_fields, -1);
+}
+
+//delete topic
+void TpComm::handleRequest0x0000BB93(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_UnsignedInt32* request_data_ptr = new RequestMessageType_UnsignedInt32;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    if(!decodeRequestPackage(RequestMessageType_UnsignedInt32_fields, (void*)request_data_ptr, recv_bytes))
+    {
+        FST_ERROR("handleRequestPackage: /rpc/controller/deleteTopic: decode data failed");
+        return ;
+    }
+
+    Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x0000BB93);
+
+    if(!checkAuthority(((RequestMessageType_UnsignedInt32*)request_data_ptr)->property.authority, controller_authority))
+    {
+        FST_ERROR("handleRequestPackage: /rpc/controller/deleteTopic: operation is not authorized");
+        initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
+    }
+    else
+    {
+        initResponsePackage(request_data_ptr, response_data_ptr, -1);
+    }
+
+    eraseTaskFromPublishList(request_data_ptr->data.data);
+
+    TpRequestResponse package;
+    package.hash = 0x0000BB93;
+    package.request_data_ptr = request_data_ptr;
+    package.response_data_ptr = response_data_ptr;
+
+    pushTaskToResponseList(package);
 }

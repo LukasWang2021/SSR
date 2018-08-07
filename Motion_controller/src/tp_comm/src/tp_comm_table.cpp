@@ -15,6 +15,21 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/controller/callReset",	0x000161E4,	"RequestMessageType_Void",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x000161E4,	&TpComm::handleResponse0x000161E4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/setUserOpMode",	0x00002ED5,	"RequestMessageType_Int32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00002ED5,	&TpComm::handleResponse0x00002ED5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/addTopic",	0x00000773,	"RequestMessageType_Topic",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00000773,	&TpComm::handleResponse0x00000773,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/controller/deleteTopic",	0x0000BB93,	"RequestMessageType_UnsignedInt32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000BB93,	&TpComm::handleResponse0x0000BB93,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+
+	rpc_service =	{	"/rpc/tool_manager/addTool",	0x0000A22C,	"RequestMessageType_ToolInfo",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000A22C,	&TpComm::handleResponse0x0000A22C,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/tool_manager/deleteTool",	0x00010E4C,	"RequestMessageType_Int32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00010E4C,	&TpComm::handleResponse0x00010E4C,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/tool_manager/updateTool",	0x0000C78C,	"RequestMessageType_ToolInfo",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000C78C,	&TpComm::handleResponse0x0000C78C,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/tool_manager/moveTool",	0x000085FC,	"RequestMessageType_Int32List",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x000085FC,	&TpComm::handleResponse0x000085FC,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/tool_manager/getToolInfoById",	0x00009E34,	"RequestMessageType_Int32",	"ResponseMessageType_Bool_ToolInfo",	&TpComm::handleRequest0x00009E34,	&TpComm::handleResponse0x00009E34,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/tool_manager/getAllValidToolSummaryInfo",	0x0001104F,	"RequestMessageType_Void",	"ResponseMessageType_ToolSummaryList",	&TpComm::handleRequest0x0001104F,	&TpComm::handleResponse0x0001104F,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+											
+	rpc_service =	{	"/rpc/coordinate_manager/addUserCoord",	0x00016764,	"RequestMessageType_UserInfo",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00016764,	&TpComm::handleResponse0x00016764,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/coordinate_manager/deleteUserCoord",	0x0000BAF4,	"RequestMessageType_Int32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000BAF4,	&TpComm::handleResponse0x0000BAF4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/coordinate_manager/updateUserCoord",	0x0000EC14,	"RequestMessageType_UserInfo",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000EC14,	&TpComm::handleResponse0x0000EC14,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/coordinate_manager/moveUserCoord",	0x0000E104,	"RequestMessageType_Int32List",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000E104,	&TpComm::handleResponse0x0000E104,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/coordinate_manager/getUserCoordInfoById",	0x00004324,	"RequestMessageType_Int32",	"ResponseMessageType_Bool_UserInfo",	&TpComm::handleRequest0x00004324,	&TpComm::handleResponse0x00004324,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo",	0x0001838F,	"RequestMessageType_Void",	"ResponseMessageType_UserSummaryList",	&TpComm::handleRequest0x0001838F,	&TpComm::handleResponse0x0001838F,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 
 }
 

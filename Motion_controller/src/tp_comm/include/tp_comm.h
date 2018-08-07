@@ -53,7 +53,6 @@ public:
     TpPublish generateTpPublishTask(unsigned int topic_hash, int interval_min, int interval_max);
     void addTpPublishElement(TpPublish& task, unsigned int element_hash, void* element_data_ptr);
     void pushTaskToPublishList(TpPublish& package);
-
 private:
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -77,6 +76,7 @@ private:
     void pushTaskToRequestList(unsigned int hash, void* request_data_ptr, void* response_data_ptr);
     void handleResponseList();
     void handlePublishList();
+    void eraseTaskFromPublishList(unsigned int &topic_hash);
 
     long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
     long computeTimeForTp(struct timeval& current_time_val);
@@ -94,28 +94,57 @@ private:
     bool encodePublishElement(Comm_PublishElement_data_t& element, const pb_field_t fields[], void* element_data_ptr);
     bool encodePublishPackage(Comm_Publish& package, unsigned int hash, struct timeval& current_time_val, int& send_buffer_size);
 
-    /********GetUserOpMode, ResponseMessageType_Int32**********/	
+    /********GetUserOpMode, RequestMessageType_Void**********/          
     void handleRequest0x00000C05(int recv_bytes);
-    /********GetRunningStatus, ResponseMessageType_Int32**********/	
+    /********GetRunningStatus, RequestMessageType_Void**********/       
     void handleRequest0x00000AB3(int recv_bytes);
-    /********GetInterpreterStatus, ResponseMessageType_Int32**********/	
+    /********GetInterpreterStatus, RequestMessageType_Void**********/   
     void handleRequest0x00016483(int recv_bytes);
-    /********GetRobotStatus, ResponseMessageType_Int32**********/	
+    /********GetRobotStatus, RequestMessageType_Void**********/         
     void handleRequest0x00006F83(int recv_bytes);
-    /********GetCtrlStatus, ResponseMessageType_Int32**********/	
+    /********GetCtrlStatus, RequestMessageType_Void**********/          
     void handleRequest0x0000E9D3(int recv_bytes);
-    /********GetServoStatus, ResponseMessageType_Int32**********/	
+    /********GetServoStatus, RequestMessageType_Void**********/         
     void handleRequest0x0000D113(int recv_bytes);
-    /********GetSafetyAlarm, ResponseMessageType_Int32**********/	
+    /********GetSafetyAlarm, RequestMessageType_Void**********/         
     void handleRequest0x0000C00D(int recv_bytes);
-    /********CallEstop, ResponseMessageType_Bool**********/	        
+    /********CallEstop, RequestMessageType_Void**********/              
     void handleRequest0x00013940(int recv_bytes);
-    /********CallReset, ResponseMessageType_Bool**********/     	
+    /********CallReset, RequestMessageType_Void**********/              
     void handleRequest0x000161E4(int recv_bytes);
-    /********SetUserOpMode, ResponseMessageType_Bool**********/	    
+    /********SetUserOpMode, RequestMessageType_Int32**********/         
     void handleRequest0x00002ED5(int recv_bytes);
-    /********addTopic, ResponseMessageType_Bool**********/	
+    /********addTopic, RequestMessageType_Topic**********/              
     void handleRequest0x00000773(int recv_bytes);
+    /********deleteTopic, RequestMessageType_UnsignedInt32**********/  
+ 
+    void handleRequest0x0000BB93(int recv_bytes);
+    /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
+    void handleRequest0x0000A22C(int recv_bytes);
+    /********tool_manager/deleteTool, RequestMessageType_Int32**********/
+    void handleRequest0x00010E4C(int recv_bytes);
+    /********tool_manager/updateTool, RequestMessageType_ToolInfo**********/   
+    void handleRequest0x0000C78C(int recv_bytes);
+    /********tool_manager/moveTool, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x000085FC(int recv_bytes);
+    /********tool_manager/getToolInfoById, RequestMessageType_Int32**********/
+    void handleRequest0x00009E34(int recv_bytes);
+    /********tool_manager/getAllValidToolSummaryInfo, RequestMessageType_Void**********/
+    void handleRequest0x0001104F(int recv_bytes);
+
+    /********coordinate_manager/addUserCoord, RequestMessageType_UserInfo**********/
+    void handleRequest0x00016764(int recv_bytes);
+    /********coordinate_manager/deleteUserCoord, RequestMessageType_Int32**********/
+    void handleRequest0x0000BAF4(int recv_bytes);
+    /********coordinate_manager/updateUserCoord, RequestMessageType_UserInfo**********/
+    void handleRequest0x0000EC14(int recv_bytes);
+    /********coordinate_manager/moveUserCoord, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0000E104(int recv_bytes);
+    /********coordinate_manager/getUserCoordInfoById, RequestMessageType_Int32**********/
+    void handleRequest0x00004324(int recv_bytes);
+    /********coordinate_manager/getAllValidUserCoordSummaryInfo, RequestMessageType_Void**********/
+    void handleRequest0x0001838F(int recv_bytes);
+
 
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
@@ -140,7 +169,34 @@ private:
     void handleResponse0x00002ED5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********addTopic, ResponseMessageType_Bool**********/
     void handleResponse0x00000773(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********deleteTopicResponseMessageType_Bool**********/
+    void handleResponse0x0000BB93(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
+    /********tool_manager/addTool, ResponseMessageType_Bool**********/
+    void handleResponse0x0000A22C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********tool_manager/deleteTool, ResponseMessageType_Bool**********/
+    void handleResponse0x00010E4C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********tool_manager/updateTool, ResponseMessageType_Bool**********/
+    void handleResponse0x0000C78C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********tool_manager/moveTool, ResponseMessageType_Bool**********/
+    void handleResponse0x000085FC(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********tool_manager/getToolInfoById, ResponseMessageType_Bool_ToolInfo**********/
+    void handleResponse0x00009E34(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********tool_manager/getAllValidToolSummaryInfo, ResponseMessageType_ToolSummaryList**********/
+    void handleResponse0x0001104F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********coordinate_manager/addUserCoord, ResponseMessageType_Bool**********/
+    void handleResponse0x00016764(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********coordinate_manager/deleteUserCoord, ResponseMessageType_Bool**********/
+    void handleResponse0x0000BAF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********coordinate_manager/updateUserCoord, ResponseMessageType_Bool**********/
+    void handleResponse0x0000EC14(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********coordinate_manager/moveUserCoord, ResponseMessageType_Bool**********/
+    void handleResponse0x0000E104(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********coordinate_manager/getUserCoordInfoById, ResponseMessageType_Bool_UserInfo**********/
+    void handleResponse0x00004324(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********coordinate_manager/getAllValidUserCoordSummaryInfo, ResponseMessageType_UserSummaryList**********/
+    void handleResponse0x0001838F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********UserOpMode, MessageType_Int32**********/  
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);

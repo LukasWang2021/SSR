@@ -72,6 +72,10 @@ install(FILES config/pr_reg.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/reg/
 )
 
+install(FILES config/hr_reg.yaml 
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/reg/
+)
+
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

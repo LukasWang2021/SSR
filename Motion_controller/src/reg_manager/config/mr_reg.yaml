@@ -1,0 +1,61 @@
+MR1:
+    id: 1
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR2:
+    id: 2
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR3:
+    id: 3
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR4:
+    id: 4
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR5:
+    id: 5
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR6:
+    id: 6
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR7:
+    id: 7
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR8:
+    id: 8
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR9:
+    id: 9
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+MR10:
+    id: 10
+    is_valid: false
+    name: default
+    comment: default
+    value: 0
+#END

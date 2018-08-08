@@ -47,7 +47,7 @@ bool Controller::init()
     
     virtual_core1_.init(log_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
-    rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &tool_manager_, &coordinate_manager_);
+    rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &tool_manager_, &coordinate_manager_, &reg_manager_);
 
     if(!tool_manager_.init())
     {
@@ -59,6 +59,11 @@ bool Controller::init()
         return false;
     }
 
+    if(!reg_manager_.init())
+    {
+        return false;
+    }
+    
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
     {
         return false;

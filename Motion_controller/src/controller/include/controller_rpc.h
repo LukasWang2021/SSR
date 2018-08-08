@@ -9,6 +9,7 @@
 #include "controller_publish.h"
 #include "tool_manager.h"
 #include "coordinate_manager.h"
+#include "reg_manager.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -20,7 +21,8 @@ public:
     ~ControllerRpc();
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr);
+                    ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
+                    RegManager* reg_manager_ptr);
 
     void processRpc();
 
@@ -32,6 +34,7 @@ private:
     ControllerSm* state_machine_ptr_;
     ToolManager* tool_manager_ptr_;
     CoordinateManager* coordinate_manager_ptr_;
+    RegManager* reg_manager_ptr_;
     ControllerPublish publish_;
 
     enum {HASH_BYTE_SIZE = 4,};
@@ -51,6 +54,10 @@ private:
     void initRpcTable();
     void initRpcQuickSearchTable();
     HandleRpcFuncPtr getRpcHandlerByHash(unsigned int hash);
+
+    /* publish rpc */
+    // "/rpc/publish/addRegTopic"
+    void handleRpc0x00000001(void* request_data_ptr, void* response_data_ptr);
 
     /* controller rpc */
     // "/rpc/controller/addTopic"

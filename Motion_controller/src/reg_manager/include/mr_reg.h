@@ -3,14 +3,10 @@
 
 #include "base_reg.h"
 #include "parameter_manager/parameter_manager_param_group.h"
-
+#include "reg_manager_param.h"
 
 namespace fst_ctrl
 {
-
-#define MAX_MR_REG_VALUE 99999999.999 
-
-
 typedef struct
 {
     int id;
@@ -22,7 +18,7 @@ typedef struct
 class MrReg:public BaseReg
 {
 public:
-    MrReg(int size, std::string file_path);
+    MrReg(RegManagerParam* param_ptr);
     ~MrReg();
 
     virtual bool init();
@@ -30,8 +26,11 @@ public:
     virtual bool deleteReg(int id);
     virtual bool getReg(int id, void* data_ptr);
     virtual bool setReg(void* data_ptr);
+    virtual bool moveReg(int expect_id, int original_id);
+    void* getRegValueById(int id);
     
 private:
+    RegManagerParam* param_ptr_;
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
     std::vector<int> data_list_;

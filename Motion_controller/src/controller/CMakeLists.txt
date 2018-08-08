@@ -48,6 +48,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/common/
     ${depend_PATH_INC}/tool_manager/include 
     ${depend_PATH_INC}/coordinate_manager/include 
+    ${depend_PATH_INC}/reg_manager/include 
 )
 
 catkin_package(
@@ -88,6 +89,7 @@ target_link_libraries(controller
     thread_help
     tool_manager 
     coordinate_manager 
+    reg_manager 
 )
 
 #############

@@ -17,9 +17,10 @@ BaseReg::~BaseReg()
 
 }
 
-std::vector<BaseRegData> BaseReg::getChangedIdList(int start_id, int size)
+std::vector<BaseRegSummary> BaseReg::getChangedList(int start_id, int size)
 {
-    std::vector<BaseRegData> list;
+    BaseRegSummary summary;
+    std::vector<BaseRegSummary> list;
     int end_id = start_id + size;
     start_id = (start_id <= 0 ? 1 : start_id);
     end_id = (end_id < reg_list_.size() ? end_id : reg_list_.size());
@@ -27,16 +28,20 @@ std::vector<BaseRegData> BaseReg::getChangedIdList(int start_id, int size)
     {
         if(reg_list_[i].is_changed)
         {
-            list.push_back(reg_list_[i]);
+            summary.id = reg_list_[i].id;
+            summary.name = reg_list_[i].name;
+            summary.comment = reg_list_[i].comment;
+            list.push_back(summary);
             reg_list_[i].is_changed = false;
         }
     }
     return list;
 }
 
-std::vector<BaseRegData> BaseReg::getValidIdList(int start_id, int size)
+std::vector<BaseRegSummary> BaseReg::getValidList(int start_id, int size)
 {
-    std::vector<BaseRegData> list;
+    BaseRegSummary summary;
+    std::vector<BaseRegSummary> list;
     int end_id = start_id + size;
     start_id = (start_id <= 0 ? 1 : start_id);
     end_id = (end_id < reg_list_.size() ? end_id : reg_list_.size());
@@ -44,7 +49,10 @@ std::vector<BaseRegData> BaseReg::getValidIdList(int start_id, int size)
     {
         if(reg_list_[i].is_valid)
         {
-            list.push_back(reg_list_[i]);
+            summary.id = reg_list_[i].id;
+            summary.name = reg_list_[i].name;
+            summary.comment = reg_list_[i].comment;
+            list.push_back(summary);
         }
     }
     return list;
@@ -241,6 +249,19 @@ bool BaseReg::isSetInputValid(int id)
 bool BaseReg::isGetInputValid(int id)
 {
     return isDeleteInputValid(id);
+}
+
+bool BaseReg::isMoveInputValid(int expect_id, int original_id)
+{
+    if(reg_list_[expect_id].is_valid
+        || !reg_list_[original_id].is_valid)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 void BaseReg::packAddRegData(BaseRegData& data, int id, std::string name, std::string comment)

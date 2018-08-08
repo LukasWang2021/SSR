@@ -22,7 +22,8 @@ ControllerRpc::~ControllerRpc()
 }
 
 void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr)
+                    ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
+                    RegManager* reg_manager_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -31,6 +32,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, V
     state_machine_ptr_ = state_machine_ptr;
     tool_manager_ptr_ = tool_manager_ptr;
     coordinate_manager_ptr_ = coordinate_manager_ptr;
+    reg_manager_ptr_ = reg_manager_ptr;
     initRpcTable();
     initRpcQuickSearchTable();
     publish_.init(log_ptr, param_ptr, virtual_core1_ptr, tp_comm_ptr, state_machine_ptr);

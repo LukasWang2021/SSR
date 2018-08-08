@@ -1,5 +1,5 @@
-#ifndef R_REG_H
-#define R_REG_H
+#ifndef HR_REG_H
+#define HR_REG_H
 
 #include "base_reg.h"
 #include "parameter_manager/parameter_manager_param_group.h"
@@ -9,17 +9,24 @@ namespace fst_ctrl
 {
 typedef struct
 {
+    double joint_pos[9];        // support up to 9 axes per control group
+    double diff_pos[9];
+    int group_id;
+}HrValue;
+
+typedef struct
+{
     int id;
     std::string name;
     std::string comment;
-    double value;
-}RRegData;
+    HrValue value;
+}HrRegData;
 
-class RReg:public BaseReg
+class HrReg:public BaseReg
 {
 public:
-    RReg(RegManagerParam* param_ptr);
-    ~RReg();
+    HrReg(RegManagerParam* param_ptr);
+    ~HrReg();
 
     virtual bool init();
     virtual bool addReg(void* data_ptr);
@@ -33,12 +40,12 @@ private:
     RegManagerParam* param_ptr_;
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
-    std::vector<double> data_list_;
+    std::vector<HrValue> data_list_;
 
-    RReg();
+    HrReg();
     bool createYaml();
     bool readAllRegDataFromYaml();
-    bool writeRegDataToYaml(const BaseRegData& base_data, const double& data);
+    bool writeRegDataToYaml(const BaseRegData& base_data, const HrValue& data);
     std::string getRegPath(int reg_id);
 };
 

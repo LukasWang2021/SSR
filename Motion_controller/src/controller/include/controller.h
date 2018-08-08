@@ -10,6 +10,7 @@
 #include "controller_rpc.h"
 #include "tool_manager.h"
 #include "coordinate_manager.h"
+#include "reg_manager.h"
 // for test only
 #include "virtual_core1.h"
 
@@ -37,6 +38,7 @@ private:
     ControllerRpc rpc_;
     ToolManager tool_manager_;
     CoordinateManager coordinate_manager_;
+    RegManager reg_manager_;
     VirtualCore1 virtual_core1_; // for test only
     
     // thread related

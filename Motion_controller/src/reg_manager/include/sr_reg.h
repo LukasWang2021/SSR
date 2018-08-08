@@ -3,14 +3,10 @@
 
 #include "base_reg.h"
 #include "parameter_manager/parameter_manager_param_group.h"
-
+#include "reg_manager_param.h"
 
 namespace fst_ctrl
 {
-
-enum{MAX_SR_REG_STRING_LENGTH = 255,};
-
-
 typedef struct
 {
     int id;
@@ -22,7 +18,7 @@ typedef struct
 class SrReg:public BaseReg
 {
 public:
-    SrReg(int size, std::string file_path);
+    SrReg(RegManagerParam* param_ptr);
     ~SrReg();
 
     virtual bool init();
@@ -30,8 +26,11 @@ public:
     virtual bool deleteReg(int id);
     virtual bool getReg(int id, void* data_ptr);
     virtual bool setReg(void* data_ptr);
+    virtual bool moveReg(int expect_id, int original_id);
+    void* getRegValueById(int id);
     
 private:
+    RegManagerParam* param_ptr_;
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
     std::vector<std::string> data_list_;

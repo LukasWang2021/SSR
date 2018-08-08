@@ -33,6 +33,6 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/coordinate_manager/getUserCoordInfoById", 0x00004324, &ControllerRpc::handleRpc0x00004324}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo", 0x0001838F, &ControllerRpc::handleRpc0x0001838F}; rpc_table_.push_back(rpc_service);
 
-    
+    rpc_service = {"/rpc/publish/addRegTopic", 0x00000001, &ControllerRpc::handleRpc0x00000001}; rpc_table_.push_back(rpc_service);
 }
 

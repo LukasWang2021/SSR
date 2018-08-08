@@ -3,13 +3,10 @@
 
 #include "base_reg.h"
 #include "parameter_manager/parameter_manager_param_group.h"
-
+#include "reg_manager_param.h"
 
 namespace fst_ctrl
 {
-
-#define MAX_PR_REG_POS_VALUE 99999999.999
-
 typedef struct
 {
     double joint_pos[9];        // support up to 9 axes per control group
@@ -27,7 +24,7 @@ typedef struct
 class PrReg:public BaseReg
 {
 public:
-    PrReg(int size, std::string file_path);
+    PrReg(RegManagerParam* param_ptr);
     ~PrReg();
 
     virtual bool init();
@@ -35,8 +32,11 @@ public:
     virtual bool deleteReg(int id);
     virtual bool getReg(int id, void* data_ptr);
     virtual bool setReg(void* data_ptr);
-    
+    virtual bool moveReg(int expect_id, int original_id);
+    void* getRegValueById(int id);
+        
 private:
+    RegManagerParam* param_ptr_;
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
     std::vector<PrValue> data_list_;

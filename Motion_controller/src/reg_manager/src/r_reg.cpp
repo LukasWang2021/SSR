@@ -11,10 +11,11 @@ using namespace fst_ctrl;
 using namespace fst_parameter;
 
 
-RReg::RReg(int size, std::string file_path):
-    BaseReg(REG_TYPE_R, size), file_path_(file_path)
+RReg::RReg(RegManagerParam* param_ptr):
+    BaseReg(REG_TYPE_R, param_ptr->r_reg_number_), 
+        param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_)
 {
-
+    file_path_ += param_ptr_->r_reg_file_name_;
 }
 
 RReg::~RReg()
@@ -26,13 +27,13 @@ bool RReg::init()
 {
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
-    if(access(file_path_.c_str(), 0) != 0)
+    /*if(access(file_path_.c_str(), 0) != 0)
     {
         if(!createYaml())
         {
             return false;
         }
-    }
+    }*/
 
     if(!readAllRegDataFromYaml())
     {
@@ -51,8 +52,8 @@ bool RReg::addReg(void* data_ptr)
 
     RRegData* reg_ptr = reinterpret_cast<RRegData*>(data_ptr);
     if(!isAddInputValid(reg_ptr->id)
-        || reg_ptr->value > MAX_R_REG_VALUE
-        || reg_ptr->value < -MAX_R_REG_VALUE)
+        || reg_ptr->value > param_ptr_->r_value_limit_
+        || reg_ptr->value < -param_ptr_->r_value_limit_)
     {
         return false;
     }
@@ -112,8 +113,8 @@ bool RReg::setReg(void* data_ptr)
 
     RRegData* reg_ptr = reinterpret_cast<RRegData*>(data_ptr);
     if(!isSetInputValid(reg_ptr->id)
-        || reg_ptr->value > MAX_R_REG_VALUE
-        || reg_ptr->value < -MAX_R_REG_VALUE)
+        || reg_ptr->value > param_ptr_->r_value_limit_
+        || reg_ptr->value < -param_ptr_->r_value_limit_)
     {
         return false;
     }
@@ -126,6 +127,34 @@ bool RReg::setReg(void* data_ptr)
     }
     data_list_[reg_data.id] = reg_ptr->value;
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
+}
+
+bool RReg::moveReg(int expect_id, int original_id)
+{
+    if(!isMoveInputValid(expect_id, original_id))
+    {
+        return false;
+    }
+
+    RRegData data;
+    if(!getReg(original_id, (void*)&data)
+        || !deleteReg(original_id))
+    {
+        return false;
+    }
+    data.id = expect_id;
+    return addReg((void*)&data);
+}
+
+void* RReg::getRegValueById(int id)
+{
+    if(id <= 0
+        || id >= data_list_.size())
+    {
+        return NULL;
+    }
+        
+    return (void*)&data_list_[id];
 }
 
 RReg::RReg():

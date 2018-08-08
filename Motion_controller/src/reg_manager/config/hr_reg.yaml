@@ -1,4 +1,4 @@
-PR1:
+HR1:
     id: 1
     is_valid: false
     name: default
@@ -13,7 +13,16 @@ PR1:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR2:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR2:
     id: 2
     is_valid: false
     name: default
@@ -28,7 +37,16 @@ PR2:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR3:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR3:
     id: 3
     is_valid: false
     name: default
@@ -43,7 +61,16 @@ PR3:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR4:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR4:
     id: 4
     is_valid: false
     name: default
@@ -58,7 +85,16 @@ PR4:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR5:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR5:
     id: 5
     is_valid: false
     name: default
@@ -73,7 +109,16 @@ PR5:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR6:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR6:
     id: 6
     is_valid: false
     name: default
@@ -88,7 +133,16 @@ PR6:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR7:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR7:
     id: 7
     is_valid: false
     name: default
@@ -103,7 +157,16 @@ PR7:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR8:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR8:
     id: 8
     is_valid: false
     name: default
@@ -118,7 +181,16 @@ PR8:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR9:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR9:
     id: 9
     is_valid: false
     name: default
@@ -133,7 +205,16 @@ PR9:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
-PR10:
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
+HR10:
     id: 10
     is_valid: false
     name: default
@@ -148,4 +229,13 @@ PR10:
     joint_pos7: 0.0 
     joint_pos8: 0.0 
     joint_pos9: 0.0 
+    diff_pos1: 0.0
+    diff_pos2: 0.0 
+    diff_pos3: 0.0 
+    diff_pos4: 0.0 
+    diff_pos5: 0.0 
+    diff_pos6: 0.0 
+    diff_pos7: 0.0 
+    diff_pos8: 0.0 
+    diff_pos9: 0.0 
 #END

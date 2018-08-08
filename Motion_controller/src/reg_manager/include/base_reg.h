@@ -4,28 +4,26 @@
 #include <vector>
 #include <string>
 
-
 namespace fst_ctrl
 {
-enum {MAX_REG_COMMENT_LENGTH = 32,};
-
-enum
-{
-    MAX_PR_REG_ID = 10,//200,
-    MAX_SR_REG_ID = 10,//300,
-    MAX_MR_REG_ID = 10,//1500,
-    MAX_R_REG_ID = 10,//1500,
-};
-
 typedef enum
 {
     REG_TYPE_PR = 0,
-    REG_TYPE_SR = 1,
-    REG_TYPE_MR = 2,
-    REG_TYPE_R = 3,
-    REG_TYPE_MAX = 4,
-    REG_TYPE_INVALID = 5,
+    REG_TYPE_HR = 1,
+    REG_TYPE_SR = 2,
+    REG_TYPE_MR = 3,
+    REG_TYPE_R = 4,
+    REG_TYPE_MAX = 5,
+    REG_TYPE_INVALID = 6,
 }RegType;
+
+
+typedef struct
+{
+    int id;
+    std::string name;
+    std::string comment;
+}BaseRegSummary;
 
 typedef struct
 {
@@ -47,8 +45,10 @@ public:
     virtual bool deleteReg(int id) = 0;
     virtual bool getReg(int id, void* data_ptr) = 0;
     virtual bool setReg(void* data_ptr) = 0;
-    std::vector<BaseRegData> getChangedIdList(int start_id, int size);
-    std::vector<BaseRegData> getValidIdList(int start_id, int size);
+    virtual bool moveReg(int expect_id, int original_id) = 0;
+    virtual void* getRegValueById(int id) = 0;
+    std::vector<BaseRegSummary> getChangedList(int start_id, int size);
+    std::vector<BaseRegSummary> getValidList(int start_id, int size);
 
     RegType getRegType();
     int getListSize();
@@ -64,6 +64,7 @@ public:
     bool isDeleteInputValid(int id);
     bool isSetInputValid(int id);
     bool isGetInputValid(int id);
+    bool isMoveInputValid(int expect_id, int original_id);
     void packAddRegData(BaseRegData& data, int id, std::string name, std::string comment);
     void packDeleteRegData(BaseRegData& data, int id);
     void packSetRegData(BaseRegData& data, int id, std::string name, std::string comment);

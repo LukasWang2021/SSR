@@ -19,6 +19,7 @@ public:
                 fst_base::ControllerServer* controller_server_ptr, RegManager* reg_manager_ptr);
 
     void processIpc();
+    fst_base::ControllerClient* getControllerClientPtr();
 
 private:
     fst_log::Logger* log_ptr_;

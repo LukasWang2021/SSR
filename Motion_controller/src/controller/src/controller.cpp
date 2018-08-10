@@ -73,7 +73,8 @@ bool Controller::init()
     process_comm_ptr_ = ProcessComm::getInstance();
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
     if(!process_comm_ptr_->getControllerServerPtr()->init()
-        || !process_comm_ptr_->getControllerServerPtr()->open())
+        || !process_comm_ptr_->getControllerServerPtr()->open()
+        || !process_comm_ptr_->getControllerClientPtr()->init())
     {
         return false;
     }

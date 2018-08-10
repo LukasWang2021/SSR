@@ -26,6 +26,18 @@ ProcessComm::ProcessComm():
         FST_ERROR("Failed to new controller server");
     }
 
+    controller_client_ptr_ = new ControllerClient(log_ptr_, param_ptr_);
+    if(controller_client_ptr_ == NULL)
+    {
+        FST_ERROR("Failed to new controller client");
+    }
+
+    interpreter_server_ptr_ = new InterpreterServer(log_ptr_, param_ptr_);
+    if(interpreter_server_ptr_ == NULL)
+    {
+        FST_ERROR("Failed to new interpreter server");
+    }
+    
     interpreter_client_ptr_ = new InterpreterClient(log_ptr_, param_ptr_);
     if(interpreter_client_ptr_ == NULL)
     {
@@ -50,6 +62,16 @@ ProcessComm* ProcessComm::getInstance()
 ControllerServer* ProcessComm::getControllerServerPtr()
 {
     return controller_server_ptr_;
+}
+
+ControllerClient* ProcessComm::getControllerClientPtr()
+{
+    return controller_client_ptr_;
+}
+
+InterpreterServer* ProcessComm::getInterpreterServerPtr()
+{
+    return interpreter_server_ptr_;
 }
 
 InterpreterClient* ProcessComm::getInterpreterClientPtr()

@@ -6,6 +6,7 @@
 #include "common_log.h"
 #include "controller_server.h"
 #include "controller_client.h"
+#include "interpreter_server.h"
 #include "interpreter_client.h"
 
 namespace fst_base
@@ -19,6 +20,8 @@ public:
     static ProcessComm* getInstance();
 
     ControllerServer* getControllerServerPtr();
+    ControllerClient* getControllerClientPtr();
+    InterpreterServer* getInterpreterServerPtr();
     InterpreterClient* getInterpreterClientPtr();
 
 private:
@@ -27,8 +30,10 @@ private:
     fst_log::Logger* log_ptr_;
 
     ControllerServer* controller_server_ptr_;
+    ControllerClient* controller_client_ptr_;
+    InterpreterServer* interpreter_server_ptr_;
     InterpreterClient* interpreter_client_ptr_;
- 
+    
 };
 
 }

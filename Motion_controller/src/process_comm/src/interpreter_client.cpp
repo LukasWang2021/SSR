@@ -3,7 +3,7 @@
 #include <nanomsg/reqrep.h>
 #include <cstring>
 #include <iostream>
-
+#include "process_comm_datatype.h"
 
 using namespace fst_base;
 using namespace fst_ctrl;
@@ -36,7 +36,7 @@ bool InterpreterClient::init()
 bool InterpreterClient::setPrReg(PrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(data, sizeof(PrRegData))
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_PR_REG, data, sizeof(PrRegData))
         || !recvResponse(sizeof(bool)))
     {
         return false;
@@ -48,7 +48,7 @@ bool InterpreterClient::setPrReg(PrRegData* data)
 bool InterpreterClient::setHrReg(HrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(data, sizeof(HrRegData))
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_HR_REG, data, sizeof(HrRegData))
         || !recvResponse(sizeof(bool)))
     {
         return false;
@@ -60,7 +60,7 @@ bool InterpreterClient::setHrReg(HrRegData* data)
 bool InterpreterClient::setMrReg(MrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(data, sizeof(MrRegData))
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_MR_REG, data, sizeof(MrRegData))
         || !recvResponse(sizeof(bool)))
     {
         return false;
@@ -72,7 +72,7 @@ bool InterpreterClient::setMrReg(MrRegData* data)
 bool InterpreterClient::setSrReg(SrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(data, sizeof(SrRegData))
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_SR_REG, data, sizeof(SrRegData))
         || !recvResponse(sizeof(bool)))
     {
         return false;
@@ -84,7 +84,7 @@ bool InterpreterClient::setSrReg(SrRegData* data)
 bool InterpreterClient::setRReg(RRegData* data)
 {
     if(data == NULL
-        || !sendRequest(data, sizeof(RRegData))
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_R_REG, data, sizeof(RRegData))
         || !recvResponse(sizeof(bool)))
     {
         return false;
@@ -96,7 +96,7 @@ bool InterpreterClient::setRReg(RRegData* data)
 bool InterpreterClient::getPrReg(int id, PrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_PR_REG, id, sizeof(int))
         || !recvResponse(sizeof(PrRegData)))
     {
         return false;
@@ -116,7 +116,7 @@ bool InterpreterClient::getPrReg(int id, PrRegData* data)
 bool InterpreterClient::getHrReg(int id, HrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_HR_REG, id, sizeof(int))
         || !recvResponse(sizeof(HrRegData)))
     {
         return false;
@@ -136,7 +136,7 @@ bool InterpreterClient::getHrReg(int id, HrRegData* data)
 bool InterpreterClient::getMrReg(int id, MrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_MR_REG, id, sizeof(int))
         || !recvResponse(sizeof(MrRegData)))
     {
         return false;
@@ -156,7 +156,7 @@ bool InterpreterClient::getMrReg(int id, MrRegData* data)
 bool InterpreterClient::getSrReg(int id, SrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_SR_REG, id, sizeof(int))
         || !recvResponse(sizeof(SrRegData)))
     {
         return false;
@@ -176,7 +176,7 @@ bool InterpreterClient::getSrReg(int id, SrRegData* data)
 bool InterpreterClient::getRReg(int id, RRegData* data)
 {
     if(data == NULL
-        || !sendRequest(id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_R_REG, id, sizeof(int))
         || !recvResponse(sizeof(RRegData)))
     {
         return false;
@@ -193,10 +193,15 @@ bool InterpreterClient::getRReg(int id, RRegData* data)
     }
 }
 
-bool InterpreterClient::sendRequest(void* data_ptr, int send_size)
+bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {
-    int send_bytes = nn_send(req_resp_socket_, data_ptr, send_size, 0); // block send
-    if(send_bytes == -1 || send_bytes != send_size)
+    *((unsigned int*)send_buffer_ptr_) = cmd_id;
+    if(data_ptr != NULL && send_size != 0)
+    {
+        memcpy(send_buffer_ptr_ + 4, data_ptr, send_size);
+    }
+    int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_size + 4, 0); // block send
+    if(send_bytes == -1 || send_bytes != (send_size + 4))
     {
         FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
     }

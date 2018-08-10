@@ -6,7 +6,7 @@
 #define VER_REVISION 5
   
 #define VER_BUILD_DATE "20180810"  
-#define VER_BUILD_TIME "10:00:20"    
+#define VER_BUILD_TIME "10:44:59"    
   
 #define VERSION_ALL  "2.0.5.20180810"  
   

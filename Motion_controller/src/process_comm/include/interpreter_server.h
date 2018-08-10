@@ -72,7 +72,7 @@ private:
     void handleRequestBackward();
     void handleRequestJump();
     void handleRequestPause();
-    void handleRequestContinue();
+    void handleRequestResume();
     void handleRequestAbort();
     void handleRequestGetNextInstruction();
 
@@ -83,7 +83,7 @@ private:
     void handleResponseBackward(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseJump(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponsePause(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    void handleResponseContinue(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseResume(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseAbort(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetNextInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
 };

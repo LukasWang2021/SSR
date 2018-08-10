@@ -101,7 +101,7 @@ void InterpreterServer::handleRequestPause()
 }
 
 // Continue
-void InterpreterServer::handleRequestContinue()
+void InterpreterServer::handleRequestResume()
 {
     bool* response_data_ptr = new bool;
     if(response_data_ptr == NULL)
@@ -109,7 +109,7 @@ void InterpreterServer::handleRequestContinue()
         FST_ERROR("handleRequest: can't allocate memory for response_data");
         return;
     }
-    pushTaskToRequestList(INTERPRETER_SERVER_CMD_CONTINUE, NULL, (void*)response_data_ptr); 
+    pushTaskToRequestList(INTERPRETER_SERVER_CMD_RESUME, NULL, (void*)response_data_ptr); 
 }
 
 // Abort

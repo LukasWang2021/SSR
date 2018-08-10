@@ -89,9 +89,9 @@ void InterpreterServer::handleResponsePause(std::vector<ProcessCommRequestRespon
 }
 
 // Continue
-void InterpreterServer::handleResponseContinue(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+void InterpreterServer::handleResponseResume(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_CONTINUE, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_RESUME, task->response_data_ptr, sizeof(bool), send_buffer_size);
     if(task->request_data_ptr != NULL)
     {
         delete[] (char*)task->request_data_ptr;

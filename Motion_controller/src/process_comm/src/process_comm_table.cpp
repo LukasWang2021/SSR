@@ -1,8 +1,10 @@
 #include "controller_server.h"
+#include "interpreter_server.h"
+
 
 using namespace fst_base;
 
-void ControllerServer::initIpcTable()
+void ControllerServer::initRpcTable()
 {
     ControllerRpcService rpc_service;
     rpc_service = {CONTROLLER_SERVER_CMD_SET_PR_REG, &ControllerServer::handleRequestSetPrReg, &ControllerServer::handleResponseSetPrReg}; rpc_table_.push_back(rpc_service);
@@ -15,5 +17,19 @@ void ControllerServer::initIpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_GET_MR_REG, &ControllerServer::handleRequestGetMrReg, &ControllerServer::handleResponseGetMrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_SR_REG, &ControllerServer::handleRequestGetSrReg, &ControllerServer::handleResponseGetSrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerServer::handleRequestGetRReg, &ControllerServer::handleResponseGetRReg}; rpc_table_.push_back(rpc_service);
+}
+
+void InterpreterServer::initRpcTable()
+{
+    InterpreterRpcService rpc_service;
+    rpc_service = {INTERPRETER_SERVER_CMD_START, &InterpreterServer::handleRequestStart, &InterpreterServer::handleResponseStart}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_DEBUG, &InterpreterServer::handleRequestDebug, &InterpreterServer::handleResponseDebug}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_FORWARD, &InterpreterServer::handleRequestForward, &InterpreterServer::handleResponseForward}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_BACKWARD, &InterpreterServer::handleRequestBackward, &InterpreterServer::handleResponseBackward}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_JUMP, &InterpreterServer::handleRequestJump, &InterpreterServer::handleResponseJump}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_PAUSE, &InterpreterServer::handleRequestPause, &InterpreterServer::handleResponsePause}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_CONTINUE, &InterpreterServer::handleRequestContinue, &InterpreterServer::handleResponseContinue}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_ABORT, &InterpreterServer::handleRequestAbort, &InterpreterServer::handleResponseAbort}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_GET_NEXT_INSTRUCTION, &InterpreterServer::handleRequestGetNextInstruction, &InterpreterServer::handleResponseGetNextInstruction}; rpc_table_.push_back(rpc_service);
 }
 

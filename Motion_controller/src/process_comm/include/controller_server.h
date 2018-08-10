@@ -57,7 +57,7 @@ private:
     std::vector<ControllerRpcService> rpc_table_;
     
     ControllerServer();
-    void initIpcTable();
+    void initRpcTable();
     void handleRequestList();
     void handleResponseList();
     void pushTaskToRequestList(unsigned int cmd_id, void* request_data_ptr, void* response_data_ptr);

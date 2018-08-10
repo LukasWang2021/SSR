@@ -34,7 +34,7 @@ bool ControllerServer::init()
     recv_buffer_ptr_ = new uint8_t[param_ptr_->recv_buffer_size_]();
     send_buffer_ptr_ = new uint8_t[param_ptr_->send_buffer_size_]();
 
-    initIpcTable();
+    initRpcTable();
     return true;
 }
 

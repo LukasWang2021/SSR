@@ -36,43 +36,18 @@ include_directories(
   ${NANOPB_DIR}
 )
 
+aux_source_directory(src BASE_SRCS)
+aux_source_directory(src/protocal/ PROTOCAL_SRCS)
+aux_source_directory(src/message_type/ MSG_SRCS)
+aux_source_directory(src/request/ REQ_SRCS)
+aux_source_directory(src/response/ REP_SRCS)
+
 add_library(protos
-  src/protocal/comm.pb.c
-  src/protocal/publish.pb.c
-  src/protocal/request_header.pb.c
-  src/protocal/response_header.pb.c
-
-  src/message_type/base.pb.c
-  src/message_type/publish_topic.pb.c
-  src/message_type/publish_table.pb.c
-  src/message_type/rpc_table.pb.c
-  src/message_type/joint_list.pb.c
-  src/message_type/pose_euler.pb.c
-  src/message_type/register_mr.pb.c
-  src/message_type/register_pr.pb.c
-  src/message_type/register_r.pb.c
-  src/message_type/register_sr.pb.c
-  src/message_type/tool_frame.pb.c
-  src/message_type/user_frame.pb.c
-
-  src/request/request_base.pb.c
-  src/request/request_publish_topic.pb.c
-  src/request/request_register_pr.pb.c
-  src/request/request_register_r.pb.c
-  src/request/request_register_mr.pb.c
-  src/request/request_register_sr.pb.c
-  src/request/request_tool_frame.pb.c
-  src/request/request_user_frame.pb.c
-
-  src/response/response_base.pb.c
-  src/response/response_publish_table.pb.c
-  src/response/response_rpc_table.pb.c
-  src/response/response_register_pr.pb.c
-  src/response/response_register_r.pb.c
-  src/response/response_register_mr.pb.c
-  src/response/response_register_sr.pb.c
-  src/response/response_tool_frame.pb.c
-  src/response/response_user_frame.pb.c
+    ${BASE_SRCS}
+    ${PROTOCAL_SRCS}
+    ${MSG_SRCS}
+    ${REQ_SRCS}
+    ${REP_SRCS}
 )
 
 target_link_libraries(protos

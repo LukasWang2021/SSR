@@ -149,6 +149,80 @@ private:
     /********getPublishTable, RequestMessageType_Void**********/
     void handleRequest0x000147A5(int recv_bytes);
 
+    /********rpc/controller/addRegTopic, RequestMessageType_Topic**********/
+    void handleRequest0x0000BA13(int recv_bytes);
+
+
+    /********rpc/reg_manager/r/addReg, RequestMessageType_RRegData**********/
+    void handleRequest0x00004FF7(int recv_bytes);
+    /********rpc/reg_manager/r/deleteReg, RequestMessageType_Int32**********/
+    void handleRequest0x000012F7(int recv_bytes);
+    /********rpc/reg_manager/r/updateReg, RequestMessageType_RRegData**********/
+    void handleRequest0x00005757(int recv_bytes);
+    /********rpc/reg_manager/r/getReg, RequestMessageType_Int32**********/
+    void handleRequest0x0000EAB7(int recv_bytes);
+    /********rpc/reg_manager/r/moveReg, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0000C877(int recv_bytes);
+    /********rpc/reg_manager/r/getChangedList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0000A904(int recv_bytes);
+    /********rpc/reg_manager/r/getValidList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00008CE4(int recv_bytes);
+    /********rpc/reg_manager/mr/addReg, RequestMessageType_MrRegData**********/
+    void handleRequest0x000097E7(int recv_bytes);
+    /********rpc/reg_manager/mr/deleteReg, RequestMessageType_Int32**********/
+    void handleRequest0x0000E5D7(int recv_bytes);
+    /********rpc/reg_manager/mr/updateReg, RequestMessageType_MrRegData**********/
+    void handleRequest0x0000E9B7(int recv_bytes);
+    /********rpc/reg_manager/mr/getReg, RequestMessageType_Int32**********/
+    void handleRequest0x0000B507(int recv_bytes);
+    /********rpc/reg_manager/mr/moveReg, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00015BA7(int recv_bytes);
+    /********rpc/reg_manager/mr/getChangedList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00001774(int recv_bytes);
+    /********rpc/reg_manager/mr/getValidList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00015CF4(int recv_bytes);
+    /********rpc/reg_manager/sr/addReg, RequestMessageType_SrRegData**********/
+    void handleRequest0x000161E7(int recv_bytes);
+    /********rpc/reg_manager/sr/deleteReg, RequestMessageType_Int32**********/
+    void handleRequest0x0000B817(int recv_bytes);
+    /********rpc/reg_manager/sr/updateReg, RequestMessageType_SrRegData**********/
+    void handleRequest0x000119F7(int recv_bytes);
+    /********rpc/reg_manager/sr/getReg, RequestMessageType_Int32**********/
+    void handleRequest0x00017F07(int recv_bytes);
+    /********rpc/reg_manager/sr/moveReg, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00002127(int recv_bytes);
+    /********rpc/reg_manager/sr/getChangedList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00004834(int recv_bytes);
+    /********rpc/reg_manager/sr/getValidList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00009854(int recv_bytes);
+    /********rpc/reg_manager/pr/addReg, RequestMessageType_PrRegData**********/
+    void handleRequest0x000154E7(int recv_bytes);
+    /********rpc/reg_manager/pr/deleteReg, RequestMessageType_Int32**********/
+    void handleRequest0x00001097(int recv_bytes);
+    /********rpc/reg_manager/pr/updateReg, RequestMessageType_PrRegData**********/
+    void handleRequest0x00009EF7(int recv_bytes);
+    /********rpc/reg_manager/pr/getReg, RequestMessageType_Int32**********/
+    void handleRequest0x00017207(int recv_bytes);
+    /********rpc/reg_manager/pr/moveReg, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0000D7C7(int recv_bytes);
+    /********rpc/reg_manager/pr/getChangedList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0000B454(int recv_bytes);
+    /********rpc/reg_manager/pr/getValidList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00009354(int recv_bytes);
+    /********rpc/reg_manager/hr/addReg, RequestMessageType_HrRegData**********/
+    void handleRequest0x00016CE7(int recv_bytes);
+    /********rpc/reg_manager/hr/deleteReg, RequestMessageType_Int32**********/
+    void handleRequest0x00003D17(int recv_bytes);
+    /********rpc/reg_manager/hr/updateReg, RequestMessageType_HrRegData**********/
+    void handleRequest0x0000CB77(int recv_bytes);
+    /********rpc/reg_manager/hr/getReg, RequestMessageType_Int32**********/
+    void handleRequest0x00000367(int recv_bytes);
+    /********rpc/reg_manager/hr/moveReg, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00014A87(int recv_bytes);
+    /********rpc/reg_manager/hr/getChangedList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00012974(int recv_bytes);
+    /********rpc/reg_manager/hr/getValidList, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00006B54(int recv_bytes);
 
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
@@ -207,6 +281,85 @@ private:
     void handleResponse0x00004324(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********coordinate_manager/getAllValidUserCoordSummaryInfo, ResponseMessageType_UserSummaryList**********/
     void handleResponse0x0001838F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/controller/addRegTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x0000BA13(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+
+    /********rpc/reg_manager/r/addReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00004FF7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/r/deleteReg, ResponseMessageType_Bool**********/
+    void handleResponse0x000012F7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/r/updateReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00005757(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/r/getReg, ResponseMessageType_Bool_RRegData**********/
+    void handleResponse0x0000EAB7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/r/moveReg, ResponseMessageType_Bool**********/
+    void handleResponse0x0000C877(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/r/getChangedList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x0000A904(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/r/getValidList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00008CE4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/reg_manager/mr/addReg, ResponseMessageType_Bool**********/
+    void handleResponse0x000097E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/mr/deleteReg, ResponseMessageType_Bool**********/
+    void handleResponse0x0000E5D7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/mr/updateReg, ResponseMessageType_Bool**********/
+    void handleResponse0x0000E9B7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/mr/getReg, ResponseMessageType_Bool_MrRegData**********/
+    void handleResponse0x0000B507(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/mr/moveReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00015BA7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/mr/getChangedList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00001774(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/mr/getValidList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00015CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/reg_manager/sr/addReg, ResponseMessageType_Bool**********/
+    void handleResponse0x000161E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/sr/deleteReg, ResponseMessageType_Bool**********/
+    void handleResponse0x0000B817(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/sr/updateReg, ResponseMessageType_Bool**********/
+    void handleResponse0x000119F7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/sr/getReg, ResponseMessageType_Bool_SrRegData**********/
+    void handleResponse0x00017F07(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/sr/moveReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00002127(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/sr/getChangedList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00004834(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/sr/getValidList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00009854(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/reg_manager/pr/addReg, ResponseMessageType_Bool**********/
+    void handleResponse0x000154E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/deleteReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00001097(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/updateReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00009EF7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getReg, ResponseMessageType_Bool_PrRegData**********/
+    void handleResponse0x00017207(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/moveReg, ResponseMessageType_Bool**********/
+    void handleResponse0x0000D7C7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getChangedList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x0000B454(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/pr/getValidList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00009354(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/reg_manager/hr/addReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00016CE7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/hr/deleteReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00003D17(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/hr/updateReg, ResponseMessageType_Bool**********/
+    void handleResponse0x0000CB77(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/hr/getReg, ResponseMessageType_Bool_HrRegData**********/
+    void handleResponse0x00000367(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/hr/moveReg, ResponseMessageType_Bool**********/
+    void handleResponse0x00014A87(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/hr/getChangedList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00012974(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/reg_manager/hr/getValidList, ResponseMessageType_BaseRegSummaryList**********/
+    void handleResponse0x00006B54(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********UserOpMode, MessageType_Int32**********/  
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);

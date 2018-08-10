@@ -307,7 +307,7 @@ void TpComm::pushTaskToRequestList(unsigned int hash, void* request_data_ptr, vo
 
 void TpComm::handleResponseList()
 {
-    int send_buffer_size = 1024;
+    int send_buffer_size = 0;
     std::vector<TpRequestResponse>::iterator it;
     HandleResponseFuncPtr func_ptr;
     response_list_mutex_.lock();
@@ -434,7 +434,7 @@ void TpComm::initResponsePackage(void* request_data_ptr, void* response_data_ptr
     // it is tricky here that all request & response have the same package header and property, no matter what data they have
     ((ResponseMessageType_Int32*)response_data_ptr)->header.time_stamp = ((RequestMessageType_Int32*)request_data_ptr)->header.time_stamp;
     ((ResponseMessageType_Int32*)response_data_ptr)->header.package_left = package_left;
-    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = 1;
+    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = 0;
     ((ResponseMessageType_Int32*)response_data_ptr)->property.authority = ((RequestMessageType_Int32*)request_data_ptr)->property.authority;
 }
 
@@ -481,14 +481,12 @@ bool TpComm::encodeResponsePackage(unsigned int hash, const pb_field_t fields[],
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer_ptr_ + HASH_BYTE_SIZE, send_buffer_size_ - HASH_BYTE_SIZE);
     if(!pb_encode(&stream, fields, response_data_ptr))
     {
-        FST_INFO("Here : encodeResponsePackage send_buffer_size_ = %d", send_buffer_size_);
         FST_ERROR("encodeResponsePackage: encode data failed");
         send_buffer_size = 0;
         return false;
     }
     send_buffer_size = stream.bytes_written + HASH_BYTE_SIZE;
     FST_INFO("Here : encodeResponsePackage send_buffer_size real = %d", send_buffer_size);
-    FST_INFO("Here : encodeResponsePackage , data size = %d, send_buffer_size_  = %d", stream.bytes_written,  send_buffer_size_);
     return true;
 }
 
@@ -538,7 +536,6 @@ ResponseMessageType_PublishTable TpComm::getResponseSucceedPublishTable()
        element_index++;
     }
 
-    FST_ERROR("Here : publish_element_table_ element count is %d", element_index);
     response_data_ptr.data.element_count = element_index;
 
     return response_data_ptr;

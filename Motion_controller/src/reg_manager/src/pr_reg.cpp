@@ -51,35 +51,51 @@ bool PrReg::addReg(void* data_ptr)
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
-    if(!isAddInputValid(reg_ptr->id)
-        || reg_ptr->value.joint_pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[0] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[1] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[1] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[2] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[2] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[3] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[3] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[4] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[4] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[5] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[5] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[6] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[6] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[7] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[8] < -param_ptr_->pr_value_limit_)
+    if(!isAddInputValid(reg_ptr->id))
     {
         return false;
     }
+
+    if(reg_ptr->value.pos_type != PR_REG_POS_TYPE_JOINT
+        && reg_ptr->value.pos_type != PR_REG_POS_TYPE_CARTESIAN)
+    {
+        return false;
+    }
+        
+    if(reg_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[1] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[1] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[2] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[2] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[3] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[3] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[4] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[4] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[5] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[5] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[6] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[6] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
+    {
+        return false;
+    }
+    
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
         return false;
     }
+    data_list_[reg_data.id].pos_type = reg_ptr->value.pos_type;
     data_list_[reg_data.id].group_id = reg_ptr->value.group_id;
-    data_list_[reg_data.id].joint_pos[0] = reg_ptr->value.joint_pos[0];
-    data_list_[reg_data.id].joint_pos[1] = reg_ptr->value.joint_pos[1];
-    data_list_[reg_data.id].joint_pos[2] = reg_ptr->value.joint_pos[2];
-    data_list_[reg_data.id].joint_pos[3] = reg_ptr->value.joint_pos[3];
-    data_list_[reg_data.id].joint_pos[4] = reg_ptr->value.joint_pos[4];
-    data_list_[reg_data.id].joint_pos[5] = reg_ptr->value.joint_pos[5];
-    data_list_[reg_data.id].joint_pos[6] = reg_ptr->value.joint_pos[6];
-    data_list_[reg_data.id].joint_pos[7] = reg_ptr->value.joint_pos[7];
-    data_list_[reg_data.id].joint_pos[8] = reg_ptr->value.joint_pos[8];
+    data_list_[reg_data.id].pos[0] = reg_ptr->value.pos[0];
+    data_list_[reg_data.id].pos[1] = reg_ptr->value.pos[1];
+    data_list_[reg_data.id].pos[2] = reg_ptr->value.pos[2];
+    data_list_[reg_data.id].pos[3] = reg_ptr->value.pos[3];
+    data_list_[reg_data.id].pos[4] = reg_ptr->value.pos[4];
+    data_list_[reg_data.id].pos[5] = reg_ptr->value.pos[5];
+    data_list_[reg_data.id].pos[6] = reg_ptr->value.pos[6];
+    data_list_[reg_data.id].pos[7] = reg_ptr->value.pos[7];
+    data_list_[reg_data.id].pos[8] = reg_ptr->value.pos[8];
+    data_list_[reg_data.id].posture[0] = reg_ptr->value.posture[0];
+    data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
+    data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
+    data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }
 
@@ -96,16 +112,21 @@ bool PrReg::deleteReg(int id)
     {
         return false;
     }
+    data_list_[id].pos_type = PR_REG_POS_TYPE_JOINT;
     data_list_[id].group_id = -1;
-    data_list_[id].joint_pos[0] = 0;
-    data_list_[id].joint_pos[1] = 0;
-    data_list_[id].joint_pos[2] = 0;
-    data_list_[id].joint_pos[3] = 0;
-    data_list_[id].joint_pos[4] = 0;
-    data_list_[id].joint_pos[5] = 0;
-    data_list_[id].joint_pos[6] = 0;
-    data_list_[id].joint_pos[7] = 0;
-    data_list_[id].joint_pos[8] = 0;
+    data_list_[id].pos[0] = 0;
+    data_list_[id].pos[1] = 0;
+    data_list_[id].pos[2] = 0;
+    data_list_[id].pos[3] = 0;
+    data_list_[id].pos[4] = 0;
+    data_list_[id].pos[5] = 0;
+    data_list_[id].pos[6] = 0;
+    data_list_[id].pos[7] = 0;
+    data_list_[id].pos[8] = 0;
+    data_list_[id].posture[0] = false;
+    data_list_[id].posture[1] = false;
+    data_list_[id].posture[2] = false;
+    data_list_[id].posture[3] = false;
     return writeRegDataToYaml(reg_data, data_list_[id]);
 }
 
@@ -125,16 +146,21 @@ bool PrReg::getReg(int id, void* data_ptr)
     reg_ptr->id = reg_data.id;
     reg_ptr->name = reg_data.name;
     reg_ptr->comment = reg_data.comment;
+    reg_ptr->value.pos_type = data_list_[id].pos_type;
     reg_ptr->value.group_id = data_list_[id].group_id;
-    reg_ptr->value.joint_pos[0] = data_list_[id].joint_pos[0];
-    reg_ptr->value.joint_pos[1] = data_list_[id].joint_pos[1];
-    reg_ptr->value.joint_pos[2] = data_list_[id].joint_pos[2];
-    reg_ptr->value.joint_pos[3] = data_list_[id].joint_pos[3];
-    reg_ptr->value.joint_pos[4] = data_list_[id].joint_pos[4];
-    reg_ptr->value.joint_pos[5] = data_list_[id].joint_pos[5];
-    reg_ptr->value.joint_pos[6] = data_list_[id].joint_pos[6];
-    reg_ptr->value.joint_pos[7] = data_list_[id].joint_pos[7];
-    reg_ptr->value.joint_pos[8] = data_list_[id].joint_pos[8];
+    reg_ptr->value.pos[0] = data_list_[id].pos[0];
+    reg_ptr->value.pos[1] = data_list_[id].pos[1];
+    reg_ptr->value.pos[2] = data_list_[id].pos[2];
+    reg_ptr->value.pos[3] = data_list_[id].pos[3];
+    reg_ptr->value.pos[4] = data_list_[id].pos[4];
+    reg_ptr->value.pos[5] = data_list_[id].pos[5];
+    reg_ptr->value.pos[6] = data_list_[id].pos[6];
+    reg_ptr->value.pos[7] = data_list_[id].pos[7];
+    reg_ptr->value.pos[8] = data_list_[id].pos[8];
+    reg_ptr->value.posture[0] = data_list_[id].posture[0];
+    reg_ptr->value.posture[1] = data_list_[id].posture[1];
+    reg_ptr->value.posture[2] = data_list_[id].posture[2];
+    reg_ptr->value.posture[3] = data_list_[id].posture[3];
     return true;
 }
 
@@ -146,16 +172,26 @@ bool PrReg::setReg(void* data_ptr)
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
-    if(!isSetInputValid(reg_ptr->id)
-        || reg_ptr->value.joint_pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[0] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[1] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[1] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[2] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[2] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[3] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[3] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[4] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[4] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[5] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[5] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[6] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[6] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[7] < -param_ptr_->pr_value_limit_
-        || reg_ptr->value.joint_pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.joint_pos[8] < -param_ptr_->pr_value_limit_)
+    if(!isSetInputValid(reg_ptr->id))
+    {
+        return false;
+    }
+    
+    if(reg_ptr->value.pos_type != PR_REG_POS_TYPE_JOINT
+        && reg_ptr->value.pos_type != PR_REG_POS_TYPE_CARTESIAN)
+    {
+        return false;
+    }
+        
+    if(reg_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[1] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[1] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[2] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[2] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[3] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[3] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[4] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[4] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[5] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[5] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[6] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[6] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
+        || reg_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
         return false;
     }
@@ -166,16 +202,21 @@ bool PrReg::setReg(void* data_ptr)
     {
         return false;
     }
+    data_list_[reg_data.id].pos_type = reg_ptr->value.pos_type;
     data_list_[reg_data.id].group_id = reg_ptr->value.group_id;
-    data_list_[reg_data.id].joint_pos[0] = reg_ptr->value.joint_pos[0];
-    data_list_[reg_data.id].joint_pos[1] = reg_ptr->value.joint_pos[1];
-    data_list_[reg_data.id].joint_pos[2] = reg_ptr->value.joint_pos[2];
-    data_list_[reg_data.id].joint_pos[3] = reg_ptr->value.joint_pos[3];
-    data_list_[reg_data.id].joint_pos[4] = reg_ptr->value.joint_pos[4];
-    data_list_[reg_data.id].joint_pos[5] = reg_ptr->value.joint_pos[5];
-    data_list_[reg_data.id].joint_pos[6] = reg_ptr->value.joint_pos[6];
-    data_list_[reg_data.id].joint_pos[7] = reg_ptr->value.joint_pos[7];
-    data_list_[reg_data.id].joint_pos[8] = reg_ptr->value.joint_pos[8];    
+    data_list_[reg_data.id].pos[0] = reg_ptr->value.pos[0];
+    data_list_[reg_data.id].pos[1] = reg_ptr->value.pos[1];
+    data_list_[reg_data.id].pos[2] = reg_ptr->value.pos[2];
+    data_list_[reg_data.id].pos[3] = reg_ptr->value.pos[3];
+    data_list_[reg_data.id].pos[4] = reg_ptr->value.pos[4];
+    data_list_[reg_data.id].pos[5] = reg_ptr->value.pos[5];
+    data_list_[reg_data.id].pos[6] = reg_ptr->value.pos[6];
+    data_list_[reg_data.id].pos[7] = reg_ptr->value.pos[7];
+    data_list_[reg_data.id].pos[8] = reg_ptr->value.pos[8];    
+    data_list_[reg_data.id].posture[0] = reg_ptr->value.posture[0];
+    data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
+    data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
+    data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }
 
@@ -231,16 +272,21 @@ bool PrReg::createYaml()
         yaml_help_.setParam(reg_path + "/is_valid", false);
         yaml_help_.setParam(reg_path + "/name", std::string("default"));
         yaml_help_.setParam(reg_path + "/comment", std::string("default"));
+        yaml_help_.setParam(reg_path + "/pos_type", PR_REG_POS_TYPE_JOINT);
         yaml_help_.setParam(reg_path + "/group_id", -1);
-        yaml_help_.setParam(reg_path + "/joint_pos1", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos2", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos3", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos4", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos5", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos6", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos7", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos8", 0);
-        yaml_help_.setParam(reg_path + "/joint_pos9", 0);
+        yaml_help_.setParam(reg_path + "/pos1", 0);
+        yaml_help_.setParam(reg_path + "/pos2", 0);
+        yaml_help_.setParam(reg_path + "/pos3", 0);
+        yaml_help_.setParam(reg_path + "/pos4", 0);
+        yaml_help_.setParam(reg_path + "/pos5", 0);
+        yaml_help_.setParam(reg_path + "/pos6", 0);
+        yaml_help_.setParam(reg_path + "/pos7", 0);
+        yaml_help_.setParam(reg_path + "/pos8", 0);
+        yaml_help_.setParam(reg_path + "/pos9", 0);
+        yaml_help_.setParam(reg_path + "/posture1", false);
+        yaml_help_.setParam(reg_path + "/posture2", false);
+        yaml_help_.setParam(reg_path + "/posture3", false);
+        yaml_help_.setParam(reg_path + "/posture4", false);
     }
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }
@@ -262,16 +308,21 @@ bool PrReg::readAllRegDataFromYaml()
         {
             return false;
         }
+        yaml_help_.getParam(reg_path + "/pos_type", data_list_[i].pos_type);
         yaml_help_.getParam(reg_path + "/group_id", data_list_[i].group_id);
-        yaml_help_.getParam(reg_path + "/joint_pos1", data_list_[i].joint_pos[0]);
-        yaml_help_.getParam(reg_path + "/joint_pos2", data_list_[i].joint_pos[1]);
-        yaml_help_.getParam(reg_path + "/joint_pos3", data_list_[i].joint_pos[2]);
-        yaml_help_.getParam(reg_path + "/joint_pos4", data_list_[i].joint_pos[3]);
-        yaml_help_.getParam(reg_path + "/joint_pos5", data_list_[i].joint_pos[4]);
-        yaml_help_.getParam(reg_path + "/joint_pos6", data_list_[i].joint_pos[5]);
-        yaml_help_.getParam(reg_path + "/joint_pos7", data_list_[i].joint_pos[6]);
-        yaml_help_.getParam(reg_path + "/joint_pos8", data_list_[i].joint_pos[7]);
-        yaml_help_.getParam(reg_path + "/joint_pos9", data_list_[i].joint_pos[8]);
+        yaml_help_.getParam(reg_path + "/pos1", data_list_[i].pos[0]);
+        yaml_help_.getParam(reg_path + "/pos2", data_list_[i].pos[1]);
+        yaml_help_.getParam(reg_path + "/pos3", data_list_[i].pos[2]);
+        yaml_help_.getParam(reg_path + "/pos4", data_list_[i].pos[3]);
+        yaml_help_.getParam(reg_path + "/pos5", data_list_[i].pos[4]);
+        yaml_help_.getParam(reg_path + "/pos6", data_list_[i].pos[5]);
+        yaml_help_.getParam(reg_path + "/pos7", data_list_[i].pos[6]);
+        yaml_help_.getParam(reg_path + "/pos8", data_list_[i].pos[7]);
+        yaml_help_.getParam(reg_path + "/pos9", data_list_[i].pos[8]);
+        yaml_help_.getParam(reg_path + "/posture1", data_list_[i].posture[0]);
+        yaml_help_.getParam(reg_path + "/posture2", data_list_[i].posture[1]);
+        yaml_help_.getParam(reg_path + "/posture3", data_list_[i].posture[2]);
+        yaml_help_.getParam(reg_path + "/posture4", data_list_[i].posture[3]);
     }
     return true;
 }
@@ -283,16 +334,21 @@ bool PrReg::writeRegDataToYaml(const BaseRegData& base_data, const PrValue& data
     yaml_help_.setParam(reg_path + "/is_valid", base_data.is_valid);
     yaml_help_.setParam(reg_path + "/name", base_data.name);
     yaml_help_.setParam(reg_path + "/comment", base_data.comment);
+    yaml_help_.setParam(reg_path + "/pos_type", data.pos_type);
     yaml_help_.setParam(reg_path + "/group_id", data.group_id);
-    yaml_help_.setParam(reg_path + "/joint_pos1", data.joint_pos[0]);
-    yaml_help_.setParam(reg_path + "/joint_pos2", data.joint_pos[1]);
-    yaml_help_.setParam(reg_path + "/joint_pos3", data.joint_pos[2]);
-    yaml_help_.setParam(reg_path + "/joint_pos4", data.joint_pos[3]);
-    yaml_help_.setParam(reg_path + "/joint_pos5", data.joint_pos[4]);
-    yaml_help_.setParam(reg_path + "/joint_pos6", data.joint_pos[5]);
-    yaml_help_.setParam(reg_path + "/joint_pos7", data.joint_pos[6]);
-    yaml_help_.setParam(reg_path + "/joint_pos8", data.joint_pos[7]);
-    yaml_help_.setParam(reg_path + "/joint_pos9", data.joint_pos[8]);
+    yaml_help_.setParam(reg_path + "/pos1", data.pos[0]);
+    yaml_help_.setParam(reg_path + "/pos2", data.pos[1]);
+    yaml_help_.setParam(reg_path + "/pos3", data.pos[2]);
+    yaml_help_.setParam(reg_path + "/pos4", data.pos[3]);
+    yaml_help_.setParam(reg_path + "/pos5", data.pos[4]);
+    yaml_help_.setParam(reg_path + "/pos6", data.pos[5]);
+    yaml_help_.setParam(reg_path + "/pos7", data.pos[6]);
+    yaml_help_.setParam(reg_path + "/pos8", data.pos[7]);
+    yaml_help_.setParam(reg_path + "/pos9", data.pos[8]);
+    yaml_help_.setParam(reg_path + "/posture1", data.posture[0]);
+    yaml_help_.setParam(reg_path + "/posture2", data.posture[1]);
+    yaml_help_.setParam(reg_path + "/posture3", data.posture[2]);
+    yaml_help_.setParam(reg_path + "/posture4", data.posture[3]);
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }
 

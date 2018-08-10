@@ -7,9 +7,17 @@
 
 namespace fst_ctrl
 {
+typedef enum
+{
+    PR_REG_POS_TYPE_JOINT = 0,
+    PR_REG_POS_TYPE_CARTESIAN = 1,
+}PrRegPosType;
+
 typedef struct
 {
-    double joint_pos[9];        // support up to 9 axes per control group
+    int pos_type;
+    double pos[9];        // support up to 9 axes per control group
+    bool posture[4];
     int group_id;
 }PrValue;
 

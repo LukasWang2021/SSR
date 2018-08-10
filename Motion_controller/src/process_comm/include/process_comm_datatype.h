@@ -1,6 +1,8 @@
 #ifndef PROCESS_COMM_DATATYPE_H
 #define PROCESS_COMM_DATATYPE_H
 
+#include "interpreter_common.h"
+
 namespace fst_base
 {
 
@@ -37,6 +39,20 @@ typedef struct
     void* request_data_ptr;
     void* response_data_ptr;
 }ProcessCommRequestResponse;
+
+typedef struct
+{
+    int interval;   // ms
+    InterpreterPublish* data_ptr;
+    struct timeval last_publish_time;
+}ProcessCommPublish;
+
+typedef struct
+{
+    int event_type;
+    // if multi data type exist, change data to union 
+    unsigned long long int data;
+}ProcessCommEvent;
 
 
 }

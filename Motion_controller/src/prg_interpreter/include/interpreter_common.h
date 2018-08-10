@@ -368,5 +368,11 @@ typedef struct _IODeviceInfoShm
     unsigned int output;
 } IODeviceInfoShm;
 
+typedef struct
+{
+    int status;
+    int current_line_num;
+}InterpreterPublish;
+
 
 #endif

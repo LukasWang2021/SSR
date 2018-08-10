@@ -8,6 +8,7 @@
 #include <nanomsg/nn.h>
 #include <mutex>
 #include <vector>
+#include "interpreter_common.h"
 
 namespace fst_base
 {
@@ -21,9 +22,13 @@ public:
     bool isExit();
     bool open();
     void close();
+    void runThreadFunc();
+    
     std::vector<ProcessCommRequestResponse> popTaskFromRequestList();
     void pushTaskToResponseList(ProcessCommRequestResponse& package);
-    void runThreadFunc();
+    bool addPublishTask(int interval, InterpreterPublish* data_ptr); // interval unit is ms
+    void removePublishTask();
+    void sendEvent(int event_type, void* data_ptr);
     
 private:
     fst_log::Logger* log_ptr_;
@@ -35,17 +40,25 @@ private:
     bool is_exit_;
     ThreadHelp thread_;
     int req_resp_socket_;
+    int publish_socket_;
+    int event_socket_;
     int req_resp_endpoint_id_;
-    struct nn_pollfd poll_fd_;
+    int publish_endpoint_id_;
+    int event_endpoint_id_;
+    struct nn_pollfd poll_req_res_fd_;
+    struct nn_pollfd poll_event_fd_;
     uint8_t* recv_buffer_ptr_;
     uint8_t* send_buffer_ptr_;
 
     // runtime list & list mutex
     std::mutex request_list_mutex_;
     std::mutex response_list_mutex_;
+    std::mutex publish_list_mutex_;
     std::mutex event_list_mutex_;
     std::vector<ProcessCommRequestResponse>  request_list_;
     std::vector<ProcessCommRequestResponse>  response_list_;
+    std::vector<ProcessCommPublish> publish_list_;
+    std::vector<ProcessCommEvent> event_list_;
 
     // runtime table    
     typedef struct
@@ -60,10 +73,14 @@ private:
     void initRpcTable();
     void handleRequestList();
     void handleResponseList();
+    void handlePublishList();
+    void handleEventList();
     void pushTaskToRequestList(unsigned int cmd_id, void* request_data_ptr, void* response_data_ptr);
     void copyRecvBufferToRequestData(void* request_data_ptr, int size);
     void copyResponseDataToSendBuffer(InterpreterServerCmd cmd_id, void* response_data_ptr, 
                                                 int response_data_size, int& send_buffer_size);
+    long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
+    bool checkPublishCondition(long time_elapsed, int interval);
 
     // rpc request handler
     void handleRequestStart();

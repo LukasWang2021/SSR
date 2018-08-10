@@ -8,8 +8,15 @@ using namespace fst_base;
 ProcessCommParam::ProcessCommParam():
     file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(fst_log::MSG_LEVEL_ERROR),
+    controller_server_thread_priority_(0),
     controller_server_cycle_time_(0),
     i2c_req_res_ip_(""),
+    interpreter_server_thread_priority_(0),
+    interpreter_server_cycle_time_(0),
+    c2i_req_res_ip_(""),
+    c2i_pub_ip_(""),
+    c2i_event_ip_(""),
+    interpreter_server_event_buffer_size_(0),
     recv_buffer_size_(0),
     send_buffer_size_(0)
     
@@ -34,6 +41,7 @@ bool ProcessCommParam::loadParam()
         || !yaml_help_.getParam("c2i_req_res_ip", c2i_req_res_ip_)
         || !yaml_help_.getParam("c2i_pub_ip", c2i_pub_ip_)
         || !yaml_help_.getParam("c2i_event_ip", c2i_event_ip_)
+        || !yaml_help_.getParam("interpreter_server_event_buffer_size", interpreter_server_event_buffer_size_)
         || !yaml_help_.getParam("recv_buffer_size", recv_buffer_size_)
         || !yaml_help_.getParam("send_buffer_size", send_buffer_size_))
     {
@@ -56,6 +64,7 @@ bool ProcessCommParam::saveParam()
         || !yaml_help_.setParam("c2i_req_res_ip", c2i_req_res_ip_)
         || !yaml_help_.setParam("c2i_pub_ip", c2i_pub_ip_)
         || !yaml_help_.setParam("c2i_event_ip", c2i_event_ip_)
+        || !yaml_help_.setParam("interpreter_server_event_buffer_size", interpreter_server_event_buffer_size_)
         || !yaml_help_.setParam("recv_buffer_size", recv_buffer_size_)
         || !yaml_help_.setParam("send_buffer_size", send_buffer_size_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))

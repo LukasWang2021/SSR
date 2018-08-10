@@ -11,7 +11,8 @@ ControllerRpc::ControllerRpc():
     tp_comm_ptr_(NULL),
     state_machine_ptr_(NULL),
     tool_manager_ptr_(NULL),
-    coordinate_manager_ptr_(NULL)
+    coordinate_manager_ptr_(NULL),
+    reg_manager_ptr_(NULL)
 {
 
 }

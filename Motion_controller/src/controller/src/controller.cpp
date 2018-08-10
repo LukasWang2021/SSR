@@ -13,7 +13,8 @@ Controller* Controller::instance_ = NULL;
 Controller::Controller():
     is_exit_(false),
     log_ptr_(NULL),
-    param_ptr_(NULL)
+    param_ptr_(NULL),
+    process_comm_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ControllerParam();
@@ -48,7 +49,7 @@ bool Controller::init()
     virtual_core1_.init(log_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
     rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &tool_manager_, &coordinate_manager_, &reg_manager_);
-
+    
     if(!tool_manager_.init())
     {
         return false;
@@ -65,6 +66,14 @@ bool Controller::init()
     }
     
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
+    {
+        return false;
+    }
+
+    process_comm_ptr_ = ProcessComm::getInstance();
+    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
+    if(!process_comm_ptr_->getControllerServerPtr()->init()
+        || !process_comm_ptr_->getControllerServerPtr()->open())
     {
         return false;
     }
@@ -87,6 +96,7 @@ void Controller::runRoutineThreadFunc()
 {
     state_machine_.processStateMachine();
     rpc_.processRpc();
+    ipc_.processIpc();
 }
 
 

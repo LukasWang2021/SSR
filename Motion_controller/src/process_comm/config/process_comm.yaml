@@ -1,0 +1,12 @@
+log_level: 1
+controller_server_thread_priority: 50
+controller_server_cycle_time: 100000
+i2c_req_res_ip: ipc:///tmp/i2c_req_res.ipc
+interpreter_server_thread_priority: 50 
+interpreter_server_cycle_time: 100000
+c2i_req_res_ip: ipc:///tmp/c2i_req_res.ipc
+c2i_pub_ip: ipc:///tmp/c2i_pub.ipc
+c2i_event_ip: ipc:///tmp/c2i_event.ipc 
+recv_buffer_size: 512
+send_buffer_size: 512
+#END

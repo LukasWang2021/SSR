@@ -11,6 +11,8 @@
 #include "tool_manager.h"
 #include "coordinate_manager.h"
 #include "reg_manager.h"
+#include "process_comm.h"
+#include "controller_ipc.h"
 // for test only
 #include "virtual_core1.h"
 
@@ -36,9 +38,11 @@ private:
     ControllerSm state_machine_;
     TpComm tp_comm_;
     ControllerRpc rpc_;
+    ControllerIpc ipc_;
     ToolManager tool_manager_;
     CoordinateManager coordinate_manager_;
     RegManager reg_manager_;
+    fst_base::ProcessComm* process_comm_ptr_;
     VirtualCore1 virtual_core1_; // for test only
     
     // thread related

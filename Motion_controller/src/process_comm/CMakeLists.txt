@@ -18,9 +18,12 @@ endif()
 
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
+    ${NANOPB_DIR}
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/reg_manager/include 
+    ${depend_PATH_INC}/thread_help/include 
 )
 
 catkin_package(
@@ -46,6 +49,7 @@ add_library(process_comm
 
 target_link_libraries(process_comm 
     ${catkin_LIBRARIES}
+    thread_help 
 )
 
 install(TARGETS process_comm 

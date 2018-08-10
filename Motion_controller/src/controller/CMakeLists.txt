@@ -49,6 +49,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/tool_manager/include 
     ${depend_PATH_INC}/coordinate_manager/include 
     ${depend_PATH_INC}/reg_manager/include 
+    ${depend_PATH_INC}/process_comm/include 
 )
 
 catkin_package(
@@ -90,6 +91,7 @@ target_link_libraries(controller
     tool_manager 
     coordinate_manager 
     reg_manager 
+    process_comm 
 )
 
 #############

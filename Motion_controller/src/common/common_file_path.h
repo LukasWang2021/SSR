@@ -13,7 +13,7 @@
 #define TOOL_DIR                    "share/runtime/tool/"
 #define COORD_DIR                   "share/runtime/coord/"
 #define REG_DIR                     "share/runtime/reg/"
-
+#define DEVICE_DIR                  "share/runtime/device/"
 
 
 

@@ -7,6 +7,7 @@
 #include "base_device.h"
 #include <string>
 #include <vector>
+#include "xml_help.h"
 
 
 namespace fst_hal
@@ -55,24 +56,28 @@ typedef struct
     int dummy;
 }VirtualSafetyConfigDetail;
 
+// it is so bad to apply struct instead of union here,
+// the only merit that struct hold is avoid compilation failure.
+// vector<union> is the root of the problem.
+typedef struct
+{
+    FstAxisConfigDetail fst_axis;
+    FstIoConfigDetail fst_io;
+    FstSafetyConfigDetail fst_safety;
+    FstFstAnybusConfigDetail any_bus;
+    NormalConfigDetail normal;
+    VirtualAxisConfigDetail virtual_axis;
+    VirtualIoConfigDetail virtual_io;
+    VirtualSafetyConfigDetail virtual_safety;
+}DeviceConfigDetail;
+
 typedef struct
 {
     int device_index;
     int address;
     DeviceType device_type;
-    /*union
-    {
-        FstAxisConfigDetail fst_axis;
-        FstIoConfigDetail fst_io;
-        FstSafetyConfigDetail fst_safety;
-        FstFstAnybusConfigDetail any_bus;
-        NormalConfigDetail normal;
-        VirtualAxisConfigDetail virtual_axis;
-        VirtualIoConfigDetail virtual_io;
-        VirtualSafetyConfigDetail virtual_safety;
-    }DeviceConfigDetail;*/    
+    DeviceConfigDetail detail;
 }DeviceConfig;
-
 
 class DeviceXml
 {
@@ -83,14 +88,17 @@ public:
     bool loadDeviceConfig();
     bool saveDeviceConfig();
 
-    std::vector<DeviceConfig> device_config_;
+    std::vector<DeviceConfig> device_config_list_;
 private:
     fst_log::Logger* log_ptr_;
     DeviceManagerParam* param_ptr_;
+    fst_base::XmlHelp xml_help_;
+    std::string config_file_path_;
     
     
     DeviceXml();
-
+    bool createDeviceConfig(const xmlDocPtr doc_ptr, const xmlNodePtr slave_node_ptr, DeviceConfig& slave_data);
+    DeviceType convertDeviceTypeStrToEnum(std::string device_type_str);
 };
 
 }

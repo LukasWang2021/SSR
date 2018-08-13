@@ -42,7 +42,7 @@ bool DeviceManager::init()
 
     std::vector<DeviceConfig>::iterator it;
     BaseDevice* device_ptr;
-    for(it = device_xml_ptr_->device_config_.begin(); it != device_xml_ptr_->device_config_.end(); ++it)
+    for(it = device_xml_ptr_->device_config_list_.begin(); it != device_xml_ptr_->device_config_list_.end(); ++it)
     {
         switch(it->device_type)
         {
@@ -62,8 +62,7 @@ bool DeviceManager::init()
         {
             return false;
         }
-
-        
+        device_map_[it->device_index] = device_ptr;
     }
     
     return true;

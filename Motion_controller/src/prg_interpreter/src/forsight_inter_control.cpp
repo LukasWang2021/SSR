@@ -7,14 +7,14 @@
 #include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
 #ifndef WIN32
-#include "io_interface.h"
+// #include "io_interface.h"
 #include "error_code.h"
 #endif
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 #ifndef WIN32
-#include "reg_manager/reg_manager_interface.h"
-using namespace fst_reg ;
+#include "reg_manager/reg_manager_interface_wrapper.h"
+using namespace fst_ctrl ;
 #endif
 #include "reg_manager/forsight_registers_manager.h"
 
@@ -40,7 +40,7 @@ InterpreterState prgm_state = IDLE_R;
 static IntprtStatus intprt_status;
 static Instruction instruction;
 static CtrlStatus ctrl_status;
-static InterpreterControl intprt_ctrl;
+// static InterpreterControl intprt_ctrl;
 
 InterpreterCommand g_lastcmd;
 
@@ -443,7 +443,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     return true;
 }
 
-bool getIntprtCtrl()
+bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
 {
     bool iRet = tryRead(SHM_CTRL_CMD, 0, (void*)&intprt_ctrl, sizeof(intprt_ctrl));
 	if(g_lastcmd != intprt_ctrl.cmd)
@@ -463,7 +463,7 @@ void startFile(struct thread_control_block * objThdCtrlBlockPtr,
 	objThdCtrlBlockPtr->iThreadIdx = idx ;
 	append_program_prop_mapper(objThdCtrlBlockPtr, proj_name);
 	basic_thread_create(idx, objThdCtrlBlockPtr);
-	intprt_ctrl.cmd = LOAD ;
+	// intprt_ctrl.cmd = LOAD ;
 }
 
 bool deal_auto_mode(AutoMode autoMode)
@@ -620,13 +620,11 @@ void waitInterpreterStateToPaused(
 	}
 }	
 
-void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
+void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_block * objThdCtrlBlockPtr)
 {
 	InterpreterState interpreterState  = IDLE_R;
 #ifdef WIN32
 	__int64 result = 0 ;
-#else
-	U64 result = SUCCESS ;
 #endif
 
 	RegMap reg ;
@@ -1007,7 +1005,9 @@ void parseCtrlComand() // (struct thread_control_block * objThdCtrlBlockPtr)
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			forgesight_mod_io_emulate_value(dioPathInfo.dio_path, dioPathInfo.value);
             break;
-#ifndef WIN32
+// #ifndef WIN32
+#if 0
+
         case READ_CHG_PR_LST:
 			vecRet.clear(); 
 			vecRet = forgesight_read_valid_pr_lst(0, 255);
@@ -1199,7 +1199,7 @@ void initShm()
     openShm(SHM_CTRL_CMD, 1024);
     openShm(SHM_CTRL_STATUS, 1024);
     openShm(SHM_INTPRT_DST, 1024);
-    intprt_ctrl.cmd = LOAD;
+    // intprt_ctrl.cmd = LOAD;
     // intprt_ctrl.cmd = START;
 	g_privateInterpreterState = IDLE_R ;
 	
@@ -1219,12 +1219,12 @@ void initShm()
 void updateIOError()
 {
 #ifndef WIN32
-	U64 result = SUCCESS ;
-	result = IOInterface::instance()->updateIOError();
-    if (result != SUCCESS)
-    {
-		setWarning(result) ; 
-    }
+//	U64 result = SUCCESS ;
+//	result = IOInterface::instance()->updateIOError();
+//    if (result != SUCCESS)
+//    {
+//		setWarning(result) ; 
+//    }
 #endif
 }
 

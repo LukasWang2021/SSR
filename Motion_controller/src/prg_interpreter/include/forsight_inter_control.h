@@ -20,7 +20,6 @@
 #include <unistd.h>
 #endif
 #include "interpreter_common.h"
-#include "reg_manager/reg_manager_interface_wrapper.h"
 
 #include "forsight_interpreter_shm.h"
 #include "forsight_basint.h"
@@ -42,7 +41,7 @@ void getSendPermission();
 void returnRegInfo(RegMap info);
 void returnDIOInfo(IOPathInfo& info);
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction);
-bool getIntprtCtrl();
+bool getIntprtCtrl(InterpreterControl& intprt_ctrl);
 void executeBlock();
 void executeLoop(int loop_cnt);
 void executeScript();
@@ -51,7 +50,7 @@ unsigned __stdcall script_func(void* arg);
 #else
 void* script_func(void* arg);
 #endif
-void parseCtrlComand(); // (struct thread_control_block * objThdCtrlBlock);
+void parseCtrlComand(InterpreterControl intprt_ctrl); // (struct thread_control_block * objThdCtrlBlock);
 void initShm();
 void forgesight_load_programs_path();
 char * forgesight_get_programs_path();

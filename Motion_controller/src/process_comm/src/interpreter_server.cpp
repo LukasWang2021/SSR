@@ -38,8 +38,8 @@ bool InterpreterServer::init()
     event_socket_ = nn_socket(AF_SP, NN_PUSH);
     if(publish_socket_ == -1) return false;
 
-    publish_endpoint_id_ = nn_bind(publish_socket_, param_ptr_->c2i_pub_ip_.c_str());
-    if(publish_endpoint_id_ == -1) return false;
+    event_endpoint_id_ = nn_bind(event_socket_, param_ptr_->c2i_event_ip_.c_str());
+    if(event_endpoint_id_ == -1) return false;
 
 
     // it is critical to set poll fd here to make the model work correctly

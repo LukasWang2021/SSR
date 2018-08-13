@@ -50,7 +50,8 @@ add_library(process_comm
 
 target_link_libraries(process_comm 
     ${catkin_LIBRARIES}
-    thread_help 
+    thread_help
+    logger
 )
 
 install(TARGETS process_comm 

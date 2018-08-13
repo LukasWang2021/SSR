@@ -32,6 +32,8 @@ set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/middleware_to_mem/include
+    ${depend_PATH_INC}/service_manager/include
     ${depend_PATH_INC}/parameter_manager/include 
     ${depend_PATH_INC}/base_device/include 
     ${depend_PATH_INC}/fst_axis_device/include 
@@ -49,7 +51,8 @@ set(catkin_INCLUDE_DIRS
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES fst_axis_group
+    #LIBRARIES fst_axis_group
+    LIBRARIES motion_control
     DEPENDS base_device 
     DEPENDS fst_axis_device 
     DEPENDS virtual_axis_device 
@@ -72,10 +75,17 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-aux_source_directory(src BASE_SRCS)
-
 add_library(motion_control
-    ${BASE_SRCS}
+    src/motion_control.cpp
+    src/motion_control_param.cpp
+    src/motion_control_arm_group.cpp
+    src/motion_control_base_group.cpp
+    src/motion_control_manual_teach.cpp
+    src/motion_control_core_interface.cpp
+)
+
+add_executable(manual_test
+    src/manual_test.cpp
 )
 
 target_link_libraries(motion_control
@@ -92,10 +102,23 @@ target_link_libraries(motion_control
     trajectory_alg 
     dynamic_alg 
     xml_help 
+    comm_interface
+    core_interface
+    logger
+    parameter_manager
+)
+
+target_link_libraries(manual_test
+    ${catkin_LIBRARIES}
+    motion_control
 )
 
 install(TARGETS motion_control
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS manual_test
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES config/motion_control.yaml 

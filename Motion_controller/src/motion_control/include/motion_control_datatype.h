@@ -8,7 +8,7 @@
 #ifndef _MOTION_CONTROL_DATATYPE_H
 #define _MOTION_CONTROL_DATATYPE_H
 
-#include <motion_control_base_type.h>
+#include <base_datatype.h>
 
 namespace fst_mc
 {
@@ -61,7 +61,7 @@ enum ManualMode
 
 enum ManualDirection
 {
-    STANDBY  = 0,
+    STANDING = 0,
     INCREASE = 1,
     DECREASE = 2,
 };

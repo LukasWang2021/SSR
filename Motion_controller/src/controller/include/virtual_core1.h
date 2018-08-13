@@ -45,8 +45,8 @@ private:
     int arm_status_;
 
     std::thread* thread_ptr_;
-    fst_base::Joint joint_cmd_;
-    fst_base::Joint joint_feedback_;
+    fst_mc::Joint joint_cmd_;
+    fst_mc::Joint joint_feedback_;
     fst_base::ThreadHelp thread_;
 };
 

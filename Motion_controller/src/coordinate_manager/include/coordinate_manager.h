@@ -19,7 +19,7 @@ typedef struct
     std::string name;
     std::string comment;
     int group_id;
-    fst_base::PoseEuler data;
+    fst_mc::PoseEuler data;
 }CoordInfo;
 
 typedef struct

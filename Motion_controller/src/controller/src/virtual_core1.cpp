@@ -5,6 +5,7 @@
 
 
 using namespace fst_ctrl;
+using namespace fst_mc;
 using namespace std;
 
 VirtualCore1::VirtualCore1():

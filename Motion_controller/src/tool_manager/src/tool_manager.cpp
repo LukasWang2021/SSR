@@ -85,7 +85,7 @@ bool ToolManager::deleteTool(int id)
     tool_set_[id].name = std::string("default");
     tool_set_[id].comment = std::string("default");
     tool_set_[id].group_id = -1;
-    memset(&tool_set_[id].data, 0, sizeof(fst_base::PoseEuler));
+    memset(&tool_set_[id].data, 0, sizeof(fst_mc::PoseEuler));
     return writeToolInfoToYaml(tool_set_[id]);
 }
 
@@ -143,7 +143,7 @@ bool ToolManager::moveTool(int expect_id, int original_id)
     tool_set_[original_id].name = std::string("default");
     tool_set_[original_id].comment = std::string("default");
     tool_set_[original_id].group_id = -1;
-    memset(&tool_set_[original_id].data, 0, sizeof(fst_base::PoseEuler));
+    memset(&tool_set_[original_id].data, 0, sizeof(fst_mc::PoseEuler));
 
     return (writeToolInfoToYaml(tool_set_[original_id]) 
             && writeToolInfoToYaml(tool_set_[expect_id]));
@@ -196,7 +196,7 @@ void ToolManager::packDummyToolInfo(ToolInfo& info)
     info.name = std::string("no tool");
     info.comment = std::string("no tool");
     info.group_id = -1;
-    memset(&info.data, 0, sizeof(fst_base::PoseEuler));
+    memset(&info.data, 0, sizeof(fst_mc::PoseEuler));
 }
 
 std::string ToolManager::getToolInfoPath(int tool_id)

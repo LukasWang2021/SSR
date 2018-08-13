@@ -85,7 +85,7 @@ bool CoordinateManager::deleteCoord(int id)
     coord_set_[id].name = std::string("default");
     coord_set_[id].comment = std::string("default");
     coord_set_[id].group_id = -1;
-    memset(&coord_set_[id].data, 0, sizeof(fst_base::PoseEuler));
+    memset(&coord_set_[id].data, 0, sizeof(fst_mc::PoseEuler));
     return writeCoordInfoToYaml(coord_set_[id]);
 }
 
@@ -143,7 +143,7 @@ bool CoordinateManager::moveCoord(int expect_id, int original_id)
     coord_set_[original_id].name = std::string("default");
     coord_set_[original_id].comment = std::string("default");
     coord_set_[original_id].group_id = -1;
-    memset(&coord_set_[original_id].data, 0, sizeof(fst_base::PoseEuler));
+    memset(&coord_set_[original_id].data, 0, sizeof(fst_mc::PoseEuler));
 
     return (writeCoordInfoToYaml(coord_set_[original_id]) 
             && writeCoordInfoToYaml(coord_set_[expect_id]));
@@ -186,7 +186,7 @@ void CoordinateManager::packDummyCoordInfo(CoordInfo& info)
     info.name = std::string("no coordinate");
     info.comment = std::string("no coordinate");
     info.group_id = -1;
-    memset(&info.data, 0, sizeof(fst_base::PoseEuler));
+    memset(&info.data, 0, sizeof(fst_mc::PoseEuler));
 }
 
 std::string CoordinateManager::getCoordInfoPath(int coord_id)

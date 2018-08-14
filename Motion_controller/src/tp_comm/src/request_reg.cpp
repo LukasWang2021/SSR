@@ -2,7 +2,9 @@
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include <pb_common.h>
-#include "common/common.h"
+
+using namespace fst_comm;
+
 
 // "/rpc/controller/addRegTopic",	0x0000BA13
 void TpComm::handleRequest0x0000BA13(int recv_bytes)

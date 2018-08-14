@@ -1,17 +1,24 @@
 #ifndef TP_COMM_H
 #define TP_COMM_H
 
-
-#include <thread>
 #include <mutex>
 #include <string>
 #include <vector>
 #include <sys/time.h>
 #include <nanomsg/nn.h>
+
 #include "protoc.h"
 #include "parameter_manager/parameter_manager_param_group.h"
+#include "thread_help.h"
+#include "common_log.h"
 
+#include "local_ip.h"
+#include "tp_comm_manager_param.h"
 
+using namespace std;
+
+namespace fst_comm
+{
 typedef struct
 {
     unsigned int hash;
@@ -47,12 +54,18 @@ public:
     bool open();
     void close();
 
+    void tpCommThreadFunc();
+    bool isRunning();
+
     std::vector<TpRequestResponse> popTaskFromRequestList();
     int32_t getResponseSucceed(void* response_data_ptr);
     void pushTaskToResponseList(TpRequestResponse& package);
     TpPublish generateTpPublishTask(unsigned int topic_hash, int interval_min, int interval_max);
     void addTpPublishElement(TpPublish& task, unsigned int element_hash, void* element_data_ptr);
     void pushTaskToPublishList(TpPublish& package);
+
+    // component parameters
+    int log_level_;
 private:
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -65,13 +78,13 @@ private:
     void initRpcQuickSearchTable();
     void initPublishElementTable();
     void initPublishElementQuickSearchTable();
-    bool initParamsFromYaml();
+    bool initComponentParams();
     HandleRequestFuncPtr getRequestHandlerByHash(unsigned int hash);
     HandleResponseFuncPtr getResponseHandlerByHash(unsigned int hash);
     HandlePublishElementFuncPtr getPublishElementHandlerByHash(unsigned int hash);
     Comm_Authority getPublishElementAuthorityByHash(unsigned int hash);
     Comm_Authority getRpcTableElementAuthorityByHash(unsigned int hash);
-    void tpCommThreadFunc();
+
     void handleRequest();
     void pushTaskToRequestList(unsigned int hash, void* request_data_ptr, void* response_data_ptr);
     void handleResponseList();
@@ -376,16 +389,20 @@ private:
     /********SafetyAlarm, MessageType_Int32**********/
     void handlePublishElement0x0000D0AD(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
-    // component parameters
+    LocalIP local_ip_;
+    TpCommManagerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
+
     bool is_running_;
-    int cycle_time_;    //ms
     std::string req_resp_ip_;
     std::string publish_ip_;
+
+    // component parameters
+    int cycle_time_;//ms
     int recv_buffer_size_;
     int send_buffer_size_;
 
     // runtime variables
-    std::thread* thread_ptr_;
     int req_resp_socket_;
     int publish_socket_;
     int req_resp_endpoint_id_;
@@ -393,9 +410,10 @@ private:
     struct nn_pollfd poll_fd_;
     uint8_t* recv_buffer_ptr_;
     uint8_t* send_buffer_ptr_;
-    fst_parameter::ParamGroup param_;
 
-    // runtime table    
+    fst_base::ThreadHelp thread_ptr_;
+
+    // runtime table
     typedef struct
     {
         std::string path;
@@ -428,6 +446,7 @@ private:
     std::vector<TpRequestResponse>  response_list_;
     std::vector<TpPublish>  publish_list_;
 };
-
+}
 #endif
 
+void tpCommRoutineThreadFunc(void* arg);

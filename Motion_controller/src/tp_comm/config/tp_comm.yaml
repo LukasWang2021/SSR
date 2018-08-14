@@ -1,6 +1,5 @@
-rpc_ip: "ws://192.168.1.65:5600"
-pub_ip: "ws://192.168.1.65:5601"
+log_level: 1
+cycle_time: 10000 #ms
 recv_buffer_size: 65535
 send_buffer_size: 65535
-cycle_time: 10000 #ms
 #END

@@ -2,8 +2,8 @@
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include <pb_common.h>
-#include "common/common.h"
 
+using namespace fst_comm;
 
 using namespace std;
 
@@ -245,8 +245,6 @@ void TpComm::handleRequest0x00000773(int recv_bytes)
         delete request_data_ptr;
         return;
     }
-
-    FST_INFO("request_data_ptr->data.element_hash_list_count = ",request_data_ptr->data.element_hash_list_count);
 
     handleRequestPackage(0x00000773, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Topic_fields, -1);

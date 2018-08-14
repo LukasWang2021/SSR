@@ -2,7 +2,9 @@
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include <pb_common.h>
-#include "common/common.h"
+
+using namespace fst_comm;
+
 
 // add tool_frame
 void TpComm::handleRequest0x0000A22C(int recv_bytes)

@@ -4,8 +4,9 @@ project(tp_comm)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     protos
-    log_manager
     parameter_manager
+    thread_help
+    log_manager
 )
 
 if(catkin_CROSS)
@@ -24,14 +25,19 @@ set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${NANOPB_DIR}
     ${depend_PATH_INC}/protos/include
+    ${depend_PATH_INC}/common/
+    ${depend_PATH_INC}/parameter_manager/include/
     ${depend_PATH_INC}/log_manager/include/
-    ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/thread_help/include/
+
 )
 
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES tp_comm
-    DEPENDS parameter_manager
+    DEPENDS parameter_manager 
+    DEPENDS thread_help
+    DEPENDS log_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -39,7 +45,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_
 
 include_directories(
   include
-  include/common
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -55,7 +60,7 @@ add_library(tp_comm
 target_link_libraries(tp_comm
     ${catkin_LIBRARIES}
     protos
-    logger
+    thread_help
     parameter_manager
 )
 
@@ -64,11 +69,9 @@ install(TARGETS tp_comm
 )
 
 install(FILES config/tp_comm.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-

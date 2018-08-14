@@ -1,5 +1,5 @@
 #include "tp_comm.h"
-
+using namespace fst_comm;
 
 void TpComm::initRpcTable()
 {

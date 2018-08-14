@@ -16,7 +16,7 @@ public:
     ControllerPublish();
     ~ControllerPublish();
 
-    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
+    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr);
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
@@ -25,7 +25,7 @@ private:
     fst_log::Logger* log_ptr_;
     ControllerParam* param_ptr_;
     VirtualCore1* virtual_core1_ptr_;
-    TpComm* tp_comm_ptr_;
+    fst_comm::TpComm* tp_comm_ptr_;
     ControllerSm* state_machine_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};

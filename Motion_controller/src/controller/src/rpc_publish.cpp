@@ -1,7 +1,7 @@
 #include "controller_rpc.h"
 
 using namespace fst_ctrl;
-
+using namespace fst_comm;
 
 // "/rpc/controller/addTopic"
 void ControllerRpc::handleRpc0x00000773(void* request_data_ptr, void* response_data_ptr)

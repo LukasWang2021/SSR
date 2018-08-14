@@ -3,6 +3,7 @@
 using namespace fst_ctrl;
 using namespace fst_log;
 using namespace fst_base;
+using namespace fst_comm;
 
 ControllerPublish::ControllerPublish():
     log_ptr_(NULL),

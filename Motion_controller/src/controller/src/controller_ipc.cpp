@@ -35,7 +35,7 @@ void ControllerIpc::processIpc()
     std::vector<ProcessCommRequestResponse> request_list = controller_server_ptr_->popTaskFromRequestList();
     for(it = request_list.begin(); it != request_list.end(); ++it)
     {
-        HandleIpcFuncPtr func_ptr = ipc_table_[it->cmd_id].ipc_func_ptr;
+        func_ptr = ipc_table_[it->cmd_id].ipc_func_ptr;
         if(func_ptr != NULL)
         {
             (this->*func_ptr)(it->request_data_ptr, it->response_data_ptr);

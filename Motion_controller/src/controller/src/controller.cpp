@@ -1,5 +1,5 @@
 #include "controller.h"
-#include "error_monitor1.h"
+#include "error_monitor.h"
 #include "base_datatype.h"
 #include <unistd.h>
 #include <iostream>
@@ -7,6 +7,7 @@
 
 using namespace fst_ctrl;
 using namespace fst_base;
+using namespace fst_comm;
 using namespace std;
 
 Controller* Controller::instance_ = NULL;

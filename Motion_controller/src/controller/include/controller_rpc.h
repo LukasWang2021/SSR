@@ -21,7 +21,7 @@ public:
     ControllerRpc();
     ~ControllerRpc();
 
-    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
+    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
                     RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr);
 
@@ -31,7 +31,7 @@ private:
     fst_log::Logger* log_ptr_;
     ControllerParam* param_ptr_;
     VirtualCore1* virtual_core1_ptr_;
-    TpComm* tp_comm_ptr_;
+    fst_comm::TpComm* tp_comm_ptr_;
     ControllerSm* state_machine_ptr_;
     ToolManager* tool_manager_ptr_;
     CoordinateManager* coordinate_manager_ptr_;

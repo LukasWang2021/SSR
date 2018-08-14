@@ -37,7 +37,7 @@ private:
     fst_log::Logger* log_ptr_;
     ControllerParam* param_ptr_;
     ControllerSm state_machine_;
-    TpComm tp_comm_;
+    fst_comm::TpComm tp_comm_;
     ControllerRpc rpc_;
     ControllerIpc ipc_;
     ToolManager tool_manager_;

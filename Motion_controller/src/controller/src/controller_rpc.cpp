@@ -4,6 +4,7 @@ using namespace fst_ctrl;
 using namespace fst_log;
 using namespace fst_base;
 using namespace fst_hal;
+using namespace fst_comm;
 
 
 ControllerRpc::ControllerRpc():

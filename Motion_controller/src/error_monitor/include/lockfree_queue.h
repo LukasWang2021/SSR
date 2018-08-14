@@ -7,7 +7,7 @@
 #include <type_traits>
 
 
-namespace fst_ctrl
+namespace fst_base
 {      
 template <typename T>
 class LFQueue

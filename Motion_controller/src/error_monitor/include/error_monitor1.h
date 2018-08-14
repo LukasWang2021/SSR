@@ -5,7 +5,7 @@
 #include <string>
 
 
-namespace fst_ctrl
+namespace fst_base
 {
 class ErrorMonitor
 {

@@ -52,7 +52,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/process_comm/include 
     ${depend_PATH_INC}/device_manager/include 
     ${depend_PATH_INC}/xml_help/include 
-    ${depend_PATH_INC}/base_device/include 
+    ${depend_PATH_INC}/base_device/include
+    ${depend_PATH_INC}/error_monitor/include 
 )
 
 catkin_package(
@@ -61,6 +62,7 @@ catkin_package(
     DEPENDS core_interface
     DEPENDS log_manager
     DEPENDS thread_help 
+    DEPENDS error_monitor 
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -96,6 +98,7 @@ target_link_libraries(controller
     reg_manager 
     process_comm 
     device_manager 
+    error_monitor 
 )
 
 #############

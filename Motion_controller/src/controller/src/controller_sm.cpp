@@ -1,5 +1,5 @@
 #include "controller_sm.h"
-#include "error_monitor.h"
+#include "error_monitor1.h"
 #include <unistd.h>
 
 
@@ -116,7 +116,7 @@ bool ControllerSm::callReset()
 {
     if(ctrl_status_ == CTRL_ESTOP
         || ctrl_status_ == CTRL_INIT)
-    {                
+    {
         ErrorMonitor::instance()->clear();
         //serv_jtac_.resetBareMetal();
         //safety_interface_.reset();

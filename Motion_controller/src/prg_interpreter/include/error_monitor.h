@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "lockfree_queue.h"
+#include "io_interface.h"
 
 #define MAX_ERRORS  (10)
 

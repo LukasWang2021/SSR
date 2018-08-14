@@ -64,6 +64,8 @@ typedef enum
     SERVO_WAIT_SERVODOWN    = 5,
 }ServoStatus;
 
+//class fst_base::ErrorMonitor;
+
 class ControllerSm
 {
 public:

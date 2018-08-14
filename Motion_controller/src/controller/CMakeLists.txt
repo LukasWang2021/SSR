@@ -50,6 +50,9 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/coordinate_manager/include 
     ${depend_PATH_INC}/reg_manager/include 
     ${depend_PATH_INC}/process_comm/include 
+    ${depend_PATH_INC}/device_manager/include 
+    ${depend_PATH_INC}/xml_help/include 
+    ${depend_PATH_INC}/base_device/include 
 )
 
 catkin_package(
@@ -92,6 +95,7 @@ target_link_libraries(controller
     coordinate_manager 
     reg_manager 
     process_comm 
+    device_manager 
 )
 
 #############

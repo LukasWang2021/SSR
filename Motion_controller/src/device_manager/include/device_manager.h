@@ -2,10 +2,10 @@
 #define DEVICE_MANAGER_H
 
 
-#include "base_device.h"
 #include "device_manager_param.h"
 #include "common_log.h"
 #include "device_xml.h"
+#include "base_device.h"
 #include <map>
 #include <vector>
 

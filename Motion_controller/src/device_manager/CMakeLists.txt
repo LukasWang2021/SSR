@@ -29,7 +29,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/fst_safety_device/include 
     ${depend_PATH_INC}/fst_axis_device/include 
     ${depend_PATH_INC}/virtual_axis_device/include
-    ${depend_PATH_INC}/xml_help/include
+    ${depend_PATH_INC}/xml_help/include 
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
@@ -78,6 +78,10 @@ install(TARGETS device_manager
 
 install(FILES config/device_manager.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+)
+
+install(FILES config/device_config.xml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/device/
 )
 
 install(DIRECTORY config

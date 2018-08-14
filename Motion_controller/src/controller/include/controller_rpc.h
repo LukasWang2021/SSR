@@ -9,6 +9,7 @@
 #include "controller_publish.h"
 #include "tool_manager.h"
 #include "coordinate_manager.h"
+#include "device_manager.h"
 #include "reg_manager.h"
 #include <vector>
 
@@ -22,7 +23,7 @@ public:
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
-                    RegManager* reg_manager_ptr);
+                    RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr);
 
     void processRpc();
 
@@ -35,6 +36,7 @@ private:
     ToolManager* tool_manager_ptr_;
     CoordinateManager* coordinate_manager_ptr_;
     RegManager* reg_manager_ptr_;
+    fst_hal::DeviceManager* device_manager_ptr_;
     ControllerPublish publish_;
 
     enum {HASH_BYTE_SIZE = 4,};

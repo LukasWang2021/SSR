@@ -1,0 +1,12 @@
+<Devices>
+    <Device>
+        <DeviceIndex>1</DeviceIndex>
+        <Address>201</Address>
+        <DeviceType>VirtualAxis</DeviceType>
+    </Device>
+    <Device>
+        <DeviceIndex>2</DeviceIndex>
+        <Address>202</Address>
+        <DeviceType>VirtualAxis</DeviceType>
+    </Device>
+</Devices>

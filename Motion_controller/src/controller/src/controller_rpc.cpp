@@ -3,6 +3,8 @@
 using namespace fst_ctrl;
 using namespace fst_log;
 using namespace fst_base;
+using namespace fst_hal;
+
 
 ControllerRpc::ControllerRpc():
     log_ptr_(NULL),
@@ -24,7 +26,7 @@ ControllerRpc::~ControllerRpc()
 
 void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
-                    RegManager* reg_manager_ptr)
+                    RegManager* reg_manager_ptr, DeviceManager* device_manager_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -34,6 +36,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, V
     tool_manager_ptr_ = tool_manager_ptr;
     coordinate_manager_ptr_ = coordinate_manager_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
+    device_manager_ptr_ = device_manager_ptr;
     initRpcTable();
     initRpcQuickSearchTable();
     publish_.init(log_ptr, param_ptr, virtual_core1_ptr, tp_comm_ptr, state_machine_ptr);
@@ -46,7 +49,7 @@ void ControllerRpc::processRpc()
     std::vector<TpRequestResponse> request_list = tp_comm_ptr_->popTaskFromRequestList();
     for(it = request_list.begin(); it != request_list.end(); ++it)
     {
-        if(tp_comm_ptr_->getResponseSucceed(it->response_data_ptr))
+        if(tp_comm_ptr_->getResponseSucceed(it->response_data_ptr) == 0)
         {
             func_ptr = getRpcHandlerByHash(it->hash);
             if(func_ptr != NULL)

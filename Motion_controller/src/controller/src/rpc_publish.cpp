@@ -24,6 +24,7 @@ void ControllerRpc::handleRpc0x00000773(void* request_data_ptr, void* response_d
             }
         }
     }  
+    
     if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);

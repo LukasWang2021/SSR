@@ -1,8 +1,8 @@
 #include "device_xml.h"
 #include "common_file_path.h"
 
-
 using namespace fst_hal;
+using namespace fst_base;
 
 DeviceXml::DeviceXml(fst_log::Logger* log_ptr, DeviceManagerParam* param_ptr):
     log_ptr_(log_ptr), param_ptr_(param_ptr), config_file_path_(DEVICE_DIR)

@@ -4,10 +4,10 @@
 
 #include "common_log.h"
 #include "device_manager_param.h"
-#include "base_device.h"
 #include <string>
 #include <vector>
 #include "xml_help.h"
+#include "base_device.h"
 
 
 namespace fst_hal
@@ -56,7 +56,7 @@ typedef struct
     int dummy;
 }VirtualSafetyConfigDetail;
 
-// it is so bad to apply struct instead of union here,
+// it is ugly to apply struct instead of union here,
 // the only merit that struct hold is avoid compilation failure.
 // vector<union> is the root of the problem.
 typedef struct

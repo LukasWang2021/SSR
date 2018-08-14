@@ -1,22 +1,32 @@
 #include <unistd.h>
 #include <string>
+#include <iostream>
+#include <nanomsg/nn.h>
+#include <nanomsg/ws.h>
 #include <nanomsg/pubsub.h>
 #include <nanomsg/reqrep.h>
 #include <pb_decode.h>
 #include <pb_encode.h>
 #include "tp_comm.h"
-#include "common/common.h"
 
 using namespace std;
-
+using namespace fst_comm;
 
 TpComm::TpComm():
+    log_ptr_(NULL), param_ptr_(NULL),
     is_running_(false), cycle_time_(10), 
     req_resp_socket_(-1), publish_socket_(-1),
     req_resp_endpoint_id_(-1), publish_endpoint_id_(-1),
-    req_resp_ip_("ws://192.168.1.166:5600"), publish_ip_("ws://192.168.1.166:5601"),
     recv_buffer_size_(65536), send_buffer_size_(65536)
 {
+    string ip = local_ip_.get();
+    req_resp_ip_ = "ws://" + ip + ":5600";
+    publish_ip_ = "ws://" + ip + ":5601";
+
+    log_ptr_ = new fst_log::Logger();
+    param_ptr_ = new TpCommManagerParam();
+    FST_LOG_INIT("TpCommManager");
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
 TpComm::~TpComm()
@@ -24,27 +34,26 @@ TpComm::~TpComm()
     this->close();
 }
 
-bool TpComm::initParamsFromYaml()
+bool TpComm::initComponentParams()
 {
-    std::string file_path = "share/configuration/configurable/tp_comm.yaml";
-    if (!param_.loadParamFile(file_path.c_str()))
+    if(!param_ptr_->loadParam())
     {
-        FST_ERROR("TP COMM : yaml file load failed!");
+        FST_ERROR("Failed to load TpCommManager component parameters");
         return false;
-    }
+    } 
 
-    param_.getParam("/rpc_ip", req_resp_ip_);
-    param_.getParam("/pub_ip", publish_ip_);
-    param_.getParam("/recv_buffer_size", recv_buffer_size_);
-    param_.getParam("/send_buffer_size", send_buffer_size_);
-    param_.getParam("/cycle_time", cycle_time_);
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
+
+    recv_buffer_size_ = param_ptr_->recv_buffer_size_;
+    send_buffer_size_ = param_ptr_->send_buffer_size_;
+    cycle_time_ = param_ptr_->cycle_time_;
 
     return true;
 }
 
 bool TpComm::init()
 {
-    if (!initParamsFromYaml()) return false;
+    if (!initComponentParams()) return false;
 
     req_resp_socket_ = nn_socket(AF_SP, NN_REP);
     if(req_resp_socket_ == -1) return false;
@@ -77,26 +86,24 @@ bool TpComm::init()
 bool TpComm::open()
 {
     is_running_ = true;
-    thread_ptr_ = new std::thread(std::bind(&TpComm::tpCommThreadFunc, this));
-    if(thread_ptr_ != NULL)
-    {
-        return true;
-    }
-    else
+
+    if(!thread_ptr_.run(&tpCommRoutineThreadFunc, this, 50))
     {
         return false;
     }
+
+    return true;
+}
+
+bool TpComm::isRunning()
+{
+    return is_running_;
 }
 
 void TpComm::close()
 {
-    if(thread_ptr_ != NULL)
-    {
-        is_running_ = false;
-        thread_ptr_->join();
-        delete thread_ptr_;
-        thread_ptr_ = NULL;
-    }
+    is_running_ = false;
+    thread_ptr_.join();
 
     if(req_resp_socket_ != -1 && req_resp_endpoint_id_ != -1)
     {
@@ -252,13 +259,10 @@ Comm_Authority TpComm::getPublishElementAuthorityByHash(unsigned int hash)
 
 void TpComm::tpCommThreadFunc()
 {
-    while(is_running_)
-    {
-        handleRequest();
-        handleResponseList();
-        handlePublishList();
-        usleep(cycle_time_);
-    }
+    handleRequest();
+    handleResponseList();
+    handlePublishList();
+    usleep(cycle_time_);
 }
 
 void TpComm::handleRequest()
@@ -443,7 +447,7 @@ void TpComm::initCommFailedResponsePackage(void* request_data_ptr, void* respons
     // it is tricky here that all request & response have the same package header and property, no matter what data they have
     ((ResponseMessageType_Int32*)response_data_ptr)->header.time_stamp = ((RequestMessageType_Int32*)request_data_ptr)->header.time_stamp;
     ((ResponseMessageType_Int32*)response_data_ptr)->header.package_left = -1;
-    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = 0;
+    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = 1;
     ((ResponseMessageType_Int32*)response_data_ptr)->property.authority = ((RequestMessageType_Int32*)request_data_ptr)->property.authority;
 }
 
@@ -553,4 +557,14 @@ void TpComm::eraseTaskFromPublishList(unsigned int &topic_hash)
             ++it;
     }
     publish_list_mutex_.unlock();
+}
+
+
+void tpCommRoutineThreadFunc(void* arg)
+{
+    TpComm* tp_comm = static_cast<TpComm*>(arg);
+    while(tp_comm->isRunning())
+    {
+        tp_comm->tpCommThreadFunc();
+    }
 }

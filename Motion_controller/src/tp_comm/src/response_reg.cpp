@@ -1,5 +1,6 @@
 #include "tp_comm.h"
-#include "common/common.h"
+
+using namespace fst_comm;
 
 // "/rpc/controller/addRegTopic",	0x0000BA13,	"RequestMessageType.Topic",	"ResponseMessageType.Bool",
 void TpComm::handleResponse0x0000BA13(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)

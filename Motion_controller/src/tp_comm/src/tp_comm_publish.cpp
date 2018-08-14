@@ -1,6 +1,6 @@
 #include "tp_comm.h"
-#include "common/common.h"
 
+using namespace fst_comm;
 using namespace std;
 
 // UserOpMode, MessageType_Int32

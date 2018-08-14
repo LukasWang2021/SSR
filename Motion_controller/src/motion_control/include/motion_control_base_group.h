@@ -40,11 +40,18 @@ class BaseGroup
     BaseGroup(fst_log::Logger* plog);
     ~BaseGroup();
 
+    virtual ErrorCode initGroup(void) = 0;
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode resetGroup(void);
+
     virtual ErrorCode autoMove(void) = 0;
+    
+    virtual ErrorCode setManualMode(ManualMode mode) = 0;
+    virtual ErrorCode setManualFrame(ManualFrame frame) = 0;
     virtual ErrorCode manualMove(const ManualDirection directions[NUM_OF_JOINT]) = 0;
     virtual ErrorCode manualMove(const Joint &joint) = 0;
+    virtual ErrorCode manualStop(void) = 0;
+
     virtual ErrorCode sendPoint(void) = 0;
 
 

@@ -17,6 +17,7 @@ namespace fst_mc
 
 ErrorCode ArmGroup::initGroup(void)
 {
+    log_ptr_->initLogger("ArmGroup");
     cycle_time_ = 0.001;
 
     soft_constraint_.upper[0] = 2.8;

@@ -96,7 +96,7 @@ bool InterpreterClient::setRReg(RRegData* data)
 bool InterpreterClient::getPrReg(int id, PrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(CONTROLLER_SERVER_CMD_GET_PR_REG, id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_PR_REG, &id, sizeof(int))
         || !recvResponse(sizeof(PrRegData)))
     {
         return false;
@@ -116,7 +116,7 @@ bool InterpreterClient::getPrReg(int id, PrRegData* data)
 bool InterpreterClient::getHrReg(int id, HrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(CONTROLLER_SERVER_CMD_GET_HR_REG, id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_HR_REG, &id, sizeof(int))
         || !recvResponse(sizeof(HrRegData)))
     {
         return false;
@@ -136,7 +136,7 @@ bool InterpreterClient::getHrReg(int id, HrRegData* data)
 bool InterpreterClient::getMrReg(int id, MrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(CONTROLLER_SERVER_CMD_GET_MR_REG, id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_MR_REG, &id, sizeof(int))
         || !recvResponse(sizeof(MrRegData)))
     {
         return false;
@@ -156,7 +156,7 @@ bool InterpreterClient::getMrReg(int id, MrRegData* data)
 bool InterpreterClient::getSrReg(int id, SrRegData* data)
 {
     if(data == NULL
-        || !sendRequest(CONTROLLER_SERVER_CMD_GET_SR_REG, id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_SR_REG, &id, sizeof(int))
         || !recvResponse(sizeof(SrRegData)))
     {
         return false;
@@ -176,7 +176,7 @@ bool InterpreterClient::getSrReg(int id, SrRegData* data)
 bool InterpreterClient::getRReg(int id, RRegData* data)
 {
     if(data == NULL
-        || !sendRequest(CONTROLLER_SERVER_CMD_GET_R_REG, id, sizeof(int))
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_R_REG, &id, sizeof(int))
         || !recvResponse(sizeof(RRegData)))
     {
         return false;

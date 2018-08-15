@@ -59,6 +59,7 @@
 #define DEFAULT   28
 #define WAIT      29
 #define CALLMACRO 30
+#define NOP       31
 
 enum var_inner_type { FORSIGHT_CHAR, FORSIGHT_INT, FORSIGHT_FLOAT };
 
@@ -121,6 +122,7 @@ static struct commands table[] = { /* Commands must be entered lowercase */
   "end",         END,
   "import",      IMPORT,
   "callmacro",   CALLMACRO,
+  "nop",         NOP,
   "", END  /* mark end of table */
 };
 
@@ -698,6 +700,15 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		  // Skip Function declaration by jiaming.lu at 180717
 		  find_eol(objThreadCntrolBlock);
   		  break;
+        case NOP:
+		  // Skip Function declaration by jiaming.lu at 180717
+		  if(objThreadCntrolBlock->prog_mode == STEP_MODE)
+		  {
+		     printf("Meet NOP \n");
+		     setLinenum(objThreadCntrolBlock, getLinenum(objThreadCntrolBlock) + 1);
+		  }
+		  find_eol(objThreadCntrolBlock);
+  		  break;
         case PRINT:
 		  print(objThreadCntrolBlock);
   		  break;
@@ -799,6 +810,21 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	else {
 		isExecuteEmptyLine = 1 ;
 	}
+#ifdef JMP_NOP
+    // Skip NOP and set new line number
+	char tokenType = get_token(objThreadCntrolBlock);
+	while((tokenType == DELIMITER)
+		||( (objThreadCntrolBlock->token_type==COMMAND) 
+		  &&(objThreadCntrolBlock->tok == NOP)))
+	{
+		tokenType = get_token(objThreadCntrolBlock);
+	}
+	// Get normal token
+	putback(objThreadCntrolBlock);
+	// Skip NOP over and set new line number
+	setLinenum(objThreadCntrolBlock, calc_line_from_prog(objThreadCntrolBlock));
+    // Skip NOP over and set new line number over
+#endif
   } while (objThreadCntrolBlock->tok != FINISHED);
   
   printf("call_interpreter execution over\n");

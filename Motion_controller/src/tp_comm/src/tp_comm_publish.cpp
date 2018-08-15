@@ -66,3 +66,4 @@ void TpComm::handlePublishElement0x0000D0AD(Comm_Publish& package, int element_i
     }
 }
 
+void TpComm::handlePublishElement0x00013643(Comm_Publish& package, int element_index, TpPublishElement& list_element){}

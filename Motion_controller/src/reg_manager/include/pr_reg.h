@@ -29,6 +29,14 @@ typedef struct
     PrValue value;
 }PrRegData;
 
+typedef struct
+{
+    int id;
+    char name[32];
+    char comment[256];
+    PrValue value;
+}PrRegDataIpc;
+
 class PrReg:public BaseReg
 {
 public:

@@ -22,6 +22,7 @@ public:
     int heartbeat_cycle_time_;  // us
     int routine_thread_priority_;
     int reset_max_time_;        // us
+    bool enable_controller_heartbeat_;
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

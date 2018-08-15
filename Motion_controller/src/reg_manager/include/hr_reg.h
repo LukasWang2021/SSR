@@ -22,6 +22,14 @@ typedef struct
     HrValue value;
 }HrRegData;
 
+typedef struct
+{
+    int id;
+    char name[32];
+    char comment[256];
+    HrValue value;
+}HrRegDataIpc;
+
 class HrReg:public BaseReg
 {
 public:

@@ -15,6 +15,14 @@ typedef struct
     std::string value;
 }SrRegData;
 
+typedef struct
+{
+    int id;
+    char name[32];
+    char comment[256];
+    char value[256];
+}SrRegDataIpc;
+
 class SrReg:public BaseReg
 {
 public:

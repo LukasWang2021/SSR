@@ -15,6 +15,14 @@ typedef struct
     int value;
 }MrRegData;
 
+typedef struct
+{
+    int id;
+    char name[32];
+    char comment[256];
+    double value;
+}MrRegDataIpc;
+
 class MrReg:public BaseReg
 {
 public:

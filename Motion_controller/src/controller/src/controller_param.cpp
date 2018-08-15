@@ -12,7 +12,8 @@ ControllerParam::ControllerParam():
     rt_cycle_time_(0),
     heartbeat_cycle_time_(0),
     routine_thread_priority_(50),
-    reset_max_time_(5000000)
+    reset_max_time_(5000000),
+    enable_controller_heartbeat_(false)
 {
     file_path_ += "controller.yaml";
 }
@@ -30,7 +31,8 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("rt_cycle_time", rt_cycle_time_)
         || !yaml_help_.getParam("heartbeat_cycle_time", heartbeat_cycle_time_)
         || !yaml_help_.getParam("routine_thread_priority", routine_thread_priority_)
-        || !yaml_help_.getParam("reset_max_time", reset_max_time_))
+        || !yaml_help_.getParam("reset_max_time", reset_max_time_)
+        || !yaml_help_.getParam("enable_controller_heartbeat", enable_controller_heartbeat_))
     {
         return false;
     }
@@ -48,6 +50,7 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("heartbeat_cycle_time", heartbeat_cycle_time_)
         || !yaml_help_.setParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.setParam("reset_max_time", reset_max_time_)
+        || !yaml_help_.setParam("enable_controller_heartbeat", enable_controller_heartbeat_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

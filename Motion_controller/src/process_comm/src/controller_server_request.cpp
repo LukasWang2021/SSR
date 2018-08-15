@@ -9,7 +9,7 @@ using namespace fst_ctrl;
 // SetPrReg
 void ControllerServer::handleRequestSetPrReg()
 {
-    fst_ctrl::PrRegData* request_data_ptr = new fst_ctrl::PrRegData;
+    fst_ctrl::PrRegDataIpc* request_data_ptr = new fst_ctrl::PrRegDataIpc;
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
@@ -22,14 +22,14 @@ void ControllerServer::handleRequestSetPrReg()
         delete request_data_ptr;
         return;
     }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::PrRegData));
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::PrRegDataIpc));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_PR_REG, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
 // SetHrReg
 void ControllerServer::handleRequestSetHrReg()
 {
-    fst_ctrl::HrRegData* request_data_ptr = new fst_ctrl::HrRegData;
+    fst_ctrl::HrRegDataIpc* request_data_ptr = new fst_ctrl::HrRegDataIpc;
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
@@ -42,14 +42,14 @@ void ControllerServer::handleRequestSetHrReg()
         delete request_data_ptr;
         return;
     }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::HrRegData));
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::HrRegDataIpc));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_HR_REG, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
 // SetMrReg
 void ControllerServer::handleRequestSetMrReg()
 {
-    fst_ctrl::MrRegData* request_data_ptr = new fst_ctrl::MrRegData;
+    fst_ctrl::MrRegDataIpc* request_data_ptr = new fst_ctrl::MrRegDataIpc;
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
@@ -62,14 +62,14 @@ void ControllerServer::handleRequestSetMrReg()
         delete request_data_ptr;
         return;
     }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::MrRegData));
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::MrRegDataIpc));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_MR_REG, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
 // SetSrReg
 void ControllerServer::handleRequestSetSrReg()
 {
-    fst_ctrl::SrRegData* request_data_ptr = new fst_ctrl::SrRegData;
+    fst_ctrl::SrRegDataIpc* request_data_ptr = new fst_ctrl::SrRegDataIpc;
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
@@ -82,14 +82,14 @@ void ControllerServer::handleRequestSetSrReg()
         delete request_data_ptr;
         return;
     }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::SrRegData));
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::SrRegDataIpc));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_SR_REG, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
 // SetRReg
 void ControllerServer::handleRequestSetRReg()
 {
-    fst_ctrl::RRegData* request_data_ptr = new fst_ctrl::RRegData;
+    fst_ctrl::RRegDataIpc* request_data_ptr = new fst_ctrl::RRegDataIpc;
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
@@ -102,7 +102,7 @@ void ControllerServer::handleRequestSetRReg()
         delete request_data_ptr;
         return;
     }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::RRegData));
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(fst_ctrl::RRegDataIpc));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_R_REG, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
@@ -115,7 +115,7 @@ void ControllerServer::handleRequestGetPrReg()
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    fst_ctrl::PrRegData* response_data_ptr = new fst_ctrl::PrRegData;
+    fst_ctrl::PrRegDataIpc* response_data_ptr = new fst_ctrl::PrRegDataIpc;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -135,7 +135,7 @@ void ControllerServer::handleRequestGetHrReg()
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    fst_ctrl::PrRegData* response_data_ptr = new fst_ctrl::PrRegData;
+    fst_ctrl::HrRegDataIpc* response_data_ptr = new fst_ctrl::HrRegDataIpc;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -155,7 +155,7 @@ void ControllerServer::handleRequestGetMrReg()
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    fst_ctrl::MrRegData* response_data_ptr = new fst_ctrl::MrRegData;
+    fst_ctrl::MrRegDataIpc* response_data_ptr = new fst_ctrl::MrRegDataIpc;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -175,7 +175,7 @@ void ControllerServer::handleRequestGetSrReg()
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    fst_ctrl::SrRegData* response_data_ptr = new fst_ctrl::SrRegData;
+    fst_ctrl::SrRegDataIpc* response_data_ptr = new fst_ctrl::SrRegDataIpc;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -195,7 +195,7 @@ void ControllerServer::handleRequestGetRReg()
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    fst_ctrl::RRegData* response_data_ptr = new fst_ctrl::RRegData;
+    fst_ctrl::RRegDataIpc* response_data_ptr = new fst_ctrl::RRegDataIpc;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");

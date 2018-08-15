@@ -15,6 +15,14 @@ typedef struct
     double value;
 }RRegData;
 
+typedef struct
+{
+    int id;
+    char name[32];
+    char comment[256];
+    double value;
+}RRegDataIpc;
+
 class RReg:public BaseReg
 {
 public:

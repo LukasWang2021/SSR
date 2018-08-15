@@ -14,8 +14,11 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/controller/callEstop",	0x00013940,	"RequestMessageType_Void",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00013940,	&TpComm::handleResponse0x00013940,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/callReset",	0x000161E4,	"RequestMessageType_Void",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x000161E4,	&TpComm::handleResponse0x000161E4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/setUserOpMode",	0x00002ED5,	"RequestMessageType_Int32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00002ED5,	&TpComm::handleResponse0x00002ED5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
-	rpc_service =	{	"/rpc/controller/addTopic",	0x00000773,	"RequestMessageType_Topic",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x00000773,	&TpComm::handleResponse0x00000773,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
-	rpc_service =	{	"/rpc/controller/deleteTopic",	0x0000BB93,	"RequestMessageType_UnsignedInt32",	"ResponseMessageType_Bool",	&TpComm::handleRequest0x0000BB93,	&TpComm::handleResponse0x0000BB93,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+
+	rpc_service =	{	"/rpc/publish/addTopic",	0x000050E3,	"RequestMessageType.Topic",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x000050E3,	&TpComm::handleResponse0x000050E3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/publish/deleteTopic",	0x00004403,	"RequestMessageType.UnsignedInt32",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00004403,	&TpComm::handleResponse0x00004403,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/publish/addRegTopic",	0x000163A3,	"RequestMessageType.Topic",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x000163A3,	&TpComm::handleResponse0x000163A3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/publish/addIoTopic",	0x000058F3,	"RequestMessageType.Topic",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x000058F3,	&TpComm::handleResponse0x000058F3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 
 	rpc_service =	{	"/rpc/tp_comm/getRpcTable",	0x00004FA5,	"RequestMessageType_Void",	"ResponseMessageType_RpcTable",	&TpComm::handleRequest0x00004FA5,	&TpComm::handleResponse0x00004FA5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/tp_comm/getPublishTable",	0x000147A5,	"RequestMessageType_Void",	"ResponseMessageType_PublishTable",	&TpComm::handleRequest0x000147A5,	&TpComm::handleResponse0x000147A5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
@@ -74,6 +77,30 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/reg_manager/hr/getChangedList",	0x00012974,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList",	&TpComm::handleRequest0x00012974,	&TpComm::handleResponse0x00012974,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/reg_manager/hr/getValidList",	0x00006B54,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList",	&TpComm::handleRequest0x00006B54,	&TpComm::handleResponse0x00006B54,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 
+	rpc_service =	{	"/rpc/motion_control/stop",	0x00001E70,	"RequestMessageType.Void",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00001E70,	&TpComm::handleResponse0x00001E70,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/reset",	0x00001D14,	"RequestMessageType.Void",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00001D14,	&TpComm::handleResponse0x00001D14,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/setManualMode",	0x00012FB5,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00012FB5,	&TpComm::handleResponse0x00012FB5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/setManualFrame",	0x00009D05,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00009D05,	&TpComm::handleResponse0x00009D05,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/doStepManualMove",	0x000085D5,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x000085D5,	&TpComm::handleResponse0x000085D5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/doContinusManulMove",	0x000173B5,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x000173B5,	&TpComm::handleResponse0x000173B5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/doGotoPointManulMove",	0x00009B75,	"RequestMessageType.Int32_DoubleList",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00009B75,	&TpComm::handleResponse0x00009B75,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/getJointsFeedBack",	0x0000DFBB,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_DoubleList(count = 9) ",	&TpComm::handleRequest0x0000DFBB,	&TpComm::handleResponse0x0000DFBB,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+											
+	rpc_service =	{	"/rpc/interpreter/start",	0x00006154,	"RequestMessageType.String",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00006154,	&TpComm::handleResponse0x00006154,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/debug",	0x000102D7,	"RequestMessageType.String",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x000102D7,	&TpComm::handleResponse0x000102D7,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/forward",	0x0000D974,	"RequestMessageType.Void",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x0000D974,	&TpComm::handleResponse0x0000D974,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/backward",	0x00008E74,	"RequestMessageType.Void",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00008E74,	&TpComm::handleResponse0x00008E74,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/jump",	0x00015930,	"RequestMessageType.Int32",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00015930,	&TpComm::handleResponse0x00015930,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/pause",	0x0000BA55,	"RequestMessageType.Void",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x0000BA55,	&TpComm::handleResponse0x0000BA55,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/resume",	0x0000CF55,	"RequestMessageType.Void",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x0000CF55,	&TpComm::handleResponse0x0000CF55,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/abort",	0x000086F4,	"RequestMessageType.Void",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x000086F4,	&TpComm::handleResponse0x000086F4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+
+	rpc_service =	{	"/rpc/io_mapping/getDIByBit",	0x000050B4,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_Int32",	&TpComm::handleRequest0x000050B4,	&TpComm::handleResponse0x000050B4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/io_mapping/setDIByBit",	0x00011754,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00011754,	&TpComm::handleResponse0x00011754,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/io_mapping/getDOByBit",	0x00013074,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_Int32",	&TpComm::handleRequest0x00013074,	&TpComm::handleResponse0x00013074,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/io_mapping/setDOByBit",	0x00007074,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool",	&TpComm::handleRequest0x00007074,	&TpComm::handleResponse0x00007074,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+
+	rpc_service =	{	"/rpc/device_manager/getDeviceList",	0x0000C1E0,	"RequestMessageType.Void",	"ResponseMessageType.DeviceInfoList",	&TpComm::handleRequest0x0000C1E0,	&TpComm::handleResponse0x0000C1E0,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 }
 
 void TpComm::initPublishElementTable()
@@ -86,5 +113,6 @@ void TpComm::initPublishElementTable()
 	publish_service =	{	"/publish/controller/CtrlStatus",	0x0000E8E3,	"MessageType_Int32",	&TpComm::handlePublishElement0x0000E8E3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 	publish_service =	{	"/publish/controller/ServoStatus",	0x00002053,	"MessageType_Int32",	&TpComm::handlePublishElement0x00002053,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 	publish_service =	{	"/publish/controller/SafetyAlarm",	0x0000D0AD,	"MessageType_Int32",	&TpComm::handlePublishElement0x0000D0AD,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/axis_group/feedback/joints",	0x00013643,	"MessageType_Int32_Int32List(count=9)",	&TpComm::handlePublishElement0x00013643,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 
 }

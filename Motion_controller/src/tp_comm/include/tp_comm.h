@@ -127,11 +127,7 @@ private:
     void handleRequest0x000161E4(int recv_bytes);
     /********SetUserOpMode, RequestMessageType_Int32**********/         
     void handleRequest0x00002ED5(int recv_bytes);
-    /********addTopic, RequestMessageType_Topic**********/              
-    void handleRequest0x00000773(int recv_bytes);
-    /********deleteTopic, RequestMessageType_UnsignedInt32**********/  
- 
-    void handleRequest0x0000BB93(int recv_bytes);
+
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
     /********tool_manager/deleteTool, RequestMessageType_Int32**********/
@@ -164,7 +160,6 @@ private:
 
     /********rpc/controller/addRegTopic, RequestMessageType_Topic**********/
     void handleRequest0x0000BA13(int recv_bytes);
-
 
     /********rpc/reg_manager/r/addReg, RequestMessageType_RRegData**********/
     void handleRequest0x00004FF7(int recv_bytes);
@@ -236,6 +231,63 @@ private:
     void handleRequest0x00012974(int recv_bytes);
     /********rpc/reg_manager/hr/getValidList, RequestMessageType_Int32List(count = 2) **********/
     void handleRequest0x00006B54(int recv_bytes);
+
+
+    /********rpc/motion_control/stop, RequestMessageType_Void**********/
+    void handleRequest0x00001E70(int recv_bytes);
+    /********rpc/motion_control/reset, RequestMessageType_Void**********/
+    void handleRequest0x00001D14(int recv_bytes);
+    /********rpc/motion_control/axis_group/setManualMode, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00012FB5(int recv_bytes);
+    /********rpc/motion_control/axis_group/setManualFrame, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00009D05(int recv_bytes);
+    /********rpc/motion_control/axis_group/doStepManualMove, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x000085D5(int recv_bytes);
+    /********rpc/motion_control/axis_group/doContinusManulMove, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x000173B5(int recv_bytes);
+    /********rpc/motion_control/axis_group/doGotoPointManulMove, RequestMessageType_Int32_Int32List(count = 9) **********/
+    void handleRequest0x00009B75(int recv_bytes);
+    /********rpc/motion_control/axis_group/getJointsFeedBack, RequestMessageType_Int32**********/
+    void handleRequest0x0000DFBB(int recv_bytes);
+
+    /********rpc/interpreter/start, RequestMessageType_String**********/
+    void handleRequest0x00006154(int recv_bytes);
+    /********rpc/interpreter/debug, RequestMessageType_String**********/
+    void handleRequest0x000102D7(int recv_bytes);
+    /********rpc/interpreter/forward, RequestMessageType_Void**********/
+    void handleRequest0x0000D974(int recv_bytes);
+    /********rpc/interpreter/backward, RequestMessageType_Void**********/
+    void handleRequest0x00008E74(int recv_bytes);
+    /********rpc/interpreter/jump, RequestMessageType_Int32**********/
+    void handleRequest0x00015930(int recv_bytes);
+    /********rpc/interpreter/pause, RequestMessageType_Void**********/
+    void handleRequest0x0000BA55(int recv_bytes);
+    /********rpc/interpreter/resume, RequestMessageType_Void**********/
+    void handleRequest0x0000CF55(int recv_bytes);
+    /********rpc/interpreter/abort, RequestMessageType_Void**********/
+    void handleRequest0x000086F4(int recv_bytes);
+
+    /********rpc/io_mapping/getDIByBit, RequestMessageType_Int32**********/
+    void handleRequest0x000050B4(int recv_bytes);
+    /********rpc/io_mapping/setDIByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00011754(int recv_bytes);
+    /********rpc/io_mapping/getDOByBit, RequestMessageType_Int32**********/
+    void handleRequest0x00013074(int recv_bytes);
+    /********rpc/io_mapping/setDOByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00007074(int recv_bytes);
+
+    /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
+    void handleRequest0x0000C1E0(int recv_bytes);
+
+
+    /********rpc/publish/addTopic, RequestMessageType_Topic**********/
+    void handleRequest0x000050E3(int recv_bytes);
+    /********rpc/publish/deleteTopic, RequestMessageType_UnsignedInt32**********/
+    void handleRequest0x00004403(int recv_bytes);
+    /********rpc/publish/addRegTopic, RequestMessageType_Topic**********/
+    void handleRequest0x000163A3(int recv_bytes);
+    /********rpc/publish/addIoTopic, RequestMessageType_Topic**********/
+    void handleRequest0x000058F3(int recv_bytes);
 
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
@@ -374,6 +426,64 @@ private:
     /********rpc/reg_manager/hr/getValidList, ResponseMessageType_BaseRegSummaryList**********/
     void handleResponse0x00006B54(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
+    /********rpc/motion_control/stop, ResponseMessageType_Bool**********/
+    void handleResponse0x00001E70(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/reset, ResponseMessageType_Bool**********/
+    void handleResponse0x00001D14(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setManualMode, ResponseMessageType_Bool**********/
+    void handleResponse0x00012FB5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setManualFrame, ResponseMessageType_Bool**********/
+    void handleResponse0x00009D05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/doStepManualMove, ResponseMessageType_Bool**********/
+    void handleResponse0x000085D5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/doContinusManulMove, ResponseMessageType_Bool**********/
+    void handleResponse0x000173B5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/doGotoPointManulMove, ResponseMessageType_Bool**********/
+    void handleResponse0x00009B75(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getJointsFeedBack, ResponseMessageType_Bool_Int32List(count = 9) **********/
+    void handleResponse0x0000DFBB(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/interpreter/start, ResponseMessageType_Bool**********/
+    void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/debug, ResponseMessageType_Bool**********/
+    void handleResponse0x000102D7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/forward, ResponseMessageType_Bool**********/
+    void handleResponse0x0000D974(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/backward, ResponseMessageType_Bool**********/
+    void handleResponse0x00008E74(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/jump, ResponseMessageType_Bool**********/
+    void handleResponse0x00015930(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/pause, ResponseMessageType_Bool**********/
+    void handleResponse0x0000BA55(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/resume, ResponseMessageType_Bool**********/
+    void handleResponse0x0000CF55(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/abort, ResponseMessageType_Bool**********/
+    void handleResponse0x000086F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getDIByBit, ResponseMessageType_Bool_Int32**********/
+    void handleResponse0x000050B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setDIByBit, ResponseMessageType_Bool**********/
+    void handleResponse0x00011754(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getDOByBit, ResponseMessageType_Bool_Int32**********/
+    void handleResponse0x00013074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setDOByBit, ResponseMessageType_Bool**********/
+    void handleResponse0x00007074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/addIoTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x0000B823(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/device_manager/getDeviceList , ResponseMessageType_DeviceInfoList**********/
+    void handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/publish/addTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x000050E3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/publish/deleteTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x00004403(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/publish/addRegTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x000163A3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/publish/addIoTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x000058F3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+
+
     /********UserOpMode, MessageType_Int32**********/  
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     /********RunningStatus, MessageType_Int32**********/
@@ -388,6 +498,9 @@ private:
     void handlePublishElement0x00002053(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     /********SafetyAlarm, MessageType_Int32**********/
     void handlePublishElement0x0000D0AD(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+
+    /********"MessageType_Int32_Int32List(count=9)",**********/
+    void handlePublishElement0x00013643(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

@@ -494,8 +494,6 @@ void TpComm::handleRequest0x00009854(int recv_bytes)
         recv_bytes, RequestMessageType_Int32List_fields, -1);
 }
 
-
-
 // "/rpc/reg_manager/pr/addReg",	0x000154E7,
 void TpComm::handleRequest0x000154E7(int recv_bytes)
 {
@@ -696,7 +694,7 @@ void TpComm::handleRequest0x00003D17(int recv_bytes)
         recv_bytes, RequestMessageType_Int32_fields, -1);
 }
 
-//"/rpc/reg_manager/hr/updateReg",	0x0000CB77,	
+//"/rpc/reg_manager/hr/updateReg",	0x0000CB77,
 void TpComm::handleRequest0x0000CB77(int recv_bytes)
 {
     // create object for request and response package
@@ -784,7 +782,7 @@ void TpComm::handleRequest0x00012974(int recv_bytes)
         recv_bytes, RequestMessageType_Int32List_fields, -1);
 }
 
-//"/rpc/reg_manager/hr/getValidList",	0x00006B54,	
+//"/rpc/reg_manager/hr/getValidList",	0x00006B54
 void TpComm::handleRequest0x00006B54(int recv_bytes)
 {
     // create object for request and response package

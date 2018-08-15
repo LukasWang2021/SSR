@@ -21,7 +21,7 @@ MotionControl::MotionControl(DeviceManager* device_manager_ptr, AxisGroupManager
     //group_ptr_ = new ScalaGroup(log_ptr_);
 
 }
-                    
+
 MotionControl::~MotionControl()
 {
     if (log_ptr_ != NULL)   {delete log_ptr_; log_ptr_ = NULL;};
@@ -34,7 +34,7 @@ MotionControl::MotionControl():
     coordinate_manager_ptr_(NULL), tool_manager_ptr_(NULL)
 {}
 
-ErrorCode MotionControl::intiMotionControl(ErrorMonitor *error_monitor_ptr)
+ErrorCode MotionControl::initMotionControl(ErrorMonitor *error_monitor_ptr)
 {
     ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);
 

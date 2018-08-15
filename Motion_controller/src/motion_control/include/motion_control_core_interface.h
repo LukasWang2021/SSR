@@ -15,19 +15,11 @@
 #include <comm_interface/comm_interface.h>
 #include <motion_control_datatype.h>
 #include <motion_control_error_code.h>
+#include <common_enum.h>
 
 namespace fst_mc
 {
 
-enum ServoState
-{
-    SERVO_IDLE = 1,
-    SERVO_RUNNING = 2,
-    SERVO_DISABLE = 3,
-    SERVO_WAIT_READY = 4,
-    SERVO_WAIT_DOWN = 5,
-    SERVO_INIT = 10,
-};
 
 enum PointProperty
 {

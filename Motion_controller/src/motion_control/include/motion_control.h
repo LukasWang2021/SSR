@@ -20,7 +20,7 @@ public:
                         fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr);
     ~MotionControl();
 
-    ErrorCode intiMotionControl(fst_base::ErrorMonitor *error_monitor_ptr);
+    ErrorCode initMotionControl(fst_base::ErrorMonitor *error_monitor_ptr);
 
     // API for teaching
     ErrorCode setManualMode(ManualMode mode);

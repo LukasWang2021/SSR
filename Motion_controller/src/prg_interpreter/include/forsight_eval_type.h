@@ -54,13 +54,13 @@ class eval_value {
 public:
 	eval_value() 
 	{
-		memset((void *)&poseFake, 0x00, sizeof(poseFake));
-		memset((void *)&jointFake, 0x00, sizeof(jointFake));
-		memset((void *)&prRegDataFake, 0x00, sizeof(prRegDataFake));
-//		memset((void *)&srRegDataFake, 0x00, sizeof(srRegDataFake));
-		memset((void *)&rRegDataFake,  0x00, sizeof(rRegDataFake));
-//		memset((void *)&mrRegDataFake, 0x00, sizeof(mrRegDataFake));
-		
+//			memset((void *)&poseFake, 0x00, sizeof(poseFake));
+//			memset((void *)&jointFake, 0x00, sizeof(jointFake));
+//			memset((void *)&prRegDataFake, 0x00, sizeof(prRegDataFake));
+//	//		memset((void *)&srRegDataFake, 0x00, sizeof(srRegDataFake));
+//			memset((void *)&rRegDataFake,  0x00, sizeof(rRegDataFake));
+//	//		memset((void *)&mrRegDataFake, 0x00, sizeof(mrRegDataFake));
+			
 		resetNoneValue() ;
 	}
 	int getType(){

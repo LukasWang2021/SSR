@@ -25,7 +25,6 @@
 #include <boost/algorithm/string.hpp>
 #include "forsight_inter_control.h"
 
-
 IOInterface::IOInterface()
 {
     U64 result = initial();

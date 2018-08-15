@@ -125,16 +125,15 @@ ShmData *getShm(const char* name)
 
 void readShm(const char* name, int offset,  void*buffer, int size)
 {
-    void* ptr = getShm(name)->ptr;
-
-    memcpy(buffer, (char*)ptr+offset, size);
+//    void* ptr = getShm(name)->ptr;
+//    memcpy(buffer, (char*)ptr+offset, size);
 }
 
 
 void writeShm(const char* name, int offset, void*buffer, int size)
 {
-    void* ptr = getShm(name)->ptr;
-    memcpy((char*)ptr+offset, buffer, size); 
+//    void* ptr = getShm(name)->ptr;
+//    memcpy((char*)ptr+offset, buffer, size); 
 }
 
 bool tryWrite(const char* name, int offset, void*buffer, int size)

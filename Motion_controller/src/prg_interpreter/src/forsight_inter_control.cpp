@@ -651,7 +651,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 	std::vector<BaseRegData> vecRet ; 
     char * strChgRegLst ;
 	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
-    printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
+	if(intprt_ctrl.cmd != LOAD)
+        printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
     switch (intprt_ctrl.cmd)
     {
@@ -686,7 +687,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             setPrgmState(EXECUTE_R);
 			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "call_test");
+			   strcpy(intprt_ctrl.start_ctrl.file_name, "reconstruction_r_test");
 			}
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
@@ -1185,25 +1186,25 @@ char * forgesight_get_programs_path()
 
 void initShm()
 {
-    openShm(SHM_INTPRT_CMD, 1024);
-    openShm(SHM_INTPRT_STATUS, 1024);
+//    openShm(SHM_INTPRT_CMD, 1024);
+//    openShm(SHM_INTPRT_STATUS, 1024);
 	
 	// Lujiaming add at 0323
-    openShm(SHM_REG_IO_INFO, 1024);
+//    openShm(SHM_REG_IO_INFO, 1024);
 	// Lujiaming add at 0323 end
 	
 	// Lujiaming add at 0514
-    openShm(SHM_CHG_REG_LIST_INFO, 1024);
+//    openShm(SHM_CHG_REG_LIST_INFO, 1024);
 	// Lujiaming add at 0514 end
 	
-    openShm(SHM_CTRL_CMD, 1024);
-    openShm(SHM_CTRL_STATUS, 1024);
-    openShm(SHM_INTPRT_DST, 1024);
+//    openShm(SHM_CTRL_CMD, 1024);
+//    openShm(SHM_CTRL_STATUS, 1024);
+//    openShm(SHM_INTPRT_DST, 1024);
     // intprt_ctrl.cmd = LOAD;
     // intprt_ctrl.cmd = START;
 	g_privateInterpreterState = IDLE_R ;
 	
-	setPrgmState(IDLE_R);
+//	setPrgmState(IDLE_R);
 #ifdef WIN32
 //	generateFakeData();
 #else
@@ -1213,6 +1214,7 @@ void initShm()
 #endif
 //	initShmi(1024);
 #endif
+	forgesight_load_programs_path();
 }
 
 

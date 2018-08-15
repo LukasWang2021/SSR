@@ -8,6 +8,9 @@
 #include "forsight_innerfunc.h"
 #include <algorithm> 
 
+#define RAD2DEG(x) ((x)*180./PI)  // Convert radians to angles
+#define DEG2RAD(x) ((x)*PI/180.)  // Convert angle to radians
+
 //        A 三角函数
 //    01. double sin (double);
 //    02. double cos (double);
@@ -60,7 +63,16 @@ bool call_fabs (eval_value *result, char * valFirst, char * valSecond, char * va
 bool call_ldexp(eval_value *result, char * valFirst, char * valSecond, char * valThird);
 bool call_modf (eval_value *result, char * valFirst, char * valSecond, char * valThird);
 bool call_fmod (eval_value *result, char * valFirst, char * valSecond, char * valThird);
-
+bool call_hypot(eval_value *result, char * valFirst, char * valSecond, char * valThird);
+bool call_gcd  (eval_value *result, char * valFirst, char * valSecond, char * valThird);
+bool call_lcm  (eval_value *result, char * valFirst, char * valSecond, char * valThird);
+// Convert function
+bool call_degrees(eval_value *result, char * valFirst, char * valSecond, char * valThird);
+bool call_radians(eval_value *result, char * valFirst, char * valSecond, char * valThird);
+// Year/Month/Day function
+bool call_isleapyear(eval_value *result, char * valFirst, char * valSecond, char * valThird);
+bool call_getmaxday(eval_value *result, char * valFirst, char * valSecond, char * valThird);
+bool call_getdays(eval_value *result, char * valFirst, char * valSecond, char * valThird);
 //        I 字符串操作函数
 //    23. strlen  (char *);
 //    24. findstr (char *, char *);
@@ -111,6 +123,16 @@ struct intern_func_type {
 	(char *)"ldexp",      2, call_ldexp,
 	(char *)"modf",       2, call_modf ,
 	(char *)"fmod",       2, call_fmod ,
+	(char *)"hypot",      2, call_hypot,
+	(char *)"gcd",        2, call_gcd,
+	(char *)"lcm",        2, call_lcm,
+    // Convert function
+	(char *)"degrees",    1, call_degrees,
+	(char *)"radians",    1, call_radians,
+    // Convert function
+	(char *)"isleapyear", 1, call_isleapyear,
+	(char *)"getmaxday",  1, call_getmaxday,
+	(char *)"getdays",    1, call_getdays,
 	// String function
 	(char *)"strlen",     1, call_strlen ,
 	(char *)"findstr",    2, call_findstr ,
@@ -306,6 +328,129 @@ bool call_fmod (eval_value *result, char * valFirst, char * valSecond, char * va
 	double val = atof(valFirst);
 	double valTwo = atof(valSecond);
 	result->setFloatValue(fmod(val, valTwo));
+    return true ;
+}
+
+bool call_hypot(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	double val = atof(valFirst);
+	double valTwo = atof(valSecond);
+	result->setFloatValue(hypot(val, valTwo));
+    return true ;
+}
+
+int Stein_GCD(int x, int y)
+{
+    if (x == 0) return y;
+    if (y == 0) return x;
+    if (x % 2 == 0 && y % 2 == 0)
+        return 2 * Stein_GCD(x >> 1, y >> 1);
+    else if (x % 2 == 0)
+        return Stein_GCD(x >> 1, y);
+    else if (y % 2 == 0)
+        return Stein_GCD(x, y >> 1);
+    else
+        return Stein_GCD(min(x, y), fabs(x - y));
+}
+
+bool call_gcd(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	double val = atof(valFirst);
+	double valTwo = atof(valSecond);
+	result->setFloatValue(Stein_GCD((int)val, (int)valTwo));
+    return true ;
+}
+
+bool call_lcm(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	int iLcm = 0 ;
+	double val = atof(valFirst);
+	double valTwo = atof(valSecond);
+	iLcm = (int)val * (int)valTwo /(int)Stein_GCD((int)val, (int)valTwo);
+	result->setFloatValue(iLcm);
+    return true ;
+}
+
+bool call_degrees(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	double val = atof(valFirst);
+	result->setFloatValue(RAD2DEG(val));
+    return true ;
+}
+
+bool call_radians(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	double val = atof(valFirst);
+	result->setFloatValue(DEG2RAD(val));
+    return true ;
+}
+
+//判断某一年份是否是闰年
+int IsLeapYear(int year)
+{
+	return (year % 400 == 0 || (year % 4 == 0) && (year % 100 != 0));
+}
+
+bool call_isleapyear(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	double val = atof(valFirst);
+	result->setFloatValue(IsLeapYear((int)val));
+    return true ;
+}
+
+//获得某年、某月的最大天数
+int GetMaxDay(int year,int month)
+{
+	switch(month)
+	{
+	case 1:
+	case 3:
+	case 5:
+	case 7:
+	case 8:
+	case 10:
+	case 12:
+		return 31;
+	case 4:
+	case 6:
+	case 9:
+	case 11:
+		return 30;
+	case 2:
+		return IsLeapYear(year)?29:28;		
+	default:return -1;
+	}
+}
+
+bool call_getmaxday(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	double val = atof(valFirst);
+	double valTwo = atof(valSecond);
+	result->setFloatValue(GetMaxDay((int)val, (int)valTwo));
+    return true ;
+}
+
+//输入某年某月某日，判断这一天是这一年的第几天？ 
+/*  
+程序分析：以3月5日为例，应该先把前两个月的加起来，然后再加上5天即本年的第几天，特殊 
+情况，闰年且输入月份大于3时需考虑多加一天。
+*/
+int GetDays(int year,int month,int day)
+{
+	int sum = 0;
+	int i;
+	for(i = 1; i < month; i++)      //将前几个月天数相加
+		sum += GetMaxDay(year,month);
+	sum = sum + day;  //加上本月的天数，就是总天数
+	return sum;
+}
+
+bool call_getdays(eval_value *result, char * valFirst, char * valSecond, char * valThird)
+{
+	double val = atof(valFirst);
+	double valTwo = atof(valSecond);
+	double valThr = atof(valThird);
+	result->setFloatValue(GetDays((int)val, (int)valTwo, (int)valThr));
     return true ;
 }
 

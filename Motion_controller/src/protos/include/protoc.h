@@ -23,6 +23,7 @@
 #include "message_type/publish_topic.pb.h"
 #include "message_type/rpc_table.pb.h"
 #include "message_type/pose_euler.pb.h"
+#include "message_type/joint_list.pb.h"
 #include "message_type/tool_frame.pb.h"
 #include "message_type/user_frame.pb.h"
 

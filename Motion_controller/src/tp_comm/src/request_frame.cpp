@@ -5,7 +5,6 @@
 
 using namespace fst_comm;
 
-
 // add tool_frame
 void TpComm::handleRequest0x0000A22C(int recv_bytes)
 {
@@ -23,7 +22,7 @@ void TpComm::handleRequest0x0000A22C(int recv_bytes)
         delete request_data_ptr;
         return;
     }
-    
+
     handleRequestPackage(0x0000A22C, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_ToolInfo_fields, -1);
 }

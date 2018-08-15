@@ -19,6 +19,16 @@
 namespace fst_mc
 {
 
+enum ServoState
+{
+    SERVO_IDLE = 1,
+    SERVO_RUNNING = 2,
+    SERVO_DISABLE = 3,
+    SERVO_WAIT_READY = 4,
+    SERVO_WAIT_DOWN = 5,
+    SERVO_INIT = 10,
+};
+
 enum PointProperty
 {
     POINT_POS = 1,
@@ -57,18 +67,19 @@ class BareCoreInterface
   public:
     BareCoreInterface();
     ~BareCoreInterface();
+
+    bool initInterface(void);
     
     bool sendPoint(void);
     bool isPointCacheEmpty(void);
     bool fillPointCache(TrajectoryPoint *points, size_t length, PointProperty proerty);
 
-    bool getLatestJoint(Joint &joint);
+    bool getLatestJoint(Joint &joint, ServoState &state);
 
     bool resetBareCore(void);
     bool stopBareCore(void);
 
   private:
-    int         servo_state_;
     PointCache  point_cache_;
 
     fst_core_interface::CoreInterface   core_interface_;

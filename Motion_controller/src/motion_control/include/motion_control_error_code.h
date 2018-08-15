@@ -47,8 +47,8 @@ typedef unsigned long long int ErrorCode;
 #define FAIL_GET_FEEDBACK_JOINT (unsigned long long int)0x00010002006607E6   /*fail to get FeedbackJointState*/
 #define NEED_INITIALIZATION (unsigned long long int)0x0001000200660411   /*ArmGroup need to initialize */
 #define NEED_CALIBRATION (unsigned long long int)0x0001000400660412   /*ArmGroup need to calibrate*/
-#define IPC_COMMUNICATION_ERROR (unsigned long long int)0x00010002006607E7   /*fail to communication with other process*/
-
+#define IPC_COMMUNICATION_ERROR (unsigned long long int)0x00010002006607E7   /*fail to communicate with other process*/
+#define BARE_CORE_TIMEOUT (unsigned long long int)0x00010004006607E8   /*fail to communicate with bare core*/
 
 #ifndef SUCCESS
 #define SUCCESS (unsigned long long int)0x0000000000000000

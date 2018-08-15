@@ -5,18 +5,18 @@
 	> Created Time: 2018年08月07日 星期二 14时34分07秒
  ************************************************************************/
 
+#include <unistd.h>
+#include <math.h>
 #include <motion_control_arm_group.h>
 
-#define FST_LOG(fmt, ...)       log_ptr_->log(fmt, ##__VA_ARGS__)
-#define FST_INFO(fmt, ...)      log_ptr_->info(fmt, ##__VA_ARGS__)
-#define FST_WARN(fmt, ...)      log_ptr_->warn(fmt, ##__VA_ARGS__)
-#define FST_ERROR(fmt, ...)     log_ptr_->error(fmt, ##__VA_ARGS__)
+using namespace fst_base;
 
 namespace fst_mc
 {
 
-ErrorCode ArmGroup::initGroup(void)
+ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 {
+    error_monitor_ptr_ = error_monitor_ptr;
     log_ptr_->initLogger("ArmGroup");
     cycle_time_ = 0.001;
 
@@ -34,6 +34,17 @@ ErrorCode ArmGroup::initGroup(void)
     soft_constraint_.lower[5] = -6.0;
 
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
+
+    pthread_mutex_init(&auto_mutex_, NULL);
+    pthread_mutex_init(&manual_mutex_, NULL);
+    pthread_mutex_init(&servo_mutex_, NULL);
+
+    if (!bare_core_.initInterface())
+    {
+        FST_ERROR("Fail to create communication with bare core.");
+        return BARE_CORE_TIMEOUT;
+    }
+
     return SUCCESS;
 }
 
@@ -88,7 +99,7 @@ ErrorCode ArmGroup::manualMove(const Joint &joint)
         return INVALID_SEQUENCE;
     }
 
-    bare_core_.getLatestJoint(manual_traj_.joint_start);
+    getLatestJoint(manual_traj_.joint_start);
 
     if (!isJointInConstraint(manual_traj_.joint_start, soft_constraint_))
     {
@@ -142,7 +153,7 @@ ErrorCode ArmGroup::manualMove(const ManualDirection *direction)
 
     if (group_state_ == STANDBY)
     {
-        bare_core_.getLatestJoint(manual_traj_.joint_start);
+        getLatestJoint(manual_traj_.joint_start);
         FST_INFO("start joint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
                 manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2], 
                 manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
@@ -265,31 +276,6 @@ ErrorCode ArmGroup::manualStop(void)
     }
 }
 
-ErrorCode ArmGroup::sendPoint(void)
-{
-    if (group_state_ == MANUAL)
-    {
-        if (bare_core_.isPointCacheEmpty())
-        {
-            size_t length = 10;
-            TrajectoryPoint point[10];
-            pickFromManual(point, length);
-            bare_core_.fillPointCache(point, length, POINT_POS);
-        }
-
-        bare_core_.sendPoint();
-        return SUCCESS;
-    }
-    else if (group_state_ == AUTO)
-    {
-        // TODO
-        return SUCCESS;
-    }
-    else
-    {
-        return INVALID_SEQUENCE;
-    }
-}
 
 ErrorCode ArmGroup::pickFromManual(TrajectoryPoint *point, size_t &length)
 {
@@ -405,6 +391,23 @@ ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &leng
 ErrorCode ArmGroup::autoMove(void)
 {
     return SUCCESS;
+}
+
+
+size_t ArmGroup::getFIFOLength(void)
+{
+    if (group_state_ == MANUAL)
+    {
+        return ceil((manual_traj_.duration - manual_time_) * 1000);
+    }
+    else if (group_state_ == AUTO)
+    {
+        return 0;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 

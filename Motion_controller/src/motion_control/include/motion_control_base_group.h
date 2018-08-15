@@ -9,16 +9,17 @@
 #define _MOTION_CONTROL_BASE_GROUP_H
 
 #include <pthread.h>
+#include "common_log.h"
+#include "error_monitor.h"
 #include <motion_control_datatype.h>
 #include <motion_control_error_code.h>
 #include <motion_control_core_interface.h>
-#include <log_manager/log_manager_logger.h>
 
 
 namespace fst_mc
 {
 
-enum MotionState
+enum GroupState
 {
     STANDBY = 0,
     MANUAL = 1,
@@ -34,13 +35,15 @@ enum MotionState
     PAUSE_TO_STANDBY = 130,
 };
 
+
 class BaseGroup
 {
   public:
     BaseGroup(fst_log::Logger* plog);
-    ~BaseGroup();
+    virtual ~BaseGroup();
 
-    virtual ErrorCode initGroup(void) = 0;
+    virtual ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr) = 0;
+
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode resetGroup(void);
 
@@ -52,13 +55,35 @@ class BaseGroup
     virtual ErrorCode manualMove(const Joint &joint) = 0;
     virtual ErrorCode manualStop(void) = 0;
 
-    virtual ErrorCode sendPoint(void) = 0;
+    virtual size_t getFIFOLength(void) = 0;
+
+    ErrorCode realtimeTask(void);
+
+    void getLatestJoint(Joint &joint);
+    void getServoState(ServoState &state);
+    void getGroupState(GroupState &state);
+
+    Joint getLatestJoint(void);
+    GroupState getGroupState(void);
+    ServoState getServoState(void);
+
+
+
 
 
   protected:
+    virtual ErrorCode sendPoint(void);
+    virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length) = 0;
+    virtual ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length) = 0;
+    virtual ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length) = 0;
     virtual bool isJointInConstraint(Joint joint, JointConstraint constraint) = 0;
 
-    MotionState group_state_;
+    inline void reportError(const ErrorCode &error);
+    bool updateJointStateFromBareCore(void);
+
+    Joint current_joint_;
+    ServoState  servo_state_;
+    GroupState  group_state_;
 
     JointConstraint     soft_constraint_;
     TrajectorySegment*  auto_cache_;
@@ -71,9 +96,11 @@ class BaseGroup
 
     pthread_mutex_t auto_mutex_;
     pthread_mutex_t manual_mutex_;
+    pthread_mutex_t servo_mutex_;
     
-    BareCoreInterface   bare_core_;
-    fst_log::Logger*    log_ptr_;
+    BareCoreInterface       bare_core_;
+    fst_log::Logger         *log_ptr_;
+    fst_base::ErrorMonitor  *error_monitor_ptr_;
 };
 
 

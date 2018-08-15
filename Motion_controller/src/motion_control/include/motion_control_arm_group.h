@@ -8,6 +8,7 @@
 #ifndef _MOTION_CONTROL_ARM_GROUP_H
 #define _MOTION_CONTROL_ARM_GROUP_H
 
+#include "common_log.h"
 #include <motion_control_base_group.h>
 #include <motion_control_manual_teach.h>
 
@@ -21,7 +22,8 @@ class ArmGroup : public BaseGroup
   public:
     ArmGroup(fst_log::Logger* plog) : BaseGroup(plog) {};
     ~ArmGroup() {};
-    ErrorCode initGroup(void);
+
+    ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr);
 
     ErrorCode setManualMode(ManualMode mode);
     ErrorCode setManualFrame(ManualFrame frame);
@@ -31,8 +33,7 @@ class ArmGroup : public BaseGroup
 
     ErrorCode autoMove(void);
 
-    ErrorCode sendPoint(void);
-
+    size_t getFIFOLength(void);
   
   private:
     bool isJointInConstraint(Joint joint, JointConstraint constraint);

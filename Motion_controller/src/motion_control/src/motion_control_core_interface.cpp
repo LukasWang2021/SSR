@@ -16,12 +16,25 @@ const static size_t MAX_ATTEMPTS = 100;
 BareCoreInterface::BareCoreInterface(void)
 {
     point_cache_.is_empty = true;
-    core_interface_.init();
-    command_interface_.createChannel(COMM_REQ, COMM_IPC, "JTAC");
 }
 
 BareCoreInterface::~BareCoreInterface(void)
 {}
+
+bool BareCoreInterface::initInterface(void)
+{
+    if (core_interface_.init() != SUCCESS)
+    {
+        return false;
+    }
+
+    if (command_interface_.createChannel(COMM_REQ, COMM_IPC, "JTAC") != SUCCESS)
+    {
+        return false;
+    }
+
+    return true;
+}
 
 bool BareCoreInterface::isPointCacheEmpty(void)
 {
@@ -71,7 +84,7 @@ bool BareCoreInterface::sendPoint(void)
     }
 }
 
-bool BareCoreInterface::getLatestJoint(Joint &joint)
+bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
 {
     FeedbackJointState fbjs;
 
@@ -79,7 +92,7 @@ bool BareCoreInterface::getLatestJoint(Joint &joint)
     {
         if (core_interface_.recvBareCore(fbjs) == SUCCESS)
         {
-            servo_state_ = fbjs.state;
+            state = ServoState(fbjs.state);
             memcpy(&joint, fbjs.position, JOINT_NUM * sizeof(double));
             return true;
         }

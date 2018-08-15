@@ -6,23 +6,29 @@
  ************************************************************************/
 
 #include <unistd.h>
+#include <pthread.h>
 #include <iostream>
 #include <motion_control_arm_group.h>
+
 
 using namespace std;
 using namespace fst_mc;
 using namespace fst_log;
+using namespace fst_base;
 
 
 int main(int argc, char **argv)
 {
-    size_t loop = 0;
+    //size_t loop = 0;
     Logger log;
     log.initLogger("test");
     ArmGroup arm(&log);
+    ErrorMonitor error_monitor;
     cout << "begin" << endl;
 
-    arm.initGroup();
+    arm.initGroup(&error_monitor);
+
+
     cout << "reset group" << endl;
     arm.resetGroup();
     sleep(1);
@@ -60,6 +66,7 @@ int main(int argc, char **argv)
     sleep(1);
     */
 
+    /*
     arm.setManualMode(APOINT);
     Joint target;
     target.j1 = 0;
@@ -77,7 +84,7 @@ int main(int argc, char **argv)
 
     sleep(1);
     arm.stopGroup();
-    
+    */
 
 
     return 0;

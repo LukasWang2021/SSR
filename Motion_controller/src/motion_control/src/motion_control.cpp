@@ -1,11 +1,7 @@
 #include "motion_control.h"
 #include <motion_control_arm_group.h>
 
-#define FST_LOG(fmt, ...)       log_ptr_->log(fmt, ##__VA_ARGS__)
-#define FST_INFO(fmt, ...)      log_ptr_->info(fmt, ##__VA_ARGS__)
-#define FST_WARN(fmt, ...)      log_ptr_->warn(fmt, ##__VA_ARGS__)
-#define FST_ERROR(fmt, ...)     log_ptr_->error(fmt, ##__VA_ARGS__)
-
+using namespace fst_base;
 using namespace fst_mc;
 using namespace fst_hal;
 using namespace fst_ctrl;
@@ -14,8 +10,7 @@ MotionControl::MotionControl(DeviceManager* device_manager_ptr, AxisGroupManager
                                 CoordinateManager* coordinate_manager_ptr, ToolManager* tool_manager_ptr):
     device_manager_ptr_(device_manager_ptr), axis_group_manager_ptr_(axis_group_manager_ptr), 
     coordinate_manager_ptr_(coordinate_manager_ptr), tool_manager_ptr_(tool_manager_ptr),
-    log_ptr_(NULL),
-    param_ptr_(NULL)
+    log_ptr_(NULL), param_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     assert(log_ptr_ != NULL);
@@ -24,19 +19,36 @@ MotionControl::MotionControl(DeviceManager* device_manager_ptr, AxisGroupManager
     group_ptr_ = new ArmGroup(log_ptr_);
     assert(group_ptr_ != NULL);
     //group_ptr_ = new ScalaGroup(log_ptr_);
-    if (group_ptr_->initGroup() != SUCCESS)
-    {
-        FST_ERROR("Fail to inti group");
-    }
+
 }
                     
 MotionControl::~MotionControl()
-{}
+{
+    if (log_ptr_ != NULL)   {delete log_ptr_; log_ptr_ = NULL;};
+    if (param_ptr_ != NULL)   {delete param_ptr_; param_ptr_ = NULL;};
+    if (group_ptr_ != NULL)   {delete group_ptr_; group_ptr_ = NULL;};
+}
 
 MotionControl::MotionControl():
     device_manager_ptr_(NULL), axis_group_manager_ptr_(NULL), 
     coordinate_manager_ptr_(NULL), tool_manager_ptr_(NULL)
 {}
+
+ErrorCode MotionControl::intiMotionControl(ErrorMonitor *error_monitor_ptr)
+{
+    ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);
+
+    if (err == SUCCESS)
+    {
+        FST_INFO("Initialize motion group success.");
+        return SUCCESS;
+    }
+    else
+    {
+        FST_ERROR("Fail to init motion group");
+        return err;
+    }
+}
 
 
 ErrorCode MotionControl::setManualMode(ManualMode mode)
@@ -74,8 +86,42 @@ ErrorCode MotionControl::resetGroup(void)
     return group_ptr_->resetGroup();
 }
 
-ErrorCode MotionControl::sendPoint(void)
+GroupState MotionControl::getGroupState(void)
 {
-    return group_ptr_->sendPoint();
+    return group_ptr_->getGroupState();
+}
+
+ServoState MotionControl::getServoState(void)
+{
+    return group_ptr_->getServoState();
+}
+
+Joint MotionControl::getServoJoint(void)
+{
+    return group_ptr_->getLatestJoint();
+}
+
+void MotionControl::getServoJoint(Joint &joint)
+{
+    group_ptr_->getLatestJoint(joint);
+}
+
+size_t MotionControl::getFIFOLength(void)
+{
+    return group_ptr_->getFIFOLength();
+}
+
+void MotionControl::rtTask(void)
+{
+    ErrorCode err = group_ptr_->realtimeTask();
+
+    if (err == SUCCESS)
+    {
+        FST_INFO("RT task quit with SUCCESS");
+    }
+    else
+    {
+        FST_ERROR("RT task quit with error = 0x%llx", err);
+    }
 }
 

@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     trajectory_alg
     dynamic_alg
     xml_help
+    error_monitor
 )
 
 if(catkin_CROSS)
@@ -46,7 +47,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/basic_alg/include 
     ${depend_PATH_INC}/trajectory_alg/include 
     ${depend_PATH_INC}/dynamic_alg/include 
-    ${depend_PATH_INC}/xml_help/include 
+    ${depend_PATH_INC}/xml_help/include
+    ${depend_PATH_INC}/error_monitor/include
 )
 
 catkin_package(
@@ -106,6 +108,7 @@ target_link_libraries(motion_control
     core_interface
     logger
     parameter_manager
+    error_monitor
 )
 
 target_link_libraries(manual_test

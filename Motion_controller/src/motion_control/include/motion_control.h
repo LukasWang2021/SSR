@@ -20,6 +20,8 @@ public:
                         fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr);
     ~MotionControl();
 
+    ErrorCode intiMotionControl(fst_base::ErrorMonitor *error_monitor_ptr);
+
     // API for teaching
     ErrorCode setManualMode(ManualMode mode);
     ErrorCode setManualFrame(ManualFrame frame);
@@ -33,7 +35,15 @@ public:
     // API for Axis Group Enable/Disable/Halt/Stop/Reset
     ErrorCode stopGroup(void);
     ErrorCode resetGroup(void);
-    ErrorCode sendPoint(void);
+
+    // more API
+    GroupState getGroupState(void);
+    ServoState getServoState(void);
+    Joint   getServoJoint(void);
+    void    getServoJoint(Joint &joint);
+    size_t  getFIFOLength(void);
+
+    void rtTask(void);
 
 
     // parameter access

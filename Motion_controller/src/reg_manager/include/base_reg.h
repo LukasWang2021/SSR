@@ -44,7 +44,7 @@ public:
     virtual bool addReg(void* data_ptr) = 0;
     virtual bool deleteReg(int id) = 0;
     virtual bool getReg(int id, void* data_ptr) = 0;
-    virtual bool setReg(void* data_ptr) = 0;
+    virtual bool updateReg(void* data_ptr) = 0;
     virtual bool moveReg(int expect_id, int original_id) = 0;
     virtual void* getRegValueById(int id) = 0;
     std::vector<BaseRegSummary> getChangedList(int start_id, int size);

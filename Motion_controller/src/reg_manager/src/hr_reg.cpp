@@ -174,7 +174,7 @@ bool HrReg::getReg(int id, void* data_ptr)
     return true;
 }
 
-bool HrReg::setReg(void* data_ptr)
+bool HrReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {

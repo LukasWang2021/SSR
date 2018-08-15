@@ -104,7 +104,7 @@ bool MrReg::getReg(int id, void* data_ptr)
     return true;
 }
 
-bool MrReg::setReg(void* data_ptr)
+bool MrReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {

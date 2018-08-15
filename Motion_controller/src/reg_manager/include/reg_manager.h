@@ -25,7 +25,7 @@ public:
     bool addPrReg(PrRegData* data_ptr);
     bool deletePrReg(int id);
     bool getPrReg(int id, PrRegData* data_ptr);
-    bool setPrReg(PrRegData* data_ptr);
+    bool updatePrReg(PrRegData* data_ptr);
     bool movePrReg(int expect_id, int original_id);
     std::vector<BaseRegSummary> getPrRegChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getPrRegValidList(int start_id, int size);
@@ -33,7 +33,7 @@ public:
     bool addHrReg(HrRegData* data_ptr);
     bool deleteHrReg(int id);
     bool getHrReg(int id, HrRegData* data_ptr);
-    bool setHrReg(HrRegData* data_ptr);
+    bool updateHrReg(HrRegData* data_ptr);
     bool moveHrReg(int expect_id, int original_id);
     std::vector<BaseRegSummary> getHrRegChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getHrRegValidList(int start_id, int size);   
@@ -41,7 +41,7 @@ public:
     bool addMrReg(MrRegData* data_ptr);
     bool deleteMrReg(int id);
     bool getMrReg(int id, MrRegData* data_ptr);
-    bool setMrReg(MrRegData* data_ptr);
+    bool updateMrReg(MrRegData* data_ptr);
     bool moveMrReg(int expect_id, int original_id);
     std::vector<BaseRegSummary> getMrRegChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getMrRegValidList(int start_id, int size);   
@@ -49,7 +49,7 @@ public:
     bool addSrReg(SrRegData* data_ptr);
     bool deleteSrReg(int id);
     bool getSrReg(int id, SrRegData* data_ptr);
-    bool setSrReg(SrRegData* data_ptr);
+    bool updateSrReg(SrRegData* data_ptr);
     bool moveSrReg(int expect_id, int original_id);
     std::vector<BaseRegSummary> getSrRegChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getSrRegValidList(int start_id, int size);   
@@ -57,7 +57,7 @@ public:
     bool addRReg(RRegData* data_ptr);
     bool deleteRReg(int id);
     bool getRReg(int id, RRegData* data_ptr);
-    bool setRReg(RRegData* data_ptr);
+    bool updateRReg(RRegData* data_ptr);
     bool moveRReg(int expect_id, int original_id);
     std::vector<BaseRegSummary> getRRegChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getRRegValidList(int start_id, int size);    

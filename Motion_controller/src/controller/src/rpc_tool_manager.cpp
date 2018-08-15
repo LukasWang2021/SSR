@@ -93,7 +93,6 @@ void ControllerRpc::handleRpc0x00009E34(void* request_data_ptr, void* response_d
 // "/rpc/tool_manager/getAllValidToolSummaryInfo"
 void ControllerRpc::handleRpc0x0001104F(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_ToolSummaryList* rs_data_ptr = static_cast<ResponseMessageType_ToolSummaryList*>(response_data_ptr);
 
     std::vector<ToolSummaryInfo> info_list;

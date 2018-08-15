@@ -50,8 +50,6 @@ bool Controller::init()
     
     virtual_core1_.init(log_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
-    rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, 
-                &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_);
 
     /*if(!device_manager_.init())
     {
@@ -87,6 +85,10 @@ bool Controller::init()
         return false;
     }
 
+    rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, 
+        &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_,
+        process_comm_ptr_->getControllerClientPtr());
+        
     if(!tp_comm_.init()
         || !tp_comm_.open())
     {

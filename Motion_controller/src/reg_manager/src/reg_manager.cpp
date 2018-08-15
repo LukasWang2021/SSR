@@ -64,9 +64,9 @@ bool RegManager::getPrReg(int id, PrRegData* data_ptr)
     return reg_ptr_[REG_TYPE_PR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::setPrReg(PrRegData* data_ptr)
+bool RegManager::updatePrReg(PrRegData* data_ptr)
 {
-    return reg_ptr_[REG_TYPE_PR]->setReg((void*)data_ptr);
+    return reg_ptr_[REG_TYPE_PR]->updateReg((void*)data_ptr);
 }
 
 bool RegManager::movePrReg(int expect_id, int original_id)
@@ -99,9 +99,9 @@ bool RegManager::getHrReg(int id, HrRegData* data_ptr)
     return reg_ptr_[REG_TYPE_HR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::setHrReg(HrRegData* data_ptr)
+bool RegManager::updateHrReg(HrRegData* data_ptr)
 {
-    return reg_ptr_[REG_TYPE_HR]->setReg((void*)data_ptr);
+    return reg_ptr_[REG_TYPE_HR]->updateReg((void*)data_ptr);
 }
 
 bool RegManager::moveHrReg(int expect_id, int original_id)
@@ -134,9 +134,9 @@ bool RegManager::getMrReg(int id, MrRegData* data_ptr)
     return reg_ptr_[REG_TYPE_MR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::setMrReg(MrRegData* data_ptr)
+bool RegManager::updateMrReg(MrRegData* data_ptr)
 {
-    return reg_ptr_[REG_TYPE_MR]->setReg((void*)data_ptr);
+    return reg_ptr_[REG_TYPE_MR]->updateReg((void*)data_ptr);
 }
 
 bool RegManager::moveMrReg(int expect_id, int original_id)
@@ -169,9 +169,9 @@ bool RegManager::getSrReg(int id, SrRegData* data_ptr)
     return reg_ptr_[REG_TYPE_SR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::setSrReg(SrRegData* data_ptr)
+bool RegManager::updateSrReg(SrRegData* data_ptr)
 {
-    return reg_ptr_[REG_TYPE_SR]->setReg((void*)data_ptr);
+    return reg_ptr_[REG_TYPE_SR]->updateReg((void*)data_ptr);
 }
 
 bool RegManager::moveSrReg(int expect_id, int original_id)
@@ -204,9 +204,9 @@ bool RegManager::getRReg(int id, RRegData* data_ptr)
     return reg_ptr_[REG_TYPE_R]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::setRReg(RRegData* data_ptr)
+bool RegManager::updateRReg(RRegData* data_ptr)
 {
-    return reg_ptr_[REG_TYPE_R]->setReg((void*)data_ptr);
+    return reg_ptr_[REG_TYPE_R]->updateReg((void*)data_ptr);
 }
 
 bool RegManager::moveRReg(int expect_id, int original_id)

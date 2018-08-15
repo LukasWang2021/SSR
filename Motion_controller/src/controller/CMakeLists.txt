@@ -54,6 +54,9 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/xml_help/include 
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/error_monitor/include 
+    ${depend_PATH_INC}/motion_control/include 
+    ${depend_PATH_INC}/axis_group_manager/include
+    ${depend_PATH_INC}/base_axis_group/include 
 )
 
 catkin_package(
@@ -99,6 +102,7 @@ target_link_libraries(controller
     process_comm 
     device_manager 
     error_monitor 
+    motion_control
 )
 
 #############

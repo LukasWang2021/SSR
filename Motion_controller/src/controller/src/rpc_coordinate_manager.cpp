@@ -91,7 +91,6 @@ void ControllerRpc::handleRpc0x00004324(void* request_data_ptr, void* response_d
 // "/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"
 void ControllerRpc::handleRpc0x0001838F(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_UserSummaryList* rs_data_ptr = static_cast<ResponseMessageType_UserSummaryList*>(response_data_ptr);
 
     std::vector<CoordSummaryInfo> info_list;

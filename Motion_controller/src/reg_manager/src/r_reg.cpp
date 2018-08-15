@@ -104,7 +104,7 @@ bool RReg::getReg(int id, void* data_ptr)
     return true;
 }
 
-bool RReg::setReg(void* data_ptr)
+bool RReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {

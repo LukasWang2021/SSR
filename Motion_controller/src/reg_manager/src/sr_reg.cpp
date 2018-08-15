@@ -110,7 +110,7 @@ bool SrReg::getReg(int id, void* data_ptr)
     return true;
 }
 
-bool SrReg::setReg(void* data_ptr)
+bool SrReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {

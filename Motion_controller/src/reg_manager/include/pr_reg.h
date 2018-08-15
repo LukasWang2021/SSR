@@ -39,7 +39,7 @@ public:
     virtual bool addReg(void* data_ptr);
     virtual bool deleteReg(int id);
     virtual bool getReg(int id, void* data_ptr);
-    virtual bool setReg(void* data_ptr);
+    virtual bool updateReg(void* data_ptr);
     virtual bool moveReg(int expect_id, int original_id);
     void* getRegValueById(int id);
         

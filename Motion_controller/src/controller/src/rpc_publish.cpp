@@ -4,7 +4,7 @@ using namespace fst_ctrl;
 using namespace fst_comm;
 
 // "/rpc/controller/addTopic"
-void ControllerRpc::handleRpc0x00000773(void* request_data_ptr, void* response_data_ptr)
+void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
@@ -37,7 +37,7 @@ void ControllerRpc::handleRpc0x00000773(void* request_data_ptr, void* response_d
 }
 
 // "/rpc/publish/addRegTopic"
-void ControllerRpc::handleRpc0x00000001(void* request_data_ptr, void* response_data_ptr)
+void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
@@ -75,6 +75,12 @@ void ControllerRpc::handleRpc0x00000001(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = false;
     }
+}
+
+// "/rpc/publish/addIoTopic"
+void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_data_ptr)
+{
+
 }
 
 

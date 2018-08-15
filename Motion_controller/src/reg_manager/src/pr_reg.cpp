@@ -164,7 +164,7 @@ bool PrReg::getReg(int id, void* data_ptr)
     return true;
 }
 
-bool PrReg::setReg(void* data_ptr)
+bool PrReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {

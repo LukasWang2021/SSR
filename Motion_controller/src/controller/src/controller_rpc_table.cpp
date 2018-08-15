@@ -3,11 +3,15 @@
 
 using namespace fst_ctrl;
 
+
 void ControllerRpc::initRpcTable()
 {
     RpcService rpc_service;
     
-    rpc_service = {"/rpc/controller/addTopic", 0x00000773, &ControllerRpc::handleRpc0x00000773}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/publish/addTopic", 0x000050E3, &ControllerRpc::handleRpc0x000050E3}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/publish/addRegTopic", 0x000163A3, &ControllerRpc::handleRpc0x000163A3}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/publish/addIoTopic", 0x000058F3, &ControllerRpc::handleRpc0x000058F3}; rpc_table_.push_back(rpc_service);
+    
     rpc_service = {"/rpc/controller/getUserOpMode", 0x00000C05, &ControllerRpc::handleRpc0x00000C05}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getRunningStatus", 0x00000AB3, &ControllerRpc::handleRpc0x00000AB3}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getInterpreterStatus", 0x00016483, &ControllerRpc::handleRpc0x00016483}; rpc_table_.push_back(rpc_service);
@@ -33,6 +37,65 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/coordinate_manager/getUserCoordInfoById", 0x00004324, &ControllerRpc::handleRpc0x00004324}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo", 0x0001838F, &ControllerRpc::handleRpc0x0001838F}; rpc_table_.push_back(rpc_service);
 
-    rpc_service = {"/rpc/publish/addRegTopic", 0x00000001, &ControllerRpc::handleRpc0x00000001}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/r/addReg", 0x00004FF7, &ControllerRpc::handleRpc0x00004FF7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/r/deleteReg", 0x000012F7, &ControllerRpc::handleRpc0x000012F7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/r/updateReg", 0x00005757, &ControllerRpc::handleRpc0x00005757}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/r/getReg", 0x0000EAB7, &ControllerRpc::handleRpc0x0000EAB7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/r/moveReg", 0x0000C877, &ControllerRpc::handleRpc0x0000C877}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/r/getChangedList", 0x0000A904, &ControllerRpc::handleRpc0x0000A904}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/r/getValidList", 0x00008CE4, &ControllerRpc::handleRpc0x00008CE4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/mr/addReg", 0x000097E7, &ControllerRpc::handleRpc0x000097E7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/mr/deleteReg", 0x0000E5D7, &ControllerRpc::handleRpc0x0000E5D7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/mr/updateReg", 0x0000E9B7, &ControllerRpc::handleRpc0x0000E9B7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/mr/getReg", 0x0000B507, &ControllerRpc::handleRpc0x0000B507}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/mr/moveReg", 0x00015BA7, &ControllerRpc::handleRpc0x00015BA7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/mr/getChangedList", 0x00001774, &ControllerRpc::handleRpc0x00001774}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/mr/getValidList", 0x00015CF4, &ControllerRpc::handleRpc0x00015CF4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/sr/addReg", 0x000161E7, &ControllerRpc::handleRpc0x000161E7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/sr/deleteReg", 0x0000B817, &ControllerRpc::handleRpc0x0000B817}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/sr/updateReg", 0x000119F7, &ControllerRpc::handleRpc0x000119F7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/sr/getReg", 0x00017F07, &ControllerRpc::handleRpc0x00017F07}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/sr/moveReg", 0x00002127, &ControllerRpc::handleRpc0x00002127}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/sr/getChangedList", 0x00004834, &ControllerRpc::handleRpc0x00004834}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/sr/getValidList", 0x00009854, &ControllerRpc::handleRpc0x00009854}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/pr/addReg", 0x000154E7, &ControllerRpc::handleRpc0x000154E7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/pr/deleteReg", 0x00001097, &ControllerRpc::handleRpc0x00001097}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/pr/updateReg", 0x00009EF7, &ControllerRpc::handleRpc0x00009EF7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/pr/getReg", 0x00017207, &ControllerRpc::handleRpc0x00017207}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/pr/moveReg", 0x0000D7C7, &ControllerRpc::handleRpc0x0000D7C7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/pr/getChangedList", 0x0000B454, &ControllerRpc::handleRpc0x0000B454}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/pr/getValidList", 0x00009354, &ControllerRpc::handleRpc0x00009354}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/hr/addReg", 0x00016CE7, &ControllerRpc::handleRpc0x00016CE7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/hr/deleteReg", 0x00003D17, &ControllerRpc::handleRpc0x00003D17}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/hr/updateReg", 0x0000CB77, &ControllerRpc::handleRpc0x0000CB77}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/hr/getReg", 0x00000367, &ControllerRpc::handleRpc0x00000367}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/hr/moveReg", 0x00014A87, &ControllerRpc::handleRpc0x00014A87}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/hr/getChangedList", 0x00012974, &ControllerRpc::handleRpc0x00012974}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/reg_manager/hr/getValidList", 0x00006B54, &ControllerRpc::handleRpc0x00006B54}; rpc_table_.push_back(rpc_service);
+
+    rpc_service = {"/rpc/motion_control/stop", 0x00001E70, &ControllerRpc::handleRpc0x00001E70}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/reset", 0x00001D14, &ControllerRpc::handleRpc0x00001D14}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setManualMode", 0x00012FB5, &ControllerRpc::handleRpc0x00012FB5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setManualFrame", 0x00009D05, &ControllerRpc::handleRpc0x00009D05}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/doStepManualMove", 0x000085D5, &ControllerRpc::handleRpc0x000085D5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/doContinusManualMove", 0x000173B5, &ControllerRpc::handleRpc0x000173B5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/doGotoPointManualMove", 0x00009B75, &ControllerRpc::handleRpc0x00009B75}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getJointFeedBack", 0x0000DFBB, &ControllerRpc::handleRpc0x0000DFBB}; rpc_table_.push_back(rpc_service);
+
+    rpc_service = {"/rpc/interpreter/start", 0x00006154, &ControllerRpc::handleRpc0x00006154}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/debug", 0x000102D7, &ControllerRpc::handleRpc0x000102D7}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/forward", 0x0000D974, &ControllerRpc::handleRpc0x0000D974}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/backward", 0x00008E74, &ControllerRpc::handleRpc0x00008E74}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/jump", 0x00015930, &ControllerRpc::handleRpc0x00015930}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/pause", 0x0000BA55, &ControllerRpc::handleRpc0x0000BA55}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/resume", 0x0000CF55, &ControllerRpc::handleRpc0x0000CF55}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/abort", 0x000086F4, &ControllerRpc::handleRpc0x000086F4}; rpc_table_.push_back(rpc_service);
+
+    rpc_service = {"/rpc/io_mapping/getDIByBit", 0x000050B4, &ControllerRpc::handleRpc0x000050B4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/setDIByBit", 0x00011754, &ControllerRpc::handleRpc0x00011754}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/getDOByBit", 0x00013074, &ControllerRpc::handleRpc0x00013074}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/setDOByBit", 0x00007074, &ControllerRpc::handleRpc0x00007074}; rpc_table_.push_back(rpc_service);
+
+    rpc_service = {"/rpc/device_manager/getDeviceList", 0x0000C1E0, &ControllerRpc::handleRpc0x0000C1E0}; rpc_table_.push_back(rpc_service);
 }
 

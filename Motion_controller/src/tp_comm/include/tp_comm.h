@@ -232,23 +232,33 @@ private:
     /********rpc/reg_manager/hr/getValidList, RequestMessageType_Int32List(count = 2) **********/
     void handleRequest0x00006B54(int recv_bytes);
 
-
     /********rpc/motion_control/stop, RequestMessageType_Void**********/
     void handleRequest0x00001E70(int recv_bytes);
     /********rpc/motion_control/reset, RequestMessageType_Void**********/
     void handleRequest0x00001D14(int recv_bytes);
-    /********rpc/motion_control/axis_group/setManualMode, RequestMessageType_Int32List(count = 2) **********/
-    void handleRequest0x00012FB5(int recv_bytes);
     /********rpc/motion_control/axis_group/setManualFrame, RequestMessageType_Int32List(count = 2) **********/
     void handleRequest0x00009D05(int recv_bytes);
     /********rpc/motion_control/axis_group/doStepManualMove, RequestMessageType_Int32List(count = 2) **********/
     void handleRequest0x000085D5(int recv_bytes);
-    /********rpc/motion_control/axis_group/doContinusManulMove, RequestMessageType_Int32List(count = 2) **********/
-    void handleRequest0x000173B5(int recv_bytes);
-    /********rpc/motion_control/axis_group/doGotoPointManulMove, RequestMessageType_Int32_Int32List(count = 9) **********/
-    void handleRequest0x00009B75(int recv_bytes);
+    /********rpc/motion_control/axis_group/doContinuousManualMove, RequestMessageType_Int32_Int32List(count = 9)**********/
+    void handleRequest0x0000D3F5(int recv_bytes);
     /********rpc/motion_control/axis_group/getJointsFeedBack, RequestMessageType_Int32**********/
     void handleRequest0x0000DFBB(int recv_bytes);
+
+    /********rpc/motion_control/axis_group/setUserSoftLimit, RequestMessageType_Int32_JointLimit**********/
+    void handleRequest0x000114A4(int recv_bytes);
+    /********rpc/motion_control/axis_group/getUserSoftLimit, RequestMessageType_Int32**********/
+    void handleRequest0x0000C764(int recv_bytes);
+    /********rpc/motion_control/axis_group/setManuSoftLimit, RequestMessageType_Int32_JointLimit**********/
+    void handleRequest0x000108E4(int recv_bytes);
+    /********rpc/motion_control/axis_group/getManuSoftLimit, RequestMessageType_Int32**********/
+    void handleRequest0x0000C244(int recv_bytes);
+    /********rpc/motion_control/axis_group/doGotoCartesianPointManualMove, RequestMessageType_Int32_DoubleList(count = 6) **********/
+    void handleRequest0x00010C05(int recv_bytes);
+    /********rpc/motion_control/axis_group/doGotoJointPointManualMove, RequestMessageType_Int32_DoubleList(count = 9) **********/
+    void handleRequest0x00008075(int recv_bytes);
+    /********rpc/motion_control/axis_group/doManualStop, RequestMessageType_Int32**********/
+    void handleRequest0x0000A9A0(int recv_bytes);
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);
@@ -278,8 +288,6 @@ private:
 
     /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
     void handleRequest0x0000C1E0(int recv_bytes);
-
-
     /********rpc/publish/addTopic, RequestMessageType_Topic**********/
     void handleRequest0x000050E3(int recv_bytes);
     /********rpc/publish/deleteTopic, RequestMessageType_UnsignedInt32**********/
@@ -430,18 +438,29 @@ private:
     void handleResponse0x00001E70(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/reset, ResponseMessageType_Bool**********/
     void handleResponse0x00001D14(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/setManualMode, ResponseMessageType_Bool**********/
-    void handleResponse0x00012FB5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setManualFrame, ResponseMessageType_Bool**********/
     void handleResponse0x00009D05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/doStepManualMove, ResponseMessageType_Bool**********/
     void handleResponse0x000085D5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/doContinusManulMove, ResponseMessageType_Bool**********/
-    void handleResponse0x000173B5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/doGotoPointManulMove, ResponseMessageType_Bool**********/
-    void handleResponse0x00009B75(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/doContinuousManualMove, ResponseMessageType_Bool**********/
+    void handleResponse0x0000D3F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getJointsFeedBack, ResponseMessageType_Bool_Int32List(count = 9) **********/
     void handleResponse0x0000DFBB(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/motion_control/axis_group/setUserSoftLimit, ResponseMessageType_Bool**********/
+    void handleResponse0x000114A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getUserSoftLimit, ResponseMessageType_Bool_JointLimit**********/
+    void handleResponse0x0000C764(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setManuSoftLimit, ResponseMessageType_Bool**********/
+    void handleResponse0x000108E4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getManuSoftLimit, ResponseMessageType_Bool_JointLimit**********/
+    void handleResponse0x0000C244(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/doGotoCartesianPointManualMove, ResponseMessageType_Bool**********/
+    void handleResponse0x00010C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/doGotoJointPointManualMove, ResponseMessageType_Bool**********/
+    void handleResponse0x00008075(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/doManualStop, ResponseMessageType_Bool**********/
+    void handleResponse0x0000A9A0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -500,7 +519,7 @@ private:
     void handlePublishElement0x0000D0AD(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     /********"MessageType_Int32_Int32List(count=9)",**********/
-    void handlePublishElement0x00013643(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElement0x000161F3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

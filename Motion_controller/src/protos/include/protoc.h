@@ -17,6 +17,8 @@
 #include "request/request_reg_r.pb.h"
 #include "request/request_reg_sr.pb.h"
 #include "request/request_int32_doublelist.pb.h"
+#include "request/request_int32_int32list.pb.h"
+#include "request/request_int32_jointlimit.pb.h"
 
 #include "message_type/base.pb.h"
 #include "message_type/publish_table.pb.h"
@@ -28,6 +30,8 @@
 #include "message_type/user_frame.pb.h"
 
 #include "message_type/device_info.pb.h"
+#include "message_type/int32_int32list.pb.h"
+#include "message_type/joint_limit.pb.h"
 
 #include "message_type/reg_hr.pb.h"
 #include "message_type/reg_mr.pb.h"
@@ -53,6 +57,6 @@
 #include "response/response_bool_int32list.pb.h"
 #include "response/response_device_info.pb.h"
 #include "response/response_bool_doublelist.pb.h"
-
+#include "response/response_bool_jointlimit.pb.h"
 
 #endif

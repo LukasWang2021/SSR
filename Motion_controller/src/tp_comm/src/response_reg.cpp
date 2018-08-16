@@ -381,7 +381,7 @@ void TpComm::handleResponse0x00009854(std::vector<TpRequestResponse>::iterator& 
 
 
 
-// "/rpc/reg_manager/pr/addReg",	0x000154E7,	"RequestMessageType.PrRegData",	"ResponseMessageType.Bool",	
+// "/rpc/reg_manager/pr/addReg"
 void TpComm::handleResponse0x000154E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Bool_fields, task->response_data_ptr, send_buffer_size))

@@ -178,5 +178,5 @@ void TpComm::handleRequest0x0000DFBB(int recv_bytes)
     }
     
     handleRequestPackage(0x0000DFBB, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, ResponseMessageType_Bool_DoubleList_fields, -1);
+        recv_bytes, RequestMessageType_Int32_fields, -1);
 }

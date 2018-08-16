@@ -66,6 +66,23 @@ enum ManualDirection
     DECREASE = 2,
 };
 
+class GroupDirection
+{
+  public:
+    ManualDirection axis1;
+    ManualDirection axis2;
+    ManualDirection axis3;
+    ManualDirection axis4;
+    ManualDirection axis5;
+    ManualDirection axis6;
+    ManualDirection axis7;
+    ManualDirection axis8;
+    ManualDirection axis9;
+
+    ManualDirection& operator[](size_t index) {assert(index < NUM_OF_JOINT); return *(&axis1 + index);}
+    const ManualDirection& operator[](size_t index) const {assert(index < NUM_OF_JOINT); return *(&axis1 + index);}
+};
+
 struct ManualCoef
 {
     MotionTime start_time;

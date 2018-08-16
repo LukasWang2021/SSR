@@ -5,18 +5,18 @@
 	> Created Time: 2016年12月12日 星期一 14时30分56秒
  ************************************************************************/
 
-#ifndef _MOTION_CONTROLLER_OFFSET_CALIBRATION_H
-#define _MOTION_CONTROLLER_OFFSET_CALIBRATION_H
+#ifndef _MOTION_CONTROLLER_OFFSET_CALIBRATOR_H
+#define _MOTION_CONTROLLER_OFFSET_CALIBRATOR_H
 
 #include <string>
 #include <vector>
 #include <base_datatype.h>
+#include <common_log.h>
 #include <motion_control_core_interface.h>
-#include <log_manager/log_manager_logger.h>
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <parameter_manager/parameter_manager_error_code.h>
 
-namespace fst_controller
+namespace fst_mc
 {
 
 enum CalibrateState

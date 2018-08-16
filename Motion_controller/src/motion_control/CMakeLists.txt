@@ -84,6 +84,7 @@ add_library(motion_control
     src/motion_control_base_group.cpp
     src/motion_control_manual_teach.cpp
     src/motion_control_core_interface.cpp
+    #src/motion_control_offset_calibrator.cpp
 )
 
 add_executable(manual_test

@@ -48,11 +48,11 @@ class BaseGroup
     virtual ErrorCode resetGroup(void);
 
     virtual ErrorCode autoMove(void) = 0;
-    
-    virtual ErrorCode setManualMode(ManualMode mode) = 0;
+
     virtual ErrorCode setManualFrame(ManualFrame frame) = 0;
-    virtual ErrorCode manualMove(const ManualDirection directions[NUM_OF_JOINT]) = 0;
-    virtual ErrorCode manualMove(const Joint &joint) = 0;
+    virtual ErrorCode manualMoveStep(const ManualDirection *direction) = 0;
+    virtual ErrorCode manualMoveContinuous(const ManualDirection *direction) = 0;
+    virtual ErrorCode manualMoveToPoint(const Joint &joint) = 0;
     virtual ErrorCode manualStop(void) = 0;
 
     virtual size_t getFIFOLength(void) = 0;

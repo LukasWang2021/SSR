@@ -9,25 +9,25 @@
 #include "coordinate_manager.h"
 #include "tool_manager.h"
 #include "motion_control_arm_group.h"
-#include "error_monitor.h"
+
 
 namespace fst_mc
 {
 class MotionControl
 {
 public:
-    MotionControl();
+    MotionControl(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
+                        fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr);
     ~MotionControl();
 
-    ErrorCode init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
-                        fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr,
-                        fst_base::ErrorMonitor* error_monitor_ptr);
+    ErrorCode initMotionControl(fst_base::ErrorMonitor *error_monitor_ptr);
 
     // API for teaching
-    ErrorCode setManualMode(ManualMode mode);
     ErrorCode setManualFrame(ManualFrame frame);
-    ErrorCode manualMove(const ManualDirection *direction);
-    ErrorCode manualMove(const Joint &joint);
+    ErrorCode doStepManualMove(const GroupDirection &direction);
+    ErrorCode doContinuousManualMove(const GroupDirection &direction);
+    ErrorCode doGotoPointManualMove(const Joint &joint);
+    ErrorCode doGotoPointManualMove(const PoseEuler &pose);
     ErrorCode manualStop(void);
 
     // API for auto run
@@ -57,9 +57,9 @@ private:
     AxisGroupManager* axis_group_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
-    fst_base::ErrorMonitor* error_monitor_ptr_;
     BaseGroup *group_ptr_;
-    
+
+    MotionControl();
 };
 
 

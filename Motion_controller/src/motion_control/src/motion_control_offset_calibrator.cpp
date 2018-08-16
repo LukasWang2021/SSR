@@ -11,13 +11,11 @@
 #include <motion_control_offset_calibrator.h>
 #include <motion_control_error_code.h>
 
-#define FST_LOG(fmt, ...)       log_ptr_->log(fmt, ##__VA_ARGS__)
-#define FST_INFO(fmt, ...)      log_ptr_->info(fmt, ##__VA_ARGS__)
-#define FST_WARN(fmt, ...)      log_ptr_->warn(fmt, ##__VA_ARGS__)
-#define FST_ERROR(fmt, ...)     log_ptr_->error(fmt, ##__VA_ARGS__)
 
 using namespace std;
 
+namespace fst_mc
+{
 
 Calibrator::Calibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog)
 {
@@ -45,7 +43,7 @@ ErrorCode Calibrator::initCalibrator(const string &path)
     vector<double> data;
     char buffer[LOG_TEXT_SIZE];
 
-    FST_INFO("Initializing offset calibrator ...");
+    FST_INFO("Initializing offset calibrator, number-of-joint = %d ...", joint_num_);
 
     // if directory given by 'path' is not found, create it
     boost::filesystem::path pa(path);
@@ -103,9 +101,9 @@ ErrorCode Calibrator::initCalibrator(const string &path)
         FST_ERROR("Invalid array size of joint-mask, except %d but get %d", joint_num_, stat.size());
         return false;
     }
-    FST_INFO("Recorded-Masks: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE);
+    FST_INFO("Recorded-Masks: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE));
 
-    for (int i = 0; i < joint_num_; i++)
+    for (size_t i = 0; i < joint_num_; i++)
         offset_mask_[i] = OffsetMask(stat[i]);
 
     stat.clear();
@@ -120,9 +118,9 @@ ErrorCode Calibrator::initCalibrator(const string &path)
         FST_ERROR("Invalid array size of joint-flag, except %d but get %d", joint_num_, stat.size());
         return INVALID_PARAMETER;
     }
-    FST_INFO("Recorded-Flags: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE);
+    FST_INFO("Recorded-Flags: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE));
 
-    for (int i = 0; i < joint_num_; i++)
+    for (size_t i = 0; i < joint_num_; i++)
         offset_stat_[i] = OffsetState(stat[i]);
 
     // load thresholds used in checking offset
@@ -142,9 +140,9 @@ ErrorCode Calibrator::initCalibrator(const string &path)
             FST_ERROR("Invalid array size of normal threshold, except %d but get %d", joint_num_, data.size());
             return INVALID_PARAMETER;
         }
-        FST_INFO("Threshold-normal: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE);
+        FST_INFO("Threshold-normal: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
 
-        for (int i = 0; i < joint_num_; i++)
+        for (size_t i = 0; i < joint_num_; i++)
             normal_threshold_[i] = data[i];
 
         data.clear();
@@ -154,9 +152,9 @@ ErrorCode Calibrator::initCalibrator(const string &path)
             FST_ERROR("Invalid array size of lost threshold, except %d but get %d", joint_num_, data.size());
             return INVALID_PARAMETER;
         }
-        FST_INFO("Threshold-lost: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE);
+        FST_INFO("Threshold-lost: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
 
-        for (int i = 0; i < joint_num_; i++)
+        for (size_t i = 0; i < joint_num_; i++)
             lost_threshold_[i] = data[i];
     }
     else
@@ -185,9 +183,9 @@ ErrorCode Calibrator::initCalibrator(const string &path)
         }
 
         FST_INFO("ID of offset: 0x%x", id);
-        FST_INFO("Encoder-Zero-Offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE);
+        FST_INFO("Encoder-Zero-Offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
 
-        for (int i = 0; i < joint_num_; i++)
+        for (size_t i = 0; i < joint_num_; i++)
             zero_offset_[i] = data[i];
     }
     else
@@ -222,15 +220,16 @@ ErrorCode Calibrator::initCalibrator(const string &path)
 
 ErrorCode Calibrator::checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat)
 {
+    ServoState servo_state;
     vector<double> joint;
     Joint cur_jnt, old_jnt;
     char buffer[LOG_TEXT_SIZE];
 
     FST_INFO("Check zero offset.");
 
-    if (bare_core_ptr_->getLatestJoint(cur_jnt))
+    if (bare_core_ptr_->getLatestJoint(cur_jnt, servo_state))
     {
-        FST_INFO("Curr-joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE);
+        FST_INFO("Curr-joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
 
         if (robot_recorder_.getParam("joint", joint))
         {
@@ -248,7 +247,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState *cali_stat, OffsetState *offset
 
                 bool recorder_need_update = false;
 
-                for (int i = 0; i < joint_num_; i++)
+                for (size_t i = 0; i < joint_num_; i++)
                 {
                     if (offset_mask_[i] == OFFSET_UNMASK && state[i] > offset_stat_[i])
                     {
@@ -260,7 +259,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState *cali_stat, OffsetState *offset
                     }
                 }
 
-                for (int i = joint_num_; i < NUM_OF_JOINT; i++)
+                for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
                 {
                     state[i] = OFFSET_LOST;
                 }
@@ -273,14 +272,14 @@ ErrorCode Calibrator::checkOffset(CalibrateState *cali_stat, OffsetState *offset
 
                     vector<int> stat; stat.resize(NUM_OF_JOINT);
 
-                    for (int i = 0; i < NUM_OF_JOINT; i++)
+                    for (size_t i = 0; i < NUM_OF_JOINT; i++)
                     {
                         stat[i] = int(state[i]);
                     }
 
                     if (robot_recorder_.setParam("state", stat) && robot_recorder_.dumpParamFile())
                     {
-                        for (int i = 0; i < joint_num_; i++)
+                        for (size_t i = 0; i < joint_num_; i++)
                         {
                             offset_stat_[i] = state[i];
                             offset_stat[i] = state[i];
@@ -299,7 +298,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState *cali_stat, OffsetState *offset
                 bool limited = false;
                 bool forbidden = false;
 
-                for (int i = 0; i < joint_num_; i++)
+                for (size_t i = 0; i < joint_num_; i++)
                 {
                     if (offset_mask_[i] == OFFSET_UNMASK)
                     {
@@ -347,7 +346,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState *cali_stat, OffsetState *offset
 
 void Calibrator::checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat)
 {
-    for (int i = 0; i < joint_num_; i++)
+    for (size_t i = 0; i < joint_num_; i++)
     {
         if (fabs(curr_jnt[i] - last_jnt[i]) > lost_threshold_[i])
         {
@@ -380,9 +379,10 @@ ErrorCode Calibrator::calibrateOffset(size_t index)
     if (index < joint_num_)
     {
         Joint cur_jnt;
+        ServoState servo_state;
         vector<double> old_offset_data;
 
-        if (bare_core_ptr_->getLatestJoint(cur_jnt) && getOffsetFromBareCore(old_offset_data))
+        if (bare_core_ptr_->getLatestJoint(cur_jnt) && getOffsetFromBareCore(old_offset_data, servo_state))
         {
             zero_offset_[index] = calculateOffset(old_offset_data[index], cur_jnt[index], 0);
             offset_need_save_[index] = true;
@@ -422,9 +422,10 @@ bool Calibrator::calibrateOffset(const size_t *pindex, size_t length)
     }
 
     Joint cur_joint;
+    ServoState servo_state;
     vector<double> cur_offset;
 
-    if (ShareMem::instance()->getLatestJoint(cur_joint) && getOffsetFromBareCore(cur_offset))
+    if (ShareMem::instance()->getLatestJoint(cur_joint, servo_state) && getOffsetFromBareCore(cur_offset))
     {
         FST_INFO("Current-offset: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
                  cur_joint[0], cur_joint[1], cur_joint[2], cur_joint[3], cur_joint[4],
@@ -485,7 +486,7 @@ bool Calibrator::saveOffset(void)
                  offset_need_save_[0], offset_need_save_[1], offset_need_save_[2], offset_need_save_[3], offset_need_save_[4],
                  offset_need_save_[5], offset_need_save_[6], offset_need_save_[7], offset_need_save_[8]);
 
-        for (int i = 0; i < NUM_OF_JOINT; i++)
+        for (size_t i = 0; i < NUM_OF_JOINT; i++)
         {
             if (offset_need_save_[i])
                 data[i] = zero_offset_[i];
@@ -1185,3 +1186,4 @@ char* Calibrator::printDBLine(const double *data, char *buffer, size_t length)
     return buffer;
 }
 
+}

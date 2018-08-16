@@ -41,15 +41,15 @@ ManualTeach::ManualTeach(size_t joint_num, JointConstraint* pcons, fst_log::Logg
 ManualTeach::~ManualTeach(void)
 {}
 
-ErrorCode ManualTeach::manualByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj)
+ErrorCode ManualTeach::manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj)
 {
     ErrorCode err = SUCCESS;
-    FST_INFO("Manual request received, mode=%d, frame=%d", traj.mode, traj.frame);
+    FST_INFO("Manual step request received, frame=%d", traj.frame);
 
     switch (traj.frame)
     {
         case JOINT:
-            err = manualJoint(directions, time, traj);
+            err = manualJointStep(directions, time, traj);
             break;
         case WORLD:
         case USER:
@@ -74,34 +74,37 @@ ErrorCode ManualTeach::manualByDirect(const ManualDirection *directions, MotionT
     }
 }
 
-ErrorCode ManualTeach::manualJoint(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj)
+ErrorCode ManualTeach::manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj)
 {
     ErrorCode err = SUCCESS;
-    
-    switch (traj.mode)
+    FST_INFO("Manual continuous request received, frame=%d", traj.frame);
+
+    switch (traj.frame)
     {
-        case STEP:
-            err = manualJointStep(dir, time, traj);
+        case JOINT:
+            err = manualJointContinuous(directions, time, traj);
             break;
-        case CONTINUOUS:
-            err = manualJointContinuous(dir, time, traj);
-            break;
-        case APOINT:
-            FST_ERROR("manualJoint: manual-mode = APOINT, but give directions");
-            err = MOTION_INTERNAL_FAULT;
-            break;
+        case WORLD:
+        case USER:
+        case TOOL:
+            //err = manualCartesian(directions, time, traj);
+            //break;
         default:
-            FST_ERROR("Unsupported manual mode: %d", traj.mode);
             err = MOTION_INTERNAL_FAULT;
+            FST_ERROR("Unsupported manual frame: %d", traj.frame);
             break;
     }
 
-    if (err != SUCCESS)
+    if (err == SUCCESS)
     {
-        FST_ERROR("manualJoint failed, err=0x%llx", err);
+        FST_INFO("Manual trajectory ready.");
+        return SUCCESS;
     }
-
-    return err;
+    else
+    {
+        FST_ERROR("Manual failed, err = 0x%llx", err);
+        return err;
+    }
 }
 
 char* ManualTeach::printDBLine(const int *data, size_t size, char *buffer, size_t length)
@@ -422,14 +425,7 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
 
 ErrorCode ManualTeach::manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj)
 {
-    FST_INFO("Manual request received, mode=%d, frame=%d", traj.mode, traj.frame);
-
-    if (traj.mode != APOINT)
-    {
-        FST_ERROR("Cannot manual to target in current mode = %d", traj.mode);
-        return INVALID_SEQUENCE;
-    }
-
+    FST_INFO("Manual request received, frame=%d", traj.frame);
     return manualJointAPoint(target, time, traj);
 }
 

@@ -44,26 +44,18 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         FST_ERROR("Fail to create communication with bare core.");
         return BARE_CORE_TIMEOUT;
     }
+/*
+    ErrorCode err = calibrator_.initCalibrator();
 
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to initialize calibrator, code = 0x%llx", err);
+        return err;
+    }
+*/
     return SUCCESS;
 }
 
-ErrorCode ArmGroup::setManualMode(ManualMode mode)
-{
-    FST_INFO("Set manual mode = %d", mode);
-
-    if (group_state_ == STANDBY)
-    {
-        manual_traj_.mode = mode;
-        FST_INFO("Done.");
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Cannot set mode in current state = %d", group_state_);
-        return INVALID_SEQUENCE;
-    }
-}
 
 ErrorCode ArmGroup::setManualFrame(ManualFrame frame)
 {
@@ -82,16 +74,10 @@ ErrorCode ArmGroup::setManualFrame(ManualFrame frame)
     }
 }
 
-ErrorCode ArmGroup::manualMove(const Joint &joint)
+ErrorCode ArmGroup::manualMoveToPoint(const Joint &joint)
 {
-    FST_INFO("Manual (mode=%d, frame=%d) by target: %.6f %.6f %.6f %.6f %.6f %.6f",
-             manual_traj_.mode, manual_traj_.frame, joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
-
-    if (manual_traj_.mode != APOINT || manual_traj_.frame != JOINT)
-    {
-        FST_ERROR("Cannot manual to target in current mode = %d", manual_traj_.mode);
-        return INVALID_SEQUENCE;
-    }
+    FST_INFO("Manual to pose, frame = %d by target: %.6f %.6f %.6f %.6f %.6f %.6f",
+             manual_traj_.frame, joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
 
     if (group_state_ != STANDBY)
     {
@@ -118,6 +104,7 @@ ErrorCode ArmGroup::manualMove(const Joint &joint)
     }
 
     manual_time_ = 0;
+    manual_traj_.mode = APOINT;
     ErrorCode err = manual_teach_.manualByTarget(joint, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -133,30 +120,80 @@ ErrorCode ArmGroup::manualMove(const Joint &joint)
     }
 }
 
-ErrorCode ArmGroup::manualMove(const ManualDirection *direction)
+ErrorCode ArmGroup::manualMoveStep(const ManualDirection *direction)
 {
-    FST_INFO("Manual (mode=%d, frame=%d) by direction: %d %d %d %d %d %d",
-             manual_traj_.mode, manual_traj_.frame,
-             direction[0], direction[1], direction[2], direction[3], direction[4], direction[5]);
+    FST_INFO("Manual step frame=%d by direction.", manual_traj_.frame);
 
-    if (manual_traj_.mode == STEP && group_state_ != STANDBY)
+    if (group_state_ != STANDBY)
     {
         FST_ERROR("Cannot manual step in current state = %d", group_state_);
         return INVALID_SEQUENCE;
     }
 
-    if (manual_traj_.mode == APOINT)
+    getLatestJoint(manual_traj_.joint_start);
+
+    FST_INFO("start joint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+            manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
+            manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
+
+    if (!isJointInConstraint(manual_traj_.joint_start, soft_constraint_))
     {
-        FST_ERROR("Given directions in manual-to-target mode");
-        return INVALID_PARAMETER;
+        if (manual_traj_.frame != JOINT)
+        {
+            FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
+            return INVALID_SEQUENCE;
+        }
+
+        for (size_t i = 0; i < JOINT_OF_ARM; i++)
+        {
+            if (manual_traj_.joint_start[i] > soft_constraint_.upper[i] + MINIMUM_E9 && direction[i] == INCREASE)
+            {
+                FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
+                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower[i], soft_constraint_.upper[i]);
+                return INVALID_PARAMETER;
+            }
+            else if (manual_traj_.joint_start[i] < soft_constraint_.lower[i] - MINIMUM_E9 && direction[i] == DECREASE)
+            {
+                FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
+                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower[i], soft_constraint_.upper[i]);
+                return INVALID_PARAMETER;
+            }
+        }
+    }
+
+    manual_time_ = 0;
+    manual_traj_.mode = STEP;
+    ErrorCode err = manual_teach_.manualStepByDirect(direction, manual_time_, manual_traj_);
+
+    if (err == SUCCESS)
+    {
+        group_state_ = MANUAL;
+        return SUCCESS;
+    }
+    else
+    {
+        FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
+        memset(&manual_traj_, 0, sizeof(ManualTrajectory));
+        return err;
+    }
+}
+
+ErrorCode ArmGroup::manualMoveContinuous(const ManualDirection *direction)
+{
+    FST_INFO("Manual continuous frame=%d by direction.", manual_traj_.frame);
+
+    if (group_state_ != STANDBY && group_state_ != MANUAL)
+    {
+        FST_ERROR("Cannot manual continuous in current state = %d", group_state_);
+        return INVALID_SEQUENCE;
     }
 
     if (group_state_ == STANDBY)
     {
         getLatestJoint(manual_traj_.joint_start);
         FST_INFO("start joint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2], 
-                manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
+                 manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
+                 manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
 
         if (!isJointInConstraint(manual_traj_.joint_start, soft_constraint_))
         {
@@ -165,12 +202,7 @@ ErrorCode ArmGroup::manualMove(const ManualDirection *direction)
                 FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
                 return INVALID_SEQUENCE;
             }
-            if (manual_traj_.mode == APOINT)
-            {
-                FST_ERROR("start-joint is out of soft constraint, manual-mode-apoint is disabled.");
-                return INVALID_SEQUENCE;
-            }
-            
+
             for (size_t i = 0; i < JOINT_OF_ARM; i++)
             {
                 if (manual_traj_.joint_start[i] > soft_constraint_.upper[i] + MINIMUM_E9 && direction[i] == INCREASE)
@@ -189,8 +221,9 @@ ErrorCode ArmGroup::manualMove(const ManualDirection *direction)
         }
 
         manual_time_ = 0;
-        ErrorCode err = manual_teach_.manualByDirect(direction, manual_time_, manual_traj_);
-        
+        manual_traj_.mode = CONTINUOUS;
+        ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
+
         if (err == SUCCESS)
         {
             group_state_ = MANUAL;
@@ -209,7 +242,7 @@ ErrorCode ArmGroup::manualMove(const ManualDirection *direction)
         {
             if (manual_traj_.direction[i] != direction[i])
             {
-                return manual_teach_.manualByDirect(direction, manual_time_, manual_traj_);
+                return manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
             }
             else
             {
@@ -235,7 +268,7 @@ ErrorCode ArmGroup::manualStop(void)
         if (manual_traj_.mode == CONTINUOUS)
         {
             ManualDirection direction[JOINT_OF_ARM] = {STANDING};
-            ErrorCode err = manual_teach_.manualByDirect(direction, manual_time_, manual_traj_);
+            ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
             
             if (err == SUCCESS)
             {

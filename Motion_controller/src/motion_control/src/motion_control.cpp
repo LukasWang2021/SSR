@@ -6,14 +6,11 @@ using namespace fst_mc;
 using namespace fst_hal;
 using namespace fst_ctrl;
 
-MotionControl::MotionControl():
-    log_ptr_(NULL), 
-    param_ptr_(NULL),
-    device_manager_ptr_(NULL), 
-    axis_group_manager_ptr_(NULL), 
-    coordinate_manager_ptr_(NULL), 
-    tool_manager_ptr_(NULL),
-    error_monitor_ptr_(NULL)
+MotionControl::MotionControl(DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
+                                CoordinateManager* coordinate_manager_ptr, ToolManager* tool_manager_ptr):
+    device_manager_ptr_(device_manager_ptr), axis_group_manager_ptr_(axis_group_manager_ptr), 
+    coordinate_manager_ptr_(coordinate_manager_ptr), tool_manager_ptr_(tool_manager_ptr),
+    log_ptr_(NULL), param_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     assert(log_ptr_ != NULL);
@@ -32,17 +29,15 @@ MotionControl::~MotionControl()
     if (group_ptr_ != NULL)   {delete group_ptr_; group_ptr_ = NULL;};
 }
 
-ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
-                        fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr,
-                        fst_base::ErrorMonitor* error_monitor_ptr)
+MotionControl::MotionControl():
+    device_manager_ptr_(NULL), axis_group_manager_ptr_(NULL), 
+    coordinate_manager_ptr_(NULL), tool_manager_ptr_(NULL)
+{}
+
+ErrorCode MotionControl::initMotionControl(ErrorMonitor *error_monitor_ptr)
 {
-    device_manager_ptr_ = device_manager_ptr;
-    axis_group_manager_ptr_ = axis_group_manager_ptr;
-    coordinate_manager_ptr_ = coordinate_manager_ptr;
-    tool_manager_ptr_ = tool_manager_ptr;
-    error_monitor_ptr_ = error_monitor_ptr;
-    ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);    
-    
+    ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);
+
     if (err == SUCCESS)
     {
         FST_INFO("Initialize motion group success.");
@@ -55,25 +50,29 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     }
 }
 
-
-ErrorCode MotionControl::setManualMode(ManualMode mode)
-{
-    return group_ptr_->setManualMode(mode);
-}
-
 ErrorCode MotionControl::setManualFrame(ManualFrame frame)
 {
     return group_ptr_->setManualFrame(frame);
 }
 
-ErrorCode MotionControl::manualMove(const ManualDirection *direction)
+ErrorCode MotionControl::doStepManualMove(const GroupDirection &direction)
 {
-    return group_ptr_->manualMove(direction);
+    return group_ptr_->manualMoveStep(&direction[0]);
 }
 
-ErrorCode MotionControl::manualMove(const Joint &joint)
+ErrorCode MotionControl::doContinuousManualMove(const GroupDirection &direction)
 {
-    return group_ptr_->manualMove(joint);
+    return group_ptr_->manualMoveContinuous(&direction[0]);
+}
+
+ErrorCode MotionControl::doGotoPointManualMove(const Joint &joint)
+{
+    return group_ptr_->manualMoveToPoint(joint);
+}
+
+ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
+{
+    return SUCCESS;
 }
 
 ErrorCode MotionControl::manualStop(void)

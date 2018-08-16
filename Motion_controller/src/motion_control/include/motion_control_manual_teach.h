@@ -22,12 +22,12 @@ class ManualTeach
 public:
     ManualTeach(size_t joint_num, JointConstraint* pcons, fst_log::Logger* plog);
     ~ManualTeach(void);
-    ErrorCode manualByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
+    ErrorCode manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
+    ErrorCode manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualStop(MotionTime time, ManualTrajectory &traj);
 
 private:
-    ErrorCode   manualJoint(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj);

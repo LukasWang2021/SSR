@@ -5,7 +5,7 @@
 
 using namespace fst_comm;
 
-//"/rpc/io_mapping/getDIByBit",	,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_Int32",	&TpComm::handleRequest0x000050B4
+//"/rpc/io_mapping/getDIByBit"
 
 void TpComm::handleRequest0x000050B4(int recv_bytes)
 {
@@ -16,7 +16,7 @@ void TpComm::handleRequest0x000050B4(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Bool_Int32* response_data_ptr = new ResponseMessageType_Bool_Int32;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -25,7 +25,7 @@ void TpComm::handleRequest0x000050B4(int recv_bytes)
     }
     
     handleRequestPackage(0x000050B4, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_Void_fields, -1);
+        recv_bytes, RequestMessageType_Int32_fields, -1);
 }
 
 

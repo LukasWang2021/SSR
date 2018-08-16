@@ -121,7 +121,7 @@ void TpComm::handleResponse0x00009B75(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-//"/rpc/motion_control/axis_group/getJointsFeedBack",	0x0000DFBB,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_Int32List(count = 9)
+//"/rpc/motion_control/axis_group/getJointsFeedBack"
 void TpComm::handleResponse0x0000DFBB(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Bool_DoubleList_fields, task->response_data_ptr, send_buffer_size))
@@ -137,3 +137,4 @@ void TpComm::handleResponse0x0000DFBB(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Bool_DoubleList*)task->response_data_ptr;
     }
 }
+

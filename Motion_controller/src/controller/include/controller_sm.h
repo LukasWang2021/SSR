@@ -20,7 +20,7 @@ typedef enum
 {
     RUNNING_STATUS_NORMAL    = 0, 
     RUNNING_STATUS_LIMITED   = 1,
-}RunningStatus;
+}RunningState;
 
 typedef enum
 {
@@ -31,7 +31,7 @@ typedef enum
     INTERPRETER_EXECUTE_TO_PAUSE  = 102,
     INTERPRETER_PAUSE_TO_IDLE     = 103,
     INTERPRETER_PAUSE_TO_EXECUTE  = 104    
-}InterpreterStatus;
+}InterpreterState;
 
 typedef enum
 {
@@ -42,7 +42,7 @@ typedef enum
     ROBOT_IDLE_TO_TEACHING  = 102,
     ROBOT_RUNNING_TO_IDLE   = 103,
     ROBOT_TEACHING_TO_IDLE  = 104,
-}RobotStatus;
+}RobotState;
 
 typedef enum
 {
@@ -53,7 +53,7 @@ typedef enum
     CTRL_ANY_TO_ESTOP       = 101,
     CTRL_ESTOP_TO_ENGAGED   = 102,
     CTRL_ESTOP_TO_TERMINATE = 103,
-}CtrlStatus;
+}CtrlState;
 
 class ControllerSm
 {
@@ -64,11 +64,11 @@ public:
     void processStateMachine();
 
     UserOpMode getUserOpMode();
-    RunningStatus getRunningStatus();
-    InterpreterStatus getInterpreterStatus();
-    RobotStatus getRobotStatus();
-    CtrlStatus getCtrlStatus();
-    fst_mc::ServoStatus getServoStatus();
+    RunningState getRunningState();
+    InterpreterState getInterpreterState();
+    RobotState getRobotState();
+    CtrlState getCtrlState();
+    fst_mc::ServoState getServoState();
     int getSafetyAlarm();
     bool setUserOpMode(UserOpMode mode);
     bool callEstop();
@@ -76,11 +76,11 @@ public:
 
     // for publish data
     UserOpMode* getUserOpModePtr();
-    RunningStatus* getRunningStatusPtr();
-    InterpreterStatus* getInterpreterStatusPtr();
-    RobotStatus* getRobotStatusPtr();
-    CtrlStatus* getCtrlStatusPtr();
-    fst_mc::ServoStatus* getServoStatusPtr();
+    RunningState* getRunningStatePtr();
+    InterpreterState* getInterpreterStatePtr();
+    RobotState* getRobotStatePtr();
+    CtrlState* getCtrlStatePtr();
+    fst_mc::ServoState* getServoStatePtr();
     int* getSafetyAlarmPtr();    
     
 private:
@@ -90,11 +90,11 @@ private:
 
     // mode and status
     UserOpMode user_op_mode_;
-    RunningStatus running_status_;
-    InterpreterStatus interpreter_status_;
-    RobotStatus robot_status_;
-    CtrlStatus ctrl_status_;
-    fst_mc::ServoStatus servo_status_;
+    RunningState running_state_;
+    InterpreterState interpreter_state_;
+    RobotState robot_state_;
+    CtrlState ctrl_state_;
+    fst_mc::ServoState servo_state_;
     int safety_alarm_;
     int ctrl_reset_count_;
 
@@ -107,9 +107,9 @@ private:
     // state machine transfer
     void processInterpreter();  
     void processError();
-    void transferServoStatus();
-    void transferCtrlStatus();
-    void transferRobotStatus();      
+    void transferServoState();
+    void transferCtrlState();
+    void transferRobotState();      
 };
 
 }

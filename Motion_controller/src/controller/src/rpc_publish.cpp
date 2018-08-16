@@ -66,6 +66,40 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
             ++element_count;
         }
     }
+    
+    rs_data_ptr->data.data = false;
+    /*if(element_count == rq_data_ptr->data.element_hash_list_count)
+    {
+        tp_comm_ptr_->pushTaskToPublishList(task);
+        rs_data_ptr->data.data = true;
+    }
+    else
+    {
+        rs_data_ptr->data.data = false;
+    }*/
+}
+
+// "/rpc/publish/addIoTopic"
+void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
+    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+
+    int element_count = 0;
+    void* data_ptr;
+    int device_index;
+    int io_type;
+    int io_offset;
+    TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
+    for(unsigned int i = 0; i < rq_data_ptr->data.element_hash_list_count; ++i)
+    {
+        device_index = rq_data_ptr->data.element_hash_list[i] >> 24;
+        io_type = (rq_data_ptr->data.element_hash_list[i] >> 16) & 0x000000FF;
+        io_offset = (rq_data_ptr->data.element_hash_list[i] & 0x0000FFFF);
+
+        // do io publish mapping
+    }
+    
     if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);
@@ -75,12 +109,6 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = false;
     }
-}
-
-// "/rpc/publish/addIoTopic"
-void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_data_ptr)
-{
-
 }
 
 

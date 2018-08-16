@@ -39,7 +39,7 @@ public:
 
     // more API
     GroupState getGroupState(void);
-    ServoStatus getServoState(void);
+    ServoState getServoState(void);
     Joint   getServoJoint(void);
     void    getServoJoint(Joint &joint);
     size_t  getFIFOLength(void);

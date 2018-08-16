@@ -11,7 +11,7 @@ using namespace std;
 VirtualCore1::VirtualCore1():
     log_(NULL),
     is_estop(false), is_reset(false),
-    servo_status_(1), arm_status_(1)
+    servo_state_(1), arm_state_(1)
 {
     memset(&joint_cmd_, 0, sizeof(joint_cmd_));
     memset(&joint_feedback_, 0, sizeof(joint_feedback_));
@@ -28,14 +28,14 @@ void VirtualCore1::init(fst_log::Logger* log)
     thread_.run(&virtualCore1ThreadFunc, this, 50);
 }
 
-int VirtualCore1::getServoStatus()
+int VirtualCore1::getServoState()
 {
-    return servo_status_;
+    return servo_state_;
 }
 
-int VirtualCore1::getArmStatus()
+int VirtualCore1::getArmState()
 {
-    return arm_status_;
+    return arm_state_;
 }
 
 int VirtualCore1::getSafetyAlarm()
@@ -58,18 +58,18 @@ void VirtualCore1::threadFunc()
     if(is_estop)
     {
         is_estop = false;
-        if(servo_status_ == 2)
+        if(servo_state_ == 2)
         {
             usleep(500000);
-            servo_status_ = 1;
+            servo_state_ = 1;
         }
     }
     else if(is_reset)
     {
         is_reset = false;
         usleep(1000000);
-        servo_status_ = 1;
-        arm_status_ = 1;
+        servo_state_ = 1;
+        arm_state_ = 1;
     }
     else{}
 

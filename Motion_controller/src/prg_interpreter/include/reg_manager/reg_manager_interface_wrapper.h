@@ -36,8 +36,8 @@ bool reg_manager_interface_delPr(uint16_t num);
 bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num);
 bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num);
 
-bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num);
-bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num);
+bool reg_manager_interface_getJointPr(_Joint *ptr, uint16_t num);
+bool reg_manager_interface_setJointPr(_Joint *ptr, uint16_t num);
 
 bool reg_manager_interface_getTypePr(int *ptr, uint16_t num);
 bool reg_manager_interface_setTypePr(int *ptr, uint16_t num);
@@ -111,8 +111,8 @@ bool reg_manager_interface_delHr(uint16_t num);
 bool reg_manager_interface_getPoseHr(PoseEuler *ptr, uint16_t num);
 bool reg_manager_interface_setPoseHr(PoseEuler *ptr, uint16_t num);
 
-bool reg_manager_interface_getJointHr(Joint *ptr, uint16_t num);
-bool reg_manager_interface_setJointHr(Joint *ptr, uint16_t num);
+bool reg_manager_interface_getJointHr(_Joint *ptr, uint16_t num);
+bool reg_manager_interface_setJointHr(_Joint *ptr, uint16_t num);
 
 bool reg_manager_interface_getIdHr(int *ptr, uint16_t num);
 bool reg_manager_interface_setIdHr(int *ptr, uint16_t num);

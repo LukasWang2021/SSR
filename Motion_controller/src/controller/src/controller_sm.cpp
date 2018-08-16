@@ -12,11 +12,11 @@ ControllerSm::ControllerSm():
     param_ptr_(NULL),
     virtual_core1_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
-    running_status_(RUNNING_STATUS_LIMITED),
-    interpreter_status_(INTERPRETER_IDLE),
-    robot_status_(ROBOT_IDLE),
-    ctrl_status_(CTRL_INIT),
-    servo_status_(SERVO_INIT),
+    running_state_(RUNNING_STATUS_LIMITED),
+    interpreter_state_(INTERPRETER_IDLE),
+    robot_state_(ROBOT_IDLE),
+    ctrl_state_(CTRL_INIT),
+    servo_state_(SERVO_INIT),
     safety_alarm_(0),
     ctrl_reset_count_(0),
     interpreter_warning_code_(0),
@@ -43,9 +43,9 @@ void ControllerSm::processStateMachine()
 {
     processInterpreter();
     processError();
-    transferServoStatus();
-    transferCtrlStatus();
-    transferRobotStatus();
+    transferServoState();
+    transferCtrlState();
+    transferRobotState();
     usleep(param_ptr_->routine_cycle_time_);
 }
 
@@ -54,29 +54,29 @@ UserOpMode ControllerSm::getUserOpMode()
     return user_op_mode_;
 }
 
-RunningStatus ControllerSm::getRunningStatus()
+RunningState ControllerSm::getRunningState()
 {
-    return running_status_;
+    return running_state_;
 }
 
-InterpreterStatus ControllerSm::getInterpreterStatus()
+InterpreterState ControllerSm::getInterpreterState()
 {
-    return interpreter_status_;
+    return interpreter_state_;
 }
 
-RobotStatus ControllerSm::getRobotStatus()
+RobotState ControllerSm::getRobotState()
 {
-    return robot_status_;
+    return robot_state_;
 }
 
-CtrlStatus ControllerSm::getCtrlStatus()
+CtrlState ControllerSm::getCtrlState()
 {
-    return ctrl_status_;
+    return ctrl_state_;
 }
 
-ServoStatus ControllerSm::getServoStatus()
+ServoState ControllerSm::getServoState()
 {
-    return servo_status_;
+    return servo_state_;
 }
 
 int ControllerSm::getSafetyAlarm()
@@ -101,29 +101,29 @@ bool ControllerSm::setUserOpMode(UserOpMode mode)
 
 bool ControllerSm::callEstop()
 {
-    if(ctrl_status_ == CTRL_ENGAGED
-        || ctrl_status_ == CTRL_ESTOP_TO_ENGAGED)
+    if(ctrl_state_ == CTRL_ENGAGED
+        || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED)
     {
         //serv_jtac_.stopBareMetal();
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
-        FST_INFO("---callEstop: ctrl_status-->CTRL_ANY_TO_ESTOP");
-        ctrl_status_ = CTRL_ANY_TO_ESTOP;
+        FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
+        ctrl_state_ = CTRL_ANY_TO_ESTOP;
     } 
     return true;
 }
 
 bool ControllerSm::callReset()
 {
-    if(ctrl_status_ == CTRL_ESTOP
-        || ctrl_status_ == CTRL_INIT)
+    if(ctrl_state_ == CTRL_ESTOP
+        || ctrl_state_ == CTRL_INIT)
     {
         ErrorMonitor::instance()->clear();
         //serv_jtac_.resetBareMetal();
         //safety_interface_.reset();
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
-        FST_INFO("---callReset: ctrl_status-->CTRL_ESTOP_TO_ENGAGED");
-        ctrl_status_ = CTRL_ESTOP_TO_ENGAGED;
+        FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
+        ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
     }
     return true;
 }
@@ -133,29 +133,29 @@ UserOpMode* ControllerSm::getUserOpModePtr()
     return &user_op_mode_;
 }
 
-RunningStatus* ControllerSm::getRunningStatusPtr()
+RunningState* ControllerSm::getRunningStatePtr()
 {
-    return &running_status_;
+    return &running_state_;
 }
 
-InterpreterStatus* ControllerSm::getInterpreterStatusPtr()
+InterpreterState* ControllerSm::getInterpreterStatePtr()
 {
-    return &interpreter_status_;
+    return &interpreter_state_;
 }
 
-RobotStatus* ControllerSm::getRobotStatusPtr()
+RobotState* ControllerSm::getRobotStatePtr()
 {
-    return &robot_status_;
+    return &robot_state_;
 }
 
-CtrlStatus* ControllerSm::getCtrlStatusPtr()
+CtrlState* ControllerSm::getCtrlStatePtr()
 {
-    return &ctrl_status_;
+    return &ctrl_state_;
 }
 
-ServoStatus* ControllerSm::getServoStatusPtr()
+ServoState* ControllerSm::getServoStatePtr()
 {
-    return &servo_status_;
+    return &servo_state_;
 }
 
 int* ControllerSm::getSafetyAlarmPtr()
@@ -241,61 +241,61 @@ void ControllerSm::processError()
     }
 }
 
-void ControllerSm::transferServoStatus()
+void ControllerSm::transferServoState()
 {
     //servo_status_ = (ServoStatus)ShareMem::instance()->getServoState();
-    servo_status_ = (ServoStatus)virtual_core1_ptr_->getServoStatus();
-    if(ctrl_status_ == CTRL_ENGAGED
-        && servo_status_ != SERVO_IDLE
-        && servo_status_ != SERVO_RUNNING)
+    servo_state_ = (ServoState)virtual_core1_ptr_->getServoState();
+    if(ctrl_state_ == CTRL_ENGAGED
+        && servo_state_ != SERVO_IDLE
+        && servo_state_ != SERVO_RUNNING)
     {
         // this is ugly, because of lacking status in ctrl status definition
-        if(robot_status_ == ROBOT_TEACHING
-            || robot_status_ == ROBOT_IDLE_TO_TEACHING
-            || robot_status_ == ROBOT_TEACHING_TO_IDLE)
+        if(robot_state_ == ROBOT_TEACHING
+            || robot_state_ == ROBOT_IDLE_TO_TEACHING
+            || robot_state_ == ROBOT_TEACHING_TO_IDLE)
         {
             ;//FST_INFO("---transferServoStatus: in teaching mode: clearArmGroup");
             //arm_group_->clearArmGroup();
         }
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
-        FST_INFO("---transferServoStatus: servo in error: ctrl_status-->CTRL_ANY_TO_ESTOP");
-        ctrl_status_ = CTRL_ANY_TO_ESTOP;
+        FST_INFO("---transferServoState: servo in error: ctrl_state-->CTRL_ANY_TO_ESTOP");
+        ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }      
 }
 
-void ControllerSm::transferCtrlStatus()
+void ControllerSm::transferCtrlState()
 {
-    switch(ctrl_status_)
+    switch(ctrl_state_)
     {
         case CTRL_ANY_TO_ESTOP:
-            if(robot_status_ == ROBOT_IDLE)
+            if(robot_state_ == ROBOT_IDLE)
             {
                 //recordJoints();
-                FST_INFO("---transferCtrlStatus: ctrl_status-->CTRL_ESTOP");
-                ctrl_status_ = CTRL_ESTOP;
+                FST_INFO("---transferCtrlState: ctrl_state-->CTRL_ESTOP");
+                ctrl_state_ = CTRL_ESTOP;
             }
             break;
         case CTRL_ESTOP_TO_ENGAGED:
-            if(robot_status_ == ROBOT_IDLE
-                && servo_status_ == SERVO_IDLE
+            if(robot_state_ == ROBOT_IDLE
+                && servo_state_ == SERVO_IDLE
                 && !is_error_exist_)
             {
-                FST_INFO("---transferCtrlStatus: ctrl_status-->CTRL_ENGAGED");
-                ctrl_status_ = CTRL_ENGAGED;
+                FST_INFO("---transferCtrlState: ctrl_state-->CTRL_ENGAGED");
+                ctrl_state_ = CTRL_ENGAGED;
             }
             else if((--ctrl_reset_count_) < 0)
             {
-                FST_INFO("---transferCtrlStatus: ctrl_status-->CTRL_ESTOP");
-                ctrl_status_ = CTRL_ESTOP;
+                FST_INFO("---transferCtrlState: ctrl_status-->CTRL_ESTOP");
+                ctrl_state_ = CTRL_ESTOP;
             }
             break;
         case CTRL_ESTOP_TO_TERMINATE:
-            if(robot_status_ == ROBOT_IDLE)
+            if(robot_state_ == ROBOT_IDLE)
             {
                 //recordJoints();
-                FST_INFO("---transferCtrlStatus: ctrl_status-->CTRL_TERMINATED");
-                ctrl_status_ = CTRL_TERMINATED;
+                FST_INFO("---transferCtrlState: ctrl_state-->CTRL_TERMINATED");
+                ctrl_state_ = CTRL_TERMINATED;
             }
             break;
         default:
@@ -303,56 +303,56 @@ void ControllerSm::transferCtrlStatus()
     }
 }
 
-void ControllerSm::transferRobotStatus()
+void ControllerSm::transferRobotState()
 {    
-    switch(robot_status_)
+    switch(robot_state_)
     {
         case ROBOT_IDLE_TO_RUNNING:
-            if(interpreter_status_ == INTERPRETER_EXECUTE)
+            if(interpreter_state_ == INTERPRETER_EXECUTE)
             {
-                FST_INFO("---transferRobotStatus: robot_status-->ROBOT_RUNNING");
-                robot_status_ = ROBOT_RUNNING;
+                FST_INFO("---transferRobotState: robot_state-->ROBOT_RUNNING");
+                robot_state_ = ROBOT_RUNNING;
             }
             break;
         case ROBOT_IDLE_TO_TEACHING:
-            FST_INFO("---transferRobotStatus: robot_status-->ROBOT_TEACHING");
-            robot_status_ = ROBOT_TEACHING;
+            FST_INFO("---transferRobotState: robot_state-->ROBOT_TEACHING");
+            robot_state_ = ROBOT_TEACHING;
             break;
         case ROBOT_RUNNING_TO_IDLE:
-            if(interpreter_status_ != INTERPRETER_EXECUTE
-                && servo_status_ != SERVO_RUNNING)
+            if(interpreter_state_ != INTERPRETER_EXECUTE
+                && servo_state_ != SERVO_RUNNING)
             {
-                FST_INFO("---transferRobotStatus: robot_status-->ROBOT_IDLE");
-                robot_status_ = ROBOT_IDLE;
+                FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE");
+                robot_state_ = ROBOT_IDLE;
             }
             break;
         case ROBOT_TEACHING_TO_IDLE:
-            if(servo_status_ != SERVO_RUNNING)
+            if(servo_state_ != SERVO_RUNNING)
             {
-                FST_INFO("---transferRobotStatus: robot_status-->ROBOT_IDLE");
-                robot_status_ = ROBOT_IDLE;
+                FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE");
+                robot_state_ = ROBOT_IDLE;
             }
             break;
         case ROBOT_RUNNING:
-            if(interpreter_status_ != INTERPRETER_EXECUTE)
+            if(interpreter_state_ != INTERPRETER_EXECUTE)
             {
-                FST_INFO("---transferRobotStatus: robot_status-->ROBOT_RUNNING_TO_IDLE");
-                robot_status_ = ROBOT_RUNNING_TO_IDLE;
+                FST_INFO("---transferRobotState: robot_state-->ROBOT_RUNNING_TO_IDLE");
+                robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             break;
         case ROBOT_TEACHING:
             //if (arm_group_->getFIFOLength() == 0)
-            if(virtual_core1_ptr_->getArmStatus() == 1)
+            if(virtual_core1_ptr_->getArmState() == 1)
             {
-                FST_INFO("---transferRobotStatus: robot_status-->ROBOT_TEACHING_TO_IDLE");
-                robot_status_ = ROBOT_TEACHING_TO_IDLE;
+                FST_INFO("---transferRobotState: robot_state-->ROBOT_TEACHING_TO_IDLE");
+                robot_state_ = ROBOT_TEACHING_TO_IDLE;
             }
             break;
         case ROBOT_IDLE:
-            if(interpreter_status_ == INTERPRETER_EXECUTE)
+            if(interpreter_state_ == INTERPRETER_EXECUTE)
             {
-                FST_INFO("---transferRobotStatus: robot_status-->ROBOT_IDLE_TO_RUNNING");
-                robot_status_ = ROBOT_IDLE_TO_RUNNING;
+                FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE_TO_RUNNING");
+                robot_state_ = ROBOT_IDLE_TO_RUNNING;
             }
             break;
         default:

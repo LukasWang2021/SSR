@@ -96,7 +96,7 @@ GroupState MotionControl::getGroupState(void)
     return group_ptr_->getGroupState();
 }
 
-ServoStatus MotionControl::getServoState(void)
+ServoState MotionControl::getServoState(void)
 {
     return group_ptr_->getServoState();
 }

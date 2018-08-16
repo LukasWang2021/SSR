@@ -84,7 +84,7 @@ bool BareCoreInterface::sendPoint(void)
     }
 }
 
-bool BareCoreInterface::getLatestJoint(Joint &joint, ServoStatus &state)
+bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
 {
     FeedbackJointState fbjs;
 
@@ -92,7 +92,7 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, ServoStatus &state)
     {
         if (core_interface_.recvBareCore(fbjs) == SUCCESS)
         {
-            state = ServoStatus(fbjs.state);
+            state = ServoState(fbjs.state);
             memcpy(&joint, fbjs.position, JOINT_NUM * sizeof(double));
             return true;
         }

@@ -14,35 +14,35 @@ void ControllerRpc::handleRpc0x00000C05(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00000AB3(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Int32* data_ptr = static_cast<ResponseMessageType_Int32*>(response_data_ptr);
-    data_ptr->data.data = (int32_t)state_machine_ptr_->getRunningStatus();
+    data_ptr->data.data = (int32_t)state_machine_ptr_->getRunningState();
 }
 
 // "/rpc/controller/getInterpreterStatus"
 void ControllerRpc::handleRpc0x00016483(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Int32* data_ptr = static_cast<ResponseMessageType_Int32*>(response_data_ptr);
-    data_ptr->data.data = (int32_t)state_machine_ptr_->getInterpreterStatus();
+    data_ptr->data.data = (int32_t)state_machine_ptr_->getInterpreterState();
 }
 
 // "/rpc/controller/getRobotStatus"
 void ControllerRpc::handleRpc0x00006F83(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Int32* data_ptr = static_cast<ResponseMessageType_Int32*>(response_data_ptr);
-    data_ptr->data.data = (int32_t)state_machine_ptr_->getRobotStatus();
+    data_ptr->data.data = (int32_t)state_machine_ptr_->getRobotState();
 }
 
 // "/rpc/controller/getCtrlStatus"
 void ControllerRpc::handleRpc0x0000E9D3(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Int32* data_ptr = static_cast<ResponseMessageType_Int32*>(response_data_ptr);
-    data_ptr->data.data = (int32_t)state_machine_ptr_->getCtrlStatus();
+    data_ptr->data.data = (int32_t)state_machine_ptr_->getCtrlState();
 }
 
 // "/rpc/controller/getServoStatus"
 void ControllerRpc::handleRpc0x0000D113(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Int32* data_ptr = static_cast<ResponseMessageType_Int32*>(response_data_ptr);
-    data_ptr->data.data = (int32_t)state_machine_ptr_->getServoStatus();
+    data_ptr->data.data = (int32_t)state_machine_ptr_->getServoState();
 }
 
 // "/rpc/controller/getSafetyAlarm"

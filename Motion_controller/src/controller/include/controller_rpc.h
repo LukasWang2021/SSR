@@ -197,18 +197,24 @@ private:
     void handleRpc0x00001E70(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/reset"
     void handleRpc0x00001D14(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/motion_control/axis_group/setManualMode"
-    void handleRpc0x00012FB5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/setManualFrame"
     void handleRpc0x00009D05(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/doStepManualMove"
     void handleRpc0x000085D5(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/motion_control/axis_group/doContinusManualMove"
-    void handleRpc0x000173B5(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/doContinuousManualMove"
+    void handleRpc0x0000D3F5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/doGotoPointManualMove"
-    void handleRpc0x00009B75(void* request_data_ptr, void* response_data_ptr);
+    void handleRpc0x000056B5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getJointFeedBack"
     void handleRpc0x0000DFBB(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setUserSoftLimit"
+    void handleRpc0x000114A4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getUserSoftLimit"
+    void handleRpc0x0000C764(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setManuSoftLimit"
+    void handleRpc0x000108E4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getManuSoftLimit"
+    void handleRpc0x0000C244(void* request_data_ptr, void* response_data_ptr);
 
     /* interpreter rpc */
     // "/rpc/interpreter/start"

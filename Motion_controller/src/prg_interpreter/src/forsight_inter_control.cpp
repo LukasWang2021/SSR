@@ -122,7 +122,7 @@ bool parseScript(const char* fname)
                     return false;
                 }
                 instr.target.type = MOTION_JOINT;
-                instr.target.joint_target = *(Joint*)&result[1];
+                instr.target.joint_target = *(_Joint*)&result[1];
                 if (result.size() == 7)
                     instr.target.cnt = -1;
                 else

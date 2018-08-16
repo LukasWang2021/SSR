@@ -46,11 +46,11 @@ private:
 
     // get publish element ptr
     void* getUserOpModePtr();
-    void* getRunningStatusPtr();
-    void* getInterpreterStatusPtr();
-    void* getRobotStatusPtr();
-    void* getCtrlStatusPtr();
-    void* getServoStatusPtr();
+    void* getRunningStatePtr();
+    void* getInterpreterStatePtr();
+    void* getRobotStatePtr();
+    void* getCtrlStatePtr();
+    void* getServoStatePtr();
     void* getSafetyAlarmPtr();   
 };
 

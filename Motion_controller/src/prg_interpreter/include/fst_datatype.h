@@ -28,7 +28,7 @@ typedef double          Alpha;
 
 
 /* Define a group of values in joint space */
-struct Joint {
+struct _Joint {
     Angle   j1;
     Angle   j2;
     Angle   j3;
@@ -229,7 +229,7 @@ struct PathPoint {
     // value in cartesian space or joint space
     union {
         Pose    pose;
-        Joint   joint;
+        _Joint   joint;
     };
 };
 
@@ -287,7 +287,7 @@ struct JointPoint
     // the point generated from which command
     MotionCommand *source;
     // joint values of this point
-    Joint       joint;
+    _Joint       joint;
     // angular velocity of this point
     JointOmega  omega;
 };
@@ -299,7 +299,7 @@ struct JointOutput {
     int id;
     PointLevel  level;
 
-    Joint           joint;
+    _Joint           joint;
     JointOmega      omega;
     JointAlpha      alpha;
     JointInertia    inertia;
@@ -358,7 +358,7 @@ struct MotionTarget {
 
     union {
         PoseEuler       pose_target;
-        Joint           joint_target;
+        _Joint           joint_target;
         CircleTarget    circle_target;
     };
 };
@@ -436,7 +436,7 @@ struct CCommand
 
 struct JCommand
 {
-    Joint       joints;
+    _Joint       joints;
     double      v_percentage;
     union
     {

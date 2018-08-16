@@ -147,12 +147,12 @@ public:
 	}
 
 	// TYPE_JOINT
-	void setJointValue(Joint * jointVal){
+	void setJointValue(_Joint * jointVal){
 		evalType |= TYPE_JOINT ;
 		joint     = * jointVal ;
 	}
 	
-	Joint getJointValue(){
+	_Joint getJointValue(){
 		int iType = evalType & TYPE_JOINT;
 		if(iType != 0) {
 			return joint ;
@@ -240,7 +240,7 @@ public:
 		reg_pr     = * prRegDataVal ;
 	}
 	
-	void setPrRegDataWithJointValue(Joint * jointVal){
+	void setPrRegDataWithJointValue(_Joint * jointVal){
 		evalType  |= TYPE_PR ;
 		reg_pr.value.pos_type     = PR_REG_POS_TYPE_JOINT ;
 		reg_pr.value.pos[0] = jointVal->j1;
@@ -333,7 +333,7 @@ public:
 		reg_hr     = * hrRegDataVal ;
 	}
 	
-	void setHrRegDataWithJointValue(Joint * jointVal){
+	void setHrRegDataWithJointValue(_Joint * jointVal){
 		evalType  |= TYPE_HR ;
 		reg_hr.value.joint_pos[0] = jointVal->j1;
 		reg_hr.value.joint_pos[1] = jointVal->j2;
@@ -363,7 +363,7 @@ public:
 		}else if(evalType == (int)(TYPE_PR | TYPE_JOINT)){
 		    if(operand->getType() == TYPE_JOINT)
 		    {
-		    	Joint jointOperand = operand->getJointValue();
+		    	_Joint jointOperand = operand->getJointValue();
 				joint.j1 += jointOperand.j1;
 				joint.j2 += jointOperand.j2;
 				joint.j3 += jointOperand.j3;
@@ -380,7 +380,7 @@ public:
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
 		    {
-		    	Joint jointOperand = operand->getJointValue();
+		    	_Joint jointOperand = operand->getJointValue();
 				joint.j1 += jointOperand.j1;
 				joint.j2 += jointOperand.j2;
 				joint.j3 += jointOperand.j3;
@@ -488,7 +488,7 @@ public:
 		}else if(evalType == (int)(TYPE_PR | TYPE_JOINT)){
 		    if(operand->getType() == TYPE_JOINT)
 		    {
-		    	Joint jointOperand = operand->getJointValue();
+		    	_Joint jointOperand = operand->getJointValue();
 				joint.j1 -= jointOperand.j1;
 				joint.j2 -= jointOperand.j2;
 				joint.j3 -= jointOperand.j3;
@@ -505,7 +505,7 @@ public:
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
 		    {
-		    	Joint jointOperand = operand->getJointValue();
+		    	_Joint jointOperand = operand->getJointValue();
 				joint.j1 -= jointOperand.j1;
 				joint.j2 -= jointOperand.j2;
 				joint.j3 -= jointOperand.j3;
@@ -893,8 +893,8 @@ private:
 		// All member of register
 		PoseEuler pose;
 		PoseEuler poseFake;
-		Joint     joint;
-		Joint     jointFake;
+		_Joint     joint;
+		_Joint     jointFake;
 //		Coordinate c; 
 		pl_t pallet;
 		pl_t     palletFake;

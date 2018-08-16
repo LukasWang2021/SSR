@@ -8,29 +8,29 @@ void* ControllerPublish::getUserOpModePtr()
     return (void*)state_machine_ptr_->getUserOpModePtr();
 }
 
-void* ControllerPublish::getRunningStatusPtr()
+void* ControllerPublish::getRunningStatePtr()
 {
-    return (void*)state_machine_ptr_->getRunningStatusPtr();
+    return (void*)state_machine_ptr_->getRunningStatePtr();
 }
 
-void* ControllerPublish::getInterpreterStatusPtr()
+void* ControllerPublish::getInterpreterStatePtr()
 {
-    return (void*)state_machine_ptr_->getInterpreterStatusPtr();
+    return (void*)state_machine_ptr_->getInterpreterStatePtr();
 }
 
-void* ControllerPublish::getRobotStatusPtr()
+void* ControllerPublish::getRobotStatePtr()
 {
-    return (void*)state_machine_ptr_->getRobotStatusPtr();
+    return (void*)state_machine_ptr_->getRobotStatePtr();
 }
 
-void* ControllerPublish::getCtrlStatusPtr()
+void* ControllerPublish::getCtrlStatePtr()
 {
-    return (void*)state_machine_ptr_->getCtrlStatusPtr();
+    return (void*)state_machine_ptr_->getCtrlStatePtr();
 }
 
-void* ControllerPublish::getServoStatusPtr()
+void* ControllerPublish::getServoStatePtr()
 {
-    return (void*)state_machine_ptr_->getServoStatusPtr();
+    return (void*)state_machine_ptr_->getServoStatePtr();
 }
 
 void* ControllerPublish::getSafetyAlarmPtr()

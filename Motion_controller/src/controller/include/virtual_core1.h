@@ -23,13 +23,13 @@ public:
     SERVO_READY = 1,
     SERVO_RUNNING = 2,
     */
-    int getServoStatus();
+    int getServoState();
     /*
     This represents for if core0 fifo is empty
     ARM_READY = 1,
     ARM_RUNNING = 2,
     */
-    int getArmStatus();
+    int getArmState();
 
     int getSafetyAlarm();
 
@@ -41,8 +41,8 @@ private:
     fst_log::Logger* log_;
     bool is_estop;
     bool is_reset;
-    int servo_status_;
-    int arm_status_;
+    int servo_state_;
+    int arm_state_;
 
     std::thread* thread_ptr_;
     fst_mc::Joint joint_cmd_;

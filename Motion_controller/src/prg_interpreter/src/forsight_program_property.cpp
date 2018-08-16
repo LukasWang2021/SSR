@@ -57,7 +57,7 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 }
 
 int parseJoint(struct thread_control_block * objThreadCntrolBlock, 
-			  cJSON *jsonJoint, Joint & joint)
+			  cJSON *jsonJoint, _Joint & joint)
 {
 	int numentries=0,i=0,fail=0;
 	cJSON *child=jsonJoint->child;
@@ -129,7 +129,7 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 {
 	int id = -1 , uf = -1 , tf = -1 ;
 	int iPoseType = POSE_NONE ;
-	Joint joint ;
+	_Joint joint ;
 	PoseEuler cart ;
 	AdditionalE additionalE ;
 	char var[128];

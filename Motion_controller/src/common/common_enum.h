@@ -16,7 +16,7 @@ typedef enum
     SERVO_WAIT_READY = 4,
     SERVO_WAIT_DOWN = 5,
     SERVO_INIT = 10,
-}ServoStatus;
+}ServoState;
 
 }
 

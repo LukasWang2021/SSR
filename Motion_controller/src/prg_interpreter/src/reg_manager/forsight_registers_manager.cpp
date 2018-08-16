@@ -134,7 +134,7 @@ int forgesight_registers_manager_get_register(
     std::string    strComment;
 
 	PoseEuler objPoseEuler ;
-    Joint     objJoint;
+    _Joint     objJoint;
     int       iType ;
     
     std::string    strSrValue;
@@ -685,7 +685,7 @@ int forgesight_registers_manager_set_register(
 	HrRegData objHrRegData ;
 	
 	PoseEuler pose ;
-	Joint joint ;
+	_Joint joint ;
 	pl_t pltValue ;
 	
 	std::string strValue;
@@ -1910,7 +1910,7 @@ int forgesight_read_reg(RegMap & reg)
     std::string    strComment;
 
 	PoseEuler objPoseEuler ;
-    Joint     objJoint;
+    _Joint     objJoint;
     int       iType ;
     
     std::string    strSrValue;
@@ -2108,7 +2108,7 @@ int forgesight_mod_reg(RegMap & reg)
 //    char      cComment[MAX_REG_COMMENT_LENGTH];
 
 	PoseEuler objPoseEuler ;
-    Joint     objJoint;
+    _Joint     objJoint;
     int       iType ;
     
     std::string    strSrValue;

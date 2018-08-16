@@ -235,7 +235,7 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
+bool reg_manager_interface_getJointPr(_Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -259,7 +259,7 @@ bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
+bool reg_manager_interface_setJointPr(_Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -1177,7 +1177,7 @@ bool reg_manager_interface_delHr(uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getJointHr(Joint *ptr, uint16_t num)
+bool reg_manager_interface_getJointHr(_Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -1201,7 +1201,7 @@ bool reg_manager_interface_getJointHr(Joint *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setJointHr(Joint *ptr, uint16_t num)
+bool reg_manager_interface_setJointHr(_Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32

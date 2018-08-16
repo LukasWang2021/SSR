@@ -456,7 +456,7 @@ void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, voi
 {
     if(!decodeRequestPackage(fields, (void*)request_data_ptr, recv_bytes))
     {
-        FST_ERROR("handleRequestPackage: /tp_comm/test_request: decode data failed");
+        FST_ERROR("handleRequestPackage:  decode data failed");
         return ;
     }
 
@@ -464,7 +464,7 @@ void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, voi
 
     if(!checkAuthority(((RequestMessageType_Int32*)request_data_ptr)->property.authority, controller_authority))
     {
-        FST_ERROR("handleRequestPackage: /tp_comm/test_request: operation is not authorized");
+        FST_ERROR("handleRequestPackage: operation is not authorized");
         // If operation not authorized, don't throw a response to response list directly but reuse the normal channel,
         // that is throwing the task to request list. User should judge if response_data_ptr.header.succeed is false.
         // If it is false, then don't process anything, throw it to response list directly caling by pushTaskToRequestList().
@@ -490,7 +490,7 @@ bool TpComm::encodeResponsePackage(unsigned int hash, const pb_field_t fields[],
         return false;
     }
     send_buffer_size = stream.bytes_written + HASH_BYTE_SIZE;
-    FST_INFO("Here : encodeResponsePackage send_buffer_size real = %d", send_buffer_size);
+
     return true;
 }
 

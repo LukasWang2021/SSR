@@ -8,7 +8,7 @@
 namespace fst_mc
 {
 
-enum ServoState
+typedef enum 
 {
     SERVO_IDLE = 1,
     SERVO_RUNNING = 2,
@@ -16,7 +16,7 @@ enum ServoState
     SERVO_WAIT_READY = 4,
     SERVO_WAIT_DOWN = 5,
     SERVO_INIT = 10,
-};
+}ServoStatus;
 
 }
 

@@ -59,17 +59,17 @@ Joint BaseGroup::getLatestJoint(void)
     return joint;
 }
 
-void BaseGroup::getServoState(ServoState &state)
+void BaseGroup::getServoState(ServoStatus &state)
 {
     pthread_mutex_lock(&servo_mutex_);
     state = servo_state_;
     pthread_mutex_unlock(&servo_mutex_);
 }
 
-ServoState BaseGroup::getServoState(void)
+ServoStatus BaseGroup::getServoState(void)
 {
     pthread_mutex_lock(&servo_mutex_);
-    ServoState state(servo_state_);
+    ServoStatus state(servo_state_);
     pthread_mutex_unlock(&servo_mutex_);
     return state;
 }
@@ -115,7 +115,7 @@ ErrorCode BaseGroup::realtimeTask(void)
 {
     ErrorCode  err;
     Joint barecore_joint;
-    ServoState barecore_state;
+    ServoStatus barecore_state;
 
     while (true)
     {

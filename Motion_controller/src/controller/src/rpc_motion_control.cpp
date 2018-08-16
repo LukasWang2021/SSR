@@ -1,11 +1,15 @@
 #include "controller_rpc.h"
+#include "base_datatype.h"
+
 
 using namespace fst_ctrl;
 
 // "/rpc/motion_control/stop"
 void ControllerRpc::handleRpc0x00001E70(void* request_data_ptr, void* response_data_ptr)
 {
+    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
 
+    rs_data_ptr->data.data = motion_control_ptr_->stopGroup();
 }
 
 // "/rpc/motion_control/reset"

@@ -60,12 +60,12 @@ class BaseGroup
     ErrorCode realtimeTask(void);
 
     void getLatestJoint(Joint &joint);
-    void getServoState(ServoState &state);
+    void getServoState(ServoStatus &state);
     void getGroupState(GroupState &state);
 
     Joint getLatestJoint(void);
     GroupState getGroupState(void);
-    ServoState getServoState(void);
+    ServoStatus getServoState(void);
 
 
 
@@ -82,7 +82,7 @@ class BaseGroup
     bool updateJointStateFromBareCore(void);
 
     Joint current_joint_;
-    ServoState  servo_state_;
+    ServoStatus  servo_state_;
     GroupState  group_state_;
 
     JointConstraint     soft_constraint_;

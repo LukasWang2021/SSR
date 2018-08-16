@@ -25,7 +25,7 @@ public:
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
-                    RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
+                    RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, fst_mc::MotionControl* motion_control_ptr,
                     fst_base::ControllerClient* controller_client_ptr);
 
     void processRpc();
@@ -40,6 +40,7 @@ private:
     CoordinateManager* coordinate_manager_ptr_;
     RegManager* reg_manager_ptr_;
     fst_hal::DeviceManager* device_manager_ptr_;
+    fst_mc::MotionControl* motion_control_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
     ControllerPublish publish_;
 

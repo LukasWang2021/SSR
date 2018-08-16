@@ -6,11 +6,14 @@ using namespace fst_mc;
 using namespace fst_hal;
 using namespace fst_ctrl;
 
-MotionControl::MotionControl(DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
-                                CoordinateManager* coordinate_manager_ptr, ToolManager* tool_manager_ptr):
-    device_manager_ptr_(device_manager_ptr), axis_group_manager_ptr_(axis_group_manager_ptr), 
-    coordinate_manager_ptr_(coordinate_manager_ptr), tool_manager_ptr_(tool_manager_ptr),
-    log_ptr_(NULL), param_ptr_(NULL)
+MotionControl::MotionControl():
+    log_ptr_(NULL), 
+    param_ptr_(NULL),
+    device_manager_ptr_(NULL), 
+    axis_group_manager_ptr_(NULL), 
+    coordinate_manager_ptr_(NULL), 
+    tool_manager_ptr_(NULL),
+    error_monitor_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     assert(log_ptr_ != NULL);
@@ -29,15 +32,17 @@ MotionControl::~MotionControl()
     if (group_ptr_ != NULL)   {delete group_ptr_; group_ptr_ = NULL;};
 }
 
-MotionControl::MotionControl():
-    device_manager_ptr_(NULL), axis_group_manager_ptr_(NULL), 
-    coordinate_manager_ptr_(NULL), tool_manager_ptr_(NULL)
-{}
-
-ErrorCode MotionControl::initMotionControl(ErrorMonitor *error_monitor_ptr)
+ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
+                        fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr,
+                        fst_base::ErrorMonitor* error_monitor_ptr)
 {
-    ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);
-
+    device_manager_ptr_ = device_manager_ptr;
+    axis_group_manager_ptr_ = axis_group_manager_ptr;
+    coordinate_manager_ptr_ = coordinate_manager_ptr;
+    tool_manager_ptr_ = tool_manager_ptr;
+    error_monitor_ptr_ = error_monitor_ptr;
+    ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);    
+    
     if (err == SUCCESS)
     {
         FST_INFO("Initialize motion group success.");
@@ -91,7 +96,7 @@ GroupState MotionControl::getGroupState(void)
     return group_ptr_->getGroupState();
 }
 
-ServoState MotionControl::getServoState(void)
+ServoStatus MotionControl::getServoState(void)
 {
     return group_ptr_->getServoState();
 }

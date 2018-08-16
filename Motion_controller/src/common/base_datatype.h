@@ -9,7 +9,7 @@
 #define     MINIMUM_E6      0.000001
 #define     MINIMUM_E9      0.000000001
 
-
+typedef unsigned long long int ErrorCode;
 typedef double  MotionTime;
 
 namespace fst_mc

@@ -5,6 +5,7 @@
 
 using namespace fst_ctrl;
 using namespace fst_base;
+using namespace fst_mc;
 
 ControllerSm::ControllerSm():
     log_ptr_(NULL),
@@ -245,7 +246,7 @@ void ControllerSm::transferServoStatus()
     //servo_status_ = (ServoStatus)ShareMem::instance()->getServoState();
     servo_status_ = (ServoStatus)virtual_core1_ptr_->getServoStatus();
     if(ctrl_status_ == CTRL_ENGAGED
-        && servo_status_ != SERVO_READY
+        && servo_status_ != SERVO_IDLE
         && servo_status_ != SERVO_RUNNING)
     {
         // this is ugly, because of lacking status in ctrl status definition
@@ -277,7 +278,7 @@ void ControllerSm::transferCtrlStatus()
             break;
         case CTRL_ESTOP_TO_ENGAGED:
             if(robot_status_ == ROBOT_IDLE
-                && servo_status_ == SERVO_READY
+                && servo_status_ == SERVO_IDLE
                 && !is_error_exist_)
             {
                 FST_INFO("---transferCtrlStatus: ctrl_status-->CTRL_ENGAGED");

@@ -5,6 +5,7 @@ using namespace fst_log;
 using namespace fst_base;
 using namespace fst_hal;
 using namespace fst_comm;
+using namespace fst_mc;
 
 
 ControllerRpc::ControllerRpc():
@@ -15,7 +16,11 @@ ControllerRpc::ControllerRpc():
     state_machine_ptr_(NULL),
     tool_manager_ptr_(NULL),
     coordinate_manager_ptr_(NULL),
-    reg_manager_ptr_(NULL)
+    reg_manager_ptr_(NULL),
+    device_manager_ptr_(NULL),
+    motion_control_ptr_(NULL),
+    controller_client_ptr_(NULL)
+    
 {
 
 }
@@ -27,7 +32,8 @@ ControllerRpc::~ControllerRpc()
 
 void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
-                    RegManager* reg_manager_ptr, DeviceManager* device_manager_ptr, ControllerClient* controller_client_ptr)
+                    RegManager* reg_manager_ptr, DeviceManager* device_manager_ptr, fst_mc::MotionControl* motion_control_ptr,
+                    ControllerClient* controller_client_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -38,6 +44,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, V
     coordinate_manager_ptr_ = coordinate_manager_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
     device_manager_ptr_ = device_manager_ptr;
+    motion_control_ptr_ = motion_control_ptr;
     controller_client_ptr_ = controller_client_ptr;
     initRpcTable();
     initRpcQuickSearchTable();

@@ -14,6 +14,7 @@
 #include "process_comm.h"
 #include "controller_ipc.h"
 #include "device_manager.h"
+#include "motion_control.h"
 // for test only
 #include "virtual_core1.h"
 
@@ -44,6 +45,7 @@ private:
     CoordinateManager coordinate_manager_;
     RegManager reg_manager_;
     fst_hal::DeviceManager device_manager_;
+    fst_mc::MotionControl motion_control_;
     fst_base::ProcessComm* process_comm_ptr_;
     VirtualCore1 virtual_core1_; // for test only
     

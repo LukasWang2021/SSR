@@ -4,6 +4,7 @@
 #include "controller_param.h"
 #include "common_log.h"
 #include "virtual_core1.h"
+#include "common_enum.h"
 
 namespace fst_ctrl
 {
@@ -54,18 +55,6 @@ typedef enum
     CTRL_ESTOP_TO_TERMINATE = 103,
 }CtrlStatus;
 
-typedef enum
-{
-    SERVO_INIT              = 10,
-    SERVO_READY             = 1,
-    SERVO_RUNNING           = 2,
-    SERVO_ERROR             = 3,
-    SERVO_WAIT_SERVOREADY   = 4,
-    SERVO_WAIT_SERVODOWN    = 5,
-}ServoStatus;
-
-//class fst_base::ErrorMonitor;
-
 class ControllerSm
 {
 public:
@@ -79,7 +68,7 @@ public:
     InterpreterStatus getInterpreterStatus();
     RobotStatus getRobotStatus();
     CtrlStatus getCtrlStatus();
-    ServoStatus getServoStatus();
+    fst_mc::ServoStatus getServoStatus();
     int getSafetyAlarm();
     bool setUserOpMode(UserOpMode mode);
     bool callEstop();
@@ -91,7 +80,7 @@ public:
     InterpreterStatus* getInterpreterStatusPtr();
     RobotStatus* getRobotStatusPtr();
     CtrlStatus* getCtrlStatusPtr();
-    ServoStatus* getServoStatusPtr();
+    fst_mc::ServoStatus* getServoStatusPtr();
     int* getSafetyAlarmPtr();    
     
 private:
@@ -105,7 +94,7 @@ private:
     InterpreterStatus interpreter_status_;
     RobotStatus robot_status_;
     CtrlStatus ctrl_status_;
-    ServoStatus servo_status_;
+    fst_mc::ServoStatus servo_status_;
     int safety_alarm_;
     int ctrl_reset_count_;
 

@@ -70,6 +70,11 @@ bool Controller::init()
     {
         return false;
     }
+
+    if(motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance()) != 0)
+    {
+        return false;
+    }
     
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
     {
@@ -86,7 +91,7 @@ bool Controller::init()
     }
 
     rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, 
-        &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_,
+        &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr());
         
     if(!tp_comm_.init()

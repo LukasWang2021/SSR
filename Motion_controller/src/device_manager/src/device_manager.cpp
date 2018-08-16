@@ -50,7 +50,7 @@ bool DeviceManager::init()
             case DEVICE_TYPE_FST_IO: return false;
             case DEVICE_TYPE_FST_SAFETY: return false;
             case DEVICE_TYPE_FST_ANYBUS: return false;
-            case DEVICE_TYPE_VIRTUAL_AXIS: device_ptr = new VirtualAxisDevice(it->address);
+            case DEVICE_TYPE_VIRTUAL_AXIS: device_ptr = new VirtualAxisDevice(it->address); break;
             case DEVICE_TYPE_VIRTUAL_IO: return false;
             case DEVICE_TYPE_VIRTUAL_SAFETY: return false;
             case DEVICE_TYPE_NORMAL: return false;

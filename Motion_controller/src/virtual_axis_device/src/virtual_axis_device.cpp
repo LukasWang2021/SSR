@@ -13,6 +13,8 @@ VirtualAxisDevice::VirtualAxisDevice(int address):
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new VirtualAxisDeviceParam();
+    FST_LOG_INIT("VirtualAxisDevice");
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
 VirtualAxisDevice::~VirtualAxisDevice()
@@ -27,6 +29,8 @@ bool VirtualAxisDevice::init()
         FST_ERROR("Failed to load VirtualAxisDevice component parameters");
         return false;        
     }
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+    
     target_position_ = 0;
     feedback_position_ = 0;
     status_ = VIRTUAL_AXIS_DEVICE_DISABLE;

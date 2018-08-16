@@ -5,10 +5,10 @@
 #define VER_MINOR 0
 #define VER_REVISION 5
   
-#define VER_BUILD_DATE "20180814"  
-#define VER_BUILD_TIME "17:10:12"    
+#define VER_BUILD_DATE "20180816"  
+#define VER_BUILD_TIME "09:44:01"    
   
-#define VERSION_ALL  "2.0.5.20180814"  
+#define VERSION_ALL  "2.0.5.20180816"  
   
 char *get_version()
 {

@@ -51,10 +51,10 @@ bool Controller::init()
     virtual_core1_.init(log_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
 
-    /*if(!device_manager_.init())
+    if(!device_manager_.init())
     {
         return false;
-    }*/
+    }
     
     if(!tool_manager_.init())
     {

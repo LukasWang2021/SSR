@@ -1,12 +1,13 @@
 #include "virtual_axis_device_param.h"
 #include "common_file_path.h"
+#include "common_log.h"
 #include <string>
 
 using namespace fst_hal;
 
 VirtualAxisDeviceParam::VirtualAxisDeviceParam():
     file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(3)
+    log_level_(fst_log::MSG_LEVEL_ERROR)
 {
     file_path_ += "virtual_axis_device.yaml";
 }

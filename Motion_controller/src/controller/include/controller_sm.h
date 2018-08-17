@@ -5,6 +5,7 @@
 #include "common_log.h"
 #include "virtual_core1.h"
 #include "common_enum.h"
+#include "motion_control.h"
 
 namespace fst_ctrl
 {
@@ -60,7 +61,7 @@ class ControllerSm
 public:
     ControllerSm();
     ~ControllerSm();
-    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr);
+    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, VirtualCore1* virtual_core1_ptr);
     void processStateMachine();
 
     UserOpMode getUserOpMode();
@@ -86,6 +87,7 @@ public:
 private:
     fst_log::Logger* log_ptr_;
     ControllerParam* param_ptr_;
+    fst_mc::MotionControl* motion_control_ptr_;
     VirtualCore1* virtual_core1_ptr_;
 
     // mode and status

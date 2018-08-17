@@ -32,10 +32,11 @@ ControllerSm::~ControllerSm()
 
 }
 
-void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr)
+void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, VirtualCore1* virtual_core1_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
+    motion_control_ptr_ = motion_control_ptr;
     virtual_core1_ptr_ = virtual_core1_ptr;
 }
 
@@ -104,7 +105,7 @@ bool ControllerSm::callEstop()
     if(ctrl_state_ == CTRL_ENGAGED
         || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED)
     {
-        //serv_jtac_.stopBareMetal();
+        motion_control_ptr_->stopGroup();
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
         FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
@@ -119,7 +120,7 @@ bool ControllerSm::callReset()
         || ctrl_state_ == CTRL_INIT)
     {
         ErrorMonitor::instance()->clear();
-        //serv_jtac_.resetBareMetal();
+        motion_control_ptr_->resetGroup();
         //safety_interface_.reset();
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
         FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
@@ -243,16 +244,16 @@ void ControllerSm::processError()
 
 void ControllerSm::transferServoState()
 {
-    //servo_status_ = (ServoStatus)ShareMem::instance()->getServoState();
-    servo_state_ = (ServoState)virtual_core1_ptr_->getServoState();
+    servo_state_ = motion_control_ptr_->getServoState();
+    //servo_state_ = (ServoState)virtual_core1_ptr_->getServoState();
     if(ctrl_state_ == CTRL_ENGAGED
         && servo_state_ != SERVO_IDLE
         && servo_state_ != SERVO_RUNNING)
     {
         // this is ugly, because of lacking status in ctrl status definition
-        if(robot_state_ == ROBOT_TEACHING
-            || robot_state_ == ROBOT_IDLE_TO_TEACHING
-            || robot_state_ == ROBOT_TEACHING_TO_IDLE)
+        if(robot_state_ == ROBOT_RUNNING
+            || robot_state_ == ROBOT_IDLE_TO_RUNNING
+            || robot_state_ == ROBOT_RUNNING_TO_IDLE)
         {
             ;//FST_INFO("---transferServoStatus: in teaching mode: clearArmGroup");
             //arm_group_->clearArmGroup();
@@ -341,8 +342,8 @@ void ControllerSm::transferRobotState()
             }
             break;
         case ROBOT_TEACHING:
-            //if (arm_group_->getFIFOLength() == 0)
-            if(virtual_core1_ptr_->getArmState() == 1)
+            if (motion_control_ptr_->getGroupState() == STANDBY)
+            //if(virtual_core1_ptr_->getArmState() == 1)
             {
                 FST_INFO("---transferRobotState: robot_state-->ROBOT_TEACHING_TO_IDLE");
                 robot_state_ = ROBOT_TEACHING_TO_IDLE;

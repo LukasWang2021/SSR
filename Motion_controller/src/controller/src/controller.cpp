@@ -49,7 +49,7 @@ bool Controller::init()
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
     
     virtual_core1_.init(log_ptr_);
-    state_machine_.init(log_ptr_, param_ptr_, &virtual_core1_);
+    state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_);
 
     if(!device_manager_.init())
     {
@@ -139,7 +139,7 @@ void controllerRoutineThreadFunc(void* arg)
 
 void heartbeatThreadFunc(void* arg)
 {
-    std::cout<<"---heartbeatRoutineThreadFunc running"<<std::endl;
+    std::cout<<"---heartbeatThreadFunc running"<<std::endl;
     Controller* controller_ptr = static_cast<Controller*>(arg);
     while(!controller_ptr->isExit())
     {

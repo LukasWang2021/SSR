@@ -42,6 +42,9 @@ private:
     std::vector<PublishService> publish_table_;
     std::vector<PublishService> publish_quick_search_table_[QUICK_SEARCH_TABLE_SIZE]; 
 
+    // publish data, mutex protected
+    
+
     void initPublishTable();
     void initPublishQuickSearchTable();
     

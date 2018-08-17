@@ -5,13 +5,22 @@
 	> Created Time: 2018年08月08日 星期三 15时35分37秒
  ************************************************************************/
 
-#include <iostream>
 #include <motion_control_core_interface.h>
+
+using namespace std;
+using namespace fst_core_interface;
+using namespace fst_comm_interface;
 
 namespace fst_mc
 {
 
 const static size_t MAX_ATTEMPTS = 100;
+const static unsigned char WRITE_BY_ID  = 0x2D;
+const static unsigned char GET_ENCODER  = 0x70;
+const static unsigned char READ_BY_ADDR     = 0x14;
+const static unsigned char READ_BY_ID       = 0x1D;
+const static unsigned char WRITE_BY_ADDR    = 0x24;
+
 
 BareCoreInterface::BareCoreInterface(void)
 {
@@ -29,6 +38,11 @@ bool BareCoreInterface::initInterface(void)
     }
 
     if (command_interface_.createChannel(COMM_REQ, COMM_IPC, "JTAC") != SUCCESS)
+    {
+        return false;
+    }
+
+    if (jtac_param_interface_.createChannel(COMM_REQ, COMM_IPC, "servo_param") != SUCCESS)
     {
         return false;
     }
@@ -108,39 +122,86 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
 
 bool BareCoreInterface::resetBareCore(void)
 {
-    int cmd = 0;
     ServiceRequest req;
-
     req.req_id = JTAC_CMD_SID;
+    int cmd = 0;
     memcpy(req.req_buff, &cmd, sizeof(cmd));
-
-    for (size_t cnt = 0; cnt < MAX_ATTEMPTS; cnt++)
-    {
-        if (command_interface_.send(&req, sizeof(ServiceRequest), COMM_DONTWAIT) != SUCCESS)
-        {
-            usleep(1000);
-            continue;
-        }
-        else
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return sendRequest(command_interface_, req);
 }
 
 bool BareCoreInterface::stopBareCore(void)
 {
-    int cmd = 1;
     ServiceRequest req;
-
     req.req_id = JTAC_CMD_SID;
+    int cmd = 1;
     memcpy(req.req_buff, &cmd, sizeof(cmd));
+    return sendRequest(command_interface_, req);
+}
 
+bool BareCoreInterface::setConfigData(int id, const vector<double> &data)
+{
+    ServiceRequest req;
+    req.req_id = WRITE_BY_ID;
+    int len = data.size();
+    memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
+    memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
+    memcpy(&req.req_buff[8], (char*)&data[0], len * sizeof(double));
+    return sendRequest(jtac_param_interface_ , req);
+}
+
+bool BareCoreInterface::getConfigData(int id, vector<double> &data)
+{
+    ServiceRequest req;
+    req.req_id = READ_BY_ID;
+    int len = data.size();
+    memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
+    memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
+
+    if (sendRequest(jtac_param_interface_, req))
+    {
+        ServiceResponse res;
+
+        if (recvResponse(jtac_param_interface_, res))
+        {
+            if (*((int*)(&res.res_buff[0])) == id && *((int*)(&res.res_buff[4])) == len)
+            {
+                memcpy(&data[0], &res.res_buff[8], len * sizeof(double));
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool BareCoreInterface::getEncoder(vector<int> &data)
+{
+    ServiceRequest req;
+    req.req_id = GET_ENCODER;
+    int len = data.size();
+    memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
+
+    if (sendRequest(jtac_param_interface_, req))
+    {
+        ServiceResponse res;
+
+        if (recvResponse(jtac_param_interface_, res))
+        {
+            if (*((int*)(&res.res_buff[0])) == len)
+            {
+                memcpy(&data[0], &res.res_buff[4], len * sizeof(int));
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool BareCoreInterface::sendRequest(const CommInterface &comm, const ServiceRequest &req)
+{
     for (size_t cnt = 0; cnt < MAX_ATTEMPTS; cnt++)
     {
-        if (command_interface_.send(&req, sizeof(ServiceRequest), COMM_DONTWAIT) != SUCCESS)
+        if (comm.send(&req, sizeof(ServiceRequest), COMM_DONTWAIT) != SUCCESS)
         {
             usleep(1000);
             continue;
@@ -153,6 +214,25 @@ bool BareCoreInterface::stopBareCore(void)
 
     return false;
 }
+
+bool BareCoreInterface::recvResponse(const CommInterface &comm, ServiceResponse &res)
+{
+    for (size_t cnt = 0; cnt < MAX_ATTEMPTS; cnt++)
+    {
+        if (comm.recv(&res, sizeof(ServiceResponse), COMM_DONTWAIT) != SUCCESS)
+        {
+            usleep(1000);
+            continue;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 
 }
 

@@ -8,6 +8,7 @@
 #ifndef _MOTION_CONTROL_CORE_INTERFACE_H
 #define _MOTION_CONTROL_CORE_INTERFACE_H
 
+#include <vector>
 #include <comm_interface/core_interface.h>
 #include <struct_to_mem/struct_service_request.h>
 #include <struct_to_mem/struct_service_response.h>
@@ -71,11 +72,18 @@ class BareCoreInterface
     bool resetBareCore(void);
     bool stopBareCore(void);
 
+    bool setConfigData(int id, const std::vector<double> &data);
+    bool getConfigData(int id, std::vector<double> &data);
+    bool getEncoder(std::vector<int> &data);
+
   private:
+    bool sendRequest(const fst_comm_interface::CommInterface &comm, const ServiceRequest &req);
+    bool recvResponse(const fst_comm_interface::CommInterface &comm, ServiceResponse &res);
     PointCache  point_cache_;
 
     fst_core_interface::CoreInterface   core_interface_;
     fst_comm_interface::CommInterface   command_interface_;
+    fst_comm_interface::CommInterface   jtac_param_interface_;
 };
 
 

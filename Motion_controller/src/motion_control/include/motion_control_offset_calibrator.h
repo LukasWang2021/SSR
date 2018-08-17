@@ -39,6 +39,9 @@ enum OffsetMask
     OFFSET_MASKED,
 };
 
+static const int NEED_SAVE = 1;
+static const int UNNEED_SAVE = 0;
+
 
 class Calibrator
 {
@@ -50,39 +53,37 @@ class Calibrator
     ErrorCode checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat);
 
 
-    bool calibrateOffset(void);
-    bool calibrateOffset(size_t index);
-    bool calibrateOffset(const size_t *pindex, size_t length);
+    ErrorCode calibrateOffset(void);
+    ErrorCode calibrateOffset(size_t index);
+    ErrorCode calibrateOffset(const size_t *pindex, size_t length);
 
 
-    bool saveOffset(void);
-    bool saveJoint(void);
+    ErrorCode saveOffset(void);
+    ErrorCode saveJoint(void);
 
 
-    bool maskOffsetLost(void);
-    bool setOffsetState(size_t index, OffsetState stat);
+    ErrorCode maskOffsetLostError(void);
+    ErrorCode setOffsetState(size_t index, OffsetState stat);
 
 
     void getOffset(double *offset);
     CalibrateState getCalibrateState(void);
-    bool sendJtacParam(const std::string &param);
+    ErrorCode sendJtacParam(const std::string &param = "all");
 
-    bool saveReference(void);
-    bool fastCalibrate(void);
-    bool fastCalibrate(size_t index);
-    bool fastCalibrate(const size_t *pindex, size_t length);
+    ErrorCode saveReference(void);
+    ErrorCode fastCalibrate(void);
+    ErrorCode fastCalibrate(size_t index);
+    ErrorCode fastCalibrate(const size_t *pindex, size_t length);
 
     
   private:
     void checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat);
     double calculateOffset(double current_offset, double current_joint, double target_joint);
     double calculateOffsetEasy(double gear_ratio, double ref_offset, unsigned int ref_encoder, unsigned int cur_encoder);
-    bool saveGivenJoint(const Joint &joint);
-    bool saveGivenJoint(const std::vector<double> &joint);
-    bool sendConfigData(const std::string &path);
-    bool transmitJtacParam(const std::string &param = "all");
-    bool buildRecordFile(const std::string &file);
-    bool getOffsetFromBareCore(std::vector<double> &data);
+    ErrorCode saveGivenJoint(const Joint &joint);
+    ErrorCode sendConfigData(const std::string &path);
+    ErrorCode buildRecordFile(const std::string &file);
+    ErrorCode getOffsetFromBareCore(std::vector<double> &data);
 
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
@@ -98,8 +99,7 @@ class Calibrator
     OffsetMask  offset_mask_[NUM_OF_JOINT];
     OffsetState offset_stat_[NUM_OF_JOINT];
     double      zero_offset_[NUM_OF_JOINT];
-    bool        offset_need_save_[NUM_OF_JOINT];
-    //Joint       joint_to_save_[NUM_OF_JOINT];
+    int         offset_need_save_[NUM_OF_JOINT];
 
     size_t joint_num_;
     BareCoreInterface *bare_core_ptr_;

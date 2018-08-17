@@ -43,7 +43,7 @@ class ArmGroup : public BaseGroup
     ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
     ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
 
-    //Calibrator          calibrator_{JOINT_OF_ARM, &bare_core_, log_ptr_};
+    Calibrator          calibrator_{JOINT_OF_ARM, &bare_core_, log_ptr_};
     ManualTeach         manual_teach_{JOINT_OF_ARM, &soft_constraint_, log_ptr_};
     ManualTrajectory    manual_traj_;
 };

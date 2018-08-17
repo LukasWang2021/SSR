@@ -20,9 +20,9 @@ public:
     MotionControl();
     ~MotionControl();
 
-    ErrorCode init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
-                    fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr, 
-                    fst_base::ErrorMonitor *error_monitor_ptr);
+    ErrorCode init(fst_hal::DeviceManager *device_manager_ptr, AxisGroupManager *axis_group_manager_ptr,
+                   fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr,
+                   fst_base::ErrorMonitor *error_monitor_ptr);
 
     // API for teaching
     ErrorCode setManualFrame(ManualFrame frame);
@@ -59,9 +59,8 @@ private:
     AxisGroupManager* axis_group_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
-    fst_base::ErrorMonitor* error_monitor_ptr_;
+    fst_base::ErrorMonitor *error_monitor_ptr_;
     BaseGroup *group_ptr_;
-
 };
 
 

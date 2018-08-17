@@ -243,6 +243,19 @@ bool BaseReg::isAddInputValid(int id)
 bool BaseReg::isDeleteInputValid(int id)
 {
     if(id <= 0
+        || id >= reg_list_.size())
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool BaseReg::isUpdateInputValid(int id)
+{
+    if(id <= 0
         || id >= reg_list_.size()
         || !reg_list_[id].is_valid)
     {
@@ -254,14 +267,9 @@ bool BaseReg::isDeleteInputValid(int id)
     }
 }
 
-bool BaseReg::isSetInputValid(int id)
-{
-    return isDeleteInputValid(id);
-}
-
 bool BaseReg::isGetInputValid(int id)
 {
-    return isDeleteInputValid(id);
+    return isUpdateInputValid(id);
 }
 
 bool BaseReg::isMoveInputValid(int expect_id, int original_id)

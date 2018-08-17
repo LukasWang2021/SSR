@@ -118,7 +118,7 @@ bool SrReg::updateReg(void* data_ptr)
     }
 
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
-    if(!isSetInputValid(reg_ptr->id)
+    if(!isUpdateInputValid(reg_ptr->id)
         || reg_ptr->value.size() > param_ptr_->sr_value_limit_)
     {
         return false;
@@ -177,7 +177,7 @@ bool SrReg::updateRegValue(SrRegDataIpc* data_ptr)
     }
 
     int str_size = strlen(data_ptr->value);
-    if(!isSetInputValid(data_ptr->id)
+    if(!isUpdateInputValid(data_ptr->id)
         || str_size >= param_ptr_->sr_value_limit_)
     {
         return false;

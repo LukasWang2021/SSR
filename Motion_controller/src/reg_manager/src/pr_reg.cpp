@@ -172,7 +172,7 @@ bool PrReg::updateReg(void* data_ptr)
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
-    if(!isSetInputValid(reg_ptr->id))
+    if(!isUpdateInputValid(reg_ptr->id))
     {
         return false;
     }
@@ -255,7 +255,7 @@ bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
         return false;
     }
 
-    if(!isSetInputValid(data_ptr->id)
+    if(!isUpdateInputValid(data_ptr->id)
         || data_ptr->pos[0] > param_ptr_->pr_value_limit_ || data_ptr->pos[0] < -param_ptr_->pr_value_limit_
         || data_ptr->pos[1] > param_ptr_->pr_value_limit_ || data_ptr->pos[1] < -param_ptr_->pr_value_limit_
         || data_ptr->pos[2] > param_ptr_->pr_value_limit_ || data_ptr->pos[2] < -param_ptr_->pr_value_limit_

@@ -63,7 +63,7 @@ public:
     bool getRegList(int id, BaseRegData& data);
     bool isAddInputValid(int id);
     bool isDeleteInputValid(int id);
-    bool isSetInputValid(int id);
+    bool isUpdateInputValid(int id);
     bool isGetInputValid(int id);
     bool isMoveInputValid(int expect_id, int original_id);
     void packAddRegData(BaseRegData& data, int id, std::string name, std::string comment);

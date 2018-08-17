@@ -182,7 +182,7 @@ bool HrReg::updateReg(void* data_ptr)
     }
 
     HrRegData* reg_ptr = reinterpret_cast<HrRegData*>(data_ptr);
-    if(!isSetInputValid(reg_ptr->id)
+    if(!isUpdateInputValid(reg_ptr->id)
         || reg_ptr->value.joint_pos[0] > param_ptr_->hr_value_limit_ || reg_ptr->value.joint_pos[0] < -param_ptr_->hr_value_limit_
         || reg_ptr->value.joint_pos[1] > param_ptr_->hr_value_limit_ || reg_ptr->value.joint_pos[1] < -param_ptr_->hr_value_limit_
         || reg_ptr->value.joint_pos[2] > param_ptr_->hr_value_limit_ || reg_ptr->value.joint_pos[2] < -param_ptr_->hr_value_limit_
@@ -268,7 +268,7 @@ bool HrReg::updateRegJointPos(HrRegDataIpc* data_ptr)
         return false;
     }
 
-    if(!isSetInputValid(data_ptr->id)
+    if(!isUpdateInputValid(data_ptr->id)
         || data_ptr->joint_pos[0] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[0] < -param_ptr_->hr_value_limit_
         || data_ptr->joint_pos[1] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[1] < -param_ptr_->hr_value_limit_
         || data_ptr->joint_pos[2] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[2] < -param_ptr_->hr_value_limit_

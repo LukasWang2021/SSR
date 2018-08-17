@@ -112,7 +112,7 @@ bool RReg::updateReg(void* data_ptr)
     }
 
     RRegData* reg_ptr = reinterpret_cast<RRegData*>(data_ptr);
-    if(!isSetInputValid(reg_ptr->id)
+    if(!isUpdateInputValid(reg_ptr->id)
         || reg_ptr->value > param_ptr_->r_value_limit_
         || reg_ptr->value < -param_ptr_->r_value_limit_)
     {
@@ -164,7 +164,7 @@ bool RReg::updateRegValue(RRegDataIpc* data_ptr)
         return false;
     }
 
-    if(!isSetInputValid(data_ptr->id)
+    if(!isUpdateInputValid(data_ptr->id)
         || data_ptr->value > param_ptr_->r_value_limit_
         || data_ptr->value < -param_ptr_->r_value_limit_)
     {

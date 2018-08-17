@@ -78,7 +78,9 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/setManualFrame", 0x00009D05, &ControllerRpc::handleRpc0x00009D05}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doStepManualMove", 0x000085D5, &ControllerRpc::handleRpc0x000085D5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doContinuousManualMove", 0x0000D3F5, &ControllerRpc::handleRpc0x0000D3F5}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/motion_control/axis_group/doGotoPointManualMove", 0x000056B5, &ControllerRpc::handleRpc0x000056B5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/doGotoCartesianPointManualMove", 0x00010C05, &ControllerRpc::handleRpc0x00010C05}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/doGotoJointPointManualMove", 0x00008075, &ControllerRpc::handleRpc0x00008075}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/doManualStop", 0x0000A9A0, &ControllerRpc::handleRpc0x0000A9A0}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getJointFeedBack", 0x0000DFBB, &ControllerRpc::handleRpc0x0000DFBB}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setUserSoftLimit", 0x000114A4, &ControllerRpc::handleRpc0x000114A4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getUserSoftLimit", 0x0000C764, &ControllerRpc::handleRpc0x0000C764}; rpc_table_.push_back(rpc_service);

@@ -48,7 +48,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, V
     controller_client_ptr_ = controller_client_ptr;
     initRpcTable();
     initRpcQuickSearchTable();
-    publish_.init(log_ptr, param_ptr, virtual_core1_ptr, tp_comm_ptr, state_machine_ptr);
+    publish_.init(log_ptr, param_ptr, virtual_core1_ptr, tp_comm_ptr, state_machine_ptr, motion_control_ptr);
 }
 
 void ControllerRpc::processRpc()

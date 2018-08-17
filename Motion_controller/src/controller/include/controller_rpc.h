@@ -203,8 +203,12 @@ private:
     void handleRpc0x000085D5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/doContinuousManualMove"
     void handleRpc0x0000D3F5(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/motion_control/axis_group/doGotoPointManualMove"
-    void handleRpc0x000056B5(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/doGotoCartesianPointManualMove"
+    void handleRpc0x00010C05(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/doGotoJointPointManualMove"
+    void handleRpc0x00008075(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/doManualStop"
+    void handleRpc0x0000A9A0(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getJointFeedBack"
     void handleRpc0x0000DFBB(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/setUserSoftLimit"

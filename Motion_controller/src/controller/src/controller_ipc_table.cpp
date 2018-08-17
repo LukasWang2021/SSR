@@ -8,15 +8,15 @@ void ControllerIpc::initIpcTable()
 {
     IpcService ipc_service;
     
-    ipc_service = {CONTROLLER_SERVER_CMD_SET_PR_REG, &ControllerIpc::handleIpcSetPrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_SET_HR_REG, &ControllerIpc::handleIpcSetHrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_SET_MR_REG, &ControllerIpc::handleIpcSetMrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_SET_SR_REG, &ControllerIpc::handleIpcSetSrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_SET_R_REG, &ControllerIpc::handleIpcSetRReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_GET_PR_REG, &ControllerIpc::handleIpcGetPrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_GET_HR_REG, &ControllerIpc::handleIpcGetHrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_GET_MR_REG, &ControllerIpc::handleIpcGetMrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_GET_SR_REG, &ControllerIpc::handleIpcGetSrReg}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerIpc::handleIpcGetRReg}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_PR_REG, &ControllerIpc::handleIpcSetPrRegPos}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_HR_REG, &ControllerIpc::handleIpcSetHrRegJointPos}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_MR_REG, &ControllerIpc::handleIpcSetMrRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_SR_REG, &ControllerIpc::handleIpcSetSrRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_R_REG, &ControllerIpc::handleIpcSetRRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_PR_REG, &ControllerIpc::handleIpcGetPrRegPos}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_HR_REG, &ControllerIpc::handleIpcGetHrRegJointPos}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_MR_REG, &ControllerIpc::handleIpcGetMrRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_SR_REG, &ControllerIpc::handleIpcGetSrRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerIpc::handleIpcGetRRegValue}; ipc_table_.push_back(ipc_service);
 }
 

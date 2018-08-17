@@ -169,6 +169,50 @@ void* SrReg::getRegValueById(int id)
     return (void*)data_list_[id].c_str();
 }
 
+bool SrReg::updateRegValue(SrRegDataIpc* data_ptr)
+{
+    if(data_ptr == NULL)
+    {
+        return false;
+    }
+
+    int str_size = strlen(data_ptr->value);
+    if(!isSetInputValid(data_ptr->id)
+        || str_size >= param_ptr_->sr_value_limit_)
+    {
+        return false;
+    }
+        
+    BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
+    if(reg_data_ptr == NULL)
+    {
+        return false;
+    }
+    if(str_size == 0)
+    {
+        data_list_[data_ptr->id] = std::string("default");
+    }
+    else
+    {
+        data_list_[data_ptr->id] = data_ptr->value;
+    }
+    return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+}
+
+bool SrReg::getRegValue(int id, SrRegDataIpc* data_ptr)
+{
+    if(!isGetInputValid(id)
+        || data_list_[id].size() >= 256)
+    {
+        return false;
+    }
+    
+    data_ptr->id = id;
+    memcpy(data_ptr->value, data_list_[id].c_str(), data_list_[id].size());
+    data_ptr->value[data_list_[id].size()] = 0;
+    return true;
+}
+
 SrReg::SrReg():
     BaseReg(REG_TYPE_INVALID, 0)
 {

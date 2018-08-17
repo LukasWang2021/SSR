@@ -248,6 +248,49 @@ void* PrReg::getRegValueById(int id)
     return (void*)&data_list_[id];
 }
 
+bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
+{
+    if(data_ptr == NULL)
+    {
+        return false;
+    }
+
+    if(!isSetInputValid(data_ptr->id)
+        || data_ptr->pos[0] > param_ptr_->pr_value_limit_ || data_ptr->pos[0] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[1] > param_ptr_->pr_value_limit_ || data_ptr->pos[1] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[2] > param_ptr_->pr_value_limit_ || data_ptr->pos[2] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[3] > param_ptr_->pr_value_limit_ || data_ptr->pos[3] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[4] > param_ptr_->pr_value_limit_ || data_ptr->pos[4] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[5] > param_ptr_->pr_value_limit_ || data_ptr->pos[5] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[6] > param_ptr_->pr_value_limit_ || data_ptr->pos[6] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[7] > param_ptr_->pr_value_limit_ || data_ptr->pos[7] < -param_ptr_->pr_value_limit_
+        || data_ptr->pos[8] > param_ptr_->pr_value_limit_ || data_ptr->pos[8] < -param_ptr_->pr_value_limit_)
+    {
+        return false;
+    }
+        
+    BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
+    if(reg_data_ptr == NULL)
+    {
+        return false;
+    }
+    memcpy(&data_list_[data_ptr->id].pos[0], &data_ptr->pos[0], 9*sizeof(double));
+    return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+}
+
+bool PrReg::getRegPos(int id, PrRegDataIpc* data_ptr)
+{
+    if(!isGetInputValid(id))
+    {
+        return false;
+    }
+    
+    data_ptr->id = id;
+    memcpy(&data_ptr->pos[0], &data_list_[data_ptr->id].pos[0], 9*sizeof(double));
+    return true;
+}
+
+
 PrReg::PrReg():
     BaseReg(REG_TYPE_INVALID, 0)
 {

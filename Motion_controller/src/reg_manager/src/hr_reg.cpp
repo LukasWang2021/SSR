@@ -261,6 +261,48 @@ void* HrReg::getRegValueById(int id)
     return (void*)&data_list_[id];
 }
 
+bool HrReg::updateRegJointPos(HrRegDataIpc* data_ptr)
+{
+    if(data_ptr == NULL)
+    {
+        return false;
+    }
+
+    if(!isSetInputValid(data_ptr->id)
+        || data_ptr->joint_pos[0] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[0] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[1] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[1] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[2] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[2] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[3] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[3] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[4] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[4] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[5] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[5] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[6] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[6] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[7] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[7] < -param_ptr_->hr_value_limit_
+        || data_ptr->joint_pos[8] > param_ptr_->hr_value_limit_ || data_ptr->joint_pos[8] < -param_ptr_->hr_value_limit_)
+    {
+        return false;
+    }
+        
+    BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
+    if(reg_data_ptr == NULL)
+    {
+        return false;
+    }
+    memcpy(&data_list_[data_ptr->id].joint_pos[0], &data_ptr->joint_pos[0], 9*sizeof(double));
+    return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+}
+
+bool HrReg::getRegJointPos(int id, HrRegDataIpc* data_ptr)
+{
+    if(!isGetInputValid(id))
+    {
+        return false;
+    }
+    
+    data_ptr->id = id;
+    memcpy(&data_ptr->joint_pos[0], &data_list_[data_ptr->id].joint_pos[0], 9*sizeof(double));
+    return true;
+}
+
 HrReg::HrReg():
     BaseReg(REG_TYPE_INVALID, 0)
 {

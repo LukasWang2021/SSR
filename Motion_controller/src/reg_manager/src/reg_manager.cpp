@@ -249,4 +249,63 @@ void* RegManager::getRRegValueById(int id)
     return reg_ptr_[REG_TYPE_R]->getRegValueById(id);
 }
 
+bool RegManager::updatePrRegPos(PrRegDataIpc* data_ptr)
+{
+    PrReg* reg_ptr = static_cast<PrReg*>(reg_ptr_[REG_TYPE_PR]);
+    return reg_ptr->updateRegPos(data_ptr);
+}
+
+bool RegManager::updateHrRegJointPos(HrRegDataIpc* data_ptr)
+{
+    HrReg* reg_ptr = static_cast<HrReg*>(reg_ptr_[REG_TYPE_HR]);
+    return reg_ptr->updateRegJointPos(data_ptr);
+}
+
+bool RegManager::updateMrRegValue(MrRegDataIpc* data_ptr)
+{
+    MrReg* reg_ptr = static_cast<MrReg*>(reg_ptr_[REG_TYPE_MR]);
+    return reg_ptr->updateRegValue(data_ptr);
+}
+
+bool RegManager::updateSrRegValue(SrRegDataIpc* data_ptr)
+{
+    SrReg* reg_ptr = static_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
+    return reg_ptr->updateRegValue(data_ptr);
+}
+
+bool RegManager::updateRRegValue(RRegDataIpc* data_ptr)
+{
+    RReg* reg_ptr = static_cast<RReg*>(reg_ptr_[REG_TYPE_R]);
+    return reg_ptr->updateRegValue(data_ptr);
+}
+
+bool RegManager::getPrRegPos(int id, PrRegDataIpc* data_ptr)
+{
+    PrReg* reg_ptr = static_cast<PrReg*>(reg_ptr_[REG_TYPE_PR]);
+    return reg_ptr->getRegPos(id, data_ptr);
+}
+
+bool RegManager::getHrRegJointPos(int id, HrRegDataIpc* data_ptr)
+{
+    HrReg* reg_ptr = static_cast<HrReg*>(reg_ptr_[REG_TYPE_HR]);
+    return reg_ptr->getRegJointPos(id, data_ptr);
+}
+
+bool RegManager::getMrRegValue(int id, MrRegDataIpc* data_ptr)
+{
+    MrReg* reg_ptr = static_cast<MrReg*>(reg_ptr_[REG_TYPE_MR]);
+    return reg_ptr->getRegValue(id, data_ptr);
+}
+
+bool RegManager::getSrRegValue(int id, SrRegDataIpc* data_ptr)
+{
+    SrReg* reg_ptr = static_cast<SrReg*>(reg_ptr_[REG_TYPE_SR]);
+    return reg_ptr->getRegValue(id, data_ptr);
+}
+
+bool RegManager::getRRegValue(int id, RRegDataIpc* data_ptr)
+{
+    RReg* reg_ptr = static_cast<RReg*>(reg_ptr_[REG_TYPE_R]);
+    return reg_ptr->getRegValue(id, data_ptr);
+}
 

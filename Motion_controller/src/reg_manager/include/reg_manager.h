@@ -62,11 +62,24 @@ public:
     std::vector<BaseRegSummary> getRRegChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getRRegValidList(int start_id, int size);    
 
+    // rpc call
     void* getPrRegValueById(int id);
     void* getHrRegValueById(int id);
     void* getMrRegValueById(int id);
     void* getSrRegValueById(int id);
     void* getRRegValueById(int id);
+
+    // ipc call
+    bool updatePrRegPos(PrRegDataIpc* data_ptr);
+    bool updateHrRegJointPos(HrRegDataIpc* data_ptr);
+    bool updateMrRegValue(MrRegDataIpc* data_ptr);
+    bool updateSrRegValue(SrRegDataIpc* data_ptr);
+    bool updateRRegValue(RRegDataIpc* data_ptr);
+    bool getPrRegPos(int id, PrRegDataIpc* data_ptr);
+    bool getHrRegJointPos(int id, HrRegDataIpc* data_ptr);
+    bool getMrRegValue(int id, MrRegDataIpc* data_ptr);
+    bool getSrRegValue(int id, SrRegDataIpc* data_ptr);
+    bool getRRegValue(int id, RRegDataIpc* data_ptr);
     
 private:
     RegManagerParam* param_ptr_;

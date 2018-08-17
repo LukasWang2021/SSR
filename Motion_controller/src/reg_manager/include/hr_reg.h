@@ -25,9 +25,7 @@ typedef struct
 typedef struct
 {
     int id;
-    char name[32];
-    char comment[256];
-    HrValue value;
+    double joint_pos[9];
 }HrRegDataIpc;
 
 class HrReg:public BaseReg
@@ -43,6 +41,8 @@ public:
     virtual bool updateReg(void* data_ptr);
     virtual bool moveReg(int expect_id, int original_id);
     void* getRegValueById(int id);
+    bool updateRegJointPos(HrRegDataIpc* data_ptr);
+    bool getRegJointPos(int id, HrRegDataIpc* data_ptr);
     
 private:
     RegManagerParam* param_ptr_;

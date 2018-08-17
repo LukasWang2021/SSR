@@ -40,16 +40,16 @@ private:
 
     void initIpcTable();
 
-    void handleIpcSetPrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcSetHrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcSetMrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcSetSrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcSetRReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcGetPrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcGetHrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcGetMrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcGetSrReg(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcGetRReg(void* request_data_ptr, void* response_data_ptr); 
+    void handleIpcSetPrRegPos(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetHrRegJointPos(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetMrRegValue(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetSrRegValue(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetRRegValue(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetPrRegPos(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetHrRegJointPos(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetMrRegValue(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetSrRegValue(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetRRegValue(void* request_data_ptr, void* response_data_ptr); 
 };
 
 }

@@ -32,9 +32,7 @@ typedef struct
 typedef struct
 {
     int id;
-    char name[32];
-    char comment[256];
-    PrValue value;
+    double pos[9];
 }PrRegDataIpc;
 
 class PrReg:public BaseReg
@@ -50,7 +48,9 @@ public:
     virtual bool updateReg(void* data_ptr);
     virtual bool moveReg(int expect_id, int original_id);
     void* getRegValueById(int id);
-        
+    bool updateRegPos(PrRegDataIpc* data_ptr);
+    bool getRegPos(int id, PrRegDataIpc* data_ptr);
+    
 private:
     RegManagerParam* param_ptr_;
     std::string file_path_;

@@ -157,6 +157,41 @@ void* RReg::getRegValueById(int id)
     return (void*)&data_list_[id];
 }
 
+bool RReg::updateRegValue(RRegDataIpc* data_ptr)
+{
+    if(data_ptr == NULL)
+    {
+        return false;
+    }
+
+    if(!isSetInputValid(data_ptr->id)
+        || data_ptr->value > param_ptr_->r_value_limit_
+        || data_ptr->value < -param_ptr_->r_value_limit_)
+    {
+        return false;
+    }
+        
+    BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
+    if(reg_data_ptr == NULL)
+    {
+        return false;
+    }
+    data_list_[data_ptr->id] = data_ptr->value;
+    return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+}
+
+bool RReg::getRegValue(int id, RRegDataIpc* data_ptr)
+{
+    if(!isGetInputValid(id))
+    {
+        return false;
+    }
+    
+    data_ptr->id = id;
+    data_ptr->value = data_list_[id];
+    return true;
+}
+
 RReg::RReg():
     BaseReg(REG_TYPE_INVALID, 0)
 {

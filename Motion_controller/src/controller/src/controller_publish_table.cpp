@@ -13,5 +13,6 @@ void ControllerPublish::initPublishTable()
     publish_service = {"/publish/controller/CtrlStatus", 0x0000E8E3, &ControllerPublish::getCtrlStatePtr}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/controller/ServoStatus", 0x00002053, &ControllerPublish::getServoStatePtr}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/controller/SafetyAlarm", 0x0000D0AD, &ControllerPublish::getSafetyAlarmPtr}; publish_table_.push_back(publish_service);   
+    publish_service = {"/publish/motion_control/axis_group/feedback/joints", 0x00013643, &ControllerPublish::getAxisGroupJointFeedbackPtr}; publish_table_.push_back(publish_service); 
 }
 

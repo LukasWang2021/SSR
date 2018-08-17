@@ -18,8 +18,6 @@ typedef struct
 typedef struct
 {
     int id;
-    char name[32];
-    char comment[256];
     char value[256];
 }SrRegDataIpc;
 
@@ -36,6 +34,8 @@ public:
     virtual bool updateReg(void* data_ptr);
     virtual bool moveReg(int expect_id, int original_id);
     void* getRegValueById(int id);
+    bool updateRegValue(SrRegDataIpc* data_ptr);
+    bool getRegValue(int id, SrRegDataIpc* data_ptr);
     
 private:
     RegManagerParam* param_ptr_;

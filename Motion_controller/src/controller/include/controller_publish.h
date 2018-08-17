@@ -6,6 +6,7 @@
 #include "virtual_core1.h"
 #include "tp_comm.h"
 #include "controller_sm.h"
+#include "motion_control.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -17,7 +18,7 @@ public:
     ~ControllerPublish();
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr);
+                    ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr);
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     HandlePublishFuncPtr getPublishHandlerByHash(unsigned int hash);
@@ -27,6 +28,7 @@ private:
     VirtualCore1* virtual_core1_ptr_;
     fst_comm::TpComm* tp_comm_ptr_;
     ControllerSm* state_machine_ptr_;
+    fst_mc::MotionControl* motion_control_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -51,7 +53,8 @@ private:
     void* getRobotStatePtr();
     void* getCtrlStatePtr();
     void* getServoStatePtr();
-    void* getSafetyAlarmPtr();   
+    void* getSafetyAlarmPtr();
+    void* getAxisGroupJointFeedbackPtr();
 };
 
 }

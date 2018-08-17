@@ -9,6 +9,7 @@
 #include "coordinate_manager.h"
 #include "tool_manager.h"
 #include "motion_control_arm_group.h"
+#include "error_monitor.h"
 
 
 namespace fst_mc
@@ -16,11 +17,12 @@ namespace fst_mc
 class MotionControl
 {
 public:
-    MotionControl(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
-                        fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr);
+    MotionControl();
     ~MotionControl();
 
-    ErrorCode initMotionControl(fst_base::ErrorMonitor *error_monitor_ptr);
+    ErrorCode init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
+                    fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr, 
+                    fst_base::ErrorMonitor *error_monitor_ptr);
 
     // API for teaching
     ErrorCode setManualFrame(ManualFrame frame);
@@ -57,9 +59,9 @@ private:
     AxisGroupManager* axis_group_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
+    fst_base::ErrorMonitor* error_monitor_ptr_;
     BaseGroup *group_ptr_;
 
-    MotionControl();
 };
 
 

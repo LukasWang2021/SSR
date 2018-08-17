@@ -38,4 +38,8 @@ void* ControllerPublish::getSafetyAlarmPtr()
     return (void*)state_machine_ptr_->getSafetyAlarmPtr();
 }
 
+void* ControllerPublish::getAxisGroupJointFeedbackPtr()
+{
+    return NULL;
+}
 

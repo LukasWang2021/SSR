@@ -204,7 +204,9 @@ bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int sen
     if(send_bytes == -1 || send_bytes != (send_size + 4))
     {
         FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
+        return false;
     }
+    return true;
 }
 
 bool InterpreterClient::recvResponse(int expect_recv_size)

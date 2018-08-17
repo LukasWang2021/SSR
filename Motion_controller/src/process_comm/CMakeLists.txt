@@ -24,7 +24,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/reg_manager/include 
     ${depend_PATH_INC}/thread_help/include 
-    ${depend_PATH_INC}/prg_interpreter/include 
+    ${depend_PATH_INC}/prg_interpreter/include
+    ${depend_PATH_INC}/error_monitor/include 
 )
 
 catkin_package(
@@ -52,6 +53,7 @@ target_link_libraries(process_comm
     ${catkin_LIBRARIES}
     thread_help
     logger
+    error_monitor 
 )
 
 install(TARGETS process_comm 

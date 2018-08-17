@@ -146,7 +146,9 @@ bool ControllerClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send
     if(send_bytes == -1 || send_bytes != (send_size + 4))
     {
         FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
+        return false;
     }
+    return true;
 }
 
 bool ControllerClient::recvResponse(int expect_recv_size)

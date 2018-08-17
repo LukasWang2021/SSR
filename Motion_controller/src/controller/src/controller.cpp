@@ -75,17 +75,13 @@ bool Controller::init()
     {
         return false;
     }
-    
-    if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
-    {
-        return false;
-    }
 
     process_comm_ptr_ = ProcessComm::getInstance();
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
     if(!process_comm_ptr_->getControllerServerPtr()->init()
         || !process_comm_ptr_->getControllerServerPtr()->open()
-        || !process_comm_ptr_->getControllerClientPtr()->init())
+        || !process_comm_ptr_->getControllerClientPtr()->init()
+        || !process_comm_ptr_->getHeartbeatClientPtr()->init())
     {
         return false;
     }
@@ -93,6 +89,17 @@ bool Controller::init()
     rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr());
+
+    if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, 50))
+    {
+        return false;
+    }
+
+    if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
+    {
+        return false;
+    }
+
         
     if(!tp_comm_.init()
         || !tp_comm_.open())
@@ -115,6 +122,10 @@ void Controller::runRoutineThreadFunc()
     ipc_.processIpc();
 }
 
+void Controller::runHeartbeatThreadFunc()
+{
+    process_comm_ptr_->getHeartbeatClientPtr()->sendHeartbeat();
+}
 
 void controllerRoutineThreadFunc(void* arg)
 {
@@ -126,4 +137,13 @@ void controllerRoutineThreadFunc(void* arg)
     }
 }
 
+void heartbeatThreadFunc(void* arg)
+{
+    std::cout<<"---heartbeatRoutineThreadFunc running"<<std::endl;
+    Controller* controller_ptr = static_cast<Controller*>(arg);
+    while(!controller_ptr->isExit())
+    {
+        controller_ptr->runHeartbeatThreadFunc();
+    }
+}
 

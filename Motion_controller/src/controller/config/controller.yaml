@@ -4,5 +4,5 @@ rt_cycle_time: 10000
 heartbeat_cycle_time: 10000 
 routine_thread_priority: 50 
 reset_max_time: 1000000 
-enable_controller_heartbeat: false
+enable_controller_heartbeat: true
 #END

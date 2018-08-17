@@ -32,6 +32,7 @@ public:
     bool isExit();
     
     void runRoutineThreadFunc();
+    void runHeartbeatThreadFunc();
     
 private: 
     static Controller* instance_;
@@ -52,6 +53,7 @@ private:
     // thread related
     bool is_exit_;
     fst_base::ThreadHelp routine_thread_;
+    fst_base::ThreadHelp heartbeat_thread_;
     
 };
 
@@ -60,6 +62,7 @@ private:
 
 // thread function
 void controllerRoutineThreadFunc(void* arg);
+void heartbeatThreadFunc(void* arg);
 
 
 #endif

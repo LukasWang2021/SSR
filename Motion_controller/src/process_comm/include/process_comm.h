@@ -8,6 +8,7 @@
 #include "controller_client.h"
 #include "interpreter_server.h"
 #include "interpreter_client.h"
+#include "heartbeat_client.h"
 
 namespace fst_base
 {
@@ -23,7 +24,8 @@ public:
     ControllerClient* getControllerClientPtr();
     InterpreterServer* getInterpreterServerPtr();
     InterpreterClient* getInterpreterClientPtr();
-
+    HeartbeatClient* getHeartbeatClientPtr();
+    
 private:
     static ProcessComm* instance_;
     ProcessCommParam* param_ptr_;
@@ -33,6 +35,7 @@ private:
     ControllerClient* controller_client_ptr_;
     InterpreterServer* interpreter_server_ptr_;
     InterpreterClient* interpreter_client_ptr_;
+    HeartbeatClient* heartbeat_client_ptr_;
     
 };
 

@@ -7,7 +7,13 @@ using namespace std;
 ProcessComm* ProcessComm::instance_ = NULL;
 
 ProcessComm::ProcessComm():
-    log_ptr_(NULL), param_ptr_(NULL), controller_server_ptr_(NULL)
+    log_ptr_(NULL), 
+    param_ptr_(NULL), 
+    controller_server_ptr_(NULL),
+    controller_client_ptr_(NULL),
+    interpreter_server_ptr_(NULL),
+    interpreter_client_ptr_(NULL),
+    heartbeat_client_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ProcessCommParam(); 
@@ -42,7 +48,14 @@ ProcessComm::ProcessComm():
     if(interpreter_client_ptr_ == NULL)
     {
         FST_ERROR("Failed to new interpreter client");
-    }    
+    }
+
+    heartbeat_client_ptr_ = new HeartbeatClient(log_ptr_, param_ptr_);
+    if(heartbeat_client_ptr_ == NULL)
+    {
+        FST_ERROR("Failed to new heartbeat client");
+    }  
+
 }
 
 ProcessComm::~ProcessComm()
@@ -79,4 +92,8 @@ InterpreterClient* ProcessComm::getInterpreterClientPtr()
     return interpreter_client_ptr_;
 }
 
+HeartbeatClient* ProcessComm::getHeartbeatClientPtr()
+{
+    return heartbeat_client_ptr_;
+}
 

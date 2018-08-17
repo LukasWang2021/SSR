@@ -54,8 +54,7 @@ typedef struct
     unsigned long long int data;
 }ProcessCommEvent;
 
-
 }
 
-
 #endif
+

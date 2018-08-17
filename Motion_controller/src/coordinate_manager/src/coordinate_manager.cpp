@@ -52,7 +52,7 @@ bool CoordinateManager::addCoord(CoordInfo& info)
         
     coord_set_[info.id].id = info.id;
     coord_set_[info.id].is_valid = true;
-    if(coord_set_[info.id].name.size() == 0)
+    if(info.name.size() == 0)
     {
         coord_set_[info.id].name = std::string("default");
     }
@@ -60,7 +60,7 @@ bool CoordinateManager::addCoord(CoordInfo& info)
     {
         coord_set_[info.id].name = info.name;
     }
-    if(coord_set_[info.id].comment.size() == 0)
+    if(info.comment.size() == 0)
     {
         coord_set_[info.id].comment = std::string("default");
     }
@@ -100,7 +100,7 @@ bool CoordinateManager::updateCoord(CoordInfo& info)
         
     coord_set_[info.id].id = info.id;
     coord_set_[info.id].is_valid = true;
-    if(coord_set_[info.id].name.size() == 0)
+    if(info.name.size() == 0)
     {
         coord_set_[info.id].name = std::string("default");
     }
@@ -108,7 +108,7 @@ bool CoordinateManager::updateCoord(CoordInfo& info)
     {
         coord_set_[info.id].name = info.name;
     }
-    if(coord_set_[info.id].comment.size() == 0)
+    if(info.comment.size() == 0)
     {
         coord_set_[info.id].comment = std::string("default");
     }

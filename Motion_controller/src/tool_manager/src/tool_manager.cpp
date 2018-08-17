@@ -52,7 +52,7 @@ bool ToolManager::addTool(ToolInfo& info)
         
     tool_set_[info.id].id = info.id;
     tool_set_[info.id].is_valid = true;
-    if(tool_set_[info.id].name.size() == 0)
+    if(info.name.size() == 0)
     {
         tool_set_[info.id].name = std::string("default");
     }
@@ -60,7 +60,7 @@ bool ToolManager::addTool(ToolInfo& info)
     {
         tool_set_[info.id].name = info.name;
     }
-    if(tool_set_[info.id].comment.size() == 0)
+    if(info.comment.size() == 0)
     {
         tool_set_[info.id].comment = std::string("default");
     }
@@ -100,7 +100,7 @@ bool ToolManager::updateTool(ToolInfo& info)
         
     tool_set_[info.id].id = info.id;
     tool_set_[info.id].is_valid = true;
-    if(tool_set_[info.id].name.size() == 0)
+    if(info.name.size() == 0)
     {
         tool_set_[info.id].name = std::string("default");
     }
@@ -108,7 +108,7 @@ bool ToolManager::updateTool(ToolInfo& info)
     {
         tool_set_[info.id].name = info.name;
     }
-    if(tool_set_[info.id].comment.size() == 0)
+    if(info.comment.size() == 0)
     {
         tool_set_[info.id].comment = std::string("default");
     }

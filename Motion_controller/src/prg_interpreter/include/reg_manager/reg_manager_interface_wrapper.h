@@ -33,8 +33,8 @@ bool reg_manager_interface_delPr(uint16_t num);
 /*
  * The operated object is an individual member of PR.
  */
-bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num);
-bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num);
+bool reg_manager_interface_getPosePr(_PoseEuler *ptr, uint16_t num);
+bool reg_manager_interface_setPosePr(_PoseEuler *ptr, uint16_t num);
 
 bool reg_manager_interface_getJointPr(_Joint *ptr, uint16_t num);
 bool reg_manager_interface_setJointPr(_Joint *ptr, uint16_t num);
@@ -108,8 +108,8 @@ bool reg_manager_interface_delHr(uint16_t num);
 /*
  * The operated object is an individual member of HR.
  */
-bool reg_manager_interface_getPoseHr(PoseEuler *ptr, uint16_t num);
-bool reg_manager_interface_setPoseHr(PoseEuler *ptr, uint16_t num);
+bool reg_manager_interface_getPoseHr(_PoseEuler *ptr, uint16_t num);
+bool reg_manager_interface_setPoseHr(_PoseEuler *ptr, uint16_t num);
 
 bool reg_manager_interface_getJointHr(_Joint *ptr, uint16_t num);
 bool reg_manager_interface_setJointHr(_Joint *ptr, uint16_t num);
@@ -157,8 +157,8 @@ bool reg_manager_interface_setCommentTf(char *ptr, uint16_t num);
 bool reg_manager_interface_getPl(void *ptr, uint16_t num);
 bool reg_manager_interface_setPl(void *ptr, uint16_t num);
 
-bool reg_manager_interface_getPosePl(PoseEuler* pose, int index);
-bool reg_manager_interface_setPosePl(PoseEuler* pose, int index);
+bool reg_manager_interface_getPosePl(_PoseEuler* pose, int index);
+bool reg_manager_interface_setPosePl(_PoseEuler* pose, int index);
 
 bool reg_manager_interface_getPalletPl(pl_t *ptr, uint16_t num);
 bool reg_manager_interface_setPalletPl(pl_t *ptr, uint16_t num);

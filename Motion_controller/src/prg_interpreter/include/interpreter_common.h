@@ -274,7 +274,7 @@ typedef struct _AdditionalOffsetInfomation
     AdditionalOffsetInfomationType        type;
     union {
         Reg             pr_reg;
-        PoseEuler       pose_target;
+        _PoseEuler       pose_target;
         _Joint           joint_target;
     };
     Reg                 uf_reg;
@@ -334,7 +334,7 @@ typedef struct _Instruction
 typedef struct _MoveCommandDestination
 {
     MotionType        type;
-    PoseEuler       pose_target;
+    _PoseEuler       pose_target;
     _Joint           joint_target;
 } MoveCommandDestination;
 

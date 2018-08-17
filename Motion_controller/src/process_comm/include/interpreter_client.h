@@ -17,16 +17,16 @@ public:
 
     bool init();
 
-    bool setPrReg(fst_ctrl::PrRegData* data);
-    bool setHrReg(fst_ctrl::HrRegData* data);
-    bool setMrReg(fst_ctrl::MrRegData* data);
-    bool setSrReg(fst_ctrl::SrRegData* data);
-    bool setRReg(fst_ctrl::RRegData* data);
-    bool getPrReg(int id, fst_ctrl::PrRegData* data);
-    bool getHrReg(int id, fst_ctrl::HrRegData* data);
-    bool getMrReg(int id, fst_ctrl::MrRegData* data);
-    bool getSrReg(int id, fst_ctrl::SrRegData* data);
-    bool getRReg(int id, fst_ctrl::RRegData* data); 
+    bool setPrReg(fst_ctrl::PrRegDataIpc* data);
+    bool setHrReg(fst_ctrl::HrRegDataIpc* data);
+    bool setMrReg(fst_ctrl::MrRegDataIpc* data);
+    bool setSrReg(fst_ctrl::SrRegDataIpc* data);
+    bool setRReg(fst_ctrl::RRegDataIpc* data);
+    bool getPrReg(int id, fst_ctrl::PrRegDataIpc* data);
+    bool getHrReg(int id, fst_ctrl::HrRegDataIpc* data);
+    bool getMrReg(int id, fst_ctrl::MrRegDataIpc* data);
+    bool getSrReg(int id, fst_ctrl::SrRegDataIpc* data);
+    bool getRReg(int id, fst_ctrl::RRegDataIpc* data); 
 
 private:
     fst_log::Logger* log_ptr_;

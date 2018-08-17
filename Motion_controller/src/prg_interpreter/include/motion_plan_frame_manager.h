@@ -24,7 +24,7 @@ typedef struct
     int id;
     bool is_valid;
     char comment[MAX_COMMENT_LENGTH];
-    PoseEuler data;
+    _PoseEuler data;
 }Frame;
 
 typedef struct

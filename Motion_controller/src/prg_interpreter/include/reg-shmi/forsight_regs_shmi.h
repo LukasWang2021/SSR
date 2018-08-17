@@ -30,7 +30,7 @@ using namespace fst_controller;
 // pose register
 typedef struct 
 {
-	PoseEuler pose;
+	_PoseEuler pose;
 	Joint     joint;
 	int type;
 	int id;
@@ -61,7 +61,7 @@ typedef struct
 	char comment[COMMENT_SIZE];
 }mr_shmi_t;
 
-typedef PoseEuler Coordinate;
+typedef _PoseEuler Coordinate;
 
 // register of user coordinate offset
 typedef struct
@@ -89,7 +89,7 @@ typedef struct
 // stack register
 typedef struct
 {
-	PoseEuler pose;
+	_PoseEuler pose;
 	pallet_t pallet;
 	int flag;
 	int id;

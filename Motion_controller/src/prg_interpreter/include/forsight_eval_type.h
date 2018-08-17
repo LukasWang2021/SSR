@@ -130,12 +130,12 @@ public:
 	}
 	
 	// TYPE_POSE
-	void setPoseValue(PoseEuler * poseVal){
+	void setPoseValue(_PoseEuler * poseVal){
 		evalType |= TYPE_POSE ;
 		pose     = * poseVal ;
 	}
 	
-	PoseEuler getPoseValue(){
+	_PoseEuler getPoseValue(){
 		int iType = evalType & TYPE_POSE ;
 		if(iType != 0) {
 			return pose ;
@@ -251,7 +251,7 @@ public:
 		reg_pr.value.pos[5] = jointVal->j6;
 	}
 	
-	void setPrRegDataWithPoseEulerValue(PoseEuler * pointEulerVal){
+	void setPrRegDataWithPoseEulerValue(_PoseEuler * pointEulerVal){
 		evalType  |= TYPE_PR ;
 		reg_pr.value.pos_type      = PR_REG_POS_TYPE_CARTESIAN ;
 		reg_pr.value.pos[0]        = pointEulerVal->position.x;
@@ -398,7 +398,7 @@ public:
 		}else if(evalType == (int)(TYPE_PR | TYPE_POSE)){
 		    if(operand->getType() == TYPE_POSE)
 		    {
-		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	_PoseEuler poseOperand = operand->getPoseValue();
 		    	pose = calcCartesianPosAdd(pose, poseOperand);
 				reg_pr.value.pos[0] = pose.position.x;
 				reg_pr.value.pos[1] = pose.position.y;
@@ -409,7 +409,7 @@ public:
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_POSE))
 		    {
-		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	_PoseEuler poseOperand = operand->getPoseValue();
 		    	pose = calcCartesianPosAdd(pose, poseOperand);
 				reg_pr.value.pos[0] = pose.position.x;
 				reg_pr.value.pos[1] = pose.position.y;
@@ -523,7 +523,7 @@ public:
 		}else if(evalType == (int)(TYPE_PR | TYPE_POSE)){
 		    if(operand->getType() == TYPE_POSE)
 		    {
-		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	_PoseEuler poseOperand = operand->getPoseValue();
 		    	pose = calcCartesianPosSubtract(pose, poseOperand);
 				reg_pr.value.pos[0] = pose.position.x;
 				reg_pr.value.pos[1] = pose.position.y;
@@ -534,7 +534,7 @@ public:
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_POSE))
 		    {
-		    	PoseEuler poseOperand = operand->getPoseValue();
+		    	_PoseEuler poseOperand = operand->getPoseValue();
 		    	pose = calcCartesianPosSubtract(pose, poseOperand);
 				reg_pr.value.pos[0] = pose.position.x;
 				reg_pr.value.pos[1] = pose.position.y;
@@ -867,11 +867,11 @@ public:
 		}
 	}
 
-	PoseEuler calcCartesianPosAdd(PoseEuler & opt, PoseEuler & optAnd) 
+	_PoseEuler calcCartesianPosAdd(_PoseEuler & opt, _PoseEuler & optAnd) 
 	{
 		return opt ;
 	}
-	PoseEuler calcCartesianPosSubtract(PoseEuler & opt, PoseEuler & optAnd) 
+	_PoseEuler calcCartesianPosSubtract(_PoseEuler & opt, _PoseEuler & optAnd) 
 	{
 		return opt ;
 	}
@@ -891,8 +891,8 @@ private:
 		std::string strContent;
 		
 		// All member of register
-		PoseEuler pose;
-		PoseEuler poseFake;
+		_PoseEuler pose;
+		_PoseEuler poseFake;
 		_Joint     joint;
 		_Joint     jointFake;
 //		Coordinate c; 

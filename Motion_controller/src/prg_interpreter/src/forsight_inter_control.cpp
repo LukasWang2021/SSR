@@ -136,7 +136,7 @@ bool parseScript(const char* fname)
                     return false;
                 }
                 instr.target.type = MOTION_LINE;
-                instr.target.pose_target = *(PoseEuler*)&result[1];
+                instr.target.pose_target = *(_PoseEuler*)&result[1];
                 if (result.size() == 7)
                     instr.target.cnt = -1;
                 else
@@ -898,6 +898,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			// Do nothing after it.
 			// intprt_ctrl.cmd = LOAD ;
             break;
+/*
         case READ_REG:
 			// intprt_ctrl.RegMap.
 			reg = intprt_ctrl.reg ;
@@ -917,6 +918,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			forgesight_del_reg(reg);
   	        printf("reg.type = %d end.\n", reg.type);
             break;
+*/
         case READ_IO:
 			// intprt_ctrl.RegMap.
 			// dioMap  = intprt_ctrl.dio ;

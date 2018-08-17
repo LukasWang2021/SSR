@@ -41,7 +41,7 @@ struct _Joint {
 };
 
 // Define a angular velocity structure
-struct JointOmega {
+struct _JointOmega {
     Omega   j1;
     Omega   j2;
     Omega   j3;
@@ -53,7 +53,7 @@ struct JointOmega {
     Omega   j9;
 };
 
-struct JointAlpha {
+struct _JointAlpha {
     Alpha   j1;
     Alpha   j2;
     Alpha   j3;
@@ -65,7 +65,7 @@ struct JointAlpha {
     Alpha   j9;
 };
 
-struct JointInertia {
+struct _JointInertia {
     Alpha   j1;
     Alpha   j2;
     Alpha   j3;
@@ -77,48 +77,48 @@ struct JointInertia {
     Alpha   j9;
 };
 
-struct JointState
+struct _JointState
 {
     Angle   joint[NUM_OF_JOINT];
     Omega   omega[NUM_OF_JOINT];
     Alpha   alpha[NUM_OF_JOINT];
 };
 
-struct JointGroup {
+struct _JointGroup {
     Tick        stamp;
-    JointState  j1;
-    JointState  j2;
-    JointState  j3;
-    JointState  j4;
-    JointState  j5;
-    JointState  j6;
-    JointState  j7;
-    JointState  j8;
-    JointState  j9;
+    _JointState  j1;
+    _JointState  j2;
+    _JointState  j3;
+    _JointState  j4;
+    _JointState  j5;
+    _JointState  j6;
+    _JointState  j7;
+    _JointState  j8;
+    _JointState  j9;
 };
 
 
-struct Spline {
+struct _Spline {
     double  coeff[6];
 };
 
-struct JointSegment {
+struct _JointSegment {
     MotionTime  time_from_start;
     MotionTime  duration;
-    JointGroup  start;
-    JointGroup  end;
-    Spline      coeff[NUM_OF_JOINT];
+    _JointGroup  start;
+    _JointGroup  end;
+    _Spline      coeff[NUM_OF_JOINT];
 };
 
 // Define a point in cartesian space
-struct Point {
+struct _Point {
     double x;
     double y;
     double z;
 };
 
-// Define a quaternion
-struct Quaternion {
+// Define a _Quaternion
+struct _Quaternion {
     double x;
     double y;
     double z;
@@ -126,29 +126,29 @@ struct Quaternion {
 };
 
 // Define an euler angle
-struct Euler {
+struct _Euler {
     double a;
     double b;
     double c;
 };
 
 // Define a pose in cartesian space
-struct Pose {
-    Point       position;
-    Quaternion  orientation;
+struct _Pose {
+    _Point       position;
+    _Quaternion  orientation;
 };
 
 // Define another pose type using euler angle
-struct PoseEuler {
-    Point position;
-    Euler orientation;
+struct _PoseEuler {
+    _Point position;
+    _Euler orientation;
 };
 
 
 
 
 // Define the home position, upper limit and lower limit of a joint
-struct JointLimit {
+struct _JointLimit {
     double home;
     double upper;
     double lower;
@@ -158,16 +158,16 @@ struct JointLimit {
 };
 
 // Define all joint limits of a robot
-struct JointConstraint {
-    JointLimit j1;
-    JointLimit j2;
-    JointLimit j3;
-    JointLimit j4;
-    JointLimit j5;
-    JointLimit j6;
-    JointLimit j7;
-    JointLimit j8;
-    JointLimit j9;
+struct _JointConstraint {
+    _JointLimit j1;
+    _JointLimit j2;
+    _JointLimit j3;
+    _JointLimit j4;
+    _JointLimit j5;
+    _JointLimit j6;
+    _JointLimit j7;
+    _JointLimit j8;
+    _JointLimit j9;
 };
 
 // Define a transformation type
@@ -175,7 +175,7 @@ struct JointConstraint {
 //    Point position;
 //    Euler orientation;
 //};
-typedef PoseEuler Transformation;
+typedef _PoseEuler Transformation;
 
 // point level: 0x0 -> middle point
 //              0x1 -> start  point
@@ -228,7 +228,7 @@ struct PathPoint {
 
     // value in cartesian space or joint space
     union {
-        Pose    pose;
+        _Pose    pose;
         _Joint   joint;
     };
 };
@@ -252,8 +252,8 @@ struct ControlPoint {
 
     
     // point is what trajectory-create should give out
-    JointState  forward_point;
-    JointState  backward_point;
+    _JointState  forward_point;
+    _JointState  backward_point;
 
     double  coeff[AXIS_IN_ALGORITHM][6];
     double  inertia[NUM_OF_JOINT];
@@ -289,7 +289,7 @@ struct JointPoint
     // joint values of this point
     _Joint       joint;
     // angular velocity of this point
-    JointOmega  omega;
+    _JointOmega  omega;
 };
 
 
@@ -300,9 +300,9 @@ struct JointOutput {
     PointLevel  level;
 
     _Joint           joint;
-    JointOmega      omega;
-    JointAlpha      alpha;
-    JointInertia    inertia;
+    _JointOmega      omega;
+    _JointAlpha      alpha;
+    _JointInertia    inertia;
 };
 
 struct JointOut {
@@ -335,8 +335,8 @@ struct DHGroup {
 
 // target poses of circle motion
 struct CircleTarget {
-    PoseEuler pose1;
-    PoseEuler pose2;
+    _PoseEuler pose1;
+    _PoseEuler pose2;
 };
 
 // target structure used in motion command
@@ -357,7 +357,7 @@ struct MotionTarget {
     double acc;
 
     union {
-        PoseEuler       pose_target;
+        _PoseEuler       pose_target;
         _Joint           joint_target;
         CircleTarget    circle_target;
     };
@@ -365,15 +365,15 @@ struct MotionTarget {
 
 // initial state of a line motion
 struct LInitial {
-    Pose    pose_prv;
-    Pose    pose;
+    _Pose    pose_prv;
+    _Pose    pose;
     double  velocity;
     double  vu;
 };
 
 // initial state of a circle motion
 struct CInitial {
-    Pose    pose;
+    _Pose    pose;
     double  velocity;
 };
 
@@ -411,7 +411,7 @@ struct Parabola {
 
 struct LCommand
 {
-    Pose    pose;
+    _Pose    pose;
     double  velocity;
     union
     {
@@ -423,8 +423,8 @@ struct LCommand
 
 struct CCommand
 {
-    Pose    pose1;
-    Pose    pose2;
+    _Pose    pose1;
+    _Pose    pose2;
     double  velocity;
     union
     {
@@ -458,7 +458,7 @@ struct VelCartesian
 
 struct PoseVel
 {
-    Pose pose;
+    _Pose pose;
     VelCartesian velocity;
 };
 

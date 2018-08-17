@@ -135,13 +135,13 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_PR_POSE))
 		{
 			getPosePr(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			_PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
 			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_PR_JOINT))
 		{
 			getJointPr(reg_content_buffer, iRegIdx);
-			Joint * ptr = (Joint *)reg_content_buffer ;
+			_Joint * ptr = (_Joint *)reg_content_buffer ;
 			value->setJointValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_TYPE))
@@ -245,7 +245,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
 			getCoordinateUf(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			_PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
 			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
@@ -270,7 +270,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
 			getCoordinateTf(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			_PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
 			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
@@ -296,7 +296,7 @@ int forgesight_get_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_PL_POSE))
 		{
 			getPalletPl(reg_content_buffer, iRegIdx);
-			PoseEuler * ptr = (PoseEuler *)reg_content_buffer ;
+			_PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
 			value->setPoseValue(ptr);
 		}
 		else if (!strcmp(reg_member, TXT_PL_PALLET))
@@ -337,7 +337,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 	char * namePtr = name ;
 	char *temp = NULL ;
 	
-	PoseEuler pose ;
+	_PoseEuler pose ;
 	Joint joint ;
 	
 	memset(reg_name, 0x00, 16);

@@ -197,7 +197,7 @@ bool BareCoreInterface::getEncoder(vector<int> &data)
     return false;
 }
 
-bool BareCoreInterface::sendRequest(const CommInterface &comm, const ServiceRequest &req)
+bool BareCoreInterface::sendRequest(CommInterface &comm, const ServiceRequest &req)
 {
     for (size_t cnt = 0; cnt < MAX_ATTEMPTS; cnt++)
     {
@@ -215,7 +215,7 @@ bool BareCoreInterface::sendRequest(const CommInterface &comm, const ServiceRequ
     return false;
 }
 
-bool BareCoreInterface::recvResponse(const CommInterface &comm, ServiceResponse &res)
+bool BareCoreInterface::recvResponse(CommInterface &comm, ServiceResponse &res)
 {
     for (size_t cnt = 0; cnt < MAX_ATTEMPTS; cnt++)
     {

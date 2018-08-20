@@ -1,10 +1,19 @@
-#include "motion_control.h"
+#include <string.h>
+#include <motion_control.h>
 #include <motion_control_arm_group.h>
+
 
 using namespace fst_base;
 using namespace fst_mc;
 using namespace fst_hal;
 using namespace fst_ctrl;
+
+
+static void rtTask(void *group)
+{
+    ((BaseGroup*)group)->realtimeTask();
+}
+
 
 MotionControl::MotionControl():
         device_manager_ptr_(NULL), axis_group_manager_ptr_(NULL),
@@ -24,6 +33,8 @@ MotionControl::MotionControl():
 
 MotionControl::~MotionControl()
 {
+    stopRealtimeTask();
+
     if (log_ptr_ != NULL)   {delete log_ptr_; log_ptr_ = NULL;};
     if (param_ptr_ != NULL)   {delete param_ptr_; param_ptr_ = NULL;};
     if (group_ptr_ != NULL)   {delete group_ptr_; group_ptr_ = NULL;};
@@ -42,14 +53,34 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
 
     if (err == SUCCESS)
     {
-        FST_INFO("Initialize motion group success.");
-        return SUCCESS;
+        if (startRealtimeTask())
+        {
+            FST_INFO("Initialize motion group success.");
+            return SUCCESS;
+        }
+        else
+        {
+            FST_ERROR("Fail to create rt task.");
+            return MOTION_INTERNAL_FAULT;
+        }
     }
     else
     {
         FST_ERROR("Fail to init motion group");
         return err;
     }
+}
+
+bool MotionControl::startRealtimeTask(void)
+{
+    group_ptr_->activeRealtimeTask();
+    rt_thread_.run(&rtTask, group_ptr_, 80);
+}
+
+bool MotionControl::stopRealtimeTask(void)
+{
+    group_ptr_->inactiveRealtimeTask();
+    rt_thread_.join();
 }
 
 ErrorCode MotionControl::setManualFrame(ManualFrame frame)
@@ -117,6 +148,7 @@ size_t MotionControl::getFIFOLength(void)
     return group_ptr_->getFIFOLength();
 }
 
+/*
 void MotionControl::rtTask(void)
 {
     ErrorCode err = group_ptr_->realtimeTask();
@@ -130,4 +162,5 @@ void MotionControl::rtTask(void)
         FST_ERROR("RT task quit with error = 0x%llx", err);
     }
 }
+ */
 

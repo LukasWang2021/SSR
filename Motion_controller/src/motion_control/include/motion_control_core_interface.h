@@ -77,8 +77,8 @@ class BareCoreInterface
     bool getEncoder(std::vector<int> &data);
 
   private:
-    bool sendRequest(const fst_comm_interface::CommInterface &comm, const ServiceRequest &req);
-    bool recvResponse(const fst_comm_interface::CommInterface &comm, ServiceResponse &res);
+    bool sendRequest(fst_comm_interface::CommInterface &comm, const ServiceRequest &req);
+    bool recvResponse(fst_comm_interface::CommInterface &comm, ServiceResponse &res);
     PointCache  point_cache_;
 
     fst_core_interface::CoreInterface   core_interface_;

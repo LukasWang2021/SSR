@@ -9,6 +9,7 @@
 #include <math.h>
 #include <motion_control_arm_group.h>
 
+
 using namespace fst_base;
 
 namespace fst_mc
@@ -44,7 +45,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         FST_ERROR("Fail to create communication with bare core.");
         return BARE_CORE_TIMEOUT;
     }
-/*
+
     ErrorCode err = calibrator_.initCalibrator();
 
     if (err != SUCCESS)
@@ -52,7 +53,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         FST_ERROR("Fail to initialize calibrator, code = 0x%llx", err);
         return err;
     }
-*/
+
     return SUCCESS;
 }
 

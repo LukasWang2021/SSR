@@ -57,7 +57,9 @@ class BaseGroup
 
     virtual size_t getFIFOLength(void) = 0;
 
-    ErrorCode realtimeTask(void);
+    void realtimeTask(void);
+    void activeRealtimeTask(void);
+    void inactiveRealtimeTask(void);
 
     void getLatestJoint(Joint &joint);
     void getServoState(ServoState &state);
@@ -81,6 +83,7 @@ class BaseGroup
     inline void reportError(const ErrorCode &error);
     bool updateJointStateFromBareCore(void);
 
+    bool rt_task_active_;
     Joint current_joint_;
     ServoState  servo_state_;
     GroupState  group_state_;

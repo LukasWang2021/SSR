@@ -111,13 +111,14 @@ ErrorCode BaseGroup::sendPoint(void)
 }
 
 
-ErrorCode BaseGroup::realtimeTask(void)
+void BaseGroup::realtimeTask(void)
 {
     ErrorCode  err;
     Joint barecore_joint;
     ServoState barecore_state;
+    FST_WARN("Realtime task start.");
 
-    while (true)
+    while (rt_task_active_)
     {
         if (bare_core_.getLatestJoint(barecore_joint, barecore_state))
         {
@@ -147,9 +148,18 @@ ErrorCode BaseGroup::realtimeTask(void)
         usleep(5000);
     }
 
-    return SUCCESS;
+    FST_WARN("Realtime task quit.");
 }
 
+void BaseGroup::inactiveRealtimeTask(void)
+{
+    rt_task_active_ = false;
+}
+
+void BaseGroup::activeRealtimeTask(void)
+{
+    rt_task_active_ = true;
+}
 
 
 }

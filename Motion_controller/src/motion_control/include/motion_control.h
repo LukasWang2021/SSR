@@ -10,6 +10,7 @@
 #include "tool_manager.h"
 #include "motion_control_arm_group.h"
 #include "error_monitor.h"
+#include "thread_help.h"
 
 
 namespace fst_mc
@@ -46,13 +47,18 @@ public:
     void    getServoJoint(Joint &joint);
     size_t  getFIFOLength(void);
 
-    void rtTask(void);
 
 
     // parameter access
     // ...
     
 private:
+    bool startRealtimeTask(void);
+    bool stopRealtimeTask(void);
+
+
+
+
     MotionControlParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     fst_hal::DeviceManager* device_manager_ptr_;
@@ -61,6 +67,7 @@ private:
     fst_ctrl::ToolManager* tool_manager_ptr_;
     fst_base::ErrorMonitor *error_monitor_ptr_;
     BaseGroup *group_ptr_;
+    fst_base::ThreadHelp rt_thread_;
 };
 
 

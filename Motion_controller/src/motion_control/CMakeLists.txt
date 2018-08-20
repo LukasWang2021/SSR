@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     dynamic_alg
     xml_help
     error_monitor
+    thread_help
 )
 
 if(catkin_CROSS)
@@ -49,6 +50,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/dynamic_alg/include 
     ${depend_PATH_INC}/xml_help/include
     ${depend_PATH_INC}/error_monitor/include
+    ${depend_PATH_INC}/thread_help/include
 )
 
 catkin_package(
@@ -110,6 +112,7 @@ target_link_libraries(motion_control
     logger
     parameter_manager
     error_monitor
+    thread_help
 )
 
 target_link_libraries(manual_test

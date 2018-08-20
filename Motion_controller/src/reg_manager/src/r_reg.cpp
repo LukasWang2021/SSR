@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 
-
 using namespace std;
 using namespace fst_ctrl;
 using namespace fst_parameter;

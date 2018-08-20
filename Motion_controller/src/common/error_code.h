@@ -1,57 +1,79 @@
 #ifndef COMMON_ERROR_CODE_H_
 #define COMMON_ERROR_CODE_H_
 
-#define INIT_CONTROLLER_FAILED                  (unsigned long long int)0x0011000200AB0001   /*initialization controller failed*/
-#define WRITE_SERVICE_TIMETOUT                  (unsigned long long int)0x00010006006F0001   /*write service timeout*/
-#define READ_SERVICE_TIMEOUT                    (unsigned long long int)0x00010006006F0002   /*read service timeout*/
-#define SERVICE_DISABLE_FAILED                  (unsigned long long int)0x00010006006F0003   /*write disable service to core1 failed*/
-#define SERVICE_RESET_FAILED                    (unsigned long long int)0x00010006006F0004   /*write reset service to core1 failed*/
 
-#define SET_MODE_FAILED                         (unsigned long long int)0x0001000200670001   /*set current mode failed*/
-#define INVALID_ACTION_IN_CURRENT_MODE          (unsigned long long int)0x0001000200670002   /*cant action in current mode*/
-#define SET_STATE_FAILED                        (unsigned long long int)0x0001000200670003   /*set current state failed*/
-#define INVALID_ACTION_IN_CURRENT_STATE         (unsigned long long int)0x0001000200670004   /*cant action in current state*/
-#define FIND_MOVE_INSTRUCTION_FAILED            (unsigned long long int)0x0001000200670005   /*when smoothing, can't find next move instruction*/
-#define CONTINUE_MOVING_AS_PLAN_FAILED          (unsigned long long int)0x0001000200670006   /*can't continue moving as plan*/
-#define INVALID_ACTION_IN_LIMITED_STATE         (unsigned long long int)0x0001000200670007   /*cant caction in limited running state*/
-#define PAUSE_AS_PLAN_FAILED                    (unsigned long long int)0x0001000600670008   /*error accurred during suspending*/
-#define PARSE_IO_PATH_FAILED                    (unsigned long long int)0x0001000400670009   /*cant use current path to set IO*/
+#define API_SUCCESS (0)
 
-#define READ_SHARE_MEMORY_TIMEOUT               (unsigned long long int)0x0001000600700001   /*read share memory timeout*/
-#define WRITE_SHARE_MEMORY_TIMEOUT              (unsigned long long int)0x0001000600700002   /*write share memory timeout*/
-#define FAILED_TO_SET_TEMP_ZERO                 (unsigned long long int)0x000200020070000A   /*failed to set temp zero*/
+#define BM_INVALID_DTC (unsigned long long int)0x0
+#define BM_NUMBER_OF_DTC (int)110
+#define BM_DTC_E01 (unsigned long long int)0x0001000B00A10001   /*Controller,inner problem,there might be system damagement, need to change controller*/
+#define BM_DTC_E02 (unsigned long long int)0x0001000900A10002   /*Core 1 detected trajectory data timeout when running a continuous trajectory*/
+#define BM_DTC_E03 (unsigned long long int)0x0011000B00A10003   /*Core 1 interrupt ISR not run!! */
+#define BM_DTC_E04 (unsigned long long int)0x0001000900A10004   /*Core 1 detected Core 0 hear beat missing*/
+#define BM_DTC_E05 (unsigned long long int)0x0000000200A10005   /*Core 1 ISR timeout error*/
+#define BM_DTC_E06 (unsigned long long int)0x0000000200A10006   /*Core 1 ISR timeout warning*/
+#define BM_DTC_E07 (unsigned long long int)0x0000000100A10007   /*Print buf is full,just for debug*/
+#define BM_DTC_E08 (unsigned long long int)0x0000000100A10008   /*Log buf is full,just for debug*/
+#define BM_DTC_E09 (unsigned long long int)0x0001000900A10009   /*Distance between consecutive points is over limit*/
+#define BM_DTC_E10 (unsigned long long int)0x0001000900A1000A   /*Acceleration is over limit*/
+#define BM_DTC_E11 (unsigned long long int)0x0001000900A1000B   /*Time stamp error*/
+#define BM_DTC_E12 (unsigned long long int)0x0001000900A1000C   /*Motor Setpoint Speed over limit*/
 
-#define ENCODE_MESSAGE_FAILED                   (unsigned long long int)0x0001000200830001   /*encode controller message failed*/
-#define DECODE_MESSAGE_FAILED                   (unsigned long long int)0x0001000200830002   /*decode controller message failed*/
-#define INVALID_PARAM_FROM_TP                   (unsigned long long int)0x0001000200830003   /*tp sent invalid parameters*/
-#define INVALID_PATH_FROM_TP                    (unsigned long long int)0x0001000200830004   /*tp sent invalid path*/
-#define INVALID_ID_FROM_TP                      (unsigned long long int)0x0001000200830005   /*tp sent invalid id*/
-#define READ_SHARE_MEMORY_FAILED                (unsigned long long int)0x0000000200700001   /*read share memory failed*/
-#define WRITE_SHARE_MEMORY_FAILED               (unsigned long long int)0x0000000200700002   /*write share memory failed*/
-#define WRONG_FIFO_STATE                        (unsigned long long int)0x0000000200670001   /*traj_len is not 0 but joints_len is 0 */
-#define ENCODER_DATA_CHANGED                    (unsigned long long int)0x0000000200670002   /*data from encoder changed, this is not an error*/
-#define CREATE_ARM_GROUP_FAILED                 (unsigned long long int)0x0001000200970001   /*create arm group failed*/
-#define CREATE_PARAM_GROUP_FAILED               (unsigned long long int)0x0001000200970002   /*create_param_group_failed*/
-#define PARAMETER_NOT_UPDATED                   (unsigned long long int)0x0000000200720001   /*the parameter hasn't updated yet*/
-#define SERVO_ESTOP                             (unsigned long long int)0x0001000600700003   /*received estop signal from safety board*/
+#define OPEN_CORE_MEM_FAIL (unsigned long long int)0x0011000B007103E9   /*fail to open sharedmem of cores when initialization,interaction between cores is not available.*/
+#define WRITE_CORE_MEM_FAIL (unsigned long long int)0x00000002007103EA   /*fail to write data on sharedmem of cores.*/
+#define READ_CORE_MEM_FAIL (unsigned long long int)0x00000002007103EB   /*fail to read date from sharedmem of cores.*/
+#define CREATE_CHANNEL_FAIL (unsigned long long int)0x00110006006F03F3   /*fail to create channel between processes.*/
+#define SEND_MSG_FAIL (unsigned long long int)0x00000002006F03F4   /*fail to send msg to the other process.*/
+#define RECV_MSG_FAIL (unsigned long long int)0x00000002006F03F5   /*fail to recv msg to the other process.*/
+#define BARE_CORE_TIMEOUT (unsigned long long int)0x0001000B0071044C   /*no heartbeat from BARE CORE within a limited time.*/
+#define INVALID_SERVICE_ID (unsigned long long int)0x00000002006F044D   /*invalid service ID received from other processes.*/
+#define SEND_RESP_FAIL (unsigned long long int)0x00000002006F044E   /*fail to send response to other processes within limited tries.*/
+#define MCS_TIMEOUT (unsigned long long int)0x00000002006F044F   /*no heartbeat from Motion Controller within a limited time.*/
 
-#define ZERO_OFFSET_LOST                        (unsigned long long int)0x00010004006607D2   /*one or more axis lost its zero offset*/
-#define ZERO_OFFSET_DEVIATE                     (unsigned long long int)0x00010004006607D3   /*axis zero offset deviated*/
-#define NEED_CALIBRATION                        (unsigned long long int)0x0001000400660412   /*ArmGroup need to calibrate*/
-
-#define FAIL_GET_REGISTER_TYPE                  (unsigned long long int)0x00010002006707EF   /*fail get register type*/
-#define FAIL_GET_REGISTER_ID                    (unsigned long long int)0x00010002006707F0   /*fail get register id*/
-#define FAIL_SET_REGISTER_TYPE                  (unsigned long long int)0x00010002006707F1   /*fail set register type*/
-#define FAIL_SET_REGISTER_ID                    (unsigned long long int)0x00010002006707F2   /*fail set register id*/
-
-#define FALT_GET_FRAME                          (unsigned long long int)0x00010002006707F9   /*fail get frame*/
-#define FALT_UPDATE_FRAME                       (unsigned long long int)0x00010002006707FA   /*fail update frame*/
-#define FALT_DELETE_FRAME                       (unsigned long long int)0x00010002006707FB   /*fail delete frame*/
-#define FALT_ADD_FRAME                          (unsigned long long int)0x00010002006707FC   /*fail_add_frame*/
-#define FALT_ACTIVATE_FRAME                     (unsigned long long int)0x00010002006707FD   /*fail_activate_frame*/
-#define FALT_INIT_USER_FRAME                    (unsigned long long int)0x00110001006707FE   /*fail_init_user_frame*/
-#define FALT_INIT_TOOL_FRAME                    (unsigned long long int)0x00110001006707FF   /*fail_init_tool_frame*/
-#define FALT_SET_FRAME                          (unsigned long long int)0x0001000200670800   /*fail_set_frame*/
+#define TOOL_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A20001   /*ToolManager load param failed in initialization phase*/
+#define TOOL_MANAGER_LOAD_TOOLINFO_FAILED (unsigned long long int)0x0011000B00A20002   /*ToolManager load tool info failed in initialization phase*/
+#define TOOL_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A20003   /*ToolManager has invalid argument*/
+#define TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A20004   /*ToolManager failed to write ToolInfo config file*/
+#define COORDINATE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A30001   /*CoordinateManager load param failed in initialization phase*/
+#define COORDINATE_MANAGER_LOAD_COORDINFO_FAILED (unsigned long long int)0x0011000B00A30002   /*CoordinateManager load tool info failed in initialization phase*/
+#define COORDINATE_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A30003   /*CoordinateManager has invalid argument*/
+#define COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A30004   /*CoordinateManager failed to write ToolInfo config file*/
+#define REG_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A40001   /*RegManager load param failed in initialization phase*/
+#define REG_MANAGER_LOAD_PR_FAILED (unsigned long long int)0x0011000B00A40002   /*RegManager load PrReg info failed in initialization phase*/
+#define REG_MANAGER_LOAD_HR_FAILED (unsigned long long int)0x0011000B00A40003   /*RegManager load HrReg info failed in initialization phase*/
+#define REG_MANAGER_LOAD_MR_FAILED (unsigned long long int)0x0011000B00A40004   /*RegManager load MrReg info failed in initialization phase*/
+#define REG_MANAGER_LOAD_SR_FAILED (unsigned long long int)0x0011000B00A40005   /*RegManager load SrReg info failed in initialization phase*/
+#define REG_MANAGER_LOAD_R_FAILED (unsigned long long int)0x0011000B00A40006   /*RegManager load RReg info failed in initialization phase*/
+#define REG_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A40007   /*RegManager has invalid argument*/
+#define REG_MANAGER_REG_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A40008   /*RegManager failed to write reg config file*/
+#define DEVICE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A50001   /*DeviceManager load param failed in initialization phase*/
+#define DEVICE_MANAGER_LOAD_DEVICE_CONFIG_FAILED (unsigned long long int)0x0011000B00A50002   /*DeviceManager load device config failed in initialization phase*/
+#define DEVICE_MANAGER_INVALID_DEVICE_TYPE (unsigned long long int)0x0011000B00A50003   /*DeviceManager load invalid type of device from device config file in initialization phase*/
+#define DEVICE_MANAGER_INIT_DEVICE_FAILED (unsigned long long int)0x0011000B00A50004   /*DeviceManager failed to init device according to device config file*/
+#define DEVICE_MANAGER_DEVICE_ALREADY_EXIST (unsigned long long int)0x0001000200A50005   /*DeviceManager failed to add device because the device has already been exist*/
+#define DEVICE_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A50006   /*DeviceManager has invalid argument*/
+#define PROCESS_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A60001   /*ProcessComm load param failed in initialization phase*/
+#define PROCESS_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A60002   /*ProcessComm failed to initialize internal variables*/
+#define PROCESS_COMM_CONTROLLER_CLIENT_INIT_FAILED (unsigned long long int)0x0011000B00A60003   /*ControllerClient init failed*/
+#define PROCESS_COMM_CONTROLLER_SERVER_INIT_FAILED (unsigned long long int)0x0011000B00A60004   /*ControllerServer init failed*/
+#define PROCESS_COMM_CONTROLLER_SERVER_OPEN_FAILED (unsigned long long int)0x0011000B00A60005   /*ControllerServer open failed*/
+#define PROCESS_COMM_INTERPRETER_CLIENT_INIT_FAILED (unsigned long long int)0x0011000B00A60006   /*InterpreterClient init failed*/
+#define PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED (unsigned long long int)0x0011000B00A60007   /*InterpreterServer init failed*/
+#define PROCESS_COMM_INTERPRETER_SERVER_OPEN_FAILED (unsigned long long int)0x0011000B00A60008   /*InterpreterServer open failed*/
+#define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm load param failed in initialization phase*/
+#define TP_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A70002   /*TpComm failed to initialize internal variables*/
+#define TP_COMM_OPEN_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm open failed*/
+#define TP_COMM_INVALID_REQUEST (unsigned long long int)0x0001000200A70004   /*TpComm receive invalid hash for RPC*/
+#define TP_COMM_ENCODE_FAILED (unsigned long long int)0x0001000200A70005   /*TpComm failed to encode data to send out*/
+#define TP_COMM_DECODE_FAILED (unsigned long long int)0x0001000200A70006   /*TpComm failed to decode data that has been received*/
+#define TP_COMM_MEMORY_OPERATION_FAILED (unsigned long long int)0x0001000200A70007   /*TpComm failed to operate memory*/
+#define TP_COMM_AUTHORITY_CHECK_FAILED (unsigned long long int)0x0001000200A70008   /*TpComm failed to run unauthorized operation*/
+#define TP_COMM_SEND_FAILED (unsigned long long int)0x0001000200A70009   /*TpComm failed to send package*/
+#define TP_COMM_RECEIVE_FAILED (unsigned long long int)0x0001000200A7000A   /*TpComm failed to receive package*/
+#define CONTROLLER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A80001   /*Controller load param failed in initialization phase*/
+#define CONTROLLER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A80002   /*Controller failed to initialize internal object*/
+#define CONTROLLER_CREATE_ROUTINE_THREAD_FAILED (unsigned long long int)0x0011000B00A80003   /*Controller failed to create routine thread*/
+#define CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED (unsigned long long int)0x0011000B00A80003   /*Controller failed to create heartbeat thread*/
 
 #define FAIL_INTERPRETER_BASE                       (unsigned long long int)0x0001000900B50000   /*fail to dump parameter into a file*/
 #define FAIL_INTERPRETER_SYNTAX_ERROR               (unsigned long long int)0x0001000900B50001 
@@ -72,7 +94,6 @@
 #define FAIL_INTERPRETER_MOVL_WITH_JOINT            (unsigned long long int)0x0001000900B50010
 #define FAIL_INTERPRETER_MOVJ_WITH_POINT            (unsigned long long int)0x0001000900B50011 
 #define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER        (unsigned long long int)0x0001000900B50012 
-
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE            (unsigned long long int)0x0001000900B50100 
 #define FAIL_INTERPRETER_USER_ALARM1                (unsigned long long int)0x0001000900B50101
 #define FAIL_INTERPRETER_USER_ALARM2                (unsigned long long int)0x0001000900B50102
@@ -86,12 +107,8 @@
 #define FAIL_INTERPRETER_USER_ALARM10               (unsigned long long int)0x0001000900B5010A
 #define FAIL_INTERPRETER_NOT_IN_PAUSE               (unsigned long long int)0x0001000900B5010B
 
+#define PARSE_IO_PATH_FAILED                    (unsigned long long int)0x0001000400670009   /*cant use current path to set IO*/
 
-
-#define FALT_SET_STEP                           (unsigned long long int)0x000100020067041B   /*fail_set_step*/
-#define FALT_SET_TARGET                         (unsigned long long int)0x000100020067041C   /*fail_set_target*/
-
-#define TPI_SUCCESS				(0)
 
 #endif
 

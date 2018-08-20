@@ -185,7 +185,8 @@ void ControllerServer::copyResponseDataToSendBuffer(ControllerServerCmd cmd_id, 
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;
     memcpy(send_buffer_ptr_ + 4, response_data_ptr, response_data_size);
-    send_buffer_size = sizeof(bool) + 4;
+    //send_buffer_size = sizeof(bool) + 4;
+    send_buffer_size = response_data_size + 4;
 }
 
 void controllerServerThreadFunc(void* arg)

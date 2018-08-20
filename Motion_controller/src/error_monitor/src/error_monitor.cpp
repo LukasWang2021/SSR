@@ -8,7 +8,7 @@ ErrorMonitor::ErrorMonitor()
     init_err_flag_ = false;
     err_cnt_ = 0;
     warning_level_ = 0;
-    pre_code_ = TPI_SUCCESS;
+    pre_code_ = API_SUCCESS;
 }
 
 ErrorMonitor::~ErrorMonitor(){ }
@@ -32,7 +32,7 @@ void ErrorMonitor::clear()
     warning_level_ = 0;
     init_err_flag_ = false;
     updated_flag_ = false;
-    pre_code_ = TPI_SUCCESS;
+    pre_code_ = API_SUCCESS;
 }
 
 bool ErrorMonitor::add(unsigned long long code)

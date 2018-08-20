@@ -71,10 +71,10 @@ bool Controller::init()
         return false;
     }
 
-    if(motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance()) != 0)
+    /*if(motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance()) != 0)
     {
         return false;
-    }
+    }*/
 
     process_comm_ptr_ = ProcessComm::getInstance();
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);

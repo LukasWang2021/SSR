@@ -155,7 +155,7 @@ bool ControllerClient::recvResponse(int expect_recv_size)
 {
     int recv_size = nn_recv(req_resp_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
     if(recv_size == -1 
-        || recv_size != expect_recv_size)
+        || recv_size != (expect_recv_size + 4))
     {
         return false;
     }

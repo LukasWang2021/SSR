@@ -10,6 +10,7 @@
 #include "tool_manager.h"
 #include "motion_control_arm_group.h"
 #include "error_monitor.h"
+#include "error_code.h"
 #include "thread_help.h"
 
 
@@ -35,6 +36,26 @@ public:
 
     // API for auto run
     // ...
+
+    // API for zero offset and calibrator
+    void getOffset(double *offset);
+    CalibrateState getCalibrateState(void);
+
+    ErrorCode saveJoint(void);
+    ErrorCode saveOffset(void);
+    ErrorCode checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat);
+    ErrorCode maskOffsetLostError(void);
+    ErrorCode setOffsetState(size_t index, OffsetState stat);
+
+    ErrorCode calibrateOffset(void);
+    ErrorCode calibrateOffset(size_t index);
+    ErrorCode calibrateOffset(const size_t *pindex, size_t length);
+
+    ErrorCode saveReference(void);
+    ErrorCode fastCalibrate(void);
+    ErrorCode fastCalibrate(size_t index);
+    ErrorCode fastCalibrate(const size_t *pindex, size_t length);
+
 
     // API for Axis Group Enable/Disable/Halt/Stop/Reset
     ErrorCode stopGroup(void);

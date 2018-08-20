@@ -74,13 +74,14 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
 bool MotionControl::startRealtimeTask(void)
 {
     group_ptr_->activeRealtimeTask();
-    rt_thread_.run(&rtTask, group_ptr_, 80);
+    return rt_thread_.run(&rtTask, group_ptr_, 80);
 }
 
 bool MotionControl::stopRealtimeTask(void)
 {
     group_ptr_->inactiveRealtimeTask();
     rt_thread_.join();
+    return true;
 }
 
 ErrorCode MotionControl::setManualFrame(ManualFrame frame)
@@ -111,6 +112,76 @@ ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
 ErrorCode MotionControl::manualStop(void)
 {
     return group_ptr_->manualStop();
+}
+
+void MotionControl::getOffset(double *offset)
+{
+    group_ptr_->getGroupCalibratorPtr()->getOffset(offset);
+}
+
+CalibrateState MotionControl::getCalibrateState(void)
+{
+    return group_ptr_->getGroupCalibratorPtr()->getCalibrateState();
+}
+
+ErrorCode MotionControl::saveJoint(void)
+{
+    return group_ptr_->getGroupCalibratorPtr()->saveJoint();
+}
+
+ErrorCode MotionControl::saveOffset(void)
+{
+    return group_ptr_->getGroupCalibratorPtr()->saveOffset();
+}
+
+ErrorCode MotionControl::checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat)
+{
+    return group_ptr_->getGroupCalibratorPtr()->checkOffset(cali_stat, offset_stat);
+}
+
+ErrorCode MotionControl::maskOffsetLostError(void)
+{
+    return group_ptr_->getGroupCalibratorPtr()->maskOffsetLostError();
+}
+
+ErrorCode MotionControl::setOffsetState(size_t index, OffsetState stat)
+{
+    return group_ptr_->getGroupCalibratorPtr()->setOffsetState(index, stat);
+}
+
+ErrorCode MotionControl::calibrateOffset(void)
+{
+    return group_ptr_->getGroupCalibratorPtr()->calibrateOffset();
+}
+
+ErrorCode MotionControl::calibrateOffset(size_t index)
+{
+    return group_ptr_->getGroupCalibratorPtr()->calibrateOffset(index);
+}
+
+ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length)
+{
+    return group_ptr_->getGroupCalibratorPtr()->calibrateOffset(pindex, length);
+}
+
+ErrorCode MotionControl::saveReference(void)
+{
+    return group_ptr_->getGroupCalibratorPtr()->saveReference();
+}
+
+ErrorCode MotionControl::fastCalibrate(void)
+{
+    return group_ptr_->getGroupCalibratorPtr()->fastCalibrate();
+}
+
+ErrorCode MotionControl::fastCalibrate(size_t index)
+{
+    return group_ptr_->getGroupCalibratorPtr()->fastCalibrate(index);
+}
+
+ErrorCode MotionControl::fastCalibrate(const size_t *pindex, size_t length)
+{
+    return group_ptr_->getGroupCalibratorPtr()->fastCalibrate(pindex, length);
 }
 
 ErrorCode MotionControl::stopGroup(void)

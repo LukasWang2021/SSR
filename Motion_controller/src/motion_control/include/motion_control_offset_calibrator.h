@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <base_datatype.h>
+#include <error_code.h>
 #include <common_log.h>
 #include <motion_control_core_interface.h>
 #include <parameter_manager/parameter_manager_param_group.h>

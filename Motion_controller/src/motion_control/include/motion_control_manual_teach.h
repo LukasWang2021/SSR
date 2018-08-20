@@ -8,8 +8,8 @@
 #ifndef _MOTION_CONTROL_MANUAL_TEACH_H
 #define _MOTION_CONTROL_MANUAL_TEACH_H
 
+#include <error_code.h>
 #include <motion_control_datatype.h>
-#include <motion_control_error_code.h>
 #include <log_manager/log_manager_logger.h>
 
 namespace fst_mc

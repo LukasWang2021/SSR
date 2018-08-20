@@ -15,7 +15,7 @@
 #include <service_actions/response_actions.h>
 #include <comm_interface/comm_interface.h>
 #include <motion_control_datatype.h>
-#include <motion_control_error_code.h>
+#include <error_code.h>
 #include <common_enum.h>
 
 namespace fst_mc

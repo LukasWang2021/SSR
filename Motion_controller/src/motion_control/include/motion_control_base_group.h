@@ -11,9 +11,10 @@
 #include <pthread.h>
 #include "common_log.h"
 #include "error_monitor.h"
+#include "error_code.h"
 #include <motion_control_datatype.h>
-#include <motion_control_error_code.h>
 #include <motion_control_core_interface.h>
+#include <motion_control_offset_calibrator.h>
 
 
 namespace fst_mc
@@ -56,6 +57,8 @@ class BaseGroup
     virtual ErrorCode manualStop(void) = 0;
 
     virtual size_t getFIFOLength(void) = 0;
+
+    virtual Calibrator* getGroupCalibratorPtr(void) = 0;
 
     void realtimeTask(void);
     void activeRealtimeTask(void);

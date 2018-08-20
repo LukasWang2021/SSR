@@ -9,7 +9,6 @@
 #include <math.h>
 #include <boost/filesystem.hpp>
 #include <motion_control_offset_calibrator.h>
-#include <motion_control_error_code.h>
 
 
 using namespace std;

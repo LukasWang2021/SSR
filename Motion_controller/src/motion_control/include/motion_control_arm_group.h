@@ -11,7 +11,7 @@
 #include "common_log.h"
 #include <motion_control_base_group.h>
 #include <motion_control_manual_teach.h>
-#include <motion_control_offset_calibrator.h>
+
 
 #define JOINT_OF_ARM    6
 
@@ -35,6 +35,8 @@ class ArmGroup : public BaseGroup
     ErrorCode autoMove(void);
 
     size_t getFIFOLength(void);
+
+    Calibrator* getGroupCalibratorPtr(void);
   
   private:
     bool isJointInConstraint(Joint joint, JointConstraint constraint);

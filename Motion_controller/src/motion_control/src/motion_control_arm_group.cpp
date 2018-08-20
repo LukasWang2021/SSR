@@ -58,6 +58,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 }
 
 
+Calibrator* ArmGroup::getGroupCalibratorPtr(void)
+{
+    return &calibrator_;
+}
+
+
 ErrorCode ArmGroup::setManualFrame(ManualFrame frame)
 {
     FST_INFO("Set manual frame = %d", frame);

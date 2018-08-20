@@ -102,7 +102,7 @@ bool InterpreterClient::getPrReg(int id, PrRegDataIpc* data)
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(PrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + 4, sizeof(PrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -122,7 +122,7 @@ bool InterpreterClient::getHrReg(int id, HrRegDataIpc* data)
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(HrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + 4, sizeof(HrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -142,7 +142,7 @@ bool InterpreterClient::getMrReg(int id, MrRegDataIpc* data)
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(MrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + 4, sizeof(MrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -162,7 +162,7 @@ bool InterpreterClient::getSrReg(int id, SrRegDataIpc* data)
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(SrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + 4, sizeof(SrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -182,7 +182,7 @@ bool InterpreterClient::getRReg(int id, RRegDataIpc* data)
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(RRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + 4, sizeof(RRegDataIpc));
     if(data->id == 0)
     {
         return false;

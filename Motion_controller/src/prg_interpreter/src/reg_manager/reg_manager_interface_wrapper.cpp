@@ -136,12 +136,18 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		objPrRegDataIpc.id     = num;
 		objPrRegDataIpc.pos[0] = ptr->value.pos[0];
 		objPrRegDataIpc.pos[1] = ptr->value.pos[1];
 		objPrRegDataIpc.pos[2] = ptr->value.pos[2];
 		objPrRegDataIpc.pos[3] = ptr->value.pos[3];
 		objPrRegDataIpc.pos[4] = ptr->value.pos[4];
 		objPrRegDataIpc.pos[5] = ptr->value.pos[5];
+		
+		printf("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
+			ptr->value.pos[0], ptr->value.pos[1], 
+			ptr->value.pos[2], ptr->value.pos[3], 
+			ptr->value.pos[4], ptr->value.pos[5]);
 		
 		bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
@@ -564,6 +570,7 @@ bool reg_manager_interface_setValueSr(string &strVal, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		objSrRegDataIpc.id    = num;
 		strcpy(objSrRegDataIpc.value, strVal.c_str());
 		printf("setValueSr:(%s)\n", objSrRegDataIpc.value);
 		bRet = g_objRegManagerInterface->setSrReg(&objSrRegDataIpc);
@@ -686,8 +693,8 @@ bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
-		printf("reg_manager_interface_getR at %d \n", num);
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
+		printf("getR: value = (%f) \n", objRRegDataIpc.value);
 		ptr->value = objRRegDataIpc.value;
 	}
 	else
@@ -708,6 +715,8 @@ bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 	{
 		
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		printf("getR: id = %d value = (%f) \n", num, ptr->value);
+		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = ptr->value;
 		// memcpy(&objRRegData, ptr, sizeof(objRRegData));
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
@@ -778,6 +787,7 @@ bool reg_manager_interface_setValueR(double *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
 	}
@@ -985,6 +995,7 @@ bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		objMrRegDataIpc.id    = num;
 		objMrRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
 	}

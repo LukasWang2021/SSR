@@ -285,15 +285,15 @@ void InterpreterServer::pushTaskToRequestList(unsigned int cmd_id, void* request
 
 void InterpreterServer::copyRecvBufferToRequestData(void* request_data_ptr, int size)
 {
-    memcpy(request_data_ptr, recv_buffer_ptr_ + 4, size);
+    memcpy(request_data_ptr, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, size);
 }
 
 void InterpreterServer::copyResponseDataToSendBuffer(InterpreterServerCmd cmd_id, void* response_data_ptr, 
                                                             int response_data_size, int& send_buffer_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;
-    memcpy(send_buffer_ptr_ + 4, response_data_ptr, response_data_size);
-    send_buffer_size = response_data_size + 4;
+    memcpy(send_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, response_data_ptr, response_data_size);
+    send_buffer_size = response_data_size + PROCESS_COMM_CMD_ID_SIZE;
 }
 
 long InterpreterServer::computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val)

@@ -289,7 +289,8 @@ void TpComm::handleRequest()
     }
 
     unsigned int hash = *((unsigned int*)recv_buffer_ptr_);
-    FST_INFO("---handleRequest: hash = %x", hash);
+    FST_INFO("---handleRequest: hash = %x, recv_bytes = %d", hash, recv_bytes);
+    FST_INFO("---handleRequest: %x %x %x %x", recv_buffer_ptr_[0], recv_buffer_ptr_[1], recv_buffer_ptr_[2], recv_buffer_ptr_[3]);
     HandleRequestFuncPtr func_ptr = getRequestHandlerByHash(hash);
     if(func_ptr != NULL)
     {

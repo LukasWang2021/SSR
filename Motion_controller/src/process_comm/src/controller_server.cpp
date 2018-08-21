@@ -177,16 +177,15 @@ void ControllerServer::pushTaskToRequestList(unsigned int cmd_id, void* request_
 
 void ControllerServer::copyRecvBufferToRequestData(void* request_data_ptr, int size)
 {
-    memcpy(request_data_ptr, recv_buffer_ptr_ + 4, size);
+    memcpy(request_data_ptr, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, size);
 }
 
 void ControllerServer::copyResponseDataToSendBuffer(ControllerServerCmd cmd_id, void* response_data_ptr, 
                                                             int response_data_size, int& send_buffer_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;
-    memcpy(send_buffer_ptr_ + 4, response_data_ptr, response_data_size);
-    //send_buffer_size = sizeof(bool) + 4;
-    send_buffer_size = response_data_size + 4;
+    memcpy(send_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, response_data_ptr, response_data_size);
+    send_buffer_size = response_data_size + PROCESS_COMM_CMD_ID_SIZE;
 }
 
 void controllerServerThreadFunc(void* arg)

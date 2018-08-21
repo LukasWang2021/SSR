@@ -37,72 +37,73 @@ bool InterpreterClient::setPrReg(PrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_SET_PR_REG, data, sizeof(PrRegDataIpc))
-        || !recvResponse(sizeof(bool)))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_PR_REG)
     {
         return false;
     }
-    
-    return *((bool*)recv_buffer_ptr_);
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
 bool InterpreterClient::setHrReg(HrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_SET_HR_REG, data, sizeof(HrRegDataIpc))
-        || !recvResponse(sizeof(bool)))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_HR_REG)
     {
         return false;
     }
-    
-    return *((bool*)recv_buffer_ptr_);
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
 bool InterpreterClient::setMrReg(MrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_SET_MR_REG, data, sizeof(MrRegDataIpc))
-        || !recvResponse(sizeof(bool)))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_MR_REG)
     {
         return false;
     }
-    
-    return *((bool*)recv_buffer_ptr_);
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
 bool InterpreterClient::setSrReg(SrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_SET_SR_REG, data, sizeof(SrRegDataIpc))
-        || !recvResponse(sizeof(bool)))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_SR_REG)
     {
         return false;
     }
-    
-    return *((bool*)recv_buffer_ptr_);
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
 bool InterpreterClient::setRReg(RRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_SET_R_REG, data, sizeof(RRegDataIpc))
-        || !recvResponse(sizeof(bool)))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_R_REG)
     {
         return false;
     }
-    
-    return *((bool*)recv_buffer_ptr_);
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
 bool InterpreterClient::getPrReg(int id, PrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_GET_PR_REG, &id, sizeof(int))
-        || !recvResponse(sizeof(PrRegDataIpc)))
+        || !recvResponse(sizeof(PrRegDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_PR_REG)
     {
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(PrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(PrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -117,12 +118,13 @@ bool InterpreterClient::getHrReg(int id, HrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_GET_HR_REG, &id, sizeof(int))
-        || !recvResponse(sizeof(HrRegDataIpc)))
+        || !recvResponse(sizeof(HrRegDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_HR_REG)
     {
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(HrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(HrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -137,12 +139,13 @@ bool InterpreterClient::getMrReg(int id, MrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_GET_MR_REG, &id, sizeof(int))
-        || !recvResponse(sizeof(MrRegDataIpc)))
+        || !recvResponse(sizeof(MrRegDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_MR_REG)
     {
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(MrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(MrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -157,12 +160,13 @@ bool InterpreterClient::getSrReg(int id, SrRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_GET_SR_REG, &id, sizeof(int))
-        || !recvResponse(sizeof(SrRegDataIpc)))
+        || !recvResponse(sizeof(SrRegDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_SR_REG)
     {
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(SrRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(SrRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -177,12 +181,13 @@ bool InterpreterClient::getRReg(int id, RRegDataIpc* data)
 {
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_GET_R_REG, &id, sizeof(int))
-        || !recvResponse(sizeof(RRegDataIpc)))
+        || !recvResponse(sizeof(RRegDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_R_REG)
     {
         return false;
     }
 
-    memcpy(data, recv_buffer_ptr_, sizeof(RRegDataIpc));
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(RRegDataIpc));
     if(data->id == 0)
     {
         return false;
@@ -198,10 +203,10 @@ bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int sen
     *((unsigned int*)send_buffer_ptr_) = cmd_id;
     if(data_ptr != NULL && send_size != 0)
     {
-        memcpy(send_buffer_ptr_ + 4, data_ptr, send_size);
+        memcpy(send_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, data_ptr, send_size);
     }
-    int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_size + 4, 0); // block send
-    if(send_bytes == -1 || send_bytes != (send_size + 4))
+    int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_size + PROCESS_COMM_CMD_ID_SIZE, 0); // block send
+    if(send_bytes == -1 || send_bytes != (send_size + PROCESS_COMM_CMD_ID_SIZE))
     {
         FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
         return false;
@@ -213,7 +218,7 @@ bool InterpreterClient::recvResponse(int expect_recv_size)
 {
     int recv_size = nn_recv(req_resp_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
     if(recv_size == -1 
-        || recv_size != (expect_recv_size + 4))
+        || recv_size != (expect_recv_size + PROCESS_COMM_CMD_ID_SIZE))
     {
         return false;
     }

@@ -5,6 +5,7 @@
 
 namespace fst_base
 {
+enum {PROCESS_COMM_CMD_ID_SIZE = 4,};
 
 typedef enum
 {

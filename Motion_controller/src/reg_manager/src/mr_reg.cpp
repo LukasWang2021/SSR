@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 
-
 using namespace std;
 using namespace fst_ctrl;
 using namespace fst_parameter;
@@ -124,7 +123,7 @@ bool MrReg::updateReg(void* data_ptr)
     if(!setRegList(reg_data))
     {
         return false;
-    }
+    }    
     data_list_[reg_data.id] = reg_ptr->value;
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }

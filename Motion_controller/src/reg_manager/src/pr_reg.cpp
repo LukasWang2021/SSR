@@ -55,13 +55,11 @@ bool PrReg::addReg(void* data_ptr)
     {
         return false;
     }
-
     if(reg_ptr->value.pos_type != PR_REG_POS_TYPE_JOINT
         && reg_ptr->value.pos_type != PR_REG_POS_TYPE_CARTESIAN)
     {
         return false;
     }
-        
     if(reg_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
         || reg_ptr->value.pos[1] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[1] < -param_ptr_->pr_value_limit_
         || reg_ptr->value.pos[2] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[2] < -param_ptr_->pr_value_limit_
@@ -74,7 +72,7 @@ bool PrReg::addReg(void* data_ptr)
     {
         return false;
     }
-    
+
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))

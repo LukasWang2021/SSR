@@ -68,7 +68,14 @@ void ControllerRpc::handleRpc0x0000C877(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
 
-    rs_data_ptr->data.data = reg_manager_ptr_->moveRReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = reg_manager_ptr_->moveRReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    }
+    else
+    {
+        rs_data_ptr->data.data = false;
+    }
 }
 
 // "/rpc/reg_manager/r/getChangedList"
@@ -77,17 +84,24 @@ void ControllerRpc::handleRpc0x0000A904(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getRRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getRRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/r/getValidList"
@@ -96,17 +110,24 @@ void ControllerRpc::handleRpc0x00008CE4(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getRRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getRRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/mr/addReg"
@@ -175,7 +196,14 @@ void ControllerRpc::handleRpc0x00015BA7(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
 
-    rs_data_ptr->data.data = reg_manager_ptr_->moveMrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = reg_manager_ptr_->moveMrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    }
+    else
+    {
+        rs_data_ptr->data.data = false;
+    }
 }
 
 // "/rpc/reg_manager/mr/getChangedList"
@@ -184,17 +212,24 @@ void ControllerRpc::handleRpc0x00001774(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getMrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getMrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/mr/getValidList"
@@ -203,17 +238,24 @@ void ControllerRpc::handleRpc0x00015CF4(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getMrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getMrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/sr/addReg"
@@ -283,7 +325,14 @@ void ControllerRpc::handleRpc0x00002127(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
 
-    rs_data_ptr->data.data = reg_manager_ptr_->moveSrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = reg_manager_ptr_->moveSrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    }
+    else
+    {
+        rs_data_ptr->data.data = false;
+    }
 }
 
 // "/rpc/reg_manager/sr/getChangedList"
@@ -292,17 +341,24 @@ void ControllerRpc::handleRpc0x00004834(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getSrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getSrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/sr/getValidList"
@@ -311,17 +367,24 @@ void ControllerRpc::handleRpc0x00009854(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getSrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getSrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/pr/addReg"
@@ -337,7 +400,7 @@ void ControllerRpc::handleRpc0x000154E7(void* request_data_ptr, void* response_d
     reg.value.pos_type = rq_data_ptr->data.pos_type;
     reg.value.group_id = rq_data_ptr->data.group_id;
     memcpy(reg.value.pos, rq_data_ptr->data.pos.data, 9*sizeof(double));
-    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(double));
+    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(bool));
     rs_data_ptr->data.data = reg_manager_ptr_->addPrReg(&reg);
 }
 
@@ -401,7 +464,14 @@ void ControllerRpc::handleRpc0x0000D7C7(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
 
-    rs_data_ptr->data.data = reg_manager_ptr_->movePrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = reg_manager_ptr_->movePrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    }
+    else
+    {
+        rs_data_ptr->data.data = false;
+    }
 }
 
 // "/rpc/reg_manager/pr/getChangedList"
@@ -410,17 +480,24 @@ void ControllerRpc::handleRpc0x0000B454(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getPrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getPrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/pr/getValidList"
@@ -429,17 +506,24 @@ void ControllerRpc::handleRpc0x00009354(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getPrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getPrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/hr/addReg"
@@ -516,7 +600,14 @@ void ControllerRpc::handleRpc0x00014A87(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
 
-    rs_data_ptr->data.data = reg_manager_ptr_->moveHrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = reg_manager_ptr_->moveHrReg(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    }
+    else
+    {
+        rs_data_ptr->data.data = false;
+    }
 }
 
 // "/rpc/reg_manager/hr/getChangedList"
@@ -525,17 +616,24 @@ void ControllerRpc::handleRpc0x00012974(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getHrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getHrRegChangedList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 
 // "/rpc/reg_manager/hr/getValidList"
@@ -544,16 +642,23 @@ void ControllerRpc::handleRpc0x00006B54(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
 
-    std::vector<BaseRegSummary> summary_list;
-    summary_list = reg_manager_ptr_->getHrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    for(unsigned int i = 0; i < summary_list.size(); ++i)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.summary[i].id = summary_list[i].id;
-        strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
-        rs_data_ptr->data.summary[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.summary[i].comment[31] = 0;
+        std::vector<BaseRegSummary> summary_list;
+        summary_list = reg_manager_ptr_->getHrRegValidList(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        for(unsigned int i = 0; i < summary_list.size(); ++i)
+        {
+            rs_data_ptr->data.summary[i].id = summary_list[i].id;
+            strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
+            rs_data_ptr->data.summary[i].name[31] = 0;
+            strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
+            rs_data_ptr->data.summary[i].comment[31] = 0;
+        }
+        rs_data_ptr->data.summary_count = summary_list.size();
     }
-    rs_data_ptr->data.summary_count = summary_list.size();
+    else
+    {
+        rs_data_ptr->data.summary_count = 0;
+    }
 }
 

@@ -60,7 +60,14 @@ void ControllerRpc::handleRpc0x0000E104(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
 
-    rs_data_ptr->data.data = coordinate_manager_ptr_->moveCoord(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = coordinate_manager_ptr_->moveCoord(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+    }
+    else
+    {
+        rs_data_ptr->data.data = false;
+    }
 }
 
 // "/rpc/coordinate_manager/getUserCoordInfoById"

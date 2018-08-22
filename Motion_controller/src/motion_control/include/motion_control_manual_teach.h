@@ -10,6 +10,7 @@
 
 #include <error_code.h>
 #include <motion_control_datatype.h>
+#include <motion_control_constraint.h>
 #include <log_manager/log_manager_logger.h>
 
 namespace fst_mc
@@ -20,7 +21,7 @@ namespace fst_mc
 class ManualTeach
 {
 public:
-    ManualTeach(size_t joint_num, JointConstraint* pcons, fst_log::Logger* plog);
+    ManualTeach(size_t joint_num, Constraint *pcons, fst_log::Logger *plog);
     ~ManualTeach(void);
     ErrorCode manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
@@ -42,7 +43,7 @@ private:
     double step_orientation_;
     double vel_ratio_;
     double acc_ratio_;
-    JointConstraint* joint_constraint_ptr_;
+    Constraint* joint_constraint_ptr_;
 };
 
 

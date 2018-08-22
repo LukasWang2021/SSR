@@ -25,7 +25,7 @@ using namespace std;
 namespace fst_mc
 {
 
-ManualTeach::ManualTeach(size_t joint_num, JointConstraint* pcons, fst_log::Logger* plog)
+ManualTeach::ManualTeach(size_t joint_num, Constraint* pcons, fst_log::Logger* plog)
 {
     joint_num_ = joint_num;
     log_ptr_ = plog;
@@ -317,10 +317,9 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
             {
                 // start joint motion
                 // stop until soft constraint
-                double trip = dir[i] == INCREASE ? joint_constraint_ptr_->upper[i] - traj.joint_start[i] :
-                                joint_constraint_ptr_->lower[i] - traj.joint_start[i];
-               
-                trip = fabs(trip);
+                double trip = dir[i] == INCREASE ? joint_constraint_ptr_->upper()[i] - traj.joint_start[i] :
+                                                   traj.joint_start[i] - joint_constraint_ptr_->lower()[i];
+
                 if (trip > MINIMUM_E6)
                 {
                     double delta = trip - omega * omega / alpha;
@@ -343,7 +342,8 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                     traj.coeff[i].start_alpha = dir[i] == INCREASE ? alpha : -alpha;
                     traj.coeff[i].brake_alpha = -traj.coeff[i].start_alpha;
                     traj.direction[i] = dir[i];
-                    traj.joint_ending[i] = dir[i] == INCREASE ? joint_constraint_ptr_->upper[i] : joint_constraint_ptr_->lower[i];
+                    traj.joint_ending[i] = dir[i] == INCREASE ? joint_constraint_ptr_->upper()[i] :
+                                                                joint_constraint_ptr_->lower()[i];
                 }
                 else
                 {

@@ -56,6 +56,14 @@ public:
     ErrorCode fastCalibrate(size_t index);
     ErrorCode fastCalibrate(const size_t *pindex, size_t length);
 
+    // API for soft and hard constraint
+    ErrorCode getSoftConstraint(JointConstraint &soft_constraint);
+    ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
+    ErrorCode getHardConstraint(JointConstraint &hard_constraint);
+    ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
+    ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
+    ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
+
 
     // API for Axis Group Enable/Disable/Halt/Stop/Reset
     ErrorCode stopGroup(void);

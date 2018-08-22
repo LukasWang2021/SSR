@@ -87,11 +87,11 @@ add_library(motion_control
     src/motion_control_manual_teach.cpp
     src/motion_control_core_interface.cpp
     src/motion_control_offset_calibrator.cpp
-)
+        src/motion_control_constraint.cpp)
 
 add_executable(manual_test
     src/manual_test.cpp
-)
+        include/motion_control_constraint.h)
 
 target_link_libraries(motion_control
     ${catkin_LIBRARIES}

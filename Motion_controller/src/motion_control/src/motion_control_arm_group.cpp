@@ -5,40 +5,131 @@
 	> Created Time: 2018年08月07日 星期二 14时34分07秒
  ************************************************************************/
 
-#include <unistd.h>
 #include <math.h>
+#include <string.h>
+#include <unistd.h>
+#include <vector>
+
 #include <motion_control_arm_group.h>
+#include <parameter_manager/parameter_manager_param_group.h>
+#include "../../parameter_manager/include/parameter_manager/parameter_manager_param_group.h"
+#include "../../error_monitor/include/error_monitor.h"
 
 
+using namespace std;
 using namespace fst_base;
+using namespace fst_parameter;
 
 namespace fst_mc
 {
 
 ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 {
-    error_monitor_ptr_ = error_monitor_ptr;
     log_ptr_->initLogger("ArmGroup");
     cycle_time_ = 0.001;
-
-    soft_constraint_.upper[0] = 2.8;
-    soft_constraint_.upper[1] = 1.6;
-    soft_constraint_.upper[2] = 3.3;
-    soft_constraint_.upper[3] = 3.1;
-    soft_constraint_.upper[4] = 1.8;
-    soft_constraint_.upper[5] = 6.0;
-    soft_constraint_.lower[0] = -2.8;
-    soft_constraint_.lower[1] = -2.2;
-    soft_constraint_.lower[2] = -1.0;
-    soft_constraint_.lower[3] = -3.1;
-    soft_constraint_.lower[4] = -1.8;
-    soft_constraint_.lower[5] = -6.0;
-
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 
-    pthread_mutex_init(&auto_mutex_, NULL);
-    pthread_mutex_init(&manual_mutex_, NULL);
-    pthread_mutex_init(&servo_mutex_, NULL);
+    if (error_monitor_ptr == NULL)
+    {
+        FST_ERROR("Invalid pointer of error-monitor.");
+        return MOTION_INTERNAL_FAULT;
+    }
+    else
+    {
+        error_monitor_ptr_ = error_monitor_ptr;
+    }
+
+    if (pthread_mutex_init(&auto_mutex_, NULL) != 0 ||
+        pthread_mutex_init(&manual_mutex_, NULL) != 0 ||
+        pthread_mutex_init(&servo_mutex_, NULL) != 0)
+    {
+        FST_ERROR("Fail to initialize mutex.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    ParamGroup param;
+    vector<double> upper;
+    vector<double> lower;
+
+    if (param.loadParamFile("hard_constraint.yaml") &&
+        param.getParam("hard_constraint/upper", upper) &&
+        param.getParam("hard_constraint/lower", lower))
+    {
+        if (upper.size() == NUM_OF_JOINT && lower.size() == NUM_OF_JOINT)
+        {
+            for (size_t i = 0; i < JOINT_OF_ARM; i++)
+            {
+                hard_constraint_.upper()[i] = upper[i];
+                hard_constraint_.lower()[i] = lower[i];
+            }
+        }
+        else
+        {
+            FST_ERROR("Invalid array size of hard constraint.");
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading hard constraint from config file");
+        return param.getLastError();
+    }
+
+    param.reset();
+    upper.clear();
+    lower.clear();
+
+    if (param.loadParamFile("firm_constraint.yaml") &&
+        param.getParam("firm_constraint/upper", upper) &&
+        param.getParam("firm_constraint/lower", lower))
+    {
+        if (upper.size() == NUM_OF_JOINT && lower.size() == NUM_OF_JOINT)
+        {
+            for (size_t i = 0; i < JOINT_OF_ARM; i++)
+            {
+                firm_constraint_.upper()[i] = upper[i];
+                firm_constraint_.lower()[i] = lower[i];
+            }
+        }
+        else
+        {
+            FST_ERROR("Invalid array size of firm constraint.");
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading firm constraint from config file");
+        return param.getLastError();
+    }
+
+    param.reset();
+    upper.clear();
+    lower.clear();
+
+    if (param.loadParamFile("soft_constraint.yaml") &&
+        param.getParam("soft_constraint/upper", upper) &&
+        param.getParam("soft_constraint/lower", lower))
+    {
+        if (upper.size() == NUM_OF_JOINT && lower.size() == NUM_OF_JOINT)
+        {
+            for (size_t i = 0; i < JOINT_OF_ARM; i++)
+            {
+                soft_constraint_.upper()[i] = upper[i];
+                soft_constraint_.lower()[i] = lower[i];
+            }
+        }
+        else
+        {
+            FST_ERROR("Invalid array size of soft constraint.");
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading soft constraint from config file");
+        return param.getLastError();
+    }
 
     if (!bare_core_.initInterface())
     {
@@ -58,9 +149,214 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 }
 
 
-Calibrator* ArmGroup::getGroupCalibratorPtr(void)
+Calibrator* ArmGroup::getCalibratorPtr(void)
 {
     return &calibrator_;
+}
+
+
+ErrorCode ArmGroup::getSoftConstraint(JointConstraint &soft_constraint)
+{
+    FST_INFO("Get soft constraint.");
+    soft_constraint_.getConstraint(soft_constraint);
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             soft_constraint.lower[0], soft_constraint.lower[1], soft_constraint.lower[2],
+             soft_constraint.lower[3], soft_constraint.lower[4], soft_constraint.lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             soft_constraint.upper[0], soft_constraint.upper[1], soft_constraint.upper[2],
+             soft_constraint.upper[3], soft_constraint.upper[4], soft_constraint.upper[5]);
+    return SUCCESS;
+}
+
+
+ErrorCode ArmGroup::getFirmConstraint(JointConstraint &firm_constraint)
+{
+    FST_INFO("Get firm constraint.");
+    firm_constraint_.getConstraint(firm_constraint);
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             firm_constraint.lower[0], firm_constraint.lower[1], firm_constraint.lower[2],
+             firm_constraint.lower[3], firm_constraint.lower[4], firm_constraint.lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             firm_constraint.upper[0], firm_constraint.upper[1], firm_constraint.upper[2],
+             firm_constraint.upper[3], firm_constraint.upper[4], firm_constraint.upper[5]);
+    return SUCCESS;
+}
+
+
+ErrorCode ArmGroup::getHardConstraint(JointConstraint &hard_constraint)
+{
+    FST_INFO("Get hard constraint.");
+    hard_constraint_.getConstraint(hard_constraint);
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             hard_constraint.lower[0], hard_constraint.lower[1], hard_constraint.lower[2],
+             hard_constraint.lower[3], hard_constraint.lower[4], hard_constraint.lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             hard_constraint.upper[0], hard_constraint.upper[1], hard_constraint.upper[2],
+             hard_constraint.upper[3], hard_constraint.upper[4], hard_constraint.upper[5]);
+    return SUCCESS;
+}
+
+
+ErrorCode ArmGroup::setSoftConstraint(const JointConstraint &soft_constraint)
+{
+    Joint lower, upper;
+    FST_INFO("Set soft constraint.");
+
+    soft_constraint_.getConstraint(lower, upper);
+    FST_INFO("Origin soft constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
+
+    FST_INFO("Given soft constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             soft_constraint.lower[0], soft_constraint.lower[1], soft_constraint.lower[2],
+             soft_constraint.lower[3], soft_constraint.lower[4], soft_constraint.lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             soft_constraint.upper[0], soft_constraint.upper[1], soft_constraint.upper[2],
+             soft_constraint.upper[3], soft_constraint.upper[4], soft_constraint.upper[5]);
+
+    firm_constraint_.getConstraint(lower, upper);
+    FST_INFO("Firm constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
+
+    if (firm_constraint_.isCoverConstaint(soft_constraint))
+    {
+        ParamGroup param;
+        vector<double> v_upper(&soft_constraint.upper[0], &soft_constraint.upper[0] + NUM_OF_JOINT);
+        vector<double> v_lower(&soft_constraint.lower[0], &soft_constraint.lower[0] + NUM_OF_JOINT);
+
+        for (size_t i = JOINT_OF_ARM; i < NUM_OF_JOINT; i++)
+        {
+            v_upper[i] = 0;
+            v_lower[i] = 0;
+        }
+
+        if (param.loadParamFile("soft_constraint.yaml") &&
+            param.setParam("soft_constraint/upper", v_upper) &&
+            param.setParam("soft_constraint/lower", v_lower) &&
+            param.dumpParamFile("soft_constraint.yaml"))
+        {
+            soft_constraint_.setConstraint(soft_constraint);
+            FST_INFO("Soft constraint updated successfully.");
+            return SUCCESS;
+        }
+        else
+        {
+            FST_ERROR("Fail dumping soft constraint to config file");
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        FST_ERROR("Given soft constraint out of firm constraint.");
+        return INVALID_PARAMETER;
+    }
+}
+
+
+ErrorCode ArmGroup::setFirmConstraint(const JointConstraint &firm_constraint)
+{
+    Joint lower, upper;
+    FST_INFO("Set firm constraint.");
+
+    firm_constraint_.getConstraint(lower, upper);
+    FST_INFO("Origin firm constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
+
+    FST_INFO("Given firm constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             firm_constraint.lower[0], firm_constraint.lower[1], firm_constraint.lower[2],
+             firm_constraint.lower[3], firm_constraint.lower[4], firm_constraint.lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             firm_constraint.upper[0], firm_constraint.upper[1], firm_constraint.upper[2],
+             firm_constraint.upper[3], firm_constraint.upper[4], firm_constraint.upper[5]);
+
+    hard_constraint_.getConstraint(lower, upper);
+    FST_INFO("Hard constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
+
+    if (hard_constraint_.isCoverConstaint(firm_constraint_))
+    {
+        ParamGroup param;
+        vector<double> v_upper(&firm_constraint.upper[0], &firm_constraint.upper[0] + NUM_OF_JOINT);
+        vector<double> v_lower(&firm_constraint.lower[0], &firm_constraint.lower[0] + NUM_OF_JOINT);
+
+        for (size_t i = JOINT_OF_ARM; i < NUM_OF_JOINT; i++)
+        {
+            v_upper[i] = 0;
+            v_lower[i] = 0;
+        }
+
+        if (param.loadParamFile("firm_constraint.yaml") &&
+            param.setParam("firm_constraint/upper", v_upper) &&
+            param.setParam("firm_constraint/lower", v_lower) &&
+            param.dumpParamFile("firm_constraint.yaml"))
+        {
+            firm_constraint_.setConstraint(firm_constraint);
+            FST_INFO("Firm constraint updated successfully.");
+            return SUCCESS;
+        }
+        else
+        {
+            FST_ERROR("Fail dumping firm constraint to config file");
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        FST_ERROR("Given firm constraint out of hard constraint.");
+        return INVALID_PARAMETER;
+    }
+}
+
+
+ErrorCode ArmGroup::setHardConstraint(const JointConstraint &hard_constraint)
+{
+    FST_INFO("Set hard constraint.");
+
+    FST_INFO("Origin hard constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             hard_constraint_.lower()[0], hard_constraint_.lower()[1], hard_constraint_.lower()[2],
+             hard_constraint_.lower()[3], hard_constraint_.lower()[4], hard_constraint_.lower()[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             hard_constraint_.upper()[0], hard_constraint_.upper()[1], hard_constraint_.upper()[2],
+             hard_constraint_.upper()[3], hard_constraint_.upper()[4], hard_constraint_.upper()[5]);
+
+    FST_INFO("Given hard constraint:");
+    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             hard_constraint.lower[0], hard_constraint.lower[1], hard_constraint.lower[2],
+             hard_constraint.lower[3], hard_constraint.lower[4], hard_constraint.lower[5]);
+    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+             hard_constraint.upper[0], hard_constraint.upper[1], hard_constraint.upper[2],
+             hard_constraint.upper[3], hard_constraint.upper[4], hard_constraint.upper[5]);
+
+    ParamGroup param;
+    vector<double> v_upper(&hard_constraint.upper[0], &hard_constraint.upper[0] + NUM_OF_JOINT);
+    vector<double> v_lower(&hard_constraint.lower[0], &hard_constraint.lower[0] + NUM_OF_JOINT);
+
+    for (size_t i = JOINT_OF_ARM; i < NUM_OF_JOINT; i++)
+    {
+        v_upper[i] = 0;
+        v_lower[i] = 0;
+    }
+
+    if (param.loadParamFile("hard_constraint.yaml") &&
+        param.setParam("hard_constraint/upper", v_upper) &&
+        param.setParam("hard_constraint/lower", v_lower) &&
+        param.dumpParamFile("hard_constraint.yaml"))
+    {
+        hard_constraint_.setConstraint(hard_constraint);
+        FST_INFO("Hard constraint updated successfully.");
+        return SUCCESS;
+    }
+    else
+    {
+        FST_ERROR("Fail dumping hard constraint to config file");
+        return param.getLastError();
+    }
 }
 
 
@@ -94,7 +390,7 @@ ErrorCode ArmGroup::manualMoveToPoint(const Joint &joint)
 
     getLatestJoint(manual_traj_.joint_start);
 
-    if (!isJointInConstraint(manual_traj_.joint_start, soft_constraint_))
+    if (soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
         FST_ERROR("start-joint = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
                   manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
@@ -103,7 +399,7 @@ ErrorCode ArmGroup::manualMoveToPoint(const Joint &joint)
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    if (!isJointInConstraint(joint, soft_constraint_))
+    if (!soft_constraint_.isJointInConstraint(joint))
     {
         FST_ERROR("target-joint out of constraint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
                   joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6);
@@ -143,7 +439,7 @@ ErrorCode ArmGroup::manualMoveStep(const ManualDirection *direction)
             manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
             manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
 
-    if (!isJointInConstraint(manual_traj_.joint_start, soft_constraint_))
+    if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
         if (manual_traj_.frame != JOINT)
         {
@@ -153,16 +449,16 @@ ErrorCode ArmGroup::manualMoveStep(const ManualDirection *direction)
 
         for (size_t i = 0; i < JOINT_OF_ARM; i++)
         {
-            if (manual_traj_.joint_start[i] > soft_constraint_.upper[i] + MINIMUM_E9 && direction[i] == INCREASE)
+            if (manual_traj_.joint_start[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
             {
                 FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
-                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower[i], soft_constraint_.upper[i]);
+                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                 return INVALID_PARAMETER;
             }
-            else if (manual_traj_.joint_start[i] < soft_constraint_.lower[i] - MINIMUM_E9 && direction[i] == DECREASE)
+            else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
             {
                 FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
-                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower[i], soft_constraint_.upper[i]);
+                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                 return INVALID_PARAMETER;
             }
         }
@@ -202,7 +498,7 @@ ErrorCode ArmGroup::manualMoveContinuous(const ManualDirection *direction)
                  manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
                  manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
 
-        if (!isJointInConstraint(manual_traj_.joint_start, soft_constraint_))
+        if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
         {
             if (manual_traj_.frame != JOINT)
             {
@@ -212,16 +508,16 @@ ErrorCode ArmGroup::manualMoveContinuous(const ManualDirection *direction)
 
             for (size_t i = 0; i < JOINT_OF_ARM; i++)
             {
-                if (manual_traj_.joint_start[i] > soft_constraint_.upper[i] + MINIMUM_E9 && direction[i] == INCREASE)
+                if (manual_traj_.joint_start[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
                 {
                     FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
-                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower[i], soft_constraint_.upper[i]);
+                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                     return INVALID_PARAMETER;
                 }
-                else if (manual_traj_.joint_start[i] < soft_constraint_.lower[i] - MINIMUM_E9 && direction[i] == DECREASE)
+                else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
                 {
                     FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
-                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower[i], soft_constraint_.upper[i]);
+                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
                     return INVALID_PARAMETER;
                 }
             }

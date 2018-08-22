@@ -116,72 +116,102 @@ ErrorCode MotionControl::manualStop(void)
 
 void MotionControl::getOffset(double *offset)
 {
-    group_ptr_->getGroupCalibratorPtr()->getOffset(offset);
+    group_ptr_->getCalibratorPtr()->getOffset(offset);
 }
 
 CalibrateState MotionControl::getCalibrateState(void)
 {
-    return group_ptr_->getGroupCalibratorPtr()->getCalibrateState();
+    return group_ptr_->getCalibratorPtr()->getCalibrateState();
 }
 
 ErrorCode MotionControl::saveJoint(void)
 {
-    return group_ptr_->getGroupCalibratorPtr()->saveJoint();
+    return group_ptr_->getCalibratorPtr()->saveJoint();
 }
 
 ErrorCode MotionControl::saveOffset(void)
 {
-    return group_ptr_->getGroupCalibratorPtr()->saveOffset();
+    return group_ptr_->getCalibratorPtr()->saveOffset();
 }
 
 ErrorCode MotionControl::checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat)
 {
-    return group_ptr_->getGroupCalibratorPtr()->checkOffset(cali_stat, offset_stat);
+    return group_ptr_->getCalibratorPtr()->checkOffset(cali_stat, offset_stat);
 }
 
 ErrorCode MotionControl::maskOffsetLostError(void)
 {
-    return group_ptr_->getGroupCalibratorPtr()->maskOffsetLostError();
+    return group_ptr_->getCalibratorPtr()->maskOffsetLostError();
 }
 
 ErrorCode MotionControl::setOffsetState(size_t index, OffsetState stat)
 {
-    return group_ptr_->getGroupCalibratorPtr()->setOffsetState(index, stat);
+    return group_ptr_->getCalibratorPtr()->setOffsetState(index, stat);
 }
 
 ErrorCode MotionControl::calibrateOffset(void)
 {
-    return group_ptr_->getGroupCalibratorPtr()->calibrateOffset();
+    return group_ptr_->getCalibratorPtr()->calibrateOffset();
 }
 
 ErrorCode MotionControl::calibrateOffset(size_t index)
 {
-    return group_ptr_->getGroupCalibratorPtr()->calibrateOffset(index);
+    return group_ptr_->getCalibratorPtr()->calibrateOffset(index);
 }
 
 ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length)
 {
-    return group_ptr_->getGroupCalibratorPtr()->calibrateOffset(pindex, length);
+    return group_ptr_->getCalibratorPtr()->calibrateOffset(pindex, length);
 }
 
 ErrorCode MotionControl::saveReference(void)
 {
-    return group_ptr_->getGroupCalibratorPtr()->saveReference();
+    return group_ptr_->getCalibratorPtr()->saveReference();
 }
 
 ErrorCode MotionControl::fastCalibrate(void)
 {
-    return group_ptr_->getGroupCalibratorPtr()->fastCalibrate();
+    return group_ptr_->getCalibratorPtr()->fastCalibrate();
 }
 
 ErrorCode MotionControl::fastCalibrate(size_t index)
 {
-    return group_ptr_->getGroupCalibratorPtr()->fastCalibrate(index);
+    return group_ptr_->getCalibratorPtr()->fastCalibrate(index);
 }
 
 ErrorCode MotionControl::fastCalibrate(const size_t *pindex, size_t length)
 {
-    return group_ptr_->getGroupCalibratorPtr()->fastCalibrate(pindex, length);
+    return group_ptr_->getCalibratorPtr()->fastCalibrate(pindex, length);
+}
+
+ErrorCode MotionControl::getSoftConstraint(JointConstraint &soft_constraint)
+{
+    return group_ptr_->getSoftConstraint(soft_constraint);
+}
+
+ErrorCode MotionControl::getFirmConstraint(JointConstraint &firm_constraint)
+{
+    return group_ptr_->getFirmConstraint(firm_constraint);
+}
+
+ErrorCode MotionControl::getHardConstraint(JointConstraint &hard_constraint)
+{
+    return group_ptr_->getHardConstraint(hard_constraint);
+}
+
+ErrorCode MotionControl::setSoftConstraint(const JointConstraint &soft_constraint)
+{
+    return group_ptr_->setSoftConstraint(soft_constraint);
+}
+
+ErrorCode MotionControl::setFirmConstraint(const JointConstraint &firm_constraint)
+{
+    return group_ptr_->setFirmConstraint(firm_constraint);
+}
+
+ErrorCode MotionControl::setHardConstraint(const JointConstraint &hard_constraint)
+{
+    return group_ptr_->setHardConstraint(hard_constraint);
 }
 
 ErrorCode MotionControl::stopGroup(void)

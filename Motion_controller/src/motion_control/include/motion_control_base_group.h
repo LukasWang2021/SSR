@@ -13,6 +13,7 @@
 #include "error_monitor.h"
 #include "error_code.h"
 #include <motion_control_datatype.h>
+#include <motion_control_constraint.h>
 #include <motion_control_core_interface.h>
 #include <motion_control_offset_calibrator.h>
 
@@ -58,7 +59,14 @@ class BaseGroup
 
     virtual size_t getFIFOLength(void) = 0;
 
-    virtual Calibrator* getGroupCalibratorPtr(void) = 0;
+    virtual Calibrator* getCalibratorPtr(void) = 0;
+
+    virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint) = 0;
+    virtual ErrorCode setFirmConstraint(const JointConstraint &firm_constraint) = 0;
+    virtual ErrorCode setHardConstraint(const JointConstraint &hard_constraint) = 0;
+    virtual ErrorCode getSoftConstraint(JointConstraint &soft_constraint) = 0;
+    virtual ErrorCode getFirmConstraint(JointConstraint &firm_constraint) = 0;
+    virtual ErrorCode getHardConstraint(JointConstraint &hard_constraint) = 0;
 
     void realtimeTask(void);
     void activeRealtimeTask(void);

@@ -36,7 +36,14 @@ class ArmGroup : public BaseGroup
 
     size_t getFIFOLength(void);
 
-    Calibrator* getGroupCalibratorPtr(void);
+    Calibrator* getCalibratorPtr(void);
+
+    ErrorCode getSoftConstraint(JointConstraint &soft_constraint);
+    ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
+    ErrorCode getHardConstraint(JointConstraint &hard_constraint);
+    ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
+    ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
+    ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
   
   private:
     bool isJointInConstraint(Joint joint, JointConstraint constraint);
@@ -45,6 +52,9 @@ class ArmGroup : public BaseGroup
     ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
     ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
 
+    Constraint          hard_constraint_{JOINT_OF_ARM};
+    Constraint          soft_constraint_{JOINT_OF_ARM};
+    Constraint          firm_constraint_{JOINT_OF_ARM};
     Calibrator          calibrator_{JOINT_OF_ARM, &bare_core_, log_ptr_};
     ManualTeach         manual_teach_{JOINT_OF_ARM, &soft_constraint_, log_ptr_};
     ManualTrajectory    manual_traj_;

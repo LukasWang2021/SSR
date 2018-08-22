@@ -73,3 +73,75 @@ void TpComm::handlePublishElement0x000161F3(Comm_Publish& package, int element_i
         FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
     }
 }
+
+//"/publish/motion_control/axis_group/feedback/tcp_world_cartesian"
+void TpComm::handlePublishElement0x00009D8E(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}
+
+//"/publish/motion_control/axis_group/feedback/tcp_base_cartesian"
+void TpComm::handlePublishElement0x00002D5E(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}
+
+//"/publish/motion_control/axis_group/feedback/tcp_current_cartesian"
+void TpComm::handlePublishElement0x0000352E(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}
+
+//"/publish/motion_control/axis_group/current_coordinate"
+void TpComm::handlePublishElement0x00012C55(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32List_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}
+
+//"/publish/motion_control/axis_group/current_tool"
+void TpComm::handlePublishElement0x00004BEC(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32List_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}
+
+//"/publish/motion_control/global_vel_ratio",	0x00012A4F,	"MessageType_Double",
+void TpComm::handlePublishElement0x00012A4F(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Double_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}
+
+//"/publish/motion_control/global_acc_ratio",	0x0001517F,	"MessageType_Double",
+void TpComm::handlePublishElement0x0001517F(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Double_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}
+
+//"/publish/interpreter/program_status"
+void TpComm::handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_String_Int32_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+    }
+}

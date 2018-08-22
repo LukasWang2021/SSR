@@ -127,6 +127,8 @@ private:
     void handleRequest0x000161E4(int recv_bytes);
     /********SetUserOpMode, RequestMessageType_Int32**********/         
     void handleRequest0x00002ED5(int recv_bytes);
+    /********rpc/controller/shutdown, RequestMessageType_Void**********/
+    void handleRequest0x0000899E(int recv_bytes);
 
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
@@ -295,6 +297,31 @@ private:
     void handleRequest0x000058F3(int recv_bytes);
 
 
+    /********rpc/motion_control/setGlobalVelRatio, RequestMessageType_Double**********/
+    void handleRequest0x000005EF(int recv_bytes);
+    /********rpc/motion_control/getGlobalVelRatio, RequestMessageType_Void**********/
+    void handleRequest0x0001578F(int recv_bytes);
+    /********rpc/motion_control/setGlobalAccRatio, RequestMessageType_Double**********/
+    void handleRequest0x0000271F(int recv_bytes);
+    /********rpc/motion_control/getGlobalAccRatio, RequestMessageType_Void**********/
+    void handleRequest0x00016D9F(int recv_bytes);
+    /********rpc/motion_control/axis_group/setHardLimit, RequestMessageType_Int32_JointLimit **********/
+    void handleRequest0x0000C454(int recv_bytes);
+    /********rpc/motion_control/axis_group/getHardLimit, RequestMessageType_Int32**********/
+    void handleRequest0x00013394(int recv_bytes);
+    /********rpc/motion_control/axis_group/getCoordinate, RequestMessageType_Int32**********/
+    void handleRequest0x00008595(int recv_bytes);
+    /********rpc/motion_control/axis_group/setCoordinate, RequestMessageType_Int32List(count = 3) **********/
+    void handleRequest0x0000A845(int recv_bytes);
+    /********rpc/motion_control/axis_group/getTool, RequestMessageType_Int32**********/
+    void handleRequest0x0001354C(int recv_bytes);
+    /********rpc/motion_control/axis_group/setTool, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0001581C(int recv_bytes);
+    /********rpc/motion_control/axis_group/convertCartToJoint, RequestMessageType_Int32List_DoubleList(Int32List_count=4,DoubleList_count=6)**********/
+    void handleRequest0x00010FD4(int recv_bytes);
+    /********rpc/motion_control/axis_group/convertJointToCart, RequestMessageType_Int32List_DoubleList(Int32List_count=4,DoubleList_count = 9)**********/
+    void handleRequest0x0000B6D4(int recv_bytes);
+
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********GetRunningStatus, ResponseMessageType_Int32**********/	
@@ -319,6 +346,8 @@ private:
     void handleResponse0x00000773(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********deleteTopicResponseMessageType_Bool**********/
     void handleResponse0x0000BB93(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/shutdown, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000899E(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********getRpcTable, ResponseMessageType_RpcTable**********/
     void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -494,7 +523,30 @@ private:
     /********rpc/publish/addIoTopic, ResponseMessageType_Bool**********/
     void handleResponse0x000058F3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-
+    /********rpc/motion_control/setGlobalVelRatio, ResponseMessageType_Uint64**********/
+    void handleResponse0x000005EF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/getGlobalVelRatio, ResponseMessageType_Uint64_Double**********/
+    void handleResponse0x0001578F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/setGlobalAccRatio, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000271F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/getGlobalAccRatio, ResponseMessageType_Uint64_Double**********/
+    void handleResponse0x00016D9F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setHardLimit, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000C454(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getHardLimit, ResponseMessageType_Uint64_JointLimit **********/
+    void handleResponse0x00013394(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getCoordinate, ResponseMessageType_Uint64_Int32List(count = 2)**********/
+    void handleResponse0x00008595(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setCoordinate, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000A845(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getTool, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x0001354C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setTool, ResponseMessageType_Uint64**********/
+    void handleResponse0x0001581C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/convertCartToJoint, ResponseMessageType_Uint64_DoubleList(count = 9)**********/
+    void handleResponse0x00010FD4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/convertJointToCart, ResponseMessageType_Uint64_DoubleList(count = 6)**********/
+    void handleResponse0x0000B6D4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********UserOpMode, MessageType_Int32**********/  
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);
@@ -513,6 +565,24 @@ private:
 
     /********"MessageType_Int32_Int32List(count=9)",**********/
     void handlePublishElement0x000161F3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+
+	/********publish/motion_control/axis_group/feedback/tcp_world_cartesian, MessageType_Int32_DoubleList(count=6)**********/
+    void handlePublishElement0x00009D8E(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/motion_control/axis_group/feedback/tcp_base_cartesian, MessageType_Int32_DoubleList(count=6)**********/
+    void handlePublishElement0x00002D5E(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/motion_control/axis_group/feedback/tcp_current_cartesian, MessageType_Int32_DoubleList(count=6)**********/
+    void handlePublishElement0x0000352E(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/motion_control/axis_group/current_coordinate, MessageType_Int32List(count=3)**********/
+    void handlePublishElement0x00012C55(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/motion_control/axis_group/current_tool, MessageType_Int32List(count=2)**********/
+    void handlePublishElement0x00004BEC(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/motion_control/global_vel_ratio, MessageType_Double**********/
+    void handlePublishElement0x00012A4F(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/motion_control/global_acc_ratio, MessageType_Double**********/
+    void handlePublishElement0x0001517F(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/interpreter/program_status, MessageType_String_Int32**********/
+    void handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+
 
     LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

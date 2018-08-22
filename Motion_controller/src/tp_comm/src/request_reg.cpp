@@ -5,29 +5,6 @@
 
 using namespace fst_comm;
 
-
-// "/rpc/controller/addRegTopic",	0x0000BA13
-void TpComm::handleRequest0x0000BA13(int recv_bytes)
-{
-    // create object for request and response package
-    RequestMessageType_Topic* request_data_ptr = new RequestMessageType_Topic;
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
-        return;
-    }
-    
-    handleRequestPackage(0x0000BA13, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_Topic_fields, -1);
-}
-
 // "/rpc/reg_manager/r/addReg",	0x00004FF7
 void TpComm::handleRequest0x00004FF7(int recv_bytes)
 {
@@ -38,7 +15,7 @@ void TpComm::handleRequest0x00004FF7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -60,7 +37,7 @@ void TpComm::handleRequest0x000012F7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -82,7 +59,7 @@ void TpComm::handleRequest0x00005757(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -104,7 +81,7 @@ void TpComm::handleRequest0x0000EAB7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool_RRegData* response_data_ptr = new ResponseMessageType_Bool_RRegData;
+    ResponseMessageType_Uint64_RRegData* response_data_ptr = new ResponseMessageType_Uint64_RRegData;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -126,7 +103,7 @@ void TpComm::handleRequest0x0000C877(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -148,7 +125,7 @@ void TpComm::handleRequest0x0000A904(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -170,7 +147,7 @@ void TpComm::handleRequest0x00008CE4(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -194,7 +171,7 @@ void TpComm::handleRequest0x000097E7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -216,7 +193,7 @@ void TpComm::handleRequest0x0000E5D7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -238,7 +215,7 @@ void TpComm::handleRequest0x0000E9B7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -260,7 +237,7 @@ void TpComm::handleRequest0x0000B507(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool_MrRegData* response_data_ptr = new ResponseMessageType_Bool_MrRegData;
+    ResponseMessageType_Uint64_MrRegData* response_data_ptr = new ResponseMessageType_Uint64_MrRegData;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -282,7 +259,7 @@ void TpComm::handleRequest0x00015BA7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -304,7 +281,7 @@ void TpComm::handleRequest0x00001774(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -326,7 +303,7 @@ void TpComm::handleRequest0x00015CF4(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -350,7 +327,7 @@ void TpComm::handleRequest0x000161E7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -372,7 +349,7 @@ void TpComm::handleRequest0x0000B817(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -394,7 +371,7 @@ void TpComm::handleRequest0x000119F7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -416,7 +393,7 @@ void TpComm::handleRequest0x00017F07(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool_SrRegData* response_data_ptr = new ResponseMessageType_Bool_SrRegData;
+    ResponseMessageType_Uint64_SrRegData* response_data_ptr = new ResponseMessageType_Uint64_SrRegData;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -438,7 +415,7 @@ void TpComm::handleRequest0x00002127(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -460,7 +437,7 @@ void TpComm::handleRequest0x00004834(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -482,7 +459,7 @@ void TpComm::handleRequest0x00009854(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -504,7 +481,7 @@ void TpComm::handleRequest0x000154E7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -526,7 +503,7 @@ void TpComm::handleRequest0x00001097(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -548,7 +525,7 @@ void TpComm::handleRequest0x00009EF7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -570,7 +547,7 @@ void TpComm::handleRequest0x00017207(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool_PrRegData* response_data_ptr = new ResponseMessageType_Bool_PrRegData;
+    ResponseMessageType_Uint64_PrRegData* response_data_ptr = new ResponseMessageType_Uint64_PrRegData;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -592,7 +569,7 @@ void TpComm::handleRequest0x0000D7C7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -614,7 +591,7 @@ void TpComm::handleRequest0x0000B454(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -636,7 +613,7 @@ void TpComm::handleRequest0x00009354(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -660,7 +637,7 @@ void TpComm::handleRequest0x00016CE7(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -682,7 +659,7 @@ void TpComm::handleRequest0x00003D17(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -704,7 +681,7 @@ void TpComm::handleRequest0x0000CB77(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -726,7 +703,7 @@ void TpComm::handleRequest0x00000367(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool_HrRegData* response_data_ptr = new ResponseMessageType_Bool_HrRegData;
+    ResponseMessageType_Uint64_HrRegData* response_data_ptr = new ResponseMessageType_Uint64_HrRegData;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -748,7 +725,7 @@ void TpComm::handleRequest0x00014A87(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -770,7 +747,7 @@ void TpComm::handleRequest0x00012974(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -792,7 +769,7 @@ void TpComm::handleRequest0x00006B54(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_BaseRegSummaryList;
+    ResponseMessageType_Uint64_BaseRegSummaryList* response_data_ptr = new ResponseMessageType_Uint64_BaseRegSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");

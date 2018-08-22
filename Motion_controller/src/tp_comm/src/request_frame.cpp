@@ -15,7 +15,7 @@ void TpComm::handleRequest0x0000A22C(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -37,7 +37,7 @@ void TpComm::handleRequest0x00010E4C(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -59,7 +59,7 @@ void TpComm::handleRequest0x0000C78C(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -80,7 +80,7 @@ void TpComm::handleRequest0x000085FC(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -102,7 +102,7 @@ void TpComm::handleRequest0x00009E34(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool_ToolInfo* response_data_ptr = new ResponseMessageType_Bool_ToolInfo;
+    ResponseMessageType_Uint64_ToolInfo* response_data_ptr = new ResponseMessageType_Uint64_ToolInfo;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -124,7 +124,7 @@ void TpComm::handleRequest0x0001104F(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_ToolSummaryList* response_data_ptr = new ResponseMessageType_ToolSummaryList;
+    ResponseMessageType_Uint64_ToolSummaryList* response_data_ptr = new ResponseMessageType_Uint64_ToolSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -140,13 +140,13 @@ void TpComm::handleRequest0x0001104F(int recv_bytes)
 void TpComm::handleRequest0x00016764(int recv_bytes)
 {
     // create object for request and response package
-    RequestMessageType_UserInfo* request_data_ptr = new RequestMessageType_UserInfo;
+    RequestMessageType_UserCoordInfo* request_data_ptr = new RequestMessageType_UserCoordInfo;
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -155,7 +155,7 @@ void TpComm::handleRequest0x00016764(int recv_bytes)
     }
 
     handleRequestPackage(0x00016764, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_UserInfo_fields, -1);
+        recv_bytes, RequestMessageType_UserCoordInfo_fields, -1);
 }
 
 // delete frame
@@ -168,7 +168,7 @@ void TpComm::handleRequest0x0000BAF4(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -184,13 +184,13 @@ void TpComm::handleRequest0x0000BAF4(int recv_bytes)
 void TpComm::handleRequest0x0000EC14(int recv_bytes)
 {
     // create object for request and response package
-    RequestMessageType_UserInfo* request_data_ptr = new RequestMessageType_UserInfo;
+    RequestMessageType_UserCoordInfo* request_data_ptr = new RequestMessageType_UserCoordInfo;
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -199,7 +199,7 @@ void TpComm::handleRequest0x0000EC14(int recv_bytes)
     }
 
     handleRequestPackage(0x0000EC14, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_UserInfo_fields, -1);
+        recv_bytes, RequestMessageType_UserCoordInfo_fields, -1);
 }
 
 // moveUserCoord
@@ -212,7 +212,7 @@ void TpComm::handleRequest0x0000E104(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool* response_data_ptr = new ResponseMessageType_Bool;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -234,7 +234,7 @@ void TpComm::handleRequest0x00004324(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Bool_UserInfo* response_data_ptr = new ResponseMessageType_Bool_UserInfo;
+    ResponseMessageType_Uint64_UserCoordInfo* response_data_ptr = new ResponseMessageType_Uint64_UserCoordInfo;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -256,7 +256,7 @@ void TpComm::handleRequest0x0001838F(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_UserSummaryList* response_data_ptr = new ResponseMessageType_UserSummaryList;
+    ResponseMessageType_Uint64_UserCoordSummaryList* response_data_ptr = new ResponseMessageType_Uint64_UserCoordSummaryList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");

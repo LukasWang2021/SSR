@@ -74,4 +74,9 @@ void ControllerRpc::handleRpc0x00002ED5(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = state_machine_ptr_->setUserOpMode((UserOpMode)rq_data_ptr->data.data);
 }
 
+// "/rpc/controller/shutdown"
+void ControllerRpc::handleRpc0x0000899E(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
 

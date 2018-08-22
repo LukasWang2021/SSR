@@ -39,6 +39,30 @@ void ControllerRpc::handleRpc0x00001D14(void* request_data_ptr, void* response_d
     }
 }
 
+// "/rpc/motion_control/setGlobalVelRatio"
+void ControllerRpc::handleRpc0x000005EF(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/getGlobalVelRatio"
+void ControllerRpc::handleRpc0x0001578F(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/setGlobalAccRatio"
+void ControllerRpc::handleRpc0x0000271F(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/getGlobalAccRatio"
+void ControllerRpc::handleRpc0x00016D9F(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
 // "/rpc/motion_control/axis_group/setManualFrame"
 void ControllerRpc::handleRpc0x00009D05(void* request_data_ptr, void* response_data_ptr)
 {
@@ -290,4 +314,51 @@ void ControllerRpc::handleRpc0x0000C244(void* request_data_ptr, void* response_d
     rs_data_ptr->success.data = true;
 }
 
+// "/rpc/motion_control/axis_group/setHardLimit"
+void ControllerRpc::handleRpc0x0000C454(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/axis_group/getHardLimit"
+void ControllerRpc::handleRpc0x00013394(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/axis_group/setCoordinate"
+void ControllerRpc::handleRpc0x0000A845(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/axis_group/getCoordinate"
+void ControllerRpc::handleRpc0x00008595(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/axis_group/setTool"
+void ControllerRpc::handleRpc0x0001581C(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/axis_group/getTool"
+void ControllerRpc::handleRpc0x0001354C(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/axis_group/convertCartToJoint"
+void ControllerRpc::handleRpc0x00010FD4(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+// "/rpc/motion_control/axis_group/convertJointToCart"
+void ControllerRpc::handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
 

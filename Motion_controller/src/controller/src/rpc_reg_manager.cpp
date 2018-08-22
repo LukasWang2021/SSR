@@ -426,7 +426,7 @@ void ControllerRpc::handleRpc0x00009EF7(void* request_data_ptr, void* response_d
     reg.value.pos_type = rq_data_ptr->data.pos_type;
     reg.value.group_id = rq_data_ptr->data.group_id;
     memcpy(reg.value.pos, rq_data_ptr->data.pos.data, 9*sizeof(double));
-    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(double));
+    memcpy(reg.value.posture, rq_data_ptr->data.posture.data, 4*sizeof(bool));
     rs_data_ptr->data.data = reg_manager_ptr_->updatePrReg(&reg);
 }
 
@@ -450,7 +450,7 @@ void ControllerRpc::handleRpc0x00017207(void* request_data_ptr, void* response_d
         rs_data_ptr->data.pos.data_count = 9;
         memcpy(rs_data_ptr->data.pos.data, reg.value.pos, 9*sizeof(double));
         rs_data_ptr->data.posture.data_count = 4;
-        memcpy(rs_data_ptr->data.posture.data, reg.value.posture, 4*sizeof(double));
+        memcpy(rs_data_ptr->data.posture.data, reg.value.posture, 4*sizeof(bool));
     }
     else
     {

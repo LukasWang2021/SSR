@@ -43,3 +43,44 @@ void* ControllerPublish::getAxisGroupJointFeedbackPtr()
     return NULL;
 }
 
+void* ControllerPublish::getAxisGroupTcpWorldCartesianPtr()
+{
+    return NULL;
+}
+
+void* ControllerPublish::getAxisGroupTcpBaseCartesianPtr()
+{
+    return NULL;
+}
+
+void* ControllerPublish::getAxisGroupTcpCurrentCartesianPtr()
+{
+    return NULL;
+}
+
+void* ControllerPublish::getAxisGroupCurrentCoordinatePtr()
+{
+    return NULL;
+}
+
+void* ControllerPublish::getAxisGroupCurrentToolPtr()
+{
+    return NULL;
+}
+
+void* ControllerPublish::getGlobalVelRatioPtr()
+{
+    return NULL;
+}
+
+void* ControllerPublish::getGlobalAccRatioPtr()
+{
+    return NULL;
+}
+
+void* ControllerPublish::getProgramStatusPtr()
+{
+    return NULL;
+}
+
+

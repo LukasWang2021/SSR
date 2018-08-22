@@ -71,11 +71,6 @@ bool Controller::init()
         return false;
     }
 
-    /*if(motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance()) != 0)
-    {
-        return false;
-    }*/
-
     process_comm_ptr_ = ProcessComm::getInstance();
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
     if(!process_comm_ptr_->getControllerServerPtr()->init()
@@ -100,7 +95,11 @@ bool Controller::init()
         return false;
     }
 
-        
+    /*if(motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance()) != 0)
+    {
+        return false;
+    }*/
+    
     if(!tp_comm_.init()
         || !tp_comm_.open())
     {

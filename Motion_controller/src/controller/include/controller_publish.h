@@ -58,6 +58,14 @@ private:
     void* getServoStatePtr();
     void* getSafetyAlarmPtr();
     void* getAxisGroupJointFeedbackPtr();
+    void* getAxisGroupTcpWorldCartesianPtr();
+    void* getAxisGroupTcpBaseCartesianPtr();
+    void* getAxisGroupTcpCurrentCartesianPtr();
+    void* getAxisGroupCurrentCoordinatePtr();
+    void* getAxisGroupCurrentToolPtr();
+    void* getGlobalVelRatioPtr();
+    void* getGlobalAccRatioPtr();
+    void* getProgramStatusPtr();
 };
 
 }

@@ -91,6 +91,8 @@ private:
     void handleRpc0x000161E4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/setUserOpMode"
     void handleRpc0x00002ED5(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/controller/shutdown"
+    void handleRpc0x0000899E(void* request_data_ptr, void* response_data_ptr);
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"
@@ -197,6 +199,14 @@ private:
     void handleRpc0x00001E70(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/reset"
     void handleRpc0x00001D14(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/setGlobalVelRatio"
+    void handleRpc0x000005EF(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/getGlobalVelRatio"
+    void handleRpc0x0001578F(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/setGlobalAccRatio"
+    void handleRpc0x0000271F(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/getGlobalAccRatio"
+    void handleRpc0x00016D9F(void* request_data_ptr, void* response_data_ptr); 
     // "/rpc/motion_control/axis_group/setManualFrame"
     void handleRpc0x00009D05(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/doStepManualMove"
@@ -219,6 +229,22 @@ private:
     void handleRpc0x000108E4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getManuSoftLimit"
     void handleRpc0x0000C244(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setHardLimit"
+    void handleRpc0x0000C454(void* request_data_ptr, void* response_data_ptr);  
+    // "/rpc/motion_control/axis_group/getHardLimit"
+    void handleRpc0x00013394(void* request_data_ptr, void* response_data_ptr);   
+    // "/rpc/motion_control/axis_group/setCoordinate"
+    void handleRpc0x0000A845(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getCoordinate"
+    void handleRpc0x00008595(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setTool"
+    void handleRpc0x0001581C(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getTool"
+    void handleRpc0x0001354C(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/convertCartToJoint"
+    void handleRpc0x00010FD4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/convertJointToCart"
+    void handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr);
 
     /* interpreter rpc */
     // "/rpc/interpreter/start"

@@ -22,6 +22,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/callEstop", 0x00013940, &ControllerRpc::handleRpc0x00013940}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/callReset", 0x000161E4, &ControllerRpc::handleRpc0x000161E4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/setUserOpMode", 0x00002ED5, &ControllerRpc::handleRpc0x00002ED5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/shutdown", 0x0000899E, &ControllerRpc::handleRpc0x0000899E}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/tool_manager/deleteTool", 0x00010E4C, &ControllerRpc::handleRpc0x00010E4C}; rpc_table_.push_back(rpc_service);
@@ -75,6 +76,10 @@ void ControllerRpc::initRpcTable()
 
     rpc_service = {"/rpc/motion_control/stop", 0x00001E70, &ControllerRpc::handleRpc0x00001E70}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/reset", 0x00001D14, &ControllerRpc::handleRpc0x00001D14}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/setGlobalVelRatio", 0x000005EF, &ControllerRpc::handleRpc0x000005EF}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/getGlobalVelRatio", 0x0001578F, &ControllerRpc::handleRpc0x0001578F}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/setGlobalAccRatio", 0x0000271F, &ControllerRpc::handleRpc0x0000271F}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/getGlobalAccRatio", 0x00016D9F, &ControllerRpc::handleRpc0x00016D9F}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setManualFrame", 0x00009D05, &ControllerRpc::handleRpc0x00009D05}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doStepManualMove", 0x000085D5, &ControllerRpc::handleRpc0x000085D5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doContinuousManualMove", 0x0000D3F5, &ControllerRpc::handleRpc0x0000D3F5}; rpc_table_.push_back(rpc_service);
@@ -86,6 +91,14 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/getUserSoftLimit", 0x0000C764, &ControllerRpc::handleRpc0x0000C764}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setManuSoftLimit", 0x000108E4, &ControllerRpc::handleRpc0x000108E4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getManuSoftLimit", 0x0000C244, &ControllerRpc::handleRpc0x0000C244}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setHardLimit", 0x0000C454, &ControllerRpc::handleRpc0x0000C454}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getHardLimit", 0x00013394, &ControllerRpc::handleRpc0x00013394}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setCoordinate", 0x0000A845, &ControllerRpc::handleRpc0x0000A845}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getCoordinate", 0x00008595, &ControllerRpc::handleRpc0x00008595}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setTool", 0x0001581C, &ControllerRpc::handleRpc0x0001581C}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getTool", 0x0001354C, &ControllerRpc::handleRpc0x0001354C}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/convertCartToJoint", 0x00010FD4, &ControllerRpc::handleRpc0x00010FD4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/convertJointToCart", 0x0000B6D4, &ControllerRpc::handleRpc0x0000B6D4}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/interpreter/start", 0x00006154, &ControllerRpc::handleRpc0x00006154}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/debug", 0x000102D7, &ControllerRpc::handleRpc0x000102D7}; rpc_table_.push_back(rpc_service);

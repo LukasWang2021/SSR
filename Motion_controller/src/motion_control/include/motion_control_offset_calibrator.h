@@ -68,9 +68,12 @@ class Calibrator
 
 
     void getOffset(double *offset);
+    void getOffsetMask(OffsetMask *mask);
     CalibrateState getCalibrateState(void);
     ErrorCode sendJtacParam(const std::string &param = "all");
 
+    bool isReferenceAvailable(void);
+    ErrorCode deleteReference(void);
     ErrorCode saveReference(void);
     ErrorCode fastCalibrate(void);
     ErrorCode fastCalibrate(size_t index);

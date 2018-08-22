@@ -114,9 +114,14 @@ ErrorCode MotionControl::manualStop(void)
     return group_ptr_->manualStop();
 }
 
-void MotionControl::getOffset(double *offset)
+void MotionControl::getOffset(double (&offset)[NUM_OF_JOINT])
 {
     group_ptr_->getCalibratorPtr()->getOffset(offset);
+}
+
+void MotionControl::getOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT])
+{
+    group_ptr_->getCalibratorPtr()->getOffsetMask(mask);
 }
 
 CalibrateState MotionControl::getCalibrateState(void)
@@ -162,6 +167,16 @@ ErrorCode MotionControl::calibrateOffset(size_t index)
 ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length)
 {
     return group_ptr_->getCalibratorPtr()->calibrateOffset(pindex, length);
+}
+
+bool MotionControl::isReferenceAvailable(void)
+{
+    return group_ptr_->getCalibratorPtr()->isReferenceAvailable();
+}
+
+ErrorCode MotionControl::deleteReference(void)
+{
+    return group_ptr_->getCalibratorPtr()->deleteReference();
 }
 
 ErrorCode MotionControl::saveReference(void)

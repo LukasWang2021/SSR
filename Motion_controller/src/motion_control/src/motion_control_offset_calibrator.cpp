@@ -13,6 +13,7 @@
 
 
 using namespace std;
+using namespace fst_parameter;
 
 namespace fst_mc
 {
@@ -124,7 +125,7 @@ ErrorCode Calibrator::initCalibrator(const string &path)
         offset_stat_[i] = OffsetState(stat[i]);
 
     // load thresholds used in checking offset
-    fst_parameter::ParamGroup params(COMPONENT_PARAM_FILE_DIR"motion_control.yaml");
+    ParamGroup params(COMPONENT_PARAM_FILE_DIR"motion_control.yaml");
     if (params.getLastError() == SUCCESS)
     {
         data.clear();
@@ -794,9 +795,96 @@ void Calibrator::getOffset(double *offset)
 }
 
 
+void Calibrator::getOffsetMask(OffsetMask *mask)
+{
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        mask[i] = offset_mask_[i];
+    }
+
+    for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
+    {
+        mask[i] = OFFSET_UNMASK;
+    }
+}
+
+
 CalibrateState Calibrator::getCalibrateState(void)
 {
     return current_state_;
+}
+
+
+bool Calibrator::isReferenceAvailable(void)
+{
+    ParamGroup params(AXIS_GROUP_DIR"arm_group_offset_reference.yaml");
+
+    if (params.getLastError() == SUCCESS)
+    {
+        bool is_available = false;
+
+        if (params.getParam("reference_available", is_available))
+        {
+            FST_INFO("Reference point is %s", (is_available ? "available" : "inavailable"));
+            return is_available;
+        }
+        else
+        {
+            FST_ERROR("Fail to get item from config file, error code = 0x%llx", params.getLastError());
+            return false;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to load config file, error code = 0x%llx", params.getLastError());
+        return false;
+    }
+}
+
+
+ErrorCode Calibrator::deleteReference(void)
+{
+    FST_INFO("Delete reference point.");
+    ParamGroup params(AXIS_GROUP_DIR"arm_group_offset_reference.yaml");
+
+    if (params.getLastError() == SUCCESS)
+    {
+        bool is_available = false;
+
+        if (params.getParam("reference_available", is_available))
+        {
+            if (is_available)
+            {
+                is_available = false;
+
+                if (params.setParam("reference_available", is_available) && params.dumpParamFile())
+                {
+                    FST_INFO("Inactive reference point success.");
+                    return SUCCESS;
+                }
+                else
+                {
+                    FST_ERROR("Error while modifying reference point, err=0x%llx", params.getLastError());
+                    return params.getLastError();
+                }
+            }
+            else
+            {
+                FST_INFO("Reference point is inavailable, nothing to do.");
+                return SUCCESS;
+            }
+        }
+        else
+        {
+            FST_ERROR("Fail to get item from config file, error code = 0x%llx", params.getLastError());
+            return false;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to load config file, error code = 0x%llx", params.getLastError());
+        return false;
+    }
 }
 
 
@@ -807,7 +895,7 @@ ErrorCode Calibrator::saveReference(void)
     char buffer[LOG_TEXT_SIZE];
 
     FST_INFO("Save referenece point");
-    fst_parameter::ParamGroup params("share/configuration/configurable/offset_reference.yaml");
+    ParamGroup params(AXIS_GROUP_DIR"arm_group_offset_reference.yaml");
 
     if (params.getLastError() != SUCCESS)
     {
@@ -847,7 +935,8 @@ ErrorCode Calibrator::saveReference(void)
     FST_INFO("  encoder: %s", printDBLine(&ref_encoder[0], buffer, LOG_TEXT_SIZE));
 
     if (!params.setParam("reference_joint", ref_joint) || !params.setParam("reference_offset", ref_offset) ||
-        !params.setParam("reference_encoder", ref_encoder) || !params.dumpParamFile())
+        !params.setParam("reference_encoder", ref_encoder) || !params.setParam("reference_available", true) ||
+        !params.dumpParamFile())
     {
         FST_ERROR("Error while saving reference point, err=0x%llx", params.getLastError());
         return params.getLastError();
@@ -876,8 +965,8 @@ ErrorCode Calibrator::fastCalibrate(size_t index)
         vector<double>  ref_offset;
         vector<double>  gear_ratio;
 
-        fst_parameter::ParamGroup params("share/configuration/configurable/offset_reference.yaml");
-        fst_parameter::ParamGroup jtac("share/configuration/machine/jtac.yaml");
+        ParamGroup params(AXIS_GROUP_DIR"arm_group_offset_reference.yaml");
+        ParamGroup jtac("share/configuration/machine/jtac.yaml");
 
         if (params.getLastError() == SUCCESS && jtac.getLastError() == SUCCESS)
         {
@@ -974,8 +1063,8 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
     vector<double>  ref_offset;
     vector<double>  gear_ratio;
 
-    fst_parameter::ParamGroup params("share/configuration/configurable/offset_reference.yaml");
-    fst_parameter::ParamGroup jtac("share/configuration/machine/jtac.yaml");
+    ParamGroup params(AXIS_GROUP_DIR"arm_group_offset_reference.yaml");
+    ParamGroup jtac("share/configuration/machine/jtac.yaml");
 
     if (params.getLastError() == SUCCESS && jtac.getLastError() == SUCCESS)
     {

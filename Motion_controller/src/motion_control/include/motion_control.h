@@ -38,7 +38,8 @@ public:
     // ...
 
     // API for zero offset and calibrator
-    void getOffset(double *offset);
+    void getOffset(double (&offset)[NUM_OF_JOINT]);
+    void getOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT]);
     CalibrateState getCalibrateState(void);
 
     ErrorCode saveJoint(void);
@@ -51,6 +52,8 @@ public:
     ErrorCode calibrateOffset(size_t index);
     ErrorCode calibrateOffset(const size_t *pindex, size_t length);
 
+    bool isReferenceAvailable(void);
+    ErrorCode deleteReference(void);
     ErrorCode saveReference(void);
     ErrorCode fastCalibrate(void);
     ErrorCode fastCalibrate(size_t index);

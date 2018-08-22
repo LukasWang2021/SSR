@@ -8,7 +8,7 @@ using namespace std;
 //"/rpc/device_manager/getDeviceList"
 void TpComm::handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
-    if(!encodeResponsePackage(task->hash, ResponseMessageType_DeviceInfoList_fields, task->response_data_ptr, send_buffer_size))
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_DeviceInfoList_fields, task->response_data_ptr, send_buffer_size))
     {
         FST_ERROR("handleResponseGetUserOpMode: failed to encode response package");// send
     }
@@ -18,6 +18,6 @@ void TpComm::handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->response_data_ptr != NULL)
     {
-        delete (ResponseMessageType_DeviceInfoList*)task->response_data_ptr;
+        delete (ResponseMessageType_Uint64_DeviceInfoList*)task->response_data_ptr;
     }
 }

@@ -14,7 +14,7 @@ void TpComm::handleRequest0x0000C1E0(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_DeviceInfoList* response_data_ptr = new ResponseMessageType_DeviceInfoList;
+    ResponseMessageType_Uint64_DeviceInfoList* response_data_ptr = new ResponseMessageType_Uint64_DeviceInfoList;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");

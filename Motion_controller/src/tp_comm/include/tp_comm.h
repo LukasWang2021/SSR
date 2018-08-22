@@ -101,7 +101,7 @@ private:
     void initCommFailedResponsePackage(void* request_data_ptr, void* response_data_ptr);
     void handleRequestPackage(unsigned int hash, void* request_data_ptr, void* response_data_ptr, int recv_bytes, 
                                     const pb_field_t fields[], int package_left);
-    ResponseMessageType_PublishTable getResponseSucceedPublishTable();
+    ResponseMessageType_Uint64_PublishTable getResponseSucceedPublishTable();
 
     bool encodeResponsePackage(unsigned int hash, const pb_field_t fields[], void* response_data_ptr, int& send_buffer_size);
     bool encodePublishElement(Comm_PublishElement_data_t& element, const pb_field_t fields[], void* element_data_ptr);
@@ -157,9 +157,6 @@ private:
     void handleRequest0x00004FA5(int recv_bytes);
     /********getPublishTable, RequestMessageType_Void**********/
     void handleRequest0x000147A5(int recv_bytes);
-
-    /********rpc/controller/addRegTopic, RequestMessageType_Topic**********/
-    void handleRequest0x0000BA13(int recv_bytes);
 
     /********rpc/reg_manager/r/addReg, RequestMessageType_RRegData**********/
     void handleRequest0x00004FF7(int recv_bytes);
@@ -354,10 +351,6 @@ private:
     void handleResponse0x00004324(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********coordinate_manager/getAllValidUserCoordSummaryInfo, ResponseMessageType_UserSummaryList**********/
     void handleResponse0x0001838F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
-    /********rpc/controller/addRegTopic, ResponseMessageType_Bool**********/
-    void handleResponse0x0000BA13(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
 
     /********rpc/reg_manager/r/addReg, ResponseMessageType_Bool**********/
     void handleResponse0x00004FF7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

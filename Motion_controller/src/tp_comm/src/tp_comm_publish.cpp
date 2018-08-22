@@ -68,7 +68,7 @@ void TpComm::handlePublishElement0x0000D0AD(Comm_Publish& package, int element_i
 
 void TpComm::handlePublishElement0x000161F3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
-    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_Int32List_fields, list_element.data_ptr))
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
     {
         FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
     }

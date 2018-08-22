@@ -9,7 +9,7 @@
 #include "request/request_base.pb.h"
 #include "request/request_publish_topic.pb.h"
 #include "request/request_tool_frame.pb.h"
-#include "request/request_user_frame.pb.h"
+#include "request/request_coord_user.pb.h"
 
 #include "request/request_reg_hr.pb.h"
 #include "request/request_reg_mr.pb.h"
@@ -27,10 +27,11 @@
 #include "message_type/pose_euler.pb.h"
 #include "message_type/joint_list.pb.h"
 #include "message_type/tool_frame.pb.h"
-#include "message_type/user_frame.pb.h"
+#include "message_type/coord_user.pb.h"
 
 #include "message_type/device_info.pb.h"
 #include "message_type/int32_int32list.pb.h"
+#include "message_type/int32_doublelist.pb.h"
 #include "message_type/joint_limit.pb.h"
 
 #include "message_type/reg_hr.pb.h"
@@ -44,7 +45,7 @@
 #include "response/response_publish_table.pb.h"
 #include "response/response_rpc_table.pb.h"
 #include "response/response_tool_frame.pb.h"
-#include "response/response_user_frame.pb.h"
+#include "response/response_coord_user.pb.h"
 
 #include "response/response_reg_base_summary.pb.h"
 #include "response/response_reg_hr.pb.h"
@@ -56,7 +57,8 @@
 #include "response/response_bool_int32.pb.h"
 #include "response/response_bool_int32list.pb.h"
 #include "response/response_device_info.pb.h"
-#include "response/response_bool_doublelist.pb.h"
-#include "response/response_bool_jointlimit.pb.h"
+#include "response/response_uint64_doublelist.pb.h"
+#include "response/response_uint64_jointlimit.pb.h"
 
+#include "response/response_uint64_int32.pb.h"
 #endif

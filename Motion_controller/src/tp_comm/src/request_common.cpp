@@ -20,7 +20,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
         return;
     }
 
-    ResponseMessageType_RpcTable* response_data_ptr = new ResponseMessageType_RpcTable;
+    ResponseMessageType_Uint64_RpcTable* response_data_ptr = new ResponseMessageType_Uint64_RpcTable;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -48,6 +48,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     response_data_ptr->header.package_left = 12;
     response_data_ptr->header.error_code = 0;
     response_data_ptr->property.authority = Comm_Authority_TP;
+    response_data_ptr->error_code.data = 0;
 
     std::vector<RpcService>::iterator iter;
     int element_index = 0;
@@ -98,7 +99,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
         return;
     }
 
-    ResponseMessageType_PublishTable* response_data_ptr = new ResponseMessageType_PublishTable;
+    ResponseMessageType_Uint64_PublishTable* response_data_ptr = new ResponseMessageType_Uint64_PublishTable;
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
@@ -131,6 +132,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     response_data_ptr->header.package_left = 12;
     response_data_ptr->header.error_code = 0;
     response_data_ptr->property.authority = Comm_Authority_TP;
+    response_data_ptr->error_code.data = 0;
 
     std::vector<PublishService>::iterator iter;
     int element_index = 0;

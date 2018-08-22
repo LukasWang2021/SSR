@@ -523,9 +523,9 @@ bool TpComm::encodePublishPackage(Comm_Publish& package, unsigned int hash, stru
     return true;
 }
 
-ResponseMessageType_PublishTable TpComm::getResponseSucceedPublishTable()
+ResponseMessageType_Uint64_PublishTable TpComm::getResponseSucceedPublishTable()
 {
-    ResponseMessageType_PublishTable response_data_ptr;
+    ResponseMessageType_Uint64_PublishTable response_data_ptr;
     response_data_ptr.header.time_stamp = 11;
     response_data_ptr.header.package_left = 12;
     response_data_ptr.header.error_code = 0;
@@ -543,6 +543,7 @@ ResponseMessageType_PublishTable TpComm::getResponseSucceedPublishTable()
     }
 
     response_data_ptr.data.element_count = element_index;
+    response_data_ptr.error_code.data = 0;
 
     return response_data_ptr;
 }

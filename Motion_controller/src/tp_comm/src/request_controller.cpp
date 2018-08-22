@@ -227,3 +227,25 @@ void TpComm::handleRequest0x0000C00D(int recv_bytes)
     handleRequestPackage(0x0000C00D, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Void_fields, -1);
 }
+
+//"/rpc/controller/shutdown"
+void TpComm::handleRequest0x0000899E(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000899E, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}

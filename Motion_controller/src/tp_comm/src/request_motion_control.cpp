@@ -293,3 +293,266 @@ void TpComm::handleRequest0x0000A9A0(int recv_bytes)
         recv_bytes, RequestMessageType_Int32_fields, -1);
 }
 
+//"/rpc/motion_control/setGlobalVelRatio"
+void TpComm::handleRequest0x000005EF(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Double* request_data_ptr = new RequestMessageType_Double;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000005EF, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Double_fields, -1);
+}
+
+//"/rpc/motion_control/getGlobalVelRatio"
+void TpComm::handleRequest0x0001578F(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Double* response_data_ptr = new ResponseMessageType_Uint64_Double;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0001578F, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+//"/rpc/motion_control/setGlobalAccRatio",	,	"RequestMessageType.Double",	"ResponseMessageType.Uint64",
+void TpComm::handleRequest0x0000271F(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Double* request_data_ptr = new RequestMessageType_Double;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000271F, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Double_fields, -1);
+}
+
+//"/rpc/motion_control/getGlobalAccRatio"
+void TpComm::handleRequest0x00016D9F(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Double* response_data_ptr = new ResponseMessageType_Uint64_Double;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00016D9F, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setHardLimit"
+void TpComm::handleRequest0x0000C454(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32_JointLimit* request_data_ptr = new RequestMessageType_Int32_JointLimit;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000C454, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_JointLimit_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getHardLimit"
+void TpComm::handleRequest0x00013394(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_JointLimit* response_data_ptr = new ResponseMessageType_Uint64_JointLimit;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00013394, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getCoordinate"
+void TpComm::handleRequest0x00008595(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00008595, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setCoordinate"
+void TpComm::handleRequest0x0000A845(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000A845, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32List_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getTool"
+void TpComm::handleRequest0x0001354C(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0001354C, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setTool"
+void TpComm::handleRequest0x0001581C(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0001581C, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32List_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/convertCartToJoint"
+void TpComm::handleRequest0x00010FD4(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List_DoubleList* request_data_ptr = new RequestMessageType_Int32List_DoubleList;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_DoubleList* response_data_ptr = new ResponseMessageType_Uint64_DoubleList;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00010FD4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32List_DoubleList_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/convertJointToCart",
+void TpComm::handleRequest0x0000B6D4(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List_DoubleList* request_data_ptr = new RequestMessageType_Int32List_DoubleList;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_DoubleList* response_data_ptr = new ResponseMessageType_Uint64_DoubleList;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000B6D4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32List_DoubleList_fields, -1);
+}

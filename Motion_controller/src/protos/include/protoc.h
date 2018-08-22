@@ -17,6 +17,7 @@
 #include "request/request_reg_r.pb.h"
 #include "request/request_reg_sr.pb.h"
 #include "request/request_int32_doublelist.pb.h"
+#include "request/request_int32list_doublelist.pb.h"
 #include "request/request_int32_int32list.pb.h"
 #include "request/request_int32_jointlimit.pb.h"
 
@@ -33,6 +34,7 @@
 #include "message_type/int32_int32list.pb.h"
 #include "message_type/int32_doublelist.pb.h"
 #include "message_type/joint_limit.pb.h"
+#include "message_type/string_int32.pb.h"
 
 #include "message_type/reg_hr.pb.h"
 #include "message_type/reg_mr.pb.h"
@@ -61,4 +63,8 @@
 #include "response/response_uint64_jointlimit.pb.h"
 
 #include "response/response_uint64_int32.pb.h"
+#include "response/response_uint64_int32list.pb.h"
+#include "response/response_uint64_double.pb.h"
+
+
 #endif

@@ -174,3 +174,20 @@ void TpComm::handleResponse0x00002ED5(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64*)task->response_data_ptr;
     }
 }
+
+//"/rpc/controller/shutdown"
+void TpComm::handleResponse0x0000899E(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse0x00002ED5: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}

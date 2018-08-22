@@ -9,6 +9,7 @@
 #include <math.h>
 #include <boost/filesystem.hpp>
 #include <motion_control_offset_calibrator.h>
+#include <common_file_path.h>
 
 
 using namespace std;
@@ -42,7 +43,7 @@ ErrorCode Calibrator::initCalibrator(const string &path)
     vector<double> data;
     char buffer[LOG_TEXT_SIZE];
 
-    FST_INFO("Initializing offset calibrator, number-of-joint = %d ...", joint_num_);
+    FST_INFO("Initializing offset calibrator, number-of-joint = %d.", joint_num_);
 
     // if directory given by 'path' is not found, create it
     boost::filesystem::path pa(path);
@@ -123,7 +124,7 @@ ErrorCode Calibrator::initCalibrator(const string &path)
         offset_stat_[i] = OffsetState(stat[i]);
 
     // load thresholds used in checking offset
-    fst_parameter::ParamGroup params("share/configuration/configurable/motion_plan.yaml");
+    fst_parameter::ParamGroup params(COMPONENT_PARAM_FILE_DIR"motion_control.yaml");
     if (params.getLastError() == SUCCESS)
     {
         data.clear();
@@ -164,8 +165,9 @@ ErrorCode Calibrator::initCalibrator(const string &path)
     }
 
     // load offset config file
-    offset_param_.loadParamFile("share/configuration/machine/offset.yaml");
+    offset_param_.loadParamFile(AXIS_GROUP_DIR"arm_group_offset.yaml");
     result = offset_param_.getLastError();
+
     if (result == SUCCESS)
     {
         data.clear();
@@ -195,7 +197,7 @@ ErrorCode Calibrator::initCalibrator(const string &path)
 
     // set zero offset into core1, offset in core1 should be setted before engage
     FST_INFO("Downloading zero offset ...");
-    if (sendJtacParam("zero_offset"))
+    if (sendJtacParam("zero_offset") == SUCCESS)
     {
         FST_INFO("Success!");
         usleep(256 * 1000);
@@ -241,9 +243,7 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
 }
 
 
-
-
-    ErrorCode Calibrator::checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat)
+ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT])
 {
     ServoState servo_state;
     vector<double> joint;
@@ -315,7 +315,7 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
                     {
                         FST_ERROR("Failed, err=0x%llx", robot_recorder_.getLastError());
                         current_state_ = MOTION_FORBIDDEN;
-                        *cali_stat = current_state_;
+                        cali_stat = current_state_;
                         return robot_recorder_.getLastError();
                     }
                 }
@@ -339,7 +339,7 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
                 }
 
                 current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
-                *cali_stat = current_state_;
+                cali_stat = current_state_;
                 FST_INFO("Done, calibrate motion-state is %d", current_state_);
                 return SUCCESS;
             }
@@ -347,7 +347,7 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
             {
                 FST_ERROR("Invalid array size of joint in recorder, expect %d but get %d", joint_num_, joint.size());
                 current_state_ = MOTION_FORBIDDEN;
-                *cali_stat = current_state_;
+                cali_stat = current_state_;
                 return INVALID_PARAMETER;
             }
         }
@@ -355,7 +355,7 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
         {
             FST_ERROR("Fail to get joint from recorder.");
             current_state_ = MOTION_FORBIDDEN;
-            *cali_stat = current_state_;
+            cali_stat = current_state_;
             return robot_recorder_.getLastError();
         }
     }
@@ -363,7 +363,7 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
     {
         FST_ERROR("Fail to get current joint from share mem.");
         current_state_ = MOTION_FORBIDDEN;
-        *cali_stat = current_state_;
+        cali_stat = current_state_;
         return BARE_CORE_TIMEOUT;
     }
 }

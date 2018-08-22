@@ -11,9 +11,9 @@
 #include <vector>
 
 #include <motion_control_arm_group.h>
-#include <parameter_manager/parameter_manager_param_group.h>
-#include "../../parameter_manager/include/parameter_manager/parameter_manager_param_group.h"
-#include "../../error_monitor/include/error_monitor.h"
+#include "parameter_manager/parameter_manager_param_group.h"
+#include "error_monitor.h"
+#include "common_file_path.h"
 
 
 using namespace std;
@@ -25,10 +25,16 @@ namespace fst_mc
 
 ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 {
-    log_ptr_->initLogger("ArmGroup");
     cycle_time_ = 0.001;
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 
+    if (!log_ptr_->initLogger("ArmGroup"))
+    {
+        FST_ERROR("Lost communication with log server, initGroup abort.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Error monitor addr: 0x%x", error_monitor_ptr);
     if (error_monitor_ptr == NULL)
     {
         FST_ERROR("Invalid pointer of error-monitor.");
@@ -39,6 +45,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         error_monitor_ptr_ = error_monitor_ptr;
     }
 
+    FST_INFO("Initializing mutex ...");
     if (pthread_mutex_init(&auto_mutex_, NULL) != 0 ||
         pthread_mutex_init(&manual_mutex_, NULL) != 0 ||
         pthread_mutex_init(&servo_mutex_, NULL) != 0)
@@ -47,11 +54,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return MOTION_INTERNAL_FAULT;
     }
 
+    FST_INFO("Loading hard constraints ...");
     ParamGroup param;
     vector<double> upper;
     vector<double> lower;
 
-    if (param.loadParamFile("hard_constraint.yaml") &&
+    if (param.loadParamFile(AXIS_GROUP_DIR "hard_constraint.yaml") &&
         param.getParam("hard_constraint/upper", upper) &&
         param.getParam("hard_constraint/lower", lower))
     {
@@ -59,6 +67,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         {
             for (size_t i = 0; i < JOINT_OF_ARM; i++)
             {
+                FST_INFO("  index-%d: [%.6f, %.6f]", i, lower[i], upper[i]);
                 hard_constraint_.upper()[i] = upper[i];
                 hard_constraint_.lower()[i] = lower[i];
             }
@@ -75,11 +84,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
+    FST_INFO("Loading firm constraints ...");
     param.reset();
     upper.clear();
     lower.clear();
 
-    if (param.loadParamFile("firm_constraint.yaml") &&
+    if (param.loadParamFile(AXIS_GROUP_DIR"firm_constraint.yaml") &&
         param.getParam("firm_constraint/upper", upper) &&
         param.getParam("firm_constraint/lower", lower))
     {
@@ -87,6 +97,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         {
             for (size_t i = 0; i < JOINT_OF_ARM; i++)
             {
+                FST_INFO("  index-%d: [%.6f, %.6f]", i, lower[i], upper[i]);
                 firm_constraint_.upper()[i] = upper[i];
                 firm_constraint_.lower()[i] = lower[i];
             }
@@ -103,11 +114,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
+    FST_INFO("Loading soft constraints ...");
     param.reset();
     upper.clear();
     lower.clear();
 
-    if (param.loadParamFile("soft_constraint.yaml") &&
+    if (param.loadParamFile(AXIS_GROUP_DIR"soft_constraint.yaml") &&
         param.getParam("soft_constraint/upper", upper) &&
         param.getParam("soft_constraint/lower", lower))
     {
@@ -115,6 +127,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         {
             for (size_t i = 0; i < JOINT_OF_ARM; i++)
             {
+                FST_INFO("  index-%d: [%.6f, %.6f]", i, lower[i], upper[i]);
                 soft_constraint_.upper()[i] = upper[i];
                 soft_constraint_.lower()[i] = lower[i];
             }
@@ -131,12 +144,15 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
+    FST_INFO("Initializing interface to bare core ...");
+
     if (!bare_core_.initInterface())
     {
         FST_ERROR("Fail to create communication with bare core.");
         return BARE_CORE_TIMEOUT;
     }
 
+    FST_INFO("Initializing calibrator of ArmGroup ...");
     ErrorCode err = calibrator_.initCalibrator();
 
     if (err != SUCCESS)

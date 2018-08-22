@@ -5,6 +5,7 @@
 	> Created Time: 2018年08月08日 星期三 15时35分37秒
  ************************************************************************/
 
+#include <iostream>
 #include <motion_control_core_interface.h>
 
 using namespace std;

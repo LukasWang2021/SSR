@@ -43,7 +43,7 @@ public:
 
     ErrorCode saveJoint(void);
     ErrorCode saveOffset(void);
-    ErrorCode checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat);
+    ErrorCode checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT]);
     ErrorCode maskOffsetLostError(void);
     ErrorCode setOffsetState(size_t index, OffsetState stat);
 

@@ -51,7 +51,7 @@ class Calibrator
     ~Calibrator(void);
     
     ErrorCode initCalibrator(const std::string &path = "/opt/fst_controller/runtime/");
-    ErrorCode checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat);
+    ErrorCode checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT]);
 
 
     ErrorCode calibrateOffset(void);

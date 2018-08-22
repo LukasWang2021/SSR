@@ -134,7 +134,7 @@ ErrorCode MotionControl::saveOffset(void)
     return group_ptr_->getCalibratorPtr()->saveOffset();
 }
 
-ErrorCode MotionControl::checkOffset(CalibrateState *cali_stat, OffsetState *offset_stat)
+ErrorCode MotionControl::checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT])
 {
     return group_ptr_->getCalibratorPtr()->checkOffset(cali_stat, offset_stat);
 }

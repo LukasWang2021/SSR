@@ -1,4 +1,6 @@
 #include "controller_rpc.h"
+#include "error_code.h"
+
 
 using namespace fst_ctrl;
 
@@ -6,7 +8,7 @@ using namespace fst_ctrl;
 void ControllerRpc::handleRpc0x00004FF7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_RRegData* rq_data_ptr = static_cast<RequestMessageType_RRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     RRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -20,7 +22,7 @@ void ControllerRpc::handleRpc0x00004FF7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000012F7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteRReg(rq_data_ptr->data.data);
 }
@@ -29,7 +31,7 @@ void ControllerRpc::handleRpc0x000012F7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00005757(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_RRegData* rq_data_ptr = static_cast<RequestMessageType_RRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     RRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -43,11 +45,11 @@ void ControllerRpc::handleRpc0x00005757(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000EAB7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_RRegData* rs_data_ptr = static_cast<ResponseMessageType_Bool_RRegData*>(response_data_ptr);
+    ResponseMessageType_Uint64_RRegData* rs_data_ptr = static_cast<ResponseMessageType_Uint64_RRegData*>(response_data_ptr);
 
     RRegData reg;
-    rs_data_ptr->success.data = reg_manager_ptr_->getRReg(rq_data_ptr->data.data, &reg);
-    if(rs_data_ptr->success.data)
+    rs_data_ptr->error_code.data = reg_manager_ptr_->getRReg(rq_data_ptr->data.data, &reg);
+    if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.id = reg.id;
         strncpy(rs_data_ptr->data.name, reg.name.c_str(), 31);
@@ -66,7 +68,7 @@ void ControllerRpc::handleRpc0x0000EAB7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000C877(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -74,7 +76,7 @@ void ControllerRpc::handleRpc0x0000C877(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -82,7 +84,7 @@ void ControllerRpc::handleRpc0x0000C877(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000A904(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -97,10 +99,12 @@ void ControllerRpc::handleRpc0x0000A904(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -108,7 +112,7 @@ void ControllerRpc::handleRpc0x0000A904(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00008CE4(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -123,10 +127,12 @@ void ControllerRpc::handleRpc0x00008CE4(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -134,7 +140,7 @@ void ControllerRpc::handleRpc0x00008CE4(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000097E7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_MrRegData* rq_data_ptr = static_cast<RequestMessageType_MrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     MrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -148,7 +154,7 @@ void ControllerRpc::handleRpc0x000097E7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000E5D7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteMrReg(rq_data_ptr->data.data);
 }
@@ -157,7 +163,7 @@ void ControllerRpc::handleRpc0x0000E5D7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000E9B7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_MrRegData* rq_data_ptr = static_cast<RequestMessageType_MrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     MrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -171,11 +177,11 @@ void ControllerRpc::handleRpc0x0000E9B7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000B507(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_MrRegData* rs_data_ptr = static_cast<ResponseMessageType_Bool_MrRegData*>(response_data_ptr);
+    ResponseMessageType_Uint64_MrRegData* rs_data_ptr = static_cast<ResponseMessageType_Uint64_MrRegData*>(response_data_ptr);
 
     MrRegData reg;
-    rs_data_ptr->success.data = reg_manager_ptr_->getMrReg(rq_data_ptr->data.data, &reg);
-    if(rs_data_ptr->success.data)
+    rs_data_ptr->error_code.data = reg_manager_ptr_->getMrReg(rq_data_ptr->data.data, &reg);
+    if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.id = reg.id;
         strncpy(rs_data_ptr->data.name, reg.name.c_str(), 31);
@@ -194,7 +200,7 @@ void ControllerRpc::handleRpc0x0000B507(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00015BA7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -202,7 +208,7 @@ void ControllerRpc::handleRpc0x00015BA7(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -210,7 +216,7 @@ void ControllerRpc::handleRpc0x00015BA7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00001774(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -225,10 +231,12 @@ void ControllerRpc::handleRpc0x00001774(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -236,7 +244,7 @@ void ControllerRpc::handleRpc0x00001774(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00015CF4(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -251,10 +259,12 @@ void ControllerRpc::handleRpc0x00015CF4(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -262,7 +272,7 @@ void ControllerRpc::handleRpc0x00015CF4(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000161E7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_SrRegData* rq_data_ptr = static_cast<RequestMessageType_SrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     SrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -276,7 +286,7 @@ void ControllerRpc::handleRpc0x000161E7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000B817(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteSrReg(rq_data_ptr->data.data);
 }
@@ -285,7 +295,7 @@ void ControllerRpc::handleRpc0x0000B817(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000119F7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_SrRegData* rq_data_ptr = static_cast<RequestMessageType_SrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     SrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -299,11 +309,11 @@ void ControllerRpc::handleRpc0x000119F7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00017F07(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_SrRegData* rs_data_ptr = static_cast<ResponseMessageType_Bool_SrRegData*>(response_data_ptr);
+    ResponseMessageType_Uint64_SrRegData* rs_data_ptr = static_cast<ResponseMessageType_Uint64_SrRegData*>(response_data_ptr);
 
     SrRegData reg;
-    rs_data_ptr->success.data = reg_manager_ptr_->getSrReg(rq_data_ptr->data.data, &reg);
-    if(rs_data_ptr->success.data)
+    rs_data_ptr->error_code.data = reg_manager_ptr_->getSrReg(rq_data_ptr->data.data, &reg);
+    if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.id = reg.id;
         strncpy(rs_data_ptr->data.name, reg.name.c_str(), 31);
@@ -323,7 +333,7 @@ void ControllerRpc::handleRpc0x00017F07(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00002127(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -331,7 +341,7 @@ void ControllerRpc::handleRpc0x00002127(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -339,7 +349,7 @@ void ControllerRpc::handleRpc0x00002127(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00004834(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -354,10 +364,12 @@ void ControllerRpc::handleRpc0x00004834(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -365,7 +377,7 @@ void ControllerRpc::handleRpc0x00004834(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00009854(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -380,10 +392,12 @@ void ControllerRpc::handleRpc0x00009854(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -391,7 +405,7 @@ void ControllerRpc::handleRpc0x00009854(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000154E7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_PrRegData* rq_data_ptr = static_cast<RequestMessageType_PrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     PrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -408,7 +422,7 @@ void ControllerRpc::handleRpc0x000154E7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00001097(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = reg_manager_ptr_->deletePrReg(rq_data_ptr->data.data);
 }
@@ -417,7 +431,7 @@ void ControllerRpc::handleRpc0x00001097(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00009EF7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_PrRegData* rq_data_ptr = static_cast<RequestMessageType_PrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     PrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -434,11 +448,11 @@ void ControllerRpc::handleRpc0x00009EF7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00017207(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_PrRegData* rs_data_ptr = static_cast<ResponseMessageType_Bool_PrRegData*>(response_data_ptr);
+    ResponseMessageType_Uint64_PrRegData* rs_data_ptr = static_cast<ResponseMessageType_Uint64_PrRegData*>(response_data_ptr);
 
     PrRegData reg;
-    rs_data_ptr->success.data = reg_manager_ptr_->getPrReg(rq_data_ptr->data.data, &reg);
-    if(rs_data_ptr->success.data)
+    rs_data_ptr->error_code.data = reg_manager_ptr_->getPrReg(rq_data_ptr->data.data, &reg);
+    if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.id = reg.id;
         strncpy(rs_data_ptr->data.name, reg.name.c_str(), 31);
@@ -462,7 +476,7 @@ void ControllerRpc::handleRpc0x00017207(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000D7C7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -470,7 +484,7 @@ void ControllerRpc::handleRpc0x0000D7C7(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -478,7 +492,7 @@ void ControllerRpc::handleRpc0x0000D7C7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000B454(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -493,10 +507,12 @@ void ControllerRpc::handleRpc0x0000B454(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -504,7 +520,7 @@ void ControllerRpc::handleRpc0x0000B454(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00009354(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -519,10 +535,12 @@ void ControllerRpc::handleRpc0x00009354(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -530,7 +548,7 @@ void ControllerRpc::handleRpc0x00009354(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00016CE7(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_HrRegData* rq_data_ptr = static_cast<RequestMessageType_HrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     HrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -546,7 +564,7 @@ void ControllerRpc::handleRpc0x00016CE7(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00003D17(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = reg_manager_ptr_->deleteHrReg(rq_data_ptr->data.data);
 }
@@ -555,7 +573,7 @@ void ControllerRpc::handleRpc0x00003D17(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000CB77(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_HrRegData* rq_data_ptr = static_cast<RequestMessageType_HrRegData*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     HrRegData reg;
     reg.id = rq_data_ptr->data.id;
@@ -571,11 +589,11 @@ void ControllerRpc::handleRpc0x0000CB77(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00000367(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_HrRegData* rs_data_ptr = static_cast<ResponseMessageType_Bool_HrRegData*>(response_data_ptr);
+    ResponseMessageType_Uint64_HrRegData* rs_data_ptr = static_cast<ResponseMessageType_Uint64_HrRegData*>(response_data_ptr);
 
     HrRegData reg;
-    rs_data_ptr->success.data = reg_manager_ptr_->getHrReg(rq_data_ptr->data.data, &reg);
-    if(rs_data_ptr->success.data)
+    rs_data_ptr->error_code.data = reg_manager_ptr_->getHrReg(rq_data_ptr->data.data, &reg);
+    if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.id = reg.id;
         strncpy(rs_data_ptr->data.name, reg.name.c_str(), 31);
@@ -598,7 +616,7 @@ void ControllerRpc::handleRpc0x00000367(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00014A87(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -606,7 +624,7 @@ void ControllerRpc::handleRpc0x00014A87(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -614,7 +632,7 @@ void ControllerRpc::handleRpc0x00014A87(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00012974(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -629,10 +647,12 @@ void ControllerRpc::handleRpc0x00012974(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 
@@ -640,7 +660,7 @@ void ControllerRpc::handleRpc0x00012974(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00006B54(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_BaseRegSummaryList*>(response_data_ptr);
+    ResponseMessageType_Uint64_BaseRegSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_BaseRegSummaryList*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -655,10 +675,12 @@ void ControllerRpc::handleRpc0x00006B54(void* request_data_ptr, void* response_d
             rs_data_ptr->data.summary[i].comment[31] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
+        rs_data_ptr->error_code.data = SUCCESS;
     }
     else
     {
         rs_data_ptr->data.summary_count = 0;
+        rs_data_ptr->error_code.data = REG_MANAGER_INVALID_ARG;
     }
 }
 

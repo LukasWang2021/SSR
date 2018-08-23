@@ -6,9 +6,9 @@ using namespace fst_ctrl;
 void ControllerRpc::handleRpc0x000050B4(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_Int32* rs_data_ptr = static_cast<ResponseMessageType_Bool_Int32*>(response_data_ptr);
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
-    rs_data_ptr->success.data = true;
+    rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = rq_data_ptr->data.data % 2;
 }
 
@@ -16,15 +16,15 @@ void ControllerRpc::handleRpc0x000050B4(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00011754(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.data = true;
+        rs_data_ptr->data.data = SUCCESS;
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 }
 
@@ -32,9 +32,9 @@ void ControllerRpc::handleRpc0x00011754(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00013074(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_Int32* rs_data_ptr = static_cast<ResponseMessageType_Bool_Int32*>(response_data_ptr);
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
-    rs_data_ptr->success.data = true;
+    rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = rq_data_ptr->data.data % 2;
 }
 
@@ -42,15 +42,15 @@ void ControllerRpc::handleRpc0x00013074(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00007074(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.data = true;
+        rs_data_ptr->data.data = SUCCESS;
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 }
 

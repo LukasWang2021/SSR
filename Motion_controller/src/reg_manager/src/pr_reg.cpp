@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
+#include "error_code.h"
 
 
 using namespace std;
@@ -23,7 +24,7 @@ PrReg::~PrReg()
 
 }
 
-bool PrReg::init()
+ErrorCode PrReg::init()
 {
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
@@ -37,28 +38,28 @@ bool PrReg::init()
 
     if(!readAllRegDataFromYaml())
     {
-        return false;
+        return REG_MANAGER_LOAD_PR_FAILED;
     }
     
-    return true;
+    return SUCCESS;
 }
 
-bool PrReg::addReg(void* data_ptr)
+ErrorCode PrReg::addReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
     if(!isAddInputValid(reg_ptr->id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     if(reg_ptr->value.pos_type != PR_REG_POS_TYPE_JOINT
         && reg_ptr->value.pos_type != PR_REG_POS_TYPE_CARTESIAN)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     if(reg_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
         || reg_ptr->value.pos[1] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[1] < -param_ptr_->pr_value_limit_
@@ -70,14 +71,14 @@ bool PrReg::addReg(void* data_ptr)
         || reg_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
         || reg_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id].pos_type = reg_ptr->value.pos_type;
     data_list_[reg_data.id].group_id = reg_ptr->value.group_id;
@@ -94,21 +95,25 @@ bool PrReg::addReg(void* data_ptr)
     data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
     data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
     data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
-    return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool PrReg::deleteReg(int id)
+ErrorCode PrReg::deleteReg(int id)
 {
     if(!isDeleteInputValid(id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     BaseRegData reg_data;
     packDeleteRegData(reg_data, id);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[id].pos_type = PR_REG_POS_TYPE_JOINT;
     data_list_[id].group_id = -1;
@@ -125,21 +130,25 @@ bool PrReg::deleteReg(int id)
     data_list_[id].posture[1] = false;
     data_list_[id].posture[2] = false;
     data_list_[id].posture[3] = false;
-    return writeRegDataToYaml(reg_data, data_list_[id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool PrReg::getReg(int id, void* data_ptr)
+ErrorCode PrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     reg_ptr->id = reg_data.id;
     reg_ptr->name = reg_data.name;
@@ -159,26 +168,26 @@ bool PrReg::getReg(int id, void* data_ptr)
     reg_ptr->value.posture[1] = data_list_[id].posture[1];
     reg_ptr->value.posture[2] = data_list_[id].posture[2];
     reg_ptr->value.posture[3] = data_list_[id].posture[3];
-    return true;
+    return SUCCESS;
 }
 
-bool PrReg::updateReg(void* data_ptr)
+ErrorCode PrReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     PrRegData* reg_ptr = reinterpret_cast<PrRegData*>(data_ptr);
     if(!isUpdateInputValid(reg_ptr->id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     
     if(reg_ptr->value.pos_type != PR_REG_POS_TYPE_JOINT
         && reg_ptr->value.pos_type != PR_REG_POS_TYPE_CARTESIAN)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
         
     if(reg_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
@@ -191,14 +200,14 @@ bool PrReg::updateReg(void* data_ptr)
         || reg_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
         || reg_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || reg_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id].pos_type = reg_ptr->value.pos_type;
     data_list_[reg_data.id].group_id = reg_ptr->value.group_id;
@@ -215,21 +224,31 @@ bool PrReg::updateReg(void* data_ptr)
     data_list_[reg_data.id].posture[1] = reg_ptr->value.posture[1];
     data_list_[reg_data.id].posture[2] = reg_ptr->value.posture[2];
     data_list_[reg_data.id].posture[3] = reg_ptr->value.posture[3];
-    return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool PrReg::moveReg(int expect_id, int original_id)
+ErrorCode PrReg::moveReg(int expect_id, int original_id)
 {
     if(!isMoveInputValid(expect_id, original_id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     PrRegData data;
-    if(!getReg(original_id, (void*)&data)
-        || !deleteReg(original_id))
+    ErrorCode error_code;
+    error_code = getReg(original_id, (void*)&data);
+    if(error_code != SUCCESS)
     {
-        return false;
+        return error_code;
+    }
+    error_code = deleteReg(original_id);
+    if(error_code != SUCCESS)
+    {
+        return error_code;
     }
     data.id = expect_id;
     return addReg((void*)&data);

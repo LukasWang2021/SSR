@@ -12,7 +12,8 @@ Summary:    lib to communicate between processes
 
 #include <vector>
 #include <string>
-#include "error_code/error_code.h"
+#include "error_code.h"
+#include "base_datatype.h"
 #include "struct_to_mem/struct_joint_command.h"
 #include "struct_to_mem/struct_trajectory_segment.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
@@ -81,7 +82,7 @@ public:
     // Return:  FST_SUCCESS -> succeed to get handle.
     //          CREATE_CHANNEL_FAIL -> failed to create channel 
     //------------------------------------------------------------
-    ERROR_CODE_TYPE createChannel(int protocol, int transport, const char *name);
+    ErrorCode createChannel(int protocol, int transport, const char *name);
 
     //------------------------------------------------------------
     // Function:  send
@@ -94,7 +95,7 @@ public:
     //          SEND_MSG_FAIL -> failed to send data.
     //          CREATE_CHANNEL_FAIL -> didn't or failed to create channel
     //------------------------------------------------------------
-    ERROR_CODE_TYPE send(const void *buf, int buf_size, int flag);
+    ErrorCode send(const void *buf, int buf_size, int flag);
 
     //------------------------------------------------------------
     // Function:  send
@@ -106,7 +107,7 @@ public:
     //          SEND_MSG_FAIL -> failed to send data.
     //          CREATE_CHANNEL_FAIL -> didn't or failed to create channel
     //------------------------------------------------------------
-    ERROR_CODE_TYPE send(std::string str, int flag);
+    ErrorCode send(std::string str, int flag);
 
     //------------------------------------------------------------
     // Function:  recv
@@ -118,7 +119,7 @@ public:
     // Return:  0 -> succeed to get data.
     //          RECV_MSG_FAIL -> failed to get data.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE recv(void *buf, int buf_size, int flag);
+    ErrorCode recv(void *buf, int buf_size, int flag);
 
     //------------------------------------------------------------
     // Function:  recv
@@ -130,7 +131,7 @@ public:
     //          RECV_MSG_FAIL -> failed to get data.
     //          CREATE_CHANNEL_FAIL -> didn't or failed to create channel
     //------------------------------------------------------------
-    ERROR_CODE_TYPE recv(std::string *str, int flag);
+    ErrorCode recv(std::string *str, int flag);
   
     //------------------------------------------------------------
     // Function:  getLocalIP
@@ -172,7 +173,7 @@ private:
     static int obj_num_;
 
     // Record error status.
-    ERROR_CODE_TYPE error_flag_;
+    ErrorCode error_flag_;
 
     //------------------------------------------------------------
     // Function:  convertIpcUrl

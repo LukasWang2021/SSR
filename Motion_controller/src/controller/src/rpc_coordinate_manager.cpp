@@ -1,4 +1,5 @@
 #include "controller_rpc.h"
+#include "error_code.h"
 
 using namespace fst_ctrl;
 
@@ -6,8 +7,8 @@ using namespace fst_ctrl;
 // "/rpc/coordinate_manager/addUserCoord"
 void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_UserInfo* rq_data_ptr = static_cast<RequestMessageType_UserInfo*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    RequestMessageType_UserCoordInfo* rq_data_ptr = static_cast<RequestMessageType_UserCoordInfo*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     CoordInfo info;
     info.id = rq_data_ptr->data.id;
@@ -28,7 +29,7 @@ void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000BAF4(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = coordinate_manager_ptr_->deleteCoord(rq_data_ptr->data.data);
 }
@@ -36,8 +37,8 @@ void ControllerRpc::handleRpc0x0000BAF4(void* request_data_ptr, void* response_d
 // "/rpc/coordinate_manager/updateUserCoord"
 void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_UserInfo* rq_data_ptr = static_cast<RequestMessageType_UserInfo*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    RequestMessageType_UserCoordInfo* rq_data_ptr = static_cast<RequestMessageType_UserCoordInfo*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     CoordInfo info;
     info.id = rq_data_ptr->data.id;
@@ -58,7 +59,7 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x0000E104(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(rq_data_ptr->data.data_count == 2)
     {
@@ -66,7 +67,7 @@ void ControllerRpc::handleRpc0x0000E104(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
     }
 }
 
@@ -74,11 +75,11 @@ void ControllerRpc::handleRpc0x0000E104(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00004324(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Bool_UserInfo* rs_data_ptr = static_cast<ResponseMessageType_Bool_UserInfo*>(response_data_ptr);
+    ResponseMessageType_Uint64_UserCoordInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_UserCoordInfo*>(response_data_ptr);
 
     CoordInfo info;
-    rs_data_ptr->success.data = coordinate_manager_ptr_->getCoordInfoById(rq_data_ptr->data.data, info);
-    if(rs_data_ptr->success.data)
+    rs_data_ptr->error_code.data = coordinate_manager_ptr_->getCoordInfoById(rq_data_ptr->data.data, info);
+    if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.id = info.id;
         strncpy(rs_data_ptr->data.name, info.name.c_str(), 31);
@@ -97,7 +98,8 @@ void ControllerRpc::handleRpc0x00004324(void* request_data_ptr, void* response_d
 
 // "/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"
 void ControllerRpc::handleRpc0x0001838F(void* request_data_ptr, void* response_data_ptr)
-{
+{//FIXME
+#if 0
     ResponseMessageType_UserSummaryList* rs_data_ptr = static_cast<ResponseMessageType_UserSummaryList*>(response_data_ptr);
 
     std::vector<CoordSummaryInfo> info_list;
@@ -112,5 +114,6 @@ void ControllerRpc::handleRpc0x0001838F(void* request_data_ptr, void* response_d
         rs_data_ptr->data.user_summary_info[i].group_id = info_list[i].group_id;
     }
     rs_data_ptr->data.user_summary_info_count = info_list.size();
+#endif    
 }
 

@@ -27,12 +27,12 @@ public:
     SrReg(RegManagerParam* param_ptr);
     ~SrReg();
 
-    virtual bool init();
-    virtual bool addReg(void* data_ptr);
-    virtual bool deleteReg(int id);
-    virtual bool getReg(int id, void* data_ptr);
-    virtual bool updateReg(void* data_ptr);
-    virtual bool moveReg(int expect_id, int original_id);
+    virtual ErrorCode init();
+    virtual ErrorCode addReg(void* data_ptr);
+    virtual ErrorCode deleteReg(int id);
+    virtual ErrorCode getReg(int id, void* data_ptr);
+    virtual ErrorCode updateReg(void* data_ptr);
+    virtual ErrorCode moveReg(int expect_id, int original_id);
     void* getRegValueById(int id);
     bool updateRegValue(SrRegDataIpc* data_ptr);
     bool getRegValue(int id, SrRegDataIpc* data_ptr);

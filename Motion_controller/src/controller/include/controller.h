@@ -15,6 +15,7 @@
 #include "controller_ipc.h"
 #include "device_manager.h"
 #include "motion_control.h"
+#include "base_datatype.h"
 // for test only
 #include "virtual_core1.h"
 
@@ -28,7 +29,7 @@ public:
     ~Controller();
 
     static Controller* getInstance();
-    bool init();
+    ErrorCode init();
     bool isExit();
     
     void runRoutineThreadFunc();

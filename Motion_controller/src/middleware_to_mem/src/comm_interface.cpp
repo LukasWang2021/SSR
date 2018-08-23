@@ -85,7 +85,7 @@ CommInterface::~CommInterface()
 // Return:  FST_SUCCESS -> succeed to get handle.
 //          CREATE_CHANNEL_FAIL -> failed to create channel 
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommInterface::createChannel(int protocol, int transport, const char *name)
+ErrorCode CommInterface::createChannel(int protocol, int transport, const char *name)
 {
     if (strlen(name) >= NAME_SIZE || strlen(name) == 0)
     {
@@ -167,7 +167,7 @@ ERROR_CODE_TYPE CommInterface::createChannel(int protocol, int transport, const 
         return CREATE_CHANNEL_FAIL;
     };
 
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -181,7 +181,7 @@ ERROR_CODE_TYPE CommInterface::createChannel(int protocol, int transport, const 
 //          SEND_MSG_FAIL -> failed to send data.
 //          CREATE_CHANNEL_FAIL -> didn't or failed to create channel 
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommInterface::send(const void *buf, int buf_size, int flag)
+ErrorCode CommInterface::send(const void *buf, int buf_size, int flag)
 {
     if (error_flag_ != 0)
         return error_flag_;
@@ -203,7 +203,7 @@ ERROR_CODE_TYPE CommInterface::send(const void *buf, int buf_size, int flag)
         std::cout<<"Error in CommInterface::send(): "<<nn_strerror(nn_errno())<<std::endl;
         return SEND_MSG_FAIL;
     }
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -216,7 +216,7 @@ ERROR_CODE_TYPE CommInterface::send(const void *buf, int buf_size, int flag)
 //          SEND_MSG_FAIL -> failed to send data.
 //          CREATE_CHANNEL_FAIL -> didn't or failed to create channel 
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommInterface::send(std::string str, int flag)
+ErrorCode CommInterface::send(std::string str, int flag)
 {
     if (error_flag_ != 0)
         return error_flag_;
@@ -224,7 +224,7 @@ ERROR_CODE_TYPE CommInterface::send(std::string str, int flag)
     char *send_buf = new char[str.length() + 1];
     strcpy(send_buf, str.c_str());
 
-    ERROR_CODE_TYPE result = send(send_buf, str.length() + 1, flag);
+    ErrorCode result = send(send_buf, str.length() + 1, flag);
 
     delete[] send_buf;
     return result;
@@ -241,7 +241,7 @@ ERROR_CODE_TYPE CommInterface::send(std::string str, int flag)
 //          RECV_MSG_FAIL -> failed to get data.
 //          CREATE_CHANNEL_FAIL -> didn't or failed to create channel
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommInterface::recv(void *buf, int buf_size, int flag)
+ErrorCode CommInterface::recv(void *buf, int buf_size, int flag)
 {
     if (error_flag_ != 0)
         return error_flag_;
@@ -265,7 +265,7 @@ ERROR_CODE_TYPE CommInterface::recv(void *buf, int buf_size, int flag)
         }
         return RECV_MSG_FAIL;
     }    
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -278,7 +278,7 @@ ERROR_CODE_TYPE CommInterface::recv(void *buf, int buf_size, int flag)
 //          RECV_MSG_FAIL -> failed to get data.
 //          CREATE_CHANNEL_FAIL -> didn't or failed to create channel
 //------------------------------------------------------------
-ERROR_CODE_TYPE CommInterface::recv(std::string *str, int flag)
+ErrorCode CommInterface::recv(std::string *str, int flag)
 {
     if (error_flag_ != 0)
         return error_flag_;
@@ -300,7 +300,7 @@ ERROR_CODE_TYPE CommInterface::recv(std::string *str, int flag)
     }   
     *str = buf;
     nn_freemsg(buf);
-    return FST_SUCCESS;
+    return SUCCESS;
 
 }
 

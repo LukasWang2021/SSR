@@ -1,5 +1,6 @@
 #include "coordinate_manager.h"
 #include "common_file_path.h"
+#include "error_code.h"
 #include <cstring>
 #include <sstream>
 
@@ -22,12 +23,12 @@ CoordinateManager::~CoordinateManager()
 
 }
 
-bool CoordinateManager::init()
+ErrorCode CoordinateManager::init()
 {
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load CoordinateManager component parameters");
-        return false;
+        return COORDINATE_MANAGER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
 
@@ -36,18 +37,18 @@ bool CoordinateManager::init()
     if(!readAllCoordInfoFromYaml(param_ptr_->max_number_of_coords_))
     {
         FST_ERROR("Failed to load coord info");
-        return false;
+        return COORDINATE_MANAGER_LOAD_COORDINFO_FAILED;
     }
-    return true;
+    return SUCCESS;
 }
 
-bool CoordinateManager::addCoord(CoordInfo& info)
+ErrorCode CoordinateManager::addCoord(CoordInfo& info)
 {
     if(info.id >= coord_set_.size()
         || info.id == 0
         || coord_set_[info.id].is_valid)
     {
-        return false;
+        return COORDINATE_MANAGER_INVALID_ARG;
     }
         
     coord_set_[info.id].id = info.id;
@@ -70,15 +71,19 @@ bool CoordinateManager::addCoord(CoordInfo& info)
     }
     coord_set_[info.id].group_id = info.group_id;
     coord_set_[info.id].data = info.data;
-    return writeCoordInfoToYaml(coord_set_[info.id]);
+    if(!writeCoordInfoToYaml(coord_set_[info.id]))
+    {
+        return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool CoordinateManager::deleteCoord(int id)
+ErrorCode CoordinateManager::deleteCoord(int id)
 {
     if(id >= coord_set_.size()
         || id == 0)
     {
-        return false;
+        return COORDINATE_MANAGER_INVALID_ARG;
     }
         
     coord_set_[id].is_valid = false;
@@ -86,16 +91,20 @@ bool CoordinateManager::deleteCoord(int id)
     coord_set_[id].comment = std::string("default");
     coord_set_[id].group_id = -1;
     memset(&coord_set_[id].data, 0, sizeof(fst_mc::PoseEuler));
-    return writeCoordInfoToYaml(coord_set_[id]);
+    if(!writeCoordInfoToYaml(coord_set_[id]))
+    {
+        return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool CoordinateManager::updateCoord(CoordInfo& info)
+ErrorCode CoordinateManager::updateCoord(CoordInfo& info)
 {
     if(info.id >= coord_set_.size()
         || info.id == 0
         || !coord_set_[info.id].is_valid)
     {
-        return false;
+        return COORDINATE_MANAGER_INVALID_ARG;
     }
         
     coord_set_[info.id].id = info.id;
@@ -119,16 +128,20 @@ bool CoordinateManager::updateCoord(CoordInfo& info)
     coord_set_[info.id].group_id = info.group_id;
     coord_set_[info.id].data = info.data;
 
-    return writeCoordInfoToYaml(coord_set_[info.id]);
+    if(!writeCoordInfoToYaml(coord_set_[info.id]))
+    {
+        return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool CoordinateManager::moveCoord(int expect_id, int original_id)
+ErrorCode CoordinateManager::moveCoord(int expect_id, int original_id)
 {
     if(coord_set_[expect_id].is_valid
         || original_id == expect_id
         || !coord_set_[original_id].is_valid)
     {
-        return false;
+        return COORDINATE_MANAGER_INVALID_ARG;
     }
 
     coord_set_[expect_id].id = expect_id;
@@ -145,20 +158,24 @@ bool CoordinateManager::moveCoord(int expect_id, int original_id)
     coord_set_[original_id].group_id = -1;
     memset(&coord_set_[original_id].data, 0, sizeof(fst_mc::PoseEuler));
 
-    return (writeCoordInfoToYaml(coord_set_[original_id]) 
-            && writeCoordInfoToYaml(coord_set_[expect_id]));
+    if(!writeCoordInfoToYaml(coord_set_[original_id]) 
+        || !writeCoordInfoToYaml(coord_set_[expect_id]))
+    {
+        return COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool CoordinateManager::getCoordInfoById(int id, CoordInfo& info)
+ErrorCode CoordinateManager::getCoordInfoById(int id, CoordInfo& info)
 {
     if(id >= coord_set_.size()
         || id <= 0)
     {
-        return false;
+        return COORDINATE_MANAGER_INVALID_ARG;
     }
 
     info = coord_set_[id];
-    return true;
+    return SUCCESS;
 }
 
 std::vector<CoordSummaryInfo> CoordinateManager::getAllValidCoordSummaryInfo()

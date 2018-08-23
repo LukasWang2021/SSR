@@ -25,13 +25,13 @@ ServoDiag::~ServoDiag(void)
 }
 
 
-ERROR_CODE_TYPE ServoDiag::initComm(const char *ip_address, int port)
+ErrorCode ServoDiag::initComm(const char *ip_address, int port)
 {
     char ip_str[30];
 
     snprintf(ip_str,30,"%s:%d", ip_address, port);
     std::cout<<ip_str<<std::endl;
-    ERROR_CODE_TYPE err = comm_.createChannel(COMM_REP, COMM_TCP, ip_str);
+    ErrorCode err = comm_.createChannel(COMM_REP, COMM_TCP, ip_str);
     if (err == CREATE_CHANNEL_FAIL)
     {
         printf("Error when server createChannel.\n");
@@ -74,8 +74,8 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }    
             case PC_READINT:
             {
-                ERROR_CODE_TYPE err = service->readIntVar(*(int*)&pkg.data[0],&pkg.data[4],(int*)&pkg.data[0]);
-                if(FST_SUCCESS!=err)  
+                ErrorCode err = service->readIntVar(*(int*)&pkg.data[0],&pkg.data[4],(int*)&pkg.data[0]);
+                if(SUCCESS!=err)  
                 {
                     std::cout<<"Read Int failed!"<<std::endl;
                 }
@@ -83,9 +83,9 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }
             case PC_SETTRIGGER:
             {
-                ERROR_CODE_TYPE err = service->setTrig(&pkg.data[8],*(int*)&pkg.data[0],(int*)&pkg.data[0]);
+                ErrorCode err = service->setTrig(&pkg.data[8],*(int*)&pkg.data[0],(int*)&pkg.data[0]);
                 DataMonitor::setSnapshotSize(monitor,*(unsigned int*)&pkg.data[4]);
-                if(FST_SUCCESS!=err)  
+                if(SUCCESS!=err)  
                 {
                     std::cout<<"Set trigger failed!"<<std::endl;
                 }
@@ -93,8 +93,8 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }
             case PC_READSERVODTC:
             {
-                ERROR_CODE_TYPE err = service->readErrCode((int)(SERVO_CMD_SEG_LENGTH-sizeof(int))/4,(int*)&pkg.data[4],(int*)&pkg.data[0]);
-                if(FST_SUCCESS!=err)  
+                ErrorCode err = service->readErrCode((int)(SERVO_CMD_SEG_LENGTH-sizeof(int))/4,(int*)&pkg.data[4],(int*)&pkg.data[0]);
+                if(SUCCESS!=err)  
                 {
                     std::cout<<"Read Err Code failed!"<<std::endl;
                 }
@@ -123,8 +123,8 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }    
             case PC_SERVOCMD:
             {
-                ERROR_CODE_TYPE err = service->servoCmd(*(int*)&pkg.data[0],&pkg.data[4],1020,&pkg.data[4],1020);
-                if(FST_SUCCESS!=err)  
+                ErrorCode err = service->servoCmd(*(int*)&pkg.data[0],&pkg.data[4],1020,&pkg.data[4],1020);
+                if(SUCCESS!=err)  
                 {
                     std::cout<<"Servo CMD failed!"<<std::endl;
                 }

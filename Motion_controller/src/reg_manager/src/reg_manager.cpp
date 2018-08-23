@@ -1,5 +1,5 @@
 #include "reg_manager.h"
-
+#include "error_code.h"
 
 using namespace fst_ctrl;
 
@@ -23,7 +23,7 @@ RegManager::~RegManager()
 
 }
 
-bool RegManager::init()
+ErrorCode RegManager::init()
 {
     if(!param_ptr_->loadParam())
     {
@@ -38,38 +38,46 @@ bool RegManager::init()
     reg_ptr_[REG_TYPE_MR] = new MrReg(param_ptr_);
     reg_ptr_[REG_TYPE_R] = new RReg(param_ptr_);
 
+    ErrorCode error_code;
     for(int i = 0; i < REG_TYPE_MAX; ++i)
     {
-        if(reg_ptr_[i] == NULL
-            || !reg_ptr_[i]->init())
+        if(reg_ptr_[i] != NULL)
         {
-            return false;
+            error_code = reg_ptr_[i]->init();
+            if(error_code != SUCCESS)
+            {
+                return error_code;
+            }
+        }
+        else
+        {
+            return REG_MANAGER_INIT_OBJECT_FAILED;
         }
     }
     return true;    
 }
 
-bool RegManager::addPrReg(PrRegData* data_ptr)
+ErrorCode RegManager::addPrReg(PrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_PR]->addReg((void*)data_ptr);
 }
 
-bool RegManager::deletePrReg(int id)
+ErrorCode RegManager::deletePrReg(int id)
 {
     return reg_ptr_[REG_TYPE_PR]->deleteReg(id);
 }
 
-bool RegManager::getPrReg(int id, PrRegData* data_ptr)
+ErrorCode RegManager::getPrReg(int id, PrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_PR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::updatePrReg(PrRegData* data_ptr)
+ErrorCode RegManager::updatePrReg(PrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_PR]->updateReg((void*)data_ptr);
 }
 
-bool RegManager::movePrReg(int expect_id, int original_id)
+ErrorCode RegManager::movePrReg(int expect_id, int original_id)
 {
     return reg_ptr_[REG_TYPE_PR]->moveReg(expect_id, original_id);
 }
@@ -84,27 +92,27 @@ std::vector<BaseRegSummary> RegManager::getPrRegValidList(int start_id, int size
     return reg_ptr_[REG_TYPE_PR]->getValidList(start_id, size);
 }
 
-bool RegManager::addHrReg(HrRegData* data_ptr)
+ErrorCode RegManager::addHrReg(HrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_HR]->addReg((void*)data_ptr);
 }
 
-bool RegManager::deleteHrReg(int id)
+ErrorCode RegManager::deleteHrReg(int id)
 {
     return reg_ptr_[REG_TYPE_HR]->deleteReg(id);
 }
 
-bool RegManager::getHrReg(int id, HrRegData* data_ptr)
+ErrorCode RegManager::getHrReg(int id, HrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_HR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::updateHrReg(HrRegData* data_ptr)
+ErrorCode RegManager::updateHrReg(HrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_HR]->updateReg((void*)data_ptr);
 }
 
-bool RegManager::moveHrReg(int expect_id, int original_id)
+ErrorCode RegManager::moveHrReg(int expect_id, int original_id)
 {
     return reg_ptr_[REG_TYPE_HR]->moveReg(expect_id, original_id);
 }
@@ -119,27 +127,27 @@ std::vector<BaseRegSummary> RegManager::getHrRegValidList(int start_id, int size
     return reg_ptr_[REG_TYPE_HR]->getValidList(start_id, size);
 }
 
-bool RegManager::addMrReg(MrRegData* data_ptr)
+ErrorCode RegManager::addMrReg(MrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_MR]->addReg((void*)data_ptr);
 }
 
-bool RegManager::deleteMrReg(int id)
+ErrorCode RegManager::deleteMrReg(int id)
 {
     return reg_ptr_[REG_TYPE_MR]->deleteReg(id);
 }
 
-bool RegManager::getMrReg(int id, MrRegData* data_ptr)
+ErrorCode RegManager::getMrReg(int id, MrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_MR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::updateMrReg(MrRegData* data_ptr)
+ErrorCode RegManager::updateMrReg(MrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_MR]->updateReg((void*)data_ptr);
 }
 
-bool RegManager::moveMrReg(int expect_id, int original_id)
+ErrorCode RegManager::moveMrReg(int expect_id, int original_id)
 {
     return reg_ptr_[REG_TYPE_MR]->moveReg(expect_id, original_id);
 }
@@ -154,27 +162,27 @@ std::vector<BaseRegSummary> RegManager::getMrRegValidList(int start_id, int size
     return reg_ptr_[REG_TYPE_MR]->getValidList(start_id, size);
 }
 
-bool RegManager::addSrReg(SrRegData* data_ptr)
+ErrorCode RegManager::addSrReg(SrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_SR]->addReg((void*)data_ptr);
 }
 
-bool RegManager::deleteSrReg(int id)
+ErrorCode RegManager::deleteSrReg(int id)
 {
     return reg_ptr_[REG_TYPE_SR]->deleteReg(id);
 }
 
-bool RegManager::getSrReg(int id, SrRegData* data_ptr)
+ErrorCode RegManager::getSrReg(int id, SrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_SR]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::updateSrReg(SrRegData* data_ptr)
+ErrorCode RegManager::updateSrReg(SrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_SR]->updateReg((void*)data_ptr);
 }
 
-bool RegManager::moveSrReg(int expect_id, int original_id)
+ErrorCode RegManager::moveSrReg(int expect_id, int original_id)
 {
     return reg_ptr_[REG_TYPE_SR]->moveReg(expect_id, original_id);
 }
@@ -189,27 +197,27 @@ std::vector<BaseRegSummary> RegManager::getSrRegValidList(int start_id, int size
     return reg_ptr_[REG_TYPE_SR]->getValidList(start_id, size);
 }
 
-bool RegManager::addRReg(RRegData* data_ptr)
+ErrorCode RegManager::addRReg(RRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_R]->addReg((void*)data_ptr);
 }
 
-bool RegManager::deleteRReg(int id)
+ErrorCode RegManager::deleteRReg(int id)
 {
     return reg_ptr_[REG_TYPE_R]->deleteReg(id);
 }
 
-bool RegManager::getRReg(int id, RRegData* data_ptr)
+ErrorCode RegManager::getRReg(int id, RRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_R]->getReg(id, (void*)data_ptr);
 }
 
-bool RegManager::updateRReg(RRegData* data_ptr)
+ErrorCode RegManager::updateRReg(RRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_R]->updateReg((void*)data_ptr);
 }
 
-bool RegManager::moveRReg(int expect_id, int original_id)
+ErrorCode RegManager::moveRReg(int expect_id, int original_id)
 {
     return reg_ptr_[REG_TYPE_R]->moveReg(expect_id, original_id);
 }

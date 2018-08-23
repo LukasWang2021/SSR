@@ -2,6 +2,7 @@
 #include "common_file_path.h"
 #include <cstring>
 #include <sstream>
+#include "error_code.h"
 
 
 using namespace fst_ctrl;
@@ -22,12 +23,12 @@ ToolManager::~ToolManager()
 
 }
 
-bool ToolManager::init()
+ErrorCode ToolManager::init()
 {
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load ToolManager component parameters");
-        return false;
+        return TOOL_MANAGER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
 
@@ -36,18 +37,18 @@ bool ToolManager::init()
     if(!readAllToolInfoFromYaml(param_ptr_->max_number_of_tools_))
     {
         FST_ERROR("Failed to load tool info");
-        return false;
+        return TOOL_MANAGER_LOAD_TOOLINFO_FAILED;
     }
-    return true;
+    return SUCCESS;
 }
 
-bool ToolManager::addTool(ToolInfo& info)
+ErrorCode ToolManager::addTool(ToolInfo& info)
 {
     if(info.id >= tool_set_.size()
         || info.id == 0
         || tool_set_[info.id].is_valid)
     {
-        return false;
+        return TOOL_MANAGER_INVALID_ARG;
     }
         
     tool_set_[info.id].id = info.id;
@@ -70,15 +71,19 @@ bool ToolManager::addTool(ToolInfo& info)
     }
     tool_set_[info.id].group_id = info.group_id;
     tool_set_[info.id].data = info.data;
-    return writeToolInfoToYaml(tool_set_[info.id]);
+    if(!writeToolInfoToYaml(tool_set_[info.id]))
+    {
+        return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool ToolManager::deleteTool(int id)
+ErrorCode ToolManager::deleteTool(int id)
 {
     if(id >= tool_set_.size()
         || id == 0)
     {
-        return false;
+        return TOOL_MANAGER_INVALID_ARG;
     }
         
     tool_set_[id].is_valid = false;
@@ -86,16 +91,20 @@ bool ToolManager::deleteTool(int id)
     tool_set_[id].comment = std::string("default");
     tool_set_[id].group_id = -1;
     memset(&tool_set_[id].data, 0, sizeof(fst_mc::PoseEuler));
-    return writeToolInfoToYaml(tool_set_[id]);
+    if(!writeToolInfoToYaml(tool_set_[id]))
+    {
+        return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool ToolManager::updateTool(ToolInfo& info)
+ErrorCode ToolManager::updateTool(ToolInfo& info)
 {
     if(info.id >= tool_set_.size()
         || info.id == 0
         || !tool_set_[info.id].is_valid)
     {
-        return false;
+        return TOOL_MANAGER_INVALID_ARG;
     }
         
     tool_set_[info.id].id = info.id;
@@ -119,16 +128,20 @@ bool ToolManager::updateTool(ToolInfo& info)
     tool_set_[info.id].group_id = info.group_id;
     tool_set_[info.id].data = info.data;
 
-    return writeToolInfoToYaml(tool_set_[info.id]);
+    if(!writeToolInfoToYaml(tool_set_[info.id]))
+    {
+        return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool ToolManager::moveTool(int expect_id, int original_id)
+ErrorCode ToolManager::moveTool(int expect_id, int original_id)
 {
     if(tool_set_[expect_id].is_valid
         || original_id == expect_id
         || !tool_set_[original_id].is_valid)
     {
-        return false;
+        return TOOL_MANAGER_INVALID_ARG;
     }
 
     tool_set_[expect_id].id = expect_id;
@@ -145,16 +158,20 @@ bool ToolManager::moveTool(int expect_id, int original_id)
     tool_set_[original_id].group_id = -1;
     memset(&tool_set_[original_id].data, 0, sizeof(fst_mc::PoseEuler));
 
-    return (writeToolInfoToYaml(tool_set_[original_id]) 
-            && writeToolInfoToYaml(tool_set_[expect_id]));
+    if(!writeToolInfoToYaml(tool_set_[original_id]) 
+        || !writeToolInfoToYaml(tool_set_[expect_id]))
+    {
+        return TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool ToolManager::getToolInfoById(int id, ToolInfo& info)
+ErrorCode ToolManager::getToolInfoById(int id, ToolInfo& info)
 {
     if(id >= tool_set_.size()
         || id <= 0)
     {
-        return false;
+        return TOOL_MANAGER_INVALID_ARG;
     }
 
     info.id = tool_set_[id].id;
@@ -168,7 +185,7 @@ bool ToolManager::getToolInfoById(int id, ToolInfo& info)
     info.data.orientation.a = tool_set_[id].data.orientation.a;
     info.data.orientation.b = tool_set_[id].data.orientation.b;
     info.data.orientation.c = tool_set_[id].data.orientation.c;
-    return true;
+    return SUCCESS;
 }
 
 std::vector<ToolSummaryInfo> ToolManager::getAllValidToolSummaryInfo()

@@ -12,6 +12,7 @@ Summary:    The actions according to corresponding service id.
 #include "service_actions/response_actions.h"
 #include "stdio.h"
 #include <iostream>
+#include "error_code.h"
 
 namespace fst_response_action
 {

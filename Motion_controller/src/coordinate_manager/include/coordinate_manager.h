@@ -36,13 +36,13 @@ public:
     CoordinateManager();
     ~CoordinateManager();
 
-    bool init();
+    ErrorCode init();
 
-    bool addCoord(CoordInfo& info);
-    bool deleteCoord(int id);
-    bool updateCoord(CoordInfo& info);
-    bool moveCoord(int expect_id, int original_id);
-    bool getCoordInfoById(int id, CoordInfo& info);
+    ErrorCode addCoord(CoordInfo& info);
+    ErrorCode deleteCoord(int id);
+    ErrorCode updateCoord(CoordInfo& info);
+    ErrorCode moveCoord(int expect_id, int original_id);
+    ErrorCode getCoordInfoById(int id, CoordInfo& info);
     std::vector<CoordSummaryInfo> getAllValidCoordSummaryInfo();   
 
 private:

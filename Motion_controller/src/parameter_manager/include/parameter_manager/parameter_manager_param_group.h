@@ -11,11 +11,12 @@
 #include <parameter_manager/parameter_manager_param_value.h>
 #include <string>
 #include <vector>
+#include "base_datatype.h"
 
 
 namespace fst_parameter {
 
-typedef unsigned long long int ErrorCode;
+//typedef unsigned long long int ErrorCode;
 enum ScalarType {
     e_type_invalid,
     e_type_bool,

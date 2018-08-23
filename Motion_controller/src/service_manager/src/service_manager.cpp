@@ -14,6 +14,7 @@ Summary:    dealing with service
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
+#include "error_code.h"
 
 
 namespace fst_service_manager
@@ -54,14 +55,14 @@ ServiceManager::~ServiceManager()
 // Return:  0 -> success.
 //          ERROR_CODE -> failed.
 //------------------------------------------------------------
-ERROR_CODE_TYPE ServiceManager::init(void)
+ErrorCode ServiceManager::init(void)
 {
     handle_core_ = openMem(MEM_CORE);
     if (handle_core_ == -1) return OPEN_CORE_MEM_FAIL;
     clearSharedmem(MEM_CORE);
     
     // Establish the communication channel with other processes.
-    ERROR_CODE_TYPE result = comm_test_.createChannel(COMM_REP, COMM_IPC, "test");
+    ErrorCode result = comm_test_.createChannel(COMM_REP, COMM_IPC, "test");
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error in CommMonito::init(): fail to create modbus channel."<<std::endl;
@@ -110,7 +111,7 @@ memcpy(&test.res_buff[16], &test_code2, sizeof(test_code2));
 response_fifo_.push_back(test);
 */
     
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -143,7 +144,7 @@ bool ServiceManager::receiveRequest(void)
     }
 
     ServiceRequest request;
-    ERROR_CODE_TYPE result = comm_mcs_.recv(&request, sizeof(request), COMM_DONTWAIT);
+    ErrorCode result = comm_mcs_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
         printf("recv servo mcs success with %X\n", request.req_id);
@@ -215,7 +216,7 @@ bool ServiceManager::addRequest(void)
 
                     
         //store the motion controller timeout error.
-        ERROR_CODE_TYPE mcs_timeout = MCS_TIMEOUT;
+        ErrorCode mcs_timeout = MCS_TIMEOUT;
         storeError(mcs_timeout);
 
         check_mcs_enable_ = false;
@@ -327,7 +328,7 @@ bool ServiceManager::fillLocalHeartbeat(void)
         memcpy(&(heartbeat_local_.res_buff[0]), &size, sizeof(size));
         for (size_t i = 0; i < size; ++i)
         {
-            ERROR_CODE_TYPE error = error_fifo_[0];
+            ErrorCode error = error_fifo_[0];
             memcpy(&(heartbeat_local_.res_buff[8 + i*8]), &error, sizeof(error));
             deleteFirstElement(&error_fifo_);
             printf("local heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", heartbeat_local_.res_id, (unsigned char)heartbeat_local_.res_buff[7+8+ i*8],(unsigned char)heartbeat_local_.res_buff[6+8+ i*8],(unsigned char)heartbeat_local_.res_buff[5+8+ i*8],(unsigned char)heartbeat_local_.res_buff[4+8+ i*8],(unsigned char)heartbeat_local_.res_buff[3+8+ i*8],(unsigned char)heartbeat_local_.res_buff[2+8+ i*8],(unsigned char)heartbeat_local_.res_buff[1+8+ i*8],(unsigned char)heartbeat_local_.res_buff[0+8+ i*8]);
@@ -403,13 +404,13 @@ bool ServiceManager::getResponse(void)
 // Return:  0 -> success to send a request and receive a response.
 //          BARE_CORE_TIMEOUT -> timeout. 
 //------------------------------------------------------------
-ERROR_CODE_TYPE ServiceManager::interactBareCore(void)
+ErrorCode ServiceManager::interactBareCore(void)
 {
     if (request_fifo_.empty())
-        return FST_SUCCESS;  
+        return SUCCESS;  
 
     if (!response_fifo_.empty())
-        return FST_SUCCESS;
+        return SUCCESS;
 
     ServiceRequest request = request_fifo_[0];
     int req_result = false, res_result = false;
@@ -468,7 +469,7 @@ bool ServiceManager::storeError(ERROR_CODE_TYPE error)
 //------------------------------------------------------------
 bool ServiceManager::doesErrorExist(ERROR_CODE_TYPE error)
 {
-    for (std::vector<ERROR_CODE_TYPE>::iterator iter = error_fifo_.begin(); iter !=error_fifo_.end(); ++iter)
+    for (std::vector<ErrorCode>::iterator iter = error_fifo_.begin(); iter !=error_fifo_.end(); ++iter)
     {
         if (*iter == error)
             return true;
@@ -548,7 +549,7 @@ bool ServiceManager::transmitResponse(fst_comm_interface::CommInterface &comm)
     ServiceResponse temp_response = response_fifo_[0];
 
     int count = 0;
-    ERROR_CODE_TYPE send_result;
+    ErrorCode send_result;
     do
     {
         send_result = comm.send(&temp_response, sizeof(temp_response), COMM_DONTWAIT);
@@ -556,12 +557,12 @@ bool ServiceManager::transmitResponse(fst_comm_interface::CommInterface &comm)
         if (count >= SEND_RESP_ATTEMPTS)
         {
             std::cout<<"Error in CommMonitor::transmitResponse():fail to send response id(0x"<<std::hex<<temp_response.res_id<<std::dec<<") within limit tries. It was dropped."<<std::endl;
-            ERROR_CODE_TYPE send_error = SEND_RESP_FAIL;
+            ErrorCode send_error = SEND_RESP_FAIL;
             storeError(send_error);
             deleteFirstElement(&response_fifo_);
             return false;
         }
-    } while (send_result != FST_SUCCESS);
+    } while (send_result != SUCCESS);
     deleteFirstElement(&response_fifo_);
     return true;
 }
@@ -578,7 +579,7 @@ bool ServiceManager::extractErrorCode(ServiceResponse resp)
 {
     if (resp.res_id == READ_DTC_SID)
     {
-        ERROR_CODE_TYPE error_code = 0;
+        ErrorCode error_code = 0;
         unsigned int size = *(int*)(&(resp.res_buff[4]));
 
         for (unsigned int i = 0;  i < size; ++i)
@@ -701,7 +702,7 @@ int main(int argc, char** argv)
 */    {
 
     fst_service_manager::ServiceManager cm;
-    ERROR_CODE_TYPE init_result = cm.init();
+    ErrorCode init_result = cm.init();
     if (init_result != 0) 
         return false;
 

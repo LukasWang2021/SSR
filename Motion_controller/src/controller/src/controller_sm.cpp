@@ -85,22 +85,22 @@ int ControllerSm::getSafetyAlarm()
     return safety_alarm_;
 }
 
-bool ControllerSm::setUserOpMode(UserOpMode mode)
+ErrorCode ControllerSm::setUserOpMode(UserOpMode mode)
 {
     if(mode == USER_OP_MODE_AUTO
         || mode == USER_OP_MODE_SLOWLY_MANUAL
         || mode == USER_OP_MODE_UNLIMITED_MANUAL)
     {
         user_op_mode_ = mode;
-        return true;
+        return SUCCESS;
     }
     else
     {
-        return false;
+        return CONTROLLER_INVALID_ARG;
     }
 }
 
-bool ControllerSm::callEstop()
+ErrorCode ControllerSm::callEstop()
 {
     if(ctrl_state_ == CTRL_ENGAGED
         || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED)
@@ -111,10 +111,10 @@ bool ControllerSm::callEstop()
         FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     } 
-    return true;
+    return SUCCESS;
 }
 
-bool ControllerSm::callReset()
+ErrorCode ControllerSm::callReset()
 {
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
@@ -126,7 +126,12 @@ bool ControllerSm::callReset()
         FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
         ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
     }
-    return true;
+    return SUCCESS;
+}
+
+ErrorCode ControllerSm::callShutdown()
+{
+    return SUCCESS;
 }
 
 UserOpMode* ControllerSm::getUserOpModePtr()

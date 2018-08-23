@@ -1,4 +1,5 @@
 #include "controller_rpc.h"
+#include "error_code.h"
 
 using namespace fst_ctrl;
 using namespace fst_comm;
@@ -7,7 +8,7 @@ using namespace fst_comm;
 void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     int element_count = 0;
     void* data_ptr;
     TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
@@ -28,11 +29,11 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
     if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);
-        rs_data_ptr->data.data = true;
+        rs_data_ptr->data.data = SUCCESS;
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
     }
 }
 
@@ -40,7 +41,7 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     int element_count = 0;
     void* data_ptr;
@@ -67,7 +68,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
         }
     }
     
-    rs_data_ptr->data.data = false;
+    rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
     /*if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);
@@ -83,7 +84,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
-    ResponseMessageType_Bool* rs_data_ptr = static_cast<ResponseMessageType_Bool*>(response_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     int element_count = 0;
     void* data_ptr;
@@ -103,11 +104,11 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
     if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);
-        rs_data_ptr->data.data = true;
+        rs_data_ptr->data.data = SUCCESS;
     }
     else
     {
-        rs_data_ptr->data.data = false;
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
     }
 }
 

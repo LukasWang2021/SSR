@@ -39,12 +39,12 @@ Controller* Controller::getInstance()
     return instance_;
 }
 
-bool Controller::init()
+ErrorCode Controller::init()
 {
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load controller component parameters");
-        return false;
+        return CONTROLLER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
     
@@ -53,22 +53,22 @@ bool Controller::init()
 
     if(!device_manager_.init())
     {
-        return false;
+        return CONTROLLER_INIT_OBJECT_FAILED;
     }
     
     if(!tool_manager_.init())
     {
-        return false;
+        return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    if(!coordinate_manager_.init())
+    if(coordinate_manager_.init() != SUCCESS)
     {
-        return false;
+        return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
     if(!reg_manager_.init())
     {
-        return false;
+        return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
     process_comm_ptr_ = ProcessComm::getInstance();
@@ -78,7 +78,7 @@ bool Controller::init()
         || !process_comm_ptr_->getControllerClientPtr()->init()
         || !process_comm_ptr_->getHeartbeatClientPtr()->init())
     {
-        return false;
+        return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
     rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, 
@@ -87,23 +87,23 @@ bool Controller::init()
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, 50))
     {
-        return false;
+        return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     }
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
     {
-        return false;
+        return CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED;
     }
 
     /*if(motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance()) != 0)
     {
-        return false;
+        return CONTROLLER_INIT_OBJECT_FAILED;
     }*/
     
     if(!tp_comm_.init()
         || !tp_comm_.open())
     {
-        return false;
+        return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
     return true;    

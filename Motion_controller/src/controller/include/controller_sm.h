@@ -6,6 +6,7 @@
 #include "virtual_core1.h"
 #include "common_enum.h"
 #include "motion_control.h"
+#include "base_datatype.h"
 
 namespace fst_ctrl
 {
@@ -71,9 +72,10 @@ public:
     CtrlState getCtrlState();
     fst_mc::ServoState getServoState();
     int getSafetyAlarm();
-    bool setUserOpMode(UserOpMode mode);
-    bool callEstop();
-    bool callReset();
+    ErrorCode setUserOpMode(UserOpMode mode);
+    ErrorCode callEstop();
+    ErrorCode callReset();
+    ErrorCode callShutdown();
 
     // for publish data
     UserOpMode* getUserOpModePtr();

@@ -17,7 +17,7 @@ fst_controller::DataMonitor::DataMonitor(const char *ip_addr, int port)
     {
         snprintf(ip_str,30,"%s:%d", ip_addr, port);
         std::cout<<ip_str<<std::endl;
-        ERROR_CODE_TYPE fd = p_comm_->createChannel(COMM_REP, COMM_TCP, ip_str);
+        ErrorCode fd = p_comm_->createChannel(COMM_REP, COMM_TCP, ip_str);
         openMem(MEM_CORE);
         if (fd == CREATE_CHANNEL_FAIL)
         {
@@ -101,7 +101,7 @@ bool fst_controller::DataMonitor::alignNcheck(int & k,int bytesize,int totalsize
 bool fst_controller::DataMonitor::sendResponse(fst_comm_interface::CommInterface* pcomm,const 
 void *buf, int buf_size)
 {
-    ERROR_CODE_TYPE rc;
+    ErrorCode rc;
     bool res = false;
     int retry = 6;
     do
@@ -110,9 +110,9 @@ void *buf, int buf_size)
                 buf_size, 
                 COMM_DONTWAIT);
         retry--;
-    }while(FST_SUCCESS != rc && retry>0);  
+    }while(SUCCESS != rc && retry>0);  
 
-    if(FST_SUCCESS == rc)
+    if(SUCCESS == rc)
         res = true;
     return res;
 }
@@ -260,7 +260,7 @@ void fst_controller::DataMonitor::pcComm_Thread(DataMonitor* moni)
                     //printf("data triggered and locked\n");
                 }
             }
-            if(moni->p_comm_->recv(&req, 2, COMM_DONTWAIT)!=FST_SUCCESS)
+            if(moni->p_comm_->recv(&req, 2, COMM_DONTWAIT)!=SUCCESS)
             {
                 usleep(1000);
 

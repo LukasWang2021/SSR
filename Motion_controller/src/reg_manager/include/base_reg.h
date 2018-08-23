@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include "base_datatype.h"
 
 namespace fst_ctrl
 {
@@ -40,12 +41,12 @@ public:
     BaseReg(RegType type, int size);
     ~BaseReg();
 
-    virtual bool init() = 0;
-    virtual bool addReg(void* data_ptr) = 0;
-    virtual bool deleteReg(int id) = 0;
-    virtual bool getReg(int id, void* data_ptr) = 0;
-    virtual bool updateReg(void* data_ptr) = 0;
-    virtual bool moveReg(int expect_id, int original_id) = 0;
+    virtual ErrorCode init() = 0;
+    virtual ErrorCode addReg(void* data_ptr) = 0;
+    virtual ErrorCode deleteReg(int id) = 0;
+    virtual ErrorCode getReg(int id, void* data_ptr) = 0;
+    virtual ErrorCode updateReg(void* data_ptr) = 0;
+    virtual ErrorCode moveReg(int expect_id, int original_id) = 0;
     virtual void* getRegValueById(int id) = 0;
     std::vector<BaseRegSummary> getChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getValidList(int start_id, int size);

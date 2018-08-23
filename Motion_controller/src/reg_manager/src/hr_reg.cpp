@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
+#include "error_code.h"
 
 
 using namespace std;
@@ -23,7 +24,7 @@ HrReg::~HrReg()
 
 }
 
-bool HrReg::init()
+ErrorCode HrReg::init()
 {
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
@@ -37,17 +38,17 @@ bool HrReg::init()
 
     if(!readAllRegDataFromYaml())
     {
-        return false;
+        return REG_MANAGER_LOAD_HR_FAILED;
     }
     
-    return true;
+    return SUCCESS;
 }
 
-bool HrReg::addReg(void* data_ptr)
+ErrorCode HrReg::addReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     HrRegData* reg_ptr = reinterpret_cast<HrRegData*>(data_ptr);
@@ -71,13 +72,13 @@ bool HrReg::addReg(void* data_ptr)
         || reg_ptr->value.diff_pos[7] > param_ptr_->hr_value_limit_ || reg_ptr->value.diff_pos[7] < -param_ptr_->hr_value_limit_
         || reg_ptr->value.diff_pos[8] > param_ptr_->hr_value_limit_ || reg_ptr->value.diff_pos[8] < -param_ptr_->hr_value_limit_)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id].group_id = reg_ptr->value.group_id;
     data_list_[reg_data.id].joint_pos[0] = reg_ptr->value.joint_pos[0];
@@ -98,21 +99,25 @@ bool HrReg::addReg(void* data_ptr)
     data_list_[reg_data.id].diff_pos[6] = reg_ptr->value.diff_pos[6];
     data_list_[reg_data.id].diff_pos[7] = reg_ptr->value.diff_pos[7];
     data_list_[reg_data.id].diff_pos[8] = reg_ptr->value.diff_pos[8];
-    return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool HrReg::deleteReg(int id)
+ErrorCode HrReg::deleteReg(int id)
 {
     if(!isDeleteInputValid(id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     BaseRegData reg_data;
     packDeleteRegData(reg_data, id);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[id].group_id = -1;
     data_list_[id].joint_pos[0] = 0;
@@ -133,21 +138,25 @@ bool HrReg::deleteReg(int id)
     data_list_[id].diff_pos[6] = 0;
     data_list_[id].diff_pos[7] = 0;
     data_list_[id].diff_pos[8] = 0;
-    return writeRegDataToYaml(reg_data, data_list_[id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool HrReg::getReg(int id, void* data_ptr)
+ErrorCode HrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     HrRegData* reg_ptr = reinterpret_cast<HrRegData*>(data_ptr);
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     reg_ptr->id = reg_data.id;
     reg_ptr->name = reg_data.name;
@@ -171,14 +180,14 @@ bool HrReg::getReg(int id, void* data_ptr)
     reg_ptr->value.diff_pos[6] = data_list_[id].diff_pos[6];
     reg_ptr->value.diff_pos[7] = data_list_[id].diff_pos[7];
     reg_ptr->value.diff_pos[8] = data_list_[id].diff_pos[8];
-    return true;
+    return SUCCESS;
 }
 
-bool HrReg::updateReg(void* data_ptr)
+ErrorCode HrReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     HrRegData* reg_ptr = reinterpret_cast<HrRegData*>(data_ptr);
@@ -202,14 +211,14 @@ bool HrReg::updateReg(void* data_ptr)
         || reg_ptr->value.diff_pos[7] > param_ptr_->hr_value_limit_ || reg_ptr->value.diff_pos[7] < -param_ptr_->hr_value_limit_
         || reg_ptr->value.diff_pos[8] > param_ptr_->hr_value_limit_ || reg_ptr->value.diff_pos[8] < -param_ptr_->hr_value_limit_)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id].group_id = reg_ptr->value.group_id;
     data_list_[reg_data.id].joint_pos[0] = reg_ptr->value.joint_pos[0];
@@ -230,21 +239,31 @@ bool HrReg::updateReg(void* data_ptr)
     data_list_[reg_data.id].diff_pos[6] = reg_ptr->value.diff_pos[6];
     data_list_[reg_data.id].diff_pos[7] = reg_ptr->value.diff_pos[7];
     data_list_[reg_data.id].diff_pos[8] = reg_ptr->value.diff_pos[8]; 
-    return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool HrReg::moveReg(int expect_id, int original_id)
+ErrorCode HrReg::moveReg(int expect_id, int original_id)
 {
     if(!isMoveInputValid(expect_id, original_id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     HrRegData data;
-    if(!getReg(original_id, (void*)&data)
-        || !deleteReg(original_id))
+    ErrorCode error_code;
+    error_code = getReg(original_id, (void*)&data);
+    if(error_code != SUCCESS)
     {
-        return false;
+        return error_code;
+    }
+    error_code = deleteReg(original_id);
+    if(error_code != SUCCESS)
+    {
+        return error_code;
     }
     data.id = expect_id;
     return addReg((void*)&data);

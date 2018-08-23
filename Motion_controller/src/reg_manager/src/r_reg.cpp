@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
+#include "error_code.h"
+
 
 using namespace std;
 using namespace fst_ctrl;
@@ -22,7 +24,7 @@ RReg::~RReg()
 
 }
 
-bool RReg::init()
+ErrorCode RReg::init()
 {
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
@@ -36,17 +38,17 @@ bool RReg::init()
 
     if(!readAllRegDataFromYaml())
     {
-        return false;
+        return REG_MANAGER_LOAD_R_FAILED;
     }
     
-    return true;
+    return SUCCESS;
 }
 
-bool RReg::addReg(void* data_ptr)
+ErrorCode RReg::addReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     RRegData* reg_ptr = reinterpret_cast<RRegData*>(data_ptr);
@@ -54,60 +56,68 @@ bool RReg::addReg(void* data_ptr)
         || reg_ptr->value > param_ptr_->r_value_limit_
         || reg_ptr->value < -param_ptr_->r_value_limit_)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id] = reg_ptr->value;
-    return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool RReg::deleteReg(int id)
+ErrorCode RReg::deleteReg(int id)
 {
     if(!isDeleteInputValid(id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     BaseRegData reg_data;
     packDeleteRegData(reg_data, id);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[id] = 0;
-    return writeRegDataToYaml(reg_data, data_list_[id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool RReg::getReg(int id, void* data_ptr)
+ErrorCode RReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     RRegData* reg_ptr = reinterpret_cast<RRegData*>(data_ptr);
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     reg_ptr->id = reg_data.id;
     reg_ptr->name = reg_data.name;
     reg_ptr->comment = reg_data.comment;
     reg_ptr->value = data_list_[id];
-    return true;
+    return SUCCESS;
 }
 
-bool RReg::updateReg(void* data_ptr)
+ErrorCode RReg::updateReg(void* data_ptr)
 {
     if(data_ptr == NULL)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     RRegData* reg_ptr = reinterpret_cast<RRegData*>(data_ptr);
@@ -115,31 +125,41 @@ bool RReg::updateReg(void* data_ptr)
         || reg_ptr->value > param_ptr_->r_value_limit_
         || reg_ptr->value < -param_ptr_->r_value_limit_)
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id] = reg_ptr->value;
-    return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
+    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+    {
+        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+    }
+    return SUCCESS;
 }
 
-bool RReg::moveReg(int expect_id, int original_id)
+ErrorCode RReg::moveReg(int expect_id, int original_id)
 {
     if(!isMoveInputValid(expect_id, original_id))
     {
-        return false;
+        return REG_MANAGER_INVALID_ARG;
     }
 
     RRegData data;
-    if(!getReg(original_id, (void*)&data)
-        || !deleteReg(original_id))
+    ErrorCode error_code;
+    error_code = getReg(original_id, (void*)&data);
+    if(error_code != SUCCESS)
     {
-        return false;
+        return error_code;
+    }
+    error_code = deleteReg(original_id);
+    if(error_code != SUCCESS)
+    {
+        return error_code;
     }
     data.id = expect_id;
     return addReg((void*)&data);

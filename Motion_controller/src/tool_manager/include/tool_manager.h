@@ -36,13 +36,13 @@ public:
     ToolManager();
     ~ToolManager();
 
-    bool init();
+    ErrorCode init();
 
-    bool addTool(ToolInfo& info);
-    bool deleteTool(int id);
-    bool updateTool(ToolInfo& info);
-    bool moveTool(int expect_id, int original_id);
-    bool getToolInfoById(int id, ToolInfo& info);
+    ErrorCode addTool(ToolInfo& info);
+    ErrorCode deleteTool(int id);
+    ErrorCode updateTool(ToolInfo& info);
+    ErrorCode moveTool(int expect_id, int original_id);
+    ErrorCode getToolInfoById(int id, ToolInfo& info);
     std::vector<ToolSummaryInfo> getAllValidToolSummaryInfo();   
 
 private:

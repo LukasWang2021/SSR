@@ -35,7 +35,7 @@
 #define TOOL_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A20003   /*ToolManager has invalid argument*/
 #define TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A20004   /*ToolManager failed to write ToolInfo config file*/
 #define COORDINATE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A30001   /*CoordinateManager load param failed in initialization phase*/
-#define COORDINATE_MANAGER_LOAD_COORDINFO_FAILED (unsigned long long int)0x0011000B00A30002   /*CoordinateManager load tool info failed in initialization phase*/
+#define COORDINATE_MANAGER_LOAD_COORDINFO_FAILED (unsigned long long int)0x0011000B00A30002   /*CoordinateManager load user coordinate info failed in initialization phase*/
 #define COORDINATE_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A30003   /*CoordinateManager has invalid argument*/
 #define COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A30004   /*CoordinateManager failed to write ToolInfo config file*/
 #define REG_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A40001   /*RegManager load param failed in initialization phase*/
@@ -46,6 +46,7 @@
 #define REG_MANAGER_LOAD_R_FAILED (unsigned long long int)0x0011000B00A40006   /*RegManager load RReg info failed in initialization phase*/
 #define REG_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A40007   /*RegManager has invalid argument*/
 #define REG_MANAGER_REG_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A40008   /*RegManager failed to write reg config file*/
+#define REG_MANAGER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A40009   /*RegManager failed to initialize internal variables*/
 #define DEVICE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A50001   /*DeviceManager load param failed in initialization phase*/
 #define DEVICE_MANAGER_LOAD_DEVICE_CONFIG_FAILED (unsigned long long int)0x0011000B00A50002   /*DeviceManager load device config failed in initialization phase*/
 #define DEVICE_MANAGER_INVALID_DEVICE_TYPE (unsigned long long int)0x0011000B00A50003   /*DeviceManager load invalid type of device from device config file in initialization phase*/
@@ -73,7 +74,9 @@
 #define CONTROLLER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A80001   /*Controller load param failed in initialization phase*/
 #define CONTROLLER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A80002   /*Controller failed to initialize internal object*/
 #define CONTROLLER_CREATE_ROUTINE_THREAD_FAILED (unsigned long long int)0x0011000B00A80003   /*Controller failed to create routine thread*/
-#define CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED (unsigned long long int)0x0011000B00A80003   /*Controller failed to create heartbeat thread*/
+#define CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED (unsigned long long int)0x0011000B00A80004   /*Controller failed to create heartbeat thread*/
+#define CONTROLLER_INVALID_ARG (unsigned long long int)0x0001000200A80005   /*Controller has invalid argument*/
+#define CONTROLLER_PUBLISH_FAILED (unsigned long long int)0x0001000200A80006   /*Controller failed to echo the request of publish something*/
 
 #define IK_OUT_OF_WORKSPACE (unsigned long long int)0x00010004006503E9   /*IK failed for Axis 1*/
 #define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x00010004006503EA   /*IK failed for Axis 2~6*/
@@ -111,7 +114,6 @@
 #define NEED_INITIALIZATION (unsigned long long int)0x0001000200660411   /*ArmGroup need to initialize */
 #define NEED_CALIBRATION (unsigned long long int)0x0001000400660412   /*ArmGroup need to calibrate*/
 #define IPC_COMMUNICATION_ERROR (unsigned long long int)0x00010002006607E7   /*fail to communicate with other process*/
-#define BARE_CORE_TIMEOUT (unsigned long long int)0x00010004006607E8   /*fail to communicate with bare core*/
 
 #define FAIL_INTERPRETER_BASE                       (unsigned long long int)0x0001000900B50000   /*fail to dump parameter into a file*/
 #define FAIL_INTERPRETER_SYNTAX_ERROR               (unsigned long long int)0x0001000900B50001 
@@ -150,6 +152,24 @@
 #define FAIL_INTERPRETER_NOT_IN_PAUSE               (unsigned long long int)0x0001000900B5010B
 
 #define PARSE_IO_PATH_FAILED                    (unsigned long long int)0x0001000400670009   /*cant use current path to set IO*/
+
+#define PARAM_INTERNAL_FAULT (unsigned long long int)0x0001000400790001   /*program internal fault*/
+#define PARAM_FAIL_IN_INIT (unsigned long long int)0x00010002007903E9   /*initialization failed*/
+#define PARAM_NOT_FOUND (unsigned long long int)0x00010002007903F3   /*cannot find the param*/
+#define PARAM_TYPE_ERROR (unsigned long long int)0x00010002007903F4   /*param has a type beyond expectation*/
+#define PARAM_LENGTH_ERROR (unsigned long long int)0x00010000007903F5   /*try to touch a param beyond range*/
+#define PARAM_PARSE_ERROR (unsigned long long int)0x00010002007903FD   /*cannot parse a scalar to expected value type*/
+#define COMMUNICATION_ERROR (unsigned long long int)0x0001000200790407   /*cannot communicate with remote server*/
+#define BAD_FILE_PATH (unsigned long long int)0x00000002007907D1   /*bad path of config file*/
+#define BAD_FILE_EXTENSION (unsigned long long int)0x00000002007907D2   /*bad extension of config file*/
+#define BAD_FILE_NAME (unsigned long long int)0x00000002007907D3   /*bad name of config file*/
+#define FAIL_OPENNING_FILE (unsigned long long int)0x00010002007907DB   /*open config file failed*/
+#define FAIL_BUILDING_PARAM_TREE (unsigned long long int)0x00010002007907DC   /*build param tree failed*/
+#define FAIL_RESTORING_YAML (unsigned long long int)0x00010002007907DD   /*restore YAML from backup failed*/
+#define FAIL_UPDATING_BACKUP (unsigned long long int)0x00010002007907DE   /*update backup file falled*/
+#define FAIL_DUMPING_PARAM (unsigned long long int)0x00010002007907DF   /*fail to dump parameter into a file*/
+
+#define FAIL_INTERPRETER_BASE (unsigned long long int)0x0001000900B50000   /*fail to dump parameter into a file*/
 
 
 #endif

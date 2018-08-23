@@ -10,6 +10,8 @@
 #include <servo_service.h>
 #include "comm_interface/comm_interface.h"
 #include <data_monitor.h>
+#include "base_datatype.h"
+#include "error_code.h"
 
 #ifndef SERVO_DIAG_H
 #define SERVO_DIAG_H
@@ -60,7 +62,7 @@ class ServoDiag {
     // Out:     None
     // Return:  Error code
     //------------------------------------------------------------
-    static ERROR_CODE_TYPE initComm(const char *ip_address, int port);
+    static ErrorCode initComm(const char *ip_address, int port);
 
 
     //------------------------------------------------------------

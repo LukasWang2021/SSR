@@ -17,6 +17,7 @@ Summary:    dealing with service
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 #include "service_actions/response_actions.h"
+#include "base_datatype.h"
 
 namespace fst_service_manager
 {
@@ -59,7 +60,7 @@ public:
     // Return:  0 -> success.
     //          ERROR_CODE -> failed.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE init(void);
+    ErrorCode init(void);
 
     //------------------------------------------------------------
     // Function:  receiveRequest
@@ -152,7 +153,7 @@ public:
     // Return:  0 -> success to send a request and receive a response.
     //          BARE_CORE_TIMEOUT -> timeout. 
     //------------------------------------------------------------
-    ERROR_CODE_TYPE interactBareCore(void);
+    ErrorCode interactBareCore(void);
 
     //------------------------------------------------------------
     // Function:  storeError
@@ -315,7 +316,7 @@ private:
     std::vector<ServiceResponse> response_fifo_;
 
     // The fifo is to store error codes.
-    std::vector<ERROR_CODE_TYPE> error_fifo_;
+    std::vector<ErrorCode> error_fifo_;
 
     // Used to respond local services from BARE CORE.
     fst_response_action::ResponseAction response_action_;

@@ -235,7 +235,7 @@ void* basic_interpreter(void* arg)
   //  }
   setPrgmState(IDLE_R);
   // clear line path
-  setCurLine("");
+  setCurLine((char *)"");
 
   // free(objThreadCntrolBlock->instrSet);
   objThreadCntrolBlock->instrSet = 0 ;
@@ -253,6 +253,7 @@ void* basic_interpreter(void* arg)
   printf("Left  pthread_join.\n");
   fflush(stdout);
   g_basic_interpreter_handle[iIdx] = 0;
+  return NULL ;
 #endif // WIN32
 }
 
@@ -391,10 +392,10 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
   char * cLineContentPtr = 0 ;
   char * cLineContentProgPtr = 0 ;
   char cLineContent[LINE_CONTENT_LEN];
-  int iScan = 0 ;
+  // int iScan = 0 ;
   // char in[80];
   // char *p_buf;
-  char *t = 0;
+  // char *t = 0;
 
   objThreadCntrolBlock->ret_value = 0.0 ;
 //  objThreadCntrolBlock->stateLineNum = LINENUM_PRODUCED ;
@@ -468,7 +469,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		  return 1;
 	  }
 	  // Save local var stack index.
-	  int lvartemp = objThreadCntrolBlock->local_var_stack.size();
+	  // int lvartemp = objThreadCntrolBlock->local_var_stack.size();
 	  gosub_push(objThreadCntrolBlock, objThreadCntrolBlock->prog); /* save place to return to */
 	  objThreadCntrolBlock->prog = loc;  /* start program running at that loc */
 	  
@@ -577,8 +578,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 						objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos)
 					{
 						printf("objThreadCntrolBlock->prog : (%08X) and start_prog_pos (%08X) \n",
-							objThreadCntrolBlock->prog, 
-							objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos);
+							(unsigned int)objThreadCntrolBlock->prog, 
+							(unsigned int)objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos);
 					}
 					objThreadCntrolBlock->prog =
 						objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos;
@@ -833,7 +834,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 
 int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum)
 {
-	if(iNum < objThreadCntrolBlock->prog_jmp_line.size())
+	if(iNum < (int)objThreadCntrolBlock->prog_jmp_line.size())
 	{
 		objThreadCntrolBlock->prog = objThreadCntrolBlock->prog_jmp_line[iNum].start_prog_pos;
 		return iNum ;
@@ -843,14 +844,14 @@ int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int
 
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 {
-	for(int i = 0 ; i < objThreadCntrolBlock->prog_jmp_line.size() ; i++)
+	for(int i = 0 ; i < (int)objThreadCntrolBlock->prog_jmp_line.size() ; i++)
 	{
 		if(objThreadCntrolBlock->prog < objThreadCntrolBlock->prog_jmp_line[i].end_prog_pos)
 		{
 			prog_line_info tmpDbg = objThreadCntrolBlock->prog_jmp_line[i];
 			printf("calc_line_from_prog get %d at (%08X, %08X) \n", 
-		   	    i, tmpDbg.start_prog_pos,
-		   	    objThreadCntrolBlock->prog_jmp_line[i-1].start_prog_pos);
+		   	    i, (unsigned int)tmpDbg.start_prog_pos,
+		   	    (unsigned int)objThreadCntrolBlock->prog_jmp_line[i-1].start_prog_pos);
 		//   printf("calc_line_from_prog get %d at (%08X, %08X) \n", 
 		//   	    i, objThreadCntrolBlock->prog,
 		//   	    objThreadCntrolBlock->prog_jmp_line[i-1].start_prog_pos);
@@ -875,9 +876,9 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
   sprintf(fname, "%s.bas", pname);
 #else
-  sprintf(fname, "%s\/programs\/%s.xml", forgesight_get_programs_path(), pname);
+  sprintf(fname, "%s/programs/%s.xml", forgesight_get_programs_path(), pname);
   parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
-  sprintf(fname, "%s\/programs\/%s.bas", forgesight_get_programs_path(), pname);
+  sprintf(fname, "%s/programs/%s.bas", forgesight_get_programs_path(), pname);
 #endif
   if(!(fp=fopen(fname, "r"))) 
   {
@@ -1687,7 +1688,7 @@ void exec_next(struct thread_control_block * objThreadCntrolBlock)
 // Deal the COMMAND such like "loop 5"
 void exec_loop(struct thread_control_block * objThreadCntrolBlock)
 {
-  int iRet = JUMP_OUT_INIT ;
+  // int iRet = JUMP_OUT_INIT ;
   struct select_and_cycle_stack loop_stack;
   // int value;
   eval_value value;
@@ -2534,7 +2535,7 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 		FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH     ,     "func params mismatching",     // 18
 		FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO     ,     "exec macro duplicating"       // 19
   };
-  if(error > sizeof(errInfo)/sizeof(ErrInfo)) {
+  if(error > (int)(sizeof(errInfo)/sizeof(ErrInfo))) {
   	printf("\t NOTICE : Error out of range %d \n", error);
     return;
   }
@@ -3246,7 +3247,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
     {
 		if(strchr(vname, '['))
 		{
-			int iValue = -1;
+			// int iValue = -1;
 			
 			if(g_io_mapper.find(vname) != g_io_mapper.end() )
 			{
@@ -3341,7 +3342,7 @@ bool basic_thread_create(int iIdx, void * args)
 	}
 	else
 	{
-      printf("start basic_thread_create Failed..\n", iIdx);
+      printf("start basic_thread_create Failed..\n");
 		g_basic_interpreter_handle[iIdx] = 0;
 	}
 #endif

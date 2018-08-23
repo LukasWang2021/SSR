@@ -144,7 +144,7 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		objPrRegDataIpc.pos[4] = ptr->value.pos[4];
 		objPrRegDataIpc.pos[5] = ptr->value.pos[5];
 		
-		printf("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		printf("setPr: id = %d (%f, %f, %f, %f, %f, %f) \n", num, 
 			ptr->value.pos[0], ptr->value.pos[1], 
 			ptr->value.pos[2], ptr->value.pos[3], 
 			ptr->value.pos[4], ptr->value.pos[5]);

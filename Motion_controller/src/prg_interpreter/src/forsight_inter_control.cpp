@@ -30,15 +30,16 @@ using namespace fst_ctrl ;
 using namespace std;
 
 static std::vector<Instruction> g_script;
-static int block_start, block_end;
+// static int block_start;
+static int block_end;
 bool terminated = false;
 
 bool is_backward= false;
 InterpreterState prgm_state = IDLE_R;
 //bool send_flag = false;
 // int target_line;
-static IntprtStatus intprt_status;
-static Instruction instruction;
+// static IntprtStatus intprt_status;
+// static Instruction instruction;
 static CtrlStatus ctrl_status;
 // static InterpreterControl intprt_ctrl;
 
@@ -70,7 +71,7 @@ vector<string> split(string str,string pattern)
 	for(int i=0; i<size; i++)
 	{
 		pos=str.find(pattern,i);
-		if(pos<size)
+		if((int)pos<size)
 		{
 			string s=str.substr(i,pos-i);
 			result.push_back(s);
@@ -169,7 +170,7 @@ bool parseScript(const char* fname)
 
 void findLoopEnd(int index)
 {
-    for(int i = index; i < g_script.size(); i++)
+    for(int i = index; i < (int)g_script.size(); i++)
     {
         if (g_script[i].type == END_PROG) // END)
         {
@@ -202,7 +203,7 @@ void setIntprtDataFlag(bool flag)
 	CtrlStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->is_data_ready) - (int)tempPtr ;
 #else
-    int offset = &((CtrlStatus*)0)->is_data_ready;
+    int offset = (int)&((CtrlStatus*)0)->is_data_ready;
 #endif  
     writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
 }
@@ -214,7 +215,7 @@ bool getIntprtDataFlag()
 	CtrlStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->is_data_ready) - (int)tempPtr ;
 #else
-    int offset = &((CtrlStatus*)0)->is_data_ready;  
+    int offset = (int)&((CtrlStatus*)0)->is_data_ready;  
 #endif     
     readShm(SHM_CTRL_STATUS, offset, (void*)&is_data_ready, sizeof(is_data_ready));
     return is_data_ready;
@@ -260,7 +261,7 @@ void setPrgmState(InterpreterState state)
     IntprtStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->state) - (int)tempPtr ;
 #else
-    int offset = &((IntprtStatus*)0)->state;
+    int offset = (int)&((IntprtStatus*)0)->state;
 #endif
     printf("setPrgmState to %d\n", (int)state);
     writeShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
@@ -273,7 +274,7 @@ void setCurLine(char * line)
     int offset = (int)&(tempPtr->line) - (int)tempPtr ;
 #else
    // int offset = (int)&intprt_status.line - (int)&intprt_status;
-    int offset = &((Instruction*)0)->line;   
+    int offset = (int)&((Instruction*)0)->line;   
 #endif  
     printf("setCurLine %s(%d) at %d\n", line, strlen(line), offset);
 //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
@@ -290,7 +291,7 @@ void setWarning(long long int warn)
 	IntprtStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
 #else
-    int offset = &((IntprtStatus*)0)->warn;
+    int offset = (int)&((IntprtStatus*)0)->warn;
 #endif  
     writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
 }
@@ -301,7 +302,7 @@ void setSendPermission(bool flag)
 	CtrlStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->is_permitted) - (int)tempPtr ;
 #else
-    int offset = &((CtrlStatus*)0)->is_permitted;
+    int offset = (int)&((CtrlStatus*)0)->is_permitted;
 #endif  
     writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
 }
@@ -312,7 +313,7 @@ void getSendPermission()
 	CtrlStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->is_permitted) - (int)tempPtr ;
 #else
-    int offset = &((CtrlStatus*)0)->is_permitted;
+    int offset = (int)&((CtrlStatus*)0)->is_permitted;
 #endif  
     readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.is_permitted, sizeof(ctrl_status.is_permitted));
 }
@@ -323,7 +324,7 @@ UserOpMode getUserOpMode()
 	CtrlStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->user_op_mode) - (int)tempPtr ;
 #else
-    int offset = &((CtrlStatus*)0)->user_op_mode;
+    int offset = (int)&((CtrlStatus*)0)->user_op_mode;
 #endif  
     readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.user_op_mode, sizeof(ctrl_status.user_op_mode));
 
@@ -340,7 +341,7 @@ UserOpMode getUserOpMode()
 
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction)
 {
-    int iLineNum = 0;
+//    int iLineNum = 0;
 	// We had eaten MOV* as token. 
     if (objThdCtrlBlockPtr->is_abort)
     {
@@ -356,7 +357,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 	
 	setSendPermission(false);
 	
-    int count = 0;
+//    int count = 0;
     bool ret;
     //printf("cur state:%d\n", prgm_state);
     if ((objThdCtrlBlockPtr->prog_mode == STEP_MODE) 
@@ -622,12 +623,12 @@ void waitInterpreterStateToPaused(
 
 void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_block * objThdCtrlBlockPtr)
 {
-	InterpreterState interpreterState  = IDLE_R;
+//	InterpreterState interpreterState  = IDLE_R;
 #ifdef WIN32
 	__int64 result = 0 ;
 #endif
 
-	RegMap reg ;
+//	RegMap reg ;
 	IOPathInfo  dioPathInfo ;
 	
 	int iLineNum = 0 ;
@@ -637,19 +638,19 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
 #ifndef WIN32
-    int iIONum = 0 ;
+//    int iIONum = 0 ;
 //	fst_io_manager::IODeviceInfo * objIODeviceInfoPtr ;
-	char * objCharPtr ;
-	IODeviceInfoShm * objIODeviceInfoShmPtr ;
+//	char * objCharPtr ;
+//	IODeviceInfoShm * objIODeviceInfoShmPtr ; 
 	
-	char tempDebug[1024];
-	int iSeq = 0 ;
-	char * testDebug = 0 ;
-	RegChgList  * regChgList ;
-	ChgFrameSimple * chgFrameSimple ;
+//	char tempDebug[1024];
+//	int iSeq = 0 ;
+//	char * testDebug = 0 ;
+//	RegChgList  * regChgList ;
+//	ChgFrameSimple * chgFrameSimple ;
 //	RegManagerInterface objRegManagerInterface("share/configuration/machine");
-	std::vector<BaseRegData> vecRet ; 
-    char * strChgRegLst ;
+//	std::vector<BaseRegData> vecRet ; 
+//    char * strChgRegLst ;
 	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
 	if(intprt_ctrl.cmd != LOAD)
         printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);

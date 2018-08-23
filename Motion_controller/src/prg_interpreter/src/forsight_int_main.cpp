@@ -24,10 +24,6 @@ int main(int  argc, char *argv[])
 	append_io_mapping();
 	forgesight_load_io_config();
 	load_register_data();
-// #ifndef WIN32
-//     glog.initLogger("interpreter");\
-//     glog.setDisplayLevel(fst_log::MSG_LEVEL_INFO);
-// #endif
 	while(1)
 	{
 		std::vector<fst_base::ProcessCommRequestResponse>::iterator it;

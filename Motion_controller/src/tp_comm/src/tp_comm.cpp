@@ -142,6 +142,16 @@ void TpComm::pushTaskToResponseList(TpRequestResponse& package)
     response_list_mutex_.unlock();
 }
 
+void TpComm::lockPublishMutex()
+{
+    publish_list_mutex_.lock();
+}
+
+void TpComm::unlockPublishMutex()
+{
+    publish_list_mutex_.unlock();
+}
+
 TpPublish TpComm::generateTpPublishTask(unsigned int topic_hash, int interval_min, int interval_max)
 {
     TpPublish task;

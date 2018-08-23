@@ -1,6 +1,7 @@
 #include "controller_rpc.h"
 #include "base_datatype.h"
 #include "motion_control_datatype.h"
+#include "error_code.h"
 
 using namespace fst_ctrl;
 using namespace fst_mc;
@@ -210,7 +211,26 @@ void ControllerRpc::handleRpc0x000114A4(void* request_data_ptr, void* response_d
     if(rq_data_ptr->limit.positive_limit.data_count == 9
         && rq_data_ptr->limit.negative_limit.data_count == 9)
     {
-        rs_data_ptr->data.data = SUCCESS;
+        JointConstraint constraint;
+        constraint.upper.j1 = rq_data_ptr->limit.positive_limit.data[0];
+        constraint.upper.j2 = rq_data_ptr->limit.positive_limit.data[1];
+        constraint.upper.j3 = rq_data_ptr->limit.positive_limit.data[2];
+        constraint.upper.j4 = rq_data_ptr->limit.positive_limit.data[3];
+        constraint.upper.j5 = rq_data_ptr->limit.positive_limit.data[4];
+        constraint.upper.j6 = rq_data_ptr->limit.positive_limit.data[5];
+        constraint.upper.j7 = rq_data_ptr->limit.positive_limit.data[6];
+        constraint.upper.j8 = rq_data_ptr->limit.positive_limit.data[7];
+        constraint.upper.j9 = rq_data_ptr->limit.positive_limit.data[8];
+        constraint.lower.j1 = rq_data_ptr->limit.negative_limit.data[0];
+        constraint.lower.j2 = rq_data_ptr->limit.negative_limit.data[1];
+        constraint.lower.j3 = rq_data_ptr->limit.negative_limit.data[2];
+        constraint.lower.j4 = rq_data_ptr->limit.negative_limit.data[3];
+        constraint.lower.j5 = rq_data_ptr->limit.negative_limit.data[4];
+        constraint.lower.j6 = rq_data_ptr->limit.negative_limit.data[5];
+        constraint.lower.j7 = rq_data_ptr->limit.negative_limit.data[6];
+        constraint.lower.j8 = rq_data_ptr->limit.negative_limit.data[7];
+        constraint.lower.j9 = rq_data_ptr->limit.negative_limit.data[8];
+        rs_data_ptr->data.data = motion_control_ptr_->setSoftConstraint(constraint);
     }
     else
     {
@@ -224,9 +244,31 @@ void ControllerRpc::handleRpc0x0000C764(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimit*>(response_data_ptr);
 
-    rs_data_ptr->limit.positive_limit.data_count = 9;
-    rs_data_ptr->limit.negative_limit.data_count = 9;
-    rs_data_ptr->error_code.data = SUCCESS;
+    JointConstraint constraint;
+    rs_data_ptr->error_code.data = motion_control_ptr_->getSoftConstraint(constraint);
+    if(rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->limit.positive_limit.data_count = 9;
+        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1;
+        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2;
+        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3;
+        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4;
+        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5;
+        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6;
+        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7;
+        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8;
+        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9;
+        rs_data_ptr->limit.negative_limit.data_count = 9;
+        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1;
+        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2;
+        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3;
+        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4;
+        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5;
+        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6;
+        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7;
+        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8;
+        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9;
+    }
 }
 
 // "/rpc/motion_control/axis_group/setManuSoftLimit"
@@ -238,7 +280,26 @@ void ControllerRpc::handleRpc0x000108E4(void* request_data_ptr, void* response_d
     if(rq_data_ptr->limit.positive_limit.data_count == 9
         && rq_data_ptr->limit.negative_limit.data_count == 9)
     {
-        rs_data_ptr->data.data = SUCCESS;
+        JointConstraint constraint;
+        constraint.upper.j1 = rq_data_ptr->limit.positive_limit.data[0];
+        constraint.upper.j2 = rq_data_ptr->limit.positive_limit.data[1];
+        constraint.upper.j3 = rq_data_ptr->limit.positive_limit.data[2];
+        constraint.upper.j4 = rq_data_ptr->limit.positive_limit.data[3];
+        constraint.upper.j5 = rq_data_ptr->limit.positive_limit.data[4];
+        constraint.upper.j6 = rq_data_ptr->limit.positive_limit.data[5];
+        constraint.upper.j7 = rq_data_ptr->limit.positive_limit.data[6];
+        constraint.upper.j8 = rq_data_ptr->limit.positive_limit.data[7];
+        constraint.upper.j9 = rq_data_ptr->limit.positive_limit.data[8];
+        constraint.lower.j1 = rq_data_ptr->limit.negative_limit.data[0];
+        constraint.lower.j2 = rq_data_ptr->limit.negative_limit.data[1];
+        constraint.lower.j3 = rq_data_ptr->limit.negative_limit.data[2];
+        constraint.lower.j4 = rq_data_ptr->limit.negative_limit.data[3];
+        constraint.lower.j5 = rq_data_ptr->limit.negative_limit.data[4];
+        constraint.lower.j6 = rq_data_ptr->limit.negative_limit.data[5];
+        constraint.lower.j7 = rq_data_ptr->limit.negative_limit.data[6];
+        constraint.lower.j8 = rq_data_ptr->limit.negative_limit.data[7];
+        constraint.lower.j9 = rq_data_ptr->limit.negative_limit.data[8];
+        rs_data_ptr->data.data = motion_control_ptr_->setFirmConstraint(constraint);
     }
     else
     {
@@ -252,56 +313,188 @@ void ControllerRpc::handleRpc0x0000C244(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimit*>(response_data_ptr);
 
-    rs_data_ptr->limit.positive_limit.data_count = 9;
-    rs_data_ptr->limit.negative_limit.data_count = 9;
-    rs_data_ptr->error_code.data = SUCCESS;
+    JointConstraint constraint;
+    rs_data_ptr->error_code.data = motion_control_ptr_->getFirmConstraint(constraint);
+    if(rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->limit.positive_limit.data_count = 9;
+        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1;
+        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2;
+        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3;
+        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4;
+        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5;
+        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6;
+        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7;
+        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8;
+        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9;
+        rs_data_ptr->limit.negative_limit.data_count = 9;
+        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1;
+        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2;
+        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3;
+        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4;
+        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5;
+        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6;
+        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7;
+        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8;
+        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9;
+    }
 }
 
 // "/rpc/motion_control/axis_group/setHardLimit"
 void ControllerRpc::handleRpc0x0000C454(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32_JointLimit* rq_data_ptr = static_cast<RequestMessageType_Int32_JointLimit*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if(rq_data_ptr->limit.positive_limit.data_count == 9
+        && rq_data_ptr->limit.negative_limit.data_count == 9)
+    {
+        JointConstraint constraint;
+        constraint.upper.j1 = rq_data_ptr->limit.positive_limit.data[0];
+        constraint.upper.j2 = rq_data_ptr->limit.positive_limit.data[1];
+        constraint.upper.j3 = rq_data_ptr->limit.positive_limit.data[2];
+        constraint.upper.j4 = rq_data_ptr->limit.positive_limit.data[3];
+        constraint.upper.j5 = rq_data_ptr->limit.positive_limit.data[4];
+        constraint.upper.j6 = rq_data_ptr->limit.positive_limit.data[5];
+        constraint.upper.j7 = rq_data_ptr->limit.positive_limit.data[6];
+        constraint.upper.j8 = rq_data_ptr->limit.positive_limit.data[7];
+        constraint.upper.j9 = rq_data_ptr->limit.positive_limit.data[8];
+        constraint.lower.j1 = rq_data_ptr->limit.negative_limit.data[0];
+        constraint.lower.j2 = rq_data_ptr->limit.negative_limit.data[1];
+        constraint.lower.j3 = rq_data_ptr->limit.negative_limit.data[2];
+        constraint.lower.j4 = rq_data_ptr->limit.negative_limit.data[3];
+        constraint.lower.j5 = rq_data_ptr->limit.negative_limit.data[4];
+        constraint.lower.j6 = rq_data_ptr->limit.negative_limit.data[5];
+        constraint.lower.j7 = rq_data_ptr->limit.negative_limit.data[6];
+        constraint.lower.j8 = rq_data_ptr->limit.negative_limit.data[7];
+        constraint.lower.j9 = rq_data_ptr->limit.negative_limit.data[8];
+        rs_data_ptr->data.data = motion_control_ptr_->setHardConstraint(constraint);
+    }
+    else
+    {
+        rs_data_ptr->data.data = INVALID_PARAMETER;
+    }
 }
 
 // "/rpc/motion_control/axis_group/getHardLimit"
 void ControllerRpc::handleRpc0x00013394(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_JointLimit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimit*>(response_data_ptr);
 
+    JointConstraint constraint;
+    rs_data_ptr->error_code.data = motion_control_ptr_->getHardConstraint(constraint);
+    if(rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->limit.positive_limit.data_count = 9;
+        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1;
+        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2;
+        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3;
+        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4;
+        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5;
+        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6;
+        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7;
+        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8;
+        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9;
+        rs_data_ptr->limit.negative_limit.data_count = 9;
+        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1;
+        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2;
+        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3;
+        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4;
+        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5;
+        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6;
+        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7;
+        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8;
+        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9;
+    }
 }
 
 // "/rpc/motion_control/axis_group/setCoordinate"
 void ControllerRpc::handleRpc0x0000A845(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if(rq_data_ptr->data.data_count == 3)
+    {
+        rs_data_ptr->data.data = SUCCESS;
+    }
+    else
+    {
+        rs_data_ptr->data.data = INVALID_PARAMETER;
+    }
 }
 
 // "/rpc/motion_control/axis_group/getCoordinate"
 void ControllerRpc::handleRpc0x00008595(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
+    rs_data_ptr->error_code.data = SUCCESS;
+    rs_data_ptr->data.data_count = 2;
 }
 
 // "/rpc/motion_control/axis_group/setTool"
 void ControllerRpc::handleRpc0x0001581C(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = SUCCESS;
+    }
+    else
+    {
+        rs_data_ptr->data.data = INVALID_PARAMETER;
+    }
 }
 
 // "/rpc/motion_control/axis_group/getTool"
 void ControllerRpc::handleRpc0x0001354C(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
+    rs_data_ptr->error_code.data = SUCCESS;
 }
 
 // "/rpc/motion_control/axis_group/convertCartToJoint"
 void ControllerRpc::handleRpc0x00010FD4(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32List_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32List_DoubleList*>(request_data_ptr);
+    ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
 
+    if(rq_data_ptr->data1.data_count == 4
+        && rq_data_ptr->data2.data_count == 6)
+    {
+        rs_data_ptr->data.data_count = 9;
+        rs_data_ptr->error_code.data = SUCCESS;
+    }
+    else
+    {
+        rs_data_ptr->data.data_count = 9;
+        rs_data_ptr->error_code.data = INVALID_PARAMETER;
+    }
 }
 
 // "/rpc/motion_control/axis_group/convertJointToCart"
 void ControllerRpc::handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32List_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32List_DoubleList*>(request_data_ptr);
+    ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
 
+    if(rq_data_ptr->data1.data_count == 4
+        && rq_data_ptr->data2.data_count == 9)
+    {
+        rs_data_ptr->data.data_count = 6;
+        rs_data_ptr->error_code.data = SUCCESS;
+    }
+    else
+    {
+        rs_data_ptr->data.data_count = 6;
+        rs_data_ptr->error_code.data = INVALID_PARAMETER;
+    }
 }
 

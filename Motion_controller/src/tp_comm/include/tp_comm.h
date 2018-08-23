@@ -63,6 +63,8 @@ public:
     TpPublish generateTpPublishTask(unsigned int topic_hash, int interval_min, int interval_max);
     void addTpPublishElement(TpPublish& task, unsigned int element_hash, void* element_data_ptr);
     void pushTaskToPublishList(TpPublish& package);
+    void lockPublishMutex();
+    void unlockPublishMutex();
 
     // component parameters
     int log_level_;

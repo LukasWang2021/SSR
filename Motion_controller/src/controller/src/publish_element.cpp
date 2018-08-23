@@ -40,7 +40,7 @@ void* ControllerPublish::getSafetyAlarmPtr()
 
 void* ControllerPublish::getAxisGroupJointFeedbackPtr()
 {
-    return NULL;
+    return (void*)&joint_feedback_;
 }
 
 void* ControllerPublish::getAxisGroupTcpWorldCartesianPtr()

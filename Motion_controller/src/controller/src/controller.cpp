@@ -119,6 +119,7 @@ void Controller::runRoutineThreadFunc()
     state_machine_.processStateMachine();
     rpc_.processRpc();
     ipc_.processIpc();
+    
 }
 
 void Controller::runHeartbeatThreadFunc()

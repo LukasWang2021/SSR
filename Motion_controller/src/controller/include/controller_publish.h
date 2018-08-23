@@ -7,6 +7,7 @@
 #include "tp_comm.h"
 #include "controller_sm.h"
 #include "motion_control.h"
+#include "base_datatype.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -22,6 +23,8 @@ public:
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     HandlePublishFuncPtr getPublishHandlerByHash(unsigned int hash);
+    void updatePublish();
+    
 private:
     fst_log::Logger* log_ptr_;
     ControllerParam* param_ptr_;
@@ -42,8 +45,8 @@ private:
     std::vector<PublishService> publish_table_;
     std::vector<PublishService> publish_quick_search_table_[QUICK_SEARCH_TABLE_SIZE]; 
 
-    // publish data, mutex protected
-    
+    // publish data, mutex protected    
+    MessageType_Int32_DoubleList joint_feedback_;
 
     void initPublishTable();
     void initPublishQuickSearchTable();

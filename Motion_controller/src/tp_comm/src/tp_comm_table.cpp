@@ -133,14 +133,15 @@ void TpComm::initPublishElementTable()
 	publish_service =	{	"/publish/controller/ServoStatus",	0x00002053,	"MessageType.Int32",	&TpComm::handlePublishElement0x00002053,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 	publish_service =	{	"/publish/controller/SafetyAlarm",	0x0000D0AD,	"MessageType.Int32",	&TpComm::handlePublishElement0x0000D0AD,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 
-	publish_service =	{	"/publish/motion_control/axis_group/feedback/joints",	0x000161F3,	"MessageType_Int32_DoubleList(count=9)",	&TpComm::handlePublishElement0x000161F3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/motion_control/axis_group/feedback/tcp_world_cartesian",	0x00009D8E,	"MessageType_Int32_DoubleList(count=6)",	&TpComm::handlePublishElement0x00009D8E,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/motion_control/axis_group/feedback/tcp_base_cartesian",	0x00002D5E,	"MessageType_Int32_DoubleList(count=6)",	&TpComm::handlePublishElement0x00002D5E,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/motion_control/axis_group/feedback/tcp_current_cartesian",	0x0000352E,	"MessageType_Int32_DoubleList(count=6)",	&TpComm::handlePublishElement0x0000352E,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/motion_control/axis_group/current_coordinate",	0x00012C55,	"MessageType_Int32List(count=3)",	&TpComm::handlePublishElement0x00012C55,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/motion_control/axis_group/current_tool",	0x00004BEC,	"MessageType_Int32List(count=2)",	&TpComm::handlePublishElement0x00004BEC,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/motion_control/global_vel_ratio",	0x00012A4F,	"MessageType_Double",	&TpComm::handlePublishElement0x00012A4F,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/motion_control/global_acc_ratio",	0x0001517F,	"MessageType_Double",	&TpComm::handlePublishElement0x0001517F,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
-	publish_service =	{	"/publish/interpreter/program_status",	0x00001AF3,	"MessageType_String_Int32",	&TpComm::handlePublishElement0x00001AF3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/axis_group/feedback/joints",	0x000161F3,	"MessageType.Int32_DoubleList(count=9)",	&TpComm::handlePublishElement0x000161F3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/axis_group/feedback/tcp_world_cartesian",	0x00009D8E,	"MessageType.Int32_DoubleList(count=6)",	&TpComm::handlePublishElement0x00009D8E,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/axis_group/feedback/tcp_base_cartesian",	0x00002D5E,	"MessageType.Int32_DoubleList(count=6)",	&TpComm::handlePublishElement0x00002D5E,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/axis_group/feedback/tcp_current_cartesian",	0x0000352E,	"MessageType.Int32_DoubleList(count=6)",	&TpComm::handlePublishElement0x0000352E,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/axis_group/current_coordinate",	0x00012C55,	"MessageType.Int32List(count=3)",	&TpComm::handlePublishElement0x00012C55,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/axis_group/current_tool",	0x00004BEC,	"MessageType.Int32List(count=2)",	&TpComm::handlePublishElement0x00004BEC,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/global_vel_ratio",	0x00012A4F,	"MessageType.Double",	&TpComm::handlePublishElement0x00012A4F,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/motion_control/global_acc_ratio",	0x0001517F,	"MessageType.Double",	&TpComm::handlePublishElement0x0001517F,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+
+	publish_service =	{	"/publish/interpreter/program_status",	0x00001AF3,	"MessageType.String_Int32",	&TpComm::handlePublishElement0x00001AF3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 
 }

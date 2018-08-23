@@ -53,7 +53,6 @@ void ControllerIpc::handleIpcGetPrRegPos(void* request_data_ptr, void* response_
 {
     int* rq_data_ptr = static_cast<int*>(request_data_ptr);
     PrRegDataIpc* rs_data_ptr = static_cast<PrRegDataIpc*>(response_data_ptr);
-
     
     if(!reg_manager_ptr_->getPrRegPos(*rq_data_ptr, rs_data_ptr))
     {

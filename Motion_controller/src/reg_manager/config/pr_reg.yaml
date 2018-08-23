@@ -20,7 +20,7 @@ PR1:
     posture4: false
 PR2:
     id: 2
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     group_id: -1
@@ -40,7 +40,7 @@ PR2:
     posture4: false
 PR3:
     id: 3
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     group_id: -1

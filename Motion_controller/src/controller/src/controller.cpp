@@ -56,7 +56,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
     
-    if(!tool_manager_.init())
+    if(tool_manager_.init() != SUCCESS)
     {
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
@@ -66,7 +66,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    if(!reg_manager_.init())
+    if(reg_manager_.init() != SUCCESS)
     {
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
@@ -106,7 +106,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    return true;    
+    return SUCCESS;    
 }
 
 bool Controller::isExit()

@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include "error_code.h"
+#include <iostream>
 
 
 using namespace std;
@@ -301,7 +302,7 @@ bool PrReg::getRegPos(int id, PrRegDataIpc* data_ptr)
     {
         return false;
     }
-    
+
     data_ptr->id = id;
     memcpy(&data_ptr->pos[0], &data_list_[data_ptr->id].pos[0], 9*sizeof(double));
     return true;

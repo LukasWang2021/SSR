@@ -28,7 +28,7 @@ ErrorCode RegManager::init()
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load reg manager component parameters");
-        return false;
+        return REG_MANAGER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
 
@@ -54,7 +54,7 @@ ErrorCode RegManager::init()
             return REG_MANAGER_INIT_OBJECT_FAILED;
         }
     }
-    return true;    
+    return SUCCESS;    
 }
 
 ErrorCode RegManager::addPrReg(PrRegData* data_ptr)

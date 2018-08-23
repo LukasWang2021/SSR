@@ -68,7 +68,7 @@ void ControllerRpc::processRpc()
         }
         tp_comm_ptr_->pushTaskToResponseList(*it);
     }
-    publish_.updatePublish();
+    //publish_.updatePublish();
 }
 
 void ControllerRpc::initRpcQuickSearchTable()

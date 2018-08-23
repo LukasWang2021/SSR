@@ -1504,7 +1504,6 @@ bool reg_manager_interface_setCommentPl(char *ptr, uint16_t num)
 std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
-	bool bRet = false ;
 	vecRet.clear();
 #ifndef WIN32
 	if(g_objRegManagerInterface)
@@ -1517,8 +1516,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, i
 	{
 		printf("g_objRegManagerInterface is NULL\n");
 	}
-#else
-	bRet = true ;
 #endif
 	return vecRet ;
 }
@@ -1526,7 +1523,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, i
 std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
-	bool bRet = false ;
 	vecRet.clear();
 #ifndef WIN32
 	if(g_objRegManagerInterface)
@@ -1539,8 +1535,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, i
 	{
 		printf("g_objRegManagerInterface is NULL\n");
 	}
-#else
-	bRet = true ;
 #endif
 	return vecRet ;
 }
@@ -1548,7 +1542,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, i
 std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
-	bool bRet = false ;
 	vecRet.clear();
 #ifndef WIN32
 	if(g_objRegManagerInterface)
@@ -1561,8 +1554,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, in
 	{
 		printf("g_objRegManagerInterface is NULL\n");
 	}
-#else
-	bRet = true ;
 #endif
 	return vecRet ;
 }
@@ -1570,7 +1561,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, in
 std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
-	bool bRet = false ;
 	vecRet.clear();
 #ifndef WIN32
 	if(g_objRegManagerInterface)
@@ -1584,8 +1574,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, i
 	{
 		printf("g_objRegManagerInterface is NULL\n");
 	}
-#else
-	bRet = true ;
 #endif
 	return vecRet ;
 }
@@ -1593,7 +1581,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, i
 std::vector<BaseRegData> reg_manager_interface_read_valid_hr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
-	bool bRet = false ;
 	vecRet.clear();
 #ifndef WIN32
 	if(g_objRegManagerInterface)
@@ -1606,8 +1593,6 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_hr_lst(int start_id, i
 	{
 		printf("g_objRegManagerInterface is NULL\n");
 	}
-#else
-	bRet = true ;
 #endif
 	return vecRet ;
 }

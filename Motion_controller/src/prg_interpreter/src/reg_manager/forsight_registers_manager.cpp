@@ -1415,7 +1415,7 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			int iValue = (int)valueStart->getFloatValue();
-			printf("Set VALUE:(%f) to MR[%s]\n", iValue, reg_idx);
+			printf("Set VALUE:(%d) to MR[%s]\n", iValue, reg_idx);
 			reg_manager_interface_setValueMr(&iValue, iRegIdx);
 	       	return 0 ;
 		}

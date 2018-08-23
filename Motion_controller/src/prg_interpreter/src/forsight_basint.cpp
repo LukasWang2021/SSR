@@ -217,7 +217,7 @@ void* basic_interpreter(void* arg)
 #endif
 {
   int iIdx = 0;
-  int iRet = 0;
+//  int iRet = 0;
   struct thread_control_block * objThreadCntrolBlock
   				= (struct thread_control_block*)arg;
   // Set this state outside according prog_mode
@@ -227,7 +227,8 @@ void* basic_interpreter(void* arg)
   //  {
   //  	setRunningMacroInstr(objThreadCntrolBlock->project_name);
   //  }
-  iRet = call_interpreter(objThreadCntrolBlock, 1);
+  // iRet = 
+  call_interpreter(objThreadCntrolBlock, 1);
   printf("Left  call_interpreter.\n");
   //  if(objThreadCntrolBlock->is_in_macro)
   //  {
@@ -956,9 +957,9 @@ void deal_array_element(struct thread_control_block * objThreadCntrolBlock)
     int array_value;
     char array_variable[128];
 	char * temp_prog = 0 ;
-	char * start_pos = 0 ;
+//	char * start_pos = 0 ;
 	memset(array_variable, 0x00, 128);
-    start_pos = array_variable ;
+//    start_pos = array_variable ;
 
 	temp_prog = objThreadCntrolBlock->prog;
 	get_token(objThreadCntrolBlock);
@@ -2916,8 +2917,8 @@ void level6(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
 
   op = 0;
   if((objThreadCntrolBlock->token_type==DELIMITER) &&
-  	*(objThreadCntrolBlock->token)=='+'
-  	|| *(objThreadCntrolBlock->token)=='-') {
+  	(*(objThreadCntrolBlock->token)=='+'
+  	|| *(objThreadCntrolBlock->token)=='-')) {
     op = *(objThreadCntrolBlock->token);
     get_token(objThreadCntrolBlock);
   }
@@ -2947,7 +2948,7 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
   std::string strValue ;
   char var[80];
   int iRet = 0 ;
-  char *progFuncCall; 
+  // char *progFuncCall; 
   switch(objThreadCntrolBlock->token_type) {
   case VARIABLE:
 	objThreadCntrolBlock->g_variable_error = 0 ;
@@ -2989,7 +2990,7 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
     get_token(objThreadCntrolBlock);
     return;
   case INSIDEFUNC:
-    progFuncCall = objThreadCntrolBlock->prog ;
+    // progFuncCall = objThreadCntrolBlock->prog ;
   	putback(objThreadCntrolBlock);
 	// exec_call(objThreadCntrolBlock);
 	iRet = exec_call(objThreadCntrolBlock);

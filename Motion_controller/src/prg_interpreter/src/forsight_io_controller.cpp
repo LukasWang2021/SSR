@@ -294,7 +294,7 @@ void generate_fake_io_config()
 
 int forgesight_load_io_config()
 {	
-	int iCode = 0;
+//	int iCode = 0;
 	FILE *f;long len;char *data;
 	
 	f=fopen(IO_EMULATOR_JSON,"rb"); 
@@ -391,7 +391,7 @@ void refresh_io_config_emulated()
 int set_io_status_to_io_mananger(
 	char *vname, eval_value& value)
 {
-	char val = (char)value.getFloatValue();
+	// char val = (char)value.getFloatValue();
 	return 1 ;
 }
 
@@ -423,7 +423,7 @@ eval_value forgesight_get_io_status(char *name)
 	char io_idx[16] ;
 	// char io_key_buffer[16] ;
 
-	int  iIOIdx = 0 ;
+//	int  iIOIdx = 0 ;
 	char * namePtr = name ;
 	char *temp = NULL ;
 	
@@ -442,7 +442,7 @@ eval_value forgesight_get_io_status(char *name)
 	memset(io_idx, 0x00, 16);
 	temp = io_idx ;
 	get_num_token(namePtr, temp);
-	iIOIdx = atoi(io_idx);
+//	iIOIdx = atoi(io_idx);
 	// namePtr += strlen(reg_idx) ;
 	
 	namePtr += strlen(io_idx) ;
@@ -680,7 +680,7 @@ int forgesight_read_io_emulate_status(char * name, int& value)
 	char io_idx[16] ;
 	// char io_key_buffer[32] ;
 
-	int  iIOIdx = 0 ;
+//	int  iIOIdx = 0 ;
 	char * namePtr = name ;
 	char *temp = NULL ;
 	
@@ -710,7 +710,7 @@ int forgesight_read_io_emulate_status(char * name, int& value)
 		memset(io_idx, 0x00, 16);
 		temp = io_idx ;
 		get_num_token(namePtr, temp);
-		iIOIdx = atoi(io_idx);
+//		iIOIdx = atoi(io_idx);
 		// namePtr += strlen(reg_idx) ;
 		
 		namePtr += strlen(io_idx) ;
@@ -733,7 +733,7 @@ int forgesight_mod_io_emulate_status(char * name, char value)
 	char io_idx[16] ;
 	// char io_key_buffer[32] ;
 
-	int  iIOIdx = 0 ;
+//	int  iIOIdx = 0 ;
 	char * namePtr = name ;
 	char *temp = NULL ;
 	
@@ -765,7 +765,7 @@ int forgesight_mod_io_emulate_status(char * name, char value)
 		memset(io_idx, 0x00, 16);
 		temp = io_idx ;
 		get_num_token(namePtr, temp);
-		iIOIdx = atoi(io_idx);
+//		iIOIdx = atoi(io_idx);
 		// namePtr += strlen(reg_idx) ;
 		
 		namePtr += strlen(io_idx) ;
@@ -789,7 +789,7 @@ int forgesight_mod_io_emulate_value(char * name, char value)
 	char io_idx[16] ;
 	// char io_key_buffer[32] ;
 
-	int  iIOIdx = 0 ;
+//	int  iIOIdx = 0 ;
 	char * namePtr = name ;
 	char *temp = NULL ;
 	
@@ -816,7 +816,7 @@ int forgesight_mod_io_emulate_value(char * name, char value)
 		memset(io_idx, 0x00, 16);
 		temp = io_idx ;
 		get_num_token(namePtr, temp);
-		iIOIdx = atoi(io_idx);
+//		iIOIdx = atoi(io_idx);
 		// namePtr += strlen(reg_idx) ;
 		
 		namePtr += strlen(io_idx) ;

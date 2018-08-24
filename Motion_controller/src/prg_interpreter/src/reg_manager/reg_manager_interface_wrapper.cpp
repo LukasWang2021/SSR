@@ -147,6 +147,9 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		objPrRegDataIpc.pos[3] = ptr->value.pos[3];
 		objPrRegDataIpc.pos[4] = ptr->value.pos[4];
 		objPrRegDataIpc.pos[5] = ptr->value.pos[5];
+		objPrRegDataIpc.pos[6] = 0.0;
+		objPrRegDataIpc.pos[7] = 0.0;
+		objPrRegDataIpc.pos[8] = 0.0;
 		
 		printf("setPr: id = %d (%f, %f, %f, %f, %f, %f) \n", num, 
 			ptr->value.pos[0], ptr->value.pos[1], 
@@ -236,6 +239,9 @@ bool reg_manager_interface_setPosePr(_PoseEuler *ptr, uint16_t num)
 		objPrRegDataIpc.pos[3] = ptr->orientation.a;
 		objPrRegDataIpc.pos[4] = ptr->orientation.b;
 		objPrRegDataIpc.pos[5] = ptr->orientation.c;
+		objPrRegDataIpc.pos[6] = 0.0;
+		objPrRegDataIpc.pos[7] = 0.0;
+		objPrRegDataIpc.pos[8] = 0.0;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -300,6 +306,9 @@ bool reg_manager_interface_setJointPr(_Joint *ptr, uint16_t num)
 			objPrRegDataIpc.pos[3] = ptr->j4;
 			objPrRegDataIpc.pos[4] = ptr->j5;
 			objPrRegDataIpc.pos[5] = ptr->j6;
+			objPrRegDataIpc.pos[6] = 0.0;
+			objPrRegDataIpc.pos[7] = 0.0;
+			objPrRegDataIpc.pos[8] = 0.0;
 			bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
 		}
 	}

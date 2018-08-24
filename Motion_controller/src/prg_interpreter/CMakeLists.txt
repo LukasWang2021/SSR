@@ -54,7 +54,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/process_comm/include 
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fpermissive -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wwrite-strings -fpermissive -O0")
 
 catkin_package(
 #    DEPENDS motion_plan 

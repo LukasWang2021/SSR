@@ -249,6 +249,9 @@ public:
 		reg_pr.value.pos[3] = jointVal->j4;
 		reg_pr.value.pos[4] = jointVal->j5;
 		reg_pr.value.pos[5] = jointVal->j6;
+		reg_pr.value.pos[6] = 0.0;
+		reg_pr.value.pos[7] = 0.0;
+		reg_pr.value.pos[8] = 0.0;
 	}
 	
 	void setPrRegDataWithPoseEulerValue(_PoseEuler * pointEulerVal){
@@ -260,6 +263,9 @@ public:
 		reg_pr.value.pos[3]        = pointEulerVal->orientation.a;
 		reg_pr.value.pos[4]        = pointEulerVal->orientation.b;
 		reg_pr.value.pos[5]        = pointEulerVal->orientation.c;
+		reg_pr.value.pos[6] = 0.0;
+		reg_pr.value.pos[7] = 0.0;
+		reg_pr.value.pos[8] = 0.0;
 	}
 	
 	PrRegData getPrRegDataValue(){
@@ -377,6 +383,9 @@ public:
 				reg_pr.value.pos[3] += jointOperand.j4;
 				reg_pr.value.pos[4] += jointOperand.j5;
 				reg_pr.value.pos[5] += jointOperand.j6;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
 		    {
@@ -394,6 +403,9 @@ public:
 				reg_pr.value.pos[3] += jointOperand.j4;
 				reg_pr.value.pos[4] += jointOperand.j5;
 				reg_pr.value.pos[5] += jointOperand.j6;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 		}else if(evalType == (int)(TYPE_PR | TYPE_POSE)){
 		    if(operand->getType() == TYPE_POSE)
@@ -406,6 +418,9 @@ public:
 				reg_pr.value.pos[3] = pose.orientation.a;
 				reg_pr.value.pos[4] = pose.orientation.b;
 				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_POSE))
 		    {
@@ -417,6 +432,9 @@ public:
 				reg_pr.value.pos[3] = pose.orientation.a;
 				reg_pr.value.pos[4] = pose.orientation.b;
 				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 		}else if(evalType == (int)(TYPE_R | TYPE_FLOAT)){
 		    if(operand->getType() == TYPE_FLOAT)
@@ -502,6 +520,9 @@ public:
 				reg_pr.value.pos[3] -= jointOperand.j4;
 				reg_pr.value.pos[4] -= jointOperand.j5;
 				reg_pr.value.pos[5] -= jointOperand.j6;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
 		    {
@@ -519,6 +540,9 @@ public:
 				reg_pr.value.pos[3] -= jointOperand.j4;
 				reg_pr.value.pos[4] -= jointOperand.j5;
 				reg_pr.value.pos[5] -= jointOperand.j6;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 		}else if(evalType == (int)(TYPE_PR | TYPE_POSE)){
 		    if(operand->getType() == TYPE_POSE)
@@ -531,6 +555,9 @@ public:
 				reg_pr.value.pos[3] = pose.orientation.a;
 				reg_pr.value.pos[4] = pose.orientation.b;
 				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_POSE))
 		    {
@@ -542,6 +569,9 @@ public:
 				reg_pr.value.pos[3] = pose.orientation.a;
 				reg_pr.value.pos[4] = pose.orientation.b;
 				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[6] = 0.0;
+				reg_pr.value.pos[7] = 0.0;
+				reg_pr.value.pos[8] = 0.0;
 		    }
 		}else if(evalType == (int)(TYPE_R | TYPE_FLOAT)){
 		    if(operand->getType() == TYPE_FLOAT)

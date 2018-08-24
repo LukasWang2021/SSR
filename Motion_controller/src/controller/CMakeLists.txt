@@ -56,7 +56,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/error_monitor/include 
     ${depend_PATH_INC}/motion_control/include 
     ${depend_PATH_INC}/axis_group_manager/include
-    ${depend_PATH_INC}/base_axis_group/include 
+    ${depend_PATH_INC}/base_axis_group/include
+    ${depend_PATH_INC}/log_service/include 
 )
 
 catkin_package(
@@ -75,6 +76,7 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}
+    /usr/include/python2.7 
 )
 
 ###########
@@ -103,6 +105,7 @@ target_link_libraries(controller
     device_manager 
     error_monitor 
     motion_control
+    log_service
 )
 
 #############

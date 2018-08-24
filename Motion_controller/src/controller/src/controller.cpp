@@ -3,6 +3,7 @@
 #include "base_datatype.h"
 #include <unistd.h>
 #include <iostream>
+#include "serverAlarmApi.h"
 
 
 using namespace fst_ctrl;
@@ -106,6 +107,8 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
+        
+    //ServerAlarmApi::GetInstance()->sendOneAlarm(SUCCESS, std::string("Controller init successfully"));
 
     return SUCCESS;    
 }

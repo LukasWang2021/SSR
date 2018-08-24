@@ -37,20 +37,22 @@ ErrorCode ControllerClient::init()
 bool ControllerClient::start(std::string data)
 {
     if(data.size() == 0
-        || !sendRequest(INTERPRETER_SERVER_CMD_START, data.c_str(), data.size() + 1)
+        || data.size() >= 256
+        || !sendRequest(INTERPRETER_SERVER_CMD_START, data.c_str(), 256)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_START)
     {
         return false;
     }
-    
+        
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
 bool ControllerClient::debug(std::string data)
 {
     if(data.size() == 0
-        || !sendRequest(INTERPRETER_SERVER_CMD_DEBUG, data.c_str(), data.size() + 1)
+        || data.size() >= 256
+        || !sendRequest(INTERPRETER_SERVER_CMD_DEBUG, data.c_str(), 256)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_DEBUG)
     {
@@ -86,7 +88,7 @@ bool ControllerClient::backward()
 
 bool ControllerClient::jump(int data)
 {
-    if(!sendRequest(INTERPRETER_SERVER_CMD_JUMP, NULL, 0)
+    if(!sendRequest(INTERPRETER_SERVER_CMD_JUMP, &data, sizeof(int))
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_JUMP)
     {

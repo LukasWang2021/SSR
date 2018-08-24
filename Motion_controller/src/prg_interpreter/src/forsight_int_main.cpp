@@ -56,8 +56,6 @@ int main(int  argc, char *argv[])
 		}
 		else
 		{
-			
-			parseCtrlComand(intprt_ctrl);
 			intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
 		}
 	}

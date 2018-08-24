@@ -68,43 +68,6 @@ typedef enum _InterpreterState
     
 }InterpreterState;
 
-typedef enum _InterpreterCommand
-{
-    LOAD    = 101,
-    JUMP    = 102,
-    START   = 103,
-    DEBUG   = 104,
-    FORWARD  = 105,
-    BACKWARD = 106,
-    CONTINUE = 107,
-    PAUSE   = 108,
-    ABORT   = 109,
-    SET_AUTO_MODE  = 110,
-		
-    MOD_REG  = 201,
-	READ_REG = 202,
-    DEL_REG  = 203,
-    
-    MOD_IO   = 204,
-    READ_IO  = 205,
-    
-    READ_IO_DEV_INFO  = 206,
-//    UPDATE_IO_DEV_ERROR  = 207,
-    
-    // Jump to 210 for adding IO feature
-    READ_SMLT_STS  = 211,
-	MOD_SMLT_STS   = 212,
-    MOD_SMLT_VAL   = 213,
-    
-//    READ_CHG_PR_LST   = 214,
-//    READ_CHG_SR_LST   = 215,
-//    READ_CHG_R_LST    = 226,
-//    READ_CHG_MR_LST   = 227,
-//    READ_CHG_HR_LST   = 228,
-
-}InterpreterCommand;
-
-
 typedef enum _RegDIOType
 {
     NOTDEFINE = 0,
@@ -226,23 +189,16 @@ typedef enum _AutoMode
     MACRO_TRIGGER_U     = 3,
 }AutoMode;
 
-typedef struct _StartCtrl
-{
-    char        file_name[128];
-}StartCtrl;
-
 typedef struct _InterpreterControl
 {
-    InterpreterCommand cmd;
+    int cmd;
+    // void* request_data_ptr;
     union
     {
-        StartCtrl   start_ctrl;
+        char      start_ctrl[256];
 		AutoMode    autoMode ;
         // int         id;
         int            jump_line;    // Jump 
-        RegMap      reg;
-        // IOMapPortInfo  dio;
-        IOPathInfo  dioPathInfo;
     };
 }InterpreterControl;
 
@@ -341,7 +297,7 @@ typedef struct _MoveCommandDestination
 
 typedef struct _RegChgList
 {
-    InterpreterCommand  command;
+    int  command;
     int             count;
 #ifdef WIN32
     char additional; //malloc other memory

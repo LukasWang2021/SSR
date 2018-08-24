@@ -20,7 +20,7 @@ int main(int  argc, char *argv[])
 	InterpreterControl intprt_ctrl;
 	initShm();
 	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
-	intprt_ctrl.cmd = START ;
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
 	append_io_mapping();
 	forgesight_load_io_config();
 	load_register_data();
@@ -35,10 +35,11 @@ int main(int  argc, char *argv[])
 			{
 				memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 				intprt_ctrl.cmd = it->cmd_id ;
+				memcpy(intprt_ctrl.start_ctrl, it->request_data_ptr, 256);
 	            printf("parseCtrlComand at %d \n", intprt_ctrl.cmd);
-				memcpy(&intprt_ctrl + sizeof(InterpreterCommand), it->request_data_ptr, 
-					sizeof(InterpreterControl) - sizeof(InterpreterCommand));
 				parseCtrlComand(intprt_ctrl);
+				bool * bRsp = it->response_data_ptr;
+				*bRsp = true;
 				g_objInterpreterServer->pushTaskToResponseList(*it);
 			}
 #ifdef WIN32
@@ -57,7 +58,7 @@ int main(int  argc, char *argv[])
 		{
 			
 			parseCtrlComand(intprt_ctrl);
-			intprt_ctrl.cmd = LOAD ;
+			intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
 		}
 	}
 	return 1;

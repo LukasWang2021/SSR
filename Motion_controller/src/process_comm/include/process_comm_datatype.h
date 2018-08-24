@@ -23,6 +23,9 @@ typedef enum
 
 typedef enum
 {
+    // used by interpretor
+    INTERPRETER_SERVER_CMD_LOAD = 255,
+    // used by controller
     INTERPRETER_SERVER_CMD_START = 0,
     INTERPRETER_SERVER_CMD_DEBUG = 1,
     INTERPRETER_SERVER_CMD_FORWARD = 2,
@@ -32,6 +35,7 @@ typedef enum
     INTERPRETER_SERVER_CMD_RESUME = 6,
     INTERPRETER_SERVER_CMD_ABORT = 7,
     INTERPRETER_SERVER_CMD_GET_NEXT_INSTRUCTION = 8,
+    INTERPRETER_SERVER_CMD_SET_AUTO_MODE = 9,
 }InterpreterServerCmd;
 
 typedef struct

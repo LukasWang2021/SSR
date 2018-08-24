@@ -43,7 +43,7 @@ InterpreterState prgm_state = IDLE_R;
 static CtrlStatus ctrl_status;
 // static InterpreterControl intprt_ctrl;
 
-InterpreterCommand g_lastcmd;
+fst_base::InterpreterServerCmd g_lastcmd;
 
 static InterpreterState g_privateInterpreterState;
 
@@ -450,7 +450,7 @@ bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
 	if(g_lastcmd != intprt_ctrl.cmd)
     {
        printf("getIntprtCtrl = %d\n", intprt_ctrl.cmd);
-	   g_lastcmd = intprt_ctrl.cmd ;
+	   g_lastcmd = (fst_base::InterpreterServerCmd)intprt_ctrl.cmd ;
 	}
 	return iRet ;
 }
@@ -632,7 +632,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 	IOPathInfo  dioPathInfo ;
 	
 	int iLineNum = 0 ;
-	static InterpreterCommand lastCmd ;
+	static fst_base::InterpreterServerCmd lastCmd ;
 	UserOpMode userOpMode ;
 	AutoMode   autoMode ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
@@ -652,15 +652,15 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 //	std::vector<BaseRegData> vecRet ; 
 //    char * strChgRegLst ;
 	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
-	if(intprt_ctrl.cmd != LOAD)
+	if(intprt_ctrl.cmd != fst_base::INTERPRETER_SERVER_CMD_LOAD)
         printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
     switch (intprt_ctrl.cmd)
     {
-        case LOAD:
+        case fst_base::INTERPRETER_SERVER_CMD_LOAD:
             // printf("load file_name\n");
             break;
-        case DEBUG:
+        case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
             printf("debug...\n");
 			g_iCurrentThreadSeq++ ;
 			if(g_iCurrentThreadSeq < 0) break ;
@@ -669,16 +669,17 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             objThdCtrlBlockPtr->prog_mode = STEP_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
             setPrgmState(PAUSED_R);
-			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
+			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "while_test");
+			   strcpy(intprt_ctrl.start_ctrl, "while_test");
 			}
             startFile(objThdCtrlBlockPtr, 
-				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
+				intprt_ctrl.start_ctrl, g_iCurrentThreadSeq);
 	        // g_iCurrentThreadSeq++ ;
             break;
-        case START:
+        case fst_base::INTERPRETER_SERVER_CMD_START:
             printf("start run...\n");
+            printf("start run %s ...\n", intprt_ctrl.start_ctrl);
 			g_iCurrentThreadSeq++ ;
 			if(g_iCurrentThreadSeq < 0) break ;
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
@@ -686,15 +687,15 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
             setPrgmState(EXECUTE_R);
-			if(strlen(intprt_ctrl.start_ctrl.file_name) == 0)
+			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl.file_name, "reconstruction_r_test");
+			   strcpy(intprt_ctrl.start_ctrl, "reconstruction_pr_test");
 			}
 			startFile(objThdCtrlBlockPtr, 
-				intprt_ctrl.start_ctrl.file_name, g_iCurrentThreadSeq);
+				intprt_ctrl.start_ctrl, g_iCurrentThreadSeq);
 	        // g_iCurrentThreadSeq++ ;
             break;
-        case JUMP:
+        case fst_base::INTERPRETER_SERVER_CMD_JUMP:
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
 			{
@@ -725,7 +726,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			// Just Move to line and do not execute
             // setPrgmState(EXECUTE_R);
 			break;
-        case FORWARD:
+        case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
             printf("step forward at %d \n", g_iCurrentThreadSeq);
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
@@ -767,7 +768,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
             setLinenum(objThdCtrlBlockPtr, iLineNum);
             break;
-        case BACKWARD:
+        case fst_base::INTERPRETER_SERVER_CMD_BACKWARD:
             printf("backward at %d \n", g_iCurrentThreadSeq);
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
@@ -792,7 +793,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
            		break;
 			}
 
-			if(lastCmd == FORWARD)
+			if(lastCmd == fst_base::INTERPRETER_SERVER_CMD_FORWARD)
 			{
 			    // In this circumstance, 
 			    // call calc_line_from_prog to get the next FORWARD line.
@@ -837,7 +838,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			iLineNum-- ;
 		    setLinenum(objThdCtrlBlockPtr, iLineNum);
 		    break;
-		case CONTINUE:
+		case fst_base::INTERPRETER_SERVER_CMD_RESUME:
 			if(g_iCurrentThreadSeq < 0) break ;
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			
@@ -851,7 +852,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			else
 			    setWarning(FAIL_INTERPRETER_NOT_IN_PAUSE);
             break;
-        case PAUSE:
+        case fst_base::INTERPRETER_SERVER_CMD_PAUSE:
 			if(g_iCurrentThreadSeq < 0) break ;
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			if(objThdCtrlBlockPtr->is_in_macro == true)
@@ -868,7 +869,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             }
             setPrgmState(PAUSED_R); 
             break;
-        case ABORT:
+        case fst_base::INTERPRETER_SERVER_CMD_ABORT:
             printf("abort motion\n");
 			if(g_iCurrentThreadSeq < 0) break ;
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
@@ -888,7 +889,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
   			printf("setPrgmState(IDLE_R).\n");
 		    setPrgmState(IDLE_R);
             break;
-        case SET_AUTO_MODE:
+        case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_MODE:
 			// intprt_ctrl.RegMap.
 			autoMode = intprt_ctrl.autoMode ;
 			deal_auto_mode(autoMode);
@@ -899,267 +900,6 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			// Do nothing after it.
 			// intprt_ctrl.cmd = LOAD ;
             break;
-/*
-        case READ_REG:
-			// intprt_ctrl.RegMap.
-			reg = intprt_ctrl.reg ;
-			memset(reg.value, 0x00, 1024);
-			forgesight_read_reg(reg);
-			returnRegInfo(reg);
-            break;
-        case MOD_REG:
-			// intprt_ctrl.RegMap.
-			reg = intprt_ctrl.reg ;
-			forgesight_mod_reg(reg);
-  	        printf("reg.type = %d end.\n", reg.type);
-            break;
-        case DEL_REG:
-			// intprt_ctrl.RegMap.
-			reg = intprt_ctrl.reg ;
-			forgesight_del_reg(reg);
-  	        printf("reg.type = %d end.\n", reg.type);
-            break;
-*/
-        case READ_IO:
-			// intprt_ctrl.RegMap.
-			// dioMap  = intprt_ctrl.dio ;
-			// forgesight_read_dio(regIOInfo.dio);
-			dioPathInfo = intprt_ctrl.dioPathInfo;
-            printf("READ_IO:: path : %s\n", dioPathInfo.dio_path); 
-
-			dioPathInfo.value = get_io_interface_status(dioPathInfo.dio_path);
-			returnDIOInfo(dioPathInfo);
-            break;
-        case MOD_IO:
-			dioPathInfo = intprt_ctrl.dioPathInfo;
-			printf("MOD_IO: %s:%d.\n", 
-						dioPathInfo.dio_path, dioPathInfo.value);
-			set_io_interface_status(
-					dioPathInfo.dio_path, dioPathInfo.value);
-            break;
-#ifndef WIN32
-/*
-        case READ_IO_DEV_INFO:
-			iIONum = IOInterface::instance()->getIODevNum();
-			printf("READ_IO_DEV_INFO::getIODevNum: start: %d.\n", iIONum);
- 			objIODeviceInfoPtr = IOInterface::instance()->getDevInfoPtr();
-			objCharPtr = (char *)malloc(sizeof(int) + sizeof(IODeviceInfoShm) * (iIONum + 1));
-			objIODeviceInfoShmPtr = (IODeviceInfoShm *)(objCharPtr + sizeof(int));
-			iIONum = iIONum + 1;
-			memcpy(objCharPtr, &iIONum, sizeof(int));
-			iIONum = iIONum - 1;
-			memset(objIODeviceInfoShmPtr, 0x00, sizeof(IODeviceInfoShm) * iIONum);
-			for(int i = 0 ; i < iIONum ; i++)
-			{
-			    memcpy(objIODeviceInfoShmPtr[i].path, objIODeviceInfoPtr[i].path.c_str(), 
-					objIODeviceInfoPtr[i].path.length());
-				objIODeviceInfoShmPtr[i].id = objIODeviceInfoPtr[i].id;
-				
-			    memcpy(objIODeviceInfoShmPtr[i].communication_type, 
-					objIODeviceInfoPtr[i].communication_type.c_str(), 
-					objIODeviceInfoPtr[i].communication_type.length());
-				objIODeviceInfoShmPtr[i].device_number = objIODeviceInfoPtr[i].device_number;
-				objIODeviceInfoShmPtr[i].device_type   = objIODeviceInfoPtr[i].device_type;
-				objIODeviceInfoShmPtr[i].input         = objIODeviceInfoPtr[i].input;
-				objIODeviceInfoShmPtr[i].output        = objIODeviceInfoPtr[i].output;
-		    }
-
-			if(iIONum == 0)
-			{
-			    memcpy(objIODeviceInfoShmPtr[iIONum].path, 
-							"root/IO/RS485/1/DO/1", strlen("root/IO/RS485/1/DO/1"));
-				objIODeviceInfoShmPtr[iIONum].id = 1;
-			    memcpy(objIODeviceInfoShmPtr[iIONum].communication_type, "RS485", strlen("RS485"));
-				objIODeviceInfoShmPtr[iIONum].device_number = 1;
-				objIODeviceInfoShmPtr[iIONum].device_type   = 2;
-				objIODeviceInfoShmPtr[iIONum].input         = 0x22;
-				objIODeviceInfoShmPtr[iIONum].output        = 0x33;
-				printf("%d: READ_IO_DEV_INFO::getIODevNum with Fack Data: end: %d.\n", __LINE__, iIONum);
-				returnIODeviceInfo(objCharPtr, iIONum + 1);
-			}
-			else
-			{
-				printf("%d: READ_IO_DEV_INFO::getIODevNum with Real Data: end: %d.\n", __LINE__, iIONum);
-				returnIODeviceInfo(objCharPtr, iIONum);
-			}
-            break;
-*/
-
-//        case UPDATE_IO_DEV_ERROR:
-//			result = IOInterface::instance()->updateIOError();
-// 			setWarning(result) ; 
-//          break;
-#endif
-        case READ_SMLT_STS:
-			dioPathInfo = intprt_ctrl.dioPathInfo;
-			printf("READ_SMLT_STS: %s:%d .\n", dioPathInfo.dio_path, dioPathInfo.value);
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
-			forgesight_read_io_emulate_status(dioPathInfo.dio_path, (int &)dioPathInfo.value);
-			returnDIOInfo(dioPathInfo);
-            break;
-        case MOD_SMLT_STS:
-			dioPathInfo = intprt_ctrl.dioPathInfo;
-			printf("MOD_SMLT_STS: %s:%d .\n", dioPathInfo.dio_path, dioPathInfo.value);
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
-			forgesight_mod_io_emulate_status(dioPathInfo.dio_path, dioPathInfo.value);
-            break;
-        case MOD_SMLT_VAL:
-			dioPathInfo = intprt_ctrl.dioPathInfo;
-			printf("MOD_SMLT_VAL: %s:%d .\n", dioPathInfo.dio_path, dioPathInfo.value);
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
-			forgesight_mod_io_emulate_value(dioPathInfo.dio_path, dioPathInfo.value);
-            break;
-// #ifndef WIN32
-#if 0
-
-        case READ_CHG_PR_LST:
-			vecRet.clear(); 
-			vecRet = forgesight_read_valid_pr_lst(0, 255);
-			
-			memset(tempDebug, 0x00, 1024);
-			strcpy(tempDebug, "PR:");
-			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + MAX_PR_REG_ID * sizeof(ChgFrameSimple));
-			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
-			strChgRegLst = (char *)regChgList ;
-			memset(strChgRegLst, 0x00, sizeof(RegChgList) + MAX_PR_REG_ID * sizeof(ChgFrameSimple));
-			regChgList->command = intprt_ctrl.cmd ;
-			regChgList->count   = vecRet.size();
-			iSeq = 0 ;
-			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
-			{
-				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
-				chgFrameSimple[iSeq].id = it->id ;
-				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
-				printf("             %d:%s;\n", it->id, it->comment);
-			    iSeq++ ;
-			}
-			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
-			
-		//	for (int i = 0 ; i < sizeof(RegChgList) + 1 * sizeof(ChgFrameSimple) ; i++)
-		//		printf("GET:: data: %d\n", strChgRegLst[i]);
-			
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
-				sizeof(RegChgList) + MAX_PR_REG_ID * sizeof(ChgFrameSimple));
-	        setIntprtDataFlag(true);
-            break;
-        case READ_CHG_SR_LST:
-			vecRet.clear(); 
-			vecRet = forgesight_read_valid_sr_lst(0, 255);
-			
-			memset(tempDebug, 0x00, 1024);
-			strcpy(tempDebug, "SR:");
-			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + MAX_SR_REG_ID * sizeof(ChgFrameSimple));
-			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
-			strChgRegLst = (char *)regChgList ;
-			memset(strChgRegLst, 0x00, sizeof(RegChgList) + MAX_SR_REG_ID * sizeof(ChgFrameSimple));
-			regChgList->command = intprt_ctrl.cmd ;
-			regChgList->count   = vecRet.size();
-			iSeq = 0 ;
-			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
-			{
-				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
-				chgFrameSimple[iSeq].id = it->id ;
-				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
-				printf("             %d:%s;\n", it->id, it->comment);
-			    iSeq++ ;
-			}
-			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
-				
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
-				sizeof(RegChgList) + MAX_SR_REG_ID * sizeof(ChgFrameSimple));;
-	        setIntprtDataFlag(true);
-            break;
-        case READ_CHG_R_LST:
-			vecRet.clear(); 
-			vecRet = forgesight_read_valid_r_lst(0, 255);
-			memset(tempDebug, 0x00, 1024);
-			strcpy(tempDebug, "R:");
-			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + MAX_R_REG_ID * sizeof(ChgFrameSimple));
-			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
-			strChgRegLst = (char *)regChgList ;
-			memset(strChgRegLst, 0x00, sizeof(RegChgList) + MAX_R_REG_ID * sizeof(ChgFrameSimple));
-			regChgList->command = intprt_ctrl.cmd ;
-			regChgList->count   = vecRet.size();
-			iSeq = 0 ;
-			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
-			{
-				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
-				chgFrameSimple[iSeq].id = it->id ;
-				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
-				printf("             %d:%s;\n", it->id, it->comment);
-			    iSeq++ ;
-			}
-			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
-			
-//		    printf("GET:: data: %d - %d \n\t", sizeof(RegChgList), sizeof(ChgFrameSimple));
-//			for (int i = 0 ; i < sizeof(RegChgList) + regChgList->count * sizeof(ChgFrameSimple) ; i++)
-//			{
-//			    printf("%02X ", strChgRegLst[i]);
-//				if(i+1 == sizeof(RegChgList))
-//			    	printf("\n-%02X\t", i+1);
-//				else if((i+1 - sizeof(RegChgList))%sizeof(ChgFrameSimple) == 0)
-//					if(i+1 - sizeof(RegChgList) > 0)
-//			    	     printf("\n_%02X\t", i+1);
-//			}
-//		    printf("\n");
-			
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
-				sizeof(RegChgList) + MAX_R_REG_ID * sizeof(ChgFrameSimple));
-	        setIntprtDataFlag(true);
-            break;
-        case READ_CHG_MR_LST:
-			vecRet.clear(); 
-			vecRet = forgesight_read_valid_mr_lst(0, 255);
-			memset(tempDebug, 0x00, 1024);
-			strcpy(tempDebug, "MR:");
-			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + MAX_MR_REG_ID * sizeof(ChgFrameSimple));
-			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
-			strChgRegLst = (char *)regChgList ;
-			memset(strChgRegLst, 0x00, sizeof(RegChgList) + MAX_MR_REG_ID * sizeof(ChgFrameSimple));
-			regChgList->command = intprt_ctrl.cmd ;
-			regChgList->count   = vecRet.size();
-			iSeq = 0 ;
-			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
-			{
-				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
-				chgFrameSimple[iSeq].id = it->id ;
-				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
-				printf("             %d:%s;\n", it->id, it->comment);
-			    iSeq++ ;
-			}
-			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
-				
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
-				sizeof(RegChgList) + MAX_MR_REG_ID * sizeof(ChgFrameSimple));
-	        setIntprtDataFlag(true);
-            break;
-        case READ_CHG_HR_LST:
-			vecRet.clear(); 
-			vecRet = forgesight_read_valid_hr_lst(0, 255);
-			memset(tempDebug, 0x00, 1024);
-			strcpy(tempDebug, "MR:");
-			regChgList = (RegChgList *)malloc(sizeof(RegChgList) + MAX_MR_REG_ID * sizeof(ChgFrameSimple));
-			chgFrameSimple = (ChgFrameSimple *)((char *)regChgList + sizeof(RegChgList)) ;
-			strChgRegLst = (char *)regChgList ;
-			memset(strChgRegLst, 0x00, sizeof(RegChgList) + MAX_MR_REG_ID * sizeof(ChgFrameSimple));
-			regChgList->command = intprt_ctrl.cmd ;
-			regChgList->count   = vecRet.size();
-			iSeq = 0 ;
-			for(vector<BaseRegData>::iterator it = vecRet.begin(); it != vecRet.end(); ++it)
-			{
-				sprintf(tempDebug, "%s%d:%s;", tempDebug, it->id, it->comment);
-				chgFrameSimple[iSeq].id = it->id ;
-				memcpy(chgFrameSimple[iSeq].comment, it->comment, 32);
-				printf("             %d:%s;\n", it->id, it->comment);
-			    iSeq++ ;
-			}
-			printf("temp: %s  (%d) .\n", tempDebug, vecRet.size());
-				
-            writeShm(SHM_CHG_REG_LIST_INFO, 0, (void*)regChgList, 
-				sizeof(RegChgList) + MAX_MR_REG_ID * sizeof(ChgFrameSimple));
-	        setIntprtDataFlag(true);
-            break;
-#endif
         default:
             break;
 

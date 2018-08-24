@@ -9,6 +9,8 @@
 #include <mutex>
 #include <vector>
 #include "interpreter_common.h"
+#include "base_datatype.h"
+
 
 namespace fst_base
 {
@@ -18,9 +20,9 @@ public:
     InterpreterServer(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr);
     ~InterpreterServer();
 
-    bool init();
+    ErrorCode init();
     bool isExit();
-    bool open();
+    ErrorCode open();
     void close();
     void runThreadFunc();
     

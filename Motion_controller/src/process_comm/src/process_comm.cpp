@@ -1,10 +1,13 @@
 #include "process_comm.h"
 #include <iostream>
+#include "error_code.h"
+
 
 using namespace fst_base;
 using namespace std;
 
 ProcessComm* ProcessComm::instance_ = NULL;
+ErrorCode ProcessComm::init_error_code_ = SUCCESS;
 
 ProcessComm::ProcessComm():
     log_ptr_(NULL), 
@@ -23,6 +26,8 @@ ProcessComm::ProcessComm():
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load process comm component parameters");
+        init_error_code_ = PROCESS_COMM_LOAD_PARAM_FAILED;
+        return;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);      
 
@@ -30,32 +35,41 @@ ProcessComm::ProcessComm():
     if(controller_server_ptr_ == NULL)
     {
         FST_ERROR("Failed to new controller server");
+        init_error_code_ = PROCESS_COMM_INIT_OBJECT_FAILED;
+        return;
     }
 
     controller_client_ptr_ = new ControllerClient(log_ptr_, param_ptr_);
     if(controller_client_ptr_ == NULL)
     {
         FST_ERROR("Failed to new controller client");
+        init_error_code_ = PROCESS_COMM_INIT_OBJECT_FAILED;
+        return;
     }
 
     interpreter_server_ptr_ = new InterpreterServer(log_ptr_, param_ptr_);
     if(interpreter_server_ptr_ == NULL)
     {
         FST_ERROR("Failed to new interpreter server");
+        init_error_code_ = PROCESS_COMM_INIT_OBJECT_FAILED;
+        return;
     }
     
     interpreter_client_ptr_ = new InterpreterClient(log_ptr_, param_ptr_);
     if(interpreter_client_ptr_ == NULL)
     {
         FST_ERROR("Failed to new interpreter client");
+        init_error_code_ = PROCESS_COMM_INIT_OBJECT_FAILED;
+        return;
     }
 
     heartbeat_client_ptr_ = new HeartbeatClient(log_ptr_, param_ptr_);
     if(heartbeat_client_ptr_ == NULL)
     {
         FST_ERROR("Failed to new heartbeat client");
+        init_error_code_ = PROCESS_COMM_INIT_OBJECT_FAILED;
+        return;
     }  
-
 }
 
 ProcessComm::~ProcessComm()
@@ -70,6 +84,11 @@ ProcessComm* ProcessComm::getInstance()
         instance_ = new ProcessComm();
     }
     return instance_;
+}
+
+ErrorCode ProcessComm::getInitErrorCode()
+{
+    return init_error_code_;
 }
 
 ControllerServer* ProcessComm::getControllerServerPtr()

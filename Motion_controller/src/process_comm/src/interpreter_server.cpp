@@ -6,6 +6,8 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
+#include "error_code.h"
+
 
 using namespace std;
 using namespace fst_base;
@@ -21,25 +23,25 @@ InterpreterServer::~InterpreterServer()
     this->close();
 }
 
-bool InterpreterServer::init()
+ErrorCode InterpreterServer::init()
 {
     req_resp_socket_ = nn_socket(AF_SP, NN_REP);
-    if(req_resp_socket_ == -1) return false;
+    if(req_resp_socket_ == -1) return PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED;
 
     req_resp_endpoint_id_ = nn_bind(req_resp_socket_, param_ptr_->c2i_req_res_ip_.c_str());
-    if(req_resp_endpoint_id_ == -1) return false;
+    if(req_resp_endpoint_id_ == -1) return PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED;
 
     publish_socket_ = nn_socket(AF_SP, NN_PUB);
-    if(publish_socket_ == -1) return false;
+    if(publish_socket_ == -1) return PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED;
 
     publish_endpoint_id_ = nn_bind(publish_socket_, param_ptr_->c2i_pub_ip_.c_str());
-    if(publish_endpoint_id_ == -1) return false;
+    if(publish_endpoint_id_ == -1) return PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED;
 
     event_socket_ = nn_socket(AF_SP, NN_PUSH);
-    if(publish_socket_ == -1) return false;
+    if(publish_socket_ == -1) return PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED;
 
     event_endpoint_id_ = nn_bind(event_socket_, param_ptr_->c2i_event_ip_.c_str());
-    if(event_endpoint_id_ == -1) return false;
+    if(event_endpoint_id_ == -1) return PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED;
 
 
     // it is critical to set poll fd here to make the model work correctly
@@ -52,7 +54,7 @@ bool InterpreterServer::init()
     send_buffer_ptr_ = new uint8_t[param_ptr_->send_buffer_size_]();
 
     initRpcTable();
-    return true;
+    return SUCCESS;
 }
 
 bool InterpreterServer::isExit()
@@ -60,16 +62,16 @@ bool InterpreterServer::isExit()
     return is_exit_;
 }
 
-bool InterpreterServer::open()
+ErrorCode InterpreterServer::open()
 {
     is_exit_ = false;
     if(!thread_.run(&interpreterServerThreadFunc, this, param_ptr_->interpreter_server_thread_priority_))
     {
-        return false;
+        return PROCESS_COMM_INTERPRETER_SERVER_OPEN_FAILED;
     }
     else
     {
-        return true;
+        return SUCCESS;
     }
 }
 

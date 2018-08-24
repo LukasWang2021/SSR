@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <sys/time.h>
+#include "base_datatype.h"
 
 
 namespace fst_base
@@ -23,7 +24,7 @@ public:
     HeartbeatClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr);
     ~HeartbeatClient();
 
-    bool init();
+    ErrorCode init();
     void sendHeartbeat();
 
 private:

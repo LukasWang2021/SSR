@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unistd.h>
 #include "error_monitor.h"
+#include "error_code.h"
 
 
 using namespace fst_base;
@@ -20,7 +21,7 @@ HeartbeatClient::~HeartbeatClient()
 
 }
 
-bool HeartbeatClient::init()
+ErrorCode HeartbeatClient::init()
 {
     request_data_.cmd = CMD_HEARTBEAT;
     memset(&request_data_.data[0], 0, 1024);
@@ -29,10 +30,10 @@ bool HeartbeatClient::init()
     memset(&last_send_time_, 0, sizeof(struct timeval));
 
     req_resp_socket_ = nn_socket(AF_SP, NN_REQ);
-    if(req_resp_socket_ == -1) return false;
+    if(req_resp_socket_ == -1) return PROCESS_COMM_HEARTBEAT_CLIENT_INIT_FAILED;
 
     req_resp_endpoint_id_ = nn_connect(req_resp_socket_, param_ptr_->heartbeat_ip_.c_str());
-    if(req_resp_endpoint_id_ == -1) return false;
+    if(req_resp_endpoint_id_ == -1) return PROCESS_COMM_HEARTBEAT_CLIENT_INIT_FAILED;
 
 	poll_fd_.fd = req_resp_socket_;
 	poll_fd_.events = NN_POLLIN | NN_POLLOUT;
@@ -40,7 +41,7 @@ bool HeartbeatClient::init()
     recv_buffer_ptr_ = new uint8_t[param_ptr_->recv_buffer_size_]();
     send_buffer_ptr_ = new uint8_t[param_ptr_->send_buffer_size_]();
 
-    return true;
+    return SUCCESS;
 }
 
 void HeartbeatClient::sendHeartbeat()

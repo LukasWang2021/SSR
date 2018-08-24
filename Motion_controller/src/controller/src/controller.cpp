@@ -51,7 +51,7 @@ ErrorCode Controller::init()
     virtual_core1_.init(log_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_);
 
-    if(!device_manager_.init())
+    if(device_manager_.init() != SUCCESS)
     {
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
@@ -72,14 +72,15 @@ ErrorCode Controller::init()
     }
 
     process_comm_ptr_ = ProcessComm::getInstance();
-    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
-    if(!process_comm_ptr_->getControllerServerPtr()->init()
-        || !process_comm_ptr_->getControllerServerPtr()->open()
-        || !process_comm_ptr_->getControllerClientPtr()->init()
-        || !process_comm_ptr_->getHeartbeatClientPtr()->init())
+    if((ProcessComm::getInitErrorCode() != SUCCESS)
+        || (process_comm_ptr_->getControllerServerPtr()->init() != SUCCESS)
+        || (process_comm_ptr_->getControllerServerPtr()->open() != SUCCESS)
+        || (process_comm_ptr_->getControllerClientPtr()->init() != SUCCESS)
+        || (process_comm_ptr_->getHeartbeatClientPtr()->init() != SUCCESS))
     {
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
+    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
 
     rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,

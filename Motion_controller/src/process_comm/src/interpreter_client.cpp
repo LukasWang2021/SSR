@@ -4,6 +4,8 @@
 #include <cstring>
 #include <iostream>
 #include "process_comm_datatype.h"
+#include "error_code.h"
+
 
 using namespace fst_base;
 using namespace fst_ctrl;
@@ -19,18 +21,18 @@ InterpreterClient::~InterpreterClient()
 
 }
 
-bool InterpreterClient::init()
+ErrorCode InterpreterClient::init()
 {
     req_resp_socket_ = nn_socket(AF_SP, NN_REQ);
-    if(req_resp_socket_ == -1) return false;
+    if(req_resp_socket_ == -1) return PROCESS_COMM_INTERPRETER_CLIENT_INIT_FAILED;
 
     req_resp_endpoint_id_ = nn_connect(req_resp_socket_, param_ptr_->i2c_req_res_ip_.c_str());
-    if(req_resp_endpoint_id_ == -1) return false;
+    if(req_resp_endpoint_id_ == -1) return PROCESS_COMM_INTERPRETER_CLIENT_INIT_FAILED;
 
     recv_buffer_ptr_ = new uint8_t[param_ptr_->recv_buffer_size_]();
     send_buffer_ptr_ = new uint8_t[param_ptr_->send_buffer_size_]();
 
-    return true;
+    return SUCCESS;
 }
 
 bool InterpreterClient::setPrReg(PrRegDataIpc* data)

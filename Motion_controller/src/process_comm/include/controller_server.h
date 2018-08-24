@@ -8,6 +8,8 @@
 #include <nanomsg/nn.h>
 #include <mutex>
 #include <vector>
+#include "base_datatype.h"
+
 
 namespace fst_base
 {
@@ -17,9 +19,9 @@ public:
     ControllerServer(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr);
     ~ControllerServer();
 
-    bool init();
+    ErrorCode init();
     bool isExit();
-    bool open();
+    ErrorCode open();
     void close();
     std::vector<ProcessCommRequestResponse> popTaskFromRequestList();
     void pushTaskToResponseList(ProcessCommRequestResponse& package);

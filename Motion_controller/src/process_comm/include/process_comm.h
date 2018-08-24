@@ -9,6 +9,7 @@
 #include "interpreter_server.h"
 #include "interpreter_client.h"
 #include "heartbeat_client.h"
+#include "base_datatype.h"
 
 namespace fst_base
 {
@@ -19,7 +20,7 @@ public:
     ~ProcessComm();
 
     static ProcessComm* getInstance();
-
+    static ErrorCode getInitErrorCode();
     ControllerServer* getControllerServerPtr();
     ControllerClient* getControllerClientPtr();
     InterpreterServer* getInterpreterServerPtr();
@@ -28,6 +29,7 @@ public:
     
 private:
     static ProcessComm* instance_;
+    static ErrorCode init_error_code_;
     ProcessCommParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 
@@ -36,7 +38,7 @@ private:
     InterpreterServer* interpreter_server_ptr_;
     InterpreterClient* interpreter_client_ptr_;
     HeartbeatClient* heartbeat_client_ptr_;
-    
+
 };
 
 }

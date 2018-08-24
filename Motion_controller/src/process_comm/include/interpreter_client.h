@@ -6,6 +6,8 @@
 #include <nanomsg/nn.h>
 #include <vector>
 #include "reg_manager.h"
+#include "base_datatype.h"
+
 
 namespace fst_base
 {
@@ -15,7 +17,7 @@ public:
     InterpreterClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr);
     ~InterpreterClient();
 
-    bool init();
+    ErrorCode init();
 
     bool setPrReg(fst_ctrl::PrRegDataIpc* data);
     bool setHrReg(fst_ctrl::HrRegDataIpc* data);

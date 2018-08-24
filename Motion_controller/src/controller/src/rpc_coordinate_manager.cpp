@@ -98,22 +98,21 @@ void ControllerRpc::handleRpc0x00004324(void* request_data_ptr, void* response_d
 
 // "/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"
 void ControllerRpc::handleRpc0x0001838F(void* request_data_ptr, void* response_data_ptr)
-{//FIXME
-#if 0
-    ResponseMessageType_UserSummaryList* rs_data_ptr = static_cast<ResponseMessageType_UserSummaryList*>(response_data_ptr);
+{
+    ResponseMessageType_Uint64_UserCoordSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_UserCoordSummaryList*>(response_data_ptr);
 
     std::vector<CoordSummaryInfo> info_list;
     info_list = coordinate_manager_ptr_->getAllValidCoordSummaryInfo();
     for(unsigned int i = 0; i < info_list.size(); ++i)
     {
-        rs_data_ptr->data.user_summary_info[i].id = info_list[i].id;
-        strncpy(rs_data_ptr->data.user_summary_info[i].name, info_list[i].name.c_str(), 31);
-        rs_data_ptr->data.user_summary_info[i].name[31] = 0;
-        strncpy(rs_data_ptr->data.user_summary_info[i].comment, info_list[i].comment.c_str(), 255);
-        rs_data_ptr->data.user_summary_info[i].comment[255] = 0;
-        rs_data_ptr->data.user_summary_info[i].group_id = info_list[i].group_id;
+        rs_data_ptr->data.user_coord_summary[i].id = info_list[i].id;
+        strncpy(rs_data_ptr->data.user_coord_summary[i].name, info_list[i].name.c_str(), 31);
+        rs_data_ptr->data.user_coord_summary[i].name[31] = 0;
+        strncpy(rs_data_ptr->data.user_coord_summary[i].comment, info_list[i].comment.c_str(), 255);
+        rs_data_ptr->data.user_coord_summary[i].comment[255] = 0;
+        rs_data_ptr->data.user_coord_summary[i].group_id = info_list[i].group_id;
     }
-    rs_data_ptr->data.user_summary_info_count = info_list.size();
-#endif    
+    rs_data_ptr->data.user_coord_summary_count = info_list.size();    
+    rs_data_ptr->error_code.data = SUCCESS;
 }
 

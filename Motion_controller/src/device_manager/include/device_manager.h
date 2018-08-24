@@ -8,6 +8,7 @@
 #include "base_device.h"
 #include <map>
 #include <vector>
+#include "base_datatype.h"
 
 namespace fst_hal
 {
@@ -25,7 +26,7 @@ public:
     DeviceManager();
     ~DeviceManager();
 
-    bool init();
+    ErrorCode init();
 
     BaseDevice* getDevicePtrByDeviceIndex(int device_index);
     std::vector<DeviceInfo> getDeviceList();
@@ -36,7 +37,7 @@ private:
     DeviceXml* device_xml_ptr_;
     std::map<int, BaseDevice*> device_map_;
 
-    bool addDevice(int device_index, BaseDevice* device_ptr);
+    ErrorCode addDevice(int device_index, BaseDevice* device_ptr);
 };
 
 }

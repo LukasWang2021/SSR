@@ -75,18 +75,22 @@ void load_register_data()
 	g_objRegManagerInterface = new RegManagerInterface("/root/install/share/configuration/machine");
 #else
 	g_process_comm_ptr = fst_base::ProcessComm::getInstance();
-
-	if(!g_process_comm_ptr->getInterpreterClientPtr()->init())
+    if(fst_base::ProcessComm::getInitErrorCode() != SUCCESS)
+    {
+        printf("load_register_data getInitErrorCode return failed\n");
+        return false;
+    }
+	if(g_process_comm_ptr->getInterpreterClientPtr()->init() != SUCCESS)
 	{
         printf("load_register_data getInterpreterClientPtr return false\n");
 		return false;
 	}
-    if(!g_process_comm_ptr->getInterpreterServerPtr()->init())
+    if(g_process_comm_ptr->getInterpreterServerPtr()->init() != SUCCESS)
 	{
         printf("load_register_data getInterpreterServerPtr init return false\n");
 		return false;
 	}
-    if(!g_process_comm_ptr->getInterpreterServerPtr()->open())
+    if(g_process_comm_ptr->getInterpreterServerPtr()->open() != SUCCESS)
 	{
         printf("load_register_data getInterpreterServerPtr open return false\n");
 		return false;

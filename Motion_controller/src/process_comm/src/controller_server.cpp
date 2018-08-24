@@ -4,6 +4,8 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
+#include "error_code.h"
+
 
 using namespace std;
 using namespace fst_base;
@@ -19,13 +21,13 @@ ControllerServer::~ControllerServer()
     this->close();
 }
 
-bool ControllerServer::init()
+ErrorCode ControllerServer::init()
 {
     req_resp_socket_ = nn_socket(AF_SP, NN_REP);
-    if(req_resp_socket_ == -1) return false;
+    if(req_resp_socket_ == -1) return PROCESS_COMM_CONTROLLER_SERVER_INIT_FAILED;
 
     req_resp_endpoint_id_ = nn_bind(req_resp_socket_, param_ptr_->i2c_req_res_ip_.c_str());
-    if(req_resp_endpoint_id_ == -1) return false;
+    if(req_resp_endpoint_id_ == -1) return PROCESS_COMM_CONTROLLER_SERVER_INIT_FAILED;
 
     // it is critical to set poll fd here to make the model work correctly
 	poll_fd_.fd = req_resp_socket_;
@@ -35,7 +37,7 @@ bool ControllerServer::init()
     send_buffer_ptr_ = new uint8_t[param_ptr_->send_buffer_size_]();
 
     initRpcTable();
-    return true;
+    return SUCCESS;
 }
 
 bool ControllerServer::isExit()
@@ -43,16 +45,16 @@ bool ControllerServer::isExit()
     return is_exit_;
 }
 
-bool ControllerServer::open()
+ErrorCode ControllerServer::open()
 {
     is_exit_ = false;
     if(!thread_.run(&controllerServerThreadFunc, this, param_ptr_->controller_server_thread_priority_))
     {
-        return false;
+        return PROCESS_COMM_CONTROLLER_SERVER_OPEN_FAILED;
     }
     else
     {
-        return true;
+        return SUCCESS;
     }
 }
 

@@ -3,6 +3,7 @@
 #include "fst_safety_device.h"
 #include "fst_axis_device.h"
 #include "virtual_axis_device.h"
+#include "error_code.h"
 
 
 using namespace fst_hal;
@@ -23,12 +24,12 @@ DeviceManager::~DeviceManager()
 
 }
 
-bool DeviceManager::init()
+ErrorCode DeviceManager::init()
 {
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load device manager component parameters");
-        return false;
+        return DEVICE_MANAGER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_); 
 
@@ -37,7 +38,7 @@ bool DeviceManager::init()
         || !device_xml_ptr_->loadDeviceConfig())
     {
         FST_ERROR("Failed to load device config file");
-        return false;
+        return DEVICE_MANAGER_LOAD_DEVICE_CONFIG_FAILED;
     }
 
     std::vector<DeviceConfig>::iterator it;
@@ -46,26 +47,26 @@ bool DeviceManager::init()
     {
         switch(it->device_type)
         {
-            case DEVICE_TYPE_FST_AXIS: return false;
-            case DEVICE_TYPE_FST_IO: return false;
-            case DEVICE_TYPE_FST_SAFETY: return false;
-            case DEVICE_TYPE_FST_ANYBUS: return false;
+            case DEVICE_TYPE_FST_AXIS: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_FST_IO: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_FST_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_FST_ANYBUS: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_VIRTUAL_AXIS: device_ptr = new VirtualAxisDevice(it->address); break;
-            case DEVICE_TYPE_VIRTUAL_IO: return false;
-            case DEVICE_TYPE_VIRTUAL_SAFETY: return false;
-            case DEVICE_TYPE_NORMAL: return false;
-            default: return false;
+            case DEVICE_TYPE_VIRTUAL_IO: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_VIRTUAL_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_NORMAL: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            default: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
         }
 
         if(device_ptr == NULL
             || !device_ptr->init())
         {
-            return false;
+            return DEVICE_MANAGER_INIT_DEVICE_FAILED;
         }
         device_map_[it->device_index] = device_ptr;
     }
     
-    return true;
+    return SUCCESS;
 }
 
 BaseDevice* DeviceManager::getDevicePtrByDeviceIndex(int device_index)
@@ -98,30 +99,30 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
     return device_list;
 }
 
-bool DeviceManager::addDevice(int device_index, BaseDevice* device_ptr)
+ErrorCode DeviceManager::addDevice(int device_index, BaseDevice* device_ptr)
 {
     std::map<int, BaseDevice*>::iterator it;
     it = device_map_.find(device_index);
     if(it != device_map_.end())
     {
-        return false;
+        return DEVICE_MANAGER_DEVICE_ALREADY_EXIST;
     }
 
     if(device_ptr == NULL)
     {
-        return false;
+        return DEVICE_MANAGER_INVALID_ARG;
     }
     
     for(it = device_map_.begin(); it != device_map_.end(); ++it)
     {
         if(it->second == device_ptr)
         {
-            return false;
+            return DEVICE_MANAGER_INVALID_ARG;
         }
     }
 
     device_map_[device_index] = device_ptr;
-    return true;
+    return SUCCESS;
 }
 
 

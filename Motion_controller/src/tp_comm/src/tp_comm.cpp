@@ -528,7 +528,7 @@ bool TpComm::encodePublishPackage(Comm_Publish& package, unsigned int hash, stru
     {
         FST_ERROR("encodePublishPackage: encode data failed");
         return false;
-    }            
+    }
     send_buffer_size = stream.bytes_written + HASH_BYTE_SIZE;
     return true;
 }
@@ -580,4 +580,150 @@ void tpCommRoutineThreadFunc(void* arg)
     {
         tp_comm->tpCommThreadFunc();
     }
+}
+
+void TpComm::lockIoPublishMutex()
+{
+    io_publish_list_mutex_.lock();
+}
+
+void TpComm::unlockIoPublishMutex()
+{
+    io_publish_list_mutex_.lock();
+}
+
+void TpComm::lockRegPublishMutex()
+{
+    reg_publish_list_mutex_.lock();
+}
+
+void TpComm::unlockRegPublishMutex()
+{
+    reg_publish_list_mutex_.unlock();
+}
+
+void TpComm::pushTaskToRegPublishList(TpPublish& package)
+{
+    reg_publish_list_mutex_.lock();
+    reg_publish_list_.push_back(package);
+    reg_publish_list_mutex_.unlock();
+}
+
+void TpComm::pushTaskToIoPublishList(TpPublish& package)
+{
+    io_publish_list_mutex_.lock();
+    io_publish_list_.push_back(package);
+    io_publish_list_mutex_.unlock();
+}
+
+void  TpComm::handleRegPublishList()
+{
+    std::vector<TpPublish>::iterator it;
+    struct timeval time_val;
+    long time_elapsed;
+ 
+    reg_publish_list_mutex_.lock();
+    gettimeofday(&time_val, NULL);
+    for(it = reg_publish_list_.begin(); it != reg_publish_list_.end(); ++it)
+    {
+        time_elapsed = computeTimeElapsed(time_val, it->last_publish_time);
+        if(checkPublishCondition(time_elapsed, it->is_element_changed, it->interval_min, it->interval_max))
+        {
+            // encode TpPublishElement
+            for(int i = 0; i < it->package.element_count; ++i)
+            {
+                // to do...
+            }
+
+            // encode TpPublish
+            int send_buffer_size;
+            if(!encodePublishPackage(it->package, it->hash, time_val, send_buffer_size))
+            {
+                FST_ERROR("handlePublishList: encode data failed");
+                break;
+            }
+
+            int send_bytes = nn_send(publish_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
+            if(send_bytes == -1)
+            {
+                FST_INFO("handleRegPublishList: send publish failed, error = %d", nn_errno());
+                break;
+            }
+
+            it->is_element_changed = false;
+            it->last_publish_time = time_val;
+        }
+    }
+
+    reg_publish_list_mutex_.unlock();
+}
+
+void  TpComm::eraseTaskFromRegPublishList(unsigned int &topic_hash)
+{
+    std::vector<TpPublish>::iterator it;  //reg_publish_list_;
+    reg_publish_list_mutex_.lock();
+    for(it = reg_publish_list_.begin(); it != reg_publish_list_.end();)
+    {
+        if(topic_hash == it->hash)
+            it = reg_publish_list_.erase(it);
+        else 
+            ++it;
+    }
+    reg_publish_list_mutex_.unlock();
+}
+
+void  TpComm::handleIoPublishList()
+{
+    std::vector<TpPublish>::iterator it;
+    struct timeval time_val;
+    long time_elapsed;
+ 
+    io_publish_list_mutex_.lock();
+    gettimeofday(&time_val, NULL);
+    for(it = io_publish_list_.begin(); it != io_publish_list_.end(); ++it)
+    {
+        time_elapsed = computeTimeElapsed(time_val, it->last_publish_time);
+        if(checkPublishCondition(time_elapsed, it->is_element_changed, it->interval_min, it->interval_max))
+        {
+            // encode TpPublishElement
+            for(int i = 0; i < it->package.element_count; ++i)
+            {
+                // to do...
+            }
+
+            // encode TpPublish
+            int send_buffer_size;
+            if(!encodePublishPackage(it->package, it->hash, time_val, send_buffer_size))
+            {
+                FST_ERROR("handlePublishList: encode data failed");
+                break;
+            }
+
+            int send_bytes = nn_send(publish_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
+            if(send_bytes == -1)
+            {
+                FST_INFO("handleRegPublishList: send publish failed, error = %d", nn_errno());
+                break;
+            }
+
+            it->is_element_changed = false;
+            it->last_publish_time = time_val;
+        }
+    }
+
+    io_publish_list_mutex_.unlock();
+}
+
+void  TpComm::eraseTaskFromIoPublishList(unsigned int &topic_hash)
+{
+    std::vector<TpPublish>::iterator it;  //io_publish_list_;
+    io_publish_list_mutex_.lock();
+    for(it = io_publish_list_.begin(); it != io_publish_list_.end();)
+    {
+        if(topic_hash == it->hash)
+            it = io_publish_list_.erase(it);
+        else 
+            ++it;
+    }
+    io_publish_list_mutex_.unlock();
 }

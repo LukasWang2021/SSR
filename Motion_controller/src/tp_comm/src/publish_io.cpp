@@ -8,6 +8,6 @@ void TpComm::handlePublishElementIo(Comm_Publish& package, int element_index, Tp
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElementIo: failed to encode UserOpMode");
+        FST_ERROR("handlePublishElementIo: failed to encode IO.");
     }
 }

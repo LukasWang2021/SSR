@@ -20,6 +20,8 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/publish/deleteTopic",	0x00004403,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00004403,	&TpComm::handleResponse0x00004403,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/publish/addRegTopic",	0x000163A3,	"RequestMessageType.Topic",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000163A3,	&TpComm::handleResponse0x000163A3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/publish/addIoTopic",	0x000058F3,	"RequestMessageType.Topic",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000058F3,	&TpComm::handleResponse0x000058F3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/publish/deleteRegTopic",	0x00010353,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010353,	&TpComm::handleResponse0x00010353,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/publish/deleteIoTopic",	0x0000DD03,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000DD03,	&TpComm::handleResponse0x0000DD03,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 
 	rpc_service =	{	"/rpc/tp_comm/getRpcTable",	0x00004FA5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_RpcTable",	&TpComm::handleRequest0x00004FA5,	&TpComm::handleResponse0x00004FA5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/tp_comm/getPublishTable",	0x000147A5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_PublishTable",	&TpComm::handleRequest0x000147A5,	&TpComm::handleResponse0x000147A5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);

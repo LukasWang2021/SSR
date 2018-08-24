@@ -71,4 +71,39 @@ void TpComm::handleResponse0x000058F3(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+//"/rpc/publish/deleteRegTopic"
+void TpComm::handleResponse0x00010353(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Uint32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/publish/deleteIoTopic"
+void TpComm::handleResponse0x0000DD03(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Uint32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+
+
+}
 

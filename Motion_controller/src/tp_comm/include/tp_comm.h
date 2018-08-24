@@ -66,6 +66,14 @@ public:
     void lockPublishMutex();
     void unlockPublishMutex();
 
+    void pushTaskToRegPublishList(TpPublish& package);
+    void lockRegPublishMutex();
+    void unlockRegPublishMutex();
+
+    void pushTaskToIoPublishList(TpPublish& package);
+    void lockIoPublishMutex();
+    void unlockIoPublishMutex();
+
     // component parameters
     int log_level_;
 private:
@@ -93,6 +101,12 @@ private:
     void handlePublishList();
     void eraseTaskFromPublishList(unsigned int &topic_hash);
 
+    void handleRegPublishList();///////////
+    void eraseTaskFromRegPublishList(unsigned int &topic_hash);//////////////
+
+    void handleIoPublishList();//////////////
+    void eraseTaskFromIoPublishList(unsigned int &topic_hash);///////////
+
     long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
     long computeTimeForTp(struct timeval& current_time_val);
     bool checkPublishCondition(long time_elapsed, bool is_element_changed, int interval_min, int interval_max);
@@ -108,6 +122,13 @@ private:
     bool encodeResponsePackage(unsigned int hash, const pb_field_t fields[], void* response_data_ptr, int& send_buffer_size);
     bool encodePublishElement(Comm_PublishElement_data_t& element, const pb_field_t fields[], void* element_data_ptr);
     bool encodePublishPackage(Comm_Publish& package, unsigned int hash, struct timeval& current_time_val, int& send_buffer_size);
+
+    void handlePublishElementRegPr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElementRegSr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElementRegMr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElementRegHr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElementRegR(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElementIo(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     /********GetUserOpMode, RequestMessageType_Void**********/          
     void handleRequest0x00000C05(int recv_bytes);
@@ -639,9 +660,13 @@ private:
     std::mutex request_list_mutex_;
     std::mutex response_list_mutex_;
     std::mutex publish_list_mutex_;
+    std::mutex reg_publish_list_mutex_;
+    std::mutex io_publish_list_mutex_;
     std::vector<TpRequestResponse>  request_list_;
     std::vector<TpRequestResponse>  response_list_;
     std::vector<TpPublish>  publish_list_;
+    std::vector<TpPublish>  reg_publish_list_;
+    std::vector<TpPublish>  io_publish_list_;
 };
 }
 #endif

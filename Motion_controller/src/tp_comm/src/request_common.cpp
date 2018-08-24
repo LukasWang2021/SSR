@@ -1,12 +1,13 @@
-#include "tp_comm.h"
 #include <pb_encode.h>
 #include <pb_decode.h>
 #include <pb_common.h>
+#include "error_monitor.h"
+#include "error_code.h"
+#include "tp_comm.h"
 
+using namespace fst_base;
 using namespace fst_comm;
-
 using namespace std;
-
 
 // get rpc table
 void TpComm::handleRequest0x00004FA5(int recv_bytes)
@@ -16,28 +17,31 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("Can't allocate memory for request_data");
         return;
     }
 
     ResponseMessageType_Uint64_RpcTable* response_data_ptr = new ResponseMessageType_Uint64_RpcTable;
     if(response_data_ptr == NULL)
     {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
 
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
-        FST_ERROR("handleRequestPackage: decode data failed");
+        
+        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
+        FST_ERROR("Decode data failed");
         return ;
     }
 
     Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x00004FA5);
     if(!checkAuthority(request_data_ptr->property.authority, controller_authority))
     {
-        FST_ERROR("handleRequestPackage: operation is not authorized");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
         return;
     }
@@ -73,6 +77,11 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
             response_data_ptr->data.element[element_index].hash = iter->hash;
             element_index++;
         }
+        else
+        {
+            ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);
+            FST_ERROR("Operation is not authorized");
+        }
     }
 
     response_data_ptr->data.element_count = element_index;
@@ -95,28 +104,30 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("Can't allocate memory for request_data");
         return;
     }
 
     ResponseMessageType_Uint64_PublishTable* response_data_ptr = new ResponseMessageType_Uint64_PublishTable;
     if(response_data_ptr == NULL)
     {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
     }
 
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
-        FST_ERROR("handleRequestPackage: decode data failed");
+        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
+        FST_ERROR("Decode data failed");
         return ;
     }
 
     Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x000147A5);
     if(!checkAuthority(request_data_ptr->property.authority, controller_authority))
     {
-        FST_ERROR("handleRequestPackage: operation is not authorized");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
     else
@@ -149,6 +160,11 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
             response_data_ptr->data.element[element_index].message_type[iter->element_type.length()] = '\0';
             response_data_ptr->data.element[element_index].hash = iter->hash;
             element_index++;
+        }
+        else
+        {
+            ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);
+            FST_ERROR("Operation is not authorized");
         }
     }
 

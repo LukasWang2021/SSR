@@ -62,14 +62,18 @@ public:
     void pushTaskToResponseList(TpRequestResponse& package);
     TpPublish generateTpPublishTask(unsigned int topic_hash, int interval_min, int interval_max);
     void addTpPublishElement(TpPublish& task, unsigned int element_hash, void* element_data_ptr);
+
+    bool isTopicExisted(unsigned int topic_hash);
     void pushTaskToPublishList(TpPublish& package);
     void lockPublishMutex();
     void unlockPublishMutex();
 
+    bool isRegTopicExisted(unsigned int topic_hash);
     void pushTaskToRegPublishList(TpPublish& package);
     void lockRegPublishMutex();
     void unlockRegPublishMutex();
 
+    bool isIoTopicExisted(unsigned int topic_hash);
     void pushTaskToIoPublishList(TpPublish& package);
     void lockIoPublishMutex();
     void unlockIoPublishMutex();
@@ -98,6 +102,7 @@ private:
     void handleRequest();
     void pushTaskToRequestList(unsigned int hash, void* request_data_ptr, void* response_data_ptr);
     void handleResponseList();
+
     void handlePublishList();
     void eraseTaskFromPublishList(unsigned int &topic_hash);
 
@@ -318,6 +323,10 @@ private:
     void handleRequest0x000163A3(int recv_bytes);
     /********rpc/publish/addIoTopic, RequestMessageType_Topic**********/
     void handleRequest0x000058F3(int recv_bytes);
+    /********rpc/publish/deleteRegTopic, RequestMessageType_Uint32**********/
+    void handleRequest0x00010353(int recv_bytes);
+    /********rpc/publish/deleteIoTopic, RequestMessageType_Uint32**********/
+    void handleRequest0x0000DD03(int recv_bytes);
 
 
     /********rpc/motion_control/setGlobalVelRatio, RequestMessageType_Double**********/
@@ -545,6 +554,11 @@ private:
     void handleResponse0x000163A3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/publish/addIoTopic, ResponseMessageType_Bool**********/
     void handleResponse0x000058F3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/publish/deleteRegTopic, ResponseMessageType_Uint64**********/
+    void handleResponse0x00010353(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/publish/deleteIoTopic, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000DD03(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
 
     /********rpc/motion_control/setGlobalVelRatio, ResponseMessageType_Uint64**********/
     void handleResponse0x000005EF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

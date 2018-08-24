@@ -44,7 +44,7 @@ void TpComm::handlePublishElement0x0000E8E3(Comm_Publish& package, int element_i
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x0000E8E3: failed to encode RobotStatus");
+        FST_ERROR("handlePublishElement0x0000E8E3: failed to encode CtrlStatus");
     }
 }
 
@@ -66,11 +66,12 @@ void TpComm::handlePublishElement0x0000D0AD(Comm_Publish& package, int element_i
     }
 }
 
+//"/publish/motion_control/axis_group/feedback/joints"
 void TpComm::handlePublishElement0x000161F3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
 {
     if(!encodePublishElement(package.element[element_index].data, MessageType_Int32_DoubleList_fields, list_element.data_ptr))
     {
-        FST_ERROR("handlePublishElement0x000161F3: failed to encode SafetyAlarm");
+        FST_ERROR("handlePublishElement0x000161F3: failed to encode motion_control axis_group feedback joints");
     }
 }
 

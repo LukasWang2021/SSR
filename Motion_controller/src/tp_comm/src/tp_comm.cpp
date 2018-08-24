@@ -7,10 +7,14 @@
 #include <nanomsg/reqrep.h>
 #include <pb_decode.h>
 #include <pb_encode.h>
+#include "error_monitor.h"
+#include "error_code.h"
 #include "tp_comm.h"
 
+using namespace fst_base;
 using namespace std;
 using namespace fst_comm;
+
 
 TpComm::TpComm():
     log_ptr_(NULL), param_ptr_(NULL),
@@ -38,9 +42,10 @@ bool TpComm::initComponentParams()
 {
     if(!param_ptr_->loadParam())
     {
+        ErrorMonitor::instance()->add(TP_COMM_LOAD_PARAM_FAILED);
         FST_ERROR("Failed to load TpCommManager component parameters");
         return false;
-    } 
+    }
 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
 
@@ -53,19 +58,44 @@ bool TpComm::initComponentParams()
 
 bool TpComm::init()
 {
-    if (!initComponentParams()) return false;
+    if (!initComponentParams()) 
+    {
+        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
+        FST_ERROR("Failed to init object");
+        return false;
+    }
 
     req_resp_socket_ = nn_socket(AF_SP, NN_REP);
-    if(req_resp_socket_ == -1) return false;
+    if(req_resp_socket_ == -1)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
+        FST_ERROR("Failed to init object");
+        return false;
+    }
 
     req_resp_endpoint_id_ = nn_bind(req_resp_socket_, req_resp_ip_.c_str());
-    if(req_resp_endpoint_id_ == -1) return false;
+    if(req_resp_endpoint_id_ == -1)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
+        FST_ERROR("Failed to init object");
+        return false;
+    }
 
     publish_socket_ = nn_socket(AF_SP, NN_PUB);
-    if(publish_socket_ == -1) return false;
+    if(publish_socket_ == -1)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
+        FST_ERROR("Failed to init object");
+        return false;
+    }
 
     publish_endpoint_id_ = nn_bind(publish_socket_, publish_ip_.c_str());
-    if(publish_endpoint_id_ == -1) return false;
+    if(publish_endpoint_id_ == -1)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
+        FST_ERROR("Failed to init object");
+        return false;
+    }
 
     // it is critical to set poll fd here to make the model work correctly
 	poll_fd_.fd = req_resp_socket_;
@@ -80,7 +110,7 @@ bool TpComm::init()
     initPublishElementQuickSearchTable();
 
     FST_INFO("TpComm init success");
-    return true;
+    return true;    
 }
 
 bool TpComm::open()
@@ -89,6 +119,8 @@ bool TpComm::open()
 
     if(!thread_ptr_.run(&tpCommRoutineThreadFunc, this, 50))
     {
+        ErrorMonitor::instance()->add(TP_COMM_OPEN_FAILED);
+        FST_ERROR("Failed to open tpcomm");
         return false;
     }
 
@@ -290,6 +322,8 @@ void TpComm::handleRequest()
 
         if(recv_bytes == -1)
         {
+            ErrorMonitor::instance()->add(TP_COMM_RECEIVE_FAILED);
+            FST_ERROR("Failed to receive request.");
             return;
         }
     }
@@ -301,13 +335,19 @@ void TpComm::handleRequest()
     unsigned int hash = *((unsigned int*)recv_buffer_ptr_);
     FST_INFO("---handleRequest: hash = %x, recv_bytes = %d", hash, recv_bytes);
     FST_INFO("---handleRequest: %x %x %x %x", recv_buffer_ptr_[0], recv_buffer_ptr_[1], recv_buffer_ptr_[2], recv_buffer_ptr_[3]);
+
     HandleRequestFuncPtr func_ptr = getRequestHandlerByHash(hash);
     if(func_ptr != NULL)
     {
         (this->*func_ptr)(recv_bytes);
     }
+    else
+    {
+        ErrorMonitor::instance()->add(TP_COMM_INVALID_REQUEST);
+        FST_ERROR("Request invalid.");
+    }
 
-    cout << "Here : recv msg" <<endl;
+    FST_INFO("Received msg");
 }
 
 void TpComm::pushTaskToRequestList(unsigned int hash, void* request_data_ptr, void* response_data_ptr)
@@ -346,7 +386,8 @@ void TpComm::handleResponseList()
         int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
         if(send_bytes == -1)
         {
-            FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
+            ErrorMonitor::instance()->add(TP_COMM_SEND_FAILED);
+            FST_ERROR("Send response failed, nn_error = %d", nn_errno());
         }
     }
     response_list_.clear();
@@ -358,14 +399,14 @@ void TpComm::handlePublishList()
     std::vector<TpPublish>::iterator it;
     struct timeval time_val;
     long time_elapsed;
-    HandlePublishElementFuncPtr func_ptr; 
+    HandlePublishElementFuncPtr func_ptr;
     publish_list_mutex_.lock();
     gettimeofday(&time_val, NULL);
     for(it = publish_list_.begin(); it != publish_list_.end(); ++it)
     {
         time_elapsed = computeTimeElapsed(time_val, it->last_publish_time);
         if(checkPublishCondition(time_elapsed, it->is_element_changed, it->interval_min, it->interval_max))
-        {            
+        {
             // encode TpPublishElement
             for(int i = 0; i < it->package.element_count; ++i)
             {
@@ -380,14 +421,16 @@ void TpComm::handlePublishList()
             int send_buffer_size;
             if(!encodePublishPackage(it->package, it->hash, time_val, send_buffer_size))
             {
-                FST_ERROR("handlePublishList: encode data failed");
+                FST_ERROR("Encode data failed");
+                ErrorMonitor::instance()->add(TP_COMM_ENCODE_FAILED);
                 break;
             }
 
             int send_bytes = nn_send(publish_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
             if(send_bytes == -1)
             {
-                FST_INFO("handlePublishList: send publish failed, error = %d", nn_errno());
+                ErrorMonitor::instance()->add(TP_COMM_SEND_FAILED);
+                FST_INFO("Send publish failed, error = %d", nn_errno());
                 break;
             }
 
@@ -459,15 +502,16 @@ void TpComm::initCommFailedResponsePackage(void* request_data_ptr, void* respons
     // it is tricky here that all request & response have the same package header and property, no matter what data they have
     ((ResponseMessageType_Int32*)response_data_ptr)->header.time_stamp = ((RequestMessageType_Int32*)request_data_ptr)->header.time_stamp;
     ((ResponseMessageType_Int32*)response_data_ptr)->header.package_left = -1;
-    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = 1;
+    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = TP_COMM_AUTHORITY_CHECK_FAILED;
     ((ResponseMessageType_Int32*)response_data_ptr)->property.authority = ((RequestMessageType_Int32*)request_data_ptr)->property.authority;
 }
 
-void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, void* response_data_ptr, int recv_bytes, 
-                                                const pb_field_t fields[], int package_left)
+void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, void* response_data_ptr, 
+                                    int recv_bytes, const pb_field_t fields[], int package_left)
 {
     if(!decodeRequestPackage(fields, (void*)request_data_ptr, recv_bytes))
     {
+        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
         FST_ERROR("handleRequestPackage:  decode data failed");
         return ;
     }
@@ -476,7 +520,8 @@ void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, voi
 
     if(!checkAuthority(((RequestMessageType_Int32*)request_data_ptr)->property.authority, controller_authority))
     {
-        FST_ERROR("handleRequestPackage: operation is not authorized");
+        ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);    
+        FST_ERROR("Operation is not authorized");
         // If operation not authorized, don't throw a response to response list directly but reuse the normal channel,
         // that is throwing the task to request list. User should judge if response_data_ptr.header.succeed is false.
         // If it is false, then don't process anything, throw it to response list directly caling by pushTaskToRequestList().
@@ -497,7 +542,8 @@ bool TpComm::encodeResponsePackage(unsigned int hash, const pb_field_t fields[],
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer_ptr_ + HASH_BYTE_SIZE, send_buffer_size_ - HASH_BYTE_SIZE);
     if(!pb_encode(&stream, fields, response_data_ptr))
     {
-        FST_ERROR("encodeResponsePackage: encode data failed");
+        ErrorMonitor::instance()->add(TP_COMM_ENCODE_FAILED);
+        FST_ERROR("Encode data failed");
         send_buffer_size = 0;
         return false;
     }
@@ -511,6 +557,7 @@ bool TpComm::encodePublishElement(Comm_PublishElement_data_t& element, const pb_
     pb_ostream_t element_stream = pb_ostream_from_buffer(element.bytes, sizeof(element.bytes));
     if(!pb_encode(&element_stream, fields, element_data_ptr))
     {
+        ErrorMonitor::instance()->add(TP_COMM_ENCODE_FAILED);
         FST_ERROR("encodePublishElement: encode element data failed");
         element.size = 0;
         return false;
@@ -726,4 +773,50 @@ void  TpComm::eraseTaskFromIoPublishList(unsigned int &topic_hash)
             ++it;
     }
     io_publish_list_mutex_.unlock();
+}
+
+
+bool TpComm::isTopicExisted(unsigned int topic_hash)
+{
+    bool is_exist = false;    
+    std::vector<TpPublish>::iterator itr;
+
+    publish_list_mutex_.lock();
+
+    for (itr = publish_list_.begin(); itr != publish_list_.end(); ++itr)
+        if (itr->hash == topic_hash)
+            is_exist = true;
+
+    publish_list_mutex_.unlock();
+    return is_exist;
+}
+
+bool TpComm::isRegTopicExisted(unsigned int topic_hash)
+{
+    bool is_exist = false;    
+    std::vector<TpPublish>::iterator itr;
+
+    reg_publish_list_mutex_.lock();
+
+    for (itr = reg_publish_list_.begin(); itr != reg_publish_list_.end(); ++itr)
+        if (itr->hash == topic_hash)
+            is_exist = true;
+
+    reg_publish_list_mutex_.unlock();
+    return is_exist;
+}
+
+bool TpComm::isIoTopicExisted(unsigned int topic_hash)
+{
+    bool is_exist = false;
+    std::vector<TpPublish>::iterator itr;
+
+    io_publish_list_mutex_.lock();
+
+    for (itr = io_publish_list_.begin(); itr != io_publish_list_.end(); ++itr)
+        if (itr->hash == topic_hash)
+            is_exist = true;
+
+    io_publish_list_mutex_.unlock();
+    return is_exist;
 }

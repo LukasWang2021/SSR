@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     parameter_manager
     thread_help
     log_manager
+    error_monitor
 )
 
 if(catkin_CROSS)
@@ -29,14 +30,12 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/parameter_manager/include/
     ${depend_PATH_INC}/log_manager/include/
     ${depend_PATH_INC}/thread_help/include/
+    ${depend_PATH_INC}/error_monitor/include/
 )
 
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES tp_comm
-    DEPENDS parameter_manager 
-    DEPENDS thread_help
-    DEPENDS log_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -61,6 +60,7 @@ target_link_libraries(tp_comm
     protos
     thread_help
     parameter_manager
+    error_monitor 
 )
 
 install(TARGETS tp_comm

@@ -107,11 +107,11 @@ ErrorCode ManualTeach::manualContinuousByDirect(const ManualDirection *direction
     }
 }
 
-char* ManualTeach::printDBLine(const int *data, size_t size, char *buffer, size_t length)
+char* ManualTeach::printDBLine(const int *data, char *buffer, size_t length)
 {
     int len = 0;
     
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < joint_num_; i++)
     {
         len += snprintf(buffer + len, length - len, "%d ", data[i]);
     }
@@ -125,11 +125,11 @@ char* ManualTeach::printDBLine(const int *data, size_t size, char *buffer, size_
     return buffer;
 }
 
-char* ManualTeach::printDBLine(const double *data, size_t size, char *buffer, size_t length)
+char* ManualTeach::printDBLine(const double *data, char *buffer, size_t length)
 {
     int len = 0;
     
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < joint_num_; i++)
     {
         len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
     }
@@ -147,9 +147,9 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
 {
     char buffer[LOG_TEXT_SIZE];
 
-    FST_INFO("manual-Joint-Step: directions = %s, planning trajectory ...", printDBLine((int*)dir, joint_num_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("manual-Joint-Step: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
     FST_INFO("  step_angle = %.4frad, vel_ratio = %.0f%%, acc_ratio = %.0f%%", step_joint_, vel_ratio_ * 100, acc_ratio_ * 100);
-    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], joint_num_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     Joint target  = traj.joint_start;
 
@@ -159,15 +159,13 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
         else if (dir[i] == DECREASE) target[i] -= step_joint_;
     }
 
-    FST_INFO("  target joint = %s", printDBLine(&target[0], joint_num_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  target joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
 
-    /*
-    if (!isJointInConstraint(target, g_soft_constraint))
+    if (!joint_constraint_ptr_->isJointInConstraint(target))
     {
         FST_ERROR("Target out of soft constraint.");
         return TARGET_OUT_OF_CONSTRAINT;
     }
-    */
 
     double omega_limit[NUM_OF_JOINT] = {5.81, 4.66, 5.81, 7.85, 7.07, 10.56, 0, 0, 0};
     double alpha_limit[NUM_OF_JOINT] = {11.62, 9.32, 16.6, 22.44, 28.27, 42.24, 0, 0, 0};
@@ -248,9 +246,9 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
     double alpha, omega;
     char buffer[LOG_TEXT_SIZE];
 
-    FST_INFO("manual-Joint-Continuous: directions = %s, planning trajectory ...", printDBLine((int*)dir, joint_num_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("manual-Joint-Continuous: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
     FST_INFO("  vel_ratio = %.0f%%, acc_ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
-    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], joint_num_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (traj.duration < MINIMUM_E6)
     {
@@ -317,8 +315,17 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
             {
                 // start joint motion
                 // stop until soft constraint
-                double trip = dir[i] == INCREASE ? joint_constraint_ptr_->upper()[i] - traj.joint_start[i] :
-                                                   traj.joint_start[i] - joint_constraint_ptr_->lower()[i];
+                double trip;
+
+                if (joint_constraint_ptr_->isJointMasked(i))
+                {
+                    trip = 99.99;
+                }
+                else
+                {
+                    trip = dir[i] == INCREASE ? joint_constraint_ptr_->upper()[i] - traj.joint_start[i] :
+                           traj.joint_start[i] - joint_constraint_ptr_->lower()[i];
+                }
 
                 if (trip > MINIMUM_E6)
                 {
@@ -342,8 +349,17 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
                     traj.coeff[i].start_alpha = dir[i] == INCREASE ? alpha : -alpha;
                     traj.coeff[i].brake_alpha = -traj.coeff[i].start_alpha;
                     traj.direction[i] = dir[i];
-                    traj.joint_ending[i] = dir[i] == INCREASE ? joint_constraint_ptr_->upper()[i] :
-                                                                joint_constraint_ptr_->lower()[i];
+
+                    if (joint_constraint_ptr_->isJointMasked(i))
+                    {
+                        traj.joint_ending[i] = dir[i] == INCREASE ? traj.joint_start[i] + trip :
+                                               traj.joint_start[i] - trip;
+                    }
+                    else
+                    {
+                        traj.joint_ending[i] = dir[i] == INCREASE ? joint_constraint_ptr_->upper()[i] :
+                                               joint_constraint_ptr_->lower()[i];
+                    }
                 }
                 else
                 {
@@ -439,8 +455,8 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
 
     FST_INFO("manual-Joint-APOINT: planning trajectory ...");
     FST_INFO("  vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
-    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], joint_num_, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  target joint = %s", printDBLine(&target[0], joint_num_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  target joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
 
     double trips[NUM_OF_JOINT], alpha[NUM_OF_JOINT], omega[NUM_OF_JOINT], t_min[NUM_OF_JOINT], delta[NUM_OF_JOINT];
     double duration = 0;

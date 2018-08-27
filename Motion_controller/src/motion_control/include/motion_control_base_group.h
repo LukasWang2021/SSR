@@ -57,16 +57,18 @@ class BaseGroup
     virtual ErrorCode manualMoveToPoint(const Joint &joint) = 0;
     virtual ErrorCode manualStop(void) = 0;
 
+    virtual size_t getNumberOfJoint(void) = 0;
     virtual size_t getFIFOLength(void) = 0;
 
     virtual Calibrator* getCalibratorPtr(void) = 0;
+    Constraint* getSoftConstraintPtr(void);
 
-    virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint) = 0;
-    virtual ErrorCode setFirmConstraint(const JointConstraint &firm_constraint) = 0;
-    virtual ErrorCode setHardConstraint(const JointConstraint &hard_constraint) = 0;
-    virtual ErrorCode getSoftConstraint(JointConstraint &soft_constraint) = 0;
-    virtual ErrorCode getFirmConstraint(JointConstraint &firm_constraint) = 0;
-    virtual ErrorCode getHardConstraint(JointConstraint &hard_constraint) = 0;
+    ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
+    ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
+    ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
+    ErrorCode getSoftConstraint(JointConstraint &soft_constraint);
+    ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
+    ErrorCode getHardConstraint(JointConstraint &hard_constraint);
 
     void realtimeTask(void);
     void activeRealtimeTask(void);
@@ -81,9 +83,6 @@ class BaseGroup
     ServoState getServoState(void);
 
 
-
-
-
   protected:
     virtual ErrorCode sendPoint(void);
     virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length) = 0;
@@ -91,15 +90,22 @@ class BaseGroup
     virtual ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length) = 0;
     virtual bool isJointInConstraint(Joint joint, JointConstraint constraint) = 0;
 
+    virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
+    virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
+
     inline void reportError(const ErrorCode &error);
     bool updateJointStateFromBareCore(void);
 
     bool rt_task_active_;
+
+    Constraint          hard_constraint_;
+    Constraint          soft_constraint_;
+    Constraint          firm_constraint_;
+
     Joint current_joint_;
     ServoState  servo_state_;
     GroupState  group_state_;
 
-    JointConstraint     soft_constraint_;
     TrajectorySegment*  auto_cache_;
     TrajectorySegment*  manual_cache_;
 

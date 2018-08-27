@@ -1,6 +1,7 @@
 #ifndef _MOTION_CONTROL_BASE_TYPE_H
 #define _MOTION_CONTROL_BASE_TYPE_H
 
+#include <stddef.h>
 #include <assert.h>
 
 #define     NUM_OF_JOINT    9
@@ -8,6 +9,7 @@
 #define     MINIMUM_E3      0.001
 #define     MINIMUM_E6      0.000001
 #define     MINIMUM_E9      0.000000001
+#define     MINIMUM_E12     0.000000000001
 
 typedef unsigned long long int ErrorCode;
 typedef double  MotionTime;

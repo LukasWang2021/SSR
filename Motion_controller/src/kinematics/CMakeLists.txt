@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(basic_alg)
+project(kinematics)
 
 find_package(catkin REQUIRED COMPONENTS
-    log_manager
+  basic_alg
 )
 
 if(catkin_CROSS)
@@ -21,11 +21,12 @@ set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/basic_alg/include
 )
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES basic_alg
+    LIBRARIES kinematics
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -38,16 +39,14 @@ include_directories(
 
 aux_source_directory(src BASE_SRCS)
 
-add_library(basic_alg
+add_library(kinematics
     ${BASE_SRCS}
 )
 
-target_link_libraries(basic_alg
+target_link_libraries(kinematics
     ${catkin_LIBRARIES}
 )
 
-install(TARGETS basic_alg
+install(TARGETS kinematics
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
-
-

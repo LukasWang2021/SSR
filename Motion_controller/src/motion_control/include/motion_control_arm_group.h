@@ -34,6 +34,7 @@ class ArmGroup : public BaseGroup
 
     ErrorCode autoMove(void);
 
+    size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);
 
     Calibrator* getCalibratorPtr(void);
@@ -52,9 +53,9 @@ class ArmGroup : public BaseGroup
     ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
     ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
 
-    Constraint          hard_constraint_{JOINT_OF_ARM};
-    Constraint          soft_constraint_{JOINT_OF_ARM};
-    Constraint          firm_constraint_{JOINT_OF_ARM};
+    inline char* printDBLine(const int *data, char *buffer, size_t length);
+    inline char* printDBLine(const double *data, char *buffer, size_t length);
+
     Calibrator          calibrator_{JOINT_OF_ARM, &bare_core_, log_ptr_};
     ManualTeach         manual_teach_{JOINT_OF_ARM, &soft_constraint_, log_ptr_};
     ManualTrajectory    manual_traj_;

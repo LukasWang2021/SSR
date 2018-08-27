@@ -33,8 +33,8 @@ private:
     ErrorCode   manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj);
 
-    inline char* printDBLine(const int *data, size_t size, char *buffer, size_t length);
-    inline char* printDBLine(const double *data, size_t size, char *buffer, size_t length);
+    inline char* printDBLine(const int *data, char *buffer, size_t length);
+    inline char* printDBLine(const double *data, char *buffer, size_t length);
 
     size_t joint_num_;
     fst_log::Logger* log_ptr_;

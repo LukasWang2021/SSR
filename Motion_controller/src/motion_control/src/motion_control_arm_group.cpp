@@ -65,12 +65,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     {
         if (upper.size() == NUM_OF_JOINT && lower.size() == NUM_OF_JOINT)
         {
-            for (size_t i = 0; i < JOINT_OF_ARM; i++)
-            {
-                FST_INFO("  index-%d: [%.6f, %.6f]", i, lower[i], upper[i]);
-                hard_constraint_.upper()[i] = upper[i];
-                hard_constraint_.lower()[i] = lower[i];
-            }
+            hard_constraint_.initConstraint(*(Joint*)(&lower[0]), *(Joint*)(&upper[0]), JOINT_OF_ARM);
         }
         else
         {
@@ -95,12 +90,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     {
         if (upper.size() == NUM_OF_JOINT && lower.size() == NUM_OF_JOINT)
         {
-            for (size_t i = 0; i < JOINT_OF_ARM; i++)
-            {
-                FST_INFO("  index-%d: [%.6f, %.6f]", i, lower[i], upper[i]);
-                firm_constraint_.upper()[i] = upper[i];
-                firm_constraint_.lower()[i] = lower[i];
-            }
+            firm_constraint_.initConstraint(*(Joint*)(&lower[0]), *(Joint*)(&upper[0]), JOINT_OF_ARM);
         }
         else
         {
@@ -125,12 +115,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     {
         if (upper.size() == NUM_OF_JOINT && lower.size() == NUM_OF_JOINT)
         {
-            for (size_t i = 0; i < JOINT_OF_ARM; i++)
-            {
-                FST_INFO("  index-%d: [%.6f, %.6f]", i, lower[i], upper[i]);
-                soft_constraint_.upper()[i] = upper[i];
-                soft_constraint_.lower()[i] = lower[i];
-            }
+            soft_constraint_.initConstraint(*(Joint*)(&lower[0]), *(Joint*)(&upper[0]), JOINT_OF_ARM);
         }
         else
         {
@@ -143,6 +128,16 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         FST_ERROR("Fail loading soft constraint from config file");
         return param.getLastError();
     }
+
+    char buffer[LOG_TEXT_SIZE];
+    FST_INFO("Hard/firm/soft constraints from axis-%d to axis-%d:", 0, JOINT_OF_ARM - 1);
+    FST_INFO("  hard-lower: %s", printDBLine(&hard_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  firm-lower: %s", printDBLine(&firm_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  soft-lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  soft-upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  firm-upper: %s", printDBLine(&firm_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  hard-upper: %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+
 
     FST_INFO("Initializing interface to bare core ...");
 
@@ -161,6 +156,21 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return err;
     }
 
+    OffsetMask mask[NUM_OF_JOINT] = {OFFSET_UNMASK};
+    calibrator_.getOffsetMask(mask);
+    size_t index[JOINT_OF_ARM];
+    size_t length = 0;
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        if (mask[i] == OFFSET_MASKED)
+        {
+            index[length++] = i;
+        }
+    }
+
+    soft_constraint_.setMask(index, length);
+
     return SUCCESS;
 }
 
@@ -168,211 +178,6 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 Calibrator* ArmGroup::getCalibratorPtr(void)
 {
     return &calibrator_;
-}
-
-
-ErrorCode ArmGroup::getSoftConstraint(JointConstraint &soft_constraint)
-{
-    FST_INFO("Get soft constraint.");
-    soft_constraint_.getConstraint(soft_constraint);
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             soft_constraint.lower[0], soft_constraint.lower[1], soft_constraint.lower[2],
-             soft_constraint.lower[3], soft_constraint.lower[4], soft_constraint.lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             soft_constraint.upper[0], soft_constraint.upper[1], soft_constraint.upper[2],
-             soft_constraint.upper[3], soft_constraint.upper[4], soft_constraint.upper[5]);
-    return SUCCESS;
-}
-
-
-ErrorCode ArmGroup::getFirmConstraint(JointConstraint &firm_constraint)
-{
-    FST_INFO("Get firm constraint.");
-    firm_constraint_.getConstraint(firm_constraint);
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             firm_constraint.lower[0], firm_constraint.lower[1], firm_constraint.lower[2],
-             firm_constraint.lower[3], firm_constraint.lower[4], firm_constraint.lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             firm_constraint.upper[0], firm_constraint.upper[1], firm_constraint.upper[2],
-             firm_constraint.upper[3], firm_constraint.upper[4], firm_constraint.upper[5]);
-    return SUCCESS;
-}
-
-
-ErrorCode ArmGroup::getHardConstraint(JointConstraint &hard_constraint)
-{
-    FST_INFO("Get hard constraint.");
-    hard_constraint_.getConstraint(hard_constraint);
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             hard_constraint.lower[0], hard_constraint.lower[1], hard_constraint.lower[2],
-             hard_constraint.lower[3], hard_constraint.lower[4], hard_constraint.lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             hard_constraint.upper[0], hard_constraint.upper[1], hard_constraint.upper[2],
-             hard_constraint.upper[3], hard_constraint.upper[4], hard_constraint.upper[5]);
-    return SUCCESS;
-}
-
-
-ErrorCode ArmGroup::setSoftConstraint(const JointConstraint &soft_constraint)
-{
-    Joint lower, upper;
-    FST_INFO("Set soft constraint.");
-
-    soft_constraint_.getConstraint(lower, upper);
-    FST_INFO("Origin soft constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
-
-    FST_INFO("Given soft constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             soft_constraint.lower[0], soft_constraint.lower[1], soft_constraint.lower[2],
-             soft_constraint.lower[3], soft_constraint.lower[4], soft_constraint.lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             soft_constraint.upper[0], soft_constraint.upper[1], soft_constraint.upper[2],
-             soft_constraint.upper[3], soft_constraint.upper[4], soft_constraint.upper[5]);
-
-    firm_constraint_.getConstraint(lower, upper);
-    FST_INFO("Firm constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
-
-    if (firm_constraint_.isCoverConstaint(soft_constraint))
-    {
-        ParamGroup param;
-        vector<double> v_upper(&soft_constraint.upper[0], &soft_constraint.upper[0] + NUM_OF_JOINT);
-        vector<double> v_lower(&soft_constraint.lower[0], &soft_constraint.lower[0] + NUM_OF_JOINT);
-
-        for (size_t i = JOINT_OF_ARM; i < NUM_OF_JOINT; i++)
-        {
-            v_upper[i] = 0;
-            v_lower[i] = 0;
-        }
-
-        if (param.loadParamFile("soft_constraint.yaml") &&
-            param.setParam("soft_constraint/upper", v_upper) &&
-            param.setParam("soft_constraint/lower", v_lower) &&
-            param.dumpParamFile("soft_constraint.yaml"))
-        {
-            soft_constraint_.setConstraint(soft_constraint);
-            FST_INFO("Soft constraint updated successfully.");
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("Fail dumping soft constraint to config file");
-            return param.getLastError();
-        }
-    }
-    else
-    {
-        FST_ERROR("Given soft constraint out of firm constraint.");
-        return INVALID_PARAMETER;
-    }
-}
-
-
-ErrorCode ArmGroup::setFirmConstraint(const JointConstraint &firm_constraint)
-{
-    Joint lower, upper;
-    FST_INFO("Set firm constraint.");
-
-    firm_constraint_.getConstraint(lower, upper);
-    FST_INFO("Origin firm constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
-
-    FST_INFO("Given firm constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             firm_constraint.lower[0], firm_constraint.lower[1], firm_constraint.lower[2],
-             firm_constraint.lower[3], firm_constraint.lower[4], firm_constraint.lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             firm_constraint.upper[0], firm_constraint.upper[1], firm_constraint.upper[2],
-             firm_constraint.upper[3], firm_constraint.upper[4], firm_constraint.upper[5]);
-
-    hard_constraint_.getConstraint(lower, upper);
-    FST_INFO("Hard constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", lower[0], lower[1], lower[2], lower[3], lower[4], lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", upper[0], upper[1], upper[2], upper[3], upper[4], upper[5]);
-
-    if (hard_constraint_.isCoverConstaint(firm_constraint_))
-    {
-        ParamGroup param;
-        vector<double> v_upper(&firm_constraint.upper[0], &firm_constraint.upper[0] + NUM_OF_JOINT);
-        vector<double> v_lower(&firm_constraint.lower[0], &firm_constraint.lower[0] + NUM_OF_JOINT);
-
-        for (size_t i = JOINT_OF_ARM; i < NUM_OF_JOINT; i++)
-        {
-            v_upper[i] = 0;
-            v_lower[i] = 0;
-        }
-
-        if (param.loadParamFile("firm_constraint.yaml") &&
-            param.setParam("firm_constraint/upper", v_upper) &&
-            param.setParam("firm_constraint/lower", v_lower) &&
-            param.dumpParamFile("firm_constraint.yaml"))
-        {
-            firm_constraint_.setConstraint(firm_constraint);
-            FST_INFO("Firm constraint updated successfully.");
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("Fail dumping firm constraint to config file");
-            return param.getLastError();
-        }
-    }
-    else
-    {
-        FST_ERROR("Given firm constraint out of hard constraint.");
-        return INVALID_PARAMETER;
-    }
-}
-
-
-ErrorCode ArmGroup::setHardConstraint(const JointConstraint &hard_constraint)
-{
-    FST_INFO("Set hard constraint.");
-
-    FST_INFO("Origin hard constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             hard_constraint_.lower()[0], hard_constraint_.lower()[1], hard_constraint_.lower()[2],
-             hard_constraint_.lower()[3], hard_constraint_.lower()[4], hard_constraint_.lower()[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             hard_constraint_.upper()[0], hard_constraint_.upper()[1], hard_constraint_.upper()[2],
-             hard_constraint_.upper()[3], hard_constraint_.upper()[4], hard_constraint_.upper()[5]);
-
-    FST_INFO("Given hard constraint:");
-    FST_INFO("  lower = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             hard_constraint.lower[0], hard_constraint.lower[1], hard_constraint.lower[2],
-             hard_constraint.lower[3], hard_constraint.lower[4], hard_constraint.lower[5]);
-    FST_INFO("  upper = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-             hard_constraint.upper[0], hard_constraint.upper[1], hard_constraint.upper[2],
-             hard_constraint.upper[3], hard_constraint.upper[4], hard_constraint.upper[5]);
-
-    ParamGroup param;
-    vector<double> v_upper(&hard_constraint.upper[0], &hard_constraint.upper[0] + NUM_OF_JOINT);
-    vector<double> v_lower(&hard_constraint.lower[0], &hard_constraint.lower[0] + NUM_OF_JOINT);
-
-    for (size_t i = JOINT_OF_ARM; i < NUM_OF_JOINT; i++)
-    {
-        v_upper[i] = 0;
-        v_lower[i] = 0;
-    }
-
-    if (param.loadParamFile("hard_constraint.yaml") &&
-        param.setParam("hard_constraint/upper", v_upper) &&
-        param.setParam("hard_constraint/lower", v_lower) &&
-        param.dumpParamFile("hard_constraint.yaml"))
-    {
-        hard_constraint_.setConstraint(hard_constraint);
-        FST_INFO("Hard constraint updated successfully.");
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Fail dumping hard constraint to config file");
-        return param.getLastError();
-    }
 }
 
 
@@ -746,6 +551,12 @@ ErrorCode ArmGroup::autoMove(void)
 }
 
 
+size_t ArmGroup::getNumberOfJoint(void)
+{
+    return JOINT_OF_ARM;
+}
+
+
 size_t ArmGroup::getFIFOLength(void)
 {
     if (group_state_ == MANUAL)
@@ -776,6 +587,42 @@ bool ArmGroup::isJointInConstraint(Joint joint, JointConstraint constraint)
     return true;
 }
 
+
+char* ArmGroup::printDBLine(const int *data, char *buffer, size_t length)
+{
+    int len = 0;
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        len += snprintf(buffer + len, length - len, "%d ", data[i]);
+    }
+
+    if (len > 0)
+    {
+        len --;
+    }
+
+    buffer[len] = '\0';
+    return buffer;
+}
+
+char* ArmGroup::printDBLine(const double *data, char *buffer, size_t length)
+{
+    int len = 0;
+
+    for (size_t i = 0; i < JOINT_OF_ARM; i++)
+    {
+        len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
+    }
+
+    if (len > 0)
+    {
+        len --;
+    }
+
+    buffer[len] = '\0';
+    return buffer;
+}
 
 
 

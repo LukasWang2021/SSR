@@ -16,7 +16,6 @@
 #include <motion_control_core_interface.h>
 #include <parameter_manager/parameter_manager_param_group.h>
 
-
 namespace fst_mc
 {
 

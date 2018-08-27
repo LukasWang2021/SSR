@@ -136,7 +136,30 @@ ErrorCode MotionControl::saveJoint(void)
 
 ErrorCode MotionControl::saveOffset(void)
 {
-    return group_ptr_->getCalibratorPtr()->saveOffset();
+    ErrorCode err = group_ptr_->getCalibratorPtr()->saveOffset();
+
+    if (err == SUCCESS)
+    {
+        size_t length = 0;
+        size_t index[NUM_OF_JOINT];
+        OffsetMask mask[NUM_OF_JOINT];
+        group_ptr_->getCalibratorPtr()->getOffsetMask(mask);
+
+        for (size_t i = 0; i < group_ptr_->getNumberOfJoint(); i++)
+        {
+            if (mask[i] == OFFSET_UNMASK)
+            {
+                index[length++] = i;
+            }
+        }
+
+        group_ptr_->getSoftConstraintPtr()->resetMask(index, length);
+        return SUCCESS;
+    }
+    else
+    {
+        return err;
+    }
 }
 
 ErrorCode MotionControl::checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT])
@@ -146,7 +169,30 @@ ErrorCode MotionControl::checkOffset(CalibrateState &cali_stat, OffsetState (&of
 
 ErrorCode MotionControl::maskOffsetLostError(void)
 {
-    return group_ptr_->getCalibratorPtr()->maskOffsetLostError();
+    ErrorCode err = group_ptr_->getCalibratorPtr()->maskOffsetLostError();
+
+    if (err == SUCCESS)
+    {
+        size_t length = 0;
+        size_t index[NUM_OF_JOINT];
+        OffsetMask mask[NUM_OF_JOINT];
+        group_ptr_->getCalibratorPtr()->getOffsetMask(mask);
+
+        for (size_t i = 0; i < group_ptr_->getNumberOfJoint(); i++)
+        {
+            if (mask[i] == OFFSET_MASKED)
+            {
+                index[length++] = i;
+            }
+        }
+
+        group_ptr_->getSoftConstraintPtr()->setMask(index, length);
+        return SUCCESS;
+    }
+    else
+    {
+        return err;
+    }
 }
 
 ErrorCode MotionControl::setOffsetState(size_t index, OffsetState stat)
@@ -264,19 +310,5 @@ size_t MotionControl::getFIFOLength(void)
     return group_ptr_->getFIFOLength();
 }
 
-/*
-void MotionControl::rtTask(void)
-{
-    ErrorCode err = group_ptr_->realtimeTask();
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("RT task quit with SUCCESS");
-    }
-    else
-    {
-        FST_ERROR("RT task quit with error = 0x%llx", err);
-    }
-}
- */
 

@@ -18,20 +18,24 @@ namespace fst_mc
 
 enum ConstraintMask
 {
-    CONSTRAINT_UNMASK,
-    CONSTRAINT_MASKED,
+    CONSTRAINT_UNMASK = 0,
+    CONSTRAINT_MASKED = 1,
 };
 
 class Constraint
 {
   public:
-    Constraint(size_t joint_num);
+    Constraint(void);
     ~Constraint(void);
+
+    bool initConstraint(const Joint &lower, const Joint &upper, size_t joint_num);
+    bool initConstraint(const JointConstraint &constraint, size_t joint_num);
 
     size_t getNumberOfJoint(void) const;
 
     bool setMask(size_t *index, size_t length);
     bool resetMask(size_t *index, size_t length);
+    bool isJointMasked(size_t index);
 
     void getConstraint(Joint &lower, Joint &upper) const;
     void setConstraint(const Joint &lower, const Joint &upper);

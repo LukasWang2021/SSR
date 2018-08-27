@@ -12,15 +12,40 @@
 namespace fst_mc
 {
 
-Constraint::Constraint(size_t joint_num)
+Constraint::Constraint()
 {
-    assert(joint_num <= NUM_OF_JOINT);
-    joint_num_ = joint_num;
+    joint_num_ = 0;
+    memset(mask_, 0, sizeof(mask_));
     memset(&constraint_, 0, sizeof(JointConstraint));
 }
 
 Constraint::~Constraint(void)
 {}
+
+bool Constraint::initConstraint(const Joint &lower, const Joint &upper, size_t joint_num)
+{
+    if (joint_num <= NUM_OF_JOINT)
+    {
+        joint_num_ = joint_num;
+
+        for (size_t i = 0; i < joint_num_; i++)
+        {
+            constraint_.lower[i] = lower[i];
+            constraint_.upper[i] = upper[i];
+        }
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Constraint::initConstraint(const JointConstraint &constraint, size_t joint_num)
+{
+    return initConstraint(constraint.lower, constraint.upper, joint_num);
+}
 
 size_t Constraint::getNumberOfJoint(void) const
 {
@@ -59,6 +84,11 @@ bool Constraint::resetMask(size_t *index, size_t length)
     }
 
     return true;
+}
+
+bool Constraint::isJointMasked(size_t index)
+{
+    return index < joint_num_ ? (mask_[index] == CONSTRAINT_MASKED) : (false);
 }
 
 void Constraint::setConstraint(const Joint &lower, const Joint &upper)

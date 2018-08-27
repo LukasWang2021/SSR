@@ -47,6 +47,7 @@ struct MotionTarget
 enum ManualFrame
 {
     JOINT,
+    BASE,
     WORLD,
     USER,
     TOOL,

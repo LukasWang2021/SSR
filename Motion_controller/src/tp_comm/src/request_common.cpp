@@ -17,7 +17,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getRpcTable");
         FST_ERROR("Can't allocate memory for request_data");
         return;
     }
@@ -25,7 +25,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     ResponseMessageType_Uint64_RpcTable* response_data_ptr = new ResponseMessageType_Uint64_RpcTable;
     if(response_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getRpcTable");
         FST_ERROR("Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
@@ -33,58 +33,48 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
 
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
-        
-        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/tp_comm/getRpcTable");
         FST_ERROR("Decode data failed");
         return ;
     }
 
     Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x00004FA5);
-    if(!checkAuthority(request_data_ptr->property.authority, controller_authority))
+    if(checkAuthority(request_data_ptr->property.authority, controller_authority))
     {
+        initResponsePackage(request_data_ptr, response_data_ptr, -1);    
+        response_data_ptr->error_code.data = SUCCESS;
+        recordLog(TP_COMM_LOG, SUCCESS, "/rpc/tp_comm/getRpcTable");
+
+        int element_index = 0;
+        for (std::vector<RpcService>::iterator iter = rpc_table_.begin(); iter != rpc_table_.end(); iter++)
+        {
+            Comm_Authority rpc_element_authority = getRpcTableElementAuthorityByHash(iter->hash);
+
+            if (checkAuthority(request_data_ptr->property.authority, rpc_element_authority))
+            {
+                iter->path.copy(response_data_ptr->data.element[element_index].path, iter->path.length(), 0);
+                response_data_ptr->data.element[element_index].path[iter->path.length()] = '\0';
+
+                iter->request_type.copy(response_data_ptr->data.element[element_index].request_message_type,
+                    iter->request_type.length(), 0);
+                response_data_ptr->data.element[element_index].request_message_type[iter->request_type.length()] = '\0';
+
+                iter->response_type.copy(response_data_ptr->data.element[element_index].response_message_type,
+                    iter->response_type.length(), 0);
+                response_data_ptr->data.element[element_index].response_message_type[iter->response_type.length()] = '\0';
+
+                response_data_ptr->data.element[element_index].hash = iter->hash;
+
+                element_index++;
+            }
+        }
+        response_data_ptr->data.element_count = element_index;
+    }
+    else
+    {
+        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/tp_comm/getRpcTable");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
-        return;
     }
-
-    initResponsePackage(request_data_ptr, response_data_ptr, -1);
-
-    response_data_ptr->header.time_stamp = 11;
-    response_data_ptr->header.package_left = 12;
-    response_data_ptr->header.error_code = 0;
-    response_data_ptr->property.authority = Comm_Authority_TP;
-    response_data_ptr->error_code.data = 0;
-
-    std::vector<RpcService>::iterator iter;
-    int element_index = 0;
-
-    for (iter = rpc_table_.begin(); iter != rpc_table_.end(); iter++)
-    {
-        Comm_Authority rpc_element_authority = getRpcTableElementAuthorityByHash(iter->hash);
-
-        if (checkAuthority(request_data_ptr->property.authority, rpc_element_authority))
-        {
-            iter->path.copy(response_data_ptr->data.element[element_index].path, iter->path.length(), 0);
-            response_data_ptr->data.element[element_index].path[iter->path.length()] = '\0';
-
-            iter->request_type.copy(response_data_ptr->data.element[element_index].request_message_type,
-                iter->request_type.length(), 0);
-            response_data_ptr->data.element[element_index].request_message_type[iter->request_type.length()] = '\0';
-
-            iter->response_type.copy(response_data_ptr->data.element[element_index].response_message_type,
-                iter->response_type.length(), 0);
-            response_data_ptr->data.element[element_index].response_message_type[iter->response_type.length()] = '\0';
-
-            response_data_ptr->data.element[element_index].hash = iter->hash;
-            element_index++;
-        }
-        else
-        {
-            ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);
-            FST_ERROR("Operation is not authorized");
-        }
-    }
-
-    response_data_ptr->data.element_count = element_index;
 
     TpRequestResponse package;
     package.hash = 0x00004FA5;
@@ -96,7 +86,7 @@ void TpComm::handleRequest0x00004FA5(int recv_bytes)
     response_list_mutex_.unlock();
 }
 
-// get publish tables
+// get publish table
 void TpComm::handleRequest0x000147A5(int recv_bytes)
 {
     // create object for request and response package
@@ -104,7 +94,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
         FST_ERROR("Can't allocate memory for request_data");
         return;
     }
@@ -112,7 +102,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     ResponseMessageType_Uint64_PublishTable* response_data_ptr = new ResponseMessageType_Uint64_PublishTable;
     if(response_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
         FST_ERROR("Can't allocate memory for response_data");
         delete request_data_ptr;
         return;
@@ -120,57 +110,45 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
 
     if(!decodeRequestPackage(RequestMessageType_Void_fields, (void*)request_data_ptr, recv_bytes))
     {
-        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/tp_comm/getPublishTable");
         FST_ERROR("Decode data failed");
         return ;
     }
 
     Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x000147A5);
-    if(!checkAuthority(request_data_ptr->property.authority, controller_authority))
+    if(checkAuthority(request_data_ptr->property.authority, controller_authority))
     {
-        initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
+        initResponsePackage(request_data_ptr, response_data_ptr, -1);
+        response_data_ptr->error_code.data = SUCCESS;
+        recordLog(TP_COMM_LOG, SUCCESS, "/rpc/tp_comm/getPublishTable");
+
+        int element_index = 0;
+        for (std::vector<PublishService>::iterator iter = publish_element_table_.begin(); iter != publish_element_table_.end(); iter++)
+        {
+            Comm_Authority publish_element_authority = getPublishElementAuthorityByHash(iter->hash);
+
+            if (checkAuthority(request_data_ptr->property.authority, publish_element_authority))
+            {
+                iter->element_path.copy(response_data_ptr->data.element[element_index].path, iter->element_path.length(), 0);
+                response_data_ptr->data.element[element_index].path[iter->element_path.length()] = '\0';
+                iter->element_type.copy(response_data_ptr->data.element[element_index].message_type, iter->element_type.length(), 0);
+                response_data_ptr->data.element[element_index].message_type[iter->element_type.length()] = '\0';
+                response_data_ptr->data.element[element_index].hash = iter->hash;
+                element_index++;
+            }
+        }
+        response_data_ptr->data.element_count = element_index;
     }
     else
     {
-        initResponsePackage(request_data_ptr, response_data_ptr, -1);
+        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/tp_comm/getPublishTable");
+        initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 
     TpRequestResponse package;
     package.hash = 0x000147A5;
     package.request_data_ptr = request_data_ptr;
-
-    response_data_ptr->header.time_stamp = 11;
-    response_data_ptr->header.package_left = 12;
-    response_data_ptr->header.error_code = 0;
-    response_data_ptr->property.authority = Comm_Authority_TP;
-    response_data_ptr->error_code.data = 0;
-
-    std::vector<PublishService>::iterator iter;
-    int element_index = 0;
-
-    for (iter = publish_element_table_.begin(); iter != publish_element_table_.end(); iter++)
-    {
-        Comm_Authority publish_element_authority = getPublishElementAuthorityByHash(iter->hash);
-
-        if (checkAuthority(request_data_ptr->property.authority, publish_element_authority))
-        {
-            iter->element_path.copy(response_data_ptr->data.element[element_index].path, iter->element_path.length(), 0);
-            response_data_ptr->data.element[element_index].path[iter->element_path.length()] = '\0';
-            iter->element_type.copy(response_data_ptr->data.element[element_index].message_type, iter->element_type.length(), 0);
-            response_data_ptr->data.element[element_index].message_type[iter->element_type.length()] = '\0';
-            response_data_ptr->data.element[element_index].hash = iter->hash;
-            element_index++;
-        }
-        else
-        {
-            ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);
-            FST_ERROR("Operation is not authorized");
-        }
-    }
-
-    response_data_ptr->data.element_count = element_index;
-
-    package.response_data_ptr = response_data_ptr; 
+    package.response_data_ptr = response_data_ptr;
 
     response_list_mutex_.lock();
     response_list_.push_back(package);

@@ -31,6 +31,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_manager/include/
     ${depend_PATH_INC}/thread_help/include/
     ${depend_PATH_INC}/error_monitor/include/
+    ${depend_PATH_INC}/log_service/include 
 )
 
 catkin_package(
@@ -44,6 +45,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  /usr/include/python2.7 
 )
 
 aux_source_directory(src BASE_SRCS)
@@ -60,7 +62,8 @@ target_link_libraries(tp_comm
     protos
     thread_help
     parameter_manager
-    error_monitor 
+    error_monitor
+    log_service
 )
 
 install(TARGETS tp_comm

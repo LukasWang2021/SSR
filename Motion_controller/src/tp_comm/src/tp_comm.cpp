@@ -9,6 +9,7 @@
 #include <pb_encode.h>
 #include "error_monitor.h"
 #include "error_code.h"
+#include "serverAlarmApi.h"
 #include "tp_comm.h"
 
 using namespace fst_base;
@@ -40,12 +41,7 @@ TpComm::~TpComm()
 
 bool TpComm::initComponentParams()
 {
-    if(!param_ptr_->loadParam())
-    {
-        ErrorMonitor::instance()->add(TP_COMM_LOAD_PARAM_FAILED);
-        FST_ERROR("Failed to load TpCommManager component parameters");
-        return false;
-    }
+    if(!param_ptr_->loadParam()) return false;
 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
 
@@ -56,45 +52,40 @@ bool TpComm::initComponentParams()
     return true;
 }
 
-bool TpComm::init()
+unsigned long long int TpComm::init()
 {
     if (!initComponentParams()) 
     {
-        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
-        FST_ERROR("Failed to init object");
-        return false;
+        FST_ERROR("Failed to load TpCommManager component parameters");
+        return TP_COMM_LOAD_PARAM_FAILED;
     }
 
     req_resp_socket_ = nn_socket(AF_SP, NN_REP);
     if(req_resp_socket_ == -1)
     {
-        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
-        FST_ERROR("Failed to init object");
-        return false;
+        FST_ERROR("Failed to init rpc socket");
+        return TP_COMM_INIT_OBJECT_FAILED;
     }
 
     req_resp_endpoint_id_ = nn_bind(req_resp_socket_, req_resp_ip_.c_str());
     if(req_resp_endpoint_id_ == -1)
     {
-        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
-        FST_ERROR("Failed to init object");
-        return false;
+        FST_ERROR("Failed to bind rpc socket");
+        return TP_COMM_INIT_OBJECT_FAILED;
     }
 
     publish_socket_ = nn_socket(AF_SP, NN_PUB);
     if(publish_socket_ == -1)
     {
-        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
-        FST_ERROR("Failed to init object");
-        return false;
+        FST_ERROR("Failed to init pub socket");
+        return TP_COMM_INIT_OBJECT_FAILED;
     }
 
     publish_endpoint_id_ = nn_bind(publish_socket_, publish_ip_.c_str());
     if(publish_endpoint_id_ == -1)
     {
-        ErrorMonitor::instance()->add(TP_COMM_INIT_OBJECT_FAILED);
-        FST_ERROR("Failed to init object");
-        return false;
+        FST_ERROR("Failed to bind pub socket");
+        return TP_COMM_INIT_OBJECT_FAILED;
     }
 
     // it is critical to set poll fd here to make the model work correctly
@@ -110,21 +101,20 @@ bool TpComm::init()
     initPublishElementQuickSearchTable();
 
     FST_INFO("TpComm init success");
-    return true;    
+    return SUCCESS;
 }
 
-bool TpComm::open()
+unsigned long long int TpComm::open()
 {
     is_running_ = true;
 
     if(!thread_ptr_.run(&tpCommRoutineThreadFunc, this, 50))
     {
-        ErrorMonitor::instance()->add(TP_COMM_OPEN_FAILED);
         FST_ERROR("Failed to open tpcomm");
-        return false;
+        return TP_COMM_OPEN_FAILED;
     }
 
-    return true;
+    return SUCCESS;
 }
 
 bool TpComm::isRunning()
@@ -493,7 +483,7 @@ void TpComm::initResponsePackage(void* request_data_ptr, void* response_data_ptr
     // it is tricky here that all request & response have the same package header and property, no matter what data they have
     ((ResponseMessageType_Int32*)response_data_ptr)->header.time_stamp = ((RequestMessageType_Int32*)request_data_ptr)->header.time_stamp;
     ((ResponseMessageType_Int32*)response_data_ptr)->header.package_left = package_left;
-    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = 0;
+    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = SUCCESS;
     ((ResponseMessageType_Int32*)response_data_ptr)->property.authority = ((RequestMessageType_Int32*)request_data_ptr)->property.authority;
 }
 
@@ -540,15 +530,17 @@ bool TpComm::encodeResponsePackage(unsigned int hash, const pb_field_t fields[],
     send_buffer_size = 0;
     *((unsigned int*)send_buffer_ptr_) = hash;
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer_ptr_ + HASH_BYTE_SIZE, send_buffer_size_ - HASH_BYTE_SIZE);
+
     if(!pb_encode(&stream, fields, response_data_ptr))
     {
         ErrorMonitor::instance()->add(TP_COMM_ENCODE_FAILED);
         FST_ERROR("Encode data failed");
+
         send_buffer_size = 0;
         return false;
     }
-    send_buffer_size = stream.bytes_written + HASH_BYTE_SIZE;
 
+    send_buffer_size = stream.bytes_written + HASH_BYTE_SIZE;
     return true;
 }
 
@@ -585,7 +577,7 @@ ResponseMessageType_Uint64_PublishTable TpComm::getResponseSucceedPublishTable()
     ResponseMessageType_Uint64_PublishTable response_data_ptr;
     response_data_ptr.header.time_stamp = 11;
     response_data_ptr.header.package_left = 12;
-    response_data_ptr.header.error_code = 0;
+    response_data_ptr.header.error_code = SUCCESS;
     response_data_ptr.property.authority = Comm_Authority_TP;
 
     std::vector<PublishService>::iterator iter;
@@ -600,7 +592,7 @@ ResponseMessageType_Uint64_PublishTable TpComm::getResponseSucceedPublishTable()
     }
 
     response_data_ptr.data.element_count = element_index;
-    response_data_ptr.error_code.data = 0;
+    response_data_ptr.error_code.data = SUCCESS;
 
     return response_data_ptr;
 }
@@ -819,4 +811,21 @@ bool TpComm::isIoTopicExisted(unsigned int topic_hash)
 
     io_publish_list_mutex_.unlock();
     return is_exist;
+}
+
+
+void TpComm::recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path)
+{
+    std::string log_str("run ");
+    log_str += rpc_path;
+    if(error_code == SUCCESS)
+    {
+        log_str += " success";
+        ServerAlarmApi::GetInstance()->sendOneAlarm(log_code, log_str);
+    }
+    else
+    {
+        log_str += " failed";
+        ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
+    }
 }

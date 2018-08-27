@@ -140,12 +140,14 @@ ErrorCode Controller::init()
         return CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED;
     }
 
-    /*error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
+    error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
     if(error_code != SUCCESS)
     {
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
-    }*/
+    }
+    //FIXME: remove it later
+    motion_control_.maskOffsetLostError();
     
     if(!tp_comm_.init()
         || !tp_comm_.open())

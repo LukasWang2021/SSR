@@ -19,8 +19,11 @@ ServerAlarmApi::ServerAlarmApi():
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("sys.path.append('/root/install/share/runtime/python/')");
     PyObject *pName = PyString_FromString("send_one_alarm");
+    if(pName == NULL) return;
     PyObject *pModule = PyImport_Import(pName);
+    if(pModule == NULL) return;
     PyObject *pDict = PyModule_GetDict(pModule);
+    if(pDict == NULL) return;
     mPost = PyDict_GetItemString(pDict, "send_one_alarm");
     Py_XDECREF(pName);
     Py_XDECREF(pDict);

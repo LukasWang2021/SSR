@@ -85,6 +85,7 @@
 #define CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED (unsigned long long int)0x0011000B00A80004   /*Controller failed to create heartbeat thread*/
 #define CONTROLLER_INVALID_ARG (unsigned long long int)0x0001000200A80005   /*Controller has invalid argument*/
 #define CONTROLLER_PUBLISH_FAILED (unsigned long long int)0x0001000200A80006   /*Controller failed to echo the request of publish something*/
+#define CONTROLLER_INVALID_OPERATION (unsigned long long int)0x0001000200A80007   /*Controller failed to operate command because of invalid pre-condition*/
 
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0001000200A90000   /*MotionControl log*/
 #define INTERPRETER_LOG (unsigned long long int)0x0001000200AA0000   /*Interpreter log*/

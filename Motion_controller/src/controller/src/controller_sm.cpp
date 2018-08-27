@@ -1,6 +1,10 @@
 #include "controller_sm.h"
 #include "error_monitor.h"
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
 
 using namespace fst_ctrl;
@@ -131,7 +135,15 @@ ErrorCode ControllerSm::callReset()
 
 ErrorCode ControllerSm::callShutdown()
 {
-    return SUCCESS;
+    if(ctrl_state_ == CTRL_ESTOP)
+    {
+        ctrl_state_ = CTRL_ESTOP_TO_TERMINATE;
+        return SUCCESS;
+    }
+    else
+    {
+        return CONTROLLER_INVALID_OPERATION;
+    }
 }
 
 UserOpMode* ControllerSm::getUserOpModePtr()
@@ -265,7 +277,6 @@ void ControllerSm::transferServoState()
         }
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
-        FST_INFO("---transferServoState: servo in error: ctrl_state-->CTRL_ANY_TO_ESTOP");
         recordLog("Servo state is abnormal");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }      
@@ -278,8 +289,7 @@ void ControllerSm::transferCtrlState()
         case CTRL_ANY_TO_ESTOP:
             if(robot_state_ == ROBOT_IDLE)
             {
-                //recordJoints();
-                FST_INFO("---transferCtrlState: ctrl_state-->CTRL_ESTOP");
+                motion_control_ptr_->saveJoint();
                 recordLog("Controller transfer to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
             }
@@ -289,13 +299,11 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_)
             {
-                FST_INFO("---transferCtrlState: ctrl_state-->CTRL_ENGAGED");
                 recordLog("Controller transfer to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
             else if((--ctrl_reset_count_) < 0)
             {
-                FST_INFO("---transferCtrlState: ctrl_status-->CTRL_ESTOP");
                 recordLog("Controller transfer to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
             }
@@ -303,10 +311,10 @@ void ControllerSm::transferCtrlState()
         case CTRL_ESTOP_TO_TERMINATE:
             if(robot_state_ == ROBOT_IDLE)
             {
-                //recordJoints();
-                FST_INFO("---transferCtrlState: ctrl_state-->CTRL_TERMINATED");
+                motion_control_ptr_->saveJoint();
                 recordLog("Controller transfer to TERMINATED");
                 ctrl_state_ = CTRL_TERMINATED;
+                shutdown();
             }
             break;
         default:
@@ -321,13 +329,11 @@ void ControllerSm::transferRobotState()
         case ROBOT_IDLE_TO_RUNNING:
             if(interpreter_state_ == INTERPRETER_EXECUTE)
             {
-                FST_INFO("---transferRobotState: robot_state-->ROBOT_RUNNING");
                 recordLog("Robot transfer to RUNNING");
                 robot_state_ = ROBOT_RUNNING;
             }
             break;
         case ROBOT_IDLE_TO_TEACHING:
-            FST_INFO("---transferRobotState: robot_state-->ROBOT_TEACHING");
             recordLog("Robot transfer to TEACHING");
             robot_state_ = ROBOT_TEACHING;
             break;
@@ -335,7 +341,6 @@ void ControllerSm::transferRobotState()
             if(interpreter_state_ != INTERPRETER_EXECUTE
                 && servo_state_ != SERVO_RUNNING)
             {
-                FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE");
                 recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
@@ -343,7 +348,6 @@ void ControllerSm::transferRobotState()
         case ROBOT_TEACHING_TO_IDLE:
             if(servo_state_ != SERVO_RUNNING)
             {
-                FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE");
                 recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
@@ -351,7 +355,6 @@ void ControllerSm::transferRobotState()
         case ROBOT_RUNNING:
             if(interpreter_state_ != INTERPRETER_EXECUTE)
             {
-                FST_INFO("---transferRobotState: robot_state-->ROBOT_RUNNING_TO_IDLE");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             break;
@@ -359,20 +362,50 @@ void ControllerSm::transferRobotState()
             if (motion_control_ptr_->getGroupState() == STANDBY)
             //if(virtual_core1_ptr_->getArmState() == 1)
             {
-                FST_INFO("---transferRobotState: robot_state-->ROBOT_TEACHING_TO_IDLE");
                 robot_state_ = ROBOT_TEACHING_TO_IDLE;
             }
             break;
         case ROBOT_IDLE:
             if(interpreter_state_ == INTERPRETER_EXECUTE)
             {
-                FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE_TO_RUNNING");
                 robot_state_ = ROBOT_IDLE_TO_RUNNING;
             }
             break;
         default:
             ;
     }
+}
+
+void ControllerSm::shutdown()
+{
+	// flush the cache
+	// int flushshutdown;
+	// flushshutdown = fsync();
+
+	// sent a message outside to shutdown
+	int fdshutdown;
+	fdshutdown = open("/dev/mem", O_RDWR);
+	if (fdshutdown == -1)
+		printf("The shutdown-message cann't be sent. fd = %d\n", fdshutdown);
+	enum msgshutdown {
+		SHUTDOWN_BASE = 0xff300000,
+		SHUTDOWN_OFFSET = 0x0020,
+		SHUTDOWN_LEN = 0x1000,
+	};
+	void *ptrshutdown;
+	ptrshutdown = mmap(NULL, SHUTDOWN_LEN, PROT_READ|PROT_WRITE, MAP_SHARED, fdshutdown, SHUTDOWN_BASE);
+	if (ptrshutdown == MAP_FAILED)
+	{
+		printf("The shutdown-message cann't be sent. mmap = %d\n", (void *)ptrshutdown);
+	}
+	else
+	{
+		int *pshutdown;
+		pshutdown = (int *)((uint8_t*)ptrshutdown + 0x0020);
+		*pshutdown = 1;
+	}
+
+	system("shutdown -h now");
 }
 
 void ControllerSm::recordLog(std::string log_str)

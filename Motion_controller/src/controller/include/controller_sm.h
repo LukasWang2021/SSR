@@ -115,7 +115,9 @@ private:
     void processError();
     void transferServoState();
     void transferCtrlState();
-    void transferRobotState();   
+    void transferRobotState();
+
+    void shutdown();
 
     // log service
     void recordLog(std::string log_str);

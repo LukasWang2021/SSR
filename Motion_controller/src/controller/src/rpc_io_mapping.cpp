@@ -10,6 +10,7 @@ void ControllerRpc::handleRpc0x000050B4(void* request_data_ptr, void* response_d
 
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = rq_data_ptr->data.data % 2;
+    recordLog(IO_MAPPING_LOG, rs_data_ptr->error_code.data, std::string("/rpc/io_mapping/getDIByBit"));
 }
 
 // "/rpc/io_mapping/setDIByBit"
@@ -26,6 +27,7 @@ void ControllerRpc::handleRpc0x00011754(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
+    recordLog(IO_MAPPING_LOG, rs_data_ptr->data.data, std::string("/rpc/io_mapping/setDIByBit"));
 }
 
 // "/rpc/io_mapping/getDOByBit"
@@ -36,6 +38,7 @@ void ControllerRpc::handleRpc0x00013074(void* request_data_ptr, void* response_d
 
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = rq_data_ptr->data.data % 2;
+    recordLog(IO_MAPPING_LOG, rs_data_ptr->error_code.data, std::string("/rpc/io_mapping/getDOByBit"));
 }
 
 // "/rpc/io_mapping/setDOByBit"
@@ -52,5 +55,6 @@ void ControllerRpc::handleRpc0x00007074(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
+    recordLog(IO_MAPPING_LOG, rs_data_ptr->data.data, std::string("/rpc/io_mapping/setDOByBit"));
 }
 

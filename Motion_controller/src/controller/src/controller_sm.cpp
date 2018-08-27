@@ -266,6 +266,7 @@ void ControllerSm::transferServoState()
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
         FST_INFO("---transferServoState: servo in error: ctrl_state-->CTRL_ANY_TO_ESTOP");
+        recordLog("Servo state is abnormal");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }      
 }
@@ -279,6 +280,7 @@ void ControllerSm::transferCtrlState()
             {
                 //recordJoints();
                 FST_INFO("---transferCtrlState: ctrl_state-->CTRL_ESTOP");
+                recordLog("Controller transfer to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
             }
             break;
@@ -288,11 +290,13 @@ void ControllerSm::transferCtrlState()
                 && !is_error_exist_)
             {
                 FST_INFO("---transferCtrlState: ctrl_state-->CTRL_ENGAGED");
+                recordLog("Controller transfer to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
             else if((--ctrl_reset_count_) < 0)
             {
                 FST_INFO("---transferCtrlState: ctrl_status-->CTRL_ESTOP");
+                recordLog("Controller transfer to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
             }
             break;
@@ -301,6 +305,7 @@ void ControllerSm::transferCtrlState()
             {
                 //recordJoints();
                 FST_INFO("---transferCtrlState: ctrl_state-->CTRL_TERMINATED");
+                recordLog("Controller transfer to TERMINATED");
                 ctrl_state_ = CTRL_TERMINATED;
             }
             break;
@@ -317,11 +322,13 @@ void ControllerSm::transferRobotState()
             if(interpreter_state_ == INTERPRETER_EXECUTE)
             {
                 FST_INFO("---transferRobotState: robot_state-->ROBOT_RUNNING");
+                recordLog("Robot transfer to RUNNING");
                 robot_state_ = ROBOT_RUNNING;
             }
             break;
         case ROBOT_IDLE_TO_TEACHING:
             FST_INFO("---transferRobotState: robot_state-->ROBOT_TEACHING");
+            recordLog("Robot transfer to TEACHING");
             robot_state_ = ROBOT_TEACHING;
             break;
         case ROBOT_RUNNING_TO_IDLE:
@@ -329,6 +336,7 @@ void ControllerSm::transferRobotState()
                 && servo_state_ != SERVO_RUNNING)
             {
                 FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE");
+                recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
             break;
@@ -336,6 +344,7 @@ void ControllerSm::transferRobotState()
             if(servo_state_ != SERVO_RUNNING)
             {
                 FST_INFO("---transferRobotState: robot_state-->ROBOT_IDLE");
+                recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
             break;
@@ -365,4 +374,10 @@ void ControllerSm::transferRobotState()
             ;
     }
 }
+
+void ControllerSm::recordLog(std::string log_str)
+{
+    ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);
+}
+
 

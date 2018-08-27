@@ -5,4 +5,8 @@ heartbeat_cycle_time: 10000
 routine_thread_priority: 50 
 reset_max_time: 1000000 
 enable_controller_heartbeat: true
+heartbeat_thread_priority: 50 
+enable_log_service: false
+enable_virtual_core1: false 
+virtual_core1_thread_priority: 50 
 #END

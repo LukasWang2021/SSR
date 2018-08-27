@@ -13,7 +13,11 @@ ControllerParam::ControllerParam():
     heartbeat_cycle_time_(0),
     routine_thread_priority_(50),
     reset_max_time_(5000000),
-    enable_controller_heartbeat_(false)
+    enable_controller_heartbeat_(false),
+    heartbeat_thread_priority_(50),
+    enable_log_service_(false),
+    enable_virtual_core1_(false),
+    virtual_core1_thread_priority_(50)
 {
     file_path_ += "controller.yaml";
 }
@@ -32,7 +36,11 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("heartbeat_cycle_time", heartbeat_cycle_time_)
         || !yaml_help_.getParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.getParam("reset_max_time", reset_max_time_)
-        || !yaml_help_.getParam("enable_controller_heartbeat", enable_controller_heartbeat_))
+        || !yaml_help_.getParam("enable_controller_heartbeat", enable_controller_heartbeat_)
+        || !yaml_help_.getParam("heartbeat_thread_priority", heartbeat_thread_priority_)
+        || !yaml_help_.getParam("enable_log_service", enable_log_service_)
+        || !yaml_help_.getParam("enable_virtual_core1", enable_virtual_core1_)
+        || !yaml_help_.getParam("virtual_core1_thread_priority", virtual_core1_thread_priority_))
     {
         return false;
     }
@@ -51,6 +59,10 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.setParam("reset_max_time", reset_max_time_)
         || !yaml_help_.setParam("enable_controller_heartbeat", enable_controller_heartbeat_)
+        || !yaml_help_.setParam("heartbeat_thread_priority", heartbeat_thread_priority_)
+        || !yaml_help_.setParam("enable_log_service", enable_log_service_)
+        || !yaml_help_.setParam("enable_virtual_core1", enable_virtual_core1_)
+        || !yaml_help_.setParam("virtual_core1_thread_priority", virtual_core1_thread_priority_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

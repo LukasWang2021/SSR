@@ -14,10 +14,10 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
     TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
     for(unsigned int i = 0; i < rq_data_ptr->data.element_hash_list_count; ++i)
     {
-        ControllerPublish::HandlePublishFuncPtr func_ptr = publish_.getPublishHandlerByHash(rq_data_ptr->data.element_hash_list[i]);
+        ControllerPublish::HandlePublishFuncPtr func_ptr = publish_ptr_->getPublishHandlerByHash(rq_data_ptr->data.element_hash_list[i]);
         if(func_ptr != NULL)
         {
-            data_ptr = (publish_.*func_ptr)();
+            data_ptr = (publish_ptr_->*func_ptr)();
             if(data_ptr != NULL)
             {
                 tp_comm_ptr_->addTpPublishElement(task, rq_data_ptr->data.element_hash_list[i], data_ptr);
@@ -35,6 +35,7 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
     }
+    recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addTopic"));
 }
 
 // "/rpc/publish/addRegTopic"
@@ -69,6 +70,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
     }
     
     rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+    recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
     /*if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);
@@ -110,6 +112,7 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
     }
+    recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addIoTopic"));
 }
 
 

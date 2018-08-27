@@ -58,7 +58,7 @@ void ControllerPublish::initPublishQuickSearchTable()
     }
 }
 
-void ControllerPublish::updatePublish()
+void ControllerPublish::processPublish()
 {
     tp_comm_ptr_->lockPublishMutex();
     Joint joint_feedback = motion_control_ptr_->getServoJoint();

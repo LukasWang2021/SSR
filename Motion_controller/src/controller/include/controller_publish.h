@@ -23,7 +23,7 @@ public:
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     HandlePublishFuncPtr getPublishHandlerByHash(unsigned int hash);
-    void updatePublish();
+    void processPublish();
     
 private:
     fst_log::Logger* log_ptr_;

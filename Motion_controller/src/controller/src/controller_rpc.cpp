@@ -20,7 +20,6 @@ ControllerRpc::ControllerRpc():
     device_manager_ptr_(NULL),
     motion_control_ptr_(NULL),
     controller_client_ptr_(NULL)
-    
 {
 
 }
@@ -30,13 +29,14 @@ ControllerRpc::~ControllerRpc()
 
 }
 
-void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
-                    RegManager* reg_manager_ptr, DeviceManager* device_manager_ptr, fst_mc::MotionControl* motion_control_ptr,
-                    ControllerClient* controller_client_ptr)
+void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, ControllerPublish* publish_ptr, VirtualCore1* virtual_core1_ptr, 
+                    fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
+                    CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
+                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
+    publish_ptr_ = publish_ptr;
     virtual_core1_ptr_ = virtual_core1_ptr;
     tp_comm_ptr_ = tp_comm_ptr;
     state_machine_ptr_ = state_machine_ptr;
@@ -48,7 +48,6 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, V
     controller_client_ptr_ = controller_client_ptr;
     initRpcTable();
     initRpcQuickSearchTable();
-    publish_.init(log_ptr, param_ptr, virtual_core1_ptr, tp_comm_ptr, state_machine_ptr, motion_control_ptr);
 }
 
 void ControllerRpc::processRpc()
@@ -68,7 +67,6 @@ void ControllerRpc::processRpc()
         }
         tp_comm_ptr_->pushTaskToResponseList(*it);
     }
-    publish_.updatePublish();
 }
 
 void ControllerRpc::initRpcQuickSearchTable()
@@ -94,4 +92,19 @@ ControllerRpc::HandleRpcFuncPtr ControllerRpc::getRpcHandlerByHash(unsigned int 
     return NULL;
 }
 
+void ControllerRpc::recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path)
+{
+    std::string log_str("run ");
+    log_str += rpc_path;
+    if(error_code == SUCCESS)
+    {
+        log_str += " success";
+        ServerAlarmApi::GetInstance()->sendOneAlarm(log_code, log_str);
+    }
+    else
+    {
+        log_str += " failed";
+        ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
+    }    
+}
 

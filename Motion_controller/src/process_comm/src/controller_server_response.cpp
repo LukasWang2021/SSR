@@ -145,4 +145,27 @@ void ControllerServer::handleResponseGetRReg(std::vector<ProcessCommRequestRespo
     }
 }
 
+// SetInstruction
+void ControllerServer::handleResponseSetInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_INSTRUCTION, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (Instruction*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (bool*)task->response_data_ptr;
+    }
+}
+
+// IsNextInstructionNeeded
+void ControllerServer::handleResponseIsNextInstructionNeeded(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    if(task->response_data_ptr != NULL)
+    {
+        delete (bool*)task->response_data_ptr;
+    }
+}
 

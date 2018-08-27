@@ -13,6 +13,7 @@
 #include "reg_manager.h"
 #include "process_comm.h"
 #include "motion_control.h"
+#include "serverAlarmApi.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -23,10 +24,10 @@ public:
     ControllerRpc();
     ~ControllerRpc();
 
-    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, CoordinateManager* coordinate_manager_ptr,
-                    RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, fst_mc::MotionControl* motion_control_ptr,
-                    fst_base::ControllerClient* controller_client_ptr);
+    void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, ControllerPublish* publish_ptr, VirtualCore1* virtual_core1_ptr, 
+                    fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
+                    CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
+                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr);
 
     void processRpc();
 
@@ -42,7 +43,7 @@ private:
     fst_hal::DeviceManager* device_manager_ptr_;
     fst_mc::MotionControl* motion_control_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
-    ControllerPublish publish_;
+    ControllerPublish* publish_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -61,6 +62,7 @@ private:
     void initRpcTable();
     void initRpcQuickSearchTable();
     HandleRpcFuncPtr getRpcHandlerByHash(unsigned int hash);
+    void recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path);
 
     /* publish rpc */
     // "/rpc/publish/addTopic"

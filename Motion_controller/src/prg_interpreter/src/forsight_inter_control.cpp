@@ -889,7 +889,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
   			printf("setPrgmState(IDLE_R).\n");
 		    setPrgmState(IDLE_R);
             break;
-        case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_MODE:
+        case fst_base::INTERPRETER_SERVER_CMD_AUTO:
 			// intprt_ctrl.RegMap.
 			autoMode = intprt_ctrl.autoMode ;
 			deal_auto_mode(autoMode);

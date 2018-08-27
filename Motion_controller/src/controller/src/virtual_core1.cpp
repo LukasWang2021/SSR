@@ -10,6 +10,7 @@ using namespace std;
 
 VirtualCore1::VirtualCore1():
     log_(NULL),
+    param_ptr_(NULL),
     is_estop(false), is_reset(false),
     servo_state_(1), arm_state_(1)
 {
@@ -22,10 +23,14 @@ VirtualCore1::~VirtualCore1()
 
 }
 
-void VirtualCore1::init(fst_log::Logger* log)
+void VirtualCore1::init(fst_log::Logger* log, ControllerParam* param_ptr)
 {
     log_ = log;
-    thread_.run(&virtualCore1ThreadFunc, this, 50);
+    param_ptr_ = param_ptr;
+    if(param_ptr->enable_virtual_core1_)
+    {
+        thread_.run(&virtualCore1ThreadFunc, this, param_ptr_->virtual_core1_thread_priority_);
+    }
 }
 
 int VirtualCore1::getServoState()

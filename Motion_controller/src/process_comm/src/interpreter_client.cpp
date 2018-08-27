@@ -200,6 +200,29 @@ bool InterpreterClient::getRReg(int id, RRegDataIpc* data)
     }
 }
 
+bool InterpreterClient::setInstruction(Instruction* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_INSTRUCTION, data, sizeof(Instruction))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_INSTRUCTION)
+    {
+        return false;
+    }
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+bool InterpreterClient::isNextInstructionNeeded()
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, NULL, 0)
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED)
+    {
+        return false;
+    }
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;

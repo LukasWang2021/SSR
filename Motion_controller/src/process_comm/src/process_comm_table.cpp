@@ -17,6 +17,8 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_GET_MR_REG, &ControllerServer::handleRequestGetMrReg, &ControllerServer::handleResponseGetMrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_SR_REG, &ControllerServer::handleRequestGetSrReg, &ControllerServer::handleResponseGetSrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerServer::handleRequestGetRReg, &ControllerServer::handleResponseGetRReg}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_SET_INSTRUCTION, &ControllerServer::handleRequestSetInstruction, &ControllerServer::handleResponseSetInstruction}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, &ControllerServer::handleRequestIsNextInstructionNeeded, &ControllerServer::handleResponseIsNextInstructionNeeded}; rpc_table_.push_back(rpc_service);
 }
 
 void InterpreterServer::initRpcTable()

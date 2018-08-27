@@ -5,7 +5,8 @@
 using namespace std;
 using std::string;
 ServerAlarmApi *ServerAlarmApi::m_pInstance = NULL;
-ServerAlarmApi::ServerAlarmApi()
+ServerAlarmApi::ServerAlarmApi():
+    enabled(false)
 {
     mInitFlag = 0;
     if ( !Py_IsInitialized() ) {
@@ -44,9 +45,14 @@ void ServerAlarmApi::pyDecref()
 // @return 返回执行结果, 返回状态码,1000表示执行成功,否则表示执行失败。失败时打印错误信息
 int ServerAlarmApi::sendOneAlarm(unsigned long long logCode, string param)
 {
+    if(!enabled)
+    {
+        std::cout<<"LogService: 0x"<<std::hex<<logCode<<": "<<param<<std::endl;
+        return 0;
+    }
     if(mInitFlag){
         std::cout << "ServerAlarmApi init failed" << endl;
-        return false;
+        return -1;
     }
     int statusCode = 1001;
     try{
@@ -74,9 +80,14 @@ int ServerAlarmApi::sendOneAlarm(unsigned long long logCode, string param)
 // @return 返回执行结果, 返回状态码,1000表示执行成功,否则表示执行失败。失败时打印错误信息
 int ServerAlarmApi::sendOneAlarm(unsigned long long logCode)
 {
+    if(!enabled)
+    {
+        std::cout<<"LogService: 0x"<<std::hex<<logCode<<std::endl;
+        return 0;
+    }
     if(mInitFlag){
         std::cout << "ServerAlarmApi init failed" << endl;
-        return false;
+        return -1;
     }
     int statusCode = 1001;
     try{
@@ -99,3 +110,10 @@ int ServerAlarmApi::sendOneAlarm(unsigned long long logCode)
     }
     return statusCode;
 }
+
+void ServerAlarmApi::setEnable(bool enable_status)
+{
+    enabled = enable_status;
+}
+
+

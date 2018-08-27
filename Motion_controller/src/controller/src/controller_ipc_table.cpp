@@ -18,5 +18,7 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_GET_MR_REG, &ControllerIpc::handleIpcGetMrRegValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_SR_REG, &ControllerIpc::handleIpcGetSrRegValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerIpc::handleIpcGetRRegValue}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_INSTRUCTION, &ControllerIpc::handleIpcSetInstruction}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, &ControllerIpc::handleIpcIsNextInstructionNeeded}; ipc_table_.push_back(ipc_service);
 }
 

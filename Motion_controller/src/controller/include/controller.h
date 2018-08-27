@@ -8,6 +8,7 @@
 #include "thread_help.h"
 #include "controller_sm.h"
 #include "controller_rpc.h"
+#include "controller_publish.h"
 #include "tool_manager.h"
 #include "coordinate_manager.h"
 #include "reg_manager.h"
@@ -16,6 +17,8 @@
 #include "device_manager.h"
 #include "motion_control.h"
 #include "base_datatype.h"
+#include "serverAlarmApi.h"
+#include <string>
 // for test only
 #include "virtual_core1.h"
 
@@ -42,6 +45,7 @@ private:
     ControllerSm state_machine_;
     fst_comm::TpComm tp_comm_;
     ControllerRpc rpc_;
+    ControllerPublish publish_;
     ControllerIpc ipc_;
     ToolManager tool_manager_;
     CoordinateManager coordinate_manager_;
@@ -55,7 +59,10 @@ private:
     bool is_exit_;
     fst_base::ThreadHelp routine_thread_;
     fst_base::ThreadHelp heartbeat_thread_;
-    
+
+    void recordLog(std::string log_str);
+    void recordLog(ErrorCode error_code, std::string log_str);
+    void recordLog(ErrorCode major_error_code, ErrorCode minor_error_code, std::string log_str);
 };
 
 }

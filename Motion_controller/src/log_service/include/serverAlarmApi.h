@@ -14,11 +14,12 @@ private:
     char mBuf[32];
     PyObject *mPost;
     static ServerAlarmApi *m_pInstance;
-
+    bool enabled;
 public:
     static ServerAlarmApi *GetInstance();
     int sendOneAlarm(unsigned long long logCode, string param);
     int sendOneAlarm(unsigned long long logCode);
     void pyDecref();
+    void setEnable(bool enable_status);
 };
 #endif

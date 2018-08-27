@@ -50,6 +50,8 @@ private:
     void handleIpcGetMrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetSrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetRRegValue(void* request_data_ptr, void* response_data_ptr); 
+    void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

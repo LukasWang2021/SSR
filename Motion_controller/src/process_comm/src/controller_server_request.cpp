@@ -1,5 +1,6 @@
 #include "controller_server.h"
 #include "reg_manager.h"
+#include "interpreter_common.h"
 
 
 using namespace fst_base;
@@ -204,6 +205,38 @@ void ControllerServer::handleRequestGetRReg()
     }
     copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_R_REG, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
+// SetInstruction
+void ControllerServer::handleRequestSetInstruction()
+{
+    Instruction* request_data_ptr = new Instruction;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    bool* response_data_ptr = new bool;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(Instruction));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_INSTRUCTION, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
+// IsNextInstructionNeeded
+void ControllerServer::handleRequestIsNextInstructionNeeded()
+{
+    bool* response_data_ptr = new bool;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        return;
+    }
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, NULL, (void*)response_data_ptr);
 }
 
 

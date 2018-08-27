@@ -23,6 +23,10 @@ public:
     int routine_thread_priority_;
     int reset_max_time_;        // us
     bool enable_controller_heartbeat_;
+    int heartbeat_thread_priority_;
+    bool enable_log_service_;
+    bool enable_virtual_core1_;
+    int virtual_core1_thread_priority_;
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

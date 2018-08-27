@@ -10,6 +10,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
 
     controller_client_ptr_->start(std::string(rq_data_ptr->data.data));
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/start"));
 }
 
 // "/rpc/interpreter/debug"
@@ -20,6 +21,7 @@ void ControllerRpc::handleRpc0x000102D7(void* request_data_ptr, void* response_d
 
     controller_client_ptr_->debug(std::string(rq_data_ptr->data.data)); 
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/debug"));
 }
 
 // "/rpc/interpreter/forward"
@@ -29,6 +31,7 @@ void ControllerRpc::handleRpc0x0000D974(void* request_data_ptr, void* response_d
 
     controller_client_ptr_->forward(); 
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/forward"));
 }
 
 // "/rpc/interpreter/backward"
@@ -38,6 +41,7 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
 
     controller_client_ptr_->backward(); 
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/backward"));
 }
 
 // "/rpc/interpreter/jump"
@@ -48,6 +52,7 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
 
     controller_client_ptr_->jump(rq_data_ptr->data.data); 
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/jump"));
 }
 
 // "/rpc/interpreter/pause"
@@ -56,6 +61,7 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     controller_client_ptr_->pause(); 
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
 }
 
 // "/rpc/interpreter/resume"
@@ -64,6 +70,7 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     controller_client_ptr_->resume(); 
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/resume"));
 }
 
 // "/rpc/interpreter/abort"
@@ -72,5 +79,6 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     controller_client_ptr_->abort(); 
     rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));
 }
 

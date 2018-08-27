@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <iostream>
 #include "serverAlarmApi.h"
-
+#include <sstream>
 
 using namespace fst_ctrl;
 using namespace fst_base;
@@ -42,63 +42,108 @@ Controller* Controller::getInstance()
 
 ErrorCode Controller::init()
 {
+    recordLog("Controller initialization start");
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load controller component parameters");
+        recordLog(CONTROLLER_LOAD_PARAM_FAILED, "Failed to load controller component parameters");
         return CONTROLLER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
+
+    ServerAlarmApi::GetInstance()->setEnable(param_ptr_->enable_log_service_);
+    ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, std::string("Controller start init..."));
     
-    virtual_core1_.init(log_ptr_);
+    virtual_core1_.init(log_ptr_, param_ptr_);
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_);
 
-    if(device_manager_.init() != SUCCESS)
+    ErrorCode error_code;
+    error_code = device_manager_.init();
+    if(error_code != SUCCESS)
     {
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-    
-    if(tool_manager_.init() != SUCCESS)
-    {
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    if(coordinate_manager_.init() != SUCCESS)
-    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    if(reg_manager_.init() != SUCCESS)
+    error_code = tool_manager_.init();
+    if(error_code != SUCCESS)
     {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
+    error_code = coordinate_manager_.init();
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
+    error_code = reg_manager_.init();
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
     process_comm_ptr_ = ProcessComm::getInstance();
-    if((ProcessComm::getInitErrorCode() != SUCCESS)
-        || (process_comm_ptr_->getControllerServerPtr()->init() != SUCCESS)
-        || (process_comm_ptr_->getControllerServerPtr()->open() != SUCCESS)
-        || (process_comm_ptr_->getControllerClientPtr()->init() != SUCCESS)
-        || (process_comm_ptr_->getHeartbeatClientPtr()->init() != SUCCESS))
+    error_code = ProcessComm::getInitErrorCode();
+    if(error_code != SUCCESS)
     {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
-    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
 
-    rpc_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, 
+    error_code = process_comm_ptr_->getControllerServerPtr()->init();
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
+    error_code = process_comm_ptr_->getControllerClientPtr()->init();
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
+    error_code = process_comm_ptr_->getHeartbeatClientPtr()->init();
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
+    error_code = process_comm_ptr_->getControllerServerPtr()->open();
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
+    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
+    rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr());
+    publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_);
 
-    if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, 50))
+    if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {
+        recordLog(CONTROLLER_CREATE_ROUTINE_THREAD_FAILED, "Controller failed to create routine thread");
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     }
 
-    if(!routine_thread_.run(&controllerRoutineThreadFunc, this, 50))
+    if(!routine_thread_.run(&controllerRoutineThreadFunc, this, param_ptr_->routine_thread_priority_))
     {
+        recordLog(CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED, "Controller failed to create heartbeat thread");
         return CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED;
     }
 
-    /*if(motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance()) != 0)
+    /*error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
+    if(error_code != SUCCESS)
     {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }*/
     
@@ -107,9 +152,8 @@ ErrorCode Controller::init()
     {
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
-        
-    //ServerAlarmApi::GetInstance()->sendOneAlarm(SUCCESS, std::string("Controller init successfully"));
-
+            
+    recordLog("Controller initialization success");
     return SUCCESS;    
 }
 
@@ -123,12 +167,33 @@ void Controller::runRoutineThreadFunc()
     state_machine_.processStateMachine();
     rpc_.processRpc();
     ipc_.processIpc();
-    
+    publish_.processPublish();
 }
 
 void Controller::runHeartbeatThreadFunc()
 {
+    usleep(param_ptr_->heartbeat_cycle_time_);
     process_comm_ptr_->getHeartbeatClientPtr()->sendHeartbeat();
+}
+
+void Controller::recordLog(std::string log_str)
+{
+    ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);
+}
+
+void Controller::recordLog(ErrorCode error_code, std::string log_str)
+{
+    ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
+}
+
+void Controller::recordLog(ErrorCode major_error_code, ErrorCode minor_error_code, std::string log_str)
+{
+    std::stringstream ss;
+    ss << log_str;
+    ss << std::hex << minor_error_code;
+    std::string str;
+    ss >> str;
+    ServerAlarmApi::GetInstance()->sendOneAlarm(major_error_code, str);
 }
 
 void controllerRoutineThreadFunc(void* arg)

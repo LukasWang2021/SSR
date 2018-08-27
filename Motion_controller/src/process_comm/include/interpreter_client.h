@@ -7,6 +7,7 @@
 #include <vector>
 #include "reg_manager.h"
 #include "base_datatype.h"
+#include "interpreter_common.h"
 
 
 namespace fst_base
@@ -29,6 +30,8 @@ public:
     bool getMrReg(int id, fst_ctrl::MrRegDataIpc* data);
     bool getSrReg(int id, fst_ctrl::SrRegDataIpc* data);
     bool getRReg(int id, fst_ctrl::RRegDataIpc* data); 
+    bool setInstruction(Instruction* data);
+    bool isNextInstructionNeeded();
 
 private:
     fst_log::Logger* log_ptr_;

@@ -46,7 +46,6 @@ ErrorCode HeartbeatClient::init()
 
 void HeartbeatClient::sendHeartbeat()
 {
-    usleep(10000);
     if(nn_poll (&poll_fd_, 1, 0) <= 0)
     {
         return;

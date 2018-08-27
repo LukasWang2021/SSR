@@ -20,5 +20,6 @@ void ControllerRpc::handleRpc0x0000C1E0(void* request_data_ptr, void* response_d
     }
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.device_info_count = device_list.size();
+    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getDeviceList"));
 }
 

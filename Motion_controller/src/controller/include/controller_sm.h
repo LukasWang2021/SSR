@@ -7,6 +7,8 @@
 #include "common_enum.h"
 #include "motion_control.h"
 #include "base_datatype.h"
+#include "serverAlarmApi.h"
+#include <string>
 
 namespace fst_ctrl
 {
@@ -113,7 +115,10 @@ private:
     void processError();
     void transferServoState();
     void transferCtrlState();
-    void transferRobotState();      
+    void transferRobotState();   
+
+    // log service
+    void recordLog(std::string log_str);
 };
 
 }

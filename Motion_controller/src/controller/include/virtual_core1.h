@@ -1,7 +1,7 @@
 #ifndef VIRTUAL_CORE1_H
 #define VIRTUAL_CORE1_H
 
-
+#include "controller_param.h"
 #include <thread>
 #include "base_datatype.h"
 #include "common_log.h"
@@ -16,7 +16,7 @@ public:
     VirtualCore1();
     ~VirtualCore1();
 
-    void init(fst_log::Logger* log);
+    void init(fst_log::Logger* log, ControllerParam* param_ptr);
 
     /*
     This represents for if motor is running
@@ -39,6 +39,7 @@ public:
     void threadFunc();
 private:
     fst_log::Logger* log_;
+    ControllerParam* param_ptr_;
     bool is_estop;
     bool is_reset;
     int servo_state_;

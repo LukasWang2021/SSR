@@ -294,6 +294,8 @@ void TpComm::tpCommThreadFunc()
     handleRequest();
     handleResponseList();
     handlePublishList();
+    handleIoPublishList();
+    handleRegPublishList();
     usleep(cycle_time_);
 }
 
@@ -671,7 +673,16 @@ void  TpComm::handleRegPublishList()
             // encode TpPublishElement
             for(int i = 0; i < it->package.element_count; ++i)
             {
-                // to do...
+                int reg_type = (MessageType_RegType)(it->element_list_[i].hash >> 16);
+                switch(reg_type)
+                {
+                    case MessageType_RegType_PR: handlePublishElementRegPr(it->package, i, it->element_list_[i]); break;
+                    case MessageType_RegType_HR: handlePublishElementRegMr(it->package, i, it->element_list_[i]); break;
+                    case MessageType_RegType_SR: handlePublishElementRegHr(it->package, i, it->element_list_[i]); break;
+                    case MessageType_RegType_MR: handlePublishElementRegSr(it->package, i, it->element_list_[i]); break;
+                    case MessageType_RegType_R:  handlePublishElementRegR(it->package, i, it->element_list_[i]); break;
+                    default: ;
+                }
             }
 
             // encode TpPublish
@@ -727,7 +738,13 @@ void  TpComm::handleIoPublishList()
             // encode TpPublishElement
             for(int i = 0; i < it->package.element_count; ++i)
             {
-                // to do...
+                int io_type = (it->element_list_[i].hash >> 16) & 0x000000FF;
+                switch(io_type)
+                {
+                    case MessageType_IoType_INPUT: handlePublishElementIoInput(it->package, i, it->element_list_[i]); break;
+                    case MessageType_IoType_OUTPUT: handlePublishElementIoOutput(it->package, i, it->element_list_[i]); break;
+                    default: ;
+                }
             }
 
             // encode TpPublish

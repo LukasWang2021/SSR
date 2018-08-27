@@ -44,6 +44,8 @@
 #include "message_type/reg_base_summary.pb.h"
 #include "message_type/reg_type.pb.h"
 
+#include "message_type/io_type.pb.h"
+
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
 #include "response/response_rpc_table.pb.h"

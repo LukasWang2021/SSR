@@ -28,6 +28,7 @@ public:
     bool resume();
     bool abort();
     bool getNextInstruction(Instruction* instruction_ptr); 
+    bool setAutoStartMode(int start_mode);
 
 private:
     fst_log::Logger* log_ptr_;

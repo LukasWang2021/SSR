@@ -950,11 +950,11 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	 printf("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
 #ifndef WIN32
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
-	while(bRet == false)
-	{
-        printf("setInstruction return false\n");
-		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
-	}
+//	while(bRet == false)
+//	{
+//        printf("setInstruction return false\n");
+//		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+//	}
 #endif
 
 //    printf("setInstruction return true\n");

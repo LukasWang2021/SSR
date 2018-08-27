@@ -341,6 +341,7 @@ UserOpMode getUserOpMode()
 
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction)
 {
+    bool ret;
 //    int iLineNum = 0;
 	// We had eaten MOV* as token. 
     if (objThdCtrlBlockPtr->is_abort)
@@ -348,17 +349,15 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
         // target_line++;
         return false;
     }
-    getSendPermission();
-    if (!ctrl_status.is_permitted)
+    ret = g_objRegManagerInterface->isNextInstructionNeeded();
+    if (ret == false)
     {
         printf("not permitted\n");
         return false;
     }
-	
-	setSendPermission(false);
+	// setSendPermission(false);
 	
 //    int count = 0;
-    bool ret;
     //printf("cur state:%d\n", prgm_state);
     if ((objThdCtrlBlockPtr->prog_mode == STEP_MODE) 
 		&& (prgm_state == EXECUTE_TO_PAUSE_T))
@@ -379,16 +378,20 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 		if (instruction->is_additional == false)
 		{
 	     	// printf("instr.target.cnt = %f .\n", instruction->target.cnt);
-			ret = tryWrite(SHM_INTPRT_CMD, 0, 
-				(void*)instruction, sizeof(Instruction));
+			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
+			//		(void*)instruction, sizeof(Instruction));
+			
+			ret = g_objRegManagerInterface->setInstruction(instruction);
 		}
 		else
 		{
 	     	// printf("instr.target.cnt = %f .\n", instruction->target.cnt);
-			ret = tryWrite(SHM_INTPRT_CMD, 0, 
-				(void*)instruction, 
-				sizeof(Instruction) 
-					+ sizeof(AdditionalInfomation) * instruction->add_num);
+			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
+			//  	(void*)instruction, 
+			//  	sizeof(Instruction) 
+			//  		+ sizeof(AdditionalInfomation) * instruction->add_num);
+			
+			ret = g_objRegManagerInterface->setInstruction(instruction);
 		}
 #ifndef WIN32
 	    if (ret)
@@ -400,14 +403,14 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 		        //    iLineNum--;
 		        //    setCurLine(iLineNum);
 	        }
-		        //else
-		        //{
-		        //    iLineNum++;
-		        //    setCurLine(iLineNum);
-		        //}   
-		//	iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
-		//  printf("set line in setInstruction\n");
-        //    setLinenum(objThdCtrlBlockPtr, iLineNum);
+	        //else
+	        //{
+	        //    iLineNum++;
+	        //    setCurLine(iLineNum);
+	        //}   
+			//	iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
+			//  printf("set line in setInstruction\n");
+	        //    setLinenum(objThdCtrlBlockPtr, iLineNum);
 
 	        if (objThdCtrlBlockPtr->prog_mode == STEP_MODE)
 	        {
@@ -427,9 +430,9 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     }while(!ret);
 
     // Wait until finish 
-    getSendPermission();
+    ret = g_objRegManagerInterface->isNextInstructionNeeded();
     printf("wait ctrl_status.is_permitted == false\n");
-    while (ctrl_status.is_permitted == false)
+    while (ret == false)
     {
 #ifdef WIN32
 		Sleep(1);
@@ -437,7 +440,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 #else
         usleep(1000);
 #endif
-        getSendPermission();
+    	ret = g_objRegManagerInterface->isNextInstructionNeeded();
     }
     printf("ctrl_status.is_permitted == true\n");
 

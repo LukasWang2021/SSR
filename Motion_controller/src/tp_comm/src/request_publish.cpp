@@ -40,14 +40,14 @@ void TpComm::handleRequest0x00004403(int recv_bytes)
     RequestMessageType_Uint32* request_data_ptr = new RequestMessageType_Uint32;
     if(request_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/publish/deleteTopic");
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/publish/deleteTopic");
         FST_ERROR("handleRequest: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
@@ -55,36 +55,33 @@ void TpComm::handleRequest0x00004403(int recv_bytes)
 
     if(!decodeRequestPackage(RequestMessageType_Uint32_fields, (void*)request_data_ptr, recv_bytes))
     {
-        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
-        FST_ERROR("handleRequestPackage:  decode data failed");
-        return ;
+        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/publish/deleteTopic");
+        FST_ERROR("Decode data failed");
+        return;
     }
 
     Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x00004403);
 
     if(checkAuthority(request_data_ptr->property.authority, controller_authority))
     {
+        initResponsePackage(request_data_ptr, response_data_ptr, -1);
         if (isTopicExisted(request_data_ptr->data.data))
         {
-            initResponsePackage(request_data_ptr, response_data_ptr, -1);
-            response_data_ptr->data.data = 0;
-
+            response_data_ptr->data.data = SUCCESS;
+            recordLog(TP_COMM_LOG, SUCCESS, "/rpc/publish/deleteTopic");
             eraseTaskFromPublishList(request_data_ptr->data.data);
         }
         else
         {
-            ErrorMonitor::instance()->add(TP_COMM_DELETE_TOPIC_FAILED);
             FST_ERROR("Topic dose not exist");
-
-            initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
             response_data_ptr->data.data = TP_COMM_DELETE_TOPIC_FAILED;
+            recordLog(TP_COMM_LOG, TP_COMM_DELETE_TOPIC_FAILED, "/rpc/publish/deleteTopic");
         }
     }
     else
     {
-        ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);
         FST_ERROR("Operation is not authorized");
-
+        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/publish/deleteTopic");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 
@@ -153,14 +150,14 @@ void TpComm::handleRequest0x00010353(int recv_bytes)
     RequestMessageType_Uint32* request_data_ptr = new RequestMessageType_Uint32;
     if(request_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/publish/deleteRegTopic");
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/publish/deleteRegTopic");
         FST_ERROR("handleRequest: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
@@ -168,7 +165,7 @@ void TpComm::handleRequest0x00010353(int recv_bytes)
 
     if(!decodeRequestPackage(RequestMessageType_Uint32_fields, (void*)request_data_ptr, recv_bytes))
     {
-        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/publish/deleteRegTopic");
         FST_ERROR("handleRequestPackage:  decode data failed");
         return ;
     }
@@ -177,27 +174,24 @@ void TpComm::handleRequest0x00010353(int recv_bytes)
 
     if(checkAuthority(request_data_ptr->property.authority, controller_authority))
     {
+        initResponsePackage(request_data_ptr, response_data_ptr, -1);
         if (isRegTopicExisted(request_data_ptr->data.data))
         {
-            initResponsePackage(request_data_ptr, response_data_ptr, -1);
-            response_data_ptr->data.data = 0;
-
+            response_data_ptr->data.data = SUCCESS;
+            recordLog(TP_COMM_LOG, SUCCESS, "/rpc/publish/deleteRegTopic");
             eraseTaskFromRegPublishList(request_data_ptr->data.data);
         }
         else
         {
-            ErrorMonitor::instance()->add(TP_COMM_DELETE_TOPIC_FAILED);
             FST_ERROR("Topic dose not exist");
-
-            initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
             response_data_ptr->data.data = TP_COMM_DELETE_TOPIC_FAILED;
+            recordLog(TP_COMM_LOG, TP_COMM_DELETE_TOPIC_FAILED, "/rpc/publish/deleteRegTopic");
         }
     }
     else
     {
-        ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);
         FST_ERROR("Operation is not authorized");
-
+        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/publish/deleteRegTopic");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 
@@ -218,14 +212,14 @@ void TpComm::handleRequest0x0000DD03(int recv_bytes)
     RequestMessageType_Uint32* request_data_ptr = new RequestMessageType_Uint32;
     if(request_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/publish/deleteIoTopic");
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
     ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/publish/deleteIoTopic");
         FST_ERROR("handleRequest: can't allocate memory for response_data");
         delete request_data_ptr;
         return;
@@ -233,7 +227,7 @@ void TpComm::handleRequest0x0000DD03(int recv_bytes)
 
     if(!decodeRequestPackage(RequestMessageType_Uint32_fields, (void*)request_data_ptr, recv_bytes))
     {
-        ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
+        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/publish/deleteIoTopic");
         FST_ERROR("handleRequestPackage:  decode data failed");
         return ;
     }
@@ -242,27 +236,24 @@ void TpComm::handleRequest0x0000DD03(int recv_bytes)
 
     if(checkAuthority(request_data_ptr->property.authority, controller_authority))
     {
+        initResponsePackage(request_data_ptr, response_data_ptr, -1);
         if (isIoTopicExisted(request_data_ptr->data.data))
         {
-            initResponsePackage(request_data_ptr, response_data_ptr, -1);
-            response_data_ptr->data.data = 0;
-
+            response_data_ptr->data.data = SUCCESS;
+            recordLog(TP_COMM_LOG, SUCCESS, "/rpc/publish/deleteIoTopic");
             eraseTaskFromIoPublishList(request_data_ptr->data.data);
         }
         else
         {
-            ErrorMonitor::instance()->add(TP_COMM_DELETE_TOPIC_FAILED);
             FST_ERROR("Topic dose not exist");
-
-            initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
+            recordLog(TP_COMM_LOG, TP_COMM_DELETE_TOPIC_FAILED, "/rpc/publish/deleteIoTopic");
             response_data_ptr->data.data = TP_COMM_DELETE_TOPIC_FAILED;
         }
     }
     else
     {
-        ErrorMonitor::instance()->add(TP_COMM_AUTHORITY_CHECK_FAILED);
         FST_ERROR("Operation is not authorized");
-
+        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/publish/deleteIoTopic");
         initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
     }
 

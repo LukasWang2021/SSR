@@ -49,9 +49,8 @@ public:
     TpComm();
     ~TpComm();
 
-    bool init();
-
-    bool open();
+    unsigned long long int init();
+    unsigned long long int open();
     void close();
 
     void tpCommThreadFunc();
@@ -106,11 +105,11 @@ private:
     void handlePublishList();
     void eraseTaskFromPublishList(unsigned int &topic_hash);
 
-    void handleRegPublishList();///////////
-    void eraseTaskFromRegPublishList(unsigned int &topic_hash);//////////////
+    void handleRegPublishList();
+    void eraseTaskFromRegPublishList(unsigned int &topic_hash);
 
-    void handleIoPublishList();//////////////
-    void eraseTaskFromIoPublishList(unsigned int &topic_hash);///////////
+    void handleIoPublishList();
+    void eraseTaskFromIoPublishList(unsigned int &topic_hash);
 
     long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
     long computeTimeForTp(struct timeval& current_time_val);
@@ -134,6 +133,8 @@ private:
     void handlePublishElementRegHr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     void handlePublishElementRegR(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     void handlePublishElementIo(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+
+    void recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path);
 
     /********GetUserOpMode, RequestMessageType_Void**********/          
     void handleRequest0x00000C05(int recv_bytes);

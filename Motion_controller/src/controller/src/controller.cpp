@@ -148,13 +148,21 @@ ErrorCode Controller::init()
     }
     //FIXME: remove it later
     motion_control_.maskOffsetLostError();
-    
-    if(!tp_comm_.init()
-        || !tp_comm_.open())
+
+    error_code = tp_comm_.init();
+    if(error_code != SUCCESS)
     {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
-            
+
+    error_code = tp_comm_.open();
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+       
     recordLog("Controller initialization success");
     return SUCCESS;    
 }

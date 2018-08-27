@@ -68,18 +68,17 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
             ++element_count;
         }
     }
-    
-    rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
-    recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
-    /*if(element_count == rq_data_ptr->data.element_hash_list_count)
+ 
+    if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
         tp_comm_ptr_->pushTaskToPublishList(task);
-        rs_data_ptr->data.data = true;
+        rs_data_ptr->data.data = SUCCESS;
     }
     else
     {
-        rs_data_ptr->data.data = false;
-    }*/
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+    }
+    recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
 }
 
 // "/rpc/publish/addIoTopic"

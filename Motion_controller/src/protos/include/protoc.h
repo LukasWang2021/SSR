@@ -43,6 +43,8 @@
 #include "message_type/reg_sr.pb.h"
 #include "message_type/reg_base_summary.pb.h"
 #include "message_type/reg_type.pb.h"
+#include "message_type/reg_pr_value.pb.h"
+#include "message_type/reg_hr_value.pb.h"
 
 #include "message_type/io_type.pb.h"
 

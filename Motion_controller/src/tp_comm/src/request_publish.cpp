@@ -53,46 +53,8 @@ void TpComm::handleRequest0x00004403(int recv_bytes)
         return;
     }
 
-    if(!decodeRequestPackage(RequestMessageType_Uint32_fields, (void*)request_data_ptr, recv_bytes))
-    {
-        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/publish/deleteTopic");
-        FST_ERROR("Decode data failed");
-        return;
-    }
-
-    Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x00004403);
-
-    if(checkAuthority(request_data_ptr->property.authority, controller_authority))
-    {
-        initResponsePackage(request_data_ptr, response_data_ptr, -1);
-        if (isTopicExisted(request_data_ptr->data.data))
-        {
-            response_data_ptr->data.data = SUCCESS;
-            recordLog(TP_COMM_LOG, SUCCESS, "/rpc/publish/deleteTopic");
-            eraseTaskFromPublishList(request_data_ptr->data.data);
-        }
-        else
-        {
-            FST_ERROR("Topic dose not exist");
-            response_data_ptr->data.data = TP_COMM_DELETE_TOPIC_FAILED;
-            recordLog(TP_COMM_LOG, TP_COMM_DELETE_TOPIC_FAILED, "/rpc/publish/deleteTopic");
-        }
-    }
-    else
-    {
-        FST_ERROR("Operation is not authorized");
-        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/publish/deleteTopic");
-        initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
-    }
-
-    TpRequestResponse package;
-    package.hash = 0x00004403;
-    package.request_data_ptr = request_data_ptr;
-    package.response_data_ptr = response_data_ptr;
-
-    response_list_mutex_.lock();
-    response_list_.push_back(package);
-    response_list_mutex_.unlock();
+    handleRequestPackage(0x00004403, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Uint32_fields, -1);
 }
 
 //"/rpc/publish/addRegTopic"
@@ -163,46 +125,8 @@ void TpComm::handleRequest0x00010353(int recv_bytes)
         return;
     }
 
-    if(!decodeRequestPackage(RequestMessageType_Uint32_fields, (void*)request_data_ptr, recv_bytes))
-    {
-        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/publish/deleteRegTopic");
-        FST_ERROR("handleRequestPackage:  decode data failed");
-        return ;
-    }
-
-    Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x00010353);
-
-    if(checkAuthority(request_data_ptr->property.authority, controller_authority))
-    {
-        initResponsePackage(request_data_ptr, response_data_ptr, -1);
-        if (isRegTopicExisted(request_data_ptr->data.data))
-        {
-            response_data_ptr->data.data = SUCCESS;
-            recordLog(TP_COMM_LOG, SUCCESS, "/rpc/publish/deleteRegTopic");
-            eraseTaskFromRegPublishList(request_data_ptr->data.data);
-        }
-        else
-        {
-            FST_ERROR("Topic dose not exist");
-            response_data_ptr->data.data = TP_COMM_DELETE_TOPIC_FAILED;
-            recordLog(TP_COMM_LOG, TP_COMM_DELETE_TOPIC_FAILED, "/rpc/publish/deleteRegTopic");
-        }
-    }
-    else
-    {
-        FST_ERROR("Operation is not authorized");
-        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/publish/deleteRegTopic");
-        initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
-    }
-
-    TpRequestResponse package;
-    package.hash = 0x00010353;
-    package.request_data_ptr = request_data_ptr;
-    package.response_data_ptr = response_data_ptr;
-
-    response_list_mutex_.lock();
-    response_list_.push_back(package);
-    response_list_mutex_.unlock();
+    handleRequestPackage(0x00010353, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Uint32_fields, -1);
 }
 
 // delete io topic 
@@ -225,45 +149,7 @@ void TpComm::handleRequest0x0000DD03(int recv_bytes)
         return;
     }
 
-    if(!decodeRequestPackage(RequestMessageType_Uint32_fields, (void*)request_data_ptr, recv_bytes))
-    {
-        recordLog(TP_COMM_LOG, TP_COMM_DECODE_FAILED, "/rpc/publish/deleteIoTopic");
-        FST_ERROR("handleRequestPackage:  decode data failed");
-        return ;
-    }
-
-    Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(0x0000DD03);
-
-    if(checkAuthority(request_data_ptr->property.authority, controller_authority))
-    {
-        initResponsePackage(request_data_ptr, response_data_ptr, -1);
-        if (isIoTopicExisted(request_data_ptr->data.data))
-        {
-            response_data_ptr->data.data = SUCCESS;
-            recordLog(TP_COMM_LOG, SUCCESS, "/rpc/publish/deleteIoTopic");
-            eraseTaskFromIoPublishList(request_data_ptr->data.data);
-        }
-        else
-        {
-            FST_ERROR("Topic dose not exist");
-            recordLog(TP_COMM_LOG, TP_COMM_DELETE_TOPIC_FAILED, "/rpc/publish/deleteIoTopic");
-            response_data_ptr->data.data = TP_COMM_DELETE_TOPIC_FAILED;
-        }
-    }
-    else
-    {
-        FST_ERROR("Operation is not authorized");
-        recordLog(TP_COMM_LOG, TP_COMM_AUTHORITY_CHECK_FAILED, "/rpc/publish/deleteIoTopic");
-        initCommFailedResponsePackage(request_data_ptr, response_data_ptr);
-    }
-
-    TpRequestResponse package;
-    package.hash = 0x0000DD03;
-    package.request_data_ptr = request_data_ptr;
-    package.response_data_ptr = response_data_ptr;
-
-    response_list_mutex_.lock();
-    response_list_.push_back(package);
-    response_list_mutex_.unlock();
+    handleRequestPackage(0x0000DD03, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Uint32_fields, -1);
 }
 

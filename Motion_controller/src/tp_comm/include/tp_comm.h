@@ -64,16 +64,19 @@ public:
 
     bool isTopicExisted(unsigned int topic_hash);
     void pushTaskToPublishList(TpPublish& package);
+    void eraseTaskFromPublishList(unsigned int &topic_hash);
     void lockPublishMutex();
     void unlockPublishMutex();
 
     bool isRegTopicExisted(unsigned int topic_hash);
     void pushTaskToRegPublishList(TpPublish& package);
+    void eraseTaskFromRegPublishList(unsigned int &topic_hash);
     void lockRegPublishMutex();
     void unlockRegPublishMutex();
 
     bool isIoTopicExisted(unsigned int topic_hash);
     void pushTaskToIoPublishList(TpPublish& package);
+    void eraseTaskFromIoPublishList(unsigned int &topic_hash);
     void lockIoPublishMutex();
     void unlockIoPublishMutex();
 
@@ -103,13 +106,8 @@ private:
     void handleResponseList();
 
     void handlePublishList();
-    void eraseTaskFromPublishList(unsigned int &topic_hash);
-
     void handleRegPublishList();
-    void eraseTaskFromRegPublishList(unsigned int &topic_hash);
-
     void handleIoPublishList();
-    void eraseTaskFromIoPublishList(unsigned int &topic_hash);
 
     long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
     long computeTimeForTp(struct timeval& current_time_val);

@@ -18,8 +18,6 @@ namespace fst_hal
 {
 	
 typedef unsigned long long int U64;
-#define PARSE_IO_PATH_FAILED                    (unsigned long long int)0x0001000400670009   /*cant use current path to set IO*/
-#define INVALID_PATH_FROM_TP                    (unsigned long long int)0x0001000200830004   /*tp sent invalid path*/
 	
 	// IO Macro and structure begin
 #ifndef IO_BASE_ADDRESS

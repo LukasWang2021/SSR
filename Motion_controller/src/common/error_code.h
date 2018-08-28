@@ -196,6 +196,8 @@
 #define IO_INVALID_PORT_LEN (unsigned long long int)0x00000002008F03F8   /*invalid port number of device.*/
 #define IO_THREAD_INIT_STATUS (unsigned long long int)0x00000002008F03F9   /*io thread is in initial status and not ready.*/
 
+#define PARSE_IO_PATH_FAILED                    (unsigned long long int)0x0001000400670009   /*cant use current path to set IO*/
+#define INVALID_PATH_FROM_TP                    (unsigned long long int)0x0001000200830004   /*tp sent invalid path*/
 
 #endif
 

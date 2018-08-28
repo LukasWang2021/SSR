@@ -28,6 +28,7 @@ typedef struct _IOPortInfo
     int         port_type;
     int         port_index;
     int         bytes_len;
+	uint8_t     value ;
 }IOPortInfo;
 
 

@@ -608,3 +608,598 @@ void TpComm::handleRequest0x0000B6D4(int recv_bytes)
     handleRequestPackage(0x0000B6D4, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes,RequestMessageType_Int32List_DoubleList_fields, -1);
 }
+
+//"/rpc/motion_control/axis_group/ignoreLostZeroError"
+void TpComm::handleRequest0x00014952(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00014952, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getAllZeroPointOffsets"
+
+void TpComm::handleRequest0x00012353(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_DoubleList* response_data_ptr = new ResponseMessageType_Uint64_DoubleList;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00012353, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus"
+void TpComm::handleRequest0x0000C183(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000C183, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/saveAllZeroPointOffsets"
+void TpComm::handleRequest0x000171D3(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000171D3, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setSingleZeroPointStatus"
+void TpComm::handleRequest0x00010E43(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00010E43, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32List_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"
+void TpComm::handleRequest0x00011B03(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00011B03, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset"
+void TpComm::handleRequest0x000131D4(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000131D4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32List_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/calibrateZeroPointOffsets"
+void TpComm::handleRequest0x00005AE3(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32_Int32List* request_data_ptr = new RequestMessageType_Int32_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00005AE3, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_Int32List_fields, -1);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//"/rpc/motion_control/axis_group/isReferencePointExist"
+void TpComm::handleRequest0x0000D344(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Bool* response_data_ptr = new ResponseMessageType_Uint64_Bool;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000D344, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/deleteReferencePoint"
+void TpComm::handleRequest0x00008744(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00008744, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rp/motion_control/axis_group/saveReferencePoint"
+void TpComm::handleRequest0x00006744(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00006744, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/fastCalibrateAllZeroPointOffsets"
+void TpComm::handleRequest0x0000E913(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000E913, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/fastCalibrateSingleZeroPointOffset"
+void TpComm::handleRequest0x00004754(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00004754, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32List_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/fastCalibrateZeroPointOffsets"
+void TpComm::handleRequest0x00007EC3(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32_Int32List* request_data_ptr = new RequestMessageType_Int32_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00007EC3, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_Int32List_fields, -1);
+}
+
+//"/rpc/motion_control/getAxisGroupInfoList"
+void TpComm::handleRequest0x00010F54(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_AxisGroupInfoList* response_data_ptr = new ResponseMessageType_Uint64_AxisGroupInfoList;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00010F54, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getUserSoftLimitWithUnit",
+void TpComm::handleRequest0x00008ED4(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_JointLimitWithUnit* response_data_ptr = new ResponseMessageType_Uint64_JointLimitWithUnit;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00008ED4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getManuSoftLimitWithUnit"
+void TpComm::handleRequest0x000124E4(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_JointLimitWithUnit* response_data_ptr = new ResponseMessageType_Uint64_JointLimitWithUnit;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000124E4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getHardLimitWithUnit"
+void TpComm::handleRequest0x000092B4(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_JointLimitWithUnit* response_data_ptr = new ResponseMessageType_Uint64_JointLimitWithUnit;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000092B4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setRotateManualStep"
+void TpComm::handleRequest0x00005290(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32_Double* request_data_ptr = new RequestMessageType_Int32_Double;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00005290, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_Double_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getRotateManualStep"
+void TpComm::handleRequest0x00003000(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Double* response_data_ptr = new ResponseMessageType_Uint64_Double;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00003000, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setPrismaticManualStep"
+void TpComm::handleRequest0x0000B640(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32_Double* request_data_ptr = new RequestMessageType_Int32_Double;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000B640, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_Double_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getPrismaticManualStep"
+void TpComm::handleRequest0x0000FCE0(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Double* response_data_ptr = new ResponseMessageType_Uint64_Double;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000FCE0, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setCartesianManualStep"
+void TpComm::handleRequest0x0000A420(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32_Double* request_data_ptr = new RequestMessageType_Int32_Double;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000A420, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_Double_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getCartesianManualStep"
+void TpComm::handleRequest0x0000EAC0(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Double* response_data_ptr = new ResponseMessageType_Uint64_Double;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000EAC0, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+

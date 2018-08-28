@@ -357,6 +357,55 @@ private:
     /********rpc/motion_control/axis_group/convertJointToCart, RequestMessageType_Int32List_DoubleList(Int32List_count=4,DoubleList_count = 9)**********/
     void handleRequest0x0000B6D4(int recv_bytes);
 
+    /********rpc/motion_control/axis_group/ignoreLostZeroError, RequestMessageType_Int32**********/
+    void handleRequest0x00014952(int recv_bytes);
+    /********rpc/motion_control/axis_group/getAllZeroPointOffsets, RequestMessageType_Int32**********/
+    void handleRequest0x00012353(int recv_bytes);
+    /********rpc/motion_control/axis_group/getAllZeroErrorMaskStatus, RequestMessageType_Int32**********/
+    void handleRequest0x0000C183(int recv_bytes);
+    /********rpc/motion_control/axis_group/saveAllZeroPointOffsets, RequestMessageType_Int32**********/
+    void handleRequest0x000171D3(int recv_bytes);
+    /********rpc/motion_control/axis_group/setSingleZeroPointStatus, RequestMessageType_Int32List(count=3)**********/
+    void handleRequest0x00010E43(int recv_bytes);
+    /********rpc/motion_control/axis_group/calibrateAllZeroPointOffsets, RequestMessageType_Int32**********/
+    void handleRequest0x00011B03(int recv_bytes);
+    /********rpc/motion_control/axis_group/calibrateSingleZeroPointOffset, RequestMessageType_Int32List(count=2)**********/
+    void handleRequest0x000131D4(int recv_bytes);
+    /********rpc/motion_control/axis_group/calibrateZeroPointOffsets, RequestMessageType_Int32_Int32List(count=9)**********/
+    void handleRequest0x00005AE3(int recv_bytes);
+    /********rpc/motion_control/axis_group/isReferencePointExist, RequestMessageType_Int32**********/
+    void handleRequest0x0000D344(int recv_bytes);
+    /********rpc/motion_control/axis_group/deleteReferencePoint, RequestMessageType_Int32**********/
+    void handleRequest0x00008744(int recv_bytes);
+    /********rpc/motion_control/axis_group/saveReferencePoint, RequestMessageType_Int32**********/
+    void handleRequest0x00006744(int recv_bytes);
+    /********rpc/motion_control/axis_group/fastCalibrateAllZeroPointOffsets, RequestMessageType_Int32**********/
+    void handleRequest0x0000E913(int recv_bytes);
+    /********rpc/motion_control/axis_group/fastCalibrateSingleZeroPointOffset, RequestMessageType_Int32List(count=2)**********/
+    void handleRequest0x00004754(int recv_bytes);
+    /********rpc/motion_control/axis_group/fastCalibrateZeroPointOffsets, RequestMessageType_Int32_Int32List(count=9)**********/
+    void handleRequest0x00007EC3(int recv_bytes);
+    /********rpc/motion_control/getAxisGroupInfoList, RequestMessageType_Void**********/
+    void handleRequest0x00010F54(int recv_bytes);
+    /********rpc/motion_control/axis_group/getUserSoftLimitWithUnit, RequestMessageType_Int32**********/
+    void handleRequest0x00008ED4(int recv_bytes);
+    /********rpc/motion_control/axis_group/getManuSoftLimitWithUnit, RequestMessageType_Int32**********/
+    void handleRequest0x000124E4(int recv_bytes);
+    /********rpc/motion_control/axis_group/getHardLimitWithUnit, RequestMessageType_Int32**********/
+    void handleRequest0x000092B4(int recv_bytes);
+    /********rpc/motion_control/axis_group/setRotateManualStep, RequestMessageType_Int32_Double**********/
+    void handleRequest0x00005290(int recv_bytes);
+    /********rpc/motion_control/axis_group/getRotateManualStep, RequestMessageType_Int32**********/
+    void handleRequest0x00003000(int recv_bytes);
+    /********rpc/motion_control/axis_group/setPrismaticManualStep, RequestMessageType_Int32_Double**********/
+    void handleRequest0x0000B640(int recv_bytes);
+    /********rpc/motion_control/axis_group/getPrismaticManualStep, RequestMessageType_Int32**********/
+    void handleRequest0x0000FCE0(int recv_bytes);
+    /********rpc/motion_control/axis_group/setCartesianManualStep, RequestMessageType_Int32_Double**********/
+    void handleRequest0x0000A420(int recv_bytes);
+    /********rpc/motion_control/axis_group/getCartesianManualStep, RequestMessageType_Int32**********/
+    void handleRequest0x0000EAC0(int recv_bytes);
+
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********GetRunningStatus, ResponseMessageType_Int32**********/	
@@ -388,7 +437,6 @@ private:
     void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********getPublishTable, ResponseMessageType_PublishTable**********/
     void handleResponse0x000147A5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
 
     /********tool_manager/addTool, ResponseMessageType_Bool**********/
     void handleResponse0x0000A22C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -587,6 +635,56 @@ private:
     void handleResponse0x00010FD4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/convertJointToCart, ResponseMessageType_Uint64_DoubleList(count = 6)**********/
     void handleResponse0x0000B6D4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+
+    /********rpc/motion_control/axis_group/ignoreLostZeroError, ResponseMessageType_Uint64**********/
+    void handleResponse0x00014952(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getAllZeroPointOffsets, ResponseMessageType_Uint64_DoubleList(count=9)**********/
+    void handleResponse0x00012353(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getAllZeroErrorMaskStatus, ResponseMessageType_Uint64_Int32List(count=9)**********/
+    void handleResponse0x0000C183(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/saveAllZeroPointOffsets, ResponseMessageType_Uint64**********/
+    void handleResponse0x000171D3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setSingleZeroPointStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x00010E43(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/calibrateAllZeroPointOffsets, ResponseMessageType_Uint64**********/	
+    void handleResponse0x00011B03(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/calibrateSingleZeroPointOffset, ResponseMessageType_Uint64**********/
+    void handleResponse0x000131D4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/calibrateZeroPointOffsets, ResponseMessageType_Uint64**********/
+    void handleResponse0x00005AE3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/isReferencePointExist, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x0000D344(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/deleteReferencePoint, ResponseMessageType_Uint64**********/
+    void handleResponse0x00008744(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/saveReferencePoint, ResponseMessageType_Uint64**********/
+    void handleResponse0x00006744(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/fastCalibrateAllZeroPointOffsets, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000E913(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/fastCalibrateSingleZeroPointOffset, ResponseMessageType_Uint64**********/
+    void handleResponse0x00004754(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/fastCalibrateZeroPointOffsets, ResponseMessageType_Uint64**********/
+    void handleResponse0x00007EC3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/getAxisGroupInfoList, ResponseMessageType_Uint64_AxisGroupInfoList(count = 8)**********/
+    void handleResponse0x00010F54(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getUserSoftLimitWithUnit, ResponseMessageType_Uint64_JointLimitWithUnit**********/
+    void handleResponse0x00008ED4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getManuSoftLimitWithUnit, ResponseMessageType_Uint64_JointLimitWithUnit**********/
+    void handleResponse0x000124E4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getHardLimitWithUnit, ResponseMessageType_Uint64_JointLimitWithUnit**********/
+    void handleResponse0x000092B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setRotateManualStep, ResponseMessageType_Uint64**********/
+    void handleResponse0x00005290(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getRotateManualStep, ResponseMessageType_Uint64_Double**********/
+    void handleResponse0x00003000(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setPrismaticManualStep, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000B640(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getPrismaticManualStep, ResponseMessageType_Uint64_Double**********/
+    void handleResponse0x0000FCE0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setCartesianManualStep, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000A420(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getCartesianManualStep, ResponseMessageType_Uint64_Double**********/
+    void handleResponse0x0000EAC0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********UserOpMode, MessageType_Int32**********/  
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);

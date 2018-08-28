@@ -45,42 +45,42 @@ void* ControllerPublish::getAxisGroupJointFeedbackPtr()
 
 void* ControllerPublish::getAxisGroupTcpWorldCartesianPtr()
 {
-    return NULL;
+    return (void*)&tcp_world_cartesian_;
 }
 
 void* ControllerPublish::getAxisGroupTcpBaseCartesianPtr()
 {
-    return NULL;
+    return (void*)&tcp_base_cartesian_;
 }
 
 void* ControllerPublish::getAxisGroupTcpCurrentCartesianPtr()
 {
-    return NULL;
+    return (void*)&tcp_current_cartesian_;
 }
 
 void* ControllerPublish::getAxisGroupCurrentCoordinatePtr()
 {
-    return NULL;
+    return (void*)&current_coordinate_;
 }
 
 void* ControllerPublish::getAxisGroupCurrentToolPtr()
 {
-    return NULL;
+    return (void*)&current_tool_;
 }
 
 void* ControllerPublish::getGlobalVelRatioPtr()
 {
-    return NULL;
+    return (void*)&global_vel_ratio_;
 }
 
 void* ControllerPublish::getGlobalAccRatioPtr()
 {
-    return NULL;
+    return (void*)&global_acc_ratio_;
 }
 
 void* ControllerPublish::getProgramStatusPtr()
 {
-    return NULL;
+    return (void*)&program_status_;
 }
 
 

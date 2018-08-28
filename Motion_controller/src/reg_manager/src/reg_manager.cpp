@@ -20,7 +20,16 @@ RegManager::RegManager():
 
 RegManager::~RegManager()
 {
-
+    if(log_ptr_ != NULL)
+    {
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
+    if(param_ptr_ != NULL)
+    {
+        delete param_ptr_;
+        param_ptr_ = NULL;
+    }
 }
 
 ErrorCode RegManager::init()

@@ -9,6 +9,7 @@
 #include "motion_control.h"
 #include "base_datatype.h"
 #include <vector>
+#include <list>
 
 namespace fst_ctrl
 {
@@ -22,7 +23,10 @@ public:
                     ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr);
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
+    typedef void (ControllerPublish::*HandleUpdateFuncPtr)(void);
     HandlePublishFuncPtr getPublishHandlerByHash(unsigned int hash);
+    HandleUpdateFuncPtr getUpdateHandlerByHash(unsigned int hash);
+    void addTaskToUpdateList(HandleUpdateFuncPtr func_ptr);
     void processPublish();
     
 private:
@@ -41,13 +45,24 @@ private:
         std::string path;
         unsigned int hash;
         HandlePublishFuncPtr publish_func_ptr;
+        HandleUpdateFuncPtr update_func_ptr;
     }PublishService;
     std::vector<PublishService> publish_table_;
     std::vector<PublishService> publish_quick_search_table_[QUICK_SEARCH_TABLE_SIZE]; 
 
     // publish data, mutex protected    
     MessageType_Int32_DoubleList joint_feedback_;
+    MessageType_Int32_DoubleList tcp_world_cartesian_;
+    MessageType_Int32_DoubleList tcp_base_cartesian_;
+    MessageType_Int32_DoubleList tcp_current_cartesian_;
+    MessageType_Int32List current_coordinate_;
+    MessageType_Int32List current_tool_;
+    MessageType_Double global_vel_ratio_;
+    MessageType_Double global_acc_ratio_;
+    MessageType_String_Int32 program_status_;
 
+    std::list<HandleUpdateFuncPtr> update_list_;
+    
     void initPublishTable();
     void initPublishQuickSearchTable();
     
@@ -69,6 +84,17 @@ private:
     void* getGlobalVelRatioPtr();
     void* getGlobalAccRatioPtr();
     void* getProgramStatusPtr();
+
+    // update publish element
+    void updateAxisGroupJointFeedback();
+    void updateAxisGroupTcpWorldCartesian();
+    void updateAxisGroupTcpBaseCartesian();
+    void updateAxisGroupTcpCurrentCartesian();
+    void updateAxisGroupCurrentCoordinate();
+    void updateAxisGroupCurrentTool();
+    void updateGlobalVelRatio();
+    void updateGlobalAccRatio();
+    void updateProgramStatus();
 };
 
 }

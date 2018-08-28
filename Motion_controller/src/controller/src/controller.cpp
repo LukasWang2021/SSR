@@ -28,7 +28,16 @@ Controller::Controller():
 
 Controller::~Controller()
 {
-
+    if(log_ptr_ != NULL)
+    {
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
+    if(param_ptr_ != NULL)
+    {
+        delete param_ptr_;
+        param_ptr_ = NULL;
+    }
 }
 
 Controller* Controller::getInstance()
@@ -170,6 +179,11 @@ ErrorCode Controller::init()
 bool Controller::isExit()
 {
     return is_exit_;
+}
+
+void Controller::setExit()
+{
+    is_exit_ = true;
 }
 
 void Controller::runRoutineThreadFunc()

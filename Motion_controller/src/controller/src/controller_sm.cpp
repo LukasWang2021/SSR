@@ -107,7 +107,8 @@ ErrorCode ControllerSm::setUserOpMode(UserOpMode mode)
 ErrorCode ControllerSm::callEstop()
 {
     if(ctrl_state_ == CTRL_ENGAGED
-        || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED)
+        || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED
+        || ctrl_state_ == CTRL_INIT)
     {
         motion_control_ptr_->stopGroup();
         //RobotCtrlCmd cmd = ABORT_CMD;
@@ -125,6 +126,7 @@ ErrorCode ControllerSm::callReset()
     {
         ErrorMonitor::instance()->clear();
         motion_control_ptr_->resetGroup();
+
         //safety_interface_.reset();
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
         FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");

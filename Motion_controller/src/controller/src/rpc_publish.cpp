@@ -9,8 +9,16 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(tp_comm_ptr_->isTopicExisted(rq_data_ptr->data.topic_hash))
+    {
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addTopic"));
+        return;        
+    }
+
     int element_count = 0;
-    void* data_ptr;
+    void* data_ptr;    
     TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
     for(unsigned int i = 0; i < rq_data_ptr->data.element_hash_list_count; ++i)
     {
@@ -21,6 +29,11 @@ void ControllerRpc::handleRpc0x000050E3(void* request_data_ptr, void* response_d
             if(data_ptr != NULL)
             {
                 tp_comm_ptr_->addTpPublishElement(task, rq_data_ptr->data.element_hash_list[i], data_ptr);
+                ControllerPublish::HandleUpdateFuncPtr update_func_ptr = publish_ptr_->getUpdateHandlerByHash(rq_data_ptr->data.element_hash_list[i]);
+                if(update_func_ptr != NULL)
+                {
+                    publish_ptr_->addTaskToUpdateList(update_func_ptr);
+                }
                 ++element_count;
             }
         }
@@ -43,6 +56,13 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(tp_comm_ptr_->isRegTopicExisted(rq_data_ptr->data.topic_hash))
+    {
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addRegTopic"));
+        return;        
+    }
 
     int element_count = 0;
     void* data_ptr;
@@ -71,7 +91,7 @@ void ControllerRpc::handleRpc0x000163A3(void* request_data_ptr, void* response_d
  
     if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
-        tp_comm_ptr_->pushTaskToPublishList(task);
+        tp_comm_ptr_->pushTaskToRegPublishList(task);
         rs_data_ptr->data.data = SUCCESS;
     }
     else
@@ -86,6 +106,13 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Topic* rq_data_ptr = static_cast<RequestMessageType_Topic*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(tp_comm_ptr_->isIoTopicExisted(rq_data_ptr->data.topic_hash))
+    {
+        rs_data_ptr->data.data = CONTROLLER_PUBLISH_FAILED;
+        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/addIoTopic"));
+        return;        
+    }
 
     int element_count = 0;
     void* data_ptr;
@@ -104,7 +131,7 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
     
     if(element_count == rq_data_ptr->data.element_hash_list_count)
     {
-        tp_comm_ptr_->pushTaskToPublishList(task);
+        tp_comm_ptr_->pushTaskToIoPublishList(task);
         rs_data_ptr->data.data = SUCCESS;
     }
     else

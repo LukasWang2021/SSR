@@ -34,6 +34,7 @@ public:
     static Controller* getInstance();
     ErrorCode init();
     bool isExit();
+    void setExit();
     
     void runRoutineThreadFunc();
     void runHeartbeatThreadFunc();

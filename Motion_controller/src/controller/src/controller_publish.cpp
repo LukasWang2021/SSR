@@ -48,6 +48,19 @@ ControllerPublish::HandlePublishFuncPtr ControllerPublish::getPublishHandlerByHa
     return NULL;
 }
 
+ControllerPublish::HandleUpdateFuncPtr ControllerPublish::getUpdateHandlerByHash(unsigned int hash)
+{
+    unsigned int remainder = hash % QUICK_SEARCH_TABLE_SIZE;
+    for(unsigned int i = 0; i < publish_quick_search_table_[remainder].size(); ++i)
+    {
+        if(publish_quick_search_table_[remainder][i].hash == hash)
+        {
+            return publish_quick_search_table_[remainder][i].update_func_ptr;
+        }
+    }
+    return NULL;
+}
+
 void ControllerPublish::initPublishQuickSearchTable()
 {
     unsigned int remainder;
@@ -58,22 +71,37 @@ void ControllerPublish::initPublishQuickSearchTable()
     }
 }
 
+void ControllerPublish::addTaskToUpdateList(HandleUpdateFuncPtr func_ptr)
+{
+    std::list<HandleUpdateFuncPtr>::iterator it;
+    for(it = update_list_.begin(); it != update_list_.end(); ++it)
+    {
+        if(*it == func_ptr)
+        {
+            return;
+        }
+    }
+    update_list_.push_back(func_ptr);
+}
+
 void ControllerPublish::processPublish()
 {
+    HandleUpdateFuncPtr update_func_ptr;
+    std::list<HandleUpdateFuncPtr>::iterator it;
     tp_comm_ptr_->lockPublishMutex();
-    Joint joint_feedback = motion_control_ptr_->getServoJoint();
-    joint_feedback_.data1.data = 1;
-    joint_feedback_.data2.data_count = 9;
-    joint_feedback_.data2.data[0] = joint_feedback.j1;
-    joint_feedback_.data2.data[1] = joint_feedback.j2;
-    joint_feedback_.data2.data[2] = joint_feedback.j3;
-    joint_feedback_.data2.data[3] = joint_feedback.j4;
-    joint_feedback_.data2.data[4] = joint_feedback.j5;
-    joint_feedback_.data2.data[5] = joint_feedback.j6;
-    joint_feedback_.data2.data[6] = joint_feedback.j7;
-    joint_feedback_.data2.data[7] = joint_feedback.j8;
-    joint_feedback_.data2.data[8] = joint_feedback.j9;
+    for(it = update_list_.begin(); it != update_list_.end(); ++it)
+    {
+        update_func_ptr = *it;
+        if(update_func_ptr != NULL)
+        {
+            (this->*update_func_ptr)();
+        }
+    }
     tp_comm_ptr_->unlockPublishMutex();
+
+    //tp_comm_ptr_->lockRegPublishMutex();
+    
+    //tp_comm_ptr_->unlockRegPublishMutex();
 }
 
 

@@ -846,3 +846,64 @@ void TpComm::recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc
         ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
     }
 }
+
+
+std::vector<TpPublishElement> TpComm::getPublishElementByHash(unsigned int topic_hash)
+{
+    std::vector<TpPublishElement> publish_element;
+    std::vector<TpPublish>::iterator itr;
+    publish_list_mutex_.lock();
+
+    for (itr = publish_list_.begin(); itr != publish_list_.end(); ++itr)
+    {
+        if (itr->hash == topic_hash)
+        {
+            publish_element.assign(itr->element_list_.begin(), itr->element_list_.end());
+            break;
+        }
+    }
+
+    publish_list_mutex_.unlock();
+
+    return publish_element;
+}
+
+std::vector<TpPublishElement> TpComm::getRegPublishElementByHash(unsigned int topic_hash)
+{
+    std::vector<TpPublishElement> reg_publish_element;
+    std::vector<TpPublish>::iterator itr;
+    publish_list_mutex_.lock();
+
+    for (itr = publish_list_.begin(); itr != publish_list_.end(); ++itr)
+    {
+        if (itr->hash == topic_hash)
+        {
+            reg_publish_element.assign(itr->element_list_.begin(), itr->element_list_.end());
+            break;
+        }
+    }
+
+    publish_list_mutex_.unlock();
+
+    return reg_publish_element;
+}
+
+std::vector<TpPublishElement> TpComm::getIoPublishElementByHash(unsigned int topic_hash)
+{
+    std::vector<TpPublishElement> io_publish_element;
+    std::vector<TpPublish>::iterator itr;
+    publish_list_mutex_.lock();
+
+    for (itr = publish_list_.begin(); itr != publish_list_.end(); ++itr)
+    {
+        if (itr->hash == topic_hash)
+        {
+            io_publish_element.assign(itr->element_list_.begin(), itr->element_list_.end());
+            break;
+        }
+    }
+
+    publish_list_mutex_.unlock();
+
+    return io_publish_element;
+}

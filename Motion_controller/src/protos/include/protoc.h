@@ -20,6 +20,7 @@
 #include "request/request_int32list_doublelist.pb.h"
 #include "request/request_int32_int32list.pb.h"
 #include "request/request_int32_jointlimit.pb.h"
+#include "request/request_int32_double.pb.h"
 
 #include "message_type/base.pb.h"
 #include "message_type/publish_table.pb.h"
@@ -29,11 +30,13 @@
 #include "message_type/joint_list.pb.h"
 #include "message_type/tool_frame.pb.h"
 #include "message_type/coord_user.pb.h"
+#include "message_type/axis_group_info.pb.h"
 
 #include "message_type/device_info.pb.h"
 #include "message_type/int32_int32list.pb.h"
 #include "message_type/int32_doublelist.pb.h"
 #include "message_type/joint_limit.pb.h"
+#include "message_type/joint_limit_with_unit.pb.h"
 #include "message_type/string_int32.pb.h"
 
 #include "message_type/reg_hr.pb.h"
@@ -45,6 +48,9 @@
 #include "message_type/reg_type.pb.h"
 #include "message_type/reg_pr_value.pb.h"
 #include "message_type/reg_hr_value.pb.h"
+#include "message_type/reg_mr_value.pb.h"
+#include "message_type/reg_sr_value.pb.h"
+#include "message_type/reg_r_value.pb.h"
 
 #include "message_type/io_type.pb.h"
 
@@ -53,6 +59,8 @@
 #include "response/response_rpc_table.pb.h"
 #include "response/response_tool_frame.pb.h"
 #include "response/response_coord_user.pb.h"
+#include "response/response_axis_group_info.pb.h"
+#include "response/response_joint_limit_with_unit.pb.h"
 
 #include "response/response_reg_base_summary.pb.h"
 #include "response/response_reg_hr.pb.h"
@@ -70,6 +78,7 @@
 #include "response/response_uint64_int32.pb.h"
 #include "response/response_uint64_int32list.pb.h"
 #include "response/response_uint64_double.pb.h"
+#include "response/response_uint64_bool.pb.h"
 
 
 #endif

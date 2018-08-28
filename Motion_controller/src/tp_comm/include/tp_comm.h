@@ -65,18 +65,21 @@ public:
     bool isTopicExisted(unsigned int topic_hash);
     void pushTaskToPublishList(TpPublish& package);
     void eraseTaskFromPublishList(unsigned int &topic_hash);
+    std::vector<TpPublishElement> getPublishElementByHash(unsigned int topic_hash);
     void lockPublishMutex();
     void unlockPublishMutex();
 
     bool isRegTopicExisted(unsigned int topic_hash);
     void pushTaskToRegPublishList(TpPublish& package);
     void eraseTaskFromRegPublishList(unsigned int &topic_hash);
+    std::vector<TpPublishElement> getRegPublishElementByHash(unsigned int topic_hash);
     void lockRegPublishMutex();
     void unlockRegPublishMutex();
 
     bool isIoTopicExisted(unsigned int topic_hash);
     void pushTaskToIoPublishList(TpPublish& package);
     void eraseTaskFromIoPublishList(unsigned int &topic_hash);
+    std::vector<TpPublishElement> getIoPublishElementByHash(unsigned int topic_hash);
     void lockIoPublishMutex();
     void unlockIoPublishMutex();
 

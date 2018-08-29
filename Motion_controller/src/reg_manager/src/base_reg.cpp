@@ -58,6 +58,20 @@ std::vector<BaseRegSummary> BaseReg::getValidList(int start_id, int size)
     return list;
 }
 
+bool BaseReg::isRegValid(int id)
+{
+    if(id <= 0
+        || id >= reg_list_.size()
+        || !reg_list_[id].is_valid)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 BaseRegData* BaseReg::getBaseRegDataById(int id)
 {
     if(id <= 0

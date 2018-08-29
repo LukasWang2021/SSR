@@ -1,6 +1,6 @@
 PR1:
     id: 1
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     group_id: -1

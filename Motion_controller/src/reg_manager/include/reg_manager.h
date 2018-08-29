@@ -23,6 +23,8 @@ public:
 
     ErrorCode init();
 
+    bool isRegValid(RegType reg_type, int reg_index);
+
     ErrorCode addPrReg(PrRegData* data_ptr);
     ErrorCode deletePrReg(int id);
     ErrorCode getPrReg(int id, PrRegData* data_ptr);

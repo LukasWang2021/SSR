@@ -1,12 +1,12 @@
 MR1:
     id: 1
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     value: 0
 MR2:
     id: 2
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     value: 0

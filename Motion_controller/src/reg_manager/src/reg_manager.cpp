@@ -66,6 +66,19 @@ ErrorCode RegManager::init()
     return SUCCESS;    
 }
 
+bool RegManager::isRegValid(RegType reg_type, int reg_index)
+{
+    switch(reg_type)
+    {
+        case REG_TYPE_PR:   return reg_ptr_[REG_TYPE_PR]->isRegValid(reg_index);
+        case REG_TYPE_HR:   return reg_ptr_[REG_TYPE_HR]->isRegValid(reg_index);
+        case REG_TYPE_SR:   return reg_ptr_[REG_TYPE_SR]->isRegValid(reg_index);
+        case REG_TYPE_MR:   return reg_ptr_[REG_TYPE_MR]->isRegValid(reg_index);
+        case REG_TYPE_R:    return reg_ptr_[REG_TYPE_R]->isRegValid(reg_index);
+        default:            return false;
+    }
+}
+
 ErrorCode RegManager::addPrReg(PrRegData* data_ptr)
 {
     return reg_ptr_[REG_TYPE_PR]->addReg((void*)data_ptr);

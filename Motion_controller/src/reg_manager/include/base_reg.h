@@ -50,6 +50,7 @@ public:
     virtual void* getRegValueById(int id) = 0;
     std::vector<BaseRegSummary> getChangedList(int start_id, int size);
     std::vector<BaseRegSummary> getValidList(int start_id, int size);
+    bool isRegValid(int id);
 
     BaseRegData* getBaseRegDataById(int id);
     RegType getRegType();

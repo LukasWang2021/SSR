@@ -8,6 +8,7 @@
 #include "controller_sm.h"
 #include "motion_control.h"
 #include "base_datatype.h"
+#include "reg_manager.h"
 #include <vector>
 #include <list>
 
@@ -20,13 +21,24 @@ public:
     ~ControllerPublish();
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr);
+                    ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr, RegManager* reg_manager_ptr);
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     typedef void (ControllerPublish::*HandleUpdateFuncPtr)(void);
     HandlePublishFuncPtr getPublishHandlerByHash(unsigned int hash);
     HandleUpdateFuncPtr getUpdateHandlerByHash(unsigned int hash);
     void addTaskToUpdateList(HandleUpdateFuncPtr func_ptr);
+    void unrefUpdateListElement(HandleUpdateFuncPtr func_ptr);
+    void cleanUpdateList();
+    void deleteTaskFromUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
+
+    void* getRegPublishDataPtr(RegType reg_type, int reg_index);
+    void* addTaskToRegUpdateList(RegType reg_type, int reg_index);
+    void unrefRegUpdateListElement(RegType reg_type, int reg_index);
+    void cleanRegUpdateList();
+    void deleteTaskFromRegUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
+    
+
     void processPublish();
     
 private:
@@ -36,6 +48,7 @@ private:
     fst_comm::TpComm* tp_comm_ptr_;
     ControllerSm* state_machine_ptr_;
     fst_mc::MotionControl* motion_control_ptr_;
+    RegManager* reg_manager_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -49,7 +62,13 @@ private:
     }PublishService;
     std::vector<PublishService> publish_table_;
     std::vector<PublishService> publish_quick_search_table_[QUICK_SEARCH_TABLE_SIZE]; 
-
+    typedef struct
+    {
+        HandleUpdateFuncPtr func_ptr;
+        int ref_count;
+    }PublishUpdate;
+    std::list<PublishUpdate> update_list_;
+    
     // publish data, mutex protected    
     MessageType_Int32_DoubleList joint_feedback_;
     MessageType_Int32_DoubleList tcp_world_cartesian_;
@@ -61,7 +80,18 @@ private:
     MessageType_Double global_acc_ratio_;
     MessageType_String_Int32 program_status_;
 
-    std::list<HandleUpdateFuncPtr> update_list_;
+    typedef struct
+    {
+        RegType reg_type;
+        int reg_index;
+        MessageType_PrValue pr_value;
+        MessageType_HrValue hr_value;
+        MessageType_MrValue mr_value;
+        MessageType_SrValue sr_value;
+        MessageType_RValue r_value;
+        int ref_count;
+    }RegPublishUpdate;
+    std::list<RegPublishUpdate> reg_update_list_;
     
     void initPublishTable();
     void initPublishQuickSearchTable();
@@ -95,6 +125,9 @@ private:
     void updateGlobalVelRatio();
     void updateGlobalAccRatio();
     void updateProgramStatus();
+
+    // update reg publish
+    void updateReg();
 };
 
 }

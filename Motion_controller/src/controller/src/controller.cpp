@@ -28,6 +28,9 @@ Controller::Controller():
 
 Controller::~Controller()
 {
+    routine_thread_.join();
+    heartbeat_thread_.join();
+
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;
@@ -135,7 +138,7 @@ ErrorCode Controller::init()
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr());
-    publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_);
+    publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_);
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {
@@ -222,21 +225,23 @@ void Controller::recordLog(ErrorCode major_error_code, ErrorCode minor_error_cod
 
 void controllerRoutineThreadFunc(void* arg)
 {
-    std::cout<<"---controllerRoutineThreadFunc running"<<std::endl;
+    std::cout<<"controller routine thread running"<<std::endl;
     Controller* controller_ptr = static_cast<Controller*>(arg);
     while(!controller_ptr->isExit())
     {
         controller_ptr->runRoutineThreadFunc();
     }
+    std::cout<<"controller routine thread exit"<<std::endl;
 }
 
 void heartbeatThreadFunc(void* arg)
 {
-    std::cout<<"---heartbeatThreadFunc running"<<std::endl;
+    std::cout<<"heartbeat thread running"<<std::endl;
     Controller* controller_ptr = static_cast<Controller*>(arg);
     while(!controller_ptr->isExit())
     {
         controller_ptr->runHeartbeatThreadFunc();
     }
+    std::cout<<"heartbeat thread exit"<<std::endl;
 }
 

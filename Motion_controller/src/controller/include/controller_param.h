@@ -27,6 +27,7 @@ public:
     bool enable_log_service_;
     bool enable_virtual_core1_;
     int virtual_core1_thread_priority_;
+    int max_reg_publish_number_;
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

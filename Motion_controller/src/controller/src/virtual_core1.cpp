@@ -20,7 +20,7 @@ VirtualCore1::VirtualCore1():
 
 VirtualCore1::~VirtualCore1()
 {
-
+    thread_.join();
 }
 
 void VirtualCore1::init(fst_log::Logger* log, ControllerParam* param_ptr)
@@ -83,12 +83,13 @@ void VirtualCore1::threadFunc()
 
 void virtualCore1ThreadFunc(void* arg)
 {
-    std::cout<<"---virtualCore1ThreadFunc running"<<std::endl;
+    std::cout<<"virtual core1 thread running"<<std::endl;
     VirtualCore1* virtual_core1_ptr = static_cast<VirtualCore1*>(arg);
     while(1)
     {
         virtual_core1_ptr->threadFunc();
     }
+    std::cout<<"virtual core1 thread exit"<<std::endl;
 }
 
 

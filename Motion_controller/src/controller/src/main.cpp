@@ -38,7 +38,8 @@ int main(int argc, char **argv)
             }
         }
     }
-
+    delete controller_ptr;
+    std::cout<<"controller exit"<<std::endl;
     return 0;
 }
 

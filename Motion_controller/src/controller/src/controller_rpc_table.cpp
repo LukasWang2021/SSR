@@ -11,6 +11,9 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/publish/addTopic", 0x000050E3, &ControllerRpc::handleRpc0x000050E3}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/publish/addRegTopic", 0x000163A3, &ControllerRpc::handleRpc0x000163A3}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/publish/addIoTopic", 0x000058F3, &ControllerRpc::handleRpc0x000058F3}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/publish/deleteTopic", 0x00004403, &ControllerRpc::handleRpc0x00004403}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/publish/deleteRegTopic", 0x00010353, &ControllerRpc::handleRpc0x00010353}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/publish/deleteIoTopic", 0x0000DD03, &ControllerRpc::handleRpc0x0000DD03}; rpc_table_.push_back(rpc_service);
     
     rpc_service = {"/rpc/controller/getUserOpMode", 0x00000C05, &ControllerRpc::handleRpc0x00000C05}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getRunningStatus", 0x00000AB3, &ControllerRpc::handleRpc0x00000AB3}; rpc_table_.push_back(rpc_service);

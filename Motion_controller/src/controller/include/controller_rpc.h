@@ -71,6 +71,12 @@ private:
     void handleRpc0x000163A3(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/publish/addIoTopic"
     void handleRpc0x000058F3(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/publish/deleteTopic"
+    void handleRpc0x00004403(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/publish/deleteRegTopic"
+    void handleRpc0x00010353(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/publish/deleteIoTopic"
+    void handleRpc0x0000DD03(void* request_data_ptr, void* response_data_ptr);   
 
     /* controller rpc */
     // "/rpc/controller/getUserOpMode"

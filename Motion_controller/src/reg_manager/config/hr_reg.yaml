@@ -1,6 +1,6 @@
 HR1:
     id: 1
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     group_id: -1
@@ -24,7 +24,7 @@ HR1:
     diff_pos9: 0.0 
 HR2:
     id: 2
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     group_id: -1

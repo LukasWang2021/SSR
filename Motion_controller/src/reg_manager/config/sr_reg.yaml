@@ -1,12 +1,12 @@
 SR1:
     id: 1
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     value: default
 SR2:
     id: 2
-    is_valid: false
+    is_valid: true
     name: default
     comment: default
     value: default

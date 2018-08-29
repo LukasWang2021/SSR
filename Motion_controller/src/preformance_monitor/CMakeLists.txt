@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(basic_alg)
+project(preformance_monitor)
 
 find_package(catkin REQUIRED COMPONENTS
 )
@@ -24,7 +24,8 @@ set(catkin_INCLUDE_DIRS
 
 catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES basic_alg
+    LIBRARIES preformance_monitor
+    DEPENDS log_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -37,16 +38,17 @@ include_directories(
 
 aux_source_directory(src BASE_SRCS)
 
-add_library(basic_alg
+add_library(preformance_monitor
     ${BASE_SRCS}
 )
 
-target_link_libraries(basic_alg
+target_link_libraries(preformance_monitor
     ${catkin_LIBRARIES}
 )
 
-install(TARGETS basic_alg
+install(TARGETS preformance_monitor
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
+
 
 

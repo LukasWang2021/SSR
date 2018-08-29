@@ -223,6 +223,62 @@ bool InterpreterClient::isNextInstructionNeeded()
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
+ErrorCode InterpreterClient::checkIo(char path[256], IOPortInfo* port_info_ptr)
+{
+    if(strlen(path) >= 256
+        || port_info_ptr == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_CHECK_IO, (void*)path, 256)
+        || !recvResponse(sizeof(ResponseCheckIo))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_CHECK_IO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+
+    ResponseCheckIo response_check_io;
+    memcpy(&response_check_io, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseCheckIo));
+    memcpy(port_info_ptr, &response_check_io.port_info, sizeof(IOPortInfo));
+    return response_check_io.error_code;
+}
+
+ErrorCode InterpreterClient::setIo(IOPortInfo* port_info_ptr, char value)
+{
+    if(port_info_ptr == NULL)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    RequestSetIo request_set_io;
+    memcpy(&request_set_io.port_info, port_info_ptr, sizeof(IOPortInfo));
+    request_set_io.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_IO, (void*)&request_set_io, sizeof(RequestSetIo))
+        || !recvResponse(sizeof(unsigned long long))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_IO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+ErrorCode InterpreterClient::getIo(IOPortInfo* port_info_ptr, int buffer_length, char* value_ptr)
+{
+    if(port_info_ptr == NULL)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    RequestGetIo request_get_io;
+    memcpy(&request_get_io.port_info, port_info_ptr, sizeof(IOPortInfo));
+    request_get_io.buffer_length = buffer_length;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_IO, (void*)&request_get_io, sizeof(RequestGetIo))
+        || !recvResponse(sizeof(ResponseGetIo))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_IO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetIo response_get_io;
+    memcpy(&response_get_io, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetIo));
+    *value_ptr = response_get_io.value;
+    return response_get_io.error_code;
+}
+
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;

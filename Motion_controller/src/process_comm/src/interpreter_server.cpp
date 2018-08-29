@@ -232,7 +232,7 @@ void InterpreterServer::handlePublishList()
 {
     std::vector<ProcessCommPublish>::iterator it;
     struct timeval time_val;
-    long time_elapsed; 
+    long long time_elapsed; 
     publish_list_mutex_.lock();
     gettimeofday(&time_val, NULL);
     for(it = publish_list_.begin(); it != publish_list_.end(); ++it)
@@ -298,10 +298,10 @@ void InterpreterServer::copyResponseDataToSendBuffer(InterpreterServerCmd cmd_id
     send_buffer_size = response_data_size + PROCESS_COMM_CMD_ID_SIZE;
 }
 
-long InterpreterServer::computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val)
+long long InterpreterServer::computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val)
 {
-    long delta_tv_sec = current_time_val.tv_sec - last_time_val.tv_sec;
-    long delta_tv_usec = current_time_val.tv_usec - last_time_val.tv_usec;
+    long long delta_tv_sec = current_time_val.tv_sec - last_time_val.tv_sec;
+    long long delta_tv_usec = current_time_val.tv_usec - last_time_val.tv_usec;
     return delta_tv_sec * 1000 + delta_tv_usec / 1000;
 }
 

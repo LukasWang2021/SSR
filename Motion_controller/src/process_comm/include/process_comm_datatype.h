@@ -2,6 +2,8 @@
 #define PROCESS_COMM_DATATYPE_H
 
 #include "interpreter_common.h"
+#include "io_interface.h"
+
 
 namespace fst_base
 {
@@ -21,6 +23,9 @@ typedef enum
     CONTROLLER_SERVER_CMD_GET_R_REG = 9,
     CONTROLLER_SERVER_CMD_SET_INSTRUCTION = 10,
     CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED = 11,
+    CONTROLLER_SERVER_CMD_CHECK_IO = 12,
+    CONTROLLER_SERVER_CMD_SET_IO = 13,
+    CONTROLLER_SERVER_CMD_GET_IO = 14,
 }ControllerServerCmd;
 
 typedef enum
@@ -60,6 +65,30 @@ typedef struct
     // if multi data type exist, change data to union 
     unsigned long long int data;
 }ProcessCommEvent;
+
+typedef struct
+{
+    IOPortInfo port_info;
+    ErrorCode error_code;
+}ResponseCheckIo;
+
+typedef struct
+{
+    IOPortInfo port_info;
+    char value;
+}RequestSetIo;
+
+typedef struct
+{
+    IOPortInfo port_info;
+    int buffer_length;
+}RequestGetIo;
+
+typedef struct
+{
+    unsigned long long error_code;
+    char value;
+}ResponseGetIo;
 
 }
 

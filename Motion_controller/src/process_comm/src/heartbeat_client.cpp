@@ -76,8 +76,8 @@ void HeartbeatClient::sendHeartbeat()
     else    // socket can send something
     {
         gettimeofday(&current_time_, NULL);
-        long time_elapsed = computeTimeElapsed();
-        if(time_elapsed >= param_ptr_->heartbeat_cycle_time_)
+        long long time_elapsed = computeTimeElapsed();
+        if(time_elapsed >= (long long)param_ptr_->heartbeat_cycle_time_)
         {
             int send_bytes = nn_send(req_resp_socket_, &request_data_, sizeof(HeartbeatClientRequestResponseData), 0);
             if(send_bytes == -1 || send_bytes != sizeof(HeartbeatClientRequestResponseData))
@@ -93,10 +93,10 @@ void HeartbeatClient::sendHeartbeat()
     }
 }
 
-long HeartbeatClient::computeTimeElapsed()
+long long HeartbeatClient::computeTimeElapsed()
 {
-    long delta_tv_sec = current_time_.tv_sec - last_send_time_.tv_sec;
-    long delta_tv_usec = current_time_.tv_usec - last_send_time_.tv_usec;
+    long long delta_tv_sec = current_time_.tv_sec - last_send_time_.tv_sec;
+    long long delta_tv_usec = current_time_.tv_usec - last_send_time_.tv_usec;
     return delta_tv_sec * 1000000 + delta_tv_usec;
 }
 

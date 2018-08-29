@@ -169,4 +169,45 @@ void ControllerServer::handleResponseIsNextInstructionNeeded(std::vector<Process
     }
 }
 
+// CheckIo
+void ControllerServer::handleResponseCheckIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_CHECK_IO, task->response_data_ptr, sizeof(ResponseCheckIo), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete[] (char*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseCheckIo*)task->response_data_ptr;
+    }
+}
+
+// SetIo
+void ControllerServer::handleResponseSetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_IO, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetIo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+}
+
+// GetIo
+void ControllerServer::handleResponseGetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_IO, task->response_data_ptr, sizeof(ResponseGetIo), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetIo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetIo*)task->response_data_ptr;
+    }
+}
 

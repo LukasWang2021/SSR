@@ -42,7 +42,7 @@ private:
 
     enum {CMD_HEARTBEAT = 0xA1,};
 
-    long computeTimeElapsed();
+    long long computeTimeElapsed();
 };
 
 }

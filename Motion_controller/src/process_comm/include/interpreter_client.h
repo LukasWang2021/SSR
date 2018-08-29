@@ -8,7 +8,7 @@
 #include "reg_manager.h"
 #include "base_datatype.h"
 #include "interpreter_common.h"
-
+#include "io_interface.h"
 
 namespace fst_base
 {
@@ -32,6 +32,9 @@ public:
     bool getRReg(int id, fst_ctrl::RRegDataIpc* data); 
     bool setInstruction(Instruction* data);
     bool isNextInstructionNeeded();
+    ErrorCode checkIo(char path[256], IOPortInfo* port_info_ptr);
+    ErrorCode setIo(IOPortInfo* port_info_ptr, char value);
+    ErrorCode getIo(IOPortInfo* port_info_ptr, int buffer_length, char* value_ptr);
 
 private:
     fst_log::Logger* log_ptr_;

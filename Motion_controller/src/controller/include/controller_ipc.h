@@ -52,6 +52,9 @@ private:
     void handleIpcGetRRegValue(void* request_data_ptr, void* response_data_ptr); 
     void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
     void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

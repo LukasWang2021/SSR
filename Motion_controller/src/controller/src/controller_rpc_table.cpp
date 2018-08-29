@@ -26,6 +26,8 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/callReset", 0x000161E4, &ControllerRpc::handleRpc0x000161E4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/setUserOpMode", 0x00002ED5, &ControllerRpc::handleRpc0x00002ED5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/shutdown", 0x0000899E, &ControllerRpc::handleRpc0x0000899E}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/setSystemTime", 0x000167C5, &ControllerRpc::handleRpc0x000167C5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/getSystemTime", 0x000003F5, &ControllerRpc::handleRpc0x000003F5}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/tool_manager/deleteTool", 0x00010E4C, &ControllerRpc::handleRpc0x00010E4C}; rpc_table_.push_back(rpc_service);
@@ -83,6 +85,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/getGlobalVelRatio", 0x0001578F, &ControllerRpc::handleRpc0x0001578F}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/setGlobalAccRatio", 0x0000271F, &ControllerRpc::handleRpc0x0000271F}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/getGlobalAccRatio", 0x00016D9F, &ControllerRpc::handleRpc0x00016D9F}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/getAxisGroupInfoList", 0x00010F54, &ControllerRpc::handleRpc0x00010F54}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setManualFrame", 0x00009D05, &ControllerRpc::handleRpc0x00009D05}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doStepManualMove", 0x000085D5, &ControllerRpc::handleRpc0x000085D5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doContinuousManualMove", 0x0000D3F5, &ControllerRpc::handleRpc0x0000D3F5}; rpc_table_.push_back(rpc_service);
@@ -102,6 +105,29 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/getTool", 0x0001354C, &ControllerRpc::handleRpc0x0001354C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/convertCartToJoint", 0x00010FD4, &ControllerRpc::handleRpc0x00010FD4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/convertJointToCart", 0x0000B6D4, &ControllerRpc::handleRpc0x0000B6D4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/ignoreLostZeroError", 0x00014952, &ControllerRpc::handleRpc0x00014952}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getAllZeroPointOffsets", 0x00012353, &ControllerRpc::handleRpc0x00012353}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus", 0x0000C183, &ControllerRpc::handleRpc0x0000C183}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/saveAllZeroPointOffsets", 0x000171D3, &ControllerRpc::handleRpc0x000171D3}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setSingleZeroPointStatus", 0x00010E43, &ControllerRpc::handleRpc0x00010E43}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets", 0x00011B03, &ControllerRpc::handleRpc0x00011B03}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset", 0x000131D4, &ControllerRpc::handleRpc0x000131D4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/calibrateZeroPointOffsets", 0x00005AE3, &ControllerRpc::handleRpc0x00005AE3}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/isReferencePointExist", 0x0000D344, &ControllerRpc::handleRpc0x0000D344}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/deleteReferencePoint", 0x00008744, &ControllerRpc::handleRpc0x00008744}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/saveReferencePoint", 0x00006744, &ControllerRpc::handleRpc0x00006744}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/fastCalibrateAllZeroPointOffsets", 0x0000E913, &ControllerRpc::handleRpc0x0000E913}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/fastCalibrateSingleZeroPointOffset", 0x00004754, &ControllerRpc::handleRpc0x00004754}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/fastCalibrateZeroPointOffsets", 0x00007EC3, &ControllerRpc::handleRpc0x00007EC3}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getUserSoftLimitWithUnit", 0x00008ED4, &ControllerRpc::handleRpc0x00008ED4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getManuSoftLimitWithUnit", 0x000124E4, &ControllerRpc::handleRpc0x000124E4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getHardLimitWithUnit", 0x000092B4, &ControllerRpc::handleRpc0x000092B4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setRotateManualStep", 0x00005290, &ControllerRpc::handleRpc0x00005290}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getRotateManualStep", 0x00003000, &ControllerRpc::handleRpc0x00003000}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setPrismaticManualStep", 0x0000B640, &ControllerRpc::handleRpc0x0000B640}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getPrismaticManualStep", 0x0000FCE0, &ControllerRpc::handleRpc0x0000FCE0}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setCartesianManualStep", 0x0000A420, &ControllerRpc::handleRpc0x0000A420}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getCartesianManualStep", 0x0000EAC0, &ControllerRpc::handleRpc0x0000EAC0}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/interpreter/start", 0x00006154, &ControllerRpc::handleRpc0x00006154}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/debug", 0x000102D7, &ControllerRpc::handleRpc0x000102D7}; rpc_table_.push_back(rpc_service);

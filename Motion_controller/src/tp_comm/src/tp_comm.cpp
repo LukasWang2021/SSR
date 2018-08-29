@@ -390,7 +390,7 @@ void TpComm::handlePublishList()
 {
     std::vector<TpPublish>::iterator it;
     struct timeval time_val;
-    long time_elapsed;
+    long long time_elapsed;
     HandlePublishElementFuncPtr func_ptr;
     publish_list_mutex_.lock();
     gettimeofday(&time_val, NULL);
@@ -425,7 +425,6 @@ void TpComm::handlePublishList()
                 FST_INFO("Send publish failed, error = %d", nn_errno());
                 break;
             }
-
             it->is_element_changed = false;
             it->last_publish_time = time_val;
         }
@@ -434,23 +433,24 @@ void TpComm::handlePublishList()
     publish_list_mutex_.unlock();
 }
 
-long TpComm::computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val)
+long long TpComm::computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val)
 {
-    long delta_tv_sec = current_time_val.tv_sec - last_time_val.tv_sec;
-    long delta_tv_usec = current_time_val.tv_usec - last_time_val.tv_usec;
-    return delta_tv_sec * 1000 + delta_tv_usec / 1000;
+    long long delta_tv_sec = current_time_val.tv_sec - last_time_val.tv_sec;
+    long long delta_tv_usec = current_time_val.tv_usec - last_time_val.tv_usec;
+
+    return (delta_tv_sec * 1000 + delta_tv_usec / 1000);
 }
 
-long TpComm::computeTimeForTp(struct timeval& current_time_val)
+long long TpComm::computeTimeForTp(struct timeval& current_time_val)
 {
     return current_time_val.tv_sec * 1000000 + current_time_val.tv_usec;
 }
 
-bool TpComm::checkPublishCondition(long time_elapsed, bool is_element_changed, int interval_min, int interval_max)
+bool TpComm::checkPublishCondition(long long time_elapsed, bool is_element_changed, int interval_min, int interval_max)
 {
     if(is_element_changed)
     {
-        if(time_elapsed >= interval_min)
+        if(time_elapsed >= (long long)interval_min)
         {
             return true;
         }
@@ -459,7 +459,7 @@ bool TpComm::checkPublishCondition(long time_elapsed, bool is_element_changed, i
             return false;
         }
     }
-    else if(time_elapsed >= interval_max)
+    else if(time_elapsed >= (long long)interval_max)
     {
         return true;
     }
@@ -667,7 +667,7 @@ void  TpComm::handleRegPublishList()
 {
     std::vector<TpPublish>::iterator it;
     struct timeval time_val;
-    long time_elapsed;
+    long long time_elapsed;
  
     reg_publish_list_mutex_.lock();
     gettimeofday(&time_val, NULL);
@@ -738,7 +738,7 @@ void  TpComm::handleIoPublishList()
 {
     std::vector<TpPublish>::iterator it;
     struct timeval time_val;
-    long time_elapsed;
+    long long time_elapsed;
  
     io_publish_list_mutex_.lock();
     gettimeofday(&time_val, NULL);

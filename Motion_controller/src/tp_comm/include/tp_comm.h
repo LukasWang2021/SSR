@@ -109,9 +109,9 @@ private:
     void handleRegPublishList();
     void handleIoPublishList();
 
-    long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
-    long computeTimeForTp(struct timeval& current_time_val);
-    bool checkPublishCondition(long time_elapsed, bool is_element_changed, int interval_min, int interval_max);
+    long long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
+    long long computeTimeForTp(struct timeval& current_time_val);
+    bool checkPublishCondition(long long time_elapsed, bool is_element_changed, int interval_min, int interval_max);
 
     bool decodeRequestPackage(const pb_field_t fields[], void* request_data_ptr, int recv_bytes);
     bool checkAuthority(Comm_Authority request_authority, Comm_Authority controller_authority);

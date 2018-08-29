@@ -101,6 +101,10 @@ private:
     void handleRpc0x00002ED5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/shutdown"
     void handleRpc0x0000899E(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/controller/setSystemTime"
+    void handleRpc0x000167C5(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/controller/getSystemTime"
+    void handleRpc0x000003F5(void* request_data_ptr, void* response_data_ptr);
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"
@@ -215,6 +219,8 @@ private:
     void handleRpc0x0000271F(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/getGlobalAccRatio"
     void handleRpc0x00016D9F(void* request_data_ptr, void* response_data_ptr); 
+    // "/rpc/motion_control/getAxisGroupInfoList"
+    void handleRpc0x00010F54(void* request_data_ptr, void* response_data_ptr);    
     // "/rpc/motion_control/axis_group/setManualFrame"
     void handleRpc0x00009D05(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/doStepManualMove"
@@ -253,6 +259,52 @@ private:
     void handleRpc0x00010FD4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/convertJointToCart"
     void handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/ignoreLostZeroError"
+    void handleRpc0x00014952(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getAllZeroPointOffsets"
+    void handleRpc0x00012353(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus"
+    void handleRpc0x0000C183(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/saveAllZeroPointOffsets"
+    void handleRpc0x000171D3(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setSingleZeroPointStatus"
+    void handleRpc0x00010E43(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"
+    void handleRpc0x00011B03(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset"
+    void handleRpc0x000131D4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/calibrateZeroPointOffsets"
+    void handleRpc0x00005AE3(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/isReferencePointExist"
+    void handleRpc0x0000D344(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/deleteReferencePoint"
+    void handleRpc0x00008744(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/saveReferencePoint"
+    void handleRpc0x00006744(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/fastCalibrateAllZeroPointOffsets"
+    void handleRpc0x0000E913(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/fastCalibrateSingleZeroPointOffset"
+    void handleRpc0x00004754(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/fastCalibrateZeroPointOffsets"
+    void handleRpc0x00007EC3(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getUserSoftLimitWithUnit"
+    void handleRpc0x00008ED4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getManuSoftLimitWithUnit"
+    void handleRpc0x000124E4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getHardLimitWithUnit"
+    void handleRpc0x000092B4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setRotateManualStep"
+    void handleRpc0x00005290(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getRotateManualStep"
+    void handleRpc0x00003000(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setPrismaticManualStep"
+    void handleRpc0x0000B640(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getPrismaticManualStep"
+    void handleRpc0x0000FCE0(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setCartesianManualStep"
+    void handleRpc0x0000A420(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getCartesianManualStep"
+    void handleRpc0x0000EAC0(void* request_data_ptr, void* response_data_ptr);
 
     /* interpreter rpc */
     // "/rpc/interpreter/start"

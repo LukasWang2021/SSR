@@ -35,9 +35,9 @@ MotionControl::~MotionControl()
 {
     stopRealtimeTask();
 
-    if (log_ptr_ != NULL)   {delete log_ptr_; log_ptr_ = NULL;};
-    if (param_ptr_ != NULL)   {delete param_ptr_; param_ptr_ = NULL;};
     if (group_ptr_ != NULL)   {delete group_ptr_; group_ptr_ = NULL;};
+    if (param_ptr_ != NULL)   {delete param_ptr_; param_ptr_ = NULL;};
+    if (log_ptr_ != NULL)   {delete log_ptr_; log_ptr_ = NULL;};
 }
 
 ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,

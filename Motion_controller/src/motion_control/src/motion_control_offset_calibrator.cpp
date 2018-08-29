@@ -18,12 +18,11 @@ using namespace fst_parameter;
 namespace fst_mc
 {
 
-Calibrator::Calibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog)
+Calibrator::Calibrator(void)
 {
-    log_ptr_ = plog;
-    joint_num_ = joint_num;
-    bare_core_ptr_ = pcore;
-
+    log_ptr_ = NULL;
+    joint_num_ = 0;
+    bare_core_ptr_ = NULL;
     current_state_ = MOTION_FORBIDDEN;
     memset(normal_threshold_, 0, NUM_OF_JOINT * sizeof(double));
     memset(lost_threshold_, 0, NUM_OF_JOINT * sizeof(double));
@@ -36,14 +35,24 @@ Calibrator::Calibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logg
 Calibrator::~Calibrator(void)
 {}
 
-ErrorCode Calibrator::initCalibrator(const string &path)
+ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog, const string &path)
 {
+    if (joint_num > 0 && joint_num <= NUM_OF_JOINT && plog && pcore)
+    {
+        log_ptr_ = plog;
+        joint_num_ = joint_num;
+        bare_core_ptr_ = pcore;
+    }
+    else
+    {
+        return MOTION_INTERNAL_FAULT;
+    }
+
     int id;
     ErrorCode result;
     vector<int> stat;
     vector<double> data;
     char buffer[LOG_TEXT_SIZE];
-
     FST_INFO("Initializing offset calibrator, number-of-joint = %d.", joint_num_);
 
     // if directory given by 'path' is not found, create it
@@ -684,7 +693,7 @@ ErrorCode Calibrator::maskOffsetLostError(void)
     vector<int> mask;   mask.resize(NUM_OF_JOINT);
 
     FST_INFO("Mask all lost-offset errors.");
-    FST_INFO("     mask flag: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  mask flag: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
     FST_INFO("  offset state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
 
     bool need_save = false;

@@ -16,6 +16,8 @@
 #include <motion_control_constraint.h>
 #include <motion_control_core_interface.h>
 #include <motion_control_offset_calibrator.h>
+#include <motion_control_manual_teach.h>
+#include <arm_kinematics.h>
 
 
 namespace fst_mc
@@ -51,11 +53,11 @@ class BaseGroup
 
     virtual ErrorCode autoMove(void) = 0;
 
-    virtual ErrorCode setManualFrame(ManualFrame frame) = 0;
-    virtual ErrorCode manualMoveStep(const ManualDirection *direction) = 0;
-    virtual ErrorCode manualMoveContinuous(const ManualDirection *direction) = 0;
-    virtual ErrorCode manualMoveToPoint(const Joint &joint) = 0;
-    virtual ErrorCode manualStop(void) = 0;
+    virtual ErrorCode setManualFrame(ManualFrame frame);
+    virtual ErrorCode manualMoveStep(const ManualDirection *direction);
+    virtual ErrorCode manualMoveContinuous(const ManualDirection *direction);
+    virtual ErrorCode manualMoveToPoint(const Joint &joint);
+    virtual ErrorCode manualStop(void);
 
     virtual size_t getNumberOfJoint(void) = 0;
     virtual size_t getFIFOLength(void) = 0;
@@ -114,10 +116,15 @@ class BaseGroup
     MotionTime  auto_time_;
     MotionTime  manual_time_;
 
+    Calibrator  calibrator_;
+    ManualTeach manual_teach_;
+
     pthread_mutex_t auto_mutex_;
     pthread_mutex_t manual_mutex_;
     pthread_mutex_t servo_mutex_;
-    
+
+    BaseKinematics          *kinematics_ptr_;
+    ManualTrajectory        manual_traj_;
     BareCoreInterface       bare_core_;
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;

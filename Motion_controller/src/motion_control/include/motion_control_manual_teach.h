@@ -21,8 +21,10 @@ namespace fst_mc
 class ManualTeach
 {
 public:
-    ManualTeach(size_t joint_num, Constraint *pcons, fst_log::Logger *plog);
+    ManualTeach(void);
     ~ManualTeach(void);
+
+    ErrorCode init(size_t joint_num, Constraint *pcons, fst_log::Logger *plog);
     ErrorCode manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj);
@@ -32,6 +34,8 @@ private:
     ErrorCode   manualJointStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj);
+
+    ErrorCode   manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
 
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
@@ -43,6 +47,10 @@ private:
     double step_orientation_;
     double vel_ratio_;
     double acc_ratio_;
+    double position_vel_reference_;
+    double position_acc_reference_;
+    double orientation_omega_reference_;
+    double orientation_alpha_reference_;
     Constraint* joint_constraint_ptr_;
 };
 

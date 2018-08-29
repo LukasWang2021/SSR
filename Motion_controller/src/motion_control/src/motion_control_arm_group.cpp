@@ -153,7 +153,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     }
 
     FST_INFO("Initializing calibrator of ArmGroup ...");
-    ErrorCode err = calibrator_.initCalibrator();
+    ErrorCode err = calibrator_.initCalibrator(JOINT_OF_ARM, &bare_core_, log_ptr_);
 
     if (err != SUCCESS)
     {
@@ -176,6 +176,19 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     soft_constraint_.setMask(index, length);
 
+    FST_INFO("Initializing kinematics of ArmGroup ...");
+    double dh_matrix[NUM_OF_JOINT][4];
+    kinematics_ptr_ = new ArmKinematics();
+    kinematics_ptr_->initKinematics(dh_matrix);
+
+    err = manual_teach_.init(JOINT_OF_ARM, &soft_constraint_, log_ptr_);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
+        return err;
+    }
+
     return SUCCESS;
 }
 
@@ -184,260 +197,6 @@ Calibrator* ArmGroup::getCalibratorPtr(void)
 {
     return &calibrator_;
 }
-
-
-ErrorCode ArmGroup::setManualFrame(ManualFrame frame)
-{
-    FST_INFO("Set manual frame = %d", frame);
-
-    if (group_state_ == STANDBY)
-    {
-        manual_traj_.frame = frame;
-        FST_INFO("Done.");
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Cannot set frame in current state = %d", group_state_);
-        return INVALID_SEQUENCE;
-    }
-}
-
-ErrorCode ArmGroup::manualMoveToPoint(const Joint &joint)
-{
-    FST_INFO("Manual to pose, frame = %d by target: %.6f %.6f %.6f %.6f %.6f %.6f",
-             manual_traj_.frame, joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
-
-    if (group_state_ != STANDBY)
-    {
-        FST_ERROR("Cannot manual to target in current state = %d", group_state_);
-        return INVALID_SEQUENCE;
-    }
-
-    getLatestJoint(manual_traj_.joint_start);
-
-    if (soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
-    {
-        FST_ERROR("start-joint = %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                  manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
-                  manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
-        FST_ERROR("start-joint is out of soft constraint, manual-mode-apoint is disabled.");
-        return JOINT_OUT_OF_CONSTRAINT;
-    }
-
-    if (!soft_constraint_.isJointInConstraint(joint))
-    {
-        FST_ERROR("target-joint out of constraint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                  joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6);
-        return JOINT_OUT_OF_CONSTRAINT;
-    }
-
-    manual_time_ = 0;
-    manual_traj_.mode = APOINT;
-    ErrorCode err = manual_teach_.manualByTarget(joint, manual_time_, manual_traj_);
-
-    if (err == SUCCESS)
-    {
-        group_state_ = MANUAL;
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
-        memset(&manual_traj_, 0, sizeof(ManualTrajectory));
-        return err;
-    }
-}
-
-ErrorCode ArmGroup::manualMoveStep(const ManualDirection *direction)
-{
-    FST_INFO("Manual step frame=%d by direction.", manual_traj_.frame);
-
-    if (group_state_ != STANDBY)
-    {
-        FST_ERROR("Cannot manual step in current state = %d", group_state_);
-        return INVALID_SEQUENCE;
-    }
-
-    getLatestJoint(manual_traj_.joint_start);
-
-    FST_INFO("start joint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-            manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
-            manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
-
-    if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
-    {
-        if (manual_traj_.frame != JOINT)
-        {
-            FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
-            return INVALID_SEQUENCE;
-        }
-
-        for (size_t i = 0; i < JOINT_OF_ARM; i++)
-        {
-            if (manual_traj_.joint_start[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
-            {
-                FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
-                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                return INVALID_PARAMETER;
-            }
-            else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
-            {
-                FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
-                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                return INVALID_PARAMETER;
-            }
-        }
-    }
-
-    manual_time_ = 0;
-    manual_traj_.mode = STEP;
-    ErrorCode err = manual_teach_.manualStepByDirect(direction, manual_time_, manual_traj_);
-
-    if (err == SUCCESS)
-    {
-        group_state_ = MANUAL;
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
-        memset(&manual_traj_, 0, sizeof(ManualTrajectory));
-        return err;
-    }
-}
-
-ErrorCode ArmGroup::manualMoveContinuous(const ManualDirection *direction)
-{
-    FST_INFO("Manual continuous frame=%d by direction.", manual_traj_.frame);
-
-    if (group_state_ != STANDBY && group_state_ != MANUAL)
-    {
-        FST_ERROR("Cannot manual continuous in current state = %d", group_state_);
-        return INVALID_SEQUENCE;
-    }
-
-    if (group_state_ == STANDBY)
-    {
-        getLatestJoint(manual_traj_.joint_start);
-        FST_INFO("start joint: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                 manual_traj_.joint_start[0], manual_traj_.joint_start[1], manual_traj_.joint_start[2],
-                 manual_traj_.joint_start[3], manual_traj_.joint_start[4], manual_traj_.joint_start[5]);
-
-        if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
-        {
-            if (manual_traj_.frame != JOINT)
-            {
-                FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
-                return INVALID_SEQUENCE;
-            }
-
-            for (size_t i = 0; i < JOINT_OF_ARM; i++)
-            {
-                if (manual_traj_.joint_start[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
-                {
-                    FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
-                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                    return INVALID_PARAMETER;
-                }
-                else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
-                {
-                    FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
-                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                    return INVALID_PARAMETER;
-                }
-            }
-        }
-
-        manual_time_ = 0;
-        manual_traj_.mode = CONTINUOUS;
-        ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
-
-        if (err == SUCCESS)
-        {
-            group_state_ = MANUAL;
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
-            memset(&manual_traj_, 0, sizeof(ManualTrajectory));
-            return err;
-        }
-    }
-    else if (group_state_ == MANUAL)
-    {
-        for (size_t i = 0; i < JOINT_OF_ARM; i++)
-        {
-            if (manual_traj_.direction[i] != direction[i])
-            {
-                return manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
-            }
-            else
-            {
-                continue;
-            }
-        }
-
-        return SUCCESS;
-    }
-
-    FST_ERROR("Cannot manual now, current state = %d", group_state_);
-    return INVALID_SEQUENCE;
-}
-
-ErrorCode ArmGroup::manualStop(void)
-{
-    FST_INFO("Manual stop request received.");
-
-    if (group_state_ == MANUAL)
-    {
-        FST_INFO("Manual mode = %d, frame = %d", manual_traj_.mode, manual_traj_.frame);
-        
-        if (manual_traj_.mode == CONTINUOUS)
-        {
-            ManualDirection direction[JOINT_OF_ARM] = {STANDING};
-            ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
-            
-            if (err == SUCCESS)
-            {
-                FST_INFO("Success, the group will stop in %.4fs", manual_traj_.duration - manual_time_);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to stop current manual motion, error-code = 0x%llx", err);
-                return err;
-            }
-        }
-        else if (manual_traj_.mode == APOINT)
-        {
-            ErrorCode err = manual_teach_.manualStop(manual_time_, manual_traj_);
-
-            if (err == SUCCESS)
-            {
-                FST_INFO("Success, the group will stop in %.4fs", manual_traj_.duration - manual_time_);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to stop current manual motion, error-code = 0x%llx", err);
-                return err;
-            }
-        }
-        else
-        {
-            FST_INFO("Cannot stop manual motion in step mode, the group will stop in %.4fs", manual_traj_.duration - manual_time_);
-            return INVALID_SEQUENCE;
-        }
-    }
-    else
-    {
-        FST_INFO("The group is not in manual state, current-state = %d", group_state_);
-        return SUCCESS;
-    }
-}
-
 
 ErrorCode ArmGroup::pickFromManual(TrajectoryPoint *point, size_t &length)
 {
@@ -526,7 +285,7 @@ ErrorCode ArmGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
             memset(manual_traj_.coeff, 0, JOINT_OF_ARM * sizeof(ManualCoef));
             start_joint_ = manual_traj_.joint_ending;
             manual_time_ = 0;
-            group_state_ = STANDBY;
+            group_state_ = MANUAL_TO_STANDBY;
             break;
         }
         else

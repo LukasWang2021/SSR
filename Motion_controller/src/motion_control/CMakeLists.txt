@@ -51,6 +51,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/xml_help/include
     ${depend_PATH_INC}/error_monitor/include
     ${depend_PATH_INC}/thread_help/include
+    ${depend_PATH_INC}/kinematics_alg/include
 )
 
 catkin_package(
@@ -87,7 +88,7 @@ add_library(motion_control
     src/motion_control_manual_teach.cpp
     src/motion_control_core_interface.cpp
     src/motion_control_offset_calibrator.cpp
-        src/motion_control_constraint.cpp)
+    src/motion_control_constraint.cpp)
 
 add_executable(manual_test
     src/manual_test.cpp
@@ -113,6 +114,7 @@ target_link_libraries(motion_control
     parameter_manager
     error_monitor
     thread_help
+    kinematics_alg
 )
 
 target_link_libraries(manual_test

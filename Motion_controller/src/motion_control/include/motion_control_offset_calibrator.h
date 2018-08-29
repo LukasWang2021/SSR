@@ -46,10 +46,10 @@ static const int UNNEED_SAVE = 0;
 class Calibrator
 {
   public:
-    Calibrator(size_t joint_num, BareCoreInterface *bare_core, fst_log::Logger *plog);
+    Calibrator();
     ~Calibrator(void);
     
-    ErrorCode initCalibrator(const std::string &path = "/opt/fst_controller/runtime/");
+    ErrorCode initCalibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog, const std::string &path = "/opt/fst_controller/runtime/");
     ErrorCode checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT]);
 
 

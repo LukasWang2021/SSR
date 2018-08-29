@@ -57,7 +57,9 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/motion_control/include 
     ${depend_PATH_INC}/axis_group_manager/include
     ${depend_PATH_INC}/base_axis_group/include
-    ${depend_PATH_INC}/log_service/include 
+    ${depend_PATH_INC}/log_service/include
+    ${depend_PATH_INC}/kinematics_alg/include
+    ${depend_PATH_INC}/basic_alg/include
 )
 
 catkin_package(

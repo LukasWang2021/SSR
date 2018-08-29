@@ -10,7 +10,6 @@
 
 #include "common_log.h"
 #include <motion_control_base_group.h>
-#include <motion_control_manual_teach.h>
 
 
 #define JOINT_OF_ARM    6
@@ -25,12 +24,6 @@ class ArmGroup : public BaseGroup
     ~ArmGroup() {};
 
     ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr);
-
-    ErrorCode setManualFrame(ManualFrame frame);
-    ErrorCode manualMoveStep(const ManualDirection *direction);
-    ErrorCode manualMoveContinuous(const ManualDirection *direction);
-    ErrorCode manualMoveToPoint(const Joint &joint);
-    ErrorCode manualStop(void);
 
     ErrorCode autoMove(void);
 
@@ -55,10 +48,6 @@ class ArmGroup : public BaseGroup
 
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
-
-    Calibrator          calibrator_{JOINT_OF_ARM, &bare_core_, log_ptr_};
-    ManualTeach         manual_teach_{JOINT_OF_ARM, &soft_constraint_, log_ptr_};
-    ManualTrajectory    manual_traj_;
 };
 
 

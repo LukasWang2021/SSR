@@ -64,22 +64,19 @@ public:
 
     bool isTopicExisted(unsigned int topic_hash);
     void pushTaskToPublishList(TpPublish& package);
-    void eraseTaskFromPublishList(unsigned int &topic_hash);
-    std::vector<TpPublishElement> getPublishElementByHash(unsigned int topic_hash);
+    std::vector<TpPublishElement> eraseTaskFromPublishList(unsigned int &topic_hash);
     void lockPublishMutex();
     void unlockPublishMutex();
 
     bool isRegTopicExisted(unsigned int topic_hash);
     void pushTaskToRegPublishList(TpPublish& package);
-    void eraseTaskFromRegPublishList(unsigned int &topic_hash);
-    std::vector<TpPublishElement> getRegPublishElementByHash(unsigned int topic_hash);
+    std::vector<TpPublishElement> eraseTaskFromRegPublishList(unsigned int &topic_hash);
     void lockRegPublishMutex();
     void unlockRegPublishMutex();
 
     bool isIoTopicExisted(unsigned int topic_hash);
     void pushTaskToIoPublishList(TpPublish& package);
-    void eraseTaskFromIoPublishList(unsigned int &topic_hash);
-    std::vector<TpPublishElement> getIoPublishElementByHash(unsigned int topic_hash);
+    std::vector<TpPublishElement> eraseTaskFromIoPublishList(unsigned int &topic_hash);
     void lockIoPublishMutex();
     void unlockIoPublishMutex();
 
@@ -160,6 +157,10 @@ private:
     void handleRequest0x00002ED5(int recv_bytes);
     /********rpc/controller/shutdown, RequestMessageType_Void**********/
     void handleRequest0x0000899E(int recv_bytes);
+    /********rpc/controller/setSystemTime, RequestMessageType_Uint64**********/
+    void handleRequest0x000167C5(int recv_bytes);
+    /********rpc/controller/getSystemTime, RequestMessageType_Void**********/
+    void handleRequest0x000003F5(int recv_bytes);
 
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
@@ -432,6 +433,12 @@ private:
     void handleResponse0x0000BB93(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/shutdown, ResponseMessageType_Uint64**********/
     void handleResponse0x0000899E(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/setSystemTime, ResponseMessageType_Uint64**********/
+    void handleResponse0x000167C5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/getSystemTime, ResponseMessageType_Uint64List(count=2)**********/
+    void handleResponse0x000003F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+
 
     /********getRpcTable, ResponseMessageType_RpcTable**********/
     void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

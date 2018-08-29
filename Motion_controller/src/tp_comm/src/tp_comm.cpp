@@ -599,18 +599,24 @@ ResponseMessageType_Uint64_PublishTable TpComm::getResponseSucceedPublishTable()
     return response_data_ptr;
 }
 
-void TpComm::eraseTaskFromPublishList(unsigned int &topic_hash)
+std::vector<TpPublishElement> TpComm::eraseTaskFromPublishList(unsigned int &topic_hash)
 {
     std::vector<TpPublish>::iterator it;  //publish_list_;
+    std::vector<TpPublishElement> publish_element;
     publish_list_mutex_.lock();
     for(it = publish_list_.begin(); it != publish_list_.end();)
     {
         if(topic_hash == it->hash)
+        {
+            publish_element.assign(it->element_list_.begin(), it->element_list_.end());
             it = publish_list_.erase(it);
+        }
         else 
             ++it;
     }
     publish_list_mutex_.unlock();
+
+    return publish_element;
 }
 
 
@@ -677,9 +683,9 @@ void  TpComm::handleRegPublishList()
                 switch(reg_type)
                 {
                     case MessageType_RegType_PR: handlePublishElementRegPr(it->package, i, it->element_list_[i]); break;
-                    case MessageType_RegType_HR: handlePublishElementRegMr(it->package, i, it->element_list_[i]); break;
-                    case MessageType_RegType_SR: handlePublishElementRegHr(it->package, i, it->element_list_[i]); break;
-                    case MessageType_RegType_MR: handlePublishElementRegSr(it->package, i, it->element_list_[i]); break;
+                    case MessageType_RegType_HR: handlePublishElementRegHr(it->package, i, it->element_list_[i]); break;
+                    case MessageType_RegType_SR: handlePublishElementRegSr(it->package, i, it->element_list_[i]); break;
+                    case MessageType_RegType_MR: handlePublishElementRegMr(it->package, i, it->element_list_[i]); break;
                     case MessageType_RegType_R:  handlePublishElementRegR(it->package, i, it->element_list_[i]); break;
                     default: ;
                 }
@@ -689,7 +695,7 @@ void  TpComm::handleRegPublishList()
             int send_buffer_size;
             if(!encodePublishPackage(it->package, it->hash, time_val, send_buffer_size))
             {
-                FST_ERROR("handlePublishList: encode data failed");
+                FST_ERROR("handleRegPublishList: encode data failed");
                 break;
             }
 
@@ -708,18 +714,24 @@ void  TpComm::handleRegPublishList()
     reg_publish_list_mutex_.unlock();
 }
 
-void  TpComm::eraseTaskFromRegPublishList(unsigned int &topic_hash)
+std::vector<TpPublishElement>  TpComm::eraseTaskFromRegPublishList(unsigned int &topic_hash)
 {
     std::vector<TpPublish>::iterator it;  //reg_publish_list_;
+    std::vector<TpPublishElement> reg_publish_element;
     reg_publish_list_mutex_.lock();
     for(it = reg_publish_list_.begin(); it != reg_publish_list_.end();)
     {
         if(topic_hash == it->hash)
+        {
+            reg_publish_element.assign(it->element_list_.begin(), it->element_list_.end());
             it = reg_publish_list_.erase(it);
+        }
         else 
             ++it;
     }
     reg_publish_list_mutex_.unlock();
+
+    return reg_publish_element;
 }
 
 void  TpComm::handleIoPublishList()
@@ -751,14 +763,14 @@ void  TpComm::handleIoPublishList()
             int send_buffer_size;
             if(!encodePublishPackage(it->package, it->hash, time_val, send_buffer_size))
             {
-                FST_ERROR("handlePublishList: encode data failed");
+                FST_ERROR("handleIoPublishList: encode data failed");
                 break;
             }
 
             int send_bytes = nn_send(publish_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
             if(send_bytes == -1)
             {
-                FST_INFO("handleRegPublishList: send publish failed, error = %d", nn_errno());
+                FST_INFO("handleIoPublishList: send publish failed, error = %d", nn_errno());
                 break;
             }
 
@@ -770,18 +782,24 @@ void  TpComm::handleIoPublishList()
     io_publish_list_mutex_.unlock();
 }
 
-void  TpComm::eraseTaskFromIoPublishList(unsigned int &topic_hash)
+std::vector<TpPublishElement>  TpComm::eraseTaskFromIoPublishList(unsigned int &topic_hash)
 {
+    std::vector<TpPublishElement> io_publish_element;
     std::vector<TpPublish>::iterator it;  //io_publish_list_;
     io_publish_list_mutex_.lock();
     for(it = io_publish_list_.begin(); it != io_publish_list_.end();)
     {
         if(topic_hash == it->hash)
+        {
+            io_publish_element.assign(it->element_list_.begin(), it->element_list_.end());
             it = io_publish_list_.erase(it);
+        }
         else 
             ++it;
     }
     io_publish_list_mutex_.unlock();
+
+    return io_publish_element;
 }
 
 
@@ -845,65 +863,4 @@ void TpComm::recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc
         log_str += " failed";
         ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
     }
-}
-
-
-std::vector<TpPublishElement> TpComm::getPublishElementByHash(unsigned int topic_hash)
-{
-    std::vector<TpPublishElement> publish_element;
-    std::vector<TpPublish>::iterator itr;
-    publish_list_mutex_.lock();
-
-    for (itr = publish_list_.begin(); itr != publish_list_.end(); ++itr)
-    {
-        if (itr->hash == topic_hash)
-        {
-            publish_element.assign(itr->element_list_.begin(), itr->element_list_.end());
-            break;
-        }
-    }
-
-    publish_list_mutex_.unlock();
-
-    return publish_element;
-}
-
-std::vector<TpPublishElement> TpComm::getRegPublishElementByHash(unsigned int topic_hash)
-{
-    std::vector<TpPublishElement> reg_publish_element;
-    std::vector<TpPublish>::iterator itr;
-    publish_list_mutex_.lock();
-
-    for (itr = publish_list_.begin(); itr != publish_list_.end(); ++itr)
-    {
-        if (itr->hash == topic_hash)
-        {
-            reg_publish_element.assign(itr->element_list_.begin(), itr->element_list_.end());
-            break;
-        }
-    }
-
-    publish_list_mutex_.unlock();
-
-    return reg_publish_element;
-}
-
-std::vector<TpPublishElement> TpComm::getIoPublishElementByHash(unsigned int topic_hash)
-{
-    std::vector<TpPublishElement> io_publish_element;
-    std::vector<TpPublish>::iterator itr;
-    publish_list_mutex_.lock();
-
-    for (itr = publish_list_.begin(); itr != publish_list_.end(); ++itr)
-    {
-        if (itr->hash == topic_hash)
-        {
-            io_publish_element.assign(itr->element_list_.begin(), itr->element_list_.end());
-            break;
-        }
-    }
-
-    publish_list_mutex_.unlock();
-
-    return io_publish_element;
 }

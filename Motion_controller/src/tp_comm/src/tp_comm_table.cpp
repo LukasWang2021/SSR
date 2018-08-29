@@ -15,6 +15,8 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/controller/callReset",	0x000161E4,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000161E4,	&TpComm::handleResponse0x000161E4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/setUserOpMode",	0x00002ED5,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00002ED5,	&TpComm::handleResponse0x00002ED5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/shutdown",	0x0000899E,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000899E,	&TpComm::handleResponse0x0000899E,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/controller/setSystemTime",	0x000167C5,	"RequestMessageType.Uint64",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000167C5,	&TpComm::handleResponse0x000167C5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/controller/getSystemTime",	0x000003F5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64List(count=2)",	&TpComm::handleRequest0x000003F5,	&TpComm::handleResponse0x000003F5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 
 	rpc_service =	{	"/rpc/publish/addTopic",	0x000050E3,	"RequestMessageType.Topic",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000050E3,	&TpComm::handleResponse0x000050E3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/publish/deleteTopic",	0x00004403,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00004403,	&TpComm::handleResponse0x00004403,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);

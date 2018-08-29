@@ -276,3 +276,51 @@ void TpComm::handleRequest0x0000899E(int recv_bytes)
     handleRequestPackage(0x0000899E, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Void_fields, -1);
 }
+
+//"/rpc/controller/setSystemTime"
+void TpComm::handleRequest0x000167C5(int recv_bytes)
+{
+    RequestMessageType_Uint64* request_data_ptr = new RequestMessageType_Uint64;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x000167C5, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Uint64_fields, -1);
+}
+
+//"/rpc/controller/getSystemTime"
+void TpComm::handleRequest0x000003F5(int recv_bytes)
+{
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64List* response_data_ptr = new ResponseMessageType_Uint64List;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000003F5, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+

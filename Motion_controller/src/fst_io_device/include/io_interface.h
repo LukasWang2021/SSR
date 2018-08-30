@@ -10,10 +10,13 @@
 
 #ifndef WIN32
 #include <atomic>
+#include <vector>
 #include "io_manager.h"
 #endif
 // #include "motionSL.pb.h"
 #include "common_log.h"
+
+using namespace std;
 	
 typedef unsigned long long int U64;
 
@@ -45,9 +48,12 @@ class IOInterface
      * @return: 0 if success 
      */
     U64 addIODevices();
-    // void getIODevices(motion_spec_DeviceList &dev_list);
+	
+    vector<fst_io_manager::IODeviceInfo> getIODevices();
+
 
     //bool encDevList(BaseTypes_ParameterMsg *param_msg, pb_ostream_t *stream, const pb_field_t *field);
+	U64 getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info);
 
     /**
      * @brief: get io devices number 

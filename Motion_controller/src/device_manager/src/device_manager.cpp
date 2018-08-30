@@ -57,12 +57,15 @@ ErrorCode DeviceManager::init()
         switch(it->device_type)
         {
             case DEVICE_TYPE_FST_AXIS: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_FST_IO: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_FST_IO: 
+				device_ptr = new FstSafetyDevice(it->address); break;
             case DEVICE_TYPE_FST_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_FST_ANYBUS: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_VIRTUAL_AXIS: device_ptr = new VirtualAxisDevice(it->address); break;
-            case DEVICE_TYPE_VIRTUAL_IO: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_VIRTUAL_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_VIRTUAL_IO: 
+				device_ptr = new FstIoDevice(it->address); break;
+            case DEVICE_TYPE_VIRTUAL_SAFETY: 
+				device_ptr = new FstSafetyDevice(it->address); break;
             case DEVICE_TYPE_NORMAL: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             default: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
         }

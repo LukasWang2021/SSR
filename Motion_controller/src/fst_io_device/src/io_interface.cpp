@@ -115,20 +115,24 @@ int IOInterface::getIODevNum()
     return io_num_;
 }
 
-/*
-
-void IOInterface::getIODevices(motion_spec_DeviceList &dev_list)
+vector<fst_io_manager::IODeviceInfo> IOInterface::getIODevices()
 {
-    dev_list.dev_info_count = io_num_;
+	vector<fst_io_manager::IODeviceInfo> vectorIODeviceInfo ;
+	
     for (int i = 0; i < io_num_; i++)
     {
-        strcpy(dev_list.dev_info[i].communication_type, dev_info_[i].communication_type.c_str());
-        dev_list.dev_info[i].device_number = dev_info_[i].device_number;
-        dev_list.dev_info[i].device_type = (motion_spec_DeviceType)dev_info_[i].device_type;
-        dev_list.dev_info[i].input = dev_info_[i].input;
-        dev_list.dev_info[i].output = dev_info_[i].output;
+		vectorIODeviceInfo.push_back(dev_info_[i]);
     }
+	return vectorIODeviceInfo ;
 }
+
+U64 IOInterface::getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info)
+{
+	info = dev_info_[index];
+    return SUCCESS;
+}
+
+/*
 
 bool IOInterface::encDevList(BaseTypes_ParameterMsg *param_msg, pb_ostream_t *stream, const pb_field_t *field)
 {

@@ -18,6 +18,7 @@
 #include "motion_control.h"
 #include "base_datatype.h"
 #include "serverAlarmApi.h"
+#include "preformance_monitor.h"
 #include <string>
 // for test only
 #include "virtual_core1.h"
@@ -55,6 +56,7 @@ private:
     fst_mc::MotionControl motion_control_;
     fst_base::ProcessComm* process_comm_ptr_;
     VirtualCore1 virtual_core1_; // for test only
+    fst_base::PreformanceMonitor preformance_monitor_;
     
     // thread related
     bool is_exit_;

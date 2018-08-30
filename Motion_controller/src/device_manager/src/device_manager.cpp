@@ -21,6 +21,32 @@ DeviceManager::DeviceManager():
 
 DeviceManager::~DeviceManager()
 {
+    std::map<int, BaseDevice*>::iterator it;
+    for(it = device_map_.begin(); it != device_map_.end(); ++it)
+    {
+        if(it->second != NULL)
+        {
+            switch(it->second->getDeviceType())
+            {
+                case DEVICE_TYPE_FST_AXIS:  break;
+                case DEVICE_TYPE_FST_IO:    break;
+                case DEVICE_TYPE_FST_SAFETY: break;
+                case DEVICE_TYPE_FST_ANYBUS: break;
+                case DEVICE_TYPE_VIRTUAL_AXIS: delete (VirtualAxisDevice*)it->second;
+                case DEVICE_TYPE_VIRTUAL_IO: break;
+                case DEVICE_TYPE_VIRTUAL_SAFETY: break;
+                case DEVICE_TYPE_NORMAL: break;
+            }
+            it->second = NULL;
+        }
+    }
+    device_map_.clear();
+
+    if(device_xml_ptr_ != NULL)
+    {
+        delete device_xml_ptr_;
+        device_xml_ptr_ = NULL;
+    }
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;

@@ -131,9 +131,7 @@ public:
             return false;
         }
     }
-
 private:
-    fst_log::Logger* log_ptr_;
 };
 
 }

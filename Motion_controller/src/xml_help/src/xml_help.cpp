@@ -7,9 +7,7 @@ using namespace std;
 
 XmlHelp::XmlHelp()
 {
-    log_ptr_ = new fst_log::Logger();
-    FST_LOG_INIT("XmlHelp");
-    FST_LOG_SET_LEVEL(fst_log::MSG_LEVEL_INFO);
+
 }
 
 XmlHelp::~XmlHelp()

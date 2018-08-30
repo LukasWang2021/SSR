@@ -125,27 +125,54 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
-        if (manual_traj_.frame != JOINT)
+        if (manual_traj_.frame == JOINT)
+        {
+            for (size_t i = 0; i < getNumberOfJoint(); i++)
+            {
+                if (manual_traj_.joint_start[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
+                {
+                    FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
+                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
+                    return INVALID_PARAMETER;
+                }
+                else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
+                {
+                    FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
+                              i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
+                    return INVALID_PARAMETER;
+                }
+            }
+        }
+        else
         {
             FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
             return INVALID_SEQUENCE;
         }
+    }
 
-        for (size_t i = 0; i < getNumberOfJoint(); i++)
-        {
-            if (manual_traj_.joint_start[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
-            {
-                FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
-                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                return INVALID_PARAMETER;
-            }
-            else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
-            {
-                FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
-                          i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                return INVALID_PARAMETER;
-            }
-        }
+    switch (manual_traj_.frame)
+    {
+        case JOINT:
+            break;
+        case BASE:
+            kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, manual_traj_.cart_start);
+        case USER:
+            kinematics_ptr_->forwardKinematicsInUser(manual_traj_.joint_start, manual_traj_.cart_start);
+            break;
+        case WORLD:
+            kinematics_ptr_->forwardKinematicsInWorld(manual_traj_.joint_start, manual_traj_.cart_start);
+            break;
+        case TOOL:
+            manual_traj_.cart_start.position.x = 0;
+            manual_traj_.cart_start.position.y = 0;
+            manual_traj_.cart_start.position.z = 0;
+            manual_traj_.cart_start.orientation.a = 0;
+            manual_traj_.cart_start.orientation.b = 0;
+            manual_traj_.cart_start.orientation.c = 0;
+            break;
+        default:
+            FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
+            return MOTION_INTERNAL_FAULT;
     }
 
     manual_time_ = 0;
@@ -263,11 +290,14 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
             }
         }
 
+        FST_INFO("Given directions same as current motion, do not need replan.");
         return SUCCESS;
     }
-
-    FST_ERROR("Cannot manual now, current state = %d", group_state_);
-    return INVALID_SEQUENCE;
+    else
+    {
+        FST_ERROR("Cannot manual now, current state = %d", group_state_);
+        return INVALID_SEQUENCE;
+    }
 }
 
 ErrorCode BaseGroup::manualStop(void)

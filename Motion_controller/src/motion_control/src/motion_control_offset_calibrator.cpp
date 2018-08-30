@@ -209,8 +209,13 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     FST_INFO("Downloading zero offset ...");
     if (sendJtacParam("zero_offset") == SUCCESS)
     {
-        FST_INFO("Success!");
+        Joint cur_jnt;
+        ServoState servo_state;
+        char buffer[LOG_TEXT_SIZE];
         usleep(256 * 1000);
+        bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
+        FST_INFO("Success!");
+        FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
     }
     else
     {

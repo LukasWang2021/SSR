@@ -11,9 +11,10 @@
 #include <vector>
 
 #include <motion_control_arm_group.h>
-#include "parameter_manager/parameter_manager_param_group.h"
-#include "error_monitor.h"
-#include "common_file_path.h"
+#include <parameter_manager/parameter_manager_param_group.h>
+#include <error_monitor.h>
+#include <common_file_path.h>
+#include <motion_control_base_type.h>
 
 
 using namespace std;
@@ -179,14 +180,63 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     FST_INFO("Initializing kinematics of ArmGroup ...");
     double dh_matrix[NUM_OF_JOINT][4];
     kinematics_ptr_ = new ArmKinematics();
-    kinematics_ptr_->initKinematics(dh_matrix);
 
-    err = manual_teach_.init(JOINT_OF_ARM, &soft_constraint_, log_ptr_);
-
-    if (err != SUCCESS)
+    if (kinematics_ptr_)
     {
-        FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
-        return err;
+        param.reset();
+
+        if (param.loadParamFile(AXIS_GROUP_DIR"arm_dh.yaml"))
+        {
+            if (param.getParam("dh_parameter/axis-0", dh_matrix[0], 4) &&
+                param.getParam("dh_parameter/axis-1", dh_matrix[1], 4) &&
+                param.getParam("dh_parameter/axis-2", dh_matrix[2], 4) &&
+                param.getParam("dh_parameter/axis-3", dh_matrix[3], 4) &&
+                param.getParam("dh_parameter/axis-4", dh_matrix[4], 4) &&
+                param.getParam("dh_parameter/axis-5", dh_matrix[5], 4))
+            {
+                kinematics_ptr_->initKinematics(dh_matrix);
+                FST_INFO("DH-matrix:");
+                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[0][0], dh_matrix[0][1], dh_matrix[0][2], dh_matrix[0][3]);
+                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[1][0], dh_matrix[1][1], dh_matrix[1][2], dh_matrix[1][3]);
+                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[2][0], dh_matrix[2][1], dh_matrix[2][2], dh_matrix[2][3]);
+                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[3][0], dh_matrix[3][1], dh_matrix[3][2], dh_matrix[3][3]);
+                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[4][0], dh_matrix[4][1], dh_matrix[4][2], dh_matrix[4][3]);
+                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[5][0], dh_matrix[5][1], dh_matrix[5][2], dh_matrix[5][3]);
+            }
+            else
+            {
+                FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
+                return param.getLastError();
+            }
+        }
+        else
+        {
+            FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to initialize kinematics for ArmGroup");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Initializing manual teach of ArmGroup ...");
+    param.reset();
+    if (param.loadParamFile(AXIS_GROUP_DIR"arm_manual_teach.yaml"))
+    {
+        err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, param);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
+            return err;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to load manual teach config file, code = 0x%llx", param.getLastError());
+        return param.getLastError();
     }
 
     return SUCCESS;
@@ -271,7 +321,7 @@ ErrorCode ArmGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
         if (manual_time_ >= manual_traj_.duration)
         {
             point[i].level = POINT_ENDING;
-            FST_INFO("%d - %.3f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
+            FST_INFO("%d - %.4f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
                         point[i].angle.j1, point[i].angle.j2,  point[i].angle.j3,
                         point[i].angle.j4, point[i].angle.j5,  point[i].angle.j6);
 
@@ -301,12 +351,113 @@ ErrorCode ArmGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
     return SUCCESS;
 }
 
-ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &length)
-{
-    // TODO
-    return SUCCESS;
-}
+ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &length) {
+    ErrorCode err = SUCCESS;
+    PoseEuler pose;
+    double tim, vel;
+    double *axis, *start, *target;
+    size_t cnt = 0;
 
+    FST_INFO("Pick from manual cartesian");
+    FST_INFO("manual-time=%.4f", manual_time_);
+
+    for (size_t i = 0; i < length; i++) {
+        point[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
+        memset(&point[i].omega, 0, sizeof(Joint));
+        memset(&point[i].alpha, 0, sizeof(Joint));
+        memset(&point[i].torque, 0, sizeof(Joint));
+        memset(&point[i].inertia, 0, sizeof(Joint));
+        memset(&point[i].gravity, 0, sizeof(Joint));
+
+        axis = (double *) &pose.position.x;
+        start = (double *) &manual_traj_.cart_start.position.x;
+        target = (double *) &manual_traj_.cart_ending.position.x;
+
+        manual_time_ += cycle_time_;
+
+        for (size_t i = 0; i < 6; i++) {
+            if (manual_time_ < manual_traj_.coeff[i].start_time) {
+                *axis = *start;
+            } else if (manual_time_ < manual_traj_.coeff[i].stable_time) {
+                tim = manual_time_ - manual_traj_.coeff[i].start_time;
+                *axis = *start + manual_traj_.coeff[i].start_alpha * tim * tim / 2;
+            } else if (manual_time_ < manual_traj_.coeff[i].brake_time) {
+                tim = manual_traj_.coeff[i].stable_time - manual_traj_.coeff[i].start_time;
+                vel = manual_traj_.coeff[i].start_alpha * tim;
+                *axis = *start + vel * tim / 2;
+                tim = manual_time_ - manual_traj_.coeff[i].stable_time;
+                *axis = *axis + vel * tim;
+            } else if (manual_time_ < manual_traj_.coeff[i].stop_time) {
+                tim = manual_traj_.coeff[i].stable_time - manual_traj_.coeff[i].start_time;
+                vel = manual_traj_.coeff[i].start_alpha * tim;
+                *axis = *start + vel * tim / 2;
+                tim = manual_traj_.coeff[i].brake_time - manual_traj_.coeff[i].stable_time;
+                *axis = *axis + vel * tim;
+                tim = manual_time_ - manual_traj_.coeff[i].brake_time;
+                *axis = *axis + vel * tim + manual_traj_.coeff[i].brake_alpha * tim * tim / 2;
+            } else {
+                *axis = *target;
+            }
+
+            ++axis;
+            ++start;
+            ++target;
+        }
+
+        switch (manual_traj_.frame) {
+            case BASE:
+                err = kinematics_ptr_->inverseKinematicsInBase(pose, current_joint_, point[i].angle);
+                break;
+            case USER:
+            case WORLD:
+            case TOOL:
+            default:
+                err = MOTION_INTERNAL_FAULT;
+                break;
+        }
+
+        if (err == SUCCESS && soft_constraint_.isJointInConstraint(point[i].angle)) {
+            cnt++;
+
+            if (manual_time_ >= manual_traj_.duration) {
+                point[i].level = POINT_ENDING;
+                FST_INFO("%d - %.4f - %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", point[i].level, manual_time_,
+                         point[i].angle.j1, point[i].angle.j2, point[i].angle.j3, point[i].angle.j4, point[i].angle.j5,
+                         point[i].angle.j6);
+
+                manual_traj_.direction[0] = STANDING;
+                manual_traj_.direction[1] = STANDING;
+                manual_traj_.direction[2] = STANDING;
+                manual_traj_.direction[3] = STANDING;
+                manual_traj_.direction[4] = STANDING;
+                manual_traj_.direction[5] = STANDING;
+                manual_traj_.duration = 0;
+                memset(manual_traj_.coeff, 0, 6 * sizeof(ManualCoef));
+                start_joint_ = point[i].angle;
+                manual_time_ = 0;
+                group_state_ = MANUAL_TO_STANDBY;
+                break;
+            } else {
+                FST_INFO("%d - %.3f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
+                         point[i].angle.j1, point[i].angle.j2, point[i].angle.j3,
+                         point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
+                continue;
+            }
+        } else {
+            if (err != SUCCESS) {
+                FST_ERROR("pickFromManualCartesian: IK failed.");
+                break;
+            } else {
+                FST_ERROR("pickFromManualCartesian: IK result out of soft constraint.");
+                err = JOINT_OUT_OF_CONSTRAINT;
+                break;
+            }
+        }
+    }
+
+    length = cnt;
+    return err;
+}
 
 
 ErrorCode ArmGroup::autoMove(void)

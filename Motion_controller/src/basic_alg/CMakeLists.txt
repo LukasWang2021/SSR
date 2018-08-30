@@ -44,6 +44,7 @@ add_library(basic_alg
 
 target_link_libraries(basic_alg
     ${catkin_LIBRARIES}
+    logger
 )
 
 install(TARGETS basic_alg

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(basic_alg)
 
 find_package(catkin REQUIRED COMPONENTS
-    log_manager
+#    log_manager
 )
 
 if(catkin_CROSS)

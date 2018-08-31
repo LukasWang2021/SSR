@@ -5,6 +5,7 @@
 #include "common_log.h"
 #include "process_comm.h"
 #include "reg_manager.h"
+#include "fst_io_device.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -26,6 +27,7 @@ private:
     ControllerParam* param_ptr_;
     fst_base::ControllerServer* controller_server_ptr_;
     RegManager* reg_manager_ptr_;
+    fst_hal::FstIoDevice* io_device_ptr_;
 
     enum {CMD_ID_BYTE_SIZE = 4,};
 

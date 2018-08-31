@@ -8,7 +8,8 @@
 #include "reg_manager.h"
 #include "base_datatype.h"
 #include "interpreter_common.h"
-#include "io_interface.h"
+
+#include "fst_io_device.h"
 
 namespace fst_base
 {

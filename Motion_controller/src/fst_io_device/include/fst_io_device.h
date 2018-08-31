@@ -15,6 +15,7 @@
 #include "IOboard.h"
 
 #include "io_interface.h"
+#include "io_manager.h"
 
 namespace fst_hal
 {
@@ -60,7 +61,7 @@ public:
     //------------------------------------------------------------
     int getDevicesNum(void);
 
-	vector<fst_io_manager::IODeviceInfo> getIODevices();
+	std::vector<fst_io_manager::IODeviceInfo> getIODevices();
 
     //------------------------------------------------------------
     // Function:    getDeviceInfo

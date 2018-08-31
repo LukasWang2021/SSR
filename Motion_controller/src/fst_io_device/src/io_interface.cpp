@@ -17,6 +17,7 @@
 #include "io_interface.h"
 #include "error_code.h"
 #include <boost/algorithm/string.hpp>
+using namespace std;
 
 IOInterface::IOInterface()
 {

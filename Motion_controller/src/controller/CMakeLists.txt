@@ -61,6 +61,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/basic_alg/include 
     ${depend_PATH_INC}/kinematics_alg/include
     ${depend_PATH_INC}/preformance_monitor/include 
+    ${depend_PATH_INC}/fst_io_device/include 
 )
 
 catkin_package(

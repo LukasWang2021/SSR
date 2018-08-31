@@ -24,6 +24,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/reg_manager/include 
     ${depend_PATH_INC}/thread_help/include 
+    ${depend_PATH_INC}/fst_io_device/include 
+    ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/prg_interpreter/include
     ${depend_PATH_INC}/error_monitor/include 
 )
@@ -33,6 +35,7 @@ catkin_package(
     LIBRARIES process_comm 
     DEPENDS parameter_manager
     DEPENDS log_manager
+    DEPENDS fst_io_device 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -54,6 +57,7 @@ target_link_libraries(process_comm
     thread_help
     logger
     error_monitor 
+    fst_io_device 
 )
 
 install(TARGETS process_comm 

@@ -16,7 +16,7 @@
 // #include "motionSL.pb.h"
 #include "common_log.h"
 
-using namespace std;
+//using namespace std;
 	
 typedef unsigned long long int U64;
 
@@ -31,7 +31,6 @@ typedef struct _IOPortInfo
     int         port_type;
     int         port_index;
     int         bytes_len;
-	uint8_t     value ;
 }IOPortInfo;
 
 
@@ -49,7 +48,7 @@ class IOInterface
      */
     U64 addIODevices();
 	
-    vector<fst_io_manager::IODeviceInfo> getIODevices();
+    std::vector<fst_io_manager::IODeviceInfo> getIODevices();
 
 
     //bool encDevList(BaseTypes_ParameterMsg *param_msg, pb_ostream_t *stream, const pb_field_t *field);

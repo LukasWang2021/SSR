@@ -51,6 +51,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/thread_help/include 
     ${depend_PATH_INC}/common/
     ${depend_PATH_INC}/reg_manager/include 
+    ${depend_PATH_INC}/fst_io_device/include 
+    ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/process_comm/include 
 )
 
@@ -58,6 +60,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wwrite-strings -fpermi
 
 catkin_package(
 #    DEPENDS motion_plan 
+    DEPENDS fst_io_device 
 )
  
 

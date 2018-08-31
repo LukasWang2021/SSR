@@ -290,6 +290,10 @@ private:
     void handleRequest0x00008075(int recv_bytes);
     /********rpc/motion_control/axis_group/doManualStop, RequestMessageType_Int32**********/
     void handleRequest0x0000A9A0(int recv_bytes);
+    /********rpc/motion_control/axis_group/setOrientationManualStep, RequestMessageType_Int32_Double**********/
+    void handleRequest0x00002940(int recv_bytes);
+    /********rpc/motion_control/axis_group/getOrientationManualStep, RequestMessageType_Int32**********/
+    void handleRequest0x00016D20(int recv_bytes);
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);
@@ -573,6 +577,10 @@ private:
     void handleResponse0x00008075(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/doManualStop, ResponseMessageType_Bool**********/
     void handleResponse0x0000A9A0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setOrientationManualStep, ResponseMessageType_Uint64**********/
+    void handleResponse0x00002940(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getOrientationManualStep, ResponseMessageType_Uint64_Double**********/
+    void handleResponse0x00016D20(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

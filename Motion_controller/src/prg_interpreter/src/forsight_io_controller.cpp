@@ -20,6 +20,13 @@
 #endif
 #include "forsight_cJSON.h"
 
+#ifdef USE_FORSIGHT_REGISTERS_MANAGER
+#ifndef WIN32
+#include "reg_manager/reg_manager_interface_wrapper.h"
+using namespace fst_ctrl ;
+#endif
+#endif
+
 // Register name
 #define TXT_AI    "ai"
 #define TXT_AO    "ao"
@@ -391,7 +398,23 @@ void refresh_io_config_emulated()
 int set_io_status_to_io_mananger(
 	char *vname, eval_value& value)
 {
-	// char val = (char)value.getFloatValue();
+	char val = (char)value.getFloatValue();
+
+	IOPortInfo  objIOPortInfo ;
+	string vpath = g_io_mapper[string(vname)];
+	bool bRet = g_objRegManagerInterface->checkIo(vpath.c_str(), &objIOPortInfo);
+	if(bRet == false)
+	{
+		printf("checkIo failed!");
+		return -1 ;
+	}
+	
+	bRet = g_objRegManagerInterface->setIo(&objIOPortInfo, val);
+	if(bRet == false)
+	{
+		printf("setIo failed!");
+		return -1 ;
+	}
 	return 1 ;
 }
 

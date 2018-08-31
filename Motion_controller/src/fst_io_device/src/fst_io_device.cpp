@@ -34,14 +34,15 @@ FstIoDevice::FstIoDevice(int address):
 
 FstIoDevice::~FstIoDevice()
 {
-
+	delete log_ptr_;
+	delete param_ptr_;
 }
 
 
 bool FstIoDevice::init()
 {
 	// IOInterface::instance would call initial
-	int iIONum = IOInterface::instance()->getIODevNum();
+	int iIONum = IOInterface::instance(log_ptr_)->getIODevNum();
     return SUCCESS;
 }
 
@@ -54,12 +55,12 @@ bool FstIoDevice::init()
 //------------------------------------------------------------
 int FstIoDevice::getDevicesNum(void)
 {
-	return IOInterface::instance()->getIODevNum();
+	return IOInterface::instance(log_ptr_)->getIODevNum();
 }
 
 vector<fst_io_manager::IODeviceInfo> FstIoDevice::getIODevices()
 {
-    return IOInterface::instance()->getIODevices();
+    return IOInterface::instance(log_ptr_)->getIODevices();
 }
 
 //------------------------------------------------------------
@@ -71,47 +72,47 @@ vector<fst_io_manager::IODeviceInfo> FstIoDevice::getIODevices()
 //------------------------------------------------------------
 U64 FstIoDevice::getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info)
 {
-    return IOInterface::instance()->getDeviceInfo(index, info);
+    return IOInterface::instance(log_ptr_)->getDeviceInfo(index, info);
 }
 
 U64 FstIoDevice::setDO(const char *path, char value)
 {
-	return IOInterface::instance()->setDO(path, value);
+	return IOInterface::instance(log_ptr_)->setDO(path, value);
 }
 
 U64 FstIoDevice::setDO(int msg_id, unsigned char value)
 {
-	return IOInterface::instance()->setDO(msg_id, value);
+	return IOInterface::instance(log_ptr_)->setDO(msg_id, value);
 }
 
 U64 FstIoDevice::setDO(IOPortInfo *io_info, char value)
 {
-	return IOInterface::instance()->setDO(io_info, value);
+	return IOInterface::instance(log_ptr_)->setDO(io_info, value);
 }
 
 U64 FstIoDevice::getDIO(const char *path, unsigned char *buffer, int buf_len, int& io_bytes_len)
 {
-	return IOInterface::instance()->getDIO(path, buffer, buf_len, io_bytes_len);
+	return IOInterface::instance(log_ptr_)->getDIO(path, buffer, buf_len, io_bytes_len);
 }
 
 U64 FstIoDevice::getDIO(int msg_id, uint8_t *buffer, int buf_len, int& io_bytes_len)
 {
-	return IOInterface::instance()->getDIO(msg_id, buffer, buf_len, io_bytes_len);
+	return IOInterface::instance(log_ptr_)->getDIO(msg_id, buffer, buf_len, io_bytes_len);
 }
 
 U64 FstIoDevice::getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len)
 {
-	return IOInterface::instance()->getDIO(io_info, buffer, buf_len);
+	return IOInterface::instance(log_ptr_)->getDIO(io_info, buffer, buf_len);
 }
 
 U64 FstIoDevice::checkIO(const char *path, IOPortInfo* io_info)
 {
-	return IOInterface::instance()->checkIO(path, io_info);
+	return IOInterface::instance(log_ptr_)->checkIO(path, io_info);
 }
 
 U64 FstIoDevice::updateIOError()
 {
-	return IOInterface::instance()->updateIOError();
+	return IOInterface::instance(log_ptr_)->updateIOError();
 }
 
 

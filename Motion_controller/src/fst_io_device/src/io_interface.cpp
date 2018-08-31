@@ -19,8 +19,9 @@
 #include <boost/algorithm/string.hpp>
 using namespace std;
 
-IOInterface::IOInterface()
+IOInterface::IOInterface(fst_log::Logger * logger)
 {
+    log_ptr_ = logger;
     U64 result = initial();
     if (result != SUCCESS)
     {
@@ -36,9 +37,9 @@ IOInterface::~IOInterface()
        delete [] dev_info_;
 }
 
-IOInterface* IOInterface::instance()
+IOInterface* IOInterface::instance(fst_log::Logger* logger)
 {
-    static IOInterface io_interface;
+    static IOInterface io_interface(logger);
 
     return &io_interface;
 }

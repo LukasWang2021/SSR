@@ -37,9 +37,9 @@ typedef struct _IOPortInfo
 class IOInterface
 {
   public:	 
-    IOInterface();
+    IOInterface(fst_log::Logger* logger);
     ~IOInterface();
-    static IOInterface* instance();
+    static IOInterface* instance(fst_log::Logger* logger);
     U64 initial();
     /**
      * @brief: add io device infomation to dev_info_ 

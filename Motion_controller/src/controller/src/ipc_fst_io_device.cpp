@@ -21,7 +21,8 @@ void ControllerIpc::handleIpcSetIo(void* request_data_ptr, void* response_data_p
     RequestSetIo* rq_data_ptr = static_cast<RequestSetIo*>(request_data_ptr);
     unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
 
-    *rs_data_ptr = io_device_ptr_->setDO(rq_data_ptr, rq_data_ptr->value);
+
+    *rs_data_ptr = io_device_ptr_->setDO(&(rq_data_ptr->port_info), rq_data_ptr->value);
 }
 
 void ControllerIpc::handleIpcGetIo(void* request_data_ptr, void* response_data_ptr)

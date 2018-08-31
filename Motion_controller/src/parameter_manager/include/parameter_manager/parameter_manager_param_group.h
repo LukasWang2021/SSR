@@ -50,8 +50,8 @@ class ParamGroup {
     bool getParam(const std::string &key, std::vector<std::string> &value);
     bool getParam(const std::string &key, ParamValue &value);
 
-    bool getParam(const std::string &key, size_t size, int *value);
-    bool getParam(const std::string &key, size_t size, double *value);
+    bool getParam(const std::string &key, int *value, size_t size);
+    bool getParam(const std::string &key, double *value, size_t size);
 
     bool hasParam(const std::string &key);
     

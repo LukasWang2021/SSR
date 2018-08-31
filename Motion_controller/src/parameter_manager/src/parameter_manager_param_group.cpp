@@ -340,7 +340,7 @@ bool ParamGroup::getParam(const string &key, vector<int> &value)
     }
 }
 
-bool ParamGroup::getParam(const string &key, size_t size, int *value)
+bool ParamGroup::getParam(const string &key, int *value, size_t size)
 {
     vector<int> tmp;
     if (getParam(key, tmp))
@@ -394,7 +394,7 @@ bool ParamGroup::getParam(const string &key, vector<double> &value)
     }
 }
 
-bool ParamGroup::getParam(const string &key, size_t size, double *value)
+bool ParamGroup::getParam(const string &key, double *value, size_t size)
 {
     vector<double> tmp;
     if (getParam(key, tmp))

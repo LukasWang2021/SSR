@@ -27,7 +27,18 @@ public:
                    fst_base::ErrorMonitor *error_monitor_ptr);
 
     // API for teaching
+    ManualFrame getManualFrame(void);
     ErrorCode setManualFrame(ManualFrame frame);
+
+    double getRotateManualStep(void);
+    double getPrismaticManualStep(void);
+    double getPositionManualStep(void);
+    double getOrientationManualStep(void);
+    ErrorCode setRotateManualStep(double step);
+    ErrorCode setPrismaticManualStep(double step);
+    ErrorCode setPositionManualStep(double step);
+    ErrorCode setOrientationManualStep(double step);
+
     ErrorCode doStepManualMove(const GroupDirection &direction);
     ErrorCode doContinuousManualMove(const GroupDirection &direction);
     ErrorCode doGotoPointManualMove(const Joint &joint);
@@ -78,6 +89,11 @@ public:
     Joint   getServoJoint(void);
     void    getServoJoint(Joint &joint);
     size_t  getFIFOLength(void);
+
+    ErrorCode setGlobalVelRatio(double ratio);
+    ErrorCode setGlobalAccRatio(double ratio);
+    double getGlobalVelRatio(void);
+    double getGlobalAccRatio(void);
 
 
 

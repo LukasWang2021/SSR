@@ -22,19 +22,6 @@ class ArmKinematics : public BaseKinematics
   public:
     void initKinematics(double (&dh_matrix)[NUM_OF_JOINT][4]);
 
-    void forwardKinematicsInBase(const Joint &joint, Pose      &pose);
-    void forwardKinematicsInBase(const Joint &joint, PoseEuler &pose);
-    void forwardKinematicsInUser(const Joint &joint, Pose      &pose);
-    void forwardKinematicsInUser(const Joint &joint, PoseEuler &pose);
-    void forwardKinematicsInWorld(const Joint &joint, Pose      &pose);
-    void forwardKinematicsInWorld(const Joint &joint, PoseEuler &pose);
-
-    //Pose      getPoseFromJoint(const Joint &joint);
-    //PoseEuler getPoseEulerFromJoint(const Joint &joint);
-
-    ErrorCode   inverseKinematicsInBase(const Pose &pose, const Joint &ref, Joint &res);
-    ErrorCode   inverseKinematicsInBase(const PoseEuler &pose, const Joint &ref, Joint &res);
-
     //ErrorCode   chainIK(const Pose &pose, Joint &ref, Joint &res);
     //ErrorCode   chainIK(const PoseEuler &pose, Joint &ref, Joint &res);
 

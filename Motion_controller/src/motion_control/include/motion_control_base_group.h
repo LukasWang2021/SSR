@@ -53,10 +53,18 @@ class BaseGroup
 
     virtual ErrorCode autoMove(void) = 0;
 
+    virtual ManualFrame getManualFrame(void);
+    virtual double getManualStepAxis(void);
+    virtual double getManualStepPosition(void);
+    virtual double getManualStepOrientation(void);
     virtual ErrorCode setManualFrame(ManualFrame frame);
+    virtual ErrorCode setManualStepAxis(double step);
+    virtual ErrorCode setManualStepPosition(double step);
+    virtual ErrorCode setManualStepOrientation(double step);
     virtual ErrorCode manualMoveStep(const ManualDirection *direction);
     virtual ErrorCode manualMoveContinuous(const ManualDirection *direction);
     virtual ErrorCode manualMoveToPoint(const Joint &joint);
+    virtual ErrorCode manualMoveToPoint(const PoseEuler &pose);
     virtual ErrorCode manualStop(void);
 
     virtual size_t getNumberOfJoint(void) = 0;
@@ -84,6 +92,10 @@ class BaseGroup
     GroupState getGroupState(void);
     ServoState getServoState(void);
 
+    ErrorCode setGlobalVelRatio(double ratio);
+    ErrorCode setGlobalAccRatio(double ratio);
+    double getGlobalVelRatio(void);
+    double getGlobalAccRatio(void);
 
   protected:
     virtual ErrorCode sendPoint(void);
@@ -98,11 +110,12 @@ class BaseGroup
     inline void reportError(const ErrorCode &error);
     bool updateJointStateFromBareCore(void);
 
-    bool rt_task_active_;
+    bool    rt_task_active_;
+    double  vel_ratio_, acc_ratio_;
 
-    Constraint          hard_constraint_;
-    Constraint          soft_constraint_;
-    Constraint          firm_constraint_;
+    Constraint  hard_constraint_;
+    Constraint  soft_constraint_;
+    Constraint  firm_constraint_;
 
     Joint current_joint_;
     ServoState  servo_state_;

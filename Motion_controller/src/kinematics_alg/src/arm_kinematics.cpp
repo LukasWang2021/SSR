@@ -11,8 +11,6 @@
 
 using namespace basic_alg;
 
-
-
 namespace fst_mc
 {
 
@@ -36,54 +34,6 @@ void ArmKinematics::initKinematics(double (&dh_matrix)[NUM_OF_JOINT][4])
 }
 
 
-void ArmKinematics::forwardKinematicsInBase(const Joint &joint, Pose &pose)
-{
-    Matrix matrix;
-    forwardKinematics(joint, matrix);
-    matrix.rightMultiply(tool_frame_).toPose(pose);
-}
-
-
-void ArmKinematics::forwardKinematicsInBase(const Joint &joint, PoseEuler &pose)
-{
-    Matrix matrix;
-    forwardKinematics(joint, matrix);
-    matrix.rightMultiply(tool_frame_).toPoseEuler(pose);
-}
-
-
-void ArmKinematics::forwardKinematicsInUser(const Joint &joint, Pose &pose)
-{
-    Matrix matrix;
-    forwardKinematics(joint, matrix);
-    matrix.leftMultiply(inverse_user_frame_).rightMultiply(tool_frame_).toPose(pose);
-}
-
-
-void ArmKinematics::forwardKinematicsInUser(const Joint &joint, PoseEuler &pose)
-{
-    Matrix matrix;
-    forwardKinematics(joint, matrix);
-    matrix.leftMultiply(inverse_user_frame_).rightMultiply(tool_frame_).toPoseEuler(pose);
-}
-
-
-void ArmKinematics::forwardKinematicsInWorld(const Joint &joint, Pose &pose)
-{
-    Matrix matrix;
-    forwardKinematics(joint, matrix);
-    matrix.leftMultiply(inverse_world_frame_).rightMultiply(tool_frame_).toPose(pose);
-}
-
-
-void ArmKinematics::forwardKinematicsInWorld(const Joint &joint, PoseEuler &pose)
-{
-    Matrix matrix;
-    forwardKinematics(joint, matrix);
-    matrix.leftMultiply(inverse_world_frame_).rightMultiply(tool_frame_).toPoseEuler(pose);
-}
-
-
 void ArmKinematics::forwardKinematics(const Joint &joint, Matrix &matrix)
 {
     matrix.eye();
@@ -93,25 +43,6 @@ void ArmKinematics::forwardKinematics(const Joint &joint, Matrix &matrix)
     matrix.transFromDH(dh_matrix_[3], joint.j4);
     matrix.transFromDH(dh_matrix_[4], joint.j5);
     matrix.transFromDH(dh_matrix_[5], joint.j6);
-}
-
-
-
-
-
-
-
-ErrorCode ArmKinematics::inverseKinematicsInBase(const Pose &pose, const Joint &ref, Joint &res)
-{
-    Matrix matrix = Matrix(pose).rightMultiply(inverse_tool_frame_);
-    return inverseKinematics(matrix, ref, res);
-}
-
-
-ErrorCode ArmKinematics::inverseKinematicsInBase(const PoseEuler &pose, const Joint &ref, Joint &res)
-{
-    Matrix matrix = Matrix(pose).rightMultiply(inverse_tool_frame_);
-    return inverseKinematics(matrix, ref, res);
 }
 
 

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <motion_control_base_group.h>
+#include <motion_control_base_type.h>
 #include "parameter_manager/parameter_manager_param_group.h"
 
 using namespace std;
@@ -49,6 +50,16 @@ ErrorCode BaseGroup::stopGroup(void)
     return bare_core_.stopBareCore() == true ? SUCCESS : BARE_CORE_TIMEOUT;
 }
 
+
+
+
+
+ManualFrame BaseGroup::getManualFrame(void)
+{
+    FST_INFO("Get manual frame = %d", manual_traj_.frame);
+    return manual_traj_.frame;
+}
+
 ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
 {
     FST_INFO("Set manual frame = %d", frame);
@@ -66,14 +77,59 @@ ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
     }
 }
 
+double BaseGroup::getManualStepAxis(void)
+{
+    double step = manual_teach_.getManualStepAxis();
+    FST_INFO("Get manual step axis = %.6f", step);
+    return step;
+}
+
+double BaseGroup::getManualStepPosition(void)
+{
+    double step = manual_teach_.getManualStepPosition();
+    FST_INFO("Get manual step position = %.4f", step);
+    return step;
+}
+
+double BaseGroup::getManualStepOrientation(void)
+{
+    double step = manual_teach_.getManualStepOrientation();
+    FST_INFO("Get manual step orientation = %.6f", step);
+    return step;
+}
+
+ErrorCode BaseGroup::setManualStepAxis(double step)
+{
+    FST_INFO("Set manual step axis = %.6f", step);
+    return manual_teach_.setManualStepAxis(step);
+}
+
+ErrorCode BaseGroup::setManualStepPosition(double step)
+{
+    FST_INFO("Set manual step position = %.4f", step);
+    return manual_teach_.setManualStepPosition(step);
+}
+
+ErrorCode BaseGroup::setManualStepOrientation(double step)
+{
+    FST_INFO("Set manual step orientation = %.6f", step);
+    return manual_teach_.setManualStepOrientation(step);
+}
+
 ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
 {
     char buffer[LOG_TEXT_SIZE];
-    FST_INFO("Manual to pose, frame = %d by target: %s", manual_traj_.frame, printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Manual to target joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
 
     if (group_state_ != STANDBY)
     {
         FST_ERROR("Cannot manual to target in current state = %d", group_state_);
+        return INVALID_SEQUENCE;
+    }
+
+    if (manual_traj_.frame != JOINT)
+    {
+        FST_ERROR("Cannot manual to target in current frame = %d", manual_traj_.frame);
         return INVALID_SEQUENCE;
     }
 
@@ -109,8 +165,85 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
     }
 }
 
+ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
+{
+    ErrorCode err;
+    char buffer[LOG_TEXT_SIZE];
+    FST_INFO("Manual to target pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f",
+             pose.position.x, pose.position.y, pose.position.z, pose.orientation.a, pose.orientation.b, pose.orientation.c);
+
+    if (group_state_ != STANDBY)
+    {
+        FST_ERROR("Cannot manual to target in current state = %d", group_state_);
+        return INVALID_SEQUENCE;
+    }
+
+    if (manual_traj_.frame != BASE && manual_traj_.frame != USER && manual_traj_.frame != WORLD)
+    {
+        FST_ERROR("Cannot manual to target in current frame = %d", manual_traj_.frame);
+        return INVALID_SEQUENCE;
+    }
+
+    getLatestJoint(manual_traj_.joint_start);
+    FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+
+    if (soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
+    {
+        FST_ERROR("start-joint is out of soft constraint, manual-mode-apoint is disabled.");
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
+    Joint res_joint;
+    Joint ref_joint = getLatestJoint();
+
+    switch (manual_traj_.frame)
+    {
+        case BASE:
+            err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, res_joint);
+            break;
+        case USER:
+            err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, res_joint);
+            break;
+        case WORLD:
+            err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, res_joint);
+            break;
+        default:
+            FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_traj_.frame);
+            return MOTION_INTERNAL_FAULT;
+    }
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to get inverse kinematics of given target, code = 0x%llx", err);
+        return err;
+    }
+
+    if (soft_constraint_.isJointInConstraint(res_joint))
+    {
+        FST_ERROR("target-joint is out of soft constraint: %s", printDBLine(&res_joint[0], buffer, LOG_TEXT_SIZE));
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
+    manual_time_ = 0;
+    manual_traj_.mode = APOINT;
+    err = manual_teach_.manualByTarget(res_joint, manual_time_, manual_traj_);
+
+    if (err == SUCCESS)
+    {
+        group_state_ = MANUAL;
+        return SUCCESS;
+    }
+    else
+    {
+        FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
+        memset(&manual_traj_, 0, sizeof(ManualTrajectory));
+        return err;
+    }
+}
+
 ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 {
+    PoseEuler pose;
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Manual step frame=%d by direction.", manual_traj_.frame);
 
@@ -163,12 +296,9 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
             kinematics_ptr_->forwardKinematicsInWorld(manual_traj_.joint_start, manual_traj_.cart_start);
             break;
         case TOOL:
-            manual_traj_.cart_start.position.x = 0;
-            manual_traj_.cart_start.position.y = 0;
-            manual_traj_.cart_start.position.z = 0;
-            manual_traj_.cart_start.orientation.a = 0;
-            manual_traj_.cart_start.orientation.b = 0;
-            manual_traj_.cart_start.orientation.c = 0;
+            kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, pose);
+            manual_traj_.tool_coordinate = pose;
+            memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
             break;
         default:
             FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
@@ -205,6 +335,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
     if (group_state_ == STANDBY)
     {
+        PoseEuler pose;
         getLatestJoint(manual_traj_.joint_start);
         FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
@@ -248,12 +379,9 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 kinematics_ptr_->forwardKinematicsInWorld(manual_traj_.joint_start, manual_traj_.cart_start);
                 break;
             case TOOL:
-                manual_traj_.cart_start.position.x = 0;
-                manual_traj_.cart_start.position.y = 0;
-                manual_traj_.cart_start.position.z = 0;
-                manual_traj_.cart_start.orientation.a = 0;
-                manual_traj_.cart_start.orientation.b = 0;
-                manual_traj_.cart_start.orientation.c = 0;
+                kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, pose);
+                manual_traj_.tool_coordinate = pose;
+                memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
                 break;
             default:
                 FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
@@ -390,6 +518,50 @@ void BaseGroup::getGroupState(GroupState &state)
 GroupState BaseGroup::getGroupState(void)
 {
     return group_state_;
+}
+
+ErrorCode BaseGroup::setGlobalVelRatio(double ratio)
+{
+    FST_INFO("Set global velocity ratio: %.4f", ratio);
+
+    if (ratio < 0 || ratio > 1)
+    {
+        FST_ERROR("Given ratio out of range (0, 1)");
+        return INVALID_PARAMETER;
+    }
+    else
+    {
+        vel_ratio_ = ratio;
+        manual_teach_.setGlobalVelRatio(vel_ratio_);
+        return SUCCESS;
+    }
+}
+
+ErrorCode BaseGroup::setGlobalAccRatio(double ratio)
+{
+    FST_INFO("Set global acceleration ratio: %.4f", ratio);
+
+    if (ratio < 0 || ratio > 1)
+    {
+        FST_ERROR("Given ratio out of range (0, 1)");
+        return INVALID_PARAMETER;
+    }
+    else
+    {
+        acc_ratio_ = ratio;
+        manual_teach_.setGlobalAccRatio(acc_ratio_);
+        return SUCCESS;
+    }
+}
+
+double BaseGroup::getGlobalVelRatio(void)
+{
+    return vel_ratio_;
+}
+
+double BaseGroup::getGlobalAccRatio(void)
+{
+    return acc_ratio_;
 }
 
 ErrorCode BaseGroup::sendPoint(void)

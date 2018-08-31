@@ -84,9 +84,59 @@ bool MotionControl::stopRealtimeTask(void)
     return true;
 }
 
+
+
+
+ManualFrame MotionControl::getManualFrame(void)
+{
+    return group_ptr_->getManualFrame();
+}
+
 ErrorCode MotionControl::setManualFrame(ManualFrame frame)
 {
     return group_ptr_->setManualFrame(frame);
+}
+
+double MotionControl::getRotateManualStep(void)
+{
+    return group_ptr_->getManualStepAxis();
+}
+
+double MotionControl::getPrismaticManualStep(void)
+{
+    // TODO
+    return 0;
+}
+
+double MotionControl::getPositionManualStep(void)
+{
+    return group_ptr_->getManualStepPosition();
+}
+
+double MotionControl::getOrientationManualStep(void)
+{
+    return group_ptr_->getManualStepOrientation();
+}
+
+ErrorCode MotionControl::setRotateManualStep(double step)
+{
+    return group_ptr_->setManualStepAxis(step);
+}
+
+ErrorCode MotionControl::setPrismaticManualStep(double step)
+{
+    // TODO
+    return SUCCESS;
+}
+
+ErrorCode MotionControl::setPositionManualStep(double step)
+{
+    return group_ptr_->setManualStepPosition(step);
+}
+
+ErrorCode MotionControl::setOrientationManualStep(double step)
+{
+    return group_ptr_->setManualStepOrientation(step);
 }
 
 ErrorCode MotionControl::doStepManualMove(const GroupDirection &direction)
@@ -106,13 +156,16 @@ ErrorCode MotionControl::doGotoPointManualMove(const Joint &joint)
 
 ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
 {
-    return SUCCESS;
+    return group_ptr_->manualMoveToPoint(pose);
 }
 
 ErrorCode MotionControl::manualStop(void)
 {
     return group_ptr_->manualStop();
 }
+
+
+
 
 void MotionControl::getOffset(double (&offset)[NUM_OF_JOINT])
 {
@@ -310,5 +363,24 @@ size_t MotionControl::getFIFOLength(void)
     return group_ptr_->getFIFOLength();
 }
 
+ErrorCode MotionControl::setGlobalVelRatio(double ratio)
+{
+    return group_ptr_->setGlobalVelRatio(ratio);
+}
+
+ErrorCode MotionControl::setGlobalAccRatio(double ratio)
+{
+    return group_ptr_->setGlobalAccRatio(ratio);
+}
+
+double MotionControl::getGlobalVelRatio(void)
+{
+    return group_ptr_->getGlobalVelRatio();
+}
+
+double MotionControl::getGlobalAccRatio(void)
+{
+    return group_ptr_->getGlobalAccRatio();
+}
 
 

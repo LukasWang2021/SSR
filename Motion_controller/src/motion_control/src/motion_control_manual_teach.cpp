@@ -8,14 +8,14 @@
 #include <math.h>
 #include <float.h>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <string.h>
 #include <vector>
 
-#include <motion_control_manual_teach.h>
 #include <common_log.h>
+#include <motion_control_manual_teach.h>
 #include <motion_control_base_type.h>
+#include <parameter_manager/parameter_manager_param_group.h>
 
 
 using namespace std;
@@ -47,7 +47,7 @@ ManualTeach::ManualTeach(void)
 ManualTeach::~ManualTeach(void)
 {}
 
-ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, ParamGroup &config)
+ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, const string &config_file)
 {
     if (pkinematics && pcons && plog)
     {
@@ -60,7 +60,15 @@ ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_
         return MOTION_INTERNAL_FAULT;
     }
 
-    int joint_num = 0;
+    int joint_num;
+    ParamGroup config;
+    manual_config_file_ = config_file;
+
+    if (!config.loadParamFile(manual_config_file_))
+    {
+        FST_ERROR("Fail to load config file: %s", manual_config_file_.c_str());
+        return config.getLastError();
+    }
 
     if (config.getParam("number_of_axis", joint_num))
     {
@@ -116,6 +124,114 @@ ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_
 
     return SUCCESS;
 }
+
+
+double ManualTeach::getGlobalVelRatio(void)
+{
+    return vel_ratio_;
+}
+
+double ManualTeach::getGlobalAccRatio(void)
+{
+    return acc_ratio_;
+}
+
+double ManualTeach::getManualStepAxis(void)
+{
+    return step_joint_;
+}
+
+double ManualTeach::getManualStepPosition(void)
+{
+    return step_position_;
+}
+
+double ManualTeach::getManualStepOrientation(void)
+{
+    return step_orientation_;
+}
+
+ErrorCode ManualTeach::setGlobalVelRatio(double ratio)
+{
+    vel_ratio_ = ratio;
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::setGlobalAccRatio(double ratio)
+{
+    acc_ratio_ = ratio;
+    return SUCCESS;
+}
+
+ErrorCode ManualTeach::setManualStepAxis(double step)
+{
+    if (step > MINIMUM_E6 && step < 1)
+    {
+        ParamGroup param;
+
+        if (param.loadParamFile(manual_config_file_) && param.setParam("step/axis", step) && param.dumpParamFile())
+        {
+            step_joint_ = step;
+            return SUCCESS;
+        }
+        else
+        {
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        return INVALID_PARAMETER;
+    }
+}
+
+ErrorCode ManualTeach::setManualStepPosition(double step)
+{
+    if (step > MINIMUM_E3 && step < 100)
+    {
+        ParamGroup param;
+
+        if (param.loadParamFile(manual_config_file_) && param.setParam("step/position", step) && param.dumpParamFile())
+        {
+            step_position_ = step;
+            return SUCCESS;
+        }
+        else
+        {
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        return INVALID_PARAMETER;
+    }
+}
+
+ErrorCode ManualTeach::setManualStepOrientation(double step)
+{
+    if (step > MINIMUM_E6 && step < 1)
+    {
+        ParamGroup param;
+
+        if (param.loadParamFile(manual_config_file_) && param.setParam("step/orientation", step) && param.dumpParamFile())
+        {
+            step_orientation_ = step;
+            return SUCCESS;
+        }
+        else
+        {
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        return INVALID_PARAMETER;
+    }
+}
+
+
+
+
 
 ErrorCode ManualTeach::manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj)
 {

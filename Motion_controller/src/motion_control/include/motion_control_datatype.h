@@ -106,6 +106,7 @@ struct ManualTrajectory
 
     PoseEuler   cart_start;
     PoseEuler   cart_ending;
+    PoseEuler   tool_coordinate;
 
     MotionTime      duration;
     ManualCoef      coeff[6];

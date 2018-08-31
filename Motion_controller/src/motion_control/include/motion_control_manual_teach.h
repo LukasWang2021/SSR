@@ -8,11 +8,11 @@
 #ifndef _MOTION_CONTROL_MANUAL_TEACH_H
 #define _MOTION_CONTROL_MANUAL_TEACH_H
 
+#include <string>
 #include <error_code.h>
 #include <motion_control_datatype.h>
 #include <motion_control_constraint.h>
 #include <log_manager/log_manager_logger.h>
-#include <parameter_manager/parameter_manager_param_group.h>
 #include <base_kinematics.h>
 
 namespace fst_mc
@@ -26,7 +26,19 @@ public:
     ManualTeach(void);
     ~ManualTeach(void);
 
-    ErrorCode init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, fst_parameter::ParamGroup &config);
+    ErrorCode init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, const std::string &config_file);
+
+    double getGlobalVelRatio(void);
+    double getGlobalAccRatio(void);
+    double getManualStepAxis(void);
+    double getManualStepPosition(void);
+    double getManualStepOrientation(void);
+    ErrorCode setGlobalVelRatio(double ratio);
+    ErrorCode setGlobalAccRatio(double ratio);
+    ErrorCode setManualStepAxis(double step);
+    ErrorCode setManualStepPosition(double step);
+    ErrorCode setManualStepOrientation(double step);
+
     ErrorCode manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj);
@@ -60,6 +72,7 @@ private:
     Constraint *joint_constraint_ptr_;
     BaseKinematics *kinematics_ptr_;
     fst_log::Logger *log_ptr_;
+    std::string manual_config_file_;
 };
 
 

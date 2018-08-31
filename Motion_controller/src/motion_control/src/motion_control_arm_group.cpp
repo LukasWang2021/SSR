@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace fst_base;
+using namespace basic_alg;
 using namespace fst_parameter;
 
 namespace fst_mc
@@ -222,21 +223,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     }
 
     FST_INFO("Initializing manual teach of ArmGroup ...");
-    param.reset();
-    if (param.loadParamFile(AXIS_GROUP_DIR"arm_manual_teach.yaml"))
-    {
-        err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, param);
+    err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, AXIS_GROUP_DIR"arm_manual_teach.yaml");
 
-        if (err != SUCCESS)
-        {
-            FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
-            return err;
-        }
-    }
-    else
+    if (err != SUCCESS)
     {
-        FST_ERROR("Fail to load manual teach config file, code = 0x%llx", param.getLastError());
-        return param.getLastError();
+        FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
+        return err;
     }
 
     return SUCCESS;
@@ -250,7 +242,8 @@ Calibrator* ArmGroup::getCalibratorPtr(void)
 
 ErrorCode ArmGroup::pickFromManual(TrajectoryPoint *point, size_t &length)
 {
-    return manual_traj_.frame == JOINT ? pickFromManualJoint(point, length) : pickFromManualCartesian(point, length);
+    return (manual_traj_.frame == JOINT || manual_traj_.mode == APOINT) ?
+           pickFromManualJoint(point, length) : pickFromManualCartesian(point, length);
 }
 
 ErrorCode ArmGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
@@ -361,7 +354,8 @@ ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &leng
     FST_INFO("Pick from manual cartesian");
     FST_INFO("manual-time=%.4f", manual_time_);
 
-    for (size_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++)
+    {
         point[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
         memset(&point[i].omega, 0, sizeof(Joint));
         memset(&point[i].alpha, 0, sizeof(Joint));
@@ -375,19 +369,27 @@ ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &leng
 
         manual_time_ += cycle_time_;
 
-        for (size_t i = 0; i < 6; i++) {
-            if (manual_time_ < manual_traj_.coeff[i].start_time) {
+        for (size_t i = 0; i < 6; i++)
+        {
+            if (manual_time_ < manual_traj_.coeff[i].start_time)
+            {
                 *axis = *start;
-            } else if (manual_time_ < manual_traj_.coeff[i].stable_time) {
+            }
+            else if (manual_time_ < manual_traj_.coeff[i].stable_time)
+            {
                 tim = manual_time_ - manual_traj_.coeff[i].start_time;
                 *axis = *start + manual_traj_.coeff[i].start_alpha * tim * tim / 2;
-            } else if (manual_time_ < manual_traj_.coeff[i].brake_time) {
+            }
+            else if (manual_time_ < manual_traj_.coeff[i].brake_time)
+            {
                 tim = manual_traj_.coeff[i].stable_time - manual_traj_.coeff[i].start_time;
                 vel = manual_traj_.coeff[i].start_alpha * tim;
                 *axis = *start + vel * tim / 2;
                 tim = manual_time_ - manual_traj_.coeff[i].stable_time;
                 *axis = *axis + vel * tim;
-            } else if (manual_time_ < manual_traj_.coeff[i].stop_time) {
+            }
+            else if (manual_time_ < manual_traj_.coeff[i].stop_time)
+            {
                 tim = manual_traj_.coeff[i].stable_time - manual_traj_.coeff[i].start_time;
                 vel = manual_traj_.coeff[i].start_alpha * tim;
                 *axis = *start + vel * tim / 2;
@@ -395,7 +397,9 @@ ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &leng
                 *axis = *axis + vel * tim;
                 tim = manual_time_ - manual_traj_.coeff[i].brake_time;
                 *axis = *axis + vel * tim + manual_traj_.coeff[i].brake_alpha * tim * tim / 2;
-            } else {
+            }
+            else
+            {
                 *axis = *target;
             }
 
@@ -404,26 +408,37 @@ ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &leng
             ++target;
         }
 
-        switch (manual_traj_.frame) {
+        Joint ref_joint = getLatestJoint();
+
+        switch (manual_traj_.frame)
+        {
             case BASE:
-                err = kinematics_ptr_->inverseKinematicsInBase(pose, current_joint_, point[i].angle);
+                err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, point[i].angle);
                 break;
             case USER:
+                err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, point[i].angle);
+                break;
             case WORLD:
+                err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, point[i].angle);
+                break;
             case TOOL:
+                err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, point[i].angle);
+                break;
+            case JOINT:
             default:
                 err = MOTION_INTERNAL_FAULT;
                 break;
         }
 
-        if (err == SUCCESS && soft_constraint_.isJointInConstraint(point[i].angle)) {
+        if (err == SUCCESS && soft_constraint_.isJointInConstraint(point[i].angle))
+        {
             cnt++;
 
-            if (manual_time_ >= manual_traj_.duration) {
+            if (manual_time_ >= manual_traj_.duration)
+            {
                 point[i].level = POINT_ENDING;
                 FST_INFO("%d - %.4f - %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", point[i].level, manual_time_,
-                         point[i].angle.j1, point[i].angle.j2, point[i].angle.j3, point[i].angle.j4, point[i].angle.j5,
-                         point[i].angle.j6);
+                         point[i].angle.j1, point[i].angle.j2, point[i].angle.j3, point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
 
                 manual_traj_.direction[0] = STANDING;
                 manual_traj_.direction[1] = STANDING;
@@ -437,17 +452,24 @@ ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &leng
                 manual_time_ = 0;
                 group_state_ = MANUAL_TO_STANDBY;
                 break;
-            } else {
-                FST_INFO("%d - %.3f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
+            }
+            else
+            {
+                FST_INFO("%d - %.4f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
                          point[i].angle.j1, point[i].angle.j2, point[i].angle.j3,
                          point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
                 continue;
             }
-        } else {
-            if (err != SUCCESS) {
+        }
+        else
+        {
+            if (err != SUCCESS)
+            {
                 FST_ERROR("pickFromManualCartesian: IK failed.");
                 break;
-            } else {
+            }
+            else
+            {
                 FST_ERROR("pickFromManualCartesian: IK result out of soft constraint.");
                 err = JOINT_OUT_OF_CONSTRAINT;
                 break;

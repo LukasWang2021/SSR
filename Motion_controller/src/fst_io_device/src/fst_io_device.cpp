@@ -42,8 +42,8 @@ FstIoDevice::~FstIoDevice()
 bool FstIoDevice::init()
 {
 	// IOInterface::instance would call initial
-	int iIONum = IOInterface::instance(log_ptr_)->getIODevNum();
-    return SUCCESS;
+    int iIONum = IOInterface::instance(log_ptr_)->getIODevNum();
+    return true;
 }
 
 //------------------------------------------------------------

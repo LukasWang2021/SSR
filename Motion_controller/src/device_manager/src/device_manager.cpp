@@ -28,14 +28,14 @@ DeviceManager::~DeviceManager()
         {
             switch(it->second->getDeviceType())
             {
-                case DEVICE_TYPE_FST_AXIS:  break;
-                case DEVICE_TYPE_FST_IO:    break;
-                case DEVICE_TYPE_FST_SAFETY: break;
-                case DEVICE_TYPE_FST_ANYBUS: break;
-                case DEVICE_TYPE_VIRTUAL_AXIS: delete (VirtualAxisDevice*)it->second;
-                case DEVICE_TYPE_VIRTUAL_IO: break;
+                case DEVICE_TYPE_FST_AXIS:       break;
+                case DEVICE_TYPE_FST_IO:         delete (FstIoDevice*)it->second;
+                case DEVICE_TYPE_FST_SAFETY:     delete (FstSafetyDevice*)it->second;
+                case DEVICE_TYPE_FST_ANYBUS:     break;
+                case DEVICE_TYPE_VIRTUAL_AXIS:   delete (VirtualAxisDevice*)it->second;
+                case DEVICE_TYPE_VIRTUAL_IO:     break;
                 case DEVICE_TYPE_VIRTUAL_SAFETY: break;
-                case DEVICE_TYPE_NORMAL: break;
+                case DEVICE_TYPE_NORMAL:         break;
             }
             it->second = NULL;
         }
@@ -82,18 +82,18 @@ ErrorCode DeviceManager::init()
     {
         switch(it->device_type)
         {
-            case DEVICE_TYPE_FST_AXIS: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_FST_AXIS:       return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_FST_IO: 
-				device_ptr = new FstSafetyDevice(it->address); break;
-            case DEVICE_TYPE_FST_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_FST_ANYBUS: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_VIRTUAL_AXIS: device_ptr = new VirtualAxisDevice(it->address); break;
-            case DEVICE_TYPE_VIRTUAL_IO: 
 				device_ptr = new FstIoDevice(it->address); break;
-            case DEVICE_TYPE_VIRTUAL_SAFETY: 
+            case DEVICE_TYPE_FST_SAFETY: 
 				device_ptr = new FstSafetyDevice(it->address); break;
-            case DEVICE_TYPE_NORMAL: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            default: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_FST_ANYBUS:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_VIRTUAL_AXIS: 
+				device_ptr = new VirtualAxisDevice(it->address); break;
+            case DEVICE_TYPE_VIRTUAL_IO:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_VIRTUAL_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_NORMAL:         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            default:                         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
         }
 
         if(device_ptr == NULL

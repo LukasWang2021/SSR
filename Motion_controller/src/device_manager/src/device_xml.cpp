@@ -60,8 +60,8 @@ bool DeviceXml::createDeviceConfig(const xmlDocPtr doc_ptr,
     switch(slave_data.device_type)
     {
         case DEVICE_TYPE_FST_AXIS: return false;
-        case DEVICE_TYPE_FST_IO: return false;
-        case DEVICE_TYPE_FST_SAFETY: return false;
+        case DEVICE_TYPE_FST_IO: break;
+        case DEVICE_TYPE_FST_SAFETY: break;
         case DEVICE_TYPE_FST_ANYBUS: return false;
         case DEVICE_TYPE_VIRTUAL_AXIS: break;
         case DEVICE_TYPE_VIRTUAL_IO: return false;

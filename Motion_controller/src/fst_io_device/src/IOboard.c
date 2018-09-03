@@ -55,7 +55,14 @@ int trueInit() {
 }
 
 int fakeInit() {
+    init_ioboard();
     int ret = 0;
+
+	piodev->pfw = &pio->idseq;
+	piodev->pfr = &pio->updown;
+	piodev->pdw = (uint32_t *)(pio->buffromhps);
+	piodev->pdr = (uint32_t *)(pio->buftohps);
+
 	return ret;
 }
 
@@ -92,6 +99,8 @@ int ioSetIdSeq(uint8_t idseq) {
 
 int ioGetSeq(uint8_t *seq) {
     /*fake simulation*/
+    if (fake_flag == 1)
+        updateseq();
 
     *seq = *(uint8_t *)piodev->pfr;
     return 0;
@@ -131,9 +140,15 @@ int ioWriteDownload(struct IODeviceData *idd) {
 
 	ioIntegParameter(buf, idd);
 	ioWriteIOstate((uint8_t *)buf + OF_FRAME_INPUT, (uint8_t *)idd->output, (int)IO_DATAFRAME_MAX);
+	if (fake_flag == 1)
+              printf("set_buf = { %08X, %08X, %08X, %08X, %08X, %08X, %08X, %08X }\n", 
+		            buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
 	setFpga(ptr, buf, (int)IO_WORD_MAX);
 
 	/*fake simulation*/
+	if (fake_flag == 1)
+		readdownload();
+
 	return 0;
 }
 
@@ -147,7 +162,11 @@ void getFpga(uint32_t *buf, uint32_t *fpga, int num) {
 void ioParseParameter(struct IODeviceData *idd, uint32_t *parameter) {
                 uint32_t param = *parameter;
 
+	if (fake_flag == 1)
+	    printf("ioParseParameter: data.enable=%d. id=%d. data.id=%d.\n", idd->enable, idd->id, idd->id);
 	idd->id = PARSEDATA(param, MASK_ID, OF_ID);
+	if (fake_flag == 1)
+	    printf("ioParseParameter: data.enable=%d. id=%d. data.id=%d.\n", idd->enable, idd->id, idd->id);
 	idd->enable = PARSEDATA(param, MASK_ENABLE, OF_ENABLE);
 	if (fake_flag == 1)
 	    printf("ioParseParameter: data.enable=%d. id=%d. data.id=%d.\n", idd->enable, idd->id, idd->id);
@@ -172,6 +191,7 @@ int ioReadUpload(struct IODeviceData *idd) {
     if (fake_flag == 1)
     {
 	printf("fake_flag: data.enable=%d. id=%d. data.id=%d.\n", idd->enable, idd->id, idd->id);
+	writeupload();
 	printf("fake_flag: data.enable=%d. id=%d. data.id=%d.\n", idd->enable, idd->id, idd->id);
 	printf("get_ptr = { %08X, %08X, %08X, %08X, %08X, %08X, %08X, %08X }\n", 
 			    ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7]);

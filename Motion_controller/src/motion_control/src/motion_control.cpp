@@ -51,7 +51,8 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         return MOTION_INTERNAL_FAULT;
     }
 
-    if (device_manager_ptr_ && axis_group_manager_ptr_ && coordinate_manager_ptr_ && tool_manager_ptr_ && error_monitor_ptr_)
+    //if (device_manager_ptr_ && axis_group_manager_ptr_ && coordinate_manager_ptr_ && tool_manager_ptr_ && error_monitor_ptr_)
+    if(1)
     {
         device_manager_ptr_ = device_manager_ptr;
         axis_group_manager_ptr_ = axis_group_manager_ptr;

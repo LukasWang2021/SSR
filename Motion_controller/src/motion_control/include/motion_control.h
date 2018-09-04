@@ -114,7 +114,6 @@ private:
 
     int  user_frame_id_;
     int  tool_frame_id_;
-    MotionFrame motion_frame_;
 
     MotionControlParam* param_ptr_;
     fst_log::Logger* log_ptr_;

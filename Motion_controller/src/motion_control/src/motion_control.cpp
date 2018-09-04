@@ -460,7 +460,7 @@ ErrorCode MotionControl::setToolFrameID(int id)
 
 void MotionControl::getMotionFrameID(MotionFrame &frame, int &id)
 {
-    frame = motion_frame_;
+    frame = group_ptr_->getMotionFrame();
 
     if (frame == USER)
     {
@@ -481,15 +481,14 @@ ErrorCode MotionControl::setMotionFrameID(MotionFrame frame, int id)
     FST_INFO("Set motion frame: %d, id = %d", frame, id);
     ErrorCode err;
 
-    if (frame != motion_frame_)
+    if (frame != group_ptr_->getMotionFrame())
     {
-        FST_INFO("Current frame: %d", motion_frame_);
+        FST_INFO("Current frame: %d", group_ptr_->getMotionFrame());
         err = group_ptr_->setMotionFrame(frame);
 
         if (err == SUCCESS)
         {
-            motion_frame_ = frame;
-            FST_INFO("Current frame switch to %d success.", motion_frame_);
+            FST_INFO("Current frame switch to %d success.", group_ptr_->getMotionFrame());
         }
         else
         {
@@ -498,7 +497,7 @@ ErrorCode MotionControl::setMotionFrameID(MotionFrame frame, int id)
         }
     }
 
-    if (motion_frame_ == USER)
+    if (group_ptr_->getMotionFrame() == USER)
     {
         FST_INFO("Current user frame ID = %d", user_frame_id_);
 
@@ -535,7 +534,7 @@ ErrorCode MotionControl::setMotionFrameID(MotionFrame frame, int id)
             return SUCCESS;
         }
     }
-    else if (motion_frame_ == TOOL)
+    else if (frame == TOOL)
     {
         FST_INFO("Current tool frame ID = %d", tool_frame_id_);
 

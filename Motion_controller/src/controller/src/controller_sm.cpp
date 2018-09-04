@@ -51,7 +51,6 @@ void ControllerSm::processStateMachine()
     transferServoState();
     transferCtrlState();
     transferRobotState();
-    usleep(param_ptr_->routine_cycle_time_);
 }
 
 UserOpMode ControllerSm::getUserOpMode()

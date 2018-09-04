@@ -62,6 +62,9 @@ ErrorCode Controller::init()
         return CONTROLLER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
+    
+    //preformance_monitor_.addTimer(1, "routine thread",  0,  10, 100, 1000);
+    //preformance_monitor_.addTimer(2, "heartbeat thread",  0,  20, 200, 2000);
 
     ServerAlarmApi::GetInstance()->setEnable(param_ptr_->enable_log_service_);
     ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, std::string("Controller start init..."));
@@ -191,16 +194,22 @@ void Controller::setExit()
 
 void Controller::runRoutineThreadFunc()
 {
+    //preformance_monitor_.startTimer(1);
     state_machine_.processStateMachine();
     rpc_.processRpc();
     ipc_.processIpc();
-    publish_.processPublish();
+    publish_.processPublish();    
+    //preformance_monitor_.stopTimer(1);
+    //preformance_monitor_.printRealTimeStatistic(10);
+    usleep(param_ptr_->routine_cycle_time_);
 }
 
 void Controller::runHeartbeatThreadFunc()
 {
     usleep(param_ptr_->heartbeat_cycle_time_);
+    //preformance_monitor_.startTimer(2);
     process_comm_ptr_->getHeartbeatClientPtr()->sendHeartbeat();
+    //preformance_monitor_.stopTimer(2);
 }
 
 void Controller::recordLog(std::string log_str)

@@ -128,6 +128,8 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/getPrismaticManualStep", 0x0000FCE0, &ControllerRpc::handleRpc0x0000FCE0}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setCartesianManualStep", 0x0000A420, &ControllerRpc::handleRpc0x0000A420}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getCartesianManualStep", 0x0000EAC0, &ControllerRpc::handleRpc0x0000EAC0}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setOrientationManualStep", 0x00002940, &ControllerRpc::handleRpc0x00002940}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getOrientationManualStep", 0x00016D20, &ControllerRpc::handleRpc0x00016D20}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/interpreter/start", 0x00006154, &ControllerRpc::handleRpc0x00006154}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/debug", 0x000102D7, &ControllerRpc::handleRpc0x000102D7}; rpc_table_.push_back(rpc_service);

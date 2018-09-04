@@ -980,4 +980,24 @@ void ControllerRpc::handleRpc0x0000EAC0(void* request_data_ptr, void* response_d
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getCartesianManualStep"));
 }
 
+// "/rpc/motion_control/axis_group/setOrientationManualStep"
+void ControllerRpc::handleRpc0x00002940(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32_Double* rq_data_ptr = static_cast<RequestMessageType_Int32_Double*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    rs_data_ptr->data.data = SUCCESS;
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setOrientationManualStep"));
+}
+
+// "/rpc/motion_control/axis_group/getOrientationManualStep"
+void ControllerRpc::handleRpc0x00016D20(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
+
+    rs_data_ptr->error_code.data = SUCCESS;
+    rs_data_ptr->data.data = 0.1;
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getOrientationManualStep"));
+}
 

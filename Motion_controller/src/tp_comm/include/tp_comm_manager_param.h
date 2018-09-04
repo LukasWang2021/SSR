@@ -22,6 +22,7 @@ public:
     int cycle_time_;    //ms
     int recv_buffer_size_;
     int send_buffer_size_;
+    int rpc_list_max_size_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

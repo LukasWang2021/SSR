@@ -149,18 +149,27 @@ void TpComm::close()
     }
 }
 
-std::vector<TpRequestResponse> TpComm::popTaskFromRequestList()
+ bool TpComm::popTaskFromRequestList(TpRequestResponse* task)
 {
-    std::vector<TpRequestResponse> request_list;
-    std::vector<TpRequestResponse>::iterator it;
-    request_list_mutex_.lock();
-    for(it = request_list_.begin(); it != request_list_.end(); ++it)
+    if(task == NULL)
     {
-        request_list.push_back(*it);
+        return false;
     }
-    request_list_.clear();
-    request_list_mutex_.unlock();
-    return request_list;
+    
+    request_list_mutex_.lock();
+
+    if(!request_list_.empty())
+    {
+        *task = request_list_.front();
+        request_list_.pop_front();
+        request_list_mutex_.unlock();
+        return true;
+    }
+    else
+    {
+        request_list_mutex_.unlock();
+        return false;
+    }
 }
 
 int32_t TpComm::getResponseSucceed(void* response_data_ptr)
@@ -335,8 +344,14 @@ void TpComm::handleRequest()
         return;
     }
 
+    if(request_list_.size() > param_ptr_->rpc_list_max_size_)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_RPC_OVERLOAD);
+        FST_ERROR("Too much rpc to handle.");
+        return;
+    }
+    
     unsigned int hash = *((unsigned int*)recv_buffer_ptr_);
-    FST_INFO("---handleRequest: hash = %x, recv_bytes = %d", hash, recv_bytes);
     FST_INFO("---handleRequest: %x %x %x %x", recv_buffer_ptr_[0], recv_buffer_ptr_[1], recv_buffer_ptr_[2], recv_buffer_ptr_[3]);
 
     HandleRequestFuncPtr func_ptr = getRequestHandlerByHash(hash);
@@ -349,8 +364,6 @@ void TpComm::handleRequest()
         ErrorMonitor::instance()->add(TP_COMM_INVALID_REQUEST);
         FST_ERROR("Request invalid.");
     }
-
-    FST_INFO("Received msg");
 }
 
 void TpComm::pushTaskToRequestList(unsigned int hash, void* request_data_ptr, void* response_data_ptr)

@@ -53,19 +53,18 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
 void ControllerRpc::processRpc()
 {
     HandleRpcFuncPtr func_ptr;
-    std::vector<TpRequestResponse>::iterator it;
-    std::vector<TpRequestResponse> request_list = tp_comm_ptr_->popTaskFromRequestList();
-    for(it = request_list.begin(); it != request_list.end(); ++it)
+    TpRequestResponse task;
+    if(tp_comm_ptr_->popTaskFromRequestList(&task))
     {
-        if(tp_comm_ptr_->getResponseSucceed(it->response_data_ptr) == 0)
+        if(tp_comm_ptr_->getResponseSucceed(task.response_data_ptr) == 0)
         {
-            func_ptr = getRpcHandlerByHash(it->hash);
+            func_ptr = getRpcHandlerByHash(task.hash);
             if(func_ptr != NULL)
             {
-                (this->*func_ptr)(it->request_data_ptr, it->response_data_ptr);
+                (this->*func_ptr)(task.request_data_ptr, task.response_data_ptr);
             }
         }
-        tp_comm_ptr_->pushTaskToResponseList(*it);
+        tp_comm_ptr_->pushTaskToResponseList(task);
     }
 }
 

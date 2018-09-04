@@ -221,8 +221,6 @@ private:
     void handleRpc0x00016D9F(void* request_data_ptr, void* response_data_ptr); 
     // "/rpc/motion_control/getAxisGroupInfoList"
     void handleRpc0x00010F54(void* request_data_ptr, void* response_data_ptr);    
-    // "/rpc/motion_control/axis_group/setManualFrame"
-    void handleRpc0x00009D05(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/doStepManualMove"
     void handleRpc0x000085D5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/doContinuousManualMove"

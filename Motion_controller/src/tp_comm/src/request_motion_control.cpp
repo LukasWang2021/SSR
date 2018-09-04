@@ -57,30 +57,6 @@ void TpComm::handleRequest0x00001D14(int recv_bytes)
         recv_bytes, RequestMessageType_Void_fields, -1);
 }
 
-//"/rpc/motion_control/axis_group/setManualFrame"
-void TpComm::handleRequest0x00009D05(int recv_bytes)
-{
-    // create object for request and response package
-    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
-    if(request_data_ptr == NULL)
-    {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
-    if(response_data_ptr == NULL)
-    {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
-        return;
-    }
-    
-    handleRequestPackage(0x00009D05, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_Int32List_fields, -1);
-}
-
 //"/rpc/motion_control/axis_group/doStepManualMove"
 void TpComm::handleRequest0x000085D5(int recv_bytes)
 { 

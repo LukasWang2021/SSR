@@ -4,6 +4,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <list>
 #include <sys/time.h>
 #include <nanomsg/nn.h>
 
@@ -56,7 +57,7 @@ public:
     void tpCommThreadFunc();
     bool isRunning();
 
-    std::vector<TpRequestResponse> popTaskFromRequestList();
+    bool popTaskFromRequestList(TpRequestResponse* task);
     int32_t getResponseSucceed(void* response_data_ptr);
     void pushTaskToResponseList(TpRequestResponse& package);
     TpPublish generateTpPublishTask(unsigned int topic_hash, int interval_min, int interval_max);
@@ -267,8 +268,6 @@ private:
     void handleRequest0x00001E70(int recv_bytes);
     /********rpc/motion_control/reset, RequestMessageType_Void**********/
     void handleRequest0x00001D14(int recv_bytes);
-    /********rpc/motion_control/axis_group/setManualFrame, RequestMessageType_Int32List(count = 2) **********/
-    void handleRequest0x00009D05(int recv_bytes);
     /********rpc/motion_control/axis_group/doStepManualMove, RequestMessageType_Int32List(count = 2) **********/
     void handleRequest0x000085D5(int recv_bytes);
     /********rpc/motion_control/axis_group/doContinuousManualMove, RequestMessageType_Int32_Int32List(count = 9)**********/
@@ -554,8 +553,6 @@ private:
     void handleResponse0x00001E70(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/reset, ResponseMessageType_Bool**********/
     void handleResponse0x00001D14(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/motion_control/axis_group/setManualFrame, ResponseMessageType_Bool**********/
-    void handleResponse0x00009D05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/doStepManualMove, ResponseMessageType_Bool**********/
     void handleResponse0x000085D5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/doContinuousManualMove, ResponseMessageType_Bool**********/
@@ -792,7 +789,7 @@ private:
     std::mutex publish_list_mutex_;
     std::mutex reg_publish_list_mutex_;
     std::mutex io_publish_list_mutex_;
-    std::vector<TpRequestResponse>  request_list_;
+    std::list<TpRequestResponse>  request_list_;
     std::vector<TpRequestResponse>  response_list_;
     std::vector<TpPublish>  publish_list_;
     std::vector<TpPublish>  reg_publish_list_;

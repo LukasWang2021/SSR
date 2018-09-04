@@ -86,7 +86,6 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/setGlobalAccRatio", 0x0000271F, &ControllerRpc::handleRpc0x0000271F}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/getGlobalAccRatio", 0x00016D9F, &ControllerRpc::handleRpc0x00016D9F}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/getAxisGroupInfoList", 0x00010F54, &ControllerRpc::handleRpc0x00010F54}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/motion_control/axis_group/setManualFrame", 0x00009D05, &ControllerRpc::handleRpc0x00009D05}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doStepManualMove", 0x000085D5, &ControllerRpc::handleRpc0x000085D5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doContinuousManualMove", 0x0000D3F5, &ControllerRpc::handleRpc0x0000D3F5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/doGotoCartesianPointManualMove", 0x00010C05, &ControllerRpc::handleRpc0x00010C05}; rpc_table_.push_back(rpc_service);

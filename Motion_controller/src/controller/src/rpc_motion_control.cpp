@@ -31,7 +31,7 @@ void ControllerRpc::handleRpc0x000005EF(void* request_data_ptr, void* response_d
     RequestMessageType_Double* rq_data_ptr = static_cast<RequestMessageType_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->setGlobalVelRatio(rq_data_ptr->data.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/setGlobalVelRatio"));
 }
 
@@ -40,7 +40,8 @@ void ControllerRpc::handleRpc0x0001578F(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
     
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->error_code.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->getGlobalVelRatio();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/getGlobalVelRatio"));
 }
 
@@ -50,7 +51,7 @@ void ControllerRpc::handleRpc0x0000271F(void* request_data_ptr, void* response_d
     RequestMessageType_Double* rq_data_ptr = static_cast<RequestMessageType_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->setGlobalAccRatio(rq_data_ptr->data.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/setGlobalAccRatio"));
 }
 
@@ -59,7 +60,8 @@ void ControllerRpc::handleRpc0x00016D9F(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
     
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->error_code.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->getGlobalAccRatio();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/getGlobalAccRatio"));
 }
 
@@ -94,23 +96,6 @@ void ControllerRpc::handleRpc0x00010F54(void* request_data_ptr, void* response_d
     rs_data_ptr->data.info_list[0].axis_info_list[7].axis_type = -1;
     rs_data_ptr->data.info_list[0].axis_info_list[8].axis_id = -1;
     rs_data_ptr->data.info_list[0].axis_info_list[8].axis_type = -1;    
-}
-
-// "/rpc/motion_control/axis_group/setManualFrame"
-void ControllerRpc::handleRpc0x00009D05(void* request_data_ptr, void* response_data_ptr)
-{
-    RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
-    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
-    if(rq_data_ptr->data.data_count == 2)
-    {
-        //rs_data_ptr->data.data = motion_control_ptr_->setManualFrame(rq_data_ptr->data.data[1]);
-    }
-    else
-    {
-        rs_data_ptr->data.data = INVALID_PARAMETER;
-    }
-    //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setManualFrame"));
 }
 
 // "/rpc/motion_control/axis_group/doStepManualMove"
@@ -221,7 +206,7 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/doManualStop"
 void ControllerRpc::handleRpc0x0000A9A0(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->manualStop();
@@ -231,7 +216,7 @@ void ControllerRpc::handleRpc0x0000A9A0(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getJointFeedBack"
 void ControllerRpc::handleRpc0x0000DFBB(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
 
     Joint joint = motion_control_ptr_->getServoJoint();
@@ -289,7 +274,7 @@ void ControllerRpc::handleRpc0x000114A4(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getUserSoftLimit"
 void ControllerRpc::handleRpc0x0000C764(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimit*>(response_data_ptr);
 
     JointConstraint constraint;
@@ -360,7 +345,7 @@ void ControllerRpc::handleRpc0x000108E4(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getManuSoftLimit"
 void ControllerRpc::handleRpc0x0000C244(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimit*>(response_data_ptr);
 
     JointConstraint constraint;
@@ -431,7 +416,7 @@ void ControllerRpc::handleRpc0x0000C454(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getHardLimit"
 void ControllerRpc::handleRpc0x00013394(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimit*>(response_data_ptr);
 
     JointConstraint constraint;
@@ -470,7 +455,7 @@ void ControllerRpc::handleRpc0x0000A845(void* request_data_ptr, void* response_d
 
     if(rq_data_ptr->data.data_count == 3)
     {
-        rs_data_ptr->data.data = SUCCESS;
+        rs_data_ptr->data.data = motion_control_ptr_->setMotionFrameID((MotionFrame)rq_data_ptr->data.data[1], rq_data_ptr->data.data[2]);
     }
     else
     {
@@ -482,10 +467,13 @@ void ControllerRpc::handleRpc0x0000A845(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getCoordinate"
 void ControllerRpc::handleRpc0x00008595(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
+    MotionFrame frame;
+    motion_control_ptr_->getMotionFrameID(frame, rs_data_ptr->data.data[1]);
+    rs_data_ptr->data.data[0] = (int32_t)frame;
     rs_data_ptr->data.data_count = 2;
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getCoordinate"));
 }
@@ -498,7 +486,7 @@ void ControllerRpc::handleRpc0x0001581C(void* request_data_ptr, void* response_d
 
     if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.data = SUCCESS;
+        rs_data_ptr->data.data = motion_control_ptr_->setToolFrameID(rq_data_ptr->data.data[1]);
     }
     else
     {
@@ -510,10 +498,11 @@ void ControllerRpc::handleRpc0x0001581C(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getTool"
 void ControllerRpc::handleRpc0x0001354C(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
+    motion_control_ptr_->getToolFrameID(rs_data_ptr->data.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getTool"));
 }
 
@@ -560,7 +549,7 @@ void ControllerRpc::handleRpc0x0000B6D4(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/ignoreLostZeroError"
 void ControllerRpc::handleRpc0x00014952(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->maskOffsetLostError();
@@ -570,7 +559,7 @@ void ControllerRpc::handleRpc0x00014952(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getAllZeroPointOffsets"
 void ControllerRpc::handleRpc0x00012353(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
 
     double offset[NUM_OF_JOINT];
@@ -584,7 +573,7 @@ void ControllerRpc::handleRpc0x00012353(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus"
 void ControllerRpc::handleRpc0x0000C183(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
     OffsetMask error_mask_state[NUM_OF_JOINT];
@@ -598,7 +587,7 @@ void ControllerRpc::handleRpc0x0000C183(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/saveAllZeroPointOffsets"
 void ControllerRpc::handleRpc0x000171D3(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->saveOffset();
@@ -625,7 +614,7 @@ void ControllerRpc::handleRpc0x00010E43(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"
 void ControllerRpc::handleRpc0x00011B03(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->calibrateOffset();
@@ -679,7 +668,7 @@ void ControllerRpc::handleRpc0x00005AE3(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/isReferencePointExist"
 void ControllerRpc::handleRpc0x0000D344(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
@@ -690,7 +679,7 @@ void ControllerRpc::handleRpc0x0000D344(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/deleteReferencePoint"
 void ControllerRpc::handleRpc0x00008744(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->deleteReference();
@@ -700,7 +689,7 @@ void ControllerRpc::handleRpc0x00008744(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/saveReferencePoint"
 void ControllerRpc::handleRpc0x00006744(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->saveReference();
@@ -710,7 +699,7 @@ void ControllerRpc::handleRpc0x00006744(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/fastCalibrateAllZeroPointOffsets"
 void ControllerRpc::handleRpc0x0000E913(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->fastCalibrate();
@@ -764,7 +753,7 @@ void ControllerRpc::handleRpc0x00007EC3(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getUserSoftLimitWithUnit"
 void ControllerRpc::handleRpc0x00008ED4(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimitWithUnit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimitWithUnit*>(response_data_ptr);
 
     JointConstraint constraint;
@@ -816,7 +805,7 @@ void ControllerRpc::handleRpc0x00008ED4(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getManuSoftLimitWithUnit"
 void ControllerRpc::handleRpc0x000124E4(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimitWithUnit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimitWithUnit*>(response_data_ptr);
 
     JointConstraint constraint;
@@ -868,7 +857,7 @@ void ControllerRpc::handleRpc0x000124E4(void* request_data_ptr, void* response_d
 // "/rpc/motion_control/axis_group/getHardLimitWithUnit"
 void ControllerRpc::handleRpc0x000092B4(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimitWithUnit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimitWithUnit*>(response_data_ptr);
 
     JointConstraint constraint;
@@ -923,18 +912,18 @@ void ControllerRpc::handleRpc0x00005290(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_Double* rq_data_ptr = static_cast<RequestMessageType_Int32_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->setRotateManualStep(rq_data_ptr->data2.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setRotateManualStep"));
 }
 
 // "/rpc/motion_control/axis_group/getRotateManualStep"
 void ControllerRpc::handleRpc0x00003000(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = 0.1;
+    rs_data_ptr->data.data = motion_control_ptr_->getRotateManualStep();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getRotateManualStep"));
 }
 
@@ -944,18 +933,18 @@ void ControllerRpc::handleRpc0x0000B640(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_Double* rq_data_ptr = static_cast<RequestMessageType_Int32_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->setPrismaticManualStep(rq_data_ptr->data2.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setPrismaticManualStep"));
 }
 
 // "/rpc/motion_control/axis_group/getPrismaticManualStep"
 void ControllerRpc::handleRpc0x0000FCE0(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = 0.1;
+    rs_data_ptr->data.data = motion_control_ptr_->getPrismaticManualStep();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getPrismaticManualStep"));
 }
 
@@ -965,18 +954,18 @@ void ControllerRpc::handleRpc0x0000A420(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_Double* rq_data_ptr = static_cast<RequestMessageType_Int32_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->setPositionManualStep(rq_data_ptr->data2.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setCartesianManualStep"));
 }
 
 // "/rpc/motion_control/axis_group/getCartesianManualStep"
 void ControllerRpc::handleRpc0x0000EAC0(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = 0.1;
+    rs_data_ptr->data.data = motion_control_ptr_->getPositionManualStep();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getCartesianManualStep"));
 }
 
@@ -986,18 +975,18 @@ void ControllerRpc::handleRpc0x00002940(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_Double* rq_data_ptr = static_cast<RequestMessageType_Int32_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->setOrientationManualStep(rq_data_ptr->data2.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setOrientationManualStep"));
 }
 
 // "/rpc/motion_control/axis_group/getOrientationManualStep"
 void ControllerRpc::handleRpc0x00016D20(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = 0.1;
+    rs_data_ptr->data.data = motion_control_ptr_->getOrientationManualStep();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getOrientationManualStep"));
 }
 

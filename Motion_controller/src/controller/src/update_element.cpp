@@ -59,25 +59,26 @@ void ControllerPublish::updateAxisGroupCurrentCoordinate()
 {
     current_coordinate_.data_count = 3;
     current_coordinate_.data[0] = 1;
-    current_coordinate_.data[1] = 0;
-    current_coordinate_.data[2] = 0;
+    MotionFrame motion_frame;
+    motion_control_ptr_->getMotionFrameID(motion_frame, current_coordinate_.data[2]);
+    current_coordinate_.data[1] = (int32_t)motion_frame;
 }
 
 void ControllerPublish::updateAxisGroupCurrentTool()
 {
     current_tool_.data_count = 2;
     current_tool_.data[0] = 1;
-    current_tool_.data[1] = 0;
+    motion_control_ptr_->getToolFrameID(current_tool_.data[1]);
 }
 
 void ControllerPublish::updateGlobalVelRatio()
 {
-    global_vel_ratio_.data = 0.5;
+    global_vel_ratio_.data = motion_control_ptr_->getGlobalVelRatio();
 }
 
 void ControllerPublish::updateGlobalAccRatio()
 {
-    global_acc_ratio_.data = 0.5;
+    global_acc_ratio_.data = motion_control_ptr_->getGlobalAccRatio();
 }
 
 void ControllerPublish::updateProgramStatus()

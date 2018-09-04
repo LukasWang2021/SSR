@@ -31,13 +31,6 @@ class ArmGroup : public BaseGroup
     size_t getFIFOLength(void);
 
     Calibrator* getCalibratorPtr(void);
-
-    ErrorCode getSoftConstraint(JointConstraint &soft_constraint);
-    ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
-    ErrorCode getHardConstraint(JointConstraint &hard_constraint);
-    ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
-    ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
-    ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
   
   private:
     bool isJointInConstraint(Joint joint, JointConstraint constraint);

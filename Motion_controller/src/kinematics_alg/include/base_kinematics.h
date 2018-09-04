@@ -8,12 +8,14 @@
 #ifndef _BASE_KINEMATICS_H
 #define _BASE_KINEMATICS_H
 
+#include <math.h>
 #include <base_datatype.h>
 #include <basic_matrix.h>
 #include <error_code.h>
 
 namespace fst_mc
 {
+
 
 class BaseKinematics
 {
@@ -45,9 +47,13 @@ class BaseKinematics
     //virtual ErrorCode   chainIK(const Pose &pose, Joint &ref, Joint &res) = 0;
     //virtual ErrorCode   chainIK(const PoseEuler &pose, Joint &ref, Joint &res) = 0;
 
-    ErrorCode setWorldFrame(PoseEuler wf);
-    ErrorCode setUserFrame(PoseEuler uf);
-    ErrorCode setToolFrame(PoseEuler tf);
+    ErrorCode setWorldFrame(const PoseEuler &wf);
+    ErrorCode setWorldFrame(const basic_alg::Matrix &wf);
+    ErrorCode setUserFrame(const PoseEuler &uf);
+    ErrorCode setUserFrame(const basic_alg::Matrix &uf);
+    ErrorCode setToolFrame(const PoseEuler &tf);
+    ErrorCode setToolFrame(const basic_alg::Matrix &tf);
+
 
   protected:
     virtual void forwardKinematics(const Joint &joint, basic_alg::Matrix &matrix) = 0;
@@ -64,6 +70,12 @@ class BaseKinematics
 };
 
 
+void inline reviseJoint(double &jnt, double ref, double upper_limit, double lower_limit)
+{
+    jnt = jnt - round((jnt - ref) / 2 / PI) * PI * 2;
+    if      (jnt > upper_limit)  jnt = jnt - ceil((jnt - upper_limit) / 2 / PI) * PI * 2;
+    else if (jnt < lower_limit)  jnt = jnt - ceil((jnt - lower_limit) / 2 / PI) * PI * 2;
+}
 
 
 

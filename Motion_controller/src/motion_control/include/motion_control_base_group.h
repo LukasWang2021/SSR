@@ -53,11 +53,17 @@ class BaseGroup
 
     virtual ErrorCode autoMove(void) = 0;
 
-    virtual ManualFrame getManualFrame(void);
+    virtual MotionFrame getMotionFrame(void);
+    virtual ErrorCode setMotionFrame(MotionFrame frame);
+
+    virtual ErrorCode setToolFrame(const PoseEuler &tf);
+    virtual ErrorCode setUserFrame(const PoseEuler &uf);
+    virtual ErrorCode setWorldFrame(const PoseEuler &wf);
+
     virtual double getManualStepAxis(void);
     virtual double getManualStepPosition(void);
     virtual double getManualStepOrientation(void);
-    virtual ErrorCode setManualFrame(ManualFrame frame);
+
     virtual ErrorCode setManualStepAxis(double step);
     virtual ErrorCode setManualStepPosition(double step);
     virtual ErrorCode setManualStepOrientation(double step);
@@ -71,14 +77,17 @@ class BaseGroup
     virtual size_t getFIFOLength(void) = 0;
 
     virtual Calibrator* getCalibratorPtr(void) = 0;
-    Constraint* getSoftConstraintPtr(void);
+    virtual Constraint* getSoftConstraintPtr(void);
 
-    ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
-    ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
-    ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
-    ErrorCode getSoftConstraint(JointConstraint &soft_constraint);
-    ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
-    ErrorCode getHardConstraint(JointConstraint &hard_constraint);
+    virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
+    virtual ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
+    virtual ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
+    virtual ErrorCode getSoftConstraint(JointConstraint &soft_constraint);
+    virtual ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
+    virtual ErrorCode getHardConstraint(JointConstraint &hard_constraint);
+
+    virtual ErrorCode getJointFromPose(const PoseEuler &pose, Joint &joint);
+    virtual ErrorCode getPoseFromJoint(const Joint &joint, PoseEuler &pose);
 
     void realtimeTask(void);
     void activeRealtimeTask(void);
@@ -128,7 +137,6 @@ class BaseGroup
     MotionTime  cycle_time_;
     MotionTime  auto_time_;
     MotionTime  manual_time_;
-
     Calibrator  calibrator_;
     ManualTeach manual_teach_;
 

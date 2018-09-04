@@ -25,6 +25,15 @@ enum MotionType
     MOTION_CIRCLE = 3,
 };
 
+enum MotionFrame
+{
+	JOINT,
+	BASE,
+	WORLD,
+	USER,
+	TOOL,
+};
+
 class Joint
 {
   public:

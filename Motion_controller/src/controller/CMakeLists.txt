@@ -59,9 +59,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/base_axis_group/include
     ${depend_PATH_INC}/log_service/include
     ${depend_PATH_INC}/basic_alg/include 
-    ${depend_PATH_INC}/kinematics_alg/include
-    ${depend_PATH_INC}/preformance_monitor/include 
-    ${depend_PATH_INC}/fst_io_device/include 
+    ${depend_PATH_INC}/kinematics_alg/include 
 )
 
 catkin_package(
@@ -110,7 +108,6 @@ target_link_libraries(controller
     error_monitor 
     motion_control
     log_service
-    preformance_monitor 
 )
 
 #############

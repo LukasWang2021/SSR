@@ -44,15 +44,6 @@ struct MotionTarget
     };
 };
 
-enum ManualFrame
-{
-    JOINT,
-    BASE,
-    WORLD,
-    USER,
-    TOOL,
-};
-
 enum ManualMode
 {
     STEP,
@@ -98,7 +89,7 @@ struct ManualCoef
 struct ManualTrajectory
 {
     ManualMode      mode;
-    ManualFrame     frame;
+    MotionFrame     frame;
     ManualDirection direction[6];
 
     Joint       joint_start;

@@ -15,6 +15,7 @@
 
 using namespace std;
 using namespace fst_base;
+using namespace basic_alg;
 using namespace fst_parameter;
 
 namespace fst_mc
@@ -54,26 +55,33 @@ ErrorCode BaseGroup::stopGroup(void)
 
 
 
-ManualFrame BaseGroup::getManualFrame(void)
+MotionFrame BaseGroup::getMotionFrame(void)
 {
-    FST_INFO("Get manual frame = %d", manual_traj_.frame);
+    FST_INFO("Get motion frame = %d", manual_traj_.frame);
     return manual_traj_.frame;
 }
 
-ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
+ErrorCode BaseGroup::setMotionFrame(MotionFrame frame)
 {
-    FST_INFO("Set manual frame = %d", frame);
+    FST_INFO("Set manual frame = %d, current frame is %d", frame, manual_traj_.frame);
 
-    if (group_state_ == STANDBY)
+    if (frame != manual_traj_.frame)
     {
-        manual_traj_.frame = frame;
-        FST_INFO("Done.");
-        return SUCCESS;
+        if (group_state_ == STANDBY)
+        {
+            manual_traj_.frame = frame;
+            FST_INFO("Done.");
+            return SUCCESS;
+        }
+        else
+        {
+            FST_ERROR("Cannot set frame in current state = %d", group_state_);
+            return INVALID_SEQUENCE;
+        }
     }
     else
     {
-        FST_ERROR("Cannot set frame in current state = %d", group_state_);
-        return INVALID_SEQUENCE;
+        return SUCCESS;
     }
 }
 
@@ -520,6 +528,20 @@ GroupState BaseGroup::getGroupState(void)
     return group_state_;
 }
 
+ErrorCode BaseGroup::getJointFromPose(const PoseEuler &pose, Joint &joint)
+{
+    ErrorCode err = SUCCESS;
+
+    return err;
+}
+
+ErrorCode BaseGroup::getPoseFromJoint(const Joint &joint, PoseEuler &pose)
+{
+    ErrorCode err = SUCCESS;
+
+    return err;
+}
+
 ErrorCode BaseGroup::setGlobalVelRatio(double ratio)
 {
     FST_INFO("Set global velocity ratio: %.4f", ratio);
@@ -562,6 +584,21 @@ double BaseGroup::getGlobalVelRatio(void)
 double BaseGroup::getGlobalAccRatio(void)
 {
     return acc_ratio_;
+}
+
+ErrorCode BaseGroup::setToolFrame(const PoseEuler &tf)
+{
+    return kinematics_ptr_->setToolFrame(tf);
+}
+
+ErrorCode BaseGroup::setUserFrame(const PoseEuler &uf)
+{
+    return kinematics_ptr_->setUserFrame(uf);
+}
+
+ErrorCode BaseGroup::setWorldFrame(const PoseEuler &wf)
+{
+    return kinematics_ptr_->setUserFrame(wf);
 }
 
 ErrorCode BaseGroup::sendPoint(void)

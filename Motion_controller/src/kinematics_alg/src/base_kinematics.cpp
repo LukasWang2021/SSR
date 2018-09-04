@@ -119,15 +119,23 @@ ErrorCode BaseKinematics::inverseKinematicsInTool(const Matrix &tool_coordinate,
 }
 
 
-ErrorCode BaseKinematics::setWorldFrame(PoseEuler wf)
+ErrorCode BaseKinematics::setWorldFrame(const PoseEuler &wf)
 {
-    user_frame_ = wf;
+    world_frame_ = wf;
+    inverse_world_frame_ = wf;
+    inverse_world_frame_.inverse();
+    return SUCCESS;
+}
+
+ErrorCode BaseKinematics::setWorldFrame(const Matrix &wf)
+{
+    world_frame_ = wf;
     inverse_user_frame_ = wf;
     inverse_user_frame_.inverse();
     return SUCCESS;
 }
 
-ErrorCode BaseKinematics::setUserFrame(PoseEuler uf)
+ErrorCode BaseKinematics::setUserFrame(const PoseEuler &uf)
 {
     user_frame_ = uf;
     inverse_user_frame_ = uf;
@@ -135,7 +143,15 @@ ErrorCode BaseKinematics::setUserFrame(PoseEuler uf)
     return SUCCESS;
 }
 
-ErrorCode BaseKinematics::setToolFrame(PoseEuler tf)
+ErrorCode BaseKinematics::setUserFrame(const Matrix &uf)
+{
+    user_frame_ = uf;
+    inverse_user_frame_ = uf;
+    inverse_user_frame_.inverse();
+    return SUCCESS;
+}
+
+ErrorCode BaseKinematics::setToolFrame(const PoseEuler &tf)
 {
     tool_frame_ = tf;
     inverse_tool_frame_ = tf;
@@ -143,7 +159,13 @@ ErrorCode BaseKinematics::setToolFrame(PoseEuler tf)
     return SUCCESS;
 }
 
-
+ErrorCode BaseKinematics::setToolFrame(const Matrix &tf)
+{
+    tool_frame_ = tf;
+    inverse_tool_frame_ = tf;
+    inverse_tool_frame_.inverse();
+    return SUCCESS;
+}
 
 
 

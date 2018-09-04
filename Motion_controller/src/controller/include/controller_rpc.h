@@ -305,10 +305,6 @@ private:
     void handleRpc0x0000A420(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getCartesianManualStep"
     void handleRpc0x0000EAC0(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/motion_control/axis_group/setOrientationManualStep"
-    void handleRpc0x00002940(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/motion_control/axis_group/getOrientationManualStep"
-    void handleRpc0x00016D20(void* request_data_ptr, void* response_data_ptr);
 
     /* interpreter rpc */
     // "/rpc/interpreter/start"

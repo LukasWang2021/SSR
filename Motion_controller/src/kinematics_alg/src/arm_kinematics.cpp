@@ -5,7 +5,6 @@
 	> Created Time: 2018年08月28日 星期二 13时29分43秒
  ************************************************************************/
 
-#include <math.h>
 #include <string.h>
 #include <arm_kinematics.h>
 
@@ -13,14 +12,6 @@ using namespace basic_alg;
 
 namespace fst_mc
 {
-
-void inline reviseJoint(double &jnt, double ref, double upper_limit, double lower_limit)
-{
-    jnt = jnt - round((jnt - ref) / 2 / PI) * PI * 2;
-    if      (jnt > upper_limit)  jnt = jnt - ceil((jnt - upper_limit) / 2 / PI) * PI * 2;
-    else if (jnt < lower_limit)  jnt = jnt - ceil((jnt - lower_limit) / 2 / PI) * PI * 2;
-}
-
 
 void ArmKinematics::initKinematics(double (&dh_matrix)[NUM_OF_JOINT][4])
 {

@@ -27,8 +27,8 @@ public:
                    fst_base::ErrorMonitor *error_monitor_ptr);
 
     // API for teaching
-    ManualFrame getManualFrame(void);
-    ErrorCode setManualFrame(ManualFrame frame);
+    //MotionFrame getManualFrame(void);
+    //ErrorCode setManualFrame(MotionFrame frame);
 
     double getRotateManualStep(void);
     double getPrismaticManualStep(void);
@@ -84,8 +84,11 @@ public:
     ErrorCode resetGroup(void);
 
     // more API
-    GroupState getGroupState(void);
-    ServoState getServoState(void);
+    ErrorCode  convertCartToJoint(const PoseEuler &pose, Joint &joint);
+    ErrorCode  convertJointToCart(const Joint &joint, PoseEuler &pose);
+
+    GroupState  getGroupState(void);
+    ServoState  getServoState(void);
     Joint   getServoJoint(void);
     void    getServoJoint(Joint &joint);
     size_t  getFIFOLength(void);
@@ -96,6 +99,11 @@ public:
     double getGlobalAccRatio(void);
 
 
+    void getToolFrameID(int &id);
+    ErrorCode setToolFrameID(int id);
+
+    void getMotionFrameID(MotionFrame &frame, int &id);
+    ErrorCode setMotionFrameID(MotionFrame frame, int id);
 
     // parameter access
     // ...
@@ -104,8 +112,9 @@ private:
     bool startRealtimeTask(void);
     bool stopRealtimeTask(void);
 
-
-
+    int  user_frame_id_;
+    int  tool_frame_id_;
+    MotionFrame motion_frame_;
 
     MotionControlParam* param_ptr_;
     fst_log::Logger* log_ptr_;

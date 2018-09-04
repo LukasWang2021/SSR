@@ -138,6 +138,7 @@ class BaseGroup
     MotionTime  auto_time_;
     MotionTime  manual_time_;
     Calibrator  calibrator_;
+    MotionFrame motion_frame_;
     ManualTeach manual_teach_;
 
     pthread_mutex_t auto_mutex_;

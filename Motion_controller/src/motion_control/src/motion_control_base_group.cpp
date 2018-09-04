@@ -10,7 +10,6 @@
 #include <vector>
 
 #include <motion_control_base_group.h>
-#include <motion_control_base_type.h>
 #include "parameter_manager/parameter_manager_param_group.h"
 
 using namespace std;
@@ -31,6 +30,7 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     kinematics_ptr_ = NULL;
     auto_time_ = 0;
     manual_time_ = 0;
+    motion_frame_ = JOINT;
 }
 
 BaseGroup::~BaseGroup()
@@ -57,19 +57,19 @@ ErrorCode BaseGroup::stopGroup(void)
 
 MotionFrame BaseGroup::getMotionFrame(void)
 {
-    FST_INFO("Get motion frame = %d", manual_traj_.frame);
-    return manual_traj_.frame;
+    FST_INFO("Get motion frame = %d", motion_frame_);
+    return motion_frame_;
 }
 
 ErrorCode BaseGroup::setMotionFrame(MotionFrame frame)
 {
-    FST_INFO("Set manual frame = %d, current frame is %d", frame, manual_traj_.frame);
+    FST_INFO("Set manual frame = %d, current frame is %d", frame, motion_frame_);
 
-    if (frame != manual_traj_.frame)
+    if (frame != motion_frame_)
     {
         if (group_state_ == STANDBY)
         {
-            manual_traj_.frame = frame;
+            motion_frame_ = frame;
             FST_INFO("Done.");
             return SUCCESS;
         }
@@ -135,9 +135,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
         return INVALID_SEQUENCE;
     }
 
-    if (manual_traj_.frame != JOINT)
+    if (motion_frame_ != JOINT)
     {
-        FST_ERROR("Cannot manual to target in current frame = %d", manual_traj_.frame);
+        FST_ERROR("Cannot manual to target in current frame = %d", motion_frame_);
         return INVALID_SEQUENCE;
     }
 
@@ -158,6 +158,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
 
     manual_time_ = 0;
     manual_traj_.mode = APOINT;
+    manual_traj_.frame = JOINT;
     ErrorCode err = manual_teach_.manualByTarget(joint, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -186,9 +187,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
         return INVALID_SEQUENCE;
     }
 
-    if (manual_traj_.frame != BASE && manual_traj_.frame != USER && manual_traj_.frame != WORLD)
+    if (motion_frame_ != BASE && motion_frame_ != USER && motion_frame_ != WORLD)
     {
-        FST_ERROR("Cannot manual to target in current frame = %d", manual_traj_.frame);
+        FST_ERROR("Cannot manual to target in current frame = %d", motion_frame_);
         return INVALID_SEQUENCE;
     }
 
@@ -204,7 +205,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     Joint res_joint;
     Joint ref_joint = getLatestJoint();
 
-    switch (manual_traj_.frame)
+    switch (motion_frame_)
     {
         case BASE:
             err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, res_joint);
@@ -216,7 +217,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
             err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, res_joint);
             break;
         default:
-            FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_traj_.frame);
+            FST_ERROR("Invalid manual frame = %d in manual to pose mode", motion_frame_);
             return MOTION_INTERNAL_FAULT;
     }
 
@@ -234,6 +235,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
 
     manual_time_ = 0;
     manual_traj_.mode = APOINT;
+    manual_traj_.frame = motion_frame_;
     err = manual_teach_.manualByTarget(res_joint, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -531,6 +533,8 @@ GroupState BaseGroup::getGroupState(void)
 ErrorCode BaseGroup::getJointFromPose(const PoseEuler &pose, Joint &joint)
 {
     ErrorCode err = SUCCESS;
+
+
 
     return err;
 }

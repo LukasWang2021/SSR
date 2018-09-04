@@ -14,7 +14,6 @@
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <error_monitor.h>
 #include <common_file_path.h>
-#include <motion_control_base_type.h>
 
 
 using namespace std;

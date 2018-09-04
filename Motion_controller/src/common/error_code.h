@@ -66,6 +66,7 @@
 #define PROCESS_COMM_INTERPRETER_SERVER_INIT_FAILED (unsigned long long int)0x0011000B00A60007   /*InterpreterServer init failed*/
 #define PROCESS_COMM_INTERPRETER_SERVER_OPEN_FAILED (unsigned long long int)0x0011000B00A60008   /*InterpreterServer open failed*/
 #define PROCESS_COMM_HEARTBEAT_CLIENT_INIT_FAILED (unsigned long long int)0x0011000B00A60009   /*HeartbeatClient init failed*/
+#define PROCESS_COMM_OPERATION_FAILED (unsigned long long int)0x0000000200A6000A   /*ProcessComm operation failed*/
 #define TP_COMM_LOG (unsigned long long int)0x0001000200A70000   /*TpComm log*/
 #define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm load param failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A70002   /*TpComm failed to initialize internal variables*/
@@ -164,8 +165,6 @@
 #define FAIL_INTERPRETER_USER_ALARM10               (unsigned long long int)0x0001000900B5010A
 #define FAIL_INTERPRETER_NOT_IN_PAUSE               (unsigned long long int)0x0001000900B5010B
 
-#define PARSE_IO_PATH_FAILED                    (unsigned long long int)0x0001000400670009   /*cant use current path to set IO*/
-
 #define PARAM_INTERNAL_FAULT (unsigned long long int)0x0001000400790001   /*program internal fault*/
 #define PARAM_FAIL_IN_INIT (unsigned long long int)0x00010002007903E9   /*initialization failed*/
 #define PARAM_NOT_FOUND (unsigned long long int)0x00010002007903F3   /*cannot find the param*/
@@ -181,8 +180,6 @@
 #define FAIL_RESTORING_YAML (unsigned long long int)0x00010002007907DD   /*restore YAML from backup failed*/
 #define FAIL_UPDATING_BACKUP (unsigned long long int)0x00010002007907DE   /*update backup file falled*/
 #define FAIL_DUMPING_PARAM (unsigned long long int)0x00010002007907DF   /*fail to dump parameter into a file*/
-
-#define FAIL_INTERPRETER_BASE (unsigned long long int)0x0001000900B50000   /*fail to dump parameter into a file*/
 
 #define GET_IO_FAIL (unsigned long long int)0x00010006008F03E9   /*fail to get io data from FPGA*/
 #define LOAD_IO_CONFIG_FAIL (unsigned long long int)0x00010006008F03EA   /*fail to load io configuration file*/

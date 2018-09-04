@@ -12,9 +12,8 @@
 #include <string.h>
 #include <vector>
 
-#include <common_log.h>
 #include <motion_control_manual_teach.h>
-#include <motion_control_base_type.h>
+#include <common_log.h>
 #include <parameter_manager/parameter_manager_param_group.h>
 
 

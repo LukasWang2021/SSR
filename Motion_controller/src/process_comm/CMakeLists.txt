@@ -28,6 +28,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/prg_interpreter/include
     ${depend_PATH_INC}/error_monitor/include 
+    ${depend_PATH_INC}/modbus/include
 )
 
 catkin_package(

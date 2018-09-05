@@ -11,8 +11,8 @@
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
 
-#include "modbus-private.h"
-#include "modbus-rtu.h"
+#include "modbus/modbus-private.h"
+#include "modbus/modbus-rtu.h"
 
 #include "modbus_manager_param.h"
 #include "local_ip.h"
@@ -38,7 +38,7 @@ typedef struct
 class ModbusTCPClient
 {
 public:
-    ModbusTCPClient(int port);
+    ModbusTCPClient(string strIP, int port);
      ~ModbusTCPClient();
 
     /***************************************
@@ -206,7 +206,7 @@ private:
     modbus_t* ctx_;
     int nb_fail_;
 
-    LocalIP local_ip_;
+    fst_modbus::LocalIP local_ip_;
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 };

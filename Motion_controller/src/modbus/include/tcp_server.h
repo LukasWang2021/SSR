@@ -8,8 +8,8 @@
 #include <errno.h>
 #include <time.h>
 
-#include "modbus-private.h"
-#include "modbus-rtu.h"
+#include "modbus/modbus-private.h"
+#include "modbus/modbus-rtu.h"
 #include "modbus_manager_param.h"
 #include "local_ip.h"
 

@@ -6,10 +6,10 @@
 
 using namespace fst_modbus;
 
-ModbusTCPClient::ModbusTCPClient(int port):
+ModbusTCPClient::ModbusTCPClient(string strIP, int port):
     log_ptr_(NULL), param_ptr_(NULL)
 {
-    string ip = local_ip_.get();
+    string ip = strIP ; // local_ip_.get();
     ctx_ = modbus_new_tcp(ip.c_str(), port);
     nb_fail_ = 0;
 

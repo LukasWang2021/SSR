@@ -178,7 +178,10 @@ U64 IOInterface::setDO(const char *path, char value)
         && (stoi(vc_path[3]) == dev_info_[i].device_number))
         {
             FST_INFO("id:%d, port:%d, value:%d", dev_info_[i].id, stoi(vc_path[5]), value);
-            return io_manager_->setModuleValue(dev_info_[i].id, stoi(vc_path[5]), value);
+			if(dev_info_[i].communication_type == "RS485")
+            	return io_manager_->setModuleValue(dev_info_[i].id, stoi(vc_path[5]), value);
+			// else if(dev_info_[i].communication_type == "MODBUS")
+            // 	return modbus_manager_->setModuleValue(dev_info_[i].id, stoi(vc_path[5]), value);
         }
     }
     return PARSE_IO_PATH_FAILED;
@@ -251,7 +254,6 @@ U64 IOInterface::getDIO(const char *path, unsigned char *buffer, int buf_len, in
     }
     return PARSE_IO_PATH_FAILED;
 }
-
 
 U64 IOInterface::getDIO(int msg_id, uint8_t *buffer, int buf_len, int& io_bytes_len)
 {

@@ -54,6 +54,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/fst_io_device/include 
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/process_comm/include 
+    ${depend_PATH_INC}/modbus/include
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wwrite-strings -fpermissive -O0")

@@ -23,6 +23,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/modbus/include
 )
 
 catkin_package(
@@ -31,6 +32,7 @@ catkin_package(
     DEPENDS base_device
     DEPENDS parameter_manager
     DEPENDS log_manager
+    DEPENDS modbus
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")

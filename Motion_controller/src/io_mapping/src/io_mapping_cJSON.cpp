@@ -30,7 +30,7 @@
 #include <float.h>
 #include <limits.h>
 #include <ctype.h>
-#include "forsight_cJSON.h"
+#include "io_mapping_cJSON.h"
 
 static const char *ep;
 

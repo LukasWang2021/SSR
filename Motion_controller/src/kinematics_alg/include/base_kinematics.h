@@ -25,6 +25,13 @@ class BaseKinematics
 
     virtual void initKinematics(double (&dh_matrix)[NUM_OF_JOINT][4]);
 
+    // universal FK/IK API
+    virtual void forwardKinematics(const Joint &joint, const PoseEuler &user, const PoseEuler &tool, PoseEuler &pose);
+    virtual void forwardKinematics(const Joint &joint, const basic_alg::Matrix &user, const basic_alg::Matrix &tool, PoseEuler &pose);
+    virtual ErrorCode inverseKinematics(const PoseEuler &pose, const PoseEuler &user, const PoseEuler &tool, const Joint &ref, Joint &res);
+    virtual ErrorCode inverseKinematics(const PoseEuler &pose, const basic_alg::Matrix &user, const basic_alg::Matrix &tool, const Joint &ref, Joint &res);
+
+    // FK/IK using activated frame and tool
     virtual void forwardKinematicsInBase(const Joint &joint, Pose      &pose);
     virtual void forwardKinematicsInBase(const Joint &joint, PoseEuler &pose);
     virtual void forwardKinematicsInUser(const Joint &joint, Pose      &pose);
@@ -32,20 +39,20 @@ class BaseKinematics
     virtual void forwardKinematicsInWorld(const Joint &joint, Pose      &pose);
     virtual void forwardKinematicsInWorld(const Joint &joint, PoseEuler &pose);
 
-    //virtual Pose      getPoseFromJoint(const Joint &joint) = 0;
-    //virtual PoseEuler getPoseEulerFromJoint(const Joint &joint) = 0;
-
     virtual ErrorCode inverseKinematicsInBase(const Pose      &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInBase(const PoseEuler &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInUser(const Pose      &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInUser(const PoseEuler &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInWorld(const Pose      &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInWorld(const PoseEuler &pose, const Joint &ref, Joint &res);
-
     virtual ErrorCode inverseKinematicsInTool(const basic_alg::Matrix &tool_coordinate, const PoseEuler &pose, const Joint &ref, Joint &res);
 
     //virtual ErrorCode   chainIK(const Pose &pose, Joint &ref, Joint &res) = 0;
     //virtual ErrorCode   chainIK(const PoseEuler &pose, Joint &ref, Joint &res) = 0;
+
+    const basic_alg::Matrix& getWorldFrame(void) const;
+    const basic_alg::Matrix& getUserFrame(void) const;
+    const basic_alg::Matrix& getToolFrame(void) const;
 
     ErrorCode setWorldFrame(const PoseEuler &wf);
     ErrorCode setWorldFrame(const basic_alg::Matrix &wf);

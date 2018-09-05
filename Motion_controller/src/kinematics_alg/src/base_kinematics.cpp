@@ -32,6 +32,42 @@ void BaseKinematics::initKinematics(double (&dh_matrix)[NUM_OF_JOINT][4])
     memcpy(dh_matrix_, dh_matrix, NUM_OF_JOINT * 4 * sizeof(double));
 }
 
+void BaseKinematics::forwardKinematics(const Joint &joint, const PoseEuler &user, const PoseEuler &tool, PoseEuler &pose)
+{
+    Matrix matrix;
+    Matrix uf = user;
+    Matrix tf = tool;
+    uf.inverse();
+    forwardKinematics(joint, matrix);
+    matrix.leftMultiply(uf).rightMultiply(tf).toPoseEuler(pose);
+}
+
+void BaseKinematics::forwardKinematics(const Joint &joint, const Matrix &user, const Matrix &tool, PoseEuler &pose)
+{
+    Matrix matrix;
+    Matrix iuf = user;
+    iuf.inverse();
+    forwardKinematics(joint, matrix);
+    matrix.leftMultiply(iuf).rightMultiply(tool).toPoseEuler(pose);
+}
+
+ErrorCode BaseKinematics::inverseKinematics(const PoseEuler &pose, const PoseEuler &user, const PoseEuler &tool, const Joint &ref, Joint &res)
+{
+    Matrix uf = user;
+    Matrix tf = tool;
+    tf.inverse();
+    Matrix matrix = Matrix(pose).leftMultiply(uf).rightMultiply(tf);
+    return inverseKinematics(matrix, ref, res);
+}
+
+ErrorCode BaseKinematics::inverseKinematics(const PoseEuler &pose, const Matrix &user, const Matrix &tool, const Joint &ref, Joint &res)
+{
+    Matrix itf = tool;
+    itf.inverse();
+    Matrix matrix = Matrix(pose).leftMultiply(user).rightMultiply(itf);
+    return inverseKinematics(matrix, ref, res);
+}
+
 void BaseKinematics::forwardKinematicsInBase(const Joint &joint, Pose &pose)
 {
     Matrix matrix;
@@ -165,6 +201,21 @@ ErrorCode BaseKinematics::setToolFrame(const Matrix &tf)
     inverse_tool_frame_ = tf;
     inverse_tool_frame_.inverse();
     return SUCCESS;
+}
+
+const Matrix& BaseKinematics::getWorldFrame(void) const
+{
+    return world_frame_;
+}
+
+const Matrix& BaseKinematics::getUserFrame(void) const
+{
+    return user_frame_;
+}
+
+const Matrix& BaseKinematics::getToolFrame(void) const
+{
+    return tool_frame_;
 }
 
 

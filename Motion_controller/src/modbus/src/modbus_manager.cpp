@@ -135,6 +135,16 @@ U64 ModbusManager::getModuleValues(unsigned int id, int len, unsigned char *ptr,
 //------------------------------------------------------------
 U64 ModbusManager::setModuleValue(unsigned int id, unsigned int port_seq, unsigned char port_value)
 {	   
+    uint8_t* tab_wq_bits = new uint8_t[10];
+    fst_modbus::ModbusStatus write_status;
+	// read_status.addr = getaddrefromseq(port_seq);
+	tab_wq_bits[0] = port_value ;
+    write_status.dest = tab_wq_bits;
+    if (!tcp_client->writeCoils(write_status))
+        printf("Test Modbus Client : Failed write and read coils: nb = %d\n", 10);
+    else
+        printf("Test Modbus Client : Success write and read coils.\n");
+	delete[] tab_wq_bits;
 	return SUCCESS;
 }
 

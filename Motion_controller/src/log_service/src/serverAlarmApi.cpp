@@ -11,6 +11,7 @@ ServerAlarmApi::ServerAlarmApi():
     mInitFlag = 0;
     if ( !Py_IsInitialized() ) {
         Py_Initialize();
+        PyEval_InitThreads();
     }
     if ( !Py_IsInitialized() ) {
         mInitFlag -= 1;

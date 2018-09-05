@@ -31,6 +31,8 @@ Controller::~Controller()
     routine_thread_.join();
     heartbeat_thread_.join();
 
+    ServerAlarmApi::GetInstance()->pyDecref();    
+
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;

@@ -56,7 +56,6 @@ ErrorCode BaseGroup::stopGroup(void)
 
 MotionFrame BaseGroup::getMotionFrame(void)
 {
-    FST_INFO("Get motion frame = %d", motion_frame_);
     return motion_frame_;
 }
 

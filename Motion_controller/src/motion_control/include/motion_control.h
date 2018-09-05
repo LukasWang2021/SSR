@@ -12,6 +12,7 @@
 #include "error_monitor.h"
 #include "error_code.h"
 #include "thread_help.h"
+#include "base_datatype.h"
 
 
 namespace fst_mc
@@ -84,8 +85,8 @@ public:
     ErrorCode resetGroup(void);
 
     // more API
-    ErrorCode  convertCartToJoint(const PoseEuler &pose, Joint &joint);
-    ErrorCode  convertJointToCart(const Joint &joint, PoseEuler &pose);
+    ErrorCode  convertCartToJoint(const PoseEuler &pose, MotionFrame frame, int user_frame_id, int tool_frame_id, Joint &joint);
+    ErrorCode  convertJointToCart(const Joint &joint, MotionFrame frame, int user_frame_id, int tool_frame_id, PoseEuler &pose);
 
     GroupState  getGroupState(void);
     ServoState  getServoState(void);

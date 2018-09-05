@@ -30,7 +30,6 @@ class ArmGroup : public BaseGroup
     size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);
 
-    Calibrator* getCalibratorPtr(void);
   
   private:
     bool isJointInConstraint(Joint joint, JointConstraint constraint);

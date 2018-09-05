@@ -177,12 +177,13 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     soft_constraint_.setMask(index, length);
 
+
     FST_INFO("Initializing kinematics of ArmGroup ...");
-    double dh_matrix[NUM_OF_JOINT][4];
     kinematics_ptr_ = new ArmKinematics();
 
     if (kinematics_ptr_)
     {
+        double dh_matrix[NUM_OF_JOINT][4];
         param.reset();
 
         if (param.loadParamFile(AXIS_GROUP_DIR"arm_dh.yaml"))
@@ -217,7 +218,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     }
     else
     {
-        FST_ERROR("Fail to initialize kinematics for ArmGroup");
+        FST_ERROR("Fail to create kinematics for ArmGroup.");
         return MOTION_INTERNAL_FAULT;
     }
 
@@ -234,10 +235,6 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 }
 
 
-Calibrator* ArmGroup::getCalibratorPtr(void)
-{
-    return &calibrator_;
-}
 
 ErrorCode ArmGroup::pickFromManual(TrajectoryPoint *point, size_t &length)
 {

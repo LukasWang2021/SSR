@@ -51,19 +51,19 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         return MOTION_INTERNAL_FAULT;
     }
 
-    //if (device_manager_ptr_ && axis_group_manager_ptr_ && coordinate_manager_ptr_ && tool_manager_ptr_ && error_monitor_ptr_)
-    if(1)
+    //if (device_manager_ptr && axis_group_manager_ptr && coordinate_manager_ptr && tool_manager_ptr && error_monitor_ptr)
+    if (coordinate_manager_ptr && tool_manager_ptr && error_monitor_ptr)
     {
-        device_manager_ptr_ = device_manager_ptr;
-        axis_group_manager_ptr_ = axis_group_manager_ptr;
+        //device_manager_ptr_ = device_manager_ptr;
+        //axis_group_manager_ptr_ = axis_group_manager_ptr;
         coordinate_manager_ptr_ = coordinate_manager_ptr;
         tool_manager_ptr_ = tool_manager_ptr;
         error_monitor_ptr_ = error_monitor_ptr;
     }
     else
     {
-        FST_ERROR("device-manger: %p, group-manager: %p, coordinate-manager: %p, tool-manager: %p, error-monitor: %p",
-                  device_manager_ptr_, axis_group_manager_ptr_, coordinate_manager_ptr_, tool_manager_ptr_, error_monitor_ptr_);
+        FST_ERROR("device-manger: %x, group-manager: %x, coordinate-manager: %x, tool-manager: %x, error-monitor: %x",
+                  device_manager_ptr, axis_group_manager_ptr, coordinate_manager_ptr, tool_manager_ptr, error_monitor_ptr);
         return INVALID_PARAMETER;
     }
 
@@ -360,14 +360,103 @@ ErrorCode MotionControl::resetGroup(void)
     return group_ptr_->resetGroup();
 }
 
-ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, Joint &joint)
+ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, MotionFrame frame, int user_frame_id, int tool_frame_id, Joint &joint)
 {
-    return group_ptr_->getJointFromPose(pose, joint);
+    ToolInfo  tf_info;
+    ErrorCode err = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
+
+    if (err == SUCCESS)
+    {
+        Matrix tf = tf_info.data;
+
+        if (frame == BASE)
+        {
+            Matrix uf;
+            uf.eye();
+            return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
+        }
+        else if (frame == USER)
+        {
+            CoordInfo uf_info;
+            err = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
+
+            if (err == SUCCESS)
+            {
+                Matrix uf = uf_info.data;
+                return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
+            }
+            else
+            {
+                FST_ERROR("Fail to get user frame from given id");
+                return err;
+            }
+        }
+        else if (frame == WORLD)
+        {
+            return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, group_ptr_->getKinematicsPtr()->getWorldFrame(), tf, group_ptr_->getLatestJoint(), joint);
+        }
+        else
+        {
+            FST_ERROR("convertCartToJoint: invalid given frame: %d", frame);
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to get tool frame from given id");
+        return err;
+    }
 }
 
-ErrorCode MotionControl::convertJointToCart(const Joint &joint, PoseEuler &pose)
+ErrorCode MotionControl::convertJointToCart(const Joint &joint, MotionFrame frame, int user_frame_id, int tool_frame_id, PoseEuler &pose)
 {
-    return group_ptr_->getPoseFromJoint(joint, pose);
+    ToolInfo  tf_info;
+    ErrorCode err = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
+
+    if (err == SUCCESS)
+    {
+        Matrix tf = tf_info.data;
+
+        if (frame == BASE)
+        {
+            Matrix uf;
+            uf.eye();
+            group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
+            return SUCCESS;
+        }
+        else if (frame == USER)
+        {
+            CoordInfo uf_info;
+            err = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
+
+            if (err == SUCCESS)
+            {
+                Matrix uf = uf_info.data;
+                group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
+                return SUCCESS;
+            }
+            else
+            {
+                FST_ERROR("Fail to get user frame from given id");
+                return err;
+            }
+        }
+        else if (frame == WORLD)
+        {
+            group_ptr_->getKinematicsPtr()->forwardKinematics(joint, group_ptr_->getKinematicsPtr()->getWorldFrame(), tf, pose);
+            return SUCCESS;
+        }
+        else
+        {
+            FST_ERROR("convertCartToJoint: invalid given frame: %d", frame);
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to get tool frame from given id");
+        return err;
+    }
 }
 
 GroupState MotionControl::getGroupState(void)

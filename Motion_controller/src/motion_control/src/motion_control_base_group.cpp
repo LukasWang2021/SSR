@@ -27,7 +27,6 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     log_ptr_ = plog;
     auto_cache_ = NULL;
     manual_cache_ = NULL;
-    kinematics_ptr_ = NULL;
     auto_time_ = 0;
     manual_time_ = 0;
     motion_frame_ = JOINT;
@@ -532,6 +531,7 @@ GroupState BaseGroup::getGroupState(void)
     return group_state_;
 }
 
+/*
 ErrorCode BaseGroup::getJointFromPose(const PoseEuler &pose, Joint &joint)
 {
     ErrorCode err;
@@ -574,6 +574,7 @@ ErrorCode BaseGroup::getPoseFromJoint(const Joint &joint, PoseEuler &pose)
             return INVALID_SEQUENCE;
     }
 }
+*/
 
 /*
 ErrorCode BaseGroup::getPoseFromJointInBase(const Joint &joint, PoseEuler &pose)
@@ -756,6 +757,17 @@ void BaseGroup::inactiveRealtimeTask(void)
 void BaseGroup::activeRealtimeTask(void)
 {
     rt_task_active_ = true;
+}
+
+BaseKinematics* BaseGroup::getKinematicsPtr(void)
+{
+    return kinematics_ptr_;
+}
+
+
+Calibrator* BaseGroup::getCalibratorPtr(void)
+{
+    return &calibrator_;
 }
 
 Constraint* BaseGroup::getSoftConstraintPtr(void)

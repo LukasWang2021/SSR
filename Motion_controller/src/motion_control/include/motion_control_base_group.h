@@ -76,7 +76,8 @@ class BaseGroup
     virtual size_t getNumberOfJoint(void) = 0;
     virtual size_t getFIFOLength(void) = 0;
 
-    virtual Calibrator* getCalibratorPtr(void) = 0;
+    virtual BaseKinematics* getKinematicsPtr(void);
+    virtual Calibrator* getCalibratorPtr(void);
     virtual Constraint* getSoftConstraintPtr(void);
 
     virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
@@ -86,8 +87,8 @@ class BaseGroup
     virtual ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
     virtual ErrorCode getHardConstraint(JointConstraint &hard_constraint);
 
-    virtual ErrorCode getJointFromPose(const PoseEuler &pose, Joint &joint);
-    virtual ErrorCode getPoseFromJoint(const Joint &joint, PoseEuler &pose);
+    //virtual ErrorCode getJointFromPose(const PoseEuler &pose, Joint &joint);
+    //virtual ErrorCode getPoseFromJoint(const Joint &joint, PoseEuler &pose);
 
     void realtimeTask(void);
     void activeRealtimeTask(void);

@@ -545,11 +545,12 @@ ErrorCode Calibrator::saveOffset(void)
         if (offset_param_.setParam("zero_offset/data", data) && offset_param_.dumpParamFile())
         {
             FST_INFO("Offset saved, update offset in core1 ...");
+            ErrorCode err = sendConfigData("zero_offset/");
 
-            if (!sendConfigData("zero_offset/"))
+            if (err != SUCCESS)
             {
-                FST_ERROR("Cannot update offset in core1");
-                return BARE_CORE_TIMEOUT;
+                FST_ERROR("Cannot update offset in core1, code = 0x%llx", err);
+                return err;
             }
 
             usleep(200 * 1000);

@@ -738,6 +738,7 @@ private:
     TpCommManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 
+    bool is_received_;
     bool is_running_;
     std::string req_resp_ip_;
     std::string publish_ip_;

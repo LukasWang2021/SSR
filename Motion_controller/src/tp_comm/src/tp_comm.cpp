@@ -27,6 +27,7 @@ TpComm::TpComm():
     string ip = local_ip_.get();
     req_resp_ip_ = "ws://" + ip + ":5600";
     publish_ip_ = "ws://" + ip + ":5601";
+    is_received_ = false;
 
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new TpCommManagerParam();
@@ -321,6 +322,7 @@ void TpComm::tpCommThreadFunc()
 
 void TpComm::handleRequest()
 {
+    if (is_received_) return;
 
     if(nn_poll (&poll_fd_, 1, 0) == -1)
     {
@@ -338,6 +340,7 @@ void TpComm::handleRequest()
             FST_ERROR("Failed to receive request.");
             return;
         }
+        is_received_ = true;
     }
     else
     {
@@ -405,6 +408,8 @@ void TpComm::handleResponseList()
             ErrorMonitor::instance()->add(TP_COMM_SEND_FAILED);
             FST_ERROR("Send response failed, nn_error = %d", nn_errno());
         }
+
+        is_received_ = false;
     }
     response_list_.clear();
     response_list_mutex_.unlock();

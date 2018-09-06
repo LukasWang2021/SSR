@@ -11,7 +11,10 @@
 #define     MINIMUM_E9      0.000000001
 #define     MINIMUM_E12     0.000000000001
 
+#define MAX_PATH_SIZE   2048
+
 typedef unsigned long long int ErrorCode;
+typedef unsigned int Tick;
 typedef double  MotionTime;
 
 namespace fst_mc
@@ -105,6 +108,7 @@ class PoseEuler
     const double& operator[](size_t index) const {assert(index < 6); return *(&position.x + index);}
 };
 
+/*
 // total size of TrajectoryItem is 16 * 8 = 128 bytes
 class TrajectoryItem
 {
@@ -131,7 +135,7 @@ struct TrajectorySegment
 	MotionTime      duration;
 	TrajectoryItem  coeff[NUM_OF_JOINT];
 };
-
+*/
 
 }
 

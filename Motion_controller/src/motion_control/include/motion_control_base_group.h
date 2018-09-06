@@ -8,7 +8,6 @@
 #ifndef _MOTION_CONTROL_BASE_GROUP_H
 #define _MOTION_CONTROL_BASE_GROUP_H
 
-#include <pthread.h>
 #include "common_log.h"
 #include "error_monitor.h"
 #include "error_code.h"
@@ -18,6 +17,7 @@
 #include <motion_control_offset_calibrator.h>
 #include <motion_control_manual_teach.h>
 #include <arm_kinematics.h>
+#include <path_plan.h>
 
 
 namespace fst_mc
@@ -47,23 +47,32 @@ class BaseGroup
     virtual ~BaseGroup();
 
     virtual ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr) = 0;
-
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode resetGroup(void);
+    virtual ErrorCode clearGroup(void);
 
-    virtual ErrorCode autoMove(void) = 0;
+    void getLatestJoint(Joint &joint);
+    void getServoState(ServoState &state);
+    void getGroupState(GroupState &state);
+    Joint getLatestJoint(void);
+    GroupState getGroupState(void);
+    ServoState getServoState(void);
 
+
+    // Frame handle APIs:
     virtual MotionFrame getMotionFrame(void);
     virtual ErrorCode setMotionFrame(MotionFrame frame);
-
     virtual ErrorCode setToolFrame(const PoseEuler &tf);
     virtual ErrorCode setUserFrame(const PoseEuler &uf);
     virtual ErrorCode setWorldFrame(const PoseEuler &wf);
 
+    // Auto move APIs:
+    virtual ErrorCode autoMove(int id, const MotionTarget &target);
+
+    // Manual teach APIs:
     virtual double getManualStepAxis(void);
     virtual double getManualStepPosition(void);
     virtual double getManualStepOrientation(void);
-
     virtual ErrorCode setManualStepAxis(double step);
     virtual ErrorCode setManualStepPosition(double step);
     virtual ErrorCode setManualStepOrientation(double step);
@@ -73,13 +82,7 @@ class BaseGroup
     virtual ErrorCode manualMoveToPoint(const PoseEuler &pose);
     virtual ErrorCode manualStop(void);
 
-    virtual size_t getNumberOfJoint(void) = 0;
-    virtual size_t getFIFOLength(void) = 0;
-
-    virtual BaseKinematics* getKinematicsPtr(void);
-    virtual Calibrator* getCalibratorPtr(void);
-    virtual Constraint* getSoftConstraintPtr(void);
-
+    // Constraints handle APIs:
     virtual ErrorCode setSoftConstraint(const JointConstraint &soft_constraint);
     virtual ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
     virtual ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
@@ -87,27 +90,35 @@ class BaseGroup
     virtual ErrorCode getFirmConstraint(JointConstraint &firm_constraint);
     virtual ErrorCode getHardConstraint(JointConstraint &hard_constraint);
 
-    //virtual ErrorCode getJointFromPose(const PoseEuler &pose, Joint &joint);
-    //virtual ErrorCode getPoseFromJoint(const Joint &joint, PoseEuler &pose);
-
-    void realtimeTask(void);
-    void activeRealtimeTask(void);
-    void inactiveRealtimeTask(void);
-
-    void getLatestJoint(Joint &joint);
-    void getServoState(ServoState &state);
-    void getGroupState(GroupState &state);
-
-    Joint getLatestJoint(void);
-    GroupState getGroupState(void);
-    ServoState getServoState(void);
-
+    // Global velocity and acceleration APIs
     ErrorCode setGlobalVelRatio(double ratio);
     ErrorCode setGlobalAccRatio(double ratio);
     double getGlobalVelRatio(void);
     double getGlobalAccRatio(void);
 
+    // More APIs:
+    virtual size_t getNumberOfJoint(void) = 0;
+    virtual size_t getFIFOLength(void) = 0;
+
+    virtual BaseKinematics* getKinematicsPtr(void);
+    virtual Calibrator* getCalibratorPtr(void);
+    virtual Constraint* getSoftConstraintPtr(void);
+
+    void realtimeTask(void);
+    void activeRealtimeTask(void);
+    void inactiveRealtimeTask(void);
+
+
+
+
+
   protected:
+    virtual ErrorCode autoJoint(int id, const MotionTarget &target);
+    virtual ErrorCode autoLine(int id, const MotionTarget &target);
+    virtual ErrorCode autoCircle(int id, const MotionTarget &target);
+
+    virtual ErrorCode planFirstStageTraj(TrajectoryCache &cache);
+
     virtual ErrorCode sendPoint(void);
     virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length) = 0;
     virtual ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length) = 0;
@@ -122,6 +133,8 @@ class BaseGroup
 
     bool    rt_task_active_;
     double  vel_ratio_, acc_ratio_;
+    double  axis_vel_[NUM_OF_JOINT];
+    double  axis_acc_[NUM_OF_JOINT];
 
     Constraint  hard_constraint_;
     Constraint  soft_constraint_;
@@ -131,8 +144,8 @@ class BaseGroup
     ServoState  servo_state_;
     GroupState  group_state_;
 
-    TrajectorySegment*  auto_cache_;
-    TrajectorySegment*  manual_cache_;
+    TrajectoryCache     auto_cache_[2];
+    TrajectoryCache     *auto_cache_ptr_;
 
     Joint       start_joint_;
     MotionTime  cycle_time_;

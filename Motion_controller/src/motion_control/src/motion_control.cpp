@@ -1,7 +1,8 @@
 #include <string.h>
 #include <motion_control.h>
 #include <motion_control_arm_group.h>
-#include "../../tool_manager/include/tool_manager.h"
+#include <tool_manager.h>
+#include <coordinate_manager.h>
 
 
 using namespace fst_base;
@@ -519,7 +520,7 @@ ErrorCode MotionControl::setToolFrameID(int id)
         ToolInfo  tf_info;
         err = tool_manager_ptr_->getToolInfoById(id, tf_info);
 
-        if (err == SUCCESS)
+        if (err == SUCCESS && tf_info.is_valid)
         {
             err = group_ptr_->setToolFrame(tf_info.data);
 
@@ -596,7 +597,7 @@ ErrorCode MotionControl::setMotionFrameID(MotionFrame frame, int id)
             CoordInfo uf_info;
             err = coordinate_manager_ptr_->getCoordInfoById(id, uf_info);
 
-            if (err == SUCCESS)
+            if (err == SUCCESS && uf_info.is_valid)
             {
                 err = group_ptr_->setUserFrame(uf_info.data);
 

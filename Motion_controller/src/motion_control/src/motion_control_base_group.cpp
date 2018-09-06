@@ -25,11 +25,29 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
 {
     group_state_ = STANDBY;
     log_ptr_ = plog;
-    auto_cache_ = NULL;
-    manual_cache_ = NULL;
     auto_time_ = 0;
     manual_time_ = 0;
     motion_frame_ = JOINT;
+
+    auto_cache_[0].deadline = 0;
+    auto_cache_[0].valid = false;
+    auto_cache_[0].head = 0;
+    auto_cache_[0].tail = 0;
+    auto_cache_[0].smooth_in_stamp = 0;
+    auto_cache_[0].smooth_out_stamp = 0;
+    auto_cache_[0].next = &auto_cache_[1];
+    auto_cache_[0].prev = &auto_cache_[1];
+
+    auto_cache_[1].deadline = 0;
+    auto_cache_[1].valid = false;
+    auto_cache_[1].head = 0;
+    auto_cache_[1].tail = 0;
+    auto_cache_[1].smooth_in_stamp = 0;
+    auto_cache_[1].smooth_out_stamp = 0;
+    auto_cache_[1].next = &auto_cache_[0];
+    auto_cache_[1].prev = &auto_cache_[0];
+
+    auto_cache_ptr_ = &auto_cache_[0];
 }
 
 BaseGroup::~BaseGroup()
@@ -50,12 +68,20 @@ ErrorCode BaseGroup::stopGroup(void)
     return bare_core_.stopBareCore() == true ? SUCCESS : BARE_CORE_TIMEOUT;
 }
 
+ErrorCode BaseGroup::clearGroup(void)
+{
+    FST_INFO("Clear group, current group state = %d", group_state_);
 
+    group_state_ = STANDBY;
+    manual_time_ = 0;
+    memset(&manual_traj_, 0, sizeof(manual_traj_));
+}
 
 
 
 MotionFrame BaseGroup::getMotionFrame(void)
 {
+    FST_INFO("Get motion frame = %d", motion_frame_);
     return motion_frame_;
 }
 
@@ -490,6 +516,111 @@ ErrorCode BaseGroup::manualStop(void)
     }
 }
 
+
+ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
+{
+    FST_INFO("Auto move request received, motion ID = %d, type = %d", id, target.type);
+    ErrorCode err;
+
+    switch (target.type)
+    {
+        case MOTION_JOINT:
+            err = autoJoint(id, target);
+            break;
+        case MOTION_LINE:
+            err = autoLine(id, target);
+            break;
+        case MOTION_CIRCLE:
+            err = autoCircle(id, target);
+            break;
+        default:
+            FST_ERROR("Invalid motion type, auto move aborted.");
+            return INVALID_PARAMETER;
+    }
+
+    return err;
+}
+
+ErrorCode BaseGroup::autoJoint(int id, const MotionTarget &target)
+{
+    char buffer[LOG_TEXT_SIZE];
+    Joint start_joint;
+    FST_INFO("autoJoint: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    FST_INFO("  target = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
+
+    if (!soft_constraint_.isJointInConstraint(target.joint_target))
+    {
+        FST_ERROR("Target out of soft constraint.");
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
+    if (group_state_ == STANDBY)
+    {
+        getLatestJoint(start_joint);
+    }
+    else if (group_state_ == AUTO)
+    {
+        start_joint = start_joint_;
+    }
+    else
+    {
+        FST_ERROR("Cannot start auto motion in current group state: %d", group_state_);
+        return INVALID_SEQUENCE;
+    }
+
+    FST_INFO("  start  = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
+
+    if (!soft_constraint_.isJointInConstraint(start_joint))
+    {
+        FST_ERROR("Start joint out of soft constraint.");
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
+    size_t  index, length;
+    double  precision = 0.01;
+    Joint   path[MAX_PATH_SIZE];
+    planJointPath(start_joint, target.joint_target, precision, index, path, length);
+    double  expect_duration = precision / axis_vel_[index] / vel_ratio_;
+    TrajectoryCache *p_cache = auto_cache_ptr_->valid == false ? auto_cache_ptr_ : auto_cache_ptr_->next;
+
+    for (size_t i = 0; i < length; i++)
+    {
+        p_cache->cache[i].path_point.id = id;
+        p_cache->cache[i].path_point.stamp = i;
+        p_cache->cache[i].path_point.type  = MOTION_JOINT;
+        p_cache->cache[i].path_point.joint = path[i];
+        p_cache->cache[i].command_duration = expect_duration;
+
+        p_cache->cache[i].time_from_start = -1;
+        p_cache->cache[i].forward_duration = -1;
+        p_cache->cache[i].backward_duration = -1;
+    }
+
+    p_cache->head = 0;
+    p_cache->tail = length - 1;
+
+    ErrorCode err = planFirstStageTraj(*p_cache);
+
+    FST_INFO("SUCCESS.");
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::planFirstStageTraj(TrajectoryCache &cache)
+{
+
+}
+
+ErrorCode BaseGroup::autoLine(int id, const MotionTarget &target)
+{
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::autoCircle(int id, const MotionTarget &target)
+{
+    return SUCCESS;
+}
+
+
 void BaseGroup::getLatestJoint(Joint &joint)
 {
     pthread_mutex_lock(&servo_mutex_);
@@ -686,14 +817,14 @@ void BaseGroup::realtimeTask(void)
     Joint barecore_joint;
     ServoState barecore_state;
     size_t send_fail_cnt = 0;
+    memset(&barecore_joint, 0, sizeof(barecore_joint));
     FST_WARN("Realtime task start.");
-
-    //static size_t cnt = 0;
 
     while (rt_task_active_)
     {
         if (bare_core_.getLatestJoint(barecore_joint, barecore_state))
         {
+
             pthread_mutex_lock(&servo_mutex_);
             servo_state_ = barecore_state;
             current_joint_ = barecore_joint;

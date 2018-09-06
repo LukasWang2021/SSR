@@ -25,7 +25,6 @@ class ArmGroup : public BaseGroup
 
     ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr);
 
-    ErrorCode autoMove(void);
 
     size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);

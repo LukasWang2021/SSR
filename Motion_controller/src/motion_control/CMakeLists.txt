@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     xml_help
     error_monitor
     thread_help
+    path_alg
 )
 
 if(catkin_CROSS)
@@ -52,6 +53,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/error_monitor/include
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/kinematics_alg/include
+    ${depend_PATH_INC}/path_alg/include
 )
 
 catkin_package(
@@ -69,7 +71,9 @@ catkin_package(
     DEPENDS basic_alg
     DEPENDS trajectory_alg
     DEPENDS dynamic_alg 
-    DEPENDS xml_help 
+    DEPENDS xml_help
+    DEPENDS kinematics_alg
+    DEPENDS path_plan
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -92,7 +96,7 @@ add_library(motion_control
 
 add_executable(manual_test
     src/manual_test.cpp
-        include/motion_control_constraint.h)
+)
 
 target_link_libraries(motion_control
     ${catkin_LIBRARIES}
@@ -115,6 +119,7 @@ target_link_libraries(motion_control
     error_monitor
     thread_help
     kinematics_alg
+    path_plan
 )
 
 target_link_libraries(manual_test

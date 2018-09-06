@@ -144,6 +144,28 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     FST_INFO("  firm-upper: %s", printDBLine(&firm_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  hard-upper: %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
 
+    param.reset();
+    vector<double> data;
+
+    if (param.loadParamFile(AXIS_GROUP_DIR"motion_control.yaml") &&
+        param.getParam("joint/omega/limit", data))
+    {
+        if (data.size() == NUM_OF_JOINT)
+        {
+            memcpy(axis_vel_, &data[0], NUM_OF_JOINT * sizeof(double));
+            FST_INFO("Joint omega: %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+        }
+        else
+        {
+            FST_ERROR("Invalid omega array size : %d", data.size());
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading motion configuration from config file");
+        return param.getLastError();
+    }
 
     FST_INFO("Initializing interface to bare core ...");
 
@@ -477,11 +499,6 @@ ErrorCode ArmGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &leng
     return err;
 }
 
-
-ErrorCode ArmGroup::autoMove(void)
-{
-    return SUCCESS;
-}
 
 
 size_t ArmGroup::getNumberOfJoint(void)

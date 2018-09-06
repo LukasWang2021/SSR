@@ -37,11 +37,80 @@ struct MotionTarget
     // velocity < 0 means using default velocity
     double vel;
 
-    union {
+    int user_frame_id_;
+    int tool_frame_id_;
+
+    union
+    {
         PoseEuler       pose_target;
         Joint           joint_target;
         CircleTarget    circle_target;
     };
+};
+
+struct JointPoint
+{
+    Joint angle;
+    Joint omega;
+    Joint alpha;
+};
+
+struct PathPoint
+{
+    // Command type, joint command or cartesian command*/
+    MotionType  type;
+
+    int         id;
+
+    // point stamp
+    size_t      stamp;
+
+    // value in cartesian space or joint space
+    union
+    {
+        Pose    pose;
+        Joint   joint;
+    };
+};
+
+struct TrajectorySegment
+{
+    // point from path plan
+    PathPoint   path_point;
+
+    // time from start
+    // time < 0 means this point has not been converted to a trajectory point
+    MotionTime  time_from_start;
+
+    // time duration from prev point to this point
+    // duration < 0 means this point has not been converted to a trajectory point
+    // command_duration = cycle_step / v_command
+    // duration = actual dutation
+    MotionTime  command_duration;
+    MotionTime  forward_duration;
+    MotionTime  backward_duration;
+
+
+    // point is what trajectory-create should give out
+    //JointPoint  forward_point;
+    //JointPoint  backward_point;
+
+    double  coeff[NUM_OF_JOINT][6];
+    double  inertia[NUM_OF_JOINT];
+};
+
+struct TrajectoryCache
+{
+    bool    valid;
+    size_t  head;
+    size_t  tail;
+    size_t  smooth_in_stamp;
+    size_t  smooth_out_stamp;
+    double  deadline;
+
+    TrajectorySegment cache[MAX_PATH_SIZE];
+    TrajectoryCache *prev;
+    TrajectoryCache *next;
 };
 
 enum ManualMode

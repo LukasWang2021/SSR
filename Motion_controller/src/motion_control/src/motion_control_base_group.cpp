@@ -85,7 +85,7 @@ ErrorCode BaseGroup::clearGroup(void)
 
 ManualFrame BaseGroup::getManualFrame(void)
 {
-    FST_INFO("Get manual frame = %d", manual_frame_);
+    //FST_INFO("Get manual frame = %d", manual_frame_);
     return manual_frame_;
 }
 

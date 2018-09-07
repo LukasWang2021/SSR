@@ -328,12 +328,10 @@ void TpComm::handleRequest()
     {
         return;
     }
-
     int recv_bytes;
     if(poll_fd_.revents & NN_POLLIN)
     {
         recv_bytes = nn_recv(req_resp_socket_, recv_buffer_ptr_, recv_buffer_size_, 0);
-
         if(recv_bytes == -1)
         {
             ErrorMonitor::instance()->add(TP_COMM_RECEIVE_FAILED);
@@ -353,7 +351,7 @@ void TpComm::handleRequest()
         FST_ERROR("Too much rpc to handle.");
         return;
     }
-    
+
     unsigned int hash = *((unsigned int*)recv_buffer_ptr_);
     FST_INFO("---handleRequest: %x %x %x %x", recv_buffer_ptr_[0], recv_buffer_ptr_[1], recv_buffer_ptr_[2], recv_buffer_ptr_[3]);
 
@@ -408,9 +406,8 @@ void TpComm::handleResponseList()
             ErrorMonitor::instance()->add(TP_COMM_SEND_FAILED);
             FST_ERROR("Send response failed, nn_error = %d", nn_errno());
         }
-
-        is_received_ = false;
     }
+    is_received_ = false;
     response_list_.clear();
     response_list_mutex_.unlock();
 }

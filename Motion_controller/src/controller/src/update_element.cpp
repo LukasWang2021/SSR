@@ -59,8 +59,8 @@ void ControllerPublish::updateAxisGroupCurrentCoordinate()
 {
     current_coordinate_.data_count = 3;
     current_coordinate_.data[0] = 1;
+    current_coordinate_.data[1] = (int32_t)motion_control_ptr_->getManualFrame();
     motion_control_ptr_->getUserFrame(current_coordinate_.data[2]);
-    current_coordinate_.data[1] = (int32_t)motion_control_ptr_->getManualFrame();;
 }
 
 void ControllerPublish::updateAxisGroupCurrentTool()

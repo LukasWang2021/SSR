@@ -122,7 +122,7 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doStepManualMove"));
+    //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doStepManualMove"));
 }
 
 // "/rpc/motion_control/axis_group/doContinuousManualMove"
@@ -149,7 +149,7 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doContinuousManualMove"));
+    //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doContinuousManualMove"));
 }
 
 // "/rpc/motion_control/axis_group/doGotoCartesianPointManualMove"
@@ -173,7 +173,7 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doGotoCartesianPointManualMove"));
+    //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doGotoCartesianPointManualMove"));
 }
 
 // "/rpc/motion_control/axis_group/doGotoJointPointManualMove"
@@ -200,7 +200,7 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doGotoJointPointManualMove"));
+    //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doGotoJointPointManualMove"));
 }
 
 // "/rpc/motion_control/axis_group/doManualStop"
@@ -210,7 +210,7 @@ void ControllerRpc::handleRpc0x0000A9A0(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = motion_control_ptr_->manualStop();
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doManualStop"));
+    //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doManualStop"));
 }
 
 // "/rpc/motion_control/axis_group/getJointFeedBack"

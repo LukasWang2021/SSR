@@ -49,6 +49,11 @@ add_library(fst_safety_device
     ${BASE_SRCS}
 )
 
+add_executable(safety_node
+    src/safety.c
+    test/safety_node.cpp
+)
+
 target_link_libraries(fst_safety_device
     ${catkin_LIBRARIES}
     base_device
@@ -57,6 +62,10 @@ target_link_libraries(fst_safety_device
 
 install(TARGETS fst_safety_device
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS safety_node
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 install(FILES config/fst_safety_device.yaml

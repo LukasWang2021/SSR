@@ -158,7 +158,7 @@ struct ManualCoef
 struct ManualTrajectory
 {
     ManualMode      mode;
-    MotionFrame     frame;
+    ManualFrame     frame;
     ManualDirection direction[6];
 
     Joint       joint_start;

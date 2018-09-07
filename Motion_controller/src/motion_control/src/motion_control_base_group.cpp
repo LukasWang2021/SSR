@@ -10,7 +10,8 @@
 #include <vector>
 
 #include <motion_control_base_group.h>
-#include "parameter_manager/parameter_manager_param_group.h"
+#include <parameter_manager/parameter_manager_param_group.h>
+#include <common_file_path.h>
 
 using namespace std;
 using namespace fst_base;
@@ -27,7 +28,7 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     log_ptr_ = plog;
     auto_time_ = 0;
     manual_time_ = 0;
-    motion_frame_ = JOINT;
+    manual_frame_ = JOINT;
 
     auto_cache_[0].deadline = 0;
     auto_cache_[0].valid = false;
@@ -79,21 +80,21 @@ ErrorCode BaseGroup::clearGroup(void)
 
 
 
-MotionFrame BaseGroup::getMotionFrame(void)
+ManualFrame BaseGroup::getManualFrame(void)
 {
-    FST_INFO("Get motion frame = %d", motion_frame_);
-    return motion_frame_;
+    FST_INFO("Get manual frame = %d", manual_frame_);
+    return manual_frame_;
 }
 
-ErrorCode BaseGroup::setMotionFrame(MotionFrame frame)
+ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
 {
-    FST_INFO("Set manual frame = %d, current frame is %d", frame, motion_frame_);
+    FST_INFO("Set manual frame = %d, current frame is %d", frame, manual_frame_);
 
-    if (frame != motion_frame_)
+    if (frame != manual_frame_)
     {
         if (group_state_ == STANDBY)
         {
-            motion_frame_ = frame;
+            manual_frame_ = frame;
             FST_INFO("Done.");
             return SUCCESS;
         }
@@ -159,9 +160,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
         return INVALID_SEQUENCE;
     }
 
-    if (motion_frame_ != JOINT)
+    if (manual_frame_ != JOINT)
     {
-        FST_ERROR("Cannot manual to target in current frame = %d", motion_frame_);
+        FST_ERROR("Cannot manual to target in current frame = %d", manual_frame_);
         return INVALID_SEQUENCE;
     }
 
@@ -211,9 +212,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
         return INVALID_SEQUENCE;
     }
 
-    if (motion_frame_ != BASE && motion_frame_ != USER && motion_frame_ != WORLD)
+    if (manual_frame_ != BASE && manual_frame_ != USER && manual_frame_ != WORLD)
     {
-        FST_ERROR("Cannot manual to target in current frame = %d", motion_frame_);
+        FST_ERROR("Cannot manual to target in current frame = %d", manual_frame_);
         return INVALID_SEQUENCE;
     }
 
@@ -229,7 +230,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     Joint res_joint;
     Joint ref_joint = getLatestJoint();
 
-    switch (motion_frame_)
+    switch (manual_frame_)
     {
         case BASE:
             err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, res_joint);
@@ -241,7 +242,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
             err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, res_joint);
             break;
         default:
-            FST_ERROR("Invalid manual frame = %d in manual to pose mode", motion_frame_);
+            FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_frame_);
             return MOTION_INTERNAL_FAULT;
     }
 
@@ -259,7 +260,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
 
     manual_time_ = 0;
     manual_traj_.mode = APOINT;
-    manual_traj_.frame = motion_frame_;
+    manual_traj_.frame = manual_frame_;
     err = manual_teach_.manualByTarget(res_joint, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -279,7 +280,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 {
     PoseEuler pose;
     char buffer[LOG_TEXT_SIZE];
-    FST_INFO("Manual step frame=%d by direction.", motion_frame_);
+    FST_INFO("Manual step frame=%d by direction.", manual_frame_);
 
     if (group_state_ != STANDBY)
     {
@@ -292,7 +293,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
-        if (motion_frame_ == JOINT)
+        if (manual_frame_ == JOINT)
         {
             for (size_t i = 0; i < getNumberOfJoint(); i++)
             {
@@ -317,7 +318,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         }
     }
 
-    switch (motion_frame_)
+    switch (manual_frame_)
     {
         case JOINT:
             break;
@@ -335,13 +336,13 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
             memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
             break;
         default:
-            FST_ERROR("Unsupported manual frame: %d", motion_frame_);
+            FST_ERROR("Unsupported manual frame: %d", manual_frame_);
             return MOTION_INTERNAL_FAULT;
     }
 
     manual_time_ = 0;
     manual_traj_.mode = STEP;
-    manual_traj_.frame = motion_frame_;
+    manual_traj_.frame = manual_frame_;
     ErrorCode err = manual_teach_.manualStepByDirect(direction, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -360,7 +361,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 {
     char buffer[LOG_TEXT_SIZE];
-    FST_INFO("Manual continuous frame=%d by direction.", motion_frame_);
+    FST_INFO("Manual continuous frame=%d by direction.", manual_frame_);
 
     if (group_state_ != STANDBY && group_state_ != MANUAL)
     {
@@ -376,7 +377,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
         if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
         {
-            if (motion_frame_ == JOINT)
+            if (manual_frame_ == JOINT)
             {
                 for (size_t i = 0; i < getNumberOfJoint(); i++)
                 {
@@ -401,7 +402,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
             }
         }
 
-        switch (motion_frame_)
+        switch (manual_frame_)
         {
             case JOINT:
                 break;
@@ -419,13 +420,13 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
                 break;
             default:
-                FST_ERROR("Unsupported manual frame: %d", motion_frame_);
+                FST_ERROR("Unsupported manual frame: %d", manual_frame_);
                 return MOTION_INTERNAL_FAULT;
         }
 
         manual_time_ = 0;
         manual_traj_.mode = CONTINUOUS;
-        manual_traj_.frame = motion_frame_;
+        manual_traj_.frame = manual_frame_;
         ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
 
         if (err == SUCCESS)
@@ -666,7 +667,7 @@ ErrorCode BaseGroup::getJointFromPose(const PoseEuler &pose, Joint &joint)
 {
     ErrorCode err;
 
-    switch (motion_frame_)
+    switch (manual_frame_)
     {
         case BASE:
             err = kinematics_ptr_->inverseKinematicsInBase(pose, getLatestJoint(), joint);
@@ -678,7 +679,7 @@ ErrorCode BaseGroup::getJointFromPose(const PoseEuler &pose, Joint &joint)
             err = kinematics_ptr_->inverseKinematicsInUser(pose, getLatestJoint(), joint);
             break;
         default:
-            FST_ERROR("getJointFromPose: motion-frame is invalid: %d", motion_frame_);
+            FST_ERROR("getJointFromPose: motion-frame is invalid: %d", manual_frame_);
             err = INVALID_SEQUENCE;
             break;
     }
@@ -688,7 +689,7 @@ ErrorCode BaseGroup::getJointFromPose(const PoseEuler &pose, Joint &joint)
 
 ErrorCode BaseGroup::getPoseFromJoint(const Joint &joint, PoseEuler &pose)
 {
-    switch (motion_frame_)
+    switch (manual_frame_)
     {
         case BASE:
             kinematics_ptr_->forwardKinematicsInBase(joint, pose);
@@ -700,7 +701,7 @@ ErrorCode BaseGroup::getPoseFromJoint(const Joint &joint, PoseEuler &pose)
             kinematics_ptr_->forwardKinematicsInWorld(joint, pose);
             return SUCCESS;
         default:
-            FST_ERROR("getPoseFromJoint: motion-frame is invalid: %d", motion_frame_);
+            FST_ERROR("getPoseFromJoint: motion-frame is invalid: %d", manual_frame_);
             return INVALID_SEQUENCE;
     }
 }
@@ -970,10 +971,10 @@ ErrorCode BaseGroup::setSoftConstraint(const JointConstraint &soft_constraint)
             v_lower[i] = 0;
         }
 
-        if (param.loadParamFile("soft_constraint.yaml") &&
+        if (param.loadParamFile(AXIS_GROUP_DIR"soft_constraint.yaml") &&
             param.setParam("soft_constraint/upper", v_upper) &&
             param.setParam("soft_constraint/lower", v_lower) &&
-            param.dumpParamFile("soft_constraint.yaml"))
+            param.dumpParamFile())
         {
             soft_constraint_.setConstraint(soft_constraint);
             FST_INFO("Soft constraint updated successfully.");
@@ -1025,10 +1026,10 @@ ErrorCode BaseGroup::setFirmConstraint(const JointConstraint &firm_constraint)
             v_lower[i] = 0;
         }
 
-        if (param.loadParamFile("firm_constraint.yaml") &&
+        if (param.loadParamFile(AXIS_GROUP_DIR"firm_constraint.yaml") &&
             param.setParam("firm_constraint/upper", v_upper) &&
             param.setParam("firm_constraint/lower", v_lower) &&
-            param.dumpParamFile("firm_constraint.yaml"))
+            param.dumpParamFile())
         {
             firm_constraint_.setConstraint(firm_constraint);
             FST_INFO("Firm constraint updated successfully.");
@@ -1070,10 +1071,10 @@ ErrorCode BaseGroup::setHardConstraint(const JointConstraint &hard_constraint)
         v_lower[i] = 0;
     }
 
-    if (param.loadParamFile("hard_constraint.yaml") &&
+    if (param.loadParamFile(AXIS_GROUP_DIR"hard_constraint.yaml") &&
         param.setParam("hard_constraint/upper", v_upper) &&
         param.setParam("hard_constraint/lower", v_lower) &&
-        param.dumpParamFile("hard_constraint.yaml"))
+        param.dumpParamFile())
     {
         hard_constraint_.setConstraint(hard_constraint);
         FST_INFO("Hard constraint updated successfully.");

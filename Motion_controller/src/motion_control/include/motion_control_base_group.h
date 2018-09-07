@@ -60,8 +60,6 @@ class BaseGroup
 
 
     // Frame handle APIs:
-    virtual MotionFrame getMotionFrame(void);
-    virtual ErrorCode setMotionFrame(MotionFrame frame);
     virtual ErrorCode setToolFrame(const PoseEuler &tf);
     virtual ErrorCode setUserFrame(const PoseEuler &uf);
     virtual ErrorCode setWorldFrame(const PoseEuler &wf);
@@ -70,6 +68,8 @@ class BaseGroup
     virtual ErrorCode autoMove(int id, const MotionTarget &target);
 
     // Manual teach APIs:
+    virtual ManualFrame getManualFrame(void);
+    virtual ErrorCode setManualFrame(ManualFrame frame);
     virtual double getManualStepAxis(void);
     virtual double getManualStepPosition(void);
     virtual double getManualStepOrientation(void);
@@ -152,7 +152,7 @@ class BaseGroup
     MotionTime  auto_time_;
     MotionTime  manual_time_;
     Calibrator  calibrator_;
-    MotionFrame motion_frame_;
+    ManualFrame manual_frame_;
     ManualTeach manual_teach_;
 
     pthread_mutex_t auto_mutex_;

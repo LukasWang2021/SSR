@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <assert.h>
 
+#include <common_enum.h>
+
 #define     NUM_OF_JOINT    9
 #define     PI              3.1415926535897932384626433832795
 #define     MINIMUM_E3      0.001
@@ -19,23 +21,6 @@ typedef double  MotionTime;
 
 namespace fst_mc
 {
-	
-enum MotionType
-{
-    MOTION_NONE   = 0,
-    MOTION_JOINT  = 1,
-    MOTION_LINE   = 2,
-    MOTION_CIRCLE = 3,
-};
-
-enum MotionFrame
-{
-	JOINT,
-	BASE,
-	WORLD,
-	USER,
-	TOOL,
-};
 
 class Joint
 {

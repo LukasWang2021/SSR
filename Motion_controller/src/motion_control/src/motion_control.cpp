@@ -3,6 +3,8 @@
 #include <motion_control_arm_group.h>
 #include <tool_manager.h>
 #include <coordinate_manager.h>
+#include "../../coordinate_manager/include/coordinate_manager.h"
+#include "../../tool_manager/include/tool_manager.h"
 
 
 using namespace fst_base;
@@ -108,17 +110,17 @@ bool MotionControl::stopRealtimeTask(void)
 
 
 
-/*
-MotionFrame MotionControl::getManualFrame(void)
+
+ManualFrame MotionControl::getManualFrame(void)
 {
     return group_ptr_->getManualFrame();
 }
 
-ErrorCode MotionControl::setManualFrame(MotionFrame frame)
+ErrorCode MotionControl::setManualFrame(ManualFrame frame)
 {
     return group_ptr_->setManualFrame(frame);
 }
-*/
+
 
 double MotionControl::getRotateManualStep(void)
 {
@@ -361,102 +363,113 @@ ErrorCode MotionControl::resetGroup(void)
     return group_ptr_->resetGroup();
 }
 
-ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, MotionFrame frame, int user_frame_id, int tool_frame_id, Joint &joint)
+ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_frame_id, int tool_frame_id, Joint &joint)
 {
-    ToolInfo  tf_info;
-    ErrorCode err = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
-
-    if (err == SUCCESS)
+    if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        Matrix tf = tf_info.data;
-
-        if (frame == BASE)
-        {
-            Matrix uf;
-            uf.eye();
-            return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
-        }
-        else if (frame == USER)
-        {
-            CoordInfo uf_info;
-            err = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
-
-            if (err == SUCCESS)
-            {
-                Matrix uf = uf_info.data;
-                return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
-            }
-            else
-            {
-                FST_ERROR("Fail to get user frame from given id");
-                return err;
-            }
-        }
-        else if (frame == WORLD)
-        {
-            return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, group_ptr_->getKinematicsPtr()->getWorldFrame(), tf, group_ptr_->getLatestJoint(), joint);
-        }
-        else
-        {
-            FST_ERROR("convertCartToJoint: invalid given frame: %d", frame);
-            return INVALID_PARAMETER;
-        }
+        return group_ptr_->getKinematicsPtr()->inverseKinematicsInUser(pose, group_ptr_->getLatestJoint(), joint);
     }
     else
     {
-        FST_ERROR("Fail to get tool frame from given id");
-        return err;
+        Matrix tf, uf;
+
+        if (user_frame_id == 0)
+        {
+            uf.eye();
+        }
+        else
+        {
+            CoordInfo uf_info;
+            ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
+
+            if (err_user == SUCCESS && uf_info.is_valid)
+            {
+                uf = uf_info.data;
+            }
+            else
+            {
+                FST_ERROR("Fail to get user frame from given ID.");
+                return err_user;
+            }
+        }
+
+        if (tool_frame_id == 0)
+        {
+            tf.eye();
+        }
+        else
+        {
+            ToolInfo tf_info;
+            ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
+
+            if (err_tool == SUCCESS && tf_info.is_valid)
+            {
+                tf = tf_info.data;
+            }
+            else
+            {
+                FST_ERROR("Fail to get tool frame from given id");
+                return err_tool;
+            }
+        }
+
+        return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
     }
 }
 
-ErrorCode MotionControl::convertJointToCart(const Joint &joint, MotionFrame frame, int user_frame_id, int tool_frame_id, PoseEuler &pose)
+ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_id, int tool_frame_id, PoseEuler &pose)
 {
-    ToolInfo  tf_info;
-    ErrorCode err = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
-
-    if (err == SUCCESS)
+    if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        Matrix tf = tf_info.data;
-
-        if (frame == BASE)
-        {
-            Matrix uf;
-            uf.eye();
-            group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
-            return SUCCESS;
-        }
-        else if (frame == USER)
-        {
-            CoordInfo uf_info;
-            err = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
-
-            if (err == SUCCESS)
-            {
-                Matrix uf = uf_info.data;
-                group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to get user frame from given id");
-                return err;
-            }
-        }
-        else if (frame == WORLD)
-        {
-            group_ptr_->getKinematicsPtr()->forwardKinematics(joint, group_ptr_->getKinematicsPtr()->getWorldFrame(), tf, pose);
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("convertCartToJoint: invalid given frame: %d", frame);
-            return INVALID_PARAMETER;
-        }
+        group_ptr_->getKinematicsPtr()->forwardKinematicsInUser(joint, pose);
+        return SUCCESS;
     }
     else
     {
-        FST_ERROR("Fail to get tool frame from given id");
-        return err;
+        Matrix tf, uf;
+
+        if (user_frame_id == 0)
+        {
+            uf.eye();
+        }
+        else
+        {
+            CoordInfo uf_info;
+            ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
+
+            if (err_user == SUCCESS && uf_info.is_valid)
+            {
+                uf = uf_info.data;
+            }
+            else
+            {
+                FST_ERROR("Fail to get user frame from given ID.");
+                return err_user;
+            }
+        }
+
+        if (tool_frame_id == 0)
+        {
+            tf.eye();
+        }
+        else
+        {
+            ToolInfo tf_info;
+            ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
+
+            if (err_tool == SUCCESS && tf_info.is_valid)
+            {
+                tf = tf_info.data;
+            }
+            else
+            {
+                FST_ERROR("Fail to get tool frame from given id");
+                return err_tool;
+            }
+        }
+
+        group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
+        return SUCCESS;
     }
 }
 
@@ -505,24 +518,21 @@ double MotionControl::getGlobalAccRatio(void)
     return group_ptr_->getGlobalAccRatio();
 }
 
-void MotionControl::getToolFrameID(int &id)
+void MotionControl::getToolFrame(int &id)
 {
     id = tool_frame_id_;
 }
 
-ErrorCode MotionControl::setToolFrameID(int id)
+ErrorCode MotionControl::setToolFrame(int id)
 {
     FST_INFO("Set tool frame: id = %d, current is %d", id, tool_frame_id_);
 
     if (id != tool_frame_id_)
     {
-        ErrorCode err;
-        ToolInfo  tf_info;
-        err = tool_manager_ptr_->getToolInfoById(id, tf_info);
-
-        if (err == SUCCESS && tf_info.is_valid)
+        if (id == 0)
         {
-            err = group_ptr_->setToolFrame(tf_info.data);
+            Matrix tf;
+            ErrorCode err = group_ptr_->getKinematicsPtr()->setToolFrame(tf.eye());
 
             if (err == SUCCESS)
             {
@@ -538,8 +548,30 @@ ErrorCode MotionControl::setToolFrameID(int id)
         }
         else
         {
-            FST_ERROR("Fail to get tool frame from given id");
-            return err;
+            ToolInfo  tf_info;
+            ErrorCode err = tool_manager_ptr_->getToolInfoById(id, tf_info);
+
+            if (err == SUCCESS && tf_info.is_valid)
+            {
+                err = group_ptr_->getKinematicsPtr()->setToolFrame(tf_info.data);
+
+                if (err == SUCCESS)
+                {
+                    tool_frame_id_ = id;
+                    FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
+                    return SUCCESS;
+                }
+                else
+                {
+                    FST_ERROR("Fail to set tool frame.");
+                    return err;
+                }
+            }
+            else
+            {
+                FST_ERROR("Fail to get tool frame from given id");
+                return err;
+            }
         }
     }
     else
@@ -549,57 +581,42 @@ ErrorCode MotionControl::setToolFrameID(int id)
     }
 }
 
-void MotionControl::getMotionFrameID(MotionFrame &frame, int &id)
+void MotionControl::getUserFrame(int &id)
 {
-    frame = group_ptr_->getMotionFrame();
-
-    if (frame == USER)
-    {
-        id = user_frame_id_;
-    }
-    else if (frame == TOOL)
-    {
-        id = tool_frame_id_;
-    }
-    else
-    {
-        id = 0;
-    }
+    id = user_frame_id_;
 }
 
-ErrorCode MotionControl::setMotionFrameID(MotionFrame frame, int id)
+ErrorCode MotionControl::setUserFrame(int id)
 {
-    FST_INFO("Set motion frame: %d, id = %d", frame, id);
-    ErrorCode err;
+    FST_INFO("Set user frame id = %d, current is %d", id, user_frame_id_);
 
-    if (frame != group_ptr_->getMotionFrame())
+    if (id != user_frame_id_)
     {
-        FST_INFO("Current frame: %d", group_ptr_->getMotionFrame());
-        err = group_ptr_->setMotionFrame(frame);
-
-        if (err == SUCCESS)
+        if (id == 0)
         {
-            FST_INFO("Current frame switch to %d success.", group_ptr_->getMotionFrame());
+            Matrix uf;
+            ErrorCode err = group_ptr_->getKinematicsPtr()->setUserFrame(uf.eye());
+
+            if (err == SUCCESS)
+            {
+                user_frame_id_ = id;
+                FST_INFO("Success, current user frame id is %d", user_frame_id_);
+                return SUCCESS;
+            }
+            else
+            {
+                FST_ERROR("Fail to set user frame.");
+                return err;
+            }
         }
         else
         {
-            FST_ERROR("Fail to set motion frame, code = 0x%llx", err);
-            return err;
-        }
-    }
-
-    if (group_ptr_->getMotionFrame() == USER)
-    {
-        FST_INFO("Current user frame ID = %d", user_frame_id_);
-
-        if (id != user_frame_id_)
-        {
             CoordInfo uf_info;
-            err = coordinate_manager_ptr_->getCoordInfoById(id, uf_info);
+            ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(id, uf_info);
 
             if (err == SUCCESS && uf_info.is_valid)
             {
-                err = group_ptr_->setUserFrame(uf_info.data);
+                err = group_ptr_->getKinematicsPtr()->setUserFrame(uf_info.data);
 
                 if (err == SUCCESS)
                 {
@@ -615,56 +632,14 @@ ErrorCode MotionControl::setMotionFrameID(MotionFrame frame, int id)
             }
             else
             {
-                FST_ERROR("Fail to get tool frame from given id");
+                FST_ERROR("Fail to get user frame from given id");
                 return err;
             }
-        }
-        else
-        {
-            FST_INFO("Success!");
-            return SUCCESS;
-        }
-    }
-    else if (frame == TOOL)
-    {
-        FST_INFO("Current tool frame ID = %d", tool_frame_id_);
-
-        if (id != tool_frame_id_)
-        {
-            ToolInfo  tf_info;
-            err = tool_manager_ptr_->getToolInfoById(id, tf_info);
-
-            if (err == SUCCESS)
-            {
-                err = group_ptr_->setToolFrame(tf_info.data);
-
-                if (err == SUCCESS)
-                {
-                    tool_frame_id_ = id;
-                    FST_INFO("Success, current tool frame ID switch to %d", tool_frame_id_);
-                    return SUCCESS;
-                }
-                else
-                {
-                    FST_ERROR("Fail to set tool frame.");
-                    return err;
-                }
-            }
-            else
-            {
-                FST_ERROR("Fail to get tool frame from given id");
-                return err;
-            }
-        }
-        else
-        {
-            FST_INFO("Success!");
-            return SUCCESS;
         }
     }
     else
     {
-        FST_INFO("Ignore frame ID, success!");
+        FST_INFO("Success!");
         return SUCCESS;
     }
 }

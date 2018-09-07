@@ -8,6 +8,23 @@
 namespace fst_mc
 {
 
+enum MotionType
+{
+    MOTION_NONE   = 0,
+    MOTION_JOINT  = 1,
+    MOTION_LINE   = 2,
+    MOTION_CIRCLE = 3,
+};
+
+enum ManualFrame
+{
+    JOINT,
+    BASE,
+    WORLD,
+    USER,
+    TOOL,
+};
+
 typedef enum 
 {
     SERVO_IDLE = 1,

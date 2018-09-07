@@ -26,6 +26,8 @@ namespace fst_mc
 
 ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 {
+    vel_ratio_ = 0.0625;
+    acc_ratio_ = 0.0625;
     cycle_time_ = 0.001;
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 
@@ -147,7 +149,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     param.reset();
     vector<double> data;
 
-    if (param.loadParamFile(AXIS_GROUP_DIR"motion_control.yaml") &&
+    if (param.loadParamFile(COMPONENT_PARAM_FILE_DIR"motion_control.yaml") &&
         param.getParam("joint/omega/limit", data))
     {
         if (data.size() == NUM_OF_JOINT)
@@ -252,6 +254,9 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
         return err;
     }
+
+    manual_teach_.setGlobalVelRatio(vel_ratio_);
+    manual_teach_.setGlobalAccRatio(acc_ratio_);
 
     return SUCCESS;
 }

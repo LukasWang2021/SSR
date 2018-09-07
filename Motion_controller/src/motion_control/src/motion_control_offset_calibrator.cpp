@@ -555,7 +555,18 @@ ErrorCode Calibrator::saveOffset(void)
 
             usleep(200 * 1000);
             FST_INFO("Core1 offset updated, update recorder ...");
+
+            Joint joint;
+            ServoState state;
             vector<double> jnt;
+
+            if (!bare_core_ptr_->getLatestJoint(joint, state))
+            {
+                FST_ERROR("Fail to get current joint from core1.");
+                return BARE_CORE_TIMEOUT;
+            }
+
+            FST_INFO("Current joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
 
             if (!robot_recorder_.getParam("joint", jnt))
             {
@@ -567,14 +578,6 @@ ErrorCode Calibrator::saveOffset(void)
             {
                 FST_ERROR("Wrong array size of last joint in recorder.");
                 return INVALID_PARAMETER;
-            }
-
-            Joint joint;
-            ServoState state;
-            if (!bare_core_ptr_->getLatestJoint(joint, state))
-            {
-                FST_ERROR("Fail to get current joint from core1.");
-                return BARE_CORE_TIMEOUT;
             }
 
             vector<int> flag;   flag.resize(NUM_OF_JOINT);

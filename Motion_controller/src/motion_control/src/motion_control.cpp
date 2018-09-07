@@ -363,6 +363,11 @@ ErrorCode MotionControl::resetGroup(void)
     return group_ptr_->resetGroup();
 }
 
+ErrorCode MotionControl::clearGroup(void)
+{
+    return group_ptr_->clearGroup();
+}
+
 ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_frame_id, int tool_frame_id, Joint &joint)
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)

@@ -118,9 +118,6 @@ ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_
         FST_INFO("Axis acc : %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
     }
 
-    vel_ratio_ = 1;
-    acc_ratio_ = 1;
-
     return SUCCESS;
 }
 
@@ -310,12 +307,9 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
         if (t_min[i] > duration) duration = t_min[i];
     }
 
-    //FST_INFO("  t1=%f, t2=%f, t3=%f, t4=%f, t5=%f, t6=%f",
-    //         t_min[0], t_min[1], t_min[2], t_min[3], t_min[4], t_min[5]);
-    FST_INFO("  duration=%.4f, create trajectory ...", duration);
-
     traj.duration = duration;
     traj.joint_ending = target;
+    FST_INFO("  duration=%.4f, create trajectory ...", duration);
 
     for (size_t i = 0; i < joint_num_; i++)
     {
@@ -353,10 +347,10 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
             traj.coeff[i].brake_alpha = -traj.coeff[i].start_alpha;
         }
 
-        FST_INFO("  J%d: t1=%.4f,t2=%.4f,t3=%.4f,t4=%.4f,alpha1-2=%.4f,alpha3-4=%.4f",
+        /*FST_INFO("  J%d: t1=%.4f,t2=%.4f,t3=%.4f,t4=%.4f,alpha1-2=%.4f,alpha3-4=%.4f",
                  i + 1, traj.coeff[i].start_time, traj.coeff[i].stable_time,
                  traj.coeff[i].brake_time, traj.coeff[i].stop_time,
-                 traj.coeff[i].start_alpha, traj.coeff[i].brake_alpha);
+                 traj.coeff[i].start_alpha, traj.coeff[i].brake_alpha);*/
     }
 
     FST_INFO("Success !");

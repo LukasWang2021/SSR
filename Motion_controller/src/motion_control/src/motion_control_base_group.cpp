@@ -49,6 +49,9 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     auto_cache_[1].prev = &auto_cache_[0];
 
     auto_cache_ptr_ = &auto_cache_[0];
+
+    vel_ratio_ = 0;
+    acc_ratio_ = 0;
 }
 
 BaseGroup::~BaseGroup()

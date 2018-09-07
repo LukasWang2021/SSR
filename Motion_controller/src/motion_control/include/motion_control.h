@@ -82,6 +82,7 @@ public:
     // API for Axis Group Enable/Disable/Halt/Stop/Reset
     ErrorCode stopGroup(void);
     ErrorCode resetGroup(void);
+    ErrorCode clearGroup(void);
 
     // more API
     ErrorCode  convertCartToJoint(const PoseEuler &pose, int user_frame_id, int tool_frame_id, Joint &joint);

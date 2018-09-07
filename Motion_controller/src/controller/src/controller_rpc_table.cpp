@@ -100,6 +100,8 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/getHardLimit", 0x00013394, &ControllerRpc::handleRpc0x00013394}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setCoordinate", 0x0000A845, &ControllerRpc::handleRpc0x0000A845}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getCoordinate", 0x00008595, &ControllerRpc::handleRpc0x00008595}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setUserCoordId", 0x00005CF4, &ControllerRpc::handleRpc0x00005CF4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getUserCoordId", 0x00005BB4, &ControllerRpc::handleRpc0x00005BB4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setTool", 0x0001581C, &ControllerRpc::handleRpc0x0001581C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getTool", 0x0001354C, &ControllerRpc::handleRpc0x0001354C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/convertCartToJoint", 0x00010FD4, &ControllerRpc::handleRpc0x00010FD4}; rpc_table_.push_back(rpc_service);
@@ -109,6 +111,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus", 0x0000C183, &ControllerRpc::handleRpc0x0000C183}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/saveAllZeroPointOffsets", 0x000171D3, &ControllerRpc::handleRpc0x000171D3}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setSingleZeroPointStatus", 0x00010E43, &ControllerRpc::handleRpc0x00010E43}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/getAllZeroPointStatus", 0x000102F3, &ControllerRpc::handleRpc0x000102F3}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets", 0x00011B03, &ControllerRpc::handleRpc0x00011B03}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset", 0x000131D4, &ControllerRpc::handleRpc0x000131D4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/calibrateZeroPointOffsets", 0x00005AE3, &ControllerRpc::handleRpc0x00005AE3}; rpc_table_.push_back(rpc_service);

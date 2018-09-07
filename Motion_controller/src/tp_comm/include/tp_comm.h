@@ -352,6 +352,10 @@ private:
     void handleRequest0x00008595(int recv_bytes);
     /********rpc/motion_control/axis_group/setCoordinate, RequestMessageType_Int32List(count = 3) **********/
     void handleRequest0x0000A845(int recv_bytes);
+    //"/rpc/motion_control/axis_group/getUserCoordId"
+    void handleRequest0x00005BB4(int recv_bytes);
+    //"/rpc/motion_control/axis_group/setUserCoordId"
+    void handleRequest0x00005CF4(int recv_bytes);
     /********rpc/motion_control/axis_group/getTool, RequestMessageType_Int32**********/
     void handleRequest0x0001354C(int recv_bytes);
     /********rpc/motion_control/axis_group/setTool, RequestMessageType_Int32List(count = 2) **********/
@@ -371,6 +375,8 @@ private:
     void handleRequest0x000171D3(int recv_bytes);
     /********rpc/motion_control/axis_group/setSingleZeroPointStatus, RequestMessageType_Int32List(count=3)**********/
     void handleRequest0x00010E43(int recv_bytes);
+    //"/rpc/motion_control/axis_group/getAllZeroPointStatus"
+    void handleRequest0x000102F3(int recv_bytes);
     /********rpc/motion_control/axis_group/calibrateAllZeroPointOffsets, RequestMessageType_Int32**********/
     void handleRequest0x00011B03(int recv_bytes);
     /********rpc/motion_control/axis_group/calibrateSingleZeroPointOffset, RequestMessageType_Int32List(count=2)**********/
@@ -639,6 +645,10 @@ private:
     void handleResponse0x00008595(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setCoordinate, ResponseMessageType_Uint64**********/
     void handleResponse0x0000A845(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    //"/rpc/motion_control/axis_group/getUserCoordId"
+    void handleResponse0x00005BB4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    //"/rpc/motion_control/axis_group/setUserCoordId"
+    void handleResponse0x00005CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);    
     /********rpc/motion_control/axis_group/getTool, ResponseMessageType_Uint64_Int32**********/
     void handleResponse0x0001354C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setTool, ResponseMessageType_Uint64**********/
@@ -659,6 +669,8 @@ private:
     void handleResponse0x000171D3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setSingleZeroPointStatus, ResponseMessageType_Uint64**********/
     void handleResponse0x00010E43(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    //"/rpc/motion_control/axis_group/getAllZeroPointStatus"
+    void handleResponse0x000102F3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/calibrateAllZeroPointOffsets, ResponseMessageType_Uint64**********/	
     void handleResponse0x00011B03(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/calibrateSingleZeroPointOffset, ResponseMessageType_Uint64**********/

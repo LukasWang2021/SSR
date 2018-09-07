@@ -31,7 +31,7 @@ TpComm::TpComm():
 
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new TpCommManagerParam();
-    FST_LOG_INIT("TpCommManager");
+    FST_LOG_INIT("TpComm");
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 

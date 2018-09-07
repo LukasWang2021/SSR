@@ -11,7 +11,8 @@ using namespace std;
 using namespace fst_base;
 
 ControllerServer::ControllerServer(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
-    log_ptr_(log_ptr), param_ptr_(param_ptr), is_exit_(false)
+    log_ptr_(log_ptr), param_ptr_(param_ptr), is_exit_(false),
+    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL)
 {
 
 }
@@ -19,6 +20,18 @@ ControllerServer::ControllerServer(fst_log::Logger* log_ptr, ProcessCommParam* p
 ControllerServer::~ControllerServer()
 {
     this->close();
+
+    if(recv_buffer_ptr_ != NULL)
+    {
+        delete[] recv_buffer_ptr_;
+        recv_buffer_ptr_ = NULL;
+    }
+
+    if(send_buffer_ptr_ != NULL)
+    {
+        delete[] send_buffer_ptr_;
+        send_buffer_ptr_ = NULL;
+    }
 }
 
 ErrorCode ControllerServer::init()

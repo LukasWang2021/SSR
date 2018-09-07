@@ -11,14 +11,25 @@ using namespace fst_base;
 using namespace fst_ctrl;
 
 InterpreterClient::InterpreterClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
-    log_ptr_(log_ptr), param_ptr_(param_ptr)
+    log_ptr_(log_ptr), param_ptr_(param_ptr),
+    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL)
 {
 
 }
 
 InterpreterClient::~InterpreterClient()
 {
-
+    if(recv_buffer_ptr_ != NULL)
+    {
+        delete[] recv_buffer_ptr_;
+        recv_buffer_ptr_ = NULL;
+    }
+    
+    if(send_buffer_ptr_ != NULL)
+    {
+        delete[] send_buffer_ptr_;
+        send_buffer_ptr_ = NULL;
+    }
 }
 
 ErrorCode InterpreterClient::init()

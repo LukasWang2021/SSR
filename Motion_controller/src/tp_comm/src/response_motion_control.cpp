@@ -346,6 +346,40 @@ void TpComm::handleResponse0x0000A845(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+//"/rpc/motion_control/axis_group/getUserCoordId"
+void TpComm::handleResponse0x00005BB4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/motion_control/axis_group/setUserCoordId"
+void TpComm::handleResponse0x00005CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32List*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
 //"/rpc/motion_control/axis_group/getTool"
 void TpComm::handleResponse0x0001354C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
@@ -496,6 +530,23 @@ void TpComm::handleResponse0x00010E43(std::vector<TpRequestResponse>::iterator& 
     if(task->response_data_ptr != NULL)
     {
         delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/motion_control/axis_group/getAllZeroPointStatus"
+void TpComm::handleResponse0x000102F3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32List_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32List*)task->response_data_ptr;
     }
 }
 

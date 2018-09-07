@@ -31,7 +31,11 @@ Controller::~Controller()
     routine_thread_.join();
     heartbeat_thread_.join();
 
-    ServerAlarmApi::GetInstance()->pyDecref();    
+    if(process_comm_ptr_ != NULL)
+    {
+        delete process_comm_ptr_;
+        process_comm_ptr_ = NULL;
+    }
 
     if(log_ptr_ != NULL)
     {
@@ -43,6 +47,8 @@ Controller::~Controller()
         delete param_ptr_;
         param_ptr_ = NULL;
     }
+
+    ServerAlarmApi::GetInstance()->pyDecref();
 }
 
 Controller* Controller::getInstance()

@@ -269,12 +269,11 @@ void ControllerSm::transferServoState()
         && servo_state_ != SERVO_RUNNING)
     {
         // this is ugly, because of lacking status in ctrl status definition
-        if(robot_state_ == ROBOT_RUNNING
-            || robot_state_ == ROBOT_IDLE_TO_RUNNING
-            || robot_state_ == ROBOT_RUNNING_TO_IDLE)
+        if(robot_state_ == ROBOT_TEACHING
+            || robot_state_ == ROBOT_IDLE_TO_TEACHING
+            || robot_state_ == ROBOT_TEACHING_TO_IDLE)
         {
-            ;//FST_INFO("---transferServoStatus: in teaching mode: clearArmGroup");
-            //arm_group_->clearArmGroup();
+            motion_control_ptr_->clearGroup();
         }
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);

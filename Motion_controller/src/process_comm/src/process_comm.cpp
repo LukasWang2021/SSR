@@ -74,6 +74,36 @@ ProcessComm::ProcessComm():
 
 ProcessComm::~ProcessComm()
 {
+    /*if(controller_client_ptr_ != NULL)
+    {
+        delete controller_client_ptr_;
+        controller_client_ptr_ = NULL;
+    }
+    
+    if(controller_server_ptr_ != NULL)
+    {
+        delete controller_server_ptr_;
+        controller_server_ptr_ = NULL;
+    }
+
+    if(interpreter_client_ptr_ != NULL)
+    {
+        delete interpreter_client_ptr_;
+        interpreter_client_ptr_ = NULL;
+    }
+    
+    if(interpreter_server_ptr_ != NULL)
+    {
+        delete interpreter_server_ptr_;
+        interpreter_server_ptr_ = NULL;
+    }
+
+    if(heartbeat_client_ptr_ != NULL)
+    {
+        delete heartbeat_client_ptr_;
+        heartbeat_client_ptr_ = NULL;
+    }*/
+
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;
@@ -83,7 +113,7 @@ ProcessComm::~ProcessComm()
     {
         delete param_ptr_;
         param_ptr_ = NULL;
-    }
+    }    
 }
 
 ProcessComm* ProcessComm::getInstance()

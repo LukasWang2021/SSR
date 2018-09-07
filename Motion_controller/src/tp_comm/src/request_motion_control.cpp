@@ -452,7 +452,7 @@ void TpComm::handleRequest0x00008595(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
     if(response_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -486,6 +486,54 @@ void TpComm::handleRequest0x0000A845(int recv_bytes)
     }
     
     handleRequestPackage(0x0000A845, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32List_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/getUserCoordId"
+void TpComm::handleRequest0x00005BB4(int recv_bytes)
+{  
+   // create object for request and response package
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00005BB4, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_fields, -1);
+}
+
+//"/rpc/motion_control/axis_group/setUserCoordId"
+void TpComm::handleRequest0x00005CF4(int recv_bytes)
+{  
+   // create object for request and response package
+    RequestMessageType_Int32List* request_data_ptr = new RequestMessageType_Int32List;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00005CF4, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Int32List_fields, -1);
 }
 
@@ -706,6 +754,29 @@ void TpComm::handleRequest0x00010E43(int recv_bytes)
         recv_bytes,RequestMessageType_Int32List_fields, -1);
 }
 
+//"/rpc/motion_control/axis_group/getAllZeroPointStatus"
+void TpComm::handleRequest0x000102F3(int recv_bytes)
+{
+    RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x000102F3, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32_fields, -1);
+}
+
 //"/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"
 void TpComm::handleRequest0x00011B03(int recv_bytes)
 {
@@ -777,23 +848,6 @@ void TpComm::handleRequest0x00005AE3(int recv_bytes)
     handleRequestPackage(0x00005AE3, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes,RequestMessageType_Int32_Int32List_fields, -1);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //"/rpc/motion_control/axis_group/isReferencePointExist"
 void TpComm::handleRequest0x0000D344(int recv_bytes)

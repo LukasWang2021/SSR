@@ -453,9 +453,9 @@ void ControllerRpc::handleRpc0x0000A845(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    if(rq_data_ptr->data.data_count == 3)
+    if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.data = motion_control_ptr_->setMotionFrameID((MotionFrame)rq_data_ptr->data.data[1], rq_data_ptr->data.data[2]);
+        rs_data_ptr->data.data = motion_control_ptr_->setManualFrame((fst_mc::ManualFrame)rq_data_ptr->data.data[1]);
     }
     else
     {
@@ -468,14 +468,39 @@ void ControllerRpc::handleRpc0x0000A845(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x00008595(void* request_data_ptr, void* response_data_ptr)
 {
     //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    MotionFrame frame;
-    motion_control_ptr_->getMotionFrameID(frame, rs_data_ptr->data.data[1]);
-    rs_data_ptr->data.data[0] = (int32_t)frame;
-    rs_data_ptr->data.data_count = 2;
+    rs_data_ptr->data.data = (int32_t)motion_control_ptr_->getManualFrame();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getCoordinate"));
+}
+
+// "/rpc/motion_control/axis_group/setUserCoordId"
+void ControllerRpc::handleRpc0x00005CF4(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        rs_data_ptr->data.data = motion_control_ptr_->setUserFrame(rq_data_ptr->data.data[1]);
+    }
+    else
+    {
+        rs_data_ptr->data.data = INVALID_PARAMETER;
+    }
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setUserCoordId"));
+}
+
+// "/rpc/motion_control/axis_group/getUserCoordId"
+void ControllerRpc::handleRpc0x00005BB4(void* request_data_ptr, void* response_data_ptr)
+{
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
+
+    rs_data_ptr->error_code.data = SUCCESS;
+    motion_control_ptr_->getUserFrame(rs_data_ptr->data.data);
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getUserCoordId"));
 }
 
 // "/rpc/motion_control/axis_group/setTool"
@@ -486,7 +511,7 @@ void ControllerRpc::handleRpc0x0001581C(void* request_data_ptr, void* response_d
 
     if(rq_data_ptr->data.data_count == 2)
     {
-        rs_data_ptr->data.data = motion_control_ptr_->setToolFrameID(rq_data_ptr->data.data[1]);
+        rs_data_ptr->data.data = motion_control_ptr_->setToolFrame(rq_data_ptr->data.data[1]);
     }
     else
     {
@@ -502,7 +527,7 @@ void ControllerRpc::handleRpc0x0001354C(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    motion_control_ptr_->getToolFrameID(rs_data_ptr->data.data);
+    motion_control_ptr_->getToolFrame(rs_data_ptr->data.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getTool"));
 }
 
@@ -515,6 +540,7 @@ void ControllerRpc::handleRpc0x00010FD4(void* request_data_ptr, void* response_d
     if(rq_data_ptr->data1.data_count == 4
         && rq_data_ptr->data2.data_count == 6)
     {
+        PoseEuler pos;
         rs_data_ptr->data.data_count = 9;
         rs_data_ptr->error_code.data = SUCCESS;
     }
@@ -609,6 +635,23 @@ void ControllerRpc::handleRpc0x00010E43(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setSingleZeroPointStatus"));
+}
+
+// "/rpc/motion_control/axis_group/getAllZeroPointStatus"
+void ControllerRpc::handleRpc0x000102F3(void* request_data_ptr, void* response_data_ptr)
+{
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
+
+    CalibrateState dummy;
+    OffsetState offset_state[NUM_OF_JOINT];
+    rs_data_ptr->error_code.data = motion_control_ptr_->checkOffset(dummy, offset_state);
+    rs_data_ptr->data.data_count = NUM_OF_JOINT;
+    for(int i=0; i<NUM_OF_JOINT; ++i)
+    {
+        rs_data_ptr->data.data[i] = (int32_t)offset_state[i];
+    }
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/getAllZeroPointStatus"));
 }
 
 // "/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"

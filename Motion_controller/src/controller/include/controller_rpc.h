@@ -249,6 +249,10 @@ private:
     void handleRpc0x0000A845(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getCoordinate"
     void handleRpc0x00008595(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setUserCoordId"
+    void handleRpc0x00005CF4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getUserCoordId"
+    void handleRpc0x00005BB4(void* request_data_ptr, void* response_data_ptr);    
     // "/rpc/motion_control/axis_group/setTool"
     void handleRpc0x0001581C(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getTool"
@@ -267,6 +271,8 @@ private:
     void handleRpc0x000171D3(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/setSingleZeroPointStatus"
     void handleRpc0x00010E43(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/getAllZeroPointStatus"
+    void handleRpc0x000102F3(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"
     void handleRpc0x00011B03(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/calibrateSingleZeroPointOffset"

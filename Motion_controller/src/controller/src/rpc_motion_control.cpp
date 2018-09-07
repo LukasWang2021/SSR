@@ -537,12 +537,31 @@ void ControllerRpc::handleRpc0x00010FD4(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32List_DoubleList*>(request_data_ptr);
     ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
 
-    if(rq_data_ptr->data1.data_count == 4
+    if(rq_data_ptr->data1.data_count == 3
         && rq_data_ptr->data2.data_count == 6)
     {
         PoseEuler pos;
+        Joint joint;
+        pos.position.x = rq_data_ptr->data2.data[0];
+        pos.position.y = rq_data_ptr->data2.data[1];
+        pos.position.z = rq_data_ptr->data2.data[2];
+        pos.orientation.a = rq_data_ptr->data2.data[3];
+        pos.orientation.b = rq_data_ptr->data2.data[4];
+        pos.orientation.c = rq_data_ptr->data2.data[5];
+        rs_data_ptr->error_code.data = motion_control_ptr_->convertCartToJoint(pos, rq_data_ptr->data1.data[2], rq_data_ptr->data1.data[1], joint);
         rs_data_ptr->data.data_count = 9;
-        rs_data_ptr->error_code.data = SUCCESS;
+        if(rs_data_ptr->error_code.data == SUCCESS)
+        {
+            rs_data_ptr->data.data[0] = joint.j1;
+            rs_data_ptr->data.data[1] = joint.j2;
+            rs_data_ptr->data.data[2] = joint.j3;
+            rs_data_ptr->data.data[3] = joint.j4;
+            rs_data_ptr->data.data[4] = joint.j5;
+            rs_data_ptr->data.data[5] = joint.j6;
+            rs_data_ptr->data.data[6] = joint.j7;
+            rs_data_ptr->data.data[7] = joint.j8;
+            rs_data_ptr->data.data[8] = joint.j9;
+        }
     }
     else
     {
@@ -558,11 +577,31 @@ void ControllerRpc::handleRpc0x0000B6D4(void* request_data_ptr, void* response_d
     RequestMessageType_Int32List_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32List_DoubleList*>(request_data_ptr);
     ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
 
-    if(rq_data_ptr->data1.data_count == 4
+    if(rq_data_ptr->data1.data_count == 3
         && rq_data_ptr->data2.data_count == 9)
     {
+        Joint joint;
+        PoseEuler pos;
+        joint.j1 = rq_data_ptr->data2.data[0];
+        joint.j2 = rq_data_ptr->data2.data[1];
+        joint.j3 = rq_data_ptr->data2.data[2];
+        joint.j4 = rq_data_ptr->data2.data[3];
+        joint.j5 = rq_data_ptr->data2.data[4];
+        joint.j6 = rq_data_ptr->data2.data[5];
+        joint.j7 = rq_data_ptr->data2.data[6];
+        joint.j8 = rq_data_ptr->data2.data[7];
+        joint.j9 = rq_data_ptr->data2.data[8];    
+        rs_data_ptr->error_code.data = motion_control_ptr_->convertJointToCart(joint, rq_data_ptr->data1.data[2], rq_data_ptr->data1.data[1], pos);
         rs_data_ptr->data.data_count = 6;
-        rs_data_ptr->error_code.data = SUCCESS;
+        if(rs_data_ptr->error_code.data == SUCCESS)
+        {
+            rs_data_ptr->data.data[0] = pos.position.x;
+            rs_data_ptr->data.data[1] = pos.position.y;
+            rs_data_ptr->data.data[2] = pos.position.z;
+            rs_data_ptr->data.data[3] = pos.orientation.a;
+            rs_data_ptr->data.data[4] = pos.orientation.b;
+            rs_data_ptr->data.data[5] = pos.orientation.c;
+        }
     }
     else
     {

@@ -29,10 +29,10 @@ DeviceManager::~DeviceManager()
             switch(it->second->getDeviceType())
             {
                 case DEVICE_TYPE_FST_AXIS:       break;
-                case DEVICE_TYPE_FST_IO:         delete (FstIoDevice*)it->second;
-                case DEVICE_TYPE_FST_SAFETY:     delete (FstSafetyDevice*)it->second;
+                case DEVICE_TYPE_FST_IO:         delete (FstIoDevice*)it->second; break;
+                case DEVICE_TYPE_FST_SAFETY:     delete (FstSafetyDevice*)it->second; break;
                 case DEVICE_TYPE_FST_ANYBUS:     break;
-                case DEVICE_TYPE_VIRTUAL_AXIS:   delete (VirtualAxisDevice*)it->second;
+                case DEVICE_TYPE_VIRTUAL_AXIS:   delete (VirtualAxisDevice*)it->second; break;
                 case DEVICE_TYPE_VIRTUAL_IO:     break;
                 case DEVICE_TYPE_VIRTUAL_SAFETY: break;
                 case DEVICE_TYPE_NORMAL:         break;

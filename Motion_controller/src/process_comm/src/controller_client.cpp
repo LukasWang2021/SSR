@@ -210,7 +210,18 @@ void ControllerClient::handleSubscribe()
 
 void ControllerClient::handleEvent()
 {
+    if(nn_poll(&poll_event_fd_, 1, 0) == -1)
+    {
+        return;
+    }
+    int recv_bytes = nn_recv(req_resp_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
+    if(recv_bytes == -1
+        || recv_bytes != sizeof(unsigned long long int))
+    {
+        return;
+    }    
 
+    FST_ERROR("recv event from interpreter: error_code = %llx", *((ErrorCode*)recv_buffer_ptr_));
 }
 
 InterpreterPublish* ControllerClient::getInterpreterPublishPtr()

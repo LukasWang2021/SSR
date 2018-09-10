@@ -62,7 +62,7 @@ Controller* Controller::getInstance()
 
 ErrorCode Controller::init()
 {
-    recordLog("Controller initialization start");
+    
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load controller component parameters");
@@ -75,7 +75,7 @@ ErrorCode Controller::init()
     //preformance_monitor_.addTimer(2, "heartbeat thread",  0,  20, 200, 2000);
 
     ServerAlarmApi::GetInstance()->setEnable(param_ptr_->enable_log_service_);
-    ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, std::string("Controller start init..."));
+    recordLog("Controller initialization start");
     
     virtual_core1_.init(log_ptr_, param_ptr_);
 

@@ -61,18 +61,18 @@ int ServerAlarmApi::sendOneAlarm(unsigned long long logCode, string param)
     int statusCode = 1001;
     try{
         PyGILState_STATE gstate;
-        gstate = PyGILState_Ensure();
+        gstate = PyGILState_Ensure();       
         PyObject *pArgs = PyTuple_New(2);
         sprintf(mBuf, "%016llX", logCode);
         PyTuple_SetItem(pArgs, 0, Py_BuildValue("s",mBuf));
-        PyTuple_SetItem(pArgs, 1, Py_BuildValue("s",param.c_str()));
-        PyObject *result = PyObject_CallObject(mPost, pArgs);
-        Py_XDECREF(pArgs);
+        PyTuple_SetItem(pArgs, 1, Py_BuildValue("s",param.c_str()));       
+        PyObject *result = PyObject_CallObject(mPost, pArgs);        
+        Py_XDECREF(pArgs);        
         if(result != NULL){
             PyArg_Parse(result, "i", &statusCode);// 解析失败返回0
             Py_XDECREF(result);
-        }
-        PyGILState_Release(gstate);
+        }     
+        PyGILState_Release(gstate);       
     }
     catch(...){
         std::cout << "PyArg_ParseTuple fail" << endl;

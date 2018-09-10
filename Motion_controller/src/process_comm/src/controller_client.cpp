@@ -215,15 +215,15 @@ void ControllerClient::handleEvent()
 		FST_ERROR("nn_poll failed");
         return;
     }
-    int recv_bytes = nn_recv(req_resp_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
+    int recv_bytes = nn_recv(event_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
     if(recv_bytes == -1
-        || recv_bytes != sizeof(unsigned long long int))
+        || recv_bytes != sizeof(ProcessCommEvent))
     {
-		// FST_ERROR("nn_recv failed");
+		FST_ERROR("nn_recv failed = %d", recv_bytes);
         return;
     }    
 
-    FST_ERROR("recv event from interpreter: error_code = %llx", *((ErrorCode*)recv_buffer_ptr_));
+    FST_ERROR("recv event from interpreter: error_code = %llx", ((ProcessCommEvent*)recv_buffer_ptr_)->data);
 }
 
 InterpreterPublish* ControllerClient::getInterpreterPublishPtr()

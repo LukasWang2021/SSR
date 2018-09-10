@@ -265,7 +265,7 @@ void InterpreterServer::handleEventList()
     for(it = event_list_.begin(); it != event_list_.end(); ++it)
     {
 		FST_INFO("InterpreterServer::handleEventList: nn_send ");
-        int send_bytes = nn_send(event_socket_, &it->data, sizeof(unsigned long long int), 0);
+        int send_bytes = nn_send(event_socket_, &it->data, sizeof(ProcessCommEvent), 0);
         if(send_bytes == -1)
         {
             FST_ERROR("handleEventList: send publish failed, error = %d", nn_errno());

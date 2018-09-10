@@ -649,9 +649,10 @@ ErrorCode Calibrator::saveOffset(void)
 
 ErrorCode Calibrator::saveJoint(void)
 {
-    FST_INFO("Save current joint into record file.");
     Joint cur_jnt;
     ServoState state;
+    memset(&cur_jnt, 0, sizeof(Joint));
+    FST_INFO("Save current joint into record file.");
 
     if (bare_core_ptr_->getLatestJoint(cur_jnt, state))
     {

@@ -275,8 +275,8 @@ ErrorCode ArmGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
     double *angle, *start, *target;
     double tm, omega;
 
-    FST_INFO("Pick from manual joint");
-    FST_INFO("manual-time=%.4f", manual_time_);
+    //FST_INFO("Pick from manual joint");
+    //FST_INFO("manual-time=%.4f", manual_time_);
 
     for (size_t i = 0 ; i < length; i++)
     {
@@ -356,9 +356,9 @@ ErrorCode ArmGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
         }
         else
         {
-            FST_INFO("%d - %.3f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
-                          point[i].angle.j1, point[i].angle.j2, point[i].angle.j3,
-                          point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
+            //FST_INFO("%d - %.3f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
+            //              point[i].angle.j1, point[i].angle.j2, point[i].angle.j3,
+            //              point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
             continue;
         }
     }

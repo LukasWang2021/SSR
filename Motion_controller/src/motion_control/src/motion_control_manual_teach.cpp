@@ -379,7 +379,7 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
 
     FST_INFO("  start-pose  = %.4f %.4f %.4f - %.4f %.4f %.4f",
              start.position.x, start.position.y, start.position.z, start.orientation.a, start.orientation.b, start.orientation.c);
-    FST_INFO("  target-pose = %.4f %.4f %.2f - %.4f %.4f %.4f",
+    FST_INFO("  target-pose = %.4f %.4f %.4f - %.4f %.4f %.4f",
              target.position.x, target.position.y, target.position.z, target.orientation.a, target.orientation.b, target.orientation.c);
 
     ErrorCode err;
@@ -391,10 +391,10 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
             err = kinematics_ptr_->inverseKinematicsInBase(target, traj.joint_start, target_joint);
             break;
         case USER:
-            //err = kinematics_ptr_->inverseKinematicsInUser(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->inverseKinematicsInUser(target, traj.joint_start, target_joint);
             break;
         case WORLD:
-            //err = kinematics_ptr_->inverseKinematicsInWorld(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->inverseKinematicsInWorld(target, traj.joint_start, target_joint);
             break;
         default:
             err = MOTION_INTERNAL_FAULT;

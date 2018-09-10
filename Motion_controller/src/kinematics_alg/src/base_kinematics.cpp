@@ -17,7 +17,7 @@ BaseKinematics::BaseKinematics()
 {
     memset(dh_matrix_, 0, sizeof(dh_matrix_));
     user_frame_.eye();
-    user_frame_.eye();
+    tool_frame_.eye();
     world_frame_.eye();
     inverse_user_frame_.eye();
     inverse_tool_frame_.eye();
@@ -93,6 +93,11 @@ void BaseKinematics::forwardKinematicsInUser(const Joint &joint, PoseEuler &pose
 {
     Matrix matrix;
     forwardKinematics(joint, matrix);
+
+    matrix.printMatrix(NULL);
+    inverse_user_frame_.printMatrix(NULL);
+    tool_frame_.printMatrix(NULL);
+
     matrix.leftMultiply(inverse_user_frame_).rightMultiply(tool_frame_).toPoseEuler(pose);
 }
 

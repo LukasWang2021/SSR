@@ -1356,8 +1356,8 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
 int call_Pause(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
-	InterpreterState interpreterState  = PAUSED_R ;
-	setPrgmState(PAUSED_R);
+	InterpreterState interpreterState  = INTERPRETER_PAUSED ;
+	setPrgmState(INTERPRETER_PAUSED);
 /*
 	while(interpreterState == PAUSED_R)
 	{
@@ -1381,7 +1381,7 @@ int call_Pause(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
 int call_Abort(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
-	setPrgmState(IDLE_R);
+	setPrgmState(INTERPRETER_IDLE);
 #ifdef WIN32
 	Sleep(100);
     return 0; 

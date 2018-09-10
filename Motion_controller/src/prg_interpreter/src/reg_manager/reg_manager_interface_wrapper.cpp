@@ -31,6 +31,7 @@
 // RegManagerInterface * g_objRegManagerInterface = NULL;
 // using namespace fst_reg ;
 #else
+extern InterpreterPublish  g_interpreter_publish; 
 fst_base::ProcessComm* g_process_comm_ptr       = NULL;
 fst_base::InterpreterClient* g_objRegManagerInterface = NULL;
 fst_base::InterpreterServer* g_objInterpreterServer   = NULL;
@@ -97,6 +98,8 @@ void load_register_data()
 	}
 	g_objRegManagerInterface = g_process_comm_ptr->getInterpreterClientPtr();
 	g_objInterpreterServer   = g_process_comm_ptr->getInterpreterServerPtr();
+	memset(&g_interpreter_publish, 0x00, sizeof(InterpreterPublish));
+	g_objInterpreterServer->addPublishTask(300, &g_interpreter_publish);
 #endif
 
 #endif

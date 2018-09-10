@@ -54,7 +54,7 @@ void* macro_instr_thread(void* arg)
 				
 				objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 				objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
-				setPrgmState(EXECUTE_R);
+				setPrgmState(INTERPRETER_EXECUTE);
 				if(strlen(it->second.program_name) == 0)
 				{
 					startFile(objThdCtrlBlockPtr, (char *)"sr_test", g_iCurrentThreadSeq);

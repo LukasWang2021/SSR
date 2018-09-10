@@ -234,7 +234,7 @@ void* basic_interpreter(void* arg)
   //  {
   //  	resetRunningMacroInstr(objThreadCntrolBlock->project_name);
   //  }
-  setPrgmState(IDLE_R);
+  setPrgmState(INTERPRETER_IDLE);
   // clear line path
   setCurLine((char *)"");
 
@@ -534,12 +534,12 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 
 		if(strlen(cLineContent) != 0)
 		{
-//		    setPrgmState(PAUSED_R);
+//		    setPrgmState(INTERPRETER_PAUSED);
   			printf("PAUSED: Line number(%s) at %d\n", cLineContent, iLinenum);
 			int iOldLinenum = iLinenum ;
 			// iScan = scanf("%d", &iLinenum);
 			
-			setPrgmState(PAUSED_R) ; // WAITING_R ;
+			setPrgmState(INTERPRETER_PAUSED) ; // WAITING_R ;
             printf("call_interpreter : Enter waitInterpreterStateleftPaused %d \n", iLinenum);
 			waitInterpreterStateleftPaused(objThreadCntrolBlock);
             printf("call_interpreter : Left  waitInterpreterStateleftPaused %d \n", iLinenum);
@@ -588,9 +588,9 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 				}
 			}
 			// Not need to execute this state
-		    // setPrgmState(PAUSED_R);
+		    // setPrgmState(INTERPRETER_PAUSED);
   			printf("setPrgmState(EXECUTE_TO_PAUSE_T).\n");
-		    setPrgmState(EXECUTE_TO_PAUSE_T);
+		    setPrgmState(INTERPRETER_EXECUTE_TO_PAUSE);
 #ifdef WIN32
 			Sleep(1);
 #else
@@ -599,7 +599,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
   			// printf("interpreterState : Line number(%d) \n", iLinenum);
   			printCurrentLine(objThreadCntrolBlock);
   			printf("setPrgmState(EXECUTE_R).\n");
-		    setPrgmState(EXECUTE_R);
+		    setPrgmState(INTERPRETER_EXECUTE);
 		}
   	}
 	else if(objThreadCntrolBlock->prog_mode == ERROR_MODE)
@@ -619,7 +619,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	}
 	// Deal PAUSED_R
 	InterpreterState interpreterState  = getPrgmState();
-	while(interpreterState == PAUSED_R)
+	while(interpreterState == INTERPRETER_PAUSED)
 	{
 		printf("interpreterState is PAUSED_R.\n");
 #ifdef WIN32
@@ -682,7 +682,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 				if (isInstructionEmpty(SHM_INTPRT_CMD))
 		        {
 		            printf("check if step is done in call_interpreter\n");
-		            // setPrgmState(PAUSED_R);
+		            // setPrgmState(INTERPRETER_PAUSED);
 		        }
 			} 
     		printf("call_internal_cmd execution : %s at %d, iLineNum = %d\n", 

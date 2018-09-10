@@ -141,12 +141,17 @@ void InterpreterServer::sendEvent(int event_type, void* data_ptr)
     ProcessCommEvent event;
     event.event_type = event_type;
     event.data = *((unsigned long long int*)data_ptr);
+	
+    FST_INFO("InterpreterServer::sendEvent: %d, %lld ", event.event_type, event.data);
+	
     event_list_mutex_.lock();
     if(event_list_.size() <  param_ptr_->interpreter_server_event_buffer_size_)
     {
         event_list_.push_back(event);
     }
     event_list_mutex_.unlock();
+	
+    FST_INFO("InterpreterServer::sendEvent: %d, %lld ", event.event_type, event.data);
 }
 
 InterpreterServer::InterpreterServer():
@@ -251,6 +256,7 @@ void InterpreterServer::handleEventList()
 {
     if(nn_poll(&poll_event_fd_, 1, 0) == -1)
     {
+		FST_INFO("InterpreterServer::handleEventList: nn_poll ");
         return;
     }
 
@@ -258,6 +264,7 @@ void InterpreterServer::handleEventList()
     event_list_mutex_.lock();
     for(it = event_list_.begin(); it != event_list_.end(); ++it)
     {
+		FST_INFO("InterpreterServer::handleEventList: nn_send ");
         int send_bytes = nn_send(event_socket_, &it->data, sizeof(unsigned long long int), 0);
         if(send_bytes == -1)
         {

@@ -212,12 +212,14 @@ void ControllerClient::handleEvent()
 {
     if(nn_poll(&poll_event_fd_, 1, 0) == -1)
     {
+		FST_ERROR("nn_poll failed");
         return;
     }
     int recv_bytes = nn_recv(req_resp_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
     if(recv_bytes == -1
         || recv_bytes != sizeof(unsigned long long int))
     {
+		// FST_ERROR("nn_recv failed");
         return;
     }    
 

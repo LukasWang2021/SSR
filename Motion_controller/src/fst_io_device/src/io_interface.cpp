@@ -25,7 +25,12 @@ IOInterface::IOInterface(fst_log::Logger * logger)
     U64 result = initial();
     if (result != SUCCESS)
     {
-    //    setWarning(result);
+    //  setWarning(result);
+        FST_ERROR("IOInterface::initial failed :%llx", result);
+    }
+    else 
+    {
+        FST_ERROR("IOInterface::initial OK :%llx", result);
     }
 }
 
@@ -103,9 +108,12 @@ U64 IOInterface::initial()
     for (int i = 0; i < io_num_; i++)
     {
         result = io_manager_->getDeviceInfo(i, dev_info_[i]);
-        //FST_INFO("input:%d,output:%d", dev_info_[i].input, dev_info_[i].output);
+        FST_INFO("input:%d,output:%d", dev_info_[i].input, dev_info_[i].output);
         if (result != SUCCESS)
+        {
+            FST_ERROR("io_manager_ getDeviceInfo failed:%llx", result);
             return result;
+        }
     }
 
     return SUCCESS;

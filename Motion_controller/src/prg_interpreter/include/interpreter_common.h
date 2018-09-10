@@ -11,6 +11,14 @@ using namespace fst_controller;
 
 #define USE_XPATH
 
+
+typedef enum _InterpreterEventType
+{
+    INTERPRETER_EVENT_TYPE_WARING = 1,
+    INTERPRETER_EVENT_TYPE_ERROR,
+}InterpreterEventType;
+
+
 typedef enum _AdditionalInfomationType
 {
     ACC, 
@@ -54,19 +62,17 @@ typedef enum _InstType
     END_PROG,
 }InstType;
 
-typedef enum _InterpreterState
+typedef enum
 {
-    IDLE_R      = 0,    
-    EXECUTE_R   = 1,
-    PAUSED_R    = 2,
-//    WAITING_R   = 3,
-
-    IDLE_TO_EXECUTE_T   = 101,
-    EXECUTE_TO_PAUSE_T  = 102,
-    PAUSE_TO_IDLE_T     = 103,
-    PAUSE_TO_EXECUTE_T  = 104
-    
+    INTERPRETER_IDLE      = 0,    
+    INTERPRETER_EXECUTE   = 1,
+    INTERPRETER_PAUSED    = 2,
+    INTERPRETER_IDLE_TO_EXECUTE   = 101,
+    INTERPRETER_EXECUTE_TO_PAUSE  = 102,
+    INTERPRETER_PAUSE_TO_IDLE     = 103,
+    INTERPRETER_PAUSE_TO_EXECUTE  = 104    
 }InterpreterState;
+
 
 typedef enum _RegDIOType
 {
@@ -327,8 +333,9 @@ typedef struct _IODeviceInfoShm
 typedef struct
 {
     char program_name[256];
-    int current_line_num;
-    int status;
+//  int  current_line_num;
+    char current_line_num[256];
+    InterpreterState status;
 }InterpreterPublish;
 
 

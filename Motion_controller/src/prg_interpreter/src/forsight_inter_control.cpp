@@ -35,7 +35,7 @@ static int block_end;
 bool terminated = false;
 
 bool is_backward= false;
-InterpreterState prgm_state = IDLE_R;
+InterpreterState prgm_state = INTERPRETER_IDLE;
 //bool send_flag = false;
 // int target_line;
 // static IntprtStatus intprt_status;
@@ -60,6 +60,8 @@ int  g_iCurrentThreadSeq = -1 ;  // minus one add one equals to zero
 AutoMode g_current_auto_mode = AUTOMODE_NONE_U;
 
 std::string g_files_manager_data_path = "";
+
+InterpreterPublish  g_interpreter_publish; 
 
 vector<string> split(string str,string pattern)
 {
@@ -256,29 +258,32 @@ InterpreterState getPrgmState()
 
 void setPrgmState(InterpreterState state)
 {
-	g_privateInterpreterState = state ;
-#ifdef WIN32
-    IntprtStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->state) - (int)tempPtr ;
-#else
-    int offset = (int)&((IntprtStatus*)0)->state;
-#endif
-    printf("setPrgmState to %d\n", (int)state);
-    writeShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
+ 	g_privateInterpreterState = state ;
+// #ifdef WIN32
+//     IntprtStatus temp,  * tempPtr = &temp;
+//     int offset = (int)&(tempPtr->state) - (int)tempPtr ;
+// #else
+//     int offset = (int)&((IntprtStatus*)0)->state;
+// #endif
+//    printf("setPrgmState to %d\n", (int)state);
+//    writeShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
+	
+	g_interpreter_publish.status = state ;
 }
 
 void setCurLine(char * line)
 {
-#ifdef WIN32
-	Instruction temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->line) - (int)tempPtr ;
-#else
-   // int offset = (int)&intprt_status.line - (int)&intprt_status;
-    int offset = (int)&((Instruction*)0)->line;   
-#endif  
-    printf("setCurLine %s(%d) at %d\n", line, strlen(line), offset);
-//    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
-	writeShm(SHM_INTPRT_STATUS, offset, (void*)line, strlen(line) + 1); 
+// #ifdef WIN32
+//  	Instruction temp,  * tempPtr = &temp;
+//      int offset = (int)&(tempPtr->line) - (int)tempPtr ;
+// #else
+//   // int offset = (int)&intprt_status.line - (int)&intprt_status;
+//      int offset = (int)&((Instruction*)0)->line;   
+// #endif  
+//     printf("setCurLine %s(%d) at %d\n", line, strlen(line), offset);
+//  //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
+//  	writeShm(SHM_INTPRT_STATUS, offset, (void*)line, strlen(line) + 1); 
+	strcpy(g_interpreter_publish.current_line_num, line); 
 }
 
 #ifdef WIN32
@@ -287,13 +292,14 @@ void setWarning(__int64 warn)
 void setWarning(long long int warn)
 #endif  
 {
-#ifdef WIN32
-	IntprtStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
-#else
-    int offset = (int)&((IntprtStatus*)0)->warn;
-#endif  
-    writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
+// #ifdef WIN32
+//  	IntprtStatus temp,  * tempPtr = &temp;
+//      int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
+// #else
+//      int offset = (int)&((IntprtStatus*)0)->warn;
+// #endif  
+//      writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
+	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_ERROR, &warn);
 }
 
 void setSendPermission(bool flag)
@@ -360,18 +366,18 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 //    int count = 0;
     //printf("cur state:%d\n", prgm_state);
     if ((objThdCtrlBlockPtr->prog_mode == STEP_MODE) 
-		&& (prgm_state == EXECUTE_TO_PAUSE_T))
+		&& (prgm_state == INTERPRETER_EXECUTE_TO_PAUSE))
     {
         if (isInstructionEmpty(SHM_INTPRT_CMD))
         {
             printf("check if step is done in setInstruction\n");
-            setPrgmState(PAUSED_R);
+            setPrgmState(INTERPRETER_PAUSED);
         }
 		// printf("cur state:%d in STEP_MODE \n", prgm_state);
         return false;
     }
 
-    // if (prgm_state != EXECUTE_R)
+    // if (prgm_state != INTERPRETER_EXECUTE)
     //    return false;
     do
     {
@@ -415,7 +421,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 	        if (objThdCtrlBlockPtr->prog_mode == STEP_MODE)
 	        {
 			    printf("In STEP_MODE, it seems that it does not need to wait\n");
-	            // setPrgmState(EXECUTE_TO_PAUSE_T);   //wait until this Instruction end
+	            // setPrgmState(INTERPRETER_EXECUTE_TO_PAUSE);   //wait until this Instruction end
             }
 	    }
 
@@ -466,6 +472,9 @@ void startFile(struct thread_control_block * objThdCtrlBlockPtr,
 	objThdCtrlBlockPtr->is_in_macro    = false ;
 	objThdCtrlBlockPtr->iThreadIdx = idx ;
 	append_program_prop_mapper(objThdCtrlBlockPtr, proj_name);
+	// Refresh InterpreterPublish project_name
+	strcpy(g_interpreter_publish.program_name, proj_name); 
+	// Start thread
 	basic_thread_create(idx, objThdCtrlBlockPtr);
 	// intprt_ctrl.cmd = LOAD ;
 }
@@ -547,7 +556,7 @@ void waitInterpreterStateleftWaiting(
 		interpreterState = getPrgmState();
 		if(objThdCtrlBlockPtr->is_abort == true)
 		{
-			// setPrgmState(PAUSE_TO_IDLE_T) ;
+			// setPrgmState(INTERPRETER_PAUSE_TO_IDLE) ;
 			break;
 		}
 #endif
@@ -568,7 +577,7 @@ void waitInterpreterStateToWaiting(
 		interpreterState = getPrgmState();
 		if(objThdCtrlBlockPtr->is_abort == true)
 		{
-			// setPrgmState(PAUSE_TO_IDLE_T) ;
+			// setPrgmState(INTERPRETER_PAUSE_TO_IDLE) ;
 			break;
 		}
 #endif
@@ -580,17 +589,17 @@ void waitInterpreterStateleftPaused(
 	struct thread_control_block * objThdCtrlBlockPtr)
 {
 	InterpreterState interpreterState  = getPrgmState();
-	while(interpreterState == PAUSED_R)
+	while(interpreterState == INTERPRETER_PAUSED)
 	{
 #ifdef WIN32
 		Sleep(100);
-		interpreterState = EXECUTE_R ;
+		interpreterState = INTERPRETER_EXECUTE ;
 #else
 		sleep(1);
 		interpreterState = getPrgmState();
 		if(objThdCtrlBlockPtr->is_abort == true)
 		{
-			// setPrgmState(PAUSE_TO_IDLE_T) ;
+			// setPrgmState(INTERPRETER_PAUSE_TO_IDLE) ;
 			break;
 		}
 #endif
@@ -601,21 +610,21 @@ void waitInterpreterStateToPaused(
 	struct thread_control_block * objThdCtrlBlockPtr)
 {
 	InterpreterState interpreterState  = getPrgmState();
-	while(interpreterState != PAUSED_R)
+	while(interpreterState != INTERPRETER_PAUSED)
 	{
 #ifdef WIN32
 		Sleep(100);
-		// interpreterState = EXECUTE_R ;
+		// interpreterState = INTERPRETER_EXECUTE ;
 #else
 		sleep(1);
 		interpreterState = getPrgmState();
 		if(objThdCtrlBlockPtr->is_abort == true)
 		{
-			// setPrgmState(PAUSE_TO_IDLE_T) ;
+			// setPrgmState(INTERPRETER_PAUSE_TO_IDLE) ;
    			printf("waitInterpreterStateToPaused abort\n");
 			break;
 		}
-		if(interpreterState == IDLE_R)
+		if(interpreterState == INTERPRETER_IDLE)
 		{
    			printf("waitInterpreterStateToPaused = IDLE_R\n");
 			break;
@@ -671,7 +680,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			
             objThdCtrlBlockPtr->prog_mode = STEP_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
-            setPrgmState(PAUSED_R);
+            setPrgmState(INTERPRETER_PAUSED);
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
 			   strcpy(intprt_ctrl.start_ctrl, "while_test");
@@ -689,7 +698,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			
             objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
-            setPrgmState(EXECUTE_R);
+            setPrgmState(INTERPRETER_EXECUTE);
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
 			   strcpy(intprt_ctrl.start_ctrl, "reconstruction_pr_test");
@@ -716,7 +725,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             	printf("Can not FORWARD in calling Pause \n");
            		break;
 			}
-			if(getPrgmState() == EXECUTE_R)
+			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
             	printf("Can not FORWARD in EXECUTE_R \n");
            		break;
@@ -727,7 +736,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			// Jump prog
 			jump_prog_from_line(objThdCtrlBlockPtr, iLineNum);
 			// Just Move to line and do not execute
-            // setPrgmState(EXECUTE_R);
+            // setPrgmState(INTERPRETER_EXECUTE);
 			break;
         case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
             printf("step forward at %d \n", g_iCurrentThreadSeq);
@@ -748,7 +757,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             	printf("Can not FORWARD in calling Pause \n");
            		break;
 			}
-			if(getPrgmState() == EXECUTE_R)
+			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
             	printf("Can not FORWARD in EXECUTE_R \n");
            		break;
@@ -759,7 +768,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             // target_line++;
             iLineNum = getLinenum(objThdCtrlBlockPtr);
             printf("step forward to %d \n", iLineNum);
-            setPrgmState(EXECUTE_R);
+            setPrgmState(INTERPRETER_EXECUTE);
 			
             printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
 			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
@@ -790,7 +799,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             	printf("Can not BACKWARD in calling Pause \n");
            		break;
 			}
-			if(getPrgmState() == EXECUTE_R)
+			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
             	printf("Can not FORWARD in EXECUTE_R \n");
            		break;
@@ -814,7 +823,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 					iLineNum,    objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
 				break;
 			}
-            // setPrgmState(EXECUTE_R);  
+            // setPrgmState(INTERPRETER_EXECUTE);  
 			// In this circumstance, 
 			// We had jmp to the right line, we should use the iLineNum.
             iLineNum = getLinenum(objThdCtrlBlockPtr);
@@ -831,7 +840,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
             printf("step BACKWARD to %d \n", iLineNum);
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);
-            setPrgmState(EXECUTE_R);
+            setPrgmState(INTERPRETER_EXECUTE);
 
             printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
 			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
@@ -845,12 +854,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 			if(g_iCurrentThreadSeq < 0) break ;
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			
-			if(getPrgmState() == PAUSED_R)
+			if(getPrgmState() == INTERPRETER_PAUSED)
 	        {
 	            printf("continue move..\n");
 				// Not Change program mode  
 				// objThdCtrlBlockPtr->prog_mode = FULL_MODE;
-	            setPrgmState(EXECUTE_R);
+	            setPrgmState(INTERPRETER_EXECUTE);
 			}
 			else
 			    setWarning(FAIL_INTERPRETER_NOT_IN_PAUSE);
@@ -870,7 +879,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             {
                 objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
             }
-            setPrgmState(PAUSED_R); 
+            setPrgmState(INTERPRETER_PAUSED); 
             break;
         case fst_base::INTERPRETER_SERVER_CMD_ABORT:
             printf("abort motion\n");
@@ -883,14 +892,14 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             // Restore program pointer
             objThdCtrlBlockPtr->prog = objThdCtrlBlockPtr->p_buf ;
 			
-		    setPrgmState(PAUSE_TO_IDLE_T);
+		    setPrgmState(INTERPRETER_PAUSE_TO_IDLE);
 #ifdef WIN32
 			Sleep(1);
 #else
 	        usleep(1000);
 #endif
   			printf("setPrgmState(IDLE_R).\n");
-		    setPrgmState(IDLE_R);
+		    setPrgmState(INTERPRETER_IDLE);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE:
 			// intprt_ctrl.RegMap.
@@ -948,9 +957,9 @@ void initShm()
 //    openShm(SHM_INTPRT_DST, 1024);
     // intprt_ctrl.cmd = LOAD;
     // intprt_ctrl.cmd = START;
-	g_privateInterpreterState = IDLE_R ;
+	g_privateInterpreterState = INTERPRETER_IDLE ;
 	
-//	setPrgmState(IDLE_R);
+//	setPrgmState(INTERPRETER_IDLE);
 #ifdef WIN32
 //	generateFakeData();
 #else

@@ -187,7 +187,7 @@ int* ControllerSm::getSafetyAlarmPtr()
 
 void ControllerSm::processInterpreter()
 {
-    interpreter_state_ = controller_client_ptr_->getInterpreterPublishPtr()->status;
+    interpreter_state_ = (fst_ctrl::InterpreterState)controller_client_ptr_->getInterpreterPublishPtr()->status;
 #if 0
     U64 result = SUCCESS; 
     Instruction inst;

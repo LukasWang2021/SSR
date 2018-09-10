@@ -326,8 +326,9 @@ typedef struct _IODeviceInfoShm
 
 typedef struct
 {
-    int status;
+    char program_name[256];
     int current_line_num;
+    int status;
 }InterpreterPublish;
 
 

@@ -15,6 +15,7 @@ ControllerSm::ControllerSm():
     log_ptr_(NULL),
     param_ptr_(NULL),
     virtual_core1_ptr_(NULL),
+    controller_client_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
     running_state_(RUNNING_STATUS_LIMITED),
     interpreter_state_(INTERPRETER_IDLE),
@@ -36,12 +37,14 @@ ControllerSm::~ControllerSm()
 
 }
 
-void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, VirtualCore1* virtual_core1_ptr)
+void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
+                            VirtualCore1* virtual_core1_ptr, ControllerClient* controller_client_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
     motion_control_ptr_ = motion_control_ptr;
     virtual_core1_ptr_ = virtual_core1_ptr;
+    controller_client_ptr_ = controller_client_ptr;
 }
 
 void ControllerSm::processStateMachine()
@@ -53,7 +56,7 @@ void ControllerSm::processStateMachine()
     transferRobotState();
 }
 
-UserOpMode ControllerSm::getUserOpMode()
+fst_ctrl::UserOpMode ControllerSm::getUserOpMode()
 {
     return user_op_mode_;
 }
@@ -63,22 +66,22 @@ RunningState ControllerSm::getRunningState()
     return running_state_;
 }
 
-InterpreterState ControllerSm::getInterpreterState()
+fst_ctrl::InterpreterState ControllerSm::getInterpreterState()
 {
     return interpreter_state_;
 }
 
-RobotState ControllerSm::getRobotState()
+fst_ctrl::RobotState ControllerSm::getRobotState()
 {
     return robot_state_;
 }
 
-CtrlState ControllerSm::getCtrlState()
+fst_ctrl::CtrlState ControllerSm::getCtrlState()
 {
     return ctrl_state_;
 }
 
-ServoState ControllerSm::getServoState()
+fst_mc::ServoState ControllerSm::getServoState()
 {
     return servo_state_;
 }
@@ -88,7 +91,7 @@ int ControllerSm::getSafetyAlarm()
     return safety_alarm_;
 }
 
-ErrorCode ControllerSm::setUserOpMode(UserOpMode mode)
+ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
 {
     if(mode == USER_OP_MODE_AUTO
         || mode == USER_OP_MODE_SLOWLY_MANUAL
@@ -147,32 +150,32 @@ ErrorCode ControllerSm::callShutdown()
     }
 }
 
-UserOpMode* ControllerSm::getUserOpModePtr()
+fst_ctrl::UserOpMode* ControllerSm::getUserOpModePtr()
 {
     return &user_op_mode_;
 }
 
-RunningState* ControllerSm::getRunningStatePtr()
+fst_ctrl::RunningState* ControllerSm::getRunningStatePtr()
 {
     return &running_state_;
 }
 
-InterpreterState* ControllerSm::getInterpreterStatePtr()
+fst_ctrl::InterpreterState* ControllerSm::getInterpreterStatePtr()
 {
     return &interpreter_state_;
 }
 
-RobotState* ControllerSm::getRobotStatePtr()
+fst_ctrl::RobotState* ControllerSm::getRobotStatePtr()
 {
     return &robot_state_;
 }
 
-CtrlState* ControllerSm::getCtrlStatePtr()
+fst_ctrl::CtrlState* ControllerSm::getCtrlStatePtr()
 {
     return &ctrl_state_;
 }
 
-ServoState* ControllerSm::getServoStatePtr()
+fst_mc::ServoState* ControllerSm::getServoStatePtr()
 {
     return &servo_state_;
 }
@@ -184,6 +187,7 @@ int* ControllerSm::getSafetyAlarmPtr()
 
 void ControllerSm::processInterpreter()
 {
+    interpreter_state_ = controller_client_ptr_->getInterpreterPublishPtr()->status;
 #if 0
     U64 result = SUCCESS; 
     Instruction inst;
@@ -359,7 +363,7 @@ void ControllerSm::transferRobotState()
             }
             break;
         case ROBOT_TEACHING:
-            if (motion_control_ptr_->getGroupState() == STANDBY)
+            if (motion_control_ptr_->getGroupState() == fst_mc::STANDBY)
             //if(virtual_core1_ptr_->getArmState() == 1)
             {
                 robot_state_ = ROBOT_TEACHING_TO_IDLE;

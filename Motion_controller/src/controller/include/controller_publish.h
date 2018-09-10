@@ -9,6 +9,7 @@
 #include "motion_control.h"
 #include "base_datatype.h"
 #include "reg_manager.h"
+#include "process_comm.h"
 #include <vector>
 #include <list>
 
@@ -21,7 +22,8 @@ public:
     ~ControllerPublish();
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr, RegManager* reg_manager_ptr);
+                    ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
+                    fst_base::ControllerClient* controller_client_ptr);
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     typedef void (ControllerPublish::*HandleUpdateFuncPtr)(void);
@@ -49,6 +51,7 @@ private:
     ControllerSm* state_machine_ptr_;
     fst_mc::MotionControl* motion_control_ptr_;
     RegManager* reg_manager_ptr_;
+    fst_base::ControllerClient* controller_client_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};

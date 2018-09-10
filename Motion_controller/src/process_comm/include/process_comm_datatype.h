@@ -62,7 +62,7 @@ typedef struct
 {
     int event_type;
     // if multi data type exist, change data to union 
-    unsigned long long int data;
+    unsigned long long data;
 }ProcessCommEvent;
 
 typedef struct

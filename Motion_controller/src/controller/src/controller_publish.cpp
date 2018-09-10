@@ -12,7 +12,8 @@ ControllerPublish::ControllerPublish():
     virtual_core1_ptr_(NULL),
     tp_comm_ptr_(NULL),
     state_machine_ptr_(NULL),
-    reg_manager_ptr_(NULL)
+    reg_manager_ptr_(NULL),
+    controller_client_ptr_(NULL)
 {
 
 }
@@ -23,7 +24,8 @@ ControllerPublish::~ControllerPublish()
 }
 
 void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
-                    ControllerSm* state_machine_ptr, MotionControl* motion_control_ptr, RegManager* reg_manager_ptr)
+                    ControllerSm* state_machine_ptr, MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
+                    ControllerClient* controller_client_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -32,6 +34,7 @@ void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_pt
     state_machine_ptr_ = state_machine_ptr;
     motion_control_ptr_ = motion_control_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
+    controller_client_ptr_ = controller_client_ptr;
 
     initPublishTable();
     initPublishQuickSearchTable();

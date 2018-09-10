@@ -82,9 +82,9 @@ void ControllerPublish::updateGlobalAccRatio()
 
 void ControllerPublish::updateProgramStatus()
 {
-    char* name = "test_program\0";
-    memcpy(&program_status_.data1.data[0], name, strlen(name));
-    program_status_.data2.data = 100;
+    InterpreterPublish* data_ptr = controller_client_ptr_->getInterpreterPublishPtr();
+    memcpy(&program_status_.data1.data[0], data_ptr->program_name, 256);
+    program_status_.data2.data = data_ptr->current_line_num;
 }
 
 void ControllerPublish::updateReg()

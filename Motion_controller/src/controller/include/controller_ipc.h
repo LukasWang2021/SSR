@@ -17,15 +17,15 @@ public:
     ~ControllerIpc();
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, 
-                fst_base::ControllerServer* controller_server_ptr, RegManager* reg_manager_ptr);
+                fst_base::ControllerServer* controller_server_ptr, fst_base::ControllerClient* controller_client_ptr,
+                RegManager* reg_manager_ptr);
 
     void processIpc();
-    fst_base::ControllerClient* getControllerClientPtr();
-
 private:
     fst_log::Logger* log_ptr_;
     ControllerParam* param_ptr_;
     fst_base::ControllerServer* controller_server_ptr_;
+    fst_base::ControllerClient* controller_client_ptr_;
     RegManager* reg_manager_ptr_;
     fst_hal::FstIoDevice* io_device_ptr_;
 

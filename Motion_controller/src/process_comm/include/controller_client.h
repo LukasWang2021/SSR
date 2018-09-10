@@ -30,14 +30,26 @@ public:
     bool getNextInstruction(Instruction* instruction_ptr); 
     bool setAutoStartMode(int start_mode);
 
+    void handleSubscribe();
+    void handleEvent();
+    InterpreterPublish* getInterpreterPublishPtr();
+
 private:
     fst_log::Logger* log_ptr_;
     ProcessCommParam* param_ptr_;  
     int req_resp_socket_;
     int req_resp_endpoint_id_;
+    int sub_socket_;
+    int sub_endpoint_id_;
+    int event_socket_;
+    int event_endpoint_id_;
+    struct nn_pollfd poll_sub_fd_;
+    struct nn_pollfd poll_event_fd_;
     uint8_t* recv_buffer_ptr_;
     uint8_t* send_buffer_ptr_;
 
+    InterpreterPublish interpreter_publish_data_;
+        
     bool sendRequest(unsigned int cmd_id, void* data_ptr, int send_size);
     bool recvResponse(int expect_recv_size);
 };

@@ -78,7 +78,6 @@ ErrorCode Controller::init()
     ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, std::string("Controller start init..."));
     
     virtual_core1_.init(log_ptr_, param_ptr_);
-    state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_);
 
     ErrorCode error_code;
     error_code = device_manager_.init();
@@ -145,11 +144,14 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), &reg_manager_);
+    state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, process_comm_ptr_->getControllerClientPtr());
+    ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
+                process_comm_ptr_->getControllerClientPtr(), &reg_manager_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr());
-    publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_);
+    publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
+                    process_comm_ptr_->getControllerClientPtr());
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {
@@ -206,7 +208,7 @@ void Controller::runRoutineThreadFunc()
     state_machine_.processStateMachine();
     rpc_.processRpc();
     ipc_.processIpc();
-    publish_.processPublish();    
+    publish_.processPublish();
     //preformance_monitor_.stopTimer(1);
     //preformance_monitor_.printRealTimeStatistic(10);
     usleep(param_ptr_->routine_cycle_time_);

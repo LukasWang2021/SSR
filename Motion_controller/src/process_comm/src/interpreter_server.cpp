@@ -60,6 +60,8 @@ ErrorCode InterpreterServer::init()
     // it is critical to set poll fd here to make the model work correctly
 	poll_req_res_fd_.fd = req_resp_socket_;
 	poll_req_res_fd_.events = NN_POLLIN | NN_POLLOUT;
+    poll_pub_fd_.fd = publish_socket_;
+    poll_pub_fd_.events = NN_POLLOUT;
     poll_event_fd_.fd = event_socket_;
     poll_event_fd_.events = NN_POLLOUT;
 
@@ -132,31 +134,6 @@ void InterpreterServer::pushTaskToResponseList(ProcessCommRequestResponse& packa
     response_list_mutex_.lock();
     response_list_.push_back(package);
     response_list_mutex_.unlock();
-}
-
-bool InterpreterServer::addPublishTask(int interval, InterpreterPublish* data_ptr)
-{
-    if(interval <= 0
-        || data_ptr == NULL)
-    {
-        return false;
-    }
-
-    ProcessCommPublish task;
-    task.interval = interval;
-    task.data_ptr = data_ptr;
-    task.last_publish_time.tv_sec = 0;
-    task.last_publish_time.tv_usec = 0;
-    publish_list_mutex_.lock();
-    publish_list_.push_back(task);
-    publish_list_mutex_.unlock();
-}
-
-void InterpreterServer::removePublishTask()
-{
-    publish_list_mutex_.lock();
-    publish_list_.clear();
-    publish_list_mutex_.unlock();
 }
 
 void InterpreterServer::sendEvent(int event_type, void* data_ptr)
@@ -243,6 +220,11 @@ void InterpreterServer::handleResponseList()
 
 void InterpreterServer::handlePublishList()
 {
+    if(nn_poll(&poll_pub_fd_, 1, 0) == -1)
+    {
+        return;
+    }
+
     std::vector<ProcessCommPublish>::iterator it;
     struct timeval time_val;
     long long time_elapsed; 

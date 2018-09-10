@@ -48,6 +48,7 @@ private:
     int publish_endpoint_id_;
     int event_endpoint_id_;
     struct nn_pollfd poll_req_res_fd_;
+    struct nn_pollfd poll_pub_fd_;
     struct nn_pollfd poll_event_fd_;
     uint8_t* recv_buffer_ptr_;
     uint8_t* send_buffer_ptr_;

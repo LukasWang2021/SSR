@@ -8,6 +8,7 @@ ControllerIpc::ControllerIpc():
     log_ptr_(NULL),
     param_ptr_(NULL),
     controller_server_ptr_(NULL),
+    controller_client_ptr_(NULL),
     reg_manager_ptr_(NULL)
 {
 
@@ -19,11 +20,13 @@ ControllerIpc::~ControllerIpc()
 }
 
 void ControllerIpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr,
-                            ControllerServer* controller_server_ptr, RegManager* reg_manager_ptr)
+                            ControllerServer* controller_server_ptr, ControllerClient* controller_client_ptr,
+                            RegManager* reg_manager_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
     controller_server_ptr_ = controller_server_ptr;
+    controller_client_ptr_ = controller_client_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
     initIpcTable();
 }
@@ -42,5 +45,7 @@ void ControllerIpc::processIpc()
         }
         controller_server_ptr_->pushTaskToResponseList(*it);
     }
+    controller_client_ptr_->handleSubscribe();
+    controller_client_ptr_->handleEvent();
 }
 

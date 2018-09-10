@@ -290,6 +290,18 @@ ErrorCode InterpreterClient::getIo(IOPortInfo* port_info_ptr, int buffer_length,
     return response_get_io.error_code;
 }
 
+bool InterpreterClient::setInterpreterServerStatus(bool status)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &status, sizeof(bool))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS)
+    {
+        return false;
+    }
+
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;

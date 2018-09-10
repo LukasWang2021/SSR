@@ -36,7 +36,8 @@ public:
     ErrorCode checkIo(char path[256], IOPortInfo* port_info_ptr);
     ErrorCode setIo(IOPortInfo* port_info_ptr, char value);
     ErrorCode getIo(IOPortInfo* port_info_ptr, int buffer_length, char* value_ptr);
-
+    bool setInterpreterServerStatus(bool status);
+    
 private:
     fst_log::Logger* log_ptr_;
     ProcessCommParam* param_ptr_;  

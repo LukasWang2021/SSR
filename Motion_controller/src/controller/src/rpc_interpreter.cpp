@@ -7,8 +7,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
 {
     RequestMessageType_String* rq_data_ptr = static_cast<RequestMessageType_String*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
-    controller_client_ptr_->start(std::string(rq_data_ptr->data.data));
+    controller_client_ptr_->start(std::string(rq_data_ptr->data.data));    
     rs_data_ptr->data.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/start"));
 }

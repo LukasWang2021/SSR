@@ -205,7 +205,7 @@ void Controller::setExit()
 void Controller::runRoutineThreadFunc()
 {
     //preformance_monitor_.startTimer(1);
-    state_machine_.processStateMachine();
+    state_machine_.processStateMachine();    
     rpc_.processRpc();
     ipc_.processIpc();
     publish_.processPublish();

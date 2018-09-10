@@ -22,6 +22,7 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_CHECK_IO, &ControllerServer::handleRequestCheckIo, &ControllerServer::handleResponseCheckIo}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_IO, &ControllerServer::handleRequestSetIo, &ControllerServer::handleResponseSetIo}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_IO, &ControllerServer::handleRequestGetIo, &ControllerServer::handleResponseGetIo}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &ControllerServer::handleRequestSetInterpreterServerStatus, &ControllerServer::handleResponseSetInterpreterServerStatus}; rpc_table_.push_back(rpc_service);
 }
 
 void InterpreterServer::initRpcTable()

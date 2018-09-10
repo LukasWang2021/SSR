@@ -57,6 +57,7 @@ private:
     void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetInterpreterServerStatus(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

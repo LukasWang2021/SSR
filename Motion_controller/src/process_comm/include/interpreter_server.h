@@ -35,6 +35,8 @@ public:
 private:
     fst_log::Logger* log_ptr_;
     ProcessCommParam* param_ptr_;    
+    static bool is_server_ready_;
+
     typedef void (InterpreterServer::*HandleRequestFuncPtr)();
     typedef void (InterpreterServer::*HandleResponseFuncPtr)(std::vector<ProcessCommRequestResponse>::iterator&, int&);
 

@@ -26,10 +26,14 @@ public:
     std::vector<ProcessCommRequestResponse> popTaskFromRequestList();
     void pushTaskToResponseList(ProcessCommRequestResponse& package);
     void runThreadFunc();
+
+    static bool setInterpreterServerStatus(bool is_ready);
+    static bool isInterpreterServerReady();
     
 private:
     fst_log::Logger* log_ptr_;
-    ProcessCommParam* param_ptr_;    
+    ProcessCommParam* param_ptr_;
+    static bool is_interpreter_server_ready_;
     typedef void (ControllerServer::*HandleRequestFuncPtr)();
     typedef void (ControllerServer::*HandleResponseFuncPtr)(std::vector<ProcessCommRequestResponse>::iterator&, int&);
 
@@ -83,6 +87,7 @@ private:
     void handleRequestCheckIo();
     void handleRequestSetIo();
     void handleRequestGetIo();
+    void handleRequestSetInterpreterServerStatus();
 
     // rpc response handler
     void handleResponseSetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -100,6 +105,7 @@ private:
     void handleResponseCheckIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     
 };
 

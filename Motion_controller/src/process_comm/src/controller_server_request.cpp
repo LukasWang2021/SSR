@@ -298,3 +298,24 @@ void ControllerServer::handleRequestGetIo()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_IO, (void*)request_data_ptr, (void*)response_data_ptr);  
 }
 
+// SetInterpreterServerStatus
+void ControllerServer::handleRequestSetInterpreterServerStatus()
+{
+    bool* request_data_ptr = new bool;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    bool* response_data_ptr = new bool;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete[] request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(bool));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, (void*)request_data_ptr, (void*)response_data_ptr);  
+}
+
+

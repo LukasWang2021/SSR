@@ -211,3 +211,18 @@ void ControllerServer::handleResponseGetIo(std::vector<ProcessCommRequestRespons
     }
 }
 
+// SetInterpreterServerStatus
+void ControllerServer::handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (bool*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (bool*)task->response_data_ptr;
+    }
+}
+
+

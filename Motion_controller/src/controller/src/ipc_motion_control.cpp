@@ -22,4 +22,3 @@ void ControllerIpc::handleIpcIsNextInstructionNeeded(void* request_data_ptr, voi
     *rs_data_ptr = true;
 }
 
-

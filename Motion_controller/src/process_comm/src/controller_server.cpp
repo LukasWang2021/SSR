@@ -10,6 +10,8 @@
 using namespace std;
 using namespace fst_base;
 
+bool ControllerServer::is_interpreter_server_ready_ = false;
+
 ControllerServer::ControllerServer(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
     log_ptr_(log_ptr), param_ptr_(param_ptr), is_exit_(false),
     recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL)
@@ -108,6 +110,16 @@ void ControllerServer::runThreadFunc()
     handleRequestList();
     handleResponseList();
     usleep(param_ptr_->controller_server_cycle_time_);
+}
+
+bool ControllerServer::setInterpreterServerStatus(bool is_ready)
+{
+    is_interpreter_server_ready_ = is_ready;
+}
+
+bool ControllerServer::isInterpreterServerReady()
+{
+    return is_interpreter_server_ready_;
 }
 
 ControllerServer::ControllerServer():

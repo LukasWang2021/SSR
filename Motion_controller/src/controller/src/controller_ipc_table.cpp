@@ -23,5 +23,6 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_CHECK_IO, &ControllerIpc::handleIpcCheckIo}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_IO, &ControllerIpc::handleIpcSetIo}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_IO, &ControllerIpc::handleIpcGetIo}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &ControllerIpc::handleIpcSetInterpreterServerStatus}; ipc_table_.push_back(ipc_service);
 }
 

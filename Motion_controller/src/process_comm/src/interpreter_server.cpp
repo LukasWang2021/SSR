@@ -142,7 +142,7 @@ void InterpreterServer::sendEvent(int event_type, void* data_ptr)
     event.event_type = event_type;
     event.data = *((unsigned long long int*)data_ptr);
 	
-    FST_INFO("InterpreterServer::sendEvent: %d, %lld ", event.event_type, event.data);
+    FST_INFO("InterpreterServer::sendEvent: %d, %08llX ", event.event_type, event.data);
 	
     event_list_mutex_.lock();
     if(event_list_.size() <  param_ptr_->interpreter_server_event_buffer_size_)
@@ -151,7 +151,7 @@ void InterpreterServer::sendEvent(int event_type, void* data_ptr)
     }
     event_list_mutex_.unlock();
 	
-    FST_INFO("InterpreterServer::sendEvent: %d, %lld ", event.event_type, event.data);
+    FST_INFO("InterpreterServer::sendEvent: %d, %08llX ", event.event_type, event.data);
 }
 
 InterpreterServer::InterpreterServer():

@@ -384,6 +384,13 @@ void TpComm::handleResponseList()
     std::vector<TpRequestResponse>::iterator it;
     HandleResponseFuncPtr func_ptr;
     response_list_mutex_.lock();
+
+    if (response_list_.empty())
+    {
+        response_list_mutex_.unlock();
+        return;
+    }
+
     for(it = response_list_.begin(); it != response_list_.end(); ++it)
     {
         func_ptr = getResponseHandlerByHash(it->hash);

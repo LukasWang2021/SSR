@@ -85,7 +85,7 @@ private:
     void copyResponseDataToSendBuffer(InterpreterServerCmd cmd_id, void* response_data_ptr, 
                                                 int response_data_size, int& send_buffer_size);
     long long computeTimeElapsed(struct timeval& current_time_val, struct timeval& last_time_val);
-    bool checkPublishCondition(long time_elapsed, int interval);
+    bool checkPublishCondition(long long time_elapsed, int interval);
 
     // rpc request handler
     void handleRequestStart();

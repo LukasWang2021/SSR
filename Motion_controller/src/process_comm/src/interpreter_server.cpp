@@ -305,7 +305,7 @@ long long InterpreterServer::computeTimeElapsed(struct timeval& current_time_val
     return delta_tv_sec * 1000 + delta_tv_usec / 1000;
 }
 
-bool InterpreterServer::checkPublishCondition(long time_elapsed, int interval)
+bool InterpreterServer::checkPublishCondition(long long time_elapsed, int interval)
 {
     return (time_elapsed >= interval ? true : false);
 }

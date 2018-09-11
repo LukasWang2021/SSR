@@ -46,7 +46,8 @@ ErrorCode ControllerClient::init(ControllerServer* controller_server_ptr)
 
     sub_endpoint_id_ = nn_connect(sub_socket_, param_ptr_->c2i_pub_ip_.c_str());
     if(sub_endpoint_id_ == -1) return PROCESS_COMM_CONTROLLER_CLIENT_INIT_FAILED;
-
+    nn_setsockopt(sub_socket_, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
+	
     event_socket_ = nn_socket(AF_SP, NN_PULL);
     if(event_socket_ == -1) return PROCESS_COMM_CONTROLLER_CLIENT_INIT_FAILED;
 
@@ -208,7 +209,7 @@ void ControllerClient::handleSubscribe()
         return;
     }
 
-    if(nn_poll(&poll_sub_fd_, 1, 0) <= 0)
+    if(nn_poll(&poll_sub_fd_, 1, 0) < 0)
     {
         return;
     }
@@ -228,6 +229,11 @@ void ControllerClient::handleSubscribe()
     }
 
     memcpy(&interpreter_publish_data_, recv_buffer_ptr_, sizeof(InterpreterPublish));
+	
+    FST_ERROR("handleSubscribe: (%s, %s, %d)", 
+		interpreter_publish_data_.program_name, 
+		interpreter_publish_data_.current_line_num, 
+		(int)interpreter_publish_data_.status);
 }
 
 void ControllerClient::handleEvent()

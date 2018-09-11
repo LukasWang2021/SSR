@@ -96,8 +96,11 @@ void load_register_data()
         printf("load_register_data getInterpreterServerPtr open return false\n");
 		return false;
 	}
+	usleep(10);
 	g_objRegManagerInterface = g_process_comm_ptr->getInterpreterClientPtr();
 	g_objInterpreterServer   = g_process_comm_ptr->getInterpreterServerPtr();
+	g_objRegManagerInterface->setInterpreterServerStatus(true);
+	usleep(10);
 	memset(&g_interpreter_publish, 0x00, sizeof(InterpreterPublish));
 	g_objInterpreterServer->addPublishTask(300, &g_interpreter_publish);
 #endif

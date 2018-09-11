@@ -10,12 +10,14 @@
 using namespace fst_ctrl;
 using namespace fst_base;
 using namespace fst_mc;
+using namespace fst_hal;
 
 ControllerSm::ControllerSm():
     log_ptr_(NULL),
     param_ptr_(NULL),
     virtual_core1_ptr_(NULL),
     controller_client_ptr_(NULL),
+    safety_device_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
     running_state_(RUNNING_STATUS_LIMITED),
     interpreter_state_(INTERPRETER_IDLE),
@@ -38,13 +40,15 @@ ControllerSm::~ControllerSm()
 }
 
 void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
-                            VirtualCore1* virtual_core1_ptr, ControllerClient* controller_client_ptr)
+                            VirtualCore1* virtual_core1_ptr, ControllerClient* controller_client_ptr, 
+                            FstSafetyDevice* safety_device_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
     motion_control_ptr_ = motion_control_ptr;
     virtual_core1_ptr_ = virtual_core1_ptr;
     controller_client_ptr_ = controller_client_ptr;
+    safety_device_ptr_ =safety_device_ptr;
 }
 
 void ControllerSm::processStateMachine()
@@ -115,7 +119,7 @@ ErrorCode ControllerSm::callEstop()
         motion_control_ptr_->stopGroup();
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
-        FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
+        //FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     } 
     return SUCCESS;
@@ -128,10 +132,9 @@ ErrorCode ControllerSm::callReset()
     {
         ErrorMonitor::instance()->clear();
         motion_control_ptr_->resetGroup();
-
-        //safety_interface_.reset();
+        safety_device_ptr_->reset();
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
-        FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
+        //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
         ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
     }
     return SUCCESS;
@@ -250,9 +253,9 @@ void ControllerSm::processError()
 {
     error_level_ = ErrorMonitor::instance()->getWarningLevel();
     is_init_error_exist = ErrorMonitor::instance()->isInitError();
-    //safety_status_ = safety_interface_.getDIAlarm();
-    safety_alarm_ = virtual_core1_ptr_->getSafetyAlarm();
-    if(error_level_ > 4
+    safety_alarm_ = safety_device_ptr_->getDIAlarm();
+    //safety_alarm_ = virtual_core1_ptr_->getSafetyAlarm();
+    if(error_level_ >= 4
         || is_init_error_exist
         || safety_alarm_ != 0)
     {

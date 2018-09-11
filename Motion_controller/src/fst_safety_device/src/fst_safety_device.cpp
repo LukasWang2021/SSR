@@ -64,6 +64,18 @@ FstSafetyDevice::~FstSafetyDevice()
 #ifdef CROSS_PLATFORM 
     closeSafety();
 #endif
+
+    if(log_ptr_ != NULL)
+    {
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
+
+    if(param_ptr_ != NULL)
+    {
+        delete param_ptr_;
+        param_ptr_ = NULL;
+    }
 }
 
 bool FstSafetyDevice::init()
@@ -124,7 +136,7 @@ void FstSafetyDevice::startThread(void)
 void FstSafetyDevice::runThread(void)
 {
     try
-    {
+    {   FST_INFO("safety thread running...");
         while (true)
         {
             setSafetyHeartBeat();

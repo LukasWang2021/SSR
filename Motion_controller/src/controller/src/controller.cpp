@@ -4,11 +4,13 @@
 #include <unistd.h>
 #include <iostream>
 #include "serverAlarmApi.h"
+#include "fst_safety_device.h"
 #include <sstream>
 
 using namespace fst_ctrl;
 using namespace fst_base;
 using namespace fst_comm;
+using namespace fst_hal;
 using namespace std;
 
 Controller* Controller::instance_ = NULL;
@@ -144,7 +146,11 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, process_comm_ptr_->getControllerClientPtr());
+    // fix me later, make device manager more automatic
+    BaseDevice* device_ptr = device_manager_.getDevicePtrByDeviceIndex(1);
+    FstSafetyDevice* safety_device_ptr = static_cast<FstSafetyDevice*>(device_ptr);
+    state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
+                        process_comm_ptr_->getControllerClientPtr(), safety_device_ptr);
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
                 process_comm_ptr_->getControllerClientPtr(), &reg_manager_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 

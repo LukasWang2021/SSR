@@ -9,6 +9,7 @@
 #include "process_comm.h"
 #include "base_datatype.h"
 #include "serverAlarmApi.h"
+#include "fst_safety_device.h"
 #include <string>
 
 namespace fst_ctrl
@@ -66,7 +67,8 @@ public:
     ControllerSm();
     ~ControllerSm();
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
-                VirtualCore1* virtual_core1_ptr, fst_base::ControllerClient* controller_client_ptr);
+                VirtualCore1* virtual_core1_ptr, fst_base::ControllerClient* controller_client_ptr, 
+                fst_hal::FstSafetyDevice* safety_device_ptr);
     void processStateMachine();
 
     UserOpMode getUserOpMode();
@@ -96,6 +98,7 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     VirtualCore1* virtual_core1_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
+    fst_hal::FstSafetyDevice* safety_device_ptr_;
 
     // mode and status
     UserOpMode user_op_mode_;

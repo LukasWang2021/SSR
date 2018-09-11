@@ -2,17 +2,12 @@
 <Devices>
     <Device>
         <DeviceIndex>1</DeviceIndex>
-        <Address>201</Address>
-        <DeviceType>VirtualAxis</DeviceType>
+        <Address>1</Address>
+        <DeviceType>FstSafety</DeviceType>
     </Device>
     <Device>
         <DeviceIndex>2</DeviceIndex>
-        <Address>202</Address>
-        <DeviceType>VirtualAxis</DeviceType>
-    </Device>
-    <Device>
-        <DeviceIndex>3</DeviceIndex>
-        <Address>5</Address>
+        <Address>2</Address>
         <DeviceType>FstIo</DeviceType>
     </Device>
 </Devices>

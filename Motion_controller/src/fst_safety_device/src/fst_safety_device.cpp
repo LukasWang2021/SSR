@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 
 #include <memory.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "safety.h"
 #include "fst_safety_device.h"
@@ -95,7 +96,47 @@ bool FstSafetyDevice::init()
 	{
         FST_ERROR("init FstSafetyDevice failed");
 	}
+    startThread();
+	
     return true;
+}
+
+//------------------------------------------------------------
+// Function:    startThread
+// Summary: start a thread.
+// In:      None.
+// Out:     None.
+// Return:  None.
+//------------------------------------------------------------
+void FstSafetyDevice::startThread(void)
+{
+    safety_thread = boost::thread(boost::bind(&FstSafetyDevice::runThread, this));
+    //io_thread.timed_join(boost::posix_time::milliseconds(100)); // check the thread running or not.
+}
+
+//------------------------------------------------------------
+// Function:    runThread
+// Summary: main function of io thread.
+// In:      None.
+// Out:     None.
+// Return:  None.
+//------------------------------------------------------------
+void FstSafetyDevice::runThread(void)
+{
+    try
+    {
+        while (true)
+        {
+            setSafetyHeartBeat();
+
+            // set interruption point.
+            boost::this_thread::sleep(boost::posix_time::microseconds(LOOP_CYCLE));
+        }
+    }
+    catch (boost::thread_interrupted &)
+    {
+        std::cout<<"~Stop safety_thread Thread Safely.~"<<std::endl;
+    }
 }
 
 FstSafetyDevice::FstSafetyDevice():

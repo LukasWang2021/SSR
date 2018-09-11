@@ -7,6 +7,10 @@
 #include <thread>
 #include <mutex>
 
+
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+
 namespace fst_hal
 {
 	
@@ -412,6 +416,25 @@ public:
      * @return 
      */
     bool isSafetyAlarm();
+	
+    //------------------------------------------------------------
+    // Function:    startThread
+    // Summary: start a thread.
+    // In:      None.
+    // Out:     None.
+    // Return:  None.
+    //------------------------------------------------------------
+    void startThread(void);
+	
+    //------------------------------------------------------------
+    // Function:    runThread
+    // Summary: main function of io thread.
+    // In:      None.
+    // Out:     None.
+    // Return:  None.
+    //------------------------------------------------------------
+    void runThread(void);
+	
 private:
     FstSafetyDeviceParam* param_ptr_;
     fst_log::Logger* log_ptr_;
@@ -428,6 +451,12 @@ private:
 
     std::atomic<SafetyBoardDIFrm2>  din_frm2_;
     std::atomic<SafetyBoardDOFrm2>  dout_frm2_;
+	
+    // the thread cycle.
+    static const int LOOP_CYCLE = 1000;
+	
+    // the thread object.
+    boost::thread safety_thread;
 };
 
 }

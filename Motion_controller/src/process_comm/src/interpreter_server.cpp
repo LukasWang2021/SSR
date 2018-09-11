@@ -225,7 +225,7 @@ void InterpreterServer::handleResponseList()
 
 void InterpreterServer::handlePublishList()
 {
-    if(nn_poll(&poll_pub_fd_, 1, 0) == -1)
+    if(nn_poll(&poll_pub_fd_, 1, 0) <= 0)
     {
         return;
     }
@@ -254,9 +254,8 @@ void InterpreterServer::handlePublishList()
 
 void InterpreterServer::handleEventList()
 {
-    if(nn_poll(&poll_event_fd_, 1, 0) == -1)
+    if(nn_poll(&poll_event_fd_, 1, 0) <= 0)
     {
-		FST_INFO("InterpreterServer::handleEventList: nn_poll ");
         return;
     }
 
@@ -264,7 +263,6 @@ void InterpreterServer::handleEventList()
     event_list_mutex_.lock();
     for(it = event_list_.begin(); it != event_list_.end(); ++it)
     {
-		FST_INFO("InterpreterServer::handleEventList: nn_send ");
         int send_bytes = nn_send(event_socket_, &it->data, sizeof(ProcessCommEvent), 0);
         if(send_bytes == -1)
         {

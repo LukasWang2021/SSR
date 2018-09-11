@@ -6,7 +6,6 @@
 #include <cstring>
 #include <iostream>
 #include "process_comm_datatype.h"
-#include "controller_server.h"
 #include "error_code.h"
 
 
@@ -14,7 +13,7 @@ using namespace fst_base;
 
 ControllerClient::ControllerClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
     log_ptr_(log_ptr), param_ptr_(param_ptr),
-    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL)
+    recv_buffer_ptr_(NULL), send_buffer_ptr_(NULL), controller_server_ptr_(NULL)
 {
     memset(&interpreter_publish_data_, 0, sizeof(InterpreterPublish));
 }
@@ -34,7 +33,7 @@ ControllerClient::~ControllerClient()
     }
 }
 
-ErrorCode ControllerClient::init()
+ErrorCode ControllerClient::init(ControllerServer* controller_server_ptr)
 {
     req_resp_socket_ = nn_socket(AF_SP, NN_REQ);
     if(req_resp_socket_ == -1) return PROCESS_COMM_CONTROLLER_CLIENT_INIT_FAILED;
@@ -62,13 +61,14 @@ ErrorCode ControllerClient::init()
     recv_buffer_ptr_ = new uint8_t[param_ptr_->recv_buffer_size_]();
     send_buffer_ptr_ = new uint8_t[param_ptr_->send_buffer_size_]();
 
+    controller_server_ptr_ = controller_server_ptr;
+
     return SUCCESS;
 }
 
 bool ControllerClient::start(std::string data)
-{
-    if(!ControllerServer::isInterpreterServerReady()
-        || data.size() == 0
+{     
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || data.size() >= 256
         || !sendRequest(INTERPRETER_SERVER_CMD_START, data.c_str(), 256)
         || !recvResponse(sizeof(bool))
@@ -82,8 +82,7 @@ bool ControllerClient::start(std::string data)
 
 bool ControllerClient::debug(std::string data)
 {
-    if(!ControllerServer::isInterpreterServerReady()
-        || data.size() == 0
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || data.size() >= 256
         || !sendRequest(INTERPRETER_SERVER_CMD_DEBUG, data.c_str(), 256)
         || !recvResponse(sizeof(bool))
@@ -97,7 +96,7 @@ bool ControllerClient::debug(std::string data)
 
 bool ControllerClient::forward()
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || !sendRequest(INTERPRETER_SERVER_CMD_FORWARD, NULL, 0)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_FORWARD)
@@ -110,7 +109,7 @@ bool ControllerClient::forward()
 
 bool ControllerClient::backward()
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || !sendRequest(INTERPRETER_SERVER_CMD_BACKWARD, NULL, 0)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_BACKWARD)
@@ -123,7 +122,7 @@ bool ControllerClient::backward()
 
 bool ControllerClient::jump(int data)
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || !sendRequest(INTERPRETER_SERVER_CMD_JUMP, &data, sizeof(int))
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_JUMP)
@@ -136,7 +135,7 @@ bool ControllerClient::jump(int data)
 
 bool ControllerClient::pause()
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || !sendRequest(INTERPRETER_SERVER_CMD_PAUSE, NULL, 0)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_PAUSE)
@@ -149,7 +148,7 @@ bool ControllerClient::pause()
 
 bool ControllerClient::resume()
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || !sendRequest(INTERPRETER_SERVER_CMD_RESUME, NULL, 0)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_RESUME)
@@ -162,7 +161,7 @@ bool ControllerClient::resume()
 
 bool ControllerClient::abort()
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || !sendRequest(INTERPRETER_SERVER_CMD_ABORT, NULL, 0)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_ABORT)
@@ -175,7 +174,7 @@ bool ControllerClient::abort()
 
 bool ControllerClient::getNextInstruction(Instruction* instruction_ptr)
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || instruction_ptr == NULL
         || !sendRequest(INTERPRETER_SERVER_CMD_GET_NEXT_INSTRUCTION, instruction_ptr, sizeof(Instruction))
         || !recvResponse(sizeof(bool))
@@ -190,7 +189,7 @@ bool ControllerClient::getNextInstruction(Instruction* instruction_ptr)
 
 bool ControllerClient::setAutoStartMode(int start_mode)
 {
-    if(!ControllerServer::isInterpreterServerReady()
+    if(!controller_server_ptr_->isInterpreterServerReady()
         || !sendRequest(INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, &start_mode, sizeof(int))
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE)
@@ -204,19 +203,26 @@ bool ControllerClient::setAutoStartMode(int start_mode)
 
 void ControllerClient::handleSubscribe()
 {
-    if(!ControllerServer::isInterpreterServerReady())
+    if(!controller_server_ptr_->isInterpreterServerReady())
     {
         return;
     }
-    
-    if(nn_poll(&poll_sub_fd_, 1, 0) == -1)
+
+    if(nn_poll(&poll_sub_fd_, 1, 0) <= 0)
     {
         return;
     }
-    
-    int recv_bytes = nn_recv(req_resp_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
-    if(recv_bytes == -1
-        || recv_bytes != sizeof(InterpreterPublish))
+
+    if(poll_sub_fd_.revents & NN_POLLIN)
+    {
+        int recv_bytes = nn_recv(sub_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
+        if(recv_bytes == -1
+            || recv_bytes != sizeof(InterpreterPublish))
+        {
+            return;
+        }
+    }
+    else 
     {
         return;
     }
@@ -226,23 +232,30 @@ void ControllerClient::handleSubscribe()
 
 void ControllerClient::handleEvent()
 {
-    if(!ControllerServer::isInterpreterServerReady())
+    if(!controller_server_ptr_->isInterpreterServerReady())
     {
         return;
     }
 
-    if(nn_poll(&poll_event_fd_, 1, 0) == -1)
+    if(nn_poll(&poll_event_fd_, 1, 0) <= 0)
     {
-		FST_ERROR("nn_poll failed");
         return;
     }
-    int recv_bytes = nn_recv(event_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
-    if(recv_bytes == -1
-        || recv_bytes != sizeof(ProcessCommEvent))
+
+    if(poll_event_fd_.revents & NN_POLLIN)
     {
-		FST_ERROR("nn_recv failed = %d", recv_bytes);
+        int recv_bytes = nn_recv(event_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
+        if(recv_bytes == -1
+            || recv_bytes != sizeof(ProcessCommEvent))
+        {
+        	FST_ERROR("nn_recv failed = %d", recv_bytes);
+            return;
+        }
+    }
+    else
+    {
         return;
-    }    
+    }
 
     FST_ERROR("recv event from interpreter: error_code = %llx", ((ProcessCommEvent*)recv_buffer_ptr_)->data);
 }

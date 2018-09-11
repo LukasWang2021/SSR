@@ -27,13 +27,13 @@ public:
     void pushTaskToResponseList(ProcessCommRequestResponse& package);
     void runThreadFunc();
 
-    static bool setInterpreterServerStatus(bool is_ready);
-    static bool isInterpreterServerReady();
+    bool setInterpreterServerStatus(bool is_ready);
+    bool isInterpreterServerReady();
     
 private:
     fst_log::Logger* log_ptr_;
     ProcessCommParam* param_ptr_;
-    static bool is_interpreter_server_ready_;
+    bool is_interpreter_server_ready_;
     typedef void (ControllerServer::*HandleRequestFuncPtr)();
     typedef void (ControllerServer::*HandleResponseFuncPtr)(std::vector<ProcessCommRequestResponse>::iterator&, int&);
 

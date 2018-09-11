@@ -123,7 +123,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    error_code = process_comm_ptr_->getControllerClientPtr()->init();
+    error_code = process_comm_ptr_->getControllerClientPtr()->init(process_comm_ptr_->getControllerServerPtr());
     if(error_code != SUCCESS)
     {
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");

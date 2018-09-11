@@ -28,7 +28,7 @@ void TpComm::handleRequest0x00006154(int recv_bytes)
         delete request_data_ptr;
         return;
     }
-
+    
     handleRequestPackage(0x00006154, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_String_fields, -1);
 }

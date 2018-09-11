@@ -11,8 +11,6 @@ void ControllerIpc::handleIpcSetInterpreterServerStatus(void* request_data_ptr, 
 {
     bool* rq_data_ptr = static_cast<bool*>(request_data_ptr);
     bool* rs_data_ptr = static_cast<bool*>(response_data_ptr);
-
-    ControllerServer::setInterpreterServerStatus(*rq_data_ptr);
-    *rs_data_ptr = true;
+    *rs_data_ptr = controller_server_ptr_->setInterpreterServerStatus(*rq_data_ptr);    
 }
 

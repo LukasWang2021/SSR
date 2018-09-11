@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include "interpreter_common.h"
+#include "controller_server.h"
 #include "base_datatype.h"
 
 namespace fst_base
@@ -17,7 +18,7 @@ public:
     ControllerClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr);
     ~ControllerClient();
 
-    ErrorCode init();
+    ErrorCode init(ControllerServer* controller_server_ptr);
 
     bool start(std::string file_name);
     bool debug(std::string file_name);
@@ -36,7 +37,8 @@ public:
 
 private:
     fst_log::Logger* log_ptr_;
-    ProcessCommParam* param_ptr_;  
+    ProcessCommParam* param_ptr_;
+    ControllerServer* controller_server_ptr_;
     int req_resp_socket_;
     int req_resp_endpoint_id_;
     int sub_socket_;

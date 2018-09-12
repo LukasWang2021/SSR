@@ -8,13 +8,13 @@
 #include <errno.h>
 #include <time.h>
 
-#include "modbus/modbus-private.h"
-#include "modbus/modbus-rtu.h"
-#include "modbus_manager_param.h"
-#include "local_ip.h"
-
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
+
+#include "modbus-private.h"
+#include "modbus-tcp.h"
+#include "modbus_manager_param.h"
+#include "local_ip.h"
 
 using namespace std;
 
@@ -23,7 +23,7 @@ namespace fst_modbus
 class ModbusTCPServer
 {
 public:
-    ModbusTCPServer(int port);
+    ModbusTCPServer(string ip, int port);
      ~ModbusTCPServer();
 
     /***************************************
@@ -103,7 +103,6 @@ public:
     ***************************************/
     void close();
 
-    int log_level_;
 private:
     modbus_t* ctx_;
     modbus_mapping_t* mb_mapping_;

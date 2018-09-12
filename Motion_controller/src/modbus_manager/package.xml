@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>modbus</name>
+  <name>modbus_manager</name>
   <version>0.1.0</version>
   <description>The servo diagnostic package</description>
 
@@ -17,13 +17,16 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>fst_modbus_mapping</build_depend>
   <build_depend>parameter_manager</build_depend>
   <build_depend>error_monitor</build_depend>
   <build_depend>log_service</build_depend>
+
   <run_depend>roscpp</run_depend>
   <run_depend>parameter_manager</run_depend>
   <run_depend>error_monitor</run_depend>
-  <build_depend>log_service</build_depend>
+  <run_depend>log_service</run_depend>
+  <run_depend>fst_modbus_mapping</run_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

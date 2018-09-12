@@ -6,46 +6,52 @@
 
 using namespace fst_modbus;
 
-ModbusTCPServer::ModbusTCPServer(int port):
+ModbusTCPServer::ModbusTCPServer(string ip, int port):
     log_ptr_(NULL), param_ptr_(NULL)
 {
-    string ip = local_ip_.get();
     ctx_ = modbus_new_tcp(ip.c_str(), port);
 
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();
-    FST_LOG_INIT("Modbus");
-
-    log_level_ = 1;
+    FST_LOG_INIT("ModbusTcpServer");
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
 ModbusTCPServer::~ModbusTCPServer()
 {
+    if (log_ptr_ != NULL)
+    {
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
+    if (param_ptr_ != NULL)
+    {
+        delete param_ptr_;
+        param_ptr_ = NULL;
+    }
+
     modbus_close(ctx_);
-    modbus_free(ctx_);
+    if (ctx_ != NULL)
+    {
+        modbus_free(ctx_);
+        ctx_ = NULL;
+    }
 }
 
 bool ModbusTCPServer::init(int nb_connection)
 {
-    if (modbus_connect(ctx_) < 0)
-    {
-        FST_ERROR("Modbus : connect failed");
-        return false;
-    }
-
-    if (!setDebug(false)) return false;
+    if (!setDebug(true)) return false;
 
     server_socket_ = modbus_tcp_listen(ctx_, nb_connection);
     if (server_socket_ < 0)
     {
-        FST_ERROR("Modbus :unable to listen tcp!");
+        FST_ERROR("Modbus :unable to listen tcp :%s", modbus_strerror(errno));
         return false;
     }
 
     if (modbus_tcp_accept(ctx_, &server_socket_) < 0)
     {
-        FST_ERROR("Modbus :unable to accept from tcp!");
+        FST_ERROR("Modbus :unable to accept from tcp : %s", modbus_strerror(errno));
         return false;
     }
 
@@ -85,7 +91,7 @@ bool ModbusTCPServer::mapping_new(
 
     if (NULL == mb_mapping_)
     {
-        FST_ERROR("Failed mapping:%s", modbus_strerror(errno));
+        FST_ERROR("Failed mapping : %s", modbus_strerror(errno));
         return false;
     }
 
@@ -112,7 +118,7 @@ bool ModbusTCPServer::setDebug(bool flag)
     if (modbus_set_debug(ctx_, flag) < 0)
     {
         // get error
-        FST_ERROR("Modbus : set debug failed");
+        FST_ERROR("Modbus : set debug failed : %s", modbus_strerror(errno));
         return false;
     }
 

@@ -82,6 +82,7 @@ private:
     MessageType_Double global_vel_ratio_;
     MessageType_Double global_acc_ratio_;
     MessageType_String_Int32 program_status_;
+    MessageType_StringList tp_program_status_;
 
     typedef struct
     {
@@ -117,6 +118,7 @@ private:
     void* getGlobalVelRatioPtr();
     void* getGlobalAccRatioPtr();
     void* getProgramStatusPtr();
+    void* getTpProgramStatusPtr();
 
     // update publish element
     void updateAxisGroupJointFeedback();
@@ -128,6 +130,7 @@ private:
     void updateGlobalVelRatio();
     void updateGlobalAccRatio();
     void updateProgramStatus();
+    void updateTpProgramStatus();
 
     // update reg publish
     void updateReg();

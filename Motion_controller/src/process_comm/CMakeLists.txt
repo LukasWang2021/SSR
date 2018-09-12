@@ -29,6 +29,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/prg_interpreter/include
     ${depend_PATH_INC}/error_monitor/include 
     ${depend_PATH_INC}/modbus/include
+    ${depend_PATH_INC}/error_monitor/include
 )
 
 catkin_package(
@@ -59,6 +60,7 @@ target_link_libraries(process_comm
     logger
     error_monitor 
     fst_io_device 
+    error_monitor
 )
 
 install(TARGETS process_comm 

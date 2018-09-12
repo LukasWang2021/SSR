@@ -173,6 +173,7 @@ void TpComm::initPublishElementTable()
 	publish_service =	{	"/publish/motion_control/global_vel_ratio",	0x00012A4F,	"MessageType.Double",	&TpComm::handlePublishElement0x00012A4F,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 	publish_service =	{	"/publish/motion_control/global_acc_ratio",	0x0001517F,	"MessageType.Double",	&TpComm::handlePublishElement0x0001517F,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 
-	publish_service =	{	"/publish/interpreter/program_status",	0x00001AF3,	"MessageType.String_Int32",	&TpComm::handlePublishElement0x00001AF3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
+	publish_service =	{	"/publish/interpreter/program_status",	0x00001AF3,	"MessageType.String_Int32",	&TpComm::handlePublishElement0x00001AF3,	Comm_Authority_TP_SIMMULATOR,	};	publish_element_table_.push_back(publish_service); 
+    publish_service =	{	"/publish/interpreter/tp_program_status",	0x000042B3,	"MessageType.StringList(count=2)",	&TpComm::handlePublishElement0x000042B3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 
 }

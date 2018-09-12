@@ -12,7 +12,7 @@
 #include <atomic>
 #include <vector>
 #include "io_manager.h"
-#include "modbus_manager.h"
+//#include "modbus_manager.h"
 #endif
 // #include "motionSL.pb.h"
 #include "common_log.h"
@@ -156,7 +156,7 @@ class IOInterface
     fst_io_manager::IOManager *io_manager_;
     std::atomic<fst_io_manager::IODeviceInfo*>  dev_info_;  //
     
-    fst_modbus::ModbusManager *modbus_manager_;
+    //fst_modbus::ModbusManager *modbus_manager_;
 	
     std::atomic_int     io_num_;    //number of IO board
     

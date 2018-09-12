@@ -333,8 +333,8 @@ typedef struct _IODeviceInfoShm
 typedef struct
 {
     char program_name[256];
-//  int  current_line_num;
-    char current_line_num[256];
+    char current_line_path[256];
+    int current_line_num;
     InterpreterState status;
 }InterpreterPublish;
 

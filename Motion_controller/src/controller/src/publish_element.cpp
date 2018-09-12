@@ -83,4 +83,8 @@ void* ControllerPublish::getProgramStatusPtr()
     return (void*)&program_status_;
 }
 
+void* ControllerPublish::getTpProgramStatusPtr()
+{
+    return (void*)&tp_program_status_;
+}
 

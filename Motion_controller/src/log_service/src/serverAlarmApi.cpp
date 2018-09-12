@@ -30,7 +30,7 @@ ServerAlarmApi *ServerAlarmApi::GetInstance()
 void ServerAlarmApi::pyDecref()
 {
     m_loop = false;
-//    pthread_cancel(m_tid);
+    pthread_join(m_tid, NULL);
 }
 // @description 发送一条Log
 // @param logCode: Log code

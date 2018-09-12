@@ -146,3 +146,13 @@ void TpComm::handlePublishElement0x00001AF3(Comm_Publish& package, int element_i
         FST_ERROR("handlePublishElement0x00001AF3: failed to encode SafetyAlarm");
     }
 }
+
+//"/publish/interpreter/tp_program_status"
+void TpComm::handlePublishElement0x000042B3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_StringList_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000042B3: failed to encode SafetyAlarm");
+    }
+}
+

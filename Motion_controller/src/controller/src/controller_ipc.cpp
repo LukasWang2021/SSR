@@ -45,6 +45,7 @@ void ControllerIpc::processIpc()
         }
         controller_server_ptr_->pushTaskToResponseList(*it);
     }
+
     controller_client_ptr_->handleSubscribe();
     controller_client_ptr_->handleEvent();
 }

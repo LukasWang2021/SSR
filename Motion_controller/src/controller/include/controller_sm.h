@@ -114,7 +114,6 @@ private:
     long long int interpreter_warning_code_;
     int error_level_;
     bool is_error_exist_;
-    bool is_init_error_exist;
     
     // state machine transfer
     void processInterpreter();  
@@ -127,6 +126,7 @@ private:
 
     // log service
     void recordLog(std::string log_str);
+    void recordLog(ErrorCode error_code);
 };
 
 }

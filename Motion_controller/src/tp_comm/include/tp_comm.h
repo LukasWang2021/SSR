@@ -744,7 +744,8 @@ private:
     void handlePublishElement0x0001517F(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/interpreter/program_status, MessageType_String_Int32**********/
     void handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-
+	/********publish/interpreter/tp_program_status, MessageType_StringList(count=2)**********/
+    void handlePublishElement0x000042B3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

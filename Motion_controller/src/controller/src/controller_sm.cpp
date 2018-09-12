@@ -28,8 +28,7 @@ ControllerSm::ControllerSm():
     ctrl_reset_count_(0),
     interpreter_warning_code_(0),
     error_level_(0),
-    is_error_exist_(false),
-    is_init_error_exist(false)
+    is_error_exist_(false)
 {
 
 }
@@ -252,11 +251,9 @@ void ControllerSm::processInterpreter()
 void ControllerSm::processError()
 {
     error_level_ = ErrorMonitor::instance()->getWarningLevel();
-    is_init_error_exist = ErrorMonitor::instance()->isInitError();
     safety_alarm_ = safety_device_ptr_->getDIAlarm();
     //safety_alarm_ = virtual_core1_ptr_->getSafetyAlarm();
     if(error_level_ >= 4
-        || is_init_error_exist
         || safety_alarm_ != 0)
     {
         is_error_exist_ = true;
@@ -264,6 +261,12 @@ void ControllerSm::processError()
     else
     {
         is_error_exist_ = false;
+    }
+
+    ErrorCode error_code;
+    while(ErrorMonitor::instance()->pop(error_code))
+    {
+        recordLog(error_code);
     }
 }
 
@@ -420,4 +423,8 @@ void ControllerSm::recordLog(std::string log_str)
     ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);
 }
 
+void ControllerSm::recordLog(ErrorCode error_code)
+{
+    ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
+}
 

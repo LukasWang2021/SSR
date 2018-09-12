@@ -283,7 +283,7 @@ void setCurLine(char * line)
 //     printf("setCurLine %s(%d) at %d\n", line, strlen(line), offset);
 //  //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
 //  	writeShm(SHM_INTPRT_STATUS, offset, (void*)line, strlen(line) + 1); 
-	strcpy(g_interpreter_publish.current_line_num, line); 
+	strcpy(g_interpreter_publish.current_line_path, line); 
 }
 
 #ifdef WIN32

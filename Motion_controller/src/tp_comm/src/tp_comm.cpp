@@ -324,7 +324,7 @@ void TpComm::handleRequest()
 {
     if (is_received_) return;
 
-    if(nn_poll (&poll_fd_, 1, 0) == -1)
+    if(nn_poll (&poll_fd_, 1, 0) <= 0)
     {
         return;
     }

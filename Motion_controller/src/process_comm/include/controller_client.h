@@ -34,6 +34,7 @@ public:
     void handleSubscribe();
     void handleEvent();
     InterpreterPublish* getInterpreterPublishPtr();
+    
 
 private:
     fst_log::Logger* log_ptr_;

@@ -7,6 +7,7 @@
 #include <iostream>
 #include "process_comm_datatype.h"
 #include "error_code.h"
+#include "error_monitor.h"
 
 
 using namespace fst_base;
@@ -183,7 +184,6 @@ bool ControllerClient::getNextInstruction(Instruction* instruction_ptr)
     {
         return false;
     }
-
         
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
@@ -197,7 +197,6 @@ bool ControllerClient::setAutoStartMode(int start_mode)
     {
         return false;
     }
-
         
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
@@ -229,11 +228,6 @@ void ControllerClient::handleSubscribe()
     }
 
     memcpy(&interpreter_publish_data_, recv_buffer_ptr_, sizeof(InterpreterPublish));
-	
-    FST_ERROR("handleSubscribe: (%s, %s, %d)", 
-		interpreter_publish_data_.program_name, 
-		interpreter_publish_data_.current_line_num, 
-		(int)interpreter_publish_data_.status);
 }
 
 void ControllerClient::handleEvent()
@@ -252,18 +246,18 @@ void ControllerClient::handleEvent()
     {
         int recv_bytes = nn_recv(event_socket_, recv_buffer_ptr_, param_ptr_->recv_buffer_size_, 0);
         if(recv_bytes == -1
-            || recv_bytes != sizeof(ProcessCommEvent))
+            || recv_bytes != sizeof(ErrorCode))
         {
         	FST_ERROR("nn_recv failed = %d", recv_bytes);
             return;
         }
+        ErrorCode error_code = *((ErrorCode*)recv_buffer_ptr_);
+        ErrorMonitor::instance()->add(error_code);
     }
     else
     {
         return;
     }
-
-    FST_ERROR("recv event from interpreter: error_code = %llx", ((ProcessCommEvent*)recv_buffer_ptr_)->data);
 }
 
 InterpreterPublish* ControllerClient::getInterpreterPublishPtr()
@@ -300,4 +294,5 @@ bool ControllerClient::recvResponse(int expect_recv_size)
         return true;
     }
 }
+
 

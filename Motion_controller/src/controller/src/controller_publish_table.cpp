@@ -22,5 +22,6 @@ void ControllerPublish::initPublishTable()
     publish_service = {"/publish/motion_control/global_vel_ratio", 0x00012A4F, &ControllerPublish::getGlobalVelRatioPtr, &ControllerPublish::updateGlobalVelRatio}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/motion_control/global_acc_ratio", 0x0001517F, &ControllerPublish::getGlobalAccRatioPtr, &ControllerPublish::updateGlobalAccRatio}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/interpreter/program_status", 0x00001AF3, &ControllerPublish::getProgramStatusPtr, &ControllerPublish::updateProgramStatus}; publish_table_.push_back(publish_service);
+    publish_service = {"/publish/interpreter/tp_program_status", 0x000042B3, &ControllerPublish::getTpProgramStatusPtr, &ControllerPublish::updateTpProgramStatus}; publish_table_.push_back(publish_service);
 }
 

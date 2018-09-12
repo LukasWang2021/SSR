@@ -1,5 +1,5 @@
-#ifndef MODBUS_LOCAL_IP_HPP
-#define MODBUS_LOCAL_IP_HPP
+#ifndef LOCAL_IP_HPP
+#define LOCAL_IP_HPP
 
 #include <unistd.h>
 #include <string>

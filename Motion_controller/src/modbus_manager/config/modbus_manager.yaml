@@ -1,0 +1,31 @@
+log_level: 1
+cycle_time: 1000 #1ms
+
+modbus_info:
+    server_ip: 192.168.1.24
+    server_port: 1502
+    connection_number: 1
+    is_debug: false
+    device_number: 1
+
+    response_timeout: 
+        tv_sec: 1
+        tv_usec: 0
+    bytes_timeout:
+        tv_sec: 0
+        tv_usec: 250000
+
+    reg_info:
+        coil:
+            addr: 0
+            max_nb: 1024
+        discrepte_input:
+            addr: 0
+            max_nb: 1024
+        input_register:
+            addr: 0
+            max_nb: 1024
+        holding_register:
+            addr: 0
+            max_nb: 1024
+#END

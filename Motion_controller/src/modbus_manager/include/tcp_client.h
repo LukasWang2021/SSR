@@ -11,8 +11,8 @@
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
 
-#include "modbus/modbus-private.h"
-#include "modbus/modbus-rtu.h"
+#include "modbus-private.h"
+#include "modbus-tcp.h"
 
 #include "modbus_manager_param.h"
 #include "local_ip.h"
@@ -38,7 +38,7 @@ typedef struct
 class ModbusTCPClient
 {
 public:
-    ModbusTCPClient(string strIP, int port);
+    ModbusTCPClient(string ip, int port);
      ~ModbusTCPClient();
 
     /***************************************
@@ -56,7 +56,7 @@ public:
     return true : if operation succeed 
     return false : if operation failed
     ***************************************/
-    bool setErrorRecovery(int error_recovery);
+    bool setErrorRecovery(modbus_error_recovery_mode error_recovery);
 
     /***************************************
     Function : bulk read coils, 
@@ -200,13 +200,14 @@ public:
     ***************************************/
     int getFailedOperationNumber();
 
-    int log_level_;
+    bool setSlaveId(int slave_id);
+
 private:
     enum {SOCKET_ID_MIN = 1, SOCKET_ID_MAX = 247, };
     modbus_t* ctx_;
     int nb_fail_;
 
-    fst_modbus::LocalIP local_ip_;
+    LocalIP local_ip_;
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 };

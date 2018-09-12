@@ -10,6 +10,7 @@
 #include "request/request_publish_topic.pb.h"
 #include "request/request_tool_frame.pb.h"
 #include "request/request_coord_user.pb.h"
+#include "request/request_file.pb.h"
 
 #include "request/request_reg_hr.pb.h"
 #include "request/request_reg_mr.pb.h"
@@ -38,6 +39,8 @@
 #include "message_type/joint_limit.pb.h"
 #include "message_type/joint_limit_with_unit.pb.h"
 #include "message_type/string_int32.pb.h"
+#include "message_type/string_list.pb.h"
+#include "message_type/file.pb.h"
 
 #include "message_type/reg_hr.pb.h"
 #include "message_type/reg_mr.pb.h"
@@ -79,6 +82,6 @@
 #include "response/response_uint64_int32list.pb.h"
 #include "response/response_uint64_double.pb.h"
 #include "response/response_uint64_bool.pb.h"
-
+#include "response/response_file.pb.h"
 
 #endif

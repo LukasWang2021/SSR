@@ -14,6 +14,7 @@
 #include "modbus_manager_param.h"
 
 using namespace std;
+using namespace fst_modbus;
 
 namespace fst_modbus
 {
@@ -72,7 +73,7 @@ private:
     fst_log::Logger* log_ptr_;
     fst_modbus::ModbusTCPClient * tcp_client_;
     fst_modbus::ModbusTCPServer * tcp_server_;
-    LocalIP local_ip_;
+    fst_ip::LocalIP local_ip_;
     StartMode start_mode_;
 
     // component params

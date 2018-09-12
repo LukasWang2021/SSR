@@ -12,8 +12,8 @@
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "thread_help.h"
 #include "common_log.h"
-
 #include "local_ip.h"
+
 #include "tp_comm_manager_param.h"
 
 using namespace std;
@@ -746,7 +746,7 @@ private:
     void handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
 
-    LocalIP local_ip_;
+    fst_ip::LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 

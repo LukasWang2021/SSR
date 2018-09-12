@@ -209,7 +209,7 @@ void ControllerClient::handleSubscribe()
         return;
     }
 
-    if(nn_poll(&poll_sub_fd_, 1, 0) < 0)
+    if(nn_poll(&poll_sub_fd_, 1, 0) <= 0)
     {
         return;
     }

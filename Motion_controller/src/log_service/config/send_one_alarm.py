@@ -6,15 +6,15 @@ import tornado.web
 import tornado.httpclient
 
 
-def send_one_alarm(log_code, param):
-    """å‘èµ·postè¯·æ±‚ï¼"""
+def send_one_alarm(event_record):
+    """·¢ÆğpostÇëÇó£®"""
+
     one_record = dict()
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     one_record['time'] = current_time
-    one_record['code'] = log_code
-    one_record['detailEn'] = [param] if param else []
-    one_record['detailCn'] = [param] if param else []
-
+    one_record['code'] = event_record[0:16]
+    one_record['detailEn'] = [event_record[16:]]
+    one_record['detailCn'] = [event_record[16:]]
     req = tornado.httpclient.HTTPRequest(
         url='http://0.0.0.0:9003/',
         method='POST',

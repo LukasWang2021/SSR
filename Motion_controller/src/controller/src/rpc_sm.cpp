@@ -9,7 +9,7 @@ void ControllerRpc::handleRpc0x00000C05(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     data_ptr->data.data = (int32_t)state_machine_ptr_->getUserOpMode();
     data_ptr->error_code.data = SUCCESS;
-    recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getUserOpMode"));
+    //recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getUserOpMode"));
 }
 
 // "/rpc/controller/getRunningStatus"
@@ -18,7 +18,7 @@ void ControllerRpc::handleRpc0x00000AB3(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     data_ptr->data.data = (int32_t)state_machine_ptr_->getRunningState();
     data_ptr->error_code.data = SUCCESS;
-    recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getRunningStatus"));
+    //recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getRunningStatus"));
 }
 
 // "/rpc/controller/getInterpreterStatus"
@@ -27,7 +27,7 @@ void ControllerRpc::handleRpc0x00016483(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     data_ptr->data.data = (int32_t)state_machine_ptr_->getInterpreterState();
     data_ptr->error_code.data = SUCCESS;
-    recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getInterpreterStatus"));
+    //recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getInterpreterStatus"));
 }
 
 // "/rpc/controller/getRobotStatus"
@@ -36,7 +36,7 @@ void ControllerRpc::handleRpc0x00006F83(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     data_ptr->data.data = (int32_t)state_machine_ptr_->getRobotState();
     data_ptr->error_code.data = SUCCESS;
-    recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getRobotStatus"));
+    //recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getRobotStatus"));
 }
 
 // "/rpc/controller/getCtrlStatus"
@@ -45,7 +45,7 @@ void ControllerRpc::handleRpc0x0000E9D3(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     data_ptr->data.data = (int32_t)state_machine_ptr_->getCtrlState();
     data_ptr->error_code.data = SUCCESS;
-    recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getCtrlStatus"));
+    //recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getCtrlStatus"));
 }
 
 // "/rpc/controller/getServoStatus"
@@ -54,7 +54,7 @@ void ControllerRpc::handleRpc0x0000D113(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     data_ptr->data.data = (int32_t)state_machine_ptr_->getServoState();
     data_ptr->error_code.data = SUCCESS;
-    recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getServoStatus"));
+    //recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getServoStatus"));
 }
 
 // "/rpc/controller/getSafetyAlarm"
@@ -63,7 +63,7 @@ void ControllerRpc::handleRpc0x0000C00D(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Int32* data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
     data_ptr->data.data = (int32_t)state_machine_ptr_->getSafetyAlarm();
     data_ptr->error_code.data = SUCCESS;
-    recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getSafetyAlarm"));
+    //recordLog(CONTROLLER_LOG, data_ptr->error_code.data, std::string("/rpc/controller/getSafetyAlarm"));
 }
 
 // "/rpc/controller/callEstop"

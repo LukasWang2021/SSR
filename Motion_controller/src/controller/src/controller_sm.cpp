@@ -287,6 +287,7 @@ void ControllerSm::transferServoState()
         }
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
+        motion_control_ptr_->stopGroup();
         recordLog("Servo state is abnormal");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }      
@@ -325,6 +326,13 @@ void ControllerSm::transferCtrlState()
                 recordLog("Controller transfer to TERMINATED");
                 ctrl_state_ = CTRL_TERMINATED;
                 shutdown();
+            }
+            break;
+        case CTRL_ENGAGED:
+            if(is_error_exist_)
+            {
+                motion_control_ptr_->stopGroup();
+                ctrl_state_ = CTRL_ANY_TO_ESTOP;
             }
             break;
         default:

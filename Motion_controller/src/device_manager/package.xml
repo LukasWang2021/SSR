@@ -40,6 +40,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>modbus_manager</build_depend>
   <build_depend>log_manager</build_depend>
   <build_depend>parameter_manager</build_depend>
   <build_depend>base_device</build_depend>

@@ -12,7 +12,7 @@
 
 using namespace std;
 
-namespace fst_modbus
+namespace fst_ip
 {
 class LocalIP
 {

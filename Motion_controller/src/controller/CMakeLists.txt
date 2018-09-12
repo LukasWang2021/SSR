@@ -63,7 +63,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/process_comm/include 
     ${depend_PATH_INC}/preformance_monitor/include 
     ${depend_PATH_INC}/fst_io_device/include 
-    ${depend_PATH_INC}/modbus/include
+    ${depend_PATH_INC}/modbus_manager/include
     ${depend_PATH_INC}/path_alg/include
     ${depend_PATH_INC}/fst_safety_device/include 
 )
@@ -74,7 +74,8 @@ catkin_package(
     DEPENDS core_interface
     DEPENDS log_manager
     DEPENDS thread_help 
-    DEPENDS error_monitor 
+    DEPENDS error_monitor
+    DEPENDS modbus_manager 
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -104,7 +105,8 @@ target_link_libraries(controller
     comm_interface
     core_interface
     protos 
-    tp_comm 
+    tp_comm
+    modbus_manager
     thread_help
     tool_manager 
     coordinate_manager 
@@ -115,7 +117,8 @@ target_link_libraries(controller
     motion_control
     log_service
     preformance_monitor 
-    fst_safety_device 
+    fst_safety_device
+
 )
 
 #############

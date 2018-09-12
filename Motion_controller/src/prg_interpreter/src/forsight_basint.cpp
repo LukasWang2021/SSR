@@ -236,7 +236,7 @@ void* basic_interpreter(void* arg)
   //  }
   setPrgmState(INTERPRETER_IDLE);
   // clear line path
-  setCurLine((char *)"");
+  setCurLine((char *)"", 0);
 
   // free(objThreadCntrolBlock->instrSet);
   objThreadCntrolBlock->instrSet = 0 ;
@@ -339,7 +339,7 @@ void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
     printf("setLinenum : %d\n", iLinenum);
 	objThreadCntrolBlock->iLineNum = iLinenum;
     printf("setLinenum: setCurLine (%d) at %s\n", iLinenum, g_vecXPath[iLinenum].c_str());
-	setCurLine((char *)g_vecXPath[iLinenum].c_str());
+	setCurLine((char *)g_vecXPath[iLinenum].c_str(), iLinenum);
 }
 
 int getLinenum(
@@ -869,19 +869,28 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 /* Load a program. */
 int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, char *pname)
 {
-  char fname[128];
+  char fXMLName[128];
+  char fBASName[128];
   FILE *fp = 0 ;
   int i=0;
 #ifdef WIN32
-  sprintf(fname, "%s.xml", pname);
-  parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
-  sprintf(fname, "%s.bas", pname);
+  sprintf(fXMLName, "%s.xml", pname);
+  sprintf(fBASName, "%s.bas", pname);
+  // use bas directly 
+  if((access(fBASName,F_OK))==-1)   
+  {   
+      parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
+  }   
 #else
-  sprintf(fname, "%s/programs/%s.xml", forgesight_get_programs_path(), pname);
-  parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fname);
-  sprintf(fname, "%s/programs/%s.bas", forgesight_get_programs_path(), pname);
+  sprintf(fXMLName, "%s/programs/%s.xml", forgesight_get_programs_path(), pname);
+  sprintf(fBASName, "%s/programs/%s.bas", forgesight_get_programs_path(), pname);
+  // use bas directly 
+  if((access(fBASName,F_OK))==-1)   
+  {   
+      parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
+  }   
 #endif
-  if(!(fp=fopen(fname, "r"))) 
+  if(!(fp=fopen(fBASName, "r"))) 
   {
       serror(objThreadCntrolBlock, 14);
       return 0;

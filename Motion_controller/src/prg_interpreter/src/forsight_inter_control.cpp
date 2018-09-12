@@ -268,10 +268,11 @@ void setPrgmState(InterpreterState state)
 //    printf("setPrgmState to %d\n", (int)state);
 //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
 	
+    printf("setPrgmState to %d\n", (int)state);
 	g_interpreter_publish.status = state ;
 }
 
-void setCurLine(char * line)
+void setCurLine(char * line, int lineNum)
 {
 // #ifdef WIN32
 //  	Instruction temp,  * tempPtr = &temp;
@@ -284,6 +285,7 @@ void setCurLine(char * line)
 //  //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
 //  	writeShm(SHM_INTPRT_STATUS, offset, (void*)line, strlen(line) + 1); 
 	strcpy(g_interpreter_publish.current_line_path, line); 
+	g_interpreter_publish.current_line_num = lineNum; 
 }
 
 #ifdef WIN32

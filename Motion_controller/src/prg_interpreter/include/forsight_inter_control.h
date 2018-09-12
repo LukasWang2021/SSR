@@ -30,7 +30,7 @@ bool parseScript(const char* fname);
 // void findLoopEnd(int index);
 InterpreterState getPrgmState();
 void setPrgmState(InterpreterState state);
-void setCurLine(char * line);
+void setCurLine(char * line, int lineNum);
 #ifdef WIN32
 void setWarning(__int64 warn);
 #else

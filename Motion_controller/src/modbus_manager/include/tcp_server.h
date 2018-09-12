@@ -11,12 +11,13 @@
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
 
-#include "modbus-private.h"
-#include "modbus-tcp.h"
+#include "modbus/modbus-private.h"
+#include "modbus/modbus-tcp.h"
 #include "modbus_manager_param.h"
 #include "local_ip.h"
 
 using namespace std;
+using namespace fst_modbus;
 
 namespace fst_modbus
 {
@@ -108,7 +109,7 @@ private:
     modbus_mapping_t* mb_mapping_;
     int server_socket_;
 
-    LocalIP local_ip_;
+    fst_ip::LocalIP local_ip_;
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 };

@@ -251,6 +251,18 @@ void returnIODeviceInfo(char * info, int iNum)
 	setIntprtDataFlag(true);
 }
 
+void resetProgramNameAndLineNum()
+{
+	setCurLine((char *)"", 0);
+	setProgramName((char *)""); 
+}
+
+void setProgramName(char * program_name)
+{
+    printf("setProgramName to %s\n", program_name);
+	strcpy(g_interpreter_publish.program_name, program_name); 
+}
+
 InterpreterState getPrgmState()
 {
 	return g_privateInterpreterState ;
@@ -475,7 +487,7 @@ void startFile(struct thread_control_block * objThdCtrlBlockPtr,
 	objThdCtrlBlockPtr->iThreadIdx = idx ;
 	append_program_prop_mapper(objThdCtrlBlockPtr, proj_name);
 	// Refresh InterpreterPublish project_name
-	strcpy(g_interpreter_publish.program_name, proj_name); 
+	setProgramName(proj_name); 
 	// Start thread
 	basic_thread_create(idx, objThdCtrlBlockPtr);
 	// intprt_ctrl.cmd = LOAD ;
@@ -902,6 +914,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 #endif
   			printf("setPrgmState(IDLE_R).\n");
 		    setPrgmState(INTERPRETER_IDLE);
+		    // clear line path and ProgramName
+		    resetProgramNameAndLineNum();
             break;
         case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE:
 			// intprt_ctrl.RegMap.

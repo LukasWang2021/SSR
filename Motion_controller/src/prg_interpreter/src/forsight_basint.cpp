@@ -235,8 +235,8 @@ void* basic_interpreter(void* arg)
   //  	resetRunningMacroInstr(objThreadCntrolBlock->project_name);
   //  }
   setPrgmState(INTERPRETER_IDLE);
-  // clear line path
-  setCurLine((char *)"", 0);
+  // clear line path and ProgramName
+  resetProgramNameAndLineNum();
 
   // free(objThreadCntrolBlock->instrSet);
   objThreadCntrolBlock->instrSet = 0 ;

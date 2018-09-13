@@ -28,6 +28,9 @@
 
 bool parseScript(const char* fname);
 // void findLoopEnd(int index);
+void resetProgramNameAndLineNum();
+
+void setProgramName(char * program_name);
 InterpreterState getPrgmState();
 void setPrgmState(InterpreterState state);
 void setCurLine(char * line, int lineNum);

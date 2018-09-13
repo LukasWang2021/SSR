@@ -1382,6 +1382,8 @@ int call_Pause(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 int call_Abort(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
 	setPrgmState(INTERPRETER_IDLE);
+  // clear line path and ProgramName
+  resetProgramNameAndLineNum();
 #ifdef WIN32
 	Sleep(100);
     return 0; 

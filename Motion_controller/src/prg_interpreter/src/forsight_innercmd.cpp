@@ -701,7 +701,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.acc = -1 ;
+	// instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	
@@ -835,13 +835,13 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		get_exp(objThreadCntrolBlock, &value, &boolValue);
 		instr.target.pose_target.orientation.c = value.getFloatValue();
 
-		instr.current_tf = instr.current_uf = -1 ;
+		instr.target.user_frame_id_ = instr.target.tool_frame_id_ = -1 ;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
 		instr.target.pose_target = value.getPoseValue();
-		instr.current_tf = value.getTFIndex();
-		instr.current_uf = value.getUFIndex();
+		instr.target.user_frame_id_ = value.getUFIndex();
+		instr.target.tool_frame_id_ = value.getTFIndex();
 		
 	    printf("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
 			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
@@ -916,7 +916,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.acc = -1 ;
+	// instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	
@@ -939,7 +939,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			objThreadCntrolBlock->instrSet->add_num    = 0 ;
 		}
 	}
-	printf("MOVL: instr.target.accleration = %f .\n", instr.target.acc);
+	// printf("MOVL: instr.target.accleration = %f .\n", instr.target.acc);
 	
 // 	#ifdef USE_XPATH
 // 		printf("setInstruction MOTION_LINE at %s\n", instr.line);
@@ -1138,7 +1138,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.acc = -1 ;
+	// instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	

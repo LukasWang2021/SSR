@@ -28,6 +28,7 @@ public:
     bool enable_virtual_core1_;
     int virtual_core1_thread_priority_;
     int max_reg_publish_number_;
+    int max_continuous_manual_move_timeout_;    //us
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

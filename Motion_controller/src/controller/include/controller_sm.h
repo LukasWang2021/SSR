@@ -11,6 +11,8 @@
 #include "serverAlarmApi.h"
 #include "fst_safety_device.h"
 #include <string>
+#include <sys/time.h>
+#include <mutex>
 
 namespace fst_ctrl
 {
@@ -83,6 +85,10 @@ public:
     ErrorCode callReset();
     ErrorCode callShutdown();
 
+    void transferRobotStateToTeaching();
+    void transferRobotStateToRunning();
+    bool updateContinuousManualMoveRpcTime();
+
     // for publish data
     UserOpMode* getUserOpModePtr();
     RunningState* getRunningStatePtr();
@@ -110,6 +116,11 @@ private:
     int safety_alarm_;
     int ctrl_reset_count_;
 
+    // manual rpc related
+    bool is_continuous_manual_move_timeout_;
+    struct timeval last_continuous_manual_move_rpc_time_;    
+    std::mutex manual_rpc_mutex_;
+
     // error flags
     long long int interpreter_warning_code_;
     int error_level_;
@@ -121,8 +132,10 @@ private:
     void transferServoState();
     void transferCtrlState();
     void transferRobotState();
-
     void shutdown();
+
+    // manual rpc related
+    void handleContinuousManualRpcTimeout();
 
     // log service
     void recordLog(std::string log_str);

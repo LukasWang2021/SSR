@@ -56,11 +56,11 @@ Logger::~Logger(void)
         cnt++;
         usleep(10 * 1000);
         
-        if (cnt > 50)
+        if (cnt > 500)
             break;
     }
 
-    if (cnt > 50) {
+    if (cnt > 500) {
         error(" -Conmunication time-out when sending request");
         return;
     }
@@ -73,11 +73,11 @@ Logger::~Logger(void)
         cnt++;
         usleep(10 * 1000);
         
-        if (cnt > 10)
+        if (cnt > 100)
             break;
     }
 
-    if (cnt > 10) {
+    if (cnt > 100) {
         error(" -Conmunication time-out when wating response");
         ctrl_area_->register_block.flag_in  = false;
         ctrl_area_->register_block.reg_in = 0;
@@ -122,11 +122,11 @@ bool Logger::initLogger(const char *name)
         exp = 0;
         usleep(10 * 1000);
         
-        if (cnt > 50)
+        if (cnt > 500)
             break;
     }
 
-    if (cnt > 50) {
+    if (cnt > 500) {
         error(" -Conmunication time-out");
         return false;
     }
@@ -149,11 +149,11 @@ bool Logger::initLogger(const char *name)
         cnt++;
         usleep(10 * 1000);
         
-        if (cnt > 10)
+        if (cnt > 100)
             break;
     }
 
-    if (cnt > 10) {
+    if (cnt > 100) {
         error(" -Conmunication time-out");
         ctrl_area_->register_block.flag_in  = false;
         ctrl_area_->register_block.reg_in = 0;

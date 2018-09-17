@@ -28,7 +28,8 @@ ControllerSm::ControllerSm():
     ctrl_reset_count_(0),
     interpreter_warning_code_(0),
     error_level_(0),
-    is_error_exist_(false)
+    is_error_exist_(false),
+    is_continuous_manual_move_timeout_(false)
 {
 
 }
@@ -150,6 +151,39 @@ ErrorCode ControllerSm::callShutdown()
     {
         return CONTROLLER_INVALID_OPERATION;
     }
+}
+
+void ControllerSm::transferRobotStateToTeaching()
+{
+    if(robot_state_ == ROBOT_IDLE)
+    {
+        robot_state_ = ROBOT_IDLE_TO_TEACHING;
+    }
+}
+
+void ControllerSm::transferRobotStateToRunning()
+{
+    if(robot_state_ == ROBOT_IDLE)
+    {
+        robot_state_ = ROBOT_IDLE_TO_RUNNING;
+    }
+}
+
+bool ControllerSm::updateContinuousManualMoveRpcTime()
+{
+    manual_rpc_mutex_.lock();
+    if(is_continuous_manual_move_timeout_)
+    {
+        manual_rpc_mutex_.unlock();
+        return false;
+    }
+    
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    last_continuous_manual_move_rpc_time_.tv_sec = current_time.tv_sec;
+    last_continuous_manual_move_rpc_time_.tv_usec = current_time.tv_usec;
+    manual_rpc_mutex_.unlock();
+    return true;
 }
 
 fst_ctrl::UserOpMode* ControllerSm::getUserOpModePtr()
@@ -366,6 +400,7 @@ void ControllerSm::transferRobotState()
         case ROBOT_TEACHING_TO_IDLE:
             if(servo_state_ != SERVO_RUNNING)
             {
+                is_continuous_manual_move_timeout_ = false;
                 recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
@@ -377,6 +412,7 @@ void ControllerSm::transferRobotState()
             }
             break;
         case ROBOT_TEACHING:
+            handleContinuousManualRpcTimeout();
             if (motion_control_ptr_->getGroupState() == fst_mc::STANDBY)
             //if(virtual_core1_ptr_->getArmState() == 1)
             {
@@ -424,6 +460,38 @@ void ControllerSm::shutdown()
 	}
 
 	system("shutdown -h now");
+}
+
+void ControllerSm::handleContinuousManualRpcTimeout()
+{
+    if(is_continuous_manual_move_timeout_)
+    {
+        return;
+    }
+
+    manual_rpc_mutex_.lock();
+    if(last_continuous_manual_move_rpc_time_.tv_sec == 0
+        && last_continuous_manual_move_rpc_time_.tv_usec == 0)
+    {
+        manual_rpc_mutex_.unlock();
+        return;
+    }
+    
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+    long long delta_tv_sec = current_time.tv_sec - last_continuous_manual_move_rpc_time_.tv_sec;
+    long long delta_tv_usec = current_time.tv_usec - last_continuous_manual_move_rpc_time_.tv_usec;
+    manual_rpc_mutex_.unlock();
+    long long time_elapse = delta_tv_sec * 1000000 + delta_tv_usec;
+    if(time_elapse > param_ptr_->max_continuous_manual_move_timeout_)
+    {
+        is_continuous_manual_move_timeout_ = true;
+        ErrorCode error_code = motion_control_ptr_->manualStop();
+        if(error_code != SUCCESS)
+        {
+            ErrorMonitor::instance()->add(error_code);
+        }
+    }
 }
 
 void ControllerSm::recordLog(std::string log_str)

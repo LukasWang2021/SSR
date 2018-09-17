@@ -104,6 +104,14 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
+        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+
     if(rq_data_ptr->data2.data_count == 9)
     {
         GroupDirection direction;
@@ -117,11 +125,17 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
         direction.axis8 = rq_data_ptr->data2.data[7];
         direction.axis9 = rq_data_ptr->data2.data[8];
         rs_data_ptr->data.data = motion_control_ptr_->doStepManualMove(direction);
+        if(rs_data_ptr->data.data == SUCCESS)
+        {
+            state_machine_ptr_->transferRobotStateToTeaching();
+        }
     }
     else
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
+
+    state_machine_ptr_->transferRobotStateToTeaching();
     //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doStepManualMove"));
 }
 
@@ -130,6 +144,20 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Int32_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32_Int32List*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
+        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+
+    if(!state_machine_ptr_->updateContinuousManualMoveRpcTime())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
 
     if(rq_data_ptr->data2.data_count == 9)
     {
@@ -144,11 +172,17 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
         direction.axis8 = rq_data_ptr->data2.data[7];
         direction.axis9 = rq_data_ptr->data2.data[8];
         rs_data_ptr->data.data = motion_control_ptr_->doContinuousManualMove(direction);
+        if(rs_data_ptr->data.data == SUCCESS)
+        {
+            state_machine_ptr_->transferRobotStateToTeaching();
+        }
     }
     else
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
+
+    state_machine_ptr_->transferRobotStateToTeaching();
     //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doContinuousManualMove"));
 }
 
@@ -157,6 +191,14 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
+        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
 
     if(rq_data_ptr->data2.data_count == 6)
     {
@@ -168,11 +210,16 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
         pos.orientation.b = rq_data_ptr->data2.data[4];
         pos.orientation.c = rq_data_ptr->data2.data[5];
         rs_data_ptr->data.data = motion_control_ptr_->doGotoPointManualMove(pos);
+        if(rs_data_ptr->data.data == SUCCESS)
+        {
+            state_machine_ptr_->transferRobotStateToTeaching();
+        }
     }
     else
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
+
     //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doGotoCartesianPointManualMove"));
 }
 
@@ -181,6 +228,14 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
+        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
 
     if(rq_data_ptr->data2.data_count == 9)
     {
@@ -195,11 +250,16 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
         joint.j8 = rq_data_ptr->data2.data[7];
         joint.j9 = rq_data_ptr->data2.data[8];
         rs_data_ptr->data.data = motion_control_ptr_->doGotoPointManualMove(joint);
+        if(rs_data_ptr->data.data == SUCCESS)
+        {
+            state_machine_ptr_->transferRobotStateToTeaching();
+        }
     }
     else
     {
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
+
     //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doGotoJointPointManualMove"));
 }
 
@@ -208,6 +268,14 @@ void ControllerRpc::handleRpc0x0000A9A0(void* request_data_ptr, void* response_d
 {
     //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
+        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
 
     rs_data_ptr->data.data = motion_control_ptr_->manualStop();
     //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doManualStop"));
@@ -684,7 +752,7 @@ void ControllerRpc::handleRpc0x000102F3(void* request_data_ptr, void* response_d
 
     CalibrateState dummy;
     OffsetState offset_state[NUM_OF_JOINT];
-    rs_data_ptr->error_code.data = motion_control_ptr_->checkOffset(dummy, offset_state);
+    rs_data_ptr->error_code.data = motion_control_ptr_->checkOffset(dummy, offset_state);   
     rs_data_ptr->data.data_count = NUM_OF_JOINT;
     for(int i=0; i<NUM_OF_JOINT; ++i)
     {

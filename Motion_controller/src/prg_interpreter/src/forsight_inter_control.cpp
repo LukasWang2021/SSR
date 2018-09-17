@@ -647,7 +647,8 @@ void waitInterpreterStateToPaused(
 	}
 }	
 
-void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_block * objThdCtrlBlockPtr)
+void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr) 
+	// (struct thread_control_block * objThdCtrlBlockPtr)
 {
 //	InterpreterState interpreterState  = IDLE_R;
 #ifdef WIN32
@@ -687,6 +688,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
             // printf("load file_name\n");
             break;
         case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
+			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             printf("debug...\n");
 			g_iCurrentThreadSeq++ ;
 			if(g_iCurrentThreadSeq < 0) break ;
@@ -704,6 +706,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 	        // g_iCurrentThreadSeq++ ;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_START:
+			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             printf("start run...\n");
             printf("start run %s ...\n", intprt_ctrl.start_ctrl);
 			g_iCurrentThreadSeq++ ;
@@ -722,6 +725,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 	        // g_iCurrentThreadSeq++ ;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_JUMP:
+			memcpy(&intprt_ctrl.jump_line, requestDataPtr, sizeof(int));
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
 			{
@@ -918,6 +922,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl) // (struct thread_control_b
 		    resetProgramNameAndLineNum();
             break;
         case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE:
+			memcpy(&intprt_ctrl.autoMode, requestDataPtr, sizeof(AutoMode));
 			// intprt_ctrl.RegMap.
 			autoMode = intprt_ctrl.autoMode ;
 			deal_auto_mode(autoMode);

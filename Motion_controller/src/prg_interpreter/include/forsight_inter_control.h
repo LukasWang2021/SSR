@@ -53,7 +53,8 @@ unsigned __stdcall script_func(void* arg);
 #else
 void* script_func(void* arg);
 #endif
-void parseCtrlComand(InterpreterControl intprt_ctrl); // (struct thread_control_block * objThdCtrlBlock);
+void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr); 
+							// (struct thread_control_block * objThdCtrlBlock);
 void initShm();
 void forgesight_load_programs_path();
 char * forgesight_get_programs_path();

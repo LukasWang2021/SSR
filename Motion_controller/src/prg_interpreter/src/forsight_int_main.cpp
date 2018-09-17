@@ -35,9 +35,8 @@ int main(int  argc, char *argv[])
 			{
 				memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 				intprt_ctrl.cmd = it->cmd_id ;
-				memcpy(intprt_ctrl.start_ctrl, it->request_data_ptr, 256);
 	            printf("parseCtrlComand at %d \n", intprt_ctrl.cmd);
-				parseCtrlComand(intprt_ctrl);
+				parseCtrlComand(intprt_ctrl, it->request_data_ptr);
 				bool * bRsp = it->response_data_ptr;
 				*bRsp = true;
 				g_objInterpreterServer->pushTaskToResponseList(*it);

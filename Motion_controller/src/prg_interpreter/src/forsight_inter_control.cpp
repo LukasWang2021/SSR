@@ -787,11 +787,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             iLineNum = getLinenum(objThdCtrlBlockPtr);
             printf("step forward to %d \n", iLineNum);
             setPrgmState(INTERPRETER_EXECUTE);
-			
-            printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
-			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
-			// target_line++ in setInstruction
-            printf("Left  waitInterpreterStateToPaused %d \n", iLineNum);
+
+			// Controller use the PrgmState and LineNum to check to execute 
+//            printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
+//            waitInterpreterStateToPaused(objThdCtrlBlockPtr);
+// 			// target_line++ in setInstruction
+//            printf("Left  waitInterpreterStateToPaused %d \n", iLineNum);
 
 			// Use the program pointer to get the current line number.
 			// to support logic
@@ -860,10 +861,11 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);
             setPrgmState(INTERPRETER_EXECUTE);
 
-            printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
-			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
-			// target_line-- in setInstruction
-            printf("Left  waitInterpreterStateToPaused %d \n", iLineNum);
+			// Controller use the PrgmState and LineNum to check to execute 
+//            printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
+//			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
+//			// target_line-- in setInstruction
+//            printf("Left  waitInterpreterStateToPaused %d \n", iLineNum);
 			
 			iLineNum-- ;
 		    setLinenum(objThdCtrlBlockPtr, iLineNum);

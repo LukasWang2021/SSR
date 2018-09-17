@@ -29,6 +29,7 @@ public:
     int virtual_core1_thread_priority_;
     int max_reg_publish_number_;
     int max_continuous_manual_move_timeout_;    //us
+    bool is_simmulation_;
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

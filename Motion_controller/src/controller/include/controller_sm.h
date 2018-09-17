@@ -121,13 +121,17 @@ private:
     struct timeval last_continuous_manual_move_rpc_time_;    
     std::mutex manual_rpc_mutex_;
 
+    // user op mode related
+    int unknown_user_op_mode_count_;
+
     // error flags
     long long int interpreter_warning_code_;
     int error_level_;
     bool is_error_exist_;
     
     // state machine transfer
-    void processInterpreter();  
+    void processInterpreter();
+    void processSafety();
     void processError();
     void transferServoState();
     void transferCtrlState();

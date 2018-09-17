@@ -11,4 +11,5 @@ enable_virtual_core1: false
 virtual_core1_thread_priority: 50
 max_reg_publish_number: 32
 max_continuous_manual_move_timeout: 500000
+is_simmulation: true
 #END

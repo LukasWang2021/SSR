@@ -19,7 +19,8 @@ ControllerParam::ControllerParam():
     enable_virtual_core1_(false),
     virtual_core1_thread_priority_(50),
     max_reg_publish_number_(0),
-    max_continuous_manual_move_timeout_(0)
+    max_continuous_manual_move_timeout_(0),
+    is_simmulation_(false)
 {
     file_path_ += "controller.yaml";
 }
@@ -44,7 +45,8 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("enable_virtual_core1", enable_virtual_core1_)
         || !yaml_help_.getParam("virtual_core1_thread_priority", virtual_core1_thread_priority_)
         || !yaml_help_.getParam("max_reg_publish_number", max_reg_publish_number_)
-        || !yaml_help_.getParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_))
+        || !yaml_help_.getParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_)
+        || !yaml_help_.getParam("is_simmulation", is_simmulation_))
     {
         return false;
     }
@@ -69,6 +71,7 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("virtual_core1_thread_priority", virtual_core1_thread_priority_)
         || !yaml_help_.setParam("max_reg_publish_number", max_reg_publish_number_)
         || !yaml_help_.setParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_)
+        || !yaml_help_.setParam("is_simmulation", is_simmulation_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

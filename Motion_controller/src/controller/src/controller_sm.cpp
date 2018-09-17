@@ -54,6 +54,7 @@ void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fs
 void ControllerSm::processStateMachine()
 {
     processInterpreter();
+    processSafety();
     processError();
     transferServoState();
     transferCtrlState();
@@ -130,6 +131,7 @@ ErrorCode ControllerSm::callReset()
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
     {
+        unknown_user_op_mode_count_ = 0;
         ErrorMonitor::instance()->clear();
         motion_control_ptr_->resetGroup();
         safety_device_ptr_->reset();
@@ -282,11 +284,40 @@ void ControllerSm::processInterpreter()
 #endif    
 }
 
+void ControllerSm::processSafety()
+{
+    if(!param_ptr_->is_simmulation_)
+    {
+        user_op_mode_ = safety_device_ptr_->getDITPUserMode();
+        if(user_op_mode_ == USER_OP_MODE_NONE)
+        {
+            ++unknown_user_op_mode_count_;
+            if(unknown_user_op_mode_count_ == 15)
+            {
+                FST_ERROR("unknown user op mode");
+                //ErrorMonitor::instance()->add();
+            }
+            else if(unknown_user_op_mode_count_ > 15)
+            {
+                --unknown_user_op_mode_count_;
+            }
+        }
+        else
+        {
+            unknown_user_op_mode_count_ = 0;
+        }
+        safety_alarm_ = safety_device_ptr_->getDIAlarm();
+    }
+    else
+    {
+        safety_alarm_ = 0;
+    }
+}
+
 void ControllerSm::processError()
 {
+    
     error_level_ = ErrorMonitor::instance()->getWarningLevel();
-    safety_alarm_ = safety_device_ptr_->getDIAlarm();
-    //safety_alarm_ = virtual_core1_ptr_->getSafetyAlarm();
     if(error_level_ >= 4
         || safety_alarm_ != 0)
     {

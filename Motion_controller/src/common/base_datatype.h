@@ -93,6 +93,26 @@ class PoseEuler
     const double& operator[](size_t index) const {assert(index < 6); return *(&position.x + index);}
 };
 
+struct JointPoint
+{
+	Joint angle;
+	Joint omega;
+	Joint alpha;
+};
+
+struct DynamicsProduct
+{
+	double m[NUM_OF_JOINT][NUM_OF_JOINT];
+	double c[NUM_OF_JOINT][NUM_OF_JOINT];
+	double g[NUM_OF_JOINT];
+};
+
+struct TrajSegment
+{
+	double coeff[4][4];
+	double duration[4];
+};
+
 /*
 // total size of TrajectoryItem is 16 * 8 = 128 bytes
 class TrajectoryItem

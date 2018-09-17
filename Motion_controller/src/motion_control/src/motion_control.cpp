@@ -189,7 +189,22 @@ ErrorCode MotionControl::manualStop(void)
     return group_ptr_->manualStop();
 }
 
+ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
+{
+    if (user_frame_id_ != target.user_frame_id)
+    {
+        FST_ERROR("autoMove: user frame ID mismatch with activated user frame.");
+        return INVALID_PARAMETER;
+    }
 
+    if (tool_frame_id_ != target.tool_frame_id)
+    {
+        FST_ERROR("autoMove: tool frame ID mismatch with activated tool frame.");
+        return INVALID_PARAMETER;
+    }
+
+    return group_ptr_->autoMove(id, target);
+}
 
 
 void MotionControl::getOffset(double (&offset)[NUM_OF_JOINT])

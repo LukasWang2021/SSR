@@ -25,17 +25,10 @@ class ArmGroup : public BaseGroup
 
     ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr);
 
-
     size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);
 
-  
   private:
-    bool isJointInConstraint(Joint joint, JointConstraint constraint);
-    
-    ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length);
-    ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
-    ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
 
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);

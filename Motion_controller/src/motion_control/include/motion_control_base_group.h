@@ -16,28 +16,14 @@
 #include <motion_control_core_interface.h>
 #include <motion_control_offset_calibrator.h>
 #include <motion_control_manual_teach.h>
+#include <motion_control_traj_fifo.h>
 #include <arm_kinematics.h>
 #include <path_plan.h>
 
 
+#define AUTO_CACHE_SIZE     2
 namespace fst_mc
 {
-
-enum GroupState
-{
-    STANDBY = 0,
-    MANUAL = 1,
-    AUTO = 2,
-    PAUSE = 3,
-
-    MANUAL_TO_STANDBY = 110,
-    STANDBY_TO_MANUAL = 101,
-    AUTO_TO_STANDBY = 120,
-    STANDBY_TO_AUTO = 102,
-    AUTO_TO_PAUSE = 123,
-    PAUSE_TO_AUTO = 132,
-    PAUSE_TO_STANDBY = 130,
-};
 
 
 class BaseGroup
@@ -109,21 +95,22 @@ class BaseGroup
     void inactiveRealtimeTask(void);
 
 
-
-
-
   protected:
-    virtual ErrorCode autoJoint(int id, const MotionTarget &target);
-    virtual ErrorCode autoLine(int id, const MotionTarget &target);
-    virtual ErrorCode autoCircle(int id, const MotionTarget &target);
+    virtual ErrorCode autoJoint(const Joint &target, double vel, double cnt, int id);
+    virtual ErrorCode autoLine(const PoseEuler &target, double vel, double cnt, int id);
+    virtual ErrorCode autoCircle(const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id);
 
-    virtual ErrorCode planFirstStageTraj(TrajectoryCache &cache);
+    virtual ErrorCode prepareCache(TrajectoryCache &cache);
+    virtual ErrorCode preplanCache(TrajectoryCache &cache);
+    virtual ErrorCode smoothJoint2Joint(const JointPoint &ps, const JointPoint &pe, MotionTime smooth_time, TrajSegment &seg);
 
     virtual ErrorCode sendPoint(void);
-    virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length) = 0;
-    virtual ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length) = 0;
-    virtual ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length) = 0;
-    virtual bool isJointInConstraint(Joint joint, JointConstraint constraint) = 0;
+    virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length);
+    virtual ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
+    virtual ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
+    virtual ErrorCode pickFromAuto(TrajectoryPoint *point, size_t &length);
+    virtual ErrorCode createTrajectory(void);
+    virtual ErrorCode sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], double time, Joint &angle, Joint &omega, Joint &alpha);
 
     virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
@@ -135,6 +122,7 @@ class BaseGroup
     double  vel_ratio_, acc_ratio_;
     double  axis_vel_[NUM_OF_JOINT];
     double  axis_acc_[NUM_OF_JOINT];
+    size_t  auto_pick_segment_;
 
     Constraint  hard_constraint_;
     Constraint  soft_constraint_;
@@ -144,7 +132,7 @@ class BaseGroup
     ServoState  servo_state_;
     GroupState  group_state_;
 
-    TrajectoryCache     auto_cache_[2];
+    TrajectoryCache     auto_cache_[AUTO_CACHE_SIZE];
     TrajectoryCache     *auto_cache_ptr_;
 
     Joint       start_joint_;
@@ -159,6 +147,7 @@ class BaseGroup
     pthread_mutex_t manual_mutex_;
     pthread_mutex_t servo_mutex_;
 
+    TrajectoryFifo          traj_fifo_;
     BaseKinematics          *kinematics_ptr_;
     ManualTrajectory        manual_traj_;
     BareCoreInterface       bare_core_;

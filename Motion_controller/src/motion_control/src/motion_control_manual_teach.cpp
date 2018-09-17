@@ -1,7 +1,7 @@
 /*************************************************************************
 	> File Name: motion_control_manual_teach.cpp
-	> Author: 
-	> Mail: 
+	> Author: 冯赟
+	> Mail: yun.feng@foresight-robotics.com
 	> Created Time: 2018年08月07日 星期二 15时48分54秒
  ************************************************************************/
 

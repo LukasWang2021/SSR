@@ -322,7 +322,6 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
                         for (size_t i = 0; i < joint_num_; i++)
                         {
                             offset_stat_[i] = state[i];
-                            offset_stat[i] = state[i];
                         }
                         FST_INFO("Success.");
                     }
@@ -331,6 +330,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
                         FST_ERROR("Failed, err=0x%llx", robot_recorder_.getLastError());
                         current_state_ = MOTION_FORBIDDEN;
                         cali_stat = current_state_;
+                        memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
                         return robot_recorder_.getLastError();
                     }
                 }
@@ -355,6 +355,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
                 current_state_ = forbidden ? MOTION_FORBIDDEN : (limited ? MOTION_LIMITED : MOTION_NORMAL);
                 cali_stat = current_state_;
+                memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
                 FST_INFO("Done, calibrate motion-state is %d", current_state_);
                 return SUCCESS;
             }
@@ -363,6 +364,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
                 FST_ERROR("Invalid array size of joint in recorder, expect %d but get %d", joint_num_, joint.size());
                 current_state_ = MOTION_FORBIDDEN;
                 cali_stat = current_state_;
+                memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
                 return INVALID_PARAMETER;
             }
         }
@@ -371,6 +373,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
             FST_ERROR("Fail to get joint from recorder.");
             current_state_ = MOTION_FORBIDDEN;
             cali_stat = current_state_;
+            memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
             return robot_recorder_.getLastError();
         }
     }
@@ -379,6 +382,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
         FST_ERROR("Fail to get current joint from share mem.");
         current_state_ = MOTION_FORBIDDEN;
         cali_stat = current_state_;
+        memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
         return BARE_CORE_TIMEOUT;
     }
 }

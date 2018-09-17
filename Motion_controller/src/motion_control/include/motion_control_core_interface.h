@@ -21,33 +21,6 @@
 namespace fst_mc
 {
 
-
-enum PointProperty
-{
-    POINT_POS = 1,
-    POINT_POS_VEL = 2,
-    POINT_POS_VEL_ACC = 4,
-    POINT_POS_VEL_ACC_EFF = 8,
-};
-
-enum PointLevel
-{
-    POINT_MIDDLE = 0,
-    POINT_START  = 1,
-    POINT_ENDING = 2,
-};
-
-struct TrajectoryPoint
-{
-    Joint   angle;
-    Joint   omega;
-    Joint   alpha;
-    Joint   torque;
-    Joint   inertia;
-    Joint   gravity;
-    PointLevel  level;
-};
-
 struct PointCache
 {
     bool is_empty;
@@ -65,6 +38,7 @@ class BareCoreInterface
     
     bool sendPoint(void);
     bool isPointCacheEmpty(void);
+    bool clearPointCache(void);
     bool fillPointCache(TrajectoryPoint *points, size_t length, PointProperty proerty);
 
     bool getLatestJoint(Joint &joint, ServoState &state);

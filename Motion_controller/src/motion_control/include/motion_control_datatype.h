@@ -37,8 +37,8 @@ struct MotionTarget
     // velocity < 0 means using default velocity
     double vel;
 
-    int user_frame_id_;
-    int tool_frame_id_;
+    int user_frame_id;
+    int tool_frame_id;
 
     union
     {
@@ -46,13 +46,6 @@ struct MotionTarget
         Joint           joint_target;
         CircleTarget    circle_target;
     };
-};
-
-struct JointPoint
-{
-    Joint angle;
-    Joint omega;
-    Joint alpha;
 };
 
 struct PathPoint
@@ -77,6 +70,8 @@ struct TrajectorySegment
 {
     // point from path plan
     PathPoint   path_point;
+    JointPoint  start_state;
+    JointPoint  ending_state;
 
     // time from start
     // time < 0 means this point has not been converted to a trajectory point
@@ -86,17 +81,18 @@ struct TrajectorySegment
     // duration < 0 means this point has not been converted to a trajectory point
     // command_duration = cycle_step / v_command
     // duration = actual dutation
-    MotionTime  command_duration;
+    //MotionTime  command_duration;
     MotionTime  forward_duration;
     MotionTime  backward_duration;
-
 
     // point is what trajectory-create should give out
     //JointPoint  forward_point;
     //JointPoint  backward_point;
 
-    double  coeff[NUM_OF_JOINT][6];
-    double  inertia[NUM_OF_JOINT];
+    TrajSegment  forward_coeff[NUM_OF_JOINT];
+    TrajSegment  backward_coeff[NUM_OF_JOINT];
+
+    DynamicsProduct dynamics_product;
 };
 
 struct TrajectoryCache
@@ -107,24 +103,20 @@ struct TrajectoryCache
     size_t  smooth_in_stamp;
     size_t  smooth_out_stamp;
     double  deadline;
+    double  expect_duration;
 
     TrajectorySegment cache[MAX_PATH_SIZE];
     TrajectoryCache *prev;
     TrajectoryCache *next;
 };
 
-enum ManualMode
+struct TrajectoryItem
 {
-    STEP,
-    CONTINUOUS,
-    APOINT,
-};
-
-enum ManualDirection
-{
-    STANDING = 0,
-    INCREASE = 1,
-    DECREASE = 2,
+    int         id;
+    MotionTime  time_from_start;
+    MotionTime  duration;
+    TrajSegment traj_coeff[NUM_OF_JOINT];
+    DynamicsProduct dynamics_product;
 };
 
 class GroupDirection
@@ -170,6 +162,17 @@ struct ManualTrajectory
 
     MotionTime      duration;
     ManualCoef      coeff[6];
+};
+
+struct TrajectoryPoint
+{
+    Joint   angle;
+    Joint   omega;
+    Joint   alpha;
+    Joint   ma_cv_g;
+    //Joint   inertia;
+    //Joint   gravity;
+    PointLevel  level;
 };
 
 

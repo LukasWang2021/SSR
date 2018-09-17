@@ -56,6 +56,12 @@ bool BareCoreInterface::isPointCacheEmpty(void)
     return point_cache_.is_empty;
 }
 
+bool BareCoreInterface::clearPointCache(void)
+{
+    point_cache_.is_empty = true;
+    return true;
+}
+
 bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, PointProperty property)
 {
     if (point_cache_.is_empty && length > 0 && length <= JC_POINT_NUM)
@@ -64,7 +70,7 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
         {
             memcpy(point_cache_.cache.points[i].positions, &points[i].angle, JOINT_NUM * sizeof(double));
             memcpy(point_cache_.cache.points[i].omega, &points[i].omega, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].inertia, &points[i].inertia, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].inertia, &points[i].ma_cv_g, JOINT_NUM * sizeof(double));
             point_cache_.cache.points[i].point_position = points[i].level;
         }
 

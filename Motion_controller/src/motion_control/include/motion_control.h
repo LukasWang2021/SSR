@@ -46,7 +46,7 @@ public:
     ErrorCode manualStop(void);
 
     // API for auto run
-    // ...
+    ErrorCode autoMove(int id, const MotionTarget &target);
 
     // API for zero offset and calibrator
     void getOffset(double (&offset)[NUM_OF_JOINT]);

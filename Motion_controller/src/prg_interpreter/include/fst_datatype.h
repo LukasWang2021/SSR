@@ -351,10 +351,8 @@ struct MotionTarget {
     // velocity < 0 means using default velocity
     double vel;
 
-    // percent accleration in move Joint, range: 0.0-1.0
-    // linear accleration in move cartesian, range: 0.0-MAX_ACC
-    // accleration < 0 means using default accleration
-    double acc;
+    int user_frame_id_;
+    int tool_frame_id_;
 
     union {
         _PoseEuler       pose_target;

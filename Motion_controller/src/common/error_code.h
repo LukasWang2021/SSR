@@ -2,7 +2,7 @@
 #define COMMON_ERROR_CODE_H_
 
 
-#ifnfef SUCCESS
+#ifndef SUCCESS
 #define SUCCESS 0
 #endif
 

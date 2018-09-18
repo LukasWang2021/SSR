@@ -11,6 +11,7 @@
 
 #include <motion_control_base_group.h>
 #include <parameter_manager/parameter_manager_param_group.h>
+#include <trajectory_alg.h>
 #include <common_file_path.h>
 
 using namespace std;
@@ -30,25 +31,8 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     manual_time_ = 0;
     manual_frame_ = JOINT;
 
-    auto_cache_[0].deadline = 0;
-    auto_cache_[0].valid = false;
-    auto_cache_[0].head = 0;
-    auto_cache_[0].tail = 0;
-    auto_cache_[0].smooth_in_stamp = 0;
-    auto_cache_[0].smooth_out_stamp = 0;
-    auto_cache_[0].next = &auto_cache_[1];
-    auto_cache_[0].prev = &auto_cache_[1];
-
-    auto_cache_[1].deadline = 0;
-    auto_cache_[1].valid = false;
-    auto_cache_[1].head = 0;
-    auto_cache_[1].tail = 0;
-    auto_cache_[1].smooth_in_stamp = 0;
-    auto_cache_[1].smooth_out_stamp = 0;
-    auto_cache_[1].next = &auto_cache_[0];
-    auto_cache_[1].prev = &auto_cache_[0];
-
-    auto_cache_ptr_ = &auto_cache_[0];
+    auto_pick_ptr_ = NULL;
+    auto_cache_ptr_ = NULL;
     auto_pick_segment_ = 0;
 
     vel_ratio_ = 0;
@@ -56,7 +40,13 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
 }
 
 BaseGroup::~BaseGroup()
-{}
+{
+    if (auto_cache_ptr_ != NULL)
+    {
+        delete [] auto_cache_ptr_;
+        auto_cache_ptr_ = NULL;
+    }
+}
 
 void BaseGroup::reportError(const ErrorCode &error)
 {
@@ -568,12 +558,12 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
         {
             size_t cnt = 0;
 
-            while (!auto_cache_ptr_->valid && cnt < AUTO_CACHE_SIZE)
+            while (!auto_pick_ptr_->valid && cnt < AUTO_CACHE_SIZE)
             {
-                auto_cache_ptr_ = auto_cache_ptr_->next;
+                auto_pick_ptr_ = auto_pick_ptr_->next;
             }
 
-            if (auto_cache_ptr_->valid)
+            if (auto_pick_ptr_->valid)
             {
                 auto_pick_segment_ = 1;
                 group_state_ = AUTO;
@@ -639,7 +629,7 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
     double  precision = 0.01;
     Joint   path[MAX_PATH_SIZE];
     planJointPath(start_joint, target, precision, index, path, length);
-    TrajectoryCache *p_cache = auto_cache_ptr_->valid == false ? auto_cache_ptr_ : auto_cache_ptr_->next;
+    TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
 
     for (size_t i = 0; i < length; i++)
     {
@@ -657,6 +647,7 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
     p_cache->tail = length;
     p_cache->expect_duration = precision / (axis_vel_[index] * vel * vel_ratio_);
 
+    FST_INFO("Prepare trajectory cache ...");
     err = prepareCache(*p_cache);
 
     if (err != SUCCESS)
@@ -665,6 +656,7 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
         return err;
     }
 
+    FST_INFO("Preplan trajectory cache ...");
     err = preplanCache(*p_cache);
 
     if (err != SUCCESS)
@@ -743,11 +735,19 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
     memset(&segn.ending_state.omega, 0, sizeof(Joint));
     memset(&segn.ending_state.alpha, 0, sizeof(Joint));
 
+    char buffer[LOG_TEXT_SIZE];
+
+    for (size_t i = cache.head; i < cache.tail; i++)
+    {
+        FST_INFO("Point-%d: %s", i, printDBLine(&cache.cache[i].ending_state.angle[0], buffer, LOG_TEXT_SIZE));
+    }
+
     return SUCCESS;
 }
 
 ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
 {
+    char buffer[LOG_TEXT_SIZE];
     ErrorCode err = SUCCESS;
     double  this_duration = 99.99;
     double  last_duration = 99.99;
@@ -763,16 +763,36 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
     Joint   backward_alpha_upper;
     Joint   backward_alpha_lower;
 
-    //computeDynamics(seg1.start_state.angle, seg1.start_state.omega, forward_alpha_upper, forward_alpha_lower, seg1.dynamics_product);
-    //computeDynamics(segn.ending_state.angle, segn.ending_state.omega, backward_alpha_upper, backward_alpha_lower, segn.dynamics_product);
+    computeDynamics(seg1.start_state.angle, seg1.start_state.omega, forward_alpha_upper, forward_alpha_lower, seg1.dynamics_product);
+    computeDynamics(segn.ending_state.angle, segn.ending_state.omega, backward_alpha_upper, backward_alpha_lower, segn.dynamics_product);
+
+    FST_INFO("forward angle: %s", printDBLine(&seg1.start_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("forward omega: %s", printDBLine(&seg1.start_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("forward alpha-upper: %s", printDBLine(&forward_alpha_upper[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("forward alpha-lower: %s", printDBLine(&forward_alpha_lower[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("backward angle: %s", printDBLine(&segn.ending_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("backward omega: %s", printDBLine(&segn.ending_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("backward alpha-upper: %s", printDBLine(&backward_alpha_upper[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("backward alpha-lower: %s", printDBLine(&backward_alpha_lower[0], buffer, LOG_TEXT_SIZE));
 
     while (this_duration > cache.expect_duration + MINIMUM_E6 && index > 0)
     {
         pseg = &cache.cache[index];
-        //err = backwardCycle(pseg->start_state.angle, pseg->ending_state, cache.expect_duration, backward_alpha_upper, backward_alpha_lower, pseg->backward_coeff);
+        err = backwardCycle(pseg->start_state.angle, pseg->ending_state, cache.expect_duration, backward_alpha_upper, backward_alpha_lower, jerk_, pseg->backward_coeff);
 
         if (err == SUCCESS)
         {
+            FST_WARN("back-cycle: %d", index);
+            FST_INFO("  start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("  ending-angle: %s", printDBLine(&pseg->ending_state.angle[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("  ending-omega: %s", printDBLine(&pseg->ending_state.omega[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("  ending-alpha: %s", printDBLine(&pseg->ending_state.alpha[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].duration[0], pseg->backward_coeff[0].duration[1], pseg->backward_coeff[0].duration[2], pseg->backward_coeff[0].duration[3]);
+            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[0][0], pseg->backward_coeff[0].coeff[0][1], pseg->backward_coeff[0].coeff[0][2], pseg->backward_coeff[0].coeff[0][3]);
+            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[1][0], pseg->backward_coeff[0].coeff[1][1], pseg->backward_coeff[0].coeff[1][2], pseg->backward_coeff[0].coeff[1][3]);
+            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[2][0], pseg->backward_coeff[0].coeff[2][1], pseg->backward_coeff[0].coeff[2][2], pseg->backward_coeff[0].coeff[2][3]);
+            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[3][0], pseg->backward_coeff[0].coeff[3][1], pseg->backward_coeff[0].coeff[3][2], pseg->backward_coeff[0].coeff[3][3]);
+
             for (size_t i = 0; i < joint_num; i++)
             {
                 pseg->backward_coeff[i].duration[1] += pseg->backward_coeff[i].duration[0];
@@ -823,7 +843,7 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
     while (this_duration > cache.expect_duration + MINIMUM_E6 && index < cache.tail)
     {
         pseg = &cache.cache[index];
-        //err = forwardCycle(pseg->start_state, pseg->ending_state.angle, cache.expect_duration, forward_alpha_upper, forward_alpha_lower, pseg->forward_coeff);
+        err = forwardCycle(pseg->start_state, pseg->ending_state.angle, cache.expect_duration, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
 
         if (err == SUCCESS)
         {
@@ -932,16 +952,19 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
 
     FST_INFO("spd-up-index=%d, spd-down-index=%d", fore_index, back_index);
 
-    /*
-    for (size_t i = head; i < tail; i++)
+    for (size_t i = cache.head; i < cache.tail; i++)
     {
-        FST_LOG("stamp=%d, duration_f=%.6f, duration_b=%.6f, cmd_duration=%.6f",
-                 path[i].path_point.stamp, path[i].forward_duration,
-                 path[i].backward_duration, path[i].command_duration);
+        FST_INFO("stamp=%d, duration_f=%.6f, duration_b=%.6f, cmd_duration=%.6f",
+                 cache.cache[i].path_point.stamp, cache.cache[i].forward_duration,
+                 cache.cache[i].backward_duration, cache.expect_duration);
     }
-    */
 
     return SUCCESS;
+}
+
+bool BaseGroup::nextMovePermitted(void)
+{
+    return true;
 }
 
 ErrorCode BaseGroup::smoothJoint2Joint(const JointPoint &ps, const JointPoint &pe, MotionTime smooth_time, TrajSegment &seg)
@@ -963,11 +986,11 @@ ErrorCode BaseGroup::createTrajectory(void)
 
         while ((traj_fifo_.duration() < 0.1 && !traj_fifo_.full()) || traj_fifo_.size() < 3)
         {
-            FST_INFO("fore-duration = %.4f, back-duration = %.4f", auto_cache_ptr_->cache[auto_pick_segment_].forward_duration, auto_cache_ptr_->cache[auto_pick_segment_].backward_duration);
+            FST_INFO("fore-duration = %.4f, back-duration = %.4f", auto_pick_ptr_->cache[auto_pick_segment_].forward_duration, auto_pick_ptr_->cache[auto_pick_segment_].backward_duration);
 
-            if (auto_pick_segment_ < auto_cache_ptr_->smooth_out_stamp)
+            if (auto_pick_segment_ < auto_pick_ptr_->smooth_out_stamp)
             {
-                pseg = &auto_cache_ptr_->cache[auto_pick_segment_];
+                pseg = &auto_pick_ptr_->cache[auto_pick_segment_];
 
                 if (pseg->forward_duration > 0)
                 {
@@ -978,7 +1001,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     memcpy(traj_item.traj_coeff,  pseg->forward_coeff, sizeof(traj_item.traj_coeff));
                     traj_fifo_.push(traj_item);
                     sampleTrajectorySegment(traj_item.traj_coeff, traj_item.duration, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
-                    auto_cache_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                    auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
                 }
                 else if (pseg->backward_duration > 0)
                 {
@@ -989,12 +1012,12 @@ ErrorCode BaseGroup::createTrajectory(void)
                     memcpy(traj_item.traj_coeff,  pseg->backward_coeff, sizeof(traj_item.traj_coeff));
                     traj_fifo_.push(traj_item);
                     sampleTrajectorySegment(traj_item.traj_coeff, 0, tmp_joint, pseg->start_state.omega, pseg->start_state.alpha);
-                    auto_cache_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                    auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
                 }
                 else
                 {
-                    //computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
-                    //err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_cache_ptr_->expect_duration, alpha_upper, alpha_lower, pseg->forward_coeff);
+                    computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
+                    err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_pick_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
 
                     if (err == SUCCESS)
                     {
@@ -1013,7 +1036,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                         memcpy(traj_item.traj_coeff,  pseg->forward_coeff, sizeof(traj_item.traj_coeff));
                         traj_fifo_.push(traj_item);
                         sampleTrajectorySegment(traj_item.traj_coeff, traj_item.duration, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
-                        auto_cache_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                        auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
                     }
                     else
                     {

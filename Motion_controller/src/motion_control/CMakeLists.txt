@@ -54,6 +54,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/kinematics_alg/include
     ${depend_PATH_INC}/path_alg/include
+    ${depend_PATH_INC}/trajectory_alg/include
 )
 
 catkin_package(
@@ -74,6 +75,7 @@ catkin_package(
     DEPENDS xml_help
     DEPENDS kinematics_alg
     DEPENDS path_plan
+    DEPENDS trajectory_alg
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -122,6 +124,7 @@ target_link_libraries(motion_control
     thread_help
     kinematics_alg
     path_plan
+    trajectory_alg
 )
 
 target_link_libraries(manual_test

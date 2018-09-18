@@ -22,6 +22,7 @@
 
 
 #define AUTO_CACHE_SIZE     2
+
 namespace fst_mc
 {
 
@@ -52,6 +53,7 @@ class BaseGroup
 
     // Auto move APIs:
     virtual ErrorCode autoMove(int id, const MotionTarget &target);
+    virtual bool nextMovePermitted(void);
 
     // Manual teach APIs:
     virtual ManualFrame getManualFrame(void);
@@ -132,9 +134,10 @@ class BaseGroup
     ServoState  servo_state_;
     GroupState  group_state_;
 
-    TrajectoryCache     auto_cache_[AUTO_CACHE_SIZE];
+    TrajectoryCache     *auto_pick_ptr_;
     TrajectoryCache     *auto_cache_ptr_;
 
+    Joint       jerk_;
     Joint       start_joint_;
     MotionTime  cycle_time_;
     MotionTime  auto_time_;

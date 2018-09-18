@@ -53,6 +53,32 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         error_monitor_ptr_ = error_monitor_ptr;
     }
 
+    FST_INFO("Initializing cache ...");
+    auto_cache_ptr_ = new TrajectoryCache[AUTO_CACHE_SIZE];
+
+    if (auto_cache_ptr_)
+    {
+        for (size_t i = 0; i < AUTO_CACHE_SIZE; i++)
+        {
+            auto_cache_ptr_[i].deadline = 0;
+            auto_cache_ptr_[i].valid = false;
+            auto_cache_ptr_[i].head = 0;
+            auto_cache_ptr_[i].tail = 0;
+            auto_cache_ptr_[i].smooth_in_stamp = 0;
+            auto_cache_ptr_[i].smooth_out_stamp = 0;
+            auto_cache_ptr_[i].next = &auto_cache_ptr_[(i + 1) % AUTO_CACHE_SIZE];
+            auto_cache_ptr_[i].prev = &auto_cache_ptr_[(i - 1) % AUTO_CACHE_SIZE];
+        }
+
+        auto_cache_ptr_[0].prev = &auto_cache_ptr_[AUTO_CACHE_SIZE - 1];
+        auto_pick_ptr_ = &auto_cache_ptr_[0];
+    }
+    else
+    {
+        FST_ERROR("Fail to create trajectory cache.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
     FST_INFO("Initializing mutex ...");
     if (pthread_mutex_init(&auto_mutex_, NULL) != 0 ||
         pthread_mutex_init(&manual_mutex_, NULL) != 0 ||
@@ -257,6 +283,13 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     manual_teach_.setGlobalVelRatio(vel_ratio_);
     manual_teach_.setGlobalAccRatio(acc_ratio_);
+
+    jerk_.j1 = 5.0 * 0.5 / 1.3 * 10000 * 81;
+    jerk_.j2 = 3.3 * 0.4 / 0.44 * 10000 * 101;
+    jerk_.j3 = 3.3 * 0.4 / 0.44 * 10000 * 81;
+    jerk_.j4 = 1.7 * 0.39 / 0.18 * 10000 * 60;
+    jerk_.j5 = 1.7 * 0.25 / 0.17 * 10000 * 66.66667;
+    jerk_.j6 = 1.7 * 0.25 / 0.17 * 10000 * 44.64286;
 
     return SUCCESS;
 }

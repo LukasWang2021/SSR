@@ -2,7 +2,13 @@
 #define COMMON_ERROR_CODE_H_
 
 
-#define SUCCESS (0)
+#ifnfef SUCCESS
+#define SUCCESS 0
+#endif
+
+#ifndef FST_SUCCESS
+#define FST_SUCCESS 0
+#endif
 
 #define BM_INVALID_DTC (unsigned long long int)0x0
 #define BM_NUMBER_OF_DTC (int)110

@@ -11,7 +11,7 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
                         const fst_mc::Joint &alpha_upper, const fst_mc::Joint &alpha_lower, const fst_mc::Joint &jerk,
                         fst_mc::TrajSegment (&segment)[NUM_OF_JOINT]);
 ErrorCode computeDynamics(const fst_mc::Joint &angle, const fst_mc::Joint &omega,
-                          fst_mc::Joint &alpha_upper, fst_mc::Joint &alpha_lower, fst_mc::DynamicsProduct (&product)[NUM_OF_JOINT]);
+                          fst_mc::Joint &alpha_upper, fst_mc::Joint &alpha_lower, fst_mc::DynamicsProduct &product);
 
 
 #endif

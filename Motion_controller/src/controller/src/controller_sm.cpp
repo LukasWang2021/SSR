@@ -29,9 +29,11 @@ ControllerSm::ControllerSm():
     interpreter_warning_code_(0),
     error_level_(0),
     is_error_exist_(false),
-    is_continuous_manual_move_timeout_(false)
+    is_continuous_manual_move_timeout_(false),
+    is_unknown_user_op_mode_exist_(false)
 {
-
+    memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
+    memset(&last_unknown_user_op_mode_time_, 0, sizeof(struct timeval));
 }
 
 ControllerSm::~ControllerSm()
@@ -131,7 +133,7 @@ ErrorCode ControllerSm::callReset()
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
     {
-        unknown_user_op_mode_count_ = 0;
+        is_unknown_user_op_mode_exist_ = false;
         ErrorMonitor::instance()->clear();
         motion_control_ptr_->resetGroup();
         safety_device_ptr_->reset();
@@ -288,23 +290,24 @@ void ControllerSm::processSafety()
 {
     if(!param_ptr_->is_simmulation_)
     {
+        struct timeval current_time;
+        gettimeofday(&current_time, NULL);
         user_op_mode_ = safety_device_ptr_->getDITPUserMode();
-        if(user_op_mode_ == USER_OP_MODE_NONE)
+        if(!is_unknown_user_op_mode_exist_
+            && user_op_mode_ == USER_OP_MODE_NONE
+            && last_unknown_user_op_mode_time_.tv_sec != 0)
         {
-            ++unknown_user_op_mode_count_;
-            if(unknown_user_op_mode_count_ == 15)
+            long long time_elapse = computeTimeElapse(current_time, last_unknown_user_op_mode_time_);
+            if(time_elapse >= param_ptr_->max_unknown_user_op_mode_timeout_)
             {
-                FST_ERROR("unknown user op mode");
-                //ErrorMonitor::instance()->add();
-            }
-            else if(unknown_user_op_mode_count_ > 15)
-            {
-                --unknown_user_op_mode_count_;
+                is_unknown_user_op_mode_exist_ = true;
+                ErrorMonitor::instance()->add(CONTROLLER_UNKNOWN_USER_OP_MODE);
             }
         }
         else
         {
-            unknown_user_op_mode_count_ = 0;
+            last_unknown_user_op_mode_time_.tv_sec = current_time.tv_sec;
+            last_unknown_user_op_mode_time_.tv_usec = current_time.tv_usec;
         }
         safety_alarm_ = safety_device_ptr_->getDIAlarm();
     }
@@ -493,6 +496,13 @@ void ControllerSm::shutdown()
 	system("shutdown -h now");
 }
 
+long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)
+{
+    long long delta_tv_sec = current_time.tv_sec - last_time.tv_sec;
+    long long delta_tv_usec = current_time.tv_usec - last_time.tv_usec;
+    return (delta_tv_sec * 1000000 + delta_tv_usec);
+}
+
 void ControllerSm::handleContinuousManualRpcTimeout()
 {
     if(is_continuous_manual_move_timeout_)
@@ -510,10 +520,8 @@ void ControllerSm::handleContinuousManualRpcTimeout()
     
     struct timeval current_time;
     gettimeofday(&current_time, NULL);
-    long long delta_tv_sec = current_time.tv_sec - last_continuous_manual_move_rpc_time_.tv_sec;
-    long long delta_tv_usec = current_time.tv_usec - last_continuous_manual_move_rpc_time_.tv_usec;
+    long long time_elapse = computeTimeElapse(current_time, last_continuous_manual_move_rpc_time_);
     manual_rpc_mutex_.unlock();
-    long long time_elapse = delta_tv_sec * 1000000 + delta_tv_usec;
     if(time_elapse > param_ptr_->max_continuous_manual_move_timeout_)
     {
         is_continuous_manual_move_timeout_ = true;

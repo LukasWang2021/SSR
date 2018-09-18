@@ -88,6 +88,7 @@
 #define CONTROLLER_INVALID_ARG (unsigned long long int)0x0001000200A80005   /*Controller has invalid argument*/
 #define CONTROLLER_PUBLISH_FAILED (unsigned long long int)0x0001000200A80006   /*Controller failed to echo the request of publish something*/
 #define CONTROLLER_INVALID_OPERATION (unsigned long long int)0x0001000200A80007   /*Controller failed to operate command because of invalid pre-condition*/
+#define CONTROLLER_UNKNOWN_USER_OP_MODE (unsigned long long int)0x0001000B00A80008   /*User Op Mode is in unknown state*/
 
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0001000200A90000   /*MotionControl log*/
 #define INTERPRETER_LOG (unsigned long long int)0x0001000200AA0000   /*Interpreter log*/

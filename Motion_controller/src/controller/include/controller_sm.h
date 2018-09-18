@@ -122,7 +122,8 @@ private:
     std::mutex manual_rpc_mutex_;
 
     // user op mode related
-    int unknown_user_op_mode_count_;
+    struct timeval last_unknown_user_op_mode_time_;
+    bool is_unknown_user_op_mode_exist_;
 
     // error flags
     long long int interpreter_warning_code_;
@@ -139,6 +140,7 @@ private:
     void shutdown();
 
     // manual rpc related
+    long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);
     void handleContinuousManualRpcTimeout();
 
     // log service

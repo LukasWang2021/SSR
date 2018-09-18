@@ -87,7 +87,14 @@ void ControllerRpc::handleRpc0x00002ED5(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-    rs_data_ptr->data.data = state_machine_ptr_->setUserOpMode((UserOpMode)rq_data_ptr->data.data);
+    if(param_ptr_->is_simmulation_)
+    {
+        rs_data_ptr->data.data = state_machine_ptr_->setUserOpMode((UserOpMode)rq_data_ptr->data.data);
+    }
+    else
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+    }
     recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setUserOpMode"));
 }
 

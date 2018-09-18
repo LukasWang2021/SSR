@@ -102,8 +102,8 @@ ErrorCode ServiceManager::init(void)
     channel_flag_ = LOCAL_CHANNEL;
 /*//for independent test
 ServiceResponse test = {READ_DTC_SID, ""};
-const ERROR_CODE_TYPE test_code = SEND_MSG_FAIL;
-const ERROR_CODE_TYPE test_code2 = OPEN_CORE_MEM_FAIL;
+const ErrorCode test_code = SEND_MSG_FAIL;
+const ErrorCode test_code2 = OPEN_CORE_MEM_FAIL;
 int s = 2;
 memcpy(&test.res_buff[4], &s, 4);
 memcpy(&test.res_buff[8], &test_code, sizeof(test_code));
@@ -282,7 +282,7 @@ bool ServiceManager::checkRequest(ServiceRequest req)
         return true;
     }
     // Record the error if unexpected request is received.
-    ERROR_CODE_TYPE invalid_sid = INVALID_SERVICE_ID;
+    ErrorCode invalid_sid = INVALID_SERVICE_ID;
     storeError(invalid_sid);
     std::cout<<"Error in CommMonitor::checkRequest(): The request id(0x"<<std::hex<<req.req_id<<std::dec<<") is not available"<<std::endl;
     return false;
@@ -431,7 +431,7 @@ ErrorCode ServiceManager::interactBareCore(void)
             std::cout<<"\033[31m"<<"||====No heartbeat from CORE1====||"<<"\033[0m"<<std::endl;
             std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us. ";
             std::cout<<"send="<<req_result<<". recv="<<res_result<<std::endl;
-            ERROR_CODE_TYPE timeout_error = BARE_CORE_TIMEOUT;
+            ErrorCode timeout_error = BARE_CORE_TIMEOUT;
             storeError(timeout_error);
             return BARE_CORE_TIMEOUT;
         }
@@ -451,7 +451,7 @@ ErrorCode ServiceManager::interactBareCore(void)
 // Return:  true -> A error is pushed into error_fifo_.
 //          false -> did nothing. 
 //------------------------------------------------------------
-bool ServiceManager::storeError(ERROR_CODE_TYPE error)
+bool ServiceManager::storeError(ErrorCode error)
 {
     if (error == 0 || doesErrorExist(error))
         return false;
@@ -467,7 +467,7 @@ bool ServiceManager::storeError(ERROR_CODE_TYPE error)
 // Return:  true -> the error code exists in fifo.
 //          false -> the error code doesn't exist in fifo. 
 //------------------------------------------------------------
-bool ServiceManager::doesErrorExist(ERROR_CODE_TYPE error)
+bool ServiceManager::doesErrorExist(ErrorCode error)
 {
     for (std::vector<ErrorCode>::iterator iter = error_fifo_.begin(); iter !=error_fifo_.end(); ++iter)
     {
@@ -681,14 +681,14 @@ int main(int argc, char** argv)
         {
 //            sleep(1);
             usleep(50000);
-            ERROR_CODE_TYPE result = comm.send(&req, sizeof(req), IPC_DONTWAIT);
+            ErrorCode result = comm.send(&req, sizeof(req), IPC_DONTWAIT);
             if (result == 0)
             {
 //                std::cout<<"send heartbeat req ok."<<std::endl;
             }
 
             ServiceResponse resp;
-            ERROR_CODE_TYPE rec = comm.recv(&resp, sizeof(resp), IPC_WAIT);
+            ErrorCode rec = comm.recv(&resp, sizeof(resp), IPC_WAIT);
             if (rec == 0)
             {
                 size_t size;

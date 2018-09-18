@@ -13,6 +13,7 @@ Summary:    lib to communicate with core1
 #include <iostream>
 #include <sstream>
 #include <struct_to_mem/struct_joint_command.h>
+#include <struct_to_mem/struct_trajectory_segment.h>
 #include "middleware_to_mem_version.h"
 
 namespace fst_core_interface
@@ -147,8 +148,9 @@ ErrorCode CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_level)
         ts_.points[i].valid_level = valid_level;
         for (int j = 0; j < JOINT_NUM; ++j)
         {
-            ts_.points[i].positions[j] = jc.points[i].positions[j];
+            ts_.points[i].positions[j] = jc.points[i].angle[j];
             ts_.points[i].velocities[j] = jc.points[i].omega[j];
+            ts_.points[i].accelerations[j] = jc.points[i].alpha[j];
             ts_.points[i].effort[j] = jc.points[i].inertia[j];
         }
         //Adding time stamp for trajectory. 
@@ -258,7 +260,7 @@ ErrorCode CoreInterface::recvBareCoreFake(FeedbackJointState &fbjs)
     //set trajectory joint states as feedback joint states
     for (int j = 0; j < JOINT_NUM; ++j)
     {
-        fbjs_.position[j] = joints_in_fifo_[0].positions[j];
+        fbjs_.position[j] = joints_in_fifo_[0].angle[j];
         fbjs.position[j] = fbjs_.position[j];
     }
     int num;

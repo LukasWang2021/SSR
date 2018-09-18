@@ -11,13 +11,14 @@ Summary:    dealing with service
 #define SERVICE_MANAGER_SERVICE_MANAGER_H_
 
 #include <vector>
-#include "service_manager_error_code.h"
+#include "error_code.h"
 #include "middleware_to_mem/middleware_to_sharedmem.h"
 #include "comm_interface/comm_interface.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 #include "service_actions/response_actions.h"
 #include "base_datatype.h"
+
 
 namespace fst_service_manager
 {
@@ -163,7 +164,7 @@ public:
     // Return:  true -> A error is pushed into error_fifo_.
     //          false -> did nothing. 
     //------------------------------------------------------------
-    bool storeError(ERROR_CODE_TYPE error);
+    bool storeError(ErrorCode error);
 
     //------------------------------------------------------------
     // Function:  doesErrorExist
@@ -173,7 +174,7 @@ public:
     // Return:  true -> the error code exists in fifo.
     //          false -> the error code doesn't exist in fifo. 
     //------------------------------------------------------------
-    bool doesErrorExist(ERROR_CODE_TYPE error);
+    bool doesErrorExist(ErrorCode error);
 
     //------------------------------------------------------------
     // Function:  manageResponse

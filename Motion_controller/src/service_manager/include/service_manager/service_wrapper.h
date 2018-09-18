@@ -10,7 +10,7 @@ Summary:    lib to send service to BARE CORE
 #ifndef MIDDLEWARE_TO_MEM_SERVICE_WRAPPER_H_
 #define MIDDLEWARE_TO_MEM_SERVICE_WRAPPER_H_
 
-#include "error_code/error_code.h"
+#include "error_code.h"
 #include "comm_interface/comm_interface.h"
 #include "service_actions/response_actions.h"
 #include "struct_to_mem/struct_joint_command.h"

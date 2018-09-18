@@ -91,8 +91,11 @@ public:
 
     GroupState  getGroupState(void);
     ServoState  getServoState(void);
+    PoseEuler   getCurrentPose(void);
+    void    getCurrentPose(PoseEuler &pose);
     Joint   getServoJoint(void);
     void    getServoJoint(Joint &joint);
+
     size_t  getFIFOLength(void);
 
     ErrorCode setGlobalVelRatio(double ratio);

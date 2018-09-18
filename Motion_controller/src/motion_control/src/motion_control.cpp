@@ -508,6 +508,18 @@ ServoState MotionControl::getServoState(void)
     return group_ptr_->getServoState();
 }
 
+PoseEuler MotionControl::getCurrentPose(void)
+{
+    PoseEuler pose;
+    group_ptr_->getKinematicsPtr()->forwardKinematicsInUser(group_ptr_->getLatestJoint(), pose);
+    return pose;
+}
+
+void MotionControl::getCurrentPose(PoseEuler &pose)
+{
+    group_ptr_->getKinematicsPtr()->forwardKinematicsInUser(group_ptr_->getLatestJoint(), pose);
+}
+
 Joint MotionControl::getServoJoint(void)
 {
     return group_ptr_->getLatestJoint();

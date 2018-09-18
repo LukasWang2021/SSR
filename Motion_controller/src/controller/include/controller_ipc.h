@@ -6,6 +6,7 @@
 #include "process_comm.h"
 #include "reg_manager.h"
 #include "fst_io_device.h"
+#include "controller_sm.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -18,7 +19,7 @@ public:
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, 
                 fst_base::ControllerServer* controller_server_ptr, fst_base::ControllerClient* controller_client_ptr,
-                RegManager* reg_manager_ptr);
+                RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr);
 
     void processIpc();
 private:
@@ -28,6 +29,7 @@ private:
     fst_base::ControllerClient* controller_client_ptr_;
     RegManager* reg_manager_ptr_;
     fst_hal::FstIoDevice* io_device_ptr_;
+    ControllerSm* state_machine_ptr_;
 
     enum {CMD_ID_BYTE_SIZE = 4,};
 

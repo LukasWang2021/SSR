@@ -271,16 +271,14 @@ typedef struct _Instruction
     int             line;
 #endif
     InstType        type;
-    union 
-    {
-        MotionTarget    target;
-    };
+
+    MotionTarget    target;
     int  loop_cnt;
 	
 	int  current_uf ;
 	int  current_tf ;
-	int  current_ovc ;
-	int  current_oac ;
+	double  current_ovc ;
+	double  current_oac ;
     bool is_additional;
     int add_num;
 #ifdef WIN32

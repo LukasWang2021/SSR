@@ -10,6 +10,7 @@
 #include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "fst_safety_device.h"
+#include "interpreter_common.h"
 #include <string>
 #include <sys/time.h>
 #include <mutex>
@@ -89,6 +90,9 @@ public:
     void transferRobotStateToRunning();
     bool updateContinuousManualMoveRpcTime();
 
+    void getNewInstruction(Instruction* data_ptr);
+    bool isNextInstructionNeeded();
+
     // for publish data
     UserOpMode* getUserOpModePtr();
     RunningState* getRunningStatePtr();
@@ -125,6 +129,10 @@ private:
     struct timeval last_unknown_user_op_mode_time_;
     bool is_unknown_user_op_mode_exist_;
 
+    // interpreter instruction
+    Instruction instruction_;
+    bool is_instruction_available_;
+
     // error flags
     long long int interpreter_warning_code_;
     int error_level_;
@@ -142,6 +150,9 @@ private:
     // manual rpc related
     long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);
     void handleContinuousManualRpcTimeout();
+
+    // interpreter instruction
+    void clearInstruction();
 
     // log service
     void recordLog(std::string log_str);

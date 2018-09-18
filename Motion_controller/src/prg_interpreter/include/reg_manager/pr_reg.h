@@ -2,7 +2,7 @@
 #define INTERPRETER_REG_MANAGER_PR_REG_H
 
 #include "base_reg.h"
-#include "fst_datatype.h"
+#include "base_datatype.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 
 

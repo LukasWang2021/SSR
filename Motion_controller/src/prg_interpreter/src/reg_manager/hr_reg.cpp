@@ -8,7 +8,7 @@
 
 using namespace std;
 using namespace fst_reg;
-using namespace fst_controller;
+using namespace fst_mc;
 
 
 HrReg::HrReg(int size, std::string file_dir):

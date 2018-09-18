@@ -24,7 +24,7 @@ using namespace std;
 #include <process.h>
 #else
 #include <pthread.h>
-#include "motion_plan_arm_group.h"
+// #include "motion_plan_arm_group.h"
 #endif
 
 #ifdef WIN32

@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
 #    motion_plan
     parameter_manager
 #    mem_share
+    motion_control
 )
 set(VERSION_MAJOR ?)
 set(VERSION_MINOR ?)
@@ -38,7 +39,6 @@ endif()
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
 
-    ${depend_PATH_INC}/motion_plan/include
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/ioboard/include
@@ -55,6 +55,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/process_comm/include 
     ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/motion_control/include 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wwrite-strings -fpermissive -O0")
@@ -62,6 +63,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wwrite-strings -fpermi
 catkin_package(
 #    DEPENDS motion_plan 
     DEPENDS fst_io_device 
+    DEPENDS motion_control 
 )
  
 

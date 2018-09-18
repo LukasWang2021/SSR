@@ -20,7 +20,7 @@ using namespace std;
 #define POSE_JOINT     2
 
 int parseCart(struct thread_control_block * objThreadCntrolBlock, 
-			   cJSON *jsonCart, _PoseEuler & cart)
+			   cJSON *jsonCart, PoseEuler & cart)
 {
 	// int numentries=0; int i=0; int fail=0;
 	cJSON *child=jsonCart->child;
@@ -57,7 +57,7 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 }
 
 int parseJoint(struct thread_control_block * objThreadCntrolBlock, 
-			  cJSON *jsonJoint, _Joint & joint)
+			  cJSON *jsonJoint, Joint & joint)
 {
 	// int numentries=0,i=0,fail=0;
 	cJSON *child=jsonJoint->child;
@@ -129,8 +129,8 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 {
 	int id = -1 , uf = -1 , tf = -1 ;
 	int iPoseType = POSE_NONE ;
-	_Joint joint ;
-	_PoseEuler cart ;
+	Joint joint ;
+	PoseEuler cart ;
 	AdditionalE additionalE ;
 	char var[128];
 	eval_value value ;

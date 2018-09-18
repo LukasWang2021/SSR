@@ -1,7 +1,7 @@
 #ifndef REG_MANAGER_INTERFACE_H
 #define REG_MANAGER_INTERFACE_H
 
-#include "fst_datatype.h"
+#include "base_datatype.h"
 #include "base_reg.h"
 #include "pr_reg.h"
 #include "mr_reg.h"

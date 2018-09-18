@@ -1,9 +1,9 @@
 #ifndef PRG_INTERPRETER_COMMON_H_
 #define PRG_INTERPRETER_COMMON_H_
 
-#include "fst_datatype.h"
+#include "motion_control_datatype.h"
 #include "stdint.h"
-using namespace fst_controller;
+using namespace fst_mc;
 
 #define ADD_INFO_NUM    10
 
@@ -236,8 +236,8 @@ typedef struct _AdditionalOffsetInfomation
     AdditionalOffsetInfomationType        type;
     union {
         Reg             pr_reg;
-        _PoseEuler       pose_target;
-        _Joint           joint_target;
+        PoseEuler       pose_target;
+        Joint           joint_target;
     };
     Reg                 uf_reg;
 } AdditionalOffsetInfomation;
@@ -294,8 +294,8 @@ typedef struct _Instruction
 typedef struct _MoveCommandDestination
 {
     MotionType        type;
-    _PoseEuler       pose_target;
-    _Joint           joint_target;
+    PoseEuler       pose_target;
+    Joint           joint_target;
 } MoveCommandDestination;
 
 

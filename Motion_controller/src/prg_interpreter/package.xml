@@ -44,11 +44,13 @@
   <build_depend>rospy</build_depend>
   <build_depend>io_manager</build_depend>
   <build_depend>modbus_manager</build_depend>
+  <build_depend>motion_control</build_depend>
 
 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>io_manager</run_depend>
+  <run_depend>motion_control</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

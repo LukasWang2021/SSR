@@ -133,8 +133,8 @@ int forgesight_registers_manager_get_register(
     char      cComment[MAX_REG_COMMENT_LENGTH];
     std::string    strComment;
 
-	_PoseEuler objPoseEuler ;
-    _Joint     objJoint;
+	PoseEuler objPoseEuler ;
+    Joint     objJoint;
     int       iType ;
     
     std::string    strSrValue;
@@ -684,8 +684,8 @@ int forgesight_registers_manager_set_register(
 	PrRegData objPrRegData ;
 	HrRegData objHrRegData ;
 	
-	_PoseEuler pose ;
-	_Joint joint ;
+	PoseEuler pose ;
+	Joint joint ;
 	pl_t pltValue ;
 	
 	std::string strValue;

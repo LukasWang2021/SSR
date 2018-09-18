@@ -835,13 +835,13 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		get_exp(objThreadCntrolBlock, &value, &boolValue);
 		instr.target.pose_target.orientation.c = value.getFloatValue();
 
-		instr.target.user_frame_id_ = instr.target.tool_frame_id_ = -1 ;
+		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
 		instr.target.pose_target = value.getPoseValue();
-		instr.target.user_frame_id_ = value.getUFIndex();
-		instr.target.tool_frame_id_ = value.getTFIndex();
+		instr.target.user_frame_id = value.getUFIndex();
+		instr.target.tool_frame_id = value.getTFIndex();
 		
 	    printf("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
 			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 

@@ -1,8 +1,8 @@
 #ifndef REGS_SHMI_
 #define REGS_SHMI_
 
-#include "fst_datatype.h"  
-using namespace fst_controller;
+#include "base_datatype.h"  
+using namespace fst_mc;
 
 #define REGS_TYPE_NUM 7
 #define PR_REGS 0 
@@ -30,7 +30,7 @@ using namespace fst_controller;
 // pose register
 typedef struct 
 {
-	_PoseEuler pose;
+	PoseEuler pose;
 	Joint     joint;
 	int type;
 	int id;
@@ -61,7 +61,7 @@ typedef struct
 	char comment[COMMENT_SIZE];
 }mr_shmi_t;
 
-typedef _PoseEuler Coordinate;
+typedef PoseEuler Coordinate;
 
 // register of user coordinate offset
 typedef struct
@@ -89,7 +89,7 @@ typedef struct
 // stack register
 typedef struct
 {
-	_PoseEuler pose;
+	PoseEuler pose;
 	pallet_t pallet;
 	int flag;
 	int id;

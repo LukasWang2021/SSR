@@ -1,7 +1,7 @@
 #ifndef MOTION_PLAN_FRAME_MANAGER_H
 #define MOTION_PLAN_FRAME_MANAGER_H
 
-#include "fst_datatype.h"
+#include "base_datatype.h"
 #include <vector>
 #include <string>
 
@@ -24,7 +24,7 @@ typedef struct
     int id;
     bool is_valid;
     char comment[MAX_COMMENT_LENGTH];
-    _PoseEuler data;
+    PoseEuler data;
 }Frame;
 
 typedef struct

@@ -203,7 +203,7 @@ bool reg_manager_interface_delPr(uint16_t num)
 /*
  * The operated object is an individual member of PR.
  */
-bool reg_manager_interface_getPosePr(_PoseEuler *ptr, uint16_t num)
+bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -231,7 +231,7 @@ bool reg_manager_interface_getPosePr(_PoseEuler *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setPosePr(_PoseEuler *ptr, uint16_t num)
+bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -268,7 +268,7 @@ bool reg_manager_interface_setPosePr(_PoseEuler *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getJointPr(_Joint *ptr, uint16_t num)
+bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -296,7 +296,7 @@ bool reg_manager_interface_getJointPr(_Joint *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setJointPr(_Joint *ptr, uint16_t num)
+bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -1216,7 +1216,7 @@ bool reg_manager_interface_delHr(uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_getJointHr(_Joint *ptr, uint16_t num)
+bool reg_manager_interface_getJointHr(Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -1244,7 +1244,7 @@ bool reg_manager_interface_getJointHr(_Joint *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setJointHr(_Joint *ptr, uint16_t num)
+bool reg_manager_interface_setJointHr(Joint *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
@@ -1470,12 +1470,12 @@ bool reg_manager_interface_setPl(void *ptr, uint16_t num)
 	return 0 ;
 }
 
-bool reg_manager_interface_getPosePl(_PoseEuler* pose, int index)
+bool reg_manager_interface_getPosePl(PoseEuler* pose, int index)
 {
 	return 0 ;
 }
 
-bool reg_manager_interface_setPosePl(_PoseEuler* pose, int index)
+bool reg_manager_interface_setPosePl(PoseEuler* pose, int index)
 {
 	return 0 ;
 }

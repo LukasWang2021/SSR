@@ -206,6 +206,11 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
     return group_ptr_->autoMove(id, target);
 }
 
+bool MotionControl::nextMovePermitted(void)
+{
+    return group_ptr_->nextMovePermitted();
+}
+
 
 void MotionControl::getOffset(double (&offset)[NUM_OF_JOINT])
 {

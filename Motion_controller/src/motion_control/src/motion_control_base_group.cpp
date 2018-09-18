@@ -762,9 +762,10 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
     Joint   forward_alpha_lower;
     Joint   backward_alpha_upper;
     Joint   backward_alpha_lower;
+    DynamicsProduct forward_dynamics_product, backward_dynamics_product;
 
-    computeDynamics(seg1.start_state.angle, seg1.start_state.omega, forward_alpha_upper, forward_alpha_lower, seg1.dynamics_product);
-    computeDynamics(segn.ending_state.angle, segn.ending_state.omega, backward_alpha_upper, backward_alpha_lower, segn.dynamics_product);
+    computeDynamics(seg1.start_state.angle, seg1.start_state.omega, forward_alpha_upper, forward_alpha_lower, forward_dynamics_product);
+    computeDynamics(segn.ending_state.angle, segn.ending_state.omega, backward_alpha_upper, backward_alpha_lower, backward_dynamics_product);
 
     FST_INFO("forward angle: %s", printDBLine(&seg1.start_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("forward omega: %s", printDBLine(&seg1.start_state.omega[0], buffer, LOG_TEXT_SIZE));
@@ -801,7 +802,7 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
             }
 
             pseg->backward_duration = pseg->backward_coeff[0].duration[3];
-            pseg->dynamics_product  = segn.dynamics_product;
+            pseg->dynamics_product  = backward_dynamics_product;
             this_duration = pseg->backward_duration;
             //FST_LOG("back-index=%d, duration=%.6f, last-duration=%.6f, cmd-duration=%.6f",
             //        ind_b, duration_b, last_duration, cmd_duration);
@@ -855,7 +856,7 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
             }
 
             pseg->forward_duration = pseg->forward_coeff[0].duration[3];
-            pseg->dynamics_product = seg1.dynamics_product;
+            pseg->dynamics_product = forward_dynamics_product;
             this_duration = pseg->forward_duration;
             //FST_LOG("fore-index=%d, duration=%.6f, last-duration=%.6f, cmd-duration=%.6f",
             //        ind_f, duration_f, last_duration, cmd_duration);
@@ -1533,6 +1534,7 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
                 seg_tm = auto_time_ - (traj_fifo_.front().time_from_start - traj_fifo_.front().duration);
 
                 ErrorCode err = sampleTrajectorySegment(traj_fifo_.front().traj_coeff, seg_tm, point[i].angle, point[i].omega, point[i].alpha);
+                computeCompensate(traj_fifo_.front().dynamics_product, point[i].omega, point[i].alpha, point[i].ma_cv_g);
 
                 if (err == SUCCESS)
                 {
@@ -1611,6 +1613,28 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
     }
 
     length = pick_num;
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g)
+{
+    double ma, cv;
+    size_t joint_num = getNumberOfJoint();
+
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        ma = 0;
+        cv = 0;
+
+        for (size_t j = 0; j < joint_num; j++)
+        {
+            ma += product.m[i][j] * alpha[j];
+            cv += product.c[i][j] * omega[j];
+        }
+
+        ma_cv_g[i] = ma + cv + product.g[i];
+    }
+
     return SUCCESS;
 }
 

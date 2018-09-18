@@ -111,6 +111,7 @@ class BaseGroup
     virtual ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
     virtual ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
     virtual ErrorCode pickFromAuto(TrajectoryPoint *point, size_t &length);
+    virtual ErrorCode computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g);
     virtual ErrorCode createTrajectory(void);
     virtual ErrorCode sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], double time, Joint &angle, Joint &omega, Joint &alpha);
 

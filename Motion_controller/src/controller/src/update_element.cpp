@@ -91,8 +91,8 @@ void ControllerPublish::updateTpProgramStatus()
 {
     InterpreterPublish* data_ptr = controller_client_ptr_->getInterpreterPublishPtr();
     tp_program_status_.data_count = 2;
-    memcpy(&tp_program_status_.data[0].data, data_ptr->program_name, 256);
-    memcpy(&tp_program_status_.data[1].data, data_ptr->current_line_path, 256);
+    memcpy(&tp_program_status_.data[0].data[0], data_ptr->program_name, 256);
+    memcpy(&tp_program_status_.data[1].data[0], data_ptr->current_line_path, 256);
 }
 
 

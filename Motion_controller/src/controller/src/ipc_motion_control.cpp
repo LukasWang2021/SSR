@@ -11,7 +11,8 @@ void ControllerIpc::handleIpcSetInstruction(void* request_data_ptr, void* respon
 {
     Instruction* rq_data_ptr = static_cast<Instruction*>(request_data_ptr);
     bool* rs_data_ptr = static_cast<bool*>(response_data_ptr);
-
+    
+    state_machine_ptr_->getNewInstruction(rq_data_ptr);
     *rs_data_ptr = true;
 }
 
@@ -19,6 +20,6 @@ void ControllerIpc::handleIpcIsNextInstructionNeeded(void* request_data_ptr, voi
 {
     bool* rs_data_ptr = static_cast<bool*>(response_data_ptr);
 
-    *rs_data_ptr = true;
+    *rs_data_ptr = state_machine_ptr_->isNextInstructionNeeded();
 }
 

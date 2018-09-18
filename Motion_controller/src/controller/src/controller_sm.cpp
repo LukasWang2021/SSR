@@ -30,10 +30,12 @@ ControllerSm::ControllerSm():
     error_level_(0),
     is_error_exist_(false),
     is_continuous_manual_move_timeout_(false),
-    is_unknown_user_op_mode_exist_(false)
+    is_unknown_user_op_mode_exist_(false),
+    is_instruction_available_(false)
 {
     memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
     memset(&last_unknown_user_op_mode_time_, 0, sizeof(struct timeval));
+    memset(&instruction_, 0, sizeof(Instruction));
 }
 
 ControllerSm::~ControllerSm()
@@ -120,8 +122,7 @@ ErrorCode ControllerSm::callEstop()
         || ctrl_state_ == CTRL_INIT)
     {
         motion_control_ptr_->stopGroup();
-        //RobotCtrlCmd cmd = ABORT_CMD;
-        //XXsetCtrlCmd(&cmd, 0);
+        controller_client_ptr_->abort();
         //FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     } 
@@ -136,6 +137,7 @@ ErrorCode ControllerSm::callReset()
         is_unknown_user_op_mode_exist_ = false;
         ErrorMonitor::instance()->clear();
         motion_control_ptr_->resetGroup();
+        clearInstruction();
         safety_device_ptr_->reset();
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
         //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
@@ -190,6 +192,34 @@ bool ControllerSm::updateContinuousManualMoveRpcTime()
     return true;
 }
 
+void ControllerSm::getNewInstruction(Instruction* data_ptr)
+{
+    if(data_ptr != NULL)
+    {
+        memcpy(&instruction_, data_ptr, sizeof(Instruction));
+        is_instruction_available_ = true;
+    }
+}
+
+bool ControllerSm::isNextInstructionNeeded()
+{
+    if(!is_instruction_available_)
+    {
+        if(instruction_.type == MOTION)
+        {
+            return motion_control_ptr_->nextMovePermitted();
+        }
+        else
+        {
+            return true;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
 fst_ctrl::UserOpMode* ControllerSm::getUserOpModePtr()
 {
     return &user_op_mode_;
@@ -228,6 +258,50 @@ int* ControllerSm::getSafetyAlarmPtr()
 void ControllerSm::processInterpreter()
 {
     interpreter_state_ = (fst_ctrl::InterpreterState)controller_client_ptr_->getInterpreterPublishPtr()->status;
+
+    if(interpreter_state_ == INTERPRETER_EXECUTE)
+    {
+        if(is_instruction_available_)
+        {
+            ErrorCode error_code = SUCCESS;
+            switch(instruction_.type)
+            {
+                case MOTION:
+                {
+                    error_code = motion_control_ptr_->autoMove(0, instruction_.target);
+                    break;
+                }
+                case SET_UF:
+                {
+                    error_code = motion_control_ptr_->setUserFrame(instruction_.current_uf);
+                    break;
+                }
+                case SET_TF:
+                {
+                    error_code = motion_control_ptr_->setToolFrame(instruction_.current_tf);
+                    break;
+                }
+                case SET_OVC:
+                {
+                    error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
+                    break;
+                }
+                case SET_OAC:
+                {
+                    error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_ovc);
+                    break;
+                }
+                default:
+                    ;
+            }
+            
+            if(error_code != SUCCESS)
+            {
+                ErrorMonitor::instance()->add(error_code);
+            }
+            is_instruction_available_ = false;
+        }
+    }
 #if 0
     U64 result = SUCCESS; 
     Instruction inst;
@@ -355,6 +429,7 @@ void ControllerSm::transferServoState()
         }
         //RobotCtrlCmd cmd = ABORT_CMD;
         //XXsetCtrlCmd(&cmd, 0);
+        controller_client_ptr_->abort();
         motion_control_ptr_->stopGroup();
         recordLog("Servo state is abnormal");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
@@ -531,6 +606,12 @@ void ControllerSm::handleContinuousManualRpcTimeout()
             ErrorMonitor::instance()->add(error_code);
         }
     }
+}
+
+void ControllerSm::clearInstruction()
+{
+    is_instruction_available_ = false;
+    memset(&instruction_, 0, sizeof(Instruction));
 }
 
 void ControllerSm::recordLog(std::string log_str)

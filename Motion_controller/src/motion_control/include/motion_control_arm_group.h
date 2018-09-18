@@ -29,7 +29,7 @@ class ArmGroup : public BaseGroup
     size_t getFIFOLength(void);
 
   private:
-
+    ErrorCode computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g);
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
 };

@@ -142,7 +142,7 @@ private:
     ErrorCode error_flag_;
 
     // The trajectory structure being to the sharedmem.
-    TrajectorySegment ts_;
+    TrajectorySeg ts_;
 
     // For adding timestamp.
     unsigned int sec_;

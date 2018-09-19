@@ -16,7 +16,7 @@
 //2 Bellow add the new message structure to the core structure.
 typedef struct
 {
-    DECLARE_ITEM(TrajectorySegment);
+    DECLARE_ITEM(TrajectorySeg);
     DECLARE_ITEM(FeedbackJointState);
     DECLARE_ITEM(ServiceRequest);
     DECLARE_ITEM(ServiceResponse);
@@ -26,7 +26,7 @@ typedef struct
 #define MEM_TABLE_CORE_LEN 4
 static const FunctionTable tableCore[MEM_TABLE_CORE_LEN] = 
 {
-    MEM_CORE_ITEM(TrajectorySegment, MEM_HANDSHAKE, "TrajectorySegment"),        //{   0,  2104, "TrajectorySegment"}
+    MEM_CORE_ITEM(TrajectorySeg, MEM_HANDSHAKE, "TrajectorySegment"),        //{   0,  2104, "TrajectorySegment"}
     MEM_CORE_ITEM(FeedbackJointState, MEM_NO_HANDSHAKE, "FeedbackJointState"),   //{2120,   152, "FeedbackJointState"}
     MEM_CORE_ITEM(ServiceRequest, MEM_HANDSHAKE, "ServiceRequest"),
     MEM_CORE_ITEM(ServiceResponse, MEM_HANDSHAKE, "ServiceResponse"),

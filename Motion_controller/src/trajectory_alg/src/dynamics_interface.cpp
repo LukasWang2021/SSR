@@ -20,6 +20,8 @@
 using namespace std;
 ///using namespace fst_controller;
 
+fst_algorithm::DynamicsInterface g_dynamics_interface;
+
 namespace fst_algorithm
 {
     bool DynamicsInterface::Cross(double a[3],double b[3],double c[3])

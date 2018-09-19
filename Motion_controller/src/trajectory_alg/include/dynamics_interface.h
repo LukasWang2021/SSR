@@ -225,6 +225,8 @@ private:
 
 };
 
+extern fst_algorithm::DynamicsInterface g_dynamics_interface;
+
 }
 
 #endif 

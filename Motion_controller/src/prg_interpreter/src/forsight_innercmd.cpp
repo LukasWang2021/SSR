@@ -479,7 +479,7 @@ int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThre
     return 1;
 }
 
-int set_OVC(int iLineNum, int iOVCNum, struct thread_control_block* objThreadCntrolBlock)
+int set_OVC(int iLineNum, double dOVCNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
 	instr.type = SET_OVC ;
@@ -493,7 +493,7 @@ int set_OVC(int iLineNum, int iOVCNum, struct thread_control_block* objThreadCnt
 	instr.line = iLineNum;
 	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
-	instr.current_ovc = iOVCNum ;
+	instr.current_ovc = dOVCNum / 100 ;
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
@@ -504,7 +504,7 @@ int set_OVC(int iLineNum, int iOVCNum, struct thread_control_block* objThreadCnt
     return 1;
 }
 
-int set_OAC(int iLineNum, int iOACNum, struct thread_control_block* objThreadCntrolBlock)
+int set_OAC(int iLineNum, double dOACNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
 	instr.type = SET_OVC ;
@@ -518,7 +518,7 @@ int set_OAC(int iLineNum, int iOACNum, struct thread_control_block* objThreadCnt
 	instr.line = iLineNum;
 	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
-	instr.current_oac = iOACNum ;
+	instr.current_oac = dOACNum / 100 ;
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);

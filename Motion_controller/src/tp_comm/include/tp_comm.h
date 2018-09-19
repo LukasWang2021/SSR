@@ -162,7 +162,9 @@ private:
     void handleRequest0x000167C5(int recv_bytes);
     /********rpc/controller/getSystemTime, RequestMessageType_Void**********/
     void handleRequest0x000003F5(int recv_bytes);
-
+    /********rpc/controller/getVersion, RequestMessageType_Void**********/
+    void handleRequest0x000093EE(int recv_bytes);
+    
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
     /********tool_manager/deleteTool, RequestMessageType_Int32**********/
@@ -446,7 +448,8 @@ private:
     void handleResponse0x000167C5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getSystemTime, ResponseMessageType_Uint64List(count=2)**********/
     void handleResponse0x000003F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
+    /********rpc/controller/getVersion, ResponseMessageType_Uint64_String**********/
+    void handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
 
     /********getRpcTable, ResponseMessageType_RpcTable**********/

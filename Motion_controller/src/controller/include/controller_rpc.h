@@ -105,6 +105,8 @@ private:
     void handleRpc0x000167C5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getSystemTime"
     void handleRpc0x000003F5(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/controller/getVersion"
+    void handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr);
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"

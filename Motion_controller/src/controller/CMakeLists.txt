@@ -118,7 +118,6 @@ target_link_libraries(controller
     log_service
     preformance_monitor 
     fst_safety_device
-
 )
 
 #############

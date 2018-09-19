@@ -82,6 +82,7 @@
 #include "response/response_uint64_int32list.pb.h"
 #include "response/response_uint64_double.pb.h"
 #include "response/response_uint64_bool.pb.h"
+#include "response/response_uint64_string.pb.h"
 #include "response/response_file.pb.h"
 
 #endif

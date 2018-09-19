@@ -212,7 +212,7 @@ bool InterpreterClient::getRReg(int id, RRegDataIpc* data)
 }
 
 bool InterpreterClient::setInstruction(Instruction* data)
-{
+{   
     if(data == NULL
         || !sendRequest(CONTROLLER_SERVER_CMD_SET_INSTRUCTION, data, sizeof(Instruction))
         || !recvResponse(sizeof(bool))

@@ -7,7 +7,7 @@ using namespace fst_mc;
 
 #define ADD_INFO_NUM    10
 
-#define TP_XPATH_LEN     1024
+#define TP_XPATH_LEN     512
 
 #define USE_XPATH
 

@@ -45,14 +45,15 @@ void ControllerPublish::updateAxisGroupTcpBaseCartesian()
 
 void ControllerPublish::updateAxisGroupTcpCurrentCartesian()
 {
+    PoseEuler pos_feedback = motion_control_ptr_->getCurrentPose();
     tcp_current_cartesian_.data1.data = 1;
     tcp_current_cartesian_.data2.data_count = 6;
-    tcp_current_cartesian_.data2.data[0] = 111;
-    tcp_current_cartesian_.data2.data[1] = 222;
-    tcp_current_cartesian_.data2.data[2] = 333;
-    tcp_current_cartesian_.data2.data[3] = 1.11;
-    tcp_current_cartesian_.data2.data[4] = 2.22;
-    tcp_current_cartesian_.data2.data[5] = 3.33;
+    tcp_current_cartesian_.data2.data[0] = pos_feedback.position.x;
+    tcp_current_cartesian_.data2.data[1] = pos_feedback.position.y;
+    tcp_current_cartesian_.data2.data[2] = pos_feedback.position.z;
+    tcp_current_cartesian_.data2.data[3] = pos_feedback.orientation.a;
+    tcp_current_cartesian_.data2.data[4] = pos_feedback.orientation.b;
+    tcp_current_cartesian_.data2.data[5] = pos_feedback.orientation.c;
 }
 
 void ControllerPublish::updateAxisGroupCurrentCoordinate()

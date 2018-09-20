@@ -226,3 +226,23 @@ void TpComm::handleResponse0x000003F5(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+//"/rpc/controller/getVersion"
+void TpComm::handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_String_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse0x000093EE: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_String*)task->response_data_ptr;
+    }
+}
+
+
+
+

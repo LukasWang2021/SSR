@@ -1,7 +1,7 @@
 #include "controller_rpc.h"
 #include <sys/time.h>
 #include <unistd.h>
-
+#include "version.h"
 
 using namespace fst_ctrl;
 
@@ -36,4 +36,15 @@ void ControllerRpc::handleRpc0x000003F5(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data[0] = SUCCESS;
     rs_data_ptr->data.data[1] = time_val.tv_sec;
 }
+
+// "/rpc/controller/getVersion"
+void ControllerRpc::handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64_String* rs_data_ptr = static_cast<ResponseMessageType_Uint64_String*>(response_data_ptr);
+    
+    memcpy(rs_data_ptr->data.data, get_version(), strlen(get_version()));
+    rs_data_ptr->data.data[strlen(get_version())] = 0;
+    rs_data_ptr->error_code.data = SUCCESS;
+}
+
 

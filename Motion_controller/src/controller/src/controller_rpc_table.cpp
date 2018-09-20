@@ -28,6 +28,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/shutdown", 0x0000899E, &ControllerRpc::handleRpc0x0000899E}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/setSystemTime", 0x000167C5, &ControllerRpc::handleRpc0x000167C5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getSystemTime", 0x000003F5, &ControllerRpc::handleRpc0x000003F5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/getVersion", 0x000093EE, &ControllerRpc::handleRpc0x000093EE}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/tool_manager/deleteTool", 0x00010E4C, &ControllerRpc::handleRpc0x00010E4C}; rpc_table_.push_back(rpc_service);

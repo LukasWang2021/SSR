@@ -267,27 +267,27 @@ void ControllerSm::processInterpreter()
             switch(instruction_.type)
             {
                 case MOTION:
-                {
+                {FST_ERROR("---Instruction Motion");
                     error_code = motion_control_ptr_->autoMove(0, instruction_.target);
                     break;
                 }
                 case SET_UF:
-                {
+                {FST_ERROR("---Instruction SetUF");
                     error_code = motion_control_ptr_->setUserFrame(instruction_.current_uf);
                     break;
                 }
                 case SET_TF:
-                {
+                {FST_ERROR("---Instruction SetTf");
                     error_code = motion_control_ptr_->setToolFrame(instruction_.current_tf);
                     break;
                 }
                 case SET_OVC:
-                {
+                {FST_ERROR("---Instruction SetOvc");
                     error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
                     break;
                 }
                 case SET_OAC:
-                {
+                {FST_ERROR("---Instruction SetOac");
                     error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_ovc);
                     break;
                 }

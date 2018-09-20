@@ -3155,14 +3155,14 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
     {
         printf("set_OVC vname = %s and value = %f.\n", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-		set_OVC(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		set_OVC(iLineNum, value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
 	else if(strcmp(FORSIGHT_OAC, vname) == 0)
     {
         printf("set_OAC vname = %s and value = %f.\n", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-		set_OVC(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
+		set_OAC(iLineNum, value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
 

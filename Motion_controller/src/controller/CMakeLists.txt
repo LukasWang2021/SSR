@@ -66,6 +66,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/modbus_manager/include
     ${depend_PATH_INC}/path_alg/include
     ${depend_PATH_INC}/fst_safety_device/include 
+    ${depend_PATH_INC}/io_mapping/include 
 )
 
 catkin_package(

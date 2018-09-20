@@ -3,8 +3,6 @@ project(io_mapping)
 
 find_package(catkin REQUIRED COMPONENTS
     base_device
-    fst_io_device
-    device_manager
 )
 
 if(catkin_CROSS)
@@ -22,8 +20,6 @@ endif()
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/base_device/include
-    ${depend_PATH_INC}/fst_io_device/include
-    ${depend_PATH_INC}/device_manager/include 
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
@@ -33,8 +29,6 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES io_mapping
     DEPENDS base_device
-    DEPENDS fst_io_device 
-    DEPENDS device_manager
     DEPENDS parameter_manager
     DEPENDS log_manager
 )
@@ -56,8 +50,6 @@ add_library(io_mapping
 target_link_libraries(io_mapping
     ${catkin_LIBRARIES}
     base_device
-    fst_io_device
-    device_manager
 )
 
 install(TARGETS io_mapping

@@ -31,6 +31,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/modbus/include
     ${depend_PATH_INC}/error_monitor/include
     ${depend_PATH_INC}/motion_control/include
+    ${depend_PATH_INC}/io_mapping/include 
 )
 
 catkin_package(

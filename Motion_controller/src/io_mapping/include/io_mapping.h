@@ -46,8 +46,9 @@ public:
     ~IoMapping();
 	
 	int init();
-	map<string, string> getIOMapper() { return io_mapper; }
-	
+        // map<string, string> getIOMapper() { return io_mapper; }
+        string getIOPathByName(string key) { return io_mapper[key]; }
+
 private:
 	int generateIOInfo(IOMapJsonInfo &objInfo, char * strIOType);
 	int parseIOObject(cJSON *jsonIObject, char * strIOType);

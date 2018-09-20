@@ -24,6 +24,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/io_mapping/include 
 )
 
 catkin_package(
@@ -33,6 +34,7 @@ catkin_package(
     DEPENDS parameter_manager
     DEPENDS log_manager
     DEPENDS modbus_manager
+    DEPENDS io_mapping 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -53,6 +55,7 @@ target_link_libraries(fst_io_device
     ${catkin_LIBRARIES}
     base_device
     modbus_manager
+    io_mapping 
 )
 
 install(TARGETS fst_io_device

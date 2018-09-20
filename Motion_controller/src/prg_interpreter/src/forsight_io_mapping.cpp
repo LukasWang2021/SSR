@@ -24,17 +24,17 @@ typedef struct _IOMapJsonInfo
     int         index;
     char        module[128];
     int         to;
-}IOMapJsonInfo;
+}PrgIntIOMapJsonInfo;
 
 typedef struct _IOMapVarInfo
 {
     char        in[8];
     char        out[8];
-}IOMapVarInfo;
+}PrgIntIOMapVarInfo;
 
 map<string, string> g_io_mapper;
 
-int generateIOInfo(IOMapJsonInfo &objInfo, char * strIOType)
+int generateIOInfo(PrgIntIOMapJsonInfo &objInfo, char * strIOType)
 {
 	char cTemp[128];
 	char cUpperType[16];
@@ -72,7 +72,7 @@ int generateIOInfo(IOMapJsonInfo &objInfo, char * strIOType)
 
 int parseIOObject(cJSON *jsonIObject, char * strIOType)
 {
-	IOMapJsonInfo objInfo ;
+	PrgIntIOMapJsonInfo objInfo ;
 	int numentries=0; // ,i=0,fail=0;
 	cJSON *child=jsonIObject->child;
 	
@@ -133,7 +133,7 @@ int parseIO(cJSON *jsonDI, char * strIOType)
 	return 1;
 }
 
-int parseIOMap(char * data, IOMapVarInfo &varInfo)
+int parseIOMap(char * data, PrgIntIOMapVarInfo &varInfo)
 {
 	cJSON *json;
 	json=cJSON_Parse(data);
@@ -193,7 +193,7 @@ int print_io_mapper()
 }
 
 int append_single_io_mapper(
-		char *filename, IOMapVarInfo &varInfo)
+		char *filename, PrgIntIOMapVarInfo &varInfo)
 {
 	FILE *f;long len;char *data;
 
@@ -211,7 +211,7 @@ int append_single_io_mapper(
 
 int append_io_mapping()
 {
-	IOMapVarInfo varInfo ;
+	PrgIntIOMapVarInfo varInfo ;
 	g_io_mapper.clear();
 #ifdef WIN32
 	// AI/AO

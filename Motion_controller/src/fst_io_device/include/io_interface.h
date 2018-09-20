@@ -16,6 +16,7 @@
 #endif
 // #include "motionSL.pb.h"
 #include "common_log.h"
+#include "io_mapping.h"
 
 //using namespace std;
 	
@@ -54,6 +55,10 @@ class IOInterface
 
     //bool encDevList(BaseTypes_ParameterMsg *param_msg, pb_ostream_t *stream, const pb_field_t *field);
 	U64 getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info);
+
+	U64 getDIByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len);
+	U64 getDOByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len);
+	U64 setDOByBit(int idx, char value);
 
     /**
      * @brief: get io devices number 
@@ -161,6 +166,8 @@ class IOInterface
     std::atomic_int     io_num_;    //number of IO board
     
     fst_log::Logger* log_ptr_;
+
+	fst_ctrl::IoMapping  io_mapping ;
 };
 
 #endif

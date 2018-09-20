@@ -115,7 +115,7 @@ U64 IOInterface::initial()
             return result;
         }
     }
-
+	io_mapping.init();
     return SUCCESS;
 }
 
@@ -169,6 +169,42 @@ bool IOInterface::encDevList(BaseTypes_ParameterMsg *param_msg, pb_ostream_t *st
     return true;
 }
 */
+
+U64 IOInterface::setDOByBit(int idx, char value)
+{
+	char cName[32];
+	memset(cName, 0x00, 32);
+	sprintf(cName, "DO[%d]", idx);
+	
+	// io_mapping.init();
+	string strPath = io_mapping.getIOPathByName(string(cName));
+	setDO(strPath.c_str(), value);
+}
+
+
+U64 IOInterface::getDIByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len)
+{
+	char cName[32];
+	memset(cName, 0x00, 32);
+	sprintf(cName, "DI[%d]", idx);
+	
+	// io_mapping.init();
+	string strPath = io_mapping.getIOPathByName(string(cName));
+	getDIO(strPath.c_str(), buffer, buf_len, io_bytes_len);
+}
+
+
+U64 IOInterface::getDOByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len)
+{
+	char cName[32];
+	memset(cName, 0x00, 32);
+	sprintf(cName, "DO[%d]", idx);
+	
+	// io_mapping.init();
+	string strPath = io_mapping.getIOPathByName(string(cName));
+	getDIO(strPath.c_str(), buffer, buf_len, io_bytes_len);
+}
+
 
 U64 IOInterface::setDO(const char *path, char value)
 {

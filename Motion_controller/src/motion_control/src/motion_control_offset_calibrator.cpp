@@ -763,11 +763,13 @@ ErrorCode Calibrator::maskOffsetLostError(void)
 ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
 {
     char buffer[LOG_TEXT_SIZE];
-    FST_INFO("Set offset state, index = %d", index);
+    FST_INFO("Set offset state, index = %d, state = %d", index, stat);
 
     if (index < joint_num_)
     {
-        vector<int> flag;   flag.resize(NUM_OF_JOINT);
+        bool update_joint = false;
+        vector<int>     flag;   flag.resize(NUM_OF_JOINT);
+        vector<double>  joint;  joint.resize(NUM_OF_JOINT);
 
         for (int i = 0; i < NUM_OF_JOINT; i++)
         {
@@ -778,9 +780,35 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
         flag[index] = stat;
         FST_INFO("  changed to: %s", printDBLine(&flag[0], buffer, LOG_TEXT_SIZE));
 
-        if (robot_recorder_.setParam("state", flag) && robot_recorder_.dumpParamFile())
+        if (stat == OFFSET_NORMAL && offset_stat_[index] != OFFSET_NORMAL)
+        {
+            update_joint = true;
+        }
+
+        Joint cur_jnt;
+        ServoState servo_state;
+
+        if (!robot_recorder_.getParam("joint", joint))
+        {
+            FST_ERROR("Fail to get last joint from recorder, err=0x%llx", robot_recorder_.getLastError());
+            return robot_recorder_.getLastError();
+        }
+
+        if (!bare_core_ptr_->getLatestJoint(cur_jnt, servo_state))
+        {
+            FST_ERROR("Fail to get current joint from bare core.");
+            return BARE_CORE_TIMEOUT;
+        }
+
+        if (update_joint)
+        {
+            joint[index] = cur_jnt[index];
+        }
+
+        if (robot_recorder_.setParam("state", flag) && robot_recorder_.setParam("joint", joint) && robot_recorder_.dumpParamFile())
         {
             offset_stat_[index] = OffsetState(flag[index]);
+
             FST_INFO("Success.");
             return SUCCESS;
         }

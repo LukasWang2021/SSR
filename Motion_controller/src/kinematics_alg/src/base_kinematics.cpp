@@ -94,9 +94,9 @@ void BaseKinematics::forwardKinematicsInUser(const Joint &joint, PoseEuler &pose
     Matrix matrix;
     forwardKinematics(joint, matrix);
 
-    matrix.printMatrix(NULL);
-    inverse_user_frame_.printMatrix(NULL);
-    tool_frame_.printMatrix(NULL);
+    //matrix.printMatrix(NULL);
+    //inverse_user_frame_.printMatrix(NULL);
+    //tool_frame_.printMatrix(NULL);
 
     matrix.leftMultiply(inverse_user_frame_).rightMultiply(tool_frame_).toPoseEuler(pose);
 }

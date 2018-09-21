@@ -73,10 +73,10 @@ enum var_inner_type { FORSIGHT_CHAR, FORSIGHT_INT, FORSIGHT_FLOAT };
 // #define FORSIGHT_REGISTER_UF    "uf"
 // #define FORSIGHT_REGISTER_TF    "tf"
 
-#define FORSIGHT_TF_NO    "tf_no"
-#define FORSIGHT_UF_NO    "uf_no"
-#define FORSIGHT_OVC      "ovc"
-#define FORSIGHT_OAC      "oac"
+#define FORSIGHT_TF_NO    "tf_no."
+#define FORSIGHT_UF_NO    "uf_no."
+#define FORSIGHT_OVC      "ovc."
+#define FORSIGHT_OAC      "oac."
 
 #define STR_AND   "and"
 #define STR_OR    "or"
@@ -877,7 +877,9 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   sprintf(fXMLName, "%s.xml", pname);
   sprintf(fBASName, "%s.bas", pname);
   // use bas directly 
-  if((access(fBASName,F_OK))==-1)   
+  // if((access(fBASName,F_OK))==-1)
+  // use XML directly 
+  if((access(fXMLName, F_OK))==0)
   {   
       parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
   }   
@@ -885,7 +887,9 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   sprintf(fXMLName, "%s/programs/%s.xml", forgesight_get_programs_path(), pname);
   sprintf(fBASName, "%s/programs/%s.bas", forgesight_get_programs_path(), pname);
   // use bas directly 
-  if((access(fXMLName, F_OK))==-1)
+  // if((access(fBASName,F_OK))==-1)
+  // use XML directly 
+  if((access(fXMLName, F_OK))==0)
   {   
       parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
   }

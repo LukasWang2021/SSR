@@ -885,10 +885,10 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   sprintf(fXMLName, "%s/programs/%s.xml", forgesight_get_programs_path(), pname);
   sprintf(fBASName, "%s/programs/%s.bas", forgesight_get_programs_path(), pname);
   // use bas directly 
-  if((access(fBASName,F_OK))==-1)   
+  if((access(fXMLName, F_OK))==-1)
   {   
       parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
-  }   
+  }
 #endif
   if(!(fp=fopen(fBASName, "r"))) 
   {

@@ -72,8 +72,9 @@ public:
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
                 VirtualCore1* virtual_core1_ptr, fst_base::ControllerClient* controller_client_ptr, 
                 fst_hal::FstSafetyDevice* safety_device_ptr);
+    ControllerParam* getParam();
     void processStateMachine();
-
+    
     UserOpMode getUserOpMode();
     RunningState getRunningState();
     InterpreterState getInterpreterState();

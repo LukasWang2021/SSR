@@ -31,6 +31,8 @@ public:
     int max_continuous_manual_move_timeout_;    //us
     bool is_simmulation_;
     int max_unknown_user_op_mode_timeout_;  //us
+    double max_limited_global_vel_ratio_;  // 0~1
+    double max_limited_global_acc_ratio_;  // 0~1
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

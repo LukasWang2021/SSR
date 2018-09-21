@@ -8,8 +8,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     RequestMessageType_String* rq_data_ptr = static_cast<RequestMessageType_String*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    if(state_machine_ptr_->getUserOpMode() != USER_OP_MODE_AUTO
-        || state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
+    if(state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;

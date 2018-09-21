@@ -533,11 +533,8 @@ void ControllerSm::transferRobotState()
     switch(robot_state_)
     {
         case ROBOT_IDLE_TO_RUNNING:
-            if(interpreter_state_ == INTERPRETER_EXECUTE)
-            {
-                recordLog("Robot transfer to RUNNING");
-                robot_state_ = ROBOT_RUNNING;
-            }
+            recordLog("Robot transfer to RUNNING");
+            robot_state_ = ROBOT_RUNNING;
             break;
         case ROBOT_IDLE_TO_TEACHING:
             recordLog("Robot transfer to TEACHING");
@@ -571,12 +568,6 @@ void ControllerSm::transferRobotState()
             //if(virtual_core1_ptr_->getArmState() == 1)
             {
                 robot_state_ = ROBOT_TEACHING_TO_IDLE;
-            }
-            break;
-        case ROBOT_IDLE:
-            if(interpreter_state_ == INTERPRETER_EXECUTE)
-            {
-                robot_state_ = ROBOT_IDLE_TO_RUNNING;
             }
             break;
         default:

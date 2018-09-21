@@ -1,6 +1,5 @@
 log_level: 1
 routine_cycle_time: 100000
-rt_cycle_time: 10000 
 heartbeat_cycle_time: 10000 
 routine_thread_priority: 50 
 reset_max_time: 1000000 

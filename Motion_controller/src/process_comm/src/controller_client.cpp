@@ -135,6 +135,20 @@ bool ControllerClient::jump(int data)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
+// to do
+bool ControllerClient::switchStep(int data)
+{
+    if(!controller_server_ptr_->isInterpreterServerReady()
+        || !sendRequest(INTERPRETER_SERVER_CMD_SWITCH_STEP, &data, sizeof(int))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_SWITCH_STEP)
+    {
+        return false;
+    }
+
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
 bool ControllerClient::pause()
 {
     if(!controller_server_ptr_->isInterpreterServerReady()

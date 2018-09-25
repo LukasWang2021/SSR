@@ -143,3 +143,23 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));
 }
 
+// "/rpc/interpreter/jump"
+void ControllerRpc::handleRpc0x000140F0(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    // to do...
+    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
+        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+
+    // to detect...
+    controller_client_ptr_->switchStep(rq_data_ptr->data.data); 
+    rs_data_ptr->data.data = SUCCESS;
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/switchStep"));
+}

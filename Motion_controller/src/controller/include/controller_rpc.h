@@ -333,6 +333,8 @@ private:
     void handleRpc0x0000CF55(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/interpreter/abort"
     void handleRpc0x000086F4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/interpreter/switchStep"
+    void handleRpc0x000140F0(void* request_data_ptr, void* response_data_ptr);
 
     /* io mapping rpc */
     // "/rpc/io_mapping/getDIByBit"

@@ -164,7 +164,9 @@ private:
     void handleRequest0x000003F5(int recv_bytes);
     /********rpc/controller/getVersion, RequestMessageType_Void**********/
     void handleRequest0x000093EE(int recv_bytes);
-    
+    /********rpc/interpreter/switchStep, RequestMessageType_Int32**********/
+    void handleRequest0x000140F0(int recv_bytes);
+
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
     /********tool_manager/deleteTool, RequestMessageType_Int32**********/
@@ -604,6 +606,9 @@ private:
     void handleResponse0x0000CF55(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/interpreter/abort, ResponseMessageType_Bool**********/
     void handleResponse0x000086F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/switchStep, ResponseMessageType_Uint64**********/
+    void handleResponse0x000140F0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
     /********rpc/io_mapping/getDIByBit, ResponseMessageType_Bool_Int32**********/
     void handleResponse0x000050B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/io_mapping/setDIByBit, ResponseMessageType_Bool**********/

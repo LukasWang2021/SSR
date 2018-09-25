@@ -156,3 +156,22 @@ void InterpreterServer::handleRequestSetAutoStartMode()
     pushTaskToRequestList(INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, (void*)request_data_ptr, (void*)response_data_ptr);  
 }
 
+//switch step
+void InterpreterServer::handleRequestSwitchStep()
+{
+    int* request_data_ptr = new int;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    bool* response_data_ptr = new bool;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
+    pushTaskToRequestList(INTERPRETER_SERVER_CMD_SWITCH_STEP, (void*)request_data_ptr, (void*)response_data_ptr);  
+}

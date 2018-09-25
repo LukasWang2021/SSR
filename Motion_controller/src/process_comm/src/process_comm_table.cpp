@@ -36,6 +36,7 @@ void InterpreterServer::initRpcTable()
     rpc_service = {INTERPRETER_SERVER_CMD_PAUSE, &InterpreterServer::handleRequestPause, &InterpreterServer::handleResponsePause}; rpc_table_.push_back(rpc_service);
     rpc_service = {INTERPRETER_SERVER_CMD_RESUME, &InterpreterServer::handleRequestResume, &InterpreterServer::handleResponseResume}; rpc_table_.push_back(rpc_service);
     rpc_service = {INTERPRETER_SERVER_CMD_ABORT, &InterpreterServer::handleRequestAbort, &InterpreterServer::handleResponseAbort}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_SWITCH_STEP, &InterpreterServer::handleRequestSwitchStep, &InterpreterServer::handleResponseSwitchStep}; rpc_table_.push_back(rpc_service);
     rpc_service = {INTERPRETER_SERVER_CMD_GET_NEXT_INSTRUCTION, &InterpreterServer::handleRequestGetNextInstruction, &InterpreterServer::handleResponseGetNextInstruction}; rpc_table_.push_back(rpc_service);
     rpc_service = {INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, &InterpreterServer::handleRequestSetAutoStartMode, &InterpreterServer::handleResponseSetAutoStartMode}; rpc_table_.push_back(rpc_service);
 }

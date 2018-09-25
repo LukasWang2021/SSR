@@ -7,6 +7,10 @@
 #include "trajectory_alg.h"
 #include "dynamics_interface.h"
 
+#define MAXAXES 6
+#define minim 1e-12
+#define pi 3.141592625
+
 extern fst_algorithm::DynamicsInterface g_dynamics_interface;
 
 ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &target, double exp_duration,
@@ -19,779 +23,1010 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 using namespace fst_mc;
 using namespace std;
 
-/*
-getrootofquadratic£ºÇóÒ»ÔªÈı´Î·½³ÌµÄ¸ù
-ÊäÈë²ÎÊı£ºa£ºÈı´ÎÏîµÄÏµÊı b£º¶ş´ÎÏîµÄÏµÊı c£ºÒ»´ÎÏîµÄÏµÊı d£º³£ÊıÏîµÄÏµÊı
-Êä³ö²ÎÊı£ºSv[3]  Îª·½³ÌµÄÈı¸ö¸ù Ä³Ğ©ÌØÊâÇé¿öÏÂ ½ö½öÓĞÒ»¸ö¸ù ÓĞÁ½¸ö¸´¸ù£¨ºöÂÔ£©
-*/
-int getrootsofquadratic(double a, double b, double c, double d, double Sv[3])
+int Gauss(double **A, double **B, int N)
 {
-	double A, B, C, L, K, T, rad;
-	double GS1, GS2, Y1, Y2, P1, P2;
-	double X1, X2, X3;
+	int i, j, k;
+	double max, temp;
+	double **t;//[N][N];
 
-	A = b*b - 3 * a*c;
-	B = b*c - 9 * a*d;
-	C = c*c - 3 * b*d;
+	t = (double**)malloc(sizeof(double*)*N);
 
-	L = B*B - 4 * A*C;
-
-	if (A == 0 && B == 0)
+	for (i = 0; i<N; i++)
 	{
-		X1 = X2 = X3 = -b / (3 * a);
-		Sv[0] = X1; Sv[1] = X2; Sv[2] = X3;
+		t[i] = (double*)malloc(sizeof(double*)*N);
 	}
-	else
+
+	for (i = 0; i < N; i++)
 	{
-		if (L > 0)
+		for (j = 0; j < N; j++)
 		{
-			Y1 = A*b + (3 * a*(-B + sqrt(L))) / 2;
-			Y2 = A*b + (3 * a*(-B - sqrt(L))) / 2;
-
-			if (Y1 > 0)
-			{
-				GS1 = pow(Y1, 1.0 / 3);
-			}
-			else
-			{
-				GS1 = -pow(fabs(Y1), 1.0 / 3);
-			}
-
-			if (Y2 > 0)
-			{
-				GS2 = pow(Y2, (1.0 / 3));
-			}
-			else
-			{
-				GS2 = -pow(fabs(Y2), (1.0 / 3));
-			}
-			P1 = (-2 * b + GS1 + GS2) / (6 * a);
-			P2 = sqrt(3)*(GS1 - GS2) / (6 * a);
-			X1 = (-b - GS1 - GS2) / (3 * a);
-			Sv[0] = X1;
-			printf("X1=%.3f\n", X1);
-			printf("X2=%.3f+%.3fi\n", P1, P2);
-			printf("X3=%.3f-%.3fi\n", P1, P2);
+			t[i][j] = A[i][j];
 		}
-		else if (L == 0)
+	}
+	//printf("gauss111\n");
+	for (i = 0; i < N; i++)
+	{
+		for (j = 0; j < N; j++)
 		{
-			K = B / A;
-			X1 = -b / a + K;
-			X2 = X3 = -K / 2;
-			Sv[0] = X1; Sv[1] = X2; Sv[2] = X3;
+			B[i][j] = (i == j) ? (float)1 : 0;
+		}
+	}
+	//printf("gauss222\n");
+	for (i = 0; i < N; i++)
+	{
+
+		max = t[i][i];
+		k = i;
+		for (j = i + 1; j < N; j++)
+		{
+			if (fabs(t[j][i]) > fabs(max))
+			{
+				max = t[j][i];
+				k = j;
+			}
+		}
+
+		if (k != i)
+		{
+			for (j = 0; j < N; j++)
+			{
+				temp = t[i][j];
+				t[i][j] = t[k][j];
+				t[k][j] = temp;
+				//BÂ°Ã©Ã‹Ã¦Â½Â»Â»Â»
+				temp = B[i][j];
+				B[i][j] = B[k][j];
+				B[k][j] = temp;
+			}
+		}
+
+		if (t[i][i] == 0)
+		{
+			//cout << "There is no inverse matrix!";
+			return 0;
+		}
+
+		temp = t[i][i];
+		for (j = 0; j < N; j++)
+		{
+			t[i][j] = t[i][j] / temp;
+			B[i][j] = B[i][j] / temp;
+		}
+		for (j = 0; j < N; j++)
+		{
+			if (j != i)
+			{
+				temp = t[j][i];
+				for (k = 0; k < N; k++)
+				{
+					t[j][k] = t[j][k] - t[i][k] * temp;
+					B[j][k] = B[j][k] - B[i][k] * temp;
+				}
+			}
+		}
+	}
+
+	for (i = 0; i<N; i++)
+	{
+		free(t[i]);
+	}
+	free(t);
+	t = NULL;
+	//printf("gauss end\n");
+	return 1;
+}
+void getInverseM(double **M, double **IM, int N)
+{
+
+	Gauss(M, IM, N);
+
+}
+void getMtxMulVec(double **IM, double *V, double *Res, int N)
+{
+	int i, j;
+
+	for (i = 0; i<N; i++)
+	{
+		Res[i] = 0;
+		for (j = 0; j<N; j++)
+		{
+			Res[i] = Res[i] + IM[i][j] * V[j];
+		}
+
+	}
+}
+/*
+getrootofquadraticï¼šæ±‚ä¸€å…ƒä¸‰æ¬¡æ–¹ç¨‹çš„æ ¹
+è¾“å…¥å‚æ•°ï¼šaï¼šä¸‰æ¬¡é¡¹çš„ç³»æ•° bï¼šäºŒæ¬¡é¡¹çš„ç³»æ•° cï¼šä¸€æ¬¡é¡¹çš„ç³»æ•° dï¼šå¸¸æ•°é¡¹çš„ç³»æ•°
+è¾“å‡ºå‚æ•°ï¼šSv[3]  ä¸ºæ–¹ç¨‹çš„ä¸‰ä¸ªæ ¹ æŸäº›ç‰¹æ®Šæƒ…å†µä¸‹ ä»…ä»…æœ‰ä¸€ä¸ªæ ¹ æœ‰ä¸¤ä¸ªå¤æ ¹ï¼ˆå¿½ç•¥ï¼‰
+*/
+int getrootsofquadratic(double a, double b, double c, double d, double Sv[3],int *svnum)
+{
+	if ((a == 0) || (d == 0))
+	{
+		printf("coefficiant is error");
+		return -1;
+	}
+	b = b / a;
+	c = c / a;
+	d = d / a;
+
+
+	double q = (3.0*c - (b*b)) / 9.0;
+	double r = -(27.0*d) + b*(9.0*c - 2.0*(b*b));
+	r = r / 54.0;
+	double disc = q*q*q + r*r;
+	//The first root is always real.
+	double term1 = (b / 3.0);
+	double s = 0;
+
+	if (disc > 0) // one root real, two are complex
+	{
+		s = r + sqrt(disc);
+
+		if (s < 0)
+		{
+			s = -pow((-s), (1.0 / 3.0));
 		}
 		else
 		{
-			T = (2 * A*b - 3 * a*B) / (2 * pow(A, 1.5));
-			rad = acos(T);
-			X1 = (-b - 2 * sqrt(A)*cos(rad / 3)) / (3 * a);
-			X2 = (-b + sqrt(A)*(cos(rad / 3) + sqrt(3)*sin(rad / 3))) / (3 * a);
-			X3 = (-b + sqrt(A)*(cos(rad / 3) - sqrt(3)*sin(rad / 3))) / (3 * a);
-			Sv[0] = X1; Sv[1] = X2; Sv[2] = X3;
+			s = pow(s, (1.0 / 3.0));
 		}
+		//s = ((s < 0) ? -Math.pow(-s, (1.0 / 3.0)) : Math.pow(s, (1.0 / 3.0)));
+		double t = r - sqrt(disc);
+
+		if (t < 0)
+		{
+			t = -pow((-t), (1.0 / 3.0));
+		}
+		else
+		{
+			t = pow(t, (1.0 / 3.0));
+		}
+		//t = ((t < 0) ? -Math.pow(-t, (1.0 / 3.0)) : Math.pow(t, (1.0 / 3.0)));
+		Sv[0] = -term1 + s + t;
+		*svnum = 1;
+		return 1;
+		//%         term1 = term1 + (s + t) / 2.0;
+		//%         dataForm.x3Re.value = dataForm.x2Re.value = -term1;
+		//%         term1 = Math.sqrt(3.0)*(-t + s) / 2;
+		//%         dataForm.x2Im.value = term1;
+		//%         dataForm.x3Im.value = -term1;
 	}
 
+	//The remaining options are all real
+	double r13 = 0;
+	if (disc == 0) // All roots real, at least two are equal.
+	{
+		if (r < 0)
+		{
+			r13 = -pow((-r), (1.0 / 3.0));
+		}
+		else
+		{
+			r13 = pow(r, (1.0 / 3.0));
+		}
+		//r13 = ((r < 0) ? -Math.pow(-r, (1.0 / 3.0)) : Math.pow(r, (1.0 / 3.0)));
+		Sv[0] = -term1 + 2.0*r13;
+		Sv[1] = -(r13 + term1);
+		Sv[2] = Sv[1];
+		*svnum = 3;
+		return 1;
+	}
+	//Only option left is that all roots are real and unequal(to get here, q < 0)
+	q = -q;
+	double dum1 = q*q*q;
+	dum1 = acos(r / sqrt(dum1));
+	r13 = 2.0*sqrt(q);
+	Sv[0] = -term1 + r13*cos(dum1 / 3.0);
+	Sv[1] = -term1 + r13*cos((dum1 + 2.0*pi) / 3.0);
+	Sv[2] = -term1 + r13*cos((dum1 + 4.0*pi) / 3.0);
+	*svnum = 3;
 	return 0;
 }
-int calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MAXAXES], double qf[MAXAXES], 
-                        double maxdq[MAXAXES], double maxddq[MAXAXES], double Jm[MAXAXES], double Ti[MAXAXES], 
-                        int type, double Ta[MAXAXES][4], double coeff[MAXAXES][4][4], double *maxT, double tqf[MAXAXES], 
-                        double dqf[MAXAXES], double ddqf[MAXAXES])
+void phase_coeff_tran(double orcoeff[4], double t, double modcoeff[4])
 {
-	//	calculateParamÊÇÖğµã¼Ó¼õËÙ¸÷ÏîÏµÊıµÄ¼ÆËãº¯Êı °üÀ¨Ê±¼äÏîÏµÊı  Ò»ÔªÈı´Î·½³Ì¸÷ÏîÏµÊı£¬¸÷ÖáÍ¬²½Ê±¼ä¼ÆËã
-	//   Èë²Î£º
-	//	q0£ºÎŞÂÛÊÇ¼Ó¼õËÙ¶¼ÊÇÉÏÒ»µãµÄ¹Ø½Ú½ÇÖµ 6¡Á1Êı×é
-	//	dq0£º¶ÔÓÚ¼ÓËÙÊÇÉÏÒ»µãµÄ¹Ø½ÚËÙ¶ÈÖµ ¶ÔÓÚ¼õËÙÊÇÏÂÒ»µãµÄ¹Ø½ÚËÙ¶ÈÖµ 6¡Á1Êı×é
-	//	ddq0£º¶ÔÓÚ¼ÓËÙÊÇÉÏÒ»µãµÄ¹Ø½Ú¼ÓËÙ¶ÈÖµ  ¶ÔÓÚ¼õËÙÊÇÏÂÒ»µãµÄ¹Ø½Ú¼ÓËÙ¶ÈÖµ 6¡Á1Êı×é
-	//	qf£ºÎŞÂÛ¶ÔÓÚ¼Ó¼õËÙ ¶¼ÊÇÏÂÒ»µãµÄ¹Ø½Ú½ÇÖµ 6¡Á1Êı×é
-	//	maxdq£ºËãÀıÖĞ¼ÆËãµÄÆ½¾ùËÙ¶ÈÖµ 6¡Á1Êı×é
-	//	maxddq£ºËãÀıÖĞ¼ÆËãµÄ¶¯Á¦Ñ§Ğ£ºË×î´ó / ×îĞ¡¼ÓËÙ¶ÈÖµ 6¡Á1Êı×é
-	//	Jm£º¸÷µç»úÄ¬ÈÏµÄJerkÖµ 6¡Á1Êı×é
-	//	Ti£º¶ÔÓÚ¼ÆËã¸÷ÖáÍ¬²½Ê±¼äÀ´Ëµ ´« - 1Öµ 6¡Á1Êı×é
-	//	type£º1±íÊ¾¼ÓËÙ 2±íÊ¾¼õËÙ
-	//	dofn£º¹Ø½ÚÊı ¿ÉÄ¬ÈÏ6
+	//% function phase_coeff_tran will transform the coefficient of cubic
+	//% equation of each motion phase(q = a0 + a1*t + a2*t ^ 2 + a3*t ^ 3)
+	//
+	//% orcoeff: original coefficients of cubic equation of motion phase
+	//% orcoeff = [a0, a1, a2, a3]
+	//% t : time interval of motion phase(t < 0)
+	//
+	//	% modcoeff : modified coefficients of cubic equatiion of motion phase
+	//	% modcoeff = [a0, a1, a2, a3]
 
-	//	³ö²Î£º
-	//	Ta£º¼ÆËãµÄÊ±¼äÏµÊı£¬6¡Á4Êı×é 6Îª¹Ø½ÚÊı 4¸öÊ±¼ä¶ÎµÄÊ±¼äÖµ
-	//	coeff£º¼ÆËãµÄ¸÷Ê±¼ä¶ÎµÄÈı´Î·½³ÌÏµÊıÖµ£¬6¡Á4¡Á4 Êı×é 6Îª¹Ø½ÚÊı 4Îª4¶ÎÊ±¼ä 4ÎªËÄ¸öÏµÊı
-	//	maxT£º´úÈëTiÎª - 1 ´Ë´¦·µ»ØµÄmaxTÎª¸÷ÖáÍ¬²½µÄÊ±¼ä doubleÖµ ´úÈëTiÎªÍ¬²½Ê±¼ä ²»»á¸Ä±ä
-	//	tqf£º¶ÔÓÚ¼ÓËÙÊÇÏÂÒ»µã¹Ø½ÚÖµ ¶ÔÓÚ¼õËÙÊÇÉÏÒ»µãµÄ¹Ø½ÚÖµ
-	//	dqf£º¶ÔÓÚ¼ÓËÙÊÇÏÂÒ»µã¹Ø½ÚËÙ¶ÈÖµ  ¶ÔÓÚ¼õËÙÊÇÉÏÒ»µã¹Ø½ÚËÙ¶ÈÖµ
-	//	ddqf£º¶ÔÓÚ¼ÓËÙÊÇÏÂÒ»µã¹Ø½Ú¼ÓËÙ¶ÈÖµ  ¶ÔÓÚ¼õËÙÊÇÉÏÒ»µã¹Ø½Ú¼ÓËÙ¶ÈÖµ
+	double a[4];
+	for(int i=0;i<4;i++)
+		a[i]= orcoeff[i];
 
-	//	Ö÷Ìå³ÌĞò
+	modcoeff[0] = a[3]*pow(t,3) + a[2]*pow(t,2) + a[1]*t + a[0];
+	modcoeff[1] = 3 * a[3]*pow(t,2) + 2 * a[2]*t + a[1];
+	modcoeff[2] = a[2] + 3 * a[3]*t;
+	modcoeff[3] = a[3];
 
-	//¶¨ÒåÁÙÊ±±äÁ¿ ta1 ta2 ta3 ta4 ±íÊ¾4¶ÎÊ±¼äµÄÏµÊıÖµ 6¡Á1Êı×é
+}
+void coefficient_transform(double orcoeff_matrix[4][4], double t_matrix[4],double coeff_matrix[4][4])
+{
+	//% function coefficient_transform will transform the coefficients of all
+	//	% cubic equations of backward motion phase.
+
+	//	% orcoeff_matrix: original coefficients matrix of cubic equation
+	//	% orcoeff = [a00, a01, a02, a03;
+	//%            a10, a11, a12, a13;
+	//%            a20, a21, a22, a23;
+	//%            a30, a31, a32, a33;]
+	//	% t_matrix : time interval matrix of motion phase[t0, t1, t2, t3]
+
+	//	% coeff_matrix : modified coefficients of cubic equatiion of motion phase
+	//	% coeff_matrix = [a30, a31, a32, a33;
+	//%                 a20, a21, a22, a23;
+	//%                 a10, a11, a12, a13;
+	//%                 a00, a01, a02, a03;]
+	double crm[4],res[4];
+	for(int  i = 0;i<4;i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			crm[j] = orcoeff_matrix[3 - i][j];
+		}
+		phase_coeff_tran(crm, t_matrix[3 - i],res);
+
+		for (int j = 0; j < 4; j++)
+		{
+			coeff_matrix[i][j] = res[j];
+		}
+	}
+}
+int calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MAXAXES], double qf[MAXAXES], double maxdq[MAXAXES], double maxddq[MAXAXES], double Jm[MAXAXES], double Ti[MAXAXES], int type, double Ta[MAXAXES][4], double coeff[MAXAXES][4][4], double *maxT, double tqf[MAXAXES], double dqf[MAXAXES], double ddqf[MAXAXES])
+{
+	//	calculateParamæ˜¯é€ç‚¹åŠ å‡é€Ÿå„é¡¹ç³»æ•°çš„è®¡ç®—å‡½æ•° åŒ…æ‹¬æ—¶é—´é¡¹ç³»æ•°  ä¸€å…ƒä¸‰æ¬¡æ–¹ç¨‹å„é¡¹ç³»æ•°ï¼Œå„è½´åŒæ­¥æ—¶é—´è®¡ç®—
+	//   å…¥å‚ï¼š
+	//	q0ï¼šæ— è®ºæ˜¯åŠ å‡é€Ÿéƒ½æ˜¯ä¸Šä¸€ç‚¹çš„å…³èŠ‚è§’å€¼ 6Ã—1æ•°ç»„
+	//	dq0ï¼šå¯¹äºåŠ é€Ÿæ˜¯ä¸Šä¸€ç‚¹çš„å…³èŠ‚é€Ÿåº¦å€¼ å¯¹äºå‡é€Ÿæ˜¯ä¸‹ä¸€ç‚¹çš„å…³èŠ‚é€Ÿåº¦å€¼ 6Ã—1æ•°ç»„
+	//	ddq0ï¼šå¯¹äºåŠ é€Ÿæ˜¯ä¸Šä¸€ç‚¹çš„å…³èŠ‚åŠ é€Ÿåº¦å€¼  å¯¹äºå‡é€Ÿæ˜¯ä¸‹ä¸€ç‚¹çš„å…³èŠ‚åŠ é€Ÿåº¦å€¼ 6Ã—1æ•°ç»„
+	//	qfï¼šæ— è®ºå¯¹äºåŠ å‡é€Ÿ éƒ½æ˜¯ä¸‹ä¸€ç‚¹çš„å…³èŠ‚è§’å€¼ 6Ã—1æ•°ç»„
+	//	maxdqï¼šç®—ä¾‹ä¸­è®¡ç®—çš„å¹³å‡é€Ÿåº¦å€¼ 6Ã—1æ•°ç»„
+	//	maxddqï¼šç®—ä¾‹ä¸­è®¡ç®—çš„åŠ¨åŠ›å­¦æ ¡æ ¸æœ€å¤§ / æœ€å°åŠ é€Ÿåº¦å€¼ 6Ã—1æ•°ç»„
+	//	Jmï¼šå„ç”µæœºé»˜è®¤çš„Jerkå€¼ 6Ã—1æ•°ç»„
+	//	Tiï¼šå¯¹äºè®¡ç®—å„è½´åŒæ­¥æ—¶é—´æ¥è¯´ ä¼  - 1å€¼ 6Ã—1æ•°ç»„
+	//	typeï¼š1è¡¨ç¤ºåŠ é€Ÿ 2è¡¨ç¤ºå‡é€Ÿ
+	//	dofnï¼šå…³èŠ‚æ•° å¯é»˜è®¤6
+
+	//	å‡ºå‚ï¼š
+	//	Taï¼šè®¡ç®—çš„æ—¶é—´ç³»æ•°ï¼Œ6Ã—4æ•°ç»„ 6ä¸ºå…³èŠ‚æ•° 4ä¸ªæ—¶é—´æ®µçš„æ—¶é—´å€¼
+	//	coeffï¼šè®¡ç®—çš„å„æ—¶é—´æ®µçš„ä¸‰æ¬¡æ–¹ç¨‹ç³»æ•°å€¼ï¼Œ6Ã—4Ã—4 æ•°ç»„ 6ä¸ºå…³èŠ‚æ•° 4ä¸º4æ®µæ—¶é—´ 4ä¸ºå››ä¸ªç³»æ•°
+	//	maxTï¼šä»£å…¥Tiä¸º - 1 æ­¤å¤„è¿”å›çš„maxTä¸ºå„è½´åŒæ­¥çš„æ—¶é—´ doubleå€¼ ä»£å…¥Tiä¸ºåŒæ­¥æ—¶é—´ ä¸ä¼šæ”¹å˜
+	//	tqfï¼šå¯¹äºåŠ é€Ÿæ˜¯ä¸‹ä¸€ç‚¹å…³èŠ‚å€¼ å¯¹äºå‡é€Ÿæ˜¯ä¸Šä¸€ç‚¹çš„å…³èŠ‚å€¼
+	//	dqfï¼šå¯¹äºåŠ é€Ÿæ˜¯ä¸‹ä¸€ç‚¹å…³èŠ‚é€Ÿåº¦å€¼  å¯¹äºå‡é€Ÿæ˜¯ä¸Šä¸€ç‚¹å…³èŠ‚é€Ÿåº¦å€¼
+	//	ddqfï¼šå¯¹äºåŠ é€Ÿæ˜¯ä¸‹ä¸€ç‚¹å…³èŠ‚åŠ é€Ÿåº¦å€¼  å¯¹äºå‡é€Ÿæ˜¯ä¸Šä¸€ç‚¹å…³èŠ‚åŠ é€Ÿåº¦å€¼
+
+	//	ä¸»ä½“ç¨‹åº
+
+	//å®šä¹‰ä¸´æ—¶å˜é‡ ta1 ta2 ta3 ta4 è¡¨ç¤º4æ®µæ—¶é—´çš„ç³»æ•°å€¼ 6Ã—1æ•°ç»„
 	double ta1[MAXAXES], ta2[MAXAXES], ta3[MAXAXES], ta4[MAXAXES];
 
 
-	//¶Ô¸÷¶Î½áÊøÊ±¿ÌµÄÎ»ÖÃ ËÙ¶È ¼ÓËÙ¶È½øĞĞ±äÁ¿ÄÚ´æ·ÖÅä
+	//å¯¹å„æ®µç»“æŸæ—¶åˆ»çš„ä½ç½® é€Ÿåº¦ åŠ é€Ÿåº¦è¿›è¡Œå˜é‡å†…å­˜åˆ†é…
 	double q1[MAXAXES], q2[MAXAXES], q3[MAXAXES], q4[MAXAXES];
 	double dq1[MAXAXES], dq2[MAXAXES], dq3[MAXAXES], dq4[MAXAXES];
 	double ddq1[MAXAXES], ddq2[MAXAXES], ddq3[MAXAXES], ddq4[MAXAXES];
 
-	//¶¨ÒåÁÙÊ±±äÁ¿
-	double ddq_max[MAXAXES], dq_avg[MAXAXES], sigma[MAXAXES]; //×î´ó¼ÓËÙ¶È Æ½¾ùËÙ¶È ×ÜÊ±¼ä jerk·ûºÅ
+	//å®šä¹‰ä¸´æ—¶å˜é‡
+	double ddq_max[MAXAXES], dq_avg[MAXAXES], sigma[MAXAXES]; //æœ€å¤§åŠ é€Ÿåº¦ å¹³å‡é€Ÿåº¦ æ€»æ—¶é—´ jerkç¬¦å·
 	double tempT[MAXAXES] = { 0 };
 	double newT[2] = { 0 };
+	double snewT[2] = { 0 };
 	double r[3] = { 0 };
 
-	double a, b, c, lamda, a3, a2, a1, a0, tempt, ta41;
+	double a, b, c, lamda,slamda, a3, a2, a1, a0, tempt;
 	int dofn = MAXAXES;
 
-	if (type == 1) // ¼ÓËÙ¼ÆËã
+	if (type == 1) // åŠ é€Ÿè®¡ç®—
 	{
 		for (int i = 0; i < dofn; i++)
 		{
-			//¸ù¾İ¹Ø½ÚµÄÔË¶¯·½Ïò ÅĞ¶ÏJerkµÄ·ûºÅ±äÁ¿
+			//æ ¹æ®å…³èŠ‚çš„è¿åŠ¨æ–¹å‘ åˆ¤æ–­Jerkçš„ç¬¦å·å˜é‡
 			if (qf[i] - q0[i] > minim)
 			{
-				sigma[i] = 1; //Õı×ª  ·ûºÅÈ¡1
+				sigma[i] = 1; //æ­£è½¬  ç¬¦å·å–1
 			}
 			else if (qf[i] - q0[i] < -minim)
 			{
-				sigma[i] = -1; //·´×ª ·ûºÅÈ¡ - 1
+				sigma[i] = -1; //åè½¬ ç¬¦å·å– - 1
 			}
 			else
 			{
-				sigma[i] = 0;	//¾²Ö¹ ·ûºÅÈ¡0
+				sigma[i] = 0;	//é™æ­¢ ç¬¦å·å–0
 			}
 
-			if (sigma[i] != 0 && Ti[i] == -1) // ¹Ø½Ú´æÔÚÔË¶¯ ÇÒÖ»Ğè¼ÆËã¸÷ÖáÍ¬²½ÔË¶¯Ê±¼ä ½øÈëÏÂÃæ¼ÆËã
+			if (sigma[i] != 0 && Ti[i] == -1) // å…³èŠ‚å­˜åœ¨è¿åŠ¨ ä¸”åªéœ€è®¡ç®—å„è½´åŒæ­¥è¿åŠ¨æ—¶é—´ è¿›å…¥ä¸‹é¢è®¡ç®—
 			{
-				ddq_max[i] = maxddq[i];	//¼ÓËÙ¶È¸³Öµ
-				dq_avg[i] = maxdq[i];		//Æ½¾ùËÙ¶È¸³Öµ
+				ddq_max[i] = maxddq[i];	//åŠ é€Ÿåº¦èµ‹å€¼
+				dq_avg[i] = maxdq[i];		//å¹³å‡é€Ÿåº¦èµ‹å€¼
 
-											//time adjust
-											//stage 1  -- - acc - acc
-											//µÚÒ»¶Î¼ÆËã  ¼ÆËã¼Ó¼ÓËÙ¶ÎÇó¼Ó¼ÓËÙµÄÊ±¼äta1
-											//Çó¼Ó¼ÓËÙµÄÊ±¼äta1 ¼ÓËÙ¶Èddq1 ËÙ¶Èdq1 ½áÊøÊ±¿ÌÎ»ÖÃ q1
-				ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
-				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-				q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-				//stage 2 -- - quansi - acc
-				//µÚ¶ş¶Î¼ÆËã  ¼ÆËãÔÈ¼ÓËÙ¶ÎÇóÔÈ¼ÓËÙµÄÊ±¼äta2
-				//ÇóÔÈ¼ÓËÙµÄÊ±¼äta2 ¼ÓËÙ¶Èddq2 ËÙ¶Èdq2 ½áÊøÊ±¿ÌÎ»ÖÃ q2
-				//ĞèÒªÌáÇ°¼ÆËãµÚÈı¶ÎËùĞèµÄÊ±¼äta3 ÒÔ¼Óµ½Æ½¾ùËÙ¶Èdq_avg×÷ÎªÌõ¼şÀ´´úÈë¼ÆËãta2
-				ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-				ta2[i] = (dq_avg[i] - ddq_max[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2) - dq1[i]) / ddq_max[i];
-				ddq2[i] = ddq1[i];
-				dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-				q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-				//µÚ¶ş¶Î¼ÆËãµÄ½áÊøÊ±¿ÌÎ»ÖÃÈç¹û³¬¹ıÏÂÒ»µãµÄÎ»ÖÃ ĞèÒªÖØĞÂ¼ÆËãta2
-				if ((sigma[i] == 1 && q2[i] > qf[i]) || (sigma[i] == -1 && q2[i] < qf[i]))
+				//time adjust
+				if ((((dq0[i] > dq_avg[i] *0.9) && (dq0[i] > 0)) || ((dq0[i]< dq_avg[i] *0.9) && (dq0[i] < 0))))
 				{
-					// ¸ø³öĞŞÕı¶ş´ÎÏîµÄ¸÷ÏµÊı
-					a = 1 / 2.0 * ddq1[i];
-					b = dq1[i];
-					c = -(qf[i] - q1[i]);
-					lamda = pow(b, 2) - 4 * a*c;
-					if (lamda < 0)
-					{
-						printf("signification erreur"); //¶ş´ÎÏîÏµÊıÓĞÎó ±íÊ¾¸ø¶¨µÄÂ·¾¶²åÖµÊ±¼äÌ«¶Ì ÖÁÉÙĞ¡ÓÚ900ÄÉÃë ±¨´í
-						return -1;
-					}
+					ta1[i] = 0;
+					ta2[i] = 0;
+					ta3[i] = 0;
+					ta4[i] = (qf[i] - q0[i]) / dq0[i];
+					ddq4[i] = 0;
+					dq4[i] = dq0[i];
+					q4[i] = q0[i] + ta4[i] *dq0[i];
 
-					newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //Çó³öµÄ¶ş´ÎÏî¸ù1
-					newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //Çó³öµÄ¶ş´ÎÏî¸ù2
-
-					if (newT[0] > minim && newT[1] > minim) // Çó³öÁ½¸öÕı¸ù È¡¶ÌµÄÊ±¼ä´úÈë¼ÆËã
-					{
-						if (newT[0] > newT[1]) // ta2È¡Ê±¼ä½ÏĞ¡µÄÖµ
-						{
-							ta2[i] = newT[1];
-						}
-						else
-						{
-							ta2[i] = newT[0];
-						}
-					}
-					else if (newT[0] > minim && newT[1] < -minim) // È¡ÕıµÄÊ±¼äÖµ
-					{
-						ta2[i] = newT[0];
-					}
-					else if (newT[1] > minim && newT[0] < -minim) // È¡ÕıµÄÊ±¼äÖµ
-					{
-						ta2[i] = newT[1];
-					}
-					//ÖØĞÂ¼ÆËãta2ºó ¸üĞÂ¼ÓËÙ¶È ËÙ¶ÈºÍÎ»ÖÃ
-					ddq2[i] = ddq1[i];
-					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-					q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-					//¸üĞÂ³ö²Î
+					//æ›´æ–°å‡ºå‚
 					tqf[i] = q2[i];
 					dqf[i] = dq2[i];
 					ddqf[i] = ddq2[i];
-
-					//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-					ta3[i] = 0;
-					ta4[i] = 0;
-
-					//¼ÆËã×ÜÊ±¼ä
-					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-
-					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];  //¸÷¶ÎÊ±¼ä¸³Öµ
-
-																								 //¸÷¶ÎÏµÊı¸³Öµ
-					if (ta1[i] > 0)
-					{
-						coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i]; // 3½×
-						coeff[i][0][1] = 1 / 2.0 * ddq0[i]; // 2½×
-						coeff[i][0][2] = dq0[i]; // 1½×
-						coeff[i][0][3] = q0[i]; // 0½×
-					}
-					if (ta2[i] > 0)
-					{
-						coeff[i][1][0] = 0;
-						coeff[i][1][1] = 1 / 2.0 * ddq1[i];
-						coeff[i][1][2] = dq1[i];
-						coeff[i][1][3] = q1[i];
-					}
-					if (ta3[i] > 0)
-					{
-						coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
-						coeff[i][2][1] = 1 / 2.0 * ddq2[i];
-						coeff[i][2][2] = dq2[i];
-						coeff[i][2][3] = q2[i];
-					}
-					if (ta4[i] > 0)
-					{
-						coeff[i][3][0] = 0;
-						coeff[i][3][1] = 0;
-						coeff[i][3][2] = dq3[i];
-						coeff[i][3][3] = q3[i];
-					}
-					continue;
 				}
-
-				//stage 3 -- - dcc - acc
-				//¼ÆËã¼õ¼ÓËÙ¶Î
-				//¼õ¼ÓËÙ¶ÎµÄÊ±¼äta3ÔÚÔÈ¼ÓËÙÊ±ÒÑ¼ÆËã£¬Ë¢ĞÂ¼ÓËÙ¶È£¬ËÙ¶ÈºÍÎ»ÖÃÖµ
-				ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-				dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-				q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-				//ÅĞ¶Ï¼õ¼ÓËÙ½áÊøºóµÄÎ»ÖÃÊÇ·ñ³¬¹ıÏÂÒ»µãÎ»ÖÃ Èç¹û³¬³ö ÖØĞÂ¼ÆËãÊ±¼äta3
-				if ((sigma[i] == 1 && q3[i] > qf[i]) || (sigma[i] == -1 && q3[i] < qf[i]))
+				else
 				{
-					// ¸ù¾İ¼õ¼ÓËÙ¶ÎµÄÒ»ÔªÈı´Î·½³Ì¼ÆËãµ÷ÕûºóµÄ¸ù
-					//Ê×ÏÈ»ñµÃ¸÷ÏîµÄÏµÊı
-					a3 = -1 / 6.0 * sigma[i] * Jm[i]; //a
-					a2 = 1 / 2.0 * ddq2[i]; //b
-					a1 = dq2[i]; //c
-					a0 = -(qf[i] - q2[i]); //d
+					//stage 1  -- - acc - acc
+					//ç¬¬ä¸€æ®µè®¡ç®—  è®¡ç®—åŠ åŠ é€Ÿæ®µæ±‚åŠ åŠ é€Ÿçš„æ—¶é—´ta1
+					//æ±‚åŠ åŠ é€Ÿçš„æ—¶é—´ta1 åŠ é€Ÿåº¦ddq1 é€Ÿåº¦dq1 ç»“æŸæ—¶åˆ»ä½ç½® q1
+					ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+					ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+					dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+					q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
 
-					getrootsofquadratic(a3, a2, a1, a0, r); //¼ÆËãÒ»ÔªÈı´Î·½³ÌµÄ¸ù
-					double tempt = 99; //»ñµÃÈ«²¿µÄ½â
-					for (int j = 0; j < 3; j++)
+					if ((dq1[i]  > dq_avg[i] *0.9 && sigma[i] == 1) || (dq1[i] < dq_avg[i] *0.9 && sigma[i] == -1))
 					{
-						if (r[j]<tempt && r[j]>minim) //¸ù¾İÒªÇóÈ¥µô¸ºÊ±¼ä£¬È¡×îĞ¡Ê±¼ä
+						ddq_max[i] = sqrt(sigma[i] *Jm[i] *(dq_avg[i] - dq0[i]) + 1 / 2.0 * pow(ddq0[i],2));
+						ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] *Jm[i]);
+						ddq1[i] = ddq0[i] + sigma[i] *Jm[i] *ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] *ta1[i] + 1 / 2.0 * sigma[i] *Jm[i] *pow(ta1[i],2);
+						q1[i] = q0[i] + dq0[i] *ta1[i] + 1 / 2.0 * ddq0[i] *pow(ta1[i],2) + 1 / 6.0 * sigma[i] *Jm[i] *pow(ta1[i],3);
+
+						if ((sigma[i] == 1 && q1[i]  > qf[i]) || (sigma[i] == -1 && q1[i]  < qf[i]))
 						{
-							tempt = r[j];
+							ta1[i] = 0;
+							ta2[i] = 0;
+							ta3[i] = 0;
+
+							//å¾—åˆ°åŒ€é€Ÿæ®µçš„ta4 ä½ç½®å’Œé€Ÿåº¦ åŠ é€Ÿåº¦å€¼
+							ta4[i] = (qf[i] - q0[i]) / dq0[i];
+							ddq4[i] = 0;
+							dq4[i] = dq0[i];
+							q4[i] = q0[i] + ta4[i] *dq0[i];
+
+							//æ›´æ–°è¿”å›çš„ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦å€¼
+							tqf[i] = q4[i];
+							dqf[i] = dq4[i];
+							ddqf[i] = ddq4[i];
 						}
-					}
-
-					ta3[i] = tempt;
-
-					//ÖØĞÂË¢ĞÂta3µÄÎ»ÖÃ ËÙ¶È ºÍ¼ÓËÙ¶ÈÖµ
-					ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-					dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-					q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-					//²»´æÔÚµÚËÄÊ±¼ä¶Î
-					ta4[i] = 0;
-
-					//¸üĞÂ¸Ã¹Ø½ÚµÄ½áÊøµÄÎ»ÖÃ ËÙ¶È ¼ÓËÙ¶È
-					tqf[i] = q3[i];
-					dqf[i] = dq3[i];
-					ddqf[i] = ddq3[i];
-
-					//µÃµ½×ÜÊ±¼ä
-					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];  //¸÷ÏîÊ±¼äÏµÊıµÄË¢ĞÂ
-																								 //¸÷ÏîÈı´ÎÏîÏµÊıµÄË¢ĞÂ
-					if (ta1[i] > 0)
-					{
-						coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
-						coeff[i][0][1] = 1 / 2.0 * ddq0[i];
-						coeff[i][0][2] = dq0[i];
-						coeff[i][0][3] = q0[i];
-					}
-					if (ta2[i] > 0)
-					{
-						coeff[i][1][0] = 0;
-						coeff[i][1][1] = 1 / 2.0 * ddq1[i];
-						coeff[i][1][2] = dq1[i];
-						coeff[i][1][3] = q1[i];
-					}
-					if (ta3[i] > 0)
-					{
-						coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
-						coeff[i][2][1] = 1 / 2.0 * ddq2[i];
-						coeff[i][2][2] = dq2[i];
-						coeff[i][2][3] = q2[i];
-					}
-					if (ta4[i] > 0)
-					{
-						coeff[i][3][0] = 0;
-						coeff[i][3][1] = 0;
-						coeff[i][3][2] = dq3[i];
-						coeff[i][3][3] = q3[i];
-					}
-					continue;
-				}
-
-				//stage 4 -- - quansi - velocity
-				//µÚËÄ¶Î ÔÈËÙ¼ÆËã
-				//¼ÆËãÔÈËÙµÄta4 ÒÔ¼°Î»ÖÃËÙ¶È ¼ÓËÙ¶ÈÖµ
-				//Ê×ÏÈÅĞ¶Ï¼õ¼ÓËÙ½áÊøµãÊÇ·ñĞ¡ÓÚÄ¿±êÎ»ÖÃ£¨ÏÂÒ»µãÎ»ÖÃ£© Ğ¡ÓÚ Ôò´æÔÚÔÈËÙ¶Î
-				if ((sigma[i] == 1 && q3[i] < qf[i]) || (sigma[i] == -1 && q3[i] > qf[i]))
-				{
-					// µÃµ½ÔÈËÙ¶ÎµÄta4 Î»ÖÃºÍËÙ¶È ¼ÓËÙ¶ÈÖµ
-					ta4[i] = (qf[i] - q3[i]) / dq3[i];
-					ddq4[i] = 0;
-					dq4[i] = dq3[i];
-					q4[i] = q3[i] + ta4[i] * dq3[i];
-
-					//¸üĞÂ·µ»ØµÄÎ»ÖÃËÙ¶È¼ÓËÙ¶ÈÖµ
-					tqf[i] = q4[i];
-					dqf[i] = dq4[i];
-					ddqf[i] = ddq4[i];
-				}
-
-				//¸üĞÂ×ÜÊ±¼ä
-				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-
-				//¸üĞÂ¸÷ÏîÊ±¼äÏµÊı
-				Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
-				//¸üĞÂ¸÷ÏîµÄ¶àÏîÊ½ÏµÊı
-				if (ta1[i] > 0)
-				{
-					coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
-					coeff[i][0][1] = 1 / 2.0 * ddq0[i];
-					coeff[i][0][2] = dq0[i];
-					coeff[i][0][3] = q0[i];
-				}
-				if (ta2[i] > 0)
-				{
-					coeff[i][1][0] = 0;
-					coeff[i][1][1] = 1 / 2.0 * ddq1[i];
-					coeff[i][1][2] = dq1[i];
-					coeff[i][1][3] = q1[i];
-				}
-				if (ta3[i] > 0)
-				{
-					coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
-					coeff[i][2][1] = 1 / 2.0 * ddq2[i];
-					coeff[i][2][2] = dq2[i];
-					coeff[i][2][3] = q2[i];
-				}
-				if (ta4[i] > 0)
-				{
-					coeff[i][3][0] = 0;
-					coeff[i][3][1] = 0;
-					coeff[i][3][2] = dq3[i];
-					coeff[i][3][3] = q3[i];
-				}
-			}
-			else if (sigma[i] != 0 && Ti[i] > 0) // ÕâÒ»¶ÎÊÇ¸ù¾İ¶àÖáÊ±¼äÍ¬²½ºó ¼ÆËã¸÷¶ÎµÄÊ±¼äÏµÊıºÍ¶àÏîÊ½ÏµÊı ²¢·µ»Ø½áÊøµÄÎ»ÖÃËÙ¶È ¼ÓËÙ¶È
-			{
-				ddq_max[i] = maxddq[i];	//¼ÓËÙ¶È¸³Öµ
-				dq_avg[i] = maxdq[i];		//Æ½¾ùËÙ¶È¸³Öµ
-
-											//time adjust
-											//stage 1  -- - acc - acc
-											//¼ÆËã¼Ó¼ÓËÙ¶ÎÇó¼Ó¼ÓËÙµÄÊ±¼äta1 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-				ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
-				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-				q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-				//¼ÆËãÔÈ¼ÓËÙ¶Îta2Ç° ĞèÒª¼ÆËã¼õ¼ÓËÙÊ±¼äta3
-				ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-
-				//Ê×ÏÈ¸ù¾İÊ±¼äTiµÄÔ¼Êø Çóta4µÄºÏÊÊÖµ
-				//ÏÂÃæ¸ø³öÁ¬Á¢·½³ÌµÄ¶ş´ÎÏî¸÷ÏîÏµÊı
-				a = -1 / 2.0 * ddq1[i];
-				b = 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2) + ddq1[i] * (Ti[i] - ta1[i] - ta3[i]);
-
-				c = (Ti[i] - ta1[i] - ta3[i])*(ddq1[i] * ta3[i] + dq1[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2)) + q1[i] + dq1[i] * ta3[i] + 1 / 2.0 * ddq1[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3) - qf[i];
-				lamda = pow(b, 2) - 4 * a*c; //lamdaÖµ
-
-				if (lamda <= 0) // lamdaÖµĞ¡ÓÚ0 ±íÊ¾ta2ÎŞ½â ĞèÒª¸ù¾İta1 ta3 Çó½â
-				{
-					//ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-					ta2[i] = Ti[i] - ta1[i] - ta3[i];
-					ddq2[i] = ddq1[i];
-					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-					q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-					//Èç¹ûÔÈ¼ÓËÙºóÎ»ÖÃ³¬³öÏÂÒ»µãÎ»ÖÃ ÀûÓÃÈı´Î·½³ÌÖØĞÂ¼ÆËãta2µÄÊ±¼ä
-					if ((sigma[i] == 1 && q2[i] > qf[i]) || (sigma[i] == -1 && q2[i] < qf[i]))
-					{
-						// ¸ø³öÁ¬Á¢ta1ºÍta2·½³Ìºó Èı´Î·½³ÌµÄ¸÷ÏîÏµÊı  ÇóĞŞÕıºóµÄta1Öµ
-						a3 = -1 / 3.0 * sigma[i] * Jm[i]; //a
-						a2 = -1 / 2.0 * sigma[i] * Jm[i] * Ti[i] - 1 / 2.0 * ddq0[i]; //b
-						a1 = 1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-						a0 = 1 / 2.0 * ddq0[i] * pow(Ti[i], 2) + dq0[i] * Ti[i] + q0[i] - qf[i]; //d
-
-						getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÈı´Î·½³ÌµÄ¸ù
-						tempt = 99;
-						for (int j = 0; j < 3; j++)
+						else
 						{
-							if (r[j] < tempt && r[j] > minim) //ÇóÊ±¼ä×îĞ¡ÇÒÎªÕıµÄ¸ù
+							ta2[i] = 0;
+							ta3[i] = ddq_max[i] / (sigma[i] *Jm[i]);
+							ddq3[i] = ddq1[i] - sigma[i] *Jm[i] *ta3[i];
+							dq3[i] = dq1[i] + ddq1[i] *ta3[i] - 1 / 2.0 * sigma[i] *Jm[i] *pow(ta3[i],2);
+							q3[i] = q1[i] + dq1[i] *ta3[i] + 1 / 2.0 * ddq1[i] *pow(ta3[i],2) - 1 / 6.0 * sigma[i] *Jm[i] *pow(ta3[i],3);
+
+							if (((sigma[i] == 1 && q3[i]  > qf[i]) || (sigma[i] == -1 && q3[i]  < qf[i])))
 							{
-								tempt = r[j];
+								//å¾—åˆ°åŒ€é€Ÿæ®µçš„ta4 ä½ç½®å’Œé€Ÿåº¦ åŠ é€Ÿåº¦å€¼
+								ta4[i] = (qf[i] - q0[i]) / dq0[i];
+								ddq4[i] = 0;
+								dq4[i] = dq0[i];
+								q4[i] = q0[i] + ta4[i] *dq0[i];
+
+								//æ›´æ–°è¿”å›çš„ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦å€¼
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
 							}
-						}
-
-						//¸ù¾İ·½³ÌµÄ¸ù Ë¢ĞÂta1 ÒÔ¼°Î»ÖÃËÙ¶È ¼ÓËÙ¶È
-						ta1[i] = tempt;
-						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-						//ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = Ti[i] - ta1[i];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-						ta3[i] = 0;
-						ta4[i] = 0;
-
-						//¸üĞÂ³ö²Î
-						tqf[i] = q2[i];
-						dqf[i] = dq2[i];
-						ddqf[i] = ddq2[i];
-					}
-
-					else //´æÔÚµÚÈı¶Îta3 q2Ğ¡ÓÚqf
-					{
-
-						//Ë¢ĞÂ¼õ¼ÓËÙ½áÊøºóµÄÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//²»´æÔÚµÚËÄ¶ÎÊ±¼ä
-						ta4[i] = 0;
-						//¸üĞÂ³ö²Î
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
-					}
-				}
-				else //´æÔÚµÚËÄ¶Î ta2  lamda´óÓÚ0
-				{
-					newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //Çó³öta4µÄ½â1
-					newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //Çó³öta4µÄ½â2
-
-																	//Èç¹ûÁ½¸öÊ±¼ä½â¶¼ÎªÕı ÒÀ´Î½øĞĞ¼ÆËã ²¢ÅĞ¶Ï
-					if (newT[0] > minim && newT[1] > minim)
-					{
-
-						//Ê×ÏÈÈ¡½â1 Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = newT[0];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						//¸ù¾İta3 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//Ë¢ĞÂta4
-						ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-
-						//Èç¹û¼ÆËãµÄta4 Îª¸º ±íÊ¾È¡µÃ½â²»ºÏÊÊ »»½â2 ÖØĞÂ¼ÆËã
-						if (ta4[i] < 0)
-						{
-							// »»½â2 ¼ÆËãÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ta2[i] = newT[1];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							//¼ÆËãta3Î»ÖÃËÙ¶È¼ÓËÙ¶È
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							//¼ÆËãta4
-							ta41 = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-
-							//Èç¹ûÁ½¸ö½â¶¼²»´æÔÚta4 ÔòÈ¥µôµÚËÄÊ±¼ä¶Î ÖØĞÂµ÷Õûta2
-							if (ta41 < 0)
+							else
 							{
-								// ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-								//Èç¹ûq2µÄÎ»ÖÃ´óÓÚÏÂÒ»µãÎ»ÖÃ ĞèÒª¸ù¾İÈı´Î·½³ÌÖØĞÂ¼ÆËãta1ºÍta2
-								if ((sigma[i] == 1 && q2[i] > qf[i]) || (sigma[i] == -1 && q2[i] < qf[i]))
-								{
-									// ½¨Á¢Èı´Î·½³Ì
-									a3 = -1 / 3.0 * sigma[i] * Jm[i]; //a
-									a2 = -1 / 2.0 * sigma[i] * Jm[i] * Ti[i] - 1 / 2.0 * ddq0[i]; //b
-									a1 = 1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-									a0 = 1 / 2.0 * ddq0[i] * pow(Ti[i], 2) + dq0[i] * Ti[i] + q0[i] - qf[i]; //d
-
-									getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÈı´Î·½³ÌµÄ¸ù
-									tempt = 99;
-									for (int j = 0; j < 3; j++)
-									{
-										if (r[j]<tempt && r[j]>minim) 	//È¡×îĞ¡µÄÕıÊ±¼äµÄ¸ù
-										{
-											tempt = r[j];
-										}
-									}
-
-									//Ë¢ĞÂta1 ÒÔ¼°Î»ÖÃËÙ¶È¼ÓËÙ¶È
-									ta1[i] = tempt;
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									//Ë¢ĞÂta2 ÒÔ¼°Î»ÖÃËÙ¶È¼ÓËÙ¶È
-									ta2[i] = Ti[i] - ta1[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-									ta3[i] = 0;
-									ta4[i] = 0;
-
-									//Ë¢ĞÂ³ö²Î
-									tqf[i] = q2[i];
-									dqf[i] = dq2[i];
-									ddqf[i] = ddq2[i];
-								}
-								else //ÔÈ¼ÓËÙºóµÄÎ»ÖÃ²»³¬¹ıÏÂÒ»µãÎ»ÖÃ ¼ÆËã¼õ¼ÓËÙ¶Î
-								{
-									//¸üĞÂta3¶ÎµÄÎ»ÖÃËÙ¶È¼ÓËÙ¶ÈÖµ
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									//²»´æÔÚµÚËÄÊ±¼ä¶Î
-									ta4[i] = 0;
-									//¸üĞÂ³ö²Î
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-							}
-							else //ta4´óÓÚ0´æÔÚµÚËÄ¶Î Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È Ë¢ĞÂ³ö²Î
-							{
-								ta4[i] = ta41;
+								//å¾—åˆ°åŒ€é€Ÿæ®µçš„ta4 ä½ç½®å’Œé€Ÿåº¦ åŠ é€Ÿåº¦å€¼
+								ta4[i] = (qf[i] - q3[i]) / dq3[i];
 								ddq4[i] = 0;
 								dq4[i] = dq3[i];
-								q4[i] = q3[i] + ta41*dq3[i];
+								q4[i] = q3[i] + ta4[i] *dq3[i];
+
+								//æ›´æ–°è¿”å›çš„ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦å€¼
 								tqf[i] = q4[i];
 								dqf[i] = dq4[i];
 								ddqf[i] = ddq4[i];
 							}
 						}
-						else //ta4´óÓÚ0´æÔÚµÚËÄ¶Î Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È Ë¢ĞÂ³ö²Î
-						{
-
-							ddq4[i] = 0;
-							dq4[i] = dq3[i];
-							q4[i] = q3[i] + ta4[i] * dq3[i];
-							tqf[i] = q4[i];
-							dqf[i] = dq4[i];
-							ddqf[i] = ddq4[i];
-						}
 					}
-					else if (newT[0] > minim && newT[1] < -minim) // ½â1 ÎªÕı ½â2Îª¸º È¡½â1
+					else
 					{
-						//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = newT[0];
+						//stage 2 -- - quansi - acc
+						//ç¬¬äºŒæ®µè®¡ç®—  è®¡ç®—åŒ€åŠ é€Ÿæ®µæ±‚åŒ€åŠ é€Ÿçš„æ—¶é—´ta2
+						//æ±‚åŒ€åŠ é€Ÿçš„æ—¶é—´ta2 åŠ é€Ÿåº¦ddq2 é€Ÿåº¦dq2 ç»“æŸæ—¶åˆ»ä½ç½® q2
+						//éœ€è¦æå‰è®¡ç®—ç¬¬ä¸‰æ®µæ‰€éœ€çš„æ—¶é—´ta3 ä»¥åŠ åˆ°å¹³å‡é€Ÿåº¦dq_avgä½œä¸ºæ¡ä»¶æ¥ä»£å…¥è®¡ç®—ta2
+						ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - ddq_max[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2) - dq1[i]) / ddq_max[i];
 						ddq2[i] = ddq1[i];
 						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
 						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
-						//Ë¢ĞÂta3 ºÍÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//¼ÆËãta4
-						ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-						if (ta4[i] < 0) // Èç¹ûta4Ğ¡ÓÚ0 ±íÊ¾Ç°Ãæ¸øµÄ½â²»ºÏÊÊ ÖØĞÂ¼ÆËã
+						//ç¬¬äºŒæ®µè®¡ç®—çš„ç»“æŸæ—¶åˆ»ä½ç½®å¦‚æœè¶…è¿‡ä¸‹ä¸€ç‚¹çš„ä½ç½® éœ€è¦é‡æ–°è®¡ç®—ta2
+						if ((sigma[i] == 1 && q2[i] > qf[i]) || (sigma[i] == -1 && q2[i] < qf[i]))
 						{
-							//È¥µôta4 ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
+							// ç»™å‡ºä¿®æ­£äºŒæ¬¡é¡¹çš„å„ç³»æ•°
+							a = 1 / 2.0 * ddq1[i];
+							b = dq1[i];
+							c = -(qf[i] - q1[i]);
+							lamda = pow(b, 2) - 4 * a*c;
+							if (lamda < 0)
+							{
+								printf("signification erreur"); //äºŒæ¬¡é¡¹ç³»æ•°æœ‰è¯¯ è¡¨ç¤ºç»™å®šçš„è·¯å¾„æ’å€¼æ—¶é—´å¤ªçŸ­ è‡³å°‘å°äº900çº³ç§’ æŠ¥é”™
+								return -1;
+							}
+
+							newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //æ±‚å‡ºçš„äºŒæ¬¡é¡¹æ ¹1
+							newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //æ±‚å‡ºçš„äºŒæ¬¡é¡¹æ ¹2
+
+							if (newT[0] > minim && newT[1] > minim) // æ±‚å‡ºä¸¤ä¸ªæ­£æ ¹ å–çŸ­çš„æ—¶é—´ä»£å…¥è®¡ç®—
+							{
+								if (newT[0] > newT[1]) // ta2å–æ—¶é—´è¾ƒå°çš„å€¼
+								{
+									ta2[i] = newT[1];
+								}
+								else
+								{
+									ta2[i] = newT[0];
+								}
+							}
+							else if (newT[0] > minim && newT[1] < -minim) // å–æ­£çš„æ—¶é—´å€¼
+							{
+								ta2[i] = newT[0];
+							}
+							else if (newT[1] > minim && newT[0] < -minim) // å–æ­£çš„æ—¶é—´å€¼
+							{
+								ta2[i] = newT[1];
+							}
+							//é‡æ–°è®¡ç®—ta2å æ›´æ–°åŠ é€Ÿåº¦ é€Ÿåº¦å’Œä½ç½®
 							ddq2[i] = ddq1[i];
 							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
 							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-							//Èç¹ûq2µÄÎ»ÖÃ´óÓÚÏÂÒ»µãÎ»ÖÃ ÁªÁ¢q1ºÍq2µÄ·½³Ì×é µÃµ½Ò»ÔªÈı´Î·½³Ì
-							if ((sigma[i] == 1 && q2[i] > qf[i]) || (sigma[i] == -1 && q2[i] < qf[i]))
-							{
-								// ¸ø³öÒ»ÔªÈı´Î·½³ÌµÄÏµÊı
-								a3 = -1 / 3.0 * sigma[i] * Jm[i]; //a
-								a2 = -1 / 2.0 * sigma[i] * Jm[i] * Ti[i] - 1 / 2.0 * ddq0[i]; //b
-								a1 = 1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-								a0 = 1 / 2.0 * ddq0[i] * pow(Ti[i], 2) + dq0[i] * Ti[i] + q0[i] - qf[i]; //d
 
-								getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÒ»ÔªÈı´Î·½³ÌµÄ¸ù
-								tempt = 99;
-								for (int j = 0; j < 3; j++)
+							//æ›´æ–°å‡ºå‚
+							tqf[i] = q2[i];
+							dqf[i] = dq2[i];
+							ddqf[i] = ddq2[i];
+
+							//ä¸å­˜åœ¨ç¬¬ä¸‰å’Œç¬¬å››æ—¶é—´æ®µ
+							ta3[i] = 0;
+							ta4[i] = 0;
+
+						}
+						else
+						{
+							//stage 3 -- - dcc - acc
+							//è®¡ç®—å‡åŠ é€Ÿæ®µ
+							//å‡åŠ é€Ÿæ®µçš„æ—¶é—´ta3åœ¨åŒ€åŠ é€Ÿæ—¶å·²è®¡ç®—ï¼Œåˆ·æ–°åŠ é€Ÿåº¦ï¼Œé€Ÿåº¦å’Œä½ç½®å€¼
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							//åˆ¤æ–­å‡åŠ é€Ÿç»“æŸåçš„ä½ç½®æ˜¯å¦è¶…è¿‡ä¸‹ä¸€ç‚¹ä½ç½® å¦‚æœè¶…å‡º é‡æ–°è®¡ç®—æ—¶é—´ta3
+							if ((sigma[i] == 1 && q3[i] > qf[i]) || (sigma[i] == -1 && q3[i] < qf[i]))
+							{
+								// æ ¹æ®å‡åŠ é€Ÿæ®µçš„ä¸€å…ƒä¸‰æ¬¡æ–¹ç¨‹è®¡ç®—è°ƒæ•´åçš„æ ¹
+								//é¦–å…ˆè·å¾—å„é¡¹çš„ç³»æ•°
+								a3 = -1 / 6.0 * sigma[i] * Jm[i]; //a
+								a2 = 1 / 2.0 * ddq2[i]; //b
+								a1 = dq2[i]; //c
+								a0 = -(qf[i] - q2[i]); //d
+
+								int snum = 0;
+								getrootsofquadratic(a3, a2, a1, a0, r,&snum); //è®¡ç®—ä¸€å…ƒä¸‰æ¬¡æ–¹ç¨‹çš„æ ¹
+
+								if (snum == 1)
 								{
-									if (r[j] < tempt && r[j] > minim)	//Çó×îĞ¡µÄÕıÊ±¼ä
+									tempt = r[0];
+								}
+								else
+								{
+									double tempt = 99; //è·å¾—å…¨éƒ¨çš„è§£
+									for (int j = 0; j < 3; j++)
 									{
-										tempt = r[j];
+										if (r[j]<tempt && r[j]>minim) //æ ¹æ®è¦æ±‚å»æ‰è´Ÿæ—¶é—´ï¼Œå–æœ€å°æ—¶é—´
+										{
+											tempt = r[j];
+										}
 									}
 								}
-								//Ë¢ĞÂta1 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta1[i] = tempt;
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
 
-								//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta2[i] = Ti[i] - ta1[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+								ta3[i] = tempt;
 
-								//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-								ta3[i] = 0;
-								ta4[i] = 0;
-								//Ë¢ĞÂ³ö²Î
-								tqf[i] = q2[i];
-								dqf[i] = dq2[i];
-								ddqf[i] = ddq2[i];
-							}
-							else //q2Ğ¡ÓÚqf ´æÔÚµÚÈı¶Î
-							{
-								//                     ta3[i] = Ti[i] - ta1[i] - ta2[i];
-								//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
+								//é‡æ–°åˆ·æ–°ta3çš„ä½ç½® é€Ÿåº¦ å’ŒåŠ é€Ÿåº¦å€¼
 								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
 								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
 								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
 
-								//²»´æÔÚµÚËÄ¶ÎÊ±¼ä
+								//ä¸å­˜åœ¨ç¬¬å››æ—¶é—´æ®µ
 								ta4[i] = 0;
-								//Ë¢ĞÂ³ö²Î
+
+								//æ›´æ–°è¯¥å…³èŠ‚çš„ç»“æŸçš„ä½ç½® é€Ÿåº¦ åŠ é€Ÿåº¦
 								tqf[i] = q3[i];
 								dqf[i] = dq3[i];
 								ddqf[i] = ddq3[i];
+
 							}
-						}
-						else //´æÔÚµÚËÄ¶Î
-						{
-							//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ddq4[i] = 0;
-							dq4[i] = dq3[i];
-							q4[i] = q3[i] + ta4[i] * dq3[i];
-							//Ë¢ĞÂ³ö²Î
-							tqf[i] = q4[i];
-							dqf[i] = dq4[i];
-							ddqf[i] = ddq4[i];
-						}
-					}
-					else if (newT[1] > 1e-6 && newT[0] < -1e-6) // ½â2 ÎªÕı ½â1Îª¸º È¡½â2
-					{
-						//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = newT[1];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
-						//Ë¢ĞÂta3 ºÍÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//¼ÆËãta4
-						ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-						if (ta4[i] < 0) // Èç¹ûta4Ğ¡ÓÚ0 ±íÊ¾Ç°Ãæ¸øµÄ½â²»ºÏÊÊ ÖØĞÂ¼ÆËã
-						{
-							//È¥µôta4 ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-							//Èç¹ûq2µÄÎ»ÖÃ´óÓÚÏÂÒ»µãÎ»ÖÃ ÁªÁ¢q1ºÍq2µÄ·½³Ì×é µÃµ½Ò»ÔªÈı´Î·½³Ì
-							if ((sigma[i] == 1 && q2[i] > qf[i]) || (sigma[i] == -1 && q2[i] < qf[i]))
+							else
 							{
-								// ¸ø³öÒ»ÔªÈı´Î·½³ÌµÄÏµÊı
-								a3 = -1 / 3.0 * sigma[i] * Jm[i]; //a
-								a2 = -1 / 2.0 * sigma[i] * Jm[i] * Ti[i] - 1 / 2.0 * ddq0[i]; //b
-								a1 = 1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-								a0 = 1 / 2.0 * ddq0[i] * pow(Ti[i], 2) + dq0[i] * Ti[i] + q0[i] - qf[i]; //d
+								//stage 4 -- - quansi - velocity
+								//ç¬¬å››æ®µ åŒ€é€Ÿè®¡ç®—
+								//è®¡ç®—åŒ€é€Ÿçš„ta4 ä»¥åŠä½ç½®é€Ÿåº¦ åŠ é€Ÿåº¦å€¼
+								//é¦–å…ˆåˆ¤æ–­å‡åŠ é€Ÿç»“æŸç‚¹æ˜¯å¦å°äºç›®æ ‡ä½ç½®ï¼ˆä¸‹ä¸€ç‚¹ä½ç½®ï¼‰ å°äº åˆ™å­˜åœ¨åŒ€é€Ÿæ®µ
 
-								getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÒ»ÔªÈı´Î·½³ÌµÄ¸ù
-								tempt = 99;
-								for (int j = 0; j < 3; j++)
-								{
-									if (r[j]<tempt && r[j]>minim)  //Çó×îĞ¡µÄÕıÊ±¼ä
-									{
-										tempt = r[j];
-									}
-								}
+								// å¾—åˆ°åŒ€é€Ÿæ®µçš„ta4 ä½ç½®å’Œé€Ÿåº¦ åŠ é€Ÿåº¦å€¼
+								ta4[i] = (qf[i] - q3[i]) / dq3[i];
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
 
-								//Ë¢ĞÂta1 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta1[i] = tempt;
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta2[i] = Ti[i] - ta1[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-								ta3[i] = 0;
-								ta4[i] = 0;
-								//Ë¢ĞÂ³ö²Î
-								tqf[i] = q2[i];
-								dqf[i] = dq2[i];
-								ddqf[i] = ddq2[i];
+								//æ›´æ–°è¿”å›çš„ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦å€¼
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
 							}
-							else	//q2Ğ¡ÓÚqf ´æÔÚµÚÈı¶Î
-							{
-								//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-								//²»´æÔÚµÚËÄ¶ÎÊ±¼ä
-								ta4[i] = 0;
-								//Ë¢ĞÂ³ö²Î
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-							}
-						}
-						else//´æÔÚµÚËÄ¶Î
-						{
-							//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ddq4[i] = 0;
-							dq4[i] = dq3[i];
-							q4[i] = q3[i] + ta4[i] * dq3[i];
-							//Ë¢ĞÂ³ö²Î
-							tqf[i] = q4[i];
-							dqf[i] = dq4[i];
-							ddqf[i] = ddq4[i];
 						}
 					}
 				}
-				//Ë¢ĞÂ×ÜÊ±¼ä
+				//è®¡ç®—æ€»æ—¶é—´
 				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-				//Ë¢ĞÂ¸÷¶ÎÊ±¼ä
+
+				Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];  //å„æ®µæ—¶é—´èµ‹å€¼
+
+				//å„æ®µç³»æ•°èµ‹å€¼
+				if (ta1[i] > 0)
+				{
+					coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i]; // 3é˜¶
+					coeff[i][0][1] = 1 / 2.0 * ddq0[i]; // 2é˜¶
+					coeff[i][0][2] = dq0[i]; // 1é˜¶
+					coeff[i][0][3] = q0[i]; // 0é˜¶
+				}
+				if (ta2[i] > 0)
+				{
+					coeff[i][1][0] = 0;
+					coeff[i][1][1] = 1 / 2.0 * ddq1[i];
+					coeff[i][1][2] = dq1[i];
+					coeff[i][1][3] = q1[i];
+				}
+				if (ta3[i] > 0)
+				{
+					coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
+					coeff[i][2][1] = 1 / 2.0 * ddq2[i];
+					coeff[i][2][2] = dq2[i];
+					coeff[i][2][3] = q2[i];
+				}
+				if (ta4[i] > 0)
+				{
+					coeff[i][3][0] = 0;
+					coeff[i][3][1] = 0;
+					coeff[i][3][2] = dq3[i];
+					coeff[i][3][3] = q3[i];
+				}
+			}
+			else if (sigma[i] != 0 && Ti[i] > 0) // è¿™ä¸€æ®µæ˜¯æ ¹æ®å¤šè½´æ—¶é—´åŒæ­¥å è®¡ç®—å„æ®µçš„æ—¶é—´ç³»æ•°å’Œå¤šé¡¹å¼ç³»æ•° å¹¶è¿”å›ç»“æŸçš„ä½ç½®é€Ÿåº¦ åŠ é€Ÿåº¦
+			{
+				ddq_max[i] = maxddq[i];	//åŠ é€Ÿåº¦èµ‹å€¼
+				dq_avg[i] = maxdq[i];		//å¹³å‡é€Ÿåº¦èµ‹å€¼
+
+				//%time adjust
+				//	%é¦–å…ˆæ ¹æ®æ—¶é—´Tiçš„çº¦æŸ æ±‚ta4çš„åˆé€‚å€¼
+				//	%ä¸‹é¢ç»™å‡ºè¿ç«‹æ–¹ç¨‹çš„äºŒæ¬¡é¡¹å„é¡¹ç³»æ•°
+
+				a = (12 * pow(Jm[i],3) * dq_avg[i] *pow(sigma[i],3) - 12 * pow(Jm[i],3) * dq0[i] *pow(sigma[i],3) + 6 * pow(Jm[i],2) * pow(ddq0[i],2) * pow(sigma[i],2));
+				b = (24 * pow(Jm[i],3) * qf[i] *pow(sigma[i],3) - 24 * pow(Jm[i],3) * q0[i] *pow(sigma[i],3) - 8 * Jm[i] *pow(ddq0[i],3) * sigma[i] - 24 * pow(Jm[i],3) * Ti[i] *dq_avg[i] *pow(sigma[i],3) + 24 * pow(Jm[i],2) * ddq0[i] *dq0[i] *pow(sigma[i],2) - 24 * pow(Jm[i],2) * ddq0[i] *dq_avg[i] *pow(sigma[i],2));
+				c = 12 * pow(Jm[i],2) * pow(dq0[i],2) * pow(sigma[i],2) - 24 * pow(Jm[i],2) * dq0[i] *dq_avg[i] *pow(sigma[i],2) + 12 * pow(Jm[i],2) * pow(dq_avg[i],2) * pow(sigma[i],2) - 12 * Jm[i] *pow(ddq0[i],2) * dq0[i] *sigma[i] + 12 * Jm[i] *pow(ddq0[i],2) * dq_avg[i] *sigma[i] + 3 * pow(ddq0[i],4);
+				lamda = b*b - 4 * a*c;
+				if (lamda <= 0)
+				{
+					//printf("lamda <=0\n");
+				}
+				else // ta3  lamdaå¤§äº0
+				{
+					newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a);
+					newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a);
+
+					//å¦‚æœä¸¤ä¸ªæ—¶é—´è§£éƒ½ä¸ºæ­£ ä¾æ¬¡è¿›è¡Œè®¡ç®— å¹¶åˆ¤æ–­
+					if (newT[0] > minim && newT[1] > minim)
+					{
+						//é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						if (newT[0] > newT[1])
+						{
+							ta3[i] = newT[1];
+						}
+						else
+						{
+							ta3[i] = newT[0];
+						}
+
+						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
+
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						//æ ¹æ®ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+						{
+
+							a = ((Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0 - (3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0);
+							b = (-(Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
+							c = qf[i] - q0[i] - (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) - pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) + (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]);
+
+							slamda = b*b - 4 * a*c;
+							if (slamda <= 0)
+							{
+								//printf("slamda <=0\n");
+							}
+							else //ta3  lamdaå¤§äº0
+							{
+								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+								if ((snewT[0] > minim && snewT[1] > minim))
+								{
+									// é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+									if (snewT[0] > snewT[1])
+										ta3[i] = snewT[1];
+									else
+										ta3[i] = snewT[0];
+
+
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if ((snewT[0] > minim && snewT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+								{
+									ta3[i] = snewT[0];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if (snewT[1] > minim && snewT[0] < -minim) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+								{
+									ta3[i] = snewT[1];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+
+								}
+							}
+						}
+						else
+						{
+							//åˆ·æ–°ta4
+							ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
+							//å¦‚æœè®¡ç®—çš„ta4 ä¸ºè´Ÿ è¡¨ç¤ºå–å¾—è§£ä¸åˆé€‚ æ¢è§£2 é‡æ–°è®¡ç®—
+							if (ta4[i] < 0)
+							{
+								//é‡æ–°è®¡ç®—ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+								printf("ta4 error\n");
+							}
+							else //ta4å¤§äº0å­˜åœ¨ç¬¬å››æ®µ åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦ åˆ·æ–°å‡ºå‚
+							{
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+						}
+					}
+					else if ((newT[0] > minim) && (newT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+					{
+						ta3[i] = newT[0];
+						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
+
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						//æ ¹æ®ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+						{
+
+							a = ((Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0 - (3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0);
+							b = (-(Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
+							c = qf[i] - q0[i] - (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) - pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) + (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]);
+
+							slamda = b*b - 4 * a*c;
+							if (slamda <= 0)
+							{
+								//printf("slamda <=0\n");
+							}
+							else //ta3  lamdaå¤§äº0
+							{
+								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+								if ((snewT[0] > minim && snewT[1] > minim))
+								{
+									// é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+									if (snewT[0] > snewT[1])
+										ta3[i] = snewT[1];
+									else
+										ta3[i] = snewT[0];
+
+
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if ((snewT[0] > minim && snewT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+								{
+									ta3[i] = snewT[0];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if (snewT[1] > minim && snewT[0] < -minim) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+								{
+									ta3[i] = snewT[1];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+
+								}
+							}
+						}
+						else
+						{
+							//åˆ·æ–°ta4
+							ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
+							//å¦‚æœè®¡ç®—çš„ta4 ä¸ºè´Ÿ è¡¨ç¤ºå–å¾—è§£ä¸åˆé€‚ æ¢è§£2 é‡æ–°è®¡ç®—
+							if (ta4[i] < 0)
+							{
+								//é‡æ–°è®¡ç®—ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+								printf("ta4 error\n");
+							}
+							else //ta4å¤§äº0å­˜åœ¨ç¬¬å››æ®µ åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦ åˆ·æ–°å‡ºå‚
+							{
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+						}
+
+					}
+					else if ((newT[1] > minim) && (newT[0] < -minim)) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+					{
+						ta3[i] = newT[1];
+						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
+
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						//æ ¹æ®ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+						{
+
+							a = ((Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0 - (3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0);
+							b = (-(Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
+							c = qf[i] - q0[i] - (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) - pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) + (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]);
+
+							slamda = b*b - 4 * a*c;
+							if (slamda <= 0)
+							{
+								//printf("slamda <=0\n");
+							}
+							else //ta3  lamdaå¤§äº0
+							{
+								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+								if ((snewT[0] > minim && snewT[1] > minim))
+								{
+									// é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+									if (snewT[0] > snewT[1])
+										ta3[i] = snewT[1];
+									else
+										ta3[i] = snewT[0];
+
+
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if ((snewT[0] > minim && snewT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+								{
+									ta3[i] = snewT[0];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if (snewT[1] > minim && snewT[0] < -minim) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+								{
+									ta3[i] = snewT[1];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] > qf[i] && sigma[i] == 1) || (q3[i] < qf[i] && sigma[i] == -1))
+										printf("q3 error\n");
+
+								}
+							}
+						}
+						else
+						{
+							//åˆ·æ–°ta4
+							ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
+							//å¦‚æœè®¡ç®—çš„ta4 ä¸ºè´Ÿ è¡¨ç¤ºå–å¾—è§£ä¸åˆé€‚ æ¢è§£2 é‡æ–°è®¡ç®—
+							if (ta4[i] < 0)
+							{
+								//é‡æ–°è®¡ç®—ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+								printf("ta4 error\n");
+							}
+							else //ta4å¤§äº0å­˜åœ¨ç¬¬å››æ®µ åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦ åˆ·æ–°å‡ºå‚
+							{
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+						}
+					}
+				}
+				//åˆ·æ–°æ€»æ—¶é—´
+				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
+				if ((ta1[i] + ta2[i] + ta3[i] + ta4[i])<= 0)
+				{
+					printf("ta error\n");
+				}
+				//åˆ·æ–°å„æ®µæ—¶é—´
 				Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
-				//Ë¢ĞÂ¸÷¶ÎÊ±¼äµÄ¶ÔÓ¦Èı´Î·½³ÌµÄÏµÊı
+				//åˆ·æ–°å„æ®µæ—¶é—´çš„å¯¹åº”ä¸‰æ¬¡æ–¹ç¨‹çš„ç³»æ•°
 				if (ta1[i] > 0)
 				{
 					coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
@@ -821,7 +1056,7 @@ int calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MAXAXES]
 					coeff[i][3][3] = q3[i];
 				}
 			}
-			else if (sigma[i] == 0) // ¾²Ö¹µÄ´¦Àí
+			else if (sigma[i] == 0) // é™æ­¢çš„å¤„ç†
 			{
 				ta1[i] = 0;
 				ta2[i] = 0;
@@ -848,7 +1083,7 @@ int calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MAXAXES]
 				coeff[i][3][3] = q0[i];
 			}
 		}
-		//maxT = max(tempT); //ÇótempTÊı×éÖĞµÄ×î´óÖµ ²¢·µ»Ø
+		//maxT = max(tempT); //æ±‚tempTæ•°ç»„ä¸­çš„æœ€å¤§å€¼ å¹¶è¿”å›
 		*maxT = -1;
 		for (int i = 0; i < 6; i++)
 		{
@@ -859,689 +1094,736 @@ int calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MAXAXES]
 
 		}
 	}
-	else if (type == 2)// slowdown  Öğµã¼õËÙ¶Î
+	else if (type == 2)// slowdown  é€ç‚¹å‡é€Ÿæ®µ
 	{
 		for (int i = 0; i < dofn; i++)
 		{
-			//¸ù¾İ¹Ø½ÚµÄÔË¶¯·½Ïò ÅĞ¶ÏJerkµÄ·ûºÅ±äÁ¿
-			if (qf[i] - q0[i] > minim)  //Õı×ª  ·ûºÅÈ¡1
+			//æ ¹æ®å…³èŠ‚çš„è¿åŠ¨æ–¹å‘ åˆ¤æ–­Jerkçš„ç¬¦å·å˜é‡
+			if (qf[i] - q0[i] > minim)  //æ­£è½¬  ç¬¦å·å–1
 			{
 				sigma[i] = 1;
 			}
-			else if (qf[i] - q0[i] < -minim) //·´×ª ·ûºÅÈ¡ - 1
+			else if (qf[i] - q0[i] < -minim) //åè½¬ ç¬¦å·å– - 1
 			{
 				sigma[i] = -1;
 			}
 			else
 			{
-				sigma[i] = 0; //¾²Ö¹ ·ûºÅÈ¡0
+				sigma[i] = 0; //é™æ­¢ ç¬¦å·å–0
 			}
-			if (sigma[i] != 0 && Ti[i] == -1) // ¹Ø½Ú´æÔÚÔË¶¯ ÇÒÖ»Ğè¼ÆËã¸÷ÖáÍ¬²½ÔË¶¯Ê±¼ä ½øÈëÏÂÃæ¼ÆËã
+			if (sigma[i] != 0 && Ti[i] == 1) // å…³èŠ‚å­˜åœ¨è¿åŠ¨ ä¸”åªéœ€è®¡ç®—å„è½´åŒæ­¥è¿åŠ¨æ—¶é—´ è¿›å…¥ä¸‹é¢è®¡ç®—
 			{
-				ddq_max[i] = maxddq[i]; //¼ÓËÙ¶È¸³Öµ
-				dq_avg[i] = maxdq[i]; //Æ½¾ùËÙ¶È¸³Öµ
+				ddq_max[i] = maxddq[i]; //åŠ é€Ÿåº¦èµ‹å€¼
+				dq_avg[i] = maxdq[i]; //å¹³å‡é€Ÿåº¦èµ‹å€¼
 
-									  //time adjust
-									  //stage 1  -- - acc - acc
-									  //µÚÒ»¶Î¼ÆËã  ¼ÆËã¼Ó¼ÓËÙ¶ÎÇó¼Ó¼ÓËÙµÄÊ±¼äta1
-									  //Çó¼Ó¼ÓËÙµÄÊ±¼äta1 ¼ÓËÙ¶Èddq1 ËÙ¶Èdq1 ½áÊøÊ±¿ÌÎ»ÖÃ q1
-
-				ta1[i] = (ddq0[i] - ddq_max[i]) / -(sigma[i] * Jm[i]);
-				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-				q1[i] = qf[i] - dq0[i] * ta1[i] - 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-				//stage 2 -- - quansi - acc
-				//µÚ¶ş¶Î¼ÆËã  ¼ÆËãÔÈ¼ÓËÙ¶ÎÇóÔÈ¼ÓËÙµÄÊ±¼äta2
-				//ÇóÔÈ¼ÓËÙµÄÊ±¼äta2 ¼ÓËÙ¶Èddq2 ËÙ¶Èdq2 ½áÊøÊ±¿ÌÎ»ÖÃ q2
-				//ĞèÒªÌáÇ°¼ÆËãµÚÈı¶ÎËùĞèµÄÊ±¼äta3 ÒÔ¼Óµ½Æ½¾ùËÙ¶Èdq_avg×÷ÎªÌõ¼şÀ´´úÈë¼ÆËãta2
-
-				ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-				ta2[i] = (dq_avg[i] - ddq_max[i] * ta3[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2) + dq1[i]) / ddq_max[i];
-				ddq2[i] = ddq1[i];
-				dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-				q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-				//µÚ¶ş¶Î¼ÆËãµÄ½áÊøÊ±¿ÌÎ»ÖÃÈç¹ûĞ¡ÓÚ³õÊ¼µãµÄÎ»ÖÃ ĞèÒªÖØĞÂ¼ÆËãta2
-				if ((sigma[i] == 1 && q2[i] < q0[i]) || (sigma[i] == -1 && q2[i] > q0[i]))
+				//time adjust
+				if ((((dq0[i] > dq_avg[i] *0.9) && (dq0[i] > 0)) || ((dq0[i] < dq_avg[i] *0.9) && (dq0[i] < 0))))
 				{
-					// ¸ø³öĞŞÕı¶ş´ÎÏîµÄ¸÷ÏµÊı
-					a = -1 / 2.0 * ddq1[i];
-					b = -dq1[i];
-					c = (q1[i] - q0[i]);
-					lamda = b*b - 4 * a*c;
-					if (lamda < 0)
-					{
-						printf("signification erreur"); //¶ş´ÎÏîÏµÊıÓĞÎó ±íÊ¾¸ø¶¨µÄÂ·¾¶²åÖµÊ±¼äÌ«¶Ì ÖÁÉÙĞ¡ÓÚ900ÄÉÃë ±¨´í
-						return -1;
-					}
-
-					newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //Çó³öµÄ¶ş´ÎÏî¸ù1
-					newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //Çó³öµÄ¶ş´ÎÏî¸ù2
-
-					if (newT[0] > minim && newT[1] > minim) // Çó³öÁ½¸öÕı¸ù È¡¶ÌµÄÊ±¼ä´úÈë¼ÆËã
-					{
-						if (newT[0] > newT[1]) // ta2È¡Ê±¼ä½ÏĞ¡µÄÖµ
-						{
-							ta2[i] = newT[0];
-						}
-						else
-						{
-							ta2[i] = newT[1];
-						}
-					}
-					else if (newT[0] > minim && newT[1] < -minim) // È¡ÕıµÄÊ±¼äÖµ
-					{
-						ta2[i] = newT[0];
-					}
-					else if (newT[1] > 1e-6 && newT[0] < -1e-6) // È¡ÕıµÄÊ±¼äÖµ
-					{
-						ta2[i] = newT[1];
-					}
-					//ÖØĞÂ¼ÆËãta2ºó ¸üĞÂ¼ÓËÙ¶È ËÙ¶ÈºÍÎ»ÖÃ
-					ddq2[i] = ddq1[i];
-					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-					q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-					//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
+					ta1[i] = 0;
+					ta2[i] = 0;
 					ta3[i] = 0;
-					ta4[i] = 0;
-					//¸üĞÂ³ö²Î
-					tqf[i] = q2[i];
-					dqf[i] = dq2[i];
-					ddqf[i] = ddq2[i];
-					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-					//¼ÆËã×ÜÊ±¼ä
-					//¸÷¶ÎÊ±¼ä¸³Öµ
-					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
-					//¸÷¶ÎÏµÊı¸³Öµ
-					if (ta1[i] > 0)
-					{
-						coeff[i][0][0] = -1 / 6.0 * sigma[i] * Jm[i];
-						coeff[i][0][1] = -1 / 2.0 * ddq0[i];
-						coeff[i][0][2] = -dq0[i];
-						coeff[i][0][3] = qf[i];
-					}
-
-					if (ta2[i] > 0)
-					{
-						coeff[i][1][0] = 0;
-						coeff[i][1][1] = -1 / 2.0 * ddq1[i];
-						coeff[i][1][2] = -dq1[i];
-						coeff[i][1][3] = q1[i];
-					}
-					if (ta3[i] > 0)
-					{
-						coeff[i][2][0] = 1 / 6.0 * sigma[i] * Jm[i];
-						coeff[i][2][1] = -1 / 2.0 * ddq2[i];
-						coeff[i][2][2] = -dq2[i];
-						coeff[i][2][3] = q2[i];
-					}
-					if (ta4[i] > 0)
-					{
-						coeff[i][3][0] = 0;
-						coeff[i][3][1] = 0;
-						coeff[i][3][2] = -dq3[i];
-						coeff[i][3][3] = q3[i];
-					}
-					continue;
-				}
-
-				//stage 3 -- - dcc - acc
-				//¼ÆËã¼õ¼ÓËÙ¶Î
-				//¼õ¼ÓËÙ¶ÎµÄÊ±¼äta3ÔÚÔÈ¼ÓËÙÊ±ÒÑ¼ÆËã£¬Ë¢ĞÂ¼ÓËÙ¶È£¬ËÙ¶ÈºÍÎ»ÖÃÖµ
-
-				ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-				dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-				q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-				//ÅĞ¶Ï¼õ¼ÓËÙ½áÊøºóµÄÎ»ÖÃÊÇ·ñĞ¡ÓÚ³õÊ¼µãÎ»ÖÃ Èç¹ûĞ¡ÓÚ ÖØĞÂ¼ÆËãÊ±¼äta3
-				if ((sigma[i] == 1 && q3[i] < q0[i]) || (sigma[i] == -1 && q3[i] > q0[i]))
-				{
-					// ¸ù¾İ¼õ¼ÓËÙ¶ÎµÄÒ»ÔªÈı´Î·½³Ì¼ÆËãµ÷ÕûºóµÄ¸ù
-					//Ê×ÏÈ»ñµÃ¸÷ÏîµÄÏµÊı
-
-					a3 = 1 / 6.0 * sigma[i] * Jm[i]; //a
-					a2 = -1 / 2.0 * ddq2[i]; //b
-					a1 = -dq2[i]; //c
-					a0 = q2[i] - q0[i]; //d
-
-										//                     r = roots([a3 a2 a1 a0]);
-					getrootsofquadratic(a3, a2, a1, a0, r);  //¼ÆËãÒ»ÔªÈı´Î·½³Ì
-					tempt = 99; //»ñµÃÈ«²¿µÄ½â
-					for (int j = 0; j < 3; j++)
-					{
-						if (r[j]<tempt && r[j]>minim) //¸ù¾İÒªÇóÈ¥µô¸ºÊ±¼ä£¬È¡×îĞ¡Ê±¼ä
-						{
-							tempt = r[j];
-						}
-					}
-					ta3[i] = tempt;
-
-					//ÖØĞÂË¢ĞÂta3µÄÎ»ÖÃ ËÙ¶È ºÍ¼ÓËÙ¶ÈÖµ
-					ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-					dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-					q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-					//²»´æÔÚµÚËÄÊ±¼ä¶Î
-					ta4[i] = 0;
-					//¸üĞÂ¸Ã¹Ø½ÚµÄ½áÊøµÄÎ»ÖÃ ËÙ¶È ¼ÓËÙ¶È
-					tqf[i] = q3[i];
-					dqf[i] = dq3[i];
-					ddqf[i] = ddq3[i];
-					//µÃµ½×ÜÊ±¼ä
-					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-					//¸÷ÏîÊ±¼äÏµÊıµÄË¢ĞÂ
-					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
-					//¸÷ÏîÈı´ÎÏîÏµÊıµÄË¢ĞÂ
-					if (ta1[i] > 0)
-					{
-						coeff[i][0][0] = -1 / 6.0 * sigma[i] * Jm[i];
-						coeff[i][0][1] = -1 / 2.0 * ddq0[i];
-						coeff[i][0][2] = -dq0[i];
-						coeff[i][0][3] = qf[i];
-					}
-					if (ta2[i] > 0)
-					{
-						coeff[i][1][0] = 0;
-						coeff[i][1][1] = -1 / 2.0 * ddq1[i];
-						coeff[i][1][2] = -dq1[i];
-						coeff[i][1][3] = q1[i];
-					}
-					if (ta3[i] > 0)
-					{
-						coeff[i][2][0] = 1 / 6.0 * sigma[i] * Jm[i];
-						coeff[i][2][1] = -1 / 2.0 * ddq2[i];
-						coeff[i][2][2] = -dq2[i];
-						coeff[i][2][3] = q2[i];
-					}
-					if (ta4[i] > 0)
-					{
-						coeff[i][3][0] = 0;
-						coeff[i][3][1] = 0;
-						coeff[i][3][2] = -dq3[i];
-						coeff[i][3][3] = q3[i];
-					}
-					continue;
-				}
-
-				//stage 4 -- - quansi - velocity
-				//µÚËÄ¶Î ÔÈËÙ¼ÆËã
-				//¼ÆËãÔÈËÙµÄta4 ÒÔ¼°Î»ÖÃËÙ¶È ¼ÓËÙ¶ÈÖµ
-				//Ê×ÏÈÅĞ¶Ï¼õ¼ÓËÙ½áÊøµãÊÇ·ñ´óÓÚÄ¿±êÎ»ÖÃ£¨³õÊ¼µãÎ»ÖÃ£© ´óÓÚ Ôò´æÔÚÔÈËÙ¶Î
-
-				if ((sigma[i] == 1 && q3[i] > q0[i]) || (sigma[i] == -1 && q3[i] < q0[i]))
-				{
-					// µÃµ½ÔÈËÙ¶ÎµÄta4 Î»ÖÃºÍËÙ¶È ¼ÓËÙ¶ÈÖµ
-					ta4[i] = (q3[i] - q0[i]) / dq3[i];
+					ta4[i] = (q0[i] - qf[i]) / dq0[i];
 					ddq4[i] = 0;
-					dq4[i] = dq3[i];
-					q4[i] = q3[i] - ta4[i] * dq3[i];
-					//¸üĞÂ·µ»ØµÄÎ»ÖÃËÙ¶È¼ÓËÙ¶ÈÖµ
+					dq4[i] = dq0[i];
+					q4[i] = qf[i] + ta4[i] *dq0[i];
+					//æ›´æ–°å‡ºå‚
 					tqf[i] = q4[i];
 					dqf[i] = dq4[i];
 					ddqf[i] = ddq4[i];
 				}
-
-				//¸üĞÂ×ÜÊ±¼ä
-				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-
-				//¸üĞÂ¸÷ÏîÊ±¼äÏµÊı
-				Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
-				//¸üĞÂ¸÷ÏîµÄ¶àÏîÊ½ÏµÊı
-				if (ta1[i] > 0)
+				else
 				{
-					coeff[i][0][0] = -1 / 6.0 * sigma[i] * Jm[i];
-					coeff[i][0][1] = -1 / 2.0 * ddq0[i];
-					coeff[i][0][2] = -dq0[i];
-					coeff[i][0][3] = qf[i];
-				}
-				if (ta2[i] > 0)
-				{
-					coeff[i][1][0] = 0;
-					coeff[i][1][1] = -1 / 2.0 * ddq1[i];
-					coeff[i][1][2] = -dq1[i];
-					coeff[i][1][3] = q1[i];
-				}
-				if (ta3[i] > 0)
-				{
-					coeff[i][2][0] = 1 / 6.0 * sigma[i] * Jm[i];
-					coeff[i][2][1] = -1 / 2.0 * ddq2[i];
-					coeff[i][2][2] = -dq2[i];
-					coeff[i][2][3] = q2[i];
-				}
-				if (ta4[i] > 0)
-				{
-					coeff[i][3][0] = 0;
-					coeff[i][3][1] = 0;
-					coeff[i][3][2] = -dq3[i];
-					coeff[i][3][3] = q3[i];
-				}
-			}
-			else if (sigma[i] != 0 && Ti[i] > 0)// ÕâÒ»¶ÎÊÇ¸ù¾İ¶àÖáÊ±¼äÍ¬²½ºó ¼ÆËã¸÷¶ÎµÄÊ±¼äÏµÊıºÍ¶àÏîÊ½ÏµÊı ²¢·µ»Ø½áÊøµÄÎ»ÖÃËÙ¶È ¼ÓËÙ¶È
-			{
-				ddq_max[i] = maxddq[i]; //¼ÓËÙ¶È¸³Öµ
-				dq_avg[i] = maxdq[i]; //Æ½¾ùËÙ¶È¸³Öµ
+					//stage 1  -- - acc - acc
+					//ç¬¬ä¸€æ®µè®¡ç®—  è®¡ç®—åŠ åŠ é€Ÿæ®µæ±‚åŠ åŠ é€Ÿçš„æ—¶é—´ta1
+					//æ±‚åŠ åŠ é€Ÿçš„æ—¶é—´ta1 åŠ é€Ÿåº¦ddq1 é€Ÿåº¦dq1 ç»“æŸæ—¶åˆ»ä½ç½® q1
 
-									  //time adjust
-									  //stage 1  -- - acc - acc
-									  //¼ÆËã¼Ó¼ÓËÙ¶ÎÇó¼Ó¼ÓËÙµÄÊ±¼äta1 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-				ta1[i] = (ddq0[i] - ddq_max[i]) / -(sigma[i] * Jm[i]);
-				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-				q1[i] = qf[i] - dq0[i] * ta1[i] - 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+					ta1[i] = (-ddq0[i] + ddq_max[i]) / (sigma[i] * Jm[i]);
+					ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+					dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+					q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
 
-				//¼ÆËãÔÈ¼ÓËÙ¶Îta2Ç° ĞèÒª¼ÆËã¼õ¼ÓËÙÊ±¼äta3
-				ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-
-				//Ê×ÏÈ¸ù¾İÊ±¼äTiµÄÔ¼Êø Çóta4µÄºÏÊÊÖµ
-				//ÏÂÃæ¸ø³öÁ¬Á¢·½³ÌµÄ¶ş´ÎÏî¸÷ÏîÏµÊı
-
-				a = 1 / 2.0 * ddq1[i];
-				b = -1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2) - ddq1[i] * (Ti[i] - ta1[i] - ta3[i]);
-				//                 b = 1 / 2 * sigma[i]*Jm[i]*ta3[i] ^ 2 + ddq1[i]*Ti[i];
-				c = q1[i] - q0[i] - dq1[i] * ta3[i] - 1 / 2.0 * ddq1[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3) - dq1[i] * (Ti[i] - ta1[i] - ta3[i]) - ddq1[i] * ta3[i] * (Ti[i] - ta1[i] - ta3[i]) + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2) * (Ti[i] - ta1[i] - ta3[i]);
-				//                 c = q0[i] + dq0[i]*ta1[i] + ta3[i]*((sigma[i]*Jm[i]*ta1[i] ^ 2) / 2 + ddq0[i]*ta1[i] + dq0[i]) + ta3[i] ^ 2 * (ddq0[i] / 2 + (sigma[i]*Jm[i]*ta1[i]) / 2) + (ddq0[i]*ta1[i] ^ 2) / 2 + (sigma[i]*Jm[i]*ta1[i] ^ 3) / 6 - (sigma[i]*Jm[i]*ta3[i] ^ 3) / 6 + Ti[i]*(dq0[i] + ddq0[i]*ta1[i] + (sigma[i]*Jm[i]*ta1[i] ^ 2) / 2 - (sigma[i]*Jm[i]*ta3[i] ^ 2) / 2 + ta3[i]*(ddq0[i] + sigma[i]*Jm[i]*ta1[i])) - qf[i];
-				lamda = b*b - 4 * a*c;
-				if (lamda <= 0)// lamdaÖµĞ¡ÓÚ0 ±íÊ¾ta2ÎŞ½â ĞèÒª¸ù¾İta1 ta3 Çó½â
-				{
-					//ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-					ta2[i] = Ti[i] - ta1[i] - ta3[i];
-					ddq2[i] = ddq1[i];
-					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-					q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-					//Èç¹ûÔÈ¼ÓËÙºóÎ»ÖÃ³¬³öÏÂÒ»µãÎ»ÖÃ ÀûÓÃÈı´Î·½³ÌÖØĞÂ¼ÆËãta2µÄÊ±¼ä
-					if ((sigma[i] == 1 && q2[i] < q0[i]) || (sigma[i] == -1 && q2[i] > q0[i]))
+					if ((dq1[i] > dq_avg[i] *0.9 && sigma[i] == 1) || (dq1[i] < dq_avg[i] *0.9 && sigma[i] == -1))
 					{
-						// ¸ø³öÁ¬Á¢ta1ºÍta2·½³Ìºó Èı´Î·½³ÌµÄ¸÷ÏîÏµÊı  ÇóĞŞÕıºóµÄta1Öµ
-						a3 = 1 / 3.0 * sigma[i] * Jm[i]; //a
-						a2 = 1 / 2.0 * sigma[i] * Jm[i] * Ti[i] + 1 / 2.0 * ddq0[i]; //b
-						a1 = -1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-						a0 = -1 / 2.0 * ddq0[i] * pow(Ti[i], 2) - dq0[i] * Ti[i] + qf[i] - q0[i]; //d
+						ddq_max[i] = -sqrt(sigma[i] *Jm[i] *(dq_avg[i] - dq0[i]) + 1 / 2.0 * pow(ddq0[i],2));
+						ta1[i] = (-ddq0[i] + ddq_max[i]) / (sigma[i] *Jm[i]);
+						ddq1[i] = ddq0[i] + sigma[i] *Jm[i] *ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] *ta1[i] + 1 / 2.0 * sigma[i] *Jm[i]*pow(ta1[i],2);
+						q1[i] = qf[i] + dq0[i] *ta1[i] + 1 / 2.0 * ddq0[i] *pow(ta1[i],2) + 1 / 6.0 * sigma[i] *Jm[i]*pow(ta1[i],3);
 
-																								  //                         r = roots([a3 a2 a1 a0]);
-						getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÈı´Î·½³ÌµÄ¸ù
-						tempt = 99;
-						for (int j = 0; j < 3; j++)
+						if (((sigma[i] == 1 && q1[i] < q0[i]) || (sigma[i] == -1 && q1[i] > q0[i])))
 						{
-							if (r[j]<tempt && r[j]>minim) //ÇóÊ±¼ä×îĞ¡ÇÒÎªÕıµÄ¸ù
-							{
-								tempt = r[j];
-							}
+							ta1[i] = 0;
+							ta2[i] = 0;
+							ta3[i] = 0;
+							ta4[i] = (q0[i] - qf[i]) / dq0[i];
+							ddq4[i] = 0;
+							dq4[i] = dq0[i];
+							q4[i] = qf[i] + ta4[i] *dq0[i];
+							//æ›´æ–°å‡ºå‚
+							tqf[i] = q4[i];
+							dqf[i] = dq4[i];
+							ddqf[i] = ddq4[i];
 						}
-						//¸ù¾İ·½³ÌµÄ¸ù Ë¢ĞÂta1 ÒÔ¼°Î»ÖÃËÙ¶È ¼ÓËÙ¶È
-						ta1[i] = tempt;
-						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-						q1[i] = qf[i] - dq0[i] * ta1[i] - 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-						//ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = Ti[i] - ta1[i];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-						//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-						ta3[i] = 0;
-						ta4[i] = 0;
-						//¸üĞÂ³ö²Î
-						tqf[i] = q2[i];
-						dqf[i] = dq2[i];
-						ddqf[i] = ddq2[i];
-					}
-					else//´æÔÚµÚÈı¶Îta3 q2Ğ¡ÓÚqf
-					{
-						//                     ta3[i] = Ti[i] - ta1[i] - ta2[i];
-						//Ë¢ĞÂ¼õ¼ÓËÙ½áÊøºóµÄÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//²»´æÔÚµÚËÄ¶ÎÊ±¼ä
-						ta4[i] = 0;
-						//¸üĞÂ³ö²Î
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
-					}
-				}
-				else //´æÔÚµÚËÄ¶Î ta2  lamda´óÓÚ0
-				{
-					newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a);
-					newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a);
-
-					//Èç¹ûÁ½¸öÊ±¼ä½â¶¼ÎªÕı ÒÀ´Î½øĞĞ¼ÆËã ²¢ÅĞ¶Ï
-					if ((newT[0] > minim && newT[1] > minim))
-					{
-						// if newT(1)>newT(2)
-						// ta2[i] = newT(2);
-						//                         else
-						//Ê×ÏÈÈ¡½â1 Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = newT[0];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						//¸ù¾İta3 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//Ë¢ĞÂta4
-						ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-						//Èç¹û¼ÆËãµÄta4 Îª¸º ±íÊ¾È¡µÃ½â²»ºÏÊÊ »»½â2 ÖØĞÂ¼ÆËã
-						if (ta4[i] < 0)
+						else
 						{
-							// »»½â2 ¼ÆËãÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ta2[i] = newT[1];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+							ta2[i] = 0;
+							ta3[i] = ddq_max[i] / (sigma[i] *Jm[i]);
+							ddq3[i] = ddq1[i] - sigma[i] *Jm[i] *ta3[i];
+							dq3[i] = dq1[i] + ddq1[i] *ta3[i] - 1 / 2.0 * sigma[i] *Jm[i] *pow(ta3[i],2);
+							q3[i] = q1[i] + dq1[i] *ta3[i] + 1 / 2.0 * ddq1[i] *pow(ta3[i],2) - 1 / 6.0 * sigma[i] *Jm[i] *pow(ta3[i],3);
 
-							//¼ÆËãta3Î»ÖÃËÙ¶È¼ÓËÙ¶È
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							//¼ÆËãta4
-							ta41 = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-
-							//Èç¹ûÁ½¸ö½â¶¼²»´æÔÚta4 ÔòÈ¥µôµÚËÄÊ±¼ä¶Î ÖØĞÂµ÷Õûta2
-							if (ta41 < 0)
+							if (((sigma[i] == 1 && q3[i] < q0[i]) || (sigma[i] == -1 && q3[i] > q0[i])))
 							{
-								// ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-								//Èç¹ûq2µÄÎ»ÖÃ´óÓÚÏÂÒ»µãÎ»ÖÃ ĞèÒª¸ù¾İÈı´Î·½³ÌÖØĞÂ¼ÆËãta1ºÍta2
-								if ((sigma[i] == 1 && q2[i] < q0[i]) || (sigma[i] == -1 && q2[i] > q0[i]))
-								{
-									// ½¨Á¢Èı´Î·½³Ì
-									a3 = 1 / 3.0 * sigma[i] * Jm[i]; //a
-									a2 = 1 / 2.0 * sigma[i] * Jm[i] * Ti[i] + 1 / 2.0 * ddq0[i]; //b
-									a1 = -1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-									a0 = -1 / 2.0 * ddq0[i] * pow(Ti[i], 2) - dq0[i] * Ti[i] + qf[i] - q0[i]; //d
-
-
-									getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÈı´Î·½³ÌµÄ¸ù
-									tempt = 99;
-									for (int j = 0; j < 3; j++)
-									{
-										if (r[j]<tempt && r[j]>minim) //È¡×îĞ¡µÄÕıÊ±¼äµÄ¸ù
-										{
-											tempt = r[j];
-										}
-									}
-
-									//Ë¢ĞÂta1 ÒÔ¼°Î»ÖÃËÙ¶È¼ÓËÙ¶È
-									ta1[i] = tempt;
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = qf[i] - dq0[i] * ta1[i] - 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									//Ë¢ĞÂta2 ÒÔ¼°Î»ÖÃËÙ¶È¼ÓËÙ¶È
-									ta2[i] = Ti[i] - ta1[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-									ta3[i] = 0;
-									ta4[i] = 0;
-									//Ë¢ĞÂ³ö²Î
-									tqf[i] = q2[i];
-									dqf[i] = dq2[i];
-									ddqf[i] = ddq2[i];
-								}
-								else//ÔÈ¼ÓËÙºóµÄÎ»ÖÃ²»³¬¹ıÏÂÒ»µãÎ»ÖÃ ¼ÆËã¼õ¼ÓËÙ¶Î
-								{
-
-									//¸üĞÂta3¶ÎµÄÎ»ÖÃËÙ¶È¼ÓËÙ¶ÈÖµ
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									//²»´æÔÚµÚËÄÊ±¼ä¶Î
-									ta4[i] = 0;
-									//¸üĞÂ³ö²Î
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-							}
-							else //ta4´óÓÚ0´æÔÚµÚËÄ¶Î Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È Ë¢ĞÂ³ö²Î
-							{
-								ta4[i] = ta41;
+								ta4[i] = (q0[i] - qf[i]) / dq0[i];
 								ddq4[i] = 0;
-								dq4[i] = dq3[i];
-								q4[i] = q3[i] - ta41*dq3[i];
+								dq4[i] = dq0[i];
+								q4[i] = qf[i] + ta4[i] *dq0[i];
+								//æ›´æ–°è¯¥å…³èŠ‚çš„ç»“æŸçš„ä½ç½® é€Ÿåº¦ åŠ é€Ÿåº¦
 								tqf[i] = q4[i];
 								dqf[i] = dq4[i];
 								ddqf[i] = ddq4[i];
 							}
-						}
-						else //ta4´óÓÚ0´æÔÚµÚËÄ¶Î Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È Ë¢ĞÂ³ö²Î
-						{
-							ddq4[i] = 0;
-							dq4[i] = dq3[i];
-							q4[i] = q3[i] - ta4[i] * dq3[i];
-							tqf[i] = q4[i];
-							dqf[i] = dq4[i];
-							ddqf[i] = ddq4[i];
+							else
+							{
+								ta4[i] = (q0[i] - q3[i]) / dq3[i];
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] *dq3[i];
+								//æ›´æ–°è¯¥å…³èŠ‚çš„ç»“æŸçš„ä½ç½® é€Ÿåº¦ åŠ é€Ÿåº¦
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
 						}
 					}
-					else if (newT[0] > minim && newT[1] < -minim) // ½â1 ÎªÕı ½â2Îª¸º È¡½â1
+					else
 					{
-						//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = newT[0];
+						//stage 2 -- - quansi - acc
+						//ç¬¬äºŒæ®µè®¡ç®—  è®¡ç®—åŒ€åŠ é€Ÿæ®µæ±‚åŒ€åŠ é€Ÿçš„æ—¶é—´ta2
+						//æ±‚åŒ€åŠ é€Ÿçš„æ—¶é—´ta2 åŠ é€Ÿåº¦ddq2 é€Ÿåº¦dq2 ç»“æŸæ—¶åˆ»ä½ç½® q2
+						//éœ€è¦æå‰è®¡ç®—ç¬¬ä¸‰æ®µæ‰€éœ€çš„æ—¶é—´ta3 ä»¥åŠ åˆ°å¹³å‡é€Ÿåº¦dq_avgä½œä¸ºæ¡ä»¶æ¥ä»£å…¥è®¡ç®—ta2
+
+						ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - ddq_max[i] * ta3[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2) - dq1[i]) / ddq_max[i];
 						ddq2[i] = ddq1[i];
 						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+						q2[i] = q1[i] +dq1[i] * ta2[i]+ 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
-						//Ë¢ĞÂta3 ºÍÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//¼ÆËãta4
-						ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-						//Èç¹ûta4Ğ¡ÓÚ0 ±íÊ¾Ç°Ãæ¸øµÄ½â²»ºÏÊÊ ÖØĞÂ¼ÆËã
-						if (ta4[i] < 0)
+						//ç¬¬äºŒæ®µè®¡ç®—çš„ç»“æŸæ—¶åˆ»ä½ç½®å¦‚æœå°äºåˆå§‹ç‚¹çš„ä½ç½® éœ€è¦é‡æ–°è®¡ç®—ta2
+						if ((sigma[i] == 1 && q2[i] < q0[i]) || (sigma[i] == -1 && q2[i] > q0[i]))
 						{
-							// È¥µôta4 ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
+							// ç»™å‡ºä¿®æ­£äºŒæ¬¡é¡¹çš„å„ç³»æ•°
+							a = 1 / 2.0 * ddq1[i];
+							b = dq1[i];
+							c = (q1[i] - q0[i]);
+							lamda = b*b - 4 * a*c;
+							if (lamda < 0)
+							{
+								printf("signification erreur"); //äºŒæ¬¡é¡¹ç³»æ•°æœ‰è¯¯ è¡¨ç¤ºç»™å®šçš„è·¯å¾„æ’å€¼æ—¶é—´å¤ªçŸ­ è‡³å°‘å°äº900çº³ç§’ æŠ¥é”™
+								return -1;
+							}
+
+							newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //æ±‚å‡ºçš„äºŒæ¬¡é¡¹æ ¹1
+							newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //æ±‚å‡ºçš„äºŒæ¬¡é¡¹æ ¹2
+
+							if (newT[0] <- minim && newT[1] <- minim) // æ±‚å‡ºä¸¤ä¸ªè´Ÿæ ¹ å–çŸ­çš„æ—¶é—´ä»£å…¥è®¡ç®—
+							{
+								if (newT[0] > newT[1]) // ta2å–æ—¶é—´è¾ƒå°çš„å€¼
+								{
+									ta2[i] = newT[0];
+								}
+								else
+								{
+									ta2[i] = newT[1];
+								}
+							}
+							else if (newT[0] > minim && newT[1] < -minim) // å–æ­£çš„æ—¶é—´å€¼
+							{
+								ta2[i] = newT[1];
+							}
+							else if (newT[1] > minim && newT[0] < -minim) // å–æ­£çš„æ—¶é—´å€¼
+							{
+								ta2[i] = newT[0];
+							}
+							//é‡æ–°è®¡ç®—ta2å æ›´æ–°åŠ é€Ÿåº¦ é€Ÿåº¦å’Œä½ç½®
 							ddq2[i] = ddq1[i];
 							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-							//Èç¹ûq2µÄÎ»ÖÃ´óÓÚÏÂÒ»µãÎ»ÖÃ ÁªÁ¢q1ºÍq2µÄ·½³Ì×é µÃµ½Ò»ÔªÈı´Î·½³Ì
-							if ((sigma[i] == 1 && q2[i] < q0[i]) || (sigma[i] == -1 && q2[i] > q0[i]))
+							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+							//ä¸å­˜åœ¨ç¬¬ä¸‰å’Œç¬¬å››æ—¶é—´æ®µ
+							ta3[i] = 0;
+							ta4[i] = 0;
+							//æ›´æ–°å‡ºå‚
+							tqf[i] = q2[i];
+							dqf[i] = dq2[i];
+							ddqf[i] = ddq2[i];
+
+						}
+
+						//stage 3 -- - dcc - acc
+						//è®¡ç®—å‡åŠ é€Ÿæ®µ
+						//å‡åŠ é€Ÿæ®µçš„æ—¶é—´ta3åœ¨åŒ€åŠ é€Ÿæ—¶å·²è®¡ç®—ï¼Œåˆ·æ–°åŠ é€Ÿåº¦ï¼Œé€Ÿåº¦å’Œä½ç½®å€¼
+
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						//åˆ¤æ–­å‡åŠ é€Ÿç»“æŸåçš„ä½ç½®æ˜¯å¦å°äºåˆå§‹ç‚¹ä½ç½® å¦‚æœå°äº é‡æ–°è®¡ç®—æ—¶é—´ta3
+						if ((sigma[i] == 1 && q3[i] < q0[i]) || (sigma[i] == -1 && q3[i] > q0[i]))
+						{
+							// æ ¹æ®å‡åŠ é€Ÿæ®µçš„ä¸€å…ƒä¸‰æ¬¡æ–¹ç¨‹è®¡ç®—è°ƒæ•´åçš„æ ¹
+							//é¦–å…ˆè·å¾—å„é¡¹çš„ç³»æ•°
+
+							a3 = -1 / 6.0 * sigma[i] * Jm[i]; //a
+							a2 = 1 / 2.0 * ddq2[i]; //b
+							a1 = dq2[i]; //c
+							a0 = q2[i] - q0[i]; //d
+
+							int snum = 0;
+							getrootsofquadratic(a3, a2, a1, a0, r, &snum); //è®¡ç®—ä¸€å…ƒä¸‰æ¬¡æ–¹ç¨‹çš„æ ¹
+
+							if (snum == 1)
 							{
-								// ¸ø³öÒ»ÔªÈı´Î·½³ÌµÄÏµÊı
-								a3 = 1 / 3.0 * sigma[i] * Jm[i]; //a
-								a2 = 1 / 2.0 * sigma[i] * Jm[i] * Ti[i] + 1 / 2.0 * ddq0[i]; //b
-								a1 = -1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-								a0 = -1 / 2.0 * ddq0[i] * pow(Ti[i], 2) - dq0[i] * Ti[i] + qf[i] - q0[i]; //d
-
-
-								getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÒ»ÔªÈı´Î·½³ÌµÄ¸ù
-								tempt = 99;
+								tempt = r[0];
+							}
+							else
+							{
+								double tempt = -99; //è·å¾—å…¨éƒ¨çš„è§£
 								for (int j = 0; j < 3; j++)
 								{
-									if (r[j] < tempt && r[j] > minim) //Çó×îĞ¡µÄÕıÊ±¼ä
+									if (r[j]>tempt && r[j]<-minim) //æ ¹æ®è¦æ±‚å»æ‰è´Ÿæ—¶é—´ï¼Œå–æœ€å°æ—¶é—´
 									{
 										tempt = r[j];
 									}
 								}
-								//Ë¢ĞÂta1 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta1[i] = tempt;
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = qf[i] - dq0[i] * ta1[i] - 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta2[i] = Ti[i] - ta1[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-								ta3[i] = 0;
-								ta4[i] = 0;
-								//Ë¢ĞÂ³ö²Î
-								tqf[i] = q2[i];
-								dqf[i] = dq2[i];
-								ddqf[i] = ddq2[i];
 							}
-							else//q2Ğ¡ÓÚqf ´æÔÚµÚÈı¶Î
-							{
-								//                     ta3[i] = Ti[i] - ta1[i] - ta2[i];
-								//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+							ta3[i] = tempt;
 
-								//²»´æÔÚµÚËÄ¶ÎÊ±¼ä
-								ta4[i] = 0;
-								//Ë¢ĞÂ³ö²Î
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-							}
+							//é‡æ–°åˆ·æ–°ta3çš„ä½ç½® é€Ÿåº¦ å’ŒåŠ é€Ÿåº¦å€¼
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i]+ dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+							//ä¸å­˜åœ¨ç¬¬å››æ—¶é—´æ®µ
+							ta4[i] = 0;
+							//æ›´æ–°è¯¥å…³èŠ‚çš„ç»“æŸçš„ä½ç½® é€Ÿåº¦ åŠ é€Ÿåº¦
+							tqf[i] = q3[i];
+							dqf[i] = dq3[i];
+							ddqf[i] = ddq3[i];
+
 						}
-						else//´æÔÚµÚËÄ¶Î
+						else
 						{
-							//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
+							//stage 4 -- - quansi - velocity
+							//ç¬¬å››æ®µ åŒ€é€Ÿè®¡ç®—
+							//è®¡ç®—åŒ€é€Ÿçš„ta4 ä»¥åŠä½ç½®é€Ÿåº¦ åŠ é€Ÿåº¦å€¼
+							//é¦–å…ˆåˆ¤æ–­å‡åŠ é€Ÿç»“æŸç‚¹æ˜¯å¦å¤§äºç›®æ ‡ä½ç½®ï¼ˆåˆå§‹ç‚¹ä½ç½®ï¼‰ å¤§äº åˆ™å­˜åœ¨åŒ€é€Ÿæ®µ
+
+
+							// å¾—åˆ°åŒ€é€Ÿæ®µçš„ta4 ä½ç½®å’Œé€Ÿåº¦ åŠ é€Ÿåº¦å€¼
+							ta4[i] = (q0[i]-q3[i]) / dq3[i];
 							ddq4[i] = 0;
 							dq4[i] = dq3[i];
-							q4[i] = q3[i] - ta4[i] * dq3[i];
-							//Ë¢ĞÂ³ö²Î
-							tqf[i] = q4[i];
-							dqf[i] = dq4[i];
-							ddqf[i] = ddq4[i];
-						}
-					}
-					else if (newT[1] > minim && newT[0] < -minim) // ½â2 ÎªÕı ½â1Îª¸º È¡½â2
-					{
-						//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ta2[i] = newT[1];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						//Ë¢ĞÂta3 ºÍÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						//¼ÆËãta4
-						ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-						//Èç¹ûta4Ğ¡ÓÚ0 ±íÊ¾Ç°Ãæ¸øµÄ½â²»ºÏÊÊ ÖØĞÂ¼ÆËã
-						if (ta4[i] < 0)
-						{
-							// È¥µôta4 ÖØĞÂ¼ÆËãta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-							//Èç¹ûq2µÄÎ»ÖÃ´óÓÚÏÂÒ»µãÎ»ÖÃ ÁªÁ¢q1ºÍq2µÄ·½³Ì×é µÃµ½Ò»ÔªÈı´Î·½³Ì
-							if ((sigma[i] == 1 && q2[i] < q0[i]) || (sigma[i] == -1 && q2[i] > q0[i]))
-							{
-								// ¸ø³öÒ»ÔªÈı´Î·½³ÌµÄÏµÊı
-								a3 = 1 / 3.0 * sigma[i] * Jm[i]; //a
-								a2 = 1 / 2.0 * sigma[i] * Jm[i] * Ti[i] + 1 / 2.0 * ddq0[i]; //b
-								a1 = -1 / 2.0 * sigma[i] * Jm[i] * pow(Ti[i], 2); //c
-								a0 = -1 / 2.0 * ddq0[i] * pow(Ti[i], 2) - dq0[i] * Ti[i] + qf[i] - q0[i]; //d
-
-																										  //                                 r = roots([a3 a2 a1 a0]);
-								getrootsofquadratic(a3, a2, a1, a0, r); //ÇóÒ»ÔªÈı´Î·½³ÌµÄ¸ù
-								tempt = 99;
-								for (int j = 0; j < 3; j++)
-								{
-									if (r[j]<tempt && r[j]>minim) //Çó×îĞ¡µÄÕıÊ±¼ä
-									{
-										tempt = r[j];
-									}
-								}
-								//Ë¢ĞÂta1 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta1[i] = tempt;
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = qf[i] - dq0[i] * ta1[i] - 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-								//Ë¢ĞÂta2 Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ta2[i] = Ti[i] - ta1[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] - dq1[i] * ta2[i] - 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-								//²»´æÔÚµÚÈıºÍµÚËÄÊ±¼ä¶Î
-								ta3[i] = 0;
-								ta4[i] = 0;
-								//                                 continue;
-								//Ë¢ĞÂ³ö²Î
-								tqf[i] = q2[i];
-								dqf[i] = dq2[i];
-								ddqf[i] = ddq2[i];
-							}
-							else //q2Ğ¡ÓÚqf ´æÔÚµÚÈı¶Î
-							{
-								//                     ta3[i] = Ti[i] - ta1[i] - ta2[i];
-								//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] - dq2[i] * ta3[i] - 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-								//²»´æÔÚµÚËÄ¶ÎÊ±¼ä
-								ta4[i] = 0;
-								//Ë¢ĞÂ³ö²Î
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-							}
-						}
-						else//´æÔÚµÚËÄ¶Î
-						{
-							//Ë¢ĞÂÎ»ÖÃËÙ¶È¼ÓËÙ¶È
-							ddq4[i] = 0;
-							dq4[i] = dq3[i];
-							q4[i] = q3[i] - ta4[i] * dq3[i];
-							//Ë¢ĞÂ³ö²Î
+							q4[i] = q3[i] + ta4[i] * dq3[i];
+							//æ›´æ–°è¿”å›çš„ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦å€¼
 							tqf[i] = q4[i];
 							dqf[i] = dq4[i];
 							ddqf[i] = ddq4[i];
 						}
 					}
 				}
-				//Ë¢ĞÂ×ÜÊ±¼ä
 				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-				//Ë¢ĞÂ¸÷¶ÎÊ±¼ä
+				//è®¡ç®—æ€»æ—¶é—´
+				//å„æ®µæ—¶é—´èµ‹å€¼
 				Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
-				//Ë¢ĞÂ¸÷¶ÎÊ±¼äµÄ¶ÔÓ¦Èı´Î·½³ÌµÄÏµÊı
-				if (ta1[i] > 0)
+				if ((ta1[i] + ta2[i] + ta3[i] + ta4[i]) >= 0)
 				{
-					coeff[i][0][0] = -1 / 6.0 * sigma[i] * Jm[i];
-					coeff[i][0][1] = -1 / 2.0 * ddq0[i];
-					coeff[i][0][2] = -dq0[i];
+					printf("ta error\n");
+				}
+				//å„æ®µç³»æ•°èµ‹å€¼
+				if (ta1[i] < 0)
+				{
+					coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
+					coeff[i][0][1] = 1 / 2.0 * ddq0[i];
+					coeff[i][0][2] = dq0[i];
 					coeff[i][0][3] = qf[i];
 				}
-				if (ta2[i] > 0)
+
+				if (ta2[i] < 0)
 				{
 					coeff[i][1][0] = 0;
-					coeff[i][1][1] = -1 / 2.0 * ddq1[i];
-					coeff[i][1][2] = -dq1[i];
+					coeff[i][1][1] = 1 / 2.0 * ddq1[i];
+					coeff[i][1][2] = dq1[i];
 					coeff[i][1][3] = q1[i];
 				}
-				if (ta3[i] > 0)
+				if (ta3[i] < 0)
 				{
-					coeff[i][2][0] = 1 / 6.0 * sigma[i] * Jm[i];
-					coeff[i][2][1] = -1 / 2.0 * ddq2[i];
-					coeff[i][2][2] = -dq2[i];
+					coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
+					coeff[i][2][1] = 1 / 2.0 * ddq2[i];
+					coeff[i][2][2] = dq2[i];
 					coeff[i][2][3] = q2[i];
 				}
-				if (ta4[i] > 0)
+				if (ta4[i] < 0)
 				{
 					coeff[i][3][0] = 0;
 					coeff[i][3][1] = 0;
-					coeff[i][3][2] = -dq3[i];
+					coeff[i][3][2] = dq3[i];
 					coeff[i][3][3] = q3[i];
 				}
 			}
-			else if (sigma[i] == 0) // ¾²Ö¹µÄ´¦Àí
+			else if (sigma[i] != 0 && Ti[i] < 0)// è¿™ä¸€æ®µæ˜¯æ ¹æ®å¤šè½´æ—¶é—´åŒæ­¥å è®¡ç®—å„æ®µçš„æ—¶é—´ç³»æ•°å’Œå¤šé¡¹å¼ç³»æ•° å¹¶è¿”å›ç»“æŸçš„ä½ç½®é€Ÿåº¦ åŠ é€Ÿåº¦
+			{
+				ddq_max[i] = maxddq[i]; //åŠ é€Ÿåº¦èµ‹å€¼
+				dq_avg[i] = maxdq[i]; //å¹³å‡é€Ÿåº¦èµ‹å€¼
+
+				//	%é¦–å…ˆæ ¹æ®æ—¶é—´Tiçš„çº¦æŸ æ±‚ta4çš„åˆé€‚å€¼
+				//	%ä¸‹é¢ç»™å‡ºè¿ç«‹æ–¹ç¨‹çš„äºŒæ¬¡é¡¹å„é¡¹ç³»æ•°
+
+				a = (12 * pow(Jm[i], 3) * dq_avg[i] * pow(sigma[i], 3) - 12 * pow(Jm[i], 3) * dq0[i] * pow(sigma[i], 3) + 6 * pow(Jm[i], 2) * pow(ddq0[i], 2) * pow(sigma[i], 2));
+				b = (24 * pow(Jm[i], 3) * q0[i] * pow(sigma[i], 3) - 24 * pow(Jm[i], 3) * qf[i] * pow(sigma[i], 3) - 8 * Jm[i] * pow(ddq0[i], 3) * sigma[i] - 24 * pow(Jm[i], 3) * Ti[i] * dq_avg[i] * pow(sigma[i], 3) + 24 * pow(Jm[i], 2) * ddq0[i] * dq0[i] * pow(sigma[i], 2) - 24 * pow(Jm[i], 2) * ddq0[i] * dq_avg[i] * pow(sigma[i], 2));
+				c = 12 * pow(Jm[i], 2) * pow(dq0[i], 2) * pow(sigma[i], 2) - 24 * pow(Jm[i], 2) * dq0[i] * dq_avg[i] * pow(sigma[i], 2) + 12 * pow(Jm[i], 2) * pow(dq_avg[i], 2) * pow(sigma[i], 2) - 12 * Jm[i] * pow(ddq0[i], 2) * dq0[i] * sigma[i] + 12 * Jm[i] * pow(ddq0[i], 2) * dq_avg[i] * sigma[i] + 3 * pow(ddq0[i], 4);
+				lamda = b*b - 4 * a*c;
+				if (lamda <= 0)
+				{
+					//printf("lamda <=0\n");
+				}
+				else // ta3  lamdaå¤§äº0
+				{
+					newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a);
+					newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a);
+
+					//å¦‚æœä¸¤ä¸ªæ—¶é—´è§£éƒ½ä¸ºæ­£ ä¾æ¬¡è¿›è¡Œè®¡ç®— å¹¶åˆ¤æ–­
+					if (newT[0] <- minim && newT[1] <- minim)
+					{
+						//é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						if (newT[0] > newT[1])
+						{
+							ta3[i] = newT[0];
+						}
+						else
+						{
+							ta3[i] = newT[1];
+						}
+
+						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
+
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						//æ ¹æ®ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+						{
+
+							a = ((Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0 - (3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0);
+							b = (-(Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
+							c = q0[i] - qf[i] - (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) - pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) + (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]);
+
+							slamda = b*b - 4 * a*c;
+							if (slamda <= 0)
+							{
+								//printf("slamda <=0\n");
+							}
+							else //ta3  lamdaå¤§äº0
+							{
+								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+								if ((snewT[0] <- minim && snewT[1]<- minim))
+								{
+									// é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+									if (snewT[0] > snewT[1])
+										ta3[i] = snewT[0];
+									else
+										ta3[i] = snewT[1];
+
+
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if ((snewT[0] > minim && snewT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+								{
+									ta3[i] = snewT[1];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if (snewT[1] > minim && snewT[0] < -minim) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+								{
+									ta3[i] = snewT[0];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+
+								}
+							}
+						}
+						else
+						{
+							//åˆ·æ–°ta4
+							ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
+							//å¦‚æœè®¡ç®—çš„ta4 ä¸ºè´Ÿ è¡¨ç¤ºå–å¾—è§£ä¸åˆé€‚ æ¢è§£2 é‡æ–°è®¡ç®—
+							if (ta4[i] > 0)
+							{
+								//é‡æ–°è®¡ç®—ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+								printf("ta4 error\n");
+							}
+							else //ta4å¤§äº0å­˜åœ¨ç¬¬å››æ®µ åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦ åˆ·æ–°å‡ºå‚
+							{
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+						}
+					}
+					else if ((newT[0] > minim) && (newT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+					{
+						ta3[i] = newT[0];
+
+						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
+
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						//æ ¹æ®ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+						{
+
+							a = ((Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0 - (3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0);
+							b = (-(Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
+							c = q0[i] - qf[i] - (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) - pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) + (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]);
+
+							slamda = b*b - 4 * a*c;
+							if (slamda <= 0)
+							{
+								//printf("slamda <=0\n");
+							}
+							else //ta3  lamdaå¤§äº0
+							{
+								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+								if ((snewT[0] <-minim && snewT[1]<-minim))
+								{
+									// é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+									if (snewT[0] > snewT[1])
+										ta3[i] = snewT[0];
+									else
+										ta3[i] = snewT[1];
+
+
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if ((snewT[0] > minim && snewT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+								{
+									ta3[i] = snewT[1];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if (snewT[1] > minim && snewT[0] < -minim) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+								{
+									ta3[i] = snewT[0];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+
+								}
+							}
+						}
+						else
+						{
+							//åˆ·æ–°ta4
+							ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
+							//å¦‚æœè®¡ç®—çš„ta4 ä¸ºè´Ÿ è¡¨ç¤ºå–å¾—è§£ä¸åˆé€‚ æ¢è§£2 é‡æ–°è®¡ç®—
+							if (ta4[i] > 0)
+							{
+								//é‡æ–°è®¡ç®—ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+								printf("ta4 error\n");
+							}
+							else //ta4å¤§äº0å­˜åœ¨ç¬¬å››æ®µ åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦ åˆ·æ–°å‡ºå‚
+							{
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+						}
+					}
+					else if ((newT[1] > minim) && (newT[0] < -minim)) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+					{
+						ta3[i] = newT[1];
+
+						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+						ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
+
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						//æ ¹æ®ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+						{
+
+							a = ((Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0 - (3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0);
+							b = (-(Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
+							c = q0[i] - qf[i] - (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) - pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) + (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]);
+
+							slamda = b*b - 4 * a*c;
+							if (slamda <= 0)
+							{
+								//printf("slamda <=0\n");
+							}
+							else //ta3  lamdaå¤§äº0
+							{
+								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+								if ((snewT[0] <-minim && snewT[1]<-minim))
+								{
+									// é¦–å…ˆå–è§£1 åˆ·æ–°ta3 åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+									if (snewT[0] > snewT[1])
+										ta3[i] = snewT[0];
+									else
+										ta3[i] = snewT[1];
+
+
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if ((snewT[0] > minim && snewT[1] < -minim)) // è§£1 ä¸ºæ­£ è§£2ä¸ºè´Ÿ å–è§£1
+								{
+									ta3[i] = snewT[1];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+								}
+								else if (snewT[1] > minim && snewT[0] < -minim) // è§£2 ä¸ºæ­£ è§£1ä¸ºè´Ÿ å–è§£2
+								{
+									ta3[i] = snewT[0];
+									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+									ta2[i] = Ti[i] - ta1[i] - ta3[i];
+									ddq2[i] = ddq1[i];
+									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+									if ((q3[i] < q0[i] && sigma[i] == 1) || (q3[i] > q0[i] && sigma[i] == -1))
+										printf("q3 error\n");
+
+								}
+							}
+						}
+						else
+						{
+							//åˆ·æ–°ta4
+							ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
+							//å¦‚æœè®¡ç®—çš„ta4 ä¸ºè´Ÿ è¡¨ç¤ºå–å¾—è§£ä¸åˆé€‚ æ¢è§£2 é‡æ–°è®¡ç®—
+							if (ta4[i] > 0)
+							{
+								//é‡æ–°è®¡ç®—ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦
+								printf("ta4 error\n");
+							}
+							else //ta4å¤§äº0å­˜åœ¨ç¬¬å››æ®µ åˆ·æ–°ä½ç½®é€Ÿåº¦åŠ é€Ÿåº¦ åˆ·æ–°å‡ºå‚
+							{
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+						}
+					}
+				}
+				//åˆ·æ–°æ€»æ—¶é—´
+				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
+				//åˆ·æ–°å„æ®µæ—¶é—´
+				Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
+
+				if ((ta1[i] + ta2[i] + ta3[i] + ta4[i]) >= 0)
+				{
+					printf("ta error\n");
+					return -1;
+				}
+				//åˆ·æ–°å„æ®µæ—¶é—´çš„å¯¹åº”ä¸‰æ¬¡æ–¹ç¨‹çš„ç³»æ•°
+				if (ta1[i] < 0)
+				{
+					coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
+					coeff[i][0][1] = 1 / 2.0 * ddq0[i];
+					coeff[i][0][2] = dq0[i];
+					coeff[i][0][3] = qf[i];
+				}
+				if (ta2[i] < 0)
+				{
+					coeff[i][1][0] = 0;
+					coeff[i][1][1] = 1 / 2.0 * ddq1[i];
+					coeff[i][1][2] = dq1[i];
+					coeff[i][1][3] = q1[i];
+				}
+				if (ta3[i] < 0)
+				{
+					coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
+					coeff[i][2][1] = 1 / 2.0 * ddq2[i];
+					coeff[i][2][2] = dq2[i];
+					coeff[i][2][3] = q2[i];
+				}
+				if (ta4[i] < 0)
+				{
+					coeff[i][3][0] = 0;
+					coeff[i][3][1] = 0;
+					coeff[i][3][2] = dq3[i];
+					coeff[i][3][3] = q3[i];
+				}
+			}
+			else if (sigma[i] == 0) // é™æ­¢çš„å¤„ç†
 			{
 
 				ta1[i] = 0;
@@ -1569,10 +1851,10 @@ int calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MAXAXES]
 				coeff[i][3][3] = qf[i];
 			}
 		}
-		*maxT = -1;
+		*maxT = 1;
 		for (int i = 0; i < 6; i++)
 		{
-			if (*maxT < tempT[i])
+			if (*maxT > tempT[i])
 			{
 				*maxT = tempT[i];
 			}
@@ -1584,18 +1866,18 @@ int calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MAXAXES]
 }
 
 //------------------------------------------------------
-// Ãû³Æ£ºforwardCycle
-// ¹¦ÄÜ£ºÖğµã¼ÓËÙÕıÏòµü´ú¼ÆËã£»
-// ÊäÈë£ºstart - ÆğÊ¼µãµÄÎ»ÖÃ¡¢ËÙ¶È¡¢¼ÓËÙ¶È
-//       target - ÖÕÄ©µãµÄÎ»ÖÃ
-//       exp_duration - ÆÚÍûÔËĞĞÊ±¼ä
-//       alpha_upper - ÕıÏò½Ç¼ÓËÙ¶È×î´óÖµ
-//       alpha_lower - ·´Ïò½Ç¼ÓËÙ¶È×î´óÖµ
-// Êä³ö£ºsegment - ±¾¶Î¹ì¼£µÄ·Ö¶Î±í´ïÊ½ÏµÊı¼°Ê±¼ä
+// åç§°ï¼šforwardCycle
+// åŠŸèƒ½ï¼šé€ç‚¹åŠ é€Ÿæ­£å‘è¿­ä»£è®¡ç®—ï¼›
+// è¾“å…¥ï¼šstart - èµ·å§‹ç‚¹çš„ä½ç½®ã€é€Ÿåº¦ã€åŠ é€Ÿåº¦
+//       target - ç»ˆæœ«ç‚¹çš„ä½ç½®
+//       exp_duration - æœŸæœ›è¿è¡Œæ—¶é—´
+//       alpha_upper - æ­£å‘è§’åŠ é€Ÿåº¦æœ€å¤§å€¼
+//       alpha_lower - åå‘è§’åŠ é€Ÿåº¦æœ€å¤§å€¼
+// è¾“å‡ºï¼šsegment - æœ¬æ®µè½¨è¿¹çš„åˆ†æ®µè¡¨è¾¾å¼ç³»æ•°åŠæ—¶é—´
 //------------------------------------------------------
 ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &target, double exp_duration,
-	const fst_mc::Joint &alpha_upper, const fst_mc::Joint &alpha_lower, const fst_mc::Joint &jerk,
-	fst_mc::TrajSegment(&segment)[NUM_OF_JOINT])
+					   const fst_mc::Joint &alpha_upper, const fst_mc::Joint &alpha_lower, const fst_mc::Joint &jerk,
+					   fst_mc::TrajSegment(&segment)[NUM_OF_JOINT])
 {
 	double J0[6] = { 0 };// { -0.266252049150925, -0.600252808094322, 0.645899775801551, 0, -1.61644329450212, -0.266252049150925 };
 	double J1[6] = { 0 };// { -0.258175866447821, -0.595379359200683, 0.638347237960886, 0, -1.6137642055551, -0.258175866447821 };
@@ -1603,7 +1885,7 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 	double dq_avg[6];
 	double ddq_max[6] = { 0 };// {
 
-	J0[0] = start.alpha.j1; J0[1] = start.alpha.j2; J0[2] = start.alpha.j3; J0[3] = start.alpha.j4; J0[4] = start.alpha.j5; J0[5] = start.alpha.j6;
+	J0[0] = start.angle.j1; J0[1] = start.angle.j2; J0[2] = start.angle.j3; J0[3] = start.angle.j4; J0[4] = start.angle.j5; J0[5] = start.angle.j6;
 	J1[0] = target.j1; J1[1] = target.j2; J1[2] = target.j3; J1[3] = target.j4; J1[4] = target.j5; J1[5] = target.j6;
 	for (int i = 0; i < 6; i++)
 	{
@@ -1620,42 +1902,42 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 		{
 			switch (i)
 			{
-			case 0:
-				ddq_max[i] = alpha_upper.j1;
-				dq0[i] = start.angle.j1;
-				ddq0[i] = start.omega.j1;
-				jk[i] = jerk.j1;
-				break;
-			case 1:
-				ddq_max[i] = alpha_upper.j2;
-				dq0[i] = start.angle.j2;
-				ddq0[i] = start.omega.j2;
-				jk[i] = jerk.j2;
-				break;
-			case 2:
-				ddq_max[i] = alpha_upper.j3;
-				dq0[i] = start.angle.j3;
-				ddq0[i] = start.omega.j3;
-				jk[i] = jerk.j3;
-				break;
-			case 3:
-				ddq_max[i] = alpha_upper.j4;
-				dq0[i] = start.angle.j4;
-				ddq0[i] = start.omega.j4;
-				jk[i] = jerk.j4;
-				break;
-			case 4:
-				ddq_max[i] = alpha_upper.j5;
-				dq0[i] = start.angle.j5;
-				ddq0[i] = start.omega.j5;
-				jk[i] = jerk.j5;
-				break;
-			case 5:
-				ddq_max[i] = alpha_upper.j6;
-				dq0[i] = start.angle.j6;
-				ddq0[i] = start.omega.j6;
-				jk[i] = jerk.j6;
-				break;
+				case 0:
+					ddq_max[i] = alpha_upper.j1;
+					dq0[i] = start.omega.j1;
+					ddq0[i] = start.alpha.j1;
+					jk[i] = jerk.j1;
+					break;
+				case 1:
+					ddq_max[i] = alpha_upper.j2;
+					dq0[i] = start.omega.j2;
+					ddq0[i] = start.alpha.j2;
+					jk[i] = jerk.j2;
+					break;
+				case 2:
+					ddq_max[i] = alpha_upper.j3;
+					dq0[i] = start.omega.j3;
+					ddq0[i] = start.alpha.j3;
+					jk[i] = jerk.j3;
+					break;
+				case 3:
+					ddq_max[i] = alpha_upper.j4;
+					dq0[i] = start.omega.j4;
+					ddq0[i] = start.alpha.j4;
+					jk[i] = jerk.j4;
+					break;
+				case 4:
+					ddq_max[i] = alpha_upper.j5;
+					dq0[i] = start.omega.j5;
+					ddq0[i] = start.alpha.j5;
+					jk[i] = jerk.j5;
+					break;
+				case 5:
+					ddq_max[i] = alpha_upper.j6;
+					dq0[i] = start.angle.j6;
+					ddq0[i] = start.alpha.j6;
+					jk[i] = jerk.j6;
+					break;
 
 			}
 
@@ -1665,42 +1947,42 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 		{
 			switch (i)
 			{
-			case 0:
-				ddq_max[i] = alpha_lower.j1;
-				dq0[i] = start.angle.j1;
-				ddq0[i] = start.omega.j1;
-				jk[i] = jerk.j1;
-				break;
-			case 1:
-				ddq_max[i] = alpha_lower.j2;
-				dq0[i] = start.angle.j2;
-				ddq0[i] = start.omega.j2;
-				jk[i] = jerk.j2;
-				break;
-			case 2:
-				ddq_max[i] = alpha_lower.j3;
-				dq0[i] = start.angle.j3;
-				ddq0[i] = start.omega.j3;
-				jk[i] = jerk.j3;
-				break;
-			case 3:
-				ddq_max[i] = alpha_lower.j4;
-				dq0[i] = start.angle.j4;
-				ddq0[i] = start.omega.j4;
-				jk[i] = jerk.j4;
-				break;
-			case 4:
-				ddq_max[i] = alpha_lower.j5;
-				dq0[i] = start.angle.j5;
-				ddq0[i] = start.omega.j5;
-				jk[i] = jerk.j5;
-				break;
-			case 5:
-				ddq_max[i] = alpha_lower.j6;
-				dq0[i] = start.angle.j6;
-				ddq0[i] = start.omega.j6;
-				jk[i] = jerk.j6;
-				break;
+				case 0:
+					ddq_max[i] = alpha_lower.j1;
+					dq0[i] = start.angle.j1;
+					ddq0[i] = start.omega.j1;
+					jk[i] = jerk.j1;
+					break;
+				case 1:
+					ddq_max[i] = alpha_lower.j2;
+					dq0[i] = start.angle.j2;
+					ddq0[i] = start.omega.j2;
+					jk[i] = jerk.j2;
+					break;
+				case 2:
+					ddq_max[i] = alpha_lower.j3;
+					dq0[i] = start.angle.j3;
+					ddq0[i] = start.omega.j3;
+					jk[i] = jerk.j3;
+					break;
+				case 3:
+					ddq_max[i] = alpha_lower.j4;
+					dq0[i] = start.angle.j4;
+					ddq0[i] = start.omega.j4;
+					jk[i] = jerk.j4;
+					break;
+				case 4:
+					ddq_max[i] = alpha_lower.j5;
+					dq0[i] = start.angle.j5;
+					ddq0[i] = start.omega.j5;
+					jk[i] = jerk.j5;
+					break;
+				case 5:
+					ddq_max[i] = alpha_lower.j6;
+					dq0[i] = start.angle.j6;
+					ddq0[i] = start.omega.j6;
+					jk[i] = jerk.j6;
+					break;
 
 			}
 
@@ -1715,13 +1997,13 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 	double tqf[6] = { 0 };
 	double dqf[6] = { 0 };
 	double ddqf[6] = { 0 };
-	int ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
+	int ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 1, Ta, coeff, &maxT, tqf, dqf, ddqf);
 
-	printf("maxT=%f\n", maxT);
+	//printf("maxT=%f\n", maxT);
 
 	for (int i = 0; i < 6; i++)
 		Ti[i] = maxT;
-	ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
+	ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 1, Ta, coeff, &maxT, tqf, dqf, ddqf);
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -1730,7 +2012,7 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 			segment[i].duration[j] = Ta[i][j];
 			for (int k = 0; k < 4; k++)
 			{
-				segment[i].coeff[j][k] = coeff[i][j][k];
+				segment[i].coeff[j][k] = coeff[i][j][3-k];
 			}
 		}
 
@@ -1745,18 +2027,18 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 }
 
 //------------------------------------------------------
-// Ãû³Æ£ºbackwardCycle
-// ¹¦ÄÜ£ºÖğµã¼ÓËÙ·´Ïòµü´ú¼ÆËã£»
-// ÊäÈë£ºstart - ÆğÊ¼µãµÄÎ»ÖÃ
-//       target - ÖÕÄ©µãµÄÎ»ÖÃ¡¢ËÙ¶È¡¢¼ÓËÙ¶È
-//       exp_duration - ÆÚÍûÔËĞĞÊ±¼ä
-//       alpha_upper - ÕıÏò½Ç¼ÓËÙ¶È×î´óÖµ
-//       alpha_lower - ·´Ïò½Ç¼ÓËÙ¶È×î´óÖµ
-// Êä³ö£ºsegment - ±¾¶Î¹ì¼£µÄ·Ö¶Î±í´ïÊ½ÏµÊı¼°Ê±¼ä
+// åç§°ï¼šbackwardCycle
+// åŠŸèƒ½ï¼šé€ç‚¹åŠ é€Ÿåå‘è¿­ä»£è®¡ç®—ï¼›
+// è¾“å…¥ï¼šstart - èµ·å§‹ç‚¹çš„ä½ç½®
+//       target - ç»ˆæœ«ç‚¹çš„ä½ç½®ã€é€Ÿåº¦ã€åŠ é€Ÿåº¦
+//       exp_duration - æœŸæœ›è¿è¡Œæ—¶é—´
+//       alpha_upper - æ­£å‘è§’åŠ é€Ÿåº¦æœ€å¤§å€¼
+//       alpha_lower - åå‘è§’åŠ é€Ÿåº¦æœ€å¤§å€¼
+// è¾“å‡ºï¼šsegment - æœ¬æ®µè½¨è¿¹çš„åˆ†æ®µè¡¨è¾¾å¼ç³»æ•°åŠæ—¶é—´
 //------------------------------------------------------
 ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &target, double exp_duration,
-	const fst_mc::Joint &alpha_upper, const fst_mc::Joint &alpha_lower, const fst_mc::Joint &jerk,
-	fst_mc::TrajSegment(&segment)[NUM_OF_JOINT])
+						const fst_mc::Joint &alpha_upper, const fst_mc::Joint &alpha_lower, const fst_mc::Joint &jerk,
+						fst_mc::TrajSegment(&segment)[NUM_OF_JOINT])
 {
 	double J0[6] = { 0 };// { -0.266252049150925, -0.600252808094322, 0.645899775801551, 0, -1.61644329450212, -0.266252049150925 };
 	double J1[6] = { 0 };// { -0.258175866447821, -0.595379359200683, 0.638347237960886, 0, -1.6137642055551, -0.258175866447821 };
@@ -1764,7 +2046,7 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 	double dq_avg[6];
 	double ddq_max[6] = { 0 };// {
 
-	J1[0] = target.alpha.j1; J1[1] = target.alpha.j2; J1[2] = target.alpha.j3; J1[3] = target.alpha.j4; J1[4] = target.alpha.j5; J1[5] = target.alpha.j6;
+	J1[0] = target.angle.j1; J1[1] = target.angle.j2; J1[2] = target.angle.j3; J1[3] = target.angle.j4; J1[4] = target.angle.j5; J1[5] = target.angle.j6;
 	J0[0] = start.j1; J0[1] = start.j2; J0[2] = start.j3; J0[3] = start.j4; J0[4] = start.j5; J0[5] = start.j6;
 	for (int i = 0; i < 6; i++)
 	{
@@ -1781,42 +2063,42 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 		{
 			switch (i)
 			{
-			case 0:
-				ddq_max[i] = alpha_upper.j1;
-				dq0[i] = target.angle.j1;
-				ddq0[i] = target.omega.j1;
-				jk[i] = jerk.j1;
-				break;
-			case 1:
-				ddq_max[i] = alpha_upper.j2;
-				dq0[i] = target.angle.j2;
-				ddq0[i] = target.omega.j2;
-				jk[i] = jerk.j2;
-				break;
-			case 2:
-				ddq_max[i] = alpha_upper.j3;
-				dq0[i] = target.angle.j3;
-				ddq0[i] = target.omega.j3;
-				jk[i] = jerk.j3;
-				break;
-			case 3:
-				ddq_max[i] = alpha_upper.j4;
-				dq0[i] = target.angle.j4;
-				ddq0[i] = target.omega.j4;
-				jk[i] = jerk.j4;
-				break;
-			case 4:
-				ddq_max[i] = alpha_upper.j5;
-				dq0[i] = target.angle.j5;
-				ddq0[i] = target.omega.j5;
-				jk[i] = jerk.j5;
-				break;
-			case 5:
-				ddq_max[i] = alpha_upper.j6;
-				dq0[i] = target.angle.j6;
-				ddq0[i] = target.omega.j6;
-				jk[i] = jerk.j6;
-				break;
+				case 0:
+					ddq_max[i] = alpha_lower.j1;
+					dq0[i] = target.omega.j1;
+					ddq0[i] = target.alpha.j1;
+					jk[i] = jerk.j1;
+					break;
+				case 1:
+					ddq_max[i] = alpha_lower.j2;
+					dq0[i] = target.omega.j2;
+					ddq0[i] = target.alpha.j2;
+					jk[i] = jerk.j2;
+					break;
+				case 2:
+					ddq_max[i] = alpha_lower.j3;
+					dq0[i] = target.omega.j3;
+					ddq0[i] = target.alpha.j3;
+					jk[i] = jerk.j3;
+					break;
+				case 3:
+					ddq_max[i] = alpha_lower.j4;
+					dq0[i] = target.omega.j4;
+					ddq0[i] = target.alpha.j4;
+					jk[i] = jerk.j4;
+					break;
+				case 4:
+					ddq_max[i] = alpha_lower.j5;
+					dq0[i] = target.omega.j5;
+					ddq0[i] = target.alpha.j5;
+					jk[i] = jerk.j5;
+					break;
+				case 5:
+					ddq_max[i] = alpha_lower.j6;
+					dq0[i] = target.omega.j6;
+					ddq0[i] = target.alpha.j6;
+					jk[i] = jerk.j6;
+					break;
 
 			}
 
@@ -1826,42 +2108,229 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 		{
 			switch (i)
 			{
-			case 0:
-				ddq_max[i] = alpha_lower.j1;
-				dq0[i] = target.angle.j1;
-				ddq0[i] = target.omega.j1;
-				jk[i] = jerk.j1;
-				break;
-			case 1:
-				ddq_max[i] = alpha_lower.j2;
-				dq0[i] = target.angle.j2;
-				ddq0[i] = target.omega.j2;
-				jk[i] = jerk.j2;
-				break;
-			case 2:
-				ddq_max[i] = alpha_lower.j3;
-				dq0[i] = target.angle.j3;
-				ddq0[i] = target.omega.j3;
-				jk[i] = jerk.j3;
-				break;
-			case 3:
-				ddq_max[i] = alpha_lower.j4;
-				dq0[i] = target.angle.j4;
-				ddq0[i] = target.omega.j4;
-				jk[i] = jerk.j4;
-				break;
-			case 4:
-				ddq_max[i] = alpha_lower.j5;
-				dq0[i] = target.angle.j5;
-				ddq0[i] = target.omega.j5;
-				jk[i] = jerk.j5;
-				break;
-			case 5:
-				ddq_max[i] = alpha_lower.j6;
-				dq0[i] = target.angle.j6;
-				ddq0[i] = target.omega.j6;
-				jk[i] = jerk.j6;
-				break;
+				case 0:
+					ddq_max[i] = alpha_upper.j1;
+					dq0[i] = target.omega.j1;
+					ddq0[i] = target.alpha.j1;
+					jk[i] = jerk.j1;
+					break;
+				case 1:
+					ddq_max[i] = alpha_upper.j2;
+					dq0[i] = target.omega.j2;
+					ddq0[i] = target.alpha.j2;
+					jk[i] = jerk.j2;
+					break;
+				case 2:
+					ddq_max[i] = alpha_upper.j3;
+					dq0[i] = target.omega.j3;
+					ddq0[i] = target.alpha.j3;
+					jk[i] = jerk.j3;
+					break;
+				case 3:
+					ddq_max[i] = alpha_upper.j4;
+					dq0[i] = target.omega.j4;
+					ddq0[i] = target.alpha.j4;
+					jk[i] = jerk.j4;
+					break;
+				case 4:
+					ddq_max[i] = alpha_upper.j5;
+					dq0[i] = target.omega.j5;
+					ddq0[i] = target.alpha.j5;
+					jk[i] = jerk.j5;
+					break;
+				case 5:
+					ddq_max[i] = alpha_upper.j6;
+					dq0[i] = target.omega.j6;
+					ddq0[i] = target.alpha.j6;
+					jk[i] = jerk.j6;
+					break;
+
+			}
+
+		}
+	}
+
+
+	double Ti[6] = { 1,1,1,1,1,1 };
+	double Ta[6][4] = { 0 };
+	double coeff[6][4][4] = { 0 };
+	double maxT = 0;
+	double tqf[6] = { 0 };
+	double dqf[6] = { 0 };
+	double ddqf[6] = { 0 };
+	int ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
+
+	//printf("maxT=%f\n", maxT);
+
+	for (int i = 0; i < 6; i++)
+		Ti[i] = maxT;
+	ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
+
+	double cef[4][4];
+	double newcoeff[4][4];
+	double tm[4];
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			segment[i].duration[j] = fabs(Ta[i][3 - j]);
+			tm[j] = Ta[i][j];
+			for (int k = 0; k < 4; k++)
+			{
+				cef[j][k] = coeff[i][j][3 - k];
+			}
+		}
+		coefficient_transform(cef, tm, newcoeff);
+		for (int j = 0; j < 4; j++)
+		{
+			for (int k = 0; k < 4; k++)
+			{
+				segment[i].coeff[j][k] = newcoeff[j][ k];
+			}
+		}
+		//printf("joint:%d Ta=%f %f %f %f\n", i, Ta[i][0], Ta[i][1], Ta[i][2], Ta[i][3]);
+		//printf("coeff:%f %f %f %f -- %f %f %f %f -- %f %f %f %f -- %f %f %f %f\n", coeff[i][0][0], coeff[i][0][1], coeff[i][0][2], coeff[i][0][3], coeff[i][1][0], coeff[i][1][1], coeff[i][1][2], coeff[i][1][3], coeff[i][2][0], coeff[i][2][1], coeff[i][2][2], coeff[i][2][3], coeff[i][3][0], coeff[i][3][1], coeff[i][3][2], coeff[i][3][3]);
+		//printf("each joint time:%f\n", maxT);
+		//printf("dest status(q,dq,ddq):%f %f %f\n", tqf[i], dqf[i], ddqf[i]);
+	}
+
+	return ret;
+
+}
+ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, double exp_duration,
+							const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk,
+							TrajSegment(&segment)[NUM_OF_JOINT])
+{
+	double J0[6] = { 0 };// { -0.266252049150925, -0.600252808094322, 0.645899775801551, 0, -1.61644329450212, -0.266252049150925 };
+	double J1[6] = { 0 };// { -0.258175866447821, -0.595379359200683, 0.638347237960886, 0, -1.6137642055551, -0.258175866447821 };
+
+	double dq_avg[6];
+	double ddq_max[6] = { 0 };// {
+
+	J0[0] = start.angle.j1; J0[1] = start.angle.j2; J0[2] = start.angle.j3; J0[3] = start.angle.j4; J0[4] = start.angle.j5; J0[5] = start.angle.j6;
+	J1[0] = target.angle.j1; J1[1] = target.angle.j2; J1[2] = target.angle.j3; J1[3] = target.angle.j4; J1[4] = target.angle.j5; J1[5] = target.angle.j6;
+	for (int i = 0; i < 6; i++)
+	{
+
+		dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
+	}
+
+	double dq0[6] = { 0 };
+	double ddq0[6] = { 0 };
+	double dqf[6] = { 0 };
+	double ddqf[6] = { 0 };
+	double jk[6] = { 0 };
+	for (int i = 0; i < 6; i++)
+	{
+		if (J1[i] > J0[i])
+		{
+			switch (i)
+			{
+				case 0:
+					ddq_max[i] = alpha_upper.j1;
+					dq0[i] = start.omega.j1;
+					ddq0[i] = start.alpha.j1;
+					dqf[i] = target.omega.j1;
+					dqf[i] = target.alpha.j1;
+					jk[i] = jerk.j1;
+					break;
+				case 1:
+					ddq_max[i] = alpha_upper.j2;
+					dq0[i] = start.omega.j2;
+					ddq0[i] = start.alpha.j2;
+					dqf[i] = target.omega.j2;
+					dqf[i] = target.alpha.j2;
+					jk[i] = jerk.j2;
+					break;
+				case 2:
+					ddq_max[i] = alpha_upper.j3;
+					dq0[i] = start.omega.j3;
+					ddq0[i] = start.alpha.j3;
+					dqf[i] = target.omega.j3;
+					dqf[i] = target.alpha.j3;
+					jk[i] = jerk.j3;
+					break;
+				case 3:
+					ddq_max[i] = alpha_upper.j4;
+					dq0[i] = start.omega.j4;
+					ddq0[i] = start.alpha.j4;
+					dqf[i] = target.omega.j4;
+					dqf[i] = target.alpha.j4;
+					jk[i] = jerk.j4;
+					break;
+				case 4:
+					ddq_max[i] = alpha_upper.j5;
+					dq0[i] = start.omega.j5;
+					ddq0[i] = start.alpha.j5;
+					dqf[i] = target.omega.j5;
+					dqf[i] = target.alpha.j5;
+					jk[i] = jerk.j5;
+					break;
+				case 5:
+					ddq_max[i] = alpha_upper.j6;
+					dq0[i] = start.angle.j6;
+					ddq0[i] = start.alpha.j6;
+					dqf[i] = target.omega.j6;
+					dqf[i] = target.alpha.j6;
+					jk[i] = jerk.j6;
+					break;
+
+			}
+
+		}
+
+		else
+		{
+			switch (i)
+			{
+				case 0:
+					ddq_max[i] = alpha_lower.j1;
+					dq0[i] = start.angle.j1;
+					ddq0[i] = start.omega.j1;
+					dqf[i] = target.omega.j1;
+					dqf[i] = target.alpha.j1;
+					jk[i] = jerk.j1;
+					break;
+				case 1:
+					ddq_max[i] = alpha_lower.j2;
+					dq0[i] = start.angle.j2;
+					ddq0[i] = start.omega.j2;
+					dqf[i] = target.omega.j2;
+					dqf[i] = target.alpha.j2;
+					jk[i] = jerk.j2;
+					break;
+				case 2:
+					ddq_max[i] = alpha_lower.j3;
+					dq0[i] = start.angle.j3;
+					ddq0[i] = start.omega.j3;
+					dqf[i] = target.omega.j3;
+					dqf[i] = target.alpha.j3;
+					jk[i] = jerk.j3;
+					break;
+				case 3:
+					ddq_max[i] = alpha_lower.j4;
+					dq0[i] = start.angle.j4;
+					ddq0[i] = start.omega.j4;
+					dqf[i] = target.omega.j4;
+					dqf[i] = target.alpha.j4;
+					jk[i] = jerk.j4;
+					break;
+				case 4:
+					ddq_max[i] = alpha_lower.j5;
+					dq0[i] = start.angle.j5;
+					ddq0[i] = start.omega.j5;
+					dqf[i] = target.omega.j5;
+					dqf[i] = target.alpha.j5;
+					jk[i] = jerk.j5;
+					break;
+				case 5:
+					ddq_max[i] = alpha_lower.j6;
+					dq0[i] = start.angle.j6;
+					ddq0[i] = start.omega.j6;
+					dqf[i] = target.omega.j6;
+					dqf[i] = target.alpha.j6;
+					jk[i] = jerk.j6;
+					break;
 
 			}
 
@@ -1874,33 +2343,77 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 	double coeff[6][4][4] = { 0 };
 	double maxT = 0;
 	double tqf[6] = { 0 };
-	double dqf[6] = { 0 };
-	double ddqf[6] = { 0 };
-	int ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
+	double tdqf[6] = { 0 };
+	double tddqf[6] = { 0 };
+	int ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 1, Ta, coeff, &maxT, tqf, tdqf, tddqf);
 
-	printf("maxT=%f\n", maxT);
+	//printf("maxT=%f\n", maxT);
 
-	for (int i = 0; i < 6; i++)
-		Ti[i] = maxT;
-	ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
+	/*ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 1, Ta, coeff, &maxT, tqf, dqf, ddqf);*/
+	double a0[MAXAXES];
+	double a1[MAXAXES];
+	double a2[MAXAXES];
+	double a3[MAXAXES];
+
+	int i;
+
+	for (i = 0; i<MAXAXES; i++)
+	{
+		a0[i] = J0[i]; //6*1 vector
+		a1[i] = dq0[i];
+	}
+
+	double **TF, **iTF;
+	double C[2];
+	double A[2];
+
+	TF = (double**)malloc(sizeof(double*) * 2);
+	iTF = (double**)malloc(sizeof(double*) * 2);
+	for (i = 0; i<2; i++)
+	{
+		TF[i] = (double*)malloc(sizeof(double) * 2);
+		iTF[i] = (double*)malloc(sizeof(double) * 2);
+	}
+
+	//printf("nk:%d\n",nk);
+
+	for (i = 0; i<MAXAXES; i++)
+	{
+		TF[0][0] = pow(maxT, 3);
+		TF[0][1] = pow(maxT, 2);
+		TF[1][0] = 3 * pow(maxT, 2);
+		TF[1][1] = 2 * maxT;
+
+		C[0] = J1[i] - J0[i] - dq0[i] * maxT;
+		C[1] = dqf[i] - dq0[i];
+		getInverseM(TF, iTF, 2);
+		getMtxMulVec(iTF, C, A, 2);
+
+		a3[i] = A[0];
+		a2[i] = A[1];
+		//printf("%d a3:%f a2:%f\n",i+1,a3[i],a2[i]);
+	}
+
+	for (i = 0; i<2; i++)
+	{
+		free(TF[i]);
+		free(iTF[i]);
+	}
+	free(TF);
+	free(iTF);
+	TF = iTF = NULL;
 
 	for (int i = 0; i < 6; i++)
 	{
-		for (int j = 0; j<4; j++)
-		{
-			segment[i].duration[j] = Ta[i][j];
-			for (int k = 0; k < 4; k++)
-			{
-				segment[i].coeff[j][k] = coeff[i][j][k];
-			}
-		}
-		//printf("joint:%d Ta=%f %f %f %f\n", i, Ta[i][0], Ta[i][1], Ta[i][2], Ta[i][3]);
-		//printf("coeff:%f %f %f %f -- %f %f %f %f -- %f %f %f %f -- %f %f %f %f\n", coeff[i][0][0], coeff[i][0][1], coeff[i][0][2], coeff[i][0][3], coeff[i][1][0], coeff[i][1][1], coeff[i][1][2], coeff[i][1][3], coeff[i][2][0], coeff[i][2][1], coeff[i][2][2], coeff[i][2][3], coeff[i][3][0], coeff[i][3][1], coeff[i][3][2], coeff[i][3][3]);
-		//printf("each joint time:%f\n", maxT);
-		//printf("dest status(q,dq,ddq):%f %f %f\n", tqf[i], dqf[i], ddqf[i]);
+		segment[i].duration[0] = maxT;
+		segment[i].coeff[0][0] = a0[i];
+		segment[i].coeff[0][1] = a1[i];
+		segment[i].coeff[0][2] = a2[i];
+		segment[i].coeff[0][3] = a3[i];
 	}
 
 	return ret;
+
 
 }
                           
@@ -1969,7 +2482,7 @@ ErrorCode computeDynamics(const fst_mc::Joint &angle, const fst_mc::Joint &omega
               mddq[j][i] = 0;
 
       }
-      printf("%f %f %f %f %f %f\n", mddq[0][i], mddq[1][i], mddq[2][i], mddq[3][i], mddq[4][i], mddq[5][i]);
+      //printf("%f %f %f %f %f %f\n", mddq[0][i], mddq[1][i], mddq[2][i], mddq[3][i], mddq[4][i], mddq[5][i]);
   }
   g_dynamics_interface.rne_M(mq, mdq, mddq, M);
 

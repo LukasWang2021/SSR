@@ -28,6 +28,7 @@ public:
     bool pause();
     bool resume();
     bool abort();
+    bool switchStep(int data);
     bool getNextInstruction(Instruction* instruction_ptr); 
     bool setAutoStartMode(int start_mode);
 

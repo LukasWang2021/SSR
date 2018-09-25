@@ -103,8 +103,7 @@ class BaseGroup
     virtual ErrorCode autoCircle(const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id);
 
     virtual ErrorCode prepareCache(TrajectoryCache &cache);
-    virtual ErrorCode preplanCache(TrajectoryCache &cache);
-    virtual ErrorCode smoothJoint2Joint(const JointPoint &ps, const JointPoint &pe, MotionTime smooth_time, TrajSegment &seg);
+    virtual ErrorCode preplanCache(TrajectoryCache &cache, double cnt);
 
     virtual ErrorCode sendPoint(void);
     virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length);
@@ -119,7 +118,14 @@ class BaseGroup
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
 
     inline void reportError(const ErrorCode &error);
-    bool updateJointStateFromBareCore(void);
+    inline bool isSameJoint(const Joint &joint1, const Joint &joint2);
+
+
+    bool        waiting_fine_;
+    size_t      start_waiting_cnt_;
+    MotionType  waiting_motion_type_;
+    PoseEuler   waiting_pose_;
+    Joint       waiting_joint_;
 
     bool    rt_task_active_;
     double  vel_ratio_, acc_ratio_;

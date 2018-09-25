@@ -13,6 +13,7 @@
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <trajectory_alg.h>
 #include <common_file_path.h>
+#include <basic_alg.h>
 
 using namespace std;
 using namespace fst_base;
@@ -37,6 +38,8 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
 
     vel_ratio_ = 0;
     acc_ratio_ = 0;
+
+    waiting_fine_ = false;
 }
 
 BaseGroup::~BaseGroup()
@@ -180,7 +183,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
     }
 
     getLatestJoint(manual_traj_.joint_start);
-    FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
@@ -228,11 +231,11 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     if (manual_frame_ != BASE && manual_frame_ != USER && manual_frame_ != WORLD)
     {
         FST_ERROR("Cannot manual to target in current frame = %d", manual_frame_);
-        return INVALID_SEQmZENCE;
+        return INVALID_SEQUENCE;
     }
 
     getLatestJoint(manual_traj_.joint_start);
-    FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
@@ -565,8 +568,11 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
             if (auto_pick_ptr_->valid)
             {
+                auto_pick_ptr_->cache[0].time_from_start = 0;
                 auto_pick_segment_ = 1;
+                auto_time_ = 0;
                 group_state_ = AUTO;
+                FST_INFO("Start motion, pick-cache = %p, pick-seg = %d, pick-time = %.4f", auto_pick_ptr_, auto_pick_segment_, auto_time_);
             }
             else
             {
@@ -574,13 +580,40 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
                 return MOTION_INTERNAL_FAULT;
             }
         }
+
+        if (target.cnt < 0)
+        {
+            FST_INFO("Move with 'FINE', group will waiting for sand stable");
+            // move by 'FINE'
+            if (target.type == MOTION_JOINT)
+            {
+                waiting_motion_type_ = MOTION_JOINT;
+                waiting_joint_ = target.joint_target;
+                start_waiting_cnt_ = 20;
+                waiting_fine_ = true;
+            }
+            else if (target.type == MOTION_LINE)
+            {
+                waiting_motion_type_ = MOTION_LINE;
+                waiting_pose_ = target.pose_target;
+                start_waiting_cnt_ = 20;
+                waiting_fine_ = true;
+            }
+            else
+            {
+                FST_ERROR("Move by 'FINE', motion type = %d invalid", target.type);
+                return MOTION_INTERNAL_FAULT;
+            }
+        }
     }
     else
     {
         FST_ERROR("autoMove: failed, code = 0x%llx", err);
+        return err;
     }
 
-    return err;
+    FST_INFO("autoMove: success!");
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int id)
@@ -589,6 +622,96 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
     Joint start_joint;
     FST_INFO("autoJoint: vel = %.4f, cnt = %.4f", vel, cnt);
     FST_INFO("  target = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
+
+    if (vel < MINIMUM_E6 || vel > 1 + MINIMUM_E6 || fabs(cnt) > 1 + MINIMUM_E6)
+    {
+        FST_ERROR("Invalid vel or CNT.");
+        return INVALID_PARAMETER;
+    }
+
+    if (!soft_constraint_.isJointInConstraint(target))
+    {
+        FST_ERROR("Target out of soft constraint.");
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
+    if (group_state_ == STANDBY)
+    {
+        getLatestJoint(start_joint);
+    }
+    else if (group_state_ == AUTO)
+    {
+        start_joint = start_joint_;
+    }
+    else
+    {
+        FST_ERROR("Cannot start auto motion in current group state: %d", group_state_);
+        return INVALID_SEQUENCE;
+    }
+
+    FST_INFO("  start  = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
+
+    if (!soft_constraint_.isJointInConstraint(start_joint))
+    {
+        FST_ERROR("Start joint out of soft constraint.");
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
+    ErrorCode err;
+    size_t  index, length;
+    double  precision = 0.01;
+    Joint   path[MAX_PATH_SIZE];
+    planJointPath(start_joint, target, precision, index, path, length);
+    TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
+
+    for (size_t i = 0; i < length; i++)
+    {
+        p_cache->cache[i].path_point.id     = id;
+        p_cache->cache[i].path_point.stamp  = i;
+        p_cache->cache[i].path_point.type   = MOTION_JOINT;
+        p_cache->cache[i].path_point.joint  = path[i];
+        p_cache->cache[i].time_from_start   = -1;
+        //p_cache->cache[i].command_duration  = expect_duration;
+        p_cache->cache[i].forward_duration  = -1;
+        p_cache->cache[i].backward_duration = -1;
+    }
+
+    p_cache->head = 0;
+    p_cache->tail = length;
+    p_cache->expect_duration = precision / (axis_vel_[index] * vel * vel_ratio_);
+    p_cache->deadline = 999999999.999;
+
+    FST_INFO("Prepare trajectory cache ...");
+    err = prepareCache(*p_cache);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to prepare trajectory, code = 0x%llx", err);
+        return err;
+    }
+
+    FST_INFO("Preplan trajectory cache ...");
+    err = preplanCache(*p_cache, cnt);
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to preplan trajectory, code = 0x%llx", err);
+        return err;
+    }
+
+    p_cache->valid = true;
+    start_joint_ = p_cache->cache[p_cache->tail - 1].ending_state.angle;
+    FST_INFO("Success.");
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, int id)
+{
+    /*
+    char buffer[LOG_TEXT_SIZE];
+    Joint start_joint;
+    FST_INFO("autoLine: vel = %.4f, cnt = %.4f", vel, cnt);
+    FST_INFO("  target = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target);
 
     if (vel < MINIMUM_E6 || vel > 1 + MINIMUM_E6 || fabs(cnt) > 1 + MINIMUM_E6)
     {
@@ -668,6 +791,12 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
     p_cache->valid = true;
     start_joint_ = p_cache->cache[p_cache->tail - 1].ending_state.angle;
     FST_INFO("Success.");
+     */
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::autoCircle(const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id)
+{
     return SUCCESS;
 }
 
@@ -745,13 +874,12 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
+ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
 {
     char buffer[LOG_TEXT_SIZE];
     ErrorCode err = SUCCESS;
     double  this_duration = 99.99;
     double  last_duration = 99.99;
-    size_t  joint_num = getNumberOfJoint();
     size_t  index = cache.tail - 1;
     TrajectorySegment *pseg;
     TrajectorySegment &seg1 = cache.cache[1];
@@ -775,37 +903,38 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
     FST_INFO("backward omega: %s", printDBLine(&segn.ending_state.omega[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("backward alpha-upper: %s", printDBLine(&backward_alpha_upper[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("backward alpha-lower: %s", printDBLine(&backward_alpha_lower[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
 
     while (this_duration > cache.expect_duration + MINIMUM_E6 && index > 0)
     {
         pseg = &cache.cache[index];
         err = backwardCycle(pseg->start_state.angle, pseg->ending_state, cache.expect_duration, backward_alpha_upper, backward_alpha_lower, jerk_, pseg->backward_coeff);
+        //err = backwardCycleTest(pseg->start_state.angle, pseg->ending_state, 0.01, backward_alpha_upper, backward_alpha_lower, jerk_, pseg->backward_coeff);
 
         if (err == SUCCESS)
         {
-            FST_WARN("back-cycle: %d", index);
+            FST_WARN("back-cycle: %d, exp-duration: %.4f", index, cache.expect_duration);
             FST_INFO("  start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
             FST_INFO("  ending-angle: %s", printDBLine(&pseg->ending_state.angle[0], buffer, LOG_TEXT_SIZE));
             FST_INFO("  ending-omega: %s", printDBLine(&pseg->ending_state.omega[0], buffer, LOG_TEXT_SIZE));
             FST_INFO("  ending-alpha: %s", printDBLine(&pseg->ending_state.alpha[0], buffer, LOG_TEXT_SIZE));
-            FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].duration[0], pseg->backward_coeff[0].duration[1], pseg->backward_coeff[0].duration[2], pseg->backward_coeff[0].duration[3]);
-            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[0][0], pseg->backward_coeff[0].coeff[0][1], pseg->backward_coeff[0].coeff[0][2], pseg->backward_coeff[0].coeff[0][3]);
-            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[1][0], pseg->backward_coeff[0].coeff[1][1], pseg->backward_coeff[0].coeff[1][2], pseg->backward_coeff[0].coeff[1][3]);
-            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[2][0], pseg->backward_coeff[0].coeff[2][1], pseg->backward_coeff[0].coeff[2][2], pseg->backward_coeff[0].coeff[2][3]);
-            FST_INFO("  coeff = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[0].coeff[3][0], pseg->backward_coeff[0].coeff[3][1], pseg->backward_coeff[0].coeff[3][2], pseg->backward_coeff[0].coeff[3][3]);
 
-            for (size_t i = 0; i < joint_num; i++)
+            for (size_t i = 0; i < 6; i++)
             {
-                pseg->backward_coeff[i].duration[1] += pseg->backward_coeff[i].duration[0];
-                pseg->backward_coeff[i].duration[2] += pseg->backward_coeff[i].duration[1];
-                pseg->backward_coeff[i].duration[3] += pseg->backward_coeff[i].duration[2];
+                FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", pseg->backward_coeff[i].duration[0], pseg->backward_coeff[i].duration[1], pseg->backward_coeff[i].duration[2], pseg->backward_coeff[i].duration[3]);
+                FST_INFO("  coeff = %.6f, %.6f, %.6f, %.6f", pseg->backward_coeff[i].coeff[0][3], pseg->backward_coeff[i].coeff[0][2], pseg->backward_coeff[i].coeff[0][1], pseg->backward_coeff[i].coeff[0][0]);
+                FST_INFO("          %.6f, %.6f, %.6f, %.6f", pseg->backward_coeff[i].coeff[1][3], pseg->backward_coeff[i].coeff[1][2], pseg->backward_coeff[i].coeff[1][1], pseg->backward_coeff[i].coeff[1][0]);
+                FST_INFO("          %.6f, %.6f, %.6f, %.6f", pseg->backward_coeff[i].coeff[2][3], pseg->backward_coeff[i].coeff[2][2], pseg->backward_coeff[i].coeff[2][1], pseg->backward_coeff[i].coeff[2][0]);
+                FST_INFO("          %.6f, %.6f, %.6f, %.6f", pseg->backward_coeff[i].coeff[3][3], pseg->backward_coeff[i].coeff[3][2], pseg->backward_coeff[i].coeff[3][1], pseg->backward_coeff[i].coeff[3][0]);
             }
 
-            pseg->backward_duration = pseg->backward_coeff[0].duration[3];
+            pseg->backward_duration = pseg->backward_coeff[0].duration[0] + pseg->backward_coeff[0].duration[1] + pseg->backward_coeff[0].duration[2] + pseg->backward_coeff[0].duration[3];
             pseg->dynamics_product  = backward_dynamics_product;
             this_duration = pseg->backward_duration;
-            //FST_LOG("back-index=%d, duration=%.6f, last-duration=%.6f, cmd-duration=%.6f",
-            //        ind_b, duration_b, last_duration, cmd_duration);
+            Joint tmp;
+            sampleTrajectorySegment(pseg->backward_coeff, 0, tmp, pseg->start_state.omega, pseg->start_state.alpha);
+            cache.cache[index - 1].ending_state = pseg->start_state;
+            FST_WARN("this duration: %.8f, exp duration: %.8f, last duration: %.8f", this_duration, cache.expect_duration, last_duration);
 
             if (this_duration + MINIMUM_E6 > last_duration)
             {
@@ -845,22 +974,33 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
     {
         pseg = &cache.cache[index];
         err = forwardCycle(pseg->start_state, pseg->ending_state.angle, cache.expect_duration, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
+        //err = forwardCycleTest(pseg->start_state, pseg->ending_state.angle, 0.01, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
 
         if (err == SUCCESS)
         {
-            for (size_t i = 0; i < joint_num; i++)
+            FST_WARN("fore-cycle: %d, exp-duration: %.4f", index, cache.expect_duration);
+            FST_INFO("  start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("  start-omega: %s", printDBLine(&pseg->start_state.omega[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("  start-alpha: %s", printDBLine(&pseg->start_state.alpha[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("  ending-angle: %s", printDBLine(&pseg->ending_state.angle[0], buffer, LOG_TEXT_SIZE));
+
+            for (size_t i = 0; i < 6; i++)
             {
-                pseg->forward_coeff[i].duration[1] += pseg->forward_coeff[i].duration[0];
-                pseg->forward_coeff[i].duration[2] += pseg->forward_coeff[i].duration[1];
-                pseg->forward_coeff[i].duration[3] += pseg->forward_coeff[i].duration[2];
+                FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", pseg->forward_coeff[i].duration[0], pseg->forward_coeff[i].duration[1], pseg->forward_coeff[i].duration[2], pseg->forward_coeff[i].duration[3]);
+                FST_INFO("  coeff = %.6f, %.6f, %.6f, %.6f", pseg->forward_coeff[i].coeff[0][3], pseg->forward_coeff[i].coeff[0][2], pseg->forward_coeff[i].coeff[0][1], pseg->forward_coeff[i].coeff[0][0]);
+                FST_INFO("          %.6f, %.6f, %.6f, %.6f", pseg->forward_coeff[i].coeff[1][3], pseg->forward_coeff[i].coeff[1][2], pseg->forward_coeff[i].coeff[1][1], pseg->forward_coeff[i].coeff[1][0]);
+                FST_INFO("          %.6f, %.6f, %.6f, %.6f", pseg->forward_coeff[i].coeff[2][3], pseg->forward_coeff[i].coeff[2][2], pseg->forward_coeff[i].coeff[2][1], pseg->forward_coeff[i].coeff[2][0]);
+                FST_INFO("          %.6f, %.6f, %.6f, %.6f", pseg->forward_coeff[i].coeff[3][3], pseg->forward_coeff[i].coeff[3][2], pseg->forward_coeff[i].coeff[3][1], pseg->forward_coeff[i].coeff[3][0]);
             }
 
-            pseg->forward_duration = pseg->forward_coeff[0].duration[3];
+            pseg->forward_duration = pseg->forward_coeff[0].duration[0] + pseg->forward_coeff[0].duration[1] +
+                                     pseg->forward_coeff[0].duration[2] + pseg->forward_coeff[0].duration[3];
             pseg->dynamics_product = forward_dynamics_product;
             this_duration = pseg->forward_duration;
-            //FST_LOG("fore-index=%d, duration=%.6f, last-duration=%.6f, cmd-duration=%.6f",
-            //        ind_f, duration_f, last_duration, cmd_duration);
-
+            Joint tmp;
+            sampleTrajectorySegment(pseg->forward_coeff, pseg->forward_duration, tmp, pseg->ending_state.omega, pseg->ending_state.alpha);
+            cache.cache[index + 1].start_state = pseg->ending_state;
+            FST_WARN("this duration: %.8f, exp duration: %.8f, last duration: %.8f", this_duration, cache.expect_duration, last_duration);
             if (this_duration + MINIMUM_E6 > last_duration)
             {
                 break;
@@ -891,7 +1031,6 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
         return err;
     }
 
-    size_t fore_index, back_index;
     size_t forward_index = cache.head + 1;
     size_t backward_index = cache.tail - 1;
 
@@ -936,8 +1075,9 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
         }
     }
 
-    fore_index = forward_index;
-    back_index = backward_index;
+    FST_INFO("spd-up-index=%d, spd-down-index=%d", forward_index, backward_index);
+    size_t fore_index = forward_index;
+    size_t back_index = backward_index;
     forward_index ++;
     backward_index --;
 
@@ -951,8 +1091,6 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
         cache.cache[backward_index --].backward_duration = -1;
     }
 
-    FST_INFO("spd-up-index=%d, spd-down-index=%d", fore_index, back_index);
-
     for (size_t i = cache.head; i < cache.tail; i++)
     {
         FST_INFO("stamp=%d, duration_f=%.6f, duration_b=%.6f, cmd_duration=%.6f",
@@ -960,18 +1098,64 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache)
                  cache.cache[i].backward_duration, cache.expect_duration);
     }
 
+    if (cnt > MINIMUM_E3)
+    {
+        double smooth_duration = cache.expect_duration / cnt;
+
+        for (forward_index = cache.head + 1; forward_index < cache.tail; forward_index++)
+        {
+            if (cache.cache[forward_index].forward_duration > smooth_duration && forward_index + 1 < cache.tail && cache.cache[forward_index + 1].forward_duration > 0)
+            {
+                forward_index ++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        cache.smooth_in_stamp = forward_index;
+
+        for (backward_index = cache.tail - 1; backward_index > cache.head; backward_index--)
+        {
+            if (cache.cache[backward_index].backward_duration > smooth_duration && backward_index - 1 > cache.head && cache.cache[backward_index - 1].backward_duration > 0)
+            {
+                backward_index --;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        cache.smooth_out_stamp = backward_index;
+    }
+    else
+    {
+        cache.smooth_in_stamp = fore_index;
+        cache.smooth_out_stamp = back_index;
+    }
+
     return SUCCESS;
 }
 
 bool BaseGroup::nextMovePermitted(void)
 {
+    if (waiting_fine_)
+        return false;
+
+    if (group_state_ == AUTO || group_state_ == AUTO_TO_STANDBY || group_state_ == STANDBY_TO_AUTO)
+    {
+        if (auto_pick_ptr_->valid && auto_time_ + 0.1 < auto_pick_ptr_->deadline)
+        {
+            return false;
+        }
+    }
+
     return true;
 }
 
-ErrorCode BaseGroup::smoothJoint2Joint(const JointPoint &ps, const JointPoint &pe, MotionTime smooth_time, TrajSegment &seg)
-{
-    return SUCCESS;
-}
+#define  PRINT_COEFFS
 
 ErrorCode BaseGroup::createTrajectory(void)
 {
@@ -987,9 +1171,28 @@ ErrorCode BaseGroup::createTrajectory(void)
 
         while ((traj_fifo_.duration() < 0.1 && !traj_fifo_.full()) || traj_fifo_.size() < 3)
         {
-            FST_INFO("fore-duration = %.4f, back-duration = %.4f", auto_pick_ptr_->cache[auto_pick_segment_].forward_duration, auto_pick_ptr_->cache[auto_pick_segment_].backward_duration);
+            if (auto_pick_segment_ >= auto_pick_ptr_->tail)
+            {
+                auto_pick_ptr_->valid = false;
 
-            if (auto_pick_segment_ < auto_pick_ptr_->smooth_out_stamp)
+                if (auto_pick_ptr_->next->valid)
+                {
+                    auto_pick_ptr_ = auto_pick_ptr_->next;
+                    auto_pick_segment_ = 1;
+                    auto_pick_ptr_->cache[0].time_from_start = traj_fifo_.back().time_from_start;
+                    FST_INFO("auto-pick-ptr switch, seg = %d, time-from-start = %.4f", auto_pick_segment_, auto_pick_ptr_->cache[0].time_from_start);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+#ifdef PRINT_COEFFS
+            FST_INFO("seg-%d, fore-duration = %.4f, back-duration = %.4f", auto_pick_segment_, auto_pick_ptr_->cache[auto_pick_segment_].forward_duration, auto_pick_ptr_->cache[auto_pick_segment_].backward_duration);
+            FST_INFO("next-seg = %d, traj-tail = %d, fore-duration = %.4f, back-duration = %.4f", auto_pick_segment_ + 1, auto_pick_ptr_->tail, auto_pick_ptr_->cache[auto_pick_segment_ + 1].forward_duration, auto_pick_ptr_->cache[auto_pick_segment_ + 1].backward_duration);
+#endif
+            if (auto_pick_segment_ <= auto_pick_ptr_->smooth_out_stamp)
             {
                 pseg = &auto_pick_ptr_->cache[auto_pick_segment_];
 
@@ -1003,72 +1206,125 @@ ErrorCode BaseGroup::createTrajectory(void)
                     traj_fifo_.push(traj_item);
                     sampleTrajectorySegment(traj_item.traj_coeff, traj_item.duration, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
                     auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
-                }
-                else if (pseg->backward_duration > 0)
-                {
-                    traj_item.id = pseg->path_point.id;
-                    traj_item.duration = pseg->backward_duration;
-                    traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
-                    traj_item.dynamics_product = pseg->dynamics_product;
-                    memcpy(traj_item.traj_coeff,  pseg->backward_coeff, sizeof(traj_item.traj_coeff));
-                    traj_fifo_.push(traj_item);
-                    sampleTrajectorySegment(traj_item.traj_coeff, 0, tmp_joint, pseg->start_state.omega, pseg->start_state.alpha);
-                    auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+#ifdef PRINT_COEFFS
+                    for (size_t i = 0; i < 6; i++)
+                    {
+                        FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", traj_item.traj_coeff[i].duration[0], traj_item.traj_coeff[i].duration[1], traj_item.traj_coeff[i].duration[2], traj_item.traj_coeff[i].duration[3]);
+                        FST_INFO("  coeff = %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[0][3], traj_item.traj_coeff[i].coeff[0][2], traj_item.traj_coeff[i].coeff[0][1], traj_item.traj_coeff[i].coeff[0][0]);
+                        FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[1][3], traj_item.traj_coeff[i].coeff[1][2], traj_item.traj_coeff[i].coeff[1][1], traj_item.traj_coeff[i].coeff[1][0]);
+                        FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[2][3], traj_item.traj_coeff[i].coeff[2][2], traj_item.traj_coeff[i].coeff[2][1], traj_item.traj_coeff[i].coeff[2][0]);
+                        FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[3][3], traj_item.traj_coeff[i].coeff[3][2], traj_item.traj_coeff[i].coeff[3][1], traj_item.traj_coeff[i].coeff[3][0]);
+                    }
+#endif
                 }
                 else
                 {
-                    computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
-                    err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_pick_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
-
-                    if (err == SUCCESS)
+                    if (pseg->backward_duration < 0 && auto_pick_segment_ + 1 < auto_pick_ptr_->tail && (pseg + 1)->backward_duration < 0)
                     {
-                        for (size_t i = 0; i < joint_num; i++)
-                        {
-                            pseg->forward_coeff[i].duration[1] += pseg->forward_coeff[i].duration[0];
-                            pseg->forward_coeff[i].duration[2] += pseg->forward_coeff[i].duration[1];
-                            pseg->forward_coeff[i].duration[3] += pseg->forward_coeff[i].duration[2];
-                        }
+                        computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
+                        err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_pick_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
+                        //err = forwardCycleTest(pseg->start_state, pseg->ending_state.angle, 0.01, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
 
-                        pseg->forward_duration = pseg->forward_coeff[0].duration[3];
+                        if (err == SUCCESS)
+                        {
+                            for (size_t i = 0; i < joint_num; i++)
+                            {
+                                pseg->forward_coeff[i].duration[1] += pseg->forward_coeff[i].duration[0];
+                                pseg->forward_coeff[i].duration[2] += pseg->forward_coeff[i].duration[1];
+                                pseg->forward_coeff[i].duration[3] += pseg->forward_coeff[i].duration[2];
+                            }
+
+                            pseg->forward_duration = pseg->forward_coeff[0].duration[0] + pseg->forward_coeff[0].duration[1] +
+                                                     pseg->forward_coeff[0].duration[2] + pseg->forward_coeff[0].duration[3];
+                            traj_item.id = pseg->path_point.id;
+                            traj_item.duration = pseg->forward_duration;
+                            traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
+                            traj_item.dynamics_product = pseg->dynamics_product;
+                            memcpy(traj_item.traj_coeff,  pseg->forward_coeff, sizeof(traj_item.traj_coeff));
+                            traj_fifo_.push(traj_item);
+                            sampleTrajectorySegment(traj_item.traj_coeff, traj_item.duration, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
+                            auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                        }
+                        else
+                        {
+                            FST_ERROR("Fail to create trajectory from path, code = 0x%llx", err);
+                            return err;
+                        }
+#ifdef PRINT_COEFFS
+                        for (size_t i = 0; i < 6; i++)
+                        {
+                            FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", traj_item.traj_coeff[i].duration[0], traj_item.traj_coeff[i].duration[1], traj_item.traj_coeff[i].duration[2], traj_item.traj_coeff[i].duration[3]);
+                            FST_INFO("  coeff = %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[0][3], traj_item.traj_coeff[i].coeff[0][2], traj_item.traj_coeff[i].coeff[0][1], traj_item.traj_coeff[i].coeff[0][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[1][3], traj_item.traj_coeff[i].coeff[1][2], traj_item.traj_coeff[i].coeff[1][1], traj_item.traj_coeff[i].coeff[1][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[2][3], traj_item.traj_coeff[i].coeff[2][2], traj_item.traj_coeff[i].coeff[2][1], traj_item.traj_coeff[i].coeff[2][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[3][3], traj_item.traj_coeff[i].coeff[3][2], traj_item.traj_coeff[i].coeff[3][1], traj_item.traj_coeff[i].coeff[3][0]);
+                        }
+#endif
+                    }
+                    else if (pseg->backward_duration > 0 && (auto_pick_segment_ + 1 == auto_pick_ptr_->tail || (pseg + 1)->backward_duration > 0))
+                    {
                         traj_item.id = pseg->path_point.id;
-                        traj_item.duration = pseg->forward_duration;
+                        traj_item.duration = pseg->backward_duration;
                         traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
                         traj_item.dynamics_product = pseg->dynamics_product;
-                        memcpy(traj_item.traj_coeff,  pseg->forward_coeff, sizeof(traj_item.traj_coeff));
+                        memcpy(traj_item.traj_coeff,  pseg->backward_coeff, sizeof(traj_item.traj_coeff));
                         traj_fifo_.push(traj_item);
-                        sampleTrajectorySegment(traj_item.traj_coeff, traj_item.duration, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
-                        auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                        //sampleTrajectorySegment(traj_item.traj_coeff, 0, tmp_joint, pseg->start_state.omega, pseg->start_state.alpha);
+                        //auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+#ifdef PRINT_COEFFS
+                        for (size_t i = 0; i < 6; i++)
+                        {
+                            FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", traj_item.traj_coeff[i].duration[0], traj_item.traj_coeff[i].duration[1], traj_item.traj_coeff[i].duration[2], traj_item.traj_coeff[i].duration[3]);
+                            FST_INFO("  coeff = %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[0][3], traj_item.traj_coeff[i].coeff[0][2], traj_item.traj_coeff[i].coeff[0][1], traj_item.traj_coeff[i].coeff[0][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[1][3], traj_item.traj_coeff[i].coeff[1][2], traj_item.traj_coeff[i].coeff[1][1], traj_item.traj_coeff[i].coeff[1][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[2][3], traj_item.traj_coeff[i].coeff[2][2], traj_item.traj_coeff[i].coeff[2][1], traj_item.traj_coeff[i].coeff[2][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[3][3], traj_item.traj_coeff[i].coeff[3][2], traj_item.traj_coeff[i].coeff[3][1], traj_item.traj_coeff[i].coeff[3][0]);
+                        }
+#endif
+                    }
+                    else if (pseg->backward_duration < 0 && auto_pick_segment_ + 1 < auto_pick_ptr_->tail && (pseg + 1)->backward_duration > 0)
+                    {
+                        //smooth
+                        computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
+                        traj_item.id = pseg->path_point.id;
+                        traj_item.dynamics_product = pseg->dynamics_product;
+                        smoothPoint2Point(pseg->start_state, (pseg + 1)->start_state, auto_cache_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, traj_item.traj_coeff);
+                        traj_item.duration = traj_item.traj_coeff[0].duration[0] + traj_item.traj_coeff[0].duration[1] + traj_item.traj_coeff[0].duration[2] + traj_item.traj_coeff[0].duration[3];
+                        traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
+                        traj_fifo_.push(traj_item);
+#ifdef PRINT_COEFFS
+                        for (size_t i = 0; i < 6; i++)
+                        {
+                            FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", traj_item.traj_coeff[i].duration[0], traj_item.traj_coeff[i].duration[1], traj_item.traj_coeff[i].duration[2], traj_item.traj_coeff[i].duration[3]);
+                            FST_INFO("  coeff = %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[0][3], traj_item.traj_coeff[i].coeff[0][2], traj_item.traj_coeff[i].coeff[0][1], traj_item.traj_coeff[i].coeff[0][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[1][3], traj_item.traj_coeff[i].coeff[1][2], traj_item.traj_coeff[i].coeff[1][1], traj_item.traj_coeff[i].coeff[1][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[2][3], traj_item.traj_coeff[i].coeff[2][2], traj_item.traj_coeff[i].coeff[2][1], traj_item.traj_coeff[i].coeff[2][0]);
+                            FST_INFO("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[3][3], traj_item.traj_coeff[i].coeff[3][2], traj_item.traj_coeff[i].coeff[3][1], traj_item.traj_coeff[i].coeff[3][0]);
+                        }
+#endif
                     }
                     else
                     {
-                        FST_ERROR("Fail to create trajectory from path, code = 0x%llx", err);
-                        return err;
+                        FST_ERROR("createTrajectory: internal fault !!!");
+                        return MOTION_INTERNAL_FAULT;
                     }
                 }
-                /*
-                else
-                {
-                    // Forward meet backward, this.forward & this.backward & next.forward is none, but next.backward is valid
-                    FST_WARN("Meet backward, link forward with backward");
 
+                if (auto_pick_segment_ == auto_pick_ptr_->smooth_out_stamp)
+                {
+                    auto_pick_ptr_->deadline = traj_fifo_.timeFromStart();
                 }
-                 */
+
+                auto_pick_segment_ ++;
+            }
+            else
+            {
+
             }
         }
     }
     return SUCCESS;
 }
-
-ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, int id)
-{
-    return SUCCESS;
-}
-
-ErrorCode BaseGroup::autoCircle(const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id)
-{
-    return SUCCESS;
-}
-
 
 void BaseGroup::getLatestJoint(Joint &joint)
 {
@@ -1255,7 +1511,7 @@ ErrorCode BaseGroup::sendPoint(void)
             size_t length = 10;
             TrajectoryPoint point[10];
             pickFromAuto(point, length);
-            bare_core_.fillPointCache(point, length, POINT_POS_VEL_ACC);
+            bare_core_.fillPointCache(point, length, POINT_POS_VEL_ACC_EFF);
         }
 
         return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
@@ -1515,6 +1771,9 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
     size_t joint_num = getNumberOfJoint();
     MotionTime seg_tm;
 
+    FST_INFO("Pick from auto move");
+    FST_INFO("auto-time=%.4f", auto_time_);
+
     for (size_t i = 0; i < length; i++)
     {
         auto_time_ += cycle_time_;
@@ -1534,17 +1793,15 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
                 seg_tm = auto_time_ - (traj_fifo_.front().time_from_start - traj_fifo_.front().duration);
 
                 ErrorCode err = sampleTrajectorySegment(traj_fifo_.front().traj_coeff, seg_tm, point[i].angle, point[i].omega, point[i].alpha);
-                computeCompensate(traj_fifo_.front().dynamics_product, point[i].omega, point[i].alpha, point[i].ma_cv_g);
+
+                FST_INFO("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
+                         point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
+                         point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
+                         point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
 
                 if (err == SUCCESS)
                 {
-                    for (size_t j = 0; j < joint_num; j++)
-                    {
-                        //point[i].torque[j] = traj_fifo_.front().dynamics_product[j].torque;
-                        //point[i].inertia[j] = traj_fifo_.front().dynamics_product[j].inertia;
-                        //point[i].gravity[j] = traj_fifo_.front().dynamics_product[j].gravity;
-                    }
-
+                    computeCompensate(traj_fifo_.front().dynamics_product, point[i].omega, point[i].alpha, point[i].ma_cv_g);
                     pick_num ++;
                 }
                 else
@@ -1566,6 +1823,18 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
         else
         {
             ErrorCode err = sampleTrajectorySegment(traj_fifo_.front().traj_coeff, traj_fifo_.front().duration, point[i].angle, point[i].omega, point[i].alpha);
+
+            /*
+            FST_INFO("duration = %.4f, %.4f, %.4f, %.4f", traj_fifo_.front().traj_coeff[0].duration[0], traj_fifo_.front().traj_coeff[0].duration[1], traj_fifo_.front().traj_coeff[0].duration[2], traj_fifo_.front().traj_coeff[0].duration[3]);
+            FST_INFO("coeff = %.6f, %.6f, %.6f, %.6f", traj_fifo_.front().traj_coeff[0].coeff[0][3], traj_fifo_.front().traj_coeff[0].coeff[0][2], traj_fifo_.front().traj_coeff[0].coeff[0][1], traj_fifo_.front().traj_coeff[0].coeff[0][0]);
+            FST_INFO("        %.6f, %.6f, %.6f, %.6f", traj_fifo_.front().traj_coeff[0].coeff[1][3], traj_fifo_.front().traj_coeff[0].coeff[1][2], traj_fifo_.front().traj_coeff[0].coeff[1][1], traj_fifo_.front().traj_coeff[0].coeff[1][0]);
+            FST_INFO("        %.6f, %.6f, %.6f, %.6f", traj_fifo_.front().traj_coeff[0].coeff[2][3], traj_fifo_.front().traj_coeff[0].coeff[2][2], traj_fifo_.front().traj_coeff[0].coeff[2][1], traj_fifo_.front().traj_coeff[0].coeff[2][0]);
+            FST_INFO("        %.6f, %.6f, %.6f, %.6f", traj_fifo_.front().traj_coeff[0].coeff[3][3], traj_fifo_.front().traj_coeff[0].coeff[3][2], traj_fifo_.front().traj_coeff[0].coeff[3][1], traj_fifo_.front().traj_coeff[0].coeff[3][0]);
+            */
+            FST_WARN("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
+                     point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
+                     point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
+                     point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
 
             if (err == SUCCESS)
             {
@@ -1599,7 +1868,6 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
 
             char buffer[LOG_TEXT_SIZE];
             FST_INFO("%d - %.4f - %s", point[i].level, auto_time_, printDBLine(&point[i].angle.j1, buffer, LOG_TEXT_SIZE));
-
             FST_INFO("Command ID = %d finished", traj_fifo_.front().id);
             //auto_running_ = false;
 
@@ -1607,6 +1875,8 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
             {
                 group_state_ = AUTO_TO_STANDBY;
             }
+
+            traj_fifo_.clear();
 
             break;
         }
@@ -1643,17 +1913,20 @@ ErrorCode BaseGroup::sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF
 {
     size_t ind;
     size_t joint_num = getNumberOfJoint();
-    MotionTime tm;
 
     for (size_t j = 0; j < joint_num; j++)
     {
+        double tm = time;
         const double (&coeff)[4][4] = segment[j].coeff;
         const double (&duration)[4] = segment[j].duration;
 
-        if (time < duration[0])       { ind = 0; tm = time; }
-        else if (time < duration[1])  { ind = 1; tm = time - duration[0]; }
-        else if (time < duration[2])  { ind = 2; tm = time - duration[1]; }
-        else if (time < duration[3])  { ind = 3; tm = time - duration[2]; }
+        if (tm < duration[0]) { ind = 0; goto sample_by_time; }
+        tm -= duration[0];
+        if (tm < duration[1]) { ind = 1; goto sample_by_time; }
+        tm -= duration[1];
+        if (tm < duration[2]) { ind = 2; goto sample_by_time; }
+        tm -= duration[2];
+        if (tm < duration[3] + MINIMUM_E9) { ind = 3; goto sample_by_time; }
         else
         {
             FST_ERROR("Time error! time = %.4f, duration0 = %.4f, duration1 = %.4f, duration2 = %.4f, duration3 = %.4f",
@@ -1661,6 +1934,7 @@ ErrorCode BaseGroup::sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF
             return MOTION_INTERNAL_FAULT;
         }
 
+sample_by_time:
         MotionTime tm_array[4] = {1.0, tm, tm * tm, tm * tm * tm};
 
         angle[j] = coeff[ind][3] * tm_array[3] + coeff[ind][2] * tm_array[2] + coeff[ind][1] * tm_array[1] + coeff[ind][0];
@@ -1675,18 +1949,20 @@ ErrorCode BaseGroup::sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF
 
 void BaseGroup::realtimeTask(void)
 {
-    ErrorCode  err;
-    Joint barecore_joint;
-    ServoState barecore_state;
-    size_t send_fail_cnt = 0;
-    memset(&barecore_joint, 0, sizeof(barecore_joint));
+    ErrorCode   err;
+    ServoState  barecore_state;
+    Joint   barecore_joint;
+    Pose    barecore_pose;
+    size_t  send_fail_cnt = 0;
+    size_t  stable_cnt = 0;
+
     FST_WARN("Realtime task start.");
+    memset(&barecore_joint, 0, sizeof(barecore_joint));
 
     while (rt_task_active_)
     {
         if (bare_core_.getLatestJoint(barecore_joint, barecore_state))
         {
-
             pthread_mutex_lock(&servo_mutex_);
             servo_state_ = barecore_state;
             current_joint_ = barecore_joint;
@@ -1696,6 +1972,50 @@ void BaseGroup::realtimeTask(void)
         {
             FST_ERROR("Lost communication with bare core.");
             reportError(BARE_CORE_TIMEOUT);
+        }
+
+        if (waiting_fine_)
+        {
+            if (start_waiting_cnt_ > 0)
+            {
+                start_waiting_cnt_ --;
+            }
+            else
+            {
+                if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
+                {
+                    if (waiting_motion_type_ == MOTION_JOINT)
+                    {
+                        if (isSameJoint(waiting_joint_, barecore_joint))
+                        {
+                            stable_cnt ++;
+                        }
+                        else
+                        {
+                            stable_cnt = 0;
+                        }
+                    }
+                    else
+                    {
+                        kinematics_ptr_->forwardKinematicsInUser(barecore_joint, barecore_pose);
+
+                        if (getDistance(barecore_pose.position, waiting_pose_.position) < 0.05)
+                        {
+                            stable_cnt ++;
+                        }
+                        else
+                        {
+                            stable_cnt = 0;
+                        }
+                    }
+
+                    if (stable_cnt > 5)
+                    {
+                        FST_WARN("Waiting-fine: group is stable.");
+                        waiting_fine_ = false;
+                    }
+                }
+            }
         }
 
         if ((servo_state_ == SERVO_IDLE || servo_state_ == SERVO_RUNNING) &&
@@ -1745,6 +2065,21 @@ void BaseGroup::realtimeTask(void)
     FST_WARN("Realtime task quit.");
 }
 
+bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2)
+{
+    size_t  joint_num = getNumberOfJoint();
+
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        if (fabs(joint1[i] - joint2[i]) > MINIMUM_E6)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void BaseGroup::inactiveRealtimeTask(void)
 {
     rt_task_active_ = false;
@@ -1759,7 +2094,6 @@ BaseKinematics* BaseGroup::getKinematicsPtr(void)
 {
     return kinematics_ptr_;
 }
-
 
 Calibrator* BaseGroup::getCalibratorPtr(void)
 {

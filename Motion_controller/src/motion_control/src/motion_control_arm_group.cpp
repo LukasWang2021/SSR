@@ -31,12 +31,13 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     cycle_time_ = 0.001;
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 
+    /*
     char buf[LOG_ITEM_SIZE];
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
     sprintf(buf, "ArmGroup%ld.%ld", time_now.tv_sec, time_now.tv_usec);
-
-    if (!log_ptr_->initLogger(buf))
+*/
+    if (!log_ptr_->initLogger("ArmGroup"))
     {
         FST_ERROR("Lost communication with log server, initGroup abort.");
         return MOTION_INTERNAL_FAULT;

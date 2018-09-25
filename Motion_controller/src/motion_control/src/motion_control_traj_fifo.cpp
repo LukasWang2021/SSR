@@ -119,7 +119,7 @@ bool TrajectoryFifo::dropFront(void)
 
 const TrajectoryItem& TrajectoryFifo::front(void) const
 {
-    return traj_fifo_[traj_head_];
+    return empty() ? traj_fifo_[traj_head_ > 0 ? traj_head_ - 1 : TRAJECTORY_FIFO_CAPACITY - 1] : traj_fifo_[traj_head_];
 }
 
 const TrajectoryItem& TrajectoryFifo::back(void) const

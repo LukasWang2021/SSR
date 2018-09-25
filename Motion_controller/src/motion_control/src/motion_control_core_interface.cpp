@@ -88,6 +88,7 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
 
 bool BareCoreInterface::sendPoint(void)
 {
+    /*
     if (!point_cache_.is_empty)
     {
         if (core_interface_.sendBareCore(point_cache_.cache, point_cache_.property) == SUCCESS)
@@ -104,6 +105,9 @@ bool BareCoreInterface::sendPoint(void)
     {
         return false;
     }
+    */
+    point_cache_.is_empty = true;
+    return true;
 }
 
 bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)

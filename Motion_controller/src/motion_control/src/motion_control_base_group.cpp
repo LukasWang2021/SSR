@@ -180,9 +180,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
     }
 
     getLatestJoint(manual_traj_.joint_start);
-    FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
-    if (soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
+    if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
         FST_ERROR("start-joint is out of soft constraint, manual-mode-apoint is disabled.");
         return JOINT_OUT_OF_CONSTRAINT;
@@ -228,13 +228,13 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     if (manual_frame_ != BASE && manual_frame_ != USER && manual_frame_ != WORLD)
     {
         FST_ERROR("Cannot manual to target in current frame = %d", manual_frame_);
-        return INVALID_SEQUENCE;
+        return INVALID_SEQmZENCE;
     }
 
     getLatestJoint(manual_traj_.joint_start);
-    FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
-    if (soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
+    if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
         FST_ERROR("start-joint is out of soft constraint, manual-mode-apoint is disabled.");
         return JOINT_OUT_OF_CONSTRAINT;
@@ -265,7 +265,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
         return err;
     }
 
-    if (soft_constraint_.isJointInConstraint(res_joint))
+    if (!soft_constraint_.isJointInConstraint(res_joint))
     {
         FST_ERROR("target-joint is out of soft constraint: %s", printDBLine(&res_joint[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;

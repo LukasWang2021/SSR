@@ -1465,6 +1465,10 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock)
       serror(objThreadCntrolBlock, 8);
       return;
     }/* else program execution starts on next line */
+    else
+    {
+       find_eol(objThreadCntrolBlock);
+    }
     if_stack.itokentype = IF ;
     select_and_cycle_push(objThreadCntrolBlock, if_stack);
   }
@@ -1562,6 +1566,10 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
       serror(objThreadCntrolBlock, 8);
       return;
     }/* else program execution starts on next line */
+    else
+    {
+      find_eol(objThreadCntrolBlock);
+    }
     if_stack.itokentype = IF ;
     select_and_cycle_push(objThreadCntrolBlock, if_stack);
   }
@@ -1819,6 +1827,7 @@ void exec_wend(struct thread_control_block * objThreadCntrolBlock)
   cond = calc_conditions(objThreadCntrolBlock);
 
   if(cond) { /* is true so process target of IF */
+	  find_eol(objThreadCntrolBlock);
 	  select_and_cycle_push(objThreadCntrolBlock, while_stack);  /* otherwise, restore the info */
 	  objThreadCntrolBlock->prog = while_stack.loc;  /* loop */
   }
@@ -1884,6 +1893,7 @@ void exec_continue(struct thread_control_block * objThreadCntrolBlock)
       cond = calc_conditions(objThreadCntrolBlock);
 
 	  if(cond) { /* is true so process target of IF */
+	      find_eol(objThreadCntrolBlock);
 		  select_and_cycle_push(objThreadCntrolBlock, cycle_stack);  /* otherwise, restore the info */
 		  objThreadCntrolBlock->prog = cycle_stack.loc;  /* loop */
 	  }

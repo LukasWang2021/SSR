@@ -65,7 +65,7 @@ private:
     std::vector<ProcessCommPublish> publish_list_;
     std::vector<ProcessCommEvent> event_list_;
 
-    // runtime table    
+    // runtime table
     typedef struct
     {
         unsigned int cmd_id;
@@ -73,7 +73,7 @@ private:
         HandleResponseFuncPtr response_func_ptr;
     }InterpreterRpcService;
     std::vector<InterpreterRpcService> rpc_table_;
-    
+
     InterpreterServer();
     void initRpcTable();
     void handleRequestList();
@@ -96,6 +96,7 @@ private:
     void handleRequestPause();
     void handleRequestResume();
     void handleRequestAbort();
+    void handleRequestSwitchStep();
     void handleRequestGetNextInstruction();
     void handleRequestSetAutoStartMode();
 
@@ -108,6 +109,7 @@ private:
     void handleResponsePause(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseResume(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseAbort(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSwitchStep(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetNextInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetAutoStartMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
 };

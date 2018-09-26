@@ -80,7 +80,7 @@ void HeartbeatClient::sendHeartbeat()
         unsigned long long int* error_code = (unsigned long long int*)&response_data_.data[8];
         for(int i=0; i<error_num; ++i)
         {
-            FST_ERROR("sendHeartbeat: core1 report error_code: 0x%lx", error_code[i]);
+            FST_ERROR("sendHeartbeat: core1 report error_code: 0x%llx", error_code[i]);
             ErrorMonitor::instance()->add(error_code[i]);
         }
     }

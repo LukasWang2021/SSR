@@ -171,7 +171,7 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
 
     if(!state_machine_ptr_->updateContinuousManualMoveRpcTime())
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        //rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
 

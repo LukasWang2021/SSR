@@ -142,6 +142,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/interpreter/pause", 0x0000BA55, &ControllerRpc::handleRpc0x0000BA55}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/resume", 0x0000CF55, &ControllerRpc::handleRpc0x0000CF55}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/abort", 0x000086F4, &ControllerRpc::handleRpc0x000086F4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/interpreter/switchStep", 0x000140F0, &ControllerRpc::handleRpc0x000140F0}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/io_mapping/getDIByBit", 0x000050B4, &ControllerRpc::handleRpc0x000050B4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/setDIByBit", 0x00011754, &ControllerRpc::handleRpc0x00011754}; rpc_table_.push_back(rpc_service);

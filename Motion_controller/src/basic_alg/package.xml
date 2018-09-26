@@ -41,7 +41,7 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>log_manager</build_depend>
-  <build_depend>log_manager</build_depend>
+  <run_depend>log_manager</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

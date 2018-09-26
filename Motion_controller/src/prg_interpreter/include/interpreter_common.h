@@ -205,6 +205,7 @@ typedef struct _InterpreterControl
 		AutoMode    autoMode ;
         // int         id;
         int            jump_line;    // Jump 
+        int            step_mode;    // auto or debug 
     };
 }InterpreterControl;
 

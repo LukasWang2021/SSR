@@ -756,6 +756,19 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			// Just Move to line and do not execute
             // setPrgmState(INTERPRETER_EXECUTE);
 			break;
+        case fst_base::INTERPRETER_SERVER_CMD_SWITCH_STEP:
+			memcpy(&intprt_ctrl.step_mode, requestDataPtr, sizeof(int));
+            printf("switch Step at %d with %d\n", g_iCurrentThreadSeq, intprt_ctrl.step_mode);
+			if(g_iCurrentThreadSeq < 0) break ;
+			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
+			{
+            	printf("Thread exits at %d \n", getPrgmState());
+				break;
+			}
+			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+            printf("SWITCH_STEP with %d\n", intprt_ctrl.step_mode);
+            objThdCtrlBlockPtr->prog_mode = intprt_ctrl.step_mode;
+            break;
         case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
             printf("step forward at %d \n", g_iCurrentThreadSeq);
 			if(g_iCurrentThreadSeq < 0) break ;

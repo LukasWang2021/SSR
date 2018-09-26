@@ -11,6 +11,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x00006154");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -33,6 +34,7 @@ void ControllerRpc::handleRpc0x000102D7(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x000102D7");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -51,6 +53,7 @@ void ControllerRpc::handleRpc0x0000D974(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x0000D974");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -70,6 +73,7 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x00008E74");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -90,6 +94,7 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x00015930");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -107,9 +112,11 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getInterpreterState() != INTERPRETER_EXECUTE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x0000BA55");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
+        FST_INFO("Load /rpc/interpreter/pause");
     
     controller_client_ptr_->pause(); 
     rs_data_ptr->data.data = SUCCESS;
@@ -124,9 +131,11 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getInterpreterState() != INTERPRETER_PAUSED
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x0000CF55");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
+        FST_INFO("Load /rpc/interpreter/resume");
     
     controller_client_ptr_->resume(); 
     rs_data_ptr->data.data = SUCCESS;
@@ -139,6 +148,7 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     controller_client_ptr_->abort(); 
+        FST_ERROR("Load /rpc/interpreter/abort");
     rs_data_ptr->data.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));
 }
@@ -150,10 +160,13 @@ void ControllerRpc::handleRpc0x000140F0(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     // to do...
-    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
-        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
-        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    if(// state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO || 
+       // state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE || 
+       state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
+        FST_ERROR("Failed to load handleRpc0x000140F0 with %d and %d ",
+			(int)state_machine_ptr_->getUserOpMode(), 
+			(int)state_machine_ptr_->getCtrlState());
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }

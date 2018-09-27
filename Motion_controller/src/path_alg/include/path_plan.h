@@ -16,21 +16,7 @@ namespace fst_mc
 {
 
 ErrorCode planJointPath(const Joint &start, const Joint &target, double &precision, size_t &index, Joint (&path)[MAX_PATH_SIZE], size_t &valid_length);
-
-/*
-class PathPlan
-{
-  public:
-    PathPlan(void);
-    ~PathPlan(void);
-
-    ErrorCode initPathPlan(size_t joint_num);
-    ErrorCode planJointPath(const Joint &start, const Joint &target, int id, double precision);
-
-  private:
-    size_t joint_num_;
-};
-*/
+ErrorCode planLinePath(const PoseEuler &start, const PoseEuler &target, double &precision, Pose (&path)[MAX_PATH_SIZE], size_t &valid_length);
 
 }
 

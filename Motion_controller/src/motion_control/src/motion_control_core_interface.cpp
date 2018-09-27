@@ -104,6 +104,9 @@ bool BareCoreInterface::sendPoint(void)
     {
         return false;
     }
+
+    //point_cache_.is_empty = true;
+    //return true;
 }
 
 bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)

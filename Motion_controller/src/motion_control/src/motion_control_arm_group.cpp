@@ -285,12 +285,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     manual_teach_.setGlobalVelRatio(vel_ratio_);
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
-    jerk_.j1 = 5.0 * 0.5 / 1.3 * 10000 * 81;
-    jerk_.j2 = 3.3 * 0.4 / 0.44 * 10000 * 101;
-    jerk_.j3 = 3.3 * 0.4 / 0.44 * 10000 * 81;
-    jerk_.j4 = 1.7 * 0.39 / 0.18 * 10000 * 60;
-    jerk_.j5 = 1.7 * 0.25 / 0.17 * 10000 * 66.66667;
-    jerk_.j6 = 1.7 * 0.25 / 0.17 * 10000 * 44.64286;
+    jerk_.j1 = 5.0 * 0.5 / 1.3 * 100 * 81;
+    jerk_.j2 = 3.3 * 0.4 / 0.44 * 100 * 101;
+    jerk_.j3 = 3.3 * 0.4 / 0.44 * 100 * 81;
+    jerk_.j4 = 1.7 * 0.39 / 0.18 * 100 * 60;
+    jerk_.j5 = 1.7 * 0.25 / 0.17 * 100 * 66.66667;
+    jerk_.j6 = 1.7 * 0.25 / 0.17 * 100 * 44.64286;
 
     return SUCCESS;
 }
@@ -330,31 +330,31 @@ ErrorCode ArmGroup::computeCompensate(const DynamicsProduct &product, const Join
                  product.c[0][3] * omega[3] + product.c[0][4] * omega[4] + product.c[0][5] * omega[5] +
                  product.g[0];
 
-    ma_cv_g[0] = product.m[1][0] * alpha[0] + product.m[1][1] * alpha[1] + product.m[1][2] * alpha[2] +
+    ma_cv_g[1] = product.m[1][0] * alpha[0] + product.m[1][1] * alpha[1] + product.m[1][2] * alpha[2] +
                  product.m[1][3] * alpha[3] + product.m[1][4] * alpha[4] + product.m[1][5] * alpha[5] +
                  product.c[1][0] * omega[0] + product.c[1][1] * omega[1] + product.c[1][2] * omega[2] +
                  product.c[1][3] * omega[3] + product.c[1][4] * omega[4] + product.c[1][5] * omega[5] +
                  product.g[1];
 
-    ma_cv_g[0] = product.m[2][0] * alpha[0] + product.m[2][1] * alpha[1] + product.m[2][2] * alpha[2] +
+    ma_cv_g[2] = product.m[2][0] * alpha[0] + product.m[2][1] * alpha[1] + product.m[2][2] * alpha[2] +
                  product.m[2][3] * alpha[3] + product.m[2][4] * alpha[4] + product.m[2][5] * alpha[5] +
                  product.c[2][0] * omega[0] + product.c[2][1] * omega[1] + product.c[2][2] * omega[2] +
                  product.c[2][3] * omega[3] + product.c[2][4] * omega[4] + product.c[2][5] * omega[5] +
                  product.g[2];
 
-    ma_cv_g[0] = product.m[3][0] * alpha[0] + product.m[3][1] * alpha[1] + product.m[3][2] * alpha[2] +
+    ma_cv_g[3] = product.m[3][0] * alpha[0] + product.m[3][1] * alpha[1] + product.m[3][2] * alpha[2] +
                  product.m[3][3] * alpha[3] + product.m[3][4] * alpha[4] + product.m[3][5] * alpha[5] +
                  product.c[3][0] * omega[0] + product.c[3][1] * omega[1] + product.c[3][2] * omega[2] +
                  product.c[3][3] * omega[3] + product.c[3][4] * omega[4] + product.c[3][5] * omega[5] +
                  product.g[3];
 
-    ma_cv_g[0] = product.m[4][0] * alpha[0] + product.m[4][1] * alpha[1] + product.m[4][2] * alpha[2] +
+    ma_cv_g[4] = product.m[4][0] * alpha[0] + product.m[4][1] * alpha[1] + product.m[4][2] * alpha[2] +
                  product.m[4][3] * alpha[3] + product.m[4][4] * alpha[4] + product.m[4][5] * alpha[5] +
                  product.c[4][0] * omega[0] + product.c[4][1] * omega[1] + product.c[4][2] * omega[2] +
                  product.c[4][3] * omega[3] + product.c[4][4] * omega[4] + product.c[4][5] * omega[5] +
                  product.g[4];
 
-    ma_cv_g[0] = product.m[5][0] * alpha[0] + product.m[5][1] * alpha[1] + product.m[5][2] * alpha[2] +
+    ma_cv_g[5] = product.m[5][0] * alpha[0] + product.m[5][1] * alpha[1] + product.m[5][2] * alpha[2] +
                  product.m[5][3] * alpha[3] + product.m[5][4] * alpha[4] + product.m[5][5] * alpha[5] +
                  product.c[5][0] * omega[0] + product.c[5][1] * omega[1] + product.c[5][2] * omega[2] +
                  product.c[5][3] * omega[3] + product.c[5][4] * omega[4] + product.c[5][5] * omega[5] +

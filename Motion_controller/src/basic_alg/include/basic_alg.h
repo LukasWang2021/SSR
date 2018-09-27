@@ -1275,12 +1275,7 @@ static inline double getOrientationAngle(const fst_mc::Quaternion &q1, const fst
 
 static inline double getOrientationAngle(const fst_mc::Pose &pose1, const fst_mc::Pose &pose2)
 {
-    double t = innerProductQuatern(pose1.orientation, pose2.orientation);
-
-    if (t > 1.0)        t =  1.0;
-    else if (t < -1.0)  t = -1.0;
-
-    return acos(t);
+    return getOrientationAngle(pose1.orientation, pose2.orientation);
 }
 
 

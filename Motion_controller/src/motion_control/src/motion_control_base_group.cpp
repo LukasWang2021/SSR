@@ -1591,6 +1591,7 @@ ErrorCode BaseGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
             else
             {
                 *angle = *target;
+                *start = *target;
             }
 
             ++ angle;
@@ -1690,6 +1691,7 @@ ErrorCode BaseGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &len
             else
             {
                 *axis = *target;
+                *start = *target;
             }
 
             ++axis;

@@ -93,6 +93,7 @@ void ControllerRpc::handleRpc0x00002ED5(void* request_data_ptr, void* response_d
     }
     else
     {
+        FST_ERROR("Not simmulation");
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
     }
     recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setUserOpMode"));

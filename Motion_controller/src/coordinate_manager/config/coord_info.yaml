@@ -5,13 +5,13 @@ coord1:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord2:
     id: 2
     is_valid: false
@@ -19,13 +19,13 @@ coord2:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord3:
     id: 3
     is_valid: false
@@ -33,13 +33,13 @@ coord3:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord4:
     id: 4
     is_valid: false
@@ -47,13 +47,13 @@ coord4:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord5:
     id: 5
     is_valid: false
@@ -61,13 +61,13 @@ coord5:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord6:
     id: 6
     is_valid: false
@@ -75,13 +75,13 @@ coord6:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord7:
     id: 7
     is_valid: false
@@ -89,13 +89,13 @@ coord7:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord8:
     id: 8
     is_valid: false
@@ -103,13 +103,13 @@ coord8:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord9:
     id: 9
     is_valid: false
@@ -117,13 +117,13 @@ coord9:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 coord10:
     id: 10
     is_valid: false
@@ -131,11 +131,11 @@ coord10:
     comment: default
     group_id: -1
     point:
-        x: 0
-        y: 0
-        z: 0
+        x: 0.0
+        y: 0.0
+        z: 0.0
     euler:
-        a: 0
-        b: 0
-        c: 0
+        a: 0.0
+        b: 0.0
+        c: 0.0
 #END

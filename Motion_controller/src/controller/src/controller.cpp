@@ -178,7 +178,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
     //FIXME: remove it later
-    motion_control_.maskOffsetLostError();
+    //motion_control_.maskOffsetLostError();
 
     error_code = tp_comm_.init();
     if(error_code != SUCCESS)

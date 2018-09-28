@@ -112,7 +112,7 @@ public:
     // Out:     None
     // Return:  true -> receive a heartbeat request.
     //          false -> not heartbeat request.
-    //------------------------------------------------------------
+    //------------------------------------------------------------loop_count_core_
     bool isLocalRequest(ServiceRequest req);
 
     //------------------------------------------------------------
@@ -139,7 +139,7 @@ public:
     // Function:  getResponse
     // Summary: get the service response from BARE CORE. 
     // In:      None
-    // Out:     None
+    // Out:     Noneloop_count_core_
     // Return:  true -> success.
     //          false -> failed. 
     //------------------------------------------------------------
@@ -179,7 +179,7 @@ public:
     //------------------------------------------------------------
     // Function:  manageResponse
     // Summary: deal with the service response from BARE CORE. 
-    //          Some responses are deal with locally. 
+    //          Some responses are deal with locally. git@git.foresight-robotics.cn:MC_System/Application.git
     //          Some are sent to the other processes.
     // In:      None
     // Out:     None
@@ -263,7 +263,9 @@ public:
     static const int HEARTBEAT_INTERVAL_CORE = 100; // 1ms * 100.
 
     // The BARE CORE timeout is 50ms. The unit is usec.
-    static const int HEARTBEAT_CORE_TIMEOUT = 50000;
+    //static const int HEARTBEAT_CORE_TIMEOUT = 50000;
+    // The attempt number to communicate with barecore.
+    static const int HEARTBEAT_CORE_TIMEOUT_COUNT = 5;
 
     // The max number of loops to recv heartbeat request from MCS.
     static const int HEARTBEAT_INTERVAL_MCS= 100; // 1ms * 100.

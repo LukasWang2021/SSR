@@ -414,9 +414,12 @@ ErrorCode ServiceManager::interactBareCore(void)
 
     ServiceRequest request = request_fifo_[0];
     int req_result = false, res_result = false;
+    int timeout_count = 0;
+    /*
     struct timeval t_start, t_end;
     long cost_time = 0;
     gettimeofday(&t_start, NULL);
+    */
     while (res_result == false)
     {
         if (req_result == false) req_result = sendRequest();
@@ -424,21 +427,22 @@ ErrorCode ServiceManager::interactBareCore(void)
         usleep(200);
         if (req_result == true) res_result = getResponse();
 
+        timeout_count++;
+        /*
         gettimeofday(&t_end, NULL);
         cost_time = (t_end.tv_sec - t_start.tv_sec) * SEC_TO_USEC + (t_end.tv_usec - t_start.tv_usec);
         if (cost_time > HEARTBEAT_CORE_TIMEOUT)
+        */
+        if (timeout_count >= HEARTBEAT_CORE_TIMEOUT_COUNT)
         {
             std::cout<<"\033[31m"<<"||====No heartbeat from CORE1====||"<<"\033[0m"<<std::endl;
-            std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us. ";
+            std::cout<<"BARE CORE response "<<request.req_id<<" timeout count is "<<timeout_count<<". ";
             std::cout<<"send="<<req_result<<". recv="<<res_result<<std::endl;
             ErrorCode timeout_error = BARE_CORE_TIMEOUT;
             storeError(timeout_error);
             return BARE_CORE_TIMEOUT;
         }
     }// end while (res_result == false)
-    // For debug
-    if (cost_time > 5000)
-        std::cout<<"BARE CORE response "<<request.req_id<<" time is "<<cost_time<<" us."<<std::endl;
     return FST_SUCCESS;
 }
 

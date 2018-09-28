@@ -174,9 +174,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Manual to target joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
 
-    if (group_state_ != STANDBY)
+    if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
-        FST_ERROR("Cannot manual to target in current state = %d", group_state_);
+        FST_ERROR("Cannot manual to target in current group-state = %d, servo-state = %d", group_state_, servo_state_);
         return INVALID_SEQUENCE;
     }
 
@@ -226,9 +226,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     FST_INFO("Manual to target pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f",
              pose.position.x, pose.position.y, pose.position.z, pose.orientation.a, pose.orientation.b, pose.orientation.c);
 
-    if (group_state_ != STANDBY)
+    if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
-        FST_ERROR("Cannot manual to target in current state = %d", group_state_);
+        FST_ERROR("Cannot manual to target in current group-state = %d, servo-state = %d", group_state_, servo_state_);
         return INVALID_SEQUENCE;
     }
 
@@ -302,9 +302,9 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Manual step frame=%d by direction.", manual_frame_);
 
-    if (group_state_ != STANDBY)
+    if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
-        FST_ERROR("Cannot manual step in current state = %d", group_state_);
+        FST_ERROR("Cannot manual step in current group-state = %d, servo-state = %d", group_state_, servo_state_);
         return INVALID_SEQUENCE;
     }
 
@@ -391,6 +391,12 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
     if (group_state_ == STANDBY)
     {
+        if (servo_state_ != SERVO_IDLE)
+        {
+            FST_ERROR("Cannot manual continuous in current servo-state = %d", servo_state_);
+            return INVALID_SEQUENCE;
+        }
+
         PoseEuler pose;
         getLatestJoint(manual_traj_.joint_start);
         FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
@@ -684,6 +690,8 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
     p_cache->tail = length;
     p_cache->expect_duration = precision / (axis_vel_[index] * vel * vel_ratio_);
     p_cache->deadline = 999999999.999;
+
+    FST_WARN("precision = %.4f, omega-limit = %.4f, vel = %.4f, ratio = %.4f => duration = %.4f", precision, axis_vel_[index], vel, vel_ratio_, p_cache->expect_duration);
 
     FST_INFO("Prepare trajectory cache ...");
     err = prepareCache(*p_cache);

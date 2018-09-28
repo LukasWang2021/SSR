@@ -433,7 +433,7 @@ ErrorCode ServiceManager::interactBareCore(void)
         cost_time = (t_end.tv_sec - t_start.tv_sec) * SEC_TO_USEC + (t_end.tv_usec - t_start.tv_usec);
         if (cost_time > HEARTBEAT_CORE_TIMEOUT)
         */
-        if (timeout_count >= HEARTBEAT_CORE_TIMEOUT_COUNT)
+        if ((timeout_count >= HEARTBEAT_CORE_TIMEOUT_COUNT) && (res_result == false)) 
         {
             std::cout<<"\033[31m"<<"||====No heartbeat from CORE1====||"<<"\033[0m"<<std::endl;
             std::cout<<"BARE CORE response "<<request.req_id<<" timeout count is "<<timeout_count<<". ";

@@ -714,7 +714,7 @@ ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, i
     char buffer[LOG_TEXT_SIZE];
     Joint start_joint;
     FST_INFO("autoLine: ID = %d, vel = %.4f, cnt = %.4f", id, vel, cnt);
-    FST_INFO("  target = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target.position.x, target.position.y, target.position.z, target.orientation.a, target.orientation.b, target.orientation.c);
+    FST_INFO("  target pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target.position.x, target.position.y, target.position.z, target.orientation.a, target.orientation.b, target.orientation.c);
 
     if (vel < MINIMUM_E3 || vel > 4000 + MINIMUM_E3 || fabs(cnt) > 1 + MINIMUM_E6)
     {
@@ -736,7 +736,7 @@ ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, i
         return INVALID_SEQUENCE;
     }
 
-    FST_INFO("  start  = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start joint = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(start_joint))
     {
@@ -751,6 +751,7 @@ ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, i
     Pose    path[MAX_PATH_SIZE];
 
     kinematics_ptr_->forwardKinematicsInUser(start_joint, start);
+    FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start.position.x, start.position.y, start.position.z, start.orientation.a, start.orientation.b, start.orientation.c);
     planLinePath(start, target, precision, path, length);
     TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
 
@@ -864,12 +865,14 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
     memset(&segn.ending_state.omega, 0, sizeof(Joint));
     memset(&segn.ending_state.alpha, 0, sizeof(Joint));
 
+    /*
     char buffer[LOG_TEXT_SIZE];
 
     for (size_t i = cache.head; i < cache.tail; i++)
     {
         FST_INFO("Point-%d: %s", i, printDBLine(&cache.cache[i].ending_state.angle[0], buffer, LOG_TEXT_SIZE));
     }
+     */
 
     return SUCCESS;
 }
@@ -1146,14 +1149,16 @@ bool BaseGroup::nextMovePermitted(void)
     {
         if (auto_pick_ptr_->valid && auto_time_ + 0.1 < auto_pick_ptr_->deadline)
         {
+            FST_INFO("Not-permitted: auto-time = %.4f, deadline = %.4f", auto_time_, auto_pick_ptr_->deadline);
             return false;
         }
     }
 
+    FST_INFO("Permitted: auto-time = %.4f, deadline = %.4f", auto_time_, auto_pick_ptr_->deadline);
     return true;
 }
 
-#define  PRINT_COEFFS
+//#define  PRINT_COEFFS
 
 ErrorCode BaseGroup::createTrajectory(void)
 {
@@ -1249,6 +1254,16 @@ ErrorCode BaseGroup::createTrajectory(void)
                             return err;
                         }
 #ifdef PRINT_COEFFS
+                        char buffer[LOG_TEXT_SIZE];
+                        FST_INFO("start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
+                        FST_INFO("start-omega: %s", printDBLine(&pseg->start_state.omega[0], buffer, LOG_TEXT_SIZE));
+                        FST_INFO("start-alpha: %s", printDBLine(&pseg->start_state.alpha[0], buffer, LOG_TEXT_SIZE));
+                        FST_INFO("target-angle: %s", printDBLine(&pseg->ending_state.angle[0], buffer, LOG_TEXT_SIZE));
+                        FST_INFO("alpha-upper: %s", printDBLine(&alpha_upper[0], buffer, LOG_TEXT_SIZE));
+                        FST_INFO("alpha-lower: %s", printDBLine(&alpha_lower[0], buffer, LOG_TEXT_SIZE));
+                        FST_INFO("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
+                        FST_INFO("exp-duration: %.8f", auto_pick_ptr_->expect_duration);
+
                         for (size_t i = 0; i < 6; i++)
                         {
                             FST_INFO("  duration = %.4f, %.4f, %.4f, %.4f", traj_item.traj_coeff[i].duration[0], traj_item.traj_coeff[i].duration[1], traj_item.traj_coeff[i].duration[2], traj_item.traj_coeff[i].duration[3]);
@@ -1781,8 +1796,8 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
     size_t joint_num = getNumberOfJoint();
     MotionTime seg_tm;
 
-    FST_INFO("Pick from auto move");
-    FST_INFO("auto-time=%.4f", auto_time_);
+    //FST_INFO("Pick from auto move");
+    //FST_INFO("auto-time=%.4f", auto_time_);
 
     for (size_t i = 0; i < length; i++)
     {
@@ -1804,14 +1819,14 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
 
                 ErrorCode err = sampleTrajectorySegment(traj_fifo_.front().traj_coeff, seg_tm, point[i].angle, point[i].omega, point[i].alpha);
 
-                jout << auto_time_ << ","
-                     << point[i].angle[0] << "," << point[i].angle[1] << "," << point[i].angle[2] << "," << point[i].angle[3] << "," << point[i].angle[4] << "," << point[i].angle[5] << ","
-                     << point[i].omega[0] << "," << point[i].omega[1] << "," << point[i].omega[2] << "," << point[i].omega[3] << "," << point[i].omega[4] << "," << point[i].omega[5] << ","
-                     << point[i].alpha[0] << "," << point[i].alpha[1] << "," << point[i].alpha[2] << "," << point[i].alpha[3] << "," << point[i].alpha[4] << "," << point[i].alpha[5] << endl;
-                //FST_INFO("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
-                //         point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
-                //         point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
-                //         point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
+                //jout << auto_time_ << ","
+                //     << point[i].angle[0] << "," << point[i].angle[1] << "," << point[i].angle[2] << "," << point[i].angle[3] << "," << point[i].angle[4] << "," << point[i].angle[5] << ","
+                //     << point[i].omega[0] << "," << point[i].omega[1] << "," << point[i].omega[2] << "," << point[i].omega[3] << "," << point[i].omega[4] << "," << point[i].omega[5] << ","
+                //     << point[i].alpha[0] << "," << point[i].alpha[1] << "," << point[i].alpha[2] << "," << point[i].alpha[3] << "," << point[i].alpha[4] << "," << point[i].alpha[5] << endl;
+                FST_INFO("%.4f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
+                         point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
+                         point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
+                         point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
 
                 if (err == SUCCESS)
                 {
@@ -1838,14 +1853,14 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
         {
             ErrorCode err = sampleTrajectorySegment(traj_fifo_.front().traj_coeff, traj_fifo_.front().duration, point[i].angle, point[i].omega, point[i].alpha);
 
-            jout << auto_time_ << ","
-                 << point[i].angle[0] << "," << point[i].angle[1] << "," << point[i].angle[2] << "," << point[i].angle[3] << "," << point[i].angle[4] << "," << point[i].angle[5] << ","
-                 << point[i].omega[0] << "," << point[i].omega[1] << "," << point[i].omega[2] << "," << point[i].omega[3] << "," << point[i].omega[4] << "," << point[i].omega[5] << ","
-                 << point[i].alpha[0] << "," << point[i].alpha[1] << "," << point[i].alpha[2] << "," << point[i].alpha[3] << "," << point[i].alpha[4] << "," << point[i].alpha[5] << endl;
-            //FST_INFO("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
-            //         point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
-            //         point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
-            //         point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
+            //jout << auto_time_ << ","
+            //     << point[i].angle[0] << "," << point[i].angle[1] << "," << point[i].angle[2] << "," << point[i].angle[3] << "," << point[i].angle[4] << "," << point[i].angle[5] << ","
+            //     << point[i].omega[0] << "," << point[i].omega[1] << "," << point[i].omega[2] << "," << point[i].omega[3] << "," << point[i].omega[4] << "," << point[i].omega[5] << ","
+            //     << point[i].alpha[0] << "," << point[i].alpha[1] << "," << point[i].alpha[2] << "," << point[i].alpha[3] << "," << point[i].alpha[4] << "," << point[i].alpha[5] << endl;
+            FST_INFO("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
+                     point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
+                     point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
+                     point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
 
             if (err == SUCCESS)
             {

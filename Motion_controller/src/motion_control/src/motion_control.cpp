@@ -166,21 +166,61 @@ ErrorCode MotionControl::setOrientationManualStep(double step)
 
 ErrorCode MotionControl::doStepManualMove(const GroupDirection &direction)
 {
+    if (group_ptr_->getCalibratorPtr()->getCalibrateState() == MOTION_FORBIDDEN)
+    {
+        FST_ERROR("Cannot manual move, calibrator-state = %d, all motion is forbidden.", MOTION_FORBIDDEN);
+        return INVALID_SEQUENCE;
+    }
+    else if (group_ptr_->getCalibratorPtr()->getCalibrateState() == MOTION_LIMITED)
+    {
+        if (group_ptr_->getManualFrame() != JOINT)
+        {
+            FST_ERROR("Cannot manual cartesian in limited state, calibrator-state = %d, manual cartesian is forbidden.", MOTION_LIMITED);
+            return INVALID_SEQUENCE;
+        }
+    }
+
     return group_ptr_->manualMoveStep(&direction[0]);
 }
 
 ErrorCode MotionControl::doContinuousManualMove(const GroupDirection &direction)
 {
+    if (group_ptr_->getCalibratorPtr()->getCalibrateState() == MOTION_FORBIDDEN)
+    {
+        FST_ERROR("Cannot manual move, calibrator-state = %d, all motion is forbidden.", MOTION_FORBIDDEN);
+        return INVALID_SEQUENCE;
+    }
+    else if (group_ptr_->getCalibratorPtr()->getCalibrateState() == MOTION_LIMITED)
+    {
+        if (group_ptr_->getManualFrame() != JOINT)
+        {
+            FST_ERROR("Cannot manual cartesian in limited state, calibrator-state = %d, manual-frame = %d, manual cartesian is forbidden.", MOTION_LIMITED, group_ptr_->getManualFrame());
+            return INVALID_SEQUENCE;
+        }
+    }
+
     return group_ptr_->manualMoveContinuous(&direction[0]);
 }
 
 ErrorCode MotionControl::doGotoPointManualMove(const Joint &joint)
 {
+    if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
+    {
+        FST_ERROR("Cannot manual move to point in current state, calibrator-state = %d.", group_ptr_->getCalibratorPtr()->getCalibrateState());
+        return INVALID_SEQUENCE;
+    }
+
     return group_ptr_->manualMoveToPoint(joint);
 }
 
 ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
 {
+    if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
+    {
+        FST_ERROR("Cannot manual move to point in current state, calibrator-state = %d.", group_ptr_->getCalibratorPtr()->getCalibrateState());
+        return INVALID_SEQUENCE;
+    }
+
     return group_ptr_->manualMoveToPoint(pose);
 }
 
@@ -191,16 +231,25 @@ ErrorCode MotionControl::manualStop(void)
 
 ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 {
-    if (user_frame_id_ != target.user_frame_id)
+    if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
-        FST_ERROR("autoMove: user frame ID mismatch with activated user frame.");
-        return INVALID_PARAMETER;
+        FST_ERROR("Offset of the group is abnormal, auto move is forbidden, calibrator-state = %d.", group_ptr_->getCalibratorPtr()->getCalibrateState());
+        return INVALID_SEQUENCE;
     }
 
-    if (tool_frame_id_ != target.tool_frame_id)
+    if (target.type == MOTION_LINE || target.type == MOTION_CIRCLE)
     {
-        FST_ERROR("autoMove: tool frame ID mismatch with activated tool frame.");
-        return INVALID_PARAMETER;
+        if (user_frame_id_ != target.user_frame_id)
+        {
+            FST_ERROR("autoMove: user frame ID mismatch with activated user frame.");
+            return INVALID_PARAMETER;
+        }
+
+        if (tool_frame_id_ != target.tool_frame_id)
+        {
+            FST_ERROR("autoMove: tool frame ID mismatch with activated tool frame.");
+            return INVALID_PARAMETER;
+        }
     }
 
     return group_ptr_->autoMove(id, target);

@@ -125,22 +125,47 @@ void test2(void)
     arm.activeRealtimeTask();
     rt_thread.run(&rtTask, &arm, 80);
     sleep(1);
+    arm.setGlobalVelRatio(1);
     arm.resetGroup();
 
     MotionTarget target;
     target.type = MOTION_JOINT;
-    target.vel = 1;
+    target.vel = 0.5;
     target.cnt = 0;
-    target.joint_target.j1 = 0.1;
-    target.joint_target.j2 = 0.1;
-    target.joint_target.j3 = 0.1;
-    target.joint_target.j4 = 0.1;
+    target.joint_target.j1 = 0.0;
+    target.joint_target.j2 = 0.0;
+    target.joint_target.j3 = 0.0;
+    target.joint_target.j4 = 0.0;
     target.joint_target.j5 = -1.5708;
-    target.joint_target.j6 = 0.1;
+    target.joint_target.j6 = 0.0;
     arm.autoMove(10, target);
 
-    sleep(10);
+    while (!arm.nextMovePermitted())
+    {
+        cout << "not permitted" << endl;
+        usleep(10000);
+    }
 
+    cout << "get permitted" << endl;
+
+    target.type = MOTION_JOINT;
+    target.vel = 0.5;
+    target.cnt = 0;
+    target.joint_target.j1 = 0.8;
+    target.joint_target.j2 = 0.5;
+    target.joint_target.j3 = -0.4;
+    target.joint_target.j4 = 1.1;
+    target.joint_target.j5 = -0.8;
+    target.joint_target.j6 = -2.0;
+    arm.autoMove(10, target);
+
+    while (!arm.nextMovePermitted())
+    {
+        cout << "not permitted" << endl;
+        usleep(10000);
+    }
+
+    /*
     target.type = MOTION_LINE;
     target.vel = 600;
     target.cnt = 0;
@@ -151,6 +176,7 @@ void test2(void)
     target.pose_target.orientation.b = 0;
     target.pose_target.orientation.c = 3.1416;
     arm.autoMove(10, target);
+     */
 
     sleep(10);
 }

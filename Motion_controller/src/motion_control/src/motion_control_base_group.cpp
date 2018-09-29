@@ -1147,6 +1147,25 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
     return SUCCESS;
 }
 
+ErrorCode BaseGroup::abortMove(void)
+{
+    if (group_state_ == AUTO || group_state_ == PAUSE)
+    {
+        group_state_ == STANDBY;
+        auto_time_ = 0;
+        traj_fifo_.clear();
+        bare_core_.clearPointCache();
+
+        while (auto_pick_ptr_->valid)
+        {
+            auto_pick_ptr_->valid = false;
+            auto_pick_ptr_ = auto_pick_ptr_->next;
+        }
+    }
+
+    FST_WARN("Auto move Aborted");
+}
+
 bool BaseGroup::nextMovePermitted(void)
 {
     if (waiting_fine_)

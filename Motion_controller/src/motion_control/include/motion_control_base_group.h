@@ -53,6 +53,7 @@ class BaseGroup
 
     // Auto move APIs:
     virtual ErrorCode autoMove(int id, const MotionTarget &target);
+    virtual ErrorCode abortMove(void);
     virtual bool nextMovePermitted(void);
 
     // Manual teach APIs:

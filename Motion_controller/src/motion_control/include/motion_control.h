@@ -47,6 +47,7 @@ public:
 
     // API for auto run
     ErrorCode autoMove(int id, const MotionTarget &target);
+    ErrorCode abortMove(void);
     bool nextMovePermitted(void);
 
     // API for zero offset and calibrator

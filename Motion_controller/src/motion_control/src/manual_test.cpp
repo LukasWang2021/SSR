@@ -218,7 +218,7 @@ ErrorCode sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], do
 
 void test3(void)
 {
-
+    timeval tm0, tm1;
     int i = 0;
 
 
@@ -317,9 +317,21 @@ void test3(void)
     target.alpha.j1 = ddq0[0]; target.alpha.j2 = ddq0[1]; target.alpha.j3 = ddq0[2]; target.alpha.j4 = ddq0[3]; target.alpha.j5 = ddq0[4]; target.alpha.j6 = ddq0[5];
     jk.j1 = jmax[0]; jk.j2 = jmax[1]; jk.j3 = jmax[2]; jk.j4 = jmax[3]; jk.j5 = jmax[4]; jk.j6 = jmax[5];
 
+    Joint alpha_u, alpha_l;
+    DynamicsProduct product;
+    gettimeofday(&tm0, NULL);
+    computeDynamics(target.angle, target.omega, alpha_u, alpha_l, product);
+    gettimeofday(&tm1, NULL);
+    long tm = (tm1.tv_sec - tm0.tv_sec) * 1000 + tm1.tv_usec - tm0.tv_usec;
+    if (tm > 500)
+    {
+        printf("$$$$$$$$$$$$$$$$  dynamics over time %d ms !!!!!!!!!!!!!!!!\n", tm / 1000);
+        //reportError(MOTION_INTERNAL_FAULT);
+    }
     //forwardCycle(target, start,0.02658693, au, al, jk, segment);
     //end = GetTickCount();
     backwardCycle(start, target, 0.01192179, au, al, jk, segment);
+
 
     //smoothPoint2Point(start, target, 0.05505945, au, al, jk, segment);
     printf("----------------cycle 1-------------------\n");

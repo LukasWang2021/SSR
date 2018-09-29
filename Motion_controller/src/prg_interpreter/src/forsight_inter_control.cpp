@@ -740,12 +740,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			}
 			if(objThdCtrlBlockPtr->is_paused == true)
 			{
-            	printf("Can not FORWARD in calling Pause \n");
+            	printf("Can not JUMP in calling Pause \n");
            		break;
 			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
-            	printf("Can not FORWARD in EXECUTE_R \n");
+            	printf("Can not JUMP in EXECUTE_R \n");
            		break;
 			}
             printf("jump to line:%d\n", intprt_ctrl.jump_line);

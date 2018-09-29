@@ -232,7 +232,7 @@ ErrorCode MotionControl::manualStop(void)
 ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 {
     // FIXME
-    /*
+
     if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
         FST_ERROR("Offset of the group is abnormal, auto move is forbidden, calibrator-state = %d.", group_ptr_->getCalibratorPtr()->getCalibrateState());
@@ -253,7 +253,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
             return INVALID_PARAMETER;
         }
     }
-    */
+
 
     return group_ptr_->autoMove(id, target);
 }

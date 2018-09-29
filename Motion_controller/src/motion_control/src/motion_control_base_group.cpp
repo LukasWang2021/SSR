@@ -394,7 +394,6 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         if (servo_state_ != SERVO_IDLE)
         {
             FST_ERROR("Cannot manual continuous in current servo-state = %d", servo_state_);
-            return INVALID_SEQUENCE;
         }
 
         PoseEuler pose;
@@ -1166,7 +1165,7 @@ bool BaseGroup::nextMovePermitted(void)
     return true;
 }
 
-//#define  PRINT_COEFFS
+#define  PRINT_COEFFS
 
 ErrorCode BaseGroup::createTrajectory(void)
 {

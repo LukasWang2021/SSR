@@ -181,31 +181,51 @@ void test2(void)
     sleep(10);
 }
 
+ErrorCode sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], double time, Joint &angle, Joint &omega, Joint &alpha)
+{
+    size_t ind;
+
+    for (size_t j = 0; j < 6; j++)
+    {
+        double tm = time;
+        const double (&coeff)[4][4] = segment[j].coeff;
+        const double (&duration)[4] = segment[j].duration;
+
+        if (tm < duration[0]) { ind = 0; goto sample_by_time; }
+        tm -= duration[0];
+        if (tm < duration[1]) { ind = 1; goto sample_by_time; }
+        tm -= duration[1];
+        if (tm < duration[2]) { ind = 2; goto sample_by_time; }
+        tm -= duration[2];
+        if (tm < duration[3] + MINIMUM_E9) { ind = 3; goto sample_by_time; }
+        else
+        {
+            printf("Time error! time = %.4f, duration0 = %.4f, duration1 = %.4f, duration2 = %.4f, duration3 = %.4f",
+                      time, duration[0], duration[1], duration[2], duration[3]);
+            return MOTION_INTERNAL_FAULT;
+        }
+
+        sample_by_time:
+        double tm_array[4] = {1.0, tm, tm * tm, tm * tm * tm};
+
+        angle[j] = coeff[ind][3] * tm_array[3] + coeff[ind][2] * tm_array[2] + coeff[ind][1] * tm_array[1] + coeff[ind][0];
+        omega[j] = coeff[ind][3] * tm_array[2] * 3 + coeff[ind][2] * tm_array[1] * 2 + coeff[ind][1];
+        alpha[j] = coeff[ind][3] * tm_array[1] * 6 + coeff[ind][2] * 2;
+    }
+
+    return SUCCESS;
+}
+
 void test3(void)
 {
+
     int i = 0;
 
-    //double J0[6] = { 0.09,0.09,0.09,0.09,0.09,0.09 };
-    //double J1[6] = { 0.1,0.1,0.1,0.1,0.1,0.1 };
 
-    //double dq_avg[6];
-    //double ddq_max[6] = {
-    //	124.238852,
-    //	27.405693,
-    //	16.749410,
-    //	115.950513,
-    //	341.373255,
-    //	678.835059 };
-
-    //for (int i = 0; i < 6; i++)
-    //{
-    //	dq_avg[i] = (J1[i] - J0[i]) / 0.055059;
-    //}
-
-    double dq0[6] = { 0.18162186509309483,0.18162186509309483,0.18162186509309483,0.18162186509309483,0.112891,0.18162186509309483 };
+    double dq0[6] = {0,0,0,0,0,0};
     double ddq0[6] = {0,0,0,0,0,0 };
     double Ti[6] = { -1,-1,-1,-1,-1,-1 };
-    double Ta[6][4] = { 0 };
+    double Ta[6][4] = { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
     double coeff[6][4][4] = { 0 };
     //double maxT = 0;
     //double tqf[6] = { 0 };
@@ -235,36 +255,52 @@ void test3(void)
 
     //}
 
-    //double J0[6] = { 0.01,0.01,0.01,0.01,0.01,0.01};
-    //double J1[6] = { 0,0,0,0,0,0};
-    double J0[6] = { 0.02,0.02,0.02,0.02,0.02,0.02};
-    double J1[6] = { 0.01,0.01,0.01,0.01,0.01,0.01 };
-    /*double J1[6] = { 0.09,0.09,0.09,0.09,0.09,0.09};
-    double J0[6] = { 0.08,0.08,0.08,0.08,0.08,0.08};*/
+    double J0[6] = {
+            0.266667,
+            0.355556,
+            0.266667,
+            0.355556,
+            0.266667,
+            0.355556,
+    };
+    double J1[6] = {
+            0.3,
+            0.4,
+            0.3,
+            0.4,
+            0.3,
+            0.4,
+    };
+    //double J0[6] = { 0.02,0.02,0.02,0.02,0.02,0.02};
+    //double J1[6] = { 0.01,0.01,0.01,0.01,0.01,0.01 };
+    //double J0[6] = { 0.006035,0.006035,0.006035,0.006035,-0.097678,0.006035 };
+    //double J1[6] = { 0.002903,0.002903,0.002903,0.002903,-0.048574,0.002903};
     double ddq_max[6] = {
-            124.238852,
-            27.405693,
-            16.749410,
-            115.950513,
-            341.373255,
-            678.835059};
+            138.250417,
+            31.017384,
+            7.327117,
+            86.613806,
+            346.409978,
+            678.767975,
+    };
     double ddq_min[6] = {
-            -123.615654,
-            -22.630127,
-            -50.360374,
-            -140.650880,
-            -340.782976,
-            -678.798393
+            -138.176962,
+            -13.988353,
+            -40.614755,
+            -113.623069,
+            -346.745980,
+            -678.730126,
     };
     double jmax[6] = {
             1557692.30769231,
-            3030000,
-            2430000,
-            2210000,
+            3030000 ,
+            2430000 ,
+            2210000 ,
             1666666.75,
-            1116071.5
+            1116071.5,
     };
     Joint start;
+    //JointPoint start;
     JointPoint target;
     Joint au, al,jk;
     TrajSegment segment[9];
@@ -272,27 +308,68 @@ void test3(void)
     au.j1 = ddq_max[0]; au.j2 = ddq_max[1]; au.j3 = ddq_max[2]; au.j4 = ddq_max[3]; au.j5 = ddq_max[4]; au.j6 = ddq_max[5];
     al.j1 = ddq_min[0]; al.j2 = ddq_min[1]; al.j3 = ddq_min[2]; al.j4 = ddq_min[3]; al.j5 = ddq_min[4]; al.j6 = ddq_min[5];
     start.j1 = J0[0]; start.j2 = J0[1]; start.j3 = J0[2]; start.j4 = J0[3]; start.j5 = J0[4]; start.j6 = J0[5];
+    //start.angle.j1 = J0[0]; start.angle.j2 = J0[1]; start.angle.j3 = J0[2]; start.angle.j4 = J0[3]; start.angle.j5 = J0[4]; start.angle.j6 = J0[5];
+    //start.omega.j1 = dq0[0]; start.omega.j2 = dq0[1]; start.omega.j3 = dq0[2]; start.omega.j4 = dq0[3]; start.omega.j5 = dq0[4]; start.omega.j6 = dq0[5];
+    //start.alpha.j1 = ddq0[0]; start.alpha.j2 = ddq0[1]; start.alpha.j3 = ddq0[2]; start.alpha.j4 = ddq0[3]; start.alpha.j5 = ddq0[4]; start.alpha.j6 = ddq0[5];
+
     target.angle.j1 = J1[0]; target.angle.j2 = J1[1]; target.angle.j3 = J1[2]; target.angle.j4 = J1[3]; target.angle.j5 = J1[4]; target.angle.j6 = J1[5];
     target.omega.j1 = dq0[0]; target.omega.j2 = dq0[1]; target.omega.j3 = dq0[2]; target.omega.j4 = dq0[3]; target.omega.j5 = dq0[4]; target.omega.j6 = dq0[5];
     target.alpha.j1 = ddq0[0]; target.alpha.j2 = ddq0[1]; target.alpha.j3 = ddq0[2]; target.alpha.j4 = ddq0[3]; target.alpha.j5 = ddq0[4]; target.alpha.j6 = ddq0[5];
     jk.j1 = jmax[0]; jk.j2 = jmax[1]; jk.j3 = jmax[2]; jk.j4 = jmax[3]; jk.j5 = jmax[4]; jk.j6 = jmax[5];
 
-    forwardCycle(target, start, 0.05505945, au, al, jk, segment);
+    //forwardCycle(target, start,0.02658693, au, al, jk, segment);
     //end = GetTickCount();
-    //backwardCycle(start, target, 0.0551, au, al, jk, segment);
+    backwardCycle(start, target, 0.01192179, au, al, jk, segment);
+
+    //smoothPoint2Point(start, target, 0.05505945, au, al, jk, segment);
+    printf("----------------cycle 1-------------------\n");
     for (int i = 0; i < 6; i++)
     {
-        printf("start-angle: %f\n", J1[i]);
-        printf("ending-angle:%f\n", J0[i]);
-        printf("ending-omega:%f\n", dq0[i]);
-        printf("ending-alpha:%f\n", ddq0[i]);
+        printf("-----J%d\n", i+1);
+        printf("start-angle: %f\n", start[i]);
+        printf("ending-angle:%f\n", target.angle[i]);
+        printf("ending-omega:%f\n", target.omega[i]);
+        printf("ending-alpha:%f\n", target.alpha[i]);
         printf("duration = %f %f %f %f\n", segment[i].duration[0], segment[i].duration[1], segment[i].duration[2], segment[i].duration[3]);
+        //printf("duration = %f\n", segment[i].duration[0]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[0][0], segment[i].coeff[0][1], segment[i].coeff[0][2], segment[i].coeff[0][3]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[1][0], segment[i].coeff[1][1], segment[i].coeff[1][2], segment[i].coeff[1][3]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[2][0], segment[i].coeff[2][1], segment[i].coeff[2][2], segment[i].coeff[2][3]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[3][0], segment[i].coeff[3][1], segment[i].coeff[3][2], segment[i].coeff[3][3]);
+    }
+
+    Joint angle, omega, alpha;
+    sampleTrajectorySegment(segment, 0, angle, omega, alpha);
+    printf("angle = %f,%f,%f,%f,%f,%f\n", angle[0], angle[1], angle[2], angle[3], angle[4], angle[5]);
+    printf("omega = %f,%f,%f,%f,%f,%f\n", omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
+    printf("alpha = %f,%f,%f,%f,%f,%f\n", alpha[0], alpha[1], alpha[2], alpha[3], alpha[4], alpha[5]);
+    target.angle = angle;
+    target.omega = omega;
+    target.alpha = alpha;
+    start.j1 = 0.233333;
+    start.j2 = 0.311111;
+    start.j3 = 0.233333;
+    start.j4 = 0.311111;
+    start.j5 = 0.233333;
+    start.j6 = 0.311111;
+    backwardCycle(start, target, 0.01192179, au, al, jk, segment);
+    printf("----------------cycle 2-------------------\n");
+    for (int i = 0; i < 6; i++)
+    {
+        printf("-----J%d\n", i+1);
+        printf("start-angle: %f\n", start[i]);
+        printf("ending-angle:%f\n", target.angle[i]);
+        printf("ending-omega:%f\n", target.omega[i]);
+        printf("ending-alpha:%f\n", target.alpha[i]);
+        printf("duration = %f %f %f %f\n", segment[i].duration[0], segment[i].duration[1], segment[i].duration[2], segment[i].duration[3]);
+        //printf("duration = %f\n", segment[i].duration[0]);
         printf("coeff=%f %f %f %f\n", segment[i].coeff[0][0], segment[i].coeff[0][1], segment[i].coeff[0][2], segment[i].coeff[0][3]);
         printf("coeff=%f %f %f %f\n", segment[i].coeff[1][0], segment[i].coeff[1][1], segment[i].coeff[1][2], segment[i].coeff[1][3]);
         printf("coeff=%f %f %f %f\n", segment[i].coeff[2][0], segment[i].coeff[2][1], segment[i].coeff[2][2], segment[i].coeff[2][3]);
         printf("coeff=%f %f %f %f\n", segment[i].coeff[3][0], segment[i].coeff[3][1], segment[i].coeff[3][2], segment[i].coeff[3][3]);
         printf("\n");
     }
+
     //printf("duration = %f %f %f %f\n", Ta[0][0], Ta[0][1], Ta[0][2], Ta[0][3]);
     //printf("coeff=%f %f %f %f\n", coeff[0][0][0], coeff[0][0][1], coeff[0][0][2], coeff[0][0][3]);
     //printf("coeff=%f %f %f %f\n", coeff[0][1][0], coeff[0][1][1], coeff[0][1][2], coeff[0][1][3]);
@@ -338,8 +415,9 @@ void test4(void)
 int main(int argc, char **argv)
 {
     //test1();
-    test2();
-    //test3();
+    //test2();
+    test3();
+
     //test4();
 
     return 0;

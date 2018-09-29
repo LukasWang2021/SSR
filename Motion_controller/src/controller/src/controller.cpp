@@ -50,6 +50,7 @@ Controller::~Controller()
         param_ptr_ = NULL;
     }
 
+    motion_control_.saveOffset();
     ServerAlarmApi::GetInstance()->pyDecref();
 }
 
@@ -179,6 +180,7 @@ ErrorCode Controller::init()
     }
     //FIXME: remove it later
     //motion_control_.maskOffsetLostError();
+    motion_control_.resetGroup();
 
     error_code = tp_comm_.init();
     if(error_code != SUCCESS)
@@ -193,7 +195,7 @@ ErrorCode Controller::init()
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
-       
+
     recordLog("Controller initialization success");
     return SUCCESS;    
 }

@@ -1198,6 +1198,9 @@ bool BaseGroup::nextMovePermitted(void)
 
 ErrorCode BaseGroup::createTrajectory(void)
 {
+    static size_t  dynamics_cnt = 0;
+    static Joint   alpha_upper;
+    static Joint   alpha_lower;
     timeval tm0, tm1, tm2;
 
     if (group_state_ == AUTO && auto_pick_ptr_->valid)
@@ -1205,8 +1208,6 @@ ErrorCode BaseGroup::createTrajectory(void)
         ErrorCode err = SUCCESS;
         size_t  joint_num = getNumberOfJoint();
         Joint   tmp_joint;
-        Joint   alpha_upper;
-        Joint   alpha_lower;
         TrajectoryItem traj_item;
         TrajectorySegment *pseg;
 
@@ -1239,6 +1240,7 @@ ErrorCode BaseGroup::createTrajectory(void)
 
                 if (pseg->forward_duration > 0)
                 {
+                    dynamics_cnt = 0;
                     traj_item.id = pseg->path_point.id;
                     traj_item.duration = pseg->forward_duration;
                     traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
@@ -1263,9 +1265,18 @@ ErrorCode BaseGroup::createTrajectory(void)
                     if (pseg->backward_duration < 0 && auto_pick_segment_ + 1 < auto_pick_ptr_->tail && (pseg + 1)->backward_duration < 0)
                     {
                         gettimeofday(&tm0, NULL);
-                        computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
+                        if (dynamics_cnt == 0)
+                        {
+                            computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
+                            dynamics_cnt = dynamics_cnt_;
+                        }
+
                         gettimeofday(&tm1, NULL);
                         err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_pick_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
+                        if (dynamics_cnt > 0)
+                        {
+                            dynamics_cnt --;
+                        }
                         gettimeofday(&tm2, NULL);
                         //err = forwardCycleTest(pseg->start_state, pseg->ending_state.angle, 0.01, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
 
@@ -1354,6 +1365,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     }
                     else if (pseg->backward_duration > 0 && (auto_pick_segment_ + 1 == auto_pick_ptr_->tail || (pseg + 1)->backward_duration > 0))
                     {
+                        dynamics_cnt = 0;
                         traj_item.id = pseg->path_point.id;
                         traj_item.duration = pseg->backward_duration;
                         traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
@@ -1379,7 +1391,11 @@ ErrorCode BaseGroup::createTrajectory(void)
                         //FST_WARN("smooth");
                         char buffer[LOG_TEXT_SIZE];
                         gettimeofday(&tm0, NULL);
-                        computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
+                        if (dynamics_cnt == 0)
+                        {
+                            computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, pseg->dynamics_product);
+                            dynamics_cnt = dynamics_cnt_;
+                        }
                         gettimeofday(&tm1, NULL);
                         long tm = (tm1.tv_sec - tm0.tv_sec) * 1000 + tm1.tv_usec - tm0.tv_usec;
                         if (tm > 1000)
@@ -1400,6 +1416,10 @@ ErrorCode BaseGroup::createTrajectory(void)
 #endif
                         gettimeofday(&tm0, NULL);
                         smoothPoint2Point(pseg->start_state, (pseg + 1)->start_state, auto_cache_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, traj_item.traj_coeff);
+                        if (dynamics_cnt > 0)
+                        {
+                            dynamics_cnt --;
+                        }
                         gettimeofday(&tm1, NULL);
                         tm = (tm1.tv_sec - tm0.tv_sec) * 1000 + tm1.tv_usec - tm0.tv_usec;
                         if (tm > 1000)
@@ -2084,10 +2104,10 @@ void BaseGroup::realtimeTask(void)
 
         long delay = (this_time.tv_sec - last_time.tv_sec) * 1000 + this_time.tv_usec - last_time.tv_usec;
 
-        if (delay> 20000)
+        if (delay> 50000)
         {
             FST_ERROR("RT task delayed %d ms !!!!!!", delay / 1000);
-            //reportError(MOTION_INTERNAL_FAULT);
+            reportError(MOTION_INTERNAL_FAULT);
         }
 
         last_time = this_time;

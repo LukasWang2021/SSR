@@ -98,7 +98,7 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
 bool MotionControl::startRealtimeTask(void)
 {
     group_ptr_->activeRealtimeTask();
-    return rt_thread_.runRT(&rtTask, group_ptr_, 80);
+    return rt_thread_.run(&rtTask, group_ptr_, 80);
 }
 
 bool MotionControl::stopRealtimeTask(void)

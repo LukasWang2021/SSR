@@ -196,6 +196,23 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
+    int sample_dynamics;
+
+    if (!param.getParam("sample_dynamics", sample_dynamics))
+    {
+        FST_ERROR("Fail loading sample dynamics from config file");
+        return param.getLastError();
+    }
+
+    if (sample_dynamics > 0)
+    {
+        dynamics_cnt_ = sample_dynamics;
+    }
+    else
+    {
+        FST_ERROR("Invalid sample dynamics = %d", sample_dynamics);
+    }
+
     FST_INFO("Initializing interface to bare core ...");
 
     if (!bare_core_.initInterface())

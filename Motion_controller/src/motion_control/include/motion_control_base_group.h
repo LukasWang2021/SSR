@@ -122,6 +122,7 @@ class BaseGroup
     inline bool isSameJoint(const Joint &joint1, const Joint &joint2);
 
 
+    size_t      dynamics_cnt_;
     bool        waiting_fine_;
     size_t      start_waiting_cnt_;
     MotionType  waiting_motion_type_;

@@ -166,6 +166,7 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     controller_client_ptr_->abort(); 
+    motion_control_ptr_->abortMove();
         FST_ERROR("Load /rpc/interpreter/abort");
     rs_data_ptr->data.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));

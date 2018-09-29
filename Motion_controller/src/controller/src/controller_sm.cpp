@@ -498,6 +498,7 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_)
             {
+                checkZeroPointOffsetState();
                 recordLog("Controller transfer to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
@@ -660,3 +661,24 @@ void ControllerSm::recordLog(ErrorCode error_code)
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
 }
 
+void ControllerSm::checkZeroPointOffsetState()
+{
+    CalibrateState dummy;
+    OffsetState offset_state[NUM_OF_JOINT];
+    ErrorCode error_code = motion_control_ptr_->checkOffset(dummy, offset_state);
+
+    if (error_code != SUCCESS)
+    {
+        ErrorMonitor::instance()->add(error_code);
+        return;
+    }
+
+    for (int i = 0; i != NUM_OF_JOINT; ++i)
+    {
+        if (offset_state[i] != MOTION_NORMAL)
+        {
+            error_code = ZERO_OFFSET_DEVIATE;
+            ErrorMonitor::instance()->add(error_code);
+        }
+    }
+}

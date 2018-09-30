@@ -137,7 +137,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 	while(*(objThreadCntrolBlock->token) != '\r')
 	{
 		get_token(objThreadCntrolBlock);
-		// 1.	ACCº”ÀŸ∂»±∂¬ ÷∏¡Ó
+		// 1.	ACCÔøΩÔøΩÔøΩŸ∂»±ÔøΩÔøΩÔøΩ÷∏ÔøΩÔøΩ
 		if(strcmp(objThreadCntrolBlock->token, "acc") == 0)
 		{
 			additionalInfomation.type = ACC ;
@@ -146,10 +146,10 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 			additionalInfomation.acc_speed = speed ;
 			iCount++ ;
 		}
-		// 2.	 Condition <case>£®µÕ”≈œ»º∂£©
-		// 3.	≈˙¡øŒª÷√≤π≥•÷∏¡Ó£®µÕ”≈œ»º∂£©
-		// 4.	µ•æ‰Œª÷√≤π≥•÷∏¡Ó
-		// 5.	Tool_Offsetπ§æﬂ◊¯±Í≤π≥•÷∏¡Ó
+		// 2.	 Condition <case>ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ»ºÔøΩÔøΩÔøΩ
+		// 3.	ÔøΩÔøΩÔøΩÔøΩŒªÔøΩ√≤ÔøΩÔøΩÔøΩ÷∏ÔøΩÓ£®ÔøΩÔøΩÔøΩÔøΩÔøΩ»ºÔøΩÔøΩÔøΩ
+		// 4.	ÔøΩÔøΩÔøΩÔøΩŒªÔøΩ√≤ÔøΩÔøΩÔøΩ÷∏ÔøΩÔøΩ
+		// 5.	Tool_OffsetÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÍ≤πÔøΩÔøΩ÷∏ÔøΩÔøΩ
 		else if((strcmp(objThreadCntrolBlock->token, "offset") == 0)
 		      ||(strcmp(objThreadCntrolBlock->token, "tool_offset") == 0))
 		{
@@ -341,7 +341,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 			}
 			iCount++ ;
 		}
-		// 6.	EVÕ¨≤Ω∏Ωº”÷·ÀŸ∂»÷∏¡Ó£®µÕ”≈œ»º∂£©
+		// 6.	EVÕ¨ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩŸ∂ÔøΩ÷∏ÔøΩÓ£®ÔøΩÔøΩÔøΩÔøΩÔøΩ»ºÔøΩÔøΩÔøΩ
 		else if(strncmp(objThreadCntrolBlock->token, "ev", 2) == 0)
 		{
 			additionalInfomation.type = EV ;
@@ -349,7 +349,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 		//	int speed = (int)value.getFloatValue();
 			iCount++ ;
 		}
-		// 7.	Ind_EV∑«Õ¨≤Ω∏Ωº”÷·ÀŸ∂»÷∏¡Ó£®µÕ”≈œ»º∂£©
+		// 7.	Ind_EVÔøΩÔøΩÕ¨ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩŸ∂ÔøΩ÷∏ÔøΩÓ£®ÔøΩÔøΩÔøΩÔøΩÔøΩ»ºÔøΩÔøΩÔøΩ
 		else if(strncmp(objThreadCntrolBlock->token, "ind_ev", 6) == 0)
 		{
 			additionalInfomation.type = IND_EV ;
@@ -357,7 +357,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 		//	int speed = (int)value.getFloatValue();
 			iCount++ ;
 		}
-		// 8.	TBœ»÷¥––÷∏¡Ó
+		// 8.	TBÔøΩÔøΩ÷¥ÔøΩÔøΩ÷∏ÔøΩÔøΩ
 		else if((strcmp(objThreadCntrolBlock->token, "tb") == 0)
 			  ||(strcmp(objThreadCntrolBlock->token, "ta") == 0)
 			  ||(strcmp(objThreadCntrolBlock->token, "db") == 0))
@@ -530,7 +530,7 @@ int set_OAC(int iLineNum, double dOACNum, struct thread_control_block* objThread
 }
 
 
-// MovJ P[1] P[1] 30% Fine +∏Ωº”≤Œ ˝
+// MovJ P[1] P[1] 30% Fine +ÔøΩÔøΩÔøΩ”≤ÔøΩÔøΩÔøΩ
 int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
     MoveCommandDestination movCmdDst ;
@@ -586,7 +586,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		}
 		else
 		{
-			printf("call_MoveJ XPATH without movCmdDst\n");
+			FST_INFO("call_MoveJ XPATH without movCmdDst\n");
 		}
 	}
 	else
@@ -731,7 +731,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 // 	#else
 // 		printf("setInstruction MOTION_JOINT at %d\n", instr.line);
 // 	#endif
-	     		printf("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
+	     		FST_INFO("call_MoveJ instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{

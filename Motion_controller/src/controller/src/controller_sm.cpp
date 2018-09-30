@@ -488,6 +488,7 @@ void ControllerSm::transferCtrlState()
         case CTRL_ANY_TO_ESTOP:
             if(robot_state_ == ROBOT_IDLE)
             {
+                sleep(1); // wait for robot stop
                 motion_control_ptr_->saveJoint();
                 recordLog("Controller transfer to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
@@ -675,10 +676,16 @@ void ControllerSm::checkZeroPointOffsetState()
 
     for (int i = 0; i != NUM_OF_JOINT; ++i)
     {
-        if (offset_state[i] != MOTION_NORMAL)
+        if (offset_state[i] == OFFSET_LOST)
+        {
+            error_code = ZERO_OFFSET_LOST;
+            ErrorMonitor::instance()->add(error_code);
+        }
+        else if (offset_state[i] == OFFSET_DEVIATE)
         {
             error_code = ZERO_OFFSET_DEVIATE;
             ErrorMonitor::instance()->add(error_code);
         }
+        else;
     }
 }

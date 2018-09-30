@@ -120,6 +120,7 @@ target_link_libraries(prg_interpreter
     thread_help
     pthread
     modbus_manager
+    logger
 )
 
 #############

@@ -185,6 +185,10 @@ struct thread_control_block {
     map<int, MoveCommandDestination>  start_mov_position ;  // iLineNum :: movCmdDst
 } ;
 
+
+extern fst_log::Logger * log_ptr_;
+
+
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);
 // LineNumState getLinenum(struct thread_control_block* objThreadCntrolBlock, int & num);
 int getLinenum(struct thread_control_block* objThreadCntrolBlock) ;

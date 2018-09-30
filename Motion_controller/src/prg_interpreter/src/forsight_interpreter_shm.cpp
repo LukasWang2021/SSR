@@ -141,7 +141,7 @@ bool tryWrite(const char* name, int offset, void*buffer, int size)
     ShmData *data = getShm(name);
     if (data == NULL)
     {
-        printf("can't find name:%s\n", name);
+        printf("tryWrite :: can't find name:%s\n", name);
         return false;
     }
     volatile unsigned int *ptr_read, *ptr_write, *ptr_turn, *ptr_latest;
@@ -263,7 +263,7 @@ bool isInstructionEmpty(const char* name)
     ShmData *data = getShm(name);
     if (data == NULL)
     {
-        printf("can't find name:%s\n", name);
+        printf("isInstructionEmpty :: can't find name:%s\n", name);
         return false;
     }
     volatile unsigned int *ptr_read, *ptr_write; // , *ptr_turn, *ptr_latest;

@@ -151,7 +151,7 @@ private:
     // manual rpc related
     long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);
     void handleContinuousManualRpcTimeout();
-    void checkZeroPointOffsetState();
+    bool checkZeroPointOffsetState();
     // interpreter instruction
     void clearInstruction();
 

@@ -50,7 +50,7 @@ Controller::~Controller()
         param_ptr_ = NULL;
     }
 
-    motion_control_.saveOffset();
+    motion_control_.saveJoint();
     ServerAlarmApi::GetInstance()->pyDecref();
 }
 

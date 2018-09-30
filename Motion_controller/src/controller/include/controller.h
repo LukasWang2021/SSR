@@ -59,6 +59,7 @@ private:
     VirtualCore1 virtual_core1_; // for test only
     
     // thread related
+    int routine_times_;
     bool is_exit_;
     fst_base::ThreadHelp routine_thread_;
     fst_base::ThreadHelp heartbeat_thread_;

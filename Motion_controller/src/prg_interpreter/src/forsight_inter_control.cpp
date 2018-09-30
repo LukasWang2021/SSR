@@ -361,7 +361,7 @@ UserOpMode getUserOpMode()
 
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction)
 {
-    bool ret;
+    bool ret = true;
 //    int iLineNum = 0;
 	// We had eaten MOV* as token. 
     if (objThdCtrlBlockPtr->is_abort)
@@ -369,24 +369,25 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
         // target_line++;
         return false;
     }
-    ret = g_objRegManagerInterface->isNextInstructionNeeded();
-    if (ret == false)
-    {
-        printf("not permitted\n");
-        return false;
-    }
-	// setSendPermission(false);
+	// Speed up at 0930
+//    ret = g_objRegManagerInterface->isNextInstructionNeeded();
+//    if (ret == false)
+ //   {
+ //       printf("not permitted\n");
+ //       return false;
+ //   }
+//	// setSendPermission(false);
 	
 //    int count = 0;
     //printf("cur state:%d\n", prgm_state);
     if ((objThdCtrlBlockPtr->prog_mode == STEP_MODE) 
 		&& (prgm_state == INTERPRETER_EXECUTE_TO_PAUSE))
     {
-        if (isInstructionEmpty(SHM_INTPRT_CMD))
-        {
-            printf("check if step is done in setInstruction\n");
-            setPrgmState(INTERPRETER_PAUSED);
-        }
+//        if (isInstructionEmpty(SHM_INTPRT_CMD))
+//        {
+//            printf("check if step is done in setInstruction\n");
+//            setPrgmState(INTERPRETER_PAUSED);
+//        }
 		// printf("cur state:%d in STEP_MODE \n", prgm_state);
         return false;
     }
@@ -397,7 +398,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     {
 		if (instruction->is_additional == false)
 		{
-	     	// printf("instr.target.cnt = %f .\n", instruction->target.cnt);
+	     	FST_ERROR("setInstruction:: instr.target.cnt = %f .\n", instruction->target.cnt);
 			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
 			//		(void*)instruction, sizeof(Instruction));
 			
@@ -405,7 +406,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 		}
 		else
 		{
-	     	// printf("instr.target.cnt = %f .\n", instruction->target.cnt);
+	     	FST_ERROR("setInstruction:: instr.target.cnt = %f .\n", instruction->target.cnt);
 			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
 			//  	(void*)instruction, 
 			//  	sizeof(Instruction) 
@@ -451,7 +452,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 
     // Wait until finish 
     ret = g_objRegManagerInterface->isNextInstructionNeeded();
-    printf("wait ctrl_status.is_permitted == false\n");
+    FST_ERROR("wait ctrl_status.is_permitted == false\n");
     while (ret == false)
     {
 #ifdef WIN32

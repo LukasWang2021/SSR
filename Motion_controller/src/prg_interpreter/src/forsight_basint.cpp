@@ -210,6 +210,8 @@ pthread_t g_basic_interpreter_handle[NUM_THREAD];
 
 extern MacroInstrMgr  *  g_macro_instr_mgr_ptr; 
 
+fst_log::Logger * log_ptr_ = NULL;
+
 #ifdef WIN32
 unsigned __stdcall basic_interpreter(void* arg)
 #else
@@ -222,6 +224,10 @@ void* basic_interpreter(void* arg)
   				= (struct thread_control_block*)arg;
   // Set this state outside according prog_mode
   // setPrgmState(EXECUTE_R);  
+	if(log_ptr_ == NULL)
+	{
+		log_ptr_ = new fst_log::Logger();
+	}
   printf("Enter call_interpreter.\n");
   //  if(objThreadCntrolBlock->is_in_macro)
   //  {
@@ -631,7 +637,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	}
     /* check for assignment statement */
 	iLinenum = calc_line_from_prog(objThreadCntrolBlock);
-    printf("objThreadCntrolBlock->token_type = %d at line %d \n", 
+    FST_INFO("objThreadCntrolBlock->token_type = %d at line %d \n", 
     	objThreadCntrolBlock->token_type, iLinenum);
 	setLinenum(objThreadCntrolBlock, iLinenum);
     if(objThreadCntrolBlock->token_type==VARIABLE) {
@@ -685,7 +691,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		            // setPrgmState(INTERPRETER_PAUSED);
 		        }
 			} 
-    		printf("call_internal_cmd execution : %s at %d, iLineNum = %d\n", 
+    		FST_INFO("call_internal_cmd execution : %s at %d, iLineNum = %d\n", 
 						objThreadCntrolBlock->token, iIdx, iLineNum);
 			printCurrentLine(objThreadCntrolBlock);
 			int iRet = call_internal_cmd(iIdx, iLineNum, 

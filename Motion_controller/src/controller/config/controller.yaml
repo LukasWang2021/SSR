@@ -1,8 +1,8 @@
 log_level: 1
-routine_cycle_time: 100000
+routine_cycle_time: 5000
 heartbeat_cycle_time: 10000 
 routine_thread_priority: 50 
-reset_max_time: 1000000 
+reset_max_time: 4000000 
 enable_controller_heartbeat: true
 heartbeat_thread_priority: 50 
 enable_log_service: false

@@ -499,9 +499,16 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_)
             {
-                checkZeroPointOffsetState();
-                recordLog("Controller transfer to ENGAGED");
-                ctrl_state_ = CTRL_ENGAGED;
+                if(checkZeroPointOffsetState())
+                {
+                    recordLog("Controller transfer to ENGAGED");
+                    ctrl_state_ = CTRL_ENGAGED;
+                }
+                else
+                {
+                    recordLog("Controller transfer to ESTOP");
+                    ctrl_state_ = CTRL_ESTOP;
+                }
             }
             else if((--ctrl_reset_count_) < 0)
             {
@@ -662,7 +669,7 @@ void ControllerSm::recordLog(ErrorCode error_code)
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
 }
 
-void ControllerSm::checkZeroPointOffsetState()
+bool ControllerSm::checkZeroPointOffsetState()
 {
     CalibrateState dummy;
     OffsetState offset_state[NUM_OF_JOINT];
@@ -671,7 +678,7 @@ void ControllerSm::checkZeroPointOffsetState()
     if (error_code != SUCCESS)
     {
         ErrorMonitor::instance()->add(error_code);
-        return;
+        return false;
     }
 
     for (int i = 0; i != NUM_OF_JOINT; ++i)
@@ -688,4 +695,11 @@ void ControllerSm::checkZeroPointOffsetState()
         }
         else;
     }
+
+    if (dummy == MOTION_FORBIDDEN)
+    {
+        return false;
+    }
+
+    return true;
 }

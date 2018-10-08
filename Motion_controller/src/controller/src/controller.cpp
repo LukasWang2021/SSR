@@ -188,7 +188,10 @@ ErrorCode Controller::init()
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
-    motion_control_.resetGroup();
+    if(!state_machine_.checkOffsetState())
+    {
+        FST_ERROR("controller check offset failed");
+    }  
 
     error_code = tp_comm_.init();
     if(error_code != SUCCESS)

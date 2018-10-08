@@ -121,6 +121,44 @@ ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
     }
 }
 
+bool ControllerSm::checkOffsetState()
+{
+    CalibrateState calib_state;
+    OffsetState offset_state[NUM_OF_JOINT];
+
+    ErrorCode error_code = motion_control_ptr_->checkOffset(calib_state, offset_state);
+    if (error_code != SUCCESS)
+    {
+        return false;
+    }
+
+    if(calib_state != MOTION_NORMAL)
+    {
+        for(int i=0; i<NUM_OF_JOINT; ++i)
+        {
+            if(offset_state[i] == OFFSET_LOST)
+            {
+                std::string log_str("offset lost: joint ");
+                log_str.append(std::to_string(i+1));
+                recordLog(ZERO_OFFSET_LOST, log_str);
+            }
+            else if(offset_state[i] == OFFSET_DEVIATE)
+            {
+                std::string log_str("offset deviate: joint ");
+                log_str.append(std::to_string(i+1));
+                recordLog(ZERO_OFFSET_DEVIATE, log_str);
+            }
+        }
+    
+        if(calib_state == MOTION_FORBIDDEN)
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 ErrorCode ControllerSm::callEstop()
 {
     if(ctrl_state_ == CTRL_ENGAGED
@@ -150,6 +188,13 @@ ErrorCode ControllerSm::callReset()
         {
             //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
             ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
+        }
+        else
+        {
+            motion_control_ptr_->stopGroup();
+            controller_client_ptr_->abort();
+            FST_ERROR("controller check offset failed");
+            ctrl_state_ = CTRL_ANY_TO_ESTOP;
         }
     }
     return SUCCESS;
@@ -262,44 +307,6 @@ fst_mc::ServoState* ControllerSm::getServoStatePtr()
 int* ControllerSm::getSafetyAlarmPtr()
 {
     return &safety_alarm_;
-}
-
-bool ControllerSm::checkOffsetState()
-{
-    CalibrateState calib_state;
-    OffsetState offset_state[NUM_OF_JOINT];
-
-    ErrorCode error_code = motion_control_ptr_->checkOffset(calib_state, offset_state);
-    if (error_code != SUCCESS)
-    {
-        return false;
-    }
-
-    if(calib_state != MOTION_NORMAL)
-    {
-        for(int i=0; i<NUM_OF_JOINT; ++i)
-        {
-            if(offset_state[i] == OFFSET_LOST)
-            {
-                std::string log_str("offset lost: joint ");
-                log_str.append(std::to_string(i+1));
-                recordLog(ZERO_OFFSET_LOST, log_str);
-            }
-            else if(offset_state[i] == OFFSET_DEVIATE)
-            {
-                std::string log_str("offset deviate: joint ");
-                log_str.append(std::to_string(i+1));
-                recordLog(ZERO_OFFSET_DEVIATE, log_str);
-            }
-        }
-    
-        if(calib_state == MOTION_FORBIDDEN)
-        {
-            return false;
-        }
-    }
-    
-    return true;
 }
 
 void ControllerSm::processInterpreter()
@@ -509,6 +516,9 @@ void ControllerSm::transferCtrlState()
                 motion_control_ptr_->stopGroup();
                 ctrl_state_ = CTRL_ANY_TO_ESTOP;
             }
+            break;
+        case CTRL_INIT:
+            ctrl_state_ = CTRL_ESTOP;
             break;
         default:
             ;

@@ -83,6 +83,7 @@ public:
     fst_mc::ServoState getServoState();
     int getSafetyAlarm();
     ErrorCode setUserOpMode(UserOpMode mode);
+    bool checkOffsetState();
     ErrorCode callEstop();
     ErrorCode callReset();
     ErrorCode callShutdown();
@@ -140,7 +141,6 @@ private:
     bool is_error_exist_;
     
     // state machine transfer
-    bool checkOffsetState();
     void processInterpreter();
     void processSafety();
     void processError();

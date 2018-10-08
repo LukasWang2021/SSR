@@ -147,7 +147,7 @@
 #define INVALID_PARAMETER (unsigned long long int)0x0001000400A903FD   /*APIs called with an invalid parameter*/
 #define INVALID_SEQUENCE (unsigned long long int)0x0001000400A903FE   /*APIs called in a invalid sequence*/
 #define CALIBRATION_FAULT (unsigned long long int)0x0001000A00A907D1   /*error while calibrating zero offset*/
-#define ZERO_OFFSET_LOST (unsigned long long int)0x0001000A00A907D2   /*one or more axis lost its zero offset*/
+#define ZERO_OFFSET_LOST (unsigned long long int)0x0001000200A907D2   /*one or more axis lost its zero offset*/
 #define ZERO_OFFSET_DEVIATE (unsigned long long int)0x0001000200A907D3   /*axis zero offset deviated*/
 #define FAIL_GET_FEEDBACK_JOINT (unsigned long long int)0x0001000600A907E6   /*fail to get FeedbackJointState*/
 #define NEED_INITIALIZATION (unsigned long long int)0x0010000200A90411   /*ArmGroup need to initialize */

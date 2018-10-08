@@ -10,9 +10,9 @@
 
 #define MAXAXES 6
 #define minimt 1e-12
-#define minimq 1e-5
+#define minimq 1e-12
 #define pi 3.141592625
-#define printf //
+//#define printf //
 
 extern fst_algorithm::DynamicsInterface g_dynamics_interface;
 
@@ -25,7 +25,6 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 
 using namespace fst_mc;
 using namespace std;
-
 
 
 
@@ -80,7 +79,7 @@ int Gauss(double A[2][2], double B[2][2],int N)
 			}
 		}
 
-		if (t[i][i] > -minimq && t[i][i]<minimq)
+		if (t[i][i] >-minimt && t[i][i]<minimt)
 		{
 			//cout << "There is no inverse matrix!";
 			return 0;
@@ -136,7 +135,7 @@ getrootofquadratic：求一元三次方程的根
 */
 ErrorCode getrootsofquadratic(double a, double b, double c, double d, double Sv[3],int *svnum)
 {
-	if (a>-minimt && a<minimt)
+	if (a ==0)
 	{
 		printf("coefficiant is error");
 		return 0x002100B00A40001; //三次项求根系数错误
@@ -158,7 +157,7 @@ ErrorCode getrootsofquadratic(double a, double b, double c, double d, double Sv[
 	{
 		s = r + sqrt(disc);
 
-		if (s < 0)
+		if (s <0)
 		{
 			s = -pow((-s), (1.0 / 3.0));
 		}
@@ -169,7 +168,7 @@ ErrorCode getrootsofquadratic(double a, double b, double c, double d, double Sv[
 		//s = ((s < 0) ? -Math.pow(-s, (1.0 / 3.0)) : Math.pow(s, (1.0 / 3.0)));
 		double t = r - sqrt(disc);
 
-		if (t < 0)
+		if (t <0)
 		{
 			t = -pow((-t), (1.0 / 3.0));
 		}
@@ -190,9 +189,9 @@ ErrorCode getrootsofquadratic(double a, double b, double c, double d, double Sv[
 
 	//The remaining options are all real
 	double r13 = 0;
-	if (disc > -minimq && disc<minimq) // All roots real, at least two are equal.
+	if (disc ==0) // All roots real, at least two are equal.
 	{
-		if (r < 0)
+		if (r <0)
 		{
 			r13 = -pow((-r), (1.0 / 3.0));
 		}
@@ -313,9 +312,9 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 	double newT[2] = { 0 };
 	double snewT[2] = { 0 };
 	double r[3] = { 0 };
-	double a0, a1, a2, a3, tempt;
+	double a0, a1, a2, a3;
 
-	double a, b, c, lamda,slamda;
+	double a, b, c, lamda;
 	int dofn = MAXAXES;
 
 	if (type == 1) // 加速计算
@@ -323,11 +322,11 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 		for (int i = 0; i < dofn; i++)
 		{
 			//根据关节的运动方向 判断Jerk的符号变量
-			if (qf[i] - q0[i] > 0)
+			if (qf[i] - q0[i] > minimq)
 			{
 				sigmaq[i] = 1; //正转  符号取1
 			}
-			else if (qf[i] - q0[i] < 0)
+			else if (qf[i] - q0[i] < -minimq)
 			{
 				sigmaq[i] = -1; //反转 符号取 - 1
 			}
@@ -336,176 +335,124 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 				sigmaq[i] = 0;	//静止 符号取1
 			}
 
-			if (maxdq[i] - dq0[i] > 0)
+			if (maxdq[i] - dq0[i] > minimq)
 			{
 				sigma[i] = 1; //正转  符号取1
 			}
-			else if (maxdq[i] - dq0[i] <0)
+			else if (maxdq[i] - dq0[i] < -minimq)
 			{
 				sigma[i] = -1; //反转 符号取 - 1
 			}
-			else if ((maxdq[i] - dq0[i] < minimq) && (maxdq[i]-dq0[i]>-minimq) && (sigmaq[i]==1))
+			else if ((maxdq[i] - dq0[i] < minimq) && (maxdq[i]-dq0[i]>-minimq))
 			{
-				sigma[i] = 1;	//静止 符号取1
+				sigma[i] = 0;	//静止 符号取1
 			}
-			else if ((maxdq[i] - dq0[i] < minimq) && (maxdq[i] - dq0[i]>-minimq) && (sigmaq[i] == -1))
-			{
-				sigma[i] = -1;	//静止 符号取1
-			}
+			
 
-			if (sigmaq[i] != 0 && (Ti[i] > -1-minimt && Ti[i]<-1+minimt)) // 关节存在运动 且只需计算各轴同步运动时间 进入下面计算
+			if (sigmaq[i] != 0 && Ti[i] == -1) // 关节存在运动 且只需计算各轴同步运动时间 进入下面计算
 			{
 				if (sigma[i] == 1)
-					ddq_max[i] = maxddq[i];	//加速度赋值
-				else if (sigma[i] == -1)
-					ddq_max[i] = minddq[i];
-				else
-					ddq_max[i] = 0;
-
-				dq_avg[i] = maxdq[i];		//平均速度赋值
-
-				//time adjust
-				dq3[i] = dq0[i] + (2 * pow(ddq_max[i],2) - pow(ddq0[i],2)) / (2 * sigma[i] *Jm[i]);
-				
-				if ((dq_avg[i] > (dq3[i]+minimq) && sigma[i] == 1) || (dq_avg[i] < (dq3[i]-minimq) && sigma[i] == -1) || ((dq_avg[i] - dq3[i]) < minimq && (dq_avg[i] - dq3[i]) > -minimq))
 				{
-					//求ta2
-					ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+					ddq_max[i] = maxddq[i];	//加速度赋值
+				}
+				else if (sigma[i] == -1)
+				{
+					ddq_max[i] = minddq[i];
+				}
+				else
+				{
+					ta1[i] = 0;
 					ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
 					dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
 					q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
 
-					ta2[i] = (dq_avg[i] - dq0[i] - (2 * pow(ddq_max[i], 2) - pow(ddq0[i], 2)) / (2 * sigma[i] * Jm[i])) / ddq_max[i];
 
+					ta2[i] = 0;
 					ddq2[i] = ddq1[i];
 					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
 					q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
-					ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-					ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+					ta3[i] = 0;
+					ddq3[i] = 0;
 					dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
 					q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
 
-					if ((qf[i] > (q3[i]+minimq) && sigmaq[i] == 1) || (qf[i] < (q3[i]-minimq) && sigmaq[i] == -1))
+					ta4[i] = (qf[i]-q0[i])/dq3[i];
+					ddq4[i] = 0;
+					dq4[i] = dq3[i];
+					q4[i] = q3[i] + ta4[i] * dq3[i];
+
+					tqf[i] = q4[i];
+					dqf[i] = dq4[i];
+					ddqf[i] = ddq4[i];
+
+					//计算总时间
+					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
+					if ((ta1[i] + ta2[i] + ta3[i] + ta4[i])<-minimt)
 					{
-						//速度和加速度都能满足 存在ta4
-						ta4[i] = (qf[i] - q3[i]) / dq3[i];
-						ddq4[i] = 0;
-						dq4[i] = dq3[i];
-						q4[i] = q3[i] + ta4[i] * dq3[i];
-
-						tqf[i] = q4[i];
-						dqf[i] = dq4[i];
-						ddqf[i] = ddq4[i];
+						printf("ta error\n");
+						return 0x002100B00A40003; //总时间计算错误
 					}
-					else if ((qf[i] - q3[i]) < minimq && (qf[i] - q3[i]) > -minimq)
+					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];  //各段时间赋值
+
+																								 //各段系数赋值
+					if ((ta1[i] >minimt) || (ta1[i]>-minimt && ta1[i]<minimt))
 					{
-						//速度加速度都能满足  但没有ta4
-						ta4[i] = 0;
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
+						coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i]; // 3阶
+						coeff[i][0][1] = 1 / 2.0 * ddq0[i]; // 2阶
+						coeff[i][0][2] = dq0[i]; // 1阶
+						coeff[i][0][3] = q0[i]; // 0阶
 					}
-					else
+					if ((ta2[i] >minimt) || (ta2[i]>-minimt && ta2[i]<minimt))
 					{
-						// 达不到最大速度 但能达到最大加速度
-						a = (ddq0[i] / 2.0 + (Jm[i] * sigma[i] * ta1[i]) / 2.0);
-						b = (dq0[i] + ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * ta1[i]) + ddq0[i] * ta1[i] + (Jm[i] * sigma[i] * pow(ta1[i],2)) / 2.0);
-						c = q0[i] - qf[i] + dq0[i] * ta1[i] + (ddq0[i] * pow(ta1[i],2)) / 2.0 + ta3[i] * ((Jm[i] * sigma[i] * pow(ta1[i],2)) / 2.0 + ddq0[i] * ta1[i] + dq0[i]) + pow(ta3[i],2) * (ddq0[i] / 2.0 + (Jm[i] * sigma[i] * ta1[i]) / 2.0) + (Jm[i] * sigma[i] * pow(ta1[i],3)) / 6.0 - (Jm[i] * sigma[i] * pow(ta3[i],3)) / 6.0;
-						lamda = b*b - 4 * a*c;
-						if (lamda < 0)
-						{
-							printf("signification erreur\n"); //二次项系数有误 表示给定的路径插值时间太短 至少小于900纳秒 报错
-							return 0x002100B00A40002; //二次项求根系数错误
-						}
-
-
-						newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //求出的二次项根1
-						newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //求出的二次项根2
-
-						if ((newT[0] > minimt && newT[1] > minimt)) // 求出两个正根 取短的时间代入计算
-						{
-							if (newT[0] > newT[1]) // ta2取时间较小的值
-								ta2[i] = newT[1];
-							else
-								ta2[i] = newT[0];
-						}
-						else if ((newT[0] > minimt && newT[1] < -minimt)) // 取正的时间值
-						{
-							ta2[i] = newT[0];
-						}
-						else if ((newT[1] > minimt && newT[0] < -minimt)) // 取正的时间值
-						{
-							ta2[i] = newT[1];
-						}
-						//重新计算ta2后 更新加速度 速度和位置
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i],2);
-
-						ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i],2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i],2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i],3);
-
-						ta4[i] = 0;
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
+						coeff[i][1][0] = 0;
+						coeff[i][1][1] = 1 / 2.0 * ddq1[i];
+						coeff[i][1][2] = dq1[i];
+						coeff[i][1][3] = q1[i];
 					}
+					if ((ta3[i] >minimt) || (ta3[i]>-minimt && ta3[i]<minimt))
+					{
+						coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
+						coeff[i][2][1] = 1 / 2.0 * ddq2[i];
+						coeff[i][2][2] = dq2[i];
+						coeff[i][2][3] = q2[i];
+					}
+					if ((ta4[i] >minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
+					{
+						coeff[i][3][0] = 0;
+						coeff[i][3][1] = 0;
+						coeff[i][3][2] = dq3[i];
+						coeff[i][3][3] = q3[i];
+					}
+					continue;
 				}
-				else
+				
+				
+				dq_avg[i] = maxdq[i];		//平均速度赋值
+
+				ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+				q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+				if ((q1[i] > (qf[i]+minimq) && sigmaq[i] == 1) || (q1[i] < (qf[i]-minimq) && sigmaq[i] == -1))
 				{
-					//没有ta2 需重算最大加速度  可能存在ta4
-					double deltadq = 0;
-					if (((dq_avg[i] - dq0[i]) < minimq && (dq_avg[i] - dq0[i]) > -minimq))
-						deltadq = 0;
-					else
-						deltadq = dq_avg[i] - dq0[i];
-					if (sigma[i]==1)
-						ddq_max[i] = sqrt((2 * deltadq*sigma[i]*Jm[i] + pow(ddq0[i],2)) / 2.0);
-					else if (sigma[i]==-1)
-						ddq_max[i] = -sqrt((2 * deltadq*sigma[i] * Jm[i] + pow(ddq0[i], 2)) / 2.0);
-
-					ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i]*Jm[i]);
-					ddq1[i] = ddq0[i] + sigma[i]*Jm[i]*ta1[i];
-					dq1[i] = dq0[i] + ddq0[i]*ta1[i] + 1 / 2.0 * sigma[i]*Jm[i]*pow(ta1[i],2);
-					q1[i] = q0[i] + dq0[i]*ta1[i] + 1 / 2.0 * ddq0[i]*pow(ta1[i],2) + 1 / 6.0 * sigma[i]*Jm[i]*pow(ta1[i],3);
-
-
-					ta2[i] = 0;
-					ddq2[i] = ddq1[i];
-					dq2[i] = dq1[i] + ddq1[i]*ta2[i];
-					q2[i] = q1[i] + dq1[i]*ta2[i] + 1 / 2.0 * ddq1[i]*pow(ta2[i],2);
-
-					ta3[i] = ddq_max[i] / (sigma[i]*Jm[i]);
-					ddq3[i] = ddq2[i] - sigma[i]*Jm[i]*ta3[i];
-					dq3[i] = dq2[i] + ddq2[i]*ta3[i] - 1 / 2.0 * sigma[i]*Jm[i]*pow(ta3[i],2);
-					q3[i] = q2[i] + dq2[i]*ta3[i] + 1 / 2.0 * ddq2[i]*pow(ta3[i],2) - 1 / 6.0 * sigma[i]*Jm[i]*pow(ta3[i],3);
-
-					if ((qf[i] - q0[i] > -minimq) && (qf[i] - q0[i] < minimq))
-						ta4[i] = 0;
-					else
-						ta4[i] = (qf[i] - (q0[i] + dq0[i]*ta1[i] + (ddq0[i]*pow(ta1[i],2)) / 2.0 + ta3[i]*((Jm[i]*sigma[i]*pow(ta1[i],2)) / 2.0 + ddq0[i]*ta1[i] + dq0[i]) + pow(ta3[i],2) * (ddq0[i] / 2.0 + (Jm[i]*sigma[i]*ta1[i]) / 2.0) + (Jm[i]*sigma[i]*pow(ta1[i],3)) / 6.0 - (Jm[i]*sigma[i]*pow(ta3[i],3)) / 6.0)) / ((dq0[i] + ta3[i]*(ddq0[i] + Jm[i]*sigma[i]*ta1[i]) + ddq0[i]*ta1[i] + (Jm[i]*sigma[i]*pow(ta1[i],2)) / 2.0 - (Jm[i]*sigma[i]*pow(ta3[i],2)) / 2.0));
-
-					if (ta4[i] < minimt)
-					{
 						// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-						a3 = sigma[i] * Jm[i]; //a
-						a2 = 0; //b
-						a1 = (-pow(ddq0[i],2) / (Jm[i]*sigma[i]) + 2 * dq0[i]); //c
-						a0 = q0[i] + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - qf[i]; //d
+						a3 = 1/6.0*sigma[i] * Jm[i]; //a
+						a2 = 1/2.0*ddq0[i]; //b
+						a1 = dq0[i]; //c
+						a0 = q0[i] - qf[i]; //d
 
 						int snum = 0;
 						getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
+double tempt = 99; //获得全部的解
 						if (snum == 1)
 						{
 							tempt = r[0];
 						}
 						else
 						{
-							double tempt = 99; //获得全部的解
+							
 							for (int j = 0; j < 3; j++)
 							{
 								if (r[j]<tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
@@ -514,7 +461,38 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 								}
 							}
 						}
-						ta3[i] = tempt;
+						ta1[i] = tempt;
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+
+						ta2[i] = 0;
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						ta3[i] = 0;
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						ta4[i] = 0;
+						ddq4[i] = 0;
+						dq4[i] = dq3[i];
+						q4[i] = q3[i] + ta4[i] * dq3[i];
+
+						tqf[i] = q4[i];
+						dqf[i] = dq4[i];
+						ddqf[i] = ddq4[i];
+				}
+				else
+				{
+					ta2[i] = (dq_avg[i] - dq0[i] - (2 * pow(ddq_max[i], 2) - pow(ddq0[i], 2)) / (2 * sigma[i] * Jm[i])) / ddq_max[i];
+
+					if (ta2[i] < -minimt)
+					{
+						ta3[i] = sqrt((dq_avg[i] * (2 * Jm[i] * sigma[i]) + ddq0[i] * ddq0[i] - 2 * dq0[i] * Jm[i] * sigma[i]) / (2 * Jm[i] * Jm[i] * sigma[i] * sigma[i]));
 						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
 						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
 						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
@@ -530,7 +508,7 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
 						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
 
-						ta4[i] = 0;
+						ta4[i] = (qf[i] - q3[i]) / dq3[i];
 						ddq4[i] = 0;
 						dq4[i] = dq3[i];
 						q4[i] = q3[i] + ta4[i] * dq3[i];
@@ -541,19 +519,126 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					}
 					else
 					{
-						ddq4[i] = 0;
-						dq4[i] = dq3[i];
-						q4[i] = q3[i] + ta4[i]*dq3[i];
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
-						tqf[i] = q4[i];
-						dqf[i] = dq4[i];
-						ddqf[i] = ddq4[i];
+						if ((q2[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q2[i] < (qf[i] - minimq) && sigmaq[i] == -1))
+						{
+							a = (ddq0[i] / 2.0 + (Jm[i] * sigma[i] * ta1[i]) / 2.0);
+							b = ((Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2 + ddq0[i] * ta1[i] + dq0[i]);
+							c = (Jm[i] * sigma[i] * pow(ta1[i], 3)) / 6 + (ddq0[i] * pow(ta1[i], 2)) / 2 + dq0[i] * ta1[i] + q0[i] - qf[i];
+							lamda = b*b - 4 * a*c;
+							if (lamda < -minimt)
+							{
+								printf("signification erreur\n"); //二次项系数有误 表示给定的路径插值时间太短 至少小于900纳秒 报错
+								return 0x002100B00A40002; //二次项求根系数错误
+							}
+
+
+							newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //求出的二次项根1
+							newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //求出的二次项根2
+
+							if ((newT[0] > minimt && newT[1] > minimt)) // 求出两个正根 取短的时间代入计算
+							{
+								if (newT[0] > newT[1]) // ta2取时间较小的值
+									ta2[i] = newT[1];
+								else
+									ta2[i] = newT[0];
+							}
+							else if ((newT[0] > minimt && newT[1] < -minimt)) // 取正的时间值
+							{
+								ta2[i] = newT[0];
+							}
+							else if ((newT[1] > minimt && newT[0] < -minimt)) // 取正的时间值
+							{
+								ta2[i] = newT[1];
+							}
+							//重新计算ta2后 更新加速度 速度和位置
+							ddq2[i] = ddq1[i];
+							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							ta4[i] = 0;
+							tqf[i] = q3[i];
+							dqf[i] = dq3[i];
+							ddqf[i] = ddq3[i];
+
+						}
+						else
+						{
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
+							{
+								a3 = -1 / 6.0*sigma[i] * Jm[i]; //a
+								a2 = (ddq0[i] / 2 + (Jm[i] * sigma[i] * ta1[i]) / 2); //b
+								a1 = (dq0[i] + ta2[i] * (ddq0[i] + Jm[i] * sigma[i] * ta1[i]) + ddq0[i] * ta1[i] + (Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2); //c
+								a0 = q0[i] - qf[i] + dq0[i] * ta1[i] + (ddq0[i] * pow(ta1[i], 2)) / 2 + ta2[i] * ((Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2 + ddq0[i] * ta1[i] + dq0[i]) + pow(ta2[i], 2)*(ddq0[i] / 2 + (Jm[i] * sigma[i] * ta1[i]) / 2) + (Jm[i] * sigma[i] * pow(ta1[i], 3)) / 6; //d
+
+								int snum = 0;
+								getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
+								double tempt = 99; //获得全部的解
+								if (snum == 1)
+								{
+									tempt = r[0];
+								}
+								else
+								{
+									
+									for (int j = 0; j < 3; j++)
+									{
+										if (r[j]<tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
+										{
+											tempt = r[j];
+										}
+									}
+								}
+								ta3[i] = tempt;
+
+								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+								ta4[i] = 0;
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+
+							}
+							else
+							{
+								ta4[i] = (qf[i] - q3[i]) / dq3[i];
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+
+						}
 					}
 				}
-				
+
 				//计算总时间
 				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-				if ((ta1[i] + ta2[i] + ta3[i] + ta4[i])< 0)
+				if ((ta1[i] + ta2[i] + ta3[i] + ta4[i])<-minimt)
 				{
 					printf("ta error\n");
 					return 0x002100B00A40003; //总时间计算错误
@@ -582,7 +667,7 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					coeff[i][2][2] = dq2[i];
 					coeff[i][2][3] = q2[i];
 				}
-				if((ta4[i] >minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
+				if ((ta4[i] >minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
 				{
 					coeff[i][3][0] = 0;
 					coeff[i][3][1] = 0;
@@ -593,14 +678,106 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 			else if (sigmaq[i] != 0 && Ti[i] > minimt) // 这一段是根据多轴时间同步后 计算各段的时间系数和多项式系数 并返回结束的位置速度 加速度
 			{
 				if (sigma[i] == 1)
+				{
 					ddq_max[i] = maxddq[i];	//加速度赋值
+				}
 				else if (sigma[i] == -1)
+				{
 					ddq_max[i] = minddq[i];
-				else
-					ddq_max[i] = 0;
+				}
+
 
 				dq_avg[i] = maxdq[i];		//平均速度赋值
 				dq_avg_new[i] = (qf[i] - q0[i]) / Ti[i];
+
+				if (sigmaq[i] == 1)
+				{
+					if (((dq_avg_new[i] - dq0[i] > minimq)) || ((dq_avg_new[i] - dq0[i] < -minimq) && (ddq0[i] < -minimq)))
+					{
+						sigma[i] = 1; //正转  符号取1
+					}
+					else if (((dq_avg_new[i] - dq0[i] < -minimq)) || ((dq_avg_new[i] - dq0[i] > minimq) && (ddq0[i] > minimq)))
+					{
+						sigma[i] = -1; //反转 符号取 - 1
+					}
+				}
+				if (sigmaq[i] == -1)
+				{
+					if (((dq_avg_new[i] - dq0[i] <- minimq)) || ((dq_avg_new[i] - dq0[i] >minimq) && (ddq0[i] > minimq)))
+					{
+						sigma[i] = -1; //正转  符号取1
+					}
+					else if (((dq_avg_new[i] - dq0[i] >minimq)) || ((dq_avg_new[i] - dq0[i] <- minimq) && (ddq0[i] <- minimq)))
+					{
+						sigma[i] = 1; //反转 符号取 - 1
+					}
+				}
+				if ((dq_avg_new[i] - dq0[i] < minimq) && (dq_avg_new[i] - dq0[i]>-minimq))
+				{
+					sigma[i] = 0;	//静止 符号取1
+					ta1[i] = 0;
+					ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+					dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+					q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+					ta2[i] = 0;
+					ddq2[i] = ddq1[i];
+					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+					q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+					ta3[i] = 0;
+					ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+					dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+					q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+					ta4[i] = (qf[i] - q0[i]) / dq3[i];
+					tqf[i] = q3[i];
+					dqf[i] = dq3[i];
+					ddqf[i] = ddq3[i];
+
+
+					//刷新总时间
+					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
+					if ((ta1[i] + ta2[i] + ta3[i] + ta4[i])< -minimt)
+					{
+						printf("ta error\n");
+						return 0x002100B00A40003; //总时间计算错误
+					}
+					//刷新各段时间
+					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
+					//刷新各段时间的对应三次方程的系数
+					if ((ta1[i] >minimt) || (ta1[i]>-minimt && ta1[i]<minimt))
+					{
+						coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
+						coeff[i][0][1] = 1 / 2.0 * ddq0[i];
+						coeff[i][0][2] = dq0[i];
+						coeff[i][0][3] = q0[i];
+					}
+					if ((ta2[i]>minimt) || (ta2[i]>-minimt && ta2[i]<minimt))
+					{
+						coeff[i][1][0] = 0;
+						coeff[i][1][1] = 1 / 2.0 * ddq1[i];
+						coeff[i][1][2] = dq1[i];
+						coeff[i][1][3] = q1[i];
+					}
+					if ((ta3[i] >minimt) || (ta3[i]>-minimt && ta3[i]<minimt))
+					{
+						coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
+						coeff[i][2][1] = 1 / 2.0 * ddq2[i];
+						coeff[i][2][2] = dq2[i];
+						coeff[i][2][3] = q2[i];
+					}
+					if ((ta4[i] >minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
+					{
+						coeff[i][3][0] = 0;
+						coeff[i][3][1] = 0;
+						coeff[i][3][2] = dq3[i];
+						coeff[i][3][3] = q3[i];
+					}
+					continue;
+				}
+
+
 				if (((Ti[i]-(old_Ta[i][0]+ old_Ta[i][1]+ old_Ta[i][2]+ old_Ta[i][3]))<minimt) && ((Ti[i] - (old_Ta[i][0] + old_Ta[i][1] + old_Ta[i][2] + old_Ta[i][3]))>-minimt) )
 				{
 
@@ -630,1222 +807,63 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					ddqf[i] = old_ddqf[i];
 					continue;
 				}
-
-				if ((sigma[i] == 1 && dq_avg_new[i] > (dq0[i] + minimq)) || (sigma[i] == -1 && dq_avg_new[i] < (dq0[i] - minimq)))
+				double newq = q0[i]+dq0[i]*Ti[i]+1/2.0*ddq0[i]*pow(Ti[i],2);
+                
+				if ((sigmaq[i] == 1 && newq > qf[i] + minimq) || (sigmaq[i] == -1 && newq < qf[i] - minimq))
 				{
-					//%time adjust
-					//	%首先根据时间Ti的约束 求ta4的合适值
-					//	%下面给出连立方程的二次项各项系数
-
-					a = (12 * pow(Jm[i], 3) * dq_avg[i] * pow(sigma[i], 3) - 12 * pow(Jm[i], 3) * dq0[i] * pow(sigma[i], 3) + 6 * pow(Jm[i], 2) * pow(ddq0[i], 2) * pow(sigma[i], 2));
-					b = (24 * pow(Jm[i], 3) * qf[i] * pow(sigma[i], 3) - 24 * pow(Jm[i], 3) * q0[i] * pow(sigma[i], 3) - 8 * Jm[i] * pow(ddq0[i], 3) * sigma[i] - 24 * pow(Jm[i], 3) * Ti[i] * dq_avg[i] * pow(sigma[i], 3) + 24 * pow(Jm[i], 2) * ddq0[i] * dq0[i] * pow(sigma[i], 2) - 24 * pow(Jm[i], 2) * ddq0[i] * dq_avg[i] * pow(sigma[i], 2));
-					c = 12 * pow(Jm[i], 2) * pow(dq0[i], 2) * pow(sigma[i], 2) - 24 * pow(Jm[i], 2) * dq0[i] * dq_avg[i] * pow(sigma[i], 2) + 12 * pow(Jm[i], 2) * pow(dq_avg[i], 2) * pow(sigma[i], 2) - 12 * Jm[i] * pow(ddq0[i], 2) * dq0[i] * sigma[i] + 12 * Jm[i] * pow(ddq0[i], 2) * dq_avg[i] * sigma[i] + 3 * pow(ddq0[i], 4);
-
-
-					lamda = b*b - 4 * a*c;
-					if (lamda < 0)
-					{
-						if (dq_avg_new[i] - dq0[i] > 0)
-						{
-							sigma[i] = 1; //正转  符号取1
-						}
-						else if (dq_avg_new[i] - dq0[i] < 0)
-						{
-							sigma[i] = -1; //反转 符号取 - 1
-						}
-						else if (dq_avg_new[i] - dq0[i] > -minimq && dq_avg_new[i] - dq0[i] < minimq)
-						{
-							sigma[i] = 1;	//静止 符号取1
-						}
-						a = 1 / 2.0 * (-ddq0[i] - Jm[i] * sigma[i] * Ti[i]);
-						b = pow((ddq0[i] + Jm[i] * sigma[i] * Ti[i]), 2) / (2 * Jm[i] * sigma[i]);
-						c = q0[i] - qf[i] + dq0[i] * Ti[i] - pow(ddq0[i], 3) / (6 * pow(Jm[i], 2) * pow(sigma[i], 2)) - pow(ddq0[i], 2) * Ti[i] / (2 * Jm[i] * sigma[i]);
-						slamda = b*b - 4 * a*c;
-						if (slamda < 0)
-						{
-							// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-							a3 = (3 * pow(Ti[i],3) * pow(sigma[i],3));
-							a2 = (24 * q0[i] *pow(sigma[i],2) - 24 * qf[i] *pow(sigma[i],2) + 9 * pow(Ti[i],2) * ddq0[i] *pow(sigma[i],2) + 24 * Ti[i] *dq0[i] *pow(sigma[i],2));
-							a1 = (-3 * Ti[i] *pow(ddq0[i],2) * sigma[i]);
-							a0 = -pow(ddq0[i],3);
-
-							int snum = 0;
-							getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-							if (snum == 1)
-							{
-								tempt = r[0];
-							}
-							else
-							{
-								double tempt = -99; //获得全部的解
-								for (int j = 0; j < 3; j++)
-								{
-									if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-									{
-										tempt = r[j];
-									}
-								}
-							}
-
-							ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i]*Jm[i]));
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] =0;
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ta3[i] = Ti[i] - ta1[i];
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-
-
-						}
-						else //ta3  lamda大于0
-						{
-							snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-							snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-							if ((snewT[0] > minimt && snewT[1] > minimt))
-							{
-								// 首先取解1 刷新ta3 刷新位置速度加速度
-								if (snewT[0] > snewT[1])
-									ta3[i] = snewT[1];
-								else
-									ta3[i] = snewT[0];
-
-
-								ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-								if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i] - minimq && sigmaq[i] == -1))
-								{
-									printf("q3 error\n");
-									return 0x002100B00A40005; //q3 计算错误
-								}
-							}
-							else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-							{
-								ta3[i] = snewT[0];
-								ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-								if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i] - minimq && sigmaq[i] == -1))
-								{
-									printf("q3 error\n");
-									return 0x002100B00A40005; //q3 计算错误
-								}
-							}
-							else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-							{
-								ta3[i] = snewT[1];
-								ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-								if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-								{
-									printf("q3 error\n");
-									return 0x002100B00A40005; //q3 计算错误
-								}
-
-							}
-						}
-					}
-					else // ta3  lamda大于0
-					{
-						double ld = sqrt(lamda);
-						newT[0] = -b / (2 * a) + ld / (2 * a);
-						newT[1] = -b / (2 * a) - ld / (2 * a);
-
-						if (newT[0]<minimt && newT[0]>-minimt)
-						{
-							newT[0] = 0;
-						}
-						if (newT[1]<minimt && newT[1]>-minimt)
-						{
-							newT[1] = 0;
-						}
-
-						//如果两个时间解都为正 依次进行计算 并判断
-						if (newT[0] > minimt && newT[1] > minimt)
-						{
-							//首先取解1 刷新ta3 刷新位置速度加速度
-							if (newT[0] > newT[1])
-							{
-								ta3[i] = newT[1];
-							}
-							else
-							{
-								ta3[i] = newT[0];
-							}
-
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
-
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							//根据ta3 刷新位置速度加速度
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-							{
-
-								a = ((3 * Jm[i] *sigma[i] *(Ti[i] + ddq0[i] / (Jm[i] *sigma[i]))) / 2.0 - (Jm[i] *sigma[i] *(4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] *sigma[i]))) / 2.0);
-								b = ((Jm[i] *sigma[i] *pow((Ti[i] + ddq0[i] / (Jm[i] *sigma[i])),2)) / 2.0);
-								c = q0[i] + (-pow(ddq0[i],2) / (2 * Jm[i] *sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] *sigma[i])) + pow(ddq0[i],3)/ (3 * pow(Jm[i],2) * pow(sigma[i],2)) - (ddq0[i] *dq0[i]) / (Jm[i] *sigma[i]) - qf[i];
-								slamda = b*b - 4 * a*c;
-								if (slamda <= 0)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta3  lamda大于0
-								{
-									snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-									snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-									if ((snewT[0] > minimt && snewT[1] > minimt))
-									{
-										// 首先取解1 刷新ta3 刷新位置速度加速度
-										if (snewT[0] > snewT[1])
-											ta3[i] = snewT[1];
-										else
-											ta3[i] = snewT[0];
-
-
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i]-minimq && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-									{
-										ta3[i] = snewT[0];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i]-minimq && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3计算错误
-										}
-									}
-									else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-									{
-										ta3[i] = snewT[1];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3计算错误
-										}
-
-									}
-								}
-							}
-							else
-							{
-								//刷新ta4
-								ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-								//如果计算的ta4 为负 表示取得解不合适 换解2 重新计算
-								if (ta4[i] < minimt)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta4大于0存在第四段 刷新位置速度加速度 刷新出参
-								{
-									ddq4[i] = 0;
-									dq4[i] = dq3[i];
-									q4[i] = q3[i] + ta4[i] * dq3[i];
-									tqf[i] = q4[i];
-									dqf[i] = dq4[i];
-									ddqf[i] = ddq4[i];
-
-								}
-							}
-						}
-						else if ((newT[0] > minimt) && (newT[1] < -minimt)) // 解1 为正 解2为负 取解1
-						{
-							ta3[i] = newT[0];
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
-
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							//根据ta3 刷新位置速度加速度
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-							{
-
-								a = ((3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0 - (Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0);
-								b = ((Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
-								c = q0[i] + (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - qf[i];
-								slamda = b*b - 4 * a*c;
-								if (slamda < 0)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta3  lamda大于0
-								{
-									snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-									snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-									if ((snewT[0] > minimt && snewT[1] > minimt))
-									{
-										// 首先取解1 刷新ta3 刷新位置速度加速度
-										if (snewT[0] > snewT[1])
-											ta3[i] = snewT[1];
-										else
-											ta3[i] = snewT[0];
-
-
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i]-minimq && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-									{
-										ta3[i] = snewT[0];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-									{
-										ta3[i] = snewT[1];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-
-									}
-								}
-							}
-							else
-							{
-								//刷新ta4
-								ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-								//如果计算的ta4 为负 表示取得解不合适 换解2 重新计算
-								if (ta4[i] < minimt)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta4大于0存在第四段 刷新位置速度加速度 刷新出参
-								{
-									ddq4[i] = 0;
-									dq4[i] = dq3[i];
-									q4[i] = q3[i] + ta4[i] * dq3[i];
-									tqf[i] = q4[i];
-									dqf[i] = dq4[i];
-									ddqf[i] = ddq4[i];
-
-								}
-							}
-
-						}
-						else if ((newT[1] > minimt) && (newT[0] < -minimt)) // 解2 为正 解1为负 取解2
-						{
-							ta3[i] = newT[1];
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
-
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							//根据ta3 刷新位置速度加速度
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-							{
-
-								a = ((3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0 - (Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0);
-								b = ((Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
-								c = q0[i] + (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - qf[i];
-								slamda = b*b - 4 * a*c;
-								if (slamda < minimq)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta3  lamda大于0
-								{
-									snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-									snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-									if ((snewT[0] > minimt && snewT[1] > minimt))
-									{
-										// 首先取解1 刷新ta3 刷新位置速度加速度
-										if (snewT[0] > snewT[1])
-											ta3[i] = snewT[1];
-										else
-											ta3[i] = snewT[0];
-
-
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i]-minimq && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-									{
-										ta3[i] = snewT[0];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i]-minimq && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-									{
-										ta3[i] = snewT[1];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-
-									}
-								}
-							}
-							else
-							{
-								//刷新ta4
-								ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-								//如果计算的ta4 为负 表示取得解不合适 换解2 重新计算
-								if (ta4[i] < minimt)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta4大于0存在第四段 刷新位置速度加速度 刷新出参
-								{
-									ddq4[i] = 0;
-									dq4[i] = dq3[i];
-									q4[i] = q3[i] + ta4[i] * dq3[i];
-									tqf[i] = q4[i];
-									dqf[i] = dq4[i];
-									ddqf[i] = ddq4[i];
-
-								}
-							}
-						}
-						else
-						{
-							if (dq_avg_new[i] - dq0[i] > 0)
-							{
-								sigma[i] = 1; //正转  符号取1
-							}
-							else if (dq_avg_new[i] - dq0[i] < 0)
-							{
-								sigma[i] = -1; //反转 符号取 - 1
-							}
-							else if (dq_avg_new[i] - dq0[i] > -minimq && dq_avg_new[i] - dq0[i] < minimq)
-							{
-								sigma[i] = 1;	//静止 符号取1
-							}
-							a = 1 / 2.0 * (-ddq0[i] - Jm[i] * sigma[i] * Ti[i]);
-							b = pow((ddq0[i] + Jm[i] * sigma[i] * Ti[i]), 2) / (2 * Jm[i] * sigma[i]);
-							c = q0[i] - qf[i] + dq0[i] * Ti[i] - pow(ddq0[i], 3) / (6 * pow(Jm[i], 2) * pow(sigma[i], 2)) - pow(ddq0[i], 2) * Ti[i] / (2 * Jm[i] * sigma[i]);
-							slamda = b*b - 4 * a*c;
-							if (slamda < 0)
-							{
-								// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-								a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-								a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-								a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-								a0 = -pow(ddq0[i], 3);
-
-								int snum = 0;
-								getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-								if (snum == 1)
-								{
-									tempt = r[0];
-								}
-								else
-								{
-									double tempt = -99; //获得全部的解
-									for (int j = 0; j < 3; j++)
-									{
-										if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-										{
-											tempt = r[j];
-										}
-									}
-								}
-
-								ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = 0;
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ta3[i] = Ti[i] - ta1[i];
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-							}
-							else //ta3  lamda大于0
-							{
-								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-								if ((snewT[0] > minimt && snewT[1] > minimt))
-								{
-									// 首先取解1 刷新ta3 刷新位置速度加速度
-									if (snewT[0] > snewT[1])
-										ta3[i] = snewT[1];
-									else
-										ta3[i] = snewT[0];
-
-
-									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = Ti[i] - ta1[i] - ta3[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-									if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i] - minimq && sigmaq[i] == -1))
-									{
-										printf("q3 error\n");
-										return 0x002100B00A40005; //q3 计算错误
-									}
-								}
-								else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-								{
-									ta3[i] = snewT[0];
-									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = Ti[i] - ta1[i] - ta3[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-									if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i] - minimq && sigmaq[i] == -1))
-									{
-										printf("q3 error\n");
-										return 0x002100B00A40005; //q3 计算错误
-									}
-								}
-								else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-								{
-									ta3[i] = snewT[1];
-									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = Ti[i] - ta1[i] - ta3[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-									if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-									{
-										printf("q3 error\n");
-										return 0x002100B00A40005; //q3 计算错误
-									}
-
-								}
-							}
-						}
-					}
+					if(sigmaq[i]*sigma[i]==1)
+						sigma[i] = sigma[i] * -1;
+				}
+
+				// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
+				a3 = (Jm[i]*sigma[i])/6;
+				a2 =  -(Jm[i]*sigma[i]*Ti[i])/2;
+				a1 = (Jm[i]*sigma[i]*pow(Ti[i],2))/2;
+				a0 =(q0[i] - qf[i]+ dq0[i]*Ti[i]+ (ddq0[i]*pow(Ti[i],2))/2) ;
+
+				int snum = 0;
+				getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
+				double tempt = 99; //获得全部的解
+				if (snum == 1)
+				{
+					tempt = r[0];
 				}
 				else
 				{
-					if (dq_avg_new[i] - dq0[i] > 0)
+					
+					for (int j = 0; j < 3; j++)
 					{
-						sigma[i] = 1; //正转  符号取1
-					}
-					else if (dq_avg_new[i] - dq0[i] <0)
-					{
-						sigma[i] = -1; //反转 符号取 - 1
-					}
-					else if (dq_avg_new[i] - dq0[i] >0 && dq_avg_new[i] - dq0[i] < 0)
-					{
-						sigma[i] = 1;	//静止 符号取1
-					}
-					a = 1 / 2.0 * (-ddq0[i] - Jm[i] * sigma[i] * Ti[i]);
-					b = pow((ddq0[i] + Jm[i] * sigma[i] * Ti[i]), 2) / (2 * Jm[i] * sigma[i]);
-					c = q0[i] - qf[i] + dq0[i] * Ti[i] - pow(ddq0[i], 3) / (6 * pow(Jm[i], 2) * pow(sigma[i], 2)) - pow(ddq0[i], 2) * Ti[i] / (2 * Jm[i] * sigma[i]);
-					slamda = b*b - 4 * a*c;
-					if (slamda <0)
-					{
-						// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-						a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-						a2 = (24 * q0[i] * pow(sigma[i], 2) - 24 * qf[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-						a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-						a0 = -pow(ddq0[i], 3);
-
-						int snum = 0;
-						getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-						if (snum == 1)
+						if (r[j]<tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
 						{
-							tempt = r[0];
-						}
-						else
-						{
-							double tempt = -99; //获得全部的解
-							for (int j = 0; j < 3; j++)
-							{
-								if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-								{
-									tempt = r[j];
-								}
-							}
-						}
-
-						ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-						ta2[i] = 0;
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						ta3[i] = Ti[i] - ta1[i];
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						ta4[i] = 0;
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
-					}
-					else //ta3  lamda大于0
-					{
-						snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-						snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-						if ((snewT[0] > minimt && snewT[1] > minimt))
-						{
-							// 首先取解1 刷新ta3 刷新位置速度加速度
-							if (snewT[0] > snewT[1])
-								ta3[i] = snewT[1];
-							else
-								ta3[i] = snewT[0];
-
-
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-							if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i] - minimq && sigmaq[i] == -1))
-							{
-								printf("q3 error\n");
-								return 0x002100B00A40005; //q3 计算错误
-							}
-						}
-						else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-						{
-							ta3[i] = snewT[0];
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-							if ((q3[i] > qf[i] + minimq && sigmaq[i] == 1) || (q3[i] < qf[i] - minimq && sigmaq[i] == -1))
-							{
-								printf("q3 error\n");
-								return 0x002100B00A40005; //q3 计算错误
-							}
-						}
-						else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-						{
-							ta3[i] = snewT[1];
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-							if ((q3[i] > (qf[i] + minimq) && sigmaq[i] == 1) || (q3[i] < (qf[i] - minimq) && sigmaq[i] == -1))
-							{
-								printf("q3 error\n");
-								return 0x002100B00A40005; //q3 计算错误
-							}
-
+							tempt = r[j];
 						}
 					}
 				}
+
+				ta1[i] = tempt;
+				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+				q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+				ta2[i] = Ti[i]-ta1[i];
+				ddq2[i] = ddq1[i];
+				dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+				q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+				ta3[i] =0;
+				ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+				dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+				q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+				ta4[i] = 0;
+				tqf[i] = q3[i];
+				dqf[i] = dq3[i];
+				ddqf[i] = ddq3[i];
+
+				
 				//刷新总时间
 				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
-				if ((ta1[i] + ta2[i] + ta3[i] + ta4[i])< minimt)
+				if ((ta1[i] + ta2[i] + ta3[i] + ta4[i])< -minimt)
 				{
 					printf("ta error\n");
 					return 0x002100B00A40003; //总时间计算错误
@@ -1860,7 +878,7 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					coeff[i][0][2] = dq0[i];
 					coeff[i][0][3] = q0[i];
 				}
-				if ((ta2[i] >minimt) || (ta2[i]>-minimt && ta2[i]<minimt))
+				if ((ta2[i]>minimt) || (ta2[i]>-minimt && ta2[i]<minimt))
 				{
 					coeff[i][1][0] = 0;
 					coeff[i][1][1] = 1 / 2.0 * ddq1[i];
@@ -1874,7 +892,7 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					coeff[i][2][2] = dq2[i];
 					coeff[i][2][3] = q2[i];
 				}
-				if((ta4[i] >minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
+				if ((ta4[i] >minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
 				{
 					coeff[i][3][0] = 0;
 					coeff[i][3][1] = 0;
@@ -1884,15 +902,18 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 			}
 			else if (sigmaq[i] == 0)
 			{
-				ta1[i] = 0; ta2[i] = 0; ta3[i] = 0; ta4[i] =Ti[i];
+				ta1[i] = 0; ta2[i] = 0; ta3[i] = 0; ta4[i] = Ti[i];
+
 				sigma[i] = 0;
 				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
 				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
 				q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
 
+
 				ddq2[i] = ddq1[i];
 				dq2[i] = dq1[i] + ddq1[i] * ta2[i];
 				q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
 
 				ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
 				dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
@@ -1901,6 +922,7 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 				ddq4[i] = 0;
 				dq4[i] = dq3[i];
 				q4[i] = q3[i] + ta4[i] * dq3[i];
+
 				tqf[i] = q4[i];
 				dqf[i] = dq4[i];
 				ddqf[i] = ddq4[i];
@@ -1957,188 +979,135 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 		for (int i = 0; i < dofn; i++)
 		{
 			//根据关节的运动方向 判断Jerk的符号变量
-			if (qf[i] - q0[i] > 0)
+			if (qf[i] - q0[i] > minimq)
 			{
 				sigmaq[i] = 1; //正转  符号取1
 			}
-			else if (qf[i] - q0[i] < 0)
+			else if (qf[i] - q0[i] < -minimq)
 			{
 				sigmaq[i] = -1; //反转 符号取 - 1
 			}
 			else if ((qf[i] - q0[i] < minimq) && (qf[i] - q0[i]>-minimq))
 			{
-				sigmaq[i] = 0;	//静止 符号取1
+				sigmaq[i] = 0;	//静止 符号取0
 			}
 
-			if (maxdq[i] - dq0[i] > 0)
+			if (dq0[i] - maxdq[i] > minimq)
 			{
-				sigma[i] = 1; //正转  符号取1
+				sigma[i] = -1; //减速 符号取 - 1
 			}
-			else if (maxdq[i] - dq0[i] < 0)
+			else if (dq0[i] - maxdq[i]   < -minimq)
 			{
-				sigma[i] = -1; //反转 符号取 - 1
+				sigma[i] = 1; //加速  符号取1
 			}
-			else if ((maxdq[i] - dq0[i] < minimq) && (maxdq[i] - dq0[i]>-minimq) && (sigmaq[i] == 1))
+			else if ((maxdq[i] - dq0[i] < minimq) && (maxdq[i] - dq0[i]>-minimq))
 			{
-				sigma[i] = 1;	//静止 符号取1
+				sigma[i] = 0;	//匀速 符号取0
 			}
-			else if ((maxdq[i] - dq0[i] < minimq) && (maxdq[i] - dq0[i]>-minimq) && (sigmaq[i] == -1))
-			{
-				sigma[i] = -1;	//静止 符号取1
-			}
+			
 			if (sigmaq[i] != 0 && (Ti[i] >1-minimt && Ti[i]<1+minimt)) // 关节存在运动 且只需计算各轴同步运动时间 进入下面计算
 			{
-				if (sigma[i] ==- 1)
-					ddq_max[i] = maxddq[i];	//加速度赋值
-				else if (sigma[i] == 1)
-					ddq_max[i] = minddq[i];
-				else
-					ddq_max[i] = 0;
-
-				dq_avg[i] = maxdq[i]; //平均速度赋值
-
-									  //time adjust
-				dq3[i] = dq0[i] + (2 * pow(ddq_max[i], 2) - pow(ddq0[i], 2)) / (2 * sigma[i] * Jm[i]);
-
-				if ((dq_avg[i] > (dq3[i]+minimq) && sigma[i] == 1) || (dq_avg[i] < (dq3[i]-minimq) && sigma[i] == -1) || ((dq_avg[i] - dq3[i]) < minimq && (dq_avg[i] - dq3[i]) > -minimq))
+				if (sigma[i] == -1)
 				{
-					//求ta2
-					ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
-					ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-					dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-					q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-					ta2[i] = (dq_avg[i] - dq0[i] - (2 * pow(ddq_max[i], 2) - pow(ddq0[i], 2)) / (2 * sigma[i] * Jm[i])) / ddq_max[i];
-
-					ddq2[i] = ddq1[i];
-					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-					q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-					ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-					ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-					dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-					q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-					if ((q0[i] < (q3[i]-minimq) && sigmaq[i] == 1) || (q0[i] >(q3[i]+minimq) && sigmaq[i] == -1))
-					{
-						//速度和加速度都能满足 存在ta4
-						ta4[i] = (q0[i] - q3[i]) / dq3[i];
-						ddq4[i] = 0;
-						dq4[i] = dq3[i];
-						q4[i] = q3[i] + ta4[i] * dq3[i];
-
-						tqf[i] = q4[i];
-						dqf[i] = dq4[i];
-						ddqf[i] = ddq4[i];
-					}
-					else if ((q0[i] - q3[i]) < minimq && (q0[i] - q3[i]) > -minimq)
-					{
-						//速度加速度都能满足  但没有ta4
-						ta4[i] = 0;
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
-					}
-					else
-					{
-						// 达不到最大速度 但能达到最大加速度
-						a = (ddq0[i] / 2.0 + (Jm[i] * sigma[i] * ta1[i]) / 2.0);
-						b = (dq0[i] + ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * ta1[i]) + ddq0[i] * ta1[i] + (Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2.0);
-						c = qf[i] - q0[i] + dq0[i] * ta1[i] + (ddq0[i] * pow(ta1[i], 2)) / 2.0 + ta3[i] * ((Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2.0 + ddq0[i] * ta1[i] + dq0[i]) + pow(ta3[i], 2) * (ddq0[i] / 2.0 + (Jm[i] * sigma[i] * ta1[i]) / 2.0) + (Jm[i] * sigma[i] * pow(ta1[i], 3)) / 6.0 - (Jm[i] * sigma[i] * pow(ta3[i], 3)) / 6.0;
-						lamda = b*b - 4 * a*c;
-						if (lamda <0)
-						{
-							printf("signification erreur\n"); //二次项系数有误 表示给定的路径插值时间太短 至少小于900纳秒 报错
-							return 0x002100B00A40002; //二次项求根系数错误
-						}
-
-
-						newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //求出的二次项根1
-						newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //求出的二次项根2
-
-						if ((newT[0] <- minimt && newT[1]<- minimt)) // 求出两个正根 取短的时间代入计算
-						{
-							if (newT[0] > newT[1]) // ta2取时间较小的值
-								ta2[i] = newT[0];
-							else
-								ta2[i] = newT[1];
-						}
-						else if ((newT[0] > minimt && newT[1] < -minimt)) // 取正的时间值
-						{
-							ta2[i] = newT[1];
-						}
-						else if ((newT[1] > minimt && newT[0] < -minimt)) // 取正的时间值
-						{
-							ta2[i] = newT[0];
-						}
-						//重新计算ta2后 更新加速度 速度和位置
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						ta4[i] = 0;
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
-					}
+					ddq_max[i] = maxddq[i];	//加速度赋值
+				}
+				else if (sigma[i] == 1)
+				{
+					ddq_max[i] = minddq[i];
 				}
 				else
 				{
-					//没有ta2 需重算最大加速度  可能存在ta4
-					double deltadq = 0;
-					if (((dq_avg[i] - dq0[i]) < 0 && (dq_avg[i] - dq0[i]) > 0))
-						deltadq = 0;
-					else
-						deltadq = dq_avg[i] - dq0[i];
-
-					if(sigma[i]==1)
-						ddq_max[i] = -sqrt((2 * deltadq*sigma[i] * Jm[i] + pow(ddq0[i], 2)) / 2.0);
-					else if (sigma[i]==-1)
-						ddq_max[i] = sqrt((2 * deltadq*sigma[i] * Jm[i] + pow(ddq0[i], 2)) / 2.0);
-					ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+					ta1[i] = 0;
 					ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
 					dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
 					q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-
+					
 					ta2[i] = 0;
 					ddq2[i] = ddq1[i];
 					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
 					q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
-					ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+					ta3[i] = 0;
 					ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
 					dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
 					q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
 
-					if ((qf[i] - q0[i] > -minimq) && (qf[i] - q0[i] < minimq))
-						ta4[i] = 0;
-					else
-						ta4[i] = (q0[i] - (qf[i] + dq0[i] * ta1[i] + (ddq0[i] * pow(ta1[i], 2)) / 2.0 + ta3[i] * ((Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2.0 + ddq0[i] * ta1[i] + dq0[i]) + pow(ta3[i], 2) * (ddq0[i] / 2.0 + (Jm[i] * sigma[i] * ta1[i]) / 2.0) + (Jm[i] * sigma[i] * pow(ta1[i], 3)) / 6.0 - (Jm[i] * sigma[i] * pow(ta3[i], 3)) / 6.0)) / ((dq0[i] + ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * ta1[i]) + ddq0[i] * ta1[i] + (Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2.0 - (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0));
+					ta4[i] = (q0[i]-qf[i])/dq3[i];
+					ddq4[i] = 0;
+					dq4[i] = dq3[i];
+					q4[i] = q3[i] + ta4[i] * dq3[i];
 
-					if (ta4[i] > minimt)
+					tqf[i] = q4[i];
+					dqf[i] = dq4[i];
+					ddqf[i] = ddq4[i];
+
+					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
+					//计算总时间
+					//各段时间赋值
+					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
+					if ((ta1[i] + ta2[i] + ta3[i] + ta4[i]) > minimt)
 					{
+						printf("ta error\n");
+						return 0x002100B00A40003; //总时间计算错误
+					}
+					//各段系数赋值
+					if ((ta1[i] <-minimt) || (ta1[i]>-minimt && ta1[i]<minimt))
+					{
+						coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
+						coeff[i][0][1] = 1 / 2.0 * ddq0[i];
+						coeff[i][0][2] = dq0[i];
+						coeff[i][0][3] = qf[i];
+					}
+
+					if ((ta2[i] <-minimt) || (ta2[i]>-minimt && ta2[i]<minimt))
+					{
+						coeff[i][1][0] = 0;
+						coeff[i][1][1] = 1 / 2.0 * ddq1[i];
+						coeff[i][1][2] = dq1[i];
+						coeff[i][1][3] = q1[i];
+					}
+					if ((ta3[i] <-minimt) || (ta3[i]>-minimt && ta3[i]<minimt))
+					{
+						coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
+						coeff[i][2][1] = 1 / 2.0 * ddq2[i];
+						coeff[i][2][2] = dq2[i];
+						coeff[i][2][3] = q2[i];
+					}
+					if ((ta4[i] <-minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
+					{
+						coeff[i][3][0] = 0;
+						coeff[i][3][1] = 0;
+						coeff[i][3][2] = dq3[i];
+						coeff[i][3][3] = q3[i];
+					}
+					continue;
+				}
+				dq_avg[i] = maxdq[i]; //平均速度赋值
+
+									  //time adjust
+				ta1[i] = (   ddq_max[i]  - ddq0[i]) / (sigma[i] * Jm[i]);
+				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+				q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+				if ((q1[i] < (q0[i]-minimq) && sigmaq[i] == 1) || (q1[i] > (q0[i]+minimq) && sigmaq[i] == -1))
+				{
 						// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-						a3 = sigma[i] * Jm[i]; //a
-						a2 = 0; //b
-						a1 = (-pow(ddq0[i], 2) / (Jm[i] * sigma[i]) + 2 * dq0[i]); //c
-						a0 = qf[i] + pow(ddq0[i],3) / (3 * pow(Jm[i],2) * pow(sigma[i],2)) - (ddq0[i]*dq0[i]) / (Jm[i]*sigma[i]) - q0[i]; //d
+						a3 = 1/6.0*sigma[i] * Jm[i]; //a
+						a2 = 1/2.0*ddq0[i]; //b
+						a1 = dq0[i]; //c
+						a0 = qf[i] - q0[i]; //d
 
 						int snum = 0;
 						getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
+						double tempt = -99; //获得全部的解
 						if (snum == 1)
 						{
 							tempt = r[0];
 						}
 						else
 						{
-							double tempt = -99; //获得全部的解
+							
 							for (int j = 0; j < 3; j++)
 							{
 								if (r[j]>tempt && r[j]<-minimt) //根据要求去掉负时间，取最小时间
@@ -2147,12 +1116,42 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 								}
 							}
 						}
-						ta3[i] = tempt;
-						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
+						ta1[i] = tempt;
 						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
 						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+						q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
 
+
+						ta2[i] = 0;
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+						ta3[i] = 0;
+						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+						ta4[i] = 0;
+						ddq4[i] = 0;
+						dq4[i] = dq3[i];
+						q4[i] = q3[i] + ta4[i] * dq3[i];
+
+						tqf[i] = q4[i];
+						dqf[i] = dq4[i];
+						ddqf[i] = ddq4[i];
+				}
+				else
+				{
+					ta2[i] = (dq_avg[i] - dq0[i] - (2 * pow(ddq_max[i], 2) - pow(ddq0[i], 2)) / (2 * sigma[i] * Jm[i])) / ddq_max[i];
+
+					if (ta2[i] > minimt)
+					{
+						ta3[i] = -sqrt((dq_avg[i] *(2 * Jm[i] *sigma[i]) + ddq0[i]*ddq0[i] - 2 * dq0[i] *Jm[i] *sigma[i]) / (2 * Jm[i]*Jm[i] * sigma[i]*sigma[i]));
+						ta1[i] = ta3[i] - ddq0[i] / (sigma[i] *Jm[i]);
+						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+						q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
 
 						ta2[i] = 0;
 						ddq2[i] = ddq1[i];
@@ -2163,7 +1162,7 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
 						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
 
-						ta4[i] = 0;
+						ta4[i] = (q0[i] - q3[i]) / dq3[i];
 						ddq4[i] = 0;
 						dq4[i] = dq3[i];
 						q4[i] = q3[i] + ta4[i] * dq3[i];
@@ -2174,13 +1173,125 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					}
 					else
 					{
-						ddq4[i] = 0;
-						dq4[i] = dq3[i];
-						q4[i] = q3[i] + ta4[i] * dq3[i];
+						ddq2[i] = ddq1[i];
+						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
-						tqf[i] = q4[i];
-						dqf[i] = dq4[i];
-						ddqf[i] = ddq4[i];
+						if ((q2[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q2[i] > (q0[i] + minimq) && sigmaq[i] == -1))
+						{
+							a = (ddq0[i] / 2.0 + (Jm[i] * sigma[i] * ta1[i]) / 2.0);
+							b = ((Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2 + ddq0[i] * ta1[i] + dq0[i]);
+							c = (Jm[i] * sigma[i] * pow(ta1[i], 3)) / 6 + (ddq0[i] * pow(ta1[i], 2)) / 2 + dq0[i] * ta1[i] + qf[i] - q0[i];
+							lamda = b*b - 4 * a*c;
+							if (lamda < -minimt)
+							{
+								printf("signification erreur\n"); //二次项系数有误 表示给定的路径插值时间太短 至少小于900纳秒 报错
+								return 0x002100B00A40002; //二次项求根系数错误
+							}
+
+
+							newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //求出的二次项根1
+							newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //求出的二次项根2
+
+							if ((newT[0] < -minimt && newT[1] < -minimt)) // 求出两个正根 取短的时间代入计算
+							{
+								if (newT[0] > newT[1]) // ta2取时间较小的值
+									ta2[i] = newT[0];
+								else
+									ta2[i] = newT[1];
+							}
+							else if ((newT[0] > minimt && newT[1] < -minimt)) // 取正的时间值
+							{
+								ta2[i] = newT[1];
+							}
+							else if ((newT[1] > minimt && newT[0] < -minimt)) // 取正的时间值
+							{
+								ta2[i] = newT[0];
+							}
+							//重新计算ta2后 更新加速度 速度和位置
+							ddq2[i] = ddq1[i];
+							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							ta4[i] = 0;
+							tqf[i] = q3[i];
+							dqf[i] = dq3[i];
+							ddqf[i] = ddq3[i];
+
+						}
+						else
+						{
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
+							{
+								//a3 = -1 / 6.0*sigma[i] * Jm[i]; //a
+								//a2 = (ddq0[i] / 2 + (Jm[i] * sigma[i] * ta1[i]) / 2); //b
+								//a1 = (dq0[i] + ta2[i] * (ddq0[i] + Jm[i] * sigma[i] * ta1[i]) + ddq0[i] * ta1[i] + (Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2); //c
+								//a0 = qf[i] - q0[i] + dq0[i] * ta1[i] + (ddq0[i] * pow(ta1[i], 2)) / 2 + ta2[i] * ((Jm[i] * sigma[i] * pow(ta1[i], 2)) / 2 + ddq0[i] * ta1[i] + dq0[i]) + pow(ta2[i], 2)*(ddq0[i] / 2 + (Jm[i] * sigma[i] * ta1[i]) / 2) + (Jm[i] * sigma[i] * pow(ta1[i], 3)) / 6; //d
+								a3 = -1 / 6.0*sigma[i] * Jm[i];
+								a2 = 1/2.0*ddq2[i];
+								a1 = dq2[i];
+								a0 = q2[i] - q0[i];
+
+
+								int snum = 0;
+								getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
+								double tempt = -99; //获得全部的解
+								if (snum == 1)
+								{
+									tempt = r[0];
+								}
+								else
+								{
+									
+									for (int j = 0; j < 3; j++)
+									{
+										if (r[j] > tempt && r[j] < -minimt) //根据要求去掉负时间，取最小时间
+										{
+											tempt = r[j];
+										}
+									}
+								}
+								ta3[i] = tempt;
+
+								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+								ta4[i] = 0;
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+
+							}
+							else
+							{
+								ta4[i] = (q0[i] - q3[i]) / dq3[i];
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
+
+							}
+
+						}
 					}
 				}
 
@@ -2224,16 +1335,102 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					coeff[i][3][3] = q3[i];
 				}
 			}
-			else if (sigmaq[i] != 0 && Ti[i] < -minimt)// 这一段是根据多轴时间同步后 计算各段的时间系数和多项式系数 并返回结束的位置速度 加速度
+			else if (sigmaq[i] != 0 && Ti[i] <-minimt)// 这一段是根据多轴时间同步后 计算各段的时间系数和多项式系数 并返回结束的位置速度 加速度
 			{
-				if (sigma[i] == -1)
-					ddq_max[i] = maxddq[i];	//加速度赋值
-				else if (sigma[i] == 1)
-					ddq_max[i] = minddq[i];
-				else
-					ddq_max[i] = 0;
+				if (sigma[i] == 1)
+					ddq_max[i] = minddq[i];	//加速度赋值
+				else if (sigma[i] == -1)
+					ddq_max[i] = maxddq[i];
+
 				dq_avg[i] = maxdq[i]; //平均速度赋值
-				dq_avg_new[i] = (q0[i]-qf[i]) / Ti[i];
+				dq_avg_new[i] = (qf[i]-q0[i]) /fabs( Ti[i]);
+				if (sigmaq[i] == 1)
+				{
+					if (((dq0[i] - dq_avg_new[i] > minimq)) || ((dq0[i] - dq_avg_new[i] < -minimq) && (ddq0[i] < -minimq)))
+					{
+						sigma[i] = -1; //正转  符号取1
+					}
+					else if (((dq0[i] - dq_avg_new[i] < -minimq)) || ((dq0[i] - dq_avg_new[i] > minimq) && (ddq0[i] > minimq)))
+					{
+						sigma[i] = 1; //反转 符号取 - 1
+					}
+				}
+				if (sigmaq[i] == -1)
+				{
+					if (((dq0[i] - dq_avg_new[i] <-minimq)) || ((dq0[i] - dq_avg_new[i] >minimq) && (ddq0[i] < -minimq)))
+					{
+						sigma[i] = 1; //正转  符号取1
+					}
+					else if (((dq0[i] - dq_avg_new[i] >minimq)) || ((dq0[i] - dq_avg_new[i] <-minimq) && (ddq0[i] > minimq)))
+					{
+						sigma[i] = -1; //反转 符号取 - 1
+					}
+				}
+
+				if ((dq0[i] - dq_avg_new[i] < minimq) && (dq0[i] - dq_avg_new[i]>-minimq))
+				{
+					sigma[i] = 0;	//匀速 符号取0
+					ta1[i] = 0;
+					ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+					dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+					q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+					ta2[i] = 0;
+					ddq2[i] = ddq1[i];
+					dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+					q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+					ta3[i] = 0;
+					ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+					dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+					q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+					ta4[i] = (q0[i] - qf[i]) / dq3[i];
+					tqf[i] = q3[i];
+					dqf[i] = dq3[i];
+					ddqf[i] = ddq3[i];
+
+					//刷新总时间
+					tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
+					//刷新各段时间
+					Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
+
+					if ((ta1[i] + ta2[i] + ta3[i] + ta4[i]) > minimt)
+					{
+						printf("ta error\n");
+						return 0x002100B00A40003; //总时间计算错误
+					}
+					//刷新各段时间的对应三次方程的系数
+					if ((ta1[i] <-minimt) || (ta1[i]>-minimt && ta1[i]<minimt))
+					{
+						coeff[i][0][0] = 1 / 6.0 * sigma[i] * Jm[i];
+						coeff[i][0][1] = 1 / 2.0 * ddq0[i];
+						coeff[i][0][2] = dq0[i];
+						coeff[i][0][3] = qf[i];
+					}
+					if ((ta2[i] <-minimt) || (ta2[i]>-minimt && ta2[i]<minimt))
+					{
+						coeff[i][1][0] = 0;
+						coeff[i][1][1] = 1 / 2.0 * ddq1[i];
+						coeff[i][1][2] = dq1[i];
+						coeff[i][1][3] = q1[i];
+					}
+					if ((ta3[i] <-minimt) || (ta3[i]>-minimt && ta3[i]<minimt))
+					{
+						coeff[i][2][0] = -1 / 6.0 * sigma[i] * Jm[i];
+						coeff[i][2][1] = 1 / 2.0 * ddq2[i];
+						coeff[i][2][2] = dq2[i];
+						coeff[i][2][3] = q2[i];
+					}
+					if ((ta4[i] <-minimt) || (ta4[i]>-minimt && ta4[i]<minimt))
+					{
+						coeff[i][3][0] = 0;
+						coeff[i][3][1] = 0;
+						coeff[i][3][2] = dq3[i];
+						coeff[i][3][3] = q3[i];
+					}
+					continue;
+				}
 				if (((Ti[i] - (old_Ta[i][0] + old_Ta[i][1] + old_Ta[i][2] + old_Ta[i][3]))<minimt) && ((Ti[i] - (old_Ta[i][0] + old_Ta[i][1] + old_Ta[i][2] + old_Ta[i][3]))>-minimt))
 				{
 
@@ -2264,1211 +1461,71 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					continue;
 				}
 
-				if (((sigma[i] == 1 && dq_avg_new[i] > dq0[i] + minimq) || (sigma[i] == -1 && dq_avg_new[i] < dq0[i] - minimq)))
+				double newq = qf[i]+dq0[i]*Ti[i]+1/2.0*ddq0[i]*pow(Ti[i],2);
+				if ((sigmaq[i] == 1 && newq < q0[i] -minimq) || (sigmaq[i] == -1 && newq > q0[i] + minimq))
 				{
-					//	%首先根据时间Ti的约束 求ta4的合适值
-				//	%下面给出连立方程的二次项各项系数
-
-					a = (12 * pow(Jm[i], 3) * dq_avg[i] * pow(sigma[i], 3) - 12 * pow(Jm[i], 3) * dq0[i] * pow(sigma[i], 3) + 6 * pow(Jm[i], 2) * pow(ddq0[i], 2) * pow(sigma[i], 2));
-					b = (24 * pow(Jm[i], 3) * q0[i] * pow(sigma[i], 3) - 24 * pow(Jm[i], 3) * qf[i] * pow(sigma[i], 3) - 8 * Jm[i] * pow(ddq0[i], 3) * sigma[i] - 24 * pow(Jm[i], 3) * Ti[i] * dq_avg[i] * pow(sigma[i], 3) + 24 * pow(Jm[i], 2) * ddq0[i] * dq0[i] * pow(sigma[i], 2) - 24 * pow(Jm[i], 2) * ddq0[i] * dq_avg[i] * pow(sigma[i], 2));
-					c = 12 * pow(Jm[i], 2) * pow(dq0[i], 2) * pow(sigma[i], 2) - 24 * pow(Jm[i], 2) * dq0[i] * dq_avg[i] * pow(sigma[i], 2) + 12 * pow(Jm[i], 2) * pow(dq_avg[i], 2) * pow(sigma[i], 2) - 12 * Jm[i] * pow(ddq0[i], 2) * dq0[i] * sigma[i] + 12 * Jm[i] * pow(ddq0[i], 2) * dq_avg[i] * sigma[i] + 3 * pow(ddq0[i], 4);
-					lamda = b*b - 4 * a*c;
-					if (lamda < 0)
-					{
-						if (dq_avg_new[i] - dq0[i] > 0)
-						{
-							sigma[i] = 1; //正转  符号取1
-						}
-						else if (dq_avg_new[i] - dq0[i] <0)
-						{
-							sigma[i] = -1; //反转 符号取 - 1
-						}
-						else if (dq_avg_new[i] - dq0[i] > -minimq && dq_avg_new[i] - dq0[i] < minimq)
-						{
-							sigma[i] = 1;	//静止 符号取1
-						}
-						a = ((3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0 - (Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0);
-						b = ((Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
-						c = qf[i] + (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - q0[i];                            					slamda = b*b - 4 * a*c;
-
-						slamda = b*b - 4 * a*c;
-						if (slamda < 0)
-						{
-							// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-							a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-							a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-							a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-							a0 = -pow(ddq0[i], 3);
-
-							int snum = 0;
-							getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-							if (snum == 1)
-							{
-								tempt = r[0];
-							}
-							else
-							{
-								double tempt = -99; //获得全部的解
-								for (int j = 0; j < 3; j++)
-								{
-									if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-									{
-										tempt = r[j];
-									}
-								}
-							}
-
-							ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] = 0;
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ta3[i] = Ti[i] - ta1[i];
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-						}
-						else //ta3  lamda大于0
-						{
-							snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-							snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-							if ((snewT[0] < -minimt && snewT[1] < -minimt))
-							{
-								// 首先取解1 刷新ta3 刷新位置速度加速度
-								if (snewT[0] > snewT[1])
-									ta3[i] = snewT[0];
-								else
-									ta3[i] = snewT[1];
-
-
-								ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-								if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-								{
-									printf("q3 error\n");
-									return 0x002100B00A40005; //q3 计算错误
-								}
-							}
-							else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-							{
-								ta3[i] = snewT[1];
-								ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-								if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-								{
-									printf("q3 error\n");
-									return 0x002100B00A40005; //q3 计算错误
-								}
-							}
-							else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-							{
-								ta3[i] = snewT[0];
-								ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = Ti[i] - ta1[i] - ta3[i];
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-								if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-								{
-									printf("q3 error\n");
-									return 0x002100B00A40005; //q3 计算错误
-								}
-
-							}
-						}
-					}
-					else // ta3  lamda大于0
-					{
-						newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a);
-						newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a);
-
-						//如果两个时间解都为正 依次进行计算 并判断
-						if (newT[0] < -minimt && newT[1] < -minimt)
-						{
-							//首先取解1 刷新ta3 刷新位置速度加速度
-							if (newT[0] > newT[1])
-							{
-								ta3[i] = newT[0];
-							}
-							else
-							{
-								ta3[i] = newT[1];
-							}
-
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
-
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							//根据ta3 刷新位置速度加速度
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-							{
-
-								a = ((3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0 - (Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0);
-								b = ((Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
-								c = qf[i] + (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - q0[i];                            					slamda = b*b - 4 * a*c;
-
-								slamda = b*b - 4 * a*c;
-								if (slamda < 0)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta3  lamda大于0
-								{
-									snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-									snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-									if ((snewT[0] < -minimt && snewT[1] < -minimt))
-									{
-										// 首先取解1 刷新ta3 刷新位置速度加速度
-										if (snewT[0] > snewT[1])
-											ta3[i] = snewT[0];
-										else
-											ta3[i] = snewT[1];
-
-
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-									{
-										ta3[i] = snewT[1];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-									{
-										ta3[i] = snewT[0];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-
-									}
-								}
-							}
-							else
-							{
-								//刷新ta4
-								ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-								//如果计算的ta4 为负 表示取得解不合适 换解2 重新计算
-								if (ta4[i] >minimt)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta4大于0存在第四段 刷新位置速度加速度 刷新出参
-								{
-									ddq4[i] = 0;
-									dq4[i] = dq3[i];
-									q4[i] = q3[i] + ta4[i] * dq3[i];
-									tqf[i] = q4[i];
-									dqf[i] = dq4[i];
-									ddqf[i] = ddq4[i];
-
-								}
-							}
-						}
-						else if ((newT[0] > minimt) && (newT[1] < -minimt)) // 解1 为正 解2为负 取解1
-						{
-							ta3[i] = newT[0];
-
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
-
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							//根据ta3 刷新位置速度加速度
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-							{
-
-								a = ((3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0 - (Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0);
-								b = ((Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
-								c = qf[i] + (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - q0[i];                            					slamda = b*b - 4 * a*c;
-
-								slamda = b*b - 4 * a*c;
-								if (slamda <minimq)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta3  lamda大于0
-								{
-									snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-									snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-									if ((snewT[0] < -minimt && snewT[1] < -minimt))
-									{
-										// 首先取解1 刷新ta3 刷新位置速度加速度
-										if (snewT[0] > snewT[1])
-											ta3[i] = snewT[0];
-										else
-											ta3[i] = snewT[1];
-
-
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-									{
-										ta3[i] = snewT[1];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-									{
-										ta3[i] = snewT[0];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-
-									}
-								}
-							}
-							else
-							{
-								//刷新ta4
-								ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-								//如果计算的ta4 为负 表示取得解不合适 换解2 重新计算
-								if (ta4[i] > minimt)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta4大于0存在第四段 刷新位置速度加速度 刷新出参
-								{
-									ddq4[i] = 0;
-									dq4[i] = dq3[i];
-									q4[i] = q3[i] + ta4[i] * dq3[i];
-									tqf[i] = q4[i];
-									dqf[i] = dq4[i];
-									ddqf[i] = ddq4[i];
-
-								}
-							}
-						}
-						else if ((newT[1] > minimt) && (newT[0] < -minimt)) // 解2 为正 解1为负 取解2
-						{
-							ta3[i] = newT[1];
-
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ta2[i] = (dq_avg[i] - dq0[i] - ta3[i] * (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i]))) - ddq0[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])) - (Jm[i] * sigma[i] * pow((ta3[i] - ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0 + (Jm[i] * sigma[i] * pow(ta3[i], 2)) / 2.0) / (ddq0[i] + Jm[i] * sigma[i] * (ta3[i] - ddq0[i] / (Jm[i] * sigma[i])));
-
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							//根据ta3 刷新位置速度加速度
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-							{
-
-								a = ((3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0 - (Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0);
-								b = ((Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
-								c = qf[i] + (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - q0[i];                            					slamda = b*b - 4 * a*c;
-
-								slamda = b*b - 4 * a*c;
-								if (slamda < 0)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta3  lamda大于0
-								{
-									snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-									snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-									if ((snewT[0] < -minimt && snewT[1] < -minimt))
-									{
-										// 首先取解1 刷新ta3 刷新位置速度加速度
-										if (snewT[0] > snewT[1])
-											ta3[i] = snewT[0];
-										else
-											ta3[i] = snewT[1];
-
-
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-									{
-										ta3[i] = snewT[1];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-									}
-									else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-									{
-										ta3[i] = snewT[0];
-										ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-										ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-										dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-										q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-										ta2[i] = Ti[i] - ta1[i] - ta3[i];
-										ddq2[i] = ddq1[i];
-										dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-										q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-										ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-										dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-										q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-										ta4[i] = 0;
-										tqf[i] = q3[i];
-										dqf[i] = dq3[i];
-										ddqf[i] = ddq3[i];
-										if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-										{
-											printf("q3 error\n");
-											return 0x002100B00A40005; //q3 计算错误
-										}
-
-									}
-								}
-							}
-							else
-							{
-								//刷新ta4
-								ta4[i] = Ti[i] - ta2[i] - ta1[i] - ta3[i];
-								//如果计算的ta4 为负 表示取得解不合适 换解2 重新计算
-								if (ta4[i] > minimt)
-								{
-									// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-									a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-									a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-									a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-									a0 = -pow(ddq0[i], 3);
-
-									int snum = 0;
-									getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-									if (snum == 1)
-									{
-										tempt = r[0];
-									}
-									else
-									{
-										double tempt = -99; //获得全部的解
-										for (int j = 0; j < 3; j++)
-										{
-											if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-											{
-												tempt = r[j];
-											}
-										}
-									}
-
-									ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = 0;
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ta3[i] = Ti[i] - ta1[i];
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-								}
-								else //ta4大于0存在第四段 刷新位置速度加速度 刷新出参
-								{
-									ddq4[i] = 0;
-									dq4[i] = dq3[i];
-									q4[i] = q3[i] + ta4[i] * dq3[i];
-									tqf[i] = q4[i];
-									dqf[i] = dq4[i];
-									ddqf[i] = ddq4[i];
-
-								}
-							}
-						}
-						else
-						{
-							if (dq_avg_new[i] - dq0[i] > 0)
-							{
-								sigma[i] = 1; //正转  符号取1
-							}
-							else if (dq_avg_new[i] - dq0[i] < 0)
-							{
-								sigma[i] = -1; //反转 符号取 - 1
-							}
-							else if (dq_avg_new[i] - dq0[i] > -minimq && dq_avg_new[i] - dq0[i] < minimq)
-							{
-								sigma[i] = 1;	//静止 符号取1
-							}
-							a = ((3 * Jm[i] * sigma[i] * (Ti[i] + ddq0[i] / (Jm[i] * sigma[i]))) / 2.0 - (Jm[i] * sigma[i] * (4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] * sigma[i]))) / 2.0);
-							b = ((Jm[i] * sigma[i] * pow((Ti[i] + ddq0[i] / (Jm[i] * sigma[i])), 2)) / 2.0);
-							c = qf[i] + (-pow(ddq0[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] * sigma[i])) + pow(ddq0[i], 3) / (3 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq0[i] * dq0[i]) / (Jm[i] * sigma[i]) - q0[i];                            					slamda = b*b - 4 * a*c;
-
-							slamda = b*b - 4 * a*c;
-							if (slamda < 0)
-							{
-								// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-								a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-								a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-								a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-								a0 = -pow(ddq0[i], 3);
-
-								int snum = 0;
-								getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-								if (snum == 1)
-								{
-									tempt = r[0];
-								}
-								else
-								{
-									double tempt = -99; //获得全部的解
-									for (int j = 0; j < 3; j++)
-									{
-										if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-										{
-											tempt = r[j];
-										}
-									}
-								}
-
-								ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-								q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-								ta2[i] = 0;
-								ddq2[i] = ddq1[i];
-								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-								ta3[i] = Ti[i] - ta1[i];
-								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-								ta4[i] = 0;
-								tqf[i] = q3[i];
-								dqf[i] = dq3[i];
-								ddqf[i] = ddq3[i];
-							}
-							else //ta3  lamda大于0
-							{
-								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-								if ((snewT[0] < -minimt && snewT[1] < -minimt))
-								{
-									// 首先取解1 刷新ta3 刷新位置速度加速度
-									if (snewT[0] > snewT[1])
-										ta3[i] = snewT[0];
-									else
-										ta3[i] = snewT[1];
-
-
-									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = Ti[i] - ta1[i] - ta3[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-									if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-									{
-										printf("q3 error\n");
-										return 0x002100B00A40005; //q3 计算错误
-									}
-								}
-								else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-								{
-									ta3[i] = snewT[1];
-									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = Ti[i] - ta1[i] - ta3[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-									if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-									{
-										printf("q3 error\n");
-										return 0x002100B00A40005; //q3 计算错误
-									}
-								}
-								else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-								{
-									ta3[i] = snewT[0];
-									ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-									ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-									dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-									q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-									ta2[i] = Ti[i] - ta1[i] - ta3[i];
-									ddq2[i] = ddq1[i];
-									dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-									q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-									ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-									dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-									q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-									ta4[i] = 0;
-									tqf[i] = q3[i];
-									dqf[i] = dq3[i];
-									ddqf[i] = ddq3[i];
-									if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-									{
-										printf("q3 error\n");
-										return 0x002100B00A40005; //q3 计算错误
-									}
-
-								}
-							}
-						}
-					}
+					if (sigmaq[i]*sigma[i]==1)
+						sigma[i] = sigma[i] * -1;
+				}
+    //            if ((newq<q0[i] && sigmaq[i]==1) || (newq>q0[i] && sigmaq[i] == -1))
+				//{
+    //                sigma[i]=sigma[i]*-1;
+				//	if (sigma[i] == 1)
+				//		ddq_max[i] = minddq[i];	//加速度赋值
+				//	else if (sigma[i] == -1)
+				//		ddq_max[i] = maxddq[i];
+				//	else
+				//		ddq_max[i] = 0;
+
+				//}
+				// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
+				//a3 = (Jm[i]*sigma[i])/6;
+				//a2 = - (Jm[i]*sigma[i]*Ti[i])/2;
+				//a1 = (Jm[i]*sigma[i]*pow(Ti[i],2))/2;
+				//a0 =qf[i] - q0[i]+ dq0[i]*Ti[i]+ (ddq0[i]*pow(Ti[i],2))/2 ;
+				a3 = (Jm[i] * sigma[i]) / 6;
+				a2 = -(Jm[i] * sigma[i] * Ti[i]) / 2;
+				a1 = (Jm[i] * sigma[i] * pow(Ti[i], 2)) / 2;
+				a0 = -q0[i] + qf[i] + dq0[i] * Ti[i] + (ddq0[i] * pow(Ti[i], 2)) / 2;
+				int snum = 0;
+				getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
+double tempt = -99; //获得全部的解
+				if (snum == 1)
+				{
+					tempt = r[0];
 				}
 				else
 				{
-					if (dq_avg_new[i] - dq0[i] > 0)
+					
+					for (int j = 0; j < 3; j++)
 					{
-						sigma[i] = 1; //正转  符号取1
-					}
-					else if (dq_avg_new[i] - dq0[i] < 0)
-					{
-						sigma[i] = -1; //反转 符号取 - 1
-					}
-					else if (dq_avg_new[i] - dq0[i] > -minimq && dq_avg_new[i] - dq0[i] < minimq)
-					{
-						sigma[i] = 1;	//静止 符号取1
-					}
-					a = ((3 * Jm[i] *sigma[i] *(Ti[i] + ddq0[i] / (Jm[i] *sigma[i]))) / 2.0 - (Jm[i] *sigma[i] *(4 * Ti[i] + (4 * ddq0[i]) / (Jm[i] *sigma[i]))) / 2.0);
-					b = ((Jm[i] *sigma[i] *pow((Ti[i] + ddq0[i] / (Jm[i] *sigma[i])),2)) / 2.0);
-					c = qf[i] + (-pow(ddq0[i],2) / (2 * Jm[i] *sigma[i]) + dq0[i])*(Ti[i] + ddq0[i] / (Jm[i] *sigma[i])) + pow(ddq0[i],3) / (3 * pow(Jm[i],2) * pow(sigma[i],2)) - (ddq0[i] *dq0[i]) / (Jm[i] *sigma[i]) - q0[i];                            					slamda = b*b - 4 * a*c;
-
-					slamda = b*b - 4 * a*c;
-					if (slamda < 0)
-					{
-						// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-						a3 = (3 * pow(Ti[i], 3) * pow(sigma[i], 3));
-						a2 = (24 * qf[i] * pow(sigma[i], 2) - 24 * q0[i] * pow(sigma[i], 2) + 9 * pow(Ti[i], 2) * ddq0[i] * pow(sigma[i], 2) + 24 * Ti[i] * dq0[i] * pow(sigma[i], 2));
-						a1 = (-3 * Ti[i] * pow(ddq0[i], 2) * sigma[i]);
-						a0 = -pow(ddq0[i], 3);
-
-						int snum = 0;
-						getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-						if (snum == 1)
+						if (r[j]>tempt && r[j]<-minimt) //根据要求去掉负时间，取最小时间
 						{
-							tempt = r[0];
-						}
-						else
-						{
-							double tempt = -99; //获得全部的解
-							for (int j = 0; j < 3; j++)
-							{
-								if (r[j]>tempt && r[j]>minimt) //根据要求去掉负时间，取最小时间
-								{
-									tempt = r[j];
-								}
-							}
-						}
-
-						ta1[i] = Ti[i] / 2.0 - ddq0[i] / (2 * (sigma[i] * Jm[i]));
-						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-						ta2[i] = 0;
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						ta3[i] = Ti[i] - ta1[i];
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						ta4[i] = 0;
-						tqf[i] = q3[i];
-						dqf[i] = dq3[i];
-						ddqf[i] = ddq3[i];
-					}
-					else //ta3  lamda大于0
-					{
-						snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-						snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-						if ((snewT[0] < -minimt && snewT[1] < -minimt))
-						{
-							// 首先取解1 刷新ta3 刷新位置速度加速度
-							if (snewT[0] > snewT[1])
-								ta3[i] = snewT[0];
-							else
-								ta3[i] = snewT[1];
-
-
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-							if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-							{
-								printf("q3 error\n");
-								return 0x002100B00A40005; //q3 计算错误
-							}
-						}
-						else if ((snewT[0] > minimt && snewT[1] < -minimt)) // 解1 为正 解2为负 取解1
-						{
-							ta3[i] = snewT[1];
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-							if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-							{
-								printf("q3 error\n");
-								return 0x002100B00A40005; //q3 计算错误
-							}
-						}
-						else if (snewT[1] > minimt && snewT[0] < -minimt) // 解2 为正 解1为负 取解2
-						{
-							ta3[i] = snewT[0];
-							ta1[i] = ta3[i] - ddq0[i] / (sigma[i] * Jm[i]);
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta2[i] = Ti[i] - ta1[i] - ta3[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ta4[i] = 0;
-							tqf[i] = q3[i];
-							dqf[i] = dq3[i];
-							ddqf[i] = ddq3[i];
-							if ((q3[i] < (q0[i] - minimq) && sigmaq[i] == 1) || (q3[i] > (q0[i] + minimq) && sigmaq[i] == -1))
-							{
-								printf("q3 error\n");
-								return 0x002100B00A40005; //q3 计算错误
-							}
-
+							tempt = r[j];
 						}
 					}
-
 				}
+
+				ta1[i] = tempt;
+				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+				q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+				ta2[i] = Ti[i]-ta1[i];
+				ddq2[i] = ddq1[i];
+				dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+				q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+				ta3[i] =0;
+				ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+				dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+				q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+				ta4[i] = 0;
+				tqf[i] = q3[i];
+				dqf[i] = dq3[i];
+				ddqf[i] = ddq3[i];
+
 				//刷新总时间
 				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
 				//刷新各段时间
@@ -3513,26 +1570,30 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 			{
 				ta1[i] = 0; ta2[i] = 0; ta3[i] = 0; ta4[i] = Ti[i];
 				sigma[i] = 0;
-				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
 				ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
 				dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
 				q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
 
 				ddq2[i] = ddq1[i];
 				dq2[i] = dq1[i] + ddq1[i] * ta2[i];
 				q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
 
+
 				ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
 				dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
 				q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-				
+
 				ddq4[i] = 0;
 				dq4[i] = dq3[i];
 				q4[i] = q3[i] + ta4[i] * dq3[i];
+
 				tqf[i] = q4[i];
 				dqf[i] = dq4[i];
 				ddqf[i] = ddq4[i];
-				
+
+				tempT[i] = ta1[i] + ta2[i] + ta3[i] + ta4[i];
+
 				//刷新各段时间
 				Ta[i][0] = ta1[i]; Ta[i][1] = ta2[i]; Ta[i][2] = ta3[i]; Ta[i][3] = ta4[i];
 				//刷新各段时间的对应三次方程的系数
@@ -3608,8 +1669,10 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 	J1[0] = target.j1; J1[1] = target.j2; J1[2] = target.j3; J1[3] = target.j4; J1[4] = target.j5; J1[5] = target.j6;
 	for (int i = 0; i < 6; i++)
 	{
-
-		dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
+		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
+			dq_avg[i] = 0;
+		else
+			dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
 	}
 
 	double dq0[6] = { 0 };
@@ -3680,7 +1743,7 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 	double oddqf[6] = { 0 };
 	ErrorCode ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, ddq_min,jk, Ti,ocoeff,oTa,otqf,odqf,oddqf, 1, Ta, coeff, &maxT, tqf, dqf, ddqf);
 
-	printf("maxT=%f\n", maxT);
+	//printf("maxT=%f\n", maxT);
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -3742,8 +1805,10 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 	J0[0] = start.j1; J0[1] = start.j2; J0[2] = start.j3; J0[3] = start.j4; J0[4] = start.j5; J0[5] = start.j6;
 	for (int i = 0; i < 6; i++)
 	{
-
-		dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
+		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
+			dq_avg[i] = 0;
+		else
+			dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
 	}
 
 	double dq0[6] = { 0 };
@@ -3813,7 +1878,7 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 	double oddqf[6] = { 0 };
 	ErrorCode ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max,ddq_min, jk, Ti,ocoeff,oTa,otqf,odqf,oddqf, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
 
-	printf("maxT=%f\n", maxT);
+	//printf("maxT=%f\n", maxT);
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -3838,7 +1903,8 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			segment[i].duration[j] = fabs(Ta[i][3 - j]);
+			//segment[i].duration[j] = fabs(Ta[i][3 - j]);
+			segment[i].duration[j] = Ta[i][j];
 			tm[j] = Ta[i][j];
 			for (int k = 0; k < 4; k++)
 			{
@@ -3851,7 +1917,9 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 			for (int k = 0; k < 4; k++)
 			{
 				segment[i].coeff[j][k] = newcoeff[j][ k];
+				//segment[i].coeff[j][k] = cef[j][k];
 			}
+			segment[i].duration[j] = fabs(Ta[i][3 - j]);
 		}
 		//printf("joint:%d Ta=%f %f %f %f\n", i, Ta[i][0], Ta[i][1], Ta[i][2], Ta[i][3]);
 		//printf("coeff:%f %f %f %f -- %f %f %f %f -- %f %f %f %f -- %f %f %f %f\n", coeff[i][0][0], coeff[i][0][1], coeff[i][0][2], coeff[i][0][3], coeff[i][1][0], coeff[i][1][1], coeff[i][1][2], coeff[i][1][3], coeff[i][2][0], coeff[i][2][1], coeff[i][2][2], coeff[i][2][3], coeff[i][3][0], coeff[i][3][1], coeff[i][3][2], coeff[i][3][3]);
@@ -3877,12 +1945,14 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 	J1[0] = target.angle.j1; J1[1] = target.angle.j2; J1[2] = target.angle.j3; J1[3] = target.angle.j4; J1[4] = target.angle.j5; J1[5] = target.angle.j6;
 	for (int i = 0; i < 6; i++)
 	{
-
-		dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
+		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
+			dq_avg[i] = 0;
+		else
+			dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
 	}
 
 	double dq0[6] = { 0 };
-	double ddq0[6] = { 0 };
+	//double ddq0[6] = { 0 };
 	double dqf[6] = { 0 };
 	double ddqf[6] = { 0 };
 	double jk[6] = { 0 };
@@ -3894,64 +1964,64 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 		case 0:
 			ddq_max[i] = alpha_upper.j1;
 			ddq_min[i] = alpha_lower.j1;
-			dq0[i] = target.omega.j1;
-			ddq0[i] = target.alpha.j1;
+			dq0[i] = start.omega.j1;
+			dqf[i] = target.omega.j1;
 			jk[i] = jerk.j1;
 			break;
 		case 1:
 			ddq_max[i] = alpha_upper.j2;
 			ddq_min[i] = alpha_lower.j2;
-			dq0[i] = target.omega.j2;
-			ddq0[i] = target.alpha.j2;
+			dq0[i] = start.omega.j2;
+			dqf[i] = target.omega.j2;
 			jk[i] = jerk.j2;
 			break;
 		case 2:
 			ddq_max[i] = alpha_upper.j3;
 			ddq_min[i] = alpha_lower.j3;
-			dq0[i] = target.omega.j3;
-			ddq0[i] = target.alpha.j3;
+			dq0[i] = start.omega.j3;
+			dqf[i] = target.omega.j3;
 			jk[i] = jerk.j3;
 			break;
 		case 3:
 			ddq_max[i] = alpha_upper.j4;
 			ddq_min[i] = alpha_lower.j4;
-			dq0[i] = target.omega.j4;
-			ddq0[i] = target.alpha.j4;
+			dq0[i] = start.omega.j4;
+			dqf[i] = target.omega.j4;
 			jk[i] = jerk.j4;
 			break;
 		case 4:
 			ddq_max[i] = alpha_upper.j5;
 			ddq_min[i] = alpha_lower.j5;
-			dq0[i] = target.omega.j5;
-			ddq0[i] = target.alpha.j5;
+			dq0[i] = start.omega.j5;
+			dqf[i] = target.omega.j5;
 			jk[i] = jerk.j5;
 			break;
 		case 5:
 			ddq_max[i] = alpha_upper.j6;
 			ddq_min[i] = alpha_lower.j6;
-			dq0[i] = target.omega.j6;
-			ddq0[i] = target.alpha.j6;
+			dq0[i] = start.omega.j6;
+			dqf[i] = target.omega.j6;
 			jk[i] = jerk.j6;
 			break;
 
 		}
 	}
 
-	double Ti[6] = { -1,-1,-1,-1,-1,-1 };
-	double Ta[6][4] = { 0 };
-	double coeff[6][4][4] = { 0 };
-	double oTa[6][4] = { 0 };
-	double ocoeff[6][4][4] = { 0 };
-	double maxT = 0;
-	double tqf[6] = { 0 };
-	double tdqf[6] = { 0 };
-	double tddqf[6] = { 0 };
-	double otqf[6] = { 0 };
-	double odqf[6] = { 0 };
-	double oddqf[6] = { 0 };
-	ErrorCode ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max,ddq_min, jk, Ti,ocoeff,oTa,otqf,odqf,oddqf, 1, Ta, coeff, &maxT, tqf, tdqf, tddqf);
+	//double Ti[6] = { -1,-1,-1,-1,-1,-1 };
+	//double Ta[6][4] = { 0 };
+	//double coeff[6][4][4] = { 0 };
+	//double oTa[6][4] = { 0 };
+	//double ocoeff[6][4][4] = { 0 };
+	double maxT = exp_duration;
+	//double tqf[6] = { 0 };
+	//double tdqf[6] = { 0 };
+	//double tddqf[6] = { 0 };
+	//double otqf[6] = { 0 };
+	//double odqf[6] = { 0 };
+	//double oddqf[6] = { 0 };
+	ErrorCode ret = 0;// = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, ddq_min, jk, Ti, ocoeff, oTa, otqf, odqf, oddqf, 1, Ta, coeff, &maxT, tqf, tdqf, tddqf);
 
-	printf("maxT=%f\n", maxT);
+	//printf("maxT=%f\n", maxT);
 
 	/*ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jk, Ti, 1, Ta, coeff, &maxT, tqf, dqf, ddqf);*/
 	double a0[MAXAXES];
@@ -4020,6 +2090,128 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

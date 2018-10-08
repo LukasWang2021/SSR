@@ -188,8 +188,6 @@ ErrorCode Controller::init()
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
-    //FIXME: remove it later
-    //motion_control_.maskOffsetLostError();
     motion_control_.resetGroup();
 
     error_code = tp_comm_.init();
@@ -224,17 +222,7 @@ void Controller::runRoutineThreadFunc()
 {
     //preformance_monitor_.startTimer(1);
     state_machine_.processStateMachine();
-
-    if (routine_times_ == 10)
-    {
-        rpc_.processRpc();
-        routine_times_ = 0;
-    }
-    else
-    {
-        routine_times_++;
-    }
-
+    rpc_.processRpc();
     ipc_.processIpc();
     publish_.processPublish();
     //preformance_monitor_.stopTimer(1);

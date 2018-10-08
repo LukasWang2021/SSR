@@ -96,9 +96,9 @@ private:
     void handleRequestPause();
     void handleRequestResume();
     void handleRequestAbort();
-    void handleRequestSwitchStep();
     void handleRequestGetNextInstruction();
     void handleRequestSetAutoStartMode();
+    void handleRequestSwitchStep();
 
     // rpc response handler
     void handleResponseStart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -109,9 +109,9 @@ private:
     void handleResponsePause(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseResume(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseAbort(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    void handleResponseSwitchStep(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetNextInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetAutoStartMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSwitchStep(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
 };
 
 }

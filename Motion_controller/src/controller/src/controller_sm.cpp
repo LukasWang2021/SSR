@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <string>
 
 
 using namespace fst_ctrl;
@@ -145,8 +146,11 @@ ErrorCode ControllerSm::callReset()
         clearInstruction();
         safety_device_ptr_->reset();
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
-        //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
-        ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
+        if(checkOffsetState())
+        {
+            //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
+            ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
+        }
     }
     return SUCCESS;
 }
@@ -195,11 +199,6 @@ bool ControllerSm::updateContinuousManualMoveRpcTime()
     last_continuous_manual_move_rpc_time_.tv_usec = current_time.tv_usec;
     manual_rpc_mutex_.unlock();
     return true;
-}
-
-bool ControllerSm::isContinuousManualMoveTimeout()
-{
-    return is_continuous_manual_move_timeout_;
 }
 
 void ControllerSm::getNewInstruction(Instruction* data_ptr)
@@ -265,6 +264,44 @@ int* ControllerSm::getSafetyAlarmPtr()
     return &safety_alarm_;
 }
 
+bool ControllerSm::checkOffsetState()
+{
+    CalibrateState calib_state;
+    OffsetState offset_state[NUM_OF_JOINT];
+
+    ErrorCode error_code = motion_control_ptr_->checkOffset(calib_state, offset_state);
+    if (error_code != SUCCESS)
+    {
+        return false;
+    }
+
+    if(calib_state != MOTION_NORMAL)
+    {
+        for(int i=0; i<NUM_OF_JOINT; ++i)
+        {
+            if(offset_state[i] == OFFSET_LOST)
+            {
+                std::string log_str("offset lost: joint ");
+                log_str.append(std::to_string(i+1));
+                recordLog(ZERO_OFFSET_LOST, log_str);
+            }
+            else if(offset_state[i] == OFFSET_DEVIATE)
+            {
+                std::string log_str("offset deviate: joint ");
+                log_str.append(std::to_string(i+1));
+                recordLog(ZERO_OFFSET_DEVIATE, log_str);
+            }
+        }
+    
+        if(calib_state == MOTION_FORBIDDEN)
+        {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 void ControllerSm::processInterpreter()
 {
     interpreter_state_ = (fst_ctrl::InterpreterState)controller_client_ptr_->getInterpreterPublishPtr()->status;
@@ -277,22 +314,22 @@ void ControllerSm::processInterpreter()
             switch(instruction_.type)
             {
                 case MOTION:
-                {FST_ERROR("---Instruction Motion");
+                {//FST_ERROR("---Instruction Motion");
                     error_code = motion_control_ptr_->autoMove(0, instruction_.target);
                     break;
                 }
                 case SET_UF:
-                {FST_ERROR("---Instruction SetUF");
+                {//FST_ERROR("---Instruction SetUF");
                     error_code = motion_control_ptr_->setUserFrame(instruction_.current_uf);
                     break;
                 }
                 case SET_TF:
-                {FST_ERROR("---Instruction SetTf");
+                {//FST_ERROR("---Instruction SetTf");
                     error_code = motion_control_ptr_->setToolFrame(instruction_.current_tf);
                     break;
                 }
                 case SET_OVC:
-                {FST_ERROR("---Instruction SetOvc");
+                {//FST_ERROR("---Instruction SetOvc");
                     if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL
                         && instruction_.current_ovc > param_ptr_->max_limited_global_vel_ratio_)
                     {
@@ -305,7 +342,7 @@ void ControllerSm::processInterpreter()
                     break;
                 }
                 case SET_OAC:
-                {FST_ERROR("---Instruction SetOac");
+                {//FST_ERROR("---Instruction SetOac");
                     if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL
                         && instruction_.current_oac > param_ptr_->max_limited_global_acc_ratio_)
                     {
@@ -327,63 +364,7 @@ void ControllerSm::processInterpreter()
             }
             is_instruction_available_ = false;
         }
-    }
-#if 0
-    U64 result = SUCCESS; 
-    Instruction inst;
-
-    xx_intrp_status_ = ShareMem::instance()->getIntprtState();
-    if (xx_intrp_status_ == EXECUTE_R)
-    {
-        if (ShareMem::instance()->getInstruction(inst))
-        {
-            if(strlen(inst.line) > 0)
-            {
-                result = auto_motion_->moveTarget(inst.target);
-                if(result != SUCCESS)
-                {
-                    rcs::Error::instance()->add(result);
-                    RobotStateCmd cmd = EMERGENCY_STOP_E;
-                    XXsetStateCmd(&cmd, 0);
-                    
-                    InterpreterControl ctrl;
-                    ctrl.cmd = ABORT;
-                    ShareMem::instance()->intprtControl(ctrl);
-                    FST_INFO("---XXprocessInterp: moveTarget Failed: intrp_status-->ABORT");
-                }
-                else
-                {
-                    current_cnt_ = inst.target.cnt;
-                    calcMotionDst(inst.target);
-                }
-            }
-        }
-
-        xx_intrp_warn_ = ShareMem::instance()->getWarning();
-        if (xx_intrp_warn_ >= FAIL_INTERPRETER_BASE)
-        {
-            rcs::Error::instance()->add(xx_intrp_warn_);
-            ShareMem::instance()->setWarning(0);
-            FST_INFO("---XXprocessInterp: report intrp error code = %ld", xx_intrp_warn_);
-        }
-    }
-
-    double left_time =  arm_group_->timeBeforeDeadline();
-    if(left_time <= 0.001)
-    {
-        if(current_cnt_ < 0 
-            && xx_servo_status_ != SERVO_STATE_READY)
-        {
-            return;
-        }
-
-        if(!ShareMem::instance()->getIntprtSendFlag())
-        {
-            ShareMem::instance()->sendingPermitted();
-            ShareMem::instance()->setIntprtSendFlag(true);
-        }
-    }
-#endif    
+    }    
 }
 
 void ControllerSm::processSafety()
@@ -491,9 +472,9 @@ void ControllerSm::transferCtrlState()
     switch(ctrl_state_)
     {
         case CTRL_ANY_TO_ESTOP:
-            if(robot_state_ == ROBOT_IDLE)
+            if(robot_state_ == ROBOT_IDLE
+                && servo_state_ != SERVO_RUNNING)
             {
-                sleep(1); // wait for robot stop
                 motion_control_ptr_->saveJoint();
                 recordLog("Controller transfer to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
@@ -504,16 +485,8 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_)
             {
-                if(checkZeroPointOffsetState())
-                {
-                    recordLog("Controller transfer to ENGAGED");
-                    ctrl_state_ = CTRL_ENGAGED;
-                }
-                else
-                {
-                    recordLog("Controller transfer to ESTOP");
-                    ctrl_state_ = CTRL_ESTOP;
-                }
+                recordLog("Controller transfer to ENGAGED");
+                ctrl_state_ = CTRL_ENGAGED;
             }
             else if((--ctrl_reset_count_) < 0)
             {
@@ -674,37 +647,7 @@ void ControllerSm::recordLog(ErrorCode error_code)
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
 }
 
-bool ControllerSm::checkZeroPointOffsetState()
+void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
 {
-    CalibrateState dummy;
-    OffsetState offset_state[NUM_OF_JOINT];
-    ErrorCode error_code = motion_control_ptr_->checkOffset(dummy, offset_state);
-
-    if (error_code != SUCCESS)
-    {
-        ErrorMonitor::instance()->add(error_code);
-        return false;
-    }
-
-    for (int i = 0; i != NUM_OF_JOINT; ++i)
-    {
-        if (offset_state[i] == OFFSET_LOST)
-        {
-            error_code = ZERO_OFFSET_LOST;
-            ErrorMonitor::instance()->add(error_code);
-        }
-        else if (offset_state[i] == OFFSET_DEVIATE)
-        {
-            error_code = ZERO_OFFSET_DEVIATE;
-            ErrorMonitor::instance()->add(error_code);
-        }
-        else;
-    }
-
-    if (dummy == MOTION_FORBIDDEN)
-    {
-        return false;
-    }
-
-    return true;
+    ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }

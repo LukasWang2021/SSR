@@ -123,7 +123,8 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED
-        || state_machine_ptr_->isContinuousManualMoveTimeout())
+        || state_machine_ptr_->getServoState() != SERVO_IDLE
+        || state_machine_ptr_->getRobotState() != ROBOT_IDLE)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
@@ -164,15 +165,10 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
 
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
-        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED
+        || !state_machine_ptr_->updateContinuousManualMoveRpcTime())
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
-        return;
-    }
-
-    if(!state_machine_ptr_->updateContinuousManualMoveRpcTime())
-    {
-        //rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
 

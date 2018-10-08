@@ -90,7 +90,6 @@ public:
     void transferRobotStateToTeaching();
     void transferRobotStateToRunning();
     bool updateContinuousManualMoveRpcTime();
-    bool isContinuousManualMoveTimeout();
 
     void getNewInstruction(Instruction* data_ptr);
     bool isNextInstructionNeeded();
@@ -141,6 +140,7 @@ private:
     bool is_error_exist_;
     
     // state machine transfer
+    bool checkOffsetState();
     void processInterpreter();
     void processSafety();
     void processError();
@@ -152,13 +152,14 @@ private:
     // manual rpc related
     long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);
     void handleContinuousManualRpcTimeout();
-    bool checkZeroPointOffsetState();
+    
     // interpreter instruction
     void clearInstruction();
 
     // log service
     void recordLog(std::string log_str);
     void recordLog(ErrorCode error_code);
+    void recordLog(ErrorCode error_code, std::string log_str);
 };
 
 }

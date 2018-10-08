@@ -90,6 +90,7 @@ public:
     void transferRobotStateToTeaching();
     void transferRobotStateToRunning();
     bool updateContinuousManualMoveRpcTime();
+    bool isContinuousManualMoveTimeout();
 
     void getNewInstruction(Instruction* data_ptr);
     bool isNextInstructionNeeded();

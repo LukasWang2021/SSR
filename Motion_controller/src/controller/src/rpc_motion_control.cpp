@@ -34,10 +34,6 @@ void ControllerRpc::handleRpc0x000005EF(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_SLOWLY_MANUAL
         && rq_data_ptr->data.data > state_machine_ptr_->getParam()->max_limited_global_vel_ratio_)
     {
-        FST_ERROR("User operation mode is %d, expect for 2", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Global vel ratio limit is %d, real value is %d", 
-            state_machine_ptr_->getParam()->max_limited_global_vel_ratio_,
-            rq_data_ptr->data.data);
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
     }
     else
@@ -66,10 +62,6 @@ void ControllerRpc::handleRpc0x0000271F(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_SLOWLY_MANUAL
         && rq_data_ptr->data.data > state_machine_ptr_->getParam()->max_limited_global_acc_ratio_)
     {
-        FST_ERROR("User operation mode is %d, expect for 2", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Global acc ratio limit is %d, real value is %d", 
-            state_machine_ptr_->getParam()->max_limited_global_acc_ratio_,
-            rq_data_ptr->data.data);
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
     }
     else
@@ -130,11 +122,9 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
 
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
-        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED
+        || state_machine_ptr_->isContinuousManualMoveTimeout())
     {
-        FST_ERROR("User operation mode is %d, expect not 1 and 0", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Control state is %d, expect for 1", state_machine_ptr_->getCtrlState());
-
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -176,9 +166,6 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        FST_ERROR("User operation mode is %d, expect not 1 and 0", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Control state is %d, expect for 1", state_machine_ptr_->getCtrlState());
-
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -226,8 +213,6 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        FST_ERROR("User operation mode is %d, expect not 1 and 0", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Control state is %d, expect for 1", state_machine_ptr_->getCtrlState());
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -265,9 +250,6 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        FST_ERROR("User operation mode is %d, expect not 1 and 0", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Control state is %d, expect for 1", state_machine_ptr_->getCtrlState());
-
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -308,8 +290,6 @@ void ControllerRpc::handleRpc0x0000A9A0(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        FST_ERROR("User operation mode is %d, expect not 1 and 0", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Control state is %d, expect for 1", state_machine_ptr_->getCtrlState());
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }

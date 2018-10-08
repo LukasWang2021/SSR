@@ -197,6 +197,11 @@ bool ControllerSm::updateContinuousManualMoveRpcTime()
     return true;
 }
 
+bool ControllerSm::isContinuousManualMoveTimeout()
+{
+    return is_continuous_manual_move_timeout_;
+}
+
 void ControllerSm::getNewInstruction(Instruction* data_ptr)
 {
     if(data_ptr != NULL)

@@ -30,6 +30,17 @@ Controller::Controller():
 
 Controller::~Controller()
 {
+    ErrorCode error_code = motion_control_.saveJoint();
+    if(error_code == SUCCESS)
+    {
+        recordLog(CONTROLLER_LOG, "save joint success");
+    }
+    else
+    {
+        recordLog(error_code, "save joint failed");
+    }
+    
+
     routine_thread_.join();
     heartbeat_thread_.join();
 
@@ -50,7 +61,6 @@ Controller::~Controller()
         param_ptr_ = NULL;
     }
 
-    motion_control_.saveJoint();
     ServerAlarmApi::GetInstance()->pyDecref();
 }
 

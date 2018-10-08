@@ -8,6 +8,7 @@
 #define FST_ERROR   log_ptr_->error
 #define FST_WARN    log_ptr_->warn
 #define FST_INFO    log_ptr_->info
+#define FST_LOG     log_ptr_->log
 
 #endif
 

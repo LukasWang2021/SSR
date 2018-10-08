@@ -128,6 +128,7 @@ bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 			ptr->value.pos[0], ptr->value.pos[1], 
 			ptr->value.pos[2], ptr->value.pos[3], 
 			ptr->value.pos[4], ptr->value.pos[5]);
+		bRet = true ;
 	}
 	else
 	{
@@ -169,6 +170,7 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addPrReg(&objPrRegDataIpc);
 		}
 #endif
+		bRet = true ;
 	}
 	else
 	{
@@ -189,6 +191,7 @@ bool reg_manager_interface_delPr(uint16_t num)
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		bRet = g_objRegManagerInterface->deletePrReg(num);
 #endif
+		bRet = true ;
 	}
 	else
 	{
@@ -220,6 +223,7 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 		   ptr->orientation.b = objPrRegDataIpc.pos[4];
 		   ptr->orientation.c = objPrRegDataIpc.pos[5];
 		}
+		bRet = true ;
 	}
 	else
 	{
@@ -496,6 +500,7 @@ bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		ptr->value = string(objSrRegDataIpc.value) ;
 		printf("getSr[%d]:(%s)\n", num, ptr->value.c_str());
+		bRet = true ;
 	}
 	else
 	{
@@ -527,6 +532,7 @@ bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addSrReg(&objSrRegDataIpc);
 		}
 #endif
+		bRet = true ;
 	}
 	else
 	{
@@ -715,6 +721,7 @@ bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
 		printf("getR: value = (%f) \n", objRRegDataIpc.value);
 		ptr->value = objRRegDataIpc.value;
+		bRet = true ;
 	}
 	else
 	{
@@ -745,6 +752,7 @@ bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addRReg(objRRegDataIpc);
 		}
 #endif
+		bRet = true ;
 	}
 	else
 	{
@@ -765,6 +773,7 @@ bool reg_manager_interface_delR(uint16_t num)
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		bRet = g_objRegManagerInterface->deleteRReg(num);
 #endif
+		bRet = true ;
 	}
 	else
 	{
@@ -926,6 +935,7 @@ bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num)
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
 		ptr->value = objMrRegDataIpc.value ;
+		bRet = true ;
 	}
 	else
 	{
@@ -953,6 +963,7 @@ bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addMrReg(&objMrRegDataIpc);
 		}
 #endif
+		bRet = true ;
 	}
 	else
 	{
@@ -1153,6 +1164,7 @@ bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num)
 			objHrRegDataIpc.joint_pos[0], objHrRegDataIpc.joint_pos[1], 
 			objHrRegDataIpc.joint_pos[2], objHrRegDataIpc.joint_pos[3], 
 			objHrRegDataIpc.joint_pos[4], objHrRegDataIpc.joint_pos[5]);
+		bRet = true ;
 	}
 	else
 	{
@@ -1185,6 +1197,7 @@ bool reg_manager_interface_setHr(HrRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addHrReg(&objHrRegDataIpc);
 		}
 #endif
+		bRet = true ;
 	}
 	else
 	{

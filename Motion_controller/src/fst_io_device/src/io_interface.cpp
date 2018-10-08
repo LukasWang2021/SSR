@@ -30,7 +30,7 @@ IOInterface::IOInterface(fst_log::Logger * logger)
     }
     else 
     {
-        FST_ERROR("IOInterface::initial OK :%llx", result);
+        FST_INFO("IOInterface::initial OK :%llx", result);
     }
 }
 

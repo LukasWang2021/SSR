@@ -137,7 +137,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 	while(*(objThreadCntrolBlock->token) != '\r')
 	{
 		get_token(objThreadCntrolBlock);
-		// 1.	ACC���ٶȱ���ָ��
+		// 1.	ACC¼ÓËÙ¶È±¶ÂÊÖ¸Áî
 		if(strcmp(objThreadCntrolBlock->token, "acc") == 0)
 		{
 			additionalInfomation.type = ACC ;
@@ -146,10 +146,10 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 			additionalInfomation.acc_speed = speed ;
 			iCount++ ;
 		}
-		// 2.	 Condition <case>�������ȼ���
-		// 3.	����λ�ò���ָ������ȼ���
-		// 4.	����λ�ò���ָ��
-		// 5.	Tool_Offset�������겹��ָ��
+		// 2.	 Condition <case>£¨µÍÓÅÏÈ¼¶£©
+		// 3.	ÅúÁ¿Î»ÖÃ²¹³¥Ö¸Áî£¨µÍÓÅÏÈ¼¶£©
+		// 4.	µ¥¾äÎ»ÖÃ²¹³¥Ö¸Áî
+		// 5.	Tool_Offset¹¤¾ß×ø±ê²¹³¥Ö¸Áî
 		else if((strcmp(objThreadCntrolBlock->token, "offset") == 0)
 		      ||(strcmp(objThreadCntrolBlock->token, "tool_offset") == 0))
 		{
@@ -341,7 +341,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 			}
 			iCount++ ;
 		}
-		// 6.	EVͬ���������ٶ�ָ������ȼ���
+		// 6.	EVÍ¬²½¸½¼ÓÖáËÙ¶ÈÖ¸Áî£¨µÍÓÅÏÈ¼¶£©
 		else if(strncmp(objThreadCntrolBlock->token, "ev", 2) == 0)
 		{
 			additionalInfomation.type = EV ;
@@ -349,7 +349,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 		//	int speed = (int)value.getFloatValue();
 			iCount++ ;
 		}
-		// 7.	Ind_EV��ͬ���������ٶ�ָ������ȼ���
+		// 7.	Ind_EV·ÇÍ¬²½¸½¼ÓÖáËÙ¶ÈÖ¸Áî£¨µÍÓÅÏÈ¼¶£©
 		else if(strncmp(objThreadCntrolBlock->token, "ind_ev", 6) == 0)
 		{
 			additionalInfomation.type = IND_EV ;
@@ -357,7 +357,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 		//	int speed = (int)value.getFloatValue();
 			iCount++ ;
 		}
-		// 8.	TB��ִ��ָ��
+		// 8.	TBÏÈÖ´ÐÐÖ¸Áî
 		else if((strcmp(objThreadCntrolBlock->token, "tb") == 0)
 			  ||(strcmp(objThreadCntrolBlock->token, "ta") == 0)
 			  ||(strcmp(objThreadCntrolBlock->token, "db") == 0))
@@ -530,7 +530,7 @@ int set_OAC(int iLineNum, double dOACNum, struct thread_control_block* objThread
 }
 
 
-// MovJ P[1] P[1] 30% Fine +���Ӳ���
+// MovJ P[1] P[1] 30% Fine +¸½¼Ó²ÎÊý
 int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
     MoveCommandDestination movCmdDst ;
@@ -591,11 +591,12 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	}
 	else
 	{
-		printf("call_MoveJ XPATH out of range at %d\n", iLineNum);
+		; // printf("call_MoveJ XPATH out of range at %d\n", iLineNum);
 	}
 	// printf("call_MoveJ XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
+	printf("call_MoveJ value.getType() = %d\n", value.getType());
 	if(value.getType() == TYPE_NONE)
 	{
 		find_eol(objThreadCntrolBlock);
@@ -675,6 +676,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	// Divide 100 as percent.
+	printf("get_token =  '%f'\n", value.getFloatValue());
     instr.target.vel        = value.getFloatValue() / 100;
 	
 	get_token(objThreadCntrolBlock);
@@ -795,7 +797,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		}
 		else
 		{
-			printf("call_MoveL XPATH without movCmdDst\n");
+			; // printf("call_MoveL XPATH without movCmdDst\n");
 		}
 	}
 	else
@@ -806,6 +808,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
+	printf("call_MoveL value.getType() = %d\n", value.getType());
 	if(value.getType() == TYPE_NONE)
 	{
 		find_eol(objThreadCntrolBlock);
@@ -947,7 +950,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 // 		printf("setInstruction MOTION_LINE at %d\n", instr.line);
 // 	#endif
 	
-	 printf("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
+	 FST_INFO("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
 #ifndef WIN32
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 //	while(bRet == false)

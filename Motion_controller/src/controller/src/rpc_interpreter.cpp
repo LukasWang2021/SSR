@@ -12,8 +12,6 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x00006154");
-        FST_ERROR("Interpreter state is %d, expect for 0", state_machine_ptr_->getInterpreterState());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -37,9 +35,6 @@ void ControllerRpc::handleRpc0x000102D7(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x000102D7");
-        FST_ERROR("User operation mode is %d, expect not 0 and 1", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
-        FST_ERROR("Interpreter state is %d, expect for 0", state_machine_ptr_->getInterpreterState());
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -59,8 +54,6 @@ void ControllerRpc::handleRpc0x0000D974(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x0000D974");
-        FST_ERROR("User operation mode is %d, expect not 0 and 1", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -81,9 +74,6 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x00008E74");
-        FST_ERROR("User operation mode is %d, expect not 0 and 1", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
-
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -105,9 +95,6 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x00015930");
-        FST_ERROR("User operation mode is %d, expect not 0 and 1", state_machine_ptr_->getUserOpMode());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
-
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -126,9 +113,6 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x0000BA55");
-        FST_ERROR("Interpreter state is %d, expect for 1", state_machine_ptr_->getInterpreterState());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
-
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -148,8 +132,6 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x0000CF55");
-        FST_ERROR("Interpreter state is %d, expect for 2", state_machine_ptr_->getInterpreterState());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
@@ -186,7 +168,6 @@ void ControllerRpc::handleRpc0x000140F0(void* request_data_ptr, void* response_d
         FST_ERROR("Failed to load handleRpc0x000140F0 with %d and %d ",
 			(int)state_machine_ptr_->getUserOpMode(), 
 			(int)state_machine_ptr_->getCtrlState());
-        FST_ERROR("Controller state is %d, expect for 1", state_machine_ptr_->getCtrlState());
 
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;

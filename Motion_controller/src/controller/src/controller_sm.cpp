@@ -513,6 +513,7 @@ void ControllerSm::transferCtrlState()
         case CTRL_ENGAGED:
             if(is_error_exist_)
             {
+                controller_client_ptr_->abort();
                 motion_control_ptr_->stopGroup();
                 ctrl_state_ = CTRL_ANY_TO_ESTOP;
             }

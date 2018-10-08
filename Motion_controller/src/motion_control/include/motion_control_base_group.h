@@ -113,6 +113,8 @@ class BaseGroup
     virtual ErrorCode pickFromAuto(TrajectoryPoint *point, size_t &length);
     virtual ErrorCode computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g);
     virtual ErrorCode createTrajectory(void);
+    ErrorCode sampleStartTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], Joint &angle, Joint &omega, Joint &alpha);
+    ErrorCode sampleEndingTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], Joint &angle, Joint &omega, Joint &alpha);
     virtual ErrorCode sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], double time, Joint &angle, Joint &omega, Joint &alpha);
 
     virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;

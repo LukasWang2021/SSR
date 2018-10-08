@@ -405,7 +405,8 @@ char* ArmGroup::printDBLine(const double *data, char *buffer, size_t length)
 
     for (size_t i = 0; i < JOINT_OF_ARM; i++)
     {
-        len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
+        len += snprintf(buffer + len, length - len, "%.12f ", data[i]);
     }
 
     if (len > 0)

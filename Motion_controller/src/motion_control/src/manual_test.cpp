@@ -424,13 +424,67 @@ void test4(void)
     printf("Pose2: %.6f %.6f %.6f - %.6f %.6f %.6f\n", pose2.position.x, pose2.position.y, pose2.position.z, pose2.orientation.a, pose2.orientation.b, pose2.orientation.c);
 }
 
+void test5(void)
+{
+    int i = 0;
+
+    double ddq_max[6] = {
+            113.185481,
+            31.117495,
+            28.028706,
+            133.685325,
+            345.276156,
+            679.195016,
+    };
+    double ddq_min[6] = {
+            -113.641874,
+            -34.094074,
+            -60.576517,
+            -151.275799,
+            -341.769501,
+            -679.187671,
+    };
+
+    Joint target;
+    JointPoint start;
+    Joint au, al, jk;
+    TrajSegment segment[9];
+
+    au.j1 = ddq_max[0]; au.j2 = ddq_max[1]; au.j3 = ddq_max[2]; au.j4 = ddq_max[3]; au.j5 = ddq_max[4]; au.j6 = ddq_max[5];
+    al.j1 = ddq_min[0]; al.j2 = ddq_min[1]; al.j3 = ddq_min[2]; al.j4 = ddq_min[3]; al.j5 = ddq_min[4]; al.j6 = ddq_min[5];
+    start.angle.j1 = -0.000000891239; start.angle.j2 = -0.039804802286; start.angle.j3 = -0.234121204372; start.angle.j4 = 0.000003740897; start.angle.j5 = -1.296872118570; start.angle.j6 = -0.000001904078;
+    start.omega.j1 = 0.000000000000; start.omega.j2 = -0.278025664223; start.omega.j3 = -0.698738972363; start.omega.j4 = 0.000000000000; start.omega.j5 = 0.976770964618; start.omega.j6 = 0.000000000000;
+    start.alpha.j1 = 0.000000000000; start.alpha.j2 = 0.000000000000; start.alpha.j3 = 0.000000000000; start.alpha.j4 = 0.000000000000; start.alpha.j5 = 0.000000000000; start.alpha.j6 = 0.000000000000;
+
+    target.j1 = -0.000000900191; target.j2 = -0.040619360958; target.j3 = -0.236139691737; target.j4 = 0.000003782489; target.j5 = -1.294039054183; target.j6 = -0.000001934583;
+    jk.j1 = 1557692.307692307746; jk.j2 = 3030000.000000000000; jk.j3 = 2430000.000000000000; jk.j4 = 2210000.000000000000; jk.j5 = 1666666.749999999767; jk.j6 = 1116071.499999999767;
+
+    forwardCycle(start, target, 0.00289998, au, al, jk, segment);
+
+    for (int i = 0; i < 6; i++)
+    {
+        printf("start-angle: %f\n", start.angle[i]);
+        printf("ending-angle:%f\n", target[i]);
+        printf("ending-omega:%f\n", start.omega[i]);
+        printf("ending-alpha:%f\n", start.alpha[i]);
+        printf("duration = %f %f %f %f\n", segment[i].duration[0], segment[i].duration[1], segment[i].duration[2], segment[i].duration[3]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[0][0], segment[i].coeff[0][1], segment[i].coeff[0][2], segment[i].coeff[0][3]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[1][0], segment[i].coeff[1][1], segment[i].coeff[1][2], segment[i].coeff[1][3]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[2][0], segment[i].coeff[2][1], segment[i].coeff[2][2], segment[i].coeff[2][3]);
+        printf("coeff=%f %f %f %f\n", segment[i].coeff[3][0], segment[i].coeff[3][1], segment[i].coeff[3][2], segment[i].coeff[3][3]);
+        printf("\n");
+    }
+
+}
+
 int main(int argc, char **argv)
 {
     //test1();
     //test2();
-    test3();
+    //test3();
 
     //test4();
+    test5();
 
     return 0;
 }

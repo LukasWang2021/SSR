@@ -40,6 +40,7 @@ ErrorCode planJointPath(const Joint &start, const Joint &target, double &precisi
     size_t max_stamp;
     max_stamp = ceil(fabs(target[trip_index] - start[trip_index]) / precision);
     max_stamp = max_stamp < MAX_PATH_SIZE ? max_stamp : MAX_PATH_SIZE - 1;
+    max_stamp = max_stamp > 2 ? max_stamp : 3;
     precision = fabs(target[trip_index] - start[trip_index]) / max_stamp;
     index = trip_index;
     valid_length = max_stamp + 1;
@@ -98,6 +99,8 @@ ErrorCode planLinePath(const PoseEuler &start, const PoseEuler &target, double &
     double stamp_position    = distance / precision;
     double stamp_orientation = rotation / 0.01;
     size_t max_stamp = stamp_position > stamp_orientation ? ceil(stamp_position) : ceil(stamp_orientation);
+    max_stamp = max_stamp < MAX_PATH_SIZE ? max_stamp : MAX_PATH_SIZE - 1;
+    max_stamp = max_stamp > 2 ? max_stamp : 3;
     valid_length = max_stamp + 1;
     precision = distance / max_stamp;
 

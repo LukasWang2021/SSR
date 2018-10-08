@@ -547,6 +547,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			
 			setPrgmState(INTERPRETER_PAUSED) ; // WAITING_R ;
             printf("call_interpreter : Enter waitInterpreterStateleftPaused %d \n", iLinenum);
+			setLinenum(objThreadCntrolBlock, iLinenum);
 			waitInterpreterStateleftPaused(objThreadCntrolBlock);
             printf("call_interpreter : Left  waitInterpreterStateleftPaused %d \n", iLinenum);
 			
@@ -900,8 +901,10 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
       parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
   }
 #endif
+  
   if(!(fp=fopen(fBASName, "r"))) 
   {
+      printf("load_program failed : %s from %s\n", fBASName, fXMLName);
       serror(objThreadCntrolBlock, 14);
       return 0;
   }
@@ -3042,6 +3045,7 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
     get_token(objThreadCntrolBlock);
     return;
   default:
+	printf("primitive error :: get_token =  '%s'\n", objThreadCntrolBlock->token);
     serror(objThreadCntrolBlock, 0);
   }
 }

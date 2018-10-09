@@ -738,6 +738,11 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	while(bRet == false)
 	{
 		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+#ifdef WIN32
+		Sleep(1);
+#else
+        usleep(1000);
+#endif
 	}
     return 1;   
 }
@@ -953,11 +958,15 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	 FST_INFO("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
 #ifndef WIN32
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
-//	while(bRet == false)
-//	{
-//        printf("setInstruction return false\n");
-//		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
-//	}
+	while(bRet == false)
+	{
+		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+#ifdef WIN32
+		Sleep(1);
+#else
+        usleep(1000);
+#endif
+	}
 #endif
 
 //    printf("setInstruction return true\n");
@@ -1174,6 +1183,11 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	while(bRet == false)
 	{
 		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+#ifdef WIN32
+		Sleep(1);
+#else
+        usleep(1000);
+#endif
 	}
     return 1;     
 }

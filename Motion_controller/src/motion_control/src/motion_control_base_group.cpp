@@ -22,7 +22,7 @@ using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
 
-//#define OUTPUT_JOUT
+#define OUTPUT_JOUT
 //#define OUTPUT_POUT
 
 namespace fst_mc
@@ -689,7 +689,7 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
 
     ErrorCode err;
     size_t  index, length;
-    double  precision = 0.05;
+    double  precision = 0.01;
     Joint   path[MAX_PATH_SIZE];
     planJointPath(start_joint, target, precision, index, path, length);
     TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
@@ -920,7 +920,7 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
     return SUCCESS;
 }
 
-#define PRINT_CACHE
+//#define PRINT_CACHE
 #define CHECK_COEFF
 
 
@@ -996,6 +996,25 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
     FST_LOG("backward alpha-lower: %s", printDBLine(&backward_alpha_lower[0], buffer, LOG_TEXT_SIZE));
     FST_LOG("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
 #endif
+
+    size_t joint_num = getNumberOfJoint();
+
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        forward_alpha_lower[i] = forward_alpha_lower[i] * acc_ratio_;
+        forward_alpha_upper[i] = forward_alpha_upper[i] * acc_ratio_;
+        backward_alpha_lower[i] = backward_alpha_lower[i] * acc_ratio_;
+        backward_alpha_upper[i] = backward_alpha_upper[i] * acc_ratio_;
+    }
+
+#ifdef PRINT_CACHE
+    FST_LOG("acc ratio: %.12f", acc_ratio_);
+    FST_LOG("forward alpha-upper: %s", printDBLine(&forward_alpha_upper[0], buffer, LOG_TEXT_SIZE));
+    FST_LOG("forward alpha-lower: %s", printDBLine(&forward_alpha_lower[0], buffer, LOG_TEXT_SIZE));
+    FST_LOG("backward alpha-upper: %s", printDBLine(&backward_alpha_upper[0], buffer, LOG_TEXT_SIZE));
+    FST_LOG("backward alpha-lower: %s", printDBLine(&backward_alpha_lower[0], buffer, LOG_TEXT_SIZE));
+#endif
+
 
     memcpy(&fore_status[0], &cache.cache[0].start_state, sizeof(JointPoint));
     memcpy(&fore_status[1], &cache.cache[1].start_state, sizeof(JointPoint));
@@ -1369,7 +1388,10 @@ ErrorCode BaseGroup::abortMove(void)
 bool BaseGroup::nextMovePermitted(void)
 {
     if (waiting_fine_)
+    {
         return false;
+    }
+
 
     if (group_state_ == AUTO || group_state_ == AUTO_TO_STANDBY || group_state_ == STANDBY_TO_AUTO)
     {
@@ -1448,6 +1470,14 @@ ErrorCode BaseGroup::createTrajectory(void)
                     {
                         computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, dynamics_product);
                         dynamics_cnt = dynamics_cnt_;
+
+                        size_t joint_num = getNumberOfJoint();
+
+                        for (size_t i = 0; i < joint_num; i++)
+                        {
+                            alpha_lower[i] = alpha_lower[i] * acc_ratio_;
+                            alpha_upper[i] = alpha_upper[i] * acc_ratio_;
+                        }
                     }
 
                     double duration = auto_pick_ptr_->expect_duration * (auto_pick_ptr_->tail - auto_pick_ptr_->smooth_out_stamp) + auto_pick_ptr_->next->expect_duration * auto_pick_ptr_->smooth_in_stamp;
@@ -1484,6 +1514,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     FST_LOG("alpha-upper: %s", printDBLine(&alpha_upper[0], buffer, LOG_TEXT_SIZE));
                     FST_LOG("alpha-lower: %s", printDBLine(&alpha_lower[0], buffer, LOG_TEXT_SIZE));
                     FST_LOG("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
+                    FST_LOG("start time: %.12f", traj_fifo_.timeFromStart());
 
                     for (size_t i = 0; i < 6; i++)
                     {
@@ -1536,6 +1567,8 @@ ErrorCode BaseGroup::createTrajectory(void)
                 auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
 
 #ifdef PRINT_COEFFS
+                FST_LOG("start time: %.12f", traj_fifo_.timeFromStart());
+
                 for (size_t i = 0; i < 6; i++)
                 {
                     FST_LOG("  duration = %.12f, %.12f, %.12f, %.12f, total = %.12f", traj_item.traj_coeff[i].duration[0], traj_item.traj_coeff[i].duration[1], traj_item.traj_coeff[i].duration[2], traj_item.traj_coeff[i].duration[3],
@@ -1555,6 +1588,14 @@ ErrorCode BaseGroup::createTrajectory(void)
                     {
                         computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, dynamics_product);
                         dynamics_cnt = dynamics_cnt_;
+
+                        size_t joint_num = getNumberOfJoint();
+
+                        for (size_t i = 0; i < joint_num; i++)
+                        {
+                            alpha_lower[i] = alpha_lower[i] * acc_ratio_;
+                            alpha_upper[i] = alpha_upper[i] * acc_ratio_;
+                        }
                     }
 
                     err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_pick_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
@@ -1597,6 +1638,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                         FST_LOG("alpha-lower: %s", printDBLine(&alpha_lower[0], buffer, LOG_TEXT_SIZE));
                         FST_LOG("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
                         FST_LOG("exp-duration: %.12f", auto_pick_ptr_->expect_duration);
+                        FST_LOG("start time: %.12f", traj_fifo_.timeFromStart());
 
                         for (size_t i = 0; i < 6; i++)
                         {
@@ -1653,6 +1695,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     memcpy(traj_item.traj_coeff,  pseg->backward_coeff, sizeof(traj_item.traj_coeff));
                     traj_fifo_.push(traj_item);
 #ifdef PRINT_COEFFS
+                    FST_LOG("start time: %.12f", traj_fifo_.timeFromStart());
 
                     for (size_t i = 0; i < 6; i++)
                     {
@@ -1674,6 +1717,14 @@ ErrorCode BaseGroup::createTrajectory(void)
                     {
                         computeDynamics(pseg->start_state.angle, pseg->start_state.omega, alpha_upper, alpha_lower, dynamics_product);
                         dynamics_cnt = dynamics_cnt_;
+
+                        size_t joint_num = getNumberOfJoint();
+
+                        for (size_t i = 0; i < joint_num; i++)
+                        {
+                            alpha_lower[i] = alpha_lower[i] * acc_ratio_;
+                            alpha_upper[i] = alpha_upper[i] * acc_ratio_;
+                        }
                     }
 
                     smoothPoint2Point(pseg->start_state, (pseg + 1)->start_state, ((pseg - 1)->forward_duration + (pseg + 1)->backward_duration) / 2, alpha_upper, alpha_lower, jerk_, traj_item.traj_coeff);
@@ -1711,6 +1762,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     FST_LOG("alpha-upper: %s", printDBLine(&alpha_upper[0], buffer, LOG_TEXT_SIZE));
                     FST_LOG("alpha-lower: %s", printDBLine(&alpha_lower[0], buffer, LOG_TEXT_SIZE));
                     FST_LOG("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
+                    FST_LOG("start time: %.12f", traj_fifo_.timeFromStart());
 
                     for (size_t i = 0; i < 6; i++)
                     {
@@ -2441,6 +2493,7 @@ sample_by_time:
 
 void BaseGroup::realtimeTask(void)
 {
+    char buffer[LOG_TEXT_SIZE];
     ErrorCode   err;
     ServoState  barecore_state;
     Joint   barecore_joint;
@@ -2448,6 +2501,7 @@ void BaseGroup::realtimeTask(void)
     size_t  send_fail_cnt = 0;
     size_t  stable_cnt = 0;
     timeval this_time, last_time;
+    timeval t0, t1, t2, t3;
 
     FST_WARN("Realtime task start.");
     memset(&barecore_joint, 0, sizeof(barecore_joint));
@@ -2458,17 +2512,20 @@ void BaseGroup::realtimeTask(void)
     while (rt_task_active_)
     {
         gettimeofday(&this_time, NULL);
+        gettimeofday(&t0, NULL);
 
         long delay = (this_time.tv_sec - last_time.tv_sec) * 1000 + this_time.tv_usec - last_time.tv_usec;
 
-        if (delay> 50000)
+        if (delay > 90000)
         {
-            FST_ERROR("RT task delayed %d ms !!!!!!", delay / 1000);
+            FST_ERROR(" ++++ RT task delayed %d ms !!!!!!", delay / 1000);
+            FST_ERROR("%d.%d - %d.%d", this_time.tv_sec, this_time.tv_usec, last_time.tv_sec, last_time.tv_usec);
             reportError(MOTION_INTERNAL_FAULT);
         }
 
         last_time = this_time;
 
+        gettimeofday(&t2, NULL);
         if (bare_core_.getLatestJoint(barecore_joint, barecore_state))
         {
             pthread_mutex_lock(&servo_mutex_);
@@ -2481,9 +2538,22 @@ void BaseGroup::realtimeTask(void)
             FST_ERROR("Lost communication with bare core.");
             reportError(BARE_CORE_TIMEOUT);
         }
+        gettimeofday(&t3, NULL);
+
+        delay = (t3.tv_sec - t2.tv_sec) * 1000 + t3.tv_usec - t2.tv_usec;
+
+        if (delay > 30000)
+        {
+            FST_ERROR(" ++++ RT task part1 %d ms !!!!!!", delay / 1000);
+            FST_ERROR("%d.%d - %d.%d", t3.tv_sec, t3.tv_usec, t2.tv_sec, t2.tv_usec);
+        }
 
         if (waiting_fine_)
         {
+            FST_LOG("waiting fine ... type = %d, cnt = %d, grp-state=%d, servo-state=%d", waiting_motion_type_, start_waiting_cnt_, group_state_, servo_state_);
+            FST_LOG("waiting joint = %s", printDBLine(&waiting_joint_[0], buffer, LOG_TEXT_SIZE));
+            FST_LOG("current joint = %s", printDBLine(&barecore_joint[0], buffer, LOG_TEXT_SIZE));
+
             if (start_waiting_cnt_ > 0)
             {
                 start_waiting_cnt_ --;
@@ -2529,7 +2599,17 @@ void BaseGroup::realtimeTask(void)
         if ((servo_state_ == SERVO_IDLE || servo_state_ == SERVO_RUNNING) &&
             (group_state_ == MANUAL || group_state_ == MANUAL_TO_STANDBY || group_state_ == AUTO || group_state_ == AUTO_TO_STANDBY))
         {
+            gettimeofday(&t2, NULL);
             err = sendPoint();
+            gettimeofday(&t3, NULL);
+
+            delay = (t3.tv_sec - t2.tv_sec) * 1000 + t3.tv_usec - t2.tv_usec;
+
+            if (delay > 30000)
+            {
+                FST_ERROR(" ++++ RT task part2 %d ms !!!!!!", delay / 1000);
+                FST_ERROR("%d.%d - %d.%d", t3.tv_sec, t3.tv_usec, t2.tv_sec, t2.tv_usec);
+            }
 
             if (err == SUCCESS)
             {
@@ -2571,6 +2651,16 @@ void BaseGroup::realtimeTask(void)
                      current_joint_[0], current_joint_[1], current_joint_[2], current_joint_[3], current_joint_[4], current_joint_[5]);
         }
          */
+        gettimeofday(&t1, NULL);
+
+        long tm = (t1.tv_sec - t0.tv_sec) * 1000 + t1.tv_usec - t0.tv_usec;
+
+        if (tm > 30000)
+        {
+            FST_ERROR(" ----- RT task cycle time: %d ms !!!!!!", tm / 1000);
+            FST_ERROR("%d.%d - %d.%d", t1.tv_sec, t1.tv_usec, t0.tv_sec, t0.tv_usec);
+            reportError(MOTION_INTERNAL_FAULT);
+        }
 
         usleep(2000);
     }
@@ -2582,9 +2672,10 @@ bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2)
 {
     size_t  joint_num = getNumberOfJoint();
 
-    for (size_t i = 0; i < joint_num; i++)
+    //for (size_t i = 0; i < joint_num; i++)
+    for (size_t i = 0; i < 5; i++)
     {
-        if (fabs(joint1[i] - joint2[i]) > MINIMUM_E6)
+        if (fabs(joint1[i] - joint2[i]) > 0.0001)
         {
             return false;
         }

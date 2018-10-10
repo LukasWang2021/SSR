@@ -398,7 +398,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     {
 		if (instruction->is_additional == false)
 		{
-	     	FST_ERROR("setInstruction:: instr.target.cnt = %f .\n", instruction->target.cnt);
+	     	FST_INFO("setInstruction:: instr.target.cnt = %f .\n", instruction->target.cnt);
 			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
 			//		(void*)instruction, sizeof(Instruction));
 			
@@ -406,7 +406,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 		}
 		else
 		{
-	     	FST_ERROR("setInstruction:: instr.target.cnt = %f .\n", instruction->target.cnt);
+	     	FST_INFO("setInstruction:: instr.target.cnt = %f .\n", instruction->target.cnt);
 			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
 			//  	(void*)instruction, 
 			//  	sizeof(Instruction) 
@@ -452,7 +452,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 
     // Wait until finish 
     ret = g_objRegManagerInterface->isNextInstructionNeeded();
-    FST_ERROR("wait ctrl_status.is_permitted == false\n");
+    FST_INFO("wait ctrl_status.is_permitted == false\n");
     while (ret == false)
     {
 #ifdef WIN32

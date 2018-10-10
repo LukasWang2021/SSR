@@ -56,6 +56,11 @@ int main(int  argc, char *argv[])
 		else
 		{
 			intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
+#ifdef WIN32
+			Sleep(100);
+#else
+			usleep(1000);
+#endif
 		}
 	}
 	return 1;

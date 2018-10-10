@@ -153,7 +153,6 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    state_machine_ptr_->transferRobotStateToTeaching();
     //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doStepManualMove"));
 }
 
@@ -195,7 +194,6 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    state_machine_ptr_->transferRobotStateToTeaching();
     //recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/doContinuousManualMove"));
 }
 

@@ -531,8 +531,16 @@ void ControllerSm::transferRobotState()
     switch(robot_state_)
     {
         case ROBOT_IDLE_TO_RUNNING:
-            recordLog("Robot transfer to RUNNING");
-            robot_state_ = ROBOT_RUNNING;
+            if(is_error_exist_)
+            {
+                recordLog("Robot transfer to IDLE");
+                robot_state_ = ROBOT_RUNNING_TO_IDLE;
+            }
+            else if(interpreter_state_ == INTERPRETER_EXECUTE)
+            {
+                recordLog("Robot transfer to RUNNING");
+                robot_state_ = ROBOT_RUNNING;
+            }
             break;
         case ROBOT_IDLE_TO_TEACHING:
             recordLog("Robot transfer to TEACHING");
@@ -550,6 +558,7 @@ void ControllerSm::transferRobotState()
             if(servo_state_ != SERVO_RUNNING)
             {
                 is_continuous_manual_move_timeout_ = false;
+                memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
                 recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
@@ -634,7 +643,17 @@ void ControllerSm::handleContinuousManualRpcTimeout()
     if(time_elapse > param_ptr_->max_continuous_manual_move_timeout_)
     {
         is_continuous_manual_move_timeout_ = true;
-        ErrorCode error_code = motion_control_ptr_->manualStop();
+        GroupDirection direction;
+        direction.axis1 = fst_mc::STANDING;
+        direction.axis2 = fst_mc::STANDING;
+        direction.axis3 = fst_mc::STANDING;
+        direction.axis4 = fst_mc::STANDING;
+        direction.axis5 = fst_mc::STANDING;
+        direction.axis6 = fst_mc::STANDING;
+        direction.axis7 = fst_mc::STANDING;
+        direction.axis8 = fst_mc::STANDING;
+        direction.axis9 = fst_mc::STANDING;        
+        ErrorCode error_code = motion_control_ptr_->doContinuousManualMove(direction);
         if(error_code != SUCCESS)
         {
             ErrorMonitor::instance()->add(error_code);

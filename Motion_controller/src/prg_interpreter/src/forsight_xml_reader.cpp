@@ -752,7 +752,7 @@ int generateWaitInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 {
 	// char waitParam[1024];
     xmlNodePtr nodeInstructionParam;
-    xmlChar *name, *value;
+    xmlChar *name, *value, *type;
 	name = xmlGetProp(nodeInstructionStatement,BAD_CAST"type");
 	
 	string strCommandName = (char *)name;
@@ -767,6 +767,7 @@ int generateWaitInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 		value = xmlNodeGetContent(nodeInstructionParam);
         if(xmlStrcasecmp(nodeInstructionParam->name,BAD_CAST"argument")==0){
 			name = xmlGetProp(nodeInstructionParam, BAD_CAST"name");
+			type = xmlGetProp(nodeInstructionParam, BAD_CAST"type");
 			// All of parameters should have spaces after them . 
 			// Without the space, it would cause the expression analyzer work failed
 			if(xmlStrcasecmp(name, BAD_CAST"condition")==0){
@@ -774,7 +775,12 @@ int generateWaitInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 				generateOffsetCondition(nodeInstructionParam, objLineInfo);
 			}
 			else if(xmlStrcasecmp(name, BAD_CAST"timeout")==0){
-				printBASCode(objLineInfo, " %s", (char*)value);
+				if(xmlStrcasecmp(type, BAD_CAST"register")==0){
+					printBASCode(objLineInfo, " R[%s]", (char*)value);
+				}
+				else if(xmlStrcasecmp(type, BAD_CAST"number_register")==0){
+					printBASCode(objLineInfo, " MR[%s]", (char*)value);
+				}
 			}
 			else if(xmlStrcasecmp(name, BAD_CAST"call_back")==0){
 				printBASCode(objLineInfo, " %s", (char*)value);

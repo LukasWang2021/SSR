@@ -1278,6 +1278,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
 		// Need not get_token again . let call_interpreter filter it .
 		timeWaitSeconds = (int)value.getFloatValue() ;
+	    printf("call_Wait timeWaitSeconds = %d at %lld.\n", timeWaitSeconds, time(NULL));
 		now = timeStart  = time(0);
 		while(now - timeStart < timeWaitSeconds)
 		{
@@ -1288,6 +1289,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #endif
 			now = time(0);
 		}
+	    printf("call_Wait timeWaitSeconds = %d at %lld.\n", timeWaitSeconds, time(NULL));
 		find_eol(objThreadCntrolBlock);
     }
     else  // Deal wait with condition

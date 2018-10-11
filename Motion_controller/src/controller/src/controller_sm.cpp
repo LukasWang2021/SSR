@@ -165,8 +165,9 @@ ErrorCode ControllerSm::callEstop()
         || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED
         || ctrl_state_ == CTRL_INIT)
     {
-        motion_control_ptr_->stopGroup();
         controller_client_ptr_->abort();
+        motion_control_ptr_->stopGroup();
+        motion_control_ptr_->abortMove();
         //FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     } 

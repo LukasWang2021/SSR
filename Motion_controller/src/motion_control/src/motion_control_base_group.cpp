@@ -22,8 +22,8 @@ using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
 
-#define OUTPUT_JOUT
-#define OUTPUT_COEFF
+//#define OUTPUT_JOUT
+//#define OUTPUT_COEFF
 //#define OUTPUT_POUT
 
 namespace fst_mc
@@ -660,8 +660,6 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
     FST_INFO("Auto move request received, motion ID = %d, type = %d", id, target.type);
     ErrorCode err;
 
-    bool valid_cache = auto_pick_ptr_->valid;
-
     switch (target.type)
     {
         case MOTION_JOINT:
@@ -671,18 +669,21 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
             err = autoLine(target.pose_target, target.vel, target.cnt, id);
             break;
         case MOTION_CIRCLE:
-            err = autoCircle(target.circle_target.pose1, target.circle_target.pose2, target.vel, target.cnt, id);
-            break;
+            //err = autoCircle(target.circle_target.pose1, target.circle_target.pose2, target.vel, target.cnt, id);
+            //break;
         default:
             FST_ERROR("Invalid motion type, auto move aborted.");
-            return INVALID_PARAMETER;
+            err = INVALID_PARAMETER;
+            break;
     }
 
     if (err == SUCCESS)
     {
         //if (group_state_ == STANDBY)
-        //FST_INFO("grp-state=%d, servo-state=%d, auto-ptr-valid = %d", group_state_, servo_state_, valid_cache);
-        if ((group_state_ == STANDBY && servo_state_ == SERVO_IDLE) || !valid_cache)
+        pthread_mutex_lock(&auto_mutex_);
+        FST_INFO("grp-state=%d, servo-state=%d, auto-ptr-valid = %d", group_state_, servo_state_, auto_pick_ptr_->valid);
+
+        if (auto_pick_ptr_->valid == false)
         {
             size_t cnt = 0;
 
@@ -694,21 +695,23 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
             if (auto_pick_ptr_->valid)
             {
                 auto_pick_segment_ = 1;
-
-                if (group_state_ == STANDBY)
-                {
-                    auto_time_ = 0;
-                    group_state_ = AUTO;
-                }
-
-                FST_INFO("Start motion, pick-cache = %p, pick-seg = %d, pick-time = %.4f", auto_pick_ptr_, auto_pick_segment_, auto_time_);
+                FST_INFO("Start motion, pick-cache = %p, pick-seg = %d", auto_pick_ptr_, auto_pick_segment_);
             }
             else
             {
                 FST_INFO("Trajectory cache not ready.");
+                pthread_mutex_unlock(&auto_mutex_);
                 return MOTION_INTERNAL_FAULT;
             }
         }
+
+        if (group_state_ == STANDBY)
+        {
+            auto_time_ = 0;
+            group_state_ = AUTO;
+        }
+
+        FST_INFO("Auto pick-time = %.4f", auto_time_);
 
         if (target.cnt < 0)
         {
@@ -731,18 +734,24 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
             else
             {
                 FST_ERROR("Move by 'FINE', motion type = %d invalid", target.type);
+                pthread_mutex_unlock(&auto_mutex_);
                 return MOTION_INTERNAL_FAULT;
             }
         }
+
+        FST_INFO("autoMove: success!");
+        pthread_mutex_unlock(&auto_mutex_);
+        return SUCCESS;
+    }
+    else if (err == 0xA000B000C000D000)
+    {
+        return SUCCESS;
     }
     else
     {
         FST_ERROR("autoMove: failed, code = 0x%llx", err);
         return err;
     }
-
-    FST_INFO("autoMove: success!");
-    return SUCCESS;
 }
 
 ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int id)
@@ -786,12 +795,19 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
+    if (isSameJoint(start_joint, target))
+    {
+        FST_WARN("Start joint same as target joint");
+        return 0xA000B000C000D000;
+    }
+
     ErrorCode err;
     size_t  index, length;
     double  precision = 0.01;
     Joint   path[MAX_PATH_SIZE];
     planJointPath(start_joint, target, precision, index, path, length);
-    TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
+    //TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
+    TrajectoryCache *p_cache = auto_pick_ptr_->next;
 
     for (size_t i = 0; i < length; i++)
     {
@@ -880,7 +896,8 @@ ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, i
     kinematics_ptr_->forwardKinematicsInUser(start_joint, start);
     FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start.position.x, start.position.y, start.position.z, start.orientation.a, start.orientation.b, start.orientation.c);
     planLinePath(start, target, precision, path, length);
-    TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
+    //TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
+    TrajectoryCache *p_cache = auto_pick_ptr_->next;
 
     for (size_t i = 0; i < length; i++)
     {
@@ -1022,7 +1039,6 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
 //#define PRINT_CACHE
 #define CHECK_COEFF
 
-
 #ifdef CHECK_COEFF
 bool checkCoeff(TrajSegment (&segment)[NUM_OF_JOINT])
 {
@@ -1044,10 +1060,10 @@ bool checkCoeff(TrajSegment (&segment)[NUM_OF_JOINT])
 
         duration[i] = segment[i].duration[0] + segment[i].duration[1] + segment[i].duration[2] + segment[i].duration[3];
 
-        if (fabs(segment[i].coeff[0][0]) > 10 || fabs(segment[i].coeff[0][1]) > 10 || fabs(segment[i].coeff[0][2]) > 1000 || fabs(segment[i].coeff[0][3]) > 10000000 ||
-            fabs(segment[i].coeff[1][0]) > 10 || fabs(segment[i].coeff[1][1]) > 10 || fabs(segment[i].coeff[1][2]) > 1000 || fabs(segment[i].coeff[1][3]) > 10000000 ||
-            fabs(segment[i].coeff[2][0]) > 10 || fabs(segment[i].coeff[2][1]) > 10 || fabs(segment[i].coeff[2][2]) > 1000 || fabs(segment[i].coeff[2][3]) > 10000000 ||
-            fabs(segment[i].coeff[3][0]) > 10 || fabs(segment[i].coeff[3][1]) > 10 || fabs(segment[i].coeff[3][2]) > 1000 || fabs(segment[i].coeff[3][3]) > 10000000)
+        if (fabs(segment[i].coeff[0][0]) > 10 || fabs(segment[i].coeff[0][1]) > 12 || fabs(segment[i].coeff[0][2]) > 1000 || fabs(segment[i].coeff[0][3]) > 10000000 ||
+            fabs(segment[i].coeff[1][0]) > 10 || fabs(segment[i].coeff[1][1]) > 12 || fabs(segment[i].coeff[1][2]) > 1000 || fabs(segment[i].coeff[1][3]) > 10000000 ||
+            fabs(segment[i].coeff[2][0]) > 10 || fabs(segment[i].coeff[2][1]) > 12 || fabs(segment[i].coeff[2][2]) > 1000 || fabs(segment[i].coeff[2][3]) > 10000000 ||
+            fabs(segment[i].coeff[3][0]) > 10 || fabs(segment[i].coeff[3][1]) > 12 || fabs(segment[i].coeff[3][2]) > 1000 || fabs(segment[i].coeff[3][3]) > 10000000)
         {
             printf("coeff error\n");
             return false;
@@ -1468,6 +1484,7 @@ ErrorCode BaseGroup::abortMove(void)
 {
     if (group_state_ == AUTO || group_state_ == PAUSE)
     {
+        pthread_mutex_lock(&auto_mutex_);
         group_state_ = STANDBY;
         auto_time_ = 0;
         traj_fifo_.clear();
@@ -1478,6 +1495,8 @@ ErrorCode BaseGroup::abortMove(void)
             auto_pick_ptr_->valid = false;
             auto_pick_ptr_ = auto_pick_ptr_->next;
         }
+
+        pthread_mutex_unlock(&auto_mutex_);
     }
 
     FST_WARN("Auto move Aborted");
@@ -1491,23 +1510,26 @@ bool BaseGroup::nextMovePermitted(void)
         return false;
     }
 
+    pthread_mutex_lock(&auto_mutex_);
 
     if (group_state_ == AUTO || group_state_ == AUTO_TO_STANDBY || group_state_ == STANDBY_TO_AUTO)
     {
         TrajectoryCache *ptr = auto_pick_ptr_->next->valid ? auto_pick_ptr_->next : auto_pick_ptr_;
 
-        if (ptr->valid && auto_time_ + 0.1 < ptr->deadline)
+        if (ptr->valid && auto_time_ + 0.15 < ptr->deadline)
         {
             FST_LOG("Not-permitted: auto-time = %.4f, deadline = %.4f", auto_time_, ptr->deadline);
+            pthread_mutex_unlock(&auto_mutex_);
             return false;
         }
     }
 
     FST_WARN("Next motion permitted: auto-time = %.4f, deadline = %.4f", auto_time_, auto_pick_ptr_->deadline);
+    pthread_mutex_unlock(&auto_mutex_);
     return true;
 }
 
-#define  PRINT_COEFFS
+//#define  PRINT_COEFFS
 
 ErrorCode BaseGroup::createTrajectory(void)
 {
@@ -1521,15 +1543,15 @@ ErrorCode BaseGroup::createTrajectory(void)
     TrajectoryItem      traj_item;
     TrajectorySegment   *pseg;
 
-
     if (group_state_ == AUTO && auto_pick_ptr_->valid)
     {
-        while ((traj_fifo_.duration() < 0.1 && !traj_fifo_.full()) || traj_fifo_.size() < 3)
+        while ((traj_fifo_.duration() < 0.15 && !traj_fifo_.full()) || traj_fifo_.size() < 3)
         {
             if (auto_pick_segment_ >= auto_pick_ptr_->tail)
             {
                 //FST_WARN("cache ptr = %x is empty", auto_pick_ptr_);
 
+                pthread_mutex_lock(&auto_mutex_);
                 if (auto_pick_ptr_->next->valid)
                 {
                     auto_pick_ptr_->valid = false;
@@ -1542,8 +1564,10 @@ ErrorCode BaseGroup::createTrajectory(void)
                     auto_pick_ptr_->valid = false;
                     auto_pick_segment_ = 1;
                     FST_INFO("auto-pick-ptr turn to invalid");
+                    pthread_mutex_unlock(&auto_mutex_);
                     break;
                 }
+                pthread_mutex_unlock(&auto_mutex_);
             }
 
 #ifdef PRINT_COEFFS
@@ -1615,6 +1639,9 @@ ErrorCode BaseGroup::createTrajectory(void)
                             FST_ERROR("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[2][3], traj_item.traj_coeff[i].coeff[2][2], traj_item.traj_coeff[i].coeff[2][1], traj_item.traj_coeff[i].coeff[2][0]);
                             FST_ERROR("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[3][3], traj_item.traj_coeff[i].coeff[3][2], traj_item.traj_coeff[i].coeff[3][1], traj_item.traj_coeff[i].coeff[3][0]);
                         }
+
+                        FST_ERROR("createTrajectory: internal fault !!!");
+                        return MOTION_INTERNAL_FAULT;
                     }
 #endif
 #ifdef PRINT_COEFFS
@@ -1644,12 +1671,14 @@ ErrorCode BaseGroup::createTrajectory(void)
                     traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
                     traj_fifo_.push(traj_item);
 
+                    pthread_mutex_lock(&auto_mutex_);
                     auto_pick_ptr_->valid = false;
                     auto_pick_ptr_ = auto_pick_ptr_->next;
                     auto_pick_segment_ = auto_pick_ptr_->smooth_in_stamp + 1;
+                    pthread_mutex_unlock(&auto_mutex_);
                     continue;
                 }
-                else if (auto_time_ + 0.02 < traj_fifo_.timeFromStart())
+                else if (auto_time_ + 0.05 < traj_fifo_.timeFromStart())
                 {
                     // Next motion is NOT ready, waiting for next motion
                     FST_LOG("Next motion is NOT ready, waiting for next motion");
@@ -1749,6 +1778,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                                 FST_ERROR("          %.6f, %.6f, %.6f, %.6f", pseg->forward_coeff[i].coeff[3][3], pseg->forward_coeff[i].coeff[3][2], pseg->forward_coeff[i].coeff[3][1], pseg->forward_coeff[i].coeff[3][0]);
                             }
 
+                            FST_ERROR("createTrajectory: internal fault !!!");
                             return MOTION_INTERNAL_FAULT;
                         }
 #endif
@@ -1805,6 +1835,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                             FST_ERROR("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[3][3], traj_item.traj_coeff[i].coeff[3][2], traj_item.traj_coeff[i].coeff[3][1], traj_item.traj_coeff[i].coeff[3][0]);
                         }
 
+                        FST_ERROR("createTrajectory: internal fault !!!");
                         return MOTION_INTERNAL_FAULT;
                     }
                 }
@@ -1887,6 +1918,9 @@ ErrorCode BaseGroup::createTrajectory(void)
                             FST_ERROR("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[2][3], traj_item.traj_coeff[i].coeff[2][2], traj_item.traj_coeff[i].coeff[2][1], traj_item.traj_coeff[i].coeff[2][0]);
                             FST_ERROR("          %.6f, %.6f, %.6f, %.6f", traj_item.traj_coeff[i].coeff[3][3], traj_item.traj_coeff[i].coeff[3][2], traj_item.traj_coeff[i].coeff[3][1], traj_item.traj_coeff[i].coeff[3][0]);
                         }
+
+                        FST_ERROR("createTrajectory: internal fault !!!");
+                        return MOTION_INTERNAL_FAULT;
                     }
 #endif
 #ifdef PRINT_COEFFS
@@ -2428,10 +2462,10 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
                 g_jindex = (g_jindex + 1) % JOUT_SIZE;
 #endif
 
-                FST_LOG ("%.4f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
-                         point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
-                         point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
-                         point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
+                //FST_LOG ("%.4f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
+                //         point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
+                //         point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
+                //         point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
 
                 if (err == SUCCESS)
                 {
@@ -2466,10 +2500,10 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
             g_jindex = (g_jindex + 1) % JOUT_SIZE;
 #endif
 
-            FST_LOG ("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
-                     point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
-                     point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
-                     point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
+            //FST_LOG ("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
+            //         point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
+            //         point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
+            //         point[i].alpha[0], point[i].alpha[1], point[i].alpha[2], point[i].alpha[3], point[i].alpha[4], point[i].alpha[5]);
 
             if (err == SUCCESS)
             {
@@ -2674,7 +2708,7 @@ void BaseGroup::realtimeTask(void)
 
         delay = (t3.tv_sec - t2.tv_sec) * 1000 + t3.tv_usec - t2.tv_usec;
 
-        if (delay > 30000)
+        if (delay > 5000)
         {
             FST_ERROR(" ++++ RT task part1 %d ms !!!!!!", delay / 1000);
             FST_ERROR("%d.%d - %d.%d", t3.tv_sec, t3.tv_usec, t2.tv_sec, t2.tv_usec);
@@ -2737,7 +2771,7 @@ void BaseGroup::realtimeTask(void)
 
             delay = (t3.tv_sec - t2.tv_sec) * 1000 + t3.tv_usec - t2.tv_usec;
 
-            if (delay > 30000)
+            if (delay > 90000)
             {
                 FST_ERROR(" ++++ RT task part2 %d ms !!!!!!", delay / 1000);
                 FST_ERROR("%d.%d - %d.%d", t3.tv_sec, t3.tv_usec, t2.tv_sec, t2.tv_usec);
@@ -2787,7 +2821,7 @@ void BaseGroup::realtimeTask(void)
 
         long tm = (t1.tv_sec - t0.tv_sec) * 1000 + t1.tv_usec - t0.tv_usec;
 
-        if (tm > 30000)
+        if (tm > 90000)
         {
             FST_ERROR(" ----- RT task cycle time: %d ms !!!!!!", tm / 1000);
             FST_ERROR("%d.%d - %d.%d", t1.tv_sec, t1.tv_usec, t0.tv_sec, t0.tv_usec);

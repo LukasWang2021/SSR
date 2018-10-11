@@ -13,7 +13,6 @@
 #define minimq 1e-6
 #define minimv 1e-7
 #define pi 3.141592625
-#define printf
 
 extern fst_algorithm::DynamicsInterface g_dynamics_interface;
 
@@ -1686,7 +1685,7 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
     double oddqf[6] = { 0 };
     ErrorCode ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, ddq_min,jk, Ti,ocoeff,oTa,otqf,odqf,oddqf, 1, Ta, coeff, &maxT, tqf, dqf, ddqf);
 
-    printf("maxT=%f\n", maxT);
+    //printf("maxT=%f\n", maxT);
 
     for (int i = 0; i < 6; i++)
     {
@@ -1822,7 +1821,7 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
     double oddqf[6] = { 0 };
     ErrorCode ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max,ddq_min, jk, Ti,ocoeff,oTa,otqf,odqf,oddqf, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
 
-    printf("maxT=%f\n", maxT);
+    //printf("maxT=%f\n", maxT);
 
     for (int i = 0; i < 6; i++)
     {

@@ -302,12 +302,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     manual_teach_.setGlobalVelRatio(vel_ratio_);
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
-    jerk_.j1 = 5.0 * 0.5 / 1.3 * 10000 * 81;
-    jerk_.j2 = 3.3 * 0.4 / 0.44 * 10000 * 101;
-    jerk_.j3 = 3.3 * 0.4 / 0.44 * 10000 * 81;
-    jerk_.j4 = 1.7 * 0.39 / 0.18 * 10000 * 60;
-    jerk_.j5 = 1.7 * 0.25 / 0.17 * 10000 * 66.66667;
-    jerk_.j6 = 1.7 * 0.25 / 0.17 * 10000 * 44.64286;
+    jerk_.j1 = 5.0 * 0.5 / 1.3 * 10000 * 81 * 1;
+    jerk_.j2 = 3.3 * 0.4 / 0.44 * 10000 * 101 * 1;
+    jerk_.j3 = 3.3 * 0.4 / 0.44 * 10000 * 81 * 1;
+    jerk_.j4 = 1.7 * 0.39 / 0.18 * 10000 * 60 * 1;
+    jerk_.j5 = 1.7 * 0.25 / 0.17 * 10000 * 66.66667 * 1;
+    jerk_.j6 = 1.7 * 0.25 / 0.17 * 10000 * 44.64286 * 1;
 
     return SUCCESS;
 }

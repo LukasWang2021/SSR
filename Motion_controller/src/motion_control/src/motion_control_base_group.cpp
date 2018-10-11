@@ -23,13 +23,56 @@ using namespace basic_alg;
 using namespace fst_parameter;
 
 #define OUTPUT_JOUT
+#define OUTPUT_COEFF
 //#define OUTPUT_POUT
 
 namespace fst_mc
 {
 #ifdef OUTPUT_JOUT
-std::ofstream jout("jout.csv");
+#define JOUT_SIZE   (200 * 1000)
+
+struct JointOut
+{
+    double time;
+    JointPoint point;
+};
+
+size_t    g_jindex = 0;
+JointOut  g_jout[JOUT_SIZE];
+ofstream  jout("jout.csv");
+
 #endif
+
+#ifdef OUTPUT_COEFF
+#define COEFF_SIZE   (100000)
+
+
+enum CoeffOutputType
+{
+    FORE_CYCLE = 0,
+    BACK_CYCLE = 1,
+    SMOOTH_CYCLE = 2,
+};
+
+struct CoeffOut
+{
+    JointPoint start;
+    JointPoint ending;
+    Joint alpha_upper;
+    Joint alpha_lower;
+    double exp_duration;
+    double duration;
+    double start_time;
+    CoeffOutputType type;
+    TrajSegment segment[NUM_OF_JOINT];
+};
+
+size_t   g_cindex = 0;
+CoeffOut g_cout[COEFF_SIZE];
+ofstream coeff_out("cout.csv");
+
+#endif
+
 #ifdef OUTPUT_POUT
 std::ofstream pout("pout.csv");
 #endif
@@ -61,8 +104,64 @@ BaseGroup::~BaseGroup()
     }
 
 #ifdef OUTPUT_JOUT
+    jout << "time-of-start,angle[0],angle[1],angle[2],angle[3],angle[4],angle[5],omega[0],omega[1],omega[2],omega[3],omega[4],omega[5],alpha[0],alpha[1],alpha[2],alpha[3],alpha[4],alpha[5]" << endl;
+
+    for (size_t i = 0; i < g_jindex; i++)
+    {
+        jout << g_jout[i].time << ","
+             << g_jout[i].point.angle[0] << "," << g_jout[i].point.angle[1] << "," << g_jout[i].point.angle[2] << "," << g_jout[i].point.angle[3] << "," << g_jout[i].point.angle[4] << "," << g_jout[i].point.angle[5] << ","
+             << g_jout[i].point.omega[0] << "," << g_jout[i].point.omega[1] << "," << g_jout[i].point.omega[2] << "," << g_jout[i].point.omega[3] << "," << g_jout[i].point.omega[4] << "," << g_jout[i].point.omega[5] << ","
+             << g_jout[i].point.alpha[0] << "," << g_jout[i].point.alpha[1] << "," << g_jout[i].point.alpha[2] << "," << g_jout[i].point.alpha[3] << "," << g_jout[i].point.alpha[4] << "," << g_jout[i].point.alpha[5] << endl;
+    }
+
     jout.close();
 #endif
+
+#ifdef OUTPUT_COEFF
+    coeff_out << "type,"
+              << "start.angle[0],start.angle[1],start.angle[2],start.angle[3],start.angle[4],start.angle[5],start.omega[0],start.omega[1],start.omega[2],start.omega[3],start.omega[4],start.omega[5],start.alpha[0],start.alpha[1],start.alpha[2],start.alpha[3],start.alpha[4],start.alpha[5],"
+              << "ending.angle[0],ending.angle[1],ending.angle[2],ending.angle[3],ending.angle[4],ending.angle[5],ending.omega[0],ending.omega[1],ending.omega[2],ending.omega[3],ending.omega[4],ending.omega[5],ending.alpha[0],ending.alpha[1],ending.alpha[2],ending.alpha[3],ending.alpha[4],ending.alpha[5],"
+              << "alpha_upper[0],alpha_upper[1],alpha_upper[2],alpha_upper[3],alpha_upper[4],alpha_upper[5],alpha_lower[0],alpha_lower[1],alpha_lower[2],alpha_lower[3],alpha_lower[4],alpha_lower[5],"
+              << "exp-duration,duration,start-time,"
+              << "j0.duration[0],j0.duration[1],j0.duration[2],j0.duration[3],"
+              << "j0.coeff[0][3],j0.coeff[0][2],j0.coeff[0][1],j0.coeff[0][0],j0.coeff[1][3],j0.coeff[1][2],j0.coeff[1][1],j0.coeff[1][0],j0.coeff[2][3],j0.coeff[2][2],j0.coeff[2][1],j0.coeff[2][0],j0.coeff[3][3],j0.coeff[3][2],j0.coeff[3][1],j0.coeff[3][0],"
+              << "j1.duration[0],j1.duration[1],j1.duration[2],j1.duration[3],"
+              << "j1.coeff[0][3],j1.coeff[0][2],j1.coeff[0][1],j1.coeff[0][0],j1.coeff[1][3],j1.coeff[1][2],j1.coeff[1][1],j1.coeff[1][0],j1.coeff[2][3],j1.coeff[2][2],j1.coeff[2][1],j1.coeff[2][0],j1.coeff[3][3],j1.coeff[3][2],j1.coeff[3][1],j1.coeff[3][0],"
+              << "j2.duration[0],j2.duration[1],j2.duration[2],j2.duration[3],"
+              << "j2.coeff[0][3],j2.coeff[0][2],j2.coeff[0][1],j2.coeff[0][0],j2.coeff[1][3],j2.coeff[1][2],j2.coeff[1][1],j2.coeff[1][0],j2.coeff[2][3],j2.coeff[2][2],j2.coeff[2][1],j2.coeff[2][0],j2.coeff[3][3],j2.coeff[3][2],j2.coeff[3][1],j2.coeff[3][0],"
+              << "j3.duration[0],j3.duration[1],j3.duration[2],j3.duration[3],"
+              << "j3.coeff[0][3],j3.coeff[0][2],j3.coeff[0][1],j3.coeff[0][0],j3.coeff[1][3],j3.coeff[1][2],j3.coeff[1][1],j3.coeff[1][0],j3.coeff[2][3],j3.coeff[2][2],j3.coeff[2][1],j3.coeff[2][0],j3.coeff[3][3],j3.coeff[3][2],j3.coeff[3][1],j3.coeff[3][0],"
+              << "j4.duration[0],j4.duration[1],j4.duration[2],j4.duration[3],"
+              << "j4.coeff[0][3],j4.coeff[0][2],j4.coeff[0][1],j4.coeff[0][0],j4.coeff[1][3],j4.coeff[1][2],j4.coeff[1][1],j4.coeff[1][0],j4.coeff[2][3],j4.coeff[2][2],j4.coeff[2][1],j4.coeff[2][0],j4.coeff[3][3],j4.coeff[3][2],j4.coeff[3][1],j4.coeff[3][0],"
+              << "j5.duration[0],j5.duration[1],j5.duration[2],j5.duration[3],"
+              << "j5.coeff[0][3],j5.coeff[0][2],j5.coeff[0][1],j5.coeff[0][0],j5.coeff[1][3],j5.coeff[1][2],j5.coeff[1][1],j5.coeff[1][0],j5.coeff[2][3],j5.coeff[2][2],j5.coeff[2][1],j5.coeff[2][0],j5.coeff[3][3],j5.coeff[3][2],j5.coeff[3][1],j5.coeff[3][0],"
+              << endl;
+    for (size_t i = 0; i < g_cindex; i++)
+    {
+        coeff_out << g_cout[i].type << ","
+                  << g_cout[i].start.angle[0] << "," << g_cout[i].start.angle[1] << "," << g_cout[i].start.angle[2] << "," << g_cout[i].start.angle[3] << "," << g_cout[i].start.angle[4] << "," << g_cout[i].start.angle[5] << ","
+                  << g_cout[i].start.omega[0] << "," << g_cout[i].start.omega[1] << "," << g_cout[i].start.omega[2] << "," << g_cout[i].start.omega[3] << "," << g_cout[i].start.omega[4] << "," << g_cout[i].start.omega[5] << ","
+                  << g_cout[i].start.alpha[0] << "," << g_cout[i].start.alpha[1] << "," << g_cout[i].start.alpha[2] << "," << g_cout[i].start.alpha[3] << "," << g_cout[i].start.alpha[4] << "," << g_cout[i].start.alpha[5] << ","
+                  << g_cout[i].ending.angle[0] << "," << g_cout[i].ending.angle[1] << "," << g_cout[i].ending.angle[2] << "," << g_cout[i].ending.angle[3] << "," << g_cout[i].ending.angle[4] << "," << g_cout[i].ending.angle[5] << ","
+                  << g_cout[i].ending.omega[0] << "," << g_cout[i].ending.omega[1] << "," << g_cout[i].ending.omega[2] << "," << g_cout[i].ending.omega[3] << "," << g_cout[i].ending.omega[4] << "," << g_cout[i].ending.omega[5] << ","
+                  << g_cout[i].ending.alpha[0] << "," << g_cout[i].ending.alpha[1] << "," << g_cout[i].ending.alpha[2] << "," << g_cout[i].ending.alpha[3] << "," << g_cout[i].ending.alpha[4] << "," << g_cout[i].ending.alpha[5] << ","
+                  << g_cout[i].alpha_upper[0] << "," << g_cout[i].alpha_upper[1] << "," << g_cout[i].alpha_upper[2] << "," << g_cout[i].alpha_upper[3] << "," << g_cout[i].alpha_upper[4] << "," << g_cout[i].alpha_upper[5] << ","
+                  << g_cout[i].alpha_lower[0] << "," << g_cout[i].alpha_lower[1] << "," << g_cout[i].alpha_lower[2] << "," << g_cout[i].alpha_lower[3] << "," << g_cout[i].alpha_lower[4] << "," << g_cout[i].alpha_lower[5] << ","
+                  << g_cout[i].exp_duration << "," << g_cout[i].duration << "," << g_cout[i].start_time;
+
+        for (size_t j = 0; j < 6; j++)
+        {
+            coeff_out << g_cout[i].segment[j].duration[0] << "," << g_cout[i].segment[j].duration[1] << "," << g_cout[i].segment[j].duration[2] << "," << g_cout[i].segment[j].duration[3] << ","
+                      << g_cout[i].segment[j].coeff[0][3] << "," << g_cout[i].segment[j].coeff[0][2] << "," << g_cout[i].segment[j].coeff[0][1] << "," << g_cout[i].segment[j].coeff[0][0] << ","
+                      << g_cout[i].segment[j].coeff[1][3] << "," << g_cout[i].segment[j].coeff[1][2] << "," << g_cout[i].segment[j].coeff[1][1] << "," << g_cout[i].segment[j].coeff[1][0] << ","
+                      << g_cout[i].segment[j].coeff[2][3] << "," << g_cout[i].segment[j].coeff[2][2] << "," << g_cout[i].segment[j].coeff[2][1] << "," << g_cout[i].segment[j].coeff[2][0] << ","
+                      << g_cout[i].segment[j].coeff[3][3] << "," << g_cout[i].segment[j].coeff[3][2] << "," << g_cout[i].segment[j].coeff[3][1] << "," << g_cout[i].segment[j].coeff[3][0];
+        }
+
+        coeff_out << endl;
+    }
+#endif
+
 #ifdef OUTPUT_POUT
     pout.close();
 #endif
@@ -1484,6 +1583,18 @@ ErrorCode BaseGroup::createTrajectory(void)
                     smoothPoint2Point(pseg->start_state, auto_pick_ptr_->next->cache[auto_pick_ptr_->next->smooth_in_stamp].ending_state, duration, alpha_upper, alpha_lower, jerk_, traj_item.traj_coeff);
                     dynamics_cnt = dynamics_cnt > 0 ? dynamics_cnt - 1 : 0;
 
+#ifdef OUTPUT_COEFF
+                    g_cout[g_cindex].type = SMOOTH_CYCLE;
+                    g_cout[g_cindex].start = pseg->start_state;
+                    g_cout[g_cindex].ending = auto_pick_ptr_->next->cache[auto_pick_ptr_->next->smooth_in_stamp].ending_state;
+                    g_cout[g_cindex].alpha_upper = alpha_upper;
+                    g_cout[g_cindex].alpha_lower = alpha_lower;
+                    g_cout[g_cindex].exp_duration = duration;
+                    g_cout[g_cindex].duration = traj_item.traj_coeff[0].duration[0] + traj_item.traj_coeff[0].duration[1] + traj_item.traj_coeff[0].duration[2] + traj_item.traj_coeff[0].duration[3];
+                    g_cout[g_cindex].start_time = traj_fifo_.timeFromStart();
+                    memcpy(g_cout[g_cindex].segment, traj_item.traj_coeff, sizeof(traj_item.traj_coeff));
+                    g_cindex = (g_cindex + 1) % COEFF_SIZE;
+#endif
 #ifdef CHECK_COEFF
                     if (!checkCoeff(traj_item.traj_coeff))
                     {
@@ -1601,6 +1712,18 @@ ErrorCode BaseGroup::createTrajectory(void)
                     err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_pick_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
                     dynamics_cnt = dynamics_cnt > 0 ? dynamics_cnt - 1: 0;
 
+#ifdef OUTPUT_COEFF
+                    g_cout[g_cindex].type = FORE_CYCLE;
+                    g_cout[g_cindex].start = pseg->start_state;
+                    g_cout[g_cindex].ending = pseg->ending_state;
+                    g_cout[g_cindex].alpha_upper = alpha_upper;
+                    g_cout[g_cindex].alpha_lower = alpha_lower;
+                    g_cout[g_cindex].exp_duration = auto_pick_ptr_->expect_duration;
+                    g_cout[g_cindex].duration = pseg->forward_coeff[0].duration[0] + pseg->forward_coeff[0].duration[1] + pseg->forward_coeff[0].duration[2] + pseg->forward_coeff[0].duration[3];
+                    g_cout[g_cindex].start_time = traj_fifo_.timeFromStart();
+                    memcpy(g_cout[g_cindex].segment, pseg->forward_coeff, sizeof(pseg->forward_coeff));
+                    g_cindex = (g_cindex + 1) % COEFF_SIZE;
+#endif
                     if (err == SUCCESS)
                     {
 #ifdef CHECK_COEFF
@@ -1730,6 +1853,19 @@ ErrorCode BaseGroup::createTrajectory(void)
                     smoothPoint2Point(pseg->start_state, (pseg + 1)->start_state, ((pseg - 1)->forward_duration + (pseg + 1)->backward_duration) / 2, alpha_upper, alpha_lower, jerk_, traj_item.traj_coeff);
                     dynamics_cnt = dynamics_cnt > 0 ? dynamics_cnt - 1: 0;
 
+#ifdef OUTPUT_COEFF
+                    g_cout[g_cindex].type = SMOOTH_CYCLE;
+                    g_cout[g_cindex].start = pseg->start_state;
+                    g_cout[g_cindex].ending = (pseg + 1)->start_state;
+                    g_cout[g_cindex].alpha_upper = alpha_upper;
+                    g_cout[g_cindex].alpha_lower = alpha_lower;
+                    g_cout[g_cindex].exp_duration = ((pseg - 1)->forward_duration + (pseg + 1)->backward_duration) / 2;
+                    g_cout[g_cindex].duration = traj_item.traj_coeff[0].duration[0] + traj_item.traj_coeff[0].duration[1] + traj_item.traj_coeff[0].duration[2] + traj_item.traj_coeff[0].duration[3];
+                    g_cout[g_cindex].start_time = traj_fifo_.timeFromStart();
+                    memcpy(g_cout[g_cindex].segment, traj_item.traj_coeff, sizeof(traj_item.traj_coeff));
+                    g_cindex = (g_cindex + 1) % COEFF_SIZE;
+
+#endif
 #ifdef CHECK_COEFF
                     if (!checkCoeff(traj_item.traj_coeff))
                     {
@@ -2252,10 +2388,9 @@ ErrorCode BaseGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &len
 
 ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
 {
-    size_t pick_num = 0;
-    size_t joint_num = getNumberOfJoint();
     MotionTime  seg_tm;
     ErrorCode   err;
+    size_t      pick_num = 0;
 
     FST_LOG("Pick from auto, auto-time=%.4f, time-form-start of traj-fifo=%.4f", auto_time_, traj_fifo_.timeFromStart());
 
@@ -2286,11 +2421,13 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
                 err = sampleTrajectorySegment(traj_fifo_.front().traj_coeff, seg_tm, point[i].angle, point[i].omega, point[i].alpha);
 
 #ifdef OUTPUT_JOUT
-                jout << auto_time_ << ","
-                     << point[i].angle[0] << "," << point[i].angle[1] << "," << point[i].angle[2] << "," << point[i].angle[3] << "," << point[i].angle[4] << "," << point[i].angle[5] << ","
-                     << point[i].omega[0] << "," << point[i].omega[1] << "," << point[i].omega[2] << "," << point[i].omega[3] << "," << point[i].omega[4] << "," << point[i].omega[5] << ","
-                     << point[i].alpha[0] << "," << point[i].alpha[1] << "," << point[i].alpha[2] << "," << point[i].alpha[3] << "," << point[i].alpha[4] << "," << point[i].alpha[5] << endl;
+                g_jout[g_jindex].time = auto_time_;
+                g_jout[g_jindex].point.angle = point[i].angle;
+                g_jout[g_jindex].point.omega = point[i].omega;
+                g_jout[g_jindex].point.alpha = point[i].alpha;
+                g_jindex = (g_jindex + 1) % JOUT_SIZE;
 #endif
+
                 FST_LOG ("%.4f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
                          point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
                          point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
@@ -2322,11 +2459,13 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
             err = sampleEndingTrajectorySegment(traj_fifo_.front().traj_coeff, point[i].angle, point[i].omega, point[i].alpha);
 
 #ifdef OUTPUT_JOUT
-            jout << auto_time_ << ","
-                 << point[i].angle[0] << "," << point[i].angle[1] << "," << point[i].angle[2] << "," << point[i].angle[3] << "," << point[i].angle[4] << "," << point[i].angle[5] << ","
-                 << point[i].omega[0] << "," << point[i].omega[1] << "," << point[i].omega[2] << "," << point[i].omega[3] << "," << point[i].omega[4] << "," << point[i].omega[5] << ","
-                 << point[i].alpha[0] << "," << point[i].alpha[1] << "," << point[i].alpha[2] << "," << point[i].alpha[3] << "," << point[i].alpha[4] << "," << point[i].alpha[5] << endl;
+            g_jout[g_jindex].time = auto_time_;
+            g_jout[g_jindex].point.angle = point[i].angle;
+            g_jout[g_jindex].point.omega = point[i].omega;
+            g_jout[g_jindex].point.alpha = point[i].alpha;
+            g_jindex = (g_jindex + 1) % JOUT_SIZE;
 #endif
+
             FST_LOG ("%.4f: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", auto_time_,
                      point[i].angle[0], point[i].angle[1], point[i].angle[2], point[i].angle[3], point[i].angle[4], point[i].angle[5],
                      point[i].omega[0], point[i].omega[1], point[i].omega[2], point[i].omega[3], point[i].omega[4], point[i].omega[5],
@@ -2334,15 +2473,8 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
 
             if (err == SUCCESS)
             {
-                for (size_t j = 0; j < joint_num; j++)
-                {
-                    point[i].omega[j] = 0;
-                    point[i].alpha[j] = 0;
-                    //point[i].torque[j] = traj_fifo_.front().dynamics_product[j].torque;
-                    //point[i].inertia[j] = traj_fifo_.front().dynamics_product[j].inertia;
-                    //point[i].gravity[j] = traj_fifo_.front().dynamics_product[j].gravity;
-                }
-
+                memset(&point[i].omega, 0, sizeof(point[i].omega));
+                memset(&point[i].alpha, 0, sizeof(point[i].alpha));
                 point[i].level = POINT_ENDING;
                 pick_num ++;
             }
@@ -2670,10 +2802,10 @@ void BaseGroup::realtimeTask(void)
 
 bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2)
 {
-    size_t  joint_num = getNumberOfJoint();
+    //size_t  joint_num = getNumberOfJoint();
+    size_t  joint_num = 5;
 
-    //for (size_t i = 0; i < joint_num; i++)
-    for (size_t i = 0; i < 5; i++)
+    for (size_t i = 0; i < joint_num; i++)
     {
         if (fabs(joint1[i] - joint2[i]) > 0.0001)
         {

@@ -192,8 +192,9 @@ ErrorCode ControllerSm::callReset()
         }
         else
         {
-            motion_control_ptr_->stopGroup();
             controller_client_ptr_->abort();
+            motion_control_ptr_->stopGroup();
+            motion_control_ptr_->abortMove();
             FST_ERROR("controller check offset failed");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
         }
@@ -470,6 +471,7 @@ void ControllerSm::transferServoState()
         //XXsetCtrlCmd(&cmd, 0);
         controller_client_ptr_->abort();
         motion_control_ptr_->stopGroup();
+        motion_control_ptr_->abortMove();
         recordLog("Servo state is abnormal");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     }      
@@ -516,6 +518,7 @@ void ControllerSm::transferCtrlState()
             {
                 controller_client_ptr_->abort();
                 motion_control_ptr_->stopGroup();
+                motion_control_ptr_->abortMove();
                 ctrl_state_ = CTRL_ANY_TO_ESTOP;
             }
             break;

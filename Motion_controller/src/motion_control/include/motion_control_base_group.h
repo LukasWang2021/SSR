@@ -121,7 +121,11 @@ class BaseGroup
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
 
     inline void reportError(const ErrorCode &error);
+    inline bool isSameJointForFine(const Joint &joint1, const Joint &joint2);
     inline bool isSameJoint(const Joint &joint1, const Joint &joint2);
+    inline bool checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const JointPoint &start, const Joint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk);
+    inline bool checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joint &start, const JointPoint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk);
+    inline bool checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const JointPoint &start, const JointPoint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk);
 
 
     size_t      dynamics_cnt_;

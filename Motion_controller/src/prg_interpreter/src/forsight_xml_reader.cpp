@@ -712,7 +712,7 @@ int generateOffsetVEC(xmlNodePtr nodeInstructionParam, LineInfo objLineInfo)
 int generateOffsetCondExecute(xmlNodePtr nodeInstructionParam, LineInfo objLineInfo)
 {
     xmlNodePtr nodeElement;
-    xmlChar *name, *value;
+    xmlChar *name, *value, *type;
 	
 	name = xmlGetProp(nodeInstructionParam, BAD_CAST"name");
 	printBASCode(objLineInfo, ";%s ", (char*)name);
@@ -721,7 +721,17 @@ int generateOffsetCondExecute(xmlNodePtr nodeInstructionParam, LineInfo objLineI
 			nodeElement; nodeElement = nodeElement->next){
 		if(xmlStrcasecmp(nodeElement->name, BAD_CAST"argument")==0){
 			value = xmlNodeGetContent(nodeElement);
-			printBASCode(objLineInfo, "%s ", (char*)value);
+			type  = xmlGetProp(nodeElement, BAD_CAST"type");
+			
+			if(xmlStrcasecmp(type, BAD_CAST"register")==0){
+				printBASCode(objLineInfo, " R[%s]", (char*)value);
+			}
+			else if(xmlStrcasecmp(type, BAD_CAST"number_register")==0){
+				printBASCode(objLineInfo, " MR[%s]", (char*)value);
+			}
+			else {
+				printBASCode(objLineInfo, "%s ", (char*)value);
+			}
 		}
 		else if(xmlStrcasecmp(nodeElement->name, BAD_CAST"assignment")==0){
 			printBASCode(objLineInfo, "ASSIGN ", "");
@@ -780,6 +790,9 @@ int generateWaitInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 				}
 				else if(xmlStrcasecmp(type, BAD_CAST"number_register")==0){
 					printBASCode(objLineInfo, " MR[%s]", (char*)value);
+				}
+				else {
+					printBASCode(objLineInfo, " %s", (char*)value);
 				}
 			}
 			else if(xmlStrcasecmp(name, BAD_CAST"call_back")==0){

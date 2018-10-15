@@ -1,0 +1,17 @@
+cycle_time: 1000 #1ms
+connection_nb: 128
+is_debug: true
+reg_info:
+    coil:
+        addr: 0
+        max_nb: 1024
+    discrepte_input:
+        addr: 0
+        max_nb: 1024
+    input_register:
+        addr: 0
+        max_nb: 1024
+    holding_register:
+        addr: 0
+        max_nb: 1024
+#END

@@ -6,10 +6,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <signal.h>
 #include <time.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
+#include "thread_help.h"
 
 #include "modbus/modbus-private.h"
 #include "modbus/modbus-tcp.h"
@@ -21,98 +27,75 @@ using namespace fst_modbus;
 
 namespace fst_modbus
 {
+struct ServerRegInfo
+{
+    int coil_addr;
+    int coil_nb; //
+    int discrepte_input_addr;
+    int discrepte_input_nb;
+    int holding_register_addr;
+    int holding_register_nb;
+    int input_register_addr;
+    int input_register_nb;
+};
+
 class ModbusTCPServer
 {
 public:
-    ModbusTCPServer(string ip, int port);
+    ModbusTCPServer(int port);
      ~ModbusTCPServer();
 
-    /***************************************
-    Function : init ModbusTCPServer obj,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool init(int nb_connection);
+    void setDebug(bool flag);
+    void setConnectionNnumber(int nb);
+    ServerRegInfo getServerRegInfo();
 
-    /***************************************
-    Function : set debug mode or not
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool setDebug(bool flag);
+    bool isRunning();
+    void modbusTcpServerThreadFunc();
 
-    /***************************************
-    Function : allocate four arrays to store 
-        coils, discrete inputs, holding registers and inputs registers
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
+    ErrorCode init();
+    ErrorCode open();
+    void close();
+
+    bool saveComponentParams();
+
+private:
+    modbus_t* ctx_;
+    int port_;
+    fst_ip::LocalIP local_ip_;
+
+    int server_socket_;
+    int connection_number_;
+    bool is_debug_;
+
+    int fd_max_;
+    fd_set refset_;
+    fd_set rdset_;
+
+    modbus_mapping_t* mb_mapping_;
+    uint8_t query_[MODBUS_TCP_MAX_ADU_LENGTH];
+    ServerRegInfo server_reg_info_;
+
+    ModbusManagerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
+    fst_parameter::ParamGroup tcp_server_yaml_help_;
+    std::string tcp_server_file_path_;
+
+    int cycle_time_;
+    bool is_running_;
+    fst_base::ThreadHelp thread_ptr_;
+
+    bool loadComponentParams();
+
     bool mapping_new_start_address(
         unsigned int start_colis, unsigned int nb_colis,
         unsigned int start_discrete_inputs, unsigned int nb_discrete_inputs,
         unsigned int start_holding_registers, unsigned int nb_holding_registers,
         unsigned int start_input_registers, unsigned int nb_input_registers);
 
-    /***************************************
-    Function : allocate four arrays to store 
-        coils, discrete inputs, holding registers and inputs registers
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool mapping_new(unsigned int nb_colis, unsigned int nb_discrete_inputs,
-        unsigned int nb_holding_registers, unsigned int nb_input_registers);
-
-    /***************************************
-    Function : free the four arrays
-    return void 
-    ***************************************/
     void mapping_free();
-
-    /***************************************
-    Function :  receive an indication request from the socket 
-    return size of request: if operation succeed 
-    return -1 : if operation failed
-    ***************************************/
-    int receive(uint8_t *req);
-
-    /***************************************
-    Function :  send an response
-    return size of reply: if operation succeed 
-    return -1 : if operation failed
-    ***************************************/
-    int reply(const uint8_t *req, int req_length);
-
-    /***************************************
-    Function :  listen to sockets, 
-        nb_connection is number of socket to listen, 
-        generally, nb_connection = 1
-    return size of reply: if operation succeed 
-    return -1 : if operation failed
-    ***************************************/
-    int listen(int nb_connection);
-
-    /***************************************
-    Function :  accept frames from a client
-    return socket value: if operation succeed 
-    return -1 : if operation failed
-    ***************************************/
-    int accept();
-
-    /***************************************
-    Function :  close modbus server socket
-    return void
-    ***************************************/
-    void close();
-
-private:
-    modbus_t* ctx_;
-    modbus_mapping_t* mb_mapping_;
-    int server_socket_;
-
-    fst_ip::LocalIP local_ip_;
-    ModbusManagerParam* param_ptr_;
-    fst_log::Logger* log_ptr_;
 };
 }
 
 #endif
+
+void modbusTcpServerRoutineThreadFunc(void* arg);

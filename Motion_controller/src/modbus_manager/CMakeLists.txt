@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
     log_manager
     parameter_manager
     error_monitor
+    thread_help
 )
 
 if(catkin_CROSS)
@@ -33,6 +34,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_service/include/
     ${depend_PATH_INC}/error_monitor/include/
     ${depend_PATH_INC}/parameter_manager/include/
+    ${depend_PATH_INC}/thread_help/include/
     ${depend_PATH_INC}/common/
 )
 
@@ -54,6 +56,7 @@ add_library(modbus_manager
 target_link_libraries(modbus_manager
     ${catkin_LIBRARIES}
     parameter_manager
+    thread_help
   )
 
 install(TARGETS modbus_manager
@@ -64,24 +67,14 @@ install(FILES config/modbus_manager.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
-install(FILES config/modbus_device_manager.yaml
+install(FILES config/tcp_client.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+)
+
+install(FILES config/tcp_server.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-# add_executable(test_modbus_manager 
-    # ${BASE_SRCS}
-    # ${MODBUS_SRCS}
-    # )
-# 
-# target_link_libraries(test_modbus_manager 
-    # ${catkin_LIBRARIES}
-    # parameter_manager
-    # logger
-    # )
-# 
-# install(TARGETS test_modbus_manager 
-    # RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/test)

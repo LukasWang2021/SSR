@@ -15,7 +15,6 @@
 #include "modbus/modbus-tcp.h"
 
 #include "modbus_manager_param.h"
-#include "local_ip.h"
 
 using namespace std;
 using namespace fst_modbus;
@@ -34,7 +33,7 @@ typedef struct
     int addr; //start address
     int nb; //number of address
     uint16_t *dest; //store data
-}ModbusRegisters; //for holding regs and input regs
+}ModbusRegs; //for holding regs and input regs
 
 class ModbusTCPClient
 {
@@ -42,176 +41,48 @@ public:
     ModbusTCPClient(string ip, int port);
      ~ModbusTCPClient();
 
-    /***************************************
-    Function : set debug mode or not
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool setDebug(bool flag);
+    void setDebug(bool flag);
+    void setSocket(int s);
+    void setResponseTimeout(timeval& timeout);
+    void setBytesTimeout(timeval& timeout);
 
-    /***************************************
-    Function : set error recovery mode, 
-        mode :  MODBUS_ERROR_RECOVERY_NONE = 0,
-                MODBUS_ERROR_RECOVERY_LINK = 1,
-                MODBUS_ERROR_RECOVERY_PROTOCOL = 2 
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool setErrorRecovery(modbus_error_recovery_mode error_recovery);
-
-    /***************************************
-    Function : bulk read coils, 
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool readCoils(ModbusStatus& status);
-
-    /***************************************
-    Function : bulk read discrete inputs, 
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool readDiscreteInputs(ModbusStatus& status); //input bits
-
-    /***************************************
-    Function : bulk read Input Registers, 
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool readInputRegs(ModbusRegisters& regs);
-
-    /***************************************
-    Function : bulk read Holding Registers, 
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool readHoldingRegs(ModbusRegisters& regs);
-
-    /***************************************
-    Function : write singal coil, 
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool writeSingleCoil(int coil_addr, uint8_t status); //bit
-
-    /***************************************
-    Function : bulk write coils,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool writeCoils(ModbusStatus& status);
-
-    /***************************************
-    Function : write singal holding register, 
-    return true : if operation succeed 
-    return false : if operation failed
-    ***************************************/
-    bool writeSingleHoldingReg(int reg_addr, uint16_t value);
-
-    /***************************************
-    Function : bulk write holding registers,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool writeHoldingRegs(ModbusRegisters& regs);
-
-    /***************************************
-    Function : write and read singal coil,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool writeAndReadSingleCoil(int addr, uint8_t& write_status, uint8_t& read_status);
-
-    /***************************************
-    Function : write and read singal holding registers,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool writeAndReadSingleHoldingReg(int addr, uint16_t& write_reg, uint16_t& read_reg);
-
-    /***************************************
-    Function :bulk  write and read coils,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool writeAndReadCoils(ModbusStatus& write_status, ModbusStatus& read_status);
-
-    /***************************************
-    Function :bulk  write and read holding registers,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool writeAndReadHoldingRegs(ModbusRegisters& write_regs, ModbusRegisters& read_regs);
-
-    /***************************************
-    Function : store the timeout interval used to wait 
-        for a response in the timeout argument.
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool getResponseTimeout(timeval& timeout);
-
-    /***************************************
-    Function : set the timeout interval used to wait for a response
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool setResponseTimeout(timeval& timeout);
-
-    /***************************************
-    Function : store the timeout interval between two consecutive bytes
-        of the same message in the timeout argument.
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool getByteTimeout(timeval& timeout);
-
-    /***************************************
-    Function : set the timeout interval between two consecutive bytes 
-        of the same message
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/    
-    bool setByteTimeout(timeval& timeout);
-
-    /***************************************
-    Function : init ModbusTCPClient obj,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool init();
-
-    /***************************************
-    Function : set socket for modbus,
-    return true : if operation succeed
-    return false : if operation failed
-    ***************************************/
-    bool setSocket(int socket);
-
-    /***************************************
-    Function : set socket for modbus,
-    return souket value : if operation succeed
-    return -1 : if operation failed
-    ***************************************/
+    ErrorCode init();
     int getSocket();
+    ErrorCode getResponseTimeout(timeval& timeout);
+    ErrorCode getByteTimeout(timeval& timeout);
 
-    /***************************************
-    Function :get number of failed operation,
-    return number
-    ***************************************/
-    int getFailedOperationNumber();
-
-    bool setSlaveId(int slave_id);
+    ErrorCode readCoils(ModbusStatus& status);
+    ErrorCode readDiscreteInputs(ModbusStatus& status); //input bits
+    ErrorCode readInputRegs(ModbusRegs& regs);
+    ErrorCode readHoldingRegs(ModbusRegs& regs);
+    ErrorCode writeSingleCoil(int coil_addr, uint8_t status); //bit
+    ErrorCode writeSingleHoldingReg(int reg_addr, uint16_t value);
+    ErrorCode writeAndReadSingleCoil(int addr, uint8_t& write_status, uint8_t& read_status);
+    ErrorCode writeAndReadSingleHoldingReg(int addr, uint16_t& write_reg, uint16_t& read_reg);
+    ErrorCode writeCoils(ModbusStatus& status);
+    ErrorCode writeHoldingRegs(ModbusRegs& regs);
+    ErrorCode writeAndReadCoils(ModbusStatus& write_status, ModbusStatus& read_status);
+    ErrorCode writeAndReadHoldingRegs(ModbusRegs& write_regs, ModbusRegs& read_regs);
 
 private:
     enum {SOCKET_ID_MIN = 1, SOCKET_ID_MAX = 247, };
+    enum RegsOneOpNum{ STATUS_ONE_OP_NUM = 1968, REGISTER_ONE_OP_NUM = 121, };
     modbus_t* ctx_;
-    int nb_fail_;
 
-    
-    fst_ip::LocalIP local_ip_;
+    bool is_debug_;
+    int socket_;
+    int port_;
+    string ip_;
+    timeval response_timeout_;
+    timeval bytes_timeout_;
+
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
+    fst_parameter::ParamGroup tcp_client_yaml_help_;
+    std::string tcp_client_file_path_;
+
+    bool loadComponentParams();
+    bool saveComponentParams();
 };
 }
 

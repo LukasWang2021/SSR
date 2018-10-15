@@ -34,6 +34,7 @@ namespace fst_mc
 struct JointOut
 {
     double time;
+    Joint  ma_cv_g;
     JointPoint point;
 };
 
@@ -2672,9 +2673,11 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
                 seg_tm = auto_time_ - (traj_fifo_.front().time_from_start - traj_fifo_.front().duration);
 
                 err = sampleTrajectorySegment(traj_fifo_.front().traj_coeff, seg_tm, point[i].angle, point[i].omega, point[i].alpha);
+                computeCompensate(traj_fifo_.front().dynamics_product, point[i].omega, point[i].alpha, point[i].ma_cv_g);
 
 #ifdef OUTPUT_JOUT
                 g_jout[g_jindex].time = auto_time_;
+                g_jout[g_jindex].ma_cv_g = point[i].ma_cv_g;
                 g_jout[g_jindex].point.angle = point[i].angle;
                 g_jout[g_jindex].point.omega = point[i].omega;
                 g_jout[g_jindex].point.alpha = point[i].alpha;
@@ -2688,7 +2691,6 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
 
                 if (err == SUCCESS)
                 {
-                    computeCompensate(traj_fifo_.front().dynamics_product, point[i].omega, point[i].alpha, point[i].ma_cv_g);
                     pick_num ++;
                 }
                 else
@@ -2710,9 +2712,11 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
         else
         {
             err = sampleEndingTrajectorySegment(traj_fifo_.front().traj_coeff, point[i].angle, point[i].omega, point[i].alpha);
+            computeCompensate(traj_fifo_.front().dynamics_product, point[i].omega, point[i].alpha, point[i].ma_cv_g);
 
 #ifdef OUTPUT_JOUT
             g_jout[g_jindex].time = auto_time_;
+            g_jout[g_jindex].ma_cv_g = point[i].ma_cv_g;
             g_jout[g_jindex].point.angle = point[i].angle;
             g_jout[g_jindex].point.omega = point[i].omega;
             g_jout[g_jindex].point.alpha = point[i].alpha;
@@ -2881,8 +2885,8 @@ void BaseGroup::realtimeTask(void)
     char buffer[LOG_TEXT_SIZE];
     ErrorCode   err;
     ServoState  barecore_state;
-    Joint   barecore_joint;
-    Pose    barecore_pose;
+    Joint       barecore_joint;
+    PoseEuler   barecore_pose;
     size_t  send_fail_cnt = 0;
     size_t  stable_cnt = 0;
     timeval this_time, last_time;
@@ -2936,8 +2940,6 @@ void BaseGroup::realtimeTask(void)
         if (waiting_fine_)
         {
             FST_LOG("waiting fine ... type = %d, cnt = %d, grp-state=%d, servo-state=%d", waiting_motion_type_, start_waiting_cnt_, group_state_, servo_state_);
-            FST_LOG("waiting joint = %s", printDBLine(&waiting_joint_[0], buffer, LOG_TEXT_SIZE));
-            FST_LOG("current joint = %s", printDBLine(&barecore_joint[0], buffer, LOG_TEXT_SIZE));
 
             if (start_waiting_cnt_ > 0)
             {
@@ -2949,6 +2951,9 @@ void BaseGroup::realtimeTask(void)
                 {
                     if (waiting_motion_type_ == MOTION_JOINT)
                     {
+                        FST_LOG("waiting joint = %s", printDBLine(&waiting_joint_[0], buffer, LOG_TEXT_SIZE));
+                        FST_LOG("current joint = %s", printDBLine(&barecore_joint[0], buffer, LOG_TEXT_SIZE));
+
                         if (isSameJointForFine(waiting_joint_, barecore_joint))
                         {
                             stable_cnt ++;
@@ -2961,6 +2966,8 @@ void BaseGroup::realtimeTask(void)
                     else
                     {
                         kinematics_ptr_->forwardKinematicsInUser(barecore_joint, barecore_pose);
+                        FST_LOG("waiting pose = %s", printDBLine(&waiting_pose_[0], buffer, LOG_TEXT_SIZE));
+                        FST_LOG("current pose = %s", printDBLine(&barecore_pose[0], buffer, LOG_TEXT_SIZE));
 
                         if (getDistance(barecore_pose.position, waiting_pose_.position) < 0.05)
                         {

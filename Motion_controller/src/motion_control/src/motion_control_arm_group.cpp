@@ -55,29 +55,43 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     }
 
     FST_INFO("Initializing cache ...");
-    auto_cache_ptr_ = new TrajectoryCache[AUTO_CACHE_SIZE];
 
-    if (auto_cache_ptr_)
+    TrajectoryCache *pcache, *ptail;
+
+    for (size_t i = 0; i < AUTO_CACHE_SIZE; i++)
     {
-        for (size_t i = 0; i < AUTO_CACHE_SIZE; i++)
+        pcache = new TrajectoryCache;
+
+        if (pcache == NULL)
         {
-            auto_cache_ptr_[i].deadline = 0;
-            auto_cache_ptr_[i].valid = false;
-            auto_cache_ptr_[i].head = 0;
-            auto_cache_ptr_[i].tail = 0;
-            auto_cache_ptr_[i].smooth_in_stamp = 0;
-            auto_cache_ptr_[i].smooth_out_stamp = 0;
-            auto_cache_ptr_[i].next = &auto_cache_ptr_[(i + 1) % AUTO_CACHE_SIZE];
-            auto_cache_ptr_[i].prev = &auto_cache_ptr_[(i - 1) % AUTO_CACHE_SIZE];
+            FST_ERROR("Fail to create trajectory cache.");
+            return MOTION_INTERNAL_FAULT;
+        }
+        else
+        {
+            pcache->next = NULL;
         }
 
-        auto_cache_ptr_[0].prev = &auto_cache_ptr_[AUTO_CACHE_SIZE - 1];
-        auto_pick_ptr_ = &auto_cache_ptr_[0];
+        if (free_cache_ptr_ == NULL)
+        {
+            free_cache_ptr_ = pcache;
+            ptail = pcache;
+        }
+        else
+        {
+            ptail->next = pcache;
+            ptail = ptail->next;
+        }
     }
-    else
+
+    for (pcache = free_cache_ptr_; pcache != NULL; pcache = pcache->next)
     {
-        FST_ERROR("Fail to create trajectory cache.");
-        return MOTION_INTERNAL_FAULT;
+        pcache->deadline = 0;
+        pcache->valid = false;
+        pcache->head = 0;
+        pcache->tail = 0;
+        pcache->smooth_in_stamp = 0;
+        pcache->smooth_out_stamp = 0;
     }
 
     FST_INFO("Initializing mutex ...");

@@ -24,7 +24,7 @@ fst_algorithm::DynamicsInterface g_dynamics_interface;
 
 namespace fst_algorithm
 {
-    bool DynamicsInterface::Cross(double a[3],double b[3],double c[3])
+    bool DynamicsInterface::Cross(FP a[3],FP b[3],FP c[3])
     {
         c[0]=a[1]*b[2] - a[2]*b[1];
         c[1]=a[2]*b[0] - a[0]*b[2];
@@ -33,7 +33,7 @@ namespace fst_algorithm
         return true;
     }
     /* 3*3 matrix multiply 3*1 vector*/
-    bool DynamicsInterface::Multiply3331(double a[3][3],double b[3],double c[3])
+    bool DynamicsInterface::Multiply3331(FP a[3][3],FP b[3],FP c[3])
     {
          c[0]=a[0][0]*b[0] + a[0][1]*b[1] + a[0][2]*b[2];
          c[1]=a[1][0]*b[0] + a[1][1]*b[1] + a[1][2]*b[2];
@@ -42,26 +42,26 @@ namespace fst_algorithm
          return true;
 
     }
-    bool DynamicsInterface::getkineJacobian(const double q[MAX_AXES],double jacob[MAX_AXES][MAX_AXES])
+    bool DynamicsInterface::getkineJacobian(const FP q[MAX_AXES],FP jacob[MAX_AXES][MAX_AXES])
     {
-        double JOT[3][MAXAXES];
-        double JPT[3][MAXAXES];        
-        double AQ[4][4];
-        double pe[3];
-        double A[4][4];
-        double pi[3];
-        double zi[3];
-        double df[3];
-        double czd[3];
+        FP JOT[3][MAXAXES];
+        FP JPT[3][MAXAXES];        
+        FP AQ[4][4];
+        FP pe[3];
+        FP A[4][4];
+        FP pi[3];
+        FP zi[3];
+        FP df[3];
+        FP czd[3];
 
-        double z0[3]={0,0,1};
-        double p0[3]={0,0,0};
+        FP z0[3]={0,0,1};
+        FP p0[3]={0,0,0};
 
         if(!getA(MAXAXES,q,A))
             return false;
 
         pe[0]=A[0][3];pe[1]=A[1][3];pe[2]=A[2][3];
-        double I[4][4]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+        FP I[4][4]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
         for(int i=0;i<MAXAXES;i++)
         {
 
@@ -100,26 +100,26 @@ namespace fst_algorithm
         }        
     }
     /*get the Jacobian*/
-    bool DynamicsInterface::getJacobian(const double q[MAXAXES],double jacob[MAXAXES][6][MAXAXES])
+    bool DynamicsInterface::getJacobian(const FP q[MAXAXES],FP jacob[MAXAXES][6][MAXAXES])
     {
-        double JOT[3][MAXAXES];
-        double JPT[3][MAXAXES];
-        double v[3];
-        double AQ[4][4];
-        double RL[3][3];
-        double pl[3],tmpl[3];
-        double A[4][4],AL[4][4];
-        double plast[3];
-        double zlast[3];
-        double df[3];
-        double czd[3];
+        FP JOT[3][MAXAXES];
+        FP JPT[3][MAXAXES];
+        FP v[3];
+        FP AQ[4][4];
+        FP RL[3][3];
+        FP pl[3],tmpl[3];
+        FP A[4][4],AL[4][4];
+        FP plast[3];
+        FP zlast[3];
+        FP df[3];
+        FP czd[3];
 
-        double z0[3]={0,0,1};
-        double p0[3]={0,0,0};
+        FP z0[3]={0,0,1};
+        FP p0[3]={0,0,0};
 
         for(int i=0;i<MAXAXES;i++)
         {
-            double I[4][4]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+            FP I[4][4]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
             for(int j=0;j<MAXAXES;j++)
             {
                 v[0]=robot_model_.r[j][0];
@@ -148,7 +148,7 @@ namespace fst_algorithm
                     pl[1]=tmpl[1]+I[1][3];
                     pl[2]=tmpl[2]+I[2][3];
                 }
-                double KI[4][4]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+                FP KI[4][4]={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
                 for(int k=0;k<MAXAXES;k++)
                 {
 //                    if(!getA(k+1,q,A))
@@ -196,9 +196,9 @@ namespace fst_algorithm
     }
 
     /*this method to compute the link homogeneous transformation matrix*/
-    bool DynamicsInterface::getA(int ni,const double q[MAXAXES],double a[4][4])
+    bool DynamicsInterface::getA(int ni,const FP q[MAXAXES],FP a[4][4])
     {
-        double rq[MAXAXES];
+        FP rq[MAXAXES];
 
         for(int i=0;i<MAXAXES;i++)
         {
@@ -224,7 +224,7 @@ namespace fst_algorithm
 //                            st  ct*ca   -ct*sa  L.a*st
 //                            0   sa      ca      d
 //                            0   0       0       1];
-                double tmp[4][4];
+                FP tmp[4][4];
 
                 int i=ni;
 
@@ -244,7 +244,7 @@ namespace fst_algorithm
         //                    st*ca   ct*ca   -sa -sa*d
         //                    st*sa   ct*sa   ca  ca*d
         //                    0       0       0   1];
-                double tmp[4][4];
+                FP tmp[4][4];
 
                 int i=ni;
 
@@ -262,7 +262,7 @@ namespace fst_algorithm
 
     }
     /*get the link rotation matrix*/
-    bool DynamicsInterface::getR(const double a[4][4],double r[3][3])
+    bool DynamicsInterface::getR(const FP a[4][4],FP r[3][3])
     {
 
         for(int i=0;i<3;i++)
@@ -275,11 +275,11 @@ namespace fst_algorithm
         return true;
     }
     /*partial differential of the link homogeneous transformation matrix*/
-    bool DynamicsInterface::getU3(int idx_i,int idx_j,int idx_k,const double q[MAXAXES],double U[4][4])
+    bool DynamicsInterface::getU3(int idx_i,int idx_j,int idx_k,const FP q[MAXAXES],FP U[4][4])
     {
         memset(U,0,sizeof(U));
-        double A0[4][4];
-        double Q[4][4];
+        FP A0[4][4];
+        FP Q[4][4];
 
         A0[0][0]=1;A0[0][1]=0;A0[0][2]=0;A0[0][3]=0;
         A0[1][0]=0;A0[1][1]=1;A0[1][2]=0;A0[1][3]=0;
@@ -296,13 +296,13 @@ namespace fst_algorithm
             //FST_INFO("---111");
             return false;
         }
-        double tmp[4][4];
-        double QQ[4][4];
-        double Ai[4][4];
-        double QQAi[4][4];
-        double A0QQAi[4][4];
-        double A0QAi[4][4];
-        double QAi[4][4];
+        FP tmp[4][4];
+        FP QQ[4][4];
+        FP Ai[4][4];
+        FP QQAi[4][4];
+        FP A0QQAi[4][4];
+        FP A0QAi[4][4];
+        FP QAi[4][4];
 
         for(int i=0;i<idx_i;i++)
         {
@@ -319,7 +319,7 @@ namespace fst_algorithm
                     if(!Multiply4444(A0, QQAi, A0QQAi))
                         return false;
                     
-                    memcpy(A0,A0QQAi,sizeof(double)*16);   
+                    memcpy(A0,A0QQAi,sizeof(FP)*16);   
                  
                 }
                 else
@@ -334,7 +334,7 @@ namespace fst_algorithm
                     Multiply4444(Q, Ai, QAi);
 
                     Multiply4444(A0,QAi,A0QAi);
-                    memcpy(A0,A0QAi,sizeof(double)*16);
+                    memcpy(A0,A0QAi,sizeof(FP)*16);
                  
                 }
                 else
@@ -347,7 +347,7 @@ namespace fst_algorithm
                 if(getA(i+1,q,Ai))
                 {
                     Multiply4444(A0, Ai, tmp);
-                    memcpy(A0,tmp,sizeof(double)*16);
+                    memcpy(A0,tmp,sizeof(FP)*16);
 
                 }
                 else
@@ -360,7 +360,7 @@ namespace fst_algorithm
         return true;
     }
     /*get the link Pseudo inertia matrix*/
-    bool DynamicsInterface::getpseudoI(int idx_i,double Pse_I[4][4])
+    bool DynamicsInterface::getpseudoI(int idx_i,FP Pse_I[4][4])
     {
         if((idx_i<=0) || (idx_i>MAXAXES))
         {
@@ -388,7 +388,7 @@ namespace fst_algorithm
 
     }
     /* transpose matrix*/
-    bool DynamicsInterface::getTranspose(const double M[4][4],double TM[4][4])
+    bool DynamicsInterface::getTranspose(const FP M[4][4],FP TM[4][4])
     {
         //[ M00, M10, M20, M30]
         //[ M01, M11, M21, M31]
@@ -401,7 +401,7 @@ namespace fst_algorithm
         TM[3][0]=M[0][3];TM[3][1]=M[1][3];TM[3][2]=M[2][3];TM[3][3]=M[3][3];
         return true;
     }
-    bool DynamicsInterface::getTranspose33(const double M[3][3],double TM[3][3])
+    bool DynamicsInterface::getTranspose33(const FP M[3][3],FP TM[3][3])
     {
         TM[0][0]=M[0][0];TM[0][1]=M[1][0];TM[0][2]=M[2][0];
         TM[1][0]=M[0][1];TM[1][1]=M[1][1];TM[1][2]=M[2][1];
@@ -409,16 +409,16 @@ namespace fst_algorithm
         TM[3][0]=M[0][3];TM[3][1]=M[1][3];TM[3][2]=M[2][3];        
     }    
     /* trace */
-    double DynamicsInterface::TraceMatrix(const double M[4][4])
+    FP DynamicsInterface::TraceMatrix(const FP M[4][4])
     {
-        double tcm =0;
+        FP tcm =0;
 
         tcm = M[0][0]+M[1][1]+M[2][2]+M[3][3];
 
         return tcm;
     }
     //get Upi trans-Upi Ip
-    bool DynamicsInterface::getMiddleArray(const double q[MAX_AXES])
+    bool DynamicsInterface::getMiddleArray(const FP q[MAX_AXES])
     {
         q1=q[0];q2=q[1];q3=q[2];q4=q[3];q5=q[4];q6=q[5];
         c1=cos(q1);s1=sin(q1);c2=cos(q2);s2=sin(q2);c3=cos(q3);s3=sin(q3);c4=cos(q4);s4=sin(q4);c5=cos(q5);s5=sin
@@ -476,16 +476,16 @@ namespace fst_algorithm
         
     }    
     /*get the dynamic equation M*/
-    bool DynamicsInterface::getM(int idx_i,int idx_j,const double q[MAXAXES],double &M)
+    bool DynamicsInterface::getM(int idx_i,int idx_j,const FP q[MAXAXES],FP &M)
     {
         int k= idx_i>idx_j?idx_i:idx_j;
         
-        double Dij=0;
-        //double Upj[4][4],UpjIp[4][4],UpjIp_[4][4];
-        double tmp[4][4],tmp2[4][4];
-        //double Upi[4][4];
-        //double trans_Upi[4][4],TransUpiIp[4][4];
-        //double Ip[4][4];
+        FP Dij=0;
+        //FP Upj[4][4],UpjIp[4][4],UpjIp_[4][4];
+        FP tmp[4][4],tmp2[4][4];
+        //FP Upi[4][4];
+        //FP trans_Upi[4][4],TransUpiIp[4][4];
+        //FP Ip[4][4];
 
         for(int i=k;i<=MAXAXES;i++)
         {
@@ -542,16 +542,16 @@ namespace fst_algorithm
     }
  
     /*get the dynamic equation C*/
-    bool DynamicsInterface::getC(int idx_i,int idx_j,int idx_k,const double q[MAXAXES],double &C)
+    bool DynamicsInterface::getC(int idx_i,int idx_j,int idx_k,const FP q[MAXAXES],FP &C)
     {
         int p=idx_i>idx_j?idx_i:idx_j;
 
         p=p>idx_k?p:idx_k;
 
-        double Dijk=0;
-        double Upjk[4][4];
-        double tmp[4][4];
-        double trans_Upi[4][4],TransUpiIp[4][4];
+        FP Dijk=0;
+        FP Upjk[4][4];
+        FP tmp[4][4];
+        FP trans_Upi[4][4],TransUpiIp[4][4];
 
         for(int i=p;i<=MAXAXES;i++)
         {
@@ -580,12 +580,12 @@ namespace fst_algorithm
         return true;
     }
     /*get the dynamic equation G*/
-    bool DynamicsInterface::getG(int idx_i,const double q[MAXAXES],double& G)
+    bool DynamicsInterface::getG(int idx_i,const FP q[MAXAXES],FP& G)
     {
-        double Di=0;
-        double g[4]={0,0,-9.81,0};
-        double r[4];//={,,,1};
-        double tmp=0;
+        FP Di=0;
+        FP g[4]={0,0,-9.81,0};
+        FP r[4];//={,,,1};
+        FP tmp=0;
 
         if((idx_i<=0) || (idx_i>MAXAXES))
         {
@@ -611,10 +611,10 @@ namespace fst_algorithm
         return true;  
     }
 
-    bool DynamicsInterface::computeMCG(const double q[MAXAXES])
+    bool DynamicsInterface::computeMCG(const FP q[MAXAXES])
     {
         clock_t start, finish;
-        double Total_time;  
+        FP Total_time;  
         
         //start = clock();   
         getMiddleArray(q);           
@@ -640,7 +640,7 @@ namespace fst_algorithm
         //        FST_INFO("M[%d][%d]=%f",i,j,m_[i][j]);
         //getSymbolicG(q);
         //finish = clock();
-        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //Total_time = (FP)(finish-start) / CLOCKS_PER_SEC;
         //FST_INFO( "compute G & M:%f seconds/n", Total_time);
 
         //start = clock(); 
@@ -779,12 +779,12 @@ namespace fst_algorithm
         }*/
 
         //finish = clock();
-        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //Total_time = (FP)(finish-start) / CLOCKS_PER_SEC;
         //FST_INFO( "compute C %f seconds/n", Total_time);
         return true;
     }
     /*compute the torque of each joint*/
-    bool DynamicsInterface::getT(const double q[MAXAXES],const double dq[MAXAXES],const double ddq[MAXAXES],double T[MAXAXES])
+    bool DynamicsInterface::getT(const FP q[MAXAXES],const FP dq[MAXAXES],const FP ddq[MAXAXES],FP T[MAXAXES])
     {
         if(!computeMCG(q))
             return false;
@@ -804,16 +804,16 @@ namespace fst_algorithm
 
     }
     /*compute the secondary torque*/
-    bool DynamicsInterface::getTm(const double q[MAXAXES],const double dq[MAXAXES],double Tm[MAXAXES])
+    bool DynamicsInterface::getTm(const FP q[MAXAXES],const FP dq[MAXAXES],FP Tm[MAXAXES])
     {
         clock_t start, finish;
-        double Total_time;
+        FP Total_time;
 
         //start = clock();        
         if(!computeMCG(q))
             return false;        
         //finish = clock();
-        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //Total_time = (FP)(finish-start) / CLOCKS_PER_SEC;
         //FST_INFO( "compute MCG %f seconds/n", Total_time);
         for(int i=0;i<MAXAXES;i++)
         {
@@ -832,12 +832,12 @@ namespace fst_algorithm
     //入口参数: 矩阵的首地址，矩阵的行数  
     //返回值: 矩阵的行列式值  
     //----------------------------------------------  
-    double DynamicsInterface::MatDet(double *p, int n)  
+    FP DynamicsInterface::MatDet(FP *p, int n)  
     {  
         int r, c, m;  
         int lop = 0;  
-        double result = 0;  
-        double mid = 1;  
+        FP result = 0;  
+        FP mid = 1;  
       
         if (n != 1)  
         {  
@@ -870,16 +870,16 @@ namespace fst_algorithm
     //入口参数: k*k矩阵的首地址，矩阵元素A的下标m,n,矩阵行数k  
     //返回值: k*k矩阵中元素A(m, n)的代数余之式  
     //----------------------------------------------------------------------------  
-    double DynamicsInterface::Creat_M(double *p, int m, int n, int k)  
+    FP DynamicsInterface::Creat_M(FP *p, int m, int n, int k)  
     {  
         int len;  
         int i, j;  
-        double mid_result = 0;  
+        FP mid_result = 0;  
         int sign = 1;  
-        double *p_creat, *p_mid;  
+        FP *p_creat, *p_mid;  
       
         len = (k - 1)*(k - 1);            //k阶矩阵的代数余之式为k-1阶矩阵  
-        p_creat = (double*)calloc(len, sizeof(double)); //分配内存单元  
+        p_creat = (FP*)calloc(len, sizeof(FP)); //分配内存单元  
         p_mid = p_creat;  
         for (i = 0; i < k; i++)  
         {  
@@ -892,7 +892,7 @@ namespace fst_algorithm
             }  
         }  
         sign = (m + n) % 2 == 0 ? 1 : -1;    //代数余之式前面的正、负号  
-        mid_result = (double)sign*MatDet(p_creat, k - 1);  
+        mid_result = (FP)sign*MatDet(p_creat, k - 1);  
         free(p_creat);  
         return mid_result;  
     }  
@@ -901,11 +901,11 @@ namespace fst_algorithm
     //入口参数: 输入方阵，输出方阵，方阵阶数  
     //返回值: true or false  
     //-------------------------------------------------------------------  
-    bool DynamicsInterface::Gauss(const double A[MAX_AXES][MAX_AXES], double B[MAX_AXES][MAX_AXES])  
+    bool DynamicsInterface::Gauss(const FP A[MAX_AXES][MAX_AXES], FP B[MAX_AXES][MAX_AXES])  
     {  
         int i, j, k;  
-        double max, temp;  
-        double t[MAX_AXES][MAX_AXES];                //临时矩阵  
+        FP max, temp;  
+        FP t[MAX_AXES][MAX_AXES];                //临时矩阵  
         //将A矩阵存放在临时矩阵t[n][n]中  
         for (i = 0; i < MAX_AXES; i++)  
         {  
@@ -919,7 +919,7 @@ namespace fst_algorithm
         {  
             for (j = 0; j < MAX_AXES; j++)  
             {  
-                B[i][j] = (i == j) ? (double)1 : 0;  
+                B[i][j] = (i == j) ? (FP)1 : 0;  
             }  
         }  
         for (i = 0; i < MAX_AXES; i++)  
@@ -978,7 +978,7 @@ namespace fst_algorithm
         return true;  
     }  
     /*get the inverse matrix of M*/
-    bool DynamicsInterface::getInverseM(const double M[MAXAXES][MAXAXES],double IM[MAXAXES][MAXAXES])
+    bool DynamicsInterface::getInverseM(const FP M[MAXAXES][MAXAXES],FP IM[MAXAXES][MAXAXES])
     {
 
         //运用高斯消去法求该矩阵的逆矩阵并输出  
@@ -990,7 +990,7 @@ namespace fst_algorithm
         return true;
     }
     /* 6*6 Matrix Multiple 6*1 vector*/
-    bool DynamicsInterface::getMtxMulVec(const double IM[MAXAXES][MAXAXES],const double V[MAXAXES],double Res[MAXAXES])
+    bool DynamicsInterface::getMtxMulVec(const FP IM[MAXAXES][MAXAXES],const FP V[MAXAXES],FP Res[MAXAXES])
     {
          Res[0]=IM[0][0]*V[0] + IM[0][1]*V[1] + IM[0][2]*V[2] + IM[0][3]*V[3] + IM[0][4]*V[4] + IM[0][5]*V[5];
          Res[1]=IM[1][0]*V[0] + IM[1][1]*V[1] + IM[1][2]*V[2] + IM[1][3]*V[3] + IM[1][4]*V[4] + IM[1][5]*V[5];
@@ -1011,11 +1011,11 @@ namespace fst_algorithm
     */
     bool DynamicsInterface::initServoModel(const ServelModel sv_model[MAXAXES])
     {
-        //double centre_of_mass[3]; // the centre of the mass of the motor
-        //double inertia_sensor[3][3]; //inertia sensor of the motor
-        //double mass_of_motor; //mass of the motor
-        //double jm;  //inertia of the motor 
-        //double gr;  //gear ratio
+        //FP centre_of_mass[3]; // the centre of the mass of the motor
+        //FP inertia_sensor[3][3]; //inertia sensor of the motor
+        //FP mass_of_motor; //mass of the motor
+        //FP jm;  //inertia of the motor 
+        //FP gr;  //gear ratio
         for(int i=0;i<MAXAXES;i++)
         {
             servo_model_[i].rated_torque=sv_model[i].rated_torque;
@@ -1046,16 +1046,16 @@ namespace fst_algorithm
     bool DynamicsInterface::initRobotModel(const RobotModel& rob_model)
     {
         //std::string model_name; //name of the robot model
-        //double a[MAXAXES]; //a
-        //double d[MAXAXES]; //d
-        //double ap[MAXAXES]; //alpha
-        //double offset[MAXAXES];//offset
-        //double r[MAXAXES][3]; //centre of link
-        //double i[MAXAXES][6]; //tensor of inertia
-        //double m[MAXAXES]; //mass of link
+        //FP a[MAXAXES]; //a
+        //FP d[MAXAXES]; //d
+        //FP ap[MAXAXES]; //alpha
+        //FP offset[MAXAXES];//offset
+        //FP r[MAXAXES][3]; //centre of link
+        //FP i[MAXAXES][6]; //tensor of inertia
+        //FP m[MAXAXES]; //mass of link
         //bool mdh; //true:std-dh false:mod-dh
-        //double b[MAXAXES]; //joint friction  coefficient
-        //double tc[MAXAXES][2]; //Coulomb friction coefficient
+        //FP b[MAXAXES]; //joint friction  coefficient
+        //FP tc[MAXAXES][2]; //Coulomb friction coefficient
 
         robot_model_.mdh=rob_model.mdh;
 
@@ -1110,24 +1110,24 @@ namespace fst_algorithm
     return: true -> alpha_max is avaiable
             false-> alpha_max is not avaiable, error happened in computation 
     */
-    bool DynamicsInterface::computeAccMax(const double joint[MAXAXES], const double omega[MAXAXES], double alpha_max[2][MAXAXES])
+    bool DynamicsInterface::computeAccMax(const FP joint[MAXAXES], const FP omega[MAXAXES], FP alpha_max[2][MAXAXES])
     {
         clock_t start, finish;
-        double Total_time;
+        FP Total_time;
 
         //FST_INFO("---1");
-        double Tm[MAXAXES];
-        double diffT[2][MAXAXES];
-        double IB[MAXAXES][MAXAXES];
-        double ddq[MAXAXES]={0,0,0,0,0,0};
+        FP Tm[MAXAXES];
+        FP diffT[2][MAXAXES];
+        FP IB[MAXAXES][MAXAXES];
+        FP ddq[MAXAXES]={0,0,0,0,0,0};
         for(int i=0;i<MAXAXES;i++)
         {
             q_[i]=joint[i];
             dq_[i]=omega[i];
         }
 
-        double mq[6][6],mdq[6][6],mddq[6][6];
-    //double it[6];
+        FP mq[6][6],mdq[6][6],mddq[6][6];
+    //FP it[6];
 
         for(int i=0;i<6;i++)
         {
@@ -1157,7 +1157,7 @@ namespace fst_algorithm
 
         //FST_INFO("---3");
         //finish = clock();
-        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //Total_time = (FP)(finish-start) / CLOCKS_PER_SEC;
         //FST_INFO( "getTm:%f seconds/n", Total_time);
 
         for(int i=0;i<MAXAXES;i++)
@@ -1185,7 +1185,7 @@ namespace fst_algorithm
         //for (int i=0;i<6;i++)
         //    FST_INFO("diff1[%d]=%f",i,diffT[1][i]);
         //finish = clock();
-        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //Total_time = (FP)(finish-start) / CLOCKS_PER_SEC;
         //FST_INFO( "getInverseM:%f seconds/n", Total_time);        
         //FST_INFO("---5");
 
@@ -1196,7 +1196,7 @@ namespace fst_algorithm
             return false;
         //FST_INFO("---6");
         //finish = clock();
-        //Total_time = (double)(finish-start) / CLOCKS_PER_SEC;
+        //Total_time = (FP)(finish-start) / CLOCKS_PER_SEC;
         //FST_INFO( "getMtxMulVec:%f seconds/n", Total_time);
         /*for(int j=0;j<2;j++)
         {
@@ -1209,7 +1209,7 @@ namespace fst_algorithm
 
         return true;
     }
-    bool DynamicsInterface::Multiply6666(double a[6][6],double b[6][6],double c[6][6])
+    bool DynamicsInterface::Multiply6666(FP a[6][6],FP b[6][6],FP c[6][6])
     {
         c[0][0]=a[0][0]*b[0][0] + a[0][1]*b[1][0] + a[0][2]*b[2][0]+a[0][3]*b[3][0]+a[0][4]*b[4][0]+a[0][5]*b[5][0];
         c[0][1]=a[0][0]*b[0][1] + a[0][1]*b[1][1] + a[0][2]*b[2][1]+a[0][3]*b[3][1]+a[0][4]*b[4][1]+a[0][5]*b[5][1];
@@ -1256,7 +1256,7 @@ namespace fst_algorithm
         
     }
     /* 4*4 matrix multiply 4*4 4*4 matrix*/
-    bool DynamicsInterface::Multiply4444(double a[4][4],double b[4][4],double c[4][4])
+    bool DynamicsInterface::Multiply4444(FP a[4][4],FP b[4][4],FP c[4][4])
     {
         //[ a00*b00 + a01*b10 + a02*b20 + a03*b30, a00*b01 + a01*b11 + a02*b21 + a03*b31, a00*b02 + a01*b12 + a02*b22 + a03*b32, a00*b03 + a01*b13 + a02*b23 + a03*b33]
         //[ a10*b00 + a11*b10 + a12*b20 + a13*b30, a10*b01 + a11*b11 + a12*b21 + a13*b31, a10*b02 + a11*b12 + a12*b22 + a13*b32, a10*b03 + a11*b13 + a12*b23 + a13*b33]
@@ -1290,7 +1290,7 @@ namespace fst_algorithm
         
     }
     /* 3*3 matrix multiply 3*3 matrix*/
-    bool DynamicsInterface::Multiply3333(double a[3][3],double b[3][3],double c[3][3])
+    bool DynamicsInterface::Multiply3333(FP a[3][3],FP b[3][3],FP c[3][3])
     {
         //[ a11*b11 + a12*b21 + a13*b31, a11*b12 + a12*b22 + a13*b32, a11*b13 + a12*b23 + a13*b33]
         //[ a21*b11 + a22*b21 + a23*b31, a21*b12 + a22*b22 + a23*b32, a21*b13 + a22*b23 + a23*b33]
@@ -1316,10 +1316,10 @@ namespace fst_algorithm
     return: true -> inertia is avaiable
             false-> inertia is not avaiable, error happened in computation 
     */    
-    bool DynamicsInterface::getInertia(const double q[MAXAXES],const double ddq[MAXAXES],double inertia[MAXAXES])
+    bool DynamicsInterface::getInertia(const FP q[MAXAXES],const FP ddq[MAXAXES],FP inertia[MAXAXES])
     {
-        double mq[6][6],mdq[6][6],mddq[6][6];
-        double m[6][6];
+        FP mq[6][6],mdq[6][6],mddq[6][6];
+        FP m[6][6];
 
         for(int i=0;i<6;i++)
         {
@@ -1351,7 +1351,7 @@ namespace fst_algorithm
     return: true -> counter_torque is avaiable
             false-> counter_torque is not avaiable, error happened in computation 
     */  
-    bool DynamicsInterface::getCounterTorque(const double alpha[MAXAXES], double counter_torque[MAXAXES])
+    bool DynamicsInterface::getCounterTorque(const FP alpha[MAXAXES], FP counter_torque[MAXAXES])
     {
          if(!getT(q_,dq_,alpha,counter_torque))
             return false;
@@ -1360,22 +1360,22 @@ namespace fst_algorithm
          return true;
     }  
     /* Recursive Newton-Euler for standard Denavit-Hartenberg notation. */
-    bool DynamicsInterface::rne(const double q[MAX_AXES],const double dq[MAX_AXES],const double ddq[MAX_AXES],double grav[3],double rv[MAX_AXES])
+    bool DynamicsInterface::rne(const FP q[MAX_AXES],const FP dq[MAX_AXES],const FP ddq[MAX_AXES],FP grav[3],FP rv[MAX_AXES])
     {
-        double z0[3]={0,0,1};
-        double Rb[3][3]={1,0,0,0,1,0,0,0,1};
-        double Tj[4][4];
-        double w[3]={0,0,0};
-        double wd[3]={0,0,0};
-        double vd[3];
-        double r[3];
-        double pstar[3];
-        double Fm[3][MAXAXES],Nm[3][MAXAXES],Rm[MAXAXES][3][3],pstarm[3][MAXAXES];
-        double Rt[3][3];
-        //double grav[3]={0,0,g0};
-        double d,alpha,a;
-        double fext[MAXAXES]={0,0,0,0,0,0};
-        double wbase[MAXAXES];
+        FP z0[3]={0,0,1};
+        FP Rb[3][3]={1,0,0,0,1,0,0,0,1};
+        FP Tj[4][4];
+        FP w[3]={0,0,0};
+        FP wd[3]={0,0,0};
+        FP vd[3];
+        FP r[3];
+        FP pstar[3];
+        FP Fm[3][MAXAXES],Nm[3][MAXAXES],Rm[MAXAXES][3][3],pstarm[3][MAXAXES];
+        FP Rt[3][3];
+        //FP grav[3]={0,0,g0};
+        FP d,alpha,a;
+        FP fext[MAXAXES]={0,0,0,0,0,0};
+        FP wbase[MAXAXES];
 
         int n = MAX_AXES;
 
@@ -1408,25 +1408,25 @@ namespace fst_algorithm
         }
 
         //the forward recursion
-        double z0qdd[3];
-        double z0qd[3];
-        double crosswz0qd[3];
-        double ttlwd[3];
-        double ttlw[3];
-        double twd[3];
-        double tw[3];
-        double crosswdpstar[3];
-        double crosswpstar[3];
-        double crosswwpstar[3];
-        double Rtvd[3];
-        double crosswdr[3];
-        double crosswr[3];
-        double crosswwr[3];
-        double vhat[3];
-        double F[3],N[3];
-        double linkiwd[3];
-        double linkiw[3];
-        double crosswlinkiw[3];
+        FP z0qdd[3];
+        FP z0qd[3];
+        FP crosswz0qd[3];
+        FP ttlwd[3];
+        FP ttlw[3];
+        FP twd[3];
+        FP tw[3];
+        FP crosswdpstar[3];
+        FP crosswpstar[3];
+        FP crosswwpstar[3];
+        FP Rtvd[3];
+        FP crosswdr[3];
+        FP crosswr[3];
+        FP crosswwr[3];
+        FP vhat[3];
+        FP F[3],N[3];
+        FP linkiwd[3];
+        FP linkiw[3];
+        FP crosswlinkiw[3];
 
         for(int j=0;j<n;j++)
         {
@@ -1520,21 +1520,21 @@ namespace fst_algorithm
         }
 
         //the backward recursion
-        double f[3]={fext[0],fext[1],fext[2]};
-        double nn[3]={fext[3],fext[4],fext[5]};
-        double R[3][3];
-        double RT[3][3];
-        double RTpstar[3];
-        double crossrtpstarf[3];
-        double nnaddcrossrtpstarf[3];
-        double Rnnaddcrossrtpstarf[3];
-        double pstaraddr[3];
-        double Fmj[3];
-        double crosspstaraddrfmj[3];
-        double Rf[3];
-        double RTz0[3];
-        double nnRTz0;
-        double t;
+        FP f[3]={fext[0],fext[1],fext[2]};
+        FP nn[3]={fext[3],fext[4],fext[5]};
+        FP R[3][3];
+        FP RT[3][3];
+        FP RTpstar[3];
+        FP crossrtpstarf[3];
+        FP nnaddcrossrtpstarf[3];
+        FP Rnnaddcrossrtpstarf[3];
+        FP pstaraddr[3];
+        FP Fmj[3];
+        FP crosspstaraddrfmj[3];
+        FP Rf[3];
+        FP RTz0[3];
+        FP nnRTz0;
+        FP t;
 
         for(int j=5;j>=0;j--)
         {
@@ -1607,22 +1607,22 @@ namespace fst_algorithm
         }        
 
     }
-    bool DynamicsInterface::rne_tau(const double q[MAX_AXES],const double dq[MAX_AXES],const double ddq[MAX_AXES],double T[MAX_AXES])
+    bool DynamicsInterface::rne_tau(const FP q[MAX_AXES],const FP dq[MAX_AXES],const FP ddq[MAX_AXES],FP T[MAX_AXES])
     {
-        double z0[3]={0,0,1};
-        double Rb[3][3]={1,0,0,0,1,0,0,0,1};
-        double Tj[4][4];
-        double w[3]={0,0,0};
-        double wd[3]={0,0,0};
-        double vd[3];
-        double r[3];
-        double pstar[3];
-        double Fm[3][MAXAXES],Nm[3][MAXAXES],Rm[MAXAXES][3][3],pstarm[3][MAXAXES];
-        double Rt[3][3];
-        double grav[3]={0,0,g0};
-        double d,alpha,a;
-        double fext[MAXAXES]={0,0,0,0,0,0};
-        double wbase[MAXAXES];
+        FP z0[3]={0,0,1};
+        FP Rb[3][3]={1,0,0,0,1,0,0,0,1};
+        FP Tj[4][4];
+        FP w[3]={0,0,0};
+        FP wd[3]={0,0,0};
+        FP vd[3];
+        FP r[3];
+        FP pstar[3];
+        FP Fm[3][MAXAXES],Nm[3][MAXAXES],Rm[MAXAXES][3][3],pstarm[3][MAXAXES];
+        FP Rt[3][3];
+        FP grav[3]={0,0,g0};
+        FP d,alpha,a;
+        FP fext[MAXAXES]={0,0,0,0,0,0};
+        FP wbase[MAXAXES];
 
         int n = MAX_AXES;
 
@@ -1655,25 +1655,25 @@ namespace fst_algorithm
         }
 
         //the forward recursion
-        double z0qdd[3];
-        double z0qd[3];
-        double crosswz0qd[3];
-        double ttlwd[3];
-        double ttlw[3];
-        double twd[3];
-        double tw[3];
-        double crosswdpstar[3];
-        double crosswpstar[3];
-        double crosswwpstar[3];
-        double Rtvd[3];
-        double crosswdr[3];
-        double crosswr[3];
-        double crosswwr[3];
-        double vhat[3];
-        double F[3],N[3];
-        double linkiwd[3];
-        double linkiw[3];
-        double crosswlinkiw[3];
+        FP z0qdd[3];
+        FP z0qd[3];
+        FP crosswz0qd[3];
+        FP ttlwd[3];
+        FP ttlw[3];
+        FP twd[3];
+        FP tw[3];
+        FP crosswdpstar[3];
+        FP crosswpstar[3];
+        FP crosswwpstar[3];
+        FP Rtvd[3];
+        FP crosswdr[3];
+        FP crosswr[3];
+        FP crosswwr[3];
+        FP vhat[3];
+        FP F[3],N[3];
+        FP linkiwd[3];
+        FP linkiw[3];
+        FP crosswlinkiw[3];
 
         for(int j=0;j<n;j++)
         {
@@ -1767,21 +1767,21 @@ namespace fst_algorithm
         }
 
         //the backward recursion
-        double f[3]={fext[0],fext[1],fext[2]};
-        double nn[3]={fext[3],fext[4],fext[5]};
-        double R[3][3];
-        double RT[3][3];
-        double RTpstar[3];
-        double crossrtpstarf[3];
-        double nnaddcrossrtpstarf[3];
-        double Rnnaddcrossrtpstarf[3];
-        double pstaraddr[3];
-        double Fmj[3];
-        double crosspstaraddrfmj[3];
-        double Rf[3];
-        double RTz0[3];
-        double nnRTz0;
-        double t;
+        FP f[3]={fext[0],fext[1],fext[2]};
+        FP nn[3]={fext[3],fext[4],fext[5]};
+        FP R[3][3];
+        FP RT[3][3];
+        FP RTpstar[3];
+        FP crossrtpstarf[3];
+        FP nnaddcrossrtpstarf[3];
+        FP Rnnaddcrossrtpstarf[3];
+        FP pstaraddr[3];
+        FP Fmj[3];
+        FP crosspstaraddrfmj[3];
+        FP Rf[3];
+        FP RTz0[3];
+        FP nnRTz0;
+        FP t;
 
         for(int j=5;j>=0;j--)
         {
@@ -1854,7 +1854,7 @@ namespace fst_algorithm
         }
 
         //this last bit needs work/testing
-        double Rnn[3];
+        FP Rnn[3];
 
         R[0][0]=Rm[0][0][0];R[0][1]=Rm[0][0][1];R[0][2]=Rm[0][0][2];
         R[1][0]=Rm[0][1][0];R[1][1]=Rm[0][1][1];R[1][2]=Rm[0][1][2];
@@ -1877,23 +1877,23 @@ namespace fst_algorithm
         wbase[4]=nn[1];
         wbase[5]=nn[2];
     }
-    bool DynamicsInterface::rne_M(const double mq[MAX_AXES][MAX_AXES],const double mdq[MAX_AXES][MAX_AXES],const double mddq[MAX_AXES][MAX_AXES],double M[MAX_AXES][MAX_AXES])
+    bool DynamicsInterface::rne_M(const FP mq[MAX_AXES][MAX_AXES],const FP mdq[MAX_AXES][MAX_AXES],const FP mddq[MAX_AXES][MAX_AXES],FP M[MAX_AXES][MAX_AXES])
     {
-        double q[MAXAXES],dq[MAXAXES],ddq[MAXAXES];
-        double z0[3]={0,0,1};
-        double Rb[3][3]={1,0,0,0,1,0,0,0,1};
-        double Tj[4][4];
-        double w[3]={0,0,0};
-        double wd[3]={0,0,0};
-        double vd[3]={0,0,0};
-        double r[3];
-        double pstar[3];
-        double Fm[3][MAXAXES],Nm[3][MAXAXES],Rm[MAXAXES][3][3],pstarm[3][MAXAXES];
-        double Rt[3][3];
-        double grav[3]={0,0,0};
-        double d,alpha,a;
-        double fext[MAXAXES]={0,0,0,0,0,0};
-        double wbase[MAXAXES];
+        FP q[MAXAXES],dq[MAXAXES],ddq[MAXAXES];
+        FP z0[3]={0,0,1};
+        FP Rb[3][3]={1,0,0,0,1,0,0,0,1};
+        FP Tj[4][4];
+        FP w[3]={0,0,0};
+        FP wd[3]={0,0,0};
+        FP vd[3]={0,0,0};
+        FP r[3];
+        FP pstar[3];
+        FP Fm[3][MAXAXES],Nm[3][MAXAXES],Rm[MAXAXES][3][3],pstarm[3][MAXAXES];
+        FP Rt[3][3];
+        FP grav[3]={0,0,0};
+        FP d,alpha,a;
+        FP fext[MAXAXES]={0,0,0,0,0,0};
+        FP wbase[MAXAXES];
         
         int n = MAX_AXES;
 
@@ -1951,25 +1951,25 @@ namespace fst_algorithm
             }
 
             //the forward recursion
-            double z0qdd[3];
-            double z0qd[3];
-            double crosswz0qd[3];
-            double ttlwd[3];
-            double ttlw[3];
-            double twd[3];
-            double tw[3];
-            double crosswdpstar[3];
-            double crosswpstar[3];
-            double crosswwpstar[3];
-            double Rtvd[3];
-            double crosswdr[3];
-            double crosswr[3];
-            double crosswwr[3];
-            double vhat[3];
-            double F[3],N[3];
-            double linkiwd[3];
-            double linkiw[3];
-            double crosswlinkiw[3];
+            FP z0qdd[3];
+            FP z0qd[3];
+            FP crosswz0qd[3];
+            FP ttlwd[3];
+            FP ttlw[3];
+            FP twd[3];
+            FP tw[3];
+            FP crosswdpstar[3];
+            FP crosswpstar[3];
+            FP crosswwpstar[3];
+            FP Rtvd[3];
+            FP crosswdr[3];
+            FP crosswr[3];
+            FP crosswwr[3];
+            FP vhat[3];
+            FP F[3],N[3];
+            FP linkiwd[3];
+            FP linkiw[3];
+            FP crosswlinkiw[3];
 
             for(int j=0;j<n;j++)
             {
@@ -2055,21 +2055,21 @@ namespace fst_algorithm
             }
 
             //the backward recursion
-            double f[3]={fext[0],fext[1],fext[2]};
-            double nn[3]={fext[3],fext[4],fext[5]};
-            double R[3][3];
-            double RT[3][3];
-            double RTpstar[3];
-            double crossrtpstarf[3];
-            double nnaddcrossrtpstarf[3];
-            double Rnnaddcrossrtpstarf[3];
-            double pstaraddr[3];
-            double Fmj[3];
-            double crosspstaraddrfmj[3];
-            double Rf[3];
-            double RTz0[3];
-            double nnRTz0;
-            double t;
+            FP f[3]={fext[0],fext[1],fext[2]};
+            FP nn[3]={fext[3],fext[4],fext[5]};
+            FP R[3][3];
+            FP RT[3][3];
+            FP RTpstar[3];
+            FP crossrtpstarf[3];
+            FP nnaddcrossrtpstarf[3];
+            FP Rnnaddcrossrtpstarf[3];
+            FP pstaraddr[3];
+            FP Fmj[3];
+            FP crosspstaraddrfmj[3];
+            FP Rf[3];
+            FP RTz0[3];
+            FP nnRTz0;
+            FP t;
 
             for(int j=5;j>=0;j--)
             {
@@ -2143,7 +2143,7 @@ namespace fst_algorithm
             }
 
             //this last bit needs work/testing
-            double Rnn[3];
+            FP Rnn[3];
             R[0][0]=Rm[0][0][0];R[0][1]=Rm[0][0][1];R[0][2]=Rm[0][0][2];
             R[1][0]=Rm[0][1][0];R[1][1]=Rm[0][1][1];R[1][2]=Rm[0][1][2];
             R[2][0]=Rm[0][2][0];R[2][1]=Rm[0][2][1];R[2][2]=Rm[0][2][2];
@@ -2170,19 +2170,19 @@ namespace fst_algorithm
             wbase[5]=nn[2]; 
         }       
     }
-    bool DynamicsInterface::rne_C(const double cq[MAX_AXES],const double cdq[MAX_AXES],double C[MAX_AXES][MAX_AXES])
+    bool DynamicsInterface::rne_C(const FP cq[MAX_AXES],const FP cdq[MAX_AXES],FP C[MAX_AXES][MAX_AXES])
     {
         int n = MAX_AXES;
 
         //we need to create a clone robot with no friciton, since friction
         //is also proportional to joint velocity 
 
-        double rC[MAX_AXES][MAX_AXES];
-        double Csq[MAX_AXES][MAX_AXES];
-        double QD[MAX_AXES];
-        double tau[MAX_AXES];
-        double cqdd[MAX_AXES];
-        double grav[3]={0,0,0};
+        FP rC[MAX_AXES][MAX_AXES];
+        FP Csq[MAX_AXES][MAX_AXES];
+        FP QD[MAX_AXES];
+        FP tau[MAX_AXES];
+        FP cqdd[MAX_AXES];
+        FP grav[3]={0,0,0};
         // find the torques that depend on a single finite joint speed,
         // these are due to the squared (centripetal) terms
         //
@@ -2226,7 +2226,7 @@ namespace fst_algorithm
             }
         }
 
-        double diagqd[MAX_AXES][MAX_AXES];
+        FP diagqd[MAX_AXES][MAX_AXES];
 
         memset(diagqd,0,sizeof(diagqd));
 
@@ -2241,7 +2241,7 @@ namespace fst_algorithm
             }
         }
         //C = C + Csq * diag(qd);
-        double Csqdiagqd[MAX_AXES][MAX_AXES];
+        FP Csqdiagqd[MAX_AXES][MAX_AXES];
 
         Multiply6666(Csq,diagqd,Csqdiagqd);
 
@@ -2255,11 +2255,11 @@ namespace fst_algorithm
         }
         return true;
     }
-    bool DynamicsInterface::rne_G(const double gq[MAX_AXES],double grv[3],double G[MAX_AXES]) 
+    bool DynamicsInterface::rne_G(const FP gq[MAX_AXES],FP grv[3],FP G[MAX_AXES]) 
     {
-        double t[MAX_AXES];
+        FP t[MAX_AXES];
 
-        double gdq[MAX_AXES],gddq[MAX_AXES];
+        FP gdq[MAX_AXES],gddq[MAX_AXES];
 
         memset(gdq,0,sizeof(gdq));
         memset(gddq,0,sizeof(gddq));
@@ -2342,9 +2342,15 @@ namespace fst_algorithm
         robot_model_.r[4][1]=-0.021732;
         robot_model_.r[4][2]=-0.002718;
 
-        robot_model_.r[5][0]=-0.000190;
-        robot_model_.r[5][1]=0;
-        robot_model_.r[5][2]=0.092437;
+        //empty
+        //robot_model_.r[5][0]=-0.000190;
+        //robot_model_.r[5][1]=0;
+        //robot_model_.r[5][2]=0.092437;
+
+        //7kg -0.074536	-0.000242	0.174664
+        robot_model_.r[5][0]=-0.074536	;
+        robot_model_.r[5][1]=-0.000242;
+        robot_model_.r[5][2]=0.174664;
 
         robot_model_.i[0][0][0]=0.110997;
         robot_model_.i[0][1][1]=0.088273;
@@ -2396,12 +2402,24 @@ namespace fst_algorithm
         robot_model_.i[4][2][1]=robot_model_.i[4][1][2];
         robot_model_.i[4][2][0]=robot_model_.i[4][0][2];
 
-        robot_model_.i[5][0][0]=0.001107;
-        robot_model_.i[5][1][1]=0.001107;
-        robot_model_.i[5][2][2]=0.000052;
-        robot_model_.i[5][0][1]=0;
-        robot_model_.i[5][1][2]=0;
-        robot_model_.i[5][0][2]=-0.000002;
+        //empty
+        //robot_model_.i[5][0][0]=0.001107;
+        //robot_model_.i[5][1][1]=0.001107;
+        //robot_model_.i[5][2][2]=0.000052;
+        //robot_model_.i[5][0][1]=0;
+        //robot_model_.i[5][1][2]=0;
+        //robot_model_.i[5][0][2]=-0.000002;
+        //robot_model_.i[5][1][0]=robot_model_.i[5][0][1];
+        //robot_model_.i[5][2][1]=robot_model_.i[5][1][2];
+       // robot_model_.i[5][2][0]=robot_model_.i[5][0][2];
+
+        //7kg 0.227154	0.269139	0.05258	0.000124	-0.092862	-0.000298
+        robot_model_.i[5][0][0]=0.227154;
+        robot_model_.i[5][1][1]=0.269139;
+        robot_model_.i[5][2][2]=0.05258;
+        robot_model_.i[5][0][1]=0.000124;
+        robot_model_.i[5][1][2]=-0.092862;
+        robot_model_.i[5][0][2]=-0.000298;
         robot_model_.i[5][1][0]=robot_model_.i[5][0][1];
         robot_model_.i[5][2][1]=robot_model_.i[5][1][2];
         robot_model_.i[5][2][0]=robot_model_.i[5][0][2];
@@ -2411,33 +2429,34 @@ namespace fst_algorithm
         robot_model_.m[2]=9.092074;
         robot_model_.m[3]=5.305265;
         robot_model_.m[4]=2.036364;
-        robot_model_.m[5]=0.126446;
+        //robot_model_.m[5]=0.126446;  empty
+        robot_model_.m[5]=3.058417;  //7kg
 
         robot_model_.mdh=true;
         memset(robot_model_.b,0,sizeof(robot_model_.b));  
         memset(robot_model_.tc,0,sizeof(robot_model_.tc));   
     
-        servo_model_[0].rated_torque=289;
+        servo_model_[0].rated_torque=289 * 3;
         servo_model_[0].jm=0.00013;
         servo_model_[0].gr=81;
         //servo_model_[0].b=0; //friction factor
-        servo_model_[1].rated_torque=316;
+        servo_model_[1].rated_torque=316 * 3;
         servo_model_[1].jm=0.000059;
         servo_model_[1].gr=101;  
         //servo_model_[1].b=0; //friction factor
-        servo_model_[2].rated_torque=130;
+        servo_model_[2].rated_torque=130 * 3;
         servo_model_[2].jm=0.000044;
         servo_model_[2].gr=81;   
         //servo_model_[2].b=0; //friction factor   
-        servo_model_[3].rated_torque=53;
+        servo_model_[3].rated_torque=53 *3;
         servo_model_[3].jm=0.000018;
         servo_model_[3].gr=60;
         //servo_model_[3].b=0; //friction factor
-        servo_model_[4].rated_torque=29;
+        servo_model_[4].rated_torque=29 * 3;
         servo_model_[4].jm=0.000017;
         servo_model_[4].gr=66.7;
         //servo_model_[4].b=0; //friction factor
-        servo_model_[5].rated_torque=23;
+        servo_model_[5].rated_torque=23 * 3;
         servo_model_[5].jm=0.000017;
         servo_model_[5].gr=44.6;
         //servo_model_[5].b=0; //friction factor
@@ -2607,11 +2626,11 @@ namespace fst_algorithm
         is_servo_model_ready_=true;
     }*/
          //get forward kinematics solve
-    bool DynamicsInterface::getforwardkinematics(const double q[MAX_AXES],double t[4][4])
+    bool DynamicsInterface::getforwardkinematics(const FP q[MAX_AXES],FP t[4][4])
     {
-        double T[4][4]=  {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
-        double A[4][4];
-        double B[4][4];
+        FP T[4][4]=  {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+        FP A[4][4];
+        FP B[4][4];
         int i=0;
         for (int i=0;i<MAX_AXES;i++)
         {
@@ -2647,41 +2666,41 @@ namespace fst_algorithm
         }
     } 
     /*algebraic inverse kinematics solve*/
-bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],double solve[6])
+bool DynamicsInterface::getinversekinematics(FP t[4][4],FP j_ref[6],FP solve[6])
 {
         // 将腕关节中心坐标系位姿矩阵按列赋值给n、o、a、p变量
-        double tool_m[4][4]={ { 1, 0, 0, 0 },
+        FP tool_m[4][4]={ { 1, 0, 0, 0 },
                                           { 0, 1, 0, 0 },
                                           { 0, 0, 1, -robot_model_.d[5] },
                                           { 0, 0, 0, 1 } };
         //FST_INFO("d6 = %f\n",robot_model_.d[5]);
-        double T[4][4];
+        FP T[4][4];
 
         Multiply4444(t,tool_m,T);
-        double nx = T[0][0], ny = T[1][0], nz = T[2][0],
+        FP nx = T[0][0], ny = T[1][0], nz = T[2][0],
                ox = T[0][1], oy = T[1][1], oz = T[2][1],
                ax = T[0][2], ay = T[1][2], az = T[2][2],
                px = T[0][3], py = T[1][3], pz = T[2][3];
 
 
-        double t1, t2, t3, t4, t5, t6;                             // 六个关节角度
-        double c1, c2, c3, c4, c5, c6, s1, s2, s3, s4, s5, s6;     // ci：i关节角余弦，si：i关节角正弦
-        double s23, c23, c4s5, s4s5, t31, t32, t41, t42;           // 多关节角和及其正余弦
-        double k1, k2, k, b1, b2;                                  // 中间变量
+        FP t1, t2, t3, t4, t5, t6;                             // 六个关节角度
+        FP c1, c2, c3, c4, c5, c6, s1, s2, s3, s4, s5, s6;     // ci：i关节角余弦，si：i关节角正弦
+        FP s23, c23, c4s5, s4s5, t31, t32, t41, t42;           // 多关节角和及其正余弦
+        FP k1, k2, k, b1, b2;                                  // 中间变量
 
-        double JOINTS_SOL[8][6] = {};          // 存储可能解
-        double SOL_OUT[6] = {};                // 最终选择解
+        FP JOINTS_SOL[8][6] = {};          // 存储可能解
+        FP SOL_OUT[6] = {};                // 最终选择解
         int i = 0;                             // 可选解的数量
 
-        double d3 = robot_model_.d[2];
-        double d1 = robot_model_.d[0];
-        double d4 = robot_model_.d[3];
-        double a3 = robot_model_.a[2];
-        double a2 = robot_model_.a[1];
-        double a1 = robot_model_.a[0];
-        double mn1 = px*px + py*py;
+        FP d3 = robot_model_.d[2];
+        FP d1 = robot_model_.d[0];
+        FP d4 = robot_model_.d[3];
+        FP a3 = robot_model_.a[2];
+        FP a2 = robot_model_.a[1];
+        FP a1 = robot_model_.a[0];
+        FP mn1 = px*px + py*py;
         //FST_INFO("px=%f py=%f\n",px,py);
-        double mn2 = d3*d3;
+        FP mn2 = d3*d3;
         //FST_INFO("mn1=%f mn2=%f d3=%f\n",mn1,mn2,d3);
         if (mn2 > mn1) {
             //FST_INFO("[ERROR] IK failure solving theta1");
@@ -2689,14 +2708,14 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
         }//if (mn2 > mn1)   
         else {
             //Calculate 2 possible solutions of theta1
-            double t1_part1 = atan2(d3, (mn1 - mn2) / 2),
+            FP t1_part1 = atan2(d3, (mn1 - mn2) / 2),
                    t1_part2 = atan2(py, px),
                    t1_part3 = atan2(d3, -(mn1 - mn2) / 2);
             //FST_INFO("t1part1=%f t1part2=%f t1part3=%f\n",t1_part1,t1_part2,t1_part3);
-            double t11 = t1_part1 + t1_part2;
-            double t12 = t1_part3 + t1_part2;
+            FP t11 = t1_part1 + t1_part2;
+            FP t12 = t1_part3 + t1_part2;
             //FST_INFO("angle1=%f angle2=%f\n",t11,t12);
-            double THETA1[2] = { t11, t12 };             // 1轴的两个解
+            FP THETA1[2] = { t11, t12 };             // 1轴的两个解
 
             // 根据一轴两个解，分别计算其余各轴
             for (int i1 = 0; i1 <2; ++i1) {
@@ -2710,27 +2729,27 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
                 //FST_INFO("k1=%f\n",k1);
                 k2 = px*c1 + py*s1 - a1;
                 //FST_INFO("k2=%f px=%f c1=%f py=%f s1=%f a1=%f\n",k2,px,c1,py,s1,a1);
-                double mp1 = a3*a3 + d4*d4;
+                FP mp1 = a3*a3 + d4*d4;
                 //FST_INFO("mp1=%f\n",mp1);
-                double mp6 = k1*k1 + k2*k2;
+                FP mp6 = k1*k1 + k2*k2;
                 //FST_INFO("mp6=%f\n",mp6);
                 k = (mp6 - a2*a2 - mp1) / a2 / 2;
                 //FST_INFO("k=%f\n",k);
-                double mp2 = k*k;
+                FP mp2 = k*k;
                 if (mp2 > mp1)
                     continue;                           // t3 无解，跳出本轮循环
                 //FST_INFO("mp2=%f\n",mp2);
-                double mp7 = sqrt(mp1 - mp2);
+                FP mp7 = sqrt(mp1 - mp2);
                 //FST_INFO("mp7=%f\n",mp7);
-                double mp3 = atan2(k, mp7);
+                FP mp3 = atan2(k, mp7);
                 //FST_INFO("mp3=%f\n",mp3);
-                double mp4 = atan2(a3, d4);
+                FP mp4 = atan2(a3, d4);
                 //FST_INFO("mp4=%f\n",mp4);
-                double mp5 = atan2(k, -mp7);
+                FP mp5 = atan2(k, -mp7);
                 //FST_INFO("mp5:%f\n",mp5);
                 t31 = mp3 - mp4;
                 t32 = mp5 - mp4;
-                double THETA3[2] = { t31, t32 };       // 3轴的两个解
+                FP THETA3[2] = { t31, t32 };       // 3轴的两个解
                 
                 // 根据三轴两个解，分别计算其余各轴
                 for (int i2 = 0; i2 <2; ++i2) {
@@ -2760,7 +2779,7 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
                         t42 = 0;
                     }
                     // 根据 t4的两个解，依次计算其余轴
-                    double THETA4[2] = { t41, t42 };          //  四轴的两个解
+                    FP THETA4[2] = { t41, t42 };          //  四轴的两个解
                     for (int i4 = 0; i4 <= 1; ++i4) {
                         t4 = THETA4[i4];
                         s4 = sin(t4);
@@ -2771,9 +2790,9 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
                         t5 = atan2(s5, c5);
                         
                         // Calculate theta6
-                        double cf_x = (c4*s1 - c1*c23*s4);
-                        double cf_y=c1*c4 + c23*s1*s4; 
-                        double cf_z = s23*s4;
+                        FP cf_x = (c4*s1 - c1*c23*s4);
+                        FP cf_y=c1*c4 + c23*s1*s4; 
+                        FP cf_z = s23*s4;
 
                         s6 = cf_x*nx - cf_y*ny - cf_z*nz;
                         c6 = cf_x*ox - cf_y*oy - cf_z*oz;
@@ -2781,13 +2800,13 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
 
                         // 当theta5等于零时，重新分配t4和t6值，使二者离参考值最近
                         if (fabs(s5) < 1e-6) {         //if sin(theta5)=0, distribute values to make the distance minimum
-                            double t46_tmp = t4 + t6;
-                            double t46_0 = robot_model_.offset[3] +  robot_model_.offset[5];
+                            FP t46_tmp = t4 + t6;
+                            FP t46_0 = robot_model_.offset[3] +  robot_model_.offset[5];
                             t46_tmp = t46_tmp - round((t46_tmp - t46_0) / PI / 2) * 2 * PI;
                             t4 = ( robot_model_.offset[3] -robot_model_.offset[5] + t46_tmp) / 2;
                             t6 = t46_tmp - t4;
                         }
-                        double J[6] = { t1 - robot_model_.offset[0],t2 - robot_model_.offset[1], t3 - robot_model_.offset[2], t4 - robot_model_.offset[3], t5 - robot_model_.offset[4], t6 - robot_model_.offset[5]};
+                        FP J[6] = { t1 - robot_model_.offset[0],t2 - robot_model_.offset[1], t3 - robot_model_.offset[2], t4 - robot_model_.offset[3], t5 - robot_model_.offset[4], t6 - robot_model_.offset[5]};
                         ReviseJoint(J,j_ref);   // 根据参考值和上下限位修正反解出的关节值
 
                         int flag = JudgeAxis(J);
@@ -2812,10 +2831,10 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
     if (i) {            // i is the solution number,
         int minsol = 0;
         int turn = 0;
-        double dist0 = 24 * pow(PI, 2);
+        FP dist0 = 24 * pow(PI, 2);
         for (int t = 0; t < turns_6axis; t++) {
             for (int k = 0; k < i; ++k) {
-                double dist = 0;
+                FP dist = 0;
                 for (int j = 0; j < 5; ++j) {
                     dist = dist + pow((JOINTS_SOL[k][j] - j_ref[j]), 2);
                 }
@@ -2828,7 +2847,7 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
             };
         }
 
-        double d_Sol[6] = {};
+        FP d_Sol[6] = {};
         int flag1 = 0;
         for (int i = 0; i <= 5; ++i) {
             SOL_OUT[i] = JOINTS_SOL[minsol][i];         //Save the closest solution to SOL_OUT
@@ -2848,7 +2867,7 @@ bool DynamicsInterface::getinversekinematics(double t[4][4],double j_ref[6],doub
     }    
 
 }
-void DynamicsInterface::ReviseJoint(double J[6],double Joint_ref[6])
+void DynamicsInterface::ReviseJoint(FP J[6],FP Joint_ref[6])
 {
     for (int i = 0; i < 6; i++) {
         // 先以参考关节值为依据，修正结果，使之距参考值最近
@@ -2869,7 +2888,7 @@ void DynamicsInterface::ReviseJoint(double J[6],double Joint_ref[6])
 //Out:              
 //return        l               
 //--------------------------------------------------------------------
-int DynamicsInterface::JudgeAxis(double theta[6])        //判断关节是否超出限位；
+int DynamicsInterface::JudgeAxis(FP theta[6])        //判断关节是否超出限位；
 {
     int k = 0;
     for (int i = 0; i < 6; ++i) {
@@ -2882,12 +2901,12 @@ int DynamicsInterface::JudgeAxis(double theta[6])        //判断关节是否超
     return k;
 }
 /*
-    bool DynamicsInterface::getOptimalSolution(const double j_sol[8][MAX_AXES],const double j_ref[MAX_AXES],int opttype,int assigneddir,double ikres[MAX_AXES])
+    bool DynamicsInterface::getOptimalSolution(const FP j_sol[8][MAX_AXES],const FP j_ref[MAX_AXES],int opttype,int assigneddir,FP ikres[MAX_AXES])
     {
-        double j_max[MAX_AXES];
-        double j_min[MAX_AXES];
-        double idis[MAX_AXES];
-        double ath[8][MAX_AXES];
+        FP j_max[MAX_AXES];
+        FP j_min[MAX_AXES];
+        FP idis[MAX_AXES];
+        FP ath[8][MAX_AXES];
 
         int isol=1;
         int solflag=0;
@@ -2930,7 +2949,7 @@ int DynamicsInterface::JudgeAxis(double theta[6])        //判断关节是否超
 
         if(opttype==1) //energy optimal
         {
-            double dist0 = 24*M_PI*M_PI;
+            FP dist0 = 24*M_PI*M_PI;
 
             for(int i=0;i<isol-1;i++)
             {

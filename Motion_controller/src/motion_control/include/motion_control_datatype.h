@@ -106,7 +106,7 @@ struct TrajectoryCache
     double  expect_duration;
 
     TrajectorySegment cache[MAX_PATH_SIZE];
-    TrajectoryCache *prev;
+    //TrajectoryCache *prev;
     TrajectoryCache *next;
 };
 

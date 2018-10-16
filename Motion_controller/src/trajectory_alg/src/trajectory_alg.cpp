@@ -22,6 +22,7 @@ using namespace std;
 
 
 
+
 int Gauss(double A[2][2], double B[2][2],int N)
 {
 	int i, j, k;
@@ -281,10 +282,11 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 	double tempT[MAXAXES] = { 0 };
 	double newT[2] = { 0 };
 	double snewT[2] = { 0 };
-	double r[3] = { 0 };
-	double a0, a1, a2, a3, tempt;
 
-	double a, b, c, lamda,slamda;
+	double r[3] = { 0 };
+	double a0, a1, a2, a3;
+
+	double a, b, c, lamda, slamda;
 	int dofn = MAXAXES;
 
 	if (type == 1) // 加速计算
@@ -784,121 +786,121 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 					c = qf[i] - q0[i] - (pow(ddq_max[i], 2) / (Jm[i] * sigma[i]) + dq0[i])*(Ti[i] - (2 * ddq_max[i]) / (Jm[i] * sigma[i])) - pow(ddq_max[i], 3) / (2 * pow(Jm[i], 2) * pow(sigma[i], 2)) - (ddq_max[i] * (pow(ddq_max[i], 2) / (2 * Jm[i] * sigma[i]) + dq0[i])) / (Jm[i] * sigma[i]) - (ddq_max[i] * dq0[i]) / (Jm[i] * sigma[i]);
 					lamda = b*b - 4 * a*c;
 					// ta2 doesn't exist. 
-					if (lamda < 0)
-					{
-						// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
-						//a3 = 1 / (pow(Jm[i], 2) * pow(sigma[i], 2)); //a
-						//a2 = -Ti[i] / (Jm[i] * sigma[i]); //b
-						//a1 = 0; //c
-						//a0 = -q0[i] + qf[i] - Ti[i] * dq0[i]; //d
-
-						//int snum = 0;
-						//double tempt = 0; //获得全部的解
-						//getrootsofquadratic(a3, a2, a1, a0, r, &snum); //计算一元三次方程的根
-
-						//if (snum == 1)
-						//{
-						//	tempt = r[0];
-						//}
-						//else
-						//{
-
-						//	for (int j = 0; j < 3; j++)
-						//	{
-						//		if (sigma[i] == 1)
-						//		{
-						//			tempt = -99;
-						//			if (r[j]>tempt && r[j]>0) //根据要求去掉负时间，取最小时间
-						//			{
-						//				tempt = r[j];
-						//			}
-						//		}
-						//		else if (sigma[i] == -1)
-						//		{
-						//			tempt = 99;
-						//			if (r[j] < tempt && r[j] <0)
-						//			{
-						//				tempt = r[j];
-						//			}
-						//		}
-						//	}
-						//}
+					if (lamda < -minimt)
+					{						
 						// set ta4 = 0. recompute the ddq_max.
+
 						ta4[i] = 0;
-						a = -(Ti[i]) / (2 * Jm[i] * sigma[i]);
-						b = (pow(Ti[i], 2)) / 2;
-						c = dq0[i] * Ti[i] + q0[i] - qf[i];
+						a = (Ti[i]) / (2 * Jm[i] * sigma[i]);
+						b = -(pow(Ti[i], 2)) / 2;
+						c = -dq0[i] * Ti[i] - q0[i] + qf[i];
 						slamda = b*b - 4 * a*c;
 
-						snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-						snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-						if ((snewT[0] > 0 && snewT[1] > 0))
+						if (slamda >minimt)
 						{
-							// 首先取解1 
-							if (sigma[i] == 1)
+							snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+							snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+							if ((snewT[0] > 0 && snewT[1] > 0))
 							{
-								if (snewT[0] > snewT[1])
-									ddq_max[i] = snewT[1];
-								else
+								// 首先取解1 
+								if (sigma[i] == 1)
+								{
+									if (snewT[0] > snewT[1])
+										ddq_max[i] = snewT[1];
+									else
+										ddq_max[i] = snewT[0];
+								}
+							}
+							else if ((snewT[0] < 0 && snewT[1] < 0))
+							{
+								// 首先取解1 
+								if (sigma[i] == -1)
+								{
+									if (snewT[0] > snewT[1])
+										ddq_max[i] = snewT[0];
+									else
+										ddq_max[i] = snewT[1];
+								}
+							}
+							else if (snewT[0] > 0 && snewT[1] < 0)
+							{
+								if (sigma[i] == 1)
+								{
 									ddq_max[i] = snewT[0];
-							}
-						}
-						else if ((snewT[0] < 0 && snewT[1] < 0))
-						{
-							// 首先取解1 
-							if (sigma[i] == -1)
-							{
-								if (snewT[0] > snewT[1])
-									ddq_max[i] = snewT[0];
-								else
+								}
+								else if (sigma[i] == -1)
+								{
 									ddq_max[i] = snewT[1];
+								}
 							}
+							else if (snewT[1] > 0 && snewT[0] < 0)
+							{
+								if (sigma[i] == 1)
+								{
+									ddq_max[i] = snewT[1];
+								}
+								else if (sigma[i] == -1)
+								{
+									ddq_max[i] = snewT[0];
+								}
+							}
+							ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+
+							ta2[i] = Ti[i] - ta1[i] - ta3[i] - ta4[i];
+							ddq2[i] = ddq1[i];
+							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							ddq4[i] = 0;
+							dq4[i] = dq3[i];
+							q4[i] = q3[i] + ta4[i] * dq3[i];
+
+							tqf[i] = q4[i];
+							dqf[i] = dq4[i];
+							ddqf[i] = ddq4[i];
 						}
-						else if (snewT[0] > 0 && snewT[1] < 0)
+						else if ((slamda < -minimt) || (slamda > -minimt && slamda < minimt))
 						{
-							if (sigma[i] == 1)
-							{
-								ddq_max[i] = snewT[0];
-							}
-							else if (sigma[i] ==- 1)
-							{
-								ddq_max[i] = snewT[1];
-							}
+							// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
+					
+							Jm[i] = -(qf[i] - q0[i] - Ti[i] *dq0[i])/((-(pow(Ti[i],3) * sigma[i]) / 8));
+							ddq_max[i]= Ti[i] *sigma[i] *Jm[i] / 2;
+							
+							ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+							q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+
+							ta2[i] = 0;
+							ddq2[i] = ddq1[i];
+							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							ta4[i] = 0;
+							ddq4[i] = 0;
+							dq4[i] = dq3[i];
+							q4[i] = q3[i] + ta4[i] * dq3[i];
+
+							tqf[i] = q4[i];
+							dqf[i] = dq4[i];
+							ddqf[i] = ddq4[i];
+
 						}
-						else if (snewT[1] > 0 && snewT[0] < 0)
-						{
-							if (sigma[i] == 1)
-							{
-								ddq_max[i] = snewT[1];
-							}
-							else if (sigma[i] == -1)
-							{
-								ddq_max[i] = snewT[0];
-							}
-						}
-						ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
-						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-						q1[i] = q0[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-						ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-
-						ta2[i] = Ti[i] - ta1[i] - ta3[i] - ta4[i];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						ddq4[i] = 0;
-						dq4[i] = dq3[i];
-						q4[i] = q3[i] + ta4[i] * dq3[i];
-
-						tqf[i] = q4[i];
-						dqf[i] = dq4[i];
-						ddqf[i] = ddq4[i];
 						
 					}
 					// ta2 exists. compute ta2
@@ -1194,15 +1196,15 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 				sigmaq[i] = 0;	//静止 符号取0
 			}
 			deltav[i] = dq0[i] - maxdq[i];
-			if (deltav[i]> minimq)
+			if (deltav[i]> minimv)
 			{
 				sigma[i] = -1; //减速 符号取 - 1
 			}
-			else if (deltav[i]   < -minimq)
+			else if (deltav[i]   < -minimv)
 			{
 				sigma[i] = 1; //加速  符号取1
 			}
-			else if ((deltav[i] < minimq) && (deltav[i]>-minimq))
+			else if ((deltav[i] < minimv) && (deltav[i]>-minimv))
 			{
 				deltav[i] = 0;
 				sigma[i] = -1;	//匀速 符号取0
@@ -1696,75 +1698,112 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 						c = dq0[i] * Ti[i] + qf[i] - q0[i];
 						slamda = b*b - 4 * a*c;
 
-						snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-						snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-						if ((snewT[0] > 0 && snewT[1] > 0))
+						if ((slamda > minimt) || ( slamda>-minimt && slamda<minimt))
 						{
-							// 首先取解1 
-							if (sigma[i] == -1)
+							snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+							snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+							if ((snewT[0] > 0 && snewT[1] > 0))
 							{
-								if (snewT[0] > snewT[1])
-									ddq_max[i] = snewT[1];
-								else
+								// 首先取解1 
+								if (sigma[i] == -1)
+								{
+									if (snewT[0] > snewT[1])
+										ddq_max[i] = snewT[1];
+									else
+										ddq_max[i] = snewT[0];
+								}
+							}
+							else if ((snewT[0] < 0 && snewT[1] < 0))
+							{
+								// 首先取解1 
+								if (sigma[i] == 1)
+								{
+									if (snewT[0] > snewT[1])
+										ddq_max[i] = snewT[0];
+									else
+										ddq_max[i] = snewT[1];
+								}
+							}
+							else if (snewT[0] > 0 && snewT[1] < 0)
+							{
+								if (sigma[i] == -1)
+								{
 									ddq_max[i] = snewT[0];
-							}
-						}
-						else if ((snewT[0] < 0 && snewT[1] < 0))
-						{
-							// 首先取解1 
-							if (sigma[i] ==1)
-							{
-								if (snewT[0] > snewT[1])
-									ddq_max[i] = snewT[0];
-								else
+								}
+								else if (sigma[i] == 1)
+								{
 									ddq_max[i] = snewT[1];
+								}
 							}
+							else if (snewT[1] > 0 && snewT[0] < 0)
+							{
+								if (sigma[i] == -1)
+								{
+									ddq_max[i] = snewT[1];
+								}
+								else if (sigma[i] == 1)
+								{
+									ddq_max[i] = snewT[0];
+								}
+							}
+							ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+
+							ta2[i] = Ti[i] - ta1[i] - ta3[i] - ta4[i];
+							ddq2[i] = ddq1[i];
+							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							ddq4[i] = 0;
+							dq4[i] = dq3[i];
+							q4[i] = q3[i] + ta4[i] * dq3[i];
+
+							tqf[i] = q4[i];
+							dqf[i] = dq4[i];
+							ddqf[i] = ddq4[i];
 						}
-						else if (snewT[0] > 0 && snewT[1] < 0)
+						else
 						{
-							if (sigma[i] == -1)
-							{
-								ddq_max[i] = snewT[0];
-							}
-							else if (sigma[i] == 1)
-							{
-								ddq_max[i] = snewT[1];
-							}
+
+							// 给出连立ta1和ta2方程后 三次方程的各项系数  求修正后的ta1值
+
+							Jm[i] = -(q0[i] - qf[i] - Ti[i] * dq0[i]) / ((-(pow(Ti[i], 3) * sigma[i]) / 8));
+							ddq_max[i] = Ti[i] * sigma[i] * Jm[i] / 2;
+
+							ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+
+							ta2[i] = 0;
+							ddq2[i] = ddq1[i];
+							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+							ta4[i] = 0;
+							ddq4[i] = 0;
+							dq4[i] = dq3[i];
+							q4[i] = q3[i] + ta4[i] * dq3[i];
+
+							tqf[i] = q4[i];
+							dqf[i] = dq4[i];
+							ddqf[i] = ddq4[i];
+
 						}
-						else if (snewT[1] > 0 && snewT[0] < 0)
-						{
-							if (sigma[i] == -1)
-							{
-								ddq_max[i] = snewT[1];
-							}
-							else if (sigma[i] == 1)
-							{
-								ddq_max[i] = snewT[0];
-							}
-						}
-						ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
-						ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-						dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-						q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-						ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-
-						ta2[i] = Ti[i] - ta1[i] - ta3[i] - ta4[i];
-						ddq2[i] = ddq1[i];
-						dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-						q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-						ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-						dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-						q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-						ddq4[i] = 0;
-						dq4[i] = dq3[i];
-						q4[i] = q3[i] + ta4[i] * dq3[i];
-
-						tqf[i] = q4[i];
-						dqf[i] = dq4[i];
-						ddqf[i] = ddq4[i];
 
 					}
 					// ta2 exists. compute ta2
@@ -1848,75 +1887,107 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 							c = dq0[i] * Ti[i] + qf[i] - q0[i];
 							slamda = b*b - 4 * a*c;
 
-							snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
-							snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
-							if ((snewT[0] > 0 && snewT[1] > 0))
+							if (slamda > 0)
 							{
-								// 首先取解1 刷新ddq_max
-								if (sigma[i] == -1)
+								snewT[0] = -b / (2 * a) + sqrt(slamda) / (2 * a);
+								snewT[1] = -b / (2 * a) - sqrt(slamda) / (2 * a);
+								if ((snewT[0] > 0 && snewT[1] > 0))
 								{
-									if (snewT[0] > snewT[1])
-										ddq_max[i] = snewT[1];
-									else
+									// 首先取解1 刷新ddq_max
+									if (sigma[i] == -1)
+									{
+										if (snewT[0] > snewT[1])
+											ddq_max[i] = snewT[1];
+										else
+											ddq_max[i] = snewT[0];
+									}
+								}
+								else if ((snewT[0] < 0 && snewT[1] < 0))
+								{
+									// 首先取解1 刷新ddq_max
+									if (sigma[i] == 1)
+									{
+										if (snewT[0] > snewT[1])
+											ddq_max[i] = snewT[0];
+										else
+											ddq_max[i] = snewT[1];
+									}
+								}
+								else if (snewT[0] > 0 && snewT[1] < 0)
+								{
+									if (sigma[i] == -1)
+									{
 										ddq_max[i] = snewT[0];
-								}
-							}
-							else if ((snewT[0] < 0 && snewT[1] < 0))
-							{
-								// 首先取解1 刷新ddq_max
-								if (sigma[i] == 1)
-								{
-									if (snewT[0] > snewT[1])
-										ddq_max[i] = snewT[0];
-									else
+									}
+									else if (sigma[i] == 1)
+									{
 										ddq_max[i] = snewT[1];
+									}
 								}
+								else if (snewT[1] > 0 && snewT[0] < 0)
+								{
+									if (sigma[i] == -1)
+									{
+										ddq_max[i] = snewT[1];
+									}
+									else if (sigma[i] == 1)
+									{
+										ddq_max[i] = snewT[0];
+									}
+								}
+								ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+								q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+								ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+
+								ta2[i] = Ti[i] - ta1[i] - ta3[i] - ta4[i];
+								ddq2[i] = ddq1[i];
+								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
 							}
-							else if (snewT[0] > 0 && snewT[1] < 0)
+							else
 							{
-								if (sigma[i] == -1)
-								{
-									ddq_max[i] = snewT[0];
-								}
-								else if (sigma[i] == 1)
-								{
-									ddq_max[i] = snewT[1];
-								}
+								Jm[i] = -(q0[i] - qf[i] - Ti[i] *dq0[i]) / (-pow(Ti[i],3) * sigma[i] / 8);
+								ddq_max[i] = Ti[i] *sigma[i] *Jm[i] / 2;
+
+								ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
+								ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
+								dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
+								q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
+
+								ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
+
+								ta2[i] = 0;
+								ddq2[i] = ddq1[i];
+								dq2[i] = dq1[i] + ddq1[i] * ta2[i];
+								q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
+
+								ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
+								dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
+								q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
+
+								ddq4[i] = 0;
+								dq4[i] = dq3[i];
+								q4[i] = q3[i] + ta4[i] * dq3[i];
+
+								tqf[i] = q4[i];
+								dqf[i] = dq4[i];
+								ddqf[i] = ddq4[i];
 							}
-							else if (snewT[1] > 0 && snewT[0] < 0)
-							{
-								if (sigma[i] == -1)
-								{
-									ddq_max[i] = snewT[1];
-								}
-								else if (sigma[i] == 1)
-								{
-									ddq_max[i] = snewT[0];
-								}
-							}
-							ta1[i] = (ddq_max[i] - ddq0[i]) / (sigma[i] * Jm[i]);
-							ddq1[i] = ddq0[i] + sigma[i] * Jm[i] * ta1[i];
-							dq1[i] = dq0[i] + ddq0[i] * ta1[i] + 1 / 2.0 * sigma[i] * Jm[i] * pow(ta1[i], 2);
-							q1[i] = qf[i] + dq0[i] * ta1[i] + 1 / 2.0 * ddq0[i] * pow(ta1[i], 2) + 1 / 6.0 * sigma[i] * Jm[i] * pow(ta1[i], 3);
-
-							ta3[i] = ddq_max[i] / (sigma[i] * Jm[i]);
-
-							ta2[i] = Ti[i] - ta1[i] - ta3[i] - ta4[i];
-							ddq2[i] = ddq1[i];
-							dq2[i] = dq1[i] + ddq1[i] * ta2[i];
-							q2[i] = q1[i] + dq1[i] * ta2[i] + 1 / 2.0 * ddq1[i] * pow(ta2[i], 2);
-
-							ddq3[i] = ddq2[i] - sigma[i] * Jm[i] * ta3[i];
-							dq3[i] = dq2[i] + ddq2[i] * ta3[i] - 1 / 2.0 * sigma[i] * Jm[i] * pow(ta3[i], 2);
-							q3[i] = q2[i] + dq2[i] * ta3[i] + 1 / 2.0 * ddq2[i] * pow(ta3[i], 2) - 1 / 6.0 * sigma[i] * Jm[i] * pow(ta3[i], 3);
-
-							ddq4[i] = 0;
-							dq4[i] = dq3[i];
-							q4[i] = q3[i] + ta4[i] * dq3[i];
-
-							tqf[i] = q4[i];
-							dqf[i] = dq4[i];
-							ddqf[i] = ddq4[i];
 						}
 						else //ta4 exists.
 						{
@@ -2066,15 +2137,48 @@ ErrorCode forwardCycle(const fst_mc::JointPoint &start, const fst_mc::Joint &tar
 	double dq_avg[6] = {0};
 	double ddq_max[6] = { 0 };// {
 	double ddq_min[6] = { 0 };
+	double dq_lim[6] = { -5.8119,
+		-4.6600,
+		-5.8119,
+		-7.8540,
+		-7.0686,
+		-10.5592 };
+	double time_adj[6] = { 0 };
+	double maxduration = -1.0;
 
 	J0[0] = start.angle.j1; J0[1] = start.angle.j2; J0[2] = start.angle.j3; J0[3] = start.angle.j4; J0[4] = start.angle.j5; J0[5] = start.angle.j6;
 	J1[0] = target.j1; J1[1] = target.j2; J1[2] = target.j3; J1[3] = target.j4; J1[4] = target.j5; J1[5] = target.j6;
 	for (int i = 0; i < 6; i++)
 	{
+
 		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
 			dq_avg[i] = 0;
 		else
 			dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
+
+		if (fabs(dq_avg[i]) > fabs(dq_lim[i]))
+		{
+			time_adj[i] = fabs((J1[i] - J0[i]) / dq_lim[i]);
+		}
+		else
+		{
+			time_adj[i] = exp_duration;
+		}
+
+		if (time_adj[i] > maxduration)
+		{
+			maxduration = time_adj[i];
+		}
+	}
+
+	for (int i = 0; i < 6; i++)
+	{
+
+		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
+			dq_avg[i] = 0;
+		else
+			dq_avg[i] = (J1[i] - J0[i]) / maxduration;
+
 	}
 
 	double dq0[6] = { 0 };
@@ -2202,7 +2306,14 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 	double dq_avg[6];
 	double ddq_max[6] = { 0 };// {
 	double ddq_min[6] = { 0 };
-
+	double dq_lim[6] = { -5.8119,
+		- 4.6600,
+		- 5.8119,
+		- 7.8540,
+		- 7.0686,
+		- 10.5592 };
+	double time_adj[6] = { 0 };
+	double maxduration = -1.0;
 	J1[0] = target.angle.j1; J1[1] = target.angle.j2; J1[2] = target.angle.j3; J1[3] = target.angle.j4; J1[4] = target.angle.j5; J1[5] = target.angle.j6;
 	J0[0] = start.j1; J0[1] = start.j2; J0[2] = start.j3; J0[3] = start.j4; J0[4] = start.j5; J0[5] = start.j6;
 	for (int i = 0; i < 6; i++)
@@ -2212,6 +2323,30 @@ ErrorCode backwardCycle(const fst_mc::Joint &start, const fst_mc::JointPoint &ta
 			dq_avg[i] = 0;
 		else
 			dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
+
+		if (fabs(dq_avg[i]) > fabs(dq_lim[i]))
+		{
+			time_adj[i] =fabs( (J1[i] - J0[i]) / dq_lim[i]);
+		}
+		else
+		{
+			time_adj[i] = exp_duration;
+		}
+
+		if (time_adj[i] > maxduration)
+		{
+			maxduration = time_adj[i];
+		}
+	}
+
+	for (int i = 0; i < 6; i++)
+	{
+
+		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
+			dq_avg[i] = 0;
+		else
+			dq_avg[i] = (J1[i] - J0[i]) / maxduration;
+
 	}
 
 	double dq0[6] = { 0 };
@@ -2600,14 +2735,16 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 
 
 
+
+
                           
 ErrorCode computeDynamics(const fst_mc::Joint &angle, const fst_mc::Joint &omega,
   fst_mc::Joint &alpha_upper, fst_mc::Joint &alpha_lower, fst_mc::DynamicsProduct &product)
 {
-  double tq[MAXAXES];
-  double tdq[MAXAXES];
-  double tddq[2][MAXAXES];
-  double tcg[MAXAXES];
+  FP tq[MAXAXES];
+  FP tdq[MAXAXES];
+  FP tddq[2][MAXAXES];
+  FP tcg[MAXAXES];
   
   for (int i = 0; i < MAXAXES; i++)
   {
@@ -2650,8 +2787,8 @@ ErrorCode computeDynamics(const fst_mc::Joint &angle, const fst_mc::Joint &omega
   //getInertia(tq, tddq, tma, tcg);
 
   //rne_tau(tq, tdq, tddq, tau);
-  double mq[6][6], mdq[6][6], mddq[6][6];
-  double M[6][6],C[6][6];
+  FP mq[6][6], mdq[6][6], mddq[6][6];
+  FP M[6][6],C[6][6];
 
   for (int i = 0; i<6; i++)
   {
@@ -2673,7 +2810,7 @@ ErrorCode computeDynamics(const fst_mc::Joint &angle, const fst_mc::Joint &omega
 
   g_dynamics_interface.rne_C(tq, tdq, C);
 
-  double GRV[3] = { 0,0,9.81 };
+  FP GRV[3] = { 0,0,9.81 };
 
   //printf("iq : %f %f %f %f %f %f\n",iq[0],iq[1],iq[2],iq[3],iq[4],iq[5]);
   g_dynamics_interface.rne_G(tq, GRV, tcg);
@@ -2704,11 +2841,14 @@ ErrorCode computeDynamics(const fst_mc::Joint &angle, const fst_mc::Joint &omega
   alpha_lower.j5 = tddq[1][4] < -14 ? tddq[1][4] : -14;
   alpha_lower.j6 = tddq[1][5] < -21 ? tddq[1][5] : -21;
 
-  //alpha_upper.j2 *= 2;
-  //alpha_upper.j3 *= 2;
-  //alpha_lower.j2 *= 2;
-  //alpha_lower.j3 *= 2;
-  return SUCCESS;
+  //alpha_upper.j2 *= 3;
+  //alpha_upper.j3 *= 3;
+  //alpha_lower.j2 *= 3;
+  //alpha_lower.j3 *= 3;
+  if (alpha_lower.j5 > -20) alpha_lower.j5 *= 10;
+  if (alpha_upper.j5 < 20)  alpha_upper.j5 *= 10;
+
+   return SUCCESS;
 }
                           
 #if 0

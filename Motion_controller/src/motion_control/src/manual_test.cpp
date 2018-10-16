@@ -27,6 +27,54 @@ static void rtTask(void *group)
 
 #define LOOP 1
 
+void test0(void)
+{
+    Joint angle;
+    Joint omega;
+    Joint alpha_upper, alpha_lower;
+    clock_t start, end;
+    DynamicsProduct product;
+
+    angle[0] = 0.9;
+    angle[1] = 0.4;
+    angle[2] = -0.2;
+    angle[3] = 1.1;
+    angle[4] = -1.4;
+    angle[5] = 0.3;
+    omega[0] = 2.5;
+    omega[1] = 1.3;
+    omega[2] = -3.4;
+    omega[3] = -1.2;
+    omega[4] = 0.4;
+    omega[5] = -0.9;
+
+    start = clock();
+    ErrorCode err = computeDynamics(angle, omega, alpha_upper, alpha_lower, product);
+    end = clock();
+    double seconds  =(double)(end - start)/CLOCKS_PER_SEC;
+    printf("dynamics %d times, using time: %.6f ms\n", LOOP, seconds * 1000);
+
+    printf("result = %d\n", err);
+    printf("angle = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", angle[0], angle[1], angle[2], angle[3], angle[4], angle[5]);
+    printf("omega = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
+    printf("alpha-upper = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", alpha_upper[0], alpha_upper[1], alpha_upper[2], alpha_upper[3], alpha_upper[4], alpha_upper[5]);
+    printf("alpha-lower = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", alpha_lower[0], alpha_lower[1], alpha_lower[2], alpha_lower[3], alpha_lower[4], alpha_lower[5]);
+    printf("produce:\n");
+    printf("  m = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[0][0], product.m[0][1], product.m[0][2], product.m[0][3], product.m[0][4], product.m[0][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[1][0], product.m[1][1], product.m[1][2], product.m[1][3], product.m[1][4], product.m[1][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[2][0], product.m[2][1], product.m[2][2], product.m[2][3], product.m[2][4], product.m[2][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[3][0], product.m[3][1], product.m[3][2], product.m[3][3], product.m[3][4], product.m[3][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[4][0], product.m[4][1], product.m[4][2], product.m[4][3], product.m[4][4], product.m[4][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[5][0], product.m[5][1], product.m[5][2], product.m[5][3], product.m[5][4], product.m[5][5]);
+    printf("  c = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[0][0], product.c[0][1], product.c[0][2], product.c[0][3], product.c[0][4], product.c[0][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[1][0], product.c[1][1], product.c[1][2], product.c[1][3], product.c[1][4], product.c[1][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[2][0], product.c[2][1], product.c[2][2], product.c[2][3], product.c[2][4], product.c[2][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[3][0], product.c[3][1], product.c[3][2], product.c[3][3], product.c[3][4], product.c[3][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[4][0], product.c[4][1], product.c[4][2], product.c[4][3], product.c[4][4], product.c[4][5]);
+    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[5][0], product.c[5][1], product.c[5][2], product.c[5][3], product.c[5][4], product.c[5][5]);
+    printf("  g = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.g[0], product.g[1], product.g[2], product.g[3], product.g[4], product.g[5]);
+}
+
 void test1(void)
 {
     JointPoint start_state[LOOP];
@@ -479,12 +527,12 @@ void test5(void)
 
 int main(int argc, char **argv)
 {
+    test0();
     //test1();
     //test2();
     //test3();
-
     //test4();
-    test5();
+    //test5();
 
     return 0;
 }

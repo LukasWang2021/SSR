@@ -21,7 +21,7 @@
 #include <path_plan.h>
 
 
-#define AUTO_CACHE_SIZE     2
+#define AUTO_CACHE_SIZE     5
 
 namespace fst_mc
 {
@@ -99,9 +99,10 @@ class BaseGroup
 
 
   protected:
-    virtual ErrorCode autoJoint(const Joint &target, double vel, double cnt, int id);
-    virtual ErrorCode autoLine(const PoseEuler &target, double vel, double cnt, int id);
-    virtual ErrorCode autoCircle(const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id);
+    virtual ErrorCode autoJoint(const Joint &start, const Joint &target, double vel, double cnt, int id);
+    virtual ErrorCode autoLine(const Joint &start, const PoseEuler &target, double vel, double cnt, int id);
+    virtual ErrorCode autoCircle(const Joint &start, const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id);
+
 
     virtual ErrorCode prepareCache(TrajectoryCache &cache);
     virtual ErrorCode preplanCache(TrajectoryCache &cache, double cnt);
@@ -119,6 +120,9 @@ class BaseGroup
 
     virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
+
+    virtual TrajectoryCache* getTrajectoryCache(void);
+    virtual void freeTrajectoryCache(TrajectoryCache *pcache);
 
     inline void reportError(const ErrorCode &error);
     inline bool isSameJointForFine(const Joint &joint1, const Joint &joint2);
@@ -149,8 +153,8 @@ class BaseGroup
     ServoState  servo_state_;
     GroupState  group_state_;
 
-    TrajectoryCache     *auto_pick_ptr_;
-    TrajectoryCache     *auto_cache_ptr_;
+    TrajectoryCache     *used_cache_ptr_;
+    TrajectoryCache     *free_cache_ptr_;
 
     Joint       jerk_;
     Joint       start_joint_;

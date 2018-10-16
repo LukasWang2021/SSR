@@ -22,9 +22,13 @@ using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
 
-//#define OUTPUT_JOUT
+#define OUTPUT_JOUT
 //#define OUTPUT_COEFF
 //#define OUTPUT_POUT
+
+
+#define AUTO_LOCK   {pthread_mutex_lock(&auto_mutex_);}
+#define AUTO_UNLOCK {pthread_mutex_unlock(&auto_mutex_);}
 
 namespace fst_mc
 {
@@ -86,8 +90,8 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     manual_time_ = 0;
     manual_frame_ = JOINT;
 
-    auto_pick_ptr_ = NULL;
-    auto_cache_ptr_ = NULL;
+    free_cache_ptr_ = NULL;
+    used_cache_ptr_ = NULL;
     auto_pick_segment_ = 0;
 
     vel_ratio_ = 0;
@@ -98,21 +102,33 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
 
 BaseGroup::~BaseGroup()
 {
-    if (auto_cache_ptr_ != NULL)
+    TrajectoryCache *p;
+
+    while (used_cache_ptr_ != NULL)
     {
-        delete [] auto_cache_ptr_;
-        auto_cache_ptr_ = NULL;
+        p = used_cache_ptr_;
+        used_cache_ptr_ = used_cache_ptr_->next;
+        freeTrajectoryCache(p);
+    }
+
+    while (free_cache_ptr_ != NULL)
+    {
+        p = free_cache_ptr_;
+        free_cache_ptr_ = free_cache_ptr_->next;
+        delete p;
     }
 
 #ifdef OUTPUT_JOUT
-    jout << "time-of-start,angle[0],angle[1],angle[2],angle[3],angle[4],angle[5],omega[0],omega[1],omega[2],omega[3],omega[4],omega[5],alpha[0],alpha[1],alpha[2],alpha[3],alpha[4],alpha[5]" << endl;
+    jout << "time-of-start,angle[0],angle[1],angle[2],angle[3],angle[4],angle[5],omega[0],omega[1],omega[2],omega[3],omega[4],omega[5],alpha[0],alpha[1],alpha[2],alpha[3],alpha[4],alpha[5],"
+         << "ma+cv+g[0],ma+cv+g[1],ma+cv+g[2],ma+cv+g[3],ma+cv+g[4],ma+cv+g[5]" << endl;
 
     for (size_t i = 0; i < g_jindex; i++)
     {
         jout << g_jout[i].time << ","
              << g_jout[i].point.angle[0] << "," << g_jout[i].point.angle[1] << "," << g_jout[i].point.angle[2] << "," << g_jout[i].point.angle[3] << "," << g_jout[i].point.angle[4] << "," << g_jout[i].point.angle[5] << ","
              << g_jout[i].point.omega[0] << "," << g_jout[i].point.omega[1] << "," << g_jout[i].point.omega[2] << "," << g_jout[i].point.omega[3] << "," << g_jout[i].point.omega[4] << "," << g_jout[i].point.omega[5] << ","
-             << g_jout[i].point.alpha[0] << "," << g_jout[i].point.alpha[1] << "," << g_jout[i].point.alpha[2] << "," << g_jout[i].point.alpha[3] << "," << g_jout[i].point.alpha[4] << "," << g_jout[i].point.alpha[5] << endl;
+             << g_jout[i].point.alpha[0] << "," << g_jout[i].point.alpha[1] << "," << g_jout[i].point.alpha[2] << "," << g_jout[i].point.alpha[3] << "," << g_jout[i].point.alpha[4] << "," << g_jout[i].point.alpha[5] << ","
+             << g_jout[i].ma_cv_g[0] << "," << g_jout[i].ma_cv_g[1] << "," << g_jout[i].ma_cv_g[2] << "," << g_jout[i].ma_cv_g[3] << "," << g_jout[i].ma_cv_g[4] << "," << g_jout[i].ma_cv_g[5] << endl;
     }
 
     jout.close();
@@ -290,7 +306,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
     if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
         FST_ERROR("Cannot manual to target in current group-state = %d, servo-state = %d", group_state_, servo_state_);
-        return INVALID_SEQUENCE;
+        return SUCCESS;
     }
 
     if (manual_frame_ != JOINT)
@@ -342,7 +358,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
         FST_ERROR("Cannot manual to target in current group-state = %d, servo-state = %d", group_state_, servo_state_);
-        return INVALID_SEQUENCE;
+        return SUCCESS;
     }
 
     if (manual_frame_ != BASE && manual_frame_ != USER && manual_frame_ != WORLD)
@@ -418,7 +434,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
     if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
         FST_ERROR("Cannot manual step in current group-state = %d, servo-state = %d", group_state_, servo_state_);
-        return INVALID_SEQUENCE;
+        return SUCCESS;
     }
 
     getLatestJoint(manual_traj_.joint_start);
@@ -660,17 +676,32 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 {
     FST_INFO("Auto move request received, motion ID = %d, type = %d", id, target.type);
     ErrorCode err;
+    Joint start_joint;
+
+    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
+    {
+        getLatestJoint(start_joint);
+    }
+    else if (group_state_ == AUTO || group_state_ == STANDBY || group_state_ == AUTO_TO_STANDBY)
+    {
+        start_joint = start_joint_;
+    }
+    else
+    {
+        FST_ERROR("Cannot start auto motion in current group state: %d, servo-state: %d", group_state_, servo_state_);
+        return INVALID_SEQUENCE;
+    }
 
     switch (target.type)
     {
         case MOTION_JOINT:
-            err = autoJoint(target.joint_target, target.vel, target.cnt, id);
+            err = autoJoint(start_joint, target.joint_target, target.vel, target.cnt, id);
             break;
         case MOTION_LINE:
-            err = autoLine(target.pose_target, target.vel, target.cnt, id);
+            err = autoLine(start_joint, target.pose_target, target.vel, target.cnt, id);
             break;
         case MOTION_CIRCLE:
-            //err = autoCircle(target.circle_target.pose1, target.circle_target.pose2, target.vel, target.cnt, id);
+            //err = autoCircle(start_joint, target.circle_target.pose1, target.circle_target.pose2, target.vel, target.cnt, id);
             //break;
         default:
             FST_ERROR("Invalid motion type, auto move aborted.");
@@ -680,30 +711,21 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
     if (err == SUCCESS)
     {
-        //if (group_state_ == STANDBY)
-        pthread_mutex_lock(&auto_mutex_);
-        FST_INFO("grp-state=%d, servo-state=%d, auto-ptr-valid = %d", group_state_, servo_state_, auto_pick_ptr_->valid);
+        AUTO_LOCK;
+        FST_INFO("grp-state=%d, servo-state=%d, used_cache_ptr_ = %x, cache-valid = %d", group_state_, servo_state_, used_cache_ptr_, used_cache_ptr_->valid);
 
-        if (auto_pick_ptr_->valid == false)
+        if (used_cache_ptr_->valid == false)
         {
-            size_t cnt = 0;
-
-            while (!auto_pick_ptr_->valid && cnt < AUTO_CACHE_SIZE)
-            {
-                auto_pick_ptr_ = auto_pick_ptr_->next;
-            }
-
-            if (auto_pick_ptr_->valid)
-            {
-                auto_pick_segment_ = 1;
-                FST_INFO("Start motion, pick-cache = %p, pick-seg = %d", auto_pick_ptr_, auto_pick_segment_);
-            }
-            else
-            {
-                FST_INFO("Trajectory cache not ready.");
-                pthread_mutex_unlock(&auto_mutex_);
-                return MOTION_INTERNAL_FAULT;
-            }
+            used_cache_ptr_->valid = true;
+            auto_pick_segment_ = 1;
+            FST_INFO("Start motion, pick-cache = %p, pick-seg = %d", used_cache_ptr_, auto_pick_segment_);
+        }
+        else
+        {
+            TrajectoryCache *p = used_cache_ptr_;
+            while (p->next != NULL) p = p->next;
+            p->valid = true;
+            FST_INFO("Motion behind prev-motion, pick-cache = %p, pick-seg = %d", used_cache_ptr_, auto_pick_segment_);
         }
 
         if (group_state_ == STANDBY)
@@ -735,13 +757,13 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
             else
             {
                 FST_ERROR("Move by 'FINE', motion type = %d invalid", target.type);
-                pthread_mutex_unlock(&auto_mutex_);
+                AUTO_UNLOCK;
                 return MOTION_INTERNAL_FAULT;
             }
         }
 
         FST_INFO("autoMove: success!");
-        pthread_mutex_unlock(&auto_mutex_);
+        AUTO_UNLOCK;
         return SUCCESS;
     }
     else if (err == 0xA000B000C000D000)
@@ -755,11 +777,56 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
     }
 }
 
-ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int id)
+TrajectoryCache* BaseGroup::getTrajectoryCache(void)
+{
+    TrajectoryCache *pcache;
+    AUTO_LOCK;
+
+    if (free_cache_ptr_ != NULL)
+    {
+        pcache = free_cache_ptr_;
+        free_cache_ptr_ = free_cache_ptr_->next;
+        AUTO_UNLOCK;
+        pcache->next = NULL;
+        return pcache;
+    }
+    else
+    {
+        AUTO_UNLOCK;
+        return NULL;
+    }
+}
+
+void BaseGroup::freeTrajectoryCache(TrajectoryCache *pcache)
+{
+    if (pcache != NULL)
+    {
+        pcache->valid = false;
+        pcache->head = 0;
+        pcache->tail = 0;
+        pcache->smooth_in_stamp = 0;
+        pcache->smooth_out_stamp = 0;
+        pcache->next = NULL;
+        AUTO_LOCK;
+
+        if (free_cache_ptr_ != NULL)
+        {
+            free_cache_ptr_->next = pcache;
+        }
+        else
+        {
+            free_cache_ptr_ = pcache;
+        }
+
+        AUTO_UNLOCK;
+    }
+}
+
+ErrorCode BaseGroup::autoJoint(const Joint &start, const Joint &target, double vel, double cnt, int id)
 {
     char buffer[LOG_TEXT_SIZE];
-    Joint start_joint;
     FST_INFO("autoJoint: ID = %d, vel = %.4f, cnt = %.4f", id, vel, cnt);
+    FST_INFO("  start  = %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  target = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
 
     if (vel < MINIMUM_E6 || vel > 1 + MINIMUM_E6 || fabs(cnt) > 1 + MINIMUM_E6)
@@ -768,35 +835,19 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
         return INVALID_PARAMETER;
     }
 
+    if (!soft_constraint_.isJointInConstraint(start))
+    {
+        FST_ERROR("Start joint out of soft constraint.");
+        return JOINT_OUT_OF_CONSTRAINT;
+    }
+
     if (!soft_constraint_.isJointInConstraint(target))
     {
         FST_ERROR("Target out of soft constraint.");
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
-    {
-        getLatestJoint(start_joint);
-    }
-    else if (group_state_ == AUTO || group_state_ == STANDBY || group_state_ == AUTO_TO_STANDBY)
-    {
-        start_joint = start_joint_;
-    }
-    else
-    {
-        FST_ERROR("Cannot start auto motion in current group state: %d", group_state_);
-        return INVALID_SEQUENCE;
-    }
-
-    FST_INFO("  start  = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
-
-    if (!soft_constraint_.isJointInConstraint(start_joint))
-    {
-        FST_ERROR("Start joint out of soft constraint.");
-        return JOINT_OUT_OF_CONSTRAINT;
-    }
-
-    if (isSameJoint(start_joint, target))
+    if (isSameJoint(start, target))
     {
         FST_WARN("Start joint same as target joint");
         return 0xA000B000C000D000;
@@ -806,58 +857,82 @@ ErrorCode BaseGroup::autoJoint(const Joint &target, double vel, double cnt, int 
     size_t  index, length;
     double  precision = 0.01;
     Joint   path[MAX_PATH_SIZE];
-    planJointPath(start_joint, target, precision, index, path, length);
-    //TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
-    TrajectoryCache *p_cache = auto_pick_ptr_->next;
+    planJointPath(start, target, precision, index, path, length);
+    FST_INFO("  precision = %.4f", precision);
+    TrajectoryCache *pcache = getTrajectoryCache();
+
+    if (pcache == NULL)
+    {
+        FST_ERROR("No available trajectory cache.");
+        return MOTION_INTERNAL_FAULT;
+    }
 
     for (size_t i = 0; i < length; i++)
     {
-        p_cache->cache[i].path_point.id     = id;
-        p_cache->cache[i].path_point.stamp  = i;
-        p_cache->cache[i].path_point.type   = MOTION_JOINT;
-        p_cache->cache[i].path_point.joint  = path[i];
-        p_cache->cache[i].time_from_start   = -1;
-        //p_cache->cache[i].command_duration  = expect_duration;
-        p_cache->cache[i].forward_duration  = -1;
-        p_cache->cache[i].backward_duration = -1;
+        pcache->cache[i].path_point.id     = id;
+        pcache->cache[i].path_point.stamp  = i;
+        pcache->cache[i].path_point.type   = MOTION_JOINT;
+        pcache->cache[i].path_point.joint  = path[i];
+        pcache->cache[i].time_from_start   = -1;
+        pcache->cache[i].forward_duration  = -1;
+        pcache->cache[i].backward_duration = -1;
     }
 
-    p_cache->head = 0;
-    p_cache->tail = length;
-    p_cache->expect_duration = precision / (axis_vel_[index] * vel * vel_ratio_);
-    p_cache->deadline = 999999999.999;
+    pcache->head = 0;
+    pcache->tail = length;
+    pcache->expect_duration = precision / (axis_vel_[index] * vel * vel_ratio_);
+    pcache->deadline = 999999999.999;
 
-    //FST_WARN("precision = %.4f, omega-limit = %.4f, vel = %.4f, ratio = %.4f => duration = %.4f", precision, axis_vel_[index], vel, vel_ratio_, p_cache->expect_duration);
+    //FST_WARN("precision = %.4f, omega-limit = %.4f, vel = %.4f, ratio = %.4f => duration = %.4f", precision, axis_vel_[index], vel, vel_ratio_, pcache->expect_duration);
 
-    FST_INFO("Prepare trajectory cache ...");
-    err = prepareCache(*p_cache);
+    FST_INFO("Prepare trajectory cache ... tail = %d", pcache->tail);
+    err = prepareCache(*pcache);
 
     if (err != SUCCESS)
     {
         FST_ERROR("Fail to prepare trajectory, code = 0x%llx", err);
+        freeTrajectoryCache(pcache);
         return err;
     }
 
     FST_INFO("Preplan trajectory cache ...");
-    err = preplanCache(*p_cache, cnt);
+    err = preplanCache(*pcache, cnt);
 
     if (err != SUCCESS)
     {
         FST_ERROR("Fail to preplan trajectory, code = 0x%llx", err);
+        freeTrajectoryCache(pcache);
         return err;
     }
 
-    p_cache->valid = true;
-    start_joint_ = p_cache->cache[p_cache->tail - 1].ending_state.angle;
+    AUTO_LOCK;
+
+    if (used_cache_ptr_ != NULL)
+    {
+        TrajectoryCache *p = used_cache_ptr_;
+        while (p->next != NULL) p = p->next;
+        p->next = pcache;
+    }
+    else
+    {
+        used_cache_ptr_ = pcache;
+    }
+
+    AUTO_UNLOCK;
+    start_joint_ = pcache->cache[pcache->tail - 1].ending_state.angle;
     FST_INFO("Success.");
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, int id)
+ErrorCode BaseGroup::autoLine(const Joint &start, const PoseEuler &target, double vel, double cnt, int id)
 {
     char buffer[LOG_TEXT_SIZE];
-    Joint start_joint;
+    PoseEuler start_pose;
+    kinematics_ptr_->forwardKinematicsInUser(start, start_pose);
+
     FST_INFO("autoLine: ID = %d, vel = %.4f, cnt = %.4f", id, vel, cnt);
+    FST_INFO("  start joint = %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.position.x, start_pose.position.y, start_pose.position.z, start_pose.orientation.a, start_pose.orientation.b, start_pose.orientation.c);
     FST_INFO("  target pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target.position.x, target.position.y, target.position.z, target.orientation.a, target.orientation.b, target.orientation.c);
 
     if (vel < MINIMUM_E3 || vel > 4000 + MINIMUM_E3 || fabs(cnt) > 1 + MINIMUM_E6)
@@ -866,82 +941,83 @@ ErrorCode BaseGroup::autoLine(const PoseEuler &target, double vel, double cnt, i
         return INVALID_PARAMETER;
     }
 
-    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
-    {
-        getLatestJoint(start_joint);
-    }
-    else if (group_state_ == AUTO || group_state_ == STANDBY || group_state_ == AUTO_TO_STANDBY)
-    {
-        start_joint = start_joint_;
-    }
-    else
-    {
-        FST_ERROR("Cannot start auto motion in current group state: %d", group_state_);
-        return INVALID_SEQUENCE;
-    }
-
-    FST_INFO("  start joint = %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
-
-    if (!soft_constraint_.isJointInConstraint(start_joint))
+    if (!soft_constraint_.isJointInConstraint(start))
     {
         FST_ERROR("Start joint out of soft constraint.");
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
     ErrorCode err;
-    PoseEuler start;
     size_t  length;
     double  precision = vel < 1000 ? 1 : vel / 1000;     // vel < 1000mm/s -> 1mm, 1500mm/s -> 1.5mm, 2000mm/s -> 2mm
     Pose    path[MAX_PATH_SIZE];
 
-    kinematics_ptr_->forwardKinematicsInUser(start_joint, start);
-    FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start.position.x, start.position.y, start.position.z, start.orientation.a, start.orientation.b, start.orientation.c);
-    planLinePath(start, target, precision, path, length);
-    //TrajectoryCache *p_cache = auto_pick_ptr_->valid == false ? auto_pick_ptr_ : auto_pick_ptr_->next;
-    TrajectoryCache *p_cache = auto_pick_ptr_->next;
+    planLinePath(start_pose, target, precision, path, length);
+    FST_INFO("  precision = %.4f", precision);
+    TrajectoryCache *pcache = getTrajectoryCache();
+
+    if (pcache == NULL)
+    {
+        FST_ERROR("No available trajectory cache.");
+        return MOTION_INTERNAL_FAULT;
+    }
 
     for (size_t i = 0; i < length; i++)
     {
-        p_cache->cache[i].path_point.id     = id;
-        p_cache->cache[i].path_point.stamp  = i;
-        p_cache->cache[i].path_point.type   = MOTION_LINE;
-        p_cache->cache[i].path_point.pose   = path[i];
-        p_cache->cache[i].time_from_start   = -1;
-        //p_cache->cache[i].command_duration  = expect_duration;
-        p_cache->cache[i].forward_duration  = -1;
-        p_cache->cache[i].backward_duration = -1;
+        pcache->cache[i].path_point.id     = id;
+        pcache->cache[i].path_point.stamp  = i;
+        pcache->cache[i].path_point.type   = MOTION_LINE;
+        pcache->cache[i].path_point.pose   = path[i];
+        pcache->cache[i].time_from_start   = -1;
+        pcache->cache[i].forward_duration  = -1;
+        pcache->cache[i].backward_duration = -1;
     }
 
-    p_cache->head = 0;
-    p_cache->tail = length;
-    p_cache->expect_duration = precision / (vel * vel_ratio_);
-    p_cache->deadline = 999999999.999;
+    pcache->head = 0;
+    pcache->tail = length;
+    pcache->expect_duration = precision / (vel * vel_ratio_);
+    pcache->deadline = 999999999.999;
 
-    FST_INFO("Prepare trajectory cache ...");
-    err = prepareCache(*p_cache);
+    FST_INFO("Prepare trajectory cache ... tail = %d", pcache->tail);
+    err = prepareCache(*pcache);
 
     if (err != SUCCESS)
     {
         FST_ERROR("Fail to prepare trajectory, code = 0x%llx", err);
+        freeTrajectoryCache(pcache);
         return err;
     }
 
     FST_INFO("Preplan trajectory cache ...");
-    err = preplanCache(*p_cache, cnt);
+    err = preplanCache(*pcache, cnt);
 
     if (err != SUCCESS)
     {
         FST_ERROR("Fail to preplan trajectory, code = 0x%llx", err);
+        freeTrajectoryCache(pcache);
         return err;
     }
 
-    p_cache->valid = true;
-    start_joint_ = p_cache->cache[p_cache->tail - 1].ending_state.angle;
+    AUTO_LOCK;
+
+    if (used_cache_ptr_ != NULL)
+    {
+        TrajectoryCache *p = used_cache_ptr_;
+        while (p->next != NULL) p = p->next;
+        p->next = pcache;
+    }
+    else
+    {
+        used_cache_ptr_ = pcache;
+    }
+
+    AUTO_UNLOCK;
+    start_joint_ = pcache->cache[pcache->tail - 1].ending_state.angle;
     FST_INFO("Success.");
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoCircle(const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id)
+ErrorCode BaseGroup::autoCircle(const Joint &start, const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id)
 {
     return SUCCESS;
 }
@@ -972,6 +1048,9 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
 
                 if (err == SUCCESS)
                 {
+                    char buffer[LOG_TEXT_SIZE];
+                    FST_LOG("%d: %s", i, printDBLine(&cache.cache[i].path_point.pose.position.x, buffer, LOG_TEXT_SIZE));
+                    FST_LOG("%d: %s", i, printDBLine(&cache.cache[i].ending_state.angle[0], buffer, LOG_TEXT_SIZE));
                     ref = cache.cache[i].ending_state.angle;
                     cache.cache[i + 1].start_state.angle = cache.cache[i].ending_state.angle;
                     continue;
@@ -1030,7 +1109,7 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
         pout << buf << endl;
         FST_LOG("Point-%s", buf);
 #else
-        FST_LOG("Point-%d: %s", i, printDBLine(&cache.cache[i].ending_state.angle[0], buf, LOG_TEXT_SIZE));
+        //FST_LOG("Point-%d: %s", i, printDBLine(&cache.cache[i].ending_state.angle[0], buf, LOG_TEXT_SIZE));
 #endif
     }
 
@@ -1038,12 +1117,13 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
 }
 
 //#define PRINT_CACHE
-#define CHECK_COEFF
+//#define CHECK_COEFF
 
 #ifdef CHECK_COEFF
 
 bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const JointPoint &start, const Joint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk)
 {
+    char buffer[LOG_TEXT_SIZE];
     double duration[6];
 
     for (size_t i = 0; i < 6; i++)
@@ -1074,7 +1154,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 
     for (size_t i = 0; i < 6; i++)
     {
-        if (fabs(segment[i].coeff[0][3]) * 6 > jerk[i] + MINIMUM_E3 || fabs(segment[i].coeff[1][3]) * 6 > jerk[i] + MINIMUM_E3 || fabs(segment[i].coeff[2][3]) * 6 > jerk[i] + MINIMUM_E3 || fabs(segment[i].coeff[3][3]) * 6 > jerk[i] + MINIMUM_E3)
+        if (fabs(segment[i].coeff[0][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[1][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[2][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[3][3]) * 6 > jerk[i] * 3)
         {
             FST_ERROR("Jerk of joint-%d beyond limit", i);
             return false;
@@ -1110,18 +1190,24 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
     if (!isSameJoint(start.angle, joint))
     {
         FST_ERROR("Start joint mismatch with coeff");
+        FST_ERROR("Start joint given is: %s", printDBLine(&start.angle[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Start joint from coeff is: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
     if (!isSameJoint(start.omega, omega))
     {
         FST_ERROR("Start omega mismatch with coeff");
+        FST_ERROR("Start omega given is: %s", printDBLine(&start.omega[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Start omega from coeff is: %s", printDBLine(&omega[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
     if (!isSameJoint(ending, end_joint))
     {
         FST_ERROR("Ending joint mismatch with coeff");
+        FST_ERROR("Start joint given is: %s", printDBLine(&ending[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Ending joint from coeff is: %s", printDBLine(&end_joint[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
@@ -1130,6 +1216,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 
 bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joint &start, const JointPoint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk)
 {
+    char buffer[LOG_TEXT_SIZE];
     double duration[6];
 
     for (size_t i = 0; i < 6; i++)
@@ -1160,7 +1247,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 
     for (size_t i = 0; i < 6; i++)
     {
-        if (fabs(segment[i].coeff[0][3]) * 6 > jerk[i] + MINIMUM_E3 || fabs(segment[i].coeff[1][3]) * 6 > jerk[i] + MINIMUM_E3 || fabs(segment[i].coeff[2][3]) * 6 > jerk[i] + MINIMUM_E3 || fabs(segment[i].coeff[3][3]) * 6 > jerk[i] + MINIMUM_E3)
+        if (fabs(segment[i].coeff[0][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[1][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[2][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[3][3]) * 6 > jerk[i] * 3)
         {
             FST_ERROR("Jerk of joint-%d beyond limit", i);
             return false;
@@ -1196,18 +1283,24 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
     if (!isSameJoint(start, joint))
     {
         FST_ERROR("Start joint mismatch with coeff");
+        FST_ERROR("Start joint given is: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Start joint from coeff is: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
     if (!isSameJoint(ending.angle, end_joint))
     {
         FST_ERROR("Ending joint mismatch with coeff");
+        FST_ERROR("Ending joint given is: %s", printDBLine(&ending.angle[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Ending joint from coeff is: %s", printDBLine(&end_joint[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
     if (!isSameJoint(ending.omega, end_omega))
     {
         FST_ERROR("Ending omega mismatch with coeff");
+        FST_ERROR("Ending omega given is: %s", printDBLine(&ending.omega[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Ending omega from coeff is: %s", printDBLine(&end_omega[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
@@ -1216,6 +1309,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 
 bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const JointPoint &start, const JointPoint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk)
 {
+    char buffer[LOG_TEXT_SIZE];
     double duration[6];
 
     for (size_t i = 0; i < 6; i++)
@@ -1276,24 +1370,32 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
     if (!isSameJoint(start.angle, joint))
     {
         FST_ERROR("Start joint mismatch with coeff");
+        FST_ERROR("Start joint given is: %s", printDBLine(&start.angle[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Start joint from coeff is: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
     if (!isSameJoint(start.omega, omega))
     {
         FST_ERROR("Start omega mismatch with coeff");
+        FST_ERROR("Start omega given is: %s", printDBLine(&start.omega[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Start omega from coeff is: %s", printDBLine(&omega[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
     if (!isSameJoint(ending.angle, end_joint))
     {
         FST_ERROR("Ending joint mismatch with coeff");
+        FST_ERROR("Ending joint given is: %s", printDBLine(&ending.angle[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Ending joint from coeff is: %s", printDBLine(&end_joint[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
     if (!isSameJoint(ending.omega, end_omega))
     {
         FST_ERROR("Ending omega mismatch with coeff");
+        FST_ERROR("Ending omega given is: %s", printDBLine(&ending.omega[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Ending omega from coeff is: %s", printDBLine(&end_omega[0], buffer, LOG_TEXT_SIZE));
         return false;
     }
 
@@ -1700,50 +1802,64 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
 
 ErrorCode BaseGroup::abortMove(void)
 {
+    AUTO_LOCK;
+
     if (group_state_ == AUTO || group_state_ == PAUSE)
     {
-        pthread_mutex_lock(&auto_mutex_);
+        waiting_fine_ = false;
         group_state_ = STANDBY;
         auto_time_ = 0;
         traj_fifo_.clear();
         bare_core_.clearPointCache();
+        TrajectoryCache *p;
 
-        while (auto_pick_ptr_->valid)
+        while (used_cache_ptr_ != NULL)
         {
-            auto_pick_ptr_->valid = false;
-            auto_pick_ptr_ = auto_pick_ptr_->next;
+            p = used_cache_ptr_;
+            used_cache_ptr_ = used_cache_ptr_->next;
+            AUTO_UNLOCK;
+            freeTrajectoryCache(p);
+            AUTO_LOCK;
         }
-
-        pthread_mutex_unlock(&auto_mutex_);
     }
 
+    AUTO_UNLOCK;
     FST_WARN("Auto move Aborted");
     return SUCCESS;
 }
 
 bool BaseGroup::nextMovePermitted(void)
 {
-    if (waiting_fine_)
-    {
-        return false;
-    }
+    if (waiting_fine_) return false;
 
-    pthread_mutex_lock(&auto_mutex_);
+    AUTO_LOCK;
+    //FST_LOG("isNextMovePermitted: grg-state = %d, auto-time = %.4f, used_cache_ptr = %x", group_state_, auto_time_, used_cache_ptr_);
 
     if (group_state_ == AUTO || group_state_ == AUTO_TO_STANDBY || group_state_ == STANDBY_TO_AUTO)
     {
-        TrajectoryCache *ptr = auto_pick_ptr_->next->valid ? auto_pick_ptr_->next : auto_pick_ptr_;
-
-        if (ptr->valid && auto_time_ + 0.15 < ptr->deadline)
+        if (used_cache_ptr_ != NULL)
         {
-            FST_LOG("Not-permitted: auto-time = %.4f, deadline = %.4f", auto_time_, ptr->deadline);
-            pthread_mutex_unlock(&auto_mutex_);
-            return false;
+            TrajectoryCache *ptr = used_cache_ptr_;
+            while (ptr->next != NULL) ptr = ptr->next;
+
+            if (ptr->valid == false || auto_time_ + 0.15 < ptr->deadline)
+            {
+                //FST_LOG("Not-permitted, ptr = %x, valid = %d, deadline = %.4f", ptr, ptr->valid, ptr->deadline);
+                AUTO_UNLOCK;
+                return false;
+            }
+            else
+            {
+                FST_WARN("Next motion permitted, ptr = %x, valid = %d, deadline = %.4f", ptr, ptr->valid, ptr->deadline);
+                AUTO_UNLOCK;
+                return true;
+            }
         }
+
     }
 
-    FST_WARN("Next motion permitted: auto-time = %.4f, deadline = %.4f", auto_time_, auto_pick_ptr_->deadline);
-    pthread_mutex_unlock(&auto_mutex_);
+    FST_WARN("Next motion permitted.");
+    AUTO_UNLOCK;
     return true;
 }
 
@@ -1761,31 +1877,34 @@ ErrorCode BaseGroup::createTrajectory(void)
     TrajectoryItem      traj_item;
     TrajectorySegment   *pseg;
 
-    if (group_state_ == AUTO && auto_pick_ptr_->valid)
+    if (group_state_ == AUTO && used_cache_ptr_ && used_cache_ptr_->valid)
     {
         while ((traj_fifo_.duration() < 0.15 && !traj_fifo_.full()) || traj_fifo_.size() < 3)
         {
-            if (auto_pick_segment_ >= auto_pick_ptr_->tail)
+            if (auto_pick_segment_ >= used_cache_ptr_->tail)
             {
                 //FST_WARN("cache ptr = %x is empty", auto_pick_ptr_);
 
-                pthread_mutex_lock(&auto_mutex_);
-                if (auto_pick_ptr_->next->valid)
+                AUTO_LOCK;
+                if (used_cache_ptr_->next != NULL && used_cache_ptr_->next->valid)
                 {
-                    auto_pick_ptr_->valid = false;
-                    auto_pick_ptr_ = auto_pick_ptr_->next;
+                    TrajectoryCache *p = used_cache_ptr_;
+                    used_cache_ptr_ = used_cache_ptr_->next;
                     auto_pick_segment_ = 1;
+                    AUTO_UNLOCK;
+                    freeTrajectoryCache(p);
                     FST_INFO("auto-pick-ptr switch, seg = %d, time-from-start = %.4f", auto_pick_segment_, traj_fifo_.back().time_from_start);
                 }
                 else
                 {
-                    auto_pick_ptr_->valid = false;
+                    TrajectoryCache *p = used_cache_ptr_;
+                    used_cache_ptr_ = used_cache_ptr_->next;
                     auto_pick_segment_ = 1;
+                    AUTO_UNLOCK;
+                    freeTrajectoryCache(p);
                     FST_INFO("auto-pick-ptr turn to invalid");
-                    pthread_mutex_unlock(&auto_mutex_);
                     break;
                 }
-                pthread_mutex_unlock(&auto_mutex_);
             }
 
 #ifdef PRINT_COEFFS
@@ -1794,18 +1913,18 @@ ErrorCode BaseGroup::createTrajectory(void)
             FST_LOG("smooth-out = %d, traj-tail = %d", auto_pick_ptr_->smooth_out_stamp, auto_pick_ptr_->tail);
 #endif
 
-            if (auto_pick_segment_ == auto_pick_ptr_->smooth_out_stamp)
+            if (auto_pick_segment_ == used_cache_ptr_->smooth_out_stamp)
             {
-                if (auto_pick_ptr_->deadline > 9999)
+                if (used_cache_ptr_->deadline > 9999)
                 {
-                    auto_pick_ptr_->deadline = traj_fifo_.timeFromStart();
-                    FST_WARN("Set deadline: auto-time = %.4f, deadline = %.4f", auto_time_, auto_pick_ptr_->deadline);
+                    used_cache_ptr_->deadline = traj_fifo_.timeFromStart();
+                    FST_WARN("Set deadline: auto-time = %.4f, deadline = %.4f", auto_time_, used_cache_ptr_->deadline);
                 }
 
-                if (auto_pick_ptr_->next->valid)
+                if (used_cache_ptr_->next != NULL && used_cache_ptr_->next->valid)
                 {
                     FST_WARN("Next motion is ready, smooth to next motion.");
-                    pseg = &auto_pick_ptr_->cache[auto_pick_segment_];
+                    pseg = &used_cache_ptr_->cache[auto_pick_segment_];
 
                     if (dynamics_cnt == 0)
                     {
@@ -1821,8 +1940,8 @@ ErrorCode BaseGroup::createTrajectory(void)
                         }
                     }
 
-                    double duration = auto_pick_ptr_->expect_duration * (auto_pick_ptr_->tail - auto_pick_ptr_->smooth_out_stamp) + auto_pick_ptr_->next->expect_duration * auto_pick_ptr_->smooth_in_stamp;
-                    smoothPoint2Point(pseg->start_state, auto_pick_ptr_->next->cache[auto_pick_ptr_->next->smooth_in_stamp].ending_state, duration, alpha_upper, alpha_lower, jerk_, traj_item.traj_coeff);
+                    double duration = used_cache_ptr_->expect_duration * (used_cache_ptr_->tail - used_cache_ptr_->smooth_out_stamp) + used_cache_ptr_->next->expect_duration * used_cache_ptr_->smooth_in_stamp;
+                    smoothPoint2Point(pseg->start_state, used_cache_ptr_->next->cache[used_cache_ptr_->next->smooth_in_stamp].ending_state, duration, alpha_upper, alpha_lower, jerk_, traj_item.traj_coeff);
                     dynamics_cnt = dynamics_cnt > 0 ? dynamics_cnt - 1 : 0;
 
 #ifdef OUTPUT_COEFF
@@ -1889,28 +2008,29 @@ ErrorCode BaseGroup::createTrajectory(void)
                     traj_item.time_from_start = traj_fifo_.timeFromStart() + traj_item.duration;
                     traj_fifo_.push(traj_item);
 
-                    pthread_mutex_lock(&auto_mutex_);
-                    auto_pick_ptr_->valid = false;
-                    auto_pick_ptr_ = auto_pick_ptr_->next;
-                    auto_pick_segment_ = auto_pick_ptr_->smooth_in_stamp + 1;
-                    pthread_mutex_unlock(&auto_mutex_);
+                    AUTO_LOCK;
+                    TrajectoryCache *p = used_cache_ptr_;
+                    used_cache_ptr_ = used_cache_ptr_->next;
+                    auto_pick_segment_ = used_cache_ptr_->smooth_in_stamp + 1;
+                    AUTO_UNLOCK;
+                    freeTrajectoryCache(p);
                     continue;
                 }
                 else if (auto_time_ + 0.05 < traj_fifo_.timeFromStart())
                 {
                     // Next motion is NOT ready, waiting for next motion
-                    FST_LOG("Next motion is NOT ready, waiting for next motion");
+                    //FST_LOG("Next motion is NOT ready, waiting for next motion");
                     break;
                 }
                 else
                 {
                     FST_WARN("Next motion is NOT ready, auto-time = %.4f, deadline = %.4f, time-from-start of trajectory-fifo = %.4f, smooth-CNT will be abandoned",
-                             auto_time_, auto_pick_ptr_->deadline, traj_fifo_.timeFromStart());
-                    auto_pick_ptr_->smooth_out_stamp = auto_pick_ptr_->tail;
+                             auto_time_, used_cache_ptr_->deadline, traj_fifo_.timeFromStart());
+                    used_cache_ptr_->smooth_out_stamp = used_cache_ptr_->tail;
                 }
             }
 
-            pseg = &auto_pick_ptr_->cache[auto_pick_segment_];
+            pseg = &used_cache_ptr_->cache[auto_pick_segment_];
 
             if (pseg->forward_duration > 0)
             {
@@ -1922,7 +2042,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                 memcpy(traj_item.traj_coeff,  pseg->forward_coeff, sizeof(traj_item.traj_coeff));
                 traj_fifo_.push(traj_item);
                 sampleEndingTrajectorySegment(traj_item.traj_coeff, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
-                auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                used_cache_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
 
 #ifdef PRINT_COEFFS
                 FST_LOG("start time: %.12f", traj_fifo_.timeFromStart());
@@ -1940,7 +2060,7 @@ ErrorCode BaseGroup::createTrajectory(void)
             }
             else
             {
-                if (pseg->backward_duration < 0 && auto_pick_segment_ + 1 < auto_pick_ptr_->tail && (pseg + 1)->backward_duration < 0)
+                if (pseg->backward_duration < 0 && auto_pick_segment_ + 1 < used_cache_ptr_->tail && (pseg + 1)->backward_duration < 0)
                 {
                     if (dynamics_cnt == 0)
                     {
@@ -1956,7 +2076,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                         }
                     }
 
-                    err = forwardCycle(pseg->start_state, pseg->ending_state.angle, auto_pick_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
+                    err = forwardCycle(pseg->start_state, pseg->ending_state.angle, used_cache_ptr_->expect_duration, alpha_upper, alpha_lower, jerk_, pseg->forward_coeff);
                     dynamics_cnt = dynamics_cnt > 0 ? dynamics_cnt - 1: 0;
 
 #ifdef OUTPUT_COEFF
@@ -2029,7 +2149,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                         memcpy(traj_item.traj_coeff,  pseg->forward_coeff, sizeof(traj_item.traj_coeff));
                         traj_fifo_.push(traj_item);
                         sampleEndingTrajectorySegment(traj_item.traj_coeff, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
-                        auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                        used_cache_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
                     }
                     else
                     {
@@ -2041,7 +2161,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                         FST_ERROR("alpha-upper: %s", printDBLine(&alpha_upper[0], buffer, LOG_TEXT_SIZE));
                         FST_ERROR("alpha-lower: %s", printDBLine(&alpha_lower[0], buffer, LOG_TEXT_SIZE));
                         FST_ERROR("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
-                        FST_ERROR("exp-duration: %.12f", auto_pick_ptr_->expect_duration);
+                        FST_ERROR("exp-duration: %.12f", used_cache_ptr_->expect_duration);
 
                         for (size_t i = 0; i < 6; i++)
                         {
@@ -2057,7 +2177,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                         return MOTION_INTERNAL_FAULT;
                     }
                 }
-                else if (pseg->backward_duration > 0 && (auto_pick_segment_ + 1 == auto_pick_ptr_->tail || (pseg + 1)->backward_duration > 0))
+                else if (pseg->backward_duration > 0 && (auto_pick_segment_ + 1 == used_cache_ptr_->tail || (pseg + 1)->backward_duration > 0))
                 {
                     dynamics_cnt = 0;
                     traj_item.id = pseg->path_point.id;
@@ -2080,7 +2200,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     }
 #endif
                 }
-                else if (pseg->backward_duration < 0 && auto_pick_segment_ + 1 < auto_pick_ptr_->tail && (pseg + 1)->backward_duration > 0)
+                else if (pseg->backward_duration < 0 && auto_pick_segment_ + 1 < used_cache_ptr_->tail && (pseg + 1)->backward_duration > 0)
                 {
                     //smooth
                     FST_WARN("Smooth fore-cycle with back-cycle, fore-duration = %.12f, back-duration = %.12f", (pseg - 1)->forward_duration, (pseg + 1)->backward_duration);
@@ -2170,7 +2290,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     traj_item.dynamics_product = dynamics_product;
                     traj_fifo_.push(traj_item);
                     sampleEndingTrajectorySegment(traj_item.traj_coeff, tmp_joint, pseg->ending_state.omega, pseg->ending_state.alpha);
-                    auto_pick_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
+                    used_cache_ptr_->cache[auto_pick_segment_ + 1].start_state = pseg->ending_state;
                 }
                 else
                 {

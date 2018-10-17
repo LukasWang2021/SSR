@@ -204,8 +204,9 @@ typedef struct _InterpreterControl
         char      start_ctrl[256];
 		AutoMode    autoMode ;
         // int         id;
-        int            jump_line;    // Jump 
-        int            step_mode;    // auto or debug 
+        // int            jump_line;    // Jump 
+        char           jump_line[256];
+        int            step_mode;       // auto or debug 
     };
 }InterpreterControl;
 

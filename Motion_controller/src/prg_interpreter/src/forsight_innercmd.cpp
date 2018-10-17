@@ -1551,9 +1551,10 @@ int getLineNumFromXPathVector(char * xPath)
 {
     for(unsigned int i = 0; i < (int)g_vecXPath.size(); ++i)  
     {  
-        if(g_vecXPath[i] == xPath)
-			return i ;
+        if(g_vecXPath[i] == string(xPath))
+        	return i ;
     }
+	printf("getLineNumFromXPathVector Failed:: %s \n", xPath);
 	return -1 ;
 }
 

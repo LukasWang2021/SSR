@@ -531,7 +531,7 @@ bool deal_auto_mode(AutoMode autoMode)
 		else if(autoMode == MACRO_TRIGGER_U)
 		{
 			launch_code_thread_destroy();
-			macro_instr_thread_create(NULL);
+			launch_code_thread_create(NULL);
     		return true;
 		}
 		break;
@@ -546,7 +546,7 @@ bool deal_auto_mode(AutoMode autoMode)
 		else if(autoMode == LAUNCH_CODE_U)
 		{
 			macro_instr_thread_destroy();
-			launch_code_thread_create(NULL);
+			macro_instr_thread_create(NULL);
     		return true;
 		}
 		break;
@@ -726,7 +726,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 	        // g_iCurrentThreadSeq++ ;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_JUMP:
-			memcpy(&intprt_ctrl.jump_line, requestDataPtr, sizeof(int));
+			memcpy(intprt_ctrl.jump_line, requestDataPtr, 256);
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
 			{
@@ -749,13 +749,20 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             	printf("Can not JUMP in EXECUTE_R \n");
            		break;
 			}
-            printf("jump to line:%d\n", intprt_ctrl.jump_line);
-			iLineNum = intprt_ctrl.jump_line;
-            setLinenum(objThdCtrlBlockPtr, iLineNum);
-			// Jump prog
-			jump_prog_from_line(objThdCtrlBlockPtr, iLineNum);
-			// Just Move to line and do not execute
-            // setPrgmState(INTERPRETER_EXECUTE);
+            printf("jump to line:%s\n", intprt_ctrl.jump_line);
+			iLineNum = getLineNumFromXPathVector(intprt_ctrl.jump_line);
+			if(iLineNum > 0)
+            {
+            	setLinenum(objThdCtrlBlockPtr, iLineNum);
+				// Jump prog
+				jump_prog_from_line(objThdCtrlBlockPtr, iLineNum);
+				// Just Move to line and do not execute
+            	// setPrgmState(INTERPRETER_EXECUTE);
+			}
+			else
+            {
+            	printf("Failed to jump to line:%d\n", iLineNum);
+			}
 			break;
         case fst_base::INTERPRETER_SERVER_CMD_SWITCH_STEP:
 			memcpy(&intprt_ctrl.step_mode, requestDataPtr, sizeof(int));

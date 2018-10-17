@@ -29,6 +29,8 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/setSystemTime", 0x000167C5, &ControllerRpc::handleRpc0x000167C5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getSystemTime", 0x000003F5, &ControllerRpc::handleRpc0x000003F5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getVersion", 0x000093EE, &ControllerRpc::handleRpc0x000093EE}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/setStartMode", 0x00010225, &ControllerRpc::handleRpc0x00010225}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/getStartMode", 0x000092E5, &ControllerRpc::handleRpc0x000092E5}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/tool_manager/deleteTool", 0x00010E4C, &ControllerRpc::handleRpc0x00010E4C}; rpc_table_.push_back(rpc_service);
@@ -143,8 +145,6 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/interpreter/resume", 0x0000CF55, &ControllerRpc::handleRpc0x0000CF55}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/abort", 0x000086F4, &ControllerRpc::handleRpc0x000086F4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/switchStep", 0x000140F0, &ControllerRpc::handleRpc0x000140F0}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/interpreter/setStartMethod", 0x000056E4, &ControllerRpc::handleRpc0x000056E4}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/interpreter/getStartMethod", 0x00005624, &ControllerRpc::handleRpc0x00005624}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/io_mapping/getDIByBit", 0x000050B4, &ControllerRpc::handleRpc0x000050B4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/setDIByBit", 0x00011754, &ControllerRpc::handleRpc0x00011754}; rpc_table_.push_back(rpc_service);

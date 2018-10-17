@@ -161,33 +161,3 @@ void ControllerRpc::handleRpc0x000140F0(void* request_data_ptr, void* response_d
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/switchStep"));
 }
 
-// "/rpc/interpreter/setStartMethod"
-void ControllerRpc::handleRpc0x000056E4(void* request_data_ptr, void* response_data_ptr)
-{
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
-    if(state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE)
-    {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
-        return;
-    }
-
-    if(!controller_client_ptr_->setAutoStartMode(rq_data_ptr->data.data))
-    {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_ARG;
-    }
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/setStartMethod"));
-}
-
-// "/rpc/interpreter/getStartMethod"
-void ControllerRpc::handleRpc0x00005624(void* request_data_ptr, void* response_data_ptr)
-{
-    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
-        
-    rs_data_ptr->data.data = controller_client_ptr_->getAutoStartMode();
-    rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/getStartMethod"));
-}
-
-

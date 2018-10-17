@@ -107,6 +107,10 @@ private:
     void handleRpc0x000003F5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getVersion"
     void handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/controller/setStartMode"
+    void handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/controller/getStartMode"
+    void handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr);
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"
@@ -335,10 +339,6 @@ private:
     void handleRpc0x000086F4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/interpreter/switchStep"
     void handleRpc0x000140F0(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/interpreter/setStartMethod"
-    void handleRpc0x000056E4(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/interpreter/getStartMethod"
-    void handleRpc0x00005624(void* request_data_ptr, void* response_data_ptr);
 
     /* io mapping rpc */
     // "/rpc/io_mapping/getDIByBit"

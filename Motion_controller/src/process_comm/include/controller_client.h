@@ -30,7 +30,6 @@ public:
     bool abort();
     bool getNextInstruction(Instruction* instruction_ptr); 
     bool setAutoStartMode(int start_mode);
-    int getAutoStartMode();
     bool switchStep(int data);
 
     void handleSubscribe();

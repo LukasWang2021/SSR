@@ -156,7 +156,19 @@ void InterpreterServer::handleRequestSetAutoStartMode()
     pushTaskToRequestList(INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, (void*)request_data_ptr, (void*)response_data_ptr);  
 }
 
-//switch step
+// GetAutoStartMode
+void InterpreterServer::handleRequestGetAutoStartMode()
+{
+    int* response_data_ptr = new int;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        return;
+    }
+    pushTaskToRequestList(INTERPRETER_SERVER_CMD_GET_AUTO_START_MODE, NULL, (void*)response_data_ptr); 
+}
+
+// SwitchStep
 void InterpreterServer::handleRequestSwitchStep()
 {
     int* request_data_ptr = new int;

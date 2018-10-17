@@ -144,7 +144,17 @@ void InterpreterServer::handleResponseSetAutoStartMode(std::vector<ProcessCommRe
     }
 }
 
-// switch step
+// GetAutoStartMode
+void InterpreterServer::handleResponseGetAutoStartMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_GET_AUTO_START_MODE, task->response_data_ptr, sizeof(int), send_buffer_size);
+    if(task->response_data_ptr != NULL)
+    {
+        delete (int*)task->response_data_ptr;
+    }
+}
+
+// SwitchStep
 void InterpreterServer::handleResponseSwitchStep(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
     copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_SWITCH_STEP, task->response_data_ptr, sizeof(bool), send_buffer_size);
@@ -157,4 +167,6 @@ void InterpreterServer::handleResponseSwitchStep(std::vector<ProcessCommRequestR
         delete (bool*)task->response_data_ptr;
     }
 }
+
+
 

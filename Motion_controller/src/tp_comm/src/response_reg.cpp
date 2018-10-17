@@ -2,7 +2,7 @@
 
 using namespace fst_comm;
 
-// rpc/reg_manager/r/addReg "RequestMessageType.RRegData",	"ResponseMessageType.Bool"
+// rpc/reg_manager/r/addReg "
 void TpComm::handleResponse0x00004FF7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -19,7 +19,7 @@ void TpComm::handleResponse0x00004FF7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/r/deleteReg" "RequestMessageType.Int32",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/r/deleteReg" 
 void TpComm::handleResponse0x000012F7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -36,7 +36,7 @@ void TpComm::handleResponse0x000012F7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/r/updateReg" "RequestMessageType.RRegData",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/r/updateReg"
 void TpComm::handleResponse0x00005757(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -53,7 +53,7 @@ void TpComm::handleResponse0x00005757(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/r/getReg" "RequestMessageType.Int32",	"ResponseMessageType.Bool_RRegData"
+// "/rpc/reg_manager/r/getReg"
 void TpComm::handleResponse0x0000EAB7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_RRegData_fields, task->response_data_ptr, send_buffer_size))
@@ -70,7 +70,7 @@ void TpComm::handleResponse0x0000EAB7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-//  "/rpc/reg_manager/r/moveReg" "RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool
+//  "/rpc/reg_manager/r/moveReg"
 void TpComm::handleResponse0x0000C877(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -87,7 +87,7 @@ void TpComm::handleResponse0x0000C877(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/r/getChangedList" "RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList
+// "/rpc/reg_manager/r/getChangedList" 
 void TpComm::handleResponse0x0000A904(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -104,7 +104,7 @@ void TpComm::handleResponse0x0000A904(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/r/getValidList" "RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList
+// "/rpc/reg_manager/r/getValidList" 
 void TpComm::handleResponse0x00008CE4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -121,9 +121,7 @@ void TpComm::handleResponse0x00008CE4(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-
-
-// "/rpc/reg_manager/mr/addReg" "RequestMessageType.MrRegData",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/mr/addReg" 
 void TpComm::handleResponse0x000097E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -140,7 +138,7 @@ void TpComm::handleResponse0x000097E7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/mr/deleteReg" RequestMessageType.Int32",	"ResponseMessageType.Bool",
+// "/rpc/reg_manager/mr/deleteReg"
 void TpComm::handleResponse0x0000E5D7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -157,7 +155,7 @@ void TpComm::handleResponse0x0000E5D7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/mr/updateReg" "RequestMessageType.MrRegData",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/mr/updateReg" 
 void TpComm::handleResponse0x0000E9B7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -174,7 +172,7 @@ void TpComm::handleResponse0x0000E9B7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/mr/getReg" "RequestMessageType.Int32",	"ResponseMessageType.Bool_MrRegData"
+// "/rpc/reg_manager/mr/getReg"
 void TpComm::handleResponse0x0000B507(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_MrRegData_fields, task->response_data_ptr, send_buffer_size))
@@ -191,7 +189,7 @@ void TpComm::handleResponse0x0000B507(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/mr/moveReg" "RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool
+// "/rpc/reg_manager/mr/moveReg"
 void TpComm::handleResponse0x00015BA7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -208,7 +206,7 @@ void TpComm::handleResponse0x00015BA7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/mr/getChangedList","RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList
+// "/rpc/reg_manager/mr/getChangedList"
 void TpComm::handleResponse0x00001774(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -225,7 +223,7 @@ void TpComm::handleResponse0x00001774(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/mr/getValidList",	0x00015CF4,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList
+// "/rpc/reg_manager/mr/getValidList"
 void TpComm::handleResponse0x00015CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -243,7 +241,7 @@ void TpComm::handleResponse0x00015CF4(std::vector<TpRequestResponse>::iterator& 
 }
 
 
-// "/rpc/reg_manager/sr/addReg",	0x000161E7,	"RequestMessageType.SrRegData",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/sr/addReg"
 void TpComm::handleResponse0x000161E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -260,7 +258,7 @@ void TpComm::handleResponse0x000161E7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/sr/deleteReg",	0x0000B817,	"RequestMessageType.Int32",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/sr/deleteReg"
 void TpComm::handleResponse0x0000B817(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -277,7 +275,7 @@ void TpComm::handleResponse0x0000B817(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/sr/updateReg",	0x000119F7,	"RequestMessageType.SrRegData",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/sr/updateReg"
 void TpComm::handleResponse0x000119F7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -294,7 +292,7 @@ void TpComm::handleResponse0x000119F7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/sr/getReg",	0x00017F07,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_SrRegData"
+// "/rpc/reg_manager/sr/getReg"
 void TpComm::handleResponse0x00017F07(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_SrRegData_fields, task->response_data_ptr, send_buffer_size))
@@ -311,7 +309,7 @@ void TpComm::handleResponse0x00017F07(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/sr/moveReg",	0x00002127,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool
+// "/rpc/reg_manager/sr/moveReg"
 void TpComm::handleResponse0x00002127(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -328,7 +326,7 @@ void TpComm::handleResponse0x00002127(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/sr/getChangedList",	0x00004834,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList"
+// "/rpc/reg_manager/sr/getChangedList"
 void TpComm::handleResponse0x00004834(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -345,7 +343,7 @@ void TpComm::handleResponse0x00004834(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/sr/getValidList",	0x00009854,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList
+// "/rpc/reg_manager/sr/getValidList"
 void TpComm::handleResponse0x00009854(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -381,7 +379,7 @@ void TpComm::handleResponse0x000154E7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/pr/deleteReg",	0x00001097,	"RequestMessageType.Int32",	"ResponseMessageType.Bool",	
+// "/rpc/reg_manager/pr/deleteReg"
 void TpComm::handleResponse0x00001097(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -398,7 +396,7 @@ void TpComm::handleResponse0x00001097(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/pr/updateReg",	0x00009EF7,	"RequestMessageType.PrRegData",	"ResponseMessageType.Bool",	
+// "/rpc/reg_manager/pr/updateReg"
 void TpComm::handleResponse0x00009EF7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -415,7 +413,7 @@ void TpComm::handleResponse0x00009EF7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/pr/getReg",	0x00017207,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_PrRegData",	
+// "/rpc/reg_manager/pr/getReg"
 void TpComm::handleResponse0x00017207(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_PrRegData_fields, task->response_data_ptr, send_buffer_size))
@@ -432,7 +430,7 @@ void TpComm::handleResponse0x00017207(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/pr/moveReg",	0x0000D7C7,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool",
+// "/rpc/reg_manager/pr/moveReg"
 void TpComm::handleResponse0x0000D7C7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -449,7 +447,7 @@ void TpComm::handleResponse0x0000D7C7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/pr/getChangedList",	0x0000B454,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList",
+// "/rpc/reg_manager/pr/getChangedList"
 void TpComm::handleResponse0x0000B454(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -466,7 +464,7 @@ void TpComm::handleResponse0x0000B454(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/pr/getValidList",	0x00009354,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList",
+// "/rpc/reg_manager/pr/getValidList"
 void TpComm::handleResponse0x00009354(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -485,7 +483,7 @@ void TpComm::handleResponse0x00009354(std::vector<TpRequestResponse>::iterator& 
 
 
 
-// "/rpc/reg_manager/hr/addReg",	0x00016CE7,	"RequestMessageType.HrRegData",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/hr/addReg"
 void TpComm::handleResponse0x00016CE7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -502,7 +500,7 @@ void TpComm::handleResponse0x00016CE7(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/hr/deleteReg",	0x00003D17,	"RequestMessageType.Int32",	"ResponseMessageType.Bool",
+// "/rpc/reg_manager/hr/deleteReg"
 void TpComm::handleResponse0x00003D17(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -519,7 +517,7 @@ void TpComm::handleResponse0x00003D17(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/hr/updateReg",	0x0000CB77,	"RequestMessageType.HrRegData",	"ResponseMessageType.Bool"
+// "/rpc/reg_manager/hr/updateReg"
 void TpComm::handleResponse0x0000CB77(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -536,7 +534,7 @@ void TpComm::handleResponse0x0000CB77(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/hr/getReg",	0x00000367,	"RequestMessageType.Int32",	"ResponseMessageType.Bool_HrRegData"
+// "/rpc/reg_manager/hr/getReg"
 void TpComm::handleResponse0x00000367(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_HrRegData_fields, task->response_data_ptr, send_buffer_size))
@@ -553,7 +551,7 @@ void TpComm::handleResponse0x00000367(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/hr/moveReg",	0x00014A87,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Bool
+// "/rpc/reg_manager/hr/moveReg"
 void TpComm::handleResponse0x00014A87(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
@@ -570,7 +568,7 @@ void TpComm::handleResponse0x00014A87(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-// "/rpc/reg_manager/hr/getChangedList",	0x00012974,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList
+// "/rpc/reg_manager/hr/getChangedList"
 void TpComm::handleResponse0x00012974(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))
@@ -588,7 +586,7 @@ void TpComm::handleResponse0x00012974(std::vector<TpRequestResponse>::iterator& 
 }
 
 
-// "/rpc/reg_manager/hr/getValidList",	0x00006B54,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.BaseRegSummaryList
+// "/rpc/reg_manager/hr/getValidList"
 void TpComm::handleResponse0x00006B54(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_BaseRegSummaryList_fields, task->response_data_ptr, send_buffer_size))

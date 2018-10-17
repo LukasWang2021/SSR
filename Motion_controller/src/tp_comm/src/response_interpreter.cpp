@@ -79,7 +79,7 @@ void TpComm::handleResponse0x00015930(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->request_data_ptr != NULL)
     {
-        delete (RequestMessageType_Int32*)task->request_data_ptr;
+        delete (RequestMessageType_String*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {

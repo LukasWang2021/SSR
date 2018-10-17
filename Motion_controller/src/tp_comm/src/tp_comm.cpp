@@ -412,7 +412,7 @@ void TpComm::handleResponseList()
         {
             ErrorMonitor::instance()->add(TP_COMM_SEND_FAILED);
             FST_ERROR("Send response failed, nn_error = %d", nn_errno());
-        }       
+        }
     }
     is_received_ = false;
     response_list_.clear();

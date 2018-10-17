@@ -146,6 +146,8 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/interpreter/resume",	0x0000CF55,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000CF55,	&TpComm::handleResponse0x0000CF55,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/interpreter/abort",	0x000086F4,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000086F4,	&TpComm::handleResponse0x000086F4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/interpreter/switchStep",	0x000140F0,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000140F0,	&TpComm::handleResponse0x000140F0,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/interpreter/setStartMethod",	0x000056E4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000056E4,	&TpComm::handleResponse0x000056E4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/interpreter/getStartMethod",	0x00005624,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00005624,	&TpComm::handleResponse0x00005624,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 
 	rpc_service =	{	"/rpc/io_mapping/getDIByBit",	0x000050B4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000050B4,	&TpComm::handleResponse0x000050B4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/io_mapping/setDIByBit",	0x00011754,	"RequestMessageType.Int32List(count = 2)",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00011754,	&TpComm::handleResponse0x00011754,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);

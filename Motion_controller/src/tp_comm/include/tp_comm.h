@@ -314,6 +314,10 @@ private:
     void handleRequest0x0000CF55(int recv_bytes);
     /********rpc/interpreter/abort, RequestMessageType_Void**********/
     void handleRequest0x000086F4(int recv_bytes);
+    /********rpc/interpreter/setStartMethod, RequestMessageType_Int32**********/
+    void handleRequest0x000056E4(int recv_bytes);
+    /********rpc/interpreter/getStartMethod, RequestMessageType_Void**********/	
+    void handleRequest0x00005624(int recv_bytes);
 
     /********rpc/io_mapping/getDIByBit, RequestMessageType_Int32**********/
     void handleRequest0x000050B4(int recv_bytes);
@@ -608,6 +612,10 @@ private:
     void handleResponse0x000086F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/interpreter/switchStep, ResponseMessageType_Uint64**********/
     void handleResponse0x000140F0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/setStartMethod, ResponseMessageType_Uint64**********/
+    void handleResponse0x000056E4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/getStartMethod, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00005624(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/io_mapping/getDIByBit, ResponseMessageType_Bool_Int32**********/
     void handleResponse0x000050B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

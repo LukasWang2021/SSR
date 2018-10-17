@@ -152,7 +152,7 @@ void ControllerPublish::updateReg()
                     char* sr_value_ptr = static_cast<char*>(value_ptr);
                     it->sr_value.is_valid = true;
                     unsigned int str_length = strlen(sr_value_ptr);
-                    memcpy(&it->sr_value.data[0], &sr_value_ptr, str_length);
+                    memcpy(&it->sr_value.data[0], sr_value_ptr, str_length);
                     it->sr_value.data[str_length] = 0;
                 }
                 else

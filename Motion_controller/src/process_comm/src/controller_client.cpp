@@ -122,10 +122,10 @@ bool ControllerClient::backward()
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
-bool ControllerClient::jump(int data)
+bool ControllerClient::jump(std::string xml_path)
 {
     if(!controller_server_ptr_->isInterpreterServerReady()
-        || !sendRequest(INTERPRETER_SERVER_CMD_JUMP, &data, sizeof(int))
+        || !sendRequest(INTERPRETER_SERVER_CMD_JUMP, xml_path.c_str(), 512)
         || !recvResponse(sizeof(bool))
         || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_JUMP)
     {

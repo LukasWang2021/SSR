@@ -271,8 +271,7 @@ ErrorCode HrReg::moveReg(int expect_id, int original_id)
 
 void* HrReg::getRegValueById(int id)
 {
-    if(id <= 0
-        || id >= data_list_.size())
+    if(!isRegValid(id))
     {
         return NULL;
     }

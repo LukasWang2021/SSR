@@ -24,7 +24,7 @@ public:
     bool debug(std::string file_name);
     bool forward();
     bool backward();
-    bool jump(int data);
+    bool jump(std::string xml_path);
     bool pause();
     bool resume();
     bool abort();

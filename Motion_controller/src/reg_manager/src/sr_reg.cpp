@@ -179,12 +179,11 @@ ErrorCode SrReg::moveReg(int expect_id, int original_id)
 
 void* SrReg::getRegValueById(int id)
 {
-    if(id <= 0
-        || id >= data_list_.size())
+    if(!isRegValid(id))
     {
         return NULL;
     }
-        
+    
     return (void*)data_list_[id].c_str();
 }
 

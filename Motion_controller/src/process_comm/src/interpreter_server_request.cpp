@@ -17,7 +17,7 @@ void InterpreterServer::handleRequestStart()
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
+        delete[] request_data_ptr;
         return;
     }
     copyRecvBufferToRequestData(request_data_ptr, 256);
@@ -37,7 +37,7 @@ void InterpreterServer::handleRequestDebug()
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
+        delete[] request_data_ptr;
         return;
     }
     copyRecvBufferToRequestData(request_data_ptr, 256);
@@ -71,7 +71,7 @@ void InterpreterServer::handleRequestBackward()
 // Jump
 void InterpreterServer::handleRequestJump()
 {
-    int* request_data_ptr = new int;
+    char* request_data_ptr = new char[512]();
     if(request_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for request_data");
@@ -81,10 +81,10 @@ void InterpreterServer::handleRequestJump()
     if(response_data_ptr == NULL)
     {
         FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
+        delete[] request_data_ptr;
         return;
     }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
+    copyRecvBufferToRequestData(request_data_ptr, 512);
     pushTaskToRequestList(INTERPRETER_SERVER_CMD_JUMP, (void*)request_data_ptr, (void*)response_data_ptr);  
 }
 

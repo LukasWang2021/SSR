@@ -87,7 +87,7 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
 // "/rpc/interpreter/jump"
 void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_data_ptr)
 {
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    RequestMessageType_String* rq_data_ptr = static_cast<RequestMessageType_String*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
@@ -99,7 +99,7 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
         return;
     }
 
-    controller_client_ptr_->jump(rq_data_ptr->data.data); 
+    controller_client_ptr_->jump(std::string(rq_data_ptr->data.data)); 
     rs_data_ptr->data.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/jump"));
 }
@@ -154,16 +154,13 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));
 }
 
-// "/rpc/interpreter/jump"
+// "/rpc/interpreter/switchStep"
 void ControllerRpc::handleRpc0x000140F0(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
-    // to do...
-    if(// state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO || 
-       // state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE || 
-       state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    
+    if(state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         FST_ERROR("Failed to load handleRpc0x000140F0 with %d and %d ",
 			(int)state_machine_ptr_->getUserOpMode(), 
@@ -173,7 +170,6 @@ void ControllerRpc::handleRpc0x000140F0(void* request_data_ptr, void* response_d
         return;
     }
 
-    // to detect...
     controller_client_ptr_->switchStep(rq_data_ptr->data.data); 
     rs_data_ptr->data.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/switchStep"));

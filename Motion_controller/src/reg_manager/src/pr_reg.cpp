@@ -257,8 +257,7 @@ ErrorCode PrReg::moveReg(int expect_id, int original_id)
 
 void* PrReg::getRegValueById(int id)
 {
-    if(id <= 0
-        || id >= data_list_.size())
+    if(!isRegValid(id))
     {
         return NULL;
     }

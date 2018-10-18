@@ -1671,6 +1671,14 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 					 (char *)xmlGetNodePath(nodeStatement));
 			exportBASCode(objLineInfoTemp, "EXPORT: ", "CONTINUE \n", "");
         }
+		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"end")==0){ 
+            // printf("%s, ", (char*)nodeStatement->name);
+            // objLineInfoTemp.xPathIdx = iContinueIdx++;
+			value = xmlNodeGetContent(nodeStatement);
+			sprintf(objLineInfoTemp.xPath, "%s", 
+					 (char *)xmlGetNodePath(nodeStatement));
+			exportBASCode(objLineInfoTemp, "EXPORT: ", "END \n", "");
+        }
 		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"text")==0){
 			;
 		}

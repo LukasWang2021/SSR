@@ -242,7 +242,7 @@ void* basic_interpreter(void* arg)
   //  }
   setPrgmState(INTERPRETER_IDLE);
   // clear line path and ProgramName
-  resetProgramNameAndLineNum();
+  setProgramName((char *)""); 
 
   // free(objThreadCntrolBlock->instrSet);
   objThreadCntrolBlock->instrSet = 0 ;

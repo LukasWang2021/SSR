@@ -116,6 +116,12 @@ bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		ptr->value.pos[0] = 0.0;
+		ptr->value.pos[1] = 0.0;
+		ptr->value.pos[2] = 0.0;
+		ptr->value.pos[3] = 0.0;
+		ptr->value.pos[4] = 0.0;
+		ptr->value.pos[5] = 0.0;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		ptr->value.pos[0] = objPrRegDataIpc.pos[0];
 		ptr->value.pos[1] = objPrRegDataIpc.pos[1];
@@ -124,11 +130,10 @@ bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		ptr->value.pos[4] = objPrRegDataIpc.pos[4];
 		ptr->value.pos[5] = objPrRegDataIpc.pos[5];
 		
-		printf("getPr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		printf("getPr: id = (%f, %f, %f, %f, %f, %f) with %s \n", 
 			ptr->value.pos[0], ptr->value.pos[1], 
 			ptr->value.pos[2], ptr->value.pos[3], 
-			ptr->value.pos[4], ptr->value.pos[5]);
-		bRet = true ;
+			ptr->value.pos[4], ptr->value.pos[5], bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -158,19 +163,18 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		objPrRegDataIpc.pos[7] = 0.0;
 		objPrRegDataIpc.pos[8] = 0.0;
 		
-		printf("setPr: id = %d (%f, %f, %f, %f, %f, %f) \n", num, 
-			ptr->value.pos[0], ptr->value.pos[1], 
-			ptr->value.pos[2], ptr->value.pos[3], 
-			ptr->value.pos[4], ptr->value.pos[5]);
-		
 		bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
+		printf("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s \n", num, 
+			objPrRegDataIpc.pos[0], objPrRegDataIpc.pos[1], 
+			objPrRegDataIpc.pos[2], objPrRegDataIpc.pos[3], 
+			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], bRet?"TRUE":"FALSE");
+		
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
 			bRet = g_objRegManagerInterface->addPrReg(&objPrRegDataIpc);
 		}
 #endif
-		bRet = true ;
 	}
 	else
 	{
@@ -191,7 +195,6 @@ bool reg_manager_interface_delPr(uint16_t num)
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		bRet = g_objRegManagerInterface->deletePrReg(num);
 #endif
-		bRet = true ;
 	}
 	else
 	{
@@ -223,7 +226,6 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 		   ptr->orientation.b = objPrRegDataIpc.pos[4];
 		   ptr->orientation.c = objPrRegDataIpc.pos[5];
 		}
-		bRet = true ;
 	}
 	else
 	{
@@ -253,11 +255,15 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 		objPrRegDataIpc.pos[7] = 0.0;
 		objPrRegDataIpc.pos[8] = 0.0;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
+		printf("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s \n", num, 
+			objPrRegDataIpc.pos[0], objPrRegDataIpc.pos[1], 
+			objPrRegDataIpc.pos[2], objPrRegDataIpc.pos[3], 
+			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], bRet?"TRUE":"FALSE");
 		if(bRet)
 		{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		    memcpy(&(objPrRegDataIpc.value.pos), ptr, 
-				sizeof(objPrRegDataIpc.value.pos));
+		    memcpy(&(objPrRegDataIpc.pos), ptr, 
+				sizeof(objPrRegDataIpc.pos));
 			reg_manager_interface_setPr(&objPrRegDataIpc, num);
 #endif
 		}
@@ -496,11 +502,11 @@ bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		ptr->value = "";
 		printf("getSr[%d]\n", num);
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		ptr->value = string(objSrRegDataIpc.value) ;
-		printf("getSr[%d]:(%s)\n", num, ptr->value.c_str());
-		bRet = true ;
+		printf("getSr[%d]:(%s) with %s\n", num, ptr->value.c_str(), bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -523,7 +529,7 @@ bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 		// memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
 		objSrRegDataIpc.id = num ;
 		strcpy(objSrRegDataIpc.value, ptr->value.c_str()) ;
-		printf("setSr:(%s)\n", objSrRegDataIpc.value);
+		printf("setSr:(%s) with %s\n", objSrRegDataIpc.value, bRet?"TRUE":"FALSE");
 		
 		bRet = g_objRegManagerInterface->setSrReg(&objSrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
@@ -532,7 +538,6 @@ bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addSrReg(&objSrRegDataIpc);
 		}
 #endif
-		bRet = true ;
 	}
 	else
 	{
@@ -718,10 +723,10 @@ bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
-		printf("getR: value = (%f) \n", objRRegDataIpc.value);
+		printf("getR: value = (%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
 		ptr->value = objRRegDataIpc.value;
-		bRet = true ;
 	}
 	else
 	{
@@ -746,13 +751,13 @@ bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 		objRRegDataIpc.value = ptr->value;
 		// memcpy(&objRRegData, ptr, sizeof(objRRegData));
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
+		printf("setR:(%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
 			bRet = g_objRegManagerInterface->addRReg(objRRegDataIpc);
 		}
 #endif
-		bRet = true ;
 	}
 	else
 	{
@@ -773,7 +778,6 @@ bool reg_manager_interface_delR(uint16_t num)
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		bRet = g_objRegManagerInterface->deleteRReg(num);
 #endif
-		bRet = true ;
 	}
 	else
 	{
@@ -818,6 +822,7 @@ bool reg_manager_interface_setValueR(double *ptr, uint16_t num)
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
+		printf("setValueR:(%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -933,9 +938,10 @@ bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
+		printf("getMR: value = (%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
 		ptr->value = objMrRegDataIpc.value ;
-		bRet = true ;
 	}
 	else
 	{
@@ -956,6 +962,7 @@ bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
 		objMrRegDataIpc.id = num ;
 		objMrRegDataIpc.value = ptr->value ;
+		printf("setR:(%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
@@ -963,7 +970,6 @@ bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addMrReg(&objMrRegDataIpc);
 		}
 #endif
-		bRet = true ;
 	}
 	else
 	{
@@ -1028,6 +1034,7 @@ bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 		objMrRegDataIpc.id    = num;
 		objMrRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
+		printf("setValueMr:(%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -1151,6 +1158,12 @@ bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		ptr->value.joint_pos[0] = 0.0;
+		ptr->value.joint_pos[1] = 0.0;
+		ptr->value.joint_pos[2] = 0.0;
+		ptr->value.joint_pos[3] = 0.0;
+		ptr->value.joint_pos[4] = 0.0;
+		ptr->value.joint_pos[5] = 0.0;
 		bRet = g_objRegManagerInterface->getHrReg(num, &objHrRegDataIpc);
 		
 		ptr->value.joint_pos[0] = objHrRegDataIpc.joint_pos[0];
@@ -1160,11 +1173,11 @@ bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num)
 		ptr->value.joint_pos[4] = objHrRegDataIpc.joint_pos[4];
 		ptr->value.joint_pos[5] = objHrRegDataIpc.joint_pos[5];
 		
-		printf("getHr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		printf("getHr: id = (%f, %f, %f, %f, %f, %f) with %s\n", 
 			objHrRegDataIpc.joint_pos[0], objHrRegDataIpc.joint_pos[1], 
 			objHrRegDataIpc.joint_pos[2], objHrRegDataIpc.joint_pos[3], 
-			objHrRegDataIpc.joint_pos[4], objHrRegDataIpc.joint_pos[5]);
-		bRet = true ;
+			objHrRegDataIpc.joint_pos[4], objHrRegDataIpc.joint_pos[5], 
+			bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -1197,7 +1210,6 @@ bool reg_manager_interface_setHr(HrRegData *ptr, uint16_t num)
 			bRet = g_objRegManagerInterface->addHrReg(&objHrRegDataIpc);
 		}
 #endif
-		bRet = true ;
 	}
 	else
 	{
@@ -1389,42 +1401,42 @@ bool reg_manager_interface_setCommentHr(char *ptr, uint16_t num)
  **********************/
 bool reg_manager_interface_getUf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setUf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getCoordinateUf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setCoordinateUf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getIdUf(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setIdUf(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getCommentUf(char *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setCommentUf(char *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 /**********************
@@ -1432,42 +1444,42 @@ bool reg_manager_interface_setCommentUf(char *ptr, uint16_t num)
  **********************/
 bool reg_manager_interface_getTf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setTf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getCoordinateTf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setCoordinateTf(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getIdTf(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setIdTf(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getCommentTf(char *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setCommentTf(char *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 /**********************
@@ -1475,62 +1487,62 @@ bool reg_manager_interface_setCommentTf(char *ptr, uint16_t num)
  **********************/
 bool reg_manager_interface_getPl(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setPl(void *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getPosePl(PoseEuler* pose, int index)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setPosePl(PoseEuler* pose, int index)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getPalletPl(pl_t *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setPalletPl(pl_t *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getFlagPl(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setFlagPl(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getIdPl(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setIdPl(int *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_getCommentPl(char *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 bool reg_manager_interface_setCommentPl(char *ptr, uint16_t num)
 {
-	return 0 ;
+	return true ;
 }
 
 std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size)

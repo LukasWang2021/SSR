@@ -115,6 +115,7 @@ int forgesight_registers_manager_get_register(
 			struct thread_control_block* objThreadCntrolBlock, 
 							char *name, eval_value * value)
 {	
+	bool bRet = false ;
 	char reg_name[16] ;
 	char reg_idx[16] ;
 	char reg_member[16] ;
@@ -177,219 +178,318 @@ int forgesight_registers_manager_get_register(
 	// memset(reg_content_buffer, 0x00, sizeof(reg_content_buffer));
  
 	printf("forgesight_registers_manager_get_register at %s \n", reg_name);
-
+	value->resetNoneValue();
 	if(!strcmp(reg_name, TXT_PR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
 			// PrRegData * ptr = (PrRegData *)reg_content_buffer ;
-			if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_CARTESIAN)
+			
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
 			{
-			   objPoseEuler.position.x    = objPrRegData.value.pos[0];
-			   objPoseEuler.position.y    = objPrRegData.value.pos[1];
-			   objPoseEuler.position.z    = objPrRegData.value.pos[2];
-			   objPoseEuler.orientation.a = objPrRegData.value.pos[3];
-			   objPoseEuler.orientation.b = objPrRegData.value.pos[4];
-			   objPoseEuler.orientation.c = objPrRegData.value.pos[5];
-			   value->setPoseValue(&objPoseEuler);
-			}
-			else if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_JOINT)
-			{
-			   objJoint.j1 = objPrRegData.value.pos[0];
-			   objJoint.j2 = objPrRegData.value.pos[1];
-			   objJoint.j3 = objPrRegData.value.pos[2];
-			   objJoint.j4 = objPrRegData.value.pos[3];
-			   objJoint.j5 = objPrRegData.value.pos[4];
-			   objJoint.j6 = objPrRegData.value.pos[5];   
-			   value->setJointValue(&objJoint);
+				if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_CARTESIAN)
+				{
+				   objPoseEuler.position.x	  = objPrRegData.value.pos[0];
+				   objPoseEuler.position.y	  = objPrRegData.value.pos[1];
+				   objPoseEuler.position.z	  = objPrRegData.value.pos[2];
+				   objPoseEuler.orientation.a = objPrRegData.value.pos[3];
+				   objPoseEuler.orientation.b = objPrRegData.value.pos[4];
+				   objPoseEuler.orientation.c = objPrRegData.value.pos[5];
+				   value->setPoseValue(&objPoseEuler);
+				}
+				else if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_JOINT)
+				{
+				   objJoint.j1 = objPrRegData.value.pos[0];
+				   objJoint.j2 = objPrRegData.value.pos[1];
+				   objJoint.j3 = objPrRegData.value.pos[2];
+				   objJoint.j4 = objPrRegData.value.pos[3];
+				   objJoint.j5 = objPrRegData.value.pos[4];
+				   objJoint.j6 = objPrRegData.value.pos[5];   
+				   value->setJointValue(&objJoint);
+				}
+
 			}
 		}
 		// Implement for intergretion
 		else if (!strcmp(reg_member, TXT_POSE))
 		{
-			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(&objPoseEuler);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setPoseValue(&objPoseEuler);
 		}
 		else if (!strcmp(reg_member, TXT_POSE_X))
 		{
-			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setFloatValue(objPoseEuler.position.x);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objPoseEuler.position.x);
 		}
 		else if (!strcmp(reg_member, TXT_POSE_Y))
 		{
-			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setFloatValue(objPoseEuler.position.y);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objPoseEuler.position.y);
 		}
 		else if (!strcmp(reg_member, TXT_POSE_Z))
 		{
-			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setFloatValue(objPoseEuler.position.z);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objPoseEuler.position.z);
 		}
 		else if (!strcmp(reg_member, TXT_POSE_A))
 		{
-			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setFloatValue(objPoseEuler.orientation.a);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objPoseEuler.orientation.a);
 		}
 		else if (!strcmp(reg_member, TXT_POSE_B))
 		{
-			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setFloatValue(objPoseEuler.orientation.b);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objPoseEuler.orientation.b);
 		}
 		else if (!strcmp(reg_member, TXT_POSE_C))
 		{
-			reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getPosePr(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setFloatValue(objPoseEuler.orientation.c);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objPoseEuler.orientation.c);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setJointValue(&objJoint);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setJointValue(&objJoint);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J1))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j1);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j1);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J2))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j2);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j2);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J3))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j3);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j3);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J4))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j4);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j4);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J5))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j5);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j5);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J6))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j6);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j6);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J7))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j7);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j7);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J8))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j8);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j8);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J9))
 		{
-			reg_manager_interface_getJointPr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointPr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j9);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j9);
 		}
 		// General parameters for XML content
 		else if (!strcmp(reg_member, TXT_PR_POSE_JOINT_J1))
 		{
-			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
-			if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[0]);
-			else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[0]);
+			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
 			else
-	       		printf("PR[%d].pos_type = %d \n", 
-	       			iRegIdx, objPrRegData.value.pos_type);
+			{
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[0]);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[0]);
+				else
+		       		printf("PR[%d].pos_type = %d \n", 
+		       			iRegIdx, objPrRegData.value.pos_type);
+			}
 		}
 		else if (!strcmp(reg_member, TXT_PR_POSE_JOINT_J2))
 		{
-			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
-			if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[1]);
-			else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[1]);
+			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
 			else
-	       		printf("PR[%d].pos_type = %d \n", 
-	       			iRegIdx, objPrRegData.value.pos_type);
+			{
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[1]);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[1]);
+				else
+		       		printf("PR[%d].pos_type = %d \n", 
+		       			iRegIdx, objPrRegData.value.pos_type);
+			}
 		}
 		else if (!strcmp(reg_member, TXT_PR_POSE_JOINT_J3))
 		{
-			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
-			if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[2]);
-			else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[2]);
+			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
 			else
-	       		printf("PR[%d].pos_type = %d \n", 
-	       			iRegIdx, objPrRegData.value.pos_type);
+			{
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[2]);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[2]);
+				else
+		       		printf("PR[%d].pos_type = %d \n", 
+		       			iRegIdx, objPrRegData.value.pos_type);
+			}
 		}
 		else if (!strcmp(reg_member, TXT_PR_POSE_JOINT_J4))
 		{
-			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
-			if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[3]);
-			else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[3]);
+			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
 			else
-	       		printf("PR[%d].pos_type = %d \n", 
-	       			iRegIdx, objPrRegData.value.pos_type);
+			{
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[3]);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[3]);
+				else
+		       		printf("PR[%d].pos_type = %d \n", 
+		       			iRegIdx, objPrRegData.value.pos_type);
+			}
 		}
 		else if (!strcmp(reg_member, TXT_PR_POSE_JOINT_J5))
 		{
-			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
-			if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[4]);
-			else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[4]);
+			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
 			else
-	       		printf("PR[%d].pos_type = %d \n", 
-	       			iRegIdx, objPrRegData.value.pos_type);
+			{
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[4]);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[4]);
+				else
+		       		printf("PR[%d].pos_type = %d \n", 
+		       			iRegIdx, objPrRegData.value.pos_type);
+			}
 		}
 		else if (!strcmp(reg_member, TXT_PR_POSE_JOINT_J6))
 		{
-			reg_manager_interface_getPr(&objPrRegData, iRegIdx);
-			if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[5]);
-			else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
-				value->setFloatValue(objPrRegData.value.pos[5]);
+			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
 			else
-	       		printf("PR[%d].pos_type = %d \n", 
-	       			iRegIdx, objPrRegData.value.pos_type);
+			{
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[5]);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.pos[5]);
+				else
+		       		printf("PR[%d].pos_type = %d \n", 
+		       			iRegIdx, objPrRegData.value.pos_type);
+			}
 		}
 		else if (!strcmp(reg_member, TXT_REG_TYPE))
 		{
-			reg_manager_interface_getTypePr(&iType, iRegIdx);
-			value->setFloatValue(iType);
+			bRet = reg_manager_interface_getTypePr(&iType, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iType);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdPr(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdPr(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentPr(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentPr(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	else if(!strcmp(reg_name, TXT_SR))
@@ -398,26 +498,40 @@ int forgesight_registers_manager_get_register(
 		{
 			printf("TXT_SR at (%d), (%s), (%s) \n", 
 				objSrRegData.id, objSrRegData.comment.c_str(), objSrRegData.value.c_str());
-			reg_manager_interface_getSr(&objSrRegData, iRegIdx);
+			bRet = reg_manager_interface_getSr(&objSrRegData, iRegIdx);
 			// SrRegData * ptr = (SrRegData *)reg_content_buffer ;
 			// value->setStringValue(ptr->value);
-			value->setSrRegDataValue(&objSrRegData);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setSrRegDataValue(&objSrRegData);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			reg_manager_interface_getValueSr(strSrValue, iRegIdx);
-			value->setStringValue(strSrValue);
+			bRet = reg_manager_interface_getValueSr(strSrValue, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setStringValue(strSrValue);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdSr(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdSr(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentSr(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentSr(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	else if(!strcmp(reg_name, TXT_R))
@@ -427,166 +541,253 @@ int forgesight_registers_manager_get_register(
 		{
 	        printf("reg_manager_interface_getR at TXT_R \n");
             // Use TXT_REG_VALUE
-			reg_manager_interface_getR(&objRRegData, iRegIdx);
+			bRet = reg_manager_interface_getR(&objRRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			    value->setRRegDataValue(&objRRegData);
 			// RRegData * ptr = (RRegData *)reg_content_buffer ;
 			// value->setFloatValue(ptr->value);
-			value->setRRegDataValue(&objRRegData);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			reg_manager_interface_getValueR(&dRValue, iRegIdx);
-			value->setFloatValue(dRValue);
+			bRet = reg_manager_interface_getValueR(&dRValue, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(dRValue);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdR(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdR(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentR(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentR(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	else if(!strcmp(reg_name, TXT_MR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_getMr(&objMrRegData, iRegIdx);
+			bRet = reg_manager_interface_getMr(&objMrRegData, iRegIdx);
 			// MrRegData * ptr = (MrRegData *)reg_content_buffer ;
 	    	printf("Get at TXT_MR with %d (%s) %d \n", 
 	    			objMrRegData.id, objMrRegData.comment.c_str(), objMrRegData.value);
 			// value->setFloatValue(ptr->value);
-			value->setMrRegDataValue(&objMrRegData);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setMrRegDataValue(&objMrRegData);
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			reg_manager_interface_getValueMr(&iMrValue, iRegIdx);
-			value->setFloatValue(iMrValue);
+			bRet = reg_manager_interface_getValueMr(&iMrValue, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iMrValue);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdMr(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdMr(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentMr(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentMr(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	else if(!strcmp(reg_name, TXT_HR))
 	{
 		if(strlen(reg_member) == 0)
 		{
-			reg_manager_interface_getHr(&objHrRegData, iRegIdx);
+			bRet = reg_manager_interface_getHr(&objHrRegData, iRegIdx);
 			// PrRegData * ptr = (PrRegData *)reg_content_buffer ;
-			value->setHrRegDataValue(&objHrRegData);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setHrRegDataValue(&objHrRegData);
 		}
 		// Implement for intergretion
 		else if (!strcmp(reg_member, TXT_JOINT))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setJointValue(&objJoint);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setJointValue(&objJoint);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J1))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j1);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j1);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J2))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j2);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j2);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J3))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j3);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j3);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J4))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j4);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j4);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J5))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j5);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j5);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J6))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j6);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j6);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J7))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j7);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j7);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J8))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j8);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j8);
 		}
 		else if (!strcmp(reg_member, TXT_JOINT_J9))
 		{
-			reg_manager_interface_getJointHr(&objJoint, iRegIdx);
+			bRet = reg_manager_interface_getJointHr(&objJoint, iRegIdx);
 			// Joint * ptr = (Joint *)reg_content_buffer ;
-			value->setFloatValue(objJoint.j9);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objJoint.j9);
 		}
 		// General parameters for XML content
 		else if (!strcmp(reg_member, TXT_HR_JOINT_J1))
 		{
-			reg_manager_interface_getHr(&objHrRegData, iRegIdx);
-			value->setFloatValue(objHrRegData.value.joint_pos[0]);
+			bRet = reg_manager_interface_getHr(&objHrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objHrRegData.value.joint_pos[0]);
 		}
 		else if (!strcmp(reg_member, TXT_HR_JOINT_J2))
 		{
-			reg_manager_interface_getHr(&objHrRegData, iRegIdx);
-			value->setFloatValue(objHrRegData.value.joint_pos[1]);
+			bRet = reg_manager_interface_getHr(&objHrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objHrRegData.value.joint_pos[1]);
 		}
 		else if (!strcmp(reg_member, TXT_HR_JOINT_J3))
 		{
-			reg_manager_interface_getHr(&objHrRegData, iRegIdx);
-			value->setFloatValue(objHrRegData.value.joint_pos[2]);
+			bRet = reg_manager_interface_getHr(&objHrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objHrRegData.value.joint_pos[2]);
 		}
 		else if (!strcmp(reg_member, TXT_HR_JOINT_J4))
 		{
-			reg_manager_interface_getHr(&objHrRegData, iRegIdx);
-			value->setFloatValue(objHrRegData.value.joint_pos[3]);
+			bRet = reg_manager_interface_getHr(&objHrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objHrRegData.value.joint_pos[3]);
 		}
 		else if (!strcmp(reg_member, TXT_HR_JOINT_J5))
 		{
-			reg_manager_interface_getHr(&objHrRegData, iRegIdx);
-			value->setFloatValue(objHrRegData.value.joint_pos[4]);
+			bRet = reg_manager_interface_getHr(&objHrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objHrRegData.value.joint_pos[4]);
 		}
 		else if (!strcmp(reg_member, TXT_HR_JOINT_J6))
 		{
-			reg_manager_interface_getHr(&objHrRegData, iRegIdx);
-			value->setFloatValue(objHrRegData.value.joint_pos[5]);
+			bRet = reg_manager_interface_getHr(&objHrRegData, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(objHrRegData.value.joint_pos[5]);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdPr(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdPr(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentPr(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentPr(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	else if(!strcmp(reg_name, TXT_UF))
@@ -601,20 +802,31 @@ int forgesight_registers_manager_get_register(
 //		else 
 		if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
-			reg_manager_interface_getCoordinateUf(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getCoordinateUf(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(&objPoseEuler);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setPoseValue(&objPoseEuler);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdUf(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdUf(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentUf(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentUf(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	else if(!strcmp(reg_name, TXT_TF))
@@ -628,20 +840,31 @@ int forgesight_registers_manager_get_register(
 //		else 
 		if (!strcmp(reg_member, TXT_UF_TF_COORDINATE))
 		{
-			reg_manager_interface_getCoordinateTf(&objPoseEuler, iRegIdx);
+			bRet = reg_manager_interface_getCoordinateTf(&objPoseEuler, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(&objPoseEuler);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setPoseValue(&objPoseEuler);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdTf(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdTf(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentTf(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentTf(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	else if(!strcmp(reg_name, TXT_PL))
@@ -656,9 +879,12 @@ int forgesight_registers_manager_get_register(
 //		else 
 		if (!strcmp(reg_member, TXT_PL_POSE))
 		{
-			reg_manager_interface_getPalletPl(&pltValue, iRegIdx);
+			bRet = reg_manager_interface_getPalletPl(&pltValue, iRegIdx);
 			// _PoseEuler * ptr = (_PoseEuler *)reg_content_buffer ;
-			value->setPoseValue(&objPoseEuler);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setPoseValue(&objPoseEuler);
 		}
 //		else if (!strcmp(reg_member, TXT_PL_PALLET))
 //		{
@@ -668,19 +894,30 @@ int forgesight_registers_manager_get_register(
 //		}
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
-			reg_manager_interface_getFlagPl(&iPlFlag, iRegIdx);
-			value->setFloatValue(iPlFlag);
+			bRet = reg_manager_interface_getFlagPl(&iPlFlag, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iPlFlag);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
-			reg_manager_interface_getIdPl(&iID, iRegIdx);
-			value->setFloatValue(iID);
+			bRet = reg_manager_interface_getIdPl(&iID, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+				value->setFloatValue(iID);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
-			reg_manager_interface_getCommentPl(cComment, iRegIdx);
-			strComment = std::string(cComment);
-			value->setStringValue(strComment);
+			bRet = reg_manager_interface_getCommentPl(cComment, iRegIdx);
+			if(bRet == false)
+				serror(objThreadCntrolBlock, 4) ; 
+			else
+			{
+				strComment = std::string(cComment);
+				value->setStringValue(strComment);
+			}
 		}
 	}
 	return 0 ;

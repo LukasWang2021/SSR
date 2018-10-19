@@ -90,7 +90,22 @@ public:
 	void resetNoneValue(){
 		evalType = TYPE_NONE ;
 		fValue = -1 ;
+		strContent = "";
 		
+		pose.position.x	  = 0.0;
+		pose.position.y	  = 0.0;
+		pose.position.z	  = 0.0;
+		pose.orientation.a = 0.0;
+		pose.orientation.b = 0.0;
+		pose.orientation.c = 0.0;
+	   
+		joint.j1 = 0.0;
+		joint.j2 = 0.0;
+		joint.j3 = 0.0;
+		joint.j4 = 0.0;
+		joint.j5 = 0.0;
+		joint.j6 = 0.0;
+	   
 		tfIndex = -1 ;
 		ufIndex = -1 ;
 	}

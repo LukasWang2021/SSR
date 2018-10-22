@@ -18,6 +18,7 @@ namespace fst_mc
 const static size_t MAX_ATTEMPTS = 100;
 const static unsigned char WRITE_BY_ID  = 0x2D;
 const static unsigned char GET_ENCODER  = 0x70;
+const static unsigned char GET_CONTROL_POS  = 0x80;
 const static unsigned char READ_BY_ADDR     = 0x14;
 const static unsigned char READ_BY_ID       = 0x1D;
 const static unsigned char WRITE_BY_ADDR    = 0x24;
@@ -200,6 +201,32 @@ bool BareCoreInterface::getEncoder(vector<int> &data)
             if (*((int*)(&res.res_buff[0])) == len)
             {
                 memcpy(&data[0], &res.res_buff[4], len * sizeof(int));
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool BareCoreInterface::getControlPosition(double *data, size_t size)
+{
+    if (size > NUM_OF_JOINT) return false;
+
+    int len = size;
+    ServiceRequest req;
+    req.req_id = GET_CONTROL_POS;
+    memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
+
+    if (sendRequest(jtac_param_interface_, req))
+    {
+        ServiceResponse res;
+
+        if (recvResponse(jtac_param_interface_, res))
+        {
+            if (*((int*)(&res.res_buff[0])) == len)
+            {
+                memcpy(data, &res.res_buff[4], len * sizeof(double));
                 return true;
             }
         }

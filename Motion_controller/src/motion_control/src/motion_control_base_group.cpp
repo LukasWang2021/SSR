@@ -22,7 +22,7 @@ using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
 
-#define OUTPUT_JOUT
+//#define OUTPUT_JOUT
 //#define OUTPUT_COEFF
 //#define OUTPUT_POUT
 
@@ -119,7 +119,8 @@ BaseGroup::~BaseGroup()
     }
 
 #ifdef OUTPUT_JOUT
-    jout << "time-of-start,angle[0],angle[1],angle[2],angle[3],angle[4],angle[5],omega[0],omega[1],omega[2],omega[3],omega[4],omega[5],alpha[0],alpha[1],alpha[2],alpha[3],alpha[4],alpha[5],"
+    printf("正在将缓存中的轨迹录入文件：jout.csv ... 请稍后\n");
+    jout << "time,angle0,angle1,angle2,angle3,angle4,angle5,omega0,omega1,omega2,omega3,omega4,omega5,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,"
          << "ma+cv+g[0],ma+cv+g[1],ma+cv+g[2],ma+cv+g[3],ma+cv+g[4],ma+cv+g[5]" << endl;
 
     for (size_t i = 0; i < g_jindex; i++)
@@ -129,12 +130,19 @@ BaseGroup::~BaseGroup()
              << g_jout[i].point.omega[0] << "," << g_jout[i].point.omega[1] << "," << g_jout[i].point.omega[2] << "," << g_jout[i].point.omega[3] << "," << g_jout[i].point.omega[4] << "," << g_jout[i].point.omega[5] << ","
              << g_jout[i].point.alpha[0] << "," << g_jout[i].point.alpha[1] << "," << g_jout[i].point.alpha[2] << "," << g_jout[i].point.alpha[3] << "," << g_jout[i].point.alpha[4] << "," << g_jout[i].point.alpha[5] << ","
              << g_jout[i].ma_cv_g[0] << "," << g_jout[i].ma_cv_g[1] << "," << g_jout[i].ma_cv_g[2] << "," << g_jout[i].ma_cv_g[3] << "," << g_jout[i].ma_cv_g[4] << "," << g_jout[i].ma_cv_g[5] << endl;
+
+        if (i > 0 && i % 10000 == 0)
+        {
+            printf("已完成%.2f%%，还剩余%d点\n", (double)i / g_jindex * 100, g_jindex - 1 - i);
+        }
     }
 
     jout.close();
+    printf("录入完成！\n");
 #endif
 
 #ifdef OUTPUT_COEFF
+    printf("正在将缓存中的轨迹段参数录入文件：cout.csv ... 请稍后\n");
     coeff_out << "type,"
               << "start.angle[0],start.angle[1],start.angle[2],start.angle[3],start.angle[4],start.angle[5],start.omega[0],start.omega[1],start.omega[2],start.omega[3],start.omega[4],start.omega[5],start.alpha[0],start.alpha[1],start.alpha[2],start.alpha[3],start.alpha[4],start.alpha[5],"
               << "ending.angle[0],ending.angle[1],ending.angle[2],ending.angle[3],ending.angle[4],ending.angle[5],ending.omega[0],ending.omega[1],ending.omega[2],ending.omega[3],ending.omega[4],ending.omega[5],ending.alpha[0],ending.alpha[1],ending.alpha[2],ending.alpha[3],ending.alpha[4],ending.alpha[5],"
@@ -151,8 +159,8 @@ BaseGroup::~BaseGroup()
               << "j4.duration[0],j4.duration[1],j4.duration[2],j4.duration[3],"
               << "j4.coeff[0][3],j4.coeff[0][2],j4.coeff[0][1],j4.coeff[0][0],j4.coeff[1][3],j4.coeff[1][2],j4.coeff[1][1],j4.coeff[1][0],j4.coeff[2][3],j4.coeff[2][2],j4.coeff[2][1],j4.coeff[2][0],j4.coeff[3][3],j4.coeff[3][2],j4.coeff[3][1],j4.coeff[3][0],"
               << "j5.duration[0],j5.duration[1],j5.duration[2],j5.duration[3],"
-              << "j5.coeff[0][3],j5.coeff[0][2],j5.coeff[0][1],j5.coeff[0][0],j5.coeff[1][3],j5.coeff[1][2],j5.coeff[1][1],j5.coeff[1][0],j5.coeff[2][3],j5.coeff[2][2],j5.coeff[2][1],j5.coeff[2][0],j5.coeff[3][3],j5.coeff[3][2],j5.coeff[3][1],j5.coeff[3][0],"
-              << endl;
+              << "j5.coeff[0][3],j5.coeff[0][2],j5.coeff[0][1],j5.coeff[0][0],j5.coeff[1][3],j5.coeff[1][2],j5.coeff[1][1],j5.coeff[1][0],j5.coeff[2][3],j5.coeff[2][2],j5.coeff[2][1],j5.coeff[2][0],j5.coeff[3][3],j5.coeff[3][2],j5.coeff[3][1],j5.coeff[3][0]" << endl;
+
     for (size_t i = 0; i < g_cindex; i++)
     {
         coeff_out << g_cout[i].type << ","
@@ -168,7 +176,8 @@ BaseGroup::~BaseGroup()
 
         for (size_t j = 0; j < 6; j++)
         {
-            coeff_out << g_cout[i].segment[j].duration[0] << "," << g_cout[i].segment[j].duration[1] << "," << g_cout[i].segment[j].duration[2] << "," << g_cout[i].segment[j].duration[3] << ","
+            coeff_out << ","
+                      << g_cout[i].segment[j].duration[0] << "," << g_cout[i].segment[j].duration[1] << "," << g_cout[i].segment[j].duration[2] << "," << g_cout[i].segment[j].duration[3] << ","
                       << g_cout[i].segment[j].coeff[0][3] << "," << g_cout[i].segment[j].coeff[0][2] << "," << g_cout[i].segment[j].coeff[0][1] << "," << g_cout[i].segment[j].coeff[0][0] << ","
                       << g_cout[i].segment[j].coeff[1][3] << "," << g_cout[i].segment[j].coeff[1][2] << "," << g_cout[i].segment[j].coeff[1][1] << "," << g_cout[i].segment[j].coeff[1][0] << ","
                       << g_cout[i].segment[j].coeff[2][3] << "," << g_cout[i].segment[j].coeff[2][2] << "," << g_cout[i].segment[j].coeff[2][1] << "," << g_cout[i].segment[j].coeff[2][0] << ","
@@ -176,7 +185,15 @@ BaseGroup::~BaseGroup()
         }
 
         coeff_out << endl;
+
+        if (i > 0 && i % 10000 == 0)
+        {
+            printf("已完成%.2f%%，还剩余%d段\n", (double)i / g_cindex * 100, g_cindex - 1 - i);
+        }
     }
+
+    coeff_out.close();
+    printf("录入完成！\n");
 #endif
 
 #ifdef OUTPUT_POUT
@@ -315,7 +332,28 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
         return INVALID_SEQUENCE;
     }
 
-    getLatestJoint(manual_traj_.joint_start);
+    Joint current_joint, control_joint;
+    getLatestJoint(current_joint);
+
+    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
+    {
+        char buffer[LOG_TEXT_SIZE];
+        FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+    }
+    else
+    {
+        FST_ERROR("Cannot get control position from bare core.");
+        return BARE_CORE_TIMEOUT;
+    }
+
+    if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+    {
+        FST_ERROR("Control-position different with current-position, it might be a trouble.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    manual_traj_.joint_start = control_joint;
     FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
@@ -367,7 +405,28 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
         return INVALID_SEQUENCE;
     }
 
-    getLatestJoint(manual_traj_.joint_start);
+    Joint current_joint, control_joint;
+    getLatestJoint(current_joint);
+
+    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
+    {
+        char buffer[LOG_TEXT_SIZE];
+        FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+    }
+    else
+    {
+        FST_ERROR("Cannot get control position from bare core.");
+        return BARE_CORE_TIMEOUT;
+    }
+
+    if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+    {
+        FST_ERROR("Control-position different with current-position, it might be a trouble.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    manual_traj_.joint_start = control_joint;
     FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
@@ -437,7 +496,28 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         return SUCCESS;
     }
 
-    getLatestJoint(manual_traj_.joint_start);
+    Joint current_joint, control_joint;
+    getLatestJoint(current_joint);
+
+    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
+    {
+        char buffer[LOG_TEXT_SIZE];
+        FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+    }
+    else
+    {
+        FST_ERROR("Cannot get control position from bare core.");
+        return BARE_CORE_TIMEOUT;
+    }
+
+    if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+    {
+        FST_ERROR("Control-position different with current-position, it might be a trouble.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    manual_traj_.joint_start = control_joint;
     FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
@@ -522,11 +602,33 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
     {
         if (servo_state_ != SERVO_IDLE)
         {
-            FST_ERROR("Cannot manual continuous in current servo-state = %d", servo_state_);
+            FST_ERROR("Cannot manual continuous in current grp-state = %d,  servo-state = %d", group_state_, servo_state_);
+            return SUCCESS;
         }
 
         PoseEuler pose;
-        getLatestJoint(manual_traj_.joint_start);
+        Joint current_joint, control_joint;
+        getLatestJoint(current_joint);
+
+        if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
+        {
+            char buffer[LOG_TEXT_SIZE];
+            FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+        }
+        else
+        {
+            FST_ERROR("Cannot get control position from bare core.");
+            return BARE_CORE_TIMEOUT;
+        }
+
+        if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+        {
+            FST_ERROR("Control-position different with current-position, it might be a trouble.");
+            return MOTION_INTERNAL_FAULT;
+        }
+
+        manual_traj_.joint_start = control_joint;
         FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
         if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
@@ -676,15 +778,33 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 {
     FST_INFO("Auto move request received, motion ID = %d, type = %d", id, target.type);
     ErrorCode err;
-    Joint start_joint;
+    Joint control_joint, current_joint;
 
     if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
     {
-        getLatestJoint(start_joint);
+        getLatestJoint(current_joint);
+
+        if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
+        {
+            char buffer[LOG_TEXT_SIZE];
+            FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+        }
+        else
+        {
+            FST_ERROR("Cannot get control position from bare core.");
+            return BARE_CORE_TIMEOUT;
+        }
+
+        if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+        {
+            FST_ERROR("Control-position different with current-position, it might be a trouble.");
+            return MOTION_INTERNAL_FAULT;
+        }
     }
     else if (group_state_ == AUTO || group_state_ == STANDBY || group_state_ == AUTO_TO_STANDBY)
     {
-        start_joint = start_joint_;
+        control_joint = start_joint_;
     }
     else
     {
@@ -695,10 +815,10 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
     switch (target.type)
     {
         case MOTION_JOINT:
-            err = autoJoint(start_joint, target.joint_target, target.vel, target.cnt, id);
+            err = autoJoint(control_joint, target.joint_target, target.vel, target.cnt, id);
             break;
         case MOTION_LINE:
-            err = autoLine(start_joint, target.pose_target, target.vel, target.cnt, id);
+            err = autoLine(control_joint, target.pose_target, target.vel, target.cnt, id);
             break;
         case MOTION_CIRCLE:
             //err = autoCircle(start_joint, target.circle_target.pose1, target.circle_target.pose2, target.vel, target.cnt, id);
@@ -847,7 +967,7 @@ ErrorCode BaseGroup::autoJoint(const Joint &start, const Joint &target, double v
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    if (isSameJoint(start, target))
+    if (isSameJoint(start, target, 0.0001))
     {
         FST_WARN("Start joint same as target joint");
         return 0xA000B000C000D000;
@@ -947,6 +1067,15 @@ ErrorCode BaseGroup::autoLine(const Joint &start, const PoseEuler &target, doubl
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
+    Pose p1 = PoseEuler2Pose(start_pose);
+    Pose p2 = PoseEuler2Pose(target);
+
+    if (getDistance(start_pose.position, target.position) < MINIMUM_E3 && getOrientationAngle(p1.orientation, p2.orientation) < MINIMUM_E3)
+    {
+        FST_WARN("Start pose same as target pose");
+        return 0xA000B000C000D000;
+    }
+
     ErrorCode err;
     size_t  length;
     double  precision = vel < 1000 ? 1 : vel / 1000;     // vel < 1000mm/s -> 1mm, 1500mm/s -> 1.5mm, 2000mm/s -> 2mm
@@ -1040,6 +1169,7 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
         }
         else if (mtype == MOTION_LINE || mtype == MOTION_CIRCLE)
         {
+            char buffer[LOG_TEXT_SIZE];
             Joint ref = getLatestJoint();
 
             for (size_t i = cache.head; i < cache.tail; i++)
@@ -1048,7 +1178,6 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
 
                 if (err == SUCCESS)
                 {
-                    char buffer[LOG_TEXT_SIZE];
                     FST_LOG("%d: %s", i, printDBLine(&cache.cache[i].path_point.pose.position.x, buffer, LOG_TEXT_SIZE));
                     FST_LOG("%d: %s", i, printDBLine(&cache.cache[i].ending_state.angle[0], buffer, LOG_TEXT_SIZE));
                     ref = cache.cache[i].ending_state.angle;
@@ -1057,7 +1186,10 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
                 }
                 else
                 {
+                    Pose &pose = cache.cache[i].path_point.pose;
                     FST_ERROR("Fail to get IK result, code = 0x%llx", err);
+                    FST_ERROR("Point-%d: %.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f", i, pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
+                    FST_ERROR("Ref-joint: %s", i, printDBLine(&ref[0], buffer, LOG_TEXT_SIZE));
                     return err;
                 }
             }
@@ -1098,12 +1230,10 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
     }
     */
 
-
-    char buf[LOG_TEXT_SIZE];
-
     for (size_t i = cache.head; i < cache.tail; i++)
     {
 #ifdef OUTPUT_POUT
+        char buf[LOG_TEXT_SIZE];
         sprintf(buf, "%d,%.12f,%.12f,%.12f,%.12f,%.12f,%.12f", i, cache.cache[i].ending_state.angle[0], cache.cache[i].ending_state.angle[1], cache.cache[i].ending_state.angle[2],
                 cache.cache[i].ending_state.angle[3], cache.cache[i].ending_state.angle[4], cache.cache[i].ending_state.angle[5]);
         pout << buf << endl;
@@ -1117,7 +1247,7 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
 }
 
 //#define PRINT_CACHE
-//#define CHECK_COEFF
+#define CHECK_COEFF
 
 #ifdef CHECK_COEFF
 
@@ -1154,6 +1284,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 
     for (size_t i = 0; i < 6; i++)
     {
+#if 0
         if (fabs(segment[i].coeff[0][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[1][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[2][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[3][3]) * 6 > jerk[i] * 3)
         {
             FST_ERROR("Jerk of joint-%d beyond limit", i);
@@ -1171,8 +1302,12 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
             FST_ERROR("Alpha of joint-%d < alpha-lower-limit", i);
             return false;
         }
+#endif
 
-        if (fabs(segment[i].coeff[0][1]) > 12 || fabs(segment[i].coeff[1][1]) > 12 || fabs(segment[i].coeff[2][1]) > 12 || fabs(segment[i].coeff[3][1]) > 12)
+        if ((segment[i].duration[0] > MINIMUM_E9 && fabs(segment[i].coeff[0][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[1] > MINIMUM_E9 && fabs(segment[i].coeff[1][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[2] > MINIMUM_E9 && fabs(segment[i].coeff[2][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[3] > MINIMUM_E9 && fabs(segment[i].coeff[3][1]) > axis_vel_[i] * 1.2))
         {
             FST_ERROR("Omega of joint-%d beyond limit", i);
             return false;
@@ -1187,7 +1322,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(start.angle, joint))
+    if (!isSameJoint(start.angle, joint, 0.0001))
     {
         FST_ERROR("Start joint mismatch with coeff");
         FST_ERROR("Start joint given is: %s", printDBLine(&start.angle[0], buffer, LOG_TEXT_SIZE));
@@ -1195,7 +1330,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(start.omega, omega))
+    if (!isSameJoint(start.omega, omega, 0.0001))
     {
         FST_ERROR("Start omega mismatch with coeff");
         FST_ERROR("Start omega given is: %s", printDBLine(&start.omega[0], buffer, LOG_TEXT_SIZE));
@@ -1203,7 +1338,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(ending, end_joint))
+    if (!isSameJoint(ending, end_joint, 0.0001))
     {
         FST_ERROR("Ending joint mismatch with coeff");
         FST_ERROR("Start joint given is: %s", printDBLine(&ending[0], buffer, LOG_TEXT_SIZE));
@@ -1247,6 +1382,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 
     for (size_t i = 0; i < 6; i++)
     {
+#if 0
         if (fabs(segment[i].coeff[0][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[1][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[2][3]) * 6 > jerk[i] * 3 || fabs(segment[i].coeff[3][3]) * 6 > jerk[i] * 3)
         {
             FST_ERROR("Jerk of joint-%d beyond limit", i);
@@ -1264,8 +1400,12 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
             FST_ERROR("Alpha of joint-%d < alpha-lower-limit", i);
             return false;
         }
+#endif
 
-        if (fabs(segment[i].coeff[0][1]) > 12 || fabs(segment[i].coeff[1][1]) > 12 || fabs(segment[i].coeff[2][1]) > 12 || fabs(segment[i].coeff[3][1]) > 12)
+        if ((segment[i].duration[0] > MINIMUM_E9 && fabs(segment[i].coeff[0][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[1] > MINIMUM_E9 && fabs(segment[i].coeff[1][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[2] > MINIMUM_E9 && fabs(segment[i].coeff[2][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[3] > MINIMUM_E9 && fabs(segment[i].coeff[3][1]) > axis_vel_[i] * 1.2))
         {
             FST_ERROR("Omega of joint-%d beyond limit", i);
             return false;
@@ -1280,7 +1420,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(start, joint))
+    if (!isSameJoint(start, joint, 0.0001))
     {
         FST_ERROR("Start joint mismatch with coeff");
         FST_ERROR("Start joint given is: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
@@ -1288,7 +1428,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(ending.angle, end_joint))
+    if (!isSameJoint(ending.angle, end_joint, 0.0001))
     {
         FST_ERROR("Ending joint mismatch with coeff");
         FST_ERROR("Ending joint given is: %s", printDBLine(&ending.angle[0], buffer, LOG_TEXT_SIZE));
@@ -1296,7 +1436,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(ending.omega, end_omega))
+    if (!isSameJoint(ending.omega, end_omega, 0.0001))
     {
         FST_ERROR("Ending omega mismatch with coeff");
         FST_ERROR("Ending omega given is: %s", printDBLine(&ending.omega[0], buffer, LOG_TEXT_SIZE));
@@ -1340,6 +1480,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 
     for (size_t i = 0; i < 6; i++)
     {
+#if 0
         if (segment[i].coeff[0][2] * 2 > alpha_upper[i] * 10 || segment[i].coeff[1][2] * 2 > alpha_upper[i] * 10 || segment[i].coeff[2][2] * 2 > alpha_upper[i] * 10 || segment[i].coeff[3][2] * 2 > alpha_upper[i] * 10)
         {
             FST_ERROR("Alpha of joint-%d > alpha-upper-limit", i);
@@ -1351,8 +1492,12 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
             FST_ERROR("Alpha of joint-%d < alpha-lower-limit", i);
             return false;
         }
+#endif
 
-        if (fabs(segment[i].coeff[0][1]) > 12 || fabs(segment[i].coeff[1][1]) > 12 || fabs(segment[i].coeff[2][1]) > 12 || fabs(segment[i].coeff[3][1]) > 12)
+        if ((segment[i].duration[0] > MINIMUM_E9 && fabs(segment[i].coeff[0][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[1] > MINIMUM_E9 && fabs(segment[i].coeff[1][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[2] > MINIMUM_E9 && fabs(segment[i].coeff[2][1]) > axis_vel_[i] * 1.2) ||
+            (segment[i].duration[3] > MINIMUM_E9 && fabs(segment[i].coeff[3][1]) > axis_vel_[i] * 1.2))
         {
             FST_ERROR("Omega of joint-%d beyond limit", i);
             return false;
@@ -1367,7 +1512,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(start.angle, joint))
+    if (!isSameJoint(start.angle, joint, 0.0001))
     {
         FST_ERROR("Start joint mismatch with coeff");
         FST_ERROR("Start joint given is: %s", printDBLine(&start.angle[0], buffer, LOG_TEXT_SIZE));
@@ -1375,7 +1520,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(start.omega, omega))
+    if (!isSameJoint(start.omega, omega, 0.0001))
     {
         FST_ERROR("Start omega mismatch with coeff");
         FST_ERROR("Start omega given is: %s", printDBLine(&start.omega[0], buffer, LOG_TEXT_SIZE));
@@ -1383,7 +1528,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(ending.angle, end_joint))
+    if (!isSameJoint(ending.angle, end_joint, 0.0001))
     {
         FST_ERROR("Ending joint mismatch with coeff");
         FST_ERROR("Ending joint given is: %s", printDBLine(&ending.angle[0], buffer, LOG_TEXT_SIZE));
@@ -1391,7 +1536,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
         return false;
     }
 
-    if (!isSameJoint(ending.omega, end_omega))
+    if (!isSameJoint(ending.omega, end_omega, 0.0001))
     {
         FST_ERROR("Ending omega mismatch with coeff");
         FST_ERROR("Ending omega given is: %s", printDBLine(&ending.omega[0], buffer, LOG_TEXT_SIZE));
@@ -1458,18 +1603,19 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
     index = cache.tail - 1;
     this_duration = 99.99;
     last_duration = 99.99;
+    double duration_ratio = 10;
 
     while (this_duration > cache.expect_duration + MINIMUM_E6 && index > 1)
     {
         pseg = &cache.cache[index];
-        err = backwardCycle(pseg->start_state.angle, back_status[index], cache.expect_duration, backward_alpha_upper, backward_alpha_lower, jerk_, pseg->backward_coeff);
+        err = backwardCycle(pseg->start_state.angle, back_status[index], cache.expect_duration * duration_ratio, backward_alpha_upper, backward_alpha_lower, jerk_, pseg->backward_coeff);
 
         if (err == SUCCESS)
         {
 #ifdef CHECK_COEFF
             if (!checkCoeff(pseg->backward_coeff, pseg->start_state.angle, back_status[index], backward_alpha_upper, backward_alpha_lower, jerk_))
             {
-                FST_ERROR("ERROR in back-cycle-%d, this-duration: %.12f, exp-duration: %.12f, last-duration: %.12f", index, this_duration, cache.expect_duration, last_duration);
+                FST_ERROR("ERROR in back-cycle-%d, exp-duration: %.12f", index, cache.expect_duration * duration_ratio);
                 FST_ERROR("  start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  ending-angle: %s", printDBLine(&back_status[index].angle[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  ending-omega: %s", printDBLine(&back_status[index].omega[0], buffer, LOG_TEXT_SIZE));
@@ -1493,6 +1639,8 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
                 break;
             }
 #endif
+            duration_ratio -= 1;
+            duration_ratio = duration_ratio > 1 ? duration_ratio : 1;
             this_duration = pseg->backward_coeff[0].duration[0] + pseg->backward_coeff[0].duration[1] + pseg->backward_coeff[0].duration[2] + pseg->backward_coeff[0].duration[3];
             pseg->backward_duration = this_duration;
             sampleStartTrajectorySegment(pseg->backward_coeff, tmp, back_status[index - 1].omega, back_status[index - 1].alpha);
@@ -1552,11 +1700,12 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
     index = 1;
     this_duration = 99.99;
     last_duration = 99.99;
+    duration_ratio = 10;
 
     while (this_duration > cache.expect_duration + MINIMUM_E6 && index < cache.tail - 1)
     {
         pseg = &cache.cache[index];
-        err = forwardCycle(fore_status[index], pseg->ending_state.angle, cache.expect_duration, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
+        err = forwardCycle(fore_status[index], pseg->ending_state.angle, cache.expect_duration * duration_ratio, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
         //err = forwardCycleTest(pseg->start_state, pseg->ending_state.angle, 0.01, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
 
         if (err == SUCCESS)
@@ -1564,7 +1713,7 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
 #ifdef CHECK_COEFF
             if (!checkCoeff(pseg->forward_coeff, fore_status[index], pseg->ending_state.angle, forward_alpha_upper, forward_alpha_lower, jerk_))
             {
-                FST_ERROR("ERROR in fore-cycle-%d, this-duration: %.12f, exp-duration: %.12f, last-duration: %.12f", index, this_duration, cache.expect_duration, last_duration);
+                FST_ERROR("ERROR in fore-cycle-%d, exp-duration: %.12f", index, cache.expect_duration * duration_ratio);
                 FST_ERROR("  start-angle: %s", printDBLine(&fore_status[index].angle[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  start-omega: %s", printDBLine(&fore_status[index].omega[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  start-alpha: %s", printDBLine(&fore_status[index].alpha[0], buffer, LOG_TEXT_SIZE));
@@ -1588,6 +1737,8 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
                 break;
             }
 #endif
+            duration_ratio -= 1;
+            duration_ratio = duration_ratio > 1 ? duration_ratio : 1;
             this_duration = pseg->forward_coeff[0].duration[0] + pseg->forward_coeff[0].duration[1] + pseg->forward_coeff[0].duration[2] + pseg->forward_coeff[0].duration[3];
             pseg->forward_duration = this_duration;
             sampleEndingTrajectorySegment(pseg->forward_coeff, tmp, fore_status[index + 1].omega, fore_status[index + 1].alpha);
@@ -1806,7 +1957,6 @@ ErrorCode BaseGroup::abortMove(void)
 
     if (group_state_ == AUTO || group_state_ == PAUSE)
     {
-        waiting_fine_ = false;
         group_state_ = STANDBY;
         auto_time_ = 0;
         traj_fifo_.clear();
@@ -1822,6 +1972,8 @@ ErrorCode BaseGroup::abortMove(void)
             AUTO_LOCK;
         }
     }
+
+    waiting_fine_ = false;
 
     AUTO_UNLOCK;
     FST_WARN("Auto move Aborted");
@@ -1947,7 +2099,7 @@ ErrorCode BaseGroup::createTrajectory(void)
 #ifdef OUTPUT_COEFF
                     g_cout[g_cindex].type = SMOOTH_CYCLE;
                     g_cout[g_cindex].start = pseg->start_state;
-                    g_cout[g_cindex].ending = auto_pick_ptr_->next->cache[auto_pick_ptr_->next->smooth_in_stamp].ending_state;
+                    g_cout[g_cindex].ending = used_cache_ptr_->next->cache[used_cache_ptr_->next->smooth_in_stamp].ending_state;
                     g_cout[g_cindex].alpha_upper = alpha_upper;
                     g_cout[g_cindex].alpha_lower = alpha_lower;
                     g_cout[g_cindex].exp_duration = duration;
@@ -1957,15 +2109,15 @@ ErrorCode BaseGroup::createTrajectory(void)
                     g_cindex = (g_cindex + 1) % COEFF_SIZE;
 #endif
 #ifdef CHECK_COEFF
-                    if (!checkCoeff(traj_item.traj_coeff, pseg->start_state, auto_pick_ptr_->next->cache[auto_pick_ptr_->next->smooth_in_stamp].ending_state, alpha_upper, alpha_lower, jerk_))
+                    if (!checkCoeff(traj_item.traj_coeff, pseg->start_state, used_cache_ptr_->next->cache[used_cache_ptr_->next->smooth_in_stamp].ending_state, alpha_upper, alpha_lower, jerk_))
                     {
                         FST_ERROR("ERROR in smooth, exp-duration: %.12f", duration);
-                        FST_ERROR("exp=%.12f, tail=%d, smooth-out=%d", auto_pick_ptr_->expect_duration, auto_pick_ptr_->tail, auto_pick_ptr_->smooth_out_stamp);
-                        FST_ERROR("exp=%.12f, smooth-in=%d", auto_pick_ptr_->next->expect_duration, auto_pick_ptr_->smooth_in_stamp);
+                        FST_ERROR("exp=%.12f, tail=%d, smooth-out=%d", used_cache_ptr_->expect_duration, used_cache_ptr_->tail, used_cache_ptr_->smooth_out_stamp);
+                        FST_ERROR("exp=%.12f, smooth-in=%d", used_cache_ptr_->next->expect_duration, used_cache_ptr_->smooth_in_stamp);
                         FST_ERROR("  start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
                         FST_ERROR("  start-omega: %s", printDBLine(&pseg->start_state.omega[0], buffer, LOG_TEXT_SIZE));
-                        FST_ERROR("  ending-angle: %s", printDBLine(&auto_pick_ptr_->next->cache[auto_pick_ptr_->next->smooth_in_stamp].ending_state.angle[0], buffer, LOG_TEXT_SIZE));
-                        FST_ERROR("  ending-omega: %s", printDBLine(&auto_pick_ptr_->next->cache[auto_pick_ptr_->next->smooth_in_stamp].ending_state.omega[0], buffer, LOG_TEXT_SIZE));
+                        FST_ERROR("  ending-angle: %s", printDBLine(&used_cache_ptr_->next->cache[used_cache_ptr_->next->smooth_in_stamp].ending_state.angle[0], buffer, LOG_TEXT_SIZE));
+                        FST_ERROR("  ending-omega: %s", printDBLine(&used_cache_ptr_->next->cache[used_cache_ptr_->next->smooth_in_stamp].ending_state.omega[0], buffer, LOG_TEXT_SIZE));
 
                         for (size_t i = 0; i < 6; i++)
                         {
@@ -2085,7 +2237,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                     g_cout[g_cindex].ending = pseg->ending_state;
                     g_cout[g_cindex].alpha_upper = alpha_upper;
                     g_cout[g_cindex].alpha_lower = alpha_lower;
-                    g_cout[g_cindex].exp_duration = auto_pick_ptr_->expect_duration;
+                    g_cout[g_cindex].exp_duration = used_cache_ptr_->expect_duration;
                     g_cout[g_cindex].duration = pseg->forward_coeff[0].duration[0] + pseg->forward_coeff[0].duration[1] + pseg->forward_coeff[0].duration[2] + pseg->forward_coeff[0].duration[3];
                     g_cout[g_cindex].start_time = traj_fifo_.timeFromStart();
                     memcpy(g_cout[g_cindex].segment, pseg->forward_coeff, sizeof(pseg->forward_coeff));
@@ -2096,7 +2248,7 @@ ErrorCode BaseGroup::createTrajectory(void)
 #ifdef CHECK_COEFF
                         if (!checkCoeff(pseg->forward_coeff, pseg->start_state, pseg->ending_state.angle, alpha_upper, alpha_lower, jerk_))
                         {
-                            FST_ERROR("ERROR in fore-cycle-%d, exp-duration: %.12f", auto_pick_segment_, auto_pick_ptr_->expect_duration);
+                            FST_ERROR("ERROR in fore-cycle-%d, exp-duration: %.12f", auto_pick_segment_, used_cache_ptr_->expect_duration);
                             FST_ERROR("start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
                             FST_ERROR("start-omega: %s", printDBLine(&pseg->start_state.omega[0], buffer, LOG_TEXT_SIZE));
                             FST_ERROR("start-alpha: %s", printDBLine(&pseg->start_state.alpha[0], buffer, LOG_TEXT_SIZE));
@@ -2104,7 +2256,7 @@ ErrorCode BaseGroup::createTrajectory(void)
                             FST_ERROR("alpha-upper: %s", printDBLine(&alpha_upper[0], buffer, LOG_TEXT_SIZE));
                             FST_ERROR("alpha-lower: %s", printDBLine(&alpha_lower[0], buffer, LOG_TEXT_SIZE));
                             FST_ERROR("jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
-                            FST_ERROR("exp-duration: %.12f", auto_pick_ptr_->expect_duration);
+                            FST_ERROR("exp-duration: %.12f", used_cache_ptr_->expect_duration);
 
                             for (size_t i = 0; i < 6; i++)
                             {
@@ -2505,7 +2657,7 @@ ErrorCode BaseGroup::sendPoint(void)
                 return err;
             }
 
-            bare_core_.fillPointCache(point, length, POINT_POS_VEL_ACC_EFF);
+            bare_core_.fillPointCache(point, length, POINT_POS_VEL);
         }
 
         return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
@@ -2785,6 +2937,11 @@ ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
             return err;
         }
 
+        while (!traj_fifo_.empty() && auto_time_ > traj_fifo_.front().time_from_start)
+        {
+            traj_fifo_.dropFront();
+        }
+
         if (!traj_fifo_.empty())
         {
             if (auto_time_ < traj_fifo_.front().time_from_start)
@@ -3059,7 +3216,7 @@ void BaseGroup::realtimeTask(void)
 
         if (waiting_fine_)
         {
-            FST_LOG("waiting fine ... type = %d, cnt = %d, grp-state=%d, servo-state=%d", waiting_motion_type_, start_waiting_cnt_, group_state_, servo_state_);
+            //FST_LOG("waiting fine ... type = %d, cnt = %d, grp-state=%d, servo-state=%d", waiting_motion_type_, start_waiting_cnt_, group_state_, servo_state_);
 
             if (start_waiting_cnt_ > 0)
             {
@@ -3071,8 +3228,8 @@ void BaseGroup::realtimeTask(void)
                 {
                     if (waiting_motion_type_ == MOTION_JOINT)
                     {
-                        FST_LOG("waiting joint = %s", printDBLine(&waiting_joint_[0], buffer, LOG_TEXT_SIZE));
-                        FST_LOG("current joint = %s", printDBLine(&barecore_joint[0], buffer, LOG_TEXT_SIZE));
+                        //FST_LOG("waiting joint = %s", printDBLine(&waiting_joint_[0], buffer, LOG_TEXT_SIZE));
+                        //FST_LOG("current joint = %s", printDBLine(&barecore_joint[0], buffer, LOG_TEXT_SIZE));
 
                         if (isSameJointForFine(waiting_joint_, barecore_joint))
                         {
@@ -3086,8 +3243,8 @@ void BaseGroup::realtimeTask(void)
                     else
                     {
                         kinematics_ptr_->forwardKinematicsInUser(barecore_joint, barecore_pose);
-                        FST_LOG("waiting pose = %s", printDBLine(&waiting_pose_[0], buffer, LOG_TEXT_SIZE));
-                        FST_LOG("current pose = %s", printDBLine(&barecore_pose[0], buffer, LOG_TEXT_SIZE));
+                        //FST_LOG("waiting pose = %s", printDBLine(&waiting_pose_[0], buffer, LOG_TEXT_SIZE));
+                        //FST_LOG("current pose = %s", printDBLine(&barecore_pose[0], buffer, LOG_TEXT_SIZE));
 
                         if (getDistance(barecore_pose.position, waiting_pose_.position) < 0.05)
                         {
@@ -3195,13 +3352,13 @@ bool BaseGroup::isSameJointForFine(const Joint &joint1, const Joint &joint2)
     return true;
 }
 
-bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2)
+bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, double thres)
 {
     size_t  joint_num = getNumberOfJoint();
 
     for (size_t i = 0; i < joint_num; i++)
     {
-        if (fabs(joint1[i] - joint2[i]) > 0.0001)
+        if (fabs(joint1[i] - joint2[i]) > thres)
         {
             return false;
         }

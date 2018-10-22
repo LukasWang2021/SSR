@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#define FP double
+#define FP float
 
 using namespace std;
 namespace fst_algorithm

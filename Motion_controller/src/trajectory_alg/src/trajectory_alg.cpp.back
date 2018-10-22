@@ -23,6 +23,7 @@ using namespace std;
 
 
 
+
 int Gauss(double A[2][2], double B[2][2], int N)
 {
 	int i, j, k;
@@ -921,7 +922,6 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 						newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //求出的二次项根1
 						newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //求出的二次项根2
 
-						ta4[i] = 0;
 						if ((newT[0] >0 && newT[1] >0)) // 求出两个正根 取短的时间代入计算
 						{
 							if (newT[0] > newT[1]) // ta2取时间较小的值
@@ -1873,7 +1873,7 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 
 						newT[0] = -b / (2 * a) + sqrt(lamda) / (2 * a); //求出的二次项根1
 						newT[1] = -b / (2 * a) - sqrt(lamda) / (2 * a); //求出的二次项根2
-						ta4[i] = 0;
+
 						if ((newT[0] <0 && newT[1] <0)) // 求出两个正根 取短的时间代入计算
 						{
 							if (newT[0] > newT[1]) // ta2取时间较小的值
@@ -2646,6 +2646,12 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 
 
 }
+
+
+
+
+
+
 
 
 

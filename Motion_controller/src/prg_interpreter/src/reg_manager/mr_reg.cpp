@@ -53,14 +53,14 @@ bool MrReg::addReg(void* data_ptr)
         || reg_ptr->value > MAX_MR_REG_VALUE
         || reg_ptr->value < -MAX_MR_REG_VALUE)
     {
-		printf("isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-		printf("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     data_list_[reg_data.id] = reg_ptr->value;
@@ -88,7 +88,7 @@ bool MrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-	    printf("MrReg::getReg isGetInputValid failed at %d\n", id);
+	    FST_ERROR("MrReg::getReg isGetInputValid failed at %d\n", id);
         return false;
     }
 
@@ -96,7 +96,7 @@ bool MrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-	    printf("MrReg::getReg getRegList failed at %d\n", id);
+	    FST_ERROR("MrReg::getReg getRegList failed at %d\n", id);
         return false;
     }
     reg_ptr->id = reg_data.id;
@@ -122,7 +122,7 @@ bool MrReg::setReg(void* data_ptr)
 	if(strlen(reg_ptr->comment) == 0)
     {
         strcpy(reg_ptr->comment, "EMPTY");
-	    printf("MrReg::setReg fill reg_ptr.comment = %s\n", reg_ptr->comment);
+	    FST_ERROR("MrReg::setReg fill reg_ptr.comment = %s\n", reg_ptr->comment);
 	}
         
     BaseRegData reg_data;

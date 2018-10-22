@@ -15,6 +15,7 @@
 #include <boost/algorithm/string.hpp>
 #endif
 
+#include "forsight_basint.h"
 #include "macro_instr_mgr.h"
 #define EMULATE_GENERATE_CONFIG
 
@@ -73,7 +74,7 @@ int MacroInstrMgr::parseSingleMacroInstr(cJSON * item)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:
 			break;
 		case cJSON_String:
@@ -85,7 +86,7 @@ int MacroInstrMgr::parseSingleMacroInstr(cJSON * item)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			printf("cJSON_Object\n");
+			FST_INFO("cJSON_Object\n");
 			break;
 		}
 		child = child->next ;
@@ -106,7 +107,7 @@ int MacroInstrMgr::parseAllMacroInstr(char * data)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:
 			break;
 		case cJSON_String:
@@ -114,7 +115,7 @@ int MacroInstrMgr::parseAllMacroInstr(char * data)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n");
+			// FST_INFO("cJSON_Object\n");
 			parseSingleMacroInstr(child);
 			break;
 		}
@@ -171,15 +172,15 @@ static void saveMacroTriggerJsonFile(cJSON * macroTrigger) // char * cContent)
 	FILE * pFile;
 	
 	char * cContent = cJSON_Print(macroTrigger);
-	// printf("Out : %s \n", cContent);
+	// FST_INFO("Out : %s \n", cContent);
     if((pFile = fopen (MACRO_INSTR_CONFIG_JSON, "w"))==NULL)
     {
-        printf("cant open the file");
+        FST_ERROR("cant open the file");
         exit(0);
     }
 	
     if(fwrite(cContent,strlen(cContent),1, pFile)!=1)
-        printf("file write error\n");
+        FST_ERROR("file write error\n");
     fclose (pFile);
 }
 
@@ -220,7 +221,7 @@ int MacroInstrMgr::delSingleJsonConfig(char* macro_name)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:
 			break;
 		case cJSON_String:
@@ -228,7 +229,7 @@ int MacroInstrMgr::delSingleJsonConfig(char* macro_name)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n");
+			// FST_INFO("cJSON_Object\n");
 			if(strcmp(child->string, macro_name) == 0)
 			{	
 				cJSON_DeleteItemFromObject(macro_instr_root, macro_name);
@@ -254,7 +255,7 @@ int MacroInstrMgr::updateSingleJsonConfig(macro_instr macroInstr)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:
 			break;
 		case cJSON_String:
@@ -262,7 +263,7 @@ int MacroInstrMgr::updateSingleJsonConfig(macro_instr macroInstr)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n");
+			// FST_INFO("cJSON_Object\n");
 			if(strcmp(child->string, macroInstr.macro_name) == 0)
 			{	
 				updateSingleMacroInstr(child, macroInstr);
@@ -285,7 +286,7 @@ int MacroInstrMgr::updateSingleMacroInstr(cJSON * item, macro_instr macroInstr)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:
 			break;
 		case cJSON_String:
@@ -309,7 +310,7 @@ int MacroInstrMgr::updateSingleMacroInstr(cJSON * item, macro_instr macroInstr)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			printf("cJSON_Object\n");
+			FST_INFO("cJSON_Object\n");
 			break;
 		}
 		child = child->next ;
@@ -348,7 +349,7 @@ int MacroInstrMgr::printMacroInstrList()
 	while(it != macroInstrMgrList.end())
 	{
 		// it->first;  // it->second;
-		printf("\t MacroInstrMgr: %s :: (%s, %s, %s) \n", 
+		FST_INFO("\t MacroInstrMgr: %s :: (%s, %s, %s) \n", 
 			it->first.c_str(), it->second.macro_name, 
 			it->second.program_name, it->second.io_name);
 		it++;         

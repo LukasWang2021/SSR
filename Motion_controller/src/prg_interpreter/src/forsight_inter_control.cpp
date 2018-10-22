@@ -93,7 +93,7 @@ bool parseScript(const char* fname)
     int count = 0;
     while(fin.getline(command, sizeof(command)))
     {
-        printf("command:%s\n",command);
+        FST_INFO("command:%s\n",command);
 #ifdef USE_XPATH
 	    // itoa(++count, instr.line, 10);
         sprintf(instr.line, "%d", ++count);
@@ -108,7 +108,7 @@ bool parseScript(const char* fname)
                 instr.loop_cnt = -1;
             else 
                 instr.loop_cnt = atoi(result[1].c_str());
-            printf("loop_cnt:%d\n", instr.loop_cnt);
+            FST_INFO("loop_cnt:%d\n", instr.loop_cnt);
         }
         else if (result[0] == "END")
         {
@@ -121,7 +121,7 @@ bool parseScript(const char* fname)
             {
                 if(result.size() < 7)
                 {
-                    printf("Error:moveJ j1 j2 j3 j4 j5 j6 [smooth]\n");
+                    FST_ERROR("Error:moveJ j1 j2 j3 j4 j5 j6 [smooth]\n");
                     return false;
                 }
                 instr.target.type = MOTION_JOINT;
@@ -135,7 +135,7 @@ bool parseScript(const char* fname)
             {
                 if(result.size() < 7)
                 {
-                    printf("Error:moveL x y z a b c [smooth]\n");
+                    FST_ERROR("Error:moveL x y z a b c [smooth]\n");
                     return false;
                 }
                 instr.target.type = MOTION_LINE;
@@ -225,14 +225,14 @@ bool getIntprtDataFlag()
 
 void returnRegInfo(RegMap info)
 {
-    printf("returnRegInfo to %d\n", (int)info.type);
+    FST_INFO("returnRegInfo to %d\n", (int)info.type);
 	
-	printf("reg.value = (");
+	FST_INFO("reg.value = (");
 	for(int iRet = 0 ; iRet < 100 ; iRet++)
 	{
-	    printf("%08X, ", info.value[iRet]);
+	    FST_INFO("%08X, ", info.value[iRet]);
 	}
-	printf(") \n");
+	FST_INFO(") \n");
 				
     writeShm(SHM_REG_IO_INFO, 0, (void*)&info, sizeof(RegMap));
 	setIntprtDataFlag(true);
@@ -240,7 +240,7 @@ void returnRegInfo(RegMap info)
 
 void returnDIOInfo(IOPathInfo& info)
 {
-    printf("returnDIOInfo to %s:%d\n", info.dio_path, (int)info.value);
+    FST_INFO("returnDIOInfo to %s:%d\n", info.dio_path, (int)info.value);
     writeShm(SHM_REG_IO_INFO, 0, (char*)&info.value, sizeof(char));
 	setIntprtDataFlag(true);
 }
@@ -259,7 +259,7 @@ void resetProgramNameAndLineNum()
 
 void setProgramName(char * program_name)
 {
-    printf("setProgramName to %s\n", program_name);
+    FST_INFO("setProgramName to %s\n", program_name);
 	strcpy(g_interpreter_publish.program_name, program_name); 
 }
 
@@ -277,10 +277,10 @@ void setPrgmState(InterpreterState state)
 // #else
 //     int offset = (int)&((IntprtStatus*)0)->state;
 // #endif
-//    printf("setPrgmState to %d\n", (int)state);
+//    FST_INFO("setPrgmState to %d\n", (int)state);
 //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
 	
-    printf("setPrgmState to %d\n", (int)state);
+    FST_INFO("setPrgmState to %d\n", (int)state);
 	g_interpreter_publish.status = state ;
 }
 
@@ -293,7 +293,7 @@ void setCurLine(char * line, int lineNum)
 //   // int offset = (int)&intprt_status.line - (int)&intprt_status;
 //      int offset = (int)&((Instruction*)0)->line;   
 // #endif  
-//     printf("setCurLine %s(%d) at %d\n", line, strlen(line), offset);
+//     FST_INFO("setCurLine %s(%d) at %d\n", line, strlen(line), offset);
 //  //    writeShm(SHM_INTPRT_STATUS, offset, (void*)&line, sizeof(line));
 //  	writeShm(SHM_INTPRT_STATUS, offset, (void*)line, strlen(line) + 1); 
 	strcpy(g_interpreter_publish.current_line_path, line); 
@@ -373,22 +373,22 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 //    ret = g_objRegManagerInterface->isNextInstructionNeeded();
 //    if (ret == false)
  //   {
- //       printf("not permitted\n");
+ //       FST_INFO("not permitted\n");
  //       return false;
  //   }
 //	// setSendPermission(false);
 	
 //    int count = 0;
-    //printf("cur state:%d\n", prgm_state);
+    //FST_INFO("cur state:%d\n", prgm_state);
     if ((objThdCtrlBlockPtr->prog_mode == STEP_MODE) 
 		&& (prgm_state == INTERPRETER_EXECUTE_TO_PAUSE))
     {
 //        if (isInstructionEmpty(SHM_INTPRT_CMD))
 //        {
-//            printf("check if step is done in setInstruction\n");
+//            FST_INFO("check if step is done in setInstruction\n");
 //            setPrgmState(INTERPRETER_PAUSED);
 //        }
-		// printf("cur state:%d in STEP_MODE \n", prgm_state);
+		// FST_INFO("cur state:%d in STEP_MODE \n", prgm_state);
         return false;
     }
 
@@ -430,12 +430,12 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 	        //    setCurLine(iLineNum);
 	        //}   
 			//	iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
-			//  printf("set line in setInstruction\n");
+			//  FST_INFO("set line in setInstruction\n");
 	        //    setLinenum(objThdCtrlBlockPtr, iLineNum);
 
 	        if (objThdCtrlBlockPtr->prog_mode == STEP_MODE)
 	        {
-			    printf("In STEP_MODE, it seems that it does not need to wait\n");
+			    FST_INFO("In STEP_MODE, it seems that it does not need to wait\n");
 	            // setPrgmState(INTERPRETER_EXECUTE_TO_PAUSE);   //wait until this Instruction end
             }
 	    }
@@ -463,7 +463,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 #endif
     	ret = g_objRegManagerInterface->isNextInstructionNeeded();
     }
-    printf("ctrl_status.is_permitted == true\n");
+    FST_INFO("ctrl_status.is_permitted == true\n");
 
     return true;
 }
@@ -473,7 +473,7 @@ bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
     bool iRet = tryRead(SHM_CTRL_CMD, 0, (void*)&intprt_ctrl, sizeof(intprt_ctrl));
 	if(g_lastcmd != intprt_ctrl.cmd)
     {
-       printf("getIntprtCtrl = %d\n", intprt_ctrl.cmd);
+       FST_INFO("getIntprtCtrl = %d\n", intprt_ctrl.cmd);
 	   g_lastcmd = (fst_base::InterpreterServerCmd)intprt_ctrl.cmd ;
 	}
 	return iRet ;
@@ -636,12 +636,12 @@ void waitInterpreterStateToPaused(
 		if(objThdCtrlBlockPtr->is_abort == true)
 		{
 			// setPrgmState(INTERPRETER_PAUSE_TO_IDLE) ;
-   			printf("waitInterpreterStateToPaused abort\n");
+   			FST_INFO("waitInterpreterStateToPaused abort\n");
 			break;
 		}
 		if(interpreterState == INTERPRETER_IDLE)
 		{
-   			printf("waitInterpreterStateToPaused = IDLE_R\n");
+   			FST_INFO("waitInterpreterStateToPaused = IDLE_R\n");
 			break;
 		}
 #endif
@@ -681,16 +681,16 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 //    char * strChgRegLst ;
 	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
 	if(intprt_ctrl.cmd != fst_base::INTERPRETER_SERVER_CMD_LOAD)
-        printf("parseCtrlComand: %d\n", intprt_ctrl.cmd);
+        FST_INFO("parseCtrlComand: %d\n", intprt_ctrl.cmd);
 #endif
     switch (intprt_ctrl.cmd)
     {
         case fst_base::INTERPRETER_SERVER_CMD_LOAD:
-            // printf("load file_name\n");
+            // FST_INFO("load file_name\n");
             break;
         case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
-            printf("debug...\n");
+            FST_INFO("debug...\n");
 			g_iCurrentThreadSeq++ ;
 			if(g_iCurrentThreadSeq < 0) break ;
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
@@ -708,8 +708,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             break;
         case fst_base::INTERPRETER_SERVER_CMD_START:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
-            printf("start run...\n");
-            printf("start run %s ...\n", intprt_ctrl.start_ctrl);
+            FST_INFO("start run...\n");
+            FST_INFO("start run %s ...\n", intprt_ctrl.start_ctrl);
 			g_iCurrentThreadSeq++ ;
 			if(g_iCurrentThreadSeq < 0) break ;
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
@@ -730,26 +730,26 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
 			{
-            	printf("Thread exits at %d \n", getPrgmState());
+            	FST_ERROR("Thread exits at %d \n", getPrgmState());
 				break;
 			}
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
-				printf("Can not JUMP macro \n");
+				FST_ERROR("Can not JUMP macro \n");
 				break;
 			}
 			if(objThdCtrlBlockPtr->is_paused == true)
 			{
-            	printf("Can not JUMP in calling Pause \n");
+            	FST_ERROR("Can not JUMP in calling Pause \n");
            		break;
 			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
-            	printf("Can not JUMP in EXECUTE_R \n");
+            	FST_ERROR("Can not JUMP in EXECUTE_R \n");
            		break;
 			}
-            printf("jump to line:%s\n", intprt_ctrl.jump_line);
+            FST_INFO("jump to line:%s\n", intprt_ctrl.jump_line);
 			iLineNum = getLineNumFromXPathVector(intprt_ctrl.jump_line);
 			if(iLineNum > 0)
             {
@@ -761,44 +761,44 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			}
 			else
             {
-            	printf("Failed to jump to line:%d\n", iLineNum);
+            	FST_ERROR("Failed to jump to line:%d\n", iLineNum);
 			}
 			break;
         case fst_base::INTERPRETER_SERVER_CMD_SWITCH_STEP:
 			memcpy(&intprt_ctrl.step_mode, requestDataPtr, sizeof(int));
-            printf("switch Step at %d with %d\n", g_iCurrentThreadSeq, intprt_ctrl.step_mode);
+            FST_INFO("switch Step at %d with %d\n", g_iCurrentThreadSeq, intprt_ctrl.step_mode);
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
 			{
-            	printf("Thread exits at %d \n", getPrgmState());
+            	FST_ERROR("Thread exits at %d \n", getPrgmState());
 				break;
 			}
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
-            printf("SWITCH_STEP with %d\n", intprt_ctrl.step_mode);
+            FST_INFO("SWITCH_STEP with %d\n", intprt_ctrl.step_mode);
             objThdCtrlBlockPtr->prog_mode = intprt_ctrl.step_mode;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
-            printf("step forward at %d \n", g_iCurrentThreadSeq);
+            FST_INFO("step forward at %d \n", g_iCurrentThreadSeq);
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
 			{
-            	printf("Thread exits at %d \n", getPrgmState());
+            	FST_ERROR("Thread exits at %d \n", getPrgmState());
 				break;
 			}
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
-				printf("Can not FORWARD macro \n");
+				FST_ERROR("Can not FORWARD macro \n");
 				break;
 			}
 			if(objThdCtrlBlockPtr->is_paused == true)
 			{
-            	printf("Can not FORWARD in calling Pause \n");
+            	FST_ERROR("Can not FORWARD in calling Pause \n");
            		break;
 			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
-            	printf("Can not FORWARD in EXECUTE_R \n");
+            	FST_ERROR("Can not FORWARD in EXECUTE_R \n");
            		break;
 			}
 			
@@ -806,14 +806,14 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
             // target_line++;
             iLineNum = getLinenum(objThdCtrlBlockPtr);
-            printf("step forward to %d \n", iLineNum);
+            FST_INFO("step forward to %d \n", iLineNum);
             setPrgmState(INTERPRETER_EXECUTE);
 
 			// Controller use the PrgmState and LineNum to check to execute 
-//            printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
+//            FST_INFO("Enter waitInterpreterStateToPaused %d \n", iLineNum);
 //            waitInterpreterStateToPaused(objThdCtrlBlockPtr);
 // 			// target_line++ in setInstruction
-//            printf("Left  waitInterpreterStateToPaused %d \n", iLineNum);
+//            FST_INFO("Left  waitInterpreterStateToPaused %d \n", iLineNum);
 
 			// Use the program pointer to get the current line number.
 			// to support logic
@@ -821,27 +821,27 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             setLinenum(objThdCtrlBlockPtr, iLineNum);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_BACKWARD:
-            printf("backward at %d \n", g_iCurrentThreadSeq);
+            FST_INFO("backward at %d \n", g_iCurrentThreadSeq);
 			if(g_iCurrentThreadSeq < 0) break ;
 			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
 			{
-            	printf("Thread exits at %d \n", getPrgmState());
+            	FST_ERROR("Thread exits at %d \n", getPrgmState());
 				break;
 			}
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
-				printf("Can not BACKWARD macro \n");
+				FST_ERROR("Can not BACKWARD macro \n");
 				break;
 			}
 			if(objThdCtrlBlockPtr->is_paused == true)
 			{
-            	printf("Can not BACKWARD in calling Pause \n");
+            	FST_ERROR("Can not BACKWARD in calling Pause \n");
            		break;
 			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
-            	printf("Can not FORWARD in EXECUTE_R \n");
+            	FST_ERROR("Can not FORWARD in EXECUTE_R \n");
            		break;
 			}
 
@@ -853,13 +853,13 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
 				 ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
 				{
-            		printf("Can not BACKWARD to %d(%d).\n",
+            		FST_ERROR("Can not BACKWARD to %d(%d).\n",
 						iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
 					break ;
 				}
 				iLineNum-- ;
 		    	setLinenum(objThdCtrlBlockPtr, iLineNum);
-            	printf("JMP to %d(%d) in the FORWARD -> BACKWARD .\n", 
+            	FST_INFO("JMP to %d(%d) in the FORWARD -> BACKWARD .\n", 
 					iLineNum,    objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
 				break;
 			}
@@ -869,7 +869,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             iLineNum = getLinenum(objThdCtrlBlockPtr);
             if (iLineNum < PROGRAM_START_LINE_NUM)
             {
-            	printf("Can not BACKWARD out of program \n");
+            	FST_ERROR("Can not BACKWARD out of program \n");
   				setWarning(INFO_INTERPRETER_BACK_TO_BEGIN) ; 
                 break;
             }
@@ -878,15 +878,15 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             // else {  perror("can't back\n");  break;      }
             objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
-            printf("step BACKWARD to %d \n", iLineNum);
+            FST_INFO("step BACKWARD to %d \n", iLineNum);
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);
             setPrgmState(INTERPRETER_EXECUTE);
 
 			// Controller use the PrgmState and LineNum to check to execute 
-//            printf("Enter waitInterpreterStateToPaused %d \n", iLineNum);
+//            FST_INFO("Enter waitInterpreterStateToPaused %d \n", iLineNum);
 //			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
 //			// target_line-- in setInstruction
-//            printf("Left  waitInterpreterStateToPaused %d \n", iLineNum);
+//            FST_INFO("Left  waitInterpreterStateToPaused %d \n", iLineNum);
 			
 			iLineNum-- ;
 		    setLinenum(objThdCtrlBlockPtr, iLineNum);
@@ -897,7 +897,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			
 			if(getPrgmState() == INTERPRETER_PAUSED)
 	        {
-	            printf("continue move..\n");
+	            FST_INFO("continue move..\n");
 				// Not Change program mode  
 				// objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 	            setPrgmState(INTERPRETER_EXECUTE);
@@ -910,7 +910,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
-				printf("Can not PAUSE macro \n");
+				FST_ERROR("Can not PAUSE macro \n");
 				break;
 			}
 			
@@ -923,7 +923,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             setPrgmState(INTERPRETER_PAUSED); 
             break;
         case fst_base::INTERPRETER_SERVER_CMD_ABORT:
-            printf("abort motion\n");
+            FST_INFO("abort motion\n");
 			if(g_iCurrentThreadSeq < 0) break ;
 		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 			
@@ -939,7 +939,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 #else
 	        usleep(1000);
 #endif
-  			printf("setPrgmState(IDLE_R).\n");
+  			FST_INFO("setPrgmState(IDLE_R).\n");
 		    setPrgmState(INTERPRETER_IDLE);
 		    // clear line path and ProgramName
 		    resetProgramNameAndLineNum();
@@ -961,7 +961,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 
     }
 	lastCmd = intprt_ctrl.cmd;
-  	//		printf("left parseCtrlComand.\n");
+  	//		FST_INFO("left parseCtrlComand.\n");
 }
 
 void forgesight_load_programs_path()
@@ -973,7 +973,7 @@ void forgesight_load_programs_path()
     fst_parameter::ParamGroup param_;
     param_.loadParamFile("/root/install/share/configuration/machine/programs_path.yaml");
     param_.getParam("file_manager/data", g_files_manager_data_path);
-	printf("forgesight_load_programs_path: %s .\n", g_files_manager_data_path.c_str());
+	FST_INFO("forgesight_load_programs_path: %s .\n", g_files_manager_data_path.c_str());
 #endif
 	
 }

@@ -48,7 +48,7 @@ int createShm(const char* name, int size)
     }
     ShmData data;
 #ifdef WIN32
-	printf("ftruncate(fd, size);\n");
+	// printf("ftruncate(fd, size);\n");
     data.ptr = malloc(size);
 #else
     ftruncate(fd, size);
@@ -92,7 +92,7 @@ int openShm(const char* name, int size)
     }
     ShmData data;
 #ifdef WIN32
-	printf("ftruncate(fd, size);\n");
+	// printf("ftruncate(fd, size);\n");
     data.ptr = malloc(size);
 #else
     data.ptr = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
@@ -141,7 +141,7 @@ bool tryWrite(const char* name, int offset, void*buffer, int size)
     ShmData *data = getShm(name);
     if (data == NULL)
     {
-        printf("tryWrite :: can't find name:%s\n", name);
+    //     printf("tryWrite :: can't find name:%s\n", name);
         return false;
     }
     volatile unsigned int *ptr_read, *ptr_write, *ptr_turn, *ptr_latest;
@@ -227,7 +227,7 @@ bool tryRead(const char* name, int offset, void*buffer, int size)
     ShmData *data = getShm(name);
     if (data == NULL)
     {
-		printf("getShm(%s) failed \n", name);
+	// 	printf("getShm(%s) failed \n", name);
         return false;
     }
     volatile unsigned int *ptr_read, *ptr_write, *ptr_turn, *ptr_latest;
@@ -263,7 +263,7 @@ bool isInstructionEmpty(const char* name)
     ShmData *data = getShm(name);
     if (data == NULL)
     {
-        printf("isInstructionEmpty :: can't find name:%s\n", name);
+    //     printf("isInstructionEmpty :: can't find name:%s\n", name);
         return false;
     }
     volatile unsigned int *ptr_read, *ptr_write; // , *ptr_turn, *ptr_latest;

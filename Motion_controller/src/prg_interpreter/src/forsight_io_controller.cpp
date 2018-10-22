@@ -73,12 +73,14 @@ static void saveIOConfigToJsonFile(cJSON * ioConfig)
 	char * cContent = cJSON_Print(ioConfig);
     if((pFile = fopen (IO_EMULATOR_JSON, "w"))==NULL)
     {
-        printf("cant open the file");
+        FST_ERROR("cant open the file");
         exit(0);
     }
 	
     if(fwrite(cContent,strlen(cContent),1, pFile)!=1)
-        printf("file write error\n");
+    {
+        FST_ERROR("file write error\n");
+    }
     fclose (pFile);
 }
 
@@ -108,7 +110,7 @@ int getSingleConfig(cJSON * item, string key, int& value)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); 
+			FST_INFO("cJSON_True"); 
 			if(strcmp(child->string, key.c_str()) == 0)
 			{
 				if(strcmp(child->string, "emltFlag") == 0)
@@ -133,7 +135,7 @@ int getSingleConfig(cJSON * item, string key, int& value)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			printf("cJSON_Object\n");
+			FST_INFO("cJSON_Object\n");
 			break;
 		}
 		child = child->next ;
@@ -149,7 +151,7 @@ int setSingleConfig(cJSON * item, string key, int& value)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); 
+			FST_INFO("cJSON_True"); 
 			if(strcmp(child->string, key.c_str()) == 0)
 			{
 				if(strcmp(child->string, "emltFlag") == 0)
@@ -176,7 +178,7 @@ int setSingleConfig(cJSON * item, string key, int& value)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			printf("cJSON_Object\n");
+			FST_INFO("cJSON_Object\n");
 			break;
 		}
 		child = child->next ;
@@ -195,7 +197,7 @@ int forgesight_io_config_get_value(string name, string key, int& value)
 			switch ((child->type)&255)
 			{
 			case cJSON_True:	
-				printf("cJSON_True"); break;
+				FST_INFO("cJSON_True"); break;
 			case cJSON_Number:
 				break;
 			case cJSON_String:
@@ -205,7 +207,7 @@ int forgesight_io_config_get_value(string name, string key, int& value)
 			case cJSON_Array:
 				break;
 			case cJSON_Object:	
-				printf("cJSON_Object\n");
+				FST_INFO("cJSON_Object\n");
 				if(strcmp(child->string, name.c_str()) == 0)
 				{
 					getSingleConfig(child, key, value);
@@ -229,17 +231,17 @@ int forgesight_io_config_set_value(string name, string key, eval_value& value)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:
 			break;
 		case cJSON_String:
-			printf("cJSON_String"); break;
+			FST_INFO("cJSON_String"); break;
 			break;
 		case cJSON_Array:
-			printf("cJSON_Array"); break;
+			FST_INFO("cJSON_Array"); break;
 			break;
 		case cJSON_Object:	
-			printf("cJSON_Object\n");
+			FST_INFO("cJSON_Object\n");
 			if(strcmp(child->string, name.c_str()) == 0)
 			{
 				iVal = (int)value.getFloatValue();
@@ -383,7 +385,7 @@ void refresh_io_config_emulated()
 	else
 		g_io_config_emulated.is_uio_emulated = false ;
 #if 0	
-	printf("is_aio_emulated:: %s , is_dio_emulated:: %s , "
+	FST_INFO("is_aio_emulated:: %s , is_dio_emulated:: %s , "
 		   "is_rio_emulated:: %s , is_sio_emulated:: %s , "
 		   "is_uio_emulated:: %s .\n", 
 		g_io_config_emulated.is_aio_emulated ? "true" : "false", 
@@ -405,14 +407,14 @@ int set_io_status_to_io_mananger(
 	bool bRet = g_objRegManagerInterface->checkIo(vpath.c_str(), &objIOPortInfo);
 	if(bRet == false)
 	{
-		printf("checkIo failed!");
+		FST_ERROR("checkIo failed!");
 		return -1 ;
 	}
 	
 	bRet = g_objRegManagerInterface->setIo(&objIOPortInfo, val);
 	if(bRet == false)
 	{
-		printf("setIo failed!");
+		FST_ERROR("setIo failed!");
 		return -1 ;
 	}
 	return 1 ;
@@ -623,7 +625,7 @@ int forgesight_set_io_status(char *name, eval_value& valueStart)
 	}
 	else if((!strcmp(io_name, TXT_DI)) || (!strcmp(io_name, TXT_DO)))
 	{
-		printf("set_io status: %s:%d (%s).\n", 
+		FST_INFO("set_io status: %s:%d (%s).\n", 
 				io_name, iIOIdx, name);
 		if (g_io_config_emulated.is_dio_emulated == false)
 		{
@@ -719,7 +721,7 @@ int forgesight_read_io_emulate_status(char * name, int& value)
 	//	memset(io_key_buffer, 0x00, 32);
 	//	sprintf(io_key_buffer, "%s.emltFlag", name);
 		forgesight_io_config_get_value(name, "emltFlag", value);
-	    printf("forgesight_read_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
+	    FST_INFO("forgesight_read_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
 		return 1 ;
 	}
 	else
@@ -745,7 +747,7 @@ int forgesight_read_io_emulate_status(char * name, int& value)
 	// memset(io_key_buffer, 0x00, 32);
 	// sprintf(io_key_buffer, "%s.emltFlag", name);
 	forgesight_io_config_get_value(name, "emltFlag", value);
-    printf("forgesight_read_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
+    FST_INFO("forgesight_read_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
 	return 1;
 }
 
@@ -773,7 +775,7 @@ int forgesight_mod_io_emulate_status(char * name, char value)
 	//	sprintf(io_key_buffer, "%s.emltFlag", name);
 		valueSet.setFloatValue((int)value);
 		forgesight_io_config_set_value(name, "emltFlag", valueSet);
-	    printf("forgesight_mod_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
+	    FST_INFO("forgesight_mod_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
 		refresh_io_config_emulated();
 		return 1 ;
 	}
@@ -800,7 +802,7 @@ int forgesight_mod_io_emulate_status(char * name, char value)
 	// memset(io_key_buffer, 0x00, 32);
 	// sprintf(io_key_buffer, "%s.emltFlag", name);
 	valueSet.setFloatValue((int)value);
-    printf("forgesight_mod_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
+    FST_INFO("forgesight_mod_io_emulate_status: %s.emltFlag:%d .\n", name, (int)value);
 	forgesight_io_config_set_value(name, "emltFlag", valueSet);
 	return 1;
 }
@@ -851,7 +853,7 @@ int forgesight_mod_io_emulate_value(char * name, char value)
 	// memset(io_key_buffer, 0x00, 32);
 	// sprintf(io_key_buffer, "%s.value", name);
 	valueSet.setFloatValue((int)value);
-    printf("forgesight_mod_io_emulate_value: %s.value:%d .\n", name, (int)value);
+    FST_INFO("forgesight_mod_io_emulate_value: %s.value:%d .\n", name, (int)value);
 	forgesight_io_config_set_value(name, "value", valueSet);
 	return 1;
 }

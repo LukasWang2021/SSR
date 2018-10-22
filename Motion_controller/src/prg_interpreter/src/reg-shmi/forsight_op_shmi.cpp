@@ -40,19 +40,19 @@ int transData(void *ptr, struct shmi_info *info, uint8_t op) {
 #endif
         break;
     default:
-        printf("Error: wrong operation, operation = 0x%u\n", (uint8_t)op);
+        FST_ERROR("Error: wrong operation, operation = 0x%u\n", (uint8_t)op);
         return WRONG_OPERATION_SHMI;
     }
 
-	printf("tryLockPts: operation = 0x%u\n", (uint8_t)op);
+	FST_INFO("tryLockPts: operation = 0x%u\n", (uint8_t)op);
     // tryLockPts(&info->pts, op);
-	printf("tryLockPts Over: operation = 0x%u\n", (uint8_t)op);
+	FST_INFO("tryLockPts Over: operation = 0x%u\n", (uint8_t)op);
 // #ifndef WIN32
     memcpy(dst, src, info->size);
 // #endif
-	printf("unlockPts: operation = 0x%u\n", (uint8_t)op);
+	FST_INFO("unlockPts: operation = 0x%u\n", (uint8_t)op);
     // unlockPts(&info->pts, op);
-	printf("unlockPts Over: operation = 0x%u\n", (uint8_t)op);
+	FST_INFO("unlockPts Over: operation = 0x%u\n", (uint8_t)op);
 
     return SUCCESS_SHMI;
 }

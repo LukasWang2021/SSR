@@ -7,7 +7,7 @@ using namespace std;
 RegManagerInterface::RegManagerInterface(std::string file_dir):
     is_ready_(false), file_dir_(file_dir)
 {
-	printf("RegManagerInterface::RegManagerInterface Enter \n");
+//	printf("RegManagerInterface::RegManagerInterface Enter \n");
 	
     reg_ptr_[REG_TYPE_PR] = new PrReg(MAX_PR_REG_ID, file_dir);
     reg_ptr_[REG_TYPE_MR] = new MrReg(MAX_MR_REG_ID, file_dir);

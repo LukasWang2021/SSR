@@ -50,14 +50,14 @@ bool SrReg::addReg(void* data_ptr)
     SrRegData* reg_ptr = reinterpret_cast<SrRegData*>(data_ptr);
     if(!isAddInputValid(reg_ptr->id))
     {
-		printf("isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-		printf("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     data_list_[reg_data.id] = reg_ptr->value.substr(0, MAX_SR_REG_STRING_LENGTH);
@@ -85,7 +85,7 @@ bool SrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-	    printf("SrReg::getReg isGetInputValid failed at %d\n", id);
+	    FST_ERROR("SrReg::getReg isGetInputValid failed at %d\n", id);
         return false;
     }
 
@@ -93,7 +93,7 @@ bool SrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-	    printf("SrReg::getReg getRegList failed at %d\n", id);
+	    FST_ERROR("SrReg::getReg getRegList failed at %d\n", id);
         return false;
     }
     reg_ptr->id = reg_data.id;
@@ -117,7 +117,7 @@ bool SrReg::setReg(void* data_ptr)
 	if(strlen(reg_ptr->comment) == 0)
     {
         strcpy(reg_ptr->comment, "EMPTY");
-	    printf("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
+	    FST_INFO("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
 	}
         
     BaseRegData reg_data;

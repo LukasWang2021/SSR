@@ -78,22 +78,22 @@ void load_register_data()
 	g_process_comm_ptr = fst_base::ProcessComm::getInstance();
     if(fst_base::ProcessComm::getInitErrorCode() != SUCCESS)
     {
-        printf("load_register_data getInitErrorCode return failed\n");
+        FST_ERROR("load_register_data getInitErrorCode return failed\n");
         return false;
     }
 	if(g_process_comm_ptr->getInterpreterClientPtr()->init() != SUCCESS)
 	{
-        printf("load_register_data getInterpreterClientPtr return false\n");
+        FST_ERROR("load_register_data getInterpreterClientPtr return false\n");
 		return false;
 	}
     if(g_process_comm_ptr->getInterpreterServerPtr()->init() != SUCCESS)
 	{
-        printf("load_register_data getInterpreterServerPtr init return false\n");
+        FST_ERROR("load_register_data getInterpreterServerPtr init return false\n");
 		return false;
 	}
     if(g_process_comm_ptr->getInterpreterServerPtr()->open() != SUCCESS)
 	{
-        printf("load_register_data getInterpreterServerPtr open return false\n");
+        FST_ERROR("load_register_data getInterpreterServerPtr open return false\n");
 		return false;
 	}
 	usleep(10);
@@ -130,14 +130,14 @@ bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		ptr->value.pos[4] = objPrRegDataIpc.pos[4];
 		ptr->value.pos[5] = objPrRegDataIpc.pos[5];
 		
-		printf("getPr: id = (%f, %f, %f, %f, %f, %f) with %s \n", 
+		FST_INFO("getPr: id = (%f, %f, %f, %f, %f, %f) with %s \n", 
 			ptr->value.pos[0], ptr->value.pos[1], 
 			ptr->value.pos[2], ptr->value.pos[3], 
 			ptr->value.pos[4], ptr->value.pos[5], bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -164,7 +164,7 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		objPrRegDataIpc.pos[8] = 0.0;
 		
 		bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
-		printf("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s \n", num, 
+		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s \n", num, 
 			objPrRegDataIpc.pos[0], objPrRegDataIpc.pos[1], 
 			objPrRegDataIpc.pos[2], objPrRegDataIpc.pos[3], 
 			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], bRet?"TRUE":"FALSE");
@@ -178,7 +178,7 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -198,7 +198,7 @@ bool reg_manager_interface_delPr(uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -229,7 +229,7 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -255,7 +255,7 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 		objPrRegDataIpc.pos[7] = 0.0;
 		objPrRegDataIpc.pos[8] = 0.0;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
-		printf("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s \n", num, 
+		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s \n", num, 
 			objPrRegDataIpc.pos[0], objPrRegDataIpc.pos[1], 
 			objPrRegDataIpc.pos[2], objPrRegDataIpc.pos[3], 
 			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], bRet?"TRUE":"FALSE");
@@ -270,7 +270,7 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -298,7 +298,7 @@ bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -330,7 +330,7 @@ bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -355,7 +355,7 @@ bool reg_manager_interface_getTypePr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -381,7 +381,7 @@ bool reg_manager_interface_setTypePr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -406,7 +406,7 @@ bool reg_manager_interface_getIdPr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -432,7 +432,7 @@ bool reg_manager_interface_setIdPr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -457,7 +457,7 @@ bool reg_manager_interface_getCommentPr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -483,7 +483,7 @@ bool reg_manager_interface_setCommentPr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -503,14 +503,14 @@ bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num)
 	{
 		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
 		ptr->value = "";
-		printf("getSr[%d]\n", num);
+		FST_INFO("getSr[%d]\n", num);
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		ptr->value = string(objSrRegDataIpc.value) ;
-		printf("getSr[%d]:(%s) with %s\n", num, ptr->value.c_str(), bRet?"TRUE":"FALSE");
+		FST_INFO("getSr[%d]:(%s) with %s\n", num, ptr->value.c_str(), bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -529,7 +529,7 @@ bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 		// memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
 		objSrRegDataIpc.id = num ;
 		strcpy(objSrRegDataIpc.value, ptr->value.c_str()) ;
-		printf("setSr:(%s) with %s\n", objSrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setSr:(%s) with %s\n", objSrRegDataIpc.value, bRet?"TRUE":"FALSE");
 		
 		bRet = g_objRegManagerInterface->setSrReg(&objSrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
@@ -541,7 +541,7 @@ bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -561,7 +561,7 @@ bool reg_manager_interface_delSr(uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -585,7 +585,7 @@ bool reg_manager_interface_getValueSr(string &strVal, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -602,12 +602,12 @@ bool reg_manager_interface_setValueSr(string &strVal, uint16_t num)
 		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
 		objSrRegDataIpc.id    = num;
 		strcpy(objSrRegDataIpc.value, strVal.c_str());
-		printf("setValueSr:(%s)\n", objSrRegDataIpc.value);
+		FST_INFO("setValueSr:(%s)\n", objSrRegDataIpc.value);
 		bRet = g_objRegManagerInterface->setSrReg(&objSrRegDataIpc);
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -630,7 +630,7 @@ bool reg_manager_interface_getIdSr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -654,7 +654,7 @@ bool reg_manager_interface_setIdSr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -679,7 +679,7 @@ bool reg_manager_interface_getCommentSr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -705,7 +705,7 @@ bool reg_manager_interface_setCommentSr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -725,12 +725,12 @@ bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
 		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
-		printf("getR: value = (%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("getR: value = (%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
 		ptr->value = objRRegDataIpc.value;
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -746,12 +746,12 @@ bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 	{
 		
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
-		printf("getR: id = %d value = (%f) \n", num, ptr->value);
+		FST_INFO("getR: id = %d value = (%f) \n", num, ptr->value);
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = ptr->value;
 		// memcpy(&objRRegData, ptr, sizeof(objRRegData));
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
-		printf("setR:(%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setR:(%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
@@ -761,7 +761,7 @@ bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -781,7 +781,7 @@ bool reg_manager_interface_delR(uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -804,7 +804,7 @@ bool reg_manager_interface_getValueR(double *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -822,11 +822,11 @@ bool reg_manager_interface_setValueR(double *ptr, uint16_t num)
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
-		printf("setValueR:(%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setValueR:(%f) with %s\n", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -849,7 +849,7 @@ bool reg_manager_interface_getIdR(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -869,7 +869,7 @@ bool reg_manager_interface_setIdR(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -894,7 +894,7 @@ bool reg_manager_interface_getCommentR(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -920,7 +920,7 @@ bool reg_manager_interface_setCommentR(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -940,12 +940,12 @@ bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num)
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
 		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
-		printf("getMR: value = (%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("getMR: value = (%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
 		ptr->value = objMrRegDataIpc.value ;
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -962,7 +962,7 @@ bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
 		objMrRegDataIpc.id = num ;
 		objMrRegDataIpc.value = ptr->value ;
-		printf("setR:(%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setR:(%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
@@ -973,7 +973,7 @@ bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -993,7 +993,7 @@ bool reg_manager_interface_delMr(uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1016,7 +1016,7 @@ bool reg_manager_interface_getValueMr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1034,11 +1034,11 @@ bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 		objMrRegDataIpc.id    = num;
 		objMrRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
-		printf("setValueMr:(%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setValueMr:(%f) with %s\n", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1061,7 +1061,7 @@ bool reg_manager_interface_getIdMr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1088,7 +1088,7 @@ bool reg_manager_interface_setIdMr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1113,7 +1113,7 @@ bool reg_manager_interface_getCommentMr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1139,7 +1139,7 @@ bool reg_manager_interface_setCommentMr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1173,7 +1173,7 @@ bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num)
 		ptr->value.joint_pos[4] = objHrRegDataIpc.joint_pos[4];
 		ptr->value.joint_pos[5] = objHrRegDataIpc.joint_pos[5];
 		
-		printf("getHr: id = (%f, %f, %f, %f, %f, %f) with %s\n", 
+		FST_INFO("getHr: id = (%f, %f, %f, %f, %f, %f) with %s\n", 
 			objHrRegDataIpc.joint_pos[0], objHrRegDataIpc.joint_pos[1], 
 			objHrRegDataIpc.joint_pos[2], objHrRegDataIpc.joint_pos[3], 
 			objHrRegDataIpc.joint_pos[4], objHrRegDataIpc.joint_pos[5], 
@@ -1181,7 +1181,7 @@ bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1213,7 +1213,7 @@ bool reg_manager_interface_setHr(HrRegData *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1233,7 +1233,7 @@ bool reg_manager_interface_delHr(uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1261,7 +1261,7 @@ bool reg_manager_interface_getJointHr(Joint *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1287,7 +1287,7 @@ bool reg_manager_interface_setJointHr(Joint *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1310,7 +1310,7 @@ bool reg_manager_interface_getIdHr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1336,7 +1336,7 @@ bool reg_manager_interface_setIdHr(int *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1361,7 +1361,7 @@ bool reg_manager_interface_getCommentHr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1387,7 +1387,7 @@ bool reg_manager_interface_setCommentHr(char *ptr, uint16_t num)
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #else
 	bRet = true ;
@@ -1558,7 +1558,7 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, i
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #endif
 	return vecRet ;
@@ -1577,7 +1577,7 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, i
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #endif
 	return vecRet ;
@@ -1596,7 +1596,7 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, in
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #endif
 	return vecRet ;
@@ -1616,7 +1616,7 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, i
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #endif
 	return vecRet ;
@@ -1635,7 +1635,7 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_hr_lst(int start_id, i
 	}
 	else
 	{
-		printf("g_objRegManagerInterface is NULL\n");
+		FST_ERROR("g_objRegManagerInterface is NULL\n");
 	}
 #endif
 	return vecRet ;

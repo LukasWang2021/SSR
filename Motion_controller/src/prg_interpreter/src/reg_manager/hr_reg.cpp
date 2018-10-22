@@ -52,26 +52,26 @@ bool HrReg::addReg(void* data_ptr)
     if(!isAddInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
-		printf("addReg::isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("addReg::isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-		printf("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(HrValue));
 
 #if 0
 	HrRegData objHrRegData = * reg_ptr;
-		printf("setHr: id = %d, comment = %s\n", objHrRegData.id, objHrRegData.comment);
-		printf("setHr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		FST_INFO("setHr: id = %d, comment = %s\n", objHrRegData.id, objHrRegData.comment);
+		FST_INFO("setHr: id = (%f, %f, %f, %f, %f, %f) \n", 
 			objHrRegData.value.joint_pos[0], objHrRegData.value.joint_pos[1], 
 			objHrRegData.value.joint_pos[2], objHrRegData.value.joint_pos[3], 
 			objHrRegData.value.joint_pos[4], objHrRegData.value.joint_pos[5]);
-		printf("setHr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		FST_INFO("setHr: id = (%f, %f, %f, %f, %f, %f) \n", 
 			objHrRegData.value.cartesian_pos.position.x, objHrRegData.value.cartesian_pos.position.y, 
 			objHrRegData.value.cartesian_pos.position.z, objHrRegData.value.cartesian_pos.orientation.a, 
 			objHrRegData.value.cartesian_pos.orientation.b, objHrRegData.value.cartesian_pos.orientation.c);
@@ -102,7 +102,7 @@ bool HrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-	    printf("HrReg::getReg isGetInputValid failed at %d\n", id);
+	    FST_ERROR("HrReg::getReg isGetInputValid failed at %d\n", id);
         return false;
     }
 
@@ -110,14 +110,14 @@ bool HrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-	    printf("HrReg::getReg getRegList failed at %d\n", id);
+	    FST_ERROR("HrReg::getReg getRegList failed at %d\n", id);
         return false;
     }
-	printf("HrReg::getReg getRegList at %d, %d with %s\n", 
+	FST_INFO("HrReg::getReg getRegList at %d, %d with %s\n", 
 		id, reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
 	
     reg_ptr->id = reg_data.id;
-	    printf("HrReg::getReg getRegList reg_ptr at %d\n", reg_ptr->id);
+	    FST_INFO("HrReg::getReg getRegList reg_ptr at %d\n", reg_ptr->id);
     memcpy(reg_ptr->comment, reg_data.comment, MAX_REG_COMMENT_LENGTH * sizeof(char));
     memcpy(&reg_ptr->value, &data_list_[reg_data.id], sizeof(HrValue));
     return true;
@@ -134,21 +134,21 @@ bool HrReg::setReg(void* data_ptr)
     if(!isSetInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
-		printf("setReg::isSetInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("setReg::isSetInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
         return false;
     }
 	if(strlen(reg_ptr->comment) == 0)
     {
-        strcpy(reg_ptr->comment, "EMPTY");
-	    printf("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
+     //   strcpy(reg_ptr->comment, "EMPTY");
+	    FST_INFO("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
 	}
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->comment);
-	printf("HrReg::setReg setRegList at %d with %s\n", reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
+	FST_INFO("HrReg::setReg setRegList at %d with %s\n", reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
     if(!setRegList(reg_data))
     {
-	    printf("HrReg::setReg setRegList failed at %d\n", reg_data.id);
+	    FST_INFO("HrReg::setReg setRegList failed at %d\n", reg_data.id);
         return false;
     }
     memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(HrValue));
@@ -168,7 +168,7 @@ bool HrReg::isOutOfPosLimit(const HrValue& data)
         if(data.joint_pos[i] > MAX_HR_REG_POS_VALUE
             || data.joint_pos[i] < -MAX_HR_REG_POS_VALUE)
         {
-			printf("isOutOfPosLimit::joint_pos[%d]=%f return false \n", i, data.joint_pos[i]);
+		//	FST_INFO("isOutOfPosLimit::joint_pos[%d]=%f return false \n", i, data.joint_pos[i]);
             return true;
         }
     }
@@ -178,7 +178,7 @@ bool HrReg::isOutOfPosLimit(const HrValue& data)
         if(data.ext_pos[i] > MAX_HR_REG_POS_VALUE
             || data.ext_pos[i] < -MAX_HR_REG_POS_VALUE)
         {
-			printf("isOutOfPosLimit::ext_pos[%d]=%f return false \n", i, data.ext_pos[i]);
+		//	FST_INFO("isOutOfPosLimit::ext_pos[%d]=%f return false \n", i, data.ext_pos[i]);
             return true;
         }
     }

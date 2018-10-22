@@ -16,6 +16,7 @@
 #include "error_code.h"
 #endif
 
+#include "forsight_basint.h"
 #include "launch_code_mgr.h"
 #include "forsight_cJSON.h"
 
@@ -50,7 +51,7 @@ int LaunchCodeMgr::parseLaunchCode(char * data)
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:		
 			{
 				if(strcmp(child->string, "launchCode") == 0)
@@ -72,7 +73,7 @@ int LaunchCodeMgr::parseLaunchCode(char * data)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n"); 
+			// FST_INFO("cJSON_Object\n"); 
 			break;
 		}
 		child = child->next ;
@@ -126,7 +127,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
             continue;
         else if(ptr->d_type == 8)    ///file
         {
-        	printf("d_name:%s/%s\n",basePath,ptr->d_name);
+        	FST_INFO("d_name:%s/%s\n",basePath,ptr->d_name);
 			strExtPtr = strrchr(ptr->d_name, '.');
 			if(strExtPtr)
 			{
@@ -147,7 +148,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
         }
         else if(ptr->d_type == 10)    ///link file
         {
-            printf("d_name:%s/%s\n",basePath,ptr->d_name);
+            FST_INFO("d_name:%s/%s\n",basePath,ptr->d_name);
         }
         else if(ptr->d_type == 4)    ///dir
         {
@@ -198,7 +199,7 @@ int LaunchCodeMgr::printLaunchCodeList()
 	while(it != launchCodeList.end())
 	{
 		// it->first;  // it->second;
-		printf("\t LaunchCodeMgr: %d :: %s \n", it->first, it->second.c_str());
+		FST_INFO("\t LaunchCodeMgr: %d :: %s \n", it->first, it->second.c_str());
 		it++;         
 	}
 	return 1;

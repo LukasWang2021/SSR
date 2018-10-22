@@ -34,7 +34,7 @@ int initShmi(int size) {
 	fdRegShmi = shm_open("reg_shmi", O_CREAT|O_RDWR, 00777);
 	if(fdRegShmi < 0)
 	{
-		printf("REG_SHMI: init failed with = %d\n", fdRegShmi);
+		FST_INFO("REG_SHMI: init failed with = %d\n", fdRegShmi);
 	}
 	// printf("REG_SHMI: init shm_open(reg_shmi) with = %d\n", fdRegShmi);
 #endif
@@ -118,7 +118,7 @@ int initRegShmi()
 	err = initShmi(1024);
 	if(err < 0)
 	{
-		printf("Error: initShmi failed, err = %d\n", err);
+		FST_ERROR("Error: initShmi failed, err = %d\n", err);
 		return err;
 	}
 	/* init pr */
@@ -221,7 +221,7 @@ int initRegShmi()
 		pl_info[cnt].pts.turn = 0;
 	}
 */
-	printf("init all register over\n");
+	FST_INFO("init all register over\n");
 	
 	return err;
 }

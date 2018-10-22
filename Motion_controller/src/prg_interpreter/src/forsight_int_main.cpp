@@ -35,7 +35,7 @@ int main(int  argc, char *argv[])
 			{
 				memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 				intprt_ctrl.cmd = it->cmd_id ;
-	            printf("parseCtrlComand at %d \n", intprt_ctrl.cmd);
+	            FST_INFO("parseCtrlComand at %d \n", intprt_ctrl.cmd);
 				parseCtrlComand(intprt_ctrl, it->request_data_ptr);
 				bool * bRsp = it->response_data_ptr;
 				*bRsp = true;

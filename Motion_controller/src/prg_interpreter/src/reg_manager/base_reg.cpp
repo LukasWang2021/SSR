@@ -141,7 +141,7 @@ bool BaseReg::getRegList(int id, BaseRegData& data)
     if(id <= 0
         || id >= reg_list_.size())
     {
-	    printf("BaseReg::getRegList failed at %d\n", id);
+	//    printf("BaseReg::getRegList failed at %d\n", id);
         return false;
     }
     else
@@ -150,7 +150,7 @@ bool BaseReg::getRegList(int id, BaseRegData& data)
         data.is_valid = reg_list_[id].is_valid;
         data.is_changed = reg_list_[id].is_changed;
         memcpy(data.comment, reg_list_[id].comment, MAX_REG_COMMENT_LENGTH * sizeof(char));
-	    printf("BaseReg::getRegList over at %d\n", id);
+	 //   printf("BaseReg::getRegList over at %d\n", id);
         return true;
     }
 }
@@ -161,7 +161,7 @@ bool BaseReg::isAddInputValid(int id)
         || id >= reg_list_.size()
         || reg_list_[id].is_valid)   // can't add some exist reg
     {
-		printf("isAddInputValid: id = %d is inValid \n", id);
+	//	printf("isAddInputValid: id = %d is inValid \n", id);
         return false;
     }
     else
@@ -174,17 +174,17 @@ bool BaseReg::isDeleteInputValid(int id)
 {
     if(id <= 0)
     {
-	    printf("isDeleteInputValid id failed at %d\n", id);
+	 //   printf("isDeleteInputValid id failed at %d\n", id);
         return false;
     }
     else if(id >= reg_list_.size())
     {
-	    printf("isDeleteInputValid sizefailed at %d\n", id);
+	 //   printf("isDeleteInputValid sizefailed at %d\n", id);
         return false;
     }
     else if(!reg_list_[id].is_valid)    // can't delete some none-existent reg
     {
-	    printf("isDeleteInputValid is_valid failed at %d\n", id);
+	//    printf("isDeleteInputValid is_valid failed at %d\n", id);
         return false;
     }
     else

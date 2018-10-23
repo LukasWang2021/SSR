@@ -118,6 +118,7 @@ private:
     bool checkAuthority(Comm_Authority request_authority, Comm_Authority controller_authority);
     void initResponsePackage(void* request_data_ptr, void* response_data_ptr, int package_left);
     void initCommFailedResponsePackage(void* request_data_ptr, void* response_data_ptr);
+    void initDecodeFailedResponsePackage(void* request_data_ptr, void* response_data_ptr);
     void handleRequestPackage(unsigned int hash, void* request_data_ptr, void* response_data_ptr, int recv_bytes, 
                                     const pb_field_t fields[], int package_left);
     ResponseMessageType_Uint64_PublishTable getResponseSucceedPublishTable();

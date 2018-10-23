@@ -531,6 +531,15 @@ void TpComm::initCommFailedResponsePackage(void* request_data_ptr, void* respons
     ((ResponseMessageType_Int32*)response_data_ptr)->property.authority = ((RequestMessageType_Int32*)request_data_ptr)->property.authority;
 }
 
+void TpComm::initDecodeFailedResponsePackage(void* request_data_ptr, void* response_data_ptr)
+{
+    // it is tricky here that all request & response have the same package header and property, no matter what data they have
+    ((ResponseMessageType_Int32*)response_data_ptr)->header.time_stamp = ((RequestMessageType_Int32*)request_data_ptr)->header.time_stamp;
+    ((ResponseMessageType_Int32*)response_data_ptr)->header.package_left = -1;
+    ((ResponseMessageType_Int32*)response_data_ptr)->header.error_code = TP_COMM_DECODE_FAILED;
+    ((ResponseMessageType_Int32*)response_data_ptr)->property.authority = ((RequestMessageType_Int32*)request_data_ptr)->property.authority;
+}
+
 void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, void* response_data_ptr, 
                                     int recv_bytes, const pb_field_t fields[], int package_left)
 {
@@ -538,7 +547,9 @@ void TpComm::handleRequestPackage(unsigned int hash, void* request_data_ptr, voi
     {
         ErrorMonitor::instance()->add(TP_COMM_DECODE_FAILED);
         FST_ERROR("handleRequestPackage:  decode data failed");
-        return ;
+        initDecodeFailedResponsePackage(request_data_ptr, response_data_ptr);
+        pushTaskToRequestList(hash, request_data_ptr, response_data_ptr);
+        return;
     }
 
     Comm_Authority controller_authority = getRpcTableElementAuthorityByHash(hash);

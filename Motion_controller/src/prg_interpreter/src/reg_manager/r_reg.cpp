@@ -17,18 +17,18 @@ RReg::RReg(int size, std::string file_dir):
     data_list_.resize(size + 1);    // id=0 is not used, id start from 1
     // check if r_reg.yaml exist? if not, create a new one
     file_path_.append("/r_reg.yaml");
-	FST_INFO("RReg::RReg Enter %s\n", file_path_.c_str());
+	FST_INFO("RReg::RReg Enter %s", file_path_.c_str());
     if(access(file_path_.c_str(), 0) != 0)
     {
-	    FST_INFO("RReg::RReg access %s\n", file_path_.c_str());
+	    FST_INFO("RReg::RReg access %s", file_path_.c_str());
         if(!createYaml())
         {
-	        FST_INFO("RReg::RReg createYaml %s\n", file_path_.c_str());
+	        FST_INFO("RReg::RReg createYaml %s", file_path_.c_str());
             setReady(false);
             return;
         }
     }
-	FST_INFO("RReg::RReg readAllRegDataFromYaml \n");
+	FST_INFO("RReg::RReg readAllRegDataFromYaml ");
     // read yaml, load data to data_list_ and reg_list_
     if(!readAllRegDataFromYaml())
     {
@@ -57,14 +57,14 @@ bool RReg::addReg(void* data_ptr)
         || reg_ptr->value > MAX_R_REG_VALUE
         || reg_ptr->value < -MAX_R_REG_VALUE)
     {
-		FST_ERROR("isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("isAddInputValid: id = %d, comment = %s", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-		FST_ERROR("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("setRegList: id = %d, comment = %s", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     data_list_[reg_data.id] = reg_ptr->value;
@@ -92,7 +92,7 @@ bool RReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-	    FST_ERROR("RReg::getReg isGetInputValid failed at %d\n", id);
+	    FST_ERROR("RReg::getReg isGetInputValid failed at %d", id);
         return false;
     }
 
@@ -100,16 +100,16 @@ bool RReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-	    FST_ERROR("RReg::getReg getRegList failed at %d\n", id);
+	    FST_ERROR("RReg::getReg getRegList failed at %d", id);
         return false;
     }
     reg_ptr->id = reg_data.id;
-	    FST_INFO("RReg::getReg id reg_ptr at %d\n", reg_ptr->id);
+	    FST_INFO("RReg::getReg id reg_ptr at %d", reg_ptr->id);
     memcpy(reg_ptr->comment, reg_data.comment, MAX_REG_COMMENT_LENGTH * sizeof(char));
-	    FST_INFO("RReg::getReg comment reg_ptr at %s\n", reg_ptr->comment);
-	    FST_INFO("RReg::getReg comment reg_ptr at %s\n", reg_data.comment);
+	    FST_INFO("RReg::getReg comment reg_ptr at %s", reg_ptr->comment);
+	    FST_INFO("RReg::getReg comment reg_ptr at %s", reg_data.comment);
     reg_ptr->value = data_list_[id];
-	    FST_INFO("RReg::getReg value reg_ptr at %f\n", data_list_[id]);
+	    FST_INFO("RReg::getReg value reg_ptr at %f", data_list_[id]);
     return true;
 }
 
@@ -130,7 +130,7 @@ bool RReg::setReg(void* data_ptr)
 	if(strlen(reg_ptr->comment) == 0)
     {
         strcpy(reg_ptr->comment, "EMPTY");
-	    FST_INFO("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
+	    FST_INFO("MrReg::setReg fill reg_ptr->comment = %s", reg_ptr->comment);
 	}
         
     BaseRegData reg_data;
@@ -140,7 +140,7 @@ bool RReg::setReg(void* data_ptr)
         return false;
     }
     data_list_[reg_data.id] = reg_ptr->value;
-	    FST_INFO("RReg::setReg value reg_ptr at %f\n", data_list_[reg_data.id]);
+	    FST_INFO("RReg::setReg value reg_ptr at %f", data_list_[reg_data.id]);
     return writeRegDataToYaml(reg_data, data_list_[reg_data.id]);
 }
 
@@ -183,9 +183,9 @@ bool RReg::readAllRegDataFromYaml()
         param_.getParam(reg_path + "/id", base_data.id);
         param_.getParam(reg_path + "/is_valid", base_data.is_valid);
 //		if(base_data.is_valid)
-//			FST_INFO("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
+//			FST_INFO("RReg::readAllRegDataFromYaml at %d with %s", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
 //		else
-//			FST_INFO("RReg::readAllRegDataFromYaml at %d with %s\n", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
+//			FST_INFO("RReg::readAllRegDataFromYaml at %d with %s", base_data.id, base_data.is_valid ? "TRUE" : "FALSE");
         param_.getParam(reg_path + "/comment", comment);
         comment.resize(MAX_REG_COMMENT_LENGTH - 1, 0);
         memcpy(base_data.comment, comment.c_str(), MAX_REG_COMMENT_LENGTH);
@@ -202,13 +202,13 @@ bool RReg::readAllRegDataFromYaml()
 bool RReg::writeRegDataToYaml(const BaseRegData& base_data, const double& data)
 {
     std::string reg_path = getRegPath(base_data.id);
-	    FST_INFO("RReg::writeRegDataToYaml id at %d\n", base_data.id);
+	    FST_INFO("RReg::writeRegDataToYaml id at %d", base_data.id);
     param_.setParam(reg_path + "/id", base_data.id);
-	    FST_INFO("RReg::writeRegDataToYaml is_valid at %d\n", base_data.is_valid);
+	    FST_INFO("RReg::writeRegDataToYaml is_valid at %d", base_data.is_valid);
     param_.setParam(reg_path + "/is_valid", base_data.is_valid);
-	    FST_INFO("RReg::writeRegDataToYaml comment at %s\n", base_data.comment);
+	    FST_INFO("RReg::writeRegDataToYaml comment at %s", base_data.comment);
     param_.setParam(reg_path + "/comment", base_data.comment);
-	    FST_INFO("RReg::writeRegDataToYaml data at %f\n", data);
+	    FST_INFO("RReg::writeRegDataToYaml data at %f", data);
     param_.setParam(reg_path + "/value", data);
     return param_.dumpParamFile(file_path_.c_str());
 }

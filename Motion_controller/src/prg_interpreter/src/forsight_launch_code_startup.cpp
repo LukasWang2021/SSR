@@ -253,7 +253,7 @@ void* launch_code_thread(void* arg)
 			forgesight_set_io_status((char *)UO_MPLCS_START_DONE, value);
 			if(strRet != "")
 			{
-	            FST_INFO("start run...\n");
+	            FST_INFO("start run...");
 				g_iCurrentThreadSeq++ ;
 				if(g_iCurrentThreadSeq < 0) break ;
 			    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
@@ -312,9 +312,9 @@ void* launch_code_thread(void* arg)
 	g_launch_code_interpreter_handle = NULL; 
 	return NULL;
 #else
-	FST_INFO("Enter pthread_join.\n");
+	FST_INFO("Enter pthread_join.");
 	pthread_join(g_launch_code_interpreter_handle, NULL);
-	FST_INFO("Left  pthread_join.\n");
+	FST_INFO("Left  pthread_join.");
 	fflush(stdout);
 	g_launch_code_interpreter_handle = 0;
 #endif // WIN32
@@ -339,7 +339,7 @@ bool launch_code_thread_create(void * args)
 	}
 	else
 	{
-        FST_INFO("start launch_code_thread_create Failed..\n");
+        FST_INFO("start launch_code_thread_create Failed..");
 		g_launch_code_interpreter_handle = 0;
 	}
 #endif

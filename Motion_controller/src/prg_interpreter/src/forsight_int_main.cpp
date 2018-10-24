@@ -17,7 +17,11 @@ using namespace fst_log;
 
 int main(int  argc, char *argv[])
 {
-	InterpreterControl intprt_ctrl;
+	InterpreterControl intprt_ctrl; 
+	if(log_ptr_ == NULL)
+	{
+		log_ptr_ = new fst_log::Logger();
+	}
 	initShm();
 	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
@@ -35,7 +39,7 @@ int main(int  argc, char *argv[])
 			{
 				memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 				intprt_ctrl.cmd = it->cmd_id ;
-	            FST_INFO("parseCtrlComand at %d \n", intprt_ctrl.cmd);
+	            FST_INFO("parseCtrlComand at %d ", intprt_ctrl.cmd);
 				parseCtrlComand(intprt_ctrl, it->request_data_ptr);
 				bool * bRsp = it->response_data_ptr;
 				*bRsp = true;

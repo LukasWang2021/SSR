@@ -1628,7 +1628,7 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 			value = xmlNodeGetContent(nodeStatement);
 			sprintf(objLineInfoTemp.xPath, "%s", 
 					 (char *)xmlGetNodePath(nodeStatement));
-			FST_INFO("Omit comment - %s\n", (char *)value);
+			FST_INFO("Omit comment - %s ", (char *)value);
 		//	exportBASCode(objLineInfoTemp, "EXPORT: ", "# %s \n", (char*)value);
         }
 		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"nop")==0){ 

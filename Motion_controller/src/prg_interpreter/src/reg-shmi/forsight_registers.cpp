@@ -391,7 +391,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -400,7 +400,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -428,7 +428,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				joint.j6 = (double)value.getFloatValue();
 				
-				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				setJointPr(&joint, iRegIdx);
@@ -436,7 +436,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 			else if (valueStart->getType() == TYPE_JOINT)
 			{
 				joint = valueStart->getJointValue();
-				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				setJointPr(&joint, iRegIdx);
@@ -446,19 +446,19 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_TYPE))
 		{
 			int iType = (int)atof((char *)valueStart);
-			FST_INFO("Set TYPE:(%d) to PR[%s]\n", iType, reg_idx);
+			FST_INFO("Set TYPE:(%d) to PR[%s]", iType, reg_idx);
 			setTypePr(&iType, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to PR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to PR[%s]", iID, reg_idx);
 			setIdPr(&iID, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to PR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to PR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setCommentPr((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
@@ -472,20 +472,20 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			get_token(objThreadCntrolBlock);
-			FST_INFO("Set VALUE:(%s) to SR[%s]\n", 
+			FST_INFO("Set VALUE:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setValueSr(objThreadCntrolBlock->token, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to SR[%s]", iID, reg_idx);
 			setIdSr(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to SR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setCommentSr((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
@@ -499,19 +499,19 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			float fValue = atof((char *)valueStart);
-			FST_INFO("Set VALUE:(%f) to SR[%s]\n", fValue, reg_idx);
+			FST_INFO("Set VALUE:(%f) to SR[%s]", fValue, reg_idx);
 			setValueR(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to SR[%s]", iID, reg_idx);
 			setIdR(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to SR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setCommentR((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
@@ -525,19 +525,19 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			int iValue = atof((char *)valueStart);
-			FST_INFO("Set VALUE:(%f) to MR[%s]\n", iValue, reg_idx);
+			FST_INFO("Set VALUE:(%f) to MR[%s]", iValue, reg_idx);
 			setValueMr(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			setIdMr(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setCommentMr((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
@@ -569,7 +569,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 				
-				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to UF[%s]\n", 
+				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to UF[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -578,7 +578,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -588,13 +588,13 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			setIdUf(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setCommentUf((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
@@ -626,7 +626,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 				
-				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]\n", 
+				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -635,7 +635,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -645,13 +645,13 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			setIdTf(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setCommentTf((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
@@ -683,7 +683,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 				
-				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]\n", 
+				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -692,7 +692,7 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -706,19 +706,19 @@ int forgesight_set_register(struct thread_control_block* objThreadCntrolBlock,
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			setFlagPl(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)atof((char *)valueStart);
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			setIdPl(valueStart, iRegIdx);
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			setCommentPl((char *)valueStart->getStringValue().c_str(), iRegIdx);
 		}
@@ -839,13 +839,13 @@ int forgesight_read_reg(RegMap & reg)
 
 int forgesight_mod_reg(RegMap & reg)
 {
-  	 FST_INFO("reg.type = %d.\n", reg.type);
+  	 FST_INFO("reg.type = %d.", reg.type);
          FST_INFO("reg.value = (");
          for(int iRet = 0 ; iRet < 100 ; iRet++)
          {
               FST_INFO("%08X, ", reg.value[iRet]);
          }
-         FST_INFO(") \n");
+         FST_INFO(") ");
 
 	 switch(reg.type)
 	 {
@@ -953,13 +953,13 @@ int forgesight_mod_reg(RegMap & reg)
 	    setCommentPl(reg.value, reg.index);
 	 	break;
  	 }
-  	 FST_INFO("reg.type = %d end.\n", reg.type);
+  	 FST_INFO("reg.type = %d end.", reg.type);
 	 return 1;
 }
 
 int forgesight_del_reg(RegMap & reg)
 {	
-  	 FST_INFO("reg.type = %d.\n", reg.type);
+  	 FST_INFO("reg.type = %d.", reg.type);
 	 
 	 switch(reg.type)
 	 {
@@ -976,7 +976,7 @@ int forgesight_del_reg(RegMap & reg)
 	 case MOT_REG:
 	 	break;
  	 }
-  	 FST_INFO("reg.type = %d end.\n", reg.type);
+  	 FST_INFO("reg.type = %d end.", reg.type);
 	 return 1;
 }
 

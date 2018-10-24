@@ -179,13 +179,13 @@ int print_io_mapper()
 
 	it = g_io_mapper.begin();
 	
-	FST_INFO("\t\tobjThreadCntrolBlock->io_mapper has %d elements \n", 
+	FST_INFO("\t\tobjThreadCntrolBlock->io_mapper has %d elements ", 
 			g_io_mapper.size());
 
 	while(it != g_io_mapper.end())
 	{
 		// it->first;  // it->second;
-		FST_INFO("\t\t%s :: %s \n", 
+		FST_INFO("\t\t%s :: %s ", 
 				it->first.c_str(), it->second.c_str());
 		it++;         
 	}

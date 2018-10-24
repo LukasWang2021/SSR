@@ -117,7 +117,7 @@ bool SrReg::setReg(void* data_ptr)
 	if(strlen(reg_ptr->comment) == 0)
     {
         strcpy(reg_ptr->comment, "EMPTY");
-	    FST_INFO("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
+	    FST_INFO("MrReg::setReg fill reg_ptr->comment = %s", reg_ptr->comment);
 	}
         
     BaseRegData reg_data;

@@ -177,7 +177,7 @@ int forgesight_registers_manager_get_register(
 	}
 	// memset(reg_content_buffer, 0x00, sizeof(reg_content_buffer));
  
-	FST_INFO("forgesight_registers_manager_get_register at %s \n", reg_name);
+	FST_INFO("forgesight_registers_manager_get_register at %s ", reg_name);
 	value->resetNoneValue();
 	if(!strcmp(reg_name, TXT_PR))
 	{
@@ -380,7 +380,7 @@ int forgesight_registers_manager_get_register(
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[0]);
 				else
-		       		FST_INFO("PR[%d].pos_type = %d \n", 
+		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
 			}
 		}
@@ -396,7 +396,7 @@ int forgesight_registers_manager_get_register(
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[1]);
 				else
-		       		FST_INFO("PR[%d].pos_type = %d \n", 
+		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
 			}
 		}
@@ -412,7 +412,7 @@ int forgesight_registers_manager_get_register(
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[2]);
 				else
-		       		FST_INFO("PR[%d].pos_type = %d \n", 
+		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
 			}
 		}
@@ -428,7 +428,7 @@ int forgesight_registers_manager_get_register(
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[3]);
 				else
-		       		FST_INFO("PR[%d].pos_type = %d \n", 
+		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
 			}
 		}
@@ -444,7 +444,7 @@ int forgesight_registers_manager_get_register(
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[4]);
 				else
-		       		FST_INFO("PR[%d].pos_type = %d \n", 
+		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
 			}
 		}
@@ -460,7 +460,7 @@ int forgesight_registers_manager_get_register(
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[5]);
 				else
-		       		FST_INFO("PR[%d].pos_type = %d \n", 
+		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
 			}
 		}
@@ -496,7 +496,7 @@ int forgesight_registers_manager_get_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
-			FST_INFO("TXT_SR at (%d), (%s), (%s) \n", 
+			FST_INFO("TXT_SR at (%d), (%s), (%s) ", 
 				objSrRegData.id, objSrRegData.comment.c_str(), objSrRegData.value.c_str());
 			bRet = reg_manager_interface_getSr(&objSrRegData, iRegIdx);
 			// SrRegData * ptr = (SrRegData *)reg_content_buffer ;
@@ -536,10 +536,10 @@ int forgesight_registers_manager_get_register(
 	}
 	else if(!strcmp(reg_name, TXT_R))
 	{
-	    FST_INFO("forgesight_registers_manager_get_register at TXT_R \n");
+	    FST_INFO("forgesight_registers_manager_get_register at TXT_R ");
 		if(strlen(reg_member) == 0)
 		{
-	        FST_INFO("reg_manager_interface_getR at TXT_R \n");
+	        FST_INFO("reg_manager_interface_getR at TXT_R ");
             // Use TXT_REG_VALUE
 			bRet = reg_manager_interface_getR(&objRRegData, iRegIdx);
 			if(bRet == false)
@@ -583,7 +583,7 @@ int forgesight_registers_manager_get_register(
 		{
 			bRet = reg_manager_interface_getMr(&objMrRegData, iRegIdx);
 			// MrRegData * ptr = (MrRegData *)reg_content_buffer ;
-	    	FST_INFO("Get at TXT_MR with %d (%s) %d \n", 
+	    	FST_INFO("Get at TXT_MR with %d (%s) %d ", 
 	    			objMrRegData.id, objMrRegData.comment.c_str(), objMrRegData.value);
 			// value->setFloatValue(ptr->value);
 			if(bRet == false)
@@ -998,7 +998,7 @@ int forgesight_registers_manager_set_register(
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -1008,7 +1008,7 @@ int forgesight_registers_manager_set_register(
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -1029,13 +1029,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set X:(%f) but PR[%d] is not CARTESIAN\n", 
+					FST_ERROR("Set X:(%f) but PR[%d] is not CARTESIAN", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set X:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set X:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1052,13 +1052,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set Y:(%f) but PR[%d] is not CARTESIAN\n", 
+					FST_ERROR("Set Y:(%f) but PR[%d] is not CARTESIAN", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set Y:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set Y:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1075,13 +1075,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set Z:(%f) but PR[%d] is not CARTESIAN\n", 
+					FST_ERROR("Set Z:(%f) but PR[%d] is not CARTESIAN", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set Z:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set Z:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1098,13 +1098,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set A:(%f) but PR[%d] is not CARTESIAN\n", 
+					FST_ERROR("Set A:(%f) but PR[%d] is not CARTESIAN", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set A:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set A:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1121,13 +1121,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set B:(%f) but PR[%d] is not CARTESIAN\n", 
+					FST_ERROR("Set B:(%f) but PR[%d] is not CARTESIAN", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set B:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set B:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1144,13 +1144,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set C:(%f) but PR[%d] is not CARTESIAN\n", 
+					FST_ERROR("Set C:(%f) but PR[%d] is not CARTESIAN", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set C:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set C:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1175,7 +1175,7 @@ int forgesight_registers_manager_set_register(
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				joint.j6 = (double)value.getFloatValue();
 				
-				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				reg_manager_interface_setJointPr(&joint, iRegIdx);
@@ -1184,7 +1184,7 @@ int forgesight_registers_manager_set_register(
 			else if (valueStart->getType() == TYPE_JOINT)
 			{
 				joint = valueStart->getJointValue();
-				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				reg_manager_interface_setJointPr(&joint, iRegIdx);
@@ -1205,13 +1205,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set J1:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT\n", 
+					FST_ERROR("Set J1:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set J1:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J1:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1228,13 +1228,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set J2:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT\n", 
+					FST_ERROR("Set J2:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set J2:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J2:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1251,13 +1251,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set J3:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT\n", 
+					FST_ERROR("Set J3:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set J3:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J3:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1274,13 +1274,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set J4:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT\n", 
+					FST_ERROR("Set J4:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set J4:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J4:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1297,13 +1297,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set J5:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT\n", 
+					FST_ERROR("Set J5:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set J5:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J5:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1320,13 +1320,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-					FST_ERROR("Set J6:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT\n", 
+					FST_ERROR("Set J6:(%f) but PR[%d] is not PR_REG_POS_TYPE_JOINT", 
 						fValue, iRegIdx);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set J6:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J6:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1349,13 +1349,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-		       		FST_ERROR("Set PJ1:(%f) PR[%d].pos_type = %d \n", 
+		       		FST_ERROR("Set PJ1:(%f) PR[%d].pos_type = %d ", 
 						fValue, iRegIdx, objPrRegData.value.pos_type);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set PJ1:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set PJ1:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1377,13 +1377,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-		       		FST_ERROR("Set PJ2:(%f) PR[%d].pos_type = %d \n", 
+		       		FST_ERROR("Set PJ2:(%f) PR[%d].pos_type = %d ", 
 						fValue, iRegIdx, objPrRegData.value.pos_type);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set PJ2:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set PJ2:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1405,13 +1405,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-		       		FST_ERROR("Set PJ3:(%f) PR[%d].pos_type = %d \n", 
+		       		FST_ERROR("Set PJ3:(%f) PR[%d].pos_type = %d ", 
 						fValue, iRegIdx, objPrRegData.value.pos_type);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set PJ3:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set PJ3:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1433,13 +1433,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-		       		FST_ERROR("Set PJ4:(%f) PR[%d].pos_type = %d \n", 
+		       		FST_ERROR("Set PJ4:(%f) PR[%d].pos_type = %d ", 
 						fValue, iRegIdx, objPrRegData.value.pos_type);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set PJ4:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set PJ4:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1461,13 +1461,13 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-		       		FST_ERROR("Set PJ5:(%f) PR[%d].pos_type = %d \n", 
+		       		FST_ERROR("Set PJ5:(%f) PR[%d].pos_type = %d ", 
 						fValue, iRegIdx, objPrRegData.value.pos_type);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set PJ5:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set PJ5:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1489,34 +1489,34 @@ int forgesight_registers_manager_set_register(
 				}
 				else
 				{
-		       		FST_ERROR("Set PJ6:(%f) PR[%d].pos_type = %d \n", 
+		       		FST_ERROR("Set PJ6:(%f) PR[%d].pos_type = %d ", 
 						fValue, iRegIdx, objPrRegData.value.pos_type);
 				}
 			}
 			else
 			{
-				FST_ERROR("Set PJ6:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set PJ6:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_TYPE))
 		{
 			int iType = (int)valueStart->getFloatValue();
-			FST_INFO("Set TYPE:(%d) to PR[%s]\n", iType, reg_idx);
+			FST_INFO("Set TYPE:(%d) to PR[%s]", iType, reg_idx);
 			reg_manager_interface_setTypePr(&iType, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)valueStart->getFloatValue();
-			FST_INFO("Set ID:(%d) to PR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to PR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdPr(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to PR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to PR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentPr(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
@@ -1530,13 +1530,13 @@ int forgesight_registers_manager_set_register(
 			strValue = valueStart->getStringValue() ;
 			if(valueStart->getType() == TYPE_STRING)
 			{
-				FST_INFO("Set TYPE_STRING token:(%s) to %s\n", 
+				FST_INFO("Set TYPE_STRING token:(%s) to %s", 
 						objThreadCntrolBlock->token, strValue.c_str());
 			   reg_manager_interface_setValueSr(strValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_STRING | TYPE_SR))
 			{
-				FST_INFO("Set TYPE_SR token:(%s) to %s\n", 
+				FST_INFO("Set TYPE_SR token:(%s) to %s", 
 						objThreadCntrolBlock->token, strValue.c_str());
 				reg_manager_interface_setSr(&(valueStart->getSrRegDataValue()), iRegIdx);
 			}
@@ -1545,7 +1545,7 @@ int forgesight_registers_manager_set_register(
 			    char cStringValue[64];
 			    sprintf(cStringValue, "%d", (int)valueStart->getFloatValue());
 				strValue = std::string(cStringValue);
-				FST_INFO("Set TYPE_STRING token:(%s) to %s\n", 
+				FST_INFO("Set TYPE_STRING token:(%s) to %s", 
 						objThreadCntrolBlock->token, cStringValue);
 			    reg_manager_interface_setValueSr(strValue, iRegIdx);
 			}
@@ -1554,7 +1554,7 @@ int forgesight_registers_manager_set_register(
 			    char cStringValue[64];
 			    sprintf(cStringValue, "%f", valueStart->getFloatValue());
 				strValue = std::string(cStringValue);
-				FST_INFO("Set TYPE_STRING token:(%s) to %s\n", 
+				FST_INFO("Set TYPE_STRING token:(%s) to %s", 
 						objThreadCntrolBlock->token, cStringValue);
 			    reg_manager_interface_setValueSr(strValue, iRegIdx);
 			}
@@ -1563,7 +1563,7 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			get_token(objThreadCntrolBlock);
-			FST_INFO("Set VALUE:(%s) to SR[%s]\n", 
+			FST_INFO("Set VALUE:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			strValue = std::string(objThreadCntrolBlock->token);
 			reg_manager_interface_setValueSr(strValue, iRegIdx);
@@ -1572,14 +1572,14 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)valueStart->getFloatValue();
-			FST_INFO("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to SR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdSr(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to SR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentSr(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
@@ -1617,21 +1617,21 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			double fValue = valueStart->getFloatValue();
-			FST_INFO("Set VALUE:(%f) to SR[%s]\n", fValue, reg_idx);
+			FST_INFO("Set VALUE:(%f) to SR[%s]", fValue, reg_idx);
 			reg_manager_interface_setValueR(&fValue, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)valueStart->getFloatValue();
-			FST_INFO("Set ID:(%d) to SR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to SR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdR(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to SR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentR(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
@@ -1661,7 +1661,7 @@ int forgesight_registers_manager_set_register(
 				std::string strValue;
 				strValue = valueStart->getStringValue();
 				
-				FST_INFO("Set TYPE_SR token:(%s) to %s\n", 
+				FST_INFO("Set TYPE_SR token:(%s) to %s", 
 						objThreadCntrolBlock->token, strValue.c_str());
 				int iValue = (int)atof(strValue.c_str());
 			    reg_manager_interface_setValueMr(&iValue, iRegIdx);
@@ -1671,21 +1671,21 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
 			int iValue = (int)valueStart->getFloatValue();
-			FST_INFO("Set VALUE:(%d) to MR[%s]\n", iValue, reg_idx);
+			FST_INFO("Set VALUE:(%d) to MR[%s]", iValue, reg_idx);
 			reg_manager_interface_setValueMr(&iValue, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)valueStart->getFloatValue();
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdMr(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentMr(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
@@ -1720,7 +1720,7 @@ int forgesight_registers_manager_set_register(
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				joint.j6 = (double)value.getFloatValue();
 				
-				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				reg_manager_interface_setJointHr(&joint, iRegIdx);
@@ -1729,7 +1729,7 @@ int forgesight_registers_manager_set_register(
 			else if (valueStart->getType() == TYPE_JOINT)
 			{
 				joint = valueStart->getJointValue();
-				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set JOINT:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					joint.j1, joint.j2, joint.j3, joint.j4, joint.j5, joint.j6, 
 					reg_idx);
 				reg_manager_interface_setJointHr(&joint, iRegIdx);
@@ -1748,7 +1748,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_INFO("Set J1:(%f) but PR[%d] not exist\n", fValue, iRegIdx);
+				FST_INFO("Set J1:(%f) but PR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1763,7 +1763,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set J2:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J2:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1778,7 +1778,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set J3:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J3:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1793,7 +1793,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set J4:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J4:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1808,7 +1808,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set J5:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J5:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1823,7 +1823,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set J6:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set J6:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1839,7 +1839,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set HJ1:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set HJ1:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1854,7 +1854,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set HJ2:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set HJ2:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1869,7 +1869,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set HJ3:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set HJ3:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1884,7 +1884,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set HJ4:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set HJ4:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1899,7 +1899,7 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set HJ5:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set HJ5:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
@@ -1914,21 +1914,21 @@ int forgesight_registers_manager_set_register(
 			}
 			else
 			{
-				FST_ERROR("Set HJ6:(%f) but HR[%d] not exist\n", fValue, iRegIdx);
+				FST_ERROR("Set HJ6:(%f) but HR[%d] not exist", fValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)valueStart->getFloatValue();
-			FST_INFO("Set ID:(%d) to HR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to HR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdHr(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to HR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to HR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentHr(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
@@ -1964,7 +1964,7 @@ int forgesight_registers_manager_set_register(
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 				
-				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to UF[%s]\n", 
+				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to UF[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -1974,7 +1974,7 @@ int forgesight_registers_manager_set_register(
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -1985,14 +1985,14 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)value.getFloatValue();
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdUf(&iID, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentUf(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
@@ -2028,7 +2028,7 @@ int forgesight_registers_manager_set_register(
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 				
-				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]\n", 
+				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -2038,7 +2038,7 @@ int forgesight_registers_manager_set_register(
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -2049,14 +2049,14 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)value.getFloatValue();
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdTf(&iID, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentTf(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
@@ -2092,7 +2092,7 @@ int forgesight_registers_manager_set_register(
 				get_exp(objThreadCntrolBlock, &value, &boolValue);
 				pose.orientation.c = (double)value.getFloatValue();
 				
-				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]\n", 
+				FST_INFO("Set COORDINATE:(%f, %f, %f, %f, %f, %f) to TF[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -2102,7 +2102,7 @@ int forgesight_registers_manager_set_register(
 			else if (valueStart->getType() == TYPE_POSE)
 			{
 				pose = valueStart->getPoseValue();
-				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]\n", 
+				FST_INFO("Set POSE:(%f, %f, %f, %f, %f, %f) to PR[%s]", 
 					pose.position.x, pose.position.y, pose.position.z, 
 					pose.orientation.a, pose.orientation.b, pose.orientation.c,
 					reg_idx);
@@ -2119,21 +2119,21 @@ int forgesight_registers_manager_set_register(
 		else if (!strcmp(reg_member, TXT_PL_FLAG))
 		{
 			int iFlagPl = (int)value.getFloatValue();
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iFlagPl, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iFlagPl, reg_idx);
 			reg_manager_interface_setFlagPl(&iFlagPl, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)value.getFloatValue();
-			FST_INFO("Set ID:(%d) to MR[%s]\n", iID, reg_idx);
+			FST_INFO("Set ID:(%d) to MR[%s]", iID, reg_idx);
 			reg_manager_interface_setIdPl(&iID, iRegIdx);
 	        return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
 		{
 			// get_token(objThreadCntrolBlock);
-			FST_INFO("Set COMMENT:(%s) to MR[%s]\n", 
+			FST_INFO("Set COMMENT:(%s) to MR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
 			reg_manager_interface_setCommentPl(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);

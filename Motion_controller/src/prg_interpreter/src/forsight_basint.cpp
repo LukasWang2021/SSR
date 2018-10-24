@@ -223,19 +223,15 @@ void* basic_interpreter(void* arg)
   struct thread_control_block * objThreadCntrolBlock
   				= (struct thread_control_block*)arg;
   // Set this state outside according prog_mode
-  // setPrgmState(EXECUTE_R);  
-	if(log_ptr_ == NULL)
-	{
-		log_ptr_ = new fst_log::Logger();
-	}
-  FST_INFO("Enter call_interpreter.\n");
+  // setPrgmState(EXECUTE_R); 
+  FST_INFO("Enter call_interpreter.");
   //  if(objThreadCntrolBlock->is_in_macro)
   //  {
   //  	setRunningMacroInstr(objThreadCntrolBlock->project_name);
   //  }
   // iRet = 
   call_interpreter(objThreadCntrolBlock, 1);
-  FST_INFO("Left  call_interpreter.\n");
+  FST_INFO("Left  call_interpreter.");
   //  if(objThreadCntrolBlock->is_in_macro)
   //  {
   //  	resetRunningMacroInstr(objThreadCntrolBlock->project_name);
@@ -255,9 +251,9 @@ void* basic_interpreter(void* arg)
   g_basic_interpreter_handle[iIdx] = NULL; 
   return NULL;
 #else
-  FST_INFO("Enter pthread_join.\n");
+  FST_INFO("Enter pthread_join.");
   pthread_join(g_basic_interpreter_handle[iIdx], NULL);
-  FST_INFO("Left  pthread_join.\n");
+  FST_INFO("Left  pthread_join.");
   fflush(stdout);
   g_basic_interpreter_handle[iIdx] = 0;
   return NULL ;
@@ -273,7 +269,7 @@ void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 	linux_mutex_lock tempBaseLock ;
 #endif 
 	auto_lock temp(&tempBaseLock) ;
-    FST_INFO("setLinenum : %d\n", iLinenum);
+    FST_INFO("setLinenum : %d", iLinenum);
 	if(objThreadCntrolBlock->stateLineNum == LINENUM_CONSUMED)
 	{
 		objThreadCntrolBlock->stateLineNum = LINENUM_PRODUCED;
@@ -281,7 +277,7 @@ void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 	}
 	else
 	{
-		FST_ERROR("setLinenum failure\n");
+		FST_ERROR("setLinenum failure");
 	}
 }
 
@@ -342,16 +338,16 @@ void resetRunningMacroInstr(char* program_name)
 	
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 {
-    FST_INFO("setLinenum : %d\n", iLinenum);
+    FST_INFO("setLinenum : %d", iLinenum);
 	objThreadCntrolBlock->iLineNum = iLinenum;
-    FST_INFO("setLinenum: setCurLine (%d) at %s\n", iLinenum, g_vecXPath[iLinenum].c_str());
+    FST_INFO("setLinenum: setCurLine (%d) at %s", iLinenum, g_vecXPath[iLinenum].c_str());
 	setCurLine((char *)g_vecXPath[iLinenum].c_str(), iLinenum);
 }
 
 int getLinenum(
 	struct thread_control_block* objThreadCntrolBlock)
 {
-    FST_INFO("getLinenum : %d\n", objThreadCntrolBlock->iLineNum);
+    FST_INFO("getLinenum : %d", objThreadCntrolBlock->iLineNum);
 	return objThreadCntrolBlock->iLineNum ;
 }
 
@@ -370,7 +366,7 @@ void printCurrentLine(struct thread_control_block* objThreadCntrolBlock)
 	{
 		*cLineContentPtr++=*cLineContentProgPtr++;
 	}
-	FST_INFO("\t(%d): (%s)\n",  // -(%08X), objThreadCntrolBlock->prog, 
+	FST_INFO("\t(%d): (%s)",  // -(%08X), objThreadCntrolBlock->prog, 
 		objThreadCntrolBlock->iLineNum, cLineContent);
 }
 
@@ -425,7 +421,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  
 	  if(objThreadCntrolBlock->start_mov_position.size() > 0)
 	  {
-	      FST_INFO("start_mov_position = %d\n", objThreadCntrolBlock->start_mov_position.size());
+	      FST_INFO("start_mov_position = %d", objThreadCntrolBlock->start_mov_position.size());
 		  // objThdCtrlBlockPtr->start_mov_position.clear();
 	  }
       label_init(objThreadCntrolBlock);  /* zero all labels */
@@ -463,7 +459,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 // 		  = objThreadCntrolBlock->sub_label_table.begin();
 // 	  it != objThreadCntrolBlock->sub_label_table.end(); ++it)
 // 	  {
-// 		  FST_INFO("%d %s %08X\n", (int)it->type, it->name, (int)it->p);
+// 		  FST_INFO("%d %s %08X", (int)it->type, it->name, (int)it->p);
 // 	  }
       
       memset(cLineContent, 0x00, LINE_CONTENT_LEN);
@@ -484,40 +480,40 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  {
 		  get_token(objThreadCntrolBlock);
 	  }
-	  FST_INFO("Execute call_interpreter begin at call_interpreter.\n");
+	  FST_INFO("Execute call_interpreter begin at call_interpreter.");
 	  iRet = call_interpreter(objThreadCntrolBlock, 0);
-	  FST_INFO("Execute call_interpreter over at call_interpreter.\n");
+	  FST_INFO("Execute call_interpreter over at call_interpreter.");
 	  if(objThreadCntrolBlock->p_buf)
 	  {
-	    FST_INFO("free(objThreadCntrolBlock->p_buf);\n");
+	    FST_INFO("free(objThreadCntrolBlock->p_buf);");
 		free(objThreadCntrolBlock->p_buf);
 		objThreadCntrolBlock->p_buf = NULL ;
 	  }
-	  FST_INFO("free(objThreadCntrolBlock->instrSet);\n");
+	  FST_INFO("free(objThreadCntrolBlock->instrSet);");
 	  if(objThreadCntrolBlock->instrSet)
 	  {
-	    FST_INFO("free(objThreadCntrolBlock->instrSet);\n");
+	    FST_INFO("free(objThreadCntrolBlock->instrSet);");
 		free(objThreadCntrolBlock->instrSet);
 		objThreadCntrolBlock->instrSet = NULL ;
 	  }
-	  FST_INFO("free(objThreadCntrolBlock->iSubProgNum);\n");
+	  FST_INFO("free(objThreadCntrolBlock->iSubProgNum);");
 	  for(int i = 0; i < objThreadCntrolBlock->iSubProgNum; i++)
 	  {
-	      FST_INFO("objThreadCntrolBlock->sub_prog[%d]\n", i);
+	      FST_INFO("objThreadCntrolBlock->sub_prog[%d]", i);
 		  if (objThreadCntrolBlock->sub_prog[i])
 		  {
-	          FST_INFO("free objThreadCntrolBlock->sub_prog[%d]\n", i);
+	          FST_INFO("free objThreadCntrolBlock->sub_prog[%d]", i);
 			  free(objThreadCntrolBlock->sub_prog[i]);
 			  objThreadCntrolBlock->sub_prog[i] = NULL ;
 		  }
 	  }
-	  FST_INFO("return %d\n", iRet);
+	  FST_INFO("return %d", iRet);
 	  return iRet;
   }
 
   // printProgJmpLine(objThreadCntrolBlock);
   objThreadCntrolBlock->iLineNum = calc_line_from_prog(objThreadCntrolBlock);
-  FST_INFO("Start Interaptor : Line number = %d \n", objThreadCntrolBlock->iLineNum);
+  FST_INFO("Start Interaptor : Line number = %d ", objThreadCntrolBlock->iLineNum);
   iLinenum = objThreadCntrolBlock->iLineNum;
   
 // #ifdef WIN32
@@ -541,37 +537,37 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		if(strlen(cLineContent) != 0)
 		{
 //		    setPrgmState(INTERPRETER_PAUSED);
-  			FST_INFO("PAUSED: Line number(%s) at %d\n", cLineContent, iLinenum);
+  			FST_INFO("PAUSED: Line number(%s) at %d", cLineContent, iLinenum);
 			int iOldLinenum = iLinenum ;
 			// iScan = scanf("%d", &iLinenum);
 			
 			setPrgmState(INTERPRETER_PAUSED) ; // WAITING_R ;
-            FST_INFO("call_interpreter : Enter waitInterpreterStateleftPaused %d \n", iLinenum);
+            FST_INFO("call_interpreter : Enter waitInterpreterStateleftPaused %d ", iLinenum);
 			setLinenum(objThreadCntrolBlock, iLinenum);
 			waitInterpreterStateleftPaused(objThreadCntrolBlock);
-            FST_INFO("call_interpreter : Left  waitInterpreterStateleftPaused %d \n", iLinenum);
+            FST_INFO("call_interpreter : Left  waitInterpreterStateleftPaused %d ", iLinenum);
 			
 			// use the iLineNum which had been set in the BACKWARD/FORWARD/JUMP
 			iLinenum = objThreadCntrolBlock->iLineNum ;
 			// 
-  			FST_INFO("interpreterState : Line number(%d) with %d\n", iLinenum, iOldLinenum);
+  			FST_INFO("interpreterState : Line number(%d) with %d", iLinenum, iOldLinenum);
 			if(iLinenum == 0)
 			{
-				FST_INFO("illegal line number: %d.\n", iLinenum);
+				FST_INFO("illegal line number: %d.", iLinenum);
 				// serror(objThreadCntrolBlock, 17); // exit(1);
 				continue ;
 			}
 			if(iOldLinenum != iLinenum - 1)
 			{
 			    //
-  			    // FST_INFO("Insert movej at (%d) with %d\n", iLinenum, iOldLinenum);
+  			    // FST_INFO("Insert movej at (%d) with %d", iLinenum, iOldLinenum);
 /*
 				int iRet = call_internal_cmd(
 						find_internal_cmd((char *)"movej"), iLinenum,
 						objThreadCntrolBlock);
 				if(iRet == END_COMMND_RET)
 				{
-  			    	FST_INFO("Insert movej Failed at (%d) \n", iLinenum);
+  			    	FST_INFO("Insert movej Failed at (%d) ", iLinenum);
 					return END_COMMND_RET;
 				}
  */
@@ -585,34 +581,34 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 					if(objThreadCntrolBlock->prog > 
 						objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos)
 					{
-						FST_INFO("objThreadCntrolBlock->prog : (%08X) and start_prog_pos (%08X) \n",
+						FST_INFO("objThreadCntrolBlock->prog : (%08X) and start_prog_pos (%08X) ",
 							(unsigned int)objThreadCntrolBlock->prog, 
 							(unsigned int)objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos);
 					}
 					objThreadCntrolBlock->prog =
 						objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos;
-  			        FST_INFO("objThreadCntrolBlock->prog : Line number(%d) \n", iLinenum);
+  			        FST_INFO("objThreadCntrolBlock->prog : Line number(%d) ", iLinenum);
 				}
 			}
 			// Not need to execute this state
 		    // setPrgmState(INTERPRETER_PAUSED);
-  			FST_INFO("setPrgmState(EXECUTE_TO_PAUSE_T).\n");
+  			FST_INFO("setPrgmState(EXECUTE_TO_PAUSE_T).");
 		    setPrgmState(INTERPRETER_EXECUTE_TO_PAUSE);
 #ifdef WIN32
 			Sleep(1);
 #else
 	        usleep(1000);
 #endif
-  			// FST_INFO("interpreterState : Line number(%d) \n", iLinenum);
+  			// FST_INFO("interpreterState : Line number(%d) ", iLinenum);
   			printCurrentLine(objThreadCntrolBlock);
-  			FST_INFO("setPrgmState(EXECUTE_R).\n");
+  			FST_INFO("setPrgmState(EXECUTE_R).");
 		    setPrgmState(INTERPRETER_EXECUTE);
 		}
   	}
 	else if(objThreadCntrolBlock->prog_mode == ERROR_MODE)
     {
 	    iLinenum = calc_line_from_prog(objThreadCntrolBlock);
-	    FST_ERROR("objThreadCntrolBlock crash at line %d \n", iLinenum);
+	    FST_ERROR("objThreadCntrolBlock crash at line %d ", iLinenum);
         return 0 ; // NULL ;
 	}
 	isExecuteEmptyLine = 0 ;
@@ -621,14 +617,14 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	if(objThreadCntrolBlock->is_abort == true)
 	{
 		// setPrgmState(PAUSE_TO_IDLE_T) ;
-  		FST_INFO("objThreadCntrolBlock->is_abort == true.\n");
+  		FST_INFO("objThreadCntrolBlock->is_abort == true.");
         break ; // return 0 ; // NULL ;
 	}
 	// Deal PAUSED_R
 	InterpreterState interpreterState  = getPrgmState();
 	while(interpreterState == INTERPRETER_PAUSED)
 	{
-		FST_INFO("interpreterState is PAUSED_R.\n");
+		FST_INFO("interpreterState is PAUSED_R.");
 #ifdef WIN32
 		Sleep(1000);
 #else
@@ -638,7 +634,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	}
     /* check for assignment statement */
 	iLinenum = calc_line_from_prog(objThreadCntrolBlock);
-    FST_INFO("objThreadCntrolBlock->token_type = %d at line %d \n", 
+    FST_INFO("objThreadCntrolBlock->token_type = %d at line %d ", 
     	objThreadCntrolBlock->token_type, iLinenum);
 	setLinenum(objThreadCntrolBlock, iLinenum);
     if(objThreadCntrolBlock->token_type==VARIABLE) {
@@ -669,12 +665,12 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		{
 			if(call_internal_cmd_exec_sub_thread(iIdx) == 0) // 0 - mov 1 - nonmov
 			{
-				FST_INFO("Non execution permissions : %s\n", objThreadCntrolBlock->token);
+				FST_INFO("Non execution permissions : %s", objThreadCntrolBlock->token);
 				find_eol(objThreadCntrolBlock);
 			}
 			else
 			{
-    				FST_INFO("call_internal_cmd objThreadCntrolBlock at %d\n", iIdx);
+    				FST_INFO("call_internal_cmd objThreadCntrolBlock at %d", iIdx);
 				int iRet = call_internal_cmd(iIdx, iLineNum, 
 					objThreadCntrolBlock);
 				// find_eol(objThreadCntrolBlock);
@@ -688,11 +684,11 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			{
 				if (isInstructionEmpty(SHM_INTPRT_CMD))
 		        {
-		            FST_INFO("check if step is done in call_interpreter\n");
+		            FST_INFO("check if step is done in call_interpreter");
 		            // setPrgmState(INTERPRETER_PAUSED);
 		        }
 			} 
-    		FST_INFO("call_internal_cmd execution : %s at %d, iLineNum = %d\n", 
+    		FST_INFO("call_internal_cmd execution : %s at %d, iLineNum = %d", 
 						objThreadCntrolBlock->token, iIdx, iLineNum);
 			printCurrentLine(objThreadCntrolBlock);
 			int iRet = call_internal_cmd(iIdx, iLineNum, 
@@ -713,7 +709,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		  // Skip Function declaration by jiaming.lu at 180717
 		  if(objThreadCntrolBlock->prog_mode == STEP_MODE)
 		  {
-		     FST_INFO("Meet NOP \n");
+		     FST_INFO("Meet NOP ");
 		     setLinenum(objThreadCntrolBlock, getLinenum(objThreadCntrolBlock) + 1);
 		  }
 		  find_eol(objThreadCntrolBlock);
@@ -836,7 +832,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 #endif
   } while (objThreadCntrolBlock->tok != FINISHED);
   
-  FST_INFO("call_interpreter execution over\n");
+  FST_INFO("call_interpreter execution over");
   return 0 ; // NULL ;
 }
 
@@ -857,10 +853,10 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 		if(objThreadCntrolBlock->prog < objThreadCntrolBlock->prog_jmp_line[i].end_prog_pos)
 		{
 			prog_line_info tmpDbg = objThreadCntrolBlock->prog_jmp_line[i];
-			FST_INFO("calc_line_from_prog get %d at (%08X, %08X) \n", 
+			FST_INFO("calc_line_from_prog get %d at (%08X, %08X) ", 
 		   	    i, (unsigned int)tmpDbg.start_prog_pos,
 		   	    (unsigned int)objThreadCntrolBlock->prog_jmp_line[i-1].start_prog_pos);
-		//   FST_INFO("calc_line_from_prog get %d at (%08X, %08X) \n", 
+		//   FST_INFO("calc_line_from_prog get %d at (%08X, %08X) ", 
 		//   	    i, objThreadCntrolBlock->prog,
 		//   	    objThreadCntrolBlock->prog_jmp_line[i-1].start_prog_pos);
 		   printCurrentLine(objThreadCntrolBlock);
@@ -869,7 +865,7 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 		   return i + 1;
 		}
 	}
-	// FST_INFO("calc_line_from_prog Failed return \n");
+	// FST_INFO("calc_line_from_prog Failed return ");
 	return 0;
 }
 
@@ -901,7 +897,7 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   
   if(!(fp=fopen(fBASName, "r"))) 
   {
-      FST_ERROR("load_program failed : %s from %s\n", fBASName, fXMLName);
+      FST_ERROR("load_program failed : %s from %s", fBASName, fXMLName);
       serror(objThreadCntrolBlock, 14);
       return 0;
   }
@@ -1116,7 +1112,7 @@ void print(struct thread_control_block * objThreadCntrolBlock)
   			|| *(objThreadCntrolBlock->token)==',');
 
   if(objThreadCntrolBlock->tok==EOL || objThreadCntrolBlock->tok==FINISHED) {
-    if(last_delim != ';' && last_delim!=',') FST_INFO("\n");
+    if(last_delim != ';' && last_delim!=',') FST_INFO("");
   }
   else serror(objThreadCntrolBlock, 0); /* error is not , or ; */
 
@@ -2098,7 +2094,7 @@ void select_and_cycle_push(struct thread_control_block * objThreadCntrolBlock,
 
   objThreadCntrolBlock->selcyclstack[objThreadCntrolBlock->select_and_cycle_tos]=i;
   objThreadCntrolBlock->select_and_cycle_tos++;
-//    FST_INFO("\t\t\t\t\t select_and_cycle_push with %d at %d\n",
+//    FST_INFO("\t\t\t\t\t select_and_cycle_push with %d at %d",
 //		i.itokentype,
 //		objThreadCntrolBlock->select_and_cycle_tos);
 }
@@ -2118,7 +2114,7 @@ struct select_and_cycle_stack select_and_cycle_pop(
   {
   	 return(objThreadCntrolBlock->selcyclstack[objThreadCntrolBlock->select_and_cycle_tos]);
   }
-//    FST_INFO("\t\t\t\t\t select_and_cycle_pop with %d\n", objThreadCntrolBlock->select_and_cycle_tos);
+//    FST_INFO("\t\t\t\t\t select_and_cycle_pop with %d", objThreadCntrolBlock->select_and_cycle_tos);
   
 }
 
@@ -2388,9 +2384,9 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
 // 		
 // 		get_params(objThreadCntrolBlock); // load the function's parameters with
 // 		
-// 		FST_INFO("Execute call_interpreter at exec_call_submain.\n");
+// 		FST_INFO("Execute call_interpreter at exec_call_submain.");
 // 		return call_interpreter(objThreadCntrolBlock, 0);
-// 		FST_INFO("Left   call_interpreter at exec_call_submain.\n");
+// 		FST_INFO("Left   call_interpreter at exec_call_submain.");
 // 	}
 
 int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
@@ -2439,10 +2435,10 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
 
   get_params(objThreadCntrolBlock); // load the function's parameters with
   
-  FST_INFO("Execute call_interpreter at exec_call.\n");
+  FST_INFO("Execute call_interpreter at exec_call.");
   int iRet = call_interpreter(objThreadCntrolBlock, 0);
   find_eol(objThreadCntrolBlock);
-  FST_INFO("Left   call_interpreter at exec_call.\n");
+  FST_INFO("Left   call_interpreter at exec_call.");
   if(iRet == END_COMMND_RET)
 	 return END_COMMND_RET;
   return 1;
@@ -2462,7 +2458,7 @@ int gosub(struct thread_control_block * objThreadCntrolBlock)
     gosub_push(objThreadCntrolBlock, objThreadCntrolBlock->prog); /* save place to return to */
     objThreadCntrolBlock->prog = loc;  /* start program running at that loc */
 	
-	FST_INFO("Execute call_interpreter at gosub.\n");
+	FST_INFO("Execute call_interpreter at gosub.");
     return call_interpreter(objThreadCntrolBlock, 0);
   }
   return 1 ;
@@ -2566,17 +2562,17 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 		FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO     ,     "exec macro duplicating"       // 19
   };
   if(error > (int)(sizeof(errInfo)/sizeof(ErrInfo))) {
-  	FST_ERROR("\t NOTICE : Error out of range %d \n", error);
+  	FST_ERROR("\t NOTICE : Error out of range %d ", error);
     return;
   }
   
-  FST_INFO("-----------------ERR:%d----------------------\n", error);
+  FST_INFO("-----------------ERR:%d----------------------", error);
 #ifdef WIN32
-  FST_INFO("\t NOTICE : %d -  0x%016I64x  - (%s)\n", error, errInfo[error].warn, errInfo[error].desc);
+  FST_INFO("\t NOTICE : %d -  0x%016I64x  - (%s)", error, errInfo[error].warn, errInfo[error].desc);
 #else
-  FST_INFO("\t NOTICE : %d -  %llx(%s)\n", error, errInfo[error].warn, errInfo[error].desc);
+  FST_INFO("\t NOTICE : %d -  %llx(%s)", error, errInfo[error].warn, errInfo[error].desc);
 #endif
-  FST_INFO("-----------------ERR:%d----------------------\n", error);
+  FST_INFO("-----------------ERR:%d----------------------", error);
   
   setWarning(errInfo[error].warn) ; 
   objThreadCntrolBlock->prog_mode = ERROR_MODE;
@@ -2591,9 +2587,9 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 	  CloseHandle( g_basic_interpreter_handle[iIdx] );  
 	  g_basic_interpreter_handle[iIdx] = NULL; 
 #else
-	  FST_INFO("Enter pthread_join.\n");
+	  FST_INFO("Enter pthread_join.");
 	  pthread_join(g_basic_interpreter_handle[iIdx], NULL);
-	  FST_INFO("Left  pthread_join.\n");
+	  FST_INFO("Left  pthread_join.");
 	  fflush(stdout);
 	  g_basic_interpreter_handle[iIdx] = 0;
 	  pthread_exit(g_basic_interpreter_handle[iIdx]);
@@ -3042,7 +3038,7 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
     get_token(objThreadCntrolBlock);
     return;
   default:
-	FST_ERROR("primitive error :: get_token =  '%s'\n", objThreadCntrolBlock->token);
+	FST_ERROR("primitive error :: get_token =  '%s'", objThreadCntrolBlock->token);
     serror(objThreadCntrolBlock, 0);
   }
 }
@@ -3120,12 +3116,12 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		{
 			if((value.getType() & TYPE_FLOAT) == TYPE_FLOAT)
 			{
-				FST_INFO("assign_var vname = %s and value = %f.\n", vname, value.getFloatValue());
+				FST_INFO("assign_var vname = %s and value = %f.", vname, value.getFloatValue());
 			}
 			if ((value.getType() & TYPE_STRING) == TYPE_STRING)
 			{
 				string strTmp = value.getStringValue() ;
-				FST_INFO("assign_var vname = %s and value = (%s).\n", vname, strTmp.c_str());
+				FST_INFO("assign_var vname = %s and value = (%s).", vname, strTmp.c_str());
 			}
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 			int iRet = forgesight_registers_manager_set_register(
@@ -3147,7 +3143,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			int iRet = 0 ;
 			if(g_io_mapper.find(vname) != g_io_mapper.end() )
 			{
-				FST_INFO("\t SET FROM :: %s : %s\n", vname, 
+				FST_INFO("\t SET FROM :: %s : %s", vname, 
 					g_io_mapper[vname].c_str());
 			}
 			iRet = forgesight_set_io_status(vname, value);
@@ -3160,28 +3156,28 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 
 	if(strcmp(FORSIGHT_TF_NO, vname) == 0)
     {
-        FST_INFO("set_global_TF vname = %s and value = %f.\n", vname, value.getFloatValue());
+        FST_INFO("set_global_TF vname = %s and value = %f.", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
 		set_global_TF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
 	else if(strcmp(FORSIGHT_UF_NO, vname) == 0)
     {
-        FST_INFO("set_global_UF vname = %s and value = %f.\n", vname, value.getFloatValue());
+        FST_INFO("set_global_UF vname = %s and value = %f.", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
 		set_global_UF(iLineNum, (int)value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
 	else if(strcmp(FORSIGHT_OVC, vname) == 0)
     {
-        FST_INFO("set_OVC vname = %s and value = %f.\n", vname, value.getFloatValue());
+        FST_INFO("set_OVC vname = %s and value = %f.", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
 		set_OVC(iLineNum, value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
 	else if(strcmp(FORSIGHT_OAC, vname) == 0)
     {
-        FST_INFO("set_OAC vname = %s and value = %f.\n", vname, value.getFloatValue());
+        FST_INFO("set_OAC vname = %s and value = %f.", vname, value.getFloatValue());
 		iLineNum = calc_line_from_prog(objThreadCntrolBlock);
 		set_OAC(iLineNum, value.getFloatValue(), objThreadCntrolBlock);
 		return ;
@@ -3260,7 +3256,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
     {
 		if(strchr(vname, '['))
 		{
-			FST_INFO("find_var vname = %s .\n", vname);
+			FST_INFO("find_var vname = %s .", vname);
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
     		int iRet = forgesight_registers_manager_get_register(
 				objThreadCntrolBlock, vname, &value);
@@ -3282,7 +3278,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 			
 			if(g_io_mapper.find(vname) != g_io_mapper.end() )
 			{
-					FST_INFO("\t GET FROM :: %s : %s\n", vname, 
+					FST_INFO("\t GET FROM :: %s : %s", vname, 
 						g_io_mapper[vname].c_str());
 			}
 			value = forgesight_get_io_status(vname);
@@ -3312,7 +3308,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 
 	if (raise_unkown_error == 1)
 	{
-		FST_ERROR("not defined variable (%s).\n", vname);
+		FST_ERROR("not defined variable (%s).", vname);
 		serror(objThreadCntrolBlock, 4);
 	}
 	objThreadCntrolBlock->g_variable_error = 1 ;
@@ -3350,7 +3346,7 @@ int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 	        return 1;
         }
 	}
-	FST_ERROR("not defined variable.\n");
+	FST_ERROR("not defined variable.");
 	return -1 ;
 }
 
@@ -3373,7 +3369,7 @@ bool basic_thread_create(int iIdx, void * args)
 	}
 	else
 	{
-      FST_ERROR("start basic_thread_create Failed..\n");
+      FST_ERROR("start basic_thread_create Failed..");
 		g_basic_interpreter_handle[iIdx] = 0;
 	}
 #endif

@@ -86,7 +86,7 @@ int MacroInstrMgr::parseSingleMacroInstr(cJSON * item)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			FST_INFO("cJSON_Object\n");
+			FST_INFO("cJSON_Object");
 			break;
 		}
 		child = child->next ;
@@ -310,7 +310,7 @@ int MacroInstrMgr::updateSingleMacroInstr(cJSON * item, macro_instr macroInstr)
 		case cJSON_Array:
 			break;
 		case cJSON_Object:	
-			FST_INFO("cJSON_Object\n");
+			FST_INFO("cJSON_Object");
 			break;
 		}
 		child = child->next ;
@@ -349,7 +349,7 @@ int MacroInstrMgr::printMacroInstrList()
 	while(it != macroInstrMgrList.end())
 	{
 		// it->first;  // it->second;
-		FST_INFO("\t MacroInstrMgr: %s :: (%s, %s, %s) \n", 
+		FST_INFO("\t MacroInstrMgr: %s :: (%s, %s, %s) ", 
 			it->first.c_str(), it->second.macro_name, 
 			it->second.program_name, it->second.io_name);
 		it++;         

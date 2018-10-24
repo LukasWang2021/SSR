@@ -41,11 +41,11 @@ void* macro_instr_thread(void* arg)
 				&&(strlen(it->second.program_name) > 0)
 				&&(it->second.bIsRunning == false))
 			{
-				FST_INFO("start run...\n");
+				FST_INFO("start run...");
 				objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
 				if(objThdCtrlBlockPtr->is_in_macro == true)
 				{
-					FST_ERROR("Can not run macro again\n");
+					FST_ERROR("Can not run macro again");
 					break;
 				}
 				g_iCurrentThreadSeq++ ;
@@ -71,7 +71,7 @@ void* macro_instr_thread(void* arg)
 			}
 			else if (it->second.bIsRunning == true)
 			{
-				FST_INFO("it is running...\n");
+				FST_INFO("it is running...");
 			}
 
 			it++;         
@@ -88,9 +88,9 @@ void* macro_instr_thread(void* arg)
 	g_macro_instr_interpreter_handle = NULL; 
 	return NULL;
 #else
-	FST_INFO("Enter pthread_join.\n");
+	FST_INFO("Enter pthread_join.");
 	pthread_join(g_macro_instr_interpreter_handle, NULL);
-	FST_INFO("Left  pthread_join.\n");
+	FST_INFO("Left  pthread_join.");
 	fflush(stdout);
 	g_macro_instr_interpreter_handle = 0;
 	return NULL ;
@@ -116,7 +116,7 @@ bool macro_instr_thread_create(void * args)
 	}
 	else
 	{
-        FST_ERROR("start launch_code_thread_create Failed..\n");
+        FST_ERROR("start launch_code_thread_create Failed..");
 		g_macro_instr_interpreter_handle = 0;
 	}
 #endif

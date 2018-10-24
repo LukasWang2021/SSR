@@ -52,26 +52,26 @@ bool PrReg::addReg(void* data_ptr)
     if(!isAddInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
-		FST_ERROR("addReg::isAddInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("addReg::isAddInputValid: id = %d, comment = %s", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     BaseRegData reg_data;
     packAddRegData(reg_data, reg_ptr->id, reg_ptr->comment);
     if(!setRegList(reg_data))
     {
-		FST_ERROR("setRegList: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("setRegList: id = %d, comment = %s", reg_ptr->id, reg_ptr->comment);
         return false;
     }
     memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(PrValue));
 
 #if 0
 	PrRegData objPrRegData = * reg_ptr;
-		FST_INFO("setPr: id = %d, comment = %s\n", objPrRegData.id, objPrRegData.comment);
-		FST_INFO("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		FST_INFO("setPr: id = %d, comment = %s", objPrRegData.id, objPrRegData.comment);
+		FST_INFO("setPr: id = (%f, %f, %f, %f, %f, %f) ", 
 			objPrRegData.value.joint_pos[0], objPrRegData.value.joint_pos[1], 
 			objPrRegData.value.joint_pos[2], objPrRegData.value.joint_pos[3], 
 			objPrRegData.value.joint_pos[4], objPrRegData.value.joint_pos[5]);
-		FST_INFO("setPr: id = (%f, %f, %f, %f, %f, %f) \n", 
+		FST_INFO("setPr: id = (%f, %f, %f, %f, %f, %f) ", 
 			objPrRegData.value.cartesian_pos.position.x, objPrRegData.value.cartesian_pos.position.y, 
 			objPrRegData.value.cartesian_pos.position.z, objPrRegData.value.cartesian_pos.orientation.a, 
 			objPrRegData.value.cartesian_pos.orientation.b, objPrRegData.value.cartesian_pos.orientation.c);
@@ -102,7 +102,7 @@ bool PrReg::getReg(int id, void* data_ptr)
 {
     if(!isGetInputValid(id))
     {
-	    FST_ERROR("PrReg::getReg isGetInputValid failed at %d\n", id);
+	    FST_ERROR("PrReg::getReg isGetInputValid failed at %d", id);
         return false;
     }
 
@@ -110,14 +110,14 @@ bool PrReg::getReg(int id, void* data_ptr)
     BaseRegData reg_data;
     if(!getRegList(id, reg_data))
     {
-	    FST_ERROR("PrReg::getReg getRegList failed at %d\n", id);
+	    FST_ERROR("PrReg::getReg getRegList failed at %d", id);
         return false;
     }
-	FST_INFO("PrReg::getReg getRegList at %d, %d with %s\n", 
+	FST_INFO("PrReg::getReg getRegList at %d, %d with %s", 
 		id, reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
 	
     reg_ptr->id = reg_data.id;
-	    FST_INFO("PrReg::getReg getRegList reg_ptr at %d\n", reg_ptr->id);
+	    FST_INFO("PrReg::getReg getRegList reg_ptr at %d", reg_ptr->id);
     memcpy(reg_ptr->comment, reg_data.comment, MAX_REG_COMMENT_LENGTH * sizeof(char));
     memcpy(&reg_ptr->value, &data_list_[reg_data.id], sizeof(PrValue));
     return true;
@@ -134,21 +134,21 @@ bool PrReg::setReg(void* data_ptr)
     if(!isSetInputValid(reg_ptr->id)
         || isOutOfPosLimit(reg_ptr->value))
     {
-		FST_ERROR("setReg::isSetInputValid: id = %d, comment = %s\n", reg_ptr->id, reg_ptr->comment);
+		FST_ERROR("setReg::isSetInputValid: id = %d, comment = %s", reg_ptr->id, reg_ptr->comment);
         return false;
     }
 	if(strlen(reg_ptr->comment) == 0)
     {
         strcpy(reg_ptr->comment, "EMPTY");
-	    FST_ERROR("MrReg::setReg fill reg_ptr->comment = %s\n", reg_ptr->comment);
+	    FST_ERROR("MrReg::setReg fill reg_ptr->comment = %s", reg_ptr->comment);
 	}
         
     BaseRegData reg_data;
     packSetRegData(reg_data, reg_ptr->id, reg_ptr->comment);
-	FST_INFO("PrReg::setReg setRegList at %d with %s\n", reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
+	FST_INFO("PrReg::setReg setRegList at %d with %s", reg_data.id, reg_data.is_valid ? "TRUE" : "FALSE");
     if(!setRegList(reg_data))
     {
-	    FST_ERROR("PrReg::setReg setRegList failed at %d\n", reg_data.id);
+	    FST_ERROR("PrReg::setReg setRegList failed at %d", reg_data.id);
         return false;
     }
     memcpy(&data_list_[reg_data.id], &reg_ptr->value, sizeof(PrValue));
@@ -179,7 +179,7 @@ bool PrReg::isOutOfPosLimit(const PrValue& data)
                 || data.cartesian_pos.orientation.c > MAX_PR_REG_POS_VALUE
                 || data.cartesian_pos.orientation.c < -MAX_PR_REG_POS_VALUE)
             {
-				FST_ERROR("isOutOfPosLimit::cartesian_pos return false \n");
+				FST_ERROR("isOutOfPosLimit::cartesian_pos return false ");
                 return true;
             }
             break;
@@ -189,7 +189,7 @@ bool PrReg::isOutOfPosLimit(const PrValue& data)
                 if(data.joint_pos[i] > MAX_PR_REG_POS_VALUE
                     || data.joint_pos[i] < -MAX_PR_REG_POS_VALUE)
                 {
-					FST_ERROR("isOutOfPosLimit::joint_pos[%d]=%f return false \n", i, data.joint_pos[i]);
+					FST_ERROR("isOutOfPosLimit::joint_pos[%d]=%f return false ", i, data.joint_pos[i]);
                     return true;
                 }
             }
@@ -203,7 +203,7 @@ bool PrReg::isOutOfPosLimit(const PrValue& data)
         if(data.ext_pos[i] > MAX_PR_REG_POS_VALUE
             || data.ext_pos[i] < -MAX_PR_REG_POS_VALUE)
         {
-			FST_ERROR("isOutOfPosLimit::ext_pos[%d]=%f return false \n", i, data.ext_pos[i]);
+			FST_ERROR("isOutOfPosLimit::ext_pos[%d]=%f return false ", i, data.ext_pos[i]);
             return true;
         }
     }

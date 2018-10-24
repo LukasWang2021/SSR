@@ -127,7 +127,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
             continue;
         else if(ptr->d_type == 8)    ///file
         {
-        	FST_INFO("d_name:%s/%s\n",basePath,ptr->d_name);
+        	FST_INFO("d_name:%s/%s",basePath,ptr->d_name);
 			strExtPtr = strrchr(ptr->d_name, '.');
 			if(strExtPtr)
 			{
@@ -148,7 +148,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
         }
         else if(ptr->d_type == 10)    ///link file
         {
-            FST_INFO("d_name:%s/%s\n",basePath,ptr->d_name);
+            FST_INFO("d_name:%s/%s",basePath,ptr->d_name);
         }
         else if(ptr->d_type == 4)    ///dir
         {
@@ -199,7 +199,7 @@ int LaunchCodeMgr::printLaunchCodeList()
 	while(it != launchCodeList.end())
 	{
 		// it->first;  // it->second;
-		FST_INFO("\t LaunchCodeMgr: %d :: %s \n", it->first, it->second.c_str());
+		FST_INFO("\t LaunchCodeMgr: %d :: %s ", it->first, it->second.c_str());
 		it++;         
 	}
 	return 1;

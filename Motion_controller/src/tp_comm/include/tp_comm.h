@@ -136,7 +136,8 @@ private:
     void handlePublishElementIoOutput(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     void recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path);
-
+    void handleRequest0xffffffff(int recv_bytes);
+    void handleResponse0xffffffff(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********GetUserOpMode, RequestMessageType_Void**********/          
     void handleRequest0x00000C05(int recv_bytes);
     /********GetRunningStatus, RequestMessageType_Void**********/       

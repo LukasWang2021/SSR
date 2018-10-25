@@ -362,6 +362,7 @@ void TpComm::handleRequest()
     }
     else
     {
+        handleRequest0xffffffff(recv_bytes);
         ErrorMonitor::instance()->add(TP_COMM_INVALID_REQUEST);
         FST_ERROR("Request invalid.");
     }
@@ -400,8 +401,9 @@ void TpComm::handleResponseList()
         }
         else
         {
-            return;
+            handleResponse0xffffffff(it, send_buffer_size);
         }
+
         if(send_buffer_size == 0)
         {
             return;

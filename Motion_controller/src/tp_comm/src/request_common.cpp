@@ -155,3 +155,37 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
     response_list_mutex_.unlock();
 }
 
+// nonexistent rpc
+void TpComm::handleRequest0xffffffff(int recv_bytes)
+{
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+
+    if(request_data_ptr == NULL)
+    {
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
+        FST_ERROR("Can't allocate memory for request_data");
+        return;
+    }
+
+    ResponseMessageType_Void* response_data_ptr = new ResponseMessageType_Void;
+    if(response_data_ptr == NULL)
+    {
+        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
+        FST_ERROR("Can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    response_data_ptr->header.time_stamp = 0;
+    response_data_ptr->header.package_left = -1;
+    response_data_ptr->header.error_code = TP_COMM_INVALID_REQUEST;
+
+    TpRequestResponse package;
+    package.hash = 0xffffffff;
+    package.request_data_ptr = request_data_ptr;
+    package.response_data_ptr = response_data_ptr;
+
+    response_list_mutex_.lock();
+    response_list_.push_back(package);
+    response_list_mutex_.unlock();
+}

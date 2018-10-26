@@ -911,6 +911,16 @@ static inline void rotateZ(double t, double (&m)[4][4])
     m[3][1] = t2;
 }
 
+static inline void normalizeQuaternion(fst_mc::Quaternion &q)
+{
+    double norm = sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
+
+    q.w /= norm;
+    q.x /= norm;
+    q.y /= norm;
+    q.z /= norm;
+}
+
 //------------------------------------------------------------------------------
 // Function:    PoseEuler2Matrix
 // Summary: Convert a pose-euler to a 4*4 matrix.
@@ -961,48 +971,47 @@ static inline void Matrix2PoseEuler(const double (&m)[4][4], fst_mc::PoseEuler &
 // Out:     m    -> matrix output
 // Return:  None
 //------------------------------------------------------------------------------
-static inline bool Pose2Matrix(const fst_mc::Pose &pose, double (&m)[4][4])
+static inline void Pose2Matrix(const fst_mc::Pose &pose, double (&m)[4][4])
 {
-    double ss = pose.orientation.w * pose.orientation.w;
-    double aa = pose.orientation.x * pose.orientation.x;
-    double bb = pose.orientation.y * pose.orientation.y;
-    double cc = pose.orientation.z * pose.orientation.z;
-    double sa = pose.orientation.w * pose.orientation.x;
-    double sb = pose.orientation.w * pose.orientation.y;
-    double sc = pose.orientation.w * pose.orientation.z;
-    double ab = pose.orientation.x * pose.orientation.y;
-    double ac = pose.orientation.x * pose.orientation.z;
-    double bc = pose.orientation.y * pose.orientation.z;
+    fst_mc::Quaternion q(pose.orientation);
+
+    if (fabs(sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z) - 1) > 0.0005)
+    {
+        normalizeQuaternion(q);
+    }
+
+    double ss = q.w * q.w;
+    double aa = q.x * q.x;
+    double bb = q.y * q.y;
+    double cc = q.z * q.z;
+    double sa = q.w * q.x;
+    double sb = q.w * q.y;
+    double sc = q.w * q.z;
+    double ab = q.x * q.y;
+    double ac = q.x * q.z;
+    double bc = q.y * q.z;
     double sum = ss + aa + bb + cc;
 
-    if (fabs(sum -1) < 0.0005)
-    {
-        ss /= sum; aa /= sum; bb /= sum; cc /= sum;
-        sa /= sum; sb /= sum; sc /= sum;
-        ab /= sum; ac /= sum; bc /= sum;
-        m[0][0] = 2 * (ss + aa) - 1;
-        m[0][1] = 2 * (ab - sc);
-        m[0][2] = 2 * (sb + ac);
-        m[0][3] = pose.position.x;
-        m[1][0] = 2 * (ab + sc);
-        m[1][1] = 2 * (ss + bb) - 1;
-        m[1][2] = 2 * (bc - sa);
-        m[1][3] = pose.position.y;
-        m[2][0] = 2 * (ac - sb);
-        m[2][1] = 2 * (sa + bc);
-        m[2][2] = 2 * (ss + cc) - 1;
-        m[2][3] = pose.position.z;
-        m[3][0] = 0.0;
-        m[3][1] = 0.0;
-        m[3][2] = 0.0;
-        m[3][3] = 1.0;
-        return true;
-    }
-    else
-    {
-        // invalid quaternion
-        return false;
-    }
+    ss /= sum; aa /= sum; bb /= sum; cc /= sum;
+    sa /= sum; sb /= sum; sc /= sum;
+    ab /= sum; ac /= sum; bc /= sum;
+    m[0][0] = 2 * (ss + aa) - 1;
+    m[0][1] = 2 * (ab - sc);
+    m[0][2] = 2 * (sb + ac);
+    m[0][3] = pose.position.x;
+    m[1][0] = 2 * (ab + sc);
+    m[1][1] = 2 * (ss + bb) - 1;
+    m[1][2] = 2 * (bc - sa);
+    m[1][3] = pose.position.y;
+    m[2][0] = 2 * (ac - sb);
+    m[2][1] = 2 * (sa + bc);
+    m[2][2] = 2 * (ss + cc) - 1;
+    m[2][3] = pose.position.z;
+    m[3][0] = 0.0;
+    m[3][1] = 0.0;
+    m[3][2] = 0.0;
+    m[3][3] = 1.0;
+
 }
 
 //------------------------------------------------------------------------------
@@ -1055,13 +1064,13 @@ static inline void Matrix2Pose(const double (&m)[4][4], fst_mc::Pose &pose)
             break;
     }
 
-    double n = sqrt(w * w + x * x + y * y + z * z);
+    double norm = sqrt(w * w + x * x + y * y + z * z);
 
     //四元数强制单位化
-    pose.orientation.w = w / n;
-    pose.orientation.x = x / n;
-    pose.orientation.y = y / n;
-    pose.orientation.z = z / n;
+    pose.orientation.w = w / norm;
+    pose.orientation.x = x / norm;
+    pose.orientation.y = y / norm;
+    pose.orientation.z = z / norm;
 }
 
 //------------------------------------------------------------------------------
@@ -1072,26 +1081,19 @@ static inline void Matrix2Pose(const double (&m)[4][4], fst_mc::Pose &pose)
 // Return:  true -> success
 //          false-> fail, input quaternion illegal
 //------------------------------------------------------------------------------
-static inline bool Pose2PoseEuler(const fst_mc::Pose &pose, fst_mc::PoseEuler &pe)
+static inline void Pose2PoseEuler(const fst_mc::Pose &pose, fst_mc::PoseEuler &pe)
 {
-    double norm = sqrt(pose.orientation.w * pose.orientation.w + pose.orientation.x * pose.orientation.x +
-                       pose.orientation.y * pose.orientation.y + pose.orientation.z * pose.orientation.z);
+    fst_mc::Quaternion q(pose.orientation);
 
-    if (fabs(norm - 1) < 0.0005)
+    if (fabs(sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z) - 1) > 0.0005)
     {
-        pe.position = pose.position;
+        normalizeQuaternion(q);
+    }
 
-        pe.orientation.c = atan2((pose.orientation.w * pose.orientation.x + pose.orientation.y * pose.orientation.z) * 2,
-                                 1 - (pose.orientation.x * pose.orientation.x + pose.orientation.y * pose.orientation.y) * 2);
-        pe.orientation.b = asin((pose.orientation.w * pose.orientation.y - pose.orientation.z * pose.orientation.x) * 2);
-        pe.orientation.a = atan2((pose.orientation.w * pose.orientation.z + pose.orientation.x * pose.orientation.y) * 2,
-                                 1 - (pose.orientation.y * pose.orientation.y + pose.orientation.z * pose.orientation.z) * 2);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    pe.position = pose.position;
+    pe.orientation.c = atan2((q.w * q.x + q.y * q.z) * 2, 1 - (q.x * q.x + q.y * q.y) * 2);
+    pe.orientation.b = asin((q.w * q.y - q.z * q.x) * 2);
+    pe.orientation.a = atan2((q.w * q.z + q.x * q.y) * 2, 1 - (q.y * q.y + q.z * q.z) * 2);
 }
 
 //------------------------------------------------------------------------------

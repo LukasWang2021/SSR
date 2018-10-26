@@ -136,7 +136,7 @@ void CoreInterface::initTrajectory(void)
 //          OPEN_CORE_MEM_FAIL -> failed
 //------------------------------------------------------------
 ErrorCode CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_level)
-{   
+{
     if (error_flag_ != 0)
         return error_flag_;
 
@@ -188,6 +188,7 @@ ErrorCode CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_level)
         nsec_ = prev_nsec_;
         return WRITE_CORE_MEM_FAIL;
     }
+
     //printf("first:%d, level:%d, last:%d, level:%d\n", (ts_.points[0].time_from_start.sec*1000 +ts_.points[0].time_from_start.nsec/1000000),jc.points[0].point_position, (ts_.points[ts_.total_points-1].time_from_start.sec*1000 +ts_.points[ts_.total_points-1].time_from_start.nsec/1000000),jc.points[ts_.total_points-1].point_position);
 
 

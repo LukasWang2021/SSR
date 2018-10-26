@@ -2343,14 +2343,14 @@ namespace fst_algorithm
         robot_model_.r[4][2]=-0.002718;
 
         //empty
-        //robot_model_.r[5][0]=-0.000190;
-        //robot_model_.r[5][1]=0;
-        //robot_model_.r[5][2]=0.092437;
+        robot_model_.r[5][0]=-0.000190;
+        robot_model_.r[5][1]=0;
+        robot_model_.r[5][2]=0.092437;
 
         //7kg -0.074536	-0.000242	0.174664
-        robot_model_.r[5][0]=-0.074536	;
-        robot_model_.r[5][1]=-0.000242;
-        robot_model_.r[5][2]=0.174664;
+        //robot_model_.r[5][0]=-0.074536	;
+        //robot_model_.r[5][1]=-0.000242;
+        //robot_model_.r[5][2]=0.174664;
 
         robot_model_.i[0][0][0]=0.110997;
         robot_model_.i[0][1][1]=0.088273;
@@ -2403,60 +2403,60 @@ namespace fst_algorithm
         robot_model_.i[4][2][0]=robot_model_.i[4][0][2];
 
         //empty
-        //robot_model_.i[5][0][0]=0.001107;
-        //robot_model_.i[5][1][1]=0.001107;
-        //robot_model_.i[5][2][2]=0.000052;
-        //robot_model_.i[5][0][1]=0;
-        //robot_model_.i[5][1][2]=0;
-        //robot_model_.i[5][0][2]=-0.000002;
-        //robot_model_.i[5][1][0]=robot_model_.i[5][0][1];
-        //robot_model_.i[5][2][1]=robot_model_.i[5][1][2];
-       // robot_model_.i[5][2][0]=robot_model_.i[5][0][2];
-
-        //7kg 0.227154	0.269139	0.05258	0.000124	-0.092862	-0.000298
-        robot_model_.i[5][0][0]=0.227154;
-        robot_model_.i[5][1][1]=0.269139;
-        robot_model_.i[5][2][2]=0.05258;
-        robot_model_.i[5][0][1]=0.000124;
-        robot_model_.i[5][1][2]=-0.092862;
-        robot_model_.i[5][0][2]=-0.000298;
+        robot_model_.i[5][0][0]=0.001107;
+        robot_model_.i[5][1][1]=0.001107;
+        robot_model_.i[5][2][2]=0.000052;
+        robot_model_.i[5][0][1]=0;
+        robot_model_.i[5][1][2]=0;
+        robot_model_.i[5][0][2]=-0.000002;
         robot_model_.i[5][1][0]=robot_model_.i[5][0][1];
         robot_model_.i[5][2][1]=robot_model_.i[5][1][2];
         robot_model_.i[5][2][0]=robot_model_.i[5][0][2];
+
+        //7kg 0.227154	0.269139	0.05258	0.000124	-0.092862	-0.000298
+        //robot_model_.i[5][0][0]=0.227154;
+        //robot_model_.i[5][1][1]=0.269139;
+        //robot_model_.i[5][2][2]=0.05258;
+        //robot_model_.i[5][0][1]=0.000124;
+        //robot_model_.i[5][1][2]=-0.092862;
+        //robot_model_.i[5][0][2]=-0.000298;
+        //robot_model_.i[5][1][0]=robot_model_.i[5][0][1];
+        //robot_model_.i[5][2][1]=robot_model_.i[5][1][2];
+        //robot_model_.i[5][2][0]=robot_model_.i[5][0][2];
 
         robot_model_.m[0]=5.077933;
         robot_model_.m[1]=10.913478;
         robot_model_.m[2]=9.092074;
         robot_model_.m[3]=5.305265;
         robot_model_.m[4]=2.036364;
-        //robot_model_.m[5]=0.126446;  empty
-        robot_model_.m[5]=3.058417;  //7kg
+        robot_model_.m[5]=0.126446;  //empty
+        //robot_model_.m[5]=7.058417;  //7kg
 
         robot_model_.mdh=true;
         memset(robot_model_.b,0,sizeof(robot_model_.b));  
         memset(robot_model_.tc,0,sizeof(robot_model_.tc));   
     
-        servo_model_[0].rated_torque=289 * 3;
+        servo_model_[0].rated_torque=716;
         servo_model_[0].jm=0.00013;
         servo_model_[0].gr=81;
         //servo_model_[0].b=0; //friction factor
-        servo_model_[1].rated_torque=316 * 3;
+        servo_model_[1].rated_torque=573;
         servo_model_[1].jm=0.000059;
         servo_model_[1].gr=101;  
         //servo_model_[1].b=0; //friction factor
-        servo_model_[2].rated_torque=130 * 3;
+        servo_model_[2].rated_torque=382;
         servo_model_[2].jm=0.000044;
         servo_model_[2].gr=81;   
         //servo_model_[2].b=0; //friction factor   
-        servo_model_[3].rated_torque=53 *3;
+        servo_model_[3].rated_torque=191;
         servo_model_[3].jm=0.000018;
         servo_model_[3].gr=60;
         //servo_model_[3].b=0; //friction factor
-        servo_model_[4].rated_torque=29 * 3;
+        servo_model_[4].rated_torque=111;
         servo_model_[4].jm=0.000017;
         servo_model_[4].gr=66.7;
         //servo_model_[4].b=0; //friction factor
-        servo_model_[5].rated_torque=23 * 3;
+        servo_model_[5].rated_torque=111;
         servo_model_[5].jm=0.000017;
         servo_model_[5].gr=44.6;
         //servo_model_[5].b=0; //friction factor

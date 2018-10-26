@@ -131,7 +131,7 @@ bool ServiceManager::receiveRequest(void)
         ++loop_count_mcs_;
 
     if (request_fifo_.size())
-    printf("request size:%d\n", request_fifo_.size());
+        printf("request size:%d\n", request_fifo_.size());
     // Stop receive any request if there is any service in fifo.
     if (!response_fifo_.empty() || !request_fifo_.empty()) 
         return false;
@@ -147,7 +147,7 @@ bool ServiceManager::receiveRequest(void)
     ErrorCode result = comm_mcs_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
-        printf("recv servo mcs success with %X\n", request.req_id);
+        // printf("recv servo mcs success with %X\n", request.req_id);
         //push the request into fifo.
         if (checkRequest(request)) 
         {
@@ -159,7 +159,7 @@ bool ServiceManager::receiveRequest(void)
     result = comm_param_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
-        printf("recv servo param success with %X\n", request.req_id);
+        // printf("recv servo param success with %X\n", request.req_id);
         //push the request into fifo.
         if (checkRequest(request)) 
         {
@@ -183,7 +183,7 @@ bool ServiceManager::receiveRequest(void)
     result = comm_test_.recv(&request, sizeof(request), COMM_DONTWAIT);
     if (result == 0)
     {
-        printf("recv servo test success with %X\n", request.req_id);
+        // printf("recv servo test success with %X\n", request.req_id);
         //push the request into fifo.
         if (checkRequest(request)) 
         {
@@ -214,7 +214,6 @@ bool ServiceManager::addRequest(void)
         request_fifo_.push_back(req);
         std::cout<<"||====No heartbeat from MCS, a stop command was sent.====||"<<std::endl;
 
-                    
         //store the motion controller timeout error.
         ErrorCode mcs_timeout = MCS_TIMEOUT;
         storeError(mcs_timeout);

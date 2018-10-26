@@ -58,7 +58,7 @@ class BareCoreInterface
 
     fst_core_interface::CoreInterface   core_interface_;
     fst_comm_interface::CommInterface   command_interface_;
-    fst_comm_interface::CommInterface   jtac_param_interface_;
+    //fst_comm_interface::CommInterface   jtac_param_interface_;
 };
 
 

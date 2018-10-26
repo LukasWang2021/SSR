@@ -22,7 +22,7 @@ using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
 
-//#define OUTPUT_JOUT
+#define OUTPUT_JOUT
 //#define OUTPUT_COEFF
 //#define OUTPUT_POUT
 
@@ -786,20 +786,19 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
         if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
         {
-            char buffer[LOG_TEXT_SIZE];
-            FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-            FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+            if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                FST_ERROR("Control-position different with current-position, it might be a trouble.");
+                FST_ERROR("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+                return MOTION_INTERNAL_FAULT;
+            }
         }
         else
         {
             FST_ERROR("Cannot get control position from bare core.");
             return BARE_CORE_TIMEOUT;
-        }
-
-        if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
-        {
-            FST_ERROR("Control-position different with current-position, it might be a trouble.");
-            return MOTION_INTERNAL_FAULT;
         }
     }
     else if (group_state_ == AUTO || group_state_ == STANDBY || group_state_ == AUTO_TO_STANDBY)
@@ -945,9 +944,19 @@ void BaseGroup::freeTrajectoryCache(TrajectoryCache *pcache)
 ErrorCode BaseGroup::autoJoint(const Joint &start, const Joint &target, double vel, double cnt, int id)
 {
     char buffer[LOG_TEXT_SIZE];
+    Joint clean_start(start);
+    Joint clean_target(target);
+    size_t num_of_joint = getNumberOfJoint();
+
+    for (size_t j = num_of_joint; j < NUM_OF_JOINT; j++)
+    {
+        clean_start[j] = 0;
+        clean_target[j] = 0;
+    }
+
     FST_INFO("autoJoint: ID = %d, vel = %.4f, cnt = %.4f", id, vel, cnt);
-    FST_INFO("  start  = %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  target = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start  = %s", printDBLine(&clean_start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  target = %s", printDBLine(&clean_target[0], buffer, LOG_TEXT_SIZE));
 
     if (vel < MINIMUM_E6 || vel > 1 + MINIMUM_E6 || fabs(cnt) > 1 + MINIMUM_E6)
     {
@@ -967,7 +976,7 @@ ErrorCode BaseGroup::autoJoint(const Joint &start, const Joint &target, double v
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    if (isSameJoint(start, target, 0.0001))
+    if (isSameJoint(clean_start, clean_target, 0.0001))
     {
         FST_WARN("Start joint same as target joint");
         return 0xA000B000C000D000;
@@ -977,7 +986,8 @@ ErrorCode BaseGroup::autoJoint(const Joint &start, const Joint &target, double v
     size_t  index, length;
     double  precision = 0.01;
     Joint   path[MAX_PATH_SIZE];
-    planJointPath(start, target, precision, index, path, length);
+    FST_INFO("  precision = %.4f", precision);
+    planJointPath(clean_start, clean_target, precision, index, path, length);
     FST_INFO("  precision = %.4f", precision);
     TrajectoryCache *pcache = getTrajectoryCache();
 
@@ -1189,7 +1199,7 @@ ErrorCode BaseGroup::prepareCache(TrajectoryCache &cache)
                     Pose &pose = cache.cache[i].path_point.pose;
                     FST_ERROR("Fail to get IK result, code = 0x%llx", err);
                     FST_ERROR("Point-%d: %.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f", i, pose.position.x, pose.position.y, pose.position.z, pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
-                    FST_ERROR("Ref-joint: %s", i, printDBLine(&ref[0], buffer, LOG_TEXT_SIZE));
+                    FST_ERROR("Ref-joint: %s", printDBLine(&ref[0], buffer, LOG_TEXT_SIZE));
                     return err;
                 }
             }
@@ -1548,6 +1558,8 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 }
 #endif
 
+//#define SMOOTH_ON_DURATION
+
 ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
 {
     ErrorCode   err = SUCCESS;
@@ -1603,19 +1615,29 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
     index = cache.tail - 1;
     this_duration = 99.99;
     last_duration = 99.99;
+#ifdef SMOOTH_ON_DURATION
     double duration_ratio = 10;
+#endif
 
     while (this_duration > cache.expect_duration + MINIMUM_E6 && index > 1)
     {
         pseg = &cache.cache[index];
+#ifdef SMOOTH_ON_DURATION
         err = backwardCycle(pseg->start_state.angle, back_status[index], cache.expect_duration * duration_ratio, backward_alpha_upper, backward_alpha_lower, jerk_, pseg->backward_coeff);
+#else
+        err = backwardCycle(pseg->start_state.angle, back_status[index], cache.expect_duration, backward_alpha_upper, backward_alpha_lower, jerk_, pseg->backward_coeff);
+#endif
 
         if (err == SUCCESS)
         {
 #ifdef CHECK_COEFF
             if (!checkCoeff(pseg->backward_coeff, pseg->start_state.angle, back_status[index], backward_alpha_upper, backward_alpha_lower, jerk_))
             {
+#ifdef SMOOTH_ON_DURATION
                 FST_ERROR("ERROR in back-cycle-%d, exp-duration: %.12f", index, cache.expect_duration * duration_ratio);
+#else
+                FST_ERROR("ERROR in back-cycle-%d, exp-duration: %.12f", index, cache.expect_duration);
+#endif
                 FST_ERROR("  start-angle: %s", printDBLine(&pseg->start_state.angle[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  ending-angle: %s", printDBLine(&back_status[index].angle[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  ending-omega: %s", printDBLine(&back_status[index].omega[0], buffer, LOG_TEXT_SIZE));
@@ -1639,8 +1661,10 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
                 break;
             }
 #endif
+#ifdef SMOOTH_ON_DURATION
             duration_ratio -= 1;
             duration_ratio = duration_ratio > 1 ? duration_ratio : 1;
+#endif
             this_duration = pseg->backward_coeff[0].duration[0] + pseg->backward_coeff[0].duration[1] + pseg->backward_coeff[0].duration[2] + pseg->backward_coeff[0].duration[3];
             pseg->backward_duration = this_duration;
             sampleStartTrajectorySegment(pseg->backward_coeff, tmp, back_status[index - 1].omega, back_status[index - 1].alpha);
@@ -1700,12 +1724,19 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
     index = 1;
     this_duration = 99.99;
     last_duration = 99.99;
+#ifdef SMOOTH_ON_DURATION
     duration_ratio = 10;
+#endif
 
     while (this_duration > cache.expect_duration + MINIMUM_E6 && index < cache.tail - 1)
     {
         pseg = &cache.cache[index];
+#ifdef SMOOTH_ON_DURATION
         err = forwardCycle(fore_status[index], pseg->ending_state.angle, cache.expect_duration * duration_ratio, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
+#else
+        err = forwardCycle(fore_status[index], pseg->ending_state.angle, cache.expect_duration, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
+#endif
+
         //err = forwardCycleTest(pseg->start_state, pseg->ending_state.angle, 0.01, forward_alpha_upper, forward_alpha_lower, jerk_, pseg->forward_coeff);
 
         if (err == SUCCESS)
@@ -1713,7 +1744,11 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
 #ifdef CHECK_COEFF
             if (!checkCoeff(pseg->forward_coeff, fore_status[index], pseg->ending_state.angle, forward_alpha_upper, forward_alpha_lower, jerk_))
             {
+#ifdef SMOOTH_ON_DURATION
                 FST_ERROR("ERROR in fore-cycle-%d, exp-duration: %.12f", index, cache.expect_duration * duration_ratio);
+#else
+                FST_ERROR("ERROR in fore-cycle-%d, exp-duration: %.12f", index, cache.expect_duration);
+#endif
                 FST_ERROR("  start-angle: %s", printDBLine(&fore_status[index].angle[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  start-omega: %s", printDBLine(&fore_status[index].omega[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  start-alpha: %s", printDBLine(&fore_status[index].alpha[0], buffer, LOG_TEXT_SIZE));
@@ -1737,8 +1772,10 @@ ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
                 break;
             }
 #endif
+#ifdef SMOOTH_ON_DURATION
             duration_ratio -= 1;
             duration_ratio = duration_ratio > 1 ? duration_ratio : 1;
+#endif
             this_duration = pseg->forward_coeff[0].duration[0] + pseg->forward_coeff[0].duration[1] + pseg->forward_coeff[0].duration[2] + pseg->forward_coeff[0].duration[3];
             pseg->forward_duration = this_duration;
             sampleEndingTrajectorySegment(pseg->forward_coeff, tmp, fore_status[index + 1].omega, fore_status[index + 1].alpha);
@@ -3160,14 +3197,16 @@ sample_by_time:
 void BaseGroup::realtimeTask(void)
 {
     char buffer[LOG_TEXT_SIZE];
+
     ErrorCode   err;
     ServoState  barecore_state;
     Joint       barecore_joint;
     PoseEuler   barecore_pose;
-    size_t  send_fail_cnt = 0;
+
     size_t  stable_cnt = 0;
     timeval this_time, last_time;
     timeval t0, t1, t2, t3;
+    timeval last_send_time, fail_send_time;
 
     FST_WARN("Realtime task start.");
     memset(&barecore_joint, 0, sizeof(barecore_joint));
@@ -3246,7 +3285,7 @@ void BaseGroup::realtimeTask(void)
                         //FST_LOG("waiting pose = %s", printDBLine(&waiting_pose_[0], buffer, LOG_TEXT_SIZE));
                         //FST_LOG("current pose = %s", printDBLine(&barecore_pose[0], buffer, LOG_TEXT_SIZE));
 
-                        if (getDistance(barecore_pose.position, waiting_pose_.position) < 0.05)
+                        if (getDistance(barecore_pose.position, waiting_pose_.position) < 0.1)
                         {
                             stable_cnt ++;
                         }
@@ -3256,7 +3295,7 @@ void BaseGroup::realtimeTask(void)
                         }
                     }
 
-                    if (stable_cnt > 5)
+                    if (stable_cnt > 2)
                     {
                         FST_WARN("Waiting-fine: group is stable.");
                         waiting_fine_ = false;
@@ -3282,7 +3321,7 @@ void BaseGroup::realtimeTask(void)
 
             if (err == SUCCESS)
             {
-                send_fail_cnt = 0;
+                gettimeofday(&last_send_time, NULL);
 
                 if (group_state_ == MANUAL_TO_STANDBY)
                 {
@@ -3295,13 +3334,16 @@ void BaseGroup::realtimeTask(void)
             }
             else if (err == BARE_CORE_TIMEOUT)
             {
-                send_fail_cnt++;
+                gettimeofday(&fail_send_time, NULL);
+                delay = (fail_send_time.tv_sec - last_send_time.tv_sec) * 1000 + fail_send_time.tv_usec - last_send_time.tv_usec;
+                FST_LOG("this-time=%d.%d, last-time=%d.%d", fail_send_time.tv_sec, fail_send_time.tv_usec, last_send_time.tv_sec, last_send_time.tv_usec);
 
-                if (send_fail_cnt > 30)
+                if (delay > 100000)
                 {
-                    send_fail_cnt = 0;
-                    FST_ERROR("Cannot send point to bare core, group-state = %d", group_state_);
-                    reportError(err);
+                    last_send_time = fail_send_time;
+                    FST_LOG("delay=%d us", delay);
+                    //FST_ERROR("Cannot send point to bare core in past %d ms, group-state = %d, servo-state = %d", delay / 1000, group_state_, barecore_state);
+                    //reportError(err);
                 }
             }
             else

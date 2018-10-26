@@ -9,12 +9,13 @@
 #include <fstream>
 #include <motion_control_traj_fifo.h>
 
+//#define OUTPUT_TRAJECTORY_SEGMENT
+
 using namespace std;
 
 namespace fst_mc
 {
 
-//#define OUTPUT_TRAJECTORY_SEGMENT
 
 #ifdef OUTPUT_TRAJECTORY_SEGMENT
 #define SEGMENT_SIZE   (100000)

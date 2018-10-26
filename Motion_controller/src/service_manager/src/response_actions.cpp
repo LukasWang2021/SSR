@@ -163,7 +163,7 @@ int ResponseAction::heartbeatResponse(const ServiceResponse *resp)
     }
     if ((*resp).res_buff[1] == 1)
     {
-        std::cout<<"CORE1 Info: "<<&((*resp).res_buff[2])<<std::endl;
+        std::cout << &((*resp).res_buff[2])<<std::endl;
     }
     
     return true;

@@ -515,68 +515,9 @@ void test5(void)
 
 void test6(void)
 {
-    int i = 0;
-
-    double dq0[6] = { 0.843633346255, 0.002500094170, -0.003722662366, 0.000000000000, 0.001224394751, 0.843004218860 };
-    double ddq0[6] = { 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000 };
-
-    //double J0[6] = { 0.726371644316, 1.173016159116, -0.183878107248, -1.275994590811, 1.281452202314, 2.282744099965, };
-    //double J1[6] = { 0.731781104126, 1.192810752907, -0.200585403958, -1.290663078025, 1.302801465666, 2.332702749484, };
-    //double dq0[6] = { 1.182549432719, 1.576997220305, 1.182536756888, 1.576729702834, 1.182547123981, 1.576773065903, };
-    //double ddq0[6] = { 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000 };
-
-    double J0[6] = { 0.002901894125, -0.527333709800, 0.563477957021, 0.000000836704, -1.606934442914, 0.003107205117 };
-    double J1[6] = { 0.000000554252, -0.527325204923, 0.563465261153, 0.000000863690, -1.606930258100, 0.000208028869 };
-
-    double ddq_max[6] = { 29.094878997803, 17.526711959839, 17.201640701294, 2.310000000000, 46.051706085205, 201.006926879883 };
-    double ddq_min[6] = { -28.573509521484, -21.420650482178, -20.298382873535, -2.310000000000, -41.841939239502, -203.096262817383 };
-
-    double jmax[6] = {
-            1557692.30769231,
-            3030000 ,
-            2430000 ,
-            2210000 ,
-            1666666.75,
-            1116071.5,
-    };
-    Joint start;
-    //JointPoint start;
-    JointPoint target;
-    Joint au, al, jk;
-    TrajSegment segment[9];
-
-    au.j1 = ddq_max[0]; au.j2 = ddq_max[1]; au.j3 = ddq_max[2]; au.j4 = ddq_max[3]; au.j5 = ddq_max[4]; au.j6 = ddq_max[5];
-    al.j1 = ddq_min[0]; al.j2 = ddq_min[1]; al.j3 = ddq_min[2]; al.j4 = ddq_min[3]; al.j5 = ddq_min[4]; al.j6 = ddq_min[5];
-    start.j1 = J0[0]; start.j2 = J0[1]; start.j3 = J0[2]; start.j4 = J0[3]; start.j5 = J0[4]; start.j6 = J0[5];
-    //start.angle.j1 = J0[0]; start.angle.j2 = J0[1]; start.angle.j3 = J0[2]; start.angle.j4 = J0[3]; start.angle.j5 = J0[4]; start.angle.j6 = J0[5];
-    //start.omega.j1 = dq0[0]; start.omega.j2 = dq0[1]; start.omega.j3 = dq0[2]; start.omega.j4 = dq0[3]; start.omega.j5 = dq0[4]; start.omega.j6 = dq0[5];
-    //start.alpha.j1 = ddq0[0]; start.alpha.j2 = ddq0[1]; start.alpha.j3 = ddq0[2]; start.alpha.j4 = ddq0[3]; start.alpha.j5 = ddq0[4]; start.alpha.j6 = ddq0[5];
-
-    target.angle.j1 = J1[0]; target.angle.j2 = J1[1]; target.angle.j3 = J1[2]; target.angle.j4 = J1[3]; target.angle.j5 = J1[4]; target.angle.j6 = J1[5];
-    target.omega.j1 = dq0[0]; target.omega.j2 = dq0[1]; target.omega.j3 = dq0[2]; target.omega.j4 = dq0[3]; target.omega.j5 = dq0[4]; target.omega.j6 = dq0[5];
-    target.alpha.j1 = ddq0[0]; target.alpha.j2 = ddq0[1]; target.alpha.j3 = ddq0[2]; target.alpha.j4 = ddq0[3]; target.alpha.j5 = ddq0[4]; target.alpha.j6 = ddq0[5];
-    jk.j1 = jmax[0]; jk.j2 = jmax[1]; jk.j3 = jmax[2]; jk.j4 = jmax[3]; jk.j5 = jmax[4]; jk.j6 = jmax[5];
-
-    forwardCycle(target, start, 0.003439100345, au, al, jk, segment);
-
-    //backwardCycle(start, target, 0.001250000000, au, al, jk, segment);
+    Pose p;
 
 
-    //smoothPoint2Point(start, target, 0.032161179624, au, al, jk, segment);
-    for (int i = 0; i < 6; i++)
-    {
-        printf("start-angle: %f\n", J1[i]);
-        printf("ending-angle:%f\n", J0[i]);
-        printf("ending-omega:%f\n", dq0[i]);
-        printf("ending-alpha:%f\n", ddq0[i]);
-        printf("duration = %f %f %f %f\n", segment[i].duration[0], segment[i].duration[1], segment[i].duration[2], segment[i].duration[3]);
-        printf("total duration = %f\n", segment[i].duration[0] + segment[i].duration[1] + segment[i].duration[2] + segment[i].duration[3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[0][0], segment[i].coeff[0][1], segment[i].coeff[0][2], segment[i].coeff[0][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[1][0], segment[i].coeff[1][1], segment[i].coeff[1][2], segment[i].coeff[1][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[2][0], segment[i].coeff[2][1], segment[i].coeff[2][2], segment[i].coeff[2][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[3][0], segment[i].coeff[3][1], segment[i].coeff[3][2], segment[i].coeff[3][3]);
-        printf("\n");
-    }
 }
 
 int main(int argc, char **argv)

@@ -23,11 +23,18 @@ using namespace std;
 
 
 
+
+
+
+
 int Gauss(double A[2][2], double B[2][2], int N)
 {
 	int i, j, k;
 	double max, temp;
 	double t[2][2];
+
+	i = j = k = 0;
+	max = temp = 0.0;
 
 	for (i = 0; i < N; i++)
 	{
@@ -112,6 +119,7 @@ void getMtxMulVec(double IM[2][2], double V[2], double Res[2], int N)
 {
 	int i, j;
 
+	i = j = 0;
 	for (i = 0; i<N; i++)
 	{
 		Res[i] = 0;
@@ -268,17 +276,33 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 	//	主体程序
 
 	//定义临时变量 ta1 ta2 ta3 ta4 表示4段时间的系数值 6×1数组
-	double ta1[MAXAXES], ta2[MAXAXES], ta3[MAXAXES], ta4[MAXAXES];
+	double ta1[MAXAXES] = { 0 };
+	double ta2[MAXAXES] = { 0 };
+	double ta3[MAXAXES] = { 0 };
+	double ta4[MAXAXES] = { 0 };
 
 
 	//对各段结束时刻的位置 速度 加速度进行变量内存分配
-	double q1[MAXAXES], q2[MAXAXES], q3[MAXAXES], q4[MAXAXES];
-	double dq1[MAXAXES], dq2[MAXAXES], dq3[MAXAXES], dq4[MAXAXES];
-	double ddq1[MAXAXES], ddq2[MAXAXES], ddq3[MAXAXES], ddq4[MAXAXES];
+	double q1[MAXAXES] = { 0 };
+	double q2[MAXAXES] = { 0 };
+	double q3[MAXAXES] = { 0 };
+	double q4[MAXAXES] = { 0 };
+	double dq1[MAXAXES] = { 0 };
+	double dq2[MAXAXES] = { 0 };
+	double dq3[MAXAXES] = { 0 };
+	double dq4[MAXAXES] = { 0 };
+	double ddq1[MAXAXES] = { 0 };
+	double ddq2[MAXAXES] = { 0 }; 
+	double ddq3[MAXAXES] = { 0 };
+	double ddq4[MAXAXES] = { 0 };
 
 	//定义临时变量
-	double ddq_max[MAXAXES], dq_avg[MAXAXES], dq_avg_new[MAXAXES], deltav[MAXAXES]; //最大加速度 平均速度 总时间 jerk符号
-	int sigmaq[MAXAXES], sigma[MAXAXES];
+	double ddq_max[MAXAXES] = { 0 };
+	double dq_avg[MAXAXES] = { 0 };
+	double dq_avg_new[MAXAXES] = { 0 };
+	double deltav[MAXAXES] = { 0 }; //最大加速度 平均速度 总时间 jerk符号
+	int sigmaq[MAXAXES] = { 0 };
+	int sigma[MAXAXES] = { 0 };
 	double tempT[MAXAXES] = { 0 };
 	double newT[2] = { 0 };
 	double snewT[2] = { 0 };
@@ -286,7 +310,10 @@ ErrorCode calculateParam(double q0[MAXAXES], double dq0[MAXAXES], double ddq0[MA
 	double r[3] = { 0 };
 	double a0, a1, a2, a3;
 
+	a0 = a1 = a2 = a3 = 0.0;
 	double a, b, c, lamda, slamda;
+	a = b = c = lamda = slamda = 0.0;
+
 	int dofn = MAXAXES;
 
 	if (type == 1) // 加速计算
@@ -2541,15 +2568,49 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 	double dq_avg[6];
 	double ddq_max[6] = { 0 };// {
 	double ddq_min[6] = { 0 };
+	double dq_lim[6] = { -5.8119,
+		-4.6600,
+		-5.8119,
+		-7.8540,
+		-7.0686,
+		-10.5592 };
+	double time_adj[6] = { 0 };
+	double maxduration = -1.0;
+
 
 	J0[0] = start.angle.j1; J0[1] = start.angle.j2; J0[2] = start.angle.j3; J0[3] = start.angle.j4; J0[4] = start.angle.j5; J0[5] = start.angle.j6;
 	J1[0] = target.angle.j1; J1[1] = target.angle.j2; J1[2] = target.angle.j3; J1[3] = target.angle.j4; J1[4] = target.angle.j5; J1[5] = target.angle.j6;
 	for (int i = 0; i < 6; i++)
 	{
+
 		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
 			dq_avg[i] = 0;
 		else
 			dq_avg[i] = (J1[i] - J0[i]) / exp_duration;
+
+		if (fabs(dq_avg[i]) > fabs(dq_lim[i]))
+		{
+			time_adj[i] = fabs((J1[i] - J0[i]) / dq_lim[i]);
+		}
+		else
+		{
+			time_adj[i] = exp_duration;
+		}
+
+		if (time_adj[i] > maxduration)
+		{
+			maxduration = time_adj[i];
+		}
+	}
+
+	for (int i = 0; i < 6; i++)
+	{
+
+		if ((J1[i] - J0[i]) > -minimq && (J1[i] - J0[i]) < minimq)
+			dq_avg[i] = 0;
+		else
+			dq_avg[i] = (J1[i] - J0[i]) / maxduration;
+
 	}
 
 	double dq0[6] = { 0 };
@@ -2609,7 +2670,7 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 	}
 
 
-	double maxT = exp_duration;
+	double maxT = maxduration;
 
 	ErrorCode ret = 0;
 
@@ -2646,39 +2707,6 @@ ErrorCode smoothPoint2Point(const JointPoint &start, const JointPoint &target, d
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

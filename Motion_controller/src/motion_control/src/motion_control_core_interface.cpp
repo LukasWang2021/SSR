@@ -44,10 +44,10 @@ bool BareCoreInterface::initInterface(void)
         return false;
     }
 
-    if (jtac_param_interface_.createChannel(COMM_REQ, COMM_IPC, "servo_param") != SUCCESS)
-    {
-        return false;
-    }
+    //if (jtac_param_interface_.createChannel(COMM_REQ, COMM_IPC, "servo_param") != SUCCESS)
+    //{
+    //    return false;
+    //}
 
     return true;
 }
@@ -158,7 +158,8 @@ bool BareCoreInterface::setConfigData(int id, const vector<double> &data)
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
     memcpy(&req.req_buff[8], (char*)&data[0], len * sizeof(double));
-    return sendRequest(jtac_param_interface_ , req);
+    //return sendRequest(jtac_param_interface_ , req);
+    return sendRequest(command_interface_ , req);
 }
 
 bool BareCoreInterface::getConfigData(int id, vector<double> &data)
@@ -169,11 +170,13 @@ bool BareCoreInterface::getConfigData(int id, vector<double> &data)
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
 
-    if (sendRequest(jtac_param_interface_, req))
+    //if (sendRequest(jtac_param_interface_, req))
+    if (sendRequest(command_interface_, req))
     {
         ServiceResponse res;
 
-        if (recvResponse(jtac_param_interface_, res))
+        //if (recvResponse(jtac_param_interface_, res))
+        if (recvResponse(command_interface_, res))
         {
             if (*((int*)(&res.res_buff[0])) == id && *((int*)(&res.res_buff[4])) == len)
             {
@@ -192,11 +195,13 @@ bool BareCoreInterface::getEncoder(vector<int> &data)
     int len = data.size();
     memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
 
-    if (sendRequest(jtac_param_interface_, req))
+    //if (sendRequest(jtac_param_interface_, req))
+    if (sendRequest(command_interface_, req))
     {
         ServiceResponse res;
 
-        if (recvResponse(jtac_param_interface_, res))
+        //if (recvResponse(jtac_param_interface_, res))
+        if (recvResponse(command_interface_, res))
         {
             if (*((int*)(&res.res_buff[0])) == len)
             {
@@ -218,11 +223,13 @@ bool BareCoreInterface::getControlPosition(double *data, size_t size)
     req.req_id = GET_CONTROL_POS;
     memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
 
-    if (sendRequest(jtac_param_interface_, req))
+    //if (sendRequest(jtac_param_interface_, req))
+    if (sendRequest(command_interface_, req))
     {
         ServiceResponse res;
 
-        if (recvResponse(jtac_param_interface_, res))
+        //if (recvResponse(jtac_param_interface_, res))
+        if (recvResponse(command_interface_, res))
         {
             if (*((int*)(&res.res_buff[0])) == len)
             {

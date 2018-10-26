@@ -516,8 +516,37 @@ void test5(void)
 void test6(void)
 {
     Pose p;
+    Joint ref, res;
+    Logger log;
+    ArmGroup arm(&log);
+    ErrorMonitor error_monitor;
+    ThreadHelp rt_thread;
 
+    arm.initGroup(&error_monitor);
 
+    p.position.x = 430.493206;
+    p.position.y = 81.351958;
+    p.position.z = 564.339605;
+    p.orientation.w = -0.001571;
+    p.orientation.x = 0.999334;
+    p.orientation.y = 0.014975;
+    p.orientation.z = 0.024502;
+
+    ref.j1 = 0.185517603768;
+    ref.j2 = -0.158492925047;
+    ref.j3 = -0.050531790903;
+    ref.j4 = -0.005467348039;
+    ref.j5 = -1.312221853982;
+    ref.j6 = 0.156383300619;
+
+    ErrorCode err = arm.getKinematicsPtr()->inverseKinematicsInUser(p, ref, res);
+    if (err != SUCCESS)
+    {
+        log.error("IK err: %x", err);
+    }
+    log.info("Pose: %.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f", p.position.x, p.position.y, p.position.z, p.orientation.w, p.orientation.x, p.orientation.y, p.orientation.z);
+    log.info("Ref: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", ref[0], ref[1], ref[2], ref[3], ref[4], ref[5]);
+    log.info("Res: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", res[0], res[1], res[2], res[3], res[4], res[5]);
 }
 
 int main(int argc, char **argv)

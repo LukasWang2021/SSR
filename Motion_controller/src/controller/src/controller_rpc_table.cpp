@@ -110,6 +110,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/convertCartToJoint", 0x00010FD4, &ControllerRpc::handleRpc0x00010FD4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/convertJointToCart", 0x0000B6D4, &ControllerRpc::handleRpc0x0000B6D4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/ignoreLostZeroError", 0x00014952, &ControllerRpc::handleRpc0x00014952}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setAllZeroPointOffsets", 0x00008AB4, &ControllerRpc::handleRpc0x00008AB4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getAllZeroPointOffsets", 0x00012353, &ControllerRpc::handleRpc0x00012353}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus", 0x0000C183, &ControllerRpc::handleRpc0x0000C183}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/saveAllZeroPointOffsets", 0x000171D3, &ControllerRpc::handleRpc0x000171D3}; rpc_table_.push_back(rpc_service);

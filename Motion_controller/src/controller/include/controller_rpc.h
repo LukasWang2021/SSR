@@ -269,6 +269,8 @@ private:
     void handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/ignoreLostZeroError"
     void handleRpc0x00014952(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setAllZeroPointOffsets"
+    void handleRpc0x00008AB4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getAllZeroPointOffsets"
     void handleRpc0x00012353(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus"

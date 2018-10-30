@@ -377,6 +377,8 @@ private:
 
     /********rpc/motion_control/axis_group/ignoreLostZeroError, RequestMessageType_Int32**********/
     void handleRequest0x00014952(int recv_bytes);
+    /********rpc/motion_control/axis_group/setAllZeroPointOffsets, RequestMessageType_Int32_DoubleList(count=9)**********/
+    void handleRequest0x00008AB4(int recv_bytes);
     /********rpc/motion_control/axis_group/getAllZeroPointOffsets, RequestMessageType_Int32**********/
     void handleRequest0x00012353(int recv_bytes);
     /********rpc/motion_control/axis_group/getAllZeroErrorMaskStatus, RequestMessageType_Int32**********/
@@ -679,6 +681,8 @@ private:
 
     /********rpc/motion_control/axis_group/ignoreLostZeroError, ResponseMessageType_Uint64**********/
     void handleResponse0x00014952(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+        /********rpc/motion_control/axis_group/setAllZeroPointOffsets, ResponseMessageType_Uint64**********/
+    void handleResponse0x00008AB4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getAllZeroPointOffsets, ResponseMessageType_Uint64_DoubleList(count=9)**********/
     void handleResponse0x00012353(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getAllZeroErrorMaskStatus, ResponseMessageType_Uint64_Int32List(count=9)**********/

@@ -138,7 +138,7 @@ typedef struct _ErrInfo {
 
 char * gosub_pop(struct thread_control_block * objThreadCntrolBlock);
 
-struct thread_control_block g_thread_control_block[NUM_THREAD];
+struct thread_control_block g_thread_control_block[NUM_THREAD + 1];
 jmp_buf e_buf; /* hold environment for longjmp() */
 
 struct select_and_cycle_stack select_and_cycle_pop(
@@ -203,9 +203,9 @@ void get_params(struct thread_control_block * objThreadCntrolBlock);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 
 #ifdef WIN32
-HANDLE    g_basic_interpreter_handle[NUM_THREAD];
+HANDLE    g_basic_interpreter_handle[NUM_THREAD + 1];
 #else
-pthread_t g_basic_interpreter_handle[NUM_THREAD];
+pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
 #endif
 
 extern MacroInstrMgr  *  g_macro_instr_mgr_ptr; 
@@ -488,6 +488,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	    FST_INFO("free(objThreadCntrolBlock->p_buf);");
 		free(objThreadCntrolBlock->p_buf);
 		objThreadCntrolBlock->p_buf = NULL ;
+		objThreadCntrolBlock->prog = NULL ;
+		objThreadCntrolBlock->prog_end = NULL ;
 	  }
 	  FST_INFO("free(objThreadCntrolBlock->instrSet);");
 	  if(objThreadCntrolBlock->instrSet)
@@ -507,6 +509,15 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			  objThreadCntrolBlock->sub_prog[i] = NULL ;
 		  }
 	  }
+	  objThreadCntrolBlock->global_vars.clear();
+	  objThreadCntrolBlock->local_var_stack.clear();
+	  // objThreadCntrolBlock->func_call_stack.clear();
+	  while(!objThreadCntrolBlock->func_call_stack.empty()) 
+	  	objThreadCntrolBlock->func_call_stack.pop();
+	  
+	  objThreadCntrolBlock->prog_jmp_line.clear();
+	  objThreadCntrolBlock->sub_label_table.clear();
+	  objThreadCntrolBlock->start_mov_position.clear();
 	  FST_INFO("return %d", iRet);
 	  return iRet;
   }

@@ -21,6 +21,7 @@ int main(int  argc, char *argv[])
 	if(log_ptr_ == NULL)
 	{
 		log_ptr_ = new fst_log::Logger();
+    	FST_LOG_INIT("Interpreter");
 	}
 	initShm();
 	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));

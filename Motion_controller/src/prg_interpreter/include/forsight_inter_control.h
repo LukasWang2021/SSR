@@ -76,6 +76,12 @@ void setMoveCommandDestination(MoveCommandDestination movCmdDst);
 void getMoveCommandDestination(MoveCommandDestination& movCmdDst);
 void copyMoveCommandDestination(MoveCommandDestination& movCmdDst);
 
+struct thread_control_block *  getThreadControlBlock();
+int  getCurrentThreadSeq();
+void incCurrentThreadSeq();
+void decCurrentThreadSeq();
+
+
 #endif
 
 

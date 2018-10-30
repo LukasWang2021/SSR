@@ -48,12 +48,12 @@ fst_base::InterpreterServerCmd g_lastcmd;
 static InterpreterState g_privateInterpreterState;
 
 extern jmp_buf e_buf; /* hold environment for longjmp() */
-extern struct thread_control_block g_thread_control_block[NUM_THREAD];
+extern struct thread_control_block g_thread_control_block[NUM_THREAD + 1];
 
 #ifdef WIN32
-extern HANDLE    g_basic_interpreter_handle[NUM_THREAD];
+extern HANDLE    g_basic_interpreter_handle[NUM_THREAD + 1];
 #else
-extern pthread_t g_basic_interpreter_handle[NUM_THREAD];
+extern pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
 #endif
 int  g_iCurrentThreadSeq = -1 ;  // minus one add one equals to zero
 
@@ -261,6 +261,40 @@ void setProgramName(char * program_name)
 {
     FST_INFO("setProgramName to %s", program_name);
 	strcpy(g_interpreter_publish.program_name, program_name); 
+}
+
+struct thread_control_block *  getThreadControlBlock()
+{
+	if(getCurrentThreadSeq() < 0)
+    {
+        FST_ERROR("getThreadControlBlock failed from %d", getCurrentThreadSeq());
+		return NULL;
+	}
+	else
+    {
+    	FST_INFO("getThreadControlBlock at %d", getCurrentThreadSeq());
+		return &g_thread_control_block[getCurrentThreadSeq()] ;
+	}
+}
+
+int getCurrentThreadSeq()
+{
+	return g_iCurrentThreadSeq ;
+}
+
+void incCurrentThreadSeq()
+{
+	if(g_iCurrentThreadSeq < NUM_THREAD)
+		g_iCurrentThreadSeq++ ;
+	else
+		g_iCurrentThreadSeq = 0 ;
+}
+
+void decCurrentThreadSeq()
+{
+	if(g_iCurrentThreadSeq == 0)
+    	FST_ERROR("g_iCurrentThreadSeq == 0");
+	g_iCurrentThreadSeq-- ;
 }
 
 InterpreterState getPrgmState()
@@ -690,10 +724,11 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             break;
         case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
-            FST_INFO("debug...");
-			g_iCurrentThreadSeq++ ;
-			if(g_iCurrentThreadSeq < 0) break ;
-		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+            FST_INFO("start debug %s ...", intprt_ctrl.start_ctrl);
+			incCurrentThreadSeq();
+		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			
             objThdCtrlBlockPtr->prog_mode = STEP_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
@@ -703,16 +738,16 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			   strcpy(intprt_ctrl.start_ctrl, "while_test");
 			}
             startFile(objThdCtrlBlockPtr, 
-				intprt_ctrl.start_ctrl, g_iCurrentThreadSeq);
+				intprt_ctrl.start_ctrl, getCurrentThreadSeq());
 	        // g_iCurrentThreadSeq++ ;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_START:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
-            FST_INFO("start run...");
             FST_INFO("start run %s ...", intprt_ctrl.start_ctrl);
-			g_iCurrentThreadSeq++ ;
-			if(g_iCurrentThreadSeq < 0) break ;
-		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			incCurrentThreadSeq();
+		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			
             objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
@@ -722,18 +757,20 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			   strcpy(intprt_ctrl.start_ctrl, "reconstruction_pr_test");
 			}
 			startFile(objThdCtrlBlockPtr, 
-				intprt_ctrl.start_ctrl, g_iCurrentThreadSeq);
+				intprt_ctrl.start_ctrl, getCurrentThreadSeq());
 	        // g_iCurrentThreadSeq++ ;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_JUMP:
 			memcpy(intprt_ctrl.jump_line, requestDataPtr, 256);
-			if(g_iCurrentThreadSeq < 0) break ;
-			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
+			if(getCurrentThreadSeq() < 0) break ;
+			if(g_basic_interpreter_handle[getCurrentThreadSeq()] == 0)
 			{
             	FST_ERROR("Thread exits at %d ", getPrgmState());
 				break;
 			}
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
 				FST_ERROR("Can not JUMP macro ");
@@ -766,26 +803,31 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			break;
         case fst_base::INTERPRETER_SERVER_CMD_SWITCH_STEP:
 			memcpy(&intprt_ctrl.step_mode, requestDataPtr, sizeof(int));
-            FST_INFO("switch Step at %d with %d", g_iCurrentThreadSeq, intprt_ctrl.step_mode);
-			if(g_iCurrentThreadSeq < 0) break ;
-			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
+            FST_INFO("switch Step at %d with %d", 
+				getCurrentThreadSeq(), intprt_ctrl.step_mode);
+			if(getCurrentThreadSeq() < 0) break ;
+			if(g_basic_interpreter_handle[getCurrentThreadSeq()] == 0)
 			{
             	FST_ERROR("Thread exits at %d ", getPrgmState());
 				break;
 			}
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
             FST_INFO("SWITCH_STEP with %d", intprt_ctrl.step_mode);
             objThdCtrlBlockPtr->prog_mode = intprt_ctrl.step_mode;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
-            FST_INFO("step forward at %d ", g_iCurrentThreadSeq);
-			if(g_iCurrentThreadSeq < 0) break ;
-			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
+            FST_INFO("step forward at %d ", getCurrentThreadSeq());
+			if(getCurrentThreadSeq() < 0) break ;
+			if(g_basic_interpreter_handle[getCurrentThreadSeq()] == 0)
 			{
             	FST_ERROR("Thread exits at %d ", getPrgmState());
 				break;
 			}
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
 				FST_ERROR("Can not FORWARD macro ");
@@ -821,14 +863,16 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             setLinenum(objThdCtrlBlockPtr, iLineNum);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_BACKWARD:
-            FST_INFO("backward at %d ", g_iCurrentThreadSeq);
-			if(g_iCurrentThreadSeq < 0) break ;
-			if(g_basic_interpreter_handle[g_iCurrentThreadSeq] == 0)
+            FST_INFO("backward at %d ", getCurrentThreadSeq());
+			if(getCurrentThreadSeq() < 0) break ;
+			if(g_basic_interpreter_handle[getCurrentThreadSeq()] == 0)
 			{
             	FST_ERROR("Thread exits at %d ", getPrgmState());
 				break;
 			}
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
 				FST_ERROR("Can not BACKWARD macro ");
@@ -892,8 +936,10 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    setLinenum(objThdCtrlBlockPtr, iLineNum);
 		    break;
 		case fst_base::INTERPRETER_SERVER_CMD_RESUME:
-			if(g_iCurrentThreadSeq < 0) break ;
-		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			if(getCurrentThreadSeq() < 0) break ;
+		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			
 			if(getPrgmState() == INTERPRETER_PAUSED)
 	        {
@@ -906,12 +952,19 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			    setWarning(FAIL_INTERPRETER_NOT_IN_PAUSE);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_PAUSE:
-			if(g_iCurrentThreadSeq < 0) break ;
-			objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			if(getCurrentThreadSeq() < 0) break ;
+			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			if(objThdCtrlBlockPtr->is_in_macro == true)
 			{
 				FST_ERROR("Can not PAUSE macro ");
 				break;
+			}
+			if(getPrgmState() == INTERPRETER_IDLE)
+			{
+            	FST_ERROR("Can not PAUSE in INTERPRETER_IDLE ");
+           		break;
 			}
 			
             userOpMode = getUserOpMode();
@@ -924,8 +977,10 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             break;
         case fst_base::INTERPRETER_SERVER_CMD_ABORT:
             FST_INFO("abort motion");
-			if(g_iCurrentThreadSeq < 0) break ;
-		    objThdCtrlBlockPtr = &g_thread_control_block[g_iCurrentThreadSeq];
+			if(getCurrentThreadSeq() < 0) break ;
+		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+		    objThdCtrlBlockPtr = getThreadControlBlock();
+			if(objThdCtrlBlockPtr == NULL) break ;
 			
 	        objThdCtrlBlockPtr->is_abort = true;
             // target_line = getMaxLineNum();

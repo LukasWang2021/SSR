@@ -1025,9 +1025,17 @@ void forgesight_load_programs_path()
 #ifdef WIN32
     g_files_manager_data_path = std::string(DATA_PATH);
 #else
-    fst_parameter::ParamGroup param_;
-    param_.loadParamFile("/root/install/share/configuration/machine/programs_path.yaml");
-    param_.getParam("file_manager/data", g_files_manager_data_path);
+	g_files_manager_data_path = string(getenv("ROBOT_DATA_PREFIX"));
+	if(g_files_manager_data_path.length() == 0)
+	{
+	    fst_parameter::ParamGroup param_;
+	    param_.loadParamFile("/root/install/share/configuration/machine/programs_path.yaml");
+	    param_.getParam("file_manager/data", g_files_manager_data_path);
+	}
+	else
+	{
+		g_files_manager_data_path.append("/robot_data/");
+	}
 	FST_INFO("forgesight_load_programs_path: %s .", g_files_manager_data_path.c_str());
 #endif
 	

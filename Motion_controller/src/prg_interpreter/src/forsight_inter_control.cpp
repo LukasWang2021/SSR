@@ -1021,6 +1021,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 
 void forgesight_load_programs_path()
 {
+	std::string data_path = "";
 	g_files_manager_data_path = "";
 #ifdef WIN32
     g_files_manager_data_path = std::string(DATA_PATH);
@@ -1030,11 +1031,14 @@ void forgesight_load_programs_path()
 	{
 	    fst_parameter::ParamGroup param_;
 	    param_.loadParamFile("/root/install/share/configuration/machine/programs_path.yaml");
-	    param_.getParam("file_manager/data", g_files_manager_data_path);
+	    param_.getParam("file_manager/programs_path", g_files_manager_data_path);
 	}
 	else
 	{
-		g_files_manager_data_path.append("/robot_data/");
+	    fst_parameter::ParamGroup param_;
+	    param_.loadParamFile("/root/install/share/configuration/machine/programs_path.yaml");
+	    param_.getParam("file_manager/data_path", data_path);
+		g_files_manager_data_path.append(data_path);
 	}
 	FST_INFO("forgesight_load_programs_path: %s .", g_files_manager_data_path.c_str());
 #endif

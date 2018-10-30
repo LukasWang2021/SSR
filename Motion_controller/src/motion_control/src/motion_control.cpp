@@ -1,10 +1,12 @@
 #include <string.h>
+#include <motion_control_ros_basic.h>
 #include <motion_control.h>
 #include <motion_control_arm_group.h>
 #include <tool_manager.h>
 #include <coordinate_manager.h>
 #include "../../coordinate_manager/include/coordinate_manager.h"
 #include "../../tool_manager/include/tool_manager.h"
+
 
 
 using namespace fst_base;
@@ -14,9 +16,44 @@ using namespace fst_hal;
 using namespace fst_ctrl;
 
 
+
 static void rtTask(void *group)
 {
     ((BaseGroup*)group)->realtimeTask();
+}
+
+static void nonRtTask(void *mc)
+{
+    ((MotionControl*)mc)->nonRealTimeTask();
+}
+
+void MotionControl::nonRealTimeTask(void)
+{
+    Joint servo_joint;
+    int ros_publish_cnt = 0;
+
+    memset(&servo_joint, 0, sizeof(servo_joint));
+
+    FST_WARN("Non-Realtime task start.");
+
+    while (non_rt_task_running_)
+    {
+        if (param_ptr_->enable_ros_publish_)
+        {
+            ros_publish_cnt ++;
+
+            if (ros_publish_cnt >= param_ptr_->cycle_per_publish_)
+            {
+                ros_publish_cnt = 0;
+                group_ptr_->getLatestJoint(servo_joint);
+                ros_basic_ptr_->pubJointState(servo_joint);
+            }
+        }
+
+        usleep(param_ptr_->non_rt_cycle_time_ * 1000);
+    }
+
+    FST_WARN("Non-Realtime task quit.");
 }
 
 
@@ -29,15 +66,26 @@ MotionControl::MotionControl()
     error_monitor_ptr_ = NULL;
     log_ptr_ = NULL;
     param_ptr_ = NULL;
+
+    non_rt_task_running_ = false;
+
+    ros_basic_ptr_ = NULL;
 }
 
 MotionControl::~MotionControl()
 {
     stopRealtimeTask();
 
-    if (group_ptr_ != NULL)   {delete group_ptr_; group_ptr_ = NULL;};
-    if (param_ptr_ != NULL)   {delete param_ptr_; param_ptr_ = NULL;};
-    if (log_ptr_ != NULL)   {delete log_ptr_; log_ptr_ = NULL;};
+    if (non_rt_task_running_)
+    {
+        non_rt_task_running_ = false;
+        non_rt_thread_.join();
+    }
+
+    if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
+    if (param_ptr_ != NULL)     {delete param_ptr_; param_ptr_ = NULL;};
+    if (log_ptr_ != NULL)       {delete log_ptr_; log_ptr_ = NULL;};
+    if (ros_basic_ptr_ != NULL)  {delete ros_basic_ptr_; ros_basic_ptr_ = NULL;};
 }
 
 ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
@@ -51,6 +99,12 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
 
     if (log_ptr_ == NULL || param_ptr_ == NULL || group_ptr_ == NULL)
     {
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    if (!log_ptr_->initLogger("MotionControl"))
+    {
+        FST_ERROR("Lost communication with log server, init MotionControl abort.");
         return MOTION_INTERNAL_FAULT;
     }
 
@@ -70,8 +124,23 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         return INVALID_PARAMETER;
     }
 
+    if(!param_ptr_->loadParam())
+    {
+        FST_ERROR("Failed to load MotionControl component parameters");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Log-level of MotionControl setted to: %d", param_ptr_->log_level_);
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+
     user_frame_id_ = 0;
     tool_frame_id_ = 0;
+
+    if (param_ptr_->enable_ros_publish_)
+    {
+        ros_basic_ptr_ = new RosBasic;
+        ros_basic_ptr_->initRosBasic();
+    }
 
     ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);
 
@@ -79,20 +148,38 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     {
         if (startRealtimeTask())
         {
-            FST_INFO("Initialize motion group success.");
-            return SUCCESS;
+            FST_INFO("Startup real-time task success.");
         }
         else
         {
-            FST_ERROR("Fail to create rt task.");
+            FST_ERROR("Fail to create real-time task.");
             return MOTION_INTERNAL_FAULT;
         }
+
+
+
+        non_rt_task_running_ = true;
+
+        if (non_rt_thread_.run(&nonRtTask, this, 40))
+        {
+            FST_INFO("Startup non-real-time task success.");
+        }
+        else
+        {
+            FST_ERROR("Fail to create non-real-time task.");
+            non_rt_task_running_ = false;
+            return MOTION_INTERNAL_FAULT;
+        }
+
+        FST_INFO("Initialize motion group success.");
     }
     else
     {
         FST_ERROR("Fail to init motion group");
         return err;
     }
+
+    return SUCCESS;
 }
 
 bool MotionControl::startRealtimeTask(void)
@@ -269,6 +356,15 @@ bool MotionControl::nextMovePermitted(void)
     return group_ptr_->nextMovePermitted();
 }
 
+void MotionControl::setOffset(size_t index, double offset)
+{
+    group_ptr_->getCalibratorPtr()->setOffset(index, offset);
+}
+
+void MotionControl::setOffset(const double (&offset)[NUM_OF_JOINT])
+{
+    group_ptr_->getCalibratorPtr()->setOffset(offset);
+}
 
 void MotionControl::getOffset(double (&offset)[NUM_OF_JOINT])
 {

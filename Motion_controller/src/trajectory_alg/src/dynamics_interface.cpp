@@ -2436,15 +2436,15 @@ namespace fst_algorithm
         memset(robot_model_.b,0,sizeof(robot_model_.b));  
         memset(robot_model_.tc,0,sizeof(robot_model_.tc));   
     
-        servo_model_[0].rated_torque=716;
+        servo_model_[0].rated_torque=716 * 0.75;
         servo_model_[0].jm=0.00013;
         servo_model_[0].gr=81;
         //servo_model_[0].b=0; //friction factor
-        servo_model_[1].rated_torque=573;
+        servo_model_[1].rated_torque=573 * 0.75;
         servo_model_[1].jm=0.000059;
-        servo_model_[1].gr=101;  
+        servo_model_[1].gr=101;
         //servo_model_[1].b=0; //friction factor
-        servo_model_[2].rated_torque=382;
+        servo_model_[2].rated_torque=382 * 0.75;
         servo_model_[2].jm=0.000044;
         servo_model_[2].gr=81;   
         //servo_model_[2].b=0; //friction factor   

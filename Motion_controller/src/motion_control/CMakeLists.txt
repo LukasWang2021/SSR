@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(motion_control)
 
 find_package(catkin REQUIRED COMPONENTS
+    roscpp
     base_device
     fst_axis_device
     virtual_axis_device
@@ -61,7 +62,8 @@ catkin_package(
     INCLUDE_DIRS include
     #LIBRARIES fst_axis_group
     LIBRARIES motion_control
-    DEPENDS base_device 
+    DEPENDS roscpp
+    DEPENDS base_device
     DEPENDS fst_axis_device 
     DEPENDS virtual_axis_device 
     DEPENDS device_manager 
@@ -96,6 +98,7 @@ add_library(motion_control
     src/motion_control_offset_calibrator.cpp
     src/motion_control_constraint.cpp
     src/motion_control_traj_fifo.cpp
+    src/motion_control_ros_basic.cpp
 )
 
 add_executable(manual_test

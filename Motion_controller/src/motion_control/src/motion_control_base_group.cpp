@@ -1558,7 +1558,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 }
 #endif
 
-//#define SMOOTH_ON_DURATION
+#define SMOOTH_ON_DURATION
 
 ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
 {
@@ -2205,10 +2205,10 @@ ErrorCode BaseGroup::createTrajectory(void)
                     freeTrajectoryCache(p);
                     continue;
                 }
-                else if (auto_time_ + 0.05 < traj_fifo_.timeFromStart())
+                else if (auto_time_ + 0.015 < traj_fifo_.timeFromStart())
                 {
                     // Next motion is NOT ready, waiting for next motion
-                    //FST_LOG("Next motion is NOT ready, waiting for next motion");
+                    FST_LOG("Next motion is NOT ready, waiting for next motion");
                     break;
                 }
                 else
@@ -2682,9 +2682,12 @@ ErrorCode BaseGroup::sendPoint(void)
     }
     else if (group_state_ == AUTO || group_state_ == AUTO_TO_STANDBY || group_state_ == AUTO_TO_PAUSE)
     {
+        bool wait_while_start = auto_time_ < cycle_time_;
+        static size_t wait_cnt = 0;
+
         if (bare_core_.isPointCacheEmpty())
         {
-            size_t length = 10;
+            size_t  length = 10;
             TrajectoryPoint point[10];
             err = pickFromAuto(point, length);
 
@@ -2695,9 +2698,22 @@ ErrorCode BaseGroup::sendPoint(void)
             }
 
             bare_core_.fillPointCache(point, length, POINT_POS_VEL);
+
+            if (wait_while_start)
+            {
+                wait_cnt = 20;
+            }
         }
 
-        return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+        if (wait_cnt == 0)
+        {
+            return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+        }
+        else
+        {
+            wait_cnt --;
+            return SUCCESS;
+        }
     }
     else
     {
@@ -3191,7 +3207,6 @@ sample_by_time:
 
     return SUCCESS;
 }
-
 
 
 void BaseGroup::realtimeTask(void)

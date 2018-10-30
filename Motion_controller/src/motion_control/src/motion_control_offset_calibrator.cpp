@@ -109,7 +109,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     if (stat.size() != NUM_OF_JOINT)
     {
         FST_ERROR("Invalid array size of joint-mask, except %d but get %d", NUM_OF_JOINT, stat.size());
-        return false;
+        return INVALID_PARAMETER;
     }
     FST_INFO("Recorded-Masks: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE));
 
@@ -431,18 +431,18 @@ ErrorCode Calibrator::calibrateOffset(size_t index)
             zero_offset_[index] = calculateOffset(old_offset_data[index], cur_jnt[index], 0);
             offset_need_save_[index] = NEED_SAVE;
             FST_INFO("Done.");
-            return true;
+            return SUCCESS;
         }
         else
         {
             FST_ERROR("Fail to get current offset or current joint from Core1");
-            return false;
+            return BARE_CORE_TIMEOUT;
         }
     }
     else
     {
         FST_ERROR("Index out of range.");
-        return false;
+        return INVALID_PARAMETER;
     }
 }
 
@@ -826,6 +826,28 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
 }
 
 
+void Calibrator::setOffset(size_t index, double offset)
+{
+    if (index < joint_num_)
+    {
+        zero_offset_[index] = offset;
+        offset_need_save_[index] = NEED_SAVE;
+    }
+}
+
+
+void Calibrator::setOffset(const double *offset)
+{
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        zero_offset_[i] = offset[i];
+        offset_need_save_[i] = NEED_SAVE;
+    }
+
+    return SUCCESS;
+}
+
+
 void Calibrator::getOffset(double *offset)
 {
     bool need_save = false;
@@ -928,13 +950,13 @@ ErrorCode Calibrator::deleteReference(void)
         else
         {
             FST_ERROR("Fail to get item from config file, error code = 0x%llx", params.getLastError());
-            return false;
+            return params.getLastError();
         }
     }
     else
     {
         FST_ERROR("Fail to load config file, error code = 0x%llx", params.getLastError());
-        return false;
+        return params.getLastError();
     }
 }
 
@@ -1106,7 +1128,7 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
         else
         {
             FST_ERROR("  joint index = %d, index out of range", pindex[i]);
-            return false;
+            return INVALID_PARAMETER;
         }
     }
 
@@ -1145,12 +1167,12 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
                     }
 
                     FST_INFO("New offset: %s", printDBLine(zero_offset_, buffer, LOG_TEXT_SIZE));
-                    return true;
+                    return SUCCESS;
                 }
                 else
                 {
                     FST_ERROR("Fail to get current encoders.");
-                    return false;
+                    return BARE_CORE_TIMEOUT;
                 }
             }
             else

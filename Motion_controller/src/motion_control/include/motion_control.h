@@ -2,17 +2,17 @@
 #define MOTION_CONTROL_H
 
 
-#include "common_log.h"
-#include "motion_control_param.h"
-#include "device_manager.h"
-#include "axis_group_manager.h"
-#include "coordinate_manager.h"
-#include "tool_manager.h"
-#include "motion_control_arm_group.h"
-#include "error_monitor.h"
-#include "error_code.h"
-#include "thread_help.h"
-#include "base_datatype.h"
+#include <common_log.h>
+#include <motion_control_param.h>
+#include <device_manager.h>
+#include <axis_group_manager.h>
+#include <coordinate_manager.h>
+#include <tool_manager.h>
+#include <motion_control_arm_group.h>
+#include <error_monitor.h>
+#include <error_code.h>
+#include <thread_help.h>
+#include <motion_control_ros_basic.h>
 
 
 namespace fst_mc
@@ -51,6 +51,8 @@ public:
     bool nextMovePermitted(void);
 
     // API for zero offset and calibrator
+    void setOffset(size_t index, double offset);
+    void setOffset(const double (&offset)[NUM_OF_JOINT]);
     void getOffset(double (&offset)[NUM_OF_JOINT]);
     void getOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT]);
     CalibrateState getCalibrateState(void);
@@ -112,13 +114,18 @@ public:
 
     // parameter access
     // ...
+
+    void nonRealTimeTask(void);
     
 private:
     bool startRealtimeTask(void);
     bool stopRealtimeTask(void);
 
+
     int  user_frame_id_;
     int  tool_frame_id_;
+
+    bool non_rt_task_running_;
 
     MotionControlParam* param_ptr_;
     fst_log::Logger* log_ptr_;
@@ -129,6 +136,9 @@ private:
     fst_base::ErrorMonitor *error_monitor_ptr_;
     BaseGroup *group_ptr_;
     fst_base::ThreadHelp rt_thread_;
+    fst_base::ThreadHelp non_rt_thread_;
+
+    RosBasic        *ros_basic_ptr_;
 };
 
 

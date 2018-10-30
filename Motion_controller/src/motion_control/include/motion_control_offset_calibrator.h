@@ -65,7 +65,8 @@ class Calibrator
     ErrorCode maskOffsetLostError(void);
     ErrorCode setOffsetState(size_t index, OffsetState stat);
 
-
+    void setOffset(size_t index, double offset);
+    void setOffset(const double *offset);
     void getOffset(double *offset);
     void getOffsetMask(OffsetMask *mask);
     CalibrateState getCalibrateState(void);

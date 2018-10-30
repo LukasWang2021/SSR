@@ -31,18 +31,6 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     cycle_time_ = 0.001;
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 
-    /*
-    char buf[LOG_ITEM_SIZE];
-    struct timeval time_now;
-    gettimeofday(&time_now, NULL);
-    sprintf(buf, "ArmGroup%ld.%ld", time_now.tv_sec, time_now.tv_usec);
-*/
-    if (!log_ptr_->initLogger("ArmGroup"))
-    {
-        FST_ERROR("Lost communication with log server, initGroup abort.");
-        return MOTION_INTERNAL_FAULT;
-    }
-
     FST_INFO("Error monitor addr: 0x%x", error_monitor_ptr);
     if (error_monitor_ptr == NULL)
     {
@@ -355,6 +343,7 @@ size_t ArmGroup::getFIFOLength(void)
 
 ErrorCode ArmGroup::computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g)
 {
+    /*
     ma_cv_g[0] = product.m[0][0] * alpha[0] + product.m[0][1] * alpha[1] + product.m[0][2] * alpha[2] +
                  product.m[0][3] * alpha[3] + product.m[0][4] * alpha[4] + product.m[0][5] * alpha[5] +
                  product.c[0][0] * omega[0] + product.c[0][1] * omega[1] + product.c[0][2] * omega[2] +
@@ -390,6 +379,24 @@ ErrorCode ArmGroup::computeCompensate(const DynamicsProduct &product, const Join
                  product.c[5][0] * omega[0] + product.c[5][1] * omega[1] + product.c[5][2] * omega[2] +
                  product.c[5][3] * omega[3] + product.c[5][4] * omega[4] + product.c[5][5] * omega[5] +
                  product.g[5];
+    */
+    ma_cv_g[0] = product.m[0][0] * alpha[0] + product.m[0][1] * alpha[1] + product.m[0][2] * alpha[2] +
+                 product.m[0][3] * alpha[3] + product.m[0][4] * alpha[4] + product.m[0][5] * alpha[5];
+
+    ma_cv_g[1] = product.m[1][0] * alpha[0] + product.m[1][1] * alpha[1] + product.m[1][2] * alpha[2] +
+                 product.m[1][3] * alpha[3] + product.m[1][4] * alpha[4] + product.m[1][5] * alpha[5];
+
+    ma_cv_g[2] = product.m[2][0] * alpha[0] + product.m[2][1] * alpha[1] + product.m[2][2] * alpha[2] +
+                 product.m[2][3] * alpha[3] + product.m[2][4] * alpha[4] + product.m[2][5] * alpha[5];
+
+    ma_cv_g[3] = product.m[3][0] * alpha[0] + product.m[3][1] * alpha[1] + product.m[3][2] * alpha[2] +
+                 product.m[3][3] * alpha[3] + product.m[3][4] * alpha[4] + product.m[3][5] * alpha[5];
+
+    ma_cv_g[4] = product.m[4][0] * alpha[0] + product.m[4][1] * alpha[1] + product.m[4][2] * alpha[2] +
+                 product.m[4][3] * alpha[3] + product.m[4][4] * alpha[4] + product.m[4][5] * alpha[5];
+
+    ma_cv_g[5] = product.m[5][0] * alpha[0] + product.m[5][1] * alpha[1] + product.m[5][2] * alpha[2] +
+                 product.m[5][3] * alpha[3] + product.m[5][4] * alpha[4] + product.m[5][5] * alpha[5];
 
     return SUCCESS;
 }

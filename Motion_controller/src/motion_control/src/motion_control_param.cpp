@@ -1,14 +1,21 @@
 #include "motion_control_param.h"
 #include "common_file_path.h"
+#include "common_log.h"
 #include <string>
 
-using namespace fst_mc;
-
-MotionControlParam::MotionControlParam():
-    file_path_(COMPONENT_PARAM_FILE_DIR),
-    log_level_(3)
+namespace fst_mc
 {
-    file_path_ += "motion_control.yaml";
+
+MotionControlParam::MotionControlParam()
+{
+    file_path_ = COMPONENT_PARAM_FILE_DIR;
+    file_path_ = file_path_ + "motion_control.yaml";
+
+    non_rt_cycle_time_ = 1000;
+    cycle_per_publish_ = 1000;
+    enable_ros_publish_ = false;
+
+    log_level_ = fst_log::MSG_LEVEL_ERROR;
 }
 
 MotionControlParam::~MotionControlParam()
@@ -18,28 +25,28 @@ MotionControlParam::~MotionControlParam()
 
 bool MotionControlParam::loadParam()
 {    
-    if (!yaml_help_.loadParamFile(file_path_.c_str())
-        || !yaml_help_.getParam("log_level", log_level_))
+    if (yaml_help_.loadParamFile(file_path_.c_str()))
+    {
+        if (!yaml_help_.getParam("simulator.enable", enable_ros_publish_))              return false;
+        if (!yaml_help_.getParam("simulator.cycle_per_publish", cycle_per_publish_))    return false;
+        if (!yaml_help_.getParam("non_realtime_task.cycle_time", non_rt_cycle_time_))   return false;
+        if (!yaml_help_.getParam("log_level", log_level_))                              return false;
+        return true;
+    }
+    else
     {
         return false;
-    }
-    else    
-    {
-        return true;
     }
 }
 
 bool MotionControlParam::saveParam()
 {
-    if(!yaml_help_.setParam("log_level", log_level_)
-        || !yaml_help_.dumpParamFile(file_path_.c_str()))
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    if (!yaml_help_.setParam("simulator.enable", enable_ros_publish_))              return false;
+    if (!yaml_help_.setParam("simulator.cycle_per_publish", cycle_per_publish_))    return false;
+    if (!yaml_help_.setParam("non_realtime_task.cycle_time", non_rt_cycle_time_))   return false;
+    if (!yaml_help_.setParam("log_level", log_level_))                              return false;
+
+    return yaml_help_.dumpParamFile(file_path_.c_str());
 }
 
-
+}

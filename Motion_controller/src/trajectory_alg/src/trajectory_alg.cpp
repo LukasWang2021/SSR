@@ -24,9 +24,6 @@ using namespace std;
 
 
 
-
-
-
 int Gauss(double A[2][2], double B[2][2], int N)
 {
 	int i, j, k;

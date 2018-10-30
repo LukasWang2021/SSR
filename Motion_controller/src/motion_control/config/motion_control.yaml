@@ -55,5 +55,14 @@ calibrator:
     normal_offset_threshold: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
     lost_offset_threshold: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
+realtime_task:
+    cycle_time: 2       # ms
+non_realtime_task:
+    cycle_time: 10      # ms
+simulator:
+    enable: true
+    cycle_per_publish: 5
+
+log_level: 1
 
 #END

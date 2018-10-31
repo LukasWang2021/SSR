@@ -1026,7 +1026,9 @@ void forgesight_load_programs_path()
 #ifdef WIN32
     g_files_manager_data_path = std::string(DATA_PATH);
 #else
-	g_files_manager_data_path = string(getenv("ROBOT_DATA_PREFIX"));
+	if(getenv("ROBOT_DATA_PREFIX") != NULL)
+		g_files_manager_data_path = string(getenv("ROBOT_DATA_PREFIX"));
+	
 	if(g_files_manager_data_path.length() == 0)
 	{
 	    fst_parameter::ParamGroup param_;

@@ -706,7 +706,17 @@ void ControllerRpc::handleRpc0x00008AB4(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = SUCCESS;
+    if(rq_data_ptr->data2.data_count == 9)
+    {
+        double offset[NUM_OF_JOINT];
+        memcpy(&offset[0], &rq_data_ptr->data2.data[0], 9);
+        motion_control_ptr_->setOffset(offset);
+        rs_data_ptr->data.data = SUCCESS;
+    }
+    else
+    {
+        rs_data_ptr->data.data = INVALID_PARAMETER;
+    }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setAllZeroPointOffsets"));
 }
 

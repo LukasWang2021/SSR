@@ -362,7 +362,7 @@ void TpComm::handleRequest()
     }
     else
     {
-        handleRequest0xffffffff(recv_bytes);
+        handleRequestNonexistentHash(hash, recv_bytes);
         ErrorMonitor::instance()->add(TP_COMM_INVALID_REQUEST);
         FST_ERROR("Request invalid.");
     }
@@ -401,7 +401,7 @@ void TpComm::handleResponseList()
         }
         else
         {
-            handleResponse0xffffffff(it, send_buffer_size);
+            handleResponseNonexistentHash(it, send_buffer_size);
         }
 
         if(send_buffer_size == 0)

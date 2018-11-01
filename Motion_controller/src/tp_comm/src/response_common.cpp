@@ -38,7 +38,7 @@ void TpComm::handleResponse0x000147A5(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-void TpComm::handleResponse0xffffffff(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+void TpComm::handleResponseNonexistentHash(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
     if(!encodeResponsePackage(task->hash, ResponseMessageType_Void_fields, task->response_data_ptr, send_buffer_size))
     {

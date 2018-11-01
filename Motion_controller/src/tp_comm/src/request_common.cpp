@@ -156,7 +156,7 @@ void TpComm::handleRequest0x000147A5(int recv_bytes)
 }
 
 // nonexistent rpc
-void TpComm::handleRequest0xffffffff(int recv_bytes)
+void TpComm::handleRequestNonexistentHash(int hash, int recv_bytes)
 {
     RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
 
@@ -181,7 +181,7 @@ void TpComm::handleRequest0xffffffff(int recv_bytes)
     response_data_ptr->header.error_code = TP_COMM_INVALID_REQUEST;
 
     TpRequestResponse package;
-    package.hash = 0xffffffff;
+    package.hash = hash;
     package.request_data_ptr = request_data_ptr;
     package.response_data_ptr = response_data_ptr;
 

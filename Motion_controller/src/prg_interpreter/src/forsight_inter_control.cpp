@@ -17,10 +17,6 @@
 using namespace fst_ctrl ;
 #endif
 #include "reg_manager/forsight_registers_manager.h"
-
-#else
-#include "reg-shmi/forsight_registers.h"
-#include "reg-shmi/forsight_op_regs_shmi.h"
 #endif
 
 #include "forsight_launch_code_startup.h"
@@ -700,19 +696,6 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
 #ifndef WIN32
-//    int iIONum = 0 ;
-//	fst_io_manager::IODeviceInfo * objIODeviceInfoPtr ;
-//	char * objCharPtr ;
-//	IODeviceInfoShm * objIODeviceInfoShmPtr ; 
-	
-//	char tempDebug[1024];
-//	int iSeq = 0 ;
-//	char * testDebug = 0 ;
-//	RegChgList  * regChgList ;
-//	ChgFrameSimple * chgFrameSimple ;
-//	RegManagerInterface objRegManagerInterface("share/configuration/machine");
-//	std::vector<BaseRegData> vecRet ; 
-//    char * strChgRegLst ;
 	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
 	if(intprt_ctrl.cmd != fst_base::INTERPRETER_SERVER_CMD_LOAD)
         FST_INFO("parseCtrlComand: %d", intprt_ctrl.cmd);

@@ -16,8 +16,6 @@
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 #include "reg_manager/forsight_registers_manager.h"
-#else
-#include "reg-shmi/forsight_registers.h"
 #endif
 #include "macro_instr_mgr.h"
 

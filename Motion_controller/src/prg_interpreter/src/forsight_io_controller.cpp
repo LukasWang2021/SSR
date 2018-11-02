@@ -429,8 +429,27 @@ eval_value get_io_status_from_io_mananger(
 		char *vname)
 {
 	eval_value value ;
-	int iValue = -1;
-	value.setFloatValue(iValue) ;
+	char val = '\0';
+	
+	IOPortInfo  objIOPortInfo ;
+	string vpath = g_io_mapper[string(vname)];
+	bool bRet = g_objRegManagerInterface->checkIo(vpath.c_str(), &objIOPortInfo);
+	if(bRet == false)
+	{
+		FST_ERROR("checkIo failed!");
+		value.setFloatValue(-1) ;
+		return value;
+	}
+	
+	bRet = g_objRegManagerInterface->getIo(&objIOPortInfo, sizeof(IOPortInfo), &val);
+	if(bRet == false)
+	{
+		FST_ERROR("setIo failed!");
+		value.setFloatValue(-1) ;
+		return value;
+	}
+	
+	value.setFloatValue((int)val) ;
 	return value;
 }
 

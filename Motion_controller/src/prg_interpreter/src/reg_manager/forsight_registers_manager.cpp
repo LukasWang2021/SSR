@@ -7,9 +7,6 @@
 #include "ctype.h"
 #include "stdlib.h" 
 #include "forsight_innercmd.h"
-#ifndef WIN32
-#include "motion_plan_frame_manager.h"
-#endif
 
 #include "interpreter_common.h"
 #ifdef WIN32

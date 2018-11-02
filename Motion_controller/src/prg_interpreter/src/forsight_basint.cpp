@@ -5,7 +5,6 @@
 #include "forsight_innercmd.h"
 #include "forsight_innerfunc.h"
 #include "forsight_inter_control.h"
-#include "forsight_auto_lock.h"
 #include "forsight_xml_reader.h"
 #include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"

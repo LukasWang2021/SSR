@@ -9,9 +9,6 @@
 #include "forsight_innercmd.h"
 #include "reg_manager/reg_manager_interface_wrapper.h"
 #include "interpreter_common.h"
-#ifndef WIN32
-#include "motion_plan_frame_manager.h"
-#endif
 
 
 // Register name

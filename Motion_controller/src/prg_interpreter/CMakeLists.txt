@@ -78,17 +78,6 @@ include_directories(
 ## Build ##
 ###########
 add_executable(prg_interpreter
-#     #    src/reg-shmi/forsight_op_reg_shmi.cpp
-#     #    src/reg-shmi/forsight_registers.cpp
-#     #    src/reg-shmi/forsight_op_shmi.cpp
-#     #    src/reg-shmi/forsight_peterson.cpp
-#         src/reg_manager/r_reg.cpp
-#         src/reg_manager/base_reg.cpp
-#         src/reg_manager/pr_reg.cpp
-#         src/reg_manager/sr_reg.cpp
-#         src/reg_manager/mr_reg.cpp
-#         src/reg_manager/hr_reg.cpp
-#    src/reg_manager/reg_manager_interface.cpp
     src/reg_manager/reg_manager_interface_wrapper.cpp
     src/reg_manager/forsight_registers_manager.cpp
     src/forsight_interpreter_shm.cpp

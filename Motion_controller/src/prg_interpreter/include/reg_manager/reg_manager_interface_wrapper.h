@@ -5,14 +5,10 @@
 
 #ifndef WIN32
 
-#ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-// #include "reg_manager/reg_manager_interface.h"
-#else
 #include "process_comm.h"
 using namespace fst_ctrl ;
 extern fst_base::InterpreterClient* g_objRegManagerInterface;
 extern fst_base::InterpreterServer* g_objInterpreterServer ;
-#endif
 
 #endif
 #include "reg_manager/forsight_registers_manager.h"

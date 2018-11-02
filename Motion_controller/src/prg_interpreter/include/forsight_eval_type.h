@@ -9,12 +9,8 @@ using namespace fst_mc;
 // #include "reg-shmi/forsight_regs_shmi.h"
 #else
 
-#ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-// #include "reg_manager/reg_manager_interface.h"
-#else
 #include "process_comm.h"
 using namespace fst_ctrl ;
-#endif
 
 #endif
 

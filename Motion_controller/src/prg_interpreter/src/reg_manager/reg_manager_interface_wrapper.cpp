@@ -27,16 +27,11 @@
 
 
 #ifndef WIN32
-#ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-// RegManagerInterface * g_objRegManagerInterface = NULL;
-// using namespace fst_reg ;
-#else
 extern InterpreterPublish  g_interpreter_publish; 
 fst_base::ProcessComm* g_process_comm_ptr       = NULL;
 fst_base::InterpreterClient* g_objRegManagerInterface = NULL;
 fst_base::InterpreterServer* g_objInterpreterServer   = NULL;
 using namespace fst_ctrl ;
-#endif
 #endif
 
 /* Return true if c is a delimiter. */
@@ -72,9 +67,6 @@ void load_register_data()
 {
 #ifndef WIN32
 
-#ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-	g_objRegManagerInterface = new RegManagerInterface("/root/install/share/configuration/machine");
-#else
 	g_process_comm_ptr = fst_base::ProcessComm::getInstance();
     if(fst_base::ProcessComm::getInitErrorCode() != SUCCESS)
     {
@@ -103,7 +95,6 @@ void load_register_data()
 	usleep(10);
 	memset(&g_interpreter_publish, 0x00, sizeof(InterpreterPublish));
 	g_objInterpreterServer->addPublishTask(300, &g_interpreter_publish);
-#endif
 
 #endif
 

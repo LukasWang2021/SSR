@@ -19,9 +19,6 @@ using namespace fst_ctrl ;
 #include "reg_manager/forsight_registers_manager.h"
 #endif
 
-#include "forsight_launch_code_startup.h"
-#include "forsight_macro_instr_startup.h"
-
 #define VELOCITY    (500)
 using namespace std;
 
@@ -52,8 +49,6 @@ extern HANDLE    g_basic_interpreter_handle[NUM_THREAD + 1];
 extern pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
 #endif
 int  g_iCurrentThreadSeq = -1 ;  // minus one add one equals to zero
-
-AutoMode g_current_auto_mode = AUTOMODE_NONE_U;
 
 std::string g_files_manager_data_path = "";
 
@@ -524,68 +519,6 @@ void startFile(struct thread_control_block * objThdCtrlBlockPtr,
 	// intprt_ctrl.cmd = LOAD ;
 }
 
-bool deal_auto_mode(AutoMode autoMode)
-{
-	if(g_current_auto_mode == autoMode)
-	{
-    	return true;
-	}	
-	switch(g_current_auto_mode) 	
-	{
-	// NoThread -> Thread
-	case AUTOMODE_NONE_U:
-	case LOCAL_TRIGGER_U:
-		if(autoMode == LOCAL_TRIGGER_U)
-		{
-    		return true;
-		}
-		else if(autoMode == LAUNCH_CODE_U)
-		{
-			launch_code_thread_create(NULL);
-    		return true;
-		}
-		else if(autoMode == MACRO_TRIGGER_U)
-		{
-			macro_instr_thread_create(NULL);
-    		return true;
-		}
-		break;
-	// Thread -> NoThread/OtherThread
-	case LAUNCH_CODE_U:
-		// Thread -> NoThread
-		if(autoMode == LOCAL_TRIGGER_U)
-		{
-			launch_code_thread_destroy();
-    		return true;
-		}
-		else if(autoMode == MACRO_TRIGGER_U)
-		{
-			launch_code_thread_destroy();
-			launch_code_thread_create(NULL);
-    		return true;
-		}
-		break;
-	// Thread -> NoThread/OtherThread
-	case MACRO_TRIGGER_U:
-		// Thread -> NoThread
-		if(autoMode == LOCAL_TRIGGER_U)
-		{
-			launch_code_thread_destroy();
-    		return true;
-		}
-		else if(autoMode == LAUNCH_CODE_U)
-		{
-			macro_instr_thread_destroy();
-			macro_instr_thread_create(NULL);
-    		return true;
-		}
-		break;
-	default:
-		break;
-	}
-    return true;
-}
-
 /*
 void waitInterpreterStateleftWaiting(
 	struct thread_control_block * objThdCtrlBlockPtr)
@@ -986,13 +919,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			memcpy(&intprt_ctrl.autoMode, requestDataPtr, sizeof(AutoMode));
 			// intprt_ctrl.RegMap.
 			autoMode = intprt_ctrl.autoMode ;
-			deal_auto_mode(autoMode);
-			// forgesight_simulate_launch_config_values();
-			// launch_code_thread_create(NULL);
-			// macro_instr_thread_create(NULL);
-			g_current_auto_mode = autoMode ;
-			// Do nothing after it.
-			// intprt_ctrl.cmd = LOAD ;
+			// Move to Controller
+			// deal_auto_mode(autoMode);
             break;
         default:
             break;

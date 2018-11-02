@@ -17,7 +17,6 @@
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 #include "reg_manager/forsight_registers_manager.h"
 #endif
-#include "macro_instr_mgr.h"
 
 #ifndef WIN32
 #define TPI_SUCCESS				(0)
@@ -206,7 +205,7 @@ HANDLE    g_basic_interpreter_handle[NUM_THREAD + 1];
 pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
 #endif
 
-extern MacroInstrMgr  *  g_macro_instr_mgr_ptr; 
+// extern MacroInstrMgr  *  g_macro_instr_mgr_ptr; 
 
 fst_log::Logger * log_ptr_ = NULL;
 
@@ -320,18 +319,18 @@ int getLinenum(
 
 void setRunningMacroInstr(char* program_name)
 {
-  if (g_macro_instr_mgr_ptr)
-  {
-	  g_macro_instr_mgr_ptr->setRunningInMacroInstrList(program_name);
-  }
+//   if (g_macro_instr_mgr_ptr)
+//  {
+// 	  g_macro_instr_mgr_ptr->setRunningInMacroInstrList(program_name);
+//  }
 }
 
 void resetRunningMacroInstr(char* program_name)
 {
-  if (g_macro_instr_mgr_ptr)
-  {
-	  g_macro_instr_mgr_ptr->resetRunningInMacroInstrList(program_name);
-  }
+//  if (g_macro_instr_mgr_ptr)
+//  {
+//	  g_macro_instr_mgr_ptr->resetRunningInMacroInstrList(program_name);
+//  }
 }
 	
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
@@ -2419,6 +2418,7 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
 	  }
   }
   
+#if 0
   if(isMacro)
   {
 	if(g_macro_instr_mgr_ptr)
@@ -2432,6 +2432,7 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
 		}
 	}
   }
+#endif
   // Save local var stack index.
   lvartemp = objThreadCntrolBlock->local_var_stack.size();
 

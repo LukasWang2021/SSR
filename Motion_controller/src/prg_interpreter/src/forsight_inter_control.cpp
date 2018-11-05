@@ -190,58 +190,6 @@ void copyMoveCommandDestination(MoveCommandDestination& movCmdDst)
     setMoveCommandDestination(movCmdDst);
 }
 
-void setIntprtDataFlag(bool flag)
-{
-#ifdef WIN32
-	CtrlStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->is_data_ready) - (int)tempPtr ;
-#else
-    int offset = (int)&((CtrlStatus*)0)->is_data_ready;
-#endif  
-//    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
-}
-
-bool getIntprtDataFlag()
-{
-    bool is_data_ready;
-#ifdef WIN32
-	CtrlStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->is_data_ready) - (int)tempPtr ;
-#else
-    int offset = (int)&((CtrlStatus*)0)->is_data_ready;  
-#endif     
-//    readShm(SHM_CTRL_STATUS, offset, (void*)&is_data_ready, sizeof(is_data_ready));
-    return is_data_ready;
-}
-
-void returnRegInfo(RegMap info)
-{
-    FST_INFO("returnRegInfo to %d", (int)info.type);
-	
-	FST_INFO("reg.value = (");
-	for(int iRet = 0 ; iRet < 100 ; iRet++)
-	{
-	    FST_INFO("%08X, ", info.value[iRet]);
-	}
-	FST_INFO(") ");
-				
-//    writeShm(SHM_REG_IO_INFO, 0, (void*)&info, sizeof(RegMap));
-	setIntprtDataFlag(true);
-}
-
-void returnDIOInfo(IOPathInfo& info)
-{
-    FST_INFO("returnDIOInfo to %s:%d", info.dio_path, (int)info.value);
-//    writeShm(SHM_REG_IO_INFO, 0, (char*)&info.value, sizeof(char));
-	setIntprtDataFlag(true);
-}
-
-void returnIODeviceInfo(char * info, int iNum)
-{
-//    writeShm(SHM_REG_IO_INFO, 0, (char*)info, sizeof(IODeviceInfoShm) * iNum);
-	setIntprtDataFlag(true);
-}
-
 void resetProgramNameAndLineNum()
 {
 	setCurLine((char *)"", 0);
@@ -296,15 +244,6 @@ InterpreterState getPrgmState()
 void setPrgmState(InterpreterState state)
 {
  	g_privateInterpreterState = state ;
-// #ifdef WIN32
-//     IntprtStatus temp,  * tempPtr = &temp;
-//     int offset = (int)&(tempPtr->state) - (int)tempPtr ;
-// #else
-//     int offset = (int)&((IntprtStatus*)0)->state;
-// #endif
-//    FST_INFO("setPrgmState to %d", (int)state);
-//    writeShm(SHM_INTPRT_STATUS, offset, (void*)&state, sizeof(state));
-	
     FST_INFO("setPrgmState to %d", (int)state);
 	g_interpreter_publish.status = state ;
 }
@@ -341,28 +280,6 @@ void setWarning(long long int warn)
 	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_ERROR, &warn);
 }
 
-void setSendPermission(bool flag)
-{
-#ifdef WIN32
-	CtrlStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->is_permitted) - (int)tempPtr ;
-#else
-    int offset = (int)&((CtrlStatus*)0)->is_permitted;
-#endif  
-//    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
-}
-
-void getSendPermission()
-{
-#ifdef WIN32
-	CtrlStatus temp,  * tempPtr = &temp;
-    int offset = (int)&(tempPtr->is_permitted) - (int)tempPtr ;
-#else
-    int offset = (int)&((CtrlStatus*)0)->is_permitted;
-#endif  
-//    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.is_permitted, sizeof(ctrl_status.is_permitted));
-}
-
 UserOpMode getUserOpMode()
 {
 #ifdef WIN32
@@ -372,17 +289,8 @@ UserOpMode getUserOpMode()
     int offset = (int)&((CtrlStatus*)0)->user_op_mode;
 #endif  
 //    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.user_op_mode, sizeof(ctrl_status.user_op_mode));
-
     return ctrl_status.user_op_mode;
 }
-
-/*SysCtrlMode getMotionMode()*/
-//{
-    //int offset = &((CtrlStatus*)0)->sys_ctrl_mode;
-    //readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.sys_ctrl_mode, sizeof(ctrl_status.sys_ctrl_mode));
-
-    //return ctrl_status.sys_ctrl_mode;
-//}
 
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction)
 {

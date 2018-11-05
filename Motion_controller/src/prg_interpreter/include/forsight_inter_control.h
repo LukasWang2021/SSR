@@ -39,10 +39,6 @@ void setWarning(__int64 warn);
 #else
 void setWarning(long long int warn);
 #endif 
-void setSendPermission(bool flag);
-void getSendPermission();
-void returnRegInfo(RegMap info);
-void returnDIOInfo(IOPathInfo& info);
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction);
 // bool getIntprtCtrl(InterpreterControl& intprt_ctrl);
 void executeBlock();

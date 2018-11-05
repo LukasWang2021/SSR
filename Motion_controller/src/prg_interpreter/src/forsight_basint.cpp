@@ -687,14 +687,14 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		}
 		else // main
 		{
-			if(call_internal_cmd_exec_sub_thread(iIdx) == 0) // 0 - mov 1 - nonmov
-			{
-				if (isInstructionEmpty(SHM_INTPRT_CMD))
-		        {
-		            FST_INFO("check if step is done in call_interpreter");
-		            // setPrgmState(INTERPRETER_PAUSED);
-		        }
-			} 
+			// if(call_internal_cmd_exec_sub_thread(iIdx) == 0) // 0 - mov 1 - nonmov
+			// {
+			//	if (isInstructionEmpty(SHM_INTPRT_CMD))
+		    //    {
+		    //        FST_INFO("check if step is done in call_interpreter");
+		    //        // setPrgmState(INTERPRETER_PAUSED);
+		    //    }
+			// } 
     		FST_INFO("call_internal_cmd execution : %s at %d, iLineNum = %d", 
 						objThreadCntrolBlock->token, iIdx, iLineNum);
 			printCurrentLine(objThreadCntrolBlock);

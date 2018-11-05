@@ -21,7 +21,7 @@
 #endif
 #include "interpreter_common.h"
 
-#include "forsight_interpreter_shm.h"
+// #include "forsight_interpreter_shm.h"
 #include "forsight_basint.h"
 
 // #define USE_WAITING_R
@@ -44,7 +44,7 @@ void getSendPermission();
 void returnRegInfo(RegMap info);
 void returnDIOInfo(IOPathInfo& info);
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction);
-bool getIntprtCtrl(InterpreterControl& intprt_ctrl);
+// bool getIntprtCtrl(InterpreterControl& intprt_ctrl);
 void executeBlock();
 void executeLoop(int loop_cnt);
 void executeScript();

@@ -176,12 +176,12 @@ void findLoopEnd(int index)
 
 void setMoveCommandDestination(MoveCommandDestination movCmdDst)
 { 
-    writeShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
+//    writeShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
 }
 
 void getMoveCommandDestination(MoveCommandDestination& movCmdDst)
 {
-    readShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
+//    readShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
 }
 
 void copyMoveCommandDestination(MoveCommandDestination& movCmdDst)
@@ -198,7 +198,7 @@ void setIntprtDataFlag(bool flag)
 #else
     int offset = (int)&((CtrlStatus*)0)->is_data_ready;
 #endif  
-    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
+//    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
 }
 
 bool getIntprtDataFlag()
@@ -210,7 +210,7 @@ bool getIntprtDataFlag()
 #else
     int offset = (int)&((CtrlStatus*)0)->is_data_ready;  
 #endif     
-    readShm(SHM_CTRL_STATUS, offset, (void*)&is_data_ready, sizeof(is_data_ready));
+//    readShm(SHM_CTRL_STATUS, offset, (void*)&is_data_ready, sizeof(is_data_ready));
     return is_data_ready;
 }
 
@@ -225,20 +225,20 @@ void returnRegInfo(RegMap info)
 	}
 	FST_INFO(") ");
 				
-    writeShm(SHM_REG_IO_INFO, 0, (void*)&info, sizeof(RegMap));
+//    writeShm(SHM_REG_IO_INFO, 0, (void*)&info, sizeof(RegMap));
 	setIntprtDataFlag(true);
 }
 
 void returnDIOInfo(IOPathInfo& info)
 {
     FST_INFO("returnDIOInfo to %s:%d", info.dio_path, (int)info.value);
-    writeShm(SHM_REG_IO_INFO, 0, (char*)&info.value, sizeof(char));
+//    writeShm(SHM_REG_IO_INFO, 0, (char*)&info.value, sizeof(char));
 	setIntprtDataFlag(true);
 }
 
 void returnIODeviceInfo(char * info, int iNum)
 {
-    writeShm(SHM_REG_IO_INFO, 0, (char*)info, sizeof(IODeviceInfoShm) * iNum);
+//    writeShm(SHM_REG_IO_INFO, 0, (char*)info, sizeof(IODeviceInfoShm) * iNum);
 	setIntprtDataFlag(true);
 }
 
@@ -349,7 +349,7 @@ void setSendPermission(bool flag)
 #else
     int offset = (int)&((CtrlStatus*)0)->is_permitted;
 #endif  
-    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
+//    writeShm(SHM_CTRL_STATUS, offset, (void*)&flag, sizeof(flag));
 }
 
 void getSendPermission()
@@ -360,7 +360,7 @@ void getSendPermission()
 #else
     int offset = (int)&((CtrlStatus*)0)->is_permitted;
 #endif  
-    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.is_permitted, sizeof(ctrl_status.is_permitted));
+//    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.is_permitted, sizeof(ctrl_status.is_permitted));
 }
 
 UserOpMode getUserOpMode()
@@ -371,7 +371,7 @@ UserOpMode getUserOpMode()
 #else
     int offset = (int)&((CtrlStatus*)0)->user_op_mode;
 #endif  
-    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.user_op_mode, sizeof(ctrl_status.user_op_mode));
+//    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.user_op_mode, sizeof(ctrl_status.user_op_mode));
 
     return ctrl_status.user_op_mode;
 }
@@ -493,6 +493,7 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     return true;
 }
 
+/*
 bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
 {
     bool iRet = tryRead(SHM_CTRL_CMD, 0, (void*)&intprt_ctrl, sizeof(intprt_ctrl));
@@ -503,7 +504,7 @@ bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
 	}
 	return iRet ;
 }
-
+*/
 void startFile(struct thread_control_block * objThdCtrlBlockPtr, 
 	char * proj_name, int idx)
 {

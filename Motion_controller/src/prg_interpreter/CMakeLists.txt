@@ -80,7 +80,6 @@ include_directories(
 add_executable(prg_interpreter
     src/reg_manager/reg_manager_interface_wrapper.cpp
     src/reg_manager/forsight_registers_manager.cpp
-    src/forsight_interpreter_shm.cpp
     src/forsight_innercmd.cpp
     src/forsight_xml_reader.cpp
     src/forsight_int_main.cpp

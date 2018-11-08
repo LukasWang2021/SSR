@@ -938,25 +938,29 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 		 serror(objThreadCntrolBlock, 4);
 		 return -1;
 	  }
+	  // putback ']'
+	  putback(objThreadCntrolBlock);
 	  return (int)value.getFloatValue() ;
 	}
 	get_token(objThreadCntrolBlock);
 	if(objThreadCntrolBlock->token[0] == '['){
-	  value.setFloatValue(release_array_element(objThreadCntrolBlock));
-      sprintf(val_name, "%s[%d]", val_name, (int)value.getFloatValue());
-	  value = find_var(objThreadCntrolBlock, val_name);
-	  // Jump ']'
-      get_token(objThreadCntrolBlock);
-	  if(objThreadCntrolBlock->token[0] != ']'){
-		 putback(objThreadCntrolBlock);
-		 // Simulate left value
-		 objThreadCntrolBlock->token_type = NUMBER ;
-		 sprintf(objThreadCntrolBlock->token, "%d", (int)value.getFloatValue());
-		 // Calc
-	     level3(objThreadCntrolBlock, &value, &boolValue);
-	     putback(objThreadCntrolBlock);
-	  }
-	  return (int)value.getFloatValue();
+		value.setFloatValue(release_array_element(objThreadCntrolBlock));
+		// Jump ']'
+		get_token(objThreadCntrolBlock);
+		sprintf(val_name, "%s[%d]", val_name, (int)value.getFloatValue());
+		value = find_var(objThreadCntrolBlock, val_name);
+		// Jump ']'
+		get_token(objThreadCntrolBlock);
+		if(objThreadCntrolBlock->token[0] != ']'){
+			putback(objThreadCntrolBlock);
+			// Simulate left value
+			objThreadCntrolBlock->token_type = NUMBER ;
+			sprintf(objThreadCntrolBlock->token, "%d", (int)value.getFloatValue());
+			// Calc
+			level3(objThreadCntrolBlock, &value, &boolValue);
+			putback(objThreadCntrolBlock);
+		}
+		return (int)value.getFloatValue();
 	}
 	else {
 	  objThreadCntrolBlock->prog = temp_prog;
@@ -1004,7 +1008,7 @@ void deal_array_element(struct thread_control_block * objThreadCntrolBlock)
 		     return;
 		  }
           sprintf(objThreadCntrolBlock->token, "%s[%d]", array_variable, (int)array_value);
-  	      objThreadCntrolBlock->prog--;
+  	   //   objThreadCntrolBlock->prog--;
 	   }
 	   else
 	   	  putback(objThreadCntrolBlock);

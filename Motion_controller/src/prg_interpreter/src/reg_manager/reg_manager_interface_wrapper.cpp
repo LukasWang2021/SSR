@@ -501,6 +501,7 @@ bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num)
 		FST_ERROR("g_objRegManagerInterface is NULL");
 	}
 #else
+    ptr->value = string("");
 	bRet = true ;
 #endif
 	return bRet ;
@@ -721,6 +722,7 @@ bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 		FST_ERROR("g_objRegManagerInterface is NULL");
 	}
 #else
+	ptr->value = 1 ;
 	bRet = true ;
 #endif
 	return bRet ;
@@ -936,6 +938,7 @@ bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num)
 		FST_ERROR("g_objRegManagerInterface is NULL");
 	}
 #else
+	ptr->value = 1 ;
 	bRet = true ;
 #endif
 	return bRet ;

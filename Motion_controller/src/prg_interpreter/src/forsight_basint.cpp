@@ -1329,7 +1329,8 @@ char *find_label(struct thread_control_block * objThreadCntrolBlock, char *name)
 		= objThreadCntrolBlock->sub_label_table.begin();
 	   it != objThreadCntrolBlock->sub_label_table.end(); ++it)
 	{
-	    if(!strcmp(it->name, name))  {
+        // case-insensitive.
+	    if(!stricmp(it->name, name))  {
 	        return it->p;
 	    }
 	}
@@ -2450,8 +2451,9 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
   
   FST_INFO("Execute call_interpreter at exec_call.");
   int iRet = call_interpreter(objThreadCntrolBlock, 0);
-  find_eol(objThreadCntrolBlock);
+  // find_eol(objThreadCntrolBlock);
   FST_INFO("Left   call_interpreter at exec_call.");
+  greturn(objThreadCntrolBlock);
   if(iRet == END_COMMND_RET)
 	 return END_COMMND_RET;
   return 1;

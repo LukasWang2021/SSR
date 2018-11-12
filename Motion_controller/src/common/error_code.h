@@ -92,8 +92,7 @@
 #define CONTROLLER_PUBLISH_FAILED (unsigned long long int)0x0001000200A80006   /*Controller failed to echo the request of publish something*/
 #define CONTROLLER_INVALID_OPERATION (unsigned long long int)0x0001000200A80007   /*Controller failed to operate command because of invalid pre-condition*/
 #define CONTROLLER_UNKNOWN_USER_OP_MODE (unsigned long long int)0x0001000B00A80008   /*User Op Mode is in unknown state*/
-#define INTERPRETER_LOG (unsigned long long int)0x0001000100AA0000   /*Interpreter log{0}*/
-#define FAIL_INTERPRETER_BASE (unsigned long long int)0x0001000900AA0000   /*Interpreter BASE*/
+#define INTERPRETER_LOG       (unsigned long long int)0x0001000100AA0000   /*Interpreter log{0}*/
 #define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0001   /*No syntax*/
 #define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0002   /*unbalanced parentheses*/
 #define FAIL_INTERPRETER_NO_EXPRESSION_PRESENT (unsigned long long int)0x0001000900AA0003   /*no expression present*/

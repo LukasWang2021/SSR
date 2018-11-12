@@ -93,24 +93,24 @@
 #define CONTROLLER_INVALID_OPERATION (unsigned long long int)0x0001000200A80007   /*Controller failed to operate command because of invalid pre-condition*/
 #define CONTROLLER_UNKNOWN_USER_OP_MODE (unsigned long long int)0x0001000B00A80008   /*User Op Mode is in unknown state*/
 #define INTERPRETER_LOG (unsigned long long int)0x0001000100AA0000   /*Interpreter log{0}*/
-#define FAIL_INTERPRETER_BASE (unsigned long long int)0x0001000900AA0001   /*Interpreter BASE*/
-#define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0002   /*No syntax*/
-#define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0003   /*unbalanced parentheses*/
-#define FAIL_INTERPRETER_NO_EXPRESSION_PRESENT (unsigned long long int)0x0001000900AA0004   /*no expression present*/
-#define FAIL_INTERPRETER_EQUALS_SIGN_EXPECTED (unsigned long long int)0x0001000900AA0005   /*equals sign expected*/
-#define FAIL_INTERPRETER_NOT_A_VARIABLE (unsigned long long int)0x0001000900AA0006   /*not a variable*/
-#define FAIL_INTERPRETER_LABEL_TABLE_FULL (unsigned long long int)0x0001000900AA0007   /*Label table full*/
-#define FAIL_INTERPRETER_DUPLICATE_SUB_LABEL (unsigned long long int)0x0001000900AA0008   /*duplicate sub_label*/
-#define FAIL_INTERPRETER_UNDEFINED_SUB_LABEL (unsigned long long int)0x0001000900AA0009   /*undefined sub_label*/
-#define FAIL_INTERPRETER_THEN_EXPECTED (unsigned long long int)0x0001000900AA000A   /*THEN expected*/
-#define FAIL_INTERPRETER_TO_EXPECTED (unsigned long long int)0x0001000900AA000B   /*TO expected*/
-#define FAIL_INTERPRETER_TOO_MANY_NESTED_FOR_LOOPS (unsigned long long int)0x0001000900AA000C   /*too many nested FOR loops*/
-#define FAIL_INTERPRETER_NEXT_WITHOUT_FOR (unsigned long long int)0x0001000900AA000D   /*NEXT without FOR*/
-#define FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB (unsigned long long int)0x0001000900AA000E   /*too many nested GOSUBs*/
-#define FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB (unsigned long long int)0x0001000900AA000F   /*RETURN without GOSUB*/
-#define FAIL_INTERPRETER_FILE_NOT_FOUND (unsigned long long int)0x0001000900AA0010   /*no program file*/
-#define FAIL_INTERPRETER_MOVL_WITH_JOINT (unsigned long long int)0x0001000900AA0011   /*movl with joint*/
-#define FAIL_INTERPRETER_MOVJ_WITH_POINT (unsigned long long int)0x0001000900AA0012   /*movj with point*/
+#define FAIL_INTERPRETER_BASE (unsigned long long int)0x0001000900AA0000   /*Interpreter BASE*/
+#define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0001   /*No syntax*/
+#define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0002   /*unbalanced parentheses*/
+#define FAIL_INTERPRETER_NO_EXPRESSION_PRESENT (unsigned long long int)0x0001000900AA0003   /*no expression present*/
+#define FAIL_INTERPRETER_EQUALS_SIGN_EXPECTED (unsigned long long int)0x0001000900AA0004   /*equals sign expected*/
+#define FAIL_INTERPRETER_NOT_A_VARIABLE (unsigned long long int)0x0001000900AA0005   /*not a variable*/
+#define FAIL_INTERPRETER_LABEL_TABLE_FULL (unsigned long long int)0x0001000900AA0006   /*Label table full*/
+#define FAIL_INTERPRETER_DUPLICATE_SUB_LABEL (unsigned long long int)0x0001000900AA0007   /*duplicate sub_label*/
+#define FAIL_INTERPRETER_UNDEFINED_SUB_LABEL (unsigned long long int)0x0001000900AA0008   /*undefined sub_label*/
+#define FAIL_INTERPRETER_THEN_EXPECTED (unsigned long long int)0x0001000900AA0009   /*THEN expected*/
+#define FAIL_INTERPRETER_TO_EXPECTED (unsigned long long int)0x0001000900AA000A   /*TO expected*/
+#define FAIL_INTERPRETER_TOO_MANY_NESTED_FOR_LOOPS (unsigned long long int)0x0001000900AA000B   /*too many nested FOR loops*/
+#define FAIL_INTERPRETER_NEXT_WITHOUT_FOR (unsigned long long int)0x0001000900AA000C   /*NEXT without FOR*/
+#define FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB (unsigned long long int)0x0001000900AA000D   /*too many nested GOSUBs*/
+#define FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB (unsigned long long int)0x0001000900AA000E   /*RETURN without GOSUB*/
+#define FAIL_INTERPRETER_FILE_NOT_FOUND (unsigned long long int)0x0001000900AA000F   /*no program file*/
+#define FAIL_INTERPRETER_MOVL_WITH_JOINT (unsigned long long int)0x0001000900AA0010   /*movl with joint*/
+#define FAIL_INTERPRETER_MOVJ_WITH_POINT (unsigned long long int)0x0001000900AA0011   /*movj with point*/
 #define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER (unsigned long long int)0x0001000900AA0012   /*movj with point*/
 #define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH (unsigned long long int)0x0001000900AA0013   /*movj with point*/
 #define FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO (unsigned long long int)0x0001000900AA0014   /*movj with point*/

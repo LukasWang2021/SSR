@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <vector>
+#include <string>
 #include <fstream>
 #include <time.h>
 
@@ -23,7 +24,7 @@ using namespace basic_alg;
 using namespace fst_parameter;
 
 #define OUTPUT_JOUT
-//#define OUTPUT_COEFF
+#define OUTPUT_COEFF
 //#define OUTPUT_POUT
 
 
@@ -143,11 +144,10 @@ BaseGroup::~BaseGroup()
 
 #ifdef OUTPUT_COEFF
     printf("正在将缓存中的轨迹段参数录入文件：cout.csv ... 请稍后\n");
-    coeff_out << "type,"
+    coeff_out << "type,exp-duration,duration,start-time,"
               << "start.angle[0],start.angle[1],start.angle[2],start.angle[3],start.angle[4],start.angle[5],start.omega[0],start.omega[1],start.omega[2],start.omega[3],start.omega[4],start.omega[5],start.alpha[0],start.alpha[1],start.alpha[2],start.alpha[3],start.alpha[4],start.alpha[5],"
               << "ending.angle[0],ending.angle[1],ending.angle[2],ending.angle[3],ending.angle[4],ending.angle[5],ending.omega[0],ending.omega[1],ending.omega[2],ending.omega[3],ending.omega[4],ending.omega[5],ending.alpha[0],ending.alpha[1],ending.alpha[2],ending.alpha[3],ending.alpha[4],ending.alpha[5],"
               << "alpha_upper[0],alpha_upper[1],alpha_upper[2],alpha_upper[3],alpha_upper[4],alpha_upper[5],alpha_lower[0],alpha_lower[1],alpha_lower[2],alpha_lower[3],alpha_lower[4],alpha_lower[5],"
-              << "exp-duration,duration,start-time,"
               << "j0.duration[0],j0.duration[1],j0.duration[2],j0.duration[3],"
               << "j0.coeff[0][3],j0.coeff[0][2],j0.coeff[0][1],j0.coeff[0][0],j0.coeff[1][3],j0.coeff[1][2],j0.coeff[1][1],j0.coeff[1][0],j0.coeff[2][3],j0.coeff[2][2],j0.coeff[2][1],j0.coeff[2][0],j0.coeff[3][3],j0.coeff[3][2],j0.coeff[3][1],j0.coeff[3][0],"
               << "j1.duration[0],j1.duration[1],j1.duration[2],j1.duration[3],"
@@ -163,7 +163,7 @@ BaseGroup::~BaseGroup()
 
     for (size_t i = 0; i < g_cindex; i++)
     {
-        coeff_out << g_cout[i].type << ","
+        coeff_out << g_cout[i].type << "," << g_cout[i].exp_duration << "," << g_cout[i].duration << "," << g_cout[i].start_time << ","
                   << g_cout[i].start.angle[0] << "," << g_cout[i].start.angle[1] << "," << g_cout[i].start.angle[2] << "," << g_cout[i].start.angle[3] << "," << g_cout[i].start.angle[4] << "," << g_cout[i].start.angle[5] << ","
                   << g_cout[i].start.omega[0] << "," << g_cout[i].start.omega[1] << "," << g_cout[i].start.omega[2] << "," << g_cout[i].start.omega[3] << "," << g_cout[i].start.omega[4] << "," << g_cout[i].start.omega[5] << ","
                   << g_cout[i].start.alpha[0] << "," << g_cout[i].start.alpha[1] << "," << g_cout[i].start.alpha[2] << "," << g_cout[i].start.alpha[3] << "," << g_cout[i].start.alpha[4] << "," << g_cout[i].start.alpha[5] << ","
@@ -171,8 +171,7 @@ BaseGroup::~BaseGroup()
                   << g_cout[i].ending.omega[0] << "," << g_cout[i].ending.omega[1] << "," << g_cout[i].ending.omega[2] << "," << g_cout[i].ending.omega[3] << "," << g_cout[i].ending.omega[4] << "," << g_cout[i].ending.omega[5] << ","
                   << g_cout[i].ending.alpha[0] << "," << g_cout[i].ending.alpha[1] << "," << g_cout[i].ending.alpha[2] << "," << g_cout[i].ending.alpha[3] << "," << g_cout[i].ending.alpha[4] << "," << g_cout[i].ending.alpha[5] << ","
                   << g_cout[i].alpha_upper[0] << "," << g_cout[i].alpha_upper[1] << "," << g_cout[i].alpha_upper[2] << "," << g_cout[i].alpha_upper[3] << "," << g_cout[i].alpha_upper[4] << "," << g_cout[i].alpha_upper[5] << ","
-                  << g_cout[i].alpha_lower[0] << "," << g_cout[i].alpha_lower[1] << "," << g_cout[i].alpha_lower[2] << "," << g_cout[i].alpha_lower[3] << "," << g_cout[i].alpha_lower[4] << "," << g_cout[i].alpha_lower[5] << ","
-                  << g_cout[i].exp_duration << "," << g_cout[i].duration << "," << g_cout[i].start_time;
+                  << g_cout[i].alpha_lower[0] << "," << g_cout[i].alpha_lower[1] << "," << g_cout[i].alpha_lower[2] << "," << g_cout[i].alpha_lower[3] << "," << g_cout[i].alpha_lower[4] << "," << g_cout[i].alpha_lower[5];
 
         for (size_t j = 0; j < 6; j++)
         {
@@ -857,7 +856,7 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
         if (target.cnt < 0)
         {
-            FST_INFO("Move with 'FINE', group will waiting for sand stable");
+            FST_INFO("Move with 'FINE', group will waiting for stand stable");
             // move by 'FINE'
             if (target.type == MOTION_JOINT)
             {
@@ -894,6 +893,61 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
         FST_ERROR("autoMove: failed, code = 0x%llx", err);
         return err;
     }
+}
+
+ErrorCode BaseGroup::moveOffLineTrajectory(int id, const string &file_name)
+{
+    FST_INFO("Auto move by trajectory, motion ID = %d, name = %s", id, file_name.c_str());
+    ErrorCode err;
+    Joint control_joint, current_joint;
+
+    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
+    {
+        getLatestJoint(current_joint);
+
+        if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
+        {
+            if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+            {
+                char buffer[LOG_TEXT_SIZE];
+                FST_ERROR("Control-position different with current-position, it might be a trouble.");
+                FST_ERROR("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
+                FST_ERROR("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
+                return MOTION_INTERNAL_FAULT;
+            }
+        }
+        else
+        {
+            FST_ERROR("Cannot get control position from bare core.");
+            return BARE_CORE_TIMEOUT;
+        }
+    }
+    else
+    {
+        FST_ERROR("Cannot start auto motion in current group state: %d, servo-state: %d", group_state_, servo_state_);
+        return INVALID_SEQUENCE;
+    }
+
+    string line;
+    string name = file_name + ".csv";
+    ifstream in(name);
+
+    if (in)
+    {
+        while (getline(in, line))
+        {
+            FST_INFO("%s", line.c_str());
+        }
+
+        FST_INFO("Done!");
+    }
+    else
+    {
+        FST_ERROR("File: %s not found.", name.c_str());
+        return INVALID_PARAMETER;
+    }
+
+    return SUCCESS;
 }
 
 TrajectoryCache* BaseGroup::getTrajectoryCache(void)
@@ -1088,11 +1142,12 @@ ErrorCode BaseGroup::autoLine(const Joint &start, const PoseEuler &target, doubl
 
     ErrorCode err;
     size_t  length;
-    double  precision = vel < 1000 ? 1 : vel / 1000;     // vel < 1000mm/s -> 1mm, 1500mm/s -> 1.5mm, 2000mm/s -> 2mm
+    //double  precision = vel < 1000 ? 1 : vel / 1000;     // vel < 1000mm/s -> 1mm, 1500mm/s -> 1.5mm, 2000mm/s -> 2mm
+    double  precision = 20;
     Pose    path[MAX_PATH_SIZE];
 
     planLinePath(start_pose, target, precision, path, length);
-    FST_INFO("  precision = %.4f", precision);
+    FST_INFO("  precision = %.4f, vel-ratio = %.4f, acc-ratio = %.4f, exp-duration = %.4f", precision, vel_ratio_, acc_ratio_, precision / (vel * vel_ratio_));
     TrajectoryCache *pcache = getTrajectoryCache();
 
     if (pcache == NULL)
@@ -1558,7 +1613,7 @@ bool BaseGroup::checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joi
 }
 #endif
 
-#define SMOOTH_ON_DURATION
+//#define SMOOTH_ON_DURATION
 
 ErrorCode BaseGroup::preplanCache(TrajectoryCache &cache, double cnt)
 {

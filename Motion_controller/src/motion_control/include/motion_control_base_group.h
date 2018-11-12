@@ -51,6 +51,9 @@ class BaseGroup
     virtual ErrorCode setUserFrame(const PoseEuler &uf);
     virtual ErrorCode setWorldFrame(const PoseEuler &wf);
 
+    // Off-line trajectory
+    virtual ErrorCode moveOffLineTrajectory(int id, const std::string &file_name);
+
     // Auto move APIs:
     virtual ErrorCode autoMove(int id, const MotionTarget &target);
     virtual ErrorCode abortMove(void);

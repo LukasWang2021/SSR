@@ -124,6 +124,7 @@ ErrorCode BaseKinematics::inverseKinematicsInBase(const PoseEuler &pose, const J
     return inverseKinematics(matrix, ref, res);
 }
 
+#include <stdio.h>
 ErrorCode BaseKinematics::inverseKinematicsInUser(const Pose &pose, const Joint &ref, Joint &res)
 {
     Matrix matrix = Matrix(pose).leftMultiply(user_frame_).rightMultiply(inverse_tool_frame_);

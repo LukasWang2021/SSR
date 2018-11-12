@@ -2429,8 +2429,8 @@ namespace fst_algorithm
         robot_model_.m[2]=9.092074;
         robot_model_.m[3]=5.305265;
         robot_model_.m[4]=2.036364;
-        robot_model_.m[5]=0.126446;  //empty
-        //robot_model_.m[5]=7.058417;  //7kg
+        //robot_model_.m[5]=0.126446;  //empty
+        robot_model_.m[5]=7.184862;  //7kg
 
         robot_model_.mdh=true;
         memset(robot_model_.b,0,sizeof(robot_model_.b));  

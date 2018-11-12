@@ -54,7 +54,7 @@ void test0(void)
     double seconds  =(double)(end - start)/CLOCKS_PER_SEC;
     printf("dynamics %d times, using time: %.6f ms\n", LOOP, seconds * 1000);
 
-    printf("result = %d\n", err);
+    printf("result = %llx\n", err);
     printf("angle = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", angle[0], angle[1], angle[2], angle[3], angle[4], angle[5]);
     printf("omega = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
     printf("alpha-upper = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", alpha_upper[0], alpha_upper[1], alpha_upper[2], alpha_upper[3], alpha_upper[4], alpha_upper[5]);
@@ -549,6 +549,21 @@ void test6(void)
     log.info("Res: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", res[0], res[1], res[2], res[3], res[4], res[5]);
 }
 
+void test7(void)
+{
+    Logger log;
+    ArmGroup arm(&log);
+    ErrorMonitor error_monitor;
+    ThreadHelp rt_thread;
+    cout << "begin" << endl;
+
+    arm.initGroup(&error_monitor);
+    arm.resetGroup();
+
+    sleep(1);
+    arm.moveOffLineTrajectory(0, "test");
+}
+
 int main(int argc, char **argv)
 {
     //test0();
@@ -557,7 +572,8 @@ int main(int argc, char **argv)
     //test3();
     //test4();
     //test5();
-    test6();
+    //test6();
+    test7();
 
     return 0;
 }

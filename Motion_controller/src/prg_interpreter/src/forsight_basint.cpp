@@ -1329,8 +1329,13 @@ char *find_label(struct thread_control_block * objThreadCntrolBlock, char *name)
 		= objThreadCntrolBlock->sub_label_table.begin();
 	   it != objThreadCntrolBlock->sub_label_table.end(); ++it)
 	{
+#ifndef WIN32
+        // case-insensitive.
+	    if(!strcasecmp(it->name, name))  {
+#else
         // case-insensitive.
 	    if(!stricmp(it->name, name))  {
+#endif
 	        return it->p;
 	    }
 	}

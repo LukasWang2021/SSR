@@ -56,6 +56,7 @@
 #include "message_type/reg_r_value.pb.h"
 
 #include "message_type/io_type.pb.h"
+#include "message_type/io_device_info.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
@@ -75,6 +76,7 @@
 #include "response/response_bool_int32.pb.h"
 #include "response/response_bool_int32list.pb.h"
 #include "response/response_device_info.pb.h"
+#include "response/response_io_device_info.pb.h"
 #include "response/response_uint64_doublelist.pb.h"
 #include "response/response_uint64_jointlimit.pb.h"
 

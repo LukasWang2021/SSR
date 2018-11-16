@@ -1304,4 +1304,26 @@ void TpComm::handleRequest0x00016D20(int recv_bytes)
         recv_bytes,RequestMessageType_Int32_fields, -1);
 }
 
-
+////"/rpc/motion_control/axis_group/setSingleZeroPointOffset",	"RequestMessageType.Int32List_Double(count=2)",	"ResponseMessageType.Uint64"
+void TpComm::handleRequest0x00012404(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List_Double* request_data_ptr = new RequestMessageType_Int32List_Double;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00012404, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes,RequestMessageType_Int32List_Double_fields, -1);
+}

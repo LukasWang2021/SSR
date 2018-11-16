@@ -9,31 +9,8 @@
 using namespace fst_base;
 using namespace fst_comm;
 
-void TpComm::handleRequest0x0000C1E0(int recv_bytes)
-{
-    // create object for request and response package
-    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
-    if(request_data_ptr == NULL)
-    {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    ResponseMessageType_Uint64_DeviceInfoList* response_data_ptr = new ResponseMessageType_Uint64_DeviceInfoList;
-    if(response_data_ptr == NULL)
-    {
-        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
-        return;
-    }
-    
-    handleRequestPackage(0x0000C1E0, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_Void_fields, -1);
-}
-
-//"/rpc/device_manager/get_FRP8A_IoDeviceInfo"
-void TpComm::handleRequest0x00006BAF(int recv_bytes)
+//"/rpc/program_launching/setMethod"
+void TpComm::handleRequest0x00011544(int recv_bytes)
 {
     // create object for request and response package
     RequestMessageType_Int32* request_data_ptr = new RequestMessageType_Int32;
@@ -43,7 +20,7 @@ void TpComm::handleRequest0x00006BAF(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Uint64_IoDeviceInfo* response_data_ptr = new ResponseMessageType_Uint64_IoDeviceInfo;
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
     if(response_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -51,12 +28,13 @@ void TpComm::handleRequest0x00006BAF(int recv_bytes)
         delete request_data_ptr;
         return;
     }
-    
-    handleRequestPackage(0x00006BAF, (void*)request_data_ptr, (void*)response_data_ptr, 
+
+    handleRequestPackage(0x00011544, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Int32_fields, -1);
 }
-//"/rpc/device_manager/getModbusIoDeviceInfo"
-void TpComm::handleRequest0x0001421F(int recv_bytes)
+
+//"/rpc/program_launching/getMethod"
+void TpComm::handleRequest0x00010944(int recv_bytes)
 {
     // create object for request and response package
     RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
@@ -66,7 +44,7 @@ void TpComm::handleRequest0x0001421F(int recv_bytes)
         FST_ERROR("handleRequest: can't allocate memory for request_data");
         return;
     }
-    ResponseMessageType_Uint64_IoDeviceInfo* response_data_ptr = new ResponseMessageType_Uint64_IoDeviceInfo;
+    ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
     if(response_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -75,6 +53,30 @@ void TpComm::handleRequest0x0001421F(int recv_bytes)
         return;
     }
 
-    handleRequestPackage(0x0001421F, (void*)request_data_ptr, (void*)response_data_ptr, 
+    handleRequestPackage(0x00010944, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+//"/rpc/program_launching/syncFileMacroConfig"
+void TpComm::handleRequest0x00016B27(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_String* request_data_ptr = new RequestMessageType_String;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64* response_data_ptr = new ResponseMessageType_Uint64;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x00016B27, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_String_fields, -1);
 }

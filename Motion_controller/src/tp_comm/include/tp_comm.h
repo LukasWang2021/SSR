@@ -300,6 +300,8 @@ private:
     void handleRequest0x00002940(int recv_bytes);
     /********rpc/motion_control/axis_group/getOrientationManualStep, RequestMessageType_Int32**********/
     void handleRequest0x00016D20(int recv_bytes);
+    /********rpc/motion_control/axis_group/setSingleZeroPointOffset, RequestMessageType_Int32List_Double(count=2)**********/
+    void handleRequest0x00012404(int recv_bytes);
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);
@@ -321,15 +323,6 @@ private:
     void handleRequest0x00010225(int recv_bytes);
     /********rpc/controller/getStartMode, RequestMessageType_Void**********/
     void handleRequest0x000092E5(int recv_bytes);
-
-    /********rpc/io_mapping/getDIByBit, RequestMessageType_Int32**********/
-    void handleRequest0x000050B4(int recv_bytes);
-    /********rpc/io_mapping/setDIByBit, RequestMessageType_Int32List(count = 2) **********/
-    void handleRequest0x00011754(int recv_bytes);
-    /********rpc/io_mapping/getDOByBit, RequestMessageType_Int32**********/
-    void handleRequest0x00013074(int recv_bytes);
-    /********rpc/io_mapping/setDOByBit, RequestMessageType_Int32List(count = 2) **********/
-    void handleRequest0x00007074(int recv_bytes);
 
     /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
     void handleRequest0x0000C1E0(int recv_bytes);
@@ -428,6 +421,41 @@ private:
     void handleRequest0x0000A420(int recv_bytes);
     /********rpc/motion_control/axis_group/getCartesianManualStep, RequestMessageType_Int32**********/
     void handleRequest0x0000EAC0(int recv_bytes);
+
+    /********rpc/io_mapping/getDIByBit, RequestMessageType_Int32**********/
+    void handleRequest0x000050B4(int recv_bytes);
+    /********rpc/io_mapping/setDIByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00011754(int recv_bytes);
+    /********rpc/io_mapping/getDOByBit, RequestMessageType_Int32**********/
+    void handleRequest0x00013074(int recv_bytes);
+    /********rpc/io_mapping/setDOByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00007074(int recv_bytes);
+
+    /********rpc/io_mapping/getRIByBit, RequestMessageType_Int32**********/
+    void handleRequest0x00000684(int recv_bytes);
+    /********rpc/io_mapping/setRIByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0000CD24(int recv_bytes);
+    /********rpc/io_mapping/getROByBit, RequestMessageType_Int32**********/
+    void handleRequest0x00005BD4(int recv_bytes);
+    /********rpc/io_mapping/setROByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00012274(int recv_bytes);
+    /********rpc/io_mapping/syncFileIoStatus, RequestMessageType_String**********/
+    void handleRequest0x0000BA73(int recv_bytes);
+    /********rpc/io_mapping/syncFileIoMapping, RequestMessageType_String**********/
+    void handleRequest0x0000C2A7(int recv_bytes);
+
+    /********rpc/device_manager/get_FRP8A_IoDeviceInfo, RequestMessageType_Int32**********/
+    void handleRequest0x00006BAF(int recv_bytes);
+    /********rpc/device_manager/getModbusIoDeviceInfo, RequestMessageType_Void**********/
+    void handleRequest0x0001421F(int recv_bytes);
+
+    /********rpc/program_launching/setMethod, RequestMessageType_Int32**********/
+    void handleRequest0x00011544(int recv_bytes);
+    /********rpc/program_launching/getMethod, RequestMessageType_Void**********/
+    void handleRequest0x00010944(int recv_bytes);
+    /********rpc/program_launching/syncFileMacroConfig, RequestMessageType_String**********/
+    void handleRequest0x00016B27(int recv_bytes);
+
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -598,6 +626,8 @@ private:
     void handleResponse0x00002940(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getOrientationManualStep, ResponseMessageType_Uint64_Double**********/
     void handleResponse0x00016D20(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setSingleZeroPointOffset, ResponseMessageType_Uint64**********/
+    void handleResponse0x00012404(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -622,16 +652,6 @@ private:
     /********rpc/controller/getStartMode, ResponseMessageType_Uint64_Int32**********/
     void handleResponse0x000092E5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-    /********rpc/io_mapping/getDIByBit, ResponseMessageType_Bool_Int32**********/
-    void handleResponse0x000050B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/io_mapping/setDIByBit, ResponseMessageType_Bool**********/
-    void handleResponse0x00011754(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/io_mapping/getDOByBit, ResponseMessageType_Bool_Int32**********/
-    void handleResponse0x00013074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/io_mapping/setDOByBit, ResponseMessageType_Bool**********/
-    void handleResponse0x00007074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/controller/addIoTopic, ResponseMessageType_Bool**********/
-    void handleResponse0x0000B823(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/device_manager/getDeviceList , ResponseMessageType_DeviceInfoList**********/
     void handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -769,6 +789,44 @@ private:
     void handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/interpreter/tp_program_status, MessageType_StringList(count=2)**********/
     void handlePublishElement0x000042B3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+
+   /********rpc/controller/addIoTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x0000B823(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/io_mapping/getDIByBit, ResponseMessageType_Bool_Int32**********/
+    void handleResponse0x000050B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setDIByBit, ResponseMessageType_Bool**********/
+    void handleResponse0x00011754(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getDOByBit, ResponseMessageType_Bool_Int32**********/
+    void handleResponse0x00013074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setDOByBit, ResponseMessageType_Bool**********/
+    void handleResponse0x00007074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+ 
+
+   /********rpc/io_mapping/getRIByBit, ResponseMessageType_Uint64_Int32**********/	
+    void handleResponse0x00000684(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setRIByBit, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000CD24(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getROByBit, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00005BD4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setROByBit, ResponseMessageType_Uint64**********/
+    void handleResponse0x00012274(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/syncFileIoStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000BA73(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/syncFileIoMapping, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000C2A7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/device_manager/get_FRP8A_IoDeviceInfo, ResponseMessageType_Uint64_IoDeviceInfo**********/
+    void handleResponse0x00006BAF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/device_manager/getModbusIoDeviceInfo, ResponseMessageType_Uint64_IoDeviceInfo**********/
+    void handleResponse0x0001421F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/program_launching/setMethod, ResponseMessageType_Uint64**********/
+    void handleResponse0x00011544(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/program_launching/getMethod, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00010944(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/program_launching/syncFileMacroConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x00016B27(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     fst_ip::LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

@@ -22,6 +22,7 @@
 #include "request/request_int32_int32list.pb.h"
 #include "request/request_int32_jointlimit.pb.h"
 #include "request/request_int32_double.pb.h"
+#include "request/request_int32list_double.pb.h"
 
 #include "message_type/base.pb.h"
 #include "message_type/publish_table.pb.h"

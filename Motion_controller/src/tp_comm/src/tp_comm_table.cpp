@@ -139,6 +139,7 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/motion_control/axis_group/getCartesianManualStep",	0x0000EAC0,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Double",	&TpComm::handleRequest0x0000EAC0,	&TpComm::handleResponse0x0000EAC0,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/motion_control/axis_group/setOrientationManualStep",	0x00002940,	"RequestMessageType.Int32_Double",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00002940,	&TpComm::handleResponse0x00002940,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/motion_control/axis_group/getOrientationManualStep",	0x00016D20,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Double",	&TpComm::handleRequest0x00016D20,	&TpComm::handleResponse0x00016D20,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/motion_control/axis_group/setSingleZeroPointOffset",	0x00012404,	"RequestMessageType.Int32List_Double(count=2)",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00012404,	&TpComm::handleResponse0x00012404,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
 	rpc_service =	{	"/rpc/interpreter/start",	0x00006154,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00006154,	&TpComm::handleResponse0x00006154,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/interpreter/debug",	0x000102D7,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000102D7,	&TpComm::handleResponse0x000102D7,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
@@ -154,8 +155,20 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/io_mapping/setDIByBit",	0x00011754,	"RequestMessageType.Int32List(count = 2)",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00011754,	&TpComm::handleResponse0x00011754,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/io_mapping/getDOByBit",	0x00013074,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00013074,	&TpComm::handleResponse0x00013074,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/io_mapping/setDOByBit",	0x00007074,	"RequestMessageType.Int32List(count = 2)",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00007074,	&TpComm::handleResponse0x00007074,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/io_mapping/getRIByBit",	0x00000684,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00000684,	&TpComm::handleResponse0x00000684,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/io_mapping/setRIByBit",	0x0000CD24,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000CD24,	&TpComm::handleResponse0x0000CD24,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/io_mapping/getROByBit",	0x00005BD4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00005BD4,	&TpComm::handleResponse0x00005BD4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/io_mapping/setROByBit",	0x00012274,	"RequestMessageType.Int32List(count = 2) ",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00012274,	&TpComm::handleResponse0x00012274,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/io_mapping/syncFileIoStatus",	0x0000BA73,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000BA73,	&TpComm::handleResponse0x0000BA73,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/io_mapping/syncFileIoMapping",	0x0000C2A7,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000C2A7,	&TpComm::handleResponse0x0000C2A7,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
 	rpc_service =	{	"/rpc/device_manager/getDeviceList ",	0x0000C1E0,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_DeviceInfoList",	&TpComm::handleRequest0x0000C1E0,	&TpComm::handleResponse0x0000C1E0,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/device_manager/get_FRP8A_IoDeviceInfo",	0x00006BAF,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_IoDeviceInfo",	&TpComm::handleRequest0x00006BAF,	&TpComm::handleResponse0x00006BAF,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/device_manager/getModbusIoDeviceInfo",	0x0001421F,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_IoDeviceInfo",	&TpComm::handleRequest0x0001421F,	&TpComm::handleResponse0x0001421F,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+
+	rpc_service =	{	"/rpc/program_launching/setMethod",	0x00011544,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00011544,	&TpComm::handleResponse0x00011544,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/program_launching/getMethod",	0x00010944,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00010944,	&TpComm::handleResponse0x00010944,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/program_launching/syncFileMacroConfig",	0x00016B27,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00016B27,	&TpComm::handleResponse0x00016B27,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 }
 
 void TpComm::initPublishElementTable()

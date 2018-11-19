@@ -324,8 +324,6 @@ private:
     /********rpc/controller/getStartMode, RequestMessageType_Void**********/
     void handleRequest0x000092E5(int recv_bytes);
 
-    /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
-    void handleRequest0x0000C1E0(int recv_bytes);
     /********rpc/publish/addTopic, RequestMessageType_Topic**********/
     void handleRequest0x000050E3(int recv_bytes);
     /********rpc/publish/deleteTopic, RequestMessageType_UnsignedInt32**********/
@@ -444,10 +442,14 @@ private:
     /********rpc/io_mapping/syncFileIoMapping, RequestMessageType_String**********/
     void handleRequest0x0000C2A7(int recv_bytes);
 
+    /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
+    void handleRequest0x0000C1E0(int recv_bytes);
     /********rpc/device_manager/get_FRP8A_IoDeviceInfo, RequestMessageType_Int32**********/
     void handleRequest0x00006BAF(int recv_bytes);
     /********rpc/device_manager/getModbusIoDeviceInfo, RequestMessageType_Void**********/
     void handleRequest0x0001421F(int recv_bytes);
+    /********rpc/device_manager/getIoDeviceInfoList, RequestMessageType_Void**********/
+    void handleRequest0x000024A4(int recv_bytes);
 
     /********rpc/program_launching/setMethod, RequestMessageType_Int32**********/
     void handleRequest0x00011544(int recv_bytes);
@@ -652,10 +654,6 @@ private:
     /********rpc/controller/getStartMode, ResponseMessageType_Uint64_Int32**********/
     void handleResponse0x000092E5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-
-    /********rpc/device_manager/getDeviceList , ResponseMessageType_DeviceInfoList**********/
-    void handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
     /********rpc/publish/addTopic, ResponseMessageType_Bool**********/
     void handleResponse0x000050E3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/publish/deleteTopic, ResponseMessageType_Bool**********/
@@ -816,10 +814,14 @@ private:
     /********rpc/io_mapping/syncFileIoMapping, ResponseMessageType_Uint64**********/
     void handleResponse0x0000C2A7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
+    /********rpc/device_manager/getDeviceList , ResponseMessageType_DeviceInfoList**********/
+    void handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/device_manager/get_FRP8A_IoDeviceInfo, ResponseMessageType_Uint64_IoDeviceInfo**********/
     void handleResponse0x00006BAF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/device_manager/getModbusIoDeviceInfo, ResponseMessageType_Uint64_IoDeviceInfo**********/
     void handleResponse0x0001421F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/device_manager/getIoDeviceInfoList, ResponseMessageType_Uint64_IoDeviceInfoList**********/
+    void handleResponse0x000024A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/program_launching/setMethod, ResponseMessageType_Uint64**********/
     void handleResponse0x00011544(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

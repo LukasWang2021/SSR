@@ -54,3 +54,21 @@ void TpComm::handleResponse0x0001421F(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64_IoDeviceInfo*)task->response_data_ptr;
     }
 }
+
+//"/rpc/device_manager/getIoDeviceInfoList"
+void TpComm::handleResponse0x000024A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_IoDeviceInfoList_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponseGetUserOpMode: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_IoDeviceInfoList*)task->response_data_ptr;
+    }
+}
+

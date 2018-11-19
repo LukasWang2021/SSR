@@ -78,6 +78,7 @@
 #include "response/response_bool_int32list.pb.h"
 #include "response/response_device_info.pb.h"
 #include "response/response_io_device_info.pb.h"
+#include "response/response_io_device_info_list.pb.h"
 #include "response/response_uint64_doublelist.pb.h"
 #include "response/response_uint64_jointlimit.pb.h"
 

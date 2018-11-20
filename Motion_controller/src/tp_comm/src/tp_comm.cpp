@@ -682,7 +682,7 @@ void TpComm::lockIoPublishMutex()
 
 void TpComm::unlockIoPublishMutex()
 {
-    io_publish_list_mutex_.lock();
+    io_publish_list_mutex_.unlock();
 }
 
 void TpComm::lockRegPublishMutex()

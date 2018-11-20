@@ -14,6 +14,7 @@
 #include "process_comm.h"
 #include "motion_control.h"
 #include "serverAlarmApi.h"
+#include "io_mapping.h"//feng add for mapping.
 #include <vector>
 
 namespace fst_ctrl
@@ -27,7 +28,8 @@ public:
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, ControllerPublish* publish_ptr, VirtualCore1* virtual_core1_ptr, 
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
-                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr);
+                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
+                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::FstIoDevice* io_device_ptr); //feng add for mapping
 
     void processRpc();
 
@@ -44,6 +46,8 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
     ControllerPublish* publish_ptr_;
+    fst_ctrl::IoMapping* io_mapping_ptr_; //feng add for mapping.
+    fst_hal::FstIoDevice* io_device_ptr_; //feng add
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -351,10 +355,27 @@ private:
     void handleRpc0x00013074(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/io_mapping/setDOByBit"
     void handleRpc0x00007074(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/getRIByBit"
+    void handleRpc0x00000684(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/setRIByBit"
+    void handleRpc0x0000CD24(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/getROByBit"
+    void handleRpc0x00005BD4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/setROByBit"
+    void handleRpc0x00012274(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/syncFileIoStatus"
+    void handleRpc0x0000BA73(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/syncFileIoMapping"
+    void handleRpc0x0000C2A7(void* request_data_ptr, void* response_data_ptr);
+
 
     /* device manager rpc */
     // "/rpc/device_manager/getDeviceList"
     void handleRpc0x0000C1E0(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/get_FRP8A_IoDeviceInfo"
+    void handleRpc0x00006BAF(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/getModbusIoDeviceInfo"
+    void handleRpc0x0000215F(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

@@ -1,0 +1,6 @@
+log_level: 3
+cycle_time: 2000
+input_byte_size_: 0
+output_byte_size_: 0
+is_virtual: false
+#END

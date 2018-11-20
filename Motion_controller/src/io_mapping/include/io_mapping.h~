@@ -1,0 +1,97 @@
+#ifndef IO_MAPPING_H
+#define IO_MAPPING_H
+
+#include<stdio.h>
+#include<stdlib.h>
+#ifdef WIN32
+#pragma warning(disable : 4786)
+#endif
+#include<memory.h>
+#include<string.h>
+#include<string>
+#include<vector>
+#include<map>
+#include<algorithm>
+using namespace std;
+#include "io_mapping_cJSON.h"
+#include "io_mapping_param.h"
+#include "common_log.h"
+#include "base_datatype.h"
+#include "base_device.h"
+#include "error_code.h"
+
+typedef union MapID
+{
+    uint32_t number;
+    struct{
+        char port:8;
+        char port_type:8;
+        char address:8;
+        char dev_type:8;
+    }info;
+}MapID;
+
+namespace fst_ctrl
+{
+	
+#ifndef WIN32
+#define stricmp     strcasecmp
+#endif
+	
+typedef struct _IOMapJsonInfo
+{
+	int 		from;
+	int 		index;
+	char		module[128];
+	int 		to;
+}IOMapJsonInfo;
+
+typedef struct _IOMapVarInfo
+{
+	char		in[8];
+	char		out[8];
+}IOMapVarInfo;
+
+class IoMapping
+{
+public:
+    IoMapping();
+    ~IoMapping();
+	
+	int init();
+    ErrorCode getDIByBit(uint32_t user_port, uint32_t &value);
+    ErrorCode setDIByBit(uint32_t user_port, uint32_t value);
+    ErrorCode getDOByBit(uint32_t user_port, uint32_t &value);
+    ErrorCode setDOByBit(uint32_t user_port, uint32_t value);
+        // map<string, string> getIOMapper() { return io_mapper; }//delete
+    string getIOPathByName(string key) { return io_mapper[key]; }//delete
+    uint32_t getIOPhysicsID(string key) {return io_mapper_[key];}
+
+    static const int BASE_NUM = 10000;
+    static const int SLOT_NUM = 1000;
+    static const int DI_NUM = 100;
+    static const int DO_NUM = 200;
+
+private:
+	void loadProgramsPath();
+	char * getProgramsPath();
+    int generateIOInfo(IOMapJsonInfo &objInfo, char * strIOType);
+	int parseIOObject(cJSON *jsonIObject, char * strIOType);
+	int parseIO(cJSON *jsonDI, char * strIOType);
+	int parseIOMap(char * data, IOMapVarInfo &varInfo);
+	int printIOMapper();
+	int appendSingleIOMapper(char *filename, IOMapVarInfo &varInfo);
+	vector<string> split(string str,string pattern);
+
+    IoMappingParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
+	map<string, string> io_mapper;//delete later.
+    map<string, uint32_t> io_mapper_;
+	std::string files_manager_data_path_ = "";
+};
+
+}
+
+#endif
+
+

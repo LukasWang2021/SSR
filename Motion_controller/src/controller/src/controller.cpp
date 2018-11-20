@@ -19,7 +19,8 @@ Controller::Controller():
     is_exit_(false),
     log_ptr_(NULL),
     param_ptr_(NULL),
-    process_comm_ptr_(NULL)
+    process_comm_ptr_(NULL),
+    io_device_ptr_(NULL) //feng add
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ControllerParam();
@@ -43,6 +44,12 @@ Controller::~Controller()
 
     routine_thread_.join();
     heartbeat_thread_.join();
+
+    if(io_device_ptr_ != NULL)
+    {
+        delete io_device_ptr_;
+        io_device_ptr_ = NULL;
+    }
 
     if(process_comm_ptr_ != NULL)
     {
@@ -157,6 +164,24 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
+    //feng add for addIoTopic
+    io_device_ptr_ = new fst_hal::FstIoDevice(fst_hal::DEVICE_TYPE_FST_IO);
+    bool ret = io_device_ptr_->init();
+    if(ret == false)
+    {
+        printf("iodev err=%llx\n", error_code);
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+    //feng add for io_mapping
+    error_code = io_mapping_.init(io_device_ptr_);
+    if(error_code != SUCCESS)
+    {
+        printf("iomapping err=%llx\n", error_code);
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
     // fix me later, make device manager more automatic
     BaseDevice* device_ptr = device_manager_.getDevicePtrByDeviceIndex(1);
     FstSafetyDevice* safety_device_ptr = static_cast<FstSafetyDevice*>(device_ptr);
@@ -166,9 +191,9 @@ ErrorCode Controller::init()
                 process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
-        process_comm_ptr_->getControllerClientPtr());
+        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_device_ptr_);//&io_mapping_ by feng add
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
-                    process_comm_ptr_->getControllerClientPtr());
+                    process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_);
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {

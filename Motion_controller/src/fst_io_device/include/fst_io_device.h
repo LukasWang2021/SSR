@@ -1,10 +1,15 @@
+/**********************************************
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+File:       fst_io_device.h
+Author:     Feng.Wu
+Create:     14-Oct-2018
+Modify:     25-Oct-2018
+Summary:    dealing with IO module
+**********************************************/
+
 #ifndef FST_IO_DEVICE_H
 #define FST_IO_DEVICE_H
 
-#include "base_device.h"
-#include "fst_io_device_param.h"
-#include "common_log.h"
-#include "error_code.h"
 #include <vector>
 #include <thread>
 #include <mutex>
@@ -12,37 +17,30 @@
 #include <map>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include "IOboard.h"
 
-#include "io_interface.h"
-#include "io_manager.h"
+#include "base_device.h"
+#include "common_log.h"
+#include "error_code.h"
+#include "fst_io_mem.h"
+#include "fst_io_device_param.h"
+#include "fst_io_manager.h"
+
+#define IO_DEVICE_LOAD_PARAM_FAILED 123
+
+//depressed soon
+typedef struct _IOPortInfo
+{
+	uint32_t    msg_id;
+	uint32_t    dev_id;
+	int         port_type;
+	int         port_index;
+	int         bytes_len;
+}IOPortInfo;
+
 
 namespace fst_hal
 {
 	
-typedef unsigned long long int U64;
-	
-	// IO Macro and structure begin
-#ifndef IO_BASE_ADDRESS
-#define IO_BASE_ADDRESS (100000)
-#endif
-	
-#ifndef IO_MAX_NUM
-#define IO_MAX_NUM      (1000)
-#endif
-	
-#ifndef IO_INPUT
-#define IO_INPUT 0
-#endif
-	
-#ifndef IO_OUTPUT
-#define IO_OUTPUT 1
-#endif
-	
-#ifndef IO_DATAFRAME_MAX
-#define IO_DATAFRAME_MAX 5
-#endif
-
 class FstIoDevice : public BaseDevice
 {
 public:
@@ -50,146 +48,76 @@ public:
     ~FstIoDevice();
 
     virtual bool init();
-	
-public:
-    //------------------------------------------------------------
-    // Function:    getDevicesNum
-    // Summary: get the number of devices
-    // In:      None
-    // Out:     None
-    // Return:  int -> the total number of io devices.
-    //------------------------------------------------------------
-    int getDevicesNum(void);
 
-	std::vector<fst_io_manager::IODeviceInfo> getIODevices();
+	//------------------------------------------------------------
+	// Function:    getIODevices
+	// Summary: get the info of all the device.
+	// In:      None
+	// Out:     None
+	// Return:  the vector of all io devices.
+	//------------------------------------------------------------
+	std::vector<fst_hal::IODeviceInfo> getIODeviceList(void);
+
+	ErrorCode getDevInfoByID(uint8_t address, IODeviceInfo &info);
 
     //------------------------------------------------------------
-    // Function:    getDeviceInfo
+    // Function:    getDevicePortValues
     // Summary: get the information of each device.
-    // In:      index -> the sequence number of the device.
-    // Out:     info  -> the information of each device.
-    // Return:  U64   -> error codes.
+    // In:      address -> the address is from io board.
+    // Out:     values  -> the information of each device.
+    // Return:  ErrorCode   -> error codes.
     //------------------------------------------------------------
-    U64 getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info);
+ 	ErrorCode getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values);
 
-	
-	 /**
-	  * @brief: set DO 
-	  *
-	  * @param path: path of set DO
-	  * @param value: value to set
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 setDO(const char *path, char value);
-	
-	 /**
-	  * @brief: set DO 
-	  *
-	  * @param msg_id: id of this DO
-	  * @param value: value to set
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 setDO(int msg_id, unsigned char value);
-	
-	 /**
-	  * @brief: set DO 
-	  *
-	  * @param io_info: port infomation of DO
-	  * @param value: value to set
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 setDO(IOPortInfo *io_info, char value);
-	
-	 /**
-	  * @brief:get DI and DO 
-	  *
-	  * @param path: path to get
-	  * @param buffer: buffer to store value 
-	  * @param buf_len: buffer len
-	  * @param io_bytes_len: actual length
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 getDIO(const char *path, unsigned char *buffer, int buf_len, int& io_bytes_len);
-	
-	/**
-	  * @brief:get DI and DO 
-	  *
-	  * @param msg_id: id to get
-	  * @param buffer: buffer to store value 
-	  * @param buf_len: buffer len
-	  * @param io_bytes_len: actual length
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 getDIO(int msg_id, uint8_t *buffer, int buf_len, int& io_bytes_len);
-	  /**
-	  * @brief:get DI and DO 
-	  *
-	  * @param io_info: infomation of DI or DO
-	  * @param buffer: buffer to store value 
-	  * @param buf_len: buffer len
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len);
-	 
-	 /**
-	  * @brief: check valid of this DI or DO 
-	  *
-	  * @param path: path of this DI or DO
-	  * @param io_info: io infomation 
-	  *
-	  * @return: true if it is valid 
-	  */
-	 U64 checkIO(const char *path, IOPortInfo* io_info);
-	
-	 /**
-	  * @brief: get index of this IO device
-	  *
-	  * @param dev_address: address of device
-	  *
-	  * @return: index of IO device 
-	  */
-	 int getIODevIndex(int dev_address);
-	
-	 /**
-	  * @brief: update IO error 
-	  */
-	 U64 updateIOError();
-	 
+	//------------------------------------------------------------
+	// Function:    setDIOByBit
+	// Summary: Set the output to the specified port.
+	// In:      physics_id -> the specified physical port.
+	//          value      -> 1 = ON, 0 = OFF.
+	// Out:     None.
+	// Return:  ErrorCode   -> error codes.
+	//------------------------------------------------------------
+    ErrorCode setDIOByBit(uint32_t physics_id, uint8_t value);
 
-    // for the convert between parameter id and device id.
-    static const int ID_DIFF = 100000; 
-    static const int MULTIPLIER = 1000; 
+	//------------------------------------------------------------
+	// Function:    getDIOByBit
+	// Summary: get the value of the specified port.
+	// In:      physics_id -> the specified physical port.
+	// Out:     value      -> 1 = ON, 0 = OFF.
+	// Return:  ErrorCode   -> error codes.
+	//------------------------------------------------------------
+    ErrorCode getDIOByBit(uint32_t physics_id, uint8_t &value);
 
-    // the total number of device on RS485.
-    static const int RS_DEV_NUM = 4;
 
-    // the faulty tolerance times.
-    static const int FAULT_TOL = 20;
+	//------------------------------------------------------------
+	// Function:    getDevicesNum
+	// Summary: get the number of devices without freshening.
+	// In:      None
+	// Out:     None
+	// Return:  int -> the total number of io devices.
+	//------------------------------------------------------------
+	int getIODevNum(void);
 
-    // the thread cycle.
-    static const int LOOP_CYCLE = 1000;
+	//------------------------------------------------------------
+	// Function:    refreshIODevNum
+	// Summary: refresh the IO device slots.
+	// In:      None
+	// Out:     None
+	// Return:  int -> the total number of io devices.
+	//------------------------------------------------------------
+	int refreshIODevNum(void);
+    
+	ErrorCode setDO(int physics_id, unsigned char value){return 0;} //depressed soon.
+	ErrorCode getDIO(int physics_id, uint8_t *buffer, int buf_len, int& io_bytes_len){return 0;}//depressed soon
+	ErrorCode getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len){return 0;}//depressed soon
+	ErrorCode checkIO(const char *path, IOPortInfo* io_info){return 0;}//depressed soon
 	
+
 private:
     FstIoDeviceParam* param_ptr_;
     fst_log::Logger* log_ptr_;
-
     FstIoDevice();
-
-	
-private:
-
-    // the flags to read and write FPGA.
-    uint8_t seq_;
-
-    // the object to operate on the configuration file.
-    fst_parameter::ParamGroup param_;
-
+    int io_num_;
 };
 
 }

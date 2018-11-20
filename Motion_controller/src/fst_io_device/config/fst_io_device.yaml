@@ -1,0 +1,12 @@
+log_level: 1
+cycle_time: 10000
+max_dev_number: 4
+max_DI_number: 25
+max_DO_number: 25
+max_RI_number: 6
+max_RO_number: 6
+is_virtual: false
+virtual_board_address: 16
+virtual_DI_number: 2000
+virtual_DO_number: 2000
+#END

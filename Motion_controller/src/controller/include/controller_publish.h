@@ -10,6 +10,8 @@
 #include "base_datatype.h"
 #include "reg_manager.h"
 #include "process_comm.h"
+#include "io_mapping.h" //feng add for iomapping.
+#include "base_device.h"//feng add
 #include <vector>
 #include <list>
 
@@ -23,7 +25,8 @@ public:
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
-                    fst_base::ControllerClient* controller_client_ptr);
+                    fst_base::ControllerClient* controller_client_ptr,
+                    fst_hal::DeviceManager* device_manager_ptr, fst_ctrl::IoMapping* io_mapping_ptr);//feng add device_manager_ptr and mapping
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     typedef void (ControllerPublish::*HandleUpdateFuncPtr)(void);
@@ -39,7 +42,11 @@ public:
     void unrefRegUpdateListElement(RegType reg_type, int reg_index);
     void cleanRegUpdateList();
     void deleteTaskFromRegUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
-    
+
+    void* addTaskToIoUpdateList(int device_index, int port_type, int port_offset);//feng add for io publish
+    void deleteTaskFromIoUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
+    void unrefIoUpdateListElement(int device_index, int port_type, int port_offset);
+    void cleanIoUpdateList();
 
     void processPublish();
     
@@ -52,6 +59,8 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     RegManager* reg_manager_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
+    fst_hal::DeviceManager* device_manager_ptr_;//feng add for rpc-addIoTopic
+    fst_ctrl::IoMapping* io_mapping_ptr_; //feng add for mapping.
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -96,7 +105,21 @@ private:
         int ref_count;
     }RegPublishUpdate;
     std::list<RegPublishUpdate> reg_update_list_;
-    
+
+    //feng add for addIoTopic
+    typedef struct
+    {
+        int device_index;
+        char address;
+        char port_type;
+        char port_offset;
+        MessageType_Uint32 value;
+        bool is_valid;
+        int ref_count;
+    }IoPublishUpdate;
+    std::list<IoPublishUpdate> io_update_list_;
+
+
     void initPublishTable();
     void initPublishQuickSearchTable();
     
@@ -134,6 +157,9 @@ private:
 
     // update reg publish
     void updateReg();
+
+    // update io publish
+    void updateIo();
 };
 
 }

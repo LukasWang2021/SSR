@@ -22,6 +22,7 @@ DeviceManager::DeviceManager():
 DeviceManager::~DeviceManager()
 {
     std::map<int, BaseDevice*>::iterator it;
+    static int count_delete = 0;//temporary delete IOdevice once.to do delete.
     for(it = device_map_.begin(); it != device_map_.end(); ++it)
     {
         if(it->second != NULL)
@@ -29,7 +30,12 @@ DeviceManager::~DeviceManager()
             switch(it->second->getDeviceType())
             {
                 case DEVICE_TYPE_FST_AXIS:       break;
-                case DEVICE_TYPE_FST_IO:         delete (FstIoDevice*)it->second; break;
+                case DEVICE_TYPE_FST_IO:
+                    if(count_delete == 0) {
+                        delete (FstIoDevice *) it->second;
+                    }
+                    count_delete++;//to do delete
+                    break;
                 case DEVICE_TYPE_FST_SAFETY:     delete (FstSafetyDevice*)it->second; break;
                 case DEVICE_TYPE_FST_ANYBUS:     break;
                 case DEVICE_TYPE_VIRTUAL_AXIS:   delete (VirtualAxisDevice*)it->second; break;
@@ -78,15 +84,21 @@ ErrorCode DeviceManager::init()
 
     std::vector<DeviceConfig>::iterator it;
     BaseDevice* device_ptr;
+    static int count_new = 0;//temporary new IOdevice once.to do delete.
     for(it = device_xml_ptr_->device_config_list_.begin(); it != device_xml_ptr_->device_config_list_.end(); ++it)
     {
+        printf("init device .address =%d\n", it->address);
         switch(it->device_type)
         {
             case DEVICE_TYPE_FST_AXIS:       return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_FST_IO: 
-				device_ptr = new FstIoDevice(it->address); break;
-            case DEVICE_TYPE_FST_SAFETY: 
-				device_ptr = new FstSafetyDevice(it->address); break;
+            case DEVICE_TYPE_FST_IO:
+                if(count_new == 0) { //temporary used.
+                    device_ptr = new FstIoDevice(it->address);
+                }
+                count_new++;
+				break;
+            case DEVICE_TYPE_FST_SAFETY:
+                device_ptr = new FstSafetyDevice(it->address);break;
             case DEVICE_TYPE_FST_ANYBUS:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_VIRTUAL_AXIS: 
 				device_ptr = new VirtualAxisDevice(it->address); break;
@@ -125,6 +137,19 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
 {
     DeviceInfo info;
     std::vector<DeviceInfo> device_list;
+
+    //temporary used
+    std::vector<DeviceConfig>::iterator it;
+    for(it = device_xml_ptr_->device_config_list_.begin(); it != device_xml_ptr_->device_config_list_.end(); ++it)
+    {
+        info.index = it->device_index;
+        info.address = it->address;
+        info.type = it->device_type;
+        info.is_valid = true;
+        device_list.push_back(info);
+    }//end temporary
+
+    /* should be used in the future.
     std::map<int, BaseDevice*>::iterator it;
     for(it = device_map_.begin(); it != device_map_.end(); ++it)
     {
@@ -134,6 +159,7 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
         info.is_valid = it->second->isValid();
         device_list.push_back(info);
     }
+     */
     return device_list;
 }
 

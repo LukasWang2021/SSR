@@ -19,7 +19,8 @@ ControllerRpc::ControllerRpc():
     reg_manager_ptr_(NULL),
     device_manager_ptr_(NULL),
     motion_control_ptr_(NULL),
-    controller_client_ptr_(NULL)
+    controller_client_ptr_(NULL),
+    io_mapping_ptr_(NULL)
 {
 
 }
@@ -32,7 +33,8 @@ ControllerRpc::~ControllerRpc()
 void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, ControllerPublish* publish_ptr, VirtualCore1* virtual_core1_ptr, 
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
-                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr)
+                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
+                    fst_ctrl::IoMapping* io_mapping_ptr,fst_hal::FstIoDevice* io_device_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -46,6 +48,8 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
     device_manager_ptr_ = device_manager_ptr;
     motion_control_ptr_ = motion_control_ptr;
     controller_client_ptr_ = controller_client_ptr;
+    io_mapping_ptr_ = io_mapping_ptr;//feng add for mapping
+    io_device_ptr_ = io_device_ptr;//feng add for info list
     initRpcTable();
     initRpcQuickSearchTable();
 }

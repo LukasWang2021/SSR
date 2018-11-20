@@ -1,0 +1,360 @@
+/**********************************************
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+File:       io_mapping.cpp
+Author:     Feng.Wu Jiaming.Lu 
+Create:     15-Obt-2018
+Modify:     15-Obt-2018
+Summary:    implement io mapping
+**********************************************/
+#include "io_mapping.h"
+//#include "fst_io_device.h"
+using namespace fst_ctrl;
+
+IoMapping::IoMapping():
+    log_ptr_(NULL),
+    param_ptr_(NULL)
+{
+    log_ptr_ = new fst_log::Logger();
+    param_ptr_ = new IoMappingParam();
+
+	loadProgramsPath();
+}
+
+IoMapping::~IoMapping()
+{
+
+}
+
+int IoMapping::init()
+{
+	IOMapVarInfo varInfo ;
+	io_mapper.clear();
+
+	char io_map_file_name[128];
+	// AI/AO
+	strcpy(varInfo.in , "AI") ;  strcpy(varInfo.out , "AO") ;
+	sprintf(io_map_file_name, "%s/io_mapping/ai_ao_mapping.json", 
+		getProgramsPath());
+	appendSingleIOMapper(io_map_file_name, varInfo);
+	// DI/DO
+	strcpy(varInfo.in , "DI") ;  strcpy(varInfo.out , "DO") ;
+	sprintf(io_map_file_name, "%s/io_mapping/di_mapping.json", 
+		getProgramsPath());
+    printf(" the file is %s\n",io_map_file_name);
+	appendSingleIOMapper(io_map_file_name, varInfo);
+	// RI/RO
+	strcpy(varInfo.in , "RI") ;  strcpy(varInfo.out , "RO") ;
+	sprintf(io_map_file_name, "%s/io_mapping/ri_ro_mapping.json", 
+		getProgramsPath());
+	appendSingleIOMapper(io_map_file_name, varInfo);
+	// SI/SO
+	strcpy(varInfo.in , "SI") ;  strcpy(varInfo.out , "SO") ;
+	sprintf(io_map_file_name, "%s/io_mapping/si_so_mapping.json", 
+		getProgramsPath());
+	appendSingleIOMapper(io_map_file_name, varInfo);
+	// UI/UO
+	strcpy(varInfo.in , "UI") ;  strcpy(varInfo.out , "UO") ;
+	sprintf(io_map_file_name, "%s/io_mapping/ui_uo_mapping.json", 
+		getProgramsPath());
+	appendSingleIOMapper(io_map_file_name, varInfo);
+	return 1;
+}
+
+ErrorCode IoMapping::getDIByBit(uint32_t user_port, uint32_t &value)
+{
+	char cTemp[128];
+    string  strKey;
+    memset(cTemp, 0x00, 128);
+	sprintf(cTemp, "%s[%d]", "DI", user_port);
+	strKey.assign(cTemp);
+
+    uint32_t map_id = getIOPhysicsID(strKey);
+
+    return SUCCESS;
+}
+ErrorCode IoMapping::setDIByBit(uint32_t user_port, uint32_t value)
+{
+    return SUCCESS;    
+}
+ErrorCode IoMapping::getDOByBit(uint32_t user_port, uint32_t &value)
+{
+    return SUCCESS;    
+}
+ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint32_t value)
+{
+    return SUCCESS;   
+}
+
+void IoMapping::loadProgramsPath()
+{
+	files_manager_data_path_ = "";
+
+    fst_parameter::ParamGroup param_;
+    param_.loadParamFile("/home/fst/fortest/programs_path.yaml");
+    param_.getParam("file_manager/data", files_manager_data_path_);
+	printf("forgesight_load_programs_path: %s .\n", files_manager_data_path_.c_str());
+	
+}
+
+char * IoMapping::getProgramsPath()
+{
+	return (char *)files_manager_data_path_.c_str();
+}
+
+
+int IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, char * strIOType)
+{
+	char cTemp[128];
+	char cUpperType[16];
+//delete    char *pUpper;
+	string strKey, strValue ;
+	
+    strcpy(cUpperType, strIOType);
+/*delete	pUpper = cUpperType;
+	while(*pUpper){ 
+		*pUpper = toupper(*pUpper); 
+		pUpper++; 
+	}
+*/ 
+    //delete: path to path mapping.
+	for (int i = objInfo.from ; i <= objInfo.to ; i++)
+	{
+		memset(cTemp, 0x00, 128);
+		sprintf(cTemp, "%s[%d]", strIOType, i);
+		strKey.assign(cTemp);
+		
+        vector<string> result=split(objInfo.module, "/"); //use "/" to split
+		sprintf(cTemp, "root/IO/%s/%s/%s/%d", 
+			result[0].c_str(), result[2].c_str(), cUpperType, 
+			objInfo.index + i - objInfo.from);
+		strValue.assign(cTemp);
+        //printf("strkey = %s\n",strKey.c_str());
+        //printf("strValue = %s\n",strValue.c_str());
+
+		io_mapper.insert(
+			map<string, string>::value_type(strKey, strValue));
+		// Add revert element
+		io_mapper.insert(
+			map<string, string>::value_type(strValue, strKey));
+	}
+
+    // id mapping with union
+    char temp[8] = {cUpperType[1]};
+    PhysicsID id;
+    id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;//=2
+    
+    vector<string> result=split(objInfo.module, "/"); //use "/" to split
+    id.info.address = atoi(result[2].c_str());  
+
+    if (stricmp(temp,"I") == 0)
+        id.info.port_type = 1;
+    else if (stricmp(temp, "O") == 0)
+        id.info.port_type = 2;
+
+    id.info.port = objInfo.index;
+    for (int i = objInfo.from ; i <= objInfo.to ; i++)
+	{
+		memset(cTemp, 0x00, 128);
+		sprintf(cTemp, "%s[%d]", strIOType, i);
+		strKey.assign(cTemp);
+        printf("strkey = %s    ",strKey.c_str());
+        printf("physics id = %lx\n",id.number);
+
+		io_mapper_.insert(map<string, uint32_t>::value_type(strKey, id.number));
+        id.info.port++;
+	}
+
+    //  id to id mapping.
+/*delete
+    uint32_t physics_id = BASE_NUM;
+    int dev_no;
+    char temp[8] = {cUpperType[1]};
+
+    vector<string> result=split(objInfo.module, "/"); //use "/" to split
+    dev_no = atoi(result[2].c_str());
+    physics_id += dev_no*SLOT_NUM;
+    if (stricmp(temp,"I") == 0){
+        physics_id += DI_NUM;
+    }
+    else if (stricmp(temp, "O") == 0)
+        physics_id += DO_NUM;
+      
+    physics_id += objInfo.index;
+	for (int i = objInfo.from ; i <= objInfo.to ; i++)
+	{
+		memset(cTemp, 0x00, 128);
+		sprintf(cTemp, "%s[%d]", strIOType, i);
+		strKey.assign(cTemp);
+        printf("strkey = %s    ",strKey.c_str());
+        printf("physics id = %d\n",physics_id);
+
+		io_mapper_.insert(map<string, uint32_t>::value_type(strKey, physics_id));
+        physics_id++;
+	}
+*/
+	return 1;
+}
+
+int IoMapping::parseIOObject(cJSON *jsonIObject, char * strIOType)
+{
+	IOMapJsonInfo objInfo ;
+//delete	int numentries=0; // ,i=0,fail=0;
+	cJSON *child=jsonIObject->child;
+	
+	//printf("parseDIObject:cJSON_Array--- %s\n", jsonIObject->string);
+	while (child) 
+	{
+//delete		numentries++;
+        // the last catelog, such as from, index... 
+		//printf("parseIOObject: cJSON_object %s\n", child->string);
+		if(strcmp(child->string, "from") == 0)
+		{
+			objInfo.from = child->valueint ;
+		}
+		else if(strcmp(child->string, "index") == 0)
+		{
+			objInfo.index = child->valueint ;
+		}
+		else if(strcmp(child->string, "module") == 0)
+		{
+			strcpy(objInfo.module, child->valuestring) ;
+		}
+		else if(strcmp(child->string, "to") == 0)
+		{
+			objInfo.to = child->valueint ;
+		}
+		child=child->next;
+	}
+	
+	generateIOInfo(objInfo, strIOType);
+	return 1;
+}
+
+int IoMapping::parseIO(cJSON *jsonDI, char * strIOType)
+{
+//delete	int numentries=0; // ,i=0,fail=0;
+	cJSON *child=jsonDI->child;
+//delete	while (child) 
+//delete		numentries++, child=child->next;
+//delete	child=jsonDI->child;
+
+	while (child) // && !fail)
+	{
+		//printf("parseIO:cJSON_object--- %s\n", child->string);
+		switch ((child->type)&255)
+		{
+		case cJSON_Number:	
+			//printf("parseIO:cJSON_Number %d\n", child->valueint); 
+			break;
+		case cJSON_String:	
+			//printf("parseIO:cJSON_String %s\n", child->valuestring); 
+			break;
+		case cJSON_Object:
+            // the second catelog, such as [{},{}].
+			//printf("parseIO:cJSON_Object\n"); 
+			parseIOObject(child, strIOType);
+			break;
+		}
+		child=child->next;
+	}
+	return 1;
+}
+
+int IoMapping::parseIOMap(char * data, IOMapVarInfo &varInfo)
+{
+	cJSON *json;
+	json=cJSON_Parse(data);
+	if(json == NULL)
+		return -1;
+	
+	cJSON *child=json->child;
+	while(child)
+	{
+		switch ((child->type)&255)
+		{
+		case cJSON_True:	
+			//printf("parseIOMap:cJSON_True"); 
+			break;
+		case cJSON_Number:	
+			//printf("parseIOMap:cJSON_Number %d\n", child->valueint); 
+			break;
+		case cJSON_String:	
+			//printf("parseIOMap:cJSON_String %s\n", child->valuestring);
+			break;
+		case cJSON_Array:	
+			{
+                // First catelog, such as DI, DO, AI, AO.
+				//printf("parseIOMap:cJSON_Array %s\n", child->string);
+				if(stricmp(child->string, varInfo.in) == 0)
+					parseIO(child, varInfo.in);
+				else if(stricmp(child->string, varInfo.out) == 0)
+					parseIO(child, varInfo.out);
+				break;
+			}
+		case cJSON_Object:	
+			//printf("cJSON_Object\n"); 
+			break;
+		}
+		child = child->next ;
+	}
+	cJSON_Delete(json);
+	return 1;
+}
+
+int IoMapping::printIOMapper()
+{
+	map<string, string>::iterator it;
+
+	it = io_mapper.begin();
+	
+	printf("\t\tobjThreadCntrolBlock->io_mapper has %d elements \n", 
+			io_mapper.size());
+
+	while(it != io_mapper.end())
+	{
+		// it->first;  // it->second;
+		printf("\t\t%s :: %s \n", 
+				it->first.c_str(), it->second.c_str());
+		it++;         
+	}
+	return 1;
+}
+
+int IoMapping::appendSingleIOMapper(
+		char *filename, IOMapVarInfo &varInfo)
+{
+	FILE *f;long len;char *data;
+
+	f=fopen(filename,"rb"); 
+	if(f)
+	{
+        // read file to data, then parse data.
+	    fseek(f,0,SEEK_END); len=ftell(f); fseek(f,0,SEEK_SET);
+	    data=(char*)malloc(len+1); fread(data,1,len,f); 
+		fclose(f);
+		parseIOMap(data, varInfo);
+		free(data);
+	}
+	return 1;
+}
+
+vector<string> IoMapping::split(string str,string pattern)
+{
+	string::size_type pos;
+	vector<string> result;
+	str+=pattern;
+	int size=str.size();
+
+	for(int i=0; i<size; i++)
+	{
+		pos=str.find(pattern,i);
+		if((int)pos<size)
+		{
+			string s=str.substr(i,pos-i);
+			result.push_back(s);
+			i=pos+pattern.size()-1;
+		}
+	}
+	return result;
+}
+

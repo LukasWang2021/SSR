@@ -1,31 +1,24 @@
-/**
- * @file io_interface.h
- * @brief 
- * @author WangWei
- * @version 1.0.0
- * @date 2017-06-12
- */
+/**********************************************
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+File:       io_interface.h
+Author:     Feng.Wu WeiWang
+Create:     12-Jun-2017
+Modify:     25-Oct-2018
+Summary:    dealing with IO module
+**********************************************/
+
 #ifndef TP_INTERFACE_IO_INTERFACE_H_
 #define TP_INTERFACE_IO_INTERFACE_H_
 
 #ifndef WIN32
 #include <atomic>
 #include <vector>
-#include "io_manager.h"
-//#include "modbus_manager.h"
+#include "fst_io_manager.h"
 #endif
-// #include "motionSL.pb.h"
 #include "common_log.h"
-#include "io_mapping.h"
+#include "fst_io_device_param.h"
 
-//using namespace std;
-	
-typedef unsigned long long int U64;
-
-#define IO_BASE_ADDRESS (100000)
-#define IO_MAX_NUM      (1000)
-
-
+/*//depressed soon
 typedef struct _IOPortInfo
 {
     uint32_t    msg_id;
@@ -34,140 +27,96 @@ typedef struct _IOPortInfo
     int         port_index;
     int         bytes_len;
 }IOPortInfo;
+*/
 
-
-class IOInterface
+namespace fst_hal
 {
-  public:	 
-    IOInterface(fst_log::Logger* logger);
-    ~IOInterface();
-    static IOInterface* instance(fst_log::Logger* logger);
-    U64 initial();
-    /**
-     * @brief: add io device infomation to dev_info_ 
-     *
-     * @return: 0 if success 
-     */
-    U64 addIODevices();
-	
-    std::vector<fst_io_manager::IODeviceInfo> getIODevices();
+
+    class IOInterface {
+    public:
+        IOInterface(fst_log::Logger *logger, fst_hal::FstIoDeviceParam *param);
+
+        ~IOInterface();
+
+        static IOInterface *instance(fst_log::Logger *logger, fst_hal::FstIoDeviceParam *param);
+
+        ErrorCode initial(){return 0;}
+
+        //------------------------------------------------------------
+        // Function:    getDevicesNum
+        // Summary: get the number of devices without freshening.
+        // In:      None
+        // Out:     None
+        // Return:  int -> the total number of io devices.
+        //------------------------------------------------------------
+        int getIODevNum(){return 0;}
+
+        //------------------------------------------------------------
+        // Function:    refreshIODevNum
+        // Summary: refresh the IO device slots.
+        // In:      None
+        // Out:     None
+        // Return:  int -> the total number of io devices.
+        //------------------------------------------------------------
+        int refreshIODevNum(){return 0;}
+
+        //------------------------------------------------------------
+        // Function:    getIODevices
+        // Summary: get the info of all the device.
+        // In:      None
+        // Out:     None
+        // Return:  the vector of all io devices.
+        //------------------------------------------------------------
+        std::vector <fst_hal::IODeviceInfo> getIODeviceList(){std::vector<fst_hal::IODeviceInfo> v;return v;}
+
+        //------------------------------------------------------------
+        // Function:    getDeviceInfo
+        // Summary: get the information of each device.
+        // In:      index -> the sequence number of the device.
+        // Out:     info  -> the information of each device.
+        // Return:  ErrorCode   -> error codes.
+        //------------------------------------------------------------
+        ErrorCode getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values){return 0;}
+
+        //------------------------------------------------------------
+        // Function:    setDIOByBit
+        // Summary: Set the output to the specified port.
+        // In:      physics_id -> the specified physical port.
+        //          value      -> 1 = ON, 0 = OFF.
+        // Out:     None.
+        // Return:  ErrorCode   -> error codes.
+        //------------------------------------------------------------
+        ErrorCode setDIOByBit(uint32_t physics_id, uint8_t value){return 0;}
+
+        //------------------------------------------------------------
+        // Function:    getDIOByBit
+        // Summary: get the value of the specified port.
+        // In:      physics_id -> the specified physical port.
+        // Out:     value      -> 1 = ON, 0 = OFF.
+        // Return:  ErrorCode   -> error codes.
+        //------------------------------------------------------------
+        ErrorCode getDIOByBit(uint32_t physics_id, uint8_t &value){return 0;}
 
 
-    //bool encDevList(BaseTypes_ParameterMsg *param_msg, pb_ostream_t *stream, const pb_field_t *field);
-	U64 getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info);
+        ErrorCode getDIO(int physics_id, uint8_t *buffer, int buf_len, int &io_bytes_len) { return 0; }//depressed
 
-	U64 getDIByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len);
-	U64 getDOByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len);
-	U64 setDOByBit(int idx, char value);
 
-    /**
-     * @brief: get io devices number 
-     *
-     * @return 
-     */
-    int getIODevNum();
-    
-    /**
-     * @brief: set DO 
-     *
-     * @param path: path of set DO
-     * @param value: value to set
-     *
-     * @return: 0 if success 
-     */
-    U64 setDO(const char *path, char value);
+        fst_hal::IODeviceInfo *getDevInfoPtr() { return dev_info_; }
 
-    /**
-     * @brief: set DO 
-     *
-     * @param msg_id: id of this DO
-     * @param value: value to set
-     *
-     * @return: 0 if success 
-     */
-    U64 setDO(int msg_id, unsigned char value);
+    private:
+        IOInterface();
 
-    /**
-     * @brief: set DO 
-     *
-     * @param io_info: port infomation of DO
-     * @param value: value to set
-     *
-     * @return: 0 if success 
-     */
-    U64 setDO(IOPortInfo *io_info, char value);
+        fst_hal::IOManager *io_manager_;
+        std::atomic<fst_hal::IODeviceInfo *> dev_info_; // delete soon
 
-    /**
-     * @brief:get DI and DO 
-     *
-     * @param path: path to get
-     * @param buffer: buffer to store value 
-     * @param buf_len: buffer len
-     * @param io_bytes_len: actual length
-     *
-     * @return: 0 if success 
-     */
-    U64 getDIO(const char *path, unsigned char *buffer, int buf_len, int& io_bytes_len);
+        std::atomic_int io_num_;    //number of IO board
+        bool is_virtual_;
 
-   /**
-     * @brief:get DI and DO 
-     *
-     * @param msg_id: id to get
-     * @param buffer: buffer to store value 
-     * @param buf_len: buffer len
-     * @param io_bytes_len: actual length
-     *
-     * @return: 0 if success 
-     */
-    U64 getDIO(int msg_id, uint8_t *buffer, int buf_len, int& io_bytes_len);
-     /**
-     * @brief:get DI and DO 
-     *
-     * @param io_info: infomation of DI or DO
-     * @param buffer: buffer to store value 
-     * @param buf_len: buffer len
-     *
-     * @return: 0 if success 
-     */
-    U64 getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len);
-    
-    /**
-     * @brief: check valid of this DI or DO 
-     *
-     * @param path: path of this DI or DO
-     * @param io_info: io infomation 
-     *
-     * @return: true if it is valid 
-     */
-    U64 checkIO(const char *path, IOPortInfo* io_info);
 
-    /**
-     * @brief: get index of this IO device
-     *
-     * @param dev_address: address of device
-     *
-     * @return: index of IO device 
-     */
-    int getIODevIndex(int dev_address);
+        fst_log::Logger *log_ptr_;
+        fst_hal::FstIoDeviceParam *param_ptr_;
+    };
 
-    /**
-     * @brief: update IO error 
-     */
-    U64 updateIOError();
-
-	fst_io_manager::IODeviceInfo* getDevInfoPtr(){ return dev_info_ ; }
-
-  private:
-    fst_io_manager::IOManager *io_manager_;
-    std::atomic<fst_io_manager::IODeviceInfo*>  dev_info_;  //
-    
-    //fst_modbus::ModbusManager *modbus_manager_;
-	
-    std::atomic_int     io_num_;    //number of IO board
-    
-    fst_log::Logger* log_ptr_;
-
-	fst_ctrl::IoMapping  io_mapping ;
-};
+}
 
 #endif

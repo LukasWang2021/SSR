@@ -9,6 +9,7 @@ IoMappingParam::IoMappingParam():
     log_level_(3)
 {
     file_path_ += "io_mapping.yaml";
+    //file_path_ = "/home/fst/gitlab_iomapping_1015/Application/Motion_controller/install/share/runtime/component_param/io_mapping.yaml";//test only
 }
 
 IoMappingParam::~IoMappingParam()

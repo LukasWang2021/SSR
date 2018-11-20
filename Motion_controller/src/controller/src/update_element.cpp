@@ -195,4 +195,72 @@ void ControllerPublish::updateReg()
     }
 }
 
+void ControllerPublish::updateIo()
+{
+    //void* value_ptr;
+    ErrorCode ret = SUCCESS;
+    std::list<IoPublishUpdate>::iterator it;
+    for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
+    {
+        //delete
+        //fst_hal::PhysicsID id;
+        //id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;
+        //id.info.address = it->address;
+        //id.info.port_type = it->port_type;
+        //id.info.port = it->port_offset;
 
+        uint8_t value = 0;
+
+        switch(it->port_type)
+        {
+            case MessageType_IoType_DI://fst_hal::IO_TYPE_DI:
+            {
+                ret = io_mapping_ptr_->getDIByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_DO://fst_hal::IO_TYPE_DO:
+            {
+                ret = io_mapping_ptr_->getDOByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+
+
+                /*
+                value_ptr = reg_manager_ptr_->getHrRegValueById(it->reg_index);
+                if(value_ptr != NULL)
+                {
+                    HrValue* hr_value_ptr = static_cast<HrValue*>(value_ptr);
+                    it->hr_value.is_valid = true;
+                    it->hr_value.group_id = hr_value_ptr->group_id;
+                    memcpy(&it->hr_value.joint_pos.data[0], &hr_value_ptr->joint_pos[0], 9*sizeof(double));
+                    memcpy(&it->hr_value.diff_pos.data[0], &hr_value_ptr->diff_pos[0], 9*sizeof(double));
+                }
+                else
+                {
+                    it->hr_value.is_valid = false;
+                }
+                it->hr_value.joint_pos.data_count = 9;
+                it->hr_value.diff_pos.data_count = 9;
+                break;
+                 */
+            }
+        }
+    }
+}

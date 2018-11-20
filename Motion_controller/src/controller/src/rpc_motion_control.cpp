@@ -709,7 +709,7 @@ void ControllerRpc::handleRpc0x00008AB4(void* request_data_ptr, void* response_d
     if(rq_data_ptr->data2.data_count == 9)
     {
         double offset[NUM_OF_JOINT];
-        memcpy(&offset[0], &rq_data_ptr->data2.data[0], 9);
+        memcpy(&offset[0], &rq_data_ptr->data2.data[0], NUM_OF_JOINT*sizeof(double));
         motion_control_ptr_->setOffset(offset);
         rs_data_ptr->data.data = SUCCESS;
     }

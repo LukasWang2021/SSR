@@ -147,7 +147,7 @@ void TpComm::handleResponse0x0000BA73(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->request_data_ptr != NULL)
     {
-        delete (RequestMessageType_String*)task->request_data_ptr;
+        delete (RequestMessageType_StringList*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {
@@ -163,7 +163,7 @@ void TpComm::handleResponse0x0000C2A7(std::vector<TpRequestResponse>::iterator& 
     }
     if(task->request_data_ptr != NULL)
     {
-        delete (RequestMessageType_String*)task->request_data_ptr;
+        delete (RequestMessageType_StringList*)task->request_data_ptr;
     }
     if(task->response_data_ptr != NULL)
     {

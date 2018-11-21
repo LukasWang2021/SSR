@@ -205,7 +205,7 @@ void TpComm::handleRequest0x00012274(int recv_bytes)
 void TpComm::handleRequest0x0000BA73(int recv_bytes)
 {
     // create object for request and response package
-    RequestMessageType_String* request_data_ptr = new RequestMessageType_String;
+    RequestMessageType_StringList* request_data_ptr = new RequestMessageType_StringList;
     if(request_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -222,13 +222,13 @@ void TpComm::handleRequest0x0000BA73(int recv_bytes)
     }
     
     handleRequestPackage(0x0000BA73, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_String_fields, -1);
+        recv_bytes, RequestMessageType_StringList_fields, -1);
 }
 //"/rpc/io_mapping/syncFileIoMapping"
 void TpComm::handleRequest0x0000C2A7(int recv_bytes)
 {
     // create object for request and response package
-    RequestMessageType_String* request_data_ptr = new RequestMessageType_String;
+    RequestMessageType_StringList* request_data_ptr = new RequestMessageType_StringList;
     if(request_data_ptr == NULL)
     {
         ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
@@ -245,7 +245,7 @@ void TpComm::handleRequest0x0000C2A7(int recv_bytes)
     }
     
     handleRequestPackage(0x0000C2A7, (void*)request_data_ptr, (void*)response_data_ptr, 
-        recv_bytes, RequestMessageType_String_fields, -1);
+        recv_bytes,RequestMessageType_StringList_fields, -1);
 }
 
 

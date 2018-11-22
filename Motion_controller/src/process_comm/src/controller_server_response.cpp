@@ -225,4 +225,37 @@ void ControllerServer::handleResponseSetInterpreterServerStatus(std::vector<Proc
     }
 }
 
+void ControllerServer::handleResponseGetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
 
+}
+void ControllerServer::handleResponseSetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+
+}
+void ControllerServer::handleResponseGetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+
+}
+void ControllerServer::handleResponseSetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+
+}
+
+void ControllerServer::handleResponseGetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+
+}
+void ControllerServer::handleResponseSetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+
+}
+
+void ControllerServer::handleResponseGetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+
+}
+void ControllerServer::handleResponseSetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+
+}

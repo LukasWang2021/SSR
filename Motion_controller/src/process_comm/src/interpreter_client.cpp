@@ -302,6 +302,54 @@ bool InterpreterClient::setInterpreterServerStatus(bool status)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
+ErrorCode InterpreterClient::getDi(uint32_t &value)
+{
+  //  RequestGetIo request_get_io;
+  //  memcpy(&request_get_io.port_info, port_info_ptr, sizeof(IOPortInfo));
+  //  request_get_io.buffer_length = buffer_length;
+ /*   if(!sendRequest(CONTROLLER_SERVER_CMD_GET_DI, (void*)&request_get_io, sizeof(RequestGetIo))
+       || !recvResponse(sizeof(ResponseGetIo))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_IO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetIo response_get_io;
+    memcpy(&response_get_io, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetIo));
+    *value_ptr = response_get_io.value;
+    return response_get_io.error_code;
+*/
+    return SUCCESS;
+}
+
+ErrorCode InterpreterClient::setDi()
+{
+    return SUCCESS;
+}
+ErrorCode InterpreterClient::getDo()
+{
+    return SUCCESS;
+}
+ErrorCode InterpreterClient::setDo()
+{
+    return SUCCESS;
+}
+ErrorCode InterpreterClient::getRi()
+{
+    return SUCCESS;
+}
+ErrorCode InterpreterClient::setRi()
+{
+    return SUCCESS;
+}
+ErrorCode InterpreterClient::getRo()
+{
+    return SUCCESS;
+}
+ErrorCode InterpreterClient::setRo()
+{
+    return SUCCESS;
+}
+
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;

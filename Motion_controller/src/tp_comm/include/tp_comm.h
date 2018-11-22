@@ -132,8 +132,7 @@ private:
     void handlePublishElementRegMr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     void handlePublishElementRegHr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     void handlePublishElementRegR(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    void handlePublishElementIoInput(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    void handlePublishElementIoOutput(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElementIo(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     void recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path);
     void handleRequestNonexistentHash(int hash, int recv_bytes);

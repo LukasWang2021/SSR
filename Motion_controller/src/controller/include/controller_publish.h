@@ -43,9 +43,9 @@ public:
     void cleanRegUpdateList();
     void deleteTaskFromRegUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
 
-    void* addTaskToIoUpdateList(int device_index, int port_type, int port_offset);//feng add for io publish
+    void* addTaskToIoUpdateList(uint32_t port_type, uint32_t port_offset);//feng add for io publish
     void deleteTaskFromIoUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list);
-    void unrefIoUpdateListElement(int device_index, int port_type, int port_offset);
+    void unrefIoUpdateListElement(uint32_t port_type, uint32_t port_offset);
     void cleanIoUpdateList();
 
     void processPublish();
@@ -109,10 +109,10 @@ private:
     //feng add for addIoTopic
     typedef struct
     {
-        int device_index;
-        char address;
-        char port_type;
-        char port_offset;
+        //int device_index;
+        //char address;
+        uint32_t port_type;
+        uint32_t port_offset;
         MessageType_Uint32 value;
         bool is_valid;
         int ref_count;

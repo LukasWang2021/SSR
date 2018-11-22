@@ -121,19 +121,19 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
 
     int element_count = 0;
     void* data_ptr;
-    int device_index;
-    int port_type;
-    int port_offset;
+    //int device_index;
+    uint32_t port_type;
+    uint32_t port_offset;
     TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
     for(unsigned int i = 0; i < rq_data_ptr->data.element_hash_list_count; ++i)
     {
-        device_index = rq_data_ptr->data.element_hash_list[i] >> 24;
-        port_type = (rq_data_ptr->data.element_hash_list[i] >> 16) & 0x000000FF;
+        //delete device_index = rq_data_ptr->data.element_hash_list[i] >> 24;
+        port_type = (rq_data_ptr->data.element_hash_list[i] >> 16) & 0x0000FFFF;
         port_offset = (rq_data_ptr->data.element_hash_list[i] & 0x0000FFFF);
 
 
         //feng add for publish io topic
-        data_ptr = publish_ptr_->addTaskToIoUpdateList(device_index, port_type, port_offset);
+        data_ptr = publish_ptr_->addTaskToIoUpdateList(port_type, port_offset);
         if (data_ptr != NULL)
         {
             tp_comm_ptr_->addTpPublishElement(task, rq_data_ptr->data.element_hash_list[i], data_ptr);

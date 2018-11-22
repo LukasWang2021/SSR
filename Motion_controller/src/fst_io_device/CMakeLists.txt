@@ -58,6 +58,7 @@ target_link_libraries(fst_io_device
     modbus_manager
     error_monitor
     logger
+    parameter_manager
 )
 
 

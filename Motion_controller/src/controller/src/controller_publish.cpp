@@ -134,15 +134,15 @@ PTR_RETURN:
 }
 
 //feng add
-void* ControllerPublish::addTaskToIoUpdateList(int device_index, int port_type, int port_offset)//feng add for io publish
+void* ControllerPublish::addTaskToIoUpdateList(uint32_t port_type, uint32_t port_offset)//feng add for io publish
 {
-    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
-    int address = -1;
+    //delete std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+    //delete int address = -1;
 
     std::list<IoPublishUpdate>::iterator it;
     for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
     {
-        if(it->device_index == device_index && it->port_type == port_type && it->port_offset == port_offset)
+        if(it->port_type == port_type && it->port_offset == port_offset)
         {
             goto PTR_RETURN;
         }
@@ -153,7 +153,7 @@ void* ControllerPublish::addTaskToIoUpdateList(int device_index, int port_type, 
         return NULL;
     }
 
-    //find address according device_index.
+    /*//find address according device_index.
     for (unsigned int i = 0; i < device_list.size(); ++i)
     {
         if (device_list[i].index == device_index)
@@ -162,12 +162,14 @@ void* ControllerPublish::addTaskToIoUpdateList(int device_index, int port_type, 
             break;
         }
     }
+     */
 
     IoPublishUpdate io_publish_update;
-    io_publish_update.device_index = device_index;
-    io_publish_update.address = address;
+    //io_publish_update.device_index = device_index;
+    //io_publish_update.address = address;
     io_publish_update.port_type = port_type;
     io_publish_update.port_offset = port_offset;
+    io_publish_update.value.data = 0;
     io_publish_update.is_valid = true;
     io_publish_update.ref_count = 0;
     io_update_list_.push_back(io_publish_update);
@@ -296,20 +298,20 @@ void ControllerPublish::deleteTaskFromIoUpdateList(std::vector<fst_comm::TpPubli
     std::vector<TpPublishElement>::iterator it;
     for(it = publish_element_list.begin(); it != publish_element_list.end(); ++it)
     {
-        device_index = (it->hash >> 24);
-        port_type = ((it->hash >> 16) & 0x000000FF);
+        //delete device_index = (it->hash >> 24);
+        port_type = ((it->hash >> 16) & 0x0000FFFF);
         port_offset = (it->hash & 0x0000FFFF);
-        unrefIoUpdateListElement(device_index, port_type, port_offset);
+        unrefIoUpdateListElement(port_type, port_offset);
     }
     cleanIoUpdateList();
 }
 //feng add
-void ControllerPublish::unrefIoUpdateListElement(int device_index, int port_type, int port_offset)
+void ControllerPublish::unrefIoUpdateListElement(uint32_t port_type, uint32_t port_offset)
 {
     std::list<IoPublishUpdate>::iterator it;
     for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
     {
-        if(it->device_index == device_index && it->port_type == port_type && it->port_offset == port_offset)
+        if(it->port_type == port_type && it->port_offset == port_offset)
         {
             --it->ref_count;
             return;
@@ -351,9 +353,9 @@ void ControllerPublish::processPublish()
     updateReg();
     tp_comm_ptr_->unlockRegPublishMutex();
 
-    //tp_comm_ptr_->lockIoPublishMutex();
+    tp_comm_ptr_->lockIoPublishMutex();
     updateIo();
-    //tp_comm_ptr_->unlockIoPublishMutex();
+    tp_comm_ptr_->unlockIoPublishMutex();
 
 }
 

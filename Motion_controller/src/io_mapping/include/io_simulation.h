@@ -21,7 +21,6 @@ Summary:    to store the simulation values.
 #include "base_device.h"
 #include "error_code.h"
 
-#define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x00100002008F03FE   /*failed to load simused status json files*/
 
 using namespace std;
 

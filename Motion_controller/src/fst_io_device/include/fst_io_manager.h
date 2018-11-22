@@ -35,10 +35,10 @@ typedef union PhysicsID
 {
     uint32_t number;
     struct{
-        char port:8;
-        char port_type:8;
-        char address:8;
-        char dev_type:8;
+        uint8_t port:8;
+        uint8_t port_type:8;
+        uint8_t address:8;
+        uint8_t dev_type:8;
     }info;
 }PhysicsID;
 

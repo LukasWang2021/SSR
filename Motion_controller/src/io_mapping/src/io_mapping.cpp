@@ -51,15 +51,15 @@ IoMapping::~IoMapping()
 // Summary:
 // In:      None.
 // Out:     None.
-// Return:  1  -> success.
-//          -  -> failed.
+// Return:  SUCCESS -> success.
+//          ErrorCode  -> failed.
 //------------------------------------------------------------
 ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr)
 {
 	io_dev_ptr_ = io_device_ptr;
 
 	if(!param_ptr_->loadParam()){
-		FST_WARN("Failed to load io_mapping component parameters");
+		FST_INFO("Failed to load io_mapping component parameters");
 		ErrorMonitor::instance()->add(IO_MAPPING_LOAD_PARAM_FAILED);
 	} else {
 		FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
@@ -71,7 +71,6 @@ ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr)
 		return ret;
 	}
 
-	io_mapper_.clear();
 	loadProgramsPath();
 
 	ret = updateMappingFile();
@@ -94,36 +93,38 @@ ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr)
 ErrorCode IoMapping::updateMappingFile()
 {
 	char io_map_file_name[128];
-	int ret = 1;
+	bool ret = true;
+	io_mapper_.clear();
 
+	// to do, check file faulty first, pass if no files.
 	// DI
 	sprintf(io_map_file_name, "%s/di_mapping.json", getProgramsPath());
 	//printf(" the io_mapping file is %s\n",io_map_file_name);
 	ret = appendSingleIOMapper(io_map_file_name, "DI");
-	if (ret == -1){
-		FST_WARN("Failed to read mapping parameters:%s", io_map_file_name);
-		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	if (ret == false){
+		FST_INFO("Failed to read mapping parameters:%s", io_map_file_name);
+		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
 	}
 	// DO
 	sprintf(io_map_file_name, "%s/do_mapping.json", getProgramsPath());
 	ret = appendSingleIOMapper(io_map_file_name, "DO");
-	if (ret == -1){
-		FST_WARN("Failed to read mapping parameters", io_map_file_name);
-		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	if (ret == false){
+		FST_INFO("Failed to read mapping parameters", io_map_file_name);
+		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
 	}
 	// RI
 	sprintf(io_map_file_name, "%s/ri_mapping.json", getProgramsPath());
 	ret = appendSingleIOMapper(io_map_file_name, "RI");
-	if (ret == -1){
-		FST_WARN("Failed to read mapping parameters", io_map_file_name);
-		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	if (ret == false){
+		FST_INFO("Failed to read mapping parameters", io_map_file_name);
+		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
 	}
 	// RO
 	sprintf(io_map_file_name, "%s/ro_mapping.json", getProgramsPath());
 	ret = appendSingleIOMapper(io_map_file_name, "RO");
-	if (ret == -1){
-		FST_WARN("Failed to read mapping parameters", io_map_file_name);
-		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	if (ret == false){
+		FST_INFO("Failed to read mapping parameters", io_map_file_name);
+		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
 	}
 
 	FST_INFO("Update io_mapping files");
@@ -248,7 +249,9 @@ ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end()){
 		map_id = iter->second;
+		//printf("before:mapid=%x, value=%x, ret=%x\n", map_id, value, ret);
 		ret = io_dev_ptr_->setDIOByBit(map_id, value);
+		//printf("after:mapid=%x, value=%x,ret=%x\n", map_id, value,ret);
 		return ret;
 	}
 	FST_WARN("invalid strKey=%s\n", strKey.c_str());
@@ -395,7 +398,7 @@ char * IoMapping::getProgramsPath()
 }
 
 
-int IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
+bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
 {
 	char cTemp[16];
 	char cUpperType[8];
@@ -430,7 +433,7 @@ int IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
     id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;//=2
     
     vector<string> result=split(objInfo.module, "/"); //use "/" to split
-    id.info.address = atoi(result[2].c_str());  // '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3"
+    id.info.address = atoi(result[2].c_str());  // '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or "FR-P8A/RS485/1(address)/IN/25(port_offset)"
 
     if (strcasecmp(cUpperType, "DI") == 0)
         id.info.port_type = IO_TYPE_DI;
@@ -453,10 +456,10 @@ int IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
         id.info.port++;
 	}
 
-	return 1;
+	return true;
 }
 
-int IoMapping::parseIOObject(cJSON *jsonIObject, const char * strIOType)
+bool IoMapping::parseIOObject(cJSON *jsonIObject, const char * strIOType)
 {
 	IOMapJsonInfo objInfo ;
 	cJSON *child=jsonIObject->child;
@@ -486,10 +489,10 @@ int IoMapping::parseIOObject(cJSON *jsonIObject, const char * strIOType)
 	}
 	
 	generateIOInfo(objInfo, strIOType);
-	return 1;
+	return true;
 }
 
-int IoMapping::parseIO(cJSON *jsonDI, const char * strIOType)
+bool IoMapping::parseIO(cJSON *jsonDI, const char * strIOType)
 {
 	cJSON *child=jsonDI->child;
 
@@ -512,15 +515,15 @@ int IoMapping::parseIO(cJSON *jsonDI, const char * strIOType)
 		}
 		child=child->next;
 	}
-	return 1;
+	return true;
 }
 
-int IoMapping::parseIOMap(char * data, const char * strIOType)
+bool IoMapping::parseIOMap(char * data, const char * strIOType)
 {
 	cJSON *json;
 	json=cJSON_Parse(data);
 	if(json == NULL)
-		return -1;
+		return false;
 	
 	cJSON *child=json->child;
 	while(child)
@@ -550,10 +553,10 @@ int IoMapping::parseIOMap(char * data, const char * strIOType)
 		child = child->next ;
 	}
 	cJSON_Delete(json);
-	return 1;
+	return true;
 }
 
-int IoMapping::printIOMapper()
+bool IoMapping::printIOMapper()
 {
 	map<string, uint32_t>::iterator it;
 
@@ -568,10 +571,10 @@ int IoMapping::printIOMapper()
 				it->first.c_str(), it->second);
 		it++;         
 	}
-	return 1;
+	return true;
 }
 
-int IoMapping::appendSingleIOMapper(char *filename, const char * strIOType)
+bool IoMapping::appendSingleIOMapper(char *filename, const char * strIOType)
 {
 	FILE *f;long len;char *data;
 
@@ -585,9 +588,9 @@ int IoMapping::appendSingleIOMapper(char *filename, const char * strIOType)
 		parseIOMap(data, strIOType);
 		free(data);
 	} else {
-		return -1;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
 vector<string> IoMapping::split(string str,string pattern)

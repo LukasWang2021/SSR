@@ -18,9 +18,6 @@
 #include "fst_io_device.h"
 #include "error_code.h"
 
-#define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x00100002008F03FC   /*failed to load io_mapping yaml paramters*/
-#define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x00100002008F03FD   /*failed to load io_mapping json files*/
-
 
 using namespace std;
 
@@ -152,19 +149,19 @@ public:
 private:
 	void loadProgramsPath(void);
 	char * getProgramsPath(void);
-    int generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType);
-	int parseIOObject(cJSON *jsonIObject, const char * strIOType);
-	int parseIO(cJSON *jsonDI, const char * strIOType);
-	int parseIOMap(char * data, const char * strIOType);
-	int printIOMapper(void);
-	int appendSingleIOMapper(char *filename, const char * strIOType);
+    bool generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType);
+	bool parseIOObject(cJSON *jsonIObject, const char * strIOType);
+	bool parseIO(cJSON *jsonDI, const char * strIOType);
+	bool parseIOMap(char * data, const char * strIOType);
+	bool printIOMapper(void);
+	bool appendSingleIOMapper(char *filename, const char * strIOType);
 	vector<string> split(string str,string pattern);
 
     IoMappingParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     IoSimulation* sim_ptr_;
     fst_hal::FstIoDevice* io_dev_ptr_;
-    map<string, uint32_t> io_mapper_;
+    map<string, uint32_t> io_mapper_; // to do uint32_t tobe PhysicsID
 	std::string files_manager_data_path_ = "";
 };
 

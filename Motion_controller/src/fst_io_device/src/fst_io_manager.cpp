@@ -263,7 +263,6 @@ ErrorCode IOManager::getModuleValue(uint32_t physics_id, uint8_t &port_value)
 
         //del port_value = io[index].data.input[frame] >> shift & 1;
         port_value = (io[index].port_values.DI[frame] >> shift) & 0x01;
-        printf("get di, frame=%d, shift=%d, value=%d\n",frame, shift, port_value);
     } else if (id.info.port_type == IO_TYPE_DO) {
         if(id.info.port > io[index].info.DO_num || id.info.port == 0) {
             FST_ERROR("IOManager::getModuleValue(): invalid port seq for DO - %d", id.info.port);

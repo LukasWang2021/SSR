@@ -26,7 +26,6 @@ IoSimulation::~IoSimulation()
 
 ErrorCode IoSimulation::init()
 {
-    io_sim_.clear();
     loadProgramsPath();
     ErrorCode ret = updateSimFile();
     if (ret != SUCCESS)
@@ -46,20 +45,22 @@ ErrorCode IoSimulation::updateSimFile()
 {
     char io_status_file_name[128];
     int ret = 1;
+    io_sim_.clear();
+
     // DI
     sprintf(io_status_file_name, "%s/di_status.json", getProgramsPath());
     //printf(" the io_status file is %s\n",io_status_file_name);
     ret = appendSingleIOMapper(io_status_file_name, "DI");
     if (ret == -1){
-        FST_WARN("Failed to read mapping sim-status parameters:%s", io_status_file_name);
-        return IO_MAPPING_LOAD_SIM_FILE_FAILED;
+        FST_INFO("Failed to read mapping sim-status parameters:%s", io_status_file_name);
+        //return IO_MAPPING_LOAD_SIM_FILE_FAILED;
     }
     // RI
     sprintf(io_status_file_name, "%s/ri_status.json", getProgramsPath());
     ret = appendSingleIOMapper(io_status_file_name, "RI");
     if (ret == -1){
-        FST_WARN("Failed to read mapping sim-status parameters:%s", io_status_file_name);
-        return IO_MAPPING_LOAD_SIM_FILE_FAILED;
+        FST_INFO("Failed to read mapping sim-status parameters:%s", io_status_file_name);
+        //return IO_MAPPING_LOAD_SIM_FILE_FAILED;
     }
 
     return SUCCESS;

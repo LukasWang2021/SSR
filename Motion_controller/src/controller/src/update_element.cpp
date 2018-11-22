@@ -234,32 +234,41 @@ void ControllerPublish::updateIo()
                 {
                     it->is_valid = true;
                     it->value.data = static_cast<uint32_t>(value);
+                    //printf("port_offest=%d, it-value.data=%d\n",it->port_offset,it->value.data);//todo delete
                 }
                 else
                 {
                     it->is_valid = false;
                 }
                 break;
-
-
-                /*
-                value_ptr = reg_manager_ptr_->getHrRegValueById(it->reg_index);
-                if(value_ptr != NULL)
+            }
+            case MessageType_IoType_RI://fst_hal::IO_TYPE_RI:
+            {
+                ret = io_mapping_ptr_->getRIByBit(it->port_offset, value);
+                if(ret == SUCCESS)
                 {
-                    HrValue* hr_value_ptr = static_cast<HrValue*>(value_ptr);
-                    it->hr_value.is_valid = true;
-                    it->hr_value.group_id = hr_value_ptr->group_id;
-                    memcpy(&it->hr_value.joint_pos.data[0], &hr_value_ptr->joint_pos[0], 9*sizeof(double));
-                    memcpy(&it->hr_value.diff_pos.data[0], &hr_value_ptr->diff_pos[0], 9*sizeof(double));
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
                 }
                 else
                 {
-                    it->hr_value.is_valid = false;
+                    it->is_valid = false;
                 }
-                it->hr_value.joint_pos.data_count = 9;
-                it->hr_value.diff_pos.data_count = 9;
                 break;
-                 */
+            }
+            case MessageType_IoType_RO://fst_hal::IO_TYPE_RO:
+            {
+                ret = io_mapping_ptr_->getROByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
             }
         }
     }

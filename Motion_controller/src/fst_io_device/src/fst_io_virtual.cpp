@@ -82,8 +82,9 @@ ErrorCode IOManager::virtualSetModuleValue(uint32_t physics_id, uint8_t port_val
             if (port_value == 0) {
                 vector_dev_[index].port_values.virtual_DO[frame] &= ~(0x01 << shift);
             }
-            else
+            else {
                 vector_dev_[index].port_values.virtual_DO[frame] |= 0x01 << shift;
+            }
         }
 
     } else if (id.info.port_type == IO_TYPE_DI) {
@@ -97,10 +98,12 @@ ErrorCode IOManager::virtualSetModuleValue(uint32_t physics_id, uint8_t port_val
             if (port_value == 0) {
                 vector_dev_[index].port_values.virtual_DI[frame] &= ~(0x01 << shift);
             }
-            else
+            else {
                 vector_dev_[index].port_values.virtual_DI[frame] |= 0x01 << shift;
+            }
         }
     }
+    return SUCCESS;
 
 }
 

@@ -20,9 +20,14 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerIpc::handleIpcGetRRegValue}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_INSTRUCTION, &ControllerIpc::handleIpcSetInstruction}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, &ControllerIpc::handleIpcIsNextInstructionNeeded}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_CHECK_IO, &ControllerIpc::handleIpcCheckIo}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_SET_IO, &ControllerIpc::handleIpcSetIo}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_GET_IO, &ControllerIpc::handleIpcGetIo}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &ControllerIpc::handleIpcSetInterpreterServerStatus}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_DI, &ControllerIpc::handleIpcGetDi}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_DI, &ControllerIpc::handleIpcSetDi}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_DO, &ControllerIpc::handleIpcGetDo}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_DO, &ControllerIpc::handleIpcSetDo}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_RI, &ControllerIpc::handleIpcGetRi}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_RI, &ControllerIpc::handleIpcSetRi}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_RO, &ControllerIpc::handleIpcGetRo}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_RO, &ControllerIpc::handleIpcSetRo}; ipc_table_.push_back(ipc_service);
 }
 

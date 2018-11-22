@@ -195,9 +195,9 @@
 #define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE000B   /*modbus client: write failed*/
 
 
-#define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x00100002008F03FC   /*failed to load io_mapping yaml paramters*/
-#define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x00100002008F03FD   /*failed to load io_mapping json files*/
-#define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x00100002008F03FE   /*failed to load simused status json files*/
+#define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
+#define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
+#define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0010000200AD0003   /*failed to load simused status json files*/
 
 
 

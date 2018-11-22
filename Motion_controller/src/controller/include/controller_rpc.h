@@ -376,6 +376,14 @@ private:
     void handleRpc0x00006BAF(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/device_manager/getModbusIoDeviceInfo"
     void handleRpc0x0000215F(void* request_data_ptr, void* response_data_ptr);
+
+    /* program launching rpc */
+    // "/rpc/program_launching/setMethod"
+    void handleRpc0x00011544(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/program_launching/getMethod"
+    void handleRpc0x00010944(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/program_launching/syncFileMacroConfig"
+    void handleRpc0x00016B27(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

@@ -76,7 +76,8 @@ catkin_package(
     DEPENDS log_manager
     DEPENDS thread_help 
     DEPENDS error_monitor
-    DEPENDS modbus_manager 
+    DEPENDS modbus_manager
+    DEPENDS io_mapping
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -119,6 +120,7 @@ target_link_libraries(controller
     log_service
     preformance_monitor 
     fst_safety_device
+    io_mapping
 )
 
 #############

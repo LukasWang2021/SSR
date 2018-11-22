@@ -121,17 +121,25 @@ void ControllerRpc::handleRpc0x000058F3(void* request_data_ptr, void* response_d
 
     int element_count = 0;
     void* data_ptr;
-    int device_index;
-    int io_type;
-    int io_offset;
+    //int device_index;
+    uint32_t port_type;
+    uint32_t port_offset;
     TpPublish task = tp_comm_ptr_->generateTpPublishTask(rq_data_ptr->data.topic_hash, rq_data_ptr->data.time_min, rq_data_ptr->data.time_max);
     for(unsigned int i = 0; i < rq_data_ptr->data.element_hash_list_count; ++i)
     {
-        device_index = rq_data_ptr->data.element_hash_list[i] >> 24;
-        io_type = (rq_data_ptr->data.element_hash_list[i] >> 16) & 0x000000FF;
-        io_offset = (rq_data_ptr->data.element_hash_list[i] & 0x0000FFFF);
+        //delete device_index = rq_data_ptr->data.element_hash_list[i] >> 24;
+        port_type = (rq_data_ptr->data.element_hash_list[i] >> 16) & 0x0000FFFF;
+        port_offset = (rq_data_ptr->data.element_hash_list[i] & 0x0000FFFF);
 
-        // do io publish mapping
+
+        //feng add for publish io topic
+        data_ptr = publish_ptr_->addTaskToIoUpdateList(port_type, port_offset);
+        if (data_ptr != NULL)
+        {
+            tp_comm_ptr_->addTpPublishElement(task, rq_data_ptr->data.element_hash_list[i], data_ptr);
+            ++element_count;
+        }
+
     }
     
     if(element_count == rq_data_ptr->data.element_hash_list_count)
@@ -177,6 +185,7 @@ void ControllerRpc::handleRpc0x0000DD03(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     std::vector<TpPublishElement> publish_element_list = tp_comm_ptr_->eraseTaskFromIoPublishList(rq_data_ptr->data.data);
+    publish_ptr_->deleteTaskFromIoUpdateList(publish_element_list);//feng add
     rs_data_ptr->data.data = SUCCESS;
     recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/deleteIoTopic"));
 }

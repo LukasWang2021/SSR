@@ -8,6 +8,44 @@
 using namespace fst_ctrl;
 using namespace fst_base;
 
+void ControllerIpc::handleIpcGetDi(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+void ControllerIpc::handleIpcSetDi(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+void ControllerIpc::handleIpcGetDo(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+void ControllerIpc::handleIpcSetDo(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+void ControllerIpc::handleIpcGetRi(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+void ControllerIpc::handleIpcSetRi(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+void ControllerIpc::handleIpcGetRo(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+void ControllerIpc::handleIpcSetRo(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+/*
 void ControllerIpc::handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr)
 {
     char* rq_data_ptr = static_cast<char*>(request_data_ptr);
@@ -62,4 +100,4 @@ void ControllerIpc::handleIpcGetIo(void* request_data_ptr, void* response_data_p
 			rq_data_ptr->port_info.bytes_len);
 	}
 }
-
+*/

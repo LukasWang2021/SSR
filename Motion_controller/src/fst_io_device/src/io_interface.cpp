@@ -1,37 +1,32 @@
-/**
- * @file io_interface.cpp
- * @brief 
- * @author WangWei
- * @version 1.0.0
- * @date 2017-06-12
- */
-	 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <arpa/inet.h>
+/**********************************************
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+File:       io_interface.cpp
+Author:     Feng.Wu WeiWang
+Create:     12-Jun-2017
+Modify:     25-Oct-2018
+Summary:    dealing with IO module
+**********************************************/
 
+#include <unistd.h>
 #include "io_interface.h"
 #include "error_code.h"
 #include <boost/algorithm/string.hpp>
 using namespace std;
+using namespace fst_hal;
 
-IOInterface::IOInterface(fst_log::Logger * logger)
+IOInterface::IOInterface(fst_log::Logger * logger, fst_hal::FstIoDeviceParam* param)
 {
     log_ptr_ = logger;
-    U64 result = initial();
-    if (result != SUCCESS)
-    {
+    param_ptr_ = param;
+    ErrorCode result = initial();
+    if (result != SUCCESS) {
     //  setWarning(result);
         FST_ERROR("IOInterface::initial failed :%llx", result);
+    } else {
+        FST_INFO("IOInterface::initial OK ");
     }
-    else 
-    {
-        FST_INFO("IOInterface::initial OK :%llx", result);
-    }
+
+    is_virtual_ = true;
 }
 
 IOInterface::~IOInterface()
@@ -42,396 +37,109 @@ IOInterface::~IOInterface()
        delete [] dev_info_;
 }
 
-IOInterface* IOInterface::instance(fst_log::Logger* logger)
+IOInterface* IOInterface::instance(fst_log::Logger* logger, fst_hal::FstIoDeviceParam* param)
 {
-    static IOInterface io_interface(logger);
-
+    static IOInterface io_interface(logger, param);
     return &io_interface;
 }
-
-/**
- * @brief : get local ip address
- *
- * @return : the ip address in the form of string
- */
-std::string getIOIFLocalIP()
+/*
+ErrorCode IOInterface::initial()
 {
-	int fd;
-    struct ifreq ifr;
+    ErrorCode ret = 0;
+    io_manager_ = new fst_hal::IOManager(log_ptr_, param_ptr_);
+    is_virtual_ = param_ptr_->is_virtual_;
+    ret = io_manager_->init(is_virtual_);
 
-    char iface[] = "eth0";
-     
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
- 
-    //Type of address to retrieve - IPv4 IP address
-    ifr.ifr_addr.sa_family = AF_INET;
- 
-    //Copy the interface name in the ifreq structure
-    strncpy(ifr.ifr_name , iface , IFNAMSIZ-1);
- 
-    ioctl(fd, SIOCGIFADDR, &ifr);
- 
-    close(fd);
- 
-    //display result
-    //printf("%s - %s\n" , iface , inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr) );
-	std::string ret = inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr);
-	return ret;
-}
+    if (ret != 0)
+        return ret;
 
-U64 IOInterface::initial()
-{
-    U64 result = 0;
-    io_manager_ = new fst_io_manager::IOManager;
-    std::string str_addr = getIOIFLocalIP();
-	if(str_addr.substr(0,3) == "192")
-	{
-    	FST_INFO("Use Fake io_manager_");
-        result = io_manager_->init(1);
-	}
-    else
-	{
-    	FST_INFO("Use True io_manager_");
-	    result = io_manager_->init(0);
-	}
-    if (result != SUCCESS)
-    {
-        FST_ERROR("io_manager_ init failed:%llx", result);
-        return result;
-    }
     //-----------------get num of devices.----------------------//
-    io_num_.store(io_manager_->getDevicesNum());
+    io_num_.store(io_manager_->refreshDevicesNum());
     FST_INFO("IOInterface::initial io_num_:%d",io_num_.load());
-
-    dev_info_ = new fst_io_manager::IODeviceInfo[io_num_];
-
-    for (int i = 0; i < io_num_; i++)
-    {
-        result = io_manager_->getDeviceInfo(i, dev_info_[i]);
-        FST_INFO("input:%d,output:%d", dev_info_[i].input, dev_info_[i].output);
-        if (result != SUCCESS)
-        {
-            FST_ERROR("io_manager_ getDeviceInfo failed:%llx", result);
-            return result;
-        }
-    }
-	io_mapping.init();
+    dev_info_ = new fst_hal::IODeviceInfo[io_num_];//delete soon
     return SUCCESS;
 }
 
-
+//------------------------------------------------------------
+// Function:    getDevicesNum
+// Summary: get the number of devices without freshening.
+// In:      None
+// Out:     None
+// Return:  int -> the total number of io devices.
+//------------------------------------------------------------
 int IOInterface::getIODevNum()
 {
     return io_num_;
 }
 
-vector<fst_io_manager::IODeviceInfo> IOInterface::getIODevices()
+//------------------------------------------------------------
+// Function:    refreshIODevNum
+// Summary: refresh the IO device slots.
+// In:      None
+// Out:     None
+// Return:  int -> the total number of io devices.
+//------------------------------------------------------------
+int IOInterface::refreshIODevNum()
 {
-	vector<fst_io_manager::IODeviceInfo> vectorIODeviceInfo ;
+    io_num_.store(io_manager_->refreshDevicesNum());
+    return io_num_;
+}
+
+//------------------------------------------------------------
+// Function:    getIODevices
+// Summary: get the info of all the device.
+// In:      None
+// Out:     None
+// Return:  the vector of all io devices.
+//------------------------------------------------------------
+vector<fst_hal::IODeviceInfo> IOInterface::getIODeviceList()
+{
+	vector<fst_hal::IODeviceInfo> vectorIODeviceInfo ;
+    fst_hal::IODeviceInfo dev_info;
 	
     for (int i = 0; i < io_num_; i++)
     {
-		vectorIODeviceInfo.push_back(dev_info_[i]);
+        io_manager_->getDevInfoByIndex(i, dev_info);
+		vectorIODeviceInfo.push_back(dev_info);
     }
 	return vectorIODeviceInfo ;
 }
 
-U64 IOInterface::getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info)
+//------------------------------------------------------------
+// Function:    getDeviceInfo
+// Summary: get the information of each device.
+// In:      index -> the sequence number of the device.
+// Out:     info  -> the information of each device.
+// Return:  ErrorCode   -> error codes.
+//------------------------------------------------------------
+ErrorCode IOInterface::getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values)
 {
-	info = dev_info_[index];
-    return SUCCESS;
+    return io_manager_->getModuleValues(address, values);
 }
 
-/*
-
-bool IOInterface::encDevList(BaseTypes_ParameterMsg *param_msg, pb_ostream_t *stream, const pb_field_t *field)
+//------------------------------------------------------------
+// Function:    setDIOByBit
+// Summary: Set the output to the specified port.
+// In:      physics_id -> the specified physical port.
+//          value      -> 1 = ON, 0 = OFF.
+// Out:     None.
+// Return:  ErrorCode   -> error codes.
+//------------------------------------------------------------
+ErrorCode IOInterface::setDIOByBit(uint32_t physics_id, uint8_t value)
 {
-    param_msg->has_info = true;
-    param_msg->info.overwrite_active = 0; //not active
-    param_msg->info.data_type = 2;  // uint8
-    param_msg->info.data_size = 1;  // 1 byte
-    param_msg->info.number_of_elements = 1;  
-    param_msg->info.param_type = BaseTypes_ParamType_INPUT_SIGNAL;  //input
-    param_msg->info.permission = BaseTypes_Permission_permission_undefined;
-    param_msg->info.user_level = BaseTypes_UserLevel_user_level_undefined;
-    param_msg->info.unit = BaseTypes_Unit_unit_undefined;
-    for (int i = 0; i < io_num_; i++)
-    {        
-        strcpy(param_msg->info.path, dev_info_[i].path.c_str());
-        param_msg->info.id = dev_info_[i].id;
-
-        if (!pb_encode_tag_for_field(stream, field))
-            return false;        
-        if (!pb_encode_submessage(stream, BaseTypes_ParameterMsg_fields, param_msg))
-            return false;
-    }
-
-    return true;
-}
-*/
-
-U64 IOInterface::setDOByBit(int idx, char value)
-{
-	char cName[32];
-	memset(cName, 0x00, 32);
-	sprintf(cName, "DO[%d]", idx);
-	
-	// io_mapping.init();
-	string strPath = io_mapping.getIOPathByName(string(cName));
-	setDO(strPath.c_str(), value);
+    return  io_manager_->setModuleValue(physics_id, value);
 }
 
-
-U64 IOInterface::getDIByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len)
+//------------------------------------------------------------
+// Function:    getDIOByBit
+// Summary: get the value of the specified port.
+// In:      physics_id -> the specified physical port.
+// Out:     value      -> 1 = ON, 0 = OFF.
+// Return:  ErrorCode   -> error codes.
+//------------------------------------------------------------
+ErrorCode IOInterface::getDIOByBit(uint32_t physics_id, uint8_t &value)
 {
-	char cName[32];
-	memset(cName, 0x00, 32);
-	sprintf(cName, "DI[%d]", idx);
-	
-	// io_mapping.init();
-	string strPath = io_mapping.getIOPathByName(string(cName));
-	getDIO(strPath.c_str(), buffer, buf_len, io_bytes_len);
+    return  io_manager_->getModuleValue(physics_id, value);
 }
 
-
-U64 IOInterface::getDOByBit(int idx, uint8_t *buffer, int buf_len, int& io_bytes_len)
-{
-	char cName[32];
-	memset(cName, 0x00, 32);
-	sprintf(cName, "DO[%d]", idx);
-	
-	// io_mapping.init();
-	string strPath = io_mapping.getIOPathByName(string(cName));
-	getDIO(strPath.c_str(), buffer, buf_len, io_bytes_len);
-}
-
-
-U64 IOInterface::setDO(const char *path, char value)
-{
-    std::vector<std::string> vc_path;
-    boost::split(vc_path, path, boost::is_any_of("/"));
-    int size = vc_path.size();
-    if ((size != 6) || (vc_path[0] != "root") 
-    || (vc_path[1] != "IO") || (vc_path[4] != "DO"))
-    {
-        return INVALID_PATH_FROM_TP;        
-    }
-    for (int i = 0; i < getIODevNum(); i++)
-    {
-        if ((vc_path[2] == dev_info_[i].communication_type) 
-        && (stoi(vc_path[3]) == dev_info_[i].device_number))
-        {
-            FST_INFO("id:%d, port:%d, value:%d", dev_info_[i].id, stoi(vc_path[5]), value);
-			if(dev_info_[i].communication_type == "RS485")
-            	return io_manager_->setModuleValue(dev_info_[i].id, stoi(vc_path[5]), value);
-			// else if(dev_info_[i].communication_type == "MODBUS")
-            // 	return modbus_manager_->setModuleValue(dev_info_[i].id, stoi(vc_path[5]), value);
-        }
-    }
-    return PARSE_IO_PATH_FAILED;
-}
-
-
-U64 IOInterface::setDO(int msg_id, unsigned char value)
-{
-    int index = msg_id % IO_MAX_NUM;
-    int dev_address = msg_id - index;
-    FST_INFO("dev_address:%d,index:%d, value:%d", dev_address, index, value);
-    return io_manager_->setModuleValue(dev_address, index, value);
-}
-
-U64 IOInterface::setDO(IOPortInfo *io_info, char value)
-{
-    if (io_info->port_index == 0)
-    {
-        return INVALID_PATH_FROM_TP;
-    }
-    return io_manager_->setModuleValue(io_info->dev_id, io_info->port_index, value);
-}
-
-U64 IOInterface::getDIO(const char *path, unsigned char *buffer, int buf_len, int& io_bytes_len)
-{
-    std::vector<std::string> vc_path;
-    boost::split(vc_path, path, boost::is_any_of("/"));
-    
-
-    int size = vc_path.size();
-    for (int i = 0; i < getIODevNum(); i++)
-    {
-        if ((vc_path[2] == dev_info_[i].communication_type) 
-        && (stoi(vc_path[3]) == dev_info_[i].device_number))
-        {
-            if (size == 4)
-            {
-                int io_len;
-                U64 result = io_manager_->getModuleValues(dev_info_[i].id, buf_len, buffer, io_bytes_len);
-                io_bytes_len = ((dev_info_[i].input + 7) >> 3) + ((dev_info_[i].output + 7) >> 3);
-                /*printf("==buffer:");*/
-                //for(int j = 0; j < io_bytes_len; j++)
-                    //printf("%xd ", buffer[j]);
-                /*printf("\n");*/
-                return result;
-            }
-            else if (size == 6)
-            {
-                io_bytes_len = 1;
-                if (vc_path[4] == "DI")
-                {
-                    FST_INFO("get module value input:id:%d, index:%d",dev_info_[i].id, stoi(vc_path[5]));
-                    return io_manager_->getModuleValue(dev_info_[i].id, IO_INPUT, stoi(vc_path[5]), buffer[0]);
-                }
-                else if (vc_path[4] == "DO")
-                {
-                    FST_INFO("get module value output:id:%d, index:%d", dev_info_[i].id, stoi(vc_path[5]));
-                    return io_manager_->getModuleValue(dev_info_[i].id, IO_OUTPUT, stoi(vc_path[5]), buffer[0]);
-                }
-                else
-                {
-                    return PARSE_IO_PATH_FAILED;
-                }
-            }
-            else 
-            {
-                return PARSE_IO_PATH_FAILED;
-            }
-        }
-    }
-    return PARSE_IO_PATH_FAILED;
-}
-
-U64 IOInterface::getDIO(int msg_id, uint8_t *buffer, int buf_len, int& io_bytes_len)
-{
-    unsigned int index = msg_id % IO_MAX_NUM;
-    int dev_address = msg_id - index;
-    //FST_INFO("index:%d,dev_address:%d", index, dev_address);
-    int i = getIODevIndex(dev_address);
-    if (i < 0)
-    {
-        return INVALID_PATH_FROM_TP;
-    }
-    fst_io_manager::IODeviceInfo dev = dev_info_[i];
-    if (index == 0)
-    {
-        int io_len;
-        U64 result = io_manager_->getModuleValues(dev.id, buf_len, buffer, io_len);
-        io_bytes_len = ((dev.input + 7) >> 3) + ((dev.output + 7) >> 3);
-
-        return result;
-    }
-    else
-    {
-        io_bytes_len = 1;
-        if (index <= dev.input)
-        {
-            return io_manager_->getModuleValue(dev.id, IO_INPUT, index, buffer[0]);
-        }
-        else
-        {
-            unsigned int new_index = index - dev.input;
-            return io_manager_->getModuleValue(dev.id, IO_OUTPUT, new_index, buffer[0]);
-        }
-    }
-}
-
-U64 IOInterface::getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len)
-{
-    if (io_info->port_index == 0)
-    {
-        int io_len;
-        printf("io_info->port_index == 0 with %d.\n", io_info->dev_id);
-        return io_manager_->getModuleValues(io_info->dev_id, buf_len, buffer, io_len);
-    }
-    else
-    {
-		printf("IOInterface::getDIO (%d) at %d with %d\n", 
-			 buffer[0], io_info->port_index, io_info->bytes_len);
-        return io_manager_->getModuleValue(io_info->dev_id, io_info->port_type, io_info->port_index, buffer[0]);
-     }
-
-}
-
-U64 IOInterface::checkIO(const char *path, IOPortInfo* io_info)
-{
-    std::vector<std::string> vc_path;
-    boost::split(vc_path, path, boost::is_any_of("/"));
-    
-    int size = vc_path.size();
-    printf("\t Io_interface::getIODevNum: %d\n", getIODevNum());
-    for (int i = 0; i < getIODevNum(); i++)
-    {
-    		printf("\t device_number: %s\n", dev_info_[i].path.c_str());
-    		printf("\t id: %d\n", dev_info_[i].id);
-    		printf("\t device_number: %d\n", dev_info_[i].device_number);
-        if ((vc_path[2] == dev_info_[i].communication_type) 
-        && (stoi(vc_path[3]) == dev_info_[i].device_number))
-        {
-            io_info->dev_id = dev_info_[i].id;
-            if (size == 4)
-            {
-                io_info->msg_id = io_info->dev_id;
-                io_info->port_index = 0;
-                io_info->port_type = IO_INPUT;
-                io_info->bytes_len = ((dev_info_[i].input + 7) >> 3) + ((dev_info_[i].output + 7) >> 3);
-                return SUCCESS;
-            }
-            else if (size == 6)       
-            {
-                int index = stoi(vc_path[5]);
-                if (vc_path[4] == "DI")
-                {   
-                    if (index > (int)dev_info_[i].input)
-                        return INVALID_PATH_FROM_TP;
-                    io_info->port_index = index;
-                    io_info->port_type = IO_INPUT;
-                    io_info->msg_id = io_info->dev_id + index;
-                }
-                else if (vc_path[4] == "DO")
-                {   
-                    if (index > (int)dev_info_[i].output)
-                        return INVALID_PATH_FROM_TP;
-                    io_info->port_index = index;
-                    io_info->port_type = IO_OUTPUT;
-                    io_info->msg_id = io_info->dev_id + dev_info_[i].input + index;
-                }
-                else
-                {
-                    return INVALID_PATH_FROM_TP;
-                }
-                io_info->bytes_len =  1;
-                return SUCCESS;
-            }
-            else 
-            {
-                return PARSE_IO_PATH_FAILED;
-            }
-        }
-    }
-    return PARSE_IO_PATH_FAILED;
-}
-
-
-
-int IOInterface::getIODevIndex(int dev_address)
-{
-    for (int i = 0; i < io_num_; i++)
-    {        
-        if ((int)dev_info_[i].id == dev_address)
-        {
-            return i;
-        }
-   }
-
-   return -1;
-}
-
-
-U64 IOInterface::updateIOError()
-{
-    static U64 result = io_manager_->getIOError();
-    if (result != SUCCESS)
-    {
-   //     setWarning(result);
-    }
-	return result ;
-}
-
+ */

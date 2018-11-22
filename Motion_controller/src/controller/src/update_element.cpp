@@ -195,4 +195,81 @@ void ControllerPublish::updateReg()
     }
 }
 
+void ControllerPublish::updateIo()
+{
+    //void* value_ptr;
+    ErrorCode ret = SUCCESS;
+    std::list<IoPublishUpdate>::iterator it;
+    for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
+    {
+        //delete
+        //fst_hal::PhysicsID id;
+        //id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;
+        //id.info.address = it->address;
+        //id.info.port_type = it->port_type;
+        //id.info.port = it->port_offset;
 
+        uint8_t value = 0;
+
+        switch(it->port_type)
+        {
+            case MessageType_IoType_DI://fst_hal::IO_TYPE_DI:
+            {
+                ret = io_mapping_ptr_->getDIByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_DO://fst_hal::IO_TYPE_DO:
+            {
+                ret = io_mapping_ptr_->getDOByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                    //printf("port_offest=%d, it-value.data=%d\n",it->port_offset,it->value.data);//todo delete
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_RI://fst_hal::IO_TYPE_RI:
+            {
+                ret = io_mapping_ptr_->getRIByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_RO://fst_hal::IO_TYPE_RO:
+            {
+                ret = io_mapping_ptr_->getROByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+        }
+    }
+}

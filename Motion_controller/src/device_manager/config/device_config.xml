@@ -2,12 +2,17 @@
 <Devices>
     <Device>
         <DeviceIndex>1</DeviceIndex>
-        <Address>1</Address>
+        <Address>100</Address>
         <DeviceType>FstSafety</DeviceType>
     </Device>
     <Device>
         <DeviceIndex>2</DeviceIndex>
-        <Address>2</Address>
+        <Address>0</Address>
+        <DeviceType>FstIo</DeviceType>
+    </Device>
+    <Device>
+        <DeviceIndex>3</DeviceIndex>
+        <Address>16</Address>
         <DeviceType>FstIo</DeviceType>
     </Device>
 </Devices>

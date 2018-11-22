@@ -151,7 +151,20 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/io_mapping/setDIByBit", 0x00011754, &ControllerRpc::handleRpc0x00011754}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/getDOByBit", 0x00013074, &ControllerRpc::handleRpc0x00013074}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/setDOByBit", 0x00007074, &ControllerRpc::handleRpc0x00007074}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/getRIByBit", 0x00000684, &ControllerRpc::handleRpc0x00000684}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/setRIByBit", 0x0000CD24, &ControllerRpc::handleRpc0x0000CD24}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/getROByBit", 0x00005BD4, &ControllerRpc::handleRpc0x00005BD4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/setROByBit", 0x00012274, &ControllerRpc::handleRpc0x00012274}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/syncFileIoStatus", 0x0000BA73, &ControllerRpc::handleRpc0x0000BA73}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/syncFileIoMapping", 0x0000C2A7, &ControllerRpc::handleRpc0x0000C2A7}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/device_manager/getDeviceList", 0x0000C1E0, &ControllerRpc::handleRpc0x0000C1E0}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/device_manager/get_FRP8A_IoDeviceInfo", 0x00006BAF, &ControllerRpc::handleRpc0x00006BAF}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/device_manager/getModbusIoDeviceInfo", 0x0000215F, &ControllerRpc::handleRpc0x0000215F}; rpc_table_.push_back(rpc_service);
+
+    rpc_service = {"/rpc/program_launching/setMethod", 0x00011544, &ControllerRpc::handleRpc0x00011544}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/program_launching/getMethod", 0x00010944, &ControllerRpc::handleRpc0x00010944}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/program_launching/syncFileMacroConfig", 0x00016B27, &ControllerRpc::handleRpc0x00016B27}; rpc_table_.push_back(rpc_service);
+
 }
 

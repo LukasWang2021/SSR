@@ -56,10 +56,18 @@ private:
     void handleIpcGetRRegValue(void* request_data_ptr, void* response_data_ptr); 
     void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
     void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);
+    //void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);
+    //void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);
+    //void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetInterpreterServerStatus(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetDi(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetDi(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetDo(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetDo(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetRi(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetRi(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcGetRo(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetRo(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

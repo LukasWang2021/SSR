@@ -16,38 +16,58 @@ Summary:    dealing with IO module
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <parameter_manager/parameter_manager_param_group.h>
+#include "common_log.h"
+#include "fst_io_device_param.h"
+#include "base_datatype.h"
+#include "base_device.h"
 #include "error_code.h"
-#include "IOboard.h"
-#define IO_INPUT 0
-#define IO_OUTPUT 1
-#define IO_DATAFRAME_MAX 5
+#include "fst_io_mem.h"
 
+#define DI_FRAME_MAX 4
+#define DO_FRAME_MAX 4
+#define RI_FRAME_MAX 1
+#define RO_FRAME_MAX 1
 
-
-namespace fst_io_manager
+namespace fst_hal
 {
-typedef unsigned long long int U64;
 
-enum DeviceType
+typedef union PhysicsID
 {
-    UNKNOWN = 0,
-    DIGITAL_INPUT_DEVICE = 1,
-    DIGITAL_OUTPUT_DEVICE = 2,
-    DIGITAL_IN_OUT_DEVICE = 3,
-    ANALOG_INPUT_DEVICE = 4,
-};
+    uint32_t number;
+    struct{
+        uint8_t port:8;
+        uint8_t port_type:8;
+        uint8_t address:8;
+        uint8_t dev_type:8;
+    }info;
+}PhysicsID;
 
 // This is output info.
 struct IODeviceInfo
 {
-    std::string path;
-    unsigned int id;
-    std::string communication_type;
-    int device_number;
-    DeviceType device_type;
-    unsigned int input;
-    unsigned int output;
+    uint32_t id;        //address
+    uint8_t dev_type;  //?DEVICE_TYPE_FST_IO
+    std::string device_type;
+    std::string comm_type;
+    uint32_t DI_num;
+    uint32_t DO_num;
+    uint32_t RI_num;
+    uint32_t RO_num;
+    bool is_valid;
 };
+
+struct IODevicePortValues
+{
+    uint32_t id;        //address
+    uint8_t DI[DI_FRAME_MAX];
+    uint8_t DO[DO_FRAME_MAX];
+    uint8_t RI[RI_FRAME_MAX];
+    uint8_t RO[RO_FRAME_MAX];
+    uint8_t virtual_DI[256];//temporary for virtual
+    uint8_t virtual_DO[256];//temporary for virtual
+};
+
+
 /*
 // This is the data to driver.
 struct IODeviceData
@@ -60,27 +80,31 @@ struct IODeviceData
     unsigned char output[IO_DATAFRAME_MAX];
 };
 */
-// Local table
-struct IOTable
+
+// unit data for upper.
+struct IODeviceUnit
 {
-    IODeviceData data;
+    //IODeviceData data;
     IODeviceInfo info;
+    IODevicePortValues port_values;
     unsigned char output[IO_DATAFRAME_MAX]; // store the output request from tp.
 };
 
-enum ThreadStatus
+typedef enum
 {
     INIT_STATUS = 1,
     RUNNING_STATUS = 2,
-};
+}ThreadStatus;
 
-enum ThreadError
+typedef enum
 {
-    THREAD_SUCCESS = 0,
-    THREAD_LOAD_IO_CONFIG_FAIL = 1,
-    THREAD_GET_IO_FAIL = 2,
-    THREAD_IO_DEVICE_CHANGED = 3,
-};
+    IO_TYPE_DI = 0,
+    IO_TYPE_DO = 1,
+    IO_TYPE_RI = 2,
+    IO_TYPE_RO = 3,
+    IO_TYPE_UI = 4,
+    IO_TYPE_UO = 5,
+}IOType;
 
 class IOManager
 {
@@ -92,7 +116,7 @@ public:
     // Out:     None
     // Return:  None 
     //------------------------------------------------------------
-    IOManager();
+    IOManager(fst_log::Logger* logger, fst_hal::FstIoDeviceParam* param);
 
     //------------------------------------------------------------
     // Function:  ~IOManager
@@ -104,14 +128,32 @@ public:
     ~IOManager();
 
     //------------------------------------------------------------
+    // Function:  instance
+    // Summary: static instance
+    // In:
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
+    static IOManager *instance(fst_log::Logger *logger, fst_hal::FstIoDeviceParam *param);
+
+    //------------------------------------------------------------
     // Function:    init
     // Summary: Initialize
-    // In:      None
+    // In:      0 -> true init, 1 -> fake init.
     // Out:     None
     // Return:  0 -> success.
     //          ERROR_CODE -> failed.
     //------------------------------------------------------------
-    U64 init(int fake = 0);
+    ErrorCode init(void);
+
+    //------------------------------------------------------------
+    // Function:    refreshDevicesNum
+    // Summary: refresh, and get the number of devices
+    // In:      None
+    // Out:     None
+    // Return:  int -> the total number of io devices.
+    //------------------------------------------------------------
+    int refreshDevicesNum(void);
 
     //------------------------------------------------------------
     // Function:    getDevicesNum
@@ -123,13 +165,31 @@ public:
     int getDevicesNum(void);
 
     //------------------------------------------------------------
-    // Function:    getDeviceInfo
+    // Function:    getDevInfoByIndex
     // Summary: get the information of each device.
     // In:      index -> the sequence number of the device.
     // Out:     info  -> the information of each device.
-    // Return:  U64   -> error codes.
+    // Return:  ErrorCode   -> error codes.
     //------------------------------------------------------------
-    U64 getDeviceInfo(unsigned int index, IODeviceInfo &info);
+    ErrorCode getDevInfoByIndex(unsigned int index, IODeviceInfo &info);
+
+    //------------------------------------------------------------
+    // Function:    getDevInfoByID
+    // Summary: get the information of each device by id
+    // In:      in    -> the address id from device_config.xml.
+    // Out:     info  -> the information of each device.
+    // Return:  ErrorCode   -> error codes.
+    //------------------------------------------------------------
+    ErrorCode getDevInfoByID(uint8_t address, IODeviceInfo &info);
+
+    //------------------------------------------------------------
+    // Function:    getModuleValues
+    // Summary: get the information of each device by id
+    // In:      id      -> the address id from device_config.xml.
+    // Out:     values  -> the information of each device.
+    // Return:  ErrorCode   -> error codes.
+    //------------------------------------------------------------
+    ErrorCode getModuleValues(uint8_t address, IODevicePortValues &values);
 
     //------------------------------------------------------------
     // Function:    getModuleValue
@@ -138,10 +198,10 @@ public:
     //          port_type  -> IO_INPUT or IO_output.
     //          port_seq   -> the sequence number of the ports.
     // Out:     port_value -> the port status.
-    // Return:  U64        -> error codes.
+    // Return:  ErrorCode        -> error codes.
     //------------------------------------------------------------
-    U64 getModuleValue(unsigned int id, int port_type, unsigned int port_seq, unsigned char &port_value);
-
+    ErrorCode getModuleValue(uint32_t physics_id, uint8_t &port_value);
+    
     //------------------------------------------------------------
     // Function:    getModuleValues
     // Summary: get the status values of all ports on one device
@@ -149,9 +209,9 @@ public:
     //          len -> the size of the memory to store port values.
     // Out:     ptr -> the address of the memoryto store port values.
     //          num -> the total number of the ports.
-    // Return:  U64 -> error codes.
+    // Return:  ErrorCode -> error codes.
     //------------------------------------------------------------
-    U64 getModuleValues(unsigned int id, int len, unsigned char *ptr, int &num);
+    //ErrorCode getModuleValues(uint32_t physics_id, int len, unsigned char *ptr, int &num); // need redefine.
 
     //------------------------------------------------------------
     // Function:    setModuleValue
@@ -160,74 +220,69 @@ public:
     //          port_seq   -> the sequence number of the port.
     //          port_value -> the status value of the port.
     // Out:     None.
-    // Return:  U64        -> error codes.
+    // Return:  ErrorCode        -> error codes.
     //------------------------------------------------------------
-    U64 setModuleValue(unsigned int id, unsigned int port_seq, unsigned char port_value);
-
+    ErrorCode setModuleValue(uint32_t physics_id, uint8_t port_value);
+    
     //------------------------------------------------------------
     // Function:    getThreadError
     // Summary: get the error status of the io thread.
     // In:      None.
     // Out:     None.
-    // Return:  U64 -> error codes.
+    // Return:  ErrorCode -> error codes.
     //------------------------------------------------------------
-    U64 getIOError(void);
-
-    // for the convert between parameter id and device id.
-    static const int ID_DIFF = 100000; 
-    static const int MULTIPLIER = 1000; 
-
-    // the total number of device on RS485.
-    static const int RS_DEV_NUM = 4;
+    ErrorCode getIOError(void);
 
     // the faulty tolerance times.
     static const int FAULT_TOL = 20;
 
-    // the thread cycle.
-    static const int LOOP_CYCLE = 1000;
-
-
 private:
 
-    // the flags to read and write FPGA.
-    uint8_t seq_;
+    IOManager();
 
-    // the counter for the error times of reading FPGA.
-    int read_counter_;
+    int cycle_time_;
+    bool is_virtual_;
 
-    // the counter for the error times of writing FPGA.
-    int write_counter_;
+    // the total number of device.
+    uint8_t max_dev_num_;
+    uint32_t max_DI_num_;
+    uint32_t max_DO_num_;
+    uint32_t max_RI_num_;
+    uint32_t max_RO_num_;
+    uint8_t virtual_board_address_;
+    uint32_t virtual_DI_number_;
+    uint32_t virtual_DO_number_;
 
-    // to record the last error when thread runs.
-    ThreadError last_error_;
+    std::atomic<ErrorCode> error_;
 
-    // to indicate the thread has error once. Lock it when used.
-    ThreadError thread_error_;
+    ErrorCode thread_error_;
 
     // the status of the io thread.
     ThreadStatus thread_status_;
 
     // The buffer to store all the reading io data. Lock it when used.
-    std::vector<IOTable> io_r_;
+    std::vector<IODeviceUnit> vector_dev_;
 
     // mutex lock
     boost::mutex mutex_;
 
-    // the map to store the configuration file.
-    std::map<uint8_t, std::string> name_map_;
-    std::map<uint8_t, int> input_map_;
-    std::map<uint8_t, int> output_map_;
-    std::map<uint8_t, DeviceType> type_map_;
-
-    // the map to store the error codes.
-    std::map<int, U64> error_map_;
-
-    // the object to operate on the configuration file.
-    fst_parameter::ParamGroup param_;
-
     // the thread object.
-    boost::thread io_thread;
-    
+    boost::thread io_thread_;
+
+    fst_log::Logger* log_ptr_;
+
+    fst_hal::FstIoDeviceParam* param_ptr_;
+
+    //------------------------------------------------------------
+    // Function:    waitThreadFirstData
+    // Summary: wait the thread startup, and get the first data.
+    // In:      None.
+    // Out:     None.
+    // Return:  false -> overtime
+    //          true  -> startup success.
+    //------------------------------------------------------------
+    bool waitThreadFirstData(void);
+
     //------------------------------------------------------------
     // Function:    searchParamId
     // Summary: find the index of table according to the parameter id.
@@ -237,7 +292,7 @@ private:
     // Return:  int -> the index of the table.
     //          -1  -> can't find.
     //------------------------------------------------------------
-    int searchParamId(unsigned int id, std::vector<IOTable> &io);
+    int searchParamId(unsigned int id, std::vector<IODeviceUnit> &io);
 
     //------------------------------------------------------------
     // Function:    startThread
@@ -257,6 +312,8 @@ private:
     //------------------------------------------------------------
     void runThread(void);
 
+    void updateThreadFunc(void);
+
     //------------------------------------------------------------
     // Function:    initDeviceData
     // Summary: read io and load configuration file when the thread is starting up.
@@ -271,9 +328,9 @@ private:
     // Summary: refreshen the io data.
     // In:      None.
     // Out:     None.
-    // Return:  U64 -> error codes.
+    // Return:  ErrorCode -> error codes.
     //------------------------------------------------------------
-    U64 updateDevicesData(void);
+    ErrorCode updateDevicesData(void);
 
     //------------------------------------------------------------
     // Function:    setThreadError
@@ -285,68 +342,45 @@ private:
     void setThreadError(void);
 
     //------------------------------------------------------------
-    // Function:    initIOTableVar
-    // Summary: initialize the variable of IOTable structure.
+    // Function:    initIODeviceUnitVar
+    // Summary: initialize the variable of IODeviceUnit structure.
     // In:      None.
     // Out:     io -> variable.
     // Return:  None.
     //------------------------------------------------------------
-    void initIOTableVar(IOTable &io);
+    void initIODeviceUnit(IODeviceUnit &io);
 
     //------------------------------------------------------------
-    // Function:    implementConfigFile
-    // Summary: try to load configuration files to fill the complete information.
+    // Function:    initIODeviceData
+    // Summary: initialize the variable of IODeviceData structure.
     // In:      None.
-    // Out:     io -> fill io.info.
+    // Out:     io -> variable.
     // Return:  None.
     //------------------------------------------------------------
-    void implementConfigFile(IOTable &io);
+    void initIODeviceData(IODeviceData &data);
 
     //------------------------------------------------------------
-    // Function:    loadConfigFile
-    // Summary: try to load configuration files to fill the complete information.
-    // In:      model -> the model type of the device.
-    // Out:     None.
-    // Return:  true  -> load file successfully.
-    //          false -> load file failed.
-    //------------------------------------------------------------
-    bool loadConfigFile(int model);
-
-    //------------------------------------------------------------
-    // Function:    getPathOfDevice
-    // Summary: create the parameter path.
-    // In:      type          -> the communication type.
-    //          device_number -> the id in device.
-    // Out:     None.
-    // Return:  std::string   -> the parameter path.
-    //------------------------------------------------------------
-    std::string getPathOfDevice(std::string type, int device_number);
-
-    //------------------------------------------------------------
-    // Function:    getDeviceDataBy485
+    // Function:    getDeviceDataFromMem
     // Summary: get io data by RS485 and check data.
     // In:      None.
     // Out:     data -> io data from RS485.
-    // Return:  U64  -> error codes.
+    // Return:  ErrorCode  -> error codes.
     //------------------------------------------------------------
-    U64 getDeviceDataBy485(IODeviceData &data);
+    ErrorCode getDeviceDataFromMem(IODeviceData &data);
 
     //------------------------------------------------------------
-    // Function:    readWriteBy485Driver
+    // Function:    readWriteMem
     // Summary: interact with FPGA to get data.
     // In:      None.
     // Out:     data  -> io data from RS485.
     // Return:  true  -> get data successfully.
     //          false -> get data failed.
     //------------------------------------------------------------
-    bool readWriteBy485Driver(IODeviceData &data);
+    bool readWriteMem(IODeviceData &data);
 
-/*    // simulate driver function
-    int ioSetIdSeq(uint8_t idseq);
-    int ioGetSeq(uint8_t *seq);
-    int ioWriteDownload(struct IODeviceData *idd);
-    int ioReadUpload(struct IODeviceData *idd);
-*/
+    bool addVirtualBoard(void);
+    ErrorCode virtualGetModuleValue(uint32_t physics_id, uint8_t &port_value, int index, std::vector<IODeviceUnit> &io);
+    ErrorCode virtualSetModuleValue(uint32_t physics_id, uint8_t port_value, int index, std::vector<IODeviceUnit> &io);
 
 };
 } //namespace fst_io_manager

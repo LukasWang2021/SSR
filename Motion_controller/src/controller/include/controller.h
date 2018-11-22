@@ -19,6 +19,7 @@
 #include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "preformance_monitor.h"
+#include "io_mapping.h" //feng add for iomapping.
 #include <string>
 // for test only
 #include "virtual_core1.h"
@@ -57,6 +58,8 @@ private:
     fst_base::ProcessComm* process_comm_ptr_;
     fst_base::PreformanceMonitor preformance_monitor_;
     VirtualCore1 virtual_core1_; // for test only
+    fst_ctrl::IoMapping io_mapping_; //feng add for mapping.
+    fst_hal::FstIoDevice* io_device_ptr_; //feng add
     
     // thread related
     bool is_exit_;

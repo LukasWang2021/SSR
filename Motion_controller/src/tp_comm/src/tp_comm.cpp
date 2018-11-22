@@ -802,7 +802,7 @@ void  TpComm::handleIoPublishList()
                 || io_type == MessageType_IoType_RI || io_type == MessageType_IoType_RO
                 || io_type == MessageType_IoType_UI || io_type == MessageType_IoType_UO)
                 {
-                    handlePublishElementIoInput(it->package, i, it->element_list_[i]); break;
+                    handlePublishElementIo(it->package, i, it->element_list_[i]); continue;
                 }
             }
 

@@ -238,6 +238,7 @@ void ControllerServer::handleRequestIsNextInstructionNeeded()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, NULL, (void*)response_data_ptr);
 }
 
+
 // CheckIo
 void ControllerServer::handleRequestCheckIo()
 {
@@ -318,4 +319,35 @@ void ControllerServer::handleRequestSetInterpreterServerStatus()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, (void*)request_data_ptr, (void*)response_data_ptr);  
 }
 
+void ControllerServer::handleRequestGetDi()
+{
 
+}
+void ControllerServer::handleRequestSetDi()
+{
+
+}
+void ControllerServer::handleRequestGetDo()
+{
+
+}
+void ControllerServer::handleRequestSetDo()
+{
+
+}
+void ControllerServer::handleRequestGetRi()
+{
+
+}
+void ControllerServer::handleRequestSetRi()
+{
+
+}
+void ControllerServer::handleRequestGetRo()
+{
+
+}
+void ControllerServer::handleRequestSetRo()
+{
+
+}

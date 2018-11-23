@@ -68,11 +68,11 @@ install(FILES config/modbus_manager.yaml
 )
 
 install(FILES config/tcp_client.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/modbus/
 )
 
 install(FILES config/tcp_server.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/modbus/
 )
 
 install(DIRECTORY config

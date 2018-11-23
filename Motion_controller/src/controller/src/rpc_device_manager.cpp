@@ -18,7 +18,6 @@ void ControllerRpc::handleRpc0x0000C1E0(void* request_data_ptr, void* response_d
         rs_data_ptr->data.device_info[i].type = device_list[i].type;
         //rs_data_ptr->data.device_info[i].is_valid = device_list[i].is_valid;
         rs_data_ptr->data.device_info[i].is_valid = true;//feng add
-
     }
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.device_info_count = device_list.size();

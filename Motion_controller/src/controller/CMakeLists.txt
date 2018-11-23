@@ -13,9 +13,12 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 set(VERSION_MAJOR 2)
-set(VERSION_MINOR 1)
-set(VERSION_PATCH 21)
-string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
+set(VERSION_MINOR 2)
+set(VERSION_PATCH 0)
+set(VERSION_COMMIT \"df4193f2\") #from gitlab commit number.
+string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
+string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
+
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 

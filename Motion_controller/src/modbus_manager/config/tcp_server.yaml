@@ -1,6 +1,9 @@
+log_level: 1
+port: 502
 cycle_time: 1000 #1ms
-connection_nb: 128
+connection_nb: 5
 is_debug: true
+comm_type: TCP
 reg_info:
     coil:
         addr: 0

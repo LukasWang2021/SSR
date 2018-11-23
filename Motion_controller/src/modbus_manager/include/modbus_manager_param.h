@@ -9,7 +9,7 @@
 #include "common_file_path.h"
 using namespace std;
 
-namespace fst_modbus
+namespace fst_hal
 {
 class ModbusManagerParam
 {
@@ -19,16 +19,18 @@ public:
 
     bool loadParam();
     bool saveParam();
-
+    
     int log_level_;
     string tcp_server_file_name_;
     string tcp_client_file_name_;
-    string server_ip_;
-    int server_port_;
+
+    string client_file_path_;
+    string server_file_path_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;
     string file_path_;
+
 };
 }
 

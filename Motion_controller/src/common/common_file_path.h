@@ -14,7 +14,7 @@
 #define COORD_DIR                   "/root/install/share/runtime/coord/"
 #define REG_DIR                     "/root/install/share/runtime/reg/"
 #define DEVICE_DIR                  "/root/install/share/runtime/device/"
-
+#define MODBUS_DIR                  "/root/install/share/runtime/modbus/"
 
 
 #endif

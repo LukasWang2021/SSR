@@ -2043,7 +2043,8 @@ void outputXPathVector(char * xpath_file_name)
 	FILE *xpath_file ;
 
 	if((xpath_file = fopen(xpath_file_name, "r"))==NULL){
-		perror("open file failed\n");  
+		perror("open xpath_file_name file failed\n");  
+		return ;
 	}
 	
 	// Pre-arrange

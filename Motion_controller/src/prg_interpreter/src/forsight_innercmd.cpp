@@ -1418,7 +1418,8 @@ int getXPathLinenum(char * file_name)
 	char contentLine[FILE_PATH_LEN];
 	FILE *xpath_file ;
 	if((xpath_file = fopen(file_name, "r"))==NULL){
-		perror("open file failed\n");  
+		perror("open file_name file failed\n");  
+		return -1;
 	}
 	
 	memset(contentLine,    0x00, FILE_PATH_LEN);
@@ -1459,10 +1460,12 @@ void mergeImportXPathToProjectXPath(
 	iMainLineCount = getXPathLinenum(xpath_main_file_name);
 	
 	if((xpath_import_file = fopen(xpath_import_file_name, "r"))==NULL){
-		perror("open file failed\n");  
+		perror("open xpath_import_file_name file failed\n");  
+		return ;
 	}
 	if((xpath_main_file = fopen(xpath_main_file_name, "a"))==NULL){
-		perror("open file failed\n");  
+		perror("open xpath_import_file_name file failed\n");  
+		return ;
 	}
 	
 	memset(contentImportLine,    0x00, FILE_PATH_LEN);
@@ -1509,6 +1512,7 @@ void generateXPathVector(char * fname)
 
 	if((xpath_file = fopen(xpath_file_name, "r"))==NULL){
 		perror("open file failed\n");  
+		return ;
 	}
 	
 	// Pre-arrange

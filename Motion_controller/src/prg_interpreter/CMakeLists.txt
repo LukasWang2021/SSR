@@ -87,7 +87,6 @@ add_executable(prg_interpreter
     src/forsight_innerfunc.cpp
     src/forsight_inter_control.cpp
     src/forsight_io_controller.cpp
-    src/forsight_io_mapping.cpp
     src/forsight_program_property.cpp
     src/forsight_cJSON.cpp
 #   src/io_interface.cpp

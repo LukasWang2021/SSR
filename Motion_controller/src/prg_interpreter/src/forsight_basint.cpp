@@ -6,7 +6,6 @@
 #include "forsight_innerfunc.h"
 #include "forsight_inter_control.h"
 #include "forsight_xml_reader.h"
-#include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
 
 #ifndef WIN32
@@ -3161,11 +3160,6 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		if(strchr(vname, '['))
 		{
 			int iRet = 0 ;
-			if(g_io_mapper.find(vname) != g_io_mapper.end() )
-			{
-				FST_INFO("\t SET FROM :: %s : %s", vname, 
-					g_io_mapper[vname].c_str());
-			}
 			iRet = forgesight_set_io_status(vname, value);
 			if(iRet == 0)
 			{
@@ -3295,12 +3289,6 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 		if(strchr(vname, '['))
 		{
 			// int iValue = -1;
-			
-			if(g_io_mapper.find(vname) != g_io_mapper.end() )
-			{
-					FST_INFO("\t GET FROM :: %s : %s", vname, 
-						g_io_mapper[vname].c_str());
-			}
 			value = forgesight_get_io_status(vname);
 			return value;
 		}

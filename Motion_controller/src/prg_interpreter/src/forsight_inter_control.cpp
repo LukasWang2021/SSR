@@ -4,7 +4,6 @@
 #include "forsight_inter_control.h"
 #include "forsight_innercmd.h"
 #include "forsight_program_property.h"
-#include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
 #ifndef WIN32
 // #include "io_interface.h"

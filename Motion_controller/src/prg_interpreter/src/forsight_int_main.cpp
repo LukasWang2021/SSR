@@ -4,7 +4,6 @@
 using namespace fst_log;
 #endif
 #include "forsight_inter_control.h"
-#include "forsight_io_mapping.h"
 #include "forsight_io_controller.h"
 
 #include "reg_manager/reg_manager_interface_wrapper.h"
@@ -26,8 +25,6 @@ int main(int  argc, char *argv[])
 	initShm();
 	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
-	append_io_mapping();
-	forgesight_load_io_config();
 	load_register_data();
 	while(1)
 	{

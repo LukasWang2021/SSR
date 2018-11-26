@@ -8,13 +8,15 @@
 #include "modbus_manager.h"
 
 using namespace std;
-using namespace fst_modbus;
+using namespace fst_hal;
 
 ModbusManager* ModbusManager::instance_ = NULL;
 
 ModbusManager::ModbusManager():
     log_ptr_(NULL), param_ptr_(NULL),
-    server_ip_(""), server_port_(-1)
+    client_(NULL), server_(NULL),
+    server_ip_(""), server_port_(-1),
+    start_mode_(0), client_param_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();
@@ -31,13 +33,9 @@ ModbusManager::~ModbusManager()
     }
     if (server_ != NULL)
     {
+        server_->closeServer();
         delete server_;
         server_ = NULL;
-    }
-    if (map_ != NULL)
-    {
-        delete map_;
-        map_ = NULL;
     }
     if (log_ptr_ != NULL)
     {
@@ -48,6 +46,11 @@ ModbusManager::~ModbusManager()
     {
         delete param_ptr_;
         param_ptr_ = NULL;
+    }
+    if (client_param_ptr_ != NULL)
+    {
+        delete client_param_ptr_;
+        client_param_ptr_ = NULL;
     }
 }
 
@@ -60,125 +63,186 @@ ModbusManager* ModbusManager::getInstance()
     return instance_;
 }
 
-ErrorCode ModbusManager::init()
+ErrorCode ModbusManager::init(int start_mode)
 {
-    if(!param_ptr_->loadParam())
+    if (start_mode != SERVER && start_mode != CLIENT)
     {
         return MODBUS_MANAGER_INIT_FAILED;
     }
 
-    server_ip_ = param_ptr_->server_ip_;
-    server_port_ = param_ptr_->server_port_;
+    if(!param_ptr_->loadParam())
+    {
+        return MODBUS_MANAGER_LOAD_PARAM_FAILED;
+    }
+
+    start_mode_ = start_mode;
+
+    client_ = new ModbusTCPClient(param_ptr_->client_file_path_);
+    return client_->initParam();
+}
+
+ErrorCode ModbusManager::initModbus()
+{
+    ErrorCode error = SUCCESS;
+
+    if (start_mode_ == SERVER)
+    {
+        server_ = new ModbusTCPServer(param_ptr_->server_file_path_);
+
+        error = server_->init();
+        if (error != SUCCESS) return error;
+
+        error = server_->open();
+        if (error != SUCCESS) return error;
+
+        server_ip_ = server_->getIp();
+        server_port_ = server_->getPort();
+
+        error = client_->setIp(server_ip_);
+        if (error != SUCCESS) return error;
+
+        error = client_->setPort(server_port_);
+        if (error != SUCCESS) return error;
+    }
+
+    error = client_->init();
+    if (error != SUCCESS) return error;
 
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::initClient()
+bool ModbusManager::isServerRunning()
 {
-    client_ = new ModbusTCPClient(server_ip_, server_port_);
-    return client_->init();
+    return server_->isRunning();
 }
 
-void ModbusManager::initMap()
+ErrorCode ModbusManager::getServerInfo(ServerInfo& info)
 {
-    map_ = new ModbusMap();
-    map_->init();
+    if (start_mode_ != SERVER) 
+       return MODBUS_SERVER_NOT_EXISTED;
+
+    info = server_->getInfo();
+    return SUCCESS;
 }
 
-ErrorCode ModbusManager::initServer()
+ErrorCode ModbusManager::getServerCoilInfo(ModbusRegAddrInfo& info)
 {
-    server_ = new ModbusTCPServer(server_port_);
-    return server_->init();
+    if (start_mode_ != SERVER) 
+        return MODBUS_SERVER_NOT_EXISTED;
+
+    info = server_->getCoilInfo();
+    return SUCCESS;
 }
 
-ErrorCode ModbusManager::setValueById(int id, void* value)
+ErrorCode ModbusManager::getServerDiscrepteInputInfo(ModbusRegAddrInfo& info)
 {
-    ModbusRegInfo modbus_reg_info;
-    ErrorCode error_code = map_->getModbusRegInfoById(id, modbus_reg_info);
+    if (start_mode_ != SERVER) 
+        return MODBUS_SERVER_NOT_EXISTED;
 
-    if(SUCCESS != error_code)
-    {
-        return error_code;
-    }
-
-    switch(modbus_reg_info.reg_type)
-    {
-        case COIL:
-        {
-            ModbusStatus status;
-            status.nb = 1;
-            status.dest = (uint8_t*)value;
-            status.addr = modbus_reg_info.addr;
-            error_code = client_->writeCoils(status);
-         }
-            break;
-        case HOLDING_REGISTER:
-        {
-            ModbusRegs regs;
-            regs.nb = 1;
-            regs.dest = (uint16_t*)value;
-            regs.addr = modbus_reg_info.addr;
-            error_code = client_->writeHoldingRegs(regs);
-        }
-            break;
-        default:
-            error_code =  MODBUS_REG_TYPE_ERROR;
-    };
-
-    return error_code;
+    info = server_->getDiscrepteInputInfo();
+    return SUCCESS;
 }
 
-ErrorCode ModbusManager::getValueById(int id, void* value)
+ErrorCode ModbusManager::getServerHoldingRegInfo(ModbusRegAddrInfo& info)
 {
-    ModbusRegInfo modbus_reg_info;
-    ErrorCode error_code = map_->getModbusRegInfoById(id, modbus_reg_info);
-    if(SUCCESS != error_code)
-    {
-        return error_code; 
-    }
+    if (start_mode_ != SERVER) 
+        return MODBUS_SERVER_NOT_EXISTED;
 
-    switch(modbus_reg_info.reg_type)
-    {
-        case COIL:
-        {
-            ModbusStatus status;
-            status.addr = modbus_reg_info.addr;
-            FST_ERROR("Read coil : addr = %d", status.addr);
-            status.nb = 1;
-            status.dest = (uint8_t*)value;
-            error_code = client_->readCoils(status);
-        }
-            break;
-        case DISCREPTE_INPUT:
-        {
-            ModbusStatus status;
-            status.addr = modbus_reg_info.addr;
-            status.nb = 1;
-            status.dest = (uint8_t*)value;
-            error_code = client_->readDiscreteInputs(status);
-        }
-            break;
-        case HOLDING_REGISTER:
-        {
-            ModbusRegs regs;
-            regs.addr = modbus_reg_info.addr;
-            regs.nb = 1;
-            regs.dest = (uint16_t*)value;
-            error_code = client_->readHoldingRegs(regs);
-        }
-            break;
-        case INPUT_REGISTER:
-        {
-            ModbusRegs regs;
-            regs.addr = modbus_reg_info.addr;
-            regs.nb = 1;
-            regs.dest = (uint16_t*)value;
-            error_code = client_->readInputRegs(regs);
-        }
-            break;
-        default:
-            error_code = MODBUS_REG_TYPE_ERROR;
-    };
+    info = server_->getHoldingRegInfo();
+    return SUCCESS;
+}
 
-    return error_code;
+ErrorCode ModbusManager::getServerInputRegInfo(ModbusRegAddrInfo& info)
+{
+    if (start_mode_ != SERVER) 
+        return MODBUS_SERVER_NOT_EXISTED;
+
+    info = server_->getInputRegInfo();
+    return SUCCESS;
+}
+
+ErrorCode ModbusManager::getServerIp(string& ip)
+{
+    if (start_mode_ != SERVER) 
+        return MODBUS_SERVER_NOT_EXISTED;
+
+    ip = server_->getIp();
+    return SUCCESS;
+}
+
+ErrorCode ModbusManager::getServerPort(int& port)
+{
+    if (start_mode_ != SERVER) 
+        return MODBUS_SERVER_NOT_EXISTED;
+
+    port = server_->getPort();
+    return SUCCESS;
+}
+
+ErrorCode ModbusManager::setClientIp(string ip)
+{
+    return client_->setIp(ip);
+}
+
+ErrorCode ModbusManager::setClientPort(int port)
+{
+    return client_->setPort(port);
+}
+
+ErrorCode ModbusManager::setResponseTimeout(timeval timeout)
+{
+    return client_->setResponseTimeout(timeout);
+}
+
+ErrorCode ModbusManager::setBytesTimeout(timeval timeout)
+{
+    return client_->setBytesTimeout(timeout);
+}
+
+ErrorCode ModbusManager::getResponseTimeout(timeval& timeout)
+{
+    return client_->getResponseTimeout(timeout);
+}
+
+ErrorCode ModbusManager::getBytesTimeout(timeval& timeout)
+{
+    return client_->getBytesTimeout(timeout);
+}
+
+ErrorCode ModbusManager::writeCoils(int addr, int nb, uint8_t *dest)
+{
+    return client_->writeCoils(addr, nb, dest);
+}
+
+ErrorCode ModbusManager::readCoils(int addr, int nb, uint8_t *dest)
+{
+    return client_->readCoils(addr, nb, dest);
+}
+
+ErrorCode ModbusManager::readDiscreteInputs(int addr, int nb, uint8_t *dest)
+{
+    return client_->readDiscreteInputs(addr, nb, dest);
+}
+
+ErrorCode ModbusManager::writeHoldingRegs(int addr, int nb, uint16_t *dest)
+{
+    return client_->writeHoldingRegs(addr, nb, dest);
+}
+
+ErrorCode ModbusManager::readHoldingRegs(int addr, int nb, uint16_t *dest)
+{
+    return client_->readHoldingRegs(addr, nb, dest);
+}
+
+ErrorCode ModbusManager::writeAndReadHoldingRegs(
+        int write_addr, int write_nb, const uint16_t *write_dest,
+        int read_addr, int read_nb, uint16_t *read_dest)
+{
+    return client_->writeAndReadHoldingRegs(write_addr, write_nb, write_dest,
+                                            read_addr, read_nb, read_dest);
+}
+
+ErrorCode ModbusManager::readInputRegs(int addr, int nb, uint16_t *dest)
+{
+    return client_->readInputRegs(addr, nb, dest);
 }

@@ -1,6 +1,4 @@
 log_level: 1
-server_ip: 192.168.1.166
-server_port: 1502
 tcp_server_file_name: tcp_server.yaml
 tcp_client_file_name: tcp_client.yaml
 #END

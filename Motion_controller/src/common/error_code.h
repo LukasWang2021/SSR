@@ -181,18 +181,22 @@
 #define INVALID_PATH_FROM_TP (unsigned long long int)0x0000000200AC03F9   /*invalid path*/
 #define PARSE_IO_PATH_FAILED (unsigned long long int)0x0000000200AC03FA   /*IO not exist*/
 #define IO_MAPPING_LOG (unsigned long long int)0x0001000100AD0000   /*IoMapping log{0}*/
-#define MODBUS_LOG (unsigned long long int)0x0011000100AE0000   /*ModbusManager log{0}*/
-#define MODBUS_MANAGER_INIT_FAILED (unsigned long long int)0x0011000100AE0001   /*modbusManager init failed*/
-#define MODBUS_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0010000000AE0002   /*modbusManager load param failed*/
-#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0011000100AE0003   /*modbus client init failed*/
-#define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0011000200AE0004   /*modbus server init failed*/
-#define MODBUS_REG_TYPE_ERROR (unsigned long long int)0x0001000200AE0005   /*modbus reg type error*/
-#define MODBUS_MAP_ID_ERROR (unsigned long long int)0x0001000200AE0006   /*modbus map id error*/
-#define MODBUS_CLIENT_GET_RESPONSE_TIMEOUT_FAILED (unsigned long long int)0x0001000200AE0007   /*modbus client get response timeout failed*/
-#define MODBUS_CLIENT_GET_BYTES_TIMEOUT_FAILED (unsigned long long int)0x0001000200AE0008   /*modbus client get bytes timeout failed*/
-#define MODBUS_CLIENT_OPERATION_NUM_TOO_LARGE (unsigned long long int)0x0001000200AE0009   /*modbus client :操作的地址数量太大*/																										
-#define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE000A   /*modbus client: read failed*/
-#define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE000B   /*modbus client: write failed*/
+#define MODBUS_LOG (unsigned long long int)0x0011000100AE0000   /*ModbusManager log{0}*/																										
+#define MODBUS_MANAGER_INIT_FAILED (unsigned long long int)0x0011000100AE0001   /*modbusManager init failed*/																										
+#define MODBUS_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000100AE0002   /*modbusManager load param failed*/																										
+#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0011000100AE0003   /*modbus client init failed*/																										
+#define MODBUS_CLIENT_LOAD_PARAM_FAILED (unsigned long long int)0x0011000100AE0004   /*ModbusTcpClient load param failed*/																										
+#define MODBUS_CLIENT_SAVE_PARAM_FAILED (unsigned long long int)0x0011000100AE0005   /*modbus client save param failed*/																										
+#define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0011000100AE0006   /*modbus server init failed*/																										
+#define MODBUS_SERVER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000100AE0007   /*modbus server load param failed*/																										
+#define MODBUS_REG_TYPE_ERROR (unsigned long long int)0x0001000200AE0008   /*modbus reg type error*/																										
+#define MODBUS_MAP_ID_ERROR (unsigned long long int)0x0001000200AE0009   /*modbus map id error*/																										
+#define MODBUS_CLIENT_GET_RESPONSE_TIMEOUT_FAILED (unsigned long long int)0x0001000200AE000A   /*modbus client get response timeout failed*/																										
+#define MODBUS_CLIENT_GET_BYTES_TIMEOUT_FAILED (unsigned long long int)0x0001000200AE000B   /*modbus client get bytes timeout failed*/																										
+#define MODBUS_CLIENT_OPERATION_NUM_TOO_LARGE (unsigned long long int)0x0001000200AE000C   /*modbus client :操作的地址数量太大*/																										
+#define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE000D   /*modbus client: read failed*/																										
+#define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE000E   /*modbus client: write failed*/																										
+#define MODBUS_SERVER_NOT_EXISTED (unsigned long long int)0x0001000200AE000F   /*modbus server does not existed*/																										
 
 
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/

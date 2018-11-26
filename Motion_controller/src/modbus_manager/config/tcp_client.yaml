@@ -1,9 +1,12 @@
+log_level: 1
+ip: 192.168.1.102
+port: 502
+comm_type: TCP
 is_debug: true
-socket: 17
 response_timeout:
-    tv_sec: 2
-    tv_usec: 0
+    tv_sec: 2.0
+    tv_usec: 0.0
 bytes_timeout:
-    tv_sec: 0
-    tv_usec: 250000
+    tv_sec: 0.0
+    tv_usec: 250000.0
 #END

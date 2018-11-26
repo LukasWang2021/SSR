@@ -42,8 +42,10 @@ void ControllerRpc::handleRpc0x000093EE(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64_String* rs_data_ptr = static_cast<ResponseMessageType_Uint64_String*>(response_data_ptr);
     
-    memcpy(rs_data_ptr->data.data, get_version(), strlen(get_version()));
-    rs_data_ptr->data.data[strlen(get_version())] = 0;
+    std::string str = get_version();
+    int len = strlen(str.c_str());
+    memcpy(rs_data_ptr->data.data, str.c_str(), len);
+    rs_data_ptr->data.data[len] = '\0';
     rs_data_ptr->error_code.data = SUCCESS;
 }
 

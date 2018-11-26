@@ -5,6 +5,7 @@
 #include "common_log.h"
 #include "process_comm.h"
 #include "reg_manager.h"
+#include "io_mapping.h"
 #include "fst_io_device.h"
 #include "controller_sm.h"
 #include <vector>
@@ -19,7 +20,7 @@ public:
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, 
                 fst_base::ControllerServer* controller_server_ptr, fst_base::ControllerClient* controller_client_ptr,
-                RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr);
+                RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr, IoMapping* io_mapping_ptr);
 
     void processIpc();
 private:
@@ -30,6 +31,7 @@ private:
     RegManager* reg_manager_ptr_;
     fst_hal::FstIoDevice* io_device_ptr_;
     ControllerSm* state_machine_ptr_;
+    IoMapping* io_mapping_ptr_;
 
     enum {CMD_ID_BYTE_SIZE = 4,};
 
@@ -56,9 +58,11 @@ private:
     void handleIpcGetRRegValue(void* request_data_ptr, void* response_data_ptr); 
     void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
     void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
-    //void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);
-    //void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);
-    //void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);
+
+    void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);//todo delete
+    void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
+    void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
+    
     void handleIpcSetInterpreterServerStatus(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetDi(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetDi(void* request_data_ptr, void* response_data_ptr);

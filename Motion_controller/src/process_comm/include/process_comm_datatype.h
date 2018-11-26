@@ -22,7 +22,7 @@ typedef enum
     CONTROLLER_SERVER_CMD_GET_R_REG = 9,
     CONTROLLER_SERVER_CMD_SET_INSTRUCTION = 10,
     CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED = 11,
-    CONTROLLER_SERVER_CMD_CHECK_IO = 12,//todo
+    CONTROLLER_SERVER_CMD_CHECK_IO = 12,//todo delete, do not use.
     CONTROLLER_SERVER_CMD_SET_IO = 13,//todo
     CONTROLLER_SERVER_CMD_GET_IO = 14,//todo
     CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS = 15,
@@ -75,29 +75,47 @@ typedef struct
     unsigned long long data;
 }ProcessCommEvent;
 
-typedef struct
+typedef struct//todo delete
 {
     IOPortInfo port_info;
     ErrorCode error_code;
 }ResponseCheckIo;
 
-typedef struct
+typedef struct//todo delete
 {
     IOPortInfo port_info;
     char value;
 }RequestSetIo;
 
-typedef struct
+typedef struct//todo delete
 {
     IOPortInfo port_info;
     int buffer_length;
 }RequestGetIo;
 
-typedef struct
+typedef struct//doto delete
 {
     unsigned long long error_code;
     char value;
 }ResponseGetIo;
+
+typedef struct
+{
+    uint32_t port_offset;
+}RequestGetDi,RequestGetRi,RequestGetDo,RequestGetRo;
+
+typedef struct
+{
+    unsigned long long error_code;
+    uint32_t value;
+}ResponseGetDi,ResponseGetRi,ResponseGetDo,ResponseGetRo;
+
+typedef struct
+{
+    uint32_t port_offset;
+    uint32_t value;
+}RequestSetDi,RequestSetRi,RequestSetDo,RequestSetRo;
+
 
 }
 

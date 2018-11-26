@@ -169,6 +169,7 @@ void ControllerServer::handleResponseIsNextInstructionNeeded(std::vector<Process
     }
 }
 
+
 // CheckIo
 void ControllerServer::handleResponseCheckIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
@@ -211,6 +212,7 @@ void ControllerServer::handleResponseGetIo(std::vector<ProcessCommRequestRespons
     }
 }
 
+
 // SetInterpreterServerStatus
 void ControllerServer::handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
@@ -225,37 +227,116 @@ void ControllerServer::handleResponseSetInterpreterServerStatus(std::vector<Proc
     }
 }
 
+//GetDi
 void ControllerServer::handleResponseGetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_DI, task->response_data_ptr, sizeof(ResponseGetDi), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetDi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetDi*)task->response_data_ptr;
+    }
 }
+
+//SetDi
 void ControllerServer::handleResponseSetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_DI, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetDi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
 }
+
+//GetDo
 void ControllerServer::handleResponseGetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_DO, task->response_data_ptr, sizeof(ResponseGetDo), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetDo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetDo*)task->response_data_ptr;
+    }
 }
+
+//SetDo
 void ControllerServer::handleResponseSetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_DO, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetDo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
 
 }
 
+//GetRi
 void ControllerServer::handleResponseGetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_RI, task->response_data_ptr, sizeof(ResponseGetRi), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetRi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetRi*)task->response_data_ptr;
+    }
 }
+
+//SetRi
 void ControllerServer::handleResponseSetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_RI, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetRi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
 }
 
+//GetRo
 void ControllerServer::handleResponseGetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
-
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_RO, task->response_data_ptr, sizeof(ResponseGetRo), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetRo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetRo*)task->response_data_ptr;
+    }
 }
+
+//SetRo
 void ControllerServer::handleResponseSetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_RO, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetRo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
 
 }

@@ -17,27 +17,28 @@ using namespace fst_ctrl;
 
 
 
-static void rtTask(void *group)
+static void runRealTimeTask(void *mc)
 {
-    ((BaseGroup*)group)->realtimeTask();
+    ((MotionControl*)mc)->ringPriorityTask();
 }
 
-static void nonRtTask(void *mc)
+static void runNonRealTimeTask(void *mc)
 {
-    ((MotionControl*)mc)->nonRealTimeTask();
+    ((MotionControl*)mc)->ringCommonTask();
 }
 
-void MotionControl::nonRealTimeTask(void)
+void MotionControl::ringCommonTask(void)
 {
     Joint servo_joint;
     int ros_publish_cnt = 0;
-
     memset(&servo_joint, 0, sizeof(servo_joint));
 
     FST_WARN("Non-Realtime task start.");
 
-    while (non_rt_task_running_)
+    while (non_rt_thread_running_)
     {
+        group_ptr_->doCommonLoop();
+        
         if (param_ptr_->enable_ros_publish_)
         {
             ros_publish_cnt ++;
@@ -56,6 +57,19 @@ void MotionControl::nonRealTimeTask(void)
     FST_WARN("Non-Realtime task quit.");
 }
 
+void MotionControl::ringPriorityTask(void)
+{
+    FST_WARN("Realtime task start.");
+
+    while (rt_thread_running_)
+    {
+        group_ptr_->doPriorityLoop();
+        usleep(param_ptr_->rt_cycle_time_ * 1000);
+    }
+
+    FST_WARN("Realtime task quit.");
+}
+
 
 MotionControl::MotionControl()
 {
@@ -67,19 +81,24 @@ MotionControl::MotionControl()
     log_ptr_ = NULL;
     param_ptr_ = NULL;
 
-    non_rt_task_running_ = false;
+    rt_thread_running_ = false;
+    non_rt_thread_running_ = false;
 
     ros_basic_ptr_ = NULL;
 }
 
 MotionControl::~MotionControl()
 {
-    stopRealtimeTask();
-
-    if (non_rt_task_running_)
+    if (non_rt_thread_running_)
     {
-        non_rt_task_running_ = false;
+        non_rt_thread_running_ = false;
         non_rt_thread_.join();
+    }
+
+    if (rt_thread_running_)
+    {
+        rt_thread_running_ = false;
+        rt_thread_.join();
     }
 
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
@@ -146,28 +165,29 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
 
     if (err == SUCCESS)
     {
-        if (startRealtimeTask())
+        rt_thread_running_ = true;
+
+        if (rt_thread_.run(&runRealTimeTask, this, 80))
         {
             FST_INFO("Startup real-time task success.");
         }
         else
         {
             FST_ERROR("Fail to create real-time task.");
+            rt_thread_running_ = false;
             return MOTION_INTERNAL_FAULT;
         }
 
+        non_rt_thread_running_ = true;
 
-
-        non_rt_task_running_ = true;
-
-        if (non_rt_thread_.run(&nonRtTask, this, 40))
+        if (non_rt_thread_.run(&runNonRealTimeTask, this, 40))
         {
             FST_INFO("Startup non-real-time task success.");
         }
         else
         {
             FST_ERROR("Fail to create non-real-time task.");
-            non_rt_task_running_ = false;
+            non_rt_thread_running_ = false;
             return MOTION_INTERNAL_FAULT;
         }
 
@@ -180,19 +200,6 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     }
 
     return SUCCESS;
-}
-
-bool MotionControl::startRealtimeTask(void)
-{
-    group_ptr_->activeRealtimeTask();
-    return rt_thread_.run(&rtTask, group_ptr_, 80);
-}
-
-bool MotionControl::stopRealtimeTask(void)
-{
-    group_ptr_->inactiveRealtimeTask();
-    rt_thread_.join();
-    return true;
 }
 
 
@@ -318,9 +325,6 @@ ErrorCode MotionControl::manualStop(void)
 
 ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 {
-    // FIXME
-    // for test
-    /*
     if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
         FST_ERROR("Offset of the group is abnormal, auto move is forbidden, calibrator-state = %d.", group_ptr_->getCalibratorPtr()->getCalibrateState());
@@ -341,7 +345,6 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
             return INVALID_PARAMETER;
         }
     }
-    */
 
     return group_ptr_->autoMove(id, target);
 }

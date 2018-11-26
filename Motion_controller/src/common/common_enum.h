@@ -16,6 +16,12 @@ enum MotionType
     MOTION_CIRCLE = 3,
 };
 
+enum PointType
+{
+    PATH_POINT = 0,
+    TRANSITION_POINT = 1,
+};
+
 enum ManualFrame
 {
     JOINT,
@@ -66,18 +72,21 @@ enum ManualDirection
 
 enum GroupState
 {
-    STANDBY = 0,
-    MANUAL = 1,
-    AUTO = 2,
-    PAUSE = 3,
+    UNKNOW = 0x0,
+    DISABLE = 0x1,
+    STANDBY = 0x2,
+    MANUAL = 0x3,
+    AUTO = 0x4,
+    PAUSE = 0x5,
 
-    MANUAL_TO_STANDBY = 0xF10,
-    STANDBY_TO_MANUAL = 0xF01,
-    AUTO_TO_STANDBY = 0xF20,
-    STANDBY_TO_AUTO = 0xF02,
-    AUTO_TO_PAUSE = 0xF23,
-    PAUSE_TO_AUTO = 0xF32,
-    PAUSE_TO_STANDBY = 0xF30,
+    DISABLE_TO_STANDBY = 0x12,
+    STANDBY_TO_DISABLE = 0x21,
+    MANUAL_TO_STANDBY = 0x32,
+    STANDBY_TO_MANUAL = 0x23,
+    AUTO_TO_STANDBY = 0x42,
+    STANDBY_TO_AUTO = 0x24,
+    AUTO_TO_PAUSE = 0x45,
+    PAUSE_TO_AUTO = 0x54,
 };
 
 }

@@ -19,6 +19,7 @@
 #include <motion_control_traj_fifo.h>
 #include <arm_kinematics.h>
 #include <path_plan.h>
+#include <motion_control_cache_pool.h>
 
 
 #define AUTO_CACHE_SIZE     5
@@ -26,6 +27,27 @@
 namespace fst_mc
 {
 
+
+class FineWaiter
+{
+  public:
+    FineWaiter();
+    ~FineWaiter();
+    void initFineWaiter(size_t stable_cycle, double threshold);
+
+    void enableWaiter(const Pose &target);
+    void disableWaiter(void);
+    void checkWaiter(const Pose &pose);
+    bool isEnable(void);
+    bool isStable(void);
+
+  private:
+    bool    enable_;
+    double  threshold_;
+    size_t  stable_cnt_;
+    size_t  stable_cycle_;
+    Pose    waiting_pose_;
+};
 
 class BaseGroup
 {
@@ -83,10 +105,10 @@ class BaseGroup
     virtual ErrorCode getHardConstraint(JointConstraint &hard_constraint);
 
     // Global velocity and acceleration APIs
-    ErrorCode setGlobalVelRatio(double ratio);
-    ErrorCode setGlobalAccRatio(double ratio);
-    double getGlobalVelRatio(void);
-    double getGlobalAccRatio(void);
+    virtual ErrorCode setGlobalVelRatio(double ratio);
+    virtual ErrorCode setGlobalAccRatio(double ratio);
+    virtual double getGlobalVelRatio(void);
+    virtual double getGlobalAccRatio(void);
 
     // More APIs:
     virtual size_t getNumberOfJoint(void) = 0;
@@ -96,53 +118,63 @@ class BaseGroup
     virtual Calibrator* getCalibratorPtr(void);
     virtual Constraint* getSoftConstraintPtr(void);
 
-    void realtimeTask(void);
-    void activeRealtimeTask(void);
-    void inactiveRealtimeTask(void);
+    virtual void doCommonLoop(void);
+    virtual void doPriorityLoop(void);
 
 
   protected:
-    virtual ErrorCode autoJoint(const Joint &start, const Joint &target, double vel, double cnt, int id);
-    virtual ErrorCode autoLine(const Joint &start, const PoseEuler &target, double vel, double cnt, int id);
-    virtual ErrorCode autoCircle(const Joint &start, const PoseEuler &target1, const PoseEuler &target2, double vel, double cnt, int id);
-
-
-    virtual ErrorCode prepareCache(TrajectoryCache &cache);
-    virtual ErrorCode preplanCache(TrajectoryCache &cache, double cnt);
+    virtual ErrorCode autoJoint(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoStableJoint(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothJoint(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    
+    virtual ErrorCode autoLine(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoStableLine(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothLine(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    
+    virtual ErrorCode autoCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoStableCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
 
     virtual ErrorCode sendPoint(void);
     virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length);
     virtual ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
     virtual ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
     virtual ErrorCode pickFromAuto(TrajectoryPoint *point, size_t &length);
-    virtual ErrorCode computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g);
-    virtual ErrorCode createTrajectory(void);
-    ErrorCode sampleStartTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], Joint &angle, Joint &omega, Joint &alpha);
-    ErrorCode sampleEndingTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], Joint &angle, Joint &omega, Joint &alpha);
-    virtual ErrorCode sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], double time, Joint &angle, Joint &omega, Joint &alpha);
 
     virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
 
-    virtual TrajectoryCache* getTrajectoryCache(void);
-    virtual void freeTrajectoryCache(TrajectoryCache *pcache);
-
     inline void reportError(const ErrorCode &error);
-    inline bool isSameJointForFine(const Joint &joint1, const Joint &joint2);
     inline bool isSameJoint(const Joint &joint1, const Joint &joint2, double thres = MINIMUM_E6);
-    inline bool checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const JointPoint &start, const Joint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk);
-    inline bool checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const Joint &start, const JointPoint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk);
-    inline bool checkCoeff(const TrajSegment (&segment)[NUM_OF_JOINT], const JointPoint &start, const JointPoint &ending, const Joint &alpha_upper, const Joint &alpha_lower, const Joint &jerk);
+    inline ErrorCode checkMotionTarget(const MotionTarget &target);
+    inline ErrorCode checkStartState(const Joint &start_joint);
+    inline void freeFirstCacheList(void);
+    inline void linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj_ptr);
+    inline PathCache* getLastPathCachePtr(void);
+    inline PathCacheList* getLastPathCacheListPtr(void);
+    inline TrajectoryCache* getLastTrajectoryCachePtr(void);
+    inline TrajectoryCacheList* getLastTrajectoryCacheListPtr(void);
 
+    bool isLastMotionSmooth(void);
+    void updateServoStateAndJoint(void);
+    void doStateMachine(void);
+    void updatePickIndex(void);
+    void setFineWaiter(void);
+    void loopFineWaiter(void);
+    void smoothToNextTrajectory(void);
+    void fillTrajectoryFifo(void);
+    void updateTimeFromStart(TrajectoryCache &cache);
+    bool updateStartJoint(void);
+
+    void sendTrajectoryFlow(void);
+    ErrorCode sendAutoTrajectoryFlow(void);
+    ErrorCode sendManualTrajectoryFlow(void);
+    ErrorCode pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t *plength);
 
     size_t      dynamics_cnt_;
-    bool        waiting_fine_;
-    size_t      start_waiting_cnt_;
-    MotionType  waiting_motion_type_;
-    PoseEuler   waiting_pose_;
-    Joint       waiting_joint_;
 
-    bool    rt_task_active_;
+    FineWaiter  fine_waiter_;
+
     double  vel_ratio_, acc_ratio_;
     double  axis_vel_[NUM_OF_JOINT];
     double  axis_acc_[NUM_OF_JOINT];
@@ -152,12 +184,9 @@ class BaseGroup
     Constraint  soft_constraint_;
     Constraint  firm_constraint_;
 
-    Joint current_joint_;
+    Joint       servo_joint_;
     ServoState  servo_state_;
     GroupState  group_state_;
-
-    TrajectoryCache     *used_cache_ptr_;
-    TrajectoryCache     *free_cache_ptr_;
 
     Joint       jerk_;
     Joint       start_joint_;
@@ -172,15 +201,46 @@ class BaseGroup
     pthread_mutex_t manual_mutex_;
     pthread_mutex_t servo_mutex_;
 
-    TrajectoryFifo          traj_fifo_;
     BaseKinematics          *kinematics_ptr_;
     ManualTrajectory        manual_traj_;
     BareCoreInterface       bare_core_;
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;
+
+    CachePool<PathCacheList>        path_cache_pool_;
+    CachePool<TrajectoryCacheList>  traj_cache_pool_;
+
+    MotionTime          duration_per_segment_;
+    TrajectoryFifo      traj_fifo_;
+    PathCacheList       *path_list_ptr_;
+    TrajectoryCacheList *traj_list_ptr_;
+    pthread_mutex_t     cache_list_mutex_;
+    bool stop_request_;
+    bool reset_request_;
+    bool abort_request_;
+    bool auto_to_standby_request_;
+    
+    
+
+    double cartesian_vel_min_, cartesian_vel_max_;
 };
 
 
+
+/*
+class PathCachePool
+{
+  public:
+    PathCachePool(void);
+    PathCache* getCachePtr(void);
+    void freeCachePtr(PathCache *pcache);
+
+  private:
+    PathCache   cache_pool_[PATH_CACHE_SIZE];
+    PathCache*  free_cache_list_;
+    pthread_mutex_t  mutex_;
+};
+*/
 
 
 

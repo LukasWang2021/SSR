@@ -12,6 +12,7 @@
 #include "thread_help.h"
 #include <trajectory_alg.h>
 #include <time.h>
+#include <motion_control_cache_pool.h>
 
 
 using namespace std;
@@ -20,10 +21,7 @@ using namespace fst_log;
 using namespace fst_base;
 
 
-static void rtTask(void *group)
-{
-    ((BaseGroup*)group)->realtimeTask();
-}
+
 
 #define LOOP 1
 
@@ -161,6 +159,17 @@ void test1(void)
     printf("foreCycle %d times, using time: %.6f ms\n", LOOP, seconds * 1000);
 }
 
+static bool g_thread_running = false;
+
+static void rtTask(void *group)
+{
+    while (g_thread_running)
+    {
+        ((BaseGroup*)group)->doPriorityLoop();
+        usleep(2 * 1000);
+    }
+}
+
 void test2(void)
 {
     Logger log;
@@ -170,7 +179,7 @@ void test2(void)
     cout << "begin" << endl;
 
     arm.initGroup(&error_monitor);
-    arm.activeRealtimeTask();
+    g_thread_running = true;
     rt_thread.run(&rtTask, &arm, 80);
     sleep(1);
     arm.setGlobalVelRatio(1);
@@ -226,6 +235,7 @@ void test2(void)
     arm.autoMove(10, target);
      */
 
+    g_thread_running = false;
     sleep(10);
 }
 
@@ -564,6 +574,17 @@ void test7(void)
     arm.moveOffLineTrajectory(0, "test");
 }
 
+void test8(void)
+{
+    CachePool<TrajectoryCacheList> traj_cache;
+    CachePool<PathCacheList> path_cache;
+    traj_cache.initCachePool(4);
+    path_cache.initCachePool(4);
+
+    TrajectoryCacheList *p1 = traj_cache.getCachePtr();
+    traj_cache.freeCachePtr(p1);
+}
+
 int main(int argc, char **argv)
 {
     //test0();
@@ -573,7 +594,8 @@ int main(int argc, char **argv)
     //test4();
     //test5();
     //test6();
-    test7();
+    //test7();
+    test8();
 
     return 0;
 }

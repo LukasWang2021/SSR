@@ -195,6 +195,10 @@
 #define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE000A   /*modbus client: read failed*/
 #define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE000B   /*modbus client: write failed*/
 
+#define TRAJECTORY_FIFO_EMPTY (unsigned long long int)0x0001000400A90BB8   /*trajectory FIFO is empty*/
+#define TRAJECTORY_FIFO_FULL (unsigned long long int)0x0001000400A90BB9   /*trajectory FIFO is full*/
+#define TRAJECTORY_SEGMENT_ERROR (unsigned long long int)0x0001000400A90BBA   /*trajectory segment is invalid*/
+
 
 #endif
 

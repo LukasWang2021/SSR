@@ -100,6 +100,13 @@ struct JointPoint
 	Joint alpha;
 };
 
+struct JointState
+{
+	Joint angle;
+	Joint omega;
+	Joint alpha;
+};
+
 struct DynamicsProduct
 {
 	double m[NUM_OF_JOINT][NUM_OF_JOINT];

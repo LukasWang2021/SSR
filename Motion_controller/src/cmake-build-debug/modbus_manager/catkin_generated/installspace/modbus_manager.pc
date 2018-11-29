@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: modbus_manager
+Description: Description of modbus_manager
+Version: 0.1.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lmodbus_manager
+Requires: 

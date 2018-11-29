@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: process_comm
+Description: Description of process_comm
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lprocess_comm
+Requires: 

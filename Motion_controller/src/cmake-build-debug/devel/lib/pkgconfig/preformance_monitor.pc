@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: preformance_monitor
+Description: Description of preformance_monitor
+Version: 0.0.0
+Cflags: -I/home/fst/workspace/src/preformance_monitor/include
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lpreformance_monitor
+Requires: 

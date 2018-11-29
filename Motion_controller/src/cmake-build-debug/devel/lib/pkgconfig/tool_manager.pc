@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: tool_manager
+Description: Description of tool_manager
+Version: 0.0.0
+Cflags: -I/home/fst/workspace/src/tool_manager/include
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -ltool_manager
+Requires: 

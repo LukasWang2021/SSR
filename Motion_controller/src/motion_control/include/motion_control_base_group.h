@@ -18,8 +18,8 @@
 #include <motion_control_manual_teach.h>
 #include <motion_control_traj_fifo.h>
 #include <arm_kinematics.h>
-#include <path_plan.h>
 #include <motion_control_cache_pool.h>
+#include <dynamics_interface.h>
 
 
 #define AUTO_CACHE_SIZE     5
@@ -135,11 +135,14 @@ class BaseGroup
     virtual ErrorCode autoStableCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
 
-    virtual ErrorCode sendPoint(void);
-    virtual ErrorCode pickFromManual(TrajectoryPoint *point, size_t &length);
-    virtual ErrorCode pickFromManualJoint(TrajectoryPoint *point, size_t &length);
-    virtual ErrorCode pickFromManualCartesian(TrajectoryPoint *point, size_t &length);
-    virtual ErrorCode pickFromAuto(TrajectoryPoint *point, size_t &length);
+    
+    virtual ErrorCode sendAutoTrajectoryFlow(void);
+    virtual ErrorCode sendManualTrajectoryFlow(void);
+
+    virtual ErrorCode pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length);
+    virtual ErrorCode pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length);
+    virtual ErrorCode pickPointsFromManualJoint(TrajectoryPoint *points, size_t &length);
+    virtual ErrorCode pickPointsFromManualCartesian(TrajectoryPoint *points, size_t &length);
 
     virtual char* printDBLine(const int *data, char *buffer, size_t length) = 0;
     virtual char* printDBLine(const double *data, char *buffer, size_t length) = 0;
@@ -148,6 +151,7 @@ class BaseGroup
     inline bool isSameJoint(const Joint &joint1, const Joint &joint2, double thres = MINIMUM_E6);
     inline ErrorCode checkMotionTarget(const MotionTarget &target);
     inline ErrorCode checkStartState(const Joint &start_joint);
+
     inline void freeFirstCacheList(void);
     inline void linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj_ptr);
     inline PathCache* getLastPathCachePtr(void);
@@ -155,6 +159,7 @@ class BaseGroup
     inline TrajectoryCache* getLastTrajectoryCachePtr(void);
     inline TrajectoryCacheList* getLastTrajectoryCacheListPtr(void);
 
+    void sendTrajectoryFlow(void);
     bool isLastMotionSmooth(void);
     void updateServoStateAndJoint(void);
     void doStateMachine(void);
@@ -165,20 +170,11 @@ class BaseGroup
     void fillTrajectoryFifo(void);
     void updateTimeFromStart(TrajectoryCache &cache);
     bool updateStartJoint(void);
+    void resetManualTrajectory(void);
 
-    void sendTrajectoryFlow(void);
-    ErrorCode sendAutoTrajectoryFlow(void);
-    ErrorCode sendManualTrajectoryFlow(void);
-    ErrorCode pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t *plength);
-
-    size_t      dynamics_cnt_;
-
-    FineWaiter  fine_waiter_;
+    
 
     double  vel_ratio_, acc_ratio_;
-    double  axis_vel_[NUM_OF_JOINT];
-    double  axis_acc_[NUM_OF_JOINT];
-    size_t  auto_pick_segment_;
 
     Constraint  hard_constraint_;
     Constraint  soft_constraint_;
@@ -188,7 +184,6 @@ class BaseGroup
     ServoState  servo_state_;
     GroupState  group_state_;
 
-    Joint       jerk_;
     Joint       start_joint_;
     MotionTime  cycle_time_;
     MotionTime  auto_time_;
@@ -196,10 +191,7 @@ class BaseGroup
     Calibrator  calibrator_;
     ManualFrame manual_frame_;
     ManualTeach manual_teach_;
-
-    pthread_mutex_t auto_mutex_;
-    pthread_mutex_t manual_mutex_;
-    pthread_mutex_t servo_mutex_;
+    
 
     BaseKinematics          *kinematics_ptr_;
     ManualTrajectory        manual_traj_;
@@ -215,10 +207,16 @@ class BaseGroup
     PathCacheList       *path_list_ptr_;
     TrajectoryCacheList *traj_list_ptr_;
     pthread_mutex_t     cache_list_mutex_;
+    pthread_mutex_t     manual_traj_mutex_;
+    pthread_mutex_t     servo_mutex_;
+    FineWaiter          fine_waiter_;
     bool stop_request_;
     bool reset_request_;
     bool abort_request_;
+    bool clear_request_;
+    bool error_request_;
     bool auto_to_standby_request_;
+    bool manual_to_standby_request_;
     
     
 

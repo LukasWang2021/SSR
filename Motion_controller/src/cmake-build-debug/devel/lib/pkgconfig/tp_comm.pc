@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: tp_comm
+Description: Description of tp_comm
+Version: 0.0.0
+Cflags: -I/home/fst/workspace/src/tp_comm/include
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -ltp_comm
+Requires: 

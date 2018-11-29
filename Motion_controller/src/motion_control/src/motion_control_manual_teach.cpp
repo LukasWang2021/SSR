@@ -303,7 +303,7 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
 
         delta[i] = trips[i] - omega[i] * omega[i] / alpha[i];
         t_min[i] = delta[i] > 0 ? (omega[i] / alpha[i] + trips[i] / omega[i]) : (sqrt(trips[i] / alpha[i]) * 2);
-        FST_INFO("  J%d: trip=%.4f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);
+        // FST_INFO("  J%d: trip=%.4f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);
         if (t_min[i] > duration) duration = t_min[i];
     }
 
@@ -353,7 +353,7 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
                  traj.coeff[i].start_alpha, traj.coeff[i].brake_alpha);*/
     }
 
-    FST_INFO("Success !");
+    FST_INFO("  Create manual trajectory success !");
     return SUCCESS;
 }
 
@@ -522,7 +522,7 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
     }
 
     traj.duration = duration;
-    FST_INFO("Success, total duration=%.4f", traj.duration);
+    FST_INFO("  Create manual trajectory success !");
     return SUCCESS;
 }
 
@@ -757,7 +757,7 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
     }
 
     traj.duration = duration;
-    FST_INFO("Succes, total duration=%.4f", traj.duration);
+    FST_INFO("  Create manual trajectory success !");
     return SUCCESS;
 }
 
@@ -1049,7 +1049,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
     }
 
     traj.duration = duration;
-    FST_INFO("Success, total duration=%.4f", traj.duration);
+    FST_INFO("  Create manual trajectory success !");
     return SUCCESS;
 }
 
@@ -1083,12 +1083,11 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
         omega[i] = omega_limit[i] * vel_ratio_;
         delta[i] = trips[i] - omega[i] * omega[i] / alpha[i];
         t_min[i] = delta[i] > 0 ? (omega[i] / alpha[i] + trips[i] / omega[i]) : (sqrt(trips[i] / alpha[i]) * 2);
-        FST_INFO("  J%d: trip=%.8f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);
-        //FST_INFO("  J%d: t=%f", i + 1, sqrt(trips[i] / alpha[i]) * 2);
+        //FST_INFO("  J%d: trip=%.8f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);
         if (t_min[i] > duration) duration = t_min[i];
     }
 
-    FST_INFO("  duration=%.4f, create trajectory", duration);
+    FST_INFO("  duration=%.4f, create trajectory ...", duration);
 
     for (size_t i = 0; i < 6; i++)
     {
@@ -1133,7 +1132,7 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
     }
 
     traj.duration = duration;
-    FST_INFO("Success !");
+    FST_INFO("  Create manual trajectory success !");
     return SUCCESS;
 }
 

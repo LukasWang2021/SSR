@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: fst_axis_device
+Description: Description of fst_axis_device
+Version: 0.0.0
+Cflags: -I/home/fst/workspace/src/fst_axis_device/include
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lfst_axis_device
+Requires: base_device

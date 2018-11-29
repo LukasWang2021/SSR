@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: protos
+Description: Description of protos
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lprotos
+Requires: 

@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: log_service
+Description: Description of log_service
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -llog_service
+Requires: 

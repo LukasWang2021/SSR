@@ -79,7 +79,7 @@ struct AxisCoeff        // 一个轴轨迹的表达式
 
 struct TrajectoryBlock  // 一段时间内的轨迹
 {
-    size_t      index_in_path_cache;    // 轨迹段末尾位置对应在路径缓存中的索引
+    int         index_in_path_cache;    // 轨迹段末尾位置对应在路径缓存中的索引, 当轨迹段末尾点在路径中没有对应的路径点时此处应填-1
     MotionTime  duration;               // 轨迹段在时间轴上的延续长度，在本段轨迹上的差值时间：0 ～ duration
     MotionTime  time_from_start;        // 从本条指令起始到block起始之间的时间
     AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
@@ -109,6 +109,17 @@ struct TrajectorySegment
     MotionTime  duration;               // 本段segment的持续时间
     AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
 };
+
+struct TrajectoryPoint  // 差值得到的轨迹点
+{
+    Joint   angle;      // 轨迹点的位置
+    Joint   omega;      // 轨迹点的速度
+    Joint   alpha;      // 轨迹点的加速度
+    Joint   ma_cv_g;    // 轨迹点的力矩
+    PointLevel  level;  // 轨迹点位置，起始点、中间点或者结束点
+};
+
+
 
 class GroupDirection        // 手动示教模式下各轴运动方向
 {
@@ -154,16 +165,6 @@ struct ManualTrajectory     // 手动示教模式下的运动轨迹
     MotionTime      duration;       // 示教运动的耗时
     ManualCoef      coeff[NUM_OF_JOINT];        // 各轴系数
 };
-
-struct TrajectoryPoint  // 差值得到的轨迹点
-{
-    Joint   angle;      // 轨迹点的位置
-    Joint   omega;      // 轨迹点的速度
-    Joint   alpha;      // 轨迹点的加速度
-    Joint   ma_cv_g;    // 轨迹点的力矩
-    PointLevel  level;  // 轨迹点位置，起始点、中间点或者结束点
-};
-
 
 }
 

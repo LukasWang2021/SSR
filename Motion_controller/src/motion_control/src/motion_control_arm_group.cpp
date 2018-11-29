@@ -45,8 +45,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     FST_INFO("Initializing mutex ...");
     if (pthread_mutex_init(&cache_list_mutex_, NULL) != 0 ||
-        pthread_mutex_init(&auto_mutex_, NULL) != 0 ||
-        pthread_mutex_init(&manual_mutex_, NULL) != 0 ||
+        pthread_mutex_init(&manual_traj_mutex_, NULL) != 0 ||
         pthread_mutex_init(&servo_mutex_, NULL) != 0)
     {
         FST_ERROR("Fail to initialize mutex.");
@@ -145,23 +144,8 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     // 加载motion_control参数设置
     path = COMPONENT_PARAM_FILE_DIR;
     param.reset();
-    vector<double> data;
 
-    if (param.loadParamFile(path + "motion_control.yaml") &&
-        param.getParam("joint/omega/limit", data))
-    {
-        if (data.size() == NUM_OF_JOINT)
-        {
-            memcpy(axis_vel_, &data[0], NUM_OF_JOINT * sizeof(double));
-            FST_INFO("Joint omega: %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
-        }
-        else
-        {
-            FST_ERROR("Invalid omega array size : %d", data.size());
-            return INVALID_PARAMETER;
-        }
-    }
-    else
+    if (!param.loadParamFile(path + "motion_control.yaml"))
     {
         FST_ERROR("Fail loading motion configuration from config file");
         return param.getLastError();
@@ -459,8 +443,9 @@ char* ArmGroup::printDBLine(const double *data, char *buffer, size_t length)
 
     for (size_t i = 0; i < JOINT_OF_ARM; i++)
     {
-        //len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
-        len += snprintf(buffer + len, length - len, "%.12f, ", data[i]);
+        len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.9f, ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.12f, ", data[i]);
     }
 
     if (len > 1)

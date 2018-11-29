@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: log_service
+Description: Description of log_service
+Version: 0.0.0
+Cflags: -I/home/fst/workspace/src/log_service/include
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -llog_service
+Requires: 

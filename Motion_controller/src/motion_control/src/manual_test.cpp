@@ -10,20 +10,18 @@
 #include <iostream>
 #include <motion_control_arm_group.h>
 #include "thread_help.h"
-#include <trajectory_alg.h>
 #include <time.h>
 #include <motion_control_cache_pool.h>
+#include <segment_alg.h>
 
 
 using namespace std;
 using namespace fst_mc;
 using namespace fst_log;
 using namespace fst_base;
+using namespace fst_algorithm;
 
 
-
-
-#define LOOP 1
 
 void test0(void)
 {
@@ -32,6 +30,8 @@ void test0(void)
     Joint alpha_upper, alpha_lower;
     clock_t start, end;
     DynamicsProduct product;
+    DynamicsInterface dynamics;
+    float alpha[2][6];
 
     angle[0] = 0.9;
     angle[1] = 0.4;
@@ -46,12 +46,17 @@ void test0(void)
     omega[4] = 0.4;
     omega[5] = -0.9;
 
+    float jnt[6] = {0, 0, 0, 1.1, 0, 0.3};
+    float omg[6] = {0, 0, 0, 0, 0, 0};
+
     start = clock();
-    ErrorCode err = computeDynamics(angle, omega, alpha_upper, alpha_lower, product);
+    for (size_t i = 0; i < 22; i++)
+        dynamics.computeAccMax(jnt , omg, alpha);
     end = clock();
     double seconds  =(double)(end - start)/CLOCKS_PER_SEC;
-    printf("dynamics %d times, using time: %.6f ms\n", LOOP, seconds * 1000);
+    printf("dynamics using time: %.6f ms\n", seconds * 1000);
 
+/*
     printf("result = %llx\n", err);
     printf("angle = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", angle[0], angle[1], angle[2], angle[3], angle[4], angle[5]);
     printf("omega = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
@@ -71,103 +76,55 @@ void test0(void)
     printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[4][0], product.c[4][1], product.c[4][2], product.c[4][3], product.c[4][4], product.c[4][5]);
     printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[5][0], product.c[5][1], product.c[5][2], product.c[5][3], product.c[5][4], product.c[5][5]);
     printf("  g = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.g[0], product.g[1], product.g[2], product.g[3], product.g[4], product.g[5]);
+    */
 }
+
 
 void test1(void)
 {
-    JointPoint start_state[LOOP];
-    JointPoint target_state[LOOP];
-    Joint alpha_upper, alpha_lower;
-    Joint jerk;
-    TrajSegment segment[LOOP][9];
+    Logger log;
+    ArmGroup arm(&log);
+    ErrorMonitor error_monitor;
+    arm.initGroup(&error_monitor);
 
-    for (size_t i = 0; i < LOOP; i++)
-    {
-        start_state[i].angle[0] = 0.09;
-        start_state[i].angle[1] = 0.09;
-        start_state[i].angle[2] = 0.09;
-        start_state[i].angle[3] = 0.09;
-        start_state[i].angle[4] = 0.09;
-        start_state[i].angle[5] = 0.09;
-        start_state[i].omega[0] = 0;
-        start_state[i].omega[1] = 0;
-        start_state[i].omega[2] = 0;
-        start_state[i].omega[3] = 0;
-        start_state[i].omega[4] = 0;
-        start_state[i].omega[5] = 0;
-        start_state[i].alpha[0] = 0;
-        start_state[i].alpha[1] = 0;
-        start_state[i].alpha[2] = 0;
-        start_state[i].alpha[3] = 0;
-        start_state[i].alpha[4] = 0;
-        start_state[i].alpha[5] = 0;
+    //Joint joint = {PI / 2, PI / 4, PI / 8, PI / 16, PI / 16, PI / 16, 0, 0, 0};
+    Joint joint = {0, 0, 0, 0, 0, PI / 2, 0, 0, 0};
+    Joint res;
+    PoseEuler pose;
 
-        target_state[i].angle[0] = 0.1;
-        target_state[i].angle[1] = 0.1;
-        target_state[i].angle[2] = 0.1;
-        target_state[i].angle[3] = 0.1;
-        target_state[i].angle[4] = 0.1;
-        target_state[i].angle[5] = 0.1;
-        target_state[i].omega[0] = 0;
-        target_state[i].omega[1] = 0;
-        target_state[i].omega[2] = 0;
-        target_state[i].omega[3] = 0;
-        target_state[i].omega[4] = 0;
-        target_state[i].omega[5] = 0;
-        target_state[i].alpha[0] = 0;
-        target_state[i].alpha[1] = 0;
-        target_state[i].alpha[2] = 0;
-        target_state[i].alpha[3] = 0;
-        target_state[i].alpha[4] = 0;
-        target_state[i].alpha[5] = 0;
-    }
+    arm.getKinematicsPtr()->forwardKinematicsInBase(joint, pose);
+    arm.getKinematicsPtr()->inverseKinematicsInBase(pose, joint, res);
 
-    alpha_upper[0] = 124.238852;
-    alpha_upper[1] = 27.405693;
-    alpha_upper[2] = 16.749410;
-    alpha_upper[3] = 115.950513;
-    alpha_upper[4] = 341.373255;
-    alpha_upper[5] = 678.835059;
-    alpha_lower[0] = -123.615654;
-    alpha_lower[1] = -22.630127;
-    alpha_lower[2] = -50.360374;
-    alpha_lower[3] = -140.650880;
-    alpha_lower[4] = -340.782976;
-    alpha_lower[5] = -678.798393;
-
-    jerk[0] = 1557692.307692;
-    jerk[1] = 3030000.000000;
-    jerk[2] = 2430000.000000;
-    jerk[3] = 2210000.000000;
-    jerk[4] = 1666666.750000;
-    jerk[5] = 1116071.500000;
-
-    clock_t start, end;
-
-    start = clock();
-    for (size_t i = 0; i < LOOP; i++)
-        backwardCycle(start_state[i].angle, target_state[i], 0.001, alpha_upper, alpha_lower, jerk, segment[i]);
-    end = clock();
-    double seconds  =(double)(end - start)/CLOCKS_PER_SEC;
-    printf("backCycle %d times, using time: %.6f ms\n", LOOP, seconds * 1000);
-
-    start = clock();
-    for (size_t i = 0; i < LOOP; i++)
-        forwardCycle(start_state[i], target_state[i].angle, 0.001, alpha_upper, alpha_lower, jerk, segment[i]);
-    end = clock();
-    seconds  =(double)(end - start)/CLOCKS_PER_SEC;
-    printf("foreCycle %d times, using time: %.6f ms\n", LOOP, seconds * 1000);
+    printf("forward kinematics:\n");
+    printf("joint input = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
+    printf("pose output = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
+    //printf("inverse kinematics:\n");
+    //printf("pose input = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
+    //printf("joint output = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", res[0], res[1], res[2], res[3], res[4], res[5]);
 }
 
 static bool g_thread_running = false;
 
 static void rtTask(void *group)
 {
+    cout << "---------------rt thread running---------------" << endl;
     while (g_thread_running)
     {
         ((BaseGroup*)group)->doPriorityLoop();
         usleep(2 * 1000);
     }
+    cout << "---------------rt thread quit---------------" << endl;
+}
+
+static void nrtTask(void *group)
+{
+    cout << "---------------nrt thread running---------------" << endl;
+    while (g_thread_running)
+    {
+        ((BaseGroup*)group)->doCommonLoop();
+        usleep(2 * 1000);
+    }
+    cout << "---------------nrt thread quit---------------" << endl;
 }
 
 void test2(void)
@@ -175,16 +132,38 @@ void test2(void)
     Logger log;
     ArmGroup arm(&log);
     ErrorMonitor error_monitor;
-    ThreadHelp rt_thread;
+    ThreadHelp rt_thread, nrt_thread;
     cout << "begin" << endl;
 
     arm.initGroup(&error_monitor);
     g_thread_running = true;
     rt_thread.run(&rtTask, &arm, 80);
+    nrt_thread.run(&nrtTask, &arm, 78);
     sleep(1);
-    arm.setGlobalVelRatio(1);
+    arm.setGlobalVelRatio(0.5);
+    arm.setGlobalAccRatio(0.8);
+    arm.setManualFrame(JOINT);
+    arm.setManualStepAxis(0.15);
     arm.resetGroup();
+    usleep(100 * 1000);
 
+    //ManualDirection dirs[9] = {STANDING, STANDING, INCREASE, STANDING, STANDING, STANDING, STANDING, STANDING, STANDING};
+    //arm.manualMoveStep(dirs);
+    //Joint target = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    Joint target = {0.1, 0.3, 1.05, -0.5, -1.0, -0.2, 0, 0, 0};
+    arm.manualMoveToPoint(target);
+    usleep(100 * 1000);
+
+    while (arm.getGroupState() != STANDBY)
+    {
+        cout << "Group-state = " << arm.getGroupState() << endl;
+        usleep(100 * 1000);
+    }
+
+    arm.stopGroup();
+    sleep(1);
+
+    /*
     MotionTarget target;
     target.type = MOTION_JOINT;
     target.vel = 0.5;
@@ -222,7 +201,6 @@ void test2(void)
         usleep(10000);
     }
 
-    /*
     target.type = MOTION_LINE;
     target.vel = 600;
     target.cnt = 0;
@@ -236,217 +214,11 @@ void test2(void)
      */
 
     g_thread_running = false;
-    sleep(10);
+    rt_thread.join();
+    nrt_thread.join();
+    sleep(1);
 }
 
-ErrorCode sampleTrajectorySegment(const TrajSegment (&segment)[NUM_OF_JOINT], double time, Joint &angle, Joint &omega, Joint &alpha)
-{
-    size_t ind;
-
-    for (size_t j = 0; j < 6; j++)
-    {
-        double tm = time;
-        const double (&coeff)[4][4] = segment[j].coeff;
-        const double (&duration)[4] = segment[j].duration;
-
-        if (tm < duration[0]) { ind = 0; goto sample_by_time; }
-        tm -= duration[0];
-        if (tm < duration[1]) { ind = 1; goto sample_by_time; }
-        tm -= duration[1];
-        if (tm < duration[2]) { ind = 2; goto sample_by_time; }
-        tm -= duration[2];
-        if (tm < duration[3] + MINIMUM_E9) { ind = 3; goto sample_by_time; }
-        else
-        {
-            printf("Time error! time = %.4f, duration0 = %.4f, duration1 = %.4f, duration2 = %.4f, duration3 = %.4f",
-                      time, duration[0], duration[1], duration[2], duration[3]);
-            return MOTION_INTERNAL_FAULT;
-        }
-
-        sample_by_time:
-        double tm_array[4] = {1.0, tm, tm * tm, tm * tm * tm};
-
-        angle[j] = coeff[ind][3] * tm_array[3] + coeff[ind][2] * tm_array[2] + coeff[ind][1] * tm_array[1] + coeff[ind][0];
-        omega[j] = coeff[ind][3] * tm_array[2] * 3 + coeff[ind][2] * tm_array[1] * 2 + coeff[ind][1];
-        alpha[j] = coeff[ind][3] * tm_array[1] * 6 + coeff[ind][2] * 2;
-    }
-
-    return SUCCESS;
-}
-
-void test3(void)
-{
-    timeval tm0, tm1;
-    int i = 0;
-
-
-    double dq0[6] = {0,0,0,0,0,0};
-    double ddq0[6] = {0,0,0,0,0,0 };
-    double Ti[6] = { -1,-1,-1,-1,-1,-1 };
-    double Ta[6][4] = { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
-    double coeff[6][4][4] = { 0 };
-    //double maxT = 0;
-    //double tqf[6] = { 0 };
-    //double dqf[6] = { 0 };
-    //double ddqf[6] = { 0 };
-    //double jerk[6] = { 5.0*0.5 / 1.3 * pow(10, 4) * 81,
-    //3.3*0.4 / 0.44 * pow(10, 4) * 101,
-    //3.3*0.4 / 0.44 * pow(10, 4) * 81,
-    //1.7*0.39 / 0.18 * pow(10, 4) * 60,
-    //1.7*0.25 / 0.17 * pow(10, 4) * 66.66667,
-    //1.7*0.25 / 0.17 * pow(10, 4) * 44.64286 };
-
-    //int ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jerk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
-
-    //printf("maxT=%f\n", maxT);
-
-    //for (int i = 0; i < 6; i++)
-    //	Ti[i] = maxT;
-    //ret = calculateParam(J0, dq0, ddq0, J1, dq_avg, ddq_max, jerk, Ti, 2, Ta, coeff, &maxT, tqf, dqf, ddqf);
-
-    //for (int i = 0; i < 6; i++)
-    //{
-    //printf("joint:%d Ta=%f %f %f %f\n", i, Ta[i][0], Ta[i][1], Ta[i][2], Ta[i][3]);
-    //printf("coeff:%f %f %f %f -- %f %f %f %f -- %f %f %f %f -- %f %f %f %f\n", coeff[i][0][0], coeff[i][0][1], coeff[i][0][2], coeff[i][0][3], coeff[i][1][0], coeff[i][1][1], coeff[i][1][2], coeff[i][1][3], coeff[i][2][0], coeff[i][2][1], coeff[i][2][2], coeff[i][2][3], coeff[i][3][0], coeff[i][3][1], coeff[i][3][2], coeff[i][3][3]);
-    //printf("each joint time:%f\n", maxT);
-    //printf("dest status(q,dq,ddq):%f %f %f\n", tqf[i], dqf[i], ddqf[i]);
-
-    //}
-
-    double J0[6] = {
-            0.266667,
-            0.355556,
-            0.266667,
-            0.355556,
-            0.266667,
-            0.355556,
-    };
-    double J1[6] = {
-            0.3,
-            0.4,
-            0.3,
-            0.4,
-            0.3,
-            0.4,
-    };
-    //double J0[6] = { 0.02,0.02,0.02,0.02,0.02,0.02};
-    //double J1[6] = { 0.01,0.01,0.01,0.01,0.01,0.01 };
-    //double J0[6] = { 0.006035,0.006035,0.006035,0.006035,-0.097678,0.006035 };
-    //double J1[6] = { 0.002903,0.002903,0.002903,0.002903,-0.048574,0.002903};
-    double ddq_max[6] = {
-            138.250417,
-            31.017384,
-            7.327117,
-            86.613806,
-            346.409978,
-            678.767975,
-    };
-    double ddq_min[6] = {
-            -138.176962,
-            -13.988353,
-            -40.614755,
-            -113.623069,
-            -346.745980,
-            -678.730126,
-    };
-    double jmax[6] = {
-            1557692.30769231,
-            3030000 ,
-            2430000 ,
-            2210000 ,
-            1666666.75,
-            1116071.5,
-    };
-    Joint start;
-    //JointPoint start;
-    JointPoint target;
-    Joint au, al,jk;
-    TrajSegment segment[9];
-
-    au.j1 = ddq_max[0]; au.j2 = ddq_max[1]; au.j3 = ddq_max[2]; au.j4 = ddq_max[3]; au.j5 = ddq_max[4]; au.j6 = ddq_max[5];
-    al.j1 = ddq_min[0]; al.j2 = ddq_min[1]; al.j3 = ddq_min[2]; al.j4 = ddq_min[3]; al.j5 = ddq_min[4]; al.j6 = ddq_min[5];
-    start.j1 = J0[0]; start.j2 = J0[1]; start.j3 = J0[2]; start.j4 = J0[3]; start.j5 = J0[4]; start.j6 = J0[5];
-    //start.angle.j1 = J0[0]; start.angle.j2 = J0[1]; start.angle.j3 = J0[2]; start.angle.j4 = J0[3]; start.angle.j5 = J0[4]; start.angle.j6 = J0[5];
-    //start.omega.j1 = dq0[0]; start.omega.j2 = dq0[1]; start.omega.j3 = dq0[2]; start.omega.j4 = dq0[3]; start.omega.j5 = dq0[4]; start.omega.j6 = dq0[5];
-    //start.alpha.j1 = ddq0[0]; start.alpha.j2 = ddq0[1]; start.alpha.j3 = ddq0[2]; start.alpha.j4 = ddq0[3]; start.alpha.j5 = ddq0[4]; start.alpha.j6 = ddq0[5];
-
-    target.angle.j1 = J1[0]; target.angle.j2 = J1[1]; target.angle.j3 = J1[2]; target.angle.j4 = J1[3]; target.angle.j5 = J1[4]; target.angle.j6 = J1[5];
-    target.omega.j1 = dq0[0]; target.omega.j2 = dq0[1]; target.omega.j3 = dq0[2]; target.omega.j4 = dq0[3]; target.omega.j5 = dq0[4]; target.omega.j6 = dq0[5];
-    target.alpha.j1 = ddq0[0]; target.alpha.j2 = ddq0[1]; target.alpha.j3 = ddq0[2]; target.alpha.j4 = ddq0[3]; target.alpha.j5 = ddq0[4]; target.alpha.j6 = ddq0[5];
-    jk.j1 = jmax[0]; jk.j2 = jmax[1]; jk.j3 = jmax[2]; jk.j4 = jmax[3]; jk.j5 = jmax[4]; jk.j6 = jmax[5];
-
-    Joint alpha_u, alpha_l;
-    DynamicsProduct product;
-    gettimeofday(&tm0, NULL);
-    computeDynamics(target.angle, target.omega, alpha_u, alpha_l, product);
-    gettimeofday(&tm1, NULL);
-    long tm = (tm1.tv_sec - tm0.tv_sec) * 1000 + tm1.tv_usec - tm0.tv_usec;
-    if (tm > 500)
-    {
-        printf("$$$$$$$$$$$$$$$$  dynamics over time %d ms !!!!!!!!!!!!!!!!\n", tm / 1000);
-        //reportError(MOTION_INTERNAL_FAULT);
-    }
-    //forwardCycle(target, start,0.02658693, au, al, jk, segment);
-    //end = GetTickCount();
-    backwardCycle(start, target, 0.01192179, au, al, jk, segment);
-
-
-    //smoothPoint2Point(start, target, 0.05505945, au, al, jk, segment);
-    printf("----------------cycle 1-------------------\n");
-    for (int i = 0; i < 6; i++)
-    {
-        printf("-----J%d\n", i+1);
-        printf("start-angle: %f\n", start[i]);
-        printf("ending-angle:%f\n", target.angle[i]);
-        printf("ending-omega:%f\n", target.omega[i]);
-        printf("ending-alpha:%f\n", target.alpha[i]);
-        printf("duration = %f %f %f %f\n", segment[i].duration[0], segment[i].duration[1], segment[i].duration[2], segment[i].duration[3]);
-        //printf("duration = %f\n", segment[i].duration[0]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[0][0], segment[i].coeff[0][1], segment[i].coeff[0][2], segment[i].coeff[0][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[1][0], segment[i].coeff[1][1], segment[i].coeff[1][2], segment[i].coeff[1][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[2][0], segment[i].coeff[2][1], segment[i].coeff[2][2], segment[i].coeff[2][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[3][0], segment[i].coeff[3][1], segment[i].coeff[3][2], segment[i].coeff[3][3]);
-    }
-
-    Joint angle, omega, alpha;
-    sampleTrajectorySegment(segment, 0, angle, omega, alpha);
-    printf("angle = %f,%f,%f,%f,%f,%f\n", angle[0], angle[1], angle[2], angle[3], angle[4], angle[5]);
-    printf("omega = %f,%f,%f,%f,%f,%f\n", omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
-    printf("alpha = %f,%f,%f,%f,%f,%f\n", alpha[0], alpha[1], alpha[2], alpha[3], alpha[4], alpha[5]);
-    target.angle = angle;
-    target.omega = omega;
-    target.alpha = alpha;
-    start.j1 = 0.233333;
-    start.j2 = 0.311111;
-    start.j3 = 0.233333;
-    start.j4 = 0.311111;
-    start.j5 = 0.233333;
-    start.j6 = 0.311111;
-    backwardCycle(start, target, 0.01192179, au, al, jk, segment);
-    printf("----------------cycle 2-------------------\n");
-    for (int i = 0; i < 6; i++)
-    {
-        printf("-----J%d\n", i+1);
-        printf("start-angle: %f\n", start[i]);
-        printf("ending-angle:%f\n", target.angle[i]);
-        printf("ending-omega:%f\n", target.omega[i]);
-        printf("ending-alpha:%f\n", target.alpha[i]);
-        printf("duration = %f %f %f %f\n", segment[i].duration[0], segment[i].duration[1], segment[i].duration[2], segment[i].duration[3]);
-        //printf("duration = %f\n", segment[i].duration[0]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[0][0], segment[i].coeff[0][1], segment[i].coeff[0][2], segment[i].coeff[0][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[1][0], segment[i].coeff[1][1], segment[i].coeff[1][2], segment[i].coeff[1][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[2][0], segment[i].coeff[2][1], segment[i].coeff[2][2], segment[i].coeff[2][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[3][0], segment[i].coeff[3][1], segment[i].coeff[3][2], segment[i].coeff[3][3]);
-        printf("\n");
-    }
-
-    //printf("duration = %f %f %f %f\n", Ta[0][0], Ta[0][1], Ta[0][2], Ta[0][3]);
-    //printf("coeff=%f %f %f %f\n", coeff[0][0][0], coeff[0][0][1], coeff[0][0][2], coeff[0][0][3]);
-    //printf("coeff=%f %f %f %f\n", coeff[0][1][0], coeff[0][1][1], coeff[0][1][2], coeff[0][1][3]);
-    //printf("coeff=%f %f %f %f\n", coeff[0][2][0], coeff[0][2][1], coeff[0][2][2], coeff[0][2][3]);
-    //printf("coeff=%f %f %f %f\n", coeff[0][3][0], coeff[0][3][1], coeff[0][3][2], coeff[0][3][3]);
-    return 0;
-}
 
 void test4(void)
 {
@@ -480,47 +252,6 @@ void test4(void)
 
     printf("Pose1: %.6f %.6f %.6f - %.6f %.6f %.6f\n", pose1.position.x, pose1.position.y, pose1.position.z, pose1.orientation.a, pose1.orientation.b, pose1.orientation.c);
     printf("Pose2: %.6f %.6f %.6f - %.6f %.6f %.6f\n", pose2.position.x, pose2.position.y, pose2.position.z, pose2.orientation.a, pose2.orientation.b, pose2.orientation.c);
-}
-
-void test5(void)
-{
-    Joint start_angle = {0.000000554252, -0.527325204923, 0.563465261153, 0.000000863690, -1.606930258100, 0.000208028869};
-    Joint start_omega = {0.843633346255, 0.002500094170, -0.003722662366, 0.000000000000, 0.001224394751, 0.843004218860};
-    Joint start_alpha = {0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000, 0.000000000000};
-    Joint ending_angle = {0.002901894125, -0.527333709800, 0.563477957021, 0.000000836704, -1.606934442914, 0.003107205117};
-    Joint ending_omega = {0};
-    Joint ending_alpha = {0};
-    JointPoint start, ending;
-    start.angle = start_angle;
-    start.omega = start_omega;
-    start.alpha = start_alpha;
-    ending.angle = ending_angle;
-    ending.omega = ending_omega;
-    ending.alpha = ending_alpha;
-
-    Joint au = {29.094878997803, 17.526711959839, 17.201640701294, 2.310000000000, 46.051706085205, 201.006926879883};
-    Joint al = {-28.573509521484, -21.420650482178, -20.298382873535, -2.310000000000, -41.841939239502, -203.096262817383};
-    Joint jk = {1557692.307692307746, 3030000.000000000000, 2430000.000000000000, 2210000.000000000000, 1666666.749999999767, 1116071.499999999767};
-    TrajSegment segment[9];
-
-    forwardCycle(start, ending.angle, 0.003439100345, au, al, jk, segment);
-    //backwardCycle(start.angle, ending, 0.001250000000, au, al, jk, segment);
-
-    for (int i = 0; i < 6; i++)
-    {
-        printf("start-angle: %f\n", start_angle[i]);
-        printf("start-omega: %f\n", start_omega[i]);
-        printf("start-alpha: %f\n", start_alpha[i]);
-        printf("ending-angle:%f\n", ending_angle[i]);
-        //printf("ending-omega:%f\n", ending_omega[i]);
-        //printf("ending-alpha:%f\n", ending_alpha[i]);
-        printf("duration = %f %f %f %f, total = %f\n", segment[i].duration[0], segment[i].duration[1], segment[i].duration[2], segment[i].duration[3], segment[i].duration[0] + segment[i].duration[1] + segment[i].duration[2] + segment[i].duration[3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[0][0], segment[i].coeff[0][1], segment[i].coeff[0][2], segment[i].coeff[0][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[1][0], segment[i].coeff[1][1], segment[i].coeff[1][2], segment[i].coeff[1][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[2][0], segment[i].coeff[2][1], segment[i].coeff[2][2], segment[i].coeff[2][3]);
-        printf("coeff=%f %f %f %f\n", segment[i].coeff[3][0], segment[i].coeff[3][1], segment[i].coeff[3][2], segment[i].coeff[3][3]);
-        printf("\n");
-    }
 }
 
 void test6(void)
@@ -559,19 +290,54 @@ void test6(void)
     log.info("Res: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", res[0], res[1], res[2], res[3], res[4], res[5]);
 }
 
+
+extern ComplexAxisGroupModel model;
+
 void test7(void)
 {
-    Logger log;
-    ArmGroup arm(&log);
-    ErrorMonitor error_monitor;
-    ThreadHelp rt_thread;
-    cout << "begin" << endl;
+    ArmKinematics kinematics;
+    DynamicsInterface dynamics;
+    double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
+    kinematics.initKinematics(dh_matrix);
+    initComplexAxisGroupModel();
+    initSegmentAlgParam(&kinematics, &dynamics);
+    initStack(&model);   
 
-    arm.initGroup(&error_monitor);
-    arm.resetGroup();
+    Joint start_joint = {0.234, 1.234, -2.044, 0.876, -1.2432, 0.003};
+    MotionTarget target;
+    target.joint_target.j1 = -1.34;
+    target.joint_target.j2 = -0.23;
+    target.joint_target.j3 = 1.455;
+    target.joint_target.j4 = 0.034;
+    target.joint_target.j5 = 0.567;
+    target.joint_target.j6 = -1.4556;
+    target.cnt = 0;
+    target.vel = 1.0;
+    target.type = MOTION_JOINT;
+    PathCache path_cache;
+    TrajectoryCache traj_cache;
+    JointState start_state;
+    start_state.angle = start_joint;
+    memset(&start_state.omega, 0, sizeof(start_state.omega));
+    memset(&start_state.alpha, 0, sizeof(start_state.alpha));
+    clock_t t1 = clock();
+    ErrorCode err = planPathJoint(start_joint, target, path_cache);
+    clock_t t2 = clock();
+    err = planTrajectory(path_cache, start_state, 1, 1, traj_cache);
+    clock_t t3 = clock();
+    double delta_path  =(double)(t2 - t1)/CLOCKS_PER_SEC;
+    double delta_traj  =(double)(t3 - t2)/CLOCKS_PER_SEC;
 
-    sleep(1);
-    arm.moveOffLineTrajectory(0, "test");
+    std::cout<<"delta_path = "<<delta_path<<" delta_traj = "<<delta_traj<<std::endl;
+
+/*
+    printTraj(traj_cache, 0, 0.01);
+    printTraj(traj_cache, 1, 0.01);
+    printTraj(traj_cache, 2, 0.01);
+    printTraj(traj_cache, 3, 0.01);
+    printTraj(traj_cache, 4, 0.01);
+    printTraj(traj_cache, 5, 0.01);
+    */
 }
 
 void test8(void)
@@ -594,8 +360,8 @@ int main(int argc, char **argv)
     //test4();
     //test5();
     //test6();
-    //test7();
-    test8();
+    test7();
+    //test8();
 
     return 0;
 }

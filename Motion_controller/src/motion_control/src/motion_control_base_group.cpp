@@ -14,9 +14,9 @@
 
 #include <motion_control_base_group.h>
 #include <parameter_manager/parameter_manager_param_group.h>
-#include <trajectory_alg.h>
 #include <common_file_path.h>
 #include <basic_alg.h>
+#include <segment_alg.h>
 
 using namespace std;
 using namespace fst_base;
@@ -27,9 +27,7 @@ using namespace fst_parameter;
 //#define OUTPUT_POUT
 
 #define SERVO_UPDATE_FAIL_MAX_TIMES     50
-
-#define AUTO_LOCK   {pthread_mutex_lock(&auto_mutex_);}
-#define AUTO_UNLOCK {pthread_mutex_unlock(&auto_mutex_);}
+#define TRAJECTORY_FLOW_FAIL_MAX_TIMES  50
 
 
 namespace fst_mc
@@ -75,7 +73,10 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     stop_request_ = false;
     reset_request_ = false;
     abort_request_ = false;
+    clear_request_ = false;
+    error_request_ = false;
     auto_to_standby_request_ = false;
+    manual_to_standby_request_ = false;
 }
 
 BaseGroup::~BaseGroup()
@@ -96,7 +97,7 @@ BaseGroup::~BaseGroup()
 
         if (i > 0 && i % 10000 == 0)
         {
-            printf("已完成%.2f%%，还剩余%ld点\n", (double)i / g_jindex * 100, g_jindex - 1 - i);
+            printf("已完成%.2f%%，还剩余%u点\n", (double)i / g_jindex * 100, g_jindex - 1 - i);
         }
     }
 
@@ -116,34 +117,25 @@ void BaseGroup::reportError(const ErrorCode &error)
 
 ErrorCode BaseGroup::resetGroup(void)
 {
-    return bare_core_.resetBareCore() == true ? SUCCESS : BARE_CORE_TIMEOUT;
+    reset_request_ = true;
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::stopGroup(void)
 {
     stop_request_ = true;
+    return true;
+}
 
-    if (!bare_core_.isPointCacheEmpty())
-    {
-        bare_core_.clearPointCache();
-    }
-    
-    return bare_core_.stopBareCore() == true ? SUCCESS : BARE_CORE_TIMEOUT;
+ErrorCode BaseGroup::abortMove(void)
+{
+    abort_request_ = true;
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::clearGroup(void)
 {
-    FST_INFO("Clear group, current group state = %d", group_state_);
-
-    group_state_ = STANDBY;
-    manual_time_ = 0;
-    memset(&manual_traj_, 0, sizeof(manual_traj_));
-
-    if (!bare_core_.isPointCacheEmpty())
-    {
-        bare_core_.clearPointCache();
-    }
-
+    clear_request_ = true;
     return SUCCESS;
 }
 
@@ -233,29 +225,8 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
         return INVALID_SEQUENCE;
     }
 
-    Joint current_joint, control_joint;
-    getLatestJoint(current_joint);
-
-    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
-    {
-        char buffer[LOG_TEXT_SIZE];
-        FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-        FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-    }
-    else
-    {
-        FST_ERROR("Cannot get control position from bare core.");
-        return BARE_CORE_TIMEOUT;
-    }
-
-    if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
-    {
-        FST_ERROR("Control-position different with current-position, it might be a trouble.");
-        return MOTION_INTERNAL_FAULT;
-    }
-
-    manual_traj_.joint_start = control_joint;
-    FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+    manual_traj_.joint_start = start_joint_;
+    FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
@@ -276,7 +247,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
 
     if (err == SUCCESS)
     {
-        group_state_ = MANUAL;
+        FST_INFO("Manual move to target joint, total-duration = %.4f, Success.", manual_traj_.duration);
         return SUCCESS;
     }
     else
@@ -306,28 +277,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
         return INVALID_SEQUENCE;
     }
 
-    Joint current_joint, control_joint;
-    getLatestJoint(current_joint);
-
-    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
-    {
-        char buffer[LOG_TEXT_SIZE];
-        FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-        FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-    }
-    else
-    {
-        FST_ERROR("Cannot get control position from bare core.");
-        return BARE_CORE_TIMEOUT;
-    }
-
-    if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
-    {
-        FST_ERROR("Control-position different with current-position, it might be a trouble.");
-        return MOTION_INTERNAL_FAULT;
-    }
-
-    manual_traj_.joint_start = control_joint;
+    manual_traj_.joint_start = start_joint_;
     FST_ERROR("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
@@ -374,7 +324,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
 
     if (err == SUCCESS)
     {
-        group_state_ = MANUAL;
+        FST_INFO("Manual move to target pose, total-duration = %.4f, Success.", manual_traj_.duration);
         return SUCCESS;
     }
     else
@@ -397,28 +347,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         return SUCCESS;
     }
 
-    Joint current_joint, control_joint;
-    getLatestJoint(current_joint);
-
-    if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
-    {
-        char buffer[LOG_TEXT_SIZE];
-        FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-        FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-    }
-    else
-    {
-        FST_ERROR("Cannot get control position from bare core.");
-        return BARE_CORE_TIMEOUT;
-    }
-
-    if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
-    {
-        FST_ERROR("Control-position different with current-position, it might be a trouble.");
-        return MOTION_INTERNAL_FAULT;
-    }
-
-    manual_traj_.joint_start = control_joint;
+    manual_traj_.joint_start = start_joint_;
     FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
@@ -477,7 +406,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
     if (err == SUCCESS)
     {
-        group_state_ = MANUAL;
+        FST_INFO("Manual move step, total-duration = %.4f, Success.", manual_traj_.duration);
         return SUCCESS;
     }
     else
@@ -508,28 +437,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         }
 
         PoseEuler pose;
-        Joint current_joint, control_joint;
-        getLatestJoint(current_joint);
-
-        if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
-        {
-            char buffer[LOG_TEXT_SIZE];
-            FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
-            FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-        }
-        else
-        {
-            FST_ERROR("Cannot get control position from bare core.");
-            return BARE_CORE_TIMEOUT;
-        }
-
-        if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
-        {
-            FST_ERROR("Control-position different with current-position, it might be a trouble.");
-            return MOTION_INTERNAL_FAULT;
-        }
-
-        manual_traj_.joint_start = control_joint;
+        manual_traj_.joint_start = start_joint_;
         FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
         if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
@@ -588,7 +496,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
         if (err == SUCCESS)
         {
-            group_state_ = MANUAL;
+            FST_INFO("Manual move continous, total-duration = %.4f, Success.", manual_traj_.duration);
             return SUCCESS;
         }
         else
@@ -1260,13 +1168,6 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state,
     return SUCCESS;
 }
 
-
-ErrorCode BaseGroup::abortMove(void)
-{
-    abort_request_ = true;
-    return SUCCESS;
-}
-
 bool BaseGroup::nextMovePermitted(void)
 {
     if (fine_waiter_.isEnable() && !fine_waiter_.isStable()) return false;
@@ -1408,7 +1309,7 @@ ErrorCode BaseGroup::setGlobalVelRatio(double ratio)
 {
     FST_INFO("Set global velocity ratio: %.4f", ratio);
 
-    if (ratio < 0 || ratio > 1)
+    if (ratio < MINIMUM_E3 || ratio > 1)
     {
         FST_ERROR("Given ratio out of range (0, 1)");
         return INVALID_PARAMETER;
@@ -1425,7 +1326,7 @@ ErrorCode BaseGroup::setGlobalAccRatio(double ratio)
 {
     FST_INFO("Set global acceleration ratio: %.4f", ratio);
 
-    if (ratio < 0 || ratio > 1)
+    if (ratio < MINIMUM_E3 || ratio > 1)
     {
         FST_ERROR("Given ratio out of range (0, 1)");
         return INVALID_PARAMETER;
@@ -1463,133 +1364,125 @@ ErrorCode BaseGroup::setWorldFrame(const PoseEuler &wf)
     return kinematics_ptr_->setUserFrame(wf);
 }
 
-
-
-ErrorCode BaseGroup::pickFromManual(TrajectoryPoint *point, size_t &length)
+ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length)
 {
-    return (manual_traj_.frame == JOINT || manual_traj_.mode == APOINT) ? pickFromManualJoint(point, length) : pickFromManualCartesian(point, length);
+    ErrorCode err = (manual_traj_.frame == JOINT || manual_traj_.mode == APOINT) ? pickPointsFromManualJoint(points, length) : pickPointsFromManualCartesian(points, length);
+
+    if (err == SUCCESS)
+    {
+        if (points[length - 1].level == POINT_ENDING)
+        {
+            char buffer[LOG_TEXT_SIZE];
+            manual_to_standby_request_ = true;
+            FST_INFO("Get ending-point: %.4f - %s", manual_time_, printDBLine(&points[length - 1].angle[0], buffer, LOG_TEXT_SIZE));
+            resetManualTrajectory();
+            start_joint_ = points[length - 1].angle;
+        }
+
+        return SUCCESS;
+    }
+    else
+    {
+        FST_ERROR("Fail to pick points from manual trajectory, code = 0x%llx.", err);
+        return err;
+    }
 }
 
-ErrorCode BaseGroup::pickFromManualJoint(TrajectoryPoint *point, size_t &length)
+ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &length)
 {
-    size_t cnt = 0;
-    double *angle, *start, *target;
+    size_t picked_num = 0;
+    size_t joint_num = getNumberOfJoint();
+    double *angle_ptr, *start_ptr, *target_ptr;
     double tm, omega;
-
+    
     FST_INFO("Pick from manual joint, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0 ; i < length; i++)
     {
-        point[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
-        memset(&point[i].omega, 0, sizeof(Joint));
-        memset(&point[i].alpha, 0, sizeof(Joint));
-        //memset(&point[i].inertia, 0, sizeof(Joint));
-        //memset(&point[i].gravity, 0, sizeof(Joint));
-        memset(&point[i].ma_cv_g, 0, sizeof(Joint));
+        points[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
+        memset(&points[i].omega, 0, sizeof(Joint));
+        memset(&points[i].alpha, 0, sizeof(Joint));
+        memset(&points[i].ma_cv_g, 0, sizeof(Joint));
 
-        angle  = (double*)&point[i].angle;
-        start  = (double*)&manual_traj_.joint_start;
-        target = (double*)&manual_traj_.joint_ending;
+        angle_ptr  = (double*)&points[i].angle;
+        start_ptr  = (double*)&manual_traj_.joint_start;
+        target_ptr = (double*)&manual_traj_.joint_ending;
 
         manual_time_ += cycle_time_;
 
-        for (size_t jnt = 0; jnt < JOINT_OF_ARM; jnt++)
+        for (size_t jnt = 0; jnt < joint_num; jnt++)
         {
             if (manual_time_ < manual_traj_.coeff[jnt].start_time)
             {
-                *angle = *start;
+                *angle_ptr = *start_ptr;
             }
             else if (manual_time_ < manual_traj_.coeff[jnt].stable_time)
             {
                 tm = manual_time_ - manual_traj_.coeff[jnt].start_time;
-                *angle = *start + manual_traj_.coeff[jnt].start_alpha * tm * tm / 2;
+                *angle_ptr = *start_ptr + manual_traj_.coeff[jnt].start_alpha * tm * tm / 2;
             }
             else if (manual_time_ < manual_traj_.coeff[jnt].brake_time)
             {
                 tm = manual_traj_.coeff[jnt].stable_time - manual_traj_.coeff[jnt].start_time;
                 omega = manual_traj_.coeff[jnt].start_alpha * tm;
-                *angle = *start + omega * tm / 2;
+                *angle_ptr = *start_ptr + omega * tm / 2;
                 tm = manual_time_ - manual_traj_.coeff[jnt].stable_time;
-                *angle = *angle + omega * tm;
+                *angle_ptr = *angle_ptr + omega * tm;
             }
             else if (manual_time_ < manual_traj_.coeff[jnt].stop_time)
             {
                 tm = manual_traj_.coeff[jnt].stable_time - manual_traj_.coeff[jnt].start_time;
                 omega = manual_traj_.coeff[jnt].start_alpha * tm;
-                *angle = *start + omega * tm / 2;
+                *angle_ptr = *start_ptr + omega * tm / 2;
                 tm = manual_traj_.coeff[jnt].brake_time - manual_traj_.coeff[jnt].stable_time;
-                *angle = *angle + omega * tm;
+                *angle_ptr = *angle_ptr + omega * tm;
                 tm = manual_time_ - manual_traj_.coeff[jnt].brake_time;
-                *angle = *angle + omega * tm + manual_traj_.coeff[jnt].brake_alpha * tm * tm / 2;
+                *angle_ptr = *angle_ptr + omega * tm + manual_traj_.coeff[jnt].brake_alpha * tm * tm / 2;
             }
             else
             {
-                *angle = *target;
-                *start = *target;
+                *angle_ptr = *target_ptr;
+                *start_ptr = *target_ptr;
             }
 
-            ++ angle;
-            ++ start;
-            ++ target;
+            ++ angle_ptr;
+            ++ start_ptr;
+            ++ target_ptr;
         }
 
-        cnt ++;
+        picked_num ++;
 
         if (manual_time_ >= manual_traj_.duration)
         {
-            point[i].level = POINT_ENDING;
-            FST_INFO("%d - %.4f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
-                     point[i].angle.j1, point[i].angle.j2,  point[i].angle.j3,
-                     point[i].angle.j4, point[i].angle.j5,  point[i].angle.j6);
-
-            manual_traj_.direction[0] = STANDING;
-            manual_traj_.direction[1] = STANDING;
-            manual_traj_.direction[2] = STANDING;
-            manual_traj_.direction[3] = STANDING;
-            manual_traj_.direction[4] = STANDING;
-            manual_traj_.direction[5] = STANDING;
-            manual_traj_.duration = 0;
-            memset(manual_traj_.coeff, 0, JOINT_OF_ARM * sizeof(ManualCoef));
-            start_joint_ = manual_traj_.joint_ending;
-            manual_time_ = 0;
-            group_state_ = MANUAL_TO_STANDBY;
+            points[i].level = POINT_ENDING;
             break;
-        }
-        else
-        {
-            //FST_INFO("%d - %.3f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
-            //              point[i].angle.j1, point[i].angle.j2, point[i].angle.j3,
-            //              point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
-            continue;
         }
     }
 
-    length = cnt;
+    length = picked_num;
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &length)
+ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size_t &length)
 {
     ErrorCode err = SUCCESS;
     PoseEuler pose;
     double tim, vel;
-    double *axis, *start, *target;
-    size_t cnt = 0;
+    double *axis_ptr, *start_ptr, *target_ptr;
+    size_t picked_num = 0;
 
     FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0; i < length; i++)
     {
-        point[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
-        memset(&point[i].omega, 0, sizeof(Joint));
-        memset(&point[i].alpha, 0, sizeof(Joint));
-        memset(&point[i].ma_cv_g, 0, sizeof(Joint));
-        //memset(&point[i].inertia, 0, sizeof(Joint));
-        //memset(&point[i].gravity, 0, sizeof(Joint));
+        points[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
+        memset(&points[i].omega, 0, sizeof(Joint));
+        memset(&points[i].alpha, 0, sizeof(Joint));
+        memset(&points[i].ma_cv_g, 0, sizeof(Joint));
 
-        axis = (double *) &pose.position.x;
-        start = (double *) &manual_traj_.cart_start.position.x;
-        target = (double *) &manual_traj_.cart_ending.position.x;
+        axis_ptr   = (double *) &pose[0];
+        start_ptr  = (double *) &manual_traj_.cart_start[0];
+        target_ptr = (double *) &manual_traj_.cart_ending[0];
 
         manual_time_ += cycle_time_;
 
@@ -1597,40 +1490,40 @@ ErrorCode BaseGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &len
         {
             if (manual_time_ < manual_traj_.coeff[i].start_time)
             {
-                *axis = *start;
+                *axis_ptr = *start_ptr;
             }
             else if (manual_time_ < manual_traj_.coeff[i].stable_time)
             {
                 tim = manual_time_ - manual_traj_.coeff[i].start_time;
-                *axis = *start + manual_traj_.coeff[i].start_alpha * tim * tim / 2;
+                *axis_ptr = *start_ptr + manual_traj_.coeff[i].start_alpha * tim * tim / 2;
             }
             else if (manual_time_ < manual_traj_.coeff[i].brake_time)
             {
                 tim = manual_traj_.coeff[i].stable_time - manual_traj_.coeff[i].start_time;
                 vel = manual_traj_.coeff[i].start_alpha * tim;
-                *axis = *start + vel * tim / 2;
+                *axis_ptr = *start_ptr + vel * tim / 2;
                 tim = manual_time_ - manual_traj_.coeff[i].stable_time;
-                *axis = *axis + vel * tim;
+                *axis_ptr = *axis_ptr + vel * tim;
             }
             else if (manual_time_ < manual_traj_.coeff[i].stop_time)
             {
                 tim = manual_traj_.coeff[i].stable_time - manual_traj_.coeff[i].start_time;
                 vel = manual_traj_.coeff[i].start_alpha * tim;
-                *axis = *start + vel * tim / 2;
+                *axis_ptr = *start_ptr + vel * tim / 2;
                 tim = manual_traj_.coeff[i].brake_time - manual_traj_.coeff[i].stable_time;
-                *axis = *axis + vel * tim;
+                *axis_ptr = *axis_ptr + vel * tim;
                 tim = manual_time_ - manual_traj_.coeff[i].brake_time;
-                *axis = *axis + vel * tim + manual_traj_.coeff[i].brake_alpha * tim * tim / 2;
+                *axis_ptr = *axis_ptr + vel * tim + manual_traj_.coeff[i].brake_alpha * tim * tim / 2;
             }
             else
             {
-                *axis = *target;
-                *start = *target;
+                *axis_ptr = *target_ptr;
+                *start_ptr = *target_ptr;
             }
 
-            ++axis;
-            ++start;
-            ++target;
+            ++ axis_ptr;
+            ++ start_ptr;
+            ++ target_ptr;
         }
 
         Joint ref_joint = getLatestJoint();
@@ -1638,16 +1531,16 @@ ErrorCode BaseGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &len
         switch (manual_traj_.frame)
         {
             case BASE:
-                err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, point[i].angle);
+                err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, points[i].angle);
                 break;
             case USER:
-                err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, point[i].angle);
+                err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, points[i].angle);
                 break;
             case WORLD:
-                err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, point[i].angle);
+                err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, points[i].angle);
                 break;
             case TOOL:
-                err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, point[i].angle);
+                err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, points[i].angle);
                 break;
             case JOINT:
             default:
@@ -1655,35 +1548,14 @@ ErrorCode BaseGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &len
                 break;
         }
 
-        if (err == SUCCESS && soft_constraint_.isJointInConstraint(point[i].angle))
+        if (err == SUCCESS && soft_constraint_.isJointInConstraint(points[i].angle))
         {
-            cnt++;
+            picked_num ++;
 
             if (manual_time_ >= manual_traj_.duration)
             {
-                point[i].level = POINT_ENDING;
-                FST_INFO("%d - %.4f - %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", point[i].level, manual_time_,
-                         point[i].angle.j1, point[i].angle.j2, point[i].angle.j3, point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
-
-                manual_traj_.direction[0] = STANDING;
-                manual_traj_.direction[1] = STANDING;
-                manual_traj_.direction[2] = STANDING;
-                manual_traj_.direction[3] = STANDING;
-                manual_traj_.direction[4] = STANDING;
-                manual_traj_.direction[5] = STANDING;
-                manual_traj_.duration = 0;
-                memset(manual_traj_.coeff, 0, 6 * sizeof(ManualCoef));
-                start_joint_ = point[i].angle;
-                manual_time_ = 0;
-                group_state_ = MANUAL_TO_STANDBY;
+                points[i].level = POINT_ENDING;
                 break;
-            }
-            else
-            {
-                //FST_INFO("%d - %.4f - %.6f %.6f %.6f %.6f %.6f %.6f", point[i].level, manual_time_,
-                //         point[i].angle.j1, point[i].angle.j2, point[i].angle.j3,
-                //         point[i].angle.j4, point[i].angle.j5, point[i].angle.j6);
-                continue;
             }
         }
         else
@@ -1702,8 +1574,18 @@ ErrorCode BaseGroup::pickFromManualCartesian(TrajectoryPoint *point, size_t &len
         }
     }
 
-    length = cnt;
+    length = picked_num;
     return err;
+}
+
+void BaseGroup::resetManualTrajectory(void)
+{
+    pthread_mutex_lock(&manual_traj_mutex_);
+    manual_time_ = 0;
+    manual_traj_.duration = -99.99;
+    memset(manual_traj_.coeff, 0, NUM_OF_JOINT * sizeof(ManualCoef));
+    memset(manual_traj_.direction, 0, sizeof(manual_traj_.direction));
+    pthread_mutex_unlock(&manual_traj_mutex_);
 }
 
 void BaseGroup::doStateMachine(void)
@@ -1712,44 +1594,106 @@ void BaseGroup::doStateMachine(void)
     static size_t standby_to_disable_cnt = 0;
     static size_t standby_to_auto_cnt = 0;
 
+    /*
     if (abort_request_)
     {
-        abort_request_ = false;
+        FST_INFO("Abort group request received, group-state = %d.", group_state_);
 
-        // TODO
-        /*
         if (group_state_ == AUTO)
         {
+            group_state_ = STANDBY;
             pthread_mutex_lock(&cache_list_mutex_);
             auto path_ptr = path_list_ptr_;
+            auto traj_ptr = traj_list_ptr_;
+
             while (path_ptr != NULL)
             {
-
+                path_list_ptr_ = path_list_ptr_->next_ptr;
+                path_cache_pool_.freeCachePtr(path_ptr);
+                path_ptr = path_list_ptr_;
             }
-            group_state_ = STANDBY;
+
+            while (traj_ptr != NULL)
+            {
+                traj_list_ptr_ = traj_list_ptr_->next_ptr;
+                traj_cache_pool_.freeCachePtr(traj_ptr);
+                traj_ptr = traj_list_ptr_;
+            }
+
+            pthread_mutex_unlock(&cache_list_mutex_);
             auto_time_ = 0;
             traj_fifo_.clear();
             bare_core_.clearPointCache();
-            TrajectoryCache *p;
-
-            while (used_cache_ptr_ != NULL)
-            {
-                p = used_cache_ptr_;
-                used_cache_ptr_ = used_cache_ptr_->next;
-                AUTO_UNLOCK;
-                freeTrajectoryCache(p);
-                AUTO_LOCK;
-            }
+            fine_waiter_.disableWaiter();
+            abort_request_ = false;
+            FST_INFO("Auto move Aborted");
         }
-        */
+        else if (group_state_ == MANUAL)
+        {
+            group_state_ = STANDBY;
+            resetManualTrajectory();
+            bare_core_.clearPointCache();
+            abort_request_ = false;
+            FST_INFO("Manual move Aborted");
+        }
+        else
+        {}
+    }
+    */
 
+    if (error_request_)
+    {
+        stop_request_ = true;
+        clear_request_ = true;
+        error_request_ = false;
+    }
+
+    if (clear_request_)
+    {
+        FST_INFO("Clear group request received, group-state = %d", group_state_);
+
+        if (group_state_ != UNKNOW && group_state_ != DISABLE && group_state_ != DISABLE_TO_STANDBY && group_state_ != STANDBY_TO_DISABLE)
+        {
+            group_state_ = STANDBY;
+        }
+        
+        pthread_mutex_lock(&cache_list_mutex_);
+        auto path_ptr = path_list_ptr_;
+        auto traj_ptr = traj_list_ptr_;
+
+        while (path_ptr != NULL)
+        {
+            path_list_ptr_ = path_list_ptr_->next_ptr;
+            path_cache_pool_.freeCachePtr(path_ptr);
+            path_ptr = path_list_ptr_;
+        }
+
+        while (traj_ptr != NULL)
+        {
+            traj_list_ptr_ = traj_list_ptr_->next_ptr;
+            traj_cache_pool_.freeCachePtr(traj_ptr);
+            traj_ptr = traj_list_ptr_;
+        }
+
+        pthread_mutex_unlock(&cache_list_mutex_);
+        auto_time_ = 0;
+        traj_fifo_.clear();
         fine_waiter_.disableWaiter();
-        FST_WARN("Auto move Aborted");
+
+        resetManualTrajectory();
+        bare_core_.clearPointCache();
+        clear_request_ = false;
+        FST_INFO("Group cleared.");
     }
 
     if (reset_request_ && group_state_ != DISABLE)
     {
         reset_request_ = false;
+    }
+
+    if (stop_request_ && group_state_ != STANDBY)
+    {
+        stop_request_ = false;
     }
 
     switch (group_state_)
@@ -1763,66 +1707,6 @@ void BaseGroup::doStateMachine(void)
                 bare_core_.resetBareCore();
                 disable_to_standby_cnt = 0;
                 group_state_ = DISABLE_TO_STANDBY;
-            }
-
-            if (stop_request_)
-            {
-                stop_request_ = false;
-            }
-
-            break;
-        }
-
-        case DISABLE_TO_STANDBY:
-        {
-            if (getServoState() == SERVO_IDLE)
-            {
-                if (updateStartJoint())
-                {
-                    FST_INFO("Group-state switch to standby.");
-                    disable_to_standby_cnt = 0;
-                    group_state_ = STANDBY;
-                }
-                else
-                {
-                    FST_ERROR("Fail to update start joint, group-state switch to disable.");
-                    disable_to_standby_cnt = 0;
-                    group_state_ = DISABLE;
-                }
-            }
-            else
-            {
-                disable_to_standby_cnt ++;
-
-                if (disable_to_standby_cnt > 100)
-                {
-                    FST_INFO("Reset to standby timeout, group-state switch to disable.");
-                    disable_to_standby_cnt = 0;
-                    group_state_ = DISABLE;
-                }
-            }
-
-            break;
-        }
-
-        case STANDBY_TO_DISABLE:
-        {
-            if (getServoState() == SERVO_DISABLE)
-            {
-                FST_INFO("Group-state switch to disable.");
-                standby_to_disable_cnt = 0;
-                group_state_ = DISABLE;
-            }
-            else
-            {
-                standby_to_disable_cnt ++;
-
-                if (standby_to_disable_cnt > 100)
-                {
-                    FST_INFO("Stop to disable timeout, group-state switch to STANDBY.");
-                    standby_to_disable_cnt = 0;
-                    group_state_ = STANDBY;
-                }
             }
 
             break;
@@ -1839,10 +1723,14 @@ void BaseGroup::doStateMachine(void)
                 group_state_ = STANDBY_TO_DISABLE;
             }
 
-            if (traj_list_ptr_ != NULL && servo_state_ == SERVO_IDLE)
+            if (traj_list_ptr_ != NULL)
             {
                 standby_to_auto_cnt = 0;
                 group_state_ = STANDBY_TO_AUTO;
+            }
+            else if (manual_traj_.duration > MINIMUM_E6)
+            {
+                group_state_ = STANDBY_TO_MANUAL;
             }
 
             break;
@@ -1852,6 +1740,7 @@ void BaseGroup::doStateMachine(void)
         {
             if (auto_to_standby_request_)
             {
+                auto_to_standby_request_ = false;
                 group_state_ = AUTO_TO_STANDBY;
             }
 
@@ -1860,6 +1749,62 @@ void BaseGroup::doStateMachine(void)
 
         case MANUAL:
         {
+            if (manual_to_standby_request_)
+            {
+                manual_to_standby_request_ = false;
+                group_state_ = MANUAL_TO_STANDBY;
+            }
+
+            break;
+        }
+
+        case DISABLE_TO_STANDBY:
+        {
+            if (getServoState() == SERVO_IDLE)
+            {
+                if (updateStartJoint())
+                {
+                    FST_INFO("Group-state switch to standby.");
+                    group_state_ = STANDBY;
+                }
+                else
+                {
+                    FST_ERROR("Fail to update start joint, group-state switch to disable.");
+                    group_state_ = DISABLE;
+                }
+            }
+            else
+            {
+                disable_to_standby_cnt ++;
+
+                if (disable_to_standby_cnt > 100)
+                {
+                    FST_INFO("Reset to standby timeout, group-state switch to disable.");
+                    group_state_ = DISABLE;
+                }
+            }
+
+            break;
+        }
+
+        case STANDBY_TO_DISABLE:
+        {
+            if (getServoState() == SERVO_DISABLE)
+            {
+                FST_INFO("Group-state switch to disable.");
+                group_state_ = DISABLE;
+            }
+            else
+            {
+                standby_to_disable_cnt ++;
+
+                if (standby_to_disable_cnt > 100)
+                {
+                    FST_INFO("Stop to disable timeout, group-state switch to STANDBY.");
+                    group_state_ = STANDBY;
+                }
+            }
+
             break;
         }
 
@@ -1867,30 +1812,18 @@ void BaseGroup::doStateMachine(void)
         {
             standby_to_auto_cnt ++;
 
-            if (traj_fifo_.full())
+            if (traj_fifo_.full() || (standby_to_auto_cnt > 100 && !traj_fifo_.empty()))
             {
-                FST_INFO("Group-state switch to auto.");
                 auto_time_ = 0;
                 group_state_ = AUTO;
-                standby_to_auto_cnt = 0;
+                FST_INFO("Group-state switch to auto.");
             }
             
-            if (standby_to_auto_cnt > 100)
+            if (standby_to_auto_cnt > 100 && traj_fifo_.empty())
             {
-                standby_to_auto_cnt = 0;
-
-                if (!traj_fifo_.empty())
-                {
-                    FST_INFO("Group-state switch to auto.");
-                    auto_time_ = 0;
-                    group_state_ = AUTO;
-                }
-            }
-            else if (standby_to_auto_cnt > 100 && traj_fifo_.empty())
-            {
-                FST_INFO("Group-state switch to standby.");
                 group_state_ = STANDBY;
-                standby_to_auto_cnt = 0;
+                FST_INFO("Group-state switch to standby.");
+                FST_WARN("Standby to auto time-out but trajectory-fifo still empty.");
             }
             
             break;
@@ -1898,48 +1831,60 @@ void BaseGroup::doStateMachine(void)
         
         case AUTO_TO_STANDBY:
         {
-            if (getServoState() == SERVO_IDLE)
+            if (getServoState() == SERVO_IDLE && fine_waiter_.isStable())
             {
                 // 检查是否停稳，停稳后切换到standby
-                FST_INFO("Group-state switch to standby.");
                 group_state_ = STANDBY;
+                fine_waiter_.disableWaiter();
+                FST_INFO("Group-state switch to standby.");
             }
 
             break;
         }
 
         case STANDBY_TO_MANUAL:
-            // TODO
-            break;
-        case MANUAL_TO_STANDBY:
+        {
             manual_time_ = 0;
-            memset(&manual_traj_, 0, sizeof(manual_traj_));
-            group_state_ = STANDBY;
+            group_state_ = MANUAL;
+            FST_INFO("Group-state switch to manual.");
             break;
+        }
+            
+        case MANUAL_TO_STANDBY:
+        {
+            if (getServoState() == SERVO_IDLE)
+            {
+                group_state_ = STANDBY;
+                FST_INFO("Group-state switch to standby.");
+            }
+            
+            break;
+        }
+
         case UNKNOW:
         {
-            if (getServoState() == SERVO_DISABLE)
+            auto servo_state = getServoState();
+
+            if (servo_state == SERVO_DISABLE)
             {
                 FST_INFO("Group-state switch to disable.");
                 group_state_ = DISABLE;
             }
-            else if (getServoState() == SERVO_IDLE)
-            {
-                FST_INFO("Group-state switch to standby.");
-                group_state_ = STANDBY;
-            }
             else
             {
-                FST_INFO("Group-state stay in unknow.");
+                FST_INFO("Group-state is unknow but servo-state is %d, send stop request to servo.", servo_state);
+                bare_core_.stopBareCore();
             }
 
             break;
         }
+
         default:
         {
             FST_ERROR("Group-state is invalid: 0x%x", group_state_);
             FST_ERROR("Group-state switch to unknow.");
             group_state_ = UNKNOW;
+            break;
         }
     }
 }
@@ -1957,6 +1902,8 @@ bool BaseGroup::updateStartJoint(void)
 
         if (isSameJoint(current_joint, control_joint, MINIMUM_E3))
         {
+            start_joint_ = control_joint;
+            memset(&start_joint_[getNumberOfJoint()], 0, (NUM_OF_JOINT - getNumberOfJoint()) * sizeof(double));
             return true;
         }
         else
@@ -2101,16 +2048,11 @@ void BaseGroup::setFineWaiter(void)
 
 void BaseGroup::loopFineWaiter(void)
 {
-    if (fine_waiter_.isEnable() && group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
+    if (fine_waiter_.isEnable() && group_state_ == AUTO_TO_STANDBY && servo_state_ == SERVO_IDLE)
     {  
         Pose   barecore_pose;
         kinematics_ptr_->forwardKinematicsInUser(getLatestJoint(), barecore_pose);
         fine_waiter_.checkWaiter(barecore_pose);
-
-        if (fine_waiter_.isStable())
-        {
-            fine_waiter_.disableWaiter();
-        }
     }
 }
 
@@ -2151,6 +2093,11 @@ void BaseGroup::updateServoStateAndJoint(void)
 
     if (bare_core_.getLatestJoint(barecore_joint, barecore_state))
     {
+        if (servo_state_ != barecore_state)
+        {
+            FST_INFO("Servo-state switch %d to %d", servo_state_, barecore_state);
+        }
+
         pthread_mutex_lock(&servo_mutex_);
         servo_state_ = barecore_state;
         servo_joint_ = barecore_joint;
@@ -2167,139 +2114,13 @@ void BaseGroup::updateServoStateAndJoint(void)
     }
 }
 
-ErrorCode BaseGroup::sendPoint(void)
-{
-    /*
-    ErrorCode err;
-
-    else if (group_state_ == MANUAL || group_state_ == MANUAL_TO_STANDBY)
-    {
-        if (bare_core_.isPointCacheEmpty())
-        {
-            size_t length = 10;
-            TrajectoryPoint point[10];
-            err = pickFromManual(point, length);
-
-            if (err != SUCCESS)
-            {
-                FST_ERROR("sendPoint: cannot pick point from manual motion.");
-                return err;
-            }
-
-            bare_core_.fillPointCache(point, length, POINT_POS);
-        }
-
-        return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
-    }
-    else
-    {
-        return INVALID_SEQUENCE;
-    }
-    */
-    return SUCCESS;
-}
-
-ErrorCode BaseGroup::pickFromAuto(TrajectoryPoint *point, size_t &length)
-{
-    /*
-    MotionTime  seg_tm;
-    ErrorCode   err;
-    size_t      pick_num = 0;
-
-    FST_LOG("Pick from auto, auto-time=%.4f, time-form-start of traj-fifo=%.4f", auto_time_, traj_fifo_.timeFromStart());
-
-    for (size_t i = 0; i < length; i++)
-    {
-        auto_time_ += cycle_time_;
-
-        while (!traj_fifo_.empty() && auto_time_ > traj_fifo_.front().time_from_start)
-        {
-            traj_fifo_.dropFront();
-        }
-
-        err = createTrajectory();
-
-        if (err != SUCCESS)
-        {
-            FST_ERROR("pickFromAuto: Fail to create trajectory.");
-            return err;
-        }
-
-        while (!traj_fifo_.empty() && auto_time_ > traj_fifo_.front().time_from_start)
-        {
-            traj_fifo_.dropFront();
-        }
-
-        if (!traj_fifo_.empty())
-        {
-            if (auto_time_ < traj_fifo_.front().time_from_start)
-            {
-                if (err == SUCCESS)
-                {
-                    pick_num ++;
-                }
-                else
-                {
-                    FST_ERROR("pickFromAuto: sampling error! auto-time = %.4f, time-from-start = %.4f, duration = %.4f",
-                              auto_time_, traj_fifo_.front().time_from_start, traj_fifo_.front().duration);
-                    length = pick_num;
-                    return err;
-                }
-            }
-            else
-            {
-                FST_ERROR("pickFromAuto: auto-time error! auto-time = %.4f, time-from-start = %.4f, duration = %.4f",
-                          auto_time_, traj_fifo_.front().time_from_start, traj_fifo_.front().duration);
-                length = pick_num;
-                return MOTION_INTERNAL_FAULT;
-            }
-        }
-        else
-        {
-
-            if (err == SUCCESS)
-            {
-                memset(&point[i].omega, 0, sizeof(point[i].omega));
-                memset(&point[i].alpha, 0, sizeof(point[i].alpha));
-                point[i].level = POINT_ENDING;
-                pick_num ++;
-            }
-            else
-            {
-                FST_ERROR("pickFromAuto: sampling error! auto-time = %.4f, time-from-start = %.4f, duration = %.4f",
-                          auto_time_, traj_fifo_.front().time_from_start, traj_fifo_.front().duration);
-                length = pick_num;
-                return err;
-            }
-
-            char buffer[LOG_TEXT_SIZE];
-            FST_INFO("%d - %.4f - %s", point[i].level, auto_time_, printDBLine(&point[i].angle.j1, buffer, LOG_TEXT_SIZE));
-            FST_INFO("Command ID = %d finished", traj_fifo_.front().id);
-            //auto_running_ = false;
-
-            if (group_state_ == AUTO)
-            {
-                group_state_ = AUTO_TO_STANDBY;
-            }
-
-            traj_fifo_.clear();
-
-            break;
-        }
-    }
-
-    length = pick_num;
-     */
-    return SUCCESS;
-}
-
 ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
 {
     if (bare_core_.isPointCacheEmpty())
     {
         size_t length = 10;
         TrajectoryPoint points[10];
-        ErrorCode err = pickPointsFromTrajectoryFifo(points, &length);
+        ErrorCode err = pickPointsFromTrajectoryFifo(points, length);
 
         if (err != SUCCESS)
         {
@@ -2319,12 +2140,12 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
     return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
 }
 
-ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t *plength)
+ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length)
 {
     ErrorCode err = SUCCESS;
     size_t picked_num = 0;
 
-    for (size_t i = 0; i < *plength; i++)
+    for (size_t i = 0; i < length; i++)
     {
         auto_time_ += cycle_time_;
         err = traj_fifo_.pickTrajectoryPoint(auto_time_, points[i]);
@@ -2349,31 +2170,77 @@ ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_
         }
     }
 
-    *plength = picked_num;
+    length = picked_num;
     return err;
 }
 
 ErrorCode BaseGroup::sendManualTrajectoryFlow(void)
 {
-    return SUCCESS;
+    ErrorCode err;
+
+    if (bare_core_.isPointCacheEmpty())
+    {
+        size_t length = 10;
+        TrajectoryPoint points[10];
+        err = pickPointsFromManualTrajectory(points, length);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("sendPoint: cannot pick point from manual motion.");
+            return err;
+        }
+
+        bare_core_.fillPointCache(points, length, POINT_POS);
+    }
+
+    return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
 }
 
 void BaseGroup::sendTrajectoryFlow(void)
 {
+    static size_t error_cnt = 0;
     ErrorCode err = SUCCESS;
 
-    if (group_state_ == AUTO)
+    if (group_state_ == AUTO && !auto_to_standby_request_)
     {
         err = sendAutoTrajectoryFlow();
     }
-    else if (group_state_ == MANUAL)
+    else if (group_state_ == MANUAL && !manual_to_standby_request_)
     {
         err = sendManualTrajectoryFlow();
     }
-
-    if (err != SUCCESS)
+    else if (group_state_ == AUTO_TO_STANDBY || group_state_ == MANUAL_TO_STANDBY)
     {
-        //
+        if (!bare_core_.isPointCacheEmpty())
+        {
+            err = bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+        }
+    }
+
+    if (err == SUCCESS)
+    {
+        error_cnt = 0;
+    }
+    else
+    {
+        if (err == BARE_CORE_TIMEOUT)
+        {
+            error_cnt ++;
+
+            if (error_cnt > TRAJECTORY_FLOW_FAIL_MAX_TIMES)
+            {
+                error_cnt = 0;
+                abort_request_ = true;
+                reportError(BARE_CORE_TIMEOUT);
+                FST_ERROR("sendTrajectoryFlow: bare core time-out.");
+            }
+        }
+        else
+        {
+            FST_ERROR("sendTrajectoryFlow aborted, code = 0x%llx", err);
+            abort_request_ = true;
+            error_cnt = 0;
+        }
     }
 }
 

@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: coordinate_manager
+Description: Description of coordinate_manager
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lcoordinate_manager
+Requires: 

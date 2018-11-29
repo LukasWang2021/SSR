@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: servo_diag
+Description: Description of servo_diag
+Version: 0.1.0
+Cflags: 
+Libs: -L/usr/local/lib 
+Requires: 

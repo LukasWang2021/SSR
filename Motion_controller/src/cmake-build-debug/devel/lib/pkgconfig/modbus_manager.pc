@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: modbus_manager
+Description: Description of modbus_manager
+Version: 0.1.0
+Cflags: -I/home/fst/workspace/src/modbus_manager/include
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lmodbus_manager
+Requires: 

@@ -31,7 +31,7 @@ enum ManualFrame
     TOOL,
 };
 
-typedef enum 
+enum ServoState 
 {
     SERVO_IDLE = 1,
     SERVO_RUNNING = 2,
@@ -39,7 +39,7 @@ typedef enum
     SERVO_WAIT_READY = 4,
     SERVO_WAIT_DOWN = 5,
     SERVO_INIT = 10,
-}ServoState;
+};
 
 enum PointProperty
 {

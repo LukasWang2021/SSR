@@ -333,7 +333,8 @@ void resetRunningMacroInstr(char* program_name)
 	
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 {
-    FST_INFO("setLinenum : %d", iLinenum);
+    FST_INFO("setLinenum : %d at the %dth thread", 
+		iLinenum, objThreadCntrolBlock->iThreadIdx);
 	objThreadCntrolBlock->iLineNum = iLinenum;
     FST_INFO("setLinenum: setCurLine (%d) at %s", iLinenum, g_vecXPath[iLinenum].c_str());
 	setCurLine((char *)g_vecXPath[iLinenum].c_str(), iLinenum);

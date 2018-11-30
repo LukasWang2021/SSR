@@ -4,6 +4,7 @@ project(io_mapping)
 find_package(catkin REQUIRED COMPONENTS
     base_device
     fst_io_device
+    modbus_manager
 )
 
 if(catkin_CROSS)
@@ -26,6 +27,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/fst_io_device/include
     ${depend_PATH_INC}/error_monitor/include
+    ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/thread_help/include
 )
 
 catkin_package(
@@ -36,6 +39,7 @@ catkin_package(
     DEPENDS log_manager
     DEPENDS fst_io_device
     DEPENDS error_monitor
+    DEPENDS modbus_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -59,6 +63,7 @@ target_link_libraries(io_mapping
     base_device
     fst_io_device
     error_monitor
+    modbus_manager
 )
 
 add_executable(mapping_test
@@ -69,6 +74,7 @@ target_link_libraries(mapping_test
     ${catkin_LIBRARIES}
     io_mapping
     base_device
+    modbus_manager
 )
 
 install(TARGETS io_mapping

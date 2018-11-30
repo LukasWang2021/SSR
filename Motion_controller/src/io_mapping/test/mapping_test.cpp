@@ -19,6 +19,7 @@ using namespace fst_hal;
 
 int main(int argc, char** argv)
 {
+#if 0
     fst_hal::FstIoDevice* io_device_ptr = new fst_hal::FstIoDevice(fst_hal::DEVICE_TYPE_FST_IO);
     io_device_ptr->init();
 
@@ -61,6 +62,7 @@ int main(int argc, char** argv)
     printf("map id2 = 0x%x\n", id.number);
 
     delete io_device_ptr;
+#endif
     return 0;
 }
 

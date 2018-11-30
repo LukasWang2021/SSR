@@ -60,7 +60,8 @@ private:
     VirtualCore1 virtual_core1_; // for test only
     fst_ctrl::IoMapping io_mapping_; //feng add for mapping.
     fst_hal::FstIoDevice* io_device_ptr_; //feng add
-    
+    fst_hal::ModbusManager* modbus_manager_ptr_; //feng add
+
     // thread related
     bool is_exit_;
     fst_base::ThreadHelp routine_thread_;

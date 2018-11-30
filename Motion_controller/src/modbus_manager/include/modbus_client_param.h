@@ -24,6 +24,7 @@ public:
     bool savePort();
     bool saveResponseTimeoutParam();
     bool saveBytesTimeoutParam();
+    bool saveInfoParam();
 
     int log_level_;
     string ip_;

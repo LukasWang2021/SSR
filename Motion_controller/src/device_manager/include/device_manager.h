@@ -27,6 +27,7 @@ public:
     ~DeviceManager();
 
     ErrorCode init();
+    ErrorCode setModbusDetail(BaseDevice* device_ptr, FstFstModbusConfigDetail detail);
 
     BaseDevice* getDevicePtrByDeviceIndex(int device_index);
     std::vector<DeviceInfo> getDeviceList();

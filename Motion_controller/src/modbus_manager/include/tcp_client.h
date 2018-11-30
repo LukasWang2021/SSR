@@ -21,11 +21,23 @@ using namespace fst_hal;
 
 namespace fst_hal
 {
+struct ClientInfo
+{
+    int port;
+    string ip;
+    string comm_type;
+    timeval response_timeout;
+    timeval bytes_timeout;
+};
+
+
 class ModbusTCPClient
 {
 public:
     ModbusTCPClient(string file_path);
      ~ModbusTCPClient();
+
+    ErrorCode setInfo(ClientInfo info);
 
     ErrorCode setResponseTimeout(timeval timeout);
     ErrorCode setBytesTimeout(timeval timeout);
@@ -39,6 +51,7 @@ public:
 
     ErrorCode init();
     ErrorCode initParam();
+    void closeClient();
 
     ErrorCode writeCoils(int addr, int nb, uint8_t *dest);
     ErrorCode readCoils(int addr, int nb, uint8_t *dest);
@@ -64,6 +77,7 @@ private:
 
     ModbusClientParam* param_ptr_;
     fst_log::Logger* log_ptr_;
+
 };
 }
 

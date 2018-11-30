@@ -8,7 +8,7 @@ using namespace fst_hal;
 
 ModbusTCPClient::ModbusTCPClient(string file_path):
     log_ptr_(NULL), param_ptr_(NULL), ctx_(NULL),
-    is_debug_(true), socket_(17)
+    is_debug_(false), socket_(17)
 {
     ip_ = "";
     port_ = -1;
@@ -166,6 +166,13 @@ ErrorCode ModbusTCPClient::init()
     return SUCCESS;
 }
 
+void ModbusTCPClient::closeClient()
+{
+    modbus_close(ctx_);
+    modbus_free(ctx_);  
+    if (ctx_ != NULL)  ctx_ = NULL;
+}
+
 ErrorCode ModbusTCPClient::getResponseTimeout(timeval& timeout)
 {
     uint32_t sec = 0;
@@ -272,6 +279,29 @@ ErrorCode ModbusTCPClient::writeAndReadHoldingRegs(
     if(read_nb != modbus_write_and_read_registers(ctx_,
         write_addr, write_nb, write_dest, read_addr, read_nb, read_dest))
        return MODBUS_CLIENT_WRITE_FAILED;
+
+    return SUCCESS;
+}
+
+
+ErrorCode ModbusTCPClient::setInfo(ClientInfo info)
+{
+    param_ptr_->ip_ = info.ip;
+    param_ptr_->port_ = info.port;
+    param_ptr_->response_timeout_.tv_sec = info.response_timeout.tv_sec;
+    param_ptr_->response_timeout_.tv_usec = info.response_timeout.tv_usec;
+    param_ptr_->bytes_timeout_.tv_sec = info.bytes_timeout.tv_sec;
+    param_ptr_->bytes_timeout_.tv_usec = info.bytes_timeout.tv_usec;
+
+    if (!param_ptr_->saveInfoParam())
+        return MODBUS_MANAGER_LOAD_PARAM_FAILED;
+
+    ip_ = info.ip;
+    port_ = info.port;
+    response_timeout_.tv_sec = info.response_timeout.tv_sec;
+    response_timeout_.tv_usec = info.response_timeout.tv_usec;
+    bytes_timeout_.tv_sec = info.bytes_timeout.tv_sec;
+    bytes_timeout_.tv_usec = info.bytes_timeout.tv_usec;
 
     return SUCCESS;
 }

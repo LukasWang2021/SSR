@@ -14,6 +14,7 @@ typedef enum
     DEVICE_TYPE_VIRTUAL_IO = 6,
     DEVICE_TYPE_VIRTUAL_SAFETY = 7,
     DEVICE_TYPE_NORMAL = 8,
+    DEVICE_TYPE_MODBUS = 9,
 }DeviceType;
 
 class BaseDevice

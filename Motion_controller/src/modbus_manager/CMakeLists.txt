@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     parameter_manager
     error_monitor
     thread_help
+    base_device
 )
 
 if(catkin_CROSS)
@@ -35,6 +36,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/error_monitor/include/
     ${depend_PATH_INC}/parameter_manager/include/
     ${depend_PATH_INC}/thread_help/include/
+    ${depend_PATH_INC}/base_device/include/
     ${depend_PATH_INC}/common/
 )
 
@@ -57,6 +59,7 @@ target_link_libraries(modbus_manager
     ${catkin_LIBRARIES}
     parameter_manager
     thread_help
+    base_device
   )
 
 install(TARGETS modbus_manager

@@ -3,6 +3,7 @@
 #include "fst_safety_device.h"
 #include "fst_axis_device.h"
 #include "virtual_axis_device.h"
+#include "modbus_manager.h"
 #include "error_code.h"
 
 
@@ -42,6 +43,7 @@ DeviceManager::~DeviceManager()
                 case DEVICE_TYPE_VIRTUAL_IO:     break;
                 case DEVICE_TYPE_VIRTUAL_SAFETY: break;
                 case DEVICE_TYPE_NORMAL:         break;
+                case DEVICE_TYPE_MODBUS:         delete (ModbusManager*)it->second; break;
             }
             it->second = NULL;
         }
@@ -71,7 +73,7 @@ ErrorCode DeviceManager::init()
     {
         FST_ERROR("Failed to load device manager component parameters");
         return DEVICE_MANAGER_LOAD_PARAM_FAILED;
-    } 
+    }
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_); 
 
     device_xml_ptr_ = new DeviceXml(log_ptr_, param_ptr_);
@@ -100,11 +102,13 @@ ErrorCode DeviceManager::init()
             case DEVICE_TYPE_FST_SAFETY:
                 device_ptr = new FstSafetyDevice(it->address);break;
             case DEVICE_TYPE_FST_ANYBUS:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_VIRTUAL_AXIS: 
+            case DEVICE_TYPE_VIRTUAL_AXIS:
 				device_ptr = new VirtualAxisDevice(it->address); break;
             case DEVICE_TYPE_VIRTUAL_IO:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_VIRTUAL_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_NORMAL:         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_MODBUS:
+                device_ptr = new ModbusManager(it->address); break; // to do, use it->address
             default:                         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
         }
 
@@ -113,9 +117,17 @@ ErrorCode DeviceManager::init()
         {
             return DEVICE_MANAGER_INIT_DEVICE_FAILED;
         }
+
+        if (it->device_type == DEVICE_TYPE_MODBUS)
+        {
+            ErrorCode error_code;
+            error_code = setModbusDetail(device_ptr, it->detail.modbus);
+            if (error_code != SUCCESS) return error_code;
+        }
+
         device_map_[it->device_index] = device_ptr;
     }
-    
+
     return SUCCESS;
 }
 
@@ -189,4 +201,7 @@ ErrorCode DeviceManager::addDevice(int device_index, BaseDevice* device_ptr)
     return SUCCESS;
 }
 
-
+ErrorCode DeviceManager::setModbusDetail(BaseDevice* device_ptr, FstFstModbusConfigDetail detail)
+{
+    return SUCCESS;
+}

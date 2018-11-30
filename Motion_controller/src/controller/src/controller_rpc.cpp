@@ -20,7 +20,8 @@ ControllerRpc::ControllerRpc():
     device_manager_ptr_(NULL),
     motion_control_ptr_(NULL),
     controller_client_ptr_(NULL),
-    io_mapping_ptr_(NULL)
+    io_mapping_ptr_(NULL),
+    modbus_manager_ptr_(NULL)
 {
 
 }
@@ -34,7 +35,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
-                    fst_ctrl::IoMapping* io_mapping_ptr,fst_hal::FstIoDevice* io_device_ptr)
+                    fst_ctrl::IoMapping* io_mapping_ptr,fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -50,6 +51,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
     controller_client_ptr_ = controller_client_ptr;
     io_mapping_ptr_ = io_mapping_ptr;//feng add for mapping
     io_device_ptr_ = io_device_ptr;//feng add for info list
+    modbus_manager_ptr_ = modbus_manager_ptr;
     initRpcTable();
     initRpcQuickSearchTable();
 }

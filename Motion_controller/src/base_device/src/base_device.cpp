@@ -40,4 +40,3 @@ BaseDevice::BaseDevice():
 
 }
 
-

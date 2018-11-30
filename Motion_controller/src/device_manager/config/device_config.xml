@@ -15,4 +15,9 @@
         <Address>16</Address>
         <DeviceType>FstIo</DeviceType>
     </Device>
+    <Device>
+        <DeviceIndex>4</DeviceIndex>
+        <Address>128</Address>
+        <DeviceType>Modbus</DeviceType>
+    </Device>
 </Devices>

@@ -7,6 +7,7 @@
 #include <boost/thread/thread.hpp>
 
 #include "common_log.h"
+#include "base_device.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 
 #include "tcp_client.h"
@@ -22,14 +23,16 @@ using namespace fst_hal;
 namespace fst_hal
 {
 enum ModbusStartMode{CLIENT = 1, SERVER = 2, };
-class ModbusManager
+class ModbusManager: public BaseDevice
 {
 public:
-    ModbusManager();
+    ModbusManager(int address);
     ~ModbusManager();
-    ErrorCode init(int start_mode);
-    ErrorCode initModbus();
-    static ModbusManager* getInstance();
+    bool init();
+    bool isValid();
+    ErrorCode openModbus(int start_mode);
+    ErrorCode closeModbus();
+    int getStartMode();
 
     // for server
     ErrorCode getServerInfo(ServerInfo& info);
@@ -43,9 +46,10 @@ public:
     // for client
     ErrorCode setClientIp(string ip);
     ErrorCode setClientPort(int port);
-
     ErrorCode setResponseTimeout(timeval timeout);
     ErrorCode setBytesTimeout(timeval timeout);
+    ErrorCode setClientInfo(ClientInfo info);
+
     ErrorCode getResponseTimeout(timeval& timeout);
     ErrorCode getBytesTimeout(timeval& timeout);
 
@@ -71,11 +75,14 @@ private:
 
     ModbusTCPClient* client_;
     ModbusTCPServer* server_;
-    ModbusClientParam* client_param_ptr_;
 
     int start_mode_;
+    int address_;
+
+    bool is_valid_;
 
     bool isServerRunning();
+
 };
 }
 

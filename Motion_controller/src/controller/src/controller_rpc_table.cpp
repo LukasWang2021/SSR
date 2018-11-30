@@ -166,5 +166,9 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/program_launching/getMethod", 0x00010944, &ControllerRpc::handleRpc0x00010944}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/program_launching/syncFileMacroConfig", 0x00016B27, &ControllerRpc::handleRpc0x00016B27}; rpc_table_.push_back(rpc_service);
 
+    rpc_service = {"/rpc/modbus/createServer", 0x00017982, &ControllerRpc::handleRpc0x00017982}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/modbus/deleteServer", 0x00006C22, &ControllerRpc::handleRpc0x00006C22}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/modbus/createClient", 0x00015F94, &ControllerRpc::handleRpc0x00015F94}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/modbus/deleteClient", 0x00014CF4, &ControllerRpc::handleRpc0x00014CF4}; rpc_table_.push_back(rpc_service);
 }
 

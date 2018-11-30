@@ -16,7 +16,7 @@ ModbusTCPServer::ModbusTCPServer(string file_path):
 
     port_ = -1;
     comm_type_ = "TCP";
-    is_debug_ = true;
+    is_debug_ = false;
     cycle_time_ = 0;
     is_running_ = false;
     server_socket_ = -1;
@@ -80,6 +80,7 @@ ServerInfo ModbusTCPServer::getInfo()
     info.holding_reg.max_nb = server_info_.holding_reg.max_nb;
     info.input_reg.addr = server_info_.input_reg.addr;
     info.input_reg.max_nb = server_info_.input_reg.max_nb;
+    info.is_valid = is_running_;
     return info;
 }
 
@@ -169,8 +170,15 @@ ErrorCode ModbusTCPServer::open()
 void ModbusTCPServer::closeServer()
 {
     is_running_ = false;
-    modbus_close(ctx_);
     thread_ptr_.join();
+
+    modbus_close(ctx_);
+
+    close(server_socket_);
+    FD_ZERO(&refset_);
+    fdmax_ = 0;
+    server_socket_ = -1;
+    connection_nb_ = -1;
 }
 
 void ModbusTCPServer::modbusTcpServerThreadFunc()
@@ -222,7 +230,7 @@ void ModbusTCPServer::modbusTcpServerThreadFunc()
         modbus_set_socket(ctx_, master_socket);
 
         int rc = modbus_receive(ctx_, query_);
-        if ( rc<= 0)
+        if ( rc <= 0)
         {
             /* This example server in ended on connection closing or any errors. */
             FST_INFO("Connection closed on socket %d\n", master_socket);

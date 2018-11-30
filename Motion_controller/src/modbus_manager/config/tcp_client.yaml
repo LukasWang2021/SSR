@@ -2,7 +2,7 @@ log_level: 1
 ip: 192.168.1.102
 port: 502
 comm_type: TCP
-is_debug: true
+is_debug: false
 response_timeout:
     tv_sec: 2.0
     tv_usec: 0.0

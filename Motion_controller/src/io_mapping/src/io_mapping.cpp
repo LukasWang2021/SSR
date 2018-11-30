@@ -17,7 +17,8 @@ IoMapping::IoMapping():
     log_ptr_(NULL),
 	param_ptr_(NULL),
 	sim_ptr_(NULL),
-	io_dev_ptr_(NULL)
+	io_dev_ptr_(NULL),
+	modbus_manager_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new IoMappingParam();
@@ -46,15 +47,8 @@ IoMapping::~IoMapping()
     }
 }
 
-//------------------------------------------------------------
-// Function:    init
-// Summary:
-// In:      None.
-// Out:     None.
-// Return:  SUCCESS -> success.
-//          ErrorCode  -> failed.
-//------------------------------------------------------------
-ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr)
+ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr,
+	fst_hal::ModbusManager* modbus_manager)
 {
 	io_dev_ptr_ = io_device_ptr;
 
@@ -80,112 +74,101 @@ ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr)
 	}
 
 	io_dev_ptr_->init();
+
+	modbus_manager_ = modbus_manager;
 	return SUCCESS;
 }
 
-//------------------------------------------------------------
-// Function:    updateMappingFile
-// Summary: read again the io mapping json files.
-// In:      None.
-// Out:     None.
-// Return:  int   -> 1 is success, -1 is failed.
-//------------------------------------------------------------
 ErrorCode IoMapping::updateMappingFile()
 {
-	char io_map_file_name[128];
-	bool ret = true;
 	io_mapper_.clear();
 
-	// to do, check file faulty first, pass if no files.
-	// DI
+	/*  to do..., check file faulty first, pass if no files. */
+
+	char io_map_file_name[128] = {};
 	sprintf(io_map_file_name, "%s/di_mapping.json", getProgramsPath());
-	//printf(" the io_mapping file is %s\n",io_map_file_name);
-	ret = appendSingleIOMapper(io_map_file_name, "DI");
-	if (ret == false){
-		FST_INFO("Failed to read mapping parameters:%s", io_map_file_name);
-		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
-	}
-	// DO
-	sprintf(io_map_file_name, "%s/do_mapping.json", getProgramsPath());
-	ret = appendSingleIOMapper(io_map_file_name, "DO");
-	if (ret == false){
-		FST_INFO("Failed to read mapping parameters", io_map_file_name);
-		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
-	}
-	// RI
-	sprintf(io_map_file_name, "%s/ri_mapping.json", getProgramsPath());
-	ret = appendSingleIOMapper(io_map_file_name, "RI");
-	if (ret == false){
-		FST_INFO("Failed to read mapping parameters", io_map_file_name);
-		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
-	}
-	// RO
-	sprintf(io_map_file_name, "%s/ro_mapping.json", getProgramsPath());
-	ret = appendSingleIOMapper(io_map_file_name, "RO");
-	if (ret == false){
-		FST_INFO("Failed to read mapping parameters", io_map_file_name);
-		//return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	if (!appendSingleIOMapper(io_map_file_name, "DI"))
+	{
+		FST_ERROR("Failed to read mapping parameters:%s", io_map_file_name);
+		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
 	}
 
-	FST_INFO("Update io_mapping files");
+	sprintf(io_map_file_name, "%s/do_mapping.json", getProgramsPath());
+	if (!appendSingleIOMapper(io_map_file_name, "DO"))
+	{
+		FST_ERROR("Failed to read mapping parameters", io_map_file_name);
+		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	}
+
+	sprintf(io_map_file_name, "%s/ri_mapping.json", getProgramsPath());
+	if (!appendSingleIOMapper(io_map_file_name, "RI"))
+	{
+		FST_ERROR("Failed to read mapping parameters", io_map_file_name);
+		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	}
+
+	sprintf(io_map_file_name, "%s/ro_mapping.json", getProgramsPath());
+	if (!appendSingleIOMapper(io_map_file_name, "RO"))
+	{
+		FST_ERROR("Failed to read mapping parameters", io_map_file_name);
+		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	}
+
+	FST_INFO("Success update io_mapping files");
 	return SUCCESS;
 }
 
 ErrorCode IoMapping::updateSimFile()
 {
-	FST_INFO("Update io_status files");
 	return sim_ptr_->updateSimFile();
 }
 
-//------------------------------------------------------------
-// Function:    getDIByBit
-// Summary: get the value to the user port.
-// In:      user_port  -> the port defined by the user.
-// Out      value      -> 1 = ON, 0 = OFF.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
+
 ErrorCode IoMapping::getDIByBit(uint32_t user_port, uint8_t &value)
 {
-	// make a string "DI[user_port]"
-	char cTemp[16];
-    memset(cTemp, 0x00, sizeof(cTemp));
+	/* make a string "DI[user_port]" */
+	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DI", user_port);
 
-	// check if the port is simUsed
+	/* check if the port is simUsed */
 	bool data = false;
-	if (sim_ptr_->isSimUsed(cTemp, data)){
+	if (sim_ptr_->isSimUsed(cTemp, data))
+	{
 		value = data;
 		return SUCCESS;
 	}
 
-	// get physics ID by a map.
+	/* get physics ID by a map. */
 	string strKey;
 	strKey.assign(cTemp);
-	uint32_t map_id = 0;
-	ErrorCode ret = SUCCESS;
+
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
-	if (iter != io_mapper_.end()){
-		map_id = iter->second;
-		ret = io_dev_ptr_->getDIOByBit(map_id, value);
-		return ret;
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		if (physics_id.info.dev_type == DEVICE_TYPE_MODBUS)
+		{
+			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
+			{
+				return MODBUS_IS_CLOSED;
+			}
+			printf("readDiscreteInputs ");
+			return modbus_manager_->readDiscreteInputs(physics_id.info.port, 1, &value);
+		}
+
+		return io_dev_ptr_->getDIOByBit(iter->second, value);
 	}
-	FST_WARN("invalid strKey=%s\n", strKey.c_str());
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
 }
 
-//------------------------------------------------------------
-// Function:    setDIByBit
-// Summary: Set the value to the the port.
-// In:      user_port  -> the port defined by the user.
-//          value      -> 1 = ON, 0 = OFF.
-// Out:     None.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
 ErrorCode IoMapping::setDIByBit(uint32_t user_port, uint8_t value)
 {
 	// make a string "DO[user_port]"
-	char cTemp[16];
-    memset(cTemp, 0x00, sizeof(cTemp));
+	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DI", user_port);
 
 	// set value if this port is in simulation status
@@ -193,89 +176,86 @@ ErrorCode IoMapping::setDIByBit(uint32_t user_port, uint8_t value)
 		return SUCCESS;
 	}
 
-	fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
 	return IO_INVALID_PARAM_ID;
 }
 
-//------------------------------------------------------------
-// Function:    getDOByBit
-// Summary: get the value to the user port.
-// In:      user_port  -> the port defined by the user.
-// Out:     value      -> 1 = ON, 0 = OFF.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
 ErrorCode IoMapping::getDOByBit(uint32_t user_port, uint8_t &value)
 {
-	// make a string "DO[user_port]"
-    char cTemp[16];
-    memset(cTemp, 0x00, sizeof(cTemp));
+	/* make a string "DO[user_port]" */
+    char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DO", user_port);
 
-	// get physics ID by a map.
+	/* get physics ID by a map. */
 	string strKey;
 	strKey.assign(cTemp);
-	uint32_t map_id = 0;
-	ErrorCode ret = SUCCESS;
+
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
-	if (iter != io_mapper_.end()){
-		map_id = iter->second;
-		ret = io_dev_ptr_->getDIOByBit(map_id, value);
-		return ret;
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+		
+		if (physics_id.info.dev_type == DEVICE_TYPE_MODBUS)
+		{
+			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
+			{
+				return MODBUS_IS_CLOSED;
+			}
+
+			return modbus_manager_->readCoils(physics_id.info.port, 1, &value);
+		}
+
+		return io_dev_ptr_->getDIOByBit(iter->second, value);
 	}
-	FST_WARN("invalid strKey=%s\n", strKey.c_str());
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
 }
 
-//------------------------------------------------------------
-// Function:    setDOByBit
-// Summary: Set the output to the the port.
-// In:      user_port  -> the port defined by the user.
-//          value      -> 1 = ON, 0 = OFF.
-// Out:     None.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
 ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 {
-	// make a string "DO[user_port]"
-    char cTemp[16];
-    memset(cTemp, 0x00, sizeof(cTemp));
+	/* make a string "DO[user_port]" */
+    char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DO", user_port);
 
-	// get physics ID by a map.
-	string  strKey;
+	/* get physics ID by a map. */
+	string strKey;
 	strKey.assign(cTemp);
-	uint32_t map_id = 0;
-	ErrorCode ret = SUCCESS;
+
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
-	if (iter != io_mapper_.end()){
-		map_id = iter->second;
-		//printf("before:mapid=%x, value=%x, ret=%x\n", map_id, value, ret);
-		ret = io_dev_ptr_->setDIOByBit(map_id, value);
-		//printf("after:mapid=%x, value=%x,ret=%x\n", map_id, value,ret);
-		return ret;
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+		
+		if (physics_id.info.dev_type == DEVICE_TYPE_MODBUS)
+		{
+			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
+			{
+				return MODBUS_IS_CLOSED;
+			}
+
+			return modbus_manager_->writeCoils(physics_id.info.port, 1, &value);
+		}
+
+		return io_dev_ptr_->setDIOByBit(iter->second, value);
 	}
-	FST_WARN("invalid strKey=%s\n", strKey.c_str());
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
+
 	return IO_INVALID_PARAM_ID;
 }
 
-
-//------------------------------------------------------------
-// Function:    getRIByBit
-// Summary: get the value to the user port.
-// In:      user_port  -> the port defined by the user.
-// Out      value      -> 1 = ON, 0 = OFF.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
 ErrorCode IoMapping::getRIByBit(uint32_t user_port, uint8_t &value)
 {
-	// make a string "RI[user_port]"
-	char cTemp[16];
-	memset(cTemp, 0x00, sizeof(cTemp));
+	/* make a string "RI[user_port]" */
+	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RI", user_port);
 
-	// check if the port is simUsed
+	/* check if the port is simUsed */
 	bool data = false;
-	if (sim_ptr_->isSimUsed(cTemp, data)){
+	if (sim_ptr_->isSimUsed(cTemp, data))
+	{
 		value = data;
 		return SUCCESS;
 	}
@@ -283,98 +263,65 @@ ErrorCode IoMapping::getRIByBit(uint32_t user_port, uint8_t &value)
 	// get physics ID by a map.
 	string  strKey;
 	strKey.assign(cTemp);
-	uint32_t map_id = 0;
-	ErrorCode ret = SUCCESS;
+
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
-	if (iter != io_mapper_.end()){
-		map_id = iter->second;
-		ret = io_dev_ptr_->getDIOByBit(map_id, value);
-		return ret;
-	}
+	if (iter != io_mapper_.end())
+		return io_dev_ptr_->getDIOByBit(iter->second, value);
+
 	FST_WARN("invalid strKey=%s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
 }
 
-//------------------------------------------------------------
-// Function:    setRIByBit
-// Summary: Set the value to the the port.
-// In:      user_port  -> the port defined by the user.
-//          value      -> 1 = ON, 0 = OFF.
-// Out:     None.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
+
 ErrorCode IoMapping::setRIByBit(uint32_t user_port, uint8_t value)
 {
-	// make a string "RO[user_port]"
-	char cTemp[16];
-	memset(cTemp, 0x00, sizeof(cTemp));
+	/* make a string "RO[user_port]" */
+	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RI", user_port);
 
-	// set value if this port is in simulation status
-	if (sim_ptr_->setSimValue(cTemp, value)){
-		return SUCCESS;
-	}
+	/* set value if this port is in simulation status */
+	if (sim_ptr_->setSimValue(cTemp, value)) return SUCCESS;
 
-	fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
 	return IO_INVALID_PARAM_ID;
 }
 
-//------------------------------------------------------------
-// Function:    getROByBit
-// Summary: get the value to the user port.
-// In:      user_port  -> the port defined by the user.
-// Out:     value      -> 1 = ON, 0 = OFF.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
+
 ErrorCode IoMapping::getROByBit(uint32_t user_port, uint8_t &value)
 {
-	// make a string "RO[user_port]"
-	char cTemp[16];
-	memset(cTemp, 0x00, sizeof(cTemp));
+	/* make a string "RO[user_port]" */
+	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RO", user_port);
 
-	// get physics ID by a map.
+	/* get physics ID by a map. */
 	string strKey;
 	strKey.assign(cTemp);
-	uint32_t map_id = 0;
+
 	ErrorCode ret = SUCCESS;
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
-	if (iter != io_mapper_.end()){
-		map_id = iter->second;
-		ret = io_dev_ptr_->getDIOByBit(map_id, value);
-		return ret;
-	}
-	FST_WARN("invalid strKey=%s\n", strKey.c_str());
+
+	if (iter != io_mapper_.end())
+		return io_dev_ptr_->getDIOByBit(iter->second, value);
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
 }
 
-//------------------------------------------------------------
-// Function:    setROByBit
-// Summary: Set the output to the the port.
-// In:      user_port  -> the port defined by the user.
-//          value      -> 1 = ON, 0 = OFF.
-// Out:     None.
-// Return:  ErrorCode   -> error codes.
-//------------------------------------------------------------
 ErrorCode IoMapping::setROByBit(uint32_t user_port, uint8_t value)
 {
 	// make a string "RO[user_port]"
-	char cTemp[16];
-	memset(cTemp, 0x00, sizeof(cTemp));
+	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RO", user_port);
 
 	// get physics ID by a map.
 	string strKey;
 	strKey.assign(cTemp);
-	uint32_t map_id = 0;
-	ErrorCode ret = SUCCESS;
+
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
-	if (iter != io_mapper_.end()){
-		map_id = iter->second;
-		ret = io_dev_ptr_->setDIOByBit(map_id, value);
-		return ret;
-	}
-	FST_WARN("invalid strKey=%s\n", strKey.c_str());
+
+	if (iter != io_mapper_.end())
+		return io_dev_ptr_->setDIOByBit(iter->second, value);
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
 }
 
@@ -388,7 +335,6 @@ void IoMapping::loadProgramsPath()
 		files_manager_data_path_ = "/home/fst/fortest"; // for self test only.
 
 	files_manager_data_path_ += "/robot_data/io/io_mapping";
-	printf("io_mapping_load_programs_path: %s .\n", files_manager_data_path_.c_str()); //delete soon
 	FST_INFO("io_mapping_load_programs_path: %s", files_manager_data_path_.c_str());
 }
 
@@ -397,94 +343,85 @@ char * IoMapping::getProgramsPath()
 	return (char *)files_manager_data_path_.c_str();
 }
 
-
 bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
 {
-	char cTemp[16];
-	char cUpperType[8];
-	string strKey, strValue ;
-	
-    strcpy(cUpperType, strIOType);
- 
-    //delete: path to path mapping.
-/*	for (int i = objInfo.from ; i <= objInfo.to ; i++)
-	{
-		memset(cTemp, 0x00, 128);
-		sprintf(cTemp, "%s[%d]", strIOType, i);
-		strKey.assign(cTemp);
-		
-        vector<string> result=split(objInfo.module, "/"); //use "/" to split
-		sprintf(cTemp, "root/IO/%s/%s/%s/%d", 
-			result[0].c_str(), result[2].c_str(), cUpperType, 
-			objInfo.index + i - objInfo.from);
-		strValue.assign(cTemp);
-        //printf("strkey = %s\n",strKey.c_str());
-        //printf("strValue = %s\n",strValue.c_str());
+    /* //use "/" to split */
+    vector<string> result = split(objInfo.module, "/");
 
-		io_mapper.insert(
-			map<string, string>::value_type(strKey, strValue));
-		// Add revert element
-		io_mapper.insert(
-			map<string, string>::value_type(strValue, strKey));
-	}*/
-
-    // id mapping with union
+    /* '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or 
+    "FR-P8A/RS485/1(address)/IN/25(port_offset)" */
     PhysicsID id;
-    id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;//=2
-    
-    vector<string> result=split(objInfo.module, "/"); //use "/" to split
-    id.info.address = atoi(result[2].c_str());  // '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or "FR-P8A/RS485/1(address)/IN/25(port_offset)"
+    id.info.address = atoi(result[2].c_str());
 
-    if (strcasecmp(cUpperType, "DI") == 0)
-        id.info.port_type = IO_TYPE_DI;
-    else if (strcasecmp(cUpperType, "DO") == 0)
-        id.info.port_type = IO_TYPE_DO;
-    else if (strcasecmp(cUpperType, "RI") == 0)
-    	id.info.port_type = IO_TYPE_RI;
-    else if (strcasecmp(cUpperType, "RO") == 0)
-    	id.info.port_type = IO_TYPE_RO;
+    char cUpperType[8] = {};
+    strcpy(cUpperType, strIOType);
+
+    if (result[0].compare("Modbus") == 0)
+    {
+        id.info.dev_type = fst_hal::DEVICE_TYPE_MODBUS;
+
+        if (strcasecmp(cUpperType, "DI") == 0) id.info.port_type = IO_TYPE_DI;
+        else if (strcasecmp(cUpperType, "DO") == 0) id.info.port_type = IO_TYPE_DO;
+        else;
+    }
+    else
+    {
+        id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;//=2
+
+        if (strcasecmp(cUpperType, "DI") == 0)
+            id.info.port_type = IO_TYPE_DI;
+        else if (strcasecmp(cUpperType, "DO") == 0)
+            id.info.port_type = IO_TYPE_DO;
+        else if (strcasecmp(cUpperType, "RI") == 0)
+            id.info.port_type = IO_TYPE_RI;
+        else if (strcasecmp(cUpperType, "RO") == 0)
+            id.info.port_type = IO_TYPE_RO;
+        else;
+    }
 
     id.info.port = objInfo.index;
-    for (int i = objInfo.from ; i <= objInfo.to ; i++)
-	{
-		memset(cTemp, 0x00, sizeof(cTemp));
-		sprintf(cTemp, "%s[%d]", strIOType, i);
-		strKey.assign(cTemp);
+
+    for (int i = objInfo.from; i <= objInfo.to; i++)
+    {
+        char cTemp[16] = {};
+        sprintf(cTemp, "%s[%d]", strIOType, i);
+
+        string strKey;
+        strKey.assign(cTemp);
         FST_INFO("iomapping:strkey = %s  , physics id=%x", strKey.c_str(), id.number);
 
-		io_mapper_.insert(map<string, uint32_t>::value_type(strKey, id.number));
+        io_mapper_.insert(map<string, uint32_t>::value_type(strKey, id.number));
         id.info.port++;
-	}
+    }
 
-	return true;
+    return true;
 }
 
 bool IoMapping::parseIOObject(cJSON *jsonIObject, const char * strIOType)
 {
-	IOMapJsonInfo objInfo ;
-	cJSON *child=jsonIObject->child;
-	
-	//printf("parseDIObject:cJSON_Array--- %s\n", jsonIObject->string);
-	while (child) 
+	cJSON *child = jsonIObject->child;
+	IOMapJsonInfo objInfo;
+
+	while (child)
 	{
-        // the last catelog, such as from, index... 
-		//printf("parseIOObject: cJSON_object %s\n", child->string);
 		if(strcmp(child->string, "from") == 0)
 		{
-			objInfo.from = child->valueint ;
+			objInfo.from = child->valueint;
 		}
 		else if(strcmp(child->string, "index") == 0)
 		{
-			objInfo.index = child->valueint ;
+			objInfo.index = child->valueint;
 		}
 		else if(strcmp(child->string, "module") == 0)
 		{
-			strcpy(objInfo.module, child->valuestring) ;
+			strcpy(objInfo.module, child->valuestring);
 		}
 		else if(strcmp(child->string, "to") == 0)
 		{
-			objInfo.to = child->valueint ;
+			objInfo.to = child->valueint;
 		}
+		else{}
+
 		child=child->next;
 	}
 	
@@ -494,122 +431,109 @@ bool IoMapping::parseIOObject(cJSON *jsonIObject, const char * strIOType)
 
 bool IoMapping::parseIO(cJSON *jsonDI, const char * strIOType)
 {
-	cJSON *child=jsonDI->child;
+	cJSON *child = jsonDI->child;
 
-	while (child) // && !fail)
+	while (child) 
 	{
-		//printf("parseIO:cJSON_object--- %s\n", child->string);
-		switch ((child->type)&255)
+		switch ((child->type) & 0xff)
 		{
-		case cJSON_Number:	
-			//printf("parseIO:cJSON_Number %d\n", child->valueint); 
-			break;
-		case cJSON_String:	
-			//printf("parseIO:cJSON_String %s\n", child->valuestring); 
-			break;
-		case cJSON_Object:
-            // the second catelog, such as [{},{}].
-			//printf("parseIO:cJSON_Object\n"); 
-			parseIOObject(child, strIOType);
-			break;
+			case cJSON_Number:	
+				break;
+			case cJSON_String:	
+				break;
+			case cJSON_Object:
+        	    /* the second catelog, such as [{},{}]. */
+				parseIOObject(child, strIOType);
+				break;
+			default:;
 		}
 		child=child->next;
 	}
 	return true;
 }
 
-bool IoMapping::parseIOMap(char * data, const char * strIOType)
+bool IoMapping::parseIOMap(char* data, const char* strIOType)
 {
-	cJSON *json;
-	json=cJSON_Parse(data);
-	if(json == NULL)
-		return false;
-	
-	cJSON *child=json->child;
-	while(child)
-	{
-		switch ((child->type)&255)
-		{
-		case cJSON_True:	
-			//printf("parseIOMap:cJSON_True"); 
-			break;
-		case cJSON_Number:	
-			//printf("parseIOMap:cJSON_Number %d\n", child->valueint); 
-			break;
-		case cJSON_String:	
-			//printf("parseIOMap:cJSON_String %s\n", child->valuestring);
-			break;
-		case cJSON_Array:	
-			{
-                // First catelog, such as DI, DO, AI, AO.
-				//printf("parseIOMap:cJSON_Array %s\n", child->string);
+    cJSON* json = cJSON_Parse(data);
+    if (json == NULL) return false;
+
+    cJSON *child = json->child;
+    while(child)
+    {
+        switch ((child->type) & 0xff)
+        {
+            case cJSON_True:
+                break;
+            case cJSON_Number:
+                break;
+            case cJSON_String:
+                break;
+            case cJSON_Array:
                 parseIO(child, strIOType);
-				break;
-			}
-		case cJSON_Object:	
-			//printf("cJSON_Object\n"); 
-			break;
-		}
-		child = child->next ;
-	}
-	cJSON_Delete(json);
-	return true;
+                break;
+            case cJSON_Object:
+                break;
+            default:;
+        }
+        child = child->next;
+    }
+
+    cJSON_Delete(json);
+    return true;
 }
 
 bool IoMapping::printIOMapper()
 {
-	map<string, uint32_t>::iterator it;
-
-	it = io_mapper_.begin();
-	
 	printf("\t\tobjThreadCntrolBlock->io_mapper_ has %d elements \n", 
-			io_mapper_.size());
+		io_mapper_.size());
 
-	while(it != io_mapper_.end())
-	{
-		printf("\t\t%s :: 0x%x \n", 
-				it->first.c_str(), it->second);
-		it++;         
-	}
+	map<string, uint32_t>::iterator it;
+	for (it = io_mapper_.begin(); it != io_mapper_.end(); ++it)
+		printf("\t\t%s :: 0x%x \n", it->first.c_str(), it->second);
+
 	return true;
 }
 
 bool IoMapping::appendSingleIOMapper(char *filename, const char * strIOType)
 {
-	FILE *f;long len;char *data;
+	FILE *f = fopen(filename,"rb");
 
-	f=fopen(filename,"rb"); 
-	if(f)
+	if(f != NULL)
 	{
         // read file to data, then parse data.
-	    fseek(f,0,SEEK_END); len=ftell(f); fseek(f,0,SEEK_SET);
-	    data=(char*)malloc(len+1); fread(data,1,len,f); 
+	    fseek(f, 0, SEEK_END); 
+		long len = ftell(f);
+		fseek(f,0,SEEK_SET);
+
+	    char* data = (char*)malloc(len + 1);
+		fread(data, 1, len, f);
 		fclose(f);
+
 		parseIOMap(data, strIOType);
 		free(data);
-	} else {
-		return false;
-	}
-	return true;
+		return true;
+	} 
+
+	return false;
 }
 
 vector<string> IoMapping::split(string str,string pattern)
 {
-	string::size_type pos;
-	vector<string> result;
-	str+=pattern;
-	int size=str.size();
+	str += pattern;
 
-	for(int i=0; i<size; i++)
+	vector<string> result;
+	for(int i = 0; i < str.size(); i++)
 	{
-		pos=str.find(pattern,i);
-		if((int)pos<size)
+		string::size_type pos = str.find(pattern, i);
+
+		if((int)pos < str.size())
 		{
-			string s=str.substr(i,pos-i);
+			string s = str.substr(i, pos-i);
 			result.push_back(s);
-			i=pos+pattern.size()-1;
+			i = pos + pattern.size() - 1;
 		}
 	}
+
 	return result;
 }
 

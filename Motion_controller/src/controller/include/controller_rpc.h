@@ -29,7 +29,7 @@ public:
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
-                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::FstIoDevice* io_device_ptr); //feng add for mapping
+                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager_ptr); //feng add for mapping
 
     void processRpc();
 
@@ -48,6 +48,7 @@ private:
     ControllerPublish* publish_ptr_;
     fst_ctrl::IoMapping* io_mapping_ptr_; //feng add for mapping.
     fst_hal::FstIoDevice* io_device_ptr_; //feng add
+    fst_hal::ModbusManager* modbus_manager_ptr_; //yuyy add
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -384,6 +385,15 @@ private:
     void handleRpc0x00010944(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/program_launching/syncFileMacroConfig"
     void handleRpc0x00016B27(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/modbus/createServer", 
+    void handleRpc0x00017982(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/deleteServer", 
+    void handleRpc0x00006C22(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/createClient", 
+    void handleRpc0x00015F94(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/deleteClient", 
+    void handleRpc0x00014CF4(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

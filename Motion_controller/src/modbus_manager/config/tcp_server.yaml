@@ -2,19 +2,19 @@ log_level: 1
 port: 502
 cycle_time: 1000 #1ms
 connection_nb: 5
-is_debug: true
+is_debug: false
 comm_type: TCP
 reg_info:
     coil:
-        addr: 0
+        addr: 1
         max_nb: 1024
     discrepte_input:
-        addr: 0
+        addr: 1
         max_nb: 1024
     input_register:
-        addr: 0
+        addr: 1
         max_nb: 1024
     holding_register:
-        addr: 0
+        addr: 1
         max_nb: 1024
 #END

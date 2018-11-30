@@ -197,6 +197,8 @@
 #define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE000D   /*modbus client: read failed*/																										
 #define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE000E   /*modbus client: write failed*/																										
 #define MODBUS_SERVER_NOT_EXISTED (unsigned long long int)0x0001000200AE000F   /*modbus server does not existed*/																										
+#define MODBUS_IS_OPENED (unsigned long long int)0x0001000200AE0010   /*modbus is opened*/																										
+#define MODBUS_IS_CLOSED (unsigned long long int)0x0001000200AE0011   /*modbus is closed*/																										
 
 
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/

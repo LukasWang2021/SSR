@@ -457,6 +457,14 @@ private:
     /********rpc/program_launching/syncFileMacroConfig, RequestMessageType_String**********/
     void handleRequest0x00016B27(int recv_bytes);
 
+    /********rpc/modbus/createServer, RequestMessageType_ModbusTcpServer**********/
+    void handleRequest0x00017982(int recv_bytes);
+    /********rpc/modbus/deleteServer, RequestMessageType_Void**********/
+    void handleRequest0x00006C22(int recv_bytes);
+    /********rpc/modbus/createClient, RequestMessageType_ModbusTcpClient**********/
+    void handleRequest0x00015F94(int recv_bytes);
+    /********rpc/modbus/deleteClient, RequestMessageType_Void**********/
+    void handleRequest0x00014CF4(int recv_bytes);
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -828,6 +836,16 @@ private:
     void handleResponse0x00010944(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/program_launching/syncFileMacroConfig, ResponseMessageType_Uint64**********/
     void handleResponse0x00016B27(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/modbus/createServer, ResponseMessageType_Uint64**********/
+    void handleResponse0x00017982(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/deleteServer, ResponseMessageType_Uint64**********/
+    void handleResponse0x00006C22(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/createClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00015F94(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/deleteClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00014CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
 
     fst_ip::LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

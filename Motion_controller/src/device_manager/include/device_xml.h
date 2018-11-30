@@ -1,14 +1,12 @@
 #ifndef DEVICE_XML_H
 #define DEVICE_XML_H
 
-
 #include "common_log.h"
 #include "device_manager_param.h"
 #include <string>
 #include <vector>
 #include "xml_help.h"
 #include "base_device.h"
-
 
 namespace fst_hal
 {
@@ -56,6 +54,15 @@ typedef struct
     int dummy;
 }VirtualSafetyConfigDetail;
 
+typedef struct
+{
+    int start_mode;
+    std::string ip;
+    int port;
+    struct timeval response_timeout;
+    struct timeval bytes_timeout;
+}FstFstModbusConfigDetail;
+
 // it is ugly to apply struct instead of union here,
 // the only merit that struct hold is avoid compilation failure.
 // vector<union> is the root of the problem.
@@ -65,11 +72,13 @@ typedef struct
     FstIoConfigDetail fst_io;
     FstSafetyConfigDetail fst_safety;
     FstFstAnybusConfigDetail any_bus;
+    FstFstModbusConfigDetail modbus;
     NormalConfigDetail normal;
     VirtualAxisConfigDetail virtual_axis;
     VirtualIoConfigDetail virtual_io;
     VirtualSafetyConfigDetail virtual_safety;
 }DeviceConfigDetail;
+
 
 typedef struct
 {

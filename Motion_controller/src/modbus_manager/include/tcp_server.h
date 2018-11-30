@@ -47,6 +47,7 @@ struct ServerInfo
     ModbusRegAddrInfo discrepte_input;
     ModbusRegAddrInfo holding_reg;
     ModbusRegAddrInfo input_reg;
+    bool is_valid;
 };
 
 class ModbusTCPServer

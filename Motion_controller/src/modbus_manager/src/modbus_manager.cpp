@@ -10,13 +10,13 @@
 using namespace std;
 using namespace fst_hal;
 
-ModbusManager* ModbusManager::instance_ = NULL;
 
-ModbusManager::ModbusManager():
+ModbusManager::ModbusManager(int address):
+    BaseDevice(address, fst_hal::DEVICE_TYPE_MODBUS),address_(address),
     log_ptr_(NULL), param_ptr_(NULL),
     client_(NULL), server_(NULL),
     server_ip_(""), server_port_(-1),
-    start_mode_(0), client_param_ptr_(NULL)
+    start_mode_(0), is_valid_(false)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();
@@ -24,8 +24,20 @@ ModbusManager::ModbusManager():
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
+bool ModbusManager::init()
+{
+    if(!param_ptr_->loadParam()) return false;
+
+    client_ = new ModbusTCPClient(param_ptr_->client_file_path_);
+
+    if(client_->initParam() != SUCCESS) return false;
+
+    return true;
+}
+
 ModbusManager::~ModbusManager()
 {
+    is_valid_ = false;
     if (client_ != NULL)
     {
         delete client_;
@@ -37,6 +49,7 @@ ModbusManager::~ModbusManager()
         delete server_;
         server_ = NULL;
     }
+
     if (log_ptr_ != NULL)
     {
         delete log_ptr_;
@@ -47,53 +60,36 @@ ModbusManager::~ModbusManager()
         delete param_ptr_;
         param_ptr_ = NULL;
     }
-    if (client_param_ptr_ != NULL)
-    {
-        delete client_param_ptr_;
-        client_param_ptr_ = NULL;
-    }
 }
 
-ModbusManager* ModbusManager::getInstance()
+ErrorCode ModbusManager::openModbus(int start_mode)
 {
-    if(instance_ == NULL)
-    {
-        instance_ = new ModbusManager();
-    }
-    return instance_;
-}
+    ErrorCode error = SUCCESS;
 
-ErrorCode ModbusManager::init(int start_mode)
-{
+    if (is_valid_)
+    {
+        return MODBUS_IS_OPENED;
+    }
+
     if (start_mode != SERVER && start_mode != CLIENT)
     {
         return MODBUS_MANAGER_INIT_FAILED;
     }
 
-    if(!param_ptr_->loadParam())
-    {
-        return MODBUS_MANAGER_LOAD_PARAM_FAILED;
-    }
-
     start_mode_ = start_mode;
-
-    client_ = new ModbusTCPClient(param_ptr_->client_file_path_);
-    return client_->initParam();
-}
-
-ErrorCode ModbusManager::initModbus()
-{
-    ErrorCode error = SUCCESS;
 
     if (start_mode_ == SERVER)
     {
-        server_ = new ModbusTCPServer(param_ptr_->server_file_path_);
+        if (server_ == NULL)
+        {
+            server_ = new ModbusTCPServer(param_ptr_->server_file_path_);
 
-        error = server_->init();
-        if (error != SUCCESS) return error;
+            error = server_->init();
+            if (error != SUCCESS) return error;
 
-        error = server_->open();
-        if (error != SUCCESS) return error;
+            error = server_->open();
+            if (error != SUCCESS) return error;
+        }
 
         server_ip_ = server_->getIp();
         server_port_ = server_->getPort();
@@ -108,7 +104,18 @@ ErrorCode ModbusManager::initModbus()
     error = client_->init();
     if (error != SUCCESS) return error;
 
+    is_valid_ = true;
     return SUCCESS;
+}
+
+bool ModbusManager::isValid()
+{
+    return is_valid_;
+}
+
+int ModbusManager::getStartMode()
+{
+    return start_mode_;
 }
 
 bool ModbusManager::isServerRunning()
@@ -181,21 +188,37 @@ ErrorCode ModbusManager::getServerPort(int& port)
 
 ErrorCode ModbusManager::setClientIp(string ip)
 {
+    if (is_valid_)
+    {
+        return MODBUS_IS_OPENED;
+    }
     return client_->setIp(ip);
 }
 
 ErrorCode ModbusManager::setClientPort(int port)
 {
+    if (is_valid_)
+    {
+        return MODBUS_IS_OPENED;
+    }
     return client_->setPort(port);
 }
 
 ErrorCode ModbusManager::setResponseTimeout(timeval timeout)
 {
+    if (is_valid_)
+    {
+        return MODBUS_IS_OPENED;
+    }
     return client_->setResponseTimeout(timeout);
 }
 
 ErrorCode ModbusManager::setBytesTimeout(timeval timeout)
 {
+    if (is_valid_)
+    {
+        return MODBUS_IS_OPENED;
+    }
     return client_->setBytesTimeout(timeout);
 }
 
@@ -245,4 +268,27 @@ ErrorCode ModbusManager::writeAndReadHoldingRegs(
 ErrorCode ModbusManager::readInputRegs(int addr, int nb, uint16_t *dest)
 {
     return client_->readInputRegs(addr, nb, dest);
+}
+
+ErrorCode ModbusManager::setClientInfo(ClientInfo info)
+{
+    if (is_valid_)
+    {
+        return MODBUS_IS_OPENED;
+    }
+    return client_->setInfo(info);
+}
+
+ErrorCode ModbusManager::closeModbus()
+{
+    if (client_ != NULL)
+        client_->closeClient();
+
+    if (start_mode_ == SERVER && server_ != NULL)
+    {
+        delete server_;
+        server_ = NULL;
+    }
+
+    is_valid_ = false;
 }

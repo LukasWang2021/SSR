@@ -49,6 +49,7 @@
   <build_depend>fst_axis_device</build_depend>
   <build_depend>virtual_axis_device</build_depend>
   <build_depend>xml_help</build_depend>
+  <build_depend>thread_help</build_depend>
 
   <run_depend>log_manager</run_depend>
   <run_depend>parameter_manager</run_depend>
@@ -58,7 +59,7 @@
   <run_depend>fst_axis_device</run_depend>
   <run_depend>virtual_axis_device</run_depend>
   <run_depend>xml_help</run_depend>
-
+  <run_depend>modbus_manager</run_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

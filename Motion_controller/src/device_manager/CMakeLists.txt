@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     fst_safety_device
     fst_axis_device
     virtual_axis_device
+    modbus_manager
     xml_help
 )
 
@@ -27,14 +28,15 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/fst_io_device/include
     ${depend_PATH_INC}/fst_safety_device/include 
-    ${depend_PATH_INC}/fst_axis_device/include 
+    ${depend_PATH_INC}/fst_axis_device/include
     ${depend_PATH_INC}/virtual_axis_device/include
-    ${depend_PATH_INC}/xml_help/include 
+    ${depend_PATH_INC}/xml_help/include
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
-    ${depend_PATH_INC}/modbus_manager/include/
-    ${depend_PATH_INC}/io_mapping/include 
+    ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/io_mapping/include
+    ${depend_PATH_INC}/thread_help/include
 )
 
 catkin_package(

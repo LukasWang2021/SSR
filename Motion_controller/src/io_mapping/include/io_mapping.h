@@ -17,6 +17,7 @@
 #include "io_simulation.h"
 #include "fst_io_device.h"
 #include "error_code.h"
+#include "modbus_manager.h"
 
 
 using namespace std;
@@ -46,7 +47,7 @@ public:
 	// Return:  1  -> success.
 	//          -  -> failed.
 	//------------------------------------------------------------
-	ErrorCode init(fst_hal::FstIoDevice* io_device_ptr);
+	ErrorCode init(fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager);
 
 	//------------------------------------------------------------
 	// Function:    updateMappingFile
@@ -161,6 +162,7 @@ private:
     fst_log::Logger* log_ptr_;
     IoSimulation* sim_ptr_;
     fst_hal::FstIoDevice* io_dev_ptr_;
+    fst_hal::ModbusManager* modbus_manager_;
     map<string, uint32_t> io_mapper_; // to do uint32_t tobe PhysicsID
 	std::string files_manager_data_path_ = "";
 };

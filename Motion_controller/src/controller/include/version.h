@@ -1,7 +1,8 @@
 #ifndef CONTROLLER_VERSION_H_
 #define CONTROLLER_VERSION_H_ 
-
-char *get_version();  
+#include <string>
+using namespace std;
+char* get_version();
 
 char *get_build_date();
 

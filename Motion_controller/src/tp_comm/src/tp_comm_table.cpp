@@ -171,10 +171,16 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/program_launching/getMethod",	0x00010944,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00010944,	&TpComm::handleResponse0x00010944,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/program_launching/syncFileMacroConfig",	0x00016B27,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00016B27,	&TpComm::handleResponse0x00016B27,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
-	rpc_service =	{	"/rpc/modbus/createServer",	0x00017982,	"RequestMessageType.ModbusTcpServer",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00017982,	&TpComm::handleResponse0x00017982,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/newServer",	0x0000D1B2,	"RequestMessageType.ModbusServerConfig",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000D1B2,	&TpComm::handleResponse0x0000D1B2,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/deleteServer",	0x00006C22,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00006C22,	&TpComm::handleResponse0x00006C22,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
-	rpc_service =	{	"/rpc/modbus/createClient",	0x00015F94,	"RequestMessageType.ModbusTcpClient",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00015F94,	&TpComm::handleResponse0x00015F94,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
-	rpc_service =	{	"/rpc/modbus/deleteClient",	0x00014CF4,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00014CF4,	&TpComm::handleResponse0x00014CF4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/saveServerConfig",	0x000050E7,	"RequestMessageType.ModbusServerConfig",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000050E7,	&TpComm::handleResponse0x000050E7,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/getServerConfig",	0x00016947,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_ModbusServerConfig",	&TpComm::handleRequest0x00016947,	&TpComm::handleResponse0x00016947,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/newClient",	0x00009F84,	"RequestMessageType.ModbusClientConfig",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00009F84,	&TpComm::handleResponse0x00009F84,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/deleteClient",	0x00014CF4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00014CF4,	&TpComm::handleResponse0x00014CF4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/saveClientConfig",	0x00002B57,	"RequestMessageType.ModbusClientConfig",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00002B57,	&TpComm::handleResponse0x00002B57,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/getClientConfig",	0x0000FC17,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_ModbusClientConfig",	&TpComm::handleRequest0x0000FC17,	&TpComm::handleResponse0x0000FC17,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/setConnectionStatus",	0x00010C63,	"RequestMessageType.Bool",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010C63,	&TpComm::handleResponse0x00010C63,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/getConnectionStatus",	0x0000E973,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Bool",	&TpComm::handleRequest0x0000E973,	&TpComm::handleResponse0x0000E973,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
 }
 

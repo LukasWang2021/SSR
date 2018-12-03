@@ -457,14 +457,26 @@ private:
     /********rpc/program_launching/syncFileMacroConfig, RequestMessageType_String**********/
     void handleRequest0x00016B27(int recv_bytes);
 
-    /********rpc/modbus/createServer, RequestMessageType_ModbusTcpServer**********/
-    void handleRequest0x00017982(int recv_bytes);
+    /********rpc/modbus/newServer, RequestMessageType_ModbusServerConfig**********/
+    void handleRequest0x0000D1B2(int recv_bytes);
     /********rpc/modbus/deleteServer, RequestMessageType_Void**********/
     void handleRequest0x00006C22(int recv_bytes);
-    /********rpc/modbus/createClient, RequestMessageType_ModbusTcpClient**********/
-    void handleRequest0x00015F94(int recv_bytes);
-    /********rpc/modbus/deleteClient, RequestMessageType_Void**********/
+    /********rpc/modbus/saveServerConfig, RequestMessageType_ModbusServerConfig**********/
+    void handleRequest0x000050E7(int recv_bytes);
+    /********rpc/modbus/newClient, RequestMessageType_ModbusClientConfig**********/
+    void handleRequest0x00009F84(int recv_bytes);
+    /********rpc/modbus/deleteClient, RequestMessageType_Int32**********/
     void handleRequest0x00014CF4(int recv_bytes);
+    /********rpc/modbus/saveClientConfig, RequestMessageType_ModbusClientConfig**********/
+    void handleRequest0x00002B57(int recv_bytes);
+    /********rpc/modbus/getServerConfig, RequestMessageType_Void**********/
+    void handleRequest0x00016947(int recv_bytes);
+    /********rpc/modbus/getClientConfig, RequestMessageType_Int32**********/
+    void handleRequest0x0000FC17(int recv_bytes);
+    /********rpc/modbus/getConnectionStatus, RequestMessageType_Void**********/
+    void handleRequest0x0000E973(int recv_bytes);
+    /********rpc/modbus/setConnectionStatus, RequestMessageType_Bool**********/
+    void handleRequest0x00010C63(int recv_bytes);
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -837,14 +849,27 @@ private:
     /********rpc/program_launching/syncFileMacroConfig, ResponseMessageType_Uint64**********/
     void handleResponse0x00016B27(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-    /********rpc/modbus/createServer, ResponseMessageType_Uint64**********/
-    void handleResponse0x00017982(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/newServer, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000D1B2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/modbus/deleteServer, ResponseMessageType_Uint64**********/
     void handleResponse0x00006C22(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/modbus/createClient, ResponseMessageType_Uint64**********/
-    void handleResponse0x00015F94(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/saveServerConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x000050E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/newClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00009F84(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/modbus/deleteClient, ResponseMessageType_Uint64**********/
     void handleResponse0x00014CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/saveClientConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x00002B57(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+	/********rpc/modbus/getServerConfig, ResponseMessageType_Uint64_ModbusServerConfig**********/
+    void handleResponse0x00016947(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+	/********rpc/modbus/getClientConfig, ResponseMessageType_Uint64_ModbusClientConfig**********/
+    void handleResponse0x0000FC17(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getConnectionStatus, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x0000E973(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/modbus/setConnectionStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x00010C63(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
 
     fst_ip::LocalIP local_ip_;

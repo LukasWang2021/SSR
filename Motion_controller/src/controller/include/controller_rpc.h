@@ -386,14 +386,26 @@ private:
     // "/rpc/program_launching/syncFileMacroConfig"
     void handleRpc0x00016B27(void* request_data_ptr, void* response_data_ptr);
 
-    //"/rpc/modbus/createServer", 
-    void handleRpc0x00017982(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/deleteServer", 
+    //"/rpc/modbus/newServer",
+    void handleRpc0x0000D1B2(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/deleteServer",
     void handleRpc0x00006C22(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/createClient", 
-    void handleRpc0x00015F94(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/deleteClient", 
+    //"/rpc/modbus/saveServerConfig",
+    void handleRpc0x000050E7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getServerConfig",
+    void handleRpc0x00016947(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/newClient",
+    void handleRpc0x00009F84(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/deleteClient",
     void handleRpc0x00014CF4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/saveClientConfig",
+    void handleRpc0x00002B57(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientConfig",
+    void handleRpc0x0000FC17(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/enableConnection",
+    void handleRpc0x00010C63(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getConnectionStatus"
+    void handleRpc0x0000E973(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

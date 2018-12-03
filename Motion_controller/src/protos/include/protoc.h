@@ -25,6 +25,9 @@
 #include "request/request_int32list_double.pb.h"
 #include "request/request_stringlist.pb.h"
 
+#include "request/request_modbus_client_config.pb.h"
+#include "request/request_modbus_server_config.pb.h"
+
 #include "message_type/base.pb.h"
 #include "message_type/publish_table.pb.h"
 #include "message_type/publish_topic.pb.h"
@@ -60,6 +63,11 @@
 #include "message_type/io_type.pb.h"
 #include "message_type/io_device_info.pb.h"
 
+#include "message_type/timeval.pb.h"
+#include "message_type/modbus_client.pb.h"
+#include "message_type/modbus_server.pb.h"
+#include "message_type/modbus_server_function.pb.h"
+
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
 #include "response/response_rpc_table.pb.h"
@@ -89,5 +97,9 @@
 #include "response/response_uint64_bool.pb.h"
 #include "response/response_uint64_string.pb.h"
 #include "response/response_file.pb.h"
+
+#include "response/response_modbus_client_config.pb.h"
+#include "response/response_modbus_server_config.pb.h"
+
 
 #endif

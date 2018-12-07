@@ -346,7 +346,7 @@ void TpComm::handleRequest0x000093EE(int recv_bytes)
         recv_bytes, RequestMessageType_Void_fields, -1);
 }
 
-/* todo delete
+
 //"/rpc/controller/setStartMode"
 void TpComm::handleRequest0x00010225(int recv_bytes)
 {
@@ -394,4 +394,3 @@ void TpComm::handleRequest0x000092E5(int recv_bytes)
     handleRequestPackage(0x000092E5, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_Void_fields, -1);
 }
-*/

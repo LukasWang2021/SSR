@@ -49,7 +49,6 @@ void ControllerRpc::handleRpc0x000093EE(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
 }
 
-/* todo delete
 // "/rpc/controller/setStartMode"
 void ControllerRpc::handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr)
 {
@@ -70,4 +69,4 @@ void ControllerRpc::handleRpc0x000092E5(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/getStartMode"));
 }
-*/
+

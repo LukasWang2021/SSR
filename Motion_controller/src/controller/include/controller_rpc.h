@@ -116,9 +116,9 @@ private:
     // "/rpc/controller/getVersion"
     void handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/setStartMode"
-    //void handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr); //todo delete
+    void handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getStartMode"
-    //void handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr); //todo delete
+    void handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr);
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"
@@ -277,8 +277,6 @@ private:
     void handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/ignoreLostZeroError"
     void handleRpc0x00014952(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/motion_control/axis_group/setSingleZeroPointOffset"
-    void handleRpc0x00012404(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/setAllZeroPointOffsets"
     void handleRpc0x00008AB4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getAllZeroPointOffsets"

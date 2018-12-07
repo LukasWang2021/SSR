@@ -700,24 +700,6 @@ void ControllerRpc::handleRpc0x00014952(void* request_data_ptr, void* response_d
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/ignoreLostZeroError"));
 }
 
-// "/rpc/motion_control/axis_group/setSingleZeroPointOffset"
-void ControllerRpc::handleRpc0x00012404(void* request_data_ptr, void* response_data_ptr)
-{
-    RequestMessageType_Int32List_Double* rq_data_ptr = static_cast<RequestMessageType_Int32List_Double*>(request_data_ptr);
-    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
-    if(rq_data_ptr->data1.data_count == 2)
-    {
-        motion_control_ptr_->setOffset(rq_data_ptr->data1.data[1], rq_data_ptr->data2.data);//data1.data[0] is groupID, data1.data[1] is axis index.
-        rs_data_ptr->data.data = SUCCESS;
-    }
-    else
-    {
-        rs_data_ptr->data.data = INVALID_PARAMETER;
-    }
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setSingleZeroPointOffset"));
-}
-
 // "/rpc/motion_control/axis_group/setAllZeroPointOffsets"
 void ControllerRpc::handleRpc0x00008AB4(void* request_data_ptr, void* response_data_ptr)
 {

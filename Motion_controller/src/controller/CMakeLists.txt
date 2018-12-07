@@ -14,8 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 2)
-set(VERSION_PATCH 3)
-set(VERSION_COMMIT \"77cd9889\") #from gitlab commit number.
+set(VERSION_PATCH 2)
+set(VERSION_COMMIT \"e17d82dd\") #from gitlab commit number.
 string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
 string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
 

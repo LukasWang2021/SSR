@@ -76,7 +76,7 @@ eval_value forgesight_get_io_status(char *name)
 	char io_idx[16] ;
 	// char io_key_buffer[16] ;
 
-	int  iIOIdx = 0 ;
+//	int  iIOIdx = 0 ;
 	char * namePtr = name ;
 	char *temp = NULL ;
 	
@@ -95,7 +95,7 @@ eval_value forgesight_get_io_status(char *name)
 	memset(io_idx, 0x00, 16);
 	temp = io_idx ;
 	get_num_token(namePtr, temp);
-	iIOIdx = atoi(io_idx);
+//	iIOIdx = atoi(io_idx);
 	// namePtr += strlen(reg_idx) ;
 	
 	namePtr += strlen(io_idx) ;
@@ -104,46 +104,46 @@ eval_value forgesight_get_io_status(char *name)
 	}
 	namePtr++ ;
 
-	FST_INFO("set_io status: %s:%d (%s).", io_name, iIOIdx, name);
+	FST_INFO("set_io status: %s:%d (%s).", io_name, io_idx, name);
 	if(!strcmp(io_name, TXT_AI))
 	{
-	//	bRet = g_objRegManagerInterface->getAi(iIOIdx, iValue);
+	//	bRet = g_objRegManagerInterface->getAi(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_AO))
 	{
-	//	bRet = g_objRegManagerInterface->getAo(iIOIdx, iValue);
+	//	bRet = g_objRegManagerInterface->getAo(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_DI))
 	{
-		bRet = g_objRegManagerInterface->getDi(iIOIdx, iValue);
+		bRet = g_objRegManagerInterface->getDi(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_DO))
 	{
-		bRet = g_objRegManagerInterface->getDo(iIOIdx, iValue);
+		bRet = g_objRegManagerInterface->getDo(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_RI))
 	{
-		bRet = g_objRegManagerInterface->getRi(iIOIdx, iValue);
+		bRet = g_objRegManagerInterface->getRi(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_RO))
 	{
-		bRet = g_objRegManagerInterface->getRo(iIOIdx, iValue);
+		bRet = g_objRegManagerInterface->getRo(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_SI))
 	{
-	//	bRet = g_objRegManagerInterface->getSi(iIOIdx, iValue);
+	//	bRet = g_objRegManagerInterface->getSi(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_SO))
 	{
-	//	bRet = g_objRegManagerInterface->getSo(iIOIdx, iValue);
+	//	bRet = g_objRegManagerInterface->getSo(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_UI))
 	{
-	//	bRet = g_objRegManagerInterface->getUi(iIOIdx, iValue);
+	//	bRet = g_objRegManagerInterface->getUi(io_idx, iValue);
 	}
 	else if(!strcmp(io_name, TXT_UO))
 	{
-	//	bRet = g_objRegManagerInterface->getUo(iIOIdx, iValue);
+	//	bRet = g_objRegManagerInterface->getUo(io_idx, iValue);
 	}
 	value.setFloatValue(iValue);
 	return value;
@@ -152,6 +152,7 @@ eval_value forgesight_get_io_status(char *name)
 int forgesight_set_io_status(char *name, eval_value& valueStart)
 {
 	bool bRet = false ;
+	eval_value value;
 	int iValue;
 	char io_name[16] ;
 	char io_idx[16] ;
@@ -188,43 +189,43 @@ int forgesight_set_io_status(char *name, eval_value& valueStart)
 	FST_INFO("set_io status: %s:%d (%s).", io_name, iIOIdx, name);
 	if(!strcmp(io_name, TXT_AI))
 	{
-	//	bRet = g_objRegManagerInterface->setAi(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setAi(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_AO))
 	{
-	//	bRet = g_objRegManagerInterface->setAo(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setAo(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_DI))
 	{
-		bRet = g_objRegManagerInterface->setDi(iIOIdx, (int)valueStart.getFloatValue());
+		bRet = g_objRegManagerInterface->setDi(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_DO))
 	{
-		bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
+		bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_RI))
 	{
-		bRet = g_objRegManagerInterface->setRi(iIOIdx, (int)valueStart.getFloatValue());
+		bRet = g_objRegManagerInterface->setRi(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_RO))
 	{
-		bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
+		bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_SI))
 	{
-	//	bRet = g_objRegManagerInterface->setSi(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setSi(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_SO))
 	{
-	//	bRet = g_objRegManagerInterface->setSo(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setSo(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_UI))
 	{
-	//	bRet = g_objRegManagerInterface->setUi(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setUi(iIOIdx, (int)value.getFloatValue());
 	}
 	else if(!strcmp(io_name, TXT_UO))
 	{
-	//	bRet = g_objRegManagerInterface->setUo(iIOIdx, (int)valueStart.getFloatValue());
+	//	bRet = g_objRegManagerInterface->setUo(iIOIdx, (int)value.getFloatValue());
 	}
 	return 0;
 

@@ -319,9 +319,9 @@ private:
     /********rpc/interpreter/abort, RequestMessageType_Void**********/
     void handleRequest0x000086F4(int recv_bytes);
     /********rpc/controller/setStartMode, RequestMessageType_Int32**********/
-    //void handleRequest0x00010225(int recv_bytes); //todo delete
+    void handleRequest0x00010225(int recv_bytes);
     /********rpc/controller/getStartMode, RequestMessageType_Void**********/
-    //void handleRequest0x000092E5(int recv_bytes); //todo delete
+    void handleRequest0x000092E5(int recv_bytes);
 
     /********rpc/publish/addTopic, RequestMessageType_Topic**********/
     void handleRequest0x000050E3(int recv_bytes);
@@ -667,11 +667,11 @@ private:
     /********rpc/interpreter/abort, ResponseMessageType_Bool**********/
     void handleResponse0x000086F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/interpreter/switchStep, ResponseMessageType_Uint64**********/
-    void handleResponse0x000140F0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size); 
+    void handleResponse0x000140F0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/setStartMode, ResponseMessageType_Uint64**********/
-    //void handleResponse0x00010225(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size); //todo delete
+    void handleResponse0x00010225(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getStartMode, ResponseMessageType_Uint64_Int32**********/
-    //void handleResponse0x000092E5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size); //todo delete
+    void handleResponse0x000092E5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/publish/addTopic, ResponseMessageType_Bool**********/
     void handleResponse0x000050E3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

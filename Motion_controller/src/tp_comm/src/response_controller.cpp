@@ -243,7 +243,7 @@ void TpComm::handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-/*todo delete
+
 //"/rpc/controller/setStartMode"
 void TpComm::handleResponse0x00010225(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
 {
@@ -277,4 +277,4 @@ void TpComm::handleResponse0x000092E5(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
     }
 }
-*/
+

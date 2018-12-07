@@ -30,7 +30,6 @@ bool parseScript(const char* fname);
 // void findLoopEnd(int index);
 void resetProgramNameAndLineNum();
 
-char * getProgramName();
 void setProgramName(char * program_name);
 InterpreterState getPrgmState();
 void setPrgmState(InterpreterState state);

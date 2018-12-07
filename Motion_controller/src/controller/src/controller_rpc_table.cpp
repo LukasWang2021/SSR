@@ -29,8 +29,9 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/setSystemTime", 0x000167C5, &ControllerRpc::handleRpc0x000167C5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getSystemTime", 0x000003F5, &ControllerRpc::handleRpc0x000003F5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getVersion", 0x000093EE, &ControllerRpc::handleRpc0x000093EE}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/controller/setStartMode", 0x00010225, &ControllerRpc::handleRpc0x00010225}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/controller/getStartMode", 0x000092E5, &ControllerRpc::handleRpc0x000092E5}; rpc_table_.push_back(rpc_service);
+    // todo delete
+    //rpc_service = {"/rpc/controller/setStartMode", 0x00010225, &ControllerRpc::handleRpc0x00010225}; rpc_table_.push_back(rpc_service);
+    //rpc_service = {"/rpc/controller/getStartMode", 0x000092E5, &ControllerRpc::handleRpc0x000092E5}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/tool_manager/deleteTool", 0x00010E4C, &ControllerRpc::handleRpc0x00010E4C}; rpc_table_.push_back(rpc_service);
@@ -110,6 +111,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/convertCartToJoint", 0x00010FD4, &ControllerRpc::handleRpc0x00010FD4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/convertJointToCart", 0x0000B6D4, &ControllerRpc::handleRpc0x0000B6D4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/ignoreLostZeroError", 0x00014952, &ControllerRpc::handleRpc0x00014952}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setSingleZeroPointOffset", 0x00012404, &ControllerRpc::handleRpc0x00012404}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setAllZeroPointOffsets", 0x00008AB4, &ControllerRpc::handleRpc0x00008AB4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getAllZeroPointOffsets", 0x00012353, &ControllerRpc::handleRpc0x00012353}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus", 0x0000C183, &ControllerRpc::handleRpc0x0000C183}; rpc_table_.push_back(rpc_service);

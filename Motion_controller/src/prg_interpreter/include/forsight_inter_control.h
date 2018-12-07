@@ -28,7 +28,6 @@
 
 void resetProgramNameAndLineNum();
 
-char * getProgramName();
 void setProgramName(char * program_name);
 InterpreterState getPrgmState();
 void setPrgmState(InterpreterState state);

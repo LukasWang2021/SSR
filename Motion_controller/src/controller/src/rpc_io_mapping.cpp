@@ -8,7 +8,6 @@ void ControllerRpc::handleRpc0x000050B4(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
-    // feng add for io_mapping
     uint8_t value = 0;
     rs_data_ptr->error_code.data = io_mapping_ptr_->getDIByBit(rq_data_ptr->data.data, value);
     FST_INFO("rpc-getDIByBit: user_port=%d, value=%d, err=%llx\n", rq_data_ptr->data.data, value, rs_data_ptr->error_code.data);
@@ -41,7 +40,6 @@ void ControllerRpc::handleRpc0x00011754(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    // feng add for io_mapping
     rs_data_ptr->data.data = io_mapping_ptr_->setDIByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
     FST_INFO("rpc-setDIByBit: user_port=%d, value=%d, ret =%x\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1], rs_data_ptr->data.data);
 
@@ -55,7 +53,6 @@ void ControllerRpc::handleRpc0x00013074(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
-    // feng add for io_mapping
     uint8_t value = 0;
     rs_data_ptr->error_code.data =io_mapping_ptr_->getDOByBit(rq_data_ptr->data.data, value);
     FST_INFO("rpc-getDOByBit: user_port=%d, value=%d\n", rq_data_ptr->data.data, value);
@@ -87,7 +84,6 @@ void ControllerRpc::handleRpc0x00007074(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    // feng add for io_mapping
     rs_data_ptr->data.data = io_mapping_ptr_->setDOByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
     FST_INFO("rpc-setDOByBit: user_port=%d, value=%d, ret=%x\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1],rs_data_ptr->data.data);
 
@@ -102,7 +98,6 @@ void ControllerRpc::handleRpc0x00000684(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
-    // feng add for io_mapping
     uint8_t value = 0;
     rs_data_ptr->error_code.data = io_mapping_ptr_->getRIByBit(rq_data_ptr->data.data, value);
     FST_INFO("rpc-getRIByBit: user_port=%d, value=%d\n", rq_data_ptr->data.data, value);
@@ -134,7 +129,6 @@ void ControllerRpc::handleRpc0x0000CD24(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    // feng add for io_mapping
     rs_data_ptr->data.data = io_mapping_ptr_->setRIByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
     FST_INFO("rpc-setRIByBit: user_port=%d, value=%d\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
 
@@ -148,7 +142,6 @@ void ControllerRpc::handleRpc0x00005BD4(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
 
-    // feng add for io_mapping
     uint8_t value = 0;
     rs_data_ptr->error_code.data =io_mapping_ptr_->getROByBit(rq_data_ptr->data.data, value);
     FST_INFO("rpc-getROByBit: user_port=%d, value=%d\n", rq_data_ptr->data.data, value);
@@ -180,7 +173,6 @@ void ControllerRpc::handleRpc0x00012274(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    // feng add for io_mapping
     rs_data_ptr->data.data = io_mapping_ptr_->setROByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
     FST_INFO("rpc-setROByBit: user_port=%d, value=%d\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
 

@@ -16,7 +16,7 @@ void ControllerIpc::handleIpcGetDi(void* request_data_ptr, void* response_data_p
 
     uint8_t value = 0;
     rs_data_ptr->error_code = io_mapping_ptr_->getDIByBit(rq_data_ptr->port_offset, value);
-    FST_INFO("handleIpcGetDi: user_port=%d, value=%d, err=%llx\n", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+    FST_INFO("handleIpcGetDi: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
 
     if(rs_data_ptr->error_code == SUCCESS)
     {
@@ -24,7 +24,7 @@ void ControllerIpc::handleIpcGetDi(void* request_data_ptr, void* response_data_p
     }
     else
     {
-        printf("NULL::handleIpcGetDi with <port_offset = %d>\n",rq_data_ptr->port_offset);
+        FST_INFO("NULL::handleIpcGetDi with <port_offset = %d>",rq_data_ptr->port_offset);
     }
 }
 
@@ -35,10 +35,10 @@ void ControllerIpc::handleIpcSetDi(void* request_data_ptr, void* response_data_p
     unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
 
 	*rs_data_ptr = io_mapping_ptr_->setDIByBit(rq_data_ptr->port_offset, rq_data_ptr->value);
-    FST_INFO("handleIpcSetDi: user_port=%d, value=%d, ret =%x\n", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
+    FST_INFO("handleIpcSetDi: user_port=%d, value=%d, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
 
     if (*rs_data_ptr != SUCCESS)
-	    printf("NULL::handleIpcSetDi with <port_offset = %d, value=%d>\n",rq_data_ptr->port_offset, rq_data_ptr->value);
+	    FST_INFO("NULL::handleIpcSetDi with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
 }
 
 //GetDo
@@ -49,7 +49,7 @@ void ControllerIpc::handleIpcGetDo(void* request_data_ptr, void* response_data_p
 
     uint8_t value = 0;
     rs_data_ptr->error_code = io_mapping_ptr_->getDOByBit(rq_data_ptr->port_offset, value);
-    FST_INFO("handleIpcGetDo: user_port=%d, value=%d, err=%llx\n", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+    FST_INFO("handleIpcGetDo: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
 
     if(rs_data_ptr->error_code == SUCCESS)
     {
@@ -57,7 +57,7 @@ void ControllerIpc::handleIpcGetDo(void* request_data_ptr, void* response_data_p
     }
     else
     {
-        printf("NULL::handleIpcGetDo with <port_offset = %d>\n",rq_data_ptr->port_offset);
+        FST_INFO("NULL::handleIpcGetDo with <port_offset = %d>",rq_data_ptr->port_offset);
     }
 }
 
@@ -68,10 +68,10 @@ void ControllerIpc::handleIpcSetDo(void* request_data_ptr, void* response_data_p
     unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
 
 	*rs_data_ptr = io_mapping_ptr_->setDOByBit(rq_data_ptr->port_offset, rq_data_ptr->value);
-    FST_INFO("handleIpcSetDo: user_port=%d, value=%d, ret =%x\n", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
+    FST_INFO("handleIpcSetDo: user_port=%d, value=%d, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
 
     if (*rs_data_ptr != SUCCESS)
-	    printf("NULL::handleIpcSetDo with <port_offset = %d, value=%d>\n",rq_data_ptr->port_offset, rq_data_ptr->value);
+	    FST_INFO("NULL::handleIpcSetDo with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
 
 }
 
@@ -83,7 +83,7 @@ void ControllerIpc::handleIpcGetRi(void* request_data_ptr, void* response_data_p
 
     uint8_t value = 0;
     rs_data_ptr->error_code = io_mapping_ptr_->getRIByBit(rq_data_ptr->port_offset, value);
-    FST_INFO("handleIpcGetRi: user_port=%d, value=%d, err=%llx\n", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+    FST_INFO("handleIpcGetRi: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
 
     if(rs_data_ptr->error_code == SUCCESS)
     {
@@ -91,7 +91,7 @@ void ControllerIpc::handleIpcGetRi(void* request_data_ptr, void* response_data_p
     }
     else
     {
-        printf("NULL::handleIpcGetRi with <port_offset = %d>\n",rq_data_ptr->port_offset);
+        FST_INFO("NULL::handleIpcGetRi with <port_offset = %d>",rq_data_ptr->port_offset);
     }
 }
 
@@ -102,10 +102,10 @@ void ControllerIpc::handleIpcSetRi(void* request_data_ptr, void* response_data_p
     unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
 
 	*rs_data_ptr = io_mapping_ptr_->setRIByBit(rq_data_ptr->port_offset, rq_data_ptr->value);
-    FST_INFO("handleIpcSetRi: user_port=%d, value=%d, ret =%x\n", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
+    FST_INFO("handleIpcSetRi: user_port=%d, value=%d, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
 
     if (*rs_data_ptr != SUCCESS)
-	    printf("NULL::handleIpcSetRi with <port_offset = %d, value=%d>\n",rq_data_ptr->port_offset, rq_data_ptr->value);
+	    FST_INFO("NULL::handleIpcSetRi with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
 }
 
 //GetRo
@@ -116,7 +116,7 @@ void ControllerIpc::handleIpcGetRo(void* request_data_ptr, void* response_data_p
 
     uint8_t value = 0;
     rs_data_ptr->error_code = io_mapping_ptr_->getROByBit(rq_data_ptr->port_offset, value);
-    FST_INFO("handleIpcGetRo: user_port=%d, value=%d, err=%llx\n", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+    FST_INFO("handleIpcGetRo: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
 
     if(rs_data_ptr->error_code == SUCCESS)
     {
@@ -124,7 +124,7 @@ void ControllerIpc::handleIpcGetRo(void* request_data_ptr, void* response_data_p
     }
     else
     {
-        printf("NULL::handleIpcGetRo with <port_offset = %d>\n",rq_data_ptr->port_offset);
+        FST_INFO("NULL::handleIpcGetRo with <port_offset = %d>",rq_data_ptr->port_offset);
     }
 }
 
@@ -135,14 +135,14 @@ void ControllerIpc::handleIpcSetRo(void* request_data_ptr, void* response_data_p
     unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
 
 	*rs_data_ptr = io_mapping_ptr_->setROByBit(rq_data_ptr->port_offset, rq_data_ptr->value);
-    FST_INFO("handleIpcSetRo: user_port=%d, value=%d, ret =%x\n", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
+    FST_INFO("handleIpcSetRo: user_port=%d, value=%d, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
 
     if (*rs_data_ptr != SUCCESS)
-	    printf("NULL::handleIpcSetRo with <port_offset = %d, value=%d>\n",rq_data_ptr->port_offset, rq_data_ptr->value);
+	    FST_INFO("NULL::handleIpcSetRo with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
 
 }
 
-
+/* todo delete
 void ControllerIpc::handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr)
 {
     char* rq_data_ptr = static_cast<char*>(request_data_ptr);
@@ -197,4 +197,4 @@ void ControllerIpc::handleIpcGetIo(void* request_data_ptr, void* response_data_p
 			rq_data_ptr->port_info.bytes_len);
 	}
 }
-
+*/

@@ -233,7 +233,7 @@ bool InterpreterClient::isNextInstructionNeeded()
     }
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
-
+/*todo delete
 ErrorCode InterpreterClient::checkIo(char path[256], IOPortInfo* port_info_ptr)
 {
     if(strlen(path) >= 256
@@ -289,7 +289,7 @@ ErrorCode InterpreterClient::getIo(IOPortInfo* port_info_ptr, int buffer_length,
     *value_ptr = response_get_io.value;
     return response_get_io.error_code;
 }
-
+*/
 
 bool InterpreterClient::setInterpreterServerStatus(bool status)
 {

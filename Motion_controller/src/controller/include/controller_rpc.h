@@ -15,6 +15,7 @@
 #include "motion_control.h"
 #include "serverAlarmApi.h"
 #include "io_mapping.h"//feng add for mapping.
+#include "program_launching.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -29,7 +30,8 @@ public:
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
-                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager_ptr); //feng add for mapping
+                    IoMapping* io_mapping_ptr, fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
+                    ProgramLaunching* program_launching);
 
     void processRpc();
 
@@ -46,9 +48,10 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
     ControllerPublish* publish_ptr_;
-    fst_ctrl::IoMapping* io_mapping_ptr_; //feng add for mapping.
+    IoMapping* io_mapping_ptr_; //feng add for mapping.
     fst_hal::FstIoDevice* io_device_ptr_; //feng add
     fst_hal::ModbusManager* modbus_manager_ptr_; //yuyy add
+    ProgramLaunching* program_launching_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};

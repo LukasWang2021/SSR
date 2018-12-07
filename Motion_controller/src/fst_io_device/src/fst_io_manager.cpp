@@ -490,7 +490,11 @@ int IOManager::searchParamId(unsigned int id, std::vector<IODeviceUnit> &io)
 //------------------------------------------------------------
 void IOManager::startThread(void)
 {
-    io_thread_ = boost::thread(boost::bind(&IOManager::runThread, this));
+    static bool is_thread_running = false;
+    if (is_thread_running == false){
+        io_thread_ = boost::thread(boost::bind(&IOManager::runThread, this));
+        is_thread_running = true;
+    }
     //io_thread.timed_join(boost::posix_time::milliseconds(100)); // check the thread running or not.
 }
 

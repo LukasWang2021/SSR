@@ -27,6 +27,7 @@ ControllerSm::ControllerSm():
     servo_state_(SERVO_INIT),
     safety_alarm_(0),
     ctrl_reset_count_(0),
+    enable_macro_launching_(false),
     interpreter_warning_code_(0),
     error_level_(0),
     is_error_exist_(false),
@@ -69,6 +70,7 @@ void ControllerSm::processStateMachine()
     transferServoState();
     transferCtrlState();
     transferRobotState();
+    processMacroLaunching();
 }
 
 fst_ctrl::UserOpMode ControllerSm::getUserOpMode()
@@ -104,6 +106,11 @@ fst_mc::ServoState ControllerSm::getServoState()
 int ControllerSm::getSafetyAlarm()
 {
     return safety_alarm_;
+}
+
+bool ControllerSm::getEnableMacroLaunching()
+{
+    return enable_macro_launching_;
 }
 
 ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
@@ -616,6 +623,20 @@ void ControllerSm::shutdown()
 	}
 
 	system("shutdown -h now");
+}
+
+void ControllerSm::processMacroLaunching()
+{
+    if (interpreter_state_ == INTERPRETER_IDLE
+        && ctrl_state_ == CTRL_ENGAGED
+        && robot_state_ == ROBOT_IDLE)
+    {
+        enable_macro_launching_ = true;
+    }
+    else
+    {
+        enable_macro_launching_ = false;
+    }
 }
 
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)

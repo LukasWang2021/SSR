@@ -20,6 +20,7 @@
 #include "serverAlarmApi.h"
 #include "preformance_monitor.h"
 #include "io_mapping.h" //feng add for iomapping.
+#include "program_launching.h"
 #include <string>
 // for test only
 #include "virtual_core1.h"
@@ -58,9 +59,10 @@ private:
     fst_base::ProcessComm* process_comm_ptr_;
     fst_base::PreformanceMonitor preformance_monitor_;
     VirtualCore1 virtual_core1_; // for test only
-    fst_ctrl::IoMapping io_mapping_; //feng add for mapping.
-    fst_hal::FstIoDevice* io_device_ptr_; //feng add
-    fst_hal::ModbusManager* modbus_manager_ptr_; //feng add
+    IoMapping io_mapping_; 
+    fst_hal::FstIoDevice* io_device_ptr_; 
+    fst_hal::ModbusManager* modbus_manager_ptr_; 
+    ProgramLaunching program_launching_;
 
     // thread related
     bool is_exit_;

@@ -26,8 +26,6 @@
 
 // #define USE_WAITING_R
 
-bool parseScript(const char* fname);
-// void findLoopEnd(int index);
 void resetProgramNameAndLineNum();
 
 char * getProgramName();

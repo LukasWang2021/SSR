@@ -73,106 +73,6 @@ vector<string> split(string str,string pattern)
 	return result;
 }
 
-bool parseScript(const char* fname)
-{
-    Instruction instr;
-    char command[256];
-    string path = "/home/fst/Program/";
-    path = path + fname;
-    ifstream fin(path.c_str());
-    int count = 0;
-    while(fin.getline(command, sizeof(command)))
-    {
-        FST_INFO("command:%s",command);
-#ifdef USE_XPATH
-	    // itoa(++count, instr.line, 10);
-        sprintf(instr.line, "%d", ++count);
-#else
-        instr.line = ++count;
-#endif
-        vector<string> result=split(command, " "); //use space to split
-        if (result[0] == "LOOP")
-        {
-            instr.type = LOGIC_TOK; // instr.type = LOOP;
-            if (result.size() == 1)
-                instr.loop_cnt = -1;
-            else 
-                instr.loop_cnt = atoi(result[1].c_str());
-            FST_INFO("loop_cnt:%d", instr.loop_cnt);
-        }
-        else if (result[0] == "END")
-        {
-            instr.type = END_PROG; // END;
-        }
-        else
-        {
-            instr.type = MOTION;
-            if (result[0] == "moveJ")
-            {
-                if(result.size() < 7)
-                {
-                    FST_ERROR("Error:moveJ j1 j2 j3 j4 j5 j6 [smooth]");
-                    return false;
-                }
-                instr.target.type = MOTION_JOINT;
-                instr.target.joint_target = *(Joint*)&result[1];
-                if (result.size() == 7)
-                    instr.target.cnt = -1;
-                else
-                    instr.target.cnt = atoi(result[7].c_str());
-            }
-            if (result[0] == "moveL")
-            {
-                if(result.size() < 7)
-                {
-                    FST_ERROR("Error:moveL x y z a b c [smooth]");
-                    return false;
-                }
-                instr.target.type = MOTION_LINE;
-                instr.target.pose_target = *(PoseEuler*)&result[1];
-                if (result.size() == 7)
-                    instr.target.cnt = -1;
-                else
-                    instr.target.cnt = atoi(result[7].c_str());
-
-            }
-            if (result[0] == "moveC")
-            {
-                if(result.size() < 13)
-                {
-                    perror("Error:moveC x1 y1 z1 a1 b1 c1 x2 y2 z2 a2 b2 c2 [smooth]");
-                    return false;
-                }
-                instr.target.type = MOTION_CIRCLE;
-                instr.target.circle_target = *(CircleTarget*)&result[1];
-                if (result.size() == 7)
-                    instr.target.cnt = -1;
-                else
-                    instr.target.cnt = atoi(result[7].c_str());
-            }            
-        }
-        g_script.push_back(instr);
-        memset((void*)&instr, 0, sizeof(instr));
-        memset(command, 0, sizeof(command));
-    }
-    fin.close();
-
-    return true;
-}
-
-void findLoopEnd(int index)
-{
-    for(int i = index; i < (int)g_script.size(); i++)
-    {
-        if (g_script[i].type == END_PROG) // END)
-        {
-            block_end = i -1;
-            return;
-        }
-    }
-    block_end = g_script.size() - 1;
-}
-
 void setMoveCommandDestination(MoveCommandDestination movCmdDst)
 { 
 //    writeShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
@@ -211,6 +111,7 @@ struct thread_control_block *  getThreadControlBlock()
 	if(getCurrentThreadSeq() < 0)
     {
         FST_ERROR("getThreadControlBlock failed from %d", getCurrentThreadSeq());
+		setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
 		return NULL;
 	}
 	else
@@ -222,6 +123,8 @@ struct thread_control_block *  getThreadControlBlock()
 
 int getCurrentThreadSeq()
 {
+	if(g_iCurrentThreadSeq < 0)
+		setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
 	return g_iCurrentThreadSeq ;
 }
 
@@ -823,10 +726,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    objThdCtrlBlockPtr = getThreadControlBlock();
 			if(objThdCtrlBlockPtr == NULL) break ;
 			
+  			FST_INFO("set abort motion flag.");
 	        objThdCtrlBlockPtr->is_abort = true;
             // target_line = getMaxLineNum();
             // target_line = 0;
             // Restore program pointer
+  			FST_INFO("reset prog position.");
             objThdCtrlBlockPtr->prog = objThdCtrlBlockPtr->p_buf ;
 			
 		    setPrgmState(INTERPRETER_PAUSE_TO_IDLE);
@@ -838,6 +743,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
   			FST_INFO("setPrgmState(IDLE_R).");
 		    setPrgmState(INTERPRETER_IDLE);
 		    // clear line path and ProgramName
+  			FST_INFO("reset ProgramName And LineNum.");
 		    resetProgramNameAndLineNum();
             break;
         case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE:

@@ -113,7 +113,8 @@
 #define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER (unsigned long long int)0x0001000900AA0012   /*movj with point*/
 #define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH (unsigned long long int)0x0001000900AA0013   /*movj with point*/
 #define FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO (unsigned long long int)0x0001000900AA0014   /*movj with point*/
-#define INFO_INTERPRETER_BACK_TO_BEGIN (unsigned long long int)0x0001000200AA0015   /*movj with point*/
+#define INFO_INTERPRETER_BACK_TO_BEGIN    (unsigned long long int)0x0001000200AA0015   /*movj with point*/
+#define INFO_INTERPRETER_THREAD_NOT_EXIST (unsigned long long int)0x0001000200AA0016   /*THREAD NOT EXIST */
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000900AA0100   /*User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000900AA0101   /*User Alarm 1*/
 #define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000900AA0102   /*User Alarm 2*/

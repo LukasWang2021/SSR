@@ -195,6 +195,11 @@ void resetProgramNameAndLineNum()
 	setProgramName((char *)""); 
 }
 
+char * getProgramName()
+{
+	return g_interpreter_publish.program_name; 
+}
+
 void setProgramName(char * program_name)
 {
     FST_INFO("setProgramName to %s", program_name);
@@ -549,6 +554,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
         case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             FST_INFO("start debug %s ...", intprt_ctrl.start_ctrl);
+			if(strcmp(getProgramName(), intprt_ctrl.start_ctrl) == 0)
+            {
+            	FST_INFO("Duplicate to execute %s ...", intprt_ctrl.start_ctrl);
+				setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ; 
+            	break;
+			}
 			incCurrentThreadSeq();
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();
@@ -568,6 +579,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
         case fst_base::INTERPRETER_SERVER_CMD_START:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             FST_INFO("start run %s ...", intprt_ctrl.start_ctrl);
+			if(strcmp(getProgramName(), intprt_ctrl.start_ctrl) == 0)
+            {
+            	FST_INFO("Duplicate to execute %s ...", intprt_ctrl.start_ctrl);
+				setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ;
+            	break;
+			}
 			incCurrentThreadSeq();
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();

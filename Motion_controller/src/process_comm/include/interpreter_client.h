@@ -34,9 +34,9 @@ public:
     bool setInstruction(Instruction* data);
     bool isNextInstructionNeeded();
     //todo delete. don not use.
-    ErrorCode checkIo(char path[256], IOPortInfo* port_info_ptr);//todo
-    ErrorCode setIo(IOPortInfo* port_info_ptr, char value);//todo
-    ErrorCode getIo(IOPortInfo* port_info_ptr, int buffer_length, char* value_ptr);//todo
+    // ErrorCode checkIo(char path[256], IOPortInfo* port_info_ptr);//todo
+    // ErrorCode setIo(IOPortInfo* port_info_ptr, char value);//todo
+    // ErrorCode getIo(IOPortInfo* port_info_ptr, int buffer_length, char* value_ptr);//todo
     
     bool setInterpreterServerStatus(bool status);
     ErrorCode getDi(uint32_t port_offset, uint32_t &value);

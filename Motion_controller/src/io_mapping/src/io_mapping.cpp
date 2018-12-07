@@ -24,7 +24,6 @@ IoMapping::IoMapping():
     param_ptr_ = new IoMappingParam();
     sim_ptr_ = new IoSimulation(log_ptr_, param_ptr_);
     FST_LOG_INIT("io_mapping");
-    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
 IoMapping::~IoMapping()
@@ -62,7 +61,6 @@ ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr,
 	ErrorCode ret = sim_ptr_->init();
 	if (ret != SUCCESS){
 		ErrorMonitor::instance()->add(ret);
-		return ret;
 	}
 
 	loadProgramsPath();
@@ -70,10 +68,7 @@ ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr,
 	ret = updateMappingFile();
 	if (ret != SUCCESS){
 		ErrorMonitor::instance()->add(ret);
-		return ret;
 	}
-
-	io_dev_ptr_->init();
 
 	modbus_manager_ = modbus_manager;
 	return SUCCESS;

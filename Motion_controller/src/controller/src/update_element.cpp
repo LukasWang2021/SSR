@@ -197,20 +197,11 @@ void ControllerPublish::updateReg()
 
 void ControllerPublish::updateIo()
 {
-    //void* value_ptr;
     ErrorCode ret = SUCCESS;
     std::list<IoPublishUpdate>::iterator it;
     for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
     {
-        //delete
-        //fst_hal::PhysicsID id;
-        //id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;
-        //id.info.address = it->address;
-        //id.info.port_type = it->port_type;
-        //id.info.port = it->port_offset;
-
         uint8_t value = 0;
-
         switch(it->port_type)
         {
             case MessageType_IoType_DI://fst_hal::IO_TYPE_DI:
@@ -234,7 +225,6 @@ void ControllerPublish::updateIo()
                 {
                     it->is_valid = true;
                     it->value.data = static_cast<uint32_t>(value);
-                    //printf("port_offest=%d, it-value.data=%d\n",it->port_offset,it->value.data);//todo delete
                 }
                 else
                 {

@@ -169,7 +169,7 @@ void ControllerServer::handleResponseIsNextInstructionNeeded(std::vector<Process
     }
 }
 
-
+/*todo delete
 // CheckIo
 void ControllerServer::handleResponseCheckIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
@@ -211,7 +211,7 @@ void ControllerServer::handleResponseGetIo(std::vector<ProcessCommRequestRespons
         delete (ResponseGetIo*)task->response_data_ptr;
     }
 }
-
+*/
 
 // SetInterpreterServerStatus
 void ControllerServer::handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)

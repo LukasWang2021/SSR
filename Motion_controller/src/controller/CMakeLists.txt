@@ -14,8 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 2)
-set(VERSION_PATCH 1)
-set(VERSION_COMMIT \"21d6779e\") #from gitlab commit number.
+set(VERSION_PATCH 2)
+set(VERSION_COMMIT \"e17d82dd\") #from gitlab commit number.
 string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
 string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
 
@@ -70,6 +70,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/path_alg/include
     ${depend_PATH_INC}/fst_safety_device/include 
     ${depend_PATH_INC}/io_mapping/include 
+    ${depend_PATH_INC}/program_launching/include 
 )
 
 catkin_package(
@@ -81,6 +82,7 @@ catkin_package(
     DEPENDS error_monitor
     DEPENDS modbus_manager
     DEPENDS io_mapping
+    DEPENDS program_launching
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -124,6 +126,7 @@ target_link_libraries(controller
     preformance_monitor 
     fst_safety_device
     io_mapping
+    program_launching
 )
 
 #############

@@ -22,18 +22,18 @@ typedef enum
     CONTROLLER_SERVER_CMD_GET_R_REG = 9,
     CONTROLLER_SERVER_CMD_SET_INSTRUCTION = 10,
     CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED = 11,
-    CONTROLLER_SERVER_CMD_CHECK_IO = 12,//todo delete, do not use.
-    CONTROLLER_SERVER_CMD_SET_IO = 13,//todo
-    CONTROLLER_SERVER_CMD_GET_IO = 14,//todo
-    CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS = 15,
-    CONTROLLER_SERVER_CMD_GET_DI = 16,
-    CONTROLLER_SERVER_CMD_SET_DI = 17,
-    CONTROLLER_SERVER_CMD_GET_DO = 18,
-    CONTROLLER_SERVER_CMD_SET_DO = 19,
-    CONTROLLER_SERVER_CMD_GET_RI = 20,
-    CONTROLLER_SERVER_CMD_SET_RI = 21,
-    CONTROLLER_SERVER_CMD_GET_RO = 22,
-    CONTROLLER_SERVER_CMD_SET_RO = 23,
+    // CONTROLLER_SERVER_CMD_CHECK_IO = 12,//todo delete, do not use.
+    // CONTROLLER_SERVER_CMD_SET_IO = 13,//todo
+    // CONTROLLER_SERVER_CMD_GET_IO = 14,//todo
+    CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS = 12,
+    CONTROLLER_SERVER_CMD_GET_DI = 13,
+    CONTROLLER_SERVER_CMD_SET_DI = 14,
+    CONTROLLER_SERVER_CMD_GET_DO = 15,
+    CONTROLLER_SERVER_CMD_SET_DO = 16,
+    CONTROLLER_SERVER_CMD_GET_RI = 17,
+    CONTROLLER_SERVER_CMD_SET_RI = 18,
+    CONTROLLER_SERVER_CMD_GET_RO = 19,
+    CONTROLLER_SERVER_CMD_SET_RO = 20,
 }ControllerServerCmd;
 
 typedef enum
@@ -74,7 +74,7 @@ typedef struct
     // if multi data type exist, change data to union 
     unsigned long long data;
 }ProcessCommEvent;
-
+/*
 typedef struct//todo delete
 {
     IOPortInfo port_info;
@@ -98,6 +98,7 @@ typedef struct//doto delete
     unsigned long long error_code;
     char value;
 }ResponseGetIo;
+*/
 
 typedef struct
 {

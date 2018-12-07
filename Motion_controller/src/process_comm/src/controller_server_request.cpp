@@ -238,7 +238,7 @@ void ControllerServer::handleRequestIsNextInstructionNeeded()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, NULL, (void*)response_data_ptr);
 }
 
-
+/*todo delete
 // CheckIo
 void ControllerServer::handleRequestCheckIo()
 {
@@ -298,7 +298,7 @@ void ControllerServer::handleRequestGetIo()
     copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestGetIo));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_IO, (void*)request_data_ptr, (void*)response_data_ptr);  
 }
-
+*/
 
 // SetInterpreterServerStatus
 void ControllerServer::handleRequestSetInterpreterServerStatus()

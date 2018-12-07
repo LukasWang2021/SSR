@@ -55,7 +55,7 @@ void ControllerRpc::handleRpc0x00010C63(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = modbus_manager_ptr_->getConnection();
+    //rs_data_ptr->data.data = modbus_manager_ptr_->getConnection();
 
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getConnectionStatus"));
 }
@@ -67,7 +67,7 @@ void ControllerRpc::handleRpc0x0000E973(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = modbus_manager_ptr_->getConnection();
+    //rs_data_ptr->data.data = modbus_manager_ptr_->getConnection();
 
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getConnectionStatus"));
 }

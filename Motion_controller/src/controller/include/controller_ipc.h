@@ -59,9 +59,9 @@ private:
     void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
     void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
 
-    void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);//todo delete
-    void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
-    void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
+    // void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);//todo delete
+    // void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
+    // void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
     
     void handleIpcSetInterpreterServerStatus(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetDi(void* request_data_ptr, void* response_data_ptr);

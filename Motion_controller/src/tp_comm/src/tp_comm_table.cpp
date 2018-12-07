@@ -18,8 +18,9 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/controller/setSystemTime",	0x000167C5,	"RequestMessageType.Uint64",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000167C5,	&TpComm::handleResponse0x000167C5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/getSystemTime",	0x000003F5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64List(count=2)",	&TpComm::handleRequest0x000003F5,	&TpComm::handleResponse0x000003F5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/getVersion",	0x000093EE,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_String",	&TpComm::handleRequest0x000093EE,	&TpComm::handleResponse0x000093EE,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
-	rpc_service =	{	"/rpc/controller/setStartMode",	0x00010225,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010225,	&TpComm::handleResponse0x00010225,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
-	rpc_service =	{	"/rpc/controller/getStartMode",	0x000092E5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000092E5,	&TpComm::handleResponse0x000092E5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	//todo delete
+	//rpc_service =	{	"/rpc/controller/setStartMode",	0x00010225,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010225,	&TpComm::handleResponse0x00010225,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	//rpc_service =	{	"/rpc/controller/getStartMode",	0x000092E5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000092E5,	&TpComm::handleResponse0x000092E5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
 	rpc_service =	{	"/rpc/publish/addTopic",	0x000050E3,	"RequestMessageType.Topic",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000050E3,	&TpComm::handleResponse0x000050E3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/publish/deleteTopic",	0x00004403,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00004403,	&TpComm::handleResponse0x00004403,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);

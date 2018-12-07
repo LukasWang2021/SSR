@@ -13,6 +13,7 @@
 #include <time.h>
 #include <motion_control_cache_pool.h>
 #include <segment_alg.h>
+#include <fstream>
 
 
 using namespace std;
@@ -163,26 +164,52 @@ void test2(void)
     arm.stopGroup();
     sleep(1);
 
-    /*
+    g_thread_running = false;
+    rt_thread.join();
+    nrt_thread.join();
+    sleep(1);
+}
+
+void test3(void)
+{
+    Logger log;
+    ArmGroup arm(&log);
+    ErrorMonitor error_monitor;
+    ThreadHelp rt_thread, nrt_thread;
+    cout << "begin" << endl;
+
+    arm.initGroup(&error_monitor);
+    g_thread_running = true;
+    rt_thread.run(&rtTask, &arm, 80);
+    nrt_thread.run(&nrtTask, &arm, 78);
+    arm.setGlobalVelRatio(0.5);
+    arm.setGlobalAccRatio(0.8);
+    usleep(500 * 1000);
+    arm.resetGroup();
+    usleep(100 * 1000);
+
     MotionTarget target;
     target.type = MOTION_JOINT;
     target.vel = 0.5;
-    target.cnt = 0;
+    target.cnt = -1;
     target.joint_target.j1 = 0.0;
     target.joint_target.j2 = 0.0;
     target.joint_target.j3 = 0.0;
     target.joint_target.j4 = 0.0;
-    target.joint_target.j5 = -1.5708;
+    //target.joint_target.j5 = -1.5708;
+    target.joint_target.j5 = 0.0;
     target.joint_target.j6 = 0.0;
     arm.autoMove(10, target);
 
+    /*
     while (!arm.nextMovePermitted())
     {
         cout << "not permitted" << endl;
-        usleep(10000);
+        usleep(100 * 1000);
     }
 
     cout << "get permitted" << endl;
+
 
     target.type = MOTION_JOINT;
     target.vel = 0.5;
@@ -193,65 +220,75 @@ void test2(void)
     target.joint_target.j4 = 1.1;
     target.joint_target.j5 = -0.8;
     target.joint_target.j6 = -2.0;
-    arm.autoMove(10, target);
+    arm.autoMove(11, target);
 
     while (!arm.nextMovePermitted())
     {
         cout << "not permitted" << endl;
-        usleep(10000);
+        usleep(100 * 1000);
     }
+    */
 
-    target.type = MOTION_LINE;
-    target.vel = 600;
-    target.cnt = 0;
-    target.pose_target.position.x = 500;
-    target.pose_target.position.y = 0;
-    target.pose_target.position.z = 500;
-    target.pose_target.orientation.a = 0;
-    target.pose_target.orientation.b = 0;
-    target.pose_target.orientation.c = 3.1416;
-    arm.autoMove(10, target);
-     */
-
-    g_thread_running = false;
-    rt_thread.join();
-    nrt_thread.join();
-    sleep(1);
+    sleep(5);
 }
-
 
 void test4(void)
 {
     Logger log;
     ArmGroup arm(&log);
     ErrorMonitor error_monitor;
-    ThreadHelp rt_thread;
-    cout << "begin" << endl;
-
     arm.initGroup(&error_monitor);
+    ofstream  kout("kinematics.csv");
 
-    PoseEuler pose1, pose2;
-    Joint joint1, joint2;
+    Pose pose;
+    Joint inp, res;
 
-    joint1.j1 = 0.00006;
-    joint1.j2 = 0.59525;
-    joint1.j3 = -0.426034;
-    joint1.j4 = -0.000017;
-    joint1.j5 = -1.216373;
-    joint1.j6 = -0.000254;
+    kout << "input.j1,input.j2,input.j3,input.j4,input.j5,input.j6,pose.x,pose.y,pose.z,pose.ow,pose.ox,pose.oy,pose.oz," 
+         << "output.j1,output.j2,output.j3,output.j4,output.j5,output.j6,pose.x,pose.y,pose.z,pose.ow,pose.ox,pose.oy,pose.oz" << endl;
 
-    joint2.j1 = 0.000027;
-    joint2.j2 = -0.032293;
-    joint2.j3 = 0.032703;
-    joint2.j4 = 0.0;
-    joint2.j5 = -1.047568;
-    joint2.j6 = -0.000288;
+    for (double j1 = -PI + 0.01; j1 < PI - 0.01; j1 += PI / 3)
+    {
+        inp.j1 = j1;
 
-    arm.getKinematicsPtr()->forwardKinematicsInUser(joint1, pose1);
-    arm.getKinematicsPtr()->forwardKinematicsInUser(joint2, pose2);
+        for (double j2 = -PI + 0.01; j2 < PI - 0.01; j2 += PI / 3)
+        {
+            inp.j2 = j2;
 
-    printf("Pose1: %.6f %.6f %.6f - %.6f %.6f %.6f\n", pose1.position.x, pose1.position.y, pose1.position.z, pose1.orientation.a, pose1.orientation.b, pose1.orientation.c);
-    printf("Pose2: %.6f %.6f %.6f - %.6f %.6f %.6f\n", pose2.position.x, pose2.position.y, pose2.position.z, pose2.orientation.a, pose2.orientation.b, pose2.orientation.c);
+            for (double j3 = -PI + 0.01; j3 < PI - 0.01; j3 += PI / 3)
+            {
+                inp.j3 = j3;
+
+                for (double j4 = -PI + 0.01; j4 < PI - 0.01; j4 += PI / 3)
+                {
+                    inp.j4 = j4;
+
+                    for (double j5 = -PI + 0.01; j5 < PI - 0.01; j5 += PI / 3)
+                    {
+                        inp.j5 = j5;
+
+                        for (double j6 = -PI + 0.01; j6 < PI - 0.01; j6 += PI / 3)
+                        {
+                            inp.j6 = j6;
+
+                            arm.getKinematicsPtr()->forwardKinematicsInUser(inp, pose);
+                            arm.getKinematicsPtr()->inverseKinematicsInUser(pose, inp, res);
+                            
+                            kout << inp.j1 << "," << inp.j2 << "," << inp.j3 << "," << inp.j4 << "," << inp.j5 << "," << inp.j6 << ","
+                                 << pose.position.x << "," << pose.position.y << "," << pose.position.z << "," << pose.orientation.w << "," << pose.orientation.x << "," << pose.orientation.y << "," << pose.orientation.z << ",";
+
+                            arm.getKinematicsPtr()->forwardKinematicsInUser(res, pose);
+                            kout << res.j1 << "," << res.j2 << "," << res.j3 << "," << res.j4 << "," << res.j5 << "," << res.j6 << ","
+                                 << pose.position.x << "," << pose.position.y << "," << pose.position.z << "," << pose.orientation.w << "," << pose.orientation.x << "," << pose.orientation.y << "," << pose.orientation.z << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    cout << "kinematics.csv" << endl;
+    kout.close();
 }
 
 void test6(void)
@@ -280,7 +317,15 @@ void test6(void)
     ref.j5 = -1.312221853982;
     ref.j6 = 0.156383300619;
 
-    ErrorCode err = arm.getKinematicsPtr()->inverseKinematicsInUser(p, ref, res);
+    clock_t start = clock();
+    for (size_t i = 0; i < 1000; i++)
+        ErrorCode err = arm.getKinematicsPtr()->inverseKinematicsInUser(p, ref, res);
+    clock_t end = clock();
+
+    double seconds  =(double)(end - start)/CLOCKS_PER_SEC;
+    printf("kinematics using time: %.6f ms\n", seconds * 1000);
+
+    /*
     if (err != SUCCESS)
     {
         log.error("IK err: %x", err);
@@ -288,6 +333,7 @@ void test6(void)
     log.info("Pose: %.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f", p.position.x, p.position.y, p.position.z, p.orientation.w, p.orientation.x, p.orientation.y, p.orientation.z);
     log.info("Ref: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", ref[0], ref[1], ref[2], ref[3], ref[4], ref[5]);
     log.info("Res: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f", res[0], res[1], res[2], res[3], res[4], res[5]);
+    */
 }
 
 
@@ -357,10 +403,10 @@ int main(int argc, char **argv)
     //test1();
     //test2();
     //test3();
-    //test4();
+    test4();
     //test5();
     //test6();
-    test7();
+    //test7();
     //test8();
 
     return 0;

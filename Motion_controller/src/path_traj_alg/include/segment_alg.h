@@ -13,7 +13,7 @@
 #define DOUBLE_ACCURACY 1e-6
 #define SQRT_DOUBLE_ACCURACY 1e-12
 
-typedef ErrorCode (fst_mc::ArmKinematics::*ComputeIKFunc)(const fst_mc::Pose      &pose, const fst_mc::Joint &ref, fst_mc::Joint &res);
+typedef ErrorCode (fst_mc::BaseKinematics::*ComputeIKFunc)(const fst_mc::Pose      &pose, const fst_mc::Joint &ref, fst_mc::Joint &res);
 typedef bool (fst_algorithm::DynamicsInterface::*ComputeDynamicsFunc)(const float joint[6], const float omega[6], float alpha_max[2][6]);
 
 typedef struct
@@ -28,7 +28,11 @@ typedef struct
     double conservative_acc;    // conservative accerl
     double jerk_ratio;  // jerk constraints ratio, [0,1]
     bool is_fake_dynamics;
-    fst_mc::ArmKinematics* kinematics_ptr;
+    double time_factor_1;   // the first piece of time vector 
+    double time_factor_2;   // the second
+    double time_factor_3;   // the second last
+    double time_factor_4;   // the last
+    fst_mc::BaseKinematics* kinematics_ptr;
     fst_algorithm::DynamicsInterface* dynamics_ptr;
 }SegmentAlgParam;
 
@@ -109,6 +113,8 @@ typedef enum
     S_ConstraintJointVelMax = 36,    // vector in size 9 
     S_ConstraintJointJerkMax = 45,   // vector in size 9
     S_BSplineNodeVector = 54,    // vector in size 6
+    S_PathCountFactorCartesian = 60,    // double
+    S_PathCountFactorJoint = 61,    // double
 
     // basic matrix operation
     S_TransMatrix = 200,  // matrix[4][4]
@@ -151,22 +157,27 @@ typedef enum
     S_TmpMatrix66_2 = 836,
 
     // BSpline computation related, support up to 1000 interpolation points    
-    S_BaseFunctionNik0 = 900,   // base function Nik0, double 
-    S_BaseFunctionNik1 = 901,   // base function Nik1, double 
-    S_BaseFunctionNik2 = 902,   // base function Nik2, double
-    S_BSpLineResultXBase = 1000,
-    S_BSpLineResultYBase = 2000,
-    S_BSpLineResultZBase = 3000,
+    S_BaseFunctionNik0 = 850,   // base function Nik0, double 
+    S_BaseFunctionNik1 = 851,   // base function Nik1, double 
+    S_BaseFunctionNik2 = 852,   // base function Nik2, double
+    S_BSpLineResultXBase = 900,
+    S_BSpLineResultYBase = 1900,
+    S_BSpLineResultZBase = 2900,
  
     // banding matrix related, support up to 20 order of the matrix
-    S_A = 4000,   // up to matrix in size 20*20
+    S_A = 3900,   // up to matrix in size 20*20
     S_B = 4400, // up to vector in size 20
-    S_X = 4420, // up to vector in size 20 
+    S_X = 4425, // up to vector in size 20 
     
     // compute TrajP/V/A by PathX & TrajT
     S_DeltaJointVector = 4450,   // vector in size 9, fabs(joint end -joint start)
-    S_PathIndexStep = 4460, // path index interval between two traj points       
-    S_TrajRescaleFactor = 4461,  // final rescale factor, double
+    S_PathIndexStep = 4460, // path index interval between two traj points   
+    S_PathIndexStepStart2Out = 4461,
+    S_PathIndexStepOut2End = 4462,
+    S_PathIndexStepOut2In = 4463,
+    S_PathIndexStepIn2Out = 4464,
+    S_PathIndexStepIn2End = 4465,
+    S_TrajRescaleFactor = 4470,  // final rescale factor, double
     
     S_Path0 = 4500,    // traj points selected from path points, up to 20 points, not include the 2 flexible points
     S_Path1 = 4525,
@@ -179,134 +190,153 @@ typedef enum
     S_Path8 = 4700,        
     S_TrajT = 4725,    // traj initial time vector, expressed in time duration of two adjacent traj points, 
                        // up to 21 points, include the 2 flexible points
-    S_TrajRescaleT = 4750,  // recale S_TrajT by S_TrajRescaleFactor, up to 21 points
-    S_TrajAbsoluteT = 4775, // absolute time compute by S_TrajRescaleT
+    S_TrajRescaleT = 4750,  // recale S_TrajT by S_TrajRescaleFactor, up to 20 + 20 + 1 points
+    S_TrajAbsoluteT = 4800, // absolute time compute by S_TrajRescaleT
     
-    S_TrajP0 = 4800,    // {P,V,A} of joint0 on traj points, up to 22 points, include the 2 flexible points
-    S_TrajV0 = 4825,
-    S_TrajA0 = 4850,
-    S_TrajP1 = 4875,
-    S_TrajV1 = 4900,
-    S_TrajA1 = 4925,
-    S_TrajP2 = 4950,
-    S_TrajV2 = 4975,
-    S_TrajA2 = 5000,
-    S_TrajP3 = 5025,
-    S_TrajV3 = 5050,
-    S_TrajA3 = 5075,
-    S_TrajP4 = 5100,
-    S_TrajV4 = 5125,
-    S_TrajA4 = 5150,
-    S_TrajP5 = 5175,
-    S_TrajV5 = 5200,
-    S_TrajA5 = 5225,
-    S_TrajP6 = 5250,
-    S_TrajV6 = 5275,
-    S_TrajA6 = 5300,
-    S_TrajP7 = 5325,
-    S_TrajV7 = 5350,
-    S_TrajA7 = 5375,
-    S_TrajP8 = 5400,
-    S_TrajV8 = 5425,
-    S_TrajA8 = 5450,    
+    S_TrajP0 = 4850,    // {P,V,A} of joint0 on traj points, up to 20 + 20 + 2 points, include the 2 flexible points
+    S_TrajV0 = 4900,
+    S_TrajA0 = 4950,
+    S_TrajP1 = 5000,
+    S_TrajV1 = 5050,
+    S_TrajA1 = 5100,
+    S_TrajP2 = 5150,
+    S_TrajV2 = 5200,
+    S_TrajA2 = 5250,
+    S_TrajP3 = 5300,
+    S_TrajV3 = 5350,
+    S_TrajA3 = 5400,
+    S_TrajP4 = 5450,
+    S_TrajV4 = 5500,
+    S_TrajA4 = 5550,
+    S_TrajP5 = 5600,
+    S_TrajV5 = 5650,
+    S_TrajA5 = 5700,
+    S_TrajP6 = 5750,
+    S_TrajV6 = 5800,
+    S_TrajA6 = 5850,
+    S_TrajP7 = 5900,
+    S_TrajV7 = 5950,
+    S_TrajA7 = 6000,
+    S_TrajP8 = 6050,
+    S_TrajV8 = 6100,
+    S_TrajA8 = 6150,    
+
+    S_OutPointState0 = 6200, // vector in size 3
+    S_OutPointState1 = 6203,
+    S_OutPointState2 = 6206,
+    S_OutPointState3 = 6209,
+    S_OutPointState4 = 6212,
+    S_OutPointState5 = 6215,
+    S_OutPointState6 = 6218,
+    S_OutPointState7 = 6221,
+    S_OutPointState8 = 6224,
+
+    S_InPointState0 = 6250, // vector in size 3
+    S_InPointState1 = 6253,
+    S_InPointState2 = 6256,
+    S_InPointState3 = 6259,
+    S_InPointState4 = 6262,
+    S_InPointState5 = 6265,
+    S_InPointState6 = 6268,
+    S_InPointState7 = 6271,
+    S_InPointState8 = 6274,
 
     // compute robot dynamics constraints, put result in ConstaintJointPos/NegAX
-    S_ConstraintJointPosA0 = 5500, // positive max acc of joint0, from traj point(2) ~ point(n), up to 21 in size
-    S_ConstraintJointNegA0 = 5525,
-    S_ConstraintJointPosA1 = 5550,
-    S_ConstraintJointNegA1 = 5575,    
-    S_ConstraintJointPosA2 = 5600,
-    S_ConstraintJointNegA2 = 5625, 
-    S_ConstraintJointPosA3 = 5650,
-    S_ConstraintJointNegA3 = 5675, 
-    S_ConstraintJointPosA4 = 5700,
-    S_ConstraintJointNegA4 = 5725, 
-    S_ConstraintJointPosA5 = 5750,
-    S_ConstraintJointNegA5 = 5775,
-    S_ConstraintJointPosA6 = 5800,
-    S_ConstraintJointNegA6 = 5825,
-    S_ConstraintJointPosA7 = 5850,
-    S_ConstraintJointNegA7 = 5875,
-    S_ConstraintJointPosA8 = 5900,
-    S_ConstraintJointNegA8 = 5925,
+    S_ConstraintJointPosA0 = 6500, // positive max acc of joint0, from traj point(2) ~ point(n), up to 21 in size
+    S_ConstraintJointNegA0 = 6525,
+    S_ConstraintJointPosA1 = 6550,
+    S_ConstraintJointNegA1 = 6575,    
+    S_ConstraintJointPosA2 = 6600,
+    S_ConstraintJointNegA2 = 6625, 
+    S_ConstraintJointPosA3 = 6650,
+    S_ConstraintJointNegA3 = 6675, 
+    S_ConstraintJointPosA4 = 6700,
+    S_ConstraintJointNegA4 = 6725, 
+    S_ConstraintJointPosA5 = 6750,
+    S_ConstraintJointNegA5 = 6775,
+    S_ConstraintJointPosA6 = 6800,
+    S_ConstraintJointNegA6 = 6825,
+    S_ConstraintJointPosA7 = 6850,
+    S_ConstraintJointNegA7 = 6875,
+    S_ConstraintJointPosA8 = 6900,
+    S_ConstraintJointNegA8 = 6925,
 
     // traj piece jerk rescale factor
-    S_TrajPieceJ0 = 6000,   // up to 21 in size
-    S_TrajPieceJ1 = 6025,
-    S_TrajPieceJ2 = 6050,
-    S_TrajPieceJ3 = 6075,
-    S_TrajPieceJ4 = 6100,
-    S_TrajPieceJ5 = 6125,
-    S_TrajPieceJ6 = 6150,
-    S_TrajPieceJ7 = 6175,
-    S_TrajPieceJ8 = 6200,
+    S_TrajPieceJ0 = 7000,   // up to 21 in size
+    S_TrajPieceJ1 = 7025,
+    S_TrajPieceJ2 = 7050,
+    S_TrajPieceJ3 = 7075,
+    S_TrajPieceJ4 = 7100,
+    S_TrajPieceJ5 = 7125,
+    S_TrajPieceJ6 = 7150,
+    S_TrajPieceJ7 = 7175,
+    S_TrajPieceJ8 = 7200,
     // traj piece acc rescale factor
-    S_TrajPieceA0 = 6225,
-    S_TrajPieceA1 = 6250,
-    S_TrajPieceA2 = 6275,
-    S_TrajPieceA3 = 6300,
-    S_TrajPieceA4 = 6325,
-    S_TrajPieceA5 = 6350,
-    S_TrajPieceA6 = 6375,
-    S_TrajPieceA7 = 6400,
-    S_TrajPieceA8 = 6425,
+    S_TrajPieceA0 = 7225,
+    S_TrajPieceA1 = 7250,
+    S_TrajPieceA2 = 7275,
+    S_TrajPieceA3 = 7300,
+    S_TrajPieceA4 = 7325,
+    S_TrajPieceA5 = 7350,
+    S_TrajPieceA6 = 7375,
+    S_TrajPieceA7 = 7400,
+    S_TrajPieceA8 = 7425,
     // traj piece vel rescale factor
-    S_TrajPieceV0 = 6450,
-    S_TrajPieceV1 = 6475,
-    S_TrajPieceV2 = 6500,
-    S_TrajPieceV3 = 6525,
-    S_TrajPieceV4 = 6550,
-    S_TrajPieceV5 = 6575,
-    S_TrajPieceV6 = 6600,
-    S_TrajPieceV7 = 6625,
-    S_TrajPieceV8 = 6650,
+    S_TrajPieceV0 = 7450,
+    S_TrajPieceV1 = 7475,
+    S_TrajPieceV2 = 7500,
+    S_TrajPieceV3 = 7525,
+    S_TrajPieceV4 = 7550,
+    S_TrajPieceV5 = 7575,
+    S_TrajPieceV6 = 7600,
+    S_TrajPieceV7 = 7625,
+    S_TrajPieceV8 = 7650,
       
-
     // coeff of p = A3*t^3 + A2*t^2 + A1*t + A0
-    S_TrajCoeffJ0A3 = 6700,    // up to 21 in size
-    S_TrajCoeffJ0A2 = 6725,
-    S_TrajCoeffJ0A1 = 6750,
-    S_TrajCoeffJ0A0 = 6775,
+    S_TrajCoeffJ0A3 = 7700,    // up to 20 + 21 in size
+    S_TrajCoeffJ0A2 = 7750,
+    S_TrajCoeffJ0A1 = 7800,
+    S_TrajCoeffJ0A0 = 7850,
 
-    S_TrajCoeffJ1A3 = 6800,
-    S_TrajCoeffJ1A2 = 6825,
-    S_TrajCoeffJ1A1 = 6850,
-    S_TrajCoeffJ1A0 = 6875,
+    S_TrajCoeffJ1A3 = 7900,
+    S_TrajCoeffJ1A2 = 7950,
+    S_TrajCoeffJ1A1 = 8000,
+    S_TrajCoeffJ1A0 = 8050,
 
-    S_TrajCoeffJ2A3 = 6900,
-    S_TrajCoeffJ2A2 = 6925,
-    S_TrajCoeffJ2A1 = 6950,
-    S_TrajCoeffJ2A0 = 6975,
+    S_TrajCoeffJ2A3 = 8100,
+    S_TrajCoeffJ2A2 = 8150,
+    S_TrajCoeffJ2A1 = 8200,
+    S_TrajCoeffJ2A0 = 8250,
 
-    S_TrajCoeffJ3A3 = 7000,
-    S_TrajCoeffJ3A2 = 7025,
-    S_TrajCoeffJ3A1 = 7050,
-    S_TrajCoeffJ3A0 = 7075,
+    S_TrajCoeffJ3A3 = 8300,
+    S_TrajCoeffJ3A2 = 8350,
+    S_TrajCoeffJ3A1 = 8400,
+    S_TrajCoeffJ3A0 = 8450,
 
-    S_TrajCoeffJ4A3 = 7100,
-    S_TrajCoeffJ4A2 = 7125,
-    S_TrajCoeffJ4A1 = 7150,
-    S_TrajCoeffJ4A0 = 7175,
+    S_TrajCoeffJ4A3 = 8500,
+    S_TrajCoeffJ4A2 = 8550,
+    S_TrajCoeffJ4A1 = 8600,
+    S_TrajCoeffJ4A0 = 8650,
 
-    S_TrajCoeffJ5A3 = 7200,
-    S_TrajCoeffJ5A2 = 7225,
-    S_TrajCoeffJ5A1 = 7250,
-    S_TrajCoeffJ5A0 = 7275,
+    S_TrajCoeffJ5A3 = 8700,
+    S_TrajCoeffJ5A2 = 8750,
+    S_TrajCoeffJ5A1 = 8800,
+    S_TrajCoeffJ5A0 = 8850,
 
-    S_TrajCoeffJ6A3 = 7300,
-    S_TrajCoeffJ6A2 = 7325,
-    S_TrajCoeffJ6A1 = 7350,
-    S_TrajCoeffJ6A0 = 7375,
+    S_TrajCoeffJ6A3 = 8900,
+    S_TrajCoeffJ6A2 = 8950,
+    S_TrajCoeffJ6A1 = 9000,
+    S_TrajCoeffJ6A0 = 9050,
 
-    S_TrajCoeffJ7A3 = 7400,
-    S_TrajCoeffJ7A2 = 7425,
-    S_TrajCoeffJ7A1 = 7450,
-    S_TrajCoeffJ7A0 = 7475,
+    S_TrajCoeffJ7A3 = 9100,
+    S_TrajCoeffJ7A2 = 9150,
+    S_TrajCoeffJ7A1 = 9200,
+    S_TrajCoeffJ7A0 = 9250,
 
-    S_TrajCoeffJ8A3 = 7500,
-    S_TrajCoeffJ8A2 = 7525,
-    S_TrajCoeffJ8A1 = 7550,
-    S_TrajCoeffJ8A0 = 7575,    
+    S_TrajCoeffJ8A3 = 9300,
+    S_TrajCoeffJ8A2 = 9350,
+    S_TrajCoeffJ8A1 = 9400,
+    S_TrajCoeffJ8A0 = 9450,      
 }StackIndex;
 
 extern ComplexAxisGroupModel model;
@@ -314,12 +344,13 @@ extern double stack[10000];
 
 /*
 Function:   getNorm
-Summary:    get norm of vector 3*1
-Input:      vector 3*1
+Summary:    get norm of vector 3*1 or 4*1
+Input:      vector 3*1 or 4*1
 Output:     norm of the vector
 Stack:      NULL
 */
 inline double getVector3Norm(double* vector);
+inline double getVector4Norm(double* vector);
 
 /*
 Function: updateTransMatrix44
@@ -546,7 +577,7 @@ void updateTrajPVA(int path_base, double* init_state, double* end_state, int ord
 
 void initComplexAxisGroupModel();
 void initStack(ComplexAxisGroupModel* model_ptr);
-void initSegmentAlgParam(fst_mc::ArmKinematics* kinematics_ptr, fst_algorithm::DynamicsInterface* dynamics_ptr);
+void initSegmentAlgParam(fst_mc::BaseKinematics* kinematics_ptr, fst_algorithm::DynamicsInterface* dynamics_ptr);
 
 ErrorCode planPathJoint(const fst_mc::Joint &start, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
 ErrorCode planPathLine(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
@@ -570,15 +601,37 @@ void getQuaternPoint(double* start_quatern, double* end_quartern, double angle, 
 
 void generateMoveJPathPoint(const fst_mc::PathCache &path_cache, int* path_index_array, int& path_index_array_size);
 void generateMoveJTimeVector(double vel_ratio, int path_size, int& time_vector_size);
-void generatePieceVectors(int traj_piece_num, double vel_ratio, double acc_ratio);
+void generateMoveLPathPoint(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, 
+                                    int* path_index_array, int& path_index_array_size,
+                                    int& path_index_array_smooth_out_index, double& path_length_start2out, double& path_length_out2end);
+void generateMoveLTimeVector(double vel, int path_size, int path_index_array_smooth_out_index, 
+                                    double path_length_start2out, double path_length_out2end, int& time_vector_size);
+
+int computeTrajSmoothInIndex(double length_out2via, double length_via2in);
+void computePathIndexStepVia2End(const fst_mc::PathCache &path_cache, const fst_mc::MotionTarget &via, double length_via2in,
+                                    int& path_index_in, int& path_index_out, int& path_index_end);
+void generatePathPointVia2In(const fst_mc::PathCache &path_cache, const fst_mc::MotionTarget &via, double length_via2in,
+                                    double* path_vector_via2in, int path_index_in);
+void generatePathPointIn2End(const fst_mc::PathCache &path_cache, int path_index_in, int path_index_out, int path_index_end, int* path_index_array_in2end);
+void generatePathVia2EndTimeVector(double vel, const fst_mc::PathCache &path_cache, double length_via2in, 
+                                   int path_index_in, int path_index_out, int path_index_end, int& time_vector_size_via2end);
+void generatePathPointOut2In(const fst_mc::PathCache &path_cache, int traj_smooth_in_index, int& path_array_size, int* path_index_array_out2in);
+void generatePathOut2InTimeVector(double cmd_vel, double length_out2via, double length_via2in, int path_array_size_out2via,int& time_vector_size_out2in);
+
+
+void generatePieceVectors(int traj_offset, int traj_piece_num, double vel_ratio, double acc_ratio);
 double getMaxTrajPiece(int base_address, int index);
 double getMax(double value0, double value1, double value2, double value3);
 void generateRescaleFactorVector(int time_vector_size);
-void generateRescaleVector(int time_vector_size);
+void generateRescaleVector(int rescale_t_offset, int time_vector_size);
 void generateCoeff(int time_vector_size);
 void generateTrajCache(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, int* path_index_array, int path_index_array_size);
+void generateTrajCacheSmooth(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 
+                                    int* path_index_array_out2in, int path_index_array_size_out2in,
+                                    int* path_index_array_in2end, int path_index_array_size_in2end);
 
 void printTraj(fst_mc::TrajectoryCache &traj_cache, int index, double time_step);
+void printAllTraj(fst_mc::TrajectoryCache &traj_cache, double time_step);
 
 
 #endif

@@ -140,7 +140,9 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         offset_stat_[i] = OffsetState(stat[i]);
 
     // 加载零位偏移门限值和零位丢失门限值，并检查数据是否合法
-    ParamGroup params(COMPONENT_PARAM_FILE_DIR"motion_control.yaml");
+    string config_file = AXIS_GROUP_DIR;
+    ParamGroup params(config_file + "base_group.yaml");
+
     if (params.getLastError() == SUCCESS)
     {
         data.clear();
@@ -180,30 +182,44 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         return result;
     }
 
-    // 加载零位配置文件，并检查数据
-    offset_param_.loadParamFile(AXIS_GROUP_DIR"arm_group_offset.yaml");
-    result = offset_param_.getLastError();
+    // 加载传动比配置文件，并检查数据
+    // 检查无误后将数据下发到裸核
+    data.clear();
+    gear_ratio_param_.loadParamFile(config_file + "arm_group_gear_ratio.yaml");
+    result = gear_ratio_param_.getLastError();
 
     if (result == SUCCESS)
     {
-        data.clear();
-        if (!offset_param_.getParam("zero_offset/id", id) || !offset_param_.getParam("zero_offset/data", data))
+        if (gear_ratio_param_.getParam("gear_ratio/id", id) && gear_ratio_param_.getParam("gear_ratio/data", data))
         {
-            result = params.getLastError();
-            FST_ERROR("Fail to read zero offset config file, err=0x%llx", result);
+            if (data.size() == NUM_OF_JOINT)
+            {
+                FST_INFO("ID of gear ratio: 0x%x", id);
+                FST_INFO("Send gear ratio: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+                result = sendConfigData(id, data);
+
+                if (result == SUCCESS)
+                {
+                    FST_INFO("Success.");
+                }
+                else
+                {
+                    FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
+                    return result;
+                }
+            }
+            else
+            {
+                FST_ERROR("Invalid array size of gear ratio, except %d but get %d", NUM_OF_JOINT, data.size());
+                return INVALID_PARAMETER;
+            }
+        }
+        else
+        {
+            result = gear_ratio_param_.getLastError();
+            FST_ERROR("Fail to read gear ratio config file, err=0x%llx", result);
             return result;
         }
-        if (data.size() != NUM_OF_JOINT)
-        {
-            FST_ERROR("Invalid array size of zero offset, except %d but get %d", NUM_OF_JOINT, data.size());
-            return result;
-        }
-
-        FST_INFO("ID of offset: 0x%x", id);
-        FST_INFO("Encoder-Zero-Offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-
-        for (size_t i = 0; i < joint_num_; i++)
-            zero_offset_[i] = data[i];
     }
     else
     {
@@ -211,24 +227,103 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         return result;
     }
 
-    // 设置裸核的零位，注意只有处于DISABLE状态零位才能生效
-    FST_INFO("Downloading zero offset ...");
-    if (sendJtacParam("zero_offset") == SUCCESS)
+    // 加载耦合系数配置文件，并检查数据
+    // 检查无误后将数据下发到裸核
+    data.clear();
+    coupling_param_.loadParamFile(config_file + "arm_group_coupling_coeff.yaml");
+    result = coupling_param_.getLastError();
+
+    if (result == SUCCESS)
     {
-        Joint cur_jnt;
-        ServoState servo_state;
-        char buffer[LOG_TEXT_SIZE];
-        usleep(256 * 1000);
-        bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
-        FST_INFO("Success!");
-        FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
+        if (coupling_param_.getParam("coupling_coeff/id", id) && coupling_param_.getParam("coupling_coeff/data", data))
+        {
+            if (data.size() == 15)
+            {
+                FST_INFO("ID of coupling coefficient: 0x%x", id);
+                FST_INFO("Send coupling coefficient: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+                         data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14]);
+                result = sendConfigData(id, data);
+
+                if (result == SUCCESS)
+                {
+                    FST_INFO("Success.");
+                }
+                else
+                {
+                    FST_ERROR("Fail to send coupling coefficient to barecore, code = 0x%llx", result);
+                    return result;
+                }
+            }
+            else
+            {
+                FST_ERROR("Invalid array size of coupling coefficient, except %d but get %d", 15, data.size());
+                return INVALID_PARAMETER;
+            }
+        }
+        else
+        {
+            result = coupling_param_.getLastError();
+            FST_ERROR("Fail to read coupling coefficient config file, err=0x%llx", result);
+            return result;
+        }
     }
     else
     {
-        FST_ERROR("Failed, cannot set zero offset to Core1.");
-        return BARE_CORE_TIMEOUT;
+        FST_ERROR("Loading coupling coefficient param file failed, err=0x%llx", result);
+        return result;
     }
 
+    // 加载零位配置文件，并检查数据
+    // 检查无误后将数据下发到裸核，注意只有裸核处于DISABLE状态零位才能生效
+    data.clear();
+    offset_param_.loadParamFile(config_file + "arm_group_offset.yaml");
+    result = offset_param_.getLastError();
+
+    if (result == SUCCESS)
+    {
+        if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
+        {
+            if (data.size() == NUM_OF_JOINT)
+            {
+                FST_INFO("ID of offset: 0x%x", id);
+                FST_INFO("Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+                result = sendConfigData(id, data);
+
+                if (result == SUCCESS)
+                {
+                    Joint cur_jnt;
+                    ServoState servo_state;
+                    char buffer[LOG_TEXT_SIZE];
+                    usleep(256 * 1000);
+                    bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
+                    memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
+                    FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
+                    FST_INFO("Success.");
+                }
+                else
+                {
+                    FST_ERROR("Fail to send offset to barecore, code = 0x%llx", result);
+                    return result;
+                }
+            }
+            else
+            {
+                FST_ERROR("Invalid array size of zero offset, except %d but get %d", NUM_OF_JOINT, data.size());
+                return INVALID_PARAMETER;
+            }
+        }
+        else
+        {
+            result = offset_param_.getLastError();
+            FST_ERROR("Fail to read zero offset config file, err=0x%llx", result);
+            return result;
+        }
+    }
+    else
+    {
+        FST_ERROR("Loading offset param file failed, err=0x%llx", result);
+        return result;
+    }
 
     // 进行一次零位检测
     /*
@@ -601,7 +696,7 @@ ErrorCode Calibrator::saveOffset(void)
         {
             // 更新裸核零位
             FST_INFO("Offset saved, update offset in core1 ...");
-            ErrorCode err = sendConfigData("zero_offset/");
+            ErrorCode err = sendOffsetToBareCore();
 
             if (err != SUCCESS)
             {
@@ -1358,89 +1453,26 @@ double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
 }
 
 //------------------------------------------------------------------------------
-// 方法：  sendJtacParam
-// 摘要：  根据给定的参数名，向裸核发送参数；
+// 方法：  sendConfigData
+// 摘要：  使用service形式向裸核发送参数id和数据；
 //------------------------------------------------------------------------------
-ErrorCode Calibrator::sendJtacParam(const std::string &param)
+ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 {
-    ErrorCode  err = SUCCESS;
-
-    if (param == "zero_offset")
-    {
-        FST_INFO("Send zero offset to bare core.");
-        err = sendConfigData("zero_offset/");
-    }
-    else if (param == "gear_ratio")
-    {
-        FST_INFO("Send gear ratio to bare core.");
-        err = sendConfigData("gear_ratio/");
-    }
-    else if (param == "coupling_coefficient")
-    {
-        FST_INFO("Send coupling coefficient to bare core.");
-        err = sendConfigData("coupling_coefficient/");
-    }
-    else if (param == "trajectory_delay")
-    {
-        FST_INFO("Send trajectory delay to bare core.");
-        err = sendConfigData("trajectory_delay/");
-    }
-    else if (param == "all")
-    {
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send zero offset to bare core.");
-            err = sendConfigData("zero_offset/");
-        }
-
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send gear ratio to bare core.");
-            err = sendConfigData("gear_ratio/");
-        }
-
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send coupling coefficient to bare core.");
-            err = sendConfigData("coupling_coefficient/");
-        }
-
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send trajectory delay to bare core.");
-            err = sendConfigData("trajectory_delay/");
-        }
-    }
-    else
-    {
-        FST_ERROR("Invalid parameter name.");
-        err = INVALID_PARAMETER;
-    }
-
-    if (err == SUCCESS)
-    {
-        FST_INFO("Done.");
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Abort.");
-        return err;
-    }
+    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
 }
 
 //------------------------------------------------------------------------------
-// 方法：  sendConfigData
-// 摘要：  根据参数名从配置文件中提取参数，并使用service形式向裸核发送这些参数；
+// 方法：  sendOffsetToBareCore
+// 摘要：  从配置文件中提取零位参数，并使用service形式向裸核发送这些参数；
 //------------------------------------------------------------------------------
-ErrorCode Calibrator::sendConfigData(const string &path)
+ErrorCode Calibrator::sendOffsetToBareCore(void)
 {
     int id;
     vector<double> data;
 
-    if (offset_param_.getParam(path + "id", id) && offset_param_.getParam(path + "data", data))
+    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
-        return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
+        return sendConfigData(id, data);
     }
     else
     {

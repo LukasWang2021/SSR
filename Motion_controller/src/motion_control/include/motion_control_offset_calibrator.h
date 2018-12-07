@@ -189,15 +189,6 @@ class Calibrator
     CalibrateState getCalibrateState(void);
 
     //------------------------------------------------------------------------------
-    // 方法：  sendJtacParam
-    // 摘要：  通过裸核通信句柄下发伺服参数，零位、减速比、耦合系数、轨迹延迟时间；
-    // 输入：  param - 需要下发的参数， all代表全部下发
-    // 输出：  None
-    // 返回：  错误代码，详见报警代码表
-    //------------------------------------------------------------------------------
-    ErrorCode sendJtacParam(const std::string &param = "all");
-
-    //------------------------------------------------------------------------------
     // 方法：  isReferenceAvailable
     // 摘要：  获取快速标定是否可用的标志，如果之前标记过参考点，可通过快速标定接口进行标定；
     // 输入：  None
@@ -258,8 +249,9 @@ class Calibrator
     double calculateOffset(double current_offset, double current_joint, double target_joint);
     double calculateOffsetEasy(double gear_ratio, double ref_offset, unsigned int ref_encoder, unsigned int cur_encoder);
     ErrorCode saveGivenJoint(const Joint &joint);
-    ErrorCode sendConfigData(const std::string &path);
+    ErrorCode sendConfigData(int id, const std::vector<double> &data);
     ErrorCode buildRecordFile(const std::string &file);
+    ErrorCode sendOffsetToBareCore(void);
     ErrorCode getOffsetFromBareCore(std::vector<double> &data);
 
     inline char* printDBLine(const int *data, char *buffer, size_t length);
@@ -267,6 +259,8 @@ class Calibrator
 
 //***************************************************************************************************************************//
     CalibrateState              current_state_;
+    fst_parameter::ParamGroup   coupling_param_;
+    fst_parameter::ParamGroup   gear_ratio_param_;
     fst_parameter::ParamGroup   offset_param_;
     fst_parameter::ParamGroup   robot_recorder_;
 

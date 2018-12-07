@@ -331,20 +331,22 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         return INVALID_SEQUENCE;
     }
 
+    /* For test only
     if (target.type == MOTION_LINE || target.type == MOTION_CIRCLE)
     {
         if (user_frame_id_ != target.user_frame_id)
         {
-            FST_ERROR("autoMove: user frame ID mismatch with activated user frame.");
+            FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", target.user_frame_id, user_frame_id_);
             return INVALID_PARAMETER;
         }
 
         if (tool_frame_id_ != target.tool_frame_id)
         {
-            FST_ERROR("autoMove: tool frame ID mismatch with activated tool frame.");
+            FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
             return INVALID_PARAMETER;
         }
     }
+    */
 
     return group_ptr_->autoMove(id, target);
 }

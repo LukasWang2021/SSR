@@ -14,6 +14,11 @@ inline double getVector3Norm(double* vector)
     return sqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2]);
 }
 
+inline double getVector4Norm(double* vector)
+{
+    return sqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2] + vector[3]*vector[3]);
+}
+
 void updateTransMatrix44(double* rot_vector, double* trans_vector)
 {
     stack[S_TmpDouble_1] = sin(rot_vector[0]);  // sin(A)
@@ -246,27 +251,27 @@ double getQuaternsIntersectionAngle(double* quatern1, double* quatern2)
 
 void getEulerToRotationMatrix33(double* euler, double* rotation)
 {
-    stack[S_TmpDouble_1] = sin(euler[0]);  // sin(A)
-    stack[S_TmpDouble_2] = cos(euler[0]);  // cos(A)
-    stack[S_TmpDouble_3] = sin(euler[1]);  // sin(B)
-    stack[S_TmpDouble_4] = cos(euler[1]);  // cos(B)
-    stack[S_TmpDouble_5] = sin(euler[2]);  // sin(C)
-    stack[S_TmpDouble_6] = cos(euler[2]);  // cos(C)
+    stack[S_TmpDouble_1] = sin(euler[0]);  // sin(Z)
+    stack[S_TmpDouble_2] = cos(euler[0]);  // cos(Z)
+    stack[S_TmpDouble_3] = sin(euler[1]);  // sin(Y)
+    stack[S_TmpDouble_4] = cos(euler[1]);  // cos(Y)
+    stack[S_TmpDouble_5] = sin(euler[2]);  // sin(X)
+    stack[S_TmpDouble_6] = cos(euler[2]);  // cos(X)
 
-    rotation[0] = stack[S_TmpDouble_4]*stack[S_TmpDouble_6];
-    rotation[1] = stack[S_TmpDouble_6]*stack[S_TmpDouble_1]*stack[S_TmpDouble_3]-stack[S_TmpDouble_2]*stack[S_TmpDouble_5];
+    rotation[0] = stack[S_TmpDouble_2]*stack[S_TmpDouble_4];
+    rotation[1] = stack[S_TmpDouble_2]*stack[S_TmpDouble_3]*stack[S_TmpDouble_5]-stack[S_TmpDouble_6]*stack[S_TmpDouble_1];
     rotation[2] = stack[S_TmpDouble_2]*stack[S_TmpDouble_6]*stack[S_TmpDouble_3]+stack[S_TmpDouble_1]*stack[S_TmpDouble_5];
-    rotation[3] = stack[S_TmpDouble_4]*stack[S_TmpDouble_5];
+    rotation[3] = stack[S_TmpDouble_4]*stack[S_TmpDouble_1];
     rotation[4] = stack[S_TmpDouble_2]*stack[S_TmpDouble_6]+stack[S_TmpDouble_1]*stack[S_TmpDouble_3]*stack[S_TmpDouble_5];
-    rotation[5] = -stack[S_TmpDouble_6]*stack[S_TmpDouble_1]+stack[S_TmpDouble_2]*stack[S_TmpDouble_3]*stack[S_TmpDouble_5];
+    rotation[5] = stack[S_TmpDouble_6]*stack[S_TmpDouble_1]*stack[S_TmpDouble_3]-stack[S_TmpDouble_2]*stack[S_TmpDouble_5];
     rotation[6] = -stack[S_TmpDouble_3];
-    rotation[7] = stack[S_TmpDouble_4]*stack[S_TmpDouble_1];
-    rotation[8] = stack[S_TmpDouble_2]*stack[S_TmpDouble_4];
+    rotation[7] = stack[S_TmpDouble_4]*stack[S_TmpDouble_5];
+    rotation[8] = stack[S_TmpDouble_4]*stack[S_TmpDouble_6];   
 }
 
 void getRotationMatrix33ToEuler(double* rotation, double* euler)
 {
-    euler[1] = atan2(-rotation[6], sqrt(rotation[0]*rotation[0] + rotation[3]*rotation[3]));
+    /*euler[1] = atan2(-rotation[6], sqrt(rotation[0]*rotation[0] + rotation[3]*rotation[3]));
     if(rotation[7]*rotation[7] + rotation[8]*rotation[8] > SQRT_DOUBLE_ACCURACY)
     {
         euler[0] = atan2(rotation[3], rotation[0]);
@@ -276,7 +281,18 @@ void getRotationMatrix33ToEuler(double* rotation, double* euler)
     {
         euler[0] = atan2(-rotation[1], rotation[4]);
         euler[2] = 0;
+    }*/
+    euler[1] = atan2(-rotation[6], sqrt(rotation[7]*rotation[7] + rotation[8]*rotation[8]));
+    if((rotation[7]*rotation[7] + rotation[8]*rotation[8]) > SQRT_DOUBLE_ACCURACY)
+    {
+        euler[0] = atan2(rotation[3], rotation[0]);
+        euler[2] = atan2(rotation[7], rotation[8]);
     }
+    else
+    {
+        euler[0] = atan2(-rotation[1], rotation[4]);
+        euler[2] = 0;
+    }    
 }
 
 void getQuaternToRotationMatrix33(double* quatern, double* rotation)
@@ -293,7 +309,7 @@ void getQuaternToRotationMatrix33(double* quatern, double* rotation)
     rotation[0] = 2 * (stack[S_TmpDouble_7] + quatern[0] * quatern[0]) - 1; // r[0][0] = 2*(w^2+x^2)-1
     rotation[1] = stack[S_TmpDouble_1] - stack[S_TmpDouble_6];  // r[0][1] = 2*(xy-wz)
     rotation[2] = stack[S_TmpDouble_5] + stack[S_TmpDouble_3];  // r[0][2] = 2*(wy+zx)
-    rotation[3] = stack[S_TmpDouble_1] + stack[S_TmpDouble_6] - 1;  // r[1][0] = 2*(xy+wz)-1
+    rotation[3] = stack[S_TmpDouble_1] + stack[S_TmpDouble_6];  // r[1][0] = 2*(xy+wz)-1
     rotation[4] = 2 * (stack[S_TmpDouble_7] + quatern[1] * quatern[1]) - 1; // r[1][1] = 2*(w^2+y^2)-1
     rotation[5] = stack[S_TmpDouble_2] - stack[S_TmpDouble_4];  // r[1][2] = 2*(yz-wx)
     rotation[6] = stack[S_TmpDouble_3] - stack[S_TmpDouble_5];  // r[2][0] = 2*(zx-wy)
@@ -519,9 +535,14 @@ void updateTrajPVA(int path_base, double* init_state, double* end_state, int ord
     updateMatrixB(&stack[path_base], &stack[S_TrajT], init_state, end_state, order); 
     updateEquationSolution(&stack[S_A], &stack[S_B], order);
 
+/*for(i = 0; i < order; ++i)
+{
+    std::cout<<i<<" "<<stack[S_X + i]<<std::endl;
+}*/
+
     int traj_p = traj_base;
-    int traj_v = traj_base + 25;
-    int traj_a = traj_base + 50;
+    int traj_v = traj_base + 50;
+    int traj_a = traj_base + 100;
        
     // start point
     stack[traj_a] = init_state[2];
@@ -786,12 +807,16 @@ void initStack(ComplexAxisGroupModel* model_ptr)
     stack[S_BSplineNodeVector + 3] = 1;
     stack[S_BSplineNodeVector + 4] = 1;
     stack[S_BSplineNodeVector + 5] = 1;
+
+    // path count factor
+    stack[S_PathCountFactorCartesian] = segment_alg_param.accuracy_cartesian_factor / 100.0;
+    stack[S_PathCountFactorJoint] = segment_alg_param.accuracy_joint_factor / PI;
 }
 
-void initSegmentAlgParam(fst_mc::ArmKinematics* kinematics_ptr, fst_algorithm::DynamicsInterface* dynamics_ptr)
+void initSegmentAlgParam(fst_mc::BaseKinematics* kinematics_ptr, fst_algorithm::DynamicsInterface* dynamics_ptr)
 {
     segment_alg_param.accuracy_cartesian_factor = 3;
-    segment_alg_param.accuracy_joint_factor = 40;
+    segment_alg_param.accuracy_joint_factor = 6;
     segment_alg_param.max_traj_points_num = 20;
     segment_alg_param.path_interval = 1;
     segment_alg_param.joint_interval = PI * 1 / 180;
@@ -799,7 +824,11 @@ void initSegmentAlgParam(fst_mc::ArmKinematics* kinematics_ptr, fst_algorithm::D
     segment_alg_param.angle_valve = PI * 5 / 180;
     segment_alg_param.conservative_acc = 10000;
     segment_alg_param.jerk_ratio = 1.0;
-    segment_alg_param.is_fake_dynamics = false;
+    segment_alg_param.time_factor_1 = 1;
+    segment_alg_param.time_factor_2 = 1;
+    segment_alg_param.time_factor_3 = 1;
+    segment_alg_param.time_factor_4 = 1;
+    segment_alg_param.is_fake_dynamics = true;
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = dynamics_ptr;
 }
@@ -894,8 +923,7 @@ ErrorCode planPathLine(const PoseEuler &start,
         if(path_length_after_out > max_path_out_length)
         {
             path_length_after_out = max_path_out_length;
-        }
-        
+        }     
         int path_count_after_out = ceil(path_length_after_out * max_count / path_length);
         double path_step_after_out = path_length_after_out / path_count_after_out;        
         
@@ -955,13 +983,13 @@ ErrorCode planPathLine(const PoseEuler &start,
         path_cache.cache[0].pose.orientation.z = start_quatern[2];
         path_cache.cache[0].pose.orientation.w = start_quatern[3];
         path_cache.cache[0].point_type = PATH_POINT;
-        path_cache.cache[0].motion_type = MOTION_LINE;        
+        path_cache.cache[0].motion_type = MOTION_LINE;         
         for(i = 1; i < max_count; ++i)
         {
             point_distance_to_start += path_step;
             angle_distance_to_start += angle_step;
             getMoveLPathPoint(start.position, path_vector, point_distance_to_start, path_cache.cache[i].pose.position);
-            getQuaternPoint(&stack[S_TmpVector4_1], end_quatern, angle, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getQuaternPoint(start_quatern, end_quatern, angle, angle_distance_to_start, path_cache.cache[i].pose.orientation);
             path_cache.cache[i].point_type = PATH_POINT;
             path_cache.cache[i].motion_type = MOTION_LINE;
         }
@@ -1004,11 +1032,13 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     double path_vector_via2target[3];
     getMoveLPathVector(via.pose_target.position, target.pose_target.position, path_vector_via2target, path_length_via2target);
     double path_length_via2in = path_length_via2target / 2;
-    double path_length_in2target = path_length_via2target - path_length_via2in;
+    
     if(path_length_start2via < path_length_via2in)
     {
         path_length_via2in = path_length_start2via;
-    }
+    }   
+    double path_length_in2target = path_length_via2target - path_length_via2in;
+        
     int path_count_ideal_start2via = ceil(path_length_start2via / segment_alg_param.path_interval);
     int path_count_ideal_via2in = ceil(path_length_via2in / segment_alg_param.path_interval);
     Point point_in;
@@ -1054,7 +1084,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             path_length_out2target = max_path_length_out2target;
         }
-        double path_length_in2out = path_length_in2target - path_length_out2target;
+        double path_length_in2out = path_length_in2target - path_length_out2target;        
         Point point_out;
         getMoveLPathPoint(point_in, path_vector_via2target, path_length_in2out, point_out);
         int path_count_ideal_in2out = 0;
@@ -1243,19 +1273,39 @@ ErrorCode planTrajectory(const PathCache &path_cache,
 
     int path_index_array[25];
     int path_index_array_size, time_vector_size;
+    double cmd_vel = path_cache.target.vel * vel_ratio;   // command velocity
     switch(path_cache.cache[0].motion_type)
     {
         case MOTION_LINE:
-        {
+        {            
+            int path_index_array_smooth_out_index;
+            double path_length_start2out, path_length_out2end;
+            // write S_PathIndexStep, S_PathIndexStepStart2Out, S_PathIndexStepOut2End, S_Path0~S_Path8
+            generateMoveLPathPoint(path_cache, start_state, path_index_array, path_index_array_size, 
+                                    path_index_array_smooth_out_index, path_length_start2out, path_length_out2end);
+            traj_cache.smooth_out_index = path_index_array_smooth_out_index;
+            // write S_TrajT
+            generateMoveLTimeVector(cmd_vel, path_index_array_size, path_index_array_smooth_out_index,
+                                    path_length_start2out, path_length_out2end, time_vector_size);  
+            
             break;
         }
         case MOTION_JOINT:
         {
             // write S_DeltaJointVector, S_PathIndexStep, S_Path0~S_Path8
-            generateMoveJPathPoint(path_cache, path_index_array, path_index_array_size);            
+            generateMoveJPathPoint(path_cache, path_index_array, path_index_array_size);
+
+/*for(int i = 0; i<path_index_array_size; ++i)
+{
+    std::cout<<i<<" "<<path_index_array[i]<<std::endl;
+}*/
             // read S_DeltaJointVector, S_ConstraintJointVelMax
             // write S_TrajT
             generateMoveJTimeVector(vel_ratio, path_index_array_size, time_vector_size);  
+/*for(int i=0; i<time_vector_size; ++i)
+{
+    std::cout<<i<<" "<<stack[S_TrajT + i]<<std::endl;
+}*/
             // MoveJ doesn't support smooth yet
             traj_cache.smooth_out_index = -1;
             break;
@@ -1284,19 +1334,19 @@ ErrorCode planTrajectory(const PathCache &path_cache,
         // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
         updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_array_size, traj_base);
         path_base += 25;
-        traj_base += 75;
+        traj_base += 150;
     }
     
     // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
     // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
     //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
-    generatePieceVectors(time_vector_size, vel_ratio, acc_ratio);
+    generatePieceVectors(0, time_vector_size, vel_ratio, acc_ratio);
     // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
     // write: S_TrajRescaleFactor
     generateRescaleFactorVector(time_vector_size);
     // read: S_TrajRescaleFactor, S_TrajT
     // write: S_TrajRescaleT
-    generateRescaleVector(time_vector_size);
+    generateRescaleVector(0, time_vector_size);
     // read: S_TrajRescaleT, S_TrajRescaleFactor, S_TrajP0 ~ S_TrajP8, S_TrajA0 ~ S_TrajA8
     // write: S_TrajAbsoluteT, S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
     //        S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0
@@ -1316,6 +1366,249 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
                                         double acc_ratio, 
                                         TrajectoryCache &traj_cache)
 {
+    if(path_cache.cache_length == 0)
+    {
+        return 6003;
+    }
+
+    if(path_cache.smooth_in_index == -1)
+    {
+        return 6005;
+    }
+
+    // compute smooth in index of traj points
+    //double length_via2in;
+    double path_vector_via2in[3];
+    double length_via2in;
+    getMoveLPathVector(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position, path_vector_via2in, length_via2in);
+    double length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
+    int traj_smooth_in_index = computeTrajSmoothInIndex(length_out2via, length_via2in);
+    int path_index_array_size_transition = traj_smooth_in_index - 1;
+    int path_index_array_size_minus_1_transition = path_index_array_size_transition - 1;
+
+    int path_index_in, path_index_out, path_index_end;
+    // write: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
+    computePathIndexStepVia2End(path_cache, via, length_via2in, path_index_in, path_index_out, path_index_end);   
+    // write: S_Path0~S_Path8[0...path_index_in]
+    generatePathPointVia2In(path_cache, via, length_via2in, path_vector_via2in, path_index_in);
+
+    int path_index_array_in2end[25];
+    // read: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
+    // write: S_Path0~S_Path8[0...path_index_out...path_index_end]
+    generatePathPointIn2End(path_cache, path_index_in, path_index_out, path_index_end, path_index_array_in2end);
+    int path_index_array_size_in2end = path_index_end - path_index_in + 1;
+
+    int time_vector_size_via2end;
+   
+    // write: S_TrajT
+    double cmd_vel = path_cache.target.vel * vel_ratio;   // command velocity
+    generatePathVia2EndTimeVector(cmd_vel, path_cache, length_via2in, path_index_in, path_index_out, path_index_end, time_vector_size_via2end);
+
+    // init state {P,V,A}
+    stack[S_TmpVector3_1 + 1] = 0;
+    stack[S_TmpVector3_1 + 2] = 0;
+    // end state {P,V,A}
+    stack[S_TmpVector3_2 + 1] = 0;
+    stack[S_TmpVector3_2 + 2] = 0;
+
+    int i;
+    int path_base = S_Path0;
+    int traj_index_via;
+    if(path_index_in == 0)
+    {
+        traj_index_via = traj_smooth_in_index;
+    }
+    else
+    {
+        traj_index_via = (traj_smooth_in_index - path_index_in - 1);
+    } 
+    int traj_index_end = traj_smooth_in_index + (path_index_end - path_index_in + 1);
+    
+    // make sure the in point of traj point locate at (S_TrajP0 + traj_smooth_in_index)
+    int traj_base_via2end = S_TrajP0 + traj_index_via;  
+    for(i = 0; i < model.link_num; ++i)
+    {
+        stack[S_TmpVector3_1] = stack[path_base];
+        stack[S_TmpVector3_2] = stack[path_base + path_index_end];
+        // read: S_Path0 ~ S_Path8, S_TrajT
+        // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
+        updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_end + 1, traj_base_via2end);
+        path_base += 25;
+        traj_base_via2end += 150;
+    }
+
+    //for(i = traj_index_via; i<= traj_index_end; ++i)
+    //{
+        //std::cout<<i<<" "<<stack[S_TrajP0 + i]<<" "<<stack[S_TrajV0 + i]<<" "<<stack[S_TrajA0 + i]<<std::endl;
+        /*std::cout<<i<<" "<<stack[S_TrajP0 + i]<<" "
+                 <<stack[S_TrajP1 + i]<<" "
+                 <<stack[S_TrajP2 + i]<<" "
+                 <<stack[S_TrajP3 + i]<<" "
+                 <<stack[S_TrajP4 + i]<<" "
+                 <<stack[S_TrajP5 + i]<<std::endl;*/
+         /*std::cout<<stack[S_TrajV0 + i]<<" "
+                 <<stack[S_TrajV1 + i]<<" "
+                 <<stack[S_TrajV2 + i]<<" "
+                 <<stack[S_TrajV3 + i]<<" "
+                 <<stack[S_TrajV4 + i]<<" "
+                 <<stack[S_TrajV5 + i]<<std::endl;*/
+          /*std::cout<<stack[S_TrajA0 + i]<<" "
+                 <<stack[S_TrajA1 + i]<<" "
+                 <<stack[S_TrajA2 + i]<<" "
+                 <<stack[S_TrajA3 + i]<<" "
+                 <<stack[S_TrajA4 + i]<<" "
+                 <<stack[S_TrajA5 + i]<<std::endl; */    
+    //}
+
+    int traj_piece_num_via2end = traj_index_end - traj_index_via;
+    // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
+    // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
+    //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
+    generatePieceVectors(traj_index_via, traj_piece_num_via2end, vel_ratio, acc_ratio);
+
+    /*for(int i = 0; i < traj_piece_num_via2end; ++i)
+    {
+        std::cout<<i<<" "<<stack[S_TrajPieceV0 + i]<<" "<<stack[S_TrajPieceV1 + i]<<" "<<stack[S_TrajPieceV2 + i]
+                    <<" "<<stack[S_TrajPieceV2 + i]<<" "<<stack[S_TrajPieceV4 + i]<<" "<<stack[S_TrajPieceV5 + i]<<std::endl;
+        
+    }*/
+    // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
+    // write: S_TrajRescaleFactor
+    generateRescaleFactorVector(traj_piece_num_via2end);
+    //std::cout<<"stack[S_TrajRescaleFactor] = "<<stack[S_TrajRescaleFactor]<<std::endl;
+    // read: S_TrajRescaleFactor, S_TrajT
+    // write: S_TrajRescaleT
+    generateRescaleVector(traj_index_via, traj_piece_num_via2end);
+ 
+    /*for(i = 0; i < traj_piece_num_via2end; ++i)
+    {
+        std::cout<<(traj_index_via + i)<<" "<<stack[S_TrajRescaleT + traj_index_via + i]<<std::endl;
+    }*/
+    
+    // get out and in point state
+    int out_point_base = S_OutPointState0;
+    int in_point_base = S_InPointState0;
+    int traj_base_in = S_TrajP0 + traj_smooth_in_index;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        stack[out_point_base] = start_state.angle[i];   // P
+        stack[out_point_base + 1] = start_state.omega[i];   // V
+        stack[out_point_base + 2] = start_state.alpha[i];   // A
+        stack[in_point_base] = stack[traj_base_in];            // P
+        stack[in_point_base + 1] = stack[traj_base_in + 50];   // V
+        stack[in_point_base + 2] = stack[traj_base_in + 100];  // A
+        in_point_base += 3;
+        out_point_base += 3;
+        traj_base_in += 150;
+    }
+
+    int path_array_size_out2in;
+    int path_index_array_out2in[25];
+    // write: S_Path0~S_Path8
+    generatePathPointOut2In(path_cache, traj_smooth_in_index, path_array_size_out2in, path_index_array_out2in);
+
+/*for(int i=0; i<path_array_size_out2via; ++i)
+{
+    std::cout<<i<<" "<<stack[S_Path0 + i]
+                <<" "<<stack[S_Path1 + i]
+                <<" "<<stack[S_Path2 + i]
+                <<" "<<stack[S_Path3 + i]
+                <<" "<<stack[S_Path4 + i]
+                <<" "<<stack[S_Path5 + i]<<std::endl;
+}*/
+
+    int time_vector_size_out2in;
+    // write: S_TrajT
+    generatePathOut2InTimeVector(cmd_vel, length_out2via, length_via2in, path_array_size_out2in, time_vector_size_out2in);
+    
+/*for(int i=0; i<time_vector_size_out2in; ++i)
+{
+    std::cout<<i<<" "<<stack[S_TrajT + i]<<std::endl;
+}*/
+
+    path_base = S_Path0;
+    int traj_base_out2in = S_TrajP0; 
+    int out_point_state_base = S_OutPointState0;
+    int in_point_state_base = S_InPointState0;    
+    for(i = 0; i < model.link_num; ++i)
+    {
+        stack[S_TmpVector3_1] = stack[path_base];
+        // read: S_Path0 ~ S_Path8, S_TrajT
+        // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
+        updateTrajPVA(path_base, &stack[out_point_state_base], &stack[in_point_state_base], path_array_size_out2in, traj_base_out2in);
+        path_base += 25;
+        traj_base_out2in += 150;
+        in_point_state_base += 3;
+        out_point_state_base += 3;
+    }
+
+//for(int i = 0; i <= traj_index_end; ++i)
+//{
+    /*std::cout<<i<<" "<<stack[S_TrajP0 + i]<<" "
+             <<stack[S_TrajP1 + i]<<" "
+             <<stack[S_TrajP2 + i]<<" "
+             <<stack[S_TrajP3 + i]<<" "
+             <<stack[S_TrajP4 + i]<<" "
+             <<stack[S_TrajP5 + i]<<std::endl;*/
+     /*std::cout<<stack[S_TrajV0 + i]<<" "
+             <<stack[S_TrajV1 + i]<<" "
+             <<stack[S_TrajV2 + i]<<" "
+             <<stack[S_TrajV3 + i]<<" "
+             <<stack[S_TrajV4 + i]<<" "
+             <<stack[S_TrajV5 + i]<<std::endl;*/
+      /*std::cout<<stack[S_TrajA0 + i]<<" "
+             <<stack[S_TrajA1 + i]<<" "
+             <<stack[S_TrajA2 + i]<<" "
+             <<stack[S_TrajA3 + i]<<" "
+             <<stack[S_TrajA4 + i]<<" "
+             <<stack[S_TrajA5 + i]<<std::endl;*/ 
+//}
+
+    // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
+    // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
+    //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
+    generatePieceVectors(0, time_vector_size_out2in, vel_ratio, acc_ratio);
+
+    /*for(int i = 0; i < traj_piece_num_via2end; ++i)
+    {
+        std::cout<<i<<" "<<stack[S_TrajPieceA0 + i]<<" "<<stack[S_TrajPieceA1 + i]<<" "<<stack[S_TrajPieceA2 + i]
+                    <<" "<<stack[S_TrajPieceA2 + i]<<" "<<stack[S_TrajPieceA4 + i]<<" "<<stack[S_TrajPieceA5 + i]<<std::endl;
+        
+    }*/
+
+    // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
+    // write: S_TrajRescaleFactor
+    generateRescaleFactorVector(time_vector_size_out2in);    
+    //std::cout<<"stack[S_TrajRescaleFactor] = "<<stack[S_TrajRescaleFactor]<<std::endl;
+//std::cout<<"traj_smooth_in_index = "<<traj_smooth_in_index<<std::endl;
+//std::cout<<"P1 = "<<stack[S_InPointState1]<<" V1 = "<<stack[S_InPointState1 + 1]<<" A1 = "<<stack[S_InPointState1 + 2]<<std::endl;
+    // read: S_TrajRescaleFactor, S_TrajT
+    // write: S_TrajRescaleT
+    generateRescaleVector(0, time_vector_size_out2in);
+
+    int time_vector_size_total = traj_index_end;
+    // read: S_TrajRescaleT, S_TrajRescaleFactor, S_TrajP0 ~ S_TrajP8, S_TrajA0 ~ S_TrajA8
+    // write: S_TrajAbsoluteT, S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
+    //        S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0
+    generateCoeff(time_vector_size_total);
+
+    generateTrajCacheSmooth(traj_cache, time_vector_size_total, 
+                            path_index_array_out2in, path_array_size_out2in,
+                            path_index_array_in2end, path_index_array_size_in2end);
+
+/*for(int i=0; i <traj_cache.cache_length; ++i)
+{
+    std::cout<<i<<" "<<traj_cache.cache[i].index_in_path_cache<<std::endl;
+}*/
+    /*for(i = 0; i < traj_piece_num_via2end; ++i)
+    {
+        std::cout<<(traj_index_via + i)<<" "<<stack[S_TrajRescaleT + traj_index_via + i]<<std::endl;
+    }*/
+
+
+
+
+
     return 0;
 }
 
@@ -1392,6 +1685,15 @@ void getQuaternPoint(double* start_quatern, double* end_quartern, double angle, 
         target_quatern.z = stack[S_TmpDouble_1] * start_quatern[2] + angle_distance_to_start * end_quartern[2];
         target_quatern.w = stack[S_TmpDouble_1] * start_quatern[3] + angle_distance_to_start * end_quartern[3];
     }
+
+    stack[S_TmpDouble_4] = sqrt(target_quatern.x * target_quatern.x
+                                + target_quatern.y * target_quatern.y
+                                + target_quatern.z * target_quatern.z
+                                + target_quatern.w * target_quatern.w);
+    target_quatern.x = target_quatern.x / stack[S_TmpDouble_4];
+    target_quatern.y = target_quatern.y / stack[S_TmpDouble_4];
+    target_quatern.z = target_quatern.z / stack[S_TmpDouble_4];
+    target_quatern.w = target_quatern.w / stack[S_TmpDouble_4];
 }
 
 void generateMoveJPathPoint(const PathCache &path_cache, int* path_index_array, int& path_index_array_size)
@@ -1409,18 +1711,22 @@ void generateMoveJPathPoint(const PathCache &path_cache, int* path_index_array, 
         }
     }
     // compute path point step necessary for trajecotry computation
-    double path_count_ideal = stack[max_delta_joint_index] * segment_alg_param.accuracy_joint_factor / PI;
+    double path_count_ideal = stack[max_delta_joint_index] * stack[S_PathCountFactorJoint];
     int path_index_array_size_minus_1;
     if(path_count_ideal > 20)
     {
-        path_index_array_size_minus_1 = 19;
+        path_index_array_size_minus_1 = 20;
+    }
+    else if(path_count_ideal < 3)
+    {
+        path_index_array_size_minus_1 = 3;
     }
     else
     {
-        path_index_array_size_minus_1 = ceil(path_count_ideal) - 1;
+        path_index_array_size_minus_1 = ceil(path_count_ideal);
     }
     path_index_array_size = path_index_array_size_minus_1 + 1;  // include start point
-    stack[S_PathIndexStep] = path_cache.cache_length / (double)path_index_array_size_minus_1;
+    stack[S_PathIndexStep] = cache_length_minus_1 / (double)path_index_array_size_minus_1;
 
     // select point
     double path_index_ideal = 0;
@@ -1452,7 +1758,7 @@ void generateMoveJPathPoint(const PathCache &path_cache, int* path_index_array, 
     {
         stack[path_address] = path_cache.cache[cache_length_minus_1].joint[j];
         path_address += 25;
-    }         
+    }
 }
 
 void generateMoveJTimeVector(double vel_ratio, int path_size, int& time_vector_size)
@@ -1475,24 +1781,583 @@ void generateMoveJTimeVector(double vel_ratio, int path_size, int& time_vector_s
     int path_piece_num = path_size - 1;
     double time_duration = max_path_time / path_piece_num;
 
-    stack[S_TrajT] = (time_duration / 2.0);
-    stack[S_TrajT + 1] = stack[S_TrajT];
+    stack[S_TrajT] = time_duration * segment_alg_param.time_factor_1;
+    stack[S_TrajT + 1] = time_duration * segment_alg_param.time_factor_2;
     for(i = 2; i < path_piece_num; ++i)
     {
         stack[S_TrajT + i] = time_duration;
     }
-    stack[S_TrajT + path_piece_num] = stack[S_TrajT];
-    stack[S_TrajT + path_size] = stack[S_TrajT];  
+    stack[S_TrajT + path_piece_num] = time_duration * segment_alg_param.time_factor_3;
+    stack[S_TrajT + path_size] = time_duration * segment_alg_param.time_factor_4;  
     time_vector_size = path_size + 1;
 }
 
-void generatePieceVectors(int traj_piece_num, double vel_ratio, double acc_ratio)
+void generateMoveLPathPoint(const PathCache &path_cache, const JointState &start_state, 
+                                    int* path_index_array, int& path_index_array_size,
+                                    int& path_index_array_smooth_out_index, double& path_length_start2out, double& path_length_out2end)
+{
+    int i, j;
+    int cache_length_minus_1 = path_cache.cache_length - 1;
+    Joint ref_joint, result_joint;
+
+    // compute total length of path
+    double length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache.cache_length - 1].pose.position);
+    if(path_cache.smooth_out_index == -1)
+    {
+        // compute path point step necessary for trajecotry computation
+        double path_count_ideal = length_start2end * stack[S_PathCountFactorCartesian];
+        int path_index_array_size_minus_1;
+        if(path_count_ideal > 20)
+        {
+            path_index_array_size_minus_1 = 20;
+        }
+        else if(path_count_ideal < 3)
+        {
+            path_index_array_size_minus_1 = 3;
+        }
+        else
+        {
+            path_index_array_size_minus_1 = ceil(path_count_ideal);
+        }
+        stack[S_PathIndexStep] = cache_length_minus_1 / (double)path_index_array_size_minus_1;
+        path_index_array_size = path_index_array_size_minus_1 + 1;  // include start point 
+        
+        // select point
+        double path_index_ideal = 0;
+        // first point must be the start point on path
+        path_index_array[0] = 0;
+        // middle points
+        for(i = 1; i < path_index_array_size_minus_1; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStep];
+            path_index_array[i] = round(path_index_ideal) - 1;     
+        }
+        // last point must be the end point on path
+        path_index_array[path_index_array_size_minus_1] = cache_length_minus_1;          
+        path_index_array_smooth_out_index = -1;
+        path_length_start2out = length_start2end;
+        path_length_out2end = 0;
+    }
+    else
+    {
+        double length_start2out = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+        double length_out2end = length_start2end - length_start2out;       
+        double path_count_ideal_start2end = length_start2end * stack[S_PathCountFactorCartesian];
+        double path_count_ideal_start2out = length_start2out * stack[S_PathCountFactorCartesian];
+        double path_count_ideal_out2end = length_out2end * stack[S_PathCountFactorCartesian];
+
+        int path_index_array_start2out_minus_1;
+        int path_index_array_out2end_minus_1;
+        if(path_count_ideal_start2end > 19)
+        {
+            path_count_ideal_start2out = path_count_ideal_start2out * 19 / path_count_ideal_start2end;
+            path_count_ideal_out2end = path_count_ideal_out2end * 19 / path_count_ideal_start2end;
+        }
+
+        if(path_count_ideal_start2out < 2)
+        {
+            path_index_array_start2out_minus_1 = 2;
+        }
+        else
+        {
+            path_index_array_start2out_minus_1 = ceil(path_count_ideal_start2out);
+        }
+        stack[S_PathIndexStepStart2Out] = path_cache.smooth_out_index / (double)path_index_array_start2out_minus_1;
+        int path_index_array_start2out = path_index_array_start2out_minus_1 + 1;
+                
+        if(path_count_ideal_out2end < 2)
+        {
+            path_index_array_out2end_minus_1 = 2;
+        }
+        else
+        {
+            path_index_array_out2end_minus_1 = ceil(path_count_ideal_out2end);
+        }                
+        stack[S_PathIndexStepOut2End] = (cache_length_minus_1 - path_cache.smooth_out_index) / (double)path_index_array_out2end_minus_1;        
+        int path_index_array_out2end = path_index_array_out2end_minus_1 + 1;
+        path_index_array_size = path_index_array_start2out + path_index_array_out2end - 1;
+        int path_index_array_size_minus_1 = path_index_array_size - 1;
+
+        // select point
+        double path_index_ideal = 0;
+        // first point must be the start point on path
+        path_index_array[0] = 0;
+        // points from second point to smooth out point
+        for(i = 1; i < path_index_array_start2out_minus_1; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStepStart2Out];
+            path_index_array[i] = round(path_index_ideal) - 1;     
+        }
+        // this point must be the out point on path
+        path_index_array[path_index_array_start2out_minus_1] = path_cache.smooth_out_index;
+        path_index_array_smooth_out_index = path_index_array_start2out_minus_1;
+        path_index_ideal = path_cache.smooth_out_index;
+        // points from smooth out point to end point
+        for(i = path_index_array_start2out; i < path_index_array_size_minus_1; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStepOut2End];
+            path_index_array[i] = round(path_index_ideal) - 1;
+        }
+        // last point must be the end point on path
+        path_index_array[path_index_array_size_minus_1] = cache_length_minus_1; 
+        path_length_start2out = length_start2out;
+        path_length_out2end = length_out2end;
+    }
+ 
+    // compute inverse kinematics
+    // first point is the start point
+    int path_address = S_Path0;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        stack[path_address] = start_state.angle[i];
+        path_address += 25;
+    }
+    
+    // the remaining points
+    ref_joint = start_state.angle;
+    for(i = 1; i < path_index_array_size; ++i)
+    {                                   
+        ref_joint = result_joint;
+        path_address = S_Path0 + i;
+        for(j = 0; j < model.link_num; ++j)
+        {
+            stack[path_address] = path_cache.cache[path_index_array[i]].joint[j];
+            path_address += 25;
+        }
+    }   
+}
+
+void generateMoveLTimeVector(double vel, int path_size, int path_index_array_smooth_out_index, 
+                                    double path_length_start2out, double path_length_out2end, int& time_vector_size)
+{
+    int i;    
+    if(path_index_array_smooth_out_index == -1) // no smooth out point
+    {
+        double time_span_start2end = path_length_start2out / vel;   
+        int path_piece_start2end = path_size - 1;
+        double time_duration = time_span_start2end / path_piece_start2end;
+
+        stack[S_TrajT] = time_duration * segment_alg_param.time_factor_1;
+        stack[S_TrajT + 1] = time_duration * segment_alg_param.time_factor_2;
+        for(i = 2; i < path_piece_start2end; ++i)
+        {
+            stack[S_TrajT + i] = time_duration;
+        }
+        stack[S_TrajT + path_piece_start2end] = time_duration * segment_alg_param.time_factor_3;
+        stack[S_TrajT + path_size] = time_duration * segment_alg_param.time_factor_4;       
+    }
+    else
+    {
+        double time_span_start2out = path_length_start2out / vel;
+        double time_span_out2end = path_length_out2end / vel;
+        int path_piece_start2out = path_index_array_smooth_out_index;        
+        int path_piece_out2end = path_size - path_index_array_smooth_out_index - 1;
+        double time_duration_start2out = time_span_start2out / path_piece_start2out;
+        double time_duration_out2end = time_span_out2end / path_piece_out2end;
+        int path_size_minus_1 = path_size - 1;
+
+        stack[S_TrajT] = time_duration_start2out * segment_alg_param.time_factor_1;
+        stack[S_TrajT + 1] = time_duration_start2out * segment_alg_param.time_factor_2;
+        for(i = 2; i <= path_piece_start2out; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_start2out;
+        }
+        for(i = path_piece_start2out + 1; i < path_size_minus_1; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_out2end;
+        }
+        stack[S_TrajT + path_size_minus_1] = time_duration_out2end * segment_alg_param.time_factor_3;
+        stack[S_TrajT + path_size] = time_duration_out2end * segment_alg_param.time_factor_4;
+    }
+    time_vector_size = path_size + 1; 
+}
+
+int computeTrajSmoothInIndex(double length_out2via, double length_via2in)
+{
+    double path_count_ideal_transition = (length_out2via + length_via2in) * stack[S_PathCountFactorCartesian];
+    if(path_count_ideal_transition > 20)
+    {
+        return 22;
+    }
+    else if(path_count_ideal_transition < 3)
+    {
+        return 5;
+    }
+    else
+    {
+        return (ceil(path_count_ideal_transition) + 2);
+    }
+}
+
+void computePathIndexStepVia2End(const PathCache &path_cache, const MotionTarget &via, double length_via2in,
+                                    int& path_index_in, int& path_index_out, int& path_index_end)
+{
+    int cache_length_minus_1 = path_cache.cache_length - 1;
+    double length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[cache_length_minus_1].pose.position);
+    double path_count_ideal_via2in = length_via2in * stack[S_PathCountFactorCartesian];
+    double path_count_ideal_in2end = length_in2end * stack[S_PathCountFactorCartesian];
+    double path_count_ideal_via2end = path_count_ideal_via2in + path_count_ideal_in2end;
+    if(path_count_ideal_via2end > 20)
+    {
+        path_count_ideal_via2in = path_count_ideal_via2in * 20 / path_count_ideal_via2end;
+        path_count_ideal_in2end = path_count_ideal_in2end * 20 / path_count_ideal_via2end;
+    }   
+    if(path_count_ideal_via2in < DOUBLE_ACCURACY)
+    {
+        path_index_in = 0;
+    }
+    else
+    {
+        path_index_in = ceil(path_count_ideal_via2in);
+    }
+
+    if(path_cache.smooth_out_index == -1)
+    {       
+        if(path_count_ideal_in2end < 3)
+        {
+            path_index_end = path_index_in + 3;
+        }
+        else
+        {
+            path_index_end = path_index_in + ceil(path_count_ideal_in2end);
+        }
+        path_index_out = path_index_end;
+
+        if(path_index_in != 0)
+        {
+            stack[S_PathIndexStepIn2End] = (cache_length_minus_1 - path_cache.smooth_in_index) / (double)(path_index_end - path_index_in);
+        }
+        else
+        {
+            stack[S_PathIndexStepIn2End] = 0;
+        }
+    }
+    else
+    {
+        double length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+        double length_out2end = length_in2end - length_in2out;
+        double path_count_ideal_in2out = length_in2out * stack[S_PathCountFactorCartesian];
+        double path_count_ideal_out2end = length_out2end * stack[S_PathCountFactorCartesian];
+        if(path_count_ideal_via2end > 20)
+        {
+            path_count_ideal_in2out = path_count_ideal_in2out * 20 / path_count_ideal_via2end;
+            path_count_ideal_out2end = path_count_ideal_out2end * 20 / path_count_ideal_via2end;
+        }
+        
+        if(path_count_ideal_in2out < DOUBLE_ACCURACY)   // in and out is the same point
+        {
+            path_index_out = path_index_in;
+        }
+        else
+        {
+            path_index_out = path_index_in + ceil(path_count_ideal_in2out);
+        }
+
+        if(path_count_ideal_out2end < DOUBLE_ACCURACY)  // out and end is the same point
+        {
+            path_index_end = path_index_out;
+        }
+        else if(path_count_ideal_out2end < 1)
+        {
+            path_index_end = path_index_out + 2;
+        }
+        else
+        {
+            path_index_end = path_index_out + ceil(path_count_ideal_out2end);
+        }
+
+        if(path_index_in != path_index_out)
+        {
+            stack[S_PathIndexStepIn2Out] = (path_cache.smooth_out_index - path_cache.smooth_in_index) / (double)(path_index_out - path_index_in);
+        }
+        else
+        {
+            stack[S_PathIndexStepIn2Out] = 0;
+        }
+        if(path_index_out != path_index_end)
+        {
+            stack[S_PathIndexStepOut2End] = (cache_length_minus_1 - path_cache.smooth_out_index) / (double)(path_index_end - path_index_out);
+        }
+        else
+        {
+            stack[S_PathIndexStepOut2End] = 0;
+        }
+        // FIXME: what if path_index_in = path_index_out = path_index_end ?
+    }
+}
+
+void generatePathPointVia2In(const PathCache &path_cache, const MotionTarget &via, double length_via2in,
+                                    double* path_vector_via2in, int path_index_in)
+{
+    int i, j;
+    // get start joint
+    Joint via_joint;
+    segment_alg_param.kinematics_ptr->inverseKinematicsInUser(via.pose_target, path_cache.cache[0].joint, via_joint);
+    int path_address = S_Path0;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        stack[path_address] = via_joint[i];
+        path_address += 25;
+    }
+
+    // via and in points are the same point
+    if(path_index_in == 0)
+    {
+        return;
+    }
+
+    // select traj point from via to in, not include the via point
+    Pose point_array[10];   // point_array[0] is not used
+    // compute length step    
+    double length_step = length_via2in / path_index_in;
+    double distance_to_via = 0;
+    // compute angle step    
+    double via_quatern[4], in_quatern[4];
+    getMoveEulerToQuatern(via.pose_target.orientation, via_quatern);
+    in_quatern[0] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.x;
+    in_quatern[1] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.y;
+    in_quatern[2] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.z;
+    in_quatern[3] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.w;
+    double angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
+    double angle_step = angle_via2in / path_index_in;
+    double angle_to_via = 0;
+    // compute traj point from 1 to (path_index_in - 1)
+    for(i = 1; i < path_index_in; ++i)
+    {
+        distance_to_via += length_step;
+        angle_to_via += angle_step;
+        getMoveLPathPoint(via.pose_target.position, path_vector_via2in, distance_to_via, point_array[i].position);
+        getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_to_via, point_array[i].orientation);
+    }
+    // traj point should be on the 'in point' 
+    point_array[path_index_in].position = path_cache.cache[path_cache.smooth_in_index].pose.position;
+    point_array[path_index_in].orientation = path_cache.cache[path_cache.smooth_in_index].pose.orientation;    
+
+    Joint result_joint;
+    Joint ref_joint = via_joint;
+    // IK point_array to S_Path0~S_Path8
+    for(i = 1; i <= path_index_in; ++i)
+    {
+        segment_alg_param.kinematics_ptr->inverseKinematicsInUser(point_array[i], ref_joint, result_joint);
+        path_address = S_Path0 + i;
+        for(j = 0; j < model.link_num; ++j)
+        {
+            stack[path_address] = result_joint[j];
+            path_address += 25;
+        }
+        ref_joint = result_joint;
+    }
+}
+
+void generatePathPointIn2End(const PathCache &path_cache, int path_index_in, int path_index_out, int path_index_end, int* path_index_array_in2end)
+{
+    int i, j;
+    double path_index_ideal = path_cache.smooth_in_index;
+    int path_index_real;
+    int path_address;
+    int cache_length_minus_1 = path_cache.cache_length - 1;
+    
+    path_index_array_in2end[0] = path_cache.smooth_in_index;
+    int path_index_array_in2end_index = 1;
+    if(path_cache.smooth_out_index == -1)   // without smooth
+    {
+        // path_index_out == path_index_end, stack[S_PathIndexStepIn2End] is valid
+        // from (path_index_in + 1) to (path_index_end - 1)
+        for(i = path_index_in + 1; i < path_index_end; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStepIn2End];
+            path_index_real = round(path_index_ideal);
+            path_index_array_in2end[path_index_array_in2end_index] = path_index_real;
+            ++path_index_array_in2end_index;
+            path_address = S_Path0 + i;
+            for(j = 0; j < model.link_num; ++j)
+            {
+                stack[path_address] = path_cache.cache[path_index_real].joint[j];
+                path_address += 25;
+            }
+        }
+        // path_index_end should be the same as path end point
+        path_address = S_Path0 + path_index_end;
+        for(i = 0; i < model.link_num; ++i)
+        {
+            stack[path_address] = path_cache.cache[cache_length_minus_1].joint[i];
+            path_index_array_in2end[path_index_array_in2end_index] = cache_length_minus_1;
+            path_address += 25;
+        }        
+    }
+    else    // with smooth
+    {
+        // path_index_out != path_index_end, stack[S_PathIndexStepIn2Out] & stack[S_PathIndexStepOut2End] are valid
+        // from (path_index_in + 1) to (path_index_out - 1)
+        for(i = path_index_in + 1; i < path_index_out; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStepIn2Out];
+            path_index_real = round(path_index_ideal);
+            path_index_array_in2end[path_index_array_in2end_index] = path_index_real;
+            ++path_index_array_in2end_index;
+            path_address = S_Path0 + i;
+            for(j = 0; j < model.link_num; ++j)
+            {
+                stack[path_address] = path_cache.cache[path_index_real].joint[j];
+                path_address += 25;
+            }
+        }        
+        // path_index_out should be the same as path out point
+        path_address = S_Path0 + path_index_out;      
+        for(i = 0; i < model.link_num; ++i)
+        {
+            stack[path_address] = path_cache.cache[path_cache.smooth_out_index].joint[i];
+            path_index_array_in2end[path_cache.smooth_out_index] = path_index_real;
+            ++path_index_array_in2end_index;
+            path_address += 25;
+        }
+        // from (path_index_out + 1) to (path_index_end - 1)
+        path_index_ideal = path_cache.smooth_out_index;
+        for(i = path_index_out + 1; i < path_index_end; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStepOut2End];
+            path_index_real = round(path_index_ideal);
+            path_index_array_in2end[path_cache.smooth_out_index] = path_index_real;
+            ++path_index_array_in2end_index;
+            path_address = S_Path0 + i;
+            for(j = 0; j < model.link_num; ++j)
+            {
+                stack[path_address] = path_cache.cache[path_index_real].joint[j];
+                path_address += 25;
+            }
+        }
+        // path_index_end should be the same as path end point
+        path_address = S_Path0 + path_index_end;       
+        for(i = 0; i < model.link_num; ++i)
+        {
+            stack[path_address] = path_cache.cache[cache_length_minus_1].joint[i];
+            path_index_array_in2end[path_cache.smooth_out_index] = cache_length_minus_1;
+            path_address += 25;
+        }        
+    }
+}
+
+void generatePathVia2EndTimeVector(double vel, const PathCache &path_cache, double length_via2in, 
+                                            int path_index_in, int path_index_out, int path_index_end, int& time_vector_size_via2end)
+{
+    int i;
+    int cache_length_minus_1 = path_cache.cache_length - 1;
+    time_vector_size_via2end = path_index_end + 2;
+    int time_vector_size_via2end_minus_1 = time_vector_size_via2end - 1;
+    int time_vector_current_index = 0;
+    if(path_index_in != 0)
+    {
+        double time_span_via2in = length_via2in / vel;    
+        double time_duration_via2in = time_span_via2in / path_index_in;
+        stack[S_TrajT] = time_duration_via2in * segment_alg_param.time_factor_1;
+        stack[S_TrajT + 1] = time_duration_via2in * segment_alg_param.time_factor_2;
+        for(i = 1; i < path_index_in; ++i)
+        {
+            stack[S_TrajT + i + 1] = time_duration_via2in;
+        }
+        time_vector_current_index = path_index_in + 1;
+    }
+
+    double length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[cache_length_minus_1].pose.position);
+    if(path_cache.smooth_out_index == -1)
+    {
+        double time_span_in2end = length_in2end / vel;
+        double time_duration_in2end = time_span_in2end / (path_index_end - path_index_in);
+        for(i = time_vector_current_index; i < path_index_end; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_in2end;
+        }
+        stack[S_TrajT + path_index_end] = time_duration_in2end * segment_alg_param.time_factor_3;
+        stack[S_TrajT + time_vector_size_via2end_minus_1] = time_duration_in2end * segment_alg_param.time_factor_4;
+    }
+    else
+    {
+        double length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+        double length_out2end = length_in2end - length_in2out;
+        double time_span_in2out = length_in2out / vel;
+        double time_span_out2end = length_out2end / vel;
+        double time_duration_in2out = time_span_in2out / (path_index_out - path_index_in);
+        double time_duration_out2end = time_span_out2end / (path_index_end - path_index_out);
+        for(i = time_vector_current_index; i <= path_index_out; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_in2out;
+        }
+        for(i = path_index_out + 1; i < time_vector_size_via2end_minus_1; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_out2end;
+        }
+        stack[S_TrajT + path_index_end] = time_duration_out2end * segment_alg_param.time_factor_3;
+        stack[S_TrajT + time_vector_size_via2end_minus_1] = time_duration_out2end * segment_alg_param.time_factor_4; 
+    }
+}
+
+void generatePathPointOut2In(const PathCache &path_cache, int traj_smooth_in_index, int& path_array_size, int* path_index_array_out2in)
+{
+    int i, j;
+    path_array_size = traj_smooth_in_index - 1;
+    int path_array_size_minus_1 = path_array_size - 1;
+    stack[S_PathIndexStepOut2In] = (path_cache.smooth_in_index - path_cache.smooth_out_index) / (double)path_array_size_minus_1;
+
+    // fisrt traj point
+    int path_address = S_Path0;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        stack[path_address] = path_cache.cache[0].joint[i];
+        path_address += 25;
+    }
+
+    // middle traj points
+    double path_index_ideal = 0;
+    int path_index_real;
+    path_index_array_out2in[0] = 0;
+    int path_index_array_out2in_index = 1;
+    for(i = 1; i < path_array_size_minus_1; ++i)
+    {
+        path_index_ideal += stack[S_PathIndexStepOut2In];
+        path_index_real = round(path_index_ideal);
+        path_index_array_out2in[path_index_array_out2in_index] = path_index_real;
+        ++path_index_array_out2in_index;
+        path_address = S_Path0;
+        for(j = 0; j < model.link_num; ++j)
+        {
+            stack[path_address] = path_cache.cache[path_index_real].joint[j];
+            path_address += 25;
+        }        
+    }
+
+    // last traj points
+    path_address = S_Path0 + path_array_size_minus_1;
+    path_index_array_out2in[path_index_array_out2in_index] = path_cache.smooth_in_index;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        stack[path_address] = path_cache.cache[path_cache.smooth_in_index].joint[i];
+        path_address += 25;
+    }
+}
+
+void generatePathOut2InTimeVector(double cmd_vel, double length_out2via, double length_via2in, int path_array_size_out2in,int& time_vector_size_out2in)
+{
+    time_vector_size_out2in = path_array_size_out2in + 1;
+    int path_array_size_out2in_minus_1 = path_array_size_out2in - 1;
+    double time_span_out2in = (length_out2via + length_via2in) / cmd_vel;
+    double time_duration_out2in = time_span_out2in / path_array_size_out2in_minus_1;
+    stack[S_TrajT] = time_duration_out2in * segment_alg_param.time_factor_1;
+    stack[S_TrajT + 1] = time_duration_out2in * segment_alg_param.time_factor_2;
+    for(int i = 2; i < path_array_size_out2in_minus_1; ++i)
+    {
+        stack[S_TrajT + i] = time_duration_out2in;
+    }
+    stack[S_TrajT + path_array_size_out2in_minus_1] = time_duration_out2in * segment_alg_param.time_factor_3;
+    stack[S_TrajT + path_array_size_out2in] = time_duration_out2in * segment_alg_param.time_factor_4;
+}
+
+void generatePieceVectors(int traj_offset, int traj_piece_num, double vel_ratio, double acc_ratio)
 {
     int traj_piece_j_address = S_TrajPieceJ0;
     int traj_piece_v_address = S_TrajPieceV0;
     int traj_piece_a_address = S_TrajPieceA0;
-    int traj_a_address = S_TrajA0;
-    int traj_v_address = S_TrajV0;
+    int traj_a_address = S_TrajA0 + traj_offset;
+    int traj_v_address = S_TrajV0 + traj_offset;
     for(int i = 0; i <model.link_num; ++i)
     {
         for(int j = 0; j < traj_piece_num; ++j)
@@ -1533,8 +2398,8 @@ void generatePieceVectors(int traj_piece_num, double vel_ratio, double acc_ratio
         traj_piece_j_address += 25;
         traj_piece_v_address += 25;
         traj_piece_a_address += 25;
-        traj_a_address += 75;
-        traj_v_address += 75;
+        traj_a_address += 150;
+        traj_v_address += 150;
     }
 
     // compute acc
@@ -1770,11 +2635,12 @@ void generateRescaleFactorVector(int time_vector_size)
     }
 }
 
-void generateRescaleVector(int time_vector_size)
+void generateRescaleVector(int rescale_t_offset, int time_vector_size)
 {
+    int rescale_t_base = S_TrajRescaleT + rescale_t_offset;
     for(int i = 0; i < time_vector_size; ++i)
     {
-        stack[S_TrajRescaleT + i] = stack[S_TrajT + i] * stack[S_TrajRescaleFactor];
+        stack[rescale_t_base + i] = stack[S_TrajT + i] * stack[S_TrajRescaleFactor];
     }
 }
 
@@ -1794,7 +2660,7 @@ void generateCoeff(int time_vector_size)
     {
         stack[S_TrajAbsoluteT + i + 1] = stack[S_TrajAbsoluteT + i] + stack[S_TrajRescaleT + i];
     }
-  
+ 
     // compute coeff
     for(i = 0; i < model.link_num; ++i)
     {
@@ -1812,12 +2678,12 @@ void generateCoeff(int time_vector_size)
                                    + (stack[S_TmpDouble_2] * stack[S_TrajAbsoluteT + j + 1] * stack[S_TrajAbsoluteT + j + 1] * stack[S_TrajAbsoluteT + j + 1] - stack[S_TmpDouble_3] * stack[S_TrajAbsoluteT + j] * stack[S_TrajAbsoluteT + j] * stack[S_TrajAbsoluteT + j]) / (6 * stack[S_TrajRescaleT + j])
                                    + (stack[S_TmpDouble_3] * stack[S_TrajAbsoluteT + j] - stack[S_TmpDouble_2] * stack[S_TrajAbsoluteT + j + 1]) * stack[S_TrajRescaleT + j] / 6;        
         }
-        traj_p += 75;
-        traj_a += 75;
-        coeff_a3 += 100;
-        coeff_a2 += 100;
-        coeff_a1 += 100;
-        coeff_a0 += 100;
+        traj_p += 150;
+        traj_a += 150;
+        coeff_a3 += 200;
+        coeff_a2 += 200;
+        coeff_a1 += 200;
+        coeff_a0 += 200;
     }
 }
 
@@ -1858,9 +2724,63 @@ void generateTrajCache(TrajectoryCache &traj_cache, int time_vector_size, int* p
     traj_cache.cache[path_index_array_size].index_in_path_cache = path_index_array[path_index_array_size - 1];
 }
 
+void generateTrajCacheSmooth(TrajectoryCache &traj_cache, int time_vector_size, 
+                                    int* path_index_array_out2in, int path_index_array_size_out2in,
+                                    int* path_index_array_in2end, int path_index_array_size_in2end)
+{
+    int i;
+    traj_cache.cache_length = time_vector_size;
+    int traj_cache_length_minus_1 = traj_cache.cache_length - 1;
+    int time_vector_size_out2in = path_index_array_size_out2in + 1; // include two flexible point
+    int time_vector_size_out2in_minus_1 = path_index_array_size_out2in;
+    
+    for(i = 0; i < traj_cache.cache_length; ++i)
+    {
+        traj_cache.cache[i].axis[0].data[0] = stack[S_TrajCoeffJ0A0 + i];
+        traj_cache.cache[i].axis[0].data[1] = stack[S_TrajCoeffJ0A1 + i];
+        traj_cache.cache[i].axis[0].data[2] = stack[S_TrajCoeffJ0A2 + i];
+        traj_cache.cache[i].axis[0].data[3] = stack[S_TrajCoeffJ0A3 + i];
+        traj_cache.cache[i].axis[1].data[0] = stack[S_TrajCoeffJ1A0 + i];
+        traj_cache.cache[i].axis[1].data[1] = stack[S_TrajCoeffJ1A1 + i];
+        traj_cache.cache[i].axis[1].data[2] = stack[S_TrajCoeffJ1A2 + i];
+        traj_cache.cache[i].axis[1].data[3] = stack[S_TrajCoeffJ1A3 + i];   
+        traj_cache.cache[i].axis[2].data[0] = stack[S_TrajCoeffJ2A0 + i];
+        traj_cache.cache[i].axis[2].data[1] = stack[S_TrajCoeffJ2A1 + i];
+        traj_cache.cache[i].axis[2].data[2] = stack[S_TrajCoeffJ2A2 + i];
+        traj_cache.cache[i].axis[2].data[3] = stack[S_TrajCoeffJ2A3 + i];
+        traj_cache.cache[i].axis[3].data[0] = stack[S_TrajCoeffJ3A0 + i];
+        traj_cache.cache[i].axis[3].data[1] = stack[S_TrajCoeffJ3A1 + i];
+        traj_cache.cache[i].axis[3].data[2] = stack[S_TrajCoeffJ3A2 + i];
+        traj_cache.cache[i].axis[3].data[3] = stack[S_TrajCoeffJ3A3 + i];
+        traj_cache.cache[i].axis[4].data[0] = stack[S_TrajCoeffJ4A0 + i];
+        traj_cache.cache[i].axis[4].data[1] = stack[S_TrajCoeffJ4A1 + i];
+        traj_cache.cache[i].axis[4].data[2] = stack[S_TrajCoeffJ4A2 + i];
+        traj_cache.cache[i].axis[4].data[3] = stack[S_TrajCoeffJ4A3 + i];   
+        traj_cache.cache[i].axis[5].data[0] = stack[S_TrajCoeffJ5A0 + i];
+        traj_cache.cache[i].axis[5].data[1] = stack[S_TrajCoeffJ5A1 + i];
+        traj_cache.cache[i].axis[5].data[2] = stack[S_TrajCoeffJ5A2 + i];
+        traj_cache.cache[i].axis[5].data[3] = stack[S_TrajCoeffJ5A3 + i];
+        traj_cache.cache[i].duration = stack[S_TrajRescaleT + i];        
+    }
+
+    traj_cache.cache[0].index_in_path_cache = -1;
+    for(i = 1; i < (time_vector_size_out2in_minus_1 - 1); ++i)
+    {
+        traj_cache.cache[i].index_in_path_cache = path_index_array_out2in[i];
+    }
+    traj_cache.cache[time_vector_size_out2in_minus_1 - 1].index_in_path_cache = -1;
+    traj_cache.cache[time_vector_size_out2in_minus_1].index_in_path_cache = path_index_array_out2in[path_index_array_size_out2in - 1];
+    for(i = time_vector_size_out2in; i < (traj_cache_length_minus_1 - 1); ++i)
+    {
+        traj_cache.cache[i].index_in_path_cache = path_index_array_in2end[i - time_vector_size_out2in + 1];
+    }
+    traj_cache.cache[traj_cache_length_minus_1 - 1].index_in_path_cache = -1;
+    traj_cache.cache[traj_cache_length_minus_1].index_in_path_cache = path_index_array_in2end[path_index_array_size_in2end - 1];
+}
+
 void printTraj(TrajectoryCache &traj_cache, int index, double time_step)
 {
-    double absolute_time_vector[25];
+    double absolute_time_vector[50];
     absolute_time_vector[0] = 0;
     for(int i = 1; i < traj_cache.cache_length + 1; ++i)
     {
@@ -1870,10 +2790,10 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step)
     int segment_index;
     double cur_time = 0;
     double p_value, v_value, a_value;
-    int a3_base = S_TrajCoeffJ0A3 + 100*index;
-    int a2_base = S_TrajCoeffJ0A2 + 100*index;
-    int a1_base = S_TrajCoeffJ0A1 + 100*index;
-    int a0_base = S_TrajCoeffJ0A0 + 100*index;    
+    int a3_base = S_TrajCoeffJ0A3 + 200*index;
+    int a2_base = S_TrajCoeffJ0A2 + 200*index;
+    int a1_base = S_TrajCoeffJ0A1 + 200*index;
+    int a0_base = S_TrajCoeffJ0A0 + 200*index;    
     while(cur_time < absolute_time_vector[traj_cache.cache_length])
     {
         for(segment_index = 0; segment_index < traj_cache.cache_length; ++segment_index)
@@ -1901,19 +2821,31 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step)
         std::cout<<p_value<<"  "<<v_value<<"  "<<a_value<<std::endl;
         cur_time += time_step;
     }
+}
 
-
-#if 0
-    double time_step = 0.001;
-    double cur_time = 0;
-    int segment_index;
-    double p_value, v_value, a_value;
-    
-    while(cur_time < stack[S_TrajAbsoluteT + time_vector_size])
+void printAllTraj(TrajectoryCache &traj_cache, double time_step)
+{
+    double absolute_time_vector[50];
+    absolute_time_vector[0] = 0;
+    for(int i = 1; i < traj_cache.cache_length + 1; ++i)
     {
-        for(segment_index = 0; segment_index < time_vector_size; ++segment_index)
+        absolute_time_vector[i] = absolute_time_vector[i - 1] + traj_cache.cache[i - 1].duration;
+    }
+
+    int segment_index;
+    double cur_time = 0;
+    double p0_value, v0_value, a0_value;
+    double p1_value, v1_value, a1_value;
+    double p2_value, v2_value, a2_value;
+    double p3_value, v3_value, a3_value;
+    double p4_value, v4_value, a4_value;
+    double p5_value, v5_value, a5_value;
+  
+    while(cur_time < absolute_time_vector[traj_cache.cache_length])
+    {
+        for(segment_index = 0; segment_index < traj_cache.cache_length; ++segment_index)
         {
-            if(cur_time <= stack[S_TrajAbsoluteT + segment_index])
+            if(cur_time <= absolute_time_vector[segment_index])
             {
                 break;
             }
@@ -1922,7 +2854,7 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step)
         {
             segment_index = 1;
         }
-    
+
         p0_value = stack[S_TrajCoeffJ0A3 + segment_index - 1] * cur_time * cur_time * cur_time
                   + stack[S_TrajCoeffJ0A2 + segment_index - 1] * cur_time * cur_time
                   + stack[S_TrajCoeffJ0A1 + segment_index - 1] * cur_time
@@ -1932,21 +2864,61 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step)
                   + stack[S_TrajCoeffJ0A1 + segment_index - 1];
         a0_value = 6 * stack[S_TrajCoeffJ0A3 + segment_index - 1] * cur_time
                   + 2 * stack[S_TrajCoeffJ0A2 + segment_index - 1];
-        
+
+        p1_value = stack[S_TrajCoeffJ1A3 + segment_index - 1] * cur_time * cur_time * cur_time
+                    + stack[S_TrajCoeffJ1A2 + segment_index - 1] * cur_time * cur_time
+                    + stack[S_TrajCoeffJ1A1 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ1A0 + segment_index - 1];
+        v1_value = 3 * stack[S_TrajCoeffJ1A3 + segment_index - 1] * cur_time * cur_time
+                    + 2 * stack[S_TrajCoeffJ1A2 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ1A1 + segment_index - 1];
+        a1_value = 6 * stack[S_TrajCoeffJ1A3 + segment_index - 1] * cur_time
+                    + 2 * stack[S_TrajCoeffJ1A2 + segment_index - 1];
+
         p2_value = stack[S_TrajCoeffJ2A3 + segment_index - 1] * cur_time * cur_time * cur_time
-                  + stack[S_TrajCoeffJ2A2 + segment_index - 1] * cur_time * cur_time
-                  + stack[S_TrajCoeffJ2A1 + segment_index - 1] * cur_time
-                  + stack[S_TrajCoeffJ2A0 + segment_index - 1];
+                    + stack[S_TrajCoeffJ2A2 + segment_index - 1] * cur_time * cur_time
+                    + stack[S_TrajCoeffJ2A1 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ2A0 + segment_index - 1];
         v2_value = 3 * stack[S_TrajCoeffJ2A3 + segment_index - 1] * cur_time * cur_time
-                  + 2 * stack[S_TrajCoeffJ2A2 + segment_index - 1] * cur_time
-                  + stack[S_TrajCoeffJ2A1 + segment_index - 1];
+                    + 2 * stack[S_TrajCoeffJ2A2 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ2A1 + segment_index - 1];
         a2_value = 6 * stack[S_TrajCoeffJ2A3 + segment_index - 1] * cur_time
-                  + 2 * stack[S_TrajCoeffJ2A2 + segment_index - 1]; 
-        std::cout<<p0_value<<"  "<<v0_value<<"  "<<a0_value<<" "<<p2_value<<" "<<v2_value<<" "<<a2_value<<std::endl;
-    
-        //std::cout<<p0_value<<"  "<<v0_value<<"  "<<a0_value<<std::endl;
+                    + 2 * stack[S_TrajCoeffJ2A2 + segment_index - 1];
+
+        p3_value = stack[S_TrajCoeffJ3A3 + segment_index - 1] * cur_time * cur_time * cur_time
+                    + stack[S_TrajCoeffJ3A2 + segment_index - 1] * cur_time * cur_time
+                    + stack[S_TrajCoeffJ3A1 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ3A0 + segment_index - 1];
+        v3_value = 3 * stack[S_TrajCoeffJ3A3 + segment_index - 1] * cur_time * cur_time
+                    + 2 * stack[S_TrajCoeffJ3A2 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ3A1 + segment_index - 1];
+        a3_value = 6 * stack[S_TrajCoeffJ3A3 + segment_index - 1] * cur_time
+                    + 2 * stack[S_TrajCoeffJ3A2 + segment_index - 1];
+
+        p4_value = stack[S_TrajCoeffJ4A3 + segment_index - 1] * cur_time * cur_time * cur_time
+                    + stack[S_TrajCoeffJ4A2 + segment_index - 1] * cur_time * cur_time
+                    + stack[S_TrajCoeffJ4A1 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ4A0 + segment_index - 1];
+        v4_value = 3 * stack[S_TrajCoeffJ4A3 + segment_index - 1] * cur_time * cur_time
+                    + 2 * stack[S_TrajCoeffJ4A2 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ4A1 + segment_index - 1];
+        a4_value = 6 * stack[S_TrajCoeffJ4A3 + segment_index - 1] * cur_time
+                    + 2 * stack[S_TrajCoeffJ4A2 + segment_index - 1];
+
+        p5_value = stack[S_TrajCoeffJ5A3 + segment_index - 1] * cur_time * cur_time * cur_time
+                    + stack[S_TrajCoeffJ5A2 + segment_index - 1] * cur_time * cur_time
+                    + stack[S_TrajCoeffJ5A1 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ5A0 + segment_index - 1];
+        v5_value = 3 * stack[S_TrajCoeffJ5A3 + segment_index - 1] * cur_time * cur_time
+                    + 2 * stack[S_TrajCoeffJ5A2 + segment_index - 1] * cur_time
+                    + stack[S_TrajCoeffJ5A1 + segment_index - 1];
+        a5_value = 6 * stack[S_TrajCoeffJ5A3 + segment_index - 1] * cur_time
+                    + 2 * stack[S_TrajCoeffJ5A2 + segment_index - 1];
+        //std::cout<<p0_value<<"  "<<p1_value<<"  "<<p2_value<<"  "<<p3_value<<"  "<<p4_value<<"  "<<p5_value<<std::endl;
+        std::cout<<v0_value<<"  "<<v1_value<<"  "<<v2_value<<"  "<<v3_value<<"  "<<v4_value<<"  "<<v5_value<<std::endl;
+        //std::cout<<a0_value<<"  "<<a1_value<<"  "<<a2_value<<"  "<<a3_value<<"  "<<a4_value<<"  "<<a5_value<<std::endl;
         cur_time += time_step;
     }
-#endif
+
 }
 

@@ -104,8 +104,8 @@ struct TrajectoryCacheList  // 轨迹缓存链表
 
 struct TrajectorySegment
 {
-    MotionTime  time_from_start;        // 从运动起始到本段segment起点之间的时间
-    MotionTime  time_from_block;        // 从block的起始到本段segment起始之间的时间
+    MotionTime  traj_from_start;        // 从运动起始到本段轨迹起点之间的时间
+    MotionTime  segment_from_traj;     // 从本段轨迹开始到本段segment起始之间的时间
     MotionTime  duration;               // 本段segment的持续时间
     AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
 };

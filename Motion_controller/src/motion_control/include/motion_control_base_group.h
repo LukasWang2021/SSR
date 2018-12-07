@@ -135,6 +135,8 @@ class BaseGroup
     virtual ErrorCode autoStableCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
 
+    virtual ErrorCode computeInverseKinematicsOnPathCache(const Joint &start, PathCache &path);
+
     
     virtual ErrorCode sendAutoTrajectoryFlow(void);
     virtual ErrorCode sendManualTrajectoryFlow(void);
@@ -198,6 +200,7 @@ class BaseGroup
     BareCoreInterface       bare_core_;
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;
+    fst_algorithm::DynamicsInterface  *dynamics_ptr_;
 
     CachePool<PathCacheList>        path_cache_pool_;
     CachePool<TrajectoryCacheList>  traj_cache_pool_;
@@ -217,6 +220,14 @@ class BaseGroup
     bool error_request_;
     bool auto_to_standby_request_;
     bool manual_to_standby_request_;
+
+    size_t  disable_to_standby_timeout_;
+    size_t  standby_to_disable_timeout_;
+    size_t  standby_to_auto_timeout_;
+    size_t  auto_to_standby_timeout_;
+    size_t  manual_to_standby_timeout_;
+    size_t  trajectory_flow_timeout_;
+    size_t  servo_update_timeout_;
     
     
 

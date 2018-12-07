@@ -14,13 +14,16 @@
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <error_monitor.h>
 #include <common_file_path.h>
-
+#include <segment_alg.h>
 
 
 using namespace std;
 using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
+using namespace fst_algorithm;
+
+extern ComplexAxisGroupModel model;
 
 namespace fst_mc
 {
@@ -142,10 +145,9 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     FST_INFO("  hard-upper: %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
 
     // 加载motion_control参数设置
-    path = COMPONENT_PARAM_FILE_DIR;
     param.reset();
 
-    if (!param.loadParamFile(path + "motion_control.yaml"))
+    if (!param.loadParamFile(path + "base_group.yaml"))
     {
         FST_ERROR("Fail loading motion configuration from config file");
         return param.getLastError();
@@ -157,7 +159,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     {
         FST_INFO("Initializing trajectory fifo ... capacity = %d", traj_fifo_size);
 
-        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size) == SUCCESS)
+        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM) == SUCCESS)
         {
             FST_INFO("Success.");
         }
@@ -225,6 +227,28 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
+    // 从配置文件加载Fine指令的稳定周期和稳定门限
+    int     stable_times;
+    double  stable_threshold;
+    if (param.getParam("stable_with_fine/cycle", stable_times) && param.getParam("stable_with_fine/threshold", stable_threshold))
+    {
+        if (stable_times > 0 && stable_threshold > 0)
+        {
+            FST_INFO("Fine settings: cycle = %d, threshold = %.4f", stable_times, stable_threshold);
+            fine_waiter_.initFineWaiter(stable_times, stable_threshold);
+        }
+        else
+        {
+            FST_ERROR("Invalid fine settings: cycle = %d, threshold = %.4f", stable_times, stable_threshold);
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading fine setings from config file");
+        return param.getLastError();
+    }
+    
     // 从配置文件加载笛卡尔空间线速度上下限
     if (param.getParam("cartesian_vel_limit/min", cartesian_vel_min_) && param.getParam("cartesian_vel_limit/max", cartesian_vel_max_))
     {
@@ -234,6 +258,79 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     {
         FST_ERROR("Fail loading cartesian velocity limit from config file");
         return param.getLastError();
+    }
+
+    // 从配置文件加载状态机中各个临时状态的超时时间
+    int time_out;
+    
+    if (param.getParam("time_out_cycle/disable_to_standby", time_out) && time_out > 0)
+    {
+        disable_to_standby_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading disable->standby timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/standby_to_disable", time_out) && time_out > 0)
+    {
+        standby_to_disable_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading standby->disable timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/standby_to_auto", time_out) && time_out > 0)
+    {
+        standby_to_auto_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading standby->auto timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/auto_to_standby", time_out) && time_out > 0)
+    {
+        auto_to_standby_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading auto->standby timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/manual_to_standby", time_out) && time_out > 0)
+    {
+        manual_to_standby_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading manual->standby timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/trajectory_flow", time_out) && time_out > 0)
+    {
+        trajectory_flow_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading trajectory flow timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/servo_update", time_out) && time_out > 0)
+    {
+        servo_update_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading servo update timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
     }
 
     // 初始化裸核通信句柄
@@ -278,7 +375,6 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     if (kinematics_ptr_)
     {
         param.reset();
-        path = AXIS_GROUP_DIR;
         double dh_matrix[NUM_OF_JOINT][4];
 
         if (param.loadParamFile(path + "arm_dh.yaml"))
@@ -316,6 +412,21 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         FST_ERROR("Fail to create kinematics for ArmGroup.");
         return MOTION_INTERNAL_FAULT;
     }
+
+    // 初始化动力学模块
+    FST_INFO("Initializing dynamics of ArmGroup ...");
+    dynamics_ptr_ = new DynamicsInterface();
+
+    if (dynamics_ptr_ == NULL)
+    {
+        FST_ERROR("Fail to create dynamics for ArmGroup.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    // 初始化路径和轨迹规划
+    initComplexAxisGroupModel();
+    initSegmentAlgParam(kinematics_ptr_, dynamics_ptr_);
+    initStack(&model);
 
     // 初始化手动示教模块
     FST_INFO("Initializing manual teach of ArmGroup ...");

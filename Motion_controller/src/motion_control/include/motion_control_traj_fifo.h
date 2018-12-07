@@ -24,7 +24,7 @@ class TrajectoryFifo
     TrajectoryFifo(void);
     ~TrajectoryFifo(void);
 
-    ErrorCode initTrajectoryFifo(size_t capacity);
+    ErrorCode initTrajectoryFifo(size_t capacity, size_t joint_num);
     ErrorCode pushTrajectorySegment(const TrajectorySegment &segment);
     ErrorCode pickTrajectoryPoint(MotionTime time, TrajectoryPoint &point);
 
@@ -38,6 +38,7 @@ class TrajectoryFifo
     void samplePointFromSegment(MotionTime time, TrajectoryPoint &point);
     void sampleEndingPointFromSegment(TrajectoryPoint &point);
 
+    size_t  joint_num_;
     TrajectorySegment   trajectory_segment_;
     LockFreeFIFO<TrajectorySegment>   trajectory_fifo_;
 };

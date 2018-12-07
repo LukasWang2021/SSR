@@ -22,38 +22,43 @@ using namespace std;
 using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
+using namespace fst_algorithm;
 
-#define OUTPUT_JOUT
-//#define OUTPUT_POUT
+//#define OUTPUT_JOINT_POINT
+//#define OUTPUT_PATH_CACHE
+//#define OUTPUT_TRAJ_CACHE
 
-#define SERVO_UPDATE_FAIL_MAX_TIMES     50
-#define TRAJECTORY_FLOW_FAIL_MAX_TIMES  50
 
 
 namespace fst_mc
 {
 
-
-
-#ifdef OUTPUT_JOUT
-#define JOUT_SIZE   (200 * 1000)
-
+#ifdef OUTPUT_JOINT_POINT
+#define OUTPUT_JOINT_POINT_SIZE   (200 * 1000)
 
 struct JointOut
 {
     double time;
-    Joint  ma_cv_g;
-    JointPoint point;
+    TrajectoryPoint point;
 };
 
-size_t    g_jindex = 0;
-JointOut  g_jout[JOUT_SIZE];
-ofstream  jout("jout.csv");
-
+size_t    g_joint_output_index = 0;
+JointOut  g_joint_output_array[OUTPUT_JOINT_POINT_SIZE];
+ofstream  g_joint_out("jout.csv");
 #endif
 
-#ifdef OUTPUT_POUT
-std::ofstream pout("pout.csv");
+#ifdef OUTPUT_PATH_CACHE
+#define OUTPUT_PATH_CACHE_SIZE   (32)
+ofstream  g_path_out("pout.csv");
+size_t    g_path_output_index = 0;
+PathCacheList   g_path_output_array[OUTPUT_PATH_CACHE_SIZE];
+#endif
+
+#ifdef OUTPUT_TRAJ_CACHE
+#define OUTPUT_TRAJ_CACHE_SIZE   (32)
+ofstream  g_traj_out("tout.csv");
+size_t    g_traj_output_index = 0;
+TrajectoryCacheList   g_traj_output_array[OUTPUT_TRAJ_CACHE_SIZE];
 #endif
 
 BaseGroup::BaseGroup(fst_log::Logger* plog)
@@ -66,6 +71,9 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
 
     path_list_ptr_ = NULL;
     traj_list_ptr_ = NULL;
+
+    dynamics_ptr_ = NULL;
+    kinematics_ptr_ = NULL;
 
     vel_ratio_ = 0;
     acc_ratio_ = 0;
@@ -82,31 +90,107 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
 BaseGroup::~BaseGroup()
 {
 
-#ifdef OUTPUT_JOUT
-    printf("正在将缓存中的轨迹录入文件：jout.csv ... 请稍后\n");
-    jout << "time,angle0,angle1,angle2,angle3,angle4,angle5,omega0,omega1,omega2,omega3,omega4,omega5,alpha0,alpha1,alpha2,alpha3,alpha4,alpha5,"
-         << "ma+cv+g[0],ma+cv+g[1],ma+cv+g[2],ma+cv+g[3],ma+cv+g[4],ma+cv+g[5]" << endl;
+#ifdef OUTPUT_JOINT_POINT
+    PoseEuler pose;
+    printf("正在将缓存中的轨迹点录入文件：jout.csv ... 请稍后\n");
+    g_joint_out << "level,time,angle[0],angle[1],angle[2],angle[3],angle[4],angle[5],omega[0],omega[1],omega[2],omega[3],omega[4],omega[5],alpha[0],alpha[1],alpha[2],alpha[3],alpha[4],alpha[5],x,y,z,a,b,c" << endl;
 
-    for (size_t i = 0; i < g_jindex; i++)
+    for (size_t i = 0; i < g_joint_output_index; i++)
     {
-        jout << g_jout[i].time << ","
-             << g_jout[i].point.angle[0] << "," << g_jout[i].point.angle[1] << "," << g_jout[i].point.angle[2] << "," << g_jout[i].point.angle[3] << "," << g_jout[i].point.angle[4] << "," << g_jout[i].point.angle[5] << ","
-             << g_jout[i].point.omega[0] << "," << g_jout[i].point.omega[1] << "," << g_jout[i].point.omega[2] << "," << g_jout[i].point.omega[3] << "," << g_jout[i].point.omega[4] << "," << g_jout[i].point.omega[5] << ","
-             << g_jout[i].point.alpha[0] << "," << g_jout[i].point.alpha[1] << "," << g_jout[i].point.alpha[2] << "," << g_jout[i].point.alpha[3] << "," << g_jout[i].point.alpha[4] << "," << g_jout[i].point.alpha[5] << ","
-             << g_jout[i].ma_cv_g[0] << "," << g_jout[i].ma_cv_g[1] << "," << g_jout[i].ma_cv_g[2] << "," << g_jout[i].ma_cv_g[3] << "," << g_jout[i].ma_cv_g[4] << "," << g_jout[i].ma_cv_g[5] << endl;
-
-        if (i > 0 && i % 10000 == 0)
-        {
-            printf("已完成%.2f%%，还剩余%u点\n", (double)i / g_jindex * 100, g_jindex - 1 - i);
-        }
+        auto &point = g_joint_output_array[i].point;
+        kinematics_ptr_->forwardKinematicsInUser(point.angle, pose);
+        g_joint_out << point.level << "," << g_joint_output_array[i].time << ","
+                    << point.angle[0] << "," << point.angle[1] << "," << point.angle[2] << "," << point.angle[3] << "," << point.angle[4] << "," << point.angle[5] << ","
+                    << point.omega[0] << "," << point.omega[1] << "," << point.omega[2] << "," << point.omega[3] << "," << point.omega[4] << "," << point.omega[5] << ","
+                    << point.alpha[0] << "," << point.alpha[1] << "," << point.alpha[2] << "," << point.alpha[3] << "," << point.alpha[4] << "," << point.alpha[5] << ","
+                    << pose.position.x << "," << pose.position.y << "," << pose.position.z << "," << pose.orientation.a << "," << pose.orientation.b << "," << pose.orientation.c << endl;
     }
 
-    jout.close();
+    g_joint_out.close();
     printf("录入完成！\n");
 #endif
 
-#ifdef OUTPUT_POUT
-    pout.close();
+#ifdef OUTPUT_PATH_CACHE
+    printf("正在将缓存中的规划路径录入文件：pout.csv ... 请稍后\n");
+
+    for (size_t i = 0; i < g_path_output_index; i++)
+    {
+        PathCache &path_cache = g_path_output_array[i].path_cache;
+        g_path_out << "path-" << i << ",id=" << g_path_output_array[i].id << ",smooth-in=" << path_cache.smooth_in_index << ",smooth-out=" << path_cache.smooth_out_index << ",cache-length=" << path_cache.cache_length << endl;
+        
+        if (path_cache.target.type == MOTION_JOINT)
+        {
+            g_path_out << "move-joint,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
+                       << ",target[0]=" << path_cache.target.joint_target[0] << ",target[1]=" << path_cache.target.joint_target[1] << ",target[2]=" << path_cache.target.joint_target[2]
+                       << ",target[3]=" << path_cache.target.joint_target[3] << ",target[4]=" << path_cache.target.joint_target[4] << ",target[5]=" << path_cache.target.joint_target[5] << endl;
+            
+            for (size_t j = 0; j < path_cache.cache_length; j++)
+            {
+                PathBlock &block = path_cache.cache[j];
+                g_path_out << "block-" << j << ",point-type=" << block.point_type << ",motion-type=" << block.motion_type 
+                           << ",joint[0]=" << block.joint[0] << ",joint[1]=" << block.joint[1] << ",joint[2]=" << block.joint[2] 
+                           << ",joint[3]=" << block.joint[3] << ",joint[4]=" << block.joint[4] << ",joint[5]=" << block.joint[5] << endl;
+            }
+        }
+        else
+        {
+            if (path_cache.target.type == MOTION_LINE)
+            {
+                g_path_out << "move-line,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
+                           << ",target-x=" << path_cache.target.pose_target[0] << ",target-y=" << path_cache.target.pose_target[1] << ",target-z=" << path_cache.target.pose_target[2]
+                           << ",target-a=" << path_cache.target.pose_target[3] << ",target-b=" << path_cache.target.pose_target[4] << ",target-c=" << path_cache.target.pose_target[5] << endl;
+            }
+            else if (path_cache.target.type == MOTION_CIRCLE)
+            {
+                g_path_out << "move-circle,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
+                           << ",via-x=" << path_cache.target.circle_target.pose1[0] << ",via-y=" << path_cache.target.circle_target.pose1[1] << ",via-z=" << path_cache.target.circle_target.pose1[2]
+                           << ",via-a=" << path_cache.target.circle_target.pose1[3] << ",via-b=" << path_cache.target.circle_target.pose1[4] << ",via-c=" << path_cache.target.circle_target.pose1[5]
+                           << ",target-x=" << path_cache.target.circle_target.pose2[0] << ",target-y=" << path_cache.target.circle_target.pose2[1] << ",target-z=" << path_cache.target.circle_target.pose2[2]
+                           << ",target-a=" << path_cache.target.circle_target.pose2[3] << ",target-b=" << path_cache.target.circle_target.pose2[4] << ",target-c=" << path_cache.target.circle_target.pose2[5] << endl;
+            }
+            else
+            {
+                g_path_out << "unknow motion type" << endl;
+                continue;
+            }
+            
+            for (size_t j = 0; j < path_cache.cache_length; j++)
+            {
+                PathBlock &block = path_cache.cache[j];
+                g_path_out << "block-" << j << ",point-type=" << block.point_type << ",motion-type=" << block.motion_type 
+                           << ",x=" << block.pose[0] << ",y=" << block.pose[1] << ",z=" << block.pose[2] 
+                           << ",ow=" << block.pose[3] << ",ox=" << block.pose[4] << ",oy=" << block.pose[5] << ",oz=" << block.pose[6] << endl;
+            }
+        }
+    }
+
+    g_path_out.close();
+    printf("录入完成！\n");
+#endif
+
+#ifdef OUTPUT_TRAJ_CACHE
+    printf("正在将缓存中的规划轨迹录入文件：tout.csv ... 请稍后\n");
+
+    for (size_t i = 0; i < g_traj_output_index; i++)
+    {
+        TrajectoryCache &traj_cache = g_traj_output_array[i].trajectory_cache;
+        double total_duration = traj_cache.cache_length > 0 ? traj_cache.cache[traj_cache.cache_length].time_from_start : 0;
+        g_traj_out << "traj-" << i << ",time-from-start=" << g_traj_output_array[i].time_from_start << ",total-duration=" << total_duration << ",smooth-out=" << traj_cache.smooth_out_index << ",cache-length=" << traj_cache.cache_length << endl;
+        
+        for (size_t j = 0; j < traj_cache.cache_length; j++)
+        {
+            TrajectoryBlock &block = traj_cache.cache[j];
+            g_traj_out << "block-" << j << ",index-in-path=" << block.index_in_path_cache << ",start-from-traj=" << block.time_from_start << ",duration=" << block.duration << endl;
+
+            for (size_t k = 0; k < NUM_OF_JOINT; k++)
+            {
+                g_traj_out << "axis-" << k << ",c0=" << block.axis[k].data[0] << ",c1=" << block.axis[k].data[1] << ",c2=" << block.axis[k].data[2] << ",c3=" << block.axis[k].data[3] << ",c4=" << block.axis[k].data[4] << ",c5=" << block.axis[k].data[5] << endl;
+            }
+        }
+    }
+
+    g_traj_out.close();
+    printf("录入完成！\n");
 #endif
 }
 
@@ -586,7 +670,6 @@ void BaseGroup::linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj
 {
     path_ptr->next_ptr = NULL;
     traj_ptr->next_ptr = NULL;
-    pthread_mutex_lock(&cache_list_mutex_);
 
     if (path_list_ptr_ == NULL)
     {
@@ -605,8 +688,6 @@ void BaseGroup::linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj
     {
         getLastTrajectoryCacheListPtr()->next_ptr = traj_ptr;
     }
-
-    pthread_mutex_unlock(&cache_list_mutex_);
 }
 
 
@@ -627,7 +708,9 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
     if (err != SUCCESS)
     {
-        if (err == 0xA000B000C000D000)
+        // 如果目标点和起始点重合，直接跳过这条指令的规划执行，什么也不做
+        // 如果是其他错误则报错，提前结束运动规划
+        if (err == TARGET_COINCIDENCE)
         {
             FST_WARN("Target coincidence with start, nothing to do.");
             return SUCCESS;
@@ -674,9 +757,41 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
     if (err == SUCCESS)
     {
+        // 更新start-joint
+        start_joint_ = path_ptr->path_cache.cache[path_ptr->path_cache.cache_length - 1].joint;
+
+        path_ptr->id = id;
+        traj_ptr->pick_index = 0;
+        traj_ptr->time_from_start = 0;
+        traj_ptr->pick_time_from_block = 0;
         updateTimeFromStart(traj_ptr->trajectory_cache);
+        traj_ptr->trajectory_cache.path_cache_ptr = &path_ptr->path_cache;
+
+        // 上一条指令不带smooth时start-time是0，否则start-time应该等于上一条指令的平滑切出时间
+        pthread_mutex_lock(&cache_list_mutex_);
+        MotionTime start_time = 0;
+        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
+
+        if (last_traj_ptr != NULL && last_traj_ptr->trajectory_cache.smooth_out_index != -1)
+        {
+            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
+            start_time = last_traj_ptr->time_from_start + smooth_out_block.time_from_start + smooth_out_block.duration;
+        }
+
+        traj_ptr->time_from_start = start_time;
         linkCacheList(path_ptr, traj_ptr);
+        pthread_mutex_unlock(&cache_list_mutex_);
         FST_INFO("Planning success.");
+
+#ifdef OUTPUT_PATH_CACHE
+        g_path_output_array[g_path_output_index] = *path_ptr;
+        g_path_output_index = (g_path_output_index + 1) % OUTPUT_PATH_CACHE_SIZE;
+#endif
+#ifdef OUTPUT_TRAJ_CACHE
+        g_traj_output_array[g_traj_output_index] = *traj_ptr;
+        g_traj_output_index = (g_traj_output_index + 1) % OUTPUT_TRAJ_CACHE_SIZE;
+#endif
+        
         return SUCCESS;
     }
     else
@@ -698,7 +813,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
 
         if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
         {
-            if (!isSameJoint(current_joint, control_joint, MINIMUM_E3))
+            if (!isSameJoint(current_joint, control_joint, MINIMUM_E3 * 10))
             {
                 char buffer[LOG_TEXT_SIZE];
                 FST_ERROR("Control-position different with current-position, it might be a trouble.");
@@ -766,8 +881,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
         if (isSameJoint(start_joint_, target.joint_target, MINIMUM_E3))
         {
             FST_WARN("Target joint coincidence with start joint.");
-            // TODO
-            return 0xA000B000C000D000;
+            return TARGET_COINCIDENCE;
         }
 
         return SUCCESS;
@@ -800,8 +914,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
                 FST_ERROR("  target = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
                              target_pose.position.x, target_pose.position.y, target_pose.position.z,
                              target_pose.orientation.w, target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z);
-                // TODO
-                return 0xA000B000C000D000;
+                return TARGET_COINCIDENCE;
             }
         }
         else
@@ -819,8 +932,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
                 FST_ERROR("  middle = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
                              pose1.position.x, pose1.position.y, pose1.position.z,
                              pose1.orientation.w, pose1.orientation.x, pose1.orientation.y, pose1.orientation.z);
-                // TODO
-                return 0xA000B000C000D000;
+                return TARGET_COINCIDENCE;
             }
 
             if (getDistance(start_pose.position, pose2.position) < MINIMUM_E3 &&
@@ -833,8 +945,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
                 FST_ERROR("  target = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
                              pose2.position.x, pose2.position.y, pose2.position.z,
                              pose2.orientation.w, pose2.orientation.x, pose2.orientation.y, pose2.orientation.z);
-                // TODO
-                return 0xA000B000C000D000;
+                return TARGET_COINCIDENCE;
             }
             
             if (getDistance(pose1.position, pose2.position) < MINIMUM_E3 &&
@@ -939,16 +1050,21 @@ ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionTarget &target, P
 ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
+    clock_t start_clock, end_clock;
+    double  path_plan_time, traj_plan_time;
 
     FST_INFO("autoStableJoint: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
     FST_INFO("  start  = %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  target = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
 
-    ErrorCode err = SUCCESS;
-    //ErrorCode err = planPathJoint(start, target, path);
+    start_clock = clock();
+    ErrorCode err = planPathJoint(start, target, path);
+    end_clock = clock();
+    path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
     if (err == SUCCESS)
     {
+        path.target = target;
         FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",
                     path.cache_length, path.smooth_in_index, path.smooth_out_index);
     }
@@ -962,7 +1078,10 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &tar
     start_state.angle = start;
     memset(&start_state.omega, 0, sizeof(start_state.omega));
     memset(&start_state.alpha, 0, sizeof(start_state.alpha));
-    //err = planTrajectory(path, start_state, vel_ratio_, acc_ratio_, trajectory);
+    start_clock = clock();
+    err = planTrajectory(path, start_state, vel_ratio_, acc_ratio_, trajectory);
+    end_clock = clock();
+    traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
     if (err == SUCCESS)
     {
@@ -975,7 +1094,7 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &tar
         return err;
     }
 
-    FST_INFO("autoStableJoint success.");
+    FST_INFO("autoStableJoint success, path-plan: %.4f ms, traj-plan: %.4f ms", path_plan_time, traj_plan_time);
     return SUCCESS;
 }
 
@@ -999,6 +1118,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
 
     if (err == SUCCESS)
     {
+        path.target = target;
         FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",
                     path.cache_length, path.smooth_in_index, path.smooth_out_index);
     }
@@ -1044,10 +1164,53 @@ ErrorCode BaseGroup::autoLine(const Joint &start, const MotionTarget &target, Pa
     }
 }
 
+ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, PathCache &path)
+{
+    ErrorCode err = SUCCESS;
+    Joint reference = start;
+
+    for (size_t i = 0; i < path.cache_length; i++)
+    {
+        err = kinematics_ptr_->inverseKinematicsInUser(path.cache[i].pose, reference, path.cache[i].joint);
+
+        if (err == SUCCESS)
+        {
+            if (soft_constraint_.isJointInConstraint(path.cache[i].joint))
+            {
+                reference = path.cache[i].joint;
+                continue;
+            }
+            else
+            {
+                char buffer[LOG_TEXT_SIZE];
+                Pose &pose = path.cache[i].pose;
+                FST_ERROR("IK result out of soft constraint:");
+                FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5], pose[6]);
+                FST_ERROR("  joint: %s", printDBLine(&path.cache[i].joint[0], buffer, LOG_TEXT_SIZE));
+                FST_ERROR("  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+                FST_ERROR("  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+                err = JOINT_OUT_OF_CONSTRAINT;
+                break;
+            }
+        }
+        else
+        {
+            Pose &pose = path.cache[i].pose;
+            FST_ERROR("IK failed, code = 0x%llx", err);
+            FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5], pose[6]);
+            break;
+        }
+    }
+
+    return err;
+}
+
 
 ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
+    clock_t start_clock, end_clock;
+    double  path_plan_time, path_ik_time, traj_plan_time;
     PoseEuler start_pose;
     kinematics_ptr_->forwardKinematicsInUser(start, start_pose);
 
@@ -1060,13 +1223,31 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
              target.pose_target.position.x, target.pose_target.position.y, target.pose_target.position.z, 
              target.pose_target.orientation.a, target.pose_target.orientation.b, target.pose_target.orientation.c);
 
-    ErrorCode err = SUCCESS;
-    //ErrorCode err = planPathLine(start_pose, target, path);
+    start_clock = clock();
+    ErrorCode err = planPathLine(start_pose, target, path);
+    end_clock = clock();
+    path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
     if (err == SUCCESS)
     {
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+        start_clock = clock();
+        err = computeInverseKinematicsOnPathCache(start, path);
+        end_clock = clock();
+        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+        if (err == SUCCESS)
+        {
+            path.target = target;
+            FST_INFO("Inverse kinematics success, plan trajectory ...");
+        }
+        else
+        {
+            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+            return err;
+        }
     }
     else
     {
@@ -1078,7 +1259,10 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
     start_state.angle = start;
     memset(&start_state.omega, 0, sizeof(start_state.omega));
     memset(&start_state.alpha, 0, sizeof(start_state.alpha));
-    //err = planTrajectory(path, start_state, vel_ratio_, acc_ratio_, trajectory);
+    start_clock = clock();
+    err = planTrajectory(path, start_state, vel_ratio_, acc_ratio_, trajectory);
+    end_clock = clock();
+    traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
     if (err == SUCCESS)
     {
@@ -1091,7 +1275,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
         return err;
     }
 
-    FST_INFO("autoStableLine success.");
+    FST_INFO("autoStableLine success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
 
@@ -1102,6 +1286,8 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
                                     TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
+    clock_t start_clock, end_clock;
+    double  path_plan_time, path_ik_time, traj_plan_time;
     PoseEuler start_pose;
     kinematics_ptr_->forwardKinematicsInUser(start_state.angle, start_pose);
 
@@ -1119,8 +1305,23 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
 
     if (err == SUCCESS)
     {
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+        /*
+        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+        err = computeInverseKinematicsOnPathCache(start, path);
+
+        if (err == SUCCESS)
+        {
+            path.target = target;
+            FST_INFO("Inverse kinematics success, plan trajectory ...");
+        }
+        else
+        {
+            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+            return err;
+        }
+        */
     }
     else
     {
@@ -1141,7 +1342,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
         return err;
     }
 
-    FST_INFO("autoSmoothLine success.");
+    FST_INFO("autoSmoothLine success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
 
@@ -1172,7 +1373,12 @@ bool BaseGroup::nextMovePermitted(void)
 {
     if (fine_waiter_.isEnable() && !fine_waiter_.isStable()) return false;
 
-    if (group_state_ == AUTO)
+    if (group_state_ == STANDBY && traj_list_ptr_ != NULL)
+    {
+        FST_WARN("Not-permitted, grp-state = %d, traj-list-ptr = %p", group_state_, traj_list_ptr_);
+        return false;
+    }
+    else if (group_state_ == AUTO || group_state_ == STANDBY_TO_AUTO)
     {
         if (traj_list_ptr_ != NULL)
         {
@@ -1593,6 +1799,10 @@ void BaseGroup::doStateMachine(void)
     static size_t disable_to_standby_cnt = 0;
     static size_t standby_to_disable_cnt = 0;
     static size_t standby_to_auto_cnt = 0;
+    static size_t auto_to_standby_cnt = 0;
+    static size_t manual_to_standby_cnt = 0;
+
+    auto servo_state = getServoState();
 
     /*
     if (abort_request_)
@@ -1691,7 +1901,7 @@ void BaseGroup::doStateMachine(void)
         reset_request_ = false;
     }
 
-    if (stop_request_ && group_state_ != STANDBY)
+    if (stop_request_ && group_state_ == DISABLE)
     {
         stop_request_ = false;
     }
@@ -1741,7 +1951,14 @@ void BaseGroup::doStateMachine(void)
             if (auto_to_standby_request_)
             {
                 auto_to_standby_request_ = false;
+                auto_to_standby_cnt = 0;
                 group_state_ = AUTO_TO_STANDBY;
+            }
+
+            if (stop_request_)
+            {
+                stop_request_ = false;
+                error_request_ = true;
             }
 
             break;
@@ -1752,7 +1969,14 @@ void BaseGroup::doStateMachine(void)
             if (manual_to_standby_request_)
             {
                 manual_to_standby_request_ = false;
+                manual_to_standby_cnt = 0;
                 group_state_ = MANUAL_TO_STANDBY;
+            }
+
+            if (stop_request_)
+            {
+                stop_request_ = false;
+                error_request_ = true;
             }
 
             break;
@@ -1760,11 +1984,11 @@ void BaseGroup::doStateMachine(void)
 
         case DISABLE_TO_STANDBY:
         {
-            if (getServoState() == SERVO_IDLE)
+            if (servo_state == SERVO_IDLE)
             {
                 if (updateStartJoint())
                 {
-                    FST_INFO("Group-state switch to standby.");
+                    FST_WARN("Group-state switch to standby.");
                     group_state_ = STANDBY;
                 }
                 else
@@ -1773,15 +1997,13 @@ void BaseGroup::doStateMachine(void)
                     group_state_ = DISABLE;
                 }
             }
-            else
-            {
-                disable_to_standby_cnt ++;
 
-                if (disable_to_standby_cnt > 100)
-                {
-                    FST_INFO("Reset to standby timeout, group-state switch to disable.");
-                    group_state_ = DISABLE;
-                }
+            disable_to_standby_cnt ++;
+
+            if (disable_to_standby_cnt > disable_to_standby_timeout_)
+            {
+                FST_WARN("Reset to standby timeout, group-state switch to disable.");
+                group_state_ = DISABLE;
             }
 
             break;
@@ -1789,18 +2011,18 @@ void BaseGroup::doStateMachine(void)
 
         case STANDBY_TO_DISABLE:
         {
-            if (getServoState() == SERVO_DISABLE)
+            if (servo_state == SERVO_DISABLE)
             {
-                FST_INFO("Group-state switch to disable.");
+                FST_WARN("Group-state switch to disable.");
                 group_state_ = DISABLE;
             }
             else
             {
                 standby_to_disable_cnt ++;
 
-                if (standby_to_disable_cnt > 100)
+                if (standby_to_disable_cnt > standby_to_disable_timeout_)
                 {
-                    FST_INFO("Stop to disable timeout, group-state switch to STANDBY.");
+                    FST_WARN("Stop to disable timeout, group-state switch to STANDBY.");
                     group_state_ = STANDBY;
                 }
             }
@@ -1816,13 +2038,13 @@ void BaseGroup::doStateMachine(void)
             {
                 auto_time_ = 0;
                 group_state_ = AUTO;
-                FST_INFO("Group-state switch to auto.");
+                FST_WARN("Group-state switch to auto, fifo-size = %d, counter = %d", traj_fifo_.size(), standby_to_auto_cnt);
             }
             
-            if (standby_to_auto_cnt > 100 && traj_fifo_.empty())
+            if (standby_to_auto_cnt > standby_to_auto_timeout_ && traj_fifo_.empty())
             {
                 group_state_ = STANDBY;
-                FST_INFO("Group-state switch to standby.");
+                FST_WARN("Group-state switch to standby.");
                 FST_WARN("Standby to auto time-out but trajectory-fifo still empty.");
             }
             
@@ -1831,12 +2053,32 @@ void BaseGroup::doStateMachine(void)
         
         case AUTO_TO_STANDBY:
         {
-            if (getServoState() == SERVO_IDLE && fine_waiter_.isStable())
+            if (servo_state == SERVO_IDLE)
             {
                 // 检查是否停稳，停稳后切换到standby
-                group_state_ = STANDBY;
-                fine_waiter_.disableWaiter();
-                FST_INFO("Group-state switch to standby.");
+                if (fine_waiter_.isEnable())
+                {
+                    if (fine_waiter_.isStable())
+                    {
+                        fine_waiter_.disableWaiter();
+                        group_state_ = STANDBY;
+                        FST_INFO("Group is standing stable.");
+                        FST_WARN("Group-state switch to standby.");
+                    }
+                }
+                else
+                {
+                    group_state_ = STANDBY;
+                    FST_WARN("Group-state switch to standby.");
+                }
+            }
+
+            auto_to_standby_cnt ++;
+
+            if (auto_to_standby_cnt > auto_to_standby_timeout_)
+            {
+                FST_WARN("Auto to standby timeout, error-request asserted.");
+                error_request_ = true;
             }
 
             break;
@@ -1846,33 +2088,40 @@ void BaseGroup::doStateMachine(void)
         {
             manual_time_ = 0;
             group_state_ = MANUAL;
-            FST_INFO("Group-state switch to manual.");
+            FST_WARN("Group-state switch to manual.");
             break;
         }
             
         case MANUAL_TO_STANDBY:
         {
-            if (getServoState() == SERVO_IDLE)
+            if (servo_state == SERVO_IDLE)
             {
                 group_state_ = STANDBY;
-                FST_INFO("Group-state switch to standby.");
+                FST_WARN("Group-state switch to standby.");
             }
+
+            manual_to_standby_cnt ++;
+
+            if (manual_to_standby_cnt > manual_to_standby_timeout_)
+            {
+                FST_WARN("Manual to standby timeout, error-request asserted.");
+                error_request_ = true;
+            }
+
             
             break;
         }
 
         case UNKNOW:
         {
-            auto servo_state = getServoState();
-
             if (servo_state == SERVO_DISABLE)
             {
-                FST_INFO("Group-state switch to disable.");
+                FST_WARN("Group-state switch to disable.");
                 group_state_ = DISABLE;
             }
             else
             {
-                FST_INFO("Group-state is unknow but servo-state is %d, send stop request to servo.", servo_state);
+                FST_WARN("Group-state is unknow but servo-state is %d, send stop request to servo.", servo_state);
                 bare_core_.stopBareCore();
             }
 
@@ -1886,6 +2135,24 @@ void BaseGroup::doStateMachine(void)
             group_state_ = UNKNOW;
             break;
         }
+    }
+
+    if (servo_state == SERVO_IDLE && group_state_ == DISABLE)
+    {
+        FST_ERROR("Group-state is disable but servo-state is idle, switch group-state to UNKNOW");
+        group_state_ = UNKNOW;
+    }
+
+    if (servo_state == SERVO_DISABLE && group_state_ == STANDBY)
+    {
+        FST_ERROR("Group-state is STANDBY but servo-state is diabale, switch group-state to UNKNOW");
+        group_state_ = UNKNOW;
+    }
+
+    if (servo_state == SERVO_DISABLE && group_state_ == AUTO)
+    {
+        FST_ERROR("Group-state is AUTO but servo-state is diabale, switch group-state to UNKNOW");
+        group_state_ = UNKNOW;
     }
 }
 
@@ -1925,20 +2192,21 @@ void BaseGroup::fillTrajectoryFifo(void)
     {
         if (traj_list_ptr_ != NULL)
         {
-            auto &start_time = traj_list_ptr_->time_from_start;
             auto &traj_cache = traj_list_ptr_->trajectory_cache;
+            TrajectorySegment segment;
 
             while ((traj_cache.smooth_out_index == -1 && traj_list_ptr_->pick_index < traj_cache.cache_length) ||
                    (traj_cache.smooth_out_index != -1 && (int)traj_list_ptr_->pick_index <= traj_cache.smooth_out_index))
             {
-                TrajectorySegment segment;
                 TrajectoryBlock &block = traj_cache.cache[traj_list_ptr_->pick_index];
-                segment.time_from_block = traj_list_ptr_->pick_time_from_block;
-                segment.time_from_start = start_time + block.time_from_start + segment.time_from_block;
+                segment.traj_from_start = traj_list_ptr_->time_from_start;
+                segment.segment_from_traj = block.time_from_start + traj_list_ptr_->pick_time_from_block;
                 segment.duration = traj_list_ptr_->pick_time_from_block + duration_per_segment_ < block.duration ? duration_per_segment_ : block.duration - traj_list_ptr_->pick_time_from_block;
+                memcpy(segment.axis, block.axis, NUM_OF_JOINT * sizeof(AxisCoeff));
 
-                if (traj_fifo_.pushTrajectorySegment(segment))
+                if (traj_fifo_.pushTrajectorySegment(segment) == SUCCESS)
                 {
+                    //FST_INFO("push: start-time=%.4f, duration = %.4f, block-time = %.4f, block-duration = %.4f", segment.time_from_start, segment.duration, segment.time_from_block, block.duration);
                     if (traj_list_ptr_->pick_time_from_block + duration_per_segment_ < block.duration)
                     {
                         // 这个block还有部分未进入轨迹FIFO中
@@ -2043,6 +2311,7 @@ void BaseGroup::setFineWaiter(void)
         target = block.pose;
     }
 
+    FST_INFO("setFineWaiter: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", target[0], target[1], target[2], target[3], target[4], target[5], target[6]);
     fine_waiter_.enableWaiter(target);
 }
 
@@ -2052,6 +2321,7 @@ void BaseGroup::loopFineWaiter(void)
     {  
         Pose   barecore_pose;
         kinematics_ptr_->forwardKinematicsInUser(getLatestJoint(), barecore_pose);
+        //FST_INFO("loopFineWaiter: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", barecore_pose[0], barecore_pose[1], barecore_pose[2], barecore_pose[3], barecore_pose[4], barecore_pose[5], barecore_pose[6]);
         fine_waiter_.checkWaiter(barecore_pose);
     }
 }
@@ -2105,11 +2375,12 @@ void BaseGroup::updateServoStateAndJoint(void)
     }
     else
     {
-        if (++fail_cnt > SERVO_UPDATE_FAIL_MAX_TIMES)
+        if (++fail_cnt > servo_update_timeout_)
         {
             fail_cnt = 0;
             FST_ERROR("Fail to update joint and state from bare core.");
             reportError(BARE_CORE_TIMEOUT);
+            error_request_ = true;
         }
     }
 }
@@ -2158,6 +2429,12 @@ ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_
             {
                 points[i].level = POINT_START;
             }
+
+#ifdef OUTPUT_JOINT_POINT
+            g_joint_output_array[g_joint_output_index].time = auto_time_;
+            g_joint_output_array[g_joint_output_index].point = points[i];
+            g_joint_output_index = (g_joint_output_index + 1) % OUTPUT_JOINT_POINT_SIZE;
+#endif
 
             if (points[i].level == POINT_ENDING)
             {
@@ -2227,10 +2504,10 @@ void BaseGroup::sendTrajectoryFlow(void)
         {
             error_cnt ++;
 
-            if (error_cnt > TRAJECTORY_FLOW_FAIL_MAX_TIMES)
+            if (error_cnt > trajectory_flow_timeout_)
             {
                 error_cnt = 0;
-                abort_request_ = true;
+                error_request_ = true;
                 reportError(BARE_CORE_TIMEOUT);
                 FST_ERROR("sendTrajectoryFlow: bare core time-out.");
             }
@@ -2238,7 +2515,8 @@ void BaseGroup::sendTrajectoryFlow(void)
         else
         {
             FST_ERROR("sendTrajectoryFlow aborted, code = 0x%llx", err);
-            abort_request_ = true;
+            error_request_ = true;
+            reportError(err);
             error_cnt = 0;
         }
     }

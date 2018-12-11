@@ -54,8 +54,24 @@ target_link_libraries(path_traj_alg
     kinematics_alg
 )
 
+
+add_executable(alg_test
+    src/segment_alg_test
+)
+
+target_link_libraries(alg_test
+    ${catkin_LIBRARIES}
+    path_traj_alg
+    kinematics_alg
+    basic_alg 
+)
+
 install(TARGETS path_traj_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS alg_test
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 

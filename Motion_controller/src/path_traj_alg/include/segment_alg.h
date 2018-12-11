@@ -32,6 +32,7 @@ typedef struct
     double time_factor_2;   // the second
     double time_factor_3;   // the second last
     double time_factor_4;   // the last
+    double max_rescale_factor;  
     fst_mc::BaseKinematics* kinematics_ptr;
     fst_algorithm::DynamicsInterface* dynamics_ptr;
 }SegmentAlgParam;
@@ -179,17 +180,18 @@ typedef enum
     S_PathIndexStepIn2End = 4465,
     S_TrajRescaleFactor = 4470,  // final rescale factor, double
     
-    S_Path0 = 4500,    // traj points selected from path points, up to 20 points, not include the 2 flexible points
-    S_Path1 = 4525,
-    S_Path2 = 4550,
-    S_Path3 = 4575,
-    S_Path4 = 4600,
-    S_Path5 = 4625,
-    S_Path6 = 4650,
-    S_Path7 = 4675,
-    S_Path8 = 4700,        
-    S_TrajT = 4725,    // traj initial time vector, expressed in time duration of two adjacent traj points, 
+    S_Path0 = 4475,    // traj points selected from path points, up to 20 points, not include the 2 flexible points
+    S_Path1 = 4500,
+    S_Path2 = 4525,
+    S_Path3 = 4550,
+    S_Path4 = 4575,
+    S_Path5 = 4600,
+    S_Path6 = 4625,
+    S_Path7 = 4650,
+    S_Path8 = 4675,        
+    S_TrajT = 4700,    // traj initial time vector, expressed in time duration of two adjacent traj points, 
                        // up to 21 points, include the 2 flexible points
+    S_TrajT_Smooth = 4725,                   
     S_TrajRescaleT = 4750,  // recale S_TrajT by S_TrajRescaleFactor, up to 20 + 20 + 1 points
     S_TrajAbsoluteT = 4800, // absolute time compute by S_TrajRescaleT
     
@@ -570,7 +572,7 @@ Output:     trajectory {P, V, A} for path according to interp_interval
 Stack:      read: S_TrajT, S_Path0~S_Path8
             write: S_TrajP, S_TrajV, S_TrajA
 */
-void updateTrajPVA(int path_base, double* init_state, double* end_state, int order, int traj_base);
+void updateTrajPVA(int path_base, double* init_state, double* end_state, int order, int traj_base, int t_base);
 
 /***********************************************************************************************/
 
@@ -619,11 +621,15 @@ void generatePathPointOut2In(const fst_mc::PathCache &path_cache, int traj_smoot
 void generatePathOut2InTimeVector(double cmd_vel, double length_out2via, double length_via2in, int path_array_size_out2via,int& time_vector_size_out2in);
 
 
-void generatePieceVectors(int traj_offset, int traj_piece_num, double vel_ratio, double acc_ratio);
+void generatePieceVectors(int traj_offset, int traj_piece_num, int t_base, double vel_ratio, double acc_ratio);
 double getMaxTrajPiece(int base_address, int index);
 double getMax(double value0, double value1, double value2, double value3);
-void generateRescaleFactorVector(int time_vector_size);
-void generateRescaleVector(int rescale_t_offset, int time_vector_size);
+void generateRescaleFactorVector(int time_vector_size, double& recale_factor);
+void generateRescaleVector(int time_vector_size);
+void adjustTrajT(int time_vector_size, double rescale_factor);
+void adjustPVA(int traj_index_via, int traj_index_end, double rescale_factor_via2end);
+void generateRescaleVectorSmooth(int time_vector_size_out2in, int time_vector_size_in2end, int time_vector_size_via2in);
+void generateAbsoluteVector(int time_vector_size);
 void generateCoeff(int time_vector_size);
 void generateTrajCache(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, int* path_index_array, int path_index_array_size);
 void generateTrajCacheSmooth(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 

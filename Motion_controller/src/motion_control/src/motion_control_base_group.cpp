@@ -24,10 +24,9 @@ using namespace basic_alg;
 using namespace fst_parameter;
 using namespace fst_algorithm;
 
-//#define OUTPUT_JOINT_POINT
-//#define OUTPUT_PATH_CACHE
-//#define OUTPUT_TRAJ_CACHE
-
+#define OUTPUT_JOINT_POINT
+#define OUTPUT_PATH_CACHE
+#define OUTPUT_TRAJ_CACHE
 
 
 namespace fst_mc
@@ -60,6 +59,12 @@ ofstream  g_traj_out("tout.csv");
 size_t    g_traj_output_index = 0;
 TrajectoryCacheList   g_traj_output_array[OUTPUT_TRAJ_CACHE_SIZE];
 #endif
+
+// ------- for test only -------- //
+Pose    g_path_point[10000];
+size_t  g_path_index = 0;
+ofstream  g_path("path_points.csv");
+// ------- for test only -------- //
 
 BaseGroup::BaseGroup(fst_log::Logger* plog)
 {
@@ -192,6 +197,16 @@ BaseGroup::~BaseGroup()
     g_traj_out.close();
     printf("录入完成！\n");
 #endif
+
+    // ------- for test only -------- //
+    for (size_t i = 0; i < g_path_index; i++)
+    {
+        Pose &p = g_path_point[i];
+        g_path << p[0] << "," << p[1] << "," << p[2] << "," << p[3] << "," << p[4] << "," << p[5] << "," << p[6] << endl;
+    }
+
+    g_path.close();
+    // ------- for test only -------- //
 }
 
 void BaseGroup::reportError(const ErrorCode &error)
@@ -722,8 +737,8 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
         }
     }
 
-    PathCacheList       *path_ptr = path_cache_pool_.getCachePtr();
-    TrajectoryCacheList *traj_ptr = traj_cache_pool_.getCachePtr();
+    auto *path_ptr = path_cache_pool_.getCachePtr();
+    auto *traj_ptr = traj_cache_pool_.getCachePtr();
     
     if (path_ptr == NULL || traj_ptr == NULL)
     {
@@ -735,19 +750,15 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
     if (target.type == MOTION_JOINT)
     {
-        err = autoJoint(start, target, path_ptr->path_cache, traj_ptr->trajectory_cache);
+        err = autoJoint(start, target, *path_ptr, *traj_ptr);
     }
     else if (target.type == MOTION_LINE)
     {
-        //PoseEuler start_pose;
-        //kinematics_ptr_->forwardKinematicsInUser(start, start_pose);
-        err = autoLine(start, target, path_ptr->path_cache, traj_ptr->trajectory_cache);
+        err = autoLine(start, target, *path_ptr, *traj_ptr);
     }
     else if (target.type == MOTION_CIRCLE)
     {
-        //PoseEuler start_pose;
-        //kinematics_ptr_->forwardKinematicsInUser(start, start_pose);
-        err = autoCircle(start, target, path_ptr->path_cache, traj_ptr->trajectory_cache);
+        err = autoCircle(start, target, *path_ptr, *traj_ptr);
     }
     else
     {
@@ -762,26 +773,9 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
         path_ptr->id = id;
         traj_ptr->pick_index = 0;
-        traj_ptr->time_from_start = 0;
         traj_ptr->pick_time_from_block = 0;
         updateTimeFromStart(traj_ptr->trajectory_cache);
         traj_ptr->trajectory_cache.path_cache_ptr = &path_ptr->path_cache;
-
-        // 上一条指令不带smooth时start-time是0，否则start-time应该等于上一条指令的平滑切出时间
-        pthread_mutex_lock(&cache_list_mutex_);
-        MotionTime start_time = 0;
-        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
-
-        if (last_traj_ptr != NULL && last_traj_ptr->trajectory_cache.smooth_out_index != -1)
-        {
-            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
-            start_time = last_traj_ptr->time_from_start + smooth_out_block.time_from_start + smooth_out_block.duration;
-        }
-
-        traj_ptr->time_from_start = start_time;
-        linkCacheList(path_ptr, traj_ptr);
-        pthread_mutex_unlock(&cache_list_mutex_);
-        FST_INFO("Planning success.");
 
 #ifdef OUTPUT_PATH_CACHE
         g_path_output_array[g_path_output_index] = *path_ptr;
@@ -791,8 +785,40 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
         g_traj_output_array[g_traj_output_index] = *traj_ptr;
         g_traj_output_index = (g_traj_output_index + 1) % OUTPUT_TRAJ_CACHE_SIZE;
 #endif
-        
-        return SUCCESS;
+        // ------- for test only -------- //
+        for (size_t i = 0; i < path_ptr->path_cache.cache_length; i++)
+        {
+            g_path_point[g_path_index] = path_ptr->path_cache.cache[i].pose;
+            g_path_index = (g_path_index + 1) % 10000;
+        }
+        // ------- for test only -------- //
+
+        // 上一条指令不带平滑时traj_ptr->time_from_start应该是0，否则它应该等于上一条指令的平滑切出时间
+        MotionTime start_time = 0;
+        pthread_mutex_lock(&cache_list_mutex_);
+        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
+
+        if (last_traj_ptr != NULL && last_traj_ptr->trajectory_cache.smooth_out_index != -1)
+        {
+            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
+            start_time = last_traj_ptr->time_from_start + smooth_out_block.time_from_start + smooth_out_block.duration;
+        }
+
+        if (fabs(start_time - traj_ptr->time_from_start) < MINIMUM_E6)
+        {
+            linkCacheList(path_ptr, traj_ptr);
+            pthread_mutex_unlock(&cache_list_mutex_);
+            FST_INFO("Planning success.");
+            return SUCCESS;
+        }
+        else
+        {
+            pthread_mutex_unlock(&cache_list_mutex_);
+            FST_ERROR("Start-time of this motion not equal with smooth-out-time of last motion.");
+            path_cache_pool_.freeCachePtr(path_ptr);
+            traj_cache_pool_.freeCachePtr(traj_ptr);
+            return MOTION_INTERNAL_FAULT;
+        }
     }
     else
     {
@@ -880,7 +906,10 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
 
         if (isSameJoint(start_joint_, target.joint_target, MINIMUM_E3))
         {
+            char buffer[LOG_TEXT_SIZE];
             FST_WARN("Target joint coincidence with start joint.");
+            FST_WARN("  start-joint = %s", printDBLine(&start_joint_[0], buffer, LOG_TEXT_SIZE));
+            FST_WARN("  target-joint = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
             return TARGET_COINCIDENCE;
         }
 
@@ -893,9 +922,6 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
             FST_ERROR("Invalid vel: %.6f", target.vel);
             return INVALID_PARAMETER;
         }
-
-        // TODO
-        // IK and check whether target pose out of constraint
 
         Pose start_pose;
         kinematics_ptr_->forwardKinematicsInUser(start_joint_, start_pose);
@@ -1029,21 +1055,38 @@ TrajectoryCacheList* BaseGroup::getLastTrajectoryCacheListPtr(void)
     }
 }
 
-ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
+    MotionTime start_time = 0;
+    pthread_mutex_lock(&cache_list_mutex_);
+
     if (isLastMotionSmooth())
     {
-        TrajectoryCache *traj_cache_ptr = getLastTrajectoryCachePtr();
+        // 获取上一条轨迹的切出时间，作为本条指令的起始时间
+        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
+
+        if (last_traj_ptr->trajectory_cache.smooth_out_index != -1)
+        {
+            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
+            start_time = last_traj_ptr->time_from_start + smooth_out_block.time_from_start + smooth_out_block.duration;
+        }
+
+        // 获取上一条轨迹切出点的位置、速度、加速度
         JointState start_state;
-        // TODO
-        // 通过traj_cache获取上一条轨迹的切出点位置、速度、加速度
-        FST_INFO("Last motion with smooth, cnt = %.4f", traj_cache_ptr->path_cache_ptr->target.cnt);
-        return autoSmoothJoint(start_state, traj_cache_ptr->path_cache_ptr->target, target, path, trajectory);
+        TrajectoryCache &traj_cache = last_traj_ptr->trajectory_cache;
+        sampleBlockEnding(traj_cache.cache[traj_cache.smooth_out_index], start_state);
+        auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
+        FST_INFO("Last motion with smooth, cnt = %.4f", last_cnt);
+        return autoSmoothJoint(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
     }
     else
     {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
         FST_INFO("Last motion without smooth, start from stable");
-        return autoStableJoint(start, target, path, trajectory);
+        return autoStableJoint(start, target, path.path_cache, trajectory.trajectory_cache);
     }
 }
 
@@ -1145,22 +1188,86 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
     return SUCCESS;
 }
 
-
-ErrorCode BaseGroup::autoLine(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoLine(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
+    MotionTime start_time = 0;
+    pthread_mutex_lock(&cache_list_mutex_);
+
     if (isLastMotionSmooth())
     {
-        TrajectoryCache *traj_cache_ptr = getLastTrajectoryCachePtr();
+        // 获取上一条轨迹的切出时间，作为本条指令的起始时间
+        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
+
+        if (last_traj_ptr->trajectory_cache.smooth_out_index != -1)
+        {
+            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
+            start_time = last_traj_ptr->time_from_start + smooth_out_block.time_from_start + smooth_out_block.duration;
+        }
+
+        // 获取上一条轨迹切出点的位置、速度、加速度
         JointState start_state;
-        // TODO
-        // 通过traj_cache获取上一条轨迹的切出点位置、速度、加速度
-        FST_INFO("Last motion with smooth, cnt = %.4f", traj_cache_ptr->path_cache_ptr->target.cnt);
-        return autoSmoothLine(start_state, traj_cache_ptr->path_cache_ptr->target, target, path, trajectory);
+        TrajectoryCache &traj_cache = last_traj_ptr->trajectory_cache;
+        sampleBlockEnding(traj_cache.cache[traj_cache.smooth_out_index], start_state);
+        auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
+        FST_INFO("Last motion with smooth, cnt = %.4f", last_cnt);
+        return autoSmoothLine(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
     }
     else
     {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
         FST_INFO("Last motion without smooth, start from stable");
-        return autoStableLine(start, target, path, trajectory);
+        return autoStableLine(start, target, path.path_cache, trajectory.trajectory_cache);
+    }
+}
+
+void BaseGroup::sampleBlockStart(const TrajectoryBlock &block, JointState &state)
+{
+    const double *data;
+    size_t joint_num = getNumberOfJoint();
+    MotionTime sample_time = block.time_from_start;
+    MotionTime tm[4]  = {1.0, sample_time, sample_time * sample_time, sample_time * sample_time * sample_time};
+    
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        data = block.axis[i].data;
+        state.angle[i] = data[0] + data[1] * tm[1] + data[2] * tm[2] + data[3] * tm[3];
+        state.omega[i] = data[1] + data[2] * tm[1] * 2 + data[3] * tm[2] * 3;
+        state.alpha[i] = data[2] * 2 + data[3] * tm[1] * 6;
+    }
+}
+
+void BaseGroup::sampleBlockEnding(const TrajectoryBlock &block, JointState &state)
+{
+    const double *data;
+    size_t joint_num = getNumberOfJoint();
+    MotionTime sample_time = block.time_from_start + block.duration;
+    MotionTime tm[4]  = {1.0, sample_time, sample_time * sample_time, sample_time * sample_time * sample_time};
+    
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        data = block.axis[i].data;
+        state.angle[i] = data[0] + data[1] * tm[1] + data[2] * tm[2] + data[3] * tm[3];
+        state.omega[i] = data[1] + data[2] * tm[1] * 2 + data[3] * tm[2] * 3;
+        state.alpha[i] = data[2] * 2 + data[3] * tm[1] * 6;
+    }
+}
+
+void BaseGroup::sampleBlock(const TrajectoryBlock &block, MotionTime time_from_block, JointState &state)
+{
+    const double *data;
+    size_t joint_num = getNumberOfJoint();
+    MotionTime sample_time = block.time_from_start + time_from_block;
+    MotionTime tm[4]  = {1.0, sample_time, sample_time * sample_time, sample_time * sample_time * sample_time};
+    
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        data = block.axis[i].data;
+        state.angle[i] = data[0] + data[1] * tm[1] + data[2] * tm[2] + data[3] * tm[3];
+        state.omega[i] = data[1] + data[2] * tm[1] * 2 + data[3] * tm[2] * 3;
+        state.alpha[i] = data[2] * 2 + data[3] * tm[1] * 6;
     }
 }
 
@@ -1293,6 +1400,8 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
 
     FST_INFO("autoSmoothLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
     FST_INFO("  start joint = %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start omega = %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start alpha = %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
              start_pose.position.x, start_pose.position.y, start_pose.position.z, 
              start_pose.orientation.a, start_pose.orientation.b, start_pose.orientation.c);
@@ -1300,16 +1409,20 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
              target.pose_target.position.x, target.pose_target.position.y, target.pose_target.position.z, 
              target.pose_target.orientation.a, target.pose_target.orientation.b, target.pose_target.orientation.c);
 
-    ErrorCode err = SUCCESS;
-    //ErrorCode err = planPathSmoothLine(start_pose, via, target, path);
+    start_clock = clock();
+    ErrorCode err = planPathSmoothLine(start_pose, via, target, path);
+    end_clock = clock();
+    path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
     if (err == SUCCESS)
     {
-        /*
         FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
                       path.cache_length, path.smooth_in_index, path.smooth_out_index);
 
-        err = computeInverseKinematicsOnPathCache(start, path);
+        start_clock = clock();
+        err = computeInverseKinematicsOnPathCache(start_state.angle, path);
+        end_clock = clock();
+        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
         if (err == SUCCESS)
         {
@@ -1321,7 +1434,6 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
             FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
             return err;
         }
-        */
     }
     else
     {
@@ -1329,7 +1441,10 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
         return err;
     }
 
-    //err = planTrajectory(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
+    start_clock = clock();
+    err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
+    end_clock = clock();
+    traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
     if (err == SUCCESS)
     {
@@ -1348,7 +1463,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
 
 
 // TODO
-ErrorCode BaseGroup::autoCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoCircle(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
     return SUCCESS;
 }
@@ -1371,47 +1486,62 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state,
 
 bool BaseGroup::nextMovePermitted(void)
 {
-    if (fine_waiter_.isEnable() && !fine_waiter_.isStable()) return false;
+    FST_WARN("is-next-Move-Permitted ?");
 
-    if (group_state_ == STANDBY && traj_list_ptr_ != NULL)
+    if (fine_waiter_.isEnable() && !fine_waiter_.isStable())
     {
-        FST_WARN("Not-permitted, grp-state = %d, traj-list-ptr = %p", group_state_, traj_list_ptr_);
+        FST_WARN("fine-waiter is enable and fine-waiter is not stable");
+        return false;
+    }
+
+    pthread_mutex_lock(&cache_list_mutex_);
+    auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
+
+    if (group_state_ == STANDBY && last_traj_ptr != NULL)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_WARN("Not-permitted, grp-state = %d, traj-list-ptr = %p", group_state_, last_traj_ptr);
         return false;
     }
     else if (group_state_ == AUTO || group_state_ == STANDBY_TO_AUTO)
     {
-        if (traj_list_ptr_ != NULL)
+        if (last_traj_ptr != NULL)
         {
-            if (traj_list_ptr_->trajectory_cache.smooth_out_index == -1)
+            if (last_traj_ptr->trajectory_cache.smooth_out_index == -1)
             {
-                if (traj_list_ptr_->pick_index < traj_list_ptr_->trajectory_cache.cache_length)
+                if (last_traj_ptr->pick_index < last_traj_ptr->trajectory_cache.cache_length)
                 {
-                    FST_LOG("Not-permitted, fine, pick-index = %d, cache-length = %d", traj_list_ptr_->pick_index, traj_list_ptr_->trajectory_cache.cache_length);
+                    pthread_mutex_unlock(&cache_list_mutex_);
+                    FST_WARN("Not-permitted, fine, pick-index = %d, cache-length = %d", last_traj_ptr->pick_index, last_traj_ptr->trajectory_cache.cache_length);
                     return false;
                 }
                 else
                 {
-                    FST_WARN("Next motion permitted, fine, pick-index = %d, cache-length = %d", traj_list_ptr_->pick_index, traj_list_ptr_->trajectory_cache.cache_length);
+                    pthread_mutex_unlock(&cache_list_mutex_);
+                    FST_WARN("Next motion permitted, fine, pick-index = %d, cache-length = %d", last_traj_ptr->pick_index, last_traj_ptr->trajectory_cache.cache_length);
                     return true;
                 }
             }
             else
             {
-                if ((int)traj_list_ptr_->pick_index <= traj_list_ptr_->trajectory_cache.smooth_out_index)
+                if ((int)last_traj_ptr->pick_index <= last_traj_ptr->trajectory_cache.smooth_out_index)
                 {
-                    FST_LOG("Not-permitted, smooth, pick-index = %d, smooth-out-index = %d", traj_list_ptr_->pick_index, traj_list_ptr_->trajectory_cache.smooth_out_index);
+                    pthread_mutex_unlock(&cache_list_mutex_);
+                    FST_WARN("Not-permitted, smooth, pick-index = %d, smooth-out-index = %d", last_traj_ptr->pick_index, last_traj_ptr->trajectory_cache.smooth_out_index);
                     return false;
                 }
                 else
                 {
-                    FST_LOG("Next motion permitted, smooth, pick-index = %d, smooth-out-index = %d", traj_list_ptr_->pick_index, traj_list_ptr_->trajectory_cache.smooth_out_index);
+                    pthread_mutex_unlock(&cache_list_mutex_);
+                    FST_WARN("Next motion permitted, smooth, pick-index = %d, smooth-out-index = %d", last_traj_ptr->pick_index, last_traj_ptr->trajectory_cache.smooth_out_index);
                     return true;
                 }
             }
         }
     }
 
-    FST_WARN("Next motion permitted, grp-state = %d, traj-list-ptr = %p", group_state_, traj_list_ptr_);
+    pthread_mutex_unlock(&cache_list_mutex_);
+    FST_WARN("Next motion permitted, grp-state = %d, traj-list-ptr = %p", group_state_, last_traj_ptr);
     return true;
 }
 
@@ -2062,7 +2192,6 @@ void BaseGroup::doStateMachine(void)
                     {
                         fine_waiter_.disableWaiter();
                         group_state_ = STANDBY;
-                        FST_INFO("Group is standing stable.");
                         FST_WARN("Group-state switch to standby.");
                     }
                 }
@@ -2190,6 +2319,8 @@ void BaseGroup::fillTrajectoryFifo(void)
 {
     if (group_state_ == AUTO || group_state_ == STANDBY_TO_AUTO)
     {
+        pthread_mutex_lock(&cache_list_mutex_);
+
         if (traj_list_ptr_ != NULL)
         {
             auto &traj_cache = traj_list_ptr_->trajectory_cache;
@@ -2215,7 +2346,8 @@ void BaseGroup::fillTrajectoryFifo(void)
                     else
                     {
                         // 这个blcok全部进入轨迹FIFO中，更新block指引
-                        updatePickIndex();
+                        traj_list_ptr_->pick_index ++;
+                        traj_list_ptr_->pick_time_from_block = 0;
                     }
                 }
                 else
@@ -2238,7 +2370,7 @@ void BaseGroup::fillTrajectoryFifo(void)
                 // 如果下一条指令已经就绪，切换到下一条指令轨迹
                 if (traj_list_ptr_->next_ptr != NULL)
                 {
-                    smoothToNextTrajectory();
+                    freeFirstCacheList();
                 }
                 else // 如果下一条指令尚未就绪
                 {   
@@ -2259,40 +2391,22 @@ void BaseGroup::fillTrajectoryFifo(void)
                     {}
                 }
             }
-            
         } // if (traj_list_ptr_ != NULL)
         else
         {}
+
+        pthread_mutex_unlock(&cache_list_mutex_);
     } // if (group_state_ == AUTO || group_state_ == STANDBY_TO_AUTO)
     else
     {}
 }
 
-void BaseGroup::updatePickIndex(void)
-{
-    if (traj_list_ptr_->trajectory_cache.smooth_out_index == -1)
-    {
-        // 本条指令是Fine指令，走到最后一个block结束
-        traj_list_ptr_->pick_index ++;
-        traj_list_ptr_->pick_time_from_block = 0;
-    }
-    else
-    {
-        // 本条指令是带平滑的指令，走到平滑切出点后切出到下一条指令轨迹上
-        traj_list_ptr_->pick_index ++;
-        traj_list_ptr_->pick_time_from_block = 0;
-
-    }
-}
-
 void BaseGroup::freeFirstCacheList(void)
 {
-    pthread_mutex_lock(&cache_list_mutex_);
     auto *path_ptr = path_list_ptr_;
     auto *traj_ptr = traj_list_ptr_;
     path_list_ptr_ = path_list_ptr_->next_ptr;
     traj_list_ptr_ = traj_list_ptr_->next_ptr;
-    pthread_mutex_unlock(&cache_list_mutex_);
     path_cache_pool_.freeCachePtr(path_ptr);
     traj_cache_pool_.freeCachePtr(traj_ptr);
 }
@@ -2324,16 +2438,6 @@ void BaseGroup::loopFineWaiter(void)
         //FST_INFO("loopFineWaiter: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", barecore_pose[0], barecore_pose[1], barecore_pose[2], barecore_pose[3], barecore_pose[4], barecore_pose[5], barecore_pose[6]);
         fine_waiter_.checkWaiter(barecore_pose);
     }
-}
-
-void BaseGroup::smoothToNextTrajectory(void)
-{
-    auto next_ptr = traj_list_ptr_->next_ptr;
-    auto traj_duration = traj_list_ptr_->trajectory_cache.cache[traj_list_ptr_->trajectory_cache.smooth_out_index + 1].time_from_start;
-    next_ptr->pick_index = 0;
-    next_ptr->pick_time_from_block = 0;
-    next_ptr->time_from_start = traj_list_ptr_->time_from_start + traj_duration;
-    freeFirstCacheList();
 }
 
 void BaseGroup::updateTimeFromStart(TrajectoryCache &cache)

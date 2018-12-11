@@ -528,11 +528,11 @@ inline void updateMatrixB(double* path, double* interp_time, double* init_state,
                             - end_state[2] * interp_time[order];
 }
 
-void updateTrajPVA(int path_base, double* init_state, double* end_state, int order, int traj_base)
+void updateTrajPVA(int path_base, double* init_state, double* end_state, int order, int traj_base, int t_base)
 {
     int i;
-    updateMatrixA(&stack[S_TrajT], order);   
-    updateMatrixB(&stack[path_base], &stack[S_TrajT], init_state, end_state, order); 
+    updateMatrixA(&stack[t_base], order);   
+    updateMatrixB(&stack[path_base], &stack[t_base], init_state, end_state, order); 
     updateEquationSolution(&stack[S_A], &stack[S_B], order);
 
 /*for(i = 0; i < order; ++i)
@@ -551,30 +551,30 @@ void updateTrajPVA(int path_base, double* init_state, double* end_state, int ord
 
     // start add point
     stack[traj_a + 1] = stack[S_X];
-    stack[traj_v + 1] = init_state[1] + (init_state[2] + stack[S_X]) * stack[S_TrajT] / 2;
+    stack[traj_v + 1] = init_state[1] + (init_state[2] + stack[S_X]) * stack[t_base] / 2;
     stack[traj_p + 1] = init_state[0] 
-                        + init_state[1] * stack[S_TrajT]
-                        + (2 * init_state[2] + stack[traj_a + 1]) * stack[S_TrajT] * stack[S_TrajT] / 6;
+                        + init_state[1] * stack[t_base]
+                        + (2 * init_state[2] + stack[traj_a + 1]) * stack[t_base] * stack[t_base] / 6;
 
     // path[0]
     stack[traj_a + 2] = stack[S_X + 1];
-    stack[traj_v + 2] = stack[traj_v + 1] + (stack[S_X] + stack[S_X + 1]) * stack[S_TrajT + 1] / 2;
+    stack[traj_v + 2] = stack[traj_v + 1] + (stack[S_X] + stack[S_X + 1]) * stack[t_base + 1] / 2;
     stack[traj_p + 2] = stack[path_base + 1];
 
     // path[1] ~ path[N-3]
     for(i = 3; i < order; ++i)
     {
         stack[traj_a + i] = stack[S_X + i - 1];
-        stack[traj_v + i] = stack[traj_v + i - 1] + (stack[traj_a + i - 1] + stack[traj_a + i]) * stack[S_TrajT + i - 1] / 2;
+        stack[traj_v + i] = stack[traj_v + i - 1] + (stack[traj_a + i - 1] + stack[traj_a + i]) * stack[t_base + i - 1] / 2;
         stack[traj_p + i] = stack[path_base + i - 1];
     }
 
     // path[N-2]
     stack[traj_a + order] = stack[S_X + order - 1];
-    stack[traj_v + order] = end_state[1] - (end_state[2] + stack[traj_a + order]) * stack[S_TrajT + order] / 2;
+    stack[traj_v + order] = end_state[1] - (end_state[2] + stack[traj_a + order]) * stack[t_base + order] / 2;
     stack[traj_p + order] = end_state[0]
-                            - end_state[1] * stack[S_TrajT + order]
-                            + (2 * end_state[2] + stack[traj_a + order]) * stack[S_TrajT + order] * stack[S_TrajT + order] / 6;
+                            - end_state[1] * stack[t_base + order]
+                            + (2 * end_state[2] + stack[traj_a + order]) * stack[t_base + order] * stack[t_base + order] / 6;
     
     // path[N-1]
     stack[traj_a + order + 1] = end_state[2];
@@ -829,6 +829,7 @@ void initSegmentAlgParam(fst_mc::BaseKinematics* kinematics_ptr, fst_algorithm::
     segment_alg_param.time_factor_3 = 1;
     segment_alg_param.time_factor_4 = 1;
     segment_alg_param.is_fake_dynamics = true;
+    segment_alg_param.max_rescale_factor = 2;
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = dynamics_ptr;
 }
@@ -917,9 +918,13 @@ ErrorCode planPathLine(const PoseEuler &start,
     double angle_distance_to_start = 0; // scale to [0,1]
     if(target.cnt >= DOUBLE_ACCURACY)    // cnt is valid
     {
-        double path_out_vel = target.vel * target.cnt;
+        // FIXME: small cnt will cause pulse in vel and acc of traj
+        //double path_out_vel = target.vel * target.cnt;
+        //double max_path_out_length = path_length / 2;
+        //double path_length_after_out = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
+        double path_out_vel = target.vel;
         double max_path_out_length = path_length / 2;
-        double path_length_after_out = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
+        double path_length_after_out = path_out_vel * path_out_vel * target.cnt/ (2 * segment_alg_param.conservative_acc);        
         if(path_length_after_out > max_path_out_length)
         {
             path_length_after_out = max_path_out_length;
@@ -973,7 +978,14 @@ ErrorCode planPathLine(const PoseEuler &start,
     }
     else    // cnt is invalid
     {    
-        path_cache.smooth_out_index = -1;
+        if(target.cnt >= -DOUBLE_ACCURACY)  // cnt = 0
+        {
+            path_cache.smooth_out_index = max_count;
+        }
+        else
+        {
+            path_cache.smooth_out_index = -1;
+        }        
         path_cache.cache_length = max_count + 1;
         double path_step = path_length / max_count;
         double angle_step = 1.0 / max_count;
@@ -1027,7 +1039,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
 {
     int i;
     // compute path
-    double path_length_start2via = getPointsDistance(start.position, via.pose_target.position);
+    double path_length_start2via = getPointsDistance(start.position, via.pose_target.position);   
     double path_length_via2target;
     double path_vector_via2target[3];
     getMoveLPathVector(via.pose_target.position, target.pose_target.position, path_vector_via2target, path_length_via2target);
@@ -1064,7 +1076,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     int path_count_via2in = (path_count_ideal_via2in > angle_count_ideal_via2in ? path_count_ideal_via2in : angle_count_ideal_via2in);
     int path_count_transition = path_count_start2via + path_count_via2in;
     path_cache.smooth_in_index = path_count_transition;
-    
+
     // determine transition angle step
     double angle_step_transition = 1.0 / path_count_transition;
 
@@ -1075,11 +1087,14 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     double angle_distance_to_out = 0; // scale to [0,1]
     double start_point[3], via_point[3], in_point[3];
     if(target.cnt >= DOUBLE_ACCURACY)
-    {
+    {   // FIXME: small cnt will cause pulse in vel and acc of traj
         // compute path in2out and out2target
-        double path_out_vel = target.vel * target.cnt;
+        //double path_out_vel = target.vel * target.cnt;
+        //double max_path_length_out2target = path_length_via2target / 2;
+        //double path_length_out2target = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);  
+        double path_out_vel = target.vel;
         double max_path_length_out2target = path_length_via2target / 2;
-        double path_length_out2target = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);       
+        double path_length_out2target = path_out_vel * path_out_vel * target.cnt / (2 * segment_alg_param.conservative_acc);
         if(path_length_out2target > max_path_length_out2target)
         {
             path_length_out2target = max_path_length_out2target;
@@ -1092,8 +1107,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             path_count_ideal_in2out = ceil(path_length_in2out / segment_alg_param.path_interval);
         }
-        int path_count_ideal_out2target = ceil(path_length_out2target / segment_alg_param.path_interval);
-        
+        int path_count_ideal_out2target = ceil(path_length_out2target / segment_alg_param.path_interval);       
         // compute angle in2out and out2target
         double angle_distance_in2out = path_length_in2out / path_length_in2target;
         double quatern_out[4];
@@ -1188,9 +1202,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         path_cache.cache[path_cache_length_minus_1].motion_type = MOTION_LINE;
     }
     else
-    {
-        path_cache.smooth_out_index = -1;
-
+    {       
         // compute in2target settings
         int path_count_ideal_in2target = ceil(path_length_in2target / segment_alg_param.path_interval);
         int angle_count_ideal_in2target = ceil(angle_in2target / segment_alg_param.angle_interval);
@@ -1199,6 +1211,14 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         path_cache.cache_length = path_cache_length_minus_1 + 1;       
         double path_step_in2target = path_length_in2target / path_count_in2target;
         double angle_step_in2target = 1.0 / path_count_in2target;
+        if(target.cnt >= -DOUBLE_ACCURACY)  // cnt = 0
+        {
+            path_cache.smooth_out_index = path_cache_length_minus_1;
+        }
+        else
+        {
+            path_cache.smooth_out_index = -1;
+        }  
 
         // compute transition path
         getMovePointToVector3(start.position, start_point);
@@ -1282,30 +1302,31 @@ ErrorCode planTrajectory(const PathCache &path_cache,
             double path_length_start2out, path_length_out2end;
             // write S_PathIndexStep, S_PathIndexStepStart2Out, S_PathIndexStepOut2End, S_Path0~S_Path8
             generateMoveLPathPoint(path_cache, start_state, path_index_array, path_index_array_size, 
-                                    path_index_array_smooth_out_index, path_length_start2out, path_length_out2end);
-            traj_cache.smooth_out_index = path_index_array_smooth_out_index;
+                                    path_index_array_smooth_out_index, path_length_start2out, path_length_out2end);            
+            if(path_cache.smooth_out_index == -1)    // no cnt
+            {
+                traj_cache.smooth_out_index = -1;
+            }
+            else if(path_cache.smooth_out_index == (path_cache.cache_length - 1))    // cnt = 0
+            {
+                traj_cache.smooth_out_index = path_index_array_size;
+            }
+            else    // cnt > 0
+            {
+                traj_cache.smooth_out_index = path_index_array_smooth_out_index;
+            }
             // write S_TrajT
             generateMoveLTimeVector(cmd_vel, path_index_array_size, path_index_array_smooth_out_index,
                                     path_length_start2out, path_length_out2end, time_vector_size);  
-            
             break;
         }
         case MOTION_JOINT:
         {
             // write S_DeltaJointVector, S_PathIndexStep, S_Path0~S_Path8
             generateMoveJPathPoint(path_cache, path_index_array, path_index_array_size);
-
-/*for(int i = 0; i<path_index_array_size; ++i)
-{
-    std::cout<<i<<" "<<path_index_array[i]<<std::endl;
-}*/
             // read S_DeltaJointVector, S_ConstraintJointVelMax
             // write S_TrajT
             generateMoveJTimeVector(vel_ratio, path_index_array_size, time_vector_size);  
-/*for(int i=0; i<time_vector_size; ++i)
-{
-    std::cout<<i<<" "<<stack[S_TrajT + i]<<std::endl;
-}*/
             // MoveJ doesn't support smooth yet
             traj_cache.smooth_out_index = -1;
             break;
@@ -1332,7 +1353,7 @@ ErrorCode planTrajectory(const PathCache &path_cache,
         stack[S_TmpVector3_2] = stack[path_base + path_index_array_size - 1];
         // read: S_Path0 ~ S_Path8, S_TrajT
         // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-        updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_array_size, traj_base);
+        updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_array_size, traj_base, S_TrajT);
         path_base += 25;
         traj_base += 150;
     }
@@ -1340,17 +1361,27 @@ ErrorCode planTrajectory(const PathCache &path_cache,
     // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
     // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
     //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
-    generatePieceVectors(0, time_vector_size, vel_ratio, acc_ratio);
+    generatePieceVectors(0, time_vector_size, S_TrajT, vel_ratio, acc_ratio);
     // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
     // write: S_TrajRescaleFactor
-    generateRescaleFactorVector(time_vector_size);
+    generateRescaleFactorVector(time_vector_size, stack[S_TrajRescaleFactor]);
     // read: S_TrajRescaleFactor, S_TrajT
     // write: S_TrajRescaleT
-    generateRescaleVector(0, time_vector_size);
+    generateRescaleVector(time_vector_size);
+    // read: S_TrajRescaleT
+    // write: S_TrajAbsoluteT
+    generateAbsoluteVector(time_vector_size);
     // read: S_TrajRescaleT, S_TrajRescaleFactor, S_TrajP0 ~ S_TrajP8, S_TrajA0 ~ S_TrajA8
     // write: S_TrajAbsoluteT, S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
     //        S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0
     generateCoeff(time_vector_size);
+
+    /*for(int i=0; i<time_vector_size; ++i)
+        std::cout<<i<<" A3 = "<<stack[S_TrajCoeffJ1A3 + i]
+                    <<" A2 = "<<stack[S_TrajCoeffJ1A2 + i]
+                    <<" A1 = "<<stack[S_TrajCoeffJ1A1 + i]
+                    <<" A0 = "<<stack[S_TrajCoeffJ1A0 + i]<<std::endl*/;
+
     // read: S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
     //       S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0,
     //       S_TrajRescaleT
@@ -1383,25 +1414,31 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     getMoveLPathVector(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position, path_vector_via2in, length_via2in);
     double length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
     int traj_smooth_in_index = computeTrajSmoothInIndex(length_out2via, length_via2in);
-    int path_index_array_size_transition = traj_smooth_in_index - 1;
-    int path_index_array_size_minus_1_transition = path_index_array_size_transition - 1;
-
+ 
     int path_index_in, path_index_out, path_index_end;
     // write: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
-    computePathIndexStepVia2End(path_cache, via, length_via2in, path_index_in, path_index_out, path_index_end);   
+    computePathIndexStepVia2End(path_cache, via, length_via2in, path_index_in, path_index_out, path_index_end);     
     // write: S_Path0~S_Path8[0...path_index_in]
     generatePathPointVia2In(path_cache, via, length_via2in, path_vector_via2in, path_index_in);
-
     int path_index_array_in2end[25];
     // read: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
     // write: S_Path0~S_Path8[0...path_index_out...path_index_end]
     generatePathPointIn2End(path_cache, path_index_in, path_index_out, path_index_end, path_index_array_in2end);
+    
     int path_index_array_size_in2end = path_index_end - path_index_in + 1;
+    //if(path_index_out == path_index_end)
+    if(path_cache.target.cnt < -DOUBLE_ACCURACY)
+    {
+        traj_cache.smooth_out_index = -1;
+    }
+    else
+    {
+        traj_cache.smooth_out_index = traj_smooth_in_index + (path_index_out - path_index_in);
+    }
 
     int time_vector_size_via2end;
-   
-    // write: S_TrajT
     double cmd_vel = path_cache.target.vel * vel_ratio;   // command velocity
+    // write: S_TrajT
     generatePathVia2EndTimeVector(cmd_vel, path_cache, length_via2in, path_index_in, path_index_out, path_index_end, time_vector_size_via2end);
 
     // init state {P,V,A}
@@ -1423,7 +1460,6 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
         traj_index_via = (traj_smooth_in_index - path_index_in - 1);
     } 
     int traj_index_end = traj_smooth_in_index + (path_index_end - path_index_in + 1);
-    
     // make sure the in point of traj point locate at (S_TrajP0 + traj_smooth_in_index)
     int traj_base_via2end = S_TrajP0 + traj_index_via;  
     for(i = 0; i < model.link_num; ++i)
@@ -1432,63 +1468,30 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
         stack[S_TmpVector3_2] = stack[path_base + path_index_end];
         // read: S_Path0 ~ S_Path8, S_TrajT
         // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-        updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_end + 1, traj_base_via2end);
+        updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_end + 1, traj_base_via2end, S_TrajT);
         path_base += 25;
         traj_base_via2end += 150;
     }
-
-    //for(i = traj_index_via; i<= traj_index_end; ++i)
-    //{
-        //std::cout<<i<<" "<<stack[S_TrajP0 + i]<<" "<<stack[S_TrajV0 + i]<<" "<<stack[S_TrajA0 + i]<<std::endl;
-        /*std::cout<<i<<" "<<stack[S_TrajP0 + i]<<" "
-                 <<stack[S_TrajP1 + i]<<" "
-                 <<stack[S_TrajP2 + i]<<" "
-                 <<stack[S_TrajP3 + i]<<" "
-                 <<stack[S_TrajP4 + i]<<" "
-                 <<stack[S_TrajP5 + i]<<std::endl;*/
-         /*std::cout<<stack[S_TrajV0 + i]<<" "
-                 <<stack[S_TrajV1 + i]<<" "
-                 <<stack[S_TrajV2 + i]<<" "
-                 <<stack[S_TrajV3 + i]<<" "
-                 <<stack[S_TrajV4 + i]<<" "
-                 <<stack[S_TrajV5 + i]<<std::endl;*/
-          /*std::cout<<stack[S_TrajA0 + i]<<" "
-                 <<stack[S_TrajA1 + i]<<" "
-                 <<stack[S_TrajA2 + i]<<" "
-                 <<stack[S_TrajA3 + i]<<" "
-                 <<stack[S_TrajA4 + i]<<" "
-                 <<stack[S_TrajA5 + i]<<std::endl; */    
-    //}
 
     int traj_piece_num_via2end = traj_index_end - traj_index_via;
     // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
     // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
     //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
-    generatePieceVectors(traj_index_via, traj_piece_num_via2end, vel_ratio, acc_ratio);
-
-    /*for(int i = 0; i < traj_piece_num_via2end; ++i)
-    {
-        std::cout<<i<<" "<<stack[S_TrajPieceV0 + i]<<" "<<stack[S_TrajPieceV1 + i]<<" "<<stack[S_TrajPieceV2 + i]
-                    <<" "<<stack[S_TrajPieceV2 + i]<<" "<<stack[S_TrajPieceV4 + i]<<" "<<stack[S_TrajPieceV5 + i]<<std::endl;
-        
-    }*/
+    generatePieceVectors(traj_index_via, traj_piece_num_via2end, S_TrajT, vel_ratio, acc_ratio);
+    double rescale_factor_via2end;
     // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
     // write: S_TrajRescaleFactor
-    generateRescaleFactorVector(traj_piece_num_via2end);
-    //std::cout<<"stack[S_TrajRescaleFactor] = "<<stack[S_TrajRescaleFactor]<<std::endl;
-    // read: S_TrajRescaleFactor, S_TrajT
-    // write: S_TrajRescaleT
-    generateRescaleVector(traj_index_via, traj_piece_num_via2end);
- 
-    /*for(i = 0; i < traj_piece_num_via2end; ++i)
-    {
-        std::cout<<(traj_index_via + i)<<" "<<stack[S_TrajRescaleT + traj_index_via + i]<<std::endl;
-    }*/
+    generateRescaleFactorVector(traj_piece_num_via2end, rescale_factor_via2end);  
     
+    // write: S_TrajT
+    adjustTrajT(traj_piece_num_via2end, rescale_factor_via2end);
+    adjustPVA(traj_index_via, traj_index_end, rescale_factor_via2end);
+
     // get out and in point state
     int out_point_base = S_OutPointState0;
     int in_point_base = S_InPointState0;
     int traj_base_in = S_TrajP0 + traj_smooth_in_index;
+    double rescale_factor_via2end_square = rescale_factor_via2end * rescale_factor_via2end;
     for(i = 0; i < model.link_num; ++i)
     {
         stack[out_point_base] = start_state.angle[i];   // P
@@ -1501,90 +1504,63 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
         out_point_base += 3;
         traj_base_in += 150;
     }
-
+   
     int path_array_size_out2in;
     int path_index_array_out2in[25];
     // write: S_Path0~S_Path8
     generatePathPointOut2In(path_cache, traj_smooth_in_index, path_array_size_out2in, path_index_array_out2in);
 
-/*for(int i=0; i<path_array_size_out2via; ++i)
-{
-    std::cout<<i<<" "<<stack[S_Path0 + i]
-                <<" "<<stack[S_Path1 + i]
-                <<" "<<stack[S_Path2 + i]
-                <<" "<<stack[S_Path3 + i]
-                <<" "<<stack[S_Path4 + i]
-                <<" "<<stack[S_Path5 + i]<<std::endl;
-}*/
-
     int time_vector_size_out2in;
-    // write: S_TrajT
+    // write: S_TrajT_Smooth
     generatePathOut2InTimeVector(cmd_vel, length_out2via, length_via2in, path_array_size_out2in, time_vector_size_out2in);
-    
-/*for(int i=0; i<time_vector_size_out2in; ++i)
-{
-    std::cout<<i<<" "<<stack[S_TrajT + i]<<std::endl;
-}*/
 
     path_base = S_Path0;
     int traj_base_out2in = S_TrajP0; 
     int out_point_state_base = S_OutPointState0;
     int in_point_state_base = S_InPointState0;    
+    
     for(i = 0; i < model.link_num; ++i)
     {
         stack[S_TmpVector3_1] = stack[path_base];
         // read: S_Path0 ~ S_Path8, S_TrajT
         // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-        updateTrajPVA(path_base, &stack[out_point_state_base], &stack[in_point_state_base], path_array_size_out2in, traj_base_out2in);
+        updateTrajPVA(path_base, &stack[out_point_state_base], &stack[in_point_state_base], path_array_size_out2in, traj_base_out2in, S_TrajT_Smooth);
         path_base += 25;
         traj_base_out2in += 150;
         in_point_state_base += 3;
         out_point_state_base += 3;
     }
 
-//for(int i = 0; i <= traj_index_end; ++i)
-//{
-    /*std::cout<<i<<" "<<stack[S_TrajP0 + i]<<" "
-             <<stack[S_TrajP1 + i]<<" "
-             <<stack[S_TrajP2 + i]<<" "
-             <<stack[S_TrajP3 + i]<<" "
-             <<stack[S_TrajP4 + i]<<" "
-             <<stack[S_TrajP5 + i]<<std::endl;*/
-     /*std::cout<<stack[S_TrajV0 + i]<<" "
-             <<stack[S_TrajV1 + i]<<" "
-             <<stack[S_TrajV2 + i]<<" "
-             <<stack[S_TrajV3 + i]<<" "
-             <<stack[S_TrajV4 + i]<<" "
-             <<stack[S_TrajV5 + i]<<std::endl;*/
-      /*std::cout<<stack[S_TrajA0 + i]<<" "
-             <<stack[S_TrajA1 + i]<<" "
-             <<stack[S_TrajA2 + i]<<" "
-             <<stack[S_TrajA3 + i]<<" "
-             <<stack[S_TrajA4 + i]<<" "
-             <<stack[S_TrajA5 + i]<<std::endl;*/ 
-//}
-
     // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
     // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
     //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
-    generatePieceVectors(0, time_vector_size_out2in, vel_ratio, acc_ratio);
+    generatePieceVectors(0, time_vector_size_out2in, S_TrajT_Smooth, vel_ratio, acc_ratio);
 
-    /*for(int i = 0; i < traj_piece_num_via2end; ++i)
-    {
-        std::cout<<i<<" "<<stack[S_TrajPieceA0 + i]<<" "<<stack[S_TrajPieceA1 + i]<<" "<<stack[S_TrajPieceA2 + i]
-                    <<" "<<stack[S_TrajPieceA2 + i]<<" "<<stack[S_TrajPieceA4 + i]<<" "<<stack[S_TrajPieceA5 + i]<<std::endl;
-        
-    }*/
-
+    double rescale_factor_out2in;
     // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
     // write: S_TrajRescaleFactor
-    generateRescaleFactorVector(time_vector_size_out2in);    
-    //std::cout<<"stack[S_TrajRescaleFactor] = "<<stack[S_TrajRescaleFactor]<<std::endl;
-//std::cout<<"traj_smooth_in_index = "<<traj_smooth_in_index<<std::endl;
-//std::cout<<"P1 = "<<stack[S_InPointState1]<<" V1 = "<<stack[S_InPointState1 + 1]<<" A1 = "<<stack[S_InPointState1 + 2]<<std::endl;
+    generateRescaleFactorVector(time_vector_size_out2in, rescale_factor_out2in);
+      
+    stack[S_TrajRescaleFactor] = rescale_factor_out2in;
+    /*if(rescale_factor_via2end >= rescale_factor_out2in)
+    {
+        stack[S_TrajRescaleFactor] = rescale_factor_via2end;
+    }
+    else
+    {
+        stack[S_TrajRescaleFactor] = rescale_factor_out2in;
+    }*/
+
+    // read: S_TrajT, S_TrajT_Smooth, S_TrajRescaleFactor
+    // write: S_TrajRescaleT
+    generateRescaleVectorSmooth(time_vector_size_out2in, traj_piece_num_via2end, traj_smooth_in_index - traj_index_via);
+    // read: S_TrajRescaleT
+    // write: S_TrajAbsoluteT    
+    generateAbsoluteVector(traj_index_end);
+
     // read: S_TrajRescaleFactor, S_TrajT
     // write: S_TrajRescaleT
-    generateRescaleVector(0, time_vector_size_out2in);
+    //generateRescaleVector(0, time_vector_size_out2in, traj_index_via, traj_piece_num_via2end);
 
     int time_vector_size_total = traj_index_end;
     // read: S_TrajRescaleT, S_TrajRescaleFactor, S_TrajP0 ~ S_TrajP8, S_TrajA0 ~ S_TrajA8
@@ -1595,20 +1571,6 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     generateTrajCacheSmooth(traj_cache, time_vector_size_total, 
                             path_index_array_out2in, path_array_size_out2in,
                             path_index_array_in2end, path_index_array_size_in2end);
-
-/*for(int i=0; i <traj_cache.cache_length; ++i)
-{
-    std::cout<<i<<" "<<traj_cache.cache[i].index_in_path_cache<<std::endl;
-}*/
-    /*for(i = 0; i < traj_piece_num_via2end; ++i)
-    {
-        std::cout<<(traj_index_via + i)<<" "<<stack[S_TrajRescaleT + traj_index_via + i]<<std::endl;
-    }*/
-
-
-
-
-
     return 0;
 }
 
@@ -1802,7 +1764,8 @@ void generateMoveLPathPoint(const PathCache &path_cache, const JointState &start
 
     // compute total length of path
     double length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache.cache_length - 1].pose.position);
-    if(path_cache.smooth_out_index == -1)
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == cache_length_minus_1)
     {
         // compute path point step necessary for trajecotry computation
         double path_count_ideal = length_start2end * stack[S_PathCountFactorCartesian];
@@ -2011,7 +1974,8 @@ void computePathIndexStepVia2End(const PathCache &path_cache, const MotionTarget
         path_index_in = ceil(path_count_ideal_via2in);
     }
 
-    if(path_cache.smooth_out_index == -1)
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == cache_length_minus_1)
     {       
         if(path_count_ideal_in2end < 3)
         {
@@ -2056,10 +2020,6 @@ void computePathIndexStepVia2End(const PathCache &path_cache, const MotionTarget
         if(path_count_ideal_out2end < DOUBLE_ACCURACY)  // out and end is the same point
         {
             path_index_end = path_index_out;
-        }
-        else if(path_count_ideal_out2end < 1)
-        {
-            path_index_end = path_index_out + 2;
         }
         else
         {
@@ -2159,7 +2119,8 @@ void generatePathPointIn2End(const PathCache &path_cache, int path_index_in, int
     
     path_index_array_in2end[0] = path_cache.smooth_in_index;
     int path_index_array_in2end_index = 1;
-    if(path_cache.smooth_out_index == -1)   // without smooth
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == cache_length_minus_1)   // without smooth
     {
         // path_index_out == path_index_end, stack[S_PathIndexStepIn2End] is valid
         // from (path_index_in + 1) to (path_index_end - 1)
@@ -2177,11 +2138,12 @@ void generatePathPointIn2End(const PathCache &path_cache, int path_index_in, int
             }
         }
         // path_index_end should be the same as path end point
+        path_index_array_in2end[path_index_array_in2end_index] = cache_length_minus_1;
         path_address = S_Path0 + path_index_end;
         for(i = 0; i < model.link_num; ++i)
         {
             stack[path_address] = path_cache.cache[cache_length_minus_1].joint[i];
-            path_index_array_in2end[path_index_array_in2end_index] = cache_length_minus_1;
+            
             path_address += 25;
         }        
     }
@@ -2203,21 +2165,21 @@ void generatePathPointIn2End(const PathCache &path_cache, int path_index_in, int
             }
         }        
         // path_index_out should be the same as path out point
+        path_index_ideal = path_cache.smooth_out_index;
+        path_index_array_in2end[path_index_array_in2end_index] = path_cache.smooth_out_index;
+        ++path_index_array_in2end_index;
         path_address = S_Path0 + path_index_out;      
         for(i = 0; i < model.link_num; ++i)
         {
             stack[path_address] = path_cache.cache[path_cache.smooth_out_index].joint[i];
-            path_index_array_in2end[path_cache.smooth_out_index] = path_index_real;
-            ++path_index_array_in2end_index;
             path_address += 25;
         }
         // from (path_index_out + 1) to (path_index_end - 1)
-        path_index_ideal = path_cache.smooth_out_index;
         for(i = path_index_out + 1; i < path_index_end; ++i)
         {
             path_index_ideal += stack[S_PathIndexStepOut2End];
             path_index_real = round(path_index_ideal);
-            path_index_array_in2end[path_cache.smooth_out_index] = path_index_real;
+            path_index_array_in2end[path_index_array_in2end_index] = path_index_real;
             ++path_index_array_in2end_index;
             path_address = S_Path0 + i;
             for(j = 0; j < model.link_num; ++j)
@@ -2226,12 +2188,12 @@ void generatePathPointIn2End(const PathCache &path_cache, int path_index_in, int
                 path_address += 25;
             }
         }
-        // path_index_end should be the same as path end point
+        // path_index_end should be the same as path end point        
+        path_index_array_in2end[path_index_array_in2end_index] = cache_length_minus_1;
         path_address = S_Path0 + path_index_end;       
         for(i = 0; i < model.link_num; ++i)
         {
             stack[path_address] = path_cache.cache[cache_length_minus_1].joint[i];
-            path_index_array_in2end[path_cache.smooth_out_index] = cache_length_minus_1;
             path_address += 25;
         }        
     }
@@ -2259,7 +2221,8 @@ void generatePathVia2EndTimeVector(double vel, const PathCache &path_cache, doub
     }
 
     double length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[cache_length_minus_1].pose.position);
-    if(path_cache.smooth_out_index == -1)
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == cache_length_minus_1)
     {
         double time_span_in2end = length_in2end / vel;
         double time_duration_in2end = time_span_in2end / (path_index_end - path_index_in);
@@ -2296,7 +2259,7 @@ void generatePathPointOut2In(const PathCache &path_cache, int traj_smooth_in_ind
     int i, j;
     path_array_size = traj_smooth_in_index - 1;
     int path_array_size_minus_1 = path_array_size - 1;
-    stack[S_PathIndexStepOut2In] = (path_cache.smooth_in_index - path_cache.smooth_out_index) / (double)path_array_size_minus_1;
+    stack[S_PathIndexStepOut2In] = path_cache.smooth_in_index / (double)path_array_size_minus_1;
 
     // fisrt traj point
     int path_address = S_Path0;
@@ -2315,14 +2278,15 @@ void generatePathPointOut2In(const PathCache &path_cache, int traj_smooth_in_ind
     {
         path_index_ideal += stack[S_PathIndexStepOut2In];
         path_index_real = round(path_index_ideal);
+        
         path_index_array_out2in[path_index_array_out2in_index] = path_index_real;
         ++path_index_array_out2in_index;
-        path_address = S_Path0;
+        path_address = S_Path0 + i;
         for(j = 0; j < model.link_num; ++j)
         {
             stack[path_address] = path_cache.cache[path_index_real].joint[j];
             path_address += 25;
-        }        
+        }
     }
 
     // last traj points
@@ -2341,17 +2305,17 @@ void generatePathOut2InTimeVector(double cmd_vel, double length_out2via, double 
     int path_array_size_out2in_minus_1 = path_array_size_out2in - 1;
     double time_span_out2in = (length_out2via + length_via2in) / cmd_vel;
     double time_duration_out2in = time_span_out2in / path_array_size_out2in_minus_1;
-    stack[S_TrajT] = time_duration_out2in * segment_alg_param.time_factor_1;
-    stack[S_TrajT + 1] = time_duration_out2in * segment_alg_param.time_factor_2;
+    stack[S_TrajT_Smooth] = time_duration_out2in * segment_alg_param.time_factor_1;
+    stack[S_TrajT_Smooth + 1] = time_duration_out2in * segment_alg_param.time_factor_2;
     for(int i = 2; i < path_array_size_out2in_minus_1; ++i)
     {
-        stack[S_TrajT + i] = time_duration_out2in;
+        stack[S_TrajT_Smooth + i] = time_duration_out2in;
     }
-    stack[S_TrajT + path_array_size_out2in_minus_1] = time_duration_out2in * segment_alg_param.time_factor_3;
-    stack[S_TrajT + path_array_size_out2in] = time_duration_out2in * segment_alg_param.time_factor_4;
+    stack[S_TrajT_Smooth + path_array_size_out2in_minus_1] = time_duration_out2in * segment_alg_param.time_factor_3;
+    stack[S_TrajT_Smooth + path_array_size_out2in] = time_duration_out2in * segment_alg_param.time_factor_4;
 }
 
-void generatePieceVectors(int traj_offset, int traj_piece_num, double vel_ratio, double acc_ratio)
+void generatePieceVectors(int traj_offset, int traj_piece_num, int t_base, double vel_ratio, double acc_ratio)
 {
     int traj_piece_j_address = S_TrajPieceJ0;
     int traj_piece_v_address = S_TrajPieceV0;
@@ -2363,7 +2327,7 @@ void generatePieceVectors(int traj_offset, int traj_piece_num, double vel_ratio,
         for(int j = 0; j < traj_piece_num; ++j)
         {
             // compute jerk
-            stack[traj_piece_j_address + j] = fabs((stack[traj_a_address + j + 1] - stack[traj_a_address + j]) / stack[S_TrajT + j]) 
+            stack[traj_piece_j_address + j] = fabs((stack[traj_a_address + j + 1] - stack[traj_a_address + j]) / stack[t_base + j]) 
                                                 / (stack[S_ConstraintJointJerkMax + i] * segment_alg_param.jerk_ratio);
 
             // compute vel
@@ -2384,13 +2348,13 @@ void generatePieceVectors(int traj_offset, int traj_piece_num, double vel_ratio,
                 if(stack[traj_a_address + j] >= 0)
                 {
                     stack[traj_piece_v_address + j] = (stack[traj_v_address + j] 
-                                                    + stack[traj_a_address + j] * stack[traj_a_address + j] * stack[S_TrajT + j] / (2 * (stack[traj_a_address + j] - stack[traj_a_address + j + 1])))
+                                                    + stack[traj_a_address + j] * stack[traj_a_address + j] * stack[t_base + j] / (2 * (stack[traj_a_address + j] - stack[traj_a_address + j + 1])))
                                                     / (stack[S_ConstraintJointVelMax + i] * vel_ratio);
                 }
                 else
                 {
                     stack[traj_piece_v_address + j] = (stack[traj_v_address + j] 
-                                                    - stack[traj_a_address + j] * stack[traj_a_address + j] * stack[S_TrajT + j] / (2 * (stack[traj_a_address + j + 1] - stack[traj_a_address + j])))
+                                                    - stack[traj_a_address + j] * stack[traj_a_address + j] * stack[t_base + j] / (2 * (stack[traj_a_address + j + 1] - stack[traj_a_address + j])))
                                                     / (stack[S_ConstraintJointVelMax + i] * vel_ratio);
                 }
             }
@@ -2615,32 +2579,86 @@ double getMax(double value0, double value1, double value2, double value3)
     return (tmp1 > tmp2 ? tmp1 : tmp2);
 }
 
-void generateRescaleFactorVector(int time_vector_size)
+void generateRescaleFactorVector(int time_vector_size, double& rescale_factor)
 {
     double max_v_factor, max_a_factor, max_j_factor;
     int base_v_address = S_TrajPieceV0;
     int base_a_address = S_TrajPieceA0;
     int base_j_address = S_TrajPieceJ0;
-    stack[S_TrajRescaleFactor] = 1;
+    rescale_factor = 1;
     for(int i = 0; i < time_vector_size; ++i)
     {
         stack[S_TmpDouble_1] = getMaxTrajPiece(base_v_address, i);
         stack[S_TmpDouble_2] = getMaxTrajPiece(base_a_address, i);
         stack[S_TmpDouble_3] = getMaxTrajPiece(base_j_address, i);
         stack[S_TmpDouble_4] = getMax(1, stack[S_TmpDouble_1], sqrt(stack[S_TmpDouble_2]), pow(stack[S_TmpDouble_3], 0.333333));
-        if(stack[S_TmpDouble_4] > stack[S_TrajRescaleFactor])
+        if(stack[S_TmpDouble_4] > rescale_factor)
         {
-            stack[S_TrajRescaleFactor] = stack[S_TmpDouble_4];
+            rescale_factor = stack[S_TmpDouble_4];
+        }
+    }
+
+    // if(rescale_factor > segment_alg_param.max_rescale_factor)
+    // {
+    //     rescale_factor = segment_alg_param.max_rescale_factor;
+    // }
+}
+
+void generateRescaleVector(int time_vector_size)
+{
+    for(int i = 0; i < time_vector_size; ++i)
+    {
+        stack[S_TrajRescaleT + i] = stack[S_TrajT + i] * stack[S_TrajRescaleFactor];
+    }
+}
+
+void adjustTrajT(int time_vector_size, double rescale_factor)
+{
+    for(int i = 0; i < time_vector_size; ++i)
+    {
+        stack[S_TrajT + i ] = rescale_factor * stack[S_TrajT + i ];
+    }
+}
+
+void adjustPVA(int traj_index_via, int traj_index_end, double rescale_factor_via2end)
+{
+    int i, j;
+    int v_base, a_base;
+    double rescale_factor_via2end_square = rescale_factor_via2end * rescale_factor_via2end;
+    for(i = traj_index_via; i <= traj_index_end; ++i)
+    {
+        v_base = S_TrajV0;
+        a_base = S_TrajA0;
+        for(j = 0; j < model.link_num; ++j)
+        {
+            stack[v_base + i] = stack[v_base + i] / rescale_factor_via2end;
+            stack[a_base + i] = stack[a_base + i] / rescale_factor_via2end_square;
+            v_base += 150;
+            a_base += 150;
         }
     }
 }
 
-void generateRescaleVector(int rescale_t_offset, int time_vector_size)
+void generateRescaleVectorSmooth(int time_vector_size_out2in, int time_vector_size_in2end, int time_vector_size_via2in)
 {
-    int rescale_t_base = S_TrajRescaleT + rescale_t_offset;
+    int i;
+    for(i = 0; i < time_vector_size_out2in; ++i)
+    {
+        stack[S_TrajRescaleT + i] = stack[S_TrajRescaleFactor] * stack[S_TrajT_Smooth + i];
+    }
+
+    for(i = 0; i < time_vector_size_in2end; ++i)
+    {
+        stack[S_TrajRescaleT + time_vector_size_out2in + i] = stack[S_TrajRescaleFactor] * stack[S_TrajT + time_vector_size_via2in + i];
+    }    
+}
+
+void generateAbsoluteVector(int time_vector_size)
+{
+    stack[S_TrajAbsoluteT] = 0;
     for(int i = 0; i < time_vector_size; ++i)
     {
-        stack[rescale_t_base + i] = stack[S_TrajT + i] * stack[S_TrajRescaleFactor];
+        stack[S_TrajAbsoluteT + i + 1] = stack[S_TrajAbsoluteT + i] + stack[S_TrajRescaleT + i];
     }
 }
 
@@ -2653,13 +2671,6 @@ void generateCoeff(int time_vector_size)
     int coeff_a0 = S_TrajCoeffJ0A0;
     int traj_p = S_TrajP0;
     int traj_a = S_TrajA0;
-
-    // generate absolute time
-    stack[S_TrajAbsoluteT] = 0;
-    for(i = 0; i < time_vector_size; ++i)
-    {
-        stack[S_TrajAbsoluteT + i + 1] = stack[S_TrajAbsoluteT + i] + stack[S_TrajRescaleT + i];
-    }
  
     // compute coeff
     for(i = 0; i < model.link_num; ++i)
@@ -2689,8 +2700,10 @@ void generateCoeff(int time_vector_size)
 
 void generateTrajCache(TrajectoryCache &traj_cache, int time_vector_size, int* path_index_array, int path_index_array_size)
 {
+    int i;
     traj_cache.cache_length = time_vector_size;
-    for(int i = 0; i < time_vector_size; ++i)
+    int time_vector_size_minus_1 = time_vector_size - 1;
+    for(i = 0; i < time_vector_size; ++i)
     {
         traj_cache.cache[i].axis[0].data[0] = stack[S_TrajCoeffJ0A0 + i];
         traj_cache.cache[i].axis[0].data[1] = stack[S_TrajCoeffJ0A1 + i];
@@ -2717,11 +2730,15 @@ void generateTrajCache(TrajectoryCache &traj_cache, int time_vector_size, int* p
         traj_cache.cache[i].axis[5].data[2] = stack[S_TrajCoeffJ5A2 + i];
         traj_cache.cache[i].axis[5].data[3] = stack[S_TrajCoeffJ5A3 + i];
         traj_cache.cache[i].duration = stack[S_TrajRescaleT + i];
+    }
+    
+    traj_cache.cache[0].index_in_path_cache = -1;
+    for(i = 1; i < (time_vector_size_minus_1 - 1); ++i)
+    {
         traj_cache.cache[i].index_in_path_cache = path_index_array[i];
     }
-    traj_cache.cache[0].index_in_path_cache = -1;
-    traj_cache.cache[time_vector_size - 2].index_in_path_cache = -1;
-    traj_cache.cache[path_index_array_size].index_in_path_cache = path_index_array[path_index_array_size - 1];
+    traj_cache.cache[time_vector_size_minus_1 - 1].index_in_path_cache = -1;
+    traj_cache.cache[time_vector_size_minus_1].index_in_path_cache = path_index_array[path_index_array_size - 1];
 }
 
 void generateTrajCacheSmooth(TrajectoryCache &traj_cache, int time_vector_size, 

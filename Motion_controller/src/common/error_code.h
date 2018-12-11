@@ -204,6 +204,10 @@
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
 #define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
 #define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0010000200AD0003   /*failed to load simused status json files*/
+#define PROGRAM_LAUNCHING_LOAD_PARAM_FAILED (unsigned long long int)0x0011000200B00001   /*failed to load program_launching yaml paramters*/
+#define PROGRAM_LANNCHING_LOAD_MODE_FILE_FAILED (unsigned long long int)0x0011000200B00002   /*failed to load launch_mode_setting json files*/
+#define PROGRAM_LAUNCHING_LOAD_MACRO_FILE_FAILED (unsigned long long int)0x0011000200B00003   /*failed to load macro_io_launch json files*/
+
 
 
 

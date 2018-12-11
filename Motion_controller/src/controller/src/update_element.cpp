@@ -97,6 +97,37 @@ void ControllerPublish::updateTpProgramStatus()
 }
 
 
+void ControllerPublish::updateSafetyBoardStatus()
+{
+    //todo new
+    uint32_t data = safety_device_ptr_->getDIFrm2();  //old board is getDIfrm2; new board is getDiFrm1
+    memcpy(&safety_board_status_.data, &data, sizeof(data));
+}
+
+//todo new
+void ControllerPublish::updateIoBoardStatus()
+{
+    std::vector<fst_hal::IODeviceInfo> vec = io_device_ptr_->getIODeviceList();
+    int dev_num = vec.size();
+    fst_hal::IODevicePortValues values;
+
+    io_board_status_.io_board_count = 4; //max device number
+    for (int i = 0; i < io_board_status_.io_board_count; i++)
+    {
+        if (i < dev_num && vec[i].id < 16)
+        {
+            io_board_status_.io_board[i].id = vec[i].id;
+            memcpy(&io_board_status_.io_board[i].DI, &values.DI, sizeof(uint32_t));
+            memcpy(&io_board_status_.io_board[i].DO, &values.DO, sizeof(uint32_t));
+            memcpy(&io_board_status_.io_board[i].RI, &values.RI, sizeof(uint8_t));
+            memcpy(&io_board_status_.io_board[i].RO, &values.RO, sizeof(uint8_t));
+            io_board_status_.io_board[i].valid = 1; // 1 = true.
+        }
+        io_board_status_.io_board[i].valid = 0;
+    }
+    
+}
+
 void ControllerPublish::updateReg()
 {
     void* value_ptr;

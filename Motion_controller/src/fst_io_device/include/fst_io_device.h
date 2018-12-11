@@ -27,6 +27,7 @@ Summary:    dealing with IO module
 
 #define IO_DEVICE_LOAD_PARAM_FAILED 123
 
+/*todo delete
 //depressed soon
 typedef struct _IOPortInfo
 {
@@ -36,7 +37,7 @@ typedef struct _IOPortInfo
 	int         port_index;
 	int         bytes_len;
 }IOPortInfo;
-
+*/
 
 namespace fst_hal
 {
@@ -106,12 +107,12 @@ public:
 	// Return:  int -> the total number of io devices.
 	//------------------------------------------------------------
 	int refreshIODevNum(void);
-    
+    /*todo delete
 	ErrorCode setDO(int physics_id, unsigned char value){return 0;} //depressed soon.
 	ErrorCode getDIO(int physics_id, uint8_t *buffer, int buf_len, int& io_bytes_len){return 0;}//depressed soon
 	ErrorCode getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len){return 0;}//depressed soon
 	ErrorCode checkIO(const char *path, IOPortInfo* io_info){return 0;}//depressed soon
-	
+	*/
 
 private:
     FstIoDeviceParam* param_ptr_;

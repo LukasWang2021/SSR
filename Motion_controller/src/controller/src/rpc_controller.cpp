@@ -1,10 +1,11 @@
 #include "controller_rpc.h"
 #include <sys/time.h>
 #include <unistd.h>
+#include <list>
 #include "version.h"
 
 using namespace fst_ctrl;
-
+using namespace fst_base;
 
 // "/rpc/controller/setSystemTime"
 void ControllerRpc::handleRpc0x000167C5(void* request_data_ptr, void* response_data_ptr)
@@ -71,3 +72,19 @@ void ControllerRpc::handleRpc0x000092E5(void* request_data_ptr, void* response_d
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/getStartMode"));
 }
 */
+
+// "/rpc/controller/getErrorCodeList"
+void ControllerRpc::handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr)
+{ 
+    ResponseMessageType_Uint64_Uint64List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Uint64List*>(response_data_ptr);
+    
+    int index = 0;
+    std::list<uint64_t> list = ErrorMonitor::instance()->getErrorList();
+    for (std::list<uint64_t>::iterator iter = list.begin(); iter != list.end(); iter++)
+    {
+        rs_data_ptr->data.data[index] = *iter;
+        index ++;
+    }
+    
+}
+    

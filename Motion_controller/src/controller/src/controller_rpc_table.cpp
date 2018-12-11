@@ -32,6 +32,8 @@ void ControllerRpc::initRpcTable()
     // todo delete
     //rpc_service = {"/rpc/controller/setStartMode", 0x00010225, &ControllerRpc::handleRpc0x00010225}; rpc_table_.push_back(rpc_service);
     //rpc_service = {"/rpc/controller/getStartMode", 0x000092E5, &ControllerRpc::handleRpc0x000092E5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/getErrorCodeList", 0x00015F44, &ControllerRpc::handleRpc0x00015F44}; rpc_table_.push_back(rpc_service);
+
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/tool_manager/deleteTool", 0x00010E4C, &ControllerRpc::handleRpc0x00010E4C}; rpc_table_.push_back(rpc_service);

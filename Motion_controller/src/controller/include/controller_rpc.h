@@ -119,6 +119,8 @@ private:
     //void handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr); //todo delete
     // "/rpc/controller/getStartMode"
     //void handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr); //todo delete
+    // "/rpc/controller/getErrorCodeList"
+    void handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr);
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"

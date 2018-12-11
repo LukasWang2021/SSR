@@ -88,3 +88,13 @@ void* ControllerPublish::getTpProgramStatusPtr()
     return (void*)&tp_program_status_;
 }
 
+void* ControllerPublish::getSafetyBoardStatusPtr()
+{
+    return (void*)&safety_board_status_;
+}
+
+void* ControllerPublish::getIoBoardStatusPtr()
+{
+    return (void*)&io_board_status_;
+}
+

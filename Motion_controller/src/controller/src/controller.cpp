@@ -206,7 +206,7 @@ ErrorCode Controller::init()
         process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_device_ptr_, modbus_manager_ptr_,
         &program_launching_);//&io_mapping_ by feng add
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
-                    process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_);
+                    process_comm_ptr_->getControllerClientPtr(), &io_mapping_, safety_device_ptr, io_device_ptr_);
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {

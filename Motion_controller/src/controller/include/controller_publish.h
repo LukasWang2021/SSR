@@ -11,6 +11,7 @@
 #include "reg_manager.h"
 #include "process_comm.h"
 #include "io_mapping.h" //feng add for iomapping.
+#include "fst_safety_device.h"
 #include "base_device.h"//feng add
 #include <vector>
 #include <list>
@@ -26,7 +27,8 @@ public:
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
                     fst_base::ControllerClient* controller_client_ptr,
-                    fst_hal::DeviceManager* device_manager_ptr, fst_ctrl::IoMapping* io_mapping_ptr);//feng add device_manager_ptr and mapping
+                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::FstSafetyDevice* safety_device_ptr, 
+                    fst_hal::FstIoDevice* io_device_ptr);//feng add mapping
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     typedef void (ControllerPublish::*HandleUpdateFuncPtr)(void);
@@ -59,8 +61,9 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     RegManager* reg_manager_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
-    fst_hal::DeviceManager* device_manager_ptr_;//feng add for rpc-addIoTopic
     fst_ctrl::IoMapping* io_mapping_ptr_; //feng add for mapping.
+    fst_hal::FstSafetyDevice* safety_device_ptr_;
+    fst_hal::FstIoDevice* io_device_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -92,6 +95,8 @@ private:
     MessageType_Double global_acc_ratio_;
     MessageType_String_Int32 program_status_;
     MessageType_StringList tp_program_status_;
+    MessageType_Uint32 safety_board_status_;
+    MessageType_IoBoardStatusList io_board_status_; 
 
     typedef struct
     {
@@ -142,6 +147,8 @@ private:
     void* getGlobalAccRatioPtr();
     void* getProgramStatusPtr();
     void* getTpProgramStatusPtr();
+    void* getSafetyBoardStatusPtr();
+    void* getIoBoardStatusPtr();
 
     // update publish element
     void updateAxisGroupJointFeedback();
@@ -154,6 +161,8 @@ private:
     void updateGlobalAccRatio();
     void updateProgramStatus();
     void updateTpProgramStatus();
+    void updateSafetyBoardStatus();
+    void updateIoBoardStatus();
 
     // update reg publish
     void updateReg();

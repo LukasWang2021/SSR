@@ -24,10 +24,6 @@ Summary:    dealing with IO macro
 #include "io_mapping.h"
 #include "process_comm.h"
 
-#define PROGRAM_LAUNCHING_LOAD_PARAM_FAILED 123456
-#define PROGRAM_LANNCHING_LOAD_MODE_FILE_FAILED 1234
-#define PROGRAM_LAUNCHING_LOAD_MACRO_FILE_FAILED 123
-
 
 namespace fst_ctrl
 {

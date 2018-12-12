@@ -156,3 +156,20 @@ void TpComm::handlePublishElement0x000042B3(Comm_Publish& package, int element_i
     }
 }
 
+//"/publish/controller/safety_board_status"
+void TpComm::handlePublishElement0x000123C3(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_Uint32_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x000123C3: failed to encode");
+    }
+}
+
+//"/publish/controller/io_board_status"
+void TpComm::handlePublishElement0x00006D93(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_IoBoardStatusList_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x00006D93: failed to encode");
+    }
+}

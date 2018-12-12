@@ -166,6 +166,9 @@ private:
     void handleRequest0x000003F5(int recv_bytes);
     /********rpc/controller/getVersion, RequestMessageType_Void**********/
     void handleRequest0x000093EE(int recv_bytes);
+    /********rpc/controller/getErrorCodeList, RequestMessageType_Void**********/
+    void handleRequest0x00015F44(int recv_bytes);
+
     /********rpc/interpreter/switchStep, RequestMessageType_Int32**********/
     void handleRequest0x000140F0(int recv_bytes);
 
@@ -318,10 +321,6 @@ private:
     void handleRequest0x0000CF55(int recv_bytes);
     /********rpc/interpreter/abort, RequestMessageType_Void**********/
     void handleRequest0x000086F4(int recv_bytes);
-    /********rpc/controller/setStartMode, RequestMessageType_Int32**********/
-    void handleRequest0x00010225(int recv_bytes);
-    /********rpc/controller/getStartMode, RequestMessageType_Void**********/
-    void handleRequest0x000092E5(int recv_bytes);
 
     /********rpc/publish/addTopic, RequestMessageType_Topic**********/
     void handleRequest0x000050E3(int recv_bytes);
@@ -335,7 +334,6 @@ private:
     void handleRequest0x00010353(int recv_bytes);
     /********rpc/publish/deleteIoTopic, RequestMessageType_Uint32**********/
     void handleRequest0x0000DD03(int recv_bytes);
-
 
     /********rpc/motion_control/setGlobalVelRatio, RequestMessageType_Double**********/
     void handleRequest0x000005EF(int recv_bytes);
@@ -538,7 +536,8 @@ private:
     void handleResponse0x000003F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getVersion, ResponseMessageType_Uint64_String**********/
     void handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
+    /********rpc/controller/getErrorCodeList, ResponseMessageType_Uint64_Uint64List(count = 64)**********/
+    void handleResponse0x00015F44(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********getRpcTable, ResponseMessageType_RpcTable**********/
     void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -834,6 +833,10 @@ private:
     void handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/interpreter/tp_program_status, MessageType_StringList(count=2)**********/
     void handlePublishElement0x000042B3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/controller/safety_board_status, MessageType_Uint32**********/
+    void handlePublishElement0x000123C3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/controller/io_board_status, MessageType_IoboardStatusList(count=4)**********/
+    void handlePublishElement0x00006D93(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
    /********rpc/controller/addIoTopic, ResponseMessageType_Bool**********/
     void handleResponse0x0000B823(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

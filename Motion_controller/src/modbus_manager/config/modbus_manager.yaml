@@ -1,4 +1,6 @@
 log_level: 1
+start_mode: 0 #client
+client_scan_rate: 1000000 #us
 tcp_server_file_name: tcp_server.yaml
 tcp_client_file_name: tcp_client.yaml
 #END

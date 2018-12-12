@@ -11,6 +11,32 @@ using namespace std;
 
 namespace fst_hal
 {
+struct ModbusServerStartInfo
+{
+    string ip;
+    int port;
+};
+
+struct ModbusRegAddrInfo
+{
+    int addr;
+    int max_nb;
+};
+
+
+struct ModbusServerRegInfo
+{
+    ModbusRegAddrInfo coil;
+    ModbusRegAddrInfo discrepte_input;
+    ModbusRegAddrInfo holding_reg;
+    ModbusRegAddrInfo input_reg;
+};
+
+struct ModbusServerConfig
+{
+    int response_delay;
+    ModbusServerRegInfo reg_info;
+};
 
 class ModbusServerParam
 {
@@ -19,22 +45,21 @@ public:
     ~ModbusServerParam(){}
 
     bool loadParam();
-    bool saveParam();
+
+    bool loadConfig();
+    bool saveConfig();
+
+    bool saveConnectStatus();
 
     int log_level_;
     int port_;
     int cycle_time_;
     int connection_nb_;
     bool is_debug_;
+    bool is_enable_;
     string comm_type_;
-    int coil_addr_;
-    int coil_max_nb_;
-    int discrepte_input_addr_;
-    int discrepte_input_max_nb_;
-    int input_register_addr_;
-    int input_register_max_nb_;
-    int holding_register_addr_;
-    int holding_register_max_nb_;
+    ModbusServerRegInfo reg_info_;
+    ModbusServerConfig config_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;
@@ -43,3 +68,4 @@ private:
 }
 
 #endif
+

@@ -21,37 +21,27 @@ using namespace fst_hal;
 
 namespace fst_hal
 {
-struct ClientInfo
-{
-    int port;
-    string ip;
-    string comm_type;
-    timeval response_timeout;
-    timeval bytes_timeout;
-};
-
 
 class ModbusTCPClient
 {
 public:
-    ModbusTCPClient(string file_path);
+    ModbusTCPClient(string file_path, int id);
      ~ModbusTCPClient();
 
-    ErrorCode setInfo(ClientInfo info);
-
-    ErrorCode setResponseTimeout(timeval timeout);
-    ErrorCode setBytesTimeout(timeval timeout);
-    ErrorCode getResponseTimeout(timeval& timeout);
-    ErrorCode getBytesTimeout(timeval& timeout);
-
-    ErrorCode setIp(string ip);
-    ErrorCode setPort(int port);
-    string getIp();
-    int getPort();
-
-    ErrorCode init();
     ErrorCode initParam();
+
+    ErrorCode setConnectStatus(bool status);
+    ErrorCode getConnectStatus(bool status);
+
+    ErrorCode setConfig(ModbusClientConfig config);
+    ModbusClientConfig getConfig();
+    
+    int getId();
+    string getName();
+
+    ErrorCode openClient();
     void closeClient();
+    bool isRunning();
 
     ErrorCode writeCoils(int addr, int nb, uint8_t *dest);
     ErrorCode readCoils(int addr, int nb, uint8_t *dest);
@@ -66,18 +56,20 @@ private:
     enum {SOCKET_ID_MIN = 1, SOCKET_ID_MAX = 247, };
     enum RegsOneOpNum{ STATUS_ONE_OP_NUM = 1024, REGISTER_ONE_OP_NUM = 121, };
 
-    modbus_t* ctx_;
+    bool is_enable_; //to modify param name
     bool is_debug_;
+    bool is_running_;
+    int id_;
+
+    modbus_t* ctx_;
     int socket_;
-    int port_;
-    string ip_;
     string comm_type_;
-    timeval response_timeout_;
-    timeval bytes_timeout_;
+    ModbusClientConfig config_;
 
     ModbusClientParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 
+    bool checkConnectStatus();
 };
 }
 

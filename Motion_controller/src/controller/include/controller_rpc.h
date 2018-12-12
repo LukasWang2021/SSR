@@ -393,26 +393,54 @@ private:
     // "/rpc/program_launching/syncFileMacroConfig"
     void handleRpc0x00016B27(void* request_data_ptr, void* response_data_ptr);
 
-    //"/rpc/modbus/newServer",
-    void handleRpc0x0000D1B2(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/deleteServer",
-    void handleRpc0x00006C22(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/saveServerConfig",
-    void handleRpc0x000050E7(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/getServerConfig",
+	//"/rpc/modbus/setStartMode"
+    void handleRpc0x0000D3A5(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getStartMode"
+    void handleRpc0x000041C5(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setServerConnectStatus"
+    void handleRpc0x0000DB23(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerConnectStatus"
+    void handleRpc0x00001B23(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setServerConfig"
+    void handleRpc0x00017547(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerConfig"
     void handleRpc0x00016947(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/newClient",
-    void handleRpc0x00009F84(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/deleteClient",
-    void handleRpc0x00014CF4(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/saveClientConfig",
-    void handleRpc0x00002B57(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/getClientConfig",
+	//"/rpc/modbus/getServerStartInfo"
+    void handleRpc0x000018AF(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/openServer"
+    void handleRpc0x00010912(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/closeServer"
+    void handleRpc0x000045B2(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/addClient"
+    void handleRpc0x00012E44(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setClientConnectStatus"
+    void handleRpc0x000099D3(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getClientConnectStatus"
+    void handleRpc0x00010A53(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setClientConfig"
+    void handleRpc0x0000D017(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getClientConfig"
     void handleRpc0x0000FC17(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/enableConnection",
-    void handleRpc0x00010C63(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/getConnectionStatus"
-    void handleRpc0x0000E973(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/openClient"
+    void handleRpc0x00000544(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/closeClient"
+    void handleRpc0x00006CA4(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/deleteClient"
+    void handleRpc0x00014CF4(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getClientSummaryInfoList"
+    void handleRpc0x0000B424(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/writeCoils"
+    void handleRpc0x0000BD83(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readCoils"
+    void handleRpc0x0000A433(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readDiscreteInputs"
+    void handleRpc0x0000C063(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/writeHoldingRegs"
+    void handleRpc0x00008C43(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readHoldingRegs"
+    void handleRpc0x00003583(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readInputRegs"
+    void handleRpc0x000072C3(void* request_data_ptr, void* response_data_ptr);
 };
 
 }

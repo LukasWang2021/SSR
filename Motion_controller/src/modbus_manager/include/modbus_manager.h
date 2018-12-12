@@ -6,6 +6,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
+#include "net_connection.h"
 #include "common_log.h"
 #include "base_device.h"
 #include "parameter_manager/parameter_manager_param_group.h"
@@ -28,50 +29,62 @@ class ModbusManager: public BaseDevice
 public:
     ModbusManager(int address);
     ~ModbusManager();
+
     bool init();
     bool isValid();
-    ErrorCode openModbus(int start_mode);
-    ErrorCode closeModbus();
+
+    ErrorCode setStartMode(int start_mode); // enum ModbusStartMode
     int getStartMode();
 
+    ErrorCode setScanRate(int scan_rate);
+    int getScanRate();
+
+    ErrorCode writeCoils(int id, int addr, int nb, uint8_t *dest);
+    ErrorCode readCoils(int id, int addr, int nb, uint8_t *dest);
+    ErrorCode readDiscreteInputs(int id, int addr, int nb, uint8_t *dest);
+    ErrorCode writeHoldingRegs(int id, int addr, int nb, uint16_t *dest);
+    ErrorCode readHoldingRegs(int id, int addr, int nb, uint16_t *dest);
+    ErrorCode readInputRegs(int id, int addr, int nb, uint16_t *dest);
+
     // for server
-    ErrorCode getServerInfo(ServerInfo& info);
-    ErrorCode getServerCoilInfo(ModbusRegAddrInfo& info);
-    ErrorCode getServerDiscrepteInputInfo(ModbusRegAddrInfo& info);
-    ErrorCode getServerHoldingRegInfo(ModbusRegAddrInfo& info);
-    ErrorCode getServerInputRegInfo(ModbusRegAddrInfo& info);
-    ErrorCode getServerIp(string& ip);
-    ErrorCode getServerPort(int& port);
+    ErrorCode openServer();
+    ErrorCode closeServer();
+
+    ErrorCode setConnectStatusToServer(bool &status);
+    ErrorCode getConnectStatusFromServer(bool &status);
+    ErrorCode setConfigToServer(ModbusServerConfig &config);
+    ErrorCode getConfigFromServer(ModbusServerConfig &config);
+
+    ErrorCode getCoilInfoFromServer(ModbusRegAddrInfo &info); 
+    ErrorCode getDiscrepteInputInfoFromServer(ModbusRegAddrInfo &info);
+    ErrorCode getHoldingRegInfoFromServer(ModbusRegAddrInfo &info);
+    ErrorCode getInputRegInfoFromServer(ModbusRegAddrInfo &info);
+    ErrorCode getServerRegInfoFromServer(ModbusServerRegInfo &info);
+    ErrorCode getStartInfoFromServer(ModbusServerStartInfo &info);
 
     // for client
-    ErrorCode setClientIp(string ip);
-    ErrorCode setClientPort(int port);
-    ErrorCode setResponseTimeout(timeval timeout);
-    ErrorCode setBytesTimeout(timeval timeout);
-    ErrorCode setClientInfo(ClientInfo info);
+    ErrorCode addClient(int client_id);
+    ErrorCode deleteClient(int client_id);
+    ErrorCode openClient(int client_id);
+    ErrorCode closeClient(int client_id); // to modify
+    void getClientIdAndName(int id, string name);
 
-    ErrorCode getResponseTimeout(timeval& timeout);
-    ErrorCode getBytesTimeout(timeval& timeout);
+    ErrorCode setConnectStatusToClient(int client_id, bool status);
+    ErrorCode getConnectStatusFromClient(int client_id, bool status);
 
-    ErrorCode writeCoils(int addr, int nb, uint8_t *dest);
-    ErrorCode readCoils(int addr, int nb, uint8_t *dest);
-
-    ErrorCode readDiscreteInputs(int addr, int nb, uint8_t *dest);
-
-    ErrorCode writeHoldingRegs(int addr, int nb, uint16_t *dest);
-    ErrorCode readHoldingRegs(int addr, int nb, uint16_t *dest);
-    ErrorCode writeAndReadHoldingRegs(int write_addr, int write_nb, const uint16_t *write_dest,
-        int read_addr, int read_nb, uint16_t *read_dest);
-
-    ErrorCode readInputRegs(int addr, int nb, uint16_t *dest);
+    ErrorCode setConfigToClient(int client_id, ModbusClientConfig config);
+    ErrorCode getConfigFromClient(int client_id, ModbusClientConfig config); // to modify
 
 private:
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
-    static ModbusManager* instance_;
+    NetConnection net_connect_;
 
     string server_ip_;
     int server_port_;
+
+    int client_scan_rate_;
+    fst_base::ThreadHelp thread_ptr_;
 
     ModbusTCPClient* client_;
     ModbusTCPServer* server_;
@@ -79,13 +92,27 @@ private:
     int start_mode_;
     int address_;
 
-    bool is_valid_;
-
+    bool isClientRunning(int client_id);
     bool isServerRunning();
 
+    ErrorCode writeCoilsToServer(int addr, int nb, uint8_t *dest);
+    ErrorCode readCoilsFromServer(int addr, int nb, uint8_t *dest);
+    ErrorCode readDiscreteInputsFromServer(int addr, int nb, uint8_t *dest);
+    ErrorCode writeHoldingRegsToServer(int addr, int nb, uint16_t *dest);
+    ErrorCode readHoldingRegsFromServer(int addr, int nb, uint16_t *dest);
+    ErrorCode readInputRegsFromServer(int addr, int nb, uint16_t *dest);
+
+    ErrorCode writeCoilsByClient(int client_id, int addr, int nb, uint8_t *dest);
+    ErrorCode readCoilsByClient(int client_id, int addr, int nb, uint8_t *dest);
+    ErrorCode readDiscreteInputsByClient(int client_id, int addr, int nb, uint8_t *dest);
+    ErrorCode writeHoldingRegsByClient(int client_id, int addr, int nb, uint16_t *dest);
+    ErrorCode readHoldingRegsByClient(int client_id, int addr, int nb, uint16_t *dest);
+    ErrorCode writeAndReadHoldingRegsByClient(int client_id, int write_addr, int write_nb, const uint16_t *write_dest,
+        int read_addr, int read_nb, uint16_t *read_dest);
+    ErrorCode readInputRegsByClient(int client_id, int addr, int nb, uint16_t *dest);
 };
 }
 
 #endif
 
-
+//void modbusTcpAllClientRoutineThreadFunc(void* arg);

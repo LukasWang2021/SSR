@@ -16,12 +16,15 @@ ModbusManagerParam::ModbusManagerParam():
     file_path_ += "modbus_manager.yaml";
     tcp_client_file_name_ = "";
     tcp_server_file_name_ = "";
+    start_mode_ = 0;
 }
 
 bool ModbusManagerParam::loadParam()
 {
     if (!yaml_help_.loadParamFile(file_path_.c_str())
         || !yaml_help_.getParam("log_level", log_level_)
+        || !yaml_help_.getParam("client_scan_rate", client_scan_rate_)
+        || !yaml_help_.getParam("start_mode", start_mode_)
         || !yaml_help_.getParam("tcp_client_file_name", tcp_client_file_name_)
         || !yaml_help_.getParam("tcp_server_file_name", tcp_server_file_name_))
     {
@@ -38,8 +41,34 @@ bool ModbusManagerParam::loadParam()
 bool ModbusManagerParam::saveParam()
 {
     if (!yaml_help_.setParam("log_level", log_level_)
+        || !yaml_help_.setParam("client_scan_rate", client_scan_rate_)
+        || !yaml_help_.setParam("start_mode_", start_mode_)
         || !yaml_help_.setParam("tcp_client_file_name", tcp_client_file_name_)
         || !yaml_help_.setParam("tcp_server_file_name", tcp_server_file_name_)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
+    {
+        cout << " Failed save modbus_manager.yaml " << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ModbusManagerParam::saveStartMode()
+{
+    if (!yaml_help_.setParam("start_mode", start_mode_)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
+    {
+        cout << " Failed save modbus_manager.yaml " << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ModbusManagerParam::saveClientScanRate()
+{
+    if (!yaml_help_.setParam("client_scan_rate", client_scan_rate_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         cout << " Failed save modbus_manager.yaml " << endl;

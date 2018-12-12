@@ -10,62 +10,79 @@ ModbusClientParam::ModbusClientParam(string file_path):
     file_path_(file_path),
     log_level_(fst_log::MSG_LEVEL_ERROR)
 {
-    ip_ = "192.168.1.102";
-    port_ = 502;
-    comm_type_ = "TCP";
-    is_debug_ = true;
-    bytes_timeout_.tv_sec = 0;
-    bytes_timeout_.tv_usec = 250000;
-    response_timeout_.tv_sec = 1;
-    response_timeout_.tv_usec = 0;
+    scan_rate_ = 0;
+    is_enable_ = false;
+    id_ = 0;
+    config_.name = "Modbus";
+    config_.ip = "";
+    config_.port = -1;
+    config_.response_timeout_sec = 0;
+    config_.response_timeout_usec = 0;
+    config_.bytes_timeout_sec = 0;
+    config_.bytes_timeout_usec = 0;
+    config_.reg_info.coil.addr = 0;
+    config_.reg_info.coil.max_nb = 0;
+    config_.reg_info.discrepte_input.addr = 0;
+    config_.reg_info.discrepte_input.max_nb = 0;
+    config_.reg_info.holding_reg.addr = 0;
+    config_.reg_info.holding_reg.max_nb = 0;
+    config_.reg_info.input_reg.addr = 0;
+    config_.reg_info.input_reg.max_nb = 0;
+
+    comm_type_ = "";
+    is_debug_ = false;
 }
 
 bool ModbusClientParam::loadParam()
 {
-    double bytes_timeout_tv_sec = 0;
-    double bytes_timeout_tv_usec = 0;
-    double response_timeout_tv_sec = 0;
-    double response_timeout_tv_usec = 0;
-
     if (!yaml_help_.loadParamFile(file_path_.c_str())
         || !yaml_help_.getParam("log_level", log_level_)
-        || !yaml_help_.getParam("ip", ip_)
-        || !yaml_help_.getParam("port", port_)
         || !yaml_help_.getParam("comm_type", comm_type_)
         || !yaml_help_.getParam("is_debug", is_debug_)
-        || !yaml_help_.getParam("bytes_timeout/tv_sec", bytes_timeout_tv_sec)
-        || !yaml_help_.getParam("bytes_timeout/tv_usec", bytes_timeout_tv_usec)
-        || !yaml_help_.getParam("response_timeout/tv_sec", response_timeout_tv_sec)
-        || !yaml_help_.getParam("response_timeout/tv_usec", response_timeout_tv_usec))
+        || !yaml_help_.getParam("scan_rate", scan_rate_)
+        || !yaml_help_.getParam("is_enable", is_enable_)
+        || !yaml_help_.getParam("id", id_)
+        || !yaml_help_.getParam("name", config_.name)
+        || !yaml_help_.getParam("ip", config_.ip)
+        || !yaml_help_.getParam("port", config_.port)
+        || !yaml_help_.getParam("bytes_timeout/sec", config_.bytes_timeout_sec)
+        || !yaml_help_.getParam("bytes_timeout/usec", config_.bytes_timeout_usec)
+        || !yaml_help_.getParam("response_timeout/sec", config_.response_timeout_sec)
+        || !yaml_help_.getParam("response_timeout/usec", config_.response_timeout_usec)
+        || !yaml_help_.getParam("reg_info/coil/addr", config_.reg_info.coil.addr)
+        || !yaml_help_.getParam("reg_info/coil/max_nb", config_.reg_info.coil.max_nb)
+        || !yaml_help_.getParam("reg_info/discrepte_input/addr", config_.reg_info.discrepte_input.addr)
+        || !yaml_help_.getParam("reg_info/discrepte_input/max_nb", config_.reg_info.discrepte_input.max_nb)
+        || !yaml_help_.getParam("reg_info/input_register/addr", config_.reg_info.input_reg.addr)
+        || !yaml_help_.getParam("reg_info/input_register/max_nb", config_.reg_info.input_reg.max_nb)
+        || !yaml_help_.getParam("reg_info/holding_register/addr", config_.reg_info.holding_reg.addr)
+        || !yaml_help_.getParam("reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb))
     {
         cout << " Failed load modbus tcp_client.yaml " << endl;
         return false;
     }
 
-    bytes_timeout_.tv_sec = static_cast<time_t>(bytes_timeout_tv_sec);
-    bytes_timeout_.tv_usec = static_cast<suseconds_t>(bytes_timeout_tv_usec);
-    response_timeout_.tv_sec = static_cast<time_t>(response_timeout_tv_sec);
-    response_timeout_.tv_usec = static_cast<suseconds_t>(response_timeout_tv_usec);
-
     return true;
 }
 
-bool ModbusClientParam::saveParam()
+bool ModbusClientParam::saveConfig()
 {
-    double bytes_timeout_tv_sec = static_cast<double>(bytes_timeout_.tv_sec);
-    double bytes_timeout_tv_usec = static_cast<double>(bytes_timeout_.tv_usec);
-    double response_timeout_tv_sec = static_cast<double>(response_timeout_.tv_sec);
-    double response_timeout_tv_usec = static_cast<double>(response_timeout_.tv_usec);
-
-    if (!yaml_help_.setParam("ip", ip_)
-        || !yaml_help_.setParam("log_level", log_level_)
-        || !yaml_help_.setParam("port", port_)
-        || !yaml_help_.setParam("comm_type", comm_type_)
-        || !yaml_help_.setParam("is_debug", is_debug_)
-        || !yaml_help_.setParam("bytes_timeout/tv_sec", bytes_timeout_tv_sec)
-        || !yaml_help_.setParam("bytes_timeout/tv_usec", bytes_timeout_tv_usec)
-        || !yaml_help_.setParam("response_timeout/tv_sec", response_timeout_tv_sec)
-        || !yaml_help_.setParam("response_timeout/tv_usec", response_timeout_tv_usec)
+    if (!yaml_help_.setParam("ip", config_.ip)
+        || !yaml_help_.setParam("id", id_)
+        || !yaml_help_.setParam("port", config_.port)
+        || !yaml_help_.setParam("name", config_.name)
+        || !yaml_help_.setParam("bytes_timeout/sec", config_.bytes_timeout_sec)
+        || !yaml_help_.setParam("bytes_timeout/usec", config_.bytes_timeout_usec)
+        || !yaml_help_.setParam("response_timeout/sec", config_.response_timeout_sec)
+        || !yaml_help_.setParam("response_timeout/usec", config_.response_timeout_usec)
+        || !yaml_help_.setParam("reg_info/coil/addr", config_.reg_info.coil.addr)
+        || !yaml_help_.setParam("reg_info/coil/max_nb", config_.reg_info.coil.max_nb)
+        || !yaml_help_.setParam("reg_info/discrepte_input/addr", config_.reg_info.discrepte_input.addr)
+        || !yaml_help_.setParam("reg_info/discrepte_input/max_nb", config_.reg_info.discrepte_input.max_nb)
+        || !yaml_help_.setParam("reg_info/input_register/addr", config_.reg_info.input_reg.addr)
+        || !yaml_help_.setParam("reg_info/input_register/max_nb", config_.reg_info.input_reg.max_nb)
+        || !yaml_help_.setParam("reg_info/holding_register/addr", config_.reg_info.holding_reg.addr)
+        || !yaml_help_.setParam("reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         cout << " Failed save modbus tcp_client.yaml " << endl;
@@ -75,22 +92,9 @@ bool ModbusClientParam::saveParam()
     return true;
 }
 
-bool ModbusClientParam::saveIp()
+bool ModbusClientParam::saveScanRate()
 {
-    if (!yaml_help_.setParam("ip", ip_)
-        || !yaml_help_.dumpParamFile())
-    {
-        cout << " Failed save ip param to tcp_client.yaml " << endl;
-        return false;
-    }
-
-    return true;
-}
-
-
-bool ModbusClientParam::savePort()
-{
-    if (!yaml_help_.setParam("port", port_)
+    if (!yaml_help_.setParam("scan_rate", scan_rate_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         cout << " Failed save modbus tcp_client.yaml " << endl;
@@ -100,60 +104,24 @@ bool ModbusClientParam::savePort()
     return true;
 }
 
-bool ModbusClientParam::saveResponseTimeoutParam()
+bool ModbusClientParam::saveConnectStatus()
 {
-    double response_timeout_tv_sec = static_cast<double>(response_timeout_.tv_sec);
-    double response_timeout_tv_usec = static_cast<double>(response_timeout_.tv_usec);
-
-    if (!yaml_help_.setParam("response_timeout/tv_sec", response_timeout_tv_sec)
-        || !yaml_help_.setParam("response_timeout/tv_usec", response_timeout_tv_usec))
+    if (!yaml_help_.setParam("is_enable", is_enable_)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
-        cout << " Failed save param to tcp_client.yaml " << endl;
-        return false;
-    }
-
-    if (!yaml_help_.dumpParamFile(file_path_))
-    {
-        cout << " Failed dump tcp_client.yaml " << endl;
+        cout << " Failed save modbus tcp_client.yaml " << endl;
         return false;
     }
 
     return true;
 }
 
-bool ModbusClientParam::saveBytesTimeoutParam()
+bool ModbusClientParam::saveId()
 {
-    double bytes_timeout_tv_sec = static_cast<double>(bytes_timeout_.tv_sec);
-    double bytes_timeout_tv_usec = static_cast<double>(bytes_timeout_.tv_usec);
-
-    if (!yaml_help_.setParam("bytes_timeout/tv_sec", bytes_timeout_tv_sec)
-        || !yaml_help_.setParam("bytes_timeout/tv_usec", bytes_timeout_tv_usec)
+    if (!yaml_help_.setParam("id", id_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
-        cout << " Failed save bytes to tcp_client.yaml " << endl;
-        return false;
-    }
-
-    return true;
-}
-
-
-bool ModbusClientParam::saveInfoParam()
-{
-    double bytes_timeout_tv_sec = static_cast<double>(bytes_timeout_.tv_sec);
-    double bytes_timeout_tv_usec = static_cast<double>(bytes_timeout_.tv_usec);
-    double response_timeout_tv_sec = static_cast<double>(response_timeout_.tv_sec);
-    double response_timeout_tv_usec = static_cast<double>(response_timeout_.tv_usec);
-
-    if (!yaml_help_.setParam("ip", ip_)
-        || !yaml_help_.setParam("port", port_)
-        || !yaml_help_.setParam("bytes_timeout/tv_sec", bytes_timeout_tv_sec)
-        || !yaml_help_.setParam("bytes_timeout/tv_usec", bytes_timeout_tv_usec)
-        || !yaml_help_.setParam("response_timeout/tv_sec", response_timeout_tv_sec)
-        || !yaml_help_.setParam("response_timeout/tv_usec", response_timeout_tv_usec)
-        || !yaml_help_.dumpParamFile(file_path_.c_str()))
-    {
-        cout << " Failed save param to tcp_client.yaml " << endl;
+        cout << " Failed save modbus tcp_client.yaml " << endl;
         return false;
     }
 

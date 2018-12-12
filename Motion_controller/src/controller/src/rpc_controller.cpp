@@ -85,6 +85,7 @@ void ControllerRpc::handleRpc0x00015F44(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data[index] = *iter;
         index ++;
     }
-    
+    rs_data_ptr->data.data_count = index;
+    rs_data_ptr->error_code.data = SUCCESS;    
 }
     

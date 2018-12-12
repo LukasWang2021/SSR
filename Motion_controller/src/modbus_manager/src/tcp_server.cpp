@@ -200,6 +200,8 @@ ErrorCode ModbusTCPServer::initParam()
     this->cycle_time_ = param_ptr_->cycle_time_;
     this->connection_nb_ = param_ptr_->connection_nb_;
     this->reg_info_ = param_ptr_->reg_info_;
+    this->config_ = param_ptr_->config_;
+    this->is_enable_ = param_ptr_->is_enable_;
 
     return SUCCESS;
 }
@@ -249,27 +251,10 @@ bool ModbusTCPServer::loadParam()
     this->is_debug_ = param_ptr_->is_debug_;
     this->cycle_time_ = param_ptr_->cycle_time_;
     this->connection_nb_ = param_ptr_->connection_nb_;
-
-    this->reg_info_.coil.addr = param_ptr_->reg_info_.coil.addr;
-    this->reg_info_.coil.max_nb = param_ptr_->reg_info_.coil.max_nb;
-    this->reg_info_.discrepte_input.addr = param_ptr_->reg_info_.discrepte_input.addr;
-    this->reg_info_.discrepte_input.max_nb = param_ptr_->reg_info_.discrepte_input.max_nb;
-    this->reg_info_.input_reg.addr = param_ptr_->reg_info_.input_reg.addr;
-    this->reg_info_.input_reg.max_nb = param_ptr_->reg_info_.input_reg.max_nb;
-    this->reg_info_.holding_reg.addr = param_ptr_->reg_info_.holding_reg.addr;
-    this->reg_info_.holding_reg.max_nb = param_ptr_->reg_info_.holding_reg.max_nb;
-
-    this->config_.response_delay = param_ptr_->config_.response_delay;
-    this->config_.reg_info.coil.addr = param_ptr_->config_.reg_info.coil.addr;
-    this->config_.reg_info.coil.max_nb = param_ptr_->config_.reg_info.coil.max_nb;
-    this->config_.reg_info.discrepte_input.addr = param_ptr_->config_.reg_info.discrepte_input.addr;
-    this->config_.reg_info.discrepte_input.max_nb = param_ptr_->config_.reg_info.discrepte_input.max_nb;
-    this->config_.reg_info.input_reg.addr = param_ptr_->config_.reg_info.input_reg.addr;
-    this->config_.reg_info.input_reg.max_nb = param_ptr_->config_.reg_info.input_reg.max_nb;
-    this->config_.reg_info.holding_reg.addr = param_ptr_->config_.reg_info.holding_reg.addr;
-    this->config_.reg_info.holding_reg.max_nb = param_ptr_->config_.reg_info.holding_reg.max_nb;
-
+    this->reg_info_ = param_ptr_->reg_info_;
+    this->config_ = param_ptr_->config_;
     this->is_enable_ = param_ptr_->is_enable_;
+
     return true;
 }
 
@@ -354,10 +339,9 @@ void ModbusTCPServer::closeServer()
 {
     is_running_ = false;
     thread_ptr_.join();
-
+    close(server_socket_);
     modbus_close(ctx_);
 
-    close(server_socket_);
     FD_ZERO(&refset_);
     fdmax_ = 0;
     server_socket_ = -1;
@@ -392,7 +376,10 @@ void ModbusTCPServer::modbusTcpServerThreadFunc()
 
     fd_set rdset = refset_;
 
-    if (select(fdmax_ + 1, &rdset, NULL, NULL, NULL) == -1) 
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100;
+    if (select(fdmax_ + 1, &rdset, NULL, NULL, &timeout) == -1) 
     {
         FST_ERROR("Server select() Failed.");
         if (server_socket_ != -1)

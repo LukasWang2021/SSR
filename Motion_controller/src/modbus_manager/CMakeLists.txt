@@ -31,13 +31,13 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -lrt -lpthread -O0 -DPB_FIELD_32BIT -DS
 
 set(catkin_INCLUDE_DIRS 
     ${catkin_INCLUDE_DIRS}
+    ${depend_PATH_INC}/common/
     ${depend_PATH_INC}/log_manager/include/
     ${depend_PATH_INC}/log_service/include/
     ${depend_PATH_INC}/error_monitor/include/
     ${depend_PATH_INC}/parameter_manager/include/
     ${depend_PATH_INC}/thread_help/include/
     ${depend_PATH_INC}/base_device/include/
-    ${depend_PATH_INC}/common/
 )
 
 include_directories(

@@ -147,10 +147,11 @@ ErrorCode IoMapping::getDIByBit(uint32_t user_port, uint8_t &value)
 		{
 			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
 			{
-				return MODBUS_IS_CLOSED;
+				return MODBUS_INVALID;
 			}
-			printf("readDiscreteInputs ");
-			return modbus_manager_->readDiscreteInputs(physics_id.info.port, 1, &value);
+
+			int server_id = 0;
+			return modbus_manager_->readDiscreteInputs(server_id, physics_id.info.port, 1, &value);
 		}
 
 		return io_dev_ptr_->getDIOByBit(iter->second, value);
@@ -194,10 +195,11 @@ ErrorCode IoMapping::getDOByBit(uint32_t user_port, uint8_t &value)
 		{
 			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
 			{
-				return MODBUS_IS_CLOSED;
+				return MODBUS_INVALID;
 			}
 
-			return modbus_manager_->readCoils(physics_id.info.port, 1, &value);
+			int server_id = 0;
+			return modbus_manager_->readCoils(server_id, physics_id.info.port, 1, &value);
 		}
 
 		return io_dev_ptr_->getDIOByBit(iter->second, value);
@@ -227,10 +229,11 @@ ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 		{
 			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
 			{
-				return MODBUS_IS_CLOSED;
+				return MODBUS_INVALID;
 			}
 
-			return modbus_manager_->writeCoils(physics_id.info.port, 1, &value);
+			int server_id = 0;
+			return modbus_manager_->writeCoils(server_id, physics_id.info.port, 1, &value);
 		}
 
 		return io_dev_ptr_->setDIOByBit(iter->second, value);
@@ -351,7 +354,7 @@ bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
     char cUpperType[8] = {};
     strcpy(cUpperType, strIOType);
 
-    if (result[0].compare("Modbus") == 0)
+    if (result[0].compare("ModbusServer") == 0)
     {
         id.info.dev_type = fst_hal::DEVICE_TYPE_MODBUS;
 

@@ -68,14 +68,14 @@ void ControllerRpc::handleRpc0x0000215F(void* request_data_ptr, void* response_d
     RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_IoDeviceInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_IoDeviceInfo*>(response_data_ptr);
 
-    fst_hal::ServerInfo info;
     strcpy(rs_data_ptr->data.device_type, "modbus");
     strcpy(rs_data_ptr->data.comm_type, "TCP");
     rs_data_ptr->data.device_index = 0;
     rs_data_ptr->data.address = 0;
     rs_data_ptr->data.is_valid = modbus_manager_ptr_->isValid();
 
-    rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerInfo(info);
+    fst_hal::ModbusServerRegInfo info;
+    rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerRegInfoFromServer(info);
     if (rs_data_ptr->error_code.data != SUCCESS)
     {
         rs_data_ptr->data.input_num = 0;

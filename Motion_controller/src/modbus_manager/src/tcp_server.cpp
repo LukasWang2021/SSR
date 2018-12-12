@@ -14,28 +14,38 @@ ModbusTCPServer::ModbusTCPServer(string file_path):
     FST_LOG_INIT("ModbusTcpServer");
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 
+    server_socket_ = -1;
+    FD_ZERO(&refset_);
+    fdmax_ = 0;
+
+    is_running_ = false;
+
     port_ = -1;
     comm_type_ = "TCP";
     is_debug_ = false;
     cycle_time_ = 0;
-    is_running_ = false;
-    server_socket_ = -1;
-    connection_nb_ = -1;
+    connection_nb_ = 0;
 
-    server_info_.comm_type = comm_type_;
-    server_info_.ip = local_ip_.get();
-    server_info_.port = port_;
-    server_info_.coil.addr = 0;
-    server_info_.coil.max_nb = 0;
-    server_info_.discrepte_input.addr = 0;
-    server_info_.discrepte_input.max_nb = 0;
-    server_info_.holding_reg.addr = 0;
-    server_info_.holding_reg.max_nb = 0;
-    server_info_.input_reg.addr = 0;
-    server_info_.input_reg.max_nb = 0;
+    reg_info_.coil.addr = 0;
+    reg_info_.coil.max_nb = 0;
+    reg_info_.discrepte_input.addr = 0;
+    reg_info_.discrepte_input.max_nb = 0;
+    reg_info_.input_reg.addr = 0;
+    reg_info_.input_reg.max_nb = 0;
+    reg_info_.holding_reg.addr = 0;
+    reg_info_.holding_reg.max_nb = 0;
 
-    FD_ZERO(&refset_);
-    fdmax_ = 0;
+    config_.response_delay = 0;
+    config_.reg_info.coil.addr = 0;
+    config_.reg_info.coil.max_nb = 0;
+    config_.reg_info.discrepte_input.addr = 0;
+    config_.reg_info.discrepte_input.max_nb = 0;
+    config_.reg_info.input_reg.addr = 0;
+    config_.reg_info.input_reg.max_nb = 0;
+    config_.reg_info.holding_reg.addr = 0;
+    config_.reg_info.holding_reg.max_nb = 0;
+
+    is_enable_ = false;
 }
 
 ModbusTCPServer::~ModbusTCPServer()
@@ -66,22 +76,110 @@ ModbusTCPServer::~ModbusTCPServer()
     }
 }
 
-ServerInfo ModbusTCPServer::getInfo()
+ErrorCode ModbusTCPServer::setConnectStatus(bool status)
 {
-    ServerInfo info;
-    info.comm_type = comm_type_;
-    info.ip = local_ip_.get();
-    info.port = port_;
-    info.coil.addr = server_info_.coil.addr;
-    info.coil.max_nb = server_info_.coil.max_nb;
-    info.discrepte_input.addr = server_info_.discrepte_input.addr;
-    info.discrepte_input.max_nb = server_info_.discrepte_input.max_nb;
-    info.holding_reg.addr = server_info_.holding_reg.addr;
-    info.holding_reg.max_nb = server_info_.holding_reg.max_nb;
-    info.input_reg.addr = server_info_.input_reg.addr;
-    info.input_reg.max_nb = server_info_.input_reg.max_nb;
-    info.is_valid = is_running_;
-    return info;
+    if (status == is_enable_)
+        return SUCCESS;
+
+    if (!status)
+    {
+        param_ptr_->is_enable_ = status;
+
+        if (!param_ptr_->saveConnectStatus())
+            return MODBUS_SERVER_SAVE_PARAM_FALIED;
+        
+        is_enable_ = param_ptr_->is_enable_;
+    }
+
+    if (!checkConnect())
+    {
+        return MODBUS_SERVER_CONNECT_FALIED;
+    }
+
+    param_ptr_->is_enable_ = status;
+
+    if (!param_ptr_->saveConnectStatus())
+        return MODBUS_SERVER_SAVE_PARAM_FALIED;
+
+    is_enable_ = param_ptr_->is_enable_;
+
+    return SUCCESS;
+}
+
+bool ModbusTCPServer::getConnectStatus()
+{
+    return is_enable_;
+}
+
+bool ModbusTCPServer::checkConnect()
+{
+    return true;
+}
+
+ErrorCode ModbusTCPServer::setConfig(ModbusServerConfig config)
+{
+    if (config.response_delay < 0
+        || config.reg_info.coil.max_nb <= 0
+        || config.reg_info.coil.addr < reg_info_.coil.addr
+        || config.reg_info.discrepte_input.max_nb <= 0
+        || config.reg_info.discrepte_input.addr < config_.reg_info.discrepte_input.addr
+        || config.reg_info.input_reg.max_nb <= 0
+        || config.reg_info.input_reg.addr < config_.reg_info.input_reg.addr
+        || config.reg_info.holding_reg.max_nb <= 0
+        || config.reg_info.holding_reg.addr < reg_info_.holding_reg.addr
+        || reg_info_.coil.addr + reg_info_.coil.max_nb - 1 
+            < config.reg_info.coil.max_nb + config.reg_info.coil.addr - 1
+        || reg_info_.discrepte_input.addr + reg_info_.discrepte_input.max_nb - 1 
+            < config.reg_info.discrepte_input.max_nb + config.reg_info.discrepte_input.addr - 1
+        || reg_info_.input_reg.addr + reg_info_.input_reg.max_nb - 1 
+            < config.reg_info.input_reg.max_nb + config.reg_info.input_reg.addr - 1
+        || reg_info_.holding_reg.addr + reg_info_.holding_reg.max_nb - 1 
+            < config.reg_info.holding_reg.max_nb + config.reg_info.holding_reg.addr - 1)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    param_ptr_->config_.response_delay = config.response_delay;
+    param_ptr_->config_.reg_info.coil.addr = config.reg_info.coil.addr;
+    param_ptr_->config_.reg_info.coil.max_nb = config.reg_info.coil.max_nb;
+    param_ptr_->config_.reg_info.discrepte_input.addr = config.reg_info.discrepte_input.addr;
+    param_ptr_->config_.reg_info.discrepte_input.max_nb = config.reg_info.discrepte_input.max_nb;
+    param_ptr_->config_.reg_info.input_reg.addr = config.reg_info.input_reg.addr;
+    param_ptr_->config_.reg_info.input_reg.max_nb = config.reg_info.input_reg.max_nb;
+    param_ptr_->config_.reg_info.holding_reg.addr = config.reg_info.holding_reg.addr;
+    param_ptr_->config_.reg_info.holding_reg.max_nb = config.reg_info.holding_reg.max_nb;
+
+    if (!param_ptr_->saveConfig())
+    {
+        return MODBUS_SERVER_SAVE_PARAM_FALIED;
+    }
+
+    config_.response_delay = config.response_delay;
+    config_.reg_info.coil.addr = config.reg_info.coil.addr;
+    config_.reg_info.coil.max_nb = config.reg_info.coil.max_nb;
+    config_.reg_info.discrepte_input.addr = config.reg_info.discrepte_input.addr;
+    config_.reg_info.discrepte_input.max_nb = config.reg_info.discrepte_input.max_nb;
+    config_.reg_info.input_reg.addr = config.reg_info.input_reg.addr;
+    config_.reg_info.input_reg.max_nb = config.reg_info.input_reg.max_nb;
+    config_.reg_info.holding_reg.addr = config.reg_info.holding_reg.addr;
+    config_.reg_info.holding_reg.max_nb = config.reg_info.holding_reg.max_nb;
+
+    return SUCCESS;
+}
+
+ModbusServerConfig ModbusTCPServer::getConfig()
+{
+    ModbusServerConfig config;
+    config.response_delay = config_.response_delay;
+    config.reg_info.coil.addr = config_.reg_info.coil.addr;
+    config.reg_info.coil.max_nb = config_.reg_info.coil.max_nb;
+    config.reg_info.discrepte_input.addr = config_.reg_info.discrepte_input.addr;
+    config.reg_info.discrepte_input.max_nb = config_.reg_info.discrepte_input.max_nb;
+    config.reg_info.input_reg.addr = config_.reg_info.input_reg.addr;
+    config.reg_info.input_reg.max_nb = config_.reg_info.input_reg.max_nb;
+    config.reg_info.holding_reg.addr = config_.reg_info.holding_reg.addr;
+    config.reg_info.holding_reg.max_nb = config_.reg_info.holding_reg.max_nb;
+    return config;
 }
 
 bool ModbusTCPServer::isRunning()
@@ -89,31 +187,103 @@ bool ModbusTCPServer::isRunning()
     return is_running_;
 }
 
-bool ModbusTCPServer::initParam()
+ErrorCode ModbusTCPServer::initParam()
 {
-    return param_ptr_->loadParam();
-}
-
-ErrorCode ModbusTCPServer::init()
-{
-    if (!param_ptr_->loadParam())
+    if(! param_ptr_->loadParam())
     {
-        return MODBUS_SERVER_INIT_FAILED;
+        return MODBUS_SERVER_LOAD_PARAM_FALIED;
     }
 
     this->port_ = param_ptr_->port_;
     this->comm_type_ = param_ptr_->comm_type_;
+    this->is_debug_ = param_ptr_->is_debug_;
     this->cycle_time_ = param_ptr_->cycle_time_;
     this->connection_nb_ = param_ptr_->connection_nb_;
+    this->reg_info_ = param_ptr_->reg_info_;
+
+    return SUCCESS;
+}
+
+ModbusRegAddrInfo ModbusTCPServer::getCoilInfo()
+{
+    ModbusRegAddrInfo info;
+    info.addr = config_.reg_info.coil.addr;
+    info.max_nb = config_.reg_info.coil.max_nb;
+    return info;
+}
+
+ModbusRegAddrInfo ModbusTCPServer::getDiscrepteInputInfo()
+{
+    ModbusRegAddrInfo info;
+    info.addr = config_.reg_info.discrepte_input.addr;
+    info.max_nb = config_.reg_info.discrepte_input.max_nb;
+    return info;
+}
+
+ModbusRegAddrInfo ModbusTCPServer::getHoldingRegInfo()
+{
+    ModbusRegAddrInfo info;
+    info.addr = config_.reg_info.holding_reg.addr;
+    info.max_nb = config_.reg_info.holding_reg.max_nb;
+    return info;
+}
+
+ModbusRegAddrInfo ModbusTCPServer::getInputRegInfo()
+{
+    ModbusRegAddrInfo info;
+    info.addr = config_.reg_info.input_reg.addr;
+    info.max_nb = config_.reg_info.input_reg.max_nb;
+    return info;
+}
+
+
+bool ModbusTCPServer::loadParam()
+{
+    if (!param_ptr_->loadConfig())
+    {
+        return false;
+    }
+
+    this->port_ = param_ptr_->port_;
+    this->comm_type_ = param_ptr_->comm_type_;
     this->is_debug_ = param_ptr_->is_debug_;
-    this->server_info_.coil.addr = param_ptr_->coil_addr_;
-    this->server_info_.coil.max_nb = param_ptr_->coil_max_nb_;
-    this->server_info_.discrepte_input.addr = param_ptr_->discrepte_input_addr_;
-    this->server_info_.discrepte_input.max_nb = param_ptr_->discrepte_input_max_nb_;
-    this->server_info_.holding_reg.addr = param_ptr_->holding_register_addr_;
-    this->server_info_.holding_reg.max_nb = param_ptr_->holding_register_max_nb_;
-    this->server_info_.input_reg.addr = param_ptr_->input_register_addr_;
-    this->server_info_.input_reg.max_nb = param_ptr_->input_register_max_nb_;
+    this->cycle_time_ = param_ptr_->cycle_time_;
+    this->connection_nb_ = param_ptr_->connection_nb_;
+
+    this->reg_info_.coil.addr = param_ptr_->reg_info_.coil.addr;
+    this->reg_info_.coil.max_nb = param_ptr_->reg_info_.coil.max_nb;
+    this->reg_info_.discrepte_input.addr = param_ptr_->reg_info_.discrepte_input.addr;
+    this->reg_info_.discrepte_input.max_nb = param_ptr_->reg_info_.discrepte_input.max_nb;
+    this->reg_info_.input_reg.addr = param_ptr_->reg_info_.input_reg.addr;
+    this->reg_info_.input_reg.max_nb = param_ptr_->reg_info_.input_reg.max_nb;
+    this->reg_info_.holding_reg.addr = param_ptr_->reg_info_.holding_reg.addr;
+    this->reg_info_.holding_reg.max_nb = param_ptr_->reg_info_.holding_reg.max_nb;
+
+    this->config_.response_delay = param_ptr_->config_.response_delay;
+    this->config_.reg_info.coil.addr = param_ptr_->config_.reg_info.coil.addr;
+    this->config_.reg_info.coil.max_nb = param_ptr_->config_.reg_info.coil.max_nb;
+    this->config_.reg_info.discrepte_input.addr = param_ptr_->config_.reg_info.discrepte_input.addr;
+    this->config_.reg_info.discrepte_input.max_nb = param_ptr_->config_.reg_info.discrepte_input.max_nb;
+    this->config_.reg_info.input_reg.addr = param_ptr_->config_.reg_info.input_reg.addr;
+    this->config_.reg_info.input_reg.max_nb = param_ptr_->config_.reg_info.input_reg.max_nb;
+    this->config_.reg_info.holding_reg.addr = param_ptr_->config_.reg_info.holding_reg.addr;
+    this->config_.reg_info.holding_reg.max_nb = param_ptr_->config_.reg_info.holding_reg.max_nb;
+
+    this->is_enable_ = param_ptr_->is_enable_;
+    return true;
+}
+
+ErrorCode ModbusTCPServer::init()
+{
+    if (!param_ptr_->loadConfig())
+    {
+        return MODBUS_SERVER_LOAD_PARAM_FALIED;
+    }
+
+    if (!getConnectStatus())
+    {
+        return MODBUS_SERVER_CONNECT_FALIED;
+    }
 
     string server_ip = local_ip_.get();
     ctx_ = modbus_new_tcp(server_ip.c_str(), port_);
@@ -140,10 +310,10 @@ ErrorCode ModbusTCPServer::init()
     fdmax_ = server_socket_;
 
     mb_mapping_ = modbus_mapping_new_start_address(
-        server_info_.coil.addr, server_info_.coil.max_nb, 
-        server_info_.discrepte_input.addr, server_info_.discrepte_input.max_nb, 
-        server_info_.holding_reg.addr, server_info_.holding_reg.max_nb, 
-        server_info_.input_reg.addr, server_info_.input_reg.max_nb);
+        reg_info_.coil.addr, reg_info_.coil.max_nb, 
+        reg_info_.discrepte_input.addr, reg_info_.discrepte_input.max_nb,
+        reg_info_.holding_reg.addr, reg_info_.holding_reg.max_nb,
+        reg_info_.input_reg.addr, reg_info_.input_reg.max_nb);
 
     if(mb_mapping_ == NULL)
     {
@@ -154,14 +324,27 @@ ErrorCode ModbusTCPServer::init()
     return SUCCESS;
 }
 
-ErrorCode ModbusTCPServer::open()
+ErrorCode ModbusTCPServer::openServer()
 {
+    if (!checkConnect())
+    {
+        if (is_enable_)
+        {
+            setConnectStatus(false);
+        }
+
+        return MODBUS_SERVER_CONNECT_FALIED;
+    }
+
+    ErrorCode error_code = init();
+    if (error_code != SUCCESS) return error_code;
+
     is_running_ = true;
 
     if(!thread_ptr_.run(&modbusTcpServerRoutineThreadFunc, this, 50))
     {
         FST_ERROR("Failed to open ModbusTcpServer");
-        return MODBUS_SERVER_INIT_FAILED; 
+        return MODBUS_SERVER_OPEN_FAILED;
     }
 
     return SUCCESS;
@@ -178,17 +361,41 @@ void ModbusTCPServer::closeServer()
     FD_ZERO(&refset_);
     fdmax_ = 0;
     server_socket_ = -1;
-    connection_nb_ = -1;
+    connection_nb_ = 0;
+
+    if (ctx_ != NULL)
+    {
+        modbus_free(ctx_);
+        ctx_ = NULL;
+    }
+
+    if(mb_mapping_ != NULL)
+    {
+        modbus_mapping_free(mb_mapping_);
+        mb_mapping_ = NULL;
+    }
 }
 
 void ModbusTCPServer::modbusTcpServerThreadFunc()
 {
+    if (!checkConnect())
+    {
+        if (is_enable_)
+        {
+            closeServer();
+            setConnectStatus(false);
+        }
+
+        is_running_ = false;
+        return; 
+    }
+
     fd_set rdset = refset_;
 
     if (select(fdmax_ + 1, &rdset, NULL, NULL, NULL) == -1) 
     {
         FST_ERROR("Server select() Failed.");
-        if (server_socket_ != -1) 
+        if (server_socket_ != -1)
         {
             close(server_socket_);
         }
@@ -240,55 +447,153 @@ void ModbusTCPServer::modbusTcpServerThreadFunc()
             FD_CLR(master_socket, &refset_);
 
             if (master_socket == fdmax_) fdmax_--;
-
             continue;
         }
-
+        usleep(config_.response_delay);
         modbus_reply(ctx_, query_, rc, mb_mapping_);
     }
 
     usleep(cycle_time_);
 }
 
-string ModbusTCPServer::getIp()
+ErrorCode ModbusTCPServer::writeCoils(int addr, int nb, uint8_t *dest)
 {
-    return local_ip_.get();
+    if (!is_running_)
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    int last_addr = addr + nb -1;
+    if (last_addr < addr 
+        || addr < this->config_.reg_info.coil.addr
+        || this->config_.reg_info.coil.max_nb  + this->config_.reg_info.coil.addr - 1 < last_addr)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    for (unsigned int i = addr; i < addr + nb; i++)
+    {
+        mb_mapping_->tab_bits[i] = (*dest) & 0x01;
+        dest++;
+    }
+
+    return SUCCESS;
 }
 
-int ModbusTCPServer::getPort()
+
+ErrorCode ModbusTCPServer::readCoils(int addr, int nb, uint8_t *dest)
 {
-    return port_;
+    if (!is_running_)
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    int last_addr = addr + nb -1;
+    if (last_addr < addr 
+        || addr < this->config_.reg_info.coil.addr
+        || this->config_.reg_info.coil.max_nb  + this->config_.reg_info.coil.addr - 1 < last_addr)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    for (unsigned int i = addr; i < addr + nb; i++)
+    {
+        *dest = mb_mapping_->tab_bits[i];
+        dest++;
+    }
+
+    return SUCCESS;
 }
 
-ModbusRegAddrInfo ModbusTCPServer::getCoilInfo()
+ErrorCode ModbusTCPServer::readDiscreteInputs(int addr, int nb, uint8_t *dest)
 {
-    ModbusRegAddrInfo info;
-    info.addr = server_info_.coil.addr;
-    info.max_nb = server_info_.coil.max_nb;
-    return info;
+    if (!is_running_)
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    int last_addr = addr + nb -1;
+    if (last_addr < addr 
+        || addr < config_.reg_info.discrepte_input.addr
+        || config_.reg_info.discrepte_input.max_nb  + config_.reg_info.discrepte_input.addr - 1 < last_addr)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    for (unsigned int i = addr; i < addr + nb; i++)
+    {
+        *dest = mb_mapping_->tab_input_bits[i];
+        dest++;
+    }
+
+    return SUCCESS;
 }
 
-ModbusRegAddrInfo ModbusTCPServer::getDiscrepteInputInfo()
+ErrorCode ModbusTCPServer::writeHoldingRegs(int addr, int nb, uint16_t *dest)
 {
-    ModbusRegAddrInfo info;
-    info.addr = server_info_.discrepte_input.addr;
-    info.max_nb = server_info_.discrepte_input.max_nb;
-    return info;
+    if (!is_running_)
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    int last_addr = addr + nb -1;
+    if (last_addr < addr 
+        || addr < config_.reg_info.holding_reg.addr
+        || config_.reg_info.holding_reg.max_nb  + config_.reg_info.holding_reg.addr - 1 < last_addr)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    for (unsigned int i = addr; i < addr + nb; i++)
+    {
+        mb_mapping_->tab_registers[i] = (*dest) & 0xffff;
+        dest++;
+    }
+
+    return SUCCESS;
 }
 
-ModbusRegAddrInfo ModbusTCPServer::getHoldingRegInfo()
+ErrorCode ModbusTCPServer::readHoldingRegs(int addr, int nb, uint16_t *dest)
 {
-    ModbusRegAddrInfo info;
-    info.addr = server_info_.holding_reg.addr;
-    info.max_nb = server_info_.holding_reg.max_nb;
-    return info;
+    if (!is_running_)
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    int last_addr = addr + nb -1;
+    if (last_addr < addr 
+        || addr < config_.reg_info.holding_reg.addr
+        || config_.reg_info.holding_reg.max_nb  + config_.reg_info.holding_reg.addr - 1 < last_addr)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    for (unsigned int i = addr; i < addr + nb; i++)
+    {
+        *dest = mb_mapping_->tab_registers[i];
+        dest++;
+    }
+
+    return SUCCESS;
 }
 
-ModbusRegAddrInfo ModbusTCPServer::getInputRegInfo()
+ErrorCode ModbusTCPServer::readInputRegs(int addr, int nb, uint16_t *dest)
 {
-    ModbusRegAddrInfo info;
-    info.addr = server_info_.input_reg.addr;
-    info.max_nb = server_info_.input_reg.max_nb;
+    if (!is_running_)
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    int last_addr = addr + nb -1;
+    if (last_addr < addr 
+        || addr < config_.reg_info.input_reg.addr
+        || config_.reg_info.input_reg.max_nb  + config_.reg_info.input_reg.addr - 1 < last_addr)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    for (unsigned int i = addr; i < addr + nb; i++)
+    {
+        *dest = mb_mapping_->tab_input_registers[i];
+        dest++;
+    }
+
+    return SUCCESS;
+}
+
+ModbusServerStartInfo ModbusTCPServer::getStartInfo()
+{
+    ModbusServerStartInfo info;
+    info.ip = local_ip_.get();
+    info.port = port_;
     return info;
 }
 
@@ -300,3 +605,4 @@ void modbusTcpServerRoutineThreadFunc(void* arg)
         modbus_tcp_server->modbusTcpServerThreadFunc();
     }
 }
+

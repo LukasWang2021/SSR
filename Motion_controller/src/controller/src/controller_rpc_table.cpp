@@ -170,16 +170,29 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/program_launching/getMethod", 0x00010944, &ControllerRpc::handleRpc0x00010944}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/program_launching/syncFileMacroConfig", 0x00016B27, &ControllerRpc::handleRpc0x00016B27}; rpc_table_.push_back(rpc_service);
 
-    rpc_service =	{	"/rpc/modbus/newServer",	0x0000D1B2,     &ControllerRpc::handleRpc0x0000D1B2};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/deleteServer",	0x00006C22,    &ControllerRpc::handleRpc0x00006C22};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/saveServerConfig",	0x000050E7,	&ControllerRpc::handleRpc0x000050E7};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/getServerConfig",	0x00016947,	&ControllerRpc::handleRpc0x00016947};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/newClient",	0x00009F84,	    &ControllerRpc::handleRpc0x00009F84};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/deleteClient",	0x00014CF4,     &ControllerRpc::handleRpc0x00014CF4};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/saveClientConfig",	0x00002B57,	&ControllerRpc::handleRpc0x00002B57};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/getClientConfig",	0x0000FC17,	&ControllerRpc::handleRpc0x0000FC17};	 rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/getConnectionStatus",0x0000E973,&ControllerRpc::handleRpc0x0000E973}; rpc_table_.push_back(rpc_service);
-    rpc_service =	{	"/rpc/modbus/setConnectionStatus",0x00010C63,&ControllerRpc::handleRpc0x00010C63}; rpc_table_.push_back(rpc_service);
-
+	rpc_service =	{	"/rpc/modbus/setStartMode",	0x0000D3A5,	&ControllerRpc::handleRpc0x0000D3A5	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getStartMode",	0x000041C5,	&ControllerRpc::handleRpc0x000041C5	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setServerConnectStatus",	0x0000DB23,	&ControllerRpc::handleRpc0x0000DB23	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerConnectStatus",	0x00001B23,	&ControllerRpc::handleRpc0x00001B23	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setServerConfig",	0x00017547,	&ControllerRpc::handleRpc0x00017547	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerConfig",	0x00016947,	&ControllerRpc::handleRpc0x00016947	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerStartInfo",	0x000018AF,	&ControllerRpc::handleRpc0x000018AF	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/openServer",	0x00010912,	&ControllerRpc::handleRpc0x00010912	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/closeServer",	0x000045B2,	&ControllerRpc::handleRpc0x000045B2	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/addClient",	0x00012E44,	&ControllerRpc::handleRpc0x00012E44	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setClientConnectStatus",	0x000099D3,	&ControllerRpc::handleRpc0x000099D3	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getClientConnectStatus",	0x00010A53,	&ControllerRpc::handleRpc0x00010A53	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setClientConfig",	0x0000D017,	&ControllerRpc::handleRpc0x0000D017	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getClientConfig",	0x0000FC17,	&ControllerRpc::handleRpc0x0000FC17	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/openClient",	0x00000544,	&ControllerRpc::handleRpc0x00000544	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/closeClient",	0x00006CA4,	&ControllerRpc::handleRpc0x00006CA4	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/deleteClient",	0x00014CF4,	&ControllerRpc::handleRpc0x00014CF4	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getClientSummaryInfoList",	0x0000B424,	&ControllerRpc::handleRpc0x0000B424	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/writeCoils",	0x0000BD83,	&ControllerRpc::handleRpc0x0000BD83	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readCoils",	0x0000A433,	&ControllerRpc::handleRpc0x0000A433	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readDiscreteInputs",	0x0000C063,	&ControllerRpc::handleRpc0x0000C063	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/writeHoldingRegs",	0x00008C43,	&ControllerRpc::handleRpc0x00008C43	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readHoldingRegs",	0x00003583,	&ControllerRpc::handleRpc0x00003583	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readInputRegs",	0x000072C3,	&ControllerRpc::handleRpc0x000072C3	};	rpc_table_.push_back(rpc_service);
 }
 

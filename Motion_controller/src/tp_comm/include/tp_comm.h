@@ -457,26 +457,54 @@ private:
     /********rpc/program_launching/syncFileMacroConfig, RequestMessageType_String**********/
     void handleRequest0x00016B27(int recv_bytes);
 
-    /********rpc/modbus/newServer, RequestMessageType_ModbusServerConfig**********/
-    void handleRequest0x0000D1B2(int recv_bytes);
-    /********rpc/modbus/deleteServer, RequestMessageType_Void**********/
-    void handleRequest0x00006C22(int recv_bytes);
-    /********rpc/modbus/saveServerConfig, RequestMessageType_ModbusServerConfig**********/
-    void handleRequest0x000050E7(int recv_bytes);
-    /********rpc/modbus/newClient, RequestMessageType_ModbusClientConfig**********/
-    void handleRequest0x00009F84(int recv_bytes);
-    /********rpc/modbus/deleteClient, RequestMessageType_Int32**********/
-    void handleRequest0x00014CF4(int recv_bytes);
-    /********rpc/modbus/saveClientConfig, RequestMessageType_ModbusClientConfig**********/
-    void handleRequest0x00002B57(int recv_bytes);
+    /********rpc/modbus/setStartMode, RequestMessageType_ModbusStartMode**********/
+    void handleRequest0x0000D3A5(int recv_bytes);
+    /********rpc/modbus/getStartMode, RequestMessageType_Void**********/
+    void handleRequest0x000041C5(int recv_bytes);
+    /********rpc/modbus/setServerConnectStatus, RequestMessageType_Bool**********/
+    void handleRequest0x0000DB23(int recv_bytes);
+    /********rpc/modbus/getServerConnectStatus, RequestMessageType_Void**********/
+    void handleRequest0x00001B23(int recv_bytes);
+    /********rpc/modbus/setServerConfig, RequestMessageType_ModbusServerConfig**********/
+    void handleRequest0x00017547(int recv_bytes);
     /********rpc/modbus/getServerConfig, RequestMessageType_Void**********/
     void handleRequest0x00016947(int recv_bytes);
+    /********rpc/modbus/getServerStartInfo, RequestMessageType_Void**********/
+    void handleRequest0x000018AF(int recv_bytes);
+    /********rpc/modbus/openServer, RequestMessageType_Void**********/
+    void handleRequest0x00010912(int recv_bytes);
+    /********rpc/modbus/closeServer, RequestMessageType_Void**********/
+    void handleRequest0x000045B2(int recv_bytes);
+    /********rpc/modbus/addClient, RequestMessageType_Int32**********/
+    void handleRequest0x00012E44(int recv_bytes);
+    /********rpc/modbus/setClientConnectStatus, RequestMessageType_Int32_Bool**********/
+    void handleRequest0x000099D3(int recv_bytes);
+    /********rpc/modbus/getClientConnectStatus, RequestMessageType_Int32**********/
+    void handleRequest0x00010A53(int recv_bytes);
+    /********rpc/modbus/setClientConfig, RequestMessageType_ModbusClientConfig**********/
+    void handleRequest0x0000D017(int recv_bytes);
     /********rpc/modbus/getClientConfig, RequestMessageType_Int32**********/
     void handleRequest0x0000FC17(int recv_bytes);
-    /********rpc/modbus/getConnectionStatus, RequestMessageType_Void**********/
-    void handleRequest0x0000E973(int recv_bytes);
-    /********rpc/modbus/setConnectionStatus, RequestMessageType_Bool**********/
-    void handleRequest0x00010C63(int recv_bytes);
+    /********rpc/modbus/openClient, RequestMessageType_Int32**********/
+    void handleRequest0x00000544(int recv_bytes);
+    /********rpc/modbus/closeClient, RequestMessageType_Int32**********/
+    void handleRequest0x00006CA4(int recv_bytes);
+    /********rpc/modbus/deleteClient, RequestMessageType_Int32**********/
+    void handleRequest0x00014CF4(int recv_bytes);
+    /********rpc/modbus/getClientSummaryInfoList, RequestMessageType_Void**********/
+    void handleRequest0x0000B424(int recv_bytes);
+    /********rpc/modbus/writeCoils, RequestMessageType_ModbusStatusInfo**********/
+    void handleRequest0x0000BD83(int recv_bytes);
+    /********rpc/modbus/readCoils, RequestMessageType_ModbusStatusAddrInfo**********/
+    void handleRequest0x0000A433(int recv_bytes);
+    /********rpc/modbus/readDiscreteInputs, RequestMessageType_ModbusStatusAddrInfo**********/
+    void handleRequest0x0000C063(int recv_bytes);
+    /********rpc/modbus/writeHoldingRegs, RequestMessageType_ModbusRegInfo**********/
+    void handleRequest0x00008C43(int recv_bytes);
+    /********rpc/modbus/readHoldingRegs, RequestMessageType_ModbusRegAddrInfo**********/
+    void handleRequest0x00003583(int recv_bytes);
+    /********rpc/modbus/readInputRegs, RequestMessageType_ModbusRegAddrInfo**********/
+    void handleRequest0x000072C3(int recv_bytes);
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -770,7 +798,7 @@ private:
     /********rpc/motion_control/axis_group/getCartesianManualStep, ResponseMessageType_Uint64_Double**********/
     void handleResponse0x0000EAC0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-    /********UserOpMode, MessageType_Int32**********/  
+    /********UserOpMode, MessageType_Int32**********/
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     /********RunningStatus, MessageType_Int32**********/
     void handlePublishElement0x00001F33(Comm_Publish& package, int element_index, TpPublishElement& list_element);
@@ -849,28 +877,54 @@ private:
     /********rpc/program_launching/syncFileMacroConfig, ResponseMessageType_Uint64**********/
     void handleResponse0x00016B27(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-    /********rpc/modbus/newServer, ResponseMessageType_Uint64**********/
-    void handleResponse0x0000D1B2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/modbus/deleteServer, ResponseMessageType_Uint64**********/
-    void handleResponse0x00006C22(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/modbus/saveServerConfig, ResponseMessageType_Uint64**********/
-    void handleResponse0x000050E7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/modbus/newClient, ResponseMessageType_Uint64**********/
-    void handleResponse0x00009F84(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setStartMode, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000D3A5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getStartMode, ResponseMessageType_Uint64_ModbusStartMode**********/
+    void handleResponse0x000041C5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setServerConnectStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000DB23(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerConnectStatus, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x00001B23(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setServerConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x00017547(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerConfig, ResponseMessageType_Uint64_ModbusServerConfig**********/
+    void handleResponse0x00016947(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerStartInfo, ResponseMessageType_Uint64_ModbusServerStartInfo**********/
+    void handleResponse0x000018AF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/openServer, ResponseMessageType_Uint64**********/
+    void handleResponse0x00010912(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/closeServer, ResponseMessageType_Uint64**********/
+    void handleResponse0x000045B2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/addClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00012E44(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setClientConnectStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x000099D3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getClientConnectStatus, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x00010A53(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setClientConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000D017(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getClientConfig, ResponseMessageType_Uint64_ModbusClientConfig**********/
+    void handleResponse0x0000FC17(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/openClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00000544(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/closeClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00006CA4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/modbus/deleteClient, ResponseMessageType_Uint64**********/
     void handleResponse0x00014CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/modbus/saveClientConfig, ResponseMessageType_Uint64**********/
-    void handleResponse0x00002B57(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-	/********rpc/modbus/getServerConfig, ResponseMessageType_Uint64_ModbusServerConfig**********/
-    void handleResponse0x00016947(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-	/********rpc/modbus/getClientConfig, ResponseMessageType_Uint64_ModbusClientConfig**********/
-    void handleResponse0x0000FC17(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/modbus/getConnectionStatus, ResponseMessageType_Uint64_Bool**********/
-    void handleResponse0x0000E973(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
-    /********rpc/modbus/setConnectionStatus, ResponseMessageType_Uint64**********/
-    void handleResponse0x00010C63(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
+    /********rpc/modbus/getClientSummaryInfoList, ResponseMessageType_Uint64_ModbusClientSummaryInfoList**********/
+    void handleResponse0x0000B424(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/writeCoils, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000BD83(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readCoils, ResponseMessageType_Uint64_ModbusStatusValueList**********/
+    void handleResponse0x0000A433(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readDiscreteInputs, ResponseMessageType_Uint64_ModbusStatusValueList**********/
+    void handleResponse0x0000C063(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/writeHoldingRegs, ResponseMessageType_Uint64**********/
+    void handleResponse0x00008C43(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readHoldingRegs, ResponseMessageType_Uint64_ModbusRegValueList**********/
+    void handleResponse0x00003583(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readInputRegs, ResponseMessageType_Uint64_ModbusRegValueList**********/
+    void handleResponse0x000072C3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     fst_ip::LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

@@ -19,8 +19,12 @@ public:
 
     bool loadParam();
     bool saveParam();
-    
+    bool saveStartMode();
+    bool saveClientScanRate();
+
     int log_level_;
+    int start_mode_;
+    int client_scan_rate_;
     string tcp_server_file_name_;
     string tcp_client_file_name_;
 

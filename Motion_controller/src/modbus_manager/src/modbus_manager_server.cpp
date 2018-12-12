@@ -121,7 +121,6 @@ ErrorCode ModbusManager::writeCoilsToServer(int addr, int nb, uint8_t *dest)
     if (start_mode_ != SERVER || !server_->isRunning())
        return MODBUS_SERVER_BE_NOT_OPENED;
 
-    FST_ERROR("write coils by server");
     return server_->writeCoils(addr, nb, dest);
 }
 

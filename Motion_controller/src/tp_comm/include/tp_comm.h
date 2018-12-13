@@ -504,6 +504,11 @@ private:
     /********rpc/modbus/readInputRegs, RequestMessageType_ModbusRegAddrInfo**********/
     void handleRequest0x000072C3(int recv_bytes);
 
+    /********rpc/file_manager/readFile, RequestMessageType_String**********/
+    void handleRequest0x0000A545(int recv_bytes);
+    /********rpc/file_manager/writeFile, RequestMessageType_String_Bytes**********/
+    void handleRequest0x00010D95(int recv_bytes);
+
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********GetRunningStatus, ResponseMessageType_Int32**********/	
@@ -796,6 +801,11 @@ private:
     void handleResponse0x0000A420(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getCartesianManualStep, ResponseMessageType_Uint64_Double**********/
     void handleResponse0x0000EAC0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/file_manager/readFile, ResponseMessageType_Uint64_Bytes**********/
+    void handleResponse0x0000A545(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/file_manager/writeFile, ResponseMessageType_Uint64**********/
+    void handleResponse0x00010D95(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********UserOpMode, MessageType_Int32**********/
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);

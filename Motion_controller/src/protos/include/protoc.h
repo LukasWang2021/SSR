@@ -24,6 +24,8 @@
 #include "request/request_int32_double.pb.h"
 #include "request/request_int32list_double.pb.h"
 #include "request/request_stringlist.pb.h"
+#include "request/request_int32_bool.pb.h"
+#include "request/request_string_bytes.pb.h"
 
 #include "request/request_modbus_status_addr_info.pb.h"
 #include "request/request_modbus_client_config.pb.h"
@@ -32,7 +34,7 @@
 #include "request/request_modbus_server_config.pb.h"
 #include "request/request_modbus_start_mode.pb.h"
 #include "request/request_modbus_status_info.pb.h"
-#include "request/request_int32_bool.pb.h"
+
 
 #include "message_type/base.pb.h"
 #include "message_type/publish_table.pb.h"
@@ -104,6 +106,7 @@
 #include "response/response_uint64_doublelist.pb.h"
 #include "response/response_uint64_jointlimit.pb.h"
 
+#include "response/response_uint64_bytes.pb.h"
 #include "response/response_uint64_int32.pb.h"
 #include "response/response_uint64_int32list.pb.h"
 #include "response/response_uint64_double.pb.h"

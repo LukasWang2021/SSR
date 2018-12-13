@@ -194,6 +194,10 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/modbus/writeHoldingRegs",	0x00008C43,	"RequestMessageType.ModbusRegInfo",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00008C43,	&TpComm::handleResponse0x00008C43,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/readHoldingRegs",	0x00003583,	"RequestMessageType.ModbusRegAddrInfo",	"ResponseMessageType.Uint64_ModbusRegValueList",	&TpComm::handleRequest0x00003583,	&TpComm::handleResponse0x00003583,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/readInputRegs",	0x000072C3,	"RequestMessageType.ModbusRegAddrInfo",	"ResponseMessageType.Uint64_ModbusRegValueList",	&TpComm::handleRequest0x000072C3,	&TpComm::handleResponse0x000072C3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+
+	rpc_service =	{	"/rpc/file_manager/readFile",	0x0000A545,	"RequestMessageType.String",	"ResponseMessageType.Uint64_Bytes",	&TpComm::handleRequest0x0000A545,	&TpComm::handleResponse0x0000A545,	Comm_Authority_ADMINISTRATOR,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/file_manager/writeFile",	0x00010D95,	"RequestMessageType.String_Bytes",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010D95,	&TpComm::handleResponse0x00010D95,	Comm_Authority_ADMINISTRATOR,	};	 rpc_table_.push_back(rpc_service);	
+
 }
 
 void TpComm::initPublishElementTable()

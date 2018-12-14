@@ -170,6 +170,9 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/program_launching/getMethod", 0x00010944, &ControllerRpc::handleRpc0x00010944}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/program_launching/syncFileMacroConfig", 0x00016B27, &ControllerRpc::handleRpc0x00016B27}; rpc_table_.push_back(rpc_service);
 
+    rpc_service =	{	"/rpc/file_manager/readFile",	0x0000A545,	&ControllerRpc::handleRpc0x0000A545	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/file_manager/writeFile",	0x00010D95,	&ControllerRpc::handleRpc0x00010D95	};	rpc_table_.push_back(rpc_service);
+
 	rpc_service =	{	"/rpc/modbus/setStartMode",	0x0000D3A5,	&ControllerRpc::handleRpc0x0000D3A5	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/getStartMode",	0x000041C5,	&ControllerRpc::handleRpc0x000041C5	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/setServerConnectStatus",	0x0000DB23,	&ControllerRpc::handleRpc0x0000DB23	};	rpc_table_.push_back(rpc_service);

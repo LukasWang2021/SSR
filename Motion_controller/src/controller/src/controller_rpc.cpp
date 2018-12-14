@@ -22,7 +22,8 @@ ControllerRpc::ControllerRpc():
     controller_client_ptr_(NULL),
     io_mapping_ptr_(NULL),
     program_launching_(NULL),
-    modbus_manager_ptr_(NULL)
+    modbus_manager_ptr_(NULL),
+    file_manager_ptr_(NULL)
 {
 
 }
@@ -37,7 +38,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
                     IoMapping* io_mapping_ptr,fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
-                    ProgramLaunching* program_launching)
+                    ProgramLaunching* program_launching, fst_base::FileManager* file_manager)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -55,6 +56,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
     io_device_ptr_ = io_device_ptr;//feng add for info list
     modbus_manager_ptr_ = modbus_manager_ptr;
     program_launching_ = program_launching;
+    file_manager_ptr_ = file_manager;
     initRpcTable();
     initRpcQuickSearchTable();
 }

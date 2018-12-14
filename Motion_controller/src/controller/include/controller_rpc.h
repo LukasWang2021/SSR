@@ -16,6 +16,7 @@
 #include "serverAlarmApi.h"
 #include "io_mapping.h"//feng add for mapping.
 #include "program_launching.h"
+#include "file_manager.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -31,7 +32,7 @@ public:
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
                     IoMapping* io_mapping_ptr, fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
-                    ProgramLaunching* program_launching);
+                    ProgramLaunching* program_launching, fst_base::FileManager* file_manager);
 
     void processRpc();
 
@@ -52,6 +53,7 @@ private:
     fst_hal::FstIoDevice* io_device_ptr_; //feng add
     fst_hal::ModbusManager* modbus_manager_ptr_; //yuyy add
     ProgramLaunching* program_launching_;
+    fst_base::FileManager* file_manager_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -376,7 +378,6 @@ private:
     // "/rpc/io_mapping/syncFileIoMapping"
     void handleRpc0x0000C2A7(void* request_data_ptr, void* response_data_ptr);
 
-
     /* device manager rpc */
     // "/rpc/device_manager/getDeviceList"
     void handleRpc0x0000C1E0(void* request_data_ptr, void* response_data_ptr);
@@ -392,6 +393,11 @@ private:
     void handleRpc0x00010944(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/program_launching/syncFileMacroConfig"
     void handleRpc0x00016B27(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/file_manager/readFile"
+    void handleRpc0x0000A545(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/file_manager/writeFile"
+    void handleRpc0x00010D95(void* request_data_ptr, void* response_data_ptr);
 
 	//"/rpc/modbus/setStartMode"
     void handleRpc0x0000D3A5(void* request_data_ptr, void* response_data_ptr);

@@ -45,6 +45,12 @@ Controller::~Controller()
     routine_thread_.join();
     heartbeat_thread_.join();
 
+    if(modbus_manager_ptr_ != NULL)
+    {
+        delete modbus_manager_ptr_;
+        modbus_manager_ptr_ = NULL;
+    }
+
     if(io_device_ptr_ != NULL)
     {
         delete io_device_ptr_;
@@ -204,7 +210,7 @@ ErrorCode Controller::init()
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_device_ptr_, modbus_manager_ptr_,
-        &program_launching_);//&io_mapping_ by feng add
+        &program_launching_, &file_manager_);//&io_mapping_ by feng add
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
                     process_comm_ptr_->getControllerClientPtr(), &io_mapping_, safety_device_ptr, io_device_ptr_);
 

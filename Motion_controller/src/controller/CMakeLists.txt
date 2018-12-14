@@ -71,6 +71,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/fst_safety_device/include 
     ${depend_PATH_INC}/io_mapping/include 
     ${depend_PATH_INC}/program_launching/include 
+    ${depend_PATH_INC}/file_manager/include 
 )
 
 catkin_package(
@@ -83,6 +84,7 @@ catkin_package(
     DEPENDS modbus_manager
     DEPENDS io_mapping
     DEPENDS program_launching
+    DEPENDS file_manager
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -127,6 +129,7 @@ target_link_libraries(controller
     fst_safety_device
     io_mapping
     program_launching
+    file_manager
 )
 
 #############

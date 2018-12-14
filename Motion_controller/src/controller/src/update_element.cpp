@@ -116,6 +116,7 @@ void ControllerPublish::updateIoBoardStatus()
     {
         if (i < dev_num && vec[i].id < 16)
         {
+            io_device_ptr_->getDevicePortValues(vec[i].id, values);
             io_board_status_.io_board[i].id = vec[i].id;
             memcpy(&io_board_status_.io_board[i].DI, &values.DI, sizeof(uint32_t));
             memcpy(&io_board_status_.io_board[i].DO, &values.DO, sizeof(uint32_t));

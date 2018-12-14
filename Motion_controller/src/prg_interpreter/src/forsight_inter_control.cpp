@@ -95,6 +95,11 @@ void resetProgramNameAndLineNum()
 	setProgramName((char *)""); 
 }
 
+char * getProgramName()
+{
+	return g_interpreter_publish.program_name; 
+}
+
 void setProgramName(char * program_name)
 {
     FST_INFO("setProgramName to %s", program_name);
@@ -172,15 +177,14 @@ void setWarning(__int64 warn)
 void setWarning(long long int warn)
 #endif  
 {
-// #ifdef WIN32
-//  	IntprtStatus temp,  * tempPtr = &temp;
-//      int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
-// #else
-//      int offset = (int)&((IntprtStatus*)0)->warn;
-// #endif  
-//      writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
 	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_ERROR, &warn);
 }
+
+void setMessage(int warn)
+{
+	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_MESSAGE, &warn);
+}
+
 
 UserOpMode getUserOpMode()
 {
@@ -218,35 +222,20 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     if ((objThdCtrlBlockPtr->prog_mode == STEP_MODE) 
 		&& (prgm_state == INTERPRETER_EXECUTE_TO_PAUSE))
     {
-//        if (isInstructionEmpty(SHM_INTPRT_CMD))
-//        {
-//            FST_INFO("check if step is done in setInstruction");
-//            setPrgmState(INTERPRETER_PAUSED);
-//        }
 		// FST_INFO("cur state:%d in STEP_MODE ", prgm_state);
         return false;
     }
 
-    // if (prgm_state != INTERPRETER_EXECUTE)
-    //    return false;
     do
     {
 		if (instruction->is_additional == false)
 		{
 	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
-			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
-			//		(void*)instruction, sizeof(Instruction));
-			
 			ret = g_objRegManagerInterface->setInstruction(instruction);
 		}
 		else
 		{
 	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
-			// ret = tryWrite(SHM_INTPRT_CMD, 0, 
-			//  	(void*)instruction, 
-			//  	sizeof(Instruction) 
-			//  		+ sizeof(AdditionalInfomation) * instruction->add_num);
-			
 			ret = g_objRegManagerInterface->setInstruction(instruction);
 		}
 #ifndef WIN32
@@ -452,6 +441,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
         case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             FST_INFO("start debug %s ...", intprt_ctrl.start_ctrl);
+			if(strcmp(getProgramName(), intprt_ctrl.start_ctrl) == 0)
+            {
+            	FST_INFO("Duplicate to execute %s ...", intprt_ctrl.start_ctrl);
+				setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ; 
+            	break;
+			}
 			incCurrentThreadSeq();
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();
@@ -471,6 +466,12 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
         case fst_base::INTERPRETER_SERVER_CMD_START:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             FST_INFO("start run %s ...", intprt_ctrl.start_ctrl);
+			if(strcmp(getProgramName(), intprt_ctrl.start_ctrl) == 0)
+            {
+            	FST_INFO("Duplicate to execute %s ...", intprt_ctrl.start_ctrl);
+				setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ;
+            	break;
+			}
 			incCurrentThreadSeq();
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();

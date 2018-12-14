@@ -28,6 +28,7 @@
 
 void resetProgramNameAndLineNum();
 
+char * getProgramName();
 void setProgramName(char * program_name);
 InterpreterState getPrgmState();
 void setPrgmState(InterpreterState state);
@@ -37,6 +38,7 @@ void setWarning(__int64 warn);
 #else
 void setWarning(long long int warn);
 #endif 
+void setMessage(int warn);
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction);
 // bool getIntprtCtrl(InterpreterControl& intprt_ctrl);
 void executeBlock();

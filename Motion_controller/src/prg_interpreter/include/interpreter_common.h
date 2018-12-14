@@ -16,6 +16,7 @@ typedef enum _InterpreterEventType
 {
     INTERPRETER_EVENT_TYPE_WARING = 1,
     INTERPRETER_EVENT_TYPE_ERROR,
+    INTERPRETER_EVENT_TYPE_MESSAGE,
 }InterpreterEventType;
 
 

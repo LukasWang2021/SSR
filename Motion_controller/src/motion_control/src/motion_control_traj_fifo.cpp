@@ -27,8 +27,8 @@ TrajectoryFifo::~TrajectoryFifo(void)
 ErrorCode TrajectoryFifo::initTrajectoryFifo(size_t capacity, size_t joint_num)
 {
     joint_num_ = joint_num;
-    trajectory_segment_.traj_from_start = 0;
-    trajectory_segment_.segment_from_traj = 0;
+    trajectory_segment_.time_from_start = 0;
+    trajectory_segment_.time_from_block = 0;
     trajectory_segment_.duration = -99.99;
     return trajectory_fifo_.init(capacity) ? SUCCESS : MOTION_INTERNAL_FAULT;
 }
@@ -65,16 +65,13 @@ ErrorCode TrajectoryFifo::pickTrajectoryPoint(MotionTime time, TrajectoryPoint &
 
 ErrorCode TrajectoryFifo::fetchSegmentByTime(MotionTime time)
 {
-    auto segment_from_start = trajectory_segment_.traj_from_start + trajectory_segment_.segment_from_traj;
-
-    while (segment_from_start + trajectory_segment_.duration < time && !trajectory_fifo_.empty())
+    while (trajectory_segment_.time_from_start + trajectory_segment_.duration < time && !trajectory_fifo_.empty())
     {
         trajectory_fifo_.fetch(trajectory_segment_);
-        segment_from_start = trajectory_segment_.traj_from_start + trajectory_segment_.segment_from_traj;
-        //printf("fetch: time = %.4f, start-time = %.4f, duration = %.4f\n", time, segment_from_start, trajectory_segment_.duration);
+        //printf("fetch: time = %.4f, start-time = %.4f, duration = %.4f\n", time, trajectory_segment_.time_from_start, trajectory_segment_.duration);
     }
 
-    if (segment_from_start < time + MINIMUM_E9 && segment_from_start + trajectory_segment_.duration > time - MINIMUM_E9)
+    if (trajectory_segment_.time_from_start < time + MINIMUM_E9 && trajectory_segment_.time_from_start + trajectory_segment_.duration > time - MINIMUM_E9)
     {
         return SUCCESS;
     }
@@ -91,15 +88,21 @@ ErrorCode TrajectoryFifo::fetchSegmentByTime(MotionTime time)
 void TrajectoryFifo::samplePointFromSegment(MotionTime time, TrajectoryPoint &point)
 {
     double *data;
-    double sample_time = time - trajectory_segment_.traj_from_start;
-    double tm[4]  = {1.0, sample_time, sample_time * sample_time, sample_time * sample_time * sample_time};
+    double sample_time = time - trajectory_segment_.time_from_start + trajectory_segment_.time_from_block;
+    MotionTime tm[6];
+    tm[0] = 1;
+    tm[1] = sample_time;
+    tm[2] = sample_time * tm[1];
+    tm[3] = sample_time * tm[2];
+    tm[4] = sample_time * tm[3];
+    tm[5] = sample_time * tm[4];
 
     for (size_t i = 0; i < joint_num_; i++)
     {
         data = trajectory_segment_.axis[i].data;
-        point.angle[i] = data[0] + data[1] * tm[1] + data[2] * tm[2] + data[3] * tm[3];
-        point.omega[i] = data[1] + data[2] * tm[1] * 2 + data[3] * tm[2] * 3;
-        point.alpha[i] = data[2] * 2 + data[3] * tm[1] * 6;
+        point.angle[i] = data[0] + data[1] * tm[1] + data[2] * tm[2] + data[3] * tm[3] + data[4] * tm[4] + data[5] * tm[5];
+        point.omega[i] = data[1] + data[2] * tm[1] * 2 + data[3] * tm[2] * 3 + data[4] * tm[3] * 4 + data[5] * tm[4] * 5;
+        point.alpha[i] = data[2] * 2 + data[3] * tm[1] * 6 + data[4] * tm[2] * 12 + data[5] * tm[3] * 20;
     }
 
     //printf("mid: %.4f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", time,
@@ -113,22 +116,28 @@ void TrajectoryFifo::samplePointFromSegment(MotionTime time, TrajectoryPoint &po
 void TrajectoryFifo::sampleEndingPointFromSegment(TrajectoryPoint &point)
 {
     double *data;
-    double sample_time = trajectory_segment_.segment_from_traj + trajectory_segment_.duration;
-    double tm[4]  = {1.0, sample_time, sample_time * sample_time, sample_time * sample_time * sample_time};
+    double sample_time = trajectory_segment_.time_from_block + trajectory_segment_.duration;
+    MotionTime tm[6];
+    tm[0] = 1;
+    tm[1] = sample_time;
+    tm[2] = sample_time * tm[1];
+    tm[3] = sample_time * tm[2];
+    tm[4] = sample_time * tm[3];
+    tm[5] = sample_time * tm[4];
 
     for (size_t i = 0; i < joint_num_; i++)
     {
         data = trajectory_segment_.axis[i].data;
-        point.angle[i] = data[0] + data[1] * tm[1] + data[2] * tm[2] + data[3] * tm[3];
-        point.omega[i] = data[1] + data[2] * tm[1] * 2 + data[3] * tm[2] * 3;
-        point.alpha[i] = data[2] * 2 + data[3] * tm[1] * 6;
+        point.angle[i] = data[0] + data[1] * tm[1] + data[2] * tm[2] + data[3] * tm[3] + data[4] * tm[4] + data[5] * tm[5];
+        point.omega[i] = data[1] + data[2] * tm[1] * 2 + data[3] * tm[2] * 3 + data[4] * tm[3] * 4 + data[5] * tm[4] * 5;
+        point.alpha[i] = data[2] * 2 + data[3] * tm[1] * 6 + data[4] * tm[2] * 12 + data[5] * tm[3] * 20;
     }
 
-    //printf("end: %.4f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
-    //       trajectory_segment_.traj_from_start + trajectory_segment_.segment_from_traj + trajectory_segment_.duration,
-    //       point.angle[0], point.angle[1], point.angle[2], point.angle[3], point.angle[4], point.angle[5],
-    //       point.omega[0], point.omega[1], point.omega[2], point.omega[3], point.omega[4], point.omega[5],
-    //       point.alpha[0], point.alpha[1], point.alpha[2], point.alpha[3], point.alpha[4], point.alpha[5]);
+    // printf("end: %.4f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f - %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
+    //        trajectory_segment_.time_from_start + trajectory_segment_.duration,
+    //        point.angle[0], point.angle[1], point.angle[2], point.angle[3], point.angle[4], point.angle[5],
+    //        point.omega[0], point.omega[1], point.omega[2], point.omega[3], point.omega[4], point.omega[5],
+    //        point.alpha[0], point.alpha[1], point.alpha[2], point.alpha[3], point.alpha[4], point.alpha[5]);
 
     point.level = POINT_ENDING;
 }
@@ -146,8 +155,8 @@ bool TrajectoryFifo::full(void) const
 void TrajectoryFifo::clear(void)
 {
     trajectory_fifo_.clear();
-    trajectory_segment_.traj_from_start = 0;
-    trajectory_segment_.segment_from_traj = 0;
+    trajectory_segment_.time_from_start = 0;
+    trajectory_segment_.time_from_block = 0;
     trajectory_segment_.duration = -99.99;
 }
 

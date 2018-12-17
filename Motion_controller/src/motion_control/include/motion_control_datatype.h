@@ -80,8 +80,8 @@ struct AxisCoeff        // 一个轴轨迹的表达式
 struct TrajectoryBlock  // 一段时间内的轨迹
 {
     int         index_in_path_cache;    // 轨迹段末尾位置对应在路径缓存中的索引, 当轨迹段末尾点在路径中没有对应的路径点时此处应填-1
-    MotionTime  duration;               // 轨迹段在时间轴上的延续长度，在本段轨迹上的差值时间：0 ～ duration
-    MotionTime  time_from_start;        // 从本条指令起始到block起始之间的时间
+    MotionTime  duration;               // 轨迹段block在时间轴上的延续长度，在本段轨迹上的差值时间：0 ～ duration
+    MotionTime  time_from_start;        // 从运动起始到block起始之间的时间
     AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
 };
 
@@ -96,7 +96,7 @@ struct TrajectoryCache      // 轨迹缓存
 struct TrajectoryCacheList  // 轨迹缓存链表
 {
     size_t                  pick_index;
-    MotionTime              pick_time_from_block;
+    MotionTime              pick_from_block;
     MotionTime              time_from_start;                // 从运动起始到本条指令起始之间的时间
     TrajectoryCacheList*    next_ptr;                       // 下一个轨迹缓存所在的地址，用于构成轨迹缓存链表
     TrajectoryCache         trajectory_cache;
@@ -104,8 +104,8 @@ struct TrajectoryCacheList  // 轨迹缓存链表
 
 struct TrajectorySegment
 {
-    MotionTime  traj_from_start;        // 从运动起始到本段轨迹起点之间的时间
-    MotionTime  segment_from_traj;     // 从本段轨迹开始到本段segment起始之间的时间
+    MotionTime  time_from_start;     // 从运动起始到本段segment起点之间的时间
+    MotionTime  time_from_block;     // 从block开始到本段segment起始之间的时间
     MotionTime  duration;               // 本段segment的持续时间
     AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
 };

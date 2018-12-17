@@ -158,7 +158,7 @@ class BaseGroup
     inline void resetManualTrajectory(void);
     inline void freeFirstCacheList(void);
     inline void linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj_ptr);
-    inline void updateTimeFromStart(TrajectoryCache &cache);
+    inline void updateTimeFromStart(TrajectoryCacheList &cache);
     inline void setFineWaiter(void);
     inline void loopFineWaiter(void);
     

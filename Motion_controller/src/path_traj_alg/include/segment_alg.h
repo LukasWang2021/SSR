@@ -294,55 +294,74 @@ typedef enum
     S_TrajPieceV7 = 7625,
     S_TrajPieceV8 = 7650,
       
-    // coeff of p = A3*t^3 + A2*t^2 + A1*t + A0
-    S_TrajCoeffJ0A3 = 7700,    // up to 20 + 21 in size
-    S_TrajCoeffJ0A2 = 7750,
-    S_TrajCoeffJ0A1 = 7800,
-    S_TrajCoeffJ0A0 = 7850,
+    // coeff of p = A5*t^5 + A4*t^4 + A3*t^3 + A2*t^2 + A1*t + A0
+    S_TrajCoeffJ0A5 = 7700,
+    S_TrajCoeffJ0A4 = 7750,
+    S_TrajCoeffJ0A3 = 7800,    
+    S_TrajCoeffJ0A2 = 7850,
+    S_TrajCoeffJ0A1 = 7900,
+    S_TrajCoeffJ0A0 = 7950,
 
-    S_TrajCoeffJ1A3 = 7900,
-    S_TrajCoeffJ1A2 = 7950,
-    S_TrajCoeffJ1A1 = 8000,
-    S_TrajCoeffJ1A0 = 8050,
+    S_TrajCoeffJ1A5 = 8000,
+    S_TrajCoeffJ1A4 = 8050,
+    S_TrajCoeffJ1A3 = 8100,    
+    S_TrajCoeffJ1A2 = 8150,
+    S_TrajCoeffJ1A1 = 8200,
+    S_TrajCoeffJ1A0 = 8250,
 
-    S_TrajCoeffJ2A3 = 8100,
-    S_TrajCoeffJ2A2 = 8150,
-    S_TrajCoeffJ2A1 = 8200,
-    S_TrajCoeffJ2A0 = 8250,
+    S_TrajCoeffJ2A5 = 8300,
+    S_TrajCoeffJ2A4 = 8350,
+    S_TrajCoeffJ2A3 = 8400,    
+    S_TrajCoeffJ2A2 = 8450,
+    S_TrajCoeffJ2A1 = 8500,
+    S_TrajCoeffJ2A0 = 8550,
 
-    S_TrajCoeffJ3A3 = 8300,
-    S_TrajCoeffJ3A2 = 8350,
-    S_TrajCoeffJ3A1 = 8400,
-    S_TrajCoeffJ3A0 = 8450,
+    S_TrajCoeffJ3A5 = 8600,
+    S_TrajCoeffJ3A4 = 8650,
+    S_TrajCoeffJ3A3 = 8700,    
+    S_TrajCoeffJ3A2 = 8750,
+    S_TrajCoeffJ3A1 = 8800,
+    S_TrajCoeffJ3A0 = 8850,
 
-    S_TrajCoeffJ4A3 = 8500,
-    S_TrajCoeffJ4A2 = 8550,
-    S_TrajCoeffJ4A1 = 8600,
-    S_TrajCoeffJ4A0 = 8650,
+    S_TrajCoeffJ4A5 = 8900,
+    S_TrajCoeffJ4A4 = 8950,
+    S_TrajCoeffJ4A3 = 9000,    
+    S_TrajCoeffJ4A2 = 9050,
+    S_TrajCoeffJ4A1 = 9100,
+    S_TrajCoeffJ4A0 = 9150,
 
-    S_TrajCoeffJ5A3 = 8700,
-    S_TrajCoeffJ5A2 = 8750,
-    S_TrajCoeffJ5A1 = 8800,
-    S_TrajCoeffJ5A0 = 8850,
+    S_TrajCoeffJ5A5 = 9200,
+    S_TrajCoeffJ5A4 = 9250,
+    S_TrajCoeffJ5A3 = 9300,    
+    S_TrajCoeffJ5A2 = 9350,
+    S_TrajCoeffJ5A1 = 9400,
+    S_TrajCoeffJ5A0 = 9450,
 
-    S_TrajCoeffJ6A3 = 8900,
-    S_TrajCoeffJ6A2 = 8950,
-    S_TrajCoeffJ6A1 = 9000,
-    S_TrajCoeffJ6A0 = 9050,
+    S_TrajCoeffJ6A5 = 9500,
+    S_TrajCoeffJ6A4 = 9550,
+    S_TrajCoeffJ6A3 = 9600,    
+    S_TrajCoeffJ6A2 = 9650,
+    S_TrajCoeffJ6A1 = 9700,
+    S_TrajCoeffJ6A0 = 9750,
 
-    S_TrajCoeffJ7A3 = 9100,
-    S_TrajCoeffJ7A2 = 9150,
-    S_TrajCoeffJ7A1 = 9200,
-    S_TrajCoeffJ7A0 = 9250,
+    S_TrajCoeffJ7A5 = 9800,
+    S_TrajCoeffJ7A4 = 9850,
+    S_TrajCoeffJ7A3 = 9900,    
+    S_TrajCoeffJ7A2 = 9950,
+    S_TrajCoeffJ7A1 = 10000,
+    S_TrajCoeffJ7A0 = 10050,
 
-    S_TrajCoeffJ8A3 = 9300,
-    S_TrajCoeffJ8A2 = 9350,
-    S_TrajCoeffJ8A1 = 9400,
-    S_TrajCoeffJ8A0 = 9450,      
+    S_TrajCoeffJ8A5 = 10100,
+    S_TrajCoeffJ8A4 = 10150,
+    S_TrajCoeffJ8A3 = 10200,    
+    S_TrajCoeffJ8A2 = 10250,
+    S_TrajCoeffJ8A1 = 10300,
+    S_TrajCoeffJ8A0 = 10350,
+
 }StackIndex;
 
 extern ComplexAxisGroupModel model;
-extern double stack[10000];
+extern double stack[12000];
 
 /*
 Function:   getNorm
@@ -627,16 +646,20 @@ double getMax(double value0, double value1, double value2, double value3);
 void generateRescaleFactorVector(int time_vector_size, double& recale_factor);
 void generateRescaleVector(int time_vector_size);
 void adjustTrajT(int time_vector_size, double rescale_factor);
+void adjustTrajTSmooth(int time_vector_size, double rescale_factor);
 void adjustPVA(int traj_index_via, int traj_index_end, double rescale_factor_via2end);
+void adjustPVA2(int traj_index_in, double rescale_factor);
 void generateRescaleVectorSmooth(int time_vector_size_out2in, int time_vector_size_in2end, int time_vector_size_via2in);
 void generateAbsoluteVector(int time_vector_size);
 void generateCoeff(int time_vector_size);
+void adjustCoeff(int traj_smooth_in_index);
 void generateTrajCache(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, int* path_index_array, int path_index_array_size);
 void generateTrajCacheSmooth(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 
                                     int* path_index_array_out2in, int path_index_array_size_out2in,
                                     int* path_index_array_in2end, int path_index_array_size_in2end);
 
 void printTraj(fst_mc::TrajectoryCache &traj_cache, int index, double time_step);
+void printTraj2(fst_mc::TrajectoryCache &traj_cache, int index, double time_step);
 void printAllTraj(fst_mc::TrajectoryCache &traj_cache, double time_step);
 
 

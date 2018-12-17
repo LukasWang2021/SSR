@@ -12,7 +12,7 @@ using namespace fst_mc;
 using namespace fst_algorithm;
 using namespace basic_alg;
 
-extern double stack[10000];
+extern double stack[];
 extern ComplexAxisGroupModel model;
 extern SegmentAlgParam segment_alg_param;
 
@@ -308,47 +308,48 @@ int main(void)
     printAllTraj(traj_cache, 0.001);
 #endif
 
-#if 1
-    start_joint[0] = 0.643499;
-    start_joint[1] = 0.056281;
-    start_joint[2] = -0.979224;
-    start_joint[3] = 0.00001;
-    start_joint[4] = -0.647849;
-    start_joint[5] = 0.64349;
+#if 0
+    start_joint[0] = 0.289008;
+    start_joint[1] = -0.623643;
+    start_joint[2] = -0.061923;
+    start_joint[3] = 0.000009;
+    start_joint[4] = -0.885228;
+    start_joint[5] = 0.289;
 
     start_state.angle = start_joint;
-    start_state.omega[0] = 0; start_state.omega[1] = 0; start_state.omega[2] = 0;
-    start_state.omega[3] = 0; start_state.omega[4] = 0; start_state.omega[5] = 0;
-    start_state.alpha[0] = 0; start_state.alpha[1] = 0; start_state.alpha[2] = 0;
-    start_state.alpha[3] = 0; start_state.alpha[4] = 0; start_state.alpha[5] = 0;
+    start_state.omega[0] = 0.747278; start_state.omega[1] = -0.281871; start_state.omega[2] = 0.472685;
+    start_state.omega[3] = -0.000003; start_state.omega[4] = -0.190809; start_state.omega[5] = 0.74728;
+    start_state.alpha[0] = -152.107803; start_state.alpha[1] = 57.374650; start_state.alpha[2] = -96.214629;
+    start_state.alpha[3] = 0.000687; start_state.alpha[4] = 38.838923; start_state.alpha[5] = -152.1085;
 
-    start.position.x = 200;
-    start.position.y = 150;
+    start.position.x = 500;
+    start.position.y = 148.6686;
     start.position.z = 350;
     start.orientation.a = 0;
     start.orientation.b = 0;
     start.orientation.c = PI;
 
-    via.pose_target.position.x = 200;
-    via.pose_target.position.y = -150;
+    via.pose_target.position.x = 500;
+    via.pose_target.position.y = 150;
     via.pose_target.position.z = 350;
     via.pose_target.orientation.a = 0;
     via.pose_target.orientation.b = 0;
     via.pose_target.orientation.c = PI;
-    via.cnt = 0.5;
+    via.cnt = 0.25;
     via.vel = 1600;
     via.type = MOTION_LINE;
 
-    target.pose_target.position.x = 500;
-    target.pose_target.position.y = -150;
+    target.pose_target.position.x = 200;
+    target.pose_target.position.y = 150;
     target.pose_target.position.z = 350;
     target.pose_target.orientation.a = 0;
     target.pose_target.orientation.b = 0;
     target.pose_target.orientation.c = PI;
-    target.cnt = 1;
+    target.cnt = -1;
     target.vel = 1600;
     target.type = MOTION_LINE;
 
+#if 0
     PathCache path_cache_1;
     TrajectoryCache traj_cache_1;
     path_cache_1.target.vel = via.vel;
@@ -357,18 +358,18 @@ int main(void)
     /*std::cout<<" CacheLength = "<<path_cache_1.cache_length
              <<" Smooth_in_Index = "<<path_cache_1.smooth_in_index
              <<" Smooth_out_Index = "<<path_cache_1.smooth_out_index<<std::endl;
-    for(int i = 0; i < path_cache.cache_length; ++i)
+    for(int i = 0; i < path_cache_1.cache_length; ++i)
     {
         std::cout<<" ["<<i<<"] "
-                 <<" X = "<<path_cache.cache[i].pose.position.x
-                 <<" Y = "<<path_cache.cache[i].pose.position.y
-                 <<" Z = "<<path_cache.cache[i].pose.position.z
-                 <<" x = "<<path_cache.cache[i].pose.orientation.x
-                 <<" y = "<<path_cache.cache[i].pose.orientation.y
-                 <<" z = "<<path_cache.cache[i].pose.orientation.z
-                 <<" W = "<<path_cache.cache[i].pose.orientation.w
-                 <<" PointType = "<<path_cache.cache[i].point_type
-                 <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
+                 <<" X = "<<path_cache_1.cache[i].pose.position.x
+                 <<" Y = "<<path_cache_1.cache[i].pose.position.y
+                 <<" Z = "<<path_cache_1.cache[i].pose.position.z
+                 <<" x = "<<path_cache_1.cache[i].pose.orientation.x
+                 <<" y = "<<path_cache_1.cache[i].pose.orientation.y
+                 <<" z = "<<path_cache_1.cache[i].pose.orientation.z
+                 <<" W = "<<path_cache_1.cache[i].pose.orientation.w
+                 <<" PointType = "<<path_cache_1.cache[i].point_type
+                 <<" MotionType = "<<path_cache_1.cache[i].motion_type<<std::endl;
     }*/
  
     doIK(kinematics_ptr, path_cache_1, start_joint);
@@ -380,8 +381,19 @@ int main(void)
                  <<path_cache_1.cache[i].joint[3]<<" "
                  <<path_cache_1.cache[i].joint[4]<<" "
                  <<path_cache_1.cache[i].joint[5]<<std::endl;
-    }*/    
+    }*/
     planTrajectory(path_cache_1, start_state, vel_ratio, acc_ratio, traj_cache_1);
+
+/*for(int i=0; i< traj_cache_1.cache_length; ++i)
+{
+    std::cout<<i<<" path_index = "<<traj_cache_1.cache[i].index_in_path_cache
+                <<" duration = "<<traj_cache_1.cache[i].duration
+                <<" A3 = "<<traj_cache_1.cache[i].axis[1].data[3]
+                <<" A2 = "<<traj_cache_1.cache[i].axis[1].data[2]
+                <<" A1 = "<<traj_cache_1.cache[i].axis[1].data[1]
+                <<" A0 = "<<traj_cache_1.cache[i].axis[1].data[0]<<std::endl;
+                
+}*/
 
     JointState out_state;
     int p_address = S_TrajP0 + traj_cache_1.smooth_out_index + 1;
@@ -390,8 +402,8 @@ int main(void)
     for(int i=0; i<6; ++i)
     {
         out_state.angle[i] = stack[p_address];
-        out_state.omega[i] = stack[v_address];
-        out_state.alpha[i] = stack[a_address];
+        out_state.omega[i] = stack[v_address] / stack[S_TrajRescaleFactor];
+        out_state.alpha[i] = stack[a_address] / (stack[S_TrajRescaleFactor] * stack[S_TrajRescaleFactor]);
         p_address += 150;
         v_address += 150;
         a_address += 150;
@@ -411,13 +423,15 @@ int main(void)
     euler_out.orientation.a = out_euler[0];
     euler_out.orientation.b = out_euler[1];
     euler_out.orientation.c = out_euler[2];                         
+#endif
 
     PathCache path_cache_2;
     TrajectoryCache traj_cache_2;
     path_cache_2.target.vel = target.vel; 
     path_cache_2.target.cnt = target.cnt;
   
-    planPathSmoothLine(euler_out, via, target, path_cache_2);
+    //planPathSmoothLine(euler_out, via, target, path_cache_2);
+    planPathSmoothLine(start, via, target, path_cache_2);
 //std::cout<<"path_cache_2.smooth_out_index = "<<path_cache_2.smooth_out_index<<std::endl;
 //std::cout<<"path_cache_2.cache_length = "<<path_cache_2.cache_length<<std::endl;     
     /*std::cout<<" CacheLength = "<<path_cache_2.cache_length
@@ -437,7 +451,7 @@ int main(void)
                  <<" MotionType = "<<path_cache_2.cache[i].motion_type<<std::endl;
     }*/
 
-    doIK(kinematics_ptr, path_cache_2, out_state.angle);
+    doIK(kinematics_ptr, path_cache_2, start_joint);
 
     /*for(int i=0; i<path_cache_2.cache_length; ++i)
     {
@@ -449,13 +463,189 @@ int main(void)
                  <<path_cache_2.cache[i].joint[5]<<std::endl;
     }*/
  
-    planTrajectorySmooth(path_cache_2, out_state, via, vel_ratio, acc_ratio, traj_cache_2);
+    //planTrajectorySmooth(path_cache_2, out_state, via, vel_ratio, acc_ratio, traj_cache_2);
+    planTrajectorySmooth(path_cache_2, start_state, via, vel_ratio, acc_ratio, traj_cache_2);
 //std::cout<<"traj_cache_2.smooth_out_index = "<<traj_cache_2.smooth_out_index<<std::endl;
 //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
 
     //printAllTraj(traj_cache_2, 0.001);
     printTraj(traj_cache_2, 1, 0.001);
 #endif
+
+#if 1
+        start_joint[0] = 0.643499;
+        start_joint[1] = 0.056281;
+        start_joint[2] = -0.979224;
+        start_joint[3] = 0.00001;
+        start_joint[4] = -0.647849;
+        start_joint[5] = 0.64349;
+    
+        start_state.angle = start_joint;
+        start_state.omega[0] = 0; start_state.omega[1] = 0; start_state.omega[2] = 0;
+        start_state.omega[3] = 0; start_state.omega[4] = 0; start_state.omega[5] = 0;
+        start_state.alpha[0] = 0; start_state.alpha[1] = 0; start_state.alpha[2] = 0;
+        start_state.alpha[3] = 0; start_state.alpha[4] = 0; start_state.alpha[5] = 0;
+    
+        start.position.x = 200;
+        start.position.y = 150;
+        start.position.z = 350;
+        start.orientation.a = 0;
+        start.orientation.b = 0;
+        start.orientation.c = PI;
+    
+        via.pose_target.position.x = 200;
+        via.pose_target.position.y = -150;
+        via.pose_target.position.z = 350;
+        via.pose_target.orientation.a = 0;
+        via.pose_target.orientation.b = 0;
+        via.pose_target.orientation.c = PI;
+        via.cnt = 0.5;
+        via.vel = 1600;
+        via.type = MOTION_LINE;
+    
+        target.pose_target.position.x = 500;
+        target.pose_target.position.y = -150;
+        target.pose_target.position.z = 350;
+        target.pose_target.orientation.a = 0;
+        target.pose_target.orientation.b = 0;
+        target.pose_target.orientation.c = PI;
+        target.cnt = 1;
+        target.vel = 1600;
+        target.type = MOTION_LINE;
+    
+        PathCache path_cache_1;
+        TrajectoryCache traj_cache_1;
+        path_cache_1.target.vel = via.vel;
+        path_cache_1.target.cnt = via.cnt;
+        planPathLine(start, via, path_cache_1);
+        /*std::cout<<" CacheLength = "<<path_cache_1.cache_length
+                 <<" Smooth_in_Index = "<<path_cache_1.smooth_in_index
+                 <<" Smooth_out_Index = "<<path_cache_1.smooth_out_index<<std::endl;
+        for(int i = 0; i < path_cache_1.cache_length; ++i)
+        {
+            std::cout<<" ["<<i<<"] "
+                     <<" X = "<<path_cache_1.cache[i].pose.position.x
+                     <<" Y = "<<path_cache_1.cache[i].pose.position.y
+                     <<" Z = "<<path_cache_1.cache[i].pose.position.z
+                     <<" x = "<<path_cache_1.cache[i].pose.orientation.x
+                     <<" y = "<<path_cache_1.cache[i].pose.orientation.y
+                     <<" z = "<<path_cache_1.cache[i].pose.orientation.z
+                     <<" W = "<<path_cache_1.cache[i].pose.orientation.w
+                     <<" PointType = "<<path_cache_1.cache[i].point_type
+                     <<" MotionType = "<<path_cache_1.cache[i].motion_type<<std::endl;
+        }*/
+     
+        doIK(kinematics_ptr, path_cache_1, start_joint);
+        /*for(int i=0; i<path_cache_1.cache_length; ++i)
+        {
+            std::cout<<i<<" "<<path_cache_1.cache[i].joint[0]<<" "
+                     <<path_cache_1.cache[i].joint[1]<<" "
+                     <<path_cache_1.cache[i].joint[2]<<" "
+                     <<path_cache_1.cache[i].joint[3]<<" "
+                     <<path_cache_1.cache[i].joint[4]<<" "
+                     <<path_cache_1.cache[i].joint[5]<<std::endl;
+        }*/
+        planTrajectory(path_cache_1, start_state, vel_ratio, acc_ratio, traj_cache_1);
+    
+    /*for(int i=0; i< traj_cache_1.cache_length; ++i)
+    {
+        std::cout<<i<<" path_index = "<<traj_cache_1.cache[i].index_in_path_cache
+                    <<" duration = "<<traj_cache_1.cache[i].duration
+                    <<" A3 = "<<traj_cache_1.cache[i].axis[1].data[3]
+                    <<" A2 = "<<traj_cache_1.cache[i].axis[1].data[2]
+                    <<" A1 = "<<traj_cache_1.cache[i].axis[1].data[1]
+                    <<" A0 = "<<traj_cache_1.cache[i].axis[1].data[0]<<std::endl;
+                    
+    }*/
+    
+        JointState out_state;
+        int p_address = S_TrajP0 + traj_cache_1.smooth_out_index + 1;
+        int v_address = p_address + 50;
+        int a_address = p_address + 100;
+        for(int i=0; i<6; ++i)
+        {
+            out_state.angle[i] = stack[p_address];
+            out_state.omega[i] = stack[v_address] / stack[S_TrajRescaleFactor];
+            out_state.alpha[i] = stack[a_address] / (stack[S_TrajRescaleFactor] * stack[S_TrajRescaleFactor]);
+            p_address += 150;
+            v_address += 150;
+            a_address += 150;
+        }
+ //std::cout<<"out_state: "<<out_state.angle[1]<<" "<<out_state.omega[1]<<" "<<out_state.alpha[1]<<std::endl;
+        Pose pose_out;
+        PoseEuler euler_out;
+        double out_quatern[4];
+        double out_euler[3];
+        pose_out = path_cache_1.cache[traj_cache_1.cache[traj_cache_1.smooth_out_index].index_in_path_cache].pose;
+        out_quatern[0] = pose_out.orientation.x;
+        out_quatern[1] = pose_out.orientation.y;
+        out_quatern[2] = pose_out.orientation.z;
+        out_quatern[3] = pose_out.orientation.w;
+        getQuaternToEuler(out_quatern, out_euler);
+        euler_out.position = pose_out.position;
+        euler_out.orientation.a = out_euler[0];
+        euler_out.orientation.b = out_euler[1];
+        euler_out.orientation.c = out_euler[2];                         
+    
+        PathCache path_cache_2;
+        TrajectoryCache traj_cache_2;
+        path_cache_2.target.vel = target.vel; 
+        path_cache_2.target.cnt = target.cnt;
+      
+        planPathSmoothLine(euler_out, via, target, path_cache_2);
+    //std::cout<<"path_cache_2.smooth_out_index = "<<path_cache_2.smooth_out_index<<std::endl;
+    //std::cout<<"path_cache_2.cache_length = "<<path_cache_2.cache_length<<std::endl;     
+        /*std::cout<<" CacheLength = "<<path_cache_2.cache_length
+                 <<" Smooth_in_Index = "<<path_cache_2.smooth_in_index
+                 <<" Smooth_out_Index = "<<path_cache_2.smooth_out_index<<std::endl; */  
+        /*for(int i = 0; i < path_cache_2.cache_length; ++i)
+        {
+            std::cout<<" ["<<i<<"] "
+                     <<" X = "<<path_cache_2.cache[i].pose.position.x
+                     <<" Y = "<<path_cache_2.cache[i].pose.position.y
+                     <<" Z = "<<path_cache_2.cache[i].pose.position.z
+                     <<" x = "<<path_cache_2.cache[i].pose.orientation.x
+                     <<" y = "<<path_cache_2.cache[i].pose.orientation.y
+                     <<" z = "<<path_cache_2.cache[i].pose.orientation.z
+                     <<" W = "<<path_cache_2.cache[i].pose.orientation.w
+                     <<" PointType = "<<path_cache_2.cache[i].point_type
+                     <<" MotionType = "<<path_cache_2.cache[i].motion_type<<std::endl;
+        }*/
+    
+        doIK(kinematics_ptr, path_cache_2, out_state.angle);
+    
+        /*for(int i=0; i<path_cache_2.cache_length; ++i)
+        {
+            std::cout<<i<<" "<<path_cache_2.cache[i].joint[0]<<" "
+                     <<path_cache_2.cache[i].joint[1]<<" "
+                     <<path_cache_2.cache[i].joint[2]<<" "
+                     <<path_cache_2.cache[i].joint[3]<<" "
+                     <<path_cache_2.cache[i].joint[4]<<" "
+                     <<path_cache_2.cache[i].joint[5]<<std::endl;
+        }*/
+     
+        planTrajectorySmooth(path_cache_2, out_state, via, vel_ratio, acc_ratio, traj_cache_2);
+    //std::cout<<"traj_cache_2.smooth_out_index = "<<traj_cache_2.smooth_out_index<<std::endl;
+    //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
+    
+        //printAllTraj(traj_cache_2, 0.001);
+        printf("traj-cache1: smooth = %d\n", traj_cache_1.smooth_out_index);
+        for (size_t i = 0; i < traj_cache_1.cache_length; i++)
+        {
+            TrajectoryBlock &block = traj_cache_1.cache[i];
+            printf("block[%d]: duration = %.4f, c0 = %.4f, c1 = %.4f, c2 = %.4f, c3 = %.4f\n", i,
+                    block.duration, block.axis[1].data[0], block.axis[1].data[1], block.axis[1].data[2], block.axis[1].data[3]);
+        }
+        printf("----------------\n");
+        for (size_t i = 0; i < traj_cache_2.cache_length; i++)
+        {
+            TrajectoryBlock &block = traj_cache_2.cache[i];
+            printf("block[%d]: duration = %.4f, c0 = %.4f, c1 = %.4f, c2 = %.4f, c3 = %.4f\n", i,
+                    block.duration, block.axis[1].data[0], block.axis[1].data[1], block.axis[1].data[2], block.axis[1].data[3]);
+        }
+        //printTraj(traj_cache_2, 1, 0.001);
+#endif
+
 
 	return 0;
 }

@@ -293,7 +293,7 @@ void test4(void)
 
 void test6(void)
 {
-    Pose p;
+    PoseEuler p;
     Joint ref, res;
     Logger log;
     ArmGroup arm(&log);
@@ -302,20 +302,25 @@ void test6(void)
 
     arm.initGroup(&error_monitor);
 
-    p.position.x = 430.493206;
-    p.position.y = 81.351958;
-    p.position.z = 564.339605;
-    p.orientation.w = -0.001571;
-    p.orientation.x = 0.999334;
-    p.orientation.y = 0.014975;
-    p.orientation.z = 0.024502;
+    p.position.x = -29.04;
+    p.position.y = 167.96;
+    p.position.z = -465.96;
+    p.orientation.a = -0.001571;
+    p.orientation.b = 0.999334;
+    p.orientation.c = 0.014975;
 
-    ref.j1 = 0.185517603768;
-    ref.j2 = -0.158492925047;
-    ref.j3 = -0.050531790903;
-    ref.j4 = -0.005467348039;
-    ref.j5 = -1.312221853982;
-    ref.j6 = 0.156383300619;
+    ref.j1 = -0.535158;
+    ref.j2 = -0.203063;
+    ref.j3 = -0.730588;
+    ref.j4 = -0.112341;
+    ref.j5 = 1.777998;
+    ref.j6 = 1.040318;
+
+
+    arm.getKinematicsPtr()->forwardKinematicsInBase(ref, p);
+    printf("%.4f, %.4f, %.4f - %.4f, %.4f, %.4f\n", p.position.x, p.position.y, p.position.z, p.orientation.a, p.orientation.b, p.orientation.c);
+
+
 
     clock_t start = clock();
     for (size_t i = 0; i < 1000; i++)
@@ -403,9 +408,9 @@ int main(int argc, char **argv)
     //test1();
     //test2();
     //test3();
-    test4();
+    //test4();
     //test5();
-    //test6();
+    test6();
     //test7();
     //test8();
 

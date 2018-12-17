@@ -5,7 +5,7 @@ using namespace std;
 using namespace fst_mc;
 
 ComplexAxisGroupModel model;
-double stack[10000];
+double stack[12000];
 SegmentAlgParam segment_alg_param;
 
 
@@ -534,11 +534,6 @@ void updateTrajPVA(int path_base, double* init_state, double* end_state, int ord
     updateMatrixA(&stack[t_base], order);   
     updateMatrixB(&stack[path_base], &stack[t_base], init_state, end_state, order); 
     updateEquationSolution(&stack[S_A], &stack[S_B], order);
-
-/*for(i = 0; i < order; ++i)
-{
-    std::cout<<i<<" "<<stack[S_X + i]<<std::endl;
-}*/
 
     int traj_p = traj_base;
     int traj_v = traj_base + 50;
@@ -1365,6 +1360,8 @@ ErrorCode planTrajectory(const PathCache &path_cache,
     // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
     // write: S_TrajRescaleFactor
     generateRescaleFactorVector(time_vector_size, stack[S_TrajRescaleFactor]);
+
+    adjustPVA2(time_vector_size, stack[S_TrajRescaleFactor]);
     // read: S_TrajRescaleFactor, S_TrajT
     // write: S_TrajRescaleT
     generateRescaleVector(time_vector_size);
@@ -1412,19 +1409,18 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     double path_vector_via2in[3];
     double length_via2in;
     getMoveLPathVector(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position, path_vector_via2in, length_via2in);
-    double length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
+    double length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);    
     int traj_smooth_in_index = computeTrajSmoothInIndex(length_out2via, length_via2in);
- 
     int path_index_in, path_index_out, path_index_end;
     // write: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
-    computePathIndexStepVia2End(path_cache, via, length_via2in, path_index_in, path_index_out, path_index_end);     
+    computePathIndexStepVia2End(path_cache, via, length_via2in, path_index_in, path_index_out, path_index_end);   
     // write: S_Path0~S_Path8[0...path_index_in]
     generatePathPointVia2In(path_cache, via, length_via2in, path_vector_via2in, path_index_in);
     int path_index_array_in2end[25];
     // read: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
     // write: S_Path0~S_Path8[0...path_index_out...path_index_end]
     generatePathPointIn2End(path_cache, path_index_in, path_index_out, path_index_end, path_index_array_in2end);
-    
+
     int path_index_array_size_in2end = path_index_end - path_index_in + 1;
     //if(path_index_out == path_index_end)
     if(path_cache.target.cnt < -DOUBLE_ACCURACY)
@@ -1433,7 +1429,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     }
     else
     {
-        traj_cache.smooth_out_index = traj_smooth_in_index + (path_index_out - path_index_in);
+        traj_cache.smooth_out_index = traj_smooth_in_index + (path_index_out - path_index_in) - 1;
     }
 
     int time_vector_size_via2end;
@@ -1460,6 +1456,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
         traj_index_via = (traj_smooth_in_index - path_index_in - 1);
     } 
     int traj_index_end = traj_smooth_in_index + (path_index_end - path_index_in + 1);
+
     // make sure the in point of traj point locate at (S_TrajP0 + traj_smooth_in_index)
     int traj_base_via2end = S_TrajP0 + traj_index_via;  
     for(i = 0; i < model.link_num; ++i)
@@ -1481,8 +1478,8 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     double rescale_factor_via2end;
     // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
     // write: S_TrajRescaleFactor
-    generateRescaleFactorVector(traj_piece_num_via2end, rescale_factor_via2end);  
-    
+    generateRescaleFactorVector(traj_piece_num_via2end, rescale_factor_via2end);  //rescale_factor_via2end = 1.2;
+//std::cout<<"rescale_factor_via2end = "<<rescale_factor_via2end<<std::endl;
     // write: S_TrajT
     adjustTrajT(traj_piece_num_via2end, rescale_factor_via2end);
     adjustPVA(traj_index_via, traj_index_end, rescale_factor_via2end);
@@ -1495,16 +1492,18 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     for(i = 0; i < model.link_num; ++i)
     {
         stack[out_point_base] = start_state.angle[i];   // P
-        stack[out_point_base + 1] = start_state.omega[i];   // V
+        stack[out_point_base + 1] = start_state.omega[i];// * rescale_factor_via2end;   // V
         stack[out_point_base + 2] = start_state.alpha[i];   // A
         stack[in_point_base] = stack[traj_base_in];            // P
-        stack[in_point_base + 1] = stack[traj_base_in + 50];   // V
+        stack[in_point_base + 1] = stack[traj_base_in + 50];// * rescale_factor_via2end;   // V
         stack[in_point_base + 2] = stack[traj_base_in + 100];  // A
         in_point_base += 3;
         out_point_base += 3;
         traj_base_in += 150;
     }
-   
+
+//std::cout<<"out_state: "<<stack[S_OutPointState1]<<" "<<stack[S_OutPointState1 + 1]<<" "<<stack[S_OutPointState1 + 2]<<std::endl;
+//std::cout<<"in_state: "<<stack[S_InPointState1]<<" "<<stack[S_InPointState1 + 1]<<" "<<stack[S_InPointState1 + 2]<<std::endl;    
     int path_array_size_out2in;
     int path_index_array_out2in[25];
     // write: S_Path0~S_Path8
@@ -1534,30 +1533,31 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
     // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
     //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
-    generatePieceVectors(0, time_vector_size_out2in, S_TrajT_Smooth, vel_ratio, acc_ratio);
+    //generatePieceVectors(0, time_vector_size_out2in, S_TrajT_Smooth, vel_ratio, acc_ratio);
 
     double rescale_factor_out2in;
     // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
     // write: S_TrajRescaleFactor
-    generateRescaleFactorVector(time_vector_size_out2in, rescale_factor_out2in);
-      
+    generateRescaleFactorVector(time_vector_size_out2in, rescale_factor_out2in);      
     stack[S_TrajRescaleFactor] = rescale_factor_out2in;
-    /*if(rescale_factor_via2end >= rescale_factor_out2in)
-    {
-        stack[S_TrajRescaleFactor] = rescale_factor_via2end;
-    }
-    else
-    {
-        stack[S_TrajRescaleFactor] = rescale_factor_out2in;
-    }*/
+    adjustTrajTSmooth(traj_smooth_in_index, rescale_factor_out2in);
+    adjustPVA2(traj_smooth_in_index, rescale_factor_out2in); 
 
-    // read: S_TrajT, S_TrajT_Smooth, S_TrajRescaleFactor
+    // read: S_TrajT, S_TrajT_Smooth
     // write: S_TrajRescaleT
     generateRescaleVectorSmooth(time_vector_size_out2in, traj_piece_num_via2end, traj_smooth_in_index - traj_index_via);
+
+/*for(int i=0; i<=traj_index_end; ++i)
+    std::cout<<i<<" "<<stack[S_TrajP1 + i]<<" "<<stack[S_TrajV1 + i]<<" "<<stack[S_TrajA1 + i]<<std::endl;
+
+for(int i=0; i<traj_index_end; ++i)
+    std::cout<<i<<" "<<stack[S_TrajRescaleT + i]<<std::endl;*/
+
     // read: S_TrajRescaleT
     // write: S_TrajAbsoluteT    
-    generateAbsoluteVector(traj_index_end);
-
+    //generateAbsoluteVector(traj_index_end);
+/*for(int i=0; i<=traj_index_end; ++i)
+    std::cout<<i<<" "<<stack[S_TrajAbsoluteT + i]<<std::endl;*/
     // read: S_TrajRescaleFactor, S_TrajT
     // write: S_TrajRescaleT
     //generateRescaleVector(0, time_vector_size_out2in, traj_index_via, traj_piece_num_via2end);
@@ -1567,6 +1567,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     // write: S_TrajAbsoluteT, S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
     //        S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0
     generateCoeff(time_vector_size_total);
+    //adjustCoeff(traj_smooth_in_index);
 
     generateTrajCacheSmooth(traj_cache, time_vector_size_total, 
                             path_index_array_out2in, path_array_size_out2in,
@@ -2598,10 +2599,10 @@ void generateRescaleFactorVector(int time_vector_size, double& rescale_factor)
         }
     }
 
-    // if(rescale_factor > segment_alg_param.max_rescale_factor)
-    // {
-    //     rescale_factor = segment_alg_param.max_rescale_factor;
-    // }
+    if(rescale_factor > segment_alg_param.max_rescale_factor)
+    {
+        rescale_factor = segment_alg_param.max_rescale_factor;
+    }
 }
 
 void generateRescaleVector(int time_vector_size)
@@ -2620,11 +2621,19 @@ void adjustTrajT(int time_vector_size, double rescale_factor)
     }
 }
 
+void adjustTrajTSmooth(int time_vector_size, double rescale_factor)
+{
+    for(int i = 0; i < time_vector_size; ++i)
+    {
+        stack[S_TrajT_Smooth + i ] = rescale_factor * stack[S_TrajT_Smooth + i ];
+    }
+}
+
 void adjustPVA(int traj_index_via, int traj_index_end, double rescale_factor_via2end)
 {
     int i, j;
     int v_base, a_base;
-    double rescale_factor_via2end_square = rescale_factor_via2end * rescale_factor_via2end;
+    double rescale_factor_via2end_square = rescale_factor_via2end * rescale_factor_via2end;   
     for(i = traj_index_via; i <= traj_index_end; ++i)
     {
         v_base = S_TrajV0;
@@ -2639,17 +2648,37 @@ void adjustPVA(int traj_index_via, int traj_index_end, double rescale_factor_via
     }
 }
 
+void adjustPVA2(int traj_index_in, double rescale_factor)
+{
+    int i, j;
+    int v_base, a_base;
+    double rescale_factor_square = rescale_factor * rescale_factor;
+    
+    for(i = 1; i < traj_index_in; ++i)
+    {
+        v_base = S_TrajV0;
+        a_base = S_TrajA0;
+        for(j = 0; j < model.link_num; ++j)
+        {
+            stack[v_base + i] = stack[v_base + i] / rescale_factor;
+            stack[a_base + i] = stack[a_base + i] / rescale_factor_square;
+            v_base += 150;
+            a_base += 150;
+        }
+    }
+}
+
 void generateRescaleVectorSmooth(int time_vector_size_out2in, int time_vector_size_in2end, int time_vector_size_via2in)
 {
     int i;
     for(i = 0; i < time_vector_size_out2in; ++i)
     {
-        stack[S_TrajRescaleT + i] = stack[S_TrajRescaleFactor] * stack[S_TrajT_Smooth + i];
+        stack[S_TrajRescaleT + i] = stack[S_TrajT_Smooth + i];
     }
 
     for(i = 0; i < time_vector_size_in2end; ++i)
     {
-        stack[S_TrajRescaleT + time_vector_size_out2in + i] = stack[S_TrajRescaleFactor] * stack[S_TrajT + time_vector_size_via2in + i];
+        stack[S_TrajRescaleT + time_vector_size_out2in + i] = stack[S_TrajT + time_vector_size_via2in + i];
     }    
 }
 
@@ -2665,11 +2694,14 @@ void generateAbsoluteVector(int time_vector_size)
 void generateCoeff(int time_vector_size)
 {
     int i, j;
+    int coeff_a5 = S_TrajCoeffJ0A5;
+    int coeff_a4 = S_TrajCoeffJ0A4;
     int coeff_a3 = S_TrajCoeffJ0A3;
     int coeff_a2 = S_TrajCoeffJ0A2;
     int coeff_a1 = S_TrajCoeffJ0A1;
     int coeff_a0 = S_TrajCoeffJ0A0;
     int traj_p = S_TrajP0;
+    int traj_v = S_TrajV0;
     int traj_a = S_TrajA0;
  
     // compute coeff
@@ -2677,20 +2709,58 @@ void generateCoeff(int time_vector_size)
     {
         for(j = 0; j < time_vector_size; ++j)
         {
-            stack[S_TmpDouble_1] = stack[S_TrajRescaleFactor] * stack[S_TrajRescaleFactor];
-            stack[S_TmpDouble_2] = stack[traj_a + j] / stack[S_TmpDouble_1];    // recaled a1
-            stack[S_TmpDouble_3] = stack[traj_a + j + 1] / stack[S_TmpDouble_1];    // rescaled a2
-            stack[coeff_a3 + j] = (stack[S_TmpDouble_3] - stack[S_TmpDouble_2]) / (6 * stack[S_TrajRescaleT + j]);
-            stack[coeff_a2 + j] = (stack[S_TmpDouble_2] * stack[S_TrajAbsoluteT + j + 1] - stack[S_TmpDouble_3] * stack[S_TrajAbsoluteT + j]) / (2 * stack[S_TrajRescaleT + j]);
-            stack[coeff_a1 + j] = (stack[traj_p + j + 1] - stack[traj_p + j]) / stack[S_TrajRescaleT + j]
-                                   + (stack[S_TmpDouble_3] * stack[S_TrajAbsoluteT + j] * stack[S_TrajAbsoluteT + j] - stack[S_TmpDouble_2] * stack[S_TrajAbsoluteT + j + 1] * stack[S_TrajAbsoluteT + j + 1]) / (2 * stack[S_TrajRescaleT + j])
-                                   + (stack[S_TmpDouble_2] - stack[S_TmpDouble_3]) * stack[S_TrajRescaleT + j] / 6;
-            stack[coeff_a0 + j] = (stack[traj_p + j] * stack[S_TrajAbsoluteT + j + 1] - stack[traj_p + j + 1] * stack[S_TrajAbsoluteT + j]) / stack[S_TrajRescaleT + j]
-                                   + (stack[S_TmpDouble_2] * stack[S_TrajAbsoluteT + j + 1] * stack[S_TrajAbsoluteT + j + 1] * stack[S_TrajAbsoluteT + j + 1] - stack[S_TmpDouble_3] * stack[S_TrajAbsoluteT + j] * stack[S_TrajAbsoluteT + j] * stack[S_TrajAbsoluteT + j]) / (6 * stack[S_TrajRescaleT + j])
-                                   + (stack[S_TmpDouble_3] * stack[S_TrajAbsoluteT + j] - stack[S_TmpDouble_2] * stack[S_TrajAbsoluteT + j + 1]) * stack[S_TrajRescaleT + j] / 6;        
+            stack[S_TmpDouble_2] = stack[S_TrajRescaleT + j] * stack[S_TrajRescaleT + j];   // T^2
+            stack[S_TmpDouble_3] = stack[S_TmpDouble_2] * stack[S_TrajRescaleT + j];    // T^3
+            stack[S_TmpDouble_4] = stack[S_TmpDouble_3] * stack[S_TrajRescaleT + j];    // T^4
+            stack[S_TmpDouble_5] = stack[S_TmpDouble_4] * stack[S_TrajRescaleT + j];    // T^5 
+            stack[coeff_a5 + j] = (12 * (stack[traj_p + j + 1] - stack[traj_p + j])
+                                    - 6 * (stack[traj_v + j] + stack[traj_v + j + 1]) * stack[S_TrajRescaleT + j]
+                                    - (stack[traj_a + j] - stack[traj_a + j + 1]) * stack[S_TmpDouble_2])
+                                    / (2 * stack[S_TmpDouble_5]);
+            stack[coeff_a4 + j] = (30 * (stack[traj_p + j] - stack[traj_p + j + 1])
+                                    + (16 * stack[traj_v + j] + 14 * stack[traj_v + j + 1]) * stack[S_TrajRescaleT + j]
+                                    + (3 * stack[traj_a + j] - 2 * stack[traj_a + j +1]) * stack[S_TmpDouble_2])
+                                    / (2 * stack[S_TmpDouble_4]);
+            stack[coeff_a3 + j] = (20 * (stack[traj_p + j + 1] - stack[traj_p + j]) 
+                                    - 4 * (3 * stack[traj_v + j] + 2 * stack[traj_v + j + 1]) * stack[S_TrajRescaleT + j]
+                                    + (stack[traj_a + j + 1] - 3 * stack[traj_a + j]) * stack[S_TmpDouble_2])
+                                    / (2 * stack[S_TmpDouble_3]);
+            stack[coeff_a2 + j] = stack[traj_a + j] / 2;
+            stack[coeff_a1 + j] = stack[traj_v + j];
+            stack[coeff_a0 + j] = stack[traj_p + j];
         }
         traj_p += 150;
+        traj_v += 150;
         traj_a += 150;
+        coeff_a5 += 300;
+        coeff_a4 += 300;
+        coeff_a3 += 300;
+        coeff_a2 += 300;
+        coeff_a1 += 300;
+        coeff_a0 += 300;
+    }
+}
+
+void adjustCoeff(int traj_smooth_in_index)
+{
+    int coeff_a3 = S_TrajCoeffJ0A3;
+    int coeff_a2 = S_TrajCoeffJ0A2;
+    int coeff_a1 = S_TrajCoeffJ0A1;
+    int coeff_a0 = S_TrajCoeffJ0A0;
+    int traj_p = S_TrajP0;
+    int traj_v= S_TrajV0;
+    double p0, p1, v0, v1, t;
+    for(int i = 0; i < model.link_num; ++i)
+    {
+        stack[coeff_a0] = stack[traj_p];
+        stack[coeff_a1] = stack[traj_v];
+        stack[coeff_a2] = 3 * (stack[traj_p + 1] - stack[traj_p]) / (stack[S_TrajRescaleT] * stack[S_TrajRescaleT])
+                                - (2 * stack[traj_v] + stack[traj_v + 1]) / stack[S_TrajRescaleT];
+        stack[coeff_a3] = 2 * (stack[traj_p] - stack[traj_p + 1]) / (stack[S_TrajRescaleT] * stack[S_TrajRescaleT] * stack[S_TrajRescaleT])
+                                + (stack[traj_v] + stack[traj_v + 1]) / (stack[S_TrajRescaleT] * stack[S_TrajRescaleT]);
+
+        traj_p += 150;
+        traj_v += 150;
         coeff_a3 += 200;
         coeff_a2 += 200;
         coeff_a1 += 200;
@@ -2709,26 +2779,38 @@ void generateTrajCache(TrajectoryCache &traj_cache, int time_vector_size, int* p
         traj_cache.cache[i].axis[0].data[1] = stack[S_TrajCoeffJ0A1 + i];
         traj_cache.cache[i].axis[0].data[2] = stack[S_TrajCoeffJ0A2 + i];
         traj_cache.cache[i].axis[0].data[3] = stack[S_TrajCoeffJ0A3 + i];
+        traj_cache.cache[i].axis[0].data[4] = stack[S_TrajCoeffJ0A4 + i];
+        traj_cache.cache[i].axis[0].data[5] = stack[S_TrajCoeffJ0A5 + i];
         traj_cache.cache[i].axis[1].data[0] = stack[S_TrajCoeffJ1A0 + i];
         traj_cache.cache[i].axis[1].data[1] = stack[S_TrajCoeffJ1A1 + i];
         traj_cache.cache[i].axis[1].data[2] = stack[S_TrajCoeffJ1A2 + i];
-        traj_cache.cache[i].axis[1].data[3] = stack[S_TrajCoeffJ1A3 + i];   
+        traj_cache.cache[i].axis[1].data[3] = stack[S_TrajCoeffJ1A3 + i];
+        traj_cache.cache[i].axis[1].data[4] = stack[S_TrajCoeffJ1A4 + i];   
+        traj_cache.cache[i].axis[1].data[5] = stack[S_TrajCoeffJ1A5 + i];   
         traj_cache.cache[i].axis[2].data[0] = stack[S_TrajCoeffJ2A0 + i];
         traj_cache.cache[i].axis[2].data[1] = stack[S_TrajCoeffJ2A1 + i];
         traj_cache.cache[i].axis[2].data[2] = stack[S_TrajCoeffJ2A2 + i];
         traj_cache.cache[i].axis[2].data[3] = stack[S_TrajCoeffJ2A3 + i];
+        traj_cache.cache[i].axis[2].data[4] = stack[S_TrajCoeffJ2A4 + i];
+        traj_cache.cache[i].axis[2].data[5] = stack[S_TrajCoeffJ2A5 + i];
         traj_cache.cache[i].axis[3].data[0] = stack[S_TrajCoeffJ3A0 + i];
         traj_cache.cache[i].axis[3].data[1] = stack[S_TrajCoeffJ3A1 + i];
         traj_cache.cache[i].axis[3].data[2] = stack[S_TrajCoeffJ3A2 + i];
         traj_cache.cache[i].axis[3].data[3] = stack[S_TrajCoeffJ3A3 + i];
+        traj_cache.cache[i].axis[3].data[4] = stack[S_TrajCoeffJ3A4 + i];
+        traj_cache.cache[i].axis[3].data[5] = stack[S_TrajCoeffJ3A5 + i];
         traj_cache.cache[i].axis[4].data[0] = stack[S_TrajCoeffJ4A0 + i];
         traj_cache.cache[i].axis[4].data[1] = stack[S_TrajCoeffJ4A1 + i];
         traj_cache.cache[i].axis[4].data[2] = stack[S_TrajCoeffJ4A2 + i];
-        traj_cache.cache[i].axis[4].data[3] = stack[S_TrajCoeffJ4A3 + i];   
+        traj_cache.cache[i].axis[4].data[3] = stack[S_TrajCoeffJ4A3 + i];
+        traj_cache.cache[i].axis[4].data[4] = stack[S_TrajCoeffJ4A4 + i];
+        traj_cache.cache[i].axis[4].data[5] = stack[S_TrajCoeffJ4A5 + i];
         traj_cache.cache[i].axis[5].data[0] = stack[S_TrajCoeffJ5A0 + i];
         traj_cache.cache[i].axis[5].data[1] = stack[S_TrajCoeffJ5A1 + i];
         traj_cache.cache[i].axis[5].data[2] = stack[S_TrajCoeffJ5A2 + i];
         traj_cache.cache[i].axis[5].data[3] = stack[S_TrajCoeffJ5A3 + i];
+        traj_cache.cache[i].axis[5].data[4] = stack[S_TrajCoeffJ5A4 + i];
+        traj_cache.cache[i].axis[5].data[5] = stack[S_TrajCoeffJ5A5 + i];
         traj_cache.cache[i].duration = stack[S_TrajRescaleT + i];
     }
     
@@ -2757,26 +2839,38 @@ void generateTrajCacheSmooth(TrajectoryCache &traj_cache, int time_vector_size,
         traj_cache.cache[i].axis[0].data[1] = stack[S_TrajCoeffJ0A1 + i];
         traj_cache.cache[i].axis[0].data[2] = stack[S_TrajCoeffJ0A2 + i];
         traj_cache.cache[i].axis[0].data[3] = stack[S_TrajCoeffJ0A3 + i];
+        traj_cache.cache[i].axis[0].data[4] = stack[S_TrajCoeffJ0A4 + i];
+        traj_cache.cache[i].axis[0].data[5] = stack[S_TrajCoeffJ0A5 + i];
         traj_cache.cache[i].axis[1].data[0] = stack[S_TrajCoeffJ1A0 + i];
         traj_cache.cache[i].axis[1].data[1] = stack[S_TrajCoeffJ1A1 + i];
         traj_cache.cache[i].axis[1].data[2] = stack[S_TrajCoeffJ1A2 + i];
-        traj_cache.cache[i].axis[1].data[3] = stack[S_TrajCoeffJ1A3 + i];   
+        traj_cache.cache[i].axis[1].data[3] = stack[S_TrajCoeffJ1A3 + i];
+        traj_cache.cache[i].axis[1].data[4] = stack[S_TrajCoeffJ1A4 + i];   
+        traj_cache.cache[i].axis[1].data[5] = stack[S_TrajCoeffJ1A5 + i];   
         traj_cache.cache[i].axis[2].data[0] = stack[S_TrajCoeffJ2A0 + i];
         traj_cache.cache[i].axis[2].data[1] = stack[S_TrajCoeffJ2A1 + i];
         traj_cache.cache[i].axis[2].data[2] = stack[S_TrajCoeffJ2A2 + i];
         traj_cache.cache[i].axis[2].data[3] = stack[S_TrajCoeffJ2A3 + i];
+        traj_cache.cache[i].axis[2].data[4] = stack[S_TrajCoeffJ2A4 + i];
+        traj_cache.cache[i].axis[2].data[5] = stack[S_TrajCoeffJ2A5 + i];
         traj_cache.cache[i].axis[3].data[0] = stack[S_TrajCoeffJ3A0 + i];
         traj_cache.cache[i].axis[3].data[1] = stack[S_TrajCoeffJ3A1 + i];
         traj_cache.cache[i].axis[3].data[2] = stack[S_TrajCoeffJ3A2 + i];
         traj_cache.cache[i].axis[3].data[3] = stack[S_TrajCoeffJ3A3 + i];
+        traj_cache.cache[i].axis[3].data[4] = stack[S_TrajCoeffJ3A4 + i];
+        traj_cache.cache[i].axis[3].data[5] = stack[S_TrajCoeffJ3A5 + i];
         traj_cache.cache[i].axis[4].data[0] = stack[S_TrajCoeffJ4A0 + i];
         traj_cache.cache[i].axis[4].data[1] = stack[S_TrajCoeffJ4A1 + i];
         traj_cache.cache[i].axis[4].data[2] = stack[S_TrajCoeffJ4A2 + i];
-        traj_cache.cache[i].axis[4].data[3] = stack[S_TrajCoeffJ4A3 + i];   
+        traj_cache.cache[i].axis[4].data[3] = stack[S_TrajCoeffJ4A3 + i];
+        traj_cache.cache[i].axis[4].data[4] = stack[S_TrajCoeffJ4A4 + i];
+        traj_cache.cache[i].axis[4].data[5] = stack[S_TrajCoeffJ4A5 + i];
         traj_cache.cache[i].axis[5].data[0] = stack[S_TrajCoeffJ5A0 + i];
         traj_cache.cache[i].axis[5].data[1] = stack[S_TrajCoeffJ5A1 + i];
         traj_cache.cache[i].axis[5].data[2] = stack[S_TrajCoeffJ5A2 + i];
         traj_cache.cache[i].axis[5].data[3] = stack[S_TrajCoeffJ5A3 + i];
+        traj_cache.cache[i].axis[5].data[4] = stack[S_TrajCoeffJ5A4 + i];
+        traj_cache.cache[i].axis[5].data[5] = stack[S_TrajCoeffJ5A5 + i];
         traj_cache.cache[i].duration = stack[S_TrajRescaleT + i];        
     }
 
@@ -2838,6 +2932,58 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step)
         std::cout<<p_value<<"  "<<v_value<<"  "<<a_value<<std::endl;
         cur_time += time_step;
     }
+}
+
+void printTraj2(TrajectoryCache &traj_cache, int index, double time_step)
+{
+    double absolute_time_vector[50];
+    absolute_time_vector[0] = 0;
+    for(int i = 1; i < traj_cache.cache_length + 1; ++i)
+    {
+        absolute_time_vector[i] = absolute_time_vector[i - 1] + traj_cache.cache[i - 1].duration;
+    }
+
+    int segment_index;
+    double cur_time = 0;
+    double delta_time = 0;
+    double p_value, v_value, a_value;
+    int a3_base = S_TrajCoeffJ0A3 + 200*index;
+    int a2_base = S_TrajCoeffJ0A2 + 200*index;
+    int a1_base = S_TrajCoeffJ0A1 + 200*index;
+    int a0_base = S_TrajCoeffJ0A0 + 200*index;    
+    while(cur_time < absolute_time_vector[traj_cache.cache_length])
+    {
+        for(segment_index = traj_cache.cache_length - 1; segment_index >= 0; --segment_index)
+        {
+            if(cur_time >= absolute_time_vector[segment_index])
+            {
+                break;
+            }
+        }
+        if(segment_index == (traj_cache.cache_length - 1))
+            break;
+        delta_time = cur_time - absolute_time_vector[segment_index];
+        p_value = traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[3] * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[2] * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[1] * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[0];
+        v_value = 5 * traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time * delta_time
+                  + 4 * traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time * delta_time
+                  + 3 * traj_cache.cache[segment_index].axis[index].data[3] * delta_time * delta_time
+                  + 2 * traj_cache.cache[segment_index].axis[index].data[2] * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[1];
+        a_value = 20 * traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time
+                  + 12 * traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time
+                  + 6 * traj_cache.cache[segment_index].axis[index].data[3] * delta_time
+                  + 2 * traj_cache.cache[segment_index].axis[index].data[2];
+
+        std::cout<<p_value<<"  "<<v_value<<"  "<<a_value<<std::endl;
+        cur_time += time_step;
+    }
+
+
 }
 
 void printAllTraj(TrajectoryCache &traj_cache, double time_step)

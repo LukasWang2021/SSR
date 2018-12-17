@@ -112,6 +112,7 @@ void ControllerPublish::updateIoBoardStatus()
     fst_hal::IODevicePortValues values;
 
     io_board_status_.io_board_count = 4; //max device number
+    
     for (int i = 0; i < io_board_status_.io_board_count; i++)
     {
         if (i < dev_num && vec[i].id < 16)
@@ -122,9 +123,12 @@ void ControllerPublish::updateIoBoardStatus()
             memcpy(&io_board_status_.io_board[i].DO, &values.DO, sizeof(uint32_t));
             memcpy(&io_board_status_.io_board[i].RI, &values.RI, sizeof(uint8_t));
             memcpy(&io_board_status_.io_board[i].RO, &values.RO, sizeof(uint8_t));
-            io_board_status_.io_board[i].valid = 1; // 1 = true.
+            io_board_status_.io_board[i].valid = vec[i].is_valid; // 1 = true.
         }
-        io_board_status_.io_board[i].valid = 0;
+        else
+        {
+            io_board_status_.io_board[i].valid = 0;
+        } 
     }
     
 }

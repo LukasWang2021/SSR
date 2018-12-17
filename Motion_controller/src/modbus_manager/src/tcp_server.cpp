@@ -196,7 +196,6 @@ ErrorCode ModbusTCPServer::setConfig(ModbusServerConfig config)
         || (config.reg_info.input_reg.is_valid && config.reg_info.holding_reg.is_valid)
         || config.response_delay < 0)
     {
-        printf("can not be both true\n");
         return MODBUS_SERVER_INVALID_ARG;
     }
 
@@ -205,46 +204,30 @@ ErrorCode ModbusTCPServer::setConfig(ModbusServerConfig config)
         || reg_info_.coil.addr + reg_info_.coil.max_nb - 1 
             < config.reg_info.coil.max_nb + config.reg_info.coil.addr - 1)
     {
-        printf("coil param error\n");
         return MODBUS_SERVER_INVALID_ARG;
     }
 
-    else if (config.reg_info.discrepte_input.is_valid)
+    if (config.reg_info.discrepte_input.max_nb < 0
+        || config.reg_info.discrepte_input.addr < reg_info_.discrepte_input.addr
+        || reg_info_.discrepte_input.addr + reg_info_.discrepte_input.max_nb - 1 
+            < config.reg_info.discrepte_input.max_nb + config.reg_info.discrepte_input.addr - 1)
     {
-        if (config.reg_info.discrepte_input.max_nb < 0
-            || config.reg_info.discrepte_input.addr < reg_info_.discrepte_input.addr
-            || reg_info_.discrepte_input.addr + reg_info_.discrepte_input.max_nb - 1 
-                < config.reg_info.discrepte_input.max_nb + config.reg_info.discrepte_input.addr - 1)
-        {
-            printf("discrepte_input param error\n");
-            return MODBUS_SERVER_INVALID_ARG;
-        }
+        return MODBUS_SERVER_INVALID_ARG;
     }
-    else if (config.reg_info.input_reg.is_valid)
+
+    if (config.reg_info.input_reg.max_nb < 0
+        || config.reg_info.input_reg.addr < reg_info_.input_reg.addr
+        || reg_info_.input_reg.addr + reg_info_.input_reg.max_nb - 1 
+            < config.reg_info.input_reg.max_nb + config.reg_info.input_reg.addr - 1)
     {
-        if (config.reg_info.input_reg.max_nb < 0
-            || config.reg_info.input_reg.addr < reg_info_.input_reg.addr
-            || reg_info_.input_reg.addr + reg_info_.input_reg.max_nb - 1 
-                < config.reg_info.input_reg.max_nb + config.reg_info.input_reg.addr - 1)
-        {
-            printf("input_reg param error\n");
-            return MODBUS_SERVER_INVALID_ARG;
-        }
+        return MODBUS_SERVER_INVALID_ARG;
     }
-    else if (config.reg_info.holding_reg.is_valid)
+
+    if (config.reg_info.holding_reg.max_nb < 0
+        || config.reg_info.holding_reg.addr < reg_info_.holding_reg.addr
+        || reg_info_.holding_reg.addr + reg_info_.holding_reg.max_nb - 1 
+            < config.reg_info.holding_reg.max_nb + config.reg_info.holding_reg.addr - 1)
     {
-        if (config.reg_info.holding_reg.max_nb < 0
-            || config.reg_info.holding_reg.addr < reg_info_.holding_reg.addr
-            || reg_info_.holding_reg.addr + reg_info_.holding_reg.max_nb - 1 
-                < config.reg_info.holding_reg.max_nb + config.reg_info.holding_reg.addr - 1)
-        {
-            printf("holding_reg param error\n");
-            return MODBUS_SERVER_INVALID_ARG;
-        }
-    }
-    else
-    {
-        printf("func param error\n");
         return MODBUS_SERVER_INVALID_ARG;
     }
 
@@ -539,7 +522,7 @@ ErrorCode ModbusTCPServer::writeCoils(int addr, int nb, uint8_t *dest)
         return MODBUS_SERVER_BE_NOT_OPENED;
 
     if (!config_.reg_info.coil.is_valid)
-        return MODBUS_SERVER_REG_INVALID;
+        return MODBUS_SERVER_FUNCTION_INVALID;
 
     int last_addr = addr + nb -1;
     if (last_addr < addr 
@@ -566,7 +549,7 @@ ErrorCode ModbusTCPServer::readCoils(int addr, int nb, uint8_t *dest)
         return MODBUS_SERVER_BE_NOT_OPENED;
 
     if (!config_.reg_info.coil.is_valid)
-        return MODBUS_SERVER_REG_INVALID;
+        return MODBUS_SERVER_FUNCTION_INVALID;
 
     int last_addr = addr + nb -1;
     if (last_addr < addr 
@@ -592,7 +575,7 @@ ErrorCode ModbusTCPServer::readDiscreteInputs(int addr, int nb, uint8_t *dest)
         return MODBUS_SERVER_BE_NOT_OPENED;
 
     if (!config_.reg_info.discrepte_input.is_valid)
-        return MODBUS_SERVER_REG_INVALID;
+        return MODBUS_SERVER_FUNCTION_INVALID;
 
     int last_addr = addr + nb -1;
     if (last_addr < addr 
@@ -619,7 +602,7 @@ ErrorCode ModbusTCPServer::writeHoldingRegs(int addr, int nb, uint16_t *dest)
         return MODBUS_SERVER_BE_NOT_OPENED;
 
     if (!config_.reg_info.holding_reg.is_valid)
-        return MODBUS_SERVER_REG_INVALID;
+        return MODBUS_SERVER_FUNCTION_INVALID;
 
     int last_addr = addr + nb -1;
     if (last_addr < addr 
@@ -646,7 +629,7 @@ ErrorCode ModbusTCPServer::readHoldingRegs(int addr, int nb, uint16_t *dest)
         return MODBUS_SERVER_BE_NOT_OPENED;
 
     if (!config_.reg_info.holding_reg.is_valid)
-        return MODBUS_SERVER_REG_INVALID;
+        return MODBUS_SERVER_FUNCTION_INVALID;
 
     int last_addr = addr + nb -1;
     if (last_addr < addr 
@@ -673,7 +656,7 @@ ErrorCode ModbusTCPServer::readInputRegs(int addr, int nb, uint16_t *dest)
         return MODBUS_SERVER_BE_NOT_OPENED;
 
     if (!config_.reg_info.input_reg.is_valid)
-        return MODBUS_SERVER_REG_INVALID;
+        return MODBUS_SERVER_FUNCTION_INVALID;
 
     int last_addr = addr + nb -1;
     if (last_addr < addr 
@@ -735,7 +718,7 @@ ErrorCode ModbusTCPServer::getValidRegInfo(int reg_type, ModbusRegAddrInfo info)
     }
     else
     {
-        return MODBUS_SERVER_REG_INVALID;
+        return MODBUS_SERVER_FUNCTION_INVALID;
     }
 
     return SUCCESS;

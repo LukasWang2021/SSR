@@ -10,7 +10,6 @@ void ControllerRpc::handleRpc0x0000D3A5(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setStartMode(rq_data_ptr->data.start_mode);
 
-    printf("rq_data_ptr->data.start_mode = %d\n", rq_data_ptr->data.start_mode);
     recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setStartMode"));
 }
 
@@ -23,9 +22,6 @@ void ControllerRpc::handleRpc0x000041C5(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     int start_mode = modbus_manager_ptr_->getStartMode();
     rs_data_ptr->data.start_mode =  static_cast<MessageType_ModbusStartModeType>(start_mode);
-
-    printf("rq_data_ptr->data.start_mode = %d\n", rs_data_ptr->data.start_mode);
-
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getStartMode"));
 }
 
@@ -45,15 +41,6 @@ void ControllerRpc::handleRpc0x00001B23(void* request_data_ptr, void* response_d
     RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
     rs_data_ptr->error_code.data = modbus_manager_ptr_->getConnectStatusFromServer(rs_data_ptr->data.data);
-
-    if (rs_data_ptr->data.data)
-    {
-        printf("get connect status is true : %d\n", rs_data_ptr->data.data);
-    }
-    else
-    {
-        printf("get connect status is false\n");
-    }
 
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerConnectStatus"));
 }

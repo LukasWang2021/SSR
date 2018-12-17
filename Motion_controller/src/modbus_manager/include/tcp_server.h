@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <mutex>
 
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
@@ -33,6 +34,8 @@ using namespace fst_hal;
 
 namespace fst_hal
 {
+enum {MODBUS_SERVER_COIL = 1, MODBUS_SERVER_DISCREPTE_INPUT = 2,
+    MODBUS_SERVER_HOLDING_REG = 4, MODBUS_SERVER_INPUT_REG = 3, MODBUS_SERVER_REG_TYPE_INVALID = 0};
 
 class ModbusTCPServer
 {
@@ -46,6 +49,8 @@ public:
     ErrorCode setConfig(ModbusServerConfig config);
     ModbusServerConfig getConfig();
     ModbusServerStartInfo getStartInfo();
+    ErrorCode getValidRegInfo(int reg_type, ModbusRegAddrInfo info);
+    int getResponseDelay();
 
     ModbusRegAddrInfo getCoilInfo();
     ModbusRegAddrInfo getDiscrepteInputInfo();
@@ -91,10 +96,19 @@ private:
     ModbusServerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     NetConnection net_connect_;
+    int valid_reg_type_;
+
+    std::mutex tab_bit_mutex_;
+    std::mutex tab_input_bit_mutex_;
+    std::mutex tab_reg_mutex_;
+    std::mutex tab_input_reg_mutex_;
+    int thread_priority_;
 
     ErrorCode init();
     bool checkConnect();
     bool loadParam();
+
+    ModbusTCPServer();
 };
 }
 

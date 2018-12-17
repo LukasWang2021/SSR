@@ -198,6 +198,8 @@
 #define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE0010   /*modbus client read failed*/																										
 #define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE0011   /*modbus client write failed*/																										
 #define MODBUS_CLIENT_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0012   /*modbus client be not opened*/																										
+#define MODBUS_CLIENT_IS_RUNNING (unsigned long long int)0x0001000200AE0013   /*modbus client is  running*/																										
+#define MODBUS_CLIENT_IS_ADDED (unsigned long long int)0x0001000200AE0014   /*modbus client is added*/																										
 #define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
 #define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server save param failed*/																										
 #define MODBUS_SERVER_CONNECT_FALIED (unsigned long long int)0x0001000200AE001B   /*modbus server connect failed */																										
@@ -205,6 +207,8 @@
 #define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server load param failed*/																										
 #define MODBUS_SERVER_OPEN_FAILED (unsigned long long int)0x0001000200AE001E   /*modbus server open failed*/																										
 #define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0001000200AE001F   /*modbus server init failed*/																										
+#define MODBUS_SERVER_REG_INVALID (unsigned long long int)0x0001000200AE0020   /*modbus server reg invalid*/																										
+#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000200AE0021   /*modbus server is running*/																										
 
 
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/

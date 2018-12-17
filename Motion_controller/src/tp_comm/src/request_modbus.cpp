@@ -606,3 +606,80 @@ void TpComm::handleRequest0x000072C3(int recv_bytes)
     handleRequestPackage(0x000072C3, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes, RequestMessageType_ModbusRegAddrInfo_fields, -1);
 }
+
+
+
+//"/rpc/modbus/getServerValidFuctionInfo"
+void TpComm::handleRequest0x00008E7F(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_ModbusFunctionInfo* response_data_ptr = new ResponseMessageType_Uint64_ModbusFunctionInfo;
+
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x00008E7F, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+//"/rpc/modbus/getServerResponseDelay"
+void TpComm::handleRequest0x00000329(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32* response_data_ptr = new ResponseMessageType_Uint64_Int32;
+
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x00000329, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}
+
+//"/rpc/modbus/getServerRunningStatus"
+void TpComm::handleRequest0x00000953(int recv_bytes)
+{
+    // create object for request and response package
+    RequestMessageType_Void* request_data_ptr = new RequestMessageType_Void;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Bool* response_data_ptr = new ResponseMessageType_Uint64_Bool;
+
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+
+    handleRequestPackage(0x00000953, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Void_fields, -1);
+}

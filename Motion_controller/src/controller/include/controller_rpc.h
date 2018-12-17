@@ -447,6 +447,13 @@ private:
     void handleRpc0x00003583(void* request_data_ptr, void* response_data_ptr);
 	//"/rpc/modbus/readInputRegs"
     void handleRpc0x000072C3(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getServerValidFuctionInfo"
+    void handleRpc0x00008E7F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getServerResponseDelay"
+    void handleRpc0x00000329(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getServerRunningStatus"
+    void handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr);
+
 };
 
 }

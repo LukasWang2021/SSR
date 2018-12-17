@@ -509,6 +509,13 @@ private:
     /********rpc/file_manager/writeFile, RequestMessageType_String_Bytes**********/
     void handleRequest0x00010D95(int recv_bytes);
 
+    /********rpc/modbus/getServerValidFuctionInfo, RequestMessageType_Void**********/
+    void handleRequest0x00008E7F(int recv_bytes);
+    /********rpc/modbus/getServerResponseDelay, RequestMessageType_Void**********/
+    void handleRequest0x00000329(int recv_bytes);
+    /********rpc/modbus/getServerRunningStatus, RequestMessageType_Void**********/
+    void handleRequest0x00000953(int recv_bytes);
+
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********GetRunningStatus, ResponseMessageType_Int32**********/	
@@ -938,6 +945,12 @@ private:
     void handleResponse0x00003583(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/modbus/readInputRegs, ResponseMessageType_Uint64_ModbusRegValueList**********/
     void handleResponse0x000072C3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerValidFuctionInfo, ResponseMessageType_Uint64_ModbusFunctionInfo**********/
+    void handleResponse0x00008E7F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerResponseDelay, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00000329(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerRunningStatus, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x00000953(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     fst_ip::LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

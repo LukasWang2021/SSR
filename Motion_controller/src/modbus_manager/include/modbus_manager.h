@@ -23,7 +23,7 @@ using namespace fst_hal;
 
 namespace fst_hal
 {
-enum ModbusStartMode{CLIENT = 1, SERVER = 2, };
+enum ModbusStartMode{MODBUS_TCP_INVALID = 0, MODBUS_TCP_CLIENT = 1, MODBUS_TCP_SERVER = 2, };
 class ModbusManager: public BaseDevice
 {
 public:
@@ -49,11 +49,14 @@ public:
     // for server
     ErrorCode openServer();
     ErrorCode closeServer();
+    bool isServerRunning();
 
     ErrorCode setConnectStatusToServer(bool &status);
     ErrorCode getConnectStatusFromServer(bool &status);
     ErrorCode setConfigToServer(ModbusServerConfig &config);
     ErrorCode getConfigFromServer(ModbusServerConfig &config);
+    ErrorCode getValidRegInfoFromServer(int reg_type, ModbusRegAddrInfo info);
+    ErrorCode getResponseDelayFromServer(int response_delay);
 
     ErrorCode getCoilInfoFromServer(ModbusRegAddrInfo &info); 
     ErrorCode getDiscrepteInputInfoFromServer(ModbusRegAddrInfo &info);
@@ -68,6 +71,7 @@ public:
     ErrorCode openClient(int client_id);
     ErrorCode closeClient(int client_id); // to modify
     void getClientIdAndName(int id, string name);
+    bool isClientRunning(int client_id);
 
     ErrorCode setConnectStatusToClient(int client_id, bool status);
     ErrorCode getConnectStatusFromClient(int client_id, bool status);
@@ -92,9 +96,6 @@ private:
     int start_mode_;
     int address_;
 
-    bool isClientRunning(int client_id);
-    bool isServerRunning();
-
     ErrorCode writeCoilsToServer(int addr, int nb, uint8_t *dest);
     ErrorCode readCoilsFromServer(int addr, int nb, uint8_t *dest);
     ErrorCode readDiscreteInputsFromServer(int addr, int nb, uint8_t *dest);
@@ -110,6 +111,8 @@ private:
     ErrorCode writeAndReadHoldingRegsByClient(int client_id, int write_addr, int write_nb, const uint16_t *write_dest,
         int read_addr, int read_nb, uint16_t *read_dest);
     ErrorCode readInputRegsByClient(int client_id, int addr, int nb, uint16_t *dest);
+
+    ModbusManager();
 };
 }
 

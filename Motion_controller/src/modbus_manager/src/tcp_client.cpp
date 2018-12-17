@@ -37,6 +37,37 @@ ModbusTCPClient::ModbusTCPClient(string file_path, int id):
     config_.reg_info.input_reg.max_nb = 0;
 }
 
+ModbusTCPClient::ModbusTCPClient():
+    log_ptr_(NULL), param_ptr_(NULL), ctx_(NULL),
+    is_debug_(false), socket_(17), id_(0), is_running_(false)
+{
+    log_ptr_ = new fst_log::Logger();
+    param_ptr_ = new ModbusClientParam("null");
+
+    FST_LOG_INIT("ModbusTcpClient");
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+
+    is_debug_ = false;
+    comm_type_ = "TCP";
+    is_enable_ = false;
+
+    config_.name = "";
+    config_.ip = "";
+    config_.port = -1;
+    config_.response_timeout_sec = 0;
+    config_.response_timeout_usec = 0;
+    config_.bytes_timeout_sec = 0;
+    config_.bytes_timeout_usec = 0;
+    config_.reg_info.coil.addr = 0;
+    config_.reg_info.coil.max_nb = 0;
+    config_.reg_info.discrepte_input.addr = 0;
+    config_.reg_info.discrepte_input.max_nb = 0;
+    config_.reg_info.holding_reg.addr = 0;
+    config_.reg_info.holding_reg.max_nb = 0;
+    config_.reg_info.input_reg.addr = 0;
+    config_.reg_info.input_reg.max_nb = 0;
+}
+
 ModbusTCPClient::~ModbusTCPClient()
 {
     if (log_ptr_ != NULL)

@@ -68,12 +68,16 @@ void ControllerRpc::handleRpc0x00017547(void* request_data_ptr, void* response_d
     server_config.response_delay = rq_data_ptr->data.response_delay;
     server_config.reg_info.coil.addr = rq_data_ptr->data.coil.address;
     server_config.reg_info.coil.max_nb = rq_data_ptr->data.coil.number;
+    server_config.reg_info.coil.is_valid = rq_data_ptr->data.coil.is_valid;
     server_config.reg_info.discrepte_input.addr = rq_data_ptr->data.discrepte_input.address;
     server_config.reg_info.discrepte_input.max_nb = rq_data_ptr->data.discrepte_input.number;
+    server_config.reg_info.discrepte_input.is_valid = rq_data_ptr->data.discrepte_input.is_valid;
     server_config.reg_info.holding_reg.addr = rq_data_ptr->data.holding_reg.address;
     server_config.reg_info.holding_reg.max_nb = rq_data_ptr->data.holding_reg.number;
+    server_config.reg_info.holding_reg.is_valid = rq_data_ptr->data.holding_reg.is_valid;
     server_config.reg_info.input_reg.addr = rq_data_ptr->data.input_reg.address;
     server_config.reg_info.input_reg.max_nb = rq_data_ptr->data.input_reg.number;
+    server_config.reg_info.input_reg.is_valid = rq_data_ptr->data.input_reg.is_valid;
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setConfigToServer(server_config);
     recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerConfig"));
@@ -95,12 +99,16 @@ void ControllerRpc::handleRpc0x00016947(void* request_data_ptr, void* response_d
         rs_data_ptr->data.response_delay = server_config.response_delay;
         rs_data_ptr->data.coil.address = server_config.reg_info.coil.addr;
         rs_data_ptr->data.coil.number = server_config.reg_info.coil.max_nb;
+        rs_data_ptr->data.coil.is_valid = server_config.reg_info.coil.is_valid;
         rs_data_ptr->data.discrepte_input.address = server_config.reg_info.discrepte_input.addr;
         rs_data_ptr->data.discrepte_input.number = server_config.reg_info.discrepte_input.max_nb;
+        rs_data_ptr->data.discrepte_input.is_valid = server_config.reg_info.discrepte_input.is_valid;
         rs_data_ptr->data.holding_reg.address = server_config.reg_info.holding_reg.addr;
         rs_data_ptr->data.holding_reg.number = server_config.reg_info.holding_reg.max_nb;
+        rs_data_ptr->data.holding_reg.is_valid = server_config.reg_info.holding_reg.is_valid;
         rs_data_ptr->data.input_reg.address = server_config.reg_info.input_reg.addr;
         rs_data_ptr->data.input_reg.number = server_config.reg_info.input_reg.max_nb;
+        rs_data_ptr->data.input_reg.is_valid = server_config.reg_info.input_reg.is_valid;
     }
 
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerConfig"));
@@ -411,3 +419,46 @@ void ControllerRpc::handleRpc0x000072C3(void* request_data_ptr, void* response_d
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/readInputRegs"));
 }
 
+//"/rpc/modbus/getServerValidFuctionInfo"
+void ControllerRpc::handleRpc0x00008E7F(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    ResponseMessageType_Uint64_ModbusFunctionInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_ModbusFunctionInfo*>(response_data_ptr);
+
+    fst_hal::ModbusRegAddrInfo func_addr_info;
+    int func_type = 0;
+
+    rs_data_ptr->error_code.data = modbus_manager_ptr_->getValidRegInfoFromServer(func_type, func_addr_info);
+
+    if (rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->data.type = static_cast<MessageType_ModbusFunctionType>(func_type);
+        rs_data_ptr->data.address = func_addr_info.addr;
+        rs_data_ptr->data.number = func_addr_info.max_nb;
+        rs_data_ptr->data.is_valid = func_addr_info.is_valid;
+    }
+
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerValidFuctionInfo"));
+}
+
+
+//"/rpc/modbus/getServerResponseDelay"
+void ControllerRpc::handleRpc0x00000329(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
+
+    rs_data_ptr->error_code.data = modbus_manager_ptr_->getResponseDelayFromServer(rs_data_ptr->data.data);
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerResponseDelay"));
+}
+
+//"/rpc/modbus/getServerRunningStatus"	
+void ControllerRpc::handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    ResponseMessageType_Uint64_Bool* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Bool*>(response_data_ptr);
+
+    rs_data_ptr->error_code.data = SUCCESS;
+    rs_data_ptr->data.data = modbus_manager_ptr_->isServerRunning();
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerRunningStatus"));
+}

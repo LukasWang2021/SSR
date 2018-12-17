@@ -122,5 +122,6 @@
 #include "response/response_modbus_server_start_info.pb.h"
 #include "response/response_modbus_start_mode.pb.h"
 #include "response/response_modbus_status_valuelist.pb.h"
+#include "response/response_modbus_function_info.pb.h"
 
 #endif

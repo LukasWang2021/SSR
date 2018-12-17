@@ -1,6 +1,7 @@
 log_level: 1
 cycle_time: 1000 #1ms
 comm_type: TCP
+thread_priority: 50 
 
 port: 502
 connection_nb: 5
@@ -25,15 +26,19 @@ config:
         coil:
             addr: 1
             max_nb: 1024
+            is_valid: false
         discrepte_input:
             addr: 1
             max_nb: 1024
+            is_valid: false
         input_register:
             addr: 1
             max_nb: 1024
+            is_valid: false
         holding_register:
             addr: 1
             max_nb: 1024
+            is_valid: false
 
 is_enable: false
 #END

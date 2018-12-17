@@ -14,6 +14,7 @@ ModbusServerParam::ModbusServerParam(string file_path):
 
     is_debug_ = true;
     comm_type_ = "tcp";
+    thread_priority_ = -1;
 
     port_ = 502;
     cycle_time_ = 1000;
@@ -47,6 +48,7 @@ bool ModbusServerParam::loadParam()
         || !yaml_help_.getParam("port", port_)
         || !yaml_help_.getParam("is_debug", is_debug_)
         || !yaml_help_.getParam("comm_type", comm_type_)
+        || !yaml_help_.getParam("thread_priority", thread_priority_)
         || !yaml_help_.getParam("cycle_time", cycle_time_)
         || !yaml_help_.getParam("connection_nb", connection_nb_)
         || !yaml_help_.getParam("is_enable", is_enable_)
@@ -61,12 +63,16 @@ bool ModbusServerParam::loadParam()
         || !yaml_help_.getParam("config/response_delay", config_.response_delay)
         || !yaml_help_.getParam("config/reg_info/coil/addr", config_.reg_info.coil.addr)
         || !yaml_help_.getParam("config/reg_info/coil/max_nb", config_.reg_info.coil.max_nb)
+        || !yaml_help_.getParam("config/reg_info/coil/is_valid", config_.reg_info.coil.is_valid)
         || !yaml_help_.getParam("config/reg_info/discrepte_input/addr", config_.reg_info.discrepte_input.addr)
         || !yaml_help_.getParam("config/reg_info/discrepte_input/max_nb", config_.reg_info.discrepte_input.max_nb)
+        || !yaml_help_.getParam("config/reg_info/discrepte_input/is_valid", config_.reg_info.discrepte_input.is_valid)
         || !yaml_help_.getParam("config/reg_info/input_register/addr", config_.reg_info.input_reg.addr)
         || !yaml_help_.getParam("config/reg_info/input_register/max_nb", config_.reg_info.input_reg.max_nb)
+        || !yaml_help_.getParam("config/reg_info/input_register/is_valid", config_.reg_info.input_reg.is_valid)
         || !yaml_help_.getParam("config/reg_info/holding_register/addr", config_.reg_info.holding_reg.addr)
-        || !yaml_help_.getParam("config/reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb))
+        || !yaml_help_.getParam("config/reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb)
+        || !yaml_help_.getParam("config/reg_info/holding_register/is_valid", config_.reg_info.holding_reg.is_valid))
     {
         cout << " Failed load modbus tcp_server.yaml " << endl;
         return false;
@@ -81,13 +87,17 @@ bool ModbusServerParam::saveConfig()
         || !yaml_help_.setParam("config/response_delay", config_.response_delay)
         || !yaml_help_.setParam("config/reg_info/coil/addr", config_.reg_info.coil.addr)
         || !yaml_help_.setParam("config/reg_info/coil/max_nb", config_.reg_info.coil.max_nb)
+        || !yaml_help_.setParam("config/reg_info/coil/is_valid", config_.reg_info.coil.is_valid)
         || !yaml_help_.setParam("config/reg_info/discrepte_input/addr", config_.reg_info.discrepte_input.addr)
         || !yaml_help_.setParam("config/reg_info/discrepte_input/max_nb", config_.reg_info.discrepte_input.max_nb)
+        || !yaml_help_.setParam("config/reg_info/discrepte_input/is_valid", config_.reg_info.discrepte_input.is_valid)
         || !yaml_help_.setParam("config/reg_info/input_register/addr", config_.reg_info.input_reg.addr)
         || !yaml_help_.setParam("config/reg_info/input_register/max_nb", config_.reg_info.input_reg.max_nb)
+        || !yaml_help_.setParam("config/reg_info/input_register/is_valid", config_.reg_info.input_reg.is_valid)
         || !yaml_help_.setParam("config/reg_info/holding_register/addr", config_.reg_info.holding_reg.addr)
         || !yaml_help_.setParam("config/reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb)
-                || !yaml_help_.dumpParamFile(file_path_.c_str()))
+        || !yaml_help_.setParam("config/reg_info/holding_register/is_valid", config_.reg_info.holding_reg.is_valid)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         cout << " Failed save modbus tcp_server.yaml " << endl;
         return false;
@@ -102,12 +112,16 @@ bool ModbusServerParam::loadConfig()
         || !yaml_help_.getParam("config/response_delay", config_.response_delay)
         || !yaml_help_.getParam("config/reg_info/coil/addr", config_.reg_info.coil.addr)
         || !yaml_help_.getParam("config/reg_info/coil/max_nb", config_.reg_info.coil.max_nb)
+        || !yaml_help_.getParam("config/reg_info/coil/is_valid", config_.reg_info.coil.is_valid)
         || !yaml_help_.getParam("config/reg_info/discrepte_input/addr", config_.reg_info.discrepte_input.addr)
         || !yaml_help_.getParam("config/reg_info/discrepte_input/max_nb", config_.reg_info.discrepte_input.max_nb)
+        || !yaml_help_.getParam("config/reg_info/discrepte_input/is_valid", config_.reg_info.discrepte_input.is_valid)
         || !yaml_help_.getParam("config/reg_info/input_register/addr", config_.reg_info.input_reg.addr)
         || !yaml_help_.getParam("config/reg_info/input_register/max_nb", config_.reg_info.input_reg.max_nb)
+        || !yaml_help_.getParam("config/reg_info/input_register/is_valid", config_.reg_info.input_reg.is_valid)
         || !yaml_help_.getParam("config/reg_info/holding_register/addr", config_.reg_info.holding_reg.addr)
-        || !yaml_help_.getParam("config/reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb))
+        || !yaml_help_.getParam("config/reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb)
+        || !yaml_help_.getParam("config/reg_info/holding_register/is_valid", config_.reg_info.holding_reg.is_valid))
     {
         cout << " Failed load modbus tcp_server.yaml " << endl;
         return false;
@@ -119,6 +133,62 @@ bool ModbusServerParam::loadConfig()
 bool ModbusServerParam::saveConnectStatus()
 {
     if (!yaml_help_.setParam("is_enable", is_enable_)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
+    {
+        cout << " Failed save modbus tcp_server.yaml " << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ModbusServerParam::saveCoilInfo()
+{
+    if (!yaml_help_.setParam("config/reg_info/coil/addr", config_.reg_info.coil.addr)
+        || !yaml_help_.setParam("config/reg_info/coil/max_nb", config_.reg_info.coil.max_nb)
+        || !yaml_help_.setParam("config/reg_info/coil/is_valid", config_.reg_info.coil.is_valid)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
+    {
+        cout << " Failed save modbus tcp_server.yaml " << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ModbusServerParam::saveDiscrepteInputInfo()
+{
+    if (!yaml_help_.getParam("config/reg_info/discrepte_input/addr", config_.reg_info.discrepte_input.addr)
+        || !yaml_help_.getParam("config/reg_info/discrepte_input/max_nb", config_.reg_info.discrepte_input.max_nb)
+        || !yaml_help_.getParam("config/reg_info/discrepte_input/is_valid", config_.reg_info.discrepte_input.is_valid)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
+    {
+        cout << " Failed save modbus tcp_server.yaml " << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ModbusServerParam::saveHoldingRegInfo()
+{
+    if (!yaml_help_.getParam("config/reg_info/input_register/addr", config_.reg_info.input_reg.addr)
+        || !yaml_help_.getParam("config/reg_info/input_register/max_nb", config_.reg_info.input_reg.max_nb)
+        || !yaml_help_.getParam("config/reg_info/input_register/is_valid", config_.reg_info.input_reg.is_valid)
+        || !yaml_help_.dumpParamFile(file_path_.c_str()))
+    {
+        cout << " Failed save modbus tcp_server.yaml " << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool ModbusServerParam::saveInputRegInfo()
+{
+    if (!yaml_help_.setParam("config/reg_info/holding_register/addr", config_.reg_info.holding_reg.addr)
+        || !yaml_help_.setParam("config/reg_info/holding_register/max_nb", config_.reg_info.holding_reg.max_nb)
+        || !yaml_help_.setParam("config/reg_info/holding_register/is_valid", config_.reg_info.holding_reg.is_valid)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         cout << " Failed save modbus tcp_server.yaml " << endl;

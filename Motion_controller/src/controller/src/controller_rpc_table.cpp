@@ -197,5 +197,10 @@ void ControllerRpc::initRpcTable()
 	rpc_service =	{	"/rpc/modbus/writeHoldingRegs",	0x00008C43,	&ControllerRpc::handleRpc0x00008C43	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/readHoldingRegs",	0x00003583,	&ControllerRpc::handleRpc0x00003583	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/readInputRegs",	0x000072C3,	&ControllerRpc::handleRpc0x000072C3	};	rpc_table_.push_back(rpc_service);
+
+	rpc_service =	{	"/rpc/modbus/getServerValidFuctionInfo",	0x00008E7F,	&ControllerRpc::handleRpc0x00008E7F	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerResponseDelay",	0x00000329,	&ControllerRpc::handleRpc0x00000329	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerRunningStatus",	0x00000953,	&ControllerRpc::handleRpc0x00000953	};	rpc_table_.push_back(rpc_service);
+
 }
 

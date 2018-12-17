@@ -70,6 +70,8 @@ private:
     fst_log::Logger* log_ptr_;
 
     bool checkConnectStatus();
+
+    ModbusTCPClient();
 };
 }
 

@@ -409,3 +409,56 @@ void TpComm::handleResponse0x000072C3(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64_ModbusRegValueList*)task->response_data_ptr;
     }
 }
+
+
+//"/rpc/modbus/getServerValidFuctionInfo"
+void TpComm::handleResponse0x00008E7F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_ModbusFunctionInfo_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_ModbusFunctionInfo*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getServerResponseDelay"
+void TpComm::handleResponse0x00000329(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getServerRunningStatus"
+void TpComm::handleResponse0x00000953(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Bool_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Bool*)task->response_data_ptr;
+    }
+}
+

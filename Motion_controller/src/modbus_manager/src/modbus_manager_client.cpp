@@ -13,8 +13,8 @@ using namespace fst_hal;
 
 ErrorCode ModbusManager::addClient(int client_id)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ != NULL)
     {
@@ -27,9 +27,8 @@ ErrorCode ModbusManager::addClient(int client_id)
 
 ErrorCode ModbusManager::deleteClient(int client_id)
 {    
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;;
-
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -38,7 +37,7 @@ ErrorCode ModbusManager::deleteClient(int client_id)
 
     if (client_->isRunning())
     {
-        client_->closeClient();
+        return MODBUS_CLIENT_IS_RUNNING;
     }
 
     delete client_;
@@ -49,8 +48,8 @@ ErrorCode ModbusManager::deleteClient(int client_id)
 
 ErrorCode ModbusManager::openClient(int client_id)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -70,8 +69,8 @@ ErrorCode ModbusManager::openClient(int client_id)
 
 ErrorCode ModbusManager::closeClient(int client_id)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -89,8 +88,8 @@ ErrorCode ModbusManager::closeClient(int client_id)
 
 ErrorCode ModbusManager::setConnectStatusToClient(int client_id, bool status)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -102,8 +101,8 @@ ErrorCode ModbusManager::setConnectStatusToClient(int client_id, bool status)
 
 ErrorCode ModbusManager::getConnectStatusFromClient(int client_id, bool status)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -115,8 +114,8 @@ ErrorCode ModbusManager::getConnectStatusFromClient(int client_id, bool status)
 
 ErrorCode ModbusManager::setConfigToClient(int client_id, ModbusClientConfig config)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -128,8 +127,8 @@ ErrorCode ModbusManager::setConfigToClient(int client_id, ModbusClientConfig con
 
 ErrorCode ModbusManager::getConfigFromClient(int client_id, ModbusClientConfig config)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -142,8 +141,8 @@ ErrorCode ModbusManager::getConfigFromClient(int client_id, ModbusClientConfig c
 
 ErrorCode ModbusManager::writeCoilsByClient(int client_id, int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -162,8 +161,8 @@ ErrorCode ModbusManager::writeCoilsByClient(int client_id, int addr, int nb, uin
 
 ErrorCode ModbusManager::readCoilsByClient(int client_id, int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -182,8 +181,8 @@ ErrorCode ModbusManager::readCoilsByClient(int client_id, int addr, int nb, uint
 
 ErrorCode ModbusManager::readDiscreteInputsByClient(int client_id, int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -202,8 +201,8 @@ ErrorCode ModbusManager::readDiscreteInputsByClient(int client_id, int addr, int
 
 ErrorCode ModbusManager::writeHoldingRegsByClient(int client_id, int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -222,8 +221,8 @@ ErrorCode ModbusManager::writeHoldingRegsByClient(int client_id, int addr, int n
 
 ErrorCode ModbusManager::readHoldingRegsByClient(int client_id, int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -242,8 +241,8 @@ ErrorCode ModbusManager::readHoldingRegsByClient(int client_id, int addr, int nb
 ErrorCode ModbusManager::writeAndReadHoldingRegsByClient(int client_id, int write_addr, int write_nb, const uint16_t *write_dest,
     int read_addr, int read_nb, uint16_t *read_dest)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {
@@ -261,8 +260,8 @@ ErrorCode ModbusManager::writeAndReadHoldingRegsByClient(int client_id, int writ
 
 ErrorCode ModbusManager::readInputRegsByClient(int client_id, int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ != CLIENT)
-       return MODBUS_CLIENT_MODE_INVALID;
+    if (start_mode_ != MODBUS_TCP_CLIENT)
+       return MODBUS_START_MODE_ERROR;
 
     if (client_ == NULL || client_id != client_->getId())
     {

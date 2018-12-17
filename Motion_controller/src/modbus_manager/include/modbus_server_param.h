@@ -21,6 +21,7 @@ struct ModbusRegAddrInfo
 {
     int addr;
     int max_nb;
+    bool is_valid;
 };
 
 
@@ -48,6 +49,10 @@ public:
 
     bool loadConfig();
     bool saveConfig();
+    bool saveCoilInfo();
+    bool saveDiscrepteInputInfo();
+    bool saveHoldingRegInfo();
+    bool saveInputRegInfo();
 
     bool saveConnectStatus();
 
@@ -60,6 +65,8 @@ public:
     string comm_type_;
     ModbusServerRegInfo reg_info_;
     ModbusServerConfig config_;
+
+    int thread_priority_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

@@ -552,6 +552,11 @@ void ControllerSm::transferRobotState()
                 recordLog("Robot transfer to RUNNING");
                 robot_state_ = ROBOT_RUNNING;
             }
+            else if(interpreter_state_ == INTERPRETER_PAUSED)
+            {
+                recordLog("Robot transfer to IDLE");
+                robot_state_ = ROBOT_IDLE;
+            }
             break;
         case ROBOT_IDLE_TO_TEACHING:
             recordLog("Robot transfer to TEACHING");

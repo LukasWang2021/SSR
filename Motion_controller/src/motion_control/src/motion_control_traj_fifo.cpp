@@ -81,6 +81,7 @@ ErrorCode TrajectoryFifo::fetchSegmentByTime(MotionTime time)
     }
     else
     {
+        printf("%.6f - %.6f - %.6f\n", trajectory_segment_.time_from_start, trajectory_segment_.duration, trajectory_segment_.time_from_block);
         return TRAJECTORY_SEGMENT_ERROR;
     }
 }

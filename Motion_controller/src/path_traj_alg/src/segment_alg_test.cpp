@@ -12,7 +12,7 @@ using namespace fst_mc;
 using namespace fst_algorithm;
 using namespace basic_alg;
 
-extern double stack[];
+extern double stack[12000];
 extern ComplexAxisGroupModel model;
 extern SegmentAlgParam segment_alg_param;
 
@@ -520,8 +520,8 @@ int main(void)
         planPathLine(start, via, path_cache_1);
         /*std::cout<<" CacheLength = "<<path_cache_1.cache_length
                  <<" Smooth_in_Index = "<<path_cache_1.smooth_in_index
-                 <<" Smooth_out_Index = "<<path_cache_1.smooth_out_index<<std::endl;
-        for(int i = 0; i < path_cache_1.cache_length; ++i)
+                 <<" Smooth_out_Index = "<<path_cache_1.smooth_out_index<<std::endl;*/
+        /*for(int i = 0; i < path_cache_1.cache_length; ++i)
         {
             std::cout<<" ["<<i<<"] "
                      <<" X = "<<path_cache_1.cache[i].pose.position.x
@@ -534,7 +534,7 @@ int main(void)
                      <<" PointType = "<<path_cache_1.cache[i].point_type
                      <<" MotionType = "<<path_cache_1.cache[i].motion_type<<std::endl;
         }*/
-     
+    
         doIK(kinematics_ptr, path_cache_1, start_joint);
         /*for(int i=0; i<path_cache_1.cache_length; ++i)
         {
@@ -546,7 +546,9 @@ int main(void)
                      <<path_cache_1.cache[i].joint[5]<<std::endl;
         }*/
         planTrajectory(path_cache_1, start_state, vel_ratio, acc_ratio, traj_cache_1);
-    
+
+        printTraj2(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
+        
     /*for(int i=0; i< traj_cache_1.cache_length; ++i)
     {
         std::cout<<i<<" path_index = "<<traj_cache_1.cache[i].index_in_path_cache
@@ -557,7 +559,9 @@ int main(void)
                     <<" A0 = "<<traj_cache_1.cache[i].axis[1].data[0]<<std::endl;
                     
     }*/
+    //std::cout<<"traj_cache_1.smooth_out_index = "<<traj_cache_1.smooth_out_index<<std::endl;
     
+    //printTraj(traj_cache_1, 1, 0.001);
         JointState out_state;
         int p_address = S_TrajP0 + traj_cache_1.smooth_out_index + 1;
         int v_address = p_address + 50;
@@ -565,13 +569,13 @@ int main(void)
         for(int i=0; i<6; ++i)
         {
             out_state.angle[i] = stack[p_address];
-            out_state.omega[i] = stack[v_address] / stack[S_TrajRescaleFactor];
-            out_state.alpha[i] = stack[a_address] / (stack[S_TrajRescaleFactor] * stack[S_TrajRescaleFactor]);
+            out_state.omega[i] = stack[v_address];
+            out_state.alpha[i] = stack[a_address];
             p_address += 150;
             v_address += 150;
             a_address += 150;
         }
- //std::cout<<"out_state: "<<out_state.angle[1]<<" "<<out_state.omega[1]<<" "<<out_state.alpha[1]<<std::endl;
+//std::cout<<"out_state: "<<out_state.angle[1]<<" "<<out_state.omega[1]<<" "<<out_state.alpha[1]<<std::endl;
         Pose pose_out;
         PoseEuler euler_out;
         double out_quatern[4];
@@ -629,21 +633,7 @@ int main(void)
     //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
     
         //printAllTraj(traj_cache_2, 0.001);
-        printf("traj-cache1: smooth = %d\n", traj_cache_1.smooth_out_index);
-        for (size_t i = 0; i < traj_cache_1.cache_length; i++)
-        {
-            TrajectoryBlock &block = traj_cache_1.cache[i];
-            printf("block[%d]: duration = %.4f, c0 = %.4f, c1 = %.4f, c2 = %.4f, c3 = %.4f\n", i,
-                    block.duration, block.axis[1].data[0], block.axis[1].data[1], block.axis[1].data[2], block.axis[1].data[3]);
-        }
-        printf("----------------\n");
-        for (size_t i = 0; i < traj_cache_2.cache_length; i++)
-        {
-            TrajectoryBlock &block = traj_cache_2.cache[i];
-            printf("block[%d]: duration = %.4f, c0 = %.4f, c1 = %.4f, c2 = %.4f, c3 = %.4f\n", i,
-                    block.duration, block.axis[1].data[0], block.axis[1].data[1], block.axis[1].data[2], block.axis[1].data[3]);
-        }
-        //printTraj(traj_cache_2, 1, 0.001);
+        printTraj2(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
 #endif
 
 

@@ -657,9 +657,11 @@ void generateTrajCache(fst_mc::TrajectoryCache &traj_cache, int time_vector_size
 void generateTrajCacheSmooth(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 
                                     int* path_index_array_out2in, int path_index_array_size_out2in,
                                     int* path_index_array_in2end, int path_index_array_size_in2end);
+void generateTrajCacheSmoothTest(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 
+                                    int* path_index_array_in2end, int path_index_array_size_in2end);
 
 void printTraj(fst_mc::TrajectoryCache &traj_cache, int index, double time_step);
-void printTraj2(fst_mc::TrajectoryCache &traj_cache, int index, double time_step);
+void printTraj2(fst_mc::TrajectoryCache &traj_cache, int index, double time_step, int end_segment);
 void printAllTraj(fst_mc::TrajectoryCache &traj_cache, double time_step);
 
 

@@ -26,13 +26,13 @@
 
 // #define USE_WAITING_R
 
-void resetProgramNameAndLineNum();
+void resetProgramNameAndLineNum(struct thread_control_block * objThdCtrlBlockPtr);
 
 char * getProgramName();
-void setProgramName(char * program_name);
+void setProgramName(struct thread_control_block * objThdCtrlBlockPtr, char * program_name);
 InterpreterState getPrgmState();
-void setPrgmState(InterpreterState state);
-void setCurLine(char * line, int lineNum);
+void setPrgmState(struct thread_control_block * objThdCtrlBlockPtr, InterpreterState state);
+void setCurLine(struct thread_control_block * objThdCtrlBlockPtr, char * line, int lineNum);
 #ifdef WIN32
 void setWarning(__int64 warn);
 #else

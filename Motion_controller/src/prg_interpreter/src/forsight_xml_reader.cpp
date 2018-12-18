@@ -1181,7 +1181,8 @@ int generateLogicalElseIF(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	else_type = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(else_type,BAD_CAST"elif")==0){
-	    sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 		           (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s ", (char *)"ELSEIF");
 	}
@@ -1240,7 +1241,8 @@ int generateLogicalIF(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"if")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 						(char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s ", (char *)"IF");
 	}
@@ -1296,7 +1298,8 @@ int generateLogicalWHILE(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"while")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "WHILE");
 	}
@@ -1348,12 +1351,14 @@ int generateCASEInSWITCH(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"case")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "CASE ");
 	}
 	else if(xmlStrcasecmp(name,BAD_CAST"default")==0){
-		sprintf(objLineInfoTemp.xPath,  "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "DEFAULT ");
 	}
@@ -1408,7 +1413,8 @@ int generateLogicalSWITCH(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"switch")==0){
-		sprintf(objLineInfo.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfo.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfo, "EXPORT: ", "%s ", "SELECT CASE ");
 	}
@@ -1526,7 +1532,8 @@ int generateLogicalLOOP(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"LOOP")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s ", (char *)"LOOP");
 	}
@@ -1578,7 +1585,8 @@ int generateLogicalFOR(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"for")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "FOR");
 	}

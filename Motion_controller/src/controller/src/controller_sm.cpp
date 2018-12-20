@@ -575,7 +575,7 @@ void ControllerSm::transferRobotState()
             break;
         case ROBOT_TEACHING:
             handleContinuousManualRpcTimeout();
-            if (motion_control_ptr_->getGroupState() == fst_mc::STANDBY)
+            if (motion_control_ptr_->getGroupState() == fst_mc::STANDBY || motion_control_ptr_->getGroupState() == fst_mc::DISABLE)
             //if(virtual_core1_ptr_->getArmState() == 1)
             {
                 robot_state_ = ROBOT_TEACHING_TO_IDLE;

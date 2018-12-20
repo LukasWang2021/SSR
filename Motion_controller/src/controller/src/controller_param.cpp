@@ -18,6 +18,7 @@ ControllerParam::ControllerParam():
     enable_virtual_core1_(false),
     virtual_core1_thread_priority_(50),
     max_reg_publish_number_(0),
+    max_io_publish_number_(0),
     max_continuous_manual_move_timeout_(0),
     is_simmulation_(false),
     max_unknown_user_op_mode_timeout_(0),
@@ -46,6 +47,7 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("enable_virtual_core1", enable_virtual_core1_)
         || !yaml_help_.getParam("virtual_core1_thread_priority", virtual_core1_thread_priority_)
         || !yaml_help_.getParam("max_reg_publish_number", max_reg_publish_number_)
+        || !yaml_help_.getParam("max_io_publish_number", max_io_publish_number_)
         || !yaml_help_.getParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_)
         || !yaml_help_.getParam("is_simmulation", is_simmulation_)
         || !yaml_help_.getParam("max_unknown_user_op_mode_timeout", max_unknown_user_op_mode_timeout_)
@@ -73,6 +75,7 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("enable_virtual_core1", enable_virtual_core1_)
         || !yaml_help_.setParam("virtual_core1_thread_priority", virtual_core1_thread_priority_)
         || !yaml_help_.setParam("max_reg_publish_number", max_reg_publish_number_)
+        || !yaml_help_.setParam("max_io_publish_number", max_io_publish_number_)
         || !yaml_help_.setParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_)
         || !yaml_help_.setParam("is_simmulation", is_simmulation_)
         || !yaml_help_.setParam("max_unknown_user_op_mode_timeout", max_unknown_user_op_mode_timeout_)

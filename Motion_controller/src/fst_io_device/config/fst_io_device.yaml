@@ -1,0 +1,11 @@
+log_level: 1
+cycle_time: 10000
+device_type: RF-P8A
+comm_type: RS485
+max_DI_number: 25
+max_DO_number: 25
+max_RI_number: 6
+max_RO_number: 6
+is_virtual: false
+comm_tolerance: 20
+#END

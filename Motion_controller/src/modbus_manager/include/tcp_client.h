@@ -14,75 +14,64 @@
 #include "modbus/modbus-private.h"
 #include "modbus/modbus-tcp.h"
 
-#include "modbus_manager_param.h"
+#include "modbus_client_param.h"
 
 using namespace std;
-using namespace fst_modbus;
+using namespace fst_hal;
 
-namespace fst_modbus
+namespace fst_hal
 {
-typedef struct
-{
-    int addr;  //start address 
-    int nb; //number of address
-    uint8_t *dest; //store data
-}ModbusStatus; // for coil and discrete input
-
-typedef struct
-{
-    int addr; //start address
-    int nb; //number of address
-    uint16_t *dest; //store data
-}ModbusRegs; //for holding regs and input regs
 
 class ModbusTCPClient
 {
 public:
-    ModbusTCPClient(string ip, int port);
+    ModbusTCPClient(string file_path, int id);
      ~ModbusTCPClient();
 
-    void setDebug(bool flag);
-    void setSocket(int s);
-    void setResponseTimeout(timeval& timeout);
-    void setBytesTimeout(timeval& timeout);
+    ErrorCode initParam();
 
-    ErrorCode init();
-    int getSocket();
-    ErrorCode getResponseTimeout(timeval& timeout);
-    ErrorCode getByteTimeout(timeval& timeout);
+    ErrorCode setConnectStatus(bool status);
+    ErrorCode getConnectStatus(bool status);
 
-    ErrorCode readCoils(ModbusStatus& status);
-    ErrorCode readDiscreteInputs(ModbusStatus& status); //input bits
-    ErrorCode readInputRegs(ModbusRegs& regs);
-    ErrorCode readHoldingRegs(ModbusRegs& regs);
-    ErrorCode writeSingleCoil(int coil_addr, uint8_t status); //bit
-    ErrorCode writeSingleHoldingReg(int reg_addr, uint16_t value);
-    ErrorCode writeAndReadSingleCoil(int addr, uint8_t& write_status, uint8_t& read_status);
-    ErrorCode writeAndReadSingleHoldingReg(int addr, uint16_t& write_reg, uint16_t& read_reg);
-    ErrorCode writeCoils(ModbusStatus& status);
-    ErrorCode writeHoldingRegs(ModbusRegs& regs);
-    ErrorCode writeAndReadCoils(ModbusStatus& write_status, ModbusStatus& read_status);
-    ErrorCode writeAndReadHoldingRegs(ModbusRegs& write_regs, ModbusRegs& read_regs);
+    ErrorCode setConfig(ModbusClientConfig config);
+    ModbusClientConfig getConfig();
+    
+    int getId();
+    string getName();
+
+    ErrorCode openClient();
+    void closeClient();
+    bool isRunning();
+
+    ErrorCode writeCoils(int addr, int nb, uint8_t *dest);
+    ErrorCode readCoils(int addr, int nb, uint8_t *dest);
+    ErrorCode readDiscreteInputs(int addr, int nb, uint8_t *dest);
+    ErrorCode writeHoldingRegs(int addr, int nb, uint16_t *dest);
+    ErrorCode readHoldingRegs(int addr, int nb, uint16_t *dest);
+    ErrorCode writeAndReadHoldingRegs(int write_addr, int write_nb, const uint16_t *write_dest,
+        int read_addr, int read_nb, uint16_t *read_dest);
+    ErrorCode readInputRegs(int addr, int nb, uint16_t *dest);
 
 private:
     enum {SOCKET_ID_MIN = 1, SOCKET_ID_MAX = 247, };
-    enum RegsOneOpNum{ STATUS_ONE_OP_NUM = 1968, REGISTER_ONE_OP_NUM = 121, };
-    modbus_t* ctx_;
+    enum RegsOneOpNum{ STATUS_ONE_OP_NUM = 1024, REGISTER_ONE_OP_NUM = 121, };
 
+    bool is_enable_; //to modify param name
     bool is_debug_;
+    bool is_running_;
+    int id_;
+
+    modbus_t* ctx_;
     int socket_;
-    int port_;
-    string ip_;
-    timeval response_timeout_;
-    timeval bytes_timeout_;
+    string comm_type_;
+    ModbusClientConfig config_;
 
-    ModbusManagerParam* param_ptr_;
+    ModbusClientParam* param_ptr_;
     fst_log::Logger* log_ptr_;
-    fst_parameter::ParamGroup tcp_client_yaml_help_;
-    std::string tcp_client_file_path_;
 
-    bool loadComponentParams();
-    bool saveComponentParams();
+    bool checkConnectStatus();
+
+    ModbusTCPClient();
 };
 }
 

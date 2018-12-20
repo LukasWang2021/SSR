@@ -4,17 +4,19 @@
 #include "error_monitor.h"
 #include "error_code.h"
 #include "common_log.h"
+#include "net_connection.h"
 
 #include "modbus_manager.h"
 
 using namespace std;
-using namespace fst_modbus;
+using namespace fst_hal;
 
-ModbusManager* ModbusManager::instance_ = NULL;
-
-ModbusManager::ModbusManager():
+ModbusManager::ModbusManager(int address):
+    BaseDevice(address, fst_hal::DEVICE_TYPE_MODBUS),address_(address),
     log_ptr_(NULL), param_ptr_(NULL),
-    server_ip_(""), server_port_(-1)
+    client_(NULL), server_(NULL),
+    server_ip_(""), server_port_(-1),
+    start_mode_(MODBUS_TCP_INVALID), client_scan_rate_(0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();
@@ -22,23 +24,47 @@ ModbusManager::ModbusManager():
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 }
 
+ModbusManager::ModbusManager():
+    address_(0),BaseDevice(address_, fst_hal::DEVICE_TYPE_MODBUS),
+    log_ptr_(NULL), param_ptr_(NULL),
+    client_(NULL), server_(NULL),
+    server_ip_(""), server_port_(-1),
+    start_mode_(MODBUS_TCP_INVALID), client_scan_rate_(0)
+{
+    log_ptr_ = new fst_log::Logger();
+    param_ptr_ = new ModbusManagerParam();
+    FST_LOG_INIT("ModbusManager");
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+}
+
+bool ModbusManager::init()
+{
+    if(!param_ptr_->loadParam())
+        return false; //load param error
+
+    if (server_ == NULL)
+        server_ = new ModbusTCPServer(param_ptr_->server_file_path_);
+
+    if (server_->initParam() != SUCCESS)
+        return false;
+    return true;
+}
+
 ModbusManager::~ModbusManager()
 {
     if (client_ != NULL)
     {
+        client_->closeClient();
         delete client_;
         client_ = NULL;
     }
     if (server_ != NULL)
     {
+        server_->closeServer();
         delete server_;
         server_ = NULL;
     }
-    if (map_ != NULL)
-    {
-        delete map_;
-        map_ = NULL;
-    }
+
     if (log_ptr_ != NULL)
     {
         delete log_ptr_;
@@ -51,134 +77,179 @@ ModbusManager::~ModbusManager()
     }
 }
 
-ModbusManager* ModbusManager::getInstance()
+ErrorCode ModbusManager::setStartMode(int start_mode)
 {
-    if(instance_ == NULL)
+    if (start_mode == start_mode_)
     {
-        instance_ = new ModbusManager();
-    }
-    return instance_;
-}
-
-ErrorCode ModbusManager::init()
-{
-    if(!param_ptr_->loadParam())
-    {
-        return MODBUS_MANAGER_INIT_FAILED;
+        return SUCCESS;
     }
 
-    server_ip_ = param_ptr_->server_ip_;
-    server_port_ = param_ptr_->server_port_;
+    if (start_mode == MODBUS_TCP_SERVER)
+    {
+        if (client_ != NULL)
+        {
+            if (client_->isRunning()) return MODBUS_CLIENT_IS_RUNNING;
+            return MODBUS_CLIENT_IS_ADDED;
+        }
+
+        param_ptr_->start_mode_ = start_mode;
+        if (!param_ptr_->saveStartMode()) return MODBUS_MANAGER_SAVE_PARAM_FAILED;
+        start_mode_ = param_ptr_->start_mode_;
+    }
+    else if (start_mode == MODBUS_TCP_CLIENT)
+    {
+        if (server_ != NULL && server_->isRunning())
+        {
+            return MODBUS_SERVER_IS_RUNNING;
+        }
+
+        param_ptr_->start_mode_ = start_mode;
+        if (!param_ptr_->saveStartMode()) return MODBUS_MANAGER_SAVE_PARAM_FAILED;
+        start_mode_ = param_ptr_->start_mode_;
+    }
+    else
+    {
+        return MODBUS_START_MODE_ERROR;
+    }
 
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::initClient()
+int ModbusManager::getStartMode()
 {
-    client_ = new ModbusTCPClient(server_ip_, server_port_);
-    return client_->init();
+    return start_mode_;
 }
 
-void ModbusManager::initMap()
+ErrorCode ModbusManager::setScanRate(int scan_rate)
 {
-    map_ = new ModbusMap();
-    map_->init();
-}
+    param_ptr_->client_scan_rate_ = scan_rate;
 
-ErrorCode ModbusManager::initServer()
-{
-    server_ = new ModbusTCPServer(server_port_);
-    return server_->init();
-}
-
-ErrorCode ModbusManager::setValueById(int id, void* value)
-{
-    ModbusRegInfo modbus_reg_info;
-    ErrorCode error_code = map_->getModbusRegInfoById(id, modbus_reg_info);
-
-    if(SUCCESS != error_code)
+    if (!param_ptr_->saveClientScanRate())
     {
-        return error_code;
+        return MODBUS_MANAGER_SAVE_PARAM_FAILED;
     }
 
-    switch(modbus_reg_info.reg_type)
-    {
-        case COIL:
-        {
-            ModbusStatus status;
-            status.nb = 1;
-            status.dest = (uint8_t*)value;
-            status.addr = modbus_reg_info.addr;
-            error_code = client_->writeCoils(status);
-         }
-            break;
-        case HOLDING_REGISTER:
-        {
-            ModbusRegs regs;
-            regs.nb = 1;
-            regs.dest = (uint16_t*)value;
-            regs.addr = modbus_reg_info.addr;
-            error_code = client_->writeHoldingRegs(regs);
-        }
-            break;
-        default:
-            error_code =  MODBUS_REG_TYPE_ERROR;
-    };
-
-    return error_code;
+    client_scan_rate_ = scan_rate;
+    return SUCCESS;
 }
 
-ErrorCode ModbusManager::getValueById(int id, void* value)
+int ModbusManager::getScanRate()
 {
-    ModbusRegInfo modbus_reg_info;
-    ErrorCode error_code = map_->getModbusRegInfoById(id, modbus_reg_info);
-    if(SUCCESS != error_code)
+    return client_scan_rate_;
+}
+
+ErrorCode ModbusManager::writeCoils(int id, int addr, int nb, uint8_t *dest)
+{
+    if (start_mode_ == MODBUS_TCP_SERVER)
     {
-        return error_code; 
+        return writeCoilsToServer(addr, nb, dest);
     }
 
-    switch(modbus_reg_info.reg_type)
+    if (start_mode_ == MODBUS_TCP_CLIENT)
     {
-        case COIL:
-        {
-            ModbusStatus status;
-            status.addr = modbus_reg_info.addr;
-            FST_ERROR("Read coil : addr = %d", status.addr);
-            status.nb = 1;
-            status.dest = (uint8_t*)value;
-            error_code = client_->readCoils(status);
-        }
-            break;
-        case DISCREPTE_INPUT:
-        {
-            ModbusStatus status;
-            status.addr = modbus_reg_info.addr;
-            status.nb = 1;
-            status.dest = (uint8_t*)value;
-            error_code = client_->readDiscreteInputs(status);
-        }
-            break;
-        case HOLDING_REGISTER:
-        {
-            ModbusRegs regs;
-            regs.addr = modbus_reg_info.addr;
-            regs.nb = 1;
-            regs.dest = (uint16_t*)value;
-            error_code = client_->readHoldingRegs(regs);
-        }
-            break;
-        case INPUT_REGISTER:
-        {
-            ModbusRegs regs;
-            regs.addr = modbus_reg_info.addr;
-            regs.nb = 1;
-            regs.dest = (uint16_t*)value;
-            error_code = client_->readInputRegs(regs);
-        }
-            break;
-        default:
-            error_code = MODBUS_REG_TYPE_ERROR;
-    };
+        return writeCoilsByClient(id, addr, nb, dest);
+    }
 
-    return error_code;
+    return MODBUS_START_MODE_ERROR;
 }
+
+ErrorCode ModbusManager::readCoils(int id, int addr, int nb, uint8_t *dest)
+{
+    if (start_mode_ == MODBUS_TCP_SERVER)
+    {
+        return readCoilsFromServer(addr, nb, dest);
+    }
+
+    if (start_mode_ == MODBUS_TCP_CLIENT)
+    {
+        return readCoilsByClient(id, addr, nb, dest);
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
+ErrorCode ModbusManager::readDiscreteInputs(int id, int addr, int nb, uint8_t *dest)
+{
+    if (start_mode_ == MODBUS_TCP_SERVER)
+    {
+        return readDiscreteInputsFromServer(addr, nb, dest);
+    }
+
+    if (start_mode_ == MODBUS_TCP_CLIENT)
+    {
+        return readDiscreteInputsByClient(id, addr, nb, dest);
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
+ErrorCode ModbusManager::writeHoldingRegs(int id, int addr, int nb, uint16_t *dest)
+{
+    if (start_mode_ == MODBUS_TCP_SERVER)
+    {
+        return writeHoldingRegsToServer(addr, nb, dest);
+    }
+
+    if (start_mode_ == MODBUS_TCP_CLIENT)
+    {
+        return writeHoldingRegsByClient(id, addr, nb, dest);
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
+ErrorCode ModbusManager::readHoldingRegs(int id, int addr, int nb, uint16_t *dest)
+{
+    if (start_mode_ == MODBUS_TCP_SERVER)
+    {
+        return readHoldingRegsFromServer(addr, nb, dest);
+    }
+
+    if (start_mode_ == MODBUS_TCP_CLIENT)
+    {
+        return readHoldingRegsByClient(id, addr, nb, dest);
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
+ErrorCode ModbusManager::readInputRegs(int id, int addr, int nb, uint16_t *dest)
+{
+    if (start_mode_ == MODBUS_TCP_SERVER)
+    {
+        return readInputRegsFromServer(addr, nb, dest);
+    }
+
+    if (start_mode_ == MODBUS_TCP_CLIENT)
+    {
+        return readInputRegsByClient(id, addr, nb, dest);
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
+bool ModbusManager::isValid()
+{
+    if (start_mode_ == MODBUS_TCP_SERVER && isServerRunning())
+    {
+        return true;
+    }
+
+    if (start_mode_ == MODBUS_TCP_CLIENT && isClientRunning(client_->getId()))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+#if 0
+void modbusTcpAllClientRoutineThreadFunc(void* arg)
+{
+    ModbusManager* modbus_manager = static_cast<ModbusManager*>(arg);
+    while(modbus_manager->isRunningClient(getClientId()))
+    {
+        modbus_manager->modbusTcpAllClientThreadFunc();
+    }
+}
+#endif

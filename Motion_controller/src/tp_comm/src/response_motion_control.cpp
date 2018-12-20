@@ -924,5 +924,20 @@ void TpComm::handleResponse0x00016D20(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
-
+//"/rpc/motion_control/axis_group/setSingleZeroPointOffset"
+void TpComm::handleResponse0x00012404(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32List_Double*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
 

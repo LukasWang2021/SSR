@@ -1,9 +1,31 @@
-is_debug: true
-socket: 17
+log_level: 1
+comm_type: TCP
+is_debug: false
+
+scan_rate: 1000
+
+is_enable: false
+id: 1
+name: Modbus1
+ip: 192.168.1.102
+port: 502
 response_timeout:
-    tv_sec: 2
-    tv_usec: 0
+    sec: 2
+    usec: 0
 bytes_timeout:
-    tv_sec: 0
-    tv_usec: 250000
+    sec: 0
+    usec: 250000
+reg_info:
+    coil:
+        addr: 1
+        max_nb: 1024
+    discrepte_input:
+        addr: 1
+        max_nb: 1024
+    input_register:
+        addr: 1
+        max_nb: 1024
+    holding_register:
+        addr: 1
+        max_nb: 1024
 #END

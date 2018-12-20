@@ -3,6 +3,8 @@ project(io_mapping)
 
 find_package(catkin REQUIRED COMPONENTS
     base_device
+    fst_io_device
+    modbus_manager
 )
 
 if(catkin_CROSS)
@@ -23,6 +25,15 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/error_monitor/include
+    ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/thread_help/include
+    ${depend_PATH_INC}/io_manager/include
+    ${depend_PATH_INC}/device_manager/include
+    ${depend_PATH_INC}/xml_help/include
+    ${depend_PATH_INC}/fst_io_device/include
+    ${depend_PATH_INC}/virtual_io_device/include
+    ${depend_PATH_INC}/protos/include
 )
 
 catkin_package(
@@ -30,7 +41,10 @@ catkin_package(
     LIBRARIES io_mapping
     DEPENDS base_device
     DEPENDS parameter_manager
-    DEPENDS log_manager
+    DEPENDS log_manager 
+    DEPENDS error_monitor
+    DEPENDS modbus_manager
+    DEPENDS io_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -49,11 +63,32 @@ add_library(io_mapping
 
 target_link_libraries(io_mapping
     ${catkin_LIBRARIES}
+    parameter_manager
+    logger
     base_device
+    error_monitor
+    modbus_manager
+    io_manager
+)
+
+add_executable(mapping_test
+    test/mapping_test.cpp
+)
+
+target_link_libraries(mapping_test
+    ${catkin_LIBRARIES}
+    io_mapping
+    base_device
+    modbus_manager
+    io_manager
 )
 
 install(TARGETS io_mapping
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS	mapping_test
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES config/io_mapping.yaml

@@ -14,6 +14,9 @@
 #include "process_comm.h"
 #include "motion_control.h"
 #include "serverAlarmApi.h"
+#include "io_mapping.h"//feng add for mapping.
+#include "program_launching.h"
+#include "file_manager.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -27,7 +30,9 @@ public:
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, ControllerPublish* publish_ptr, VirtualCore1* virtual_core1_ptr, 
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
-                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr);
+                    fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
+                    IoMapping* io_mapping_ptr, fst_hal::IoManager* io_manager_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
+                    ProgramLaunching* program_launching, fst_base::FileManager* file_manager);
 
     void processRpc();
 
@@ -44,6 +49,11 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
     ControllerPublish* publish_ptr_;
+    IoMapping* io_mapping_ptr_; //feng add for mapping.
+    IoManager* io_manager_ptr_;
+    fst_hal::ModbusManager* modbus_manager_ptr_; //yuyy add
+    ProgramLaunching* program_launching_;
+    fst_base::FileManager* file_manager_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -107,10 +117,8 @@ private:
     void handleRpc0x000003F5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getVersion"
     void handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/controller/setStartMode"
-    void handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/controller/getStartMode"
-    void handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/controller/getErrorCodeList"
+    void handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr);
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"
@@ -269,6 +277,8 @@ private:
     void handleRpc0x0000B6D4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/ignoreLostZeroError"
     void handleRpc0x00014952(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/motion_control/axis_group/setSingleZeroPointOffset"
+    void handleRpc0x00012404(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/setAllZeroPointOffsets"
     void handleRpc0x00008AB4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getAllZeroPointOffsets"
@@ -351,10 +361,98 @@ private:
     void handleRpc0x00013074(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/io_mapping/setDOByBit"
     void handleRpc0x00007074(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/getRIByBit"
+    void handleRpc0x00000684(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/setRIByBit"
+    void handleRpc0x0000CD24(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/getROByBit"
+    void handleRpc0x00005BD4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/setROByBit"
+    void handleRpc0x00012274(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/syncFileIoStatus"
+    void handleRpc0x0000BA73(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/io_mapping/syncFileIoMapping"
+    void handleRpc0x0000C2A7(void* request_data_ptr, void* response_data_ptr);
 
     /* device manager rpc */
     // "/rpc/device_manager/getDeviceList"
     void handleRpc0x0000C1E0(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/get_FRP8A_IoDeviceInfo"
+    void handleRpc0x00006BAF(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/getModbusIoDeviceInfo"
+    void handleRpc0x0001421F(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/getIoDeviceInfoList"
+    void handleRpc0x000024A4(void* request_data_ptr, void* response_data_ptr);
+
+
+    /* program launching rpc */
+    // "/rpc/program_launching/setMethod"
+    void handleRpc0x00011544(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/program_launching/getMethod"
+    void handleRpc0x00010944(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/program_launching/syncFileMacroConfig"
+    void handleRpc0x00016B27(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/file_manager/readFile"
+    void handleRpc0x0000A545(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/file_manager/writeFile"
+    void handleRpc0x00010D95(void* request_data_ptr, void* response_data_ptr);
+
+	//"/rpc/modbus/setStartMode"
+    void handleRpc0x0000D3A5(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getStartMode"
+    void handleRpc0x000041C5(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setServerConnectStatus"
+    void handleRpc0x0000DB23(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerConnectStatus"
+    void handleRpc0x00001B23(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setServerConfig"
+    void handleRpc0x00017547(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerConfig"
+    void handleRpc0x00016947(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerStartInfo"
+    void handleRpc0x000018AF(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/openServer"
+    void handleRpc0x00010912(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/closeServer"
+    void handleRpc0x000045B2(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/addClient"
+    void handleRpc0x00012E44(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setClientConnectStatus"
+    void handleRpc0x000099D3(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getClientConnectStatus"
+    void handleRpc0x00010A53(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setClientConfig"
+    void handleRpc0x0000D017(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getClientConfig"
+    void handleRpc0x0000FC17(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/openClient"
+    void handleRpc0x00000544(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/closeClient"
+    void handleRpc0x00006CA4(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/deleteClient"
+    void handleRpc0x00014CF4(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getClientSummaryInfoList"
+    void handleRpc0x0000B424(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/writeCoils"
+    void handleRpc0x0000BD83(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readCoils"
+    void handleRpc0x0000A433(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readDiscreteInputs"
+    void handleRpc0x0000C063(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/writeHoldingRegs"
+    void handleRpc0x00008C43(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readHoldingRegs"
+    void handleRpc0x00003583(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/readInputRegs"
+    void handleRpc0x000072C3(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getServerValidFuctionInfo"
+    void handleRpc0x00008E7F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getServerResponseDelay"
+    void handleRpc0x00000329(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getServerRunningStatus"
+    void handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr);
+
 };
 
 }

@@ -384,12 +384,26 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 				}
 			}
 		}
-		else if(xmlStrcasecmp(name, BAD_CAST"di")==0){ 
+		else if(  (xmlStrcasecmp(name, BAD_CAST"ai")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"ao")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"di")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"do")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"ri")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"ro")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"si")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"so")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"ui")==0) 
+				||(xmlStrcasecmp(name, BAD_CAST"uo")==0) )  
+		{ 
 			for(nodeSubValueElement = nodeValueElement->children; 
 			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
 				if(xmlStrcasecmp(nodeSubValueElement->name,BAD_CAST"element")==0){ 
 					value = xmlNodeGetContent(nodeSubValueElement);
-					sprintf(label_str, "%sDI[%s] ", label_str, (char*)value);
+					sprintf(label_str, "%s%s[%s] ", label_str, name, (char*)value);
+					// toupper
+					string strRet = string(label_str);
+					transform(strRet.begin(), strRet.end(), strRet.begin(), ::toupper);  
+					sprintf(label_str, "%s", strRet.c_str());
 				}
 			}
 		}
@@ -1083,7 +1097,10 @@ int generateMoveInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 				if(strcmp((char*)value, "") != 0)
 					printBASCode(objLineInfo, "CNT %s ", (char*)value);
 				else
-					printBASCode(objLineInfo, "CNT %s ", (char*)"0");
+				{
+					// default is -1 in the FINE for safety.
+					printBASCode(objLineInfo, "CNT %s ", (char*)"-1");
+				}
 			}
 			else if(xmlStrcasecmp(name, BAD_CAST"smooth_velocity")==0){
 				printBASCode(objLineInfo, "SV %s ", (char*)value);
@@ -1160,13 +1177,19 @@ int generateLogicalElseIF(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	// char currentChildPath[LAB_LEN];
     xmlNodePtr nodeStatement ;
     xmlNodePtr nodeDetermine ;
-    xmlChar *name, *value;
+    xmlChar *value, *else_type;
 	
-	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
-	if(xmlStrcasecmp(name,BAD_CAST"elif")==0){
-	    sprintf(objLineInfoTemp.xPath, "%s", 
+	else_type = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
+	if(xmlStrcasecmp(else_type,BAD_CAST"elif")==0){
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 		           (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s ", (char *)"ELSEIF");
+	}
+	else if(xmlStrcasecmp(else_type,BAD_CAST"else")==0){
+		sprintf(objLineInfoTemp.xPath, "%s", 
+			(char *)xmlGetNodePath(nodeLogicalStatement));
+		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s \n", (char *)"ELSE");
 	}
 	
     for(nodeStatement = nodeLogicalStatement->children; 
@@ -1182,7 +1205,9 @@ int generateLogicalElseIF(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 					generateElement(nodeDetermine, objLineInfo);
 				}
 			}
-			printBASCode(objLineInfo, (char *)" THEN \n", (char *)"");
+			if(xmlStrcasecmp(else_type,BAD_CAST"elif")==0){
+				printBASCode(objLineInfo, (char *)" THEN \n", (char *)"");
+			}
         }
 		else if((xmlStrcasecmp(nodeStatement->name,BAD_CAST"logical_body")==0)
 			||(xmlStrcasecmp(nodeStatement->name,BAD_CAST"vice_logical_body")==0)) { 
@@ -1216,7 +1241,8 @@ int generateLogicalIF(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"if")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 						(char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s ", (char *)"IF");
 	}
@@ -1272,7 +1298,8 @@ int generateLogicalWHILE(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"while")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "WHILE");
 	}
@@ -1324,12 +1351,14 @@ int generateCASEInSWITCH(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"case")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "CASE ");
 	}
 	else if(xmlStrcasecmp(name,BAD_CAST"default")==0){
-		sprintf(objLineInfoTemp.xPath,  "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "DEFAULT ");
 	}
@@ -1384,7 +1413,8 @@ int generateLogicalSWITCH(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"switch")==0){
-		sprintf(objLineInfo.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfo.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfo, "EXPORT: ", "%s ", "SELECT CASE ");
 	}
@@ -1502,7 +1532,8 @@ int generateLogicalLOOP(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"LOOP")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s ", (char *)"LOOP");
 	}
@@ -1554,7 +1585,8 @@ int generateLogicalFOR(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 	
 	name = xmlGetProp(nodeLogicalStatement,BAD_CAST"type");
 	if(xmlStrcasecmp(name,BAD_CAST"for")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			 (char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, "EXPORT: ", "%s ", "FOR");
 	}
@@ -2043,7 +2075,8 @@ void outputXPathVector(char * xpath_file_name)
 	FILE *xpath_file ;
 
 	if((xpath_file = fopen(xpath_file_name, "r"))==NULL){
-		perror("open file failed\n");  
+		perror("open xpath_file_name file failed\n");  
+		return ;
 	}
 	
 	// Pre-arrange

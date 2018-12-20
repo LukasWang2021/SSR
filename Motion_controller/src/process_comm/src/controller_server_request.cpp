@@ -238,65 +238,6 @@ void ControllerServer::handleRequestIsNextInstructionNeeded()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, NULL, (void*)response_data_ptr);
 }
 
-// CheckIo
-void ControllerServer::handleRequestCheckIo()
-{
-    char* request_data_ptr = new char[256]();
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    ResponseCheckIo* response_data_ptr = new ResponseCheckIo;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete[] request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, 256);
-    pushTaskToRequestList(CONTROLLER_SERVER_CMD_CHECK_IO, (void*)request_data_ptr, (void*)response_data_ptr);    
-}
-
-// SetIo
-void ControllerServer::handleRequestSetIo()
-{
-    RequestSetIo* request_data_ptr = new RequestSetIo;
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    unsigned long long* response_data_ptr = new unsigned long long;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete[] request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetIo));
-    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_IO, (void*)request_data_ptr, (void*)response_data_ptr);   
-}
-
-// GetIo
-void ControllerServer::handleRequestGetIo()
-{
-    RequestGetIo* request_data_ptr = new RequestGetIo;
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    ResponseGetIo* response_data_ptr = new ResponseGetIo;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete[] request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestGetIo));
-    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_IO, (void*)request_data_ptr, (void*)response_data_ptr);  
-}
 
 // SetInterpreterServerStatus
 void ControllerServer::handleRequestSetInterpreterServerStatus()
@@ -318,4 +259,163 @@ void ControllerServer::handleRequestSetInterpreterServerStatus()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, (void*)request_data_ptr, (void*)response_data_ptr);  
 }
 
+//GetDi
+void ControllerServer::handleRequestGetDi()
+{
+    RequestGetDi* request_data_ptr = new RequestGetDi;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseGetDi* response_data_ptr = new ResponseGetDi;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestGetDi));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_DI, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
 
+//SetDi
+void ControllerServer::handleRequestSetDi()
+{
+    RequestSetDi* request_data_ptr = new RequestSetDi;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    unsigned long long* response_data_ptr = new unsigned long long;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetDi));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_DI, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
+
+//GetDo
+void ControllerServer::handleRequestGetDo()
+{
+    RequestGetDo* request_data_ptr = new RequestGetDo;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseGetDo* response_data_ptr = new ResponseGetDo;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestGetDo));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_DO, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
+
+//SetDo
+void ControllerServer::handleRequestSetDo()
+{
+    RequestSetDo* request_data_ptr = new RequestSetDo;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    unsigned long long* response_data_ptr = new unsigned long long;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetDo));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_DO, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
+
+//GetRi
+void ControllerServer::handleRequestGetRi()
+{
+    RequestGetRi* request_data_ptr = new RequestGetRi;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseGetRi* response_data_ptr = new ResponseGetRi;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestGetRi));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_RI, (void*)request_data_ptr, (void*)response_data_ptr); 
+
+}
+
+//SetRi
+void ControllerServer::handleRequestSetRi()
+{
+    RequestSetRi* request_data_ptr = new RequestSetRi;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    unsigned long long* response_data_ptr = new unsigned long long;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetRi));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_RI, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
+//GetRo
+void ControllerServer::handleRequestGetRo()
+{
+    RequestGetRo* request_data_ptr = new RequestGetRo;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseGetRo* response_data_ptr = new ResponseGetRo;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestGetRo));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_RO, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
+
+//SetRo
+void ControllerServer::handleRequestSetRo()
+{
+    RequestSetRo* request_data_ptr = new RequestSetRo;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    unsigned long long* response_data_ptr = new unsigned long long;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetRo));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_RO, (void*)request_data_ptr, (void*)response_data_ptr);
+}

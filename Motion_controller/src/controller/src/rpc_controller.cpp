@@ -1,10 +1,11 @@
 #include "controller_rpc.h"
 #include <sys/time.h>
 #include <unistd.h>
+#include <list>
 #include "version.h"
 
 using namespace fst_ctrl;
-
+using namespace fst_base;
 
 // "/rpc/controller/setSystemTime"
 void ControllerRpc::handleRpc0x000167C5(void* request_data_ptr, void* response_data_ptr)
@@ -42,29 +43,26 @@ void ControllerRpc::handleRpc0x000093EE(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64_String* rs_data_ptr = static_cast<ResponseMessageType_Uint64_String*>(response_data_ptr);
     
-    memcpy(rs_data_ptr->data.data, get_version(), strlen(get_version()));
-    rs_data_ptr->data.data[strlen(get_version())] = 0;
+    std::string str = get_version();
+    int len = strlen(str.c_str());
+    memcpy(rs_data_ptr->data.data, str.c_str(), len);
+    rs_data_ptr->data.data[len] = '\0';
     rs_data_ptr->error_code.data = SUCCESS;
 }
 
-// "/rpc/controller/setStartMode"
-void ControllerRpc::handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr)
-{
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
-    // FIXME: do it later
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setStartMode"));
+// "/rpc/controller/getErrorCodeList"
+void ControllerRpc::handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr)
+{ 
+    ResponseMessageType_Uint64_Uint64List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Uint64List*>(response_data_ptr);
+    
+    int index = 0;
+    std::list<uint64_t> list = ErrorMonitor::instance()->getErrorList();
+    for (std::list<uint64_t>::iterator iter = list.begin(); iter != list.end(); iter++)
+    {
+        rs_data_ptr->data.data[index] = *iter;
+        index ++;
+    }
+    rs_data_ptr->data.data_count = index;
+    rs_data_ptr->error_code.data = SUCCESS;    
 }
-
-// "/rpc/controller/getStartMode"
-void ControllerRpc::handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr)
-{
-    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
-
-    // FIXME: do it later
-    rs_data_ptr->data.data = 0;
-    rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/getStartMode"));
-}
-
+    

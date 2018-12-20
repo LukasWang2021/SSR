@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     parameter_manager
     error_monitor
     thread_help
+    base_device
 )
 
 if(catkin_CROSS)
@@ -30,12 +31,13 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -lrt -lpthread -O0 -DPB_FIELD_32BIT -DS
 
 set(catkin_INCLUDE_DIRS 
     ${catkin_INCLUDE_DIRS}
+    ${depend_PATH_INC}/common/
     ${depend_PATH_INC}/log_manager/include/
     ${depend_PATH_INC}/log_service/include/
     ${depend_PATH_INC}/error_monitor/include/
     ${depend_PATH_INC}/parameter_manager/include/
     ${depend_PATH_INC}/thread_help/include/
-    ${depend_PATH_INC}/common/
+    ${depend_PATH_INC}/base_device/include/
 )
 
 include_directories(
@@ -57,6 +59,7 @@ target_link_libraries(modbus_manager
     ${catkin_LIBRARIES}
     parameter_manager
     thread_help
+    base_device
   )
 
 install(TARGETS modbus_manager
@@ -68,11 +71,11 @@ install(FILES config/modbus_manager.yaml
 )
 
 install(FILES config/tcp_client.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/modbus/
 )
 
 install(FILES config/tcp_server.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/modbus/
 )
 
 install(DIRECTORY config

@@ -71,7 +71,7 @@ public:
     ~ControllerSm();
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
                 VirtualCore1* virtual_core1_ptr, fst_base::ControllerClient* controller_client_ptr, 
-                fst_hal::FstSafetyDevice* safety_device_ptr);
+                fst_hal::DeviceManager* device_manager_ptr);
     ControllerParam* getParam();
     void processStateMachine();
     
@@ -82,6 +82,7 @@ public:
     CtrlState getCtrlState();
     fst_mc::ServoState getServoState();
     int getSafetyAlarm();
+    bool getEnableMacroLaunching();//get the enable value to program launching
     ErrorCode setUserOpMode(UserOpMode mode);
     bool checkOffsetState();
     ErrorCode callEstop();
@@ -110,7 +111,8 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     VirtualCore1* virtual_core1_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
-    fst_hal::FstSafetyDevice* safety_device_ptr_;
+    fst_hal::DeviceManager* device_manager_ptr_;
+    fst_hal::FstSafetyDevice* safety_device_ptr_;    
 
     // mode and status
     UserOpMode user_op_mode_;
@@ -121,6 +123,7 @@ private:
     fst_mc::ServoState servo_state_;
     int safety_alarm_;
     int ctrl_reset_count_;
+    bool enable_macro_launching_;//flag of macro launching
 
     // manual rpc related
     bool is_continuous_manual_move_timeout_;
@@ -148,6 +151,7 @@ private:
     void transferCtrlState();
     void transferRobotState();
     void shutdown();
+    void processMacroLaunching();//to set the enable value of macro launching
 
     // manual rpc related
     long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);

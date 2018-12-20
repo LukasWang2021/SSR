@@ -57,6 +57,7 @@ bool ErrorMonitor::pop(unsigned long long& error_code)
     if(err_queue_.pop(error_code))
     {
         --err_cnt_;
+        addErrorList(error_code);
         return true;
     }
     else 
@@ -71,3 +72,15 @@ int ErrorMonitor::getWarningLevel()
     return warning_level_;
 }
 
+std::list<uint64_t> ErrorMonitor::getErrorList(void)
+{
+    return err_list_;
+}
+
+void ErrorMonitor::addErrorList(unsigned long long error_code)
+{
+    if (err_list_.size() >= MAX_ERRORS)
+        err_list_.pop_front();
+    
+    err_list_.push_back(error_code);
+}

@@ -18,6 +18,7 @@ ControllerSm::ControllerSm():
     param_ptr_(NULL),
     virtual_core1_ptr_(NULL),
     controller_client_ptr_(NULL),
+    device_manager_ptr_(NULL),
     safety_device_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
     running_state_(RUNNING_STATUS_LIMITED),
@@ -27,6 +28,7 @@ ControllerSm::ControllerSm():
     servo_state_(SERVO_INIT),
     safety_alarm_(0),
     ctrl_reset_count_(0),
+    enable_macro_launching_(false),
     interpreter_warning_code_(0),
     error_level_(0),
     is_error_exist_(false),
@@ -46,14 +48,25 @@ ControllerSm::~ControllerSm()
 
 void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
                             VirtualCore1* virtual_core1_ptr, ControllerClient* controller_client_ptr, 
-                            FstSafetyDevice* safety_device_ptr)
+                            fst_hal::DeviceManager* device_manager_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
     motion_control_ptr_ = motion_control_ptr;
     virtual_core1_ptr_ = virtual_core1_ptr;
     controller_client_ptr_ = controller_client_ptr;
-    safety_device_ptr_ =safety_device_ptr;
+    device_manager_ptr_ =device_manager_ptr;
+
+    // get the safety device ptr.
+    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+    for(unsigned int i = 0; i < device_list.size(); ++i)
+    {
+        if (device_list[i].type == DEVICE_TYPE_FST_SAFETY)
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
+        }
+    }
 }
 
 ControllerParam* ControllerSm::getParam()
@@ -69,6 +82,7 @@ void ControllerSm::processStateMachine()
     transferServoState();
     transferCtrlState();
     transferRobotState();
+    processMacroLaunching();
 }
 
 fst_ctrl::UserOpMode ControllerSm::getUserOpMode()
@@ -104,6 +118,11 @@ fst_mc::ServoState ControllerSm::getServoState()
 int ControllerSm::getSafetyAlarm()
 {
     return safety_alarm_;
+}
+
+bool ControllerSm::getEnableMacroLaunching()
+{
+    return enable_macro_launching_;
 }
 
 ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
@@ -545,6 +564,11 @@ void ControllerSm::transferRobotState()
                 recordLog("Robot transfer to RUNNING");
                 robot_state_ = ROBOT_RUNNING;
             }
+            else if(interpreter_state_ == INTERPRETER_PAUSED)
+            {
+                recordLog("Robot transfer to IDLE");
+                robot_state_ = ROBOT_IDLE;
+            }
             break;
         case ROBOT_IDLE_TO_TEACHING:
             recordLog("Robot transfer to TEACHING");
@@ -616,6 +640,20 @@ void ControllerSm::shutdown()
 	}
 
 	system("shutdown -h now");
+}
+
+void ControllerSm::processMacroLaunching()
+{
+    if (interpreter_state_ == INTERPRETER_IDLE
+        && ctrl_state_ == CTRL_ENGAGED
+        && robot_state_ == ROBOT_IDLE)
+    {
+        enable_macro_launching_ = true;
+    }
+    else
+    {
+        enable_macro_launching_ = false;
+    }
 }
 
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)

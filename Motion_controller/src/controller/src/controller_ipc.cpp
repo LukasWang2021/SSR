@@ -22,7 +22,7 @@ ControllerIpc::~ControllerIpc()
 
 void ControllerIpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr,
                             ControllerServer* controller_server_ptr, ControllerClient* controller_client_ptr,
-                            RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr)
+                            RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr, IoMapping* io_mapping_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -30,6 +30,7 @@ void ControllerIpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr,
     controller_client_ptr_ = controller_client_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
     state_machine_ptr_ = state_machine_ptr;
+    io_mapping_ptr_ = io_mapping_ptr;
     initIpcTable();
 }
 

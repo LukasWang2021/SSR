@@ -26,19 +26,19 @@
 
 // #define USE_WAITING_R
 
-bool parseScript(const char* fname);
-// void findLoopEnd(int index);
-void resetProgramNameAndLineNum();
+void resetProgramNameAndLineNum(struct thread_control_block * objThdCtrlBlockPtr);
 
-void setProgramName(char * program_name);
+char * getProgramName();
+void setProgramName(struct thread_control_block * objThdCtrlBlockPtr, char * program_name);
 InterpreterState getPrgmState();
-void setPrgmState(InterpreterState state);
-void setCurLine(char * line, int lineNum);
+void setPrgmState(struct thread_control_block * objThdCtrlBlockPtr, InterpreterState state);
+void setCurLine(struct thread_control_block * objThdCtrlBlockPtr, char * line, int lineNum);
 #ifdef WIN32
 void setWarning(__int64 warn);
 #else
 void setWarning(long long int warn);
 #endif 
+void setMessage(int warn);
 bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instruction * instruction);
 // bool getIntprtCtrl(InterpreterControl& intprt_ctrl);
 void executeBlock();

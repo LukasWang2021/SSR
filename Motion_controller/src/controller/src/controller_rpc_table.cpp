@@ -29,8 +29,8 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/setSystemTime", 0x000167C5, &ControllerRpc::handleRpc0x000167C5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getSystemTime", 0x000003F5, &ControllerRpc::handleRpc0x000003F5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getVersion", 0x000093EE, &ControllerRpc::handleRpc0x000093EE}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/controller/setStartMode", 0x00010225, &ControllerRpc::handleRpc0x00010225}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/controller/getStartMode", 0x000092E5, &ControllerRpc::handleRpc0x000092E5}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/getErrorCodeList", 0x00015F44, &ControllerRpc::handleRpc0x00015F44}; rpc_table_.push_back(rpc_service);
+
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/tool_manager/deleteTool", 0x00010E4C, &ControllerRpc::handleRpc0x00010E4C}; rpc_table_.push_back(rpc_service);
@@ -110,6 +110,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/convertCartToJoint", 0x00010FD4, &ControllerRpc::handleRpc0x00010FD4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/convertJointToCart", 0x0000B6D4, &ControllerRpc::handleRpc0x0000B6D4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/ignoreLostZeroError", 0x00014952, &ControllerRpc::handleRpc0x00014952}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/motion_control/axis_group/setSingleZeroPointOffset", 0x00012404, &ControllerRpc::handleRpc0x00012404}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setAllZeroPointOffsets", 0x00008AB4, &ControllerRpc::handleRpc0x00008AB4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getAllZeroPointOffsets", 0x00012353, &ControllerRpc::handleRpc0x00012353}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getAllZeroErrorMaskStatus", 0x0000C183, &ControllerRpc::handleRpc0x0000C183}; rpc_table_.push_back(rpc_service);
@@ -151,7 +152,54 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/io_mapping/setDIByBit", 0x00011754, &ControllerRpc::handleRpc0x00011754}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/getDOByBit", 0x00013074, &ControllerRpc::handleRpc0x00013074}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/setDOByBit", 0x00007074, &ControllerRpc::handleRpc0x00007074}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/getRIByBit", 0x00000684, &ControllerRpc::handleRpc0x00000684}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/setRIByBit", 0x0000CD24, &ControllerRpc::handleRpc0x0000CD24}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/getROByBit", 0x00005BD4, &ControllerRpc::handleRpc0x00005BD4}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/setROByBit", 0x00012274, &ControllerRpc::handleRpc0x00012274}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/syncFileIoStatus", 0x0000BA73, &ControllerRpc::handleRpc0x0000BA73}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/syncFileIoMapping", 0x0000C2A7, &ControllerRpc::handleRpc0x0000C2A7}; rpc_table_.push_back(rpc_service);
 
     rpc_service = {"/rpc/device_manager/getDeviceList", 0x0000C1E0, &ControllerRpc::handleRpc0x0000C1E0}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/device_manager/get_FRP8A_IoDeviceInfo", 0x00006BAF, &ControllerRpc::handleRpc0x00006BAF}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/device_manager/getModbusIoDeviceInfo", 0x0001421F, &ControllerRpc::handleRpc0x0001421F}; rpc_table_.push_back(rpc_service);
+    rpc_service = {	"/rpc/device_manager/getIoDeviceInfoList",	0x000024A4,	&ControllerRpc::handleRpc0x000024A4};	rpc_table_.push_back(rpc_service);
+
+
+    rpc_service = {"/rpc/program_launching/setMethod", 0x00011544, &ControllerRpc::handleRpc0x00011544}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/program_launching/getMethod", 0x00010944, &ControllerRpc::handleRpc0x00010944}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/program_launching/syncFileMacroConfig", 0x00016B27, &ControllerRpc::handleRpc0x00016B27}; rpc_table_.push_back(rpc_service);
+
+    rpc_service =	{	"/rpc/file_manager/readFile",	0x0000A545,	&ControllerRpc::handleRpc0x0000A545	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/file_manager/writeFile",	0x00010D95,	&ControllerRpc::handleRpc0x00010D95	};	rpc_table_.push_back(rpc_service);
+
+	rpc_service =	{	"/rpc/modbus/setStartMode",	0x0000D3A5,	&ControllerRpc::handleRpc0x0000D3A5	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getStartMode",	0x000041C5,	&ControllerRpc::handleRpc0x000041C5	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setServerConnectStatus",	0x0000DB23,	&ControllerRpc::handleRpc0x0000DB23	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerConnectStatus",	0x00001B23,	&ControllerRpc::handleRpc0x00001B23	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setServerConfig",	0x00017547,	&ControllerRpc::handleRpc0x00017547	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerConfig",	0x00016947,	&ControllerRpc::handleRpc0x00016947	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerStartInfo",	0x000018AF,	&ControllerRpc::handleRpc0x000018AF	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/openServer",	0x00010912,	&ControllerRpc::handleRpc0x00010912	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/closeServer",	0x000045B2,	&ControllerRpc::handleRpc0x000045B2	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/addClient",	0x00012E44,	&ControllerRpc::handleRpc0x00012E44	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setClientConnectStatus",	0x000099D3,	&ControllerRpc::handleRpc0x000099D3	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getClientConnectStatus",	0x00010A53,	&ControllerRpc::handleRpc0x00010A53	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/setClientConfig",	0x0000D017,	&ControllerRpc::handleRpc0x0000D017	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getClientConfig",	0x0000FC17,	&ControllerRpc::handleRpc0x0000FC17	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/openClient",	0x00000544,	&ControllerRpc::handleRpc0x00000544	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/closeClient",	0x00006CA4,	&ControllerRpc::handleRpc0x00006CA4	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/deleteClient",	0x00014CF4,	&ControllerRpc::handleRpc0x00014CF4	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getClientSummaryInfoList",	0x0000B424,	&ControllerRpc::handleRpc0x0000B424	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/writeCoils",	0x0000BD83,	&ControllerRpc::handleRpc0x0000BD83	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readCoils",	0x0000A433,	&ControllerRpc::handleRpc0x0000A433	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readDiscreteInputs",	0x0000C063,	&ControllerRpc::handleRpc0x0000C063	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/writeHoldingRegs",	0x00008C43,	&ControllerRpc::handleRpc0x00008C43	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readHoldingRegs",	0x00003583,	&ControllerRpc::handleRpc0x00003583	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/readInputRegs",	0x000072C3,	&ControllerRpc::handleRpc0x000072C3	};	rpc_table_.push_back(rpc_service);
+
+	rpc_service =	{	"/rpc/modbus/getServerValidFuctionInfo",	0x00008E7F,	&ControllerRpc::handleRpc0x00008E7F	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerResponseDelay",	0x00000329,	&ControllerRpc::handleRpc0x00000329	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getServerRunningStatus",	0x00000953,	&ControllerRpc::handleRpc0x00000953	};	rpc_table_.push_back(rpc_service);
+
 }
 

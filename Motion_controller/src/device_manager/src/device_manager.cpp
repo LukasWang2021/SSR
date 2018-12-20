@@ -3,6 +3,8 @@
 #include "fst_safety_device.h"
 #include "fst_axis_device.h"
 #include "virtual_axis_device.h"
+#include "virtual_io_device.h"
+#include "modbus_manager.h"
 #include "error_code.h"
 
 
@@ -29,13 +31,14 @@ DeviceManager::~DeviceManager()
             switch(it->second->getDeviceType())
             {
                 case DEVICE_TYPE_FST_AXIS:       break;
-                case DEVICE_TYPE_FST_IO:         delete (FstIoDevice*)it->second; break;
+                case DEVICE_TYPE_FST_IO:         delete (FstIoDevice *) it->second; break;
                 case DEVICE_TYPE_FST_SAFETY:     delete (FstSafetyDevice*)it->second; break;
                 case DEVICE_TYPE_FST_ANYBUS:     break;
                 case DEVICE_TYPE_VIRTUAL_AXIS:   delete (VirtualAxisDevice*)it->second; break;
-                case DEVICE_TYPE_VIRTUAL_IO:     break;
+                case DEVICE_TYPE_VIRTUAL_IO:     delete (VirtualIoDevice*)it->second; break;
                 case DEVICE_TYPE_VIRTUAL_SAFETY: break;
                 case DEVICE_TYPE_NORMAL:         break;
+                case DEVICE_TYPE_MODBUS:         delete (ModbusManager*)it->second; break;
             }
             it->second = NULL;
         }
@@ -65,7 +68,7 @@ ErrorCode DeviceManager::init()
     {
         FST_ERROR("Failed to load device manager component parameters");
         return DEVICE_MANAGER_LOAD_PARAM_FAILED;
-    } 
+    }
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_); 
 
     device_xml_ptr_ = new DeviceXml(log_ptr_, param_ptr_);
@@ -83,16 +86,19 @@ ErrorCode DeviceManager::init()
         switch(it->device_type)
         {
             case DEVICE_TYPE_FST_AXIS:       return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_FST_IO: 
-				device_ptr = new FstIoDevice(it->address); break;
-            case DEVICE_TYPE_FST_SAFETY: 
-				device_ptr = new FstSafetyDevice(it->address); break;
+            case DEVICE_TYPE_FST_IO:
+                device_ptr = new FstIoDevice(it->address); break;
+            case DEVICE_TYPE_FST_SAFETY:
+                device_ptr = new FstSafetyDevice(it->address); break;
             case DEVICE_TYPE_FST_ANYBUS:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
-            case DEVICE_TYPE_VIRTUAL_AXIS: 
+            case DEVICE_TYPE_VIRTUAL_AXIS:
 				device_ptr = new VirtualAxisDevice(it->address); break;
-            case DEVICE_TYPE_VIRTUAL_IO:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_VIRTUAL_IO:     
+                device_ptr = new VirtualIoDevice(it->address); break;
             case DEVICE_TYPE_VIRTUAL_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_NORMAL:         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_MODBUS:
+                device_ptr = new ModbusManager(it->address); break; 
             default:                         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
         }
 
@@ -101,9 +107,17 @@ ErrorCode DeviceManager::init()
         {
             return DEVICE_MANAGER_INIT_DEVICE_FAILED;
         }
+
+        if (it->device_type == DEVICE_TYPE_MODBUS)
+        {
+            ErrorCode error_code;
+            error_code = setModbusDetail(device_ptr, it->detail.modbus);
+            if (error_code != SUCCESS) return error_code;
+        }
+
         device_map_[it->device_index] = device_ptr;
     }
-    
+
     return SUCCESS;
 }
 
@@ -125,6 +139,19 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
 {
     DeviceInfo info;
     std::vector<DeviceInfo> device_list;
+
+    /*temporary used
+    std::vector<DeviceConfig>::iterator it;
+    for(it = device_xml_ptr_->device_config_list_.begin(); it != device_xml_ptr_->device_config_list_.end(); ++it)
+    {
+        info.index = it->device_index;
+        info.address = it->address;
+        info.type = it->device_type;
+        info.is_valid = true;
+        device_list.push_back(info);
+    }*/
+
+    // should be used
     std::map<int, BaseDevice*>::iterator it;
     for(it = device_map_.begin(); it != device_map_.end(); ++it)
     {
@@ -134,6 +161,7 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
         info.is_valid = it->second->isValid();
         device_list.push_back(info);
     }
+    
     return device_list;
 }
 
@@ -163,4 +191,7 @@ ErrorCode DeviceManager::addDevice(int device_index, BaseDevice* device_ptr)
     return SUCCESS;
 }
 
-
+ErrorCode DeviceManager::setModbusDetail(BaseDevice* device_ptr, FstFstModbusConfigDetail detail)
+{
+    return SUCCESS;
+}

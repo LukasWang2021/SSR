@@ -13,7 +13,11 @@ ControllerPublish::ControllerPublish():
     tp_comm_ptr_(NULL),
     state_machine_ptr_(NULL),
     reg_manager_ptr_(NULL),
-    controller_client_ptr_(NULL)
+    controller_client_ptr_(NULL),
+    io_mapping_ptr_(NULL),
+    device_manager_ptr_(NULL),
+    safety_device_ptr_(NULL),
+    io_manager_ptr_(NULL)
 {
 
 }
@@ -25,7 +29,9 @@ ControllerPublish::~ControllerPublish()
 
 void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
-                    ControllerClient* controller_client_ptr)
+                    ControllerClient* controller_client_ptr,
+                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::DeviceManager* device_manager_ptr, 
+                    fst_hal::IoManager* io_manager_ptr)//feng add mapping
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -35,6 +41,20 @@ void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_pt
     motion_control_ptr_ = motion_control_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
     controller_client_ptr_ = controller_client_ptr;
+    io_mapping_ptr_ = io_mapping_ptr; //feng add for mapping.
+    device_manager_ptr_ = device_manager_ptr;
+    io_manager_ptr_ = io_manager_ptr;
+
+    // get the safety device ptr.
+    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+    for(unsigned int i = 0; i < device_list.size(); ++i)
+    {
+        if (device_list[i].type == DEVICE_TYPE_FST_SAFETY)
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
+        }
+    }
 
     initPublishTable();
     initPublishQuickSearchTable();
@@ -130,6 +150,41 @@ PTR_RETURN:
     }
 }
 
+//add io topic
+void* ControllerPublish::addTaskToIoUpdateList(uint32_t port_type, uint32_t port_offset)
+{
+    std::list<IoPublishUpdate>::iterator it;
+    for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
+    {
+        if(it->port_type == port_type && it->port_offset == port_offset)
+        {
+            goto PTR_RETURN;
+        }
+    }
+
+    if(io_update_list_.size() >= param_ptr_->max_io_publish_number_)
+    {
+        return NULL;
+    }
+
+    IoPublishUpdate io_publish_update;
+    io_publish_update.port_type = port_type;
+    io_publish_update.port_offset = port_offset;
+    io_publish_update.value.data = 0;
+    io_publish_update.is_valid = true;
+    io_publish_update.ref_count = 0;
+    io_update_list_.push_back(io_publish_update);
+    it = io_update_list_.end();
+    --it;
+PTR_RETURN:
+    ++it->ref_count;
+    if(it->is_valid == true)
+    {
+        return (void*)&it->value;
+    }
+    return NULL;
+}
+
 void ControllerPublish::deleteTaskFromUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list)
 {
     HandleUpdateFuncPtr func_ptr;
@@ -209,6 +264,49 @@ void ControllerPublish::cleanRegUpdateList()
     }
 }
 
+
+//delete io topic
+void ControllerPublish::deleteTaskFromIoUpdateList(std::vector<fst_comm::TpPublishElement>& publish_element_list)
+{
+    int device_index;
+    int port_type;
+    int port_offset;
+    std::vector<TpPublishElement>::iterator it;
+    for(it = publish_element_list.begin(); it != publish_element_list.end(); ++it)
+    {
+        port_type = ((it->hash >> 16) & 0x0000FFFF);
+        port_offset = (it->hash & 0x0000FFFF);
+        unrefIoUpdateListElement(port_type, port_offset);
+    }
+    cleanIoUpdateList();
+}
+
+void ControllerPublish::unrefIoUpdateListElement(uint32_t port_type, uint32_t port_offset)
+{
+    std::list<IoPublishUpdate>::iterator it;
+    for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
+    {
+        if(it->port_type == port_type && it->port_offset == port_offset)
+        {
+            --it->ref_count;
+            return;
+        }
+    }
+}
+
+void ControllerPublish::cleanIoUpdateList()
+{
+    std::list<IoPublishUpdate>::iterator it;
+    for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
+    {
+        if(it->ref_count <= 0)
+        {
+            it = io_update_list_.erase(it);
+            --it;
+        }
+    }
+}
+
 void ControllerPublish::processPublish()
 {
     HandleUpdateFuncPtr update_func_ptr;
@@ -227,6 +325,11 @@ void ControllerPublish::processPublish()
     tp_comm_ptr_->lockRegPublishMutex();
     updateReg();
     tp_comm_ptr_->unlockRegPublishMutex();
+
+    tp_comm_ptr_->lockIoPublishMutex();
+    updateIo();
+    tp_comm_ptr_->unlockIoPublishMutex();
+
 }
 
 

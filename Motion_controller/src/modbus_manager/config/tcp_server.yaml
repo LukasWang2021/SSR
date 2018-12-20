@@ -1,17 +1,44 @@
+log_level: 1
 cycle_time: 1000 #1ms
-connection_nb: 128
-is_debug: true
+comm_type: TCP
+thread_priority: 50 
+
+port: 502
+connection_nb: 5
+is_debug: false
+
 reg_info:
     coil:
-        addr: 0
+        addr: 1
         max_nb: 1024
     discrepte_input:
-        addr: 0
+        addr: 1
         max_nb: 1024
     input_register:
-        addr: 0
+        addr: 1
         max_nb: 1024
     holding_register:
-        addr: 0
+        addr: 1
         max_nb: 1024
+config:
+    response_delay: 0
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+            is_valid: false
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+            is_valid: false
+        input_register:
+            addr: 1
+            max_nb: 1024
+            is_valid: false
+        holding_register:
+            addr: 1
+            max_nb: 1024
+            is_valid: false
+
+is_enable: false
 #END

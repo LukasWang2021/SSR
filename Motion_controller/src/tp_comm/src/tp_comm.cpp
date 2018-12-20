@@ -682,7 +682,7 @@ void TpComm::lockIoPublishMutex()
 
 void TpComm::unlockIoPublishMutex()
 {
-    io_publish_list_mutex_.lock();
+    io_publish_list_mutex_.unlock();
 }
 
 void TpComm::lockRegPublishMutex()
@@ -797,11 +797,12 @@ void  TpComm::handleIoPublishList()
             for(int i = 0; i < it->package.element_count; ++i)
             {
                 int io_type = (it->element_list_[i].hash >> 16) & 0x000000FF;
-                switch(io_type)
+
+                if (io_type == MessageType_IoType_DI || io_type == MessageType_IoType_DO
+                || io_type == MessageType_IoType_RI || io_type == MessageType_IoType_RO
+                || io_type == MessageType_IoType_UI || io_type == MessageType_IoType_UO)
                 {
-                    case MessageType_IoType_INPUT: handlePublishElementIoInput(it->package, i, it->element_list_[i]); break;
-                    case MessageType_IoType_OUTPUT: handlePublishElementIoOutput(it->package, i, it->element_list_[i]); break;
-                    default: ;
+                    handlePublishElementIo(it->package, i, it->element_list_[i]); continue;
                 }
             }
 

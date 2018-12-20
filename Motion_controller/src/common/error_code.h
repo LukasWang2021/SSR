@@ -92,29 +92,29 @@
 #define CONTROLLER_PUBLISH_FAILED (unsigned long long int)0x0001000200A80006   /*Controller failed to echo the request of publish something*/
 #define CONTROLLER_INVALID_OPERATION (unsigned long long int)0x0001000200A80007   /*Controller failed to operate command because of invalid pre-condition*/
 #define CONTROLLER_UNKNOWN_USER_OP_MODE (unsigned long long int)0x0001000B00A80008   /*User Op Mode is in unknown state*/
-#define INTERPRETER_LOG (unsigned long long int)0x0001000100AA0000   /*Interpreter log{0}*/
-#define FAIL_INTERPRETER_BASE (unsigned long long int)0x0001000900AA0001   /*Interpreter BASE*/
-#define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0002   /*No syntax*/
-#define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0003   /*unbalanced parentheses*/
-#define FAIL_INTERPRETER_NO_EXPRESSION_PRESENT (unsigned long long int)0x0001000900AA0004   /*no expression present*/
-#define FAIL_INTERPRETER_EQUALS_SIGN_EXPECTED (unsigned long long int)0x0001000900AA0005   /*equals sign expected*/
-#define FAIL_INTERPRETER_NOT_A_VARIABLE (unsigned long long int)0x0001000900AA0006   /*not a variable*/
-#define FAIL_INTERPRETER_LABEL_TABLE_FULL (unsigned long long int)0x0001000900AA0007   /*Label table full*/
-#define FAIL_INTERPRETER_DUPLICATE_SUB_LABEL (unsigned long long int)0x0001000900AA0008   /*duplicate sub_label*/
-#define FAIL_INTERPRETER_UNDEFINED_SUB_LABEL (unsigned long long int)0x0001000900AA0009   /*undefined sub_label*/
-#define FAIL_INTERPRETER_THEN_EXPECTED (unsigned long long int)0x0001000900AA000A   /*THEN expected*/
-#define FAIL_INTERPRETER_TO_EXPECTED (unsigned long long int)0x0001000900AA000B   /*TO expected*/
-#define FAIL_INTERPRETER_TOO_MANY_NESTED_FOR_LOOPS (unsigned long long int)0x0001000900AA000C   /*too many nested FOR loops*/
-#define FAIL_INTERPRETER_NEXT_WITHOUT_FOR (unsigned long long int)0x0001000900AA000D   /*NEXT without FOR*/
-#define FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB (unsigned long long int)0x0001000900AA000E   /*too many nested GOSUBs*/
-#define FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB (unsigned long long int)0x0001000900AA000F   /*RETURN without GOSUB*/
-#define FAIL_INTERPRETER_FILE_NOT_FOUND (unsigned long long int)0x0001000900AA0010   /*no program file*/
-#define FAIL_INTERPRETER_MOVL_WITH_JOINT (unsigned long long int)0x0001000900AA0011   /*movl with joint*/
-#define FAIL_INTERPRETER_MOVJ_WITH_POINT (unsigned long long int)0x0001000900AA0012   /*movj with point*/
+#define INTERPRETER_LOG       (unsigned long long int)0x0001000100AA0000   /*Interpreter log{0}*/
+#define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0001   /*No syntax*/
+#define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0002   /*unbalanced parentheses*/
+#define FAIL_INTERPRETER_NO_EXPRESSION_PRESENT (unsigned long long int)0x0001000900AA0003   /*no expression present*/
+#define FAIL_INTERPRETER_EQUALS_SIGN_EXPECTED (unsigned long long int)0x0001000900AA0004   /*equals sign expected*/
+#define FAIL_INTERPRETER_NOT_A_VARIABLE (unsigned long long int)0x0001000900AA0005   /*not a variable*/
+#define FAIL_INTERPRETER_LABEL_TABLE_FULL (unsigned long long int)0x0001000900AA0006   /*Label table full*/
+#define FAIL_INTERPRETER_DUPLICATE_SUB_LABEL (unsigned long long int)0x0001000900AA0007   /*duplicate sub_label*/
+#define FAIL_INTERPRETER_UNDEFINED_SUB_LABEL (unsigned long long int)0x0001000900AA0008   /*undefined sub_label*/
+#define FAIL_INTERPRETER_THEN_EXPECTED (unsigned long long int)0x0001000900AA0009   /*THEN expected*/
+#define FAIL_INTERPRETER_TO_EXPECTED (unsigned long long int)0x0001000900AA000A   /*TO expected*/
+#define FAIL_INTERPRETER_TOO_MANY_NESTED_FOR_LOOPS (unsigned long long int)0x0001000900AA000B   /*too many nested FOR loops*/
+#define FAIL_INTERPRETER_NEXT_WITHOUT_FOR (unsigned long long int)0x0001000900AA000C   /*NEXT without FOR*/
+#define FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB (unsigned long long int)0x0001000900AA000D   /*too many nested GOSUBs*/
+#define FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB (unsigned long long int)0x0001000900AA000E   /*RETURN without GOSUB*/
+#define FAIL_INTERPRETER_FILE_NOT_FOUND (unsigned long long int)0x0001000900AA000F   /*no program file*/
+#define FAIL_INTERPRETER_MOVL_WITH_JOINT (unsigned long long int)0x0001000900AA0010   /*movl with joint*/
+#define FAIL_INTERPRETER_MOVJ_WITH_POINT (unsigned long long int)0x0001000900AA0011   /*movj with point*/
 #define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER (unsigned long long int)0x0001000900AA0012   /*movj with point*/
 #define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH (unsigned long long int)0x0001000900AA0013   /*movj with point*/
 #define FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO (unsigned long long int)0x0001000900AA0014   /*movj with point*/
-#define INFO_INTERPRETER_BACK_TO_BEGIN (unsigned long long int)0x0001000200AA0015   /*movj with point*/
+#define INFO_INTERPRETER_BACK_TO_BEGIN    (unsigned long long int)0x0001000200AA0015   /*movj with point*/
+#define INFO_INTERPRETER_THREAD_NOT_EXIST (unsigned long long int)0x0001000200AA0016   /*THREAD NOT EXIST */
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000900AA0100   /*User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000900AA0101   /*User Alarm 1*/
 #define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000900AA0102   /*User Alarm 2*/
@@ -182,18 +182,42 @@
 #define INVALID_PATH_FROM_TP (unsigned long long int)0x0000000200AC03F9   /*invalid path*/
 #define PARSE_IO_PATH_FAILED (unsigned long long int)0x0000000200AC03FA   /*IO not exist*/
 #define IO_MAPPING_LOG (unsigned long long int)0x0001000100AD0000   /*IoMapping log{0}*/
-#define MODBUS_LOG (unsigned long long int)0x0011000100AE0000   /*ModbusManager log{0}*/
-#define MODBUS_MANAGER_INIT_FAILED (unsigned long long int)0x0011000100AE0001   /*modbusManager init failed*/
-#define MODBUS_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0010000000AE0002   /*modbusManager load param failed*/
-#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0011000100AE0003   /*modbus client init failed*/
-#define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0011000200AE0004   /*modbus server init failed*/
-#define MODBUS_REG_TYPE_ERROR (unsigned long long int)0x0001000200AE0005   /*modbus reg type error*/
-#define MODBUS_MAP_ID_ERROR (unsigned long long int)0x0001000200AE0006   /*modbus map id error*/
-#define MODBUS_CLIENT_GET_RESPONSE_TIMEOUT_FAILED (unsigned long long int)0x0001000200AE0007   /*modbus client get response timeout failed*/
-#define MODBUS_CLIENT_GET_BYTES_TIMEOUT_FAILED (unsigned long long int)0x0001000200AE0008   /*modbus client get bytes timeout failed*/
-#define MODBUS_CLIENT_OPERATION_NUM_TOO_LARGE (unsigned long long int)0x0001000200AE0009   /*modbus client :操作的地址数量太大*/																										
-#define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE000A   /*modbus client: read failed*/
-#define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE000B   /*modbus client: write failed*/
+
+#define MODBUS_LOG (unsigned long long int)0x0011000200AE0000   /*ModbusManager log{0}*/																										
+#define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus_manager save param failed*/																										
+#define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0003   /*modbus start mode error*/																										
+#define MODBUS_INVALID (unsigned long long int)0x0001000200AE0004   /*modbus invalid*/																										
+#define MODBUS_CLIENT_EXISTED (unsigned long long int)0x0001000200AE0008   /*modbus client is existed*/																										
+#define MODBUS_CLIENT_INVALID_ARG (unsigned long long int)0x0001000200AE0009   /*modbus client param error*/																										
+#define MODBUS_CLIENT_CONNECT_FAILED (unsigned long long int)0x0001000200AE000A   /*modbus client connect failed*/																										
+#define MODBUS_CLIENT_LOAD_PARAM_FAILED (unsigned long long int)0x0001000200AE000C   /*modbus client load param failed*/																										
+#define MODBUS_CLIENT_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE000D   /*modbus client save param failed*/																										
+#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0001000200AE000F   /*modbus client init failed*/																										
+#define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE0010   /*modbus client read failed*/																										
+#define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE0011   /*modbus client write failed*/																										
+#define MODBUS_CLIENT_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0012   /*modbus client be not opened*/																										
+#define MODBUS_CLIENT_IS_RUNNING (unsigned long long int)0x0001000200AE0013   /*modbus client is  running*/																										
+#define MODBUS_CLIENT_IS_ADDED (unsigned long long int)0x0001000200AE0014   /*modbus client is added*/																										
+#define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
+#define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server save param failed*/																										
+#define MODBUS_SERVER_CONNECT_FALIED (unsigned long long int)0x0001000200AE001B   /*modbus server connect failed */																										
+#define MODBUS_SERVER_INVALID_ARG (unsigned long long int)0x0001000200AE001C   /*modbus server invalid param*/																										
+#define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server load param failed*/																										
+#define MODBUS_SERVER_OPEN_FAILED (unsigned long long int)0x0001000200AE001E   /*modbus server open failed*/																										
+#define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0001000200AE001F   /*modbus server init failed*/																										
+#define MODBUS_SERVER_FUNCTION_INVALID (unsigned long long int)0x0001000200AE0020   /*modbus server reg invalid*/																										
+#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000200AE0021   /*modbus server is running*/																										
+
+#define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
+#define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
+#define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0010000200AD0003   /*failed to load simused status json files*/
+#define PROGRAM_LAUNCHING_LOAD_PARAM_FAILED (unsigned long long int)0x0011000200B00001   /*failed to load program_launching yaml paramters*/
+#define PROGRAM_LANNCHING_LOAD_MODE_FILE_FAILED (unsigned long long int)0x0011000200B00002   /*failed to load launch_mode_setting json files*/
+#define PROGRAM_LAUNCHING_LOAD_MACRO_FILE_FAILED (unsigned long long int)0x0011000200B00003   /*failed to load macro_io_launch json files*/
+#define FILE_MANAGER_READ_FILE_FAILED (unsigned long long int)0x0010000200B10001   /*failed to read file*/
+#define FILE_MANAGER_WRITE_FILE_FAILED (unsigned long long int)0x0010000200B10002   /*failed to write file*/
+
+
 
 #define TRAJECTORY_FIFO_EMPTY (unsigned long long int)0x0001000400A90BB8   /*trajectory FIFO is empty*/
 #define TRAJECTORY_FIFO_FULL (unsigned long long int)0x0001000400A90BB9   /*trajectory FIFO is full*/

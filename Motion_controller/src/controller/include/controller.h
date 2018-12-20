@@ -19,6 +19,9 @@
 #include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "preformance_monitor.h"
+#include "io_mapping.h" //feng add for iomapping.
+#include "program_launching.h"
+#include "file_manager.h"
 #include <string>
 // for test only
 #include "virtual_core1.h"
@@ -57,7 +60,12 @@ private:
     fst_base::ProcessComm* process_comm_ptr_;
     fst_base::PreformanceMonitor preformance_monitor_;
     VirtualCore1 virtual_core1_; // for test only
-    
+    IoMapping io_mapping_; 
+    fst_hal::IoManager* io_manager_ptr_;
+    fst_hal::ModbusManager* modbus_manager_ptr_; //todo delete
+    ProgramLaunching program_launching_;
+    fst_base::FileManager file_manager_;
+
     // thread related
     bool is_exit_;
     fst_base::ThreadHelp routine_thread_;

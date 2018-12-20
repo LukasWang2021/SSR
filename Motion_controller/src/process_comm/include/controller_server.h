@@ -84,10 +84,18 @@ private:
     void handleRequestGetRReg();
     void handleRequestSetInstruction();
     void handleRequestIsNextInstructionNeeded();
-    void handleRequestCheckIo();
-    void handleRequestSetIo();
-    void handleRequestGetIo();
+    void handleRequestCheckIo();//TODO
+    void handleRequestSetIo();//TODO
+    void handleRequestGetIo();//TODO
     void handleRequestSetInterpreterServerStatus();
+    void handleRequestGetDi();
+    void handleRequestSetDi();
+    void handleRequestGetDo();
+    void handleRequestSetDo();
+    void handleRequestGetRi();
+    void handleRequestSetRi();
+    void handleRequestGetRo();
+    void handleRequestSetRo();
 
     // rpc response handler
     void handleResponseSetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -102,10 +110,17 @@ private:
     void handleResponseGetRReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseIsNextInstructionNeeded(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    void handleResponseCheckIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    void handleResponseSetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    void handleResponseGetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+      
     void handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+
+    void handleResponseGetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     
 };
 

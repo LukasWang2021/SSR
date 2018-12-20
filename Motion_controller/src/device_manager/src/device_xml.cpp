@@ -50,7 +50,7 @@ bool DeviceXml::createDeviceConfig(const xmlDocPtr doc_ptr,
     {
         return false;
     }   
-        
+
     slave_data.device_type = convertDeviceTypeStrToEnum(device_type_str);
     if(slave_data.device_type == DEVICE_TYPE_INVALID)
     {
@@ -64,12 +64,13 @@ bool DeviceXml::createDeviceConfig(const xmlDocPtr doc_ptr,
         case DEVICE_TYPE_FST_SAFETY: break;
         case DEVICE_TYPE_FST_ANYBUS: return false;
         case DEVICE_TYPE_VIRTUAL_AXIS: break;
-        case DEVICE_TYPE_VIRTUAL_IO: return false;
+        case DEVICE_TYPE_VIRTUAL_IO: break;
         case DEVICE_TYPE_VIRTUAL_SAFETY: return false;
         case DEVICE_TYPE_NORMAL: return false;
+        case DEVICE_TYPE_MODBUS: break;
         default: return false;
     }
-	return true;
+    return true;
 }
 
 
@@ -118,6 +119,10 @@ DeviceType DeviceXml::convertDeviceTypeStrToEnum(std::string device_type_str)
     else if(device_type_str == std::string("Normal"))
     {
         return DEVICE_TYPE_NORMAL;
+    }
+    else if(device_type_str == std::string("Modbus"))
+    {
+        return DEVICE_TYPE_MODBUS;
     }
     else
     {

@@ -1,194 +1,109 @@
+/**********************************************
+Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
+File:       fst_io_device.h
+Author:     Feng.Wu
+Create:     14-Oct-2018
+Modify:     25-Oct-2018
+Summary:    dealing with IO module
+**********************************************/
+
 #ifndef FST_IO_DEVICE_H
 #define FST_IO_DEVICE_H
 
-#include "base_device.h"
-#include "fst_io_device_param.h"
-#include "common_log.h"
-#include "error_code.h"
 #include <vector>
-#include <thread>
 #include <mutex>
 #include <string>
 #include <map>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include "IOboard.h"
 
-#include "io_interface.h"
-#include "io_manager.h"
+#include "base_device.h"
+#include "common_log.h"
+#include "error_code.h"
+#include "fst_io_mem.h"
+#include "fst_io_device_param.h"
 
 namespace fst_hal
 {
-	
-typedef unsigned long long int U64;
-	
-	// IO Macro and structure begin
-#ifndef IO_BASE_ADDRESS
-#define IO_BASE_ADDRESS (100000)
-#endif
-	
-#ifndef IO_MAX_NUM
-#define IO_MAX_NUM      (1000)
-#endif
-	
-#ifndef IO_INPUT
-#define IO_INPUT 0
-#endif
-	
-#ifndef IO_OUTPUT
-#define IO_OUTPUT 1
-#endif
-	
-#ifndef IO_DATAFRAME_MAX
-#define IO_DATAFRAME_MAX 5
-#endif
 
-class FstIoDevice : public BaseDevice
+// This is output info.
+struct IODeviceInfo
+{
+    uint32_t address;        //address
+    uint8_t dev_type;  //?DEVICE_TYPE_FST_IO
+    std::string device_type;
+    std::string comm_type;
+    uint32_t DI_num;
+    uint32_t DO_num;
+    uint32_t RI_num;
+    uint32_t RO_num;
+    bool is_valid;
+};
+
+struct IODevicePortValues
+{
+    uint8_t DI[4];
+    uint8_t DO[4];
+    uint8_t RI[1];
+    uint8_t RO[1];
+};
+
+/*
+// This is the data to driver.
+struct IODeviceData
+{
+    uint8_t id;
+    uint8_t enable;
+    uint8_t verify;
+    uint8_t model;
+    unsigned char input[IO_DATAFRAME_MAX]; 
+    unsigned char output[IO_DATAFRAME_MAX];
+};
+*/
+	
+class FstIoDevice: public BaseDevice
 {
 public:
     FstIoDevice(int address);
     ~FstIoDevice();
 
     virtual bool init();
-	
-public:
-    //------------------------------------------------------------
-    // Function:    getDevicesNum
-    // Summary: get the number of devices
-    // In:      None
-    // Out:     None
-    // Return:  int -> the total number of io devices.
-    //------------------------------------------------------------
-    int getDevicesNum(void);
 
-	std::vector<fst_io_manager::IODeviceInfo> getIODevices();
+    IODeviceInfo getDeviceInfo(void);
+    IODevicePortValues getDeviceValues(void);
 
-    //------------------------------------------------------------
-    // Function:    getDeviceInfo
-    // Summary: get the information of each device.
-    // In:      index -> the sequence number of the device.
-    // Out:     info  -> the information of each device.
-    // Return:  U64   -> error codes.
-    //------------------------------------------------------------
-    U64 getDeviceInfo(unsigned int index, fst_io_manager::IODeviceInfo &info);
+    ErrorCode getDiValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getDoValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getRiValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getRoValue(uint8_t port_offset, uint8_t &value);
 
-	
-	 /**
-	  * @brief: set DO 
-	  *
-	  * @param path: path of set DO
-	  * @param value: value to set
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 setDO(const char *path, char value);
-	
-	 /**
-	  * @brief: set DO 
-	  *
-	  * @param msg_id: id of this DO
-	  * @param value: value to set
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 setDO(int msg_id, unsigned char value);
-	
-	 /**
-	  * @brief: set DO 
-	  *
-	  * @param io_info: port infomation of DO
-	  * @param value: value to set
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 setDO(IOPortInfo *io_info, char value);
-	
-	 /**
-	  * @brief:get DI and DO 
-	  *
-	  * @param path: path to get
-	  * @param buffer: buffer to store value 
-	  * @param buf_len: buffer len
-	  * @param io_bytes_len: actual length
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 getDIO(const char *path, unsigned char *buffer, int buf_len, int& io_bytes_len);
-	
-	/**
-	  * @brief:get DI and DO 
-	  *
-	  * @param msg_id: id to get
-	  * @param buffer: buffer to store value 
-	  * @param buf_len: buffer len
-	  * @param io_bytes_len: actual length
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 getDIO(int msg_id, uint8_t *buffer, int buf_len, int& io_bytes_len);
-	  /**
-	  * @brief:get DI and DO 
-	  *
-	  * @param io_info: infomation of DI or DO
-	  * @param buffer: buffer to store value 
-	  * @param buf_len: buffer len
-	  *
-	  * @return: 0 if success 
-	  */
-	 U64 getDIO(IOPortInfo *io_info, uint8_t *buffer, int buf_len);
-	 
-	 /**
-	  * @brief: check valid of this DI or DO 
-	  *
-	  * @param path: path of this DI or DO
-	  * @param io_info: io infomation 
-	  *
-	  * @return: true if it is valid 
-	  */
-	 U64 checkIO(const char *path, IOPortInfo* io_info);
-	
-	 /**
-	  * @brief: get index of this IO device
-	  *
-	  * @param dev_address: address of device
-	  *
-	  * @return: index of IO device 
-	  */
-	 int getIODevIndex(int dev_address);
-	
-	 /**
-	  * @brief: update IO error 
-	  */
-	 U64 updateIOError();
-	 
+    ErrorCode setDoValue(uint8_t port_offset, uint8_t value);
+    ErrorCode setRoValue(uint8_t port_offset, uint8_t value);
 
-    // for the convert between parameter id and device id.
-    static const int ID_DIFF = 100000; 
-    static const int MULTIPLIER = 1000; 
-
-    // the total number of device on RS485.
-    static const int RS_DEV_NUM = 4;
-
+    ErrorCode updateDeviceData(void);
+    
     // the faulty tolerance times.
-    static const int FAULT_TOL = 20;
+    //static const int FAULT_TOL = 20;
 
-    // the thread cycle.
-    static const int LOOP_CYCLE = 1000;
-	
+    // only open sharemem onece.
+    static bool is_mem_init_;
+
 private:
     FstIoDeviceParam* param_ptr_;
     fst_log::Logger* log_ptr_;
+    std::mutex data_mutex_;
+    int address_;
+    bool is_virtual_;
+    int comm_tolerance_;
+    IODeviceInfo dev_info_;
+    IODevicePortValues dev_values_;
+    uint8_t output_[IO_DATAFRAME_MAX];
 
     FstIoDevice();
 
-	
-private:
+    void initIODeviceData(IODeviceData &data);
 
-    // the flags to read and write FPGA.
-    uint8_t seq_;
+    ErrorCode getDeviceDataFromMem(IODeviceData &data);
 
-    // the object to operate on the configuration file.
-    fst_parameter::ParamGroup param_;
+    bool readWriteMem(IODeviceData &data);
 
 };
 

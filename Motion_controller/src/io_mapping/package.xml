@@ -45,12 +45,19 @@
   <build_depend>base_device</build_depend>
   <build_depend>fst_io_device</build_depend>
   <build_depend>device_manager</build_depend>
+  <build_depend>error_monitor</build_depend>
+  <build_depend>modbus_manager</build_depend>
+  <build_depend>thread_help</build_depend>
+
 
   <run_depend>log_manager</run_depend>
   <run_depend>parameter_manager</run_depend>
   <run_depend>base_device</run_depend>
   <run_depend>fst_io_device</run_depend>
   <run_depend>device_manager</run_depend>
+  <run_depend>error_monitor</run_depend>
+  <run_depend>modbus_manager</run_depend>
+  <run_depend>thread_help</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -12,87 +12,103 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <mutex>
 
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
 #include "thread_help.h"
+#include "net_connection.h"
 
 #include "modbus/modbus-private.h"
 #include "modbus/modbus-tcp.h"
-#include "modbus_manager_param.h"
+#include "modbus_server_param.h"
 #include "local_ip.h"
 
 using namespace std;
-using namespace fst_modbus;
+using namespace fst_hal;
 
-namespace fst_modbus
+namespace fst_hal
 {
-struct ServerRegInfo
-{
-    int coil_addr;
-    int coil_nb; //
-    int discrepte_input_addr;
-    int discrepte_input_nb;
-    int holding_register_addr;
-    int holding_register_nb;
-    int input_register_addr;
-    int input_register_nb;
-};
+enum {MODBUS_SERVER_COIL = 1, MODBUS_SERVER_DISCREPTE_INPUT = 2,
+    MODBUS_SERVER_HOLDING_REG = 4, MODBUS_SERVER_INPUT_REG = 3, MODBUS_SERVER_REG_TYPE_INVALID = 0};
 
 class ModbusTCPServer
 {
 public:
-    ModbusTCPServer(int port);
-     ~ModbusTCPServer();
+    ModbusTCPServer(string file_path);
+    ~ModbusTCPServer();
 
-    void setDebug(bool flag);
-    void setConnectionNnumber(int nb);
-    ServerRegInfo getServerRegInfo();
+    ErrorCode initParam();
+    ErrorCode setConnectStatus(bool status);
+    bool getConnectStatus();
+    ErrorCode setConfig(ModbusServerConfig config);
+    ModbusServerConfig getConfig();
+    ModbusServerStartInfo getStartInfo();
+    ErrorCode getValidRegInfo(int reg_type, ModbusRegAddrInfo info);
+    int getResponseDelay();
+
+    ModbusRegAddrInfo getCoilInfo();
+    ModbusRegAddrInfo getDiscrepteInputInfo();
+    ModbusRegAddrInfo getHoldingRegInfo();
+    ModbusRegAddrInfo getInputRegInfo();
+
+    ErrorCode openServer();
+    void closeServer();
 
     bool isRunning();
     void modbusTcpServerThreadFunc();
 
-    ErrorCode init();
-    ErrorCode open();
-    void close();
-
-    bool saveComponentParams();
+    ErrorCode writeCoils(int addr, int nb, uint8_t *dest);
+    ErrorCode readCoils(int addr, int nb, uint8_t *dest);
+    ErrorCode readDiscreteInputs(int addr, int nb, uint8_t *dest);
+    ErrorCode writeHoldingRegs(int addr, int nb, uint16_t *dest);
+    ErrorCode readHoldingRegs(int addr, int nb, uint16_t *dest);
+    ErrorCode readInputRegs(int addr, int nb, uint16_t *dest);
 
 private:
     modbus_t* ctx_;
-    int port_;
-    fst_ip::LocalIP local_ip_;
+    modbus_mapping_t* mb_mapping_;
 
     int server_socket_;
-    int connection_number_;
-    bool is_debug_;
-
-    int fd_max_;
+    int fdmax_;
     fd_set refset_;
-    fd_set rdset_;
 
-    modbus_mapping_t* mb_mapping_;
+    int port_;
+    int connection_nb_;
+    bool is_debug_;
+    bool is_enable_;
+    string comm_type_;
+    ModbusServerConfig config_;
+    ModbusServerRegInfo reg_info_;
+    fst_ip::LocalIP local_ip_;
+
     uint8_t query_[MODBUS_TCP_MAX_ADU_LENGTH];
-    ServerRegInfo server_reg_info_;
-
-    ModbusManagerParam* param_ptr_;
-    fst_log::Logger* log_ptr_;
-    fst_parameter::ParamGroup tcp_server_yaml_help_;
-    std::string tcp_server_file_path_;
 
     int cycle_time_;
     bool is_running_;
     fst_base::ThreadHelp thread_ptr_;
 
-    bool loadComponentParams();
+    ModbusServerParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
+    NetConnection net_connect_;
+    int valid_reg_type_;
 
-    bool mapping_new_start_address(
-        unsigned int start_colis, unsigned int nb_colis,
-        unsigned int start_discrete_inputs, unsigned int nb_discrete_inputs,
-        unsigned int start_holding_registers, unsigned int nb_holding_registers,
-        unsigned int start_input_registers, unsigned int nb_input_registers);
+    std::mutex tab_bit_mutex_;
+    std::mutex tab_input_bit_mutex_;
+    std::mutex tab_reg_mutex_;
+    std::mutex tab_input_reg_mutex_;
+    int thread_priority_;
 
-    void mapping_free();
+    ErrorCode init();
+    bool checkConnect();
+    bool loadParam();
+
+    ModbusTCPServer();
 };
 }
 

@@ -17,6 +17,10 @@ public:
 
     // param to load & save
     int log_level_;
+    std::string device_type_;
+    std::string comm_type_;
+    int max_DI_number_;
+    int max_DO_number_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

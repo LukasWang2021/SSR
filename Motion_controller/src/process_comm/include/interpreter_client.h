@@ -33,10 +33,16 @@ public:
     bool getRReg(int id, fst_ctrl::RRegDataIpc* data); 
     bool setInstruction(Instruction* data);
     bool isNextInstructionNeeded();
-    ErrorCode checkIo(char path[256], IOPortInfo* port_info_ptr);
-    ErrorCode setIo(IOPortInfo* port_info_ptr, char value);
-    ErrorCode getIo(IOPortInfo* port_info_ptr, int buffer_length, char* value_ptr);
+    
     bool setInterpreterServerStatus(bool status);
+    ErrorCode getDi(uint32_t port_offset, uint32_t &value);
+    ErrorCode setDi(uint32_t port_offset, uint32_t value);
+    ErrorCode getDo(uint32_t port_offset, uint32_t &value);
+    ErrorCode setDo(uint32_t port_offset, uint32_t value);
+    ErrorCode getRi(uint32_t port_offset, uint32_t &value);
+    ErrorCode setRi(uint32_t port_offset, uint32_t value);
+    ErrorCode getRo(uint32_t port_offset, uint32_t &value);
+    ErrorCode setRo(uint32_t port_offset, uint32_t value);
     
 private:
     fst_log::Logger* log_ptr_;

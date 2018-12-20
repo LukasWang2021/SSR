@@ -132,8 +132,7 @@ private:
     void handlePublishElementRegMr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     void handlePublishElementRegHr(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     void handlePublishElementRegR(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    void handlePublishElementIoInput(Comm_Publish& package, int element_index, TpPublishElement& list_element);
-    void handlePublishElementIoOutput(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+    void handlePublishElementIo(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
     void recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path);
     void handleRequestNonexistentHash(int hash, int recv_bytes);
@@ -167,6 +166,9 @@ private:
     void handleRequest0x000003F5(int recv_bytes);
     /********rpc/controller/getVersion, RequestMessageType_Void**********/
     void handleRequest0x000093EE(int recv_bytes);
+    /********rpc/controller/getErrorCodeList, RequestMessageType_Void**********/
+    void handleRequest0x00015F44(int recv_bytes);
+
     /********rpc/interpreter/switchStep, RequestMessageType_Int32**********/
     void handleRequest0x000140F0(int recv_bytes);
 
@@ -300,6 +302,8 @@ private:
     void handleRequest0x00002940(int recv_bytes);
     /********rpc/motion_control/axis_group/getOrientationManualStep, RequestMessageType_Int32**********/
     void handleRequest0x00016D20(int recv_bytes);
+    /********rpc/motion_control/axis_group/setSingleZeroPointOffset, RequestMessageType_Int32List_Double(count=2)**********/
+    void handleRequest0x00012404(int recv_bytes);
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);
@@ -317,22 +321,7 @@ private:
     void handleRequest0x0000CF55(int recv_bytes);
     /********rpc/interpreter/abort, RequestMessageType_Void**********/
     void handleRequest0x000086F4(int recv_bytes);
-    /********rpc/controller/setStartMode, RequestMessageType_Int32**********/
-    void handleRequest0x00010225(int recv_bytes);
-    /********rpc/controller/getStartMode, RequestMessageType_Void**********/
-    void handleRequest0x000092E5(int recv_bytes);
 
-    /********rpc/io_mapping/getDIByBit, RequestMessageType_Int32**********/
-    void handleRequest0x000050B4(int recv_bytes);
-    /********rpc/io_mapping/setDIByBit, RequestMessageType_Int32List(count = 2) **********/
-    void handleRequest0x00011754(int recv_bytes);
-    /********rpc/io_mapping/getDOByBit, RequestMessageType_Int32**********/
-    void handleRequest0x00013074(int recv_bytes);
-    /********rpc/io_mapping/setDOByBit, RequestMessageType_Int32List(count = 2) **********/
-    void handleRequest0x00007074(int recv_bytes);
-
-    /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
-    void handleRequest0x0000C1E0(int recv_bytes);
     /********rpc/publish/addTopic, RequestMessageType_Topic**********/
     void handleRequest0x000050E3(int recv_bytes);
     /********rpc/publish/deleteTopic, RequestMessageType_UnsignedInt32**********/
@@ -345,7 +334,6 @@ private:
     void handleRequest0x00010353(int recv_bytes);
     /********rpc/publish/deleteIoTopic, RequestMessageType_Uint32**********/
     void handleRequest0x0000DD03(int recv_bytes);
-
 
     /********rpc/motion_control/setGlobalVelRatio, RequestMessageType_Double**********/
     void handleRequest0x000005EF(int recv_bytes);
@@ -429,6 +417,105 @@ private:
     /********rpc/motion_control/axis_group/getCartesianManualStep, RequestMessageType_Int32**********/
     void handleRequest0x0000EAC0(int recv_bytes);
 
+    /********rpc/io_mapping/getDIByBit, RequestMessageType_Int32**********/
+    void handleRequest0x000050B4(int recv_bytes);
+    /********rpc/io_mapping/setDIByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00011754(int recv_bytes);
+    /********rpc/io_mapping/getDOByBit, RequestMessageType_Int32**********/
+    void handleRequest0x00013074(int recv_bytes);
+    /********rpc/io_mapping/setDOByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00007074(int recv_bytes);
+
+    /********rpc/io_mapping/getRIByBit, RequestMessageType_Int32**********/
+    void handleRequest0x00000684(int recv_bytes);
+    /********rpc/io_mapping/setRIByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x0000CD24(int recv_bytes);
+    /********rpc/io_mapping/getROByBit, RequestMessageType_Int32**********/
+    void handleRequest0x00005BD4(int recv_bytes);
+    /********rpc/io_mapping/setROByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00012274(int recv_bytes);
+    /********rpc/io_mapping/syncFileIoStatus, RequestMessageType_String**********/
+    void handleRequest0x0000BA73(int recv_bytes);
+    /********rpc/io_mapping/syncFileIoMapping, RequestMessageType_String**********/
+    void handleRequest0x0000C2A7(int recv_bytes);
+
+    /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
+    void handleRequest0x0000C1E0(int recv_bytes);
+    /********rpc/device_manager/get_FRP8A_IoDeviceInfo, RequestMessageType_Int32**********/
+    void handleRequest0x00006BAF(int recv_bytes);
+    /********rpc/device_manager/getModbusIoDeviceInfo, RequestMessageType_Void**********/
+    void handleRequest0x0001421F(int recv_bytes);
+    /********rpc/device_manager/getIoDeviceInfoList, RequestMessageType_Void**********/
+    void handleRequest0x000024A4(int recv_bytes);
+
+    /********rpc/program_launching/setMethod, RequestMessageType_Int32**********/
+    void handleRequest0x00011544(int recv_bytes);
+    /********rpc/program_launching/getMethod, RequestMessageType_Void**********/
+    void handleRequest0x00010944(int recv_bytes);
+    /********rpc/program_launching/syncFileMacroConfig, RequestMessageType_String**********/
+    void handleRequest0x00016B27(int recv_bytes);
+
+    /********rpc/modbus/setStartMode, RequestMessageType_ModbusStartMode**********/
+    void handleRequest0x0000D3A5(int recv_bytes);
+    /********rpc/modbus/getStartMode, RequestMessageType_Void**********/
+    void handleRequest0x000041C5(int recv_bytes);
+    /********rpc/modbus/setServerConnectStatus, RequestMessageType_Bool**********/
+    void handleRequest0x0000DB23(int recv_bytes);
+    /********rpc/modbus/getServerConnectStatus, RequestMessageType_Void**********/
+    void handleRequest0x00001B23(int recv_bytes);
+    /********rpc/modbus/setServerConfig, RequestMessageType_ModbusServerConfig**********/
+    void handleRequest0x00017547(int recv_bytes);
+    /********rpc/modbus/getServerConfig, RequestMessageType_Void**********/
+    void handleRequest0x00016947(int recv_bytes);
+    /********rpc/modbus/getServerStartInfo, RequestMessageType_Void**********/
+    void handleRequest0x000018AF(int recv_bytes);
+    /********rpc/modbus/openServer, RequestMessageType_Void**********/
+    void handleRequest0x00010912(int recv_bytes);
+    /********rpc/modbus/closeServer, RequestMessageType_Void**********/
+    void handleRequest0x000045B2(int recv_bytes);
+    /********rpc/modbus/addClient, RequestMessageType_Int32**********/
+    void handleRequest0x00012E44(int recv_bytes);
+    /********rpc/modbus/setClientConnectStatus, RequestMessageType_Int32_Bool**********/
+    void handleRequest0x000099D3(int recv_bytes);
+    /********rpc/modbus/getClientConnectStatus, RequestMessageType_Int32**********/
+    void handleRequest0x00010A53(int recv_bytes);
+    /********rpc/modbus/setClientConfig, RequestMessageType_ModbusClientConfig**********/
+    void handleRequest0x0000D017(int recv_bytes);
+    /********rpc/modbus/getClientConfig, RequestMessageType_Int32**********/
+    void handleRequest0x0000FC17(int recv_bytes);
+    /********rpc/modbus/openClient, RequestMessageType_Int32**********/
+    void handleRequest0x00000544(int recv_bytes);
+    /********rpc/modbus/closeClient, RequestMessageType_Int32**********/
+    void handleRequest0x00006CA4(int recv_bytes);
+    /********rpc/modbus/deleteClient, RequestMessageType_Int32**********/
+    void handleRequest0x00014CF4(int recv_bytes);
+    /********rpc/modbus/getClientSummaryInfoList, RequestMessageType_Void**********/
+    void handleRequest0x0000B424(int recv_bytes);
+    /********rpc/modbus/writeCoils, RequestMessageType_ModbusStatusInfo**********/
+    void handleRequest0x0000BD83(int recv_bytes);
+    /********rpc/modbus/readCoils, RequestMessageType_ModbusStatusAddrInfo**********/
+    void handleRequest0x0000A433(int recv_bytes);
+    /********rpc/modbus/readDiscreteInputs, RequestMessageType_ModbusStatusAddrInfo**********/
+    void handleRequest0x0000C063(int recv_bytes);
+    /********rpc/modbus/writeHoldingRegs, RequestMessageType_ModbusRegInfo**********/
+    void handleRequest0x00008C43(int recv_bytes);
+    /********rpc/modbus/readHoldingRegs, RequestMessageType_ModbusRegAddrInfo**********/
+    void handleRequest0x00003583(int recv_bytes);
+    /********rpc/modbus/readInputRegs, RequestMessageType_ModbusRegAddrInfo**********/
+    void handleRequest0x000072C3(int recv_bytes);
+
+    /********rpc/file_manager/readFile, RequestMessageType_String**********/
+    void handleRequest0x0000A545(int recv_bytes);
+    /********rpc/file_manager/writeFile, RequestMessageType_String_Bytes**********/
+    void handleRequest0x00010D95(int recv_bytes);
+
+    /********rpc/modbus/getServerValidFuctionInfo, RequestMessageType_Void**********/
+    void handleRequest0x00008E7F(int recv_bytes);
+    /********rpc/modbus/getServerResponseDelay, RequestMessageType_Void**********/
+    void handleRequest0x00000329(int recv_bytes);
+    /********rpc/modbus/getServerRunningStatus, RequestMessageType_Void**********/
+    void handleRequest0x00000953(int recv_bytes);
+
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
     void handleResponse0x00000C05(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********GetRunningStatus, ResponseMessageType_Int32**********/	
@@ -461,7 +548,8 @@ private:
     void handleResponse0x000003F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getVersion, ResponseMessageType_Uint64_String**********/
     void handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
+    /********rpc/controller/getErrorCodeList, ResponseMessageType_Uint64_Uint64List(count = 64)**********/
+    void handleResponse0x00015F44(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********getRpcTable, ResponseMessageType_RpcTable**********/
     void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -598,6 +686,8 @@ private:
     void handleResponse0x00002940(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getOrientationManualStep, ResponseMessageType_Uint64_Double**********/
     void handleResponse0x00016D20(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setSingleZeroPointOffset, ResponseMessageType_Uint64**********/
+    void handleResponse0x00012404(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -621,20 +711,6 @@ private:
     void handleResponse0x00010225(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getStartMode, ResponseMessageType_Uint64_Int32**********/
     void handleResponse0x000092E5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
-    /********rpc/io_mapping/getDIByBit, ResponseMessageType_Bool_Int32**********/
-    void handleResponse0x000050B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/io_mapping/setDIByBit, ResponseMessageType_Bool**********/
-    void handleResponse0x00011754(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/io_mapping/getDOByBit, ResponseMessageType_Bool_Int32**********/
-    void handleResponse0x00013074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/io_mapping/setDOByBit, ResponseMessageType_Bool**********/
-    void handleResponse0x00007074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/controller/addIoTopic, ResponseMessageType_Bool**********/
-    void handleResponse0x0000B823(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-
-    /********rpc/device_manager/getDeviceList , ResponseMessageType_DeviceInfoList**********/
-    void handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/publish/addTopic, ResponseMessageType_Bool**********/
     void handleResponse0x000050E3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -733,7 +809,12 @@ private:
     /********rpc/motion_control/axis_group/getCartesianManualStep, ResponseMessageType_Uint64_Double**********/
     void handleResponse0x0000EAC0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
-    /********UserOpMode, MessageType_Int32**********/  
+    /********rpc/file_manager/readFile, ResponseMessageType_Uint64_Bytes**********/
+    void handleResponse0x0000A545(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/file_manager/writeFile, ResponseMessageType_Uint64**********/
+    void handleResponse0x00010D95(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********UserOpMode, MessageType_Int32**********/
     void handlePublishElement0x00015255(Comm_Publish& package, int element_index, TpPublishElement& list_element);
     /********RunningStatus, MessageType_Int32**********/
     void handlePublishElement0x00001F33(Comm_Publish& package, int element_index, TpPublishElement& list_element);
@@ -769,6 +850,107 @@ private:
     void handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/interpreter/tp_program_status, MessageType_StringList(count=2)**********/
     void handlePublishElement0x000042B3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/controller/safety_board_status, MessageType_Uint32**********/
+    void handlePublishElement0x000123C3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/controller/io_board_status, MessageType_IoboardStatusList(count=4)**********/
+    void handlePublishElement0x00006D93(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+
+   /********rpc/controller/addIoTopic, ResponseMessageType_Bool**********/
+    void handleResponse0x0000B823(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/io_mapping/getDIByBit, ResponseMessageType_Bool_Int32**********/
+    void handleResponse0x000050B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setDIByBit, ResponseMessageType_Bool**********/
+    void handleResponse0x00011754(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getDOByBit, ResponseMessageType_Bool_Int32**********/
+    void handleResponse0x00013074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setDOByBit, ResponseMessageType_Bool**********/
+    void handleResponse0x00007074(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+ 
+
+   /********rpc/io_mapping/getRIByBit, ResponseMessageType_Uint64_Int32**********/	
+    void handleResponse0x00000684(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setRIByBit, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000CD24(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getROByBit, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00005BD4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setROByBit, ResponseMessageType_Uint64**********/
+    void handleResponse0x00012274(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/syncFileIoStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000BA73(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/syncFileIoMapping, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000C2A7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/device_manager/getDeviceList , ResponseMessageType_DeviceInfoList**********/
+    void handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/device_manager/get_FRP8A_IoDeviceInfo, ResponseMessageType_Uint64_IoDeviceInfo**********/
+    void handleResponse0x00006BAF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/device_manager/getModbusIoDeviceInfo, ResponseMessageType_Uint64_IoDeviceInfo**********/
+    void handleResponse0x0001421F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/device_manager/getIoDeviceInfoList, ResponseMessageType_Uint64_IoDeviceInfoList**********/
+    void handleResponse0x000024A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/program_launching/setMethod, ResponseMessageType_Uint64**********/
+    void handleResponse0x00011544(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/program_launching/getMethod, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00010944(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/program_launching/syncFileMacroConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x00016B27(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/modbus/setStartMode, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000D3A5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getStartMode, ResponseMessageType_Uint64_ModbusStartMode**********/
+    void handleResponse0x000041C5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setServerConnectStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000DB23(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerConnectStatus, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x00001B23(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setServerConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x00017547(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerConfig, ResponseMessageType_Uint64_ModbusServerConfig**********/
+    void handleResponse0x00016947(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerStartInfo, ResponseMessageType_Uint64_ModbusServerStartInfo**********/
+    void handleResponse0x000018AF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/openServer, ResponseMessageType_Uint64**********/
+    void handleResponse0x00010912(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/closeServer, ResponseMessageType_Uint64**********/
+    void handleResponse0x000045B2(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/addClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00012E44(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setClientConnectStatus, ResponseMessageType_Uint64**********/
+    void handleResponse0x000099D3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getClientConnectStatus, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x00010A53(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/setClientConfig, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000D017(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getClientConfig, ResponseMessageType_Uint64_ModbusClientConfig**********/
+    void handleResponse0x0000FC17(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/openClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00000544(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/closeClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00006CA4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/deleteClient, ResponseMessageType_Uint64**********/
+    void handleResponse0x00014CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getClientSummaryInfoList, ResponseMessageType_Uint64_ModbusClientSummaryInfoList**********/
+    void handleResponse0x0000B424(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/writeCoils, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000BD83(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readCoils, ResponseMessageType_Uint64_ModbusStatusValueList**********/
+    void handleResponse0x0000A433(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readDiscreteInputs, ResponseMessageType_Uint64_ModbusStatusValueList**********/
+    void handleResponse0x0000C063(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/writeHoldingRegs, ResponseMessageType_Uint64**********/
+    void handleResponse0x00008C43(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readHoldingRegs, ResponseMessageType_Uint64_ModbusRegValueList**********/
+    void handleResponse0x00003583(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/readInputRegs, ResponseMessageType_Uint64_ModbusRegValueList**********/
+    void handleResponse0x000072C3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerValidFuctionInfo, ResponseMessageType_Uint64_ModbusFunctionInfo**********/
+    void handleResponse0x00008E7F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerResponseDelay, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00000329(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getServerRunningStatus, ResponseMessageType_Uint64_Bool**********/
+    void handleResponse0x00000953(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     fst_ip::LocalIP local_ip_;
     TpCommManagerParam* param_ptr_;

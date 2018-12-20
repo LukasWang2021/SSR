@@ -118,10 +118,10 @@ bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		ptr->value.pos[4] = objPrRegDataIpc.pos[4];
 		ptr->value.pos[5] = objPrRegDataIpc.pos[5];
 		
-		FST_INFO("getPr: id = (%f, %f, %f, %f, %f, %f) with %s ", 
+		FST_INFO("getPr: id = (%f, %f, %f, %f, %f, %f) at %d with %s ", 
 			ptr->value.pos[0], ptr->value.pos[1], 
 			ptr->value.pos[2], ptr->value.pos[3], 
-			ptr->value.pos[4], ptr->value.pos[5], bRet?"TRUE":"FALSE");
+			ptr->value.pos[4], ptr->value.pos[5], num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -152,10 +152,10 @@ bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 		objPrRegDataIpc.pos[8] = 0.0;
 		
 		bRet = g_objRegManagerInterface->setPrReg(&objPrRegDataIpc);
-		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s ", num, 
+		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) at %d with %s ", num, 
 			objPrRegDataIpc.pos[0], objPrRegDataIpc.pos[1], 
 			objPrRegDataIpc.pos[2], objPrRegDataIpc.pos[3], 
-			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], bRet?"TRUE":"FALSE");
+			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], num, bRet?"TRUE":"FALSE");
 		
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
@@ -243,10 +243,10 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 		objPrRegDataIpc.pos[7] = 0.0;
 		objPrRegDataIpc.pos[8] = 0.0;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
-		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) with %s ", num, 
+		FST_INFO("setPr: id = %d (%f, %f, %f, %f, %f, %f) at %d with %s ", num, 
 			objPrRegDataIpc.pos[0], objPrRegDataIpc.pos[1], 
 			objPrRegDataIpc.pos[2], objPrRegDataIpc.pos[3], 
-			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], bRet?"TRUE":"FALSE");
+			objPrRegDataIpc.pos[4], objPrRegDataIpc.pos[5], num, bRet?"TRUE":"FALSE");
 		if(bRet)
 		{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
@@ -491,10 +491,9 @@ bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num)
 	{
 		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
 		ptr->value = "";
-		FST_INFO("getSr[%d]", num);
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		ptr->value = string(objSrRegDataIpc.value) ;
-		FST_INFO("getSr[%d]:(%s) with %s", num, ptr->value.c_str(), bRet?"TRUE":"FALSE");
+		FST_INFO("getSr[%d]:(%s) at %d with %s", num, ptr->value.c_str(), num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -518,7 +517,7 @@ bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 		// memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
 		objSrRegDataIpc.id = num ;
 		strcpy(objSrRegDataIpc.value, ptr->value.c_str()) ;
-		FST_INFO("setSr:(%s) with %s", objSrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setSr:(%s) at %d with %s", objSrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		
 		bRet = g_objRegManagerInterface->setSrReg(&objSrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
@@ -714,7 +713,8 @@ bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
 		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
-		FST_INFO("getR: value = (%f) with %s", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("getR: value = (%f) at %d with %s", 
+			objRRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		ptr->value = objRRegDataIpc.value;
 	}
 	else
@@ -736,12 +736,11 @@ bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 	{
 		
 		fst_ctrl::RRegDataIpc objRRegDataIpc ;
-		FST_INFO("getR: id = %d value = (%f) ", num, ptr->value);
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = ptr->value;
 		// memcpy(&objRRegData, ptr, sizeof(objRRegData));
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
-		FST_INFO("setR:(%f) with %s", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setR:(%f) at %d with %s", objRRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
 		{
@@ -812,7 +811,8 @@ bool reg_manager_interface_setValueR(double *ptr, uint16_t num)
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
-		FST_INFO("setValueR:(%f) with %s", objRRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setValueR:(%f) at %d with %s", 
+			objRRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -930,7 +930,8 @@ bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num)
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
 		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
-		FST_INFO("getMR: value = (%f) with %s", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("getMR: value = (%f) at %d with %s", 
+			objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		ptr->value = objMrRegDataIpc.value ;
 	}
 	else
@@ -953,7 +954,7 @@ bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
 		objMrRegDataIpc.id = num ;
 		objMrRegDataIpc.value = ptr->value ;
-		FST_INFO("setR:(%f) with %s", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setR:(%f) at %d with %s", objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
 		if(bRet == false)
@@ -1025,7 +1026,7 @@ bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 		objMrRegDataIpc.id    = num;
 		objMrRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
-		FST_INFO("setValueMr:(%f) with %s", objMrRegDataIpc.value, bRet?"TRUE":"FALSE");
+		FST_INFO("setValueMr:(%f) at %d with %s", objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{
@@ -1164,11 +1165,11 @@ bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num)
 		ptr->value.joint_pos[4] = objHrRegDataIpc.joint_pos[4];
 		ptr->value.joint_pos[5] = objHrRegDataIpc.joint_pos[5];
 		
-		FST_INFO("getHr: id = (%f, %f, %f, %f, %f, %f) with %s", 
+		FST_INFO("getHr: id = (%f, %f, %f, %f, %f, %f) at %d with %s", 
 			objHrRegDataIpc.joint_pos[0], objHrRegDataIpc.joint_pos[1], 
 			objHrRegDataIpc.joint_pos[2], objHrRegDataIpc.joint_pos[3], 
 			objHrRegDataIpc.joint_pos[4], objHrRegDataIpc.joint_pos[5], 
-			bRet?"TRUE":"FALSE");
+			num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{

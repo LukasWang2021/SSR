@@ -97,6 +97,69 @@ void ControllerPublish::updateTpProgramStatus()
 }
 
 
+void ControllerPublish::updateSafetyBoardStatus()
+{
+    //todo new
+    uint32_t data = safety_device_ptr_->getDIFrm2();  //old board is getDIfrm2; new board is getDiFrm1
+    memcpy(&safety_board_status_.data, &data, sizeof(data));
+}
+
+//todo new
+void ControllerPublish::updateIoBoardStatus()
+{
+    std::vector<fst_hal::IODeviceInfo> info_list = io_manager_ptr_->getIODeviceInfoList();
+    fst_hal::IODevicePortValues values;
+
+    io_board_status_.io_board_count = 4;
+    for (int i = 0; i < io_board_status_.io_board_count; ++i)
+    {
+        if (info_list[i].dev_type == DEVICE_TYPE_FST_IO)
+        {
+            ErrorCode ret = io_manager_ptr_->getDevicePortValues(info_list[i].address, values);
+            if (ret == SUCCESS)
+            {
+                io_board_status_.io_board[i].id = info_list[i].address;
+                memcpy(&io_board_status_.io_board[i].DI, &values.DI, sizeof(uint32_t));
+                memcpy(&io_board_status_.io_board[i].DO, &values.DO, sizeof(uint32_t));
+                memcpy(&io_board_status_.io_board[i].RI, &values.RI, sizeof(uint8_t));
+                memcpy(&io_board_status_.io_board[i].RO, &values.RO, sizeof(uint8_t));
+                io_board_status_.io_board[i].valid = info_list[i].is_valid;
+            }
+            else
+            {
+                io_board_status_.io_board[i].valid = 0;
+            }
+        }
+        else
+        {
+            io_board_status_.io_board[i].valid = 0;
+        }
+    }
+
+
+/*todo delete
+    int dev_num = vec.size();
+    io_board_status_.io_board_count = 4; //max device number   
+    for (int i = 0; i < io_board_status_.io_board_count; i++)
+    {
+        if (i < dev_num && vec[i].id < 16)
+        {
+            io_device_ptr_->getDevicePortValues(vec[i].id, values);
+            io_board_status_.io_board[i].id = vec[i].id;
+            memcpy(&io_board_status_.io_board[i].DI, &values.DI, sizeof(uint32_t));
+            memcpy(&io_board_status_.io_board[i].DO, &values.DO, sizeof(uint32_t));
+            memcpy(&io_board_status_.io_board[i].RI, &values.RI, sizeof(uint8_t));
+            memcpy(&io_board_status_.io_board[i].RO, &values.RO, sizeof(uint8_t));
+            io_board_status_.io_board[i].valid = vec[i].is_valid; // 1 = true.
+        }
+        else
+        {
+            io_board_status_.io_board[i].valid = 0;
+        } 
+    }
+    */
+}
+
 void ControllerPublish::updateReg()
 {
     void* value_ptr;
@@ -195,4 +258,71 @@ void ControllerPublish::updateReg()
     }
 }
 
-
+void ControllerPublish::updateIo()
+{
+    ErrorCode ret = SUCCESS;
+    std::list<IoPublishUpdate>::iterator it;
+    for(it = io_update_list_.begin(); it != io_update_list_.end(); ++it)
+    {
+        uint8_t value = 0;
+        switch(it->port_type)
+        {
+            case MessageType_IoType_DI://fst_hal::IO_TYPE_DI:
+            {
+                ret = io_mapping_ptr_->getDIByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_DO://fst_hal::IO_TYPE_DO:
+            {
+                ret = io_mapping_ptr_->getDOByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_RI://fst_hal::IO_TYPE_RI:
+            {
+                ret = io_mapping_ptr_->getRIByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_RO://fst_hal::IO_TYPE_RO:
+            {
+                ret = io_mapping_ptr_->getROByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+        }
+    }
+}

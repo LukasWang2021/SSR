@@ -13,9 +13,12 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 set(VERSION_MAJOR 2)
-set(VERSION_MINOR 1)
-set(VERSION_PATCH 21)
-string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
+set(VERSION_MINOR 3)
+set(VERSION_PATCH 0)
+set(VERSION_COMMIT \"b8068dbe\") #from gitlab commit number.
+string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
+string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
+
 configure_file(
     "${PROJECT_SOURCE_DIR}/include/version.h.in"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
@@ -62,11 +65,14 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/kinematics_alg/include 
     ${depend_PATH_INC}/process_comm/include 
     ${depend_PATH_INC}/preformance_monitor/include 
-    ${depend_PATH_INC}/fst_io_device/include 
     ${depend_PATH_INC}/modbus_manager/include
     ${depend_PATH_INC}/fst_safety_device/include 
     ${depend_PATH_INC}/io_mapping/include 
-    ${depend_PATH_INC}/path_traj_alg/include
+    ${depend_PATH_INC}/io_manager/include 
+    ${depend_PATH_INC}/fst_io_device/include 
+    ${depend_PATH_INC}/virtual_io_device/include 
+    ${depend_PATH_INC}/program_launching/include 
+    ${depend_PATH_INC}/file_manager/include 
 )
 
 catkin_package(
@@ -76,7 +82,11 @@ catkin_package(
     DEPENDS log_manager
     DEPENDS thread_help 
     DEPENDS error_monitor
-    DEPENDS modbus_manager 
+    DEPENDS modbus_manager
+    DEPENDS io_mapping
+    DEPENDS io_manager
+    DEPENDS program_launching
+    DEPENDS file_manager
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -119,6 +129,10 @@ target_link_libraries(controller
     log_service
     preformance_monitor 
     fst_safety_device
+    io_mapping
+    io_manager
+    program_launching
+    file_manager
 )
 
 #############

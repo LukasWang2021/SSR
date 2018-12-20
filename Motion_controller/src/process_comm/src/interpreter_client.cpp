@@ -234,61 +234,6 @@ bool InterpreterClient::isNextInstructionNeeded()
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
-ErrorCode InterpreterClient::checkIo(char path[256], IOPortInfo* port_info_ptr)
-{
-    if(strlen(path) >= 256
-        || port_info_ptr == NULL
-        || !sendRequest(CONTROLLER_SERVER_CMD_CHECK_IO, (void*)path, 256)
-        || !recvResponse(sizeof(ResponseCheckIo))
-        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_CHECK_IO)
-    {
-        return PROCESS_COMM_OPERATION_FAILED;
-    }
-
-    ResponseCheckIo response_check_io;
-    memcpy(&response_check_io, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseCheckIo));
-    memcpy(port_info_ptr, &response_check_io.port_info, sizeof(IOPortInfo));
-    return response_check_io.error_code;
-}
-
-ErrorCode InterpreterClient::setIo(IOPortInfo* port_info_ptr, char value)
-{
-    if(port_info_ptr == NULL)
-    {
-        return PROCESS_COMM_OPERATION_FAILED;
-    }
-    RequestSetIo request_set_io;
-    memcpy(&request_set_io.port_info, port_info_ptr, sizeof(IOPortInfo));
-    request_set_io.value = value;
-    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_IO, (void*)&request_set_io, sizeof(RequestSetIo))
-        || !recvResponse(sizeof(unsigned long long))
-        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_IO)
-    {
-        return PROCESS_COMM_OPERATION_FAILED;
-    }
-    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
-}
-
-ErrorCode InterpreterClient::getIo(IOPortInfo* port_info_ptr, int buffer_length, char* value_ptr)
-{
-    if(port_info_ptr == NULL)
-    {
-        return PROCESS_COMM_OPERATION_FAILED;
-    }
-    RequestGetIo request_get_io;
-    memcpy(&request_get_io.port_info, port_info_ptr, sizeof(IOPortInfo));
-    request_get_io.buffer_length = buffer_length;
-    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_IO, (void*)&request_get_io, sizeof(RequestGetIo))
-        || !recvResponse(sizeof(ResponseGetIo))
-        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_IO)
-    {
-        return PROCESS_COMM_OPERATION_FAILED;
-    }
-    ResponseGetIo response_get_io;
-    memcpy(&response_get_io, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetIo));
-    *value_ptr = response_get_io.value;
-    return response_get_io.error_code;
-}
 
 bool InterpreterClient::setInterpreterServerStatus(bool status)
 {
@@ -301,6 +246,135 @@ bool InterpreterClient::setInterpreterServerStatus(bool status)
 
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
+
+//getDi
+ErrorCode InterpreterClient::getDi(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetDi request_get_di;
+    request_get_di.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_DI, (void*)&request_get_di, sizeof(RequestGetDi))
+       || !recvResponse(sizeof(ResponseGetDi))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_DI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetDi response_get_di;
+    memcpy(&response_get_di, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetDi));
+    value = response_get_di.value;
+    return response_get_di.error_code;
+}
+
+//setDi
+ErrorCode InterpreterClient::setDi(uint32_t port_offset, uint32_t value)
+{
+    RequestSetDi request_set_di;
+    request_set_di.port_offset = port_offset;
+    request_set_di.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_DI, (void*)&request_set_di, sizeof(RequestSetDi))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_DI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+//getDo
+ErrorCode InterpreterClient::getDo(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetDo request_get_do;
+    request_get_do.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_DO, (void*)&request_get_do, sizeof(RequestGetDo))
+       || !recvResponse(sizeof(ResponseGetDo))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_DO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetDo response_get_do;
+    memcpy(&response_get_do, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetDo));
+    value = response_get_do.value;
+    return response_get_do.error_code;
+}
+
+//setDo
+ErrorCode InterpreterClient::setDo(uint32_t port_offset, uint32_t value)
+{
+    RequestSetDo request_set_do;
+    request_set_do.port_offset = port_offset;
+    request_set_do.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_DO, (void*)&request_set_do, sizeof(RequestSetDo))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_DO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+//getRi
+ErrorCode InterpreterClient::getRi(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetRi request_get_ri;
+    request_get_ri.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_RI, (void*)&request_get_ri, sizeof(RequestGetRi))
+       || !recvResponse(sizeof(ResponseGetRi))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_RI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetRi response_get_ri;
+    memcpy(&response_get_ri, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetRi));
+    value = response_get_ri.value;
+    return response_get_ri.error_code;
+}
+
+//setRi
+ErrorCode InterpreterClient::setRi(uint32_t port_offset, uint32_t value)
+{
+    RequestSetRi request_set_ri;
+    request_set_ri.port_offset = port_offset;
+    request_set_ri.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_RI, (void*)&request_set_ri, sizeof(RequestSetRi))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_RI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+//getRo
+ErrorCode InterpreterClient::getRo(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetRo request_get_ro;
+    request_get_ro.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_RO, (void*)&request_get_ro, sizeof(RequestGetRo))
+       || !recvResponse(sizeof(ResponseGetRo))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_RO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetDo response_get_ro;
+    memcpy(&response_get_ro, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetRo));
+    value = response_get_ro.value;
+    return response_get_ro.error_code;
+}
+
+//setRo
+ErrorCode InterpreterClient::setRo(uint32_t port_offset, uint32_t value)
+{
+    RequestSetRo request_set_ro;
+    request_set_ro.port_offset = port_offset;
+    request_set_ro.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_RO, (void*)&request_set_ro, sizeof(RequestSetRo))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_RO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
 
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {

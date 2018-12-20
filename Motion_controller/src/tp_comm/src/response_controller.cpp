@@ -278,3 +278,19 @@ void TpComm::handleResponse0x000092E5(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+//"/rpc/controller/getErrorCodeList"
+void TpComm::handleResponse0x00015F44(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Uint64List_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Uint64List*)task->response_data_ptr;
+    }
+}

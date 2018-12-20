@@ -637,7 +637,7 @@ void generatePathPointIn2End(const fst_mc::PathCache &path_cache, int path_index
 void generatePathVia2EndTimeVector(double vel, const fst_mc::PathCache &path_cache, double length_via2in, 
                                    int path_index_in, int path_index_out, int path_index_end, int& time_vector_size_via2end);
 void generatePathPointOut2In(const fst_mc::PathCache &path_cache, int traj_smooth_in_index, int& path_array_size, int* path_index_array_out2in);
-void generatePathOut2InTimeVector(double cmd_vel, double length_out2via, double length_via2in, int path_array_size_out2via,int& time_vector_size_out2in);
+void generatePathOut2InTimeVector(double cmd_vel, double length_out2via, double length_via2in, int path_array_size_out2via,int& time_vector_size_out2in, double p1[9], double pn_1[9]);
 
 
 void generatePieceVectors(int traj_offset, int traj_piece_num, int t_base, double vel_ratio, double acc_ratio);
@@ -656,8 +656,6 @@ void adjustCoeff(int traj_smooth_in_index);
 void generateTrajCache(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, int* path_index_array, int path_index_array_size);
 void generateTrajCacheSmooth(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 
                                     int* path_index_array_out2in, int path_index_array_size_out2in,
-                                    int* path_index_array_in2end, int path_index_array_size_in2end);
-void generateTrajCacheSmoothTest(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 
                                     int* path_index_array_in2end, int path_index_array_size_in2end);
 
 void printTraj(fst_mc::TrajectoryCache &traj_cache, int index, double time_step);

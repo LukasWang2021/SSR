@@ -50,29 +50,6 @@ void ControllerRpc::handleRpc0x000093EE(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
 }
 
-/* todo delete
-// "/rpc/controller/setStartMode"
-void ControllerRpc::handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr)
-{
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-
-    // FIXME: do it later
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setStartMode"));
-}
-
-// "/rpc/controller/getStartMode"
-void ControllerRpc::handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr)
-{
-    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
-
-    // FIXME: do it later
-    rs_data_ptr->data.data = 0;
-    rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/getStartMode"));
-}
-*/
-
 // "/rpc/controller/getErrorCodeList"
 void ControllerRpc::handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr)
 { 

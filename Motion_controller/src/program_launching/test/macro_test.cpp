@@ -10,7 +10,7 @@ Summary:    test process
 #define PROGRAM_LAUNCHING_MACRO_TEST_CPP_
 
 #include "program_launching.h"
-#include "modbus_manager.h"
+#include "io_manager.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,14 +20,13 @@ using namespace fst_ctrl;
 
 int main(int argc, char** argv)
 {
-    fst_hal::FstIoDevice* io_device_ptr = new fst_hal::FstIoDevice(fst_hal::DEVICE_TYPE_FST_IO);
-    io_device_ptr->init();
-
-    fst_hal::ModbusManager* modbus_manager_ptr = new fst_hal::ModbusManager(0);
-    modbus_manager_ptr->init();
+    fst_hal::DeviceManager device_manager;
+    device_manager.init();
+    fst_hal::IoManager* io_manager_ptr = fst_hal::IoManager::getInstance(&device_manager);
+    io_manager_ptr->init();
 
     fst_ctrl::IoMapping* map_ptr = new fst_ctrl::IoMapping();
-    int ret = map_ptr->init(io_device_ptr, modbus_manager_ptr);
+    int ret = map_ptr->init(io_manager_ptr);
     if (ret != 0) 
     {
         printf("failed init io mapping\n");

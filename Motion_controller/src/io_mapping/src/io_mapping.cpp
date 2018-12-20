@@ -16,9 +16,7 @@ using namespace fst_base;
 IoMapping::IoMapping():
     log_ptr_(NULL),
 	param_ptr_(NULL),
-	sim_ptr_(NULL),
-	io_dev_ptr_(NULL),
-	modbus_manager_(NULL)
+	sim_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new IoMappingParam();
@@ -40,16 +38,11 @@ IoMapping::~IoMapping()
 		delete sim_ptr_;
 		sim_ptr_ = NULL;
 	}
-    if(io_dev_ptr_ != NULL){
-        delete io_dev_ptr_;
-        io_dev_ptr_ = NULL;
-    }
 }
 
-ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr,
-	fst_hal::ModbusManager* modbus_manager)
+ErrorCode IoMapping::init(fst_hal::IoManager* io_manager_ptr)
 {
-	io_dev_ptr_ = io_device_ptr;
+	io_manager_ptr_ = io_manager_ptr;
 
 	if(!param_ptr_->loadParam()){
 		FST_INFO("Failed to load io_mapping component parameters");
@@ -70,7 +63,6 @@ ErrorCode IoMapping::init(fst_hal::FstIoDevice* io_device_ptr,
 		ErrorMonitor::instance()->add(ret);
 	}
 
-	modbus_manager_ = modbus_manager;
 	return SUCCESS;
 }
 
@@ -142,19 +134,7 @@ ErrorCode IoMapping::getDIByBit(uint32_t user_port, uint8_t &value)
 	{
 		PhysicsID physics_id;
 		physics_id.number = iter->second;
-
-		if (physics_id.info.dev_type == DEVICE_TYPE_MODBUS)
-		{
-			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
-			{
-				return MODBUS_INVALID;
-			}
-
-			int server_id = 0;
-			return modbus_manager_->readDiscreteInputs(server_id, physics_id.info.port, 1, &value);
-		}
-
-		return io_dev_ptr_->getDIOByBit(iter->second, value);
+		return io_manager_ptr_->getBitValue(physics_id, value);
 	}
 
 	FST_WARN("invalid strKey = %s\n", strKey.c_str());
@@ -190,19 +170,8 @@ ErrorCode IoMapping::getDOByBit(uint32_t user_port, uint8_t &value)
 	{
 		PhysicsID physics_id;
 		physics_id.number = iter->second;
-		
-		if (physics_id.info.dev_type == DEVICE_TYPE_MODBUS)
-		{
-			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
-			{
-				return MODBUS_INVALID;
-			}
 
-			int server_id = 0;
-			return modbus_manager_->readCoils(server_id, physics_id.info.port, 1, &value);
-		}
-
-		return io_dev_ptr_->getDIOByBit(iter->second, value);
+		return io_manager_ptr_->getBitValue(physics_id, value);
 	}
 
 	FST_WARN("invalid strKey = %s\n", strKey.c_str());
@@ -224,19 +193,8 @@ ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 	{
 		PhysicsID physics_id;
 		physics_id.number = iter->second;
-		
-		if (physics_id.info.dev_type == DEVICE_TYPE_MODBUS)
-		{
-			if (modbus_manager_ == NULL || !modbus_manager_->isValid())
-			{
-				return MODBUS_INVALID;
-			}
 
-			int server_id = 0;
-			return modbus_manager_->writeCoils(server_id, physics_id.info.port, 1, &value);
-		}
-
-		return io_dev_ptr_->setDIOByBit(iter->second, value);
+		return io_manager_ptr_->setBitValue(physics_id, value);
 	}
 
 	FST_WARN("invalid strKey = %s\n", strKey.c_str());
@@ -264,7 +222,12 @@ ErrorCode IoMapping::getRIByBit(uint32_t user_port, uint8_t &value)
 
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
-		return io_dev_ptr_->getDIOByBit(iter->second, value);
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		return io_manager_ptr_->getBitValue(physics_id, value);
+	}
 
 	FST_WARN("invalid strKey=%s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
@@ -298,7 +261,12 @@ ErrorCode IoMapping::getROByBit(uint32_t user_port, uint8_t &value)
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
 
 	if (iter != io_mapper_.end())
-		return io_dev_ptr_->getDIOByBit(iter->second, value);
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		return io_manager_ptr_->getBitValue(physics_id, value);
+	}
 
 	FST_WARN("invalid strKey = %s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
@@ -317,7 +285,12 @@ ErrorCode IoMapping::setROByBit(uint32_t user_port, uint8_t value)
 	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
 
 	if (iter != io_mapper_.end())
-		return io_dev_ptr_->setDIOByBit(iter->second, value);
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		return io_manager_ptr_->setBitValue(physics_id, value);
+	}
 
 	FST_WARN("invalid strKey = %s\n", strKey.c_str());
 	return IO_INVALID_PARAM_ID;
@@ -343,42 +316,40 @@ char * IoMapping::getProgramsPath()
 
 bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
 {
-    /* //use "/" to split */
-    vector<string> result = split(objInfo.module, "/");
-
-    /* '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or 
-    "FR-P8A/RS485/1(address)/IN/25(port_offset)" */
+    vector<string> string_array = split(objInfo.module, "/"); //use "/" to split 
+    // '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or "FR-P8A/RS485/1(address)/IN/25(port_offset)" 
     PhysicsID id;
-    id.info.address = atoi(result[2].c_str());
 
-    char cUpperType[8] = {};
-    strcpy(cUpperType, strIOType);
+	//add address value
+    id.info.address = atoi(string_array[2].c_str());
 
-    if (result[0].compare("ModbusServer") == 0)
-    {
-        id.info.dev_type = fst_hal::DEVICE_TYPE_MODBUS;
 
-        if (strcasecmp(cUpperType, "DI") == 0) id.info.port_type = IO_TYPE_DI;
-        else if (strcasecmp(cUpperType, "DO") == 0) id.info.port_type = IO_TYPE_DO;
-        else;
-    }
-    else
-    {
-        id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;//=2
+    //add dev_type value
+	if (string_array[0].compare("ModbusServer") == 0)
+        id.info.dev_type = fst_hal::DEVICE_TYPE_MODBUS;//=9
+	else if (string_array[0].compare("RF-P8A") == 0)
+	    id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;//=2
+	else if (string_array[0].compare("VirtualIoBoard") == 0)
+	    id.info.dev_type = fst_hal::DEVICE_TYPE_VIRTUAL_IO;//=6
+	else 
+	    id.info.dev_type = fst_hal::DEVICE_TYPE_INVALID;//=0
 
-        if (strcasecmp(cUpperType, "DI") == 0)
-            id.info.port_type = IO_TYPE_DI;
-        else if (strcasecmp(cUpperType, "DO") == 0)
-            id.info.port_type = IO_TYPE_DO;
-        else if (strcasecmp(cUpperType, "RI") == 0)
-            id.info.port_type = IO_TYPE_RI;
-        else if (strcasecmp(cUpperType, "RO") == 0)
-            id.info.port_type = IO_TYPE_RO;
-        else;
-    }
+    //add port_type value
+    char port_type_str[8] = {};
+    strcpy(port_type_str, strIOType);
+	if (strcasecmp(port_type_str, "DI") == 0)
+        id.info.port_type = MessageType_IoType_DI;
+    else if (strcasecmp(port_type_str, "DO") == 0)
+        id.info.port_type = MessageType_IoType_DO;
+    else if (strcasecmp(port_type_str, "RI") == 0)
+        id.info.port_type = MessageType_IoType_RI;
+    else if (strcasecmp(port_type_str, "RO") == 0)
+        id.info.port_type = MessageType_IoType_RO;
+	else 
+	    id.info.port_type = 0xFF;// need to add invalid value
 
+    //add index value
     id.info.port = objInfo.index;
-
     for (int i = objInfo.from; i <= objInfo.to; i++)
     {
         char cTemp[16] = {};

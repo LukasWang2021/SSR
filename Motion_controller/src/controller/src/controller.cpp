@@ -20,7 +20,7 @@ Controller::Controller():
     log_ptr_(NULL),
     param_ptr_(NULL),
     process_comm_ptr_(NULL),
-    io_device_ptr_(NULL) //feng add
+    io_manager_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ControllerParam();
@@ -51,10 +51,10 @@ Controller::~Controller()
         modbus_manager_ptr_ = NULL;
     }
 
-    if(io_device_ptr_ != NULL)
+    if(io_manager_ptr_ != NULL)
     {
-        delete io_device_ptr_;
-        io_device_ptr_ = NULL;
+        delete io_manager_ptr_;
+        io_manager_ptr_ = NULL;
     }
 
     if(process_comm_ptr_ != NULL)
@@ -170,12 +170,10 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    //feng add for addIoTopic
-    io_device_ptr_ = new fst_hal::FstIoDevice(fst_hal::DEVICE_TYPE_FST_IO);
-    bool ret = io_device_ptr_->init();
-    if(ret == false)
+    io_manager_ptr_ = IoManager::getInstance(&device_manager_);
+    ErrorCode ret = io_manager_ptr_->init();
+    if(ret != SUCCESS)
     {
-        printf("iodev err=%llx\n", error_code);
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
@@ -189,7 +187,7 @@ ErrorCode Controller::init()
     }
 
     //feng add for io_mapping
-    error_code = io_mapping_.init(io_device_ptr_, modbus_manager_ptr_);
+    error_code = io_mapping_.init(io_manager_ptr_);
     if(error_code != SUCCESS)
     {
         printf("iomapping err=0x%x\n", error_code);
@@ -200,19 +198,16 @@ ErrorCode Controller::init()
     //use macro to launch program
     program_launching_.init(&io_mapping_, process_comm_ptr_->getControllerClientPtr());
 
-    // fix me later, make device manager more automatic
-    BaseDevice* device_ptr = device_manager_.getDevicePtrByDeviceIndex(1);
-    FstSafetyDevice* safety_device_ptr = static_cast<FstSafetyDevice*>(device_ptr);
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
-                        process_comm_ptr_->getControllerClientPtr(), safety_device_ptr);
+                        process_comm_ptr_->getControllerClientPtr(), &device_manager_);
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
                 process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_, &io_mapping_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
-        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_device_ptr_, modbus_manager_ptr_,
+        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_manager_ptr_, modbus_manager_ptr_,
         &program_launching_, &file_manager_);//&io_mapping_ by feng add
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
-                    process_comm_ptr_->getControllerClientPtr(), &io_mapping_, safety_device_ptr, io_device_ptr_);
+                    process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, io_manager_ptr_);
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {

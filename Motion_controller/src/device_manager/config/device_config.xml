@@ -13,7 +13,7 @@
     <Device>
         <DeviceIndex>3</DeviceIndex>
         <Address>16</Address>
-        <DeviceType>FstIo</DeviceType>
+        <DeviceType>VirtualIo</DeviceType>
     </Device>
     <Device>
         <DeviceIndex>4</DeviceIndex>

@@ -3,6 +3,7 @@
 #include "fst_safety_device.h"
 #include "fst_axis_device.h"
 #include "virtual_axis_device.h"
+#include "virtual_io_device.h"
 #include "modbus_manager.h"
 #include "error_code.h"
 
@@ -23,7 +24,6 @@ DeviceManager::DeviceManager():
 DeviceManager::~DeviceManager()
 {
     std::map<int, BaseDevice*>::iterator it;
-    static int count_delete = 0;//temporary delete IOdevice once.to do delete.
     for(it = device_map_.begin(); it != device_map_.end(); ++it)
     {
         if(it->second != NULL)
@@ -31,16 +31,11 @@ DeviceManager::~DeviceManager()
             switch(it->second->getDeviceType())
             {
                 case DEVICE_TYPE_FST_AXIS:       break;
-                case DEVICE_TYPE_FST_IO:
-                    if(count_delete == 0) {
-                        delete (FstIoDevice *) it->second;
-                    }
-                    count_delete++;//to do delete
-                    break;
+                case DEVICE_TYPE_FST_IO:         delete (FstIoDevice *) it->second; break;
                 case DEVICE_TYPE_FST_SAFETY:     delete (FstSafetyDevice*)it->second; break;
                 case DEVICE_TYPE_FST_ANYBUS:     break;
                 case DEVICE_TYPE_VIRTUAL_AXIS:   delete (VirtualAxisDevice*)it->second; break;
-                case DEVICE_TYPE_VIRTUAL_IO:     break;
+                case DEVICE_TYPE_VIRTUAL_IO:     delete (VirtualIoDevice*)it->second; break;
                 case DEVICE_TYPE_VIRTUAL_SAFETY: break;
                 case DEVICE_TYPE_NORMAL:         break;
                 case DEVICE_TYPE_MODBUS:         delete (ModbusManager*)it->second; break;
@@ -86,29 +81,24 @@ ErrorCode DeviceManager::init()
 
     std::vector<DeviceConfig>::iterator it;
     BaseDevice* device_ptr;
-    static int count_new = 0;//temporary new IOdevice once.to do delete.
     for(it = device_xml_ptr_->device_config_list_.begin(); it != device_xml_ptr_->device_config_list_.end(); ++it)
     {
-        printf("init device .address =%d\n", it->address);
         switch(it->device_type)
         {
             case DEVICE_TYPE_FST_AXIS:       return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_FST_IO:
-                if(count_new == 0) { //temporary used.
-                    device_ptr = new FstIoDevice(it->address);
-                }
-                count_new++;
-				break;
+                device_ptr = new FstIoDevice(it->address); break;
             case DEVICE_TYPE_FST_SAFETY:
-                device_ptr = new FstSafetyDevice(it->address);break;
+                device_ptr = new FstSafetyDevice(it->address); break;
             case DEVICE_TYPE_FST_ANYBUS:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_VIRTUAL_AXIS:
 				device_ptr = new VirtualAxisDevice(it->address); break;
-            case DEVICE_TYPE_VIRTUAL_IO:     return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
+            case DEVICE_TYPE_VIRTUAL_IO:     
+                device_ptr = new VirtualIoDevice(it->address); break;
             case DEVICE_TYPE_VIRTUAL_SAFETY: return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_NORMAL:         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
             case DEVICE_TYPE_MODBUS:
-                device_ptr = new ModbusManager(it->address); break; // to do, use it->address
+                device_ptr = new ModbusManager(it->address); break; 
             default:                         return DEVICE_MANAGER_INVALID_DEVICE_TYPE;
         }
 
@@ -150,7 +140,7 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
     DeviceInfo info;
     std::vector<DeviceInfo> device_list;
 
-    //temporary used
+    /*temporary used
     std::vector<DeviceConfig>::iterator it;
     for(it = device_xml_ptr_->device_config_list_.begin(); it != device_xml_ptr_->device_config_list_.end(); ++it)
     {
@@ -159,9 +149,9 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
         info.type = it->device_type;
         info.is_valid = true;
         device_list.push_back(info);
-    }//end temporary
+    }*/
 
-    /* should be used in the future.
+    // should be used
     std::map<int, BaseDevice*>::iterator it;
     for(it = device_map_.begin(); it != device_map_.end(); ++it)
     {
@@ -171,7 +161,7 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
         info.is_valid = it->second->isValid();
         device_list.push_back(info);
     }
-     */
+    
     return device_list;
 }
 

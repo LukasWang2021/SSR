@@ -15,8 +15,9 @@ ControllerPublish::ControllerPublish():
     reg_manager_ptr_(NULL),
     controller_client_ptr_(NULL),
     io_mapping_ptr_(NULL),
+    device_manager_ptr_(NULL),
     safety_device_ptr_(NULL),
-    io_device_ptr_(NULL)
+    io_manager_ptr_(NULL)
 {
 
 }
@@ -29,8 +30,8 @@ ControllerPublish::~ControllerPublish()
 void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
                     ControllerClient* controller_client_ptr,
-                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::FstSafetyDevice* safety_device_ptr, 
-                    fst_hal::FstIoDevice* io_device_ptr)//feng add mapping
+                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::DeviceManager* device_manager_ptr, 
+                    fst_hal::IoManager* io_manager_ptr)//feng add mapping
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -41,8 +42,19 @@ void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_pt
     reg_manager_ptr_ = reg_manager_ptr;
     controller_client_ptr_ = controller_client_ptr;
     io_mapping_ptr_ = io_mapping_ptr; //feng add for mapping.
-    safety_device_ptr_ = safety_device_ptr;
-    io_device_ptr_ = io_device_ptr;
+    device_manager_ptr_ = device_manager_ptr;
+    io_manager_ptr_ = io_manager_ptr;
+
+    // get the safety device ptr.
+    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+    for(unsigned int i = 0; i < device_list.size(); ++i)
+    {
+        if (device_list[i].type == DEVICE_TYPE_FST_SAFETY)
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
+        }
+    }
 
     initPublishTable();
     initPublishQuickSearchTable();

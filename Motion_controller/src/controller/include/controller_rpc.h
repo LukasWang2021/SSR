@@ -31,7 +31,7 @@ public:
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
-                    IoMapping* io_mapping_ptr, fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
+                    IoMapping* io_mapping_ptr, fst_hal::IoManager* io_manager_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
                     ProgramLaunching* program_launching, fst_base::FileManager* file_manager);
 
     void processRpc();
@@ -50,7 +50,7 @@ private:
     fst_base::ControllerClient* controller_client_ptr_;
     ControllerPublish* publish_ptr_;
     IoMapping* io_mapping_ptr_; //feng add for mapping.
-    fst_hal::FstIoDevice* io_device_ptr_; //feng add
+    IoManager* io_manager_ptr_;
     fst_hal::ModbusManager* modbus_manager_ptr_; //yuyy add
     ProgramLaunching* program_launching_;
     fst_base::FileManager* file_manager_ptr_;
@@ -117,10 +117,6 @@ private:
     void handleRpc0x000003F5(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getVersion"
     void handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/controller/setStartMode"
-    //void handleRpc0x00010225(void* request_data_ptr, void* response_data_ptr); //todo delete
-    // "/rpc/controller/getStartMode"
-    //void handleRpc0x000092E5(void* request_data_ptr, void* response_data_ptr); //todo delete
     // "/rpc/controller/getErrorCodeList"
     void handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr);
 
@@ -384,7 +380,10 @@ private:
     // "/rpc/device_manager/get_FRP8A_IoDeviceInfo"
     void handleRpc0x00006BAF(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/device_manager/getModbusIoDeviceInfo"
-    void handleRpc0x0000215F(void* request_data_ptr, void* response_data_ptr);
+    void handleRpc0x0001421F(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/getIoDeviceInfoList"
+    void handleRpc0x000024A4(void* request_data_ptr, void* response_data_ptr);
+
 
     /* program launching rpc */
     // "/rpc/program_launching/setMethod"

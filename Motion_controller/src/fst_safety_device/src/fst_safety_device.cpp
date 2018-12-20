@@ -99,6 +99,7 @@ bool FstSafetyDevice::init()
 	    valid_flag_ = true;
 	}
     
+    setValid(true);
     memset((char*)&din_frm2_, 0, sizeof(din_frm2_));
     memset((char*)&dout_frm2_, 0, sizeof(dout_frm2_));
 #ifdef CROSS_PLATFORM
@@ -106,10 +107,11 @@ bool FstSafetyDevice::init()
 #endif
 	if(iRet != 0)
 	{
+        setValid(false);
         FST_ERROR("init FstSafetyDevice failed");
 	}
+    
     startThread();
-	
     return true;
 }
 

@@ -20,11 +20,6 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_SET_INSTRUCTION, &ControllerServer::handleRequestSetInstruction, &ControllerServer::handleResponseSetInstruction}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, &ControllerServer::handleRequestIsNextInstructionNeeded, &ControllerServer::handleResponseIsNextInstructionNeeded}; rpc_table_.push_back(rpc_service);
 
-    //todo delete
-    // rpc_service = {CONTROLLER_SERVER_CMD_CHECK_IO, &ControllerServer::handleRequestCheckIo, &ControllerServer::handleResponseCheckIo}; rpc_table_.push_back(rpc_service);
-    // rpc_service = {CONTROLLER_SERVER_CMD_SET_IO, &ControllerServer::handleRequestSetIo, &ControllerServer::handleResponseSetIo}; rpc_table_.push_back(rpc_service);
-    // rpc_service = {CONTROLLER_SERVER_CMD_GET_IO, &ControllerServer::handleRequestGetIo, &ControllerServer::handleResponseGetIo}; rpc_table_.push_back(rpc_service);
-
     rpc_service = {CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &ControllerServer::handleRequestSetInterpreterServerStatus, &ControllerServer::handleResponseSetInterpreterServerStatus}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_DI, &ControllerServer::handleRequestGetDi, &ControllerServer::handleResponseGetDi}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_DI, &ControllerServer::handleRequestSetDi, &ControllerServer::handleResponseSetDi}; rpc_table_.push_back(rpc_service);

@@ -29,9 +29,6 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/setSystemTime", 0x000167C5, &ControllerRpc::handleRpc0x000167C5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getSystemTime", 0x000003F5, &ControllerRpc::handleRpc0x000003F5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getVersion", 0x000093EE, &ControllerRpc::handleRpc0x000093EE}; rpc_table_.push_back(rpc_service);
-    // todo delete
-    //rpc_service = {"/rpc/controller/setStartMode", 0x00010225, &ControllerRpc::handleRpc0x00010225}; rpc_table_.push_back(rpc_service);
-    //rpc_service = {"/rpc/controller/getStartMode", 0x000092E5, &ControllerRpc::handleRpc0x000092E5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getErrorCodeList", 0x00015F44, &ControllerRpc::handleRpc0x00015F44}; rpc_table_.push_back(rpc_service);
 
 
@@ -164,7 +161,9 @@ void ControllerRpc::initRpcTable()
 
     rpc_service = {"/rpc/device_manager/getDeviceList", 0x0000C1E0, &ControllerRpc::handleRpc0x0000C1E0}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/device_manager/get_FRP8A_IoDeviceInfo", 0x00006BAF, &ControllerRpc::handleRpc0x00006BAF}; rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/device_manager/getModbusIoDeviceInfo", 0x0000215F, &ControllerRpc::handleRpc0x0000215F}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/device_manager/getModbusIoDeviceInfo", 0x0001421F, &ControllerRpc::handleRpc0x0001421F}; rpc_table_.push_back(rpc_service);
+    rpc_service = {	"/rpc/device_manager/getIoDeviceInfoList",	0x000024A4,	&ControllerRpc::handleRpc0x000024A4};	rpc_table_.push_back(rpc_service);
+
 
     rpc_service = {"/rpc/program_launching/setMethod", 0x00011544, &ControllerRpc::handleRpc0x00011544}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/program_launching/getMethod", 0x00010944, &ControllerRpc::handleRpc0x00010944}; rpc_table_.push_back(rpc_service);

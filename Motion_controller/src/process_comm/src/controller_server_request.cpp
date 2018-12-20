@@ -238,67 +238,6 @@ void ControllerServer::handleRequestIsNextInstructionNeeded()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, NULL, (void*)response_data_ptr);
 }
 
-/*todo delete
-// CheckIo
-void ControllerServer::handleRequestCheckIo()
-{
-    char* request_data_ptr = new char[256]();
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    ResponseCheckIo* response_data_ptr = new ResponseCheckIo;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete[] request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, 256);
-    pushTaskToRequestList(CONTROLLER_SERVER_CMD_CHECK_IO, (void*)request_data_ptr, (void*)response_data_ptr);    
-}
-
-// SetIo
-void ControllerServer::handleRequestSetIo()
-{
-    RequestSetIo* request_data_ptr = new RequestSetIo;
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    unsigned long long* response_data_ptr = new unsigned long long;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetIo));
-    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_IO, (void*)request_data_ptr, (void*)response_data_ptr);   
-}
-
-// GetIo
-void ControllerServer::handleRequestGetIo()
-{
-    RequestGetIo* request_data_ptr = new RequestGetIo;
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    ResponseGetIo* response_data_ptr = new ResponseGetIo;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestGetIo));
-    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_IO, (void*)request_data_ptr, (void*)response_data_ptr);  
-}
-*/
 
 // SetInterpreterServerStatus
 void ControllerServer::handleRequestSetInterpreterServerStatus()

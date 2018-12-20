@@ -58,6 +58,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/base_device/include
     ${depend_PATH_INC}/error_monitor/include 
     ${depend_PATH_INC}/motion_control/include 
+    ${depend_PATH_INC}/path_traj_alg/include 
     ${depend_PATH_INC}/axis_group_manager/include
     ${depend_PATH_INC}/base_axis_group/include
     ${depend_PATH_INC}/log_service/include

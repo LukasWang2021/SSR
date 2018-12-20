@@ -24,19 +24,26 @@ Calibrator::Calibrator(void)
     joint_num_ = 0;
     bare_core_ptr_ = NULL;
     current_state_ = MOTION_FORBIDDEN;
+    memset(offset_need_save_, 0, NUM_OF_JOINT * sizeof(int));
     memset(normal_threshold_, 0, NUM_OF_JOINT * sizeof(double));
     memset(lost_threshold_, 0, NUM_OF_JOINT * sizeof(double));
     memset(zero_offset_, 0, NUM_OF_JOINT * sizeof(double));
     memset(offset_mask_, 0, NUM_OF_JOINT * sizeof(OffsetMask));
     memset(offset_stat_, 0, NUM_OF_JOINT * sizeof(OffsetState));
-    memset(offset_need_save_, 0, NUM_OF_JOINT * sizeof(int));
 }
 
 Calibrator::~Calibrator(void)
 {}
 
+//------------------------------------------------------------------------------
+// 方法：  initCalibrator
+// 摘要：  初始化标定模块，未被初始化过的标定模块不能用于标定，此时调用标定模块任何方法得到的结果
+//        都是不可预知的，所以确保在标定模块开始工作之前调用此方法进行初始化配置；
+//        主要包括加载配置文件和记录文件，并向裸核发送零位配置；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog, const string &path)
 {
+    // 输入参数检查
     if (joint_num > 0 && joint_num <= NUM_OF_JOINT && plog && pcore)
     {
         log_ptr_ = plog;
@@ -55,7 +62,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Initializing offset calibrator, number-of-joint = %d.", joint_num_);
 
-    // if directory given by 'path' is not found, create it
+    // 检查path指定的目录是否存在，不存在则创建之
     boost::filesystem::path pa(path);
 
     if (!boost::filesystem::is_directory(pa))
@@ -72,7 +79,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         }
     }
 
-    // if record file is not found, re-create it from template in 'share/motion_controller/config'
+    // 检查零位记录文件是否存在，不存在则从模板创建一个记录文件，模板在'share/motion_controller/config'
     string record_file =  path + "robot_recorder.yaml";
     boost::filesystem::path fi(record_file);
 
@@ -90,7 +97,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         }
     }
 
-    // load record file
+    // 加载记录文件并检查数据是否合法
     if (!robot_recorder_.loadParamFile(record_file.c_str()))
     {
         result = robot_recorder_.getLastError();
@@ -98,7 +105,6 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         return result;
     }
 
-    // check whether data arrays in record file are valid
     stat.clear();
     if (!robot_recorder_.getParam("mask", stat))
     {
@@ -133,8 +139,10 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     for (size_t i = 0; i < joint_num_; i++)
         offset_stat_[i] = OffsetState(stat[i]);
 
-    // load thresholds used in checking offset
-    ParamGroup params(COMPONENT_PARAM_FILE_DIR"motion_control.yaml");
+    // 加载零位偏移门限值和零位丢失门限值，并检查数据是否合法
+    string config_file = AXIS_GROUP_DIR;
+    ParamGroup params(config_file + "base_group.yaml");
+
     if (params.getLastError() == SUCCESS)
     {
         data.clear();
@@ -174,30 +182,44 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         return result;
     }
 
-    // load offset config file
-    offset_param_.loadParamFile(AXIS_GROUP_DIR"arm_group_offset.yaml");
-    result = offset_param_.getLastError();
+    // 加载传动比配置文件，并检查数据
+    // 检查无误后将数据下发到裸核
+    data.clear();
+    gear_ratio_param_.loadParamFile(config_file + "arm_group_gear_ratio.yaml");
+    result = gear_ratio_param_.getLastError();
 
     if (result == SUCCESS)
     {
-        data.clear();
-        if (!offset_param_.getParam("zero_offset/id", id) || !offset_param_.getParam("zero_offset/data", data))
+        if (gear_ratio_param_.getParam("gear_ratio/id", id) && gear_ratio_param_.getParam("gear_ratio/data", data))
         {
-            result = params.getLastError();
-            FST_ERROR("Fail to read zero offset config file, err=0x%llx", result);
+            if (data.size() == NUM_OF_JOINT)
+            {
+                FST_INFO("ID of gear ratio: 0x%x", id);
+                FST_INFO("Send gear ratio: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+                result = sendConfigData(id, data);
+
+                if (result == SUCCESS)
+                {
+                    FST_INFO("Success.");
+                }
+                else
+                {
+                    FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
+                    return result;
+                }
+            }
+            else
+            {
+                FST_ERROR("Invalid array size of gear ratio, except %d but get %d", NUM_OF_JOINT, data.size());
+                return INVALID_PARAMETER;
+            }
+        }
+        else
+        {
+            result = gear_ratio_param_.getLastError();
+            FST_ERROR("Fail to read gear ratio config file, err=0x%llx", result);
             return result;
         }
-        if (data.size() != NUM_OF_JOINT)
-        {
-            FST_ERROR("Invalid array size of zero offset, except %d but get %d", NUM_OF_JOINT, data.size());
-            return result;
-        }
-
-        FST_INFO("ID of offset: 0x%x", id);
-        FST_INFO("Encoder-Zero-Offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-
-        for (size_t i = 0; i < joint_num_; i++)
-            zero_offset_[i] = data[i];
     }
     else
     {
@@ -205,35 +227,119 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         return result;
     }
 
-    // set zero offset into core1, offset in core1 should be setted before engage
-    FST_INFO("Downloading zero offset ...");
-    if (sendJtacParam("zero_offset") == SUCCESS)
+    // 加载耦合系数配置文件，并检查数据
+    // 检查无误后将数据下发到裸核
+    data.clear();
+    coupling_param_.loadParamFile(config_file + "arm_group_coupling_coeff.yaml");
+    result = coupling_param_.getLastError();
+
+    if (result == SUCCESS)
     {
-        Joint cur_jnt;
-        ServoState servo_state;
-        char buffer[LOG_TEXT_SIZE];
-        usleep(256 * 1000);
-        bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
-        FST_INFO("Success!");
-        FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
+        if (coupling_param_.getParam("coupling_coeff/id", id) && coupling_param_.getParam("coupling_coeff/data", data))
+        {
+            if (data.size() == 15)
+            {
+                FST_INFO("ID of coupling coefficient: 0x%x", id);
+                FST_INFO("Send coupling coefficient: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
+                         data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14]);
+                result = sendConfigData(id, data);
+
+                if (result == SUCCESS)
+                {
+                    FST_INFO("Success.");
+                }
+                else
+                {
+                    FST_ERROR("Fail to send coupling coefficient to barecore, code = 0x%llx", result);
+                    return result;
+                }
+            }
+            else
+            {
+                FST_ERROR("Invalid array size of coupling coefficient, except %d but get %d", 15, data.size());
+                return INVALID_PARAMETER;
+            }
+        }
+        else
+        {
+            result = coupling_param_.getLastError();
+            FST_ERROR("Fail to read coupling coefficient config file, err=0x%llx", result);
+            return result;
+        }
     }
     else
     {
-        FST_ERROR("Failed, cannot set zero offset to Core1.");
-        return BARE_CORE_TIMEOUT;
+        FST_ERROR("Loading coupling coefficient param file failed, err=0x%llx", result);
+        return result;
     }
 
-    ////////////////////////////////
-    // checkZeroOffset 
-    ////////////////////////////////
-    //CalibrateState calibrate_stat;
-    //OffsetState offset_stat[NUM_OF_JOINT];
-    //checkOffset(&calibrate_stat, offset_stat);
+    // 加载零位配置文件，并检查数据
+    // 检查无误后将数据下发到裸核，注意只有裸核处于DISABLE状态零位才能生效
+    data.clear();
+    offset_param_.loadParamFile(config_file + "arm_group_offset.yaml");
+    result = offset_param_.getLastError();
+
+    if (result == SUCCESS)
+    {
+        if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
+        {
+            if (data.size() == NUM_OF_JOINT)
+            {
+                FST_INFO("ID of offset: 0x%x", id);
+                FST_INFO("Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+                result = sendConfigData(id, data);
+
+                if (result == SUCCESS)
+                {
+                    Joint cur_jnt;
+                    ServoState servo_state;
+                    char buffer[LOG_TEXT_SIZE];
+                    usleep(256 * 1000);
+                    bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
+                    memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
+                    FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
+                    FST_INFO("Success.");
+                }
+                else
+                {
+                    FST_ERROR("Fail to send offset to barecore, code = 0x%llx", result);
+                    return result;
+                }
+            }
+            else
+            {
+                FST_ERROR("Invalid array size of zero offset, except %d but get %d", NUM_OF_JOINT, data.size());
+                return INVALID_PARAMETER;
+            }
+        }
+        else
+        {
+            result = offset_param_.getLastError();
+            FST_ERROR("Fail to read zero offset config file, err=0x%llx", result);
+            return result;
+        }
+    }
+    else
+    {
+        FST_ERROR("Loading offset param file failed, err=0x%llx", result);
+        return result;
+    }
+
+    // 进行一次零位检测
+    /*
+    CalibrateState calibrate_stat;
+    OffsetState offset_stat[NUM_OF_JOINT];
+    checkOffset(&calibrate_stat, offset_stat);
+    */
 
     return SUCCESS;
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  buildRecordFile
+// 摘要：  如果零位记录文件不存在，从模板生成一个零位记录文件放到初始化时指定的目录之中，正常情况下
+//        仅在MC程序第一次在控制器上运行时需要生成零位记录文件；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::buildRecordFile(const string &file)
 {
     char buf[256] = {0};
@@ -257,7 +363,11 @@ ErrorCode Calibrator::buildRecordFile(const string &file)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  checkOffset
+// 摘要：  调用checkOffset进行一次零位校验，给出各轴的零位校验结果和机器人是否允许运动的标志；
+//        注意只有在机器人处于完全静止的状态下才能进行零位校验，否则校验结果不具有任何意义；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT])
 {
     ServoState servo_state;
@@ -267,10 +377,12 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
     FST_INFO("Check zero offset.");
 
+    // 获取当前各关节的位置
     if (bare_core_ptr_->getLatestJoint(cur_jnt, servo_state))
     {
         FST_INFO("Curr-joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
 
+        // 获取记录文件中各关节的位置
         if (robot_recorder_.getParam("joint", joint))
         {
             if (joint.size() == NUM_OF_JOINT)
@@ -279,6 +391,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
                 FST_INFO("Mask-flags: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
                 FST_INFO("Last-state: %s", printDBLine((int*)offset_stat_, buffer, LOG_TEXT_SIZE));
 
+                // 当前各关节位置和记录文件中各关节位置进行比对
                 OffsetState state[NUM_OF_JOINT];
                 memcpy(&old_jnt, &joint[0], sizeof(Joint));
                 checkOffset(cur_jnt, old_jnt, state);
@@ -287,6 +400,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
                 bool recorder_need_update = false;
 
+                // 比对结果比记录文件中的状态标志更严重，则更新记录文件中的标志
                 for (size_t i = 0; i < joint_num_; i++)
                 {
                     if (offset_mask_[i] == OFFSET_UNMASK && state[i] > offset_stat_[i])
@@ -308,6 +422,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
                 if (recorder_need_update)
                 {
+                    // 更新记录文件中的零位标志
                     FST_INFO("Update offset state into recorder.");
 
                     vector<int> stat; stat.resize(NUM_OF_JOINT);
@@ -338,6 +453,8 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
                 bool limited = false;
                 bool forbidden = false;
 
+                // 综合各轴校验结果和零位错误屏蔽标志，给出允许运行标志
+                        // 函数？？？
                 for (size_t i = 0; i < joint_num_; i++)
                 {
                     if (offset_mask_[i] == OFFSET_UNMASK)
@@ -387,7 +504,10 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  checkOffset
+// 摘要：  对各个轴的当前读数和记录值进行比对，根据偏移门限和丢失门限给出比对结果；
+//------------------------------------------------------------------------------
 void Calibrator::checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat)
 {
     for (size_t i = 0; i < joint_num_; i++)
@@ -407,7 +527,11 @@ void Calibrator::checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  calibrateOffset
+// 摘要：  在当前位置，对所有轴进行零位标定；
+//        注意只有在机器人处于完全静止的状态下才能进行零位标定，否则标定结果不具有任何意义；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::calibrateOffset(void)
 {
     FST_INFO("Calibrate offset of all joints.");
@@ -415,11 +539,17 @@ ErrorCode Calibrator::calibrateOffset(void)
     return calibrateOffset(indexs, joint_num_);
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  calibrateOffset
+// 摘要：  在当前位置，对某一个轴进行零位标定；
+//        注意只有在机器人处于完全静止的状态下才能进行零位标定，否则标定结果不具有任何意义；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::calibrateOffset(size_t index)
 {
     FST_INFO("Calibrate offset of joint index=%d", index);
 
+    return calibrateOffset(&index, 1);
+    /*
     if (index < joint_num_)
     {
         Joint cur_jnt;
@@ -444,13 +574,19 @@ ErrorCode Calibrator::calibrateOffset(size_t index)
         FST_ERROR("Index out of range.");
         return INVALID_PARAMETER;
     }
+    */
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  calibrateOffset
+// 摘要：  在当前位置，对某几个轴进行零位标定；
+//        注意只有在机器人处于完全静止的状态下才能进行零位标定，否则标定结果不具有任何意义；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
 {
     FST_INFO("Calibrate offset of:");
 
+    // 检查需要标定的轴标号
     for (size_t i = 0; i < length; i++)
     {
         if (pindex[i] < NUM_OF_JOINT)
@@ -477,6 +613,7 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
 
         size_t index;
 
+        // 计算新的零位值，暂存直到saveOffset方法被调用，新的零位值生效并被写入配置文件中
         for (size_t i = 0; i < length; i++)
         {
             index = pindex[i];
@@ -494,7 +631,11 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  calculateOffset
+// 摘要：  通过在当前的零位条件下的关节读数和在新零位条件下的目标读数计算零位；
+//        公式：编码器读数 = （旧读数 + 旧零位） * 转换系数 = （新读数 + 新零位） * 转换系数
+//------------------------------------------------------------------------------
 double Calibrator::calculateOffset(double current_offset, double current_joint, double target_joint)
 {
     double new_offset = current_joint + current_offset - target_joint;
@@ -503,7 +644,10 @@ double Calibrator::calculateOffset(double current_offset, double current_joint, 
     return new_offset;
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  saveOffset
+// 摘要：  将之前计算出并暂存的零位值下发到裸核并写入配置文件；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::saveOffset(void)
 {
     FST_INFO("Save zero offset into config file ...");
@@ -519,8 +663,10 @@ ErrorCode Calibrator::saveOffset(void)
         }
     }
 
+    // 至少有一个轴的零位尚未生效和保存
     if (need_save)
     {
+        // 更新配置文件
         vector<double> data; data.resize(NUM_OF_JOINT);
 
         if (!offset_param_.getParam("zero_offset/data", data))
@@ -548,8 +694,9 @@ ErrorCode Calibrator::saveOffset(void)
 
         if (offset_param_.setParam("zero_offset/data", data) && offset_param_.dumpParamFile())
         {
+            // 更新裸核零位
             FST_INFO("Offset saved, update offset in core1 ...");
-            ErrorCode err = sendConfigData("zero_offset/");
+            ErrorCode err = sendOffsetToBareCore();
 
             if (err != SUCCESS)
             {
@@ -557,6 +704,7 @@ ErrorCode Calibrator::saveOffset(void)
                 return err;
             }
 
+            // 此处usleep为了等待裸核的零位生效，考虑是否有更好的实现方式
             usleep(200 * 1000);
             FST_INFO("Core1 offset updated, update recorder ...");
 
@@ -564,6 +712,7 @@ ErrorCode Calibrator::saveOffset(void)
             ServoState state;
             vector<double> jnt;
 
+            // 更新记录文件，清除零位丢失标志和错误屏蔽标志
             if (!bare_core_ptr_->getLatestJoint(joint, state))
             {
                 FST_ERROR("Fail to get current joint from core1.");
@@ -592,6 +741,7 @@ ErrorCode Calibrator::saveOffset(void)
                 mask[i] = offset_mask_[i];
                 flag[i] = offset_stat_[i];
 
+                // 对于更新了零位的轴，同时更新其记录关节读数、零位状态标志和错误屏蔽标志
                 if (offset_need_save_[i] == NEED_SAVE)
                 {
                     jnt[i] = joint[i];
@@ -628,7 +778,7 @@ ErrorCode Calibrator::saveOffset(void)
                     }
                 }
 
-                FST_INFO("SUccess!");
+                FST_INFO("Success!");
                 return SUCCESS;
             }
             else
@@ -650,7 +800,10 @@ ErrorCode Calibrator::saveOffset(void)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  saveJoint
+// 摘要：  将当前的关节读数写入记录文件，注意只有在机器人完全静止后才可调用；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::saveJoint(void)
 {
     Joint cur_jnt;
@@ -678,7 +831,10 @@ ErrorCode Calibrator::saveJoint(void)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  saveJoint
+// 摘要：  将给定的关节读数写入记录文件；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::saveGivenJoint(const Joint &joint)
 {
     vector<double> data(&joint[0], &joint[0] + NUM_OF_JOINT);
@@ -700,7 +856,11 @@ ErrorCode Calibrator::saveGivenJoint(const Joint &joint)
     return SUCCESS;
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  maskOffsetLostError
+// 摘要：  屏蔽零位错误，如果有轴零位丢失，该方法将设置此轴的屏蔽标志，之后将不对此轴进行零位校验，
+//        且机器人只能进入受限运行模式；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::maskOffsetLostError(void)
 {
     char buffer[LOG_TEXT_SIZE];
@@ -759,7 +919,10 @@ ErrorCode Calibrator::maskOffsetLostError(void)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  setOffsetState
+// 摘要：  当某些轴发生零位偏移时，允许用户对这些轴进行设置，将其状态归为零位正常或者零位丢失；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
 {
     char buffer[LOG_TEXT_SIZE];
@@ -777,7 +940,7 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
         }
 
         FST_INFO("Offset state: %s", printDBLine(&flag[0], buffer, LOG_TEXT_SIZE));
-        flag[index] = stat;
+        flag[index] = int(stat);
         FST_INFO("  changed to: %s", printDBLine(&flag[0], buffer, LOG_TEXT_SIZE));
 
         if (stat == OFFSET_NORMAL && offset_stat_[index] != OFFSET_NORMAL)
@@ -825,9 +988,14 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  setOffset
+// 摘要：  允许用户直接设置某个轴的零位值，被改变的零位值需要调用saveOffset借口才会被写入配置文件中；
+//------------------------------------------------------------------------------
 void Calibrator::setOffset(size_t index, double offset)
 {
+    FST_INFO("Set offset, index = %d, offset = %.6f", index, offset);
+    
     if (index < joint_num_)
     {
         zero_offset_[index] = offset;
@@ -835,19 +1003,27 @@ void Calibrator::setOffset(size_t index, double offset)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  setOffset
+// 摘要：  允许用户直接设置所有轴的零位值，被改变的零位值需要调用saveOffset借口才会被写入配置文件中；
+//        注意确保传入的offset数组长度不小于有效轴数
+//------------------------------------------------------------------------------
 void Calibrator::setOffset(const double *offset)
 {
+    char buf[LOG_TEXT_SIZE];
+    FST_INFO("Set offset: = %s", printDBLine(offset, buf, LOG_TEXT_SIZE));
+    
     for (size_t i = 0; i < joint_num_; i++)
     {
         zero_offset_[i] = offset[i];
         offset_need_save_[i] = NEED_SAVE;
     }
-
-    return SUCCESS;
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  getOffset
+// 摘要：  获取所有轴的零位值，注意确保数组长度不小于实际轴数；
+//------------------------------------------------------------------------------
 void Calibrator::getOffset(double *offset)
 {
     bool need_save = false;
@@ -867,7 +1043,10 @@ void Calibrator::getOffset(double *offset)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  getOffsetMask
+// 摘要：  获取所有轴的错误屏蔽标志，注意确保数组长度不小于实际轴数；
+//------------------------------------------------------------------------------
 void Calibrator::getOffsetMask(OffsetMask *mask)
 {
     for (size_t i = 0; i < joint_num_; i++)
@@ -875,19 +1054,28 @@ void Calibrator::getOffsetMask(OffsetMask *mask)
         mask[i] = offset_mask_[i];
     }
 
+    /*
     for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
     {
         mask[i] = OFFSET_UNMASK;
     }
+    */
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  getCalibrateState
+// 摘要：  获取允许的运行状态，所有轴零位正常处于正常运行模式，某些轴零位错误被屏蔽处于受限模式，
+//        某些轴零位异常且没有被屏蔽则处于禁止运行模式；
+//------------------------------------------------------------------------------
 CalibrateState Calibrator::getCalibrateState(void)
 {
     return current_state_;
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  isReferenceAvailable
+// 摘要：  获取快速标定是否可用的标志，如果之前标记过参考点，可通过快速标定接口进行标定；
+//------------------------------------------------------------------------------
 bool Calibrator::isReferenceAvailable(void)
 {
     ParamGroup params(AXIS_GROUP_DIR"arm_group_offset_reference.yaml");
@@ -914,7 +1102,10 @@ bool Calibrator::isReferenceAvailable(void)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  deleteReference
+// 摘要：  删除用于快速标定的记录参考点；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::deleteReference(void)
 {
     FST_INFO("Delete reference point.");
@@ -960,7 +1151,10 @@ ErrorCode Calibrator::deleteReference(void)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  saveReference
+// 摘要：  将当前位置记录为快速标定参考点，标定过参考点的机器人可通过快速标定对零位进行标定；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::saveReference(void)
 {
     Joint joint;
@@ -1019,7 +1213,10 @@ ErrorCode Calibrator::saveReference(void)
     return SUCCESS;
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  fastCalibrate
+// 摘要：  快速标定所有轴，注意标定完成后需要调用saveOffset进行保存；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::fastCalibrate(void)
 {
     FST_INFO("Easy calibrate of all joints.");
@@ -1027,11 +1224,16 @@ ErrorCode Calibrator::fastCalibrate(void)
     return fastCalibrate(indexs, joint_num_);
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  fastCalibrate
+// 摘要：  对某个轴进行快速标定，注意标定完成后需要调用saveOffset进行保存；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::fastCalibrate(size_t index)
 {
     FST_INFO("Fsst calibrate index = %d", index);
+    return fastCalibrate(&index, 1);
 
+    /*
     if (index < joint_num_)
     {
         vector<int>     ref_encoder;
@@ -1112,9 +1314,13 @@ ErrorCode Calibrator::fastCalibrate(size_t index)
         FST_ERROR("Invalid index=%d, index should less than %d", index, joint_num_);
         return INVALID_PARAMETER;
     }
+     */
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  fastCalibrate
+// 摘要：  对某几个轴进行快速标定，注意标定完成后需要调用saveOffset进行保存；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
 {
     FST_INFO("Fsst calibrate offset of:");
@@ -1215,7 +1421,10 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  calculateOffsetEasy
+// 摘要：  根据记录中的参考点和当前编码器读数计算新零位；
+//------------------------------------------------------------------------------
 double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
                                        unsigned int ref_encoder, unsigned int cur_encoder)
 {
@@ -1225,7 +1434,6 @@ double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
     double new_offset;
     unsigned int cur_rolls = (cur_encoder >> 16) & 0xFFFF;
     unsigned int ref_rolls = (ref_encoder >> 16) & 0xFFFF;
-
 
     if (cur_rolls > ref_rolls)
     {
@@ -1244,84 +1452,27 @@ double Calibrator::calculateOffsetEasy(double gear_ratio, double ref_offset,
     return new_offset;
 }
 
-
-ErrorCode Calibrator::sendJtacParam(const std::string &param)
+//------------------------------------------------------------------------------
+// 方法：  sendConfigData
+// 摘要：  使用service形式向裸核发送参数id和数据；
+//------------------------------------------------------------------------------
+ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 {
-    ErrorCode  err = SUCCESS;
-
-    if (param == "zero_offset")
-    {
-        FST_INFO("Send zero offset to bare core.");
-        err = sendConfigData("zero_offset/");
-    }
-    else if (param == "gear_ratio")
-    {
-        FST_INFO("Send gear ratio to bare core.");
-        err = sendConfigData("gear_ratio/");
-    }
-    else if (param == "coupling_coefficient")
-    {
-        FST_INFO("Send coupling coefficient to bare core.");
-        err = sendConfigData("coupling_coefficient/");
-    }
-    else if (param == "trajectory_delay")
-    {
-        FST_INFO("Send trajectory delay to bare core.");
-        err = sendConfigData("trajectory_delay/");
-    }
-    else if (param == "all")
-    {
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send zero offset to bare core.");
-            err = sendConfigData("zero_offset/");
-        }
-
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send gear ratio to bare core.");
-            err = sendConfigData("gear_ratio/");
-        }
-
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send coupling coefficient to bare core.");
-            err = sendConfigData("coupling_coefficient/");
-        }
-
-        if (err == SUCCESS)
-        {
-            FST_INFO("Send trajectory delay to bare core.");
-            err = sendConfigData("trajectory_delay/");
-        }
-    }
-    else
-    {
-        FST_ERROR("Invalid parameter name.");
-        err = INVALID_PARAMETER;
-    }
-
-    if (err == SUCCESS)
-    {
-        FST_INFO("Done.");
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Abort.");
-        return err;
-    }
+    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
 }
 
-
-ErrorCode Calibrator::sendConfigData(const string &path)
+//------------------------------------------------------------------------------
+// 方法：  sendOffsetToBareCore
+// 摘要：  从配置文件中提取零位参数，并使用service形式向裸核发送这些参数；
+//------------------------------------------------------------------------------
+ErrorCode Calibrator::sendOffsetToBareCore(void)
 {
     int id;
     vector<double> data;
 
-    if (offset_param_.getParam(path + "id", id) && offset_param_.getParam(path + "data", data))
+    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
-        return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
+        return sendConfigData(id, data);
     }
     else
     {
@@ -1329,7 +1480,10 @@ ErrorCode Calibrator::sendConfigData(const string &path)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  getOffsetFromBareCore
+// 摘要：  通过service形式，从裸核获取零位；
+//------------------------------------------------------------------------------
 ErrorCode Calibrator::getOffsetFromBareCore(vector<double> &data)
 {
     int id;
@@ -1346,7 +1500,10 @@ ErrorCode Calibrator::getOffsetFromBareCore(vector<double> &data)
     }
 }
 
-
+//------------------------------------------------------------------------------
+// 方法：  printDBLine
+// 摘要：  根据实际轴数格式化输出数据组；
+//------------------------------------------------------------------------------
 char* Calibrator::printDBLine(const int *data, char *buffer, size_t length)
 {
     int len = 0;
@@ -1365,6 +1522,10 @@ char* Calibrator::printDBLine(const int *data, char *buffer, size_t length)
     return buffer;
 }
 
+//------------------------------------------------------------------------------
+// 方法：  printDBLine
+// 摘要：  根据实际轴数格式化输出数据组；
+//------------------------------------------------------------------------------
 char* Calibrator::printDBLine(const double *data, char *buffer, size_t length)
 {
     int len = 0;

@@ -13,113 +13,115 @@
 namespace fst_mc
 {
 
-struct JointConstraint
+#define PATH_CACHE_SIZE         1024
+#define TRAJECTORY_CACHE_SIZE   128
+
+struct JointConstraint  // 关节限位
 {
-    Joint upper;
-    Joint lower;
+    Joint upper;    // 上限
+    Joint lower;    // 下限
 };
 
-struct CircleTarget
+struct CircleTarget     // moveC的目标点，由2个点位姿点构成
 {
     PoseEuler pose1;
     PoseEuler pose2;
 };
 
-struct MotionTarget
+struct MotionTarget     // 用于move指令的数据结构
 {
-    MotionType  type;
+    MotionType  type;   // 指令的运动类型
+    double      cnt;    // 平滑语句的CNT范围 ： 0.0 - 1.0， FINE语句的CNT    : < 0
+    double      vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
+                        //           如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+    
+    int user_frame_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
+    int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错
 
-    // 0.0 - 1.0
-    double cnt;
-
-    // percent velocity in move Joint, range: 0.0-1.0
-    // linear velocity in move cartesian, range 0.0-MAC_VEL
-    // velocity < 0 means using default velocity
-    double vel;
-
-    int user_frame_id;
-    int tool_frame_id;
-
-    union
+    union               // 根据type指定的运动类型，使用相应的目标数据
     {
-        PoseEuler       pose_target;
-        Joint           joint_target;
-        CircleTarget    circle_target;
+        Joint           joint_target;   // 关节目标点，moveJ时使用
+        PoseEuler       pose_target;    // 位姿目标点，moveL时使用
+        CircleTarget    circle_target;  // 2个位姿目标点，moveC时使用
     };
 };
 
-struct PathPoint
+struct PathBlock    // 路径点的数据结构
 {
-    // Command type, joint command or cartesian command*/
-    MotionType  type;
+    PointType   point_type;     // 路径点所属的区段, 路径点或者过渡点
+    MotionType  motion_type;    // 路径点的类型，关节类型或者笛卡尔类型
 
-    int         id;
+    Pose    pose;   // 路径点的笛卡尔空间位姿表示
+    Joint   joint;  // 路径点的关节空间表示
+};
 
-    // point stamp
-    size_t      stamp;
+struct PathCache    // 路径缓存
+{
+    MotionTarget    target;                 // 运动指令的目标
+    int             smooth_in_index;        // 如果上一条指令带平滑，index指示了过度路径切入本条路径的位置，否则index应为-1，在过渡段的最后一个点
+    int             smooth_out_index;       // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1，在路径上的最后一个点
+    size_t          cache_length;           // 路径缓存中的有效路径点数
+    PathBlock       cache[PATH_CACHE_SIZE]; // 由一系列连续有序的路径点构成的路径
+};
 
-    // value in cartesian space or joint space
-    union
-    {
-        Pose    pose;
-        Joint   joint;
-    };
+struct PathCacheList    // 路径缓存链表
+{
+    int             id;                     // 运动指令的ID/行号
+    PathCacheList*  next_ptr;               // 下一个路径缓存所在的地址，用于构成路径缓存链表
+    PathCache       path_cache;
+};
+
+struct AxisCoeff        // 一个轴轨迹的表达式
+{
+    int     reserve[4]; // 保留
+    double  data[10];  // 表达式，根据算法实现进行细化
+};
+
+struct TrajectoryBlock  // 一段时间内的轨迹
+{
+    int         index_in_path_cache;    // 轨迹段末尾位置对应在路径缓存中的索引, 当轨迹段末尾点在路径中没有对应的路径点时此处应填-1
+    MotionTime  duration;               // 轨迹段block在时间轴上的延续长度，在本段轨迹上的差值时间：0 ～ duration
+    MotionTime  time_from_start;        // 从运动起始到block起始之间的时间
+    AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
+};
+
+struct TrajectoryCache      // 轨迹缓存
+{
+    int                 smooth_out_index;               // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1
+    PathCache*          path_cache_ptr;                 // 轨迹对应的路径缓存地址
+    size_t              cache_length;                   // 轨迹缓存中的有效轨迹段数
+    TrajectoryBlock     cache[TRAJECTORY_CACHE_SIZE];   // 由一系列连续有序的轨迹段构成的轨迹
+};
+
+struct TrajectoryCacheList  // 轨迹缓存链表
+{
+    size_t                  pick_index;
+    MotionTime              pick_from_block;
+    MotionTime              time_from_start;                // 从运动起始到本条指令起始之间的时间
+    TrajectoryCacheList*    next_ptr;                       // 下一个轨迹缓存所在的地址，用于构成轨迹缓存链表
+    TrajectoryCache         trajectory_cache;
 };
 
 struct TrajectorySegment
 {
-    // point from path plan
-    PathPoint   path_point;
-    JointPoint  start_state;
-    JointPoint  ending_state;
-
-    // time from start
-    // time < 0 means this point has not been converted to a trajectory point
-    MotionTime  time_from_start;
-
-    // time duration from prev point to this point
-    // duration < 0 means this point has not been converted to a trajectory point
-    // command_duration = cycle_step / v_command
-    // duration = actual dutation
-    //MotionTime  command_duration;
-    MotionTime  forward_duration;
-    MotionTime  backward_duration;
-
-    // point is what trajectory-create should give out
-    //JointPoint  forward_point;
-    //JointPoint  backward_point;
-
-    TrajSegment  forward_coeff[NUM_OF_JOINT];
-    TrajSegment  backward_coeff[NUM_OF_JOINT];
-
-    DynamicsProduct dynamics_product;
+    MotionTime  time_from_start;     // 从运动起始到本段segment起点之间的时间
+    MotionTime  time_from_block;     // 从block开始到本段segment起始之间的时间
+    MotionTime  duration;               // 本段segment的持续时间
+    AxisCoeff   axis[NUM_OF_JOINT];     // 各个轴的表达式
 };
 
-struct TrajectoryCache
+struct TrajectoryPoint  // 差值得到的轨迹点
 {
-    bool    valid;
-    size_t  head;
-    size_t  tail;
-    size_t  smooth_in_stamp;
-    size_t  smooth_out_stamp;
-    double  deadline;
-    double  expect_duration;
-
-    TrajectorySegment cache[MAX_PATH_SIZE];
-    //TrajectoryCache *prev;
-    TrajectoryCache *next;
+    Joint   angle;      // 轨迹点的位置
+    Joint   omega;      // 轨迹点的速度
+    Joint   alpha;      // 轨迹点的加速度
+    Joint   ma_cv_g;    // 轨迹点的力矩
+    PointLevel  level;  // 轨迹点位置，起始点、中间点或者结束点
 };
 
-struct TrajectoryItem
-{
-    int         id;
-    MotionTime  time_from_start;
-    MotionTime  duration;
-    TrajSegment traj_coeff[NUM_OF_JOINT];
-    DynamicsProduct dynamics_product;
-};
 
-class GroupDirection
+
+class GroupDirection        // 手动示教模式下各轴运动方向
 {
   public:
     ManualDirection axis1;
@@ -136,45 +138,33 @@ class GroupDirection
     const ManualDirection& operator[](size_t index) const {assert(index < NUM_OF_JOINT); return *(&axis1 + index);}
 };
 
-struct ManualCoef
+struct ManualCoef           // 手动示教模式下关节或者笛卡尔坐标的梯形轨迹
 {
-    MotionTime start_time;
-    MotionTime stable_time;
-    MotionTime brake_time;
-    MotionTime stop_time;
+    MotionTime start_time;  // 开始加速的时刻
+    MotionTime stable_time; // 加速完毕的时刻
+    MotionTime brake_time;  // 开始减速的时刻
+    MotionTime stop_time;   // 停止的时刻
 
-    double  start_alpha;
-    double  brake_alpha;
+    double  start_alpha;    // 匀加速阶段的加速度
+    double  brake_alpha;    // 匀减速阶段的加速度
 };
 
-struct ManualTrajectory
+struct ManualTrajectory     // 手动示教模式下的运动轨迹
 {
-    ManualMode      mode;
-    ManualFrame     frame;
-    ManualDirection direction[6];
+    ManualMode      mode;           // 手动示教的模式，步进、连续或者到目标点
+    ManualFrame     frame;          // 手动示教的坐标系，关节空间、基座坐标系、用户坐标系、世界坐标系、工具坐标系
+    ManualDirection direction[NUM_OF_JOINT];   // 手动示教的各轴方向
 
-    Joint       joint_start;
-    Joint       joint_ending;
+    Joint       joint_start;        // 示教运动的开始关节位置
+    Joint       joint_ending;       // 示教运动的结束关节位置
 
-    PoseEuler   cart_start;
-    PoseEuler   cart_ending;
-    PoseEuler   tool_coordinate;
+    PoseEuler   cart_start;         // 示教运动的开始笛卡尔位姿
+    PoseEuler   cart_ending;        // 示教运动结束始笛卡尔位姿
+    PoseEuler   tool_coordinate;    // 工具坐标系到基座坐标系的变换，用于工具坐标系下的示教
 
-    MotionTime      duration;
-    ManualCoef      coeff[6];
+    MotionTime      duration;       // 示教运动的耗时
+    ManualCoef      coeff[NUM_OF_JOINT];        // 各轴系数
 };
-
-struct TrajectoryPoint
-{
-    Joint   angle;
-    Joint   omega;
-    Joint   alpha;
-    Joint   ma_cv_g;
-    //Joint   inertia;
-    //Joint   gravity;
-    PointLevel  level;
-};
-
 
 }
 

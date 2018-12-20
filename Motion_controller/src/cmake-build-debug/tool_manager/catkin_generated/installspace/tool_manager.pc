@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: tool_manager
+Description: Description of tool_manager
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -ltool_manager
+Requires: 

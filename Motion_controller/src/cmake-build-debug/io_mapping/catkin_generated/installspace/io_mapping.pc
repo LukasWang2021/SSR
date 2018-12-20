@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: io_mapping
+Description: Description of io_mapping
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lio_mapping
+Requires: base_device

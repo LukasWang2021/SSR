@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: path_alg
+Description: Description of path_alg
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lpath_plan
+Requires: basic_alg

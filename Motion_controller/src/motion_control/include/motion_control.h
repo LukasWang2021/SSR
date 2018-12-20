@@ -115,17 +115,15 @@ public:
     // parameter access
     // ...
 
-    void nonRealTimeTask(void);
+    void ringCommonTask(void);
+    void ringPriorityTask(void);
     
 private:
-    bool startRealtimeTask(void);
-    bool stopRealtimeTask(void);
-
-
     int  user_frame_id_;
     int  tool_frame_id_;
 
-    bool non_rt_task_running_;
+    bool rt_thread_running_;
+    bool non_rt_thread_running_;
 
     MotionControlParam* param_ptr_;
     fst_log::Logger* log_ptr_;

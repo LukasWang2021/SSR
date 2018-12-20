@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: dynamic_alg
+Description: Description of dynamic_alg
+Version: 0.0.0
+Cflags: -I/home/fst/workspace/src/dynamic_alg/include
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -ldynamic_alg
+Requires: 

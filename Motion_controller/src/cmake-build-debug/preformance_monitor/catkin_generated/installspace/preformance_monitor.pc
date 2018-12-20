@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: preformance_monitor
+Description: Description of preformance_monitor
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lpreformance_monitor
+Requires: 

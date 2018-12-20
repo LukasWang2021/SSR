@@ -1,0 +1,192 @@
+/home/fst/clion-2018.1.2/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/fst/workspace/src
+-- The C compiler identification is GNU 4.8.4
+-- The CXX compiler identification is GNU 4.8.4
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Using CATKIN_DEVEL_PREFIX: /home/fst/workspace/src/cmake-build-debug/devel
+-- Using CMAKE_PREFIX_PATH: /home/fst/fst_workspace/install;/home/fst/fst_workspace/devel;/opt/ros/indigo
+-- This workspace overlays: /home/fst/fst_workspace/install;/home/fst/fst_workspace/devel;/opt/ros/indigo
+-- Found PythonInterp: /usr/bin/python (found version "2.7.6") 
+-- Using PYTHON_EXECUTABLE: /usr/bin/python
+-- Using Debian Python package layout
+-- Using empy: /usr/bin/empy
+-- Using CATKIN_ENABLE_TESTING: ON
+-- Call enable_testing()
+-- Using CATKIN_TEST_RESULTS_DIR: /home/fst/workspace/src/cmake-build-debug/test_results
+-- Found gtest: gtests will be built
+-- Using Python nosetests: /usr/bin/nosetests-2.7
+-- catkin 0.6.18
+-- BUILD_SHARED_LIBS is on
+WARNING: Package name "FR0321_moveit_config" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits and underscores.
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~  traversing 37 packages in topological order:
+-- ~~  - base_axis_group
+-- ~~  - base_device
+-- ~~  - dynamic_alg
+-- ~~  - error_monitor
+-- ~~  - log_service
+-- ~~  - trajectory_alg
+-- ~~  - log_manager
+-- ~~  - basic_alg
+-- ~~  - kinematics_alg
+-- ~~  - middleware_to_mem
+-- ~~  - parameter_manager
+-- ~~  - coordinate_manager
+-- ~~  - fst_axis_device
+-- ~~  - fst_safety_device
+-- ~~  - path_alg
+-- ~~  - preformance_monitor
+-- ~~  - protos
+-- ~~  - reg_manager
+-- ~~  - service_manager
+-- ~~  - servo_diag
+-- ~~  - thread_help
+-- ~~  - modbus_manager
+-- ~~  - controller
+-- ~~  - fst_io_device
+-- ~~  - process_comm
+-- ~~  - tool_manager
+-- ~~  - tp_comm
+-- ~~  - virtual_axis_device
+-- ~~  - fst_axis_group
+-- ~~  - virtual_io_device
+-- ~~  - virtual_safety_device
+-- ~~  - xml_help
+-- ~~  - axis_group_manager
+-- ~~  - device_manager
+-- ~~  - io_mapping
+-- ~~  - motion_control
+-- ~~  - prg_interpreter
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- +++ processing catkin package: 'base_axis_group'
+-- ==> add_subdirectory(base_axis_group)
+-- x86-64
+-- +++ processing catkin package: 'base_device'
+-- ==> add_subdirectory(base_device)
+-- x86-64
+-- +++ processing catkin package: 'dynamic_alg'
+-- ==> add_subdirectory(dynamic_alg)
+-- x86-64
+-- +++ processing catkin package: 'error_monitor'
+-- ==> add_subdirectory(error_monitor)
+-- x86-64
+-- +++ processing catkin package: 'log_service'
+-- ==> add_subdirectory(log_service)
+-- x86-64
+-- +++ processing catkin package: 'trajectory_alg'
+-- ==> add_subdirectory(trajectory_alg)
+-- x86-64
+-- +++ processing catkin package: 'log_manager'
+-- ==> add_subdirectory(log_manager)
+-- x86-64
+-- +++ processing catkin package: 'basic_alg'
+-- ==> add_subdirectory(basic_alg)
+-- x86-64
+-- +++ processing catkin package: 'kinematics_alg'
+-- ==> add_subdirectory(kinematics_alg)
+-- x86-64
+-- +++ processing catkin package: 'middleware_to_mem'
+-- ==> add_subdirectory(middleware_to_mem)
+-- x86-64
+-- +++ processing catkin package: 'parameter_manager'
+-- ==> add_subdirectory(parameter_manager)
+-- x86-64
+-- +++ processing catkin package: 'coordinate_manager'
+-- ==> add_subdirectory(coordinate_manager)
+-- x86-64
+-- +++ processing catkin package: 'fst_axis_device'
+-- ==> add_subdirectory(fst_axis_device)
+-- x86-64
+-- +++ processing catkin package: 'fst_safety_device'
+-- ==> add_subdirectory(fst_safety_device)
+-- x86-64
+-- +++ processing catkin package: 'path_alg'
+-- ==> add_subdirectory(path_alg)
+-- x86-64
+-- +++ processing catkin package: 'preformance_monitor'
+-- ==> add_subdirectory(preformance_monitor)
+-- x86-64
+-- +++ processing catkin package: 'protos'
+-- ==> add_subdirectory(protos)
+-- x86-64
+-- +++ processing catkin package: 'reg_manager'
+-- ==> add_subdirectory(reg_manager)
+-- x86-64
+-- +++ processing catkin package: 'service_manager'
+-- ==> add_subdirectory(service_manager)
+-- x86-64
+-- +++ processing catkin package: 'servo_diag'
+-- ==> add_subdirectory(servo_diag)
+-- x86-64
+-- +++ processing catkin package: 'thread_help'
+-- ==> add_subdirectory(thread_help)
+-- x86-64
+-- +++ processing catkin package: 'modbus_manager'
+-- ==> add_subdirectory(modbus_manager)
+-- x86-64
+-- +++ processing catkin package: 'controller'
+-- ==> add_subdirectory(controller)
+-- x86-64
+-- +++ processing catkin package: 'fst_io_device'
+-- ==> add_subdirectory(fst_io_device)
+-- x86-64
+-- +++ processing catkin package: 'process_comm'
+-- ==> add_subdirectory(process_comm)
+-- x86-64
+-- +++ processing catkin package: 'tool_manager'
+-- ==> add_subdirectory(tool_manager)
+-- x86-64
+-- +++ processing catkin package: 'tp_comm'
+-- ==> add_subdirectory(tp_comm)
+-- x86-64
+-- +++ processing catkin package: 'virtual_axis_device'
+-- ==> add_subdirectory(virtual_axis_device)
+-- x86-64
+-- +++ processing catkin package: 'fst_axis_group'
+-- ==> add_subdirectory(fst_axis_group)
+-- x86-64
+-- +++ processing catkin package: 'virtual_io_device'
+-- ==> add_subdirectory(virtual_io_device)
+-- x86-64
+-- +++ processing catkin package: 'virtual_safety_device'
+-- ==> add_subdirectory(virtual_safety_device)
+-- x86-64
+-- +++ processing catkin package: 'xml_help'
+-- ==> add_subdirectory(xml_help)
+-- x86-64
+-- +++ processing catkin package: 'axis_group_manager'
+-- ==> add_subdirectory(axis_group_manager)
+-- x86-64
+-- +++ processing catkin package: 'device_manager'
+-- ==> add_subdirectory(device_manager)
+-- x86-64
+-- +++ processing catkin package: 'io_mapping'
+-- ==> add_subdirectory(io_mapping)
+-- x86-64
+-- +++ processing catkin package: 'motion_control'
+-- ==> add_subdirectory(motion_control)
+-- x86-64
+-- +++ processing catkin package: 'prg_interpreter'
+-- ==> add_subdirectory(prg_interpreter)
+-- x86-64
+CMake Error at /opt/ros/indigo/share/catkin/cmake/catkin_package.cmake:217 (message):
+  catkin_package() DEPENDS on the catkin package 'fst_io_device' which must
+  therefore be listed as a run dependency in the package.xml
+Call Stack (most recent call first):
+  /opt/ros/indigo/share/catkin/cmake/catkin_package.cmake:98 (_catkin_package)
+  prg_interpreter/CMakeLists.txt:64 (catkin_package)
+
+
+-- Configuring incomplete, errors occurred!
+See also "/home/fst/workspace/src/cmake-build-debug/CMakeFiles/CMakeOutput.log".
+See also "/home/fst/workspace/src/cmake-build-debug/CMakeFiles/CMakeError.log".

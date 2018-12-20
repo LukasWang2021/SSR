@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
     coordinate_manager
     tool_manager 
     basic_alg
-    trajectory_alg
     dynamic_alg
 )
 
@@ -37,7 +36,6 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/coordinate_manager/include
     ${depend_PATH_INC}/tool_manager/include 
     ${depend_PATH_INC}/basic_alg/include 
-    ${depend_PATH_INC}/trajectory_alg/include 
     ${depend_PATH_INC}/dynamic_alg/include 
 )
 
@@ -51,7 +49,6 @@ catkin_package(
     DEPENDS coordinate_manager 
     DEPENDS tool_manager 
     DEPENDS basic_alg
-    DEPENDS trajectory_alg
     DEPENDS dynamic_alg 
 )
 
@@ -78,7 +75,6 @@ target_link_libraries(fst_axis_group
     coordinate_manager
     tool_manager
     basic_alg 
-    trajectory_alg 
     dynamic_alg 
 )
 

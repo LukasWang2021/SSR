@@ -1,0 +1,8 @@
+prefix=/home/fst/workspace/src/cmake-build-debug/devel
+
+Name: middleware_to_mem
+Description: Description of middleware_to_mem
+Version: 0.1.0
+Cflags: 
+Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lmiddleware_to_mem -lcomm_interface -lcore_interface
+Requires: 

@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: device_manager
+Description: Description of device_manager
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -ldevice_manager
+Requires: base_device fst_io_device fst_safety_device fst_axis_device virtual_axis_device xml_help

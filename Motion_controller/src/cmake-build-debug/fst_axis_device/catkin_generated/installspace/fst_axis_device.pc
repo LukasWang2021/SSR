@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: fst_axis_device
+Description: Description of fst_axis_device
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lfst_axis_device
+Requires: base_device

@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: axis_group_manager
+Description: Description of axis_group_manager
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -laxis_group_manager
+Requires: base_axis_group xml_help

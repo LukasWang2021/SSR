@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: reg_manager
+Description: Description of reg_manager
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lreg_manager
+Requires: 

@@ -14,12 +14,16 @@
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <error_monitor.h>
 #include <common_file_path.h>
+#include <segment_alg.h>
 
 
 using namespace std;
 using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
+using namespace fst_algorithm;
+
+extern ComplexAxisGroupModel model;
 
 namespace fst_mc
 {
@@ -42,61 +46,24 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         error_monitor_ptr_ = error_monitor_ptr;
     }
 
-    FST_INFO("Initializing cache ...");
-
-    TrajectoryCache *pcache, *ptail;
-
-    for (size_t i = 0; i < AUTO_CACHE_SIZE; i++)
-    {
-        pcache = new TrajectoryCache;
-
-        if (pcache == NULL)
-        {
-            FST_ERROR("Fail to create trajectory cache.");
-            return MOTION_INTERNAL_FAULT;
-        }
-        else
-        {
-            pcache->next = NULL;
-        }
-
-        if (free_cache_ptr_ == NULL)
-        {
-            free_cache_ptr_ = pcache;
-            ptail = pcache;
-        }
-        else
-        {
-            ptail->next = pcache;
-            ptail = ptail->next;
-        }
-    }
-
-    for (pcache = free_cache_ptr_; pcache != NULL; pcache = pcache->next)
-    {
-        pcache->deadline = 0;
-        pcache->valid = false;
-        pcache->head = 0;
-        pcache->tail = 0;
-        pcache->smooth_in_stamp = 0;
-        pcache->smooth_out_stamp = 0;
-    }
-
     FST_INFO("Initializing mutex ...");
-    if (pthread_mutex_init(&auto_mutex_, NULL) != 0 ||
-        pthread_mutex_init(&manual_mutex_, NULL) != 0 ||
+    if (pthread_mutex_init(&cache_list_mutex_, NULL) != 0 ||
+        pthread_mutex_init(&manual_traj_mutex_, NULL) != 0 ||
         pthread_mutex_init(&servo_mutex_, NULL) != 0)
     {
         FST_ERROR("Fail to initialize mutex.");
         return MOTION_INTERNAL_FAULT;
     }
 
-    FST_INFO("Loading hard constraints ...");
     ParamGroup param;
     vector<double> upper;
     vector<double> lower;
+    string path = AXIS_GROUP_DIR;
 
-    if (param.loadParamFile(AXIS_GROUP_DIR "hard_constraint.yaml") &&
+    // 加载硬限位
+    FST_INFO("Loading hard constraints ...");
+
+    if (param.loadParamFile(path + "hard_constraint.yaml") &&
         param.getParam("hard_constraint/upper", upper) &&
         param.getParam("hard_constraint/lower", lower))
     {
@@ -116,12 +83,13 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
+    // 加载软限位上下限
     FST_INFO("Loading firm constraints ...");
     param.reset();
     upper.clear();
     lower.clear();
 
-    if (param.loadParamFile(AXIS_GROUP_DIR"firm_constraint.yaml") &&
+    if (param.loadParamFile(path + "firm_constraint.yaml") &&
         param.getParam("firm_constraint/upper", upper) &&
         param.getParam("firm_constraint/lower", lower))
     {
@@ -141,12 +109,13 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
+    // 加载软限位
     FST_INFO("Loading soft constraints ...");
     param.reset();
     upper.clear();
     lower.clear();
 
-    if (param.loadParamFile(AXIS_GROUP_DIR"soft_constraint.yaml") &&
+    if (param.loadParamFile(path + "soft_constraint.yaml") &&
         param.getParam("soft_constraint/upper", upper) &&
         param.getParam("soft_constraint/lower", lower))
     {
@@ -175,46 +144,196 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     FST_INFO("  firm-upper: %s", printDBLine(&firm_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  hard-upper: %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
 
+    // 加载motion_control参数设置
     param.reset();
-    vector<double> data;
 
-    if (param.loadParamFile(COMPONENT_PARAM_FILE_DIR"motion_control.yaml") &&
-        param.getParam("joint/omega/limit", data))
-    {
-        if (data.size() == NUM_OF_JOINT)
-        {
-            memcpy(axis_vel_, &data[0], NUM_OF_JOINT * sizeof(double));
-            FST_INFO("Joint omega: %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
-        }
-        else
-        {
-            FST_ERROR("Invalid omega array size : %d", data.size());
-            return INVALID_PARAMETER;
-        }
-    }
-    else
+    if (!param.loadParamFile(path + "base_group.yaml"))
     {
         FST_ERROR("Fail loading motion configuration from config file");
         return param.getLastError();
     }
 
-    int sample_dynamics;
-
-    if (!param.getParam("sample_dynamics", sample_dynamics))
+    // 从配置文件加载轨迹FIFO的容量，并初始化轨迹FIFO
+    int traj_fifo_size;
+    if (param.getParam("trajectory_fifo_size", traj_fifo_size))
     {
-        FST_ERROR("Fail loading sample dynamics from config file");
-        return param.getLastError();
-    }
+        FST_INFO("Initializing trajectory fifo ... capacity = %d", traj_fifo_size);
 
-    if (sample_dynamics > 0)
-    {
-        dynamics_cnt_ = sample_dynamics;
+        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM) == SUCCESS)
+        {
+            FST_INFO("Success.");
+        }
+        else
+        {
+            FST_ERROR("Fail to initialize trajectory fifo.");
+            return MOTION_INTERNAL_FAULT;
+        }
     }
     else
     {
-        FST_ERROR("Invalid sample dynamics = %d", sample_dynamics);
+        FST_ERROR("Fail loading trajectory fifo size from config file");
+        return param.getLastError();
     }
 
+    // 从配置文件加载轨迹FIFO中每个segment的时间长度
+    if (param.getParam("duration_of_segment_in_trajectory_fifo", duration_per_segment_))
+    {
+        FST_INFO("Duration of segments in trajectory fifo: %.6f", duration_per_segment_);
+
+        if (duration_per_segment_ < cycle_time_)
+        {
+            FST_ERROR("Duration of segments in trajectory fifo < cycle-time : %.6f", cycle_time_);
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading duration of segments in trajectory fifo from config file");
+        return param.getLastError();
+    }
+
+    // 从配置文件加载路径缓存池和轨迹缓存池的容量，并初始化两个缓存池
+    int path_cache_size, traj_cache_size;
+
+    if (param.getParam("path_cache_size", path_cache_size) && param.getParam("trajectory_cache_size", traj_cache_size))
+    {
+        FST_INFO("Initializing path cache ... capacity = %d", path_cache_size);
+
+        if (path_cache_pool_.initCachePool(path_cache_size) == SUCCESS)
+        {
+            FST_INFO("Success.");
+        }
+        else
+        {
+            FST_ERROR("Fail to initialize path cache.");
+            return MOTION_INTERNAL_FAULT;
+        }
+
+        FST_INFO("Initializing trajectory cache ... capacity = %d", traj_cache_size);
+
+        if (traj_cache_pool_.initCachePool(traj_cache_size) == SUCCESS)
+        {
+            FST_INFO("Success.");
+        }
+        else
+        {
+            FST_ERROR("Fail to initialize trajectory cache.");
+            return MOTION_INTERNAL_FAULT;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading path cache size or trajectory cache size from config file");
+        return param.getLastError();
+    }
+
+    // 从配置文件加载Fine指令的稳定周期和稳定门限
+    int     stable_times;
+    double  stable_threshold;
+    if (param.getParam("stable_with_fine/cycle", stable_times) && param.getParam("stable_with_fine/threshold", stable_threshold))
+    {
+        if (stable_times > 0 && stable_threshold > 0)
+        {
+            FST_INFO("Fine settings: cycle = %d, threshold = %.4f", stable_times, stable_threshold);
+            fine_waiter_.initFineWaiter(stable_times, stable_threshold);
+        }
+        else
+        {
+            FST_ERROR("Invalid fine settings: cycle = %d, threshold = %.4f", stable_times, stable_threshold);
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail loading fine setings from config file");
+        return param.getLastError();
+    }
+    
+    // 从配置文件加载笛卡尔空间线速度上下限
+    if (param.getParam("cartesian_vel_limit/min", cartesian_vel_min_) && param.getParam("cartesian_vel_limit/max", cartesian_vel_max_))
+    {
+        FST_INFO("Cartesian velocity: %.2f ~ %.2f", cartesian_vel_min_, cartesian_vel_max_);
+    }
+    else
+    {
+        FST_ERROR("Fail loading cartesian velocity limit from config file");
+        return param.getLastError();
+    }
+
+    // 从配置文件加载状态机中各个临时状态的超时时间
+    int time_out;
+    
+    if (param.getParam("time_out_cycle/disable_to_standby", time_out) && time_out > 0)
+    {
+        disable_to_standby_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading disable->standby timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/standby_to_disable", time_out) && time_out > 0)
+    {
+        standby_to_disable_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading standby->disable timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/standby_to_auto", time_out) && time_out > 0)
+    {
+        standby_to_auto_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading standby->auto timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/auto_to_standby", time_out) && time_out > 0)
+    {
+        auto_to_standby_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading auto->standby timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/manual_to_standby", time_out) && time_out > 0)
+    {
+        manual_to_standby_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading manual->standby timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/trajectory_flow", time_out) && time_out > 0)
+    {
+        trajectory_flow_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading trajectory flow timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    if (param.getParam("time_out_cycle/servo_update", time_out) && time_out > 0)
+    {
+        servo_update_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading servo update timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
+    // 初始化裸核通信句柄
     FST_INFO("Initializing interface to bare core ...");
 
     if (!bare_core_.initInterface())
@@ -223,6 +342,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return BARE_CORE_TIMEOUT;
     }
 
+    // 初始化零位校验模块
     FST_INFO("Initializing calibrator of ArmGroup ...");
     ErrorCode err = calibrator_.initCalibrator(JOINT_OF_ARM, &bare_core_, log_ptr_);
 
@@ -232,6 +352,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return err;
     }
 
+    // 如果某些轴的零位错误被屏蔽，必须同时屏蔽这些轴的软限位校验
     OffsetMask mask[NUM_OF_JOINT] = {OFFSET_UNMASK};
     calibrator_.getOffsetMask(mask);
     size_t index[JOINT_OF_ARM];
@@ -247,16 +368,16 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     soft_constraint_.setMask(index, length);
 
-
+    // 初始化运动学模块
     FST_INFO("Initializing kinematics of ArmGroup ...");
+    double dh_matrix[NUM_OF_JOINT][4];
     kinematics_ptr_ = new ArmKinematics();
 
     if (kinematics_ptr_)
     {
-        double dh_matrix[NUM_OF_JOINT][4];
         param.reset();
 
-        if (param.loadParamFile(AXIS_GROUP_DIR"arm_dh.yaml"))
+        if (param.loadParamFile(path + "arm_dh.yaml"))
         {
             if (param.getParam("dh_parameter/axis-0", dh_matrix[0], 4) &&
                 param.getParam("dh_parameter/axis-1", dh_matrix[1], 4) &&
@@ -292,8 +413,59 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return MOTION_INTERNAL_FAULT;
     }
 
+    // 初始化动力学模块
+    FST_INFO("Initializing dynamics of ArmGroup ...");
+    dynamics_ptr_ = new DynamicsInterface();
+
+    if (dynamics_ptr_ == NULL)
+    {
+        FST_ERROR("Fail to create dynamics for ArmGroup.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    // 初始化路径和轨迹规划
+    param.reset();
+    path = COMPONENT_PARAM_FILE_DIR;
+    SegmentAlgParam seg_param;
+    seg_param.kinematics_ptr = kinematics_ptr_;
+    seg_param.dynamics_ptr = dynamics_ptr_;
+
+    if (param.loadParamFile(path + "segment_alg.yaml"))
+    {
+        if (param.getParam("accuracy_cartesian_factor", seg_param.accuracy_cartesian_factor) &&
+            param.getParam("accuracy_joint_factor", seg_param.accuracy_joint_factor) &&
+            param.getParam("max_traj_points_num", seg_param.max_traj_points_num) &&
+            param.getParam("path_interval", seg_param.path_interval) &&
+            param.getParam("joint_interval", seg_param.joint_interval) &&
+            param.getParam("angle_interval", seg_param.angle_interval) &&
+            param.getParam("angle_valve", seg_param.angle_valve) &&
+            param.getParam("conservative_acc", seg_param.conservative_acc) &&
+            param.getParam("jerk_ratio", seg_param.jerk_ratio) &&
+            param.getParam("time_factor_1", seg_param.time_factor_1) &&
+            param.getParam("time_factor_2", seg_param.time_factor_2) &&
+            param.getParam("time_factor_3", seg_param.time_factor_3) &&
+            param.getParam("time_factor_4", seg_param.time_factor_4) &&
+            param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
+            param.getParam("max_rescale_factor", seg_param.max_rescale_factor))
+        {}
+        else
+        {
+            FST_ERROR("Fail to load segment algorithm config, code = 0x%llx", param.getLastError());
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to load segment algorithm config, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
+    initComplexAxisGroupModel();
+    initSegmentAlgParam(&seg_param);
+
+    // 初始化手动示教模块
     FST_INFO("Initializing manual teach of ArmGroup ...");
-    err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, AXIS_GROUP_DIR"arm_manual_teach.yaml");
+    err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, path + "arm_manual_teach.yaml");
 
     if (err != SUCCESS)
     {
@@ -304,40 +476,8 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     manual_teach_.setGlobalVelRatio(vel_ratio_);
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
-    param.reset();
-
-    if (param.loadParamFile(AXIS_GROUP_DIR"algorithm.yaml"))
-    {
-        if (param.getParam("jerk", &jerk_[0], NUM_OF_JOINT))
-        {
-            FST_INFO("Jerk: %s", printDBLine(&jerk_[0], buffer, LOG_TEXT_SIZE));
-        }
-        else
-        {
-            FST_ERROR("Fail to load algorithm config, code = 0x%llx", param.getLastError());
-            return param.getLastError();
-        }
-    }
-    else
-    {
-        FST_ERROR("Fail to load algorithm config, code = 0x%llx", param.getLastError());
-        return param.getLastError();
-    }
-
-    /*
-    jerk_.j1 = 5.0 * 0.5 / 1.3 * 10000 * 81 * 0.02;
-    jerk_.j2 = 3.3 * 0.4 / 0.44 * 10000 * 101 * 0.02;
-    jerk_.j3 = 3.3 * 0.4 / 0.44 * 10000 * 81 * 0.02;
-    jerk_.j4 = 1.7 * 0.39 / 0.18 * 10000 * 60 * 0.01;
-    jerk_.j5 = 1.7 * 0.25 / 0.17 * 10000 * 66.66667 * 0.01;
-    jerk_.j6 = 1.7 * 0.25 / 0.17 * 10000 * 44.64286 * 0.01;
-    */
-
     return SUCCESS;
 }
-
-
-
 
 
 size_t ArmGroup::getNumberOfJoint(void)
@@ -449,8 +589,9 @@ char* ArmGroup::printDBLine(const double *data, char *buffer, size_t length)
 
     for (size_t i = 0; i < JOINT_OF_ARM; i++)
     {
-        //len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
-        len += snprintf(buffer + len, length - len, "%.12f, ", data[i]);
+        len += snprintf(buffer + len, length - len, "%.6f ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.9f, ", data[i]);
+        //len += snprintf(buffer + len, length - len, "%.12f, ", data[i]);
     }
 
     if (len > 1)

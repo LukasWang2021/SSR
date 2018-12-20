@@ -3,6 +3,7 @@ project(motion_control)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    log_manager
     base_device
     fst_axis_device
     virtual_axis_device
@@ -12,12 +13,13 @@ find_package(catkin REQUIRED COMPONENTS
     coordinate_manager
     tool_manager 
     basic_alg
-    trajectory_alg
+    path_traj_alg
     dynamic_alg
     xml_help
     error_monitor
     thread_help
-    path_alg
+    kinematics_alg
+    path_traj_alg
 )
 
 if(catkin_CROSS)
@@ -48,14 +50,13 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/coordinate_manager/include
     ${depend_PATH_INC}/tool_manager/include 
     ${depend_PATH_INC}/basic_alg/include 
-    ${depend_PATH_INC}/trajectory_alg/include 
+    ${depend_PATH_INC}/path_traj_alg/include 
     ${depend_PATH_INC}/dynamic_alg/include 
     ${depend_PATH_INC}/xml_help/include
     ${depend_PATH_INC}/error_monitor/include
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/kinematics_alg/include
-    ${depend_PATH_INC}/path_alg/include
-    ${depend_PATH_INC}/trajectory_alg/include
+    ${depend_PATH_INC}/path_traj_alg/include
 )
 
 catkin_package(
@@ -72,12 +73,9 @@ catkin_package(
     DEPENDS coordinate_manager 
     DEPENDS tool_manager 
     DEPENDS basic_alg
-    DEPENDS trajectory_alg
     DEPENDS dynamic_alg 
     DEPENDS xml_help
     DEPENDS kinematics_alg
-    DEPENDS path_plan
-    DEPENDS trajectory_alg
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -116,7 +114,6 @@ target_link_libraries(motion_control
     coordinate_manager
     tool_manager
     basic_alg 
-    trajectory_alg 
     dynamic_alg 
     xml_help 
     comm_interface
@@ -126,8 +123,7 @@ target_link_libraries(motion_control
     error_monitor
     thread_help
     kinematics_alg
-    path_plan
-    trajectory_alg
+    path_traj_alg
 )
 
 target_link_libraries(manual_test
@@ -145,6 +141,10 @@ install(TARGETS manual_test
 
 install(FILES config/motion_control.yaml 
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+)
+
+install(FILES config/base_group.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
 install(FILES config/hard_constraint.yaml
@@ -167,6 +167,14 @@ install(FILES config/arm_group_offset_reference.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
+install(FILES config/arm_group_gear_ratio.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
+install(FILES config/arm_group_coupling_coeff.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
 install(FILES config/arm_manual_teach.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
@@ -175,8 +183,8 @@ install(FILES config/arm_dh.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/algorithm.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+install(FILES config/segment_alg.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param
 )
 
 install(DIRECTORY config

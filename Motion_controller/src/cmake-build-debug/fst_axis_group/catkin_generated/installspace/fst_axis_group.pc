@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: fst_axis_group
+Description: Description of fst_axis_group
+Version: 0.0.0
+Cflags: -I/usr/local/include
+Libs: -L/usr/local/lib -lfst_axis_group
+Requires: base_device fst_axis_device virtual_axis_device base_axis_group coordinate_manager tool_manager basic_alg trajectory_alg dynamic_alg

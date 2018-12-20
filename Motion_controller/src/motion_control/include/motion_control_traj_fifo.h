@@ -8,10 +8,12 @@
 #ifndef _MOTION_PLAN_TRAJ_FIFO_H
 #define _MOTION_PLAN_TRAJ_FIFO_H
 
-#include <motion_control_datatype.h>
 #include <error_code.h>
+#include <lock_free_fifo.h>
+#include <motion_control_datatype.h>
 
-#define     TRAJECTORY_FIFO_CAPACITY        256         // must be setted to 2^N
+#define LOCK_FREE_FIFO_SIZE_MIN    2
+#define LOCK_FREE_FIFO_SIZE_MAX    1024
 
 namespace fst_mc
 {
@@ -22,30 +24,23 @@ class TrajectoryFifo
     TrajectoryFifo(void);
     ~TrajectoryFifo(void);
 
-    bool    empty(void) const;
-    bool    full(void) const;
+    ErrorCode initTrajectoryFifo(size_t capacity, size_t joint_num);
+    ErrorCode pushTrajectorySegment(const TrajectorySegment &segment);
+    ErrorCode pickTrajectoryPoint(MotionTime time, TrajectoryPoint &point);
 
-    void    clear(void);
-    bool    push(const TrajectoryItem &segment);
-    bool    fetch(TrajectoryItem &segment);
-    bool    dropBack(void);
-    bool    dropFront(void);
-
-    const TrajectoryItem& front(void) const;
-    const TrajectoryItem& back(void) const;
-
-    size_t      size(void) const;
-    MotionTime  duration(void) const;
-    MotionTime  timeFromStart(void) const;
+    void clear(void);
+    bool empty(void) const;
+    bool full(void) const;
+    size_t  size(void) const;
 
   private:
-    void updateDuration(void);
+    ErrorCode fetchSegmentByTime(MotionTime time);
+    void samplePointFromSegment(MotionTime time, TrajectoryPoint &point);
+    void sampleEndingPointFromSegment(TrajectoryPoint &point);
 
-    size_t      traj_head_;
-    size_t      traj_tail_;
-    MotionTime  traj_duration_;
-    MotionTime  time_from_start_;
-    TrajectoryItem  traj_fifo_[TRAJECTORY_FIFO_CAPACITY];
+    size_t  joint_num_;
+    TrajectorySegment   trajectory_segment_;
+    LockFreeFIFO<TrajectorySegment>   trajectory_fifo_;
 };
 
 }

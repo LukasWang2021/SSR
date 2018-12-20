@@ -120,7 +120,6 @@ void IoSimulation::loadProgramsPath()
         files_manager_data_path_ = "/home/fst/fortest"; // for self test only.
 
     files_manager_data_path_ += "/robot_data/io/io_status";
-    printf("io_status_load_programs_path: %s .\n", files_manager_data_path_.c_str()); //delete soon
     FST_INFO("io_status_load_programs_path: %s", files_manager_data_path_.c_str());
 }
 

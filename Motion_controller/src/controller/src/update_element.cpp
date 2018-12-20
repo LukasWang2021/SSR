@@ -107,12 +107,39 @@ void ControllerPublish::updateSafetyBoardStatus()
 //todo new
 void ControllerPublish::updateIoBoardStatus()
 {
-    std::vector<fst_hal::IODeviceInfo> vec = io_device_ptr_->getIODeviceList();
-    int dev_num = vec.size();
+    std::vector<fst_hal::IODeviceInfo> info_list = io_manager_ptr_->getIODeviceInfoList();
     fst_hal::IODevicePortValues values;
 
-    io_board_status_.io_board_count = 4; //max device number
-    
+    io_board_status_.io_board_count = 4;
+    for (int i = 0; i < io_board_status_.io_board_count; ++i)
+    {
+        if (info_list[i].dev_type == DEVICE_TYPE_FST_IO)
+        {
+            ErrorCode ret = io_manager_ptr_->getDevicePortValues(info_list[i].address, values);
+            if (ret == SUCCESS)
+            {
+                io_board_status_.io_board[i].id = info_list[i].address;
+                memcpy(&io_board_status_.io_board[i].DI, &values.DI, sizeof(uint32_t));
+                memcpy(&io_board_status_.io_board[i].DO, &values.DO, sizeof(uint32_t));
+                memcpy(&io_board_status_.io_board[i].RI, &values.RI, sizeof(uint8_t));
+                memcpy(&io_board_status_.io_board[i].RO, &values.RO, sizeof(uint8_t));
+                io_board_status_.io_board[i].valid = info_list[i].is_valid;
+            }
+            else
+            {
+                io_board_status_.io_board[i].valid = 0;
+            }
+        }
+        else
+        {
+            io_board_status_.io_board[i].valid = 0;
+        }
+    }
+
+
+/*todo delete
+    int dev_num = vec.size();
+    io_board_status_.io_board_count = 4; //max device number   
     for (int i = 0; i < io_board_status_.io_board_count; i++)
     {
         if (i < dev_num && vec[i].id < 16)
@@ -130,7 +157,7 @@ void ControllerPublish::updateIoBoardStatus()
             io_board_status_.io_board[i].valid = 0;
         } 
     }
-    
+    */
 }
 
 void ControllerPublish::updateReg()

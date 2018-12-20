@@ -3,7 +3,7 @@ project(program_launching)
 
 find_package(catkin REQUIRED COMPONENTS
         base_device
-        fst_io_device
+        io_manager
         parameter_manager
         log_manager
         error_monitor
@@ -27,7 +27,7 @@ endif()
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/base_device/include
-    ${depend_PATH_INC}/fst_io_device/include
+    ${depend_PATH_INC}/io_manager/include
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
@@ -40,13 +40,17 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/reg_manager/include
     ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/fst_io_device/include
+    ${depend_PATH_INC}/virtual_io_device/include
+    ${depend_PATH_INC}/device_manager/include
+    ${depend_PATH_INC}/protos/include
     )
 
 catkin_package(
     INCLUDE_DIRS include
     #LIBRARIES fst_io_device
     DEPENDS base_device
-    DEPENDS fst_io_device
+    DEPENDS io_manager
     DEPENDS parameter_manager
     DEPENDS log_manager
     DEPENDS thread_help 
@@ -54,6 +58,7 @@ catkin_package(
     DEPENDS io_mapping
     DEPENDS process_comm
     DEPENDS modbus_manager
+    DEPENDS fst_io_device
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -81,6 +86,7 @@ target_link_libraries(program_launching
         io_mapping
         process_comm
         modbus_manager
+        io_manager
         )
 
 add_executable(macro_test
@@ -93,6 +99,7 @@ target_link_libraries(macro_test
     io_mapping
     process_comm
     base_device
+    io_manager
 )
 
 install(TARGETS program_launching

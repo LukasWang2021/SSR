@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(fst_io_device)
 
+
+
 find_package(catkin REQUIRED COMPONENTS
     base_device
     error_monitor
@@ -24,7 +26,6 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
-    ${depend_PATH_INC}/modbus_manager/include
     ${depend_PATH_INC}/error_monitor/include
 )
 
@@ -34,7 +35,6 @@ catkin_package(
     DEPENDS base_device
     DEPENDS parameter_manager
     DEPENDS log_manager
-    DEPENDS modbus_manager
     DEPENDS error_monitor
 )
 
@@ -55,28 +55,10 @@ add_library(fst_io_device
 target_link_libraries(fst_io_device
     ${catkin_LIBRARIES}
     base_device
-    modbus_manager
     error_monitor
     logger
     parameter_manager
 )
-
-
-
-add_executable(io_node
-        ${BASE_SRCS}
-        test/io_node.cpp)
-target_link_libraries(io_node
-        ${catkin_LIBRARIES}
-        base_device
-        modbus_manager
-        error_monitor
-        logger
-        )
-install(TARGETS io_node
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
-
 
 install(TARGETS fst_io_device
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -89,5 +71,6 @@ install(FILES config/fst_io_device.yaml
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
 
 

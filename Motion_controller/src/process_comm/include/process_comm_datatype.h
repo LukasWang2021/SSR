@@ -22,9 +22,6 @@ typedef enum
     CONTROLLER_SERVER_CMD_GET_R_REG = 9,
     CONTROLLER_SERVER_CMD_SET_INSTRUCTION = 10,
     CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED = 11,
-    // CONTROLLER_SERVER_CMD_CHECK_IO = 12,//todo delete, do not use.
-    // CONTROLLER_SERVER_CMD_SET_IO = 13,//todo
-    // CONTROLLER_SERVER_CMD_GET_IO = 14,//todo
     CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS = 12,
     CONTROLLER_SERVER_CMD_GET_DI = 13,
     CONTROLLER_SERVER_CMD_SET_DI = 14,
@@ -74,31 +71,7 @@ typedef struct
     // if multi data type exist, change data to union 
     unsigned long long data;
 }ProcessCommEvent;
-/*
-typedef struct//todo delete
-{
-    IOPortInfo port_info;
-    ErrorCode error_code;
-}ResponseCheckIo;
 
-typedef struct//todo delete
-{
-    IOPortInfo port_info;
-    char value;
-}RequestSetIo;
-
-typedef struct//todo delete
-{
-    IOPortInfo port_info;
-    int buffer_length;
-}RequestGetIo;
-
-typedef struct//doto delete
-{
-    unsigned long long error_code;
-    char value;
-}ResponseGetIo;
-*/
 
 typedef struct
 {

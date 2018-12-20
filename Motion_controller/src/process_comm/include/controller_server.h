@@ -110,11 +110,7 @@ private:
     void handleResponseGetRReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseIsNextInstructionNeeded(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    //todo delete
-    // void handleResponseCheckIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    // void handleResponseSetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    // void handleResponseGetIo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    
+      
     void handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
 
     void handleResponseGetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);

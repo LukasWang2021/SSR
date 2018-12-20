@@ -13,9 +13,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 set(VERSION_MAJOR 2)
-set(VERSION_MINOR 2)
-set(VERSION_PATCH 5)
-set(VERSION_COMMIT \"7283b0b0\") #from gitlab commit number.
+set(VERSION_MINOR 3)
+set(VERSION_PATCH 0)
+set(VERSION_COMMIT \"b8068dbe\") #from gitlab commit number.
 string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
 string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
 
@@ -65,11 +65,13 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/kinematics_alg/include 
     ${depend_PATH_INC}/process_comm/include 
     ${depend_PATH_INC}/preformance_monitor/include 
-    ${depend_PATH_INC}/fst_io_device/include 
     ${depend_PATH_INC}/modbus_manager/include
     ${depend_PATH_INC}/path_alg/include
     ${depend_PATH_INC}/fst_safety_device/include 
     ${depend_PATH_INC}/io_mapping/include 
+    ${depend_PATH_INC}/io_manager/include 
+    ${depend_PATH_INC}/fst_io_device/include 
+    ${depend_PATH_INC}/virtual_io_device/include 
     ${depend_PATH_INC}/program_launching/include 
     ${depend_PATH_INC}/file_manager/include 
 )
@@ -83,6 +85,7 @@ catkin_package(
     DEPENDS error_monitor
     DEPENDS modbus_manager
     DEPENDS io_mapping
+    DEPENDS io_manager
     DEPENDS program_launching
     DEPENDS file_manager
 )
@@ -128,6 +131,7 @@ target_link_libraries(controller
     preformance_monitor 
     fst_safety_device
     io_mapping
+    io_manager
     program_launching
     file_manager
 )

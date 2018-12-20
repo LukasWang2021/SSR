@@ -15,10 +15,9 @@
 #include "base_datatype.h"
 #include "base_device.h"
 #include "io_simulation.h"
-#include "fst_io_device.h"
 #include "error_code.h"
-#include "modbus_manager.h"
-
+#include "io_manager.h"
+#include "protoc.h"
 
 using namespace std;
 
@@ -47,7 +46,7 @@ public:
 	// Return:  1  -> success.
 	//          -  -> failed.
 	//------------------------------------------------------------
-	ErrorCode init(fst_hal::FstIoDevice* io_device_ptr, fst_hal::ModbusManager* modbus_manager);
+	ErrorCode init(fst_hal::IoManager* io_manager_ptr);
 
 	//------------------------------------------------------------
 	// Function:    updateMappingFile
@@ -161,8 +160,7 @@ private:
     IoMappingParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     IoSimulation* sim_ptr_;
-    fst_hal::FstIoDevice* io_dev_ptr_;
-    fst_hal::ModbusManager* modbus_manager_;
+	fst_hal::IoManager* io_manager_ptr_;
     map<string, uint32_t> io_mapper_; // to do uint32_t tobe PhysicsID
 	std::string files_manager_data_path_ = "";
 };

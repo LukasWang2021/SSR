@@ -6,7 +6,7 @@
 #include "process_comm.h"
 #include "reg_manager.h"
 #include "io_mapping.h"
-#include "fst_io_device.h"
+#include "io_manager.h"
 #include "controller_sm.h"
 #include <vector>
 
@@ -29,7 +29,6 @@ private:
     fst_base::ControllerServer* controller_server_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
     RegManager* reg_manager_ptr_;
-    fst_hal::FstIoDevice* io_device_ptr_;
     ControllerSm* state_machine_ptr_;
     IoMapping* io_mapping_ptr_;
 
@@ -59,9 +58,6 @@ private:
     void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
     void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
 
-    // void handleIpcCheckIo(void* request_data_ptr, void* response_data_ptr);//todo delete
-    // void handleIpcSetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
-    // void handleIpcGetIo(void* request_data_ptr, void* response_data_ptr);//todo delete
     
     void handleIpcSetInterpreterServerStatus(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetDi(void* request_data_ptr, void* response_data_ptr);

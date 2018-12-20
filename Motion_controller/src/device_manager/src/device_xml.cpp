@@ -64,7 +64,7 @@ bool DeviceXml::createDeviceConfig(const xmlDocPtr doc_ptr,
         case DEVICE_TYPE_FST_SAFETY: break;
         case DEVICE_TYPE_FST_ANYBUS: return false;
         case DEVICE_TYPE_VIRTUAL_AXIS: break;
-        case DEVICE_TYPE_VIRTUAL_IO: return false;
+        case DEVICE_TYPE_VIRTUAL_IO: break;
         case DEVICE_TYPE_VIRTUAL_SAFETY: return false;
         case DEVICE_TYPE_NORMAL: return false;
         case DEVICE_TYPE_MODBUS: break;

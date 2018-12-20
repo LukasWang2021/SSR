@@ -27,8 +27,8 @@ public:
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, VirtualCore1* virtual_core1_ptr, fst_comm::TpComm* tp_comm_ptr,
                     ControllerSm* state_machine_ptr, fst_mc::MotionControl* motion_control_ptr, RegManager* reg_manager_ptr,
                     fst_base::ControllerClient* controller_client_ptr,
-                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::FstSafetyDevice* safety_device_ptr, 
-                    fst_hal::FstIoDevice* io_device_ptr);//feng add mapping
+                    fst_ctrl::IoMapping* io_mapping_ptr, fst_hal::DeviceManager* device_manager_ptr, 
+                    fst_hal::IoManager* io_manager_ptr);//feng add mapping
 
     typedef void* (ControllerPublish::*HandlePublishFuncPtr)(void);
     typedef void (ControllerPublish::*HandleUpdateFuncPtr)(void);
@@ -62,8 +62,9 @@ private:
     RegManager* reg_manager_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
     fst_ctrl::IoMapping* io_mapping_ptr_; //feng add for mapping.
+    fst_hal::DeviceManager* device_manager_ptr_;
     fst_hal::FstSafetyDevice* safety_device_ptr_;
-    fst_hal::FstIoDevice* io_device_ptr_;
+    fst_hal::IoManager* io_manager_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};

@@ -18,15 +18,15 @@ public:
     // param to load & save
     int log_level_;
     int cycle_time_;    // thread cycle time, ms
-    int max_dev_number_;
+    std::string device_type_;
+    std::string comm_type_;
     int max_DI_number_;
     int max_DO_number_;
     int max_RI_number_;
     int max_RO_number_;
     bool is_virtual_;
-    int virtual_board_address_;
-    int virtual_DI_number_;
-    int virtual_DO_number_;
+    int comm_tolerance_;
+  
 
 private:
     fst_parameter::ParamGroup yaml_help_;

@@ -71,7 +71,7 @@ public:
     ~ControllerSm();
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
                 VirtualCore1* virtual_core1_ptr, fst_base::ControllerClient* controller_client_ptr, 
-                fst_hal::FstSafetyDevice* safety_device_ptr);
+                fst_hal::DeviceManager* device_manager_ptr);
     ControllerParam* getParam();
     void processStateMachine();
     
@@ -111,7 +111,8 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     VirtualCore1* virtual_core1_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
-    fst_hal::FstSafetyDevice* safety_device_ptr_;
+    fst_hal::DeviceManager* device_manager_ptr_;
+    fst_hal::FstSafetyDevice* safety_device_ptr_;    
 
     // mode and status
     UserOpMode user_op_mode_;

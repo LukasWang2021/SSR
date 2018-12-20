@@ -14,12 +14,14 @@
 #include <motion_control_cache_pool.h>
 #include <segment_alg.h>
 #include <fstream>
+#include <parameter_manager/parameter_manager_param_group.h>
 
 
 using namespace std;
 using namespace fst_mc;
 using namespace fst_log;
 using namespace fst_base;
+using namespace fst_parameter;
 using namespace fst_algorithm;
 
 
@@ -350,9 +352,41 @@ void test7(void)
     DynamicsInterface dynamics;
     double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
     kinematics.initKinematics(dh_matrix);
+    SegmentAlgParam seg_param;
+    ParamGroup param;
+
+    if (param.loadParamFile("/root/install/share/runtime/component_param/segment_alg.yaml"))
+    {
+        if (param.getParam("accuracy_cartesian_factor", seg_param.accuracy_cartesian_factor) &&
+            param.getParam("accuracy_joint_factor", seg_param.accuracy_joint_factor) &&
+            param.getParam("max_traj_points_num", seg_param.max_traj_points_num) &&
+            param.getParam("path_interval", seg_param.path_interval) &&
+            param.getParam("joint_interval", seg_param.joint_interval) &&
+            param.getParam("angle_interval", seg_param.angle_interval) &&
+            param.getParam("angle_valve", seg_param.angle_valve) &&
+            param.getParam("conservative_acc", seg_param.conservative_acc) &&
+            param.getParam("jerk_ratio", seg_param.jerk_ratio) &&
+            param.getParam("time_factor_1", seg_param.time_factor_1) &&
+            param.getParam("time_factor_2", seg_param.time_factor_2) &&
+            param.getParam("time_factor_3", seg_param.time_factor_3) &&
+            param.getParam("time_factor_4", seg_param.time_factor_4) &&
+            param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
+            param.getParam("max_rescale_factor", seg_param.max_rescale_factor))
+        {}
+        else
+        {
+            printf("Fail to load segment algorithm config, code = 0x%llx\n", param.getLastError());
+            return;
+        }
+    }
+    else
+    {
+        printf("Fail to load segment algorithm config, code = 0x%llx\n", param.getLastError());
+        return;
+    }
+
     initComplexAxisGroupModel();
-    initSegmentAlgParam(&kinematics, &dynamics);
-    initStack(&model);   
+    initSegmentAlgParam(&seg_param);
 
     Joint start_joint = {0.234, 1.234, -2.044, 0.876, -1.2432, 0.003};
     MotionTarget target;

@@ -370,12 +370,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     // 初始化运动学模块
     FST_INFO("Initializing kinematics of ArmGroup ...");
+    double dh_matrix[NUM_OF_JOINT][4];
     kinematics_ptr_ = new ArmKinematics();
 
     if (kinematics_ptr_)
     {
         param.reset();
-        double dh_matrix[NUM_OF_JOINT][4];
 
         if (param.loadParamFile(path + "arm_dh.yaml"))
         {
@@ -424,9 +424,44 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     }
 
     // 初始化路径和轨迹规划
+    param.reset();
+    path = COMPONENT_PARAM_FILE_DIR;
+    SegmentAlgParam seg_param;
+    seg_param.kinematics_ptr = kinematics_ptr_;
+    seg_param.dynamics_ptr = dynamics_ptr_;
+
+    if (param.loadParamFile(path + "segment_alg.yaml"))
+    {
+        if (param.getParam("accuracy_cartesian_factor", seg_param.accuracy_cartesian_factor) &&
+            param.getParam("accuracy_joint_factor", seg_param.accuracy_joint_factor) &&
+            param.getParam("max_traj_points_num", seg_param.max_traj_points_num) &&
+            param.getParam("path_interval", seg_param.path_interval) &&
+            param.getParam("joint_interval", seg_param.joint_interval) &&
+            param.getParam("angle_interval", seg_param.angle_interval) &&
+            param.getParam("angle_valve", seg_param.angle_valve) &&
+            param.getParam("conservative_acc", seg_param.conservative_acc) &&
+            param.getParam("jerk_ratio", seg_param.jerk_ratio) &&
+            param.getParam("time_factor_1", seg_param.time_factor_1) &&
+            param.getParam("time_factor_2", seg_param.time_factor_2) &&
+            param.getParam("time_factor_3", seg_param.time_factor_3) &&
+            param.getParam("time_factor_4", seg_param.time_factor_4) &&
+            param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
+            param.getParam("max_rescale_factor", seg_param.max_rescale_factor))
+        {}
+        else
+        {
+            FST_ERROR("Fail to load segment algorithm config, code = 0x%llx", param.getLastError());
+            return param.getLastError();
+        }
+    }
+    else
+    {
+        FST_ERROR("Fail to load segment algorithm config, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
     initComplexAxisGroupModel();
-    initSegmentAlgParam(kinematics_ptr_, dynamics_ptr_);
-    initStack(&model);
+    initSegmentAlgParam(&seg_param);
 
     // 初始化手动示教模块
     FST_INFO("Initializing manual teach of ArmGroup ...");

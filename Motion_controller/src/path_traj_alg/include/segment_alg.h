@@ -598,7 +598,7 @@ void updateTrajPVA(int path_base, double* init_state, double* end_state, int ord
 
 void initComplexAxisGroupModel();
 void initStack(ComplexAxisGroupModel* model_ptr);
-void initSegmentAlgParam(fst_mc::BaseKinematics* kinematics_ptr, fst_algorithm::DynamicsInterface* dynamics_ptr);
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr);
 
 ErrorCode planPathJoint(const fst_mc::Joint &start, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
 ErrorCode planPathLine(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);

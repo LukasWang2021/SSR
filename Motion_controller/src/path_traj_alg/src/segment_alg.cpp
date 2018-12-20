@@ -808,25 +808,27 @@ void initStack(ComplexAxisGroupModel* model_ptr)
     stack[S_PathCountFactorJoint] = segment_alg_param.accuracy_joint_factor / PI;
 }
 
-void initSegmentAlgParam(fst_mc::BaseKinematics* kinematics_ptr, fst_algorithm::DynamicsInterface* dynamics_ptr)
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr)
 {
-    segment_alg_param.accuracy_cartesian_factor = 3;
-    segment_alg_param.accuracy_joint_factor = 6;
-    segment_alg_param.max_traj_points_num = 20;
-    segment_alg_param.path_interval = 1;
-    segment_alg_param.joint_interval = PI * 1 / 180;
-    segment_alg_param.angle_interval = PI * 1 / 180;
-    segment_alg_param.angle_valve = PI * 5 / 180;
-    segment_alg_param.conservative_acc = 10000;
-    segment_alg_param.jerk_ratio = 1.0;
-    segment_alg_param.time_factor_1 = 1;
-    segment_alg_param.time_factor_2 = 1;
-    segment_alg_param.time_factor_3 = 1;
-    segment_alg_param.time_factor_4 = 1;
-    segment_alg_param.is_fake_dynamics = true;
-    segment_alg_param.max_rescale_factor = 2;
-    segment_alg_param.kinematics_ptr = kinematics_ptr;
-    segment_alg_param.dynamics_ptr = dynamics_ptr;
+    segment_alg_param.accuracy_cartesian_factor = segment_alg_param_ptr->accuracy_cartesian_factor;
+    segment_alg_param.accuracy_joint_factor = segment_alg_param_ptr->accuracy_joint_factor;
+    segment_alg_param.max_traj_points_num = segment_alg_param_ptr->max_traj_points_num;
+    segment_alg_param.path_interval = segment_alg_param_ptr->path_interval;
+    segment_alg_param.joint_interval = segment_alg_param_ptr->joint_interval;
+    segment_alg_param.angle_interval = segment_alg_param_ptr->angle_interval;
+    segment_alg_param.angle_valve = segment_alg_param_ptr->angle_valve;
+    segment_alg_param.conservative_acc = segment_alg_param_ptr->conservative_acc;
+    segment_alg_param.jerk_ratio = segment_alg_param_ptr->jerk_ratio;
+    segment_alg_param.time_factor_1 = segment_alg_param_ptr->time_factor_1;
+    segment_alg_param.time_factor_2 = segment_alg_param_ptr->time_factor_2;
+    segment_alg_param.time_factor_3 = segment_alg_param_ptr->time_factor_3;
+    segment_alg_param.time_factor_4 = segment_alg_param_ptr->time_factor_4;
+    segment_alg_param.is_fake_dynamics = segment_alg_param_ptr->is_fake_dynamics;
+    segment_alg_param.max_rescale_factor = segment_alg_param_ptr->max_rescale_factor;
+    segment_alg_param.kinematics_ptr = segment_alg_param_ptr->kinematics_ptr;
+    segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
+
+    initStack(&model);
 }
 
 ErrorCode planPathJoint(const Joint &start, 

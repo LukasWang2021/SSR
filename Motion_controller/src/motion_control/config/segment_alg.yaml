@@ -1,0 +1,17 @@
+accuracy_cartesian_factor: 3
+accuracy_joint_factor: 6
+max_traj_points_num: 20
+path_interval: 1.0
+joint_interval: 0.01745
+angle_interval: 0.01745
+angle_valve: 0.8727
+conservative_acc: 10000.0
+jerk_ratio: 1.0
+time_factor_1: 1.3
+time_factor_2: 1.3
+time_factor_3: 1.3
+time_factor_4: 1.3
+is_fake_dynamics: true
+max_rescale_factor: 2.0
+
+#END

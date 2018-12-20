@@ -183,8 +183,8 @@ install(FILES config/arm_dh.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/algorithm.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+install(FILES config/segment_alg.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param
 )
 
 install(DIRECTORY config

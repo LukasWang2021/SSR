@@ -37,8 +37,27 @@ int main(void)
     BaseKinematics* kinematics_ptr = new ArmKinematics();
     double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
     kinematics_ptr->initKinematics(dh_matrix);    
-    initSegmentAlgParam(kinematics_ptr, &dynamics);
-    initStack(&model);       
+
+    segment_alg_param.accuracy_cartesian_factor = 3;
+    segment_alg_param.accuracy_joint_factor = 6;
+    segment_alg_param.max_traj_points_num = 20;
+    segment_alg_param.path_interval = 1;
+    segment_alg_param.joint_interval = PI * 1 / 180;
+    segment_alg_param.angle_interval = PI * 1 / 180;
+    segment_alg_param.angle_valve = PI * 5 / 180;
+    segment_alg_param.conservative_acc = 10000;
+    segment_alg_param.jerk_ratio = 1.0;
+    segment_alg_param.time_factor_1 = 1.3;
+    segment_alg_param.time_factor_2 = 1.3;
+    segment_alg_param.time_factor_3 = 1.3;
+    segment_alg_param.time_factor_4 = 1.3;
+    segment_alg_param.is_fake_dynamics = true;
+    segment_alg_param.max_rescale_factor = 2;
+    segment_alg_param.kinematics_ptr = kinematics_ptr;
+    segment_alg_param.dynamics_ptr = &dynamics;
+
+    initSegmentAlgParam(&segment_alg_param);
+           
     
 
     fst_mc::PoseEuler start;
@@ -233,13 +252,14 @@ int main(void)
     printTraj(traj_cache, 0, 0.001);
 #endif
 
-#if 0
-    start_joint[0] = 0;
-    start_joint[1] = 0;
-    start_joint[2] = 0;
+#if 1
+    start_joint[0] = -0.266252;
+    start_joint[1] = -0.606811;
+    start_joint[2] = 0.684909;
     start_joint[3] = 0;
-    start_joint[4] = -PI/2;
-    start_joint[5] = 0;
+    start_joint[4] = -1.64889;
+    start_joint[5] = -0.266252;
+
     /*Pose start_pose;
     PoseEuler start_euler;
     kinematics_ptr->forwardKinematicsInUser(start_joint, start_euler);
@@ -256,24 +276,28 @@ int main(void)
     start_state.alpha[0] = 0; start_state.alpha[1] = 0; start_state.alpha[2] = 0;
     start_state.alpha[3] = 0; start_state.alpha[4] = 0; start_state.alpha[5] = 0;
 
-    start.position.x = 380;
-    start.position.y = 0;
-    start.position.z = 643.5;
+    start.position.x = 550;
+    start.position.y = -150;
+    start.position.z = 610;
     start.orientation.a = 0;
     start.orientation.b = 0;
     start.orientation.c = PI;
 
-    target.pose_target.position.x = 250;
+    //Joint r_joint;
+    //kinematics_ptr->inverseKinematicsInUser(start, start_joint, r_joint);
+//std::cout<<r_joint[0]<<" "<<r_joint[1]<<" "<<r_joint[2]<<" "<<r_joint[3]<<" "<<r_joint[4]<<" "<<r_joint[5]<<std::endl;
+
+    target.pose_target.position.x = 550;
     target.pose_target.position.y = 150;
-    target.pose_target.position.z = 310;
+    target.pose_target.position.z = 610;
     target.pose_target.orientation.a = 0;
     target.pose_target.orientation.b = 0;
     target.pose_target.orientation.c = PI;
     target.cnt = -1;
-    target.vel = 1000;
+    target.vel = 1600;
     target.type = MOTION_LINE;
 
-    path_cache.target.vel = 1000;
+    path_cache.target.vel = 1600;
     
     planPathLine(start, target, path_cache);
     /*std::cout<<" CacheLength = "<<path_cache.cache_length
@@ -305,7 +329,8 @@ int main(void)
 
     //std::cout<<"traj_cache.smooth_out_index = "<<traj_cache.smooth_out_index<<std::endl;
     //std::cout<<"traj_cache.cache_length = "<<traj_cache.cache_length<<std::endl;
-    printAllTraj(traj_cache, 0.001);
+    //printAllTraj(traj_cache, 0.001);
+    printTraj2(traj_cache, 0, 0.001, traj_cache.cache_length);
 #endif
 
 #if 0
@@ -472,7 +497,7 @@ int main(void)
     printTraj(traj_cache_2, 1, 0.001);
 #endif
 
-#if 1
+#if 0
         start_joint[0] = 0.643499;
         start_joint[1] = 0.056281;
         start_joint[2] = -0.979224;

@@ -423,6 +423,19 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return MOTION_INTERNAL_FAULT;
     }
 
+    // 初始化手动示教模块
+    FST_INFO("Initializing manual teach of ArmGroup ...");
+    err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, path + "arm_manual_teach.yaml");
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
+        return err;
+    }
+
+    manual_teach_.setGlobalVelRatio(vel_ratio_);
+    manual_teach_.setGlobalAccRatio(acc_ratio_);
+
     // 初始化路径和轨迹规划
     param.reset();
     path = COMPONENT_PARAM_FILE_DIR;
@@ -462,19 +475,6 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     initComplexAxisGroupModel();
     initSegmentAlgParam(&seg_param);
-
-    // 初始化手动示教模块
-    FST_INFO("Initializing manual teach of ArmGroup ...");
-    err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, path + "arm_manual_teach.yaml");
-
-    if (err != SUCCESS)
-    {
-        FST_ERROR("Fail to initialize manual teach, code = 0x%llx", err);
-        return err;
-    }
-
-    manual_teach_.setGlobalVelRatio(vel_ratio_);
-    manual_teach_.setGlobalAccRatio(acc_ratio_);
 
     return SUCCESS;
 }

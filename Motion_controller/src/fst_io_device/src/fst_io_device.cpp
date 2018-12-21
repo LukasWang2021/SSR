@@ -259,7 +259,7 @@ ErrorCode FstIoDevice::updateDeviceData(void)
     else if (ret == GET_IO_FAIL)
     {
     }
-    else if (ret == IO_DEVICE_CHANGED)
+    else if (ret == IO_DEVICE_UNFOUND)
     {
         setValid(false);
     }
@@ -305,7 +305,7 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
         //      data.id, data.enable, data.verify, data.model,
         //      data.input[4],data.input[3],data.input[2],data.input[1],data.input[0],
         //     data.output[4],data.output[3],data.output[2],data.output[1],data.output[0]);
-        return IO_DEVICE_CHANGED;
+        return IO_DEVICE_UNFOUND;
     }    
     if (data.verify == 0)
     {

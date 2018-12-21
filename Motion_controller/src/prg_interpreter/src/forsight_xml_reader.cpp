@@ -1187,7 +1187,8 @@ int generateLogicalElseIF(xmlNodePtr nodeLogicalStatement, LineInfo objLineInfo)
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s ", (char *)"ELSEIF");
 	}
 	else if(xmlStrcasecmp(else_type,BAD_CAST"else")==0){
-		sprintf(objLineInfoTemp.xPath, "%s", 
+		// Use the determine node
+		sprintf(objLineInfoTemp.xPath, "%s/determine", 
 			(char *)xmlGetNodePath(nodeLogicalStatement));
 		exportBASCode(objLineInfoTemp, (char *)"EXPORT: ", (char *)"%s \n", (char *)"ELSE");
 	}

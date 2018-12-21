@@ -102,10 +102,14 @@ char * getProgramName()
 
 void setProgramName(struct thread_control_block * objThdCtrlBlockPtr, char * program_name)
 {
-    FST_INFO("setProgramName to %s", program_name);
+    FST_INFO("setProgramName to %s at %d", program_name, objThdCtrlBlockPtr->is_main_thread);
 	if(objThdCtrlBlockPtr->is_main_thread == MAIN_THREAD)
 	{
 		strcpy(g_interpreter_publish.program_name, program_name); 
+	}
+	else
+	{
+		FST_INFO("setProgramName Failed to %s", program_name);
 	}
 }
 
@@ -153,11 +157,15 @@ InterpreterState getPrgmState()
 
 void setPrgmState(struct thread_control_block * objThdCtrlBlockPtr, InterpreterState state)
 {
-    FST_INFO("setPrgmState to %d", (int)state);
+    FST_INFO("setPrgmState to %d at %d", (int)state, objThdCtrlBlockPtr->is_main_thread);
 	if(objThdCtrlBlockPtr->is_main_thread == MAIN_THREAD)
 	{
 	 	g_privateInterpreterState = state ;
 		g_interpreter_publish.status = state ;
+	}
+	else
+	{
+		FST_INFO("setPrgmState Failed to %d", (int)state);
 	}
 }
 
@@ -179,7 +187,10 @@ void setCurLine(struct thread_control_block * objThdCtrlBlockPtr, char * line, i
 		strcpy(g_interpreter_publish.current_line_path, line); 
 		g_interpreter_publish.current_line_num = lineNum; 
 	}
-
+	else
+	{
+		FST_INFO("setCurLine Failed to %d", (int)lineNum);
+	}
 }
 
 #ifdef WIN32
@@ -492,13 +503,13 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			
             objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
-            setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
 			   strcpy(intprt_ctrl.start_ctrl, "reconstruction_pr_test");
 			}
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl, getCurrentThreadSeq());
+            setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 	        // g_iCurrentThreadSeq++ ;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_JUMP:

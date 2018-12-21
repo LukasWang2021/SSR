@@ -140,18 +140,6 @@ std::vector<DeviceInfo> DeviceManager::getDeviceList()
     DeviceInfo info;
     std::vector<DeviceInfo> device_list;
 
-    /*temporary used
-    std::vector<DeviceConfig>::iterator it;
-    for(it = device_xml_ptr_->device_config_list_.begin(); it != device_xml_ptr_->device_config_list_.end(); ++it)
-    {
-        info.index = it->device_index;
-        info.address = it->address;
-        info.type = it->device_type;
-        info.is_valid = true;
-        device_list.push_back(info);
-    }*/
-
-    // should be used
     std::map<int, BaseDevice*>::iterator it;
     for(it = device_map_.begin(); it != device_map_.end(); ++it)
     {

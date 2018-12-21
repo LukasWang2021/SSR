@@ -304,7 +304,7 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
         //printf("after----IODeviceData ID=%x, enable=%x, verify=%x, model=%x, input[]=%x-%x-%x-%x-%x,output=%x-%x-%x-%x-%x\n",
         //      data.id, data.enable, data.verify, data.model,
         //      data.input[4],data.input[3],data.input[2],data.input[1],data.input[0],
-        //      data.output[4],data.output[3],data.output[2],data.output[1],data.output[0]);
+        //     data.output[4],data.output[3],data.output[2],data.output[1],data.output[0]);
         return IO_DEVICE_CHANGED;
     }    
     if (data.verify == 0)
@@ -327,7 +327,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
     uint8_t id = data.id;
     //write download data.
     if (ioWriteDownload(&data) != 0) {
-        std::cout<<"ioWriteDownload() failed."<<std::endl;
+        //std::cout<<"ioWriteDownload() failed."<<std::endl;
         return false;
     }
 
@@ -337,7 +337,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
 
     //write ID&seq.
     if (ioSetIdSeq(idseq) != 0) {
-        std::cout<<"ioSetIdSeq() failed."<<std::endl;
+        //std::cout<<"ioSetIdSeq() failed."<<std::endl;
         return false;
     }
 
@@ -347,7 +347,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
     //get upload and download seq.
     uint8_t  read_seq;
     if (ioGetSeq(&read_seq) != 0) {
-        std::cout<<"ioGetSeq() failed."<<std::endl;
+        //std::cout<<"ioGetSeq() failed."<<std::endl;
         return false;
     }
 
@@ -356,7 +356,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
     //printf("seq=%x, upload_seq=%x, download_seq=%x\n",seq,upload_seq,download_seq);
     if (upload_seq == seq) {
         if (ioReadUpload(&data) != 0) {
-            std::cout<<"ioReadUpload() failed."<<std::endl;
+            //std::cout<<"ioReadUpload() failed."<<std::endl;
             return false;
         }
         read_counter = 0;
@@ -369,7 +369,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
     else
         ++write_counter;
     if (read_counter > comm_tolerance_ || write_counter > comm_tolerance_) {
-        std::cout<<"read write io with FPGA failed too many."<<std::endl;
+        //std::cout<<"read write io with FPGA failed too many."<<std::endl;
         return false;
     }
 

@@ -1,4 +1,5 @@
 #include "base_device.h"
+#include "stdio.h"
 
 using namespace fst_hal;
 

@@ -475,6 +475,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();
 			if(objThdCtrlBlockPtr == NULL) break ;
+			// Clear last lineNum
+			setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 			
             objThdCtrlBlockPtr->prog_mode = STEP_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
@@ -500,6 +502,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();
 			if(objThdCtrlBlockPtr == NULL) break ;
+			// Clear last lineNum
+			setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 			
             objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;

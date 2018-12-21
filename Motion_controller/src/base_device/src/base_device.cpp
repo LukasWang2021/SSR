@@ -32,7 +32,6 @@ void BaseDevice::setValid(bool is_valid)
 
 bool BaseDevice::isValid()
 {
-    printf("device address=%d, is_valid=%d\n",address_, is_valid_);
     return is_valid_;
 }
 

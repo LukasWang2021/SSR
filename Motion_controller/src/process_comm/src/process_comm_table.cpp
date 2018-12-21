@@ -19,7 +19,6 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerServer::handleRequestGetRReg, &ControllerServer::handleResponseGetRReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_INSTRUCTION, &ControllerServer::handleRequestSetInstruction, &ControllerServer::handleResponseSetInstruction}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, &ControllerServer::handleRequestIsNextInstructionNeeded, &ControllerServer::handleResponseIsNextInstructionNeeded}; rpc_table_.push_back(rpc_service);
-
     rpc_service = {CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &ControllerServer::handleRequestSetInterpreterServerStatus, &ControllerServer::handleResponseSetInterpreterServerStatus}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_DI, &ControllerServer::handleRequestGetDi, &ControllerServer::handleResponseGetDi}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_DI, &ControllerServer::handleRequestSetDi, &ControllerServer::handleResponseSetDi}; rpc_table_.push_back(rpc_service);

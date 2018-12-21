@@ -171,22 +171,13 @@ ErrorCode Controller::init()
     }
 
     io_manager_ptr_ = IoManager::getInstance(&device_manager_);
-    ErrorCode ret = io_manager_ptr_->init();
-    if(ret != SUCCESS)
+    error_code = io_manager_ptr_->init();
+    if(error_code != SUCCESS)
     {
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    //yuyy add for addmodbus
-    modbus_manager_ptr_ = new fst_hal::ModbusManager(0);
-    if(!modbus_manager_ptr_->init())
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-
-    //feng add for io_mapping
     error_code = io_mapping_.init(io_manager_ptr_);
     if(error_code != SUCCESS)
     {
@@ -204,8 +195,7 @@ ErrorCode Controller::init()
                 process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_, &io_mapping_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
-        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_manager_ptr_, modbus_manager_ptr_,
-        &program_launching_, &file_manager_);//&io_mapping_ by feng add
+        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_manager_ptr_,&program_launching_, &file_manager_);
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
                     process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, io_manager_ptr_);
 

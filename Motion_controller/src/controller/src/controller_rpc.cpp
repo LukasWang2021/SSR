@@ -37,8 +37,8 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
-                    IoMapping* io_mapping_ptr,fst_hal::IoManager* io_manager_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
-                    ProgramLaunching* program_launching, fst_base::FileManager* file_manager)
+                    IoMapping* io_mapping_ptr,fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
+                    fst_base::FileManager* file_manager)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -53,10 +53,21 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
     motion_control_ptr_ = motion_control_ptr;
     controller_client_ptr_ = controller_client_ptr;
     io_mapping_ptr_ = io_mapping_ptr;
-    io_manager_ptr_ = io_manager_ptr;//feng add for info list
-    modbus_manager_ptr_ = modbus_manager_ptr;
+    io_manager_ptr_ = io_manager_ptr;//for info list
     program_launching_ = program_launching;
     file_manager_ptr_ = file_manager;
+
+    // get the modbus_manager_ptr from device_manager.
+    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+    for(unsigned int i = 0; i < device_list.size(); ++i)
+    {
+        if (device_list[i].type == DEVICE_TYPE_MODBUS)
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+        }
+    }
+
     initRpcTable();
     initRpcQuickSearchTable();
 }

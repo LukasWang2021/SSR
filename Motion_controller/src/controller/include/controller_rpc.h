@@ -31,8 +31,8 @@ public:
                     fst_comm::TpComm* tp_comm_ptr, ControllerSm* state_machine_ptr, ToolManager* tool_manager_ptr, 
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
-                    IoMapping* io_mapping_ptr, fst_hal::IoManager* io_manager_ptr, fst_hal::ModbusManager* modbus_manager_ptr,
-                    ProgramLaunching* program_launching, fst_base::FileManager* file_manager);
+                    IoMapping* io_mapping_ptr, fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
+                    fst_base::FileManager* file_manager);
 
     void processRpc();
 
@@ -49,9 +49,9 @@ private:
     fst_mc::MotionControl* motion_control_ptr_;
     fst_base::ControllerClient* controller_client_ptr_;
     ControllerPublish* publish_ptr_;
-    IoMapping* io_mapping_ptr_; //feng add for mapping.
+    IoMapping* io_mapping_ptr_; 
     IoManager* io_manager_ptr_;
-    fst_hal::ModbusManager* modbus_manager_ptr_; //yuyy add
+    fst_hal::ModbusManager* modbus_manager_ptr_; 
     ProgramLaunching* program_launching_;
     fst_base::FileManager* file_manager_ptr_;
 

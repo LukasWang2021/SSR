@@ -525,8 +525,8 @@ ErrorCode IoManager::updateIoDevicesData(void)
                 ret = io_device_ptr->updateDeviceData();
                 if (ret != SUCCESS)
                 {
-                    FST_ERROR("Failed to get io data");
-                    ErrorMonitor::instance()->add(GET_IO_FAIL);
+                    //FST_ERROR("Failed to get io data");
+                    ErrorMonitor::instance()->add(ret);
                     return ret;
                 }
             }

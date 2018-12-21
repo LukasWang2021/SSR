@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: coordinate_manager
-Description: Description of coordinate_manager
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/coordinate_manager/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lcoordinate_manager
-Requires: 

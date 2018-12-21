@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: device_manager
-Description: Description of device_manager
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/device_manager/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -ldevice_manager
-Requires: base_device fst_io_device fst_safety_device fst_axis_device virtual_axis_device xml_help

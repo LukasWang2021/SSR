@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: error_monitor
-Description: Description of error_monitor
-Version: 0.0.0
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib -lerror_monitor
-Requires: 

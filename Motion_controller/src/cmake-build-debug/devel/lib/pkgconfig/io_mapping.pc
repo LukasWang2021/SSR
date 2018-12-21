@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: io_mapping
-Description: Description of io_mapping
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/io_mapping/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lio_mapping
-Requires: base_device

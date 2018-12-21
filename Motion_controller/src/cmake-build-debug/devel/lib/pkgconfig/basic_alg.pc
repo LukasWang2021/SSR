@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: basic_alg
-Description: Description of basic_alg
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/basic_alg/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lbasic_alg
-Requires: 

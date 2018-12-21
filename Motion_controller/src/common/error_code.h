@@ -224,6 +224,10 @@
 #define TRAJECTORY_SEGMENT_ERROR (unsigned long long int)0x0001000400A90BBA   /*trajectory segment is invalid*/
 #define TARGET_COINCIDENCE (unsigned long long int)0x0001000200A90BC2   /*target coincidence with start or another target*/
 
+#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0000000400B10001   /*the expected target point is invalid*/
+#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0000000400B10002   /*invalid path cache*/
+#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0000000400B10003   /*invalid motion type*/
+#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0000000400B10004   /*invalid smooth in index*/
 
 #endif
 

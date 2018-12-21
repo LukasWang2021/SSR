@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: log_manager
-Description: Description of log_manager
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -llogger
-Requires: 

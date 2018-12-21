@@ -1,3 +1,7 @@
+/*
+Important Note: all APIs provided by this source are not support multi thread operation!
+*/
+
 #ifndef SEGMENT_ALG_H
 #define SEGMENT_ALG_H
 
@@ -32,7 +36,8 @@ typedef struct
     double time_factor_2;   // the second
     double time_factor_3;   // the second last
     double time_factor_4;   // the last
-    double max_rescale_factor;  
+    double max_rescale_factor; 
+    double max_cartesian_acc;   // mm/s^2
     fst_mc::BaseKinematics* kinematics_ptr;
     fst_algorithm::DynamicsInterface* dynamics_ptr;
 }SegmentAlgParam;
@@ -363,6 +368,23 @@ typedef enum
 extern ComplexAxisGroupModel model;
 extern double stack[12000];
 
+/***********************************************************************************************/
+void initComplexAxisGroupModel();
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr);
+
+ErrorCode planPathJoint(const fst_mc::Joint &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathLine(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathCircle(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+
+ErrorCode planPathSmoothJoint(const fst_mc::Joint &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathSmoothLine(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathSmoothCircle(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+
+ErrorCode planTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
+ErrorCode planTrajectorySmooth(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, const fst_mc::MotionTarget &via, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
+ErrorCode planPauseTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double acc_ratio, fst_mc::TrajectoryCache &traj_cache, int &path_stop_index);
+
+/***********************************************************************************************/
 /*
 Function:   getNorm
 Summary:    get norm of vector 3*1 or 4*1
@@ -594,73 +616,60 @@ Stack:      read: S_TrajT, S_Path0~S_Path8
 void updateTrajPVA(int path_base, double* init_state, double* end_state, int order, int traj_base, int t_base);
 
 /***********************************************************************************************/
-
-
-void initComplexAxisGroupModel();
 void initStack(ComplexAxisGroupModel* model_ptr);
-void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr);
 
-ErrorCode planPathJoint(const fst_mc::Joint &start, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
-ErrorCode planPathLine(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
-ErrorCode planPathCircle(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
+inline void getMoveLPathVector(const fst_mc::Point& start_point, const fst_mc::Point& end_point, double* path_vector, double& path_length);
+inline double getPointsDistance(const fst_mc::Point& point1, const fst_mc::Point& point2);
+inline void getMoveLPathPoint(const fst_mc::Point& start_point, double* path_vector, double distance, fst_mc::Point& target_point);
+inline void getMoveEulerToQuatern(const fst_mc::Euler& euler, double* quatern);
+inline void getMovePointToVector3(const fst_mc::Point& point, double* pos_vector);
+inline void getQuaternPoint(double* start_quatern, double* end_quartern, double angle, double angle_distance_to_start, fst_mc::Quaternion& target_quatern);
+inline void packPoseByPointAndQuatern(fst_mc::Point point, double quatern[4], fst_mc::Pose& pose);
+inline void packPathBlockType(fst_mc::PointType point_type, fst_mc::MotionType motion_type, fst_mc::PathBlock& path_block);
 
-ErrorCode planPathSmoothJoint(const fst_mc::Joint &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
-ErrorCode planPathSmoothLine(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
-ErrorCode planPathSmoothCircle(const fst_mc::PoseEuler &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &target, fst_mc::PathCache &path_cache);
-
-ErrorCode planTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
-ErrorCode planTrajectorySmooth(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, const fst_mc::MotionTarget &via, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
-ErrorCode planPauseTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double acc_ratio, fst_mc::TrajectoryCache &traj_cache, int &path_stop_index);
-
-
-void getMoveLPathVector(const fst_mc::Point& start_point, const fst_mc::Point& end_point, double* path_vector, double& path_length);
-double getPointsDistance(const fst_mc::Point& point1, const fst_mc::Point& point2);
-void getMoveLPathPoint(const fst_mc::Point& start_point, double* path_vector, double distance, fst_mc::Point& target_point);
-void getMoveEulerToQuatern(const fst_mc::Euler& euler, double* quatern);
-void getMovePointToVector3(const fst_mc::Point& point, double* pos_vector);
-void getQuaternPoint(double* start_quatern, double* end_quartern, double angle, double angle_distance_to_start, fst_mc::Quaternion& target_quatern);
-
-void generateMoveJPathPoint(const fst_mc::PathCache &path_cache, int* path_index_array, int& path_index_array_size);
-void generateMoveJTimeVector(double vel_ratio, int path_size, int& time_vector_size);
-void generateMoveLPathPoint(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, 
+void generatePathPointMoveJ(const fst_mc::PathCache &path_cache, int* path_index_array, int& path_index_array_size);
+void generatePathPointMoveL(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, 
                                     int* path_index_array, int& path_index_array_size,
                                     int& path_index_array_smooth_out_index, double& path_length_start2out, double& path_length_out2end);
-void generateMoveLTimeVector(double vel, int path_size, int path_index_array_smooth_out_index, 
+void generatePathPointVia2In(const fst_mc::PathCache &path_cache, const fst_mc::MotionTarget &via, double length_via2in,
+                                    double* path_vector_via2in, int path_index_in);
+void generatePathPointIn2End(const fst_mc::PathCache &path_cache, int path_index_in, int path_index_out, 
+                                    int path_index_end, int* path_index_array_in2end);
+void generatePathPointOut2In(const fst_mc::PathCache &path_cache, int traj_smooth_in_index, 
+                                    int& path_array_size, int* path_index_array_out2in);
+
+void generateTimeVectorMoveJ(double vel_ratio, int path_size, int& time_vector_size);
+void generateTimeVectorMoveL(double vel, int path_size, int path_index_array_smooth_out_index, 
                                     double path_length_start2out, double path_length_out2end, int& time_vector_size);
+void generateTimeVectorVia2End(double vel, const fst_mc::PathCache &path_cache, double length_via2in, 
+                                   int path_index_in, int path_index_out, int path_index_end, int& time_vector_size_via2end);
+void generateTimeVectorOut2In(double cmd_vel, double length_out2via, double length_via2in, 
+                                    int path_array_size_out2via,int& time_vector_size_out2in, double p1[9], double pn_1[9]);
 
 int computeTrajSmoothInIndex(double length_out2via, double length_via2in);
 void computePathIndexStepVia2End(const fst_mc::PathCache &path_cache, const fst_mc::MotionTarget &via, double length_via2in,
                                     int& path_index_in, int& path_index_out, int& path_index_end);
-void generatePathPointVia2In(const fst_mc::PathCache &path_cache, const fst_mc::MotionTarget &via, double length_via2in,
-                                    double* path_vector_via2in, int path_index_in);
-void generatePathPointIn2End(const fst_mc::PathCache &path_cache, int path_index_in, int path_index_out, int path_index_end, int* path_index_array_in2end);
-void generatePathVia2EndTimeVector(double vel, const fst_mc::PathCache &path_cache, double length_via2in, 
-                                   int path_index_in, int path_index_out, int path_index_end, int& time_vector_size_via2end);
-void generatePathPointOut2In(const fst_mc::PathCache &path_cache, int traj_smooth_in_index, int& path_array_size, int* path_index_array_out2in);
-void generatePathOut2InTimeVector(double cmd_vel, double length_out2via, double length_via2in, int path_array_size_out2via,int& time_vector_size_out2in, double p1[9], double pn_1[9]);
+void generateOutAndInState(const fst_mc::JointState& start_state, int traj_smooth_in_index);
 
-
-void generatePieceVectors(int traj_offset, int traj_piece_num, int t_base, double vel_ratio, double acc_ratio);
+void generateTrajPiece(int traj_offset, int traj_piece_num, int t_base, double vel_ratio, double acc_ratio);
 double getMaxTrajPiece(int base_address, int index);
 double getMax(double value0, double value1, double value2, double value3);
-void generateRescaleFactorVector(int time_vector_size, double& recale_factor);
-void generateRescaleVector(int time_vector_size);
+void generateTrajRescaleFactor(int time_vector_size, double& rescale_factor);
+
+void generateTrajRescaleT(int time_vector_size);
+void generateTrajRescaleTSmooth(int time_vector_size_out2in, int time_vector_size_in2end, int time_vector_size_via2in);
+
 void adjustTrajT(int time_vector_size, double rescale_factor);
-void adjustTrajTSmooth(int time_vector_size, double rescale_factor);
-void adjustPVA(int traj_index_via, int traj_index_end, double rescale_factor_via2end);
-void adjustPVA2(int traj_index_in, double rescale_factor);
-void generateRescaleVectorSmooth(int time_vector_size_out2in, int time_vector_size_in2end, int time_vector_size_via2in);
-void generateAbsoluteVector(int time_vector_size);
+void adjustTrajVAVia2End(int traj_index_via, int traj_index_end, double rescale_factor_via2end);
+void adjustTrajVA(int time_vector_size, double rescale_factor);
+
 void generateCoeff(int time_vector_size);
-void adjustCoeff(int traj_smooth_in_index);
 void generateTrajCache(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, int* path_index_array, int path_index_array_size);
 void generateTrajCacheSmooth(fst_mc::TrajectoryCache &traj_cache, int time_vector_size, 
                                     int* path_index_array_out2in, int path_index_array_size_out2in,
                                     int* path_index_array_in2end, int path_index_array_size_in2end);
 
-void printTraj(fst_mc::TrajectoryCache &traj_cache, int index, double time_step);
-void printTraj2(fst_mc::TrajectoryCache &traj_cache, int index, double time_step, int end_segment);
-void printAllTraj(fst_mc::TrajectoryCache &traj_cache, double time_step);
+void printTraj(fst_mc::TrajectoryCache &traj_cache, int index, double time_step, int end_segment);
 
 
 #endif

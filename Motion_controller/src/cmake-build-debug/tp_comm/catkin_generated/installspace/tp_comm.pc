@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: tp_comm
-Description: Description of tp_comm
-Version: 0.0.0
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib -ltp_comm
-Requires: 

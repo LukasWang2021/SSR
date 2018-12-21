@@ -1,1 +1,0 @@
-set(ORDERED_PATHS "/home/fst/workspace/src/base_device/include")

@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: thread_help
-Description: Description of thread_help
-Version: 0.0.0
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib -lthread_help
-Requires: 

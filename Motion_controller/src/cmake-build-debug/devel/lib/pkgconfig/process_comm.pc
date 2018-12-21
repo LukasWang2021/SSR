@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: process_comm
-Description: Description of process_comm
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/process_comm/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lprocess_comm
-Requires: 

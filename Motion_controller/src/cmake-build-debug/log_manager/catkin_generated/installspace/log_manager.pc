@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: log_manager
-Description: Description of log_manager
-Version: 0.0.0
-Cflags: 
-Libs: -L/usr/local/lib -llogger
-Requires: 

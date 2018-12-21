@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: axis_group_manager
-Description: Description of axis_group_manager
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/axis_group_manager/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -laxis_group_manager
-Requires: base_axis_group xml_help

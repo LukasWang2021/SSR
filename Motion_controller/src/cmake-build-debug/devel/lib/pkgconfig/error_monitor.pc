@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: error_monitor
-Description: Description of error_monitor
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/error_monitor/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lerror_monitor
-Requires: 

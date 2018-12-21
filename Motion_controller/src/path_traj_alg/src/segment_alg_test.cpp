@@ -53,6 +53,7 @@ int main(void)
     segment_alg_param.time_factor_4 = 1.3;
     segment_alg_param.is_fake_dynamics = true;
     segment_alg_param.max_rescale_factor = 2;
+    segment_alg_param.max_cartesian_acc = 8000;
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = &dynamics;
 
@@ -252,7 +253,7 @@ int main(void)
     printTraj(traj_cache, 0, 0.001);
 #endif
 
-#if 1
+#if 0
     start_joint[0] = -0.266252;
     start_joint[1] = -0.606811;
     start_joint[2] = 0.684909;
@@ -497,7 +498,7 @@ int main(void)
     printTraj(traj_cache_2, 1, 0.001);
 #endif
 
-#if 0
+#if 1
         start_joint[0] = 0.643499;
         start_joint[1] = 0.056281;
         start_joint[2] = -0.979224;
@@ -524,7 +525,7 @@ int main(void)
         via.pose_target.orientation.a = 0;
         via.pose_target.orientation.b = 0;
         via.pose_target.orientation.c = PI;
-        via.cnt = 0.5;
+        via.cnt = 30;
         via.vel = 1600;
         via.type = MOTION_LINE;
     
@@ -534,7 +535,7 @@ int main(void)
         target.pose_target.orientation.a = 0;
         target.pose_target.orientation.b = 0;
         target.pose_target.orientation.c = PI;
-        target.cnt = 1;
+        target.cnt = 64;
         target.vel = 1600;
         target.type = MOTION_LINE;
     
@@ -572,7 +573,7 @@ int main(void)
         }*/
         planTrajectory(path_cache_1, start_state, vel_ratio, acc_ratio, traj_cache_1);
 
-        printTraj2(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
+        printTraj(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
         
     /*for(int i=0; i< traj_cache_1.cache_length; ++i)
     {
@@ -658,7 +659,7 @@ int main(void)
     //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
     
         //printAllTraj(traj_cache_2, 0.001);
-        printTraj2(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
+        printTraj(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
 #endif
 
 

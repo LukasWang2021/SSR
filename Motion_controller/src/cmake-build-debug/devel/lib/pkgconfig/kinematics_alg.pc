@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: kinematics_alg
-Description: Description of kinematics_alg
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/kinematics_alg/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lkinematics_alg
-Requires: 

@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: reg_manager
-Description: Description of reg_manager
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/reg_manager/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lreg_manager
-Requires: 

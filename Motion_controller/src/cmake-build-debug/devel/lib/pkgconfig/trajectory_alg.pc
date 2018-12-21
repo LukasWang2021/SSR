@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: trajectory_alg
-Description: Description of trajectory_alg
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/trajectory_alg/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -ltrajectory_alg
-Requires: 

@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: thread_help
-Description: Description of thread_help
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/thread_help/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lthread_help
-Requires: 

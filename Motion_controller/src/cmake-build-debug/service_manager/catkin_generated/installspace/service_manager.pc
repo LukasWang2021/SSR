@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: service_manager
-Description: Description of service_manager
-Version: 0.1.0
-Cflags: 
-Libs: -L/usr/local/lib 
-Requires: middleware_to_mem

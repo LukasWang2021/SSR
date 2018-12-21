@@ -1,8 +1,0 @@
-prefix=/home/fst/workspace/src/cmake-build-debug/devel
-
-Name: virtual_axis_device
-Description: Description of virtual_axis_device
-Version: 0.0.0
-Cflags: -I/home/fst/workspace/src/virtual_axis_device/include
-Libs: -L/home/fst/workspace/src/cmake-build-debug/devel/lib -lvirtual_axis_device
-Requires: base_device

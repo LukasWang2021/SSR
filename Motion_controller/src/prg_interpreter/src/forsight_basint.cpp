@@ -2669,7 +2669,7 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
 					objThreadCntrolBlock->prog++;   /* advance to next position */
 			        *temp = LE; temp++; *temp = LE;
 			    }
-			    else if(*(objThreadCntrolBlock->prog+1) == '<') {
+			    else if(*(objThreadCntrolBlock->prog+1) == '>') {
 			        objThreadCntrolBlock->prog++;
 					objThreadCntrolBlock->prog++;   /* advance to next position */
 			        *temp = NE; temp++; *temp = NE;

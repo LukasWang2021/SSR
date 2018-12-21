@@ -154,6 +154,12 @@
 #define NEED_CALIBRATION (unsigned long long int)0x0001000400A90412   /*ArmGroup need to calibrate*/
 #define IPC_COMMUNICATION_ERROR (unsigned long long int)0x0001000200A907E7   /*fail to communication with other process*/
 #define PLANNING_MAJOR_ARC (unsigned long long int)0x0001000400A9041F   /*given circle targets define a major arc*/
+
+#define TRAJECTORY_FIFO_EMPTY (unsigned long long int)0x0001000400A90BB8   /*trajectory FIFO is empty*/
+#define TRAJECTORY_FIFO_FULL (unsigned long long int)0x0001000400A90BB9   /*trajectory FIFO is full*/
+#define TRAJECTORY_SEGMENT_ERROR (unsigned long long int)0x0001000400A90BBA   /*trajectory segment is invalid*/
+#define TARGET_COINCIDENCE (unsigned long long int)0x0001000200A90BC2   /*target coincidence with start or another target*/
+
 #define PARAM_LENGTH_ERROR (unsigned long long int)0x00010002007903F5   /*array index beyond range*/
 #define PARAM_INTERNAL_FAULT (unsigned long long int)0x0001000B00790001   /*program internal fault*/
 #define PARAM_FAIL_IN_INIT (unsigned long long int)0x00010002007903E9   /*initialization failed*/
@@ -171,7 +177,7 @@
 #define FAIL_DUMPING_PARAM (unsigned long long int)0x00010002007907DF   /*fail to dump parameter into a file*/
 #define GET_IO_FAIL (unsigned long long int)0x0001000400AC03E9   /*fail to get io data by driver.*/
 #define LOAD_IO_CONFIG_FAIL (unsigned long long int)0x0011000400AC03EA   /*fail to load io configuration file，the device can not be used.*/
-#define IO_DEVICE_CHANGED (unsigned long long int)0x0001000400AC03EB   /*IO devices are removed when machine is running.*/
+#define IO_DEVICE_UNFOUND (unsigned long long int)0x0001000400AC03EB   /*IO devices are unfound when machine is running.*/
 #define IO_VERIFY_FALSE (unsigned long long int)0x0000000200AC03EC   /*io data is verified to be false.*/
 #define IO_INIT_FAIL (unsigned long long int)0x0011000400AC03F3   /*fail to initialize the IO module.*/
 #define IO_INVALID_PARAM_ID (unsigned long long int)0x0000000200AC03F4   /*invalid parameter id as function argument.*/
@@ -217,17 +223,10 @@
 #define FILE_MANAGER_READ_FILE_FAILED (unsigned long long int)0x0010000200B10001   /*failed to read file*/
 #define FILE_MANAGER_WRITE_FILE_FAILED (unsigned long long int)0x0010000200B10002   /*failed to write file*/
 
-
-
-#define TRAJECTORY_FIFO_EMPTY (unsigned long long int)0x0001000400A90BB8   /*trajectory FIFO is empty*/
-#define TRAJECTORY_FIFO_FULL (unsigned long long int)0x0001000400A90BB9   /*trajectory FIFO is full*/
-#define TRAJECTORY_SEGMENT_ERROR (unsigned long long int)0x0001000400A90BBA   /*trajectory segment is invalid*/
-#define TARGET_COINCIDENCE (unsigned long long int)0x0001000200A90BC2   /*target coincidence with start or another target*/
-
-#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0000000400B10001   /*the expected target point is invalid*/
-#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0000000400B10002   /*invalid path cache*/
-#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0000000400B10003   /*invalid motion type*/
-#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0000000400B10004   /*invalid smooth in index*/
+#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0000000400B20001   /*the expected target point is invalid*/
+#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0000000400B20002   /*invalid path cache*/
+#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0000000400B20003   /*invalid motion type*/
+#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0000000400B20004   /*invalid smooth in index*/
 
 #endif
 

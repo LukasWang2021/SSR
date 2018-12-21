@@ -459,7 +459,8 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
             param.getParam("time_factor_3", seg_param.time_factor_3) &&
             param.getParam("time_factor_4", seg_param.time_factor_4) &&
             param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
-            param.getParam("max_rescale_factor", seg_param.max_rescale_factor))
+            param.getParam("max_rescale_factor", seg_param.max_rescale_factor) &&
+            param.getParam("max_cartesian_acc", seg_param.max_cartesian_acc))
         {}
         else
         {

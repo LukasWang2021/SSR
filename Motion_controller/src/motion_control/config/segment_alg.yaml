@@ -13,5 +13,6 @@ time_factor_3: 1.3
 time_factor_4: 1.3
 is_fake_dynamics: true
 max_rescale_factor: 2.0
+max_cartesian_acc: 8000.0
 
 #END

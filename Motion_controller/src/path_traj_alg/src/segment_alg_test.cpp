@@ -525,7 +525,7 @@ int main(void)
         via.pose_target.orientation.a = 0;
         via.pose_target.orientation.b = 0;
         via.pose_target.orientation.c = PI;
-        via.cnt = 30;
+        via.cnt = 64;
         via.vel = 1600;
         via.type = MOTION_LINE;
     

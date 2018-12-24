@@ -345,16 +345,14 @@ ErrorCode planPathLine(const PoseEuler &start,
     double angle_distance_to_start = 0; // scale to [0,1]
     if(end.cnt >= DOUBLE_ACCURACY)    // cnt is valid
     {
+        double path_out_vel = end.vel * end.cnt;
         double max_path_length_out2end = path_length_start2end / 2;
-        double path_length_out2end;        
+        double path_length_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);        
         if(path_length_out2end > max_path_length_out2end)
         {
             path_length_out2end = max_path_length_out2end;
-        }
-        else
-        {
-            path_length_out2end = end.cnt;
-        }
+        }     
+        
         int path_count_out2end = ceil(path_length_out2end * max_count_start2end / path_length_start2end);
         double path_step_out2end = path_length_out2end / path_count_out2end;        
         
@@ -492,13 +490,14 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     if(end.cnt >= DOUBLE_ACCURACY)
     {   // FIXME: small cnt will cause pulse in vel and acc of traj
         // compute path in2out and out2target 
-        double path_out_vel = end.vel;
+        double path_out_vel = end.vel * end.cnt;
         double max_path_length_out2target = path_length_via2target / 2;
-        double path_length_out2target = end.cnt;
+        double path_length_out2target = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
         if(path_length_out2target > max_path_length_out2target)
         {
             path_length_out2target = max_path_length_out2target;
         }
+        
         double path_length_in2out = path_length_in2target - path_length_out2target;        
         Point point_out;
         getMoveLPathPoint(point_in, path_vector_via2target, path_length_in2out, point_out);

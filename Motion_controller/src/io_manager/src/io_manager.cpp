@@ -25,7 +25,6 @@ IoManager::IoManager(fst_hal::DeviceManager* device_manager):
     param_ptr_(NULL),
     log_ptr_(NULL),
     cycle_time_(10000),
-    is_virtual_(false),
     is_running_(false),
     device_manager_ptr_(NULL)
 {
@@ -72,7 +71,6 @@ ErrorCode IoManager::init(void)
     }
 
     cycle_time_ = param_ptr_->cycle_time_;
-    is_virtual_ = param_ptr_->is_virtual_;
 
     device_list_ = device_manager_ptr_->getDeviceList();
 

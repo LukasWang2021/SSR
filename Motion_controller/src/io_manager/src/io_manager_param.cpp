@@ -7,8 +7,7 @@ using namespace fst_hal;
 IoManagerParam::IoManagerParam():
     file_path_(COMPONENT_PARAM_FILE_DIR),
     log_level_(3),  // default is Error Level
-    cycle_time_(10000),
-    is_virtual_(true)
+    cycle_time_(10000)
 {
     file_path_ += "io_manager.yaml";
 }
@@ -22,8 +21,7 @@ bool IoManagerParam::loadParam()
 {
     if (!yaml_help_.loadParamFile(file_path_.c_str())
         || !yaml_help_.getParam("log_level", log_level_)
-        || !yaml_help_.getParam("cycle_time", cycle_time_)
-        || !yaml_help_.getParam("is_virtual", is_virtual_))
+        || !yaml_help_.getParam("cycle_time", cycle_time_))
     {
         return false;
     }
@@ -37,7 +35,6 @@ bool IoManagerParam::saveParam()
 {
     if(!yaml_help_.setParam("log_level", log_level_)
         || !yaml_help_.setParam("cycle_time", cycle_time_)
-        || !yaml_help_.setParam("is_virtual", is_virtual_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

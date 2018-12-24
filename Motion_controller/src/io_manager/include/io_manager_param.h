@@ -18,7 +18,6 @@ public:
     // param to load & save
     int log_level_;
     int cycle_time_;    // thread cycle time, ms
-    bool is_virtual_;
 
 
 private:

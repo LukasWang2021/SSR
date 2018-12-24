@@ -45,12 +45,6 @@ Controller::~Controller()
     routine_thread_.join();
     heartbeat_thread_.join();
 
-    if(modbus_manager_ptr_ != NULL)
-    {
-        delete modbus_manager_ptr_;
-        modbus_manager_ptr_ = NULL;
-    }
-
     if(io_manager_ptr_ != NULL)
     {
         delete io_manager_ptr_;
@@ -199,6 +193,17 @@ ErrorCode Controller::init()
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
                     process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, io_manager_ptr_);
 
+    error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
+    if(error_code != SUCCESS)
+    {
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+    if(!state_machine_.checkOffsetState())
+    {
+        FST_ERROR("controller check offset failed");
+    }  
+
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {
         recordLog(CONTROLLER_CREATE_ROUTINE_THREAD_FAILED, "Controller failed to create routine thread");
@@ -210,17 +215,6 @@ ErrorCode Controller::init()
         recordLog(CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED, "Controller failed to create heartbeat thread");
         return CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED;
     }
-
-    error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
-    if(error_code != SUCCESS)
-    {
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
-        return CONTROLLER_INIT_OBJECT_FAILED;
-    }
-    if(!state_machine_.checkOffsetState())
-    {
-        FST_ERROR("controller check offset failed");
-    }  
 
     error_code = tp_comm_.init();
     if(error_code != SUCCESS)

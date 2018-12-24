@@ -961,6 +961,8 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 			level3(objThreadCntrolBlock, &value, &boolValue);
 			putback(objThreadCntrolBlock);
 		}
+		// putback ']'
+		putback(objThreadCntrolBlock);
 		return (int)value.getFloatValue();
 	}
 	else {
@@ -973,6 +975,8 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 	    return -1;
 	  }
 	  else {
+		// putback ']'
+		putback(objThreadCntrolBlock);
 	    return (int)value.getFloatValue();
 	  }
 	}

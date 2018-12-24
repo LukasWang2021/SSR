@@ -74,8 +74,8 @@ manual:
         orientation: 0.01                   # rad
 
 calibrator:
-    normal_offset_threshold: [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001]
-    lost_offset_threshold: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    normal_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    lost_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
 
 
 #END

@@ -88,7 +88,6 @@ private:
     ErrorCode updateIoDevicesData(void);
     
     int cycle_time_;
-    bool is_virtual_;
     bool is_running_;
 
     IoManagerParam* param_ptr_;

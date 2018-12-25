@@ -21,7 +21,7 @@ using namespace fst_hal;
 using namespace fst_base;
 
 
-IoManager::IoManager(fst_hal::DeviceManager* device_manager):
+IoManager::IoManager():
     param_ptr_(NULL),
     log_ptr_(NULL),
     cycle_time_(10000),
@@ -31,11 +31,6 @@ IoManager::IoManager(fst_hal::DeviceManager* device_manager):
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new IoManagerParam();
     FST_LOG_INIT("io_manager");
-    device_manager_ptr_ = device_manager;
-}
-
-IoManager::IoManager()
-{
     
 }
 
@@ -54,13 +49,15 @@ IoManager::~IoManager()
     }
 }
 
+/*
 IoManager* IoManager::getInstance(fst_hal::DeviceManager* device_manager)
 {
     static IoManager io_manager(device_manager);
     return &io_manager;
 }
+*/
 
-ErrorCode IoManager::init(void)
+ErrorCode IoManager::init(fst_hal::DeviceManager* device_manager_ptr)
 {
     if(!param_ptr_->loadParam()){
         FST_ERROR("Failed to load io_manager component parameters");
@@ -72,6 +69,7 @@ ErrorCode IoManager::init(void)
 
     cycle_time_ = param_ptr_->cycle_time_;
 
+    device_manager_ptr_ = device_manager_ptr;
     device_list_ = device_manager_ptr_->getDeviceList();
 
     // thread to fresh data.
@@ -519,7 +517,7 @@ ErrorCode IoManager::updateIoDevicesData(void)
             case DEVICE_TYPE_FST_IO:
             {
                 BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list_[i].index);
-                if(device_ptr == NULL) break; //if deconstruction, thread stop calling.
+                //if(device_ptr == NULL) break; //if deconstruction, thread stop calling.
                 FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
                 ret = io_device_ptr->updateDeviceData();
                 if (ret != SUCCESS)

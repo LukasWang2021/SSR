@@ -50,13 +50,11 @@ class IoManager
 {
 public:
   
-    IoManager(fst_hal::DeviceManager* device_manager);
+    IoManager();
 
     ~IoManager();
 
-    static IoManager *getInstance(fst_hal::DeviceManager* device_manager);
-
-    ErrorCode init(void);
+    ErrorCode init(fst_hal::DeviceManager* device_manager_ptr);
 
     // thread to fresh data
     void ioManagerThreadFunc();
@@ -72,7 +70,6 @@ public:
     ErrorCode getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values);// get io_board values
 
 private:
-    IoManager();
 
     ErrorCode getDiValue(PhysicsID phy_id, uint8_t &value);
     ErrorCode getDoValue(PhysicsID phy_id, uint8_t &value);

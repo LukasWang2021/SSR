@@ -61,7 +61,7 @@ private:
     fst_base::PreformanceMonitor preformance_monitor_;
     VirtualCore1 virtual_core1_; // for test only
     IoMapping io_mapping_; 
-    fst_hal::IoManager* io_manager_ptr_;
+    fst_hal::IoManager io_manager_;
     ProgramLaunching program_launching_;
     fst_base::FileManager file_manager_;
 

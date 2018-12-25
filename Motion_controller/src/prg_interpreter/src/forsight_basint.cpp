@@ -1277,7 +1277,11 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
 		find_eol(objThreadCntrolBlock);
 	}
     objProgLineInfo.end_prog_pos = objThreadCntrolBlock->prog ;
-	objThreadCntrolBlock->prog_jmp_line.push_back(objProgLineInfo);
+	// Omit invalidated line - Lu.jiaming modified at 181225
+	if(objThreadCntrolBlock->tok!=FINISHED)
+	{
+		objThreadCntrolBlock->prog_jmp_line.push_back(objProgLineInfo);
+	}
     // iLineNum++ ;
   } while(objThreadCntrolBlock->tok!=FINISHED);
   objThreadCntrolBlock->prog = temp;  /* restore to original */

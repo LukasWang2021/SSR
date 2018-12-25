@@ -19,8 +19,7 @@ Controller::Controller():
     is_exit_(false),
     log_ptr_(NULL),
     param_ptr_(NULL),
-    process_comm_ptr_(NULL),
-    io_manager_ptr_(NULL)
+    process_comm_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ControllerParam();
@@ -45,30 +44,26 @@ Controller::~Controller()
     routine_thread_.join();
     heartbeat_thread_.join();
 
-    if(io_manager_ptr_ != NULL)
-    {
-        delete io_manager_ptr_;
-        io_manager_ptr_ = NULL;
-    }
-
     if(process_comm_ptr_ != NULL)
     {
         delete process_comm_ptr_;
         process_comm_ptr_ = NULL;
     }
-
+    
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;
         log_ptr_ = NULL;
     }
+    
     if(param_ptr_ != NULL)
     {
         delete param_ptr_;
         param_ptr_ = NULL;
     }
-
+    
     ServerAlarmApi::GetInstance()->pyDecref();
+    
 }
 
 Controller* Controller::getInstance()
@@ -164,18 +159,16 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    io_manager_ptr_ = IoManager::getInstance(&device_manager_);
-    error_code = io_manager_ptr_->init();
+    error_code = io_manager_.init(&device_manager_);
     if(error_code != SUCCESS)
     {
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    error_code = io_mapping_.init(io_manager_ptr_);
+    error_code = io_mapping_.init(&io_manager_);
     if(error_code != SUCCESS)
     {
-        printf("iomapping err=0x%x\n", error_code);
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
@@ -189,9 +182,9 @@ ErrorCode Controller::init()
                 process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_, &io_mapping_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
-        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, io_manager_ptr_,&program_launching_, &file_manager_);
+        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &io_manager_,&program_launching_, &file_manager_);
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
-                    process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, io_manager_ptr_);
+                    process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, &io_manager_);
 
     error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
     if(error_code != SUCCESS)

@@ -136,28 +136,6 @@ void ControllerPublish::updateIoBoardStatus()
         }
     }
 
-
-/*todo delete
-    int dev_num = vec.size();
-    io_board_status_.io_board_count = 4; //max device number   
-    for (int i = 0; i < io_board_status_.io_board_count; i++)
-    {
-        if (i < dev_num && vec[i].id < 16)
-        {
-            io_device_ptr_->getDevicePortValues(vec[i].id, values);
-            io_board_status_.io_board[i].id = vec[i].id;
-            memcpy(&io_board_status_.io_board[i].DI, &values.DI, sizeof(uint32_t));
-            memcpy(&io_board_status_.io_board[i].DO, &values.DO, sizeof(uint32_t));
-            memcpy(&io_board_status_.io_board[i].RI, &values.RI, sizeof(uint8_t));
-            memcpy(&io_board_status_.io_board[i].RO, &values.RO, sizeof(uint8_t));
-            io_board_status_.io_board[i].valid = vec[i].is_valid; // 1 = true.
-        }
-        else
-        {
-            io_board_status_.io_board[i].valid = 0;
-        } 
-    }
-    */
 }
 
 void ControllerPublish::updateReg()

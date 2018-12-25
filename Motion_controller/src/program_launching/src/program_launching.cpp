@@ -45,14 +45,7 @@ ProgramLaunching::~ProgramLaunching()
         delete param_ptr_;
         param_ptr_ = NULL;
     }
-    if(io_mapping_ptr_ != NULL){
-        delete io_mapping_ptr_;
-        io_mapping_ptr_ = NULL;
-    }
-    if(controller_client_ptr_ != NULL){
-        delete controller_client_ptr_;
-        controller_client_ptr_ = NULL;
-    }
+ 
     if(launch_info_ != NULL){
         delete[] launch_info_;
         launch_info_ = NULL;

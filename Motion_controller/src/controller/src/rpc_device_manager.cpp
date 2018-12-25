@@ -8,6 +8,7 @@ using namespace fst_hal;
 // "/rpc/device_manager/getDeviceList"
 void ControllerRpc::handleRpc0x0000C1E0(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_DeviceInfoList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DeviceInfoList*>(response_data_ptr);
     
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
@@ -20,6 +21,7 @@ void ControllerRpc::handleRpc0x0000C1E0(void* request_data_ptr, void* response_d
     }
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.device_info_count = device_list.size();
+
     recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getDeviceList"));
 }
 
@@ -94,6 +96,7 @@ void ControllerRpc::handleRpc0x0001421F(void* request_data_ptr, void* response_d
 //"/rpc/device_manager/getIoDeviceInfoList"	
 void ControllerRpc::handleRpc0x000024A4(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_IoDeviceInfoList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_IoDeviceInfoList*>(response_data_ptr);
     
     // establish the map btween address to index of device.xml

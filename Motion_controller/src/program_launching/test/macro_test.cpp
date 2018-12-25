@@ -22,11 +22,11 @@ int main(int argc, char** argv)
 {
     fst_hal::DeviceManager device_manager;
     device_manager.init();
-    fst_hal::IoManager* io_manager_ptr = fst_hal::IoManager::getInstance(&device_manager);
-    io_manager_ptr->init();
+    fst_hal::IoManager io_manager;
+    io_manager.init(&device_manager);
 
     fst_ctrl::IoMapping* map_ptr = new fst_ctrl::IoMapping();
-    int ret = map_ptr->init(io_manager_ptr);
+    int ret = map_ptr->init(&io_manager);
     if (ret != 0) 
     {
         printf("failed init io mapping\n");

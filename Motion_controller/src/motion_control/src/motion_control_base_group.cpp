@@ -24,9 +24,9 @@ using namespace basic_alg;
 using namespace fst_parameter;
 using namespace fst_algorithm;
 
-#define OUTPUT_JOINT_POINT
-#define OUTPUT_PATH_CACHE
-#define OUTPUT_TRAJ_CACHE
+//#define OUTPUT_JOINT_POINT
+//#define OUTPUT_PATH_CACHE
+//#define OUTPUT_TRAJ_CACHE
 
 
 namespace fst_mc

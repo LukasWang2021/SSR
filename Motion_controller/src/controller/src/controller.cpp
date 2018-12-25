@@ -45,30 +45,26 @@ Controller::~Controller()
     routine_thread_.join();
     heartbeat_thread_.join();
 
-    if(io_manager_ptr_ != NULL)
-    {
-        delete io_manager_ptr_;
-        io_manager_ptr_ = NULL;
-    }
-
     if(process_comm_ptr_ != NULL)
     {
         delete process_comm_ptr_;
         process_comm_ptr_ = NULL;
     }
-
+    
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;
         log_ptr_ = NULL;
     }
+    
     if(param_ptr_ != NULL)
     {
         delete param_ptr_;
         param_ptr_ = NULL;
     }
-
+    
     ServerAlarmApi::GetInstance()->pyDecref();
+    
 }
 
 Controller* Controller::getInstance()
@@ -175,7 +171,6 @@ ErrorCode Controller::init()
     error_code = io_mapping_.init(io_manager_ptr_);
     if(error_code != SUCCESS)
     {
-        printf("iomapping err=0x%x\n", error_code);
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }

@@ -62,7 +62,6 @@ private:
     VirtualCore1 virtual_core1_; // for test only
     IoMapping io_mapping_; 
     fst_hal::IoManager* io_manager_ptr_;
-    fst_hal::ModbusManager* modbus_manager_ptr_; //todo delete
     ProgramLaunching program_launching_;
     fst_base::FileManager file_manager_;
 

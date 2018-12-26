@@ -7,6 +7,7 @@
 #include "math.h"
 #include "ctype.h"
 #include "stdlib.h"
+#include "common.h"
 
 // #ifndef WIN32
 #define USE_FORSIGHT_REGISTERS_MANAGER
@@ -184,9 +185,9 @@ struct thread_control_block {
 //    MotionTarget      currentMotionTarget ;
     map<int, MoveCommandDestination>  start_mov_position ;  // iLineNum :: movCmdDst
 } ;
-
+#ifndef WIN32
 extern fst_log::Logger* log_ptr_;
-
+#endif
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);
 // LineNumState getLinenum(struct thread_control_block* objThreadCntrolBlock, int & num);
 int getLinenum(struct thread_control_block* objThreadCntrolBlock) ;

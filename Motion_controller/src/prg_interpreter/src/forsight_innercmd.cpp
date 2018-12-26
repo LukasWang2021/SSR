@@ -733,7 +733,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 // 	#else
 // 		FST_INFO("setInstruction MOTION_JOINT at %d", instr.line);
 // 	#endif
-	     		FST_INFO("call_MoveJ instr.target.cnt = %f setInstruction.", instr.target.cnt);
+	FST_INFO("call_MoveJ instr.target.cnt = %f setInstruction.", instr.target.cnt);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{

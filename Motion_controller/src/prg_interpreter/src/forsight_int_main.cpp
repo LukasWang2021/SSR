@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include "common.h"
 using namespace fst_log;
+#else
+#include "forsight_io_mapping.h"
 #endif
 #include "forsight_inter_control.h"
 #include "forsight_io_controller.h"
@@ -17,17 +19,26 @@ using namespace fst_log;
 int main(int  argc, char *argv[])
 {
 	InterpreterControl intprt_ctrl; 
+#ifndef WIN32
 	if(log_ptr_ == NULL)
 	{
 		log_ptr_ = new fst_log::Logger();
     	FST_LOG_INIT("Interpreter");
 	}
+#endif
 	initShm();
 	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
+#ifndef WIN32
 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
+#else
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_DEBUG ;
+	append_io_mapping();
+	forgesight_load_io_config();
+#endif
 	load_register_data();
 	while(1)
 	{
+#ifndef WIN32
 		std::vector<fst_base::ProcessCommRequestResponse>::iterator it;
 		std::vector<fst_base::ProcessCommRequestResponse> request_list
 			= g_objInterpreterServer->popTaskFromRequestList();
@@ -43,11 +54,7 @@ int main(int  argc, char *argv[])
 				*bRsp = true;
 				g_objInterpreterServer->pushTaskToResponseList(*it);
 			}
-#ifdef WIN32
-			Sleep(100);
-#else
 			usleep(1000);
-#endif
 		    static int count = 0;
 		    if (++count >= IO_ERROR_INTERVAL_COUNT)
 		    {
@@ -58,12 +65,13 @@ int main(int  argc, char *argv[])
 		else
 		{
 			intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
-#ifdef WIN32
-			Sleep(100);
-#else
 			usleep(1000);
-#endif
 		}
+#else
+		parseCtrlComand(intprt_ctrl, "Test_10_MOVL");
+		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
+		Sleep(100);
+#endif
 	}
 	return 1;
 }

@@ -35,8 +35,6 @@ InterpreterState prgm_state = INTERPRETER_IDLE;
 static CtrlStatus ctrl_status;
 // static InterpreterControl intprt_ctrl;
 
-fst_base::InterpreterServerCmd g_lastcmd;
-
 static InterpreterState g_privateInterpreterState;
 
 extern jmp_buf e_buf; /* hold environment for longjmp() */
@@ -199,24 +197,36 @@ void setWarning(__int64 warn)
 void setWarning(long long int warn)
 #endif  
 {
+#ifdef WIN32
+	IntprtStatus temp,  * tempPtr = &temp;
+    int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
+    writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
+#else
 	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_ERROR, &warn);
+#endif  
 }
 
 void setMessage(int warn)
 {
+#ifdef WIN32
+	IntprtStatus temp,  * tempPtr = &temp;
+    int offset = (int)&(tempPtr->warn) - (int)tempPtr ;
+    writeShm(SHM_INTPRT_STATUS, offset, (void*)&warn, sizeof(warn));
+#else
 	g_objInterpreterServer->sendEvent(INTERPRETER_EVENT_TYPE_MESSAGE, &warn);
+#endif  
 }
-
 
 UserOpMode getUserOpMode()
 {
 #ifdef WIN32
 	CtrlStatus temp,  * tempPtr = &temp;
     int offset = (int)&(tempPtr->user_op_mode) - (int)tempPtr ;
+    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.user_op_mode, sizeof(ctrl_status.user_op_mode));
 #else
     int offset = (int)&((CtrlStatus*)0)->user_op_mode;
 #endif  
-//    readShm(SHM_CTRL_STATUS, offset, (void*)&ctrl_status.user_op_mode, sizeof(ctrl_status.user_op_mode));
+
     return ctrl_status.user_op_mode;
 }
 
@@ -253,12 +263,16 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 		if (instruction->is_additional == false)
 		{
 	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
+#ifndef WIN32
 			ret = g_objRegManagerInterface->setInstruction(instruction);
+#endif
 		}
 		else
 		{
 	     	FST_INFO("setInstruction:: instr.target.cnt = %f .", instruction->target.cnt);
+#ifndef WIN32
 			ret = g_objRegManagerInterface->setInstruction(instruction);
+#endif
 		}
 #ifndef WIN32
 	    if (ret)
@@ -297,7 +311,11 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     }while(!ret);
 
     // Wait until finish 
+#ifndef WIN32
     ret = g_objRegManagerInterface->isNextInstructionNeeded();
+#else
+    ret = true;
+#endif
     FST_INFO("wait ctrl_status.is_permitted == false");
     while (ret == false)
     {
@@ -307,7 +325,9 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
 #else
         usleep(1000);
 #endif
+#ifndef WIN32
     	ret = g_objRegManagerInterface->isNextInstructionNeeded();
+#endif
     }
     FST_INFO("ctrl_status.is_permitted == true");
 
@@ -439,20 +459,20 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 	// (struct thread_control_block * objThdCtrlBlockPtr)
 {
 //	InterpreterState interpreterState  = IDLE_R;
+	int iLineNum = 0 ;
 #ifdef WIN32
 	__int64 result = 0 ;
-#endif
-
-//	RegMap reg ;
-	IOPathInfo  dioPathInfo ;
-	
-	int iLineNum = 0 ;
+	static int lastCmd ;
+#else
 	static fst_base::InterpreterServerCmd lastCmd ;
+#endif
 	UserOpMode userOpMode ;
 	AutoMode   autoMode ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
 #ifndef WIN32
+//	RegMap reg ;
+	IOPathInfo  dioPathInfo ;
 	// if(intprt_ctrl.cmd != UPDATE_IO_DEV_ERROR)
 	if(intprt_ctrl.cmd != fst_base::INTERPRETER_SERVER_CMD_LOAD)
         FST_INFO("parseCtrlComand: %d", intprt_ctrl.cmd);
@@ -480,13 +500,13 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			
             objThdCtrlBlockPtr->prog_mode = STEP_MODE;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
-            setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSED);
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl, "while_test");
+			   strcpy(intprt_ctrl.start_ctrl, "lineno_test_2");
 			}
             startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl, getCurrentThreadSeq());
+            setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSED);
 	        // g_iCurrentThreadSeq++ ;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_START:
@@ -509,7 +529,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
 			{
-			   strcpy(intprt_ctrl.start_ctrl, "reconstruction_pr_test");
+			   strcpy(intprt_ctrl.start_ctrl, "lineno_test_2");
 			}
 			startFile(objThdCtrlBlockPtr, 
 				intprt_ctrl.start_ctrl, getCurrentThreadSeq());
@@ -571,7 +591,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    objThdCtrlBlockPtr = getThreadControlBlock();
 			if(objThdCtrlBlockPtr == NULL) break ;
             FST_INFO("SWITCH_STEP with %d", intprt_ctrl.step_mode);
-            objThdCtrlBlockPtr->prog_mode = intprt_ctrl.step_mode;
+            objThdCtrlBlockPtr->prog_mode = (ProgMode)intprt_ctrl.step_mode;
             break;
         case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
             FST_INFO("step forward at %d ", getCurrentThreadSeq());

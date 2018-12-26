@@ -10,10 +10,14 @@
 
 #ifndef WIN32
 #include "error_code.h"
+#else
+#include "macro_instr_mgr.h"
 #endif
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
 #include "reg_manager/forsight_registers_manager.h"
+#else
+#include "reg-shmi/forsight_registers.h"
 #endif
 
 #ifndef WIN32
@@ -199,13 +203,11 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 
 #ifdef WIN32
 HANDLE    g_basic_interpreter_handle[NUM_THREAD + 1];
+extern MacroInstrMgr  *  g_macro_instr_mgr_ptr; 
 #else
 pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
-#endif
-
-// extern MacroInstrMgr  *  g_macro_instr_mgr_ptr; 
-
 fst_log::Logger * log_ptr_ = NULL;
+#endif
 
 #ifdef WIN32
 unsigned __stdcall basic_interpreter(void* arg)
@@ -232,8 +234,7 @@ void* basic_interpreter(void* arg)
 	//  	resetRunningMacroInstr(objThreadCntrolBlock->project_name);
 	//  }
 	setPrgmState(objThreadCntrolBlock, INTERPRETER_IDLE);
-	// clear line path and ProgramName
-  
+	// clear ProgramName and leave line path
   	setProgramName(objThreadCntrolBlock, (char *)""); 
 
 	// free(objThreadCntrolBlock->instrSet);
@@ -318,18 +319,22 @@ int getLinenum(
 
 void setRunningMacroInstr(char* program_name)
 {
-//   if (g_macro_instr_mgr_ptr)
-//  {
-// 	  g_macro_instr_mgr_ptr->setRunningInMacroInstrList(program_name);
-//  }
+#ifdef WIN32
+  if (g_macro_instr_mgr_ptr)
+  {
+	  g_macro_instr_mgr_ptr->setRunningInMacroInstrList(program_name);
+  }
+#endif
 }
 
 void resetRunningMacroInstr(char* program_name)
 {
-//  if (g_macro_instr_mgr_ptr)
-//  {
-//	  g_macro_instr_mgr_ptr->resetRunningInMacroInstrList(program_name);
-//  }
+#ifdef WIN32
+  if (g_macro_instr_mgr_ptr)
+  {
+	  g_macro_instr_mgr_ptr->resetRunningInMacroInstrList(program_name);
+  }
+#endif
 }
 	
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
@@ -532,6 +537,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
   	if((objThreadCntrolBlock->prog_mode == STEP_MODE)
 		&& (isExecuteEmptyLine == 0))
   	{
+  	    // Get curent Line
 	    memset(cLineContent, 0x00, LINE_CONTENT_LEN);
 		cLineContentPtr = cLineContent ;
 		cLineContentProgPtr = objThreadCntrolBlock->prog ;
@@ -556,7 +562,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
             FST_INFO("call_interpreter : Left  waitInterpreterStateleftPaused %d ", iLinenum);
 			
 			// use the iLineNum which had been set in the BACKWARD/FORWARD/JUMP
-			iLinenum = objThreadCntrolBlock->iLineNum ;
+			iLinenum = getLinenum(objThreadCntrolBlock) ; // objThreadCntrolBlock->iLineNum ;
 			// 
   			FST_INFO("interpreterState : Line number(%d) with %d", iLinenum, iOldLinenum);
 			if(iLinenum == 0)
@@ -920,6 +926,7 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   return 1;
 }
 
+// This function would always left the ']'.
 int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 {
     eval_value value;

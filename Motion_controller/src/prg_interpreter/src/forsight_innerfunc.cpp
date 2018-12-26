@@ -106,7 +106,7 @@ bool call_ftoa     (eval_value *result, const char * valFirst,const char * valSe
 struct intern_func_type {   
     char *f_name; // function name
     int param_num ;
-    bool (*p)(eval_value *, char* , char* = NULL, char* = NULL);   // pointer to the function   
+    bool (*p)(eval_value *, const char* , const char* = NULL, const char* = NULL);   // pointer to the function   
 } intern_func[] = {   
 	(char *)"sin",        1, call_sin  ,
 	(char *)"cos",        1, call_cos  ,

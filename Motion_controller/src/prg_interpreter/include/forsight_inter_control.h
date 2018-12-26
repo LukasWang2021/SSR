@@ -18,10 +18,11 @@
 
 #ifndef WIN32
 #include <unistd.h>
+#else
+#include "forsight_interpreter_shm.h"
 #endif
 #include "interpreter_common.h"
 
-// #include "forsight_interpreter_shm.h"
 #include "forsight_basint.h"
 
 // #define USE_WAITING_R

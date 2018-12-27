@@ -14,8 +14,15 @@
 #ifndef WIN32
 #include "reg_manager/reg_manager_interface_wrapper.h"
 using namespace fst_ctrl ;
+#else
+#include "forsight_io_mapping.h"
+#include "forsight_launch_code_startup.h"
+#include "forsight_macro_instr_startup.h"
 #endif
 #include "reg_manager/forsight_registers_manager.h"
+#else
+#include "reg-shmi/forsight_registers.h"
+#include "reg-shmi/forsight_op_regs_shmi.h"
 #endif
 
 #define VELOCITY    (500)
@@ -623,7 +630,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
             // target_line++;
-            iLineNum = getLinenum(objThdCtrlBlockPtr);
+			iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
+            setLinenum(objThdCtrlBlockPtr, iLineNum);
             FST_INFO("step forward to %d ", iLineNum);
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 
@@ -635,8 +643,6 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 
 			// Use the program pointer to get the current line number.
 			// to support logic
-			iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
-            setLinenum(objThdCtrlBlockPtr, iLineNum);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_BACKWARD:
             FST_INFO("backward at %d ", getCurrentThreadSeq());
@@ -681,6 +687,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 		    	setLinenum(objThdCtrlBlockPtr, iLineNum);
             	FST_INFO("JMP to %d(%d) in the FORWARD -> BACKWARD .", 
 					iLineNum,    objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+                setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 				break;
 			}
             // setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);  
@@ -700,16 +707,15 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
             FST_INFO("step BACKWARD to %d ", iLineNum);
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);
+			iLineNum-- ;
+		    setLinenum(objThdCtrlBlockPtr, iLineNum);
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 
 			// Controller use the PrgmState and LineNum to check to execute 
 //            FST_INFO("Enter waitInterpreterStateToPaused %d ", iLineNum);
 //			waitInterpreterStateToPaused(objThdCtrlBlockPtr);
 //			// target_line-- in setInstruction
-//            FST_INFO("Left  waitInterpreterStateToPaused %d ", iLineNum);
-			
-			iLineNum-- ;
-		    setLinenum(objThdCtrlBlockPtr, iLineNum);
+//            FST_INFO("Left  waitInterpreterStateToPaused %d ", iLineNum);			
 		    break;
 		case fst_base::INTERPRETER_SERVER_CMD_RESUME:
 			if(getCurrentThreadSeq() < 0) break ;

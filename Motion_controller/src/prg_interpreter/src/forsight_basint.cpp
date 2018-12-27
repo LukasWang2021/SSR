@@ -457,13 +457,6 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  objProgLineInfo.type     = END_PROG ;
 	  objThreadCntrolBlock->prog_jmp_line.push_back(objProgLineInfo);
 
-// 	  for(vector<sub_label>::iterator it
-// 		  = objThreadCntrolBlock->sub_label_table.begin();
-// 	  it != objThreadCntrolBlock->sub_label_table.end(); ++it)
-// 	  {
-// 		  FST_INFO("%d %s %08X", (int)it->type, it->name, (int)it->p);
-// 	  }
-      
       memset(cLineContent, 0x00, LINE_CONTENT_LEN);
 	  sprintf(cLineContent, "%s::main", objThreadCntrolBlock->project_name);
       char * loc = find_label(objThreadCntrolBlock, cLineContent); // "main");
@@ -557,6 +550,9 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			
 			setPrgmState(objThreadCntrolBlock, INTERPRETER_PAUSED) ; // WAITING_R ;
             FST_INFO("call_interpreter : Enter waitInterpreterStateleftPaused %d ", iLinenum);
+			// Set the iLineNum as the number of executed line
+			// and prog had point to the next line. 
+			// So Calling calc_line_from_prog to get the lineNum is forbidden here
 			setLinenum(objThreadCntrolBlock, iLinenum);
 			waitInterpreterStateleftPaused(objThreadCntrolBlock);
             FST_INFO("call_interpreter : Left  waitInterpreterStateleftPaused %d ", iLinenum);
@@ -573,21 +569,11 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			}
 			if(iOldLinenum != iLinenum - 1)
 			{
-			    //
   			    // FST_INFO("Insert movej at (%d) with %d", iLinenum, iOldLinenum);
-/*
-				int iRet = call_internal_cmd(
-						find_internal_cmd((char *)"movej"), iLinenum,
-						objThreadCntrolBlock);
-				if(iRet == END_COMMND_RET)
-				{
-  			    	FST_INFO("Insert movej Failed at (%d) ", iLinenum);
-					return END_COMMND_RET;
-				}
- */
 			}
 			// scanf("%s", cLinenum);
 			// iLinenum = atoi(cLinenum);
+			// Set prog at the iLineNum which had been set in the BACKWARD/FORWARD/JUMP
 			if(iLinenum > 0) // ((iLinenum > 0) && (iLinenum < 1024))
 			{
 				if(objThreadCntrolBlock->prog_jmp_line[iLinenum - 1].start_prog_pos!= 0)
@@ -640,11 +626,12 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	{
 		FST_INFO("interpreterState is PAUSED_R.");
 #ifdef WIN32
+		interpreterState =  INTERPRETER_EXECUTE;
 		Sleep(1000);
 #else
+		interpreterState  = getPrgmState();
 		sleep(1);
 #endif
-		interpreterState  = getPrgmState();
 	}
     /* check for assignment statement */
 	iLinenum = calc_line_from_prog(objThreadCntrolBlock);
@@ -868,7 +855,7 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 		{
 			prog_line_info tmpDbg = objThreadCntrolBlock->prog_jmp_line[i];
 			FST_INFO("calc_line_from_prog get %d at (%08X, %08X) ", 
-		   	    i, (unsigned int)tmpDbg.start_prog_pos,
+		   	    i+1, (unsigned int)tmpDbg.start_prog_pos,
 		   	    (unsigned int)objThreadCntrolBlock->prog_jmp_line[i-1].start_prog_pos);
 		//   FST_INFO("calc_line_from_prog get %d at (%08X, %08X) ", 
 		//   	    i, objThreadCntrolBlock->prog,
@@ -2525,6 +2512,8 @@ void greturn(struct thread_control_block * objThreadCntrolBlock)
 	  {
 		putback(objThreadCntrolBlock);
 		objThreadCntrolBlock->prog = progTemp ;
+		// We should skip the whole line
+		find_eol(objThreadCntrolBlock);
   		return ;
 	  }
 	  putback(objThreadCntrolBlock);
@@ -2532,6 +2521,8 @@ void greturn(struct thread_control_block * objThreadCntrolBlock)
 	  objThreadCntrolBlock->ret_value = ret_value.getFloatValue() ;
   }
   objThreadCntrolBlock->prog = progTemp ;
+  // We should skip the whole line
+  find_eol(objThreadCntrolBlock);
 }
 
 /* GOSUB stack push function. */

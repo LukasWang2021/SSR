@@ -61,7 +61,8 @@ bool FstIoDevice::init()
         FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
         FST_INFO("Success to load fst_io_device component parameters");
     }
-
+    
+    // init the attributes
     dev_info_.address = address_;
     dev_info_.dev_type = DEVICE_TYPE_FST_IO;
     dev_info_.device_type = param_ptr_->device_type_; //"RF-P8A"
@@ -79,13 +80,13 @@ bool FstIoDevice::init()
     memset(&output_, 0, sizeof(output_));
     setValid(true);
 
+    // init the sharemem only one time for serveral io_boards
     if(is_mem_init_ == true)
         return true;
 
-    int result = 0;
     if (is_virtual_ == false)
     {
-        result = ioInit();
+        int result = ioInit();
         if (result == 0)
         {
             is_mem_init_ = true;
@@ -258,6 +259,7 @@ ErrorCode FstIoDevice::updateDeviceData(void)
     }
     else if (ret == GET_IO_FAIL)
     {
+        setValid(false);
     }
     else if (ret == IO_DEVICE_UNFOUND)
     {
@@ -301,7 +303,7 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
     // check enable and id.
     if (data.enable == 0x0 || id != data.id)
     {
-        //printf("after----IODeviceData ID=%x, enable=%x, verify=%x, model=%x, input[]=%x-%x-%x-%x-%x,output=%x-%x-%x-%x-%x\n",
+        //printf("IODeviceData ID=%x, enable=%x, verify=%x, model=%x, input[]=%x-%x-%x-%x-%x,output=%x-%x-%x-%x-%x\n",
         //      data.id, data.enable, data.verify, data.model,
         //      data.input[4],data.input[3],data.input[2],data.input[1],data.input[0],
         //     data.output[4],data.output[3],data.output[2],data.output[1],data.output[0]);
@@ -309,7 +311,7 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
     }    
     if (data.verify == 0)
     {
-        //printf("after----IODeviceData verify=%x\n", data.verify);
+        //printf("IODeviceData verify=%x\n", data.verify);
         return IO_VERIFY_FALSE;
     }
     return SUCCESS; 
@@ -325,7 +327,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
         seq = 1;
 
     uint8_t id = data.id;
-    //write download data.
+    //step1: write download data(output).
     if (ioWriteDownload(&data) != 0) {
         //std::cout<<"ioWriteDownload() failed."<<std::endl;
         return false;
@@ -335,7 +337,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
     idseq = idseq << 4;
     idseq += seq;
 
-    //write ID&seq.
+    //step2: write ID&seq.
     if (ioSetIdSeq(idseq) != 0) {
         //std::cout<<"ioSetIdSeq() failed."<<std::endl;
         return false;
@@ -344,7 +346,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
     // wait for FPGA reply.
     usleep(200);
 
-    //get upload and download seq.
+    //step3:get upload and download seq.
     uint8_t  read_seq;
     if (ioGetSeq(&read_seq) != 0) {
         //std::cout<<"ioGetSeq() failed."<<std::endl;
@@ -354,6 +356,8 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
     uint8_t upload_seq = read_seq & 0x0F;
     uint8_t download_seq = (read_seq >> 4) & 0x0F;
     //printf("seq=%x, upload_seq=%x, download_seq=%x\n",seq,upload_seq,download_seq);
+
+    //step4:read upload data(input)
     if (upload_seq == seq) {
         if (ioReadUpload(&data) != 0) {
             //std::cout<<"ioReadUpload() failed."<<std::endl;
@@ -368,6 +372,7 @@ bool FstIoDevice::readWriteMem(IODeviceData &data)
         write_counter = 0;
     else
         ++write_counter;
+        
     if (read_counter > comm_tolerance_ || write_counter > comm_tolerance_) {
         //std::cout<<"read write io with FPGA failed too many."<<std::endl;
         return false;

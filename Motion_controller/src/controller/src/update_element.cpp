@@ -104,7 +104,6 @@ void ControllerPublish::updateSafetyBoardStatus()
     memcpy(&safety_board_status_.data, &data, sizeof(data));
 }
 
-//todo new
 void ControllerPublish::updateIoBoardStatus()
 {
     std::vector<fst_hal::IODeviceInfo> info_list = io_manager_ptr_->getIODeviceInfoList();

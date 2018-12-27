@@ -69,7 +69,7 @@ ErrorCode ControllerClient::init(ControllerServer* controller_server_ptr)
 }
 
 bool ControllerClient::start(std::string data)
-{     
+{
     if(!controller_server_ptr_->isInterpreterServerReady()
         || data.size() >= 256
         || !sendRequest(INTERPRETER_SERVER_CMD_START, data.c_str(), 256)
@@ -184,7 +184,7 @@ bool ControllerClient::getNextInstruction(Instruction* instruction_ptr)
     {
         return false;
     }
-        
+   
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
@@ -197,7 +197,7 @@ bool ControllerClient::setAutoStartMode(int start_mode)
     {
         return false;
     }
-        
+    
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
@@ -267,6 +267,7 @@ void ControllerClient::handleEvent()
         }
         ErrorCode error_code = *((ErrorCode*)recv_buffer_ptr_);
         ErrorMonitor::instance()->add(error_code);
+        FST_INFO("ControllerClient::handleEvent: %08llX ", error_code);
     }
     else
     {

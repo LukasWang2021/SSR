@@ -142,8 +142,6 @@ void InterpreterServer::sendEvent(int event_type, void* data_ptr)
     event.event_type = event_type;
     event.data = *((unsigned long long int*)data_ptr);
 	
-    FST_INFO("InterpreterServer::sendEvent: %d, %08llX ", event.event_type, event.data);
-	
     event_list_mutex_.lock();
     if(event_list_.size() <  param_ptr_->interpreter_server_event_buffer_size_)
     {
@@ -151,7 +149,7 @@ void InterpreterServer::sendEvent(int event_type, void* data_ptr)
     }
     event_list_mutex_.unlock();
 	
-    FST_INFO("InterpreterServer::sendEvent: %d, %08llX ", event.event_type, event.data);
+    FST_INFO("InterpreterServer::sendEvent: %d, %08llX", event.event_type, event.data);
 }
 
 InterpreterServer::InterpreterServer():
@@ -162,11 +160,11 @@ InterpreterServer::InterpreterServer():
 
 void InterpreterServer::handleRequestList()
 {
-    if(nn_poll(&poll_req_res_fd_, 1, 0) == -1)
+    if(nn_poll(&poll_req_res_fd_, 1, 0) <= 0)
     {
         return;
     }
-    
+  
     int recv_bytes;
     if(poll_req_res_fd_.revents & NN_POLLIN)
     {
@@ -249,6 +247,7 @@ void InterpreterServer::handlePublishList()
             it->last_publish_time = time_val;
         }
     }
+
     publish_list_mutex_.unlock();
 }
 
@@ -261,9 +260,11 @@ void InterpreterServer::handleEventList()
 
     std::vector<ProcessCommEvent>::iterator it;
     event_list_mutex_.lock();
+    
     for(it = event_list_.begin(); it != event_list_.end(); ++it)
     {
         int send_bytes = nn_send(event_socket_, &it->data, sizeof(unsigned long long), 0);
+        FST_INFO("InterpreterServer::handleEventList: %08llX ", it->data);
         if(send_bytes == -1)
         {
             FST_ERROR("handleEventList: send publish failed, error = %d", nn_errno());
@@ -318,6 +319,7 @@ void interpreterServerThreadFunc(void* arg)
     {
         interpreter_server_ptr->runThreadFunc();
     }
+    std::cout<<"---interpreterServerThreadFunc exit"<<std::endl;
 }
 
 

@@ -27,8 +27,8 @@ namespace fst_hal
 // This is output info.
 struct IODeviceInfo
 {
-    uint32_t address;        //address
-    uint8_t dev_type;  //?DEVICE_TYPE_FST_IO
+    uint32_t address;  
+    uint8_t dev_type;  //DEVICE_TYPE_FST_IO
     std::string device_type;
     std::string comm_type;
     uint32_t DI_num;
@@ -80,9 +80,6 @@ public:
 
     ErrorCode updateDeviceData(void);
     
-    // the faulty tolerance times.
-    //static const int FAULT_TOL = 20;
-
     // only open sharemem onece.
     static bool is_mem_init_;
 

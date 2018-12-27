@@ -12,7 +12,11 @@ void ControllerRpc::handleRpc0x0000A545(void* request_data_ptr, void* response_d
     uint8_t* ptr = NULL;
     rs_data_ptr->error_code.data = file_manager_ptr_->readFileStream(ptr, length, rq_data_ptr->data.data);
 
-    memcpy(&rs_data_ptr->data.data, ptr, length);
+    if (rs_data_ptr->error_code.data == SUCCESS)
+    {
+        memcpy(&rs_data_ptr->data.data, ptr, length);
+        rs_data_ptr->data.data.size = length;
+    }
 
     FST_INFO("rpc-readFile: %s, ret = 0x%llx\n", &rq_data_ptr->data.data, rs_data_ptr->error_code.data);
 }
@@ -28,9 +32,16 @@ void ControllerRpc::handleRpc0x00010D95(void* request_data_ptr, void* response_d
     //memcpy(ptr, &rq_data_ptr->data2.data, length);
     //delete ptr;
 
-    long length = sizeof(rq_data_ptr->data2.data); // data2 is the byte stream to be written
-    rs_data_ptr->data.data = file_manager_ptr_->writeFileStream(&rq_data_ptr->data2.data, length, rq_data_ptr->data1.data);//data1 is file path.
-    
+    long length = rq_data_ptr->data2.data.size;// data2 is the byte stream to be written
+    if (length < 65535)
+    {
+        rs_data_ptr->data.data = file_manager_ptr_->writeFileStream(&rq_data_ptr->data2.data, length, rq_data_ptr->data1.data);//data1 is file path.
+    }
+    else
+    {
+        rs_data_ptr->data.data = FILE_MANAGER_WRITE_FILE_FAILED;
+    }
+   
     FST_INFO("rpc-writeFile: %s, ret = 0x%llx\n", &rq_data_ptr->data1.data, rs_data_ptr->data.data);
 }
 

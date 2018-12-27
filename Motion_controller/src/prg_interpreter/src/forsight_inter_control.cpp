@@ -708,6 +708,14 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             FST_INFO("step BACKWARD to %d ", iLineNum);
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);
 			iLineNum-- ;
+			
+			if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
+			 ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
+			{
+				FST_ERROR("Can not BACKWARD to %d(%d).",
+					iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+				break ;
+			}
 		    setLinenum(objThdCtrlBlockPtr, iLineNum);
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 

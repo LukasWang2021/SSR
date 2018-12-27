@@ -72,7 +72,7 @@ ErrorCode IoManager::init(fst_hal::DeviceManager* device_manager_ptr)
     device_manager_ptr_ = device_manager_ptr;
     device_list_ = device_manager_ptr_->getDeviceList();
 
-    // thread to fresh data.
+    // thread only start one time.
     if (is_running_ == true)
         return SUCCESS;
     if(!thread_ptr_.run(&ioManagerRoutineThreadFunc, this, 20))
@@ -168,7 +168,6 @@ std::vector<fst_hal::IODeviceInfo> IoManager::getIODeviceInfoList(void)
             }
             case DEVICE_TYPE_VIRTUAL_IO:
             {
-                //code for virtual io
                 VirtualIoDevice* virtual_io_ptr = static_cast<VirtualIoDevice*>(device_ptr);
                 info = virtual_io_ptr->getDeviceInfo();
                 info_list.push_back(info);
@@ -248,7 +247,6 @@ ErrorCode IoManager::getDiValue(PhysicsID phy_id, uint8_t &value)
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
-            // code for virtual io 
             VirtualIoDevice* virtual_io_ptr = static_cast<VirtualIoDevice*>(device_ptr);
             return virtual_io_ptr->getDiValue(phy_id.info.port, value);
         }
@@ -293,7 +291,6 @@ ErrorCode IoManager::getDoValue(PhysicsID phy_id, uint8_t &value)
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
-            // code for virtual io 
             VirtualIoDevice* virtual_io_ptr = static_cast<VirtualIoDevice*>(device_ptr);
             return virtual_io_ptr->getDoValue(phy_id.info.port, value);
         }
@@ -517,20 +514,20 @@ ErrorCode IoManager::updateIoDevicesData(void)
             case DEVICE_TYPE_FST_IO:
             {
                 BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list_[i].index);
-                //if(device_ptr == NULL) break; //if deconstruction, thread stop calling.
+                if(device_ptr == NULL) break; //if devices instance are deconstructed, thread stop calling.
                 FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
                 ret = io_device_ptr->updateDeviceData();
                 if (ret != SUCCESS)
                 {
-                    //FST_ERROR("Failed to get io data");
-                    if (pre_ret != ret) //only upload error one time.
-                    {
+                    //only upload error one time.
+                    if (pre_ret != ret) 
+                    {     
+                        //FST_ERROR("Failed to get io data");                  
                         ErrorMonitor::instance()->add(ret);
-                        pre_ret = ret;
                     }
-                    break;
                 }
                 pre_ret = ret;
+                break;
             }
             case DEVICE_TYPE_MODBUS: break;
             default: break;

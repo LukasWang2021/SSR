@@ -63,11 +63,14 @@ public:
     ErrorCode getBitValue(PhysicsID phy_id, uint8_t &value);
     ErrorCode setBitValue(PhysicsID phy_id, uint8_t value);
 
-    std::vector<fst_hal::IODeviceInfo> getIODeviceInfoList(void); //get all io devices info, including io_board and modbus.
+    //get all io devices info, including io_board and modbus.
+    std::vector<fst_hal::IODeviceInfo> getIODeviceInfoList(void); 
+    
+    //get io_board info
+    ErrorCode getIODeviceInfo(uint8_t address, fst_hal::IODeviceInfo &info); 
 
-    ErrorCode getIODeviceInfo(uint8_t address, fst_hal::IODeviceInfo &info);//get io_board info 
-
-    ErrorCode getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values);// get io_board values
+    //get io_board values
+    ErrorCode getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values);
 
 private:
 

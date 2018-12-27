@@ -2127,7 +2127,9 @@ struct select_and_cycle_stack select_and_cycle_pop(
   {
       select_and_cycle_stack fake ;
 	  serror(objThreadCntrolBlock, 11);
-      memset(&fake, 0x00, sizeof(select_and_cycle_stack));
+      // memset(&fake, 0x00, sizeof(select_and_cycle_stack));
+      fake.itokentype = ILLTOK ;
+	  FST_ERROR("objThreadCntrolBlock->select_and_cycle_tos<0"); 
 	  return fake ;
   }
   else 

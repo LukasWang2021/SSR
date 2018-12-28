@@ -170,8 +170,8 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/program_launching/getMethod",	0x00010944,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00010944,	&TpComm::handleResponse0x00010944,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/program_launching/syncFileMacroConfig",	0x00016B27,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00016B27,	&TpComm::handleResponse0x00016B27,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
-	rpc_service =	{	"/rpc/file_manager/readFile",	0x0000A545,	"RequestMessageType.String",	"ResponseMessageType.Uint64_Bytes",	&TpComm::handleRequest0x0000A545,	&TpComm::handleResponse0x0000A545,	Comm_Authority_ADMINISTRATOR,	};	 rpc_table_.push_back(rpc_service);	
-	rpc_service =	{	"/rpc/file_manager/writeFile",	0x00010D95,	"RequestMessageType.String_Bytes",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010D95,	&TpComm::handleResponse0x00010D95,	Comm_Authority_ADMINISTRATOR,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/file_manager/readFile",	0x0000A545,	"RequestMessageType.String",	"ResponseMessageType.Uint64_Bytes",	&TpComm::handleRequest0x0000A545,	&TpComm::handleResponse0x0000A545,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/file_manager/writeFile",	0x00010D95,	"RequestMessageType.String_Bytes",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010D95,	&TpComm::handleResponse0x00010D95,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
 	rpc_service =	{	"/rpc/modbus/setStartMode",	0x0000D3A5,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000D3A5,	&TpComm::handleResponse0x0000D3A5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/getStartMode",	0x000041C5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000041C5,	&TpComm::handleResponse0x000041C5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	

@@ -151,8 +151,8 @@ std::vector<fst_hal::IODeviceInfo> IoManager::getIODeviceInfoList(void)
                 info.address = modbus_manager_ptr->getAddress();
                 info.is_valid = modbus_manager_ptr->isValid();
 
-                ModbusServerRegInfo modbus_info;
-                ErrorCode ret = modbus_manager_ptr->getServerRegInfoFromServer(modbus_info);
+                ModbusRegAddrInfo addr_info;
+                ErrorCode ret = modbus_manager_ptr->getServerConfigCoilInfo(addr_info);
                 if (ret != SUCCESS)
                 {
                     info.DI_num = 0;
@@ -160,9 +160,13 @@ std::vector<fst_hal::IODeviceInfo> IoManager::getIODeviceInfoList(void)
                 }
                 else
                 {
-                    info.DI_num = modbus_info.discrepte_input.max_nb;
-                    info.DO_num = modbus_info.coil.max_nb;
+                    info.DO_num = addr_info.max_nb;
                 }
+
+                ret = modbus_manager_ptr->getServerConfigDiscrepteInputInfo(addr_info);
+                if (ret != SUCCESS) info.DI_num = 0;
+                else info.DI_num = addr_info.max_nb;
+
                 info_list.push_back(info);
                 break;
             }

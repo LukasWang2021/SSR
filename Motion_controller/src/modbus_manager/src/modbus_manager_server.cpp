@@ -13,7 +13,7 @@ using namespace fst_hal;
 
 ErrorCode ModbusManager::openServer()
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER)
        return MODBUS_START_MODE_ERROR;
 
     if (server_ != NULL && server_->isRunning())
@@ -33,7 +33,7 @@ ErrorCode ModbusManager::openServer()
 
 ErrorCode ModbusManager::closeServer()
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER)
        return MODBUS_START_MODE_ERROR;
 
     if (server_ != NULL && server_->isRunning())
@@ -44,89 +44,110 @@ ErrorCode ModbusManager::closeServer()
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::setConnectStatusToServer(bool &status)
+bool ModbusManager::isServerRunning()
 {
-    if (start_mode_ != MODBUS_TCP_SERVER)
-       return MODBUS_START_MODE_ERROR;
-
-    return server_->setConnectStatus(status);
+    return server_->isRunning();
 }
 
-ErrorCode ModbusManager::getConnectStatusFromServer(bool &status)
+ErrorCode ModbusManager::setServerEnableStatus(bool &status)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER)
        return MODBUS_START_MODE_ERROR;
 
-    status = server_->getConnectStatus();
+    return server_->setEnableStatus(status);
+}
 
+ErrorCode ModbusManager::getServerEnableStatus(bool &status)
+{
+    if (start_mode_ != MODBUS_SERVER) 
+       return MODBUS_START_MODE_ERROR;
+
+    status = server_->getEnableStatus();
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::setConfigToServer(ModbusServerConfig &config)
+ErrorCode ModbusManager::setServerStartInfo(ModbusServerStartInfo &start_info)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
-    return server_->setConfig(config);
+    return server_->setStartInfo(start_info);
 }
 
-ErrorCode ModbusManager::getConfigFromServer(ModbusServerConfig &config)
+ErrorCode ModbusManager::getServerStartInfo(ModbusServerStartInfo &start_info)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
-    config =  server_->getConfig();
+    start_info =  server_->getStartInfo();
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::getCoilInfoFromServer(ModbusRegAddrInfo &info)
+ErrorCode ModbusManager::setServerRegInfo(ModbusServerRegInfo &config_reg_info)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
-    info = server_->getCoilInfo();
+    return server_->setRegInfo(config_reg_info);
+}
+
+ErrorCode ModbusManager::getServerRegInfo(ModbusServerRegInfo &config_reg_info)
+{
+    if (start_mode_ != MODBUS_SERVER) 
+       return MODBUS_START_MODE_ERROR;
+
+    config_reg_info = server_->getRegInfo();
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::getDiscrepteInputInfoFromServer(ModbusRegAddrInfo &info)
+ErrorCode ModbusManager::getServerConfigCoilInfo(ModbusRegAddrInfo &info)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER)  
+    if (start_mode_ != MODBUS_SERVER)
        return MODBUS_START_MODE_ERROR;
 
-    info = server_->getDiscrepteInputInfo();
+    info = server_->getConfigCoilInfo();
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::getHoldingRegInfoFromServer(ModbusRegAddrInfo &info)
+ErrorCode ModbusManager::getServerConfigDiscrepteInputInfo(ModbusRegAddrInfo &info)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER)  
        return MODBUS_START_MODE_ERROR;
 
-    info = server_->getHoldingRegInfo();
+    info = server_->getConfigDiscrepteInputInfo();
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::getInputRegInfoFromServer(ModbusRegAddrInfo &info)
+ErrorCode ModbusManager::getServerConfigHoldingRegInfo(ModbusRegAddrInfo &info)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER)  
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
-    info = server_->getInputRegInfo();
+    info = server_->getConfigHoldingRegInfo();
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::getStartInfoFromServer(ModbusServerStartInfo &info)
+ErrorCode ModbusManager::getServerConfigParams(ModbusServerConfigParams &params)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
-    info = server_->getStartInfo();
+    params = server_->getConfigParams();
+    return SUCCESS;
+}
+
+ErrorCode ModbusManager::getServerConfigInputRegInfo(ModbusRegAddrInfo &info)
+{
+    if (start_mode_ != MODBUS_SERVER)  
+       return MODBUS_START_MODE_ERROR;
+
+    info = server_->getConfigInputRegInfo();
     return SUCCESS;
 }
 
 ErrorCode ModbusManager::writeCoilsToServer(int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER)
+    if (start_mode_ != MODBUS_SERVER)
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
@@ -137,7 +158,7 @@ ErrorCode ModbusManager::writeCoilsToServer(int addr, int nb, uint8_t *dest)
 
 ErrorCode ModbusManager::readCoilsFromServer(int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
@@ -148,7 +169,7 @@ ErrorCode ModbusManager::readCoilsFromServer(int addr, int nb, uint8_t *dest)
 
 ErrorCode ModbusManager::readDiscreteInputsFromServer(int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER)  
+    if (start_mode_ != MODBUS_SERVER)  
         return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
@@ -159,7 +180,7 @@ ErrorCode ModbusManager::readDiscreteInputsFromServer(int addr, int nb, uint8_t 
 
 ErrorCode ModbusManager::writeHoldingRegsToServer(int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
@@ -170,7 +191,7 @@ ErrorCode ModbusManager::writeHoldingRegsToServer(int addr, int nb, uint16_t *de
 
 ErrorCode ModbusManager::readHoldingRegsFromServer(int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER) 
+    if (start_mode_ != MODBUS_SERVER) 
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
@@ -181,44 +202,11 @@ ErrorCode ModbusManager::readHoldingRegsFromServer(int addr, int nb, uint16_t *d
 
 ErrorCode ModbusManager::readInputRegsFromServer(int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ != MODBUS_TCP_SERVER)
+    if (start_mode_ != MODBUS_SERVER)
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
         return MODBUS_SERVER_BE_NOT_OPENED;
 
     return server_->readInputRegs(addr, nb, dest);
-}
-
-bool ModbusManager::isServerRunning()
-{
-    return server_->isRunning();
-}
-
-ErrorCode ModbusManager::getServerRegInfoFromServer(ModbusServerRegInfo &info)
-{
-    if (start_mode_ != MODBUS_TCP_SERVER) 
-       return MODBUS_START_MODE_ERROR;
-
-    info.coil = server_->getCoilInfo();
-    info.discrepte_input = server_->getDiscrepteInputInfo();
-    info.holding_reg = server_->getInputRegInfo();
-    info.input_reg = server_->getHoldingRegInfo();
-    return SUCCESS;
-}
-
-ErrorCode ModbusManager::getValidRegInfoFromServer(int reg_type, ModbusRegAddrInfo info)
-{
-    if (start_mode_ != MODBUS_TCP_SERVER) 
-       return MODBUS_START_MODE_ERROR;
-
-    return server_->getValidRegInfo(reg_type, info);
-}
-
-ErrorCode ModbusManager::getResponseDelayFromServer(int response_delay)
-{
-    if (start_mode_ != MODBUS_TCP_SERVER) 
-       return MODBUS_START_MODE_ERROR;
-
-    response_delay = server_->getResponseDelay();
 }

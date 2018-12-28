@@ -27,13 +27,12 @@
 #include "request/request_int32_bool.pb.h"
 #include "request/request_string_bytes.pb.h"
 
-#include "request/request_modbus_status_addr_info.pb.h"
-#include "request/request_modbus_client_config.pb.h"
-#include "request/request_modbus_reg_addr_info.pb.h"
-#include "request/request_modbus_reg_info.pb.h"
-#include "request/request_modbus_server_config.pb.h"
 #include "request/request_modbus_start_mode.pb.h"
-#include "request/request_modbus_status_info.pb.h"
+#include "request/request_int32_modbus_reg_info.pb.h"
+#include "request/request_int32_modbus_status_info.pb.h"
+#include "request/request_int32_modbus_function_addr_info.pb.h"
+#include "request/request_modbus_server_all_function_addr_info.pb.h"
+#include "request/request_modbus_server_start_info.pb.h"
 
 
 #include "message_type/base.pb.h"
@@ -74,13 +73,11 @@
 
 #include "message_type/timeval.pb.h"
 
-#include "message_type/modbus_client_config.pb.h"
-#include "message_type/modbus_client_summaryinfo.pb.h"
+#include "message_type/modbus_start_mode.pb.h"
 #include "message_type/modbus_function.pb.h"
-#include "message_type/modbus_reg_info.pb.h"
 #include "message_type/modbus_server_config.pb.h"
 #include "message_type/modbus_server_start_info.pb.h"
-#include "message_type/modbus_start_mode.pb.h"
+#include "message_type/modbus_reg_info.pb.h"
 #include "message_type/modbus_status_info.pb.h"
 
 #include "response/response_base.pb.h"
@@ -115,13 +112,10 @@
 #include "response/response_uint64_uint64list.pb.h"
 #include "response/response_file.pb.h"
 
-#include "response/response_modbus_client_config.pb.h"
-#include "response/response_modbus_client_summaryinfo.pb.h"
-#include "response/response_modbus_reg_valuelist.pb.h"
-#include "response/response_modbus_server_config.pb.h"
-#include "response/response_modbus_server_start_info.pb.h"
 #include "response/response_modbus_start_mode.pb.h"
-#include "response/response_modbus_status_valuelist.pb.h"
-#include "response/response_modbus_function_info.pb.h"
-
+#include "response/response_uint64_modbus_all_funtion_addr_info.pb.h"
+#include "response/response_uint64_modbus_server_config_params.pb.h"
+#include "response/response_uint64_modbus_server_start_info.pb.h"
+#include "response/response_uint64_modbus_status_info.pb.h"
+#include "response/response_uint64_modbus_reg_info.pb.h"
 #endif

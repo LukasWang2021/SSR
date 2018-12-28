@@ -1,5 +1,5 @@
-#ifndef MODBUS_SERVER_PARAM
-#define MODBUS_SERVER_PARAM
+#ifndef _MODBUS_SERVER_PARAM_HPP
+#define _MODBUS_SERVER_PARAM_HPP
 
 #include <string>
 #include <mutex>
@@ -7,37 +7,12 @@
 
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_file_path.h"
+
+#include "modbus_server_config_param.h"
 using namespace std;
 
 namespace fst_hal
 {
-struct ModbusServerStartInfo
-{
-    string ip;
-    int port;
-};
-
-struct ModbusRegAddrInfo
-{
-    int addr;
-    int max_nb;
-    bool is_valid;
-};
-
-
-struct ModbusServerRegInfo
-{
-    ModbusRegAddrInfo coil;
-    ModbusRegAddrInfo discrepte_input;
-    ModbusRegAddrInfo holding_reg;
-    ModbusRegAddrInfo input_reg;
-};
-
-struct ModbusServerConfig
-{
-    int response_delay;
-    ModbusServerRegInfo reg_info;
-};
 
 class ModbusServerParam
 {
@@ -46,27 +21,18 @@ public:
     ~ModbusServerParam(){}
 
     bool loadParam();
-
-    bool loadConfig();
-    bool saveConfig();
-    bool saveCoilInfo();
-    bool saveDiscrepteInputInfo();
-    bool saveHoldingRegInfo();
-    bool saveInputRegInfo();
-
-    bool saveConnectStatus();
+    bool saveParam();
 
     int log_level_;
-    int port_;
     int cycle_time_;
+    int thread_priority_;
+    string comm_type_; 
+    int port_;
+
     int connection_nb_;
     bool is_debug_;
-    bool is_enable_;
-    string comm_type_;
-    ModbusServerRegInfo reg_info_;
-    ModbusServerConfig config_;
 
-    int thread_priority_;
+    ModbusServerRegInfo reg_info_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

@@ -34,15 +34,16 @@ Summary:    dealing with safety board
 #define SAFETY_OUTPUT_FIRSTFRAME    0x0201
 #define SAFETY_OUTPUT_SECONDFRAME	0x0202
 
-#define ERR_SAFETY_FILE_OPEN (unsigned long long int)0x00010002008E0001   /*can't open file when initializing safety board*/
-#define ERR_SAFETY_FILE_MAP (unsigned long long int)0x00010002008E0002   /*Mapping is failed.*/
-#define ERR_SAFETY_RECV_CMD (unsigned long long int)0x00010002008E0015   /*Command is not received from the safety board*/
-#define ERR_SAFETY_NOT_CONNECT (unsigned long long int)0x00010002008E0016   /*Safety board is not connected with, and there is not heartbeat from the safety board.*/
-#define ERR_SAFETY_RECV_DIFF (unsigned long long int)0x00010007008E0017   /*The data from two safety MCUs are different.*/
-#define ERR_SAFETY_PTHREAD_INIT (unsigned long long int)0x00000001008E001F   /*Mutex initialization is failed.*/
-#define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x00000001008E0020   /*Mutex lock is failed*/
-#define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x00000001008E0021   /*Mutex unlock is failed*/
-#define ERR_SAFETY_FRAME (unsigned long long int)0x00000001008E0029   /*The frame is out of range.*/
+#define ERR_SAFETY_FILE_OPEN (unsigned long long int)0x0011000200AF0001   /*can't open file when initializing safety board*/
+#define ERR_SAFETY_FILE_MAP (unsigned long long int)0x0011000200AF0002   /*Mapping is failed.*/
+#define ERR_SAFETY_RECV_CMD (unsigned long long int)0x0001000200AF0003   /*Command is not received from the safety board*/
+#define ERR_SAFETY_NOT_CONNECT (unsigned long long int)0x0001000200AF0004   /*Safety board is not connected with, and there is not heartbeat from the safety board.*/
+#define ERR_SAFETY_RECV_DIFF (unsigned long long int)0x0001000200AF0005   /*The data from two safety MCUs are different.*/
+#define ERR_SAFETY_PTHREAD_INIT (unsigned long long int)0x0011000200AF0006   /*Mutex initialization is failed.*/
+#define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x0001000200AF0007   /*Mutex lock is failed*/
+#define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x0001000200AF0008   /*Mutex unlock is failed*/
+#define ERR_SAFETY_FRAME (unsigned long long int)0x0001000200AF0009   /*The frame is out of range.*/
+
 
 #ifdef __cplusplus
 extern "C" {

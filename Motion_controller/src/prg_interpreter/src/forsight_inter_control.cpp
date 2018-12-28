@@ -674,8 +674,9 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			if(lastCmd == fst_base::INTERPRETER_SERVER_CMD_FORWARD)
 			{
 			    // In this circumstance, 
-			    // call calc_line_from_prog to get the next FORWARD line.
-			    iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
+			    // we need not call calc_line_from_prog to get the next FORWARD line.
+				// Just execute last statemant
+			    iLineNum = getLinenum(objThdCtrlBlockPtr);
 				if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
 				 ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
 				{
@@ -683,7 +684,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 						iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
 					break ;
 				}
-				iLineNum-- ;
+				// In fact, It does nothing
+				// iLineNum-- ;
 		    	setLinenum(objThdCtrlBlockPtr, iLineNum);
             	FST_INFO("JMP to %d(%d) in the FORWARD -> BACKWARD .", 
 					iLineNum,    objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);

@@ -1,0 +1,211 @@
+ModbusClient1:
+    id: 1 #50
+    name: ModbusClient1
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient2:
+    id: 2
+    name: ModbusClient2
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient3:
+    id: 3
+    name: ModbusClient3
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient4:
+    id: 4
+    name: ModbusClient4
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient5:
+    id: 5
+    name: ModbusClient5
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient6:
+    id: 6
+    name: ModbusClient6
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient7:
+    id: 7
+    name: ModbusClient7
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient8:
+    id: 8
+    name: ModbusClient8
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient9:
+    id: 9
+    name: ModbusClient9
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+ModbusClient10:
+    id: 10
+    name: ModbusClient10
+    ip: 192.168.1.102
+    port: 502
+    scan_rate: 200 #ms
+    response_timeout: 2000 #ms
+    reg_info:
+        coil:
+            addr: 1
+            max_nb: 1024
+        discrepte_input:
+            addr: 1
+            max_nb: 1024
+        input_register:
+            addr: 1
+            max_nb: 1024
+        holding_register:
+            addr: 1
+            max_nb: 1024
+    is_enable: false
+#END

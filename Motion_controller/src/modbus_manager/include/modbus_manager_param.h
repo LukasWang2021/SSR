@@ -1,5 +1,5 @@
-#ifndef MODBUS_MANAGER_PARAM
-#define MODBUS_MANAGER_PARAM
+#ifndef _MODBUS_MANAGER_PARAM_HPP
+#define _MODBUS_MANAGER_PARAM_HPP
 
 #include <string>
 #include <mutex>
@@ -20,16 +20,18 @@ public:
     bool loadParam();
     bool saveParam();
     bool saveStartMode();
-    bool saveClientScanRate();
 
     int log_level_;
     int start_mode_;
-    int client_scan_rate_;
-    string tcp_server_file_name_;
-    string tcp_client_file_name_;
-
-    string client_file_path_;
+    string server_file_name_;
     string server_file_path_;
+    string server_config_file_name_;
+    string server_config_file_path_;
+
+    string client_file_name_;
+    string client_config_file_name_;
+    string client_file_path_;
+    string client_config_file_path_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

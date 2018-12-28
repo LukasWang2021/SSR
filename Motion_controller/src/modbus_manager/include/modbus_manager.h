@@ -1,29 +1,25 @@
-#ifndef MODBUS_MANAGER
-#define MODBUS_MANAGER
+#ifndef _MODBUS_MANAGER_HPP
+#define _MODBUS_MANAGER_HPP
 
 #include <string>
 #include <mutex>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "net_connection.h"
 #include "common_log.h"
 #include "base_device.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 
-#include "tcp_client.h"
-#include "tcp_server.h"
-
 #include "modbus_manager_param.h"
-#include "modbus_client_param.h"
-#include "modbus_server_param.h"
+#include "modbus_client_manager.h"
+#include "modbus_server.h"
 
 using namespace std;
 using namespace fst_hal;
 
 namespace fst_hal
 {
-enum ModbusStartMode{MODBUS_TCP_INVALID = 0, MODBUS_TCP_CLIENT = 1, MODBUS_TCP_SERVER = 2, };
+enum ModbusStartMode{MODBUS_START_MODE_INVALID = 0, MODBUS_CLIENT = 1, MODBUS_SERVER = 2, };
 class ModbusManager: public BaseDevice
 {
 public:
@@ -31,13 +27,10 @@ public:
     ~ModbusManager();
 
     bool init();
-    bool isValid();
+    bool isModbusValid();
 
     ErrorCode setStartMode(int start_mode); // enum ModbusStartMode
     int getStartMode();
-
-    ErrorCode setScanRate(int scan_rate);
-    int getScanRate();
 
     ErrorCode writeCoils(int id, int addr, int nb, uint8_t *dest);
     ErrorCode readCoils(int id, int addr, int nb, uint8_t *dest);
@@ -51,47 +44,44 @@ public:
     ErrorCode closeServer();
     bool isServerRunning();
 
-    ErrorCode setConnectStatusToServer(bool &status);
-    ErrorCode getConnectStatusFromServer(bool &status);
-    ErrorCode setConfigToServer(ModbusServerConfig &config);
-    ErrorCode getConfigFromServer(ModbusServerConfig &config);
-    ErrorCode getValidRegInfoFromServer(int reg_type, ModbusRegAddrInfo info);
-    ErrorCode getResponseDelayFromServer(int response_delay);
+    ErrorCode setServerEnableStatus(bool &status);
+    ErrorCode getServerEnableStatus(bool &status);
+    ErrorCode setServerStartInfo(ModbusServerStartInfo &start_info);
+    ErrorCode getServerStartInfo(ModbusServerStartInfo &start_info);
+    ErrorCode setServerRegInfo(ModbusServerRegInfo &config_reg_info);
+    ErrorCode getServerRegInfo(ModbusServerRegInfo &config_reg_info);
+    ErrorCode getServerConfigParams(ModbusServerConfigParams &params);
 
-    ErrorCode getCoilInfoFromServer(ModbusRegAddrInfo &info); 
-    ErrorCode getDiscrepteInputInfoFromServer(ModbusRegAddrInfo &info);
-    ErrorCode getHoldingRegInfoFromServer(ModbusRegAddrInfo &info);
-    ErrorCode getInputRegInfoFromServer(ModbusRegAddrInfo &info);
-    ErrorCode getServerRegInfoFromServer(ModbusServerRegInfo &info);
-    ErrorCode getStartInfoFromServer(ModbusServerStartInfo &info);
+    ErrorCode getServerConfigCoilInfo(ModbusRegAddrInfo &info); 
+    ErrorCode getServerConfigDiscrepteInputInfo(ModbusRegAddrInfo &info);
+    ErrorCode getServerConfigHoldingRegInfo(ModbusRegAddrInfo &info);
+    ErrorCode getServerConfigInputRegInfo(ModbusRegAddrInfo &info);
 
     // for client
-    ErrorCode addClient(int client_id);
+    ErrorCode addClient(ModbusClientStartInfo start_info);
     ErrorCode deleteClient(int client_id);
+    ErrorCode getRunningClientIdList(vector<int> &id_list);
+    ErrorCode getClientIdList(vector<int> &id_list);
+    ErrorCode getClientConfigParamsList(vector<ModbusClientConfigParams> &client_config_params_list);
+
+    ErrorCode getClientCtrlState(int client_id, int ctrl_state);
     ErrorCode openClient(int client_id);
-    ErrorCode closeClient(int client_id); // to modify
-    void getClientIdAndName(int id, string name);
-    bool isClientRunning(int client_id);
+    ErrorCode closeClient(int client_id);
 
-    ErrorCode setConnectStatusToClient(int client_id, bool status);
-    ErrorCode getConnectStatusFromClient(int client_id, bool status);
+    ErrorCode setClientEnableStatus(int client_id, bool status);
+    ErrorCode setClientRegInfo(int client_id, ModbusClientRegInfo reg_info);
+    ErrorCode updateClientStartInfo(int client_id, ModbusClientStartInfo start_info);
 
-    ErrorCode setConfigToClient(int client_id, ModbusClientConfig config);
-    ErrorCode getConfigFromClient(int client_id, ModbusClientConfig config); // to modify
+    ErrorCode getClientStartInfo(int client_id, ModbusClientStartInfo start_info);
+    ErrorCode getClientEnableStatus(int client_id, bool status);
+    ErrorCode getClientRegInfo(int client_id, ModbusClientRegInfo reg_info);
 
 private:
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
-    NetConnection net_connect_;
 
-    string server_ip_;
-    int server_port_;
-
-    int client_scan_rate_;
-    fst_base::ThreadHelp thread_ptr_;
-
-    ModbusTCPClient* client_;
-    ModbusTCPServer* server_;
+    ModbusClientManager* client_manager_ptr_;
+    ModbusServer* server_;
 
     int start_mode_;
     int address_;
@@ -118,4 +108,4 @@ private:
 
 #endif
 
-//void modbusTcpAllClientRoutineThreadFunc(void* arg);
+

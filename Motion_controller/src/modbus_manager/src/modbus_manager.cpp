@@ -12,11 +12,10 @@ using namespace std;
 using namespace fst_hal;
 
 ModbusManager::ModbusManager(int address):
-    BaseDevice(address, fst_hal::DEVICE_TYPE_MODBUS),address_(address),
+    BaseDevice(address, fst_hal::DEVICE_TYPE_MODBUS), address_(address),
     log_ptr_(NULL), param_ptr_(NULL),
-    client_(NULL), server_(NULL),
-    server_ip_(""), server_port_(-1),
-    start_mode_(MODBUS_TCP_INVALID), client_scan_rate_(0)
+    client_manager_ptr_(NULL), server_(NULL),
+    start_mode_(MODBUS_START_MODE_INVALID)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();
@@ -25,11 +24,10 @@ ModbusManager::ModbusManager(int address):
 }
 
 ModbusManager::ModbusManager():
-    address_(0),BaseDevice(address_, fst_hal::DEVICE_TYPE_MODBUS),
+    BaseDevice(0, fst_hal::DEVICE_TYPE_MODBUS), address_(0),
     log_ptr_(NULL), param_ptr_(NULL),
-    client_(NULL), server_(NULL),
-    server_ip_(""), server_port_(-1),
-    start_mode_(MODBUS_TCP_INVALID), client_scan_rate_(0)
+    client_manager_ptr_(NULL), server_(NULL),
+    start_mode_(MODBUS_START_MODE_INVALID)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new ModbusManagerParam();
@@ -40,24 +38,37 @@ ModbusManager::ModbusManager():
 bool ModbusManager::init()
 {
     if(!param_ptr_->loadParam())
-        return false; //load param error
+        return false;
 
     if (server_ == NULL)
-        server_ = new ModbusTCPServer(param_ptr_->server_file_path_);
+        server_ = new ModbusServer(param_ptr_->server_file_path_, param_ptr_->server_config_file_path_);
+
+    FST_ERROR("server_file_path_ = %s", param_ptr_->server_file_path_.c_str());
+    FST_ERROR("server_config_file_path_ = %s", param_ptr_->server_config_file_path_.c_str());
+    FST_ERROR("client_file_path_ = %s", param_ptr_->client_file_path_.c_str());
+    FST_ERROR("client_config_file_path_ = %s", param_ptr_->client_config_file_path_.c_str());
 
     if (server_->initParam() != SUCCESS)
         return false;
+
+    if (client_manager_ptr_ == NULL)
+        client_manager_ptr_ = new ModbusClientManager(
+            param_ptr_->client_file_path_, param_ptr_->client_config_file_path_);
+
+    if (client_manager_ptr_->initParam() != SUCCESS)
+        return false;
+
     return true;
 }
 
 ModbusManager::~ModbusManager()
 {
-    if (client_ != NULL)
+    if (client_manager_ptr_ != NULL)
     {
-        client_->closeClient();
-        delete client_;
-        client_ = NULL;
+        delete client_manager_ptr_;
+        client_manager_ptr_ = NULL;
     }
+
     if (server_ != NULL)
     {
         server_->closeServer();
@@ -84,68 +95,52 @@ ErrorCode ModbusManager::setStartMode(int start_mode)
         return SUCCESS;
     }
 
-    if (start_mode == MODBUS_TCP_SERVER)
+    if (start_mode == MODBUS_SERVER) //client transform to server
     {
-        if (client_ != NULL)
+        if (!client_manager_ptr_->isAnyClientClosed())
         {
-            if (client_->isRunning()) return MODBUS_CLIENT_IS_RUNNING;
-            return MODBUS_CLIENT_IS_ADDED;
+            return 0x12345678; // MODBUS_CLIENT_IS_RUNNING
         }
 
         param_ptr_->start_mode_ = start_mode;
         if (!param_ptr_->saveStartMode()) return MODBUS_MANAGER_SAVE_PARAM_FAILED;
+
         start_mode_ = param_ptr_->start_mode_;
+        return SUCCESS;
     }
-    else if (start_mode == MODBUS_TCP_CLIENT)
+    else if (start_mode == MODBUS_CLIENT)  //  server transform to client
     {
-        if (server_ != NULL && server_->isRunning())
+        if (server_->isRunning())
         {
             return MODBUS_SERVER_IS_RUNNING;
         }
 
         param_ptr_->start_mode_ = start_mode;
         if (!param_ptr_->saveStartMode()) return MODBUS_MANAGER_SAVE_PARAM_FAILED;
+
         start_mode_ = param_ptr_->start_mode_;
+        return SUCCESS;
     }
     else
     {
         return MODBUS_START_MODE_ERROR;
     }
-
-    return SUCCESS;
 }
+
 
 int ModbusManager::getStartMode()
 {
     return start_mode_;
 }
 
-ErrorCode ModbusManager::setScanRate(int scan_rate)
-{
-    param_ptr_->client_scan_rate_ = scan_rate;
-
-    if (!param_ptr_->saveClientScanRate())
-    {
-        return MODBUS_MANAGER_SAVE_PARAM_FAILED;
-    }
-
-    client_scan_rate_ = scan_rate;
-    return SUCCESS;
-}
-
-int ModbusManager::getScanRate()
-{
-    return client_scan_rate_;
-}
-
 ErrorCode ModbusManager::writeCoils(int id, int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ == MODBUS_TCP_SERVER)
+    if (start_mode_ == MODBUS_SERVER)
     {
         return writeCoilsToServer(addr, nb, dest);
     }
 
-    if (start_mode_ == MODBUS_TCP_CLIENT)
+    if (start_mode_ == MODBUS_CLIENT)
     {
         return writeCoilsByClient(id, addr, nb, dest);
     }
@@ -155,12 +150,12 @@ ErrorCode ModbusManager::writeCoils(int id, int addr, int nb, uint8_t *dest)
 
 ErrorCode ModbusManager::readCoils(int id, int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ == MODBUS_TCP_SERVER)
+    if (start_mode_ == MODBUS_SERVER)
     {
         return readCoilsFromServer(addr, nb, dest);
     }
 
-    if (start_mode_ == MODBUS_TCP_CLIENT)
+    if (start_mode_ == MODBUS_CLIENT)
     {
         return readCoilsByClient(id, addr, nb, dest);
     }
@@ -170,12 +165,12 @@ ErrorCode ModbusManager::readCoils(int id, int addr, int nb, uint8_t *dest)
 
 ErrorCode ModbusManager::readDiscreteInputs(int id, int addr, int nb, uint8_t *dest)
 {
-    if (start_mode_ == MODBUS_TCP_SERVER)
+    if (start_mode_ == MODBUS_SERVER)
     {
         return readDiscreteInputsFromServer(addr, nb, dest);
     }
 
-    if (start_mode_ == MODBUS_TCP_CLIENT)
+    if (start_mode_ == MODBUS_CLIENT)
     {
         return readDiscreteInputsByClient(id, addr, nb, dest);
     }
@@ -185,12 +180,12 @@ ErrorCode ModbusManager::readDiscreteInputs(int id, int addr, int nb, uint8_t *d
 
 ErrorCode ModbusManager::writeHoldingRegs(int id, int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ == MODBUS_TCP_SERVER)
+    if (start_mode_ == MODBUS_SERVER)
     {
         return writeHoldingRegsToServer(addr, nb, dest);
     }
 
-    if (start_mode_ == MODBUS_TCP_CLIENT)
+    if (start_mode_ == MODBUS_CLIENT)
     {
         return writeHoldingRegsByClient(id, addr, nb, dest);
     }
@@ -200,12 +195,12 @@ ErrorCode ModbusManager::writeHoldingRegs(int id, int addr, int nb, uint16_t *de
 
 ErrorCode ModbusManager::readHoldingRegs(int id, int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ == MODBUS_TCP_SERVER)
+    if (start_mode_ == MODBUS_SERVER)
     {
         return readHoldingRegsFromServer(addr, nb, dest);
     }
 
-    if (start_mode_ == MODBUS_TCP_CLIENT)
+    if (start_mode_ == MODBUS_CLIENT)
     {
         return readHoldingRegsByClient(id, addr, nb, dest);
     }
@@ -215,12 +210,12 @@ ErrorCode ModbusManager::readHoldingRegs(int id, int addr, int nb, uint16_t *des
 
 ErrorCode ModbusManager::readInputRegs(int id, int addr, int nb, uint16_t *dest)
 {
-    if (start_mode_ == MODBUS_TCP_SERVER)
+    if (start_mode_ == MODBUS_SERVER)
     {
         return readInputRegsFromServer(addr, nb, dest);
     }
 
-    if (start_mode_ == MODBUS_TCP_CLIENT)
+    if (start_mode_ == MODBUS_CLIENT)
     {
         return readInputRegsByClient(id, addr, nb, dest);
     }
@@ -228,28 +223,20 @@ ErrorCode ModbusManager::readInputRegs(int id, int addr, int nb, uint16_t *dest)
     return MODBUS_START_MODE_ERROR;
 }
 
-bool ModbusManager::isValid()
+bool ModbusManager::isModbusValid()
 {
-    if (start_mode_ == MODBUS_TCP_SERVER && isServerRunning())
+    if (start_mode_ == MODBUS_SERVER && isServerRunning())
     {
+        setValid(true);
         return true;
     }
 
-    if (start_mode_ == MODBUS_TCP_CLIENT && isClientRunning(client_->getId()))
+    if (start_mode_ == MODBUS_CLIENT && !client_manager_ptr_->isAnyClientClosed())
     {
+        setValid(true);
         return true;
     }
 
+    setValid(false);
     return false;
 }
-
-#if 0
-void modbusTcpAllClientRoutineThreadFunc(void* arg)
-{
-    ModbusManager* modbus_manager = static_cast<ModbusManager*>(arg);
-    while(modbus_manager->isRunningClient(getClientId()))
-    {
-        modbus_manager->modbusTcpAllClientThreadFunc();
-    }
-}
-#endif

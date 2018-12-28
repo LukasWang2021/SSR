@@ -77,8 +77,8 @@ void ControllerRpc::handleRpc0x0001421F(void* request_data_ptr, void* response_d
     rs_data_ptr->data.address = 0;
     rs_data_ptr->data.is_valid = modbus_manager_ptr_->isValid();
 
-    fst_hal::ModbusServerRegInfo info;
-    rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerRegInfoFromServer(info);
+    fst_hal::ModbusRegAddrInfo info;
+    rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerConfigCoilInfo(info);
     if (rs_data_ptr->error_code.data != SUCCESS)
     {
         rs_data_ptr->data.input_num = 0;
@@ -86,10 +86,17 @@ void ControllerRpc::handleRpc0x0001421F(void* request_data_ptr, void* response_d
         recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getModbusIoDeviceInfo"));
         return;
     }
+    rs_data_ptr->data.output_num = info.max_nb;
 
-    rs_data_ptr->data.input_num = info.discrepte_input.max_nb;
-    rs_data_ptr->data.output_num = info.coil.max_nb;
+    rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerConfigDiscrepteInputInfo(info);
+    if (rs_data_ptr->error_code.data != SUCCESS)
+    {
+        rs_data_ptr->data.input_num = 0;
+        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getModbusIoDeviceInfo"));
+        return;
+    }
 
+    rs_data_ptr->data.input_num = info.max_nb;
     recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getModbusIoDeviceInfo"));
 }
 

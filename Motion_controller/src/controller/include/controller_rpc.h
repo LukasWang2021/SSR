@@ -398,42 +398,31 @@ private:
     //"/rpc/file_manager/writeFile"
     void handleRpc0x00010D95(void* request_data_ptr, void* response_data_ptr);
 
-	//"/rpc/modbus/setStartMode"
+	//"/rpc/modbus/setStartMode"	
     void handleRpc0x0000D3A5(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/getStartMode"
+	//"/rpc/modbus/getStartMode"	
     void handleRpc0x000041C5(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/setServerConnectStatus"
-    void handleRpc0x0000DB23(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/getServerConnectStatus"
-    void handleRpc0x00001B23(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/setServerConfig"
-    void handleRpc0x00017547(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/getServerConfig"
-    void handleRpc0x00016947(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/getServerStartInfo"
+	//"/rpc/modbus/setServerEnableStatus"	
+    void handleRpc0x00004033(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerEnableStatus"	
+    void handleRpc0x00004C33(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/setServerStartInfo"	
+    void handleRpc0x0001300F(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerStartInfo"	
     void handleRpc0x000018AF(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/openServer"
+	//"/rpc/modbus/setServerAllFunctionAddrInfo"	
+    void handleRpc0x0000A4BF(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerAllFunctionAddrInfo"	
+    void handleRpc0x00005E1F(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerConfigParams"	
+    void handleRpc0x0000E2E3(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/openServer"	
     void handleRpc0x00010912(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/closeServer"
+	//"/rpc/modbus/closeServer"	
     void handleRpc0x000045B2(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/addClient"
-    void handleRpc0x00012E44(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/setClientConnectStatus"
-    void handleRpc0x000099D3(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/getClientConnectStatus"
-    void handleRpc0x00010A53(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/setClientConfig"
-    void handleRpc0x0000D017(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/getClientConfig"
-    void handleRpc0x0000FC17(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/openClient"
-    void handleRpc0x00000544(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/closeClient"
-    void handleRpc0x00006CA4(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/deleteClient"
-    void handleRpc0x00014CF4(void* request_data_ptr, void* response_data_ptr);
-	//"/rpc/modbus/getClientSummaryInfoList"
-    void handleRpc0x0000B424(void* request_data_ptr, void* response_data_ptr);
+	//"/rpc/modbus/getServerRunningStatus"	
+    void handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr);
+
 	//"/rpc/modbus/writeCoils"
     void handleRpc0x0000BD83(void* request_data_ptr, void* response_data_ptr);
 	//"/rpc/modbus/readCoils"
@@ -446,12 +435,7 @@ private:
     void handleRpc0x00003583(void* request_data_ptr, void* response_data_ptr);
 	//"/rpc/modbus/readInputRegs"
     void handleRpc0x000072C3(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/getServerValidFuctionInfo"
-    void handleRpc0x00008E7F(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/getServerResponseDelay"
-    void handleRpc0x00000329(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/modbus/getServerRunningStatus"
-    void handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr);
+
 
 };
 

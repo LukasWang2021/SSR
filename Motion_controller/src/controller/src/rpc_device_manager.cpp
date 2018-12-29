@@ -10,7 +10,7 @@ void ControllerRpc::handleRpc0x0000C1E0(void* request_data_ptr, void* response_d
 {
     RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_DeviceInfoList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DeviceInfoList*>(response_data_ptr);
-    
+    modbus_manager_ptr_->isModbusValid();
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
     for(unsigned int i=0; i<device_list.size(); ++i)
     {
@@ -71,6 +71,7 @@ void ControllerRpc::handleRpc0x0001421F(void* request_data_ptr, void* response_d
     RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_IoDeviceInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_IoDeviceInfo*>(response_data_ptr);
 
+    modbus_manager_ptr_->isModbusValid();
     strcpy(rs_data_ptr->data.device_type, "modbus");
     strcpy(rs_data_ptr->data.comm_type, "TCP");
     rs_data_ptr->data.device_index = 0;
@@ -106,6 +107,7 @@ void ControllerRpc::handleRpc0x000024A4(void* request_data_ptr, void* response_d
     RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_IoDeviceInfoList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_IoDeviceInfoList*>(response_data_ptr);
     
+    modbus_manager_ptr_->isModbusValid();
     // establish the map btween address to index of device.xml
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
     std::map<int, int> address_to_index;

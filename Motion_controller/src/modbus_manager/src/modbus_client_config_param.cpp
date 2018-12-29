@@ -29,14 +29,9 @@ bool ModbusClientConfigParam::loadParam()
 
     for(int client_id = 1; client_id != client_config_list_.size() + 1; client_id++)
     {
-        cout << "client_id = " << client_id << endl;
-        cout << "client_config_list_.size() = " << client_config_list_.size() << endl;
-
         stream << client_id;
         stream >> id_str;
         string client_path = std::string("ModbusClient") + id_str;
-
-        cout << "client_path = " << client_path << endl;
 
         if (!yaml_help_.getParam(client_path + "/id", it->start_info.id)
             || !yaml_help_.getParam(client_path + "/name", it->start_info.name)

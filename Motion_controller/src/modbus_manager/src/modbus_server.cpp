@@ -180,7 +180,6 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
         && config_reg_info.holding_reg.max_nb <= 0
         && config_reg_info.input_reg.max_nb <= 0)
     {
-        FST_ERROR("setRegInfo all max-nb");
         return MODBUS_SERVER_INVALID_ARG;
     }
 
@@ -190,7 +189,6 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.coil.addr + reg_info_.coil.max_nb - 1
             < config_reg_info.coil.max_nb + config_reg_info.coil.addr - 1)
         {
-            FST_ERROR("setRegInfo coil max-nb"); 
             return MODBUS_SERVER_INVALID_ARG;
         }
 
@@ -204,7 +202,6 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.discrepte_input.addr + reg_info_.discrepte_input.max_nb - 1
             < config_reg_info.discrepte_input.max_nb + config_reg_info.discrepte_input.addr - 1)
         {
-            FST_ERROR("setRegInfo discrepte_input max-nb"); 
             return MODBUS_SERVER_INVALID_ARG;
         }
 
@@ -218,7 +215,6 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.holding_reg.addr + reg_info_.holding_reg.max_nb - 1
             < config_reg_info.holding_reg.max_nb + config_reg_info.holding_reg.addr - 1)
         {
-            FST_ERROR("setRegInfo holding_reg max-nb");
             return MODBUS_SERVER_INVALID_ARG;
         }
 
@@ -232,7 +228,6 @@ ErrorCode ModbusServer::setRegInfo(ModbusServerRegInfo config_reg_info)
             ||  reg_info_.input_reg.addr + reg_info_.input_reg.max_nb - 1
             < config_reg_info.input_reg.max_nb + config_reg_info.input_reg.addr - 1)
         {
-            FST_ERROR("setRegInfo input_reg max-nb");
             return MODBUS_SERVER_INVALID_ARG;
         }
 
@@ -275,7 +270,8 @@ ErrorCode ModbusServer::setStartInfo(ModbusServerStartInfo start_info)
         return MODBUS_SERVER_SAVE_PARAM_FALIED;
     }
 
-    config_start_info_ = config_param_ptr_->start_info_;
+    config_start_info_.name = config_param_ptr_->start_info_.name;
+    config_start_info_.response_delay = config_param_ptr_->start_info_.response_delay;
     return SUCCESS;
 }
 
@@ -525,7 +521,7 @@ void ModbusServer::modbusTcpServerThreadFunc()
             if (master_socket == fdmax_) fdmax_--;
             continue;
         }
-        usleep(config_start_info_.response_delay);
+        usleep(config_start_info_.response_delay * 1000);
         modbus_reply(ctx_, query_, rc, mb_mapping_);
     }
 

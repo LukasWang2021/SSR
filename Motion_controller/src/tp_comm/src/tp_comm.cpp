@@ -404,11 +404,6 @@ void TpComm::handleResponseList()
             handleResponseNonexistentHash(it, send_buffer_size);
         }
 
-        if(send_buffer_size == 0)
-        {
-            return;
-        }
-
         int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
         if(send_bytes == -1)
         {

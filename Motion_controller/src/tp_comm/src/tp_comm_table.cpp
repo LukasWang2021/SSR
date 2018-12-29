@@ -18,7 +18,7 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/controller/setSystemTime",	0x000167C5,	"RequestMessageType.Uint64",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000167C5,	&TpComm::handleResponse0x000167C5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/getSystemTime",	0x000003F5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64List(count=2)",	&TpComm::handleRequest0x000003F5,	&TpComm::handleResponse0x000003F5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/controller/getVersion",	0x000093EE,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_String",	&TpComm::handleRequest0x000093EE,	&TpComm::handleResponse0x000093EE,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
-	rpc_service =	{	"/rpc/controller/getErrorCodeList",	0x00015F44,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Uint64List(count = 64)",	&TpComm::handleRequest0x00015F44,	&TpComm::handleResponse0x00015F44,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/controller/getErrorCodeList",	0x00015F44,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Uint64List(count = 64)",	&TpComm::handleRequest0x00015F44,	&TpComm::handleResponse0x00015F44,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);	
 
 	rpc_service =	{	"/rpc/publish/addTopic",	0x000050E3,	"RequestMessageType.Topic",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000050E3,	&TpComm::handleResponse0x000050E3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/publish/deleteTopic",	0x00004403,	"RequestMessageType.Uint32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00004403,	&TpComm::handleResponse0x00004403,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
@@ -170,8 +170,8 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/program_launching/getMethod",	0x00010944,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00010944,	&TpComm::handleResponse0x00010944,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/program_launching/syncFileMacroConfig",	0x00016B27,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00016B27,	&TpComm::handleResponse0x00016B27,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 
-	rpc_service =	{	"/rpc/file_manager/readFile",	0x0000A545,	"RequestMessageType.String",	"ResponseMessageType.Uint64_Bytes",	&TpComm::handleRequest0x0000A545,	&TpComm::handleResponse0x0000A545,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
-	rpc_service =	{	"/rpc/file_manager/writeFile",	0x00010D95,	"RequestMessageType.String_Bytes",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010D95,	&TpComm::handleResponse0x00010D95,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/file_manager/readFile",	0x0000A545,	"RequestMessageType.String",	"ResponseMessageType.Uint64_Bytes",	&TpComm::handleRequest0x0000A545,	&TpComm::handleResponse0x0000A545,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/file_manager/writeFile",	0x00010D95,	"RequestMessageType.String_Bytes",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00010D95,	&TpComm::handleResponse0x00010D95,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);	
 
 	rpc_service =	{	"/rpc/modbus/setStartMode",	0x0000D3A5,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000D3A5,	&TpComm::handleResponse0x0000D3A5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/getStartMode",	0x000041C5,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000041C5,	&TpComm::handleResponse0x000041C5,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	

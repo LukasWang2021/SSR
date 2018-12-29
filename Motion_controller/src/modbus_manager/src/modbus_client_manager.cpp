@@ -118,9 +118,6 @@ ErrorCode ModbusClientManager::initParam()
     if (config_param_ptr_ == NULL)
         config_param_ptr_ = new ModbusClientConfigParam(config_param_file_path_, client_number_);
 
-    FST_ERROR("config_param_file_path_ = %s", config_param_file_path_.c_str());
-    FST_ERROR("client_number_ = %d", client_number_);
-
     if (!config_param_ptr_->loadParam())
     {
         return 0x12345678; // MODBUS_CLIENT_MANAGER_LOAD_CONFIG_PARAM_FAILED

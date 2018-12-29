@@ -43,11 +43,6 @@ bool ModbusManager::init()
     if (server_ == NULL)
         server_ = new ModbusServer(param_ptr_->server_file_path_, param_ptr_->server_config_file_path_);
 
-    FST_ERROR("server_file_path_ = %s", param_ptr_->server_file_path_.c_str());
-    FST_ERROR("server_config_file_path_ = %s", param_ptr_->server_config_file_path_.c_str());
-    FST_ERROR("client_file_path_ = %s", param_ptr_->client_file_path_.c_str());
-    FST_ERROR("client_config_file_path_ = %s", param_ptr_->client_config_file_path_.c_str());
-
     if (server_->initParam() != SUCCESS)
         return false;
 

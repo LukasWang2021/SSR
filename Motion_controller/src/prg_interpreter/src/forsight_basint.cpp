@@ -209,6 +209,13 @@ pthread_t g_basic_interpreter_handle[NUM_THREAD + 1];
 fst_log::Logger * log_ptr_ = NULL;
 #endif
 
+/************************************************* 
+	Function:       basic_interpreter
+	Description:    interpreter thread wrapper.
+	Input:          struct thread_control_block pointer
+	Output:         NULL
+	Return:         NULL
+*************************************************/ 
 #ifdef WIN32
 unsigned __stdcall basic_interpreter(void* arg)
 #else
@@ -316,7 +323,14 @@ int getLinenum(
 	return num ;  // objThreadCntrolBlock->iLineNum ;
 }
 */
-
+	
+/************************************************* 
+	Function:		setRunningMacroInstr
+	Description:	set Macro Instruction startup .
+	Input:			program_name
+	Output: 		NULL
+	Return: 		NULL
+*************************************************/ 
 void setRunningMacroInstr(char* program_name)
 {
 #ifdef WIN32
@@ -327,6 +341,13 @@ void setRunningMacroInstr(char* program_name)
 #endif
 }
 
+/************************************************* 
+	Function:		resetRunningMacroInstr
+	Description:	reset Macro Instruction startup .
+	Input:			program_name
+	Output: 		NULL
+	Return: 		NULL
+*************************************************/ 
 void resetRunningMacroInstr(char* program_name)
 {
 #ifdef WIN32
@@ -337,6 +358,14 @@ void resetRunningMacroInstr(char* program_name)
 #endif
 }
 	
+/************************************************* 
+	Function:		setLinenum
+	Description:	set Line number.
+	Input:			thread_control_block  - interpreter info
+	                iLinenum              - Line number
+	Output: 		NULL
+	Return: 		NULL
+*************************************************/ 
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 {
     FST_INFO("setLinenum : %d at the %dth thread", 
@@ -346,6 +375,13 @@ void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum)
 	setCurLine(objThreadCntrolBlock, (char *)g_vecXPath[iLinenum].c_str(), iLinenum);
 }
 
+/************************************************* 
+	Function:		getLinenum
+	Description:	get Line number.
+	Input:			thread_control_block  - interpreter info
+	Output: 		NULL
+	Return: 		Line number
+*************************************************/ 
 int getLinenum(
 	struct thread_control_block* objThreadCntrolBlock)
 {
@@ -353,6 +389,13 @@ int getLinenum(
 	return objThreadCntrolBlock->iLineNum ;
 }
 
+/************************************************* 
+	Function:		printCurrentLine
+	Description:	print Current program Line.
+	Input:			thread_control_block  - interpreter info
+	Output: 		NULL
+	Return: 		NULL
+*************************************************/ 
 void printCurrentLine(struct thread_control_block* objThreadCntrolBlock)
 {
 	char cLineContent[LINE_CONTENT_LEN];
@@ -372,6 +415,13 @@ void printCurrentLine(struct thread_control_block* objThreadCntrolBlock)
 		objThreadCntrolBlock->iLineNum, cLineContent);
 }
 
+/************************************************* 
+	Function:		printProgJmpLine
+	Description:	print all of program Line.
+	Input:			thread_control_block  - interpreter info
+	Output: 		NULL
+	Return: 		NULL
+*************************************************/ 
 void printProgJmpLine(struct thread_control_block* objThreadCntrolBlock)
 {
 	int iLineNumTemp = 0 ; 
@@ -389,6 +439,15 @@ void printProgJmpLine(struct thread_control_block* objThreadCntrolBlock)
 	objThreadCntrolBlock->prog     = proglabelsScan;
 }
 
+/************************************************* 
+	Function:		call_interpreter
+	Description:	load program or execute interpreter process.
+	Input:			thread_control_block  - interpreter info
+	     			mode =   1   - load program
+	     			     =   0   - execute interpreter process.
+	Output: 		NULL
+	Return: 		NULL
+*************************************************/ 
 int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode)
 {
   int isExecuteEmptyLine ;
@@ -837,6 +896,14 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
   return 0 ; // NULL ;
 }
 
+/************************************************* 
+	Function:		jump_prog_from_line
+	Description:	process INTERPRETER_SERVER_CMD_JUMP.
+	Input:			thread_control_block  - interpreter info
+	                iLinenum              - Line number
+	Output: 		NULL
+	Return: 		NULL
+*************************************************/ 
 int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum)
 {
 	if(iNum < (int)objThreadCntrolBlock->prog_jmp_line.size())
@@ -847,6 +914,12 @@ int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int
 	return 0;
 }
 
+/************************************************* 
+	Function:		calc_line_from_prog
+	Description:	get lineNum by interpreter position.
+	Input:			thread_control_block  - interpreter info
+	Return: 		Line number (starts from one)
+*************************************************/ 
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 {
 	for(int i = 0 ; i < (int)objThreadCntrolBlock->prog_jmp_line.size() ; i++)
@@ -870,7 +943,15 @@ int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock)
 	return 0;
 }
 
-/* Load a program. */
+/************************************************* 
+	Function:		load_program
+	Description:	Load a program.
+	Input:			thread_control_block  - interpreter info
+	                p                     - program buffer
+	                iLinenum              - program name
+	Output: 		NULL
+	Return: 		INT 
+*************************************************/ 
 int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, char *pname)
 {
   char fXMLName[128];
@@ -913,6 +994,13 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   return 1;
 }
 
+/************************************************* 
+	Function:		release_array_element
+	Description:	calculate the index of array.
+	Input:			thread_control_block  - interpreter info
+	Output: 		NULL
+	Return: 		index value
+*************************************************/ 
 // This function would always left the ']'.
 int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 {
@@ -977,6 +1065,13 @@ int release_array_element(struct thread_control_block * objThreadCntrolBlock)
 }
 
 
+/************************************************* 
+	Function:		deal_array_element
+	Description:	deal array variable.
+	Input:			thread_control_block  - interpreter info
+	Output: 		objThreadCntrolBlock->token
+	Return: 		NULL
+*************************************************/ 
 void deal_array_element(struct thread_control_block * objThreadCntrolBlock)
 {
     int array_value;
@@ -1016,7 +1111,12 @@ void deal_array_element(struct thread_control_block * objThreadCntrolBlock)
 //	}
 }
 
-/* Assign a variable a value. */
+/************************************************* 
+	Function:		assignment
+	Description:	Assign a variable a value.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL
+*************************************************/ 
 void assignment(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value value;
@@ -1081,7 +1181,12 @@ void assignment(struct thread_control_block * objThreadCntrolBlock)
   find_eol(objThreadCntrolBlock);
 }
 
-/* Execute a simple version of the BASIC PRINT statement */
+/************************************************* 
+	Function:		print
+	Description:	Execute a simple version of the BASIC PRINT statement
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL
+*************************************************/ 
 void print(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value answer;
@@ -1128,7 +1233,18 @@ void print(struct thread_control_block * objThreadCntrolBlock)
 
 }
 
-/* Find all labels. */
+/************************************************* 
+	Function:		scan_labels
+	Description:	Find all labels in current objThreadCntrolBlock->prog.
+	                Generate line info which records the start/end position and type of each line
+	Input:			thread_control_block  - interpreter info
+	    			type:      INSIDE_FUNC  - main subroutine
+	    			           OUTSIDE_FUNC - import subroutine
+	    			pname:     subroutine name
+	Output: 		objThreadCntrolBlock->sub_label_table
+	         		objThreadCntrolBlock->prog_jmp_line
+	Return: 		NULL
+*************************************************/ 
 void scan_labels(struct thread_control_block * objThreadCntrolBlock, 
 				SubLabelType type, char * pname)
 {
@@ -1281,7 +1397,13 @@ void scan_labels(struct thread_control_block * objThreadCntrolBlock,
   objThreadCntrolBlock->prog = temp;  /* restore to original */
 }
 
-/* Find the start of the next line. */
+/************************************************* 
+	Function:		find_eol
+	Description:	Find the start of the next line and make prog move to the next line.
+	Input:			thread_control_block  - interpreter info
+	Output: 		objThreadCntrolBlock->prog
+	Return: 		NULL
+*************************************************/ 
 void find_eol(struct thread_control_block * objThreadCntrolBlock)
 {
   while(*(objThreadCntrolBlock->prog)!='\n'
@@ -1290,11 +1412,16 @@ void find_eol(struct thread_control_block * objThreadCntrolBlock)
   	(objThreadCntrolBlock->prog)++;
 }
 
-/* Return index of next free position in label array.
-   A -1 is returned if the array is full.
-   A -2 is returned when duplicate label is found.
-*/
 
+/************************************************* 
+	Function:		add_label
+	Description:	Return index of next free position in label array.
+	Input:			thread_control_block  - interpreter info
+	    			objLabel:               sub_label info
+	Output: 		NULL
+	Return: 		A -1 is returned if the array is full.
+					A -2 is returned when duplicate label is found.
+*************************************************/ 
 int add_label(struct thread_control_block * objThreadCntrolBlock, struct sub_label objLabel)
 {
 //  register int t;
@@ -1317,10 +1444,16 @@ int add_label(struct thread_control_block * objThreadCntrolBlock, struct sub_lab
 //  return -1;  /* full */
 }
 
-/* Find location of given label.  A null is returned if
-   label is not found; otherwise a pointer to the position
-   of the label is returned.
-*/
+
+/************************************************* 
+	Function:		find_label
+	Description:	Find location of given label.  A null is returned if
+				    label is not found; otherwise a pointer to the position
+				    of the label is returned.
+	Input:			thread_control_block  - interpreter info
+	    			name:                 - label name
+	Return: 		program position.
+*************************************************/ 
 char *find_label(struct thread_control_block * objThreadCntrolBlock, char *name)
 {
 //  register int t;
@@ -1344,7 +1477,17 @@ char *find_label(struct thread_control_block * objThreadCntrolBlock, char *name)
 	}
 	return '\0';
 }
-SubLabelType find_label_type(struct thread_control_block * objThreadCntrolBlock, char *name)
+
+/************************************************* 
+	Function:		find_label_by_type
+	Description:	Find location of given label.  A null is returned if
+				    label is not found; otherwise a pointer to the position
+				    of the label is returned.
+	Input:			thread_control_block  - interpreter info
+	    			name:                 - label name
+	Return: 		label_type.
+*************************************************/ 
+SubLabelType find_label_by_type(struct thread_control_block * objThreadCntrolBlock, char *name)
 {
 //  register int t;
 
@@ -1363,10 +1506,18 @@ SubLabelType find_label_type(struct thread_control_block * objThreadCntrolBlock,
 }
 
 
+/************************************************* 
+	Function:		jumpout_one_block_in_loc
+	Description:	jumpout a program block when determine condition is not false. 
+	Input:			thread_control_block  - interpreter info
+	    			startFlag:            - the program block type: such as if/while
+	    			endFlag:              - the end type of startFlag : such as endif/wend
+	Output: 		loc                   - program location
+	Return: 		SUCCESS or FAILED.
+*************************************************/ 
 #define JUMP_OUT_INIT    0
 #define JUMP_OUT_OK      1
 #define JUMP_OUT_RANGE   2
-
 static int jumpout_one_block_in_loc(struct thread_control_block * objThreadCntrolBlock,
 		char * loc,int startFlag, int endFlag)
 {
@@ -1399,6 +1550,13 @@ static int jumpout_one_block_in_loc(struct thread_control_block * objThreadCntro
      }
 }
 
+/************************************************* 
+	Function:		jumpout_one_block_in_loc
+	Description:	jumpout a program block when determine condition is not false. 
+	Input:			thread_control_block  - interpreter info
+	Output: 		loc                   - program location
+	Return: 		SUCCESS or FAILED.
+*************************************************/ 
 static int jumpout_blocks_in_loc(struct thread_control_block * objThreadCntrolBlock,
 			char * loc)
 {
@@ -1432,7 +1590,12 @@ static int jumpout_blocks_in_loc(struct thread_control_block * objThreadCntrolBl
   return 1 ;
 }
 
-/* Execute a GOTO statement. */
+/************************************************* 
+	Function:		exec_goto
+	Description:	Execute a GOTO statement.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_goto(struct thread_control_block * objThreadCntrolBlock)
 {
   char *loc;
@@ -1451,10 +1614,15 @@ void exec_goto(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
-/* Initialize the array that holds the labels.
-   By convention, a null label name indicates that
-   array position is unused.
-*/
+
+/************************************************* 
+	Function:		label_init (legacy)
+	Description:	Initialize the array that holds the labels.
+				    By convention, a null label name indicates that
+				    array position is unused.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void label_init(struct thread_control_block * objThreadCntrolBlock)
 {
   // register int t;
@@ -1462,6 +1630,13 @@ void label_init(struct thread_control_block * objThreadCntrolBlock)
   // for(t=0; t<NUM_LAB; ++t) label_table[t].name[0]='\0';
 }
 
+
+/************************************************* 
+	Function:		calc_conditions
+	Description:	calculate the condition result in if/while statement.
+	Input:			thread_control_block  - interpreter info
+	Return: 		condition result.
+*************************************************/ 
 int calc_conditions(
 		struct thread_control_block * objThreadCntrolBlock)
 {
@@ -1472,7 +1647,12 @@ int calc_conditions(
   return boolValue ;
 }
 
-/* Execute an IF statement. */
+/************************************************* 
+	Function:		exec_if
+	Description:	Execute an IF statement.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_if(struct thread_control_block * objThreadCntrolBlock)
 {
   int iRet = JUMP_OUT_INIT ;
@@ -1531,7 +1711,12 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
-/* Execute an ELSE statement. */
+/************************************************* 
+	Function:		exec_else
+	Description:	Execute an ELSE statement.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_else(struct thread_control_block * objThreadCntrolBlock)
 {
   select_and_cycle_stack if_stack ;
@@ -1572,7 +1757,12 @@ void exec_else(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
-/* Execute an IF statement. */
+/************************************************* 
+	Function:		exec_else
+	Description:	Execute an ELSEIF statement.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
 {
   int iRet = JUMP_OUT_INIT ;
@@ -1632,7 +1822,12 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
-/* Execute a FOR loop. */
+/************************************************* 
+	Function:		exec_else
+	Description:	Execute an FOR loop.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_for(struct thread_control_block * objThreadCntrolBlock)
 {
   int iRet = JUMP_OUT_INIT ;
@@ -1700,7 +1895,12 @@ void exec_for(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
-/* Execute a NEXT statement. */
+/************************************************* 
+	Function:		exec_else
+	Description:	Execute an NEXT statement.
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_next(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value value;
@@ -1729,7 +1929,12 @@ void exec_next(struct thread_control_block * objThreadCntrolBlock)
   objThreadCntrolBlock->prog = for_stack.loc;  /* loop */
 }
 
-// Deal the COMMAND such like "loop 5"
+/************************************************* 
+	Function:		exec_loop
+	Description:	Execute an loop statement. such like "loop 5"
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_loop(struct thread_control_block * objThreadCntrolBlock)
 {
   // int iRet = JUMP_OUT_INIT ;
@@ -1754,6 +1959,12 @@ void exec_loop(struct thread_control_block * objThreadCntrolBlock)
   select_and_cycle_push(objThreadCntrolBlock, loop_stack);
 }
 
+/************************************************* 
+	Function:		exec_endloop
+	Description:	Execute an exec_endloop statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_endloop(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value value;
@@ -1781,7 +1992,12 @@ void exec_endloop(struct thread_control_block * objThreadCntrolBlock)
   objThreadCntrolBlock->prog = loop_stack.loc;  /* loop */
 }
 
-/* Execute a WHILE loop. */
+/************************************************* 
+	Function:		exec_while
+	Description:	Execute a WHILE loop. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_while(struct thread_control_block * objThreadCntrolBlock)
 {
   int iRet = JUMP_OUT_INIT ;
@@ -1829,7 +2045,12 @@ void exec_while(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
-/* Execute a WEND statement. */
+/************************************************* 
+	Function:		exec_wend
+	Description:	Execute a WEND statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_wend(struct thread_control_block * objThreadCntrolBlock)
 {
   int iRet = JUMP_OUT_INIT ;
@@ -1878,7 +2099,12 @@ void exec_wend(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
-/* Execute a NEXT statement. */
+/************************************************* 
+	Function:		exec_continue
+	Description:	Execute a CONTINUE statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_continue(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value value;
@@ -1930,6 +2156,13 @@ void exec_continue(struct thread_control_block * objThreadCntrolBlock)
   return ;
 }
 
+
+/************************************************* 
+	Function:		exec_break
+	Description:	Execute a BREAK statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_break(struct thread_control_block * objThreadCntrolBlock)
 {
   struct select_and_cycle_stack cycle_stack;
@@ -1970,6 +2203,12 @@ void exec_break(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
+/************************************************* 
+	Function:		exec_select
+	Description:	Execute a SELECT statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_select(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value x ;
@@ -1990,6 +2229,12 @@ void exec_select(struct thread_control_block * objThreadCntrolBlock)
   find_eol(objThreadCntrolBlock);
 }
 
+/************************************************* 
+	Function:		exec_case
+	Description:	Execute a CASE statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_case(struct thread_control_block * objThreadCntrolBlock)
 {
   int iRet = JUMP_OUT_INIT ;
@@ -2053,6 +2298,12 @@ void exec_case(struct thread_control_block * objThreadCntrolBlock)
   }
 }
 
+/************************************************* 
+	Function:		exec_endif
+	Description:	Execute a ENDIF statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 void exec_endif(struct thread_control_block * objThreadCntrolBlock)
 {
   struct select_and_cycle_stack select_stack ;
@@ -2066,6 +2317,12 @@ void exec_endif(struct thread_control_block * objThreadCntrolBlock)
   return;
 }
 
+/************************************************* 
+	Function:		exec_end
+	Description:	Execute a END statement. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL.
+*************************************************/ 
 int exec_end(struct thread_control_block * objThreadCntrolBlock)
 {
   struct select_and_cycle_stack select_stack ;
@@ -2105,7 +2362,13 @@ int exec_end(struct thread_control_block * objThreadCntrolBlock)
   return 1 ;
 }
 
-/* Push function for the FOR stack. */
+/************************************************* 
+	Function:		select_and_cycle_push
+	Description:	Push function for the FOR stack. 
+	Input:			thread_control_block  - interpreter info
+	         		i                     - select_and_cycle_stack element
+	Return: 		NULL.
+*************************************************/ 
 void select_and_cycle_push(struct thread_control_block * objThreadCntrolBlock,
 		struct select_and_cycle_stack i)
 {
@@ -2119,6 +2382,12 @@ void select_and_cycle_push(struct thread_control_block * objThreadCntrolBlock,
 //		objThreadCntrolBlock->select_and_cycle_tos);
 }
 
+/************************************************* 
+	Function:		select_and_cycle_push
+	Description:	Pop function from the FOR stack. 
+	Input:			thread_control_block  - interpreter info
+	Return: 		Last select_and_cycle_stack element
+*************************************************/ 
 struct select_and_cycle_stack select_and_cycle_pop(
 	struct thread_control_block * objThreadCntrolBlock)
 {
@@ -2140,7 +2409,12 @@ struct select_and_cycle_stack select_and_cycle_pop(
   
 }
 
-/* Execute a simple form of the BASIC INPUT command */
+/************************************************* 
+	Function:		input
+	Description:	Execute a simple form of the BASIC INPUT command . 
+	Input:			thread_control_block  - interpreter info
+	Return: 		NULL
+*************************************************/ 
 void input(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value value;
@@ -2167,6 +2441,13 @@ void input(struct thread_control_block * objThreadCntrolBlock)
   assign_var(objThreadCntrolBlock, var, value); // i) ;
 }
 
+/************************************************* 
+	Function:		call_inner_func
+	Description:	Execute inner defined function . 
+	Input:			thread_control_block  - interpreter info
+	Ouput:			result                - return value
+	Return: 		NULL
+*************************************************/ 
 bool call_inner_func(struct thread_control_block * objThreadCntrolBlock, eval_value *result)
 {
     eval_value value;
@@ -2240,8 +2521,16 @@ bool call_inner_func(struct thread_control_block * objThreadCntrolBlock, eval_va
 	return true;
 }
 
-// Push the arguments to a function onto the local
-// variable stack.
+/************************************************* 
+	Function:		get_args
+	Description:	Push the arguments to a function onto the local variable stack.
+                    By the mean, Just get parameter values of function 
+                    and save as the local variable. 
+                    Ex. To func1(1+3, 2, 3), save 4, 2, 3 into local_var_stack
+	Input:			thread_control_block  - interpreter info
+	Ouput:			objThreadCntrolBlock->local_var_stack
+	Return: 		NULL
+*************************************************/ 
 void get_args(struct thread_control_block * objThreadCntrolBlock)
 {
     eval_value value;
@@ -2285,7 +2574,17 @@ void get_args(struct thread_control_block * objThreadCntrolBlock)
     }
 }
 
-// Get function parameters.
+/************************************************* 
+	Function:		get_params
+	Description:	Get function parameters.
+                    By the mean, Just bing parameter values while were set in the get_args
+                    with the parameter variable in the function defination. 
+                    Ex. To func1(1+3, 2, 3), 
+                        In the func1(a, b, c), a =4, b = 2, c = 3
+	Input:			thread_control_block  - interpreter info
+	Ouput:			objThreadCntrolBlock->local_var_stack
+	Return: 		NULL
+*************************************************/ 
 void get_params(struct thread_control_block * objThreadCntrolBlock)
 {
     var_type *p;
@@ -2334,6 +2633,13 @@ void get_params(struct thread_control_block * objThreadCntrolBlock)
     }
 }
 
+/************************************************* 
+	Function:		exec_import
+	Description:	Execute a IMPORT statement. 
+	Input:			thread_control_block  - interpreter info
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void exec_import(struct thread_control_block * objThreadCntrolBlock)
 {
   char *proglabelsScan; 
@@ -2411,6 +2717,15 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
 // 		FST_INFO("Left   call_interpreter at exec_call_submain.");
 // 	}
 
+/************************************************* 
+	Function:		exec_call
+	Description:	Execute a CALL statement. 
+	Input:			thread_control_block   - interpreter info
+	        		isMacro       true     - Macro mode 
+	        		              false    - Common mode 
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
 {
   char func_name[1024];
@@ -2469,7 +2784,13 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
   return 1;
 }
 
-/* Execute a GOSUB command. */
+/************************************************* 
+	Function:		gosub
+	Description:	Execute a GOSUB command. 
+	Input:			thread_control_block   - interpreter info
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 int gosub(struct thread_control_block * objThreadCntrolBlock)
 {
   char *loc;
@@ -2489,7 +2810,13 @@ int gosub(struct thread_control_block * objThreadCntrolBlock)
   return 1 ;
 }
 
-/* Return from GOSUB. */
+/************************************************* 
+	Function:		greturn
+	Description:	Execute a RETURN command and Return from GOSUB. 
+	Input:			thread_control_block   - interpreter info
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void greturn(struct thread_control_block * objThreadCntrolBlock)
 {
   eval_value ret_value ;
@@ -2527,7 +2854,14 @@ void greturn(struct thread_control_block * objThreadCntrolBlock)
   find_eol(objThreadCntrolBlock);
 }
 
-/* GOSUB stack push function. */
+/************************************************* 
+	Function:		gosub_push
+	Description:	GOSUB stack push function. 
+	Input:			thread_control_block   - interpreter info
+	            	s                      - program position
+	Ouput:			objThreadCntrolBlock->gosub_stack
+	Return: 		NULL
+*************************************************/ 
 void gosub_push(struct thread_control_block * objThreadCntrolBlock, char *s)
 {
   objThreadCntrolBlock->gosub_tos++;
@@ -2538,10 +2872,15 @@ void gosub_push(struct thread_control_block * objThreadCntrolBlock, char *s)
   }
 
   objThreadCntrolBlock->gosub_stack[objThreadCntrolBlock->gosub_tos]=s;
-
 }
 
-/* GOSUB stack pop function. */
+/************************************************* 
+	Function:		gosub_pop
+	Description:	GOSUB stack pop function. 
+	Input:			thread_control_block   - interpreter info
+	Ouput:			NULL
+	Return: 		Last program position
+*************************************************/ 
 char *gosub_pop(struct thread_control_block * objThreadCntrolBlock)
 {
   if(objThreadCntrolBlock->gosub_tos==0) {
@@ -2552,6 +2891,15 @@ char *gosub_pop(struct thread_control_block * objThreadCntrolBlock)
   return(objThreadCntrolBlock->gosub_stack[objThreadCntrolBlock->gosub_tos--]);
 }
 
+/************************************************* 
+	Function:		get_exp
+	Description:	Expression: Caculating expression. 
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 /* Entry point into parser. */
 void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * result, int* boolValue)
 {
@@ -2565,7 +2913,14 @@ void get_exp(struct thread_control_block * objThreadCntrolBlock, eval_value * re
   putback(objThreadCntrolBlock); /* return last token read to input stream */
 }
 
-/* display an error message */
+/************************************************* 
+	Function:		serror
+	Description:	display and upload an error message
+	Input:			thread_control_block   - interpreter info
+	Input:			error                  - error number
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 {
   static const ErrInfo errInfo[]= {
@@ -2626,7 +2981,13 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 #endif
 }
 
-/* Get a token. */
+/************************************************* 
+	Function:		get_token
+	Description:	Tokenizer: Get a token.
+	Input:			thread_control_block   - interpreter info
+	Ouput:			objThreadCntrolBlock->token_type, tok, token
+	Return: 		NULL
+*************************************************/ 
 int get_token(struct thread_control_block * objThreadCntrolBlock)
 {
 
@@ -2764,7 +3125,7 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
     }
     else if(find_label(objThreadCntrolBlock, objThreadCntrolBlock->token) != '\0')
     {
-        SubLabelType labelType = find_label_type(
+        SubLabelType labelType = find_label_by_type(
 			objThreadCntrolBlock, objThreadCntrolBlock->token);
     	if(labelType == INSIDE_FUNC)
 	    	objThreadCntrolBlock->token_type = INSIDEFUNC;
@@ -2795,9 +3156,13 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
   return objThreadCntrolBlock->token_type;
 }
 
-
-
-/* Return a token to input stream. */
+/************************************************* 
+	Function:		putback
+	Description:	Tokenizer: Return a token to input stream..
+	Input:			thread_control_block   - interpreter info
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void putback(struct thread_control_block * objThreadCntrolBlock)
 {
 
@@ -2813,9 +3178,12 @@ void putback(struct thread_control_block * objThreadCntrolBlock)
   memset(objThreadCntrolBlock->token, 0x00, 80);
 }
 
-/* Look up a a token's internal representation in the
-   token table.
-*/
+/************************************************* 
+	Function:		look_up
+	Description:	Look up a a token's internal representation in the token table.
+	Input:			token
+	Return: 		token type
+*************************************************/ 
 int look_up(char *s)
 {
   register int i; // ,j;
@@ -2831,7 +3199,12 @@ int look_up(char *s)
   return 0; /* unknown command */
 }
 
-/* Return true if c is a delimiter. */
+/************************************************* 
+	Function:		isdelim_with_array
+	Description:	Return true if c is a delimiter or '[]'.
+	Input:			char c
+	Return: 		1 - isdelim ; 0 - notdelim
+*************************************************/ 
 int isdelim_with_array(char c)
 {
   if(strchr(" ;,+-<>/*%^=()", c) || c==9 || c=='\r' || c=='\n' || c==0)
@@ -2839,7 +3212,12 @@ int isdelim_with_array(char c)
   return 0;
 }
 
-/* Return true if c is a delimiter. */
+/************************************************* 
+	Function:		isdelim
+	Description:	Return true if c is a delimiter.
+	Input:			char c
+	Return: 		1 - isdelim ; 0 - notdelim
+*************************************************/ 
 int isdelim(char c)
 {
   if(strchr(" ;,+-<>/*%^=()[]", c) || c==9 || c=='\r' || c=='\n' || c==0)
@@ -2847,7 +3225,12 @@ int isdelim(char c)
   return 0;
 }
 
-/* Return 1 if c is space or tab. */
+/************************************************* 
+	Function:		iswhite
+	Description:	Return 1 if c is space or tab.
+	Input:			char c
+	Return: 		1 - space or tab ; 0 - not space or tab
+*************************************************/ 
 int iswhite(char c)
 {
   if(c==' ' || c=='\t') return 1;
@@ -2855,7 +3238,15 @@ int iswhite(char c)
 }
 
 
-// Process relational operators.
+/************************************************* 
+	Function:		level1
+	Description:	Expression: Process relational operators(AND and OR).
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void level1(struct thread_control_block * objThreadCntrolBlock, eval_value *value, int* boolValue)
 {
     eval_value partial_value;
@@ -2883,7 +3274,15 @@ void level1(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
     }
 }
 
-// Process relational operators.
+/************************************************* 
+	Function:		level2
+	Description:	Expression: Process relational operators(LT, LE, GT, GE, EQ, NE).
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *value, int* boolValue)
 {
     eval_value partial_value;
@@ -2922,7 +3321,15 @@ void level2(struct thread_control_block * objThreadCntrolBlock, eval_value *valu
     }
 }
 
-/*  Add or subtract two terms. */
+/************************************************* 
+	Function:		level3
+	Description:	Expression: Add or subtract two terms.
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void level3(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue)
 {
   register char  op;
@@ -2936,7 +3343,15 @@ void level3(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
   }
 }
 
-/* Multiply or divide two factors. */
+/************************************************* 
+	Function:		level4
+	Description:	Expression: Multiply or divide two factors.
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void level4(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue)
 {
   register char  op;
@@ -2951,7 +3366,15 @@ void level4(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
   }
 }
 
-/* Process integer exponent. */
+/************************************************* 
+	Function:		level5
+	Description:	Expression: Process integer exponent.
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void level5(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue)
 {
   eval_value hold;
@@ -2964,7 +3387,15 @@ void level5(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
   }
 }
 
-/* Is a unary + or -. */
+/************************************************* 
+	Function:		level6
+	Description:	Expression: Process unary + or -.
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void level6(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue)
 {
   register char  op;
@@ -2981,7 +3412,15 @@ void level6(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
     unary(op, result);
 }
 
-/* Process parenthesized expression. */
+/************************************************* 
+	Function:		level7
+	Description:	Expression: Process parenthesized expression.
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Input:			boolValue              - Caculating boolean result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void level7(struct thread_control_block * objThreadCntrolBlock, eval_value *result, int* boolValue)
 {
   if((*(objThreadCntrolBlock->token) == '(')
@@ -2996,7 +3435,14 @@ void level7(struct thread_control_block * objThreadCntrolBlock, eval_value *resu
     primitive(objThreadCntrolBlock, result);
 }
 
-/* Find value of number or variable. */
+/************************************************* 
+	Function:		primitive
+	Description:	Expression: Find value of number or variable.
+	Input:			thread_control_block   - interpreter info
+	Input:			result                 - Caculating result
+	Ouput:			NULL
+	Return: 		NULL
+*************************************************/ 
 void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *result)
 {
   std::string strValue ;
@@ -3072,7 +3518,15 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
   }
 }
 
-/* Perform the specified arithmetic. */
+/************************************************* 
+	Function:		arith
+	Description:	Expression: Perform the specified arithmetic. 
+	Input:			o                 - arithmetic operator
+	Input:			r                 - operand1
+	Input:			h                 - operand2
+	Ouput:			r                 - operand1
+	Return: 		NULL
+*************************************************/ 
 void arith(char o, eval_value *r, eval_value *h)
 {
 //  register int t, ex;
@@ -3112,7 +3566,14 @@ void arith(char o, eval_value *r, eval_value *h)
   }
 }
 
-/* Reverse the sign. */
+/************************************************* 
+	Function:		unary
+	Description:	Expression: Reverse the sign.
+	Input:			o                 - arithmetic operator
+	Input:			r                 - operand1
+	Ouput:			r                 - operand1
+	Return: 		NULL
+*************************************************/ 
 void unary(char o, eval_value *r)
 {
   if(o=='-') r->calcUnary(); // r->fValue = -(r->fValue);
@@ -3128,7 +3589,14 @@ static int get_char_token(char * src, char * dst)
 	return tmp - src ;
 }
 
-// Declare a global variable.
+/************************************************* 
+	Function:		assign_var
+	Description:	Declare a global variable.
+	Input:			thread_control_block   - interpreter info
+	Input:			vname           - variable name
+	Input:			value           - variable value
+	Return: 		NULL
+*************************************************/ 
 void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value)
 {
     int iLineNum = 0 ;
@@ -3221,8 +3689,15 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
     objThreadCntrolBlock->global_vars.push_back(vt);
 }
 
-
-/* Reverse Find the value of a variable. */
+/************************************************* 
+	Function:		find_var
+	Description:	Reverse Find the value of a variable. 
+	Input:			thread_control_block   - interpreter info
+	Input:			vname           - variable name
+	Input:			raise_unkown_error   1 - serror with not-existed variable
+	                                     0 - Omit with not-existed variable
+	Return: 		value           - variable value
+*************************************************/ 
 eval_value find_var(struct thread_control_block * objThreadCntrolBlock, 
 					char *vname, int raise_unkown_error)
 {
@@ -3333,8 +3808,13 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 	return value ;
 }
 
-/* Reverse erase the value of a variable. */
-
+/************************************************* 
+	Function:		erase_var
+	Description:	Reverse erase the value of a variable.
+	Input:			thread_control_block   - interpreter info
+	Input:			vname           - variable name
+	Return: 		value           - variable value
+*************************************************/ 
 int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 {
         vector<var_type>::iterator it ;
@@ -3369,6 +3849,13 @@ int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname)
 }
 
 
+/************************************************* 
+	Function:		basic_thread_create
+	Description:	Start thread of interpreter.
+	Input:			iIdx            - Thread iIdx
+	Input:			args            - interpreter info
+	Return: 		NULL
+*************************************************/ 
 bool basic_thread_create(int iIdx, void * args)
 {
 	bool ret = false;
@@ -3394,6 +3881,12 @@ bool basic_thread_create(int iIdx, void * args)
 	return ret;
 }
 
+/************************************************* 
+	Function:		basic_thread_destroy
+	Description:	Destroy thread of interpreter.
+	Input:			iIdx            - Thread iIdx
+	Return: 		NULL
+*************************************************/ 
 void basic_thread_destroy(int iIdx)
 {
 #ifdef WIN32

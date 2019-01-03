@@ -104,6 +104,7 @@ public:
 	   
 		tfIndex = -1 ;
 		ufIndex = -1 ;
+		isPulse = false ;
 	}
 	// TYPE_FLOAT
 	void setFloatValue(float fVal){
@@ -216,6 +217,14 @@ public:
 			noticeErrorType(TYPE_JOINT | TYPE_POSE) ;
 			return -1;
 		}
+	}
+	
+	void setPulse(bool bValue){
+		isPulse = bValue;
+	}
+	
+	bool getPulse(){
+		return isPulse ;
 	}
 	
 	void updateAdditionalE(AdditionalE additionParam){
@@ -944,6 +953,8 @@ private:
 		// tf Index & uf Index
 		int tfIndex ;
 		int ufIndex ;
+		
+		bool isPulse ;
 #if 0
 		// All of register
 		pr_shmi_t reg_pr ;

@@ -216,7 +216,8 @@ void find_eol(struct thread_control_block * objThreadCntrolBlock);
 int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 void serror(struct thread_control_block * objThreadCntrolBlock, int error);
-	 
+
+void assignment(struct thread_control_block * objThreadCntrolBlock) ;
 
 #endif
 

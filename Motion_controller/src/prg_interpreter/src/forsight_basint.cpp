@@ -69,6 +69,13 @@ enum var_inner_type { FORSIGHT_CHAR, FORSIGHT_INT, FORSIGHT_FLOAT };
 #define FORSIGHT_REGISTER_ON    "on"
 #define FORSIGHT_REGISTER_OFF   "off"
 
+#define FORSIGHT_TIMER          "timer"
+#define FORSIGHT_TIMER_START    "start"
+#define FORSIGHT_TIMER_STOP     "stop"
+#define FORSIGHT_TIMER_RESET    "reset"
+
+#define FORSIGHT_PULSE          "pulse"
+
 // #define FORSIGHT_REGISTER_UF    "uf"
 // #define FORSIGHT_REGISTER_TF    "tf"
 
@@ -185,7 +192,6 @@ void unary(char, eval_value *r),
 	arith(char o, eval_value *r, eval_value *h);
 
 int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, char *pname);
-void assignment(struct thread_control_block * objThreadCntrolBlock) ;
 void scan_labels(struct thread_control_block * objThreadCntrolBlock, 
 				SubLabelType type, char * pname);
 int add_label(struct thread_control_block * objThreadCntrolBlock, struct sub_label objLabel);
@@ -3512,6 +3518,11 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
 	result->setStringValue(strValue);
     get_token(objThreadCntrolBlock);
     return;
+  case INNERCMD:
+    // Timer
+    result->setFloatValue(1.0);
+    get_token(objThreadCntrolBlock);
+    return;
   default:
 	FST_ERROR("primitive error :: get_token =  '%s'", objThreadCntrolBlock->token);
     serror(objThreadCntrolBlock, 0);
@@ -3645,6 +3656,19 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			}
 		}
     }
+	else if(strcmp(FORSIGHT_TIMER, reg_name) == 0)
+    {
+		if(strchr(vname, '['))
+		{
+			int iRet = 0 ;
+			// iRet = forgesight_set_timer(vname, value);
+			if(iRet == 0)
+			{
+				FST_INFO("forgesight_set_timer");
+				return ;
+			}
+		}
+    }
 
 	if(strcmp(FORSIGHT_TF_NO, vname) == 0)
     {
@@ -3703,6 +3727,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 {
 	MoveCommandDestination movCmdDst ;
 	eval_value value ;
+	int        boolPulseValue;
 	char reg_name[256] ;
 	char *temp = NULL ;
 
@@ -3744,6 +3769,27 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 		value.setPoseValue(&movCmdDst.pose_target);
 		
 		value.setPrRegDataWithPoseEulerValue(&movCmdDst.pose_target);
+		return value ;
+	}
+	else if(!strcmp(vname, FORSIGHT_TIMER_START))
+	{
+		value.setFloatValue(1.0);
+		return value ;
+	}
+	else if(!strcmp(vname, FORSIGHT_TIMER_STOP))
+	{
+		value.setFloatValue(0.0);
+		return value ;
+	}
+	else if(!strcmp(vname, FORSIGHT_TIMER_RESET))
+	{
+		value.setFloatValue(0.0);
+		return value ;
+	}
+	else if(!strcmp(vname, FORSIGHT_PULSE))
+	{
+		get_exp(objThreadCntrolBlock, &value, &boolPulseValue);
+		value.setPulse(true);
 		return value ;
 	}
 	

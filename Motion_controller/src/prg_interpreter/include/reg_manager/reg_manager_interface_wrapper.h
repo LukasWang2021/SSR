@@ -15,15 +15,14 @@ extern fst_base::InterpreterServer* g_objInterpreterServer ;
 
 #define REGSITER_NAMES   "pr;sr;r;mr;uf;tf;pl"
 
-
 void load_register_data();
 
 /**********************
  ********* PR *********
  **********************/
 
-bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num);
-bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num);
+bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num);
+bool reg_manager_interface_setPr(PrRegData *ptr, uint16_t num);
 bool reg_manager_interface_delPr(uint16_t num);
 
 /*
@@ -48,8 +47,8 @@ bool reg_manager_interface_setCommentPr(char *ptr, uint16_t num);
  ********* SR *********
  **********************/
 
-bool reg_manager_interface_getSr(fst_ctrl::SrRegData *ptr, uint16_t num);
-bool reg_manager_interface_setSr(fst_ctrl::SrRegData *ptr, uint16_t num);
+bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num);
+bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num);
 bool reg_manager_interface_delSr(uint16_t num);
 
 bool reg_manager_interface_getValueSr(string &strVal, uint16_t num);
@@ -64,8 +63,8 @@ bool reg_manager_interface_setCommentSr(char *ptr, uint16_t num);
 /**********************
  ********* R **********
  **********************/
-bool reg_manager_interface_getR(fst_ctrl::RRegData *ptr, uint16_t num);
-bool reg_manager_interface_setR(fst_ctrl::RRegData *ptr, uint16_t num);
+bool reg_manager_interface_getR(RRegData *ptr, uint16_t num);
+bool reg_manager_interface_setR(RRegData *ptr, uint16_t num);
 bool reg_manager_interface_delR(uint16_t num);
 
 bool reg_manager_interface_getValueR(double *ptr, uint16_t num);
@@ -80,8 +79,8 @@ bool reg_manager_interface_setCommentR(char *ptr, uint16_t num);
 /**********************
  ********* MR *********
  **********************/
-bool reg_manager_interface_getMr(fst_ctrl::MrRegData *ptr, uint16_t num);
-bool reg_manager_interface_setMr(fst_ctrl::MrRegData *ptr, uint16_t num);
+bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num);
+bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num);
 bool reg_manager_interface_delMr(uint16_t num);
  
 bool reg_manager_interface_getValueMr(int *ptr, uint16_t num);
@@ -97,8 +96,8 @@ bool reg_manager_interface_setCommentMr(char *ptr, uint16_t num);
  ********* HR *********
  **********************/
 	
-bool reg_manager_interface_getHr(fst_ctrl::HrRegData *ptr, uint16_t num);
-bool reg_manager_interface_setHr(fst_ctrl::HrRegData *ptr, uint16_t num);
+bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num);
+bool reg_manager_interface_setHr(HrRegData *ptr, uint16_t num);
 bool reg_manager_interface_delHr(uint16_t num);
 
 /*
@@ -168,10 +167,10 @@ bool reg_manager_interface_setIdPl(int *ptr, uint16_t num);
 bool reg_manager_interface_getCommentPl(char *ptr, uint16_t num);
 bool reg_manager_interface_setCommentPl(char *ptr, uint16_t num);
 
-std::vector<fst_ctrl::BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size);
-std::vector<fst_ctrl::BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, int size);
-std::vector<fst_ctrl::BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, int size);
-std::vector<fst_ctrl::BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, int size);
-std::vector<fst_ctrl::BaseRegData> reg_manager_interface_read_valid_hr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_sr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, int size);
+std::vector<BaseRegData> reg_manager_interface_read_valid_hr_lst(int start_id, int size);
 
 #endif

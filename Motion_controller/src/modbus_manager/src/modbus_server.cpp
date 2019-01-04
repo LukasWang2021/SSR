@@ -253,7 +253,7 @@ ErrorCode ModbusServer::setStartInfo(ModbusServerStartInfo start_info)
 
     if (is_enable_)
     {
-        return 0x12345678; //MODBUS_SERVER_ENABLED;
+        return MODBUS_SERVER_ENABLED;
     }
 
     if (start_info.name.length() == 0

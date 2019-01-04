@@ -92,7 +92,7 @@ ErrorCode ModbusClientManager::initParam()
 {
     if (!param_ptr_->loadParam())
     {
-        return 0x12345678; // MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED
+        return MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED;
     }
 
     comm_type_ = param_ptr_->comm_type_;
@@ -120,108 +120,261 @@ ErrorCode ModbusClientManager::initParam()
 
     if (!config_param_ptr_->loadParam())
     {
-        return 0x12345678; // MODBUS_CLIENT_MANAGER_LOAD_CONFIG_PARAM_FAILED
+        return MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED;
     }
-
-    // if (!initClientListByConfigParamList())
-        // return 0x12345678; //MODBUS_CLIENT_LIST_INIT_FALIED;
 
     return SUCCESS;
 }
 
-bool ModbusClientManager::initClientListByConfigParamList()
+bool ModbusClientManager::updateClientEnableStatus(int client_id, bool status)
 {
-    return true;
-}
+    list<ModbusClient*>::iterator it;
 
-ErrorCode ModbusClientManager::addClient(ModbusClientStartInfo start_info)
-{
-    vector<ModbusClient>::iterator it;
-
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end(); ++it)
     {
-        if (it->getId() == start_info.id)
+        if ((*it)->getId() == client_id)
         {
-            return SUCCESS; // MODBUS_CLIENT_IS_ADDED
+            if ((*it)->setEnableStatus(status) == SUCCESS) 
+            {
+                client_list_mutex_.unlock();
+                return true;
+            }
+            client_list_mutex_.unlock();
+            return false;
         }
     }
+    client_list_mutex_.unlock();
+    return false;
+}
 
-    if ((scan_rate_min_ <= start_info.scan_rate && start_info.scan_rate <= scan_rate_max_)
-        || (port_min_ <= start_info.port && start_info.port <= port_max_)
-        || (response_timeout_min_ <= start_info.response_timeout 
-            && start_info.response_timeout <= response_timeout_max_)
-        || 0 < start_info.ip.length()
-        || 0 < start_info.name.length())
+bool ModbusClientManager::updateClientRegInfo(int client_id, ModbusClientRegInfo &reg_info)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for(it = client_list_.begin(); it != client_list_.end(); ++it)
     {
-        return 0x12345678; // MODBUS_CLIENT_MANAGER_PARAM_INVALID
+        if ((*it)->getId() == client_id)
+        {
+            if ((*it)->setRegInfo(reg_info) == SUCCESS)
+            {
+                client_list_mutex_.unlock();
+                return true;
+            }
+
+            client_list_mutex_.unlock();
+            return false;
+        }
+    }
+    client_list_mutex_.unlock();
+    return false;
+}
+
+ErrorCode ModbusClientManager::addClient(ModbusClientStartInfo &start_info)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for(it = client_list_.begin(); it != client_list_.end();)
+    {
+        if ((*it)->getId() == start_info.id)
+        {
+            client_list_mutex_.unlock();
+            return MODBUS_CLIENT_ID_EXISTED;
+        }
+
+        ++it;
+    }
+    client_list_mutex_.unlock();
+
+    if (start_info.scan_rate < scan_rate_min_
+        || scan_rate_max_ < start_info.scan_rate
+        || start_info.port < port_min_ 
+        || port_max_ < start_info.port
+        || start_info.response_timeout < response_timeout_min_
+        || response_timeout_max_ < start_info.response_timeout
+        || start_info.ip.length() == 0
+        || start_info.name.length() == 0)
+    {
+        return MODBUS_CLIENT_MANAGER_INVALID_ARG;
     }
 
-    if (config_param_ptr_->saveStartInfo(start_info))
+    if (!config_param_ptr_->saveStartInfo(start_info))
     {
-        return 0x12345678; // MODBUS_CLIENT_MANAGER_SAEV_PARAM_FAILED
+        return MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED;
     }
 
-    ModbusClient client(start_info.id, is_debug_, param_ptr_->log_level_);
+    ModbusClient* client = new ModbusClient(start_info.id, is_debug_, param_ptr_->log_level_);
 
-    ErrorCode error_code = client.setStartInfo(start_info);
+    ErrorCode error_code = client->setStartInfo(start_info);
     if (error_code != SUCCESS) return error_code;
 
-    error_code = client.init();
-    if (error_code != SUCCESS) return error_code;
+    ModbusClientRegInfo reg_info;
+    if (!config_param_ptr_->getRegInfo(start_info.id, reg_info))
+        return MODBUS_CLIENT_ID_NOT_EXISTED;
 
+    error_code = client->setRegInfo(reg_info);
+    if (error_code != SUCCESS) error_code;
+
+    bool is_enable = false;
+    if (!config_param_ptr_->getEnableStatus(start_info.id, is_enable))
+        return MODBUS_CLIENT_ID_NOT_EXISTED;
+
+    error_code = client->setEnableStatus(is_enable);
+    if (error_code != SUCCESS) error_code;
+
+    client_list_mutex_.lock();
     client_list_.push_back(client);
+    client_list_mutex_.unlock();
     return SUCCESS;
 }
 
 ErrorCode ModbusClientManager::deleteClient(int client_id)
 {
-    vector<ModbusClient>::iterator it;
+    ErrorCode error_code = SUCCESS;
+    bool is_id_found = false;
+    list<ModbusClient*>::iterator iter;
 
-    for(it = client_list_.begin(); it != client_list_.end();)
+    client_list_mutex_.lock();
+    for(iter = client_list_.begin(); iter != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*iter)->getId() == client_id)
         {
-            if (it->isRunning()) return 0x123456768;// MODBUS_CLIENT_IS_OPENED
-            it = client_list_.erase(it);
-            return SUCCESS;
+            is_id_found = true;
+
+            if ((*iter)->isConnected())
+            {
+                error_code = MODBUS_CLIENT_CONNECTED;
+            }
+            else
+            {
+                delete (*iter);
+                iter = client_list_.erase(iter);
+                error_code = SUCCESS;
+            }
         }
         else
         {
-            ++it;
+            iter++;
         }
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
-}
-
-ErrorCode ModbusClientManager::setEnableStatus(int client_id, bool status)
-{
-    vector<ModbusClient>::iterator it;
-
-    for(it = client_list_.begin(); it != client_list_.end();)
+    client_list_mutex_.unlock();
+    if (!is_id_found)
     {
-        if (it->getId() == client_id)
-        {
-            return it->setEnableStatus(status);
-        }
-        else 
-        {
-            ++it;
-        }
+        error_code = MODBUS_CLIENT_ID_NOT_EXISTED;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    return error_code;
 }
 
-ErrorCode ModbusClientManager::getEnableStatus(int client_id, bool status)
+ErrorCode ModbusClientManager::setEnableStatus(int client_id, bool &status)
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            status = it->getEnableStatus();
+            if (!config_param_ptr_->saveEnableStatus(client_id, status))
+            {
+                client_list_mutex_.unlock();
+                return MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED;
+            }
+
+            ErrorCode error_code = (*it)->setEnableStatus(status);
+            client_list_mutex_.unlock();
+            return error_code;
+        }
+
+        ++it;
+    }
+
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
+}
+
+ErrorCode ModbusClientManager::getEnableStatus(int client_id, bool &status)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for(it = client_list_.begin(); it != client_list_.end();)
+    {
+        if ((*it)->getId() == client_id)
+        {
+            status = (*it)->getEnableStatus();
+            client_list_mutex_.unlock();
+            return SUCCESS;
+        }
+
+        ++it;
+    }
+
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
+}
+
+ErrorCode ModbusClientManager::getStartInfo(int client_id, ModbusClientStartInfo &start_info)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for(it = client_list_.begin(); it != client_list_.end();)
+    {
+        if ((*it)->getId() == client_id)
+        {
+            start_info = (*it)->getStartInfo();
+            client_list_mutex_.unlock();
+            return SUCCESS;
+        }
+
+        ++it;
+    }
+
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
+}
+
+ErrorCode ModbusClientManager::setRegInfo(int client_id, ModbusClientRegInfo &reg_info)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for(it = client_list_.begin(); it != client_list_.end();)
+    {
+        if ((*it)->getId() == client_id)
+        {
+            ErrorCode error_code = (*it)->setRegInfo(reg_info);
+            client_list_mutex_.unlock();
+            return error_code;
+
+            if (!config_param_ptr_->saveRegInfo(client_id, reg_info))
+            {
+                client_list_mutex_.unlock();
+                return MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED;
+            }
+        }
+        ++it;
+    }
+
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
+}
+
+ErrorCode ModbusClientManager::getRegInfo(int client_id, ModbusClientRegInfo &reg_info)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for(it = client_list_.begin(); it != client_list_.end();)
+    {
+        if ((*it)->getId() == client_id)
+        {
+            reg_info = (*it)->getRegInfo();
+            client_list_mutex_.unlock();
             return SUCCESS;
         }
         else 
@@ -230,337 +383,328 @@ ErrorCode ModbusClientManager::getEnableStatus(int client_id, bool status)
         }
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
-ErrorCode ModbusClientManager::getStartInfo(int client_id, ModbusClientStartInfo start_info)
+vector<int> ModbusClientManager::getConnectedClientIdList()
 {
-    vector<ModbusClient>::iterator it;
-
-    for(it = client_list_.begin(); it != client_list_.end();)
-    {
-        if (it->getId() == client_id)
-        {
-            start_info = it->getStartInfo();
-            return SUCCESS;
-        }
-        else 
-        {
-            ++it;
-        }
-    }
-
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
-}
-
-ErrorCode ModbusClientManager::setRegInfo(int client_id, ModbusClientRegInfo reg_info)
-{
-    vector<ModbusClient>::iterator it;
-
-    for(it = client_list_.begin(); it != client_list_.end();)
-    {
-        if (it->getId() == client_id)
-        {
-            return it->setRegInfo(reg_info);
-        }
-        else 
-        {
-            ++it;
-        }
-    }
-
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
-}
-
-ErrorCode ModbusClientManager::getRegInfo(int client_id, ModbusClientRegInfo reg_info)
-{
-    vector<ModbusClient>::iterator it;
-
-    for(it = client_list_.begin(); it != client_list_.end();)
-    {
-        if (it->getId() == client_id)
-        {
-            reg_info = it->getRegInfo();
-            return SUCCESS;
-        }
-        else 
-        {
-            ++it;
-        }
-    }
-
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
-}
-
-vector<int> ModbusClientManager::getRunningClientIdList()
-{
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
     vector<int> id_list;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end(); ++it)
     {
-        if (it->isRunning())
-            id_list.push_back(it->getId());
+        if ((*it)->isConnected())
+            id_list.push_back((*it)->getId());
     }
 
+    client_list_mutex_.unlock();
     return id_list;
 }
 
 vector<int> ModbusClientManager::getClientIdList()
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
     vector<int> id_list;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end(); ++it)
     {
-        id_list.push_back(it->getId());
+        id_list.push_back((*it)->getId());
     }
 
+    client_list_mutex_.unlock();
     return id_list;
 }
 
-bool ModbusClientManager::isAnyClientClosed()
+bool ModbusClientManager::isAllClientClosed()
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->isRunning())
+        if ((*it)->isConnected())
         {
+            client_list_mutex_.unlock();
             return false;
         }
-        else
-        {
-             ++it;
-        }
+        ++it;
     }
 
+    client_list_mutex_.unlock();
     return true;
 }
 
 vector<int> ModbusClientManager::getScanRateList()
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
     vector<int> scan_rate_list;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end(); ++it)
     {
-       scan_rate_list.push_back(it->getScanRate());
+       scan_rate_list.push_back((*it)->getScanRate());
     }
 
+    client_list_mutex_.unlock();
     return scan_rate_list;
 }
 
-int ModbusClientManager::getCtrlState(int client_id)
+ErrorCode ModbusClientManager::getCtrlState(int client_id, int &ctrl_state)
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
 
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->getCtrlState();
+            ctrl_state = (*it)->getCtrlState();
+            client_list_mutex_.unlock();
+            return SUCCESS;
         }
         else 
         {
             ++it;
         }
     }
-
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
-ErrorCode ModbusClientManager::openClient(int client_id)
+ErrorCode ModbusClientManager::connectClient(int client_id)
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->open();
+            ErrorCode error_code = (*it)->connect();
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
-            ++it;
-        }
+        ++it;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::closeClient(int client_id)
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            it->close();
+            (*it)->close();
+            client_list_mutex_.unlock();
             return SUCCESS;
         }
-        else 
-        {
-            ++it;
-        }
-    }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+        ++it;
+    }
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
-ErrorCode ModbusClientManager::isRunning(int client_id, bool is_running)
+ErrorCode ModbusClientManager::isConnected(int client_id, bool &is_connected)
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            is_running = it->isRunning();
+            is_connected = (*it)->isConnected();
+            client_list_mutex_.unlock();
             return SUCCESS;
         }
-        else
-        {
-            ++it;
-        }
+        ++it;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
+}
+
+ErrorCode ModbusClientManager::scanDataArea(int client_id)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for(it = client_list_.begin(); it != client_list_.end();)
+    {
+        if ((*it)->getId() == client_id)
+        {
+            if(!(*it)->scanDataArea())
+            {
+                if (!(*it)->isSocketValid())
+                {
+                    (*it)->close();
+                    client_list_mutex_.unlock();
+                    return MODBUS_CLIENT_CONNECT_FAILED;
+                }
+
+                client_list_mutex_.unlock();
+                return MODBUS_CLIENT_OPERATION_FAILED;
+            }
+
+            client_list_mutex_.unlock();
+            return SUCCESS;
+        }
+        ++it;
+    }
+
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::writeCoils(int client_id, int addr, int nb, uint8_t *dest)
 {
-   vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->writeCoils(addr, nb, dest);
+            ErrorCode error_code = (*it)->writeCoils(addr, nb, dest);
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
-            ++it;
-        }
+        ++it;
     }
-
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::readCoils(int client_id, int addr, int nb, uint8_t *dest)
 {
-   vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->readCoils(addr, nb, dest);
+            ErrorCode error_code = (*it)->readCoils(addr, nb, dest);
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
-            ++it;
-        }
+        ++it;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::readDiscreteInputs(int client_id, int addr, int nb, uint8_t *dest)
 {
-   vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->readDiscreteInputs(addr, nb, dest);
+            ErrorCode error_code = (*it)->readDiscreteInputs(addr, nb, dest);
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
-            ++it;
-        }
+        ++it;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::writeHoldingRegs(int client_id, int addr, int nb, uint16_t *dest)
 {
-   vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->writeHoldingRegs(addr, nb, dest);
+            ErrorCode error_code = (*it)->writeHoldingRegs(addr, nb, dest);
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
-            ++it;
-        }
+        ++it;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::readHoldingRegs(int client_id, int addr, int nb, uint16_t *dest)
 {
-   vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->readHoldingRegs(addr, nb, dest);
+            ErrorCode error_code = (*it)->readHoldingRegs(addr, nb, dest);
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
             ++it;
-        }
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::writeAndReadHoldingRegs(int client_id, int write_addr, int write_nb, const uint16_t *write_dest,
     int read_addr, int read_nb, uint16_t *read_dest)
 {
-   vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->writeAndReadHoldingRegs(write_addr, write_nb, write_dest, read_addr, read_nb, read_dest);
+            ErrorCode error_code = (*it)->writeAndReadHoldingRegs(write_addr, write_nb, write_dest, read_addr, read_nb, read_dest);
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
-            ++it;
-        }
+        ++it;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 ErrorCode ModbusClientManager::readInputRegs(int client_id, int addr, int nb, uint16_t *dest)
 {
-   vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator it;
 
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-        if (it->getId() == client_id)
+        if ((*it)->getId() == client_id)
         {
-            return it->readInputRegs(addr, nb, dest);
+            ErrorCode error_code = (*it)->readInputRegs(addr, nb, dest);
+            client_list_mutex_.unlock();
+            return error_code;
         }
-        else 
-        {
-            ++it;
-        }
+        ++it;
     }
 
-    return 0x12345678; //MODBUS_CLIENT_NOT_EXISTED;
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
 
@@ -569,73 +713,121 @@ vector<ModbusClientConfigParams> ModbusClientManager::getConfigParamsList()
     vector<ModbusClientConfigParams> params_list;
     vector<ModbusClientConfigParams>::iterator params_it = params_list.begin();
 
-   vector<ModbusClient>::iterator client_it;
+    list<ModbusClient*>::iterator client_it;
 
+    client_list_mutex_.lock();
     for(client_it = client_list_.begin(); client_it != client_list_.end(); ++client_it)
     {
-        *(params_it) = client_it->getConfigParams();
-        ++ params_it;
+        *(params_it) = (*client_it)->getConfigParams();
+        ++params_it;
     }
 
+    client_list_mutex_.unlock();
     return params_list;
 }
 
-ErrorCode ModbusClientManager::updateStartInfo(int client_id, ModbusClientStartInfo start_info)
+ErrorCode ModbusClientManager::getConfigParamsList(int client_id, ModbusClientConfigParams &params)
 {
-    vector<ModbusClient>::iterator it;
+    list<ModbusClient*>::iterator client_it;
 
-    if (client_id == start_info.id)
+    client_list_mutex_.lock();
+    for(client_it = client_list_.begin(); client_it != client_list_.end();)
     {
-        for(it = client_list_.begin(); it != client_list_.end();)
+        if ((*client_it)->getId() == client_id)
         {
-           if (it->getId() == client_id)
-           {
-                if ((scan_rate_min_ <= start_info.scan_rate && start_info.scan_rate <= scan_rate_max_)
-                    || (port_min_ <= start_info.port && start_info.port <= port_max_)
-                    || (response_timeout_min_ <= start_info.response_timeout 
-                        && start_info.response_timeout <= response_timeout_max_)
-                    || 0 < start_info.ip.length()
-                    || 0 < start_info.name.length())
-                {
-                    return it->setStartInfo(start_info);
-                }
-
-                return 0x12345678; //MODBUS_CLIENT_PARAM_INVALID;
-           }
-           else 
-           {
-                ++it;
-           }
+            params = (*client_it)->getConfigParams();
+            client_list_mutex_.unlock();
+            return SUCCESS;
         }
 
-        return 0x12345678; // MODBUS_CLIENT_PARAM_INVALID
+        client_id++;
     }
 
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
+}
+
+ErrorCode ModbusClientManager::updateStartInfo(ModbusClientStartInfo &start_info)
+{
+    list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
     for(it = client_list_.begin(); it != client_list_.end();)
     {
-       if (it->getId() == start_info.id)
+       if ((*it)->getId() == start_info.id)
        {
-            return 0x12345678; //MODBUS_CLIENT_PARAM_INVALID;
+            if ((*it)->getEnableStatus())
+            {
+                client_list_mutex_.unlock();
+                return MODBUS_CLIENT_ENABLED;
+            } 
+
+            if ((scan_rate_min_ <= start_info.scan_rate && start_info.scan_rate <= scan_rate_max_)
+                || (port_min_ <= start_info.port && start_info.port <= port_max_)
+                || (response_timeout_min_ <= start_info.response_timeout 
+                    && start_info.response_timeout <= response_timeout_max_)
+                || 0 < start_info.ip.length()
+                || 0 < start_info.name.length())
+            {
+                ErrorCode error_code = (*it)->setStartInfo(start_info);
+                client_list_mutex_.unlock();
+                return error_code;
+            }
+
+            if (!config_param_ptr_->saveStartInfo(start_info))
+            {
+                client_list_mutex_.unlock();
+                return MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED;
+            }
+
+            client_list_mutex_.unlock();
+            return MODBUS_CLIENT_MANAGER_INVALID_ARG;
        }
-       else
-       {
-            ++it;
-       }
+
+        ++it;
     }
 
-    for(it = client_list_.begin(); it != client_list_.end(); ++it)
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_MANAGER_INVALID_ARG;
+}
+
+ErrorCode ModbusClientManager::replaceClient(int &replaced_id, ModbusClientStartInfo &start_info)
+{
+    if (replaced_id == start_info.id) 
+        return MODBUS_CLIENT_MANAGER_INVALID_ARG;
+
+    ErrorCode error_code = SUCCESS;
+    int ctrl_state = MODBUS_CLIENT_CTRL_DISABLED;
+
+    error_code = getCtrlState(replaced_id, ctrl_state);
+    if (error_code != SUCCESS) return error_code;
+
+    if (MODBUS_CLIENT_CTRL_ENABLED <= ctrl_state)
+        return MODBUS_CLIENT_ENABLED;
+
+    error_code = addClient(start_info);
+    if (error_code != SUCCESS) return error_code;
+
+    return deleteClient(replaced_id);
+}
+
+ErrorCode ModbusClientManager::getClientScanRate(int client_id, int &scan_rate)
+{
+    list<ModbusClient*>::iterator client_it;
+
+    client_list_mutex_.lock();
+    for(client_it = client_list_.begin(); client_it != client_list_.end();)
     {
-       if (it->getId() != client_id)
-       {
-            ++it;
-       }
-       else 
-       {
-            ErrorCode error_code = deleteClient(client_id);
-            if (error_code != SUCCESS) return error_code;
-            return addClient(start_info);
-       }
+        if ((*client_it)->getId() == client_id)
+        {
+            scan_rate = (*client_it)->getScanRate();
+            client_list_mutex_.unlock();
+            return SUCCESS;
+        }
+
+        client_id++;
     }
 
-    return 0x12345678; // MODBUS_CLIENT_PARAM_INVALID
+    client_list_mutex_.unlock();
+    return MODBUS_CLIENT_ID_NOT_EXISTED;
 }

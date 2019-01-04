@@ -47,17 +47,21 @@ public:
     bool loadParam();
     bool saveParam();
 
-    bool saveStartInfo(ModbusClientStartInfo start_info); // for client element
+    bool saveStartInfo(ModbusClientStartInfo &start_info); // for client element
     bool saveRegInfo(int client_id, ModbusClientRegInfo &reg_info); // for client element
-    bool saveEnableStatus(int client_id, bool status); // for client element
+    bool saveEnableStatus(int client_id, bool &status); // for client element
 
-    std::vector<ModbusClientConfigParams> client_config_list_;
+    bool getStartInfo(ModbusClientStartInfo &start_info); // for client element
+    bool getRegInfo(int client_id, ModbusClientRegInfo &reg_info); // for client element
+    bool getEnableStatus(int client_id, bool &status); // for client element
 
 private:
     fst_parameter::ParamGroup yaml_help_;
     string file_path_;
     int client_nb_;
 
+    std::mutex client_config_list_mutex_;
+    std::vector<ModbusClientConfigParams> client_config_list_;
     ModbusClientConfigParam();
 };
 }

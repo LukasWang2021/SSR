@@ -423,6 +423,39 @@ private:
 	//"/rpc/modbus/getServerRunningStatus"	
     void handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr);
 
+    //"/rpc/modbus/addClient"
+    void handleRpc0x00012E44(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/deleteClient"
+    void handleRpc0x00014CF4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/replaceClient"
+    void handleRpc0x0000C2F4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientIdList"
+    void handleRpc0x000046C4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/setClientEnableStatus"
+    void handleRpc0x00002AD3(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientEnableStatus"
+    void handleRpc0x00018573(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/setClientAllFunctionAddrInfo"
+    void handleRpc0x0000A4CF(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientAllFunctionAddrInfo"
+    void handleRpc0x0000132F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/updateClientStartInfo"
+    void handleRpc0x00008C7F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientStartInfo"
+    void handleRpc0x0000084F(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientConfigParams"
+    void handleRpc0x00009833(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/connectClient"
+    void handleRpc0x00014594(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/closeClient"
+    void handleRpc0x00006CA4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/isClientConnected"
+    void handleRpc0x00002FC4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientCtrlStatus"
+    void handleRpc0x000170E3(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getConnectedClientList"
+    void handleRpc0x00001DC4(void* request_data_ptr, void* response_data_ptr);
+
 	//"/rpc/modbus/writeCoils"
     void handleRpc0x0000BD83(void* request_data_ptr, void* response_data_ptr);
 	//"/rpc/modbus/readCoils"

@@ -20,6 +20,7 @@ ControllerSm::ControllerSm():
     controller_client_ptr_(NULL),
     device_manager_ptr_(NULL),
     safety_device_ptr_(NULL),
+    modbus_manager_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
     running_state_(RUNNING_STATUS_LIMITED),
     interpreter_state_(INTERPRETER_IDLE),
@@ -38,6 +39,7 @@ ControllerSm::ControllerSm():
 {
     memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
     memset(&last_unknown_user_op_mode_time_, 0, sizeof(struct timeval));
+    memset(&modbus_last_scan_time_, 0, sizeof(struct timeval));
     memset(&instruction_, 0, sizeof(Instruction));
 }
 
@@ -66,6 +68,11 @@ void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fs
             BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
             safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
         }
+        else if (device_list[i].type == DEVICE_TYPE_MODBUS)
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+        }
     }
 }
 
@@ -83,6 +90,7 @@ void ControllerSm::processStateMachine()
     transferCtrlState();
     transferRobotState();
     processMacroLaunching();
+    processModbusClientList();
 }
 
 fst_ctrl::UserOpMode ControllerSm::getUserOpMode()
@@ -703,6 +711,55 @@ void ControllerSm::handleContinuousManualRpcTimeout()
     }
 }
 
+
+void ControllerSm::processModbusClientList()
+{
+    if (modbus_manager_ptr_->getStartMode() != MODBUS_CLIENT)
+    {
+        return;
+    }
+
+    if(modbus_last_scan_time_.tv_sec == 0
+        && modbus_last_scan_time_.tv_usec == 0)
+    {
+        gettimeofday(&modbus_last_scan_time_, NULL);
+    }
+
+    vector<int> id_list;
+    id_list.clear();
+    modbus_manager_ptr_->getConnectedClientIdList(id_list);
+    for (vector<int>::iterator it = id_list.begin(); it != id_list.end(); it++)
+    {
+        bool is_connected = false;
+        modbus_manager_ptr_->isConnected(*it, is_connected);
+        if (!is_connected) return;
+
+        int scan_rate = 0;
+        ErrorCode error_code = modbus_manager_ptr_->getClientScanRate(*it, scan_rate);
+        if (error_code != SUCCESS)
+        {
+            ErrorMonitor::instance()->add(error_code);
+            return;
+        }
+
+        struct timeval current_time;
+        gettimeofday(&current_time, NULL);
+        long long time_elapse = computeTimeElapse(current_time, modbus_last_scan_time_);
+        int scan_elapse = (int)(time_elapse/1000);
+
+        if (scan_rate < scan_elapse)
+        {
+            ErrorCode error_code = modbus_manager_ptr_->scanClientDataArea(*it);
+            if (error_code != SUCCESS)
+                ErrorMonitor::instance()->add(error_code);
+
+            modbus_last_scan_time_ = current_time;
+            gettimeofday(&current_time, NULL);
+            return;
+        }
+    }
+}
+
 void ControllerSm::clearInstruction()
 {
     is_instruction_available_ = false;
@@ -723,3 +780,4 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
 {
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }
+

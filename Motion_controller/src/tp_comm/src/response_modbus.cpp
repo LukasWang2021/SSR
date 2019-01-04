@@ -306,3 +306,273 @@ void TpComm::handleResponse0x000072C3(std::vector<TpRequestResponse>::iterator& 
     }
 }
 
+//"/rpc/modbus/addClient"
+void TpComm::handleResponse0x00012E44(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_ModbusClientStartInfo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/deleteClient"
+void TpComm::handleResponse0x00014CF4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getClientIdList"
+void TpComm::handleResponse0x000046C4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32List_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32List*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/setClientEnableStatus"
+void TpComm::handleResponse0x00002AD3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32_Bool*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getClientEnableStatus",
+void TpComm::handleResponse0x00018573(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Bool_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Bool*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/setClientAllFunctionAddrInfo"
+void TpComm::handleResponse0x0000A4CF(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32_ModbusAllFucntionAddrInfo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getClientAllFunctionAddrInfo"
+void TpComm::handleResponse0x0000132F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_ModbusAllFucntionAddrInfo_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_ModbusAllFucntionAddrInfo*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/updateClientStartInfo"
+void TpComm::handleResponse0x00008C7F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_ModbusClientStartInfo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getClientStartInfo"
+void TpComm::handleResponse0x0000084F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_ModbusClientStartInfo_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_ModbusClientStartInfo*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getClientConfigParams"
+void TpComm::handleResponse0x00009833(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_ModbusClientConfigParams_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_ModbusClientConfigParams*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/connectClient"
+void TpComm::handleResponse0x00014594(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/closeClient
+void TpComm::handleResponse0x00006CA4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/isClientConnected"
+void TpComm::handleResponse0x00002FC4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Bool_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Bool*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/getClientCtrlStatus"
+void TpComm::handleResponse0x000170E3(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32*)task->response_data_ptr;
+    }
+}
+
+//"/rpc/modbus/replaceClient"
+void TpComm::handleResponse0x0000C2F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Int32_ModbusClientStartInfo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+
+void TpComm::handleResponse0x00001DC4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_Int32List_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64_Int32List*)task->response_data_ptr;
+    }
+}

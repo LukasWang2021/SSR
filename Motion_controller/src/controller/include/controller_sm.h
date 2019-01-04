@@ -10,6 +10,7 @@
 #include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "fst_safety_device.h"
+#include "modbus_manager.h"
 #include "interpreter_common.h"
 #include <string>
 #include <sys/time.h>
@@ -113,6 +114,7 @@ private:
     fst_base::ControllerClient* controller_client_ptr_;
     fst_hal::DeviceManager* device_manager_ptr_;
     fst_hal::FstSafetyDevice* safety_device_ptr_;    
+    fst_hal::ModbusManager* modbus_manager_ptr_; 
 
     // mode and status
     UserOpMode user_op_mode_;
@@ -134,6 +136,10 @@ private:
     struct timeval last_unknown_user_op_mode_time_;
     bool is_unknown_user_op_mode_exist_;
 
+    // modbus client list related
+    struct timeval modbus_last_scan_time_;
+    std::mutex modbus_last_scan_time_mutex_;
+
     // interpreter instruction
     Instruction instruction_;
     bool is_instruction_available_;
@@ -152,6 +158,7 @@ private:
     void transferRobotState();
     void shutdown();
     void processMacroLaunching();//to set the enable value of macro launching
+    void processModbusClientList();
 
     // manual rpc related
     long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);

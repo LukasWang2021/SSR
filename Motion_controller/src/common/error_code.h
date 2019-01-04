@@ -189,28 +189,28 @@
 #define PARSE_IO_PATH_FAILED (unsigned long long int)0x0000000200AC03FA   /*IO not exist*/
 #define IO_MAPPING_LOG (unsigned long long int)0x0001000100AD0000   /*IoMapping log{0}*/
 
-#define MODBUS_LOG (unsigned long long int)0x0011000200AE0000   /*ModbusManager log{0}*/																										
-#define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus_manager save param failed*/																										
-#define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0003   /*modbus start mode error*/																										
-#define MODBUS_INVALID (unsigned long long int)0x0001000200AE0004   /*modbus invalid*/																										
 
-#define MODBUS_CLIENT_EXISTED (unsigned long long int)0x0001000200AE0008   /*modbus client is existed*/																										
-#define MODBUS_CLIENT_INVALID_ARG (unsigned long long int)0x0001000200AE0009   /*modbus client param error*/																										
-#define MODBUS_CLIENT_CONNECT_FAILED (unsigned long long int)0x0001000200AE000A   /*modbus client connect failed*/																										
-#define MODBUS_CLIENT_LOAD_PARAM_FAILED (unsigned long long int)0x0001000200AE000C   /*modbus client load param failed*/																										
-#define MODBUS_CLIENT_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE000D   /*modbus client save param failed*/																										
-#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0001000200AE000F   /*modbus client init failed*/																										
-#define MODBUS_CLIENT_READ_FAILED (unsigned long long int)0x0001000200AE0010   /*modbus client read failed*/																										
-#define MODBUS_CLIENT_WRITE_FAILED (unsigned long long int)0x0001000200AE0011   /*modbus client write failed*/																										
-#define MODBUS_CLIENT_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0012   /*modbus client be not opened*/																										
-#define MODBUS_CLIENT_IS_RUNNING (unsigned long long int)0x0001000200AE0013   /*modbus client is  running*/																										
-#define MODBUS_CLIENT_IS_ADDED (unsigned long long int)0x0001000200AE0014   /*modbus client is added*/																										
-#define MODBUS_CLIENT_ENABLED (unsigned long long int)0x0001000200AE0013   /*modbus client enabled*/
-#define MODBUS_CLIENT_DISABLED (unsigned long long int)0x0001000200AE0014   /*modbus client disable*/
-#define MODBUS_CLIENT_NOT_RUNNING (unsigned long long int)0x0001000200AE0015   /*modbus client is not running*/
-#define MODBUS_CLIENT_ENABLE_FAILED (unsigned long long int)0x0001000200AE0015   /*modbus client enable failed*/
-#define MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0001000200AE0032   /*modbus client manager load param failed*/
-#define MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0033   /*modbus client manager save param failed*/
+#define MODBUS_LOG (unsigned long long int)0x0011000200AE0000   /*ModbusManager log{0}*/																										
+#define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0001   /*modbus start mode error*/																										
+#define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus manager save param failed*/																										
+#define MODBUS_INVALID (unsigned long long int)0x0001000200AE0003   /*modbus be invalid*/																										
+
+#define MODBUS_CLIENT_ENABLED (unsigned long long int)0x0001000200AE0028   /*modbus client enabled*/																										
+#define MODBUS_CLIENT_DISABLED (unsigned long long int)0x0001000200AE0029   /*modbus client disabled*/																										
+#define MODBUS_CLIENT_CONNECTED (unsigned long long int)0x0001000200AE002A   /*modbus client connected*/																										
+#define MODBUS_CLIENT_NOT_CONNECT (unsigned long long int)0x0001000200AE002B   /*modbus client be not connect*/																										
+#define MODBUS_CLIENT_INVALID_ARG (unsigned long long int)0x0001000200AE002C   /*modbus client invalid param*/																										
+#define MODBUS_CLIENT_ENABLE_FAILED (unsigned long long int)0x0001000200AE002D   /*modbus client enable failed*/																										
+#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0001000200AE002E   /*modbus client init failed*/																										
+#define MODBUS_CLIENT_CONNECT_FAILED (unsigned long long int)0x0001000200AE002F   /*modbus client connect failed*/																										
+#define MODBUS_CLIENT_OPERATION_FAILED (unsigned long long int)0x0001000200AE0030   /*modbus client read failed*/																										
+
+#define MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0001000200AE0031   /*modbus client manager load param failed*/																										
+#define MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0032   /*modbus client manager save param failed*/																										
+#define MODBUS_CLIENT_ID_EXISTED (unsigned long long int)0x0001000200AE0033   /*modbus client existed*/																										
+#define MODBUS_CLIENT_ID_NOT_EXISTED (unsigned long long int)0x0001000200AE0034   /*modbus client be not existed*/																										
+#define MODBUS_CLIENT_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200AE0035   /*modbus client invalid param*/																										
+#define MODBUS_CLIENT_NOT_ALL_CLOSED (unsigned long long int)0x0001000200AE0036   /*modbus client be not all closed */																										
 
 #define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
 #define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server save param failed*/																										
@@ -218,8 +218,7 @@
 #define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server load param failed*/																										
 #define MODBUS_SERVER_OPEN_FAILED (unsigned long long int)0x0001000200AE001E   /*modbus server open failed*/																										
 #define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0001000200AE001F   /*modbus server init failed*/																										
-#define MODBUS_SERVER_FUNCTION_INVALID (unsigned long long int)0x0001000200AE0020   /*modbus server reg invalid*/																										
-#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000200AE0021   /*modbus server is running*/																										
+#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000300AE0022   /*modbus server is running*/
 #define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server init failed*/
 #define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server init failed*/
 

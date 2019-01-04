@@ -33,7 +33,9 @@
 #include "request/request_int32_modbus_function_addr_info.pb.h"
 #include "request/request_modbus_server_all_function_addr_info.pb.h"
 #include "request/request_modbus_server_start_info.pb.h"
-
+#include "request/request_modbus_client_start_info.pb.h"
+#include "request/request_int32_modbus_all_function_addr_info.pb.h"
+#include "request/request_int32_modbus_client_start_info.pb.h"
 
 #include "message_type/base.pb.h"
 #include "message_type/publish_table.pb.h"
@@ -79,6 +81,8 @@
 #include "message_type/modbus_server_start_info.pb.h"
 #include "message_type/modbus_reg_info.pb.h"
 #include "message_type/modbus_status_info.pb.h"
+#include "message_type/modbus_client_config_params.pb.h"
+#include "message_type/modbus_client_start_info.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
@@ -118,4 +122,6 @@
 #include "response/response_uint64_modbus_server_start_info.pb.h"
 #include "response/response_uint64_modbus_status_info.pb.h"
 #include "response/response_uint64_modbus_reg_info.pb.h"
+#include "response/response_uint64_modbus_client_config_params.pb.h"
+#include "response/response_uint64_modbus_client_start_info.pb.h"
 #endif

@@ -3,8 +3,8 @@ comm_type: TCP
 is_debug: false
 
 client_number: 10
-scan_rate_min: 5000
-scan_rate_max: 500
+scan_rate_min: 50
+scan_rate_max: 5000
 port_min: 1
 port_max: 2048
 response_timeout_min: 100
@@ -14,7 +14,7 @@ coil_addr_max: 1024
 discrepte_input_min: 1
 discrepte_input_max: 1024
 holding_reg_min: 1
-holding_reg_max: 120
+holding_reg_max: 1024
 input_reg_min: 1
-input_reg_max: 120
+input_reg_max: 1024
 #END

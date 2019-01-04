@@ -39,6 +39,8 @@ bool ModbusManager::init()
 {
     if(!param_ptr_->loadParam())
         return false;
+    
+    start_mode_ = param_ptr_->start_mode_;
 
     if (server_ == NULL)
         server_ = new ModbusServer(param_ptr_->server_file_path_, param_ptr_->server_config_file_path_);
@@ -85,16 +87,13 @@ ModbusManager::~ModbusManager()
 
 ErrorCode ModbusManager::setStartMode(int start_mode)
 {
-    if (start_mode == start_mode_)
-    {
-        return SUCCESS;
-    }
+    if (start_mode == start_mode_) return SUCCESS;
 
     if (start_mode == MODBUS_SERVER) //client transform to server
     {
-        if (!client_manager_ptr_->isAnyClientClosed())
+        if (!client_manager_ptr_->isAllClientClosed())
         {
-            return 0x12345678; // MODBUS_CLIENT_IS_RUNNING
+            return MODBUS_CLIENT_NOT_ALL_CLOSED;
         }
 
         param_ptr_->start_mode_ = start_mode;
@@ -103,7 +102,8 @@ ErrorCode ModbusManager::setStartMode(int start_mode)
         start_mode_ = param_ptr_->start_mode_;
         return SUCCESS;
     }
-    else if (start_mode == MODBUS_CLIENT)  //  server transform to client
+
+    if (start_mode == MODBUS_CLIENT) // server transform to client
     {
         if (server_->isRunning())
         {
@@ -116,10 +116,8 @@ ErrorCode ModbusManager::setStartMode(int start_mode)
         start_mode_ = param_ptr_->start_mode_;
         return SUCCESS;
     }
-    else
-    {
-        return MODBUS_START_MODE_ERROR;
-    }
+
+    return MODBUS_START_MODE_ERROR;
 }
 
 
@@ -226,7 +224,7 @@ bool ModbusManager::isModbusValid()
         return true;
     }
 
-    if (start_mode_ == MODBUS_CLIENT && !client_manager_ptr_->isAnyClientClosed())
+    if (start_mode_ == MODBUS_CLIENT && !client_manager_ptr_->isAllClientClosed())
     {
         setValid(true);
         return true;

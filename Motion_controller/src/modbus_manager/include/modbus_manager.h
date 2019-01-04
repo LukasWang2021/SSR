@@ -58,23 +58,29 @@ public:
     ErrorCode getServerConfigInputRegInfo(ModbusRegAddrInfo &info);
 
     // for client
-    ErrorCode addClient(ModbusClientStartInfo start_info);
+    ErrorCode addClient(ModbusClientStartInfo &start_info);
     ErrorCode deleteClient(int client_id);
-    ErrorCode getRunningClientIdList(vector<int> &id_list);
+    ErrorCode replaceClient(int &replaced_id, ModbusClientStartInfo &start_info);
     ErrorCode getClientIdList(vector<int> &id_list);
+
+    ErrorCode getClientCtrlState(int client_id, int &ctrl_state);
+    ErrorCode connectClient(int client_id);
+    ErrorCode closeClient(int client_id);
+    ErrorCode isConnected(int client_id, bool &is_connected);
+    ErrorCode scanClientDataArea(int &client_id);
+    ErrorCode getConnectedClientIdList(vector<int> &id_list);
+
+    ErrorCode setClientEnableStatus(int client_id, bool &status);
+    ErrorCode setClientRegInfo(int client_id, ModbusClientRegInfo &reg_info);
+    ErrorCode updateClientStartInfo(ModbusClientStartInfo &start_info);
+
+    ErrorCode getClientStartInfo(int client_id, ModbusClientStartInfo &start_info);
+    ErrorCode getClientEnableStatus(int client_id, bool &status);
+    ErrorCode getClientRegInfo(int client_id, ModbusClientRegInfo &reg_info);
+    ErrorCode getClientConfigParams(int client_id, ModbusClientConfigParams &client_config_params);
     ErrorCode getClientConfigParamsList(vector<ModbusClientConfigParams> &client_config_params_list);
 
-    ErrorCode getClientCtrlState(int client_id, int ctrl_state);
-    ErrorCode openClient(int client_id);
-    ErrorCode closeClient(int client_id);
-
-    ErrorCode setClientEnableStatus(int client_id, bool status);
-    ErrorCode setClientRegInfo(int client_id, ModbusClientRegInfo reg_info);
-    ErrorCode updateClientStartInfo(int client_id, ModbusClientStartInfo start_info);
-
-    ErrorCode getClientStartInfo(int client_id, ModbusClientStartInfo start_info);
-    ErrorCode getClientEnableStatus(int client_id, bool status);
-    ErrorCode getClientRegInfo(int client_id, ModbusClientRegInfo reg_info);
+    ErrorCode getClientScanRate(int client_id, int &scan_rate);
 
 private:
     ModbusManagerParam* param_ptr_;

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <list>
 
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "common_log.h"
@@ -32,29 +33,32 @@ public:
 
     ErrorCode initParam();
 
-    ErrorCode addClient(ModbusClientStartInfo start_info);
+    ErrorCode addClient(ModbusClientStartInfo &start_info);
     ErrorCode deleteClient(int client_id);
+    ErrorCode replaceClient(int &replaced_id, ModbusClientStartInfo &start_info);
 
-    ErrorCode setEnableStatus(int client_id, bool status);
-    ErrorCode setRegInfo(int client_id, ModbusClientRegInfo reg_info);
-    ErrorCode updateStartInfo(int client_id, ModbusClientStartInfo start_info);
+    ErrorCode setEnableStatus(int client_id, bool &status);
+    ErrorCode setRegInfo(int client_id, ModbusClientRegInfo &reg_info);
+    ErrorCode updateStartInfo(ModbusClientStartInfo &start_info);
 
-    ErrorCode getEnableStatus(int client_id, bool status);
-    ErrorCode getStartInfo(int client_id, ModbusClientStartInfo start_info);
-    ErrorCode getRegInfo(int client_id, ModbusClientRegInfo reg_info);
+    ErrorCode getEnableStatus(int client_id, bool &status);
+    ErrorCode getStartInfo(int client_id, ModbusClientStartInfo &start_info);
+    ErrorCode getRegInfo(int client_id, ModbusClientRegInfo &reg_info);
     vector<int> getClientIdList();
 
-    ErrorCode openClient(int client_id);
+    ErrorCode connectClient(int client_id);
     ErrorCode closeClient(int client_id);
-    ErrorCode isRunning(int client_id, bool is_running);
-    vector<int> getRunningClientIdList();//CONNECTED and OPERATIONAL
+    ErrorCode isConnected(int client_id, bool &is_connected);
+    vector<int> getConnectedClientIdList();//CONNECTED and OPERATIONAL
+    ErrorCode scanDataArea(int client_id);
 
     vector<int> getScanRateList();
     vector<ModbusClientConfigParams> getConfigParamsList();
-    bool isAnyClientClosed();
+    ErrorCode getConfigParamsList(int client_id, ModbusClientConfigParams &params);
+    bool isAllClientClosed();
 
-    int getScanRate(int client_id);
-    int getCtrlState(int client_id);
+    ErrorCode getClientScanRate(int client_id, int &scan_rate);
+    ErrorCode getCtrlState(int client_id, int &ctrl_state);
 
     ErrorCode writeCoils(int client_id, int addr, int nb, uint8_t *dest);
     ErrorCode readCoils(int client_id, int addr, int nb, uint8_t *dest);
@@ -90,10 +94,11 @@ private:
     int input_reg_min_;
     int input_reg_max_;
 
-    std::vector<ModbusClient> client_list_;
-    //std::vector<ModbusClientConfigParams> client_config_param_list_;
+    std::mutex client_list_mutex_;
+    std::list<ModbusClient*> client_list_;
 
-    bool initClientListByConfigParamList();
+    bool updateClientEnableStatus(int client_id, bool status);
+    bool updateClientRegInfo(int client_id, ModbusClientRegInfo &reg_info);
     ModbusClientManager();
 };
 }

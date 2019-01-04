@@ -11,7 +11,7 @@
 using namespace std;
 using namespace fst_hal;
 
-ErrorCode ModbusManager::addClient(ModbusClientStartInfo start_info)
+ErrorCode ModbusManager::addClient(ModbusClientStartInfo &start_info)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
@@ -27,14 +27,13 @@ ErrorCode ModbusManager::deleteClient(int client_id)
     return client_manager_ptr_->deleteClient(client_id);
 }
 
-ErrorCode ModbusManager::openClient(int client_id)
+ErrorCode ModbusManager::connectClient(int client_id)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
 
-    return client_manager_ptr_->openClient(client_id);
+    return client_manager_ptr_->connectClient(client_id);
 }
-
 
 ErrorCode ModbusManager::closeClient(int client_id)
 {
@@ -44,7 +43,7 @@ ErrorCode ModbusManager::closeClient(int client_id)
     return client_manager_ptr_->closeClient(client_id);
 }
 
-ErrorCode ModbusManager::setClientEnableStatus(int client_id, bool status)
+ErrorCode ModbusManager::setClientEnableStatus(int client_id, bool &status)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
@@ -52,7 +51,7 @@ ErrorCode ModbusManager::setClientEnableStatus(int client_id, bool status)
     return client_manager_ptr_->setEnableStatus(client_id, status);
 }
 
-ErrorCode ModbusManager::getClientEnableStatus(int client_id, bool status)
+ErrorCode ModbusManager::getClientEnableStatus(int client_id, bool &status)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
@@ -60,7 +59,7 @@ ErrorCode ModbusManager::getClientEnableStatus(int client_id, bool status)
     return client_manager_ptr_->getEnableStatus(client_id, status);
 }
 
-ErrorCode ModbusManager::setClientRegInfo(int client_id, ModbusClientRegInfo reg_info)
+ErrorCode ModbusManager::setClientRegInfo(int client_id, ModbusClientRegInfo &reg_info)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
@@ -68,7 +67,7 @@ ErrorCode ModbusManager::setClientRegInfo(int client_id, ModbusClientRegInfo reg
     return client_manager_ptr_->setRegInfo(client_id, reg_info);
 }
 
-ErrorCode ModbusManager::getClientRegInfo(int client_id, ModbusClientRegInfo reg_info)
+ErrorCode ModbusManager::getClientRegInfo(int client_id, ModbusClientRegInfo &reg_info)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
@@ -133,12 +132,12 @@ ErrorCode ModbusManager::readInputRegsByClient(int client_id, int addr, int nb, 
     return client_manager_ptr_->readInputRegs(client_id, addr, nb, dest);
 }
 
-ErrorCode ModbusManager::getRunningClientIdList(vector<int> &id_list)
+ErrorCode ModbusManager::getConnectedClientIdList(vector<int> &id_list)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
 
-    id_list = client_manager_ptr_->getRunningClientIdList();
+    id_list = client_manager_ptr_->getConnectedClientIdList();
     return SUCCESS;
 }
 
@@ -151,7 +150,7 @@ ErrorCode ModbusManager::getClientIdList(vector<int> &id_list)
     return SUCCESS;
 }
 
-ErrorCode ModbusManager::getClientStartInfo(int client_id, ModbusClientStartInfo start_info)
+ErrorCode ModbusManager::getClientStartInfo(int client_id, ModbusClientStartInfo &start_info)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
@@ -170,19 +169,58 @@ ErrorCode ModbusManager::getClientConfigParamsList(vector<ModbusClientConfigPara
 }
 
 
-ErrorCode ModbusManager::getClientCtrlState(int client_id, int ctrl_state)
+ErrorCode ModbusManager::getClientCtrlState(int client_id, int &ctrl_state)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
 
-    ctrl_state = client_manager_ptr_->getCtrlState(client_id);
-    return SUCCESS;
+    return client_manager_ptr_->getCtrlState(client_id, ctrl_state);
 }
 
-ErrorCode ModbusManager::updateClientStartInfo(int client_id, ModbusClientStartInfo start_info)
+ErrorCode ModbusManager::updateClientStartInfo(ModbusClientStartInfo &start_info)
 {
     if (start_mode_ != MODBUS_CLIENT)
        return MODBUS_START_MODE_ERROR;
 
-    return client_manager_ptr_->updateStartInfo(client_id, start_info);
+    return client_manager_ptr_->updateStartInfo(start_info);
+}
+
+ErrorCode ModbusManager::isConnected(int client_id, bool &is_connected)
+{
+    if (start_mode_ != MODBUS_CLIENT)
+        return MODBUS_START_MODE_ERROR;
+
+    return client_manager_ptr_->isConnected(client_id, is_connected);
+}
+
+ErrorCode ModbusManager::getClientConfigParams(int client_id, ModbusClientConfigParams &client_config_params)
+{
+    if (start_mode_ != MODBUS_CLIENT)
+        return MODBUS_START_MODE_ERROR;
+
+    return client_manager_ptr_->getConfigParamsList(client_id, client_config_params);
+}
+
+ErrorCode ModbusManager::getClientScanRate(int client_id, int &scan_rate)
+{
+    if (start_mode_ != MODBUS_CLIENT)
+        return MODBUS_START_MODE_ERROR;
+
+    return client_manager_ptr_->getClientScanRate(client_id, scan_rate);
+}
+
+ErrorCode ModbusManager::replaceClient(int &replaced_id, ModbusClientStartInfo &start_info)
+{
+    if (start_mode_ != MODBUS_CLIENT)
+        return MODBUS_START_MODE_ERROR;
+
+    return client_manager_ptr_->replaceClient(replaced_id, start_info);
+}
+
+ErrorCode ModbusManager::scanClientDataArea(int &client_id)
+{
+    if (start_mode_ != MODBUS_CLIENT)
+        return MODBUS_START_MODE_ERROR;
+
+    return client_manager_ptr_->scanDataArea(client_id);
 }

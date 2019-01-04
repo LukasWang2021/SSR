@@ -36,17 +36,17 @@ public:
      ~ModbusClient();
 
     ErrorCode init();
-    ErrorCode open();
-    void close();
-    bool isRunning();
+    ErrorCode connect(); //to connect modbus
+    void close(); //close modbus
+    bool isConnected();
 
-    ErrorCode setEnableStatus(bool status);
+    ErrorCode setEnableStatus(bool &status);
     bool getEnableStatus();
 
-    ErrorCode setStartInfo(ModbusClientStartInfo start_info);
+    ErrorCode setStartInfo(ModbusClientStartInfo &start_info); // not contain id
     ModbusClientStartInfo getStartInfo();
 
-    ErrorCode setRegInfo(ModbusClientRegInfo reg_info);
+    ErrorCode setRegInfo(ModbusClientRegInfo &reg_info);
     ModbusClientRegInfo getRegInfo();
 
     ModbusClientConfigParams getConfigParams();
@@ -54,6 +54,8 @@ public:
     int getScanRate();
     int getId();
     int getCtrlState();
+    bool scanDataArea();
+    bool isSocketValid();
 
     ErrorCode writeCoils(int addr, int nb, uint8_t *dest);
     ErrorCode readCoils(int addr, int nb, uint8_t *dest);
@@ -73,7 +75,7 @@ private:
 
     bool is_config_param_valid_;
     int ctrl_state_;
-    bool is_running_;
+    bool is_connected_;
 
     modbus_t* ctx_;
     int socket_;

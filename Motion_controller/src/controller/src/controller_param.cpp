@@ -12,6 +12,7 @@ ControllerParam::ControllerParam():
     heartbeat_cycle_time_(0),
     routine_thread_priority_(50),
     reset_max_time_(5000000),
+    robot_state_timeout_(1000000),
     enable_controller_heartbeat_(false),
     heartbeat_thread_priority_(50),
     enable_log_service_(false),
@@ -41,6 +42,7 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("heartbeat_cycle_time", heartbeat_cycle_time_)
         || !yaml_help_.getParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.getParam("reset_max_time", reset_max_time_)
+        || !yaml_help_.getParam("robot_state_timeout", robot_state_timeout_)
         || !yaml_help_.getParam("enable_controller_heartbeat", enable_controller_heartbeat_)
         || !yaml_help_.getParam("heartbeat_thread_priority", heartbeat_thread_priority_)
         || !yaml_help_.getParam("enable_log_service", enable_log_service_)
@@ -69,6 +71,7 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("heartbeat_cycle_time", heartbeat_cycle_time_)
         || !yaml_help_.setParam("routine_thread_priority", routine_thread_priority_)
         || !yaml_help_.setParam("reset_max_time", reset_max_time_)
+        || !yaml_help_.setParam("robot_state_timeout", robot_state_timeout_)
         || !yaml_help_.setParam("enable_controller_heartbeat", enable_controller_heartbeat_)
         || !yaml_help_.setParam("heartbeat_thread_priority", heartbeat_thread_priority_)
         || !yaml_help_.setParam("enable_log_service", enable_log_service_)

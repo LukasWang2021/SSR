@@ -104,7 +104,10 @@ public:
     RobotState* getRobotStatePtr();
     CtrlState* getCtrlStatePtr();
     fst_mc::ServoState* getServoStatePtr();
-    int* getSafetyAlarmPtr();    
+    int* getSafetyAlarmPtr();  
+
+    void setInitState(bool state);
+    bool getInitState();  
     
 private:
     fst_log::Logger* log_ptr_;
@@ -125,6 +128,8 @@ private:
     fst_mc::ServoState servo_state_;
     int safety_alarm_;
     int ctrl_reset_count_;
+    int robot_state_timeout_count_;
+    bool init_state_;
     bool enable_macro_launching_;//flag of macro launching
 
     // manual rpc related

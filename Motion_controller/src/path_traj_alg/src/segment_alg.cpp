@@ -5,7 +5,7 @@ using namespace std;
 using namespace fst_mc;
 
 ComplexAxisGroupModel model;
-double stack[12000];
+double stack[15000];
 SegmentAlgParam segment_alg_param;
 
 
@@ -119,91 +119,6 @@ void initComplexAxisGroupModel()
     model.link[5].motor_dynamic.vm = 4500;
     model.link[5].motor_dynamic.jm = 1.7 * 0.25 * 10000 / 0.17;
     model.link[5].motor_dynamic.gear = 44.671266;
-#if 0
-    // link 0
-    model.link[0].joint_type = JOINT_TYPE_ROTATE;
-    model.link[0].link_kinematic.theta = 0;
-    model.link[0].link_kinematic.d = 0.365;
-    model.link[0].link_kinematic.alpha = M_PI/2;
-    model.link[0].link_kinematic.a = 0.03;
-    model.link[0].link_kinematic.theta_offset = 0;
-    model.link[0].link_kinematic.d_offset = 0;
-    model.link[0].link_kinematic.alpha_offset = 0;
-    model.link[0].link_kinematic.a_offset = 0;
-    model.link[0].link_kinematic.qlim[0] = -3.00197;
-    model.link[0].link_kinematic.qlim[1] = 3.00197;
-    model.link[0].link_kinematic.is_flip = false;
-
-    // link 1
-    model.link[1].joint_type = JOINT_TYPE_ROTATE;
-    model.link[1].link_kinematic.theta = M_PI/2;
-    model.link[1].link_kinematic.d = 0;
-    model.link[1].link_kinematic.alpha = 0;
-    model.link[1].link_kinematic.a = 0.34;
-    model.link[1].link_kinematic.theta_offset = 0;
-    model.link[1].link_kinematic.d_offset = 0;
-    model.link[1].link_kinematic.alpha_offset = 0;
-    model.link[1].link_kinematic.a_offset = 0;
-    model.link[1].link_kinematic.qlim[0] = -1.79769;
-    model.link[1].link_kinematic.qlim[1] = 2.39110;
-    model.link[1].link_kinematic.is_flip = false;
-
-    // link 2
-    model.link[2].joint_type = JOINT_TYPE_ROTATE;
-    model.link[2].link_kinematic.theta = 0;
-    model.link[2].link_kinematic.d = 0;
-    model.link[2].link_kinematic.alpha = M_PI/2;
-    model.link[2].link_kinematic.a = 0.035;
-    model.link[2].link_kinematic.theta_offset = 0;
-    model.link[2].link_kinematic.d_offset = 0;
-    model.link[2].link_kinematic.alpha_offset = 0;
-    model.link[2].link_kinematic.a_offset = 0;
-    model.link[2].link_kinematic.qlim[0] = -3.49066;
-    model.link[2].link_kinematic.qlim[1] = 1.22173;
-    model.link[2].link_kinematic.is_flip = false;
-
-    // link 3
-    model.link[3].joint_type = JOINT_TYPE_ROTATE;
-    model.link[3].link_kinematic.theta = 0;
-    model.link[3].link_kinematic.d = 0.35;
-    model.link[3].link_kinematic.alpha = -M_PI/2;
-    model.link[3].link_kinematic.a = 0;
-    model.link[3].link_kinematic.theta_offset = 0;
-    model.link[3].link_kinematic.d_offset = 0;
-    model.link[3].link_kinematic.alpha_offset = 0;
-    model.link[3].link_kinematic.a_offset = 0;
-    model.link[3].link_kinematic.qlim[0] = -3.31613;
-    model.link[3].link_kinematic.qlim[1] = 3.31613;
-    model.link[3].link_kinematic.is_flip = false;
-
-    // link 4
-    model.link[4].joint_type = JOINT_TYPE_ROTATE;
-    model.link[4].link_kinematic.theta = 0;
-    model.link[4].link_kinematic.d = 0;
-    model.link[4].link_kinematic.alpha = M_PI/2;
-    model.link[4].link_kinematic.a = 0;
-    model.link[4].link_kinematic.theta_offset = 0;
-    model.link[4].link_kinematic.d_offset = 0;
-    model.link[4].link_kinematic.alpha_offset = 0;
-    model.link[4].link_kinematic.a_offset = 0;
-    model.link[4].link_kinematic.qlim[0] = -2.02458;
-    model.link[4].link_kinematic.qlim[1] = 2.02458;
-    model.link[4].link_kinematic.is_flip = false;
-
-    // link 5
-    model.link[5].joint_type = JOINT_TYPE_ROTATE;
-    model.link[5].link_kinematic.theta = 0;
-    model.link[5].link_kinematic.d = 0.0965;
-    model.link[5].link_kinematic.alpha = 0;
-    model.link[5].link_kinematic.a = 0;
-    model.link[5].link_kinematic.theta_offset = 0;
-    model.link[5].link_kinematic.d_offset = 0;
-    model.link[5].link_kinematic.alpha_offset = 0;
-    model.link[5].link_kinematic.a_offset = 0;
-    model.link[5].link_kinematic.qlim[0] = -6.28319;
-    model.link[5].link_kinematic.qlim[1] = 6.28319;
-    model.link[5].link_kinematic.is_flip = false;
-#endif
 }
 
 void initStack(ComplexAxisGroupModel* model_ptr)
@@ -216,7 +131,6 @@ void initStack(ComplexAxisGroupModel* model_ptr)
         stack[S_RealAlpha+i] = model_ptr->link[i].link_kinematic.alpha + model_ptr->link[i].link_kinematic.alpha_offset;
         stack[S_RealA+i] = model_ptr->link[i].link_kinematic.a + model_ptr->link[i].link_kinematic.a_offset;
         stack[S_ConstraintJointVelMax + i] = model_ptr->link[i].motor_dynamic.vm * PI * 2 / (60 * model_ptr->link[i].motor_dynamic.gear);
-        stack[S_ConstraintJointJerkMax + i] = segment_alg_param.jerk_ratio * model_ptr->link[i].motor_dynamic.jm * model_ptr->link[i].motor_dynamic.gear;
     }
 
     // S_TransMatrix
@@ -238,6 +152,19 @@ void initStack(ComplexAxisGroupModel* model_ptr)
     // path count factor
     stack[S_PathCountFactorCartesian] = segment_alg_param.accuracy_cartesian_factor / 100.0;
     stack[S_PathCountFactorJoint] = segment_alg_param.accuracy_joint_factor / PI;
+
+    // init start and end point vel and acc state
+    int start_point_address = S_StartPointState0;
+    int end_point_address = S_EndPointState0;
+    for(int i = 0; i<model_ptr->link_num; ++i)
+    {
+        stack[start_point_address + 1] = 0; // start vel always zero
+        stack[start_point_address + 2] = 0; // start acc always zero
+        stack[end_point_address + 1] = 0;   // end vel always zero
+        stack[end_point_address + 2] = 0;   // end acc always zero
+        start_point_address += 3;
+        end_point_address += 3;
+    }
 }
 
 void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr)
@@ -250,13 +177,9 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr)
     segment_alg_param.angle_interval = segment_alg_param_ptr->angle_interval;
     segment_alg_param.angle_valve = segment_alg_param_ptr->angle_valve;
     segment_alg_param.conservative_acc = segment_alg_param_ptr->conservative_acc;
-    segment_alg_param.jerk_ratio = segment_alg_param_ptr->jerk_ratio;
-    segment_alg_param.time_factor_1 = segment_alg_param_ptr->time_factor_1;
-    segment_alg_param.time_factor_2 = segment_alg_param_ptr->time_factor_2;
-    segment_alg_param.time_factor_3 = segment_alg_param_ptr->time_factor_3;
-    segment_alg_param.time_factor_4 = segment_alg_param_ptr->time_factor_4;
+    segment_alg_param.time_factor_first = segment_alg_param_ptr->time_factor_first;
+    segment_alg_param.time_factor_last = segment_alg_param_ptr->time_factor_last;
     segment_alg_param.is_fake_dynamics = segment_alg_param_ptr->is_fake_dynamics;
-    segment_alg_param.max_rescale_factor = segment_alg_param_ptr->max_rescale_factor;
     segment_alg_param.kinematics_ptr = segment_alg_param_ptr->kinematics_ptr;
     segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
     segment_alg_param.max_cartesian_acc = segment_alg_param_ptr->max_cartesian_acc;
@@ -646,107 +569,50 @@ ErrorCode planTrajectory(const PathCache &path_cache,
                                 double acc_ratio, 
                                 TrajectoryCache &traj_cache)
 {
-    if(path_cache.cache_length == 0)
+    if(path_cache.cache_length < 4)
     {
         return TRAJ_PLANNING_INVALID_PATHCACHE;
     }
 
-    int path_index_array[25];
-    int path_index_array_size, time_vector_size;
+    int traj_pva_size, traj_pva_out_index, traj_t_size;
     double cmd_vel = path_cache.target.vel * vel_ratio;   // command velocity
-    switch(path_cache.cache[0].motion_type)
+    int traj_path_cache_index[25];
+    switch(path_cache.target.type)
     {
         case MOTION_LINE:
-        {            
-            int path_index_array_smooth_out_index;
-            double path_length_start2out, path_length_out2end;
-            // write S_PathIndexStep, S_PathIndexStepStart2Out, S_PathIndexStepOut2End, S_Path0~S_Path8
-            generatePathPointMoveL(path_cache, start_state, path_index_array, path_index_array_size, 
-                                    path_index_array_smooth_out_index, path_length_start2out, path_length_out2end);   
-
-            if(path_cache.smooth_out_index == -1)    // no cnt
-            {
-                traj_cache.smooth_out_index = -1;
-            }
-            else if(path_cache.smooth_out_index == (path_cache.cache_length - 1))    // cnt = 0
-            {
-                traj_cache.smooth_out_index = path_index_array_size;
-            }
-            else    // cnt > 0
-            {
-                traj_cache.smooth_out_index = path_index_array_smooth_out_index;
-            }
-           
-            // write S_TrajT
-            generateTimeVectorMoveL(cmd_vel, path_index_array_size, path_index_array_smooth_out_index,
-                                    path_length_start2out, path_length_out2end, time_vector_size);  
+        {
+            updateMovLTrajP(path_cache, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+            updateMovLTrajT(path_cache, cmd_vel, traj_path_cache_index, traj_pva_out_index, traj_pva_size, traj_t_size);
             break;
         }
         case MOTION_JOINT:
         {
-            // write S_DeltaJointVector, S_PathIndexStep, S_Path0~S_Path8
-            generatePathPointMoveJ(path_cache, path_index_array, path_index_array_size);
-            // read S_DeltaJointVector, S_ConstraintJointVelMax
-            // write S_TrajT
-            generateTimeVectorMoveJ(vel_ratio, path_index_array_size, time_vector_size);  
-            // MoveJ doesn't support smooth yet
-            traj_cache.smooth_out_index = -1;
+            updateMovJTrajP(path_cache, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+            updateMovJTrajT(path_cache, cmd_vel, traj_path_cache_index, traj_pva_out_index, traj_pva_size, traj_t_size);
             break;
         }
         default:
-        {
+        {       
             return TRAJ_PLANNING_INVALID_MOTION_TYPE;
-        }        
-    }    
-
-    // init state {P,V,A}
-    stack[S_TmpVector3_1 + 1] = 0;
-    stack[S_TmpVector3_1 + 2] = 0;
-    // end state {P,V,A}
-    stack[S_TmpVector3_2 + 1] = 0;
-    stack[S_TmpVector3_2 + 2] = 0;
-
-    int i;
-    int path_base = S_Path0;
-    int traj_base = S_TrajP0;
-    for(i = 0; i < model.link_num; ++i)
-    {
-        stack[S_TmpVector3_1] = stack[path_base];
-        stack[S_TmpVector3_2] = stack[path_base + path_index_array_size - 1];
-        // read: S_Path0 ~ S_Path8, S_TrajT
-        // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-        updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_array_size, traj_base, S_TrajT);
-        path_base += 25;
-        traj_base += 150;
+        }
     }
+    // it is not necessary to initialize the position of S_StartPointState and S_EndPointState,
+    // because they are not used in updateTrajPVA.
+    updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
+                  &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);    
+    updateConstraintJoint(S_TrajP0, S_TrajV0, traj_pva_size);
+    updateTrajPieceA(S_TrajA0, traj_pva_size, acc_ratio);       
+    updateTrajPieceV(S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, vel_ratio);
+    updateTrajPieceRescaleFactor(traj_t_size);
     
-    // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-    // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
-    //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
-    generateTrajPiece(0, time_vector_size, S_TrajT, vel_ratio, acc_ratio);
-    // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
-    // write: S_TrajRescaleFactor
-    generateTrajRescaleFactor(time_vector_size, stack[S_TrajRescaleFactor]);
-
-    // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8, S_TrajRescaleFactor
-    // write: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-    adjustTrajVA(time_vector_size, stack[S_TrajRescaleFactor]);
-    // read: S_TrajRescaleFactor, S_TrajT
-    // write: S_TrajRescaleT
-    generateTrajRescaleT(time_vector_size);
-
-    // read: S_TrajRescaleT, S_TrajP0 ~ S_TrajP8, S_TrajA0 ~ S_TrajA8
-    // write: S_TrajCoeffJ0A5 ~ S_TrajCoeffJ8A5, S_TrajCoeffJ0A4 ~ S_TrajCoeffJ8A4,
-    //        S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
-    //        S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0
-    generateCoeff(time_vector_size);
-
-    // read: S_TrajCoeffJ0A5 ~ S_TrajCoeffJ8A5, S_TrajCoeffJ0A4 ~ S_TrajCoeffJ8A4,
-    //       S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
-    //       S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0,
-    //       S_TrajRescaleT
-    generateTrajCache(traj_cache, time_vector_size, path_index_array, path_index_array_size);
-
+    if(isRescaleNeeded(traj_t_size))
+    {
+        updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size);
+        updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
+                      &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
+    }
+    updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, traj_t_size, S_TrajJ0, S_TrajCoeffJ0A0);
+    packTrajCache(traj_path_cache_index, traj_pva_out_index, traj_pva_size, S_TrajCoeffJ0A0, S_TrajT, traj_t_size, traj_cache);  
     return SUCCESS;
 }
                                 
@@ -757,143 +623,77 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
                                         double acc_ratio, 
                                         TrajectoryCache &traj_cache)
 {
-    if(path_cache.cache_length == 0)
+    if(path_cache.cache_length < 4)
     {
         return TRAJ_PLANNING_INVALID_PATHCACHE;
     }
-
+    
     if(path_cache.smooth_in_index == -1)
     {
         return TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX;
     }
 
-    // compute smooth in index of traj points
-    //double length_via2in;
-    double path_vector_via2in[3];
-    double path_length_via2in;
-    getMoveLPathVector(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position, path_vector_via2in, path_length_via2in);
-    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);    
-    int traj_smooth_in_index = computeTrajSmoothInIndex(path_length_out2via, path_length_via2in);
-    int path_index_in, path_index_out, path_index_end;
-    // write: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
-    computePathIndexStepVia2End(path_cache, via, path_length_via2in, path_index_in, path_index_out, path_index_end);   
-    // write: S_Path0~S_Path8[0...path_index_in]
-    generatePathPointVia2In(path_cache, via, path_length_via2in, path_vector_via2in, path_index_in);
-    int path_index_array_in2end[25];
-    // read: S_PathIndexStepOut2End, S_PathIndexStepIn2Out, S_PathIndexStepIn2End
-    // write: S_Path0~S_Path8[0...path_index_out...path_index_end]
-    generatePathPointIn2End(path_cache, path_index_in, path_index_out, path_index_end, path_index_array_in2end);
-
-    int path_index_array_size_in2end = path_index_end - path_index_in + 1;
-    if(path_cache.target.cnt < -DOUBLE_ACCURACY)
+    double cmd_vel = path_cache.target.vel * vel_ratio;
+    int traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end;
+    int traj_path_cache_index_in2end[25];
+    switch(path_cache.target.type)
     {
-        traj_cache.smooth_out_index = -1;
-    }
-    else
-    {
-        traj_cache.smooth_out_index = traj_smooth_in_index + (path_index_out - path_index_in) - 1;
+        case MOTION_LINE:
+        {
+            updateMovLVia2InTrajP(path_cache, via, traj_pva_in_index);
+            updateMovLIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+            updateMovLVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
+            break;
+        }
+        default:
+        {
+            return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+        }
     }
 
-    int time_vector_size_via2end;
-    double cmd_vel = path_cache.target.vel * vel_ratio;   // command velocity
-    // write: S_TrajT
-    generateTimeVectorVia2End(cmd_vel, path_cache, path_length_via2in, path_index_in, path_index_out, path_index_end, time_vector_size_via2end);
-
-    // init state {P,V,A}
-    stack[S_TmpVector3_1 + 1] = 0;
-    stack[S_TmpVector3_1 + 2] = 0;
-    // end state {P,V,A}
-    stack[S_TmpVector3_2 + 1] = 0;
-    stack[S_TmpVector3_2 + 2] = 0;
-
-    int i;
-    int path_base = S_Path0;
-    int traj_index_via;
-    if(path_index_in == 0)
-    {
-        traj_index_via = traj_smooth_in_index;
-    }
-    else
-    {
-        traj_index_via = (traj_smooth_in_index - path_index_in - 1);
-    } 
-    int traj_index_end = traj_smooth_in_index + (path_index_end - path_index_in + 1);
-
-    // make sure the in point of traj point locate at (S_TrajP0 + traj_smooth_in_index)
-    int traj_base_via2end = S_TrajP0 + traj_index_via;  
-    for(i = 0; i < model.link_num; ++i)
-    {
-        stack[S_TmpVector3_1] = stack[path_base];
-        stack[S_TmpVector3_2] = stack[path_base + path_index_end];
-        // read: S_Path0 ~ S_Path8, S_TrajT
-        // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-        updateTrajPVA(path_base, &stack[S_TmpVector3_1], &stack[S_TmpVector3_2], path_index_end + 1, traj_base_via2end, S_TrajT);
-        path_base += 25;
-        traj_base_via2end += 150;
-    }
-
-    int traj_piece_num_via2end = traj_index_end - traj_index_via;
-    // read: S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-    // write: S_TrajPieceJ0 ~ S_TrajPieceJ5, S_TrajPieceA0 ~ S_TrajPieceA5, S_TrajPieceV0 ~ S_TrajPieceV5
-    //        S_ConstraintJointPosA0 ~ S_ConstraintJointPosA5, S_ConstraintJointNegA0 ~ S_ConstraintJointNegA5
-    generateTrajPiece(traj_index_via, traj_piece_num_via2end, S_TrajT, vel_ratio, acc_ratio);
-    double rescale_factor_via2end;
-    // read: S_TrajPieceV0 ~ S_TrajPieceV8, S_TrajPieceA0 ~ S_TrajPieceA8, S_TrajPieceJ0 ~ S_TrajPieceJ8      
-    // write: S_TrajRescaleFactor
-    generateTrajRescaleFactor(traj_piece_num_via2end, rescale_factor_via2end);
-    // write: S_TrajT
-    adjustTrajT(traj_piece_num_via2end, rescale_factor_via2end);
-    adjustTrajVAVia2End(traj_index_via, traj_index_end, rescale_factor_via2end);
-
-    // write: S_OutPointState0 ~ S_OutPointState8, S_InPointState0 ~ S_InPointState8
-    generateOutAndInState(start_state, traj_smooth_in_index);
- 
-    int path_index_array_size_out2in;
-    int path_index_array_out2in[25];
-    // write: S_Path0~S_Path8
-    generatePathPointOut2In(path_cache, traj_smooth_in_index, path_index_array_size_out2in, path_index_array_out2in);
-
-    // get the second and second last points position
-    int time_vector_size_out2in;
-    double p1[9], pn_1[9];
-    for(int i=0; i<model.link_num; ++i)
-    {
-        p1[i] = path_cache.cache[path_index_array_out2in[1]].joint[i];
-        pn_1[i] = path_cache.cache[path_index_array_out2in[path_index_array_size_out2in - 2]].joint[i];
-    }
-    // write: S_TrajT_Smooth
-    generateTimeVectorOut2In(cmd_vel, path_length_out2via, path_length_via2in, path_index_array_size_out2in, time_vector_size_out2in, p1, pn_1);
-
-    path_base = S_Path0;
-    int traj_base_out2in = S_TrajP0; 
-    int out_point_state_base = S_OutPointState0;
-    int in_point_state_base = S_InPointState0;    
+    // it is not necessary to initialize the position of S_StartPointState and S_EndPointState,
+    // because they are not used in updateTrajPVA.    
+    updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajJ0,
+                  &stack[S_TrajT], traj_t_size_via2end, S_StartPointState0, S_EndPointState0); 
+   
+    updateConstraintJoint(S_TrajP0, S_TrajV0, traj_t_size_via2end);
+    updateTrajPieceA(S_TrajA0, traj_t_size_via2end, acc_ratio);       
+    updateTrajPieceV(S_TrajV0, S_TrajA0, traj_t_size_via2end, S_TrajT, vel_ratio);
+    updateTrajPieceRescaleFactor(traj_t_size_via2end);
     
-    for(i = 0; i < model.link_num; ++i)
+    if(isRescaleNeeded(traj_t_size_via2end))
     {
-        stack[S_TmpVector3_1] = stack[path_base];
-        // read: S_Path0 ~ S_Path8, S_TrajT
-        // write: S_TrajP0 ~ S_TrajP8, S_TrajV0 ~ S_TrajV8, S_TrajA0 ~ S_TrajA8
-        updateTrajPVA(path_base, &stack[out_point_state_base], &stack[in_point_state_base], path_index_array_size_out2in, traj_base_out2in, S_TrajT_Smooth);
-        path_base += 25;
-        traj_base_out2in += 150;
-        in_point_state_base += 3;
-        out_point_state_base += 3;
+        updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size_via2end);
+        updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajJ0,
+                      &stack[S_TrajT], traj_t_size_via2end, S_StartPointState0, S_EndPointState0);
     }
+    updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajT, traj_t_size_via2end, S_TrajJ0, S_TrajCoeffJ0A0);
 
-    // read: S_TrajT, S_TrajT_Smooth
-    // write: S_TrajRescaleT
-    generateTrajRescaleTSmooth(time_vector_size_out2in, traj_piece_num_via2end, traj_smooth_in_index - traj_index_via);
+    int traj_pva_size_out2in, traj_t_size_out2in;
+    int traj_path_cache_index_out2in[25];
+    updateSmoothOut2InTrajP(path_cache, via, traj_path_cache_index_out2in, traj_pva_size_out2in);
+    updateSmoothOut2InTrajT(path_cache, via, cmd_vel, traj_path_cache_index_out2in, traj_pva_size_out2in, traj_t_size_out2in);
+    updateOutAndInPointState(start_state, traj_pva_in_index);
+    updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
+                  &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
 
-    int time_vector_size_total = traj_index_end;
-    // read: S_TrajRescaleT, S_TrajRescaleFactor, S_TrajP0 ~ S_TrajP8, S_TrajA0 ~ S_TrajA8
-    // write: S_TrajAbsoluteT, S_TrajCoeffJ0A3 ~ S_TrajCoeffJ8A3, S_TrajCoeffJ0A2 ~ S_TrajCoeffJ8A2, 
-    //        S_TrajCoeffJ0A1 ~ S_TrajCoeffJ8A1, S_TrajCoeffJ0A0 ~ S_TrajCoeffJ8A0
-    generateCoeff(time_vector_size_total);
+    updateConstraintJoint(S_TrajP0_Smooth, S_TrajV0_Smooth, traj_t_size_out2in);
+    updateTrajPieceA(S_TrajA0_Smooth, traj_pva_size_out2in, acc_ratio);
+    updateTrajPieceRescaleFactor(traj_t_size_out2in);
 
-    generateTrajCacheSmooth(traj_cache, time_vector_size_total, 
-                            path_index_array_out2in, path_index_array_size_out2in,
-                            path_index_array_in2end, path_index_array_size_in2end);
+    if(isRescaleNeeded(traj_t_size_out2in))
+    {
+        updateTrajTByPieceRescaleFactor(S_TrajT_Smooth, traj_t_size_out2in);
+        updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
+                      &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
+    }    
+
+    updateTrajCoeff(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajT_Smooth, traj_t_size_out2in, S_TrajJ0, S_TrajCoeffJ0A0_Smooth);
+    packTrajCacheSmooth(traj_path_cache_index_out2in, traj_pva_size_out2in, S_TrajCoeffJ0A0_Smooth, S_TrajT_Smooth, traj_t_size_out2in, 
+                        traj_path_cache_index_in2end, traj_pva_size_via2end, S_TrajCoeffJ0A0, S_TrajT, traj_t_size_via2end,
+                        traj_pva_in_index, traj_pva_out_index,
+                        traj_cache);
+    
     return SUCCESS;
 }
 
@@ -1369,109 +1169,66 @@ inline void updateEquationSolution(double* matrix_a, double* matrix_b, int order
     }
 }
 
-inline void updateMatrixA(double* interp_time, int order)
+inline void updateMatrixA(double* traj_t, int order)
 {
-    int row, base_index0, base_index1, base_index2;
-
-    stack[S_A] = 3 * interp_time[0] + 2 * interp_time[1] + interp_time[0] * interp_time[0] / interp_time[1];    // A[0][0]
-    stack[S_A + 1] = interp_time[1];    // A[0][1]
+    int row_start, element_start;
+  
+    stack[S_A] = traj_t[0] + 2 * traj_t[1]; // A[0][0]
+    stack[S_A + 1] = traj_t[1]; // A[0][1]
     memset(&stack[S_A + 2], 0, sizeof(double) * (order - 2));   // A[0][2] ~ A[0][order-1]
-    stack[S_A + order] = interp_time[1] - interp_time[0] * interp_time[0] / interp_time[1]; // A[1][0]
-    stack[S_A + order + 1] = 2 * (interp_time[1] + interp_time[2]); // A[1][1]
-    stack[S_A + order + 2] = interp_time[2];    // A[1][2]
-    memset(&stack[S_A + order + 3], 0, sizeof(double) * (order - 3));   // A[1][3] ~ A[1][order-1]
-
-    for(row = 2;  row < order - 2; ++row)   // A[2][0] ~ A[order - 3][order - 1]
+    for(int row = 1; row < (order - 1); ++row)
     {
-        base_index0 = S_A + row * order;
-        memset(&stack[base_index0], 0, sizeof(double) * (row - 1));
-        stack[base_index0 + row - 1] = interp_time[row];
-        stack[base_index0 + row] = 2 * (interp_time[row] + interp_time[row + 1]);
-        stack[base_index0 + row + 1] = interp_time[row + 1];
-        memset(&stack[base_index0 + row + 2], 0, sizeof(double) * (order - row - 2));
+        row_start = S_A + row * order;
+        element_start = row_start + row - 1;        
+        memset(&stack[row_start], 0, (row - 1) * sizeof(double));
+        stack[element_start] = traj_t[row];
+        stack[element_start + 1] = 2 * (traj_t[row] + traj_t[row + 1]);
+        stack[element_start + 2] = traj_t[row + 1];
+        memset(&stack[element_start + 3], 0, (order - row - 2) * sizeof(double));
     }
 
-    base_index1 = S_A + order * (order - 2);
-    memset(&stack[base_index1], 0, sizeof(double) * (order - 3));    // A[order - 2][0] ~ A[order - 2][order - 4]
-    stack[base_index1 + order - 3] = interp_time[order - 2]; // A[order - 2][order - 3]
-    stack[base_index1 + order - 2] = 2 * (interp_time[order - 2] + interp_time[order - 1]);  // A[order - 2][order - 2]
-    stack[base_index1 + order - 1] = interp_time[order - 1] - interp_time[order] * interp_time[order] / interp_time[order - 1];  // A[order - 2][order - 1]
-    memset(&stack[base_index1 + order], 0, sizeof(double) * (order - 2));    // A[order - 1][0] ~ A[order - 1][order - 3]
-    base_index2 = base_index1 + 2 * order - 2;
-    stack[base_index2] = interp_time[order - 1];    // A[order - 1][order - 2]
-    stack[base_index2 + 1] = 3 * interp_time[order] + 2 * interp_time[order - 1] + interp_time[order] * interp_time[order] / interp_time[order - 1];    // A[order - 1][order - 1]
+    row_start = S_A + (order - 1) * order;
+    element_start = row_start + order - 2;
+    memset(&stack[row_start], 0, (order - 2) * sizeof(double));
+    stack[element_start] = traj_t[order - 1];
+    stack[element_start + 1] = 2 * traj_t[order - 1] + traj_t[order]; 
 }
 
-inline void updateMatrixB(double* path, double* interp_time, double* init_state, double* end_state, int order)
+inline void updateMatrixB(double* traj_p, double* traj_t, double* start_state, double* end_state, int order)
 {
-    stack[S_B] = 6 * (path[1] / interp_time[1] + init_state[0] / interp_time[0])
-                - 6 * (1 / interp_time[0] + 1 / interp_time[1]) * (init_state[0] + init_state[1] * interp_time[0] + init_state[2] * interp_time[0] * interp_time[0] / 3)
-                - init_state[2] * interp_time[0];
-    stack[S_B + 1] = 6 * path[2] / interp_time[2]
-                    - 6 * (1 / interp_time[1] + 1 / interp_time[2]) * path[1]
-                    + 6 * (init_state[0] + init_state[1] * interp_time[0] + init_state[2] * interp_time[0] * interp_time[0] / 3) / interp_time[1];
-
-    for(int row = 2; row < order - 2; ++row)
+    stack[S_B] = -12 * (traj_p[1] - traj_p[0]) / traj_t[0]
+                    + 6 * (traj_p[2] - traj_p[1]) / traj_t[1]
+                    + start_state[2] * traj_t[0]
+                    + 6 * start_state[1];
+    for(int row = 1; row < (order - 1); ++row)
     {
-        stack[S_B + row] = 6 * ((path[row + 1] - path[row]) / interp_time[row + 1] - (path[row] - path[row - 1]) / interp_time[row]);
+        stack[S_B + row] = 6 * ((traj_p[row + 2] - traj_p[row + 1]) / traj_t[row + 1] - (traj_p[row + 1] - traj_p[row]) / traj_t[row]);
     }
-
-    stack[S_B + order - 2] = 6 * path[order - 3] / interp_time[order - 2]
-                            - 6 * (1 / interp_time[order - 1] + 1 / interp_time[order - 2]) * path[order - 2]
-                            + 6 * (end_state[0] - end_state[1] * interp_time[order] + end_state[2] * interp_time[order] * interp_time[order] / 3) / interp_time[order - 1];
-    stack[S_B + order - 1] = 6 * end_state[0] / interp_time[order]
-                            + 6 * path[order - 2] / interp_time[order - 1]
-                            - 6 * (1 / interp_time[order] + 1 / interp_time[order - 1]) * (end_state[0] - end_state[1] * interp_time[order] + end_state[2] * interp_time[order] * interp_time[order] / 3)
-                            - end_state[2] * interp_time[order];
+    stack[S_B + order - 1] = 12 * (traj_p[order + 1] - traj_p[order]) / traj_t[order]
+                                - 6 * (traj_p[order] - traj_p[order - 1]) / traj_t[order - 1]
+                                + end_state[2] * traj_t[order]
+                                - 6 * end_state[1];
 }
 
-void updateTrajPVA(int path_base, double* init_state, double* end_state, int order, int traj_base, int t_base)
+void updateTrajPVA(int traj_p_address, int traj_v_address, int traj_a_address, int traj_pva_size, 
+                       int traj_j_address, double* traj_t_base, int traj_t_size, int start_state_address, int end_state_address)
 {
-    int i;
-    updateMatrixA(&stack[t_base], order);   
-    updateMatrixB(&stack[path_base], &stack[t_base], init_state, end_state, order); 
-    updateEquationSolution(&stack[S_A], &stack[S_B], order);
-
-    int traj_p = traj_base;
-    int traj_v = traj_base + 50;
-    int traj_a = traj_base + 100;
-       
-    // start point
-    stack[traj_a] = init_state[2];
-    stack[traj_v] = init_state[1];
-    stack[traj_p] = init_state[0];
-
-    // start add point
-    stack[traj_a + 1] = stack[S_X];
-    stack[traj_v + 1] = init_state[1] + (init_state[2] + stack[S_X]) * stack[t_base] / 2;
-    stack[traj_p + 1] = init_state[0] 
-                        + init_state[1] * stack[t_base]
-                        + (2 * init_state[2] + stack[traj_a + 1]) * stack[t_base] * stack[t_base] / 6;
-
-    // path[0]
-    stack[traj_a + 2] = stack[S_X + 1];
-    stack[traj_v + 2] = stack[traj_v + 1] + (stack[S_X] + stack[S_X + 1]) * stack[t_base + 1] / 2;
-    stack[traj_p + 2] = stack[path_base + 1];
-
-    // path[1] ~ path[N-3]
-    for(i = 3; i < order; ++i)
+    int order = traj_t_size - 1;
+    for(int i = 0; i < model.link_num; ++i)
     {
-        stack[traj_a + i] = stack[S_X + i - 1];
-        stack[traj_v + i] = stack[traj_v + i - 1] + (stack[traj_a + i - 1] + stack[traj_a + i]) * stack[t_base + i - 1] / 2;
-        stack[traj_p + i] = stack[path_base + i - 1];
+        updateMatrixA(traj_t_base, order);
+        updateMatrixB(&stack[traj_p_address], traj_t_base, &stack[start_state_address], &stack[end_state_address], order);        
+        updateEquationSolution(&stack[S_A], &stack[S_B], order);
+        getJerkStart(&stack[traj_p_address], traj_pva_size, traj_t_base, traj_t_size, &stack[start_state_address], stack[S_X], stack[traj_j_address], stack[traj_j_address + 1]);
+        getJerkEnd(&stack[traj_p_address], traj_pva_size, traj_t_base, traj_t_size, &stack[end_state_address], stack[S_X + order - 1], stack[traj_j_address + 2], stack[traj_j_address + 3]);
+        updateTrajVA(&stack[traj_p_address], &stack[traj_v_address], &stack[traj_a_address], traj_pva_size, &stack[traj_j_address], traj_t_base, traj_t_size, &stack[start_state_address], &stack[end_state_address]);
+        traj_p_address += 75;
+        traj_v_address += 75;
+        traj_a_address += 75;
+        traj_j_address += 4;
+        start_state_address += 3;
+        end_state_address += 3;
     }
-
-    // path[N-2]
-    stack[traj_a + order] = stack[S_X + order - 1];
-    stack[traj_v + order] = end_state[1] - (end_state[2] + stack[traj_a + order]) * stack[t_base + order] / 2;
-    stack[traj_p + order] = end_state[0]
-                            - end_state[1] * stack[t_base + order]
-                            + (2 * end_state[2] + stack[traj_a + order]) * stack[t_base + order] * stack[t_base + order] / 6;
-    
-    // path[N-1]
-    stack[traj_a + order + 1] = end_state[2];
-    stack[traj_v + order + 1] = end_state[1];
-    stack[traj_p + order + 1] = end_state[0];   
 }
 
 inline void getMoveLPathVector(const Point& start_point, const Point& end_point, double* path_vector, double& path_length)
@@ -1506,6 +1263,14 @@ inline void getMoveEulerToQuatern(const Euler& euler, double* quatern)
     stack[S_TmpVector3_1 + 1] = euler.b;
     stack[S_TmpVector3_1 + 2] = euler.c;
     getEulerToQuatern(&stack[S_TmpVector3_1], quatern);
+}
+
+inline void getQuaternToQuaternVector4(const Quaternion quatern, double* quatern_vector)
+{
+    quatern_vector[0] = quatern.x;
+    quatern_vector[1] = quatern.y;
+    quatern_vector[2] = quatern.z;
+    quatern_vector[3] = quatern.w;
 }
 
 inline void getMovePointToVector3(const Point& point, double* pos_vector)
@@ -1564,1263 +1329,926 @@ inline void packPathBlockType(PointType point_type, MotionType motion_type, Path
     path_block.motion_type = motion_type;
 }
 
-void generatePathPointMoveJ(const PathCache &path_cache, int* path_index_array, int& path_index_array_size)
+inline void updateTrajPSingleItem(int traj_p_address, const Joint& joint)
 {
-    int i, j;
-    // find max delta joint of all axes
-    int max_delta_joint_index = S_DeltaJointVector;
-    int cache_length_minus_1 = path_cache.cache_length - 1;
-    for(i = 0; i < model.link_num; ++i)
+    for(int i = 0; i < model.link_num; ++i)
     {
-        stack[S_DeltaJointVector + i] = fabs(path_cache.cache[cache_length_minus_1].joint[i] - path_cache.cache[0].joint[i]);
-        if(stack[S_DeltaJointVector + i] > stack[max_delta_joint_index])
-        {
-            max_delta_joint_index = S_DeltaJointVector + i;
-        }
+        stack[traj_p_address] = joint[i];
+        traj_p_address += 75;
     }
-    // compute path point step necessary for trajecotry computation
-    double path_count_ideal = stack[max_delta_joint_index] * stack[S_PathCountFactorJoint];
-    int path_index_array_size_minus_1;
-    if(path_count_ideal > 20)
+}
+
+inline void getTrajPFromPathStart2End(const PathCache& path_cache, double traj_piece_ideal_start2end, 
+                                             int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size)
+{
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    // decide traj_pva size & path_index step
+    if(traj_piece_ideal_start2end <= 3)
     {
-        path_index_array_size_minus_1 = 20;
+        traj_pva_size = 4;
     }
-    else if(path_count_ideal < 3)
+    else if(traj_piece_ideal_start2end >= (segment_alg_param.max_traj_points_num - 1))
     {
-        path_index_array_size_minus_1 = 3;
+        traj_pva_size = segment_alg_param.max_traj_points_num;
     }
     else
     {
-        path_index_array_size_minus_1 = ceil(path_count_ideal);
+        traj_pva_size = ceil(traj_piece_ideal_start2end) + 1;
     }
-    path_index_array_size = path_index_array_size_minus_1 + 1;  // include start point
-    stack[S_PathIndexStep] = cache_length_minus_1 / (double)path_index_array_size_minus_1;
-
-    // select point
+    int traj_pva_size_minus_1 = traj_pva_size - 1;
+    stack[S_PathIndexStep_Start2End] = path_cache_length_minus_1 / (double)traj_pva_size_minus_1;
+    // select traj point from path cache        
     double path_index_ideal = 0;
-    int path_address;
-    // first point must be the start point on path
-    path_index_array[0] = 0;
-    path_address = S_Path0;
-    for(i = 0; i < model.link_num; ++i)
+    updateTrajPSingleItem(S_TrajP0, path_cache.cache[0].joint);
+    traj_path_cache_index[0] = 0;
+    for(int i = 1; i < traj_pva_size_minus_1; ++i)
     {
-        stack[path_address] = path_cache.cache[0].joint[i];
-        path_address += 25;
+        path_index_ideal += stack[S_PathIndexStep_Start2End];
+        traj_path_cache_index[i] = round(path_index_ideal);
+        updateTrajPSingleItem(S_TrajP0 + i, path_cache.cache[traj_path_cache_index[i]].joint);
     }
-    // middle points
-    for(i = 1; i < path_index_array_size_minus_1; ++i)
+    updateTrajPSingleItem(S_TrajP0 + traj_pva_size_minus_1, path_cache.cache[path_cache_length_minus_1].joint); 
+    traj_path_cache_index[traj_pva_size_minus_1] = path_cache_length_minus_1;
+    // mark traj_pva_out_index
+    if(path_cache.smooth_out_index == -1)
     {
-        path_index_ideal += stack[S_PathIndexStep];
-        path_index_array[i] = round(path_index_ideal) - 1;
-        path_address = S_Path0 + i;
-        for(j = 0; j < model.link_num; ++j)
-        {
-            stack[path_address] = path_cache.cache[path_index_array[i]].joint[j];
-            path_address += 25;
-        }        
-    }
-    // last point must be the end point on path
-    path_index_array[path_index_array_size_minus_1] = cache_length_minus_1;
-    path_address = S_Path0 + path_index_array_size_minus_1;
-    for(j = 0; j < model.link_num; ++j)
-    {
-        stack[path_address] = path_cache.cache[cache_length_minus_1].joint[j];
-        path_address += 25;
-    }
-}
-
-void generatePathPointMoveL(const PathCache &path_cache, const JointState &start_state, 
-                                    int* path_index_array, int& path_index_array_size,
-                                    int& path_index_array_smooth_out_index, double& path_length_start2out, double& path_length_out2end)
-{
-    int i, j;
-    int cache_length_minus_1 = path_cache.cache_length - 1;
-    Joint ref_joint, result_joint;
-
-    // compute total length of path
-    double length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache.cache_length - 1].pose.position);
-    if(path_cache.smooth_out_index == -1
-        || path_cache.smooth_out_index == cache_length_minus_1)
-    {
-        // compute path point step necessary for trajecotry computation
-        double path_count_ideal = length_start2end * stack[S_PathCountFactorCartesian];
-        int path_index_array_size_minus_1;
-        if(path_count_ideal > 20)
-        {
-            path_index_array_size_minus_1 = 20;
-        }
-        else if(path_count_ideal < 3)
-        {
-            path_index_array_size_minus_1 = 3;
-        }
-        else
-        {
-            path_index_array_size_minus_1 = ceil(path_count_ideal);
-        }
-        stack[S_PathIndexStep] = cache_length_minus_1 / (double)path_index_array_size_minus_1;
-        path_index_array_size = path_index_array_size_minus_1 + 1;  // include start point 
-        
-        // select point
-        double path_index_ideal = 0;
-        // first point must be the start point on path
-        path_index_array[0] = 0;
-        // middle points
-        for(i = 1; i < path_index_array_size_minus_1; ++i)
-        {
-            path_index_ideal += stack[S_PathIndexStep];
-            path_index_array[i] = round(path_index_ideal) - 1;     
-        }
-        // last point must be the end point on path
-        path_index_array[path_index_array_size_minus_1] = cache_length_minus_1;          
-        path_index_array_smooth_out_index = -1;
-        path_length_start2out = length_start2end;
-        path_length_out2end = 0;
+        traj_pva_out_index = -1;
     }
     else
     {
-        double length_start2out = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
-        double length_out2end = length_start2end - length_start2out;       
-        double path_count_ideal_start2end = length_start2end * stack[S_PathCountFactorCartesian];
-        double path_count_ideal_start2out = length_start2out * stack[S_PathCountFactorCartesian];
-        double path_count_ideal_out2end = length_out2end * stack[S_PathCountFactorCartesian];
-
-        int path_index_array_start2out_minus_1;
-        int path_index_array_out2end_minus_1;
-        if(path_count_ideal_start2end > 19)
-        {
-            path_count_ideal_start2out = path_count_ideal_start2out * 19 / path_count_ideal_start2end;
-            path_count_ideal_out2end = path_count_ideal_out2end * 19 / path_count_ideal_start2end;
-        }
-
-        if(path_count_ideal_start2out < 2)
-        {
-            path_index_array_start2out_minus_1 = 2;
-        }
-        else
-        {
-            path_index_array_start2out_minus_1 = ceil(path_count_ideal_start2out);
-        }
-        stack[S_PathIndexStepStart2Out] = path_cache.smooth_out_index / (double)path_index_array_start2out_minus_1;
-        int path_index_array_start2out = path_index_array_start2out_minus_1 + 1;
-                
-        if(path_count_ideal_out2end < 2)
-        {
-            path_index_array_out2end_minus_1 = 2;
-        }
-        else
-        {
-            path_index_array_out2end_minus_1 = ceil(path_count_ideal_out2end);
-        }                
-        stack[S_PathIndexStepOut2End] = (cache_length_minus_1 - path_cache.smooth_out_index) / (double)path_index_array_out2end_minus_1;        
-        int path_index_array_out2end = path_index_array_out2end_minus_1 + 1;
-        path_index_array_size = path_index_array_start2out + path_index_array_out2end - 1;
-        int path_index_array_size_minus_1 = path_index_array_size - 1;
-
-        // select point
-        double path_index_ideal = 0;
-        // first point must be the start point on path
-        path_index_array[0] = 0;
-        // points from second point to smooth out point
-        for(i = 1; i < path_index_array_start2out_minus_1; ++i)
-        {
-            path_index_ideal += stack[S_PathIndexStepStart2Out];
-            path_index_array[i] = round(path_index_ideal) - 1;     
-        }
-        // this point must be the out point on path
-        path_index_array[path_index_array_start2out_minus_1] = path_cache.smooth_out_index;
-        path_index_array_smooth_out_index = path_index_array_start2out_minus_1;
-        path_index_ideal = path_cache.smooth_out_index;
-        // points from smooth out point to end point
-        for(i = path_index_array_start2out; i < path_index_array_size_minus_1; ++i)
-        {
-            path_index_ideal += stack[S_PathIndexStepOut2End];
-            path_index_array[i] = round(path_index_ideal) - 1;
-        }
-        // last point must be the end point on path
-        path_index_array[path_index_array_size_minus_1] = cache_length_minus_1; 
-        path_length_start2out = length_start2out;
-        path_length_out2end = length_out2end;
+        traj_pva_out_index = traj_pva_size_minus_1;
     }
- 
-    // compute inverse kinematics
-    // first point is the start point
-    int path_address = S_Path0;
-    for(i = 0; i < model.link_num; ++i)
-    {
-        stack[path_address] = start_state.angle[i];
-        path_address += 25;
-    }
-    
-    // the remaining points
-    ref_joint = start_state.angle;
-    for(i = 1; i < path_index_array_size; ++i)
-    {                                   
-        ref_joint = result_joint;
-        path_address = S_Path0 + i;
-        for(j = 0; j < model.link_num; ++j)
-        {
-            stack[path_address] = path_cache.cache[path_index_array[i]].joint[j];
-            path_address += 25;
-        }
-    }   
 }
 
-void generatePathPointVia2In(const PathCache &path_cache, const MotionTarget &via, double length_via2in,
-                                    double* path_vector_via2in, int path_index_in)
+inline void getTrajPFromPathStart2Out2End(const PathCache& path_cache, double traj_piece_ideal_start2end, 
+                                                   int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size)
+{
+    int i;
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    // decide traj_pva size & path_index step
+    if(traj_piece_ideal_start2end <= 3)
+    {
+        traj_piece_ideal_start2end = 4;
+    }
+    else if(traj_piece_ideal_start2end >= (segment_alg_param.max_traj_points_num - 2))
+    {
+        traj_piece_ideal_start2end = segment_alg_param.max_traj_points_num - 1;
+    }
+    else
+    {
+        traj_piece_ideal_start2end = ceil(traj_piece_ideal_start2end) + 1;
+    }
+    double traj_piece_ideal_start2out = path_cache.smooth_out_index * traj_piece_ideal_start2end / path_cache_length_minus_1;
+    double traj_piece_ideal_out2end = (path_cache_length_minus_1 - path_cache.smooth_out_index) * traj_piece_ideal_start2end / path_cache_length_minus_1;
+    int traj_pva_size_start2out = ceil(traj_piece_ideal_start2out) + 1;
+    int traj_pva_size_start2out_minus_1 = traj_pva_size_start2out - 1;
+    int traj_piece_real_out2end = ceil(traj_piece_ideal_out2end);
+    traj_pva_size = traj_pva_size_start2out + traj_piece_real_out2end;
+    int traj_pva_size_minus_1 = traj_pva_size - 1;
+    stack[S_PathIndexStep_Start2Out] = path_cache.smooth_out_index / (double)traj_pva_size_start2out_minus_1;
+    stack[S_PathIndexStep_Out2End] = (path_cache_length_minus_1 - path_cache.smooth_out_index) / (double)traj_piece_real_out2end;
+    // select traj point from path cache   
+    double path_index_ideal = 0;
+    updateTrajPSingleItem(S_TrajP0, path_cache.cache[0].joint);
+    traj_path_cache_index[0] = 0;
+    for(i = 1; i < traj_pva_size_start2out; ++i)
+    {
+        path_index_ideal += stack[S_PathIndexStep_Start2Out];
+        traj_path_cache_index[i] = round(path_index_ideal);
+        updateTrajPSingleItem(S_TrajP0 + i, path_cache.cache[traj_path_cache_index[i]].joint);
+    }
+    for(; i < traj_pva_size_minus_1; ++i)
+    {
+        path_index_ideal += stack[S_PathIndexStep_Out2End];
+        traj_path_cache_index[i] = round(path_index_ideal);
+        updateTrajPSingleItem(S_TrajP0 + i, path_cache.cache[traj_path_cache_index[i]].joint);
+    }
+    updateTrajPSingleItem(S_TrajP0 + traj_pva_size_minus_1, path_cache.cache[path_cache_length_minus_1].joint); 
+    traj_path_cache_index[traj_pva_size_minus_1] = path_cache_length_minus_1;
+    // mark traj_pva_out_index
+    traj_pva_out_index = traj_pva_size_start2out_minus_1;
+}
+
+inline void getTrajPFromPathIn2End(const PathCache& path_cache, double traj_piece_ideal_in2end, int traj_pva_in_index, 
+                                          int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
+{
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    // decide traj_pva size & path_index step
+    double traj_piece_ideal_via2end = traj_pva_in_index + traj_piece_ideal_in2end;
+    if(traj_piece_ideal_via2end <= 3)
+    {
+        traj_pva_size_via2end = 4;
+    }
+    else if(traj_piece_ideal_via2end >= (segment_alg_param.max_traj_points_num - 1))
+    {
+        traj_pva_size_via2end = segment_alg_param.max_traj_points_num;
+    }
+    else
+    {
+        traj_pva_size_via2end = ceil(traj_piece_ideal_via2end) + 1;
+    }
+    int traj_pva_size_via2end_minus_1 = traj_pva_size_via2end - 1;
+    int traj_piece_real_in2end = traj_pva_size_via2end_minus_1 - traj_pva_in_index;
+    int traj_piece_real_in2end_minus_1 = traj_piece_real_in2end - 1;
+    stack[S_PathIndexStep_In2End] = (path_cache_length_minus_1 - path_cache.smooth_in_index) / (double)traj_piece_real_in2end;   
+    // select traj point from path cache        
+    updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index, path_cache.cache[path_cache.smooth_in_index].joint);
+    traj_path_cache_index_in2end[0] = path_cache.smooth_in_index;
+    double path_index_ideal = path_cache.smooth_in_index;
+    for(int i = 1; i < traj_piece_real_in2end; ++i)
+    {
+        path_index_ideal += stack[S_PathIndexStep_In2End];
+        traj_path_cache_index_in2end[i] = round(path_index_ideal);
+        updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index + i, path_cache.cache[traj_path_cache_index_in2end[i]].joint);
+    }
+    updateTrajPSingleItem(S_TrajP0 + traj_pva_size_via2end_minus_1, path_cache.cache[path_cache_length_minus_1].joint); 
+    traj_path_cache_index_in2end[traj_piece_real_in2end] = path_cache_length_minus_1;
+    // mark traj_pva_out_index
+    if(path_cache.smooth_out_index == -1)
+    {
+        traj_pva_out_index = -1;
+    }
+    else
+    {
+        traj_pva_out_index = traj_pva_size_via2end_minus_1;
+    }
+}
+
+inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_piece_ideal_in2end, int traj_pva_in_index, 
+                                          int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
+{
+    double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+    double traj_piece_ideal_in2out = path_length_in2out * stack[S_PathCountFactorCartesian];
+    if(traj_piece_ideal_in2out < DOUBLE_ACCURACY)   // in and out point is the same point
+    {
+        getTrajPFromPathIn2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+        traj_pva_out_index = traj_pva_in_index;
+    }
+    else
+    {
+        int i;
+        int path_cache_lenght_minus_1 = path_cache.cache_length - 1;
+        // decide traj piece size and path index step
+        int traj_piece_real_out2end = ceil(traj_piece_ideal_in2end - traj_piece_ideal_in2out);  // suppose out2end piece is small
+        double traj_piece_ideal_via2end = traj_pva_in_index + traj_piece_real_out2end + traj_piece_ideal_in2out;
+        if(traj_piece_ideal_via2end <= 3)
+        {
+            traj_pva_size_via2end = 4;
+        }
+        else if(traj_piece_ideal_via2end >= (segment_alg_param.max_traj_points_num - 1))
+        {
+            traj_pva_size_via2end = segment_alg_param.max_traj_points_num;
+        }
+        else
+        {
+            traj_pva_size_via2end = ceil(traj_piece_ideal_via2end) + 1;
+        }
+        int traj_piece_real_via2end = traj_pva_size_via2end - 1;
+        int traj_piece_real_in2out = traj_piece_real_via2end - traj_pva_in_index - traj_piece_real_out2end;
+        int traj_piece_real_in2end = traj_piece_real_in2out + traj_piece_real_out2end;
+        traj_pva_out_index = traj_pva_in_index + traj_piece_real_in2out;
+        stack[S_PathIndexStep_In2Out] = (path_cache.smooth_out_index - path_cache.smooth_in_index) / (double)traj_piece_real_in2out;
+        stack[S_PathIndexStep_Out2End] = (path_cache_lenght_minus_1 - path_cache.smooth_out_index) / (double)traj_piece_real_out2end;
+        // select traj point from path cache        
+        updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index, path_cache.cache[path_cache.smooth_in_index].joint);
+        traj_path_cache_index_in2end[0] = path_cache.smooth_in_index;
+        double path_index_ideal = path_cache.smooth_in_index;
+        for(i = 1; i < traj_piece_real_in2out; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStep_In2Out];
+            traj_path_cache_index_in2end[i] = round(path_index_ideal);
+            updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index + i, path_cache.cache[traj_path_cache_index_in2end[i]].joint);
+        }
+        updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index + traj_piece_real_in2out, path_cache.cache[path_cache.smooth_out_index].joint); 
+        traj_path_cache_index_in2end[traj_piece_real_in2out] = path_cache.smooth_out_index;
+        path_index_ideal = path_cache.smooth_out_index;
+        for(i = traj_piece_real_in2out + 1; i < traj_piece_real_in2end; ++i)
+        {
+            path_index_ideal += stack[S_PathIndexStep_Out2End];
+            traj_path_cache_index_in2end[i] = round(path_index_ideal);
+            updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index + i, path_cache.cache[traj_path_cache_index_in2end[i]].joint);
+        }
+        updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index + traj_piece_real_in2end, path_cache.cache[path_cache_lenght_minus_1].joint); 
+        traj_path_cache_index_in2end[traj_piece_real_in2end] = path_cache_lenght_minus_1;       
+    }
+}
+
+inline void getTrajPFromPathOut2In(const PathCache& path_cache, double traj_piece_ideal_out2in, 
+                                         int* traj_path_cache_index_out2in, int& traj_pva_size_out2in)
+{
+    // decide traj_pva size & path_index step
+    if(traj_piece_ideal_out2in <= 3)
+    {
+        traj_pva_size_out2in = 4;
+    }
+    else if(traj_piece_ideal_out2in >= (segment_alg_param.max_traj_points_num - 1))
+    {
+        traj_pva_size_out2in = segment_alg_param.max_traj_points_num;
+    }
+    else
+    {
+        traj_pva_size_out2in = ceil(traj_piece_ideal_out2in) + 1;
+    }
+    int traj_pva_size_out2in_minus_1 = traj_pva_size_out2in - 1;
+    stack[S_PathIndexStep_Out2In] = path_cache.smooth_in_index / (double)traj_pva_size_out2in_minus_1;
+    // select traj point from path cache        
+    double path_index_ideal = 0;
+    updateTrajPSingleItem(S_TrajP0_Smooth, path_cache.cache[0].joint);
+    traj_path_cache_index_out2in[0] = 0;
+    for(int i = 1; i < traj_pva_size_out2in_minus_1; ++i)
+    {
+        path_index_ideal += stack[S_PathIndexStep_Out2In];
+        traj_path_cache_index_out2in[i] = round(path_index_ideal);
+        updateTrajPSingleItem(S_TrajP0_Smooth + i, path_cache.cache[traj_path_cache_index_out2in[i]].joint);
+    }
+    updateTrajPSingleItem(S_TrajP0_Smooth + traj_pva_size_out2in_minus_1, path_cache.cache[path_cache.smooth_in_index].joint); 
+    traj_path_cache_index_out2in[traj_pva_size_out2in_minus_1] = path_cache.smooth_in_index; 
+}
+
+inline void updateMovLTrajP(const PathCache& path_cache, int* traj_path_cache_index, 
+                                int& traj_pva_out_index, int& traj_pva_size)
+{
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double traj_piece_ideal_start2end = path_length_start2end * stack[S_PathCountFactorCartesian];
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {
+        getTrajPFromPathStart2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+    }
+    else
+    {
+        getTrajPFromPathStart2Out2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+    }
+}
+
+inline void updateMovJTrajP(const PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size)
+{
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    // get max delta joint
+    double delta_joint_max = 0;
+    for(int i = 0; i < model.link_num; ++i)
+    {
+        stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache_length_minus_1].joint[i] - path_cache.cache[0].joint[i]);
+        if(stack[S_DeltaJointVector + i] > delta_joint_max)
+        {
+            delta_joint_max = stack[S_DeltaJointVector + i];
+        }
+    }
+    // decide traj_pva size & path_index step
+    double traj_piece_ideal_start2end = delta_joint_max * stack[S_PathCountFactorJoint];
+    getTrajPFromPathStart2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+}
+
+inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
 {
     int i, j;
-    // get start joint
-    Joint via_joint;
-    segment_alg_param.kinematics_ptr->inverseKinematicsInUser(via.pose_target, path_cache.cache[0].joint, via_joint);
-    int path_address = S_Path0;
-    for(i = 0; i < model.link_num; ++i)
-    {
-        stack[path_address] = via_joint[i];
-        path_address += 25;
-    }
-
-    // via and in points are the same point
-    if(path_index_in == 0)
-    {
-        return;
-    }
-
-    // select traj point from via to in, not include the via point
-    Pose point_array[10];   // point_array[0] is not used
-    // compute length step    
-    double length_step = length_via2in / path_index_in;
-    double distance_to_via = 0;
-    // compute angle step    
+    // compute path vector and quatern for via2in
+    double path_vector_via2in[3];
+    double path_length_via2in;
+    getMoveLPathVector(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position, path_vector_via2in, path_length_via2in);
     double via_quatern[4], in_quatern[4];
     getMoveEulerToQuatern(via.pose_target.orientation, via_quatern);
-    in_quatern[0] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.x;
-    in_quatern[1] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.y;
-    in_quatern[2] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.z;
-    in_quatern[3] = path_cache.cache[path_cache.smooth_in_index].pose.orientation.w;
+    getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.orientation, in_quatern);
     double angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
-    double angle_step = angle_via2in / path_index_in;
-    double angle_to_via = 0;
-    // compute traj point from 1 to (path_index_in - 1)
-    for(i = 1; i < path_index_in; ++i)
+    // compute via joint
+    Joint joint_via;
+    segment_alg_param.kinematics_ptr->inverseKinematicsInUser(via.pose_target, path_cache.cache[0].joint, joint_via);
+    // decide traj_pva_in_index & length_step & angle_step, fill TrajP via2in if in is not on via
+    double traj_piece_ideal_via2in = path_length_via2in * stack[S_PathCountFactorCartesian];
+    if(traj_piece_ideal_via2in < DOUBLE_ACCURACY)
     {
-        distance_to_via += length_step;
-        angle_to_via += angle_step;
-        getMoveLPathPoint(via.pose_target.position, path_vector_via2in, distance_to_via, point_array[i].position);
-        getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_to_via, point_array[i].orientation);
+        traj_pva_in_index = 0;        
     }
-    // traj point should be on the 'in point' 
-    point_array[path_index_in].position = path_cache.cache[path_cache.smooth_in_index].pose.position;
-    point_array[path_index_in].orientation = path_cache.cache[path_cache.smooth_in_index].pose.orientation;    
-
-    Joint result_joint;
-    Joint ref_joint = via_joint;
-    // IK point_array to S_Path0~S_Path8
-    for(i = 1; i <= path_index_in; ++i)
+    else
     {
-        segment_alg_param.kinematics_ptr->inverseKinematicsInUser(point_array[i], ref_joint, result_joint);
-        path_address = S_Path0 + i;
-        for(j = 0; j < model.link_num; ++j)
+        traj_pva_in_index = ceil(traj_piece_ideal_via2in);
+        double length_step = path_length_via2in / traj_pva_in_index;
+        double angle_step = angle_via2in / traj_pva_in_index;
+        double length_distance_to_via = 0, angle_distance_to_via = 0;
+        Pose pose;
+        Joint joint_ref = joint_via;
+        Joint joint_result;
+        int traj_p_address;
+        for(i = 0; i <= traj_pva_in_index; ++i)
         {
-            stack[path_address] = result_joint[j];
-            path_address += 25;
-        }
-        ref_joint = result_joint;
+            getMoveLPathPoint(via.pose_target.position, path_vector_via2in, length_distance_to_via, pose.position);
+            getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_distance_to_via, pose.orientation);
+            segment_alg_param.kinematics_ptr->inverseKinematicsInUser(pose, joint_ref, joint_result);
+            traj_p_address = S_TrajP0;
+            for(j = 0; j < model.link_num; ++j)
+            {
+                stack[traj_p_address + i] = joint_result[j];
+                traj_p_address += 75;
+            }            
+            joint_ref = joint_result;
+            length_distance_to_via += length_step;
+            angle_distance_to_via += angle_step;
+        }        
     }
 }
 
-void generatePathPointIn2End(const PathCache &path_cache, int path_index_in, int path_index_out, int path_index_end, int* path_index_array_in2end)
+inline void updateMovLIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_index, 
+                                        int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
     int i, j;
-    double path_index_ideal = path_cache.smooth_in_index;
-    int path_index_real;
-    int path_address;
-    int cache_length_minus_1 = path_cache.cache_length - 1;
-    
-    path_index_array_in2end[0] = path_cache.smooth_in_index;
-    int path_index_array_in2end_index = 1;
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    double path_length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double traj_piece_ideal_in2end = path_length_in2end * stack[S_PathCountFactorCartesian];
     if(path_cache.smooth_out_index == -1
-        || path_cache.smooth_out_index == cache_length_minus_1)   // without smooth
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
     {
-        // path_index_out == path_index_end, stack[S_PathIndexStepIn2End] is valid
-        // from (path_index_in + 1) to (path_index_end - 1)
-        for(i = path_index_in + 1; i < path_index_end; ++i)
-        {
-            path_index_ideal += stack[S_PathIndexStepIn2End];
-            path_index_real = round(path_index_ideal);
-            path_index_array_in2end[path_index_array_in2end_index] = path_index_real;
-            ++path_index_array_in2end_index;
-            path_address = S_Path0 + i;
-            for(j = 0; j < model.link_num; ++j)
-            {
-                stack[path_address] = path_cache.cache[path_index_real].joint[j];
-                path_address += 25;
-            }
-        }
-        // path_index_end should be the same as path end point
-        path_index_array_in2end[path_index_array_in2end_index] = cache_length_minus_1;
-        path_address = S_Path0 + path_index_end;
-        for(i = 0; i < model.link_num; ++i)
-        {
-            stack[path_address] = path_cache.cache[cache_length_minus_1].joint[i];
-            
-            path_address += 25;
-        }        
+        getTrajPFromPathIn2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
     }
-    else    // with smooth
+    else
     {
-        // path_index_out != path_index_end, stack[S_PathIndexStepIn2Out] & stack[S_PathIndexStepOut2End] are valid
-        // from (path_index_in + 1) to (path_index_out - 1)
-        for(i = path_index_in + 1; i < path_index_out; ++i)
-        {
-            path_index_ideal += stack[S_PathIndexStepIn2Out];
-            path_index_real = round(path_index_ideal);
-            path_index_array_in2end[path_index_array_in2end_index] = path_index_real;
-            ++path_index_array_in2end_index;
-            path_address = S_Path0 + i;
-            for(j = 0; j < model.link_num; ++j)
-            {
-                stack[path_address] = path_cache.cache[path_index_real].joint[j];
-                path_address += 25;
-            }
-        }        
-        // path_index_out should be the same as path out point
-        path_index_ideal = path_cache.smooth_out_index;
-        path_index_array_in2end[path_index_array_in2end_index] = path_cache.smooth_out_index;
-        ++path_index_array_in2end_index;
-        path_address = S_Path0 + path_index_out;      
-        for(i = 0; i < model.link_num; ++i)
-        {
-            stack[path_address] = path_cache.cache[path_cache.smooth_out_index].joint[i];
-            path_address += 25;
-        }
-        // from (path_index_out + 1) to (path_index_end - 1)
-        for(i = path_index_out + 1; i < path_index_end; ++i)
-        {
-            path_index_ideal += stack[S_PathIndexStepOut2End];
-            path_index_real = round(path_index_ideal);
-            path_index_array_in2end[path_index_array_in2end_index] = path_index_real;
-            ++path_index_array_in2end_index;
-            path_address = S_Path0 + i;
-            for(j = 0; j < model.link_num; ++j)
-            {
-                stack[path_address] = path_cache.cache[path_index_real].joint[j];
-                path_address += 25;
-            }
-        }
-        // path_index_end should be the same as path end point        
-        path_index_array_in2end[path_index_array_in2end_index] = cache_length_minus_1;
-        path_address = S_Path0 + path_index_end;       
-        for(i = 0; i < model.link_num; ++i)
-        {
-            stack[path_address] = path_cache.cache[cache_length_minus_1].joint[i];
-            path_address += 25;
-        }        
+        getTrajPFromPathIn2Out2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
     }
 }
 
-void generatePathPointOut2In(const PathCache &path_cache, int traj_smooth_in_index, int& path_array_size, int* path_index_array_out2in)
-{
-    int i, j;
-    path_array_size = traj_smooth_in_index - 1;
-    int path_array_size_minus_1 = path_array_size - 1;
-    stack[S_PathIndexStepOut2In] = path_cache.smooth_in_index / (double)path_array_size_minus_1;
-
-    // fisrt traj point
-    int path_address = S_Path0;
-    for(i = 0; i < model.link_num; ++i)
-    {
-        stack[path_address] = path_cache.cache[0].joint[i];
-        path_address += 25;
-    }
-
-    // middle traj points
-    double path_index_ideal = 0;
-    int path_index_real;
-    path_index_array_out2in[0] = 0;
-    int path_index_array_out2in_index = 1;
-    for(i = 1; i < path_array_size_minus_1; ++i)
-    {
-        path_index_ideal += stack[S_PathIndexStepOut2In];
-        path_index_real = round(path_index_ideal);
-        
-        path_index_array_out2in[path_index_array_out2in_index] = path_index_real;
-        ++path_index_array_out2in_index;
-        path_address = S_Path0 + i;
-        for(j = 0; j < model.link_num; ++j)
-        {
-            stack[path_address] = path_cache.cache[path_index_real].joint[j];
-            path_address += 25;
-        }
-    }
-
-    // last traj points
-    path_address = S_Path0 + path_array_size_minus_1;
-    path_index_array_out2in[path_index_array_out2in_index] = path_cache.smooth_in_index;
-    for(i = 0; i < model.link_num; ++i)
-    {
-        stack[path_address] = path_cache.cache[path_cache.smooth_in_index].joint[i];
-        path_address += 25;
-    }
-}
-
-void generateTimeVectorMoveJ(double vel_ratio, int path_size, int& time_vector_size)
-{
-    // stack[S_JointDeltaBase] should have been filled in generateMoveJPathPoint()
-    int i;
-    // compute max time of the path for all joints
-    double path_time;
-    double max_path_time = 0;
-    int path_index_of_max_path_time = 0;
-    for(i = 0; i < model.link_num; ++i)
-    {
-        path_time = stack[S_DeltaJointVector + i] / (vel_ratio * stack[S_ConstraintJointVelMax + i]);
-        if(path_time > max_path_time)
-        {
-            max_path_time = path_time;
-            path_index_of_max_path_time = i;
-        }
-    }
-    int path_piece_num = path_size - 1;
-    double time_duration = max_path_time / path_piece_num;
-
-    stack[S_TrajT] = time_duration * segment_alg_param.time_factor_1;
-    stack[S_TrajT + 1] = time_duration * segment_alg_param.time_factor_2;
-    for(i = 2; i < path_piece_num; ++i)
-    {
-        stack[S_TrajT + i] = time_duration;
-    }
-    stack[S_TrajT + path_piece_num] = time_duration * segment_alg_param.time_factor_3;
-    stack[S_TrajT + path_size] = time_duration * segment_alg_param.time_factor_4;  
-    time_vector_size = path_size + 1;
-}
-
-void generateTimeVectorMoveL(double vel, int path_size, int path_index_array_smooth_out_index, 
-                                    double path_length_start2out, double path_length_out2end, int& time_vector_size)
+inline void updateMovLTrajT(const PathCache& path_cache, double cmd_vel,
+                                int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size,
+                                int& traj_t_size)
 {
     int i;
+    // compute total time
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double critical_length = cmd_vel * cmd_vel / segment_alg_param.max_cartesian_acc;
     double time_span_start2end;
-    double critical_length = vel * vel / segment_alg_param.max_cartesian_acc;
-    if(path_length_start2out > critical_length) // can reach vel
+    if(path_length_start2end > critical_length) // can reach vel
     {
-        time_span_start2end = 2 * sqrt(critical_length / segment_alg_param.max_cartesian_acc) + (path_length_start2out - critical_length) / vel;
+        time_span_start2end = 2 * sqrt(critical_length / segment_alg_param.max_cartesian_acc) + (path_length_start2end - critical_length) / cmd_vel;
     }
     else    // can't reach vel
     {
-        time_span_start2end = 2 * sqrt(path_length_start2out / segment_alg_param.max_cartesian_acc);
+        time_span_start2end = 2 * sqrt(path_length_start2end / segment_alg_param.max_cartesian_acc);
     }
-    
-    if(path_index_array_smooth_out_index == -1) // no smooth out point
-    {
-        //double time_span_start2end = path_length_start2out / vel;   
-        int path_piece_start2end = path_size - 1;
-        double time_duration = time_span_start2end / path_piece_start2end;
 
-        stack[S_TrajT] = time_duration * segment_alg_param.time_factor_1;
-        stack[S_TrajT + 1] = time_duration * segment_alg_param.time_factor_2;
-        for(i = 2; i < path_piece_start2end; ++i)
+    // compute time duration for each traj piece
+    traj_t_size = traj_pva_size - 1;
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {
+        double time_duration_start2end = time_span_start2end / traj_t_size;
+        for(i = 0; i < traj_t_size; ++i)
         {
-            stack[S_TrajT + i] = time_duration;
-        }
-        stack[S_TrajT + path_piece_start2end] = time_duration * segment_alg_param.time_factor_3;
-        stack[S_TrajT + path_size] = time_duration * segment_alg_param.time_factor_4;       
+            stack[S_TrajT + i] = time_duration_start2end;
+        }        
     }
     else
     {
-        double path_length_start2end = path_length_start2out + path_length_out2end;
-        double time_span_start2out = time_span_start2end * path_length_start2out / path_length_start2end;
-        double time_span_out2end = time_span_start2end * path_length_out2end / path_length_start2end;
-        int path_piece_start2out = path_index_array_smooth_out_index;        
-        int path_piece_out2end = path_size - path_index_array_smooth_out_index - 1;
-        double time_duration_start2out = time_span_start2out / path_piece_start2out;
-        double time_duration_out2end = time_span_out2end / path_piece_out2end;
-        int path_size_minus_1 = path_size - 1;
-
-        stack[S_TrajT] = time_duration_start2out * segment_alg_param.time_factor_1;
-        stack[S_TrajT + 1] = time_duration_start2out * segment_alg_param.time_factor_2;
-        for(i = 2; i <= path_piece_start2out; ++i)
+        double time_duration_start2out = path_cache.smooth_out_index * time_span_start2end / (path_cache_length_minus_1 * traj_pva_out_index);
+        double time_duration_out2end = (path_cache_length_minus_1 - path_cache.smooth_out_index) * time_span_start2end / (path_cache_length_minus_1 * (traj_pva_size - traj_pva_out_index - 1));
+        for(i = 0; i < traj_pva_out_index; ++i)
         {
             stack[S_TrajT + i] = time_duration_start2out;
         }
-        for(i = path_piece_start2out + 1; i < path_size_minus_1; ++i)
+        for(; i < traj_t_size; ++i)
         {
             stack[S_TrajT + i] = time_duration_out2end;
         }
-        stack[S_TrajT + path_size_minus_1] = time_duration_out2end * segment_alg_param.time_factor_3;
-        stack[S_TrajT + path_size] = time_duration_out2end * segment_alg_param.time_factor_4;
     }
-    time_vector_size = path_size + 1; 
+    // adjust first and last piece of time
+    stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
+    stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
 }
 
-void generateTimeVectorVia2End(double vel, const PathCache &path_cache, double length_via2in, 
-                               int path_index_in, int path_index_out, int path_index_end, int& time_vector_size_via2end)
+inline void updateMovJTrajT(const PathCache& path_cache, double cmd_vel, 
+                                int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size, 
+                                int& traj_t_size)
 {
     int i;
-    int cache_length_minus_1 = path_cache.cache_length - 1;
-    time_vector_size_via2end = path_index_end + 2;
-    int time_vector_size_via2end_minus_1 = time_vector_size_via2end - 1;
-    int time_vector_current_index = 0;
-    double length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[cache_length_minus_1].pose.position);
-    double length_via2end = length_via2in + length_in2end;
-
-    double time_span_via2end;
-    double critical_length = vel * vel / segment_alg_param.max_cartesian_acc;
-    if(length_via2end > critical_length) // can reach vel
+    // get max time span of all axes
+    double time_span_start2end_max = 0;
+    double time_span_start2end;
+    for(i = 0; i < model.link_num; ++i)
     {
-        time_span_via2end = 2 * sqrt(critical_length / segment_alg_param.max_cartesian_acc) + (length_via2end - critical_length) / vel;
+        time_span_start2end = stack[S_DeltaJointVector + i] / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+        if(time_span_start2end > time_span_start2end_max)
+        {
+            time_span_start2end_max = time_span_start2end;
+        }
+    }
+
+    // compute time duration of each traj piece
+    traj_t_size = traj_pva_size - 1;
+    double time_duration_start2end = time_span_start2end_max / traj_t_size;
+    for(i = 0; i <traj_t_size; ++i)
+    {
+        stack[S_TrajT + i] = time_duration_start2end;
+    }
+    // adjust first and last piece of time
+    stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
+    stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
+}
+
+inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTarget& via, int* traj_path_cache_index_out2in, int& traj_pva_size_out2in)
+{
+    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
+    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
+    double traj_piece_ideal_out2in = (path_length_out2via + path_length_via2in) * stack[S_PathCountFactorCartesian];
+    getTrajPFromPathOut2In(path_cache, traj_piece_ideal_out2in, traj_path_cache_index_out2in, traj_pva_size_out2in);
+}
+
+inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel,
+                                   int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
+                                   int& traj_t_size)
+{
+    int i;
+    // compute time span
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    double path_length_via2end = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double critical_length = cmd_vel * cmd_vel / segment_alg_param.max_cartesian_acc;
+    double time_span_via2end;
+    if(path_length_via2end > critical_length) // can reach vel
+    {
+        time_span_via2end = 2 * sqrt(critical_length / segment_alg_param.max_cartesian_acc) + (path_length_via2end - critical_length) / cmd_vel;
     }
     else    // can't reach vel
     {
-        time_span_via2end = 2 * sqrt(length_via2end / segment_alg_param.max_cartesian_acc);
+        time_span_via2end = 2 * sqrt(path_length_via2end / segment_alg_param.max_cartesian_acc);
     }
-    
-    if(path_index_in != 0)
+    // compute time duration for each traj piece, via2in
+    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
+    double time_span_via2in = time_span_via2end * path_length_via2in / path_length_via2end;    
+    double time_duration_via2in = time_span_via2in / traj_pva_in_index;
+    for(i = 0; i < traj_pva_in_index; ++i)
     {
-        double time_span_via2in = time_span_via2end * length_via2in / length_via2end;    
-        double time_duration_via2in = time_span_via2in / path_index_in;
-        stack[S_TrajT] = time_duration_via2in * segment_alg_param.time_factor_1;
-        stack[S_TrajT + 1] = time_duration_via2in * segment_alg_param.time_factor_2;
-        for(i = 1; i < path_index_in; ++i)
-        {
-            stack[S_TrajT + i + 1] = time_duration_via2in;
-        }
-        time_vector_current_index = path_index_in + 1;
+        stack[S_TrajT + i] = time_duration_via2in;
     }
-
-    
+    // compute time duration for each traj piece, in2end
+    traj_t_size = traj_pva_size_via2end - 1;
     if(path_cache.smooth_out_index == -1
-        || path_cache.smooth_out_index == cache_length_minus_1)
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
     {
-        double time_span_in2end = time_span_via2end * length_in2end / length_via2end;
-        double time_duration_in2end = time_span_in2end / (path_index_end - path_index_in);
-        for(i = time_vector_current_index; i < path_index_end; ++i)
+        double time_duration_in2end = (time_span_via2end - time_span_via2in) / (traj_t_size - traj_pva_in_index);
+        for(i = traj_pva_in_index; i < traj_t_size; ++i)
         {
             stack[S_TrajT + i] = time_duration_in2end;
-        }
-        stack[S_TrajT + path_index_end] = time_duration_in2end * segment_alg_param.time_factor_3;
-        stack[S_TrajT + time_vector_size_via2end_minus_1] = time_duration_in2end * segment_alg_param.time_factor_4;
+        }        
     }
     else
     {
-        double length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
-        double length_out2end = length_in2end - length_in2out;
-        double time_span_in2out = time_span_via2end * length_in2out / length_via2end;
-        double time_span_out2end = time_span_via2end * length_out2end / length_via2end;
-        double time_duration_in2out = time_span_in2out / (path_index_out - path_index_in);
-        double time_duration_out2end = time_span_out2end / (path_index_end - path_index_out);
-        for(i = time_vector_current_index; i <= path_index_out; ++i)
+        double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+        double time_span_in2out = time_span_via2end * path_length_in2out / path_length_via2end;
+        double time_duration_in2out = time_span_in2out / (traj_pva_out_index - traj_pva_in_index);
+        double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+        double time_span_out2end = time_span_via2end * path_length_out2end / path_length_via2end;
+        double time_duration_out2end = time_span_out2end / (traj_pva_size_via2end - traj_pva_out_index - 1);
+
+        for(i = traj_pva_in_index; i < traj_pva_out_index; ++i)
         {
             stack[S_TrajT + i] = time_duration_in2out;
         }
-        for(i = path_index_out + 1; i < time_vector_size_via2end_minus_1; ++i)
+        for(i = traj_pva_out_index; i < traj_t_size; ++i)
         {
             stack[S_TrajT + i] = time_duration_out2end;
         }
-        stack[S_TrajT + path_index_end] = time_duration_out2end * segment_alg_param.time_factor_3;
-        stack[S_TrajT + time_vector_size_via2end_minus_1] = time_duration_out2end * segment_alg_param.time_factor_4; 
+    }
+    // adjust first and last piece of time
+    stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
+    stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
+}
+
+inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel, 
+                                           int* traj_path_cache_index_out2in, int traj_pva_size_out2in, 
+                                           int& traj_t_size_out2in)
+{
+    traj_t_size_out2in = traj_pva_size_out2in - 1;
+    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
+    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
+    double time_span_out2in = (path_length_out2via + path_length_via2in) / cmd_vel;
+    double time_duration_out2in = time_span_out2in / traj_t_size_out2in; 
+    for(int i = 0; i < traj_t_size_out2in; ++i)
+    {
+        stack[S_TrajT_Smooth + i] = time_duration_out2in;
     }
 }
 
-void generateTimeVectorOut2In(double cmd_vel, double length_out2via, double length_via2in, 
-                                   int path_array_size_out2in,int& time_vector_size_out2in, double p1[9], double pn_1[9])
+inline void getJerkStart(double* traj_p_base, int traj_pva_size, double* traj_t_base, int traj_t_size, double* start_state, double a2,
+                             double& jerk1, double& jerk2)
 {
-   time_vector_size_out2in = path_array_size_out2in + 1;
-   int path_array_size_out2in_minus_1 = path_array_size_out2in - 1;
- 
-   double time_span_out2in = (length_out2via + length_via2in) / cmd_vel;    
-   double time_duration_out2in = time_span_out2in / path_array_size_out2in_minus_1;
-
-   for(int i = 2; i < path_array_size_out2in_minus_1; ++i)
-   {
-       stack[S_TrajT_Smooth + i] = time_duration_out2in;
-   }
-
-   double delta_t1, delta_tn_1;
-   double v_avg1, v_avgn_1;
-   int out_point_address = S_OutPointState0;
-   int in_point_address = S_InPointState0;
-   double delta_t1_max = 0, delta_tn_1_max = 0;
-   for(int i = 0; i < model.link_num; ++i)
-   {
-       v_avg1 = (p1[i] - stack[out_point_address]) / time_duration_out2in;
-       v_avgn_1 = (stack[in_point_address] - pn_1[i]) / time_duration_out2in;
-       delta_t1 = (p1[i] - stack[out_point_address]) / (v_avg1 + stack[out_point_address + 1]);
-       delta_tn_1 = (stack[in_point_address] - pn_1[i]) / (v_avgn_1 + stack[in_point_address + 1]);
-
-       if(delta_t1 > delta_t1_max)
-       {
-           delta_t1_max = delta_t1;
-       }
-       if(delta_tn_1 > delta_tn_1_max)
-       {
-           delta_tn_1_max = delta_tn_1;
-       }
-       out_point_address += 3;
-       in_point_address += 3;
-   }
-
-   stack[S_TrajT_Smooth] = delta_t1_max;
-   stack[S_TrajT_Smooth + 1] = stack[S_TrajT_Smooth];
-   stack[S_TrajT_Smooth + path_array_size_out2in_minus_1] = delta_tn_1_max;
-   stack[S_TrajT_Smooth + path_array_size_out2in] = stack[S_TrajT_Smooth + path_array_size_out2in_minus_1];    
+    double duration_square = traj_t_base[0] * traj_t_base[0];
+    double duration_cubic = duration_square * traj_t_base[0];
+    jerk1 = 12 * (traj_p_base[1] - traj_p_base[0]) / duration_cubic
+            - 12 * start_state[1] / duration_square
+            - 5 * start_state[2] / traj_t_base[0]
+            - a2 / traj_t_base[0];
+    jerk2 = -12 * (traj_p_base[1] - traj_p_base[0]) / duration_cubic
+            + 12 * start_state[1] / duration_square
+            + 3 * start_state[2] / traj_t_base[0]
+            + 3 * a2 / traj_t_base[0];
 }
 
-int computeTrajSmoothInIndex(double length_out2via, double length_via2in)
+inline void getJerkEnd(double* traj_p_base, int traj_pva_size, double* traj_t_base, int traj_t_size, double* end_state, double an_1,
+                          double& jerkn_1, double& jerkn)
 {
-    double path_count_ideal_transition = (length_out2via + length_via2in) * stack[S_PathCountFactorCartesian];
-    if(path_count_ideal_transition > 20)
-    {
-        return 22;
-    }
-    else if(path_count_ideal_transition < 3)
-    {
-        return 5;
-    }
-    else
-    {
-        return (ceil(path_count_ideal_transition) + 2);
-    }
+    double duration_square = traj_t_base[traj_t_size - 1] * traj_t_base[traj_t_size - 1];
+    double duration_cubic = duration_square * traj_t_base[traj_t_size - 1];
+    jerkn_1 = -12 * (traj_p_base[traj_pva_size - 1] - traj_p_base[traj_pva_size - 2]) / duration_cubic
+              + 12 * end_state[1] / duration_square
+              - 3 * (an_1 + end_state[2]) / traj_t_base[traj_t_size - 1];
+    jerkn = 12 * (traj_p_base[traj_pva_size - 1] - traj_p_base[traj_pva_size - 2]) / duration_cubic
+            - 12 * end_state[1] / duration_square
+            + (an_1 + 5 * end_state[2]) / traj_t_base[traj_t_size - 1];             
 }
 
-void computePathIndexStepVia2End(const PathCache &path_cache, const MotionTarget &via, double length_via2in,
-                                    int& path_index_in, int& path_index_out, int& path_index_end)
+inline void updateTrajVA(double* traj_p_base, double* traj_v_base, double* traj_a_base, int traj_pva_size, 
+                             double* traj_j_base, double* traj_t_base, int traj_t_size,
+                             double* start_state, double* end_state)
 {
-    int cache_length_minus_1 = path_cache.cache_length - 1;
-    double length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[cache_length_minus_1].pose.position);
-    double path_count_ideal_via2in = length_via2in * stack[S_PathCountFactorCartesian];
-    double path_count_ideal_in2end = length_in2end * stack[S_PathCountFactorCartesian];
-    double path_count_ideal_via2end = path_count_ideal_via2in + path_count_ideal_in2end;
-    if(path_count_ideal_via2end > 20)
+    // start point
+    traj_a_base[0] = start_state[2];
+    traj_v_base[0] = start_state[1];
+
+    traj_a_base[1] = stack[S_X];
+    traj_v_base[1] = start_state[1] + (start_state[2] + ((traj_j_base[1] - traj_j_base[0]) / 6 + traj_j_base[0] / 2) * traj_t_base[0]) * traj_t_base[0];    
+
+    // traj_pva_size - 1 = traj_t_size
+    for(int i = 2; i < traj_t_size; ++i)
     {
-        path_count_ideal_via2in = path_count_ideal_via2in * 20 / path_count_ideal_via2end;
-        path_count_ideal_in2end = path_count_ideal_in2end * 20 / path_count_ideal_via2end;
-    }   
-    if(path_count_ideal_via2in < DOUBLE_ACCURACY)
-    {
-        path_index_in = 0;
-    }
-    else
-    {
-        path_index_in = ceil(path_count_ideal_via2in);
+        traj_a_base[i] = stack[S_X + i - 1];
+        traj_v_base[i] = traj_v_base[i - 1] + (traj_a_base[i] + traj_a_base[i - 1]) * traj_t_base[i - 1] / 2;
     }
 
-    if(path_cache.smooth_out_index == -1
-        || path_cache.smooth_out_index == cache_length_minus_1)
-    {       
-        if(path_count_ideal_in2end < 3)
-        {
-            path_index_end = path_index_in + 3;
-        }
-        else
-        {
-            path_index_end = path_index_in + ceil(path_count_ideal_in2end);
-        }
-        path_index_out = path_index_end;
-
-        if(path_index_in != 0)
-        {
-            stack[S_PathIndexStepIn2End] = (cache_length_minus_1 - path_cache.smooth_in_index) / (double)(path_index_end - path_index_in);
-        }
-        else
-        {
-            stack[S_PathIndexStepIn2End] = 0;
-        }
-    }
-    else
-    {
-        double length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
-        double length_out2end = length_in2end - length_in2out;
-        double path_count_ideal_in2out = length_in2out * stack[S_PathCountFactorCartesian];
-        double path_count_ideal_out2end = length_out2end * stack[S_PathCountFactorCartesian];
-        if(path_count_ideal_via2end > 20)
-        {
-            path_count_ideal_in2out = path_count_ideal_in2out * 20 / path_count_ideal_via2end;
-            path_count_ideal_out2end = path_count_ideal_out2end * 20 / path_count_ideal_via2end;
-        }
-        
-        if(path_count_ideal_in2out < DOUBLE_ACCURACY)   // in and out is the same point
-        {
-            path_index_out = path_index_in;
-        }
-        else
-        {
-            path_index_out = path_index_in + ceil(path_count_ideal_in2out);
-        }
-
-        if(path_count_ideal_out2end < DOUBLE_ACCURACY)  // out and end is the same point
-        {
-            path_index_end = path_index_out;
-        }
-        else
-        {
-            path_index_end = path_index_out + ceil(path_count_ideal_out2end);
-        }
-
-        if(path_index_in != path_index_out)
-        {
-            stack[S_PathIndexStepIn2Out] = (path_cache.smooth_out_index - path_cache.smooth_in_index) / (double)(path_index_out - path_index_in);
-        }
-        else
-        {
-            stack[S_PathIndexStepIn2Out] = 0;
-        }
-        if(path_index_out != path_index_end)
-        {
-            stack[S_PathIndexStepOut2End] = (cache_length_minus_1 - path_cache.smooth_out_index) / (double)(path_index_end - path_index_out);
-        }
-        else
-        {
-            stack[S_PathIndexStepOut2End] = 0;
-        }
-        // FIXME: what if path_index_in = path_index_out = path_index_end ?
-    }
+    // end point
+    traj_a_base[traj_t_size] = end_state[2];
+    traj_v_base[traj_t_size] = end_state[1];    
 }
 
-void generateOutAndInState(const JointState& start_state, int traj_smooth_in_index)
+inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int traj_pva_size)
 {
-    int out_point_base = S_OutPointState0;
-    int in_point_base = S_InPointState0;
-    int traj_base_in = S_TrajP0 + traj_smooth_in_index;
-    for(int i = 0; i < model.link_num; ++i)
+    int i, j;
+    int constraint_joint_pos_acc_address, constraint_joint_neg_acc_address;
+    if(segment_alg_param.is_fake_dynamics)
     {
-        stack[out_point_base] = start_state.angle[i];   // P
-        stack[out_point_base + 1] = start_state.omega[i];// * rescale_factor_via2end;   // V
-        stack[out_point_base + 2] = start_state.alpha[i];   // A
-        stack[in_point_base] = stack[traj_base_in];            // P
-        stack[in_point_base + 1] = stack[traj_base_in + 50];// * rescale_factor_via2end;   // V
-        stack[in_point_base + 2] = stack[traj_base_in + 100];  // A
-        in_point_base += 3;
-        out_point_base += 3;
-        traj_base_in += 150;
-    }
-}
-
-void generateTrajPiece(int traj_offset, int traj_piece_num, int t_base, double vel_ratio, double acc_ratio)
-{
-    int traj_piece_j_address = S_TrajPieceJ0;
-    int traj_piece_v_address = S_TrajPieceV0;
-    int traj_piece_a_address = S_TrajPieceA0;
-    int traj_a_address = S_TrajA0 + traj_offset;
-    int traj_v_address = S_TrajV0 + traj_offset;
-    for(int i = 0; i <model.link_num; ++i)
-    {
-        for(int j = 0; j < traj_piece_num; ++j)
+        for(i = 0; i < traj_pva_size; ++i)
         {
-            // compute jerk
-            stack[traj_piece_j_address + j] = fabs((stack[traj_a_address + j + 1] - stack[traj_a_address + j]) / stack[t_base + j]) 
-                                                / (stack[S_ConstraintJointJerkMax + i] * segment_alg_param.jerk_ratio);
-
-            // compute vel
-            double acc_product = stack[traj_a_address + j] * stack[traj_a_address + j + 1];
-            if(acc_product >= 0)
+            constraint_joint_pos_acc_address = S_ConstraintJointPosA0;
+            constraint_joint_neg_acc_address = S_ConstraintJointNegA0;
+            for(j = 0; j < model.link_num; ++j)
             {
-                if(fabs(stack[traj_a_address + j]) > fabs(stack[traj_a_address + j + 1]))
-                {
-                    stack[traj_piece_v_address + j] = fabs(stack[traj_v_address + j]) / (stack[S_ConstraintJointVelMax + i] * vel_ratio);
-                }
-                else
-                {
-                    stack[traj_piece_v_address + j] = fabs(stack[traj_v_address + j + 1]) / (stack[S_ConstraintJointVelMax + i] * vel_ratio);
-                }
-            }
-            else
-            {
-                if(stack[traj_a_address + j] >= 0)
-                {
-                    stack[traj_piece_v_address + j] = (stack[traj_v_address + j] 
-                                                    + stack[traj_a_address + j] * stack[traj_a_address + j] * stack[t_base + j] / (2 * (stack[traj_a_address + j] - stack[traj_a_address + j + 1])))
-                                                    / (stack[S_ConstraintJointVelMax + i] * vel_ratio);
-                }
-                else
-                {
-                    stack[traj_piece_v_address + j] = (stack[traj_v_address + j] 
-                                                    - stack[traj_a_address + j] * stack[traj_a_address + j] * stack[t_base + j] / (2 * (stack[traj_a_address + j + 1] - stack[traj_a_address + j])))
-                                                    / (stack[S_ConstraintJointVelMax + i] * vel_ratio);
-                }
+                stack[constraint_joint_pos_acc_address + i] = 100;
+                stack[constraint_joint_neg_acc_address + i] = -100;
+                constraint_joint_pos_acc_address += 50;
+                constraint_joint_neg_acc_address += 50;
             }
         }
-        traj_piece_j_address += 25;
-        traj_piece_v_address += 25;
-        traj_piece_a_address += 25;
-        traj_a_address += 150;
-        traj_v_address += 150;
     }
-
-    // compute acc
-    float joint[6], omega[6], alpha[2][6];
-    for(int i = 0; i < traj_piece_num; ++i)
-    {    
-        // quite mass
-        if(segment_alg_param.is_fake_dynamics)
+    else
+    {
+        float joint[6], omega[6], alpha[2][6];
+        int traj_p_address_local, traj_v_address_local;
+        for(i = 0; i < traj_pva_size; ++i)
         {
-            stack[S_ConstraintJointPosA0 + i] = 100;
-            stack[S_ConstraintJointPosA1 + i] = 100;
-            stack[S_ConstraintJointPosA2 + i] = 100;
-            stack[S_ConstraintJointPosA3 + i] = 100;
-            stack[S_ConstraintJointPosA4 + i] = 100;
-            stack[S_ConstraintJointPosA5 + i] = 100;
-            stack[S_ConstraintJointNegA0 + i] = -100;
-            stack[S_ConstraintJointNegA1 + i] = -100;
-            stack[S_ConstraintJointNegA2 + i] = -100;
-            stack[S_ConstraintJointNegA3 + i] = -100;
-            stack[S_ConstraintJointNegA4 + i] = -100;
-            stack[S_ConstraintJointNegA5 + i] = -100;
-
-        }
-        else
-        {
-            joint[0] = (float)stack[S_TrajP0 + i + 1];
-            joint[1] = (float)stack[S_TrajP1 + i + 1];
-            joint[2] = (float)stack[S_TrajP2 + i + 1];
-            joint[3] = (float)stack[S_TrajP3 + i + 1];
-            joint[4] = (float)stack[S_TrajP4 + i + 1];
-            joint[5] = (float)stack[S_TrajP5 + i + 1];
-            omega[0] = (float)stack[S_TrajV0 + i + 1];
-            omega[1] = (float)stack[S_TrajV1 + i + 1];
-            omega[2] = (float)stack[S_TrajV2 + i + 1];
-            omega[3] = (float)stack[S_TrajV3 + i + 1];
-            omega[4] = (float)stack[S_TrajV4 + i + 1];
-            omega[5] = (float)stack[S_TrajV5 + i + 1];
+            traj_p_address_local = traj_p_address;
+            traj_v_address_local = traj_v_address;
+            for(j = 0; j < 6; ++j)
+            {
+                joint[j] = (float)stack[traj_p_address_local + i];
+                omega[j] = (float)stack[traj_p_address_local + i];
+                traj_p_address_local += 75;
+                traj_p_address_local += 75;
+            }
             segment_alg_param.dynamics_ptr->computeAccMax(joint, omega, alpha);
-            stack[S_ConstraintJointPosA0 + i] = (double)alpha[0][0];
-            stack[S_ConstraintJointPosA1 + i] = (double)alpha[0][1];
-            stack[S_ConstraintJointPosA2 + i] = (double)alpha[0][2];
-            stack[S_ConstraintJointPosA3 + i] = (double)alpha[0][3];
-            stack[S_ConstraintJointPosA4 + i] = (double)alpha[0][4];
-            stack[S_ConstraintJointPosA5 + i] = (double)alpha[0][5];
-            stack[S_ConstraintJointNegA0 + i] = (double)alpha[1][0];
-            stack[S_ConstraintJointNegA1 + i] = (double)alpha[1][1];
-            stack[S_ConstraintJointNegA2 + i] = (double)alpha[1][2];
-            stack[S_ConstraintJointNegA3 + i] = (double)alpha[1][3];
-            stack[S_ConstraintJointNegA4 + i] = (double)alpha[1][4];
-            stack[S_ConstraintJointNegA5 + i] = (double)alpha[1][5];
-        }
-        // it is ugly...ummm
-        if(stack[S_TrajA0 + i + 1] >= 0)
-        {
-            if(stack[S_TrajA0 + i + 1] > stack[S_ConstraintJointPosA0 + i])
+            constraint_joint_pos_acc_address = S_ConstraintJointPosA0;
+            constraint_joint_neg_acc_address = S_ConstraintJointNegA0;
+            for(j = 0; j < 6; ++j)
             {
-                stack[S_TrajPieceA0 + i] = stack[S_TrajA0 + i + 1] / (stack[S_ConstraintJointPosA0 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA0 + i] = 0;
-            }
-        }
-        else
-        {
-            if(stack[S_TrajA0 + i + 1] <= stack[S_ConstraintJointNegA0 + i])
-            {
-                stack[S_TrajPieceA0 + i] = stack[S_TrajA0 + i + 1] / (stack[S_ConstraintJointNegA0 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA0 + i] = 0;
-            }
-        }
-
-        if(stack[S_TrajA1 + i + 1] >= 0)
-        {
-            if(stack[S_TrajA1 + i + 1] >= stack[S_ConstraintJointPosA1 + i])
-            {
-                stack[S_TrajPieceA1 + i] = stack[S_TrajA1 + i + 1] / (stack[S_ConstraintJointPosA1 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA1 + i] = 0;
-            }
-        }
-        else
-        {
-            if(stack[S_TrajA1 + i + 1] <= stack[S_ConstraintJointNegA1 + i])
-            {
-                stack[S_TrajPieceA1 + i] = stack[S_TrajA1 + i + 1] / (stack[S_ConstraintJointNegA1 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA1 + i] = 0;
-            }
-        }   
-
-        if(stack[S_TrajA2 + i + 1] >= 0)
-        {
-            if(stack[S_TrajA2 + i + 1] >= stack[S_ConstraintJointPosA2 + i])
-            {
-                stack[S_TrajPieceA2 + i] = stack[S_TrajA2 + i + 1] / (stack[S_ConstraintJointPosA2 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA2 + i] = 0;
-            }
-        }
-        else
-        {
-            if(stack[S_TrajA2 + i + 1] <= stack[S_ConstraintJointNegA2 + i])
-            {
-                stack[S_TrajPieceA2 + i] = stack[S_TrajA2 + i + 1] / (stack[S_ConstraintJointNegA2 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA2 + i] = 0;
+                stack[constraint_joint_pos_acc_address + i] = (double)alpha[0][j];
+                stack[constraint_joint_neg_acc_address + i] = (double)alpha[1][j];
+                constraint_joint_pos_acc_address += 50;
+                constraint_joint_neg_acc_address += 50;
             }
         }     
-
-        if(stack[S_TrajA3 + i + 1] >= 0)
-        {
-            if(stack[S_TrajA3 + i + 1] >= stack[S_ConstraintJointPosA3 + i])
-            {
-                stack[S_TrajPieceA3 + i] = stack[S_TrajA3 + i + 1] / (stack[S_ConstraintJointPosA3 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA3 + i] = 0;
-            }
-        }
-        else
-        {
-            if(stack[S_TrajA3 + i + 1] <= stack[S_ConstraintJointNegA3 + i])
-            {
-                stack[S_TrajPieceA3 + i] = stack[S_TrajA3 + i + 1] / (stack[S_ConstraintJointNegA3 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA3 + i] = 0;
-            }
-        }   
-
-        if(stack[S_TrajA4 + i + 1] >= 0)
-        {
-            if(stack[S_TrajA4 + i + 1] >= stack[S_ConstraintJointPosA4 + i])
-            {
-                stack[S_TrajPieceA4 + i] = stack[S_TrajA4 + i + 1] / (stack[S_ConstraintJointPosA4 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA4 + i] = 0;
-            }
-        }
-        else
-        {
-            if(stack[S_TrajA4 + i + 1] <= stack[S_ConstraintJointNegA4 + i])
-            {
-                stack[S_TrajPieceA4 + i] = stack[S_TrajA4 + i + 1] / (stack[S_ConstraintJointNegA4 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA4 + i] = 0;
-            }
-        }    
-
-        if(stack[S_TrajA5 + i + 1] >= 0)
-        {
-            if(stack[S_TrajA5 + i] >= stack[S_ConstraintJointPosA5 + i])
-            {
-                stack[S_TrajPieceA5 + i] = stack[S_TrajA5 + i + 1] / (stack[S_ConstraintJointPosA5 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA5 + i] = 0;
-            }
-        }
-        else
-        {
-            if(stack[S_TrajA5 + i + 1] <= stack[S_ConstraintJointNegA5 + i])
-            {
-                stack[S_TrajPieceA5 + i] = stack[S_TrajA5 + i + 1] / (stack[S_ConstraintJointNegA5 + i] * acc_ratio);
-            }
-            else
-            {
-                stack[S_TrajPieceA5 + i] = 0;
-            }
-        }         
-    }           
+    }
 }
 
-double getMaxTrajPiece(int base_address, int index)
+inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_ratio)
 {
-    double max_value = 0;
-    int piece_address = base_address + index;
-    for(int i=0; i < model.link_num; ++i)
+    int i, j;
+    int traj_a_address_local, traj_piece_a_address, constraint_joint_pos_acc_address, constraint_joint_neg_acc_address;
+    int traj_piece_size = traj_pva_size - 1;
+    int traj_piece_size_half = (traj_piece_size >> 1);
+    // first half
+    for(i = 0; i < /*traj_piece_size_half*/(traj_piece_size - 1); ++i)
     {
-        if(stack[piece_address] > max_value)
-        {
-            max_value = stack[piece_address];
+        traj_a_address_local = traj_a_address;
+        traj_piece_a_address = S_TrajPieceA0;
+        constraint_joint_pos_acc_address = S_ConstraintJointPosA0;
+        constraint_joint_neg_acc_address = S_ConstraintJointNegA0;
+        for(j = 0; j < model.link_num; ++j)
+        {        
+            if(stack[traj_a_address_local + i + 1] >= 0)
+            {
+                if(stack[traj_a_address_local + i + 1] > stack[constraint_joint_pos_acc_address + i + 1])
+                {
+                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i + 1] / (stack[constraint_joint_pos_acc_address + i + 1] * acc_ratio);
+                }
+                else
+                {
+                    stack[traj_piece_a_address + i] = 1;
+                }
+            }
+            else
+            {
+                if(stack[traj_a_address_local + i + 1] < stack[constraint_joint_neg_acc_address + i + 1])
+                {
+                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i + 1] / (stack[constraint_joint_neg_acc_address + i + 1] * acc_ratio);
+                }
+                else
+                {
+                    stack[traj_piece_a_address + i] = 1;
+                }
+            }
+            
+            traj_a_address_local += 75;
+            traj_piece_a_address += 25;
+            constraint_joint_pos_acc_address += 50;
+            constraint_joint_neg_acc_address += 50;
         }
-        piece_address += 25;
+    }
+    // second half
+    for(; i < traj_piece_size; ++i)
+    {
+        traj_a_address_local = traj_a_address;
+        traj_piece_a_address = S_TrajPieceA0;
+        constraint_joint_pos_acc_address = S_ConstraintJointPosA0;
+        constraint_joint_neg_acc_address = S_ConstraintJointNegA0;
+        for(j = 0; j < model.link_num; ++j)
+        {        
+            if(stack[traj_a_address_local + i] >= 0)
+            {
+                if(stack[traj_a_address_local + i] > stack[constraint_joint_pos_acc_address + i])
+                {
+                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i] / (stack[constraint_joint_pos_acc_address + i] * acc_ratio);
+                }
+                else
+                {
+                    stack[traj_piece_a_address + i] = 1;
+                }
+            }
+            else
+            {
+                if(stack[traj_a_address_local + i] < stack[constraint_joint_neg_acc_address + i])
+                {
+                    stack[traj_piece_a_address + i] = stack[traj_a_address_local + i] / (stack[constraint_joint_neg_acc_address + i] * acc_ratio);
+                }
+                else
+                {
+                    stack[traj_piece_a_address + i] = 1;
+                }
+            }
+            
+            traj_a_address_local += 75;
+            traj_piece_a_address += 25;
+            constraint_joint_pos_acc_address += 50;
+            constraint_joint_neg_acc_address += 50;
+        }
+    }    
+}
+
+inline void updateTrajPieceV(int traj_v_address, int traj_a_address, int traj_pva_size, int traj_t_address, double vel_ratio)
+{
+    int traj_v_address_local, traj_a_address_local, traj_piece_v_address;
+    int traj_piece_size = traj_pva_size - 1;
+    double acc_product;
+    for(int i = 0; i < traj_piece_size; ++i)
+    {
+        traj_v_address_local = traj_v_address;
+        traj_a_address_local = traj_a_address;
+        traj_piece_v_address = S_TrajPieceV0;
+        for(int j = 0; j < model.link_num; ++j)
+        {
+            acc_product = stack[traj_a_address_local + i] * stack[traj_a_address_local + i + 1];
+            if(acc_product >= 0)
+            {
+                if(fabs(stack[traj_a_address_local + i]) > fabs(stack[traj_a_address_local + i + 1]))
+                {
+                    stack[traj_piece_v_address + i] = fabs(stack[traj_v_address_local + i]) / (stack[S_ConstraintJointVelMax + j] * vel_ratio);
+                }
+                else
+                {
+                    stack[traj_piece_v_address + i] = fabs(stack[traj_v_address_local + i + 1]) / (stack[S_ConstraintJointVelMax + j] * vel_ratio);
+                }
+            }
+            else
+            {
+                if(stack[traj_a_address_local + i] >= 0)
+                {
+                    stack[traj_piece_v_address + i] = fabs(stack[traj_v_address_local + i] 
+                                                    + stack[traj_a_address_local + i] * stack[traj_a_address_local + i] * stack[traj_t_address + i] 
+                                                    / (2 * (stack[traj_a_address_local + i] - stack[traj_a_address_local + i + 1])))
+                                                    / (stack[S_ConstraintJointVelMax + j] * vel_ratio);
+                }
+                else
+                {
+                    stack[traj_piece_v_address + i] = fabs(stack[traj_v_address_local + i] 
+                                                    - stack[traj_a_address_local + i] * stack[traj_a_address_local + i] * stack[traj_t_address + i] 
+                                                    / (2 * (stack[traj_a_address_local + i + 1] - stack[traj_a_address_local + i])))
+                                                    / (stack[S_ConstraintJointVelMax + j] * vel_ratio);
+                }
+            }
+            traj_v_address_local += 75;
+            traj_a_address_local += 75;
+            traj_piece_v_address += 25;
+        }
+    }
+}
+
+inline double getMaxOfAllAxes(int traj_piece_address)
+{
+    double max_value = 1;
+    for(int i = 0; i < model.link_num; ++i)
+    {
+        if(stack[traj_piece_address] > max_value)
+        {
+            max_value = stack[traj_piece_address];
+            traj_piece_address += 25;
+        }
     }
     return max_value;
 }
 
-double getMax(double value0, double value1, double value2, double value3)
+inline void updateTrajPieceRescaleFactor(int traj_piece_size)
 {
-    double tmp1, tmp2;
-    tmp1 = (value0 > value1 ? value0 : value1);
-    tmp2 = (value2 > value3 ? value2 : value3);
-    return (tmp1 > tmp2 ? tmp1 : tmp2);
+    double traj_piece_v_max, traj_piece_a_max, traj_piece_v_max_sqrt;
+    for(int i= 0 ; i < traj_piece_size; ++i)
+    {
+        traj_piece_a_max = getMaxOfAllAxes(S_TrajPieceA0 + i);        
+        traj_piece_v_max = getMaxOfAllAxes(S_TrajPieceV0 + i);
+        traj_piece_v_max_sqrt = sqrt(traj_piece_v_max);
+        stack[S_TrajPieceRescaleFactor + i] = ((traj_piece_v_max_sqrt > traj_piece_a_max) ? traj_piece_v_max_sqrt : traj_piece_a_max);
+    }
 }
 
-void generateTrajRescaleFactor(int time_vector_size, double& rescale_factor)
+inline void updateTrajTByPieceRescaleFactor(int traj_t_address, int traj_t_size)
 {
-    double max_v_factor, max_a_factor, max_j_factor;
-    int base_v_address = S_TrajPieceV0;
-    int base_a_address = S_TrajPieceA0;
-    int base_j_address = S_TrajPieceJ0;
-    rescale_factor = 1;
-    for(int i = 0; i < time_vector_size; ++i)
+    for(int i = 0; i < traj_t_size; ++i)
     {
-        stack[S_TmpDouble_1] = getMaxTrajPiece(base_v_address, i);
-        stack[S_TmpDouble_2] = getMaxTrajPiece(base_a_address, i);
-        stack[S_TmpDouble_3] = getMaxTrajPiece(base_j_address, i);
-        stack[S_TmpDouble_4] = getMax(1, stack[S_TmpDouble_1], sqrt(stack[S_TmpDouble_2]), pow(stack[S_TmpDouble_3], 0.333333));
-        if(stack[S_TmpDouble_4] > rescale_factor)
+        stack[traj_t_address + i] = stack[S_TrajPieceRescaleFactor + i] * stack[traj_t_address + i];
+    }
+}
+
+inline void updateOutAndInPointState(const JointState& out_state, int traj_pva_in_index)
+{
+    int out_point_state_address = S_OutPointState0;
+    int in_point_state_address = S_InPointState0;
+    int traj_p_address = S_TrajP0;
+    int traj_v_address = S_TrajV0;
+    int traj_a_address = S_TrajA0;
+    for(int i = 0; i < model.link_num; ++i)
+    {
+        stack[out_point_state_address] = out_state.angle[i];
+        stack[out_point_state_address + 1] = out_state.omega[i];
+        stack[out_point_state_address + 2] = out_state.alpha[i];
+        stack[in_point_state_address] = stack[traj_p_address + traj_pva_in_index];
+        stack[in_point_state_address + 1] = stack[traj_v_address + traj_pva_in_index];
+        stack[in_point_state_address + 2] = stack[traj_a_address + traj_pva_in_index];
+        out_point_state_address += 3;
+        in_point_state_address += 3;
+        traj_p_address += 75;
+        traj_v_address += 75;
+        traj_a_address += 75;
+    }
+}
+
+inline bool isRescaleNeeded(int traj_piece_size)
+{
+    double max_rescale_factor = 1;
+    for(int i = 0; i < traj_piece_size; ++i)
+    {
+        if(stack[S_TrajPieceRescaleFactor + i ] > max_rescale_factor)
         {
-            rescale_factor = stack[S_TmpDouble_4];
+            max_rescale_factor = stack[S_TrajPieceRescaleFactor + i ];
         }
     }
-
-    if(rescale_factor > segment_alg_param.max_rescale_factor)
-    {
-        rescale_factor = segment_alg_param.max_rescale_factor;
-    }
+    return (max_rescale_factor > (1 + DOUBLE_ACCURACY)) ? true : false;
 }
 
-void generateTrajRescaleT(int time_vector_size)
+inline void updateTrajCoeff(int traj_p_address, int traj_v_address, int traj_a_address, int traj_pva_size, 
+                                int traj_t_address, int traj_t_size, int traj_j_address, int traj_coeff_address)
 {
-    for(int i = 0; i < time_vector_size; ++i)
+    int traj_t_size_minus_1 = traj_t_size - 1;
+    int traj_coeff_address_local = traj_coeff_address;
+    for(int i = 0; i < model.link_num; ++i)
     {
-        stack[S_TrajRescaleT + i] = stack[S_TrajT + i] * stack[S_TrajRescaleFactor];
-    }
-}
-
-void generateTrajRescaleTSmooth(int time_vector_size_out2in, int time_vector_size_in2end, int time_vector_size_via2in)
-{
-    int i;
-    for(i = 0; i < time_vector_size_out2in; ++i)
-    {
-        stack[S_TrajRescaleT + i] = stack[S_TrajT_Smooth + i];
-    }
-
-    for(i = 0; i < time_vector_size_in2end; ++i)
-    {
-        stack[S_TrajRescaleT + time_vector_size_out2in + i] = stack[S_TrajT + time_vector_size_via2in + i];
-    }    
-}
-
-void adjustTrajT(int time_vector_size, double rescale_factor)
-{
-    for(int i = 0; i < time_vector_size; ++i)
-    {
-        stack[S_TrajT + i ] = rescale_factor * stack[S_TrajT + i ];
-    }
-}
-
-void adjustTrajVAVia2End(int traj_index_via, int traj_index_end, double rescale_factor_via2end)
-{
-    int i, j;
-    int v_base, a_base;
-    double rescale_factor_via2end_square = rescale_factor_via2end * rescale_factor_via2end;   
-    for(i = traj_index_via; i <= traj_index_end; ++i)
-    {
-        v_base = S_TrajV0;
-        a_base = S_TrajA0;
-        for(j = 0; j < model.link_num; ++j)
-        {
-            stack[v_base + i] = stack[v_base + i] / rescale_factor_via2end;
-            stack[a_base + i] = stack[a_base + i] / rescale_factor_via2end_square;
-            v_base += 150;
-            a_base += 150;
+        // first piece, quatern
+        stack[traj_coeff_address] = stack[traj_p_address];
+        stack[traj_coeff_address + 25] = stack[traj_v_address];
+        stack[traj_coeff_address + 50] = stack[traj_a_address] / 2;
+        stack[traj_coeff_address + 75] = stack[traj_j_address] / 6;
+        stack[traj_coeff_address + 100] = (stack[traj_j_address + 1] - stack[traj_j_address]) / (24 * stack[traj_t_address]);
+        stack[traj_coeff_address + 125] = 0;
+        // middle pieces, cubic
+        for(int j = 1; j < traj_t_size_minus_1; ++j)
+        {            
+            stack[traj_coeff_address + j] = stack[traj_p_address + j];
+            stack[traj_coeff_address + 25 + j] = stack[traj_v_address + j];
+            stack[traj_coeff_address + 50 + j] = stack[traj_a_address + j] / 2;
+            stack[traj_coeff_address + 75 + j] = (stack[traj_a_address + j + 1] - stack[traj_a_address + j]) / (6 * stack[traj_t_address + j]);
+            stack[traj_coeff_address + 100 + j] = 0;
+            stack[traj_coeff_address + 125 + j] = 0;
         }
+        // last piece, quatern
+        stack[traj_coeff_address + traj_t_size_minus_1] = stack[traj_p_address + traj_t_size_minus_1];
+        stack[traj_coeff_address + traj_t_size_minus_1 + 25] = stack[traj_v_address + traj_t_size_minus_1];
+        stack[traj_coeff_address + traj_t_size_minus_1 + 50] = stack[traj_a_address + traj_t_size_minus_1] / 2;
+        stack[traj_coeff_address + traj_t_size_minus_1 + 75] = stack[traj_j_address + 2] / 6;
+        stack[traj_coeff_address + traj_t_size_minus_1 + 100] = (stack[traj_j_address + 3] - stack[traj_j_address + 2]) / (24 * stack[traj_t_address + traj_t_size_minus_1]);
+        stack[traj_coeff_address + traj_t_size_minus_1 + 125] = 0;
+        // prepare address for next axis
+        traj_coeff_address += 150;
+        traj_p_address += 75;
+        traj_v_address += 75;
+        traj_a_address += 75;
+        traj_j_address += 4;
     }
 }
 
-void adjustTrajVA(int time_vector_size, double rescale_factor)
+inline void packTrajCache(int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size, 
+                              int traj_coeff_address, int traj_t_address, int traj_t_size, TrajectoryCache& traj_cache)
 {
-    int i, j;
-    int v_base, a_base;
-    double rescale_factor_square = rescale_factor * rescale_factor;
-    
-    for(i = 1; i < time_vector_size; ++i)
+    int traj_coeff_address_local = traj_coeff_address;
+    traj_cache.cache_length = traj_t_size;
+    if(traj_pva_out_index == -1)
     {
-        v_base = S_TrajV0;
-        a_base = S_TrajA0;
-        for(j = 0; j < model.link_num; ++j)
-        {
-            stack[v_base + i] = stack[v_base + i] / rescale_factor;
-            stack[a_base + i] = stack[a_base + i] / rescale_factor_square;
-            v_base += 150;
-            a_base += 150;
-        }
+        traj_cache.smooth_out_index = -1;
     }
-}
-
-void generateCoeff(int time_vector_size)
-{
-    int i, j;
-    int coeff_a5 = S_TrajCoeffJ0A5;
-    int coeff_a4 = S_TrajCoeffJ0A4;
-    int coeff_a3 = S_TrajCoeffJ0A3;
-    int coeff_a2 = S_TrajCoeffJ0A2;
-    int coeff_a1 = S_TrajCoeffJ0A1;
-    int coeff_a0 = S_TrajCoeffJ0A0;
-    int traj_p = S_TrajP0;
-    int traj_v = S_TrajV0;
-    int traj_a = S_TrajA0;
- 
-    // compute coeff
-    for(i = 0; i < model.link_num; ++i)
+    else
     {
-        for(j = 0; j < time_vector_size; ++j)
-        {
-            stack[S_TmpDouble_2] = stack[S_TrajRescaleT + j] * stack[S_TrajRescaleT + j];   // T^2
-            stack[S_TmpDouble_3] = stack[S_TmpDouble_2] * stack[S_TrajRescaleT + j];    // T^3
-            stack[S_TmpDouble_4] = stack[S_TmpDouble_3] * stack[S_TrajRescaleT + j];    // T^4
-            stack[S_TmpDouble_5] = stack[S_TmpDouble_4] * stack[S_TrajRescaleT + j];    // T^5 
-            stack[coeff_a5 + j] = (12 * (stack[traj_p + j + 1] - stack[traj_p + j])
-                                    - 6 * (stack[traj_v + j] + stack[traj_v + j + 1]) * stack[S_TrajRescaleT + j]
-                                    - (stack[traj_a + j] - stack[traj_a + j + 1]) * stack[S_TmpDouble_2])
-                                    / (2 * stack[S_TmpDouble_5]);
-            stack[coeff_a4 + j] = (30 * (stack[traj_p + j] - stack[traj_p + j + 1])
-                                    + (16 * stack[traj_v + j] + 14 * stack[traj_v + j + 1]) * stack[S_TrajRescaleT + j]
-                                    + (3 * stack[traj_a + j] - 2 * stack[traj_a + j +1]) * stack[S_TmpDouble_2])
-                                    / (2 * stack[S_TmpDouble_4]);
-            stack[coeff_a3 + j] = (20 * (stack[traj_p + j + 1] - stack[traj_p + j]) 
-                                    - 4 * (3 * stack[traj_v + j] + 2 * stack[traj_v + j + 1]) * stack[S_TrajRescaleT + j]
-                                    + (stack[traj_a + j + 1] - 3 * stack[traj_a + j]) * stack[S_TmpDouble_2])
-                                    / (2 * stack[S_TmpDouble_3]);
-            stack[coeff_a2 + j] = stack[traj_a + j] / 2;
-            stack[coeff_a1 + j] = stack[traj_v + j];
-            stack[coeff_a0 + j] = stack[traj_p + j];
-        }
-        traj_p += 150;
-        traj_v += 150;
-        traj_a += 150;
-        coeff_a5 += 300;
-        coeff_a4 += 300;
-        coeff_a3 += 300;
-        coeff_a2 += 300;
-        coeff_a1 += 300;
-        coeff_a0 += 300;
-    }
-}
-
-void generateTrajCache(TrajectoryCache &traj_cache, int time_vector_size, int* path_index_array, int path_index_array_size)
-{
-    int i;
-    traj_cache.cache_length = time_vector_size;
-    int time_vector_size_minus_1 = time_vector_size - 1;
-    for(i = 0; i < time_vector_size; ++i)
-    {
-        traj_cache.cache[i].axis[0].data[0] = stack[S_TrajCoeffJ0A0 + i];
-        traj_cache.cache[i].axis[0].data[1] = stack[S_TrajCoeffJ0A1 + i];
-        traj_cache.cache[i].axis[0].data[2] = stack[S_TrajCoeffJ0A2 + i];
-        traj_cache.cache[i].axis[0].data[3] = stack[S_TrajCoeffJ0A3 + i];
-        traj_cache.cache[i].axis[0].data[4] = stack[S_TrajCoeffJ0A4 + i];
-        traj_cache.cache[i].axis[0].data[5] = stack[S_TrajCoeffJ0A5 + i];
-        traj_cache.cache[i].axis[1].data[0] = stack[S_TrajCoeffJ1A0 + i];
-        traj_cache.cache[i].axis[1].data[1] = stack[S_TrajCoeffJ1A1 + i];
-        traj_cache.cache[i].axis[1].data[2] = stack[S_TrajCoeffJ1A2 + i];
-        traj_cache.cache[i].axis[1].data[3] = stack[S_TrajCoeffJ1A3 + i];
-        traj_cache.cache[i].axis[1].data[4] = stack[S_TrajCoeffJ1A4 + i];   
-        traj_cache.cache[i].axis[1].data[5] = stack[S_TrajCoeffJ1A5 + i];   
-        traj_cache.cache[i].axis[2].data[0] = stack[S_TrajCoeffJ2A0 + i];
-        traj_cache.cache[i].axis[2].data[1] = stack[S_TrajCoeffJ2A1 + i];
-        traj_cache.cache[i].axis[2].data[2] = stack[S_TrajCoeffJ2A2 + i];
-        traj_cache.cache[i].axis[2].data[3] = stack[S_TrajCoeffJ2A3 + i];
-        traj_cache.cache[i].axis[2].data[4] = stack[S_TrajCoeffJ2A4 + i];
-        traj_cache.cache[i].axis[2].data[5] = stack[S_TrajCoeffJ2A5 + i];
-        traj_cache.cache[i].axis[3].data[0] = stack[S_TrajCoeffJ3A0 + i];
-        traj_cache.cache[i].axis[3].data[1] = stack[S_TrajCoeffJ3A1 + i];
-        traj_cache.cache[i].axis[3].data[2] = stack[S_TrajCoeffJ3A2 + i];
-        traj_cache.cache[i].axis[3].data[3] = stack[S_TrajCoeffJ3A3 + i];
-        traj_cache.cache[i].axis[3].data[4] = stack[S_TrajCoeffJ3A4 + i];
-        traj_cache.cache[i].axis[3].data[5] = stack[S_TrajCoeffJ3A5 + i];
-        traj_cache.cache[i].axis[4].data[0] = stack[S_TrajCoeffJ4A0 + i];
-        traj_cache.cache[i].axis[4].data[1] = stack[S_TrajCoeffJ4A1 + i];
-        traj_cache.cache[i].axis[4].data[2] = stack[S_TrajCoeffJ4A2 + i];
-        traj_cache.cache[i].axis[4].data[3] = stack[S_TrajCoeffJ4A3 + i];
-        traj_cache.cache[i].axis[4].data[4] = stack[S_TrajCoeffJ4A4 + i];
-        traj_cache.cache[i].axis[4].data[5] = stack[S_TrajCoeffJ4A5 + i];
-        traj_cache.cache[i].axis[5].data[0] = stack[S_TrajCoeffJ5A0 + i];
-        traj_cache.cache[i].axis[5].data[1] = stack[S_TrajCoeffJ5A1 + i];
-        traj_cache.cache[i].axis[5].data[2] = stack[S_TrajCoeffJ5A2 + i];
-        traj_cache.cache[i].axis[5].data[3] = stack[S_TrajCoeffJ5A3 + i];
-        traj_cache.cache[i].axis[5].data[4] = stack[S_TrajCoeffJ5A4 + i];
-        traj_cache.cache[i].axis[5].data[5] = stack[S_TrajCoeffJ5A5 + i];
-        traj_cache.cache[i].duration = stack[S_TrajRescaleT + i];
+        traj_cache.smooth_out_index = traj_pva_out_index - 1;
     }
     
-    traj_cache.cache[0].index_in_path_cache = -1;
-    for(i = 1; i < (time_vector_size_minus_1 - 1); ++i)
+    for(int i = 0; i < traj_t_size; ++i)
     {
-        traj_cache.cache[i].index_in_path_cache = path_index_array[i];
+        traj_cache.cache[i].index_in_path_cache = traj_path_cache_index[i + 1];
+        traj_cache.cache[i].duration = stack[traj_t_address + i];
+        traj_coeff_address_local = traj_coeff_address;
+        for(int j = 0; j < model.link_num; ++j)
+        {
+            traj_cache.cache[i].axis[j].data[0] = stack[traj_coeff_address_local + i];        // A0
+            traj_cache.cache[i].axis[j].data[1] = stack[traj_coeff_address_local + i + 25];   // A1
+            traj_cache.cache[i].axis[j].data[2] = stack[traj_coeff_address_local + i + 50];   // A2
+            traj_cache.cache[i].axis[j].data[3] = stack[traj_coeff_address_local + i + 75];   // A3
+            traj_cache.cache[i].axis[j].data[4] = stack[traj_coeff_address_local + i + 100];  // A4
+            traj_cache.cache[i].axis[j].data[5] = stack[traj_coeff_address_local + i + 125];  // A5
+            traj_coeff_address_local += 150;
+        }        
     }
-    traj_cache.cache[time_vector_size_minus_1 - 1].index_in_path_cache = -1;
-    traj_cache.cache[time_vector_size_minus_1].index_in_path_cache = path_index_array[path_index_array_size - 1];
 }
 
-void generateTrajCacheSmooth(TrajectoryCache &traj_cache, int time_vector_size, 
-                                    int* path_index_array_out2in, int path_index_array_size_out2in,
-                                    int* path_index_array_in2end, int path_index_array_size_in2end)
+inline void packTrajCacheSmooth(int* traj_path_cache_index_out2in, int traj_pva_size_out2in, int traj_coeff_address_out2in, int traj_t_address_out2in, int traj_t_size_out2in, 
+                                      int* traj_path_cache_index_in2end, int traj_pva_size_via2end, int traj_coeff_address_via2end, int traj_t_address_via2end, int traj_t_size_via2end,
+                                      int traj_pva_in_index, int traj_pva_out_index,
+                                      TrajectoryCache& traj_cache)
 {
     int i;
-    traj_cache.cache_length = time_vector_size;
-    int traj_cache_length_minus_1 = traj_cache.cache_length - 1;
-    int time_vector_size_out2in = path_index_array_size_out2in + 1; // include two flexible point
-    int time_vector_size_out2in_minus_1 = path_index_array_size_out2in;
-    
-    for(i = 0; i < traj_cache.cache_length; ++i)
+    int traj_coeff_address_local;
+    traj_cache.cache_length = traj_t_size_out2in + traj_t_size_via2end - traj_pva_in_index;
+    if(traj_pva_out_index == -1)
     {
-        traj_cache.cache[i].axis[0].data[0] = stack[S_TrajCoeffJ0A0 + i];
-        traj_cache.cache[i].axis[0].data[1] = stack[S_TrajCoeffJ0A1 + i];
-        traj_cache.cache[i].axis[0].data[2] = stack[S_TrajCoeffJ0A2 + i];
-        traj_cache.cache[i].axis[0].data[3] = stack[S_TrajCoeffJ0A3 + i];
-        traj_cache.cache[i].axis[0].data[4] = stack[S_TrajCoeffJ0A4 + i];
-        traj_cache.cache[i].axis[0].data[5] = stack[S_TrajCoeffJ0A5 + i];
-        traj_cache.cache[i].axis[1].data[0] = stack[S_TrajCoeffJ1A0 + i];
-        traj_cache.cache[i].axis[1].data[1] = stack[S_TrajCoeffJ1A1 + i];
-        traj_cache.cache[i].axis[1].data[2] = stack[S_TrajCoeffJ1A2 + i];
-        traj_cache.cache[i].axis[1].data[3] = stack[S_TrajCoeffJ1A3 + i];
-        traj_cache.cache[i].axis[1].data[4] = stack[S_TrajCoeffJ1A4 + i];   
-        traj_cache.cache[i].axis[1].data[5] = stack[S_TrajCoeffJ1A5 + i];   
-        traj_cache.cache[i].axis[2].data[0] = stack[S_TrajCoeffJ2A0 + i];
-        traj_cache.cache[i].axis[2].data[1] = stack[S_TrajCoeffJ2A1 + i];
-        traj_cache.cache[i].axis[2].data[2] = stack[S_TrajCoeffJ2A2 + i];
-        traj_cache.cache[i].axis[2].data[3] = stack[S_TrajCoeffJ2A3 + i];
-        traj_cache.cache[i].axis[2].data[4] = stack[S_TrajCoeffJ2A4 + i];
-        traj_cache.cache[i].axis[2].data[5] = stack[S_TrajCoeffJ2A5 + i];
-        traj_cache.cache[i].axis[3].data[0] = stack[S_TrajCoeffJ3A0 + i];
-        traj_cache.cache[i].axis[3].data[1] = stack[S_TrajCoeffJ3A1 + i];
-        traj_cache.cache[i].axis[3].data[2] = stack[S_TrajCoeffJ3A2 + i];
-        traj_cache.cache[i].axis[3].data[3] = stack[S_TrajCoeffJ3A3 + i];
-        traj_cache.cache[i].axis[3].data[4] = stack[S_TrajCoeffJ3A4 + i];
-        traj_cache.cache[i].axis[3].data[5] = stack[S_TrajCoeffJ3A5 + i];
-        traj_cache.cache[i].axis[4].data[0] = stack[S_TrajCoeffJ4A0 + i];
-        traj_cache.cache[i].axis[4].data[1] = stack[S_TrajCoeffJ4A1 + i];
-        traj_cache.cache[i].axis[4].data[2] = stack[S_TrajCoeffJ4A2 + i];
-        traj_cache.cache[i].axis[4].data[3] = stack[S_TrajCoeffJ4A3 + i];
-        traj_cache.cache[i].axis[4].data[4] = stack[S_TrajCoeffJ4A4 + i];
-        traj_cache.cache[i].axis[4].data[5] = stack[S_TrajCoeffJ4A5 + i];
-        traj_cache.cache[i].axis[5].data[0] = stack[S_TrajCoeffJ5A0 + i];
-        traj_cache.cache[i].axis[5].data[1] = stack[S_TrajCoeffJ5A1 + i];
-        traj_cache.cache[i].axis[5].data[2] = stack[S_TrajCoeffJ5A2 + i];
-        traj_cache.cache[i].axis[5].data[3] = stack[S_TrajCoeffJ5A3 + i];
-        traj_cache.cache[i].axis[5].data[4] = stack[S_TrajCoeffJ5A4 + i];
-        traj_cache.cache[i].axis[5].data[5] = stack[S_TrajCoeffJ5A5 + i];
-        traj_cache.cache[i].duration = stack[S_TrajRescaleT + i];        
+        traj_cache.smooth_out_index = -1;
+    }
+    else
+    {
+        traj_cache.smooth_out_index = traj_t_size_out2in + traj_pva_out_index - traj_pva_in_index - 1;
+    }
+    for(i = 0; i < traj_t_size_out2in; ++i)
+    {
+        traj_cache.cache[i].index_in_path_cache = traj_path_cache_index_out2in[i + 1];
+        traj_cache.cache[i].duration = stack[traj_t_address_out2in + i];
+        traj_coeff_address_local = traj_coeff_address_out2in;
+        for(int j = 0; j < model.link_num; ++j)
+        {
+            traj_cache.cache[i].axis[j].data[0] = stack[traj_coeff_address_local + i];        // A0
+            traj_cache.cache[i].axis[j].data[1] = stack[traj_coeff_address_local + i + 25];   // A1
+            traj_cache.cache[i].axis[j].data[2] = stack[traj_coeff_address_local + i + 50];   // A2
+            traj_cache.cache[i].axis[j].data[3] = stack[traj_coeff_address_local + i + 75];   // A3
+            traj_cache.cache[i].axis[j].data[4] = stack[traj_coeff_address_local + i + 100];  // A4
+            traj_cache.cache[i].axis[j].data[5] = stack[traj_coeff_address_local + i + 125];  // A5
+            traj_coeff_address_local += 150;
+        } 
     }
 
-    traj_cache.cache[0].index_in_path_cache = -1;
-    for(i = 1; i < (time_vector_size_out2in_minus_1 - 1); ++i)
+    int traj_t_size_in2end = traj_t_size_via2end - traj_pva_in_index;
+    for(i = 0; i < traj_t_size_in2end; ++i)
     {
-        traj_cache.cache[i].index_in_path_cache = path_index_array_out2in[i];
+        traj_cache.cache[traj_t_size_out2in + i].index_in_path_cache = traj_path_cache_index_in2end[i + 1];
+        traj_cache.cache[traj_t_size_out2in + i].duration = stack[traj_t_address_via2end + traj_pva_in_index + i];
+        traj_coeff_address_local = traj_coeff_address_via2end + traj_pva_in_index;
+        for(int j = 0; j < model.link_num; ++j)
+        {
+            traj_cache.cache[traj_t_size_out2in + i].axis[j].data[0] = stack[traj_coeff_address_local + i];        // A0
+            traj_cache.cache[traj_t_size_out2in + i].axis[j].data[1] = stack[traj_coeff_address_local + i + 25];   // A1
+            traj_cache.cache[traj_t_size_out2in + i].axis[j].data[2] = stack[traj_coeff_address_local + i + 50];   // A2
+            traj_cache.cache[traj_t_size_out2in + i].axis[j].data[3] = stack[traj_coeff_address_local + i + 75];   // A3
+            traj_cache.cache[traj_t_size_out2in + i].axis[j].data[4] = stack[traj_coeff_address_local + i + 100];  // A4
+            traj_cache.cache[traj_t_size_out2in + i].axis[j].data[5] = stack[traj_coeff_address_local + i + 125];  // A5
+            traj_coeff_address_local += 150;
+        } 
     }
-    traj_cache.cache[time_vector_size_out2in_minus_1 - 1].index_in_path_cache = -1;
-    traj_cache.cache[time_vector_size_out2in_minus_1].index_in_path_cache = path_index_array_out2in[path_index_array_size_out2in - 1];
-    for(i = time_vector_size_out2in; i < (traj_cache_length_minus_1 - 1); ++i)
-    {
-        traj_cache.cache[i].index_in_path_cache = path_index_array_in2end[i - time_vector_size_out2in + 1];
-    }
-    traj_cache.cache[traj_cache_length_minus_1 - 1].index_in_path_cache = -1;
-    traj_cache.cache[traj_cache_length_minus_1].index_in_path_cache = path_index_array_in2end[path_index_array_size_in2end - 1];
 }
 
 void printTraj(TrajectoryCache &traj_cache, int index, double time_step, int end_segment)
@@ -2836,11 +2264,7 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step, int end
     int segment_index;
     double cur_time = 0;
     double delta_time = 0;
-    double p_value, v_value, a_value;
-    int a3_base = S_TrajCoeffJ0A3 + 200*index;
-    int a2_base = S_TrajCoeffJ0A2 + 200*index;
-    int a1_base = S_TrajCoeffJ0A1 + 200*index;
-    int a0_base = S_TrajCoeffJ0A0 + 200*index;    
+    double p_value, v_value, a_value;   
     while(cur_time < absolute_time_vector[end_segment])
     {
         for(segment_index = end_segment - 1; segment_index >= 0; --segment_index)

@@ -12,7 +12,7 @@ using namespace fst_mc;
 using namespace fst_algorithm;
 using namespace basic_alg;
 
-extern double stack[12000];
+extern double stack[15000];
 extern ComplexAxisGroupModel model;
 extern SegmentAlgParam segment_alg_param;
 
@@ -46,13 +46,9 @@ int main(void)
     segment_alg_param.angle_interval = PI * 1 / 180;
     segment_alg_param.angle_valve = PI * 5 / 180;
     segment_alg_param.conservative_acc = 10000;
-    segment_alg_param.jerk_ratio = 1.0;
-    segment_alg_param.time_factor_1 = 1.3;
-    segment_alg_param.time_factor_2 = 1.3;
-    segment_alg_param.time_factor_3 = 1.3;
-    segment_alg_param.time_factor_4 = 1.3;
+    segment_alg_param.time_factor_first = 1.3;
+    segment_alg_param.time_factor_last = 1.3;
     segment_alg_param.is_fake_dynamics = true;
-    segment_alg_param.max_rescale_factor = 2;
     segment_alg_param.max_cartesian_acc = 8000;
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = &dynamics;
@@ -233,7 +229,7 @@ int main(void)
     start_joint.j5 = 0;
     start_joint.j6 = 0;
 
-    target.joint_target.j1 = PI / 4;
+    target.joint_target.j1 = PI ;
     target.joint_target.j2 = 0;
     target.joint_target.j3 = 0;
     target.joint_target.j4 = 0;
@@ -242,6 +238,9 @@ int main(void)
     target.cnt = 0;
     target.vel = 1;
     target.type = MOTION_JOINT;
+
+    path_cache.target.vel = 1;
+    path_cache.target.type = MOTION_JOINT;
 //clock_t t1 = clock();
     planPathJoint(start_joint, target, path_cache);
 //clock_t t2 = clock();    
@@ -250,7 +249,7 @@ int main(void)
 //long delta_path = t2 - t1;
 //long delta_traj = t3 - t2;
 //std::cout<<"delta_path = "<<delta_path<<" delta_traj = "<<delta_traj<<std::endl;
-    printTraj(traj_cache, 0, 0.001);
+    printTraj(traj_cache, 0, 0.001, traj_cache.cache_length);
 #endif
 
 #if 0
@@ -294,29 +293,16 @@ int main(void)
     target.pose_target.orientation.a = 0;
     target.pose_target.orientation.b = 0;
     target.pose_target.orientation.c = PI;
-    target.cnt = -1;
+    target.cnt = 1;
     target.vel = 1600;
     target.type = MOTION_LINE;
 
     path_cache.target.vel = 1600;
+    path_cache.target.type = MOTION_LINE;
     
     planPathLine(start, target, path_cache);
-    /*std::cout<<" CacheLength = "<<path_cache.cache_length
-             <<" Smooth_in_Index = "<<path_cache.smooth_in_index
-             <<" Smooth_out_Index = "<<path_cache.smooth_out_index<<std::endl;
-    for(int i = 0; i < path_cache.cache_length; ++i)
-    {
-        std::cout<<" ["<<i<<"] "
-                 <<" X = "<<path_cache.cache[i].pose.position.x
-                 <<" Y = "<<path_cache.cache[i].pose.position.y
-                 <<" Z = "<<path_cache.cache[i].pose.position.z
-                 <<" x = "<<path_cache.cache[i].pose.orientation.x
-                 <<" y = "<<path_cache.cache[i].pose.orientation.y
-                 <<" z = "<<path_cache.cache[i].pose.orientation.z
-                 <<" W = "<<path_cache.cache[i].pose.orientation.w
-                 <<" PointType = "<<path_cache.cache[i].point_type
-                 <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
-    }*/
+    //std::cout<<"path_cache_length = "<<path_cache.cache_length<<std::endl;
+    //std::cout<<"smooth_out_index = "<<path_cache.smooth_out_index<<std::endl;
 
     Joint result_joint;
     Joint ref_joint = start_joint;
@@ -330,8 +316,8 @@ int main(void)
 
     //std::cout<<"traj_cache.smooth_out_index = "<<traj_cache.smooth_out_index<<std::endl;
     //std::cout<<"traj_cache.cache_length = "<<traj_cache.cache_length<<std::endl;
-    //printAllTraj(traj_cache, 0.001);
-    printTraj2(traj_cache, 0, 0.001, traj_cache.cache_length);
+
+    printTraj(traj_cache, 1, 0.001, traj_cache.cache_length);
 #endif
 
 #if 0
@@ -525,7 +511,7 @@ int main(void)
         via.pose_target.orientation.a = 0;
         via.pose_target.orientation.b = 0;
         via.pose_target.orientation.c = PI;
-        via.cnt = 64;
+        via.cnt = 1;
         via.vel = 1600;
         via.type = MOTION_LINE;
     
@@ -535,12 +521,13 @@ int main(void)
         target.pose_target.orientation.a = 0;
         target.pose_target.orientation.b = 0;
         target.pose_target.orientation.c = PI;
-        target.cnt = 64;
+        target.cnt = 1;
         target.vel = 1600;
         target.type = MOTION_LINE;
     
         PathCache path_cache_1;
         TrajectoryCache traj_cache_1;
+        path_cache_1.target.type = MOTION_LINE;
         path_cache_1.target.vel = via.vel;
         path_cache_1.target.cnt = via.cnt;
         planPathLine(start, via, path_cache_1);
@@ -571,6 +558,7 @@ int main(void)
                      <<path_cache_1.cache[i].joint[4]<<" "
                      <<path_cache_1.cache[i].joint[5]<<std::endl;
         }*/
+
         planTrajectory(path_cache_1, start_state, vel_ratio, acc_ratio, traj_cache_1);
 
         printTraj(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
@@ -587,19 +575,18 @@ int main(void)
     }*/
     //std::cout<<"traj_cache_1.smooth_out_index = "<<traj_cache_1.smooth_out_index<<std::endl;
     
-    //printTraj(traj_cache_1, 1, 0.001);
         JointState out_state;
         int p_address = S_TrajP0 + traj_cache_1.smooth_out_index + 1;
-        int v_address = p_address + 50;
-        int a_address = p_address + 100;
+        int v_address = p_address + 25;
+        int a_address = p_address + 50;
         for(int i=0; i<6; ++i)
         {
             out_state.angle[i] = stack[p_address];
             out_state.omega[i] = stack[v_address];
             out_state.alpha[i] = stack[a_address];
-            p_address += 150;
-            v_address += 150;
-            a_address += 150;
+            p_address += 75;
+            v_address += 75;
+            a_address += 75;
         }
 //std::cout<<"out_state: "<<out_state.angle[1]<<" "<<out_state.omega[1]<<" "<<out_state.alpha[1]<<std::endl;
         Pose pose_out;
@@ -619,6 +606,7 @@ int main(void)
     
         PathCache path_cache_2;
         TrajectoryCache traj_cache_2;
+        path_cache_2.target.type = MOTION_LINE;
         path_cache_2.target.vel = target.vel; 
         path_cache_2.target.cnt = target.cnt;
       
@@ -658,7 +646,6 @@ int main(void)
     //std::cout<<"traj_cache_2.smooth_out_index = "<<traj_cache_2.smooth_out_index<<std::endl;
     //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
     
-        //printAllTraj(traj_cache_2, 0.001);
         printTraj(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
 #endif
 

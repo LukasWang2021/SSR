@@ -29,6 +29,8 @@ ControllerSm::ControllerSm():
     servo_state_(SERVO_INIT),
     safety_alarm_(0),
     ctrl_reset_count_(0),
+    robot_state_timeout_count_(0),
+    init_state_(false),
     enable_macro_launching_(false),
     interpreter_warning_code_(0),
     error_level_(0),
@@ -192,17 +194,22 @@ ErrorCode ControllerSm::callEstop()
         || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED
         || ctrl_state_ == CTRL_INIT)
     {
+    
         controller_client_ptr_->abort();
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
-        //FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
+        FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
     } 
+   
     return SUCCESS;
 }
 
 ErrorCode ControllerSm::callReset()
 {
+    if(init_state_ == false)
+        return SUCCESS;
+
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
     {
@@ -562,9 +569,9 @@ void ControllerSm::transferRobotState()
     switch(robot_state_)
     {
         case ROBOT_IDLE_TO_RUNNING:
-            if(is_error_exist_)
+            if(is_error_exist_ || interpreter_state_ == INTERPRETER_PAUSED)
             {
-                recordLog("Robot transfer to IDLE");
+                recordLog("Robot transfer to RUNNING_TO_IDLE");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             else if(interpreter_state_ == INTERPRETER_EXECUTE)
@@ -572,10 +579,10 @@ void ControllerSm::transferRobotState()
                 recordLog("Robot transfer to RUNNING");
                 robot_state_ = ROBOT_RUNNING;
             }
-            else if(interpreter_state_ == INTERPRETER_PAUSED)
+            else if((--robot_state_timeout_count_) < 0)
             {
-                recordLog("Robot transfer to IDLE");
-                robot_state_ = ROBOT_IDLE;
+                recordLog("Robot transfer to RUNNING_TO_IDLE");
+                robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             break;
         case ROBOT_IDLE_TO_TEACHING:
@@ -586,6 +593,7 @@ void ControllerSm::transferRobotState()
             if(interpreter_state_ != INTERPRETER_EXECUTE
                 && servo_state_ != SERVO_RUNNING)
             {
+                robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
                 recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
@@ -595,6 +603,7 @@ void ControllerSm::transferRobotState()
             {
                 is_continuous_manual_move_timeout_ = false;
                 memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
+                robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
                 recordLog("Robot transfer to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
@@ -606,13 +615,16 @@ void ControllerSm::transferRobotState()
             }
             break;
         case ROBOT_TEACHING:
-            handleContinuousManualRpcTimeout();
-            if (motion_control_ptr_->getGroupState() == fst_mc::STANDBY || motion_control_ptr_->getGroupState() == fst_mc::DISABLE)
-            //if(virtual_core1_ptr_->getArmState() == 1)
             {
-                robot_state_ = ROBOT_TEACHING_TO_IDLE;
+                handleContinuousManualRpcTimeout();
+                fst_mc::GroupState group_state = motion_control_ptr_->getGroupState();
+                if (group_state == fst_mc::STANDBY || group_state == fst_mc::DISABLE)
+                //if(virtual_core1_ptr_->getArmState() == 1)
+                {
+                     robot_state_ = ROBOT_TEACHING_TO_IDLE;
+                }
+                break;
             }
-            break;
         default:
             ;
     }
@@ -780,4 +792,15 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
 {
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }
+
+void ControllerSm::setInitState(bool state)
+{
+    init_state_ = state;
+}
+
+bool ControllerSm::getInitState()
+{
+    return init_state_;
+} 
+
 

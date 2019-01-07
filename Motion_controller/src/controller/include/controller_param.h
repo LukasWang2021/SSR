@@ -22,6 +22,7 @@ public:
     int heartbeat_cycle_time_;  // us
     int routine_thread_priority_;
     int reset_max_time_;        // us
+    int robot_state_timeout_; //us
     bool enable_controller_heartbeat_;
     int heartbeat_thread_priority_;
     bool enable_log_service_;

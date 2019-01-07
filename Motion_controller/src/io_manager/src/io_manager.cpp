@@ -145,28 +145,7 @@ std::vector<fst_hal::IODeviceInfo> IoManager::getIODeviceInfoList(void)
             case DEVICE_TYPE_MODBUS:
             {
                 ModbusManager* modbus_manager_ptr = static_cast<ModbusManager*>(device_ptr);
-                //code for modbus
-                info.device_type = "modbus";
-                info.comm_type = "TCP";
-                info.address = modbus_manager_ptr->getAddress();
-                info.is_valid = modbus_manager_ptr->isValid();
-
-                ModbusRegAddrInfo addr_info;
-                ErrorCode ret = modbus_manager_ptr->getServerConfigCoilInfo(addr_info);
-                if (ret != SUCCESS)
-                {
-                    info.DI_num = 0;
-                    info.DO_num = 0;
-                }
-                else
-                {
-                    info.DO_num = addr_info.max_nb;
-                }
-
-                ret = modbus_manager_ptr->getServerConfigDiscrepteInputInfo(addr_info);
-                if (ret != SUCCESS) info.DI_num = 0;
-                else info.DI_num = addr_info.max_nb;
-
+                ErrorCode error_code = getModbusDeviceInfo(info, modbus_manager_ptr);
                 info_list.push_back(info);
                 break;
             }
@@ -240,14 +219,8 @@ ErrorCode IoManager::getDiValue(PhysicsID phy_id, uint8_t &value)
         }
         case DEVICE_TYPE_MODBUS:
         {
-            // code for modbus 
             ModbusManager* modbus_manager_ptr = static_cast<ModbusManager*>(device_ptr);
-            if (modbus_manager_ptr == NULL || !modbus_manager_ptr->isValid())
-			{
-				return MODBUS_INVALID;
-			}
-			int server_id = 0;
-			return modbus_manager_ptr->readDiscreteInputs(server_id, phy_id.info.port, 1, &value);
+            return getDiValueFromModbusServer(phy_id.info.port, value, modbus_manager_ptr);
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
@@ -284,14 +257,8 @@ ErrorCode IoManager::getDoValue(PhysicsID phy_id, uint8_t &value)
         }
         case DEVICE_TYPE_MODBUS:
         {
-            // code for modbus 
             ModbusManager* modbus_manager_ptr = static_cast<ModbusManager*>(device_ptr);
-            if (modbus_manager_ptr == NULL || !modbus_manager_ptr->isValid())
-			{
-				return MODBUS_INVALID;
-			}
-			int server_id = 0;
-			return modbus_manager_ptr->readCoils(server_id, phy_id.info.port, 1, &value);
+            return getDoValueFromModbusServer(phy_id.info.port, value, modbus_manager_ptr);
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
@@ -419,12 +386,7 @@ ErrorCode IoManager::setDoValue(PhysicsID phy_id, uint8_t value)
         {
             // code for modbus 
             ModbusManager* modbus_manager_ptr = static_cast<ModbusManager*>(device_ptr);
-            if (modbus_manager_ptr == NULL || !modbus_manager_ptr->isValid())
-			{
-				return MODBUS_INVALID;
-			}
-			int server_id = 0;
-			return modbus_manager_ptr->writeCoils(server_id, phy_id.info.port, 1, &value);
+            return setDoValueToModbusServer(phy_id.info.port, value, modbus_manager_ptr);
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
@@ -541,6 +503,85 @@ ErrorCode IoManager::updateIoDevicesData(void)
     return ret;
 }
 
+
+ErrorCode IoManager::getModbusDeviceInfo(fst_hal::IODeviceInfo &info, ModbusManager* modbus_manager)
+{
+    if (modbus_manager == NULL) return MODBUS_INVALID;
+
+    info.device_type = "modbus";
+    info.comm_type = "TCP";
+    info.address = modbus_manager->getAddress();
+    info.is_valid = modbus_manager->isValid();
+
+    ModbusRegAddrInfo addr_info;
+
+    ErrorCode ret = modbus_manager->getServerConfigCoilInfo(addr_info);
+    if (ret != SUCCESS)
+    {
+        info.DO_num = 0;
+        info.DI_num = 0;
+        return ret;
+    }
+
+    info.DO_num = addr_info.max_nb;
+
+    ret = modbus_manager->getServerConfigDiscrepteInputInfo(addr_info);
+    if (ret != SUCCESS)
+    {
+        info.DI_num = 0;
+        return ret;
+    } 
+
+    info.DI_num = addr_info.max_nb;
+    return SUCCESS;
+}
+
+ErrorCode IoManager::getDiValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager)
+{
+    if (modbus_manager == NULL) return MODBUS_INVALID;
+
+    if (modbus_manager == NULL || !modbus_manager->isValid()
+        || modbus_manager->getStartMode() != MODBUS_SERVER)
+    {
+        return MODBUS_START_MODE_ERROR;
+    }
+
+    int server_id = 0;
+    int addr = static_cast<int>(port);
+    return modbus_manager->readDiscreteInputs(server_id, addr, 1, &value);
+}
+
+ErrorCode IoManager::getDoValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager)
+{
+    if (modbus_manager == NULL) return MODBUS_INVALID;
+
+    if (modbus_manager == NULL || !modbus_manager->isValid()
+        || modbus_manager->getStartMode() != MODBUS_SERVER)
+    {
+        return MODBUS_START_MODE_ERROR;
+    }
+
+    int server_id = 0;
+    int addr = static_cast<int>(port);
+    return modbus_manager->readCoils(server_id, addr, 1, &value);
+}
+
+
+ErrorCode IoManager::setDoValueToModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager)
+{
+    if (modbus_manager == NULL) return MODBUS_INVALID;
+
+    if (modbus_manager == NULL || !modbus_manager->isValid()
+        || modbus_manager->getStartMode() != MODBUS_SERVER)
+    {
+        return MODBUS_START_MODE_ERROR;
+    }
+
+    int server_id = 0;
+    int addr = static_cast<int>(port);
+    return modbus_manager->writeCoils(server_id, addr, 1, &value);
+}
+
 // thread function
 void ioManagerRoutineThreadFunc(void* arg)
 {
@@ -552,6 +593,10 @@ void ioManagerRoutineThreadFunc(void* arg)
     }
     std::cout<<"io_manager routine thread exit"<<std::endl;
 }
+
+
+
+
 
 
 #endif //IO_MANAGER_IO_MANAGER_CPP_

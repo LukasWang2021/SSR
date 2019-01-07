@@ -67,7 +67,10 @@ public:
     std::vector<fst_hal::IODeviceInfo> getIODeviceInfoList(void); 
     
     //get io_board info
-    ErrorCode getIODeviceInfo(uint8_t address, fst_hal::IODeviceInfo &info); 
+    ErrorCode getIODeviceInfo(uint8_t address, fst_hal::IODeviceInfo &info);
+
+    // get modbus info
+    ErrorCode getModbusDeviceInfo( fst_hal::IODeviceInfo &info, ModbusManager* modbus_manager);
 
     //get io_board values
     ErrorCode getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values);
@@ -86,7 +89,11 @@ private:
 
     BaseDevice* getDevicePtr(PhysicsID phy_id);
     ErrorCode updateIoDevicesData(void);
-    
+
+    ErrorCode getDiValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
+    ErrorCode getDoValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
+    ErrorCode setDoValueToModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
+
     int cycle_time_;
     bool is_running_;
 

@@ -71,34 +71,39 @@ void ControllerRpc::handleRpc0x0001421F(void* request_data_ptr, void* response_d
     RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
     ResponseMessageType_Uint64_IoDeviceInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_IoDeviceInfo*>(response_data_ptr);
 
-    modbus_manager_ptr_->isModbusValid();
-    strcpy(rs_data_ptr->data.device_type, "modbus");
-    strcpy(rs_data_ptr->data.comm_type, "TCP");
-    rs_data_ptr->data.device_index = 0;
-    rs_data_ptr->data.address = 0;
-    rs_data_ptr->data.is_valid = modbus_manager_ptr_->isValid();
+    std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
 
-    fst_hal::ModbusRegAddrInfo info;
-    rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerConfigCoilInfo(info);
-    if (rs_data_ptr->error_code.data != SUCCESS)
+    for (unsigned int i = 0; i < device_list.size(); ++i)
     {
-        rs_data_ptr->data.input_num = 0;
-        rs_data_ptr->data.output_num = 0;
-        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getModbusIoDeviceInfo"));
-        return;
-    }
-    rs_data_ptr->data.output_num = info.max_nb;
+        if (device_list[i].type == DEVICE_TYPE_MODBUS)
+        {
+            fst_hal::IODeviceInfo info;
+            rs_data_ptr->error_code.data = io_manager_ptr_->getModbusDeviceInfo(info, modbus_manager_ptr_);
+            if(rs_data_ptr->error_code.data == SUCCESS)
+            {
+                strcpy(rs_data_ptr->data.device_type, info.device_type.c_str());
+                strcpy(rs_data_ptr->data.comm_type, info.comm_type.c_str());
+                rs_data_ptr->data.device_index = 0;
+                rs_data_ptr->data.address = info.address;
+                rs_data_ptr->data.input_num = info.DI_num;
+                rs_data_ptr->data.output_num = info.DO_num;
+                rs_data_ptr->data.is_valid = info.is_valid;
+            }
+            else
+            {
+                memset(&rs_data_ptr->data, 0, sizeof(MessageType_IoDeviceInfo));
+            }
 
-    rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerConfigDiscrepteInputInfo(info);
-    if (rs_data_ptr->error_code.data != SUCCESS)
-    {
-        rs_data_ptr->data.input_num = 0;
-        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getModbusIoDeviceInfo"));
-        return;
+            break;
+        }
+        else
+        {
+            memset(&rs_data_ptr->data, 0, sizeof(MessageType_IoDeviceInfo));
+        }
+        rs_data_ptr->error_code.data = IO_INVALID_PARAM_ID;
     }
 
-    rs_data_ptr->data.input_num = info.max_nb;
-    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getModbusIoDeviceInfo"));
+    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/get_FRP8A_IoDeviceInfo"));
 }
 
 //"/rpc/device_manager/getIoDeviceInfoList"	

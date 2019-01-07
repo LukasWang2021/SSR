@@ -453,13 +453,9 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
             param.getParam("angle_interval", seg_param.angle_interval) &&
             param.getParam("angle_valve", seg_param.angle_valve) &&
             param.getParam("conservative_acc", seg_param.conservative_acc) &&
-            param.getParam("jerk_ratio", seg_param.jerk_ratio) &&
-            param.getParam("time_factor_1", seg_param.time_factor_1) &&
-            param.getParam("time_factor_2", seg_param.time_factor_2) &&
-            param.getParam("time_factor_3", seg_param.time_factor_3) &&
-            param.getParam("time_factor_4", seg_param.time_factor_4) &&
+            param.getParam("time_factor_first", seg_param.time_factor_first) &&
+            param.getParam("time_factor_last", seg_param.time_factor_last) &&
             param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
-            param.getParam("max_rescale_factor", seg_param.max_rescale_factor) &&
             param.getParam("max_cartesian_acc", seg_param.max_cartesian_acc))
         {}
         else

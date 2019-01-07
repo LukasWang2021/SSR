@@ -540,7 +540,7 @@ ErrorCode IoManager::getDiValueFromModbusServer(uint8_t port, uint8_t &value, Mo
 {
     if (modbus_manager == NULL) return MODBUS_INVALID;
 
-    if (modbus_manager == NULL || !modbus_manager->isValid()
+    if (!modbus_manager->isValid()
         || modbus_manager->getStartMode() != MODBUS_SERVER)
     {
         return MODBUS_START_MODE_ERROR;
@@ -555,7 +555,7 @@ ErrorCode IoManager::getDoValueFromModbusServer(uint8_t port, uint8_t &value, Mo
 {
     if (modbus_manager == NULL) return MODBUS_INVALID;
 
-    if (modbus_manager == NULL || !modbus_manager->isValid()
+    if (!modbus_manager->isValid()
         || modbus_manager->getStartMode() != MODBUS_SERVER)
     {
         return MODBUS_START_MODE_ERROR;
@@ -571,7 +571,7 @@ ErrorCode IoManager::setDoValueToModbusServer(uint8_t port, uint8_t &value, Modb
 {
     if (modbus_manager == NULL) return MODBUS_INVALID;
 
-    if (modbus_manager == NULL || !modbus_manager->isValid()
+    if (!modbus_manager->isValid()
         || modbus_manager->getStartMode() != MODBUS_SERVER)
     {
         return MODBUS_START_MODE_ERROR;

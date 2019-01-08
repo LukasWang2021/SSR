@@ -10,7 +10,7 @@ void ControllerRpc::handleRpc0x0000D3A5(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setStartMode(rq_data_ptr->data.data);
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setStartMode"));
+    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setStartMode"));
 }
 
 //"/rpc/modbus/getStartMode"	
@@ -22,7 +22,7 @@ void ControllerRpc::handleRpc0x000041C5(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = modbus_manager_ptr_->getStartMode();
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getStartMode"));
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getStartMode"));
 }
 //"/rpc/modbus/setServerEnableStatus"
 void ControllerRpc::handleRpc0x00004033(void* request_data_ptr, void* response_data_ptr)
@@ -32,7 +32,7 @@ void ControllerRpc::handleRpc0x00004033(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setServerEnableStatus(rq_data_ptr->data.data);
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerEnableStatus"));
+    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerEnableStatus"));
 }
 //"/rpc/modbus/getServerEnableStatus"	
 void ControllerRpc::handleRpc0x00004C33(void* request_data_ptr, void* response_data_ptr)
@@ -42,7 +42,7 @@ void ControllerRpc::handleRpc0x00004C33(void* request_data_ptr, void* response_d
 
     rs_data_ptr->error_code.data = modbus_manager_ptr_->getServerEnableStatus(rs_data_ptr->data.data);
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerEnableStatus"));
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerEnableStatus"));
 
 }
 //"/rpc/modbus/setServerStartInfo"	
@@ -58,7 +58,7 @@ void ControllerRpc::handleRpc0x0001300F(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setServerStartInfo(start_info);
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerStartInfo"));
+    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerStartInfo"));
 }
 
 //"/rpc/modbus/getServerStartInfo"	
@@ -80,7 +80,7 @@ void ControllerRpc::handleRpc0x000018AF(void* request_data_ptr, void* response_d
         rs_data_ptr->data.response_delay = start_info.response_delay;
     }
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerStartInfo"));
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerStartInfo"));
 }
 
 //"/rpc/modbus/setServerAllFunctionAddrInfo"	
@@ -101,7 +101,7 @@ void ControllerRpc::handleRpc0x0000A4BF(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->setServerRegInfo(reg_info);
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerAllFunctionAddrInfo"));
+    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/setServerAllFunctionAddrInfo"));
 }
 
 //"/rpc/modbus/getServerAllFunctionAddrInfo"
@@ -125,7 +125,7 @@ void ControllerRpc::handleRpc0x00005E1F(void* request_data_ptr, void* response_d
         rs_data_ptr->data.input_reg.number = reg_info.input_reg.max_nb;
     }
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerAllFunctionAddrInfo"));
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerAllFunctionAddrInfo"));
 }
 //"/rpc/modbus/getServerConfigParams"
 void ControllerRpc::handleRpc0x0000E2E3(void* request_data_ptr, void* response_data_ptr)
@@ -157,7 +157,7 @@ void ControllerRpc::handleRpc0x0000E2E3(void* request_data_ptr, void* response_d
         rs_data_ptr->data.function_addr_info.input_reg.number = params.reg_info.input_reg.max_nb;
     }
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerConfigParams"));
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerConfigParams"));
 }
 
 //"/rpc/modbus/openServer"	
@@ -168,7 +168,7 @@ void ControllerRpc::handleRpc0x00010912(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->openServer();
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/openServer"));
+    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/openServer"));
 }
 //"/rpc/modbus/closeServer"	
 void ControllerRpc::handleRpc0x000045B2(void* request_data_ptr, void* response_data_ptr)
@@ -178,7 +178,7 @@ void ControllerRpc::handleRpc0x000045B2(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = modbus_manager_ptr_->closeServer();
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/closeServer"));
+    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/closeServer"));
 }
 //"/rpc/modbus/getServerRunningStatus"
 void ControllerRpc::handleRpc0x00000953(void* request_data_ptr, void* response_data_ptr)
@@ -189,7 +189,7 @@ void ControllerRpc::handleRpc0x00000953(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = modbus_manager_ptr_->isServerRunning();
 
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/getServerRunningStatus"));
+    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/getServerRunningStatus"));
 }
 
 //"/rpc/modbus/writeCoils"

@@ -507,10 +507,16 @@ ErrorCode IoManager::updateIoDevicesData(void)
 ErrorCode IoManager::getModbusDeviceInfo(fst_hal::IODeviceInfo &info, ModbusManager* modbus_manager)
 {
     if (modbus_manager == NULL) return MODBUS_INVALID;
-
-    info.device_type = "modbus";
     info.comm_type = "TCP";
     info.address = modbus_manager->getAddress();
+    info.device_type = "ModbusServer";
+
+    if (modbus_manager->getStartMode() != MODBUS_SERVER)
+    {
+        info.is_valid = false;
+        return SUCCESS;;
+    }
+
     info.is_valid = modbus_manager->isValid();
 
     ModbusRegAddrInfo addr_info;

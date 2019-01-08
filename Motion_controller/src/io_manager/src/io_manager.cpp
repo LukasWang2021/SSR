@@ -517,7 +517,7 @@ ErrorCode IoManager::getModbusDeviceInfo(fst_hal::IODeviceInfo &info, ModbusMana
         return SUCCESS;;
     }
 
-    info.is_valid = modbus_manager->isValid();
+    info.is_valid = modbus_manager->isModbusValid();
 
     ModbusRegAddrInfo addr_info;
 

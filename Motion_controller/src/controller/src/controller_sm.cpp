@@ -29,7 +29,7 @@ ControllerSm::ControllerSm():
     servo_state_(SERVO_INIT),
     safety_alarm_(0),
     ctrl_reset_count_(0),
-    robot_state_timeout_count_(0),
+    robot_state_timeout_count_(100000),
     init_state_(false),
     enable_macro_launching_(false),
     interpreter_warning_code_(0),
@@ -68,14 +68,23 @@ void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fs
         if (device_list[i].type == DEVICE_TYPE_FST_SAFETY)
         {
             BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
-            safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
+            if (device_ptr != NULL || safety_device_ptr_ == NULL)
+            {
+                safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
+            }  
         }
         else if (device_list[i].type == DEVICE_TYPE_MODBUS)
         {
             BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
-            modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+            if (device_ptr != NULL || safety_device_ptr_ == NULL)
+            {
+                modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+            }     
         }
     }
+
+    // init the timeout param of robot_state_
+    robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
 }
 
 ControllerParam* ControllerSm::getParam()
@@ -569,7 +578,7 @@ void ControllerSm::transferRobotState()
     switch(robot_state_)
     {
         case ROBOT_IDLE_TO_RUNNING:
-            if(is_error_exist_ || interpreter_state_ == INTERPRETER_PAUSED)
+            if(is_error_exist_)
             {
                 recordLog("Robot transfer to RUNNING_TO_IDLE");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;

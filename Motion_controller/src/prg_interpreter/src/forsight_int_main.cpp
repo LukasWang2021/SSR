@@ -19,6 +19,7 @@ using namespace fst_log;
 // Logger glog;
 // #endif
 
+#ifndef WIN32
 void signalInterrupt(int signo) 
 {
 	if(log_ptr_ != NULL)
@@ -30,13 +31,14 @@ void signalInterrupt(int signo)
 	}
     _exit(0);
 }
+#endif
 
 
 int main(int  argc, char *argv[])
 {
 	InterpreterControl intprt_ctrl; 
-	signal(SIGINT, signalInterrupt);
 #ifndef WIN32
+	signal(SIGINT, signalInterrupt);
 	if(log_ptr_ == NULL)
 	{
 		log_ptr_ = new fst_log::Logger();
@@ -91,6 +93,7 @@ int main(int  argc, char *argv[])
 #endif
 	}
 	
+#ifndef WIN32
 	if(log_ptr_ != NULL)
 	{
         FST_INFO("Free log_ptr_");
@@ -98,6 +101,7 @@ int main(int  argc, char *argv[])
 		delete log_ptr_;
 		log_ptr_ = NULL ;
 	}
+#endif
 	return 1;
 }
 

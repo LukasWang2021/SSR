@@ -13,25 +13,25 @@ step:
 reference:
     axis:
         velocity:
-            - 5.8119
-            - 4.6600
-            - 5.8119
-            - 7.8540
-            - 7.0686
-            - 10.5592
+            - 3.0
+            - 2.5
+            - 2.5
+            - 3.5
+            - 3.5
+            - 3.5
         acceleration:
-            - 11.6238
-            - 9.3200
-            - 16.6054
-            - 22.4400
-            - 28.2744
-            - 42.2368
+            - 32.0
+            - 18.0
+            - 18.0
+            - 32.0
+            - 32.0
+            - 32.0
     position:
-        velocity: 4000.0
+        velocity: 1600.0
         acceleration: 16000.0
     orientation:
-        omega: 4.0
-        alpha: 10.0
+        omega: 2.0
+        alpha: 20.0
 
 
 #END

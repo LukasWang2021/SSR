@@ -250,7 +250,7 @@ ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
 
     if (frame != manual_frame_)
     {
-        if (group_state_ == STANDBY)
+        if (group_state_ == STANDBY || group_state_ == DISABLE)
         {
             manual_frame_ = frame;
             FST_INFO("Done.");

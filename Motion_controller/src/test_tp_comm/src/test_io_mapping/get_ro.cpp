@@ -24,6 +24,12 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    if (argc <= 1)
+    {
+        printf("One more parameter is needed: user_port\n");
+        return -1;
+    }
+    
     TpCommTest test;
     if (!test.initRpcSocket())
     {

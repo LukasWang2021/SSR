@@ -65,7 +65,7 @@ bool FstIoDevice::init()
     // init the attributes
     dev_info_.address = address_;
     dev_info_.dev_type = DEVICE_TYPE_FST_IO;
-    dev_info_.device_type = param_ptr_->device_type_; //"RF-P8A"
+    dev_info_.device_type = param_ptr_->device_type_; //"IMB00401"
     dev_info_.comm_type = param_ptr_->comm_type_;     //"RS485"
     dev_info_.DI_num = param_ptr_->max_DI_number_;
     dev_info_.DO_num = param_ptr_->max_DO_number_;

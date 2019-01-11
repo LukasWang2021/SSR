@@ -317,7 +317,7 @@ char * IoMapping::getProgramsPath()
 bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
 {
     vector<string> string_array = split(objInfo.module, "/"); //use "/" to split 
-    // '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or "FR-P8A/RS485/1(address)/IN/25(port_offset)" 
+    // '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or "IMB00401/RS485/1(address)/IN/25(port_offset)" 
     PhysicsID id;
 
 	//add address value
@@ -327,7 +327,7 @@ bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
     //add dev_type value
 	if (string_array[0].compare("ModbusServer") == 0)
         id.info.dev_type = fst_hal::DEVICE_TYPE_MODBUS;//=9
-	else if (string_array[0].compare("RF-P8A") == 0)
+	else if (string_array[0].compare(0,3, "IMB") == 0)
 	    id.info.dev_type = fst_hal::DEVICE_TYPE_FST_IO;//=2
 	else if (string_array[0].compare("VirtualIoBoard") == 0)
 	    id.info.dev_type = fst_hal::DEVICE_TYPE_VIRTUAL_IO;//=6

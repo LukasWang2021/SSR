@@ -1,6 +1,6 @@
 log_level: 1
 cycle_time: 10000
-device_type: RF-P8A
+device_type: IMB00401
 comm_type: RS485
 max_DI_number: 25
 max_DO_number: 25

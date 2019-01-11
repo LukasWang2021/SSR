@@ -24,6 +24,17 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    if (argc <= 1)
+    {
+        printf("Two parameter is needed: user_port and port_value\n");
+        return -1;
+    }
+    if (argc == 2)
+    {
+        printf("One more parameter is needed: port_value\n");
+        return -1;
+    }
+    
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -40,14 +51,12 @@ int main(int argc, char* argv[])
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
 
-    msg.data.data_count = msg.data.data[1];
+    msg.data.data_count = 2;
     printf("msg.data.data_count = %d\n", msg.data.data_count);
 
-    for (int i = 0; i != msg.data.data_count; ++i)
-    {
-        msg.data.data[i] = atoi(argv[2]);
-        printf("msg.data.data[%d] = %d\n",i, msg.data.data[i]);
-    }
+    msg.data.data[0] = atoi(argv[1]);
+    msg.data.data[1] = atoi(argv[2]);
+    printf("msg.data.data[%d] = %d\n", msg.data.data[0], msg.data.data[1]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_fields, buf, buf_size))
     {

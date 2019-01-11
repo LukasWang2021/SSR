@@ -97,13 +97,13 @@ void load_register_data()
 
 }
 
-bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num)
+bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		ptr->value.pos[0] = 0.0;
 		ptr->value.pos[1] = 0.0;
 		ptr->value.pos[2] = 0.0;
@@ -133,13 +133,13 @@ bool reg_manager_interface_getPr(fst_ctrl::PrRegData *ptr, uint16_t num)
 	return bRet ;
 }
 
-bool reg_manager_interface_setPr(fst_ctrl::PrRegData *ptr, uint16_t num)
+bool reg_manager_interface_setPr(PrRegData *ptr, uint16_t num)
 {
 	bool bRet = false ;
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		objPrRegDataIpc.id     = num;
 		objPrRegDataIpc.pos[0] = ptr->value.pos[0];
 		objPrRegDataIpc.pos[1] = ptr->value.pos[1];
@@ -203,7 +203,7 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -231,7 +231,7 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		
 		objPrRegDataIpc.pos[0] = ptr->position.x   ;
 		objPrRegDataIpc.pos[1] = ptr->position.y   ;
@@ -272,7 +272,7 @@ bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -300,7 +300,7 @@ bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -332,7 +332,7 @@ bool reg_manager_interface_getTypePr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -357,7 +357,7 @@ bool reg_manager_interface_setTypePr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -383,7 +383,7 @@ bool reg_manager_interface_getIdPr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -408,7 +408,7 @@ bool reg_manager_interface_setIdPr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -434,7 +434,7 @@ bool reg_manager_interface_getCommentPr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -459,7 +459,7 @@ bool reg_manager_interface_setCommentPr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::PrRegDataIpc objPrRegDataIpc ;
+		PrRegDataIpc objPrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
@@ -489,7 +489,7 @@ bool reg_manager_interface_getSr(SrRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		ptr->value = "";
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		ptr->value = string(objSrRegDataIpc.value) ;
@@ -512,8 +512,7 @@ bool reg_manager_interface_setSr(SrRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		// memcpy(&objSrRegData, ptr, sizeof(objSrRegData));
 		objSrRegDataIpc.id = num ;
 		strcpy(objSrRegDataIpc.value, ptr->value.c_str()) ;
@@ -563,7 +562,7 @@ bool reg_manager_interface_getValueSr(string &strVal, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		strVal = string(objSrRegDataIpc.value);
 		if(bRet)
@@ -587,7 +586,7 @@ bool reg_manager_interface_setValueSr(string &strVal, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		objSrRegDataIpc.id    = num;
 		strcpy(objSrRegDataIpc.value, strVal.c_str());
 		FST_INFO("setValueSr:(%s)", objSrRegDataIpc.value);
@@ -609,7 +608,7 @@ bool reg_manager_interface_getIdSr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		if(bRet)
 		{
@@ -632,7 +631,7 @@ bool reg_manager_interface_setIdSr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		if(bRet)
 		{
@@ -656,7 +655,7 @@ bool reg_manager_interface_getCommentSr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		if(bRet)
 		{
@@ -681,7 +680,7 @@ bool reg_manager_interface_setCommentSr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::SrRegDataIpc objSrRegDataIpc ;
+		SrRegDataIpc objSrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getSrReg(num, &objSrRegDataIpc);
 		if(bRet)
 		{
@@ -710,7 +709,7 @@ bool reg_manager_interface_getR(RRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
 		FST_INFO("getR: value = (%f) at %d with %s", 
@@ -734,8 +733,7 @@ bool reg_manager_interface_setR(RRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = ptr->value;
 		// memcpy(&objRRegData, ptr, sizeof(objRRegData));
@@ -784,7 +782,7 @@ bool reg_manager_interface_getValueR(double *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
 		if(bRet)
 		{
@@ -807,7 +805,7 @@ bool reg_manager_interface_setValueR(double *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 		objRRegDataIpc.id    = num;
 		objRRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
@@ -830,7 +828,7 @@ bool reg_manager_interface_getIdR(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
 		if(bRet)
 		{
@@ -853,7 +851,7 @@ bool reg_manager_interface_setIdR(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 	    objRRegDataIpc.id = *ptr;
 		bRet = g_objRegManagerInterface->setRReg(&objRRegDataIpc);
 	}
@@ -873,7 +871,7 @@ bool reg_manager_interface_getCommentR(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
 		if(bRet)
 		{
@@ -898,7 +896,7 @@ bool reg_manager_interface_setCommentR(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::RRegDataIpc objRRegDataIpc ;
+		RRegDataIpc objRRegDataIpc ;
 		bRet = g_objRegManagerInterface->getRReg(num, &objRRegDataIpc);
 		if(bRet)
 		{
@@ -927,7 +925,7 @@ bool reg_manager_interface_getMr(MrRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
 		FST_INFO("getMR: value = (%f) at %d with %s", 
@@ -951,7 +949,7 @@ bool reg_manager_interface_setMr(MrRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		objMrRegDataIpc.id = num ;
 		objMrRegDataIpc.value = ptr->value ;
 		FST_INFO("setR:(%f) at %d with %s", objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
@@ -999,7 +997,7 @@ bool reg_manager_interface_getValueMr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
 		if(bRet)
 		{
@@ -1022,7 +1020,7 @@ bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		objMrRegDataIpc.id    = num;
 		objMrRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
@@ -1044,7 +1042,7 @@ bool reg_manager_interface_getIdMr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
 		if(bRet)
 		{
@@ -1067,7 +1065,7 @@ bool reg_manager_interface_setIdMr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
 		if(bRet)
 		{
@@ -1094,7 +1092,7 @@ bool reg_manager_interface_getCommentMr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
 		if(bRet)
 		{
@@ -1119,7 +1117,7 @@ bool reg_manager_interface_setCommentMr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::MrRegDataIpc objMrRegDataIpc ;
+		MrRegDataIpc objMrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
 		if(bRet)
 		{
@@ -1149,7 +1147,7 @@ bool reg_manager_interface_getHr(HrRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		ptr->value.joint_pos[0] = 0.0;
 		ptr->value.joint_pos[1] = 0.0;
 		ptr->value.joint_pos[2] = 0.0;
@@ -1187,7 +1185,7 @@ bool reg_manager_interface_setHr(HrRegData *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		objHrRegDataIpc.joint_pos[0] = ptr->value.joint_pos[0];
 		objHrRegDataIpc.joint_pos[1] = ptr->value.joint_pos[1];
 		objHrRegDataIpc.joint_pos[2] = ptr->value.joint_pos[2];
@@ -1239,7 +1237,7 @@ bool reg_manager_interface_getJointHr(Joint *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getHrReg(num, &objHrRegDataIpc);
 		if(bRet)
 		{
@@ -1267,7 +1265,7 @@ bool reg_manager_interface_setJointHr(Joint *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		objHrRegDataIpc.joint_pos[0] = ptr->j1;
 		objHrRegDataIpc.joint_pos[1] = ptr->j2;
 		objHrRegDataIpc.joint_pos[2] = ptr->j3;
@@ -1293,7 +1291,7 @@ bool reg_manager_interface_getIdHr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getHrReg(num, &objHrRegDataIpc);
 		if(bRet)
 		{
@@ -1316,7 +1314,7 @@ bool reg_manager_interface_setIdHr(int *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getHrReg(num, &objHrRegDataIpc);
 		if(bRet)
 		{
@@ -1342,7 +1340,7 @@ bool reg_manager_interface_getCommentHr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getHrReg(num, &objHrRegDataIpc);
 		if(bRet)
 		{
@@ -1367,7 +1365,7 @@ bool reg_manager_interface_setCommentHr(char *ptr, uint16_t num)
 #ifndef WIN32
 	if(g_objRegManagerInterface)
 	{
-		fst_ctrl::HrRegDataIpc objHrRegDataIpc ;
+		HrRegDataIpc objHrRegDataIpc ;
 		bRet = g_objRegManagerInterface->getHrReg(num, &objHrRegDataIpc);
 		if(bRet)
 		{
@@ -1540,6 +1538,7 @@ bool reg_manager_interface_setCommentPl(char *ptr, uint16_t num)
 std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, int size)
 {
     std::vector<BaseRegData> vecRet ;
+	bool bRet = false ;
 	vecRet.clear();
 #ifndef WIN32
 	if(g_objRegManagerInterface)
@@ -1552,6 +1551,8 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_pr_lst(int start_id, i
 	{
 		FST_ERROR("g_objRegManagerInterface is NULL");
 	}
+#else
+	bRet = true ;
 #endif
 	return vecRet ;
 }

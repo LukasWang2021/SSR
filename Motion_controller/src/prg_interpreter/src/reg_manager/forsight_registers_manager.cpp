@@ -182,7 +182,7 @@ int forgesight_registers_manager_get_register(
 		{
 			bRet = reg_manager_interface_getPr(&objPrRegData, iRegIdx);
 			// PrRegData * ptr = (PrRegData *)reg_content_buffer ;
-			
+#ifndef WIN32
 			if(bRet == false)
 				serror(objThreadCntrolBlock, 4) ; 
 			else
@@ -209,6 +209,9 @@ int forgesight_registers_manager_get_register(
 				}
 
 			}
+#else
+			value->setPrRegDataValue(&objPrRegData);
+#endif
 		}
 		// Implement for intergretion
 		else if (!strcmp(reg_member, TXT_POSE))
@@ -372,13 +375,21 @@ int forgesight_registers_manager_get_register(
 				serror(objThreadCntrolBlock, 4) ; 
 			else
 			{
+#ifndef WIN32
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[0]);
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[0]);
+#else
+
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.cartesian_pos.position.x);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.joint_pos[0]);
+#endif
 				else
 		       		FST_INFO("PR[%d].pos_type = %d ", 
-		       			iRegIdx, objPrRegData.value.pos_type);
+	       				iRegIdx, objPrRegData.value.pos_type);
 			}
 		}
 		else if (!strcmp(reg_member, TXT_PR_POSE_JOINT_J2))
@@ -388,10 +399,17 @@ int forgesight_registers_manager_get_register(
 				serror(objThreadCntrolBlock, 4) ; 
 			else
 			{
+#ifndef WIN32
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[1]);
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[1]);
+#else
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.cartesian_pos.position.y);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.joint_pos[1]);
+#endif
 				else
 		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
@@ -404,10 +422,17 @@ int forgesight_registers_manager_get_register(
 				serror(objThreadCntrolBlock, 4) ; 
 			else
 			{
+#ifndef WIN32
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[2]);
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[2]);
+#else
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.cartesian_pos.position.z);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.joint_pos[2]);
+#endif
 				else
 		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
@@ -420,10 +445,17 @@ int forgesight_registers_manager_get_register(
 				serror(objThreadCntrolBlock, 4) ; 
 			else
 			{
+#ifndef WIN32
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[3]);
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[3]);
+#else
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.cartesian_pos.orientation.a);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.joint_pos[3]);
+#endif
 				else
 		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
@@ -436,10 +468,17 @@ int forgesight_registers_manager_get_register(
 				serror(objThreadCntrolBlock, 4) ; 
 			else
 			{
+#ifndef WIN32
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[4]);
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[4]);
+#else
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.cartesian_pos.orientation.b);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.joint_pos[4]);
+#endif
 				else
 		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
@@ -452,10 +491,17 @@ int forgesight_registers_manager_get_register(
 				serror(objThreadCntrolBlock, 4) ; 
 			else
 			{
+#ifndef WIN32
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[5]);
 				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 					value->setFloatValue(objPrRegData.value.pos[5]);
+#else
+				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.cartesian_pos.orientation.c);
+				else if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
+					value->setFloatValue(objPrRegData.value.joint_pos[5]);
+#endif
 				else
 		       		FST_INFO("PR[%d].pos_type = %d ", 
 		       			iRegIdx, objPrRegData.value.pos_type);
@@ -493,8 +539,13 @@ int forgesight_registers_manager_get_register(
 	{
 		if(strlen(reg_member) == 0)
 		{
+#ifndef WIN32
 			FST_INFO("TXT_SR at (%d), (%s), (%s) ", 
 				objSrRegData.id, objSrRegData.comment.c_str(), objSrRegData.value.c_str());
+#else
+			FST_INFO("TXT_SR at (%d), (%s), (%s) ", 
+				objSrRegData.id, objSrRegData.comment, objSrRegData.value.c_str());
+#endif
 			bRet = reg_manager_interface_getSr(&objSrRegData, iRegIdx);
 			// SrRegData * ptr = (SrRegData *)reg_content_buffer ;
 			// value->setStringValue(ptr->value);
@@ -580,8 +631,13 @@ int forgesight_registers_manager_get_register(
 		{
 			bRet = reg_manager_interface_getMr(&objMrRegData, iRegIdx);
 			// MrRegData * ptr = (MrRegData *)reg_content_buffer ;
+#ifndef WIN32
 	    	FST_INFO("Get at TXT_MR with %d (%s) %d ", 
 	    			objMrRegData.id, objMrRegData.comment.c_str(), objMrRegData.value);
+#else
+	    	FST_INFO("Get at TXT_MR with %d (%s) %d ", 
+	    			objMrRegData.id, objMrRegData.comment, objMrRegData.value);
+#endif
 			// value->setFloatValue(ptr->value);
 			if(bRet == false)
 				serror(objThreadCntrolBlock, 4) ; 
@@ -1021,7 +1077,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[0] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.position.x = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1044,7 +1104,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[1] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.position.y = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1067,7 +1131,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[2] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.position.z = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1090,7 +1158,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[3] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.orientation.a = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1113,7 +1185,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[4] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.orientation.b = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1136,7 +1212,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[5] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.orientation.c = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1197,7 +1277,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[0] = fValue ;
+#else
+					objPrRegData.value.joint_pos[0] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1220,7 +1304,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[1] = fValue ;
+#else
+					objPrRegData.value.joint_pos[1] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1243,7 +1331,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[2] = fValue ;
+#else
+					objPrRegData.value.joint_pos[2] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1266,7 +1358,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[3] = fValue ;
+#else
+					objPrRegData.value.joint_pos[3] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1289,7 +1385,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[4] = fValue ;
+#else
+					objPrRegData.value.joint_pos[4] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1312,7 +1412,11 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[5] = fValue ;
+#else
+					objPrRegData.value.joint_pos[5] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1336,12 +1440,20 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[0] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.position.x = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[0] = fValue ;
+#else
+					objPrRegData.value.joint_pos[0] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1364,12 +1476,20 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[1] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.position.y = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[1] = fValue ;
+#else
+					objPrRegData.value.joint_pos[1] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1392,12 +1512,20 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[2] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.position.z = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[2] = fValue ;
+#else
+					objPrRegData.value.joint_pos[2] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1420,12 +1548,20 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[3] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.orientation.a = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[3] = fValue ;
+#else
+					objPrRegData.value.joint_pos[3] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1448,12 +1584,20 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[4] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.orientation.b = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[4] = fValue ;
+#else
+					objPrRegData.value.joint_pos[4] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else
@@ -1476,12 +1620,20 @@ int forgesight_registers_manager_set_register(
 			{
 				if(PR_REG_POS_TYPE_CARTESIAN == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[5] = fValue ;
+#else
+					objPrRegData.value.cartesian_pos.orientation.c = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				if(PR_REG_POS_TYPE_JOINT == objPrRegData.value.pos_type)
 				{
+#ifndef WIN32
 					objPrRegData.value.pos[5] = fValue ;
+#else
+					objPrRegData.value.joint_pos[5] = fValue ;
+#endif
 					reg_manager_interface_setPr(&objPrRegData, iRegIdx);
 				}
 				else

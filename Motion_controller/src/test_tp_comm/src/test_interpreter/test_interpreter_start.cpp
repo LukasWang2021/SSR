@@ -24,6 +24,13 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    int needed_data_count = 1;
+    if (argc < needed_data_count + 1)
+    {
+        cout << "more parameters are needed" << endl;
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {

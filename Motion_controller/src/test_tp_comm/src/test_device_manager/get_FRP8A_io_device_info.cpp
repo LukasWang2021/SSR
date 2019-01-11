@@ -24,6 +24,13 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    int needed_data_count = 1;
+    if (argc < needed_data_count + 1)
+    {
+        cout << "more parameters are needed" << endl;
+        return -1;
+    }
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -39,9 +46,6 @@ int main(int argc, char* argv[])
     RequestMessageType_Int32 msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
-    int data_temp = 0;
-    printf("Please input data :");
-    cin >> data_temp;
     msg.data.data = atoi(argv[1]);
 
     printf("value = %d\n", msg.data.data);

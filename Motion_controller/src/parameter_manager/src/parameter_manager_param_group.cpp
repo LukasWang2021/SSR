@@ -8,7 +8,7 @@
 #include <parameter_manager_version.h>
 #include <parameter_manager/parameter_manager_param_builder.h>
 #include <parameter_manager/parameter_manager_param_group.h>
-#include <parameter_manager/parameter_manager_error_code.h>
+#include "error_code.h"
 #include <boost/filesystem.hpp>
 #include <memory>
 #include <fstream>
@@ -340,7 +340,7 @@ bool ParamGroup::getParam(const string &key, vector<int> &value)
     }
 }
 
-bool ParamGroup::getParam(const string &key, size_t size, int *value)
+bool ParamGroup::getParam(const string &key, int *value, size_t size)
 {
     vector<int> tmp;
     if (getParam(key, tmp))
@@ -394,7 +394,7 @@ bool ParamGroup::getParam(const string &key, vector<double> &value)
     }
 }
 
-bool ParamGroup::getParam(const string &key, size_t size, double *value)
+bool ParamGroup::getParam(const string &key, double *value, size_t size)
 {
     vector<double> tmp;
     if (getParam(key, tmp))

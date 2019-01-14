@@ -12,8 +12,9 @@
 
 typedef struct 
 {
-    double positions[JOINT_NUM];
+    double angle[JOINT_NUM];
     double omega[JOINT_NUM];
+    double alpha[JOINT_NUM];
     double inertia[JOINT_NUM];
     int point_position;
 }Points;

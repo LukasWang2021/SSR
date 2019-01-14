@@ -1,15 +1,30 @@
 #ifndef PRG_INTERPRETER_COMMON_H_
 #define PRG_INTERPRETER_COMMON_H_
 
+#ifdef WIN32
 #include "fst_datatype.h"
 #include "stdint.h"
 using namespace fst_controller;
+#else
+#include "motion_control_datatype.h"
+#include "stdint.h"
+using namespace fst_mc;
+#endif
 
 #define ADD_INFO_NUM    10
 
-#define TP_XPATH_LEN     1024
+#define TP_XPATH_LEN     512
 
 #define USE_XPATH
+
+
+typedef enum _InterpreterEventType
+{
+    INTERPRETER_EVENT_TYPE_WARING = 1,
+    INTERPRETER_EVENT_TYPE_ERROR,
+    INTERPRETER_EVENT_TYPE_MESSAGE,
+}InterpreterEventType;
+
 
 typedef enum _AdditionalInfomationType
 {
@@ -54,54 +69,16 @@ typedef enum _InstType
     END_PROG,
 }InstType;
 
-typedef enum _InterpreterState
+typedef enum
 {
-    IDLE_R      = 0,    
-    EXECUTE_R   = 1,
-    PAUSED_R    = 2,
-//    WAITING_R   = 3,
-
-    IDLE_TO_EXECUTE_T   = 101,
-    EXECUTE_TO_PAUSE_T  = 102,
-    PAUSE_TO_IDLE_T     = 103,
-    PAUSE_TO_EXECUTE_T  = 104
-    
+    INTERPRETER_IDLE      = 0,    
+    INTERPRETER_EXECUTE   = 1,
+    INTERPRETER_PAUSED    = 2,
+    INTERPRETER_IDLE_TO_EXECUTE   = 101,
+    INTERPRETER_EXECUTE_TO_PAUSE  = 102,
+    INTERPRETER_PAUSE_TO_IDLE     = 103,
+    INTERPRETER_PAUSE_TO_EXECUTE  = 104    
 }InterpreterState;
-
-typedef enum _InterpreterCommand
-{
-    LOAD    = 101,
-    JUMP    = 102,
-    START   = 103,
-    DEBUG   = 104,
-    FORWARD  = 105,
-    BACKWARD = 106,
-    CONTINUE = 107,
-    PAUSE   = 108,
-    ABORT   = 109,
-    SET_AUTO_MODE  = 110,
-		
-    MOD_REG  = 201,
-	READ_REG = 202,
-    DEL_REG  = 203,
-    
-    MOD_IO   = 204,
-    READ_IO  = 205,
-    
-    READ_IO_DEV_INFO  = 206,
-//    UPDATE_IO_DEV_ERROR  = 207,
-    
-    // Jump to 210 for adding IO feature
-    READ_SMLT_STS  = 211,
-	MOD_SMLT_STS   = 212,
-    MOD_SMLT_VAL   = 213,
-    
-    READ_CHG_PR_LST   = 214,
-    READ_CHG_SR_LST   = 215,
-    READ_CHG_R_LST    = 226,
-    READ_CHG_MR_LST   = 227,
-
-}InterpreterCommand;
 
 
 typedef enum _RegDIOType
@@ -160,6 +137,11 @@ typedef enum _RegOperateType
     PL_REG_ID          = 705,
     PL_REG_COMMENT     = 706,
 	// 26 + 6 = 32
+    HOME_REG           = 801,
+    HOME_REG_JOINT     = 802,
+    HOME_REG_ID        = 803,
+    HOME_REG_COMMENT   = 804,
+	// 32 + 4 = 36
 }RegOperateType;
 
 #define REG_TYPE_NUM    32
@@ -220,27 +202,18 @@ typedef enum _AutoMode
     MACRO_TRIGGER_U     = 3,
 }AutoMode;
 
-typedef struct _StartCtrl
-{
-    char        file_name[128];
-}StartCtrl;
-
 typedef struct _InterpreterControl
 {
-    InterpreterCommand cmd;
+    int cmd;
+    // void* request_data_ptr;
     union
     {
-        StartCtrl   start_ctrl;
+        char      start_ctrl[256];
 		AutoMode    autoMode ;
         // int         id;
-#ifdef USE_XPATH
-        char           line[TP_XPATH_LEN];
-#else
-    int             line;
-#endif
-        RegMap      reg;
-        // IOMapPortInfo  dio;
-        IOPathInfo  dioPathInfo;
+        // int            jump_line;    // Jump 
+        char           jump_line[256];
+        int            step_mode;       // auto or debug 
     };
 }InterpreterControl;
 
@@ -307,16 +280,14 @@ typedef struct _Instruction
     int             line;
 #endif
     InstType        type;
-    union 
-    {
-        MotionTarget    target;
-    };
+
+    MotionTarget    target;
     int  loop_cnt;
 	
 	int  current_uf ;
 	int  current_tf ;
-	int  current_ovc ;
-	int  current_oac ;
+	double  current_ovc ;
+	double  current_oac ;
     bool is_additional;
     int add_num;
 #ifdef WIN32
@@ -339,7 +310,7 @@ typedef struct _MoveCommandDestination
 
 typedef struct _RegChgList
 {
-    InterpreterCommand  command;
+    int  command;
     int             count;
 #ifdef WIN32
     char additional; //malloc other memory
@@ -365,6 +336,14 @@ typedef struct _IODeviceInfoShm
     unsigned int input;
     unsigned int output;
 } IODeviceInfoShm;
+
+typedef struct
+{
+    int current_line_num;
+    InterpreterState status;
+    char program_name[256];
+    char current_line_path[256];
+}InterpreterPublish;
 
 
 #endif

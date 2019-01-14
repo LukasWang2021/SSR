@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find service_manager)/launch/service_manager.launch"/>
+  <node name="controller" pkg="controller" type="controller" respawn="false" output="screen">
+  </node>
+
+</launch>

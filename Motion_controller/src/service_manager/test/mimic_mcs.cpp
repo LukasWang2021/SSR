@@ -18,12 +18,13 @@ Summary:    test process
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
+#include "error_code.h"
 
 int main(int argc, char** argv)
 {    
     /* initialize the communicatoin channel. */
     fst_comm_interface::CommInterface comm_mcs;
-    ERROR_CODE_TYPE result = comm_mcs.createChannel(COMM_REQ, COMM_IPC, "mcs");
+    ErrorCode result = comm_mcs.createChannel(COMM_REQ, COMM_IPC, "mcs");
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error when creating channel."<<std::endl;
@@ -34,15 +35,15 @@ int main(int argc, char** argv)
     while (true)
     {
         usleep(50*1000);
-        ERROR_CODE_TYPE result = comm_mcs.send(&request, sizeof(request), COMM_DONTWAIT);
-        if (result == FST_SUCCESS)
+        ErrorCode result = comm_mcs.send(&request, sizeof(request), COMM_DONTWAIT);
+        if (result == SUCCESS)
         {
 //               std::cout<<"send heartbeat req ok."<<std::endl;
         }
 
         ServiceResponse resp;
-        ERROR_CODE_TYPE ret = comm_mcs.recv(&resp, sizeof(resp), COMM_WAIT);
-        if (ret == FST_SUCCESS)
+        ErrorCode ret = comm_mcs.recv(&resp, sizeof(resp), COMM_WAIT);
+        if (ret == SUCCESS)
         {
             size_t size;
             memcpy(&size, &resp.res_buff[0], sizeof(size));

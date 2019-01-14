@@ -1,0 +1,16 @@
+log_level: 1
+controller_server_thread_priority: 50
+controller_server_cycle_time: 1000 
+i2c_req_res_ip: ipc:///tmp/i2c_req_res.ipc
+interpreter_server_thread_priority: 50
+interpreter_server_cycle_time: 1000
+c2i_req_res_ip: ipc:///tmp/c2i_req_res.ipc
+c2i_pub_ip: ipc:///tmp/c2i_pub.ipc
+c2i_event_ip: ipc:///tmp/c2i_event.ipc
+heartbeat_cycle_time: 50000
+heartbeat_ip: ipc:///tmp/ipc_msg_heartbeat.ipc
+interpreter_server_event_buffer_size: 10 
+recv_buffer_size: 1024
+send_buffer_size: 1024
+interpreter_server_publish_cycle_time: 200
+#END

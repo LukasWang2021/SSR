@@ -13,6 +13,7 @@ Summary:    lib to send service to BARE CORE
 #include <string.h>
 #include <unistd.h>
 #include <iostream>
+#include "error_code.h"
 
 namespace fst_service_wrapper
 {
@@ -47,15 +48,15 @@ ServiceWrapper::~ServiceWrapper()
 // Return:  0 -> success.
 //          CREATE_CHANNEL_FAIL -> fail to create a channel.
 //------------------------------------------------------------
-ERROR_CODE_TYPE ServiceWrapper::init(void)
+ErrorCode ServiceWrapper::init(void)
 {
-    ERROR_CODE_TYPE result = comm_.createChannel(COMM_REQ, COMM_IPC, "mcs");
+    ErrorCode result = comm_.createChannel(COMM_REQ, COMM_IPC, "mcs");
     if (result == CREATE_CHANNEL_FAIL)
     {
         std::cout<<"Error in ServiceWrapper::init(): fail to create mcs channel."<<std::endl;
         return CREATE_CHANNEL_FAIL;
     }
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -67,13 +68,13 @@ ERROR_CODE_TYPE ServiceWrapper::init(void)
 //          SEND_MSG_FAIL -> fail.
 //          RECV_MSG_FAIL
 //------------------------------------------------------------
-ERROR_CODE_TYPE ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
+ErrorCode ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
 {
     // attempt to send heartbeat request
     int count = 0;
-    ERROR_CODE_TYPE result = SEND_MSG_FAIL;
+    ErrorCode result = SEND_MSG_FAIL;
     ServiceRequest req = {MONITOR_HEARTBEAT_SID, ""};
-    while (result != FST_SUCCESS)
+    while (result != SUCCESS)
     {
         result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
@@ -88,7 +89,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
     // attempt to recv heartbeat response.
     count = 0;
     result = RECV_MSG_FAIL;
-    while (result != FST_SUCCESS)
+    while (result != SUCCESS)
     {
         usleep(500);
         result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
@@ -112,13 +113,13 @@ ERROR_CODE_TYPE ServiceWrapper::sendHeartbeatRequest(ServiceResponse &resp)
 //          SEND_MSG_FAIL -> fail to send a msg.
 //          RECV_MSG_FAIL -> fail to recv a msg within limited time.
 //------------------------------------------------------------
-ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
+ErrorCode ServiceWrapper::sendResetRequest(void)
 {
     // attempt to send reset request
     int count = 0;
-    ERROR_CODE_TYPE result = SEND_MSG_FAIL;
+    ErrorCode result = SEND_MSG_FAIL;
     ServiceRequest req = {JTAC_CMD_SID, ""};
-    while (result != FST_SUCCESS)
+    while (result != SUCCESS)
     {
         result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
@@ -130,7 +131,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
     count = 0;
     result = RECV_MSG_FAIL;
     ServiceResponse resp;
-    while (result != FST_SUCCESS)
+    while (result != SUCCESS)
     {
         usleep(500);
         result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
@@ -139,7 +140,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
             return result;
     }
 //    std::cout<<"recv reset count = "<<count<<std::endl;
-    return FST_SUCCESS;
+    return SUCCESS;
 }
    
 
@@ -151,15 +152,15 @@ ERROR_CODE_TYPE ServiceWrapper::sendResetRequest(void)
 // Return:  0 -> success.
 //          SEND_MSG_FAIL -> fail.
 //------------------------------------------------------------
-ERROR_CODE_TYPE ServiceWrapper::sendStopRequest(void)
+ErrorCode ServiceWrapper::sendStopRequest(void)
 {
     // attempt to send stop request.
     int count = 0;
-    ERROR_CODE_TYPE result = SEND_MSG_FAIL;
+    ErrorCode result = SEND_MSG_FAIL;
     ServiceRequest req = {JTAC_CMD_SID, ""};
     int stop = 1;
     memcpy(&req.req_buff[0], &stop, sizeof(stop));
-    while (result != FST_SUCCESS)
+    while (result != SUCCESS)
     {
         result = comm_.send(&req, sizeof(req), COMM_DONTWAIT);
         ++count;
@@ -171,7 +172,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendStopRequest(void)
     count = 0;
     result = RECV_MSG_FAIL;
     ServiceResponse resp;
-    while (result != FST_SUCCESS)
+    while (result != SUCCESS)
     {
         usleep(500);
         result = comm_.recv(&resp, sizeof(resp), COMM_DONTWAIT);
@@ -180,7 +181,7 @@ ERROR_CODE_TYPE ServiceWrapper::sendStopRequest(void)
             return result;
     }
 //    std::cout<<"recv stop count = "<<count<<std::endl;
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 } //namespace fst_service_wrapper

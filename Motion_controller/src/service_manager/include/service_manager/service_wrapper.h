@@ -10,13 +10,14 @@ Summary:    lib to send service to BARE CORE
 #ifndef MIDDLEWARE_TO_MEM_SERVICE_WRAPPER_H_
 #define MIDDLEWARE_TO_MEM_SERVICE_WRAPPER_H_
 
-#include "error_code/error_code.h"
+#include "error_code.h"
 #include "comm_interface/comm_interface.h"
 #include "service_actions/response_actions.h"
 #include "struct_to_mem/struct_joint_command.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
+#include "base_datatype.h"
 
 namespace fst_service_wrapper
 {
@@ -50,7 +51,7 @@ public:
     // Return:  0 -> success.
     //          CREATE_CHANNEL_FAIL -> fail to create a channel.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE init(void);
+    ErrorCode init(void);
 
     //------------------------------------------------------------
     // Function:  sendHeartbeatRequest
@@ -60,7 +61,7 @@ public:
     // Return:  0 -> success.
     //          SEND_MSG_FAIL -> fail.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE sendHeartbeatRequest(ServiceResponse &resp);
+    ErrorCode sendHeartbeatRequest(ServiceResponse &resp);
 
     //------------------------------------------------------------
     // Function:  sendResetRequest
@@ -70,7 +71,7 @@ public:
     // Return:  0 -> success.
     //          SEND_MSG_FAIL -> fail.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE sendResetRequest(void);
+    ErrorCode sendResetRequest(void);
 
     //------------------------------------------------------------
     // Function:  sendStopRequest
@@ -80,7 +81,7 @@ public:
     // Return:  0 -> success.
     //          SEND_MSG_FAIL -> fail.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE sendStopRequest(void);
+    ErrorCode sendStopRequest(void);
 
     // The attempt number to send a request or receive a response.
     static const int ATTEMPTS = 100;

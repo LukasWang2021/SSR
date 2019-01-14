@@ -9,11 +9,12 @@
 #ifndef _PARAMETER_MANAGER_PARAM_VALUE_H
 #define _PARAMETER_MANAGER_PARAM_VALUE_H
 
-#include <parameter_manager/parameter_manager_error_code.h>
 #include <map>
 #include <string>
 #include <vector>
-#include <map>
+#include "base_datatype.h"
+#include "error_code.h"
+
 //#include <unordered_map>
 
 

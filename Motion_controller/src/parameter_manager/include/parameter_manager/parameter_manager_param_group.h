@@ -11,11 +11,12 @@
 #include <parameter_manager/parameter_manager_param_value.h>
 #include <string>
 #include <vector>
+#include "base_datatype.h"
 
 
 namespace fst_parameter {
 
-typedef unsigned long long int ErrorCode;
+//typedef unsigned long long int ErrorCode;
 enum ScalarType {
     e_type_invalid,
     e_type_bool,
@@ -49,8 +50,8 @@ class ParamGroup {
     bool getParam(const std::string &key, std::vector<std::string> &value);
     bool getParam(const std::string &key, ParamValue &value);
 
-    bool getParam(const std::string &key, size_t size, int *value);
-    bool getParam(const std::string &key, size_t size, double *value);
+    bool getParam(const std::string &key, int *value, size_t size);
+    bool getParam(const std::string &key, double *value, size_t size);
 
     bool hasParam(const std::string &key);
     

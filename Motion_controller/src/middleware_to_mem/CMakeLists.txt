@@ -38,6 +38,7 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}
+    ${depend_PATH_INC}/common 
 )
 
 
@@ -58,18 +59,6 @@ add_library(comm_interface
     src/comm_interface.cpp
 )
 
-add_executable(test_app
-    test/comm_tcp_server_test.cpp
-)
-
-add_executable(test_app2
-    test/comm_tcp_client2_test.cpp
-)
-
-add_executable(test_app3
-    test/comm_tcp_client_win7.cpp
-)
-
 target_link_libraries(middleware_to_mem
     ${catkin_LIBRARIES}
 )
@@ -83,21 +72,6 @@ target_link_libraries(comm_interface
     ${catkin_LIBRARIES}
 )
 
-target_link_libraries(test_app
-    ${catkin_LIBRARIES}
-    comm_interface
-)
-
-target_link_libraries(test_app2
-    ${catkin_LIBRARIES}
-    comm_interface
-)
-
-target_link_libraries(test_app3
-    ${catkin_LIBRARIES}
-    comm_interface
-)
-
 #############
 ## Install ##
 #############
@@ -109,7 +83,4 @@ install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
 )
 
-install(TARGETS test_app test_app2 test_app3
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 

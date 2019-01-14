@@ -17,7 +17,7 @@ fst_controller::DataMonitor::DataMonitor(const char *ip_addr, int port)
     {
         snprintf(ip_str,30,"%s:%d", ip_addr, port);
         std::cout<<ip_str<<std::endl;
-        ERROR_CODE_TYPE fd = p_comm_->createChannel(COMM_REP, COMM_TCP, ip_str);
+        ErrorCode fd = p_comm_->createChannel(COMM_REP, COMM_TCP, ip_str);
         openMem(MEM_CORE);
         if (fd == CREATE_CHANNEL_FAIL)
         {
@@ -101,7 +101,7 @@ bool fst_controller::DataMonitor::alignNcheck(int & k,int bytesize,int totalsize
 bool fst_controller::DataMonitor::sendResponse(fst_comm_interface::CommInterface* pcomm,const 
 void *buf, int buf_size)
 {
-    ERROR_CODE_TYPE rc;
+    ErrorCode rc;
     bool res = false;
     int retry = 6;
     do
@@ -110,9 +110,9 @@ void *buf, int buf_size)
                 buf_size, 
                 COMM_DONTWAIT);
         retry--;
-    }while(FST_SUCCESS != rc && retry>0);  
+    }while(SUCCESS != rc && retry>0);  
 
-    if(FST_SUCCESS == rc)
+    if(SUCCESS == rc)
         res = true;
     return res;
 }
@@ -160,7 +160,7 @@ void fst_controller::DataMonitor::onFinishRecord(DataMonitor* moni)
 
 
 
-int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor* moni)
+/*int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor* moni)
 {
     int res;
     static int l_seq = -1;
@@ -176,6 +176,87 @@ int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor*
     if(moni->data_state_>0)
     {
         //data has prepared
+        
+        if(reqst_seq == l_seq + 1)
+        {
+            //right sequence
+            moni->data_package_.length = moni->record_fifo_->size();
+            if(moni->data_package_.length>PACKAGE_SIZE) 
+                moni->data_package_.length = PACKAGE_SIZE;
+
+            moni->data_package_.length = moni->record_fifo_->fetch_batch(
+                                                           moni->data_package_.record,
+                                                           moni->data_package_.length);
+            moni->data_package_.seq = reqst_seq;
+            cnt_help = moni->data_package_.length;
+            //printf("Get %d records from fifo, according to %dth sequence\n",cnt_help,reqst_seq);
+        }
+        else if(reqst_seq != l_seq)
+        {
+            //printf("Wrong sequence number!!!\n");
+        }
+        else
+        {
+            //retry
+            //do nothing
+            cnt_help = 0;
+        }
+
+        res = sendResponse(moni->p_comm_,
+                         &moni->data_package_, 
+                         sizeof(moni->data_package_));
+
+        if(true == res)
+        {
+            l_seq = moni->data_package_.seq;
+            cnt += cnt_help;
+            //printf("%d records has been sent\n",cnt);
+        }
+
+
+        
+        if((moni->data_package_.length<=0)||(true != res))
+        {
+            onFinishRecord(moni);
+        }
+
+    }
+    else
+    {
+        moni->data_package_.length = 0;
+        moni->data_package_.seq = -1;
+        l_seq = moni->data_package_.seq;
+        moni->p_comm_->send(&moni->data_package_, 
+                    sizeof(moni->data_package_), 
+                    COMM_DONTWAIT);
+        printf("ERR: get data before data is ready!!!\n");
+    }    
+    return l_seq;
+}*/
+
+int fst_controller::DataMonitor::onGetdataRequest(unsigned char seq,DataMonitor* moni)
+{
+    int res;
+    static int l_seq = -1;
+    static int cnt = 0;
+    int cnt_help = 0;
+    int reqst_seq = int(seq);
+
+    if(moni->data_state_>0)
+    {
+        //data has prepared
+        if(0==seq)
+        {
+            int extralen = moni->record_fifo_->size()-(int)(moni->snapshot_size_);
+            if(extralen>=0)
+            {
+                //data in fifo larger than need, remove some data
+                moni->record_fifo_->fetch_batch(moni->data_package_.record, extralen);
+                l_seq = -1;
+                cnt = 0;
+            }
+            //printf("Prepared to send fist package\n");
+        }        
         
         if(reqst_seq == l_seq + 1)
         {
@@ -260,7 +341,7 @@ void fst_controller::DataMonitor::pcComm_Thread(DataMonitor* moni)
                     //printf("data triggered and locked\n");
                 }
             }
-            if(moni->p_comm_->recv(&req, 2, COMM_DONTWAIT)!=FST_SUCCESS)
+            if(moni->p_comm_->recv(&req, 2, COMM_DONTWAIT)!=SUCCESS)
             {
                 usleep(1000);
 

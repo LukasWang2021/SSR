@@ -137,7 +137,7 @@ int fst_controller::Servconf::downloadConf(fst_controller::ServoService &serv,
     data = new char[length];
     
     int addr;
-    ERROR_CODE_TYPE err;
+    ErrorCode err;
     l_len = getConf(startaddr, data, length);
 
     std::cout << "l_len" << l_len << std::endl;
@@ -152,7 +152,7 @@ int fst_controller::Servconf::downloadConf(fst_controller::ServoService &serv,
             
             err = serv.downloadParam(addr, &data[addr - startaddr], seg_len);
             
-            if (FST_SUCCESS == err)
+            if (SUCCESS == err)
             {
                 std::cout << "downloadParam done" << std::endl;
                 std::cout << "addr=" << addr << ", startaddr=" << startaddr << ", seg_len=" << seg_len << std::endl;
@@ -190,7 +190,7 @@ int fst_controller::Servconf::uploadConf(fst_controller::ServoService &serv, int
     data = new char[l_len];
 
     int addr;
-    ERROR_CODE_TYPE err;
+    ErrorCode err;
 
     if (l_len > 0)
     {
@@ -202,7 +202,7 @@ int fst_controller::Servconf::uploadConf(fst_controller::ServoService &serv, int
             
             std::cout << "upload param: addr=" << addr << ", startaddr=" << startaddr << ", seg_len=" << seg_len;
             err = serv.uploadParam(addr, &data[addr - startaddr], seg_len);
-            if (FST_SUCCESS == err)
+            if (SUCCESS == err)
             {
                 std::cout << " - done" << std::endl;
                 addr += seg_len;
@@ -217,7 +217,7 @@ int fst_controller::Servconf::uploadConf(fst_controller::ServoService &serv, int
         l_len = addr - startaddr;
     }
     
-    if (FST_SUCCESS == err)
+    if (SUCCESS == err)
     {
         l_len = setConf(startaddr, data, l_len);
         std::cout << "success" << std::endl;

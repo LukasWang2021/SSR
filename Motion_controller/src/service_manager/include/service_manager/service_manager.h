@@ -11,12 +11,14 @@ Summary:    dealing with service
 #define SERVICE_MANAGER_SERVICE_MANAGER_H_
 
 #include <vector>
-#include "service_manager_error_code.h"
+#include "error_code.h"
 #include "middleware_to_mem/middleware_to_sharedmem.h"
 #include "comm_interface/comm_interface.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 #include "service_actions/response_actions.h"
+#include "base_datatype.h"
+
 
 namespace fst_service_manager
 {
@@ -59,7 +61,7 @@ public:
     // Return:  0 -> success.
     //          ERROR_CODE -> failed.
     //------------------------------------------------------------
-    ERROR_CODE_TYPE init(void);
+    ErrorCode init(void);
 
     //------------------------------------------------------------
     // Function:  receiveRequest
@@ -110,7 +112,7 @@ public:
     // Out:     None
     // Return:  true -> receive a heartbeat request.
     //          false -> not heartbeat request.
-    //------------------------------------------------------------
+    //------------------------------------------------------------loop_count_core_
     bool isLocalRequest(ServiceRequest req);
 
     //------------------------------------------------------------
@@ -137,7 +139,7 @@ public:
     // Function:  getResponse
     // Summary: get the service response from BARE CORE. 
     // In:      None
-    // Out:     None
+    // Out:     Noneloop_count_core_
     // Return:  true -> success.
     //          false -> failed. 
     //------------------------------------------------------------
@@ -152,7 +154,7 @@ public:
     // Return:  0 -> success to send a request and receive a response.
     //          BARE_CORE_TIMEOUT -> timeout. 
     //------------------------------------------------------------
-    ERROR_CODE_TYPE interactBareCore(void);
+    ErrorCode interactBareCore(void);
 
     //------------------------------------------------------------
     // Function:  storeError
@@ -162,7 +164,7 @@ public:
     // Return:  true -> A error is pushed into error_fifo_.
     //          false -> did nothing. 
     //------------------------------------------------------------
-    bool storeError(ERROR_CODE_TYPE error);
+    bool storeError(ErrorCode error);
 
     //------------------------------------------------------------
     // Function:  doesErrorExist
@@ -172,12 +174,12 @@ public:
     // Return:  true -> the error code exists in fifo.
     //          false -> the error code doesn't exist in fifo. 
     //------------------------------------------------------------
-    bool doesErrorExist(ERROR_CODE_TYPE error);
+    bool doesErrorExist(ErrorCode error);
 
     //------------------------------------------------------------
     // Function:  manageResponse
     // Summary: deal with the service response from BARE CORE. 
-    //          Some responses are deal with locally. 
+    //          Some responses are deal with locally. git@git.foresight-robotics.cn:MC_System/Application.git
     //          Some are sent to the other processes.
     // In:      None
     // Out:     None
@@ -261,7 +263,9 @@ public:
     static const int HEARTBEAT_INTERVAL_CORE = 100; // 1ms * 100.
 
     // The BARE CORE timeout is 50ms. The unit is usec.
-    static const int HEARTBEAT_CORE_TIMEOUT = 50000;
+    //static const int HEARTBEAT_CORE_TIMEOUT = 50000;
+    // The attempt number to communicate with barecore.
+    static const int HEARTBEAT_CORE_TIMEOUT_COUNT = 5;
 
     // The max number of loops to recv heartbeat request from MCS.
     static const int HEARTBEAT_INTERVAL_MCS= 100; // 1ms * 100.
@@ -315,7 +319,7 @@ private:
     std::vector<ServiceResponse> response_fifo_;
 
     // The fifo is to store error codes.
-    std::vector<ERROR_CODE_TYPE> error_fifo_;
+    std::vector<ErrorCode> error_fifo_;
 
     // Used to respond local services from BARE CORE.
     fst_response_action::ResponseAction response_action_;

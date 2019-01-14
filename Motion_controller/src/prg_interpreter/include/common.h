@@ -7,19 +7,14 @@
  */
 #ifndef INTERPRETER_COMMON_H_
 #define INTERPRETER_COMMON_H_
-#include "log_manager/log_manager_logger.h"
 
-extern fst_log::Logger glog;
-
-#define LOG_INIT()    \
-    do {\
-            glog.initLogger("interpreter");\
-            glog.setDisplayLevel(fst_log::MSG_LEVEL_INFO);\
-    }while(0)
-
-#define FST_INFO    glog.info
-#define FST_ERROR   glog.error
-#define FST_WARN    glog.warn
+#ifdef WIN32
+#define FST_INFO    printf("\n"),printf
+#define FST_ERROR   printf("\n"),printf
+#define FST_WARN    printf("\n"),printf
+#else 
+#include "common_log.h"
+#endif
 
 
 #endif

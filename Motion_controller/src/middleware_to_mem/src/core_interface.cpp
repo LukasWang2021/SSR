@@ -13,6 +13,7 @@ Summary:    lib to communicate with core1
 #include <iostream>
 #include <sstream>
 #include <struct_to_mem/struct_joint_command.h>
+#include <struct_to_mem/struct_trajectory_segment.h>
 #include "middleware_to_mem_version.h"
 
 namespace fst_core_interface
@@ -82,7 +83,7 @@ CoreInterface::~CoreInterface()
 // Return:  0 -> succeed to initialize the shared memory.
 //          OPEN_CORE_MEM_FAIL -> failed 
 //------------------------------------------------------------
-ERROR_CODE_TYPE CoreInterface::init(void)
+ErrorCode CoreInterface::init(void)
 {
     handle_core_ = openMem(MEM_CORE);
     if (handle_core_ == -1) 
@@ -91,7 +92,7 @@ ERROR_CODE_TYPE CoreInterface::init(void)
     }
     clearSharedmem(MEM_CORE);
     error_flag_ = 0;
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -134,8 +135,8 @@ void CoreInterface::initTrajectory(void)
 //          WRITE_CORE_MEM_FAIL -> failed.
 //          OPEN_CORE_MEM_FAIL -> failed
 //------------------------------------------------------------
-ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_level)
-{   
+ErrorCode CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_level)
+{
     if (error_flag_ != 0)
         return error_flag_;
 
@@ -147,8 +148,9 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_
         ts_.points[i].valid_level = valid_level;
         for (int j = 0; j < JOINT_NUM; ++j)
         {
-            ts_.points[i].positions[j] = jc.points[i].positions[j];
+            ts_.points[i].positions[j] = jc.points[i].angle[j];
             ts_.points[i].velocities[j] = jc.points[i].omega[j];
+            ts_.points[i].accelerations[j] = jc.points[i].alpha[j];
             ts_.points[i].effort[j] = jc.points[i].inertia[j];
         }
         //Adding time stamp for trajectory. 
@@ -186,10 +188,11 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_
         nsec_ = prev_nsec_;
         return WRITE_CORE_MEM_FAIL;
     }
+
     //printf("first:%d, level:%d, last:%d, level:%d\n", (ts_.points[0].time_from_start.sec*1000 +ts_.points[0].time_from_start.nsec/1000000),jc.points[0].point_position, (ts_.points[ts_.total_points-1].time_from_start.sec*1000 +ts_.points[ts_.total_points-1].time_from_start.nsec/1000000),jc.points[ts_.total_points-1].point_position);
 
 
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -201,7 +204,7 @@ ERROR_CODE_TYPE CoreInterface::sendBareCore(JointCommand jc, unsigned int valid_
 //          READ_CORE_MEM_FAIL -> failed. 
 //          OPEN_CORE_MEM_FAIL -> failed.
 //------------------------------------------------------------
-ERROR_CODE_TYPE CoreInterface::recvBareCore(FeedbackJointState &fbjs)
+ErrorCode CoreInterface::recvBareCore(FeedbackJointState &fbjs)
 {
     if (error_flag_ != 0)
         return error_flag_;
@@ -209,7 +212,7 @@ ERROR_CODE_TYPE CoreInterface::recvBareCore(FeedbackJointState &fbjs)
     int result = readWriteSharedMem(handle_core_, &fbjs, "FeedbackJointState", MEM_READ);
     if (result == false) 
         return READ_CORE_MEM_FAIL;
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 
@@ -221,7 +224,7 @@ ERROR_CODE_TYPE CoreInterface::recvBareCore(FeedbackJointState &fbjs)
 // Return:  0 -> success to send the trajectory to CORE1.
 //          WRITE_CORE_MEM_FAIL -> failed.
 //------------------------------------------------------------
-ERROR_CODE_TYPE CoreInterface::sendBareCoreFake(JointCommand jc)
+ErrorCode CoreInterface::sendBareCoreFake(JointCommand jc)
 {
 
     if (joints_in_fifo_.size() > 40) 
@@ -231,7 +234,7 @@ ERROR_CODE_TYPE CoreInterface::sendBareCoreFake(JointCommand jc)
     {
         joints_in_fifo_.push_back(jc.points[i]);
     }
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------
@@ -241,7 +244,7 @@ ERROR_CODE_TYPE CoreInterface::sendBareCoreFake(JointCommand jc)
 // Out:     fbjs -> the actual joint states.
 // Return:  0 -> success to read the actural joint states.
 //------------------------------------------------------------
-ERROR_CODE_TYPE CoreInterface::recvBareCoreFake(FeedbackJointState &fbjs)
+ErrorCode CoreInterface::recvBareCoreFake(FeedbackJointState &fbjs)
 {
     //if no trajectory, feedback the last states.
     if (joints_in_fifo_.empty()) 
@@ -258,7 +261,7 @@ ERROR_CODE_TYPE CoreInterface::recvBareCoreFake(FeedbackJointState &fbjs)
     //set trajectory joint states as feedback joint states
     for (int j = 0; j < JOINT_NUM; ++j)
     {
-        fbjs_.position[j] = joints_in_fifo_[0].positions[j];
+        fbjs_.position[j] = joints_in_fifo_[0].angle[j];
         fbjs.position[j] = fbjs_.position[j];
     }
     int num;
@@ -268,7 +271,7 @@ ERROR_CODE_TYPE CoreInterface::recvBareCoreFake(FeedbackJointState &fbjs)
         num = joints_in_fifo_.size();
     joints_in_fifo_.erase(joints_in_fifo_.begin(), joints_in_fifo_.begin()+num-1);
     fbjs.state = STATE_RUNNING;
-    return FST_SUCCESS;
+    return SUCCESS;
 }
 
 //------------------------------------------------------------

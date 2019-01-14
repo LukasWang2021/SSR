@@ -34,7 +34,7 @@ typedef struct
     unsigned int total_points;
     unsigned int seq;  
     unsigned int last_fragment;
-}TrajectorySegment;
+}TrajectorySeg;
 
 
 #endif //MIDDLEWARE_TO_MEM_STRUCT_TRAJECTORY_SEGMENT_H_

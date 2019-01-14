@@ -38,6 +38,7 @@ include_directories(
     include
     ${catkin_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}
+    ${depend_PATH_INC}/common 
 )
 
 

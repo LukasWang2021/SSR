@@ -1,102 +1,100 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(io_manager)
 
-set(${PROJECT_NAME}_VERSION_MAJOR 1)
-set(${PROJECT_NAME}_VERSION_MINOR 0)
-set(${PROJECT_NAME}_VERSION_PATCH 0)
-string(TIMESTAMP BUILD_TIME \"%Y-%m-%d|%H:%M:%S\")
-
-set(${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH})
-
-# configure a header file to pass some settings to the source code.
-configure_file(
-    "${PROJECT_SOURCE_DIR}/include/version.h.in"
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version.h" 
-)
-
-# write the verson info to a file
-file(WRITE ${PROJECT_NAME}_version "${PROJECT_NAME}:${${PROJECT_NAME}_VERSION}\n")
-
-
 find_package(catkin REQUIRED COMPONENTS
-    parameter_manager
-    ioboard
 )
 
 if(catkin_CROSS)
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
+    set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_CROSS})
     set(catkin_LIBRARIES ${catkin_LIBRARYS_CROSS})
+    set(CMAKE_CXX_FLAGS "-DCROSS_PLATFORM")
+    set(CMAKE_C_FLAGS "-DCROSS_PLATFORM")
     message(STATUS "ARM-Cross")
 else()
-	set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_x86})
+    set(catkin_INCLUDE_DIRS ${catkin_INCLUDE_DIRS_x86})
     set(catkin_LIBRARIES ${catkin_LIBRARYS_x86})
     message(STATUS "x86-64")
 endif()
 
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
-    ${depend_PATH_INC}/parameter_manager/include
-    ${depend_PATH_INC}/ioboard/include
-)
+    ${depend_PATH_INC}/common
+    )
 
 catkin_package(
+    INCLUDE_DIRS include
     LIBRARIES io_manager
+    DEPENDS device_manager
+    DEPENDS parameter_manager
+    DEPENDS error_monitor
+    DEPENDS xml_help
+    DEPENDS fst_io_device
+    DEPENDS thread_help
+    DEPENDS modbus_manager
+    DEPENDS virtual_io_device
 )
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -O0 -DPB_FIELD_32BIT -DSIMMULATION")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -D PB_FIELD_32BIT -D_GLIBCXX_USE_CXX11_ABI=0")
 
 include_directories(
     include
-    ${catkin_INCLUDE_DIRS}
-    ${PROJECT_BINARY_DIR}
+    ${catkin_INCLUDE_DIRS}  
+    ${depend_PATH_INC}/base_device/include
+    ${depend_PATH_INC}/common
+    ${depend_PATH_INC}/device_manager/include
+    ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/log_manager/include
+    ${depend_PATH_INC}/error_monitor/include
+    ${depend_PATH_INC}/xml_help/include
+    ${depend_PATH_INC}/fst_io_device/include
+    ${depend_PATH_INC}/virtual_io_device/include
+    ${depend_PATH_INC}/thread_help/include/
+    ${depend_PATH_INC}/modbus_manager/include
+    ${depend_PATH_INC}/protos/include
 )
 
-#############
-##  Build  ##
-#############
+aux_source_directory(src BASE_SRCS)
+
 add_library(io_manager
-    src/io_manager.cpp
-)
-
-add_executable(io_manager_node
-    src/io_manager_node.cpp
-)
+        ${BASE_SRCS}
+        )
 
 target_link_libraries(io_manager
-    ${catkin_LIBRARIES}
-    parameter_manager
-    ioboard
+        ${catkin_LIBRARIES}
+        parameter_manager
+        device_manager
+        error_monitor
+        xml_help
+        fst_io_device
+        virtual_io_device
+        thread_help
+        modbus_manager
+        virtual_io_device
+        )
+
+add_executable(io_test
+    test/io_test.cpp
 )
 
-target_link_libraries(io_manager_node
+target_link_libraries(io_test
     ${catkin_LIBRARIES}
     io_manager
+    device_manager
 )
 
-#############
-## Install ##
-#############
 install(TARGETS io_manager
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        )
 
-install(TARGETS io_manager_node
+install(TARGETS	io_test
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(FILES config/io_0.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+install(FILES config/io_manager.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
-install(FILES config/io_1.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+install(DIRECTORY config
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-install(FILES config/io_emulator.yaml
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/configurable
-)
-
-install(FILES ${PROJECT_NAME}_version 
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/version
-)
-

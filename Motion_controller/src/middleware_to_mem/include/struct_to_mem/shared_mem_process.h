@@ -20,7 +20,7 @@
 typedef struct
 {
     DECLARE_ITEM(JointCommand);
-//    DECLARE_ITEM(TrajectorySegment);
+//    DECLARE_ITEM(TrajectorySeg);
     DECLARE_ITEM(FeedbackJointState);
     DECLARE_ITEM(ServiceRequest);
     DECLARE_ITEM(ServiceResponse);
@@ -32,7 +32,7 @@ typedef struct
 FunctionTable tableProcess[MEM_TABLE_PROCESS_LEN] = 
 {
     MEM_PROCESS_ITEM(JointCommand, MEM_HANDSHAKE, "JointCommand"),        
-//    MEM_PROCESS_ITEM(TrajectorySegment, MEM_HANDSHAKE, "TrajectorySegment"),
+//    MEM_PROCESS_ITEM(TrajectorySeg, MEM_HANDSHAKE, "TrajectorySegment"),
     MEM_PROCESS_ITEM(FeedbackJointState, MEM_NO_HANDSHAKE, "FeedbackJointState"), 
     MEM_PROCESS_ITEM(ServiceRequest, MEM_HANDSHAKE, "ServiceRequest"),
     MEM_PROCESS_ITEM(ServiceResponse, MEM_HANDSHAKE, "ServiceResponse"),

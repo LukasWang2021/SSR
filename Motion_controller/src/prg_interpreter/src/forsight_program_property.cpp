@@ -22,16 +22,16 @@ using namespace std;
 int parseCart(struct thread_control_block * objThreadCntrolBlock, 
 			   cJSON *jsonCart, PoseEuler & cart)
 {
-	int numentries=0,i=0,fail=0;
+	// int numentries=0; int i=0; int fail=0;
 	cJSON *child=jsonCart->child;
 
-	while (child && !fail)
+	while (child) //  && !fail)
 	{
-	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	FST_INFO("parsePosesContent: cJSON_Array %s", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			// printf("cJSON_Number %f\n", child->valuedouble); 
+			// FST_INFO("cJSON_Number %f", child->valuedouble); 
 			if(strcmp(child->string, "a") == 0)
 				cart.orientation.a = child->valuedouble;
 			else if(strcmp(child->string, "b") == 0)
@@ -46,9 +46,9 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 				cart.position.z = child->valuedouble;
 			break;
 		case cJSON_String:	
-			printf("cJSON_String %s\n", child->valuestring); break;
+			FST_INFO("cJSON_String %s", child->valuestring); break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n"); 
+			// FST_INFO("cJSON_Object"); 
 			break;
 		}
 		child=child->next;
@@ -59,16 +59,16 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 int parseJoint(struct thread_control_block * objThreadCntrolBlock, 
 			  cJSON *jsonJoint, Joint & joint)
 {
-	int numentries=0,i=0,fail=0;
+	// int numentries=0,i=0,fail=0;
 	cJSON *child=jsonJoint->child;
 	
-	while (child && !fail)
+	while (child) //  && !fail)
 	{
-	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	FST_INFO("parsePosesContent: cJSON_Array %s", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			// printf("cJSON_Number %f\n", child->valuedouble); 
+			// FST_INFO("cJSON_Number %f", child->valuedouble); 
 			if(strcmp(child->string, "j1") == 0)
 				joint.j1 = child->valuedouble;
 			else if(strcmp(child->string, "j2") == 0)
@@ -83,9 +83,9 @@ int parseJoint(struct thread_control_block * objThreadCntrolBlock,
 				joint.j6 = child->valuedouble;
 			break;
 		case cJSON_String:	
-			printf("cJSON_String %s\n", child->valuestring); break;
+			FST_INFO("cJSON_String %s", child->valuestring); break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n"); 
+			// FST_INFO("cJSON_Object"); 
 			break;
 		}
 		child=child->next;
@@ -96,16 +96,16 @@ int parseJoint(struct thread_control_block * objThreadCntrolBlock,
 int parseAdditionalE(struct thread_control_block * objThreadCntrolBlock, 
 			   cJSON *jsonAdditionalE, AdditionalE & additionalE)
 {
-	int numentries=0,i=0,fail=0;
+	// int numentries=0,i=0,fail=0;
 	cJSON *child=jsonAdditionalE->child;
 	
-	while (child && !fail)
+	while (child) //  && !fail)
 	{
-	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	FST_INFO("parsePosesContent: cJSON_Array %s", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			// printf("cJSON_Number %f\n", child->valuedouble); 
+			// FST_INFO("cJSON_Number %f", child->valuedouble); 
 			if(strcmp(child->string, "e1") == 0)
 				additionalE.e1 = child->valuedouble;
 			else if(strcmp(child->string, "e2") == 0)
@@ -114,9 +114,9 @@ int parseAdditionalE(struct thread_control_block * objThreadCntrolBlock,
 				additionalE.e3 = child->valuedouble;
 			break;
 		case cJSON_String:	
-			printf("cJSON_String %s\n", child->valuestring); break;
+			FST_INFO("cJSON_String %s", child->valuestring); break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n"); 
+			// FST_INFO("cJSON_Object"); 
 			break;
 		}
 		child=child->next;
@@ -135,19 +135,19 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 	char var[128];
 	eval_value value ;
 
-	int numentries=0,i=0,fail=0;
+	int numentries=0; // ,i=0,fail=0;
 	cJSON *child=jsonPoseContent->child;
 	while (child) 
 		numentries++, child=child->next;
 	
 	child=jsonPoseContent->child;
-	while (child && !fail)
+	while (child) //  && !fail)
 	{
-	//	printf("parsePosesContent: cJSON_Array %s\n", child->string);
+	//	FST_INFO("parsePosesContent: cJSON_Array %s", child->string);
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			// printf("cJSON_Number %d\n", child->valueint);
+			// FST_INFO("cJSON_Number %d", child->valueint);
 			if(strcmp(child->string, "id") == 0)
 			{
 				id = child->valueint ;
@@ -171,7 +171,7 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 			}
 			break;
 		case cJSON_Object:	
-			// printf("cJSON_Object\n"); 
+			// FST_INFO("cJSON_Object"); 
 			if(strcmp(child->string, "cart") == 0)
 				parseCart(objThreadCntrolBlock, child, cart);
 			else if(strcmp(child->string, "joint") == 0)
@@ -209,27 +209,27 @@ int parsePosesContent(struct thread_control_block * objThreadCntrolBlock,
 int parsePoses(struct thread_control_block * objThreadCntrolBlock, 
 			 cJSON *jsonPose)
 {
-	int numentries=0,i=0,fail=0;
+	int numentries=0; // ,i=0,fail=0;
 	cJSON *child=jsonPose->child;
 	while (child) 
 		numentries++, child=child->next;
 	
 	child=jsonPose->child;
 	// include NULL check
-	while (child && !fail)
+	while (child) //  && !fail)
 	{
 		switch ((child->type)&255)
 		{
 		case cJSON_Number:	
-			// printf("cJSON_Number %s : %d\n", 
+			// FST_INFO("cJSON_Number %s : %d", 
 			//   	child->string, child->valueint); 
 			break;
 		case cJSON_String:	
-			printf("cJSON_String %s : %s\n", 
+			FST_INFO("cJSON_String %s : %s", 
 				child->string, child->valuestring); 
 			break;
 		case cJSON_Object:	
-			// printf("cJSON_Object %s \n", child->string); 
+			// FST_INFO("cJSON_Object %s ", child->string); 
 			parsePosesContent(objThreadCntrolBlock, child);
 			break;
 		}
@@ -251,12 +251,12 @@ int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * 
 		switch ((child->type)&255)
 		{
 		case cJSON_True:	
-			printf("cJSON_True"); break;
+			FST_INFO("cJSON_True"); break;
 		case cJSON_Number:		
 			{
 				if(strcmp(child->string, "launchCode") == 0)
 				{
-					printf("cJSON_Number %s : %d\n", 
+					FST_INFO("cJSON_Number %s : %d", 
 						child->string, child->valueint);
 				}
 			}
@@ -277,13 +277,13 @@ int parseProgramProp(struct thread_control_block * objThreadCntrolBlock, char * 
 			break;
 		case cJSON_Array:	
 			{
-				printf("parseDIOMap: cJSON_Array %s\n", child->string);
+				FST_INFO("parseDIOMap: cJSON_Array %s", child->string);
 				if(strcmp(child->string, "poses") == 0)
 					parsePoses(objThreadCntrolBlock, child);
 				break;
 			}
 		case cJSON_Object:	
-			// printf("cJSON_Object\n"); 
+			// FST_INFO("cJSON_Object"); 
 			break;
 		}
 		child = child->next ;
@@ -296,7 +296,7 @@ int print_program_prop_poses(struct thread_control_block * objThreadCntrolBlock)
 {
     for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
     {
-		printf("%d : %s \n", i, objThreadCntrolBlock->global_vars[i].var_name);
+		FST_INFO("%d : %s ", i, objThreadCntrolBlock->global_vars[i].var_name);
 	}
 	return 1;
 }
@@ -309,7 +309,8 @@ int append_program_prop_mapper(struct thread_control_block * objThreadCntrolBloc
 #ifdef WIN32
     sprintf(fname, "%s.json", filename);
 #else
-    sprintf(fname, "%s\/programs\/%s.json", DATA_PATH, filename);
+    sprintf(fname, "%s/programs/%s.json", 
+    		forgesight_get_programs_path(), filename);
 #endif
 	f=fopen(fname,"rb"); 
 	if(f)
@@ -320,7 +321,11 @@ int append_program_prop_mapper(struct thread_control_block * objThreadCntrolBloc
 		parseProgramProp(objThreadCntrolBlock, data);
 		free(data);
 	}
-    print_program_prop_poses(objThreadCntrolBlock);
+	
+#ifdef WIN32
+      // NOTICE: It would sometimes Segmentation fault.
+      print_program_prop_poses(objThreadCntrolBlock);
+#endif
 	return 1;
 }
 

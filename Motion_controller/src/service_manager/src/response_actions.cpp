@@ -12,6 +12,7 @@ Summary:    The actions according to corresponding service id.
 #include "service_actions/response_actions.h"
 #include "stdio.h"
 #include <iostream>
+#include "error_code.h"
 
 namespace fst_response_action
 {
@@ -162,7 +163,7 @@ int ResponseAction::heartbeatResponse(const ServiceResponse *resp)
     }
     if ((*resp).res_buff[1] == 1)
     {
-        std::cout<<"CORE1 Info: "<<&((*resp).res_buff[2])<<std::endl;
+        std::cout << &((*resp).res_buff[2])<<std::endl;
     }
     
     return true;

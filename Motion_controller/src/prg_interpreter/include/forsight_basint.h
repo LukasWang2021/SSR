@@ -7,6 +7,7 @@
 #include "math.h"
 #include "ctype.h"
 #include "stdlib.h"
+#include "common.h"
 
 // #ifndef WIN32
 #define USE_FORSIGHT_REGISTERS_MANAGER
@@ -27,22 +28,28 @@
 #include <process.h>
 #else
 #include <pthread.h>
-#include "motion_plan_arm_group.h"
+// #include "motion_plan_arm_group.h"
 #endif
 
 
 using namespace std;
 
+#ifdef WIN32
+#define DATA_PATH        "\\root\\files_manager_python27\\data"
+#else
 #define DATA_PATH        "\/root\/files_manager_python27\/data"
+#endif
 
 #define NUM_SUBROUTINE 64
 #define NUM_THREAD     32
 
+#define PROGRAM_START_LINE_NUM     2
+
 #define LAB_LEN 128
 #define SELECT_AND_CYCLE_NEST 64
 #define SUB_NEST 16
-#define PROG_SIZE 4096
-const int NUM_OF_PARAMS = 31;    // max number of parameters
+#define PROG_SIZE 40960   // 4096
+#define  NUM_OF_PARAMS  31    // max number of parameters
 
 #define DELIMITER    1
 #define VARIABLE     2
@@ -131,8 +138,8 @@ typedef struct select_and_cycle_stack {
 } select_and_cycle_stack_struct ;
 
 struct thread_control_block {
-	int iThreadIdx ;
-	char project_name[128];
+	int iThreadIdx ;              // Thread Idx
+	char project_name[128];       // project_name
 	// This vector holds info for global variables.
 	vector<var_type> global_vars;
 	
@@ -144,41 +151,45 @@ struct thread_control_block {
 	stack<int> func_call_stack;
 	
 	int g_variable_error ; // = 0 ;
-	char *p_buf;
-	char *prog;  /* holds expression to be analyzed */
-	char *prog_end;
+	char *p_buf;		// program buffer
+	char *prog;  		/* prog pointer holds expression to be analyzed */
+	char *prog_end;     /* prog end position */
 
-	int    iSubProgNum ;
-	char * sub_prog[NUM_SUBROUTINE];
+	int    iSubProgNum ;                    // sub programs number
+	char * sub_prog[NUM_SUBROUTINE];		// sub programs buffer
 	
-	vector<prog_line_info> prog_jmp_line;
-	ProgMode  prog_mode ; // = 0;   /* 0 - run to end, 1 - step  */
-	ExecuteDirection  execute_direction ;  /* 0 - FORWARD, 1 - BACKWARD  */
+	vector<prog_line_info> prog_jmp_line;   // jmp_line info
+	ProgMode  prog_mode ; 					// = 0;   /* 0 - run to end, 1 - step  */
+	ExecuteDirection  execute_direction ;  	/* 0 - FORWARD, 1 - BACKWARD  */
 	bool is_abort , is_paused, is_in_macro; 
-	int  is_main_thread ; // = 0;   /* 0 - Monitor, 1 - Main  */
+	int  is_main_thread ; 					// = 0;   /* 0 - Monitor, 1 - Main  */
 	
-	char token[80];
-	char token_type, tok;
+	char token[80];					// Current token
+	char token_type, tok;			// 
 	
 	vector<sub_label> sub_label_table; // [NUM_LAB];
-	float ret_value ;
+	float ret_value ;               // retrun values of function
 	
 	/* stack for FOR/NEXT loop */
 	struct select_and_cycle_stack  selcyclstack[SELECT_AND_CYCLE_NEST];
 	
-	char *gosub_stack[SUB_NEST];	/* stack for gosub */
+	char *gosub_stack[SUB_NEST];			/* stack for gosub */
 	
-	int select_and_cycle_tos;  /* index to top of FOR/WHILE/IF/SELECT stack */
-	int gosub_tos;  /* index to top of GOSUB stack */
+	int select_and_cycle_tos;  				/* index to top of FOR/WHILE/IF/SELECT stack */
+	int gosub_tos;  						/* index to top of GOSUB stack */
 
-	Instruction * instrSet ;
+	Instruction * instrSet ;               // used by MOV*
 	// LineNum and Update flag
-	int               iLineNum ;
+	int               iLineNum ;           // Current LineNum
 //	LineNumState      stateLineNum ;
 //    MotionTarget      currentMotionTarget ;
-    map<string, MoveCommandDestination>  start_mov_position ;
+    map<int, MoveCommandDestination>  start_mov_position ;  // iLineNum :: movCmdDst
+    
+	vector<string> vector_XPath ;
 } ;
-
+#ifndef WIN32
+extern fst_log::Logger* log_ptr_;
+#endif
 void setLinenum(struct thread_control_block* objThreadCntrolBlock, int iLinenum);
 // LineNumState getLinenum(struct thread_control_block* objThreadCntrolBlock, int & num);
 int getLinenum(struct thread_control_block* objThreadCntrolBlock) ;
@@ -204,9 +215,11 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s, int raise_unkown_error = 0);
 
 void find_eol(struct thread_control_block * objThreadCntrolBlock);
+int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum);
 int  calc_line_from_prog(struct thread_control_block * objThreadCntrolBlock);
 void serror(struct thread_control_block * objThreadCntrolBlock, int error);
-	 
+
+void assignment(struct thread_control_block * objThreadCntrolBlock) ;
 
 #endif
 

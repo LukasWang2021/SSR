@@ -11,7 +11,8 @@
 #include "struct_to_mem/struct_service_response.h"
 #include <mutex>
 #include <vector>
-#include "error_code/error_code.h"
+#include "error_code.h"
+#include "base_datatype.h"
 
 #ifndef SERVO_SERVICE_H
 #define SERVO_SERVICE_H
@@ -62,7 +63,7 @@ class ServoService {
     // Return:  ERROR Code
     //------------------------------------------------------------
 
-    ERROR_CODE_TYPE  startLog(int size_of_varlist,const char *varlist,std::vector<int>& t_list);
+    ErrorCode  startLog(int size_of_varlist,const char *varlist,std::vector<int>& t_list);
     
     //------------------------------------------------------------
     // Function:    stopLog
@@ -71,7 +72,7 @@ class ServoService {
     // Out:      None
     // Return:  ERROR Code
     //------------------------------------------------------------
-    ERROR_CODE_TYPE  stopLog(void);
+    ErrorCode  stopLog(void);
     
     
     //------------------------------------------------------------
@@ -81,7 +82,7 @@ class ServoService {
     // Out:      None
     // Return:  ERROR Code
     //------------------------------------------------------------
-    ERROR_CODE_TYPE  downloadParam(unsigned int addr,const char *data,int length);
+    ErrorCode  downloadParam(unsigned int addr,const char *data,int length);
     
     
     //------------------------------------------------------------
@@ -91,7 +92,7 @@ class ServoService {
     // Out:      data
     // Return:  ERROR Code
     //------------------------------------------------------------
-    ERROR_CODE_TYPE  uploadParam(unsigned int addr,char *data,int& length);
+    ErrorCode  uploadParam(unsigned int addr,char *data,int& length);
     
     
     //------------------------------------------------------------
@@ -101,7 +102,7 @@ class ServoService {
     // Out:      res
     // Return:  ERROR Code
     //------------------------------------------------------------    
-    ERROR_CODE_TYPE  readIntVar(int size_of_varlist,const char *varname,int* res);
+    ErrorCode  readIntVar(int size_of_varlist,const char *varname,int* res);
 
     //------------------------------------------------------------
     // Function:    readErrCode
@@ -110,7 +111,7 @@ class ServoService {
     // Out:      res,numofres
     // Return:  ERROR Code
     //------------------------------------------------------------   
-    ERROR_CODE_TYPE readErrCode(int size_of_codelist,int* res,int* numofres);
+    ErrorCode readErrCode(int size_of_codelist,int* res,int* numofres);
 
     //------------------------------------------------------------
     // Function:    servoCmd
@@ -122,7 +123,7 @@ class ServoService {
     // Out:      char* res:       response data
     // Return:  ERROR Code
     //------------------------------------------------------------    
-    ERROR_CODE_TYPE  servoCmd(unsigned int id,const char * req,int req_size,char* res,int res_size);
+    ErrorCode  servoCmd(unsigned int id,const char * req,int req_size,char* res,int res_size);
     //------------------------------------------------------------
     // Function:    setTrig
     // Summary: Set log trigger function
@@ -130,7 +131,7 @@ class ServoService {
     // Out:     res: 1 succeed
     // Return:  ERROR Code
     //------------------------------------------------------------  
-    ERROR_CODE_TYPE setTrig(const char *trigname,unsigned short ticks,int* res);
+    ErrorCode setTrig(const char *trigname,unsigned short ticks,int* res);
     //------------------------------------------------------------
     // Function:    initComm
     // Summary: To Initialize communication with service manager
@@ -138,7 +139,7 @@ class ServoService {
     // Out:     None
     // Return:  ERROR Code
     //------------------------------------------------------------
-    static ERROR_CODE_TYPE initComm(const char *channel);
+    static ErrorCode initComm(const char *channel);
     
   public:
     static const int SERVO_CONF_SEG = 512;
@@ -152,7 +153,7 @@ class ServoService {
     // Out:     None
     // Return:  ERROR Code
     //------------------------------------------------------------    
-    static ERROR_CODE_TYPE sendNRecv(fst_controller::ServoService* serv);
+    static ErrorCode sendNRecv(fst_controller::ServoService* serv);
 
     // -----------------------------private functions---------------------------------------------
 

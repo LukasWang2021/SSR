@@ -14,8 +14,8 @@
 
 #ifndef WIN32
 #include "error_code.h"
+#include <execinfo.h>
 #endif
-
 
 #define FILE_PATH_LEN       1024
 #define MAX_WAIT_SECOND     30
@@ -62,9 +62,12 @@ struct intern_cmd_type {
     (char *)"", 0  // null terminate the list   
 };
 
-vector<string> g_vecXPath ;
-
-/* Return true if c is a delimiter. */
+/************************************************* 
+	Function:		isdelim
+	Description:	Return true if c is a delimiter.
+	Input:			c           
+	Return: 		1 - true ; 0 - false
+*************************************************/ 
 static int isdelim(char c)
 {
   if(strchr(" ;,+-<>/*%^=()[]", c) || c==9 || c=='\r' || c=='\n' || c==0) 
@@ -72,14 +75,25 @@ static int isdelim(char c)
   return 0;
 }
 
-/* Return 1 if c is space or tab. */
+/************************************************* 
+	Function:		iswhite
+	Description:	Return 1 if c is space or tab.
+	Input:			c           
+	Return: 		1 - true ; 0 - false
+*************************************************/ 
 static int iswhite(char c)
 {
   if(c==' ' || c=='\t') return 1;
   else return 0;
 }
 
-/* Find the start of the next line. */
+/************************************************* 
+	Function:		find_copy_eol
+	Description:	Find the start of the next line and copy left part into temp.
+	Input:			prog         -    program pointer
+	Input:			temp         -    current line buffer
+	Return: 		1 - true ; 0 - false
+*************************************************/ 
 static char * find_copy_eol(char * prog, char* temp)
 {
   while(*prog!='\n'  && *prog!='\0') 
@@ -88,6 +102,13 @@ static char * find_copy_eol(char * prog, char* temp)
   return prog;
 }
 
+/************************************************* 
+	Function:		get_cmd_param
+	Description:	get command parameter.
+	Input:			prog         -    program pointer
+	Input:			temp         -    current line buffer
+	Return: 		1 - true ; 0 - false
+*************************************************/ 
 static char * get_cmd_param(char * prog, char* temp)
 {
   while(iswhite(*prog)) ++prog;  /* skip over white space */
@@ -97,6 +118,12 @@ static char * get_cmd_param(char * prog, char* temp)
   return prog;
 }
 
+/************************************************* 
+	Function:		find_internal_cmd
+	Description:	find internal cmd in the intern_cmd.
+	Input:			s         -    cmd name
+	Return: 		-1 - not found ; i - index of intern_cmd
+*************************************************/ 
 int find_internal_cmd(char *s)   
 {   
     int i;
@@ -106,6 +133,13 @@ int find_internal_cmd(char *s)
     return -1;   
 }   
 
+/************************************************* 
+	Function:		call_internal_cmd_exec_sub_thread
+	Description:	Whether it is moving command and 
+	                can be executed in the multipled thread.
+	Input:			s         -    cmd name
+	Return: 		-1 - not found ; i - index of intern_cmd
+*************************************************/ 
 int call_internal_cmd_exec_sub_thread(int index)   
 {   
     // int i; 
@@ -115,6 +149,15 @@ int call_internal_cmd_exec_sub_thread(int index)
 	   return -1 ;
 }
 
+/************************************************* 
+	Function:		call_internal_cmd
+	Description:	Call the function in intern_cmd by index.
+	Input:			index                  -    index of intern_cmd
+	Input:			iLineNum               -    Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		-1        -    index out of range ;
+	                Other     -    function ret.
+*************************************************/ 
 int call_internal_cmd(int index, int iLineNum, 
 					 struct thread_control_block* objThreadCntrolBlock)   
 {   
@@ -125,6 +168,15 @@ int call_internal_cmd(int index, int iLineNum,
 	   return -1 ;
 }
 
+/************************************************* 
+	Function:		getAditionalInfomation
+	Description:	get aditional parameter infomation
+	Input:			thread_control_block   - interpreter info
+	Input:			instrSetPtr            - AdditionalInfomation buffer 
+	                                         in the objThreadCntrolBlock->instrSet
+	Return: 		0        -    Failed ;
+	                Other    -    Count of aditional parameter infomation.
+*************************************************/ 
 int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock, 
 						   char * instrSetPtr)
 {
@@ -346,7 +398,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 		{
 			additionalInfomation.type = EV ;
 			get_exp(objThreadCntrolBlock, &value, &boolValue);
-			int speed = (int)value.getFloatValue();
+		//	int speed = (int)value.getFloatValue();
 			iCount++ ;
 		}
 		// 7.	Ind_EV非同步附加轴速度指令（低优先级）
@@ -354,7 +406,7 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 		{
 			additionalInfomation.type = IND_EV ;
 			get_exp(objThreadCntrolBlock, &value, &boolValue);
-			int speed = (int)value.getFloatValue();
+		//	int speed = (int)value.getFloatValue();
 			iCount++ ;
 		}
 		// 8.	TB先执行指令
@@ -429,23 +481,41 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 }
 
 
+/************************************************* 
+	Function:		set_global_TF
+	Description:	set global TF
+	Input:			iLineNum               -    Line Number
+	Input:			iTFNum                 -    index of TF
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int set_global_TF(int iLineNum, int iTFNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
 	instr.type = SET_TF ;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
-		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_UF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 #endif
 	instr.current_tf = iTFNum ;
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
-	printf("set_global_TF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_TF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
@@ -454,23 +524,41 @@ int set_global_TF(int iLineNum, int iTFNum, struct thread_control_block* objThre
     return 1;
 }
 
+/************************************************* 
+	Function:		set_global_UF
+	Description:	set global UF
+	Input:			iLineNum               -    Line Number
+	Input:			iUFNum                 -    index of UF
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
 	instr.type = SET_UF ;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
-		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_UF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 #endif
 	instr.current_uf = iUFNum ;
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
-	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_UF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
@@ -479,23 +567,41 @@ int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThre
     return 1;
 }
 
-int set_OVC(int iLineNum, int iOVCNum, struct thread_control_block* objThreadCntrolBlock)
+/************************************************* 
+	Function:		set_OVC
+	Description:	set OVC(Overall Velocity Coefficient).
+	Input:			iLineNum               - Line Number
+	Input:			dOVCNum                - value of OVC
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
+int set_OVC(int iLineNum, double dOVCNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
 	instr.type = SET_OVC ;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
-		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_UF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 #endif
-	instr.current_ovc = iOVCNum ;
+	instr.current_ovc = dOVCNum / 100 ;
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
-	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_UF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
@@ -504,23 +610,41 @@ int set_OVC(int iLineNum, int iOVCNum, struct thread_control_block* objThreadCnt
     return 1;
 }
 
-int set_OAC(int iLineNum, int iOACNum, struct thread_control_block* objThreadCntrolBlock)
+/************************************************* 
+	Function:		set_OAC
+	Description:	set OAC(Overall Acceleration Coefficient).
+	Input:			iLineNum               - Line Number
+	Input:			dOACNum                - value of OAC
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
+int set_OAC(int iLineNum, double dOACNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
 	instr.type = SET_OVC ;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
-		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_UF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 #endif
-	instr.current_oac = iOACNum ;
+	instr.current_oac = dOACNum / 100 ;
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
-	printf("set_global_UF XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("set_global_UF XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
@@ -530,7 +654,14 @@ int set_OAC(int iLineNum, int iOACNum, struct thread_control_block* objThreadCnt
 }
 
 
-// MovJ P[1] P[1] 30% Fine +附加参数
+/************************************************* 
+	Function:		call_MoveJ
+	Description:	Execute MOVEJ
+	                FORMAT: MOVEJ P[1], 250 CNT -1  +附加参数
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
     MoveCommandDestination movCmdDst ;
@@ -543,22 +674,60 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	instr.type = MOTION ;
 	instr.target.type = MOTION_JOINT;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
-		sprintf(instr.line, "OutRange with %d\n", iLineNum);
+		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("call_MoveJ XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
 	// Save start position
+	memset(&movCmdDst ,0x00, sizeof(MoveCommandDestination));
 	getMoveCommandDestination(movCmdDst);
-	objThreadCntrolBlock->start_mov_position.insert(
-		map<string, MoveCommandDestination>::value_type(g_vecXPath[iLineNum], 
-							movCmdDst));
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+	    FST_INFO("call_MoveJ Run XPATH: %d: %s", iLineNum, objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	    // FST_INFO("call_MoveJ Run movCmdDst: %08X with(%08X, %08X, %08X, %08X)", 
+		//  	movCmdDst.type, MOTION_NONE, MOTION_JOINT, MOTION_LINE, MOTION_CIRCLE);
+		if(movCmdDst.type != MOTION_NONE)
+		{
+			if(objThreadCntrolBlock->start_mov_position.find(iLineNum)
+				==objThreadCntrolBlock->start_mov_position.end())
+			{
+			//    FST_INFO("Forward move to JOINT and Insert:(%f, %f, %f, %f, %f, %f) in MovJ", 
+			//		movCmdDst.joint_target.j1, movCmdDst.joint_target.j2, 
+			//		movCmdDst.joint_target.j3, movCmdDst.joint_target.j4, 
+			//		movCmdDst.joint_target.j5, movCmdDst.joint_target.j6);
+				try
+				{
+					objThreadCntrolBlock->start_mov_position.insert(
+						map<int, MoveCommandDestination>::value_type(iLineNum, 
+										movCmdDst));
+				}
+				catch (std::exception& e)
+				{
+				    std::cerr << "Exception catched : " << e.what() << std::endl;
+				}
+			}
+			else
+			{
+	            FST_INFO("call_MoveJ Run XPATH: %s exists ", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+			}
+		}
+		else
+		{
+			FST_INFO("call_MoveJ XPATH without movCmdDst");
+		}
+	}
+	else
+	{
+		; // FST_INFO("call_MoveJ XPATH out of range at %d", iLineNum);
+	}
+	// FST_INFO("call_MoveJ XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
+	FST_INFO("call_MoveJ value.getType() = %d", value.getType());
 	if(value.getType() == TYPE_NONE)
 	{
 		find_eol(objThreadCntrolBlock);
@@ -591,7 +760,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	else if(value.getType() == TYPE_POSE)
 	{
 		// instr.target.pose_target = value.getPoseValue();
-	    printf("value.getType() == TYPE_POSE in MovJ\n");
+	    FST_ERROR("value.getType() == TYPE_POSE in MovJ");
 		serror(objThreadCntrolBlock, 16);
 		find_eol(objThreadCntrolBlock);
     	return 0;
@@ -600,7 +769,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.joint_target = value.getJointValue();
 		
-	    printf("Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ\n", 
+	    FST_INFO("Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
 			instr.target.joint_target.j1, instr.target.joint_target.j2, 
 			instr.target.joint_target.j3, instr.target.joint_target.j4, 
 			instr.target.joint_target.j5, instr.target.joint_target.j6);
@@ -608,11 +777,28 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	// Use start point in revert mode  
 	if(objThreadCntrolBlock->execute_direction == EXECUTE_BACKWARD)
 	{
-	     printf("Use start point in revert mode.\n");
-	     instr.target.joint_target = 
-		 	objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]].joint_target;
+	     FST_INFO("Use start point in revert mode.");
 		 
-	    printf("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ\n", 
+		if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		{
+		    FST_INFO("call_MoveJ XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+			if(objThreadCntrolBlock->start_mov_position.find(iLineNum)
+				!=objThreadCntrolBlock->start_mov_position.end())
+			{
+			    instr.target.joint_target
+				 	= objThreadCntrolBlock->start_mov_position[iLineNum].joint_target;
+			}
+			else
+			{
+				FST_INFO("call_MoveL XPATH without StartJoint");
+			}
+		}
+		else
+		{
+			FST_ERROR("call_MoveJ XPATH out of range at %d", iLineNum);
+		}
+		 
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
 			instr.target.joint_target.j1, instr.target.joint_target.j2, 
 			instr.target.joint_target.j3, instr.target.joint_target.j4, 
 			instr.target.joint_target.j5, instr.target.joint_target.j6);
@@ -621,6 +807,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	// Divide 100 as percent.
+	FST_INFO("get_token =  '%f'", value.getFloatValue());
     instr.target.vel        = value.getFloatValue() / 100;
 	
 	get_token(objThreadCntrolBlock);
@@ -636,7 +823,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	        if(value.getFloatValue() < 0) // == -1
 	    	{
 	        	instr.target.cnt = -1;
-	     		printf("instr.target.cnt = %f in the FINE.\n", instr.target.cnt);
+	     		FST_INFO("instr.target.cnt = %f in the FINE.", instr.target.cnt);
 	    	}
 	        else 
 				instr.target.cnt = value.getFloatValue() / 100;
@@ -647,7 +834,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.acc = -1 ;
+	// instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	
@@ -673,19 +860,32 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	
 	// objThreadCntrolBlock->currentMotionTarget = instr.target ;
 // 	#ifdef USE_XPATH
-// 		printf("setInstruction MOTION_JOINT at %s\n", instr.line);
+// 		FST_INFO("setInstruction MOTION_JOINT at %s", instr.line);
 // 	#else
-// 		printf("setInstruction MOTION_JOINT at %d\n", instr.line);
+// 		FST_INFO("setInstruction MOTION_JOINT at %d", instr.line);
 // 	#endif
-	     		printf("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
+	FST_INFO("call_MoveJ instr.target.cnt = %f setInstruction.", instr.target.cnt);
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
 		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+#ifdef WIN32
+		Sleep(1);
+#else
+        usleep(1000);
+#endif
 	}
     return 1;   
 }
 
+/************************************************* 
+	Function:		call_MoveL
+	Description:	Execute MOVEL
+	                FORMAT: MOVEL P[1], 250 CNT -1  +附加参数
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
     MoveCommandDestination movCmdDst ;
@@ -698,23 +898,61 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	instr.type = MOTION ;
 	instr.target.type = MOTION_LINE;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
 		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("call_MoveL XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
 	// Save start position
+	memset(&movCmdDst ,0x00, sizeof(MoveCommandDestination));
 	getMoveCommandDestination(movCmdDst);
-	objThreadCntrolBlock->start_mov_position.insert(
-		map<string, MoveCommandDestination>::value_type(g_vecXPath[iLineNum], 
-							movCmdDst));
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+	    FST_INFO("call_MoveL Run XPATH: %d: %s", iLineNum, objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	    // FST_INFO("call_MoveL Run movCmdDst: %08X with(%08X, %08X, %08X, %08X)", 
+		//  	movCmdDst.type, MOTION_NONE, MOTION_JOINT, MOTION_LINE, MOTION_CIRCLE);
+		if(movCmdDst.type != MOTION_NONE)
+		{
+			if(objThreadCntrolBlock->start_mov_position.find(iLineNum)
+				==objThreadCntrolBlock->start_mov_position.end())
+			{
+			//    FST_INFO("move from POSE and insert:(%f, %f, %f, %f, %f, %f) in MovL", 
+			//		movCmdDst.pose_target.position.x,    movCmdDst.pose_target.position.y, 
+			//		movCmdDst.pose_target.position.z,    movCmdDst.pose_target.orientation.a, 
+			//		movCmdDst.pose_target.orientation.b, movCmdDst.pose_target.orientation.c);
+				try
+				{
+					objThreadCntrolBlock->start_mov_position.insert(
+						map<int, MoveCommandDestination>::value_type(iLineNum, 
+											movCmdDst));
+				}
+				catch (std::exception& e)
+				{
+				    std::cerr << "Exception catched : " << e.what() << std::endl;
+				}
+			}
+			else
+			{
+	            FST_INFO("call_MoveL Run XPATH: %s exists ", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+			}
+		}
+		else
+		{
+			; // FST_INFO("call_MoveL XPATH without movCmdDst");
+		}
+	}
+	else
+	{
+		FST_ERROR("call_MoveL XPATH out of range at %d", iLineNum);
+	}
+	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
+	FST_INFO("call_MoveL value.getType() = %d", value.getType());
 	if(value.getType() == TYPE_NONE)
 	{
 		find_eol(objThreadCntrolBlock);
@@ -744,15 +982,15 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		get_exp(objThreadCntrolBlock, &value, &boolValue);
 		instr.target.pose_target.orientation.c = value.getFloatValue();
 
-		instr.current_tf = instr.current_uf = -1 ;
+		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
 		instr.target.pose_target = value.getPoseValue();
-		instr.current_tf = value.getTFIndex();
-		instr.current_uf = value.getUFIndex();
+		instr.target.user_frame_id = value.getUFIndex();
+		instr.target.tool_frame_id = value.getTFIndex();
 		
-	    printf("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
+	    FST_INFO("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
 			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
 			instr.target.pose_target.position.z, instr.target.pose_target.orientation.a, 
 			instr.target.pose_target.orientation.b, instr.target.pose_target.orientation.c);
@@ -760,7 +998,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	else if(value.getType() == TYPE_JOINT)
 	{
 		// instr.target.joint_target = value.getJointValue();
-	    printf("value.getType() == TYPE_JOINT in MovL\n");
+	    FST_ERROR("value.getType() == TYPE_JOINT in MovL");
 		serror(objThreadCntrolBlock, 15);
 		find_eol(objThreadCntrolBlock);
     	return 0;
@@ -768,11 +1006,28 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	// Use start point in revert mode  
 	if(objThreadCntrolBlock->execute_direction == EXECUTE_BACKWARD)
 	{
-	     printf("Use start point in revert mode.\n");
-	     instr.target.pose_target
-		 	= objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]].pose_target;
+	     FST_INFO("Use start point in revert mode.");
 		 
-	    printf("Backward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL\n", 
+		if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		{
+		    FST_INFO("call_MoveL XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+			if(objThreadCntrolBlock->start_mov_position.find(iLineNum)
+				!=objThreadCntrolBlock->start_mov_position.end())
+			{
+			    instr.target.pose_target
+				 	= objThreadCntrolBlock->start_mov_position[iLineNum].pose_target;
+			}
+			else
+			{
+				FST_INFO("call_MoveL XPATH without StartPoint");
+			}
+		}
+		else
+		{
+			FST_INFO("call_MoveL XPATH out of range at %d", iLineNum);
+		}
+		 
+	    FST_INFO("Backward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
 			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
 			instr.target.pose_target.position.z, instr.target.pose_target.orientation.a, 
 			instr.target.pose_target.orientation.b, instr.target.pose_target.orientation.c);
@@ -787,7 +1042,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
     {
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
-	     printf("instr.target.cnt = %f setInstruction.\n", value.getFloatValue());
+	     FST_INFO("instr.target.cnt = %f setInstruction.", value.getFloatValue());
     	if(objThreadCntrolBlock->prog_mode == STEP_MODE)
     	{
         	instr.target.cnt = -1;
@@ -797,7 +1052,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	        if(value.getFloatValue() < 0) // == -1
 	    	{
 	        	instr.target.cnt = -1.0000;
-	     		printf("instr.target.cnt = %f in the FINE.\n", instr.target.cnt);
+	     		FST_INFO("instr.target.cnt = %f in the FINE.", instr.target.cnt);
 	    	}
 	        else 
 	            instr.target.cnt = value.getFloatValue() / 100;
@@ -808,7 +1063,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.acc = -1 ;
+	// instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	
@@ -831,28 +1086,40 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			objThreadCntrolBlock->instrSet->add_num    = 0 ;
 		}
 	}
-	printf("MOVL: instr.target.accleration = %f .\n", instr.target.acc);
+	// FST_INFO("MOVL: instr.target.accleration = %f .", instr.target.acc);
 	
 // 	#ifdef USE_XPATH
-// 		printf("setInstruction MOTION_LINE at %s\n", instr.line);
+// 		FST_INFO("setInstruction MOTION_LINE at %s", instr.line);
 // 	#else
-// 		printf("setInstruction MOTION_LINE at %d\n", instr.line);
+// 		FST_INFO("setInstruction MOTION_LINE at %d", instr.line);
 // 	#endif
 	
-	 printf("instr.target.cnt = %f setInstruction.\n", instr.target.cnt);
+	 FST_INFO("instr.target.cnt = %f setInstruction.", instr.target.cnt);
 #ifndef WIN32
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
-        printf("setInstruction return false\n");
 		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+#ifdef WIN32
+		Sleep(1);
+#else
+        usleep(1000);
+#endif
 	}
 #endif
 
-//    printf("setInstruction return true\n");
+//    FST_INFO("setInstruction return true");
     return 1;   
 }
 
+/************************************************* 
+	Function:		call_MoveC
+	Description:	Execute MOVEC
+	                FORMAT: MOVEC P[1] P[1]  250 CNT -1 +附加参数
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 {  
     MoveCommandDestination movCmdDst ;
@@ -865,20 +1132,50 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	instr.type = MOTION ;
 	instr.target.type = MOTION_CIRCLE;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
 		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("call_MoveC XPATH: %s\n", g_vecXPath[iLineNum].c_str());
 #endif
 	// Save start position
+	memset(&movCmdDst ,0x00, sizeof(MoveCommandDestination));
 	getMoveCommandDestination(movCmdDst);
-	objThreadCntrolBlock->start_mov_position.insert(
-		map<string, MoveCommandDestination>::value_type(g_vecXPath[iLineNum], 
-							movCmdDst));
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+	    FST_INFO("call_MoveC Run XPATH: %d: %s", iLineNum, objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+		if(movCmdDst.type != MOTION_NONE)
+		{
+			if(objThreadCntrolBlock->start_mov_position.find(iLineNum)
+				==objThreadCntrolBlock->start_mov_position.end())
+			{
+				try
+				{
+					objThreadCntrolBlock->start_mov_position.insert(
+						map<int, MoveCommandDestination>::value_type(iLineNum, 
+											movCmdDst));
+				}
+				catch (std::exception& e)
+				{
+				    std::cerr << "Exception catched : " << e.what() << std::endl;
+				}
+			}
+			else
+			{
+	            FST_INFO("call_MoveC Run XPATH: %s exists ", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+			}
+		}
+		else
+		{
+			FST_INFO("call_MoveC XPATH without movCmdDst");
+		}
+	}
+	else
+	{
+		FST_ERROR("call_MoveC XPATH out of range at %d", iLineNum);
+	}
 
     // result.size() == MOVJ_COMMAND_PARAM_MIN
     get_exp(objThreadCntrolBlock, &value, &boolValue);
@@ -915,7 +1212,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.pose_target = value.getPoseValue();
 		
-	    printf("move to POSE:(%f, %f, %f, %f, %f, %f) in MovC\n", 
+	    FST_INFO("move to POSE:(%f, %f, %f, %f, %f, %f) in MovC", 
 			instr.target.pose_target.position.x, instr.target.pose_target.position.y, 
 			instr.target.pose_target.position.z, instr.target.pose_target.orientation.a, 
 			instr.target.pose_target.orientation.b, instr.target.pose_target.orientation.c);
@@ -923,7 +1220,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	else if(value.getType() == TYPE_JOINT)
 	{
 		// instr.target.joint_target = value.getJointValue();
-	    printf("value.getType() == TYPE_JOINT in MovC\n");
+	    FST_INFO("value.getType() == TYPE_JOINT in MovC");
 		find_eol(objThreadCntrolBlock);
     	return 0;
 	}
@@ -972,9 +1269,10 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	// Use start point in revert mode  
 	if(objThreadCntrolBlock->execute_direction == EXECUTE_BACKWARD)
 	{
-	     printf("Use start point in revert mode.\n");
+	     FST_INFO("Use start point in revert mode.");
 		 // Wait for revert
-	     // instr.target.circle_target.pose2 = objThreadCntrolBlock->start_mov_position[g_vecXPath[iLineNum]];
+	     // instr.target.circle_target.pose2 
+	     //    = objThreadCntrolBlock->start_mov_position[objThreadCntrolBlock->vector_XPath[iLineNum]];
 	}
 	get_token(objThreadCntrolBlock);
 	
@@ -999,7 +1297,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
-	instr.target.acc = -1 ;
+	// instr.target.acc = -1 ;
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	
@@ -1024,18 +1322,31 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	}
 	
 // 	#ifdef USE_XPATH
-// 		printf("setInstruction MOTION_CURVE at %s\n", instr.line);
+// 		FST_INFO("setInstruction MOTION_CURVE at %s", instr.line);
 // 	#else
-// 		printf("setInstruction MOTION_CURVE at %d\n", instr.line);
+// 		FST_INFO("setInstruction MOTION_CURVE at %d", instr.line);
 // 	#endif
 	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
 	while(bRet == false)
 	{
 		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+#ifdef WIN32
+		Sleep(1);
+#else
+        usleep(1000);
+#endif
 	}
     return 1;     
 }
 
+/************************************************* 
+	Function:		call_UserAlarm
+	Description:	Execute UserAlarm
+	                FORMAT: UserAlarm 1
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_UserAlarm(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
 	eval_value value;
@@ -1044,11 +1355,102 @@ int call_UserAlarm(int iLineNum, struct thread_control_block* objThreadCntrolBlo
 	
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	alarmNumber = (int)value.getFloatValue() ;
-	setWarning(FAIL_INTERPRETER_ALARM_EXEC_BASE + alarmNumber);
+	setMessage(alarmNumber);
     find_eol(objThreadCntrolBlock);
     return 1;
 }
 
+static int get_char_token(char * src, char * dst)
+{
+	char * tmp = src ;
+	if(isalpha(*src)) { /* var or command */
+		while(!isdelim(*(src))) 
+			*dst++=*(src)++;
+	}
+	return src - tmp ;
+}
+
+static int get_num_token(char * src, char * dst)
+{
+	char * tmp = src ;
+	if(isdigit(*src)) { /* var or command */
+		while(!isdelim(*(src))) 
+			*dst++=*(src)++;
+	}
+	return src - tmp ;
+}
+
+int execute_Timer(struct thread_control_block* objThreadCntrolBlock, char *vname, eval_value& value)
+{
+	bool bRet = false ;
+	char timer_name[16] ;
+	char timer_idx[16] ;
+	// char io_key_buffer[16] ;
+
+	int  iTimerIdx = 0 ;
+	char * namePtr = vname ;
+	char *temp = NULL ;
+	
+	memset(timer_name, 0x00, 16);
+	memset(timer_idx, 0x00, 16);
+	
+	temp = timer_name ;
+	get_char_token(namePtr, temp);
+	
+	namePtr += strlen(timer_name) ;
+	if(namePtr[0] != '['){
+		return -1 ;
+	}
+	namePtr++ ;
+	
+	memset(timer_idx, 0x00, 16);
+	temp = timer_idx ;
+	get_num_token(namePtr, temp);
+	iTimerIdx = atoi(timer_idx);
+	// namePtr += strlen(reg_idx) ;
+	
+	namePtr += strlen(timer_idx) ;
+	if(namePtr[0] != ']'){
+		return -1 ;
+	}
+	namePtr++ ;
+
+	if(value.getFloatValue() == TIMER_START_VALUE)
+	{
+		FST_INFO("%d: call_Timer  start", __LINE__);
+		g_structStopWatch[iTimerIdx].start_time = time(0);
+		value.setFloatValue(0); // 0.0; 
+	//	assign_var(objThreadCntrolBlock, vname, value); // 0.0);
+	}
+	else if(value.getFloatValue() == TIMER_RESET_VALUE)
+	{
+		FST_INFO("%d: call_Timer  start", __LINE__);
+		g_structStopWatch[iTimerIdx].start_time = time(0);
+		value.setFloatValue(0); // 0.0; 
+	//	assign_var(objThreadCntrolBlock, vname, value); // 0.0);
+	}
+	else if(value.getFloatValue() == TIMER_STOP_VALUE)
+	{
+		FST_INFO("%d: call_Timer  stop", __LINE__);
+		g_structStopWatch[iTimerIdx].diff_time = time(0) - 
+			g_structStopWatch[iTimerIdx].start_time ;
+		
+		value.setFloatValue(g_structStopWatch[iTimerIdx].diff_time)  ;
+	//	assign_var(objThreadCntrolBlock, vname, value);
+		FST_INFO("Time elapse : %d .", g_structStopWatch[iTimerIdx].diff_time);
+	}
+	return 1 ;
+}
+
+/************************************************* 
+	Function:		call_Timer
+	Description:	Execute Timer
+	                FORMAT: TIMER[1]  = START
+	                    OR: TIMER 1 start
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_Timer(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
 	eval_value value;
@@ -1056,42 +1458,58 @@ int call_Timer(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     int timerNumber;
     char var[80];
 	
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	timerNumber = (int)value.getFloatValue() ;
-        printf("%d: call_Timer  enter %d \n", __LINE__, timerNumber);
-	if(timerNumber >= MAX_STOPWATCH_NUM)
-    	return 0;
-	
-	sprintf(var, "Timer[%d]", timerNumber);
-	get_token(objThreadCntrolBlock);
-        printf("%d: call_Timer  enter %s \n", __LINE__, objThreadCntrolBlock->token);
-	if(strcmp(objThreadCntrolBlock->token, "start") == 0)
-    {
-        printf("%d: call_Timer  start\n", __LINE__);
-		g_structStopWatch[timerNumber].start_time = time(0);
-		value.setFloatValue(0); // 0.0; 
-		assign_var(objThreadCntrolBlock, var, value); // 0.0);
+	// TIMER[1]  = START
+	if(objThreadCntrolBlock->prog[0] == '['){
+		putback(objThreadCntrolBlock);
+		assignment(objThreadCntrolBlock);
 	}
-	else if(strcmp(objThreadCntrolBlock->token, "stop") == 0)
-    {
-        printf("%d: call_Timer  stop\n", __LINE__);
-		g_structStopWatch[timerNumber].diff_time = time(0) - 
-			g_structStopWatch[timerNumber].start_time ;
+	// TIMER 1 start 
+    else {
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		timerNumber = (int)value.getFloatValue() ;
+        FST_INFO("%d: call_Timer  enter %d ", __LINE__, timerNumber);
+		if(timerNumber >= MAX_STOPWATCH_NUM)
+			return 0;
 		
-    	eval_value value;
-		value.setFloatValue(g_structStopWatch[timerNumber].diff_time)  ;
-		assign_var(objThreadCntrolBlock, var, value);
-	    printf("Time elapse : %d .\n", g_structStopWatch[timerNumber].diff_time);
+		sprintf(var, "timer[%d]", timerNumber);
+		get_token(objThreadCntrolBlock);
+        FST_INFO("%d: call_Timer  enter %s ", __LINE__, objThreadCntrolBlock->token);
+		if(strcmp(objThreadCntrolBlock->token, "start") == 0)
+		{
+			value.setFloatValue(TIMER_START_VALUE); 
+			execute_Timer(objThreadCntrolBlock, var, value); 
+		}
+		else if(strcmp(objThreadCntrolBlock->token, "reset") == 0)
+		{
+			value.setFloatValue(TIMER_RESET_VALUE);
+			execute_Timer(objThreadCntrolBlock, var, value);
+		}
+		else if(strcmp(objThreadCntrolBlock->token, "stop") == 0)
+		{
+			value.setFloatValue(TIMER_STOP_VALUE); 
+			execute_Timer(objThreadCntrolBlock, var, value);
+			FST_INFO("Time elapse : %d .", g_structStopWatch[timerNumber].diff_time);
+		}
+		else 
+		{
+			find_eol(objThreadCntrolBlock);
+			return 0;
+		}
+		find_eol(objThreadCntrolBlock);
 	}
-	else 
-    {
-        find_eol(objThreadCntrolBlock);
-    	return 0;
-	}
-    find_eol(objThreadCntrolBlock);
     return 1;   
 }
 
+/************************************************* 
+	Function:		call_Wait
+	Description:	Execute Wait
+	                FORMAT: WAIT 3 ;   WAIT R[1]
+			                WAIT DI[3]=ON
+	                        WAIT DI[2]=ON, TimeOut=60 Skip
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
 	eval_value value;
@@ -1105,14 +1523,19 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	
 	instr.target.type = MOTION_JOINT;
 #ifdef USE_XPATH
-	if(iLineNum <= g_vecXPath.size())
-		sprintf(instr.line, "%s", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	else
 		sprintf(instr.line, "OutRange with %d", iLineNum);
 #else
-	printf("call_MoveJ XPATH at %d\n", iLineNum);
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
 	instr.line = iLineNum;
-	printf("call_Wait XPATH: %s\n", g_vecXPath[iLineNum].c_str());
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+		FST_INFO("call_Wait XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	}
+	else
+		FST_INFO("OutRange with:  %d", iLineNum);
 #endif
 	
 	get_token(objThreadCntrolBlock);
@@ -1122,6 +1545,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
 		// Need not get_token again . let call_interpreter filter it .
 		timeWaitSeconds = (int)value.getFloatValue() ;
+	    FST_INFO("call_Wait timeWaitSeconds = %d at %lld.", timeWaitSeconds, time(NULL));
 		now = timeStart  = time(0);
 		while(now - timeStart < timeWaitSeconds)
 		{
@@ -1132,6 +1556,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #endif
 			now = time(0);
 		}
+	    FST_INFO("call_Wait timeWaitSeconds = %d at %lld.", timeWaitSeconds, time(NULL));
 		find_eol(objThreadCntrolBlock);
     }
     else  // Deal wait with condition
@@ -1215,10 +1640,18 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     return 1;   
 }
 
+/************************************************* 
+	Function:		call_Pause
+	Description:	Execute Pause
+	                FORMAT: PAUSE
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_Pause(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
-	InterpreterState interpreterState  = PAUSED_R ;
-	setPrgmState(PAUSED_R);
+	InterpreterState interpreterState  = INTERPRETER_PAUSED ;
+	setPrgmState(objThreadCntrolBlock, INTERPRETER_PAUSED);
 /*
 	while(interpreterState == PAUSED_R)
 	{
@@ -1232,17 +1665,27 @@ int call_Pause(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	}
 */
     objThreadCntrolBlock->is_paused = true;
-    printf("call_Pause: Enter waitInterpreterStateleftPaused %d \n", iLineNum);
+    FST_INFO("call_Pause: Enter waitInterpreterStateleftPaused %d ", iLineNum);
 	waitInterpreterStateleftPaused(objThreadCntrolBlock);
-    printf("call_Pause: Left  waitInterpreterStateleftPaused %d \n", iLineNum);
+    FST_INFO("call_Pause: Left  waitInterpreterStateleftPaused %d ", iLineNum);
     objThreadCntrolBlock->is_paused = false;
     find_eol(objThreadCntrolBlock);
     return 1;   
 }
 
+/************************************************* 
+	Function:		call_Abort
+	Description:	Execute Abort
+	                FORMAT: ABORT
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
 int call_Abort(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
 {  
-	setPrgmState(IDLE_R);
+	setPrgmState(objThreadCntrolBlock, INTERPRETER_IDLE);
+  // clear line path and ProgramName
+	resetProgramNameAndLineNum(objThreadCntrolBlock);
 #ifdef WIN32
 	Sleep(100);
     return 0; 
@@ -1252,13 +1695,20 @@ int call_Abort(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #endif
 }
 
-int getXPathLinenum(char * file_name)
+/************************************************* 
+	Function:		getXPathLineNum
+	Description:	Get line count
+	Input:			file_name               - file name
+	Return: 		iLineCount              - line count
+*************************************************/ 
+int getXPathLineNum(char * file_name)
 {
 	int iLineCount = 0 ;
 	char contentLine[FILE_PATH_LEN];
 	FILE *xpath_file ;
 	if((xpath_file = fopen(file_name, "r"))==NULL){
-		perror("open file failed\n");  
+		perror("open file_name file failed\n");  
+		return -1;
 	}
 	
 	memset(contentLine,    0x00, FILE_PATH_LEN);
@@ -1270,6 +1720,13 @@ int getXPathLinenum(char * file_name)
 	return iLineCount ;
 }
 
+/************************************************* 
+	Function:		mergeImportXPathToProjectXPath
+	Description:	merge XPath content of import file into the XPath content of major file
+	Input:			thread_control_block   - interpreter info
+	Input:			fname                  - import file name
+	Return: 		NULL
+*************************************************/ 
 void mergeImportXPathToProjectXPath(
 		struct thread_control_block* objThreadCntrolBlock, char * fname)
 {
@@ -1291,17 +1748,20 @@ void mergeImportXPathToProjectXPath(
 	sprintf(xpath_import_file_name, "%s_xpath.txt", fname);
 	sprintf(xpath_main_file_name, "%s_xpath.txt", objThreadCntrolBlock->project_name);
 #else
-	sprintf(xpath_import_file_name, "%s\/programs\/%s_xpath.txt", DATA_PATH, fname);
+	sprintf(xpath_import_file_name, "%s\/programs\/%s_xpath.txt", 
+			forgesight_get_programs_path(), fname);
 	sprintf(xpath_main_file_name, "%s\/programs\/%s_xpath.txt", 
-		DATA_PATH, objThreadCntrolBlock->project_name);
+			forgesight_get_programs_path(), objThreadCntrolBlock->project_name);
 #endif
-	iMainLineCount = getXPathLinenum(xpath_main_file_name);
+	iMainLineCount = getXPathLineNum(xpath_main_file_name);
 	
 	if((xpath_import_file = fopen(xpath_import_file_name, "r"))==NULL){
-		perror("open file failed\n");  
+		perror("open xpath_import_file_name file failed\n");  
+		return ;
 	}
 	if((xpath_main_file = fopen(xpath_main_file_name, "a"))==NULL){
-		perror("open file failed\n");  
+		perror("open xpath_import_file_name file failed\n");  
+		return ;
 	}
 	
 	memset(contentImportLine,    0x00, FILE_PATH_LEN);
@@ -1317,7 +1777,7 @@ void mergeImportXPathToProjectXPath(
 				contentImportSepPtr - contentImportLine);
 			strcpy(contentImportXPath,   contentImportSepPtr + 1);
 			iImportLineNum = atoi(contentImportLineNum);
-		//	printf("%03d:%s", iImportLineNum + iMainLineCount, 
+		//	FST_INFO("%03d:%s", iImportLineNum + iMainLineCount, 
 		//		contentImportSepPtr + 1);
 			fprintf(xpath_main_file, "%03d:%s", iImportLineNum + iMainLineCount, 
 				contentImportSepPtr + 1);
@@ -1327,7 +1787,15 @@ void mergeImportXPathToProjectXPath(
 	fclose(xpath_main_file);
 }
 
-void generateXPathVector(char * fname)
+/************************************************* 
+	Function:		generateXPathVector
+	Description:	generate a Vector which recode all of XPath
+	Input:			thread_control_block   - interpreter info
+	Input:			fname                  - import file name
+	Return: 		NULL
+*************************************************/ 
+void generateXPathVector(
+		struct thread_control_block* objThreadCntrolBlock, char * fname)
 {
 	char xpath_file_name[FILE_PATH_LEN];
 	int iLineNum = 0 ;
@@ -1342,17 +1810,17 @@ void generateXPathVector(char * fname)
 #ifdef WIN32
 	sprintf(xpath_file_name, "%s_xpath.txt", fname);
 #else
-	sprintf(xpath_file_name, "%s\/programs\/%s_xpath.txt", DATA_PATH, fname);
+	sprintf(xpath_file_name, "%s\/programs\/%s_xpath.txt", 
+			forgesight_get_programs_path(), fname);
 #endif
 
 	if((xpath_file = fopen(xpath_file_name, "r"))==NULL){
 		perror("open file failed\n");  
+		return ;
 	}
 	
 	// Pre-arrange
-	// for(int i =0 ; i < g_lineNum + 1 ; i++)
-	//  	vecXPath.push_back("");
-	g_vecXPath.resize(1024);
+	objThreadCntrolBlock->vector_XPath.resize(1024);
 
 	memset(contentLine,    0x00, FILE_PATH_LEN);
 	while(fgets(contentLine,sizeof(contentLine),xpath_file)!=NULL)  
@@ -1374,29 +1842,43 @@ void generateXPathVector(char * fname)
 				strcpy(contentXPath,   contentSepPtr + 1);
 			}
 			iLineNum = atoi(contentLineNum);
-			g_vecXPath[iLineNum] = string(contentXPath) ;
+			objThreadCntrolBlock->vector_XPath[iLineNum] = string(contentXPath) ;
 		}
 	}
-	g_vecXPath.resize(iLineNum + 2);
+	objThreadCntrolBlock->vector_XPath.resize(iLineNum + 2);
 	fclose(xpath_file);
-//	for(int i =1 ; i < g_vecXPath.size() ; i++)
+//	for(int i =1 ; i < objThreadCntrolBlock->vector_XPath.size() ; i++)
 //	{
-//		printf("%d - %s" , i, g_vecXPath[i].c_str());
+//		FST_INFO("%d - %s" , i, objThreadCntrolBlock->vector_XPath[i].c_str());
 //	}
 }
 
-int getLineNumFromXPathVector(char * xPath)
+/************************************************* 
+	Function:		getLineNumFromXPathVector
+	Description:	get line number by XPath 
+	Input:			xPath                  - XPath
+	Return: 		i                      - line number
+*************************************************/ 
+int getLineNumFromXPathVector(
+		struct thread_control_block* objThreadCntrolBlock, char * xPath)
 {
-    for(unsigned int i = 0; i < g_vecXPath.size(); ++i)  
+    for(unsigned int i = 0; i < (int)objThreadCntrolBlock->vector_XPath.size(); ++i)  
     {  
-        if(g_vecXPath[i] == xPath)
-			return i ;
+        if(objThreadCntrolBlock->vector_XPath[i] == string(xPath))
+        	return i ;
     }
+	FST_INFO("getLineNumFromXPathVector Failed:: %s ", xPath);
 	return -1 ;
 }
 
-int getMaxLineNum()
+/************************************************* 
+	Function:		getMaxLineNum
+	Description:	get line count
+	Input:			NULL
+	Return: 		line count
+*************************************************/ 
+int getMaxLineNum(struct thread_control_block* objThreadCntrolBlock)
 {
-	return g_vecXPath.size() ;
+	return (int)objThreadCntrolBlock->vector_XPath.size() ;
 }
 

@@ -1,0 +1,37 @@
+number_of_axis: 6
+type_of_axis:
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+step:
+    axis: 0.1
+    position: 0.1
+    orientation: 0.1
+reference:
+    axis:
+        velocity:
+            - 3.0
+            - 2.5
+            - 2.5
+            - 3.5
+            - 3.5
+            - 3.5
+        acceleration:
+            - 32.0
+            - 18.0
+            - 18.0
+            - 32.0
+            - 32.0
+            - 32.0
+    position:
+        velocity: 1600.0
+        acceleration: 16000.0
+    orientation:
+        omega: 2.0
+        alpha: 20.0
+
+
+#END

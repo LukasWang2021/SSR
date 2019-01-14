@@ -1,0 +1,61 @@
+R1:
+    id: 1
+    is_valid: true
+    name: default
+    comment: default
+    value: 0.0
+R2:
+    id: 2
+    is_valid: true
+    name: default
+    comment: default
+    value: 0.0
+R3:
+    id: 3
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+R4:
+    id: 4
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+R5:
+    id: 5
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+R6:
+    id: 6
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+R7:
+    id: 7
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+R8:
+    id: 8
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+R9:
+    id: 9
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+R10:
+    id: 10
+    is_valid: false
+    name: default
+    comment: default
+    value: 0.0
+#END

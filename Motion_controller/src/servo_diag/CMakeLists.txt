@@ -36,6 +36,7 @@ set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/middleware_to_mem/include
     ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/common 
 )
 
 catkin_package(

@@ -4,7 +4,7 @@
 #include <string>
 #include <string.h>
 
-#define MAIN_VERSION 1
+//#define MAIN_VERSION 1
 
 char *get_version()
 {

@@ -514,12 +514,16 @@ ErrorCode IoManager::getModbusDeviceInfo(fst_hal::IODeviceInfo &info, ModbusMana
     if (modbus_manager->getStartMode() != MODBUS_SERVER)
     {
         info.is_valid = false;
+        info.DO_num = 0;
+        info.DI_num = 0;
         return SUCCESS;;
     }
 
     info.is_valid = modbus_manager->isModbusValid();
 
     ModbusRegAddrInfo addr_info;
+    addr_info.max_nb = 0;
+    addr_info.addr = 0;
 
     ErrorCode ret = modbus_manager->getServerConfigCoilInfo(addr_info);
     if (ret != SUCCESS)
@@ -531,6 +535,8 @@ ErrorCode IoManager::getModbusDeviceInfo(fst_hal::IODeviceInfo &info, ModbusMana
 
     info.DO_num = addr_info.max_nb;
 
+    addr_info.max_nb = 0;
+    addr_info.addr = 0;
     ret = modbus_manager->getServerConfigDiscrepteInputInfo(addr_info);
     if (ret != SUCCESS)
     {

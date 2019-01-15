@@ -141,6 +141,18 @@ install(TARGETS test_get_errorcode_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN
 
 
 ######### for test client #########
+add_executable(test_controller_get_system_time  ${SRC_LIST}  src/test_controller/test_controller_get_system_time.cpp)
+target_link_libraries(test_controller_get_system_time ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_controller_get_system_time RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+
+######### for test client #########
+add_executable(test_controller_set_system_time  ${SRC_LIST}  src/test_controller/test_controller_set_system_time.cpp)
+target_link_libraries(test_controller_set_system_time ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_controller_set_system_time RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+
+######### for test client #########
 add_executable(test_tool_add ${SRC_LIST}  src/test_frame/test_tool_add.cpp)
 target_link_libraries(test_tool_add ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_tool_add RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/tool_manager)

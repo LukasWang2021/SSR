@@ -61,7 +61,7 @@ unsigned long long int openSafety(void) {
          return ERR_SAFETY_FILE_OPEN;
     }
     else {
-         printf("Open /dev/mem OK .\n");
+         printf("Open safety /dev/mem OK .\n");
     }
     // map the physical address to virtual address in user space.
     s_safety_start_ptr = mmap(NULL, SAFETY_LEN, PROT_WRITE|PROT_READ,
@@ -71,7 +71,7 @@ unsigned long long int openSafety(void) {
         return ERR_SAFETY_FILE_MAP;
     }
     else {
-        printf("mmap /dev/mem OK .\n");
+        printf("mmap safety /dev/mem OK .\n");
     }
 
     // three operation addresses.
@@ -127,9 +127,13 @@ unsigned long long int getSafety(int *data, int frame) {
 
     pthread_mutex_lock(&safety->mutex);
     if (frame_mask == FIRST_FRAME) //get the first frame data.
-	  data = (int *)(&safety->data);
+    {
+	  *data = *(int *)(safety->data);
+    }
 	if (frame_mask == SECOND_FRAME)  //get the second frame data.
-	  data = (int *)(&safety->data) + 1;
+    {
+	  *data = *((int *)(&safety->data) + 1);
+    }
     pthread_mutex_unlock(&safety->mutex);
 
 	return SUCCESS;

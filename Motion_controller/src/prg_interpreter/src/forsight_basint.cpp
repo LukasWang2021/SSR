@@ -978,7 +978,7 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   // use bas directly 
   // if((access(fBASName,F_OK))==-1)
   // use XML directly 
-  parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
+  parse_xml_file_wrapper(fXMLName);
 #else
   sprintf(fXMLName, "%s/programs/%s.xml", forgesight_get_programs_path(), pname);
   sprintf(fBASName, "%s/programs/%s.bas", forgesight_get_programs_path(), pname);
@@ -987,7 +987,7 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   // use XML directly 
   if((access(fXMLName, F_OK))==0)
   {   
-      parse_xml_file_wrapper(objThreadCntrolBlock->project_name, fXMLName);
+      parse_xml_file_wrapper(fXMLName);
   }
 #endif
   
@@ -2673,6 +2673,11 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
   }
   objLabel.type = OUTSIDE_FUNC ;
   
+  if(objThreadCntrolBlock->iSubProgNum > NUM_SUBROUTINE)
+  {
+    	serror(objThreadCntrolBlock, 22);
+		return;
+  }
   if(!(objThreadCntrolBlock->sub_prog[objThreadCntrolBlock->iSubProgNum]
 	    =(char *) malloc(PROG_SIZE))) {
 	  FST_ERROR("allocation failure");
@@ -2957,7 +2962,11 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 		FAIL_INTERPRETER_MOVJ_WITH_POINT          ,     "movj with point",             // 16
 		FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER      ,     "illegal line number",         // 17
 		FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH     ,     "func params mismatching",     // 18
-		FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO     ,     "exec macro duplicating"       // 19
+		FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO     ,     "exec macro duplicating",      // 19 - used by setWarning
+		INFO_INTERPRETER_BACK_TO_BEGIN            ,     "Backward to begin",           // 20 - used by setWarning
+		INFO_INTERPRETER_THREAD_NOT_EXIST         ,     "thread not exist",            // 21 - used by setWarning
+		INFO_INTERPRETER_TOO_MANY_IMPORT          ,     "too many import file",        // 22 
+		INFO_INTERPRETER_TOO_LONG_PROJECT_NAME    ,     "too long project name"        // 23
   };
   if(error > (int)(sizeof(errInfo)/sizeof(ErrInfo))) {
   	FST_ERROR("\t NOTICE : Error out of range %d ", error);

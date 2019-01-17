@@ -34,6 +34,14 @@ void signalInterrupt(int signo)
 #endif
 
 
+/************************************************* 
+	Function:		main
+	Description:	main function.
+	Input:			name  - io name
+	Input:			NULL
+	Output: 		NULL
+	Return: 		Never
+*************************************************/ 
 int main(int  argc, char *argv[])
 {
 	InterpreterControl intprt_ctrl; 
@@ -50,7 +58,7 @@ int main(int  argc, char *argv[])
 #ifndef WIN32
 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
 #else
-	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_DEBUG ;
+	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
 	append_io_mapping();
 	forgesight_load_io_config();
 #endif

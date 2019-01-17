@@ -468,7 +468,15 @@ bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
 void startFile(struct thread_control_block * objThdCtrlBlockPtr, 
 	char * proj_name, int idx)
 {
-	strcpy(objThdCtrlBlockPtr->project_name, proj_name); // "prog_demo_dec"); // "BAS-EX1.BAS") ; // 
+	if(strlen(proj_name) < LAB_LEN)
+	{
+		strcpy(objThdCtrlBlockPtr->project_name, proj_name); // "prog_demo_dec"); // "BAS-EX1.BAS") ; // 
+	}
+	else
+	{
+		serror(objThdCtrlBlockPtr, 23);
+		return;
+	}
 	// Just set to default value and it will change in the append_program_prop_mapper
 	objThdCtrlBlockPtr->is_main_thread = MAIN_THREAD ;
 	objThdCtrlBlockPtr->is_in_macro    = false ;
@@ -713,6 +721,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			else
             {
             	FST_ERROR("Failed to jump to line:%d", iLineNum);
+				setWarning(FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER);
 			}
 			break;
         case fst_base::INTERPRETER_SERVER_CMD_SWITCH_STEP:
@@ -895,7 +904,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSED); 
             break;
         case fst_base::INTERPRETER_SERVER_CMD_ABORT:
-            FST_INFO("abort motion");
+            FST_ERROR("abort motion");
 			if(getCurrentThreadSeq() < 0) break ;
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
 		    objThdCtrlBlockPtr = getThreadControlBlock();

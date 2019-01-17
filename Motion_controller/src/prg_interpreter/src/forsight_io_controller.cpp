@@ -67,6 +67,13 @@ static int get_num_token(char * src, char * dst)
 	return src - tmp ;
 }
 
+/************************************************* 
+	Function:		forgesight_get_io_status
+	Description:	get io status.
+	Input:			name  - io name
+	Output: 		NULL
+	Return: 		io value
+*************************************************/ 
 eval_value forgesight_get_io_status(char *name)
 {	
 	bool bRet = false ;
@@ -149,6 +156,14 @@ eval_value forgesight_get_io_status(char *name)
 	return value;
 }
 
+/************************************************* 
+	Function:		forgesight_set_io_status
+	Description:	set io status.
+	Input:			name  - io name
+	Input:			valueStart  - io value
+	Output: 		NULL
+	Return: 		0 - success , -1 - failed
+*************************************************/ 
 int forgesight_set_io_status(char *name, eval_value& valueStart)
 {
 	bool bRet = false ;

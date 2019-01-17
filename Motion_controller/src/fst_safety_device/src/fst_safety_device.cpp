@@ -167,8 +167,8 @@ int FstSafetyDevice::getDITPUserMode()
     if( din_frm1_.load().byte2.usermode_man) val |= 0x2;
     if( din_frm1_.load().byte2.usermode_limit) val |= 0x4;
 
-//	FST_INFO("getDITPUserMode: safety_interface_ :: din_frm1_: %08X", *(uint32_t*)&din_frm1_);
-//	FST_INFO("getDITPUserMode: safety_interface_ :: val: %d", val);
+    //FST_INFO("getDITPUserMode: safety_interface_ :: din_frm1_: %08X", *(uint32_t*)&din_frm1_);
+	//FST_INFO("getDITPUserMode: safety_interface_ :: val: %d", val);
 
     if(val == 0x1) return 1; //auto mode
     if(val == 0x2) return 3; //manual mode

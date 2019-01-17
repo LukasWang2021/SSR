@@ -58,6 +58,8 @@ bool ProgramLaunching::parseMacroConfigObject(cJSON *object)
 		else if(strcmp(child->string, "ioPort") == 0)
 		{
 			objInfo.ioPort = child->valueint;
+			if(objInfo.ioPort == 0)
+			    return false;
 		}
 		child=child->next;
 	}

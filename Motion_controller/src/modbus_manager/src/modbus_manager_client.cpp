@@ -198,7 +198,7 @@ ErrorCode ModbusManager::getClientConfigParams(int client_id, ModbusClientConfig
     if (start_mode_ != MODBUS_CLIENT)
         return MODBUS_START_MODE_ERROR;
 
-    return client_manager_ptr_->getConfigParamsList(client_id, client_config_params);
+    return client_manager_ptr_->getConfigParams(client_id, client_config_params);
 }
 
 ErrorCode ModbusManager::getClientScanRate(int client_id, int &scan_rate)

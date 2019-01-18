@@ -133,6 +133,7 @@ bool ModbusClientConfigParam::saveStartInfo(ModbusClientStartInfo &start_info)
                 || !yaml_help_.setParam(client_path + "/response_timeout", start_info.response_timeout)
                 || !yaml_help_.dumpParamFile(file_path_.c_str()))
             {
+                //reload param
                 client_config_list_mutex_.unlock();
                 cout << " Failed save modbus client_config.yaml " << endl;
                 return false;

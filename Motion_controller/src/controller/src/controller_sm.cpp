@@ -753,14 +753,14 @@ void ControllerSm::processModbusClientList()
     {
         bool is_connected = false;
         modbus_manager_ptr_->isConnected(*it, is_connected);
-        if (!is_connected) return;
+        if (!is_connected) continue;
 
         int scan_rate = 0;
         ErrorCode error_code = modbus_manager_ptr_->getClientScanRate(*it, scan_rate);
         if (error_code != SUCCESS)
         {
             ErrorMonitor::instance()->add(error_code);
-            return;
+            continue;
         }
 
         struct timeval current_time;
@@ -776,7 +776,7 @@ void ControllerSm::processModbusClientList()
 
             modbus_last_scan_time_ = current_time;
             gettimeofday(&current_time, NULL);
-            return;
+            continue;
         }
     }
 }

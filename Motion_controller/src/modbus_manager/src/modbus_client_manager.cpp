@@ -726,7 +726,7 @@ vector<ModbusClientConfigParams> ModbusClientManager::getConfigParamsList()
     return params_list;
 }
 
-ErrorCode ModbusClientManager::getConfigParamsList(int client_id, ModbusClientConfigParams &params)
+ErrorCode ModbusClientManager::getConfigParams(int client_id, ModbusClientConfigParams &params)
 {
     list<ModbusClient*>::iterator client_it;
 

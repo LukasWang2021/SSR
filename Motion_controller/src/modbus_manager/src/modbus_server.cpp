@@ -689,5 +689,3 @@ void modbusServerRoutineThreadFunc(void* arg)
         modbus_server->modbusTcpServerThreadFunc();
     }
 }
-
-

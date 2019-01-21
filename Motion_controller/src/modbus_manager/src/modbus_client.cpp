@@ -34,6 +34,9 @@ ModbusClient::ModbusClient(int id, bool is_debug, int log_level):
     config_param_.reg_info.holding_reg.max_nb = 0;
     config_param_.reg_info.input_reg.addr = 0;
     config_param_.reg_info.input_reg.max_nb = 0;
+
+    modbus_last_scan_time_.tv_sec = 0;
+    modbus_last_scan_time_.tv_usec = 0;
 }
 
 ModbusClient::ModbusClient():
@@ -314,7 +317,33 @@ bool ModbusClient::isSocketValid()
     return true;
 }
 
-bool ModbusClient::scanDataArea()
+ErrorCode ModbusClient::scanDataArea()
+{
+    if(modbus_last_scan_time_.tv_sec == 0
+        && modbus_last_scan_time_.tv_usec == 0)
+    {
+        gettimeofday(&modbus_last_scan_time_, NULL);
+    }
+
+    struct timeval current_time;
+    gettimeofday(&current_time, NULL);
+
+    if(!is_connected_) return SUCCESS;
+
+    ErrorCode error_code = SUCCESS;
+    if (config_param_.start_info.scan_rate 
+        < computeTimeElapse(current_time, modbus_last_scan_time_))
+    {
+        modbus_last_scan_time_ = current_time;
+        error_code = readAllRegs();
+        struct timeval last_current_time;
+        gettimeofday(&last_current_time, NULL);
+    }
+
+    return error_code;
+}
+
+ErrorCode ModbusClient::readAllRegs()
 {
     int value_nb = 0;
     if(config_param_.reg_info.coil.max_nb < config_param_.reg_info.discrepte_input.max_nb)
@@ -327,19 +356,18 @@ bool ModbusClient::scanDataArea()
     }
 
     uint8_t bit_value[value_nb];
+    ErrorCode error_code = SUCCESS;
 
     if (0 < config_param_.reg_info.coil.max_nb)
     {
-        ErrorCode error_code = readCoils(config_param_.reg_info.coil.addr, 
+        error_code = readCoils(config_param_.reg_info.coil.addr, 
             config_param_.reg_info.coil.max_nb, bit_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
     if (0 < config_param_.reg_info.discrepte_input.max_nb)
     {
-        ErrorCode error_code = readDiscreteInputs(config_param_.reg_info.discrepte_input.addr, 
+        error_code = readDiscreteInputs(config_param_.reg_info.discrepte_input.addr, 
             config_param_.reg_info.discrepte_input.max_nb, bit_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
     if(config_param_.reg_info.holding_reg.max_nb < config_param_.reg_info.input_reg.max_nb)
@@ -357,16 +385,16 @@ bool ModbusClient::scanDataArea()
 
     for (int i = 0; i != reg_read_times; ++i)
     {
-        ErrorCode error_code = readHoldingRegs(config_param_.reg_info.holding_reg.addr, 
+        error_code = readHoldingRegs(
+            config_param_.reg_info.holding_reg.addr + i * REGISTER_ONE_OP_NUM, 
             REGISTER_ONE_OP_NUM, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
-    if (reg_read_left_nb != 0)
+    if (0 < reg_read_left_nb)
     {
-        ErrorCode error_code = readHoldingRegs(config_param_.reg_info.holding_reg.addr, 
+        error_code = readHoldingRegs(
+            config_param_.reg_info.holding_reg.addr + reg_read_times * REGISTER_ONE_OP_NUM, 
             reg_read_left_nb, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
     reg_read_times = config_param_.reg_info.input_reg.max_nb / REGISTER_ONE_OP_NUM;
@@ -374,20 +402,21 @@ bool ModbusClient::scanDataArea()
 
     for (int i = 0; i != reg_read_times; ++i)
     {
-        ErrorCode error_code = readInputRegs(config_param_.reg_info.input_reg.addr, 
+        error_code = readInputRegs(
+            config_param_.reg_info.input_reg.addr + i * REGISTER_ONE_OP_NUM, 
             REGISTER_ONE_OP_NUM, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
-    if (reg_read_left_nb != 0)
+    if (0 < reg_read_left_nb)
     {
-        ErrorCode error_code = readInputRegs(config_param_.reg_info.input_reg.addr,
+        error_code = readInputRegs(
+            config_param_.reg_info.input_reg.addr + reg_read_times * REGISTER_ONE_OP_NUM,
             reg_read_left_nb, reg_value);
-        if (error_code == MODBUS_CLIENT_OPERATION_FAILED) return false;
     }
 
-    return true;
+    return error_code;
 }
+
 
 void ModbusClient::close()
 {
@@ -629,6 +658,12 @@ ErrorCode ModbusClient::writeAndReadHoldingRegs(
     return SUCCESS;
 }
 
+int ModbusClient::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)
+{
+    long long delta_tv_sec = current_time.tv_sec - last_time.tv_sec;
+    long long delta_tv_usec = current_time.tv_usec - last_time.tv_usec;
+    return (delta_tv_sec * 1000 + delta_tv_usec / 1000);
+}
 
 #if 0
 void modbusClientRoutineThreadFunc(void* arg)

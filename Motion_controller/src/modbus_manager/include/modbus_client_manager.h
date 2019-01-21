@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/time.h>
 #include <list>
 
 #include "parameter_manager/parameter_manager_param_group.h"
@@ -60,6 +61,7 @@ public:
     ErrorCode getConfigParams(int client_id, ModbusClientConfigParams &params);
     bool isAllClientClosed();
     ErrorCode scanDataArea(int client_id);
+    ErrorCode scanAllClientDataArea();
 
     ErrorCode getClientScanRate(int client_id, int &scan_rate);
     ErrorCode getCtrlState(int client_id, int &ctrl_state);

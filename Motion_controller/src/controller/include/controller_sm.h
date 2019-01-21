@@ -141,10 +141,6 @@ private:
     struct timeval last_unknown_user_op_mode_time_;
     bool is_unknown_user_op_mode_exist_;
 
-    // modbus client list related
-    struct timeval modbus_last_scan_time_;
-    std::mutex modbus_last_scan_time_mutex_;
-
     // interpreter instruction
     Instruction instruction_;
     bool is_instruction_available_;

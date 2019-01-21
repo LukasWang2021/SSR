@@ -544,7 +544,7 @@ ErrorCode ModbusClientManager::scanDataArea(int client_id)
     {
         if ((*it)->getId() == client_id)
         {
-            if(!(*it)->scanDataArea())
+            if((*it)->scanDataArea() != SUCCESS)
             {
                 if (!(*it)->isSocketValid())
                 {
@@ -830,4 +830,26 @@ ErrorCode ModbusClientManager::getClientScanRate(int client_id, int &scan_rate)
 
     client_list_mutex_.unlock();
     return MODBUS_CLIENT_ID_NOT_EXISTED;
+}
+
+ErrorCode ModbusClientManager::scanAllClientDataArea()
+{
+    ErrorCode error_code = SUCCESS;
+#if 0
+    std::list<ModbusClient*>::iterator it;
+
+    client_list_mutex_.lock();
+    for (it = client_list_.begin(); it != client_list_.end(); it++)
+    {
+        error_code = (*it)->scanDataArea();
+        if (error_code != SUCCESS)
+        {
+            if (!(*it)->isSocketValid()) (*it)->close();
+            continue;
+        }
+    }
+
+    client_list_mutex_.unlock();
+#endif
+    return error_code;
 }

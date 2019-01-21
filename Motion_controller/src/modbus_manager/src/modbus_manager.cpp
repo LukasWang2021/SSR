@@ -89,6 +89,16 @@ ErrorCode ModbusManager::setStartMode(int start_mode)
 {
     if (start_mode == start_mode_) return SUCCESS;
 
+    if (start_mode != MODBUS_SERVER && start_mode != MODBUS_CLIENT)
+        return MODBUS_START_MODE_ERROR;
+
+    param_ptr_->start_mode_ = start_mode;
+    if (!param_ptr_->saveStartMode()) return MODBUS_MANAGER_SAVE_PARAM_FAILED;
+
+    start_mode_ = param_ptr_->start_mode_;
+    return SUCCESS;
+
+#if 0
     if (start_mode == MODBUS_SERVER) //client transform to server
     {
         if (!client_manager_ptr_->isAllClientClosed())
@@ -118,6 +128,7 @@ ErrorCode ModbusManager::setStartMode(int start_mode)
     }
 
     return MODBUS_START_MODE_ERROR;
+#endif
 }
 
 

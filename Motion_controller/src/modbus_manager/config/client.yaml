@@ -1,6 +1,7 @@
 log_level: 1
 comm_type: TCP
 is_debug: false
+cycle_time: 10000 #ms
 
 client_number: 10
 scan_rate_min: 50

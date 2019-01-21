@@ -68,6 +68,7 @@ public:
     ErrorCode closeClient(int client_id);
     ErrorCode isConnected(int client_id, bool &is_connected);
     ErrorCode scanClientDataArea(int &client_id);
+    ErrorCode scanAllClientDataArea();
     ErrorCode getConnectedClientIdList(vector<int> &id_list);
 
     ErrorCode setClientEnableStatus(int client_id, bool &status);

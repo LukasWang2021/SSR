@@ -217,10 +217,10 @@ ErrorCode ModbusManager::replaceClient(int &replaced_id, ModbusClientStartInfo &
     return client_manager_ptr_->replaceClient(replaced_id, start_info);
 }
 
-ErrorCode ModbusManager::scanClientDataArea(int &client_id)
+ErrorCode ModbusManager::scanAllClientDataArea()
 {
     if (start_mode_ != MODBUS_CLIENT)
-        return MODBUS_START_MODE_ERROR;
+        return SUCCESS;
 
-    return client_manager_ptr_->scanDataArea(client_id);
+    return client_manager_ptr_->scanAllClientDataArea();
 }

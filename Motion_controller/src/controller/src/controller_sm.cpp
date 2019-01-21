@@ -41,7 +41,6 @@ ControllerSm::ControllerSm():
 {
     memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
     memset(&last_unknown_user_op_mode_time_, 0, sizeof(struct timeval));
-    memset(&modbus_last_scan_time_, 0, sizeof(struct timeval));
     memset(&instruction_, 0, sizeof(Instruction));
 }
 
@@ -732,52 +731,12 @@ void ControllerSm::handleContinuousManualRpcTimeout()
     }
 }
 
-
 void ControllerSm::processModbusClientList()
 {
-    if (modbus_manager_ptr_->getStartMode() != MODBUS_CLIENT)
+    ErrorCode error_code = modbus_manager_ptr_->scanAllClientDataArea();
+    if (error_code != SUCCESS)
     {
-        return;
-    }
-
-    if(modbus_last_scan_time_.tv_sec == 0
-        && modbus_last_scan_time_.tv_usec == 0)
-    {
-        gettimeofday(&modbus_last_scan_time_, NULL);
-    }
-
-    vector<int> id_list;
-    id_list.clear();
-    modbus_manager_ptr_->getConnectedClientIdList(id_list);
-    for (vector<int>::iterator it = id_list.begin(); it != id_list.end(); it++)
-    {
-        bool is_connected = false;
-        modbus_manager_ptr_->isConnected(*it, is_connected);
-        if (!is_connected) continue;
-
-        int scan_rate = 0;
-        ErrorCode error_code = modbus_manager_ptr_->getClientScanRate(*it, scan_rate);
-        if (error_code != SUCCESS)
-        {
-            ErrorMonitor::instance()->add(error_code);
-            continue;
-        }
-
-        struct timeval current_time;
-        gettimeofday(&current_time, NULL);
-        long long time_elapse = computeTimeElapse(current_time, modbus_last_scan_time_);
-        int scan_elapse = (int)(time_elapse/1000);
-
-        if (scan_rate < scan_elapse)
-        {
-            ErrorCode error_code = modbus_manager_ptr_->scanClientDataArea(*it);
-            if (error_code != SUCCESS)
-                ErrorMonitor::instance()->add(error_code);
-
-            modbus_last_scan_time_ = current_time;
-            gettimeofday(&current_time, NULL);
-            continue;
-        }
+        ErrorMonitor::instance()->add(error_code);
     }
 }
 

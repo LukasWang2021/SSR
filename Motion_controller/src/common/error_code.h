@@ -89,9 +89,10 @@
 #define CONTROLLER_CREATE_ROUTINE_THREAD_FAILED (unsigned long long int)0x0011000B00A80003   /*Controller failed to create routine thread*/
 #define CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED (unsigned long long int)0x0011000B00A80004   /*Controller failed to create heartbeat thread*/
 #define CONTROLLER_INVALID_ARG (unsigned long long int)0x0001000200A80005   /*Controller has invalid argument*/
-#define CONTROLLER_PUBLISH_FAILED (unsigned long long int)0x0001000200A80006   /*Controller failed to echo the request of publish something*/
+#define CONTROLLER_PUBLISH_EXIST (unsigned long long int)0x0001000200A80006   /*the publishing element of request is exist*/
 #define CONTROLLER_INVALID_OPERATION (unsigned long long int)0x0001000200A80007   /*Controller failed to operate command because of invalid pre-condition*/
 #define CONTROLLER_UNKNOWN_USER_OP_MODE (unsigned long long int)0x0001000B00A80008   /*User Op Mode is in unknown state*/
+#define CONTROLLER_PUBLISH_NONE (unsigned long long int)0x0001000200A80009   /*Controller failed to find the publishing elements of request*/
 #define INTERPRETER_LOG       (unsigned long long int)0x0001000100AA0000   /*Interpreter log{0}*/
 #define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0001   /*No syntax*/
 #define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0002   /*unbalanced parentheses*/

@@ -100,7 +100,7 @@ void ControllerPublish::updateTpProgramStatus()
 void ControllerPublish::updateSafetyBoardStatus()
 {
     //todo new
-    uint32_t data = safety_device_ptr_->getDIFrm2();  //old board is getDIfrm2; new board is getDiFrm1
+    uint32_t data = safety_device_ptr_->getDIFrm1();  //old board is getDIfrm2; new board is getDiFrm1
     memcpy(&safety_board_status_.data, &data, sizeof(data));
 }
 

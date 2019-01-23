@@ -17,6 +17,7 @@
 #include "io_mapping.h"//feng add for mapping.
 #include "program_launching.h"
 #include "file_manager.h"
+#include "device_version.h"
 #include <vector>
 
 namespace fst_ctrl
@@ -52,8 +53,11 @@ private:
     IoMapping* io_mapping_ptr_; 
     IoManager* io_manager_ptr_;
     fst_hal::ModbusManager* modbus_manager_ptr_; 
+    fst_hal::FstSafetyDevice* safety_device_ptr_;
     ProgramLaunching* program_launching_;
     fst_base::FileManager* file_manager_ptr_;
+
+    DeviceVersion device_version_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -383,6 +387,8 @@ private:
     void handleRpc0x0001421F(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/device_manager/getIoDeviceInfoList"
     void handleRpc0x000024A4(void* request_data_ptr, void* response_data_ptr);
+    // "/rpc/device_manager/getDeviceVersionList"
+    void handleRpc0x0000F574(void* request_data_ptr, void* response_data_ptr);
 
 
     /* program launching rpc */

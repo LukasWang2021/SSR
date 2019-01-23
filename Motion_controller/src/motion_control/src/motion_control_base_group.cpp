@@ -1631,6 +1631,22 @@ ServoState BaseGroup::getServoState(void)
     return state;
 }
 
+ErrorCode BaseGroup::getServoVersion(std::string &version)
+{
+    char buffer[256];
+
+    if (bare_core_.readVersion(buffer, 256))
+    {
+        version = buffer;
+        return SUCCESS;
+    }
+    else
+    {
+        version.clear();
+        return BARE_CORE_TIMEOUT;
+    }
+}
+
 void BaseGroup::getGroupState(GroupState &state)
 {
     state = group_state_;
@@ -2206,7 +2222,8 @@ void BaseGroup::doStateMachine(void)
 
             if (auto_to_standby_cnt > auto_to_standby_timeout_)
             {
-                FST_WARN("Auto to standby timeout, error-request asserted.");
+                FST_ERROR("Auto to standby timeout, error-request asserted.");
+                reportError(BARE_CORE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -2233,11 +2250,11 @@ void BaseGroup::doStateMachine(void)
 
             if (manual_to_standby_cnt > manual_to_standby_timeout_)
             {
-                FST_WARN("Manual to standby timeout, error-request asserted.");
+                FST_ERROR("Manual to standby timeout, error-request asserted.");
+                reportError(BARE_CORE_TIMEOUT);
                 error_request_ = true;
             }
 
-            
             break;
         }
 

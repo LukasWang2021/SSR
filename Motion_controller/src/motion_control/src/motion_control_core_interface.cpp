@@ -16,6 +16,7 @@ namespace fst_mc
 {
 
 const static size_t MAX_ATTEMPTS = 100;
+const static unsigned char READ_VERSION = 0x10;
 const static unsigned char WRITE_BY_ID  = 0x2D;
 const static unsigned char GET_ENCODER  = 0x70;
 const static unsigned char GET_CONTROL_POS  = 0x80;
@@ -236,6 +237,27 @@ bool BareCoreInterface::getControlPosition(double *data, size_t size)
                 memcpy(data, &res.res_buff[4], len * sizeof(double));
                 return true;
             }
+        }
+    }
+
+    return false;
+}
+
+bool BareCoreInterface::readVersion(char *buffer, size_t size)
+{
+    ServiceRequest req;
+    req.req_id = READ_VERSION;
+    if (sendRequest(command_interface_, req))
+    {
+        ServiceResponse res;
+
+        if (recvResponse(command_interface_, res))
+        {
+            size_t len = strlen(res.res_buff);
+            len = len < size ? len : size - 1;
+            memcpy(buffer, res.res_buff, len);
+            buffer[len] = '\0';
+            return true;
         }
     }
 

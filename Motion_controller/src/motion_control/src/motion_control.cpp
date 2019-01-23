@@ -667,6 +667,11 @@ ServoState MotionControl::getServoState(void)
     return group_ptr_->getServoState();
 }
 
+ErrorCode MotionControl::getServoVersion(std::string &version)
+{
+    return group_ptr_->getServoVersion(version);
+}
+
 PoseEuler MotionControl::getCurrentPose(void)
 {
     PoseEuler pose;

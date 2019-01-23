@@ -50,6 +50,7 @@ class BareCoreInterface
     bool getConfigData(int id, std::vector<double> &data);
     bool getEncoder(std::vector<int> &data);
     bool getControlPosition(double *data, size_t len);
+    bool readVersion(char *buffer, size_t size);
 
   private:
     bool sendRequest(fst_comm_interface::CommInterface &comm, const ServiceRequest &req);

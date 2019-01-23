@@ -60,12 +60,14 @@ class BaseGroup
     virtual ErrorCode resetGroup(void);
     virtual ErrorCode clearGroup(void);
 
+
     void  getLatestJoint(Joint &joint);
     void  getServoState(ServoState &state);
     void  getGroupState(GroupState &state);
     Joint getLatestJoint(void);
     GroupState getGroupState(void);
     ServoState getServoState(void);
+    ErrorCode  getServoVersion(std::string &version);
 
     // Frame handle APIs:
     virtual ErrorCode setToolFrame(const PoseEuler &tf);

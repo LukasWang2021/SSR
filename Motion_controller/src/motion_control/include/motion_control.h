@@ -92,6 +92,7 @@ public:
     ErrorCode  convertCartToJoint(const PoseEuler &pose, int user_frame_id, int tool_frame_id, Joint &joint);
     ErrorCode  convertJointToCart(const Joint &joint, int user_frame_id, int tool_frame_id, PoseEuler &pose);
 
+    ErrorCode   getServoVersion(std::string &version);
     GroupState  getGroupState(void);
     ServoState  getServoState(void);
     PoseEuler   getCurrentPose(void);

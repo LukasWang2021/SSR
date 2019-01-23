@@ -1,4 +1,4 @@
 log_level: 1
 cycle_time: 2000
-is_virtual: false
+is_virtual: true
 #END

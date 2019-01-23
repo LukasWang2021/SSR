@@ -51,7 +51,9 @@ void ControllerPublish::init(fst_log::Logger* log_ptr, ControllerParam* param_pt
     {
         if (device_list[i].type == DEVICE_TYPE_FST_SAFETY)
         {
+            
             BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if(device_ptr == NULL || safety_device_ptr_ != NULL) break;
             safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
         }
     }

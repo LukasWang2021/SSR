@@ -139,3 +139,10 @@ void ControllerRpc::handleRpc0x000024A4(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getIoDeviceInfoList"));
 }
+
+//"/rpc/device_manager/getDeviceVersionList"
+void ControllerRpc::handleRpc0x0000F574(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+

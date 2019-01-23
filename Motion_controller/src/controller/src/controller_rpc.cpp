@@ -64,9 +64,18 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
         if (device_list[i].type == DEVICE_TYPE_MODBUS)
         {
             BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if(device_ptr == NULL || modbus_manager_ptr_ != NULL) break;
             modbus_manager_ptr_ = static_cast<ModbusManager*>(device_ptr);
+        } 
+        else if(device_list[i].type == DEVICE_TYPE_FST_SAFETY)// get the safety device ptr.
+        {
+            BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+            if(device_ptr == NULL || safety_device_ptr_ != NULL) break;
+            safety_device_ptr_ = static_cast<FstSafetyDevice*>(device_ptr);
         }
     }
+
+    device_version_.init(log_ptr_, io_manager_ptr_, safety_device_ptr_);
 
     initRpcTable();
     initRpcQuickSearchTable();

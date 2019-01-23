@@ -447,6 +447,8 @@ private:
     void handleRequest0x0001421F(int recv_bytes);
     /********rpc/device_manager/getIoDeviceInfoList, RequestMessageType_Void**********/
     void handleRequest0x000024A4(int recv_bytes);
+    /********rpc/device_manager/getDeviceVersionList, RequestMessageType_Void**********/
+    void handleRequest0x0000F574(int recv_bytes);
 
     /********rpc/program_launching/setMethod, RequestMessageType_Int32**********/
     void handleRequest0x00011544(int recv_bytes);
@@ -906,6 +908,8 @@ private:
     void handleResponse0x0001421F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/device_manager/getIoDeviceInfoList, ResponseMessageType_Uint64_IoDeviceInfoList**********/
     void handleResponse0x000024A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/device_manager/getDeviceVersionList, ResponseMessageType_Uint64_DeviceVersionList**********/
+    void handleResponse0x0000F574(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/program_launching/setMethod, ResponseMessageType_Uint64**********/
     void handleResponse0x00011544(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

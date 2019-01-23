@@ -72,6 +72,7 @@
 #include "message_type/io_type.pb.h"
 #include "message_type/io_device_info.pb.h"
 #include "message_type/io_board_status_list.pb.h"
+#include "message_type/device_version.pb.h"
 
 #include "message_type/timeval.pb.h"
 
@@ -115,6 +116,7 @@
 #include "response/response_uint64_string.pb.h"
 #include "response/response_uint64_uint64list.pb.h"
 #include "response/response_file.pb.h"
+#include "response/response_uint64_device_version.pb.h"
 
 #include "response/response_modbus_start_mode.pb.h"
 #include "response/response_uint64_modbus_all_funtion_addr_info.pb.h"

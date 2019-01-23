@@ -749,6 +749,11 @@ add_executable(get_io_device_info_list ${SRC_LIST} src/test_device_manager/get_i
 target_link_libraries(get_io_device_info_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_io_device_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/device_manager)
 
+######### for test device manager  #########
+add_executable(get_device_version_list ${SRC_LIST} src/test_device_manager/get_device_version_list.cpp)
+target_link_libraries(get_device_version_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_device_version_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/device_manager)
+
 ####### for test modbus  #########
 add_executable(server_close ${SRC_LIST} src/test_modbus/server/server_close.cpp)
 target_link_libraries(server_close ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
@@ -758,7 +763,6 @@ install(TARGETS server_close RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATIO
 add_executable(get_server_config_params ${SRC_LIST} src/test_modbus/server/get_server_config_params.cpp)
 target_link_libraries(get_server_config_params ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_server_config_params RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/server)
-
 
 ####### for test modbus server #########
 add_executable(function_info_get ${SRC_LIST} src/test_modbus/server/function_info_get.cpp)
@@ -785,12 +789,10 @@ add_executable(enable_status_set ${SRC_LIST} src/test_modbus/server/enable_statu
 target_link_libraries(enable_status_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS enable_status_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/server)
 
-
 ####### for test modbus  #########
 add_executable(start_info_get ${SRC_LIST} src/test_modbus/server/start_info_get.cpp)
 target_link_libraries(start_info_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS start_info_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/server)
-
 
 ####### for test modbus  #########
 add_executable(start_info_set ${SRC_LIST} src/test_modbus/server/start_info_set.cpp)

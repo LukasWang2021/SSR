@@ -23,74 +23,10 @@
 #define MSG_BUFFER_SIZE         256
 #define CONFIG_FILE_SIZE_MAX    64 * 1024
 
-using std::cout;
-using std::endl;
-using std::stringstream;
+using namespace std;
 
-using std::string;
-using std::vector;
-using std::map;
-using std::ifstream;
-using std::ofstream;
-
-namespace fst_parameter {
-/*
-void ParamGroup::test(void)
+namespace fst_parameter
 {
-    cout << "Parameter Manager Version " << parameter_manager_VERSION_MAJOR
-         << "." << parameter_manager_VERSION_MINOR
-         << "." << parameter_manager_VERSION_PATCH << endl;
-    cout << "----------------Test begin: ---------------" << endl;
-    cout << value_ << endl;
-    string test = value_.toXml();
-    cout << test << endl;
-    value_.clear();
-    cout << "clear:" << value_ << endl;
-
-    value_.fromXml(test);
-    cout << "rebuild from xml:" << endl << value_ << endl;
-
-
-
-    cout << "----------------Test end ---------------" << endl;
-
-    cout << "----------------Test begin: ---------------" << endl;
-    YAML::Node pnode = *root_;
-    cout << pnode["name"]["first"]["sck"] << endl;
-    
-
-    YAML::Node node1 = (*root_)["name"];
-    YAML::Node node2 = node1["first"];
-    YAML::Node node3 = node2["sck"];
-    cout << node3.Scalar() << endl;
-    cout << "remove: " << (*root_)["name"]["first"].remove("sdd") << endl;
-    cout << node3.Scalar() << endl;
-
-    vector<YAML::Node> v_node;
-    vector<string> v_key;
-    v_key.push_back("name");
-    v_key.push_back("first");
-    v_key.push_back("sck");
-    v_node.resize(5);
-    v_node[0] = (*root_)[v_key[0]];
-    for (int i=0; i<2; ++i) { 
-        v_node[i+1] = v_node[i][v_key[i+1]];
-    }
-    
-    cout << "here: " << v_node[2].Scalar() << endl;
-    v_node[2] = 5.8;
-    cout << "here: " << v_node[2].Scalar() << endl;
-
-    // pnode["name"]["second"] = "sdfssdf";
-    // pnode = pnode["first"];
-    // pnode = pnode["sck"];
-
-    // (*root_)["name"]["first"]["sck"] = 5.45;
-    cout << (*root_)["name"]["first"]["sck"].Scalar() << endl;
-    cout << YAML::Dump(*root_);
-    cout << "----------------Test end ---------------" << endl;
-}
-*/
 
 
 ParamGroup::ParamGroup(const string &file)
@@ -102,6 +38,9 @@ ParamGroup::ParamGroup(const string &file)
 ParamGroup::~ParamGroup()
 {}
 
+/*
+    从参数树中将key所指定的参数移除，如果key为空则将整颗参数树移除
+*/
 bool ParamGroup::deleteParam(const string &key)
 {
     if (key.empty()) {value_.clear(); return true;}
@@ -111,67 +50,121 @@ bool ParamGroup::deleteParam(const string &key)
     vector<string>::iterator it;
     ParamValue *pv = &value_;
     
-    for (it = cooked_key.begin(); it != cooked_key.end() - 1; ++it) {
-        if (pv->hasMember(*it)) {
+    for (it = cooked_key.begin(); it != cooked_key.end() - 1; ++it)
+    {
+        if (pv->hasMember(*it))
+        {
             pv = &(*pv)[*it];
         }
-        else {
+        else
+        {
             last_error_ = PARAM_NOT_FOUND;
             return false;
         }     
     }
 
-    if (pv->delMember(*it)) {
-        return true;
-    }
-    else {
+    if (!pv->delMember(*it))
+    {
         last_error_ = PARAM_NOT_FOUND;
         return false;
     }
+
+    return true;
 }
 
+/*
+    获取上一次操作失败产生的错误码
+*/
 const ErrorCode& ParamGroup::getLastError(void)
 {
     return last_error_;
 }
 
+/*
+   清除因操作失败产生的错误码
+*/
 void ParamGroup::clearLastError(void)
 {
     last_error_ = SUCCESS;
 }
 
+/*
+   获取参数树中所有参数的路径列表
+*/
 void ParamGroup::getParamList(vector<string> &list)
 {
     list.clear();
-    if (value_.isValid()) {
+
+    if (value_.isValid())
+    {
         string ns;
         getListFromParamValue(value_, ns, list);
     }
 }
 
-bool ParamGroup::getParam(const string &key, bool &value)
+/*
+   获取指定参数体中所有参数的路径列表
+*/
+void ParamGroup::getListFromParamValue(ParamValue &value, const string &ns, vector<string> &list)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
+    list.clear();
+
+    if (value.isScalar() || value.isArray())
+    {
+        list.push_back(ns);
+    }
+    else if (value.isStruct())
+    {
+        for (ParamValue::iterator it = value.begin(); it != value.end(); ++it)
+        {
+            vector<string> tmp_list;
+            string tmp_ns = ns + "/" + it->first;
+            getListFromParamValue(it->second, tmp_ns, tmp_list);
+            list.insert(list.end(), tmp_list.begin(), tmp_list.end());
+        }
+    }
+}
+
+/*
+    从参数树中找到key所指定的参数，返回其指针
+*/
+ParamValue* ParamGroup::findParam(const string &key)
+{
+    ParamValue *pv = &value_;
     vector<string> cooked_key;
     split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
+
+    for (vector<string>::iterator it = cooked_key.begin(); it != cooked_key.end(); ++it)
+    {
+        if (pv->hasMember(*it))
+        {
             pv = &(*pv)[*it];
         }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
+        else
+        {
+            return NULL;
         }     
     }
 
-    if (pv->isBool()) {
+    return pv;
+}
+
+/*
+   获取指定参数路径所对应的参数值，参数值可以是bool,int,double,string类型或者是array和map类型
+*/
+bool ParamGroup::getParam(const string &key, bool &value)
+{
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
+
+    if (pv->isBool())
+    {
         value = (bool)*pv;
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -179,27 +172,17 @@ bool ParamGroup::getParam(const string &key, bool &value)
 
 bool ParamGroup::getParam(const string &key, int &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
     
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-    
-    if (pv->isInt()) {
+    if (pv->isInt())
+    {
         value = (int)*pv;
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -207,30 +190,21 @@ bool ParamGroup::getParam(const string &key, int &value)
 
 bool ParamGroup::getParam(const string &key, double &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    if (pv->isDouble()) {
+    if (pv->isDouble())
+    {
         value = (double)(*pv);
         return true;
     }
-    else if (pv->isInt()) {
+    else if (pv->isInt())
+    {
         value = 1.0 * (int)(*pv);
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -238,27 +212,17 @@ bool ParamGroup::getParam(const string &key, double &value)
 
 bool ParamGroup::getParam(const string &key, string &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    if (pv->isString()) {
+    if (pv->isString())
+    {
         value = (string)*pv;
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -267,36 +231,31 @@ bool ParamGroup::getParam(const string &key, string &value)
 bool ParamGroup::getParam(const string &key, vector<bool> &value)
 {
     value.clear();
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    if (pv->isArray()) {
+    if (pv->isArray())
+    {
         int length = pv->size();
-        for (int cnt = 0; cnt < length; ++cnt) {
-            if ((*pv)[cnt].isBool()) {
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
+            if ((*pv)[cnt].isBool())
+            {
                 value.push_back((bool)((*pv)[cnt]));
             }
-            else {
+            else
+            {
                 last_error_ = PARAM_TYPE_ERROR;
                 return false;
             }
         }
+
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -305,36 +264,31 @@ bool ParamGroup::getParam(const string &key, vector<bool> &value)
 bool ParamGroup::getParam(const string &key, vector<int> &value)
 {
     value.clear();
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    if (pv->isArray()) {
+    if (pv->isArray())
+    {
         int length = pv->size();
-        for (int cnt = 0; cnt < length; ++cnt) {
-            if ((*pv)[cnt].isInt()) {
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
+            if ((*pv)[cnt].isInt())
+            {
                 value.push_back((int)((*pv)[cnt]));
             }
-            else {
+            else
+            {
                 last_error_ = PARAM_TYPE_ERROR;
                 return false;
             }
         }
+
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -343,52 +297,51 @@ bool ParamGroup::getParam(const string &key, vector<int> &value)
 bool ParamGroup::getParam(const string &key, int *value, size_t size)
 {
     vector<int> tmp;
+
     if (getParam(key, tmp))
     {
         if (tmp.size() < size) size = tmp.size();
-        for (size_t i = 0; i < size; i++)
-            value[i] = tmp[i];
+        for (size_t i = 0; i < size; i++) value[i] = tmp[i];
         return true;
     }
+
     return false;
 }
 
 bool ParamGroup::getParam(const string &key, vector<double> &value)
 {
     value.clear();
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
     
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    ParamValue *pv = findParam(key);
 
-    if (pv->isArray()) {
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
+
+    if (pv->isArray())
+    {
         int length = pv->size();
-        for (int cnt = 0; cnt < length; ++cnt) {
-            if ((*pv)[cnt].isDouble()) {
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
+            if ((*pv)[cnt].isDouble())
+            {
                 value.push_back((double)((*pv)[cnt]));
             }
-            else if ((*pv)[cnt].isInt()) {
+            else if ((*pv)[cnt].isInt())
+            {
                 value.push_back(1.0 * (int)((*pv)[cnt]));
             }
-            else {
+            else
+            {
                 last_error_ = PARAM_TYPE_ERROR;
                 return false;
             }
         }
+
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -397,11 +350,11 @@ bool ParamGroup::getParam(const string &key, vector<double> &value)
 bool ParamGroup::getParam(const string &key, double *value, size_t size)
 {
     vector<double> tmp;
+
     if (getParam(key, tmp))
     {
         if (tmp.size() < size) size = tmp.size();
-        for (size_t i = 0; i < size; i++)
-            value[i] = tmp[i];
+        for (size_t i = 0; i < size; i++) value[i] = tmp[i];
         return true;
     }
     return false;
@@ -410,36 +363,31 @@ bool ParamGroup::getParam(const string &key, double *value, size_t size)
 bool ParamGroup::getParam(const string &key, vector<string> &value)
 {
     value.clear();
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    if (pv->isArray()) {
+    if (pv->isArray())
+    {
         int length = pv->size();
-        for (int cnt = 0; cnt < length; ++cnt) {
-            if ((*pv)[cnt].isString()) {
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
+            if ((*pv)[cnt].isString())
+            {
                 value.push_back((string)((*pv)[cnt]));
             }
-            else {
+            else
+            {
                 last_error_ = PARAM_TYPE_ERROR;
                 return false;
             }
         }
+
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -448,46 +396,28 @@ bool ParamGroup::getParam(const string &key, vector<string> &value)
 bool ParamGroup::getParam(const string &key, ParamValue &value)
 {
     value.clear();
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
     value = *pv;
     return true;
 }
 
+/*
+   判断key所指定的参数是否存在
+*/
 bool ParamGroup::hasParam(const string &key)
 {
     if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }     
-    }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
     return true;
 }
 
+/*
+   将参数树回写到yaml文件中
+*/
 bool ParamGroup::dumpParamFile(const string &file)
 {
     time_t      begin, end;
@@ -504,32 +434,44 @@ bool ParamGroup::dumpParamFile(const string &file)
     info("Dumping YAML file ... ");
     begin = clock();
     
-    if (file.empty()) {
+    if (file.empty())
+    {
+        // 默认文件路径和文件名，指向最近一次加载的yaml文件
         config_file = file_name_;
     }
-    else if (file[0] == '/') {
+    else if (file[0] == '/')
+    {
+        // 绝对路径和文件名
         config_file = file;
     }
-    else {
+    else
+    {
+        // 相对路径和文件名
         char temp[1024] = {0};
         int length = readlink("/proc/self/exe", temp, sizeof(temp));
-        if (length > 0 && length < sizeof(temp)) {
+        if (length > 0 && length < sizeof(temp))
+        {
             boost::filesystem::path executable(temp);
             config_file = executable.parent_path().parent_path().parent_path().string() + "/" + file;
         }
-        else {
+        else
+        {
             last_error_ = BAD_FILE_PATH;
             return false;
         }
     }
+
     info("  %s", config_file.c_str());
     backup_file = config_file + ".backup";
 
-    try {
+    // 参数树退化为字符串，并加入结束符
+    try
+    {
         ParamBuilder builder;
         builder.dumpParamToString(value_, param_string);
     }
-    catch (ParamException &e) {
+    catch (ParamException &e)
+    {
         error(e.getMessage().c_str());
         last_error_ = e.getCode();
         return false;
@@ -542,10 +484,12 @@ bool ParamGroup::dumpParamFile(const string &file)
     //param_string = YAML::Dump(root);
     param_string = param_string + "\n#END";
 
+    // 写入主配置文件
 #ifdef C_STYLE_FILE_OPERATION
     out = fopen(config_file.c_str(), "w");
     //info("  -> open file done");
-    if (out == NULL) {
+    if (out == NULL)
+    {
         error("Fail to open %s", config_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
         return false;
@@ -558,7 +502,8 @@ bool ParamGroup::dumpParamFile(const string &file)
 #else
     out.open(config_file.c_str());
     //info("  -> open file done");
-    if (!out.is_open()) {
+    if (!out.is_open())
+    {
         error("Fail to open %s", config_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
         return false;
@@ -570,10 +515,12 @@ bool ParamGroup::dumpParamFile(const string &file)
     //info("  -> close file done");
 #endif
 
+    // 写入备份配置文件
 #ifdef C_STYLE_FILE_OPERATION
     out = fopen(backup_file.c_str(), "w");
     //info("  -> open file done");
-    if (out == NULL) {
+    if (out == NULL)
+    {
         error("Fail to open %s", backup_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
         return false;
@@ -586,7 +533,8 @@ bool ParamGroup::dumpParamFile(const string &file)
 #else
     out.open(backup_file.c_str());
     //info("  -> open file done");
-    if (!out.is_open()) {
+    if (!out.is_open())
+    {
         error("Fail to open %s", backup_file.c_str());
         last_error_ = FAIL_OPENNING_FILE;
         return false;
@@ -603,6 +551,9 @@ bool ParamGroup::dumpParamFile(const string &file)
     return true;
 }
 
+/*
+   从yaml文件中加载参数树
+*/
 bool ParamGroup::loadParamFile(const string &file)
 {
     time_t begin, end;
@@ -627,35 +578,45 @@ bool ParamGroup::loadParamFile(const string &file)
     begin = clock();
     value_.clear();
     info("Loading YAML file ... ");
-    if (file.size() < 6) {
+
+    if (file.size() < 6)
+    {
         error("Error: bad name");
         last_error_ = BAD_FILE_NAME;
         return false;
     }
+
     string extension = file.substr(file.size() - 5);
     vector<string> path_vector;
     split(file.substr(0, file.size() - 5), path_vector);
     string file_name = path_vector.back();
-    if (extension != ".yaml" && extension != ".YAML" && extension != ".Yaml") {
+
+    if (extension != ".yaml" && extension != ".YAML" && extension != ".Yaml")
+    {
         error("Error: Cannot open a non YAML file");
         last_error_ = BAD_FILE_EXTENSION;
         return false;
     }
     
-    if (file[0] != '/') {
+    if (file[0] != '/')
+    {
         char temp[1024] = {0};
         int length = readlink("/proc/self/exe", temp, sizeof(temp));
-        if (length > 0 && length < sizeof(temp)) {
+
+        if (length > 0 && length < sizeof(temp))
+        {
             boost::filesystem::path executable(temp);
             yaml_file = executable.parent_path().parent_path().parent_path().string() + "/" + file;
         }
-        else {
+        else
+        {
             error("Error: bad path");
             last_error_ = BAD_FILE_PATH;
             return false;
         }
     }
-    else {
+    else
+    {
         yaml_file = file;
     }
     
@@ -663,10 +624,13 @@ bool ParamGroup::loadParamFile(const string &file)
     file_name_ = yaml_file;
     info("  %s", yaml_file.c_str());
     
+    //　加载主配置文件
 #ifdef C_STYLE_FILE_OPERATION
     in = fopen(yaml_file.c_str(), "r");
     //info("  -> open file done");
-    if (in != NULL) {
+
+    if (in != NULL)
+    {
         memset(buffer, 0, sizeof(buffer));
         fread(buffer, sizeof(char), CONFIG_FILE_SIZE_MAX, in);
         yaml_str = buffer;
@@ -676,18 +640,23 @@ bool ParamGroup::loadParamFile(const string &file)
 #else
     in.open(yaml_file.c_str());
     //info("  -> open file done");
-    if (in.is_open()) {
-        string temp_str((std::istreambuf_iterator<char>(in)),
-                         std::istreambuf_iterator<char>());
+
+    if (in.is_open())
+    {
+        string temp_str((std::istreambuf_iterator<char>(in)),　std::istreambuf_iterator<char>());
         yaml_str = temp_str;
         //info("  -> read file done");
         in.close();
         //info("  -> close file done");
 #endif
-
+        //　判断yaml文件是否完整
         size_t pos = yaml_str.find_last_of("#");
-        if (pos != string::npos && yaml_str.substr(pos, 4) == "#END") {
-            try {
+        
+        if (pos != string::npos && yaml_str.substr(pos, 4) == "#END")
+        {
+            //　从yaml文件构建参数树
+            try
+            {
                 ParamBuilder builder;
                 builder.buildParamFromString(yaml_str, value_);
                 is_yaml_valid = true;
@@ -695,27 +664,34 @@ bool ParamGroup::loadParamFile(const string &file)
                 //if (getParamValueFromNode(root, value_))
                 //    is_yaml_valid = true;
             }
-            catch (ParamException& exception) {
+            catch (ParamException& exception)
+            {
                 warn(exception.getMessage().c_str());
                 is_yaml_valid = false;
                 last_error_ = exception.getCode();
             }
         }
-        else {
+        else
+        {
             is_yaml_valid = false;
             last_error_ = FAIL_BUILDING_PARAM_TREE;
         }
     }
-    else {
+    else
+    {
         is_yaml_valid = false;
         last_error_ = FAIL_OPENNING_FILE;
     }
 
-    if (is_yaml_valid == true) {
+    if (is_yaml_valid == true)
+    {
+        //　从主文件构建参数树成功，加载备份文件
 #ifdef C_STYLE_FILE_OPERATION
         in = fopen(back_file.c_str(), "r");
         //info("  -> open file done");
-        if (in != NULL) {
+
+        if (in != NULL)
+        {
             memset(buffer, 0, sizeof(buffer));
             fread(buffer, sizeof(char), CONFIG_FILE_SIZE_MAX, in);
             back_str = buffer;
@@ -725,26 +701,32 @@ bool ParamGroup::loadParamFile(const string &file)
 #else
         in.open(back_file.c_str());
         //info("  -> open file done");
-        if (in.is_open()) {
-            string temp_str((std::istreambuf_iterator<char>(in)),
-                             std::istreambuf_iterator<char>());
+
+        if (in.is_open())
+        {
+            string temp_str((std::istreambuf_iterator<char>(in)),　std::istreambuf_iterator<char>());
             back_str = temp_str;
             //info("  -> read file done");
             in.close();
             //info("  -> close file done");
 #endif
-
-            if (back_str == yaml_str) {
+            if (back_str == yaml_str)
+            {
+                // 主文件和备份文件一致，返回加载成功
                 end = clock();
                 info("Success! runtime = %f", double(end - begin) / CLOCKS_PER_SEC);
                 return true;
             }
-            else {
+            else
+            {
+                // 主文件和备份文件不一致，更新备份文件
                 warn("Mismatch detected, updating backup file");
 #ifdef C_STYLE_FILE_OPERATION
                 out = fopen(back_file.c_str(), "w");
                 //info("  -> open file done");
-                if (out != NULL) {
+
+                if (out != NULL)
+                {
                     fwrite(yaml_str.c_str(), sizeof(char), yaml_str.length(), out);
                     fflush(out);
                     //info("  -> write file done");
@@ -753,31 +735,38 @@ bool ParamGroup::loadParamFile(const string &file)
 #else
                 out.open(back_file.c_str());
                 //info("  -> open file done");
-                if (out.is_open()) {
+
+                if (out.is_open())
+                {
                     out << yaml_str;
                     out.flush();
                     //info("  -> write file done");
                     out.close();
                     //info("  -> close file done");
 #endif
-
                     end = clock();
                     info("Success! runtime = %f", double(end - begin) / CLOCKS_PER_SEC);
                     return true;
                 }
-                else {
+                else
+                {
+                    // 备份文件更新失败，返回加载失败
                     error("Updata backup file failed, loadParamFile abort");
                     last_error_ = FAIL_OPENNING_FILE;
                     return false;
                 }
             }
         }
-        else {
+        else
+        {
+            // 不能打开备份文件，使用主文件重建备份文件
             warn("Cannot read backup file, re-backing up ...");
 #ifdef C_STYLE_FILE_OPERATION
             out = fopen(back_file.c_str(), "w");
             //info("  -> open file done");
-            if (out != NULL) {
+            
+            if (out != NULL)
+            {
                 fwrite(yaml_str.c_str(), sizeof(char), yaml_str.length(), out);
                 fflush(out);
                 //info("  -> write file done");
@@ -786,7 +775,9 @@ bool ParamGroup::loadParamFile(const string &file)
 #else
             out.open(back_file.c_str());
             //info("  -> open file done");
-            if (out.is_open()) {
+            
+            if (out.is_open())
+            {
                 out << yaml_str;
                 out.flush();
                 //info("  -> write file done");
@@ -797,67 +788,83 @@ bool ParamGroup::loadParamFile(const string &file)
                 info("Success! runtime = %f", double(end - begin) / CLOCKS_PER_SEC);
                 return true;
             }
-            else {
+            else
+            {
+                // 备份文件重建失败
                 error("Re-back up failed, loadParamFile abort");
                 last_error_ = FAIL_OPENNING_FILE;
                 return false;
             }
         }
     }
-    else {  
+    else
+    {
+        //　从主文件构建参数树失败，尝试使用备份文件构建参数树
         warn("Cannot build parameter tree from YAML file, restoring from backup file ... ");
 #ifdef C_STYLE_FILE_OPERATION
         in = fopen(back_file.c_str(), "r");
         //info("  -> open file done");
-        if (in != NULL) {
+        
+        if (in != NULL)
+        {
             memset(buffer, 0, sizeof(buffer));
             fread(buffer, sizeof(char), CONFIG_FILE_SIZE_MAX, in);
             back_str = buffer;
             //info("  -> read file done");
             fclose(in);
             //info("  -> close file done");
-
 #else
         in.open(back_file.c_str());
         //info("  -> open file done");
-        if (in.is_open()) {
-            string temp_str((std::istreambuf_iterator<char>(in)),
-                             std::istreambuf_iterator<char>());
+        
+        if (in.is_open())
+        {
+            string temp_str((std::istreambuf_iterator<char>(in)),　std::istreambuf_iterator<char>());
             back_str = temp_str;
             //info("  -> read file done");
             in.close();
             //info("  -> close file done");
 #endif
-            if (back_str.substr(back_str.length() - 5, 4) == "#END") {
-                try {
+            if (back_str.substr(back_str.length() - 5, 4) == "#END")
+            {
+                try
+                {
                     ParamBuilder builder;
                     builder.buildParamFromString(yaml_str, value_);
-                    is_yaml_valid = true;
+                    is_back_valid = true;
                     //YAML::Node root = YAML::Load(back_str);
                     //if (getParamValueFromNode(root, value_))
                     //    is_back_valid = true;
                 }
-                catch (ParamException& exception) {
+                catch (ParamException& exception)
+                {
                     warn(exception.getMessage().c_str());
                     is_back_valid = false;
                     last_error_ = exception.getCode();
                 }
             }
-            else {
+            else
+            {
                 is_back_valid = false;
                 last_error_ = FAIL_BUILDING_PARAM_TREE;
             }
         }
-        else {
+        else
+        {
             warn("Cannot open backup file");
             last_error_ = FAIL_OPENNING_FILE;
             is_back_valid = false;
         }
-        if (is_back_valid == true) {
+
+        if (is_back_valid == true)
+        {
+            //　使用备份文件加载参数树成功，使用备份文件恢复主文件
 #ifdef C_STYLE_FILE_OPERATION
             out = fopen(yaml_file.c_str(), "w");
             //info("  -> open file done");
-            if (out != NULL) {
+            
+            if (out != NULL)
+            {
                 fwrite(back_str.c_str(), sizeof(char), back_str.length(), out);
                 fflush(out);
                 //info("  -> write file done");
@@ -866,7 +873,9 @@ bool ParamGroup::loadParamFile(const string &file)
 #else
             out.open(yaml_file.c_str());
             //info("  -> open file done");
-            if (out.is_open()) {
+            
+            if (out.is_open())
+            {
                 out << back_str;
                 out.flush();
                 //info("  -> write file done");
@@ -877,42 +886,37 @@ bool ParamGroup::loadParamFile(const string &file)
                 info("Success! runtime = %f", double(end - begin) / CLOCKS_PER_SEC);
                 return true;
             }
-            else {
+            else
+            {
                 error("Cannot restore YAML from backup file, loadParamFile abort");
                 last_error_ = FAIL_OPENNING_FILE;
                 return false;
             }           
         }
-        else {
+        else
+        {
             error("Cannot build parameter tree from backup file, loadParamFile abort");
             return false;
         }
     }
 }
 
+/*
+   将参数树中key所指定的参数修改为指定值
+*/
 bool ParamGroup::setParam(const string &key, bool value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-
-    if (pv->isBool()) {
+    if (pv->isBool())
+    {
         *pv = value;
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -920,35 +924,17 @@ bool ParamGroup::setParam(const string &key, bool value)
 
 bool ParamGroup::setParam(const string &key, int value)
 {
-    if (key.empty()) {
-		last_error_ = PARAM_NOT_FOUND; 
-		printf("ParamGroup::setParam:: PARAM_NOT_FOUND with key = %s\n", key.c_str());
-		return false;
-	}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-		    printf("ParamGroup::setParam:: PARAM_NOT_FOUND\n");
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-    printf("ParamGroup::setParam:: %s:%d\n", 
-    				key.c_str(), (int)value);
-
-    if (pv->isInt()) {
+    if (pv->isInt())
+    {
         *pv = value;
         return true;
     }
-    else {
-		printf("ParamGroup::setParam:: PARAM_TYPE_ERROR\n");
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -956,27 +942,17 @@ bool ParamGroup::setParam(const string &key, int value)
 
 bool ParamGroup::setParam(const string &key, double value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-    
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    if (pv->isDouble()) {
+    if (pv->isDouble())
+    {
         *pv = value;
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -984,27 +960,17 @@ bool ParamGroup::setParam(const string &key, double value)
 
 bool ParamGroup::setParam(const string &key, const string &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-
-    if (pv->isString()) {
+    if (pv->isString())
+    {
         *pv = value;
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -1012,27 +978,17 @@ bool ParamGroup::setParam(const string &key, const string &value)
 
 bool ParamGroup::setParam(const string &key, const char *value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-
-    if (pv->isString()) {
+    if (pv->isString())
+    {
         *pv = value;
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -1040,33 +996,25 @@ bool ParamGroup::setParam(const string &key, const char *value)
 
 bool ParamGroup::setParam(const string &key, const vector<bool> &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-
-    if (pv->isArray()) {
+    if (pv->isArray())
+    {
         int length = value.size();
         pv->clear();
         pv->setSize(length);
-        for (int cnt = 0; cnt < length; ++cnt) {
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
             (*pv)[cnt] = value[cnt];
         }
+
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -1074,33 +1022,25 @@ bool ParamGroup::setParam(const string &key, const vector<bool> &value)
 
 bool ParamGroup::setParam(const string &key, const vector<int> &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-
-    if (pv->isArray()) {
+    if (pv->isArray())
+    {
         int length = value.size();
         pv->clear();
         pv->setSize(length);
-        for (int cnt = 0; cnt < length; ++cnt) {
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
             (*pv)[cnt] = value[cnt];
         }
+
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -1108,33 +1048,25 @@ bool ParamGroup::setParam(const string &key, const vector<int> &value)
 
 bool ParamGroup::setParam(const string &key, const vector<double> &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-
-    if (pv->isArray()) {
+    if (pv->isArray())
+    {
         int length = value.size();
         pv->clear();
         pv->setSize(length);
-        for (int cnt = 0; cnt < length; ++cnt) {
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
             (*pv)[cnt] = value[cnt];
         }
+
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -1142,33 +1074,25 @@ bool ParamGroup::setParam(const string &key, const vector<double> &value)
 
 bool ParamGroup::setParam(const string &key, const vector<string> &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
 
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-    
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            last_error_ = PARAM_NOT_FOUND;
-            return false;
-        }
-    }
-
-    if (pv->isArray()) {
+    if (pv->isArray())
+    {
         int length = value.size();
         pv->clear();
         pv->setSize(length);
-        for (int cnt = 0; cnt < length; ++cnt) {
-            (*pv)[cnt] = value[cnt];
+
+        for (int cnt = 0; cnt < length; ++cnt)
+        {
+            (*
+            pv)[cnt] = value[cnt];
         }
         return true;
     }
-    else {
+    else
+    {
         last_error_ = PARAM_TYPE_ERROR;
         return false;
     }
@@ -1207,28 +1131,16 @@ bool ParamGroup::setParam(const string &key, const ParamValue &value)
 
 bool ParamGroup::setParam(const string &key, const ParamValue &value)
 {
-    if (key.empty()) {last_error_ = PARAM_NOT_FOUND; return false;}
-
-    vector<string> cooked_key;
-    split(key, cooked_key);
-    vector<string>::iterator it;
-    ParamValue *pv = &value_;
-
-    for (it = cooked_key.begin(); it != cooked_key.end(); ++it) {
-        if (pv->hasMember(*it)) {
-            pv = &(*pv)[*it];
-        }
-        else {
-            (*pv)[*it] = ParamValue();
-            pv = &(*pv)[*it];
-            continue;
-        }
-    }
-
+    if (key.empty()) { last_error_ = PARAM_NOT_FOUND; return false; }
+    ParamValue *pv = findParam(key);
+    if (pv == NULL) { last_error_ = PARAM_NOT_FOUND; return false; }
     *pv = value;
     return true;
 }
 
+/*
+   重置参数树至初始状态
+*/
 void ParamGroup::reset(void)
 {
     value_.clear();
@@ -1359,31 +1271,12 @@ bool ParamGroup::getParamValueFromString(const string &scalar, ParamValue &value
 }
 */
 
-void ParamGroup::getListFromParamValue(ParamValue &value, const string &ns, vector<string> &list)
-{
-    list.clear();
-    if (value.isScalar()) {
-        list.push_back(ns);
-    }
-    else if (value.isArray()) {
-        list.push_back(ns);
-    }
-    else if (value.isStruct()) {
-        ParamValue::iterator it;
-        for (it = value.begin(); it != value.end(); ++it) {
-            vector<string> tmp_list;
-            string tmp_ns = ns + "/" + it->first;
-            getListFromParamValue(it->second, tmp_ns, tmp_list);
-            list.insert(list.end(), tmp_list.begin(), tmp_list.end());
-        }
-    }
-}
+
 
 void ParamGroup::split(const string &raw, vector<string> &cooked)
 {
     cooked.clear();
-    if (raw.empty())
-        return;
+    if (raw.empty()) return;
     
     string str(raw);
     resolve(str);
@@ -1393,30 +1286,34 @@ void ParamGroup::split(const string &raw, vector<string> &cooked)
     string::size_type begin = str.find_first_not_of(sep);
     string::size_type position = 0;
 
-    while (begin != string::npos) {
+    while (begin != string::npos)
+    {
         position = str.find(sep, begin);
-        if (position != string::npos) {
+
+        if (position != string::npos)
+        {
             temp = str.substr(begin, position - begin);
             begin = position + sep.length();
         }
-        else {
+        else
+        {
             temp = str.substr(begin);
             begin = position;
         }
 
-        if (!temp.empty()) {
+        if (!temp.empty())
+        {
             cooked.push_back(temp);
             temp.clear();
         }
     }
-    return;
 }
 
 void ParamGroup::resolve(string &str)
 {
-    for (string::iterator it = str.begin(); it != str.end(); ++it) {
-        if (*it == '.')
-            *it = '/';
+    for (string::iterator it = str.begin(); it != str.end(); ++it)
+    {
+        if (*it == '.') *it = '/';
     }
 }
 

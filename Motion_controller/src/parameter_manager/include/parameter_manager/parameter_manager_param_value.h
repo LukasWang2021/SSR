@@ -1,4 +1,3 @@
-
 /*************************************************************************
 	> File Name: parameter_manager_param_value.h
 	> Author: 
@@ -10,22 +9,21 @@
 #define _PARAMETER_MANAGER_PARAM_VALUE_H
 
 #include <map>
+//#include <unordered_map>
 #include <string>
 #include <vector>
 #include "base_datatype.h"
 #include "error_code.h"
 
-//#include <unordered_map>
 
+namespace fst_parameter
+{
 
-#define FLOATING_PRECISION 0.0000000000001
-
-namespace fst_parameter {
-
-class ParamValue {
-
+class ParamValue
+{
   public:
-    enum ParamType {
+    enum ParamType
+    {
         TYPEINVALID,
         TYPEBOOL,
         TYPEINT,
@@ -54,9 +52,10 @@ class ParamValue {
     //! Destructor
     ~ParamValue() { invalidParam(); }
 
+    //! Clear
     void clear() { invalidParam(); }
 
-    // Operators
+    //! Operators
     ParamValue& operator=(const ParamValue &rhs);
     ParamValue& operator=(const bool &rhs)        { return operator=(ParamValue(rhs)); }
     ParamValue& operator=(const int &rhs)         { return operator=(ParamValue(rhs)); }
@@ -69,19 +68,19 @@ class ParamValue {
 
     operator bool&()        { assertTypeOrInvalid(TYPEBOOL);    return value_.asBool; }
     operator int&()         { assertTypeOrInvalid(TYPEINT);     return value_.asInt; }
-    operator double()      { if(isTypeDoubleOrTypeInt()) return value_.asDouble; else return value_.asInt; }
+    operator double()       { return isTypeDoubleOrTypeInt() ? value_.asDouble : value_.asInt; }
     operator std::string&() { assertTypeOrInvalid(TYPESTRING);  return *value_.asString; }
 
     const ParamValue& operator[](int i) const   { assertArray(i+1); return value_.asArray->at(i); }
     ParamValue& operator[](int i)               { assertArray(i+1); return value_.asArray->at(i); }
 
     ParamValue& operator[](const std::string &k) { assertStruct(); return (*value_.asStruct)[k]; }
-    ParamValue& operator[](const char *k) { assertStruct(); std::string s(k); return (*value_.asStruct)[s]; }
+    ParamValue& operator[](const char *k) { assertStruct(); return (*value_.asStruct)[k]; }
  
     iterator begin()    { assertStruct(); return (*value_.asStruct).begin(); }
     iterator end()      { assertStruct(); return (*value_.asStruct).end(); }
 
-    // Accessors
+    //! Accessors
     //! Return true if the value has been set to something.
     bool isValid()  const { return type_ != TYPEINVALID; }
     
@@ -90,8 +89,7 @@ class ParamValue {
     bool isInt()    const { return type_ == TYPEINT; }
     bool isDouble() const { return type_ == TYPEDOUBLE; }
     bool isString() const { return type_ == TYPESTRING; }
-    bool isScalar() const { return type_ == TYPEBOOL   || type_ == TYPEINT   || 
-                                   type_ == TYPEDOUBLE || type_ == TYPESTRING; }
+    bool isScalar() const { return type_ == TYPEBOOL || type_ == TYPEINT || type_ == TYPEDOUBLE || type_ == TYPESTRING; }
     bool isArray()  const { return type_ == TYPEARRAY; }
     bool isStruct() const { return type_ == TYPESTRUCT; }
 
@@ -151,7 +149,9 @@ class ParamValue {
 
     std::string tag_;
     ParamType type_;
-    union {
+
+    union
+    {
         bool    asBool;
         int     asInt;
         double  asDouble;
@@ -164,7 +164,8 @@ class ParamValue {
 //! A class representing an error.
 //! If server methods throw this exception, a fault response is returned
 //! to the client.
-class ParamException {
+class ParamException
+{
   public:
     //! Constructor
     //!   @param message  A descriptive error message

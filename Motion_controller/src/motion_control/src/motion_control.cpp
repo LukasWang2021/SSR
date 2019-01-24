@@ -178,6 +178,7 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
             return MOTION_INTERNAL_FAULT;
         }
 
+        usleep(50 * 1000);
         non_rt_thread_running_ = true;
 
         if (non_rt_thread_.run(&runNonRealTimeTask, this, 40))

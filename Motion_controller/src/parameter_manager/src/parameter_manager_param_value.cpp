@@ -173,11 +173,11 @@ bool ParamValue::operator==(const ParamValue &other) const
             {
                 const ParamValue& v1 = it1->second;
                 const ParamValue& v2 = it2->second;
-                ++it1;
-                ++it2;
                 
                 if ( ! (v1 == v2)) return false;
                 
+                ++it1;
+                ++it2;
             }
 
             return true;

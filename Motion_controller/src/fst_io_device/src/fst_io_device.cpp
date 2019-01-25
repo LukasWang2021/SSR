@@ -37,6 +37,11 @@ FstIoDevice::FstIoDevice(int address):
 
 FstIoDevice::~FstIoDevice()
 {
+    if(is_mem_init_ == true)
+    {
+        ioClose();
+        is_mem_init_ = false;
+    }
     if(log_ptr_ != NULL)
     {
         delete log_ptr_;
@@ -106,6 +111,17 @@ bool FstIoDevice::init()
     return true;
 }
 
+void FstIoDevice::getIoBoardVersion(int &version)
+{
+    if (is_virtual_ == false)
+    {
+        getIoBoardVersionFromMem(&version);
+    }
+    else
+    {
+        version = 0;
+    }
+}
 
 IODeviceInfo FstIoDevice::getDeviceInfo(void)
 {

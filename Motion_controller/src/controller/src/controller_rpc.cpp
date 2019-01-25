@@ -75,7 +75,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
         }
     }
 
-    device_version_.init(log_ptr_, io_manager_ptr_, safety_device_ptr_);
+    device_version_.init(log_ptr_, motion_control_ptr_, io_manager_ptr_, safety_device_ptr_);
 
     initRpcTable();
     initRpcQuickSearchTable();

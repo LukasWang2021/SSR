@@ -30,11 +30,12 @@ FstSafetyDevice::FstSafetyDevice(int address):
 
 FstSafetyDevice::~FstSafetyDevice()
 {
-    update_thread_.interrupt();
-    update_thread_.join();
-
     if (is_virtual_ == false)
+    {
+        update_thread_.interrupt();
+        update_thread_.join();
         closeSafety();
+    } 
 
     if(log_ptr_ != NULL) {
         delete log_ptr_;
@@ -68,14 +69,13 @@ bool FstSafetyDevice::init()
             ErrorMonitor::instance()->add(ret);
             return false; 
         }
+        startThread();
+        setValid(true);
     } else {
-        fake_init();
         FST_INFO("Use Fake Safety");
         return true;
     }
-
-    startThread();
-    setValid(true);	
+	
     return true;
 }
 
@@ -371,6 +371,21 @@ bool FstSafetyDevice::isExcitorStopRequest()
     pre_stop = stop;
     return false;
 }
+
+
+void FstSafetyDevice::getSafetyBoardVersion(int &version)
+{
+    if (is_virtual_ == false)
+    {
+        getSafetyBoardVersionFromMem(&version);
+    }
+    else
+    {
+        version = 0;
+    }
+}
+
+
 /*
 bool FstSafetyDevice::isSafetyAlarm()
 {

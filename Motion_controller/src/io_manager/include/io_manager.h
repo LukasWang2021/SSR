@@ -56,6 +56,8 @@ public:
 
     ErrorCode init(fst_hal::DeviceManager* device_manager_ptr);
 
+    std::map<int, int> getIoBoardVersion(void);
+
     // thread to fresh data
     void ioManagerThreadFunc();
     bool isRunning();

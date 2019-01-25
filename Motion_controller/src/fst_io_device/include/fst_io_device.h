@@ -67,6 +67,8 @@ public:
 
     virtual bool init();
 
+    void getIoBoardVersion(int &version);
+
     IODeviceInfo getDeviceInfo(void);
     IODevicePortValues getDeviceValues(void);
 

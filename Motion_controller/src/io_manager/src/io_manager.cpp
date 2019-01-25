@@ -86,6 +86,28 @@ ErrorCode IoManager::init(fst_hal::DeviceManager* device_manager_ptr)
     return SUCCESS;
 }
 
+std::map<int, int> IoManager::getIoBoardVersion(void)
+{
+    std::map<int, int> version_map;
+    int version = 0;
+    for(unsigned int i = 0; i < device_list_.size(); ++i)
+    {
+        BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list_[i].index);
+        switch(device_list_[i].type)
+        {
+            case DEVICE_TYPE_FST_IO:
+            {
+                if (device_ptr == NULL) break;
+                FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+                io_device_ptr->getIoBoardVersion(version);
+                version_map.insert(std::pair<int, int>(device_list_[i].address, version));
+                break;
+            }
+            default: break;
+        }
+    }
+    return version_map;
+}
 
 void IoManager::ioManagerThreadFunc()
 {
@@ -597,7 +619,7 @@ ErrorCode IoManager::setDoValueToModbusServer(uint8_t port, uint8_t &value, Modb
 // thread function
 void ioManagerRoutineThreadFunc(void* arg)
 {
-    std::cout<<"io_manager routine thread exit"<<std::endl;
+    std::cout<<"io_manager routine thread running"<<std::endl;
     IoManager* io_manager = static_cast<IoManager*>(arg);
     while(io_manager->isRunning())
     {

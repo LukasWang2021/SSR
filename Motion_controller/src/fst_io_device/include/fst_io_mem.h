@@ -21,11 +21,12 @@ struct IODeviceData {
 };
 
 #define IO_BASE 0xC0090000
-#define LENGTH 0x1000
+#define IO_LENGTH 0x1000
 #define ADDR_FLAG_WRITE 0x30
 #define ADDR_FLAG_READ 0x38
 #define ADDR_DATA_WRITE 0x50
 #define ADDR_DATA_READ 0x40
+#define ADDR_IO_VERSION 0x64 // for version
 
 #define START_FRAME_VALUE 0x3C
 
@@ -52,6 +53,10 @@ int ioGetSeq(uint8_t *seq);
 int ioWriteDownload(struct IODeviceData *idd);
 
 int ioReadUpload(struct IODeviceData *idd);
+
+void getIoBoardVersionFromMem(int *version);
+
+void ioClose(void);
 
 
 #ifdef __cplusplus

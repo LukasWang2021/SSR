@@ -21,9 +21,10 @@ Summary:    dealing with safety board
 #define SAFETY_LEN	0x80    
 #define SAFETY_BASE	0xC00A0000
 
-#define	R_SAFETY_BASE	0x0C	/* the address of date that read from safety. offset with a base 0xC00A0000.*/
-#define	W_SAFETY_BASE	0x04	/* the address of date that written to safety. offset with a base 0xC00A000. */
-#define STATE_SAFETY_BASE 0x1C    /* the state address of FPGA communication.offset with the base. */
+#define	R_SAFETY_BASE	0x0C	    /* the address of date that read from safety. offset with a base 0xC00A0000.*/
+#define	W_SAFETY_BASE	0x04	    /* the address of date that written to safety. offset with a base 0xC00A000. */
+#define STATE_SAFETY_BASE 0x1C      /* the state address of FPGA communication.offset with the base. */
+#define VERSION_SAFETY_BASE  0x28   /* the version address*/
 
 #define RW_MASK	0xFF00
 #define R_MASK	0x0100
@@ -37,7 +38,6 @@ Summary:    dealing with safety board
 
 static int s_safety_fd;
 static void *s_safety_start_ptr;
-//static char *s_fake_array[80]; // for fake only
 static char s_fake_array[80] = {0}; // for fake only
 static int s_safety_virtual;
 
@@ -50,6 +50,7 @@ struct	Safety {
 static struct Safety s_safety_xmit;
 static struct Safety s_safety_recv;
 static int *s_safety_state_ptr;
+static int *s_safety_version_ptr; // for version
 
 unsigned long long int openSafety(void) {
     s_safety_virtual = 0;
@@ -74,10 +75,11 @@ unsigned long long int openSafety(void) {
         printf("mmap safety /dev/mem OK .\n");
     }
 
-    // three operation addresses.
+    // protocol addresses.
     s_safety_recv.ptr = (int *)(s_safety_start_ptr + R_SAFETY_BASE);  //address to receive data
     s_safety_xmit.ptr = (int *)(s_safety_start_ptr + W_SAFETY_BASE);  //address to transmit data
     s_safety_state_ptr = (int *)(s_safety_start_ptr + STATE_SAFETY_BASE); //address to read the state of FPGA+io_board
+    s_safety_version_ptr = (int *)(s_safety_start_ptr + VERSION_SAFETY_BASE);//address to version value.
 
 	if (pthread_mutex_init(&s_safety_recv.mutex, NULL) != 0) {
         ret = ERR_SAFETY_PTHREAD_INIT;
@@ -250,6 +252,17 @@ unsigned long long int autorunSafetyData() {
     return ret;
 }
 
+void getSafetyBoardVersionFromMem(int *version)
+{
+    if(s_safety_version_ptr == NULL)
+    {
+        *version = 0;
+    }
+    else
+    {
+        *version = *(s_safety_version_ptr);
+    }
+}
 
 int fake_init(void) {
     s_safety_virtual = 1;

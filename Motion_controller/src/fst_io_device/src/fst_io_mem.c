@@ -20,6 +20,7 @@ struct IODevice {
 	uint32_t *pfr;
 	uint32_t *pdw;
 	uint32_t *pdr;
+	uint32_t *pversion;
 };
 static struct IODevice *piodev;
 
@@ -32,9 +33,10 @@ int trueInit() {
 		return IOERROR;
 	}
 
-	p->ptr = mmap(NULL, LENGTH, PROT_WRITE|PROT_READ, MAP_SHARED, p->fd, IO_BASE);
+	p->ptr = mmap(NULL, IO_LENGTH, PROT_WRITE|PROT_READ, MAP_SHARED, p->fd, IO_BASE);
 	if (p->ptr == (void *)-1) {
 		printf("trueInit: ptr = -1\n");
+		close(p->fd);
 		return IOERROR;
 	}
 
@@ -42,6 +44,7 @@ int trueInit() {
 	p->pfr = (uint32_t *)(p->ptr + ADDR_FLAG_READ);
 	p->pdw = (uint32_t *)(p->ptr + ADDR_DATA_WRITE);
 	p->pdr = (uint32_t *)(p->ptr + ADDR_DATA_READ);
+	p->pversion = (uint32_t *)(p->ptr + ADDR_IO_VERSION); 
 
 	return 0;
 }
@@ -142,3 +145,20 @@ int ioReadUpload(struct IODeviceData *idd) {
     return 0;
 }
 
+void getIoBoardVersionFromMem(int *version)
+{
+	if(piodev == NULL)
+    {
+        *version = 0;
+    }
+    else
+    {
+        *version = *(piodev->pversion);
+    }
+}
+
+void ioClose(void)
+{
+	munmap(piodev->ptr, IO_LENGTH);
+	close(piodev->fd);
+}

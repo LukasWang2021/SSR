@@ -83,6 +83,8 @@ unsigned long long int setSafety(int data, int frame);
 //  -----------------------------------------------------------------------
 unsigned long long int autorunSafetyData(void);
 
+void getSafetyBoardVersionFromMem(int *version);
+
 int fake_init(void);
 #ifdef __cplusplus
 }

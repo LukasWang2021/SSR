@@ -405,6 +405,8 @@ public:
 	bool isExcitorStopRequest(void);
     //bool isSafetyAlarm();
 
+	void getSafetyBoardVersion(int &version);
+
 
 	
 private:

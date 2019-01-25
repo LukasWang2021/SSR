@@ -862,7 +862,69 @@ public:
 			return ;
 		}
 	}
- 
+	
+	void calcDIVToInt(eval_value * operand)
+	{
+		if(evalType == TYPE_INT){
+			iValue = iValue / operand->getIntValue();
+			return ;
+		}else if(evalType == TYPE_FLOAT){
+			fValue = fValue / operand->getFloatValue();
+			fValue = (int)fValue ;
+			return ;
+		}else if(evalType == (int)(TYPE_R | TYPE_FLOAT)){
+			if(operand->getType() == TYPE_FLOAT)
+			{
+				reg_r.value = reg_r.value / operand->getFloatValue();
+				fValue = fValue / operand->getFloatValue();
+				fValue = (int)fValue ;
+				
+				//	printf("RRegData: id = %d, comment = %s\n", reg_r.id, reg_r.comment.c_str());
+				//	printf("reg_r.value = %f and operand = %f\n", reg_r.value, operand->getFloatValue());
+			}
+			else if(operand->getType() == (int)(TYPE_R | TYPE_FLOAT))
+			{
+				reg_r.value = reg_r.value / operand->getRRegDataValue().value;
+				fValue  = reg_r.value;
+				fValue = (int)fValue ;
+			}
+			else if(operand->getType() == (int)(TYPE_MR | TYPE_FLOAT))
+			{
+				reg_r.value = reg_r.value / operand->getMrRegDataValue().value;
+				fValue = fValue / operand->getMrRegDataValue().value;
+				fValue = (int)fValue ;
+			}
+			return ;
+		}else if(evalType == (int)(TYPE_MR | TYPE_FLOAT)){
+			if(operand->getType() == TYPE_FLOAT)
+			{
+				reg_mr.value = reg_mr.value / operand->getFloatValue();
+				fValue = fValue / operand->getFloatValue();
+				fValue = (int)fValue ;
+				
+				//	printf("RRegData: id = %d, comment = %s\n", reg_r.id, reg_r.comment.c_str());
+				//	printf("reg_r.value = %f and operand = %f\n", reg_r.value, operand->getFloatValue());
+			}
+			else if(operand->getType() == (int)(TYPE_R | TYPE_FLOAT))
+			{
+				reg_mr.value = reg_mr.value / operand->getRRegDataValue().value;
+				fValue = fValue / operand->getRRegDataValue().value;
+				fValue = (int)fValue ;
+			}
+			else if(operand->getType() == (int)(TYPE_MR | TYPE_FLOAT))
+			{
+				reg_mr.value = reg_mr.value / operand->getMrRegDataValue().value;
+				fValue = fValue / operand->getMrRegDataValue().value;
+				fValue = (int)fValue ;
+			}
+			return ;
+		}
+		else {
+			noticeErrorType(operand->getType()) ;
+			return ;
+		}
+	}
+
 	void calcMod(eval_value * operand)
 	{
 		int iTmp = 0 ;
@@ -870,7 +932,7 @@ public:
 			iTmp = iValue / operand->getIntValue();
 			iValue = iValue - (iTmp * operand->getIntValue());
 		}else if(evalType == TYPE_FLOAT){
-			iTmp = fValue / (int)operand->getIntValue();
+			iTmp = fValue / (int)operand->getFloatValue();
 			fValue = fValue - (iTmp * (int)operand->getFloatValue());
 		}else if(evalType == (int)(TYPE_R | TYPE_FLOAT)){
 		    if(operand->getType() == TYPE_FLOAT)

@@ -227,7 +227,16 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"operation")==0){ 
 			value = xmlNodeGetContent(nodeValueElement);
-			sprintf(label_str, "%s%s", label_str, (char*)value);
+			if(xmlStrcasecmp(value, BAD_CAST"MOD")==0)
+			{
+				sprintf(label_str, "%s %% ", label_str);
+			}
+			else if(xmlStrcasecmp(value, BAD_CAST"DIV")==0)
+			{
+				sprintf(label_str, "%s @ ", label_str);
+			}
+			else
+				sprintf(label_str, "%s%s", label_str, (char*)value);
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"boolean_operation")==0){ 
 			value = xmlNodeGetContent(nodeValueElement);

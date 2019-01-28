@@ -43,7 +43,7 @@ void ControllerRpc::handleRpc0x000093EE(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64_String* rs_data_ptr = static_cast<ResponseMessageType_Uint64_String*>(response_data_ptr);
     
-    std::string str = get_version();
+    std::string str = device_version_.getControllerVersion();
     int len = strlen(str.c_str());
     memcpy(rs_data_ptr->data.data, str.c_str(), len);
     rs_data_ptr->data.data[len] = '\0';

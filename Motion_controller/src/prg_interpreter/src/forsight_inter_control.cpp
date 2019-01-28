@@ -766,8 +766,14 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             	FST_ERROR("Can not FORWARD in EXECUTE_R ");
            		break;
 			}
+	        // Checking prog_mode on 190125 
+			if(objThdCtrlBlockPtr->prog_mode != STEP_MODE)
+			{
+            	FST_ERROR("Can not FORWARD in other mode ");
+           		break;
+			}
 			
-            objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+            // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
 
 			iLineNum = calc_line_from_prog(objThdCtrlBlockPtr);
@@ -808,13 +814,24 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             	FST_ERROR("Can not FORWARD in EXECUTE_R ");
            		break;
 			}
-
-			if(lastCmd == fst_base::INTERPRETER_SERVER_CMD_FORWARD)
+	        // Checking prog_mode on 190125 
+			if(objThdCtrlBlockPtr->prog_mode != STEP_MODE)
+			{
+            	FST_ERROR("Can not FORWARD in other mode ");
+           		break;
+			}
+			// Revert checking condition on 190125
+			// if(lastCmd == fst_base::INTERPRETER_SERVER_CMD_FORWARD)
+			if(lastCmd != fst_base::INTERPRETER_SERVER_CMD_BACKWARD)
 			{
 			    // In this circumstance, 
 			    // we need not call calc_line_from_prog to get the next FORWARD line.
 				// Just execute last statemant
 			    iLineNum = getLinenum(objThdCtrlBlockPtr);
+				// SWitch prog_mode and execute_direction on 190125
+                // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+			    objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
+			
 				if((objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == LOGIC_TOK)
 				 ||(objThdCtrlBlockPtr->prog_jmp_line[iLineNum - 1].type == END_TOK))
 				{
@@ -843,7 +860,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             // if (objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type == MOTION)
 //            is_backward = true;
             // else {  perror("can't back");  break;      }
-            objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
+            // objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_BACKWARD ;
             FST_INFO("step BACKWARD to %d ", iLineNum);
 			// set_prog_from_line(objThdCtrlBlockPtr, iLineNum);

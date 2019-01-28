@@ -108,18 +108,18 @@
 #define FAIL_INTERPRETER_NEXT_WITHOUT_FOR (unsigned long long int)0x0001000900AA000C   /*NEXT without FOR*/
 #define FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB (unsigned long long int)0x0001000900AA000D   /*too many nested GOSUBs*/
 #define FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB (unsigned long long int)0x0001000900AA000E   /*RETURN without GOSUB*/
-#define FAIL_INTERPRETER_FILE_NOT_FOUND (unsigned long long int)0x0001000900AA000F   /*no program file*/
+#define FAIL_INTERPRETER_FILE_NOT_FOUND (unsigned long long int)0x0001000900AA000F   /*file not found*/
 #define FAIL_INTERPRETER_MOVL_WITH_JOINT (unsigned long long int)0x0001000900AA0010   /*movl with joint*/
 #define FAIL_INTERPRETER_MOVJ_WITH_POINT (unsigned long long int)0x0001000900AA0011   /*movj with point*/
-#define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER (unsigned long long int)0x0001000900AA0012   /*movj with point*/
-#define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH (unsigned long long int)0x0001000900AA0013   /*movj with point*/
-#define FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO (unsigned long long int)0x0001000900AA0014   /*movj with point*/
-#define INFO_INTERPRETER_BACK_TO_BEGIN    (unsigned long long int)0x0001000200AA0015   /*movj with point*/
-#define INFO_INTERPRETER_THREAD_NOT_EXIST      (unsigned long long int)0x0001000200AA0016   /*THREAD NOT EXIST */
-#define INFO_INTERPRETER_TOO_MANY_IMPORT       (unsigned long long int)0x0001000200AA0017   /*THREAD NOT EXIST */
-#define INFO_INTERPRETER_TOO_LONG_PROJECT_NAME (unsigned long long int)0x0001000200AA0018   /*THREAD NOT EXIST */
-#define INFO_INTERPRETER_ARITHMETIC_EXCEPTION   (unsigned long long int)0x0001000200AA0019   /*THREAD NOT EXIST */
-#define INFO_INTERPRETER_UNKNOWN_ARITHM         (unsigned long long int)0x0001000200AA001A   /*THREAD NOT EXIST */
+#define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER (unsigned long long int)0x0001000900AA0012   /*illegal line number*/
+#define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH (unsigned long long int)0x0001000900AA0013   /*func params mismatching*/
+#define FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO (unsigned long long int)0x0001000900AA0014   /*exec macro duplicating*/
+#define INFO_INTERPRETER_BACK_TO_BEGIN    (unsigned long long int)0x0001000200AA0015        /*Backward to begin*/
+#define INFO_INTERPRETER_THREAD_NOT_EXIST      (unsigned long long int)0x0001000200AA0016   /*thread not exist*/
+#define INFO_INTERPRETER_TOO_MANY_IMPORT       (unsigned long long int)0x0001000200AA0017   /*too many import file */
+#define INFO_INTERPRETER_TOO_LONG_PROJECT_NAME (unsigned long long int)0x0001000200AA0018   /*too long project name */
+#define INFO_INTERPRETER_ARITHMETIC_EXCEPTION   (unsigned long long int)0x0001000200AA0019   /*Arithmetic Exception */
+#define INFO_INTERPRETER_UNKNOWN_ARITHM         (unsigned long long int)0x0001000200AA001A   /*Unknown Arithm */
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000900AA0100   /*User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000900AA0101   /*User Alarm 1*/
 #define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000900AA0102   /*User Alarm 2*/

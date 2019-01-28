@@ -600,6 +600,19 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 // #endif
   isExecuteEmptyLine = 0 ;
   do {
+	// Deal PAUSED_R at the beginning on 190125 
+	InterpreterState interpreterState  = getPrgmState();
+	while(interpreterState == INTERPRETER_PAUSED)
+	{
+		FST_INFO("interpreterState is PAUSED_R.");
+#ifdef WIN32
+		interpreterState =  INTERPRETER_EXECUTE;
+		Sleep(1000);
+#else
+		interpreterState  = getPrgmState();
+		sleep(1);
+#endif
+	}
   	if((objThreadCntrolBlock->prog_mode == STEP_MODE)
 		&& (isExecuteEmptyLine == 0))
   	{
@@ -693,19 +706,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
   		FST_INFO("objThreadCntrolBlock->is_abort == true.");
         break ; // return 0 ; // NULL ;
 	}
-	// Deal PAUSED_R
-	InterpreterState interpreterState  = getPrgmState();
-	while(interpreterState == INTERPRETER_PAUSED)
-	{
-		FST_INFO("interpreterState is PAUSED_R.");
-#ifdef WIN32
-		interpreterState =  INTERPRETER_EXECUTE;
-		Sleep(1000);
-#else
-		interpreterState  = getPrgmState();
-		sleep(1);
-#endif
-	}
+	// Deal PAUSED_R opration had moved to the beginning on 190125 
     /* check for assignment statement */
 	iLinenum = calc_line_from_prog(objThreadCntrolBlock);
     FST_INFO("objThreadCntrolBlock->token_type = %d at line %d ", 

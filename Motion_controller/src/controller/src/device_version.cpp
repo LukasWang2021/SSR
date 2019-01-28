@@ -52,7 +52,6 @@ void DeviceVersion::init(fst_log::Logger* log_ptr, fst_mc::MotionControl* motion
     {
         hand_off_ptr_ = (int *)mmap(NULL, HAND_OFF_LENGTH, PROT_READ|PROT_WRITE, MAP_SHARED, hand_off_fd, HAND_OFF_ADDR);
         close(hand_off_fd);
-        printf("-handoff ptr=%p\n", hand_off_ptr_);
     }
 
     // for rbf version address
@@ -65,7 +64,6 @@ void DeviceVersion::init(fst_log::Logger* log_ptr, fst_mc::MotionControl* motion
     {
         rbf_ptr_  = (int *)mmap(NULL, RBF_LENGTH, PROT_READ|PROT_WRITE, MAP_SHARED, rbf_fd, RBF_ADDR);
         close(rbf_fd);
-        printf("-rbf ptr=%p\n", rbf_ptr_);
     }
 
 }

@@ -811,13 +811,13 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			}
 			if(getPrgmState() == INTERPRETER_EXECUTE)
 			{
-            	FST_ERROR("Can not FORWARD in EXECUTE_R ");
+            	FST_ERROR("Can not BACKWARD in EXECUTE_R ");
            		break;
 			}
 	        // Checking prog_mode on 190125 
 			if(objThdCtrlBlockPtr->prog_mode != STEP_MODE)
 			{
-            	FST_ERROR("Can not FORWARD in other mode ");
+            	FST_ERROR("Can not BACKWARD in other mode ");
            		break;
 			}
 			// Revert checking condition on 190125

@@ -1,5 +1,6 @@
 #include "device_version.h"
 #include "controller_version.h"
+#include "controller_version.h"
 #include "common_file_path.h"
 #include "common_log.h"
 #include <string>
@@ -22,11 +23,11 @@ DeviceVersion::DeviceVersion():
 
 DeviceVersion::~DeviceVersion()
 {
-    if(hand_off_ptr_ != NULL && hand_off_ptr_ != -1)
+    if(hand_off_ptr_ != NULL && hand_off_ptr_ != MAP_FAILED)
     {
         munmap(hand_off_ptr_, HAND_OFF_LENGTH);
     }
-    if(rbf_ptr_ != NULL && rbf_ptr_ != -1)
+    if(rbf_ptr_ != NULL && rbf_ptr_ != MAP_FAILED)
     {
         munmap(rbf_ptr_, RBF_LENGTH);
     }
@@ -49,9 +50,9 @@ void DeviceVersion::init(fst_log::Logger* log_ptr, fst_mc::MotionControl* motion
     }
     else
     {
-        hand_off_ptr_ = (int *) mmap(NULL, HAND_OFF_LENGTH, PROT_READ|PROT_WRITE, MAP_SHARED, hand_off_fd, HAND_OFF_ADDR);
+        hand_off_ptr_ = (int *)mmap(NULL, HAND_OFF_LENGTH, PROT_READ|PROT_WRITE, MAP_SHARED, hand_off_fd, HAND_OFF_ADDR);
         close(hand_off_fd);
-        printf("handoff ptr=%p\n", hand_off_ptr_);
+        printf("-handoff ptr=%p\n", hand_off_ptr_);
     }
 
     // for rbf version address
@@ -62,11 +63,33 @@ void DeviceVersion::init(fst_log::Logger* log_ptr, fst_mc::MotionControl* motion
     }
     else
     {
-        rbf_ptr_ = (int *) mmap(NULL, RBF_LENGTH, PROT_READ|PROT_WRITE, MAP_SHARED, rbf_fd, RBF_ADDR);
+        rbf_ptr_  = (int *)mmap(NULL, RBF_LENGTH, PROT_READ|PROT_WRITE, MAP_SHARED, rbf_fd, RBF_ADDR);
         close(rbf_fd);
-        printf("rbf ptr=%p\n", rbf_ptr_);
+        printf("-rbf ptr=%p\n", rbf_ptr_);
     }
+
 }
+
+//controller version
+std::string DeviceVersion::getControllerVersion(void)
+{
+    char version_all[64] = "";
+
+#ifndef controller_MAIN_VERSION
+    sprintf(version_all, "%d.%d.%d.%s.%s", controller_VERSION_MAJOR,
+            controller_VERSION_MINOR, controller_VERSION_PATCH,
+            controller_BUILD_DATE,controller_VERSION_COMMIT);
+
+#else 
+    sprintf(version_all, "%d.%d", controller_VERSION_MAJOR,controller_VERSION_MINOR);
+
+#endif
+
+    std::string controller_version = version_all;
+    printf("controller_version:%s\n", controller_version.c_str());
+    return controller_version;
+}
+
 
 std::map<std::string, std::string> DeviceVersion::getDeviceVersionList(void)
 {
@@ -119,24 +142,29 @@ void DeviceVersion::getServoControlVersion(std::string &name, std::string &versi
 void DeviceVersion::getHandOffVersion(std::string &name, std::string &version)
 {
     name = "Hand_Off";
-    if (hand_off_ptr_ == NULL || hand_off_ptr_ == -1)
+    if (hand_off_ptr_ == NULL || hand_off_ptr_ == MAP_FAILED)
     {
         version = "NONE";
         return;
     }
-    sprintf(version.c_str(), "%lx", *hand_off_ptr_);
+    char temp[16];
+    sprintf(temp, "%lx", *hand_off_ptr_);
+    version = temp;
 }
 
 //rbf version
 void DeviceVersion::getRbfVersion(std::string &name, std::string &version)
 {
     name = "RBF";
-    if (rbf_ptr_ == NULL || rbf_ptr_ == -1)
+
+    if (rbf_ptr_ == NULL || rbf_ptr_ == MAP_FAILED)
     {
         version = "NONE";
         return;
     }
-    sprintf(version.c_str(), "%lx", *rbf_ptr_);
+    char temp[16];
+    sprintf(temp, "%lx", *rbf_ptr_);
+    version = temp;
 }
 
 void DeviceVersion::getServoParamVersion(std::string &name, std::string &version)
@@ -164,7 +192,9 @@ void DeviceVersion::getSafetyBoardVersion(std::string &name, std::string &versio
     // version convert from int to string
     int local_version = 0;
     safety_device_ptr_->getSafetyBoardVersion(local_version);
-    sprintf(version.c_str(), "%lx", local_version);
+    char temp[16];
+    sprintf(temp, "%lx", local_version);
+    version = temp;
 }
 
 std::map<std::string, std::string> DeviceVersion::getIoBoardVersion(void)
@@ -176,12 +206,16 @@ std::map<std::string, std::string> DeviceVersion::getIoBoardVersion(void)
     //version convert from int to string
     std::map<int, int> io_version_list;
     io_version_list = io_manager_ptr_->getIoBoardVersion();
+
     for (std::map<int, int>::iterator iter = io_version_list.begin();iter != io_version_list.end(); ++iter)
     {
         name = board_name + to_string(iter->first);
-        sprintf(version.c_str(), "%lx", iter->second);
+        char temp[16];
+        sprintf(temp, "%lx", iter->second);
+        version = temp;
         io_version_map.insert(pair<std::string, std::string>(name, version));
     }
+
     return io_version_map;
 }
 

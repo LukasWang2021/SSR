@@ -18,6 +18,10 @@ public:
     void init(fst_log::Logger* log_ptr, fst_mc::MotionControl* motion_control_ptr,
         fst_hal::IoManager* io_manager_ptr, fst_hal::FstSafetyDevice* safety_device_ptr);
     
+    //controller version
+    std::string getControllerVersion(void);
+
+    //get all device version
     std::map<std::string, std::string> getDeviceVersionList(void);
 
     //servo control bin
@@ -50,8 +54,8 @@ private:
 
     int *hand_off_ptr_;                            //for version
     int *rbf_ptr_;                                 //for version
-    static const int HAND_OFF_ADDR   = 0x38110000; //for version
-    static const int RBF_ADDR        = 0xC0010000; //for version
+    static const unsigned int HAND_OFF_ADDR   = 0x38800000; //for version
+    static const unsigned int RBF_ADDR        = 0xFF210000;//0xc0010000;//0xff210000; //for version
     static const int HAND_OFF_LENGTH = 0x04;       //for version
     static const int RBF_LENGTH      = 0x04;       //for version
 

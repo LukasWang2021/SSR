@@ -1670,11 +1670,13 @@ int calc_conditions(
 *************************************************/ 
 void exec_if(struct thread_control_block * objThreadCntrolBlock)
 {
+  eval_value x ;
   int iRet = JUMP_OUT_INIT ;
   struct select_and_cycle_stack if_stack ;
   int cond;
 
   cond = calc_conditions(objThreadCntrolBlock);
+  x.setFloatValue(cond);
 
   if(cond) { /* is true so process target of IF */
     get_token(objThreadCntrolBlock);
@@ -1687,6 +1689,7 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock)
        find_eol(objThreadCntrolBlock);
     }
     if_stack.itokentype = IF ;
+	if_stack.target = x;
     select_and_cycle_push(objThreadCntrolBlock, if_stack);
   }
   // else find_eol(); /* find start of next line */
@@ -1709,11 +1712,16 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock)
 		else if(objThreadCntrolBlock->tok==ELSE)  // Execute else
 		{
 		    if_stack.itokentype = IF ;
+			if_stack.target = x;
             select_and_cycle_push(objThreadCntrolBlock, if_stack);
 			break ;
 	    }
 		else if(objThreadCntrolBlock->tok==ELSEIF)  // Execute else
 		{
+		    /* is false so process target of ELSEIF */
+		    if_stack.itokentype = IF ;
+			if_stack.target = x;
+            select_and_cycle_push(objThreadCntrolBlock, if_stack);
 			putback(objThreadCntrolBlock);
 			break ;
 	    }
@@ -1784,8 +1792,17 @@ void exec_elseif(struct thread_control_block * objThreadCntrolBlock)
   struct select_and_cycle_stack if_stack ;
   // float x , y;
   int cond;
+  
+  if_stack = select_and_cycle_pop(objThreadCntrolBlock); /* read the loop info */
+  if(if_stack.itokentype != IF){
+	serror(objThreadCntrolBlock, 4);
+	return;
+  }
 
-  cond = calc_conditions(objThreadCntrolBlock);
+  if(if_stack.target.getFloatValue() != 0.0)  // if statement is true
+  	cond = 0 ;
+  else
+  	cond = calc_conditions(objThreadCntrolBlock);
 
   if(cond) { /* is true so process target of IF */
     get_token(objThreadCntrolBlock);

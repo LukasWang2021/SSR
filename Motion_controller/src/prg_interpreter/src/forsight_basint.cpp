@@ -7,6 +7,7 @@
 #include "forsight_inter_control.h"
 #include "forsight_xml_reader.h"
 #include "forsight_io_controller.h"
+#include "forsight_program_property.h"
 
 #ifndef WIN32
 #include "error_code.h"
@@ -506,6 +507,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  	// exit(1);
 		return -1;
 	  }
+	  // Call in the first time to load major P[*]
+  	  append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
 	  
 	  objThreadCntrolBlock->prog = objThreadCntrolBlock->p_buf;
 	  objThreadCntrolBlock->prog_end = objThreadCntrolBlock->prog + strlen(objThreadCntrolBlock->prog);
@@ -2706,6 +2709,8 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
   // objLabel.p = objThreadCntrolBlock->sub_prog[objThreadCntrolBlock->iSubProgNum] ;
   load_program(objThreadCntrolBlock, 
 	  objThreadCntrolBlock->sub_prog[objThreadCntrolBlock->iSubProgNum], objLabel.name);
+  // NOTICE: We should not call it , it should be loaded as the local variable.
+  // append_program_prop_mapper(objThreadCntrolBlock, objLabel.name, false);
   // Scan the labels in the import files
   proglabelsScan = objThreadCntrolBlock->prog ;
   objThreadCntrolBlock->prog = objThreadCntrolBlock->sub_prog[objThreadCntrolBlock->iSubProgNum];
@@ -2765,7 +2770,9 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
 *************************************************/ 
 int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
 {
-  char func_name[1024];
+  char * fileNamePtr = NULL ;
+  char func_name[256];
+  char file_name[256];
   int lvartemp;
   char *loc;
 
@@ -2774,7 +2781,7 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
   loc = find_label(objThreadCntrolBlock, objThreadCntrolBlock->token);
   if(loc=='\0')
   {
-	  memset(func_name, 0x00, 1024);
+	  memset(func_name, 0x00, 256);
 	  sprintf(func_name, "%s::main", objThreadCntrolBlock->token);
 	  loc = find_label(objThreadCntrolBlock, func_name);
 	  if(loc=='\0')
@@ -2782,6 +2789,12 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
 		  serror(objThreadCntrolBlock, 7); /* label not defined */
 		  return 0;
 	  }
+  }
+  memset(file_name, 0x00, 256);
+  sprintf(file_name, "%s", objThreadCntrolBlock->token);
+  if(fileNamePtr = strchr(file_name, ':'))
+  {
+	 *fileNamePtr = '\0';
   }
   
 #if 0
@@ -2810,7 +2823,8 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
   objThreadCntrolBlock->prog = loc;  /* start program running at that loc */
 
   get_params(objThreadCntrolBlock); // load the function's parameters with
-  
+
+  append_program_prop_mapper(objThreadCntrolBlock, file_name, false);
   FST_INFO("Execute call_interpreter at exec_call.");
   int iRet = call_interpreter(objThreadCntrolBlock, 0);
   // find_eol(objThreadCntrolBlock);
@@ -3763,7 +3777,8 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
             return;
         }
 	}
-    strcpy(vt.var_name, vname);
+    memset(vt.var_name, 0x00, LAB_LEN);
+	strcpy(vt.var_name, vname);
 	vt.value = value;
     objThreadCntrolBlock->global_vars.push_back(vt);
 }

@@ -111,7 +111,7 @@ struct sub_label {
 };
 
 struct var_type {
-    char var_name[80]; // name
+    char var_name[LAB_LEN]; // name
     // var_inner_type v_type; // data type
 	eval_value value ;
 };

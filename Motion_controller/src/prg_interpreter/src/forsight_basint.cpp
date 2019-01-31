@@ -3669,6 +3669,69 @@ static int get_char_token(char * src, char * dst)
 	return tmp - src ;
 }
 
+
+void set_var_value(struct thread_control_block * objThreadCntrolBlock, 
+				   char *dst_reg_name, eval_value valueDst, eval_value& valueSrc)
+{
+	FST_INFO("set_var_value = %s", dst_reg_name)£»
+	if(strcmp(dst_reg_name, "p") == 0) // lvalue is P register
+	{
+		if (valueSrc.getType() == TYPE_PR)
+		{
+			if (valueDst.getType() == TYPE_POSE)
+			{
+				PoseEuler pointEulerVal ;
+#ifdef WIN32
+				pointEulerVal.position = valueSrc.getPrRegDataValue().value.cartesian_pos.position ;
+				pointEulerVal.orientation = valueSrc.getPrRegDataValue().value.cartesian_pos.orientation;
+#else
+				pointEulerVal.position.x = valueSrc.getPrRegDataValue().value.pos[0];
+				pointEulerVal.position.y = valueSrc.getPrRegDataValue().value.pos[1];
+				pointEulerVal.position.z = valueSrc.getPrRegDataValue().value.pos[2];
+				pointEulerVal.orientation.a = valueSrc.getPrRegDataValue().value.pos[3];
+				pointEulerVal.orientation.b = valueSrc.getPrRegDataValue().value.pos[4];
+				pointEulerVal.orientation.c = valueSrc.getPrRegDataValue().value.pos[5];
+#endif
+				//	vt.value = value;
+				valueDst.setPoseValue(&pointEulerVal);
+			}
+			else if (valueDst.getType() == TYPE_JOINT)
+			{
+				Joint jointVal ;
+#ifdef WIN32
+				jointVal.j1 = valueSrc.getPrRegDataValue().value.joint_pos[0];
+				jointVal.j2 = valueSrc.getPrRegDataValue().value.joint_pos[1];
+				jointVal.j3 = valueSrc.getPrRegDataValue().value.joint_pos[2];
+				jointVal.j4 = valueSrc.getPrRegDataValue().value.joint_pos[3];
+				jointVal.j5 = valueSrc.getPrRegDataValue().value.joint_pos[4];
+				jointVal.j6 = valueSrc.getPrRegDataValue().value.joint_pos[5];
+#else
+				jointVal.j1 = valueSrc.getPrRegDataValue().value.pos[0];
+				jointVal.j2 = valueSrc.getPrRegDataValue().value.pos[1];
+				jointVal.j3 = valueSrc.getPrRegDataValue().value.pos[2];
+				jointVal.j4 = valueSrc.getPrRegDataValue().value.pos[3];
+				jointVal.j5 = valueSrc.getPrRegDataValue().value.pos[4];
+				jointVal.j6 = valueSrc.getPrRegDataValue().value.pos[5];
+#endif
+				//	vt.value = value;
+				valueDst.setJointValue(&jointVal);
+			}
+		}
+		else if (valueSrc.getType() == TYPE_POSE)
+		{
+			valueDst.setPoseValue(&valueSrc.getPoseValue());
+		}
+		else if (valueSrc.getType() == TYPE_JOINT)
+		{
+			valueDst.setJointValue(&valueSrc.getJointValue());
+		}
+	}
+	else
+	{
+		valueSrc = valueDst;
+	}
+}
+
 /************************************************* 
 	Function:		assign_var
 	Description:	Declare a global variable.
@@ -3773,13 +3836,15 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
     for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
     {
         if(!strcmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
-            objThreadCntrolBlock->global_vars[i].value = value;
+        //    objThreadCntrolBlock->global_vars[i].value = value;
+			set_var_value(objThreadCntrolBlock, reg_name, 
+				objThreadCntrolBlock->global_vars[i].value, value);
             return;
         }
 	}
     memset(vt.var_name, 0x00, LAB_LEN);
 	strcpy(vt.var_name, vname);
-	vt.value = value;
+	set_var_value(objThreadCntrolBlock, reg_name, vt.value, value);
     objThreadCntrolBlock->global_vars.push_back(vt);
 }
 

@@ -3671,7 +3671,7 @@ static int get_char_token(char * src, char * dst)
 
 
 void set_var_value(struct thread_control_block * objThreadCntrolBlock, 
-				   char *dst_reg_name, eval_value valueDst, eval_value& valueSrc)
+				   char *dst_reg_name, eval_value& valueDst, eval_value& valueSrc)
 {
 	FST_INFO("set_var_value = %s with %04X and %04X", dst_reg_name, valueSrc.getType(), valueDst.getType());
 	if(strcmp(dst_reg_name, "p") == 0) // lvalue is P register
@@ -3685,12 +3685,17 @@ void set_var_value(struct thread_control_block * objThreadCntrolBlock,
 				pointEulerVal.position = valueSrc.getPrRegDataValue().value.cartesian_pos.position ;
 				pointEulerVal.orientation = valueSrc.getPrRegDataValue().value.cartesian_pos.orientation;
 #else
-				pointEulerVal.position.x = valueSrc.getPrRegDataValue().value.pos[0];
-				pointEulerVal.position.y = valueSrc.getPrRegDataValue().value.pos[1];
-				pointEulerVal.position.z = valueSrc.getPrRegDataValue().value.pos[2];
+				pointEulerVal.position.x    = valueSrc.getPrRegDataValue().value.pos[0];
+				pointEulerVal.position.y    = valueSrc.getPrRegDataValue().value.pos[1];
+				pointEulerVal.position.z    = valueSrc.getPrRegDataValue().value.pos[2];
 				pointEulerVal.orientation.a = valueSrc.getPrRegDataValue().value.pos[3];
 				pointEulerVal.orientation.b = valueSrc.getPrRegDataValue().value.pos[4];
 				pointEulerVal.orientation.c = valueSrc.getPrRegDataValue().value.pos[5];
+				
+				FST_INFO("set_var_value: id = (%f, %f, %f, %f, %f, %f) ", 
+					valueSrc.getPrRegDataValue().value.pos[0], valueSrc.getPrRegDataValue().value.pos[1], 
+					valueSrc.getPrRegDataValue().value.pos[2], valueSrc.getPrRegDataValue().value.pos[3], 
+					valueSrc.getPrRegDataValue().value.pos[4], valueSrc.getPrRegDataValue().value.pos[5]);
 #endif
 				//	vt.value = value;
 				valueDst.setPoseValue(&pointEulerVal);
@@ -3728,7 +3733,7 @@ void set_var_value(struct thread_control_block * objThreadCntrolBlock,
 	}
 	else
 	{
-		valueSrc = valueDst;
+		FST_ERROR("Not support variable...");
 	}
 }
 
@@ -3830,23 +3835,37 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		set_OAC(iLineNum, value.getFloatValue(), objThreadCntrolBlock);
 		return ;
     }
-
-    var_type vt;
-    // Otherwise, try global vars.
-    for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
-    {
-        if(!strcmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
-        //    objThreadCntrolBlock->global_vars[i].value = value;
-			set_var_value(objThreadCntrolBlock, reg_name, 
-				objThreadCntrolBlock->global_vars[i].value, value);
-            return;
-        }
+	
+	var_type vt;
+	// P register was saved in the local_var_stack
+	if(strcmp(reg_name, "p") == 0) // lvalue is P register
+	{
+	    // Otherwise, try global vars.
+	    for(unsigned i=0; i < objThreadCntrolBlock->local_var_stack.size(); i++)
+	    {
+	        if(!strcmp(objThreadCntrolBlock->local_var_stack[i].var_name, vname)) {
+				set_var_value(objThreadCntrolBlock, reg_name, 
+					objThreadCntrolBlock->local_var_stack[i].value, value);
+	            return;
+	        }
+		}
+		FST_ERROR("The %s does not exist", vname);
 	}
-    memset(vt.var_name, 0x00, LAB_LEN);
-	strcpy(vt.var_name, vname);
-	FST_INFO("push_back var_value = %s", reg_name);
-	set_var_value(objThreadCntrolBlock, reg_name, vt.value, value);
-    objThreadCntrolBlock->global_vars.push_back(vt);
+	else
+	{
+	    // Otherwise, try global vars.
+	    for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
+	    {
+	        if(!strcmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
+	            objThreadCntrolBlock->global_vars[i].value = value;
+	            return;
+	        }
+		}
+	    memset(vt.var_name, 0x00, LAB_LEN);
+		strcpy(vt.var_name, vname);
+		vt.value = value;
+	    objThreadCntrolBlock->global_vars.push_back(vt);
+	}
 }
 
 /************************************************* 

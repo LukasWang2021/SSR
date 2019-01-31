@@ -192,30 +192,12 @@ int forgesight_registers_manager_get_register(
 			// PrRegData * ptr = (PrRegData *)reg_content_buffer ;
 #ifndef WIN32
 			if(bRet == false)
-				serror(objThreadCntrolBlock, 4) ; 
+			{
+				serror(objThreadCntrolBlock, 4) ;
+			}
 			else
 			{
-				if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_CARTESIAN)
-				{
-				   objPoseEuler.position.x	  = objPrRegData.value.pos[0];
-				   objPoseEuler.position.y	  = objPrRegData.value.pos[1];
-				   objPoseEuler.position.z	  = objPrRegData.value.pos[2];
-				   objPoseEuler.orientation.a = objPrRegData.value.pos[3];
-				   objPoseEuler.orientation.b = objPrRegData.value.pos[4];
-				   objPoseEuler.orientation.c = objPrRegData.value.pos[5];
-				   value->setPoseValue(&objPoseEuler);
-				}
-				else if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_JOINT)
-				{
-				   objJoint.j1 = objPrRegData.value.pos[0];
-				   objJoint.j2 = objPrRegData.value.pos[1];
-				   objJoint.j3 = objPrRegData.value.pos[2];
-				   objJoint.j4 = objPrRegData.value.pos[3];
-				   objJoint.j5 = objPrRegData.value.pos[4];
-				   objJoint.j6 = objPrRegData.value.pos[5];   
-				   value->setJointValue(&objJoint);
-				}
-
+				value->setPrRegDataValue(&objPrRegData);
 			}
 #else
 			value->setPrRegDataValue(&objPrRegData);

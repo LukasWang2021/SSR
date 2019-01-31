@@ -3507,6 +3507,15 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
   int iRet = 0 ;
   // char *progFuncCall; 
   switch(objThreadCntrolBlock->token_type) {
+  case INNERCMD:
+    // Timer
+	if(strcmp(objThreadCntrolBlock->token, "timer") != 0)
+    {
+		result->setFloatValue(1.0);
+		get_token(objThreadCntrolBlock);
+		return;
+	}
+	// if objThreadCntrolBlock->token == "timer",take it as the VARIABLE
   case VARIABLE:
 	objThreadCntrolBlock->g_variable_error = 0 ;
     *result = find_var(objThreadCntrolBlock, objThreadCntrolBlock->token);
@@ -3567,11 +3576,6 @@ void primitive(struct thread_control_block * objThreadCntrolBlock, eval_value *r
   case QUOTE:
   	strValue = std::string(objThreadCntrolBlock->token);
 	result->setStringValue(strValue);
-    get_token(objThreadCntrolBlock);
-    return;
-  case INNERCMD:
-    // Timer
-    result->setFloatValue(1.0);
     get_token(objThreadCntrolBlock);
     return;
   default:
@@ -3802,8 +3806,8 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			if(iRet != 1)
 			{
 				FST_INFO("forgesight_set_timer Failed");
-				return ;
 			}
+			return ;
 		}
     }
 

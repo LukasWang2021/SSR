@@ -1478,6 +1478,21 @@ int execute_Timer(struct thread_control_block* objThreadCntrolBlock, char *vname
 		
 		value.setFloatValue(g_structStopWatch[iTimerIdx].diff_time)  ;
 	//	assign_var(objThreadCntrolBlock, vname, value);
+		
+		var_type vt;
+		// Otherwise, try global vars.
+		for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
+		{
+			if(!strcmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
+				objThreadCntrolBlock->global_vars[i].value = value;
+				return 1;
+			}
+		}
+		memset(vt.var_name, 0x00, LAB_LEN);
+		strcpy(vt.var_name, vname);
+		vt.value = value;
+	    objThreadCntrolBlock->global_vars.push_back(vt);
+
 		FST_INFO("Time elapse : %d .", g_structStopWatch[iTimerIdx].diff_time);
 	}
 	return 1 ;

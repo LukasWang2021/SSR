@@ -296,6 +296,17 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 			serializeFunctionParam(label_vector, label_output);
 			sprintf(label_str, "%s%s)", label_str, label_output);
 		}
+		else if(xmlStrcasecmp(name, BAD_CAST"argument")==0){ 
+			value = xmlNodeGetContent(nodeValueElement);
+			sprintf(label_str, "%s", label_str, "");
+			
+			for(nodeSubValueElement = nodeValueElement->children; 
+			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
+				objLineInfoTemp.indentValue = objLineInfo.indentValue ;
+				generateElementStr(nodeSubValueElement, objLineInfoTemp, label_str);
+			}
+			sprintf(label_str, "%s", label_str);
+		}
 		else if(xmlStrcasecmp(name, BAD_CAST"subroutine")==0){ 
 			file = xmlGetProp(nodeValueElement, BAD_CAST"file");
 			name = xmlGetProp(nodeValueElement, BAD_CAST"name");

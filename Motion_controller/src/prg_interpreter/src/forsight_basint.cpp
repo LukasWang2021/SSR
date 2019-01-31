@@ -3673,7 +3673,7 @@ static int get_char_token(char * src, char * dst)
 void set_var_value(struct thread_control_block * objThreadCntrolBlock, 
 				   char *dst_reg_name, eval_value valueDst, eval_value& valueSrc)
 {
-	FST_INFO("set_var_value = %s", dst_reg_name)£»
+	FST_INFO("set_var_value = %s with %04X and %04X", dst_reg_name, valueSrc.getType(), valueDst.getType());
 	if(strcmp(dst_reg_name, "p") == 0) // lvalue is P register
 	{
 		if (valueSrc.getType() == TYPE_PR)
@@ -3844,6 +3844,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 	}
     memset(vt.var_name, 0x00, LAB_LEN);
 	strcpy(vt.var_name, vname);
+	FST_INFO("push_back var_value = %s", reg_name);
 	set_var_value(objThreadCntrolBlock, reg_name, vt.value, value);
     objThreadCntrolBlock->global_vars.push_back(vt);
 }

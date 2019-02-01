@@ -23,6 +23,7 @@ using namespace fst_ctrl ;
 #include "reg-shmi/forsight_registers.h"
 #include "reg-shmi/forsight_op_regs_shmi.h"
 #endif
+#include "launch_code_mgr.h"
 
 #define VELOCITY    (500)
 using namespace std;
@@ -48,6 +49,8 @@ std::string g_files_manager_data_path = "";
 
 static InterpreterState g_privateInterpreterState;
 InterpreterPublish  g_interpreter_publish; 
+
+LaunchCodeMgr *    g_launch_code_mgr_ptr; 
 
 /************************************************* 
 	Function:		split
@@ -614,6 +617,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 	AutoMode   autoMode ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
+	g_launch_code_mgr_ptr->updateAll();
 #ifndef WIN32
 //	RegMap reg ;
 	IOPathInfo  dioPathInfo ;
@@ -1005,32 +1009,15 @@ char * forgesight_get_programs_path()
 }
 
 /************************************************* 
-	Function:		initShm
+	Function:		initInterpreter
 	Description:	init interpretor
 	Input:			NULL
 	Return: 		programs path
 *************************************************/ 
-void initShm()
+void initInterpreter()
 {
-//    openShm(SHM_INTPRT_CMD, 1024);
-//    openShm(SHM_INTPRT_STATUS, 1024);
-	
-	// Lujiaming add at 0323
-//    openShm(SHM_REG_IO_INFO, 1024);
-	// Lujiaming add at 0323 end
-	
-	// Lujiaming add at 0514
-//    openShm(SHM_CHG_REG_LIST_INFO, 1024);
-	// Lujiaming add at 0514 end
-	
-//    openShm(SHM_CTRL_CMD, 1024);
-//    openShm(SHM_CTRL_STATUS, 1024);
-//    openShm(SHM_INTPRT_DST, 1024);
-    // intprt_ctrl.cmd = LOAD;
-    // intprt_ctrl.cmd = START;
 	g_privateInterpreterState = INTERPRETER_IDLE ;
 	
-//	setPrgmState(objThdCtrlBlockPtr, INTERPRETER_IDLE);
 #ifdef WIN32
 //	generateFakeData();
 #else
@@ -1041,8 +1028,19 @@ void initShm()
 //	initShmi(1024);
 #endif
 	forgesight_load_programs_path();
+	g_launch_code_mgr_ptr = new LaunchCodeMgr(g_files_manager_data_path);
 }
 
+/************************************************* 
+	Function:		uninitInterpreter
+	Description:	uninit interpretor
+	Input:			NULL
+	Return: 		programs path
+*************************************************/ 
+void uninitInterpreter()
+{
+	delete g_launch_code_mgr_ptr;
+}
 
 /************************************************* 
 	Function:		updateIOError (Legacy)

@@ -53,7 +53,7 @@ int main(int  argc, char *argv[])
     	FST_LOG_INIT("Interpreter");
 	}
 #endif
-	initShm();
+	initInterpreter();
 	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 #ifndef WIN32
 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_START ;
@@ -95,12 +95,13 @@ int main(int  argc, char *argv[])
 			usleep(1000);
 		}
 #else
-		parseCtrlComand(intprt_ctrl, "lineno_test_2");
+		parseCtrlComand(intprt_ctrl, "timer_test");
 		intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LOAD ;
 		Sleep(100);
 #endif
 	}
 	
+	uninitInterpreter();
 #ifndef WIN32
 	if(log_ptr_ != NULL)
 	{

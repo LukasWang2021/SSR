@@ -83,11 +83,15 @@ private:
     ErrorCode getDoValue(PhysicsID phy_id, uint8_t &value);
     ErrorCode getRiValue(PhysicsID phy_id, uint8_t &value);
     ErrorCode getRoValue(PhysicsID phy_id, uint8_t &value);
+    ErrorCode getUiValue(PhysicsID phy_id, uint8_t &value);
+    ErrorCode getUoValue(PhysicsID phy_id, uint8_t &value);
 
     ErrorCode setDiValue(PhysicsID phy_id, uint8_t value);
     ErrorCode setDoValue(PhysicsID phy_id, uint8_t value);
     ErrorCode setRiValue(PhysicsID phy_id, uint8_t value);
     ErrorCode setRoValue(PhysicsID phy_id, uint8_t value);
+    ErrorCode setUiValue(PhysicsID phy_id, uint8_t value);
+    ErrorCode setUoValue(PhysicsID phy_id, uint8_t value);
 
     BaseDevice* getDevicePtr(PhysicsID phy_id);
     ErrorCode updateIoDevicesData(void);

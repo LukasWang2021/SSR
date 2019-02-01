@@ -2,9 +2,9 @@
 Copyright © 2016 Foresight-Robotics Ltd. All rights reserved.
 File:       program_launching.cpp
 Author:     Feng.Wu
-Create:     21-Nov-2018
-Modify:     21-Nov-2018
-Summary:    dealing with IO macro
+Create:     29-Jan-2019
+Modify:     29-Jan-2019
+Summary:    dealing with UIUO
 **********************************************/
 
 #include "program_launching.h"
@@ -14,8 +14,6 @@ Summary:    dealing with IO macro
 #include <string.h>
 #include <iostream>
 #include <sstream>
-#include <unistd.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include "error_monitor.h"
 
 using namespace std;

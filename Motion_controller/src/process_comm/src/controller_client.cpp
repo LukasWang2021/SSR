@@ -214,6 +214,19 @@ bool ControllerClient::switchStep(int data)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
+bool ControllerClient::codeStart(int program_code)
+{
+    if(!controller_server_ptr_->isInterpreterServerReady()
+        || !sendRequest(INTERPRETER_SERVER_CMD_CODE_START, &program_code, sizeof(int))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_CODE_START)
+    {
+        return false;
+    }
+
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
 
 void ControllerClient::handleSubscribe()
 {

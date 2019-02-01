@@ -16,11 +16,13 @@ using namespace fst_base;
 IoMapping::IoMapping():
     log_ptr_(NULL),
 	param_ptr_(NULL),
-	sim_ptr_(NULL)
+	sim_ptr_(NULL),
+	bypass_ptr_(NULL)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new IoMappingParam();
     sim_ptr_ = new IoSimulation(log_ptr_, param_ptr_);
+	bypass_ptr_ = new IoBypass(log_ptr_, param_ptr_);
     FST_LOG_INIT("io_mapping");
 }
 
@@ -38,6 +40,10 @@ IoMapping::~IoMapping()
 		delete sim_ptr_;
 		sim_ptr_ = NULL;
 	}
+	if(bypass_ptr_ != NULL){
+		delete bypass_ptr_;
+		bypass_ptr_ = NULL;
+	}
 }
 
 ErrorCode IoMapping::init(fst_hal::IoManager* io_manager_ptr)
@@ -52,6 +58,11 @@ ErrorCode IoMapping::init(fst_hal::IoManager* io_manager_ptr)
 	}
 
 	ErrorCode ret = sim_ptr_->init();
+	if (ret != SUCCESS){
+		ErrorMonitor::instance()->add(ret);
+	}
+	
+	ret = bypass_ptr_->init();
 	if (ret != SUCCESS){
 		ErrorMonitor::instance()->add(ret);
 	}
@@ -96,6 +107,20 @@ ErrorCode IoMapping::updateMappingFile()
 
 	sprintf(io_map_file_name, "%s/ro_mapping.json", getProgramsPath());
 	if (!appendSingleIOMapper(io_map_file_name, "RO"))
+	{
+		FST_ERROR("Failed to read mapping parameters", io_map_file_name);
+		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	}
+
+	sprintf(io_map_file_name, "%s/ui_mapping.json", getProgramsPath());
+	if (!appendSingleIOMapper(io_map_file_name, "UI"))
+	{
+		FST_ERROR("Failed to read mapping parameters:%s", io_map_file_name);
+		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
+	}
+
+	sprintf(io_map_file_name, "%s/uo_mapping.json", getProgramsPath());
+	if (!appendSingleIOMapper(io_map_file_name, "UO"))
 	{
 		FST_ERROR("Failed to read mapping parameters", io_map_file_name);
 		return IO_MAPPING_LOAD_MAP_FILE_FAILED;
@@ -296,6 +321,100 @@ ErrorCode IoMapping::setROByBit(uint32_t user_port, uint8_t value)
 	return IO_INVALID_PARAM_ID;
 }
 
+
+ErrorCode IoMapping::getUIByBit(uint32_t user_port, uint8_t &value)
+{
+	/* make a string "UI[user_port]" */
+	char cTemp[16] = {};
+	sprintf(cTemp, "%s[%d]", "UI", user_port);
+
+	/* check if the port is bypass */
+	bool data = false;
+	if (bypass_ptr_->isBypassUsed(cTemp, data))
+	{
+		value = data;
+		return SUCCESS;
+	}
+
+	/* get physics ID by a map. */
+	string strKey;
+	strKey.assign(cTemp);
+
+	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+		return io_manager_ptr_->getBitValue(physics_id, value);
+	}
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
+	return IO_INVALID_PARAM_ID;
+}
+
+ErrorCode IoMapping::setUIByBit(uint32_t user_port, uint8_t yes_or_no)
+{
+	// make a string "UI[user_port]"
+	char cTemp[16] = {};
+	sprintf(cTemp, "%s[%d]", "UI", user_port);
+
+	// set the port to be bypass or not.
+	if (bypass_ptr_->setBypass(cTemp, yes_or_no)){
+		return SUCCESS;
+	}
+
+	return IO_INVALID_PARAM_ID;
+}
+
+ErrorCode IoMapping::getUOByBit(uint32_t user_port, uint8_t &value)
+{
+	/* make a string "UO[user_port]" */
+    char cTemp[16] = {};
+	sprintf(cTemp, "%s[%d]", "UO", user_port);
+
+	/* get physics ID by a map. */
+	string strKey;
+	strKey.assign(cTemp);
+
+	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		return io_manager_ptr_->getBitValue(physics_id, value);
+	}
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
+	return IO_INVALID_PARAM_ID;
+}
+
+ErrorCode IoMapping::setUOByBit(uint32_t user_port, uint8_t value)
+{
+	/* make a string "UO[user_port]" */
+    char cTemp[16] = {};
+	sprintf(cTemp, "%s[%d]", "UO", user_port);
+
+	/* get physics ID by a map. */
+	string strKey;
+	strKey.assign(cTemp);
+
+	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		return io_manager_ptr_->setBitValue(physics_id, value);
+	}
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
+
+	return IO_INVALID_PARAM_ID;
+}
+
+
+
 void IoMapping::loadProgramsPath()
 {
 	files_manager_data_path_ = "";
@@ -323,7 +442,6 @@ bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
 	//add address value
     id.info.address = atoi(string_array[2].c_str());
 
-
     //add dev_type value
 	if (string_array[0].compare("ModbusServer") == 0)
         id.info.dev_type = fst_hal::DEVICE_TYPE_MODBUS;//=9
@@ -345,6 +463,10 @@ bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
         id.info.port_type = MessageType_IoType_RI;
     else if (strcasecmp(port_type_str, "RO") == 0)
         id.info.port_type = MessageType_IoType_RO;
+	else if (strcasecmp(port_type_str, "UI") == 0)
+        id.info.port_type = MessageType_IoType_UI;
+    else if (strcasecmp(port_type_str, "UO") == 0)
+        id.info.port_type = MessageType_IoType_UO;
 	else 
 	    id.info.port_type = 0xFF;// need to add invalid value
 

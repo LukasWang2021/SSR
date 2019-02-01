@@ -11,6 +11,8 @@
 #include "serverAlarmApi.h"
 #include "fst_safety_device.h"
 #include "modbus_manager.h"
+#include "io_mapping.h"
+#include "program_launching.h"
 #include "interpreter_common.h"
 #include <string>
 #include <sys/time.h>
@@ -18,6 +20,7 @@
 
 namespace fst_ctrl
 {
+
 typedef enum
 {
     USER_OP_MODE_NONE             = 0,
@@ -65,6 +68,7 @@ typedef enum
     CTRL_ESTOP_TO_TERMINATE = 103,
 }CtrlState;
 
+
 class ControllerSm
 {
 public:
@@ -72,7 +76,8 @@ public:
     ~ControllerSm();
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
                 VirtualCore1* virtual_core1_ptr, fst_base::ControllerClient* controller_client_ptr, 
-                fst_hal::DeviceManager* device_manager_ptr);
+                fst_hal::DeviceManager* device_manager_ptr, fst_ctrl::IoMapping* io_mapping_ptr,
+                ProgramLaunching* program_launching);
     ControllerParam* getParam();
     void processStateMachine();
     
@@ -82,8 +87,8 @@ public:
     RobotState getRobotState();
     CtrlState getCtrlState();
     fst_mc::ServoState getServoState();
-    int getSafetyAlarm();
-    bool getEnableMacroLaunching();//get the enable value to program launching
+    int getSafetyAlarm();  
+
     ErrorCode setUserOpMode(UserOpMode mode);
     bool checkOffsetState();
     ErrorCode callEstop();
@@ -106,6 +111,7 @@ public:
     fst_mc::ServoState* getServoStatePtr();
     int* getSafetyAlarmPtr();  
 
+
     void setInitState(bool state);
     bool getInitState();  
     
@@ -118,6 +124,8 @@ private:
     fst_hal::DeviceManager* device_manager_ptr_;
     fst_hal::FstSafetyDevice* safety_device_ptr_;    
     fst_hal::ModbusManager* modbus_manager_ptr_; 
+    fst_ctrl::IoMapping* io_mapping_ptr_;
+    ProgramLaunching* program_launching_ptr_;
 
     // mode and status
     UserOpMode user_op_mode_;
@@ -130,7 +138,7 @@ private:
     int ctrl_reset_count_;
     int robot_state_timeout_count_;
     bool init_state_;
-    bool enable_macro_launching_;//flag of macro launching
+    int program_code_; //program launching code
 
     // manual rpc related
     bool is_continuous_manual_move_timeout_;
@@ -149,6 +157,7 @@ private:
     long long int interpreter_warning_code_;
     int error_level_;
     bool is_error_exist_;
+
     
     // state machine transfer
     void processInterpreter();
@@ -160,6 +169,15 @@ private:
     void shutdown();
     void processMacroLaunching();//to set the enable value of macro launching
     void processModbusClientList();
+    void processUIUO();
+
+    // UI check if there is falling edge.
+    bool isFallingEdge(uint32_t user_port);
+    // UI get and UO set program launching code.
+    int getSetProgramCode();
+    // getUI, setUO
+    bool getUI(uint32_t user_port, bool &level);
+    void setUO(uint32_t user_port, bool level);
 
     // manual rpc related
     long long computeTimeElapse(struct timeval &current_time, struct timeval &last_time);

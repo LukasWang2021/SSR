@@ -43,6 +43,10 @@ public:
     ErrorCode setRi(uint32_t port_offset, uint32_t value);
     ErrorCode getRo(uint32_t port_offset, uint32_t &value);
     ErrorCode setRo(uint32_t port_offset, uint32_t value);
+    ErrorCode getUi(uint32_t port_offset, uint32_t &value);
+    ErrorCode setUi(uint32_t port_offset, uint32_t value);//not use
+    ErrorCode getUo(uint32_t port_offset, uint32_t &value);
+    ErrorCode setUo(uint32_t port_offset, uint32_t value);//not use
     
 private:
     fst_log::Logger* log_ptr_;

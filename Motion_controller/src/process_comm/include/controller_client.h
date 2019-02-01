@@ -31,6 +31,7 @@ public:
     bool getNextInstruction(Instruction* instruction_ptr); 
     bool setAutoStartMode(int start_mode);
     bool switchStep(int data);
+    bool codeStart(int program_code);
 
     void handleSubscribe();
     void handleEvent();

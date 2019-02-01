@@ -142,3 +142,68 @@ void ControllerIpc::handleIpcSetRo(void* request_data_ptr, void* response_data_p
 
 }
 
+
+
+//GetUi
+void ControllerIpc::handleIpcGetUi(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestGetUi* rq_data_ptr = static_cast<RequestGetUi*>(request_data_ptr);
+    ResponseGetUi* rs_data_ptr = static_cast<ResponseGetUi*>(response_data_ptr);
+
+    uint8_t value = 0;
+    rs_data_ptr->error_code = io_mapping_ptr_->getUIByBit(rq_data_ptr->port_offset, value);
+    FST_INFO("handleIpcGetUi: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+
+    if(rs_data_ptr->error_code == SUCCESS)
+    {
+        rs_data_ptr->value = value;
+    }
+    else
+    {
+        FST_INFO("NULL::handleIpcGetUi with <port_offset = %d>",rq_data_ptr->port_offset);
+    }
+}
+
+//SetUi
+void ControllerIpc::handleIpcSetUi(void* request_data_ptr, void* response_data_ptr)
+{
+	RequestSetUi* rq_data_ptr = static_cast<RequestSetUi*>(request_data_ptr);
+    unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
+
+	*rs_data_ptr = io_mapping_ptr_->setUIByBit(rq_data_ptr->port_offset, rq_data_ptr->value);
+    FST_INFO("handleIpcSetUi: user_port=%d, value=%d, ret =%x", rq_data_ptr->port_offset, rq_data_ptr->value, *rs_data_ptr);
+
+    if (*rs_data_ptr != SUCCESS)
+	    FST_INFO("NULL::handleIpcSetUi with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
+}
+
+//GetUo
+void ControllerIpc::handleIpcGetUo(void* request_data_ptr, void* response_data_ptr)
+{
+	RequestGetUo* rq_data_ptr = static_cast<RequestGetUo*>(request_data_ptr);
+    ResponseGetUo* rs_data_ptr = static_cast<ResponseGetUo*>(response_data_ptr);
+
+    uint8_t value = 0;
+    rs_data_ptr->error_code = io_mapping_ptr_->getUOByBit(rq_data_ptr->port_offset, value);
+    FST_INFO("handleIpcGetUo: user_port=%d, value=%d, err=%llx", rq_data_ptr->port_offset, value, rs_data_ptr->error_code);
+
+    if(rs_data_ptr->error_code == SUCCESS)
+    {
+        rs_data_ptr->value = value;
+    }
+    else
+    {
+        FST_INFO("NULL::handleIpcGetUo with <port_offset = %d>",rq_data_ptr->port_offset);
+    }
+}
+
+//SetUo is forbidden
+void ControllerIpc::handleIpcSetUo(void* request_data_ptr, void* response_data_ptr)
+{
+	RequestSetUo* rq_data_ptr = static_cast<RequestSetUo*>(request_data_ptr);
+    unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
+
+	*rs_data_ptr = SUCCESS;
+
+	FST_INFO("NULL::handleIpcSetUo with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
+}

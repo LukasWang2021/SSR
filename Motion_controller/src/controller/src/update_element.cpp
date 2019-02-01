@@ -300,6 +300,34 @@ void ControllerPublish::updateIo()
                 }
                 break;
             }
+            case MessageType_IoType_UI://fst_hal::IO_TYPE_DI:
+            {
+                ret = io_mapping_ptr_->getUIByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
+            case MessageType_IoType_UO://fst_hal::IO_TYPE_DO:
+            {
+                ret = io_mapping_ptr_->getUOByBit(it->port_offset, value);
+                if(ret == SUCCESS)
+                {
+                    it->is_valid = true;
+                    it->value.data = static_cast<uint32_t>(value);
+                }
+                else
+                {
+                    it->is_valid = false;
+                }
+                break;
+            }
         }
     }
 }

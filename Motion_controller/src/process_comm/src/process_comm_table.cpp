@@ -28,6 +28,10 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_SET_RI, &ControllerServer::handleRequestSetRi, &ControllerServer::handleResponseSetRi}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_RO, &ControllerServer::handleRequestGetRo, &ControllerServer::handleResponseGetRo}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_RO, &ControllerServer::handleRequestSetRo, &ControllerServer::handleResponseSetRo}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_GET_UI, &ControllerServer::handleRequestGetUi, &ControllerServer::handleResponseGetUi}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_SET_UI, &ControllerServer::handleRequestSetUi, &ControllerServer::handleResponseSetUi}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_GET_UO, &ControllerServer::handleRequestGetUo, &ControllerServer::handleResponseGetUo}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_SET_UO, &ControllerServer::handleRequestSetUo, &ControllerServer::handleResponseSetUo}; rpc_table_.push_back(rpc_service);
 
 }
 
@@ -45,5 +49,6 @@ void InterpreterServer::initRpcTable()
     rpc_service = {INTERPRETER_SERVER_CMD_GET_NEXT_INSTRUCTION, &InterpreterServer::handleRequestGetNextInstruction, &InterpreterServer::handleResponseGetNextInstruction}; rpc_table_.push_back(rpc_service);
     rpc_service = {INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, &InterpreterServer::handleRequestSetAutoStartMode, &InterpreterServer::handleResponseSetAutoStartMode}; rpc_table_.push_back(rpc_service);
     rpc_service = {INTERPRETER_SERVER_CMD_SWITCH_STEP, &InterpreterServer::handleRequestSwitchStep, &InterpreterServer::handleResponseSwitchStep}; rpc_table_.push_back(rpc_service);
+    rpc_service = {INTERPRETER_SERVER_CMD_CODE_START, &InterpreterServer::handleRequestCodeStart, &InterpreterServer::handleResponseCodeStart}; rpc_table_.push_back(rpc_service);
 }
 

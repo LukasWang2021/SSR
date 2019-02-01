@@ -21,6 +21,8 @@ ControllerSm::ControllerSm():
     device_manager_ptr_(NULL),
     safety_device_ptr_(NULL),
     modbus_manager_ptr_(NULL),
+    io_mapping_ptr_(NULL),
+    program_launching_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
     running_state_(RUNNING_STATUS_LIMITED),
     interpreter_state_(INTERPRETER_IDLE),
@@ -31,7 +33,7 @@ ControllerSm::ControllerSm():
     ctrl_reset_count_(0),
     robot_state_timeout_count_(100000),
     init_state_(false),
-    enable_macro_launching_(false),
+    program_code_(0),
     interpreter_warning_code_(0),
     error_level_(0),
     is_error_exist_(false),
@@ -51,7 +53,8 @@ ControllerSm::~ControllerSm()
 
 void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fst_mc::MotionControl* motion_control_ptr, 
                             VirtualCore1* virtual_core1_ptr, ControllerClient* controller_client_ptr, 
-                            fst_hal::DeviceManager* device_manager_ptr)
+                            fst_hal::DeviceManager* device_manager_ptr, fst_ctrl::IoMapping* io_mapping_ptr,
+                            ProgramLaunching* program_launching_ptr)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -59,6 +62,8 @@ void ControllerSm::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, fs
     virtual_core1_ptr_ = virtual_core1_ptr;
     controller_client_ptr_ = controller_client_ptr;
     device_manager_ptr_ =device_manager_ptr;
+    io_mapping_ptr_ = io_mapping_ptr;
+    program_launching_ptr_ = program_launching_ptr;
 
     // get the safety device ptr.
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
@@ -101,6 +106,7 @@ void ControllerSm::processStateMachine()
     transferRobotState();
     processMacroLaunching();
     processModbusClientList();
+    processUIUO();
 }
 
 fst_ctrl::UserOpMode ControllerSm::getUserOpMode()
@@ -136,11 +142,6 @@ fst_mc::ServoState ControllerSm::getServoState()
 int ControllerSm::getSafetyAlarm()
 {
     return safety_alarm_;
-}
-
-bool ControllerSm::getEnableMacroLaunching()
-{
-    return enable_macro_launching_;
 }
 
 ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
@@ -352,6 +353,7 @@ int* ControllerSm::getSafetyAlarmPtr()
 {
     return &safety_alarm_;
 }
+
 
 void ControllerSm::processInterpreter()
 {
@@ -672,16 +674,19 @@ void ControllerSm::shutdown()
 
 void ControllerSm::processMacroLaunching()
 {
-    if (interpreter_state_ == INTERPRETER_IDLE
+    int enable_macro_launching = false;
+    if (user_op_mode_ == USER_OP_MODE_AUTO
+        && interpreter_state_ == INTERPRETER_IDLE
         && ctrl_state_ == CTRL_ENGAGED
         && robot_state_ == ROBOT_IDLE)
     {
-        enable_macro_launching_ = true;
+        enable_macro_launching = true;
     }
     else
     {
-        enable_macro_launching_ = false;
+        enable_macro_launching = false;
     }
+    program_launching_ptr_->processMacro(enable_macro_launching);
 }
 
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)

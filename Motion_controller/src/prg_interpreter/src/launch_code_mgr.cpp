@@ -27,6 +27,7 @@
 LaunchCodeMgr::LaunchCodeMgr(std::string path)
 {
 	program_path = path;
+	program_path += "\/programs\/";
     int result = initial(program_path);
     if (result != 0)
     {
@@ -130,7 +131,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
             continue;
         else if(ptr->d_type == 8)    ///file
         {
-        	printf("d_name:%s/%s\n",basePath,ptr->d_name);
+        //	printf("d_name:%s/%s\n",basePath,ptr->d_name);
 			strExtPtr = strrchr(ptr->d_name, '.');
 			if(strExtPtr)
 			{
@@ -151,7 +152,7 @@ int LaunchCodeMgr::readFileList(char *basePath)
         }
         else if(ptr->d_type == 10)    ///link file
         {
-            printf("d_name:%s/%s\n",basePath,ptr->d_name);
+            ; // printf("d_name:%s/%s\n",basePath,ptr->d_name);
         }
         else if(ptr->d_type == 4)    ///dir
         {

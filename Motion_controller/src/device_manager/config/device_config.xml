@@ -2,7 +2,7 @@
 <Devices>
     <Device>
         <DeviceIndex>1</DeviceIndex>
-        <Address>100</Address>
+        <Address>49</Address>
         <DeviceType>FstSafety</DeviceType>
     </Device>
     <Device>

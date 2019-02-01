@@ -96,6 +96,10 @@ private:
     void handleRequestSetRi();
     void handleRequestGetRo();
     void handleRequestSetRo();
+    void handleRequestGetUi();
+    void handleRequestSetUi();
+    void handleRequestGetUo();
+    void handleRequestSetUo();
 
     // rpc response handler
     void handleResponseSetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -121,6 +125,10 @@ private:
     void handleResponseSetRi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetRo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseSetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     
 };
 

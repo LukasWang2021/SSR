@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
     while(true)
     {
-        program_launching.processMacro(1);
+        //program_launching.processMacro(1);
         usleep(10*1000);
         map_ptr->setDIByBit(1,  1);
     }

@@ -296,3 +296,61 @@ void ControllerServer::handleResponseSetRo(std::vector<ProcessCommRequestRespons
     }
 
 }
+
+
+//GetUi
+void ControllerServer::handleResponseGetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_UI, task->response_data_ptr, sizeof(ResponseGetUi), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetUi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetUi*)task->response_data_ptr;
+    }
+}
+
+//SetUi
+void ControllerServer::handleResponseSetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_UI, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetUi*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+}
+
+//GetUo
+void ControllerServer::handleResponseGetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_UO, task->response_data_ptr, sizeof(ResponseGetUo), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestGetUo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseGetUo*)task->response_data_ptr;
+    }
+}
+
+//SetUo
+void ControllerServer::handleResponseSetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_UO, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetUo*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+
+}

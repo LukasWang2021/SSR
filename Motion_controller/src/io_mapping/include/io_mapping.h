@@ -15,6 +15,7 @@
 #include "base_datatype.h"
 #include "base_device.h"
 #include "io_simulation.h"
+#include "io_bypass.h"
 #include "error_code.h"
 #include "io_manager.h"
 #include "protoc.h"
@@ -136,6 +137,46 @@ public:
 	//------------------------------------------------------------
 	ErrorCode setROByBit(uint32_t user_port, uint8_t value);
 
+
+    //------------------------------------------------------------
+	// Function:    getUIByBit
+	// Summary: get the value to the user port.
+	// In:      user_port  -> the port defined by the user.
+	// Out      value      -> 1 = ON, 0 = OFF.
+	// Return:  ErrorCode   -> error codes.
+	//------------------------------------------------------------
+    ErrorCode getUIByBit(uint32_t user_port, uint8_t &value);
+
+	//------------------------------------------------------------
+	// Function:    setUIByBit
+	// Summary: Set the value to the the port.
+	// In:      user_port  -> the port defined by the user.
+	//          value      -> 1 = ON, 0 = OFF.
+	// Out:     None.
+	// Return:  ErrorCode   -> error codes.
+	//------------------------------------------------------------
+    ErrorCode setUIByBit(uint32_t user_port, uint8_t yes_or_no);
+
+	//------------------------------------------------------------
+	// Function:    getUOByBit
+	// Summary: get the value to the user port.
+	// In:      user_port  -> the port defined by the user.
+	// Out:     value      -> 1 = ON, 0 = OFF.
+	// Return:  ErrorCode   -> error codes.
+	//------------------------------------------------------------
+    ErrorCode getUOByBit(uint32_t user_port, uint8_t &value);
+
+	//------------------------------------------------------------
+	// Function:    setUOByBit
+	// Summary: Set the output to the the port.
+	// In:      user_port  -> the port defined by the user.
+	//          value      -> 1 = ON, 0 = OFF.
+	// Out:     None.
+	// Return:  ErrorCode   -> error codes.
+	//------------------------------------------------------------
+    ErrorCode setUOByBit(uint32_t user_port, uint8_t value);
+
+
 	//------------------------------------------------------------
 	// Function:    getIOPhysicsID
 	// Summary: get the mapping id according to the user port.
@@ -160,6 +201,7 @@ private:
     IoMappingParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     IoSimulation* sim_ptr_;
+	IoBypass* bypass_ptr_;
 	fst_hal::IoManager* io_manager_ptr_;
     map<string, uint32_t> io_mapper_; // to do uint32_t tobe PhysicsID
 	std::string files_manager_data_path_ = "";

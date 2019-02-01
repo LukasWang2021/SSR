@@ -158,5 +158,17 @@ void InterpreterServer::handleResponseSwitchStep(std::vector<ProcessCommRequestR
     }
 }
 
-
+// CodeStart
+void InterpreterServer::handleResponseCodeStart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(INTERPRETER_SERVER_CMD_CODE_START, task->response_data_ptr, sizeof(bool), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete[] (char*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (bool*)task->response_data_ptr;
+    }
+}
 

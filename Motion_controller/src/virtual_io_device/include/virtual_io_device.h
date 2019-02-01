@@ -21,9 +21,13 @@ public:
 
     ErrorCode getDiValue(uint8_t port_offset, uint8_t &value);
     ErrorCode getDoValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getUiValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getUoValue(uint8_t port_offset, uint8_t &value);
 
     ErrorCode setDiValue(uint8_t port_offset, uint8_t value);
     ErrorCode setDoValue(uint8_t port_offset, uint8_t value);
+    ErrorCode setUiValue(uint8_t port_offset, uint8_t value);
+    ErrorCode setUoValue(uint8_t port_offset, uint8_t value);
 
 private:
     VirtualIoDeviceParam* param_ptr_;

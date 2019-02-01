@@ -78,6 +78,16 @@ ErrorCode VirtualIoDevice::getDoValue(uint8_t port_offset, uint8_t &value)
     return SUCCESS;
 }
 
+ErrorCode VirtualIoDevice::getUiValue(uint8_t port_offset, uint8_t &value)
+{
+    return getDiValue(port_offset, value);
+}
+
+ErrorCode VirtualIoDevice::getUoValue(uint8_t port_offset, uint8_t &value)
+{
+    return getDoValue(port_offset, value);
+}
+
 ErrorCode VirtualIoDevice::setDiValue(uint8_t port_offset, uint8_t value)
 {
     int frame = (port_offset - 1) / 8;
@@ -110,4 +120,14 @@ ErrorCode VirtualIoDevice::setDoValue(uint8_t port_offset, uint8_t value)
     }
 
     return SUCCESS;
+}
+
+ErrorCode VirtualIoDevice::setUiValue(uint8_t port_offset, uint8_t value)
+{
+    return setDiValue(port_offset, value);
+}
+
+ErrorCode VirtualIoDevice::setUoValue(uint8_t port_offset, uint8_t value)
+{
+    return setDoValue(port_offset, value);
 }

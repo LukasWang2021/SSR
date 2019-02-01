@@ -14,7 +14,7 @@
 #include "process_comm.h"
 #include "motion_control.h"
 #include "serverAlarmApi.h"
-#include "io_mapping.h"//feng add for mapping.
+#include "io_mapping.h"
 #include "program_launching.h"
 #include "file_manager.h"
 #include "device_version.h"
@@ -373,6 +373,14 @@ private:
     void handleRpc0x00005BD4(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/io_mapping/setROByBit"
     void handleRpc0x00012274(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_mapping/getUIByBit"
+    void handleRpc0x0000A9A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_mapping/setUIByBit"
+    void handleRpc0x00017044(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_mapping/getUOByBit"
+    void handleRpc0x000002C4(void* request_data_ptr, void* response_data_ptr);
+
+
     // "/rpc/io_mapping/syncFileIoStatus"
     void handleRpc0x0000BA73(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/io_mapping/syncFileIoMapping"

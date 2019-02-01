@@ -376,6 +376,72 @@ ErrorCode InterpreterClient::setRo(uint32_t port_offset, uint32_t value)
 }
 
 
+//getUi
+ErrorCode InterpreterClient::getUi(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetUi request_get_ui;
+    request_get_ui.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_UI, (void*)&request_get_ui, sizeof(RequestGetUi))
+       || !recvResponse(sizeof(ResponseGetUi))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_UI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetUi response_get_ui;
+    memcpy(&response_get_ui, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetUi));
+    value = response_get_ui.value;
+    return response_get_ui.error_code;
+}
+
+//setUi
+ErrorCode InterpreterClient::setUi(uint32_t port_offset, uint32_t value)
+{
+    RequestSetUi request_set_ui;
+    request_set_ui.port_offset = port_offset;
+    request_set_ui.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_UI, (void*)&request_set_ui, sizeof(RequestSetUi))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_UI)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+//getUo
+ErrorCode InterpreterClient::getUo(uint32_t port_offset, uint32_t &value)
+{
+    RequestGetUo request_get_uo;
+    request_get_uo.port_offset = port_offset;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_UO, (void*)&request_get_uo, sizeof(RequestGetUo))
+       || !recvResponse(sizeof(ResponseGetUo))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_UO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    ResponseGetUo response_get_uo;
+    memcpy(&response_get_uo, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(ResponseGetUo));
+    value = response_get_uo.value;
+    return response_get_uo.error_code;
+}
+
+//setUo
+ErrorCode InterpreterClient::setUo(uint32_t port_offset, uint32_t value)
+{
+    RequestSetUo request_set_uo;
+    request_set_uo.port_offset = port_offset;
+    request_set_uo.value = value;
+    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_UO, (void*)&request_set_uo, sizeof(RequestSetUo))
+       || !recvResponse(sizeof(unsigned long long))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_UO)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+
+
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)
 {
     *((unsigned int*)send_buffer_ptr_) = cmd_id;

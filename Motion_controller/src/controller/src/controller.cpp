@@ -188,7 +188,7 @@ ErrorCode Controller::init()
     program_launching_.init(&io_mapping_, process_comm_ptr_->getControllerClientPtr());
 
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
-                        process_comm_ptr_->getControllerClientPtr(), &device_manager_);
+                        process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_, &program_launching_);
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
                 process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_, &io_mapping_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
@@ -259,7 +259,6 @@ void Controller::runRoutineThreadFunc()
     rpc_.processRpc();
     ipc_.processIpc();
     publish_.processPublish();
-    program_launching_.processMacro(state_machine_.getEnableMacroLaunching());
     //preformance_monitor_.stopTimer(1);
     //preformance_monitor_.printRealTimeStatistic(10);
     usleep(param_ptr_->routine_cycle_time_);

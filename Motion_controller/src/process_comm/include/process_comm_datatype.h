@@ -31,6 +31,10 @@ typedef enum
     CONTROLLER_SERVER_CMD_SET_RI = 18,
     CONTROLLER_SERVER_CMD_GET_RO = 19,
     CONTROLLER_SERVER_CMD_SET_RO = 20,
+    CONTROLLER_SERVER_CMD_GET_UI = 21,
+    CONTROLLER_SERVER_CMD_SET_UI = 22,
+    CONTROLLER_SERVER_CMD_GET_UO = 23,
+    CONTROLLER_SERVER_CMD_SET_UO = 24,
 }ControllerServerCmd;
 
 typedef enum
@@ -49,6 +53,7 @@ typedef enum
     INTERPRETER_SERVER_CMD_GET_NEXT_INSTRUCTION = 8,
     INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE = 9,
     INTERPRETER_SERVER_CMD_SWITCH_STEP = 10,
+    INTERPRETER_SERVER_CMD_CODE_START = 11,
 }InterpreterServerCmd;
 
 typedef struct
@@ -76,19 +81,19 @@ typedef struct
 typedef struct
 {
     uint32_t port_offset;
-}RequestGetDi,RequestGetRi,RequestGetDo,RequestGetRo;
+}RequestGetDi,RequestGetRi,RequestGetUi,RequestGetDo,RequestGetRo,RequestGetUo;
 
 typedef struct
 {
     unsigned long long error_code;
     uint32_t value;
-}ResponseGetDi,ResponseGetRi,ResponseGetDo,ResponseGetRo;
+}ResponseGetDi,ResponseGetRi,ResponseGetUi,ResponseGetDo,ResponseGetRo,ResponseGetUo;
 
 typedef struct
 {
     uint32_t port_offset;
     uint32_t value;
-}RequestSetDi,RequestSetRi,RequestSetDo,RequestSetRo;
+}RequestSetDi,RequestSetRi,RequestSetUi,RequestSetDo,RequestSetRo,RequestSetUo;
 
 
 }

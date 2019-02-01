@@ -129,6 +129,8 @@ ErrorCode IoManager::getBitValue(PhysicsID phy_id, uint8_t &value)
         case MessageType_IoType_DO: return getDoValue(phy_id, value); 
         case MessageType_IoType_RI: return getRiValue(phy_id, value); 
         case MessageType_IoType_RO: return getRoValue(phy_id, value);
+        case MessageType_IoType_UI: return getUiValue(phy_id, value); 
+        case MessageType_IoType_UO: return getUoValue(phy_id, value);
         default: return IO_INVALID_PARAM_ID;
     }
 }
@@ -142,6 +144,8 @@ ErrorCode IoManager::setBitValue(PhysicsID phy_id, uint8_t value)
         case MessageType_IoType_DO: return setDoValue(phy_id, value); 
         case MessageType_IoType_RI: return setRiValue(phy_id, value); 
         case MessageType_IoType_RO: return setRoValue(phy_id, value);
+        case MessageType_IoType_UI: return setUiValue(phy_id, value); 
+        case MessageType_IoType_UO: return setUoValue(phy_id, value);
         default: return IO_INVALID_PARAM_ID;
     }
 }
@@ -354,6 +358,84 @@ ErrorCode IoManager::getRoValue(PhysicsID phy_id, uint8_t &value)
     
 }
 
+
+//getUi
+ErrorCode IoManager::getUiValue(PhysicsID phy_id, uint8_t &value)
+{
+    //get device_ptr
+    BaseDevice* device_ptr = getDevicePtr(phy_id);
+    if (device_ptr == NULL)
+    {
+        FST_ERROR("IOManager::getUiValue(): Invalid physics id - 0x%lx", phy_id);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
+        return IO_INVALID_PARAM_ID;
+    }
+
+    //call specified device
+    switch(phy_id.info.dev_type)
+    {
+        case DEVICE_TYPE_FST_IO:
+        {
+            FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+            return io_device_ptr->getUiValue(phy_id.info.port, value);
+        }
+        case DEVICE_TYPE_MODBUS:
+        {
+            //todo modbus
+        }
+        case DEVICE_TYPE_VIRTUAL_IO:
+        {
+            VirtualIoDevice* virtual_io_ptr = static_cast<VirtualIoDevice*>(device_ptr);
+            return virtual_io_ptr->getUiValue(phy_id.info.port, value);
+        }
+        default:
+        {
+            FST_ERROR("IOManager::getUiValue(): Invalid physics id - 0x%lx", phy_id);
+            return IO_INVALID_PARAM_ID;
+        }
+    }
+}
+
+//getUo
+ErrorCode IoManager::getUoValue(PhysicsID phy_id, uint8_t &value)
+{
+    //get device_ptr
+    BaseDevice* device_ptr = getDevicePtr(phy_id);
+    if (device_ptr == NULL)
+    {
+        FST_ERROR("IOManager::getUoValue(): Invalid physics id - 0x%lx", phy_id);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
+        return IO_INVALID_PARAM_ID;
+    }
+
+    //call specified device
+    switch(phy_id.info.dev_type)
+    {
+        case DEVICE_TYPE_FST_IO:
+        {
+            FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+            return io_device_ptr->getUoValue(phy_id.info.port, value);
+        }
+        case DEVICE_TYPE_MODBUS:
+        {
+        //todo modbus
+        }
+        case DEVICE_TYPE_VIRTUAL_IO:
+        {
+            VirtualIoDevice* virtual_io_ptr = static_cast<VirtualIoDevice*>(device_ptr);
+            return virtual_io_ptr->getUoValue(phy_id.info.port, value);
+        }
+        default:
+        {
+            FST_ERROR("IOManager::getUoValue(): Invalid physics id - 0x%lx", phy_id);
+            return IO_INVALID_PARAM_ID;
+        }
+    }
+
+}
+
+
+
 //setDi
 ErrorCode IoManager::setDiValue(PhysicsID phy_id, uint8_t value)
 {
@@ -478,6 +560,78 @@ ErrorCode IoManager::setRoValue(PhysicsID phy_id, uint8_t value)
         }
     }
 }
+
+
+//setUi
+ErrorCode IoManager::setUiValue(PhysicsID phy_id, uint8_t value)
+{
+    //get device_ptr
+    BaseDevice* device_ptr = getDevicePtr(phy_id);
+    if (device_ptr == NULL)
+    {
+        FST_ERROR("IOManager::setUiValue(): Invalid physics id - 0x%lx", phy_id);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
+        return IO_INVALID_PARAM_ID;
+    }
+    
+    //call specified device
+    switch(phy_id.info.dev_type)
+    {
+        case DEVICE_TYPE_VIRTUAL_IO:
+        {
+            /* code for virtual io */
+            VirtualIoDevice* virtual_io_ptr = static_cast<VirtualIoDevice*>(device_ptr);
+            return virtual_io_ptr->setUiValue(phy_id.info.port, value);
+        }
+        default:
+        {
+            FST_ERROR("IOManager::setUiValue(): Invalid physics id - 0x%lx", phy_id);
+            return IO_INVALID_PARAM_ID;
+        }
+    }
+
+}
+
+//setUo
+ErrorCode IoManager::setUoValue(PhysicsID phy_id, uint8_t value)
+{
+    //get device_ptr
+    BaseDevice* device_ptr = getDevicePtr(phy_id);
+    if (device_ptr == NULL)
+    {
+        FST_ERROR("IOManager::setUoValue(): Invalid physics id - 0x%lx", phy_id);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
+        return IO_INVALID_PARAM_ID;
+    }
+    
+    //call specified device
+    switch(phy_id.info.dev_type)
+    {
+        case DEVICE_TYPE_FST_IO:
+        {
+            FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+            return io_device_ptr->setUoValue(phy_id.info.port, value);
+        }
+        case DEVICE_TYPE_MODBUS:
+        {
+            //todo modbus
+        }
+        case DEVICE_TYPE_VIRTUAL_IO:
+        {
+            /* code for virtual io */
+            VirtualIoDevice* virtual_io_ptr = static_cast<VirtualIoDevice*>(device_ptr);
+            return virtual_io_ptr->setUoValue(phy_id.info.port, value);
+        }
+        default:
+        {
+            FST_ERROR("IOManager::setUoValue(): Invalid physics id - 0x%lx", phy_id);
+            return IO_INVALID_PARAM_ID;
+        }
+    }
+
+}
+
+
 
 //get device ptr
 BaseDevice* IoManager::getDevicePtr(PhysicsID phy_id)

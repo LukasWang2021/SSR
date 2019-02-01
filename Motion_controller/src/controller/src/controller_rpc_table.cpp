@@ -156,6 +156,9 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/io_mapping/setRIByBit", 0x0000CD24, &ControllerRpc::handleRpc0x0000CD24}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/getROByBit", 0x00005BD4, &ControllerRpc::handleRpc0x00005BD4}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/setROByBit", 0x00012274, &ControllerRpc::handleRpc0x00012274}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/getUIByBit", 0x0000A9A4,	&ControllerRpc::handleRpc0x0000A9A4	};	rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/setUIByBit", 0x00017044,	&ControllerRpc::handleRpc0x00017044	};	rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/io_mapping/getUOByBit", 0x000002C4,	&ControllerRpc::handleRpc0x000002C4	};	rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/syncFileIoStatus", 0x0000BA73, &ControllerRpc::handleRpc0x0000BA73}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/io_mapping/syncFileIoMapping", 0x0000C2A7, &ControllerRpc::handleRpc0x0000C2A7}; rpc_table_.push_back(rpc_service);
 

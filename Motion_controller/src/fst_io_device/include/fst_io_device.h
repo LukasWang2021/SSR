@@ -76,9 +76,12 @@ public:
     ErrorCode getDoValue(uint8_t port_offset, uint8_t &value);
     ErrorCode getRiValue(uint8_t port_offset, uint8_t &value);
     ErrorCode getRoValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getUiValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getUoValue(uint8_t port_offset, uint8_t &value);
 
     ErrorCode setDoValue(uint8_t port_offset, uint8_t value);
     ErrorCode setRoValue(uint8_t port_offset, uint8_t value);
+    ErrorCode setUoValue(uint8_t port_offset, uint8_t value);
 
     ErrorCode updateDeviceData(void);
     

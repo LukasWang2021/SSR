@@ -3741,6 +3741,23 @@ void set_var_value(struct thread_control_block * objThreadCntrolBlock,
 	}
 }
 
+void assign_global_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value)
+{
+	var_type vt;
+	// Otherwise, try global vars.
+	for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
+	{
+	    if(!strcmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
+	        objThreadCntrolBlock->global_vars[i].value = value;
+	        return;
+	    }
+	}
+	memset(vt.var_name, 0x00, LAB_LEN);
+	strcpy(vt.var_name, vname);
+	vt.value = value;
+	objThreadCntrolBlock->global_vars.push_back(vt);
+}
+
 /************************************************* 
 	Function:		assign_var
 	Description:	Declare a global variable.
@@ -3840,7 +3857,6 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 		return ;
     }
 	
-	var_type vt;
 	// P register was saved in the local_var_stack
 	if(strcmp(reg_name, "p") == 0) // lvalue is P register
 	{
@@ -3857,18 +3873,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 	}
 	else
 	{
-	    // Otherwise, try global vars.
-	    for(unsigned i=0; i < objThreadCntrolBlock->global_vars.size(); i++)
-	    {
-	        if(!strcmp(objThreadCntrolBlock->global_vars[i].var_name, vname)) {
-	            objThreadCntrolBlock->global_vars[i].value = value;
-	            return;
-	        }
-		}
-	    memset(vt.var_name, 0x00, LAB_LEN);
-		strcpy(vt.var_name, vname);
-		vt.value = value;
-	    objThreadCntrolBlock->global_vars.push_back(vt);
+		assign_global_var(objThreadCntrolBlock, vname, value);
 	}
 }
 

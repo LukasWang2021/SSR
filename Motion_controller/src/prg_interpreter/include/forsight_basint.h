@@ -221,5 +221,7 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error);
 
 void assignment(struct thread_control_block * objThreadCntrolBlock) ;
 
+void assign_global_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value);
+
 #endif
 

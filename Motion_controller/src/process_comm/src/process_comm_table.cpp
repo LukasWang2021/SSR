@@ -31,8 +31,7 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_GET_UI, &ControllerServer::handleRequestGetUi, &ControllerServer::handleResponseGetUi}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_UI, &ControllerServer::handleRequestSetUi, &ControllerServer::handleResponseSetUi}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_UO, &ControllerServer::handleRequestGetUo, &ControllerServer::handleResponseGetUo}; rpc_table_.push_back(rpc_service);
-    rpc_service = {CONTROLLER_SERVER_CMD_SET_UO, &ControllerServer::handleRequestSetUo, &ControllerServer::handleResponseSetUo}; rpc_table_.push_back(rpc_service);
-
+    
 }
 
 void InterpreterServer::initRpcTable()

@@ -425,20 +425,6 @@ ErrorCode InterpreterClient::getUo(uint32_t port_offset, uint32_t &value)
     return response_get_uo.error_code;
 }
 
-//setUo
-ErrorCode InterpreterClient::setUo(uint32_t port_offset, uint32_t value)
-{
-    RequestSetUo request_set_uo;
-    request_set_uo.port_offset = port_offset;
-    request_set_uo.value = value;
-    if(!sendRequest(CONTROLLER_SERVER_CMD_SET_UO, (void*)&request_set_uo, sizeof(RequestSetUo))
-       || !recvResponse(sizeof(unsigned long long))
-       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_UO)
-    {
-        return PROCESS_COMM_OPERATION_FAILED;
-    }
-    return *((unsigned long long*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
-}
 
 
 

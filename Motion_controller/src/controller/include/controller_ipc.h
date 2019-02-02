@@ -71,7 +71,7 @@ private:
     void handleIpcGetUi(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetUi(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetUo(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcSetUo(void* request_data_ptr, void* response_data_ptr);
+
 };
 
 }

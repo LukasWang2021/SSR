@@ -34,7 +34,6 @@ typedef enum
     CONTROLLER_SERVER_CMD_GET_UI = 21,
     CONTROLLER_SERVER_CMD_SET_UI = 22,
     CONTROLLER_SERVER_CMD_GET_UO = 23,
-    CONTROLLER_SERVER_CMD_SET_UO = 24,
 }ControllerServerCmd;
 
 typedef enum
@@ -93,7 +92,7 @@ typedef struct
 {
     uint32_t port_offset;
     uint32_t value;
-}RequestSetDi,RequestSetRi,RequestSetUi,RequestSetDo,RequestSetRo,RequestSetUo;
+}RequestSetDi,RequestSetRi,RequestSetUi,RequestSetDo,RequestSetRo;
 
 
 }

@@ -119,7 +119,7 @@ void ControllerSm::processUIUO()
     //if UI[5] is OFF, abort
     if (getUI(static_cast<uint32_t>(UI_ABORT_PROGRAM), level))
     {
-        if((level == false) && (getInterpreterState() != INTERPRETER_IDLE) && (getServoState() != SERVO_DISABLE))
+        if((level == false) && (getInterpreterState() != INTERPRETER_IDLE))
         {
             FST_INFO("----UI call Abort.");
             controller_client_ptr_->abort(); 

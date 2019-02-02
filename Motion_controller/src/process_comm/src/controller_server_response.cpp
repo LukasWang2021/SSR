@@ -340,17 +340,3 @@ void ControllerServer::handleResponseGetUo(std::vector<ProcessCommRequestRespons
     }
 }
 
-//SetUo
-void ControllerServer::handleResponseSetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
-{
-    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_UO, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
-    if(task->request_data_ptr != NULL)
-    {
-        delete (RequestSetUo*)task->request_data_ptr;
-    }
-    if(task->response_data_ptr != NULL)
-    {
-        delete (unsigned long long*)task->response_data_ptr;
-    }
-
-}

@@ -32,6 +32,5 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_GET_UI, &ControllerIpc::handleIpcGetUi}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_UI, &ControllerIpc::handleIpcSetUi}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_UO, &ControllerIpc::handleIpcGetUo}; ipc_table_.push_back(ipc_service);
-    ipc_service = {CONTROLLER_SERVER_CMD_SET_UO, &ControllerIpc::handleIpcSetUo}; ipc_table_.push_back(ipc_service);
 }
 

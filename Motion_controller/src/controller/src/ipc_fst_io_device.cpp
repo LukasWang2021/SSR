@@ -197,13 +197,3 @@ void ControllerIpc::handleIpcGetUo(void* request_data_ptr, void* response_data_p
     }
 }
 
-//SetUo is forbidden
-void ControllerIpc::handleIpcSetUo(void* request_data_ptr, void* response_data_ptr)
-{
-	RequestSetUo* rq_data_ptr = static_cast<RequestSetUo*>(request_data_ptr);
-    unsigned long long* rs_data_ptr = static_cast<unsigned long long*>(response_data_ptr);
-
-	*rs_data_ptr = SUCCESS;
-
-	FST_INFO("NULL::handleIpcSetUo with <port_offset = %d, value=%d>",rq_data_ptr->port_offset, rq_data_ptr->value);
-}

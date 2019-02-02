@@ -480,22 +480,3 @@ void ControllerServer::handleRequestGetUo()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_UO, (void*)request_data_ptr, (void*)response_data_ptr); 
 }
 
-//SetUo
-void ControllerServer::handleRequestSetUo()
-{
-    RequestSetUo* request_data_ptr = new RequestSetUo;
-    if(request_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for request_data");
-        return;
-    }
-    unsigned long long* response_data_ptr = new unsigned long long;
-    if(response_data_ptr == NULL)
-    {
-        FST_ERROR("handleRequest: can't allocate memory for response_data");
-        delete request_data_ptr;
-        return;
-    }
-    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetUo));
-    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_UO, (void*)request_data_ptr, (void*)response_data_ptr); 
-}

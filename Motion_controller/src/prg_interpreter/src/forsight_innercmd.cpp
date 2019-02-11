@@ -1636,7 +1636,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			outTime = (int)value.getFloatValue() ;
 			wait_stack.loc = objThreadCntrolBlock->prog;
 			now = timeStart  = time(0);
-			while(!cond)
+			while(cond == 0)
 			{
 #ifdef WIN32
 				Sleep(100);
@@ -1647,16 +1647,27 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 				objThreadCntrolBlock->prog = wait_stack.while_loc;
 				cond = calc_conditions(objThreadCntrolBlock);
 				if(now - timeStart > outTime)
+				{
+	    			FST_INFO("cond Timeout.");
 					break ;
+				}
 			}
 			
 			objThreadCntrolBlock->prog = wait_stack.loc;
-			if(!cond)
+	    	FST_INFO("cond = %d .", cond);
+			// Execute Timeout operation
+			if(cond == 0)
 			{
 				get_token(objThreadCntrolBlock);
 				if(strcmp(objThreadCntrolBlock->token, "skip") == 0)
 				{
 					; // Do nothing  
+				}
+				else if(strcmp(objThreadCntrolBlock->token, "warning") == 0)
+				{
+					// exec_call(objThreadCntrolBlock)
+	    			FST_INFO("setWarning(INFO_INTERPRETER_WAIT_TIMEOUT).");
+					setWarning(INFO_INTERPRETER_WAIT_TIMEOUT) ; 
 				}
 				else if(strcmp(objThreadCntrolBlock->token, "call") == 0)
 				{
@@ -1670,8 +1681,8 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 					putback(objThreadCntrolBlock);
 				}
 			}
-			else
-				find_eol(objThreadCntrolBlock);
+		//	else
+		//		find_eol(objThreadCntrolBlock);
 			
 		}
 		else 

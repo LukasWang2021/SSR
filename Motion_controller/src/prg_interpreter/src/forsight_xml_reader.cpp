@@ -978,6 +978,7 @@ int generateWaitInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 {
 	// char waitParam[1024];
     xmlNodePtr nodeInstructionParam;
+    xmlNodePtr nodeInstructionCallParam;
     xmlChar *name, *value, *type;
 	name = xmlGetProp(nodeInstructionStatement,BAD_CAST"type");
 	
@@ -1015,7 +1016,23 @@ int generateWaitInstruction(xmlNodePtr nodeInstructionStatement, LineInfo objLin
 				printBASCode(objLineInfo, " %s", (char*)value);
 			}
 			else if(xmlStrcasecmp(name, BAD_CAST"handle")==0){
-				printBASCode(objLineInfo, " %s", (char*)value);
+				if(xmlStrcasecmp(value, BAD_CAST"SKIP")==0){
+					printBASCode(objLineInfo, " %s ", (char*)value);
+				}
+				else if(xmlStrcasecmp(value, BAD_CAST"Warning")==0){
+					printBASCode(objLineInfo, " %s ", (char*)value);
+				}
+				else {
+					printBASCode(objLineInfo, " %s", "");
+					
+					for(nodeInstructionCallParam = nodeInstructionParam->children; 
+						nodeInstructionCallParam; nodeInstructionCallParam = nodeInstructionCallParam->next){
+
+						if(xmlStrcasecmp(nodeInstructionCallParam->name, BAD_CAST"call")==0){
+							generateFunctionCall(nodeInstructionCallParam, objLineInfo);
+						}
+					}
+				}
 			}
 		}
 		else if(xmlStrcasecmp(nodeInstructionParam->name,BAD_CAST"text")==0){

@@ -3000,7 +3000,8 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 		INFO_INTERPRETER_TOO_MANY_IMPORT          ,     "too many import file",        // 22 
 		INFO_INTERPRETER_TOO_LONG_PROJECT_NAME    ,     "too long project name",       // 23
 		INFO_INTERPRETER_ARITHMETIC_EXCEPTION     ,     "Arithmetic Exception",        // 24
-		INFO_INTERPRETER_UNKNOWN_ARITHM     	  , 	"Unknown Arithm"		       // 25
+		INFO_INTERPRETER_UNKNOWN_ARITHM     	  , 	"Unknown Arithm",		       // 25
+		INFO_INTERPRETER_WAIT_TIMEOUT        	  , 	"Wait Timeout"		           // 26
   };
   if(error > (int)(sizeof(errInfo)/sizeof(ErrInfo))) {
   	FST_ERROR("\t NOTICE : Error out of range %d ", error);

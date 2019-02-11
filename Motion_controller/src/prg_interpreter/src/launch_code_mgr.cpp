@@ -27,7 +27,7 @@
 LaunchCodeMgr::LaunchCodeMgr(std::string path)
 {
 	program_path = path;
-	program_path += "\/programs\/";
+	program_path += std::string("/programs/");
     int result = initial(program_path);
     if (result != 0)
     {

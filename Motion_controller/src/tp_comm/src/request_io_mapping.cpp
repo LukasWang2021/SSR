@@ -249,4 +249,7 @@ void TpComm::handleRequest0x0000C2A7(int recv_bytes)
 }
 
 
+void TpComm::handleRequest0x0000A9A4(int recv_bytes){}
+void TpComm::handleRequest0x00017044(int recv_bytes){}
+void TpComm::handleRequest0x000002C4(int recv_bytes){}
 

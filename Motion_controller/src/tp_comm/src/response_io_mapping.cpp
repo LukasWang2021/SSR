@@ -170,3 +170,7 @@ void TpComm::handleResponse0x0000C2A7(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64*)task->response_data_ptr;
     }
 }
+
+void TpComm::handleResponse0x0000A9A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size){}
+void TpComm::handleResponse0x00017044(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size){}
+void TpComm::handleResponse0x000002C4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size){}

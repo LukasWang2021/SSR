@@ -22,8 +22,14 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc <= 1)
+    {
+        printf("One more parameter is needed: user_port\n");
+        return -1;
+    }
+    
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -34,13 +40,15 @@ int main()
     uint8_t buf[MAX_REQ_BUFFER_SIZE];
     int buf_size = MAX_REQ_BUFFER_SIZE;
 
-    unsigned int hash_value = 0x0000F574;
+    unsigned int hash_value = 0x0000A9A4;
 
-    RequestMessageType_Void void_msg;
-    void_msg.header.time_stamp = 122;
-    void_msg.property.authority = Comm_Authority_TP;
+    RequestMessageType_Int32 msg;
+    msg.header.time_stamp = 122;
+    msg.property.authority = Comm_Authority_TP;
+    msg.data.data = atoi(argv[1]);
+    printf("msg.data.data = %d\n", msg.data.data);
 
-    if (!test.generateRequestMessageType(hash_value, (void*)&void_msg, RequestMessageType_Void_fields, buf, buf_size))
+    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_fields, buf, buf_size))
     {
         cout << "Request : encode buf failed" << endl;
         return -1;
@@ -59,9 +67,9 @@ int main()
         return -1;
     }
 
-    ResponseMessageType_Uint64_DeviceVersionList recv_msg;
+    ResponseMessageType_Uint64_Int32 recv_msg;
     unsigned int recv_hash = 0;
-    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_DeviceVersionList_fields, buf, buf_size))
+    if (!test.decodeResponseMessageType(recv_hash, (void*)&recv_msg, ResponseMessageType_Uint64_Int32_fields, buf, buf_size))
     {
         cout << "Reply : recv msg decode failed" << endl;
         return -1;
@@ -77,16 +85,9 @@ int main()
     cout << "Reply : msg.header.error_code = " << recv_msg.header.error_code << endl;
     cout << "Reply : msg.property.authority = " << recv_msg.property.authority << endl;
     cout << "Reply : msg.error_code = " << recv_msg.error_code.data << endl;
-    cout << "Reply : msg.data.device_version_count = " << recv_msg.data.device_version_count << endl;
-
-    for (int i = 0; i != recv_msg.data.device_version_count; ++i)
-    {
-        cout << "Reply : msg.data.device_version["<< i <<"].name = " << recv_msg.data.device_version[i].name << endl;
-        cout << "Reply : msg.data.device_version["<< i <<"].version = " << recv_msg.data.device_version[i].version << endl;
-   }
+    cout << "Reply : msg.data.data = " << recv_msg.data.data << endl;
 
     usleep(200000);
 
     return 0;
 }
-

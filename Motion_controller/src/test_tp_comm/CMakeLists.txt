@@ -613,6 +613,24 @@ add_executable(sync_file_io_status ${SRC_LIST} src/test_io_mapping/sync_file_io_
 target_link_libraries(sync_file_io_status ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS sync_file_io_status RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
 
+######### for test io mapping  #########
+add_executable(get_ui ${SRC_LIST} src/test_io_mapping/get_ui.cpp)
+target_link_libraries(get_ui ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_ui RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
+
+
+######### for test io mapping  #########
+add_executable(get_uo ${SRC_LIST} src/test_io_mapping/get_uo.cpp)
+target_link_libraries(get_uo ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_uo RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
+
+
+######### for test io mapping  #########
+add_executable(set_ui ${SRC_LIST} src/test_io_mapping/set_ui.cpp)
+target_link_libraries(set_ui ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_ui RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_mapping)
+
+
 ######### for test controller #########
 add_executable(test_controller_shutdown  ${SRC_LIST}  src/test_controller/test_controller_shutdown.cpp)
 target_link_libraries(test_controller_shutdown ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)

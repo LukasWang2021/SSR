@@ -438,6 +438,12 @@ private:
     void handleRequest0x0000BA73(int recv_bytes);
     /********rpc/io_mapping/syncFileIoMapping, RequestMessageType_String**********/
     void handleRequest0x0000C2A7(int recv_bytes);
+    /********rpc/io_mapping/getUIByBit, RequestMessageType_Int32**********/
+    void handleRequest0x0000A9A4(int recv_bytes);
+    /********rpc/io_mapping/setUIByBit, RequestMessageType_Int32List(count = 2) **********/
+    void handleRequest0x00017044(int recv_bytes);
+    /********rpc/io_mapping/getUOByBit, RequestMessageType_Int32**********/
+    void handleRequest0x000002C4(int recv_bytes);
 
     /********rpc/device_manager/getDeviceList , RequestMessageType_Void**********/
     void handleRequest0x0000C1E0(int recv_bytes);
@@ -899,6 +905,12 @@ private:
     void handleResponse0x0000BA73(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/io_mapping/syncFileIoMapping, ResponseMessageType_Uint64**********/
     void handleResponse0x0000C2A7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getUIByBit, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x0000A9A4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/setUIByBit, ResponseMessageType_Uint64**********/
+    void handleResponse0x00017044(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_mapping/getUOByBit, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x000002C4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/device_manager/getDeviceList , ResponseMessageType_DeviceInfoList**********/
     void handleResponse0x0000C1E0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

@@ -171,8 +171,9 @@ private:
     void processModbusClientList();
     void processUIUO();
 
-    // UI check if there is falling edge.
+    // UI check if there is falling/rising edge.
     bool isFallingEdge(uint32_t user_port);
+    bool isRisingEdge(uint32_t user_port);
     // UI get and UO set program launching code.
     int getSetProgramCode();
     // getUI, setUO

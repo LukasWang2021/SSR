@@ -58,16 +58,24 @@ void ControllerSm::processUIUO()
     if((getUserOpMode() != USER_OP_MODE_AUTO) || (getCtrlState() != CTRL_ENGAGED))
     {
         setUO(static_cast<uint32_t>(UO_CMD_ENABLE), false);//UO[1]=false not enable UIUO function
+        setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
+        setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
         setUO(static_cast<uint32_t>(UO_SERVO_STATUS), false);//UO[5]=false signal servo_off
+        setUO(static_cast<uint32_t>(UO_SELECTION_CHECK_REQUEST), false);//UO[6] reset
+        setUO(static_cast<uint32_t>(UO_MPLCS_START_DONE), false);//UO[7] reset
+        setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_1), false);//UO[8]
+        setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_2), false);//UO[9]
+        setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_3), false);//UO[10]
+        setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_4), false);//UO[11]
+        setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_5), false);//UO[12]
+
         //if UI[3] is ON, reset
         if (getUI(static_cast<uint32_t>(UI_RESET), level))
         {
             if(level == true)
             {
                 callReset();
-                setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
                 setUO(static_cast<uint32_t>(UO_FAULT), false);//UO[3]=false signal no_fault 
-                setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
             }     
         }
 
@@ -159,12 +167,12 @@ void ControllerSm::processUIUO()
     }
 
     //if UI[7] is ON, call prg to start program running.
-    if (getUI(static_cast<uint32_t>(UI_MPLCS_START), level))
+    if (isRisingEdge(static_cast<uint32_t>(UI_MPLCS_START)))
     {
-        if((level == true) && (getUserOpMode() == USER_OP_MODE_AUTO)
-                        && (getInterpreterState() == INTERPRETER_IDLE)
-                        && (getCtrlState() == CTRL_ENGAGED)
-                        && (getRobotState() == ROBOT_IDLE))
+        if((getUserOpMode() == USER_OP_MODE_AUTO)
+            && (getInterpreterState() == INTERPRETER_IDLE)
+            && (getCtrlState() == CTRL_ENGAGED)
+            && (getRobotState() == ROBOT_IDLE))
         {
             //send prg code.
             FST_INFO("----UI call to start program.");
@@ -201,6 +209,24 @@ bool ControllerSm::isFallingEdge(uint32_t user_port)
     if (io_mapping_ptr_->getUIByBit(user_port, current_value) == SUCCESS)
     {
         if (pre_value == 1 && current_value == 0)
+        {
+            pre_value = current_value;
+            return true;
+        }
+        pre_value = current_value;
+        return false;
+    }
+    return false;
+}
+
+// check if there is rising edge.
+bool ControllerSm::isRisingEdge(uint32_t user_port)
+{
+    static uint8_t pre_value = 1;
+    uint8_t current_value = 1;
+    if (io_mapping_ptr_->getUIByBit(user_port, current_value) == SUCCESS)
+    {
+        if (pre_value == 0 && current_value == 1)
         {
             pre_value = current_value;
             return true;

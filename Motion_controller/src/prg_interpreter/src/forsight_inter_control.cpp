@@ -469,8 +469,7 @@ void dealCodeStart(int program_code)
         FST_INFO("start run %s ...", program_name.c_str());
 		if(strcmp(getProgramName(), program_name.c_str()) == 0)
         {
-        	FST_INFO("Duplicate to execute %s ...", program_name.c_str());
-			setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ;
+        	FST_INFO("Duplicate to trigger and omit it while %s is executing ...", program_name.c_str());
         	return;
 		}
 		incCurrentThreadSeq();

@@ -64,7 +64,7 @@ public:
     int getLaunchMode(void);
     void setLaunchMode(int value);
 
-    void processMacro(bool enable);
+    bool processMacro(void);
 	
 private:
     void loadProgramsPath(void);

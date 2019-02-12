@@ -47,22 +47,36 @@ typedef enum
 
 
 void ControllerSm::processUIUO()
-{
-    if((program_launching_ptr_->getLaunchMode() != PROGRAM_LAUNCH_CODE_SELECT)
-        || (getUserOpMode() != USER_OP_MODE_AUTO)
-        || (getCtrlState() != CTRL_ENGAGED))
+{     
+    if(program_launching_ptr_->getLaunchMode() != PROGRAM_LAUNCH_CODE_SELECT)
     {
-        setUO(static_cast<uint32_t>(UO_CMD_ENABLE), false);//UO[1] not enable UIUO function
+        return;
+    }
+
+    bool level = false;
+
+    if((getUserOpMode() != USER_OP_MODE_AUTO) || (getCtrlState() != CTRL_ENGAGED))
+    {
+        setUO(static_cast<uint32_t>(UO_CMD_ENABLE), false);//UO[1]=false not enable UIUO function
+        setUO(static_cast<uint32_t>(UO_SERVO_STATUS), false);//UO[5]=false signal servo_off
+        //if UI[3] is ON, reset
+        if (getUI(static_cast<uint32_t>(UI_RESET), level))
+        {
+            if(level == true)
+            {
+                callReset();
+                setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
+                setUO(static_cast<uint32_t>(UO_FAULT), false);//UO[3]=false signal no_fault 
+                setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
+            }     
+        }
+
         return;
     }
     else
     {
-        setUO(static_cast<uint32_t>(UO_CMD_ENABLE), true);//UO[1] enable UIUO function
+        setUO(static_cast<uint32_t>(UO_CMD_ENABLE), true);//UO[1]=true enable UIUO function
     }
-    
-
-    uint8_t value = 0;
-    bool level = false;
 
     //if UI[1] is OFF, 0-stop.
     if (getUI(static_cast<uint32_t>(UI_SERVO_ENABLE), level))
@@ -70,8 +84,8 @@ void ControllerSm::processUIUO()
         if(level == false)
         {
             callEstop();
-            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2] signal not paused
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4] signal no program running
+            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
+            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
         }
     }
 
@@ -84,26 +98,15 @@ void ControllerSm::processUIUO()
         {
             FST_INFO("----UI call pause.");
             controller_client_ptr_->pause();
-            setUO(static_cast<uint32_t>(UO_PAUSED), true);//UO[2] Paused signal
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4] signal no program running
+            setUO(static_cast<uint32_t>(UO_PAUSED), true);//UO[2]=true Paused signal
+            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
         }   
 
     }
-
-    //if UI[3] is ON, reset
-    if (getUI(static_cast<uint32_t>(UI_RESET), level))
-    {
-        if(level == true)
-        {
-            callReset();
-            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2] signal not paused
-            setUO(static_cast<uint32_t>(UO_FAULT), false);//UO[3] signal no_fault 
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4] signal no program running
-        }     
-    }
-
+ 
+    
     //if UI[4] is pulse down, start&restart (resume?)
-    if (isFallingEdge(static_cast<uint32_t>(UI_PAUSE_REQUEST)))
+    if (isFallingEdge(static_cast<uint32_t>(UI_START)))
     {
         if((getInterpreterState() != INTERPRETER_PAUSED) && (getCtrlState() != CTRL_ENGAGED))
         {}
@@ -111,8 +114,8 @@ void ControllerSm::processUIUO()
         {
             FST_INFO("----UI call resume.");
             controller_client_ptr_->resume();//todo start(program_name)?
-            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2] signal not paused
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), true);//UO[4] signal program running 
+            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
+            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), true);//UO[4]=true signal program running 
         }      
     }
 
@@ -124,7 +127,8 @@ void ControllerSm::processUIUO()
             FST_INFO("----UI call Abort.");
             controller_client_ptr_->abort(); 
             motion_control_ptr_->abortMove();
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4] signal no program running
+            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
+            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
         }
     }
 
@@ -135,10 +139,10 @@ void ControllerSm::processUIUO()
         if(level == true)
         {
             program_code_ = getSetProgramCode();
-            FST_INFO("----UI call to select program:%d", program_code_);
+            //FST_INFO("----UI call to select program:%d", program_code_);//todo comment
             if (program_code_ != -1)
             {
-                setUO(static_cast<uint32_t>(UO_SELECTION_CHECK_REQUEST), true);//UO[6] signals code reading is finished
+                setUO(static_cast<uint32_t>(UO_SELECTION_CHECK_REQUEST), true);//UO[6]=true signals code reading is finished
             }
 
         }
@@ -167,7 +171,7 @@ void ControllerSm::processUIUO()
             controller_client_ptr_->codeStart(program_code_);
 
             //UO[7] true after sending code to prg.
-            setUO(static_cast<uint32_t>(UO_MPLCS_START_DONE), true);//UO[7] signals program is started.
+            setUO(static_cast<uint32_t>(UO_MPLCS_START_DONE), true);//UO[7]=true signals program is started.
         }
     }
 

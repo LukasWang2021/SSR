@@ -129,12 +129,10 @@ void ProgramLaunching::setLaunchMode(int value)
     launch_mode_setting_ = value;
 }
 
-void ProgramLaunching::processMacro(bool enable)
+bool ProgramLaunching::processMacro(void)
 {
     if (launch_mode_setting_ != PROGRAM_MACRO_TRIGGER)
-        return;
-    if (enable == false)
-        return;
+        return false;
     
     ErrorCode err = SUCCESS;
     for (int i = 0; i < macro_num_; ++i)
@@ -152,6 +150,7 @@ void ProgramLaunching::processMacro(bool enable)
                 sendInterpreterStart(i);
         }
     }
+    return true;
 }
 
 // check if there is rising edge.

@@ -458,6 +458,39 @@ bool getIntprtCtrl(InterpreterControl& intprt_ctrl)
 	return iRet ;
 }
 */
+	
+void dealCodeStart(int program_code)
+{
+	struct thread_control_block * objThdCtrlBlockPtr ;
+	g_launch_code_mgr_ptr->updateAll();
+	std::string program_name = g_launch_code_mgr_ptr->getProgramByCode(program_code);
+	if(program_name != "")
+	{
+        FST_INFO("start run %s ...", program_name.c_str());
+		if(strcmp(getProgramName(), program_name.c_str()) == 0)
+        {
+        	FST_INFO("Duplicate to execute %s ...", program_name.c_str());
+			setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO) ;
+        	return;
+		}
+		incCurrentThreadSeq();
+	    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
+	    objThdCtrlBlockPtr = getThreadControlBlock();
+		if(objThdCtrlBlockPtr == NULL) return ;
+		// Clear last lineNum
+		setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
+		
+        objThdCtrlBlockPtr->prog_mode = FULL_MODE;
+		objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
+		startFile(objThdCtrlBlockPtr, 
+			program_name.c_str(), getCurrentThreadSeq());
+        setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
+	}
+	else 
+	{
+  		setWarning(FAIL_INTERPRETER_FILE_NOT_FOUND); 
+	}
+}
 
 /************************************************* 
 	Function:		startFile
@@ -615,6 +648,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 #endif
 //	UserOpMode userOpMode ;
 	AutoMode   autoMode ;
+	int        program_code ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
 	g_launch_code_mgr_ptr->updateAll();
@@ -954,6 +988,13 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			autoMode = intprt_ctrl.autoMode ;
 			// Move to Controller
 			// deal_auto_mode(autoMode);
+            break;
+        case fst_base::INTERPRETER_SERVER_CMD_CODE_START:
+			memcpy(&intprt_ctrl.program_code, requestDataPtr, sizeof(AutoMode));
+			// intprt_ctrl.RegMap.
+			program_code = intprt_ctrl.program_code ;
+			// Move to Controller
+			dealCodeStart(program_code);
             break;
         default:
             break;

@@ -120,6 +120,7 @@
 #define INFO_INTERPRETER_TOO_LONG_PROJECT_NAME (unsigned long long int)0x0001000200AA0018   /*too long project name */
 #define INFO_INTERPRETER_ARITHMETIC_EXCEPTION   (unsigned long long int)0x0001000200AA0019   /*Arithmetic Exception */
 #define INFO_INTERPRETER_UNKNOWN_ARITHM         (unsigned long long int)0x0001000200AA001A   /*Unknown Arithm */
+#define INFO_INTERPRETER_WAIT_TIMEOUT           (unsigned long long int)0x0001000200AA001B   /*Wait Timeout */
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000900AA0100   /*User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000900AA0101   /*User Alarm 1*/
 #define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000900AA0102   /*User Alarm 2*/

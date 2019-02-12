@@ -214,6 +214,7 @@ typedef struct _InterpreterControl
         // int            jump_line;    // Jump 
         char           jump_line[256];
         int            step_mode;       // auto or debug 
+        int            program_code;    // CODE_START
     };
 }InterpreterControl;
 

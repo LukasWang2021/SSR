@@ -8,8 +8,15 @@ void ControllerRpc::handleRpc0x00011544(void* request_data_ptr, void* response_d
     RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    program_launching_->setLaunchMode(rq_data_ptr->data.data);
-    rs_data_ptr->data.data = SUCCESS;
+    if (state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+    {
+        program_launching_->setLaunchMode(rq_data_ptr->data.data);
+        rs_data_ptr->data.data = SUCCESS;
+    }
+    else
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+    }  
 
     FST_INFO("rpc-setMethod: value=%d\n", rq_data_ptr->data.data);
 }

@@ -143,7 +143,6 @@ void ControllerIpc::handleIpcSetRo(void* request_data_ptr, void* response_data_p
 }
 
 
-
 //GetUi
 void ControllerIpc::handleIpcGetUi(void* request_data_ptr, void* response_data_ptr)
 {

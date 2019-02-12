@@ -26,12 +26,12 @@ int main(int argc, char* argv[])
 {
     if (argc <= 1)
     {
-        printf("Two parameter is needed: user_port and port_value\n");
+        printf("Two parameter is needed: user_port and bypass_enable\n");
         return -1;
     }
     if (argc == 2)
     {
-        printf("One more parameter is needed: port_value\n");
+        printf("One more parameter is needed: bypass_enable\n");
         return -1;
     }
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 
     msg.data.data[0] = atoi(argv[1]);
     msg.data.data[1] = atoi(argv[2]);
-    printf("msg.data.data[%d] = %d\n", msg.data.data[0], msg.data.data[1]);
+    printf("msg.data.data[%d].enable = %d\n", msg.data.data[0], msg.data.data[1]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_fields, buf, buf_size))
     {

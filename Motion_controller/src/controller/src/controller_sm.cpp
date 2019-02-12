@@ -230,7 +230,7 @@ ErrorCode ControllerSm::callReset()
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
         if(checkOffsetState())
         {
-            //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
+            //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");//todo comment
             ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
         }
         else
@@ -680,13 +680,15 @@ void ControllerSm::processMacroLaunching()
         && ctrl_state_ == CTRL_ENGAGED
         && robot_state_ == ROBOT_IDLE)
     {
-        enable_macro_launching = true;
+        if(program_launching_ptr_->processMacro())
+        {
+            transferRobotStateToRunning();
+        }
     }
     else
     {
-        enable_macro_launching = false;
+        return;
     }
-    program_launching_ptr_->processMacro(enable_macro_launching);
 }
 
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)

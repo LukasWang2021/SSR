@@ -320,8 +320,8 @@ void FstIoDevice::initIODeviceData(IODeviceData &data)
 ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
 {
     if (is_virtual_ == true) {
-        data.input[0] = 0x1B;// simulation input as binary 10101010
-        data.input[1] = 0xAA;
+        data.input[0] = 0x0;// simulation input as binary 00011011
+        data.input[1] = 0xAA;// simulation input as binary 10101010
         data.input[2] = 0xAA;
         data.input[3] = 0xAA;
         data.input[4] = 0x2A;

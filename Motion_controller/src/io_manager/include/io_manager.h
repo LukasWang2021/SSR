@@ -11,13 +11,6 @@ Summary:    dealing with IO module
 #define IO_MANAGER_H_
 
 #include <vector>
-//#include <string>
-//#include <map>
-//#include <boost/thread/thread.hpp>
-//#include <boost/thread/mutex.hpp>
-//#include <parameter_manager/parameter_manager_param_group.h>
-
-
 #include "common_log.h"
 #include "io_manager_param.h"
 #include "base_datatype.h"
@@ -38,10 +31,10 @@ typedef union PhysicsID
 {
     uint32_t number;
     struct{
-        uint8_t port:8;
-        uint8_t port_type:8;
-        uint8_t address:8;
-        uint8_t dev_type:8;
+        uint8_t port:8;      //port offset
+        uint8_t port_type:8; //such as DI DO RI RO
+        uint8_t address:8;   //physical id switches
+        uint8_t dev_type:8;  //such as io_board, modbus
     }info;
 }PhysicsID;
 
@@ -56,29 +49,98 @@ public:
 
     ErrorCode init(fst_hal::DeviceManager* device_manager_ptr);
 
+    //------------------------------------------------------------
+    // Function:  getIoBoardVersion
+    // Summary: get the version of io board.
+    // In:      None
+    // Out:     None
+    // Return:  map<int, int> -> <address, version>
+    //------------------------------------------------------------
     std::map<int, int> getIoBoardVersion(void);
 
-    // thread to fresh data
+    //------------------------------------------------------------
+    // Function:  ioManagerThreadFunc
+    // Summary: thread to update the data of io board.
+    // In:      None
+    // Out:     None
+    // Return:  None
+    //------------------------------------------------------------
     void ioManagerThreadFunc();
+
+    //------------------------------------------------------------
+    // Function:  isRunning
+    // Summary: to indicate the thread to run or not.
+    // In:      None
+    // Out:     None
+    // Return:  true -> enable thread to run
+    //          false -> stop thread running
+    //------------------------------------------------------------
     bool isRunning();
 
+    //------------------------------------------------------------
+    // Function:  getBitValue
+    // Summary: get the value.
+    // In:      phy_id -> internal id.
+    // Out:     value -> high or low (1 or 0)
+    // Return:  ErrorCode
+    //------------------------------------------------------------
     ErrorCode getBitValue(PhysicsID phy_id, uint8_t &value);
+
+    //------------------------------------------------------------
+    // Function:  setBitValue
+    // Summary: set the value.
+    // In:      phy_id -> internal id.
+    //          value -> high or low (1 or 0)
+    // Out:     None
+    // Return:  ErrorCode
+    //------------------------------------------------------------
     ErrorCode setBitValue(PhysicsID phy_id, uint8_t value);
 
-    //get all io devices info, including io_board and modbus.
+    //------------------------------------------------------------
+    // Function:  getIODeviceInfoList
+    // Summary: get all io devices info, including io_board and modbus.
+    // In:      None
+    // Out:     None
+    // Return:  vector
+    //------------------------------------------------------------
     std::vector<fst_hal::IODeviceInfo> getIODeviceInfoList(void); 
-    
-    //get io_board info
+       
+    //------------------------------------------------------------
+    // Function:  getIODeviceInfo
+    // Summary: get io_board info according to given address.
+    // In:      address ->address in io board.
+    // Out:     info
+    // Return:  ErrorCode
+    //------------------------------------------------------------
     ErrorCode getIODeviceInfo(uint8_t address, fst_hal::IODeviceInfo &info);
 
-    // get modbus info
+    //------------------------------------------------------------
+    // Function:  getModbusDeviceInfo
+    // Summary: get modbus info.
+    // In:      *modbus_manager
+    // Out:     info
+    // Return:  ErrorCode
+    //------------------------------------------------------------
     ErrorCode getModbusDeviceInfo( fst_hal::IODeviceInfo &info, ModbusManager* modbus_manager);
 
-    //get io_board values
+    //------------------------------------------------------------
+    // Function:  getIODeviceInfo
+    // Summary: get all the value of io_board for publishing.
+    // In:      address ->address in io board.
+    // Out:     values
+    // Return:  ErrorCode
+    //------------------------------------------------------------
     ErrorCode getDevicePortValues(uint8_t address, fst_hal::IODevicePortValues &values);
 
 private:
 
+    //------------------------------------------------------------
+    // Function:  get**Value
+    // Summary: get the value.
+    // In:      phy_id -> internal id.
+    // Out:     value -> high or low (1 or 0)
+    // Return:  ErrorCode
+    //------------------------------------------------------------
     ErrorCode getDiValue(PhysicsID phy_id, uint8_t &value);
     ErrorCode getDoValue(PhysicsID phy_id, uint8_t &value);
     ErrorCode getRiValue(PhysicsID phy_id, uint8_t &value);
@@ -86,6 +148,14 @@ private:
     ErrorCode getUiValue(PhysicsID phy_id, uint8_t &value);
     ErrorCode getUoValue(PhysicsID phy_id, uint8_t &value);
 
+    //------------------------------------------------------------
+    // Function:  set**Value
+    // Summary: set the value.
+    // In:      phy_id -> internal id.
+    //          value -> high or low (1 or 0)
+    // Out:     None
+    // Return:  ErrorCode
+    //------------------------------------------------------------
     ErrorCode setDiValue(PhysicsID phy_id, uint8_t value);
     ErrorCode setDoValue(PhysicsID phy_id, uint8_t value);
     ErrorCode setRiValue(PhysicsID phy_id, uint8_t value);

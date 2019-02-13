@@ -201,6 +201,16 @@ ErrorCode ModbusManager::readHoldingRegs(int id, int addr, int nb, uint16_t *des
     return MODBUS_START_MODE_ERROR;
 }
 
+ErrorCode ModbusManager::writeInputRegs(int id, int addr, int nb, uint16_t *dest)
+{
+    if (start_mode_ == MODBUS_SERVER)
+    {
+        return writeInputRegsToServer(addr, nb, dest);
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
 ErrorCode ModbusManager::readInputRegs(int id, int addr, int nb, uint16_t *dest)
 {
     if (start_mode_ == MODBUS_SERVER)

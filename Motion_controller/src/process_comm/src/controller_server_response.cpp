@@ -145,6 +145,20 @@ void ControllerServer::handleResponseGetRReg(std::vector<ProcessCommRequestRespo
     }
 }
 
+// GetMi
+void ControllerServer::handleResponseGetMi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)        
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_MI, task->response_data_ptr, sizeof(MiDataIpc), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (int*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (MiDataIpc*)task->response_data_ptr;
+    }
+}
+
 // SetInstruction
 void ControllerServer::handleResponseSetInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {

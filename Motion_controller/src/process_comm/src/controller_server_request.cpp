@@ -206,6 +206,26 @@ void ControllerServer::handleRequestGetRReg()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_R_REG, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
+// GetMi
+void ControllerServer::handleRequestGetMi()
+{
+    int* request_data_ptr = new int;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    MiDataIpc* response_data_ptr = new MiDataIpc;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_MI, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
 // SetInstruction
 void ControllerServer::handleRequestSetInstruction()
 {

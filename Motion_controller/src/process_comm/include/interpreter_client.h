@@ -7,6 +7,7 @@
 #include <vector>
 #include "reg_manager.h"
 #include "base_datatype.h"
+#include "process_comm_datatype.h"
 #include "interpreter_common.h"
 
 #include "fst_io_device.h"
@@ -31,6 +32,7 @@ public:
     bool getMrReg(int id, fst_ctrl::MrRegDataIpc* data);
     bool getSrReg(int id, fst_ctrl::SrRegDataIpc* data);
     bool getRReg(int id, fst_ctrl::RRegDataIpc* data); 
+    bool getMi(int id, MiDataIpc* data); 
     bool setInstruction(Instruction* data);
     bool isNextInstructionNeeded();
     

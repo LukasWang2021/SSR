@@ -3,7 +3,6 @@
 #include <nanomsg/reqrep.h>
 #include <cstring>
 #include <iostream>
-#include "process_comm_datatype.h"
 #include "error_code.h"
 
 
@@ -201,6 +200,28 @@ bool InterpreterClient::getRReg(int id, RRegDataIpc* data)
     }
 
     memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(RRegDataIpc));
+    if(data->id == 0)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+
+bool InterpreterClient::getMi(int id, MiDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_MI, &id, sizeof(int))
+        || !recvResponse(sizeof(MiDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_MI)
+    {
+        return false;
+    }
+
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(MiDataIpc));
     if(data->id == 0)
     {
         return false;

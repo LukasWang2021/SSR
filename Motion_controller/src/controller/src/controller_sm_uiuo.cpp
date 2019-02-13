@@ -100,9 +100,7 @@ void ControllerSm::processUIUO()
     //if UI[2] is OFF, pause
     if (getUI(static_cast<uint32_t>(UI_PAUSE_REQUEST), level))
     {
-        if((getInterpreterState() != INTERPRETER_EXECUTE) || (getCtrlState() != CTRL_ENGAGED))
-        {}
-        else if(level == false)
+        if((level == false) && (getInterpreterState() == INTERPRETER_EXECUTE) && (getCtrlState() == CTRL_ENGAGED))
         {
             FST_INFO("----UI call pause.");
             controller_client_ptr_->pause();
@@ -113,15 +111,15 @@ void ControllerSm::processUIUO()
     }
  
     
-    //if UI[4] is pulse down, start&restart (resume?)
+    //if UI[4] is pulse down, start&restart (resume)
     if (isFallingEdge(static_cast<uint32_t>(UI_START)))
     {
-        if((getInterpreterState() != INTERPRETER_PAUSED) && (getCtrlState() != CTRL_ENGAGED))
-        {}
-        else
+        if((getInterpreterState() == INTERPRETER_PAUSED) && (getCtrlState() == CTRL_ENGAGED))
         {
             FST_INFO("----UI call resume.");
-            controller_client_ptr_->resume();//todo start(program_name)?
+            controller_client_ptr_->resume();
+            transferRobotStateToRunning();
+
             setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
             setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), true);//UO[4]=true signal program running 
         }      
@@ -177,9 +175,10 @@ void ControllerSm::processUIUO()
             //send prg code.
             FST_INFO("----UI call to start program.");
             controller_client_ptr_->codeStart(program_code_);
-
-            //UO[7] true after sending code to prg.
-            setUO(static_cast<uint32_t>(UO_MPLCS_START_DONE), true);//UO[7]=true signals program is started.
+            transferRobotStateToRunning();
+            
+            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), true);//UO[4]=true signal program running
+            setUO(static_cast<uint32_t>(UO_MPLCS_START_DONE), true);//UO[7]=true signals sending code to prg.
         }
     }
 
@@ -188,7 +187,13 @@ void ControllerSm::processUIUO()
     {
         setUO(static_cast<uint32_t>(UO_FAULT), true);//UO[3] signal fault
     }
-    
+
+    //UO[4] is off if idle
+    if((getInterpreterState() != INTERPRETER_EXECUTE) && (getRobotState() == ROBOT_IDLE))
+    {
+        setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
+    }
+     
     //UO[5] is off if servo_off
     if(getServoState() == SERVO_DISABLE)
     {

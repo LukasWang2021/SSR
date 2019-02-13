@@ -103,4 +103,25 @@ void ControllerIpc::handleIpcGetRRegValue(void* request_data_ptr, void* response
     }
 }
 
+void ControllerIpc::handleIpcGetMiValue(void* request_data_ptr, void* response_data_ptr)
+{
+    int* rq_data_ptr = static_cast<int*>(request_data_ptr);
+    fst_base::MiDataIpc* rs_data_ptr = static_cast<fst_base::MiDataIpc*>(response_data_ptr);
+
+    uint16_t reg[2] = {0, 0}; 
+
+    if (modbus_manager_ptr_->readInputRegs(0, *rq_data_ptr, 2, &reg[0]) == SUCCESS)
+    {
+        int32_t h_reg = reg[1]<<16;
+        rs_data_ptr->value = reg[0] + h_reg;
+        rs_data_ptr->id = *rq_data_ptr;
+    }
+    else
+    {
+        rs_data_ptr->id = 0;
+    }
+    
+}
+
+
 

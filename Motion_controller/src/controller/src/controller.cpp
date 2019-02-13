@@ -190,7 +190,7 @@ ErrorCode Controller::init()
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
                         process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_, &program_launching_);
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
-                process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_, &io_mapping_);
+                process_comm_ptr_->getControllerClientPtr(), &reg_manager_, &state_machine_, &device_manager_, &io_mapping_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &io_manager_,&program_launching_, &file_manager_);

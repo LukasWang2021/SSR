@@ -82,11 +82,9 @@ private:
     void handleRequestGetMrReg();
     void handleRequestGetSrReg();
     void handleRequestGetRReg();
+    void handleRequestGetMi();
     void handleRequestSetInstruction();
     void handleRequestIsNextInstructionNeeded();
-    void handleRequestCheckIo();//TODO
-    void handleRequestSetIo();//TODO
-    void handleRequestGetIo();//TODO
     void handleRequestSetInterpreterServerStatus();
     void handleRequestGetDi();
     void handleRequestSetDi();
@@ -111,11 +109,10 @@ private:
     void handleResponseGetMrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetSrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetRReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetMi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetInstruction(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-    void handleResponseIsNextInstructionNeeded(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-      
+    void handleResponseIsNextInstructionNeeded(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size); 
     void handleResponseSetInterpreterServerStatus(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
-
     void handleResponseGetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetDi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetDo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);

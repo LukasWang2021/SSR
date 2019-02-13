@@ -5,6 +5,7 @@
 #include "common_log.h"
 #include "process_comm.h"
 #include "reg_manager.h"
+#include "device_manager.h"
 #include "io_mapping.h"
 #include "io_manager.h"
 #include "controller_sm.h"
@@ -20,7 +21,8 @@ public:
 
     void init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, 
                 fst_base::ControllerServer* controller_server_ptr, fst_base::ControllerClient* controller_client_ptr,
-                RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr, IoMapping* io_mapping_ptr);
+                RegManager* reg_manager_ptr, ControllerSm* state_machine_ptr, fst_hal::DeviceManager* device_manager_ptr,
+                IoMapping* io_mapping_ptr);
 
     void processIpc();
 private:
@@ -30,6 +32,8 @@ private:
     fst_base::ControllerClient* controller_client_ptr_;
     RegManager* reg_manager_ptr_;
     ControllerSm* state_machine_ptr_;
+    fst_hal::DeviceManager* device_manager_ptr_;
+    fst_hal::ModbusManager* modbus_manager_ptr_; 
     IoMapping* io_mapping_ptr_;
 
     enum {CMD_ID_BYTE_SIZE = 4,};
@@ -55,6 +59,7 @@ private:
     void handleIpcGetMrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetSrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetRRegValue(void* request_data_ptr, void* response_data_ptr); 
+    void handleIpcGetMiValue(void* request_data_ptr, void* response_data_ptr); 
     void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
     void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
 

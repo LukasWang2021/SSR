@@ -54,16 +54,17 @@ private:
     void handleIpcSetMrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetSrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetRRegValue(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetMiValue(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcSetMhValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetPrRegPos(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetHrRegJointPos(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetMrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetSrRegValue(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetRRegValue(void* request_data_ptr, void* response_data_ptr); 
     void handleIpcGetMiValue(void* request_data_ptr, void* response_data_ptr); 
+    void handleIpcGetMhValue(void* request_data_ptr, void* response_data_ptr); 
     void handleIpcSetInstruction(void* request_data_ptr, void* response_data_ptr);
-    void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr);
-
-    
+    void handleIpcIsNextInstructionNeeded(void* request_data_ptr, void* response_data_ptr); 
     void handleIpcSetInterpreterServerStatus(void* request_data_ptr, void* response_data_ptr);
     void handleIpcGetDi(void* request_data_ptr, void* response_data_ptr);
     void handleIpcSetDi(void* request_data_ptr, void* response_data_ptr);

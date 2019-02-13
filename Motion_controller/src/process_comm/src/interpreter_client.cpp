@@ -105,6 +105,31 @@ bool InterpreterClient::setRReg(RRegDataIpc* data)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
+bool InterpreterClient::setMi(MiDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_MI, data, sizeof(MiDataIpc))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_MI)
+    {
+        return false;
+    }
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+bool InterpreterClient::setMh(MhDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_SET_MH, data, sizeof(MhDataIpc))
+        || !recvResponse(sizeof(bool))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_SET_MH)
+    {
+        return false;
+    }
+    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
+}
+
+
 bool InterpreterClient::getPrReg(int id, PrRegDataIpc* data)
 {
     if(data == NULL
@@ -222,6 +247,27 @@ bool InterpreterClient::getMi(int id, MiDataIpc* data)
     }
 
     memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(MiDataIpc));
+    if(data->id == 0)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool InterpreterClient::getMh(int id, MhDataIpc* data)
+{
+    if(data == NULL
+        || !sendRequest(CONTROLLER_SERVER_CMD_GET_MH, &id, sizeof(int))
+        || !recvResponse(sizeof(MhDataIpc))
+        || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_MH)
+    {
+        return false;
+    }
+
+    memcpy(data, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(MhDataIpc));
     if(data->id == 0)
     {
         return false;

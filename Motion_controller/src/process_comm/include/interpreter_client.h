@@ -27,12 +27,15 @@ public:
     bool setMrReg(fst_ctrl::MrRegDataIpc* data);
     bool setSrReg(fst_ctrl::SrRegDataIpc* data);
     bool setRReg(fst_ctrl::RRegDataIpc* data);
+    bool setMi(MiDataIpc* data);
+    bool setMh(MhDataIpc* data);
     bool getPrReg(int id, fst_ctrl::PrRegDataIpc* data);
     bool getHrReg(int id, fst_ctrl::HrRegDataIpc* data);
     bool getMrReg(int id, fst_ctrl::MrRegDataIpc* data);
     bool getSrReg(int id, fst_ctrl::SrRegDataIpc* data);
     bool getRReg(int id, fst_ctrl::RRegDataIpc* data); 
     bool getMi(int id, MiDataIpc* data); 
+    bool getMh(int id, MhDataIpc* data); 
     bool setInstruction(Instruction* data);
     bool isNextInstructionNeeded();
     

@@ -12,12 +12,15 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_SET_MR_REG, &ControllerServer::handleRequestSetMrReg, &ControllerServer::handleResponseSetMrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_SR_REG, &ControllerServer::handleRequestSetSrReg, &ControllerServer::handleResponseSetSrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_R_REG, &ControllerServer::handleRequestSetRReg, &ControllerServer::handleResponseSetRReg}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_SET_MI, &ControllerServer::handleRequestSetMi, &ControllerServer::handleResponseSetMi}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_SET_MH, &ControllerServer::handleRequestSetMh, &ControllerServer::handleResponseSetMh}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_PR_REG, &ControllerServer::handleRequestGetPrReg, &ControllerServer::handleResponseGetPrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_HR_REG, &ControllerServer::handleRequestGetHrReg, &ControllerServer::handleResponseGetHrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_MR_REG, &ControllerServer::handleRequestGetMrReg, &ControllerServer::handleResponseGetMrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_SR_REG, &ControllerServer::handleRequestGetSrReg, &ControllerServer::handleResponseGetSrReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_R_REG, &ControllerServer::handleRequestGetRReg, &ControllerServer::handleResponseGetRReg}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_MI, &ControllerServer::handleRequestGetMi, &ControllerServer::handleResponseGetMi}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_GET_MH, &ControllerServer::handleRequestGetMh, &ControllerServer::handleResponseGetMh}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_INSTRUCTION, &ControllerServer::handleRequestSetInstruction, &ControllerServer::handleResponseSetInstruction}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_IS_NEXT_INSTRUCTION_NEEDED, &ControllerServer::handleRequestIsNextInstructionNeeded, &ControllerServer::handleResponseIsNextInstructionNeeded}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_INTERPRETER_SERVER_STATUS, &ControllerServer::handleRequestSetInterpreterServerStatus, &ControllerServer::handleResponseSetInterpreterServerStatus}; rpc_table_.push_back(rpc_service);

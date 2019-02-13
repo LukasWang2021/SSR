@@ -672,6 +672,30 @@ ErrorCode ModbusServer::readInputRegs(int addr, int nb, uint16_t *dest)
 }
 
 
+ErrorCode ModbusServer::writeInputRegs(int addr, int nb, uint16_t *dest)
+{
+    if (NULL == dest
+        || addr + nb -1 < addr 
+        || addr < config_reg_info_.input_reg.addr
+        || config_reg_info_.input_reg.max_nb  + config_reg_info_.input_reg.addr - 1 < addr + nb -1)
+    {
+        return MODBUS_SERVER_INVALID_ARG;
+    }
+
+    if (!is_running_)
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    tab_input_reg_mutex_.lock();
+    for (unsigned int i = addr; i < addr + nb; i++)
+    {
+        mb_mapping_->tab_input_registers[i] = (*dest) & 0xffff;
+        dest++;
+    }
+    tab_input_reg_mutex_.unlock();
+
+    return SUCCESS;
+}
+
 ModbusServerConfigParams ModbusServer::getConfigParams()
 {
     ModbusServerConfigParams params;

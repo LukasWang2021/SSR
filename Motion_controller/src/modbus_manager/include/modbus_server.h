@@ -81,7 +81,7 @@ public:
     ErrorCode writeHoldingRegs(int addr, int nb, uint16_t *dest);
     ErrorCode readHoldingRegs(int addr, int nb, uint16_t *dest);
     ErrorCode readInputRegs(int addr, int nb, uint16_t *dest);
-
+    ErrorCode writeInputRegs(int addr, int nb, uint16_t *dest);
 private:
     modbus_t* ctx_;
     modbus_mapping_t* mb_mapping_;

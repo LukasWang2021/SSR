@@ -38,7 +38,7 @@ public:
     ErrorCode writeHoldingRegs(int id, int addr, int nb, uint16_t *dest);
     ErrorCode readHoldingRegs(int id, int addr, int nb, uint16_t *dest);
     ErrorCode readInputRegs(int id, int addr, int nb, uint16_t *dest);
-
+    ErrorCode writeInputRegs(int id, int addr, int nb, uint16_t *dest);
     // for server
     ErrorCode openServer();
     ErrorCode closeServer();
@@ -99,6 +99,7 @@ private:
     ErrorCode writeHoldingRegsToServer(int addr, int nb, uint16_t *dest);
     ErrorCode readHoldingRegsFromServer(int addr, int nb, uint16_t *dest);
     ErrorCode readInputRegsFromServer(int addr, int nb, uint16_t *dest);
+    ErrorCode writeInputRegsToServer(int addr, int nb, uint16_t *dest);
 
     ErrorCode writeCoilsByClient(int client_id, int addr, int nb, uint8_t *dest);
     ErrorCode readCoilsByClient(int client_id, int addr, int nb, uint8_t *dest);

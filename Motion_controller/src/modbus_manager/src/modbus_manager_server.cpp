@@ -210,3 +210,14 @@ ErrorCode ModbusManager::readInputRegsFromServer(int addr, int nb, uint16_t *des
 
     return server_->readInputRegs(addr, nb, dest);
 }
+
+ErrorCode ModbusManager::writeInputRegsToServer(int addr, int nb, uint16_t *dest)
+{
+    if (start_mode_ != MODBUS_SERVER) 
+       return MODBUS_START_MODE_ERROR;
+
+    if (!server_->isRunning())
+        return MODBUS_SERVER_BE_NOT_OPENED;
+
+    return server_->writeInputRegs(addr, nb, dest);
+}

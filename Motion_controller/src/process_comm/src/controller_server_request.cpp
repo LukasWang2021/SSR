@@ -106,6 +106,46 @@ void ControllerServer::handleRequestSetRReg()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_R_REG, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
+// SetMi
+void ControllerServer::handleRequestSetMi()
+{
+    MiDataIpc* request_data_ptr = new MiDataIpc;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    bool* response_data_ptr = new bool;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(MiDataIpc));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_MI, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
+// SetMh
+void ControllerServer::handleRequestSetMh()
+{
+    MhDataIpc* request_data_ptr = new MhDataIpc;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    bool* response_data_ptr = new bool;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(MhDataIpc));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_MH, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
 // GetPrReg
 void ControllerServer::handleRequestGetPrReg()
 {
@@ -224,6 +264,26 @@ void ControllerServer::handleRequestGetMi()
     }
     copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_MI, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
+// GetMh
+void ControllerServer::handleRequestGetMh()
+{
+    int* request_data_ptr = new int;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    MhDataIpc* response_data_ptr = new MhDataIpc;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_MH, (void*)request_data_ptr, (void*)response_data_ptr);
 }
 
 // SetInstruction

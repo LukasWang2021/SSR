@@ -454,6 +454,28 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 				}
 			}
 		}
+		else if(xmlStrcasecmp(name, BAD_CAST"modbus_input_register")==0){ 
+			for(nodeSubValueElement = nodeValueElement->children; 
+			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
+				if(xmlStrcasecmp(nodeSubValueElement->name,BAD_CAST"element")==0){ 
+					//	value = xmlNodeGetContent(nodeSubValueElement);
+					memset(label_output, 0x00, 1024);
+					generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
+					sprintf(label_str, "%sMI[%s] ", label_str, (char*)label_output);
+				}
+			}
+		}
+		else if(xmlStrcasecmp(name, BAD_CAST"modbus_holding_register")==0){ 
+			for(nodeSubValueElement = nodeValueElement->children; 
+			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
+				if(xmlStrcasecmp(nodeSubValueElement->name,BAD_CAST"element")==0){ 
+					//	value = xmlNodeGetContent(nodeSubValueElement);
+					memset(label_output, 0x00, 1024);
+					generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
+					sprintf(label_str, "%sMH[%s] ", label_str, (char*)label_output);
+				}
+			}
+		}
 		else if(xmlStrcasecmp(name, BAD_CAST"timer")==0){  
 			for(nodeSubValueElement = nodeValueElement->children; 
 			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){

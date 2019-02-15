@@ -482,7 +482,7 @@ void dealCodeStart(int program_code)
         objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 		objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
 		startFile(objThdCtrlBlockPtr, 
-			program_name.c_str(), getCurrentThreadSeq());
+			(char *)program_name.c_str(), getCurrentThreadSeq());
         setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
 	}
 	else 

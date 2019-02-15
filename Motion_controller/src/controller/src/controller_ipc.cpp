@@ -34,7 +34,9 @@ void ControllerIpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr,
     controller_client_ptr_ = controller_client_ptr;
     reg_manager_ptr_ = reg_manager_ptr;
     state_machine_ptr_ = state_machine_ptr;
+    device_manager_ptr_ = device_manager_ptr;
     io_mapping_ptr_ = io_mapping_ptr;
+
     // get the modbus_manager_ptr from device_manager.
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
     for(unsigned int i = 0; i < device_list.size(); ++i)

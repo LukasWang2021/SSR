@@ -52,11 +52,12 @@ void ControllerIpc::handleIpcSetMiValue(void* request_data_ptr, void* response_d
 {
     fst_base::MiDataIpc* rq_data_ptr = static_cast<fst_base::MiDataIpc*>(request_data_ptr);
     bool* rs_data_ptr = static_cast<bool*>(response_data_ptr);
-
+rq_data_ptr->value = -11111;
     int addr = 100 + (rq_data_ptr->id) * 2 - 1;
     uint16_t reg[2];
-    reg[0] = (rq_data_ptr->value) & 0x00FF;
-    reg[1] = (rq_data_ptr->value >>16) & 0x00FF;
+    reg[0] = (rq_data_ptr->value) & 0x0000FFFF;
+    reg[1] = (rq_data_ptr->value >>16) & 0x0000FFFF;
+    //printf("setMi=0x%x, reg[%d]=0x%04x, reg[%d]=0x%04x\n", rq_data_ptr->value,addr,reg[0],(addr+1),reg[1]);
 
     if (modbus_manager_ptr_->writeInputRegs(0, addr, 2, &reg[0]) != SUCCESS)
     {
@@ -72,8 +73,9 @@ void ControllerIpc::handleIpcSetMhValue(void* request_data_ptr, void* response_d
     
     int addr = 100 + (rq_data_ptr->id) * 2 - 1;
     uint16_t reg[2];
-    reg[0] = (rq_data_ptr->value) & 0x00FF;
-    reg[1] = (rq_data_ptr->value >>16) & 0x00FF;
+    reg[0] = (rq_data_ptr->value) & 0x0000FFFF;
+    reg[1] = (rq_data_ptr->value >>16) & 0x0000FFFF;
+    //printf("setMh=0x%x, reg[%d]=0x%04x, reg[%d]=0x%04x\n", rq_data_ptr->value,addr,reg[0],(addr+1),reg[1]);
 
     if (modbus_manager_ptr_->writeHoldingRegs(0, addr, 2, &reg[0]) != SUCCESS)
     {
@@ -151,8 +153,10 @@ void ControllerIpc::handleIpcGetMiValue(void* request_data_ptr, void* response_d
         int32_t h_reg = reg[1]<<16;
         rs_data_ptr->value = reg[0] + h_reg;
         rs_data_ptr->id = *rq_data_ptr;
-		FST_INFO("handleIpcGetMiValue::rq_data_ptr        = %d", *rq_data_ptr);
-		FST_INFO("handleIpcGetMiValue::rs_data_ptr->value = %d", rs_data_ptr->value);
+
+        //printf("getMi=0x%x, reg[0]=0x%04x, reg[1]=0x%04x, h_reg=0x%04x\n", rs_data_ptr->value,reg[0],reg[1],h_reg);
+		//FST_INFO("handleIpcGetMiValue::rq_data_ptr        = %d", *rq_data_ptr);
+		//FST_INFO("handleIpcGetMiValue::rs_data_ptr->value = 0x%lx", rs_data_ptr->value);
     }
     else
     {
@@ -173,8 +177,9 @@ void ControllerIpc::handleIpcGetMhValue(void* request_data_ptr, void* response_d
         int32_t h_reg = reg[1]<<16;
         rs_data_ptr->value = reg[0] + h_reg;
         rs_data_ptr->id = *rq_data_ptr;
-		FST_INFO("handleIpcGetMhValue::rq_data_ptr        = %d", *rq_data_ptr);
-		FST_INFO("handleIpcGetMhValue::rs_data_ptr->value = %d", rs_data_ptr->value);
+        //printf("getMh=0x%x, reg[0]=0x%04x, reg[1]=0x%04x, h_reg=0x%04x\n", rs_data_ptr->value,reg[0],reg[1],h_reg);
+		//FST_INFO("handleIpcGetMhValue::rq_data_ptr        = %d", *rq_data_ptr);
+		//FST_INFO("handleIpcGetMhValue::rs_data_ptr->value = %d", rs_data_ptr->value);
     }
     else
     {

@@ -122,6 +122,7 @@ bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num)
 		ptr->value.pos[3] = 0.0;
 		ptr->value.pos[4] = 0.0;
 		ptr->value.pos[5] = 0.0;
+		ptr->value.pos_type = PR_REG_POS_TYPE_CARTESIAN ;
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		ptr->value.pos[0] = objPrRegDataIpc.pos[0];
 		ptr->value.pos[1] = objPrRegDataIpc.pos[1];
@@ -1740,7 +1741,7 @@ bool reg_manager_interface_getMI(MiData *ptr, uint16_t num)
 		fst_base::MiDataIpc objMiDataIpc ;
 		ptr->value = 0.0;
 		bRet = g_objRegManagerInterface->getMi(num, &objMiDataIpc);
-		FST_INFO("getMI: value = (%f) at %d with %s", 
+		FST_INFO("getMI: value = (%d) at %d with %s", 
 			objMiDataIpc.value, num, bRet?"TRUE":"FALSE");
 		ptr->value = objMiDataIpc.value;
 	}
@@ -2018,8 +2019,9 @@ bool reg_manager_interface_getMH(MhData *ptr, uint16_t num)
 	{
 		fst_base::MhDataIpc objMhDataIpc ;
 		ptr->value = 0.0;
+	    FST_INFO("getMh at TXT_MH = %d", num);
 		bRet = g_objRegManagerInterface->getMh(num, &objMhDataIpc);
-		FST_INFO("getMH: value = (%f) at %d with %s", 
+		FST_INFO("getMH: value = (%d) at %d with %s", 
 			objMhDataIpc.value, num, bRet?"TRUE":"FALSE");
 		ptr->value = objMhDataIpc.value;
 	}

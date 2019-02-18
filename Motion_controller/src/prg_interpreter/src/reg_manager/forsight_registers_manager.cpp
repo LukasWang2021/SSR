@@ -2202,51 +2202,51 @@ int forgesight_registers_manager_set_register(
 		{
 			if(valueStart->getType() == TYPE_FLOAT)
 			{    
-				double fValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueMI((int *)&fValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMI(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_MR))
 			{    
-				double dValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueMI((int *)&dValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMI(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_R))
 			{    
-				double dValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueMI((int *)&dValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMI(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_STRING | TYPE_SR))
 			{
 				std::string strValue;
 				strValue = valueStart->getStringValue();
 				
-				double fValue = atof(strValue.c_str());
-			    reg_manager_interface_setValueMI((int *)&fValue, iRegIdx);
+				int iValue = (int)atof(strValue.c_str());
+			    reg_manager_interface_setValueMI(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_MI))
 			{    
-				double dValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueMI((int *)&dValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMI(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_MH))
 			{    
-				double dValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueMI((int *)&dValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMI(&iValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			double fValue = valueStart->getFloatValue();
-			FST_INFO("Set VALUE:(%f) to SR[%s]", fValue, reg_idx);
-			reg_manager_interface_setValueR(&fValue, iRegIdx);
+			int iValue = (int)valueStart->getFloatValue();
+			FST_INFO("Set VALUE:(%f) to SR[%s]", iValue, reg_idx);
+			reg_manager_interface_setValueMI(&iValue, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)valueStart->getFloatValue();
 			FST_INFO("Set ID:(%d) to SR[%s]", iID, reg_idx);
-			reg_manager_interface_setIdR(&iID, iRegIdx);
+			reg_manager_interface_setIdMI(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -2254,7 +2254,7 @@ int forgesight_registers_manager_set_register(
 			// get_token(objThreadCntrolBlock);
 			FST_INFO("Set COMMENT:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentR(
+			reg_manager_interface_setCommentMI(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
 	       	return 0 ;
 		}
@@ -2265,50 +2265,51 @@ int forgesight_registers_manager_set_register(
 		{
 			if(valueStart->getType() == TYPE_FLOAT)
 			{    
-				double fValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueR(&fValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMH(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_MR))
 			{    
-				double dValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueR(&dValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMH(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_R))
 			{    
-				reg_manager_interface_setR(&(valueStart->getRRegDataValue()), iRegIdx);
+				int iValue = (int)(valueStart->getRRegDataValue().value);
+				reg_manager_interface_setValueMH(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_STRING | TYPE_SR))
 			{
 				std::string strValue;
 				strValue = valueStart->getStringValue();
 				
-				double fValue = atof(strValue.c_str());
-			    reg_manager_interface_setValueR(&fValue, iRegIdx);
+				int iValue = (int)atof(strValue.c_str());
+			    reg_manager_interface_setValueMH(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_MI))
 			{    
-				double dValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueMH((int *)&dValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMH(&iValue, iRegIdx);
 			}
 			else if(valueStart->getType() == (int)(TYPE_FLOAT | TYPE_MH))
 			{    
-				double dValue = valueStart->getFloatValue();
-			    reg_manager_interface_setValueMH((int *)&dValue, iRegIdx);
+				int iValue = (int)valueStart->getFloatValue();
+			    reg_manager_interface_setValueMH(&iValue, iRegIdx);
 			}
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_VALUE))
 		{
-			double fValue = valueStart->getFloatValue();
-			FST_INFO("Set VALUE:(%f) to SR[%s]", fValue, reg_idx);
-			reg_manager_interface_setValueR(&fValue, iRegIdx);
+			int iValue = (int)valueStart->getFloatValue();
+			FST_INFO("Set VALUE:(%d) to SR[%s]", iValue, reg_idx);
+			reg_manager_interface_setValueMH(&iValue, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_ID))
 		{
 			int iID = (int)valueStart->getFloatValue();
 			FST_INFO("Set ID:(%d) to SR[%s]", iID, reg_idx);
-			reg_manager_interface_setIdR(&iID, iRegIdx);
+			reg_manager_interface_setIdMH(&iID, iRegIdx);
 	       	return 0 ;
 		}
 		else if (!strcmp(reg_member, TXT_REG_COMMENT))
@@ -2316,7 +2317,7 @@ int forgesight_registers_manager_set_register(
 			// get_token(objThreadCntrolBlock);
 			FST_INFO("Set COMMENT:(%s) to SR[%s]", 
 				objThreadCntrolBlock->token, reg_idx);
-			reg_manager_interface_setCommentR(
+			reg_manager_interface_setCommentMH(
 				(char *)valueStart->getStringValue().c_str(), iRegIdx);
 	       	return 0 ;
 		}

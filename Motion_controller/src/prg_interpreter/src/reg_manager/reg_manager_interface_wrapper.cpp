@@ -141,6 +141,13 @@ bool reg_manager_interface_getPr(PrRegData *ptr, uint16_t num)
 		FST_ERROR("g_objRegManagerInterface is NULL");
 	}
 #else
+	ptr->value.cartesian_pos.position.x = 1.0;
+	ptr->value.cartesian_pos.position.y = 2.0;
+	ptr->value.cartesian_pos.position.z = 3.0;
+	ptr->value.cartesian_pos.orientation.a = 4.0;
+	ptr->value.cartesian_pos.orientation.b = 5.0;
+	ptr->value.cartesian_pos.orientation.c = 6.0;
+	ptr->value.pos_type = PR_REG_POS_TYPE_CARTESIAN ;
 	bRet = true ;
 #endif
 	return bRet ;

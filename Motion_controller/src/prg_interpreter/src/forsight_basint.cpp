@@ -2829,7 +2829,8 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
   int iRet = call_interpreter(objThreadCntrolBlock, 0);
   // find_eol(objThreadCntrolBlock);
   FST_INFO("Left   call_interpreter at exec_call.");
-  greturn(objThreadCntrolBlock);
+  // Lujiaming commit at 190218
+  // greturn(objThreadCntrolBlock);
   if(iRet == END_COMMND_RET)
 	 return END_COMMND_RET;
   return 1;

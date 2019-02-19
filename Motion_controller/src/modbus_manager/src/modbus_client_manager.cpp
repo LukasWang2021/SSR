@@ -44,6 +44,17 @@ ModbusClientManager::ModbusClientManager()
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
     config_param_ptr_ = NULL;
 
+    list<ModbusClient*>::iterator iter;
+
+    client_list_mutex_.lock();
+    for(iter = client_list_.begin(); iter != client_list_.end();)
+    {
+        delete (*iter);
+        iter = client_list_.erase(iter);
+        iter++;
+    }
+
+    client_list_mutex_.unlock();
     client_list_.clear();
 
     comm_type_ = "";
@@ -125,6 +136,37 @@ ErrorCode ModbusClientManager::initParam()
 
     return SUCCESS;
 }
+
+ErrorCode ModbusClientManager::initCLientListByParams()
+{
+    ErrorCode error_code = SUCCESS;
+    for(int client_id = 1; client_id != client_number_ + 1; ++client_id)
+    {
+        bool is_added = false;
+        bool is_enable = false;
+        ModbusClientStartInfo start_info;
+        start_info.id = client_id;
+        if (!config_param_ptr_->getIsAdded(client_id, is_added)
+            || !config_param_ptr_->getEnableStatus(client_id, is_enable)
+            || !config_param_ptr_->getStartInfo(start_info))
+        {
+            error_code = MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED;
+            continue;
+        }
+
+        if (is_added)
+        {
+            error_code = addClient(start_info);
+            if (error_code == SUCCESS && is_enable)
+            {
+                error_code = setEnableStatus(client_id, is_enable);
+            }
+        }
+    }
+
+    return error_code;
+}
+
 
 bool ModbusClientManager::updateClientEnableStatus(int client_id, bool status)
 {
@@ -217,16 +259,20 @@ ErrorCode ModbusClientManager::addClient(ModbusClientStartInfo &start_info)
     error_code = client->setRegInfo(reg_info);
     if (error_code != SUCCESS) error_code;
 
-    bool is_enable = false;
-    if (!config_param_ptr_->getEnableStatus(start_info.id, is_enable))
-        return MODBUS_CLIENT_ID_NOT_EXISTED;
-
-    error_code = client->setEnableStatus(is_enable);
-    if (error_code != SUCCESS) error_code;
+    // bool is_enable = false;
+    // if (!config_param_ptr_->getEnableStatus(start_info.id, is_enable))
+        // return MODBUS_CLIENT_ID_NOT_EXISTED;
+// 
+    // error_code = client->setEnableStatus(is_enable);
+    // if (error_code != SUCCESS) error_code;
 
     client_list_mutex_.lock();
     client_list_.push_back(client);
     client_list_mutex_.unlock();
+
+    bool is_added = true;
+    if (!config_param_ptr_->saveIsAdded(start_info.id, is_added))
+        return MODBUS_CLIENT_ID_NOT_EXISTED;
     return SUCCESS;
 }
 
@@ -247,12 +293,20 @@ ErrorCode ModbusClientManager::deleteClient(int client_id)
             {
                 error_code = MODBUS_CLIENT_CONNECTED;
             }
+            else if ((*iter)->getEnableStatus())
+            {
+                error_code = MODBUS_CLIENT_ENABLED;
+            }
             else
             {
                 delete (*iter);
                 iter = client_list_.erase(iter);
+                bool is_added = false;
+                if (!config_param_ptr_->saveIsAdded(client_id, is_added))
+                    error_code = MODBUS_CLIENT_ID_NOT_EXISTED;
                 error_code = SUCCESS;
             }
+            break;
         }
         else
         {
@@ -535,36 +589,19 @@ ErrorCode ModbusClientManager::isConnected(int client_id, bool &is_connected)
     return MODBUS_CLIENT_ID_NOT_EXISTED;
 }
 
-ErrorCode ModbusClientManager::scanDataArea(int client_id)
+ErrorCode ModbusClientManager::scanDataArea()
 {
     list<ModbusClient*>::iterator it;
+    ErrorCode error_code = SUCCESS;
 
     client_list_mutex_.lock();
-    for(it = client_list_.begin(); it != client_list_.end();)
+    for(it = client_list_.begin(); it != client_list_.end(); ++it)
     {
-        if ((*it)->getId() == client_id)
-        {
-            if((*it)->scanDataArea() != SUCCESS)
-            {
-                if (!(*it)->isSocketValid())
-                {
-                    (*it)->close();
-                    client_list_mutex_.unlock();
-                    return MODBUS_CLIENT_CONNECT_FAILED;
-                }
-
-                client_list_mutex_.unlock();
-                return MODBUS_CLIENT_OPERATION_FAILED;
-            }
-
-            client_list_mutex_.unlock();
-            return SUCCESS;
-        }
-        ++it;
+        error_code = (*it)->scanDataArea();
     }
 
     client_list_mutex_.unlock();
-    return MODBUS_CLIENT_ID_NOT_EXISTED;
+    return error_code;
 }
 
 ErrorCode ModbusClientManager::writeCoils(int client_id, int addr, int nb, uint8_t *dest)

@@ -206,6 +206,7 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/modbus/isClientConnected",	0x00002FC4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Bool",	&TpComm::handleRequest0x00002FC4,	&TpComm::handleResponse0x00002FC4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/getConnectedClientList",	0x00001DC4,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32List",	&TpComm::handleRequest0x00001DC4,	&TpComm::handleResponse0x00001DC4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/getClientCtrlStatus",	0x000170E3,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x000170E3,	&TpComm::handleResponse0x000170E3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/modbus/getClientSummaryStartInfoList",	0x00005564,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_ModbusClientSummaryStartInfoList",	&TpComm::handleRequest0x00005564,	&TpComm::handleResponse0x00005564,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
 
 	rpc_service =	{	"/rpc/modbus/writeCoils",	0x0000BD83,	"RequestMessageType.Int32_ModbusStatusInfo",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000BD83,	&TpComm::handleResponse0x0000BD83,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/readCoils",	0x0000A433,	"RequestMessageType.Int32_ModbusFunctionAddrInfo",	"ResponseMessageType.Uint64_ModbusStatusInfo",	&TpComm::handleRequest0x0000A433,	&TpComm::handleResponse0x0000A433,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
@@ -239,5 +240,5 @@ void TpComm::initPublishElementTable()
     publish_service =	{	"/publish/interpreter/tp_program_status",	0x000042B3,	"MessageType.StringList(count=2)",	&TpComm::handlePublishElement0x000042B3,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 	publish_service =	{	"/publish/controller/safety_board_status",	0x000123C3,	"MessageType.Uint32",	&TpComm::handlePublishElement0x000123C3,	Comm_Authority_ADMINISTRATOR,	};	publish_element_table_.push_back(publish_service); 
 	publish_service =	{	"/publish/controller/io_board_status",	0x00006D93,	"MessageType.IoboardStatusList(count=4)",	&TpComm::handlePublishElement0x00006D93,	Comm_Authority_ADMINISTRATOR,	};	publish_element_table_.push_back(publish_service); 
-
+	publish_service =	{	"/publish/modbus/client_ctrl_status",	0x00011843,	"MessageType.ModbusClientCtrlStatusList",	&TpComm::handlePublishElement0x00011843,	Comm_Authority_TP,	};	publish_element_table_.push_back(publish_service); 
 }

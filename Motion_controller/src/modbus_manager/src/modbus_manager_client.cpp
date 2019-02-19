@@ -222,5 +222,13 @@ ErrorCode ModbusManager::scanAllClientDataArea()
     if (start_mode_ != MODBUS_CLIENT)
         return SUCCESS;
 
-    return client_manager_ptr_->scanAllClientDataArea();
+    return client_manager_ptr_->scanDataArea();
+}
+
+ErrorCode  ModbusManager::initClientListByParams()
+{
+    if (start_mode_ != MODBUS_CLIENT)
+        return SUCCESS;
+
+    return client_manager_ptr_->initCLientListByParams();
 }

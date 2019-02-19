@@ -13,6 +13,8 @@ void ControllerPublish::initPublishTable()
     publish_service = {"/publish/controller/CtrlStatus", 0x0000E8E3, &ControllerPublish::getCtrlStatePtr, NULL}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/controller/ServoStatus", 0x00002053, &ControllerPublish::getServoStatePtr, NULL}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/controller/SafetyAlarm", 0x0000D0AD, &ControllerPublish::getSafetyAlarmPtr, NULL}; publish_table_.push_back(publish_service);   
+    publish_service = {"/publish/modbus/client_ctrl_status", 0x00011843, &ControllerPublish::getModbusClientCtrlStatusPtr, &ControllerPublish::updateModbusClientCtrlStatus}; publish_table_.push_back(publish_service);
+
     publish_service = {"/publish/motion_control/axis_group/feedback/joints", 0x000161F3, &ControllerPublish::getAxisGroupJointFeedbackPtr, &ControllerPublish::updateAxisGroupJointFeedback}; publish_table_.push_back(publish_service); 
     publish_service = {"/publish/motion_control/axis_group/feedback/tcp_world_cartesian", 0x00009D8E, &ControllerPublish::getAxisGroupTcpWorldCartesianPtr, &ControllerPublish::updateAxisGroupTcpWorldCartesian}; publish_table_.push_back(publish_service);
     publish_service = {"/publish/motion_control/axis_group/feedback/tcp_base_cartesian", 0x00002D5E, &ControllerPublish::getAxisGroupTcpBaseCartesianPtr, &ControllerPublish::updateAxisGroupTcpBaseCartesian}; publish_table_.push_back(publish_service); 

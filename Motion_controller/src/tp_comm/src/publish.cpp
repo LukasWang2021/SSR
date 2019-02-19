@@ -173,3 +173,11 @@ void TpComm::handlePublishElement0x00006D93(Comm_Publish& package, int element_i
         FST_ERROR("handlePublishElement0x00006D93: failed to encode");
     }
 }
+
+void TpComm::handlePublishElement0x00011843(Comm_Publish& package, int element_index, TpPublishElement& list_element)
+{
+    if(!encodePublishElement(package.element[element_index].data, MessageType_ModbusClientCtrlStatusList_fields, list_element.data_ptr))
+    {
+        FST_ERROR("handlePublishElement0x00006D93: failed to encode");
+    }
+}

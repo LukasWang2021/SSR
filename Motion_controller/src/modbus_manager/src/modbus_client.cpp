@@ -18,6 +18,7 @@ ModbusClient::ModbusClient(int id, bool is_debug, int log_level):
     is_connected_ = false;
     ctrl_state_ = MODBUS_CLIENT_CTRL_DISABLED;
     is_config_param_valid_ = false;
+    is_added_ = false;
 
     config_param_.is_enable = false;
     config_param_.start_info.id = id;
@@ -91,6 +92,51 @@ ErrorCode ModbusClient::setEnableStatus(bool &status)
         return MODBUS_CLIENT_CONNECTED;
     }
 
+    if (config_param_.is_enable && !status)
+    {
+        config_param_.is_enable = status;
+        ctrl_state_ = MODBUS_CLIENT_CTRL_DISABLED;
+    }
+    else if (config_param_.is_enable && status)
+    {
+        ErrorCode error_code = init();
+        if (error_code != SUCCESS) return error_code;
+
+        if (modbus_connect(ctx_) < 0)
+        {
+             FST_ERROR("Failed to connect socket : %s, socket = %d",
+                modbus_strerror(errno),  modbus_get_socket(ctx_));
+
+            is_connected_ = false;
+            return MODBUS_CLIENT_CONNECT_FAILED;
+        }
+
+        ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
+        is_connected_ = true;
+    }
+    else if (!config_param_.is_enable && status)
+    {
+        config_param_.is_enable = status;
+        ctrl_state_ = MODBUS_CLIENT_CTRL_ENABLED;
+        ErrorCode error_code = init();
+        if (error_code != SUCCESS) return error_code;
+
+        if (modbus_connect(ctx_) < 0)
+        {
+             FST_ERROR("Failed to connect socket : %s, socket = %d",
+                modbus_strerror(errno),  modbus_get_socket(ctx_));
+
+            is_connected_ = false;
+            return MODBUS_CLIENT_CONNECT_FAILED;
+        }
+
+        ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
+        is_connected_ = true;
+    }
+    else 
+    {}
+    return SUCCESS;
+#if 0
     if (status == config_param_.is_enable)
     {
         return SUCCESS;
@@ -98,6 +144,11 @@ ErrorCode ModbusClient::setEnableStatus(bool &status)
 
     if (!status) //status = false; is_enable = true
     {
+        if (is_connected_)
+        {
+            return MODBUS_CLIENT_CONNECTED;
+        }
+
         config_param_.is_enable = status;
         ctrl_state_ = MODBUS_CLIENT_CTRL_DISABLED;
         return SUCCESS;
@@ -111,7 +162,24 @@ ErrorCode ModbusClient::setEnableStatus(bool &status)
 
     config_param_.is_enable = status;
     ctrl_state_ = MODBUS_CLIENT_CTRL_ENABLED;
+
+    ErrorCode error_code = init();
+    if (error_code != SUCCESS) return error_code;
+
+    if (modbus_connect(ctx_) < 0)
+    {
+         FST_ERROR("Failed to connect socket : %s, socket = %d",
+            modbus_strerror(errno),  modbus_get_socket(ctx_));
+
+        is_connected_ = false;
+        return MODBUS_CLIENT_CONNECT_FAILED;
+    }
+
+    ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
+    is_connected_ = true;
+
     return SUCCESS;
+#endif
 }
 
 bool ModbusClient::getEnableStatus()
@@ -336,6 +404,16 @@ ErrorCode ModbusClient::scanDataArea()
     {
         modbus_last_scan_time_ = current_time;
         error_code = readAllRegs();
+        if (error_code != SUCCESS)
+        {
+            if (!isSocketValid())
+            {
+                ctrl_state_ = MODBUS_CLIENT_CTRL_ENABLED;
+                close();
+            }
+            else
+                ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
+        }
         struct timeval last_current_time;
         gettimeofday(&last_current_time, NULL);
     }
@@ -345,76 +423,59 @@ ErrorCode ModbusClient::scanDataArea()
 
 ErrorCode ModbusClient::readAllRegs()
 {
-    int value_nb = 0;
-    if(config_param_.reg_info.coil.max_nb < config_param_.reg_info.discrepte_input.max_nb)
-    {
-        value_nb = config_param_.reg_info.discrepte_input.max_nb;
-    }
-    else
-    {
-        value_nb = config_param_.reg_info.coil.max_nb;
-    }
-
-    uint8_t bit_value[value_nb];
-    ErrorCode error_code = SUCCESS;
-
     if (0 < config_param_.reg_info.coil.max_nb)
     {
-        error_code = readCoils(config_param_.reg_info.coil.addr, 
+        uint8_t bit_value[config_param_.reg_info.coil.max_nb];
+        return readCoils(config_param_.reg_info.coil.addr, 
             config_param_.reg_info.coil.max_nb, bit_value);
     }
 
     if (0 < config_param_.reg_info.discrepte_input.max_nb)
     {
-        error_code = readDiscreteInputs(config_param_.reg_info.discrepte_input.addr, 
+        uint8_t bit_value[config_param_.reg_info.discrepte_input.max_nb];
+        return readDiscreteInputs(config_param_.reg_info.discrepte_input.addr, 
             config_param_.reg_info.discrepte_input.max_nb, bit_value);
     }
 
-    if(config_param_.reg_info.holding_reg.max_nb < config_param_.reg_info.input_reg.max_nb)
+    if (0 < config_param_.reg_info.holding_reg.max_nb)
     {
-        value_nb = config_param_.reg_info.input_reg.max_nb;
-    }
-    else
-    {
-        value_nb = config_param_.reg_info.holding_reg.max_nb;
-    }
+        uint16_t reg_value[config_param_.reg_info.holding_reg.max_nb];
+        int reg_read_times = config_param_.reg_info.holding_reg.max_nb / REGISTER_ONE_OP_NUM;
+        int reg_read_left_nb = config_param_.reg_info.holding_reg.max_nb % REGISTER_ONE_OP_NUM;
 
-    uint16_t reg_value[value_nb];
-    int reg_read_times = config_param_.reg_info.holding_reg.max_nb / REGISTER_ONE_OP_NUM;
-    int reg_read_left_nb = config_param_.reg_info.holding_reg.max_nb % REGISTER_ONE_OP_NUM;
+        if (0 < reg_read_times)
+        {
+            return readHoldingRegs(
+                config_param_.reg_info.holding_reg.addr, REGISTER_ONE_OP_NUM, reg_value);
+        }
 
-    for (int i = 0; i != reg_read_times; ++i)
-    {
-        error_code = readHoldingRegs(
-            config_param_.reg_info.holding_reg.addr + i * REGISTER_ONE_OP_NUM, 
-            REGISTER_ONE_OP_NUM, reg_value);
-    }
-
-    if (0 < reg_read_left_nb)
-    {
-        error_code = readHoldingRegs(
-            config_param_.reg_info.holding_reg.addr + reg_read_times * REGISTER_ONE_OP_NUM, 
-            reg_read_left_nb, reg_value);
+        if (0 < reg_read_left_nb)
+        {
+            return readHoldingRegs(
+                config_param_.reg_info.holding_reg.addr, reg_read_left_nb, reg_value);
+        }
     }
 
-    reg_read_times = config_param_.reg_info.input_reg.max_nb / REGISTER_ONE_OP_NUM;
-    reg_read_left_nb = config_param_.reg_info.input_reg.max_nb % REGISTER_ONE_OP_NUM;
-
-    for (int i = 0; i != reg_read_times; ++i)
+    if (0 < config_param_.reg_info.input_reg.max_nb)
     {
-        error_code = readInputRegs(
-            config_param_.reg_info.input_reg.addr + i * REGISTER_ONE_OP_NUM, 
-            REGISTER_ONE_OP_NUM, reg_value);
+        uint16_t reg_value[config_param_.reg_info.input_reg.max_nb];
+        int reg_read_times = config_param_.reg_info.input_reg.max_nb / REGISTER_ONE_OP_NUM;
+        int reg_read_left_nb = config_param_.reg_info.input_reg.max_nb % REGISTER_ONE_OP_NUM;
+
+        if (0 < reg_read_times)
+        {
+            return readInputRegs(
+                config_param_.reg_info.input_reg.addr, REGISTER_ONE_OP_NUM, reg_value);
+        }
+
+        if (0 < reg_read_left_nb)
+        {
+            return readInputRegs(
+                config_param_.reg_info.input_reg.addr, reg_read_left_nb, reg_value);
+        }
     }
 
-    if (0 < reg_read_left_nb)
-    {
-        error_code = readInputRegs(
-            config_param_.reg_info.input_reg.addr + reg_read_times * REGISTER_ONE_OP_NUM,
-            reg_read_left_nb, reg_value);
-    }
-
-    return error_code;
+    return SUCCESS;
 }
 
 

@@ -331,3 +331,25 @@ void ControllerPublish::updateIo()
         }
     }
 }
+
+void ControllerPublish::updateModbusClientCtrlStatus()
+{
+    modbus_client_ctrl_status_ = MessageType_ModbusClientCtrlStatusList_init_default;
+    vector<int> id_list;
+    id_list.clear();
+    
+    ErrorCode error_code = modbus_manager_ptr_->getClientIdList(id_list);
+
+    if (error_code == SUCCESS)
+    {
+        vector<int>::iterator it = id_list.begin();
+        modbus_client_ctrl_status_.ctrl_status_count = id_list.size();
+
+        for (int i = 0; i != id_list.size(); ++i)
+        {
+            modbus_client_ctrl_status_.ctrl_status[i].id = *it;
+            error_code = modbus_manager_ptr_->getClientCtrlState(*it, modbus_client_ctrl_status_.ctrl_status[i].status);
+            it++;
+        }
+    }
+}

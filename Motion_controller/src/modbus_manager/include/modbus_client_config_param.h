@@ -33,6 +33,7 @@ struct ModbusClientRegInfo
 
 struct ModbusClientConfigParams
 {
+    bool is_added;
     bool is_enable;
     ModbusClientRegInfo reg_info;
     ModbusClientStartInfo start_info;
@@ -50,18 +51,21 @@ public:
     bool saveStartInfo(ModbusClientStartInfo &start_info); // for client element
     bool saveRegInfo(int client_id, ModbusClientRegInfo &reg_info); // for client element
     bool saveEnableStatus(int client_id, bool &status); // for client element
+    bool saveIsAdded(int client_id, bool &is_added);
 
     bool getStartInfo(ModbusClientStartInfo &start_info); // for client element
     bool getRegInfo(int client_id, ModbusClientRegInfo &reg_info); // for client element
     bool getEnableStatus(int client_id, bool &status); // for client element
+    bool getIsAdded(int client_id, bool &is_added);
+
+    std::mutex client_config_list_mutex_;
+    std::vector<ModbusClientConfigParams> client_config_list_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;
     string file_path_;
     int client_nb_;
 
-    std::mutex client_config_list_mutex_;
-    std::vector<ModbusClientConfigParams> client_config_list_;
     ModbusClientConfigParam();
 };
 }

@@ -534,31 +534,44 @@ void ControllerRpc::handleRpc0x00009833(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_ModbusClientConfigParams* rs_data_ptr 
         = static_cast<ResponseMessageType_Uint64_ModbusClientConfigParams*>(response_data_ptr);
 
-    ModbusClientConfigParams config_params;
-    rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientConfigParams(rq_data_ptr->data.data, config_params);
+    ModbusClientStartInfo start_info;
+    rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientStartInfo(rq_data_ptr->data.data, start_info);
+
+    ModbusClientRegInfo reg_info;
+    if (rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientRegInfo(rq_data_ptr->data.data, reg_info);
+    }
+
+    bool is_enable;
+    if (rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientEnableStatus(
+            rq_data_ptr->data.data, is_enable);
+    }
 
     if (rs_data_ptr->error_code.data == SUCCESS)
     {
-        rs_data_ptr->data.is_enable = config_params.is_enable;
+        rs_data_ptr->data.is_enable = is_enable;
 
-        rs_data_ptr->data.start_info.id = rq_data_ptr->data.data;
-        rs_data_ptr->data.start_info.port = config_params.start_info.port;
-        rs_data_ptr->data.start_info.scan_rate = config_params.start_info.scan_rate;
-        rs_data_ptr->data.start_info.response_timeout = config_params.start_info.response_timeout;
+        rs_data_ptr->data.function_addr_info.coil.address = reg_info.coil.addr;
+        rs_data_ptr->data.function_addr_info.coil.number = reg_info.coil.max_nb;
+        rs_data_ptr->data.function_addr_info.discrepte_input.address = reg_info.discrepte_input.addr;
+        rs_data_ptr->data.function_addr_info.discrepte_input.number = reg_info.discrepte_input.max_nb;
+        rs_data_ptr->data.function_addr_info.holding_reg.address = reg_info.holding_reg.addr;
+        rs_data_ptr->data.function_addr_info.holding_reg.number = reg_info.holding_reg.max_nb;
+        rs_data_ptr->data.function_addr_info.input_reg.address = reg_info.input_reg.addr;
+        rs_data_ptr->data.function_addr_info.input_reg.number = reg_info.input_reg.max_nb;
 
-        strcpy(rs_data_ptr->data.start_info.ip, config_params.start_info.ip.c_str());
+        rs_data_ptr->data.start_info.id = start_info.id;
+        rs_data_ptr->data.start_info.port = start_info.port;
+        rs_data_ptr->data.start_info.scan_rate = start_info.scan_rate;
+        rs_data_ptr->data.start_info.response_timeout = start_info.response_timeout;
+
+        strcpy(rs_data_ptr->data.start_info.ip, start_info.ip.c_str());
         rs_data_ptr->data.start_info.ip[127] = '0';
-        strcpy(rs_data_ptr->data.start_info.name, config_params.start_info.name.c_str());
+        strcpy(rs_data_ptr->data.start_info.name, start_info.name.c_str());
         rs_data_ptr->data.start_info.name[127] = '0';
-
-        rs_data_ptr->data.function_addr_info.coil.address = config_params.reg_info.coil.addr;
-        rs_data_ptr->data.function_addr_info.coil.number = config_params.reg_info.coil.max_nb;
-        rs_data_ptr->data.function_addr_info.discrepte_input.address = config_params.reg_info.discrepte_input.addr;
-        rs_data_ptr->data.function_addr_info.discrepte_input.number = config_params.reg_info.discrepte_input.max_nb;
-        rs_data_ptr->data.function_addr_info.holding_reg.address = config_params.reg_info.holding_reg.addr;
-        rs_data_ptr->data.function_addr_info.holding_reg.number = config_params.reg_info.holding_reg.max_nb;
-        rs_data_ptr->data.function_addr_info.input_reg.address = config_params.reg_info.input_reg.addr;
-        rs_data_ptr->data.function_addr_info.input_reg.number = config_params.reg_info.input_reg.max_nb;
     }
 
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientConfigParams"));
@@ -640,3 +653,35 @@ void ControllerRpc::handleRpc0x00001DC4(void* request_data_ptr, void* response_d
     recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getConnectedClientList"));
 }
 
+//"/rpc/modbus/getClientSummaryStartInfoList"
+void ControllerRpc::handleRpc0x00005564(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Void* rq_data_ptr = static_cast<RequestMessageType_Void*>(request_data_ptr);
+    ResponseMessageType_Uint64_ModbusClientSummaryStartInfoList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_ModbusClientSummaryStartInfoList*>(response_data_ptr);
+
+    vector<int> id_list;
+    id_list.clear();
+    
+    rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientIdList(id_list);;
+    rs_data_ptr->data.summary_start_info_count = id_list.size();
+
+    vector<int>::iterator it = id_list.begin();
+
+    ModbusClientStartInfo start_info;
+    if (rs_data_ptr->error_code.data == SUCCESS)
+    {
+        for (int i = 0; i != id_list.size(); ++i)
+        {
+            rs_data_ptr->error_code.data = modbus_manager_ptr_->getClientStartInfo(*it, start_info);
+            if (rs_data_ptr->error_code.data == SUCCESS)
+            {
+                rs_data_ptr->data.summary_start_info[i].id = *it;
+                strcpy(rs_data_ptr->data.summary_start_info[i].name, start_info.name.c_str());
+                rs_data_ptr->data.summary_start_info[i].name[127] = '0';
+            }
+            it++;
+        }
+    }
+
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getClientSummaryStartInfoList"));
+}

@@ -88,6 +88,11 @@ add_executable(test_add_io_topic  ${SRC_LIST}  src/test_common/test_add_io_topic
 target_link_libraries(test_add_io_topic ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_add_io_topic RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+######### for test client #########
+add_executable(test_add_modbus_client_topic  ${SRC_LIST}  src/test_common/test_add_modbus_client_topic.cpp)
+target_link_libraries(test_add_modbus_client_topic ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_add_modbus_client_topic RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
 ######### for test client #########
 add_executable(test_subscribe  ${SRC_LIST}  src/test_common/test_subscribe.cpp)
@@ -98,6 +103,13 @@ install(TARGETS test_subscribe RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINAT
 add_executable(test_subscribe_reg  ${SRC_LIST}  src/test_common/test_subscribe_reg.cpp)
 target_link_libraries(test_subscribe_reg ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_subscribe_reg RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+
+######### for test client #########
+add_executable(test_subscribe_modbus_client  ${SRC_LIST}  src/test_common/test_subscribe_modbus_client.cpp)
+target_link_libraries(test_subscribe_modbus_client ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_subscribe_modbus_client RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
 ######### for test client #########
 add_executable(test_get_rpc_table  ${SRC_LIST}  src/test_common/test_get_rpc_table.cpp)
@@ -941,3 +953,9 @@ install(TARGETS replace_client RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINAT
 add_executable(get_connected_id_list ${SRC_LIST} src/test_modbus/client/get_connected_id_list.cpp)
 target_link_libraries(get_connected_id_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_connected_id_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/client)
+
+
+####### for test modbus  #########
+add_executable(get_summary_start_info_list ${SRC_LIST} src/test_modbus/client/get_summary_start_info_list.cpp)
+target_link_libraries(get_summary_start_info_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_summary_start_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/client)

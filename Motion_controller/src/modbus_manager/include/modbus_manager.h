@@ -82,7 +82,7 @@ public:
     ErrorCode getClientConfigParamsList(vector<ModbusClientConfigParams> &client_config_params_list);
 
     ErrorCode getClientScanRate(int client_id, int &scan_rate);
-
+    ErrorCode initClientListByParams();
 private:
     ModbusManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;

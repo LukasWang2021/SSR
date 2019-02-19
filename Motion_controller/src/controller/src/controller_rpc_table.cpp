@@ -204,6 +204,7 @@ void ControllerRpc::initRpcTable()
 	rpc_service =	{	"/rpc/modbus/isClientConnected",	0x00002FC4,	&ControllerRpc::handleRpc0x00002FC4	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/getConnectedClientList",	0x00001DC4,	&ControllerRpc::handleRpc0x00001DC4	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/getClientCtrlStatus",	0x000170E3,	&ControllerRpc::handleRpc0x000170E3	};	rpc_table_.push_back(rpc_service);
+	rpc_service =	{	"/rpc/modbus/getClientSummaryStartInfoList",	0x00005564,	&ControllerRpc::handleRpc0x00005564	};	rpc_table_.push_back(rpc_service);
 
 
 	rpc_service =	{	"/rpc/modbus/writeCoils",	0x0000BD83,	&ControllerRpc::handleRpc0x0000BD83	};	rpc_table_.push_back(rpc_service);

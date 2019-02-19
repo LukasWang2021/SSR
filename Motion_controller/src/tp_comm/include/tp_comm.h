@@ -538,6 +538,8 @@ private:
     void handleRequest0x0000C2F4(int recv_bytes);
     /********rpc/modbus/getConnectedClientList, RequestMessageType_Void**********/
     void handleRequest0x00001DC4(int recv_bytes);
+    /********rpc/modbus/getClientSummaryStartInfoList, RequestMessageType_Void**********/
+    void handleRequest0x00005564(int recv_bytes);
 
 /* request end */
 
@@ -879,6 +881,8 @@ private:
     void handlePublishElement0x000123C3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/controller/io_board_status, MessageType_IoboardStatusList(count=4)**********/
     void handlePublishElement0x00006D93(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+	/********publish/modbus/client_ctrl_status, MessageType_ModbusClientCtrlStatusList**********/
+    void handlePublishElement0x00011843(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 
    /********rpc/controller/addIoTopic, ResponseMessageType_Bool**********/
     void handleResponse0x0000B823(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -1000,6 +1004,8 @@ private:
     void handleResponse0x0000C2F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/modbus/getConnectedClientList, ResponseMessageType_Uint64_Int32List**********/
     void handleResponse0x00001DC4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/modbus/getClientSummaryStartInfoList, ResponseMessageType_Uint64_ModbusClientSummaryStartInfoList**********/
+    void handleResponse0x00005564(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /* response end */
     fst_ip::LocalIP local_ip_;

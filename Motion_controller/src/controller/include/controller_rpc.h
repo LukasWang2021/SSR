@@ -469,6 +469,8 @@ private:
     void handleRpc0x000170E3(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/modbus/getConnectedClientList"
     void handleRpc0x00001DC4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/modbus/getClientSummaryStartInfoList"
+    void handleRpc0x00005564(void* request_data_ptr, void* response_data_ptr);
 
 	//"/rpc/modbus/writeCoils"
     void handleRpc0x0000BD83(void* request_data_ptr, void* response_data_ptr);

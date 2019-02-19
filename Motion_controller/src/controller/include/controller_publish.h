@@ -65,6 +65,7 @@ private:
     fst_hal::DeviceManager* device_manager_ptr_;
     fst_hal::FstSafetyDevice* safety_device_ptr_;
     fst_hal::IoManager* io_manager_ptr_;
+    fst_hal::ModbusManager* modbus_manager_ptr_;
 
     enum {HASH_BYTE_SIZE = 4,};
     enum {QUICK_SEARCH_TABLE_SIZE = 128,};
@@ -98,6 +99,7 @@ private:
     MessageType_StringList tp_program_status_;
     MessageType_Uint32 safety_board_status_;
     MessageType_IoBoardStatusList io_board_status_; 
+    MessageType_ModbusClientCtrlStatusList modbus_client_ctrl_status_;
 
     typedef struct
     {
@@ -150,6 +152,7 @@ private:
     void* getTpProgramStatusPtr();
     void* getSafetyBoardStatusPtr();
     void* getIoBoardStatusPtr();
+    void* getModbusClientCtrlStatusPtr();
 
     // update publish element
     void updateAxisGroupJointFeedback();
@@ -164,7 +167,7 @@ private:
     void updateTpProgramStatus();
     void updateSafetyBoardStatus();
     void updateIoBoardStatus();
-
+    void updateModbusClientCtrlStatus();
     // update reg publish
     void updateReg();
 

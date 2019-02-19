@@ -55,6 +55,11 @@ bool ModbusManager::init()
     if (client_manager_ptr_->initParam() != SUCCESS)
         return false;
 
+    // if (start_mode_ == MODBUS_CLIENT)
+    // {
+        // if (client_manager_ptr_->initCLientListByParams() != SUCCESS) return false;
+    // }
+
     return true;
 }
 
@@ -243,3 +248,5 @@ bool ModbusManager::isModbusValid()
     setValid(false);
     return false;
 }
+
+

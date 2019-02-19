@@ -81,6 +81,7 @@ private:
 
     modbus_t* ctx_;
     int socket_;
+    bool is_added_;
 
     ModbusClientConfigParams config_param_;
 

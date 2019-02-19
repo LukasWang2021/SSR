@@ -84,6 +84,8 @@
 #include "message_type/modbus_status_info.pb.h"
 #include "message_type/modbus_client_config_params.pb.h"
 #include "message_type/modbus_client_start_info.pb.h"
+#include "message_type/modbus_client_summary_start_info_list.pb.h"
+#include "message_type/modbus_client_ctrl_status.pb.h"
 
 #include "response/response_base.pb.h"
 #include "response/response_publish_table.pb.h"
@@ -126,4 +128,5 @@
 #include "response/response_uint64_modbus_reg_info.pb.h"
 #include "response/response_uint64_modbus_client_config_params.pb.h"
 #include "response/response_uint64_modbus_client_start_info.pb.h"
+#include "response/response_uint64_modbus_client_summary_start_info_list.pb.h"
 #endif

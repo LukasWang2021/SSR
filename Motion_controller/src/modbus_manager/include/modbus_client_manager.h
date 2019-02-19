@@ -33,6 +33,7 @@ public:
      ~ModbusClientManager();
 
     ErrorCode initParam();
+    ErrorCode initCLientListByParams();
 
     ErrorCode addClient(ModbusClientStartInfo &start_info);
     ErrorCode deleteClient(int client_id);
@@ -60,7 +61,7 @@ public:
     vector<ModbusClientConfigParams> getConfigParamsList();
     ErrorCode getConfigParams(int client_id, ModbusClientConfigParams &params);
     bool isAllClientClosed();
-    ErrorCode scanDataArea(int client_id);
+    ErrorCode scanDataArea();
     ErrorCode scanAllClientDataArea();
 
     ErrorCode getClientScanRate(int client_id, int &scan_rate);
@@ -105,6 +106,7 @@ private:
 
     bool updateClientEnableStatus(int client_id, bool status);
     bool updateClientRegInfo(int client_id, ModbusClientRegInfo &reg_info);
+
     ModbusClientManager();
 };
 }

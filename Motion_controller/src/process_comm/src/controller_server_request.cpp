@@ -560,3 +560,82 @@ void ControllerServer::handleRequestGetUo()
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_UO, (void*)request_data_ptr, (void*)response_data_ptr); 
 }
 
+//GetJoint
+void ControllerServer::handleRequestGetJoint()
+{
+    int* request_data_ptr = new int;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    Joint* response_data_ptr = new Joint;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_JOINT, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
+
+//GetCart
+void ControllerServer::handleRequestGetCart()
+{
+    int* request_data_ptr = new int;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    PoseEuler* response_data_ptr = new PoseEuler;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(int));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_GET_CART, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
+
+//CartToJoint
+void ControllerServer::handleRequestCartToJoint()
+{
+    PoseEuler* request_data_ptr = new PoseEuler;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    Joint* response_data_ptr = new Joint;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(PoseEuler));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_CART_TO_JOINT, (void*)request_data_ptr, (void*)response_data_ptr);
+}
+
+//JointToCart
+void ControllerServer::handleRequestJointToCart()
+{
+    Joint* request_data_ptr = new Joint;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    PoseEuler* response_data_ptr = new PoseEuler;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(Joint));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_JOINT_TO_CART, (void*)request_data_ptr, (void*)response_data_ptr);
+}

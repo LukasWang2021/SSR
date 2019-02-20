@@ -36,5 +36,9 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_GET_UI, &ControllerIpc::handleIpcGetUi}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_SET_UI, &ControllerIpc::handleIpcSetUi}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_GET_UO, &ControllerIpc::handleIpcGetUo}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_JOINT, &ControllerIpc::handleIpcGetJoint}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_GET_CART, &ControllerIpc::handleIpcGetCart}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_CART_TO_JOINT, &ControllerIpc::handleIpcCartToJoint}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_JOINT_TO_CART, &ControllerIpc::handleIpcJointToCart}; ipc_table_.push_back(ipc_service);
 }
 

@@ -35,7 +35,11 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_GET_UI, &ControllerServer::handleRequestGetUi, &ControllerServer::handleResponseGetUi}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_SET_UI, &ControllerServer::handleRequestSetUi, &ControllerServer::handleResponseSetUi}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_GET_UO, &ControllerServer::handleRequestGetUo, &ControllerServer::handleResponseGetUo}; rpc_table_.push_back(rpc_service);
-    
+    rpc_service = {CONTROLLER_SERVER_CMD_GET_JOINT, &ControllerServer::handleRequestGetJoint, &ControllerServer::handleResponseGetJoint}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_GET_CART, &ControllerServer::handleRequestGetCart, &ControllerServer::handleResponseGetCart}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_CART_TO_JOINT, &ControllerServer::handleRequestCartToJoint, &ControllerServer::handleResponseCartToJoint}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_JOINT_TO_CART, &ControllerServer::handleRequestJointToCart, &ControllerServer::handleResponseJointToCart}; rpc_table_.push_back(rpc_service);
+
 }
 
 void InterpreterServer::initRpcTable()

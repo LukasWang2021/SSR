@@ -492,6 +492,57 @@ ErrorCode InterpreterClient::getUo(uint32_t port_offset, uint32_t &value)
     return response_get_uo.error_code;
 }
 
+//getJoint
+ErrorCode InterpreterClient::getJoint(int id, Joint &joint)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_JOINT, (void*)&id, sizeof(int))
+       || !recvResponse(sizeof(Joint))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_JOINT)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&joint, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(Joint));
+    return SUCCESS;
+}
+
+//getCart
+ErrorCode InterpreterClient::getCart(int id, PoseEuler &pos)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_GET_CART, (void*)&id, sizeof(int))
+       || !recvResponse(sizeof(PoseEuler))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_GET_CART)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&pos, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(PoseEuler));
+    return SUCCESS;
+}
+
+//cartToJoint
+ErrorCode InterpreterClient::cartToJoint(PoseEuler pos, Joint &joint)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_CART_TO_JOINT, (void*)&pos, sizeof(PoseEuler))
+       || !recvResponse(sizeof(Joint))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_CART_TO_JOINT)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&joint, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(Joint));
+    return SUCCESS;
+}
+
+//jointToCart
+ErrorCode InterpreterClient::jointToCart(Joint joint, PoseEuler &pos)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_CART_TO_JOINT, (void*)&joint, sizeof(Joint))
+       || !recvResponse(sizeof(PoseEuler))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_CART_TO_JOINT)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&pos, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(PoseEuler));
+    return SUCCESS;
+}
 
 
 

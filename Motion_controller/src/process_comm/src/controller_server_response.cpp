@@ -397,3 +397,58 @@ void ControllerServer::handleResponseGetUo(std::vector<ProcessCommRequestRespons
     }
 }
 
+//GetJoint
+void ControllerServer::handleResponseGetJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_JOINT, task->response_data_ptr, sizeof(Joint), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (int*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (Joint*)task->response_data_ptr;
+    }
+}
+
+//GetCart
+void ControllerServer::handleResponseGetCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_GET_CART, task->response_data_ptr, sizeof(PoseEuler), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (int*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (PoseEuler*)task->response_data_ptr;
+    }
+}
+
+//CartToJoint
+void ControllerServer::handleResponseCartToJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_CART_TO_JOINT, task->response_data_ptr, sizeof(Joint), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (PoseEuler*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (Joint*)task->response_data_ptr;
+    }
+}
+
+//JointToCart
+void ControllerServer::handleResponseJointToCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_JOINT_TO_CART, task->response_data_ptr, sizeof(PoseEuler), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (Joint*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (PoseEuler*)task->response_data_ptr;
+    }
+}

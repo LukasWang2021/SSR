@@ -100,6 +100,10 @@ private:
     void handleRequestGetUi();
     void handleRequestSetUi();
     void handleRequestGetUo();
+    void handleRequestGetJoint();
+    void handleRequestGetCart();
+    void handleRequestCartToJoint();
+    void handleRequestJointToCart();
 
     // rpc response handler
     void handleResponseSetPrReg(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
@@ -130,6 +134,10 @@ private:
     void handleResponseGetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseSetUi(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     void handleResponseGetUo(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseGetCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseCartToJoint(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
+    void handleResponseJointToCart(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size);
     
 };
 

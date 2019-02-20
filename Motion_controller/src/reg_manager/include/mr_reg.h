@@ -18,7 +18,7 @@ typedef struct
 typedef struct
 {
     int id;
-    double value;
+    int value;
 }MrRegDataIpc;
 
 class MrReg:public BaseReg

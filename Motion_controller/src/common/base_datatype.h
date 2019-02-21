@@ -93,7 +93,7 @@ class PoseEuler
     const double& operator[](size_t index) const {assert(index < 6); return *(&position.x + index);}
 };
 
-struct JointPoint
+/*struct JointPoint
 {
 	Joint angle;
 	Joint omega;
@@ -105,7 +105,7 @@ struct JointState
 	Joint angle;
 	Joint omega;
 	Joint alpha;
-};
+};*/
 
 struct DynamicsProduct
 {

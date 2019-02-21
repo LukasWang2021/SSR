@@ -2,7 +2,9 @@
 #include <iostream>
 
 using namespace std;
+using namespace basic_alg;
 using namespace fst_mc;
+
 
 ComplexAxisGroupModel model;
 double stack[15000];
@@ -247,7 +249,7 @@ ErrorCode planPathLine(const PoseEuler &start,
     // compute MoveL length
     double path_length_start2end;
     double path_vector_start2end[3];
-    getMoveLPathVector(start.position, end.pose_target.position, path_vector_start2end, path_length_start2end);   // MoveL length
+    getMoveLPathVector(start.point_, end.pose_target.point_, path_vector_start2end, path_length_start2end);   // MoveL length
     if(path_length_start2end < DOUBLE_ACCURACY)
     {
         return PATH_PLANNING_INVALID_TARGET;
@@ -255,8 +257,8 @@ ErrorCode planPathLine(const PoseEuler &start,
     
     // compute MoveL quatern angle
     double start_quatern[4], end_quatern[4];
-    getMoveEulerToQuatern(start.orientation, start_quatern);
-    getMoveEulerToQuatern(end.pose_target.orientation, end_quatern);
+    getMoveEulerToQuatern(start.euler_, start_quatern);
+    getMoveEulerToQuatern(end.pose_target.euler_, end_quatern);
     double angle_start2end = getQuaternsIntersectionAngle(start_quatern, end_quatern);    // MoveL quatern angle
 
     int path_count_ideal_start2end = ceil(path_length_start2end / segment_alg_param.path_interval);
@@ -287,14 +289,14 @@ ErrorCode planPathLine(const PoseEuler &start,
         double angle_step_start2out = angle_distance_start2out / path_count_start2out;
         double angle_step_out2end = (1.0 - angle_distance_start2out) / path_count_out2end;
 
-        packPoseByPointAndQuatern(start.position, start_quatern, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);
         for(i = 1; i <= path_count_start2out; ++i)
         {
             point_distance_to_start += path_step_start2out;
             angle_distance_to_start += angle_step_start2out;            
-            getMoveLPathPoint(start.position, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.position);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         path_cache.smooth_out_index = path_count_start2out;
@@ -304,11 +306,11 @@ ErrorCode planPathLine(const PoseEuler &start,
         {
             point_distance_to_start += path_step_out2end;
             angle_distance_to_start += angle_step_out2end;
-            getMoveLPathPoint(start.position, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.position);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
     }
     else    // cnt is invalid
@@ -324,17 +326,17 @@ ErrorCode planPathLine(const PoseEuler &start,
         path_cache.cache_length = max_count_start2end + 1;
         double path_step_start2end = path_length_start2end / max_count_start2end;
         double angle_step_start2end = 1.0 / max_count_start2end;
-        packPoseByPointAndQuatern(start.position, start_quatern, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);         
         for(i = 1; i < max_count_start2end; ++i)
         {
             point_distance_to_start += path_step_start2end;
             angle_distance_to_start += angle_step_start2end;
-            getMoveLPathPoint(start.position, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.position);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, end_quatern, path_cache.cache[max_count_start2end].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[max_count_start2end]);
     }
     
@@ -363,10 +365,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
 {
     int i;
     // compute path
-    double path_length_start2via = getPointsDistance(start.position, via.pose_target.position);   
+    double path_length_start2via = getPointsDistance(start.point_, via.pose_target.point_);   
     double path_length_via2target;
     double path_vector_via2target[3];
-    getMoveLPathVector(via.pose_target.position, end.pose_target.position, path_vector_via2target, path_length_via2target);
+    getMoveLPathVector(via.pose_target.point_, end.pose_target.point_, path_vector_via2target, path_length_via2target);
     double path_length_via2in = path_length_via2target / 2;
     
     if(path_length_start2via < path_length_via2in)
@@ -378,13 +380,13 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     int path_count_ideal_start2via = ceil(path_length_start2via / segment_alg_param.path_interval);
     int path_count_ideal_via2in = ceil(path_length_via2in / segment_alg_param.path_interval);
     Point point_in;
-    getMoveLPathPoint(via.pose_target.position, path_vector_via2target, path_length_via2in, point_in);
+    getMoveLPathPoint(via.pose_target.point_, path_vector_via2target, path_length_via2in, point_in);
     
     // compute quatern
     double quatern_start[4], quatern_via[4], quatern_in[4], quatern_target[4];
-    getMoveEulerToQuatern(start.orientation, quatern_start);
-    getMoveEulerToQuatern(via.pose_target.orientation, quatern_via);
-    getMoveEulerToQuatern(end.pose_target.orientation, quatern_target);
+    getMoveEulerToQuatern(start.euler_, quatern_start);
+    getMoveEulerToQuatern(via.pose_target.euler_, quatern_via);
+    getMoveEulerToQuatern(end.pose_target.euler_, quatern_target);
     double angle_start2via = getQuaternsIntersectionAngle(quatern_start, quatern_via);   
     double angle_via2target = getQuaternsIntersectionAngle(quatern_via, quatern_target);
     double angle_count_ideal_start2via = ceil(angle_start2via / segment_alg_param.angle_interval);    
@@ -457,20 +459,20 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         double angle_step_out2target = 1.0 / path_count_out2target;
 
         // compute transition path
-        getMovePointToVector3(start.position, start_point);
-        getMovePointToVector3(via.pose_target.position, via_point);
+        getMovePointToVector3(start.point_, start_point);
+        getMovePointToVector3(via.pose_target.point_, via_point);
         getMovePointToVector3(point_in, in_point);
         updateTransitionBSpLineResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
-        packPoseByPointAndQuatern(start.position, quatern_start, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
-            path_cache.cache[i].pose.position.x = stack[S_BSpLineResultXBase + i];
-            path_cache.cache[i].pose.position.y = stack[S_BSpLineResultYBase + i];
-            path_cache.cache[i].pose.position.z = stack[S_BSpLineResultZBase + i];
+            path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
+            path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
+            path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
-            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
@@ -481,8 +483,8 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             point_distance_to_in += path_step_in2out;
             angle_distance_to_in += angle_step_in2out;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.position);
-            getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+            getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_out, quatern_out, path_cache.cache[path_cache.smooth_out_index].pose);
@@ -493,11 +495,11 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             point_distance_to_in += path_step_out2target;
             angle_distance_to_out += angle_step_out2target;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.position);
-            getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+            getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
     }
     else
@@ -520,20 +522,20 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         }  
 
         // compute transition path
-        getMovePointToVector3(start.position, start_point);
-        getMovePointToVector3(via.pose_target.position, via_point);
+        getMovePointToVector3(start.point_, start_point);
+        getMovePointToVector3(via.pose_target.point_, via_point);
         getMovePointToVector3(point_in, in_point);
         updateTransitionBSpLineResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
-        packPoseByPointAndQuatern(start.position, quatern_start, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
-            path_cache.cache[i].pose.position.x = stack[S_BSpLineResultXBase + i];
-            path_cache.cache[i].pose.position.y = stack[S_BSpLineResultYBase + i];
-            path_cache.cache[i].pose.position.z = stack[S_BSpLineResultZBase + i];
+            path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
+            path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
+            path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
-            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
@@ -544,11 +546,11 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             point_distance_to_in += path_step_in2target;
             angle_distance_to_in += angle_step_in2target;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.position);
-            getQuaternPoint(quatern_in, quatern_target, angle_in2target, angle_distance_to_in, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+            getQuaternPoint(quatern_in, quatern_target, angle_in2target, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
     }
 
@@ -1233,9 +1235,9 @@ void updateTrajPVA(int traj_p_address, int traj_v_address, int traj_a_address, i
 
 inline void getMoveLPathVector(const Point& start_point, const Point& end_point, double* path_vector, double& path_length)
 {
-    path_vector[0] = end_point.x - start_point.x; 
-    path_vector[1] = end_point.y - start_point.y;
-    path_vector[2] = end_point.z - start_point.z;
+    path_vector[0] = end_point.x_ - start_point.x_; 
+    path_vector[1] = end_point.y_ - start_point.y_;
+    path_vector[2] = end_point.z_ - start_point.z_;
     path_length = getVector3Norm(path_vector);
     path_vector[0] /= path_length;
     path_vector[1] /= path_length;
@@ -1244,40 +1246,40 @@ inline void getMoveLPathVector(const Point& start_point, const Point& end_point,
 
 inline double getPointsDistance(const Point& point1, const Point& point2)
 {
-    stack[S_TmpVector3_1] = point1.x - point2.x; 
-    stack[S_TmpVector3_1 + 1] = point1.y - point2.y; 
-    stack[S_TmpVector3_1 + 2] = point1.z - point2.z; 
+    stack[S_TmpVector3_1] = point1.x_ - point2.x_; 
+    stack[S_TmpVector3_1 + 1] = point1.y_ - point2.y_; 
+    stack[S_TmpVector3_1 + 2] = point1.z_ - point2.z_; 
     return getVector3Norm(&stack[S_TmpVector3_1]);
 }
 
 inline void getMoveLPathPoint(const Point& start_point, double* path_vector, double distance, Point& target_point)
 {
-    target_point.x = start_point.x + path_vector[0] * distance;
-    target_point.y = start_point.y + path_vector[1] * distance;
-    target_point.z = start_point.z + path_vector[2] * distance;
+    target_point.x_ = start_point.x_ + path_vector[0] * distance;
+    target_point.y_ = start_point.y_ + path_vector[1] * distance;
+    target_point.z_ = start_point.z_ + path_vector[2] * distance;
 }
 
 inline void getMoveEulerToQuatern(const Euler& euler, double* quatern)
 {
-    stack[S_TmpVector3_1] = euler.a;
-    stack[S_TmpVector3_1 + 1] = euler.b;
-    stack[S_TmpVector3_1 + 2] = euler.c;
+    stack[S_TmpVector3_1] = euler.a_;
+    stack[S_TmpVector3_1 + 1] = euler.b_;
+    stack[S_TmpVector3_1 + 2] = euler.c_;
     getEulerToQuatern(&stack[S_TmpVector3_1], quatern);
 }
 
 inline void getQuaternToQuaternVector4(const Quaternion quatern, double* quatern_vector)
 {
-    quatern_vector[0] = quatern.x;
-    quatern_vector[1] = quatern.y;
-    quatern_vector[2] = quatern.z;
-    quatern_vector[3] = quatern.w;
+    quatern_vector[0] = quatern.x_;
+    quatern_vector[1] = quatern.y_;
+    quatern_vector[2] = quatern.z_;
+    quatern_vector[3] = quatern.w_;
 }
 
 inline void getMovePointToVector3(const Point& point, double* pos_vector)
 {
-    pos_vector[0] = point.x;
-    pos_vector[1] = point.y;
-    pos_vector[2] = point.z;
+    pos_vector[0] = point.x_;
+    pos_vector[1] = point.y_;
+    pos_vector[2] = point.z_;
 }
 
 inline void getQuaternPoint(double* start_quatern, double* end_quartern, double angle, double angle_distance_to_start, Quaternion& target_quatern)
@@ -1289,38 +1291,38 @@ inline void getQuaternPoint(double* start_quatern, double* end_quartern, double 
         stack[S_TmpDouble_2] = sin((1 - angle_distance_to_start) * angle) / stack[S_TmpDouble_1];   // a(t)
         stack[S_TmpDouble_3] = sin(angle_distance_to_start * angle) / stack[S_TmpDouble_1]; // b(t)
         // target = a(t) * start + b(t) * end
-        target_quatern.x = stack[S_TmpDouble_2] * start_quatern[0] + stack[S_TmpDouble_3] * end_quartern[0];
-        target_quatern.y = stack[S_TmpDouble_2] * start_quatern[1] + stack[S_TmpDouble_3] * end_quartern[1];
-        target_quatern.z = stack[S_TmpDouble_2] * start_quatern[2] + stack[S_TmpDouble_3] * end_quartern[2];
-        target_quatern.w = stack[S_TmpDouble_2] * start_quatern[3] + stack[S_TmpDouble_3] * end_quartern[3];
+        target_quatern.x_ = stack[S_TmpDouble_2] * start_quatern[0] + stack[S_TmpDouble_3] * end_quartern[0];
+        target_quatern.y_ = stack[S_TmpDouble_2] * start_quatern[1] + stack[S_TmpDouble_3] * end_quartern[1];
+        target_quatern.z_ = stack[S_TmpDouble_2] * start_quatern[2] + stack[S_TmpDouble_3] * end_quartern[2];
+        target_quatern.w_ = stack[S_TmpDouble_2] * start_quatern[3] + stack[S_TmpDouble_3] * end_quartern[3];
     }
     else
     {
         stack[S_TmpDouble_1] = 1 - angle_distance_to_start;
         // target = (1-t) * start + t * end
-        target_quatern.x = stack[S_TmpDouble_1] * start_quatern[0] + angle_distance_to_start * end_quartern[0];
-        target_quatern.y = stack[S_TmpDouble_1] * start_quatern[1] + angle_distance_to_start * end_quartern[1];
-        target_quatern.z = stack[S_TmpDouble_1] * start_quatern[2] + angle_distance_to_start * end_quartern[2];
-        target_quatern.w = stack[S_TmpDouble_1] * start_quatern[3] + angle_distance_to_start * end_quartern[3];
+        target_quatern.x_ = stack[S_TmpDouble_1] * start_quatern[0] + angle_distance_to_start * end_quartern[0];
+        target_quatern.y_ = stack[S_TmpDouble_1] * start_quatern[1] + angle_distance_to_start * end_quartern[1];
+        target_quatern.z_ = stack[S_TmpDouble_1] * start_quatern[2] + angle_distance_to_start * end_quartern[2];
+        target_quatern.w_ = stack[S_TmpDouble_1] * start_quatern[3] + angle_distance_to_start * end_quartern[3];
     }
 
-    stack[S_TmpDouble_4] = sqrt(target_quatern.x * target_quatern.x
-                                + target_quatern.y * target_quatern.y
-                                + target_quatern.z * target_quatern.z
-                                + target_quatern.w * target_quatern.w);
-    target_quatern.x = target_quatern.x / stack[S_TmpDouble_4];
-    target_quatern.y = target_quatern.y / stack[S_TmpDouble_4];
-    target_quatern.z = target_quatern.z / stack[S_TmpDouble_4];
-    target_quatern.w = target_quatern.w / stack[S_TmpDouble_4];
+    stack[S_TmpDouble_4] = sqrt(target_quatern.x_ * target_quatern.x_
+                                + target_quatern.y_ * target_quatern.y_
+                                + target_quatern.z_ * target_quatern.z_
+                                + target_quatern.w_ * target_quatern.w_);
+    target_quatern.x_ = target_quatern.x_ / stack[S_TmpDouble_4];
+    target_quatern.y_ = target_quatern.y_ / stack[S_TmpDouble_4];
+    target_quatern.z_ = target_quatern.z_ / stack[S_TmpDouble_4];
+    target_quatern.w_ = target_quatern.w_ / stack[S_TmpDouble_4];
 }
 
-inline void packPoseByPointAndQuatern(Point point, double quatern[4], Pose& pose)
+inline void packPoseByPointAndQuatern(Point point, double quatern[4], PoseQuaternion& pose)
 {
-    pose.position = point;
-    pose.orientation.x = quatern[0];
-    pose.orientation.y = quatern[1];
-    pose.orientation.z = quatern[2];
-    pose.orientation.w = quatern[3];
+    pose.point_ = point;
+    pose.quaternion_.x_ = quatern[0];
+    pose.quaternion_.y_ = quatern[1];
+    pose.quaternion_.z_ = quatern[2];
+    pose.quaternion_.w_ = quatern[3];
 }
 
 inline void packPathBlockType(PointType point_type, MotionType motion_type, PathBlock& path_block)
@@ -1626,15 +1628,15 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
         double length_step = path_length_via2in / traj_pva_in_index;
         double angle_step = angle_via2in / traj_pva_in_index;
         double length_distance_to_via = 0, angle_distance_to_via = 0;
-        Pose pose;
+        PoseQuaternion pose;
         Joint joint_ref = joint_via;
         Joint joint_result;
         int traj_p_address;
         for(i = 0; i <= traj_pva_in_index; ++i)
         {
-            getMoveLPathPoint(via.pose_target.position, path_vector_via2in, length_distance_to_via, pose.position);
-            getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_distance_to_via, pose.orientation);
-            segment_alg_param.kinematics_ptr->inverseKinematicsInUser(pose, joint_ref, joint_result);
+            getMoveLPathPoint(via.pose_target.point_, path_vector_via2in, length_distance_to_via, pose.point_);
+            getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_distance_to_via, pose.quaternion_);
+            segment_alg_param.kinematics_ptr->doIK(pose, joint_ref, joint_result);
             traj_p_address = S_TrajP0;
             for(j = 0; j < model.link_num; ++j)
             {
@@ -1745,8 +1747,8 @@ inline void updateMovJTrajT(const PathCache& path_cache, double cmd_vel,
 
 inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTarget& via, int* traj_path_cache_index_out2in, int& traj_pva_size_out2in)
 {
-    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
-    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
+    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+    double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
     double traj_piece_ideal_out2in = (path_length_out2via + path_length_via2in) * stack[S_PathCountFactorCartesian];
     getTrajPFromPathOut2In(path_cache, traj_piece_ideal_out2in, traj_path_cache_index_out2in, traj_pva_size_out2in);
 }
@@ -1758,7 +1760,7 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     int i;
     // compute time span
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_via2end = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_via2end = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double critical_length = cmd_vel * cmd_vel / segment_alg_param.max_cartesian_acc;
     double time_span_via2end;
     if(path_length_via2end > critical_length) // can reach vel
@@ -1770,7 +1772,7 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
         time_span_via2end = 2 * sqrt(path_length_via2end / segment_alg_param.max_cartesian_acc);
     }
     // compute time duration for each traj piece, via2in
-    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
+    double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
     double time_span_via2in = time_span_via2end * path_length_via2in / path_length_via2end;    
     double time_duration_via2in = time_span_via2in / traj_pva_in_index;
     for(i = 0; i < traj_pva_in_index; ++i)
@@ -1790,10 +1792,10 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     }
     else
     {
-        double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+        double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache.smooth_out_index].pose.point_);
         double time_span_in2out = time_span_via2end * path_length_in2out / path_length_via2end;
         double time_duration_in2out = time_span_in2out / (traj_pva_out_index - traj_pva_in_index);
-        double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+        double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
         double time_span_out2end = time_span_via2end * path_length_out2end / path_length_via2end;
         double time_duration_out2end = time_span_out2end / (traj_pva_size_via2end - traj_pva_out_index - 1);
 
@@ -1816,8 +1818,8 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
                                            int& traj_t_size_out2in)
 {
     traj_t_size_out2in = traj_pva_size_out2in - 1;
-    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
-    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
+    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+    double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
     double time_span_out2in = (path_length_out2via + path_length_via2in) / cmd_vel;
     double time_duration_out2in = time_span_out2in / traj_t_size_out2in; 
     for(int i = 0; i < traj_t_size_out2in; ++i)

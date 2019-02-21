@@ -9,6 +9,7 @@
 #define _MOTION_CONTROL_DATATYPE_H
 
 #include <basic_alg_datatype.h>
+#include <basic_constants.h>
 
 namespace fst_mc
 {

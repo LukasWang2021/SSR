@@ -1,6 +1,5 @@
 #include "segment_alg.h"
-#include "base_kinematics.h"
-#include "arm_kinematics.h"
+#include "kinematics_rtm.h"
 #include "dynamics_interface.h"
 #include "basic_alg.h"
 #include <iostream>
@@ -20,23 +19,30 @@ extern SegmentAlgParam segment_alg_param;
 DynamicsInterface dynamics;
 
 
-void doIK(BaseKinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
+void doIK(KinematicsRTM* kinematics_ptr, PathCache& path_cache, basic_alg::Joint& start_joint)
 {
-    Joint result_joint;
-    Joint ref_joint = start_joint;
+    basic_alg::Joint result_joint;
+    basic_alg::Joint ref_joint = start_joint;
     for(int i = 0; i < path_cache.cache_length; ++i)
     {
-        kinematics_ptr->inverseKinematicsInUser(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
+        kinematics_ptr->doIK(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
         ref_joint = path_cache.cache[i].joint;       
     }
 }
 
 int main(void)
 {
+    return 0;
+}
+
+#if 0
+int main(void)
+{
     initComplexAxisGroupModel();
-    BaseKinematics* kinematics_ptr = new ArmKinematics();
-    double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
-    kinematics_ptr->initKinematics(dh_matrix);    
+    basic_alg::DH base_dh;
+    basic_alg::DH arm_dh[6];
+    KinematicsRTM* kinematics_ptr = new KinematicsRTM(base_dh, arm_dh);
+    //double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};  
 
     segment_alg_param.accuracy_cartesian_factor = 3;
     segment_alg_param.accuracy_joint_factor = 6;
@@ -57,10 +63,10 @@ int main(void)
            
     
 
-    fst_mc::PoseEuler start;
+    basic_alg::PoseEuler start;
     fst_mc::MotionTarget via;
     fst_mc::MotionTarget target;
-    fst_mc::Joint start_joint;
+    basic_alg::Joint start_joint;
     fst_mc::JointState start_state;
     fst_mc::PathCache path_cache;
     fst_mc::TrajectoryCache traj_cache;    
@@ -498,29 +504,29 @@ int main(void)
         start_state.alpha[0] = 0; start_state.alpha[1] = 0; start_state.alpha[2] = 0;
         start_state.alpha[3] = 0; start_state.alpha[4] = 0; start_state.alpha[5] = 0;
     
-        start.position.x = 200;
-        start.position.y = 150;
-        start.position.z = 350;
-        start.orientation.a = 0;
-        start.orientation.b = 0;
-        start.orientation.c = PI;
+        start.point_.x_ = 200;
+        start.point_.y_ = 150;
+        start.point_.z_ = 350;
+        start.euler_.a_ = 0;
+        start.euler_.b_ = 0;
+        start.euler_.c_ = PI;
     
-        via.pose_target.position.x = 200;
-        via.pose_target.position.y = -150;
-        via.pose_target.position.z = 350;
-        via.pose_target.orientation.a = 0;
-        via.pose_target.orientation.b = 0;
-        via.pose_target.orientation.c = PI;
+        via.pose_target.point_.x_ = 200;
+        via.pose_target.point_.y_ = -150;
+        via.pose_target.point_.z_ = 350;
+        via.pose_target.euler_.a_ = 0;
+        via.pose_target.euler_.b_ = 0;
+        via.pose_target.euler_.c_ = PI;
         via.cnt = 1;
         via.vel = 1600;
         via.type = MOTION_LINE;
     
-        target.pose_target.position.x = 500;
-        target.pose_target.position.y = -150;
-        target.pose_target.position.z = 350;
-        target.pose_target.orientation.a = 0;
-        target.pose_target.orientation.b = 0;
-        target.pose_target.orientation.c = PI;
+        target.pose_target.point_.x_ = 500;
+        target.pose_target.point_.y_ = -150;
+        target.pose_target.point_.z_ = 350;
+        target.pose_target.euler_.a_ = 0;
+        target.pose_target.euler_.b_ = 0;
+        target.pose_target.euler_.c_ = PI;
         target.cnt = 1;
         target.vel = 1600;
         target.type = MOTION_LINE;
@@ -589,20 +595,20 @@ int main(void)
             a_address += 75;
         }
 //std::cout<<"out_state: "<<out_state.angle[1]<<" "<<out_state.omega[1]<<" "<<out_state.alpha[1]<<std::endl;
-        Pose pose_out;
+        PoseQuaternion pose_out;
         PoseEuler euler_out;
         double out_quatern[4];
         double out_euler[3];
         pose_out = path_cache_1.cache[traj_cache_1.cache[traj_cache_1.smooth_out_index].index_in_path_cache].pose;
-        out_quatern[0] = pose_out.orientation.x;
-        out_quatern[1] = pose_out.orientation.y;
-        out_quatern[2] = pose_out.orientation.z;
-        out_quatern[3] = pose_out.orientation.w;
+        out_quatern[0] = pose_out.quaternion_.x_;
+        out_quatern[1] = pose_out.quaternion_.y_;
+        out_quatern[2] = pose_out.quaternion_.z_;
+        out_quatern[3] = pose_out.quaternion_.w_;
         getQuaternToEuler(out_quatern, out_euler);
-        euler_out.position = pose_out.position;
-        euler_out.orientation.a = out_euler[0];
-        euler_out.orientation.b = out_euler[1];
-        euler_out.orientation.c = out_euler[2];                         
+        euler_out.point_ = pose_out.point_;
+        euler_out.euler_.a_ = out_euler[0];
+        euler_out.euler_.b_ = out_euler[1];
+        euler_out.euler_.c_ = out_euler[2];                         
     
         PathCache path_cache_2;
         TrajectoryCache traj_cache_2;
@@ -652,5 +658,5 @@ int main(void)
 
 	return 0;
 }
-
+#endif
 

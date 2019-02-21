@@ -13,7 +13,6 @@ Summary:    dealing with IO module
 #include <vector>
 #include "common_log.h"
 #include "io_manager_param.h"
-#include "base_datatype.h"
 #include "base_device.h"
 #include "error_code.h"
 #include "device_manager.h"

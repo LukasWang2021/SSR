@@ -4,7 +4,6 @@
 #include "base_device.h"
 #include "fst_safety_device_param.h"
 #include "common_log.h"
-#include "base_datatype.h"
 #include <thread>
 #include <mutex>
 

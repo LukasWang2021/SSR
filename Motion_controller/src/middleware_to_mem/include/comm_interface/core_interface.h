@@ -13,7 +13,6 @@ Summary:    lib to communicate with core1
 #include <vector>
 #include <string>
 #include "error_code.h"
-#include "base_datatype.h"
 #include "middleware_to_mem/middleware_to_sharedmem.h"
 #include "struct_to_mem/struct_joint_command.h"
 #include "struct_to_mem/struct_trajectory_segment.h"

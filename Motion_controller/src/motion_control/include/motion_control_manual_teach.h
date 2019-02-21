@@ -41,13 +41,13 @@ public:
 
     ErrorCode manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
-    ErrorCode manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj);
+    ErrorCode manualByTarget(const basic_alg::Joint &target, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualStop(MotionTime time, ManualTrajectory &traj);
 
 private:
     ErrorCode   manualJointStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
-    ErrorCode   manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualJointAPoint(const basic_alg::Joint &target, MotionTime time, ManualTrajectory &traj);
 
     ErrorCode   manualCartesianStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);

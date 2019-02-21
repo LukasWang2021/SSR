@@ -23,7 +23,7 @@ using namespace fst_log;
 using namespace fst_base;
 using namespace fst_parameter;
 using namespace fst_algorithm;
-
+using namespace basic_alg;
 
 
 void test0(void)

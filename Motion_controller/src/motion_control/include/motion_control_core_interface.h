@@ -41,7 +41,7 @@ class BareCoreInterface
     bool clearPointCache(void);
     bool fillPointCache(TrajectoryPoint *points, size_t length, PointProperty proerty);
 
-    bool getLatestJoint(Joint &joint, ServoState &state);
+    bool getLatestJoint(basic_alg::Joint &joint, ServoState &state);
 
     bool resetBareCore(void);
     bool stopBareCore(void);

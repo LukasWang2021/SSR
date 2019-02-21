@@ -41,8 +41,8 @@ public:
 
     ErrorCode doStepManualMove(const GroupDirection &direction);
     ErrorCode doContinuousManualMove(const GroupDirection &direction);
-    ErrorCode doGotoPointManualMove(const Joint &joint);
-    ErrorCode doGotoPointManualMove(const PoseEuler &pose);
+    ErrorCode doGotoPointManualMove(const basic_alg::Joint &joint);
+    ErrorCode doGotoPointManualMove(const basic_alg::PoseEuler &pose);
     ErrorCode manualStop(void);
 
     // API for auto run
@@ -89,16 +89,16 @@ public:
     ErrorCode clearGroup(void);
 
     // more API
-    ErrorCode  convertCartToJoint(const PoseEuler &pose, int user_frame_id, int tool_frame_id, Joint &joint);
-    ErrorCode  convertJointToCart(const Joint &joint, int user_frame_id, int tool_frame_id, PoseEuler &pose);
+    ErrorCode  convertCartToJoint(const basic_alg::PoseEuler &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
+    ErrorCode  convertJointToCart(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose);
 
     ErrorCode   getServoVersion(std::string &version);
     GroupState  getGroupState(void);
     ServoState  getServoState(void);
     PoseEuler   getCurrentPose(void);
-    void    getCurrentPose(PoseEuler &pose);
+    void    getCurrentPose(basic_alg::PoseEuler &pose);
     Joint   getServoJoint(void);
-    void    getServoJoint(Joint &joint);
+    void    getServoJoint(basic_alg::Joint &joint);
 
     size_t  getFIFOLength(void);
 

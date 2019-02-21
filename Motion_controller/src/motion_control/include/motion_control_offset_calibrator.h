@@ -10,7 +10,7 @@
 
 #include <string>
 #include <vector>
-#include <base_datatype.h>
+#include <motion_control_datatype.h>
 #include <error_code.h>
 #include <common_log.h>
 #include <motion_control_core_interface.h>
@@ -245,10 +245,10 @@ class Calibrator
 
 //***************************************************************************************************************************//
   private:
-    void checkOffset(Joint curr_jnt, Joint last_jnt, OffsetState *offset_stat);
+    void checkOffset(basic_alg::Joint curr_jnt, basic_alg::Joint last_jnt, OffsetState *offset_stat);
     double calculateOffset(double current_offset, double current_joint, double target_joint);
     double calculateOffsetEasy(double gear_ratio, double ref_offset, unsigned int ref_encoder, unsigned int cur_encoder);
-    ErrorCode saveGivenJoint(const Joint &joint);
+    ErrorCode saveGivenJoint(const basic_alg::Joint &joint);
     ErrorCode sendConfigData(int id, const std::vector<double> &data);
     ErrorCode buildRecordFile(const std::string &file);
     ErrorCode sendOffsetToBareCore(void);

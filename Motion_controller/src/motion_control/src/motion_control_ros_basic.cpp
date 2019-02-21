@@ -8,6 +8,8 @@
 #include <vector>
 #include <motion_control_ros_basic.h>
 
+using namespace basic_alg;
+
 namespace fst_mc
 {
 

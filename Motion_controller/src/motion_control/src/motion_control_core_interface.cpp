@@ -11,6 +11,7 @@
 using namespace std;
 using namespace fst_core_interface;
 using namespace fst_comm_interface;
+using namespace basic_alg;
 
 namespace fst_mc
 {

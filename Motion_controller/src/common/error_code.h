@@ -10,6 +10,8 @@
 #define FST_SUCCESS 0
 #endif
 
+typedef unsigned long long int ErrorCode;
+
 #define BM_INVALID_DTC (unsigned long long int)0x0
 #define BM_NUMBER_OF_DTC (int)170
 #define BM_DTC_E01 (unsigned long long int)0x0001000B00A10001   /*Controller,inner problem,there might be system damagement, need to change controller*/

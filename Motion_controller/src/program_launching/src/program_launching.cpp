@@ -113,7 +113,7 @@ ErrorCode ProgramLaunching::updateFileMacroConfig()
     macro_num_ = macro_vector_.size();
     launch_info_ = new EnableLaunchInfo[macro_num_];
     initLaunchInfo();
-    
+   
     return SUCCESS;
 }
 

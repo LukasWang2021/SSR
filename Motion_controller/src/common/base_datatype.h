@@ -15,7 +15,7 @@
 
 #define MAX_PATH_SIZE   2048
 
-typedef unsigned long long int ErrorCode;
+//typedef unsigned long long int ErrorCode;
 typedef unsigned int Tick;
 typedef double  MotionTime;
 

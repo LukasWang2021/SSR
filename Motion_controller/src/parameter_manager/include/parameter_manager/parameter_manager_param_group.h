@@ -10,8 +10,7 @@
 
 #include <string>
 #include <vector>
-#include "basic_alg_datatype.h" 
-using namespace basic_alg;
+#include <error_code.h>
 #include <parameter_manager/parameter_manager_param_value.h>
 
 

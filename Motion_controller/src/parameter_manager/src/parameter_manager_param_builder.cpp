@@ -9,14 +9,10 @@
 #include <sstream>
 
 #include <parameter_manager/parameter_manager_param_builder.h>
-#include "error_code.h"
 
 
 
-using std::string;
-using std::vector;
-using std::cout;
-using std::endl;
+using namespace std;
 
 namespace fst_parameter {
 

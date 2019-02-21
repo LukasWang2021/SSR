@@ -8,11 +8,8 @@
 #include "reg_manager.h"
 #include "process_comm_datatype.h"
 #include "interpreter_common.h"
-
 #include "fst_io_device.h"
-
 #include "basic_alg_datatype.h" 
-using namespace basic_alg;
 
 namespace fst_base
 {
@@ -53,10 +50,10 @@ public:
     ErrorCode getUi(uint32_t port_offset, uint32_t &value);
     ErrorCode setUi(uint32_t port_offset, uint32_t value);//not use
     ErrorCode getUo(uint32_t port_offset, uint32_t &value);
-    ErrorCode getJoint(int id, Joint &joint);
-    ErrorCode getCart(int id, PoseEuler &pos);
-    ErrorCode cartToJoint(PoseEuler pos, Joint &joint);
-    ErrorCode jointToCart(Joint joint, PoseEuler &pos);
+    ErrorCode getJoint(int id, basic_alg::Joint &joint);
+    ErrorCode getCart(int id, basic_alg::PoseEuler &pos);
+    ErrorCode cartToJoint(basic_alg::PoseEuler pos, basic_alg::Joint &joint);
+    ErrorCode jointToCart(basic_alg::Joint joint, basic_alg::PoseEuler &pos);
     
 private:
     fst_log::Logger* log_ptr_;

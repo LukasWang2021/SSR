@@ -8,7 +8,7 @@
 #include <string>
 #include "interpreter_common.h"
 #include "controller_server.h"
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 
 namespace fst_base
 {

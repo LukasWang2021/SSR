@@ -12,8 +12,7 @@
 //#include <unordered_map>
 #include <string>
 #include <vector>
-#include "base_datatype.h"
-#include "error_code.h"
+#include <error_code.h>
 
 
 namespace fst_parameter

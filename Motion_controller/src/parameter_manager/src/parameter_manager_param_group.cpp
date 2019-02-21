@@ -8,7 +8,6 @@
 #include <parameter_manager_version.h>
 #include <parameter_manager/parameter_manager_param_builder.h>
 #include <parameter_manager/parameter_manager_param_group.h>
-#include "error_code.h"
 #include <boost/filesystem.hpp>
 #include <memory>
 #include <fstream>

@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8.3)
 project(basic_alg)
 
 find_package(catkin REQUIRED COMPONENTS
-    log_manager
 )
 
 if(catkin_CROSS)
@@ -20,7 +19,6 @@ endif()
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/common
-    ${depend_PATH_INC}/log_manager/include
 )
 
 catkin_package(
@@ -44,7 +42,6 @@ add_library(basic_alg
 
 target_link_libraries(basic_alg
     ${catkin_LIBRARIES}
-    logger
 )
 
 install(TARGETS basic_alg

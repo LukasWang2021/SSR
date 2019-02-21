@@ -1,7 +1,9 @@
 #include "controller_publish.h"
+#include "basic_alg_datatype.h"
 
 using namespace fst_ctrl;
 using namespace fst_mc;
+using namespace fst_alg;
 
 void ControllerPublish::updateAxisGroupJointFeedback()
 {

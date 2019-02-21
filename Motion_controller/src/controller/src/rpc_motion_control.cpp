@@ -1,11 +1,13 @@
 #include "controller_rpc.h"
-#include "base_datatype.h"
+//#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 #include "motion_control_datatype.h"
 #include "error_code.h"
 #include <cstring>
 
 using namespace fst_ctrl;
 using namespace fst_mc;
+using namespace fst_alg;
 
 // "/rpc/motion_control/stop"
 void ControllerRpc::handleRpc0x00001E70(void* request_data_ptr, void* response_data_ptr)

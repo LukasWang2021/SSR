@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <string>
 
+#define     NUM_OF_JOINT    9
+
 namespace basic_alg
 {
 

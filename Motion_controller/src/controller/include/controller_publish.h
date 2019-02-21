@@ -7,12 +7,12 @@
 #include "tp_comm.h"
 #include "controller_sm.h"
 #include "motion_control.h"
-#include "base_datatype.h"
+//#include "base_datatype.h"
 #include "reg_manager.h"
 #include "process_comm.h"
-#include "io_mapping.h" //feng add for iomapping.
+#include "io_mapping.h" 
 #include "fst_safety_device.h"
-#include "base_device.h"//feng add
+#include "base_device.h"
 #include <vector>
 #include <list>
 

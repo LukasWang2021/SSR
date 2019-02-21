@@ -1,6 +1,6 @@
 #include "controller.h"
 #include "error_monitor.h"
-#include "base_datatype.h"
+//#include "base_datatype.h"
 #include <unistd.h>
 #include <iostream>
 #include "serverAlarmApi.h"

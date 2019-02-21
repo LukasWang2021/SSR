@@ -2,7 +2,7 @@
 #define BASIC_MATRIX_H
 
 #include <base_datatype.h>
-#include <log_manager/log_manager_logger.h>
+//#include <log_manager/log_manager_logger.h>
 
 namespace basic_alg
 {
@@ -55,7 +55,7 @@ class Matrix
     fst_mc::Pose toPose(void);
     void toPose(fst_mc::Pose &pose);
 
-    void printMatrix(fst_log::Logger *log = NULL);
+    //void printMatrix(fst_log::Logger *log = NULL);
 
 
   private:

@@ -34,7 +34,7 @@ bool Point::isEqual(Point& point, double valve) const
 
 bool Point::isParallel(Point& point, double valve) const
 {
-    double max1;
+    double max1, max2;
     int max_index;
     max1 = point.x_;
     max_index = 1;

@@ -255,6 +255,7 @@ void Matrix::toPose(Pose &pose)
     Matrix2Pose(matrix_, pose);
 }
 
+#if 0
 void Matrix::printMatrix(fst_log::Logger *log)
 {
     if (log != NULL)
@@ -276,7 +277,7 @@ void Matrix::printMatrix(fst_log::Logger *log)
         printf("-------------------------------------------\n");
     }
 }
-
+#endif
 }
 
 

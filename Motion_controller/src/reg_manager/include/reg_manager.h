@@ -3,7 +3,7 @@
 
 
 #include "reg_manager_param.h"
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 #include "common_log.h"
 #include "base_reg.h"
 #include "pr_reg.h"

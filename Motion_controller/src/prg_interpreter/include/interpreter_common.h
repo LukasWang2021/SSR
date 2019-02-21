@@ -2,7 +2,8 @@
 #define PRG_INTERPRETER_COMMON_H_
 
 #ifdef WIN32
-#include "fst_datatype.h"
+#include "basic_alg_datatype.h" 
+using namespace basic_alg;
 #include "stdint.h"
 using namespace fst_controller;
 #else

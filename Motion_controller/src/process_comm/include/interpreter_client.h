@@ -6,11 +6,13 @@
 #include <nanomsg/nn.h>
 #include <vector>
 #include "reg_manager.h"
-#include "base_datatype.h"
 #include "process_comm_datatype.h"
 #include "interpreter_common.h"
 
 #include "fst_io_device.h"
+
+#include "basic_alg_datatype.h" 
+using namespace basic_alg;
 
 namespace fst_base
 {

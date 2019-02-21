@@ -39,6 +39,7 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}
     ${depend_PATH_INC}/common 
+    ${depend_PATH_INC}/basic_alg
 )
 
 

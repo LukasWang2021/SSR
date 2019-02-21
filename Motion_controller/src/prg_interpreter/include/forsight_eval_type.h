@@ -8,8 +8,8 @@ using namespace fst_controller;
 #include "tp_reg_manager_interface.h"
 // #include "reg-shmi/forsight_regs_shmi.h"
 #else
-#include "base_datatype.h" 
-using namespace fst_mc;
+#include "basic_alg_datatype.h" 
+using namespace basic_alg;
 #include "process_comm.h"
 using namespace fst_ctrl ;
 #endif

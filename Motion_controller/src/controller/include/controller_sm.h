@@ -7,7 +7,7 @@
 #include "common_enum.h"
 #include "motion_control.h"
 #include "process_comm.h"
-//#include "base_datatype.h"
+//#include "base_datatype.h"//todo
 #include "serverAlarmApi.h"
 #include "fst_safety_device.h"
 #include "modbus_manager.h"

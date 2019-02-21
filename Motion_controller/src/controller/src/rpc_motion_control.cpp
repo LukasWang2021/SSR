@@ -1,5 +1,5 @@
 #include "controller_rpc.h"
-//#include "base_datatype.h"
+//#include "base_datatype.h"//todo
 #include "basic_alg_datatype.h"
 #include "motion_control_datatype.h"
 #include "error_code.h"

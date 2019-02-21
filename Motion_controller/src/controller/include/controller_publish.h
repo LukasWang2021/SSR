@@ -7,7 +7,7 @@
 #include "tp_comm.h"
 #include "controller_sm.h"
 #include "motion_control.h"
-//#include "base_datatype.h"
+//#include "base_datatype.h"//todo
 #include "reg_manager.h"
 #include "process_comm.h"
 #include "io_mapping.h" 

@@ -390,7 +390,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     double angle_start2via = getQuaternsIntersectionAngle(quatern_start, quatern_via);   
     double angle_via2target = getQuaternsIntersectionAngle(quatern_via, quatern_target);
     double angle_count_ideal_start2via = ceil(angle_start2via / segment_alg_param.angle_interval);    
-    double angle_count_ideal_via2target = ceil(angle_via2target / segment_alg_param.angle_interval);
+    //double angle_count_ideal_via2target = ceil(angle_via2target / segment_alg_param.angle_interval);
     double angle_distance_via2in = path_length_via2in / path_length_via2target; // scale to [0,1]   
     double angle_in2target = (1 - angle_distance_via2in) * angle_via2target;
     int angle_count_ideal_via2in = ceil(angle_distance_via2in * angle_via2target / segment_alg_param.angle_interval);
@@ -1451,7 +1451,7 @@ inline void getTrajPFromPathIn2End(const PathCache& path_cache, double traj_piec
     }
     int traj_pva_size_via2end_minus_1 = traj_pva_size_via2end - 1;
     int traj_piece_real_in2end = traj_pva_size_via2end_minus_1 - traj_pva_in_index;
-    int traj_piece_real_in2end_minus_1 = traj_piece_real_in2end - 1;
+    //int traj_piece_real_in2end_minus_1 = traj_piece_real_in2end - 1;
     stack[S_PathIndexStep_In2End] = (path_cache_length_minus_1 - path_cache.smooth_in_index) / (double)traj_piece_real_in2end;   
     // select traj point from path cache        
     updateTrajPSingleItem(S_TrajP0 + traj_pva_in_index, path_cache.cache[path_cache.smooth_in_index].joint);
@@ -1653,7 +1653,6 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
 inline void updateMovLIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
-    int i, j;
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
     double path_length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double traj_piece_ideal_in2end = path_length_in2end * stack[S_PathCountFactorCartesian];
@@ -1932,7 +1931,7 @@ inline void updateTrajPieceA(int traj_a_address, int traj_pva_size, double acc_r
     int i, j;
     int traj_a_address_local, traj_piece_a_address, constraint_joint_pos_acc_address, constraint_joint_neg_acc_address;
     int traj_piece_size = traj_pva_size - 1;
-    int traj_piece_size_half = (traj_piece_size >> 1);
+    //int traj_piece_size_half = (traj_piece_size >> 1);
     // first half
     for(i = 0; i < /*traj_piece_size_half*/(traj_piece_size - 1); ++i)
     {
@@ -2133,7 +2132,7 @@ inline void updateTrajCoeff(int traj_p_address, int traj_v_address, int traj_a_a
                                 int traj_t_address, int traj_t_size, int traj_j_address, int traj_coeff_address)
 {
     int traj_t_size_minus_1 = traj_t_size - 1;
-    int traj_coeff_address_local = traj_coeff_address;
+    //int traj_coeff_address_local = traj_coeff_address;
     for(int i = 0; i < model.link_num; ++i)
     {
         // first piece, quatern

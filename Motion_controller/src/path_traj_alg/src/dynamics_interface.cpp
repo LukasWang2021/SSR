@@ -15,7 +15,7 @@
 //#include <motion_plan_reuse.h>
 //#include <log_manager/log_manager_logger.h>
 #include <time.h>
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 //using namespace fst_log;
 using namespace std;
 ///using namespace fst_controller;
@@ -2772,7 +2772,7 @@ bool DynamicsInterface::getinversekinematics(FP t[4][4],FP j_ref[6],FP solve[6])
                         c4s5 = c1*c23*ax + c23*s1*ay + s23*az;
                         s4s5 = s1*ax - c1*ay;
                         t41 = atan2(s4s5, c4s5);
-                        t42 = (t41>0) ? (t41 - PI) : (t41 + PI);
+                        t42 = (t41>0) ? (t41 - M_PI) : (t41 + M_PI);
                     }
                     else {                                    //Set theta4=0,if theta5=0  
                         t41 = 0;
@@ -2802,7 +2802,7 @@ bool DynamicsInterface::getinversekinematics(FP t[4][4],FP j_ref[6],FP solve[6])
                         if (fabs(s5) < 1e-6) {         //if sin(theta5)=0, distribute values to make the distance minimum
                             FP t46_tmp = t4 + t6;
                             FP t46_0 = robot_model_.offset[3] +  robot_model_.offset[5];
-                            t46_tmp = t46_tmp - round((t46_tmp - t46_0) / PI / 2) * 2 * PI;
+                            t46_tmp = t46_tmp - round((t46_tmp - t46_0) / M_PI / 2) * 2 * M_PI;
                             t4 = ( robot_model_.offset[3] -robot_model_.offset[5] + t46_tmp) / 2;
                             t6 = t46_tmp - t4;
                         }
@@ -2825,20 +2825,20 @@ bool DynamicsInterface::getinversekinematics(FP t[4][4],FP j_ref[6],FP solve[6])
         } //else
 
         // All solutions got, then try to choose the optimum one 
-    int turns_6axis = round((robot_model_.qlim[5][1] - robot_model_.qlim[5][0]) / 2 / PI);
+    int turns_6axis = round((robot_model_.qlim[5][1] - robot_model_.qlim[5][0]) / 2 / M_PI);
     // All solutions got, then try to choose the optimum one 
 
     if (i) {            // i is the solution number,
         int minsol = 0;
         int turn = 0;
-        FP dist0 = 24 * pow(PI, 2);
+        FP dist0 = 24 * pow(M_PI, 2);
         for (int t = 0; t < turns_6axis; t++) {
             for (int k = 0; k < i; ++k) {
                 FP dist = 0;
                 for (int j = 0; j < 5; ++j) {
                     dist = dist + pow((JOINTS_SOL[k][j] - j_ref[j]), 2);
                 }
-                dist = dist + pow((JOINTS_SOL[k][5] + t * 2 * PI - j_ref[5]), 2);
+                dist = dist + pow((JOINTS_SOL[k][5] + t * 2 * M_PI - j_ref[5]), 2);
                 if (dist < dist0) {             //Fine the closest solution and get the number
                     minsol = k;
                     turn = t;
@@ -2852,7 +2852,7 @@ bool DynamicsInterface::getinversekinematics(FP t[4][4],FP j_ref[6],FP solve[6])
         for (int i = 0; i <= 5; ++i) {
             SOL_OUT[i] = JOINTS_SOL[minsol][i];         //Save the closest solution to SOL_OUT
             if (i == 5) {
-                SOL_OUT[i] = SOL_OUT[i] + turn * 2 * PI;
+                SOL_OUT[i] = SOL_OUT[i] + turn * 2 * M_PI;
             }
             solve[i] = fabs(SOL_OUT[i] - j_ref[i]);
         };
@@ -2871,13 +2871,13 @@ void DynamicsInterface::ReviseJoint(FP J[6],FP Joint_ref[6])
 {
     for (int i = 0; i < 6; i++) {
         // 先以参考关节值为依据，修正结果，使之距参考值最近
-        J[i] = J[i] - round((J[i] - Joint_ref[i]) / 2 / PI)*PI * 2;
+        J[i] = J[i] - round((J[i] - Joint_ref[i]) / 2 / M_PI)*M_PI * 2;
         
         // 再判断与上下限的关系，若超出单侧限制，则修正其回到该侧限制内，不保证在双侧限制内
         if (J[i]>robot_model_.qlim[i][1]) 
-            J[i] = J[i] - ceil((J[i] - robot_model_.qlim[i][1]) / 2 / PI)*PI * 2;
+            J[i] = J[i] - ceil((J[i] - robot_model_.qlim[i][1]) / 2 / M_PI)*M_PI * 2;
         else if (J[i]<robot_model_.qlim[i][0]) 
-            J[i] = J[i] - ceil((J[i] - robot_model_.qlim[i][0]) / 2 / PI)*PI * 2; 
+            J[i] = J[i] - ceil((J[i] - robot_model_.qlim[i][0]) / 2 / M_PI)*M_PI * 2; 
     }
 }
 

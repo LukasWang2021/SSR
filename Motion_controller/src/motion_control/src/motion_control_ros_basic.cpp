@@ -42,12 +42,12 @@ void RosBasic::initRosBasic(void)
 
 void RosBasic::pubJointState(const Joint &joint)
 {
-    js_.position[0] = joint.j1;
-    js_.position[1] = joint.j2;
-    js_.position[2] = joint.j3;
-    js_.position[3] = joint.j4;
-    js_.position[4] = joint.j5;
-    js_.position[5] = joint.j6;
+    js_.position[0] = joint.j1_;
+    js_.position[1] = joint.j2_;
+    js_.position[2] = joint.j3_;
+    js_.position[3] = joint.j4_;
+    js_.position[4] = joint.j5_;
+    js_.position[5] = joint.j6_;
 
     js_.header.stamp = ros::Time::now();
 

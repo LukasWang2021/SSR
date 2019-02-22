@@ -32,7 +32,6 @@ void test0(void)
     Joint omega;
     Joint alpha_upper, alpha_lower;
     clock_t start, end;
-    DynamicsProduct product;
     DynamicsInterface dynamics;
     float alpha[2][6];
 
@@ -90,8 +89,10 @@ void test1(void)
     ErrorMonitor error_monitor;
     arm.initGroup(&error_monitor);
 
+    double data[] = {0, 0, 0, 0, 0, PI / 2, 0, 0, 0};
     //Joint joint = {PI / 2, PI / 4, PI / 8, PI / 16, PI / 16, PI / 16, 0, 0, 0};
-    Joint joint = {0, 0, 0, 0, 0, PI / 2, 0, 0, 0};
+    Joint joint;
+    memcpy(&joint, data, sizeof(joint));
     Joint res;
     PoseEuler pose;
 
@@ -100,7 +101,7 @@ void test1(void)
 
     printf("forward kinematics:\n");
     printf("joint input = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
-    printf("pose output = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
+    printf("pose output = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
     //printf("inverse kinematics:\n");
     //printf("pose input = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
     //printf("joint output = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", res[0], res[1], res[2], res[3], res[4], res[5]);
@@ -153,7 +154,9 @@ void test2(void)
     //ManualDirection dirs[9] = {STANDING, STANDING, INCREASE, STANDING, STANDING, STANDING, STANDING, STANDING, STANDING};
     //arm.manualMoveStep(dirs);
     //Joint target = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    Joint target = {0.1, 0.3, 1.05, -0.5, -1.0, -0.2, 0, 0, 0};
+    Joint target;
+    double data[] = {0.1, 0.3, 1.05, -0.5, -1.0, -0.2, 0, 0, 0};
+    memcpy(&target, data, sizeof(target));
     arm.manualMoveToPoint(target);
     usleep(100 * 1000);
 
@@ -194,13 +197,13 @@ void test3(void)
     target.type = MOTION_JOINT;
     target.vel = 0.5;
     target.cnt = -1;
-    target.joint_target.j1 = 0.0;
-    target.joint_target.j2 = 0.0;
-    target.joint_target.j3 = 0.0;
-    target.joint_target.j4 = 0.0;
+    target.joint_target.j1_ = 0.0;
+    target.joint_target.j2_ = 0.0;
+    target.joint_target.j3_ = 0.0;
+    target.joint_target.j4_ = 0.0;
     //target.joint_target.j5 = -1.5708;
-    target.joint_target.j5 = 0.0;
-    target.joint_target.j6 = 0.0;
+    target.joint_target.j5_ = 0.0;
+    target.joint_target.j6_ = 0.0;
     arm.autoMove(10, target);
 
     /*
@@ -242,7 +245,7 @@ void test4(void)
     arm.initGroup(&error_monitor);
     ofstream  kout("kinematics.csv");
 
-    Pose pose;
+    PoseQuaternion pose;
     Joint inp, res;
 
     kout << "input.j1,input.j2,input.j3,input.j4,input.j5,input.j6,pose.x,pose.y,pose.z,pose.ow,pose.ox,pose.oy,pose.oz," 
@@ -250,37 +253,37 @@ void test4(void)
 
     for (double j1 = -PI + 0.01; j1 < PI - 0.01; j1 += PI / 3)
     {
-        inp.j1 = j1;
+        inp.j1_ = j1;
 
         for (double j2 = -PI + 0.01; j2 < PI - 0.01; j2 += PI / 3)
         {
-            inp.j2 = j2;
+            inp.j2_ = j2;
 
             for (double j3 = -PI + 0.01; j3 < PI - 0.01; j3 += PI / 3)
             {
-                inp.j3 = j3;
+                inp.j3_ = j3;
 
                 for (double j4 = -PI + 0.01; j4 < PI - 0.01; j4 += PI / 3)
                 {
-                    inp.j4 = j4;
+                    inp.j4_ = j4;
 
                     for (double j5 = -PI + 0.01; j5 < PI - 0.01; j5 += PI / 3)
                     {
-                        inp.j5 = j5;
+                        inp.j5_ = j5;
 
                         for (double j6 = -PI + 0.01; j6 < PI - 0.01; j6 += PI / 3)
                         {
-                            inp.j6 = j6;
+                            inp.j6_ = j6;
 
                             arm.getKinematicsPtr()->forwardKinematicsInUser(inp, pose);
                             arm.getKinematicsPtr()->inverseKinematicsInUser(pose, inp, res);
                             
-                            kout << inp.j1 << "," << inp.j2 << "," << inp.j3 << "," << inp.j4 << "," << inp.j5 << "," << inp.j6 << ","
-                                 << pose.position.x << "," << pose.position.y << "," << pose.position.z << "," << pose.orientation.w << "," << pose.orientation.x << "," << pose.orientation.y << "," << pose.orientation.z << ",";
+                            kout << inp.j1_ << "," << inp.j2_ << "," << inp.j3_ << "," << inp.j4_ << "," << inp.j5_ << "," << inp.j6_ << ","
+                                 << pose.point_.x_ << "," << pose.point_.y_ << "," << pose.point_.z_ << "," << pose.quaternion_.w_ << "," << pose.quaternion_.x_ << "," << pose.quaternion_.y_ << "," << pose.quaternion_.z_ << ",";
 
                             arm.getKinematicsPtr()->forwardKinematicsInUser(res, pose);
-                            kout << res.j1 << "," << res.j2 << "," << res.j3 << "," << res.j4 << "," << res.j5 << "," << res.j6 << ","
-                                 << pose.position.x << "," << pose.position.y << "," << pose.position.z << "," << pose.orientation.w << "," << pose.orientation.x << "," << pose.orientation.y << "," << pose.orientation.z << endl;
+                            kout << res.j1_ << "," << res.j2_ << "," << res.j3_ << "," << res.j4_ << "," << res.j5_ << "," << res.j6_ << ","
+                                 << pose.point_.x_ << "," << pose.point_.y_ << "," << pose.point_.z_ << "," << pose.quaternion_.w_ << "," << pose.quaternion_.x_ << "," << pose.quaternion_.y_ << "," << pose.quaternion_.z_ << endl;
                         }
                     }
                 }
@@ -304,23 +307,23 @@ void test6(void)
 
     arm.initGroup(&error_monitor);
 
-    p.position.x = -29.04;
-    p.position.y = 167.96;
-    p.position.z = -465.96;
-    p.orientation.a = -0.001571;
-    p.orientation.b = 0.999334;
-    p.orientation.c = 0.014975;
+    p.point_.x_ = -29.04;
+    p.point_.y_ = 167.96;
+    p.point_.z_ = -465.96;
+    p.euler_.a_ = -0.001571;
+    p.euler_.b_ = 0.999334;
+    p.euler_.c_ = 0.014975;
 
-    ref.j1 = -0.535158;
-    ref.j2 = -0.203063;
-    ref.j3 = -0.730588;
-    ref.j4 = -0.112341;
-    ref.j5 = 1.777998;
-    ref.j6 = 1.040318;
+    ref.j1_ = -0.535158;
+    ref.j2_ = -0.203063;
+    ref.j3_ = -0.730588;
+    ref.j4_ = -0.112341;
+    ref.j5_ = 1.777998;
+    ref.j6_ = 1.040318;
 
 
     arm.getKinematicsPtr()->forwardKinematicsInBase(ref, p);
-    printf("%.4f, %.4f, %.4f - %.4f, %.4f, %.4f\n", p.position.x, p.position.y, p.position.z, p.orientation.a, p.orientation.b, p.orientation.c);
+    printf("%.4f, %.4f, %.4f - %.4f, %.4f, %.4f\n", p.point_.x_, p.point_.y_, p.point_.z_, p.euler_.a_, p.euler_.b_, p.euler_.c_);
 
 
 
@@ -329,7 +332,7 @@ void test6(void)
         ErrorCode err = arm.getKinematicsPtr()->inverseKinematicsInUser(p, ref, res);
     clock_t end = clock();
 
-    double seconds  =(double)(end - start)/CLOCKS_PER_SEC;
+    double seconds  = (double)(end - start)/CLOCKS_PER_SEC;
     printf("kinematics using time: %.6f ms\n", seconds * 1000);
 
     /*
@@ -384,14 +387,16 @@ void test7(void)
     initComplexAxisGroupModel();
     initSegmentAlgParam(&seg_param);
 
-    Joint start_joint = {0.234, 1.234, -2.044, 0.876, -1.2432, 0.003};
+    Joint start_joint;
+    double data[] = {0.234, 1.234, -2.044, 0.876, -1.2432, 0.003, 0, 0, 0};
+    memcpy(&start_joint, data, sizeof(start_joint));
     MotionTarget target;
-    target.joint_target.j1 = -1.34;
-    target.joint_target.j2 = -0.23;
-    target.joint_target.j3 = 1.455;
-    target.joint_target.j4 = 0.034;
-    target.joint_target.j5 = 0.567;
-    target.joint_target.j6 = -1.4556;
+    target.joint_target.j1_ = -1.34;
+    target.joint_target.j2_ = -0.23;
+    target.joint_target.j3_ = 1.455;
+    target.joint_target.j4_ = 0.034;
+    target.joint_target.j5_ = 0.567;
+    target.joint_target.j6_ = -1.4556;
     target.cnt = 0;
     target.vel = 1.0;
     target.type = MOTION_JOINT;

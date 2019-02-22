@@ -122,6 +122,7 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
         {
             state = ServoState(fbjs.state);
             memcpy(&joint, fbjs.position, JOINT_NUM * sizeof(double));
+            memset((void*)&joint + JOINT_NUM * sizeof(double), 0, sizeof(Joint) - JOINT_NUM * sizeof(double));
             return true;
         }
         else

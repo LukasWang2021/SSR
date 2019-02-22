@@ -1479,7 +1479,7 @@ inline void getTrajPFromPathIn2End(const PathCache& path_cache, double traj_piec
 inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_piece_ideal_in2end, int traj_pva_in_index, 
                                           int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
-    double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+    double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache.smooth_out_index].pose.point_);
     double traj_piece_ideal_in2out = path_length_in2out * stack[S_PathCountFactorCartesian];
     if(traj_piece_ideal_in2out < DOUBLE_ACCURACY)   // in and out point is the same point
     {
@@ -1571,7 +1571,7 @@ inline void updateMovLTrajP(const PathCache& path_cache, int* traj_path_cache_in
                                 int& traj_pva_out_index, int& traj_pva_size)
 {
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double traj_piece_ideal_start2end = path_length_start2end * stack[S_PathCountFactorCartesian];
     if(path_cache.smooth_out_index == -1
         || path_cache.smooth_out_index == path_cache_length_minus_1)
@@ -1608,14 +1608,14 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
     // compute path vector and quatern for via2in
     double path_vector_via2in[3];
     double path_length_via2in;
-    getMoveLPathVector(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position, path_vector_via2in, path_length_via2in);
+    getMoveLPathVector(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, path_vector_via2in, path_length_via2in);
     double via_quatern[4], in_quatern[4];
-    getMoveEulerToQuatern(via.pose_target.orientation, via_quatern);
-    getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.orientation, in_quatern);
+    getMoveEulerToQuatern(via.pose_target.euler_, via_quatern);
+    getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.quaternion_, in_quatern);
     double angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
     // compute via joint
     Joint joint_via;
-    segment_alg_param.kinematics_ptr->inverseKinematicsInUser(via.pose_target, path_cache.cache[0].joint, joint_via);
+    segment_alg_param.kinematics_ptr->doIK(via.pose_target, path_cache.cache[0].joint, joint_via);
     // decide traj_pva_in_index & length_step & angle_step, fill TrajP via2in if in is not on via
     double traj_piece_ideal_via2in = path_length_via2in * stack[S_PathCountFactorCartesian];
     if(traj_piece_ideal_via2in < DOUBLE_ACCURACY)
@@ -1655,7 +1655,7 @@ inline void updateMovLIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_i
 {
     int i, j;
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double traj_piece_ideal_in2end = path_length_in2end * stack[S_PathCountFactorCartesian];
     if(path_cache.smooth_out_index == -1
         || path_cache.smooth_out_index == path_cache_length_minus_1)
@@ -1675,7 +1675,7 @@ inline void updateMovLTrajT(const PathCache& path_cache, double cmd_vel,
     int i;
     // compute total time
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double critical_length = cmd_vel * cmd_vel / segment_alg_param.max_cartesian_acc;
     double time_span_start2end;
     if(path_length_start2end > critical_length) // can reach vel

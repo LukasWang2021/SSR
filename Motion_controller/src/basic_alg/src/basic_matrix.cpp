@@ -2,8 +2,9 @@
 #include <iostream>
 #include <basic_matrix.h>
 #include <basic_alg.h>
+#include <cassert>
 
-using namespace fst_mc;
+//using namespace fst_mc;
 
 namespace basic_alg
 {
@@ -33,7 +34,7 @@ Matrix::Matrix(const PoseEuler &pose)
     PoseEuler2Matrix(pose, matrix_);
 }
 
-Matrix::Matrix(const Pose &pose)
+Matrix::Matrix(const PoseQuaternion &pose)
 {
     Pose2Matrix(pose, matrix_);
 }
@@ -56,7 +57,7 @@ Matrix& Matrix::operator=(const PoseEuler pose)
     return operator=(Matrix(pose));
 }
 
-Matrix& Matrix::operator=(const Pose pose)
+Matrix& Matrix::operator=(const PoseQuaternion pose)
 {
     return operator=(Matrix(pose));
 }
@@ -225,7 +226,7 @@ Matrix& Matrix::fromPoseEuler(const PoseEuler &pose)
     return *this;
 }
 
-Matrix& Matrix::fromPose(const Pose &pose)
+Matrix& Matrix::fromPose(const PoseQuaternion &pose)
 {
     Pose2Matrix(pose, matrix_);
     return *this;
@@ -243,14 +244,14 @@ void Matrix::toPoseEuler(PoseEuler &pose)
     Matrix2PoseEuler(matrix_, pose);
 }
 
-Pose Matrix::toPose(void)
+PoseQuaternion Matrix::toPose(void)
 {
-    Pose pose;
+    PoseQuaternion pose;
     Matrix2Pose(matrix_, pose);
     return pose;
 }
 
-void Matrix::toPose(Pose &pose)
+void Matrix::toPose(PoseQuaternion &pose)
 {
     Matrix2Pose(matrix_, pose);
 }

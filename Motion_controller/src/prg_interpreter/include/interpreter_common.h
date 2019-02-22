@@ -10,6 +10,8 @@ using namespace fst_controller;
 #include "motion_control_datatype.h"
 #include "stdint.h"
 using namespace fst_mc;
+#include "basic_alg_datatype.h" 
+using namespace basic_alg;
 #endif
 
 #define ADD_INFO_NUM    10

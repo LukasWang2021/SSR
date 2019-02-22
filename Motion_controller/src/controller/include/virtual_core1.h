@@ -3,7 +3,6 @@
 
 #include "controller_param.h"
 #include <thread>
-//#include "base_datatype.h"//todo
 #include "basic_alg_datatype.h"
 #include "common_log.h"
 #include "thread_help.h"

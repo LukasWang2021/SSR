@@ -7,13 +7,14 @@
 #include <sys/mman.h>
 #include <string>
 #include "basic_alg_datatype.h"
+#include "basic_constants.h"
 
 
 using namespace fst_ctrl;
 using namespace fst_base;
 using namespace fst_mc;
 using namespace fst_hal;
-using namespace fst_alg;
+using namespace basic_alg;
 
 ControllerSm::ControllerSm():
     log_ptr_(NULL),

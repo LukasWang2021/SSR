@@ -18,12 +18,12 @@ void ControllerRpc::handleRpc0x0000A22C(void* request_data_ptr, void* response_d
     info.comment = rq_data_ptr->data.comment;
     info.is_valid = false;  // not used, but initialized
     info.group_id = rq_data_ptr->data.group_id;
-    info.data.position.x = rq_data_ptr->data.data.x;
-    info.data.position.y = rq_data_ptr->data.data.y;
-    info.data.position.z = rq_data_ptr->data.data.z;
-    info.data.orientation.a = rq_data_ptr->data.data.a;
-    info.data.orientation.b = rq_data_ptr->data.data.b;
-    info.data.orientation.c = rq_data_ptr->data.data.c;
+    info.data.point_.x_ = rq_data_ptr->data.data.x;
+    info.data.point_.y_ = rq_data_ptr->data.data.y;
+    info.data.point_.z_ = rq_data_ptr->data.data.z;
+    info.data.euler_.a_ = rq_data_ptr->data.data.a;
+    info.data.euler_.b_ = rq_data_ptr->data.data.b;
+    info.data.euler_.c_ = rq_data_ptr->data.data.c;
     rs_data_ptr->data.data = tool_manager_ptr_->addTool(info);
     recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/addTool"));
 }
@@ -50,12 +50,12 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
     info.comment = rq_data_ptr->data.comment;
     info.is_valid = false;  // not used, but initialized
     info.group_id = rq_data_ptr->data.group_id;
-    info.data.position.x = rq_data_ptr->data.data.x;
-    info.data.position.y = rq_data_ptr->data.data.y;
-    info.data.position.z = rq_data_ptr->data.data.z;
-    info.data.orientation.a = rq_data_ptr->data.data.a;
-    info.data.orientation.b = rq_data_ptr->data.data.b;
-    info.data.orientation.c = rq_data_ptr->data.data.c;
+    info.data.point_.x_ = rq_data_ptr->data.data.x;
+    info.data.point_.y_ = rq_data_ptr->data.data.y;
+    info.data.point_.z_ = rq_data_ptr->data.data.z;
+    info.data.euler_.a_ = rq_data_ptr->data.data.a;
+    info.data.euler_.b_ = rq_data_ptr->data.data.b;
+    info.data.euler_.c_ = rq_data_ptr->data.data.c;
     rs_data_ptr->data.data = tool_manager_ptr_->updateTool(info);
     recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/updateTool"));
 }
@@ -93,12 +93,12 @@ void ControllerRpc::handleRpc0x00009E34(void* request_data_ptr, void* response_d
         strncpy(rs_data_ptr->data.comment, info.comment.c_str(), 255);
         rs_data_ptr->data.comment[255] = 0;
         rs_data_ptr->data.group_id = info.group_id;
-        rs_data_ptr->data.data.x = info.data.position.x;
-        rs_data_ptr->data.data.y = info.data.position.y;
-        rs_data_ptr->data.data.z = info.data.position.z;
-        rs_data_ptr->data.data.a = info.data.orientation.a;
-        rs_data_ptr->data.data.b = info.data.orientation.b;
-        rs_data_ptr->data.data.c = info.data.orientation.c;
+        rs_data_ptr->data.data.x = info.data.point_.x_;
+        rs_data_ptr->data.data.y = info.data.point_.y_;
+        rs_data_ptr->data.data.z = info.data.point_.z_;
+        rs_data_ptr->data.data.a = info.data.euler_.a_;
+        rs_data_ptr->data.data.b = info.data.euler_.b_;
+        rs_data_ptr->data.data.c = info.data.euler_.c_;
     }
     recordLog(TOOL_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/tool_manager/getToolInfoById"));
 }

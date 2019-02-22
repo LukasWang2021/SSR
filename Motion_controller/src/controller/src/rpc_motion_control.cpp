@@ -1,13 +1,14 @@
 #include "controller_rpc.h"
 //#include "base_datatype.h"//todo
 #include "basic_alg_datatype.h"
+#include "basic_constants.h"
 #include "motion_control_datatype.h"
 #include "error_code.h"
 #include <cstring>
 
 using namespace fst_ctrl;
 using namespace fst_mc;
-using namespace fst_alg;
+using namespace basic_alg;
 
 // "/rpc/motion_control/stop"
 void ControllerRpc::handleRpc0x00001E70(void* request_data_ptr, void* response_data_ptr)
@@ -216,12 +217,12 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
     if(rq_data_ptr->data2.data_count == 6)
     {
         PoseEuler pos;
-        pos.position.x = rq_data_ptr->data2.data[0];
-        pos.position.y = rq_data_ptr->data2.data[1];
-        pos.position.z = rq_data_ptr->data2.data[2];
-        pos.orientation.a = rq_data_ptr->data2.data[3];
-        pos.orientation.b = rq_data_ptr->data2.data[4];
-        pos.orientation.c = rq_data_ptr->data2.data[5];
+        pos.point_.x_ = rq_data_ptr->data2.data[0];
+        pos.point_.y_ = rq_data_ptr->data2.data[1];
+        pos.point_.z_ = rq_data_ptr->data2.data[2];
+        pos.euler_.a_ = rq_data_ptr->data2.data[3];
+        pos.euler_.b_ = rq_data_ptr->data2.data[4];
+        pos.euler_.c_ = rq_data_ptr->data2.data[5];
         rs_data_ptr->data.data = motion_control_ptr_->doGotoPointManualMove(pos);
         if(rs_data_ptr->data.data == SUCCESS)
         {
@@ -253,15 +254,15 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
     if(rq_data_ptr->data2.data_count == 9)
     {
         Joint joint;
-        joint.j1 = rq_data_ptr->data2.data[0];
-        joint.j2 = rq_data_ptr->data2.data[1];
-        joint.j3 = rq_data_ptr->data2.data[2];
-        joint.j4 = rq_data_ptr->data2.data[3];
-        joint.j5 = rq_data_ptr->data2.data[4];
-        joint.j6 = rq_data_ptr->data2.data[5];
-        joint.j7 = rq_data_ptr->data2.data[6];
-        joint.j8 = rq_data_ptr->data2.data[7];
-        joint.j9 = rq_data_ptr->data2.data[8];
+        joint.j1_ = rq_data_ptr->data2.data[0];
+        joint.j2_ = rq_data_ptr->data2.data[1];
+        joint.j3_ = rq_data_ptr->data2.data[2];
+        joint.j4_ = rq_data_ptr->data2.data[3];
+        joint.j5_ = rq_data_ptr->data2.data[4];
+        joint.j6_ = rq_data_ptr->data2.data[5];
+        joint.j7_ = rq_data_ptr->data2.data[6];
+        joint.j8_ = rq_data_ptr->data2.data[7];
+        joint.j9_ = rq_data_ptr->data2.data[8];
         rs_data_ptr->data.data = motion_control_ptr_->doGotoPointManualMove(joint);
         if(rs_data_ptr->data.data == SUCCESS)
         {
@@ -325,24 +326,24 @@ void ControllerRpc::handleRpc0x000114A4(void* request_data_ptr, void* response_d
         && rq_data_ptr->limit.negative_limit.data_count == 9)
     {
         JointConstraint constraint;
-        constraint.upper.j1 = rq_data_ptr->limit.positive_limit.data[0];
-        constraint.upper.j2 = rq_data_ptr->limit.positive_limit.data[1];
-        constraint.upper.j3 = rq_data_ptr->limit.positive_limit.data[2];
-        constraint.upper.j4 = rq_data_ptr->limit.positive_limit.data[3];
-        constraint.upper.j5 = rq_data_ptr->limit.positive_limit.data[4];
-        constraint.upper.j6 = rq_data_ptr->limit.positive_limit.data[5];
-        constraint.upper.j7 = rq_data_ptr->limit.positive_limit.data[6];
-        constraint.upper.j8 = rq_data_ptr->limit.positive_limit.data[7];
-        constraint.upper.j9 = rq_data_ptr->limit.positive_limit.data[8];
-        constraint.lower.j1 = rq_data_ptr->limit.negative_limit.data[0];
-        constraint.lower.j2 = rq_data_ptr->limit.negative_limit.data[1];
-        constraint.lower.j3 = rq_data_ptr->limit.negative_limit.data[2];
-        constraint.lower.j4 = rq_data_ptr->limit.negative_limit.data[3];
-        constraint.lower.j5 = rq_data_ptr->limit.negative_limit.data[4];
-        constraint.lower.j6 = rq_data_ptr->limit.negative_limit.data[5];
-        constraint.lower.j7 = rq_data_ptr->limit.negative_limit.data[6];
-        constraint.lower.j8 = rq_data_ptr->limit.negative_limit.data[7];
-        constraint.lower.j9 = rq_data_ptr->limit.negative_limit.data[8];
+        constraint.upper.j1_ = rq_data_ptr->limit.positive_limit.data[0];
+        constraint.upper.j2_ = rq_data_ptr->limit.positive_limit.data[1];
+        constraint.upper.j3_ = rq_data_ptr->limit.positive_limit.data[2];
+        constraint.upper.j4_ = rq_data_ptr->limit.positive_limit.data[3];
+        constraint.upper.j5_ = rq_data_ptr->limit.positive_limit.data[4];
+        constraint.upper.j6_ = rq_data_ptr->limit.positive_limit.data[5];
+        constraint.upper.j7_ = rq_data_ptr->limit.positive_limit.data[6];
+        constraint.upper.j8_ = rq_data_ptr->limit.positive_limit.data[7];
+        constraint.upper.j9_ = rq_data_ptr->limit.positive_limit.data[8];
+        constraint.lower.j1_ = rq_data_ptr->limit.negative_limit.data[0];
+        constraint.lower.j2_ = rq_data_ptr->limit.negative_limit.data[1];
+        constraint.lower.j3_ = rq_data_ptr->limit.negative_limit.data[2];
+        constraint.lower.j4_ = rq_data_ptr->limit.negative_limit.data[3];
+        constraint.lower.j5_ = rq_data_ptr->limit.negative_limit.data[4];
+        constraint.lower.j6_ = rq_data_ptr->limit.negative_limit.data[5];
+        constraint.lower.j7_ = rq_data_ptr->limit.negative_limit.data[6];
+        constraint.lower.j8_ = rq_data_ptr->limit.negative_limit.data[7];
+        constraint.lower.j9_ = rq_data_ptr->limit.negative_limit.data[8];
         rs_data_ptr->data.data = motion_control_ptr_->setSoftConstraint(constraint);
     }
     else
@@ -363,25 +364,25 @@ void ControllerRpc::handleRpc0x0000C764(void* request_data_ptr, void* response_d
     if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->limit.positive_limit.data_count = 9;
-        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1;
-        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2;
-        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3;
-        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4;
-        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5;
-        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6;
-        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7;
-        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8;
-        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9;
+        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1_;
+        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2_;
+        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3_;
+        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4_;
+        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5_;
+        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6_;
+        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7_;
+        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8_;
+        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9_;
         rs_data_ptr->limit.negative_limit.data_count = 9;
-        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1;
-        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2;
-        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3;
-        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4;
-        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5;
-        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6;
-        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7;
-        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8;
-        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9;
+        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1_;
+        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2_;
+        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3_;
+        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4_;
+        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5_;
+        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6_;
+        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7_;
+        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8_;
+        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9_;
     }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getUserSoftLimit"));
 }
@@ -396,24 +397,24 @@ void ControllerRpc::handleRpc0x000108E4(void* request_data_ptr, void* response_d
         && rq_data_ptr->limit.negative_limit.data_count == 9)
     {
         JointConstraint constraint;
-        constraint.upper.j1 = rq_data_ptr->limit.positive_limit.data[0];
-        constraint.upper.j2 = rq_data_ptr->limit.positive_limit.data[1];
-        constraint.upper.j3 = rq_data_ptr->limit.positive_limit.data[2];
-        constraint.upper.j4 = rq_data_ptr->limit.positive_limit.data[3];
-        constraint.upper.j5 = rq_data_ptr->limit.positive_limit.data[4];
-        constraint.upper.j6 = rq_data_ptr->limit.positive_limit.data[5];
-        constraint.upper.j7 = rq_data_ptr->limit.positive_limit.data[6];
-        constraint.upper.j8 = rq_data_ptr->limit.positive_limit.data[7];
-        constraint.upper.j9 = rq_data_ptr->limit.positive_limit.data[8];
-        constraint.lower.j1 = rq_data_ptr->limit.negative_limit.data[0];
-        constraint.lower.j2 = rq_data_ptr->limit.negative_limit.data[1];
-        constraint.lower.j3 = rq_data_ptr->limit.negative_limit.data[2];
-        constraint.lower.j4 = rq_data_ptr->limit.negative_limit.data[3];
-        constraint.lower.j5 = rq_data_ptr->limit.negative_limit.data[4];
-        constraint.lower.j6 = rq_data_ptr->limit.negative_limit.data[5];
-        constraint.lower.j7 = rq_data_ptr->limit.negative_limit.data[6];
-        constraint.lower.j8 = rq_data_ptr->limit.negative_limit.data[7];
-        constraint.lower.j9 = rq_data_ptr->limit.negative_limit.data[8];
+        constraint.upper.j1_ = rq_data_ptr->limit.positive_limit.data[0];
+        constraint.upper.j2_ = rq_data_ptr->limit.positive_limit.data[1];
+        constraint.upper.j3_ = rq_data_ptr->limit.positive_limit.data[2];
+        constraint.upper.j4_ = rq_data_ptr->limit.positive_limit.data[3];
+        constraint.upper.j5_ = rq_data_ptr->limit.positive_limit.data[4];
+        constraint.upper.j6_ = rq_data_ptr->limit.positive_limit.data[5];
+        constraint.upper.j7_ = rq_data_ptr->limit.positive_limit.data[6];
+        constraint.upper.j8_ = rq_data_ptr->limit.positive_limit.data[7];
+        constraint.upper.j9_ = rq_data_ptr->limit.positive_limit.data[8];
+        constraint.lower.j1_ = rq_data_ptr->limit.negative_limit.data[0];
+        constraint.lower.j2_ = rq_data_ptr->limit.negative_limit.data[1];
+        constraint.lower.j3_ = rq_data_ptr->limit.negative_limit.data[2];
+        constraint.lower.j4_ = rq_data_ptr->limit.negative_limit.data[3];
+        constraint.lower.j5_ = rq_data_ptr->limit.negative_limit.data[4];
+        constraint.lower.j6_ = rq_data_ptr->limit.negative_limit.data[5];
+        constraint.lower.j7_ = rq_data_ptr->limit.negative_limit.data[6];
+        constraint.lower.j8_ = rq_data_ptr->limit.negative_limit.data[7];
+        constraint.lower.j9_ = rq_data_ptr->limit.negative_limit.data[8];
         rs_data_ptr->data.data = motion_control_ptr_->setFirmConstraint(constraint);
     }
     else
@@ -434,25 +435,25 @@ void ControllerRpc::handleRpc0x0000C244(void* request_data_ptr, void* response_d
     if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->limit.positive_limit.data_count = 9;
-        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1;
-        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2;
-        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3;
-        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4;
-        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5;
-        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6;
-        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7;
-        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8;
-        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9;
+        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1_;
+        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2_;
+        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3_;
+        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4_;
+        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5_;
+        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6_;
+        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7_;
+        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8_;
+        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9_;
         rs_data_ptr->limit.negative_limit.data_count = 9;
-        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1;
-        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2;
-        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3;
-        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4;
-        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5;
-        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6;
-        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7;
-        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8;
-        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9;
+        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1_;
+        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2_;
+        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3_;
+        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4_;
+        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5_;
+        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6_;
+        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7_;
+        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8_;
+        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9_;
     }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getManuSoftLimit"));
 }
@@ -467,24 +468,24 @@ void ControllerRpc::handleRpc0x0000C454(void* request_data_ptr, void* response_d
         && rq_data_ptr->limit.negative_limit.data_count == 9)
     {
         JointConstraint constraint;
-        constraint.upper.j1 = rq_data_ptr->limit.positive_limit.data[0];
-        constraint.upper.j2 = rq_data_ptr->limit.positive_limit.data[1];
-        constraint.upper.j3 = rq_data_ptr->limit.positive_limit.data[2];
-        constraint.upper.j4 = rq_data_ptr->limit.positive_limit.data[3];
-        constraint.upper.j5 = rq_data_ptr->limit.positive_limit.data[4];
-        constraint.upper.j6 = rq_data_ptr->limit.positive_limit.data[5];
-        constraint.upper.j7 = rq_data_ptr->limit.positive_limit.data[6];
-        constraint.upper.j8 = rq_data_ptr->limit.positive_limit.data[7];
-        constraint.upper.j9 = rq_data_ptr->limit.positive_limit.data[8];
-        constraint.lower.j1 = rq_data_ptr->limit.negative_limit.data[0];
-        constraint.lower.j2 = rq_data_ptr->limit.negative_limit.data[1];
-        constraint.lower.j3 = rq_data_ptr->limit.negative_limit.data[2];
-        constraint.lower.j4 = rq_data_ptr->limit.negative_limit.data[3];
-        constraint.lower.j5 = rq_data_ptr->limit.negative_limit.data[4];
-        constraint.lower.j6 = rq_data_ptr->limit.negative_limit.data[5];
-        constraint.lower.j7 = rq_data_ptr->limit.negative_limit.data[6];
-        constraint.lower.j8 = rq_data_ptr->limit.negative_limit.data[7];
-        constraint.lower.j9 = rq_data_ptr->limit.negative_limit.data[8];
+        constraint.upper.j1_ = rq_data_ptr->limit.positive_limit.data[0];
+        constraint.upper.j2_ = rq_data_ptr->limit.positive_limit.data[1];
+        constraint.upper.j3_ = rq_data_ptr->limit.positive_limit.data[2];
+        constraint.upper.j4_ = rq_data_ptr->limit.positive_limit.data[3];
+        constraint.upper.j5_ = rq_data_ptr->limit.positive_limit.data[4];
+        constraint.upper.j6_ = rq_data_ptr->limit.positive_limit.data[5];
+        constraint.upper.j7_ = rq_data_ptr->limit.positive_limit.data[6];
+        constraint.upper.j8_ = rq_data_ptr->limit.positive_limit.data[7];
+        constraint.upper.j9_ = rq_data_ptr->limit.positive_limit.data[8];
+        constraint.lower.j1_ = rq_data_ptr->limit.negative_limit.data[0];
+        constraint.lower.j2_ = rq_data_ptr->limit.negative_limit.data[1];
+        constraint.lower.j3_ = rq_data_ptr->limit.negative_limit.data[2];
+        constraint.lower.j4_ = rq_data_ptr->limit.negative_limit.data[3];
+        constraint.lower.j5_ = rq_data_ptr->limit.negative_limit.data[4];
+        constraint.lower.j6_ = rq_data_ptr->limit.negative_limit.data[5];
+        constraint.lower.j7_ = rq_data_ptr->limit.negative_limit.data[6];
+        constraint.lower.j8_ = rq_data_ptr->limit.negative_limit.data[7];
+        constraint.lower.j9_ = rq_data_ptr->limit.negative_limit.data[8];
         rs_data_ptr->data.data = motion_control_ptr_->setHardConstraint(constraint);
     }
     else
@@ -505,25 +506,25 @@ void ControllerRpc::handleRpc0x00013394(void* request_data_ptr, void* response_d
     if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->limit.positive_limit.data_count = 9;
-        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1;
-        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2;
-        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3;
-        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4;
-        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5;
-        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6;
-        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7;
-        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8;
-        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9;
+        rs_data_ptr->limit.positive_limit.data[0] = constraint.upper.j1_;
+        rs_data_ptr->limit.positive_limit.data[1] = constraint.upper.j2_;
+        rs_data_ptr->limit.positive_limit.data[2] = constraint.upper.j3_;
+        rs_data_ptr->limit.positive_limit.data[3] = constraint.upper.j4_;
+        rs_data_ptr->limit.positive_limit.data[4] = constraint.upper.j5_;
+        rs_data_ptr->limit.positive_limit.data[5] = constraint.upper.j6_;
+        rs_data_ptr->limit.positive_limit.data[6] = constraint.upper.j7_;
+        rs_data_ptr->limit.positive_limit.data[7] = constraint.upper.j8_;
+        rs_data_ptr->limit.positive_limit.data[8] = constraint.upper.j9_;
         rs_data_ptr->limit.negative_limit.data_count = 9;
-        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1;
-        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2;
-        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3;
-        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4;
-        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5;
-        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6;
-        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7;
-        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8;
-        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9;
+        rs_data_ptr->limit.negative_limit.data[0] = constraint.lower.j1_;
+        rs_data_ptr->limit.negative_limit.data[1] = constraint.lower.j2_;
+        rs_data_ptr->limit.negative_limit.data[2] = constraint.lower.j3_;
+        rs_data_ptr->limit.negative_limit.data[3] = constraint.lower.j4_;
+        rs_data_ptr->limit.negative_limit.data[4] = constraint.lower.j5_;
+        rs_data_ptr->limit.negative_limit.data[5] = constraint.lower.j6_;
+        rs_data_ptr->limit.negative_limit.data[6] = constraint.lower.j7_;
+        rs_data_ptr->limit.negative_limit.data[7] = constraint.lower.j8_;
+        rs_data_ptr->limit.negative_limit.data[8] = constraint.lower.j9_;
     }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getHardLimit"));
 }
@@ -623,25 +624,25 @@ void ControllerRpc::handleRpc0x00010FD4(void* request_data_ptr, void* response_d
     {
         PoseEuler pos;
         Joint joint;
-        pos.position.x = rq_data_ptr->data2.data[0];
-        pos.position.y = rq_data_ptr->data2.data[1];
-        pos.position.z = rq_data_ptr->data2.data[2];
-        pos.orientation.a = rq_data_ptr->data2.data[3];
-        pos.orientation.b = rq_data_ptr->data2.data[4];
-        pos.orientation.c = rq_data_ptr->data2.data[5];
+        pos.point_.x_ = rq_data_ptr->data2.data[0];
+        pos.point_.y_ = rq_data_ptr->data2.data[1];
+        pos.point_.z_ = rq_data_ptr->data2.data[2];
+        pos.euler_.a_ = rq_data_ptr->data2.data[3];
+        pos.euler_.b_ = rq_data_ptr->data2.data[4];
+        pos.euler_.c_ = rq_data_ptr->data2.data[5];
         rs_data_ptr->error_code.data = motion_control_ptr_->convertCartToJoint(pos, rq_data_ptr->data1.data[2], rq_data_ptr->data1.data[1], joint);
         rs_data_ptr->data.data_count = 9;
         if(rs_data_ptr->error_code.data == SUCCESS)
         {
-            rs_data_ptr->data.data[0] = joint.j1;
-            rs_data_ptr->data.data[1] = joint.j2;
-            rs_data_ptr->data.data[2] = joint.j3;
-            rs_data_ptr->data.data[3] = joint.j4;
-            rs_data_ptr->data.data[4] = joint.j5;
-            rs_data_ptr->data.data[5] = joint.j6;
-            rs_data_ptr->data.data[6] = joint.j7;
-            rs_data_ptr->data.data[7] = joint.j8;
-            rs_data_ptr->data.data[8] = joint.j9;
+            rs_data_ptr->data.data[0] = joint.j1_;
+            rs_data_ptr->data.data[1] = joint.j2_;
+            rs_data_ptr->data.data[2] = joint.j3_;
+            rs_data_ptr->data.data[3] = joint.j4_;
+            rs_data_ptr->data.data[4] = joint.j5_;
+            rs_data_ptr->data.data[5] = joint.j6_;
+            rs_data_ptr->data.data[6] = joint.j7_;
+            rs_data_ptr->data.data[7] = joint.j8_;
+            rs_data_ptr->data.data[8] = joint.j9_;
         }
     }
     else
@@ -663,25 +664,25 @@ void ControllerRpc::handleRpc0x0000B6D4(void* request_data_ptr, void* response_d
     {
         Joint joint;
         PoseEuler pos;
-        joint.j1 = rq_data_ptr->data2.data[0];
-        joint.j2 = rq_data_ptr->data2.data[1];
-        joint.j3 = rq_data_ptr->data2.data[2];
-        joint.j4 = rq_data_ptr->data2.data[3];
-        joint.j5 = rq_data_ptr->data2.data[4];
-        joint.j6 = rq_data_ptr->data2.data[5];
-        joint.j7 = rq_data_ptr->data2.data[6];
-        joint.j8 = rq_data_ptr->data2.data[7];
-        joint.j9 = rq_data_ptr->data2.data[8];    
+        joint.j1_ = rq_data_ptr->data2.data[0];
+        joint.j2_ = rq_data_ptr->data2.data[1];
+        joint.j3_ = rq_data_ptr->data2.data[2];
+        joint.j4_ = rq_data_ptr->data2.data[3];
+        joint.j5_ = rq_data_ptr->data2.data[4];
+        joint.j6_ = rq_data_ptr->data2.data[5];
+        joint.j7_ = rq_data_ptr->data2.data[6];
+        joint.j8_ = rq_data_ptr->data2.data[7];
+        joint.j9_ = rq_data_ptr->data2.data[8];    
         rs_data_ptr->error_code.data = motion_control_ptr_->convertJointToCart(joint, rq_data_ptr->data1.data[2], rq_data_ptr->data1.data[1], pos);
         rs_data_ptr->data.data_count = 6;
         if(rs_data_ptr->error_code.data == SUCCESS)
         {
-            rs_data_ptr->data.data[0] = pos.position.x;
-            rs_data_ptr->data.data[1] = pos.position.y;
-            rs_data_ptr->data.data[2] = pos.position.z;
-            rs_data_ptr->data.data[3] = pos.orientation.a;
-            rs_data_ptr->data.data[4] = pos.orientation.b;
-            rs_data_ptr->data.data[5] = pos.orientation.c;
+            rs_data_ptr->data.data[0] = pos.point_.x_;
+            rs_data_ptr->data.data[1] = pos.point_.y_;
+            rs_data_ptr->data.data[2] = pos.point_.z_;
+            rs_data_ptr->data.data[3] = pos.euler_.a_;
+            rs_data_ptr->data.data[4] = pos.euler_.b_;
+            rs_data_ptr->data.data[5] = pos.euler_.c_;
         }
     }
     else
@@ -962,15 +963,15 @@ void ControllerRpc::handleRpc0x00008ED4(void* request_data_ptr, void* response_d
     if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.positive_list_count = 9;
-        rs_data_ptr->data.positive_list[0].data = constraint.upper.j1;
-        rs_data_ptr->data.positive_list[1].data = constraint.upper.j2;
-        rs_data_ptr->data.positive_list[2].data = constraint.upper.j3;
-        rs_data_ptr->data.positive_list[3].data = constraint.upper.j4;
-        rs_data_ptr->data.positive_list[4].data = constraint.upper.j5;
-        rs_data_ptr->data.positive_list[5].data = constraint.upper.j6;
-        rs_data_ptr->data.positive_list[6].data = constraint.upper.j7;
-        rs_data_ptr->data.positive_list[7].data = constraint.upper.j8;
-        rs_data_ptr->data.positive_list[8].data = constraint.upper.j9;
+        rs_data_ptr->data.positive_list[0].data = constraint.upper.j1_;
+        rs_data_ptr->data.positive_list[1].data = constraint.upper.j2_;
+        rs_data_ptr->data.positive_list[2].data = constraint.upper.j3_;
+        rs_data_ptr->data.positive_list[3].data = constraint.upper.j4_;
+        rs_data_ptr->data.positive_list[4].data = constraint.upper.j5_;
+        rs_data_ptr->data.positive_list[5].data = constraint.upper.j6_;
+        rs_data_ptr->data.positive_list[6].data = constraint.upper.j7_;
+        rs_data_ptr->data.positive_list[7].data = constraint.upper.j8_;
+        rs_data_ptr->data.positive_list[8].data = constraint.upper.j9_;
         strncpy(rs_data_ptr->data.positive_list[0].unit, "rad", 31); rs_data_ptr->data.positive_list[0].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[1].unit, "rad", 31); rs_data_ptr->data.positive_list[1].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[2].unit, "rad", 31); rs_data_ptr->data.positive_list[2].unit[31] = 0;
@@ -981,15 +982,15 @@ void ControllerRpc::handleRpc0x00008ED4(void* request_data_ptr, void* response_d
         strncpy(rs_data_ptr->data.positive_list[7].unit, "rad", 31); rs_data_ptr->data.positive_list[7].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[8].unit, "rad", 31); rs_data_ptr->data.positive_list[8].unit[31] = 0;
         rs_data_ptr->data.negative_list_count = 9;
-        rs_data_ptr->data.negative_list[0].data = constraint.lower.j1;
-        rs_data_ptr->data.negative_list[1].data = constraint.lower.j2;
-        rs_data_ptr->data.negative_list[2].data = constraint.lower.j3;
-        rs_data_ptr->data.negative_list[3].data = constraint.lower.j4;
-        rs_data_ptr->data.negative_list[4].data = constraint.lower.j5;
-        rs_data_ptr->data.negative_list[5].data = constraint.lower.j6;
-        rs_data_ptr->data.negative_list[6].data = constraint.lower.j7;
-        rs_data_ptr->data.negative_list[7].data = constraint.lower.j8;
-        rs_data_ptr->data.negative_list[8].data = constraint.lower.j9;
+        rs_data_ptr->data.negative_list[0].data = constraint.lower.j1_;
+        rs_data_ptr->data.negative_list[1].data = constraint.lower.j2_;
+        rs_data_ptr->data.negative_list[2].data = constraint.lower.j3_;
+        rs_data_ptr->data.negative_list[3].data = constraint.lower.j4_;
+        rs_data_ptr->data.negative_list[4].data = constraint.lower.j5_;
+        rs_data_ptr->data.negative_list[5].data = constraint.lower.j6_;
+        rs_data_ptr->data.negative_list[6].data = constraint.lower.j7_;
+        rs_data_ptr->data.negative_list[7].data = constraint.lower.j8_;
+        rs_data_ptr->data.negative_list[8].data = constraint.lower.j9_;
         strncpy(rs_data_ptr->data.negative_list[0].unit, "rad", 31); rs_data_ptr->data.negative_list[0].unit[31] = 0;
         strncpy(rs_data_ptr->data.negative_list[1].unit, "rad", 31); rs_data_ptr->data.negative_list[1].unit[31] = 0;
         strncpy(rs_data_ptr->data.negative_list[2].unit, "rad", 31); rs_data_ptr->data.negative_list[2].unit[31] = 0;
@@ -1014,15 +1015,15 @@ void ControllerRpc::handleRpc0x000124E4(void* request_data_ptr, void* response_d
     if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.positive_list_count = 9;
-        rs_data_ptr->data.positive_list[0].data = constraint.upper.j1;
-        rs_data_ptr->data.positive_list[1].data = constraint.upper.j2;
-        rs_data_ptr->data.positive_list[2].data = constraint.upper.j3;
-        rs_data_ptr->data.positive_list[3].data = constraint.upper.j4;
-        rs_data_ptr->data.positive_list[4].data = constraint.upper.j5;
-        rs_data_ptr->data.positive_list[5].data = constraint.upper.j6;
-        rs_data_ptr->data.positive_list[6].data = constraint.upper.j7;
-        rs_data_ptr->data.positive_list[7].data = constraint.upper.j8;
-        rs_data_ptr->data.positive_list[8].data = constraint.upper.j9;
+        rs_data_ptr->data.positive_list[0].data = constraint.upper.j1_;
+        rs_data_ptr->data.positive_list[1].data = constraint.upper.j2_;
+        rs_data_ptr->data.positive_list[2].data = constraint.upper.j3_;
+        rs_data_ptr->data.positive_list[3].data = constraint.upper.j4_;
+        rs_data_ptr->data.positive_list[4].data = constraint.upper.j5_;
+        rs_data_ptr->data.positive_list[5].data = constraint.upper.j6_;
+        rs_data_ptr->data.positive_list[6].data = constraint.upper.j7_;
+        rs_data_ptr->data.positive_list[7].data = constraint.upper.j8_;
+        rs_data_ptr->data.positive_list[8].data = constraint.upper.j9_;
         strncpy(rs_data_ptr->data.positive_list[0].unit, "rad", 31); rs_data_ptr->data.positive_list[0].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[1].unit, "rad", 31); rs_data_ptr->data.positive_list[1].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[2].unit, "rad", 31); rs_data_ptr->data.positive_list[2].unit[31] = 0;
@@ -1033,15 +1034,15 @@ void ControllerRpc::handleRpc0x000124E4(void* request_data_ptr, void* response_d
         strncpy(rs_data_ptr->data.positive_list[7].unit, "rad", 31); rs_data_ptr->data.positive_list[7].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[8].unit, "rad", 31); rs_data_ptr->data.positive_list[8].unit[31] = 0;
         rs_data_ptr->data.negative_list_count = 9;
-        rs_data_ptr->data.negative_list[0].data = constraint.lower.j1;
-        rs_data_ptr->data.negative_list[1].data = constraint.lower.j2;
-        rs_data_ptr->data.negative_list[2].data = constraint.lower.j3;
-        rs_data_ptr->data.negative_list[3].data = constraint.lower.j4;
-        rs_data_ptr->data.negative_list[4].data = constraint.lower.j5;
-        rs_data_ptr->data.negative_list[5].data = constraint.lower.j6;
-        rs_data_ptr->data.negative_list[6].data = constraint.lower.j7;
-        rs_data_ptr->data.negative_list[7].data = constraint.lower.j8;
-        rs_data_ptr->data.negative_list[8].data = constraint.lower.j9;
+        rs_data_ptr->data.negative_list[0].data = constraint.lower.j1_;
+        rs_data_ptr->data.negative_list[1].data = constraint.lower.j2_;
+        rs_data_ptr->data.negative_list[2].data = constraint.lower.j3_;
+        rs_data_ptr->data.negative_list[3].data = constraint.lower.j4_;
+        rs_data_ptr->data.negative_list[4].data = constraint.lower.j5_;
+        rs_data_ptr->data.negative_list[5].data = constraint.lower.j6_;
+        rs_data_ptr->data.negative_list[6].data = constraint.lower.j7_;
+        rs_data_ptr->data.negative_list[7].data = constraint.lower.j8_;
+        rs_data_ptr->data.negative_list[8].data = constraint.lower.j9_;
         strncpy(rs_data_ptr->data.negative_list[0].unit, "rad", 31); rs_data_ptr->data.negative_list[0].unit[31] = 0;
         strncpy(rs_data_ptr->data.negative_list[1].unit, "rad", 31); rs_data_ptr->data.negative_list[1].unit[31] = 0;
         strncpy(rs_data_ptr->data.negative_list[2].unit, "rad", 31); rs_data_ptr->data.negative_list[2].unit[31] = 0;
@@ -1066,15 +1067,15 @@ void ControllerRpc::handleRpc0x000092B4(void* request_data_ptr, void* response_d
     if(rs_data_ptr->error_code.data == SUCCESS)
     {
         rs_data_ptr->data.positive_list_count = 9;
-        rs_data_ptr->data.positive_list[0].data = constraint.upper.j1;
-        rs_data_ptr->data.positive_list[1].data = constraint.upper.j2;
-        rs_data_ptr->data.positive_list[2].data = constraint.upper.j3;
-        rs_data_ptr->data.positive_list[3].data = constraint.upper.j4;
-        rs_data_ptr->data.positive_list[4].data = constraint.upper.j5;
-        rs_data_ptr->data.positive_list[5].data = constraint.upper.j6;
-        rs_data_ptr->data.positive_list[6].data = constraint.upper.j7;
-        rs_data_ptr->data.positive_list[7].data = constraint.upper.j8;
-        rs_data_ptr->data.positive_list[8].data = constraint.upper.j9;
+        rs_data_ptr->data.positive_list[0].data = constraint.upper.j1_;
+        rs_data_ptr->data.positive_list[1].data = constraint.upper.j2_;
+        rs_data_ptr->data.positive_list[2].data = constraint.upper.j3_;
+        rs_data_ptr->data.positive_list[3].data = constraint.upper.j4_;
+        rs_data_ptr->data.positive_list[4].data = constraint.upper.j5_;
+        rs_data_ptr->data.positive_list[5].data = constraint.upper.j6_;
+        rs_data_ptr->data.positive_list[6].data = constraint.upper.j7_;
+        rs_data_ptr->data.positive_list[7].data = constraint.upper.j8_;
+        rs_data_ptr->data.positive_list[8].data = constraint.upper.j9_;
         strncpy(rs_data_ptr->data.positive_list[0].unit, "rad", 31); rs_data_ptr->data.positive_list[0].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[1].unit, "rad", 31); rs_data_ptr->data.positive_list[1].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[2].unit, "rad", 31); rs_data_ptr->data.positive_list[2].unit[31] = 0;
@@ -1085,15 +1086,15 @@ void ControllerRpc::handleRpc0x000092B4(void* request_data_ptr, void* response_d
         strncpy(rs_data_ptr->data.positive_list[7].unit, "rad", 31); rs_data_ptr->data.positive_list[7].unit[31] = 0;
         strncpy(rs_data_ptr->data.positive_list[8].unit, "rad", 31); rs_data_ptr->data.positive_list[8].unit[31] = 0;
         rs_data_ptr->data.negative_list_count = 9;
-        rs_data_ptr->data.negative_list[0].data = constraint.lower.j1;
-        rs_data_ptr->data.negative_list[1].data = constraint.lower.j2;
-        rs_data_ptr->data.negative_list[2].data = constraint.lower.j3;
-        rs_data_ptr->data.negative_list[3].data = constraint.lower.j4;
-        rs_data_ptr->data.negative_list[4].data = constraint.lower.j5;
-        rs_data_ptr->data.negative_list[5].data = constraint.lower.j6;
-        rs_data_ptr->data.negative_list[6].data = constraint.lower.j7;
-        rs_data_ptr->data.negative_list[7].data = constraint.lower.j8;
-        rs_data_ptr->data.negative_list[8].data = constraint.lower.j9;
+        rs_data_ptr->data.negative_list[0].data = constraint.lower.j1_;
+        rs_data_ptr->data.negative_list[1].data = constraint.lower.j2_;
+        rs_data_ptr->data.negative_list[2].data = constraint.lower.j3_;
+        rs_data_ptr->data.negative_list[3].data = constraint.lower.j4_;
+        rs_data_ptr->data.negative_list[4].data = constraint.lower.j5_;
+        rs_data_ptr->data.negative_list[5].data = constraint.lower.j6_;
+        rs_data_ptr->data.negative_list[6].data = constraint.lower.j7_;
+        rs_data_ptr->data.negative_list[7].data = constraint.lower.j8_;
+        rs_data_ptr->data.negative_list[8].data = constraint.lower.j9_;
         strncpy(rs_data_ptr->data.negative_list[0].unit, "rad", 31); rs_data_ptr->data.negative_list[0].unit[31] = 0;
         strncpy(rs_data_ptr->data.negative_list[1].unit, "rad", 31); rs_data_ptr->data.negative_list[1].unit[31] = 0;
         strncpy(rs_data_ptr->data.negative_list[2].unit, "rad", 31); rs_data_ptr->data.negative_list[2].unit[31] = 0;

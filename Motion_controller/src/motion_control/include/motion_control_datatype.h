@@ -8,11 +8,15 @@
 #ifndef _MOTION_CONTROL_DATATYPE_H
 #define _MOTION_CONTROL_DATATYPE_H
 
+#include <assert.h>
 #include <basic_alg_datatype.h>
 #include <basic_constants.h>
 
 namespace fst_mc
 {
+
+typedef unsigned int Tick;
+typedef double  MotionTime;
 
 #define PATH_CACHE_SIZE         1024
 #define TRAJECTORY_CACHE_SIZE   128

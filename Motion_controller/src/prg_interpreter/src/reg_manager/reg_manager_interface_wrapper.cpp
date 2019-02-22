@@ -244,12 +244,12 @@ bool reg_manager_interface_getPosePr(PoseEuler *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
-		   ptr->position.x    = objPrRegDataIpc.pos[0];
-		   ptr->position.y    = objPrRegDataIpc.pos[1];
-		   ptr->position.z    = objPrRegDataIpc.pos[2];
-		   ptr->orientation.a = objPrRegDataIpc.pos[3];
-		   ptr->orientation.b = objPrRegDataIpc.pos[4];
-		   ptr->orientation.c = objPrRegDataIpc.pos[5];
+		   ptr->point_.x_    = objPrRegDataIpc.pos[0];
+		   ptr->point_.y_    = objPrRegDataIpc.pos[1];
+		   ptr->point_.z_    = objPrRegDataIpc.pos[2];
+		   ptr->euler_.a_    = objPrRegDataIpc.pos[3];
+		   ptr->euler_.b_    = objPrRegDataIpc.pos[4];
+		   ptr->euler_.c_    = objPrRegDataIpc.pos[5];
 		}
 	}
 	else
@@ -277,12 +277,12 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
 		objPrRegDataIpc.id     = num ;
-		objPrRegDataIpc.pos[0] = ptr->position.x   ;
-		objPrRegDataIpc.pos[1] = ptr->position.y   ;
-		objPrRegDataIpc.pos[2] = ptr->position.z   ;
-		objPrRegDataIpc.pos[3] = ptr->orientation.a;
-		objPrRegDataIpc.pos[4] = ptr->orientation.b;
-		objPrRegDataIpc.pos[5] = ptr->orientation.c;
+		objPrRegDataIpc.pos[0] = ptr->point_.x_   ;
+		objPrRegDataIpc.pos[1] = ptr->point_.y_   ;
+		objPrRegDataIpc.pos[2] = ptr->point_.z_   ;
+		objPrRegDataIpc.pos[3] = ptr->euler_.a_   ;
+		objPrRegDataIpc.pos[4] = ptr->euler_.b_   ;
+		objPrRegDataIpc.pos[5] = ptr->euler_.c_   ;
 		objPrRegDataIpc.pos[6] = 0.0;
 		objPrRegDataIpc.pos[7] = 0.0;
 		objPrRegDataIpc.pos[8] = 0.0;
@@ -319,12 +319,12 @@ bool reg_manager_interface_getJointPr(Joint *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
-		   ptr->j1 = objPrRegDataIpc.pos[0];
-		   ptr->j2 = objPrRegDataIpc.pos[1];
-		   ptr->j3 = objPrRegDataIpc.pos[2];
-		   ptr->j4 = objPrRegDataIpc.pos[3];
-		   ptr->j5 = objPrRegDataIpc.pos[4];
-		   ptr->j6 = objPrRegDataIpc.pos[5];   
+		   ptr->j1_ = objPrRegDataIpc.pos[0];
+		   ptr->j2_ = objPrRegDataIpc.pos[1];
+		   ptr->j3_ = objPrRegDataIpc.pos[2];
+		   ptr->j4_ = objPrRegDataIpc.pos[3];
+		   ptr->j5_ = objPrRegDataIpc.pos[4];
+		   ptr->j6_ = objPrRegDataIpc.pos[5];   
 		}
 	}
 	else
@@ -354,12 +354,12 @@ bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
-			objPrRegDataIpc.pos[0] = ptr->j1;
-			objPrRegDataIpc.pos[1] = ptr->j2;
-			objPrRegDataIpc.pos[2] = ptr->j3;
-			objPrRegDataIpc.pos[3] = ptr->j4;
-			objPrRegDataIpc.pos[4] = ptr->j5;
-			objPrRegDataIpc.pos[5] = ptr->j6;
+			objPrRegDataIpc.pos[0] = ptr->j1_;
+			objPrRegDataIpc.pos[1] = ptr->j2_;
+			objPrRegDataIpc.pos[2] = ptr->j3_;
+			objPrRegDataIpc.pos[3] = ptr->j4_;
+			objPrRegDataIpc.pos[4] = ptr->j5_;
+			objPrRegDataIpc.pos[5] = ptr->j6_;
 			objPrRegDataIpc.pos[6] = 0.0;
 			objPrRegDataIpc.pos[7] = 0.0;
 			objPrRegDataIpc.pos[8] = 0.0;
@@ -1548,12 +1548,12 @@ bool reg_manager_interface_getJointHr(Joint *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getHrReg(num, &objHrRegDataIpc);
 		if(bRet)
 		{
-			ptr->j1 = objHrRegDataIpc.joint_pos[0];
-			ptr->j2 = objHrRegDataIpc.joint_pos[1];
-			ptr->j3 = objHrRegDataIpc.joint_pos[2];
-			ptr->j4 = objHrRegDataIpc.joint_pos[3];
-			ptr->j5 = objHrRegDataIpc.joint_pos[4];
-			ptr->j6 = objHrRegDataIpc.joint_pos[5];
+			ptr->j1_ = objHrRegDataIpc.joint_pos[0];
+			ptr->j2_ = objHrRegDataIpc.joint_pos[1];
+			ptr->j3_ = objHrRegDataIpc.joint_pos[2];
+			ptr->j4_ = objHrRegDataIpc.joint_pos[3];
+			ptr->j5_ = objHrRegDataIpc.joint_pos[4];
+			ptr->j6_ = objHrRegDataIpc.joint_pos[5];
 		}
 	}
 	else
@@ -1580,12 +1580,12 @@ bool reg_manager_interface_setJointHr(Joint *ptr, uint16_t num)
 	if(g_objRegManagerInterface)
 	{
 		HrRegDataIpc objHrRegDataIpc ;
-		objHrRegDataIpc.joint_pos[0] = ptr->j1;
-		objHrRegDataIpc.joint_pos[1] = ptr->j2;
-		objHrRegDataIpc.joint_pos[2] = ptr->j3;
-		objHrRegDataIpc.joint_pos[3] = ptr->j4;
-		objHrRegDataIpc.joint_pos[4] = ptr->j5;
-		objHrRegDataIpc.joint_pos[5] = ptr->j6;
+		objHrRegDataIpc.joint_pos[0] = ptr->j1_;
+		objHrRegDataIpc.joint_pos[1] = ptr->j2_;
+		objHrRegDataIpc.joint_pos[2] = ptr->j3_;
+		objHrRegDataIpc.joint_pos[3] = ptr->j4_;
+		objHrRegDataIpc.joint_pos[4] = ptr->j5_;
+		objHrRegDataIpc.joint_pos[5] = ptr->j6_;
 		
 		bRet = g_objRegManagerInterface->setHrReg(&objHrRegDataIpc);
 	}

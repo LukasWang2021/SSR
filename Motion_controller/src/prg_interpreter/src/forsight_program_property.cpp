@@ -42,17 +42,17 @@ int parseCart(struct thread_control_block * objThreadCntrolBlock,
 		case cJSON_Number:	
 			// FST_INFO("cJSON_Number %f", child->valuedouble); 
 			if(strcmp(child->string, "a") == 0)
-				cart.orientation.a = child->valuedouble;
+				cart.euler_.a_ = child->valuedouble;
 			else if(strcmp(child->string, "b") == 0)
-				cart.orientation.b = child->valuedouble;
+				cart.euler_.b_ = child->valuedouble;
 			else if(strcmp(child->string, "c") == 0)
-				cart.orientation.c = child->valuedouble;
+				cart.euler_.c_ = child->valuedouble;
 			else if(strcmp(child->string, "x") == 0)
-				cart.position.x = child->valuedouble;
+				cart.point_.x_ = child->valuedouble;
 			else if(strcmp(child->string, "y") == 0)
-				cart.position.y = child->valuedouble;
+				cart.point_.y_ = child->valuedouble;
 			else if(strcmp(child->string, "z") == 0)
-				cart.position.z = child->valuedouble;
+				cart.point_.z_ = child->valuedouble;
 			break;
 		case cJSON_String:	
 			FST_INFO("cJSON_String %s", child->valuestring); break;
@@ -88,17 +88,17 @@ int parseJoint(struct thread_control_block * objThreadCntrolBlock,
 		case cJSON_Number:	
 			// FST_INFO("cJSON_Number %f", child->valuedouble); 
 			if(strcmp(child->string, "j1") == 0)
-				joint.j1 = child->valuedouble;
+				joint.j1_ = child->valuedouble;
 			else if(strcmp(child->string, "j2") == 0)
-				joint.j2 = child->valuedouble;
+				joint.j2_ = child->valuedouble;
 			else if(strcmp(child->string, "j3") == 0)
-				joint.j3 = child->valuedouble;
+				joint.j3_ = child->valuedouble;
 			else if(strcmp(child->string, "j4") == 0)
-				joint.j4 = child->valuedouble;
+				joint.j4_ = child->valuedouble;
 			else if(strcmp(child->string, "j5") == 0)
-				joint.j5 = child->valuedouble;
+				joint.j5_ = child->valuedouble;
 			else if(strcmp(child->string, "j6") == 0)
-				joint.j6 = child->valuedouble;
+				joint.j6_ = child->valuedouble;
 			break;
 		case cJSON_String:	
 			FST_INFO("cJSON_String %s", child->valuestring); break;

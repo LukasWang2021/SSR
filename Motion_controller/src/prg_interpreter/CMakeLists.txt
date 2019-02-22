@@ -66,6 +66,7 @@ catkin_package(
 #    DEPENDS motion_plan 
     DEPENDS fst_io_device 
     DEPENDS motion_control 
+    DEPENDS basic_alg 
 )
  
 
@@ -105,6 +106,7 @@ target_link_libraries(prg_interpreter
     pthread
     modbus_manager
     logger
+    basic_alg
 )
 
 #############

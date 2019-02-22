@@ -109,19 +109,19 @@ public:
 		fValue = -1 ;
 		strContent = "";
 		
-		pose.position.x	  = 0.0;
-		pose.position.y	  = 0.0;
-		pose.position.z	  = 0.0;
-		pose.orientation.a = 0.0;
-		pose.orientation.b = 0.0;
-		pose.orientation.c = 0.0;
+		pose.point_.x_	  = 0.0;
+		pose.point_.y_	  = 0.0;
+		pose.point_.z_	  = 0.0;
+		pose.euler_.a_    = 0.0;
+		pose.euler_.b_    = 0.0;
+		pose.euler_.c_    = 0.0;
 	   
-		joint.j1 = 0.0;
-		joint.j2 = 0.0;
-		joint.j3 = 0.0;
-		joint.j4 = 0.0;
-		joint.j5 = 0.0;
-		joint.j6 = 0.0;
+		joint.j1_ = 0.0;
+		joint.j2_ = 0.0;
+		joint.j3_ = 0.0;
+		joint.j4_ = 0.0;
+		joint.j5_ = 0.0;
+		joint.j6_ = 0.0;
 	   
 		tfIndex = -1 ;
 		ufIndex = -1 ;
@@ -292,12 +292,12 @@ public:
 		reg_pr.value.joint_pos[4] = jointVal->j5;
 		reg_pr.value.joint_pos[5] = jointVal->j6;
 #else
-		reg_pr.value.pos[0] = jointVal->j1;
-		reg_pr.value.pos[1] = jointVal->j2;
-		reg_pr.value.pos[2] = jointVal->j3;
-		reg_pr.value.pos[3] = jointVal->j4;
-		reg_pr.value.pos[4] = jointVal->j5;
-		reg_pr.value.pos[5] = jointVal->j6;
+		reg_pr.value.pos[0] = jointVal->j1_;
+		reg_pr.value.pos[1] = jointVal->j2_;
+		reg_pr.value.pos[2] = jointVal->j3_;
+		reg_pr.value.pos[3] = jointVal->j4_;
+		reg_pr.value.pos[4] = jointVal->j5_;
+		reg_pr.value.pos[5] = jointVal->j6_;
 		reg_pr.value.pos[6] = 0.0;
 		reg_pr.value.pos[7] = 0.0;
 		reg_pr.value.pos[8] = 0.0;
@@ -311,12 +311,12 @@ public:
 		reg_pr.value.cartesian_pos.position    = pointEulerVal->position;
 		reg_pr.value.cartesian_pos.orientation = pointEulerVal->orientation;
 #else
-		reg_pr.value.pos[0]        = pointEulerVal->position.x;
-		reg_pr.value.pos[1]        = pointEulerVal->position.y;
-		reg_pr.value.pos[2]        = pointEulerVal->position.z;
-		reg_pr.value.pos[3]        = pointEulerVal->orientation.a;
-		reg_pr.value.pos[4]        = pointEulerVal->orientation.b;
-		reg_pr.value.pos[5]        = pointEulerVal->orientation.c;
+		reg_pr.value.pos[0]        = pointEulerVal->point_.x_;
+		reg_pr.value.pos[1]        = pointEulerVal->point_.y_;
+		reg_pr.value.pos[2]        = pointEulerVal->point_.z_;
+		reg_pr.value.pos[3]        = pointEulerVal->euler_.a_;
+		reg_pr.value.pos[4]        = pointEulerVal->euler_.b_;
+		reg_pr.value.pos[5]        = pointEulerVal->euler_.c_;
 		reg_pr.value.pos[6] = 0.0;
 		reg_pr.value.pos[7] = 0.0;
 		reg_pr.value.pos[8] = 0.0;
@@ -396,12 +396,15 @@ public:
 	
 	void setHrRegDataWithJointValue(Joint * jointVal){
 		evalType  |= TYPE_HR ;
-		reg_hr.value.joint_pos[0] = jointVal->j1;
-		reg_hr.value.joint_pos[1] = jointVal->j2;
-		reg_hr.value.joint_pos[2] = jointVal->j3;
-		reg_hr.value.joint_pos[3] = jointVal->j4;
-		reg_hr.value.joint_pos[4] = jointVal->j5;
-		reg_hr.value.joint_pos[5] = jointVal->j6;
+		reg_hr.value.joint_pos[0] = jointVal->j1_;
+		reg_hr.value.joint_pos[1] = jointVal->j2_;
+		reg_hr.value.joint_pos[2] = jointVal->j3_;
+		reg_hr.value.joint_pos[3] = jointVal->j4_;
+		reg_hr.value.joint_pos[4] = jointVal->j5_;
+		reg_hr.value.joint_pos[5] = jointVal->j6_;
+		reg_hr.value.joint_pos[6] = jointVal->j7_;
+		reg_hr.value.joint_pos[7] = jointVal->j8_;
+		reg_hr.value.joint_pos[8] = jointVal->j9_;
 	}
 	
 	HrRegData getHrRegDataValue(){
@@ -463,12 +466,12 @@ public:
 		    if(operand->getType() == TYPE_JOINT)
 		    {
 		    	Joint jointOperand = operand->getJointValue();
-				joint.j1 += jointOperand.j1;
-				joint.j2 += jointOperand.j2;
-				joint.j3 += jointOperand.j3;
-				joint.j4 += jointOperand.j4;
-				joint.j5 += jointOperand.j5;
-				joint.j6 += jointOperand.j6;
+				joint.j1_ += jointOperand.j1_;
+				joint.j2_ += jointOperand.j2_;
+				joint.j3_ += jointOperand.j3_;
+				joint.j4_ += jointOperand.j4_;
+				joint.j5_ += jointOperand.j5_;
+				joint.j6_ += jointOperand.j6_;
 				
 #ifdef WIN32
 				reg_pr.value.joint_pos[0] += jointOperand.j1;
@@ -478,12 +481,12 @@ public:
 				reg_pr.value.joint_pos[4] += jointOperand.j5;
 				reg_pr.value.joint_pos[5] += jointOperand.j6;
 #else
-				reg_pr.value.pos[0] += jointOperand.j1;
-				reg_pr.value.pos[1] += jointOperand.j2;
-				reg_pr.value.pos[2] += jointOperand.j3;
-				reg_pr.value.pos[3] += jointOperand.j4;
-				reg_pr.value.pos[4] += jointOperand.j5;
-				reg_pr.value.pos[5] += jointOperand.j6;
+				reg_pr.value.pos[0] += jointOperand.j1_;
+				reg_pr.value.pos[1] += jointOperand.j2_;
+				reg_pr.value.pos[2] += jointOperand.j3_;
+				reg_pr.value.pos[3] += jointOperand.j4_;
+				reg_pr.value.pos[4] += jointOperand.j5_;
+				reg_pr.value.pos[5] += jointOperand.j6_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;
@@ -492,12 +495,12 @@ public:
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
 		    {
 		    	Joint jointOperand = operand->getJointValue();
-				joint.j1 += jointOperand.j1;
-				joint.j2 += jointOperand.j2;
-				joint.j3 += jointOperand.j3;
-				joint.j4 += jointOperand.j4;
-				joint.j5 += jointOperand.j5;
-				joint.j6 += jointOperand.j6;
+				joint.j1_ += jointOperand.j1_;
+				joint.j2_ += jointOperand.j2_;
+				joint.j3_ += jointOperand.j3_;
+				joint.j4_ += jointOperand.j4_;
+				joint.j5_ += jointOperand.j5_;
+				joint.j6_ += jointOperand.j6_;
 				
 #ifdef WIN32
 				reg_pr.value.joint_pos[0] += jointOperand.j1;
@@ -507,12 +510,12 @@ public:
 				reg_pr.value.joint_pos[4] += jointOperand.j5;
 				reg_pr.value.joint_pos[5] += jointOperand.j6;
 #else
-				reg_pr.value.pos[0] += jointOperand.j1;
-				reg_pr.value.pos[1] += jointOperand.j2;
-				reg_pr.value.pos[2] += jointOperand.j3;
-				reg_pr.value.pos[3] += jointOperand.j4;
-				reg_pr.value.pos[4] += jointOperand.j5;
-				reg_pr.value.pos[5] += jointOperand.j6;
+				reg_pr.value.pos[0] += jointOperand.j1_;
+				reg_pr.value.pos[1] += jointOperand.j2_;
+				reg_pr.value.pos[2] += jointOperand.j3_;
+				reg_pr.value.pos[3] += jointOperand.j4_;
+				reg_pr.value.pos[4] += jointOperand.j5_;
+				reg_pr.value.pos[5] += jointOperand.j6_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;
@@ -530,12 +533,12 @@ public:
 				reg_pr.value.cartesian_pos.position    = pose.position;
 				reg_pr.value.cartesian_pos.orientation = pose.orientation;
 #else
-				reg_pr.value.pos[0] = pose.position.x;
-				reg_pr.value.pos[1] = pose.position.y;
-				reg_pr.value.pos[2] = pose.position.z;
-				reg_pr.value.pos[3] = pose.orientation.a;
-				reg_pr.value.pos[4] = pose.orientation.b;
-				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[0] = pose.point_.x_;
+				reg_pr.value.pos[1] = pose.point_.y_;
+				reg_pr.value.pos[2] = pose.point_.z_;
+				reg_pr.value.pos[3] = pose.euler_.a_;
+				reg_pr.value.pos[4] = pose.euler_.b_;
+				reg_pr.value.pos[5] = pose.euler_.c_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;
@@ -549,12 +552,12 @@ public:
 				reg_pr.value.cartesian_pos.position    = pose.position;
 				reg_pr.value.cartesian_pos.orientation = pose.orientation;
 #else
-				reg_pr.value.pos[0] = pose.position.x;
-				reg_pr.value.pos[1] = pose.position.y;
-				reg_pr.value.pos[2] = pose.position.z;
-				reg_pr.value.pos[3] = pose.orientation.a;
-				reg_pr.value.pos[4] = pose.orientation.b;
-				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[0] = pose.point_.x_;
+				reg_pr.value.pos[1] = pose.point_.y_;
+				reg_pr.value.pos[2] = pose.point_.z_;
+				reg_pr.value.pos[3] = pose.euler_.a_;
+				reg_pr.value.pos[4] = pose.euler_.b_;
+				reg_pr.value.pos[5] = pose.euler_.c_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;
@@ -718,26 +721,26 @@ public:
 		    if(operand->getType() == TYPE_JOINT)
 		    {
 		    	Joint jointOperand = operand->getJointValue();
-				joint.j1 -= jointOperand.j1;
-				joint.j2 -= jointOperand.j2;
-				joint.j3 -= jointOperand.j3;
-				joint.j4 -= jointOperand.j4;
-				joint.j5 -= jointOperand.j5;
-				joint.j6 -= jointOperand.j6;
+				joint.j1_ -= jointOperand.j1_;
+				joint.j2_ -= jointOperand.j2_;
+				joint.j3_ -= jointOperand.j3_;
+				joint.j4_ -= jointOperand.j4_;
+				joint.j5_ -= jointOperand.j5_;
+				joint.j6_ -= jointOperand.j6_;
 #ifdef WIN32
-				reg_pr.value.joint_pos[0] -= jointOperand.j1;
-				reg_pr.value.joint_pos[1] -= jointOperand.j2;
-				reg_pr.value.joint_pos[2] -= jointOperand.j3;
-				reg_pr.value.joint_pos[3] -= jointOperand.j4;
-				reg_pr.value.joint_pos[4] -= jointOperand.j5;
-				reg_pr.value.joint_pos[5] -= jointOperand.j6;
+				reg_pr.value.joint_pos[0] -= jointOperand.j1_;
+				reg_pr.value.joint_pos[1] -= jointOperand.j2_;
+				reg_pr.value.joint_pos[2] -= jointOperand.j3_;
+				reg_pr.value.joint_pos[3] -= jointOperand.j4_;
+				reg_pr.value.joint_pos[4] -= jointOperand.j5_;
+				reg_pr.value.joint_pos[5] -= jointOperand.j6_;
 #else
-				reg_pr.value.pos[0] -= jointOperand.j1;
-				reg_pr.value.pos[1] -= jointOperand.j2;
-				reg_pr.value.pos[2] -= jointOperand.j3;
-				reg_pr.value.pos[3] -= jointOperand.j4;
-				reg_pr.value.pos[4] -= jointOperand.j5;
-				reg_pr.value.pos[5] -= jointOperand.j6;
+				reg_pr.value.pos[0] -= jointOperand.j1_;
+				reg_pr.value.pos[1] -= jointOperand.j2_;
+				reg_pr.value.pos[2] -= jointOperand.j3_;
+				reg_pr.value.pos[3] -= jointOperand.j4_;
+				reg_pr.value.pos[4] -= jointOperand.j5_;
+				reg_pr.value.pos[5] -= jointOperand.j6_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;
@@ -746,26 +749,26 @@ public:
 			else if(operand->getType() == (int)(TYPE_PR | TYPE_JOINT))
 		    {
 		    	Joint jointOperand = operand->getJointValue();
-				joint.j1 -= jointOperand.j1;
-				joint.j2 -= jointOperand.j2;
-				joint.j3 -= jointOperand.j3;
-				joint.j4 -= jointOperand.j4;
-				joint.j5 -= jointOperand.j5;
-				joint.j6 -= jointOperand.j6;
+				joint.j1_ -= jointOperand.j1_;
+				joint.j2_ -= jointOperand.j2_;
+				joint.j3_ -= jointOperand.j3_;
+				joint.j4_ -= jointOperand.j4_;
+				joint.j5_ -= jointOperand.j5_;
+				joint.j6_ -= jointOperand.j6_;
 #ifdef WIN32
-				reg_pr.value.joint_pos[0] -= jointOperand.j1;
-				reg_pr.value.joint_pos[1] -= jointOperand.j2;
-				reg_pr.value.joint_pos[2] -= jointOperand.j3;
-				reg_pr.value.joint_pos[3] -= jointOperand.j4;
-				reg_pr.value.joint_pos[4] -= jointOperand.j5;
-				reg_pr.value.joint_pos[5] -= jointOperand.j6;
+				reg_pr.value.joint_pos[0] -= jointOperand.j1_;
+				reg_pr.value.joint_pos[1] -= jointOperand.j2_;
+				reg_pr.value.joint_pos[2] -= jointOperand.j3_;
+				reg_pr.value.joint_pos[3] -= jointOperand.j4_;
+				reg_pr.value.joint_pos[4] -= jointOperand.j5_;
+				reg_pr.value.joint_pos[5] -= jointOperand.j6_;
 #else
-				reg_pr.value.pos[0] -= jointOperand.j1;
-				reg_pr.value.pos[1] -= jointOperand.j2;
-				reg_pr.value.pos[2] -= jointOperand.j3;
-				reg_pr.value.pos[3] -= jointOperand.j4;
-				reg_pr.value.pos[4] -= jointOperand.j5;
-				reg_pr.value.pos[5] -= jointOperand.j6;
+				reg_pr.value.pos[0] -= jointOperand.j1_;
+				reg_pr.value.pos[1] -= jointOperand.j2_;
+				reg_pr.value.pos[2] -= jointOperand.j3_;
+				reg_pr.value.pos[3] -= jointOperand.j4_;
+				reg_pr.value.pos[4] -= jointOperand.j5_;
+				reg_pr.value.pos[5] -= jointOperand.j6_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;
@@ -780,12 +783,12 @@ public:
 				reg_pr.value.cartesian_pos.position    = pose.position;
 				reg_pr.value.cartesian_pos.orientation = pose.orientation;
 #else
-				reg_pr.value.pos[0] = pose.position.x;
-				reg_pr.value.pos[1] = pose.position.y;
-				reg_pr.value.pos[2] = pose.position.z;
-				reg_pr.value.pos[3] = pose.orientation.a;
-				reg_pr.value.pos[4] = pose.orientation.b;
-				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[0] = pose.point_.x_;
+				reg_pr.value.pos[1] = pose.point_.y_;
+				reg_pr.value.pos[2] = pose.point_.z_;
+				reg_pr.value.pos[3] = pose.euler_.a_;
+				reg_pr.value.pos[4] = pose.euler_.b_;
+				reg_pr.value.pos[5] = pose.euler_.c_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;
@@ -799,12 +802,12 @@ public:
 				reg_pr.value.cartesian_pos.position    = pose.position;
 				reg_pr.value.cartesian_pos.orientation = pose.orientation;
 #else
-				reg_pr.value.pos[0] = pose.position.x;
-				reg_pr.value.pos[1] = pose.position.y;
-				reg_pr.value.pos[2] = pose.position.z;
-				reg_pr.value.pos[3] = pose.orientation.a;
-				reg_pr.value.pos[4] = pose.orientation.b;
-				reg_pr.value.pos[5] = pose.orientation.c;
+				reg_pr.value.pos[0] = pose.point_.x_;
+				reg_pr.value.pos[1] = pose.point_.y_;
+				reg_pr.value.pos[2] = pose.point_.z_;
+				reg_pr.value.pos[3] = pose.euler_.a_;
+				reg_pr.value.pos[4] = pose.euler_.b_;
+				reg_pr.value.pos[5] = pose.euler_.c_;
 				reg_pr.value.pos[6] = 0.0;
 				reg_pr.value.pos[7] = 0.0;
 				reg_pr.value.pos[8] = 0.0;

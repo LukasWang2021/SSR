@@ -247,11 +247,11 @@ typedef struct _IntprtStatus
 typedef struct _AdditionalOffsetInfomation
 {
     AdditionalOffsetInfomationType        type;
-    union {
+//    union {
         Reg             pr_reg;
         PoseEuler       pose_target;
         Joint           joint_target;
-    };
+//    };
     Reg                 uf_reg;
 } AdditionalOffsetInfomation;
 
@@ -259,21 +259,21 @@ typedef struct _AdditionalExecuteInfomation
 {
     AdditionalExecuteInfomationType type;
     double    range ;
-    union {
+//    union {
         RegMap          assignment;
         char            fname[128];
-    };
+//    };
 } AdditionalExecuteInfomation;
 
 typedef struct _AdditionalInfomation
 {
     AdditionalInfomationType        type;
-    union 
-    {
+//    union 
+//    {
     	int acc_speed ;                         // used for AAC, EV, IND_EV
     	AdditionalOffsetInfomation offset ; // used for OFFSET, TOOL_OFFSET
     	AdditionalExecuteInfomation execute ; // used for TB, TA, DB
-    };
+//    };
 } AdditionalInfomation;
 
 typedef struct _Instruction

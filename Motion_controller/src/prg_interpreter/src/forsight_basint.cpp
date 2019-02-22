@@ -3691,12 +3691,12 @@ void set_var_value(struct thread_control_block * objThreadCntrolBlock,
 				pointEulerVal.position = valueSrc.getPrRegDataValue().value.cartesian_pos.position ;
 				pointEulerVal.orientation = valueSrc.getPrRegDataValue().value.cartesian_pos.orientation;
 #else
-				pointEulerVal.position.x    = valueSrc.getPrRegDataValue().value.pos[0];
-				pointEulerVal.position.y    = valueSrc.getPrRegDataValue().value.pos[1];
-				pointEulerVal.position.z    = valueSrc.getPrRegDataValue().value.pos[2];
-				pointEulerVal.orientation.a = valueSrc.getPrRegDataValue().value.pos[3];
-				pointEulerVal.orientation.b = valueSrc.getPrRegDataValue().value.pos[4];
-				pointEulerVal.orientation.c = valueSrc.getPrRegDataValue().value.pos[5];
+				pointEulerVal.point_.x_    = valueSrc.getPrRegDataValue().value.pos[0];
+				pointEulerVal.point_.y_    = valueSrc.getPrRegDataValue().value.pos[1];
+				pointEulerVal.point_.z_    = valueSrc.getPrRegDataValue().value.pos[2];
+				pointEulerVal.euler_.a_ = valueSrc.getPrRegDataValue().value.pos[3];
+				pointEulerVal.euler_.b_ = valueSrc.getPrRegDataValue().value.pos[4];
+				pointEulerVal.euler_.c_ = valueSrc.getPrRegDataValue().value.pos[5];
 				
 				FST_INFO("set_var_value: id = (%f, %f, %f, %f, %f, %f) ", 
 					valueSrc.getPrRegDataValue().value.pos[0], valueSrc.getPrRegDataValue().value.pos[1], 
@@ -3717,12 +3717,12 @@ void set_var_value(struct thread_control_block * objThreadCntrolBlock,
 				jointVal.j5 = valueSrc.getPrRegDataValue().value.joint_pos[4];
 				jointVal.j6 = valueSrc.getPrRegDataValue().value.joint_pos[5];
 #else
-				jointVal.j1 = valueSrc.getPrRegDataValue().value.pos[0];
-				jointVal.j2 = valueSrc.getPrRegDataValue().value.pos[1];
-				jointVal.j3 = valueSrc.getPrRegDataValue().value.pos[2];
-				jointVal.j4 = valueSrc.getPrRegDataValue().value.pos[3];
-				jointVal.j5 = valueSrc.getPrRegDataValue().value.pos[4];
-				jointVal.j6 = valueSrc.getPrRegDataValue().value.pos[5];
+				jointVal.j1_ = valueSrc.getPrRegDataValue().value.pos[0];
+				jointVal.j2_ = valueSrc.getPrRegDataValue().value.pos[1];
+				jointVal.j3_ = valueSrc.getPrRegDataValue().value.pos[2];
+				jointVal.j4_ = valueSrc.getPrRegDataValue().value.pos[3];
+				jointVal.j5_ = valueSrc.getPrRegDataValue().value.pos[4];
+				jointVal.j6_ = valueSrc.getPrRegDataValue().value.pos[5];
 #endif
 				//	vt.value = value;
 				valueDst.setJointValue(&jointVal);

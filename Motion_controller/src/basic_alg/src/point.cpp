@@ -7,17 +7,6 @@ using namespace std;
 using namespace basic_alg;
 
 
-Point::Point():
-    x_(0), y_(0), z_(0)
-{
-
-}
-
-Point::~Point()
-{
-
-}
-
 bool Point::isEqual(Point& point, double valve) const
 {
     if(fabs(x_ - point.x_) < valve

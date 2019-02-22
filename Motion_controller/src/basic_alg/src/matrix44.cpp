@@ -7,16 +7,6 @@ using namespace std;
 using namespace basic_alg;
 
 
-Matrix44::Matrix44()
-{
-    memset(matrix_, 0, sizeof(matrix_));
-}
-
-Matrix44::~Matrix44()
-{
-
-}
-
 bool Matrix44::isEqual(Matrix44& matrix, double valve) const
 {
     if(fabs(matrix_[0][0] - matrix.matrix_[0][0]) < valve

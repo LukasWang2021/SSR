@@ -5,17 +5,6 @@
 using namespace std;
 using namespace basic_alg;
 
-
-PoseQuaternion::PoseQuaternion()
-{
-
-}
-
-PoseQuaternion::~PoseQuaternion()
-{
-
-}
-
 bool PoseQuaternion::isEqual(PoseQuaternion& pose_quaternion, double valve) const
 {
     if(point_.isEqual(pose_quaternion.point_, valve)

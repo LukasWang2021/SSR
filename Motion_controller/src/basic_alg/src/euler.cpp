@@ -7,17 +7,6 @@ using namespace std;
 using namespace basic_alg;
 
 
-Euler::Euler():
-    a_(0), b_(0), c_(0)
-{
-
-}
-
-Euler::~Euler()
-{
-
-}
-
 bool Euler::isEqual(Euler& euler, double valve) const
 {
     if(fabs(a_ - euler.a_) < valve

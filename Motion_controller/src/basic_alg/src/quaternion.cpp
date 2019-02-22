@@ -7,18 +7,6 @@
 using namespace std;
 using namespace basic_alg;
 
-
-Quaternion::Quaternion():
-    x_(0), y_(0), z_(0), w_(0)
-{
-
-}
-
-Quaternion::~Quaternion()
-{
-
-}
-
 bool Quaternion::isValid(double valve) const
 {
     if(fabs(x_ * x_ + y_ * y_ + z_ * z_ + w_ * w_ - 1.0) < valve)

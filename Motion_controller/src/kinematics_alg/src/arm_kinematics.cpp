@@ -29,11 +29,11 @@ void ArmKinematics::forwardKinematics(const Joint &joint, Matrix &matrix)
 {
     matrix.eye();
     matrix.transFromDH(dh_matrix_[0], joint.j1_);
-    matrix.transFromDH(dh_matrix_[1], joint.j1_);
-    matrix.transFromDH(dh_matrix_[2], joint.j1_);
-    matrix.transFromDH(dh_matrix_[3], joint.j1_);
-    matrix.transFromDH(dh_matrix_[4], joint.j1_);
-    matrix.transFromDH(dh_matrix_[5], joint.j1_);
+    matrix.transFromDH(dh_matrix_[1], joint.j2_);
+    matrix.transFromDH(dh_matrix_[2], joint.j3_);
+    matrix.transFromDH(dh_matrix_[3], joint.j4_);
+    matrix.transFromDH(dh_matrix_[4], joint.j5_);
+    matrix.transFromDH(dh_matrix_[5], joint.j6_);
 }
 
 

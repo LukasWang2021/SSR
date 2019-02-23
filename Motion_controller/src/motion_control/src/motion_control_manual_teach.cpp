@@ -789,7 +789,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
             // do nothing
             if (traj.direction[i] == STANDING)
             {
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + 1);
+                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i);
             }
 
             FST_INFO("  PoseEuler[%d]: given direction same as current motion, running along the current trajectory", i);

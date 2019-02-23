@@ -24,9 +24,9 @@ using namespace basic_alg;
 using namespace fst_parameter;
 using namespace fst_algorithm;
 
-//#define OUTPUT_JOINT_POINT
-//#define OUTPUT_PATH_CACHE
-//#define OUTPUT_TRAJ_CACHE
+#define OUTPUT_JOINT_POINT
+#define OUTPUT_PATH_CACHE
+#define OUTPUT_TRAJ_CACHE
 
 
 namespace fst_mc
@@ -1822,7 +1822,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
     double tim, vel;
     double *axis_ptr, *start_ptr, *target_ptr;
     size_t picked_num = 0;
-
+    
     FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0; i < length; i++)
@@ -1919,7 +1919,13 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             }
             else
             {
+                char buffer[LOG_TEXT_SIZE];
                 FST_ERROR("pickFromManualCartesian: IK result out of soft constraint.");
+                FST_INFO("  pose:  %s", printDBLine(&pose.point_.x_, buffer, LOG_TEXT_SIZE));
+                FST_INFO("  ref  : %s", printDBLine(&ref_joint.j1_, buffer, LOG_TEXT_SIZE));
+                FST_INFO("  joint: %s", printDBLine(&points[i].angle.j1_, buffer, LOG_TEXT_SIZE));
+                FST_INFO("  cart-start: %s", printDBLine(&manual_traj_.cart_start.point_.x_, buffer, LOG_TEXT_SIZE));
+                FST_INFO("  cart-end: %s", printDBLine(&manual_traj_.cart_ending.point_.x_, buffer, LOG_TEXT_SIZE));
                 err = JOINT_OUT_OF_CONSTRAINT;
                 break;
             }

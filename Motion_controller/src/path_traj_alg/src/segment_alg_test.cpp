@@ -1,7 +1,8 @@
 #include "segment_alg.h"
-#include "kinematics_rtm.h"
+#include "base_kinematics.h"
+#include "arm_kinematics.h"
 #include "dynamics_interface.h"
-#include "basic_alg.h"
+#include "basic_alg_datatype.h"
 #include <iostream>
 #include <math.h>
 #include <time.h>
@@ -19,43 +20,36 @@ extern SegmentAlgParam segment_alg_param;
 DynamicsInterface dynamics;
 
 
-void doIK(KinematicsRTM* kinematics_ptr, PathCache& path_cache, basic_alg::Joint& start_joint)
+void doIK(BaseKinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
 {
-    basic_alg::Joint result_joint;
-    basic_alg::Joint ref_joint = start_joint;
+    Joint result_joint;
+    Joint ref_joint = start_joint;
     for(int i = 0; i < path_cache.cache_length; ++i)
     {
-        kinematics_ptr->doIK(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
+        kinematics_ptr->inverseKinematicsInUser(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
         ref_joint = path_cache.cache[i].joint;       
     }
 }
 
 int main(void)
 {
-    return 0;
-}
-
-#if 0
-int main(void)
-{
     initComplexAxisGroupModel();
-    basic_alg::DH base_dh;
-    basic_alg::DH arm_dh[6];
-    KinematicsRTM* kinematics_ptr = new KinematicsRTM(base_dh, arm_dh);
-    //double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};  
+    BaseKinematics* kinematics_ptr = new ArmKinematics();
+    double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
+    kinematics_ptr->initKinematics(dh_matrix);    
 
-    segment_alg_param.accuracy_cartesian_factor = 3;
+    segment_alg_param.accuracy_cartesian_factor = 1;
     segment_alg_param.accuracy_joint_factor = 6;
     segment_alg_param.max_traj_points_num = 20;
     segment_alg_param.path_interval = 1;
-    segment_alg_param.joint_interval = PI * 1 / 180;
-    segment_alg_param.angle_interval = PI * 1 / 180;
-    segment_alg_param.angle_valve = PI * 5 / 180;
+    segment_alg_param.joint_interval = 0.01745;//PI * 1 / 180;
+    segment_alg_param.angle_interval = 0.01745;//PI * 1 / 180;
+    segment_alg_param.angle_valve = 0.8727;//PI * 5 / 180;
     segment_alg_param.conservative_acc = 10000;
-    segment_alg_param.time_factor_first = 1.3;
-    segment_alg_param.time_factor_last = 1.3;
+    segment_alg_param.time_factor_first = 2.5;
+    segment_alg_param.time_factor_last = 3;
     segment_alg_param.is_fake_dynamics = true;
-    segment_alg_param.max_cartesian_acc = 8000;
+    segment_alg_param.max_cartesian_acc = 16000;
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = &dynamics;
 
@@ -70,8 +64,8 @@ int main(void)
     fst_mc::JointState start_state;
     fst_mc::PathCache path_cache;
     fst_mc::TrajectoryCache traj_cache;    
-    double acc_ratio = 1;
-    double vel_ratio = 1;
+    double acc_ratio = 0.5;
+    double vel_ratio = 0.5;
 
 #if 0
     start_joint.j1 = 0;
@@ -259,12 +253,12 @@ int main(void)
 #endif
 
 #if 0
-    start_joint[0] = -0.266252;
-    start_joint[1] = -0.606811;
-    start_joint[2] = 0.684909;
+    start_joint[0] = 0;
+    start_joint[1] = 0;
+    start_joint[2] = 0;
     start_joint[3] = 0;
-    start_joint[4] = -1.64889;
-    start_joint[5] = -0.266252;
+    start_joint[4] = -1.5708;
+    start_joint[5] = 0;
 
     /*Pose start_pose;
     PoseEuler start_euler;
@@ -282,24 +276,24 @@ int main(void)
     start_state.alpha[0] = 0; start_state.alpha[1] = 0; start_state.alpha[2] = 0;
     start_state.alpha[3] = 0; start_state.alpha[4] = 0; start_state.alpha[5] = 0;
 
-    start.position.x = 550;
-    start.position.y = -150;
-    start.position.z = 610;
+    start.position.x = 250;
+    start.position.y = 150;
+    start.position.z = 310;
     start.orientation.a = 0;
     start.orientation.b = 0;
-    start.orientation.c = PI;
+    start.orientation.c = -PI;
 
     //Joint r_joint;
     //kinematics_ptr->inverseKinematicsInUser(start, start_joint, r_joint);
 //std::cout<<r_joint[0]<<" "<<r_joint[1]<<" "<<r_joint[2]<<" "<<r_joint[3]<<" "<<r_joint[4]<<" "<<r_joint[5]<<std::endl;
 
     target.pose_target.position.x = 550;
-    target.pose_target.position.y = 150;
+    target.pose_target.position.y = -150;
     target.pose_target.position.z = 610;
     target.pose_target.orientation.a = 0;
     target.pose_target.orientation.b = 0;
-    target.pose_target.orientation.c = PI;
-    target.cnt = 1;
+    target.pose_target.orientation.c = -PI;
+    target.cnt = -1;
     target.vel = 1600;
     target.type = MOTION_LINE;
 
@@ -324,6 +318,12 @@ int main(void)
     //std::cout<<"traj_cache.cache_length = "<<traj_cache.cache_length<<std::endl;
 
     printTraj(traj_cache, 1, 0.001, traj_cache.cache_length);
+    double total_time = 0;
+    for(int i=0; i<traj_cache.cache_length; i++)
+    {
+        total_time += traj_cache.cache[i].duration;
+    }
+    std::cout<<"total_time = "<<total_time<<std::endl;
 #endif
 
 #if 0
@@ -490,13 +490,13 @@ int main(void)
     printTraj(traj_cache_2, 1, 0.001);
 #endif
 
-#if 1
-        start_joint[0] = 0.643499;
-        start_joint[1] = 0.056281;
-        start_joint[2] = -0.979224;
-        start_joint[3] = 0.00001;
-        start_joint[4] = -0.647849;
-        start_joint[5] = 0.64349;
+#if 0 // smooth L test
+        start_joint[0] = 0.358665;
+        start_joint[1] = -0.3994186;
+        start_joint[2] = -0.4181983;
+        start_joint[3] = 0.0;
+        start_joint[4] = -0.75304;
+        start_joint[5] = 0.3582637;
     
         start_state.angle = start_joint;
         start_state.omega[0] = 0; start_state.omega[1] = 0; start_state.omega[2] = 0;
@@ -504,30 +504,30 @@ int main(void)
         start_state.alpha[0] = 0; start_state.alpha[1] = 0; start_state.alpha[2] = 0;
         start_state.alpha[3] = 0; start_state.alpha[4] = 0; start_state.alpha[5] = 0;
     
-        start.point_.x_ = 200;
-        start.point_.y_ = 150;
-        start.point_.z_ = 350;
-        start.euler_.a_ = 0;
-        start.euler_.b_ = 0;
-        start.euler_.c_ = PI;
+        start.position.x = 400;
+        start.position.y = 150;
+        start.position.z = 350;
+        start.orientation.a = 0;
+        start.orientation.b = 0;
+        start.orientation.c = PI;
     
-        via.pose_target.point_.x_ = 200;
-        via.pose_target.point_.y_ = -150;
-        via.pose_target.point_.z_ = 350;
-        via.pose_target.euler_.a_ = 0;
-        via.pose_target.euler_.b_ = 0;
-        via.pose_target.euler_.c_ = PI;
-        via.cnt = 1;
+        via.pose_target.position.x = 400;
+        via.pose_target.position.y = 250;
+        via.pose_target.position.z = 350;
+        via.pose_target.orientation.a = 0;
+        via.pose_target.orientation.b = 0;
+        via.pose_target.orientation.c = PI;
+        via.cnt = 0.1;
         via.vel = 1600;
         via.type = MOTION_LINE;
     
-        target.pose_target.point_.x_ = 500;
-        target.pose_target.point_.y_ = -150;
-        target.pose_target.point_.z_ = 350;
-        target.pose_target.euler_.a_ = 0;
-        target.pose_target.euler_.b_ = 0;
-        target.pose_target.euler_.c_ = PI;
-        target.cnt = 1;
+        target.pose_target.position.x = 300;
+        target.pose_target.position.y = 250;
+        target.pose_target.position.z = 350;
+        target.pose_target.orientation.a = 0;
+        target.pose_target.orientation.b = 0;
+        target.pose_target.orientation.c = PI;
+        target.cnt = 0.1;
         target.vel = 1600;
         target.type = MOTION_LINE;
     
@@ -567,7 +567,7 @@ int main(void)
 
         planTrajectory(path_cache_1, start_state, vel_ratio, acc_ratio, traj_cache_1);
 
-        printTraj(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
+        printTraj(traj_cache_1, 2, 0.001, traj_cache_1.smooth_out_index + 1);
         
     /*for(int i=0; i< traj_cache_1.cache_length; ++i)
     {
@@ -595,20 +595,20 @@ int main(void)
             a_address += 75;
         }
 //std::cout<<"out_state: "<<out_state.angle[1]<<" "<<out_state.omega[1]<<" "<<out_state.alpha[1]<<std::endl;
-        PoseQuaternion pose_out;
+        Pose pose_out;
         PoseEuler euler_out;
         double out_quatern[4];
         double out_euler[3];
         pose_out = path_cache_1.cache[traj_cache_1.cache[traj_cache_1.smooth_out_index].index_in_path_cache].pose;
-        out_quatern[0] = pose_out.quaternion_.x_;
-        out_quatern[1] = pose_out.quaternion_.y_;
-        out_quatern[2] = pose_out.quaternion_.z_;
-        out_quatern[3] = pose_out.quaternion_.w_;
+        out_quatern[0] = pose_out.orientation.x;
+        out_quatern[1] = pose_out.orientation.y;
+        out_quatern[2] = pose_out.orientation.z;
+        out_quatern[3] = pose_out.orientation.w;
         getQuaternToEuler(out_quatern, out_euler);
-        euler_out.point_ = pose_out.point_;
-        euler_out.euler_.a_ = out_euler[0];
-        euler_out.euler_.b_ = out_euler[1];
-        euler_out.euler_.c_ = out_euler[2];                         
+        euler_out.position = pose_out.position;
+        euler_out.orientation.a = out_euler[0];
+        euler_out.orientation.b = out_euler[1];
+        euler_out.orientation.c = out_euler[2];                         
     
         PathCache path_cache_2;
         TrajectoryCache traj_cache_2;
@@ -652,11 +652,118 @@ int main(void)
     //std::cout<<"traj_cache_2.smooth_out_index = "<<traj_cache_2.smooth_out_index<<std::endl;
     //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
     
-        printTraj(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
+        printTraj(traj_cache_2, 2, 0.001, traj_cache_2.cache_length);
+#endif
+
+
+#if 1
+
+    basic_alg::Joint js, jv, je;
+    js[0] = 0; jv[0] = M_PI; je[0] = M_PI;
+    js[1] = 0; jv[1] = 0;    je[1] = M_PI;
+    js[2] = 0; jv[2] = 0;    je[2] = 0;
+    js[3] = 0; jv[3] = 0;    je[3] = 0;
+    js[4] = 0; jv[4] = 0;    je[4] = 0;
+    js[5] = 0; jv[5] = 0;    je[5] = 0;    
+    start_state.angle = js;
+    start_state.omega[0] = 0; start_state.omega[1] = 0; start_state.omega[2] = 0;
+    start_state.omega[3] = 0; start_state.omega[4] = 0; start_state.omega[5] = 0;
+    start_state.alpha[0] = 0; start_state.alpha[1] = 0; start_state.alpha[2] = 0;
+    start_state.alpha[3] = 0; start_state.alpha[4] = 0; start_state.alpha[5] = 0;
+
+    
+    via.joint_target = jv;
+    via.cnt = 0.5;
+    via.vel = 1;
+    via.type = MOTION_JOINT;
+
+    target.joint_target = je;
+    target.cnt = -1;
+    target.vel = 1;
+    target.type = MOTION_JOINT;
+
+    PathCache path_cache_1;
+    TrajectoryCache traj_cache_1;
+    path_cache_1.target.type = MOTION_JOINT;
+    path_cache_1.target.vel = via.vel;
+    path_cache_1.target.cnt = via.cnt;
+    planPathJoint(js, via, path_cache_1);
+
+    /*for(int i=0; i<path_cache_1.cache_length; ++i)
+    {
+        std::cout<<i<<" "<<path_cache_1.cache[i].joint[0]<<" "
+                 <<path_cache_1.cache[i].joint[1]<<" "
+                 <<path_cache_1.cache[i].joint[2]<<" "
+                 <<path_cache_1.cache[i].joint[3]<<" "
+                 <<path_cache_1.cache[i].joint[4]<<" "
+                 <<path_cache_1.cache[i].joint[5]<<std::endl;
+    }*/
+    //std::cout<<"path_cache_1.smooth_out_index = "<<path_cache_1.smooth_out_index<<std::endl;
+    
+    planTrajectory(path_cache_1, start_state, vel_ratio, acc_ratio, traj_cache_1);
+    
+    //std::cout<<"traj_cache_1.smooth_out_index = "<<traj_cache_1.smooth_out_index<<std::endl;
+    //std::cout<<"traj_cache_1.cache_length = "<<traj_cache_1.cache_length<<std::endl;
+
+    printTraj(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
+        
+    /*for(int i=0; i< traj_cache_1.cache_length; ++i)
+    {
+        std::cout<<i<<" path_index = "<<traj_cache_1.cache[i].index_in_path_cache
+                    <<" duration = "<<traj_cache_1.cache[i].duration
+                    <<" A3 = "<<traj_cache_1.cache[i].axis[1].data[3]
+                    <<" A2 = "<<traj_cache_1.cache[i].axis[1].data[2]
+                    <<" A1 = "<<traj_cache_1.cache[i].axis[1].data[1]
+                    <<" A0 = "<<traj_cache_1.cache[i].axis[1].data[0]<<std::endl;
+                    
+    }*/
+    //std::cout<<"traj_cache_1.smooth_out_index = "<<traj_cache_1.smooth_out_index<<std::endl;
+
+    
+
+    
+    JointState out_state;
+    int p_address = S_TrajP0 + traj_cache_1.smooth_out_index + 1;
+    int v_address = p_address + 25;
+    int a_address = p_address + 50;
+    for(int i=0; i<6; ++i)
+    {
+        out_state.angle[i] = stack[p_address];
+        out_state.omega[i] = stack[v_address];
+        out_state.alpha[i] = stack[a_address];
+        p_address += 75;
+        v_address += 75;
+        a_address += 75;
+    }
+                            
+    PathCache path_cache_2;
+    TrajectoryCache traj_cache_2;
+    path_cache_2.target.type = MOTION_JOINT;
+    path_cache_2.target.vel = target.vel; 
+    path_cache_2.target.cnt = target.cnt;
+  
+    planPathSmoothJoint(out_state.angle, via, target, path_cache_2);
+    /*std::cout<<"path_cache_2.smooth_out_index = "<<path_cache_2.smooth_out_index<<std::endl;
+    std::cout<<"path_cache_2.smooth_in_index = "<<path_cache_2.smooth_in_index<<std::endl;
+    std::cout<<"path_cache_2.cache_length = "<<path_cache_2.cache_length<<std::endl;     
+    for(int i = 0; i < path_cache_2.cache_length; ++i)
+    {
+        std::cout<<" ["<<i<<"] "
+                 <<" J0 = "<<path_cache_2.cache[i].joint[0]
+                 <<" J1 = "<<path_cache_2.cache[i].joint[1]<<std::endl;
+    }
+    std::cout<<"out_state: "<<out_state.angle[0]<<" "<<out_state.omega[0]<<" "<<out_state.alpha[0]<<std::endl;*/    
+
+    planTrajectorySmooth(path_cache_2, out_state, via, vel_ratio, acc_ratio, traj_cache_2);
+    //std::cout<<"traj_cache_2.smooth_out_index = "<<traj_cache_2.smooth_out_index<<std::endl;
+    //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
+    
+    printTraj(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
+
 #endif
 
 
 	return 0;
 }
-#endif
+
 

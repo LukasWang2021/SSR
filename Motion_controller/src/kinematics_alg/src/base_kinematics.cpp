@@ -68,7 +68,7 @@ ErrorCode BaseKinematics::inverseKinematics(const PoseEuler &pose, const Matrix 
     return inverseKinematics(matrix, ref, res);
 }
 
-void BaseKinematics::forwardKinematicsInBase(const Joint &joint, Pose &pose)
+void BaseKinematics::forwardKinematicsInBase(const Joint &joint, PoseQuaternion &pose)
 {
     Matrix matrix;
     forwardKinematics(joint, matrix);
@@ -82,7 +82,7 @@ void BaseKinematics::forwardKinematicsInBase(const Joint &joint, PoseEuler &pose
     matrix.rightMultiply(tool_frame_).toPoseEuler(pose);
 }
 
-void BaseKinematics::forwardKinematicsInUser(const Joint &joint, Pose &pose)
+void BaseKinematics::forwardKinematicsInUser(const Joint &joint, PoseQuaternion &pose)
 {
     Matrix matrix;
     forwardKinematics(joint, matrix);
@@ -96,7 +96,7 @@ void BaseKinematics::forwardKinematicsInUser(const Joint &joint, PoseEuler &pose
     matrix.leftMultiply(inverse_user_frame_).rightMultiply(tool_frame_).toPoseEuler(pose);
 }
 
-void BaseKinematics::forwardKinematicsInWorld(const Joint &joint, Pose &pose)
+void BaseKinematics::forwardKinematicsInWorld(const Joint &joint, PoseQuaternion &pose)
 {
     Matrix matrix;
     forwardKinematics(joint, matrix);
@@ -112,7 +112,7 @@ void BaseKinematics::forwardKinematicsInWorld(const Joint &joint, PoseEuler &pos
 
 
 
-ErrorCode BaseKinematics::inverseKinematicsInBase(const Pose &pose, const Joint &ref, Joint &res)
+ErrorCode BaseKinematics::inverseKinematicsInBase(const PoseQuaternion &pose, const Joint &ref, Joint &res)
 {
     Matrix matrix = Matrix(pose).rightMultiply(inverse_tool_frame_);
     return inverseKinematics(matrix, ref, res);
@@ -125,7 +125,7 @@ ErrorCode BaseKinematics::inverseKinematicsInBase(const PoseEuler &pose, const J
 }
 
 #include <stdio.h>
-ErrorCode BaseKinematics::inverseKinematicsInUser(const Pose &pose, const Joint &ref, Joint &res)
+ErrorCode BaseKinematics::inverseKinematicsInUser(const PoseQuaternion &pose, const Joint &ref, Joint &res)
 {
     Matrix matrix = Matrix(pose).leftMultiply(user_frame_).rightMultiply(inverse_tool_frame_);
     return inverseKinematics(matrix, ref, res);
@@ -137,7 +137,7 @@ ErrorCode BaseKinematics::inverseKinematicsInUser(const PoseEuler &pose, const J
     return inverseKinematics(matrix, ref, res);
 }
 
-ErrorCode BaseKinematics::inverseKinematicsInWorld(const Pose &pose, const Joint &ref, Joint &res)
+ErrorCode BaseKinematics::inverseKinematicsInWorld(const PoseQuaternion &pose, const Joint &ref, Joint &res)
 {
     Matrix matrix = Matrix(pose).leftMultiply(world_frame_).rightMultiply(inverse_tool_frame_);
     return inverseKinematics(matrix, ref, res);

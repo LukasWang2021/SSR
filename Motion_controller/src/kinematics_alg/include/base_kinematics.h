@@ -9,12 +9,9 @@
 #define _BASE_KINEMATICS_H
 
 #include <math.h>
-#include <basic_alg_datatype.h>
-#include <basic_constants.h>
+#include <base_datatype.h>
 #include <basic_matrix.h>
 #include <error_code.h>
-
-using namespace basic_alg;
 
 namespace fst_mc
 {
@@ -35,18 +32,18 @@ class BaseKinematics
     virtual ErrorCode inverseKinematics(const PoseEuler &pose, const basic_alg::Matrix &user, const basic_alg::Matrix &tool, const Joint &ref, Joint &res);
 
     // FK/IK using activated frame and tool
-    virtual void forwardKinematicsInBase(const Joint &joint, PoseQuaternion &pose);
+    virtual void forwardKinematicsInBase(const Joint &joint, Pose      &pose);
     virtual void forwardKinematicsInBase(const Joint &joint, PoseEuler &pose);
-    virtual void forwardKinematicsInUser(const Joint &joint, PoseQuaternion &pose);
+    virtual void forwardKinematicsInUser(const Joint &joint, Pose      &pose);
     virtual void forwardKinematicsInUser(const Joint &joint, PoseEuler &pose);
-    virtual void forwardKinematicsInWorld(const Joint &joint, PoseQuaternion &pose);
+    virtual void forwardKinematicsInWorld(const Joint &joint, Pose      &pose);
     virtual void forwardKinematicsInWorld(const Joint &joint, PoseEuler &pose);
 
-    virtual ErrorCode inverseKinematicsInBase(const PoseQuaternion &pose, const Joint &ref, Joint &res);
+    virtual ErrorCode inverseKinematicsInBase(const Pose      &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInBase(const PoseEuler &pose, const Joint &ref, Joint &res);
-    virtual ErrorCode inverseKinematicsInUser(const PoseQuaternion &pose, const Joint &ref, Joint &res);
+    virtual ErrorCode inverseKinematicsInUser(const Pose      &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInUser(const PoseEuler &pose, const Joint &ref, Joint &res);
-    virtual ErrorCode inverseKinematicsInWorld(const PoseQuaternion &pose, const Joint &ref, Joint &res);
+    virtual ErrorCode inverseKinematicsInWorld(const Pose      &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInWorld(const PoseEuler &pose, const Joint &ref, Joint &res);
     virtual ErrorCode inverseKinematicsInTool(const basic_alg::Matrix &tool_coordinate, const PoseEuler &pose, const Joint &ref, Joint &res);
 

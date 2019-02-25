@@ -437,7 +437,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
     // 初始化路径和轨迹规划
-
+    /*
     DH base_dh = {0.365, 0.03, 0, 0};
     DH arm_dh[] = { {0, 0, PI / 2, 0},
                     {0, 0.34, 0, PI / 2},
@@ -449,10 +449,12 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
 
     KinematicsRTM *rtm_kinematics_ptr = new KinematicsRTM(base_dh, arm_dh);
+    */
     param.reset();
     path = COMPONENT_PARAM_FILE_DIR;
     SegmentAlgParam seg_param;
-    seg_param.kinematics_ptr = rtm_kinematics_ptr;
+    //seg_param.kinematics_ptr = rtm_kinematics_ptr;
+    seg_param.kinematics_ptr = kinematics_ptr_;
     seg_param.dynamics_ptr = dynamics_ptr_;
 
     if (param.loadParamFile(path + "segment_alg.yaml"))

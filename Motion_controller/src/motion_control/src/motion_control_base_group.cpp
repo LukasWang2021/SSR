@@ -24,9 +24,9 @@ using namespace basic_alg;
 using namespace fst_parameter;
 using namespace fst_algorithm;
 
-#define OUTPUT_JOINT_POINT
-#define OUTPUT_PATH_CACHE
-#define OUTPUT_TRAJ_CACHE
+//#define OUTPUT_JOINT_POINT
+//#define OUTPUT_PATH_CACHE
+//#define OUTPUT_TRAJ_CACHE
 
 
 namespace fst_mc
@@ -1156,8 +1156,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
     FST_INFO("  via    = %s", printDBLine(&via.joint_target[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  target = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
 
-    ErrorCode err = SUCCESS;
-    //ErrorCode err = planPathSmoothJoint(start.angle, via.joint_target, target, path);
+    ErrorCode err = planPathSmoothJoint(start_state.angle, via, target, path);
 
     if (err == SUCCESS)
     {
@@ -1171,7 +1170,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
         return err;
     }
 
-    //err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
+    err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
 
     if (err == SUCCESS)
     {
@@ -1902,6 +1901,8 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
 
         if (err == SUCCESS && soft_constraint_.isJointInConstraint(points[i].angle))
         {
+            char buffer[LOG_TEXT_SIZE];
+            FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
             picked_num ++;
 
             if (manual_time_ >= manual_traj_.duration)

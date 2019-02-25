@@ -7,7 +7,8 @@ using namespace std;
 using namespace basic_alg;
 
 
-KinematicsToll::KinematicsToll()
+KinematicsToll::KinematicsToll():
+    is_valid_(false)
 {
 
 }
@@ -42,11 +43,68 @@ KinematicsToll::KinematicsToll(DH& base_dh, DH arm_dh[4], bool is_left):
         posture_.elbow = 1;
         posture_.wrist = 1;
     }
+    is_valid_ = true;
+}
+
+KinematicsToll::KinematicsToll(std::string file_path, bool is_left)
+{
+    if (param_.loadParamFile(file_path + "arm_dh.yaml"))
+    {
+        if (param_.getParam("base_dh/d", base_dh_.d) &&
+            param_.getParam("base_dh/a", base_dh_.a) &&
+            param_.getParam("base_dh/alpha", base_dh_.alpha) &&
+            param_.getParam("base_dh/offset", base_dh_.offset) &&
+            param_.getParam("arm_dh/axis-0/d", arm_dh_[0].d) &&
+            param_.getParam("arm_dh/axis-0/a", arm_dh_[0].a) &&
+            param_.getParam("arm_dh/axis-0/alpha", arm_dh_[0].alpha) &&
+            param_.getParam("arm_dh/axis-0/offset", arm_dh_[0].offset) &&
+            param_.getParam("arm_dh/axis-1/d", arm_dh_[1].d) &&
+            param_.getParam("arm_dh/axis-1/a", arm_dh_[1].a) &&
+            param_.getParam("arm_dh/axis-1/alpha", arm_dh_[1].alpha) &&
+            param_.getParam("arm_dh/axis-1/offset", arm_dh_[1].offset) &&
+            param_.getParam("arm_dh/axis-2/d", arm_dh_[2].d) &&
+            param_.getParam("arm_dh/axis-2/a", arm_dh_[2].a) &&
+            param_.getParam("arm_dh/axis-2/alpha", arm_dh_[2].alpha) &&
+            param_.getParam("arm_dh/axis-2/offset", arm_dh_[2].offset) &&
+            param_.getParam("arm_dh/axis-3/d", arm_dh_[3].d) &&
+            param_.getParam("arm_dh/axis-3/a", arm_dh_[3].a) &&
+            param_.getParam("arm_dh/axis-3/alpha", arm_dh_[3].alpha) &&
+            param_.getParam("arm_dh/axis-3/offset", arm_dh_[3].offset))
+        {
+            matrix_base_.inverse(matrix_base_inv_);
+            if(is_left)
+            {
+                posture_.arm = -1;
+                posture_.elbow = -1;
+                posture_.wrist = -1;
+            }
+            else
+            {
+                posture_.arm = 1;
+                posture_.elbow = 1;
+                posture_.wrist = 1;
+            }
+            is_valid_ = true;          
+        }
+        else
+        {
+            is_valid_ = false;
+        }
+    }
+    else
+    {
+        is_valid_ = false;
+    }    
 }
 
 KinematicsToll::~KinematicsToll()
 {
 
+}
+
+bool KinematicsToll::isValid()
+{
+    return is_valid_;
 }
 
 void KinematicsToll::doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_joint_index, size_t to_joint_index)
@@ -99,21 +157,21 @@ void KinematicsToll::doFK(const Joint& joint, TransMatrix& trans_matrix, size_t 
     trans_matrix = result_matrix;
 }
 
-bool KinematicsToll::doIK(const PoseEuler& pose_euler, const PostureToll& posture, Joint& joint, double valve)
+bool KinematicsToll::doIK(const PoseEuler& pose_euler, const Posture& posture, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_euler.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, joint, valve);
 }
 
-bool KinematicsToll::doIK(const PoseQuaternion& pose_quaternion, const PostureToll& posture, Joint& joint, double valve)
+bool KinematicsToll::doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_quaternion.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, joint, valve);
 }
 
-bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const PostureToll& posture, Joint& joint, double valve)
+bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& posture, Joint& joint, double valve)
 {
     if(!isPostureValid(posture))
     {
@@ -264,44 +322,44 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const PostureToll& po
 
 bool KinematicsToll::doIK(const PoseEuler& pose_euler, const Joint& ref_joint, Joint& joint, double valve)
 {
-    PostureToll posture = getPostureByJoint(ref_joint);
+    Posture posture = getPostureByJoint(ref_joint);
     return doIK(pose_euler, posture, joint, valve);
 }
 
 bool KinematicsToll::doIK(const PoseQuaternion& pose_quaternion, const Joint& ref_joint, Joint& joint, double valve)
 {
-    PostureToll posture = getPostureByJoint(ref_joint);
+    Posture posture = getPostureByJoint(ref_joint);
     return doIK(pose_quaternion, posture, joint, valve);
 }
 
 bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& joint, double valve)
 {
-    PostureToll posture = getPostureByJoint(ref_joint);
+    Posture posture = getPostureByJoint(ref_joint);
     return doIK(trans_matrix, posture, joint, valve);
 }
 
-bool KinematicsToll::doIK(const PoseEuler& pose_euler, const PostureToll& posture, const Joint& ref_joint, Joint& joint, double valve)
+bool KinematicsToll::doIK(const PoseEuler& pose_euler, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_euler.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, ref_joint, joint, valve);
 }
 
-bool KinematicsToll::doIK(const PoseQuaternion& pose_quaternion, const PostureToll& posture, const Joint& ref_joint, Joint& joint, double valve)
+bool KinematicsToll::doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_quaternion.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, ref_joint, joint, valve);
 }
 
-bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const PostureToll& posture, const Joint& ref_joint, Joint& joint, double valve)
+bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve)
 {
     return doIK(trans_matrix, posture, joint, valve);
 }
 
-PostureToll KinematicsToll::getPostureByJoint(const Joint& joint, double valve)
+Posture KinematicsToll::getPostureByJoint(const Joint& joint, double valve)
 {
-    PostureToll posture;
+    Posture posture;
  
     if (joint.j2_ >= 0)
     {
@@ -345,7 +403,7 @@ inline void KinematicsToll::scaleResultJoint(double& angle)
     }
 }
 
-inline bool KinematicsToll::isPostureValid(const PostureToll& posture)
+inline bool KinematicsToll::isPostureValid(const Posture& posture)
 {
     if((posture.arm != 1 && posture.arm != -1)
         || (posture.elbow != 1 && posture.elbow != -1)

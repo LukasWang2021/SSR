@@ -20,6 +20,8 @@ typedef struct
 typedef struct
 {
     int arm;   // 1: right arm, -1:left arm
+    int elbow; // 1: right, -1:left
+    int wrist; // 1: right, -1:left
 }PostureToll;
 
 
@@ -60,7 +62,7 @@ private:
     DH arm_dh_[6];
     TransMatrix matrix_base_;
     TransMatrix matrix_base_inv_;
-    int arm_; // 1: right arm, -1:left arm
+    PostureToll posture_; // 1,1,1
 
 };
 

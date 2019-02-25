@@ -6,7 +6,7 @@ using namespace fst_mc;
 using namespace basic_alg;
 
 ComplexAxisGroupModel model;
-double stack[15000];
+double stack[20000];
 SegmentAlgParam segment_alg_param;
 
 
@@ -390,12 +390,50 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         joint_in[i] = start[i] + joint_step_via2end * path_piece_via2in;
     }
 
+    // find max piece of start2via
+    double delta_joint_start2via;
+    double max_delta_joint_start2via = 0;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        delta_joint_start2via = fabs(start[i] - via.joint_target[i]);
+        if(delta_joint_start2via > max_delta_joint_start2via)
+        {
+            max_delta_joint_start2via = delta_joint_start2via;
+        }
+    }
+    if(max_delta_joint_start2via < DOUBLE_ACCURACY)
+    {
+        max_delta_joint_start2via = 0;
+    }
+    int path_piece_start2via = ceil(max_delta_joint_start2via / segment_alg_param.joint_interval);
+
+    // find piece of start2in
+    path_cache.smooth_in_index = path_piece_start2via + path_piece_via2in;
+
     // compute path start2in
-    MotionTarget in;
-    in.cnt = -1;
-    in.joint_target = joint_in;
-    planPathJoint(start, in, path_cache);
-    path_cache.smooth_in_index = path_cache.cache_length - 1;
+    double start_joint[9], mid_joint[9], end_joint[9];
+    for(i = 0; i < model.link_num; ++i)
+    {
+        start_joint[i] = start[i];
+        mid_joint[i] = via.joint_target[i];
+        end_joint[i] = joint_in[i];
+    }
+    updateTransitionBSpLineJointResult(2, start_joint, mid_joint, end_joint, path_cache.smooth_in_index);
+    path_cache.cache[0].joint = start;
+    packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[0]);
+    int joint_address_base;
+    for(i = 1; i < path_cache.smooth_in_index; ++i)
+    {
+        joint_address_base = S_BSpLineResultJ1Base;
+        for(j = 0; j < model.link_num; ++j)
+        {
+            path_cache.cache[i].joint[j] = stack[joint_address_base + i];
+            joint_address_base += 1000;
+        }
+        packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[i]);
+    }
+    path_cache.cache[path_cache.smooth_in_index].joint = joint_in;
+    packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[path_cache.smooth_in_index]);
 
     // find smooth_out_index
     int path_cache_length_minus_1 = path_cache.smooth_in_index + path_piece_in2end;
@@ -540,7 +578,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         getMovePointToVector3(start.point_, start_point);
         getMovePointToVector3(via.pose_target.point_, via_point);
         getMovePointToVector3(point_in, in_point);
-        updateTransitionBSpLineResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
+        updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
         packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
@@ -603,7 +641,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         getMovePointToVector3(start.point_, start_point);
         getMovePointToVector3(via.pose_target.point_, via_point);
         getMovePointToVector3(point_in, in_point);
-        updateTransitionBSpLineResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
+        updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
         packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
@@ -990,7 +1028,7 @@ double getBaseFunction(int i, int k, double u)
     }
 }
 
-void updateTransitionBSpLineResult(int k, double* start_pos, double* mid_pos, double* end_pos, int result_count)
+void updateTransitionBSpLineCartResult(int k, double* start_pos, double* mid_pos, double* end_pos, int result_count)
 {
     //S_TmpDouble_1, S_TmpDouble_2 are used in getBaseFunction(), reserve them here
     stack[S_TmpDouble_3] = 1.0 / (result_count + 1);  // interpolation step
@@ -1011,6 +1049,40 @@ void updateTransitionBSpLineResult(int k, double* start_pos, double* mid_pos, do
         stack[S_BSpLineResultZBase + i] = start_pos[2] * stack[S_BaseFunctionNik0]
                                         + mid_pos[2] * stack[S_BaseFunctionNik1]
                                         + end_pos[2] * stack[S_BaseFunctionNik2];
+        stack[S_TmpDouble_4] += stack[S_TmpDouble_3];
+    }
+}
+
+void updateTransitionBSpLineJointResult(int k, double* start_joint, double* mid_joint, double* end_joint, int result_count)
+{
+    //S_TmpDouble_1, S_TmpDouble_2 are used in getBaseFunction(), reserve them here
+    stack[S_TmpDouble_3] = 1.0 / (result_count + 1);  // interpolation step
+    stack[S_TmpDouble_4] = stack[S_TmpDouble_3];   // sum of interpolation step
+    
+    for(int i = 0; i < result_count; ++i)
+    {
+        stack[S_BaseFunctionNik0] = getBaseFunction(0, k, stack[S_TmpDouble_4]);
+        stack[S_BaseFunctionNik1] = getBaseFunction(1, k, stack[S_TmpDouble_4]);
+        stack[S_BaseFunctionNik2] = getBaseFunction(2, k, stack[S_TmpDouble_4]);
+
+        stack[S_BSpLineResultJ1Base + i] = start_joint[0] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[0] * stack[S_BaseFunctionNik1]
+                                        + end_joint[0] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ2Base + i] = start_joint[1] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[1] * stack[S_BaseFunctionNik1]
+                                        + end_joint[1] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ3Base + i] = start_joint[2] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[2] * stack[S_BaseFunctionNik1]
+                                        + end_joint[2] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ4Base + i] = start_joint[3] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[3] * stack[S_BaseFunctionNik1]
+                                        + end_joint[3] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ5Base + i] = start_joint[4] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[4] * stack[S_BaseFunctionNik1]
+                                        + end_joint[4] * stack[S_BaseFunctionNik2];  
+        stack[S_BSpLineResultJ6Base + i] = start_joint[5] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[5] * stack[S_BaseFunctionNik1]
+                                        + end_joint[5] * stack[S_BaseFunctionNik2];        
         stack[S_TmpDouble_4] += stack[S_TmpDouble_3];
     }
 }

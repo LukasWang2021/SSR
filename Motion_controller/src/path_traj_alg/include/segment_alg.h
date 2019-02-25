@@ -469,10 +469,17 @@ typedef enum
     S_TrajCoeffJ8A3_Smooth = 9950,
     S_TrajCoeffJ8A4_Smooth = 9975,
     S_TrajCoeffJ8A5_Smooth = 10000,
+
+    S_BSpLineResultJ1Base = 11000,
+    S_BSpLineResultJ2Base = 12000,
+    S_BSpLineResultJ3Base = 13000,
+    S_BSpLineResultJ4Base = 14000,
+    S_BSpLineResultJ5Base = 15000,
+    S_BSpLineResultJ6Base = 16000,    
 }StackIndex;
 
 extern ComplexAxisGroupModel model;
-extern double stack[15000];
+extern double stack[20000];
 
 /***********************************************************************************************/
 void initComplexAxisGroupModel();
@@ -588,7 +595,7 @@ Stack:      S_NodeVector is used to stroe the node vector for computation
 double getBaseFunction(int i, int k, double u);
 
 /*
-Function:   updateTransitionBSpLineResult
+Function:   updateTransitionBSpLineCartResult
 Summary:    update the B Spline interpolation of transition path
 Input:      k is the power number of base function
             start_pos is the start point {X,Y,Z}
@@ -598,7 +605,20 @@ Input:      k is the power number of base function
 Output:     a list of points on transition path, not include start and end points
 Stack:      S_BSpLineResult is used to stroe the result points
 */
-void updateTransitionBSpLineResult(int k, double* start_pos, double* mid_pos, double* end_pos, int result_count);
+void updateTransitionBSpLineCartResult(int k, double* start_pos, double* mid_pos, double* end_pos, int result_count);
+
+/*
+Function:   updateTransitionBSpLineJointResult
+Summary:    update the B Spline interpolation of transition path
+Input:      k is the power number of base function
+            start_pos is the start point {J1~J6}
+            mid_pos is the middle point {J1~J6}
+            end_pos is the middle point {J1~J6}
+            result_count is the expected number of result points 
+Output:     a list of points on transition path, not include start and end points
+Stack:      S_BSpLineResult is used to stroe the result points
+*/
+void updateTransitionBSpLineJointResult(int k, double* start_joint, double* mid_joint, double* end_joint, int result_count);
 
 /*
 Function:   getQuaternsIntersectionAngle

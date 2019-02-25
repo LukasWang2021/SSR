@@ -12,7 +12,7 @@ using namespace fst_mc;
 using namespace fst_algorithm;
 using namespace basic_alg;
 
-extern double stack[15000];
+extern double stack[20000];
 extern ComplexAxisGroupModel model;
 extern SegmentAlgParam segment_alg_param;
 

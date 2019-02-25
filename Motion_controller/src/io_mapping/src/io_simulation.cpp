@@ -106,7 +106,8 @@ bool IoSimulation::setSimValue(const char * userString, bool value)
         //printf("key = %s, set SimValue value= %d\n", key.c_str(), value);
         return true;
     }
-    return false;
+    io_sim_.insert(map<string, bool>::value_type(key, value));
+    return true;
 }
 
 

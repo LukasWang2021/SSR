@@ -123,6 +123,9 @@ typedef unsigned long long int ErrorCode;
 #define INFO_INTERPRETER_ARITHMETIC_EXCEPTION   (unsigned long long int)0x0001000200AA0019   /*Arithmetic Exception */
 #define INFO_INTERPRETER_UNKNOWN_ARITHM         (unsigned long long int)0x0001000200AA001A   /*Unknown Arithm */
 #define INFO_INTERPRETER_WAIT_TIMEOUT           (unsigned long long int)0x0001000200AA001B   /*Wait Timeout */
+#define INFO_INTERPRETER_OVERRUN_HOME_POSE     (unsigned long long int)0x0001000200AA001C   /*Overrun home pose */
+#define INFO_INTERPRETER_HOME_POSE_NOT_EXIST   (unsigned long long int)0x0001000200AA001D   /*Home pose not exist */
+
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000900AA0100   /*User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000900AA0101   /*User Alarm 1*/
 #define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000900AA0102   /*User Alarm 2*/

@@ -35,7 +35,7 @@
 using namespace std;
 
 #ifdef WIN32
-#define DATA_PATH        "\\root\\files_manager_python27\\data"
+#define DATA_PATH        "\\data"
 #else
 #define DATA_PATH        "\/root\/files_manager_python27\/data"
 #endif
@@ -186,6 +186,10 @@ struct thread_control_block {
     map<int, MoveCommandDestination>  start_mov_position ;  // iLineNum :: movCmdDst
     
 	vector<string> vector_XPath ;
+	// Home Pose
+	char home_pose_exp[LAB_LEN];
+	Joint currentJoint ;
+	PoseEuler currentCart ;
 } ;
 #ifndef WIN32
 extern fst_log::Logger* log_ptr_;

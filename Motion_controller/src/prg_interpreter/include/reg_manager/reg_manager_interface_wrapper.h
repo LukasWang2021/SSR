@@ -206,4 +206,9 @@ std::vector<BaseRegData> reg_manager_interface_read_valid_r_lst(int start_id, in
 std::vector<BaseRegData> reg_manager_interface_read_valid_mr_lst(int start_id, int size);
 std::vector<BaseRegData> reg_manager_interface_read_valid_hr_lst(int start_id, int size);
 
+bool reg_manager_interface_getJoint(Joint &joint);
+bool reg_manager_interface_getCart(PoseEuler &pos);
+bool reg_manager_interface_cartToJoint(PoseEuler pos, Joint &joint);
+bool reg_manager_interface_jointToCart(Joint joint, PoseEuler &pos);
+
 #endif

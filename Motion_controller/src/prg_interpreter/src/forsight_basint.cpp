@@ -453,6 +453,60 @@ void printProgJmpLine(struct thread_control_block* objThreadCntrolBlock)
 	objThreadCntrolBlock->prog     = proglabelsScan;
 }
 
+checkHomePoseResult check_home_pose(struct thread_control_block* objThreadCntrolBlock)
+{
+	char home_pose_exp[LAB_LEN];
+    eval_value value;
+	int boolValue = 0;
+	char *proglabelsScan; 
+	updateHomePoseMgr();
+	if(strlen(objThreadCntrolBlock->home_pose_exp) == 0)
+	{
+		return HOME_POSE_WITHIN_CUR_POS ;
+	}
+	memset(home_pose_exp, 0x00, LAB_LEN);
+	strcpy(home_pose_exp, objThreadCntrolBlock->home_pose_exp);
+
+	// Switch prog on home_pose_exp and execute it as program
+	proglabelsScan = objThreadCntrolBlock->prog ;
+	objThreadCntrolBlock->prog = home_pose_exp ;
+	do {
+		objThreadCntrolBlock->token_type = get_token(objThreadCntrolBlock);
+		if(objThreadCntrolBlock->token_type==NUMBER) {
+			int iLen = strlen(objThreadCntrolBlock->token);
+			int iIdx = atoi(objThreadCntrolBlock->token);
+
+			checkHomePoseResult checkRet = checkSingleHomePoseByCurrentJoint(
+				iIdx, objThreadCntrolBlock->currentJoint);
+			putback(objThreadCntrolBlock);
+			if(checkRet == HOME_POSE_NOT_EXIST)
+			{
+				// Restore prog to original program
+				objThreadCntrolBlock->prog     = proglabelsScan;
+				return HOME_POSE_NOT_EXIST ;
+			}
+			if(iLen > 1)
+				memset(objThreadCntrolBlock->prog, ' ', iLen -1);
+			char *progReplace = objThreadCntrolBlock->prog + iLen -1;
+			progReplace[0] = (checkRet == HOME_POSE_WITHIN_CUR_POS)?'1':'0';
+			objThreadCntrolBlock->prog += iLen;
+		}
+	} while (objThreadCntrolBlock->tok != FINISHED);
+
+	// 
+	objThreadCntrolBlock->prog = home_pose_exp ;
+	get_exp(objThreadCntrolBlock, &value, &boolValue);
+	// Restore prog to original program
+	objThreadCntrolBlock->prog     = proglabelsScan;
+
+	FST_INFO("check_home_pose: %s -> %s", 
+		objThreadCntrolBlock->home_pose_exp, home_pose_exp);
+	if(boolValue)
+		return HOME_POSE_WITHIN_CUR_POS ;
+	else
+		return HOME_POSE_NOT_WITHIN_CUR_POS ;
+}
+
 /************************************************* 
 	Function:		call_interpreter
 	Description:	load program or execute interpreter process.
@@ -508,7 +562,21 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		return -1;
 	  }
 	  // Call in the first time to load major P[*]
+	  forgesight_registers_manager_get_joint(objThreadCntrolBlock->currentJoint);
+	  memset(objThreadCntrolBlock->home_pose_exp, 0x00, LAB_LEN);
   	  append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
+	  checkHomePoseResult checkRet = check_home_pose(objThreadCntrolBlock) ;
+	  if(checkRet == HOME_POSE_NOT_WITHIN_CUR_POS) 
+	  {
+		  serror(objThreadCntrolBlock, 27); /* Overrun home pose */
+		  return -1;
+	  }
+	  else if(checkRet == HOME_POSE_NOT_EXIST) 
+	  {
+	  //  setWarning(INFO_INTERPRETER_HOME_POSE_NOT_EXIST);
+		  serror(objThreadCntrolBlock, 28); /* Home pose not exist */
+		  return -1;
+	  }
 	  
 	  objThreadCntrolBlock->prog = objThreadCntrolBlock->p_buf;
 	  objThreadCntrolBlock->prog_end = objThreadCntrolBlock->prog + strlen(objThreadCntrolBlock->prog);
@@ -862,18 +930,36 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		     return END_COMMND_RET;
 		  break;
 		case CALLMACRO:
-//			objThreadCntrolBlock->is_in_macro = true ;
-			if(objThreadCntrolBlock->prog_mode == STEP_MODE)
+			if(objThreadCntrolBlock->is_in_macro == true)
 			{
-				objThreadCntrolBlock->prog_mode = FULL_MODE;
-				iRet = exec_call(objThreadCntrolBlock, true);
-				objThreadCntrolBlock->prog_mode = STEP_MODE;
+				if(objThreadCntrolBlock->prog_mode == STEP_MODE)
+				{
+					objThreadCntrolBlock->prog_mode = FULL_MODE;
+					iRet = exec_call(objThreadCntrolBlock, true);
+					objThreadCntrolBlock->prog_mode = STEP_MODE;
+				}
+				else
+				{
+					iRet = exec_call(objThreadCntrolBlock, true);
+				}
 			}
-			else
+			else     
 			{
-				iRet = exec_call(objThreadCntrolBlock, true);
+				// luiaming reopen at 190219
+				objThreadCntrolBlock->is_in_macro = true ;
+				if(objThreadCntrolBlock->prog_mode == STEP_MODE)
+				{
+					objThreadCntrolBlock->prog_mode = FULL_MODE;
+					iRet = exec_call(objThreadCntrolBlock, true);
+					objThreadCntrolBlock->prog_mode = STEP_MODE;
+				}
+				else
+				{
+					iRet = exec_call(objThreadCntrolBlock, true);
+				}
+				// luiaming reopen at 190219
+				objThreadCntrolBlock->is_in_macro = false ;
 			}
-//			objThreadCntrolBlock->is_in_macro = false ;
 			if(iRet == END_COMMND_RET)
 				return END_COMMND_RET;
 		  break;
@@ -3002,7 +3088,9 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 		INFO_INTERPRETER_TOO_LONG_PROJECT_NAME    ,     "too long project name",       // 23
 		INFO_INTERPRETER_ARITHMETIC_EXCEPTION     ,     "Arithmetic Exception",        // 24
 		INFO_INTERPRETER_UNKNOWN_ARITHM     	  , 	"Unknown Arithm",		       // 25
-		INFO_INTERPRETER_WAIT_TIMEOUT        	  , 	"Wait Timeout"		           // 26
+		INFO_INTERPRETER_WAIT_TIMEOUT        	  , 	"Wait Timeout",		           // 26
+		INFO_INTERPRETER_OVERRUN_HOME_POSE   	  , 	"Overrun home pose",           // 27
+		INFO_INTERPRETER_HOME_POSE_NOT_EXIST   	  , 	"Home pose not exist"          // 28
   };
   if(error > (int)(sizeof(errInfo)/sizeof(ErrInfo))) {
   	FST_ERROR("\t NOTICE : Error out of range %d ", error);
@@ -3923,7 +4011,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 
 	if(!strcmp(vname, FORSIGHT_CURRENT_JOINT))
 	{
-		copyMoveCommandDestination(movCmdDst);
+		getMoveCommandDestination(movCmdDst);
 	    value.setJointValue(&movCmdDst.joint_target);
 		
 		value.setPrRegDataWithJointValue(&movCmdDst.joint_target);
@@ -3931,7 +4019,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 	}
 	else if(!strcmp(vname, FORSIGHT_CURRENT_POS))
 	{
-		copyMoveCommandDestination(movCmdDst);
+		getMoveCommandDestination(movCmdDst);
 		value.setPoseValue(&movCmdDst.pose_target);
 		
 		value.setPrRegDataWithPoseEulerValue(&movCmdDst.pose_target);

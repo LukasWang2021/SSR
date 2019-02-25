@@ -137,20 +137,34 @@ bool ProgramLaunching::processMacro(void)
     ErrorCode err = SUCCESS;
     for (int i = 0; i < macro_num_; ++i)
     {
-        if (strcasecmp(macro_vector_[i].ioType, "di") == 0)
+        if (strcasecmp(macro_vector_[i].ioType, "ui") == 0)
         {
             err = io_mapping_ptr_->getDIByBit(macro_vector_[i].ioPort, launch_info_[i].port_value);
             if (isRisingEdge(i))
+            {
                 sendInterpreterStart(i);
+                return true;
+            }         
+        } else if (strcasecmp(macro_vector_[i].ioType, "di") == 0)
+        {
+            err = io_mapping_ptr_->getDIByBit(macro_vector_[i].ioPort, launch_info_[i].port_value);
+            if (isRisingEdge(i))
+            {
+                sendInterpreterStart(i);
+                return true;
+            }
             
         } else if (strcasecmp(macro_vector_[i].ioType, "ri") == 0)
         {
             err = io_mapping_ptr_->getRIByBit(macro_vector_[i].ioPort, launch_info_[i].port_value);
             if (isRisingEdge(i))
+            {
                 sendInterpreterStart(i);
+                return true;
+            }
         }
     }
-    return true;
+    return false;
 }
 
 // check if there is rising edge.

@@ -2465,22 +2465,14 @@ int exec_end(struct thread_control_block * objThreadCntrolBlock)
   	greturn(objThreadCntrolBlock);
 	return 1;
   }
-  putback(objThreadCntrolBlock);
-/*
-  if(select_and_cycle_tos>0)
+  // Single END also mean finish the whole subroutine 
+  // and need to call greturn
+  else  
   {
-    select_stack = select_and_cycle_pop();
-    if(tok == WHILE){
-		return ;
-	}
-	else {
-	   serror(objThreadCntrolBlock, 4);
-	   return;
-	}
+    putback(objThreadCntrolBlock);
+    greturn(objThreadCntrolBlock);
+    return 1 ;
   }
- */
-  // exit(0);
-  return 1 ;
 }
 
 /************************************************* 
@@ -2916,6 +2908,8 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro)
   // find_eol(objThreadCntrolBlock);
   FST_INFO("Left   call_interpreter at exec_call.");
   // Lujiaming commit at 190218
+  // This line use to return from subroutine to main
+  // And it should be called in the END case
   // greturn(objThreadCntrolBlock);
   if(iRet == END_COMMND_RET)
 	 return END_COMMND_RET;

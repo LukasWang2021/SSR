@@ -384,7 +384,7 @@ bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
 		if(bRet)
 		{
 #ifndef WIN32 
-			objPrRegDataIpc.pos[0] = ptr->j1_;
+			objPrRegDataIpc.pos[0] = ptr->j1_;
 			objPrRegDataIpc.pos[1] = ptr->j2_;
 			objPrRegDataIpc.pos[2] = ptr->j3_;
 			objPrRegDataIpc.pos[3] = ptr->j4_;
@@ -464,7 +464,7 @@ bool reg_manager_interface_setTypePr(int *ptr, uint16_t num)
 		if(bRet)
 		{
 #ifdef USE_LOCAL_REG_MANAGER_INTERFACE
-		    objPrRegDataIpc.value.pos_type = *ptr;
+		    objPrRegDataIpc.value.pos_type = *ptr;
 			reg_manager_interface_setPr(&objPrRegDataIpc, num);
 #endif
 		}

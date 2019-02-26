@@ -172,7 +172,7 @@ void exec_if(struct thread_control_block * objThreadCntrolBlock),
 	 exec_elseif(struct thread_control_block * objThreadCntrolBlock),
 	 exec_endif(struct thread_control_block * objThreadCntrolBlock);
 
-int  exec_end(struct thread_control_block * objThreadCntrolBlock);
+bool exec_end(struct thread_control_block * objThreadCntrolBlock);
 int  gosub(struct thread_control_block * objThreadCntrolBlock);
 void greturn(struct thread_control_block * objThreadCntrolBlock),
 	 gosub_push(struct thread_control_block * objThreadCntrolBlock, char *s),
@@ -519,6 +519,7 @@ checkHomePoseResult check_home_pose(struct thread_control_block* objThreadCntrol
 int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode)
 {
   int isExecuteEmptyLine ;
+  bool bRet = 0;
   int iRet = 0;
   int iLinenum;
   char * cLineContentPtr = 0 ;
@@ -965,8 +966,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		  break;
 		case END:
 		  // exit(0);
-		  iRet = exec_end(objThreadCntrolBlock);
-		  if(iRet == 1)
+		  bRet = exec_end(objThreadCntrolBlock);
+		  if(bRet == true)
 		  {
              return 0 ; // NULL ;
 		  }
@@ -2442,9 +2443,10 @@ void exec_endif(struct thread_control_block * objThreadCntrolBlock)
 	Function:		exec_end
 	Description:	Execute a END statement. 
 	Input:			thread_control_block  - interpreter info
-	Return: 		NULL.
+	Return: 		true  - exec end and return .
+	                false - exec end and not return.
 *************************************************/ 
-int exec_end(struct thread_control_block * objThreadCntrolBlock)
+bool exec_end(struct thread_control_block * objThreadCntrolBlock)
 {
   struct select_and_cycle_stack select_stack ;
 
@@ -2454,16 +2456,16 @@ int exec_end(struct thread_control_block * objThreadCntrolBlock)
     select_stack = select_and_cycle_pop(objThreadCntrolBlock);
 	if(objThreadCntrolBlock->tok!=select_stack.itokentype) {
 	   serror(objThreadCntrolBlock, 4);
-	   return 0;
+	   return false;
 	}
     find_eol(objThreadCntrolBlock);
-	return 0;
+	return false;
   }
   else if(objThreadCntrolBlock->tok == SUB)
   {
     putback(objThreadCntrolBlock);
   	greturn(objThreadCntrolBlock);
-	return 1;
+	return true;
   }
   // Single END also mean finish the whole subroutine 
   // and need to call greturn
@@ -2471,7 +2473,7 @@ int exec_end(struct thread_control_block * objThreadCntrolBlock)
   {
     putback(objThreadCntrolBlock);
     greturn(objThreadCntrolBlock);
-    return 1 ;
+    return true;
   }
 }
 
@@ -2793,10 +2795,21 @@ void exec_import(struct thread_control_block * objThreadCntrolBlock)
   proglabelsScan = objThreadCntrolBlock->prog ;
   objThreadCntrolBlock->prog = objThreadCntrolBlock->sub_prog[objThreadCntrolBlock->iSubProgNum];
   scan_labels(objThreadCntrolBlock, OUTSIDE_FUNC, objLabel.name);
+  
+  // merge by order before import subroutine in the subroutine
+  mergeImportXPathToProjectXPath(objThreadCntrolBlock, objLabel.name);
+  
+  // Load import subroutine in the subroutine
+  get_token(objThreadCntrolBlock);
+  while(objThreadCntrolBlock->tok == IMPORT)
+  {
+	  exec_import(objThreadCntrolBlock);
+	  get_token(objThreadCntrolBlock);
+  }
+
   objThreadCntrolBlock->prog = proglabelsScan;
   objThreadCntrolBlock->iSubProgNum++ ;
   
-  mergeImportXPathToProjectXPath(objThreadCntrolBlock, objLabel.name);
 /*
  *	  addr = add_label(objThreadCntrolBlock, objLabel);
  *    if(addr==-1 || addr==-2) {

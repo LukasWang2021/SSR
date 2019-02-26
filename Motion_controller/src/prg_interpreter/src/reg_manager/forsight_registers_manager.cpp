@@ -2901,7 +2901,7 @@ int forgesight_registers_manager_get_joint(Joint &joint)
 
 int forgesight_registers_manager_get_cart(PoseEuler &pos)
 {
-	return forgesight_registers_manager_get_cart(pos);
+	return reg_manager_interface_getCart(pos);
 }
 
 int forgesight_registers_manager_cartToJoint(PoseEuler pos, Joint &joint)

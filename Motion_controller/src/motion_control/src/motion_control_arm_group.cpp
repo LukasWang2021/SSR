@@ -370,46 +370,11 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     // 初始化运动学模块
     FST_INFO("Initializing kinematics of ArmGroup ...");
-    double dh_matrix[NUM_OF_JOINT][4];
-    kinematics_ptr_ = new ArmKinematics();
+    kinematics_ptr_ = new KinematicsRTM(path);
 
-    if (kinematics_ptr_)
+    if (!kinematics_ptr_->isValid())
     {
-        param.reset();
-
-        if (param.loadParamFile(path + "arm_dh.yaml"))
-        {
-            if (param.getParam("dh_parameter/axis-0", dh_matrix[0], 4) &&
-                param.getParam("dh_parameter/axis-1", dh_matrix[1], 4) &&
-                param.getParam("dh_parameter/axis-2", dh_matrix[2], 4) &&
-                param.getParam("dh_parameter/axis-3", dh_matrix[3], 4) &&
-                param.getParam("dh_parameter/axis-4", dh_matrix[4], 4) &&
-                param.getParam("dh_parameter/axis-5", dh_matrix[5], 4))
-            {
-                kinematics_ptr_->initKinematics(dh_matrix);
-                FST_INFO("DH-matrix:");
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[0][0], dh_matrix[0][1], dh_matrix[0][2], dh_matrix[0][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[1][0], dh_matrix[1][1], dh_matrix[1][2], dh_matrix[1][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[2][0], dh_matrix[2][1], dh_matrix[2][2], dh_matrix[2][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[3][0], dh_matrix[3][1], dh_matrix[3][2], dh_matrix[3][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[4][0], dh_matrix[4][1], dh_matrix[4][2], dh_matrix[4][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[5][0], dh_matrix[5][1], dh_matrix[5][2], dh_matrix[5][3]);
-            }
-            else
-            {
-                FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
-                return param.getLastError();
-            }
-        }
-        else
-        {
-            FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
-            return param.getLastError();
-        }
-    }
-    else
-    {
-        FST_ERROR("Fail to create kinematics for ArmGroup.");
+        FST_ERROR("Fail to create kinematics for this Group.");
         return MOTION_INTERNAL_FAULT;
     }
 
@@ -437,23 +402,9 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
     // 初始化路径和轨迹规划
-    /*
-    DH base_dh = {0.365, 0.03, 0, 0};
-    DH arm_dh[] = { {0, 0, PI / 2, 0},
-                    {0, 0.34, 0, PI / 2},
-                    {0, -0.035, PI / 2, 0},
-                    {0.35, 0, -PI / 2, 0},
-                    {0, 0, PI / 2, 0},
-                    {0.0965, 0, 0, 0}  };
-
-
-
-    KinematicsRTM *rtm_kinematics_ptr = new KinematicsRTM(base_dh, arm_dh);
-    */
     param.reset();
     path = COMPONENT_PARAM_FILE_DIR;
     SegmentAlgParam seg_param;
-    //seg_param.kinematics_ptr = rtm_kinematics_ptr;
     seg_param.kinematics_ptr = kinematics_ptr_;
     seg_param.dynamics_ptr = dynamics_ptr_;
 

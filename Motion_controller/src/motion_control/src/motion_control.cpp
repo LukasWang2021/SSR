@@ -553,15 +553,15 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        return group_ptr_->getKinematicsPtr()->inverseKinematicsInUser(pose, group_ptr_->getLatestJoint(), joint);
+        return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint);     // transform from user to base
     }
     else
     {
-        Matrix tf, uf;
+        //Matrix tf, uf;
 
         if (user_frame_id == 0)
         {
-            uf.eye();
+            //uf.eye();
         }
         else
         {
@@ -570,7 +570,7 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
 
             if (err_user == SUCCESS && uf_info.is_valid)
             {
-                uf = uf_info.data;
+                //uf = uf_info.data;
             }
             else
             {
@@ -581,7 +581,7 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
 
         if (tool_frame_id == 0)
         {
-            tf.eye();
+            //tf.eye();
         }
         else
         {
@@ -590,7 +590,7 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
 
             if (err_tool == SUCCESS && tf_info.is_valid)
             {
-                tf = tf_info.data;
+                //tf = tf_info.data;
             }
             else
             {
@@ -599,7 +599,8 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
             }
         }
 
-        return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
+       // return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
+       return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint);  // transform uf tf to base
     }
 }
 
@@ -607,16 +608,16 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        group_ptr_->getKinematicsPtr()->forwardKinematicsInUser(joint, pose);
+        group_ptr_->getKinematicsPtr()->doFK(joint, pose);  // transform from base to user
         return SUCCESS;
     }
     else
     {
-        Matrix tf, uf;
+        //Matrix tf, uf;
 
         if (user_frame_id == 0)
         {
-            uf.eye();
+            //uf.eye();
         }
         else
         {
@@ -625,7 +626,7 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
 
             if (err_user == SUCCESS && uf_info.is_valid)
             {
-                uf = uf_info.data;
+                //uf = uf_info.data;
             }
             else
             {
@@ -636,7 +637,7 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
 
         if (tool_frame_id == 0)
         {
-            tf.eye();
+            //tf.eye();
         }
         else
         {
@@ -645,7 +646,7 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
 
             if (err_tool == SUCCESS && tf_info.is_valid)
             {
-                tf = tf_info.data;
+                //tf = tf_info.data;
             }
             else
             {
@@ -654,7 +655,8 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
             }
         }
 
-        group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
+        //group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
+        group_ptr_->getKinematicsPtr()->doFK(joint, pose);      // transform base to uf tf
         return SUCCESS;
     }
 }
@@ -677,13 +679,13 @@ ErrorCode MotionControl::getServoVersion(std::string &version)
 PoseEuler MotionControl::getCurrentPose(void)
 {
     PoseEuler pose;
-    group_ptr_->getKinematicsPtr()->forwardKinematicsInUser(group_ptr_->getLatestJoint(), pose);
+    group_ptr_->getKinematicsPtr()->doFK(group_ptr_->getLatestJoint(), pose);   // transform from base to user
     return pose;
 }
 
 void MotionControl::getCurrentPose(PoseEuler &pose)
 {
-    group_ptr_->getKinematicsPtr()->forwardKinematicsInUser(group_ptr_->getLatestJoint(), pose);
+    group_ptr_->getKinematicsPtr()->doFK(group_ptr_->getLatestJoint(), pose);   // transform from base to user
 }
 
 Joint MotionControl::getServoJoint(void)
@@ -734,8 +736,10 @@ ErrorCode MotionControl::setToolFrame(int id)
     {
         if (id == 0)
         {
-            Matrix tf;
-            ErrorCode err = group_ptr_->getKinematicsPtr()->setToolFrame(tf.eye());
+            //Matrix tf;
+            ErrorCode err = SUCCESS;
+            // TODO
+            // ErrorCode err = group_ptr_->getKinematicsPtr()->setToolFrame(tf.eye());
 
             if (err == SUCCESS)
             {
@@ -756,7 +760,8 @@ ErrorCode MotionControl::setToolFrame(int id)
 
             if (err == SUCCESS && tf_info.is_valid)
             {
-                err = group_ptr_->getKinematicsPtr()->setToolFrame(tf_info.data);
+                // TODO
+                // err = group_ptr_->getKinematicsPtr()->setToolFrame(tf_info.data);
 
                 if (err == SUCCESS)
                 {
@@ -797,8 +802,10 @@ ErrorCode MotionControl::setUserFrame(int id)
     {
         if (id == 0)
         {
-            Matrix uf;
-            ErrorCode err = group_ptr_->getKinematicsPtr()->setUserFrame(uf.eye());
+            //Matrix uf;
+            // TODO
+            // ErrorCode err = group_ptr_->getKinematicsPtr()->setUserFrame(uf.eye());
+            ErrorCode err = SUCCESS;
 
             if (err == SUCCESS)
             {
@@ -819,7 +826,8 @@ ErrorCode MotionControl::setUserFrame(int id)
 
             if (err == SUCCESS && uf_info.is_valid)
             {
-                err = group_ptr_->getKinematicsPtr()->setUserFrame(uf_info.data);
+                // TODO
+                // err = group_ptr_->getKinematicsPtr()->setUserFrame(uf_info.data);
 
                 if (err == SUCCESS)
                 {

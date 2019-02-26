@@ -307,8 +307,6 @@ public:
 	//  -----------------------------------------------------------------------
     char getExcitorStop(void);
 
-    char getDIAlarm(void);//depressed soon
-
     //  -----------------------------------------------------------------------
 	//  Function:		getDOType0Stop
 	//  Description: get the value of type0 stop.
@@ -405,6 +403,8 @@ public:
     //bool isSafetyAlarm();
 
 	void getSafetyBoardVersion(int &version);
+
+	void checkSafetyBoardAlarm(void);
 
 
 	

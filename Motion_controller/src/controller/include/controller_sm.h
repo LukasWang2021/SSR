@@ -156,7 +156,6 @@ private:
     long long int interpreter_warning_code_;
     int error_level_;
     bool is_error_exist_;
-
     
     // state machine transfer
     void processInterpreter();

@@ -239,10 +239,6 @@ char FstSafetyDevice::getExcitorStop()
 {
     return din_frm1_.load().byte4.excitor_stop; 
 }
-char FstSafetyDevice::getDIAlarm()
-{
-    return getExcitorStop();
-}
 
 //---------------output byte1----------------//
 char FstSafetyDevice::getDOType0Stop()
@@ -383,6 +379,68 @@ void FstSafetyDevice::getSafetyBoardVersion(int &version)
     {
         version = 0;
     }
+}
+
+//generate the error codes from the external component(safety_board)
+void FstSafetyDevice::checkSafetyBoardAlarm(void)
+{
+    if (getDualFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_RELAY_DUAL_FAULTY);
+    }
+    if (getDIExtEStop())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_EXTERNAL_STOP);
+    }
+    if (getDISafetyDoorStop())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_SAFETY_DOOR_STOP);
+    }
+    if (getDILimitedStop())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_LIMITED_STOP);
+    }
+    if (getDIDeadmanNormal())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_DEADMAN_NORMAL_FAULTY);
+    }
+    if (getDIDeadmanPanic())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_DEADMAN_PANIC);
+    }
+    if (getDITPEStop())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_TP_ESTOP);
+    }
+    if (getModeFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_OP_MODE_FAULTY);
+    }
+    if (getDIContactorFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_MAIN_CONTACTOR_FAULTY);
+    }
+    if (getBrake1RelayFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY);
+    }
+    if (getBrake2RelayFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY);
+    }
+    if (getBrake3RelayFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY);
+    }
+    if (getContactor0RelayFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY);
+    }
+    if (getContactor1RelayFaulty())
+    {
+        ErrorMonitor::instance()->add(SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY);
+    }
+
 }
 
 

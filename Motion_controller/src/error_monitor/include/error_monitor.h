@@ -19,6 +19,9 @@ class ErrorMonitor
     bool pop(unsigned long long& error_code);
     int getWarningLevel();
     std::list<uint64_t> getErrorList(void);
+    bool isCore0Error(unsigned long long code);
+    int getErrorLevel(unsigned long long code);
+
   private:
     enum {MAX_ERRORS = 10,};
     void addErrorList(unsigned long long error_code);

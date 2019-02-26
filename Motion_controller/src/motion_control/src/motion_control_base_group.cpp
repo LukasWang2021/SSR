@@ -2679,7 +2679,7 @@ bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, double thr
     return true;
 }
 
-BaseKinematics* BaseGroup::getKinematicsPtr(void)
+Kinematics* BaseGroup::getKinematicsPtr(void)
 {
     return kinematics_ptr_;
 }

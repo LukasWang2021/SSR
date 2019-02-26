@@ -17,7 +17,7 @@
 #include <motion_control_offset_calibrator.h>
 #include <motion_control_manual_teach.h>
 #include <motion_control_traj_fifo.h>
-#include <arm_kinematics.h>
+#include <kinematics_rtm.h>
 #include <motion_control_cache_pool.h>
 #include <dynamics_interface.h>
 
@@ -115,7 +115,7 @@ class BaseGroup
     virtual size_t getNumberOfJoint(void) = 0;
     virtual size_t getFIFOLength(void) = 0;
 
-    virtual BaseKinematics* getKinematicsPtr(void);
+    virtual basic_alg::Kinematics* getKinematicsPtr(void);
     virtual Calibrator* getCalibratorPtr(void);
     virtual Constraint* getSoftConstraintPtr(void);
 
@@ -199,11 +199,11 @@ class BaseGroup
     ManualFrame manual_frame_;
     ManualTeach manual_teach_;
 
-    BaseKinematics          *kinematics_ptr_;
     ManualTrajectory        manual_traj_;
     BareCoreInterface       bare_core_;
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;
+    basic_alg::Kinematics   *kinematics_ptr_;
     fst_algorithm::DynamicsInterface  *dynamics_ptr_;
 
     CachePool<PathCacheList>        path_cache_pool_;

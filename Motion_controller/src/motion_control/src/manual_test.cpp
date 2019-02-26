@@ -96,8 +96,8 @@ void test1(void)
     Joint res;
     PoseEuler pose;
 
-    arm.getKinematicsPtr()->forwardKinematicsInBase(joint, pose);
-    arm.getKinematicsPtr()->inverseKinematicsInBase(pose, joint, res);
+    arm.getKinematicsPtr()->doFK(joint, pose);
+    arm.getKinematicsPtr()->doIK(pose, joint, res);
 
     printf("forward kinematics:\n");
     printf("joint input = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
@@ -275,13 +275,13 @@ void test4(void)
                         {
                             inp.j6_ = j6;
 
-                            arm.getKinematicsPtr()->forwardKinematicsInUser(inp, pose);
-                            arm.getKinematicsPtr()->inverseKinematicsInUser(pose, inp, res);
+                            arm.getKinematicsPtr()->doFK(inp, pose);
+                            arm.getKinematicsPtr()->doIK(pose, inp, res);
                             
                             kout << inp.j1_ << "," << inp.j2_ << "," << inp.j3_ << "," << inp.j4_ << "," << inp.j5_ << "," << inp.j6_ << ","
                                  << pose.point_.x_ << "," << pose.point_.y_ << "," << pose.point_.z_ << "," << pose.quaternion_.w_ << "," << pose.quaternion_.x_ << "," << pose.quaternion_.y_ << "," << pose.quaternion_.z_ << ",";
 
-                            arm.getKinematicsPtr()->forwardKinematicsInUser(res, pose);
+                            arm.getKinematicsPtr()->doFK(res, pose);
                             kout << res.j1_ << "," << res.j2_ << "," << res.j3_ << "," << res.j4_ << "," << res.j5_ << "," << res.j6_ << ","
                                  << pose.point_.x_ << "," << pose.point_.y_ << "," << pose.point_.z_ << "," << pose.quaternion_.w_ << "," << pose.quaternion_.x_ << "," << pose.quaternion_.y_ << "," << pose.quaternion_.z_ << endl;
                         }
@@ -322,14 +322,14 @@ void test6(void)
     ref.j6_ = 1.040318;
 
 
-    arm.getKinematicsPtr()->forwardKinematicsInBase(ref, p);
+    arm.getKinematicsPtr()->doFK(ref, p);
     printf("%.4f, %.4f, %.4f - %.4f, %.4f, %.4f\n", p.point_.x_, p.point_.y_, p.point_.z_, p.euler_.a_, p.euler_.b_, p.euler_.c_);
 
 
 
     clock_t start = clock();
     for (size_t i = 0; i < 1000; i++)
-        ErrorCode err = arm.getKinematicsPtr()->inverseKinematicsInUser(p, ref, res);
+        ErrorCode err = arm.getKinematicsPtr()->doIK(p, ref, res);
     clock_t end = clock();
 
     double seconds  = (double)(end - start)/CLOCKS_PER_SEC;
@@ -351,7 +351,8 @@ extern ComplexAxisGroupModel model;
 
 void test7(void)
 {
-    ArmKinematics kinematics;
+    /*
+    KinematicsRTM kinematics;
     DynamicsInterface dynamics;
     double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
     kinematics.initKinematics(dh_matrix);
@@ -415,6 +416,7 @@ void test7(void)
     double delta_traj  =(double)(t3 - t2)/CLOCKS_PER_SEC;
 
     std::cout<<"delta_path = "<<delta_path<<" delta_traj = "<<delta_traj<<std::endl;
+    */
 
 /*
     printTraj(traj_cache, 0, 0.01);

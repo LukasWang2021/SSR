@@ -47,12 +47,12 @@ ManualTeach::ManualTeach(void)
 ManualTeach::~ManualTeach(void)
 {}
 
-ErrorCode ManualTeach::init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, const string &config_file)
+ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_log::Logger *plog, const string &config_file)
 {
-    if (pkinematics && pcons && plog)
+    if (kinematics_ptr && pcons && plog)
     {
         log_ptr_ = plog;
-        kinematics_ptr_ = pkinematics;
+        kinematics_ptr_ = kinematics_ptr;
         joint_constraint_ptr_ = pcons;
     }
     else
@@ -389,13 +389,13 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
     switch (traj.frame)
     {
         case BASE:
-            err = kinematics_ptr_->inverseKinematicsInBase(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint);
             break;
         case USER:
-            err = kinematics_ptr_->inverseKinematicsInUser(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint);    // transfrom from user to base
             break;
         case WORLD:
-            err = kinematics_ptr_->inverseKinematicsInWorld(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint);    // transfrom from world to base
             break;
         default:
             err = MOTION_INTERNAL_FAULT;

@@ -13,6 +13,7 @@
 #include <error_code.h>
 #include <thread_help.h>
 #include <motion_control_ros_basic.h>
+#include <motion_control_datatype.h>
 
 
 namespace fst_mc
@@ -95,9 +96,9 @@ public:
     ErrorCode   getServoVersion(std::string &version);
     GroupState  getGroupState(void);
     ServoState  getServoState(void);
-    PoseEuler   getCurrentPose(void);
+    basic_alg::PoseEuler getCurrentPose(void);
     void    getCurrentPose(basic_alg::PoseEuler &pose);
-    Joint   getServoJoint(void);
+    basic_alg::Joint getServoJoint(void);
     void    getServoJoint(basic_alg::Joint &joint);
 
     size_t  getFIFOLength(void);

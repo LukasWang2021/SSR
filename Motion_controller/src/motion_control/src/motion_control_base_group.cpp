@@ -103,7 +103,7 @@ BaseGroup::~BaseGroup()
     for (size_t i = 0; i < g_joint_output_index; i++)
     {
         auto &point = g_joint_output_array[i].point;
-        kinematics_ptr_->forwardKinematicsInUser(point.angle, pose);
+        kinematics_ptr_->doFK(point.angle, pose);
         g_joint_out << point.level << "," << g_joint_output_array[i].time << ","
                     << point.angle[0] << "," << point.angle[1] << "," << point.angle[2] << "," << point.angle[3] << "," << point.angle[4] << "," << point.angle[5] << ","
                     << point.omega[0] << "," << point.omega[1] << "," << point.omega[2] << "," << point.omega[3] << "," << point.omega[4] << "," << point.omega[5] << ","
@@ -391,13 +391,13 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     switch (manual_frame_)
     {
         case BASE:
-            err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, res_joint);
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint);
             break;
         case USER:
-            err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, res_joint);
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint);    // TODO: transform from user frame to base frame
             break;
         case WORLD:
-            err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, res_joint);
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint);    // TODO: transform from world frame to base frame
             break;
         default:
             FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_frame_);
@@ -481,15 +481,15 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         case JOINT:
             break;
         case BASE:
-            kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, manual_traj_.cart_start);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);
         case USER:
-            kinematics_ptr_->forwardKinematicsInUser(manual_traj_.joint_start, manual_traj_.cart_start);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);   // tranform from base to user frame
             break;
         case WORLD:
-            kinematics_ptr_->forwardKinematicsInWorld(manual_traj_.joint_start, manual_traj_.cart_start);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);   // tranform from base to world frame
             break;
         case TOOL:
-            kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, pose);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, pose);
             manual_traj_.tool_coordinate = pose;
             memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
             break;
@@ -571,15 +571,15 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
             case JOINT:
                 break;
             case BASE:
-                kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, manual_traj_.cart_start);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);
             case USER:
-                kinematics_ptr_->forwardKinematicsInUser(manual_traj_.joint_start, manual_traj_.cart_start);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);       // transform from base to user frame
                 break;
             case WORLD:
-                kinematics_ptr_->forwardKinematicsInWorld(manual_traj_.joint_start, manual_traj_.cart_start);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);       // transform from base to world frame
                 break;
             case TOOL:
-                kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, pose);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, pose);
                 manual_traj_.tool_coordinate = pose;
                 memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
                 break;
@@ -924,7 +924,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
         }
 
         PoseQuaternion start_pose;
-        kinematics_ptr_->forwardKinematicsInUser(start_joint_, start_pose);
+        kinematics_ptr_->doFK(start_joint_, start_pose);
 
         if (target.type == MOTION_LINE)
         {
@@ -1285,7 +1285,7 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
 
     for (size_t i = 0; i < path.cache_length; i++)
     {
-        err = kinematics_ptr_->inverseKinematicsInUser(path.cache[i].pose, reference, path.cache[i].joint);
+        err = kinematics_ptr_->doIK(path.cache[i].pose, reference, path.cache[i].joint);
 
         if (err == SUCCESS)
         {
@@ -1326,7 +1326,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
     clock_t start_clock, end_clock;
     double  path_plan_time, path_ik_time, traj_plan_time;
     PoseEuler start_pose;
-    kinematics_ptr_->forwardKinematicsInUser(start, start_pose);
+    kinematics_ptr_->doFK(start, start_pose);
 
     FST_INFO("autoStableLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
     FST_INFO("  start joint = %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
@@ -1403,7 +1403,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
     clock_t start_clock, end_clock;
     double  path_plan_time, path_ik_time, traj_plan_time;
     PoseEuler start_pose;
-    kinematics_ptr_->forwardKinematicsInUser(start_state.angle, start_pose);
+    kinematics_ptr_->doFK(start_state.angle, start_pose);
 
     FST_INFO("autoSmoothLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
     FST_INFO("  start joint = %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
@@ -1702,17 +1702,23 @@ double BaseGroup::getGlobalAccRatio(void)
 
 ErrorCode BaseGroup::setToolFrame(const PoseEuler &tf)
 {
-    return kinematics_ptr_->setToolFrame(tf);
+    // return kinematics_ptr_->setToolFrame(tf);
+    // TODO
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::setUserFrame(const PoseEuler &uf)
 {
-    return kinematics_ptr_->setUserFrame(uf);
+    // return kinematics_ptr_->setUserFrame(uf);
+    // TODO
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::setWorldFrame(const PoseEuler &wf)
 {
-    return kinematics_ptr_->setUserFrame(wf);
+    // return kinematics_ptr_->setUserFrame(wf);
+    // TODO
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length)
@@ -1882,16 +1888,16 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         switch (manual_traj_.frame)
         {
             case BASE:
-                err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, points[i].angle);
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle);
                 break;
             case USER:
-                err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, points[i].angle);
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle);      // transfrom from user to base frame
                 break;
             case WORLD:
-                err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, points[i].angle);
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle);      // transfrom from world to base frame
                 break;
             case TOOL:
-                err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, points[i].angle);
+                // err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, points[i].angle);
                 break;
             case JOINT:
             default:
@@ -2081,7 +2087,7 @@ void BaseGroup::doStateMachine(void)
             {
                 FST_INFO("Stop request received, stop barecore.");
                 stop_request_ = false;
-                bare_core_.stopBareCore();
+                //bare_core_.stopBareCore();
                 standby_to_disable_cnt = 0;
                 group_state_ = STANDBY_TO_DISABLE;
             }
@@ -2442,7 +2448,7 @@ void BaseGroup::setFineWaiter(void)
 
     if (block.motion_type == MOTION_JOINT)
     {
-        kinematics_ptr_->forwardKinematicsInUser(block.joint, target);
+        kinematics_ptr_->doFK(block.joint, target);  // transfrom from base to user
     }
     else
     {
@@ -2459,7 +2465,7 @@ void BaseGroup::loopFineWaiter(void)
     if (fine_waiter_.isEnable() && group_state_ == AUTO_TO_STANDBY && servo_state_ == SERVO_IDLE)
     {  
         PoseQuaternion   barecore_pose;
-        kinematics_ptr_->forwardKinematicsInUser(getLatestJoint(), barecore_pose);
+        kinematics_ptr_->doFK(getLatestJoint(), barecore_pose);  // transfrom from base to user
         //FST_INFO("loopFineWaiter: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", barecore_pose[0], barecore_pose[1], barecore_pose[2], barecore_pose[3], barecore_pose[4], barecore_pose[5], barecore_pose[6]);
         fine_waiter_.checkWaiter(barecore_pose);
     }
@@ -2673,7 +2679,7 @@ bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, double thr
     return true;
 }
 
-BaseKinematics* BaseGroup::getKinematicsPtr(void)
+Kinematics* BaseGroup::getKinematicsPtr(void)
 {
     return kinematics_ptr_;
 }

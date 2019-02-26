@@ -252,6 +252,8 @@ typedef unsigned long long int ErrorCode;
 #define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0000000400B20002   /*invalid path cache*/
 #define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0000000400B20003   /*invalid motion type*/
 #define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0000000400B20004   /*invalid smooth in index*/
+#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0000000400B20005   /*ik failed*/
+
 
 /*New error codes feed here.*/
 

@@ -11,8 +11,9 @@ Important Note: all APIs provided by this source are not support multi thread op
 #include "basic_alg_datatype.h"
 #include "common_enum.h"
 #include "motion_control_datatype.h"
-#include "arm_kinematics.h"
+#include "kinematics.h"
 #include "dynamics_interface.h"
+#include "error_code.h"
 
 #define DOUBLE_ACCURACY 1e-6
 #define SQRT_DOUBLE_ACCURACY 1e-12
@@ -34,7 +35,7 @@ typedef struct
     double time_factor_first;   // the time factor of the first piece
     double time_factor_last;   // the time factor of the last piece
     double max_cartesian_acc;   // mm/s^2
-    fst_mc::BaseKinematics* kinematics_ptr;
+    basic_alg::Kinematics* kinematics_ptr;
     fst_algorithm::DynamicsInterface* dynamics_ptr;
 }SegmentAlgParam;
 
@@ -773,7 +774,7 @@ inline void getTrajPFromPathOut2In(const fst_mc::PathCache& path_cache, double t
 
 inline void updateMovLTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline void updateMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
-inline void updateMovLVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
+inline bool updateMovLVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline void updateMovJVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline void updateMovLIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);

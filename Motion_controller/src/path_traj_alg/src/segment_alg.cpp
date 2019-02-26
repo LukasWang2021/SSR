@@ -759,7 +759,10 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     {
         case MOTION_LINE:
         {
-            updateMovLVia2InTrajP(path_cache, via, traj_pva_in_index);
+            if(!updateMovLVia2InTrajP(path_cache, via, traj_pva_in_index))
+            {
+                return TRAJ_PLANNING_INVALID_IK_FAILED;
+            }
             updateMovLIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
             updateMovLVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
             break;
@@ -800,10 +803,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateSmoothOut2InTrajP(path_cache, via, traj_path_cache_index_out2in, traj_pva_size_out2in);
     updateSmoothOut2InTrajT(path_cache, via, cmd_vel, traj_path_cache_index_out2in, traj_pva_size_out2in, traj_t_size_out2in);
     updateOutAndInPointState(start_state, traj_pva_in_index);
-/*for(int i=0; i<traj_pva_size_out2in; ++i)
-{
-    std::cout<<i<<" "<<stack[S_TrajP0_Smooth + i]<<" "<<stack[S_TrajP1_Smooth + i]<<" "<<stack[S_TrajT_Smooth + i]<<std::endl;
-} */   
+    
     updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
                   &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
 
@@ -1772,7 +1772,7 @@ inline void updateMovJTrajP(const PathCache& path_cache, int* traj_path_cache_in
     }
 }
 
-inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
+inline bool updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
 {
     int i, j;
     // compute path vector and quatern for via2in
@@ -1785,7 +1785,10 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
     double angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
     // compute via joint
     Joint joint_via;
-    segment_alg_param.kinematics_ptr->inverseKinematicsInUser(via.pose_target, path_cache.cache[0].joint, joint_via);
+    if(!segment_alg_param.kinematics_ptr->doIK(via.pose_target, path_cache.cache[0].joint, joint_via))
+    {
+        return false;
+    }
     // decide traj_pva_in_index & length_step & angle_step, fill TrajP via2in if in is not on via
     double traj_piece_ideal_via2in = path_length_via2in * stack[S_PathCountFactorCartesian];
     if(traj_piece_ideal_via2in < DOUBLE_ACCURACY)
@@ -1806,7 +1809,10 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
         {
             getMoveLPathPoint(via.pose_target.point_, path_vector_via2in, length_distance_to_via, pose.point_);
             getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_distance_to_via, pose.quaternion_);
-            segment_alg_param.kinematics_ptr->inverseKinematicsInUser(pose, joint_ref, joint_result);
+            if(!segment_alg_param.kinematics_ptr->doIK(pose, joint_ref, joint_result))
+            {
+                return false;
+            }
             traj_p_address = S_TrajP0;
             for(j = 0; j < model.link_num; ++j)
             {
@@ -1818,6 +1824,7 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
             angle_distance_to_via += angle_step;
         }        
     }
+    return true;
 }
 
 inline void updateMovJVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)

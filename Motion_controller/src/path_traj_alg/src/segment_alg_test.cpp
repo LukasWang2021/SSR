@@ -1,6 +1,7 @@
 #include "segment_alg.h"
 #include "base_kinematics.h"
-#include "arm_kinematics.h"
+#include "kinematics.h"
+#include "kinematics_rtm.h"
 #include "dynamics_interface.h"
 #include "basic_alg_datatype.h"
 #include <iostream>
@@ -20,13 +21,13 @@ extern SegmentAlgParam segment_alg_param;
 DynamicsInterface dynamics;
 
 
-void doIK(BaseKinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
+void doIK(Kinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
 {
     Joint result_joint;
     Joint ref_joint = start_joint;
     for(int i = 0; i < path_cache.cache_length; ++i)
     {
-        kinematics_ptr->inverseKinematicsInUser(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
+        kinematics_ptr->doIK(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
         ref_joint = path_cache.cache[i].joint;       
     }
 }
@@ -34,9 +35,12 @@ void doIK(BaseKinematics* kinematics_ptr, PathCache& path_cache, Joint& start_jo
 int main(void)
 {
     initComplexAxisGroupModel();
-    BaseKinematics* kinematics_ptr = new ArmKinematics();
-    double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
-    kinematics_ptr->initKinematics(dh_matrix);    
+    Kinematics* kinematics_ptr = new KinematicsRTM("null");
+    //double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
+    if(!kinematics_ptr->isValid())
+    {
+        std::cout<<"kinematics init failed"<<std::endl;
+    }
 
     segment_alg_param.accuracy_cartesian_factor = 1;
     segment_alg_param.accuracy_joint_factor = 6;

@@ -71,6 +71,8 @@ KinematicsToll::KinematicsToll(std::string file_path, bool is_left)
             param_.getParam("arm_dh/axis-3/alpha", arm_dh_[3].alpha) &&
             param_.getParam("arm_dh/axis-3/offset", arm_dh_[3].offset))
         {
+            TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);
+            matrix_base_ = matrix_base;
             matrix_base_.inverse(matrix_base_inv_);
             if(is_left)
             {

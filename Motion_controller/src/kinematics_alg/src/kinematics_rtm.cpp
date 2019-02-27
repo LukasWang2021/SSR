@@ -74,6 +74,8 @@ KinematicsRTM::KinematicsRTM(std::string file_path, bool is_flip)
             param_.getParam("arm_dh/axis-5/alpha", arm_dh_[5].alpha) &&
             param_.getParam("arm_dh/axis-5/offset", arm_dh_[5].offset))
         {
+            TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);
+            matrix_base_ = matrix_base;
             matrix_base_.inverse(matrix_base_inv_);
             if(is_flip)
             {

@@ -54,30 +54,3 @@ target_link_libraries(kinematics_alg
 install(TARGETS kinematics_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
-
-#for test
-add_executable(kinematics_rtm_test
-    test/kinematics_rtm_test.cpp
-)
-target_link_libraries(kinematics_rtm_test
-    ${catkin_LIBRARIES}
-    basic_alg
-    kinematics_alg
-)
-install(TARGETS	kinematics_rtm_test
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-#for test
-add_executable(kinematics_toll_test
-    test/kinematics_toll_test.cpp
-)
-target_link_libraries(kinematics_toll_test
-    ${catkin_LIBRARIES}
-    basic_alg
-    kinematics_alg
-)
-install(TARGETS	kinematics_toll_test
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-

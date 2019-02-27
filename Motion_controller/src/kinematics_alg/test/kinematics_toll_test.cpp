@@ -1,6 +1,7 @@
 #include "kinematics_toll.h"
 #include <iostream>
 #include <math.h>
+#include <string.h>
 
 using namespace std;
 using namespace basic_alg;
@@ -9,7 +10,7 @@ using namespace basic_alg;
 
 bool isCorrect(Joint& init, Joint& result)
 {
-    for(int i = 0; i < 6; ++i)
+    for(int i = 0; i < 4; ++i)
     {
         if(fabs(init[i] - result[i]) > 0.001)
         {
@@ -34,12 +35,16 @@ int main()
     KinematicsToll k(base_dh, arm_dh, false);
     
     Joint joint[SET_NUM];
+    for(int i = 0; i < SET_NUM; ++i)
+    {
+        memset(&joint[i], 0, sizeof(Joint));
+    }
     joint[0].j1_ = 1;     joint[0].j2_ = 0;        joint[0].j3_ = 0;         joint[0].j4_ = 0;  
     joint[1].j1_ = 0.5;   joint[1].j2_ = M_PI / 2; joint[1].j3_ = -M_PI / 2; joint[1].j4_ = 0;  
     joint[2].j1_ = 0.25;  joint[2].j2_ = -M_PI / 4;joint[2].j3_ = M_PI / 4; joint[2].j4_ = M_PI / 2;  
     joint[3].j1_ = 0.125; joint[3].j2_ = -M_PI / 4;joint[3].j3_ = -M_PI / 2;  joint[3].j4_ = -M_PI / 2;   
 
-    PostureToll posture[SET_NUM];
+    Posture posture[SET_NUM];
     for(int i = 0; i < SET_NUM; ++i)
     {
         posture[i] = k.getPostureByJoint(joint[i]);
@@ -78,7 +83,7 @@ int main()
         {
             std::cout<<"Test set "<<i<<" is ik failed, ";
         }
-        std::cout<<"posture is "<<posture[i].arm<<std::endl<<std::endl;
+        std::cout<<"posture is "<<posture[i].arm<<" "<<posture[i].elbow<<" "<<posture[i].wrist<<std::endl;
     }
 
     return 0;

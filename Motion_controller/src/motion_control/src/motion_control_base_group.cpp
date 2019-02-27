@@ -103,12 +103,12 @@ BaseGroup::~BaseGroup()
     for (size_t i = 0; i < g_joint_output_index; i++)
     {
         auto &point = g_joint_output_array[i].point;
-        kinematics_ptr_->forwardKinematicsInUser(point.angle, pose);
+        kinematics_ptr_->doFK(point.angle, pose);
         g_joint_out << point.level << "," << g_joint_output_array[i].time << ","
                     << point.angle[0] << "," << point.angle[1] << "," << point.angle[2] << "," << point.angle[3] << "," << point.angle[4] << "," << point.angle[5] << ","
                     << point.omega[0] << "," << point.omega[1] << "," << point.omega[2] << "," << point.omega[3] << "," << point.omega[4] << "," << point.omega[5] << ","
                     << point.alpha[0] << "," << point.alpha[1] << "," << point.alpha[2] << "," << point.alpha[3] << "," << point.alpha[4] << "," << point.alpha[5] << ","
-                    << pose.position.x << "," << pose.position.y << "," << pose.position.z << "," << pose.orientation.a << "," << pose.orientation.b << "," << pose.orientation.c << endl;
+                    << pose.point_.x_ << "," << pose.point_.y_ << "," << pose.point_.z_ << "," << pose.euler_.a_ << "," << pose.euler_.b_ << "," << pose.euler_.c_ << endl;
     }
 
     g_joint_out.close();
@@ -142,16 +142,16 @@ BaseGroup::~BaseGroup()
             if (path_cache.target.type == MOTION_LINE)
             {
                 g_path_out << "move-line,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
-                           << ",target-x=" << path_cache.target.pose_target[0] << ",target-y=" << path_cache.target.pose_target[1] << ",target-z=" << path_cache.target.pose_target[2]
-                           << ",target-a=" << path_cache.target.pose_target[3] << ",target-b=" << path_cache.target.pose_target[4] << ",target-c=" << path_cache.target.pose_target[5] << endl;
+                           << ",target-x=" << path_cache.target.pose_target.point_.x_ << ",target-y=" << path_cache.target.pose_target.point_.y_ << ",target-z=" << path_cache.target.pose_target.point_.z_
+                           << ",target-a=" << path_cache.target.pose_target.euler_.a_ << ",target-b=" << path_cache.target.pose_target.euler_.b_ << ",target-c=" << path_cache.target.pose_target.euler_.c_ << endl;
             }
             else if (path_cache.target.type == MOTION_CIRCLE)
             {
                 g_path_out << "move-circle,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
-                           << ",via-x=" << path_cache.target.circle_target.pose1[0] << ",via-y=" << path_cache.target.circle_target.pose1[1] << ",via-z=" << path_cache.target.circle_target.pose1[2]
-                           << ",via-a=" << path_cache.target.circle_target.pose1[3] << ",via-b=" << path_cache.target.circle_target.pose1[4] << ",via-c=" << path_cache.target.circle_target.pose1[5]
-                           << ",target-x=" << path_cache.target.circle_target.pose2[0] << ",target-y=" << path_cache.target.circle_target.pose2[1] << ",target-z=" << path_cache.target.circle_target.pose2[2]
-                           << ",target-a=" << path_cache.target.circle_target.pose2[3] << ",target-b=" << path_cache.target.circle_target.pose2[4] << ",target-c=" << path_cache.target.circle_target.pose2[5] << endl;
+                           << ",via-x=" << path_cache.target.circle_target.pose1.point_.x_ << ",via-y=" << path_cache.target.circle_target.pose1.point_.y_ << ",via-z=" << path_cache.target.circle_target.pose1.point_.z_
+                           << ",via-a=" << path_cache.target.circle_target.pose1.euler_.a_ << ",via-b=" << path_cache.target.circle_target.pose1.euler_.b_ << ",via-c=" << path_cache.target.circle_target.pose1.euler_.c_
+                           << ",target-x=" << path_cache.target.circle_target.pose2.point_.x_ << ",target-y=" << path_cache.target.circle_target.pose2.point_.y_ << ",target-z=" << path_cache.target.circle_target.pose2.point_.z_
+                           << ",target-a=" << path_cache.target.circle_target.pose2.euler_.a_ << ",target-b=" << path_cache.target.circle_target.pose2.euler_.b_ << ",target-c=" << path_cache.target.circle_target.pose2.euler_.c_ << endl;
             }
             else
             {
@@ -163,8 +163,8 @@ BaseGroup::~BaseGroup()
             {
                 PathBlock &block = path_cache.cache[j];
                 g_path_out << "block-" << j << ",point-type=" << block.point_type << ",motion-type=" << block.motion_type 
-                           << ",x=" << block.pose[0] << ",y=" << block.pose[1] << ",z=" << block.pose[2] 
-                           << ",ow=" << block.pose[3] << ",ox=" << block.pose[4] << ",oy=" << block.pose[5] << ",oz=" << block.pose[6] << endl;
+                           << ",x=" << block.pose.point_.x_ << ",y=" << block.pose.point_.y_ << ",z=" << block.pose.point_.z_ 
+                           << ",ow=" << block.pose.quaternion_.w_ << ",ox=" << block.pose.quaternion_.x_ << ",oy=" << block.pose.quaternion_.y_ << ",oz=" << block.pose.quaternion_.z_ << endl;
             }
         }
     }
@@ -362,7 +362,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     ErrorCode err;
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Manual to target pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f",
-             pose.position.x, pose.position.y, pose.position.z, pose.orientation.a, pose.orientation.b, pose.orientation.c);
+             pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
 
     if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
@@ -391,13 +391,13 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     switch (manual_frame_)
     {
         case BASE:
-            err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, res_joint);
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint) ? SUCCESS : IK_FAIL;
             break;
         case USER:
-            err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, res_joint);
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint) ? SUCCESS : IK_FAIL;    // TODO: transform from user frame to base frame
             break;
         case WORLD:
-            err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, res_joint);
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint) ? SUCCESS : IK_FAIL;    // TODO: transform from world frame to base frame
             break;
         default:
             FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_frame_);
@@ -418,7 +418,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
 
     manual_time_ = 0;
     manual_traj_.mode = APOINT;
-    manual_traj_.frame = manual_frame_;
+    manual_traj_.frame = JOINT;
     err = manual_teach_.manualByTarget(res_joint, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -481,15 +481,15 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         case JOINT:
             break;
         case BASE:
-            kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, manual_traj_.cart_start);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);
         case USER:
-            kinematics_ptr_->forwardKinematicsInUser(manual_traj_.joint_start, manual_traj_.cart_start);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);   // tranform from base to user frame
             break;
         case WORLD:
-            kinematics_ptr_->forwardKinematicsInWorld(manual_traj_.joint_start, manual_traj_.cart_start);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);   // tranform from base to world frame
             break;
         case TOOL:
-            kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, pose);
+            kinematics_ptr_->doFK(manual_traj_.joint_start, pose);
             manual_traj_.tool_coordinate = pose;
             memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
             break;
@@ -571,15 +571,15 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
             case JOINT:
                 break;
             case BASE:
-                kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, manual_traj_.cart_start);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);
             case USER:
-                kinematics_ptr_->forwardKinematicsInUser(manual_traj_.joint_start, manual_traj_.cart_start);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);       // transform from base to user frame
                 break;
             case WORLD:
-                kinematics_ptr_->forwardKinematicsInWorld(manual_traj_.joint_start, manual_traj_.cart_start);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, manual_traj_.cart_start);       // transform from base to world frame
                 break;
             case TOOL:
-                kinematics_ptr_->forwardKinematicsInBase(manual_traj_.joint_start, pose);
+                kinematics_ptr_->doFK(manual_traj_.joint_start, pose);
                 manual_traj_.tool_coordinate = pose;
                 memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
                 break;
@@ -923,67 +923,67 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
             return INVALID_PARAMETER;
         }
 
-        Pose start_pose;
-        kinematics_ptr_->forwardKinematicsInUser(start_joint_, start_pose);
+        PoseQuaternion start_pose;
+        kinematics_ptr_->doFK(start_joint_, start_pose);
 
         if (target.type == MOTION_LINE)
         {
-            Pose target_pose = PoseEuler2Pose(target.pose_target);
+            PoseQuaternion target_pose = PoseEuler2Pose(target.pose_target);
 
-            if (getDistance(start_pose.position, target_pose.position) < MINIMUM_E3 && 
-                getOrientationAngle(start_pose.orientation, target_pose.orientation) < MINIMUM_E3)
+            if (getDistance(start_pose.point_, target_pose.point_) < MINIMUM_E3 && 
+                getOrientationAngle(start_pose.quaternion_, target_pose.quaternion_) < MINIMUM_E3)
             {
                 FST_ERROR("Target pose coincidence with start.");
                 FST_ERROR("  start  = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             start_pose.position.x, start_pose.position.y, start_pose.position.z,
-                             start_pose.orientation.w, start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z);
+                             start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_,
+                             start_pose.quaternion_.w_, start_pose.quaternion_.x_, start_pose.quaternion_.y_, start_pose.quaternion_.z_);
                 FST_ERROR("  target = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             target_pose.position.x, target_pose.position.y, target_pose.position.z,
-                             target_pose.orientation.w, target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z);
+                             target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_,
+                             target_pose.quaternion_.w_, target_pose.quaternion_.x_, target_pose.quaternion_.y_, target_pose.quaternion_.z_);
                 return TARGET_COINCIDENCE;
             }
         }
         else
         {
-            Pose pose1 = PoseEuler2Pose(target.circle_target.pose1);
-            Pose pose2 = PoseEuler2Pose(target.circle_target.pose2);
+            PoseQuaternion pose1 = PoseEuler2Pose(target.circle_target.pose1);
+            PoseQuaternion pose2 = PoseEuler2Pose(target.circle_target.pose2);
 
-            if (getDistance(start_pose.position, pose1.position) < MINIMUM_E3 && 
-                getOrientationAngle(start_pose.orientation, pose1.orientation) < MINIMUM_E3)
+            if (getDistance(start_pose.point_, pose1.point_) < MINIMUM_E3 && 
+                getOrientationAngle(start_pose.quaternion_, pose1.quaternion_) < MINIMUM_E3)
             {
                 FST_ERROR("Middle pose of the circle coincidence with start.");
                 FST_ERROR("  start  = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             start_pose.position.x, start_pose.position.y, start_pose.position.z,
-                             start_pose.orientation.w, start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z);
+                             start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_,
+                             start_pose.quaternion_.w_, start_pose.quaternion_.x_, start_pose.quaternion_.y_, start_pose.quaternion_.z_);
                 FST_ERROR("  middle = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             pose1.position.x, pose1.position.y, pose1.position.z,
-                             pose1.orientation.w, pose1.orientation.x, pose1.orientation.y, pose1.orientation.z);
+                             pose1.point_.x_, pose1.point_.y_, pose1.point_.z_,
+                             pose1.quaternion_.w_, pose1.quaternion_.x_, pose1.quaternion_.y_, pose1.quaternion_.z_);
                 return TARGET_COINCIDENCE;
             }
 
-            if (getDistance(start_pose.position, pose2.position) < MINIMUM_E3 &&
-                getOrientationAngle(start_pose.orientation, pose2.orientation) < MINIMUM_E3)
+            if (getDistance(start_pose.point_, pose2.point_) < MINIMUM_E3 &&
+                getOrientationAngle(start_pose.quaternion_, pose2.quaternion_) < MINIMUM_E3)
             {
                 FST_ERROR("Target pose of the circle coincidence with start.");
                 FST_ERROR("  start  = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             start_pose.position.x, start_pose.position.y, start_pose.position.z,
-                             start_pose.orientation.w, start_pose.orientation.x, start_pose.orientation.y, start_pose.orientation.z);
+                             start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_,
+                             start_pose.quaternion_.w_, start_pose.quaternion_.x_, start_pose.quaternion_.y_, start_pose.quaternion_.z_);
                 FST_ERROR("  target = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             pose2.position.x, pose2.position.y, pose2.position.z,
-                             pose2.orientation.w, pose2.orientation.x, pose2.orientation.y, pose2.orientation.z);
+                             pose2.point_.x_, pose2.point_.y_, pose2.point_.z_,
+                             pose2.quaternion_.w_, pose2.quaternion_.x_, pose2.quaternion_.y_, pose2.quaternion_.z_);
                 return TARGET_COINCIDENCE;
             }
             
-            if (getDistance(pose1.position, pose2.position) < MINIMUM_E3 &&
-                getOrientationAngle(pose1.orientation, pose2.orientation) < MINIMUM_E3)
+            if (getDistance(pose1.point_, pose2.point_) < MINIMUM_E3 &&
+                getOrientationAngle(pose1.quaternion_, pose2.quaternion_) < MINIMUM_E3)
             {
                 FST_ERROR("Middle pose coincidence with target pose of the circle.");
                 FST_ERROR("  middle = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             pose1.position.x, pose1.position.y, pose1.position.z,
-                             pose1.orientation.w, pose1.orientation.x, pose1.orientation.y, pose1.orientation.z);
+                             pose1.point_.x_, pose1.point_.y_, pose1.point_.z_,
+                             pose1.quaternion_.w_, pose1.quaternion_.x_, pose1.quaternion_.y_, pose1.quaternion_.z_);
                 FST_ERROR("  target = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f",
-                             pose2.position.x, pose2.position.y, pose2.position.z,
-                             pose2.orientation.w, pose2.orientation.x, pose2.orientation.y, pose2.orientation.z);
+                             pose2.point_.x_, pose2.point_.y_, pose2.point_.z_,
+                             pose2.quaternion_.w_, pose2.quaternion_.x_, pose2.quaternion_.y_, pose2.quaternion_.z_);
                 // TODO
                 return INVALID_PARAMETER;
             }
@@ -1156,8 +1156,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
     FST_INFO("  via    = %s", printDBLine(&via.joint_target[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  target = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
 
-    ErrorCode err = SUCCESS;
-    //ErrorCode err = planPathSmoothJoint(start.angle, via.joint_target, target, path);
+    ErrorCode err = planPathSmoothJoint(start_state.angle, via, target, path);
 
     if (err == SUCCESS)
     {
@@ -1171,7 +1170,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
         return err;
     }
 
-    //err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
+    err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
 
     if (err == SUCCESS)
     {
@@ -1286,7 +1285,7 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
 
     for (size_t i = 0; i < path.cache_length; i++)
     {
-        err = kinematics_ptr_->inverseKinematicsInUser(path.cache[i].pose, reference, path.cache[i].joint);
+        err = kinematics_ptr_->doIK(path.cache[i].pose, reference, path.cache[i].joint) ? SUCCESS : IK_FAIL;
 
         if (err == SUCCESS)
         {
@@ -1298,9 +1297,9 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
             else
             {
                 char buffer[LOG_TEXT_SIZE];
-                Pose &pose = path.cache[i].pose;
+                PoseQuaternion &pose = path.cache[i].pose;
                 FST_ERROR("IK result out of soft constraint:");
-                FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5], pose[6]);
+                FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
                 FST_ERROR("  joint: %s", printDBLine(&path.cache[i].joint[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
@@ -1310,9 +1309,9 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
         }
         else
         {
-            Pose &pose = path.cache[i].pose;
+            PoseQuaternion &pose = path.cache[i].pose;
             FST_ERROR("IK failed, code = 0x%llx", err);
-            FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose[0], pose[1], pose[2], pose[3], pose[4], pose[5], pose[6]);
+            FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
             break;
         }
     }
@@ -1327,16 +1326,16 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
     clock_t start_clock, end_clock;
     double  path_plan_time, path_ik_time, traj_plan_time;
     PoseEuler start_pose;
-    kinematics_ptr_->forwardKinematicsInUser(start, start_pose);
+    kinematics_ptr_->doFK(start, start_pose);
 
     FST_INFO("autoStableLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
     FST_INFO("  start joint = %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             start_pose.position.x, start_pose.position.y, start_pose.position.z, 
-             start_pose.orientation.a, start_pose.orientation.b, start_pose.orientation.c);
+             start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, 
+             start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
     FST_INFO("  target pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             target.pose_target.position.x, target.pose_target.position.y, target.pose_target.position.z, 
-             target.pose_target.orientation.a, target.pose_target.orientation.b, target.pose_target.orientation.c);
+             target.pose_target.point_.x_, target.pose_target.point_.y_, target.pose_target.point_.z_, 
+             target.pose_target.euler_.a_, target.pose_target.euler_.b_, target.pose_target.euler_.c_);
 
     start_clock = clock();
     ErrorCode err = planPathLine(start_pose, target, path);
@@ -1404,18 +1403,18 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
     clock_t start_clock, end_clock;
     double  path_plan_time, path_ik_time, traj_plan_time;
     PoseEuler start_pose;
-    kinematics_ptr_->forwardKinematicsInUser(start_state.angle, start_pose);
+    kinematics_ptr_->doFK(start_state.angle, start_pose);
 
     FST_INFO("autoSmoothLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
     FST_INFO("  start joint = %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  start omega = %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  start alpha = %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             start_pose.position.x, start_pose.position.y, start_pose.position.z, 
-             start_pose.orientation.a, start_pose.orientation.b, start_pose.orientation.c);
+             start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, 
+             start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
     FST_INFO("  target pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             target.pose_target.position.x, target.pose_target.position.y, target.pose_target.position.z, 
-             target.pose_target.orientation.a, target.pose_target.orientation.b, target.pose_target.orientation.c);
+             target.pose_target.point_.x_, target.pose_target.point_.y_, target.pose_target.point_.z_, 
+             target.pose_target.euler_.a_, target.pose_target.euler_.b_, target.pose_target.euler_.c_);
 
     start_clock = clock();
     ErrorCode err = planPathSmoothLine(start_pose, via, target, path);
@@ -1703,17 +1702,23 @@ double BaseGroup::getGlobalAccRatio(void)
 
 ErrorCode BaseGroup::setToolFrame(const PoseEuler &tf)
 {
-    return kinematics_ptr_->setToolFrame(tf);
+    // return kinematics_ptr_->setToolFrame(tf);
+    // TODO
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::setUserFrame(const PoseEuler &uf)
 {
-    return kinematics_ptr_->setUserFrame(uf);
+    // return kinematics_ptr_->setUserFrame(uf);
+    // TODO
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::setWorldFrame(const PoseEuler &wf)
 {
-    return kinematics_ptr_->setUserFrame(wf);
+    // return kinematics_ptr_->setUserFrame(wf);
+    // TODO
+    return SUCCESS;
 }
 
 ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length)
@@ -1747,7 +1752,7 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
     double *angle_ptr, *start_ptr, *target_ptr;
     double tm, omega;
     
-    FST_INFO("Pick from manual joint, manual-time = %.4f", manual_time_);
+    // FST_INFO("Pick from manual joint, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0 ; i < length; i++)
     {
@@ -1822,8 +1827,8 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
     double tim, vel;
     double *axis_ptr, *start_ptr, *target_ptr;
     size_t picked_num = 0;
-
-    FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
+    
+    // FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0; i < length; i++)
     {
@@ -1832,9 +1837,9 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         memset(&points[i].alpha, 0, sizeof(Joint));
         memset(&points[i].ma_cv_g, 0, sizeof(Joint));
 
-        axis_ptr   = (double *) &pose[0];
-        start_ptr  = (double *) &manual_traj_.cart_start[0];
-        target_ptr = (double *) &manual_traj_.cart_ending[0];
+        axis_ptr   = (double *) &pose.point_.x_;
+        start_ptr  = (double *) &manual_traj_.cart_start.point_.x_;
+        target_ptr = (double *) &manual_traj_.cart_ending.point_.x_;
 
         manual_time_ += cycle_time_;
 
@@ -1883,16 +1888,16 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         switch (manual_traj_.frame)
         {
             case BASE:
-                err = kinematics_ptr_->inverseKinematicsInBase(pose, ref_joint, points[i].angle);
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle) ? SUCCESS : IK_FAIL;
                 break;
             case USER:
-                err = kinematics_ptr_->inverseKinematicsInUser(pose, ref_joint, points[i].angle);
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle) ? SUCCESS : IK_FAIL;      // transfrom from user to base frame
                 break;
             case WORLD:
-                err = kinematics_ptr_->inverseKinematicsInWorld(pose, ref_joint, points[i].angle);
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle) ? SUCCESS : IK_FAIL;      // transfrom from world to base frame
                 break;
             case TOOL:
-                err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, points[i].angle);
+                // err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, points[i].angle);
                 break;
             case JOINT:
             default:
@@ -1902,6 +1907,8 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
 
         if (err == SUCCESS && soft_constraint_.isJointInConstraint(points[i].angle))
         {
+            char buffer[LOG_TEXT_SIZE];
+            // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
             picked_num ++;
 
             if (manual_time_ >= manual_traj_.duration)
@@ -1912,14 +1919,22 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         }
         else
         {
+            char buffer[LOG_TEXT_SIZE];
+            FST_ERROR("pickFromManualCartesian: IK failed.");
+            FST_INFO("  pose:  %s", printDBLine(&pose.point_.x_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  ref  : %s", printDBLine(&ref_joint.j1_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  joint: %s", printDBLine(&points[i].angle.j1_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  cart-start: %s", printDBLine(&manual_traj_.cart_start.point_.x_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  cart-end: %s", printDBLine(&manual_traj_.cart_ending.point_.x_, buffer, LOG_TEXT_SIZE));
+
             if (err != SUCCESS)
             {
-                FST_ERROR("pickFromManualCartesian: IK failed.");
+                FST_ERROR("Error code = 0x%llx", err);
                 break;
             }
             else
             {
-                FST_ERROR("pickFromManualCartesian: IK result out of soft constraint.");
+                FST_ERROR("IK result out of soft constraint.");
                 err = JOINT_OUT_OF_CONSTRAINT;
                 break;
             }
@@ -2074,7 +2089,7 @@ void BaseGroup::doStateMachine(void)
             {
                 FST_INFO("Stop request received, stop barecore.");
                 stop_request_ = false;
-                bare_core_.stopBareCore();
+                //bare_core_.stopBareCore();
                 standby_to_disable_cnt = 0;
                 group_state_ = STANDBY_TO_DISABLE;
             }
@@ -2430,19 +2445,20 @@ void BaseGroup::freeFirstCacheList(void)
 
 void BaseGroup::setFineWaiter(void)
 {
-    Pose target;
+    PoseQuaternion target;
     auto &block = path_list_ptr_->path_cache.cache[path_list_ptr_->path_cache.cache_length - 1];
 
     if (block.motion_type == MOTION_JOINT)
     {
-        kinematics_ptr_->forwardKinematicsInUser(block.joint, target);
+        kinematics_ptr_->doFK(block.joint, target);  // transfrom from base to user
     }
     else
     {
         target = block.pose;
     }
 
-    FST_INFO("setFineWaiter: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", target[0], target[1], target[2], target[3], target[4], target[5], target[6]);
+    FST_INFO("setFineWaiter: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", 
+             target.point_.x_, target.point_.y_, target.point_.z_, target.quaternion_.w_, target.quaternion_.x_, target.quaternion_.y_, target.quaternion_.z_);
     fine_waiter_.enableWaiter(target);
 }
 
@@ -2450,8 +2466,8 @@ void BaseGroup::loopFineWaiter(void)
 {
     if (fine_waiter_.isEnable() && group_state_ == AUTO_TO_STANDBY && servo_state_ == SERVO_IDLE)
     {  
-        Pose   barecore_pose;
-        kinematics_ptr_->forwardKinematicsInUser(getLatestJoint(), barecore_pose);
+        PoseQuaternion   barecore_pose;
+        kinematics_ptr_->doFK(getLatestJoint(), barecore_pose);  // transfrom from base to user
         //FST_INFO("loopFineWaiter: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", barecore_pose[0], barecore_pose[1], barecore_pose[2], barecore_pose[3], barecore_pose[4], barecore_pose[5], barecore_pose[6]);
         fine_waiter_.checkWaiter(barecore_pose);
     }
@@ -2479,7 +2495,7 @@ void BaseGroup::doCommonLoop(void)
 void BaseGroup::updateServoStateAndJoint(void)
 {
     static ServoState   barecore_state = SERVO_INIT;
-    static Joint        barecore_joint = {0};
+    static Joint        barecore_joint;
     static size_t       fail_cnt = 0;
 
     if (bare_core_.getLatestJoint(barecore_joint, barecore_state))
@@ -2665,7 +2681,7 @@ bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, double thr
     return true;
 }
 
-BaseKinematics* BaseGroup::getKinematicsPtr(void)
+Kinematics* BaseGroup::getKinematicsPtr(void)
 {
     return kinematics_ptr_;
 }
@@ -2881,7 +2897,7 @@ void FineWaiter::initFineWaiter(size_t stable_cycle, double threshold)
     stable_cycle_ = stable_cycle;
 }
 
-void FineWaiter::enableWaiter(const Pose &target)
+void FineWaiter::enableWaiter(const PoseQuaternion &target)
 {
     waiting_pose_ = target;
     stable_cnt_ = 0;
@@ -2893,9 +2909,9 @@ void FineWaiter::disableWaiter(void)
     enable_ = false;
 }
 
-void FineWaiter::checkWaiter(const Pose &pose)
+void FineWaiter::checkWaiter(const PoseQuaternion &pose)
 {
-    if (getDistance(pose.position, waiting_pose_.position) < threshold_)
+    if (getDistance(pose.point_, waiting_pose_.point_) < threshold_)
     {
         stable_cnt_ = stable_cnt_ < stable_cycle_ ? stable_cnt_ + 1 : stable_cycle_;
     }

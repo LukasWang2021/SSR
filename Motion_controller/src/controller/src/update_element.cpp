@@ -1,22 +1,24 @@
 #include "controller_publish.h"
+#include "basic_alg_datatype.h"
 
 using namespace fst_ctrl;
 using namespace fst_mc;
+using namespace basic_alg;
 
 void ControllerPublish::updateAxisGroupJointFeedback()
 {
     Joint joint_feedback = motion_control_ptr_->getServoJoint();
     joint_feedback_.data1.data = 1;
     joint_feedback_.data2.data_count = 9;
-    joint_feedback_.data2.data[0] = joint_feedback.j1;
-    joint_feedback_.data2.data[1] = joint_feedback.j2;
-    joint_feedback_.data2.data[2] = joint_feedback.j3;
-    joint_feedback_.data2.data[3] = joint_feedback.j4;
-    joint_feedback_.data2.data[4] = joint_feedback.j5;
-    joint_feedback_.data2.data[5] = joint_feedback.j6;
-    joint_feedback_.data2.data[6] = joint_feedback.j7;
-    joint_feedback_.data2.data[7] = joint_feedback.j8;
-    joint_feedback_.data2.data[8] = joint_feedback.j9;
+    joint_feedback_.data2.data[0] = joint_feedback.j1_;
+    joint_feedback_.data2.data[1] = joint_feedback.j2_;
+    joint_feedback_.data2.data[2] = joint_feedback.j3_;
+    joint_feedback_.data2.data[3] = joint_feedback.j4_;
+    joint_feedback_.data2.data[4] = joint_feedback.j5_;
+    joint_feedback_.data2.data[5] = joint_feedback.j6_;
+    joint_feedback_.data2.data[6] = joint_feedback.j7_;
+    joint_feedback_.data2.data[7] = joint_feedback.j8_;
+    joint_feedback_.data2.data[8] = joint_feedback.j9_;
 }
 
 void ControllerPublish::updateAxisGroupTcpWorldCartesian()
@@ -48,12 +50,12 @@ void ControllerPublish::updateAxisGroupTcpCurrentCartesian()
     PoseEuler pos_feedback = motion_control_ptr_->getCurrentPose();
     tcp_current_cartesian_.data1.data = 1;
     tcp_current_cartesian_.data2.data_count = 6;
-    tcp_current_cartesian_.data2.data[0] = pos_feedback.position.x;
-    tcp_current_cartesian_.data2.data[1] = pos_feedback.position.y;
-    tcp_current_cartesian_.data2.data[2] = pos_feedback.position.z;
-    tcp_current_cartesian_.data2.data[3] = pos_feedback.orientation.a;
-    tcp_current_cartesian_.data2.data[4] = pos_feedback.orientation.b;
-    tcp_current_cartesian_.data2.data[5] = pos_feedback.orientation.c;
+    tcp_current_cartesian_.data2.data[0] = pos_feedback.point_.x_;
+    tcp_current_cartesian_.data2.data[1] = pos_feedback.point_.y_;
+    tcp_current_cartesian_.data2.data[2] = pos_feedback.point_.z_;
+    tcp_current_cartesian_.data2.data[3] = pos_feedback.euler_.a_;
+    tcp_current_cartesian_.data2.data[4] = pos_feedback.euler_.b_;
+    tcp_current_cartesian_.data2.data[5] = pos_feedback.euler_.c_;
 }
 
 void ControllerPublish::updateAxisGroupCurrentCoordinate()

@@ -11,6 +11,7 @@
 using namespace std;
 using namespace fst_core_interface;
 using namespace fst_comm_interface;
+using namespace basic_alg;
 
 namespace fst_mc
 {
@@ -121,6 +122,7 @@ bool BareCoreInterface::getLatestJoint(Joint &joint, ServoState &state)
         {
             state = ServoState(fbjs.state);
             memcpy(&joint, fbjs.position, JOINT_NUM * sizeof(double));
+            memset((void*)&joint + JOINT_NUM * sizeof(double), 0, sizeof(Joint) - JOINT_NUM * sizeof(double));
             return true;
         }
         else

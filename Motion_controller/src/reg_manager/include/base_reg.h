@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 #include "error_code.h"
 
 namespace fst_ctrl

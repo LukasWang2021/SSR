@@ -17,7 +17,6 @@ Summary:    dealing with service
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 #include "service_actions/response_actions.h"
-#include "base_datatype.h"
 
 
 namespace fst_service_manager

@@ -8,6 +8,7 @@
 
 using namespace fst_base;
 using namespace fst_ctrl;
+using namespace basic_alg;
 
 InterpreterClient::InterpreterClient(fst_log::Logger* log_ptr, ProcessCommParam* param_ptr):
     log_ptr_(log_ptr), param_ptr_(param_ptr),
@@ -493,7 +494,7 @@ ErrorCode InterpreterClient::getUo(uint32_t port_offset, uint32_t &value)
 }
 
 //getJoint
-ErrorCode InterpreterClient::getJoint(int id, Joint &joint)
+ErrorCode InterpreterClient::getJoint(int id, basic_alg::Joint &joint)
 {
     if(!sendRequest(CONTROLLER_SERVER_CMD_GET_JOINT, (void*)&id, sizeof(int))
        || !recvResponse(sizeof(Joint))
@@ -506,7 +507,7 @@ ErrorCode InterpreterClient::getJoint(int id, Joint &joint)
 }
 
 //getCart
-ErrorCode InterpreterClient::getCart(int id, PoseEuler &pos)
+ErrorCode InterpreterClient::getCart(int id, basic_alg::PoseEuler &pos)
 {
     if(!sendRequest(CONTROLLER_SERVER_CMD_GET_CART, (void*)&id, sizeof(int))
        || !recvResponse(sizeof(PoseEuler))
@@ -519,7 +520,7 @@ ErrorCode InterpreterClient::getCart(int id, PoseEuler &pos)
 }
 
 //cartToJoint
-ErrorCode InterpreterClient::cartToJoint(PoseEuler pos, Joint &joint)
+ErrorCode InterpreterClient::cartToJoint(basic_alg::PoseEuler pos, basic_alg::Joint &joint)
 {
     if(!sendRequest(CONTROLLER_SERVER_CMD_CART_TO_JOINT, (void*)&pos, sizeof(PoseEuler))
        || !recvResponse(sizeof(Joint))
@@ -532,7 +533,7 @@ ErrorCode InterpreterClient::cartToJoint(PoseEuler pos, Joint &joint)
 }
 
 //jointToCart
-ErrorCode InterpreterClient::jointToCart(Joint joint, PoseEuler &pos)
+ErrorCode InterpreterClient::jointToCart(basic_alg::Joint joint, basic_alg::PoseEuler &pos)
 {
     if(!sendRequest(CONTROLLER_SERVER_CMD_CART_TO_JOINT, (void*)&joint, sizeof(Joint))
        || !recvResponse(sizeof(PoseEuler))

@@ -19,9 +19,6 @@ public:
     double b_;
     double c_;
 
-    Euler();
-    ~Euler();
-
     bool isEqual(Euler& euler, double valve = 0.001) const;
     void convertToQuaternion(basic_alg::Quaternion& quaternion) const;
     void convertToRotationMatrix(basic_alg::RotationMatrix& matrix) const;

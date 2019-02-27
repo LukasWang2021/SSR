@@ -3,7 +3,7 @@
 
 #include "controller_param.h"
 #include <thread>
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 #include "common_log.h"
 #include "thread_help.h"
 
@@ -46,8 +46,8 @@ private:
     int arm_state_;
 
     std::thread* thread_ptr_;
-    fst_mc::Joint joint_cmd_;
-    fst_mc::Joint joint_feedback_;
+    basic_alg::Joint joint_cmd_;
+    basic_alg::Joint joint_feedback_;
     fst_base::ThreadHelp thread_;
 };
 

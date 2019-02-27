@@ -5,7 +5,7 @@
 
 
 using namespace fst_ctrl;
-using namespace fst_mc;
+using namespace basic_alg;
 using namespace std;
 
 VirtualCore1::VirtualCore1():
@@ -32,7 +32,8 @@ void VirtualCore1::init(fst_log::Logger* log, ControllerParam* param_ptr)
         thread_.run(&virtualCore1ThreadFunc, this, param_ptr_->virtual_core1_thread_priority_);
     }
 }
-
+
+
 int VirtualCore1::getServoState()
 {
     return servo_state_;

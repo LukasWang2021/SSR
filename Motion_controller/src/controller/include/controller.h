@@ -16,10 +16,10 @@
 #include "controller_ipc.h"
 #include "device_manager.h"
 #include "motion_control.h"
-#include "base_datatype.h"
+//#include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "preformance_monitor.h"
-#include "io_mapping.h" //feng add for iomapping.
+#include "io_mapping.h" 
 #include "program_launching.h"
 #include "file_manager.h"
 #include <string>

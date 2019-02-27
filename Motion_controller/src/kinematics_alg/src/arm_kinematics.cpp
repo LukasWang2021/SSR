@@ -28,12 +28,12 @@ void ArmKinematics::initKinematics(double (&dh_matrix)[NUM_OF_JOINT][4])
 void ArmKinematics::forwardKinematics(const Joint &joint, Matrix &matrix)
 {
     matrix.eye();
-    matrix.transFromDH(dh_matrix_[0], joint.j1);
-    matrix.transFromDH(dh_matrix_[1], joint.j2);
-    matrix.transFromDH(dh_matrix_[2], joint.j3);
-    matrix.transFromDH(dh_matrix_[3], joint.j4);
-    matrix.transFromDH(dh_matrix_[4], joint.j5);
-    matrix.transFromDH(dh_matrix_[5], joint.j6);
+    matrix.transFromDH(dh_matrix_[0], joint.j1_);
+    matrix.transFromDH(dh_matrix_[1], joint.j2_);
+    matrix.transFromDH(dh_matrix_[2], joint.j3_);
+    matrix.transFromDH(dh_matrix_[3], joint.j4_);
+    matrix.transFromDH(dh_matrix_[4], joint.j5_);
+    matrix.transFromDH(dh_matrix_[5], joint.j6_);
 }
 
 
@@ -57,7 +57,7 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
     {
         //FST_ERROR("IK fail solving theta1.");
         //FST_ERROR("  px = %lf, py = %lf, DH[2][2] = %lf", px, py, dh_matrix_[2][2]);
-        return IK_OUT_OF_WORKSPACE;
+        return IK_FAIL;
     }
 
     double t1_part1 = atan2(dh_matrix_[2][2], (mn1 - mn2) / 2);
@@ -67,19 +67,19 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
     double angle1 = t1_part1 + t1_part2 - dh_matrix_[0][3];
     double angle2 = t1_part3 + t1_part2 - dh_matrix_[0][3];
 
-    joint_ref   = ref.j1;
+    joint_ref   = ref.j1_;
 
-    reviseJoint(angle1, ref.j1, PI, -PI);
-    reviseJoint(angle2, ref.j1, PI, -PI);
+    reviseJoint(angle1, ref.j1_, PI, -PI);
+    reviseJoint(angle2, ref.j1_, PI, -PI);
 
-    if (fabs(angle1 - ref.j1) < fabs(angle2 - ref.j1))
+    if (fabs(angle1 - ref.j1_) < fabs(angle2 - ref.j1_))
     {
-        res.j1 = angle1;
+        res.j1_ = angle1;
         j1 = t1_part1 + t1_part2;
     }
     else
     {
-        res.j1 = angle2;
+        res.j1_ = angle2;
         j1 = t1_part3 + t1_part2;
     }
 
@@ -100,7 +100,7 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
         //FST_ERROR("  DH[0][2] = %lf, DH[1][1] = %lf, DH[3][1] = %lf, DH[3][2] = %lf, DH[2][1] = %lf",
         //          dh_matrix_[0][2], dh_matrix_[1][1], dh_matrix_[3][1], dh_matrix_[3][2], dh_matrix_[2][1]);
         //FST_ERROR("  k1 = %lf, k2=%lf, mp1 = %lf, mp6 = %lf, mp2 = %lf", k1, k2, mp1, mp6, mp2);
-        return IK_OUT_OF_WORKSPACE;
+        return IK_FAIL;
     }
 
     double mp7 = sqrt(mp1 - mp2);
@@ -110,19 +110,19 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
 
     angle1      = mp3 - mp4 - dh_matrix_[2][3];
     angle2      = mp5 - mp4 - dh_matrix_[2][3];
-    joint_ref   = ref.j3;
+    joint_ref   = ref.j3_;
 
-    reviseJoint(angle1, ref.j3, PI, -PI);
-    reviseJoint(angle2, ref.j3, PI, -PI);
+    reviseJoint(angle1, ref.j3_, PI, -PI);
+    reviseJoint(angle2, ref.j3_, PI, -PI);
 
-    if (fabs(angle1 - ref.j3) < fabs(angle2 - ref.j3))
+    if (fabs(angle1 - ref.j3_) < fabs(angle2 - ref.j3_))
     {
-        res.j3 = angle1;
+        res.j3_ = angle1;
         j3 = mp3 - mp4;
     }
     else
     {
-        res.j3 = angle2;
+        res.j3_ = angle2;
         j3 = mp5 - mp4;
     }
 
@@ -139,10 +139,10 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
     double s2 = sin(j2);
 
     j2 -= dh_matrix_[1][3];
-    joint_ref   = ref.j2;
+    joint_ref   = ref.j2_;
 
-    reviseJoint(j2, ref.j2, PI, -PI);
-    res.j2 = j2;
+    reviseJoint(j2, ref.j2_, PI, -PI);
+    res.j2_ = j2;
 
     double c5 = c1 * s23 * ax + s1 * s23 * ay - c23 * az;
 
@@ -159,12 +159,12 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
 
     double tmp1 = angle1 - dh_matrix_[3][3];
     double tmp2 = angle2 - dh_matrix_[3][3];
-    joint_ref   = ref.j4;
+    joint_ref   = ref.j4_;
 
-    reviseJoint(tmp1, ref.j4, PI, -PI);
-    reviseJoint(tmp2, ref.j4, PI, -PI);
+    reviseJoint(tmp1, ref.j4_, PI, -PI);
+    reviseJoint(tmp2, ref.j4_, PI, -PI);
 
-    j4 = fabs(tmp1 - ref.j4) < fabs(tmp2 - ref.j4) ? angle1 : angle2;
+    j4 = fabs(tmp1 - ref.j4_) < fabs(tmp2 - ref.j4_) ? angle1 : angle2;
 
     double c4 = cos(j4);
     double s4 = sin(j4);
@@ -184,25 +184,25 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
     if (fabs(s5) < MINIMUM_E6)
     {
         double j46_tmp = j4 + j6;
-        double j46_ref = ref.j4 + dh_matrix_[3][3] + ref.j6 + dh_matrix_[5][3];
+        double j46_ref = ref.j4_ + dh_matrix_[3][3] + ref.j6_ + dh_matrix_[5][3];
 
         j46_tmp -= round((j46_tmp - j46_ref) / 2 / PI) * PI * 2;
 
-        j4 = (ref.j4 + dh_matrix_[3][3] - ref.j5 - dh_matrix_[5][3] + j46_tmp) / 2;
+        j4 = (ref.j4_ + dh_matrix_[3][3] - ref.j5_ - dh_matrix_[5][3] + j46_tmp) / 2;
         j6 = j46_tmp - j4;
     }
 
-    res.j4 = j4 - dh_matrix_[3][3];
-    res.j5 = j5 - dh_matrix_[4][3];
-    res.j6 = j6 - dh_matrix_[5][3];
+    res.j4_ = j4 - dh_matrix_[3][3];
+    res.j5_ = j5 - dh_matrix_[4][3];
+    res.j6_ = j6 - dh_matrix_[5][3];
 
-    reviseJoint(res.j4, ref.j4, PI, -PI);
-    reviseJoint(res.j5, ref.j5, PI, -PI);
-    reviseJoint(res.j6, ref.j6, 2 * PI, -2 * PI);
+    reviseJoint(res.j4_, ref.j4_, PI, -PI);
+    reviseJoint(res.j5_, ref.j5_, PI, -PI);
+    reviseJoint(res.j6_, ref.j6_, 2 * PI, -2 * PI);
 
-    res.j7 = 0;
-    res.j8 = 0;
-    res.j9 = 0;
+    res.j7_ = 0;
+    res.j8_ = 0;
+    res.j9_ = 0;
 
     return SUCCESS;
 }
@@ -225,7 +225,7 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, Joint (&solutio
     {
         //FST_ERROR("IK fail solving theta1.");
         //FST_ERROR("  px = %lf, py = %lf, DH[2][2] = %lf", px, py, dh_matrix_[2][2]);
-        return IK_OUT_OF_WORKSPACE;
+        return IK_FAIL;
     }
 
     double t1_part1 = atan2(dh_matrix_[2][2], (mn1 - mn2) / 2);

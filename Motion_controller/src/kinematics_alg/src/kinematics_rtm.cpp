@@ -7,7 +7,8 @@ using namespace std;
 using namespace basic_alg;
 
 
-KinematicsRTM::KinematicsRTM()
+KinematicsRTM::KinematicsRTM():
+    is_valid_(false)
 {
 
 }
@@ -37,11 +38,74 @@ KinematicsRTM::KinematicsRTM(DH& base_dh, DH arm_dh[6], bool is_flip):
     {
         flip_ = 0;
     }
+    is_valid_ = true;
+}
+
+KinematicsRTM::KinematicsRTM(std::string file_path, bool is_flip)
+{
+    if (param_.loadParamFile(file_path + "arm_dh.yaml"))
+    {
+        if (param_.getParam("base_dh/d", base_dh_.d) &&
+            param_.getParam("base_dh/a", base_dh_.a) &&
+            param_.getParam("base_dh/alpha", base_dh_.alpha) &&
+            param_.getParam("base_dh/offset", base_dh_.offset) &&
+            param_.getParam("arm_dh/axis-0/d", arm_dh_[0].d) &&
+            param_.getParam("arm_dh/axis-0/a", arm_dh_[0].a) &&
+            param_.getParam("arm_dh/axis-0/alpha", arm_dh_[0].alpha) &&
+            param_.getParam("arm_dh/axis-0/offset", arm_dh_[0].offset) &&
+            param_.getParam("arm_dh/axis-1/d", arm_dh_[1].d) &&
+            param_.getParam("arm_dh/axis-1/a", arm_dh_[1].a) &&
+            param_.getParam("arm_dh/axis-1/alpha", arm_dh_[1].alpha) &&
+            param_.getParam("arm_dh/axis-1/offset", arm_dh_[1].offset) &&
+            param_.getParam("arm_dh/axis-2/d", arm_dh_[2].d) &&
+            param_.getParam("arm_dh/axis-2/a", arm_dh_[2].a) &&
+            param_.getParam("arm_dh/axis-2/alpha", arm_dh_[2].alpha) &&
+            param_.getParam("arm_dh/axis-2/offset", arm_dh_[2].offset) &&
+            param_.getParam("arm_dh/axis-3/d", arm_dh_[3].d) &&
+            param_.getParam("arm_dh/axis-3/a", arm_dh_[3].a) &&
+            param_.getParam("arm_dh/axis-3/alpha", arm_dh_[3].alpha) &&
+            param_.getParam("arm_dh/axis-3/offset", arm_dh_[3].offset) &&
+            param_.getParam("arm_dh/axis-4/d", arm_dh_[4].d) &&
+            param_.getParam("arm_dh/axis-4/a", arm_dh_[4].a) &&
+            param_.getParam("arm_dh/axis-4/alpha", arm_dh_[4].alpha) &&
+            param_.getParam("arm_dh/axis-4/offset", arm_dh_[4].offset) &&
+            param_.getParam("arm_dh/axis-5/d", arm_dh_[5].d) &&
+            param_.getParam("arm_dh/axis-5/a", arm_dh_[5].a) &&
+            param_.getParam("arm_dh/axis-5/alpha", arm_dh_[5].alpha) &&
+            param_.getParam("arm_dh/axis-5/offset", arm_dh_[5].offset))
+        {
+            TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);
+            matrix_base_ = matrix_base;
+            matrix_base_.inverse(matrix_base_inv_);
+            if(is_flip)
+            {
+                flip_ = 1;
+            }
+            else
+            {
+                flip_ = 0;
+            }
+            is_valid_ = true;          
+        }
+        else
+        {
+            is_valid_ = false;
+        }
+    }
+    else
+    {
+        is_valid_ = false;
+    }    
 }
 
 KinematicsRTM::~KinematicsRTM()
 {
 
+}
+
+bool KinematicsRTM::isValid()
+{
+    return is_valid_;
 }
 
 void KinematicsRTM::doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_joint_index, size_t to_joint_index)
@@ -108,21 +172,21 @@ void KinematicsRTM::doFK(const Joint& joint, TransMatrix& trans_matrix, size_t f
     trans_matrix = result_matrix;
 }
 
-bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const PostureRTM& posture, Joint& joint, double valve)
+bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const Posture& posture, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_euler.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, joint, valve);
 }
 
-bool KinematicsRTM::doIK(const PoseQuaternion& pose_quaternion, const PostureRTM& posture, Joint& joint, double valve)
+bool KinematicsRTM::doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_quaternion.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, joint, valve);
 }
 
-bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const PostureRTM& posture, Joint& joint, double valve)
+bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Posture& posture, Joint& joint, double valve)
 {
     if(!isPostureValid(posture))
     {
@@ -260,37 +324,37 @@ bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const PostureRTM& post
 
 bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const Joint& ref_joint, Joint& joint, double valve)
 {
-    PostureRTM posture = getPostureByJoint(ref_joint);
+    Posture posture = getPostureByJoint(ref_joint);
     return doIK(pose_euler, posture, joint, valve);
 }
 
 bool KinematicsRTM::doIK(const PoseQuaternion& pose_quaternion, const Joint& ref_joint, Joint& joint, double valve)
 {
-    PostureRTM posture = getPostureByJoint(ref_joint);
+    Posture posture = getPostureByJoint(ref_joint);
     return doIK(pose_quaternion, posture, joint, valve);
 }
 
 bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& joint, double valve)
 {
-    PostureRTM posture = getPostureByJoint(ref_joint);
+    Posture posture = getPostureByJoint(ref_joint);
     return doIK(trans_matrix, posture, joint, valve);
 }
 
-bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const PostureRTM& posture, const Joint& ref_joint, Joint& joint, double valve)
+bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_euler.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, ref_joint, joint, valve);
 }
 
-bool KinematicsRTM::doIK(const PoseQuaternion& pose_quaternion, const PostureRTM& posture, const Joint& ref_joint, Joint& joint, double valve)
+bool KinematicsRTM::doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
     pose_quaternion.convertToTransMatrix(trans_matrix);
     return doIK(trans_matrix, posture, ref_joint, joint, valve);
 }
 
-bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const PostureRTM& posture, const Joint& ref_joint, Joint& joint, double valve)
+bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve)
 {
     if(!isPostureValid(posture))
     {
@@ -429,9 +493,9 @@ IK_Q5:
     return true;
 }
 
-PostureRTM KinematicsRTM::getPostureByJoint(const Joint& joint, double valve)
+Posture KinematicsRTM::getPostureByJoint(const Joint& joint, double valve)
 {
-    PostureRTM posture;
+    Posture posture;
 
     // arm
     TransMatrix trans_matrix_1to6;
@@ -505,7 +569,7 @@ inline void KinematicsRTM::scaleResultJoint(double& angle)
     }
 }
 
-inline bool KinematicsRTM::isPostureValid(const PostureRTM& posture)
+inline bool KinematicsRTM::isPostureValid(const Posture& posture)
 {
     if((posture.arm != 1 && posture.arm != -1)
         || (posture.elbow != 1 && posture.elbow != -1)

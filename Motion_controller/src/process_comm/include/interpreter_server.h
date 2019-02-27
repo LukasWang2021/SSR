@@ -9,8 +9,7 @@
 #include <mutex>
 #include <vector>
 #include "interpreter_common.h"
-#include "base_datatype.h"
-
+#include "basic_alg_datatype.h"
 
 namespace fst_base
 {

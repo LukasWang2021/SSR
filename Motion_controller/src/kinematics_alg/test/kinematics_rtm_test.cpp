@@ -49,7 +49,7 @@ int main()
     joint[2].j1_ = M_PI / 4; joint[2].j2_ = -M_PI / 4;joint[2].j3_ = 0;        joint[2].j4_ = 0;        joint[2].j5_ = M_PI / 4; joint[2].j6_ = 0;
     joint[3].j1_ = M_PI / 4; joint[3].j2_ = -M_PI / 4;joint[3].j3_ = M_PI / 2;        joint[3].j4_ = 0;        joint[3].j5_ = M_PI / 2;joint[3].j6_ = -M_PI / 4;
 
-    PostureRTM posture[SET_NUM];
+    Posture posture[SET_NUM];
     for(int i = 0; i < SET_NUM; ++i)
     {
         posture[i] = k.getPostureByJoint(joint[i]);

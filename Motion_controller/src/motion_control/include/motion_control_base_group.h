@@ -8,16 +8,16 @@
 #ifndef _MOTION_CONTROL_BASE_GROUP_H
 #define _MOTION_CONTROL_BASE_GROUP_H
 
-#include "common_log.h"
-#include "error_monitor.h"
-#include "error_code.h"
+#include <common_log.h>
+#include <error_monitor.h>
+#include <error_code.h>
 #include <motion_control_datatype.h>
 #include <motion_control_constraint.h>
 #include <motion_control_core_interface.h>
 #include <motion_control_offset_calibrator.h>
 #include <motion_control_manual_teach.h>
 #include <motion_control_traj_fifo.h>
-#include <arm_kinematics.h>
+#include <kinematics_rtm.h>
 #include <motion_control_cache_pool.h>
 #include <dynamics_interface.h>
 
@@ -35,9 +35,9 @@ class FineWaiter
     ~FineWaiter();
     void initFineWaiter(size_t stable_cycle, double threshold);
 
-    void enableWaiter(const Pose &target);
+    void enableWaiter(const basic_alg::PoseQuaternion &target);
     void disableWaiter(void);
-    void checkWaiter(const Pose &pose);
+    void checkWaiter(const basic_alg::PoseQuaternion &pose);
     bool isEnable(void);
     bool isStable(void);
 
@@ -46,7 +46,7 @@ class FineWaiter
     double  threshold_;
     size_t  stable_cnt_;
     size_t  stable_cycle_;
-    Pose    waiting_pose_;
+    basic_alg::PoseQuaternion    waiting_pose_;
 };
 
 class BaseGroup
@@ -61,18 +61,18 @@ class BaseGroup
     virtual ErrorCode clearGroup(void);
 
 
-    void  getLatestJoint(Joint &joint);
+    void  getLatestJoint(basic_alg::Joint &joint);
     void  getServoState(ServoState &state);
     void  getGroupState(GroupState &state);
-    Joint getLatestJoint(void);
+    basic_alg::Joint getLatestJoint(void);
     GroupState getGroupState(void);
     ServoState getServoState(void);
     ErrorCode  getServoVersion(std::string &version);
 
     // Frame handle APIs:
-    virtual ErrorCode setToolFrame(const PoseEuler &tf);
-    virtual ErrorCode setUserFrame(const PoseEuler &uf);
-    virtual ErrorCode setWorldFrame(const PoseEuler &wf);
+    virtual ErrorCode setToolFrame(const basic_alg::PoseEuler &tf);
+    virtual ErrorCode setUserFrame(const basic_alg::PoseEuler &uf);
+    virtual ErrorCode setWorldFrame(const basic_alg::PoseEuler &wf);
 
     // Off-line trajectory
     virtual ErrorCode moveOffLineTrajectory(int id, const std::string &file_name);
@@ -93,8 +93,8 @@ class BaseGroup
     virtual ErrorCode setManualStepOrientation(double step);
     virtual ErrorCode manualMoveStep(const ManualDirection *direction);
     virtual ErrorCode manualMoveContinuous(const ManualDirection *direction);
-    virtual ErrorCode manualMoveToPoint(const Joint &joint);
-    virtual ErrorCode manualMoveToPoint(const PoseEuler &pose);
+    virtual ErrorCode manualMoveToPoint(const basic_alg::Joint &joint);
+    virtual ErrorCode manualMoveToPoint(const basic_alg::PoseEuler &pose);
     virtual ErrorCode manualStop(void);
 
     // Constraints handle APIs:
@@ -115,7 +115,7 @@ class BaseGroup
     virtual size_t getNumberOfJoint(void) = 0;
     virtual size_t getFIFOLength(void) = 0;
 
-    virtual BaseKinematics* getKinematicsPtr(void);
+    virtual basic_alg::Kinematics* getKinematicsPtr(void);
     virtual Calibrator* getCalibratorPtr(void);
     virtual Constraint* getSoftConstraintPtr(void);
 
@@ -132,19 +132,19 @@ class BaseGroup
     virtual ErrorCode sendAutoTrajectoryFlow(void);
     virtual ErrorCode sendManualTrajectoryFlow(void);
 
-    virtual ErrorCode autoJoint(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableJoint(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoJoint(const basic_alg::Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
+    virtual ErrorCode autoStableJoint(const basic_alg::Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     virtual ErrorCode autoSmoothJoint(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     
-    virtual ErrorCode autoLine(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableLine(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoLine(const basic_alg::Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
+    virtual ErrorCode autoStableLine(const basic_alg::Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     virtual ErrorCode autoSmoothLine(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     
-    virtual ErrorCode autoCircle(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoCircle(const basic_alg::Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
+    virtual ErrorCode autoStableCircle(const basic_alg::Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
 
-    virtual ErrorCode computeInverseKinematicsOnPathCache(const Joint &start, PathCache &path);
+    virtual ErrorCode computeInverseKinematicsOnPathCache(const basic_alg::Joint &start, PathCache &path);
 
     virtual ErrorCode pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length);
     virtual ErrorCode pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length);
@@ -152,10 +152,10 @@ class BaseGroup
     virtual ErrorCode pickPointsFromManualCartesian(TrajectoryPoint *points, size_t &length);
 
     inline  ErrorCode checkMotionTarget(const MotionTarget &target);
-    inline  ErrorCode checkStartState(const Joint &start_joint);
+    inline  ErrorCode checkStartState(const basic_alg::Joint &start_joint);
 
     inline void reportError(const ErrorCode &error);
-    inline bool isSameJoint(const Joint &joint1, const Joint &joint2, double thres = MINIMUM_E6);
+    inline bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, double thres = MINIMUM_E6);
     inline bool isLastMotionSmooth(void);
     inline void resetManualTrajectory(void);
     inline void freeFirstCacheList(void);
@@ -184,8 +184,8 @@ class BaseGroup
     Constraint  soft_constraint_;
     Constraint  firm_constraint_;
 
-    Joint       servo_joint_;
-    Joint       start_joint_;
+    basic_alg::Joint  servo_joint_;
+    basic_alg::Joint  start_joint_;
     ServoState  servo_state_;
     GroupState  group_state_;
     
@@ -199,11 +199,11 @@ class BaseGroup
     ManualFrame manual_frame_;
     ManualTeach manual_teach_;
 
-    BaseKinematics          *kinematics_ptr_;
     ManualTrajectory        manual_traj_;
     BareCoreInterface       bare_core_;
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;
+    basic_alg::Kinematics   *kinematics_ptr_;
     fst_algorithm::DynamicsInterface  *dynamics_ptr_;
 
     CachePool<PathCacheList>        path_cache_pool_;

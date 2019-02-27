@@ -12,7 +12,6 @@
 #include "io_mapping_cJSON.h"
 #include "io_mapping_param.h"
 #include "common_log.h"
-#include "base_datatype.h"
 #include "base_device.h"
 #include "io_simulation.h"
 #include "io_bypass.h"

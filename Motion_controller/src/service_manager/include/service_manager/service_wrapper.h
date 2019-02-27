@@ -17,7 +17,6 @@ Summary:    lib to send service to BARE CORE
 #include "struct_to_mem/struct_feedback_joint_states.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
-#include "base_datatype.h"
 
 namespace fst_service_wrapper
 {

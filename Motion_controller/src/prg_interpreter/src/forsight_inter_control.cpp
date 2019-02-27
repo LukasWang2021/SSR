@@ -51,6 +51,7 @@ static InterpreterState g_privateInterpreterState;
 InterpreterPublish  g_interpreter_publish; 
 
 LaunchCodeMgr *    g_launch_code_mgr_ptr; 
+HomePoseMgr *      g_home_pose_mgr_ptr; 
 
 /************************************************* 
 	Function:		split
@@ -80,17 +81,6 @@ vector<string> split(string str,string pattern)
 }
 
 /************************************************* 
-	Function:		setMoveCommandDestination
-	Description:	save start position of MOV* (Used in the BACKWARD)
-	Input:			movCmdDst        - start position of MOV*
-	Return: 		NULL
-*************************************************/ 
-void setMoveCommandDestination(MoveCommandDestination movCmdDst)
-{ 
-//    writeShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
-}
-
-/************************************************* 
 	Function:		getMoveCommandDestination
 	Description:	get start position of MOV* (Used in the BACKWARD)
 	Input:			movCmdDst        - start position of MOV*
@@ -98,19 +88,9 @@ void setMoveCommandDestination(MoveCommandDestination movCmdDst)
 *************************************************/ 
 void getMoveCommandDestination(MoveCommandDestination& movCmdDst)
 {
+	  forgesight_registers_manager_get_joint(movCmdDst.joint_target);
+	  forgesight_registers_manager_get_cart(movCmdDst.pose_target);
 //    readShm(SHM_INTPRT_DST, 0, (void*)&movCmdDst, sizeof(movCmdDst));
-}
-
-/************************************************* 
-	Function:		copyMoveCommandDestination
-	Description:	copy start position of MOV* (Used in the BACKWARD)
-	Input:			movCmdDst        - start position of MOV*
-	Return: 		NULL
-*************************************************/ 
-void copyMoveCommandDestination(MoveCommandDestination& movCmdDst)
-{
-    getMoveCommandDestination(movCmdDst);
-    setMoveCommandDestination(movCmdDst);
 }
 
 /************************************************* 
@@ -271,8 +251,15 @@ void setCurLine(struct thread_control_block * objThdCtrlBlockPtr, char * line, i
 
 	if(objThdCtrlBlockPtr->is_main_thread == MAIN_THREAD)
 	{
-		strcpy(g_interpreter_publish.current_line_path, line); 
-		g_interpreter_publish.current_line_num = lineNum; 
+		if(objThdCtrlBlockPtr->is_in_macro == false)
+		{
+			strcpy(g_interpreter_publish.current_line_path, line); 
+			g_interpreter_publish.current_line_num = lineNum; 
+		}
+		else
+		{
+			FST_INFO("setCurLine Failed to %d in the macro", (int)lineNum);
+		}
 	}
 	else
 	{
@@ -1014,7 +1001,9 @@ void forgesight_load_programs_path()
 	std::string data_path = "";
 	g_files_manager_data_path = "";
 #ifdef WIN32
-    g_files_manager_data_path = std::string(DATA_PATH);
+	TCHAR pBuf[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, pBuf);
+    g_files_manager_data_path = std::string(pBuf) + std::string(DATA_PATH);
 #else
 	if(getenv("ROBOT_DATA_PREFIX") != NULL)
 		g_files_manager_data_path = string(getenv("ROBOT_DATA_PREFIX"));
@@ -1069,6 +1058,17 @@ void initInterpreter()
 #endif
 	forgesight_load_programs_path();
 	g_launch_code_mgr_ptr = new LaunchCodeMgr(g_files_manager_data_path);
+	g_home_pose_mgr_ptr   = new HomePoseMgr(g_files_manager_data_path);
+}
+
+void updateHomePoseMgr()
+{
+	g_home_pose_mgr_ptr->updateAll();
+}
+
+checkHomePoseResult checkSingleHomePoseByCurrentJoint(int idx, Joint currentJoint)
+{
+	return g_home_pose_mgr_ptr->checkSingleHomePoseByJoint(idx, currentJoint);
 }
 
 /************************************************* 
@@ -1080,6 +1080,7 @@ void initInterpreter()
 void uninitInterpreter()
 {
 	delete g_launch_code_mgr_ptr;
+	delete g_home_pose_mgr_ptr;
 }
 
 /************************************************* 

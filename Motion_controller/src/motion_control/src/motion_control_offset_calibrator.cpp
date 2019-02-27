@@ -13,6 +13,7 @@
 
 
 using namespace std;
+using namespace basic_alg;
 using namespace fst_parameter;
 
 namespace fst_mc

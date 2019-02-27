@@ -19,9 +19,6 @@ public:
     double z_;
     double w_;
 
-    Quaternion();
-    ~Quaternion();
-
     bool isValid(double valve = 0.001) const;
     bool isEqual(Quaternion& quaternion, double valve = 0.001) const;
     void reverse();

@@ -6,12 +6,15 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <string>
+#include "basic_alg_datatype.h"
+#include "basic_constants.h"
 
 
 using namespace fst_ctrl;
 using namespace fst_base;
 using namespace fst_mc;
 using namespace fst_hal;
+using namespace basic_alg;
 
 ControllerSm::ControllerSm():
     log_ptr_(NULL),
@@ -203,7 +206,7 @@ ErrorCode ControllerSm::callEstop()
         || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED
         || ctrl_state_ == CTRL_INIT)
     {
-    
+        safety_device_ptr_->setDOType0Stop(1);
         controller_client_ptr_->abort();
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
@@ -224,10 +227,7 @@ ErrorCode ControllerSm::callReset()
     {
         is_unknown_user_op_mode_exist_ = false;
         ErrorMonitor::instance()->clear();
-        motion_control_ptr_->resetGroup();
         clearInstruction();
-        safety_device_ptr_->reset();
-        ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;
         if(checkOffsetState())
         {
             //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");//todo comment
@@ -240,7 +240,12 @@ ErrorCode ControllerSm::callReset()
             motion_control_ptr_->abortMove();
             FST_ERROR("controller check offset failed");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
+            return SUCCESS;
         }
+        safety_device_ptr_->reset();
+        usleep(10000);//reset safety_board bit before sending RESET to bare_core.
+        motion_control_ptr_->resetGroup();  
+        ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;    
     }
     return SUCCESS;
 }
@@ -445,7 +450,8 @@ void ControllerSm::processSafety()
             last_unknown_user_op_mode_time_.tv_usec = current_time.tv_usec;
         }
         
-        safety_alarm_ = safety_device_ptr_->getDIAlarm();
+        safety_device_ptr_->checkSafetyBoardAlarm();
+        safety_alarm_ = safety_device_ptr_->getExcitorStop();
     }
     else
     {
@@ -477,10 +483,8 @@ void ControllerSm::processSafety()
 
 void ControllerSm::processError()
 {
-    
     error_level_ = ErrorMonitor::instance()->getWarningLevel();
-    if(error_level_ >= 4
-        || safety_alarm_ != 0)
+    if(error_level_ >= 4)
     {
         is_error_exist_ = true;
     }
@@ -493,6 +497,26 @@ void ControllerSm::processError()
     while(ErrorMonitor::instance()->pop(error_code))
     {
         recordLog(error_code);
+
+        //STOP process: write bit to the safety_board.
+        if (ErrorMonitor::instance()->isCore0Error(error_code))
+        {
+            int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+            // define error type to stop(0,1,2)
+            if (level == 7 || level == 10 || level == 11)
+            {
+                safety_device_ptr_->setDOType0Stop(1);
+            } 
+            else if (level >= 4)
+            {
+                safety_device_ptr_->setDOType1Stop(1);
+            }
+            else
+            {
+            }
+        
+        }
+
     }
 }
 

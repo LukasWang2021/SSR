@@ -25,6 +25,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/parameter_manager/include
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/error_monitor/include 
+    ${depend_PATH_INC}/basic_alg/include
 )
 
 catkin_package(

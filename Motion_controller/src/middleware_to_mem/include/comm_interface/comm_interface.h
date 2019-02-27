@@ -13,7 +13,6 @@ Summary:    lib to communicate between processes
 #include <vector>
 #include <string>
 #include "error_code.h"
-#include "base_datatype.h"
 #include "struct_to_mem/struct_joint_command.h"
 #include "struct_to_mem/struct_trajectory_segment.h"
 #include "struct_to_mem/struct_feedback_joint_states.h"

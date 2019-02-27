@@ -7,8 +7,7 @@
 #include <vector>
 #include <string>
 #include <sys/time.h>
-#include "base_datatype.h"
-
+#include "basic_alg_datatype.h"
 
 namespace fst_base
 {

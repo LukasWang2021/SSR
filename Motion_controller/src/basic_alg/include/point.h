@@ -16,9 +16,6 @@ public:
     double y_;
     double z_;
 
-    Point();
-    ~Point();
-
     bool isEqual(Point& point, double valve = 0.001) const;
     bool isParallel(Point& point, double valve = 0.001) const;
     bool isVertical(Point& point, double valve = 0.001) const;

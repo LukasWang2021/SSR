@@ -8,8 +8,7 @@
 #include <nanomsg/nn.h>
 #include <mutex>
 #include <vector>
-#include "base_datatype.h"
-
+#include "basic_alg_datatype.h"
 
 namespace fst_base
 {

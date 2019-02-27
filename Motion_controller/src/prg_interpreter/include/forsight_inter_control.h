@@ -24,6 +24,7 @@
 #include "interpreter_common.h"
 
 #include "forsight_basint.h"
+#include "forsight_home_pose.h"
 
 // #define USE_WAITING_R
 
@@ -70,16 +71,15 @@ void waitInterpreterStateleftPaused(
 void waitInterpreterStateToPaused(
 	struct thread_control_block * objThdCtrlBlockPtr);
 
-void setMoveCommandDestination(MoveCommandDestination movCmdDst);
 void getMoveCommandDestination(MoveCommandDestination& movCmdDst);
-void copyMoveCommandDestination(MoveCommandDestination& movCmdDst);
 
 struct thread_control_block *  getThreadControlBlock();
 int  getCurrentThreadSeq();
 void incCurrentThreadSeq();
 void decCurrentThreadSeq();
 
-
+void updateHomePoseMgr();
+checkHomePoseResult checkSingleHomePoseByCurrentJoint(int idx, Joint currentJoint);
 #endif
 
 

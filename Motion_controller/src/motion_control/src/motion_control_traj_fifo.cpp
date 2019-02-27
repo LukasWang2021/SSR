@@ -11,6 +11,7 @@
 
 
 using namespace std;
+using namespace basic_alg;
 
 namespace fst_mc
 {

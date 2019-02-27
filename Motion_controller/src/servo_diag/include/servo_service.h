@@ -12,7 +12,6 @@
 #include <mutex>
 #include <vector>
 #include "error_code.h"
-#include "base_datatype.h"
 
 #ifndef SERVO_SERVICE_H
 #define SERVO_SERVICE_H

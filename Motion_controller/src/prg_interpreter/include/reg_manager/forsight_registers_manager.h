@@ -29,4 +29,9 @@ std::vector<BaseRegData> forgesight_read_valid_r_lst(int start_id, int size);
 std::vector<BaseRegData> forgesight_read_valid_mr_lst(int start_id, int size);
 std::vector<BaseRegData> forgesight_read_valid_hr_lst(int start_id, int size);
 
+int forgesight_registers_manager_get_joint(Joint &joint);
+int forgesight_registers_manager_get_cart(PoseEuler &pos);
+int forgesight_registers_manager_cartToJoint(PoseEuler pos, Joint &joint);
+int forgesight_registers_manager_jointToCart(Joint joint, PoseEuler &pos);
+
 #endif

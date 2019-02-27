@@ -13,7 +13,7 @@
 #include <motion_control_datatype.h>
 #include <motion_control_constraint.h>
 #include <log_manager/log_manager_logger.h>
-#include <base_kinematics.h>
+#include <kinematics_rtm.h>
 
 namespace fst_mc
 {
@@ -26,8 +26,7 @@ public:
     ManualTeach(void);
     ~ManualTeach(void);
 
-    ErrorCode init(BaseKinematics *pkinematics, Constraint *pcons, fst_log::Logger *plog, const std::string &config_file);
-
+    ErrorCode init(basic_alg::Kinematics *kinematics_ptr, Constraint *pcons, fst_log::Logger *plog, const std::string &config_file);
     double getGlobalVelRatio(void);
     double getGlobalAccRatio(void);
     double getManualStepAxis(void);
@@ -41,13 +40,13 @@ public:
 
     ErrorCode manualStepByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualContinuousByDirect(const ManualDirection *directions, MotionTime time, ManualTrajectory &traj);
-    ErrorCode manualByTarget(const Joint &target, MotionTime time, ManualTrajectory &traj);
+    ErrorCode manualByTarget(const basic_alg::Joint &target, MotionTime time, ManualTrajectory &traj);
     ErrorCode manualStop(MotionTime time, ManualTrajectory &traj);
 
 private:
     ErrorCode   manualJointStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualJointContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
-    ErrorCode   manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj);
+    ErrorCode   manualJointAPoint(const basic_alg::Joint &target, MotionTime time, ManualTrajectory &traj);
 
     ErrorCode   manualCartesianStep(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
     ErrorCode   manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj);
@@ -70,7 +69,7 @@ private:
     double orientation_alpha_reference_;
 
     Constraint *joint_constraint_ptr_;
-    BaseKinematics *kinematics_ptr_;
+    basic_alg::Kinematics *kinematics_ptr_;
     fst_log::Logger *log_ptr_;
     std::string manual_config_file_;
 };

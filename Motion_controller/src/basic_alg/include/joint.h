@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <string>
 
+
 namespace basic_alg
 {
 
@@ -19,9 +20,6 @@ public:
     double   j7_;
     double   j8_;
     double   j9_;
-
-    Joint();
-    ~Joint();
 
     bool isEqual(Joint& joint, double valve = 0.001) const;
 

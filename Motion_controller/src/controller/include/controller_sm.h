@@ -7,7 +7,6 @@
 #include "common_enum.h"
 #include "motion_control.h"
 #include "process_comm.h"
-#include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "fst_safety_device.h"
 #include "modbus_manager.h"
@@ -157,7 +156,6 @@ private:
     long long int interpreter_warning_code_;
     int error_level_;
     bool is_error_exist_;
-
     
     // state machine transfer
     void processInterpreter();

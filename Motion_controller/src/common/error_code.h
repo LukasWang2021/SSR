@@ -123,6 +123,9 @@ typedef unsigned long long int ErrorCode;
 #define INFO_INTERPRETER_ARITHMETIC_EXCEPTION   (unsigned long long int)0x0001000200AA0019   /*Arithmetic Exception */
 #define INFO_INTERPRETER_UNKNOWN_ARITHM         (unsigned long long int)0x0001000200AA001A   /*Unknown Arithm */
 #define INFO_INTERPRETER_WAIT_TIMEOUT           (unsigned long long int)0x0001000200AA001B   /*Wait Timeout */
+#define INFO_INTERPRETER_OVERRUN_HOME_POSE     (unsigned long long int)0x0001000200AA001C   /*Overrun home pose */
+#define INFO_INTERPRETER_HOME_POSE_NOT_EXIST   (unsigned long long int)0x0001000200AA001D   /*Home pose not exist */
+
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000900AA0100   /*User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000900AA0101   /*User Alarm 1*/
 #define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000900AA0102   /*User Alarm 2*/
@@ -136,7 +139,7 @@ typedef unsigned long long int ErrorCode;
 #define FAIL_INTERPRETER_USER_ALARM10 (unsigned long long int)0x0001000900AA010A   /*User Alarm 10*/
 #define FAIL_INTERPRETER_NOT_IN_PAUSE (unsigned long long int)0x0001000900AA010B   /*Not in PAUSE*/
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0001000100A90000   /*MotionControl log{0}*/
-#define IK_OUT_OF_WORKSPACE (unsigned long long int)0x0001000400A903E9   /*IK failed for Axis 1*/
+#define IK_FAIL (unsigned long long int)0x0001000400A903E9   /*IK failed*/
 #define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903EA   /*IK failed for Axis 2~6*/
 #define IK_EXCESSIVE_DISTANCE (unsigned long long int)0x0001000400A903EB   /*IK result far away from reference*/
 #define FK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0000000400A903F3   /*joint out of limit computing FK*/
@@ -183,11 +186,22 @@ typedef unsigned long long int ErrorCode;
 #define FAIL_RESTORING_YAML (unsigned long long int)0x00010002007907DD   /*restore YAML from backup failed*/
 #define FAIL_UPDATING_BACKUP (unsigned long long int)0x00010002007907DE   /*update backup file falled*/
 #define FAIL_DUMPING_PARAM (unsigned long long int)0x00010002007907DF   /*fail to dump parameter into a file*/
-#define GET_IO_FAIL (unsigned long long int)0x0001000400AC03E9   /*fail to get io data by driver.*/
-#define LOAD_IO_CONFIG_FAIL (unsigned long long int)0x0011000400AC03EA   /*fail to load io configuration file，the device can not be used.*/
-#define IO_DEVICE_UNFOUND (unsigned long long int)0x0001000400AC03EB   /*IO devices are unfound when machine is running.*/
+
+#define ERR_SAFETY_FILE_OPEN (unsigned long long int)0x0011000B00AB0001   /*can't open memory device file when initializing safety board*/
+#define ERR_SAFETY_FILE_MAP (unsigned long long int)0x0011000B00AB0002   /*can't map memory device file when initializing safety board*/
+#define ERR_SAFETY_FPGA_MCU_NOT_CONNECT (unsigned long long int)0x0001000B00AB0003   /*No communication between FPGA and MCU*/
+#define ERR_SAFETY_FPGA_CORE0_NOT_CONNECT (unsigned long long int)0x0001000B00AB0004   /*FPGA can't read heartbeat from core0*/
+#define ERR_SAFETY_FPGA_CORE1_NOT_CONNECT (unsigned long long int)0x0001000B00AB0005   /*FPGA can't read hearbeat from core1*/
+#define ERR_SAFETY_PTHREAD_INIT (unsigned long long int)0x0011000B00AB0006   /*safety Mutex initialization is failed*/
+#define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x0001000B00AB0007   /*safety Mutex lock is failed*/
+#define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x0001000B00AB0008   /*safety Mutex unlock is failed*/
+#define ERR_SAFETY_FRAME (unsigned long long int)0x0001000B00AB0009   /*The safety frame is out of range*/
+
+#define GET_IO_FAIL (unsigned long long int)0x0001000600AC03E9   /*fail to get io data by driver.*/
+#define LOAD_IO_CONFIG_FAIL (unsigned long long int)0x0011000600AC03EA   /*fail to load io configuration file，the device can not be used.*/
+#define IO_DEVICE_UNFOUND (unsigned long long int)0x0001000600AC03EB   /*IO devices are unfound when machine is running.*/
 #define IO_VERIFY_FALSE (unsigned long long int)0x0000000200AC03EC   /*io data is verified to be false.*/
-#define IO_INIT_FAIL (unsigned long long int)0x0011000400AC03F3   /*fail to initialize the IO module.*/
+#define IO_INIT_FAIL (unsigned long long int)0x0011000600AC03F3   /*fail to initialize the IO module.*/
 #define IO_INVALID_PARAM_ID (unsigned long long int)0x0000000200AC03F4   /*invalid parameter id as function argument.*/
 #define IO_INVALID_PORT_SEQ (unsigned long long int)0x0000000200AC03F5   /*invalid port sequence number as function argument.*/
 #define IO_INVALID_DEV_INDEX (unsigned long long int)0x0000000200AC03F6   /*invalid index to get the device info as function argument.*/
@@ -196,13 +210,19 @@ typedef unsigned long long int ErrorCode;
 #define INVALID_PATH_FROM_TP (unsigned long long int)0x0000000200AC03F9   /*invalid path*/
 #define PARSE_IO_PATH_FAILED (unsigned long long int)0x0000000200AC03FA   /*IO not exist*/
 #define IO_MAPPING_LOG (unsigned long long int)0x0001000100AD0000   /*IoMapping log{0}*/
-
+#define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
+#define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
+#define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0010000200AD0003   /*failed to load simused status json files*/
+#define PROGRAM_LAUNCHING_LOAD_PARAM_FAILED (unsigned long long int)0x0011000200B00001   /*failed to load program_launching yaml paramters*/
+#define PROGRAM_LANNCHING_LOAD_MODE_FILE_FAILED (unsigned long long int)0x0011000200B00002   /*failed to load launch_mode_setting json files*/
+#define PROGRAM_LAUNCHING_LOAD_MACRO_FILE_FAILED (unsigned long long int)0x0011000200B00003   /*failed to load macro_io_launch json files*/
+#define FILE_MANAGER_READ_FILE_FAILED (unsigned long long int)0x0010000200B10001   /*failed to read file*/
+#define FILE_MANAGER_WRITE_FILE_FAILED (unsigned long long int)0x0010000200B10002   /*failed to write file*/
 
 #define MODBUS_LOG (unsigned long long int)0x0011000200AE0000   /*ModbusManager log{0}*/																										
 #define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0001   /*modbus start mode error*/																										
 #define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus manager save param failed*/																										
 #define MODBUS_INVALID (unsigned long long int)0x0001000200AE0003   /*modbus be invalid*/																										
-
 #define MODBUS_CLIENT_ENABLED (unsigned long long int)0x0001000200AE0028   /*modbus client enabled*/																										
 #define MODBUS_CLIENT_DISABLED (unsigned long long int)0x0001000200AE0029   /*modbus client disabled*/																										
 #define MODBUS_CLIENT_CONNECTED (unsigned long long int)0x0001000200AE002A   /*modbus client connected*/																										
@@ -212,14 +232,12 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0001000200AE002E   /*modbus client init failed*/																										
 #define MODBUS_CLIENT_CONNECT_FAILED (unsigned long long int)0x0001000200AE002F   /*modbus client connect failed*/																										
 #define MODBUS_CLIENT_OPERATION_FAILED (unsigned long long int)0x0001000200AE0030   /*modbus client read failed*/																										
-
 #define MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0001000200AE0031   /*modbus client manager load param failed*/																										
 #define MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0032   /*modbus client manager save param failed*/																										
 #define MODBUS_CLIENT_ID_EXISTED (unsigned long long int)0x0001000200AE0033   /*modbus client existed*/																										
 #define MODBUS_CLIENT_ID_NOT_EXISTED (unsigned long long int)0x0001000200AE0034   /*modbus client be not existed*/																										
 #define MODBUS_CLIENT_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200AE0035   /*modbus client invalid param*/																										
 #define MODBUS_CLIENT_NOT_ALL_CLOSED (unsigned long long int)0x0001000200AE0036   /*modbus client be not all closed */																										
-
 #define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
 #define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server save param failed*/																										
 #define MODBUS_SERVER_INVALID_ARG (unsigned long long int)0x0001000200AE001C   /*modbus server invalid param*/																										
@@ -230,19 +248,35 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server init failed*/
 #define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server init failed*/
 
-#define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
-#define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
-#define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0010000200AD0003   /*failed to load simused status json files*/
-#define PROGRAM_LAUNCHING_LOAD_PARAM_FAILED (unsigned long long int)0x0011000200B00001   /*failed to load program_launching yaml paramters*/
-#define PROGRAM_LANNCHING_LOAD_MODE_FILE_FAILED (unsigned long long int)0x0011000200B00002   /*failed to load launch_mode_setting json files*/
-#define PROGRAM_LAUNCHING_LOAD_MACRO_FILE_FAILED (unsigned long long int)0x0011000200B00003   /*failed to load macro_io_launch json files*/
-#define FILE_MANAGER_READ_FILE_FAILED (unsigned long long int)0x0010000200B10001   /*failed to read file*/
-#define FILE_MANAGER_WRITE_FILE_FAILED (unsigned long long int)0x0010000200B10002   /*failed to write file*/
-
 #define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0000000400B20001   /*the expected target point is invalid*/
 #define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0000000400B20002   /*invalid path cache*/
 #define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0000000400B20003   /*invalid motion type*/
 #define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0000000400B20004   /*invalid smooth in index*/
+#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0000000400B20005   /*ik failed*/
+
+
+/*New error codes feed here.*/
+
+
+
+
+
+
+//The error codes generated from the external component(safety_board)
+#define SAFETY_BOARD_RELAY_DUAL_FAULTY (unsigned long long int)0x0001000B00C80001   /*the safety board detects the relay has dual faulty.*/
+#define SAFETY_BOARD_EXTERNAL_STOP (unsigned long long int)0x0001000B00C80002   /*the safety board detects external stop signal.*/
+#define SAFETY_BOARD_SAFETY_DOOR_STOP (unsigned long long int)0x0001000B00C80003   /*the safety board detects safty door stop signal.*/
+#define SAFETY_BOARD_LIMITED_STOP (unsigned long long int)0x0001000B00C80004   /*the safety board detects limited stop signal.*/
+#define SAFETY_BOARD_DEADMAN_NORMAL_FAULTY (unsigned long long int)0x0001000B00C80005   /*the safety board detects deadman normal is abnormal when manaul mode.*/
+#define SAFETY_BOARD_DEADMAN_PANIC (unsigned long long int)0x0001000B00C80006   /*the safety board detects deadman panic signal.*/
+#define SAFETY_BOARD_TP_ESTOP (unsigned long long int)0x0001000B00C80007   /*the safety board detects TP-ESTOP signal.*/
+#define SAFETY_BOARD_OP_MODE_FAULTY (unsigned long long int)0x0001000B00C80008   /*the safety board detects abnormal operation mode.*/
+#define SAFETY_BOARD_MAIN_CONTACTOR_FAULTY (unsigned long long int)0x0001000B00C80009   /*the safety board detects the main contactor is abnormal.*/
+#define SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY (unsigned long long int)0x0001000B00C8000A   /*the safety board detects the relays on 1-6 axes are abnormal.*/
+#define SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000B   /*the safety board detects the relays of the first auxiliary axis is abnormal.*/
+#define SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY (unsigned long long int)0x0001000B00C8000C   /*the safety board detects the relay of the second auxiliary axis is abnormal.*/
+#define SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY (unsigned long long int)0x0001000B00C8000D   /*the safety board detects the first relay of the main contactor is abnormal.*/
+#define SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000E   /*the safety board detects the second relay of the main contactor is abnormal.*/
 
 #endif
 

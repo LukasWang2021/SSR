@@ -14,10 +14,7 @@ class Quaternion;
 
 class RotationMatrix: public Matrix33
 {
-public:    
-    RotationMatrix();
-    ~RotationMatrix();
-
+public:
     void initByStandardDh(double alpha, double theta);
     void convertToQuaternion(basic_alg::Quaternion& quaternion) const;
     void convertToEuler(basic_alg::Euler& euler) const; 

@@ -75,12 +75,12 @@ void ControllerIpc::handleIpcJointToCart(void* request_data_ptr, void* response_
     ErrorCode result = motion_control_ptr_->convertJointToCart(*rq_data_ptr, user_frame_id, tool_frame_id, pos);
     if (result != SUCCESS)
     {
-        pos.position.x = DBL_MAX;
-        pos.position.y = DBL_MAX;
-        pos.position.z = DBL_MAX;
-        pos.orientation.a = DBL_MAX;
-        pos.orientation.b = DBL_MAX;
-        pos.orientation.c = DBL_MAX;
+        pos.point_.x_ = DBL_MAX;
+        pos.point_.y_ = DBL_MAX;
+        pos.point_.z_ = DBL_MAX;
+        pos.euler_.a_ = DBL_MAX;
+        pos.euler_.b_ = DBL_MAX;
+        pos.euler_.c_ = DBL_MAX;
     }
     *rs_data_ptr = pos;
 }

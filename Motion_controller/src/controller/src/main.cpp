@@ -3,7 +3,7 @@
 #include <iostream>
 #include <signal.h>
 #include "error_code.h"
-#include "base_datatype.h"
+//#include "base_datatype.h"
 
 using namespace std;
 using namespace fst_ctrl;

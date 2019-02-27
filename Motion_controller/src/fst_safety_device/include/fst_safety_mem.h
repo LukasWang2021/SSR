@@ -16,15 +16,15 @@ Summary:    dealing with safety board
 #define SAFETY_INPUT_SECONDFRAME    0X0102 // for getSafety(..)  low 4 bits define first four bytes or second four bytes.
 #define SAFETY_OUTPUT_FIRSTFRAME    0X0201 // for setSafety(..)
 
-#define ERR_SAFETY_FILE_OPEN (unsigned long long int)0x00010002008E0001   /*can't open file when initializing safety board*/
-#define ERR_SAFETY_FILE_MAP (unsigned long long int)0x00010002008E0002   /*Mapping is failed.*/
-#define ERR_SAFETY_FPGA_MCU_NOT_CONNECT (unsigned long long int)0x00010002008E0015   /*No communication between FPGA and MCU.*/ 
-#define ERR_SAFETY_FPGA_CORE0_NOT_CONNECT (unsigned long long int)0x00010002008E0016   /*FPGA can't read pulse from core0.*/
-#define ERR_SAFETY_FPGA_CORE1_NOT_CONNECT (unsigned long long int)0x00010007008E0017   /*FPGA can't read pulse from core1.*/ 
-#define ERR_SAFETY_PTHREAD_INIT (unsigned long long int)0x00000001008E001F   /*Mutex initialization is failed.*/
-#define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x00000001008E0020   /*Mutex lock is failed*/
-#define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x00000001008E0021   /*Mutex unlock is failed*/
-#define ERR_SAFETY_FRAME (unsigned long long int)0x00000001008E0029   /*The frame is out of range.*/
+//#define ERR_SAFETY_FILE_OPEN (unsigned long long int)0x00010002008E0001   /*can't open file when initializing safety board*/
+//#define ERR_SAFETY_FILE_MAP (unsigned long long int)0x00010002008E0002   /*Mapping is failed.*/
+//#define ERR_SAFETY_FPGA_MCU_NOT_CONNECT (unsigned long long int)0x00010002008E0015   /*No communication between FPGA and MCU.*/ 
+//#define ERR_SAFETY_FPGA_CORE0_NOT_CONNECT (unsigned long long int)0x00010002008E0016   /*FPGA can't read pulse from core0.*/
+//#define ERR_SAFETY_FPGA_CORE1_NOT_CONNECT (unsigned long long int)0x00010007008E0017   /*FPGA can't read pulse from core1.*/ 
+//#define ERR_SAFETY_PTHREAD_INIT (unsigned long long int)0x00000001008E001F   /*Mutex initialization is failed.*/
+//#define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x00000001008E0020   /*Mutex lock is failed*/
+//#define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x00000001008E0021   /*Mutex unlock is failed*/
+//#define ERR_SAFETY_FRAME (unsigned long long int)0x00000001008E0029   /*The frame is out of range.*/
 
 
 #ifdef __cplusplus

@@ -11,9 +11,6 @@ class Matrix44
 public:
     double matrix_[4][4];
 
-    Matrix44();
-    ~Matrix44();
-
     bool isEqual(Matrix44& matrix, double valve = 0.001) const;
     Matrix44& leftMultiply(Matrix44& left_matrix);
     void leftMultiply(Matrix44& left_matrix, Matrix44& result_matrix);

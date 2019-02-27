@@ -370,46 +370,11 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     // 初始化运动学模块
     FST_INFO("Initializing kinematics of ArmGroup ...");
-    double dh_matrix[NUM_OF_JOINT][4];
-    kinematics_ptr_ = new ArmKinematics();
+    kinematics_ptr_ = new KinematicsRTM(path);
 
-    if (kinematics_ptr_)
+    if (!kinematics_ptr_->isValid())
     {
-        param.reset();
-
-        if (param.loadParamFile(path + "arm_dh.yaml"))
-        {
-            if (param.getParam("dh_parameter/axis-0", dh_matrix[0], 4) &&
-                param.getParam("dh_parameter/axis-1", dh_matrix[1], 4) &&
-                param.getParam("dh_parameter/axis-2", dh_matrix[2], 4) &&
-                param.getParam("dh_parameter/axis-3", dh_matrix[3], 4) &&
-                param.getParam("dh_parameter/axis-4", dh_matrix[4], 4) &&
-                param.getParam("dh_parameter/axis-5", dh_matrix[5], 4))
-            {
-                kinematics_ptr_->initKinematics(dh_matrix);
-                FST_INFO("DH-matrix:");
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[0][0], dh_matrix[0][1], dh_matrix[0][2], dh_matrix[0][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[1][0], dh_matrix[1][1], dh_matrix[1][2], dh_matrix[1][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[2][0], dh_matrix[2][1], dh_matrix[2][2], dh_matrix[2][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[3][0], dh_matrix[3][1], dh_matrix[3][2], dh_matrix[3][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[4][0], dh_matrix[4][1], dh_matrix[4][2], dh_matrix[4][3]);
-                FST_INFO("  %.6f, %.6f, %.6f, %.6f", dh_matrix[5][0], dh_matrix[5][1], dh_matrix[5][2], dh_matrix[5][3]);
-            }
-            else
-            {
-                FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
-                return param.getLastError();
-            }
-        }
-        else
-        {
-            FST_ERROR("Fail to load dh config, code = 0x%llx", param.getLastError());
-            return param.getLastError();
-        }
-    }
-    else
-    {
-        FST_ERROR("Fail to create kinematics for ArmGroup.");
+        FST_ERROR("Fail to create kinematics for this Group.");
         return MOTION_INTERNAL_FAULT;
     }
 
@@ -498,68 +463,6 @@ size_t ArmGroup::getFIFOLength(void)
         return 0;
     }
 }
-
-
-ErrorCode ArmGroup::computeCompensate(const DynamicsProduct &product, const Joint &omega, const Joint &alpha, Joint &ma_cv_g)
-{
-    /*
-    ma_cv_g[0] = product.m[0][0] * alpha[0] + product.m[0][1] * alpha[1] + product.m[0][2] * alpha[2] +
-                 product.m[0][3] * alpha[3] + product.m[0][4] * alpha[4] + product.m[0][5] * alpha[5] +
-                 product.c[0][0] * omega[0] + product.c[0][1] * omega[1] + product.c[0][2] * omega[2] +
-                 product.c[0][3] * omega[3] + product.c[0][4] * omega[4] + product.c[0][5] * omega[5] +
-                 product.g[0];
-
-    ma_cv_g[1] = product.m[1][0] * alpha[0] + product.m[1][1] * alpha[1] + product.m[1][2] * alpha[2] +
-                 product.m[1][3] * alpha[3] + product.m[1][4] * alpha[4] + product.m[1][5] * alpha[5] +
-                 product.c[1][0] * omega[0] + product.c[1][1] * omega[1] + product.c[1][2] * omega[2] +
-                 product.c[1][3] * omega[3] + product.c[1][4] * omega[4] + product.c[1][5] * omega[5] +
-                 product.g[1];
-
-    ma_cv_g[2] = product.m[2][0] * alpha[0] + product.m[2][1] * alpha[1] + product.m[2][2] * alpha[2] +
-                 product.m[2][3] * alpha[3] + product.m[2][4] * alpha[4] + product.m[2][5] * alpha[5] +
-                 product.c[2][0] * omega[0] + product.c[2][1] * omega[1] + product.c[2][2] * omega[2] +
-                 product.c[2][3] * omega[3] + product.c[2][4] * omega[4] + product.c[2][5] * omega[5] +
-                 product.g[2];
-
-    ma_cv_g[3] = product.m[3][0] * alpha[0] + product.m[3][1] * alpha[1] + product.m[3][2] * alpha[2] +
-                 product.m[3][3] * alpha[3] + product.m[3][4] * alpha[4] + product.m[3][5] * alpha[5] +
-                 product.c[3][0] * omega[0] + product.c[3][1] * omega[1] + product.c[3][2] * omega[2] +
-                 product.c[3][3] * omega[3] + product.c[3][4] * omega[4] + product.c[3][5] * omega[5] +
-                 product.g[3];
-
-    ma_cv_g[4] = product.m[4][0] * alpha[0] + product.m[4][1] * alpha[1] + product.m[4][2] * alpha[2] +
-                 product.m[4][3] * alpha[3] + product.m[4][4] * alpha[4] + product.m[4][5] * alpha[5] +
-                 product.c[4][0] * omega[0] + product.c[4][1] * omega[1] + product.c[4][2] * omega[2] +
-                 product.c[4][3] * omega[3] + product.c[4][4] * omega[4] + product.c[4][5] * omega[5] +
-                 product.g[4];
-
-    ma_cv_g[5] = product.m[5][0] * alpha[0] + product.m[5][1] * alpha[1] + product.m[5][2] * alpha[2] +
-                 product.m[5][3] * alpha[3] + product.m[5][4] * alpha[4] + product.m[5][5] * alpha[5] +
-                 product.c[5][0] * omega[0] + product.c[5][1] * omega[1] + product.c[5][2] * omega[2] +
-                 product.c[5][3] * omega[3] + product.c[5][4] * omega[4] + product.c[5][5] * omega[5] +
-                 product.g[5];
-    */
-    ma_cv_g[0] = product.m[0][0] * alpha[0] + product.m[0][1] * alpha[1] + product.m[0][2] * alpha[2] +
-                 product.m[0][3] * alpha[3] + product.m[0][4] * alpha[4] + product.m[0][5] * alpha[5];
-
-    ma_cv_g[1] = product.m[1][0] * alpha[0] + product.m[1][1] * alpha[1] + product.m[1][2] * alpha[2] +
-                 product.m[1][3] * alpha[3] + product.m[1][4] * alpha[4] + product.m[1][5] * alpha[5];
-
-    ma_cv_g[2] = product.m[2][0] * alpha[0] + product.m[2][1] * alpha[1] + product.m[2][2] * alpha[2] +
-                 product.m[2][3] * alpha[3] + product.m[2][4] * alpha[4] + product.m[2][5] * alpha[5];
-
-    ma_cv_g[3] = product.m[3][0] * alpha[0] + product.m[3][1] * alpha[1] + product.m[3][2] * alpha[2] +
-                 product.m[3][3] * alpha[3] + product.m[3][4] * alpha[4] + product.m[3][5] * alpha[5];
-
-    ma_cv_g[4] = product.m[4][0] * alpha[0] + product.m[4][1] * alpha[1] + product.m[4][2] * alpha[2] +
-                 product.m[4][3] * alpha[3] + product.m[4][4] * alpha[4] + product.m[4][5] * alpha[5];
-
-    ma_cv_g[5] = product.m[5][0] * alpha[0] + product.m[5][1] * alpha[1] + product.m[5][2] * alpha[2] +
-                 product.m[5][3] * alpha[3] + product.m[5][4] * alpha[4] + product.m[5][5] * alpha[5];
-
-    return SUCCESS;
-}
-
 
 char* ArmGroup::printDBLine(const int *data, char *buffer, size_t length)
 {

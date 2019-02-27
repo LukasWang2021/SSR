@@ -6,7 +6,7 @@
 #include "common_log.h"
 #include <string>
 #include <vector>
-#include "base_datatype.h"
+#include "basic_alg_datatype.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 
 
@@ -19,7 +19,7 @@ typedef struct
     std::string name;
     std::string comment;
     int group_id;
-    fst_mc::PoseEuler data;
+    basic_alg::PoseEuler data;
 }ToolInfo;
 
 typedef struct

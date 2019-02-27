@@ -26,6 +26,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/basic_alg/include 
     ${depend_PATH_INC}/motion_control/include
     ${depend_PATH_INC}/kinematics_alg/include
+    ${depend_PATH_INC}/parameter_manager/include 
 )
 
 catkin_package(
@@ -63,7 +64,8 @@ target_link_libraries(alg_test
     ${catkin_LIBRARIES}
     path_traj_alg
     kinematics_alg
-    basic_alg 
+    basic_alg
+    parameter_manager
 )
 
 install(TARGETS path_traj_alg

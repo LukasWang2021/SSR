@@ -3,9 +3,10 @@
 
 using namespace std;
 using namespace fst_mc;
+using namespace basic_alg;
 
 ComplexAxisGroupModel model;
-double stack[15000];
+double stack[20000];
 SegmentAlgParam segment_alg_param;
 
 
@@ -207,10 +208,9 @@ ErrorCode planPathJoint(const Joint &start,
     {
         return PATH_PLANNING_INVALID_TARGET;
     }
-  
+
     // init unused data
     path_cache.smooth_in_index = -1;
-    path_cache.smooth_out_index = -1;
     // compute interpolation points
     int path_count_minus_1 = ceil(max_delta_joint_start2end / segment_alg_param.joint_interval);
     path_cache.cache_length = path_count_minus_1 + 1;
@@ -233,6 +233,15 @@ ErrorCode planPathJoint(const Joint &start,
         packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[path_count_minus_1]);    
     }
 
+    if(end.cnt > DOUBLE_ACCURACY)
+    {
+        path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end.cnt / 2.0);
+    }
+    else
+    {
+        path_cache.smooth_out_index = -1;
+    }
+
     return SUCCESS;
 }
 
@@ -247,7 +256,7 @@ ErrorCode planPathLine(const PoseEuler &start,
     // compute MoveL length
     double path_length_start2end;
     double path_vector_start2end[3];
-    getMoveLPathVector(start.position, end.pose_target.position, path_vector_start2end, path_length_start2end);   // MoveL length
+    getMoveLPathVector(start.point_, end.pose_target.point_, path_vector_start2end, path_length_start2end);   // MoveL length
     if(path_length_start2end < DOUBLE_ACCURACY)
     {
         return PATH_PLANNING_INVALID_TARGET;
@@ -255,8 +264,8 @@ ErrorCode planPathLine(const PoseEuler &start,
     
     // compute MoveL quatern angle
     double start_quatern[4], end_quatern[4];
-    getMoveEulerToQuatern(start.orientation, start_quatern);
-    getMoveEulerToQuatern(end.pose_target.orientation, end_quatern);
+    getMoveEulerToQuatern(start.euler_, start_quatern);
+    getMoveEulerToQuatern(end.pose_target.euler_, end_quatern);
     double angle_start2end = getQuaternsIntersectionAngle(start_quatern, end_quatern);    // MoveL quatern angle
 
     int path_count_ideal_start2end = ceil(path_length_start2end / segment_alg_param.path_interval);
@@ -287,14 +296,14 @@ ErrorCode planPathLine(const PoseEuler &start,
         double angle_step_start2out = angle_distance_start2out / path_count_start2out;
         double angle_step_out2end = (1.0 - angle_distance_start2out) / path_count_out2end;
 
-        packPoseByPointAndQuatern(start.position, start_quatern, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);
         for(i = 1; i <= path_count_start2out; ++i)
         {
             point_distance_to_start += path_step_start2out;
             angle_distance_to_start += angle_step_start2out;            
-            getMoveLPathPoint(start.position, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.position);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         path_cache.smooth_out_index = path_count_start2out;
@@ -304,11 +313,11 @@ ErrorCode planPathLine(const PoseEuler &start,
         {
             point_distance_to_start += path_step_out2end;
             angle_distance_to_start += angle_step_out2end;
-            getMoveLPathPoint(start.position, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.position);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
     }
     else    // cnt is invalid
@@ -324,17 +333,17 @@ ErrorCode planPathLine(const PoseEuler &start,
         path_cache.cache_length = max_count_start2end + 1;
         double path_step_start2end = path_length_start2end / max_count_start2end;
         double angle_step_start2end = 1.0 / max_count_start2end;
-        packPoseByPointAndQuatern(start.position, start_quatern, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);         
         for(i = 1; i < max_count_start2end; ++i)
         {
             point_distance_to_start += path_step_start2end;
             angle_distance_to_start += angle_step_start2end;
-            getMoveLPathPoint(start.position, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.position);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, end_quatern, path_cache.cache[max_count_start2end].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[max_count_start2end]);
     }
     
@@ -353,6 +362,115 @@ ErrorCode planPathSmoothJoint(const Joint &start,
                                     const MotionTarget &end, 
                                     PathCache &path_cache)
 {
+    int i, j;
+    // find max delta joint via2end 
+    double delta_joint_via2end;
+    double max_delta_joint_via2end = 0;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        delta_joint_via2end = fabs(end.joint_target[i] - via.joint_target[i]);
+        if(delta_joint_via2end > max_delta_joint_via2end)
+        {
+            max_delta_joint_via2end = delta_joint_via2end;
+        }
+    }
+    if(max_delta_joint_via2end < DOUBLE_ACCURACY)
+    {
+        return PATH_PLANNING_INVALID_TARGET;
+    }
+    // find joint of the in point
+    int path_piece_via2end = ceil(max_delta_joint_via2end / segment_alg_param.joint_interval);
+    int path_piece_via2in = floor(via.cnt * path_piece_via2end / 2.0);
+    int path_piece_in2end = path_piece_via2end - path_piece_via2in;
+    double joint_step_via2end;
+    Joint joint_in;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        joint_step_via2end = (end.joint_target[i] - via.joint_target[i]) /  path_piece_via2end;
+        joint_in[i] = start[i] + joint_step_via2end * path_piece_via2in;
+    }
+
+    // find max piece of start2via
+    double delta_joint_start2via;
+    double max_delta_joint_start2via = 0;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        delta_joint_start2via = fabs(start[i] - via.joint_target[i]);
+        if(delta_joint_start2via > max_delta_joint_start2via)
+        {
+            max_delta_joint_start2via = delta_joint_start2via;
+        }
+    }
+    if(max_delta_joint_start2via < DOUBLE_ACCURACY)
+    {
+        max_delta_joint_start2via = 0;
+    }
+    int path_piece_start2via = ceil(max_delta_joint_start2via / segment_alg_param.joint_interval);
+
+    // find piece of start2in
+    path_cache.smooth_in_index = path_piece_start2via + path_piece_via2in;
+
+    // compute path start2in
+    double start_joint[9], mid_joint[9], end_joint[9];
+    for(i = 0; i < model.link_num; ++i)
+    {
+        start_joint[i] = start[i];
+        mid_joint[i] = via.joint_target[i];
+        end_joint[i] = joint_in[i];
+    }
+    updateTransitionBSpLineJointResult(2, start_joint, mid_joint, end_joint, path_cache.smooth_in_index);
+    path_cache.cache[0].joint = start;
+    packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[0]);
+    int joint_address_base;
+    for(i = 1; i < path_cache.smooth_in_index; ++i)
+    {
+        joint_address_base = S_BSpLineResultJ1Base;
+        for(j = 0; j < model.link_num; ++j)
+        {
+            path_cache.cache[i].joint[j] = stack[joint_address_base + i];
+            joint_address_base += 1000;
+        }
+        packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[i]);
+    }
+    path_cache.cache[path_cache.smooth_in_index].joint = joint_in;
+    packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[path_cache.smooth_in_index]);
+
+    // find smooth_out_index
+    int path_cache_length_minus_1 = path_cache.smooth_in_index + path_piece_in2end;
+    path_cache.cache_length = path_cache_length_minus_1 + 1;
+    if(end.cnt > DOUBLE_ACCURACY)
+    {
+        int path_piece_out2end = floor(end.cnt * path_piece_via2end / 2.0);    
+        path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
+    }
+    else
+    {
+        if(end.cnt > -DOUBLE_ACCURACY)  // end.cnt == 0
+        {
+            path_cache.smooth_out_index = path_cache_length_minus_1;
+        }
+        else
+        {
+            path_cache.smooth_out_index = -1;
+        }
+    }    
+
+    // compute path in2end
+    double joint_distance_to_in;
+    for(i = 0; i < model.link_num; ++i)
+    {      
+        joint_step_via2end = (end.joint_target[i] - joint_in[i]) / path_piece_in2end;
+        joint_distance_to_in = 0; 
+        for(j = path_cache.smooth_in_index + 1; j < path_cache_length_minus_1; ++j)
+        {
+            joint_distance_to_in += joint_step_via2end;
+            path_cache.cache[j].joint[i] = joint_in[i] + joint_distance_to_in;
+            packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[j]);
+        }
+        path_cache.cache[path_cache_length_minus_1].joint[i] = end.joint_target[i];
+        packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[path_cache_length_minus_1]);    
+    }
+
     return 0;
 }
 
@@ -363,10 +481,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
 {
     int i;
     // compute path
-    double path_length_start2via = getPointsDistance(start.position, via.pose_target.position);   
+    double path_length_start2via = getPointsDistance(start.point_, via.pose_target.point_);   
     double path_length_via2target;
     double path_vector_via2target[3];
-    getMoveLPathVector(via.pose_target.position, end.pose_target.position, path_vector_via2target, path_length_via2target);
+    getMoveLPathVector(via.pose_target.point_, end.pose_target.point_, path_vector_via2target, path_length_via2target);
     double path_length_via2in = path_length_via2target / 2;
     
     if(path_length_start2via < path_length_via2in)
@@ -378,13 +496,13 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     int path_count_ideal_start2via = ceil(path_length_start2via / segment_alg_param.path_interval);
     int path_count_ideal_via2in = ceil(path_length_via2in / segment_alg_param.path_interval);
     Point point_in;
-    getMoveLPathPoint(via.pose_target.position, path_vector_via2target, path_length_via2in, point_in);
+    getMoveLPathPoint(via.pose_target.point_, path_vector_via2target, path_length_via2in, point_in);
     
     // compute quatern
     double quatern_start[4], quatern_via[4], quatern_in[4], quatern_target[4];
-    getMoveEulerToQuatern(start.orientation, quatern_start);
-    getMoveEulerToQuatern(via.pose_target.orientation, quatern_via);
-    getMoveEulerToQuatern(end.pose_target.orientation, quatern_target);
+    getMoveEulerToQuatern(start.euler_, quatern_start);
+    getMoveEulerToQuatern(via.pose_target.euler_, quatern_via);
+    getMoveEulerToQuatern(end.pose_target.euler_, quatern_target);
     double angle_start2via = getQuaternsIntersectionAngle(quatern_start, quatern_via);   
     double angle_via2target = getQuaternsIntersectionAngle(quatern_via, quatern_target);
     double angle_count_ideal_start2via = ceil(angle_start2via / segment_alg_param.angle_interval);    
@@ -457,20 +575,20 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         double angle_step_out2target = 1.0 / path_count_out2target;
 
         // compute transition path
-        getMovePointToVector3(start.position, start_point);
-        getMovePointToVector3(via.pose_target.position, via_point);
+        getMovePointToVector3(start.point_, start_point);
+        getMovePointToVector3(via.pose_target.point_, via_point);
         getMovePointToVector3(point_in, in_point);
-        updateTransitionBSpLineResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
+        updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
-        packPoseByPointAndQuatern(start.position, quatern_start, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
-            path_cache.cache[i].pose.position.x = stack[S_BSpLineResultXBase + i];
-            path_cache.cache[i].pose.position.y = stack[S_BSpLineResultYBase + i];
-            path_cache.cache[i].pose.position.z = stack[S_BSpLineResultZBase + i];
+            path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
+            path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
+            path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
-            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
@@ -481,8 +599,8 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             point_distance_to_in += path_step_in2out;
             angle_distance_to_in += angle_step_in2out;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.position);
-            getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+            getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_out, quatern_out, path_cache.cache[path_cache.smooth_out_index].pose);
@@ -493,11 +611,11 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             point_distance_to_in += path_step_out2target;
             angle_distance_to_out += angle_step_out2target;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.position);
-            getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+            getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
     }
     else
@@ -520,20 +638,20 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         }  
 
         // compute transition path
-        getMovePointToVector3(start.position, start_point);
-        getMovePointToVector3(via.pose_target.position, via_point);
+        getMovePointToVector3(start.point_, start_point);
+        getMovePointToVector3(via.pose_target.point_, via_point);
         getMovePointToVector3(point_in, in_point);
-        updateTransitionBSpLineResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
+        updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
-        packPoseByPointAndQuatern(start.position, quatern_start, path_cache.cache[0].pose);
+        packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
-            path_cache.cache[i].pose.position.x = stack[S_BSpLineResultXBase + i];
-            path_cache.cache[i].pose.position.y = stack[S_BSpLineResultYBase + i];
-            path_cache.cache[i].pose.position.z = stack[S_BSpLineResultZBase + i];
+            path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
+            path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
+            path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
-            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.orientation);
+            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
@@ -544,11 +662,11 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         {
             point_distance_to_in += path_step_in2target;
             angle_distance_to_in += angle_step_in2target;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.position);
-            getQuaternPoint(quatern_in, quatern_target, angle_in2target, angle_distance_to_in, path_cache.cache[i].pose.orientation);
+            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+            getQuaternPoint(quatern_in, quatern_target, angle_in2target, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.position, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
+        packPoseByPointAndQuatern(end.pose_target.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
     }
 
@@ -588,6 +706,7 @@ ErrorCode planTrajectory(const PathCache &path_cache,
         case MOTION_JOINT:
         {
             updateMovJTrajP(path_cache, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+            //std::cout<<"traj_pva_out_index = "<<traj_pva_out_index<<std::endl;
             updateMovJTrajT(path_cache, cmd_vel, traj_path_cache_index, traj_pva_out_index, traj_pva_size, traj_t_size);
             break;
         }
@@ -640,9 +759,19 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     {
         case MOTION_LINE:
         {
-            updateMovLVia2InTrajP(path_cache, via, traj_pva_in_index);
+            if(!updateMovLVia2InTrajP(path_cache, via, traj_pva_in_index))
+            {
+                return TRAJ_PLANNING_INVALID_IK_FAILED;
+            }
             updateMovLIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
             updateMovLVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
+            break;
+        }
+        case MOTION_JOINT:
+        {
+            updateMovJVia2InTrajP(path_cache, via, traj_pva_in_index);
+            updateMovJIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+            updateMovJVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
             break;
         }
         default:
@@ -660,7 +789,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateTrajPieceA(S_TrajA0, traj_t_size_via2end, acc_ratio);       
     updateTrajPieceV(S_TrajV0, S_TrajA0, traj_t_size_via2end, S_TrajT, vel_ratio);
     updateTrajPieceRescaleFactor(traj_t_size_via2end);
-    
+
     if(isRescaleNeeded(traj_t_size_via2end))
     {
         updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size_via2end);
@@ -674,6 +803,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateSmoothOut2InTrajP(path_cache, via, traj_path_cache_index_out2in, traj_pva_size_out2in);
     updateSmoothOut2InTrajT(path_cache, via, cmd_vel, traj_path_cache_index_out2in, traj_pva_size_out2in, traj_t_size_out2in);
     updateOutAndInPointState(start_state, traj_pva_in_index);
+    
     updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
                   &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
 
@@ -898,7 +1028,7 @@ double getBaseFunction(int i, int k, double u)
     }
 }
 
-void updateTransitionBSpLineResult(int k, double* start_pos, double* mid_pos, double* end_pos, int result_count)
+void updateTransitionBSpLineCartResult(int k, double* start_pos, double* mid_pos, double* end_pos, int result_count)
 {
     //S_TmpDouble_1, S_TmpDouble_2 are used in getBaseFunction(), reserve them here
     stack[S_TmpDouble_3] = 1.0 / (result_count + 1);  // interpolation step
@@ -919,6 +1049,40 @@ void updateTransitionBSpLineResult(int k, double* start_pos, double* mid_pos, do
         stack[S_BSpLineResultZBase + i] = start_pos[2] * stack[S_BaseFunctionNik0]
                                         + mid_pos[2] * stack[S_BaseFunctionNik1]
                                         + end_pos[2] * stack[S_BaseFunctionNik2];
+        stack[S_TmpDouble_4] += stack[S_TmpDouble_3];
+    }
+}
+
+void updateTransitionBSpLineJointResult(int k, double* start_joint, double* mid_joint, double* end_joint, int result_count)
+{
+    //S_TmpDouble_1, S_TmpDouble_2 are used in getBaseFunction(), reserve them here
+    stack[S_TmpDouble_3] = 1.0 / (result_count + 1);  // interpolation step
+    stack[S_TmpDouble_4] = stack[S_TmpDouble_3];   // sum of interpolation step
+    
+    for(int i = 0; i < result_count; ++i)
+    {
+        stack[S_BaseFunctionNik0] = getBaseFunction(0, k, stack[S_TmpDouble_4]);
+        stack[S_BaseFunctionNik1] = getBaseFunction(1, k, stack[S_TmpDouble_4]);
+        stack[S_BaseFunctionNik2] = getBaseFunction(2, k, stack[S_TmpDouble_4]);
+
+        stack[S_BSpLineResultJ1Base + i] = start_joint[0] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[0] * stack[S_BaseFunctionNik1]
+                                        + end_joint[0] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ2Base + i] = start_joint[1] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[1] * stack[S_BaseFunctionNik1]
+                                        + end_joint[1] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ3Base + i] = start_joint[2] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[2] * stack[S_BaseFunctionNik1]
+                                        + end_joint[2] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ4Base + i] = start_joint[3] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[3] * stack[S_BaseFunctionNik1]
+                                        + end_joint[3] * stack[S_BaseFunctionNik2];
+        stack[S_BSpLineResultJ5Base + i] = start_joint[4] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[4] * stack[S_BaseFunctionNik1]
+                                        + end_joint[4] * stack[S_BaseFunctionNik2];  
+        stack[S_BSpLineResultJ6Base + i] = start_joint[5] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[5] * stack[S_BaseFunctionNik1]
+                                        + end_joint[5] * stack[S_BaseFunctionNik2];        
         stack[S_TmpDouble_4] += stack[S_TmpDouble_3];
     }
 }
@@ -1233,9 +1397,9 @@ void updateTrajPVA(int traj_p_address, int traj_v_address, int traj_a_address, i
 
 inline void getMoveLPathVector(const Point& start_point, const Point& end_point, double* path_vector, double& path_length)
 {
-    path_vector[0] = end_point.x - start_point.x; 
-    path_vector[1] = end_point.y - start_point.y;
-    path_vector[2] = end_point.z - start_point.z;
+    path_vector[0] = end_point.x_ - start_point.x_; 
+    path_vector[1] = end_point.y_ - start_point.y_;
+    path_vector[2] = end_point.z_ - start_point.z_;
     path_length = getVector3Norm(path_vector);
     path_vector[0] /= path_length;
     path_vector[1] /= path_length;
@@ -1244,40 +1408,40 @@ inline void getMoveLPathVector(const Point& start_point, const Point& end_point,
 
 inline double getPointsDistance(const Point& point1, const Point& point2)
 {
-    stack[S_TmpVector3_1] = point1.x - point2.x; 
-    stack[S_TmpVector3_1 + 1] = point1.y - point2.y; 
-    stack[S_TmpVector3_1 + 2] = point1.z - point2.z; 
+    stack[S_TmpVector3_1] = point1.x_ - point2.x_; 
+    stack[S_TmpVector3_1 + 1] = point1.y_ - point2.y_; 
+    stack[S_TmpVector3_1 + 2] = point1.z_ - point2.z_; 
     return getVector3Norm(&stack[S_TmpVector3_1]);
 }
 
 inline void getMoveLPathPoint(const Point& start_point, double* path_vector, double distance, Point& target_point)
 {
-    target_point.x = start_point.x + path_vector[0] * distance;
-    target_point.y = start_point.y + path_vector[1] * distance;
-    target_point.z = start_point.z + path_vector[2] * distance;
+    target_point.x_ = start_point.x_ + path_vector[0] * distance;
+    target_point.y_ = start_point.y_ + path_vector[1] * distance;
+    target_point.z_ = start_point.z_ + path_vector[2] * distance;
 }
 
 inline void getMoveEulerToQuatern(const Euler& euler, double* quatern)
 {
-    stack[S_TmpVector3_1] = euler.a;
-    stack[S_TmpVector3_1 + 1] = euler.b;
-    stack[S_TmpVector3_1 + 2] = euler.c;
+    stack[S_TmpVector3_1] = euler.a_;
+    stack[S_TmpVector3_1 + 1] = euler.b_;
+    stack[S_TmpVector3_1 + 2] = euler.c_;
     getEulerToQuatern(&stack[S_TmpVector3_1], quatern);
 }
 
 inline void getQuaternToQuaternVector4(const Quaternion quatern, double* quatern_vector)
 {
-    quatern_vector[0] = quatern.x;
-    quatern_vector[1] = quatern.y;
-    quatern_vector[2] = quatern.z;
-    quatern_vector[3] = quatern.w;
+    quatern_vector[0] = quatern.x_;
+    quatern_vector[1] = quatern.y_;
+    quatern_vector[2] = quatern.z_;
+    quatern_vector[3] = quatern.w_;
 }
 
 inline void getMovePointToVector3(const Point& point, double* pos_vector)
 {
-    pos_vector[0] = point.x;
-    pos_vector[1] = point.y;
-    pos_vector[2] = point.z;
+    pos_vector[0] = point.x_;
+    pos_vector[1] = point.y_;
+    pos_vector[2] = point.z_;
 }
 
 inline void getQuaternPoint(double* start_quatern, double* end_quartern, double angle, double angle_distance_to_start, Quaternion& target_quatern)
@@ -1289,38 +1453,38 @@ inline void getQuaternPoint(double* start_quatern, double* end_quartern, double 
         stack[S_TmpDouble_2] = sin((1 - angle_distance_to_start) * angle) / stack[S_TmpDouble_1];   // a(t)
         stack[S_TmpDouble_3] = sin(angle_distance_to_start * angle) / stack[S_TmpDouble_1]; // b(t)
         // target = a(t) * start + b(t) * end
-        target_quatern.x = stack[S_TmpDouble_2] * start_quatern[0] + stack[S_TmpDouble_3] * end_quartern[0];
-        target_quatern.y = stack[S_TmpDouble_2] * start_quatern[1] + stack[S_TmpDouble_3] * end_quartern[1];
-        target_quatern.z = stack[S_TmpDouble_2] * start_quatern[2] + stack[S_TmpDouble_3] * end_quartern[2];
-        target_quatern.w = stack[S_TmpDouble_2] * start_quatern[3] + stack[S_TmpDouble_3] * end_quartern[3];
+        target_quatern.x_ = stack[S_TmpDouble_2] * start_quatern[0] + stack[S_TmpDouble_3] * end_quartern[0];
+        target_quatern.y_ = stack[S_TmpDouble_2] * start_quatern[1] + stack[S_TmpDouble_3] * end_quartern[1];
+        target_quatern.z_ = stack[S_TmpDouble_2] * start_quatern[2] + stack[S_TmpDouble_3] * end_quartern[2];
+        target_quatern.w_ = stack[S_TmpDouble_2] * start_quatern[3] + stack[S_TmpDouble_3] * end_quartern[3];
     }
     else
     {
         stack[S_TmpDouble_1] = 1 - angle_distance_to_start;
         // target = (1-t) * start + t * end
-        target_quatern.x = stack[S_TmpDouble_1] * start_quatern[0] + angle_distance_to_start * end_quartern[0];
-        target_quatern.y = stack[S_TmpDouble_1] * start_quatern[1] + angle_distance_to_start * end_quartern[1];
-        target_quatern.z = stack[S_TmpDouble_1] * start_quatern[2] + angle_distance_to_start * end_quartern[2];
-        target_quatern.w = stack[S_TmpDouble_1] * start_quatern[3] + angle_distance_to_start * end_quartern[3];
+        target_quatern.x_ = stack[S_TmpDouble_1] * start_quatern[0] + angle_distance_to_start * end_quartern[0];
+        target_quatern.y_ = stack[S_TmpDouble_1] * start_quatern[1] + angle_distance_to_start * end_quartern[1];
+        target_quatern.z_ = stack[S_TmpDouble_1] * start_quatern[2] + angle_distance_to_start * end_quartern[2];
+        target_quatern.w_ = stack[S_TmpDouble_1] * start_quatern[3] + angle_distance_to_start * end_quartern[3];
     }
 
-    stack[S_TmpDouble_4] = sqrt(target_quatern.x * target_quatern.x
-                                + target_quatern.y * target_quatern.y
-                                + target_quatern.z * target_quatern.z
-                                + target_quatern.w * target_quatern.w);
-    target_quatern.x = target_quatern.x / stack[S_TmpDouble_4];
-    target_quatern.y = target_quatern.y / stack[S_TmpDouble_4];
-    target_quatern.z = target_quatern.z / stack[S_TmpDouble_4];
-    target_quatern.w = target_quatern.w / stack[S_TmpDouble_4];
+    stack[S_TmpDouble_4] = sqrt(target_quatern.x_ * target_quatern.x_
+                                + target_quatern.y_ * target_quatern.y_
+                                + target_quatern.z_ * target_quatern.z_
+                                + target_quatern.w_ * target_quatern.w_);
+    target_quatern.x_ = target_quatern.x_ / stack[S_TmpDouble_4];
+    target_quatern.y_ = target_quatern.y_ / stack[S_TmpDouble_4];
+    target_quatern.z_ = target_quatern.z_ / stack[S_TmpDouble_4];
+    target_quatern.w_ = target_quatern.w_ / stack[S_TmpDouble_4];
 }
 
-inline void packPoseByPointAndQuatern(Point point, double quatern[4], Pose& pose)
+inline void packPoseByPointAndQuatern(Point point, double quatern[4], PoseQuaternion& pose)
 {
-    pose.position = point;
-    pose.orientation.x = quatern[0];
-    pose.orientation.y = quatern[1];
-    pose.orientation.z = quatern[2];
-    pose.orientation.w = quatern[3];
+    pose.point_ = point;
+    pose.quaternion_.x_ = quatern[0];
+    pose.quaternion_.y_ = quatern[1];
+    pose.quaternion_.z_ = quatern[2];
+    pose.quaternion_.w_ = quatern[3];
 }
 
 inline void packPathBlockType(PointType point_type, MotionType motion_type, PathBlock& path_block)
@@ -1477,7 +1641,7 @@ inline void getTrajPFromPathIn2End(const PathCache& path_cache, double traj_piec
 inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_piece_ideal_in2end, int traj_pva_in_index, 
                                           int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
-    double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+    double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache.smooth_out_index].pose.point_);
     double traj_piece_ideal_in2out = path_length_in2out * stack[S_PathCountFactorCartesian];
     if(traj_piece_ideal_in2out < DOUBLE_ACCURACY)   // in and out point is the same point
     {
@@ -1569,7 +1733,7 @@ inline void updateMovLTrajP(const PathCache& path_cache, int* traj_path_cache_in
                                 int& traj_pva_out_index, int& traj_pva_size)
 {
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double traj_piece_ideal_start2end = path_length_start2end * stack[S_PathCountFactorCartesian];
     if(path_cache.smooth_out_index == -1
         || path_cache.smooth_out_index == path_cache_length_minus_1)
@@ -1597,23 +1761,34 @@ inline void updateMovJTrajP(const PathCache& path_cache, int* traj_path_cache_in
     }
     // decide traj_pva size & path_index step
     double traj_piece_ideal_start2end = delta_joint_max * stack[S_PathCountFactorJoint];
-    getTrajPFromPathStart2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {
+        getTrajPFromPathStart2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+    }
+    else
+    {
+        getTrajPFromPathStart2Out2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+    }
 }
 
-inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
+inline bool updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
 {
     int i, j;
     // compute path vector and quatern for via2in
     double path_vector_via2in[3];
     double path_length_via2in;
-    getMoveLPathVector(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position, path_vector_via2in, path_length_via2in);
+    getMoveLPathVector(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, path_vector_via2in, path_length_via2in);
     double via_quatern[4], in_quatern[4];
-    getMoveEulerToQuatern(via.pose_target.orientation, via_quatern);
-    getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.orientation, in_quatern);
+    getMoveEulerToQuatern(via.pose_target.euler_, via_quatern);
+    getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.quaternion_, in_quatern);
     double angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
     // compute via joint
     Joint joint_via;
-    segment_alg_param.kinematics_ptr->inverseKinematicsInUser(via.pose_target, path_cache.cache[0].joint, joint_via);
+    if(!segment_alg_param.kinematics_ptr->doIK(via.pose_target, path_cache.cache[0].joint, joint_via))
+    {
+        return false;
+    }
     // decide traj_pva_in_index & length_step & angle_step, fill TrajP via2in if in is not on via
     double traj_piece_ideal_via2in = path_length_via2in * stack[S_PathCountFactorCartesian];
     if(traj_piece_ideal_via2in < DOUBLE_ACCURACY)
@@ -1626,15 +1801,18 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
         double length_step = path_length_via2in / traj_pva_in_index;
         double angle_step = angle_via2in / traj_pva_in_index;
         double length_distance_to_via = 0, angle_distance_to_via = 0;
-        Pose pose;
+        PoseQuaternion pose;
         Joint joint_ref = joint_via;
         Joint joint_result;
         int traj_p_address;
         for(i = 0; i <= traj_pva_in_index; ++i)
         {
-            getMoveLPathPoint(via.pose_target.position, path_vector_via2in, length_distance_to_via, pose.position);
-            getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_distance_to_via, pose.orientation);
-            segment_alg_param.kinematics_ptr->inverseKinematicsInUser(pose, joint_ref, joint_result);
+            getMoveLPathPoint(via.pose_target.point_, path_vector_via2in, length_distance_to_via, pose.point_);
+            getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_distance_to_via, pose.quaternion_);
+            if(!segment_alg_param.kinematics_ptr->doIK(pose, joint_ref, joint_result))
+            {
+                return false;
+            }
             traj_p_address = S_TrajP0;
             for(j = 0; j < model.link_num; ++j)
             {
@@ -1646,14 +1824,53 @@ inline void updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
             angle_distance_to_via += angle_step;
         }        
     }
+    return true;
 }
+
+inline void updateMovJVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
+{
+    int i, j;
+    // compute max delta joint for via2in
+    double delta_joint_max_via2in = 0;
+    for(int i = 0; i < model.link_num; ++i)
+    {
+        stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - via.joint_target[i]);
+        if(stack[S_DeltaJointVector + i] > delta_joint_max_via2in)
+        {
+            delta_joint_max_via2in = stack[S_DeltaJointVector + i];
+        }
+    }    
+    
+    // decide traj_pva_in_index & length_step & angle_step, fill TrajP via2in if in is not on via
+    double traj_piece_ideal_via2in = delta_joint_max_via2in * stack[S_PathCountFactorJoint];
+    if(traj_piece_ideal_via2in < DOUBLE_ACCURACY)
+    {
+        traj_pva_in_index = 0;        
+    }
+    else
+    {
+        double joint_step_via2in;
+        int traj_p_address = S_TrajP0;
+        traj_pva_in_index = ceil(traj_piece_ideal_via2in);
+        for(i = 0; i < model.link_num; ++i)
+        {
+            joint_step_via2in = (path_cache.cache[path_cache.smooth_in_index].joint[i] - via.joint_target[i]) / traj_pva_in_index;
+            for(j = 0; j <= traj_pva_in_index; ++j)
+            {
+                stack[traj_p_address + j] = via.joint_target[i] + j * joint_step_via2in;
+            }
+            traj_p_address += 75;
+        }       
+    }
+}
+
 
 inline void updateMovLIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
     int i, j;
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_in2end = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double traj_piece_ideal_in2end = path_length_in2end * stack[S_PathCountFactorCartesian];
     if(path_cache.smooth_out_index == -1
         || path_cache.smooth_out_index == path_cache_length_minus_1)
@@ -1666,6 +1883,32 @@ inline void updateMovLIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_i
     }
 }
 
+inline void updateMovJIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_index, 
+                                        int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
+{
+    int i, j;
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    double delta_joint_max_in2end = 0;
+    for(int i = 0; i < model.link_num; ++i)
+    {
+        stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache_length_minus_1].joint[i] - path_cache.cache[path_cache.smooth_in_index].joint[i]);
+        if(stack[S_DeltaJointVector + i] > delta_joint_max_in2end)
+        {
+            delta_joint_max_in2end = stack[S_DeltaJointVector + i];
+        }
+    }    
+    double traj_piece_ideal_in2end = delta_joint_max_in2end * stack[S_PathCountFactorJoint];
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {
+        getTrajPFromPathIn2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+    }
+    else
+    {
+        getTrajPFromPathIn2Out2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+    }    
+}
+
 inline void updateMovLTrajT(const PathCache& path_cache, double cmd_vel,
                                 int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size,
                                 int& traj_t_size)
@@ -1673,7 +1916,7 @@ inline void updateMovLTrajT(const PathCache& path_cache, double cmd_vel,
     int i;
     // compute total time
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_start2end = getPointsDistance(path_cache.cache[0].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double critical_length = cmd_vel * cmd_vel / segment_alg_param.max_cartesian_acc;
     double time_span_start2end;
     if(path_length_start2end > critical_length) // can reach vel
@@ -1719,6 +1962,7 @@ inline void updateMovJTrajT(const PathCache& path_cache, double cmd_vel,
                                 int& traj_t_size)
 {
     int i;
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
     // get max time span of all axes
     double time_span_start2end_max = 0;
     double time_span_start2end;
@@ -1733,10 +1977,27 @@ inline void updateMovJTrajT(const PathCache& path_cache, double cmd_vel,
 
     // compute time duration of each traj piece
     traj_t_size = traj_pva_size - 1;
-    double time_duration_start2end = time_span_start2end_max / traj_t_size;
-    for(i = 0; i <traj_t_size; ++i)
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {    
+        double time_duration_start2end = time_span_start2end_max / traj_t_size;
+        for(i = 0; i <traj_t_size; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_start2end;
+        }
+    }
+    else
     {
-        stack[S_TrajT + i] = time_duration_start2end;
+        double time_duration_start2out = path_cache.smooth_out_index * time_span_start2end_max / (path_cache_length_minus_1 * traj_pva_out_index);
+        double time_duration_out2end = (path_cache_length_minus_1 - path_cache.smooth_out_index) * time_span_start2end_max / (path_cache_length_minus_1 * (traj_pva_size - traj_pva_out_index - 1));
+        for(i = 0; i < traj_pva_out_index; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_start2out;
+        }
+        for(; i < traj_t_size; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_out2end;
+        }
     }
     // adjust first and last piece of time
     stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
@@ -1745,9 +2006,42 @@ inline void updateMovJTrajT(const PathCache& path_cache, double cmd_vel,
 
 inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTarget& via, int* traj_path_cache_index_out2in, int& traj_pva_size_out2in)
 {
-    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
-    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
-    double traj_piece_ideal_out2in = (path_length_out2via + path_length_via2in) * stack[S_PathCountFactorCartesian];
+    double traj_piece_ideal_out2in;
+    switch(path_cache.target.type)
+    {
+        case MOTION_LINE:
+        {
+            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+            double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+            traj_piece_ideal_out2in = (path_length_out2via + path_length_via2in) * stack[S_PathCountFactorCartesian];
+            break;
+        }
+        case MOTION_JOINT:
+        {
+            double delta_joint_max_out2in = 0;
+            double delta_joint_out2in;
+            int out_path_index;
+            if(path_cache.smooth_out_index == -1)
+            {
+                out_path_index = path_cache.cache_length - 1;
+            }
+            else
+            {
+                out_path_index = path_cache.smooth_out_index;
+            }
+                
+            for(int i = 0; i < model.link_num; ++i)
+            {
+                delta_joint_out2in = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]);
+                if(delta_joint_out2in > delta_joint_max_out2in)
+                {
+                    delta_joint_max_out2in = delta_joint_out2in;
+                }
+            }    
+            traj_piece_ideal_out2in = delta_joint_max_out2in * stack[S_PathCountFactorJoint];
+            break;
+        }
+    }
     getTrajPFromPathOut2In(path_cache, traj_piece_ideal_out2in, traj_path_cache_index_out2in, traj_pva_size_out2in);
 }
 
@@ -1758,7 +2052,7 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     int i;
     // compute time span
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_via2end = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+    double path_length_via2end = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double critical_length = cmd_vel * cmd_vel / segment_alg_param.max_cartesian_acc;
     double time_span_via2end;
     if(path_length_via2end > critical_length) // can reach vel
@@ -1770,7 +2064,7 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
         time_span_via2end = 2 * sqrt(path_length_via2end / segment_alg_param.max_cartesian_acc);
     }
     // compute time duration for each traj piece, via2in
-    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
+    double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
     double time_span_via2in = time_span_via2end * path_length_via2in / path_length_via2end;    
     double time_duration_via2in = time_span_via2in / traj_pva_in_index;
     for(i = 0; i < traj_pva_in_index; ++i)
@@ -1790,10 +2084,10 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     }
     else
     {
-        double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.position, path_cache.cache[path_cache.smooth_out_index].pose.position);
+        double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache.smooth_out_index].pose.point_);
         double time_span_in2out = time_span_via2end * path_length_in2out / path_length_via2end;
         double time_duration_in2out = time_span_in2out / (traj_pva_out_index - traj_pva_in_index);
-        double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.position, path_cache.cache[path_cache_length_minus_1].pose.position);
+        double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
         double time_span_out2end = time_span_via2end * path_length_out2end / path_length_via2end;
         double time_duration_out2end = time_span_out2end / (traj_pva_size_via2end - traj_pva_out_index - 1);
 
@@ -1811,15 +2105,117 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
 }
 
+inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel,
+                                  int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
+                                  int& traj_t_size)
+{
+    int i;
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    // get max delta joint & max time span of all axes
+    double time_span_via2end_max = 0;
+    double time_span_via2end;
+    double delta_joint_via2end_max = 0;
+    double delta_joint_via2end;
+    int delta_joint_max_id = 0;
+    for(i = 0; i < model.link_num; ++i)
+    {
+        delta_joint_via2end = fabs(path_cache.cache[path_cache_length_minus_1].joint[i] - via.joint_target[i]);
+        if(delta_joint_via2end > delta_joint_via2end_max)
+        {
+            delta_joint_via2end_max = delta_joint_via2end;
+            delta_joint_max_id = i;
+        }
+        time_span_via2end = delta_joint_via2end / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+        if(time_span_via2end > time_span_via2end_max)
+        {
+            time_span_via2end_max = time_span_via2end;
+        }
+    }
+
+    // compute time duration for each traj piece, via2in
+    double delta_joint_via2in_max = fabs(path_cache.cache[path_cache.smooth_in_index].joint[delta_joint_max_id] - via.joint_target[delta_joint_max_id]);
+    double time_span_via2in = delta_joint_via2in_max * time_span_via2end_max / delta_joint_via2end_max;
+    double time_duration_via2in = time_span_via2in / traj_pva_in_index;
+    for(i = 0; i < traj_pva_in_index; ++i)
+    {
+        stack[S_TrajT + i] = time_duration_via2in;
+    }
+
+    // compute time duration for each traj piece, in2end
+    traj_t_size = traj_pva_size_via2end - 1;
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {
+        double time_duration_in2end = (time_span_via2end_max - time_span_via2in) / (traj_t_size - traj_pva_in_index);
+        for(i = traj_pva_in_index; i < traj_t_size; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_in2end;
+        }        
+    }
+    else
+    {
+        double delta_joint_in2out_max = fabs(path_cache.cache[path_cache.smooth_in_index].joint[delta_joint_max_id] - path_cache.cache[path_cache.smooth_out_index].joint[delta_joint_max_id]);
+        double time_span_in2out = delta_joint_in2out_max * time_span_via2end_max / delta_joint_via2end_max;
+        double time_duration_in2out = time_span_in2out / (traj_pva_out_index - traj_pva_in_index);
+        double delta_joint_out2end_max = fabs(path_cache.cache[path_cache.smooth_out_index].joint[delta_joint_max_id] - path_cache.cache[path_cache_length_minus_1].joint[delta_joint_max_id]);
+        double time_span_out2end = delta_joint_out2end_max * time_span_via2end_max / delta_joint_via2end_max;
+        double time_duration_out2end = time_span_out2end / (traj_pva_size_via2end - traj_pva_out_index - 1);        
+        for(i = traj_pva_in_index; i < traj_pva_out_index; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_in2out;
+        }
+        for(i = traj_pva_out_index; i < traj_t_size; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_out2end;
+        }
+    }
+
+    // adjust first and last piece of time
+    stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
+    stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
+}
+
 inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel, 
                                            int* traj_path_cache_index_out2in, int traj_pva_size_out2in, 
                                            int& traj_t_size_out2in)
 {
     traj_t_size_out2in = traj_pva_size_out2in - 1;
-    double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.position, via.pose_target.position);
-    double path_length_via2in = getPointsDistance(via.pose_target.position, path_cache.cache[path_cache.smooth_in_index].pose.position);
-    double time_span_out2in = (path_length_out2via + path_length_via2in) / cmd_vel;
-    double time_duration_out2in = time_span_out2in / traj_t_size_out2in; 
+    double time_span_out2in;
+    switch(path_cache.target.type)
+    {
+        case MOTION_LINE:
+        {
+            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+            double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+            time_span_out2in = (path_length_out2via + path_length_via2in) / cmd_vel;
+            break;
+        }
+        case MOTION_JOINT:
+        {            
+            time_span_out2in = 0;
+            double time_span_out2in_tmp;
+            int out_path_index;
+            if(path_cache.smooth_out_index == -1)
+            {
+                out_path_index = path_cache.cache_length - 1;
+            }
+            else
+            {
+                out_path_index = path_cache.smooth_out_index;
+            }
+            for(int i = 0; i < model.link_num; ++i)
+            {
+                time_span_out2in_tmp = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                if(time_span_out2in_tmp > time_span_out2in)
+                {
+                    time_span_out2in = time_span_out2in_tmp;
+                }
+            }
+            break;
+        }
+    }
+
+    double time_duration_out2in = time_span_out2in / traj_t_size_out2in;  
     for(int i = 0; i < traj_t_size_out2in; ++i)
     {
         stack[S_TrajT_Smooth + i] = time_duration_out2in;

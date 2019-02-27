@@ -8,24 +8,37 @@
 #ifndef _MOTION_CONTROL_DATATYPE_H
 #define _MOTION_CONTROL_DATATYPE_H
 
-#include <base_datatype.h>
+#include <assert.h>
+#include <basic_alg_datatype.h>
+#include <basic_constants.h>
+#include <common_enum.h>
 
 namespace fst_mc
 {
 
+typedef unsigned int Tick;
+typedef double  MotionTime;
+
 #define PATH_CACHE_SIZE         1024
 #define TRAJECTORY_CACHE_SIZE   128
 
+struct JointState
+{
+	basic_alg::Joint angle;
+	basic_alg::Joint omega;
+	basic_alg::Joint alpha;
+};
+
 struct JointConstraint  // 关节限位
 {
-    Joint upper;    // 上限
-    Joint lower;    // 下限
+    basic_alg::Joint upper;    // 上限
+    basic_alg::Joint lower;    // 下限
 };
 
 struct CircleTarget     // moveC的目标点，由2个点位姿点构成
 {
-    PoseEuler pose1;
-    PoseEuler pose2;
+    basic_alg::PoseEuler pose1;
+    basic_alg::PoseEuler pose2;
 };
 
 struct MotionTarget     // 用于move指令的数据结构
@@ -40,9 +53,9 @@ struct MotionTarget     // 用于move指令的数据结构
 
     union               // 根据type指定的运动类型，使用相应的目标数据
     {
-        Joint           joint_target;   // 关节目标点，moveJ时使用
-        PoseEuler       pose_target;    // 位姿目标点，moveL时使用
-        CircleTarget    circle_target;  // 2个位姿目标点，moveC时使用
+        basic_alg::Joint        joint_target;   // 关节目标点，moveJ时使用
+        basic_alg::PoseEuler    pose_target;    // 位姿目标点，moveL时使用
+        CircleTarget            circle_target;  // 2个位姿目标点，moveC时使用
     };
 };
 
@@ -51,8 +64,8 @@ struct PathBlock    // 路径点的数据结构
     PointType   point_type;     // 路径点所属的区段, 路径点或者过渡点
     MotionType  motion_type;    // 路径点的类型，关节类型或者笛卡尔类型
 
-    Pose    pose;   // 路径点的笛卡尔空间位姿表示
-    Joint   joint;  // 路径点的关节空间表示
+    basic_alg::PoseQuaternion   pose;   // 路径点的笛卡尔空间位姿表示
+    basic_alg::Joint            joint;  // 路径点的关节空间表示
 };
 
 struct PathCache    // 路径缓存
@@ -112,10 +125,10 @@ struct TrajectorySegment
 
 struct TrajectoryPoint  // 差值得到的轨迹点
 {
-    Joint   angle;      // 轨迹点的位置
-    Joint   omega;      // 轨迹点的速度
-    Joint   alpha;      // 轨迹点的加速度
-    Joint   ma_cv_g;    // 轨迹点的力矩
+    basic_alg::Joint   angle;      // 轨迹点的位置
+    basic_alg::Joint   omega;      // 轨迹点的速度
+    basic_alg::Joint   alpha;      // 轨迹点的加速度
+    basic_alg::Joint   ma_cv_g;    // 轨迹点的力矩
     PointLevel  level;  // 轨迹点位置，起始点、中间点或者结束点
 };
 
@@ -155,12 +168,12 @@ struct ManualTrajectory     // 手动示教模式下的运动轨迹
     ManualFrame     frame;          // 手动示教的坐标系，关节空间、基座坐标系、用户坐标系、世界坐标系、工具坐标系
     ManualDirection direction[NUM_OF_JOINT];   // 手动示教的各轴方向
 
-    Joint       joint_start;        // 示教运动的开始关节位置
-    Joint       joint_ending;       // 示教运动的结束关节位置
+    basic_alg::Joint    joint_start;        // 示教运动的开始关节位置
+    basic_alg::Joint    joint_ending;       // 示教运动的结束关节位置
 
-    PoseEuler   cart_start;         // 示教运动的开始笛卡尔位姿
-    PoseEuler   cart_ending;        // 示教运动结束始笛卡尔位姿
-    PoseEuler   tool_coordinate;    // 工具坐标系到基座坐标系的变换，用于工具坐标系下的示教
+    basic_alg::PoseEuler    cart_start;         // 示教运动的开始笛卡尔位姿
+    basic_alg::PoseEuler    cart_ending;        // 示教运动结束始笛卡尔位姿
+    basic_alg::PoseEuler    tool_coordinate;    // 工具坐标系到基座坐标系的变换，用于工具坐标系下的示教
 
     MotionTime      duration;       // 示教运动的耗时
     ManualCoef      coeff[NUM_OF_JOINT];        // 各轴系数

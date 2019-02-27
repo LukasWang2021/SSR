@@ -10,7 +10,7 @@
 
 #include <string>
 #include <vector>
-#include "base_datatype.h"
+#include <error_code.h>
 #include <parameter_manager/parameter_manager_param_value.h>
 
 

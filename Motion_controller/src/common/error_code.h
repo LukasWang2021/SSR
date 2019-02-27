@@ -139,7 +139,7 @@ typedef unsigned long long int ErrorCode;
 #define FAIL_INTERPRETER_USER_ALARM10 (unsigned long long int)0x0001000900AA010A   /*User Alarm 10*/
 #define FAIL_INTERPRETER_NOT_IN_PAUSE (unsigned long long int)0x0001000900AA010B   /*Not in PAUSE*/
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0001000100A90000   /*MotionControl log{0}*/
-#define IK_OUT_OF_WORKSPACE (unsigned long long int)0x0001000400A903E9   /*IK failed for Axis 1*/
+#define IK_FAIL (unsigned long long int)0x0001000400A903E9   /*IK failed*/
 #define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903EA   /*IK failed for Axis 2~6*/
 #define IK_EXCESSIVE_DISTANCE (unsigned long long int)0x0001000400A903EB   /*IK result far away from reference*/
 #define FK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0000000400A903F3   /*joint out of limit computing FK*/

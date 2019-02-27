@@ -391,13 +391,13 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     switch (manual_frame_)
     {
         case BASE:
-            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint);
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint) ? SUCCESS : IK_FAIL;
             break;
         case USER:
-            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint);    // TODO: transform from user frame to base frame
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint) ? SUCCESS : IK_FAIL;    // TODO: transform from user frame to base frame
             break;
         case WORLD:
-            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint);    // TODO: transform from world frame to base frame
+            err = kinematics_ptr_->doIK(pose, ref_joint, res_joint) ? SUCCESS : IK_FAIL;    // TODO: transform from world frame to base frame
             break;
         default:
             FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_frame_);
@@ -1285,7 +1285,7 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
 
     for (size_t i = 0; i < path.cache_length; i++)
     {
-        err = kinematics_ptr_->doIK(path.cache[i].pose, reference, path.cache[i].joint);
+        err = kinematics_ptr_->doIK(path.cache[i].pose, reference, path.cache[i].joint) ? SUCCESS : IK_FAIL;
 
         if (err == SUCCESS)
         {
@@ -1752,7 +1752,7 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
     double *angle_ptr, *start_ptr, *target_ptr;
     double tm, omega;
     
-    FST_INFO("Pick from manual joint, manual-time = %.4f", manual_time_);
+    // FST_INFO("Pick from manual joint, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0 ; i < length; i++)
     {
@@ -1828,7 +1828,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
     double *axis_ptr, *start_ptr, *target_ptr;
     size_t picked_num = 0;
     
-    FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
+    // FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0; i < length; i++)
     {
@@ -1888,13 +1888,13 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         switch (manual_traj_.frame)
         {
             case BASE:
-                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle);
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle) ? SUCCESS : IK_FAIL;
                 break;
             case USER:
-                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle);      // transfrom from user to base frame
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle) ? SUCCESS : IK_FAIL;      // transfrom from user to base frame
                 break;
             case WORLD:
-                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle);      // transfrom from world to base frame
+                err = kinematics_ptr_->doIK(pose, ref_joint, points[i].angle) ? SUCCESS : IK_FAIL;      // transfrom from world to base frame
                 break;
             case TOOL:
                 // err = kinematics_ptr_->inverseKinematicsInTool(manual_traj_.tool_coordinate, pose, ref_joint, points[i].angle);
@@ -1908,7 +1908,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         if (err == SUCCESS && soft_constraint_.isJointInConstraint(points[i].angle))
         {
             char buffer[LOG_TEXT_SIZE];
-            FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
+            // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
             picked_num ++;
 
             if (manual_time_ >= manual_traj_.duration)
@@ -1919,20 +1919,22 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         }
         else
         {
+            char buffer[LOG_TEXT_SIZE];
+            FST_ERROR("pickFromManualCartesian: IK failed.");
+            FST_INFO("  pose:  %s", printDBLine(&pose.point_.x_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  ref  : %s", printDBLine(&ref_joint.j1_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  joint: %s", printDBLine(&points[i].angle.j1_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  cart-start: %s", printDBLine(&manual_traj_.cart_start.point_.x_, buffer, LOG_TEXT_SIZE));
+            FST_INFO("  cart-end: %s", printDBLine(&manual_traj_.cart_ending.point_.x_, buffer, LOG_TEXT_SIZE));
+
             if (err != SUCCESS)
             {
-                FST_ERROR("pickFromManualCartesian: IK failed.");
+                FST_ERROR("Error code = 0x%llx", err);
                 break;
             }
             else
             {
-                char buffer[LOG_TEXT_SIZE];
-                FST_ERROR("pickFromManualCartesian: IK result out of soft constraint.");
-                FST_INFO("  pose:  %s", printDBLine(&pose.point_.x_, buffer, LOG_TEXT_SIZE));
-                FST_INFO("  ref  : %s", printDBLine(&ref_joint.j1_, buffer, LOG_TEXT_SIZE));
-                FST_INFO("  joint: %s", printDBLine(&points[i].angle.j1_, buffer, LOG_TEXT_SIZE));
-                FST_INFO("  cart-start: %s", printDBLine(&manual_traj_.cart_start.point_.x_, buffer, LOG_TEXT_SIZE));
-                FST_INFO("  cart-end: %s", printDBLine(&manual_traj_.cart_ending.point_.x_, buffer, LOG_TEXT_SIZE));
+                FST_ERROR("IK result out of soft constraint.");
                 err = JOINT_OUT_OF_CONSTRAINT;
                 break;
             }

@@ -37,8 +37,8 @@ cartesian:
         default: 7000.0                     # mm/s^2
         reference: 4000.0                   # mm/s^2
     orientation:
-        omega_reference: 1.0                # rad/s
-        alpha_reference: 4.0                # rad/s^2
+        omega_reference: 0.2                # rad/s
+        alpha_reference: 1.0                # rad/s^2
         linear_polation_threshold: 0.1      # rad
 
 joint:

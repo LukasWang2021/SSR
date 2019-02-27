@@ -329,7 +329,7 @@ void test6(void)
 
     clock_t start = clock();
     for (size_t i = 0; i < 1000; i++)
-        ErrorCode err = arm.getKinematicsPtr()->doIK(p, ref, res);
+        ErrorCode err = arm.getKinematicsPtr()->doIK(p, ref, res) ? SUCCESS : IK_FAIL;
     clock_t end = clock();
 
     double seconds  = (double)(end - start)/CLOCKS_PER_SEC;

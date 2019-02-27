@@ -840,12 +840,6 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
         {
             if (time >= traj.coeff[i].stop_time)
             {
-                // start motion in this direction
-                //spd = i < 3 ? position_vel_reference_ * vel_ratio_ : orientation_omega_reference_ * vel_ratio_;
-                //acc = i < 3 ? position_acc_reference_ * acc_ratio_ : orientation_alpha_reference_ * acc_ratio_;
-                spd = position_vel_reference_ * vel_ratio_;
-                acc = position_acc_reference_ * acc_ratio_;
-
                 traj.coeff[i].start_time = time;
                 traj.coeff[i].stable_time = time + spd / acc;
                 traj.coeff[i].brake_time = 32 - spd / acc;

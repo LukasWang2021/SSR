@@ -141,17 +141,10 @@ typedef unsigned long long int ErrorCode;
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0001000100A90000   /*MotionControl log{0}*/
 #define IK_FAIL (unsigned long long int)0x0001000400A903E9   /*IK failed*/
 #define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903EA   /*IK failed for Axis 2~6*/
-#define IK_EXCESSIVE_DISTANCE (unsigned long long int)0x0001000400A903EB   /*IK result far away from reference*/
 #define FK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0000000400A903F3   /*joint out of limit computing FK*/
-#define AXIS_OVERSHOOT (unsigned long long int)0x0001000400A90407   /*axis run over target position in moveJ*/
 #define AXIS_APPROACHING_LIMIT (unsigned long long int)0x0001000400A90408   /*axis approaching and going to crash a limit*/
-#define CUBIC_CURVE_PLANNING_FAILED (unsigned long long int)0x0001000400A90400   /*planning failed using cubic curve*/
-#define MOTION_SPEED_TOO_LOW (unsigned long long int)0x0001000400A90401   /*motion speed is too low*/
-#define CURVE_PRECISION_TOO_LOW (unsigned long long int)0x0001000400A9041D   /*get a low precision curve when planning MoveC*/
-#define THREE_POINTS_COLINEAR (unsigned long long int)0x0001000400A9041E   /*given points colinear, cannot define a circle*/
 #define MOTION_INTERNAL_FAULT (unsigned long long int)0x0001000400A90001   /*program internal fault*/
 #define MOTION_FAIL_IN_INIT (unsigned long long int)0x0011000200A903E9   /*initialization failed*/
-#define FAIL_LOADING_CONSTRAINT (unsigned long long int)0x0011000200A903EA   /*load joint constraint failed*/
 #define FAIL_LOADING_PARAMETER (unsigned long long int)0x0011000200A903EB   /*load parameter failed*/
 #define JOINT_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F3   /*joint out of constraint*/
 #define TARGET_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F4   /*target joint out of constraint*/
@@ -161,10 +154,7 @@ typedef unsigned long long int ErrorCode;
 #define ZERO_OFFSET_LOST (unsigned long long int)0x0001000200A907D2   /*one or more axis lost its zero offset*/
 #define ZERO_OFFSET_DEVIATE (unsigned long long int)0x0001000200A907D3   /*axis zero offset deviated*/
 #define FAIL_GET_FEEDBACK_JOINT (unsigned long long int)0x0001000600A907E6   /*fail to get FeedbackJointState*/
-#define NEED_INITIALIZATION (unsigned long long int)0x0010000200A90411   /*ArmGroup need to initialize */
-#define NEED_CALIBRATION (unsigned long long int)0x0001000400A90412   /*ArmGroup need to calibrate*/
 #define IPC_COMMUNICATION_ERROR (unsigned long long int)0x0001000200A907E7   /*fail to communication with other process*/
-#define PLANNING_MAJOR_ARC (unsigned long long int)0x0001000400A9041F   /*given circle targets define a major arc*/
 
 #define TRAJECTORY_FIFO_EMPTY (unsigned long long int)0x0001000400A90BB8   /*trajectory FIFO is empty*/
 #define TRAJECTORY_FIFO_FULL (unsigned long long int)0x0001000400A90BB9   /*trajectory FIFO is full*/
@@ -177,7 +167,6 @@ typedef unsigned long long int ErrorCode;
 #define PARAM_NOT_FOUND (unsigned long long int)0x00010002007903F3   /*cannot find the param*/
 #define PARAM_TYPE_ERROR (unsigned long long int)0x00010002007903F4   /*param has a type beyond expectation*/
 #define PARAM_PARSE_ERROR (unsigned long long int)0x00010002007903FD   /*cannot parse a scalar to expected value type*/
-#define COMMUNICATION_ERROR (unsigned long long int)0x0001000200790407   /*cannot communicate with remote server*/
 #define BAD_FILE_PATH (unsigned long long int)0x00000002007907D1   /*bad path of config file*/
 #define BAD_FILE_EXTENSION (unsigned long long int)0x00000002007907D2   /*bad extension of config file*/
 #define BAD_FILE_NAME (unsigned long long int)0x00000002007907D3   /*bad name of config file*/

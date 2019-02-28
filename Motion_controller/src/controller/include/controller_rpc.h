@@ -335,6 +335,10 @@ private:
     void handleRpc0x00002940(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getOrientationManualStep"
     void handleRpc0x00016D20(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/getPostureByJoint"
+    void handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/getPostureByCart"
+    void handleRpc0x00016994(void* request_data_ptr, void* response_data_ptr);
 
     /* interpreter rpc */
     // "/rpc/interpreter/start"

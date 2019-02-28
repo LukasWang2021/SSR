@@ -497,7 +497,7 @@ void ControllerSm::processError()
     while(ErrorMonitor::instance()->pop(error_code))
     {
         recordLog(error_code);
-
+    
         //STOP process: write bit to the safety_board.
         if (ErrorMonitor::instance()->isCore0Error(error_code))
         {
@@ -514,7 +514,6 @@ void ControllerSm::processError()
             else
             {
             }
-        
         }
 
     }

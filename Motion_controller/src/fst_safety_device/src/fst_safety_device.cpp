@@ -193,6 +193,11 @@ char FstSafetyDevice::getDISafetyDoorStop()
 {
     return din_frm1_.load().byte3.safetydoor_stop;
 }
+
+char FstSafetyDevice::getDICabinetStop(void)
+{
+    return din_frm1_.load().byte3.cabinet_estop;
+}
 char FstSafetyDevice::getDIDeadmanNormal()
 {
     return din_frm1_.load().byte3.deadman_normal;
@@ -253,7 +258,7 @@ ErrorCode FstSafetyDevice::setDOType0Stop(char data)
     }
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte1.core0_sw0 = data;
-    FST_INFO("setSafety set 0x%X\n", *(int*)&out);
+    FST_INFO("setDOType0Stop set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
@@ -269,7 +274,7 @@ ErrorCode FstSafetyDevice::setDOType1Stop(char data)
     }
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte1.core0_sw1 = data;
-    FST_INFO("setSafety set 0x%X\n", *(int*)&out);
+    FST_INFO("setDOType1Stop set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
@@ -285,7 +290,7 @@ ErrorCode FstSafetyDevice::setDOType2Stop(char data)
     }
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte1.core0_sw2 = data;
-    FST_INFO("setDOType1Stop set 0x%X\n", *(int*)&out);
+    FST_INFO("setDOType2Stop set 0x%X\n", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
@@ -390,26 +395,32 @@ void FstSafetyDevice::checkSafetyBoardAlarm(void)
     }
     if (getDIExtEStop())
     {
+        //printf("getDIExtEStop=%d\n",getDIExtEStop());
         ErrorMonitor::instance()->add(SAFETY_BOARD_EXTERNAL_STOP);
     }
     if (getDISafetyDoorStop())
     {
+        //printf("getDISafetyDoorStop=%d\n",getDISafetyDoorStop());
         ErrorMonitor::instance()->add(SAFETY_BOARD_SAFETY_DOOR_STOP);
     }
     if (getDILimitedStop())
     {
+        //printf("getDILimitedStop=%d\n",getDILimitedStop());
         ErrorMonitor::instance()->add(SAFETY_BOARD_LIMITED_STOP);
     }
     if (getDIDeadmanNormal())
     {
+        //printf("getDIdeadmanonrmal=%d\n",getDIDeadmanNormal());
         ErrorMonitor::instance()->add(SAFETY_BOARD_DEADMAN_NORMAL_FAULTY);
     }
     if (getDIDeadmanPanic())
     {
+        //printf("getDIDeadmanPanic=%d\n",getDIDeadmanPanic());
         ErrorMonitor::instance()->add(SAFETY_BOARD_DEADMAN_PANIC);
     }
     if (getDITPEStop())
     {
+        //printf("getDITPEStop=%d\n",getDITPEStop());
         ErrorMonitor::instance()->add(SAFETY_BOARD_TP_ESTOP);
     }
     if (getModeFaulty())
@@ -439,6 +450,11 @@ void FstSafetyDevice::checkSafetyBoardAlarm(void)
     if (getContactor1RelayFaulty())
     {
         ErrorMonitor::instance()->add(SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY);
+    }
+    if (getDICabinetStop())
+    {
+        //printf("getDICabinetStop=%d\n",getDICabinetStop());
+        ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_STOP);
     }
 
 }

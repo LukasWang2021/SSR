@@ -266,6 +266,8 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY (unsigned long long int)0x0001000B00C8000C   /*the safety board detects the relay of the second auxiliary axis is abnormal.*/
 #define SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY (unsigned long long int)0x0001000B00C8000D   /*the safety board detects the first relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000E   /*the safety board detects the second relay of the main contactor is abnormal.*/
+#define SAFETY_BOARD_CABINET_STOP (unsigned long long int)0x0001000B00C8000F   /*the safety board detects cabinet estop signal.*/
+
 
 #endif
 

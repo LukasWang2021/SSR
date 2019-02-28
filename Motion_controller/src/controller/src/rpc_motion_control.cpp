@@ -1192,3 +1192,16 @@ void ControllerRpc::handleRpc0x00016D20(void* request_data_ptr, void* response_d
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getOrientationManualStep"));
 }
 
+
+//"/rpc/motion_control/getPostureByJoint"
+void ControllerRpc::handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+
+//"/rpc/motion_control/getPostureByCart"
+void ControllerRpc::handleRpc0x00016994(void* request_data_ptr, void* response_data_ptr)
+{
+
+}
+

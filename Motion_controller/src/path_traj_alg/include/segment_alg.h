@@ -14,6 +14,7 @@ Important Note: all APIs provided by this source are not support multi thread op
 #include "kinematics.h"
 #include "dynamics_interface.h"
 #include "error_code.h"
+#include <basic_alg.h>
 
 #define DOUBLE_ACCURACY 1e-6
 #define SQRT_DOUBLE_ACCURACY 1e-12
@@ -117,6 +118,8 @@ typedef enum
     S_BSplineNodeVector = 45,    // vector in size 6
     S_PathCountFactorCartesian = 51,    // double
     S_PathCountFactorJoint = 52,    // double
+    S_CircleAngle = 53,    // double
+    S_CircleRadius = 54,    // double
 
     // basic matrix operation
     S_TransMatrix = 200,  // matrix[4][4]
@@ -158,7 +161,7 @@ typedef enum
     S_TmpMatrix66_1 = 800, // matrix[6][6]
     S_TmpMatrix66_2 = 836,
 
-    // BSpline computation related, support up to 1000 interpolation points    
+    // BSpline computation related, support up to 1000 interpolation points
     S_BaseFunctionNik0 = 850,   // base function Nik0, double 
     S_BaseFunctionNik1 = 851,   // base function Nik1, double 
     S_BaseFunctionNik2 = 852,   // base function Nik2, double
@@ -708,7 +711,10 @@ Stack:      S_TmpMatrix33_1, S_TmpMatrix44_1, S_HomoTransMatrix, S_TmpDouble_1~S
 */
 void getModelFk(ComplexAxisGroupModel* model_ptr, double* joints, double* pos_euler);
 
-
+void getVector3(const basic_alg::Point &start, const basic_alg::Point &end, double* vector);
+void getMidPoint(const basic_alg::Point &start, const basic_alg::Point &end, double* mid_point);
+void getUintVector3(const basic_alg::Point start, const basic_alg::Point end, double* uint_vector);
+void getUintVector3(double* vector, double* uint_vector);
 /* target_row = target_row - times * ref_row */
 inline void doRowOperation(double* target_row, double* ref_row, double times, int row_size);
 
@@ -760,6 +766,11 @@ inline void getQuaternPoint(double* start_quatern, double* end_quartern, double 
 inline void packPoseByPointAndQuatern(basic_alg::Point point, double quatern[4], basic_alg::PoseQuaternion& pose);
 inline void packPathBlockType(fst_mc::PointType point_type, fst_mc::MotionType motion_type, fst_mc::PathBlock& path_block);
 
+inline void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, 
+    double &angle, basic_alg::Point &circle_center_position, double &circle_radius, double* cross_vector);
+inline void getCirclePoint(double &circle_radius, double &angle, double* n_vector, double* o_vector,
+    basic_alg::Point &circle_center_point, basic_alg::Point &circle_point);
+
 inline void updateTrajPSingleItem(int traj_p_address, const basic_alg::Joint& joint);
 inline void getTrajPFromPathStart2End(const fst_mc::PathCache& path_cache, double traj_piece_ideal_start2end, 
                                              int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
@@ -774,6 +785,7 @@ inline void getTrajPFromPathOut2In(const fst_mc::PathCache& path_cache, double t
 
 inline void updateMovLTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline void updateMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
+inline void updateMovCTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline bool updateMovLVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline void updateMovJVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline void updateMovLIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
@@ -785,6 +797,9 @@ inline void updateMovLTrajT(const fst_mc::PathCache& path_cache, double cmd_vel,
                                 int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size,
                                 int& traj_t_size);
 inline void updateMovJTrajT(const fst_mc::PathCache& path_cache, double cmd_vel, 
+                                int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size, 
+                                int& traj_t_size);
+inline void updateMovCTrajT(const fst_mc::PathCache& path_cache, double cmd_vel, 
                                 int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size, 
                                 int& traj_t_size);
 inline void updateMovLVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,

@@ -3,21 +3,23 @@
 
 
 #include <common_log.h>
-#include <motion_control_param.h>
 #include <device_manager.h>
 #include <axis_group_manager.h>
 #include <coordinate_manager.h>
 #include <tool_manager.h>
-#include <motion_control_arm_group.h>
 #include <error_monitor.h>
 #include <error_code.h>
 #include <thread_help.h>
 #include <motion_control_ros_basic.h>
 #include <motion_control_datatype.h>
+#include <motion_control_param.h>
+#include <motion_control_arm_group.h>
+#include <motion_control_scara_group.h>
 
 
 namespace fst_mc
 {
+
 class MotionControl
 {
 public:

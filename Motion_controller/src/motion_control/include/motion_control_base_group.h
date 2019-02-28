@@ -18,6 +18,7 @@
 #include <motion_control_manual_teach.h>
 #include <motion_control_traj_fifo.h>
 #include <kinematics_rtm.h>
+#include <kinematics_toll.h>
 #include <motion_control_cache_pool.h>
 #include <dynamics_interface.h>
 

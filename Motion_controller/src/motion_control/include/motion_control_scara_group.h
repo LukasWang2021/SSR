@@ -1,27 +1,27 @@
 /*************************************************************************
-	> File Name: motion_control_arm_group.h
+	> File Name: motion_control_scara_group.h
 	> Author: 
 	> Mail: 
-	> Created Time: 2018年08月07日 星期二 14时17分10秒
+	> Created Time: 2019年02月28日 星期四 10时55分53秒
  ************************************************************************/
 
-#ifndef _MOTION_CONTROL_ARM_GROUP_H
-#define _MOTION_CONTROL_ARM_GROUP_H
+#ifndef _MOTION_CONTROL_SCARA_GROUP_H
+#define _MOTION_CONTROL_SCARA_GROUP_H
 
 #include <common_log.h>
 #include <motion_control_base_group.h>
 
 
-#define JOINT_OF_ARM    6
+#define JOINT_OF_SCARA    4
 
 namespace fst_mc
 {
 
-class ArmGroup : public BaseGroup
+class ScaraGroup : public BaseGroup
 {
   public:
-    ArmGroup(fst_log::Logger* plog) : BaseGroup(plog) {};
-    ~ArmGroup() {};
+    ScaraGroup(fst_log::Logger* plog) : BaseGroup(plog) {};
+    ~ScaraGroup() {};
 
     ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr);
 
@@ -33,7 +33,5 @@ class ArmGroup : public BaseGroup
     inline char* printDBLine(const double *data, char *buffer, size_t length);
 };
 
-
-}
 
 #endif

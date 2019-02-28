@@ -1,7 +1,6 @@
 #include <string.h>
 #include <motion_control_ros_basic.h>
 #include <motion_control.h>
-#include <motion_control_arm_group.h>
 #include <tool_manager.h>
 #include <coordinate_manager.h>
 #include "../../coordinate_manager/include/coordinate_manager.h"
@@ -114,10 +113,8 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new MotionControlParam();
-    group_ptr_ = new ArmGroup(log_ptr_);
-    //group_ptr_ = new ScalaGroup(log_ptr_);
-
-    if (log_ptr_ == NULL || param_ptr_ == NULL || group_ptr_ == NULL)
+    
+    if (log_ptr_ == NULL || param_ptr_ == NULL)
     {
         return MOTION_INTERNAL_FAULT;
     }
@@ -125,6 +122,35 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     if (!log_ptr_->initLogger("MotionControl"))
     {
         FST_ERROR("Lost communication with log server, init MotionControl abort.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    if(!param_ptr_->loadParam())
+    {
+        FST_ERROR("Failed to load MotionControl component parameters");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Log-level of MotionControl setted to: %d", param_ptr_->log_level_);
+    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+
+    if (param_ptr_->model_name_ == "PUMA")
+    {
+        group_ptr_ = new ArmGroup(log_ptr_);
+    }
+    else if (param_ptr_->model_name_ == "SCARA")
+    {
+        group_ptr_ = new ScalaGroup(log_ptr_);
+    }
+    else
+    {
+        FST_ERROR("Invalid model name: %s", param_ptr_->model_name_.c_str());
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    if (group_ptr_ == NULL)
+    {
+        FST_ERROR("Fail to create control group of %s", param_ptr_->model_name_.c_str());
         return MOTION_INTERNAL_FAULT;
     }
 
@@ -144,14 +170,6 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         return INVALID_PARAMETER;
     }
 
-    if(!param_ptr_->loadParam())
-    {
-        FST_ERROR("Failed to load MotionControl component parameters");
-        return MOTION_INTERNAL_FAULT;
-    }
-
-    FST_INFO("Log-level of MotionControl setted to: %d", param_ptr_->log_level_);
-    FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
 
     user_frame_id_ = 0;
     tool_frame_id_ = 0;

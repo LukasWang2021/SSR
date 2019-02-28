@@ -33,6 +33,7 @@ bool MotionControlParam::loadParam()
         if (!yaml_help_.getParam("realtime_task.cycle_time", rt_cycle_time_))           return false;
         if (!yaml_help_.getParam("non_realtime_task.cycle_time", non_rt_cycle_time_))   return false;
         if (!yaml_help_.getParam("log_level", log_level_))                              return false;
+        if (!yaml_help_.getParam("model_name", model_name_))                            return false;
         return true;
     }
     else
@@ -45,8 +46,8 @@ bool MotionControlParam::saveParam()
 {
     if (!yaml_help_.setParam("simulator.enable", enable_ros_publish_))              return false;
     if (!yaml_help_.setParam("simulator.cycle_per_publish", cycle_per_publish_))    return false;
-    if (!yaml_help_.setParam("realtime_task.cycle_time", rt_cycle_time_))           return false;
-    if (!yaml_help_.setParam("non_realtime_task.cycle_time", non_rt_cycle_time_))   return false;
+    // if (!yaml_help_.setParam("realtime_task.cycle_time", rt_cycle_time_))           return false;
+    // if (!yaml_help_.setParam("non_realtime_task.cycle_time", non_rt_cycle_time_))   return false;
     if (!yaml_help_.setParam("log_level", log_level_))                              return false;
 
     return yaml_help_.dumpParamFile(file_path_.c_str());

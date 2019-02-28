@@ -21,8 +21,8 @@ public:
     int     cycle_per_publish_;
     int     non_rt_cycle_time_;
     int     rt_cycle_time_;
-
     int     log_level_;
+    std::string model_name_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

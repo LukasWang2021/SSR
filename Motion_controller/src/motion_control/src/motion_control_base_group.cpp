@@ -1187,41 +1187,6 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoLine(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
-{
-    MotionTime start_time = 0;
-    pthread_mutex_lock(&cache_list_mutex_);
-
-    if (isLastMotionSmooth())
-    {
-        // 获取上一条轨迹的切出时间，作为本条指令的起始时间
-        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
-
-        if (last_traj_ptr->trajectory_cache.smooth_out_index != -1)
-        {
-            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
-            start_time = smooth_out_block.time_from_start + smooth_out_block.duration;
-        }
-
-        // 获取上一条轨迹切出点的位置、速度、加速度
-        JointState start_state;
-        TrajectoryCache &traj_cache = last_traj_ptr->trajectory_cache;
-        sampleBlockEnding(traj_cache.cache[traj_cache.smooth_out_index], start_state);
-        auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
-        pthread_mutex_unlock(&cache_list_mutex_);
-        trajectory.time_from_start = start_time;
-        FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, start_time);
-        return autoSmoothLine(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
-    }
-    else
-    {
-        pthread_mutex_unlock(&cache_list_mutex_);
-        trajectory.time_from_start = start_time;
-        FST_INFO("Last motion without smooth, start from stable");
-        return autoStableLine(start, target, path.path_cache, trajectory.trajectory_cache);
-    }
-}
-
 void BaseGroup::sampleBlockStart(const TrajectoryBlock &block, JointState &state)
 {
     const double *data;
@@ -1319,6 +1284,40 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
     return err;
 }
 
+ErrorCode BaseGroup::autoLine(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
+{
+    MotionTime start_time = 0;
+    pthread_mutex_lock(&cache_list_mutex_);
+
+    if (isLastMotionSmooth())
+    {
+        // 获取上一条轨迹的切出时间，作为本条指令的起始时间
+        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
+
+        if (last_traj_ptr->trajectory_cache.smooth_out_index != -1)
+        {
+            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
+            start_time = smooth_out_block.time_from_start + smooth_out_block.duration;
+        }
+
+        // 获取上一条轨迹切出点的位置、速度、加速度
+        JointState start_state;
+        TrajectoryCache &traj_cache = last_traj_ptr->trajectory_cache;
+        sampleBlockEnding(traj_cache.cache[traj_cache.smooth_out_index], start_state);
+        auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
+        FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, start_time);
+        return autoSmoothLine(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
+    }
+    else
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
+        FST_INFO("Last motion without smooth, start from stable");
+        return autoStableLine(start, target, path.path_cache, trajectory.trajectory_cache);
+    }
+}
 
 ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
 {
@@ -1468,16 +1467,115 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
     return SUCCESS;
 }
 
-
-// TODO
 ErrorCode BaseGroup::autoCircle(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
-    return SUCCESS;
+    MotionTime start_time = 0;
+    pthread_mutex_lock(&cache_list_mutex_);
+
+    if (isLastMotionSmooth())
+    {
+        // 获取上一条轨迹的切出时间，作为本条指令的起始时间
+        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
+
+        if (last_traj_ptr->trajectory_cache.smooth_out_index != -1)
+        {
+            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
+            start_time = smooth_out_block.time_from_start + smooth_out_block.duration;
+        }
+
+        // 获取上一条轨迹切出点的位置、速度、加速度
+        JointState start_state;
+        TrajectoryCache &traj_cache = last_traj_ptr->trajectory_cache;
+        sampleBlockEnding(traj_cache.cache[traj_cache.smooth_out_index], start_state);
+        auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
+        FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, start_time);
+        return autoSmoothCircle(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
+    }
+    else
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        trajectory.time_from_start = start_time;
+        FST_INFO("Last motion without smooth, start from stable");
+        return autoStableCircle(start, target, path.path_cache, trajectory.trajectory_cache);
+    }
 }
 
 
 ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
 {
+    char buffer[LOG_TEXT_SIZE];
+    clock_t start_clock, end_clock;
+    double  path_plan_time, path_ik_time, traj_plan_time;
+    PoseEuler start_pose;
+    kinematics_ptr_->doFK(start, start_pose);
+
+    FST_INFO("autoStableCircle: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    FST_INFO("  start joint = %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
+             start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, 
+             start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+    FST_INFO("  via pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
+             target.circle_target.pose1.point_.x_, target.circle_target.pose1.point_.y_, target.circle_target.pose1.point_.z_, 
+             target.circle_target.pose1.euler_.a_, target.circle_target.pose1.euler_.b_, target.circle_target.pose1.euler_.c_);
+    FST_INFO("  target pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
+             target.circle_target.pose2.point_.x_, target.circle_target.pose2.point_.y_, target.circle_target.pose2.point_.z_, 
+             target.circle_target.pose2.euler_.a_, target.circle_target.pose2.euler_.b_, target.circle_target.pose2.euler_.c_);
+
+    start_clock = clock();
+    ErrorCode err = planPathCircle(start_pose, target, path);
+    end_clock = clock();
+    path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err == SUCCESS)
+    {
+        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+        start_clock = clock();
+        err = computeInverseKinematicsOnPathCache(start, path);
+        end_clock = clock();
+        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+        if (err == SUCCESS)
+        {
+            path.target = target;
+            FST_INFO("Inverse kinematics success, plan trajectory ...");
+        }
+        else
+        {
+            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+            return err;
+        }
+    }
+    else
+    {
+        FST_ERROR("Path plan failed, code = 0x%llx", err);
+        return err;
+    }
+
+    JointState start_state;
+    start_state.angle = start;
+    memset(&start_state.omega, 0, sizeof(start_state.omega));
+    memset(&start_state.alpha, 0, sizeof(start_state.alpha));
+    start_clock = clock();
+    err = planTrajectory(path, start_state, vel_ratio_, acc_ratio_, trajectory);
+    end_clock = clock();
+    traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err == SUCCESS)
+    {
+        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
+                    trajectory.cache_length, trajectory.smooth_out_index);
+    }
+    else
+    {
+        FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
+        return err;
+    }
+
+    FST_INFO("autoStableCircle success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
 
@@ -1488,6 +1586,75 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state,
                                       PathCache &path,
                                       TrajectoryCache &trajectory)
 {
+    char buffer[LOG_TEXT_SIZE];
+    clock_t start_clock, end_clock;
+    double  path_plan_time, path_ik_time, traj_plan_time;
+    PoseEuler start_pose;
+    kinematics_ptr_->doFK(start_state.angle, start_pose);
+
+    FST_INFO("autoSmoothCircle: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    FST_INFO("  start joint = %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start omega = %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start alpha = %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start pose  = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
+             start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, 
+             start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+    FST_INFO("  via pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
+             target.circle_target.pose1.point_.x_, target.circle_target.pose1.point_.y_, target.circle_target.pose1.point_.z_, 
+             target.circle_target.pose1.euler_.a_, target.circle_target.pose1.euler_.b_, target.circle_target.pose1.euler_.c_);
+    FST_INFO("  target pose = %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
+             target.circle_target.pose2.point_.x_, target.circle_target.pose2.point_.y_, target.circle_target.pose2.point_.z_, 
+             target.circle_target.pose2.euler_.a_, target.circle_target.pose2.euler_.b_, target.circle_target.pose2.euler_.c_);
+
+    start_clock = clock();
+    ErrorCode err = planPathSmoothCircle(start_pose, via, target, path);
+    end_clock = clock();
+    path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err == SUCCESS)
+    {
+        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+        start_clock = clock();
+        err = computeInverseKinematicsOnPathCache(start_state.angle, path);
+        end_clock = clock();
+        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+        if (err == SUCCESS)
+        {
+            path.target = target;
+            FST_INFO("Inverse kinematics success, plan trajectory ...");
+        }
+        else
+        {
+            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+            return err;
+        }
+    }
+    else
+    {
+        FST_ERROR("Path plan failed, code = 0x%llx", err);
+        return err;
+    }
+
+    start_clock = clock();
+    err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
+    end_clock = clock();
+    traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err == SUCCESS)
+    {
+        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
+                    trajectory.cache_length, trajectory.smooth_out_index);
+    }
+    else
+    {
+        FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
+        return err;
+    }
+
+    FST_INFO("autoSmoothCircle success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
 

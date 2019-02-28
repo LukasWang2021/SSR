@@ -140,7 +140,7 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     }
     else if (param_ptr_->model_name_ == "SCARA")
     {
-        group_ptr_ = new ScalaGroup(log_ptr_);
+        group_ptr_ = new ScaraGroup(log_ptr_);
     }
     else
     {

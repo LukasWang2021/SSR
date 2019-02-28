@@ -1,4 +1,4 @@
-model: "SCARA"
+model_name: "SCARA"
 #model: "PUMA"
 realtime_task:
     cycle_time: 2       # ms

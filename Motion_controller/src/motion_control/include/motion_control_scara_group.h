@@ -33,5 +33,6 @@ class ScaraGroup : public BaseGroup
     inline char* printDBLine(const double *data, char *buffer, size_t length);
 };
 
+}
 
 #endif

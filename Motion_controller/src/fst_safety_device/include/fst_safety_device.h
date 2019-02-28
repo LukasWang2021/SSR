@@ -44,7 +44,7 @@ typedef struct _InputByte3
 	char lmt_stop:1;
 	char ext_estop:1;
 	char safetydoor_stop:1;
-    char cabinet_f_estop:1;
+    char cabinet_estop:1;
 	char deadman_normal:1;
 	char deadman_panic:1;
     char dual_faulty:1;
@@ -240,6 +240,8 @@ public:
 	//  Description: Stop from the safety door.
 	//  -----------------------------------------------------------------------
     char getDISafetyDoorStop(void);
+
+	char getDICabinetStop(void);
 
 	//  -----------------------------------------------------------------------
 	//  Function:		getDIDeadmanNormal

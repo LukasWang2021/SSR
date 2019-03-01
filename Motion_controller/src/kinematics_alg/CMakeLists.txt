@@ -54,3 +54,11 @@ target_link_libraries(kinematics_alg
 install(TARGETS kinematics_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
+
+install(FILES config/arm_dh.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
+install(FILES config/toll_dh.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)

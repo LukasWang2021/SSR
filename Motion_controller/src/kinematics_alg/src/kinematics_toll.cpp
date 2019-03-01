@@ -48,28 +48,28 @@ KinematicsToll::KinematicsToll(DH& base_dh, DH arm_dh[4], bool is_left):
 
 KinematicsToll::KinematicsToll(std::string file_path, bool is_left)
 {
-    if (param_.loadParamFile(file_path + "arm_dh.yaml"))
+    if (param_.loadParamFile(file_path + "toll_dh.yaml"))
     {
         if (param_.getParam("base_dh/d", base_dh_.d) &&
             param_.getParam("base_dh/a", base_dh_.a) &&
             param_.getParam("base_dh/alpha", base_dh_.alpha) &&
             param_.getParam("base_dh/offset", base_dh_.offset) &&
-            param_.getParam("arm_dh/axis-0/d", arm_dh_[0].d) &&
-            param_.getParam("arm_dh/axis-0/a", arm_dh_[0].a) &&
-            param_.getParam("arm_dh/axis-0/alpha", arm_dh_[0].alpha) &&
-            param_.getParam("arm_dh/axis-0/offset", arm_dh_[0].offset) &&
-            param_.getParam("arm_dh/axis-1/d", arm_dh_[1].d) &&
-            param_.getParam("arm_dh/axis-1/a", arm_dh_[1].a) &&
-            param_.getParam("arm_dh/axis-1/alpha", arm_dh_[1].alpha) &&
-            param_.getParam("arm_dh/axis-1/offset", arm_dh_[1].offset) &&
-            param_.getParam("arm_dh/axis-2/d", arm_dh_[2].d) &&
-            param_.getParam("arm_dh/axis-2/a", arm_dh_[2].a) &&
-            param_.getParam("arm_dh/axis-2/alpha", arm_dh_[2].alpha) &&
-            param_.getParam("arm_dh/axis-2/offset", arm_dh_[2].offset) &&
-            param_.getParam("arm_dh/axis-3/d", arm_dh_[3].d) &&
-            param_.getParam("arm_dh/axis-3/a", arm_dh_[3].a) &&
-            param_.getParam("arm_dh/axis-3/alpha", arm_dh_[3].alpha) &&
-            param_.getParam("arm_dh/axis-3/offset", arm_dh_[3].offset))
+            param_.getParam("toll_dh/axis-0/d", arm_dh_[0].d) &&
+            param_.getParam("toll_dh/axis-0/a", arm_dh_[0].a) &&
+            param_.getParam("toll_dh/axis-0/alpha", arm_dh_[0].alpha) &&
+            param_.getParam("toll_dh/axis-0/offset", arm_dh_[0].offset) &&
+            param_.getParam("toll_dh/axis-1/d", arm_dh_[1].d) &&
+            param_.getParam("toll_dh/axis-1/a", arm_dh_[1].a) &&
+            param_.getParam("toll_dh/axis-1/alpha", arm_dh_[1].alpha) &&
+            param_.getParam("toll_dh/axis-1/offset", arm_dh_[1].offset) &&
+            param_.getParam("toll_dh/axis-2/d", arm_dh_[2].d) &&
+            param_.getParam("toll_dh/axis-2/a", arm_dh_[2].a) &&
+            param_.getParam("toll_dh/axis-2/alpha", arm_dh_[2].alpha) &&
+            param_.getParam("toll_dh/axis-2/offset", arm_dh_[2].offset) &&
+            param_.getParam("toll_dh/axis-3/d", arm_dh_[3].d) &&
+            param_.getParam("toll_dh/axis-3/a", arm_dh_[3].a) &&
+            param_.getParam("toll_dh/axis-3/alpha", arm_dh_[3].alpha) &&
+            param_.getParam("toll_dh/axis-3/offset", arm_dh_[3].offset))
         {
             TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);
             matrix_base_ = matrix_base;

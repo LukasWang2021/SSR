@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 #    tp_comm
 )
 
-#set(MAIN_VERSION 1) #uncommemt if release version
+#set(controller_MAIN_VERSION 1) #uncommemt if release version
 set(VERSION_MAJOR 3)
 set(VERSION_MINOR 1)
 set(VERSION_PATCH 0)

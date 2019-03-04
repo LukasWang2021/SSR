@@ -74,7 +74,8 @@ static int get_num_token(char * src, char * dst)
 	Output: 		NULL
 	Return: 		io value
 *************************************************/ 
-eval_value forgesight_get_io_status(char *name)
+eval_value forgesight_get_io_status(
+			struct thread_control_block* objThreadCntrolBlock, char *name)
 {	
 	bool bRet = false ;
 	eval_value value;
@@ -152,6 +153,11 @@ eval_value forgesight_get_io_status(char *name)
 	{
 	//	bRet = g_objRegManagerInterface->getUo(iIOIdx, iValue);
 	}
+	
+	if(bRet != SUCCESS)
+	{
+		serror(objThreadCntrolBlock, 4) ; 
+	}
 	value.setFloatValue(iValue);
 	return value;
 }
@@ -164,7 +170,8 @@ eval_value forgesight_get_io_status(char *name)
 	Output: 		NULL
 	Return: 		0 - success , -1 - failed
 *************************************************/ 
-int forgesight_set_io_status(char *name, eval_value& valueStart)
+int forgesight_set_io_status(
+			struct thread_control_block* objThreadCntrolBlock,char *name, eval_value& valueStart)
 {
 	bool bRet = false ;
 	int iValue;
@@ -240,6 +247,11 @@ int forgesight_set_io_status(char *name, eval_value& valueStart)
 	else if(!strcmp(io_name, TXT_UO))
 	{
 	//	bRet = g_objRegManagerInterface->setUo(iIOIdx, (int)valueStart.getFloatValue());
+	}
+	
+	if(bRet != SUCCESS)
+	{
+		serror(objThreadCntrolBlock, 4) ; 
 	}
 	return 0;
 

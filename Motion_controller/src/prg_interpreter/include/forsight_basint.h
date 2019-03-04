@@ -217,6 +217,7 @@ int exec_call(struct thread_control_block * objThreadCntrolBlock, bool isMacro =
 
 void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname, eval_value value);
 eval_value find_var(struct thread_control_block * objThreadCntrolBlock, char *s, int raise_unkown_error = 0);
+int erase_var(struct thread_control_block * objThreadCntrolBlock, char *vname);
 
 void find_eol(struct thread_control_block * objThreadCntrolBlock);
 int  jump_prog_from_line(struct thread_control_block * objThreadCntrolBlock, int iNum);

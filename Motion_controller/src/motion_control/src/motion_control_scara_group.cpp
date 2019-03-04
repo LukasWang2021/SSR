@@ -401,6 +401,23 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     manual_teach_.setGlobalVelRatio(vel_ratio_);
     manual_teach_.setGlobalAccRatio(acc_ratio_);
 
+    double omega[JOINT_OF_SCARA] = {0};
+    param.reset();
+
+    if (!param.loadParamFile(path + "scara_group.yaml"))
+    {
+        FST_ERROR("Fail to load config file of scara group, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
+    if (!param.getParam("joint/omega", omega, JOINT_OF_SCARA))
+    {
+        FST_ERROR("Fail to load max velocity of each axis, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+    
+    FST_INFO("Max velocity of each axis: %s", printDBLine(omega, buffer, LOG_TEXT_SIZE));
+
     // 初始化路径和轨迹规划
     param.reset();
     path = COMPONENT_PARAM_FILE_DIR;
@@ -435,8 +452,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
-    initComplexAxisGroupModel();
-    initSegmentAlgParam(&seg_param);
+    initSegmentAlgParam(&seg_param, JOINT_OF_SCARA, omega);
 
     return SUCCESS;
 }

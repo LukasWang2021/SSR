@@ -148,6 +148,14 @@ install(FILES config/base_group.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
+install(FILES config/arm_group.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
+install(FILES config/scara_group.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
 install(FILES config/hard_constraint.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )

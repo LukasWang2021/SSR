@@ -2477,12 +2477,14 @@ void BaseGroup::doStateMachine(void)
     {
         FST_ERROR("Group-state is STANDBY but servo-state is diabale, switch group-state to UNKNOW");
         group_state_ = UNKNOW;
+        clear_request_ = true;
     }
 
     if (servo_state == SERVO_DISABLE && group_state_ == AUTO)
     {
         FST_ERROR("Group-state is AUTO but servo-state is diabale, switch group-state to UNKNOW");
         group_state_ = UNKNOW;
+        clear_request_ = true;
     }
 }
 

@@ -1327,3 +1327,50 @@ void TpComm::handleRequest0x00012404(int recv_bytes)
     handleRequestPackage(0x00012404, (void*)request_data_ptr, (void*)response_data_ptr, 
         recv_bytes,RequestMessageType_Int32List_Double_fields, -1);
 }
+
+//"/rpc/motion_control/getPostureByJoint"
+void TpComm::handleRequest0x0000EC64(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32_DoubleList* request_data_ptr = new RequestMessageType_Int32_DoubleList;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x0000EC64, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32_DoubleList_fields, -1);
+}
+//"/rpc/motion_control/getPostureByCart"
+void TpComm::handleRequest0x00016994(int recv_bytes)
+{
+   // create object for request and response package
+    RequestMessageType_Int32List_DoubleList* request_data_ptr = new RequestMessageType_Int32List_DoubleList;
+    if(request_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    ResponseMessageType_Uint64_Int32List* response_data_ptr = new ResponseMessageType_Uint64_Int32List;
+    if(response_data_ptr == NULL)
+    {
+        ErrorMonitor::instance()->add(TP_COMM_MEMORY_OPERATION_FAILED);
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    
+    handleRequestPackage(0x00016994, (void*)request_data_ptr, (void*)response_data_ptr, 
+        recv_bytes, RequestMessageType_Int32List_DoubleList_fields, -1);
+}

@@ -306,8 +306,6 @@ private:
     void handleRequest0x00012404(int recv_bytes);
     /********rpc/motion_control/getPostureByJoint, RequestMessageType_Int32_DoubleList(DoubleList_count=9)**********/
     void handleRequest0x0000EC64(int recv_bytes);
-    /********rpc/motion_control/getPostureByCart, RequestMessageType_Int32List_DoubleList(Int32List_count=3, DoubleList_count=9)**********/
-    void handleRequest0x00016994(int recv_bytes);
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);

@@ -383,11 +383,6 @@ target_link_libraries(global_acc_ratio_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRAR
 install(TARGETS global_acc_ratio_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
 
 ######### for test motion control #########
-add_executable(get_postrue_by_cart ${SRC_LIST} src/test_motion_control/get_postrue_by_cart.cpp)
-target_link_libraries(get_postrue_by_cart ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
-install(TARGETS get_postrue_by_cart RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
-
-######### for test motion control #########
 add_executable(get_postrue_by_joint ${SRC_LIST} src/test_motion_control/get_postrue_by_joint.cpp)
 target_link_libraries(get_postrue_by_joint ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_postrue_by_joint RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)

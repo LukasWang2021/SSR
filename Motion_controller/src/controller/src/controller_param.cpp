@@ -21,7 +21,6 @@ ControllerParam::ControllerParam():
     max_reg_publish_number_(0),
     max_io_publish_number_(0),
     max_continuous_manual_move_timeout_(0),
-    is_simmulation_(false),
     max_unknown_user_op_mode_timeout_(0),
     max_limited_global_vel_ratio_(0),
     max_limited_global_acc_ratio_(0)
@@ -51,7 +50,6 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("max_reg_publish_number", max_reg_publish_number_)
         || !yaml_help_.getParam("max_io_publish_number", max_io_publish_number_)
         || !yaml_help_.getParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_)
-        || !yaml_help_.getParam("is_simmulation", is_simmulation_)
         || !yaml_help_.getParam("max_unknown_user_op_mode_timeout", max_unknown_user_op_mode_timeout_)
         || !yaml_help_.getParam("max_limited_global_vel_ratio", max_limited_global_vel_ratio_)
         || !yaml_help_.getParam("max_limited_global_acc_ratio", max_limited_global_acc_ratio_))
@@ -80,7 +78,6 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("max_reg_publish_number", max_reg_publish_number_)
         || !yaml_help_.setParam("max_io_publish_number", max_io_publish_number_)
         || !yaml_help_.setParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_)
-        || !yaml_help_.setParam("is_simmulation", is_simmulation_)
         || !yaml_help_.setParam("max_unknown_user_op_mode_timeout", max_unknown_user_op_mode_timeout_)
         || !yaml_help_.setParam("max_limited_global_vel_ratio", max_limited_global_vel_ratio_)
         || !yaml_help_.setParam("max_limited_global_acc_ratio", max_limited_global_acc_ratio_)

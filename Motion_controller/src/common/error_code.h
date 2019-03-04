@@ -191,13 +191,8 @@ typedef unsigned long long int ErrorCode;
 #define IO_DEVICE_UNFOUND (unsigned long long int)0x0001000600AC03EB   /*IO devices are unfound when machine is running.*/
 #define IO_VERIFY_FALSE (unsigned long long int)0x0000000200AC03EC   /*io data is verified to be false.*/
 #define IO_INIT_FAIL (unsigned long long int)0x0011000600AC03F3   /*fail to initialize the IO module.*/
-#define IO_INVALID_PARAM_ID (unsigned long long int)0x0000000200AC03F4   /*invalid parameter id as function argument.*/
-#define IO_INVALID_PORT_SEQ (unsigned long long int)0x0000000200AC03F5   /*invalid port sequence number as function argument.*/
-#define IO_INVALID_DEV_INDEX (unsigned long long int)0x0000000200AC03F6   /*invalid index to get the device info as function argument.*/
-#define IO_INVALID_PORT_LEN (unsigned long long int)0x0000000200AC03F7   /*invalid port number of device as function argument.*/
-#define IO_THREAD_INIT_STATUS (unsigned long long int)0x0000000200AC03F8   /*io thread is in initial status and not ready.*/
-#define INVALID_PATH_FROM_TP (unsigned long long int)0x0000000200AC03F9   /*invalid path*/
-#define PARSE_IO_PATH_FAILED (unsigned long long int)0x0000000200AC03FA   /*IO not exist*/
+#define IO_INVALID_PARAM_ID (unsigned long long int)0x0000000600AC03F4   /*invalid parameter id as function argument.*/
+#define IO_INVALID_PORT_SEQ (unsigned long long int)0x0000000600AC03F5   /*invalid port sequence number as function argument.*/
 #define IO_MAPPING_LOG (unsigned long long int)0x0001000100AD0000   /*IoMapping log{0}*/
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
 #define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/

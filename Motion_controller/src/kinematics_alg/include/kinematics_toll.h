@@ -7,7 +7,7 @@
 #include "trans_matrix.h"
 #include "kinematics.h"
 #include "parameter_manager/parameter_manager_param_group.h"
-
+#include <string>
 
 namespace basic_alg
 {
@@ -20,6 +20,9 @@ public:
     ~KinematicsToll();
 
     virtual bool isValid();
+
+    virtual bool getDH(DH& base_dh, DH arm_dh[6]);
+    virtual bool setDH(DH& base_dh, DH arm_dh[6]);
 
     virtual void doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_joint_index = 0, size_t to_joint_index = 4);
     virtual void doFK(const Joint& joint, PoseQuaternion& pose_quaternion, size_t from_joint_index = 0, size_t to_joint_index = 4);
@@ -49,12 +52,13 @@ private:
     inline bool isPostureValid(const Posture& posture);
 
     DH base_dh_;
-    DH arm_dh_[4];
+    DH arm_dh_[6];
     TransMatrix matrix_base_;
     TransMatrix matrix_base_inv_;
     Posture posture_; // 1,1,1
     fst_parameter::ParamGroup param_;
     bool is_valid_;
+    std::string file_path_;
 };
 
 

@@ -43,7 +43,8 @@ KinematicsRTM::KinematicsRTM(DH& base_dh, DH arm_dh[6], bool is_flip):
 
 KinematicsRTM::KinematicsRTM(std::string file_path, bool is_flip)
 {
-    if (param_.loadParamFile(file_path + "arm_dh.yaml"))
+    file_path_ = file_path + "arm_dh.yaml";
+    if (param_.loadParamFile(file_path_))
     {
         if (param_.getParam("base_dh/d", base_dh_.d) &&
             param_.getParam("base_dh/a", base_dh_.a) &&
@@ -106,6 +107,81 @@ KinematicsRTM::~KinematicsRTM()
 bool KinematicsRTM::isValid()
 {
     return is_valid_;
+}
+
+bool KinematicsRTM::getDH(DH& base_dh, DH arm_dh[6])
+{
+    base_dh.d = base_dh_.d;
+    base_dh.a = base_dh_.a;
+    base_dh.alpha = base_dh_.alpha;
+    base_dh.offset = base_dh_.offset;
+
+    for(size_t i = 0; i < 6; ++i)
+    {
+        arm_dh[i].d = arm_dh_[i].d;
+        arm_dh[i].a = arm_dh_[i].a;
+        arm_dh[i].alpha = arm_dh_[i].alpha;
+        arm_dh[i].offset = arm_dh_[i].offset;
+    }
+    return true;
+}
+
+bool KinematicsRTM::setDH(DH& base_dh, DH arm_dh[6])
+{
+    if (param_.setParam("base_dh/d", base_dh.d) &&
+        param_.setParam("base_dh/a", base_dh.a) &&
+        param_.setParam("base_dh/alpha", base_dh.alpha) &&
+        param_.setParam("base_dh/offset", base_dh.offset) &&
+        param_.setParam("arm_dh/axis-0/d", arm_dh[0].d) &&
+        param_.setParam("arm_dh/axis-0/a", arm_dh[0].a) &&
+        param_.setParam("arm_dh/axis-0/alpha", arm_dh[0].alpha) &&
+        param_.setParam("arm_dh/axis-0/offset", arm_dh[0].offset) &&
+        param_.setParam("arm_dh/axis-1/d", arm_dh[1].d) &&
+        param_.setParam("arm_dh/axis-1/a", arm_dh[1].a) &&
+        param_.setParam("arm_dh/axis-1/alpha", arm_dh[1].alpha) &&
+        param_.setParam("arm_dh/axis-1/offset", arm_dh[1].offset) &&
+        param_.setParam("arm_dh/axis-2/d", arm_dh[2].d) &&
+        param_.setParam("arm_dh/axis-2/a", arm_dh[2].a) &&
+        param_.setParam("arm_dh/axis-2/alpha", arm_dh[2].alpha) &&
+        param_.setParam("arm_dh/axis-2/offset", arm_dh[2].offset) &&
+        param_.setParam("arm_dh/axis-3/d", arm_dh[3].d) &&
+        param_.setParam("arm_dh/axis-3/a", arm_dh[3].a) &&
+        param_.setParam("arm_dh/axis-3/alpha", arm_dh[3].alpha) &&
+        param_.setParam("arm_dh/axis-3/offset", arm_dh[3].offset) &&
+        param_.setParam("arm_dh/axis-4/d", arm_dh[4].d) &&
+        param_.setParam("arm_dh/axis-4/a", arm_dh[4].a) &&
+        param_.setParam("arm_dh/axis-4/alpha", arm_dh[4].alpha) &&
+        param_.setParam("arm_dh/axis-4/offset", arm_dh[4].offset) &&
+        param_.setParam("arm_dh/axis-5/d", arm_dh[5].d) &&
+        param_.setParam("arm_dh/axis-5/a", arm_dh[5].a) &&
+        param_.setParam("arm_dh/axis-5/alpha", arm_dh[5].alpha) &&
+        param_.setParam("arm_dh/axis-5/offset", arm_dh[5].offset))
+    {
+        if(!param_.dumpParamFile(file_path_))
+        {
+            return false;
+        }        
+        base_dh_.d = base_dh.d;
+        base_dh_.a = base_dh.a;
+        base_dh_.alpha = base_dh.alpha;
+        base_dh_.offset = base_dh.offset;
+        for(size_t i = 0; i < 6; ++i)
+        {
+            arm_dh_[i].d = arm_dh[i].d;
+            arm_dh_[i].a = arm_dh[i].a;
+            arm_dh_[i].alpha = arm_dh[i].alpha;
+            arm_dh_[i].offset = arm_dh[i].offset;
+        }        
+    
+        TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);
+        matrix_base_ = matrix_base;
+        matrix_base_.inverse(matrix_base_inv_);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void KinematicsRTM::doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_joint_index, size_t to_joint_index)

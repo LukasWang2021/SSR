@@ -27,6 +27,9 @@ public:
 
     virtual bool isValid() = 0;
 
+    virtual bool getDH(DH& base_dh, DH arm_dh[6]) = 0;
+    virtual bool setDH(DH& base_dh, DH arm_dh[6]) = 0;
+
     virtual void doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_joint_index = 0, size_t to_joint_index = 6) = 0;
     virtual void doFK(const Joint& joint, PoseQuaternion& pose_quaternion, size_t from_joint_index = 0, size_t to_joint_index = 6) = 0;
     virtual void doFK(const Joint& joint, TransMatrix& trans_matrix, size_t from_joint_index = 0, size_t to_joint_index = 6) = 0;

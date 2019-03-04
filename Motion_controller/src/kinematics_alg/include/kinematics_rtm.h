@@ -7,6 +7,7 @@
 #include "trans_matrix.h"
 #include "kinematics.h"
 #include "parameter_manager/parameter_manager_param_group.h"
+#include <string>
 
 namespace basic_alg
 {
@@ -19,6 +20,9 @@ public:
     ~KinematicsRTM();
 
     virtual bool isValid();
+
+    virtual bool getDH(DH& base_dh, DH arm_dh[6]);
+    virtual bool setDH(DH& base_dh, DH arm_dh[6]);
 
     virtual void doFK(const Joint& joint, PoseEuler& pose_euler, size_t from_joint_index = 0, size_t to_joint_index = 6);
     virtual void doFK(const Joint& joint, PoseQuaternion& pose_quaternion, size_t from_joint_index = 0, size_t to_joint_index = 6);
@@ -54,6 +58,7 @@ private:
     int flip_;
     fst_parameter::ParamGroup param_;
     bool is_valid_;
+    std::string file_path_;
 };
 
 

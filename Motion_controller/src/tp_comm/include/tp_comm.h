@@ -304,6 +304,10 @@ private:
     void handleRequest0x00016D20(int recv_bytes);
     /********rpc/motion_control/axis_group/setSingleZeroPointOffset, RequestMessageType_Int32List_Double(count=2)**********/
     void handleRequest0x00012404(int recv_bytes);
+    /********rpc/motion_control/getPostureByJoint, RequestMessageType_Int32_DoubleList(DoubleList_count=9)**********/
+    void handleRequest0x0000EC64(int recv_bytes);
+    /********rpc/motion_control/getPostureByCart, RequestMessageType_Int32List_DoubleList(Int32List_count=3, DoubleList_count=9)**********/
+    void handleRequest0x00016994(int recv_bytes);
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);
@@ -540,6 +544,11 @@ private:
     void handleRequest0x00001DC4(int recv_bytes);
     /********rpc/modbus/getClientSummaryStartInfoList, RequestMessageType_Void**********/
     void handleRequest0x00005564(int recv_bytes);
+
+    /********rpc/param_manager/getParamInfoList, RequestMessageType_Int32**********/
+    void handleRequest0x0000F0B4(int recv_bytes);
+    /********rpc/param_manager/setParamInfo, RequestMessageType_Int32_ParamInfo**********/
+    void handleRequest0x0001393F(int recv_bytes);
 
 /* request end */
 
@@ -835,6 +844,10 @@ private:
     void handleResponse0x0000A420(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getCartesianManualStep, ResponseMessageType_Uint64_Double**********/
     void handleResponse0x0000EAC0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+   /********rpc/motion_control/getPostureByJoint, ResponseMessageType_Uint64_Int32List(count=4)**********/
+    void handleResponse0x0000EC64(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/getPostureByCart, ResponseMessageType_Uint64_Int32List(count=4)**********/
+    void handleResponse0x00016994(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/file_manager/readFile, ResponseMessageType_Uint64_Bytes**********/
     void handleResponse0x0000A545(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
@@ -873,6 +886,7 @@ private:
     void handlePublishElement0x00012A4F(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/motion_control/global_acc_ratio, MessageType_Double**********/
     void handlePublishElement0x0001517F(Comm_Publish& package, int element_index, TpPublishElement& list_element);
+ 
 	/********publish/interpreter/program_status, MessageType_String_Int32**********/
     void handlePublishElement0x00001AF3(Comm_Publish& package, int element_index, TpPublishElement& list_element);
 	/********publish/interpreter/tp_program_status, MessageType_StringList(count=2)**********/
@@ -1006,6 +1020,11 @@ private:
     void handleResponse0x00001DC4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/modbus/getClientSummaryStartInfoList, ResponseMessageType_Uint64_ModbusClientSummaryStartInfoList**********/
     void handleResponse0x00005564(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/param_manager/getParamInfoList, ResponseMessageType_Uint64_ParamInfoList(count = 256)**********/
+    void handleResponse0x0000F0B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/param_manager/setParamInfo, ResponseMessageType_Uint64**********/
+    void handleResponse0x0001393F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /* response end */
     fst_ip::LocalIP local_ip_;

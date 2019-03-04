@@ -383,6 +383,16 @@ target_link_libraries(global_acc_ratio_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRAR
 install(TARGETS global_acc_ratio_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
 
 ######### for test motion control #########
+add_executable(get_postrue_by_cart ${SRC_LIST} src/test_motion_control/get_postrue_by_cart.cpp)
+target_link_libraries(get_postrue_by_cart ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_postrue_by_cart RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
+
+######### for test motion control #########
+add_executable(get_postrue_by_joint ${SRC_LIST} src/test_motion_control/get_postrue_by_joint.cpp)
+target_link_libraries(get_postrue_by_joint ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_postrue_by_joint RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)
+
+######### for test motion control #########
 add_executable(hard_limit_set ${SRC_LIST} src/test_motion_control/axis_group/hard_limit_set.cpp)
 target_link_libraries(hard_limit_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS hard_limit_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
@@ -954,8 +964,17 @@ add_executable(get_connected_id_list ${SRC_LIST} src/test_modbus/client/get_conn
 target_link_libraries(get_connected_id_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_connected_id_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/client)
 
-
 ####### for test modbus  #########
 add_executable(get_summary_start_info_list ${SRC_LIST} src/test_modbus/client/get_summary_start_info_list.cpp)
 target_link_libraries(get_summary_start_info_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS get_summary_start_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/modbus/client)
+
+####### for test modbus  #########
+add_executable(get_param_info_list ${SRC_LIST} src/test_param_manager/get_param_info_list.cpp)
+target_link_libraries(get_param_info_list ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_param_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/test_param_manager)
+
+####### for test modbus  #########
+add_executable(set_param_info ${SRC_LIST} src/test_param_manager/set_param_info.cpp)
+target_link_libraries(set_param_info ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_param_info RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/test_param_manager)

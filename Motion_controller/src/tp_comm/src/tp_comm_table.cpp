@@ -139,6 +139,8 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/motion_control/axis_group/setOrientationManualStep",	0x00002940,	"RequestMessageType.Int32_Double",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00002940,	&TpComm::handleResponse0x00002940,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/motion_control/axis_group/getOrientationManualStep",	0x00016D20,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_Double",	&TpComm::handleRequest0x00016D20,	&TpComm::handleResponse0x00016D20,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/motion_control/axis_group/setSingleZeroPointOffset",	0x00012404,	"RequestMessageType.Int32List_Double(count=2)",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00012404,	&TpComm::handleResponse0x00012404,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+	rpc_service =	{	"/rpc/motion_control/getPostureByJoint",	0x0000EC64,	"RequestMessageType.Int32_DoubleList(DoubleList_count=9)",	"ResponseMessageType.Uint64_Int32List(count=4)",	&TpComm::handleRequest0x0000EC64,	&TpComm::handleResponse0x0000EC64,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/motion_control/getPostureByCart",	0x00016994,	"RequestMessageType.Int32List_DoubleList(Int32List_count=3, DoubleList_count=9)",	"ResponseMessageType.Uint64_Int32List(count=4)",	&TpComm::handleRequest0x00016994,	&TpComm::handleResponse0x00016994,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
 
 	rpc_service =	{	"/rpc/interpreter/start",	0x00006154,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00006154,	&TpComm::handleResponse0x00006154,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/interpreter/debug",	0x000102D7,	"RequestMessageType.String",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x000102D7,	&TpComm::handleResponse0x000102D7,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);
@@ -214,6 +216,9 @@ void TpComm::initRpcTable()
 	rpc_service =	{	"/rpc/modbus/writeHoldingRegs",	0x00008C43,	"RequestMessageType.Int32_ModbusRegInfo",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00008C43,	&TpComm::handleResponse0x00008C43,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/readHoldingRegs",	0x00003583,	"RequestMessageType.Int32_ModbusFunctionAddrInfo",	"ResponseMessageType.Uint64_ModbusRegInfo",	&TpComm::handleRequest0x00003583,	&TpComm::handleResponse0x00003583,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
 	rpc_service =	{	"/rpc/modbus/readInputRegs",	0x000072C3,	"RequestMessageType.Int32_ModbusFunctionAddrInfo",	"ResponseMessageType.Uint64_ModbusRegInfo",	&TpComm::handleRequest0x000072C3,	&TpComm::handleResponse0x000072C3,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);	
+
+	rpc_service =	{	"/rpc/param_manager/getParamInfoList",	0x0000F0B4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_ParamInfoList(count = 256)",	&TpComm::handleRequest0x0000F0B4,	&TpComm::handleResponse0x0000F0B4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/param_manager/setParamInfo",	0x0001393F,	"RequestMessageType.Int32_ParamInfo",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0001393F,	&TpComm::handleResponse0x0001393F,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
 }
 
 void TpComm::initPublishElementTable()

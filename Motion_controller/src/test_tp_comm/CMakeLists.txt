@@ -973,3 +973,43 @@ install(TARGETS get_param_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DES
 add_executable(set_param_info ${SRC_LIST} src/test_param_manager/set_param_info.cpp)
 target_link_libraries(set_param_info ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS set_param_info RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/test_param_manager)
+
+####### for test modbus  #########
+add_executable(get_di_by_bit ${SRC_LIST} src/test_io_manager/get_di.cpp)
+target_link_libraries(get_di_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_di_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(get_do_by_bit ${SRC_LIST} src/test_io_manager/get_do.cpp)
+target_link_libraries(get_do_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS get_do_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(set_di_by_bit ${SRC_LIST} src/test_io_manager/set_di.cpp)
+target_link_libraries(set_di_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_di_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(set_do_by_bit ${SRC_LIST} src/test_io_manager/set_do.cpp)
+target_link_libraries(set_do_by_bit ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS set_do_by_bit RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/io_manager)
+
+####### for test modbus  #########
+add_executable(move_finish ${SRC_LIST} src/test_system_manager/move_finish.cpp)
+target_link_libraries(move_finish ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS move_finish RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)
+
+####### for test modbus  #########
+add_executable(move_install ${SRC_LIST} src/test_system_manager/move_install.cpp)
+target_link_libraries(move_install ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS move_install RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)
+
+####### for test modbus  #########
+add_executable(restore_finish ${SRC_LIST} src/test_system_manager/restore_finish.cpp)
+target_link_libraries(restore_finish ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_finish RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)
+
+####### for test modbus  #########
+add_executable(restore_install ${SRC_LIST} src/test_system_manager/restore_install.cpp)
+target_link_libraries(restore_install ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_install RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/system_manager)

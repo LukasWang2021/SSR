@@ -218,7 +218,18 @@ void TpComm::initRpcTable()
 
 	rpc_service =	{	"/rpc/param_manager/getParamInfoList",	0x0000F0B4,	"RequestMessageType.Int32",	"ResponseMessageType.Uint64_ParamInfoList(count = 256)",	&TpComm::handleRequest0x0000F0B4,	&TpComm::handleResponse0x0000F0B4,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
 	rpc_service =	{	"/rpc/param_manager/setParamInfo",	0x0001393F,	"RequestMessageType.Int32_ParamInfo",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0001393F,	&TpComm::handleResponse0x0001393F,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
+
+	rpc_service =	{	"/rpc/io_manager/getDIByBit",	0x0000BFE4,	"RequestMessageType.Int32List(count = 3) ",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x0000BFE4,	&TpComm::handleResponse0x0000BFE4,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/io_manager/setDIByBit",	0x00018684,	"RequestMessageType.Int32List(count = 3) ",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00018684,	&TpComm::handleResponse0x00018684,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/io_manager/getDOByBit",	0x0000B4C4,	"RequestMessageType.Int32List(count = 3) ",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x0000B4C4,	&TpComm::handleResponse0x0000B4C4,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/io_manager/setDOByBit",	0x00017B64,	"RequestMessageType.Int32List(count = 3) ",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00017B64,	&TpComm::handleResponse0x00017B64,	Comm_Authority_TP_SIMMULATOR,	};	 rpc_table_.push_back(rpc_service);		
+
+	rpc_service =	{	"/rpc/system_manager/moveInstall",	0x00015D3C,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x00015D3C,	&TpComm::handleResponse0x00015D3C,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/system_manager/moveFinish",	0x00016008,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00016008,	&TpComm::handleResponse0x00016008,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/system_manager/restoreInstall",	0x0000DCBC,	"RequestMessageType.Void",	"ResponseMessageType.Uint64",	&TpComm::handleRequest0x0000DCBC,	&TpComm::handleResponse0x0000DCBC,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
+	rpc_service =	{	"/rpc/system_manager/restoreFininsh",	0x00011CE8,	"RequestMessageType.Void",	"ResponseMessageType.Uint64_Int32",	&TpComm::handleRequest0x00011CE8,	&TpComm::handleResponse0x00011CE8,	Comm_Authority_TP,	};	 rpc_table_.push_back(rpc_service);		
 }
+
 
 void TpComm::initPublishElementTable()
 {

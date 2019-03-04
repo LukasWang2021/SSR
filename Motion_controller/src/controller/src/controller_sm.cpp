@@ -149,6 +149,11 @@ int ControllerSm::getSafetyAlarm()
 
 ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
 {
+    if (!safety_device_ptr_->isValid())
+    {
+        return CONTROLLER_INVALID_OPERATION;
+    }
+
     if(mode == USER_OP_MODE_AUTO
         || mode == USER_OP_MODE_SLOWLY_MANUAL
         || mode == USER_OP_MODE_UNLIMITED_MANUAL)
@@ -428,7 +433,7 @@ void ControllerSm::processInterpreter()
 void ControllerSm::processSafety()
 {
     // safety signal process 
-    if(!param_ptr_->is_simmulation_)
+    if(!safety_device_ptr_->isValid())
     {
         struct timeval current_time;
         gettimeofday(&current_time, NULL);

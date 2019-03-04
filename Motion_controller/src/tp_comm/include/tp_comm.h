@@ -548,6 +548,24 @@ private:
     /********rpc/param_manager/setParamInfo, RequestMessageType_Int32_ParamInfo**********/
     void handleRequest0x0001393F(int recv_bytes);
 
+    /********rpc/io_manager/getDIByBit, RequestMessageType_Int32List(count = 3) **********/
+    void handleRequest0x0000BFE4(int recv_bytes);
+    /********rpc/io_manager/setDIByBit, RequestMessageType_Int32List(count = 3) **********/
+    void handleRequest0x00018684(int recv_bytes);
+    /********rpc/io_manager/getDOByBit, RequestMessageType_Int32List(count = 3) **********/
+    void handleRequest0x0000B4C4(int recv_bytes);
+    /********rpc/io_manager/setDOByBit, RequestMessageType_Int32List(count = 3) **********/
+    void handleRequest0x00017B64(int recv_bytes);
+
+    /********rpc/system_manager/moveInstall, RequestMessageType_Void**********/
+    void handleRequest0x00015D3C(int recv_bytes);
+    /********rpc/system_manager/moveFinish, RequestMessageType_Void**********/
+    void handleRequest0x00016008(int recv_bytes);
+    /********rpc/system_manager/restoreInstall, RequestMessageType_Void**********/
+    void handleRequest0x0000DCBC(int recv_bytes);
+    /********rpc/system_manager/restoreFininsh, RequestMessageType_Void**********/
+    void handleRequest0x00011CE8(int recv_bytes);
+
 /* request end */
 
     /********GetUserOpMode, ResponseMessageType_Int32**********/	
@@ -1023,6 +1041,24 @@ private:
     void handleResponse0x0000F0B4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/param_manager/setParamInfo, ResponseMessageType_Uint64**********/
     void handleResponse0x0001393F(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/io_manager/getDIByBit, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x0000BFE4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_manager/setDIByBit, ResponseMessageType_Uint64**********/
+    void handleResponse0x00018684(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_manager/getDOByBit, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x0000B4C4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/io_manager/setDOByBit, ResponseMessageType_Uint64**********/
+    void handleResponse0x00017B64(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+
+    /********rpc/system_manager/moveInstall, ResponseMessageType_Uint64**********/
+    void handleResponse0x00015D3C(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/system_manager/moveFinish, ResponseMessageType_Uint64_Int32**********/
+    void handleResponse0x00016008(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/system_manager/restoreInstall, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000DCBC(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/system_manager/restoreFininsh, ResponseMessageType_Uint64_Int32**********/\
+    void handleResponse0x00011CE8(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /* response end */
     fst_ip::LocalIP local_ip_;

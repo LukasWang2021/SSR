@@ -94,6 +94,7 @@ public:
     // more API
     ErrorCode  convertCartToJoint(const basic_alg::PoseEuler &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
     ErrorCode  convertJointToCart(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose);
+    basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
 
     ErrorCode   getServoVersion(std::string &version);
     GroupState  getGroupState(void);

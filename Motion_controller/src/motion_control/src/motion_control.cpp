@@ -679,6 +679,11 @@ ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_i
     }
 }
 
+Posture MotionControl::getPostureFromJoint(const Joint &joint)
+{
+    return group_ptr_->getKinematicsPtr()->getPostureByJoint(joint);
+}
+
 GroupState MotionControl::getGroupState(void)
 {
     return group_ptr_->getGroupState();

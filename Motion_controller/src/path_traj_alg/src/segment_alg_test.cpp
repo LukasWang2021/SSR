@@ -34,7 +34,7 @@ void doIK(Kinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
 
 int main(void)
 {
-    initComplexAxisGroupModel();
+    //initComplexAxisGroupModel();
     Kinematics* kinematics_ptr = new KinematicsRTM("null");
     //double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
     if(!kinematics_ptr->isValid())
@@ -57,7 +57,9 @@ int main(void)
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = &dynamics;
 
-    initSegmentAlgParam(&segment_alg_param);
+    double joint_vel_max[6] = {5.82, 4.67, 5.82, 7.85, 7.07, 10.55};
+
+    initSegmentAlgParam(&segment_alg_param, 6, joint_vel_max);
            
     
 

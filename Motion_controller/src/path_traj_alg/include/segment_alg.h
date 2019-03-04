@@ -486,8 +486,8 @@ extern ComplexAxisGroupModel model;
 extern double stack[20000];
 
 /***********************************************************************************************/
-void initComplexAxisGroupModel();
-void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr);
+//void initComplexAxisGroupModel();
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, double joint_vel_max[6]);
 
 ErrorCode planPathJoint(const basic_alg::Joint &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
 ErrorCode planPathLine(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
@@ -754,7 +754,7 @@ void updateTrajPVA(int traj_p_address, int traj_v_address, int traj_a_address, i
 
 
 /***********************************************************************************************/
-void initStack(ComplexAxisGroupModel* model_ptr);
+void initStack(int link_num, double joint_vel_max[6]);
 
 inline void getMoveLPathVector(const basic_alg::Point& start_point, const basic_alg::Point& end_point, double* path_vector, double& path_length);
 inline double getPointsDistance(const basic_alg::Point& point1, const basic_alg::Point& point2);

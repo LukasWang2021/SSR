@@ -9,7 +9,7 @@ ComplexAxisGroupModel model;
 double stack[20000];
 SegmentAlgParam segment_alg_param;
 
-
+#if 0
 void initComplexAxisGroupModel()
 {
     model.robot_name = "rt-man";
@@ -121,17 +121,19 @@ void initComplexAxisGroupModel()
     model.link[5].motor_dynamic.jm = 1.7 * 0.25 * 10000 / 0.17;
     model.link[5].motor_dynamic.gear = 44.671266;
 }
+#endif
 
-void initStack(ComplexAxisGroupModel* model_ptr)
+void initStack(int link_num, double joint_vel_max[6])
 {
     // robot model related
-    for(int i=0; i<model_ptr->link_num; ++i)
+    for(int i=0; i<link_num; ++i)
     {
-        stack[S_RealTheta+i] = model_ptr->link[i].link_kinematic.theta + model_ptr->link[i].link_kinematic.theta_offset;
-        stack[S_RealD+i] = model_ptr->link[i].link_kinematic.d + model_ptr->link[i].link_kinematic.d_offset;
-        stack[S_RealAlpha+i] = model_ptr->link[i].link_kinematic.alpha + model_ptr->link[i].link_kinematic.alpha_offset;
-        stack[S_RealA+i] = model_ptr->link[i].link_kinematic.a + model_ptr->link[i].link_kinematic.a_offset;
-        stack[S_ConstraintJointVelMax + i] = model_ptr->link[i].motor_dynamic.vm * PI * 2 / (60 * model_ptr->link[i].motor_dynamic.gear);
+        //stack[S_RealTheta+i] = model_ptr->link[i].link_kinematic.theta + model_ptr->link[i].link_kinematic.theta_offset;
+        //stack[S_RealD+i] = model_ptr->link[i].link_kinematic.d + model_ptr->link[i].link_kinematic.d_offset;
+        //stack[S_RealAlpha+i] = model_ptr->link[i].link_kinematic.alpha + model_ptr->link[i].link_kinematic.alpha_offset;
+        //stack[S_RealA+i] = model_ptr->link[i].link_kinematic.a + model_ptr->link[i].link_kinematic.a_offset;
+        //stack[S_ConstraintJointVelMax + i] = model_ptr->link[i].motor_dynamic.vm * PI * 2 / (60 * model_ptr->link[i].motor_dynamic.gear);
+        stack[S_ConstraintJointVelMax + i] = joint_vel_max[i];
     }
 
     // S_TransMatrix
@@ -157,7 +159,7 @@ void initStack(ComplexAxisGroupModel* model_ptr)
     // init start and end point vel and acc state
     int start_point_address = S_StartPointState0;
     int end_point_address = S_EndPointState0;
-    for(int i = 0; i<model_ptr->link_num; ++i)
+    for(int i = 0; i<link_num; ++i)
     {
         stack[start_point_address + 1] = 0; // start vel always zero
         stack[start_point_address + 2] = 0; // start acc always zero
@@ -168,7 +170,7 @@ void initStack(ComplexAxisGroupModel* model_ptr)
     }
 }
 
-void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr)
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, double joint_vel_max[6])
 {
     segment_alg_param.accuracy_cartesian_factor = segment_alg_param_ptr->accuracy_cartesian_factor;
     segment_alg_param.accuracy_joint_factor = segment_alg_param_ptr->accuracy_joint_factor;
@@ -185,7 +187,8 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr)
     segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
     segment_alg_param.max_cartesian_acc = segment_alg_param_ptr->max_cartesian_acc;
 
-    initStack(&model);
+    initStack(link_num, joint_vel_max);
+    model.link_num = link_num;    
 }
 
 ErrorCode planPathJoint(const Joint &start, 

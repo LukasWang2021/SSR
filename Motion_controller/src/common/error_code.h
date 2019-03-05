@@ -197,6 +197,8 @@ typedef unsigned long long int ErrorCode;
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
 #define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
 #define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0010000200AD0003   /*failed to load simused status json files*/
+#define IO_MANAGER_LOG (unsigned long long int)0x0001000100AF0000   /*IoManager log{0}*/
+#define PROGRAM_LAUNCHING_LOG (unsigned long long int)0x0001000100B00000   /*ProgramLaunching log{0}*/
 #define PROGRAM_LAUNCHING_LOAD_PARAM_FAILED (unsigned long long int)0x0011000200B00001   /*failed to load program_launching yaml paramters*/
 #define PROGRAM_LANNCHING_LOAD_MODE_FILE_FAILED (unsigned long long int)0x0011000200B00002   /*failed to load launch_mode_setting json files*/
 #define PROGRAM_LAUNCHING_LOAD_MACRO_FILE_FAILED (unsigned long long int)0x0011000200B00003   /*failed to load macro_io_launch json files*/
@@ -238,6 +240,18 @@ typedef unsigned long long int ErrorCode;
 #define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0000000400B20004   /*invalid smooth in index*/
 #define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0000000400B20005   /*ik failed*/
 
+#define SYSTEM_MANAGER_LOG (unsigned long long int)0x0001000100B30000   /*SystemManager log{0}*/
+#define SYS_EXTRACT_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30001   /*fail to extract the archive when restoring the backup files.*/
+#define SYS_EXTRACT_OPEN_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30002   /*fail to open the archive when extract*/
+#define SYS_EXTRACT_READ_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30003   /*fail to read the file when extract*/
+#define SYS_EXTRACT_WRITE_FILE_HEADER_FAIL (unsigned long long int)0x0001000600B30004   /*fail to write the file header when extract*/
+#define SYS_EXTRACT_WRITE_FILE_DATA_FAIL (unsigned long long int)0x0001000600B30005   /*fail to write the file data when extract*/
+#define SYS_COMPRESS_FILE_FAIL (unsigned long long int)0x0001000600B30006   /*fail to compress when backup*/
+#define SYS_COMPRESS_OPEN_FILE_FAIL (unsigned long long int)0x0001000600B30007   /*fail to open the file when compres*/
+#define SYS_COMPRESS_READ_FILE_HEADER_FAIL (unsigned long long int)0x0001000600B30008   /*fail to read the file header when compress*/
+#define SYS_COMPRESS_WRITE_FILE_FAIL (unsigned long long int)0x0001000600B30009   /*ail to write the archive when compress*/
+#define SYS_NO_FREE_DISK (unsigned long long int)0x0001000600B3000A   /*not enough space for file operation*/
+#define SYS_START_THREAD_FAIL (unsigned long long int)0x0001000600B3000B   /*failed to start thread to execute*/
 
 /*New error codes feed here.*/
 

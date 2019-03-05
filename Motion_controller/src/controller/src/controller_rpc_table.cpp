@@ -138,8 +138,7 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/setOrientationManualStep", 0x00002940, &ControllerRpc::handleRpc0x00002940}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getOrientationManualStep", 0x00016D20, &ControllerRpc::handleRpc0x00016D20}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/getPostureByJoint",	0x0000EC64,	&ControllerRpc::handleRpc0x0000EC64	};	rpc_table_.push_back(rpc_service);
-    rpc_service = {"/rpc/motion_control/getPostureByCart",	0x00016994,	&ControllerRpc::handleRpc0x00016994	};	rpc_table_.push_back(rpc_service);
-
+    
     rpc_service = {"/rpc/interpreter/start", 0x00006154, &ControllerRpc::handleRpc0x00006154}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/debug", 0x000102D7, &ControllerRpc::handleRpc0x000102D7}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/interpreter/forward", 0x0000D974, &ControllerRpc::handleRpc0x0000D974}; rpc_table_.push_back(rpc_service);
@@ -215,6 +214,19 @@ void ControllerRpc::initRpcTable()
 	rpc_service =	{	"/rpc/modbus/writeHoldingRegs",	0x00008C43,	&ControllerRpc::handleRpc0x00008C43	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/readHoldingRegs",	0x00003583,	&ControllerRpc::handleRpc0x00003583	};	rpc_table_.push_back(rpc_service);
 	rpc_service =	{	"/rpc/modbus/readInputRegs",	0x000072C3,	&ControllerRpc::handleRpc0x000072C3	};	rpc_table_.push_back(rpc_service);
+
+    rpc_service =	{	"/rpc/param_manager/getParamInfoList",	0x0000F0B4,	&ControllerRpc::handleRpc0x0000F0B4	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/param_manager/setParamInfo",	0x0001393F,	&ControllerRpc::handleRpc0x0001393F	};	rpc_table_.push_back(rpc_service);
+
+    rpc_service =	{	"/rpc/io_manager/getDIByBit",	0x0000BFE4,	&ControllerRpc::handleRpc0x0000BFE4	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/io_manager/setDIByBit",	0x00018684,	&ControllerRpc::handleRpc0x00018684	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/io_manager/getDOByBit",	0x0000B4C4,	&ControllerRpc::handleRpc0x0000B4C4	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/io_manager/setDOByBit",	0x00017B64,	&ControllerRpc::handleRpc0x00017B64	};	rpc_table_.push_back(rpc_service);
+    
+    rpc_service =	{	"/rpc/system_manager/moveInstall",	0x00015D3C,	&ControllerRpc::handleRpc0x00015D3C	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/system_manager/moveFinish",	0x00016008,	&ControllerRpc::handleRpc0x00016008	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/system_manager/restoreInstall",	0x0000DCBC,	&ControllerRpc::handleRpc0x0000DCBC	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/system_manager/restoreFininsh",	0x00011CE8,	&ControllerRpc::handleRpc0x00011CE8	};	rpc_table_.push_back(rpc_service);
 
 }
 

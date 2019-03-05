@@ -1,5 +1,4 @@
 #include "controller_rpc.h"
-//#include "base_datatype.h"//todo
 #include "basic_alg_datatype.h"
 #include "basic_constants.h"
 #include "motion_control_datatype.h"
@@ -1196,12 +1195,29 @@ void ControllerRpc::handleRpc0x00016D20(void* request_data_ptr, void* response_d
 //"/rpc/motion_control/getPostureByJoint"
 void ControllerRpc::handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr)
 {
+    RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
+    Joint joint;
+    joint.j1_ = rq_data_ptr->data2.data[0];
+    joint.j2_ = rq_data_ptr->data2.data[1];
+    joint.j3_ = rq_data_ptr->data2.data[2];
+    joint.j4_ = rq_data_ptr->data2.data[3];
+    joint.j5_ = rq_data_ptr->data2.data[4];
+    joint.j6_ = rq_data_ptr->data2.data[5];
+    joint.j7_ = rq_data_ptr->data2.data[6];
+    joint.j8_ = rq_data_ptr->data2.data[7];
+    joint.j9_ = rq_data_ptr->data2.data[8];
+    Posture posture = motion_control_ptr_->getPostureFromJoint(joint);
+    rs_data_ptr->error_code.data = SUCCESS;
+    rs_data_ptr->data.data_count = 4; 
+    rs_data_ptr->data.data[0] = posture.arm;
+    rs_data_ptr->data.data[0] = posture.elbow;
+    rs_data_ptr->data.data[0] = posture.wrist;
+    rs_data_ptr->data.data[0] = posture.flip; 
+
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/getPostureByJoint"));
 }
 
-//"/rpc/motion_control/getPostureByCart"
-void ControllerRpc::handleRpc0x00016994(void* request_data_ptr, void* response_data_ptr)
-{
 
-}
 

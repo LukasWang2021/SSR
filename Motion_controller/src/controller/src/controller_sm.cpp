@@ -149,7 +149,7 @@ int ControllerSm::getSafetyAlarm()
 
 ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
 {
-    if (!safety_device_ptr_->isValid())
+    if (safety_device_ptr_->isValid())
     {
         return CONTROLLER_INVALID_OPERATION;
     }
@@ -433,7 +433,7 @@ void ControllerSm::processInterpreter()
 void ControllerSm::processSafety()
 {
     // safety signal process 
-    if(!safety_device_ptr_->isValid())
+    if(safety_device_ptr_->isValid())
     {
         struct timeval current_time;
         gettimeofday(&current_time, NULL);

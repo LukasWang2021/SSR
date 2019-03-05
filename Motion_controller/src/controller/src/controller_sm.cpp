@@ -151,11 +151,8 @@ ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
 {
     if (safety_device_ptr_->isValid())
     {
-        printf("1 safety valid = %d\n", safety_device_ptr_->isValid());
         return CONTROLLER_INVALID_OPERATION;
     }
-
-    printf("2 safety valid = %d\n", safety_device_ptr_->isValid());
 
     if(mode == USER_OP_MODE_AUTO
         || mode == USER_OP_MODE_SLOWLY_MANUAL

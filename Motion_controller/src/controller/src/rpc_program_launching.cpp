@@ -19,6 +19,7 @@ void ControllerRpc::handleRpc0x00011544(void* request_data_ptr, void* response_d
     }  
 
     FST_INFO("rpc-setMethod: value=%d\n", rq_data_ptr->data.data);
+    recordLog(PROGRAM_LAUNCHING_LOG, rs_data_ptr->data.data, std::string("/rpc/program_launching/setMethod"));
 }
 
 // "/rpc/program_launching/getMethod"
@@ -31,6 +32,7 @@ void ControllerRpc::handleRpc0x00010944(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
    
     FST_INFO("rpc-getMethod: value=%d\n", rs_data_ptr->data.data);
+    recordLog(PROGRAM_LAUNCHING_LOG, rs_data_ptr->data.data, std::string("/rpc/program_launching/getMethod"));
 }
 
 // "/rpc/program_launching/syncFileMacroConfig"
@@ -42,5 +44,5 @@ void ControllerRpc::handleRpc0x00016B27(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = program_launching_->updateFileMacroConfig();
 
     if (rs_data_ptr->data.data != SUCCESS)
-        recordLog(IO_MAPPING_LOG, rs_data_ptr->data.data, std::string("/rpc/program_launching/syncFileMacroConfig"));
+        recordLog(PROGRAM_LAUNCHING_LOG, rs_data_ptr->data.data, std::string("/rpc/program_launching/syncFileMacroConfig"));
 }

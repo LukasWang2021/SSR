@@ -98,7 +98,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller device manager initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -106,7 +106,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller tool manager initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -114,7 +114,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller coordinate manager initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -122,7 +122,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller reg manager initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -131,7 +131,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -139,7 +139,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm server initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -147,7 +147,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm client(controller) initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -155,7 +155,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm heartbeat client initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -163,7 +163,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller process comm server(controller) initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -171,7 +171,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller IO mananger initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -179,12 +179,20 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller IO mapping initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
     //use macro to launch program
     program_launching_.init(&io_mapping_, process_comm_ptr_->getControllerClientPtr());
+
+    error_code = system_manager_.init();
+    if(error_code != SUCCESS)
+    {
+        state_machine_.setInitState(false);
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller system manager initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
 
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
                         process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_, &program_launching_);
@@ -193,7 +201,8 @@ ErrorCode Controller::init()
                 &io_mapping_, &motion_control_);
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
-        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &io_manager_,&program_launching_, &file_manager_);
+        process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &io_manager_,&program_launching_, &file_manager_,
+        &system_manager_);
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
                     process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, &io_manager_);
 
@@ -201,7 +210,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller motion control initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
     if(!state_machine_.checkOffsetState())
@@ -211,13 +220,13 @@ ErrorCode Controller::init()
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))
     {
-        recordLog(CONTROLLER_CREATE_ROUTINE_THREAD_FAILED, "Controller failed to create routine thread");
+        recordLog(CONTROLLER_CREATE_ROUTINE_THREAD_FAILED, "Controller heartbeat thread failed to create routine thread");
         return CONTROLLER_CREATE_ROUTINE_THREAD_FAILED;
     }
 
     if(!routine_thread_.run(&controllerRoutineThreadFunc, this, param_ptr_->routine_thread_priority_))
     {
-        recordLog(CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED, "Controller failed to create heartbeat thread");
+        recordLog(CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED, "Controller rountine thread failed to create heartbeat thread");
         return CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED;
     }
 
@@ -225,7 +234,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller TP comm initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
@@ -233,7 +242,7 @@ ErrorCode Controller::init()
     if(error_code != SUCCESS)
     {
         state_machine_.setInitState(false);
-        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller initialization failed");
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller TP comm open initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 

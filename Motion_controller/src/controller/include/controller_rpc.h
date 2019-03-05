@@ -17,6 +17,7 @@
 #include "io_mapping.h"
 #include "program_launching.h"
 #include "file_manager.h"
+#include "system_manager.h"
 #include "device_version.h"
 #include <vector>
 
@@ -33,7 +34,7 @@ public:
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
                     IoMapping* io_mapping_ptr, fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
-                    fst_base::FileManager* file_manager);
+                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager);
 
     void processRpc();
 
@@ -56,6 +57,7 @@ private:
     fst_hal::FstSafetyDevice* safety_device_ptr_;
     ProgramLaunching* program_launching_;
     fst_base::FileManager* file_manager_ptr_;
+    fst_ctrl::SystemManager* system_manager_ptr_;
 
     DeviceVersion device_version_;
 
@@ -337,9 +339,7 @@ private:
     void handleRpc0x00016D20(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/getPostureByJoint"
     void handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr);
-    //"/rpc/motion_control/getPostureByCart"
-    void handleRpc0x00016994(void* request_data_ptr, void* response_data_ptr);
-
+    
     /* interpreter rpc */
     // "/rpc/interpreter/start"
     void handleRpc0x00006154(void* request_data_ptr, void* response_data_ptr);
@@ -488,6 +488,30 @@ private:
     void handleRpc0x00003583(void* request_data_ptr, void* response_data_ptr);
 	//"/rpc/modbus/readInputRegs"
     void handleRpc0x000072C3(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/param_manager/getParamInfoList"	
+    void handleRpc0x0000F0B4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/param_manager/setParamInfo"	
+    void handleRpc0x0001393F(void* request_data_ptr, void* response_data_ptr);
+	
+    //"/rpc/io_manager/getDIByBit"	
+    void handleRpc0x0000BFE4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_manager/setDIByBit"	
+    void handleRpc0x00018684(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_manager/getDOByBit"	
+    void handleRpc0x0000B4C4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/io_manager/setDOByBit"	
+    void handleRpc0x00017B64(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/system_manager/moveInstall"	
+    void handleRpc0x00015D3C(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/system_manager/moveFinish"	
+    void handleRpc0x00016008(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/system_manager/restoreInstall"	
+    void handleRpc0x0000DCBC(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/system_manager/restoreFininsh"	
+    void handleRpc0x00011CE8(void* request_data_ptr, void* response_data_ptr);
+
 
 
 };

@@ -16,12 +16,12 @@
 #include "controller_ipc.h"
 #include "device_manager.h"
 #include "motion_control.h"
-//#include "base_datatype.h"
 #include "serverAlarmApi.h"
 #include "preformance_monitor.h"
 #include "io_mapping.h" 
 #include "program_launching.h"
 #include "file_manager.h"
+#include "system_manager.h"
 #include <string>
 // for test only
 #include "virtual_core1.h"
@@ -64,6 +64,7 @@ private:
     IoMapping io_mapping_;   
     ProgramLaunching program_launching_;
     fst_base::FileManager file_manager_;
+    fst_ctrl::SystemManager system_manager_;
 
     // thread related
     bool is_exit_;

@@ -277,6 +277,8 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000E   /*the safety board detects the second relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CABINET_STOP (unsigned long long int)0x0001000B00C8000F   /*the safety board detects cabinet estop signal.*/
 
+#define PARAM_MANAGER_INIT_FAILED (unsigned long long int)0x0011000200B30001   /*param manager load param failed*/
+#define PARAM_MANAGER_SET_PARAM_FAILED (unsigned long long int)0x0011000200B30002   /*param manager set param failed*/
 
 #endif
 

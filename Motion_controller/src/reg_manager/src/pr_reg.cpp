@@ -127,10 +127,10 @@ ErrorCode PrReg::deleteReg(int id)
     data_list_[id].pos[6] = 0;
     data_list_[id].pos[7] = 0;
     data_list_[id].pos[8] = 0;
-    data_list_[id].posture[0] = false;
-    data_list_[id].posture[1] = false;
-    data_list_[id].posture[2] = false;
-    data_list_[id].posture[3] = false;
+    data_list_[id].posture[0] = 0;
+    data_list_[id].posture[1] = 0;
+    data_list_[id].posture[2] = 0;
+    data_list_[id].posture[3] = 0;
     if(!writeRegDataToYaml(reg_data, data_list_[id]))
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
@@ -343,10 +343,10 @@ bool PrReg::createYaml()
         yaml_help_.setParam(reg_path + "/pos7", 0);
         yaml_help_.setParam(reg_path + "/pos8", 0);
         yaml_help_.setParam(reg_path + "/pos9", 0);
-        yaml_help_.setParam(reg_path + "/posture1", false);
-        yaml_help_.setParam(reg_path + "/posture2", false);
-        yaml_help_.setParam(reg_path + "/posture3", false);
-        yaml_help_.setParam(reg_path + "/posture4", false);
+        yaml_help_.setParam(reg_path + "/posture1", 0);
+        yaml_help_.setParam(reg_path + "/posture2", 0);
+        yaml_help_.setParam(reg_path + "/posture3", 0);
+        yaml_help_.setParam(reg_path + "/posture4", 0);
     }
     return yaml_help_.dumpParamFile(file_path_.c_str());
 }

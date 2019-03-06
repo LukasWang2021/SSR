@@ -193,10 +193,20 @@ void KinematicsToll::doFK(const Joint& joint, PoseQuaternion& pose_quaternion, s
 
 void KinematicsToll::doFK(const Joint& joint, TransMatrix& trans_matrix, size_t from_joint_index, size_t to_joint_index)
 {
+    if(from_joint_index >= 4)
+    {
+        from_joint_index = 4;
+    }
+    if(to_joint_index >= 4)
+    {
+        to_joint_index = 4;
+    }
+
     TransMatrix result_matrix;
     if(from_joint_index == 0)
     {
         result_matrix = matrix_base_;
+        //result_matrix.print("1 in KinematicsToll::doFK: first matrix=");
     }
     else if (from_joint_index == 1)
     {
@@ -211,7 +221,7 @@ void KinematicsToll::doFK(const Joint& joint, TransMatrix& trans_matrix, size_t 
         TransMatrix matrix_first(arm_dh_[first_dh_index].d, arm_dh_[first_dh_index].a, arm_dh_[first_dh_index].alpha, joint[first_dh_index] + arm_dh_[first_dh_index].offset);        
         result_matrix = matrix_first;       
     }
-
+    //printf("from index=%d, to index=%d\n", from_joint_index, to_joint_index);
     for(size_t i = from_joint_index; i < to_joint_index; ++i)
     {
         if (i == 0)
@@ -219,12 +229,15 @@ void KinematicsToll::doFK(const Joint& joint, TransMatrix& trans_matrix, size_t 
             //the first joint is prismatic for toll scara.
             TransMatrix matrix(arm_dh_[i].d + joint[0], arm_dh_[i].a, arm_dh_[i].alpha, 0 + arm_dh_[i].offset);
             result_matrix.rightMultiply(matrix);
+            //result_matrix.print("2 in KinematicsToll::doFK: second matrix=");
             continue;
         }
         TransMatrix matrix(arm_dh_[i].d, arm_dh_[i].a, arm_dh_[i].alpha, joint[i] + arm_dh_[i].offset);
         result_matrix.rightMultiply(matrix);
+        //result_matrix.print(" in KinematicsToll::doFK: sequence matrix=");
     }
     trans_matrix = result_matrix;
+    //trans_matrix.print("3 in KinematicsToll::doFK: last matrix=");
 }
 
 bool KinematicsToll::doIK(const PoseEuler& pose_euler, const Posture& posture, Joint& joint, double valve)

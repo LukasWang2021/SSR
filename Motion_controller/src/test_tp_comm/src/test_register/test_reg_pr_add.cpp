@@ -62,13 +62,13 @@ int main(int argc, char* argv[])
     msg.data.pos.data[6] = 1.7;
 
     msg.data.posture.data_count = 9;
-    msg.data.posture.data[0] = true;
-    msg.data.posture.data[1] = true;
-    msg.data.posture.data[2] = true;
-    msg.data.posture.data[3] = true;
-    msg.data.posture.data[4] = true;
-    msg.data.posture.data[5] = true;
-    msg.data.posture.data[6] = true;
+    msg.data.posture.data[0] = 1;
+    msg.data.posture.data[1] = 1;
+    msg.data.posture.data[2] = 1;
+    msg.data.posture.data[3] = 1;
+    msg.data.posture.data[4] = 1;
+    msg.data.posture.data[5] = 1;
+    msg.data.posture.data[6] = 1;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_PrRegData_fields, buf, buf_size))
     {

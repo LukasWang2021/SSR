@@ -1048,7 +1048,6 @@ char * forgesight_get_programs_path()
 *************************************************/ 
 void forgesight_load_wait_time_out_config()
 {
-	g_files_manager_data_path = "";
 #ifdef WIN32
     g_wait_time_out_config = 10;
 #else

@@ -193,14 +193,8 @@ void KinematicsToll::doFK(const Joint& joint, PoseQuaternion& pose_quaternion, s
 
 void KinematicsToll::doFK(const Joint& joint, TransMatrix& trans_matrix, size_t from_joint_index, size_t to_joint_index)
 {
-    if(from_joint_index >= 4)
-    {
-        from_joint_index = 4;
-    }
-    if(to_joint_index >= 4)
-    {
-        to_joint_index = 4;
-    }
+    from_joint_index >= 4 ? 4 : from_joint_index;
+    to_joint_index >= 4 ? 4 : to_joint_index;
 
     TransMatrix result_matrix;
     if(from_joint_index == 0)

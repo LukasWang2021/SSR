@@ -141,7 +141,7 @@ typedef unsigned long long int ErrorCode;
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0001000100A90000   /*MotionControl log{0}*/
 #define IK_FAIL (unsigned long long int)0x0001000400A903E9   /*IK failed*/
 #define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903EA   /*IK failed for Axis 2~6*/
-#define FK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0000000400A903F3   /*joint out of limit computing FK*/
+#define FK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903F3   /*joint out of limit computing FK*/
 #define AXIS_APPROACHING_LIMIT (unsigned long long int)0x0001000400A90408   /*axis approaching and going to crash a limit*/
 #define MOTION_INTERNAL_FAULT (unsigned long long int)0x0001000400A90001   /*program internal fault*/
 #define MOTION_FAIL_IN_INIT (unsigned long long int)0x0011000200A903E9   /*initialization failed*/
@@ -191,8 +191,8 @@ typedef unsigned long long int ErrorCode;
 #define IO_DEVICE_UNFOUND (unsigned long long int)0x0001000600AC03EB   /*IO devices are unfound when machine is running.*/
 #define IO_VERIFY_FALSE (unsigned long long int)0x0000000200AC03EC   /*io data is verified to be false.*/
 #define IO_INIT_FAIL (unsigned long long int)0x0011000600AC03F3   /*fail to initialize the IO module.*/
-#define IO_INVALID_PARAM_ID (unsigned long long int)0x0000000600AC03F4   /*invalid parameter id as function argument.*/
-#define IO_INVALID_PORT_SEQ (unsigned long long int)0x0000000600AC03F5   /*invalid port sequence number as function argument.*/
+#define IO_INVALID_PARAM_ID (unsigned long long int)0x0001000600AC03F4   /*invalid parameter id as function argument.*/
+#define IO_INVALID_PORT_SEQ (unsigned long long int)0x0001000600AC03F5   /*invalid port sequence number as function argument.*/
 #define IO_MAPPING_LOG (unsigned long long int)0x0001000100AD0000   /*IoMapping log{0}*/
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
 #define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
@@ -234,11 +234,12 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server init failed*/
 #define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server init failed*/
 
-#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0000000400B20001   /*the expected target point is invalid*/
-#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0000000400B20002   /*invalid path cache*/
-#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0000000400B20003   /*invalid motion type*/
-#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0000000400B20004   /*invalid smooth in index*/
-#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0000000400B20005   /*ik failed*/
+#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0001000400B20001   /*the expected target point is invalid*/
+#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0001000400B20002   /*invalid path cache*/
+#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*invalid motion type*/
+#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*invalid smooth in index*/
+#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*ik failed*/
+
 
 #define SYSTEM_MANAGER_LOG (unsigned long long int)0x0001000100B30000   /*SystemManager log{0}*/
 #define SYS_EXTRACT_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30001   /*fail to extract the archive when restoring the backup files.*/

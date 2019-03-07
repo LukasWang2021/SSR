@@ -1,11 +1,4 @@
 number_of_axis: 6
-type_of_axis:
-    - 1
-    - 1
-    - 1
-    - 1
-    - 1
-    - 1
 step:
     axis:
         - 0.1

@@ -111,6 +111,9 @@ public:
     double getGlobalVelRatio(void);
     double getGlobalAccRatio(void);
 
+    std::string getModelName(void);
+    size_t  getNumberOfAxis(void);
+    void    getTypeOfAxis(AxisType *types);
 
     void getToolFrame(int &id);
     void getUserFrame(int &id);

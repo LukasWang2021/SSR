@@ -1,3 +1,11 @@
+number_of_axis: 6
+type_of_axis:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
 joint:
     omega:
         - 5.8119

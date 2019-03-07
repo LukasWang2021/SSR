@@ -115,6 +115,7 @@ class BaseGroup
     // More APIs:
     virtual size_t getNumberOfJoint(void) = 0;
     virtual size_t getFIFOLength(void) = 0;
+    virtual void getTypeOfAxis(AxisType *types);
 
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
     virtual Calibrator* getCalibratorPtr(void);
@@ -189,6 +190,8 @@ class BaseGroup
     basic_alg::Joint  start_joint_;
     ServoState  servo_state_;
     GroupState  group_state_;
+
+    AxisType    type_of_axis_[NUM_OF_JOINT];
     
     MotionTime  cycle_time_;
     MotionTime  auto_time_;

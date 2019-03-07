@@ -2857,6 +2857,16 @@ bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, double thr
     return true;
 }
 
+void BaseGroup::getTypeOfAxis(AxisType *types)
+{
+    size_t  joint_num = getNumberOfJoint();
+
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        types[i] = type_of_axis_[i];
+    }
+}
+
 Kinematics* BaseGroup::getKinematicsPtr(void)
 {
     return kinematics_ptr_;

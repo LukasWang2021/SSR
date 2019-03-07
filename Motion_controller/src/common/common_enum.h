@@ -70,6 +70,12 @@ enum ManualDirection
     DECREASE = 2,
 };
 
+enum AxisType
+{
+    ROTARY_AXIS = 0,
+    LINEAR_AXIS = 1,
+};
+
 enum GroupState
 {
     UNKNOW = 0x0,

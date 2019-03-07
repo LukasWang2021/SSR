@@ -684,6 +684,21 @@ Posture MotionControl::getPostureFromJoint(const Joint &joint)
     return group_ptr_->getKinematicsPtr()->getPostureByJoint(joint);
 }
 
+string MotionControl::getModelName(void)
+{
+    return param_ptr_->model_name_;
+}
+
+size_t MotionControl::getNumberOfAxis(void)
+{
+    return group_ptr_->getNumberOfJoint();
+}
+
+void MotionControl::getTypeOfAxis(AxisType *types)
+{
+    group_ptr_->getTypeOfAxis(types);
+}
+
 GroupState MotionControl::getGroupState(void)
 {
     return group_ptr_->getGroupState();

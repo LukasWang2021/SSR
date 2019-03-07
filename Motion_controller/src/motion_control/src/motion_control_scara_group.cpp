@@ -418,6 +418,21 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     
     FST_INFO("Max velocity of each axis: %s", printDBLine(omega, buffer, LOG_TEXT_SIZE));
 
+    int types[JOINT_OF_SCARA] = {0};
+
+    if (!param.getParam("type_of_axis", types, JOINT_OF_SCARA))
+    {
+        FST_ERROR("Fail to load types of each axis, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
+    for (size_t i = 0; i < JOINT_OF_SCARA; i++)
+    {
+        type_of_axis_[i] = AxisType(types[i]);
+    }
+
+    FST_INFO("Types of each axis: %s", printDBLine(types, buffer, LOG_TEXT_SIZE));
+
     // 初始化路径和轨迹规划
     param.reset();
     path = COMPONENT_PARAM_FILE_DIR;

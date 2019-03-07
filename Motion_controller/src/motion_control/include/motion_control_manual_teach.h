@@ -55,7 +55,7 @@ private:
     inline char* printDBLine(const double *data, char *buffer, size_t length);
 
     size_t joint_num_;
-    double step_joint_;
+    double step_axis_[NUM_OF_JOINT];
     double step_position_;
     double step_orientation_;
     double vel_ratio_;

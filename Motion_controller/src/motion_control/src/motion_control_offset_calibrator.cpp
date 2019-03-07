@@ -186,7 +186,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     // 加载传动比配置文件，并检查数据
     // 检查无误后将数据下发到裸核
     data.clear();
-    gear_ratio_param_.loadParamFile(config_file + "arm_group_gear_ratio.yaml");
+    gear_ratio_param_.loadParamFile(config_file + "group_gear_ratio.yaml");
     result = gear_ratio_param_.getLastError();
 
     if (result == SUCCESS)
@@ -231,7 +231,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     // 加载耦合系数配置文件，并检查数据
     // 检查无误后将数据下发到裸核
     data.clear();
-    coupling_param_.loadParamFile(config_file + "arm_group_coupling_coeff.yaml");
+    coupling_param_.loadParamFile(config_file + "group_coupling_coeff.yaml");
     result = coupling_param_.getLastError();
 
     if (result == SUCCESS)
@@ -277,7 +277,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     // 加载零位配置文件，并检查数据
     // 检查无误后将数据下发到裸核，注意只有裸核处于DISABLE状态零位才能生效
     data.clear();
-    offset_param_.loadParamFile(config_file + "arm_group_offset.yaml");
+    offset_param_.loadParamFile(config_file + "group_offset.yaml");
     result = offset_param_.getLastError();
 
     if (result == SUCCESS)

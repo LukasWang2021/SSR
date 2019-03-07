@@ -168,7 +168,7 @@ install(FILES config/soft_constraint.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/arm_group_offset.yaml
+install(FILES config/group_offset.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
@@ -176,15 +176,19 @@ install(FILES config/arm_group_offset_reference.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/arm_group_gear_ratio.yaml
+install(FILES config/group_gear_ratio.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
-install(FILES config/arm_group_coupling_coeff.yaml
+install(FILES config/group_coupling_coeff.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 
 install(FILES config/arm_manual_teach.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
+)
+
+install(FILES config/scara_manual_teach.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/axis_group
 )
 

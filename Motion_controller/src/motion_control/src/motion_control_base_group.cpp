@@ -1974,6 +1974,8 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
             ++ target_ptr;
         }
 
+        char buffer[LOG_TEXT_SIZE];
+        // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
         picked_num ++;
 
         if (manual_time_ >= manual_traj_.duration)
@@ -2075,6 +2077,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         if (err == SUCCESS && soft_constraint_.isJointInConstraint(points[i].angle))
         {
             char buffer[LOG_TEXT_SIZE];
+            // FST_INFO("  >> pose : %.4f, %.4f, %.4f, %.4f, %.4f, %.4f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
             // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
             picked_num ++;
 

@@ -29,7 +29,6 @@ ManualTeach::ManualTeach(void)
     joint_num_ = 0;
     vel_ratio_ = 0;
     acc_ratio_ = 0;
-    step_joint_ = 0;
     step_position_ = 0;
     step_orientation_ = 0;
     position_vel_reference_ = 0;
@@ -37,6 +36,7 @@ ManualTeach::ManualTeach(void)
     orientation_omega_reference_ = 0;
     orientation_alpha_reference_ = 0;
 
+    memset(step_axis_, 0, sizeof(step_axis_));
     memset(axis_vel_, 0, sizeof(axis_vel_));
     memset(axis_acc_, 0, sizeof(axis_acc_));
 
@@ -60,7 +60,9 @@ ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_l
         return MOTION_INTERNAL_FAULT;
     }
 
-    int joint_num;
+    int  joint_num;
+    char buffer[LOG_TEXT_SIZE];
+    double data[NUM_OF_JOINT];
     ParamGroup config;
     manual_config_file_ = config_file;
 
@@ -79,25 +81,33 @@ ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_l
         }
         else
         {
-            FST_ERROR("Invalid number of joint in config file, num-of-joint = %d", joint_num);
+            FST_ERROR("Invalid number of axis in config file, num-of-joint = %d", joint_num);
             return INVALID_PARAMETER;
         }
     }
     else
     {
-        FST_ERROR("Fail to load manual configuration.");
+        FST_ERROR("Fail to load number of manual axis, code = 0x%llx", config.getLastError());
         return config.getLastError();
     }
 
-    if (config.getParam("step/axis", step_joint_) &&
-        config.getParam("step/position", step_position_) &&
+    if (!config.getParam("step/axis", data, joint_num_))
+    {
+        FST_ERROR("Fail to load manual step, code = 0x%llx", config.getLastError());
+        return config.getLastError();
+    }
+
+    memcpy(step_axis_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis step: %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
+
+    if (config.getParam("step/position", step_position_) &&
         config.getParam("step/orientation", step_orientation_) &&
         config.getParam("reference/position/velocity", position_vel_reference_) &&
         config.getParam("reference/position/acceleration", position_acc_reference_) &&
         config.getParam("reference/orientation/omega", orientation_omega_reference_) &&
         config.getParam("reference/orientation/alpha", orientation_alpha_reference_))
     {
-        FST_INFO("Step: axis=%.4f, position=%.4f, orientation=%.4f", step_joint_, step_position_, step_orientation_);
+        FST_INFO("Step: position=%.4f, orientation=%.4f", step_position_, step_orientation_);
         FST_INFO("Reference: position-vel=%.4f, position-acc=%.4f, orientation-omega=%.4f, orientation-alpha=%.4f",
                  position_vel_reference_, position_acc_reference_, orientation_omega_reference_, orientation_alpha_reference_);
     }
@@ -107,17 +117,23 @@ ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_l
         return config.getLastError();
     }
 
-    vector<double> vel; vel.resize(joint_num_);
-    vector<double> acc; acc.resize(joint_num_);
-
-    if (config.getParam("reference/axis/velocity", vel) && config.getParam("reference/axis/acceleration", acc))
+    if (!config.getParam("reference/axis/velocity", data, joint_num_))
     {
-        char buffer[LOG_TEXT_SIZE];
-        memcpy(axis_vel_, &vel[0], joint_num_ * sizeof(double));
-        memcpy(axis_acc_, &acc[0], joint_num_ * sizeof(double));
-        FST_INFO("Axis vel : %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
-        FST_INFO("Axis acc : %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Fail to load reference velocity of each axis, code = 0x%llx", config.getLastError());
+        return config.getLastError();
     }
+
+    memcpy(axis_vel_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis vel: %s", printDBLine(axis_vel_, buffer, LOG_TEXT_SIZE));
+    
+    if(!config.getParam("reference/axis/acceleration", data, joint_num_))
+    {
+        FST_ERROR("Fail to load reference acceleration of each axis, code = 0x%llx", config.getLastError());
+        return config.getLastError();
+    }
+
+    memcpy(axis_acc_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis acc : %s", printDBLine(axis_acc_, buffer, LOG_TEXT_SIZE));
 
     return SUCCESS;
 }
@@ -135,7 +151,8 @@ double ManualTeach::getGlobalAccRatio(void)
 
 double ManualTeach::getManualStepAxis(void)
 {
-    return step_joint_;
+    // FIXME
+    return step_axis_[0];
 }
 
 double ManualTeach::getManualStepPosition(void)
@@ -162,13 +179,15 @@ ErrorCode ManualTeach::setGlobalAccRatio(double ratio)
 
 ErrorCode ManualTeach::setManualStepAxis(double step)
 {
+    // FIXME
+    /*
     if (step > MINIMUM_E6 && step < 1)
     {
         ParamGroup param;
 
         if (param.loadParamFile(manual_config_file_) && param.setParam("step/axis", step) && param.dumpParamFile())
         {
-            step_joint_ = step;
+            step_axis_[0] = step;
             return SUCCESS;
         }
         else
@@ -180,6 +199,7 @@ ErrorCode ManualTeach::setManualStepAxis(double step)
     {
         return INVALID_PARAMETER;
     }
+    */
 }
 
 ErrorCode ManualTeach::setManualStepPosition(double step)
@@ -273,15 +293,16 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
     char buffer[LOG_TEXT_SIZE];
 
     FST_INFO("manual-Joint-Step: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
-    FST_INFO("  step-angle = %.4frad, vel-ratio = %.0f%%, acc-ratio = %.0f%%", step_joint_, vel_ratio_ * 100, acc_ratio_ * 100);
+    FST_INFO("  step-axis = %s", printDBLine(step_axis_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("  vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
     FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     Joint target  = traj.joint_start;
 
     for (size_t i = 0; i < joint_num_; i++)
     {
-        if      (dir[i] == INCREASE) target[i] += step_joint_;
-        else if (dir[i] == DECREASE) target[i] -= step_joint_;
+        if      (dir[i] == INCREASE) target[i] += step_axis_[i];
+        else if (dir[i] == DECREASE) target[i] -= step_axis_[i];
     }
 
     FST_INFO("  target-joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
@@ -298,7 +319,7 @@ ErrorCode ManualTeach::manualJointStep(const ManualDirection *dir, MotionTime ti
 
     for (size_t i = 0; i < joint_num_; i++)
     {
-        trips[i] = dir[i] == STANDING ? 0 : step_joint_;
+        trips[i] = dir[i] == STANDING ? 0 : step_axis_[i];
         omega[i] = axis_vel_[i] * vel_ratio_;
         alpha[i] = axis_acc_[i] * acc_ratio_;
 
@@ -929,10 +950,6 @@ ErrorCode ManualTeach::manualByTarget(const Joint &target, MotionTime time, Manu
 
 ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, ManualTrajectory &traj)
 {
-    // FIXME
-    double omega_limit[NUM_OF_JOINT] = {5.81, 4.66, 5.81, 7.85, 7.07, 10.56, 0, 0, 0};
-    double alpha_limit[NUM_OF_JOINT] = {11.62, 9.32, 16.6, 22.44, 28.27, 42.24, 0, 0, 0};
-
     char buffer[LOG_TEXT_SIZE];
 
     FST_INFO("manual-Joint-APOINT: planning trajectory ...");
@@ -946,8 +963,8 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
     for (size_t i = 0; i < joint_num_; i++)
     {
         trips[i] = fabs(target[i] - traj.joint_start[i]);
-        alpha[i] = alpha_limit[i] * acc_ratio_;
-        omega[i] = omega_limit[i] * vel_ratio_;
+        alpha[i] = axis_acc_[i] * acc_ratio_;
+        omega[i] = axis_vel_[i] * vel_ratio_;
         delta[i] = trips[i] - omega[i] * omega[i] / alpha[i];
         t_min[i] = delta[i] > 0 ? (omega[i] / alpha[i] + trips[i] / omega[i]) : (sqrt(trips[i] / alpha[i]) * 2);
         //FST_INFO("  J%d: trip=%.8f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);

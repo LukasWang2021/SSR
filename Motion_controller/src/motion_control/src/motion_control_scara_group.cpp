@@ -390,7 +390,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
 
     // 初始化手动示教模块
     FST_INFO("Initializing manual teach of ScaraGroup ...");
-    err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, path + "arm_manual_teach.yaml");
+    err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, path + "scara_manual_teach.yaml");
 
     if (err != SUCCESS)
     {

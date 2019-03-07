@@ -1101,7 +1101,9 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &tar
     FST_INFO("  target = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
 
     start_clock = clock();
+    FST_INFO("----");
     ErrorCode err = planPathJoint(start, target, path);
+    FST_INFO("<<<<");
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 

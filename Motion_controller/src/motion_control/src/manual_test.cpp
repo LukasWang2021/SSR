@@ -147,7 +147,8 @@ void test2(void)
     arm.setGlobalVelRatio(0.5);
     arm.setGlobalAccRatio(0.8);
     arm.setManualFrame(JOINT);
-    arm.setManualStepAxis(0.15);
+    double steps[9] = {0.15, 0.15, 0.15, 0.15, 0.15, 0.15, 0, 0, 0};
+    arm.setManualStepAxis(steps);
     arm.resetGroup();
     usleep(100 * 1000);
 

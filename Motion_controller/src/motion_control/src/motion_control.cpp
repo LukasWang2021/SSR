@@ -257,9 +257,9 @@ double MotionControl::getOrientationManualStep(void)
     return group_ptr_->getManualStepOrientation();
 }
 
-ErrorCode MotionControl::setRotateManualStep(double step)
+ErrorCode MotionControl::setAxisManualStep(const double (&steps)[NUM_OF_JOINT])
 {
-    return group_ptr_->setManualStepAxis(step);
+    return group_ptr_->setManualStepAxis(steps);
 }
 
 ErrorCode MotionControl::setPrismaticManualStep(double step)

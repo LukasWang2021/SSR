@@ -89,7 +89,7 @@ class BaseGroup
     virtual double getManualStepAxis(void);
     virtual double getManualStepPosition(void);
     virtual double getManualStepOrientation(void);
-    virtual ErrorCode setManualStepAxis(double step);
+    virtual ErrorCode setManualStepAxis(double *steps);
     virtual ErrorCode setManualStepPosition(double step);
     virtual ErrorCode setManualStepOrientation(double step);
     virtual ErrorCode manualMoveStep(const ManualDirection *direction);

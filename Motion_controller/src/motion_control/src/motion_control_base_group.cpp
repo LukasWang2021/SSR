@@ -289,10 +289,11 @@ double BaseGroup::getManualStepOrientation(void)
     return step;
 }
 
-ErrorCode BaseGroup::setManualStepAxis(double step)
+ErrorCode BaseGroup::setManualStepAxis(double *steps)
 {
-    FST_INFO("Set manual step axis = %.6f", step);
-    return manual_teach_.setManualStepAxis(step);
+    char buffer[LOG_TEXT_SIZE];
+    FST_INFO("Set manual steps for axis = %s", printDBLine(steps, buffer, LOG_TEXT_SIZE));
+    return manual_teach_.setManualStepAxis(steps);
 }
 
 ErrorCode BaseGroup::setManualStepPosition(double step)
@@ -1976,7 +1977,7 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
             ++ target_ptr;
         }
 
-        char buffer[LOG_TEXT_SIZE];
+        // char buffer[LOG_TEXT_SIZE];
         // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
         picked_num ++;
 
@@ -2078,7 +2079,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
 
         if (err == SUCCESS && soft_constraint_.isJointInConstraint(points[i].angle))
         {
-            char buffer[LOG_TEXT_SIZE];
+            // har buffer[LOG_TEXT_SIZE];
             // FST_INFO("  >> pose : %.4f, %.4f, %.4f, %.4f, %.4f, %.4f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
             // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
             picked_num ++;

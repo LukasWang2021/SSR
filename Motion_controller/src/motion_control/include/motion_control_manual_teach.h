@@ -34,7 +34,7 @@ public:
     double getManualStepOrientation(void);
     ErrorCode setGlobalVelRatio(double ratio);
     ErrorCode setGlobalAccRatio(double ratio);
-    ErrorCode setManualStepAxis(double step);
+    ErrorCode setManualStepAxis(double *steps);
     ErrorCode setManualStepPosition(double step);
     ErrorCode setManualStepOrientation(double step);
 

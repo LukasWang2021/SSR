@@ -37,7 +37,7 @@ public:
     double getPrismaticManualStep(void);
     double getPositionManualStep(void);
     double getOrientationManualStep(void);
-    ErrorCode setRotateManualStep(double step);
+    ErrorCode setAxisManualStep(const double (&steps)[NUM_OF_JOINT]);
     ErrorCode setPrismaticManualStep(double step);
     ErrorCode setPositionManualStep(double step);
     ErrorCode setOrientationManualStep(double step);

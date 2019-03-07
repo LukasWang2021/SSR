@@ -177,29 +177,26 @@ ErrorCode ManualTeach::setGlobalAccRatio(double ratio)
     return SUCCESS;
 }
 
-ErrorCode ManualTeach::setManualStepAxis(double step)
+ErrorCode ManualTeach::setManualStepAxis(double *steps)
 {
-    // FIXME
-    /*
-    if (step > MINIMUM_E6 && step < 1)
-    {
-        ParamGroup param;
+    vector<double> data;
 
-        if (param.loadParamFile(manual_config_file_) && param.setParam("step/axis", step) && param.dumpParamFile())
-        {
-            step_axis_[0] = step;
-            return SUCCESS;
-        }
-        else
-        {
-            return param.getLastError();
-        }
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        data.push_back(steps[i]);
+    }
+
+    ParamGroup param;
+
+    if (param.loadParamFile(manual_config_file_) && param.setParam("step/axis", data) && param.dumpParamFile())
+    {
+        memcpy(step_axis_, steps, joint_num_ * sizeof(double));
+        return SUCCESS;
     }
     else
     {
-        return INVALID_PARAMETER;
+        return param.getLastError();
     }
-    */
 }
 
 ErrorCode ManualTeach::setManualStepPosition(double step)

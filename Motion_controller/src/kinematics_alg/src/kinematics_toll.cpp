@@ -277,7 +277,7 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     double sin_j234 = trans_matrix_1to4.rotation_matrix_.matrix_[1][0];
     double cos_j234 = trans_matrix_1to4.rotation_matrix_.matrix_[0][0];
     double j234 = atan2(sin_j234, cos_j234) - arm_dh_[1].offset - arm_dh_[2].offset - arm_dh_[3].offset;
-    printf("j234=%f\n",j234);
+    //printf("j234=%f\n",j234);
 
     //the 2nd version kinematics-20190222
 /*    //compute x4,y4

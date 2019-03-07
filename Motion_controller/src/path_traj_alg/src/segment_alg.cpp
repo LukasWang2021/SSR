@@ -8,6 +8,7 @@ using namespace basic_alg;
 ComplexAxisGroupModel model;
 double stack[20000];
 SegmentAlgParam segment_alg_param;
+AxisType seg_axis_type[9];
 
 #if 0
 void initComplexAxisGroupModel()
@@ -123,7 +124,7 @@ void initComplexAxisGroupModel()
 }
 #endif
 
-void initStack(int link_num, double joint_vel_max[6])
+void initStack(int link_num, double joint_vel_max[9])
 {
     // robot model related
     for(int i=0; i<link_num; ++i)
@@ -170,7 +171,7 @@ void initStack(int link_num, double joint_vel_max[6])
     }
 }
 
-void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, double joint_vel_max[6])
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, fst_mc::AxisType axis_type[9], double joint_vel_max[9])
 {
     segment_alg_param.accuracy_cartesian_factor = segment_alg_param_ptr->accuracy_cartesian_factor;
     segment_alg_param.accuracy_joint_factor = segment_alg_param_ptr->accuracy_joint_factor;
@@ -189,6 +190,10 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, d
 
     initStack(link_num, joint_vel_max);
     model.link_num = link_num;    
+    for(int i = 0; i < model.link_num; ++i)
+    {
+        seg_axis_type[i] = axis_type[i];
+    }
 }
 
 ErrorCode planPathJoint(const Joint &start, 
@@ -199,15 +204,27 @@ ErrorCode planPathJoint(const Joint &start,
     // find max delta joint 
     double delta_joint_start2end;
     double max_delta_joint_start2end = 0;
+    double max_delta_linear_start2end = 0;
     for(i = 0; i < model.link_num; ++i)
     {
         delta_joint_start2end = fabs(end.joint_target[i] - start[i]);
-        if(delta_joint_start2end > max_delta_joint_start2end)
+        if(seg_axis_type[i] == ROTARY_AXIS)
+        {            
+            if(delta_joint_start2end > max_delta_joint_start2end)
+            {
+                max_delta_joint_start2end = delta_joint_start2end;
+            }
+        }
+        else if(seg_axis_type[i] == LINEAR_AXIS)
         {
-            max_delta_joint_start2end = delta_joint_start2end;
+            if(delta_joint_start2end > max_delta_linear_start2end)
+            {
+                max_delta_linear_start2end = delta_joint_start2end;
+            }
         }
     }
-    if(max_delta_joint_start2end < DOUBLE_ACCURACY)
+    if(max_delta_joint_start2end < DOUBLE_ACCURACY
+        && max_delta_linear_start2end < DOUBLE_ACCURACY)
     {
         return PATH_PLANNING_INVALID_TARGET;
     }
@@ -215,7 +232,13 @@ ErrorCode planPathJoint(const Joint &start,
     // init unused data
     path_cache.smooth_in_index = -1;
     // compute interpolation points
-    int path_count_minus_1 = ceil(max_delta_joint_start2end / segment_alg_param.joint_interval);
+    int path_count_joint_minus_1 = ceil(max_delta_joint_start2end / segment_alg_param.joint_interval);
+    int path_count_linear_minus_1 = ceil(max_delta_linear_start2end / segment_alg_param.path_interval);
+    int path_count_minus_1 = (path_count_joint_minus_1 >= path_count_linear_minus_1) ? path_count_joint_minus_1 : path_count_linear_minus_1;
+    if(path_count_minus_1 > (PATH_CACHE_SIZE - 1))
+    {
+        path_count_minus_1 = PATH_CACHE_SIZE - 1;
+    }
     path_cache.cache_length = path_count_minus_1 + 1;
   
     double joint_step_start2end, joint_distance_to_start;
@@ -274,6 +297,10 @@ ErrorCode planPathLine(const PoseEuler &start,
     int path_count_ideal_start2end = ceil(path_length_start2end / segment_alg_param.path_interval);
     int angle_count_ideal_start2end = ceil(angle_start2end / segment_alg_param.angle_interval);
     int max_count_start2end = ((path_count_ideal_start2end >= angle_count_ideal_start2end) ? path_count_ideal_start2end : angle_count_ideal_start2end);
+    if(max_count_start2end > (PATH_CACHE_SIZE - 1))
+    {
+        max_count_start2end = PATH_CACHE_SIZE - 1;
+    }
 
     // find Pout distance to end point
     double point_distance_to_start = 0; // not scaled
@@ -386,6 +413,10 @@ ErrorCode planPathCircle(const PoseEuler &start,
 
     int max_count_start2end = ((circle_angle_count_ideal_start2end >= quatern_angle_count_ideal_start2end) ? 
         circle_angle_count_ideal_start2end : quatern_angle_count_ideal_start2end);
+    if(max_count_start2end > (PATH_CACHE_SIZE - 1))
+    {
+        max_count_start2end = PATH_CACHE_SIZE - 1;
+    }
 
     double uint_vector_n[3];
     getUintVector3(center_position, start.point_, uint_vector_n);
@@ -546,20 +577,34 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     // find max delta joint via2end 
     double delta_joint_via2end;
     double max_delta_joint_via2end = 0;
+    double max_delta_linear_via2end = 0;
     for(i = 0; i < model.link_num; ++i)
     {
         delta_joint_via2end = fabs(end.joint_target[i] - via.joint_target[i]);
-        if(delta_joint_via2end > max_delta_joint_via2end)
+        if(seg_axis_type[i] == ROTARY_AXIS)
+        {            
+            if(delta_joint_via2end > max_delta_joint_via2end)
+            {
+                max_delta_joint_via2end = delta_joint_via2end;
+            }
+        }
+        else if(seg_axis_type[i] == LINEAR_AXIS)
         {
-            max_delta_joint_via2end = delta_joint_via2end;
+            if(delta_joint_via2end > max_delta_linear_via2end)
+            {
+                max_delta_linear_via2end = delta_joint_via2end;
+            }
         }
     }
-    if(max_delta_joint_via2end < DOUBLE_ACCURACY)
+    if(max_delta_joint_via2end < DOUBLE_ACCURACY
+        && max_delta_linear_via2end < DOUBLE_ACCURACY)
     {
         return PATH_PLANNING_INVALID_TARGET;
     }
     // find joint of the in point
-    int path_piece_via2end = ceil(max_delta_joint_via2end / segment_alg_param.joint_interval);
+    int path_piece_joint_via2end = ceil(max_delta_joint_via2end / segment_alg_param.joint_interval);
+    int path_piece_linear_via2end = ceil(max_delta_linear_via2end / segment_alg_param.path_interval);
+    int path_piece_via2end = (path_piece_joint_via2end >= path_piece_linear_via2end) ? path_piece_joint_via2end : path_piece_linear_via2end;
     int path_piece_via2in = floor(via.cnt * path_piece_via2end / 2.0);
     int path_piece_in2end = path_piece_via2end - path_piece_via2in;
     double joint_step_via2end;
@@ -573,19 +618,36 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     // find max piece of start2via
     double delta_joint_start2via;
     double max_delta_joint_start2via = 0;
+    double max_delta_linear_start2via = 0;
     for(i = 0; i < model.link_num; ++i)
     {
         delta_joint_start2via = fabs(start[i] - via.joint_target[i]);
-        if(delta_joint_start2via > max_delta_joint_start2via)
+        if(seg_axis_type[i] == ROTARY_AXIS)
         {
-            max_delta_joint_start2via = delta_joint_start2via;
+            if(delta_joint_start2via > max_delta_joint_start2via)
+            {
+                max_delta_joint_start2via = delta_joint_start2via;
+            }
+        }
+        else if(seg_axis_type[i] == LINEAR_AXIS)
+        {
+            if(delta_joint_start2via > max_delta_linear_start2via)
+            {
+                max_delta_linear_start2via = delta_joint_start2via;
+            }
         }
     }
     if(max_delta_joint_start2via < DOUBLE_ACCURACY)
     {
         max_delta_joint_start2via = 0;
     }
-    int path_piece_start2via = ceil(max_delta_joint_start2via / segment_alg_param.joint_interval);
+    if(max_delta_linear_start2via < DOUBLE_ACCURACY)
+    {
+        max_delta_linear_start2via = 0;
+    }
+    int path_piece_joint_start2via = ceil(max_delta_joint_start2via / segment_alg_param.joint_interval);
+    int path_piece_linear_start2via = ceil(max_delta_linear_start2via / segment_alg_param.path_interval);
+    int path_piece_start2via = (path_piece_joint_start2via >= path_piece_linear_start2via) ? path_piece_joint_start2via : path_piece_linear_start2via;
 
     // find piece of start2in
     path_cache.smooth_in_index = path_piece_start2via + path_piece_via2in;
@@ -874,7 +936,7 @@ ErrorCode planTrajectory(const PathCache &path_cache,
 
     int traj_pva_size, traj_pva_out_index, traj_t_size;
     double cmd_vel = path_cache.target.vel * vel_ratio;   // command velocity
-    int traj_path_cache_index[25];
+    int traj_path_cache_index[25]; 
     switch(path_cache.target.type)
     {
         case MOTION_LINE:
@@ -1244,31 +1306,21 @@ void updateTransitionBSpLineJointResult(int k, double* start_joint, double* mid_
     //S_TmpDouble_1, S_TmpDouble_2 are used in getBaseFunction(), reserve them here
     stack[S_TmpDouble_3] = 1.0 / (result_count + 1);  // interpolation step
     stack[S_TmpDouble_4] = stack[S_TmpDouble_3];   // sum of interpolation step
-    
+    int BSpLineResultBase;
     for(int i = 0; i < result_count; ++i)
     {
         stack[S_BaseFunctionNik0] = getBaseFunction(0, k, stack[S_TmpDouble_4]);
         stack[S_BaseFunctionNik1] = getBaseFunction(1, k, stack[S_TmpDouble_4]);
         stack[S_BaseFunctionNik2] = getBaseFunction(2, k, stack[S_TmpDouble_4]);
 
-        stack[S_BSpLineResultJ1Base + i] = start_joint[0] * stack[S_BaseFunctionNik0]
-                                        + mid_joint[0] * stack[S_BaseFunctionNik1]
-                                        + end_joint[0] * stack[S_BaseFunctionNik2];
-        stack[S_BSpLineResultJ2Base + i] = start_joint[1] * stack[S_BaseFunctionNik0]
-                                        + mid_joint[1] * stack[S_BaseFunctionNik1]
-                                        + end_joint[1] * stack[S_BaseFunctionNik2];
-        stack[S_BSpLineResultJ3Base + i] = start_joint[2] * stack[S_BaseFunctionNik0]
-                                        + mid_joint[2] * stack[S_BaseFunctionNik1]
-                                        + end_joint[2] * stack[S_BaseFunctionNik2];
-        stack[S_BSpLineResultJ4Base + i] = start_joint[3] * stack[S_BaseFunctionNik0]
-                                        + mid_joint[3] * stack[S_BaseFunctionNik1]
-                                        + end_joint[3] * stack[S_BaseFunctionNik2];
-        stack[S_BSpLineResultJ5Base + i] = start_joint[4] * stack[S_BaseFunctionNik0]
-                                        + mid_joint[4] * stack[S_BaseFunctionNik1]
-                                        + end_joint[4] * stack[S_BaseFunctionNik2];  
-        stack[S_BSpLineResultJ6Base + i] = start_joint[5] * stack[S_BaseFunctionNik0]
-                                        + mid_joint[5] * stack[S_BaseFunctionNik1]
-                                        + end_joint[5] * stack[S_BaseFunctionNik2];        
+        BSpLineResultBase = S_BSpLineResultJ1Base;
+        for(int j = 0; j < model.link_num; ++j)
+        {
+            stack[BSpLineResultBase + i] = start_joint[j] * stack[S_BaseFunctionNik0]
+                                        + mid_joint[j] * stack[S_BaseFunctionNik1]
+                                        + end_joint[j] * stack[S_BaseFunctionNik2];
+            BSpLineResultBase += 1000;
+        }      
         stack[S_TmpDouble_4] += stack[S_TmpDouble_3];
     }
 }
@@ -1951,16 +2003,29 @@ inline void updateMovJTrajP(const PathCache& path_cache, int* traj_path_cache_in
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
     // get max delta joint
     double delta_joint_max = 0;
+    double delta_linear_max = 0;
     for(int i = 0; i < model.link_num; ++i)
     {
         stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache_length_minus_1].joint[i] - path_cache.cache[0].joint[i]);
-        if(stack[S_DeltaJointVector + i] > delta_joint_max)
+        if(seg_axis_type[i] == ROTARY_AXIS)
         {
-            delta_joint_max = stack[S_DeltaJointVector + i];
+            if(stack[S_DeltaJointVector + i] > delta_joint_max)
+            {
+                delta_joint_max = stack[S_DeltaJointVector + i];
+            }
+        }
+        else if(seg_axis_type[i] == LINEAR_AXIS)
+        {
+            if(stack[S_DeltaJointVector + i] > delta_linear_max)
+            {
+                delta_linear_max = stack[S_DeltaJointVector + i];
+            }
         }
     }
     // decide traj_pva size & path_index step
-    double traj_piece_ideal_start2end = delta_joint_max * stack[S_PathCountFactorJoint];
+    double traj_piece_ideal_joint_start2end = delta_joint_max * stack[S_PathCountFactorJoint];;
+    double traj_piece_ideal_linear_start2end = delta_linear_max * stack[S_PathCountFactorCartesian];
+    double traj_piece_ideal_start2end = (traj_piece_ideal_joint_start2end >= traj_piece_ideal_linear_start2end) ? traj_piece_ideal_joint_start2end : traj_piece_ideal_linear_start2end;
     if(path_cache.smooth_out_index == -1
         || path_cache.smooth_out_index == path_cache_length_minus_1)
     {
@@ -2032,17 +2097,30 @@ inline void updateMovJVia2InTrajP(const PathCache& path_cache, const MotionTarge
     int i, j;
     // compute max delta joint for via2in
     double delta_joint_max_via2in = 0;
+    double delta_linear_max_via2in = 0;
     for(int i = 0; i < model.link_num; ++i)
     {
         stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - via.joint_target[i]);
-        if(stack[S_DeltaJointVector + i] > delta_joint_max_via2in)
+        if(seg_axis_type[i] == ROTARY_AXIS)
         {
-            delta_joint_max_via2in = stack[S_DeltaJointVector + i];
+            if(stack[S_DeltaJointVector + i] > delta_joint_max_via2in)
+            {
+                delta_joint_max_via2in = stack[S_DeltaJointVector + i];
+            }
+        }
+        else if(seg_axis_type[i] == LINEAR_AXIS)
+        {
+            if(stack[S_DeltaJointVector + i] > delta_linear_max_via2in)
+            {
+                delta_linear_max_via2in = stack[S_DeltaJointVector + i];
+            }
         }
     }    
     
     // decide traj_pva_in_index & length_step & angle_step, fill TrajP via2in if in is not on via
-    double traj_piece_ideal_via2in = delta_joint_max_via2in * stack[S_PathCountFactorJoint];
+    double traj_piece_ideal_joint_via2in = delta_joint_max_via2in * stack[S_PathCountFactorJoint];
+    double traj_piece_ideal_linear_via2in = delta_linear_max_via2in * stack[S_PathCountFactorCartesian];
+    double traj_piece_ideal_via2in = (traj_piece_ideal_joint_via2in >= traj_piece_ideal_linear_via2in) ? traj_piece_ideal_joint_via2in : traj_piece_ideal_linear_via2in;
     if(traj_piece_ideal_via2in < DOUBLE_ACCURACY)
     {
         traj_pva_in_index = 0;        
@@ -2089,15 +2167,28 @@ inline void updateMovJIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_i
     int i, j;
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
     double delta_joint_max_in2end = 0;
+    double delta_linear_max_in2end = 0;
     for(int i = 0; i < model.link_num; ++i)
     {
         stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache_length_minus_1].joint[i] - path_cache.cache[path_cache.smooth_in_index].joint[i]);
-        if(stack[S_DeltaJointVector + i] > delta_joint_max_in2end)
+        if(seg_axis_type[i] == ROTARY_AXIS)
         {
-            delta_joint_max_in2end = stack[S_DeltaJointVector + i];
+            if(stack[S_DeltaJointVector + i] > delta_joint_max_in2end)
+            {
+                delta_joint_max_in2end = stack[S_DeltaJointVector + i];
+            }
+        }
+        else if(seg_axis_type[i] == LINEAR_AXIS)
+        {
+            if(stack[S_DeltaJointVector + i] > delta_linear_max_in2end)
+            {
+                delta_linear_max_in2end = stack[S_DeltaJointVector + i];
+            }
         }
     }    
-    double traj_piece_ideal_in2end = delta_joint_max_in2end * stack[S_PathCountFactorJoint];
+    double traj_piece_ideal_joint_in2end = delta_joint_max_in2end * stack[S_PathCountFactorJoint];
+    double traj_piece_ideal_linear_in2end = delta_linear_max_in2end * stack[S_PathCountFactorCartesian];
+    double traj_piece_ideal_in2end = (traj_piece_ideal_joint_in2end >= traj_piece_ideal_linear_in2end) ? traj_piece_ideal_joint_in2end : traj_piece_ideal_linear_in2end;
     if(path_cache.smooth_out_index == -1
         || path_cache.smooth_out_index == path_cache_length_minus_1)
     {
@@ -2223,7 +2314,7 @@ inline void updateMovJTrajT(const PathCache& path_cache, double cmd_vel,
         for(i = 0; i <traj_t_size; ++i)
         {
             stack[S_TrajT + i] = time_duration_start2end;
-        }
+        }        
     }
     else
     {
@@ -2258,6 +2349,7 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
         case MOTION_JOINT:
         {
             double delta_joint_max_out2in = 0;
+            double delta_linear_max_out2in = 0;
             double delta_joint_out2in;
             int out_path_index;
             if(path_cache.smooth_out_index == -1)
@@ -2272,12 +2364,24 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
             for(int i = 0; i < model.link_num; ++i)
             {
                 delta_joint_out2in = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]);
-                if(delta_joint_out2in > delta_joint_max_out2in)
+                if(seg_axis_type[i] == ROTARY_AXIS)
                 {
-                    delta_joint_max_out2in = delta_joint_out2in;
+                    if(delta_joint_out2in > delta_joint_max_out2in)
+                    {
+                        delta_joint_max_out2in = delta_joint_out2in;
+                    }
                 }
-            }    
-            traj_piece_ideal_out2in = delta_joint_max_out2in * stack[S_PathCountFactorJoint];
+                else if(seg_axis_type[i] == LINEAR_AXIS)
+                {
+                    if(delta_joint_out2in > delta_linear_max_out2in)
+                    {
+                        delta_linear_max_out2in = delta_joint_out2in;
+                    }
+                }
+            }
+            double traj_piece_ideal_joint_out2in = delta_joint_max_out2in * stack[S_PathCountFactorJoint];
+            double traj_piece_ideal_linear_out2in = delta_linear_max_out2in * stack[S_PathCountFactorCartesian];
+            traj_piece_ideal_out2in = (traj_piece_ideal_joint_out2in >= traj_piece_ideal_linear_out2in) ? traj_piece_ideal_joint_out2in : traj_piece_ideal_linear_out2in;
             break;
         }
     }
@@ -2524,8 +2628,16 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
             constraint_joint_neg_acc_address = S_ConstraintJointNegA0;
             for(j = 0; j < model.link_num; ++j)
             {
-                stack[constraint_joint_pos_acc_address + i] = 100;
-                stack[constraint_joint_neg_acc_address + i] = -100;
+                if(seg_axis_type[j] == ROTARY_AXIS)
+                {
+                    stack[constraint_joint_pos_acc_address + i] = 100;
+                    stack[constraint_joint_neg_acc_address + i] = -100;
+                }
+                else if(seg_axis_type[j] == LINEAR_AXIS)
+                {
+                    stack[constraint_joint_pos_acc_address + i] = 1000;
+                    stack[constraint_joint_neg_acc_address + i] = -1000;
+                }
                 constraint_joint_pos_acc_address += 50;
                 constraint_joint_neg_acc_address += 50;
             }

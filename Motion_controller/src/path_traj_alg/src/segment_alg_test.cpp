@@ -1,7 +1,6 @@
 #include "segment_alg.h"
-#include "base_kinematics.h"
 #include "kinematics.h"
-#include "kinematics_rtm.h"
+#include "kinematics_toll.h"
 #include "dynamics_interface.h"
 #include "basic_alg_datatype.h"
 #include <iostream>
@@ -10,13 +9,12 @@
 #include <ctime>
 
 using namespace fst_mc;
-using namespace fst_algorithm;
 using namespace basic_alg;
+using namespace fst_algorithm;
 
 extern double stack[20000];
 extern ComplexAxisGroupModel model;
 extern SegmentAlgParam segment_alg_param;
-
 
 DynamicsInterface dynamics;
 
@@ -34,9 +32,12 @@ void doIK(Kinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
 
 int main(void)
 {
-    //initComplexAxisGroupModel();
-    Kinematics* kinematics_ptr = new KinematicsRTM("null");
-    //double dh_matrix[9][4] = {{0, 0, 365, 0}, {PI/2, 30, 0, PI/2}, {0, 340, 0, 0}, {PI/2, 35, 350, 0}, {-PI/2, 0, 0, 0}, {PI/2, 0, 96.5, 0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
+    DH base_dh;
+
+    DH arm_dh[4];
+
+    
+    Kinematics* kinematics_ptr = new KinematicsToll(base_dh, arm_dh);
     if(!kinematics_ptr->isValid())
     {
         std::cout<<"kinematics init failed"<<std::endl;
@@ -45,11 +46,11 @@ int main(void)
     segment_alg_param.accuracy_cartesian_factor = 1;
     segment_alg_param.accuracy_joint_factor = 6;
     segment_alg_param.max_traj_points_num = 20;
-    segment_alg_param.path_interval = 0.01745 * 2;
+    segment_alg_param.path_interval = 1.0;
     segment_alg_param.joint_interval = 0.01745;//PI * 1 / 180;
     segment_alg_param.angle_interval = 0.01745;//PI * 1 / 180;
     segment_alg_param.angle_valve = 0.8727;//PI * 5 / 180;
-    segment_alg_param.conservative_acc = 10000;
+    segment_alg_param.conservative_acc = 1000;
     segment_alg_param.time_factor_first = 2.5;
     segment_alg_param.time_factor_last = 3;
     segment_alg_param.is_fake_dynamics = true;
@@ -57,12 +58,10 @@ int main(void)
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = &dynamics;
 
-    double joint_vel_max[6] = {5.82, 4.67, 5.82, 7.85, 7.07, 10.55};
-
-    initSegmentAlgParam(&segment_alg_param, 6, joint_vel_max);
+    double joint_vel_max[4] = {1200, 4.67, 5.81, 7.85};
+    AxisType axis_type[9] = {LINEAR_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS};
+    initSegmentAlgParam(&segment_alg_param, 4, axis_type, joint_vel_max);
            
-    
-
     basic_alg::PoseEuler start;
     fst_mc::MotionTarget via;
     fst_mc::MotionTarget target;
@@ -73,38 +72,40 @@ int main(void)
     double acc_ratio = 0.5;
     double vel_ratio = 0.5;
 
-#if 0
-    start_joint.j1 = 0;
-    start_joint.j2 = 0;
-    start_joint.j3 = 0;
-    start_joint.j4 = 0;
-    start_joint.j5 = 0;
-    start_joint.j6 = 0;
+#if 1
+    start_joint.j1_ = 0;
+    start_joint.j2_ = 0;
+    start_joint.j3_ = 0;
+    start_joint.j4_ = 0;
 
-    target.joint_target.j1 = PI / 2;
-    target.joint_target.j2 = PI / 4;
-    target.joint_target.j3 = 0;
-    target.joint_target.j4 = 0;
-    target.joint_target.j5 = 0;
-    target.joint_target.j6 = 0;
-    target.cnt = 0;
-    target.vel = 0.5;
+    target.joint_target.j1_ = 182;
+    target.joint_target.j2_ = -0.22;
+    target.joint_target.j3_ = 1.28;
+    target.joint_target.j4_ = 1.33;
+
+    target.cnt = -1;
+    target.vel = 1;
 
     planPathJoint(start_joint, target, path_cache);
 
-    for(int i = 0; i < path_cache.cache_length; ++i)
+    /*for(int i = 0; i < path_cache.cache_length; ++i)
     {
         std::cout<<" ["<<i<<"] "
-                 <<" J1 = "<<path_cache.cache[i].joint.j1
-                 <<" J2 = "<<path_cache.cache[i].joint.j2
-                 <<" J3 = "<<path_cache.cache[i].joint.j3
-                 <<" J4 = "<<path_cache.cache[i].joint.j4
-                 <<" J5 = "<<path_cache.cache[i].joint.j5
-                 <<" J6 = "<<path_cache.cache[i].joint.j6
-                 <<" PointType = "<<path_cache.cache[i].point_type
-                 <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
+                 <<" J1 = "<<path_cache.cache[i].joint.j1_
+                 <<" J2 = "<<path_cache.cache[i].joint.j2_
+                 <<" J3 = "<<path_cache.cache[i].joint.j3_
+                 <<" J4 = "<<path_cache.cache[i].joint.j4_<<std::endl;
 
-    }
+    }*/
+    memset(&start_state, 0, sizeof(JointState));    
+    path_cache.target.type = MOTION_JOINT;
+    path_cache.target.vel = target.vel;
+    path_cache.target.cnt = target.cnt;
+    planTrajectory(path_cache, start_state, vel_ratio, acc_ratio, traj_cache);
+//std::cout<<"traj_cache.length = "<<traj_cache.cache_length<<std::endl;
+
+
+    printTraj(traj_cache, 0, 0.001, traj_cache.cache_length);
 #endif    
 #if 0
     start.position.x = 0;
@@ -767,7 +768,7 @@ int main(void)
     printTraj(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
 
 #endif
-#if 1
+#if 0
     start_joint[0] = 0.643499;
     start_joint[1] = 0.056281;
     start_joint[2] = -0.979224;
@@ -827,7 +828,7 @@ int main(void)
     }
 
 #endif
-#if 1
+#if 0
     Joint result_joint;
     Joint ref_joint = start_joint;
     for(int i = 0; i < path_cache.cache_length; ++i)

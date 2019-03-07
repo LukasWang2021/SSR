@@ -51,6 +51,20 @@ target_link_libraries(kinematics_alg
     parameter_manager 
 )
 
+add_executable(toll_test
+    test/kinematics_toll_test.cpp
+)
+
+target_link_libraries(toll_test
+    ${catkin_LIBRARIES}
+    basic_alg
+    kinematics_alg
+)
+
+install(TARGETS	toll_test
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(TARGETS kinematics_alg
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )

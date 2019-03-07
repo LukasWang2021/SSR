@@ -234,6 +234,7 @@ void KinematicsToll::doFK(const Joint& joint, TransMatrix& trans_matrix, size_t 
     //trans_matrix.print("3 in KinematicsToll::doFK: last matrix=");
 }
 
+//being called
 bool KinematicsToll::doIK(const PoseEuler& pose_euler, const Posture& posture, Joint& joint, double valve)
 {
     TransMatrix trans_matrix;
@@ -261,6 +262,10 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     trans_matrix_ptr->leftMultiply(matrix_base_inv_, trans_matrix_0to4);
 
     joint.j1_ = trans_matrix_0to4.trans_vector_.z_ - arm_dh_[1].d - arm_dh_[3].d - arm_dh_[0].offset;
+    if (joint.j1_ < 0)
+    {
+        return false;//todo
+    }
 
     // compute q2+q3+q4
     TransMatrix trans_matrix_1to4;//matrix from z1 to z4
@@ -272,9 +277,10 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     double sin_j234 = trans_matrix_1to4.rotation_matrix_.matrix_[1][0];
     double cos_j234 = trans_matrix_1to4.rotation_matrix_.matrix_[0][0];
     double j234 = atan2(sin_j234, cos_j234) - arm_dh_[1].offset - arm_dh_[2].offset - arm_dh_[3].offset;
+    printf("j234=%f\n",j234);
 
     //the 2nd version kinematics-20190222
-    //compute x4,y4
+/*    //compute x4,y4
     double x4 = trans_matrix_1to4.trans_vector_.x_;
     double y4 = trans_matrix_1to4.trans_vector_.y_;
 
@@ -297,26 +303,31 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     double x2 = x3 - arm_dh_[2].a * sin(beta);
     double y2 = y3 - arm_dh_[2].a * cos(beta);
 
+    printf("x2=%f,y2=%f,x3=%f, y3=%f, x4=%f,y4=%f\n",x2,y2,x3,y3,x4,y4);
+
     //compute q2
     Point v1, v2; 
     v1.x_ = 1; 
     v1.y_ = 0; 
     v1.z_ = 0;
     double norm = sqrt(x2 * x2 + y2 * y2);
-    v2.x_ = x2 / norm;
+    v2.x_ = (x2 - v1.x_) / norm;
     v2.y_ = y2 / norm;
     v2.z_ = 0;
     double cos_j2 = v1.dotProduct(v2);
+
     if(cos_j2 < -1 || cos_j2 > 1)
     {
         return false;
     }
-    double sin_j2 = sqrt(1 - cos_j2 * cos_j2);
+    double sin_j2 = sqrt(1 - cos_j2 * cos_j2); 
     joint.j2_ = atan2(sin_j2, cos_j2);
+    printf("cos_j2=%f, sin_j2=%f, joint.j2_=%f\n",cos_j2, sin_j2, joint.j2_);
     if (posture.arm == -1)
     {
         joint.j2_ = - joint.j2_;
-    }
+    } 
+    printf("joint.j2__=%f\n",joint.j2_);
 
     //compute q3
     Point v3; 
@@ -331,11 +342,13 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     }
     double sin_j3 = sqrt(1 - cos_j3 * cos_j3);
     joint.j3_ = atan2(sin_j3, cos_j3);
+    printf("cos_j3=%f, sin_j3=%f, joint.j3_=%f\n",cos_j3, sin_j3, joint.j3_);
     if (posture.elbow == -1)
     {
         joint.j3_ = - joint.j3_;
     }
-  
+    printf("joint.j3__=%f\n",joint.j3_);
+
     //compute q4
     Point v4; 
     norm = sqrt((x4 - x3) * (x4 - x3) + (y4 - y3) * (y4 - y3));
@@ -349,12 +362,15 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     }
     double sin_j4 = sqrt(1 - cos_j4 * cos_j4);
     joint.j4_ = atan2(sin_j4, cos_j4);
+    printf("cos_j4=%f, sin_j4=%f, joint.j4_=%f\n",cos_j4, sin_j4, joint.j4_);
     if (posture.wrist == -1)
     {
         joint.j4_ = - joint.j4_;
     }
+    printf("joint.j4__=%f\n",joint.j4_);
+    */
 
-/*  the 1st version kinematics-20190215
+//  the 1st version kinematics-20190215
 
     // compute q3
     double x4 = trans_matrix_1to4.trans_vector_.x_;
@@ -393,10 +409,12 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     // compute q1
     joint.j4_ = j234 - joint.j2_ - joint.j3_;
     scaleResultJoint(joint.j4_); 
-*/
+
     return true;
 }
 
+
+//being called.
 bool KinematicsToll::doIK(const PoseEuler& pose_euler, const Joint& ref_joint, Joint& joint, double valve)
 {
     Posture posture = getPostureByJoint(ref_joint);
@@ -437,7 +455,17 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
 Posture KinematicsToll::getPostureByJoint(const Joint& joint, double valve)
 {
     Posture posture;
+
+    if (joint.j3_ >= 0)
+    {
+        posture.arm = 1;
+    }
+    else 
+    {
+        posture.arm = -1;
+    }
  
+ /* 2nd version
     if (joint.j2_ >= 0)
     {
         posture.arm = 1;
@@ -464,7 +492,7 @@ Posture KinematicsToll::getPostureByJoint(const Joint& joint, double valve)
     {
         posture.wrist = -1;
     }
-
+*/
     return posture;
 }
 
@@ -482,9 +510,11 @@ inline void KinematicsToll::scaleResultJoint(double& angle)
 
 inline bool KinematicsToll::isPostureValid(const Posture& posture)
 {
-    if((posture.arm != 1 && posture.arm != -1)
-        || (posture.elbow != 1 && posture.elbow != -1)
-        || (posture.wrist != 1 && posture.wrist != -1))
+    //2nd version
+    //if((posture.arm != 1 && posture.arm != -1)
+    //    || (posture.elbow != 1 && posture.elbow != -1)
+    //    || (posture.wrist != 1 && posture.wrist != -1))
+    if (posture.arm != 1 && posture.arm != -1)
     {
         return false;
     }

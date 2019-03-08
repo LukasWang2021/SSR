@@ -37,8 +37,8 @@ set(catkin_LIBRARYS_CROSS
 		${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libxml2.so
 		${CROSS_ROOT}/usr/local/lib/arm-linux-gnueabihf/libnanomsg.so
                 #${CROSS_ROOT}/usr/local/lib/libarchive.so                     #for system_manager
-                #${CROSS_ROOT}/lib/arm-linux-gnueabihf/libbz2.so.1.0           #for system_manager
-                #${CROSS_ROOT}/lib/arm-linux-gnueabihf/libcrypto.so.1.0.0      #for system_manager
+                #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libbz2.so           #for system_manager
+                #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libcrypto.so        #for system_manager
                 #${CROSS_ROOT}/usr/local/lib/libcurl.so                        #for log_service
                 #${CROSS_ROOT}/lib/arm-linux-gnueabihf/libssl.so.1.0.0         #for log_service
                 #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libgcrypt.so        #for log_service

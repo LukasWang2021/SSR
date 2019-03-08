@@ -16,7 +16,7 @@ extern fst_base::InterpreterServer* g_objInterpreterServer ;
 #define REGSITER_NAMES   "pr;sr;r;mr;mi;mh;uf;tf;pl"
 
 
-void load_register_data();
+bool load_register_data();
 
 /**********************
  ********* PR *********

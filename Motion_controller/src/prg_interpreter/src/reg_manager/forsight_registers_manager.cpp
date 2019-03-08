@@ -2919,3 +2919,32 @@ int forgesight_registers_manager_jointToCart(Joint joint, PoseEuler &pos)
 	return forgesight_registers_manager_jointToCart(joint, pos);
 }
 
+int forgesight_registers_manager_get_resource(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, key_variable keyVar, eval_value * value)
+{
+	if((keyVar.key_type == KEYTYPE_CHAR)
+		||(keyVar.key_type == KEYTYPE_INT16)
+		||(keyVar.key_type == KEYTYPE_INT32)
+		||(keyVar.key_type == KEYTYPE_INT64)
+		||(keyVar.key_type == KEYTYPE_DOUBLE))
+	{
+		value->setFloatValue(1.0);
+	}
+	else if(keyVar.key_type == KEYTYPE_BYTEARRAY)
+	{
+		std::string strVal = string("TEST KEYTYPE_BYTEARRAY");
+		value->setStringValue(strVal);
+	}
+	return 0;
+}
+
+int forgesight_registers_manager_set_resource(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, key_variable keyVar, eval_value * value)
+{
+	return 0;
+}
+
+
+

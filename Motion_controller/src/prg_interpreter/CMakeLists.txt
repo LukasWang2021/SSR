@@ -93,6 +93,7 @@ add_executable(prg_interpreter
     src/forsight_cJSON.cpp
     src/launch_code_mgr.cpp
     src/forsight_home_pose.cpp
+    src/forsight_external_resource.cpp
 #   src/io_interface.cpp
 )
 
@@ -126,6 +127,10 @@ install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_version
 )
 
 install(FILES config/programs_path.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
+)
+
+install(FILES config/user_defined_variable.xml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/configuration/machine
 )
 

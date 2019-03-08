@@ -65,10 +65,9 @@ static int get_num_token(char * src, char * dst)
 	Input:			NULL
 	Return: 		1 - success
 *************************************************/
-void load_register_data()
+bool load_register_data()
 {
 #ifndef WIN32
-
 	g_process_comm_ptr = fst_base::ProcessComm::getInstance();
     if(fst_base::ProcessComm::getInitErrorCode() != SUCCESS)
     {
@@ -97,9 +96,8 @@ void load_register_data()
 	usleep(10);
 	memset(&g_interpreter_publish, 0x00, sizeof(InterpreterPublish));
 	g_objInterpreterServer->addPublishTask(300, &g_interpreter_publish);
-
 #endif
-
+	return true ;
 }
 
 /************************************************* 

@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<prog>
+<KeyWord>
+		<KeyName>A</KeyName>
+		<BaseAddress>0x1000000</BaseAddress>
+		<Type>Double</Type>
+		<ByteSize>8</ByteSize>
+</KeyWord>
+<KeyWord>
+		<KeyName>MA</KeyName>
+		<BaseAddress>0x1100000</BaseAddress>
+		<Type>Int32</Type>
+		<ByteSize>4</ByteSize>
+</KeyWord>
+<KeyWord>
+		<KeyName>PA</KeyName>
+		<BaseAddress>0x1200000</BaseAddress>
+		<Type>ByteArray</Type>
+		<ByteSize>100</ByteSize>
+</KeyWord>
+</prog>

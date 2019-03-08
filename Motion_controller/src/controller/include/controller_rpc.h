@@ -329,6 +329,10 @@ private:
     void handleRpc0x0000B640(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getPrismaticManualStep"
     void handleRpc0x0000FCE0(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setJointManualStep"	
+    void handleRpc0x00018470(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getJointManualStep"	
+    void handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/setCartesianManualStep"
     void handleRpc0x0000A420(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/motion_control/axis_group/getCartesianManualStep"

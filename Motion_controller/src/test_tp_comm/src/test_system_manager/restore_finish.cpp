@@ -24,11 +24,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    if (argc <= 3)
-    {
-        printf("Two parameter is needed: user_port and port_value\n");
-        return -1;
-    }
+  
     TpCommTest test;
     if (!test.initRpcSocket())
     {

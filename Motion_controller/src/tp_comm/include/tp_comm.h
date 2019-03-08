@@ -306,6 +306,10 @@ private:
     void handleRequest0x00012404(int recv_bytes);
     /********rpc/motion_control/getPostureByJoint, RequestMessageType_Int32_DoubleList(DoubleList_count=9)**********/
     void handleRequest0x0000EC64(int recv_bytes);
+    /********rpc/motion_control/axis_group/setJointManualStep, RequestMessageType_Int32_DoubleList(DoubleList_count=9)**********/
+    void handleRequest0x00018470(int recv_bytes);
+    /********rpc/motion_control/axis_group/getJointManualStep, RequestMessageType_Int32**********/
+    void handleRequest0x00006D10(int recv_bytes);
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);
@@ -740,6 +744,10 @@ private:
     void handleResponse0x00016D20(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/setSingleZeroPointOffset, ResponseMessageType_Uint64**********/
     void handleResponse0x00012404(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/setJointManualStep, ResponseMessageType_Uint64**********/
+    void handleResponse0x00018470(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getJointManualStep, ResponseMessageType_Uint64_DoubleList(DoubleList_count=9)**********/
+    void handleResponse0x00006D10(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

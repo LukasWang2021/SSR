@@ -268,11 +268,11 @@ ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
     }
 }
 
-double BaseGroup::getManualStepAxis(void)
+void BaseGroup::getManualStepAxis(double *steps)
 {
-    double step = manual_teach_.getManualStepAxis();
-    FST_INFO("Get manual step axis = %.6f", step);
-    return step;
+    char buffer[LOG_TEXT_SIZE];
+    manual_teach_.getManualStepAxis(steps);
+    FST_INFO("Get manual step axis = %s", printDBLine(steps, buffer, LOG_TEXT_SIZE));
 }
 
 double BaseGroup::getManualStepPosition(void)
@@ -289,7 +289,7 @@ double BaseGroup::getManualStepOrientation(void)
     return step;
 }
 
-ErrorCode BaseGroup::setManualStepAxis(double *steps)
+ErrorCode BaseGroup::setManualStepAxis(const double *steps)
 {
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Set manual steps for axis = %s", printDBLine(steps, buffer, LOG_TEXT_SIZE));

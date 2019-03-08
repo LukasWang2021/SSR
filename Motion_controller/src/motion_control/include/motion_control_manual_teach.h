@@ -29,12 +29,12 @@ public:
     ErrorCode init(basic_alg::Kinematics *kinematics_ptr, Constraint *pcons, fst_log::Logger *plog, const std::string &config_file);
     double getGlobalVelRatio(void);
     double getGlobalAccRatio(void);
-    double getManualStepAxis(void);
+    void getManualStepAxis(double *steps);
     double getManualStepPosition(void);
     double getManualStepOrientation(void);
     ErrorCode setGlobalVelRatio(double ratio);
     ErrorCode setGlobalAccRatio(double ratio);
-    ErrorCode setManualStepAxis(double *steps);
+    ErrorCode setManualStepAxis(const double *steps);
     ErrorCode setManualStepPosition(double step);
     ErrorCode setManualStepOrientation(double step);
 

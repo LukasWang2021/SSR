@@ -86,10 +86,10 @@ class BaseGroup
     // Manual teach APIs:
     virtual ManualFrame getManualFrame(void);
     virtual ErrorCode setManualFrame(ManualFrame frame);
-    virtual double getManualStepAxis(void);
+    virtual void getManualStepAxis(double *steps);
     virtual double getManualStepPosition(void);
     virtual double getManualStepOrientation(void);
-    virtual ErrorCode setManualStepAxis(double *steps);
+    virtual ErrorCode setManualStepAxis(const double *steps);
     virtual ErrorCode setManualStepPosition(double step);
     virtual ErrorCode setManualStepOrientation(double step);
     virtual ErrorCode manualMoveStep(const ManualDirection *direction);

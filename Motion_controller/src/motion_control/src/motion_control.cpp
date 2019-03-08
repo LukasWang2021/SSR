@@ -236,15 +236,9 @@ ErrorCode MotionControl::setManualFrame(ManualFrame frame)
 }
 
 
-double MotionControl::getRotateManualStep(void)
+void MotionControl::getAxisManualStep(double (&steps)[NUM_OF_JOINT])
 {
-    return group_ptr_->getManualStepAxis();
-}
-
-double MotionControl::getPrismaticManualStep(void)
-{
-    // TODO
-    return 0;
+    group_ptr_->getManualStepAxis(steps);
 }
 
 double MotionControl::getPositionManualStep(void)
@@ -260,12 +254,6 @@ double MotionControl::getOrientationManualStep(void)
 ErrorCode MotionControl::setAxisManualStep(const double (&steps)[NUM_OF_JOINT])
 {
     return group_ptr_->setManualStepAxis(steps);
-}
-
-ErrorCode MotionControl::setPrismaticManualStep(double step)
-{
-    // TODO
-    return SUCCESS;
 }
 
 ErrorCode MotionControl::setPositionManualStep(double step)

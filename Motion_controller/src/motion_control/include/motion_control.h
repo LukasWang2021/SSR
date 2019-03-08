@@ -33,12 +33,10 @@ public:
     // API for teaching
     ManualFrame getManualFrame(void);
     ErrorCode setManualFrame(ManualFrame frame);
-    double getRotateManualStep(void);
-    double getPrismaticManualStep(void);
+    void getAxisManualStep(double (&steps)[NUM_OF_JOINT]);
     double getPositionManualStep(void);
     double getOrientationManualStep(void);
     ErrorCode setAxisManualStep(const double (&steps)[NUM_OF_JOINT]);
-    ErrorCode setPrismaticManualStep(double step);
     ErrorCode setPositionManualStep(double step);
     ErrorCode setOrientationManualStep(double step);
 

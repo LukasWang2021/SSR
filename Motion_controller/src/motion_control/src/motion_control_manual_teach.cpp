@@ -149,10 +149,12 @@ double ManualTeach::getGlobalAccRatio(void)
     return acc_ratio_;
 }
 
-double ManualTeach::getManualStepAxis(void)
+void ManualTeach::getManualStepAxis(double *steps)
 {
-    // FIXME
-    return step_axis_[0];
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        steps[i] = step_axis_[i];
+    }
 }
 
 double ManualTeach::getManualStepPosition(void)
@@ -177,7 +179,7 @@ ErrorCode ManualTeach::setGlobalAccRatio(double ratio)
     return SUCCESS;
 }
 
-ErrorCode ManualTeach::setManualStepAxis(double *steps)
+ErrorCode ManualTeach::setManualStepAxis(const double *steps)
 {
     vector<double> data;
 

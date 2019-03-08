@@ -5,11 +5,11 @@ hr_reg_file_name: hr_reg.yaml
 mr_reg_file_name: mr_reg.yaml
 sr_reg_file_name: sr_reg.yaml
 r_reg_file_name: r_reg.yaml
-pr_reg_number: 10
+pr_reg_number: 30
 hr_reg_number: 10
-mr_reg_number: 10
+mr_reg_number: 30
 sr_reg_number: 10
-r_reg_number: 10
+r_reg_number: 30
 pr_value_limit: 99999999.999
 hr_value_limit: 99999999.999
 mr_value_limit: 99999999 

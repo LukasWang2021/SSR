@@ -1185,7 +1185,7 @@ void ControllerRpc::handleRpc0x00006D10(void* request_data_ptr, void* response_d
     //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
     double steps[NUM_OF_JOINT] = {0};
-    //rs_data_ptr->error_code.data = motion_control_ptr_->getAxisManualStep(steps);
+    motion_control_ptr_->getAxisManualStep(steps);
     rs_data_ptr->data.data_count = motion_control_ptr_->getNumberOfAxis();
     rs_data_ptr->data.data[0] = steps[0];
     rs_data_ptr->data.data[1] = steps[1];
@@ -1196,8 +1196,9 @@ void ControllerRpc::handleRpc0x00006D10(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data[6] = steps[6];
     rs_data_ptr->data.data[7] = steps[7];
     rs_data_ptr->data.data[8] = steps[8];
+    rs_data_ptr->error_code.data = SUCCESS;
 
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/getJointManualStep"));
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getJointManualStep"));
 }
 
 // "/rpc/motion_control/axis_group/setCartesianManualStep"

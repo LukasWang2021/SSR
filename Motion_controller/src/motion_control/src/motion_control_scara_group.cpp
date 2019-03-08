@@ -467,7 +467,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
-    initSegmentAlgParam(&seg_param, JOINT_OF_SCARA, omega);
+    initSegmentAlgParam(&seg_param, JOINT_OF_SCARA, type_of_axis_, omega);
 
     return SUCCESS;
 }

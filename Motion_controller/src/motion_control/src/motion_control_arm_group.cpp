@@ -468,7 +468,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     }
 
     
-    initSegmentAlgParam(&seg_param, JOINT_OF_ARM, omega);
+    initSegmentAlgParam(&seg_param, JOINT_OF_ARM, type_of_axis_, omega);
 
     return SUCCESS;
 }

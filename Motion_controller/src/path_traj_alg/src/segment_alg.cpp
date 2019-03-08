@@ -596,6 +596,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
             }
         }
     }
+   
     if(max_delta_joint_via2end < DOUBLE_ACCURACY
         && max_delta_linear_via2end < DOUBLE_ACCURACY)
     {
@@ -609,6 +610,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     {
         path_piece_via2end = (int)(PATH_CACHE_SIZE*0.8);
     }
+    
     int path_piece_via2in = floor(via.cnt * path_piece_via2end / 2.0);
     int path_piece_in2end = path_piece_via2end - path_piece_via2in;
     double joint_step_via2end;
@@ -616,7 +618,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     for(i = 0; i < model.link_num; ++i)
     {
         joint_step_via2end = (end.joint_target[i] - via.joint_target[i]) /  path_piece_via2end;
-        joint_in[i] = start[i] + joint_step_via2end * path_piece_via2in;
+        joint_in[i] = via.joint_target[i] + joint_step_via2end * path_piece_via2in;
     }
 
     // find max piece of start2via
@@ -652,7 +654,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     int path_piece_joint_start2via = ceil(max_delta_joint_start2via / segment_alg_param.joint_interval);
     int path_piece_linear_start2via = ceil(max_delta_linear_start2via / segment_alg_param.path_interval);
     int path_piece_start2via = (path_piece_joint_start2via >= path_piece_linear_start2via) ? path_piece_joint_start2via : path_piece_linear_start2via;
-    
+   
     // find piece of start2in
     path_cache.smooth_in_index = path_piece_start2via + path_piece_via2in;
     if(path_cache.smooth_in_index > (PATH_CACHE_SIZE*0.2))
@@ -668,6 +670,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         mid_joint[i] = via.joint_target[i];
         end_joint[i] = joint_in[i];
     }
+
     updateTransitionBSpLineJointResult(2, start_joint, mid_joint, end_joint, path_cache.smooth_in_index);
     path_cache.cache[0].joint = start;
     packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[0]);
@@ -2498,7 +2501,7 @@ inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const MotionTarg
             time_span_via2end_max = time_span_via2end;
         }
     }
-
+ 
     // compute time duration for each traj piece, via2in
     double delta_joint_via2in_max = fabs(path_cache.cache[path_cache.smooth_in_index].joint[delta_joint_max_id] - via.joint_target[delta_joint_max_id]);
     double time_span_via2in = delta_joint_via2in_max * time_span_via2end_max / delta_joint_via2end_max;

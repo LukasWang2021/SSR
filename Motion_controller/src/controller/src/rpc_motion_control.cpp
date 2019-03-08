@@ -88,32 +88,32 @@ void ControllerRpc::handleRpc0x00010F54(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64_AxisGroupInfoList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_AxisGroupInfoList*>(response_data_ptr);
 
+    std::string model_name = motion_control_ptr_->getModelName();
+    size_t num = motion_control_ptr_->getNumberOfAxis();
+    AxisType type[9] = {0};
+    motion_control_ptr_->getTypeOfAxis(&type[0]);
+
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.info_list_count = 1;
     rs_data_ptr->data.info_list[0].group_id = 1;
     rs_data_ptr->data.info_list[0].group_type = 0;
-    strncpy(&rs_data_ptr->data.info_list[0].group_name[0], "rtman", 31);
+    strncpy(&rs_data_ptr->data.info_list[0].group_name[0], model_name.c_str(), 31);//model name
     rs_data_ptr->data.info_list[0].group_name[31] = 0;
-    rs_data_ptr->data.info_list[0].axis_number = 6;
+    rs_data_ptr->data.info_list[0].axis_number = num;//axis number
     rs_data_ptr->data.info_list[0].axis_info_list_count = 9;
-    rs_data_ptr->data.info_list[0].axis_info_list[0].axis_id = 1;
-    rs_data_ptr->data.info_list[0].axis_info_list[0].axis_type = 0;
-    rs_data_ptr->data.info_list[0].axis_info_list[1].axis_id = 2;
-    rs_data_ptr->data.info_list[0].axis_info_list[1].axis_type = 0;
-    rs_data_ptr->data.info_list[0].axis_info_list[2].axis_id = 3;
-    rs_data_ptr->data.info_list[0].axis_info_list[2].axis_type = 0;
-    rs_data_ptr->data.info_list[0].axis_info_list[3].axis_id = 4;
-    rs_data_ptr->data.info_list[0].axis_info_list[3].axis_type = 0;
-    rs_data_ptr->data.info_list[0].axis_info_list[4].axis_id = 5;
-    rs_data_ptr->data.info_list[0].axis_info_list[4].axis_type = 0;
-    rs_data_ptr->data.info_list[0].axis_info_list[5].axis_id = 6;
-    rs_data_ptr->data.info_list[0].axis_info_list[5].axis_type = 0;
-    rs_data_ptr->data.info_list[0].axis_info_list[6].axis_id = -1;
-    rs_data_ptr->data.info_list[0].axis_info_list[6].axis_type = -1;
-    rs_data_ptr->data.info_list[0].axis_info_list[7].axis_id = -1;
-    rs_data_ptr->data.info_list[0].axis_info_list[7].axis_type = -1;
-    rs_data_ptr->data.info_list[0].axis_info_list[8].axis_id = -1;
-    rs_data_ptr->data.info_list[0].axis_info_list[8].axis_type = -1;    
+
+    int index = 0;
+    for (index = 0; index < num; ++index)
+    {
+        rs_data_ptr->data.info_list[0].axis_info_list[index].axis_id = index + 1;
+        rs_data_ptr->data.info_list[0].axis_info_list[index].axis_type = type[index];
+    }
+    for (index; index < 9; ++index)
+    {
+        rs_data_ptr->data.info_list[0].axis_info_list[index].axis_id = -1;
+        rs_data_ptr->data.info_list[0].axis_info_list[index].axis_type = -1;
+    }
+
 }
 
 // "/rpc/motion_control/axis_group/doStepManualMove"

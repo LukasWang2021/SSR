@@ -87,12 +87,13 @@ int main()
         cout << "Reply : msg.data.data.info_list[i].axis_number" << recv_msg.data.info_list[i].axis_number << endl;
         cout << "Reply : msg.data.data.info_list[i].axis_info_list_count" << recv_msg.data.info_list[i].axis_info_list_count << endl;
         
-        for (int i = 0; i != recv_msg.data.info_list[i].axis_info_list_count; ++i)
+        for (int j = 0; j != recv_msg.data.info_list[i].axis_info_list_count; ++j)
         {
-            cout << "Reply : msg.data.data.info_list[i].axis_info_list[i].axis_id" << recv_msg.data.info_list[i].axis_info_list[i].axis_id<< endl;
-            cout << "Reply : msg.data.data.info_list[i].axis_info_list[i].axis_type" << recv_msg.data.info_list[i].axis_info_list[i].axis_type<< endl;
+            cout << "Reply : msg.data.data.info_list[i].axis_info_list[i].axis_id" << recv_msg.data.info_list[0].axis_info_list[j].axis_id<< endl;
+            cout << "Reply : msg.data.data.info_list[i].axis_info_list[i].axis_type" << recv_msg.data.info_list[0].axis_info_list[j].axis_type<< endl;
         }
     }
+
 
     usleep(200000);
 

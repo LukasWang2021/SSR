@@ -487,7 +487,7 @@ extern double stack[20000];
 extern fst_mc::AxisType seg_axis_type[9];
 /***********************************************************************************************/
 //void initComplexAxisGroupModel();
-void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, fst_mc::AxisType axis_type[9], double joint_vel_max[9]);
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, fst_mc::AxisType axis_type[NUM_OF_JOINT], double joint_vel_max[NUM_OF_JOINT]);
 
 ErrorCode planPathJoint(const basic_alg::Joint &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
 ErrorCode planPathLine(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);

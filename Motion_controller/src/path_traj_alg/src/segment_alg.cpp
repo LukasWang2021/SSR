@@ -171,7 +171,7 @@ void initStack(int link_num, double joint_vel_max[9])
     }
 }
 
-void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, fst_mc::AxisType axis_type[9], double joint_vel_max[9])
+void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, fst_mc::AxisType axis_type[NUM_OF_JOINT], double joint_vel_max[NUM_OF_JOINT])
 {
     segment_alg_param.accuracy_cartesian_factor = segment_alg_param_ptr->accuracy_cartesian_factor;
     segment_alg_param.accuracy_joint_factor = segment_alg_param_ptr->accuracy_joint_factor;
@@ -605,6 +605,10 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     int path_piece_joint_via2end = ceil(max_delta_joint_via2end / segment_alg_param.joint_interval);
     int path_piece_linear_via2end = ceil(max_delta_linear_via2end / segment_alg_param.path_interval);
     int path_piece_via2end = (path_piece_joint_via2end >= path_piece_linear_via2end) ? path_piece_joint_via2end : path_piece_linear_via2end;
+    if(path_piece_via2end > (PATH_CACHE_SIZE*0.8))
+    {
+        path_piece_via2end = (int)(PATH_CACHE_SIZE*0.8);
+    }
     int path_piece_via2in = floor(via.cnt * path_piece_via2end / 2.0);
     int path_piece_in2end = path_piece_via2end - path_piece_via2in;
     double joint_step_via2end;
@@ -648,9 +652,13 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     int path_piece_joint_start2via = ceil(max_delta_joint_start2via / segment_alg_param.joint_interval);
     int path_piece_linear_start2via = ceil(max_delta_linear_start2via / segment_alg_param.path_interval);
     int path_piece_start2via = (path_piece_joint_start2via >= path_piece_linear_start2via) ? path_piece_joint_start2via : path_piece_linear_start2via;
-
+    
     // find piece of start2in
     path_cache.smooth_in_index = path_piece_start2via + path_piece_via2in;
+    if(path_cache.smooth_in_index > (PATH_CACHE_SIZE*0.2))
+    {
+        path_cache.smooth_in_index = (int)(PATH_CACHE_SIZE*0.2);
+    }
 
     // compute path start2in
     double start_joint[9], mid_joint[9], end_joint[9];
@@ -759,6 +767,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     int path_count_start2via = (path_count_ideal_start2via > angle_count_ideal_start2via ? path_count_ideal_start2via : angle_count_ideal_start2via);
     int path_count_via2in = (path_count_ideal_via2in > angle_count_ideal_via2in ? path_count_ideal_via2in : angle_count_ideal_via2in);
     int path_count_transition = path_count_start2via + path_count_via2in;
+    if(path_count_transition > (PATH_CACHE_SIZE * 0.2))
+    {
+        path_count_transition = (int)(PATH_CACHE_SIZE * 0.2) - 1;
+    }    
     path_cache.smooth_in_index = path_count_transition;
 
     // determine transition angle step
@@ -805,7 +817,15 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
 
         // determine path count
         int path_count_in2out = (path_count_ideal_in2out > angle_count_ideal_in2out ? path_count_ideal_in2out : angle_count_ideal_in2out);
+        if(path_count_in2out > (PATH_CACHE_SIZE*0.6))
+        {
+            path_count_in2out = (int)(PATH_CACHE_SIZE*0.6);
+        }
         int path_count_out2target = (path_count_ideal_out2target > angle_count_ideal_out2target ? path_count_ideal_out2target : angle_count_ideal_out2target);
+        if(path_count_out2target > (PATH_CACHE_SIZE*0.2))
+        {
+            path_count_out2target = (int)(PATH_CACHE_SIZE*0.2);
+        }
         path_cache.smooth_out_index = path_cache.smooth_in_index + path_count_in2out;
         int path_cache_length_minus_1 = path_count_transition + path_count_in2out + path_count_out2target;
         path_cache.cache_length = path_cache_length_minus_1 + 1;
@@ -866,6 +886,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         int path_count_ideal_in2target = ceil(path_length_in2target / segment_alg_param.path_interval);
         int angle_count_ideal_in2target = ceil(angle_in2target / segment_alg_param.angle_interval);
         int path_count_in2target = (path_count_ideal_in2target > angle_count_ideal_in2target ? path_count_ideal_in2target : angle_count_ideal_in2target);
+        if(path_count_in2target > (PATH_CACHE_SIZE*0.8))
+        {
+            path_count_in2target = (int)(PATH_CACHE_SIZE*0.8);
+        }
         int path_cache_length_minus_1 = path_count_transition + path_count_in2target;
         path_cache.cache_length = path_cache_length_minus_1 + 1;       
         double path_step_in2target = path_length_in2target / path_count_in2target;

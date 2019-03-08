@@ -297,9 +297,9 @@ ErrorCode planPathLine(const PoseEuler &start,
     int path_count_ideal_start2end = ceil(path_length_start2end / segment_alg_param.path_interval);
     int angle_count_ideal_start2end = ceil(angle_start2end / segment_alg_param.angle_interval);
     int max_count_start2end = ((path_count_ideal_start2end >= angle_count_ideal_start2end) ? path_count_ideal_start2end : angle_count_ideal_start2end);
-    if(max_count_start2end > (PATH_CACHE_SIZE - 1))
+    if(max_count_start2end > (PATH_CACHE_SIZE - 2))
     {
-        max_count_start2end = PATH_CACHE_SIZE - 1;
+        max_count_start2end = PATH_CACHE_SIZE - 2;
     }
 
     // find Pout distance to end point

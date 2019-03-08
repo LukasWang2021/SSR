@@ -363,6 +363,16 @@ target_link_libraries(manual_stop_do ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} t
 install(TARGETS manual_stop_do RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
 
 ######### for test motion control #########
+add_executable(manual_joint_step_get ${SRC_LIST} src/test_motion_control/axis_group/manual_joint_step_get.cpp)
+target_link_libraries(manual_joint_step_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS manual_joint_step_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+
+######### for test motion control #########
+add_executable(manual_joint_step_set ${SRC_LIST} src/test_motion_control/axis_group/manual_joint_step_set.cpp)
+target_link_libraries(manual_joint_step_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS manual_joint_step_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+
+######### for test motion control #########
 add_executable(global_vel_ratio_get ${SRC_LIST} src/test_motion_control/global_vel_ratio_get.cpp)
 target_link_libraries(global_vel_ratio_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS global_vel_ratio_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control)

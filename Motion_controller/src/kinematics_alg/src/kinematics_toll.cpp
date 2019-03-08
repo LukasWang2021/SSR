@@ -34,15 +34,14 @@ KinematicsToll::KinematicsToll(DH& base_dh, DH arm_dh[4], bool is_left):
     if(is_left)
     {
         posture_.arm = -1;
-        posture_.elbow = -1;
-        posture_.wrist = -1;
     }
     else
     {
         posture_.arm = 1;
-        posture_.elbow = 1;
-        posture_.wrist = 1;
     }
+    posture_.elbow = 0;
+    posture_.wrist = 0;
+    posture_.flip = 0;
     is_valid_ = true;
 }
 
@@ -78,15 +77,14 @@ KinematicsToll::KinematicsToll(std::string file_path, bool is_left)
             if(is_left)
             {
                 posture_.arm = -1;
-                posture_.elbow = -1;
-                posture_.wrist = -1;
             }
             else
             {
                 posture_.arm = 1;
-                posture_.elbow = 1;
-                posture_.wrist = 1;
             }
+            posture_.elbow = 0;
+            posture_.wrist = 0;
+            posture_.flip = 0;
             is_valid_ = true;          
         }
         else
@@ -454,7 +452,7 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
 
 Posture KinematicsToll::getPostureByJoint(const Joint& joint, double valve)
 {
-    Posture posture;
+    Posture posture = posture_;
 
     if (joint.j3_ >= 0)
     {

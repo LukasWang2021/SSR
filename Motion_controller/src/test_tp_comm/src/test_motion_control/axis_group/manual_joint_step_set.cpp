@@ -41,10 +41,10 @@ int main()
     msg.property.authority = Comm_Authority_TP;
     msg.data1.data = 1;
     msg.data2.data_count = 4;
-    msg.data2.data[0] = 1;
-    msg.data2.data[1] = 2;
-    msg.data2.data[2] = 3;
-    msg.data2.data[3] = 4;
+    msg.data2.data[0] = 0.1;
+    msg.data2.data[1] = 0.1;
+    msg.data2.data[2] = 0.1;
+    msg.data2.data[3] = 0.1;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_DoubleList_fields, buf, buf_size))
     {

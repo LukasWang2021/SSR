@@ -1107,16 +1107,18 @@ void ControllerRpc::handleRpc0x000092B4(void* request_data_ptr, void* response_d
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getHardLimitWithUnit"));
 }
 
+//todo delete
 // "/rpc/motion_control/axis_group/setRotateManualStep"
 void ControllerRpc::handleRpc0x00005290(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32_Double* rq_data_ptr = static_cast<RequestMessageType_Int32_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = motion_control_ptr_->setRotateManualStep(rq_data_ptr->data2.data);
+    //rs_data_ptr->data.data = motion_control_ptr_->setRotateManualStep(rq_data_ptr->data2.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setRotateManualStep"));
 }
 
+//todo delete
 // "/rpc/motion_control/axis_group/getRotateManualStep"
 void ControllerRpc::handleRpc0x00003000(void* request_data_ptr, void* response_data_ptr)
 {
@@ -1124,20 +1126,22 @@ void ControllerRpc::handleRpc0x00003000(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = motion_control_ptr_->getRotateManualStep();
+    //rs_data_ptr->data.data = motion_control_ptr_->getRotateManualStep();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getRotateManualStep"));
 }
 
+//todo delete
 // "/rpc/motion_control/axis_group/setPrismaticManualStep"
 void ControllerRpc::handleRpc0x0000B640(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_Int32_Double* rq_data_ptr = static_cast<RequestMessageType_Int32_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    rs_data_ptr->data.data = motion_control_ptr_->setPrismaticManualStep(rq_data_ptr->data2.data);
+    //rs_data_ptr->data.data = motion_control_ptr_->setPrismaticManualStep(rq_data_ptr->data2.data);
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setPrismaticManualStep"));
 }
 
+//todo delete
 // "/rpc/motion_control/axis_group/getPrismaticManualStep"
 void ControllerRpc::handleRpc0x0000FCE0(void* request_data_ptr, void* response_data_ptr)
 {
@@ -1145,8 +1149,55 @@ void ControllerRpc::handleRpc0x0000FCE0(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_Double* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Double*>(response_data_ptr);
 
     rs_data_ptr->error_code.data = SUCCESS;
-    rs_data_ptr->data.data = motion_control_ptr_->getPrismaticManualStep();
+    //rs_data_ptr->data.data = motion_control_ptr_->getPrismaticManualStep();
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getPrismaticManualStep"));
+}
+
+//"/rpc/motion_control/axis_group/setJointManualStep"	
+void ControllerRpc::handleRpc0x00018470(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32_DoubleList* rq_data_ptr = static_cast<RequestMessageType_Int32_DoubleList*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    double steps[NUM_OF_JOINT] = {0};
+    /*steps[0] = rq_data_ptr->data2.data[0];
+    steps[1] = rq_data_ptr->data2.data[1];
+    steps[2] = rq_data_ptr->data2.data[2];
+    steps[3] = rq_data_ptr->data2.data[3];
+    steps[4] = rq_data_ptr->data2.data[4];
+    steps[5] = rq_data_ptr->data2.data[5];
+    steps[6] = rq_data_ptr->data2.data[6];
+    steps[7] = rq_data_ptr->data2.data[7];
+    steps[8] = rq_data_ptr->data2.data[8];*/
+    int num = (rq_data_ptr->data2.data_count < NUM_OF_JOINT ? rq_data_ptr->data2.data_count : NUM_OF_JOINT);
+    for (int i = 0;i < num; ++i)
+    {
+        steps[i] = rq_data_ptr->data2.data[i];
+    }
+    rs_data_ptr->data.data = motion_control_ptr_->setAxisManualStep(steps);
+
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setJointManualStep"));
+}
+
+//"/rpc/motion_control/axis_group/getJointManualStep"	
+void ControllerRpc::handleRpc0x00006D10(void* request_data_ptr, void* response_data_ptr)
+{
+    //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
+    double steps[NUM_OF_JOINT] = {0};
+    //rs_data_ptr->error_code.data = motion_control_ptr_->getAxisManualStep(steps);
+    rs_data_ptr->data.data_count = motion_control_ptr_->getNumberOfAxis();
+    rs_data_ptr->data.data[0] = steps[0];
+    rs_data_ptr->data.data[1] = steps[1];
+    rs_data_ptr->data.data[2] = steps[2];
+    rs_data_ptr->data.data[3] = steps[3];
+    rs_data_ptr->data.data[4] = steps[4];
+    rs_data_ptr->data.data[5] = steps[5];
+    rs_data_ptr->data.data[6] = steps[6];
+    rs_data_ptr->data.data[7] = steps[7];
+    rs_data_ptr->data.data[8] = steps[8];
+
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/getJointManualStep"));
 }
 
 // "/rpc/motion_control/axis_group/setCartesianManualStep"
@@ -1212,9 +1263,9 @@ void ControllerRpc::handleRpc0x0000EC64(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data_count = 4; 
     rs_data_ptr->data.data[0] = posture.arm;
-    rs_data_ptr->data.data[0] = posture.elbow;
-    rs_data_ptr->data.data[0] = posture.wrist;
-    rs_data_ptr->data.data[0] = posture.flip; 
+    rs_data_ptr->data.data[1] = posture.elbow;
+    rs_data_ptr->data.data[2] = posture.wrist;
+    rs_data_ptr->data.data[3] = posture.flip; 
 
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/getPostureByJoint"));
 }

@@ -133,6 +133,8 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/motion_control/axis_group/getRotateManualStep", 0x00003000, &ControllerRpc::handleRpc0x00003000}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setPrismaticManualStep", 0x0000B640, &ControllerRpc::handleRpc0x0000B640}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getPrismaticManualStep", 0x0000FCE0, &ControllerRpc::handleRpc0x0000FCE0}; rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/setJointManualStep",	0x00018470,	&ControllerRpc::handleRpc0x00018470	};	rpc_table_.push_back(rpc_service);
+    rpc_service =	{	"/rpc/motion_control/axis_group/getJointManualStep",	0x00006D10,	&ControllerRpc::handleRpc0x00006D10	};	rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setCartesianManualStep", 0x0000A420, &ControllerRpc::handleRpc0x0000A420}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/getCartesianManualStep", 0x0000EAC0, &ControllerRpc::handleRpc0x0000EAC0}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/motion_control/axis_group/setOrientationManualStep", 0x00002940, &ControllerRpc::handleRpc0x00002940}; rpc_table_.push_back(rpc_service);

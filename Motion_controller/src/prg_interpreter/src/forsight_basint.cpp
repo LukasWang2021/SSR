@@ -13,6 +13,7 @@
 #include "error_code.h"
 #else
 #include "macro_instr_mgr.h"
+#include <io.h>
 #endif
 
 #ifdef USE_FORSIGHT_REGISTERS_MANAGER
@@ -592,6 +593,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  while(objThreadCntrolBlock->tok == IMPORT)
 	  {
 		  exec_import(objThreadCntrolBlock);
+		  find_eol(objThreadCntrolBlock);
 		  get_token(objThreadCntrolBlock);
 	  }
       generateXPathVector(objThreadCntrolBlock, objThreadCntrolBlock->project_name);
@@ -1069,7 +1071,10 @@ int load_program(struct thread_control_block * objThreadCntrolBlock, char *p, ch
   // use bas directly 
   // if((access(fBASName,F_OK))==-1)
   // use XML directly 
-  parse_xml_file_wrapper(fXMLName);
+  if(_access(fXMLName, 4)==0)
+  {   
+      parse_xml_file_wrapper(fXMLName);
+  }
 #else
   sprintf(fXMLName, "%s/programs/%s.xml", forgesight_get_programs_path(), pname);
   sprintf(fBASName, "%s/programs/%s.bas", forgesight_get_programs_path(), pname);
@@ -4080,6 +4085,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 	memset(array_name, 0x00, 256);
 	temp = array_name ;
 	get_char_token(vname, temp);
+
 	// Inner Type
 	// deal "pr;sr;r;mr;uf;tf;pl" except p
     if(strstr(REGSITER_NAMES, array_name) 

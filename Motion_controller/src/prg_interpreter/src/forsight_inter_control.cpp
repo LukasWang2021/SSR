@@ -1162,6 +1162,28 @@ bool forgesight_find_external_resource(char *vname, key_variable& keyVar)
 	return false;
 }
 
+
+/************************************************* 
+	Function:		forgesight_get_programs_path
+	Description:	get programs path
+	Input:			NULL
+	Return: 		programs path
+*************************************************/ 
+bool forgesight_find_external_resource_by_xmlname(
+					char *xml_name, key_variable& keyVar)
+{
+	// Otherwise, try global vars.
+	for(unsigned i=0; i < g_vecKeyVariables.size(); i++)
+	{
+	//	FST_INFO("forgesight_find_external_resource: %s .", g_vecKeyVariables[i].key_name);
+		if(!strcmp(g_vecKeyVariables[i].xml_name, xml_name)) {
+			keyVar = g_vecKeyVariables[i] ;
+			return true;
+		}
+	}
+	return false;
+}
+
 void updateHomePoseMgr()
 {
 	g_home_pose_mgr_ptr->updateAll();

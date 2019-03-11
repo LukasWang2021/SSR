@@ -147,6 +147,8 @@ class BaseGroup
     virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
 
     virtual ErrorCode computeInverseKinematicsOnPathCache(const basic_alg::Joint &start, PathCache &path);
+    virtual bool checkPath(const PathCache &path);
+    virtual bool checkTrajectory(const TrajectoryCache &trajectory);
 
     virtual ErrorCode pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length);
     virtual ErrorCode pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length);

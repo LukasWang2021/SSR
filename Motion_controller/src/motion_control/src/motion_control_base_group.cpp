@@ -1056,6 +1056,28 @@ TrajectoryCacheList* BaseGroup::getLastTrajectoryCacheListPtr(void)
     }
 }
 
+bool BaseGroup::checkPath(const PathCache &path)
+{
+    if (path.cache_length > PATH_CACHE_SIZE) return false;
+    if (path.target.cnt < 0 && path.smooth_out_index != -1) return false;
+    if (path.smooth_out_index < -1 || path.smooth_out_index >= (int)path.cache_length) return false;
+    if (path.smooth_in_index < -1 || path.smooth_in_index >= (int)path.cache_length) return false;
+    return true;
+}
+
+bool BaseGroup::checkTrajectory(const TrajectoryCache &trajectory)
+{
+    if (trajectory.cache_length > TRAJECTORY_CACHE_SIZE) return false;
+    if (trajectory.smooth_out_index < -1 || trajectory.smooth_out_index >= (int)trajectory.cache_length) return false;
+
+    for (size_t i = 0; i < trajectory.cache_length; i++)
+    {
+        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 16) return false;
+    }
+
+    return true;
+}
+
 ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
     MotionTime start_time = 0;
@@ -1105,18 +1127,22 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &tar
     ErrorCode err = planPathJoint(start, target, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    path.target = target;
 
-    if (err == SUCCESS)
-    {
-        path.target = target;
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Path plan failed, code = 0x%llx", err);
         return err;
     }
+
+    if (!checkPath(path))
+    {
+        FST_ERROR("Data in path cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d", path.cache_length, path.smooth_in_index, path.smooth_out_index);
 
     JointState start_state;
     start_state.angle = start;
@@ -1127,17 +1153,19 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &tar
     end_clock = clock();
     traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
-                    trajectory.cache_length, trajectory.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
         return err;
     }
 
+    if (!checkTrajectory(trajectory))
+    {
+        FST_ERROR("Data in trajectory cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
     FST_INFO("autoStableJoint success, path-plan: %.4f ms, traj-plan: %.4f ms", path_plan_time, traj_plan_time);
     return SUCCESS;
 }
@@ -1158,32 +1186,39 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
     FST_INFO("  target = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
 
     ErrorCode err = planPathSmoothJoint(start_state.angle, via, target, path);
+    path.target = target;
 
-    if (err == SUCCESS)
-    {
-        path.target = target;
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Path plan failed, code = 0x%llx", err);
         return err;
     }
 
+    if (!checkPath(path))
+    {
+        FST_ERROR("Data in path cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    path.target = target;
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",path.cache_length, path.smooth_in_index, path.smooth_out_index);
+    
+
     err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
-                    trajectory.cache_length, trajectory.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
         return err;
     }
 
+    if (!checkTrajectory(trajectory))
+    {
+        FST_ERROR("Data in trajectory cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
     FST_INFO("autoSmoothJoint success.");
     return SUCCESS;
 }
@@ -1341,33 +1376,35 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
     ErrorCode err = planPathLine(start_pose, target, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    path.target = target;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
-
-        start_clock = clock();
-        err = computeInverseKinematicsOnPathCache(start, path);
-        end_clock = clock();
-        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-
-        if (err == SUCCESS)
-        {
-            path.target = target;
-            FST_INFO("Inverse kinematics success, plan trajectory ...");
-        }
-        else
-        {
-            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
-            return err;
-        }
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Path plan failed, code = 0x%llx", err);
         return err;
     }
+
+    if (!checkPath(path))
+    {
+        FST_ERROR("Data in path cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+    
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+    start_clock = clock();
+    err = computeInverseKinematicsOnPathCache(start, path);
+    end_clock = clock();
+    path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+        return err;
+    }
+    
+    FST_INFO("Inverse kinematics success, plan trajectory ...");
 
     JointState start_state;
     start_state.angle = start;
@@ -1378,17 +1415,19 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
     end_clock = clock();
     traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
-                    trajectory.cache_length, trajectory.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
         return err;
     }
 
+    if (!checkTrajectory(trajectory))
+    {
+        FST_ERROR("Data in trajectory cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+    
+    FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
     FST_INFO("autoStableLine success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
@@ -1420,50 +1459,54 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state,
     ErrorCode err = planPathSmoothLine(start_pose, via, target, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    path.target = target;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
-
-        start_clock = clock();
-        err = computeInverseKinematicsOnPathCache(start_state.angle, path);
-        end_clock = clock();
-        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-
-        if (err == SUCCESS)
-        {
-            path.target = target;
-            FST_INFO("Inverse kinematics success, plan trajectory ...");
-        }
-        else
-        {
-            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
-            return err;
-        }
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Path plan failed, code = 0x%llx", err);
         return err;
     }
+
+    if (!checkPath(path))
+    {
+        FST_ERROR("Data in path cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+    start_clock = clock();
+    err = computeInverseKinematicsOnPathCache(start_state.angle, path);
+    end_clock = clock();
+    path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+        return err;
+    }
+    
+    FST_INFO("Inverse kinematics success, plan trajectory ...");
 
     start_clock = clock();
     err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
     end_clock = clock();
     traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
-                    trajectory.cache_length, trajectory.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
         return err;
     }
 
+    if (!checkTrajectory(trajectory))
+    {
+        FST_ERROR("Data in trajectory cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+    
+    FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
     FST_INFO("autoSmoothLine success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
@@ -1528,33 +1571,41 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionTarget &ta
     ErrorCode err = planPathCircle(start_pose, target, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    path.target = target;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
-
-        start_clock = clock();
-        err = computeInverseKinematicsOnPathCache(start, path);
-        end_clock = clock();
-        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-
-        if (err == SUCCESS)
-        {
-            path.target = target;
-            FST_INFO("Inverse kinematics success, plan trajectory ...");
-        }
-        else
-        {
-            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
-            return err;
-        }
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Path plan failed, code = 0x%llx", err);
         return err;
     }
+
+    if (!checkPath(path))
+    {
+        FST_ERROR("Data in path cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+    start_clock = clock();
+    err = computeInverseKinematicsOnPathCache(start, path);
+    end_clock = clock();
+    path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+        return err;
+    }
+
+    if (!checkPath(path))
+    {
+        FST_ERROR("Data in path cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    FST_INFO("Inverse kinematics success, plan trajectory ...");
 
     JointState start_state;
     start_state.angle = start;
@@ -1565,17 +1616,19 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionTarget &ta
     end_clock = clock();
     traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
-                    trajectory.cache_length, trajectory.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
         return err;
     }
 
+    if (!checkTrajectory(trajectory))
+    {
+        FST_ERROR("Data in trajectory cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+        
+    FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
     FST_INFO("autoStableCircle success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
@@ -1611,50 +1664,54 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state,
     ErrorCode err = planPathSmoothCircle(start_pose, via, target, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    path.target = target;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                      path.cache_length, path.smooth_in_index, path.smooth_out_index);
-
-        start_clock = clock();
-        err = computeInverseKinematicsOnPathCache(start_state.angle, path);
-        end_clock = clock();
-        path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-
-        if (err == SUCCESS)
-        {
-            path.target = target;
-            FST_INFO("Inverse kinematics success, plan trajectory ...");
-        }
-        else
-        {
-            FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
-            return err;
-        }
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Path plan failed, code = 0x%llx", err);
         return err;
     }
 
+    if (!checkPath(path))
+    {
+        FST_ERROR("Data in path cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
+        
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
+                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+
+    start_clock = clock();
+    err = computeInverseKinematicsOnPathCache(start_state.angle, path);
+    end_clock = clock();
+    path_ik_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+
+    if (err != SUCCESS)
+    {
+        FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
+        return err;
+    }
+    
+    FST_INFO("Inverse kinematics success, plan trajectory ...");
+    
     start_clock = clock();
     err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
     end_clock = clock();
     traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
-    if (err == SUCCESS)
-    {
-        FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,",
-                    trajectory.cache_length, trajectory.smooth_out_index);
-    }
-    else
+    if (err != SUCCESS)
     {
         FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
         return err;
     }
+    
+    if (!checkTrajectory(trajectory))
+    {
+        FST_ERROR("Data in trajectory cache is invalid.");
+        return MOTION_INTERNAL_FAULT;
+    }
 
+    FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
     FST_INFO("autoSmoothCircle success, path-plan: %.4f ms, path-ik: %.4f ms, traj-plan: %.4f ms", path_plan_time, path_ik_time, traj_plan_time);
     return SUCCESS;
 }
@@ -2541,6 +2598,10 @@ void BaseGroup::fillTrajectoryFifo(void)
                 segment.time_from_start = block.time_from_start + segment.time_from_block;
                 segment.duration = traj_list_ptr_->pick_from_block + duration_per_segment_ < block.duration ? duration_per_segment_ : block.duration - traj_list_ptr_->pick_from_block;
                 memcpy(segment.axis, block.axis, NUM_OF_JOINT * sizeof(AxisCoeff));
+
+                // for test
+                // FST_INFO("time-of-block=%f, time-from-block=%f", block.time_from_start, segment.time_from_block);
+                // FST_INFO("pick-from-block=%f, duration-per-seg=%f, duration-of-block=%f", traj_list_ptr_->pick_from_block, duration_per_segment_, block.duration);
 
                 if (traj_fifo_.pushTrajectorySegment(segment) == SUCCESS)
                 {

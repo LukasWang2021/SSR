@@ -235,9 +235,9 @@ ErrorCode planPathJoint(const Joint &start,
     int path_count_joint_minus_1 = ceil(max_delta_joint_start2end / segment_alg_param.joint_interval);
     int path_count_linear_minus_1 = ceil(max_delta_linear_start2end / segment_alg_param.path_interval);
     int path_count_minus_1 = (path_count_joint_minus_1 >= path_count_linear_minus_1) ? path_count_joint_minus_1 : path_count_linear_minus_1;
-    if(path_count_minus_1 > (PATH_CACHE_SIZE - 1))
+    if(path_count_minus_1 > (PATH_CACHE_SIZE - 2))
     {
-        path_count_minus_1 = PATH_CACHE_SIZE - 1;
+        path_count_minus_1 = PATH_CACHE_SIZE - 2;
     }
     path_cache.cache_length = path_count_minus_1 + 1;
   
@@ -413,9 +413,9 @@ ErrorCode planPathCircle(const PoseEuler &start,
 
     int max_count_start2end = ((circle_angle_count_ideal_start2end >= quatern_angle_count_ideal_start2end) ? 
         circle_angle_count_ideal_start2end : quatern_angle_count_ideal_start2end);
-    if(max_count_start2end > (PATH_CACHE_SIZE - 1))
+    if(max_count_start2end > (PATH_CACHE_SIZE - 2))
     {
-        max_count_start2end = PATH_CACHE_SIZE - 1;
+        max_count_start2end = PATH_CACHE_SIZE - 2;
     }
 
     double uint_vector_n[3];
@@ -657,9 +657,9 @@ ErrorCode planPathSmoothJoint(const Joint &start,
    
     // find piece of start2in
     path_cache.smooth_in_index = path_piece_start2via + path_piece_via2in;
-    if(path_cache.smooth_in_index > (PATH_CACHE_SIZE*0.2))
+    if(path_cache.smooth_in_index > ((PATH_CACHE_SIZE*0.2) - 2))
     {
-        path_cache.smooth_in_index = (int)(PATH_CACHE_SIZE*0.2);
+        path_cache.smooth_in_index = (int)((PATH_CACHE_SIZE*0.2) - 2);
     }
 
     // compute path start2in
@@ -772,7 +772,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     int path_count_transition = path_count_start2via + path_count_via2in;
     if(path_count_transition > (PATH_CACHE_SIZE * 0.2))
     {
-        path_count_transition = (int)(PATH_CACHE_SIZE * 0.2) - 1;
+        path_count_transition = (int)(PATH_CACHE_SIZE * 0.2) - 2;
     }    
     path_cache.smooth_in_index = path_count_transition;
 

@@ -497,6 +497,10 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
     circle_center_position.y_ = midpoint_pose1_to_pose2[1] + cross_vector_pose23[1] * ds;
     circle_center_position.z_ = midpoint_pose1_to_pose2[2] + cross_vector_pose23[2] * ds;
 
+    stack[S_CircleCenter_1] = circle_center_position.x_;
+    stack[S_CircleCenter_2] = circle_center_position.y_;
+    stack[S_CircleCenter_3] = circle_center_position.z_;
+
     // Calculation circle radius
     circle_radius = getDistance(start.point_, circle_center_position);
 
@@ -1939,17 +1943,38 @@ inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_
         }
         case MOTION_LINE:
         {
-            double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache.smooth_out_index].pose.point_);
+            double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, 
+                path_cache.cache[path_cache.smooth_out_index].pose.point_);
             traj_piece_ideal_in2out = path_length_in2out * stack[S_PathCountFactorCartesian];
             break;
         }
-        case MOTION_CIRCLE:            
+        case MOTION_CIRCLE:
         {
-            traj_piece_ideal_in2out = 0;
+            Point circle_center;
+            circle_center.x_ = stack[S_CircleCenter_1];
+            circle_center.y_ = stack[S_CircleCenter_2];
+            circle_center.z_ = stack[S_CircleCenter_3];
+
+            double circle_center_to_in[3];
+            getUintVector3(circle_center, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_center_to_in);
+
+            double circle_center_to_out[3];
+            getUintVector3(circle_center, path_cache.cache[path_cache.smooth_out_index].pose.point_, circle_center_to_out);
+
+            double cos_circle_angle_in_to_out = circle_center_to_in[0] * circle_center_to_out[0]
+                + circle_center_to_in[1] * circle_center_to_out[1] + circle_center_to_in[2] * circle_center_to_out[2];
+
+            if (fabs(cos_circle_angle_in_to_out) < DOUBLE_ACCURACY) cos_circle_angle_in_to_out = 0;
+
+            double sin_circle_angle_in_to_out = sqrt(1 - pow(cos_circle_angle_in_to_out, 2));
+
+            double circle_angle_in_to_out = atan2(sin_circle_angle_in_to_out, cos_circle_angle_in_to_out);
+
+            traj_piece_ideal_in2out = circle_angle_in_to_out * stack[S_PathCountFactorCartesian];
             break;
         }
     }
-    
+
     if(traj_piece_ideal_in2out < DOUBLE_ACCURACY)   // in and out point is the same point
     {
         getTrajPFromPathIn2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);

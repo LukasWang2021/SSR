@@ -409,13 +409,13 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
     switch (traj.frame)
     {
         case BASE:
-            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint);
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : IK_FAIL;
             break;
         case USER:
-            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint);    // transfrom from user to base
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : IK_FAIL;    // transfrom from user to base
             break;
         case WORLD:
-            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint);    // transfrom from world to base
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : IK_FAIL;    // transfrom from world to base
             break;
         default:
             err = MOTION_INTERNAL_FAULT;

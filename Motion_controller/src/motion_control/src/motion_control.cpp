@@ -559,7 +559,7 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint);     // transform from user to base
+        return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint) ? SUCCESS : IK_FAIL;     // transform from user to base
     }
     else
     {
@@ -606,7 +606,7 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
         }
 
        // return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
-       return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint);  // transform uf tf to base
+       return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint) ? SUCCESS : IK_FAIL;  // transform uf tf to base
     }
 }
 

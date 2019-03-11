@@ -1906,8 +1906,50 @@ inline void getTrajPFromPathIn2End(const PathCache& path_cache, double traj_piec
 inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_piece_ideal_in2end, int traj_pva_in_index, 
                                           int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
-    double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache.smooth_out_index].pose.point_);
-    double traj_piece_ideal_in2out = path_length_in2out * stack[S_PathCountFactorCartesian];
+    double traj_piece_ideal_in2out;
+    switch(path_cache.target.type)
+    {
+        case MOTION_JOINT:
+        {
+            double delta_joint_in2out;
+            double max_delta_joint_in2out = 0;
+            double max_delta_linear_in2out = 0;
+            for(int i = 0; i < model.link_num; ++i)
+            {
+                delta_joint_in2out = fabs(path_cache.cache[path_cache.smooth_out_index].joint[i] - path_cache.cache[path_cache.smooth_in_index].joint[i]);
+                if(seg_axis_type[i] == ROTARY_AXIS)
+                {
+                    if(delta_joint_in2out > max_delta_joint_in2out)
+                    {
+                        max_delta_joint_in2out = delta_joint_in2out;
+                    }
+                }
+                else if(seg_axis_type[i] == LINEAR_AXIS) 
+                {
+                    if(delta_joint_in2out > max_delta_linear_in2out)
+                    {
+                        max_delta_linear_in2out = delta_joint_in2out;
+                    }
+                }
+            }
+            double traj_piece_ideal_joint_in2out = max_delta_joint_in2out * stack[S_PathCountFactorJoint];
+            double traj_piece_ideal_linear_in2out = max_delta_linear_in2out * stack[S_PathCountFactorCartesian];
+            traj_piece_ideal_in2out = (traj_piece_ideal_joint_in2out >= traj_piece_ideal_linear_in2out) ? traj_piece_ideal_joint_in2out : traj_piece_ideal_linear_in2out;
+            break;
+        }
+        case MOTION_LINE:
+        {
+            double path_length_in2out = getPointsDistance(path_cache.cache[path_cache.smooth_in_index].pose.point_, path_cache.cache[path_cache.smooth_out_index].pose.point_);
+            traj_piece_ideal_in2out = path_length_in2out * stack[S_PathCountFactorCartesian];
+            break;
+        }
+        case MOTION_CIRCLE:            
+        {
+            traj_piece_ideal_in2out = 0;
+            break;
+        }
+    }
+    
     if(traj_piece_ideal_in2out < DOUBLE_ACCURACY)   // in and out point is the same point
     {
         getTrajPFromPathIn2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);

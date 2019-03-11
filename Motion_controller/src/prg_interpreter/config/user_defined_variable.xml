@@ -13,14 +13,20 @@
 		<ByteSize>4</ByteSize>
 </KeyWord>
 <KeyWord>
-		<KeyName>MI</KeyName>
+		<KeyName>SR</KeyName>
 		<BaseAddress>0x1200000</BaseAddress>
+		<Type>STRING</Type>
+		<ByteSize>1024</ByteSize>
+</KeyWord>
+<KeyWord>
+		<KeyName>MI</KeyName>
+		<BaseAddress>0x1300000</BaseAddress>
 		<Type>Double</Type>
 		<ByteSize>8</ByteSize>
 </KeyWord>
 <KeyWord>
 		<KeyName>MH</KeyName>
-		<BaseAddress>0x1300000</BaseAddress>
+		<BaseAddress>0x1400000</BaseAddress>
 		<Type>Double</Type>
 		<ByteSize>8</ByteSize>
 </KeyWord>

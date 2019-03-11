@@ -2591,8 +2591,7 @@ bool call_inner_func(struct thread_control_block * objThreadCntrolBlock, eval_va
     // Process a comma-separated list of values.
     do {
         get_exp(objThreadCntrolBlock, &value, &boolValue);
-		if( (value.getType() == (int)(TYPE_STRING | TYPE_SR))
-		  ||(value.getType() == (int)(TYPE_STRING)))
+		if(value.getType() == TYPE_STRING)
 		{
 			sprintf(temp[count], "%s", value.getStringValue().c_str()); // save temporarily
 		}

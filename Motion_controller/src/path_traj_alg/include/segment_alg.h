@@ -121,6 +121,9 @@ typedef enum
     S_CircleAngle = 53,    // double
     S_CircleRadius = 54,    // double
 
+    S_CircleCenter_1 = 60,    // double
+    S_CircleCenter_2 = 60,    // double
+    S_CircleCenter_3 = 60,    // double
     // basic matrix operation
     S_TransMatrix = 200,  // matrix[4][4]
     S_HomoTransMatrix = 216, // matrix[4][4]

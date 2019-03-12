@@ -18,6 +18,7 @@
 #include "program_launching.h"
 #include "file_manager.h"
 #include "system_manager.h"
+#include "param_manager.h"
 #include "device_version.h"
 #include <vector>
 
@@ -34,7 +35,7 @@ public:
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
                     IoMapping* io_mapping_ptr, fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
-                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager);
+                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager, fst_mc::ParamManager* param_manager);
 
     void processRpc();
 
@@ -58,6 +59,7 @@ private:
     ProgramLaunching* program_launching_;
     fst_base::FileManager* file_manager_ptr_;
     fst_ctrl::SystemManager* system_manager_ptr_;
+    fst_mc::ParamManager* param_manager_ptr_;
 
     DeviceVersion device_version_;
 

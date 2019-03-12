@@ -22,6 +22,7 @@
 #include "program_launching.h"
 #include "file_manager.h"
 #include "system_manager.h"
+#include "param_manager.h"
 #include <string>
 // for test only
 #include "virtual_core1.h"
@@ -65,6 +66,7 @@ private:
     ProgramLaunching program_launching_;
     fst_base::FileManager file_manager_;
     fst_ctrl::SystemManager system_manager_;
+    fst_mc::ParamManager param_manager_;
 
     // thread related
     bool is_exit_;

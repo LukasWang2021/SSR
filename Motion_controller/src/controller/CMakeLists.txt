@@ -76,6 +76,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/program_launching/include 
     ${depend_PATH_INC}/file_manager/include 
     ${depend_PATH_INC}/system_manager/include 
+    ${depend_PATH_INC}/param_manager/include 
 )
 
 catkin_package(
@@ -91,6 +92,7 @@ catkin_package(
     DEPENDS program_launching
     DEPENDS file_manager
     DEPENDS system_manager
+    DEPENDS param_manager
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -138,6 +140,7 @@ target_link_libraries(controller
     program_launching
     file_manager
     system_manager
+    param_manager
 )
 
 #############

@@ -24,7 +24,8 @@ ControllerRpc::ControllerRpc():
     program_launching_(NULL),
     modbus_manager_ptr_(NULL),
     file_manager_ptr_(NULL),
-    system_manager_ptr_(NULL)
+    system_manager_ptr_(NULL),
+    param_manager_ptr_(NULL)
 {
 
 }
@@ -39,7 +40,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
                     CoordinateManager* coordinate_manager_ptr, RegManager* reg_manager_ptr, fst_hal::DeviceManager* device_manager_ptr, 
                     fst_mc::MotionControl* motion_control_ptr, fst_base::ControllerClient* controller_client_ptr,
                     IoMapping* io_mapping_ptr,fst_hal::IoManager* io_manager_ptr, ProgramLaunching* program_launching, 
-                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager)
+                    fst_base::FileManager* file_manager, fst_ctrl::SystemManager* system_manager, fst_mc::ParamManager* param_manager)
 {
     log_ptr_ = log_ptr;
     param_ptr_ = param_ptr;
@@ -58,6 +59,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
     program_launching_ = program_launching;
     file_manager_ptr_ = file_manager;
     system_manager_ptr_ = system_manager;
+    param_manager_ptr_ = param_manager;
 
     // get the modbus_manager_ptr from device_manager.
     std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();

@@ -11,6 +11,7 @@ using namespace fst_base;
 using namespace fst_comm;
 using namespace fst_hal;
 using namespace std;
+using namespace fst_mc;
 
 Controller* Controller::instance_ = NULL;
 
@@ -194,6 +195,15 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
+    //error_code = param_manager_.init();
+    if(error_code != SUCCESS)
+    {
+        printf("param failed\n");
+        state_machine_.setInitState(false);
+        recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller param manager initialization failed");
+        return CONTROLLER_INIT_OBJECT_FAILED;
+    }
+
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
                         process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_, &program_launching_);
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
@@ -202,7 +212,7 @@ ErrorCode Controller::init()
     rpc_.init(log_ptr_, param_ptr_, &publish_, &virtual_core1_, &tp_comm_, &state_machine_, 
         &tool_manager_, &coordinate_manager_, &reg_manager_, &device_manager_, &motion_control_,
         process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &io_manager_,&program_launching_, &file_manager_,
-        &system_manager_);
+        &system_manager_, &param_manager_);
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
                     process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, &io_manager_);
 

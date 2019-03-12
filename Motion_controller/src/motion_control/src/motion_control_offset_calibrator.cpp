@@ -608,7 +608,6 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
 
     if (bare_core_ptr_->getLatestJoint(cur_joint, servo_state) && getOffsetFromBareCore(cur_offset) == SUCCESS)
     {
-
         FST_INFO("Current-offset: %s", printDBLine(&cur_joint[0], buffer, LOG_TEXT_SIZE));
         FST_INFO("Current-joint:  %s", printDBLine(&cur_offset[0], buffer, LOG_TEXT_SIZE));
 

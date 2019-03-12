@@ -83,7 +83,7 @@ void ControllerRpc::init(fst_log::Logger* log_ptr, ControllerParam* param_ptr, C
 
     if (modbus_manager_ptr_ != NULL)
     {
-        ErrorCode error_code = modbus_manager_ptr_->initClientListByParams();
+        ErrorCode error_code = modbus_manager_ptr_->initDevices();
         if (error_code != SUCCESS)
             ErrorMonitor::instance()->add(error_code);
     }

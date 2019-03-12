@@ -31,6 +31,7 @@ public:
 
     ErrorCode setStartMode(int start_mode); // enum ModbusStartMode
     int getStartMode();
+    ErrorCode initDevices();
 
     ErrorCode writeCoils(int id, int addr, int nb, uint8_t *dest);
     ErrorCode readCoils(int id, int addr, int nb, uint8_t *dest);

@@ -189,7 +189,7 @@ void ControllerRpc::handleRpc0x00000953(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = modbus_manager_ptr_->isServerRunning();
 
-    recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/getServerRunningStatus"));
+    recordLog(MODBUS_LOG, rs_data_ptr->error_code.data, std::string("/rpc/modbus/getServerRunningStatus"));
 }
 
 //"/rpc/modbus/writeCoils"

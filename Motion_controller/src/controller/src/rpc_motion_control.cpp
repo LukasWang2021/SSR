@@ -664,6 +664,7 @@ void ControllerRpc::handleRpc0x0000B6D4(void* request_data_ptr, void* response_d
     {
         Joint joint;
         PoseEuler pos;
+        memset(&pos, 0, sizeof(pos));
         joint.j1_ = rq_data_ptr->data2.data[0];
         joint.j2_ = rq_data_ptr->data2.data[1];
         joint.j3_ = rq_data_ptr->data2.data[2];

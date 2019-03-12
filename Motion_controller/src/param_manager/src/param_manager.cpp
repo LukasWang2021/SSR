@@ -83,7 +83,7 @@ using namespace fst_parameter;
 #define MANU_PARAM_DATA_14 "max_cartesian_acc"
 #define MANU_PARAM_DATA_SERVO "servo/stored_param"
 
-#define FILE_BASE_GROUP (std::string(AXIS_GROUP_MODEL_DIR) + "base_group.yaml")
+#define FILE_BASE_GROUP (std::string(AXIS_GROUP_DIR) + "base_group.yaml")
 #define FILE_REG_MANAGER (std::string(COMPONENT_PARAM_FILE_DIR) + "reg_manager.yaml")
 #define FILE_COORDINATE_MANAGER (std::string(COMPONENT_PARAM_FILE_DIR) + "coordinate_manager.yaml")
 #define FILE_TOOL_MANAGER (std::string(COMPONENT_PARAM_FILE_DIR) + "tool_manager.yaml")

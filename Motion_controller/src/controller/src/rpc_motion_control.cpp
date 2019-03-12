@@ -963,6 +963,9 @@ void ControllerRpc::handleRpc0x00008ED4(void* request_data_ptr, void* response_d
     //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_JointLimitWithUnit* rs_data_ptr = static_cast<ResponseMessageType_Uint64_JointLimitWithUnit*>(response_data_ptr);
 
+    AxisType type[9] = {0};
+    motion_control_ptr_->getTypeOfAxis(&type[0]);
+
     JointConstraint constraint;
     rs_data_ptr->error_code.data = motion_control_ptr_->getSoftConstraint(constraint);
     if(rs_data_ptr->error_code.data == SUCCESS)
@@ -977,15 +980,18 @@ void ControllerRpc::handleRpc0x00008ED4(void* request_data_ptr, void* response_d
         rs_data_ptr->data.positive_list[6].data = constraint.upper.j7_;
         rs_data_ptr->data.positive_list[7].data = constraint.upper.j8_;
         rs_data_ptr->data.positive_list[8].data = constraint.upper.j9_;
-        strncpy(rs_data_ptr->data.positive_list[0].unit, "rad", 31); rs_data_ptr->data.positive_list[0].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[1].unit, "rad", 31); rs_data_ptr->data.positive_list[1].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[2].unit, "rad", 31); rs_data_ptr->data.positive_list[2].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[3].unit, "rad", 31); rs_data_ptr->data.positive_list[3].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[4].unit, "rad", 31); rs_data_ptr->data.positive_list[4].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[5].unit, "rad", 31); rs_data_ptr->data.positive_list[5].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[6].unit, "rad", 31); rs_data_ptr->data.positive_list[6].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[7].unit, "rad", 31); rs_data_ptr->data.positive_list[7].unit[31] = 0;
-        strncpy(rs_data_ptr->data.positive_list[8].unit, "rad", 31); rs_data_ptr->data.positive_list[8].unit[31] = 0;
+        for(int i = 0; i < rs_data_ptr->data.positive_list_count; ++i)
+        {
+            if (type[i] == ROTARY_AXIS)
+            {
+                strncpy(rs_data_ptr->data.positive_list[i].unit, "rad", 31); rs_data_ptr->data.positive_list[i].unit[31] = 0;
+            }
+            else
+            {
+                strncpy(rs_data_ptr->data.positive_list[i].unit, "mm", 31); rs_data_ptr->data.positive_list[i].unit[31] = 0;
+            }
+        }
+        
         rs_data_ptr->data.negative_list_count = 9;
         rs_data_ptr->data.negative_list[0].data = constraint.lower.j1_;
         rs_data_ptr->data.negative_list[1].data = constraint.lower.j2_;
@@ -996,15 +1002,18 @@ void ControllerRpc::handleRpc0x00008ED4(void* request_data_ptr, void* response_d
         rs_data_ptr->data.negative_list[6].data = constraint.lower.j7_;
         rs_data_ptr->data.negative_list[7].data = constraint.lower.j8_;
         rs_data_ptr->data.negative_list[8].data = constraint.lower.j9_;
-        strncpy(rs_data_ptr->data.negative_list[0].unit, "rad", 31); rs_data_ptr->data.negative_list[0].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[1].unit, "rad", 31); rs_data_ptr->data.negative_list[1].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[2].unit, "rad", 31); rs_data_ptr->data.negative_list[2].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[3].unit, "rad", 31); rs_data_ptr->data.negative_list[3].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[4].unit, "rad", 31); rs_data_ptr->data.negative_list[4].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[5].unit, "rad", 31); rs_data_ptr->data.negative_list[5].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[6].unit, "rad", 31); rs_data_ptr->data.negative_list[6].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[7].unit, "rad", 31); rs_data_ptr->data.negative_list[7].unit[31] = 0;
-        strncpy(rs_data_ptr->data.negative_list[8].unit, "rad", 31); rs_data_ptr->data.negative_list[8].unit[31] = 0;
+        for(int i = 0; i < rs_data_ptr->data.positive_list_count; ++i)
+        {
+            if (type[i] == ROTARY_AXIS)
+            {
+                strncpy(rs_data_ptr->data.positive_list[i].unit, "rad", 31); rs_data_ptr->data.positive_list[i].unit[31] = 0;
+            }
+            else
+            {
+                strncpy(rs_data_ptr->data.positive_list[i].unit, "mm", 31); rs_data_ptr->data.positive_list[i].unit[31] = 0;
+            }
+        }
+        
     }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getUserSoftLimit"));
 }

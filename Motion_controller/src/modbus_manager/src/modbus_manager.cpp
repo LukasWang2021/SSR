@@ -90,6 +90,31 @@ ModbusManager::~ModbusManager()
     }
 }
 
+ErrorCode ModbusManager::initDevices()
+{
+    if (start_mode_ == MODBUS_CLIENT)
+    {
+        return client_manager_ptr_->initCLientListByParams();
+    }
+
+    if (start_mode_ == MODBUS_SERVER)
+    {
+        if (server_ != NULL && server_->isRunning())
+        {
+            return SUCCESS;
+        }
+
+        ErrorCode error_code = server_->openServer();
+        if (error_code != SUCCESS)
+        {
+            server_->closeServer();
+            return error_code;
+        }
+    }
+
+    return MODBUS_START_MODE_ERROR;
+}
+
 ErrorCode ModbusManager::setStartMode(int start_mode)
 {
     if (start_mode == start_mode_) return SUCCESS;

@@ -43,5 +43,11 @@ int forgesight_registers_manager_set_resource(
 							struct thread_control_block* objThreadCntrolBlock, 
 							char *name, key_variable keyVar, eval_value * value);
 
+int forgesight_registers_manager_get_point(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, eval_value * value);
+int forgesight_registers_manager_set_point(
+							struct thread_control_block* objThreadCntrolBlock, 
+							char *name, eval_value * value);
 
 #endif

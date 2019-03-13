@@ -133,53 +133,9 @@ ErrorCode ModbusClient::setEnableStatus(bool &status)
         ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
         is_connected_ = true;
     }
-    else 
-    {}
-    return SUCCESS;
-#if 0
-    if (status == config_param_.is_enable)
-    {
-        return SUCCESS;
-    }
-
-    if (!status) //status = false; is_enable = true
-    {
-        if (is_connected_)
-        {
-            return MODBUS_CLIENT_CONNECTED;
-        }
-
-        config_param_.is_enable = status;
-        ctrl_state_ = MODBUS_CLIENT_CTRL_DISABLED;
-        return SUCCESS;
-    }
-
-    // status = true; is_enable = false
-    if (!checkConfigParamValid())
-    {
-        return MODBUS_CLIENT_ENABLE_FAILED;
-    }
-
-    config_param_.is_enable = status;
-    ctrl_state_ = MODBUS_CLIENT_CTRL_ENABLED;
-
-    ErrorCode error_code = init();
-    if (error_code != SUCCESS) return error_code;
-
-    if (modbus_connect(ctx_) < 0)
-    {
-         FST_ERROR("Failed to connect socket : %s, socket = %d",
-            modbus_strerror(errno),  modbus_get_socket(ctx_));
-
-        is_connected_ = false;
-        return MODBUS_CLIENT_CONNECT_FAILED;
-    }
-
-    ctrl_state_ = MODBUS_CLIENT_CTRL_CONNECTED;
-    is_connected_ = true;
+    else {}
 
     return SUCCESS;
-#endif
 }
 
 bool ModbusClient::getEnableStatus()
@@ -323,7 +279,11 @@ ModbusClientConfigParams ModbusClient::getConfigParams()
 ErrorCode ModbusClient::init()
 {
     if (ctx_ == NULL)
+    {
         ctx_ = modbus_new_tcp(config_param_.start_info.ip.c_str(), config_param_.start_info.port);
+        printf("config_param_.start_info.ip = %s, port = %d\n", config_param_.start_info.ip.c_str(), config_param_.start_info.port);
+    }
+        
     if(ctx_ == NULL) return MODBUS_CLIENT_INIT_FAILED;
 
     if (modbus_set_error_recovery(ctx_, MODBUS_ERROR_RECOVERY_LINK) < 0)
@@ -341,7 +301,7 @@ ErrorCode ModbusClient::init()
         return MODBUS_CLIENT_INIT_FAILED;
     }
 
-    if (modbus_set_byte_timeout(ctx_, response_timeout_sec, response_timeout_usec) < 0)
+    if (modbus_set_byte_timeout(ctx_, 5, 0) < 0)
     {
         //FST_ERROR("Falied set response timeout : %s", modbus_strerror(errno));
         return MODBUS_CLIENT_INIT_FAILED;
@@ -368,7 +328,7 @@ ErrorCode ModbusClient::connect()
     {
          FST_ERROR("Failed to connect socket : %s, socket = %d",
             modbus_strerror(errno),  modbus_get_socket(ctx_));
-
+        this->close();
         is_connected_ = false;
         return MODBUS_CLIENT_CONNECT_FAILED;
     }
@@ -481,11 +441,9 @@ ErrorCode ModbusClient::readAllRegs()
 
 void ModbusClient::close()
 {
-    if (!is_connected_) return;
-    modbus_close(ctx_);
-
     if (ctx_ != NULL)
     {
+        modbus_close(ctx_);
         modbus_free(ctx_);
         ctx_ = NULL;
     }

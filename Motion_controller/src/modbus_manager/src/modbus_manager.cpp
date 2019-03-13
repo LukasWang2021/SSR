@@ -112,7 +112,7 @@ ErrorCode ModbusManager::initDevices()
         }
     }
 
-    return MODBUS_START_MODE_ERROR;
+    return SUCCESS;
 }
 
 ErrorCode ModbusManager::setStartMode(int start_mode)

@@ -256,15 +256,8 @@ ProgMode getProgMode(struct thread_control_block * objThdCtrlBlockPtr)
 void setProgMode(struct thread_control_block * objThdCtrlBlockPtr, ProgMode progMode)
 {
     FST_INFO("setProgMode to %d at %d", (int)progMode, objThdCtrlBlockPtr->is_main_thread);
-	if(objThdCtrlBlockPtr->is_main_thread == MAIN_THREAD)
-	{
-	 	objThdCtrlBlockPtr->prog_mode   = progMode ;
-		g_interpreter_publish.progMode = progMode ;
-	}
-	else
-	{
-		FST_INFO("setProgMode Failed to %d", (int)progMode);
-	}
+ 	objThdCtrlBlockPtr->prog_mode   = progMode ;
+	g_interpreter_publish.progMode = progMode ;
 }
 
 

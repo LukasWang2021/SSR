@@ -313,7 +313,7 @@ ErrorCode planPathLine(const PoseEuler &start,
         if(path_length_out2end > max_path_length_out2end)
         {
             path_length_out2end = max_path_length_out2end;
-        }     
+        }
 
         int path_count_out2end = ceil(path_length_out2end * max_count_start2end / path_length_start2end);
         double path_step_out2end = path_length_out2end / path_count_out2end;        
@@ -432,6 +432,59 @@ ErrorCode planPathCircle(const PoseEuler &start,
     double quatern_angle_distance_to_start = 0; // scale to [0,1]
     if(end.cnt >= DOUBLE_ACCURACY)    // cnt is valid
     {
+        double path_out_vel = end.vel * end.cnt;
+        double circle_angle_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc * circle_radius);
+
+        double max_circle_angle_out2end = circle_angle / 2;
+        if(circle_angle_out2end > max_circle_angle_out2end)
+        {
+            circle_angle_out2end = max_circle_angle_out2end;
+        }
+
+        int circle_angle_count_out2end = ceil(circle_angle_out2end * max_count_start2end / circle_angle);
+        double circle_angle_step_out2end = circle_angle_out2end / circle_angle_count_out2end;
+
+        double circle_angle_start2out = circle_angle - circle_angle_out2end;
+        double quatern_angle_distance_start2out = circle_angle_start2out / circle_angle;
+        int circle_angle_count_start2out = ceil(quatern_angle_distance_start2out * max_count_start2end);
+        double circle_angle_step_start2out = circle_angle_start2out / circle_angle_count_start2out;
+
+        double quatern_angle_step_start2out = quatern_angle_distance_start2out / circle_angle_count_start2out;
+        double quatern_angle_step_out2end = (1.0 - quatern_angle_step_start2out) / circle_angle_count_out2end;
+
+        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
+        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[0]);
+
+        int i = 1;
+        for(; i <= circle_angle_count_start2out; ++i)
+        {
+            circle_angle_distance_to_start += circle_angle_step_start2out;
+            quatern_angle_distance_to_start += quatern_angle_step_start2out;
+
+            getCirclePoint(circle_radius, circle_angle_distance_to_start, uint_vector_n, uint_vector_o,
+                center_position, path_cache.cache[i].pose.point_);
+
+            getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+        }
+
+        path_cache.smooth_out_index = circle_angle_count_start2out;
+        int circle_angle_count_total_minus_1 = circle_angle_count_start2out + circle_angle_count_out2end;
+        path_cache.cache_length = circle_angle_count_total_minus_1 + 1;
+
+        for(; i < circle_angle_count_total_minus_1; ++i)
+        {
+            circle_angle_distance_to_start += circle_angle_step_out2end;
+            quatern_angle_distance_to_start += quatern_angle_step_out2end;
+
+            getCirclePoint(circle_radius, circle_angle_distance_to_start, uint_vector_n, uint_vector_o,
+                center_position, path_cache.cache[i].pose.point_);
+
+            getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+        }
+        packPoseByPointAndQuatern(end.circle_target.pose2.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
+        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[max_count_start2end]);
     }
     else    // cnt is invalid
     {
@@ -457,7 +510,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
             getCirclePoint(circle_radius, circle_angle_distance_to_start, uint_vector_n, uint_vector_o,
                 center_position, path_cache.cache[i].pose.point_);
 
-            getQuaternPoint(start_quatern, end_quatern, quatern_angle_step_start2end, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+            getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.circle_target.pose2.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
@@ -2072,6 +2125,10 @@ inline void updateMovCTrajP(const fst_mc::PathCache& path_cache, int* traj_path_
     {
         getTrajPFromPathStart2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
     }
+    else
+    {
+        getTrajPFromPathStart2Out2End(path_cache, traj_piece_ideal_start2end, traj_path_cache_index, traj_pva_out_index, traj_pva_size);
+    }
 }
 
 
@@ -2325,6 +2382,19 @@ inline void updateMovCTrajT(const fst_mc::PathCache& path_cache, double cmd_vel,
         for(i = 0; i < traj_t_size; ++i)
         {
             stack[S_TrajT + i] = time_duration_start2end;
+        }
+    }
+    else
+    {
+        double time_duration_start2out = path_cache.smooth_out_index * time_span_start2end / (path_cache_length_minus_1 * traj_pva_out_index);
+        double time_duration_out2end = (path_cache_length_minus_1 - path_cache.smooth_out_index) * time_span_start2end / (path_cache_length_minus_1 * (traj_pva_size - traj_pva_out_index - 1));
+        for(i = 0; i < traj_pva_out_index; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_start2out;
+        }
+        for(; i < traj_t_size; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_out2end;
         }
     }
 

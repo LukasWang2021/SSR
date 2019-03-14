@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 
     msg.data1.data = atoi(argv[1]);
     strcpy(msg.data2.name, argv[2]);
-    msg.data2.name[255] = 0;
+    //msg.data2.name[255] = 0;
     msg.data2.type = atoi(argv[3]);
     strcpy(msg.data2.data.bytes, argv[4]);
 

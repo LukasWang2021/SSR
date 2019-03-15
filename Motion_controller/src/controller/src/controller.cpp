@@ -195,10 +195,9 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    //error_code = param_manager_.init();
+    error_code = param_manager_.init();
     if(error_code != SUCCESS)
     {
-        printf("param failed\n");
         state_machine_.setInitState(false);
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller param manager initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;

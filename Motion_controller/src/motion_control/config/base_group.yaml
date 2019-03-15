@@ -45,6 +45,8 @@ manual:
         position: 1.0                       # mm
         orientation: 0.01                   # rad
 
+joint_tracking_accuracy: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+
 calibrator:
     normal_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
     lost_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]

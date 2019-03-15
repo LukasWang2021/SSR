@@ -21,6 +21,7 @@
 #include <kinematics_toll.h>
 #include <motion_control_cache_pool.h>
 #include <dynamics_interface.h>
+#include <transformation.h>
 
 
 #define AUTO_CACHE_SIZE     5
@@ -160,6 +161,7 @@ class BaseGroup
 
     inline void reportError(const ErrorCode &error);
     inline bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, double thres = MINIMUM_E6);
+    inline bool isSameJoint(const basic_alg::Joint &joint1, const basic_alg::Joint &joint2, const basic_alg::Joint &thres);
     inline bool isLastMotionSmooth(void);
     inline void resetManualTrajectory(void);
     inline void freeFirstCacheList(void);
@@ -188,12 +190,14 @@ class BaseGroup
     Constraint  soft_constraint_;
     Constraint  firm_constraint_;
 
+    basic_alg::Joint  joint_tracking_accuracy_;
     basic_alg::Joint  servo_joint_;
     basic_alg::Joint  start_joint_;
     ServoState  servo_state_;
     GroupState  group_state_;
 
     AxisType    type_of_axis_[NUM_OF_JOINT];
+    
     
     MotionTime  cycle_time_;
     MotionTime  auto_time_;
@@ -210,6 +214,7 @@ class BaseGroup
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;
     basic_alg::Kinematics   *kinematics_ptr_;
+    basic_alg::Transformation   transformation_;
     fst_algorithm::DynamicsInterface  *dynamics_ptr_;
 
     CachePool<PathCacheList>        path_cache_pool_;

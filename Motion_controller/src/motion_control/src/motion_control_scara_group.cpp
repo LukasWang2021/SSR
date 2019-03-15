@@ -333,6 +333,17 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
     }
 
+    // 从配置文件中加载关节位置跟随误差门限
+    double tracking_accuracy[JOINT_OF_SCARA];
+
+    if (!param.getParam("joint_tracking_accuracy", tracking_accuracy, JOINT_OF_SCARA))
+    {
+        FST_ERROR("Fail to load joint tracking error threshold for each axis, code = 0x%llx", param.getLastError());
+        return param.getLastError();
+    }
+
+    memcpy(&joint_tracking_accuracy_.j1_, tracking_accuracy, sizeof(tracking_accuracy));
+
     // 初始化裸核通信句柄
     FST_INFO("Initializing interface to bare core ...");
 

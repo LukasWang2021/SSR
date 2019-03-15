@@ -840,7 +840,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
 
         if (bare_core_.getControlPosition(&control_joint[0], getNumberOfJoint()))
         {
-            if (!isSameJoint(current_joint, control_joint, MINIMUM_E3 * 10))
+            if (!isSameJoint(current_joint, control_joint, joint_tracking_accuracy_))
             {
                 char buffer[LOG_TEXT_SIZE];
                 FST_ERROR("Control-position different with current-position, it might be a trouble.");
@@ -849,7 +849,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
                 return MOTION_INTERNAL_FAULT;
             }
 
-            if (!isSameJoint(start_joint, control_joint, MINIMUM_E3))
+            if (!isSameJoint(start_joint, control_joint, joint_tracking_accuracy_))
             {
                 char buffer[LOG_TEXT_SIZE];
                 FST_ERROR("Control-position different with start-position, it might be a trouble.");
@@ -2032,8 +2032,8 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
             ++ target_ptr;
         }
 
-        // char buffer[LOG_TEXT_SIZE];
-        // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
+        //char buffer[LOG_TEXT_SIZE];
+        //FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
         picked_num ++;
 
         if (manual_time_ >= manual_traj_.duration)
@@ -2560,7 +2560,8 @@ bool BaseGroup::updateStartJoint(void)
         FST_INFO("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
         FST_INFO("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
 
-        if (isSameJoint(current_joint, control_joint, MINIMUM_E3))
+        //if (isSameJoint(current_joint, control_joint, MINIMUM_E3))
+        if (isSameJoint(current_joint, control_joint, joint_tracking_accuracy_))
         {
             start_joint_ = control_joint;
             memset(&start_joint_[getNumberOfJoint()], 0, (NUM_OF_JOINT - getNumberOfJoint()) * sizeof(double));
@@ -2909,6 +2910,21 @@ bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, double thr
     for (size_t i = 0; i < joint_num; i++)
     {
         if (fabs(joint1[i] - joint2[i]) > thres)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, const Joint &thres)
+{
+    size_t  joint_num = getNumberOfJoint();
+
+    for (size_t i = 0; i < joint_num; i++)
+    {
+        if (fabs(joint1[i] - joint2[i]) > thres[i])
         {
             return false;
         }

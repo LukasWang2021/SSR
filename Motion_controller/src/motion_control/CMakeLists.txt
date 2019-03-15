@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
     error_monitor
     thread_help
     kinematics_alg
+    transformation
     path_traj_alg
 )
 
@@ -57,6 +58,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/thread_help/include
     ${depend_PATH_INC}/kinematics_alg/include
     ${depend_PATH_INC}/path_traj_alg/include
+    ${depend_PATH_INC}/transformation/include
 )
 
 catkin_package(
@@ -76,6 +78,7 @@ catkin_package(
     DEPENDS dynamic_alg 
     DEPENDS xml_help
     DEPENDS kinematics_alg
+    DEPENDS transformation
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -124,6 +127,7 @@ target_link_libraries(motion_control
     error_monitor
     thread_help
     kinematics_alg
+    transformation
     path_traj_alg
 )
 

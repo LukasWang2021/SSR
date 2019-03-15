@@ -65,6 +65,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_service/include
     ${depend_PATH_INC}/basic_alg/include 
     ${depend_PATH_INC}/kinematics_alg/include 
+    ${depend_PATH_INC}/transformation/include 
     ${depend_PATH_INC}/process_comm/include 
     ${depend_PATH_INC}/preformance_monitor/include 
     ${depend_PATH_INC}/modbus_manager/include
@@ -93,6 +94,7 @@ catkin_package(
     DEPENDS file_manager
     DEPENDS system_manager
     DEPENDS param_manager
+    DEPENDS transformation
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -141,6 +143,7 @@ target_link_libraries(controller
     file_manager
     system_manager
     param_manager
+    transformation
 )
 
 #############

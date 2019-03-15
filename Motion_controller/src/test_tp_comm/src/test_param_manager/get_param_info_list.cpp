@@ -93,7 +93,11 @@ int main(int argc, char* argv[])
         cout << "Reply : msg.data.data.param_info[i].name" << recv_msg.data.param_info[i].name << endl;
         cout << "Reply : msg.data.data.param_info[i].type" << recv_msg.data.param_info[i].type << endl;
         cout << "Reply : msg.data.data.param_info[i].data" << std::putwchar <<  recv_msg.data.param_info[i].data.bytes << endl;
-        printf("Reply: data =%d\n", recv_msg.data.param_info[i].data.bytes[0]);
+        printf("Reply : data =%02x-%02x-%02x-%02x--%02x-%02x-%02x-%02x\n", 
+        recv_msg.data.param_info[i].data.bytes[7],recv_msg.data.param_info[i].data.bytes[6],
+        recv_msg.data.param_info[i].data.bytes[5],recv_msg.data.param_info[i].data.bytes[4],
+        recv_msg.data.param_info[i].data.bytes[3],recv_msg.data.param_info[i].data.bytes[2],
+        recv_msg.data.param_info[i].data.bytes[1],recv_msg.data.param_info[i].data.bytes[0]);
     }
 
     usleep(200000);

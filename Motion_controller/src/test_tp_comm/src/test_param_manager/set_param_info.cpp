@@ -49,14 +49,39 @@ int main(int argc, char* argv[])
 
     msg.data1.data = atoi(argv[1]);
     strcpy(msg.data2.name, argv[2]);
-    //msg.data2.name[255] = 0;
     msg.data2.type = atoi(argv[3]);
-    strcpy(msg.data2.data.bytes, argv[4]);
+ 
+    if(msg.data2.type == 0)
+    {
+        msg.data2.data.size = sizeof(int);
+        int data = atoi(argv[4]);
+        memcpy(&msg.data2.data.bytes, &data, msg.data2.data.size);
+    }
+    else if (msg.data2.type == 1)
+    {
+        msg.data2.data.size = sizeof(double);
+        int data = atof(argv[4]);
+        memcpy(&msg.data2.data.bytes, &data, msg.data2.data.size);
+    }
+    else if (msg.data2.type == 2)
+    {
+        msg.data2.data.size = sizeof(bool);
+        int data = atoi(argv[4]);
+        memcpy(&msg.data2.data.bytes, &data, msg.data2.data.size);
+    }
+    else
+    {
+        msg.data2.data.size = sizeof(int);
+        int data = atoi(argv[4]);
+        memcpy(&msg.data2.data.bytes, &data, msg.data2.data.size);
+    }
+   //strcpy(msg.data2.data.bytes, argv[4]);
 
     cout << "param : data1 = " << msg.data1.data << endl;
     cout << "param : data2.name = " << msg.data2.name << endl;
     cout << "param : data2.type = " << msg.data2.type << endl;
     cout << "param : data2.data.bytes = " << msg.data2.data.bytes << endl;
+    cout << "param : data2.data.size = " << msg.data2.data.size << endl;
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_ParamInfo_fields, buf, buf_size))
     {

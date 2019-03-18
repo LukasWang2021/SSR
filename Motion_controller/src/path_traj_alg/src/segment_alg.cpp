@@ -409,7 +409,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
     stack[S_CircleAngle] = circle_angle;
     stack[S_CircleRadius] = circle_radius;
 
-    int circle_angle_count_ideal_start2end = ceil(circle_angle / segment_alg_param.path_interval);
+    int circle_angle_count_ideal_start2end = ceil(circle_angle / segment_alg_param.angle_interval);
 
     int max_count_start2end = ((circle_angle_count_ideal_start2end >= quatern_angle_count_ideal_start2end) ? 
         circle_angle_count_ideal_start2end : quatern_angle_count_ideal_start2end);

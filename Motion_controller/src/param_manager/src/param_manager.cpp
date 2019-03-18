@@ -269,124 +269,150 @@ ErrorCode ParamManager::init()
     fst_parameter::ParamValue servo_data;
     if(!yaml_help_.getParam(MANU_PARAM_DATA_SERVO, servo_data)) return PARAM_MANAGER_INIT_FAILED;
 
+    int data;
+
     strcpy(param_info.name, MANU_PARAM_NAME_15);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[93], sizeof(int));
+    data = (int)servo_data[93];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_16);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[96], sizeof(int));
+    data = (int)servo_data[96];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_17);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[98], sizeof(int));
+    data = (int)servo_data[98];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
     strcpy(param_info.name, MANU_PARAM_NAME_18);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[132], sizeof(int));
+    data = (int)servo_data[132];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
     
     strcpy(param_info.name, MANU_PARAM_NAME_19);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[285], sizeof(int));
+    data = (int)servo_data[285];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_20);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[288], sizeof(int));
+    data = (int)servo_data[288];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_21);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[290], sizeof(int));
+    data = (int)servo_data[290];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
     strcpy(param_info.name, MANU_PARAM_NAME_22);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[324], sizeof(int));
+    data = (int)servo_data[324];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_23);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[477], sizeof(int));
+    data = (int)servo_data[477];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_24);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[480], sizeof(int));
+    data = (int)servo_data[480];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_25);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[482], sizeof(int));
+    data = (int)servo_data[482];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
     strcpy(param_info.name, MANU_PARAM_NAME_26);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[516], sizeof(int));
+    data = (int)servo_data[516];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_27);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[669], sizeof(int));
+    data = (int)servo_data[669];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_28);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[672], sizeof(int));
+    data = (int)servo_data[672];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_29);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[674], sizeof(int));
+    data = (int)servo_data[674];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
     strcpy(param_info.name, MANU_PARAM_NAME_30);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[708], sizeof(int));
+    data = (int)servo_data[708];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);   
 
     strcpy(param_info.name, MANU_PARAM_NAME_31);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[861], sizeof(int));
+    data = (int)servo_data[861];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_32);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[864], sizeof(int));
+    data = (int)servo_data[864];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_33);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[866], sizeof(int));
+    data = (int)servo_data[866];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
     strcpy(param_info.name, MANU_PARAM_NAME_34);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[900], sizeof(int));
+    data = (int)servo_data[900];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);      
 
     strcpy(param_info.name, MANU_PARAM_NAME_35);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[1053], sizeof(int));
+    data = (int)servo_data[1053];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_36);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[1056], sizeof(int));
+    data = (int)servo_data[1056];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     strcpy(param_info.name, MANU_PARAM_NAME_37);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[1058], sizeof(int));
+    data = (int)servo_data[1058];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info); 
 
     strcpy(param_info.name, MANU_PARAM_NAME_38);
     param_info.type = PARAM_INFO_INT;
-    memcpy(param_info.data, &servo_data[1092], sizeof(int));
+    data = (int)servo_data[1092];
+    memcpy(param_info.data, &data, sizeof(int));
     manu_param_list_.push_back(param_info);
 
     return SUCCESS;

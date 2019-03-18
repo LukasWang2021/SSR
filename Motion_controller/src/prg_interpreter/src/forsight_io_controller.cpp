@@ -123,19 +123,35 @@ eval_value forgesight_get_io_status(
 	}
 	else if(!strcmp(io_name, TXT_DI))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->getDi(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_DO))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->getDo(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RI))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->getRi(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RO))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->getRo(iIOIdx, iValue);
+#endif
 	}
 	else if(!strcmp(io_name, TXT_SI))
 	{
@@ -174,7 +190,7 @@ int forgesight_set_io_status(
 			struct thread_control_block* objThreadCntrolBlock,char *name, eval_value& valueStart)
 {
 	bool bRet = false ;
-	int iValue;
+//	int iValue;
 	char io_name[16] ;
 	char io_idx[16] ;
 	// char io_key_buffer[16] ;
@@ -218,19 +234,35 @@ int forgesight_set_io_status(
 	}
 	else if(!strcmp(io_name, TXT_DI))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->setDi(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_DO))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RI))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->setRi(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_RO))
 	{
+#ifdef WIN32
+		bRet = true;
+#else
 		bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
+#endif
 	}
 	else if(!strcmp(io_name, TXT_SI))
 	{

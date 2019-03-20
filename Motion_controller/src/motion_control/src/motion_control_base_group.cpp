@@ -1058,21 +1058,54 @@ TrajectoryCacheList* BaseGroup::getLastTrajectoryCacheListPtr(void)
 
 bool BaseGroup::checkPath(const PathCache &path)
 {
-    if (path.cache_length > PATH_CACHE_SIZE) return false;
-    if (path.target.cnt < 0 && path.smooth_out_index != -1) return false;
-    if (path.smooth_out_index < -1 || path.smooth_out_index >= (int)path.cache_length) return false;
-    if (path.smooth_in_index < -1 || path.smooth_in_index >= (int)path.cache_length) return false;
+    if (path.cache_length > PATH_CACHE_SIZE)
+    {
+        FST_ERROR("Cache-length = %d", path.cache_length);
+        return false;
+    }
+
+    if (path.target.cnt < 0 && path.smooth_out_index != -1)
+    {
+        FST_ERROR("CNT = %.6f, smooth-out = %d", path.target.cnt, path.smooth_out_index);
+        return false;
+    }
+
+    if (path.smooth_out_index < -1 || path.smooth_out_index >= (int)path.cache_length)
+    {
+        FST_ERROR("Cache-length = %d, smooth-out = %d", path.cache_length, path.smooth_out_index);
+        return false;
+    }
+
+    if (path.smooth_in_index < -1 || path.smooth_in_index >= (int)path.cache_length)
+    {
+        FST_ERROR("Cache-length = %d, smooth-in = %d", path.cache_length, path.smooth_in_index);
+        return false;
+    }
+
     return true;
 }
 
 bool BaseGroup::checkTrajectory(const TrajectoryCache &trajectory)
 {
-    if (trajectory.cache_length > TRAJECTORY_CACHE_SIZE) return false;
-    if (trajectory.smooth_out_index < -1 || trajectory.smooth_out_index >= (int)trajectory.cache_length) return false;
+    if (trajectory.cache_length > TRAJECTORY_CACHE_SIZE)
+    {
+        FST_ERROR("Cache-length = %d", trajectory.cache_length);
+        return false;
+    }
+
+    if (trajectory.smooth_out_index < -1 || trajectory.smooth_out_index >= (int)trajectory.cache_length)
+    {
+        FST_ERROR("Cache-length = %d, smooth-out = %d", trajectory.cache_length, trajectory.smooth_out_index);
+        return false;
+    }
 
     for (size_t i = 0; i < trajectory.cache_length; i++)
     {
-        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 16) return false;
+        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 16)
+        {
+            FST_ERROR("trajectory-block %d: duration = %.6f", i, trajectory.cache[i].duration);
+            return false;
+        }
     }
 
     return true;

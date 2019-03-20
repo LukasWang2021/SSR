@@ -440,6 +440,38 @@ void test8(void)
     traj_cache.freeCachePtr(p1);
 }
 
+using namespace basic_alg;
+using namespace std;
+
+void test9(void)
+{
+    PoseEuler pose = {600, 100, 500, 0, 0, 3.14159};
+    PoseEuler pose_res;
+    Joint ref = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    Joint res;
+    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    
+    /*
+    double dh_matrix[NUM_OF_JOINT][4] = {{0.0, 0.0, 365.0, 0.0}, 
+                                        {1.5707963267948966192313216916398, 30, 0, 1.5707963267948966192313216916398},
+                                        {0.0, 340.0, 0.0, 0.0},
+                                        {1.5707963267948966192313216916398, 35.0, 350.0, 0.0},
+                                        {-1.5707963267948966192313216916398, 0.0, 0.0, 0.0}
+                                        {1.5707963267948966192313216916398, 0.0, 96.5, 0.0}};
+    
+    ArmKinematics kinematics2;
+    kinematics2.initKinematics(dh_matrix);
+    */
+
+    kinematics.doFK(ref, pose_res);
+    cout << "kinematics FK:" << pose_res.point_.x_ << "," << pose_res.point_.y_ << "," << pose_res.point_.z_ << "," << pose_res.euler_.a_ << "," << pose_res.euler_.b_ << "," << pose_res.euler_.c_ << endl;
+    kinematics.doIK(pose, ref, res);
+    cout << "kinematics IK:" << res[0] << "," << res[1] << "," << res[2] << "," << res[3] << "," << res[4] << "," << res[5] << endl;
+    kinematics.doFK(res, pose_res);
+    cout << "kinematics FK:" << pose_res.point_.x_ << "," << pose_res.point_.y_ << "," << pose_res.point_.z_ << "," << pose_res.euler_.a_ << "," << pose_res.euler_.b_ << "," << pose_res.euler_.c_ << endl;
+    
+}
+
 int main(int argc, char **argv)
 {
     //test0();
@@ -448,9 +480,10 @@ int main(int argc, char **argv)
     //test3();
     //test4();
     //test5();
-    test6();
+    //test6();
     //test7();
     //test8();
+    test9();
 
     return 0;
 }

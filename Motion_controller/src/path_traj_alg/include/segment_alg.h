@@ -120,10 +120,20 @@ typedef enum
     S_PathCountFactorJoint = 52,    // double
     S_CircleAngle = 53,    // double
     S_CircleRadius = 54,    // double
+    S_CircleAngle_Via2In = 55,
+    S_CircleAngle_In2Out = 56,
 
     S_CircleCenter_1 = 60,    // double
     S_CircleCenter_2 = 61,    // double
     S_CircleCenter_3 = 62,    // double
+
+    S_CIRCLE_UINT_VECTOR_N_1 = 65,
+    S_CIRCLE_UINT_VECTOR_N_2 = 66,
+    S_CIRCLE_UINT_VECTOR_N_3 = 67,
+
+    S_CIRCLE_UINT_VECTOR_O_1 = 68,
+    S_CIRCLE_UINT_VECTOR_O_2 = 69,
+    S_CIRCLE_UINT_VECTOR_O_3 = 70,
 
     S_PAUSE_TIME_FACTOR = 100,    // double
     S_PAUSE_PATH_LENGTH_FACTOR = 101,    // double
@@ -802,9 +812,12 @@ inline void updateMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_path_
 inline void updateMovCTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline bool updateMovLVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline void updateMovJVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
+inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline void updateMovLIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
 inline void updateMovJIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
+                                        int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
+inline void updateMovCIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
 
 inline bool canBePause(const fst_mc::PathCache &path_cache, const fst_mc::JointState &stop_state, const int &path_stop_index, const int &left_path_number, 
@@ -834,6 +847,9 @@ inline void updateMovLVia2EndTrajT(const fst_mc::PathCache& path_cache, const fs
                                 int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                 int& traj_t_size);
 inline void updateMovJVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
+                                int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
+                                int& traj_t_size);
+inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
                                 int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                 int& traj_t_size);
 

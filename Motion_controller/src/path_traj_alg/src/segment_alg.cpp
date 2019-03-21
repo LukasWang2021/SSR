@@ -562,6 +562,7 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
 
     // Calculation circle radius
     circle_radius = getDistance(start.point_, circle_center_position);
+    stack[S_CircleRadius] = circle_radius;
 
     double unit_vestor_pose2_to_circle_center[3];
     unit_vestor_pose2_to_circle_center[0] = (end.circle_target.pose2.point_.x_ - circle_center_position.x_) / circle_radius;
@@ -582,6 +583,7 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
     double dot_sin = sqrt(1 - pow(dot_cos, 2));
 
     angle = atan2(dot_sin, dot_cos);
+    stack[S_CircleAngle] = angle;
 }
 
 
@@ -1184,10 +1186,19 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     //---------------compute in point--------------------------//
     double uint_vector_n[3];
     getUintVector3(center_position, point_via, uint_vector_n);
+    stack[S_CIRCLE_UINT_VECTOR_N_1] =  uint_vector_n[0];
+    stack[S_CIRCLE_UINT_VECTOR_N_2] =  uint_vector_n[1];
+    stack[S_CIRCLE_UINT_VECTOR_N_3] =  uint_vector_n[2];
+
     double uint_vector_a[3];
     getUintVector3(cross_vector, uint_vector_a);
+
     double uint_vector_o[3];
     getVector3CrossProduct(uint_vector_a, uint_vector_n, uint_vector_o);
+    stack[S_CIRCLE_UINT_VECTOR_O_1] =  uint_vector_o[0];
+    stack[S_CIRCLE_UINT_VECTOR_O_2] =  uint_vector_o[1];
+    stack[S_CIRCLE_UINT_VECTOR_O_3] =  uint_vector_o[2];
+
     Point point_in;
     Quaternion quatern_in;
     getCirclePoint(circle_radius, circle_angle_via2in, uint_vector_n, uint_vector_o, center_position, point_in);
@@ -1451,6 +1462,16 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
             updateMovJVia2InTrajP(path_cache, via, traj_pva_in_index);
             updateMovJIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
             updateMovJVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
+            break;
+        }
+        case MOTION_CIRCLE:
+        {
+            if(!updateMovCVia2InTrajP(path_cache, via, traj_pva_in_index))
+            {
+                return TRAJ_PLANNING_INVALID_IK_FAILED;
+            }
+            updateMovCIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+            updateMovCVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
             break;
         }
         default:
@@ -3072,6 +3093,81 @@ inline void updateMovJVia2InTrajP(const PathCache& path_cache, const MotionTarge
     }
 }
 
+inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index)
+{
+    int i, j;
+    // compute path vector and quatern for via2in
+    double circle_angle_via2in = 0;
+    getCircleCenterAngle(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_angle_via2in);
+    stack[S_CircleAngle_Via2In] = fabs(circle_angle_via2in);
+
+    double via_quatern[4], in_quatern[4];
+    getMoveEulerToQuatern(via.pose_target.euler_, via_quatern);
+    getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.quaternion_, in_quatern);
+    double quatern_angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
+
+   // compute via joint
+    Joint joint_via;
+    if(!segment_alg_param.kinematics_ptr->doIK(via.pose_target, path_cache.cache[0].joint, joint_via))
+    {
+        return false;
+    }
+    // decide traj_pva_in_index & length_step & angle_step, fill TrajP via2in if in is not on via
+    double traj_piece_ideal_via2in = circle_angle_via2in * stack[S_PathCountFactorJoint];
+    if(traj_piece_ideal_via2in < DOUBLE_ACCURACY)
+    {
+        traj_pva_in_index = 0;
+    }
+    else
+    {
+        traj_pva_in_index = ceil(traj_piece_ideal_via2in);
+        double circle_angle_step = circle_angle_via2in / traj_pva_in_index;
+        double quatern_angle_step = quatern_angle_via2in / traj_pva_in_index;
+        double circle_angle_distance_to_via = 0, quatern_angle_distance_to_via = 0;
+        PoseQuaternion pose;
+        Joint joint_ref = joint_via;
+        Joint joint_result;
+        int traj_p_address;
+
+        double circle_angle_radius = stack[S_CircleRadius];
+        double uint_vector_n[3];
+        uint_vector_n[0] = stack[S_CIRCLE_UINT_VECTOR_N_1];
+        uint_vector_n[1] = stack[S_CIRCLE_UINT_VECTOR_N_2];
+        uint_vector_n[2] = stack[S_CIRCLE_UINT_VECTOR_N_3];
+
+        double uint_vector_o[3];
+        uint_vector_o[0] = stack[S_CIRCLE_UINT_VECTOR_O_1];
+        uint_vector_o[1] = stack[S_CIRCLE_UINT_VECTOR_O_2];
+        uint_vector_o[2] = stack[S_CIRCLE_UINT_VECTOR_O_3];
+
+        Point center_position;
+        center_position.x_ = stack[S_CircleCenter_1];
+        center_position.y_ = stack[S_CircleCenter_2];
+        center_position.z_ = stack[S_CircleCenter_3];
+
+        for(i = 0; i <= traj_pva_in_index; ++i)
+        {
+            getCirclePoint(circle_angle_radius, circle_angle_via2in, uint_vector_n, uint_vector_o,
+                center_position, pose.point_);
+            getQuaternPoint(via_quatern, in_quatern, quatern_angle_via2in, quatern_angle_distance_to_via, pose.quaternion_);
+            if(!segment_alg_param.kinematics_ptr->doIK(pose, joint_ref, joint_result))
+            {
+                return false;
+            }
+            traj_p_address = S_TrajP0;
+            for(j = 0; j < model.link_num; ++j)
+            {
+                stack[traj_p_address + i] = joint_result[j];
+                traj_p_address += 75;
+            }
+            joint_ref = joint_result;
+            circle_angle_distance_to_via += circle_angle_step;
+            quatern_angle_distance_to_via += quatern_angle_step;
+        }
+    }
+    return true;
+}
+
 
 inline void updateMovLIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
@@ -3128,6 +3224,25 @@ inline void updateMovJIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_i
     {
         getTrajPFromPathIn2Out2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
     }    
+}
+
+inline void updateMovCIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
+                                        int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
+{
+    int i, j;
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    double circle_angle_in2end = fabs(stack[S_CircleAngle] - stack[S_CircleAngle_Via2In]);
+
+    double traj_piece_ideal_in2end = circle_angle_in2end * stack[S_PathCountFactorJoint];
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {
+        getTrajPFromPathIn2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+    }
+    else
+    {
+        getTrajPFromPathIn2Out2End(path_cache, traj_piece_ideal_in2end, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
+    }
 }
 
 
@@ -3460,6 +3575,74 @@ inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
     stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
 }
+
+inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
+                                int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
+                                int& traj_t_size)
+{
+    int i;
+    // compute total time
+    int path_cache_length_minus_1 = path_cache.cache_length - 1;
+    double cmd_circle_angular_vel = cmd_vel / stack[S_CircleRadius];
+    double cmd_circle_angular_acc = segment_alg_param.max_cartesian_acc / stack[S_CircleRadius];
+    double critical_circle_angle = cmd_circle_angular_vel * cmd_circle_angular_vel / cmd_circle_angular_acc;
+    double circle_angle_start2end = stack[S_CircleAngle];
+    double time_span_via2end;
+    if(circle_angle_start2end > critical_circle_angle) // can reach vel
+    {
+        time_span_via2end = 2 * sqrt(critical_circle_angle / cmd_circle_angular_acc) + (circle_angle_start2end - critical_circle_angle) / cmd_circle_angular_vel;
+    }
+    else // can't reach vel
+    {
+        time_span_via2end = 2 * sqrt(circle_angle_start2end / cmd_circle_angular_acc);
+    }
+
+    // compute time duration for each traj piece, via2in
+    double time_span_via2in = time_span_via2end * stack[S_CircleAngle_Via2In] / stack[S_CircleAngle];
+    double time_duration_via2in = time_span_via2in / traj_pva_in_index;
+    for(i = 0; i < traj_pva_in_index; ++i)
+    {
+        stack[S_TrajT + i] = time_duration_via2in;
+    }
+    // compute time duration for each traj piece, in2end
+    traj_t_size = traj_pva_size_via2end - 1;
+    if(path_cache.smooth_out_index == -1
+        || path_cache.smooth_out_index == path_cache_length_minus_1)
+    {
+        double time_duration_in2end = (time_span_via2end - time_span_via2in) / (traj_t_size - traj_pva_in_index);
+        for(i = traj_pva_in_index; i < traj_t_size; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_in2end;
+        }        
+    }
+    else
+    {
+        double circle_angle_in2out = 0.0;
+        getCircleCenterAngle(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_angle_in2out);
+        stack[S_CircleAngle_In2Out] = circle_angle_in2out;
+
+        double circle_angle = stack[S_CircleAngle];
+        double time_span_in2out = time_span_via2end * circle_angle_in2out / circle_angle;
+        double time_duration_in2out = time_span_in2out / (traj_pva_out_index - traj_pva_in_index);
+
+        double circle_angle_out2end = stack[S_CircleAngle] - stack[S_CircleAngle_Via2In] - stack[S_CircleAngle_In2Out];
+        double time_span_out2end = time_span_via2end * circle_angle_out2end / circle_angle;
+        double time_duration_out2end = time_span_out2end / (traj_pva_size_via2end - traj_pva_out_index - 1);
+
+        for(i = traj_pva_in_index; i < traj_pva_out_index; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_in2out;
+        }
+        for(i = traj_pva_out_index; i < traj_t_size; ++i)
+        {
+            stack[S_TrajT + i] = time_duration_out2end;
+        }
+    }
+    // adjust first and last piece of time
+    stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
+    stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
+}
+
 
 inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel, 
                                            int* traj_path_cache_index_out2in, int traj_pva_size_out2in, 

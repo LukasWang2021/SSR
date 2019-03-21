@@ -1,8 +1,10 @@
 #include "segment_alg.h"
 #include "kinematics.h"
+#include "kinematics_rtm.h"
 #include "kinematics_toll.h"
 #include "dynamics_interface.h"
 #include "basic_alg_datatype.h"
+#include "common_file_path.h"
 #include <iostream>
 #include <math.h>
 #include <time.h>
@@ -32,12 +34,9 @@ void doIK(Kinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
 
 int main(void)
 {
-    DH base_dh;
-
-    DH arm_dh[4];
-
-    
-    Kinematics* kinematics_ptr = new KinematicsToll(base_dh, arm_dh);
+    std::string file_path = AXIS_GROUP_DIR;
+    //Kinematics* kinematics_ptr = new KinematicsRTM(file_path);
+    Kinematics* kinematics_ptr = new KinematicsToll(file_path);//for toll
     if(!kinematics_ptr->isValid())
     {
         std::cout<<"kinematics init failed"<<std::endl;
@@ -58,9 +57,14 @@ int main(void)
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = &dynamics;
 
-    double joint_vel_max[4] = {1200, 4.67, 5.81, 7.85};
-    AxisType axis_type[9] = {LINEAR_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS};
-    initSegmentAlgParam(&segment_alg_param, 4, axis_type, joint_vel_max);
+    double joint_vel_max[6] = {1200, 4.67, 5.81, 7.85, 5.81, 7.85};
+    AxisType axis_type[9] = {ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS};
+    initSegmentAlgParam(&segment_alg_param, 6, axis_type, joint_vel_max);
+
+    //for toll
+    //double joint_vel_max[4] = {1200, 4.67, 5.81, 7.85};
+    //AxisType axis_type[9] = {LINEAR_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS};
+    //initSegmentAlgParam(&segment_alg_param, 4, axis_type, joint_vel_max);
            
     basic_alg::PoseEuler start;
     fst_mc::MotionTarget via;
@@ -72,7 +76,88 @@ int main(void)
     double acc_ratio = 0.5;
     double vel_ratio = 0.5;
 
-#if 1
+//planPathSmoothCircle
+#if 1 
+    printf("testing planPathSmoothCircle\n");
+
+    start.point_.x_ = 400;//0
+    start.point_.y_ = 150;//150
+    start.point_.z_ = 350;
+    start.euler_.a_ = 0;
+    start.euler_.b_ = 0;
+    start.euler_.c_ = PI;
+    //used by L2C
+    via.pose_target.point_.x_ = 200;
+    via.pose_target.point_.y_ = 150;
+    via.pose_target.point_.z_ = 350;
+    via.pose_target.euler_.a_ = 0;
+    via.pose_target.euler_.b_ = 0;
+    via.pose_target.euler_.c_ = PI;
+    //used byC2C
+    via.circle_target.pose2.point_.x_ = 200;
+    via.circle_target.pose2.point_.y_ = 150;
+    via.circle_target.pose2.point_.z_ = 350;
+    via.circle_target.pose2.euler_.a_ = 0;
+    via.circle_target.pose2.euler_.b_ = 0;
+    via.circle_target.pose2.euler_.c_ = PI;
+
+    via.cnt = 0.3;
+    via.vel = 1000;
+    via.type = MOTION_LINE;//MOTION_CIRCLE
+
+    target.circle_target.pose1.point_.x_ = 200;
+    target.circle_target.pose1.point_.y_ = -150;
+    target.circle_target.pose1.point_.z_ = 350;
+    target.circle_target.pose1.euler_.a_ = 0;
+    target.circle_target.pose1.euler_.b_ = 0;
+    target.circle_target.pose1.euler_.c_ = PI;
+
+    target.circle_target.pose2.point_.x_ = 500;
+    target.circle_target.pose2.point_.y_ = -150;
+    target.circle_target.pose2.point_.z_ = 350;
+    target.circle_target.pose2.euler_.a_ = 0;
+    target.circle_target.pose2.euler_.b_ = 0;
+    target.circle_target.pose2.euler_.c_ = PI;
+
+    target.cnt = 0.4;
+    target.vel = 1000;
+
+    target.type = MOTION_CIRCLE;
+
+    path_cache.target.vel = 1000;
+    path_cache.target.type = MOTION_CIRCLE;
+
+    planPathSmoothCircle(start, via, target, path_cache);
+
+    std::cout<<" CacheLength = "<<path_cache.cache_length
+                 <<", Smooth_in_Index = "<<path_cache.smooth_in_index
+                 <<", Smooth_out_Index = "<<path_cache.smooth_out_index<<std::endl;
+    for(int i = 0; i < path_cache.cache_length; ++i)
+    {
+            std::cout<<path_cache.cache[i].pose.point_.x_
+                     <<"  "<<path_cache.cache[i].pose.point_.y_
+                     <<"  "<<path_cache.cache[i].pose.point_.z_<<std::endl;
+    }
+/*
+    for(int i = 0; i < path_cache.cache_length; ++i)
+    {
+            std::cout<<" ["<<i<<"] "
+                     <<" X = "<<path_cache.cache[i].pose.point_.x_
+                     <<" Y = "<<path_cache.cache[i].pose.point_.y_
+                     <<" Z = "<<path_cache.cache[i].pose.point_.z_
+                     <<" x = "<<path_cache.cache[i].pose.quaternion_.x_
+                     <<" y = "<<path_cache.cache[i].pose.quaternion_.y_
+                     <<" z = "<<path_cache.cache[i].pose.quaternion_.z_
+                     <<" W = "<<path_cache.cache[i].pose.quaternion_.w_
+                     <<" PointType = "<<path_cache.cache[i].point_type
+                     <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
+    }
+*/
+    printf("end of planPathSmoothCircle\n");
+
+#endif
+
+#if 0
     start_joint.j1_ = 0;
     start_joint.j2_ = 0;
     start_joint.j3_ = 0;
@@ -143,31 +228,43 @@ int main(void)
                  <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
     }
 #endif
+//planPathSmoothLine
 #if 0
-    start.position.x = 300;
-    start.position.y = 0;
-    start.position.z = 0;
-    start.orientation.a = 0;
-    start.orientation.b = 0;
-    start.orientation.c = 0;
+    start.point_.x_ = 300;
+    start.point_.y_ = 0;
+    start.point_.z_ = 0;
+    start.euler_.a_ = 0;
+    start.euler_.b_ = 0;
+    start.euler_.c_ = 0;
+    //L2L
+    via.pose_target.point_.x_ = 300;
+    via.pose_target.point_.y_ = 300;
+    via.pose_target.point_.z_ = 0;
+    via.pose_target.euler_.a_ = 0;
+    via.pose_target.euler_.b_ = 0;
+    via.pose_target.euler_.c_ = 0;
 
-    via.pose_target.position.x = 300;
-    via.pose_target.position.y = 300;
-    via.pose_target.position.z = 0;
-    via.pose_target.orientation.a = 0;
-    via.pose_target.orientation.b = 0;
-    via.pose_target.orientation.c = 0;
+    //used byC2L
+    via.circle_target.pose2.point_.x_ = 300;
+    via.circle_target.pose2.point_.y_ = 300;
+    via.circle_target.pose2.point_.z_ = 0;
+    via.circle_target.pose2.euler_.a_ = 0;
+    via.circle_target.pose2.euler_.b_ = 0;
+    via.circle_target.pose2.euler_.c_ = 0;
+
     via.cnt = 0.5;
     via.vel = 100;
+    via.type = MOTION_LINE;//MOTION_CIRCLE
 
-    target.pose_target.position.x = -300;
-    target.pose_target.position.y = 300;
-    target.pose_target.position.z = 0;
-    target.pose_target.orientation.a = PI / 2;
-    target.pose_target.orientation.b = 0;
-    target.pose_target.orientation.c = 0;
+    target.pose_target.point_.x_ = -300;
+    target.pose_target.point_.y_ = 300;
+    target.pose_target.point_.z_ = 0;
+    target.pose_target.euler_.a_ = 0;
+    target.pose_target.euler_.b_ = 0;
+    target.pose_target.euler_.c_ = 0;
     target.cnt = 0.2;
     target.vel = 1000;
+    via.type = MOTION_LINE;//MOTION_CIRCLE
 
     clock_t start_time = clock();
     planPathSmoothLine(start, via, target, path_cache);
@@ -176,21 +273,61 @@ int main(void)
 
     for(int i = 0; i < path_cache.cache_length; ++i)
     {
+            std::cout<<path_cache.cache[i].pose.point_.x_
+                     <<"  "<<path_cache.cache[i].pose.point_.y_
+                     <<"  "<<path_cache.cache[i].pose.point_.z_<<std::endl;
+    }
+
+/*
+    for(int i = 0; i < path_cache.cache_length; ++i)
+    {
         std::cout<<" ["<<i<<"] "
-                 <<" X = "<<path_cache.cache[i].pose.position.x
-                 <<" Y = "<<path_cache.cache[i].pose.position.y
-                 <<" Z = "<<path_cache.cache[i].pose.position.z
-                 <<" x = "<<path_cache.cache[i].pose.orientation.x
-                 <<" y = "<<path_cache.cache[i].pose.orientation.y
-                 <<" z = "<<path_cache.cache[i].pose.orientation.z
-                 <<" W = "<<path_cache.cache[i].pose.orientation.w
+                 <<" X = "<<path_cache.cache[i].pose.point_.x_
+                 <<" Y = "<<path_cache.cache[i].pose.point_.y_
+                 <<" Z = "<<path_cache.cache[i].pose.point_.z_
+                 <<" x = "<<path_cache.cache[i].pose.quaternion_.x_
+                 <<" y = "<<path_cache.cache[i].pose.quaternion_.y_
+                 <<" z = "<<path_cache.cache[i].pose.quaternion_.z_
+                 <<" W = "<<path_cache.cache[i].pose.quaternion_.w_
                  <<" PointType = "<<path_cache.cache[i].point_type
                  <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
     }
-
-    std::cout<<"delta_time = "<<delta<<std::endl;
+*/
+    std::cout<<"-delta_time = "<<delta<<std::endl;
 #endif
+//planPathSmoothJoint
+#if 0
+    basic_alg::Joint js, jv, je;
+    js[0] = 0; jv[0] = M_PI; je[0] = M_PI;
+    js[1] = 0; jv[1] = 0;    je[1] = M_PI;
+    js[2] = 0; jv[2] = 0;    je[2] = 0;
+    js[3] = 0; jv[3] = 0;    je[3] = 0;
+    js[4] = 0; jv[4] = 0;    je[4] = 0;
+    js[5] = 0; jv[5] = 0;    je[5] = 0;
 
+    start_joint = js;
+
+    via.joint_target = jv;
+    via.cnt = 0.5;
+    via.vel = 1;
+    via.type = MOTION_JOINT;
+
+    target.joint_target = je;
+    target.cnt = -1;
+    target.vel = 1;
+    target.type = MOTION_JOINT;
+
+    planPathSmoothJoint(start_joint, via, target, path_cache);
+    std::cout<<"path_cache.smooth_out_index = "<<path_cache.smooth_out_index<<std::endl;
+    std::cout<<"path_cache.smooth_in_index = "<<path_cache.smooth_in_index<<std::endl;
+    std::cout<<"path_cache.cache_length = "<<path_cache.cache_length<<std::endl;
+    for(int i = 0; i < path_cache.cache_length; ++i)
+    {
+        std::cout<<" "<<path_cache.cache[i].joint[0]
+                 <<" "<<path_cache.cache[i].joint[1]<<std::endl;
+    }
+
+#endif 
 
 #if 0
     path_cache.cache_length = 91;
@@ -496,8 +633,8 @@ int main(void)
     //printAllTraj(traj_cache_2, 0.001);
     printTraj(traj_cache_2, 1, 0.001);
 #endif
-
-#if 0 // smooth L test
+//smooth L test
+#if 0 
         start_joint[0] = 0.358665;
         start_joint[1] = -0.3994186;
         start_joint[2] = -0.4181983;
@@ -712,7 +849,7 @@ int main(void)
     //std::cout<<"traj_cache_1.smooth_out_index = "<<traj_cache_1.smooth_out_index<<std::endl;
     //std::cout<<"traj_cache_1.cache_length = "<<traj_cache_1.cache_length<<std::endl;
 
-    printTraj(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
+//    printTraj(traj_cache_1, 1, 0.001, traj_cache_1.smooth_out_index + 1);
         
     /*for(int i=0; i< traj_cache_1.cache_length; ++i)
     {
@@ -750,22 +887,28 @@ int main(void)
     path_cache_2.target.cnt = target.cnt;
   
     planPathSmoothJoint(out_state.angle, via, target, path_cache_2);
-    /*std::cout<<"path_cache_2.smooth_out_index = "<<path_cache_2.smooth_out_index<<std::endl;
+    std::cout<<"path_cache_2.smooth_out_index = "<<path_cache_2.smooth_out_index<<std::endl;
     std::cout<<"path_cache_2.smooth_in_index = "<<path_cache_2.smooth_in_index<<std::endl;
-    std::cout<<"path_cache_2.cache_length = "<<path_cache_2.cache_length<<std::endl;     
+    std::cout<<"path_cache_2.cache_length = "<<path_cache_2.cache_length<<std::endl;
+    for(int i = 0; i < path_cache_2.cache_length; ++i)
+    {
+        std::cout<<" "<<path_cache_2.cache[i].joint[0]
+                 <<" "<<path_cache_2.cache[i].joint[1]<<std::endl;
+    }
+    /*     
     for(int i = 0; i < path_cache_2.cache_length; ++i)
     {
         std::cout<<" ["<<i<<"] "
                  <<" J0 = "<<path_cache_2.cache[i].joint[0]
                  <<" J1 = "<<path_cache_2.cache[i].joint[1]<<std::endl;
-    }
-    std::cout<<"out_state: "<<out_state.angle[0]<<" "<<out_state.omega[0]<<" "<<out_state.alpha[0]<<std::endl;*/    
+    }*/
+    std::cout<<"out_state: "<<out_state.angle[0]<<" "<<out_state.omega[0]<<" "<<out_state.alpha[0]<<std::endl;  
 
     planTrajectorySmooth(path_cache_2, out_state, via, vel_ratio, acc_ratio, traj_cache_2);
     //std::cout<<"traj_cache_2.smooth_out_index = "<<traj_cache_2.smooth_out_index<<std::endl;
     //std::cout<<"traj_cache_2.cache_length = "<<traj_cache_2.cache_length<<std::endl;  
     
-    printTraj(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
+ //   printTraj(traj_cache_2, 1, 0.001, traj_cache_2.cache_length);
 
 #endif
 #if 0

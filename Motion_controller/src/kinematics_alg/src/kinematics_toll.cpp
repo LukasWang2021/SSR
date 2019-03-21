@@ -260,10 +260,6 @@ bool KinematicsToll::doIK(const TransMatrix& trans_matrix, const Posture& postur
     trans_matrix_ptr->leftMultiply(matrix_base_inv_, trans_matrix_0to4);
 
     joint.j1_ = trans_matrix_0to4.trans_vector_.z_ - arm_dh_[1].d - arm_dh_[3].d - arm_dh_[0].offset;
-    if (joint.j1_ < 0)
-    {
-        return false;//todo
-    }
 
     // compute q2+q3+q4
     TransMatrix trans_matrix_1to4;//matrix from z1 to z4

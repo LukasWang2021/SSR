@@ -128,7 +128,23 @@ int main(void)
     path_cache.target.type = MOTION_CIRCLE;
 
     planPathSmoothCircle(start, via, target, path_cache);
+// 
 
+    Joint result_joint;
+    Joint ref_joint = start_joint;
+    for(int i = 0; i < path_cache.cache_length; ++i)
+    {
+        kinematics_ptr->doIK(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
+        //kinematics_ptr->inverseKinematicsInUser(path_cache.cache[i].pose, ref_joint, path_cache.cache[i].joint);
+        ref_joint = path_cache.cache[i].joint;
+    }
+
+    //planTrajectorySmooth(path_cache_2, start_state, via, vel_ratio, acc_ratio, traj_cache_2);
+    planTrajectorySmooth(path_cache, start_state, via, vel_ratio, acc_ratio, traj_cache);
+    // printTraj(traj_cache, 0, 0.001, traj_cache.cache_length);
+    //fkToTraj(traj_cache);
+#endif
+#if 0
     std::cout<<" CacheLength = "<<path_cache.cache_length
                  <<", Smooth_in_Index = "<<path_cache.smooth_in_index
                  <<", Smooth_out_Index = "<<path_cache.smooth_out_index<<std::endl;
@@ -153,7 +169,7 @@ int main(void)
                      <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
     }
 */
-    printf("end of planPathSmoothCircle\n");
+    //printf("end of planPathSmoothCircle\n");
 
 #endif
 

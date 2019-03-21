@@ -1436,7 +1436,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     {
         return TRAJ_PLANNING_INVALID_PATHCACHE;
     }
-    
+
     if(path_cache.smooth_in_index == -1)
     {
         return TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX;
@@ -2803,27 +2803,12 @@ inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_
         }
         case MOTION_CIRCLE:
         {
-            Point circle_center;
-            circle_center.x_ = stack[S_CircleCenter_1];
-            circle_center.y_ = stack[S_CircleCenter_2];
-            circle_center.z_ = stack[S_CircleCenter_3];
+            double circle_angle_in2out = 0.0;
+            getCircleCenterAngle(path_cache.cache[path_cache.smooth_in_index].pose.point_,
+                path_cache.cache[path_cache.smooth_out_index].pose.point_, circle_angle_in2out);
+            stack[S_CircleAngle_In2Out] = circle_angle_in2out;
 
-            double circle_center_to_in[3];
-            getUintVector3(circle_center, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_center_to_in);
-
-            double circle_center_to_out[3];
-            getUintVector3(circle_center, path_cache.cache[path_cache.smooth_out_index].pose.point_, circle_center_to_out);
-
-            double cos_circle_angle_in_to_out = circle_center_to_in[0] * circle_center_to_out[0]
-                + circle_center_to_in[1] * circle_center_to_out[1] + circle_center_to_in[2] * circle_center_to_out[2];
-
-            if (fabs(cos_circle_angle_in_to_out) < DOUBLE_ACCURACY) cos_circle_angle_in_to_out = 0;
-
-            double sin_circle_angle_in_to_out = sqrt(1 - pow(cos_circle_angle_in_to_out, 2));
-
-            double circle_angle_in_to_out = atan2(sin_circle_angle_in_to_out, cos_circle_angle_in_to_out);
-
-            traj_piece_ideal_in2out = circle_angle_in_to_out * stack[S_PathCountFactorCartesian];
+            traj_piece_ideal_in2out = stack[S_CircleAngle_In2Out] * stack[S_PathCountFactorJoint];
             break;
         }
     }
@@ -3099,7 +3084,7 @@ inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst
     // compute path vector and quatern for via2in
     double circle_angle_via2in = 0;
     getCircleCenterAngle(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_angle_via2in);
-    stack[S_CircleAngle_Via2In] = fabs(circle_angle_via2in);
+    stack[S_CircleAngle_Via2In] = circle_angle_via2in;
 
     double via_quatern[4], in_quatern[4];
     getMoveEulerToQuatern(via.pose_target.euler_, via_quatern);
@@ -3229,9 +3214,8 @@ inline void updateMovJIn2EndTrajP(const PathCache& path_cache, int traj_pva_in_i
 inline void updateMovCIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
-    int i, j;
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double circle_angle_in2end = fabs(stack[S_CircleAngle] - stack[S_CircleAngle_Via2In]);
+    double circle_angle_in2end = stack[S_CircleAngle] - stack[S_CircleAngle_Via2In];
 
     double traj_piece_ideal_in2end = circle_angle_in2end * stack[S_PathCountFactorJoint];
     if(path_cache.smooth_out_index == -1
@@ -3613,13 +3597,11 @@ inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fs
         for(i = traj_pva_in_index; i < traj_t_size; ++i)
         {
             stack[S_TrajT + i] = time_duration_in2end;
-        }        
+        }
     }
     else
     {
-        double circle_angle_in2out = 0.0;
-        getCircleCenterAngle(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_angle_in2out);
-        stack[S_CircleAngle_In2Out] = circle_angle_in2out;
+        double circle_angle_in2out = stack[S_CircleAngle_In2Out];
 
         double circle_angle = stack[S_CircleAngle];
         double time_span_in2out = time_span_via2end * circle_angle_in2out / circle_angle;
@@ -4195,4 +4177,52 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step, int end
 
 }
 
+void fkToTraj(TrajectoryCache &traj_cache)
+{
+    int end_segment = traj_cache.cache_length;
+    double time_step = 0.001;
 
+    double absolute_time_vector[50];
+    absolute_time_vector[0] = 0;
+
+    for(int i = 1; i < traj_cache.cache_length + 1; ++i)
+    {
+        absolute_time_vector[i] = absolute_time_vector[i - 1] + traj_cache.cache[i - 1].duration;
+    }
+  
+    int segment_index;
+    double cur_time = 0;
+    double delta_time = 0;
+    double p_value, v_value, a_value;   
+    Joint joint_to_fk;
+    while(cur_time < absolute_time_vector[end_segment])
+    {
+        for(segment_index = end_segment - 1; segment_index >= 0; --segment_index)
+        {
+            if(cur_time >= absolute_time_vector[segment_index])
+            {
+                break;
+            }
+        }
+
+        delta_time = cur_time - absolute_time_vector[segment_index];
+
+        for (int index = 0; index != model.link_num; ++index)
+        {
+            joint_to_fk[index] = traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[3] * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[2] * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[1] * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[0];
+        }
+
+        PoseEuler pose_euler_traj;
+        segment_alg_param.kinematics_ptr->doFK(joint_to_fk, pose_euler_traj);
+        std::cout << "Fk traj: " << pose_euler_traj.point_.x_
+                << " " <<  pose_euler_traj.point_.y_
+                << " " <<  pose_euler_traj.point_.z_ << std::endl;
+
+        cur_time += time_step;
+    }
+}

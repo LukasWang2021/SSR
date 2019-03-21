@@ -662,6 +662,35 @@ ErrorCode planPathSmoothJoint(const Joint &start,
                                     const MotionTarget &end, 
                                     PathCache &path_cache)
 {
+    Joint joint_via;
+    if (via.type == MOTION_JOINT)
+    {
+        //moveJ2J
+        joint_via.j1_ = via.joint_target.j1_;
+        joint_via.j2_ = via.joint_target.j2_;
+        joint_via.j3_ = via.joint_target.j3_;
+        joint_via.j4_ = via.joint_target.j4_;
+        joint_via.j5_ = via.joint_target.j5_;
+        joint_via.j6_ = via.joint_target.j6_;
+        joint_via.j7_ = via.joint_target.j7_;
+        joint_via.j8_ = via.joint_target.j8_;
+        joint_via.j9_ = via.joint_target.j9_;
+    }
+    else if (via.type == MOTION_LINE)
+    {   
+        //todo fix moveL2J
+        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+    }
+    else if(via.type == MOTION_CIRCLE)
+    {   
+        //todo fix moveC2J
+        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+    }
+    else
+    {
+        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+    }
+
     int i, j;
     // find max delta joint via2end 
     double delta_joint_via2end;
@@ -669,7 +698,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     double max_delta_linear_via2end = 0;
     for(i = 0; i < model.link_num; ++i)
     {
-        delta_joint_via2end = fabs(end.joint_target[i] - via.joint_target[i]);
+        delta_joint_via2end = fabs(end.joint_target[i] - joint_via[i]);
         if(seg_axis_type[i] == ROTARY_AXIS)
         {            
             if(delta_joint_via2end > max_delta_joint_via2end)
@@ -706,8 +735,8 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     Joint joint_in;
     for(i = 0; i < model.link_num; ++i)
     {
-        joint_step_via2end = (end.joint_target[i] - via.joint_target[i]) /  path_piece_via2end;
-        joint_in[i] = via.joint_target[i] + joint_step_via2end * path_piece_via2in;
+        joint_step_via2end = (end.joint_target[i] - joint_via[i]) /  path_piece_via2end;
+        joint_in[i] = joint_via[i] + joint_step_via2end * path_piece_via2in;
     }
 
     // find max piece of start2via
@@ -716,7 +745,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     double max_delta_linear_start2via = 0;
     for(i = 0; i < model.link_num; ++i)
     {
-        delta_joint_start2via = fabs(start[i] - via.joint_target[i]);
+        delta_joint_start2via = fabs(start[i] - joint_via[i]);
         if(seg_axis_type[i] == ROTARY_AXIS)
         {
             if(delta_joint_start2via > max_delta_joint_start2via)
@@ -756,7 +785,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     for(i = 0; i < model.link_num; ++i)
     {
         start_joint[i] = start[i];
-        mid_joint[i] = via.joint_target[i];
+        mid_joint[i] = joint_via[i];
         end_joint[i] = joint_in[i];
     }
 
@@ -821,12 +850,36 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
                                     const MotionTarget &end, 
                                     PathCache &path_cache)
 {
+    Euler euler_via;
+    Point point_via;
+    if (via.type == MOTION_JOINT)
+    {
+        //todo fix moveJ2L
+        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+    }
+    else if (via.type == MOTION_LINE)
+    {   
+        //moveL2L
+        euler_via = via.pose_target.euler_;
+        point_via = via.pose_target.point_;
+    }
+    else if(via.type == MOTION_CIRCLE)
+    {   
+        //moveC2L
+        euler_via = via.circle_target.pose2.euler_;
+        point_via = via.circle_target.pose2.point_;
+    }
+    else
+    {
+        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+    }
+
     int i;
     // compute path
-    double path_length_start2via = getPointsDistance(start.point_, via.pose_target.point_);
+    double path_length_start2via = getPointsDistance(start.point_, point_via);
     double path_length_via2target;
     double path_vector_via2target[3];
-    getMoveLPathVector(via.pose_target.point_, end.pose_target.point_, path_vector_via2target, path_length_via2target);
+    getMoveLPathVector(point_via, end.pose_target.point_, path_vector_via2target, path_length_via2target);
     double path_length_via2in = path_length_via2target / 2;
     
     if(path_length_start2via < path_length_via2in)
@@ -838,12 +891,12 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     int path_count_ideal_start2via = ceil(path_length_start2via / segment_alg_param.path_interval);
     int path_count_ideal_via2in = ceil(path_length_via2in / segment_alg_param.path_interval);
     Point point_in;
-    getMoveLPathPoint(via.pose_target.point_, path_vector_via2target, path_length_via2in, point_in);
+    getMoveLPathPoint(point_via, path_vector_via2target, path_length_via2in, point_in);
     
     // compute quatern
     double quatern_start[4], quatern_via[4], quatern_in[4], quatern_target[4];
     getMoveEulerToQuatern(start.euler_, quatern_start);
-    getMoveEulerToQuatern(via.pose_target.euler_, quatern_via);
+    getMoveEulerToQuatern(euler_via, quatern_via);
     getMoveEulerToQuatern(end.pose_target.euler_, quatern_target);
     double angle_start2via = getQuaternsIntersectionAngle(quatern_start, quatern_via);   
     double angle_via2target = getQuaternsIntersectionAngle(quatern_via, quatern_target);
@@ -930,7 +983,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
 
         // compute transition path
         getMovePointToVector3(start.point_, start_point);
-        getMovePointToVector3(via.pose_target.point_, via_point);
+        getMovePointToVector3(point_via, via_point);
         getMovePointToVector3(point_in, in_point);
         updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
@@ -997,7 +1050,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
 
         // compute transition path
         getMovePointToVector3(start.point_, start_point);
-        getMovePointToVector3(via.pose_target.point_, via_point);
+        getMovePointToVector3(point_via, via_point);
         getMovePointToVector3(point_in, in_point);
         updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
@@ -1104,7 +1157,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
                               circle_angle_count_ideal_via2end : quatern_angle_count_ideal_via2end);
     if(max_count_via2end > (PATH_CACHE_SIZE * 0.8 - 2))
     {
-        max_count_via2end = floor(PATH_CACHE_SIZE * 0.8) - 2;
+        max_count_via2end = (int)(PATH_CACHE_SIZE * 0.8) - 2;
     }
 
     //------------compute via2in angle path count and step------------//
@@ -1149,7 +1202,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     int path_count_transition = path_count_start2via + path_count_via2in;
     if(path_count_transition > (PATH_CACHE_SIZE * 0.2))
     {
-        path_count_transition = floor(PATH_CACHE_SIZE * 0.2) - 2;
+        path_count_transition = (int)(PATH_CACHE_SIZE * 0.2) - 2;
     }    
     path_cache.smooth_in_index = path_count_transition;
 

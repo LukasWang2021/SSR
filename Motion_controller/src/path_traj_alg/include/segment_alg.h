@@ -122,8 +122,14 @@ typedef enum
     S_CircleRadius = 54,    // double
 
     S_CircleCenter_1 = 60,    // double
-    S_CircleCenter_2 = 60,    // double
-    S_CircleCenter_3 = 60,    // double
+    S_CircleCenter_2 = 61,    // double
+    S_CircleCenter_3 = 62,    // double
+
+    S_PAUSE_TIME_FACTOR = 100,    // double
+    S_PAUSE_PATH_LENGTH_FACTOR = 101,    // double
+    S_PAUSE_ACC_CARTESIAN = 102,
+    S_PAUSE_ACC_JOINT = 103,
+
     // basic matrix operation
     S_TransMatrix = 200,  // matrix[4][4]
     S_HomoTransMatrix = 216, // matrix[4][4]
@@ -504,6 +510,8 @@ ErrorCode planTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::Join
 ErrorCode planTrajectorySmooth(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, const fst_mc::MotionTarget &via, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
 ErrorCode planPauseTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double acc_ratio, fst_mc::TrajectoryCache &traj_cache, int &path_stop_index);
 
+// bool planPauseTrajectoryFine();
+// bool planPauseTrajectorySmooth();
 /***********************************************************************************************/
 /*
 Function:   getNorm
@@ -774,6 +782,9 @@ inline void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fs
 inline void getCirclePoint(double &circle_radius, double &angle, double* n_vector, double* o_vector,
     basic_alg::Point &circle_center_point, basic_alg::Point &circle_point);
 
+inline void getCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, double &angle);
+
+
 inline void updateTrajPSingleItem(int traj_p_address, const basic_alg::Joint& joint);
 inline void getTrajPFromPathStart2End(const fst_mc::PathCache& path_cache, double traj_piece_ideal_start2end, 
                                              int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
@@ -795,6 +806,20 @@ inline void updateMovLIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
 inline void updateMovJIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
+
+inline bool canBePause(const fst_mc::PathCache &path_cache, const fst_mc::JointState &stop_state, const int &path_stop_index, const int &left_path_number, 
+    int &path_end_index);
+
+inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pva_size, int &traj_t_size);
+
+inline void updatePauseMovLTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, 
+    int& traj_pva_size, int &path_stop_index,int &path_end_index);
+
+inline void updatePauseMovCTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index,int& traj_pva_size, 
+    int &path_stop_index, int &path_end_index);
+
+inline void updatePauseMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_size,
+     int &path_stop_index,int &path_end_index);
 
 inline void updateMovLTrajT(const fst_mc::PathCache& path_cache, double cmd_vel,
                                 int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size,
@@ -835,6 +860,8 @@ inline bool isRescaleNeeded(int traj_piece_size);
 inline void updateTrajCoeff(int traj_p_address, int traj_v_address, int traj_a_address, int traj_pva_size, 
                                 int traj_t_address, int traj_t_size, int traj_j_address, int traj_coeff_address);
 inline void packTrajCache(int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size, 
+                          int traj_coeff_address, int traj_t_address, int traj_t_size, fst_mc::TrajectoryCache& traj_cache);
+inline void packPauseTrajCache(int* traj_path_cache_index, int traj_pva_size, 
                           int traj_coeff_address, int traj_t_address, int traj_t_size, fst_mc::TrajectoryCache& traj_cache);
 inline void packTrajCacheSmooth(int* traj_path_cache_index_out2in, int traj_pva_size_out2in, int traj_coeff_address_out2in, int traj_t_address_out2in, int traj_t_size_out2in, 
                                       int* traj_path_cache_index_in2end, int traj_pva_size_via2end, int traj_coeff_address_via2end, int traj_t_address_via2end, int traj_t_size_via2end,

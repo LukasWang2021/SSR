@@ -776,6 +776,7 @@ void updateTrajPVA(int traj_p_address, int traj_v_address, int traj_a_address, i
 
 /***********************************************************************************************/
 void initStack(int link_num, double joint_vel_max[6]);
+void fkToTraj(fst_mc::TrajectoryCache &traj_cache);
 
 inline void getMoveLPathVector(const basic_alg::Point& start_point, const basic_alg::Point& end_point, double* path_vector, double& path_length);
 inline double getPointsDistance(const basic_alg::Point& point1, const basic_alg::Point& point2);

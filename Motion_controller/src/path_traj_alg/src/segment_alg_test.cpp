@@ -80,7 +80,7 @@ int main(void)
 #if 1 
     printf("testing planPathSmoothCircle\n");
 
-    start.point_.x_ = 400;//0
+    start.point_.x_ = 50;//0
     start.point_.y_ = 150;//150
     start.point_.z_ = 350;
     start.euler_.a_ = 0;
@@ -129,7 +129,7 @@ int main(void)
 
     planPathSmoothCircle(start, via, target, path_cache);
 // 
-
+/*
     Joint result_joint;
     Joint ref_joint = start_joint;
     for(int i = 0; i < path_cache.cache_length; ++i)
@@ -143,8 +143,8 @@ int main(void)
     planTrajectorySmooth(path_cache, start_state, via, vel_ratio, acc_ratio, traj_cache);
     // printTraj(traj_cache, 0, 0.001, traj_cache.cache_length);
     //fkToTraj(traj_cache);
-#endif
-#if 0
+    */
+
     std::cout<<" CacheLength = "<<path_cache.cache_length
                  <<", Smooth_in_Index = "<<path_cache.smooth_in_index
                  <<", Smooth_out_Index = "<<path_cache.smooth_out_index<<std::endl;
@@ -169,7 +169,7 @@ int main(void)
                      <<" MotionType = "<<path_cache.cache[i].motion_type<<std::endl;
     }
 */
-    //printf("end of planPathSmoothCircle\n");
+    printf("end of planPathSmoothCircle\n");
 
 #endif
 

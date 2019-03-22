@@ -122,22 +122,15 @@ typedef enum
     S_BSplineNodeVector = 45,    // vector in size 6
     S_PathCountFactorCartesian = 51,    // double
     S_PathCountFactorJoint = 52,    // double
+
     S_CircleAngle = 53,    // double
     S_CircleRadius = 54,    // double
     S_CircleAngle_Via2In = 55,
     S_CircleAngle_In2Out = 56,
 
-    S_CircleCenter_1 = 60,    // double
-    S_CircleCenter_2 = 61,    // double
-    S_CircleCenter_3 = 62,    // double
-
-    S_CIRCLE_UINT_VECTOR_N_1 = 65,
-    S_CIRCLE_UINT_VECTOR_N_2 = 66,
-    S_CIRCLE_UINT_VECTOR_N_3 = 67,
-
-    S_CIRCLE_UINT_VECTOR_O_1 = 68,
-    S_CIRCLE_UINT_VECTOR_O_2 = 69,
-    S_CIRCLE_UINT_VECTOR_O_3 = 70,
+    S_CircleCenter = 60,    // double
+    S_Circle_VectorN = 65, //65/66/67
+    S_Circle_VectorO = 68, // 
 
     S_PAUSE_TIME_FACTOR = 100,    // double
     S_PAUSE_PATH_LENGTH_FACTOR = 101,    // double
@@ -151,7 +144,7 @@ typedef enum
     // tmp variable, vector, matrix 
     S_TmpDouble_1 = 500,    // double
     S_TmpDouble_2 = 501,
-    S_TmpDouble_3 = 502,    
+    S_TmpDouble_3 = 502,
     S_TmpDouble_4 = 503,
     S_TmpDouble_5 = 504,
     S_TmpDouble_6 = 505,
@@ -826,6 +819,9 @@ inline void updateMovCIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
 
 inline bool canBePause(const fst_mc::PathCache &path_cache, const fst_mc::JointState &stop_state, const int &path_stop_index, const int &left_path_number, 
+    int &path_end_index);
+
+inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, const fst_mc::JointState &stop_state, const int &path_stop_index, const int &left_path_number, 
     int &path_end_index);
 
 inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pva_size, int &traj_t_size);

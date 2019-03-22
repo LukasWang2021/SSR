@@ -5,7 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
     basic_alg
     log_manager
     coordinate_manager
-    tool_manager
+    #tool_manager
     kinematics_alg
 )
 

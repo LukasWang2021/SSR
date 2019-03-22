@@ -1747,6 +1747,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	int boolValue;
 	time_t timeStart, now ;
 	int timeWaitSeconds ;
+	int timeWaitMicroSeconds ;   // us: 1s = 1,000,000 us
     int cond, outTime;
     struct select_and_cycle_stack wait_stack;
     
@@ -1781,13 +1782,19 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		while(now - timeStart < timeWaitSeconds)
 		{
 #ifdef WIN32
-			Sleep(100);
+			Sleep(1000);
 #else
 			sleep(1);
 #endif
 			now = time(0);
 		}
 	    FST_INFO("call_Wait timeWaitSeconds = %d at %lld.", timeWaitSeconds, time(NULL));
+		timeWaitMicroSeconds = (int)(value.getFloatValue() * 1000000 - timeWaitSeconds * 1000000);
+#ifdef WIN32
+		Sleep(timeWaitMicroSeconds/1000);
+#else
+		usleep(timeWaitMicroSeconds);
+#endif
 		find_eol(objThreadCntrolBlock);
     }
     else  // Deal wait with condition

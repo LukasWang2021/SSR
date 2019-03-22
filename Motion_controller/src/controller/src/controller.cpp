@@ -303,10 +303,9 @@ void Controller::recordLog(ErrorCode error_code, std::string log_str)
 void Controller::recordLog(ErrorCode major_error_code, ErrorCode minor_error_code, std::string log_str)
 {
     std::stringstream ss;
-    ss << log_str;
+    ss << log_str <<": 0x";
     ss << std::hex << minor_error_code;
-    std::string str;
-    ss >> str;
+    std::string str = ss.str();
     ServerAlarmApi::GetInstance()->sendOneAlarm(major_error_code, str);
 }
 

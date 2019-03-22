@@ -14,24 +14,24 @@ public:
 
     bool init(Kinematics* kinematics_ptr);
 
-    bool getTcpByBase(Joint& joint, PoseEuler& tool_frame, PoseEuler& pose_tcp_by_base);   
-    bool getFcpByBase(Joint& joint, PoseEuler& pose_fcp_by_base);  
-    bool getTcpByUser(Joint& joint, PoseEuler& user_frame, PoseEuler& tool_frame, PoseEuler& pose_tcp_by_user);
-    bool getFcpByUser(Joint& joint, PoseEuler& user_frame, PoseEuler& pose_fcp_by_user);
+    bool getTcpByBase(const Joint& joint, const PoseEuler& tool_frame, PoseEuler& pose_tcp_by_base);   
+    bool getFcpByBase(const Joint& joint, PoseEuler& pose_fcp_by_base);  
+    bool getTcpByUser(const Joint& joint, const PoseEuler& user_frame, const PoseEuler& tool_frame, PoseEuler& pose_tcp_by_user);
+    bool getFcpByUser(const Joint& joint, const PoseEuler& user_frame, PoseEuler& pose_fcp_by_user);
 
-    bool convertPoseFromBaseToUser(PoseEuler& pose_by_base, PoseEuler& user_frame, PoseEuler& pose_by_user);
-    bool convertPoseFromUserToBase(PoseEuler& pose_by_user, PoseEuler& user_frame, PoseEuler& pose_by_base);
+    bool convertPoseFromBaseToUser(const PoseEuler& pose_by_base, const PoseEuler& user_frame, PoseEuler& pose_by_user);
+    bool convertPoseFromUserToBase(const PoseEuler& pose_by_user, const PoseEuler& user_frame, PoseEuler& pose_by_base);
 
-    bool convertPoseFromBaseToTool(PoseEuler& pose_by_base, PoseEuler& pose_fcp_by_base, PoseEuler& tool_frame, PoseEuler& pose_by_tool);
-    bool convertPoseFromToolToBase(PoseEuler& pose_by_tool, PoseEuler& pose_fcp_by_base, PoseEuler& tool_frame, PoseEuler& pose_by_base);
+    bool convertPoseFromBaseToTool(const PoseEuler& pose_by_base, const PoseEuler& pose_fcp_by_base, const PoseEuler& tool_frame, PoseEuler& pose_by_tool);
+    bool convertPoseFromToolToBase(const PoseEuler& pose_by_tool, const PoseEuler& pose_fcp_by_base, const PoseEuler& tool_frame, PoseEuler& pose_by_base);
 
-    bool convertTcpToFcp(PoseEuler& pose_tcp, PoseEuler& tool_frame, PoseEuler& pose_fcp);
-    bool convertFcpToTcp(PoseEuler& pose_fcp, PoseEuler& tool_frame, PoseEuler& pose_tcp);
+    bool convertTcpToFcp(const PoseEuler& pose_tcp, const PoseEuler& tool_frame, PoseEuler& pose_fcp);
+    bool convertFcpToTcp(const PoseEuler& pose_fcp, const PoseEuler& tool_frame, PoseEuler& pose_tcp);
 
 private:
     Kinematics* kinematics_ptr_;
 
-    bool getInverse(PoseEuler& pose, TransMatrix& inverse_trans);
+    bool getInverse(const PoseEuler& pose, TransMatrix& inverse_trans);
 };
 
 }

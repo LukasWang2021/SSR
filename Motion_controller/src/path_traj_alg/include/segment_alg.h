@@ -11,6 +11,8 @@ Important Note: all APIs provided by this source are not support multi thread op
 #include "basic_alg_datatype.h"
 #include "common_enum.h"
 #include "motion_control_datatype.h"
+#include <coordinate_manager.h>
+#include <tool_manager.h>
 #include "kinematics.h"
 #include "dynamics_interface.h"
 #include "error_code.h"
@@ -36,6 +38,8 @@ typedef struct
     double time_factor_first;   // the time factor of the first piece
     double time_factor_last;   // the time factor of the last piece
     double max_cartesian_acc;   // mm/s^2
+    fst_ctrl::CoordinateManager* coordinate_manager_ptr;
+    fst_ctrl::ToolManager* tool_manager_ptr;
     basic_alg::Kinematics* kinematics_ptr;
     fst_algorithm::DynamicsInterface* dynamics_ptr;
 }SegmentAlgParam;

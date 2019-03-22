@@ -190,6 +190,8 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, f
     segment_alg_param.time_factor_first = segment_alg_param_ptr->time_factor_first;
     segment_alg_param.time_factor_last = segment_alg_param_ptr->time_factor_last;
     segment_alg_param.is_fake_dynamics = segment_alg_param_ptr->is_fake_dynamics;
+    segment_alg_param.coordinate_manager_ptr = segment_alg_param_ptr->coordinate_manager_ptr;
+    segment_alg_param.tool_manager_ptr = segment_alg_param_ptr->tool_manager_ptr;
     segment_alg_param.kinematics_ptr = segment_alg_param_ptr->kinematics_ptr;
     segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
     segment_alg_param.max_cartesian_acc = segment_alg_param_ptr->max_cartesian_acc;
@@ -289,16 +291,17 @@ ErrorCode planPathLine(const PoseEuler &start,
     double path_length_start2end;
     double path_vector_start2end[3];
     getMoveLPathVector(start.point_, end.pose_target.point_, path_vector_start2end, path_length_start2end);   // MoveL length
-    if(path_length_start2end < DOUBLE_ACCURACY)
-    {
-        return PATH_PLANNING_INVALID_TARGET;
-    }
-    
+
     // compute MoveL quatern angle
     double start_quatern[4], end_quatern[4];
     getMoveEulerToQuatern(start.euler_, start_quatern);
     getMoveEulerToQuatern(end.pose_target.euler_, end_quatern);
     double angle_start2end = getQuaternsIntersectionAngle(start_quatern, end_quatern);    // MoveL quatern angle
+
+    if((path_length_start2end < DOUBLE_ACCURACY) && (angle_start2end < DOUBLE_ACCURACY))
+    {
+        return PATH_PLANNING_INVALID_TARGET;
+    }
 
     int path_count_ideal_start2end = ceil(path_length_start2end / segment_alg_param.path_interval);
     int angle_count_ideal_start2end = ceil(angle_start2end / segment_alg_param.angle_interval);
@@ -668,15 +671,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     if (via.type == MOTION_JOINT)
     {
         //moveJ2J
-        joint_via.j1_ = via.joint_target.j1_;
-        joint_via.j2_ = via.joint_target.j2_;
-        joint_via.j3_ = via.joint_target.j3_;
-        joint_via.j4_ = via.joint_target.j4_;
-        joint_via.j5_ = via.joint_target.j5_;
-        joint_via.j6_ = via.joint_target.j6_;
-        joint_via.j7_ = via.joint_target.j7_;
-        joint_via.j8_ = via.joint_target.j8_;
-        joint_via.j9_ = via.joint_target.j9_;
+        joint_via = via.joint_target;
     }
     else if (via.type == MOTION_LINE)
     {   
@@ -1097,6 +1092,10 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     if (via.type == MOTION_JOINT)
     {
         //todo fix moveJ2C
+
+
+
+        
         return TRAJ_PLANNING_INVALID_MOTION_TYPE;
     }
     else if (via.type == MOTION_LINE)
@@ -1163,8 +1162,9 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     }
 
     //------------compute via2in angle path count and step------------//
-    double path_in_vel = via.vel * via.cnt;
-    double circle_angle_via2in = path_in_vel * path_in_vel / (2 * segment_alg_param.conservative_acc * circle_radius);
+    //double path_in_vel = via.vel * via.cnt;//delete
+    //double circle_angle_via2in = path_in_vel * path_in_vel / (2 * segment_alg_param.conservative_acc * circle_radius);//delete
+    double circle_angle_via2in = path_length_start2via / circle_radius;
     double max_circle_angle_via2in = circle_angle / 2;
     if(circle_angle_via2in > max_circle_angle_via2in)
     {

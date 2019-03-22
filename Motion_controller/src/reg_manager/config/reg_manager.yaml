@@ -15,4 +15,5 @@ hr_value_limit: 99999999.999
 mr_value_limit: 99999999 
 sr_value_limit: 255
 r_value_limit: 99999999.999 
+use_nvram: 0
 #END

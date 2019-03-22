@@ -1,10 +1,30 @@
 #ifndef BASE_REG_H
 #define BASE_REG_H
 
+#include <memory.h>
 #include <vector>
 #include <string>
 #include "basic_alg_datatype.h"
 #include "error_code.h"
+
+#include "nvram.h"
+
+#define REG_NOT_USE_NVRAM        0
+#define REG_USE_NVRAM            1
+
+#define NVRAM_HEAD           0x0130
+#define NVRAM_MR_AREA        0x0140
+#define NVRAM_R_AREA         0x4000
+#define NVRAM_PR_AREA        0xA000
+
+#define NVRAM_AREA_LENGTH    (0xEFAF - 0x130)
+#define NVRAM_Magic_NUM      0xBEADBEAD
+#define NVRAM_VERSION        0x01
+
+
+#define NVRAM_MR_NUM      	 1500
+#define NVRAM_R_NUM          1500
+#define NVRAM_PR_NUM         200
 
 namespace fst_ctrl
 {

@@ -9,6 +9,13 @@ namespace fst_ctrl
 {
 typedef struct
 {
+	int id;
+	double value;
+	char cs[2];
+}NVRamRRegData;
+
+typedef struct
+{
     int id;
     std::string name;
     std::string comment;
@@ -42,6 +49,9 @@ private:
     std::string file_path_;
     fst_parameter::ParamGroup yaml_help_;
     std::vector<double> data_list_;
+
+	Nvram nvram_obj_ ;
+    int use_nvram_;
 
     RReg();
     bool createYaml();

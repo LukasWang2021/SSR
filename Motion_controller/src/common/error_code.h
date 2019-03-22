@@ -56,6 +56,8 @@ typedef unsigned long long int ErrorCode;
 #define REG_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A40007   /*RegManager has invalid argument*/
 #define REG_MANAGER_REG_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A40008   /*RegManager failed to write reg config file*/
 #define REG_MANAGER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A40009   /*RegManager failed to initialize internal variables*/
+#define REG_MANAGER_LOAD_NVRAM_FAILED (unsigned long long int)0x0011000B00A4000A   /*RegManager load param failed in initialization phase*/
+
 #define DEVICE_MANAGER_LOG (unsigned long long int)0x0001000100A50000   /*DeviceManager log{0}*/
 #define DEVICE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A50001   /*DeviceManager load param failed in initialization phase*/
 #define DEVICE_MANAGER_LOAD_DEVICE_CONFIG_FAILED (unsigned long long int)0x0011000B00A50002   /*DeviceManager load device config failed in initialization phase*/

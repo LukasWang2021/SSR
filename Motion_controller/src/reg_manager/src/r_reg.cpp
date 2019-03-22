@@ -14,9 +14,11 @@ using namespace fst_parameter;
 
 RReg::RReg(RegManagerParam* param_ptr):
     BaseReg(REG_TYPE_R, param_ptr->r_reg_number_), 
-        param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_)
+        param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_),
+        nvram_obj_(NVRAM_AREA_LENGTH)
 {
     file_path_ += param_ptr_->r_reg_file_name_;
+    use_nvram_ += param_ptr_->use_nvram_;
 }
 
 RReg::~RReg()
@@ -26,6 +28,7 @@ RReg::~RReg()
 
 ErrorCode RReg::init()
 {
+	NVRamRRegData objNVRamRRegData ;
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
     /*if(access(file_path_.c_str(), 0) != 0)
@@ -40,12 +43,27 @@ ErrorCode RReg::init()
     {
         return REG_MANAGER_LOAD_R_FAILED;
     }
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		nvram_obj_.openNvram();
+		for(unsigned int i=0; i < data_list_.size(); i++)
+		{
+			memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
+			nvram_obj_.read((uint8_t*)&objNVRamRRegData, 
+				NVRAM_R_AREA + i * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
+			
+			printf("\nRReg::init: %f .\n", objNVRamRRegData.value);
+			data_list_[i] = objNVRamRRegData.value ;
+		}
+	}
     
     return SUCCESS;
 }
 
 ErrorCode RReg::addReg(void* data_ptr)
 {
+	NVRamRRegData objNVRamRRegData ;
     if(data_ptr == NULL)
     {
         return REG_MANAGER_INVALID_ARG;
@@ -69,11 +87,22 @@ ErrorCode RReg::addReg(void* data_ptr)
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
+		objNVRamRRegData.id    = reg_data.id;
+		objNVRamRRegData.value = data_list_[reg_data.id];
+		nvram_obj_.write((uint8_t*)&objNVRamRRegData, 
+			NVRAM_R_AREA + reg_data.id * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
+		usleep(30000);
+	}
     return SUCCESS;
 }
 
 ErrorCode RReg::deleteReg(int id)
 {
+	NVRamRRegData objNVRamRRegData ;
     if(!isDeleteInputValid(id))
     {
         return REG_MANAGER_INVALID_ARG;
@@ -90,6 +119,16 @@ ErrorCode RReg::deleteReg(int id)
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
+		objNVRamRRegData.id    = reg_data.id;
+		objNVRamRRegData.value = 0;
+		nvram_obj_.write((uint8_t*)&objNVRamRRegData, 
+			NVRAM_R_AREA + reg_data.id * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
+		usleep(30000);
+	}
     return SUCCESS;
 }
 
@@ -110,11 +149,13 @@ ErrorCode RReg::getReg(int id, void* data_ptr)
     reg_ptr->name = reg_data.name;
     reg_ptr->comment = reg_data.comment;
     reg_ptr->value = data_list_[id];
+	// printf("\nRReg::getReg: %d .\n", data_list_[id]);
     return SUCCESS;
 }
 
 ErrorCode RReg::updateReg(void* data_ptr)
 {
+	NVRamRRegData objNVRamRRegData ;
     if(data_ptr == NULL)
     {
         return REG_MANAGER_INVALID_ARG;
@@ -139,6 +180,17 @@ ErrorCode RReg::updateReg(void* data_ptr)
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
+		objNVRamRRegData.id    = reg_data.id;
+		objNVRamRRegData.value = data_list_[reg_data.id];
+		nvram_obj_.write((uint8_t*)&objNVRamRRegData, 
+			NVRAM_R_AREA + reg_data.id * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
+		usleep(30000);
+		printf("\nRReg::updateReg: %f .\n", objNVRamRRegData.value);
+	}
     return SUCCESS;
 }
 
@@ -177,6 +229,7 @@ void* RReg::getRegValueById(int id)
 
 bool RReg::updateRegValue(RRegDataIpc* data_ptr)
 {
+	NVRamRRegData objNVRamRRegData ;
     if(data_ptr == NULL)
     {
         return false;
@@ -195,7 +248,21 @@ bool RReg::updateRegValue(RRegDataIpc* data_ptr)
         return false;
     }
     data_list_[data_ptr->id] = data_ptr->value;
-    return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
+		objNVRamRRegData.id    = data_ptr->id;
+		objNVRamRRegData.value = data_list_[data_ptr->id];
+		nvram_obj_.write((uint8_t*)&objNVRamRRegData, 
+			NVRAM_R_AREA + data_ptr->id * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
+		usleep(30000);
+	//	printf("\nRReg::updateRegValue: %f .\n", objNVRamRRegData.value);
+	}
+	else
+	{
+    	return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+	}
 }
 
 bool RReg::getRegValue(int id, RRegDataIpc* data_ptr)
@@ -207,11 +274,13 @@ bool RReg::getRegValue(int id, RRegDataIpc* data_ptr)
     
     data_ptr->id = id;
     data_ptr->value = data_list_[id];
+	// printf("\nRReg::getRegValue: %f .\n", data_list_[id]);
     return true;
 }
 
 RReg::RReg():
-    BaseReg(REG_TYPE_INVALID, 0)
+    BaseReg(REG_TYPE_INVALID, 0),
+    nvram_obj_(NVRAM_AREA_LENGTH)
 {
 
 }

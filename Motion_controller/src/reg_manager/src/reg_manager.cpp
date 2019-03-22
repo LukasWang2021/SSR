@@ -1,12 +1,14 @@
 #include "reg_manager.h"
 #include "error_code.h"
+#include <unistd.h>
 
 using namespace fst_ctrl;
 
 
 RegManager::RegManager():
     log_ptr_(NULL),
-    param_ptr_(NULL)
+    param_ptr_(NULL),
+    nvram_obj_(NVRAM_AREA_LENGTH)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new RegManagerParam();
@@ -16,6 +18,7 @@ RegManager::RegManager():
     }
     FST_LOG_INIT("RegManager");
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
+    use_nvram_ = param_ptr_->use_nvram_;
 }
 
 RegManager::~RegManager()
@@ -32,8 +35,54 @@ RegManager::~RegManager()
     }
 }
 
+void RegManager::initNVRam()
+{
+	char mr_buf[sizeof(NVRamMrRegData)];
+	char r_buf[sizeof(NVRamRRegData)];
+	char pr_buf[sizeof(NVRamPrRegData)];
+	
+	char * pWriteAddr = NVRAM_HEAD ;
+	unsigned int uiWrite = NVRAM_Magic_NUM;
+	
+    FST_INFO("RegManager::initNVRam  = %08X at %08X", uiWrite, pWriteAddr);
+	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	usleep(30000);
+	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(unsigned int));
+    FST_INFO("RegManager::initNVRam return = %08X", uiWrite);
+	
+	uiWrite = NVRAM_VERSION;
+	pWriteAddr += sizeof(unsigned int);
+	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	usleep(30000);
+
+	memset(mr_buf, 0x00, sizeof(NVRamMrRegData));
+	for(int i =0; i < NVRAM_MR_NUM; i++)
+	{
+		nvram_obj_.write((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
+		usleep(30000);
+		pWriteAddr += sizeof(NVRamMrRegData);
+	}
+	
+	memset(r_buf, 0x00, sizeof(NVRamRRegData));
+	for(int i =0; i < NVRAM_R_NUM; i++)
+	{
+		nvram_obj_.write((uint8_t*)r_buf, pWriteAddr, sizeof(NVRamRRegData));
+		usleep(30000);
+		pWriteAddr += sizeof(NVRamRRegData);
+	}
+	
+	memset(pr_buf, 0x00, sizeof(NVRamPrRegData));
+	for(int i =0; i < NVRAM_PR_NUM; i++)
+	{
+		nvram_obj_.write((uint8_t*)pr_buf, pWriteAddr, sizeof(NVRamPrRegData));
+		usleep(30000);
+		pWriteAddr += sizeof(NVRamPrRegData);
+	}
+}
+
 ErrorCode RegManager::init()
 {
+	unsigned int uiMagic ;
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load reg manager component parameters");
@@ -63,7 +112,20 @@ ErrorCode RegManager::init()
             return REG_MANAGER_INIT_OBJECT_FAILED;
         }
     }
-    return SUCCESS;    
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		nvram_obj_.openNvram();
+		nvram_obj_.read((uint8_t*)&uiMagic, NVRAM_HEAD, sizeof(unsigned int));
+	    FST_INFO("RegManager::init nvram_obj_.read = %08X", uiMagic);
+		if(NVRAM_Magic_NUM != uiMagic)
+		{
+			initNVRam();
+	    	FST_INFO("RegManager::init initNVRam = %08X", uiMagic);
+	       return REG_MANAGER_LOAD_NVRAM_FAILED;
+		}
+	}
+    return SUCCESS;
 }
 
 bool RegManager::isRegValid(RegType reg_type, int reg_index)

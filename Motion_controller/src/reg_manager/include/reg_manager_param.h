@@ -34,6 +34,7 @@ public:
     int mr_value_limit_;
     int sr_value_limit_;    // size in byte
     double r_value_limit_;
+    int use_nvram_;
     
 private:
     fst_parameter::ParamGroup yaml_help_;

@@ -101,6 +101,33 @@ bool Transformation::convertPoseFromUserToBase(const PoseEuler& pose_by_user, co
     return true;
 }
 
+bool Transformation::convertPoseFromBaseToUser(const PoseQuaternion& pose_by_base, const PoseEuler& user_frame, PoseQuaternion& pose_by_user)
+{
+    TransMatrix trans_user_frame_inverse;
+    if(!getInverse(user_frame, trans_user_frame_inverse))
+    {
+        return false;
+    }
+    TransMatrix trans_pose_by_base, trans_pose_by_user;
+    pose_by_base.convertToTransMatrix(trans_pose_by_base);
+    trans_user_frame_inverse.rightMultiply(trans_pose_by_base, trans_pose_by_user);
+    trans_pose_by_user.convertToPoseQuaternion(pose_by_user);
+    return true;
+}
+
+bool Transformation::convertPoseFromUserToBase(const PoseQuaternion& pose_by_user, const PoseEuler& user_frame, PoseQuaternion& pose_by_base)
+{
+    TransMatrix trans_pose_by_user, trans_user_frame;
+    pose_by_user.convertToTransMatrix(trans_pose_by_user);
+    user_frame.convertToTransMatrix(trans_user_frame);
+    TransMatrix trans_pose_by_base;
+    trans_user_frame.rightMultiply(trans_pose_by_user, trans_pose_by_base);
+    trans_pose_by_base.convertToPoseQuaternion(pose_by_base);
+    return true;
+}
+
+
+
 bool Transformation::convertPoseFromBaseToTool(const PoseEuler& pose_by_base, const PoseEuler& pose_fcp_by_base, const PoseEuler& tool_frame, PoseEuler& pose_by_tool)
 {
     TransMatrix trans_tool_frame_inverse;
@@ -160,6 +187,33 @@ bool Transformation::convertFcpToTcp(const PoseEuler& pose_fcp, const PoseEuler&
     TransMatrix trans_pose_tcp;
     trans_tool_frame_inverse.rightMultiply(trans_pose_fcp, trans_pose_tcp);
     trans_pose_tcp.convertToPoseEuler(pose_tcp);
+    return true;
+}
+
+bool Transformation::convertTcpToFcp(const PoseQuaternion& pose_tcp, const PoseEuler& tool_frame, PoseQuaternion& pose_fcp)
+{
+    TransMatrix trans_pose_tcp;
+    pose_tcp.convertToTransMatrix(trans_pose_tcp);
+    TransMatrix trans_tool_frame;
+    tool_frame.convertToTransMatrix(trans_tool_frame);
+    TransMatrix trans_pose_fcp;
+    trans_tool_frame.rightMultiply(trans_pose_tcp, trans_pose_fcp);
+    trans_pose_fcp.convertToPoseQuaternion(pose_fcp);
+    return true;
+}
+
+bool Transformation::convertFcpToTcp(const PoseQuaternion& pose_fcp, const PoseEuler& tool_frame, PoseQuaternion& pose_tcp)
+{
+    TransMatrix trans_tool_frame_inverse;
+    if(!getInverse(tool_frame, trans_tool_frame_inverse))
+    {
+        return false;
+    }
+    TransMatrix trans_pose_fcp;
+    pose_fcp.convertToTransMatrix(trans_pose_fcp);
+    TransMatrix trans_pose_tcp;
+    trans_tool_frame_inverse.rightMultiply(trans_pose_fcp, trans_pose_tcp);
+    trans_pose_tcp.convertToPoseQuaternion(pose_tcp);
     return true;
 }
 

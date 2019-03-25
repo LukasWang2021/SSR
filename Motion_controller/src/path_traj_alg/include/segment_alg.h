@@ -11,8 +11,9 @@ Important Note: all APIs provided by this source are not support multi thread op
 #include "basic_alg_datatype.h"
 #include "common_enum.h"
 #include "motion_control_datatype.h"
-#include <coordinate_manager.h>
-#include <tool_manager.h>
+#include "coordinate_manager.h"
+#include "tool_manager.h"
+#include "transformation.h"
 #include "kinematics.h"
 #include "dynamics_interface.h"
 #include "error_code.h"
@@ -791,6 +792,11 @@ inline void getCirclePoint(double &circle_radius, double &angle, double* n_vecto
     basic_alg::Point &circle_center_point, basic_alg::Point &circle_point);
 
 inline void getCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, double &angle);
+
+//dealing with uf, tf
+inline ErrorCode convertJointToCartByUserFrame(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose);
+inline ErrorCode convertCartToJointByUserFrame(const basic_alg::PoseEuler &pose, const basic_alg::Joint &ref_joint, 
+                                               int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
 
 
 inline void updateTrajPSingleItem(int traj_p_address, const basic_alg::Joint& joint);

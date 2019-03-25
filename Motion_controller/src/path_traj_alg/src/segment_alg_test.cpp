@@ -35,12 +35,17 @@ void doIK(Kinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
 int main(void)
 {
     std::string file_path = AXIS_GROUP_DIR;
-    //Kinematics* kinematics_ptr = new KinematicsRTM(file_path);
-    Kinematics* kinematics_ptr = new KinematicsToll(file_path);//for toll
+    Kinematics* kinematics_ptr = new KinematicsRTM(file_path);
+    //Kinematics* kinematics_ptr = new KinematicsToll(file_path);//for toll
     if(!kinematics_ptr->isValid())
     {
         std::cout<<"kinematics init failed"<<std::endl;
     }
+    fst_ctrl::ToolManager* tool_manager_ptr = new fst_ctrl::ToolManager();
+    tool_manager_ptr->init();
+    fst_ctrl::CoordinateManager* coordinate_manager_ptr = new fst_ctrl::CoordinateManager();
+    coordinate_manager_ptr->init();
+
 
     segment_alg_param.accuracy_cartesian_factor = 1;
     segment_alg_param.accuracy_joint_factor = 6;
@@ -54,6 +59,8 @@ int main(void)
     segment_alg_param.time_factor_last = 3;
     segment_alg_param.is_fake_dynamics = true;
     segment_alg_param.max_cartesian_acc = 16000;
+    segment_alg_param.coordinate_manager_ptr = coordinate_manager_ptr;
+    segment_alg_param.tool_manager_ptr = tool_manager_ptr;
     segment_alg_param.kinematics_ptr = kinematics_ptr;
     segment_alg_param.dynamics_ptr = &dynamics;
 
@@ -77,8 +84,19 @@ int main(void)
     double vel_ratio = 0.5;
 
 //planPathSmoothCircle
-#if 1 
+#if 0 
     printf("testing planPathSmoothCircle\n");
+    Joint ref_joint;
+    ref_joint.j1_ = 0;
+    ref_joint.j2_ = 0;
+    ref_joint.j3_ = 0;
+    ref_joint.j4_ = 0;
+    ref_joint.j5_ = PI/2;
+    ref_joint.j6_ = 0;
+    ref_joint.j7_ = 0;
+    ref_joint.j8_ = 0;
+    ref_joint.j9_ = 0;
+
 
     start.point_.x_ = 50;//0
     start.point_.y_ = 150;//150
@@ -94,16 +112,28 @@ int main(void)
     via.pose_target.euler_.b_ = 0;
     via.pose_target.euler_.c_ = PI;
     //used byC2C
-    via.circle_target.pose2.point_.x_ = 200;
-    via.circle_target.pose2.point_.y_ = 150;
-    via.circle_target.pose2.point_.z_ = 350;
-    via.circle_target.pose2.euler_.a_ = 0;
-    via.circle_target.pose2.euler_.b_ = 0;
-    via.circle_target.pose2.euler_.c_ = PI;
+    //via.circle_target.pose2.point_.x_ = 200;
+    //via.circle_target.pose2.point_.y_ = 150;
+    //via.circle_target.pose2.point_.z_ = 350;
+    //via.circle_target.pose2.euler_.a_ = 0;
+    //via.circle_target.pose2.euler_.b_ = 0;
+    //via.circle_target.pose2.euler_.c_ = PI;    
+    //used byJ2C
+    Joint via_joint;
+    segment_alg_param.kinematics_ptr->doIK(via.pose_target, ref_joint, via_joint);
+    via.joint_target.j1_ = via_joint.j1_;
+    via.joint_target.j2_ = via_joint.j2_;
+    via.joint_target.j3_ = via_joint.j3_;
+    via.joint_target.j4_ = via_joint.j4_;
+    via.joint_target.j5_ = via_joint.j5_;
+    via.joint_target.j6_ = via_joint.j6_;
+    via.joint_target.j7_ = via_joint.j7_;
+    via.joint_target.j8_ = via_joint.j8_;
+    via.joint_target.j9_ = via_joint.j9_;
 
     via.cnt = 0.3;
     via.vel = 1000;
-    via.type = MOTION_LINE;//MOTION_CIRCLE
+    via.type = MOTION_JOINT;//MOTION_LINE;//MOTION_CIRCLE
 
     target.circle_target.pose1.point_.x_ = 200;
     target.circle_target.pose1.point_.y_ = -150;
@@ -246,44 +276,80 @@ int main(void)
 #endif
 //planPathSmoothLine
 #if 0
+    printf("start testing planPathSmoothLine\n");
+    Joint ref_joint;
+    ref_joint.j1_ = 0;
+    ref_joint.j2_ = 0;
+    ref_joint.j3_ = 0;
+    ref_joint.j4_ = 0;
+    ref_joint.j5_ = -PI/2;
+    ref_joint.j6_ = 0;
+    ref_joint.j7_ = 0;
+    ref_joint.j8_ = 0;
+    ref_joint.j9_ = 0;
+
     start.point_.x_ = 300;
     start.point_.y_ = 0;
-    start.point_.z_ = 0;
+    start.point_.z_ = 500;
     start.euler_.a_ = 0;
     start.euler_.b_ = 0;
     start.euler_.c_ = 0;
-    //L2L
-    via.pose_target.point_.x_ = 300;
-    via.pose_target.point_.y_ = 300;
-    via.pose_target.point_.z_ = 0;
-    via.pose_target.euler_.a_ = 0;
-    via.pose_target.euler_.b_ = 0;
-    via.pose_target.euler_.c_ = 0;
 
+    PoseEuler temp_pose;
+    temp_pose.point_.x_ = 300;
+    temp_pose.point_.y_ = 300;
+    temp_pose.point_.z_ = 500;
+    temp_pose.euler_.a_ = 0;
+    temp_pose.euler_.b_ = 0;
+    temp_pose.euler_.c_ = 0;
+    //L2L
+    //via.pose_target.point_.x_ = 300;
+    //via.pose_target.point_.y_ = 300;
+    //via.pose_target.point_.z_ = 500;
+    //via.pose_target.euler_.a_ = 0;
+    //via.pose_target.euler_.b_ = 0;
+    //via.pose_target.euler_.c_ = 0;
     //used byC2L
-    via.circle_target.pose2.point_.x_ = 300;
-    via.circle_target.pose2.point_.y_ = 300;
-    via.circle_target.pose2.point_.z_ = 0;
-    via.circle_target.pose2.euler_.a_ = 0;
-    via.circle_target.pose2.euler_.b_ = 0;
-    via.circle_target.pose2.euler_.c_ = 0;
+    //via.circle_target.pose2.point_.x_ = 300;
+    //via.circle_target.pose2.point_.y_ = 300;
+    //via.circle_target.pose2.point_.z_ = 500;
+    //via.circle_target.pose2.euler_.a_ = 0;
+    //via.circle_target.pose2.euler_.b_ = 0;
+    //via.circle_target.pose2.euler_.c_ = 0;
+    //used byJ2L
+    Joint via_joint;
+    segment_alg_param.kinematics_ptr->doIK(temp_pose, ref_joint, via_joint);
+    via.joint_target.j1_ = via_joint.j1_;
+    via.joint_target.j2_ = via_joint.j2_;
+    via.joint_target.j3_ = via_joint.j3_;
+    via.joint_target.j4_ = via_joint.j4_;
+    via.joint_target.j5_ = via_joint.j5_;
+    via.joint_target.j6_ = via_joint.j6_;
+    via.joint_target.j7_ = via_joint.j7_;
+    via.joint_target.j8_ = via_joint.j8_;
+    via.joint_target.j9_ = via_joint.j9_;
 
     via.cnt = 0.5;
     via.vel = 100;
-    via.type = MOTION_LINE;//MOTION_CIRCLE
+    via.type = MOTION_JOINT; //MOTION_LINE;//MOTION_CIRCLE
 
     target.pose_target.point_.x_ = -300;
     target.pose_target.point_.y_ = 300;
-    target.pose_target.point_.z_ = 0;
+    target.pose_target.point_.z_ = 500;
     target.pose_target.euler_.a_ = 0;
     target.pose_target.euler_.b_ = 0;
     target.pose_target.euler_.c_ = 0;
     target.cnt = 0.2;
     target.vel = 1000;
-    via.type = MOTION_LINE;//MOTION_CIRCLE
+    target.type = MOTION_LINE;//MOTION_CIRCLE
 
     clock_t start_time = clock();
-    planPathSmoothLine(start, via, target, path_cache);
+    ErrorCode err = planPathSmoothLine(start, via, target, path_cache);
+    if(err != SUCCESS)
+    {
+        printf("planPathSmoothLine failed, err = 0x%llx\n", err);
+        return err;
+    }
     clock_t end_time = clock();
     long long delta = end_time - start_time;
 
@@ -293,6 +359,7 @@ int main(void)
                      <<"  "<<path_cache.cache[i].pose.point_.y_
                      <<"  "<<path_cache.cache[i].pose.point_.z_<<std::endl;
     }
+    printf("end testing planPathSmoothLine\n");
 
 /*
     for(int i = 0; i < path_cache.cache_length; ++i)
@@ -312,28 +379,42 @@ int main(void)
     std::cout<<"-delta_time = "<<delta<<std::endl;
 #endif
 //planPathSmoothJoint
-#if 0
+#if 1
     basic_alg::Joint js, jv, je;
-    js[0] = 0; jv[0] = M_PI; je[0] = M_PI;
+    js[0] = 0; jv[0] = M_PI/2; je[0] = M_PI;
     js[1] = 0; jv[1] = 0;    je[1] = M_PI;
     js[2] = 0; jv[2] = 0;    je[2] = 0;
     js[3] = 0; jv[3] = 0;    je[3] = 0;
-    js[4] = 0; jv[4] = 0;    je[4] = 0;
+    js[4] = M_PI/4; jv[4] = M_PI/4;    je[4] = M_PI/4;
     js[5] = 0; jv[5] = 0;    je[5] = 0;
 
     start_joint = js;
 
-    via.joint_target = jv;
+    //L2J
+    PoseEuler temp_pose;
+    segment_alg_param.kinematics_ptr->doFK(jv, temp_pose);
+    via.pose_target = temp_pose;
     via.cnt = 0.5;
-    via.vel = 1;
-    via.type = MOTION_JOINT;
+    via.vel = 500;
+    via.type = MOTION_LINE;
+
+
+    //J2J
+    //via.joint_target = jv;
+    //via.cnt = 0.5;
+    //via.vel = 1;
+    //via.type = MOTION_JOINT;
 
     target.joint_target = je;
     target.cnt = -1;
     target.vel = 1;
     target.type = MOTION_JOINT;
 
-    planPathSmoothJoint(start_joint, via, target, path_cache);
+    ErrorCode err = planPathSmoothJoint(start_joint, via, target, path_cache);
+    if (err != SUCCESS)
+    {
+        printf("faled planPathSmoothJoint\n");
+    }
     std::cout<<"path_cache.smooth_out_index = "<<path_cache.smooth_out_index<<std::endl;
     std::cout<<"path_cache.smooth_in_index = "<<path_cache.smooth_in_index<<std::endl;
     std::cout<<"path_cache.cache_length = "<<path_cache.cache_length<<std::endl;

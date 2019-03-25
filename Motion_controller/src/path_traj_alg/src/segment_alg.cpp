@@ -675,13 +675,21 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     }
     else if (via.type == MOTION_LINE)
     {   
-        //todo fix moveL2J
-        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+        //moveL2J
+        ErrorCode err = convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        if (err != SUCCESS)
+        {
+            return err;
+        }
     }
     else if(via.type == MOTION_CIRCLE)
     {   
-        //todo fix moveC2J
-        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+        //moveC2J
+        ErrorCode err = convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        if (err != SUCCESS)
+        {
+            return err;
+        }
     }
     else
     {
@@ -851,8 +859,15 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     Point point_via;
     if (via.type == MOTION_JOINT)
     {
-        //todo fix moveJ2L
-        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+        //moveJ2L
+        PoseEuler pose_euler_via;
+        ErrorCode err = convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+        if (err != SUCCESS)
+        {
+            return err;
+        }
+        euler_via = pose_euler_via.euler_;
+        point_via = pose_euler_via.point_;
     }
     else if (via.type == MOTION_LINE)
     {   
@@ -1091,8 +1106,15 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     Point point_via;
     if (via.type == MOTION_JOINT)
     {
-        //todo fix moveJ2C
-        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+        //moveJ2C
+        PoseEuler pose_euler_via;
+        ErrorCode err = convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+        if (err != SUCCESS)
+        {
+            return err;
+        }
+        euler_via = pose_euler_via.euler_;
+        point_via = pose_euler_via.point_;
     }
     else if (via.type == MOTION_LINE)
     {   
@@ -1166,11 +1188,11 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     }
     //compute via2in angle step.
     int circle_angle_count_via2in = ceil(circle_angle_via2in * max_count_via2end / circle_angle);
-    double circle_angle_step_via2in = circle_angle_via2in / circle_angle_count_via2in;
+    //double circle_angle_step_via2in = circle_angle_via2in / circle_angle_count_via2in;
 
     //compute via2in quatern step.
     double quatern_angle_distance_via2in = circle_angle_via2in / circle_angle;//[0-1]
-    double quatern_angle_step_via2in = quatern_angle_distance_via2in / circle_angle_count_via2in;
+    //double quatern_angle_step_via2in = quatern_angle_distance_via2in / circle_angle_count_via2in;
 
     //--------------compute in2end angle path count and step-------------//
     double circle_angle_count_in2end = max_count_via2end - circle_angle_count_via2in;
@@ -2651,6 +2673,157 @@ inline void packPathBlockType(PointType point_type, MotionType motion_type, Path
     path_block.point_type = point_type;
     path_block.motion_type = motion_type;
 }
+
+//dealing J2P with uf, tf
+inline ErrorCode convertJointToCartByUserFrame(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose)
+{
+    //get uf
+    ErrorCode err = SUCCESS;
+    fst_ctrl::CoordInfo uf_info;
+    PoseEuler uf;
+    if (user_frame_id == 0)
+    {
+        uf.point_.x_ = 0;
+        uf.point_.y_ = 0;
+        uf.point_.z_ = 0;
+        uf.euler_.a_ = 0;
+        uf.euler_.b_ = 0;
+        uf.euler_.c_ = 0;
+    }
+    else 
+    {
+        err = segment_alg_param.coordinate_manager_ptr->getCoordInfoById(user_frame_id, uf_info);
+        if (err == SUCCESS && uf_info.is_valid)
+        {
+            uf = uf_info.data;
+        }
+        else
+        {
+            return err;
+        }
+    }
+
+    //get tf
+    fst_ctrl::ToolInfo tf_info;
+    PoseEuler tf;
+    if (tool_frame_id == 0)
+    {
+        tf.point_.x_ = 0;
+        tf.point_.y_ = 0;
+        tf.point_.z_ = 0;
+        tf.euler_.a_ = 0;
+        tf.euler_.b_ = 0;
+        tf.euler_.c_ = 0;
+    }
+    else
+    {
+        err = segment_alg_param.tool_manager_ptr->getToolInfoById(tool_frame_id, tf_info);
+        if (err == SUCCESS && tf_info.is_valid)
+        {
+            tf = tf_info.data;
+        }
+        else
+        {
+            return err;
+        }
+    }
+        
+    //transform
+    Transformation transform;
+    transform.init(segment_alg_param.kinematics_ptr);
+    Joint joint_via = joint;
+    bool ret = transform.getTcpByUser(joint_via, uf, tf, pose);
+    if (ret == false)
+    {
+        return PATH_PLANNING_INVALID_TARGET;//todo, use this code?
+    }
+
+    return SUCCESS;
+}
+
+//dealing P2J with uf, tf
+inline ErrorCode convertCartToJointByUserFrame(const basic_alg::PoseEuler &pose, const basic_alg::Joint &ref_joint,
+                                               int user_frame_id, int tool_frame_id, basic_alg::Joint &joint)
+{
+    //get uf
+    ErrorCode err = SUCCESS;
+    fst_ctrl::CoordInfo uf_info;
+    PoseEuler uf;
+    if (user_frame_id == 0)
+    {
+        uf.point_.x_ = 0;
+        uf.point_.y_ = 0;
+        uf.point_.z_ = 0;
+        uf.euler_.a_ = 0;
+        uf.euler_.b_ = 0;
+        uf.euler_.c_ = 0;
+    }
+    else 
+    {
+        err = segment_alg_param.coordinate_manager_ptr->getCoordInfoById(user_frame_id, uf_info);
+        if (err == SUCCESS && uf_info.is_valid)
+        {
+            uf = uf_info.data;
+        }
+        else
+        {
+            return err;
+        }
+    }
+
+    //get tf
+    fst_ctrl::ToolInfo tf_info;
+    PoseEuler tf;
+    if (tool_frame_id == 0)
+    {
+        tf.point_.x_ = 0;
+        tf.point_.y_ = 0;
+        tf.point_.z_ = 0;
+        tf.euler_.a_ = 0;
+        tf.euler_.b_ = 0;
+        tf.euler_.c_ = 0;
+    }
+    else
+    {
+        err = segment_alg_param.tool_manager_ptr->getToolInfoById(tool_frame_id, tf_info);
+        if (err == SUCCESS && tf_info.is_valid)
+        {
+            tf = tf_info.data;
+        }
+        else
+        {
+            return err;
+        }
+    }
+        
+    //transform
+    Transformation transform;
+    transform.init(segment_alg_param.kinematics_ptr);
+    //convert from pose_by_user to pose_by_base
+    PoseEuler pose_tcp;
+    bool ret = transform.convertPoseFromUserToBase(pose, uf, pose_tcp);
+    if (ret == false)
+    {
+        return PATH_PLANNING_INVALID_TARGET;//todo, use this code?
+    }
+    //convert from tcp_pose_by_base to fcp_pose_by_base 
+    PoseEuler pose_fcp;
+    ret = transform.convertTcpToFcp(pose_tcp, tf, pose_fcp);
+    if (ret == false)
+    {
+        return PATH_PLANNING_INVALID_TARGET;//todo, use this code?
+    }
+
+    ret = segment_alg_param.kinematics_ptr->doIK(pose_fcp, ref_joint, joint);
+    if (ret == false)
+    {
+        return TRAJ_PLANNING_INVALID_IK_FAILED;
+    }
+
+    return SUCCESS;
+}
+
+
 
 inline void updateTrajPSingleItem(int traj_p_address, const Joint& joint)
 {

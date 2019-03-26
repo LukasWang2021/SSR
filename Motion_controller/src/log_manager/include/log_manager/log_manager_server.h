@@ -19,7 +19,7 @@
 
 #define NO_ENOUGH_LOG_SPACE_WARNING     (MAX_LOG_FILE_SPACE * 0.9)
 
-#define MAX_LOG_CONTROL_BLOCK           32      // MAX_LOG_CONTROL_BLOCK should less than 256,
+#define MAX_LOG_CONTROL_BLOCK           200     // MAX_LOG_CONTROL_BLOCK should less than 256,
                                                 // cause there are 256 IDs at most, and ID=0 is reserved
 #define SERVER_ITEM_POOL_SIZE           10000
 namespace fst_log {

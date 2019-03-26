@@ -1097,6 +1097,24 @@ static inline void Pose2PoseEuler(const PoseQuaternion &pose, PoseEuler &pe)
     pe.euler_.a_ = atan2((q.w_ * q.z_ + q.x_ * q.y_) * 2, 1 - (q.y_ * q.y_ + q.z_ * q.z_) * 2);
 }
 
+static inline PoseEuler Pose2PoseEuler(const PoseQuaternion &pose)
+{
+    PoseEuler pe;
+    Quaternion q(pose.quaternion_);
+
+    if (fabs(sqrt(q.w_ * q.w_ + q.x_ * q.x_ + q.y_ * q.y_ + q.z_ * q.z_) - 1) > 0.0005)
+    {
+        normalizeQuaternion(q);
+    }
+
+    pe.point_ = pose.point_;
+    pe.euler_.c_ = atan2((q.w_ * q.x_ + q.y_ * q.z_) * 2, 1 - (q.x_ * q.x_ + q.y_ * q.y_) * 2);
+    pe.euler_.b_ = asin((q.w_ * q.y_ - q.z_ * q.x_) * 2);
+    pe.euler_.a_ = atan2((q.w_ * q.z_ + q.x_ * q.y_) * 2, 1 - (q.y_ * q.y_ + q.z_ * q.z_) * 2);
+
+    return pe;
+}
+
 //------------------------------------------------------------------------------
 // Function:    PoseEuler2Pose
 // Summary: Convert a pose-euler to pose.
@@ -1176,6 +1194,55 @@ static inline PoseQuaternion  PoseEuler2Pose(const PoseEuler &pe)
     }
 
     return pose;
+}
+
+static inline Quaternion Euler2Quaternion(const Euler &euler)
+{
+    Quaternion quaternion;
+    double ca = cos(euler.a_ / 2);
+    double cb = cos(euler.b_ / 2);
+    double cc = cos(euler.c_ / 2);
+    double sa = sin(euler.a_ / 2);
+    double sb = sin(euler.b_ / 2);
+    double sc = sin(euler.c_ / 2);
+
+    quaternion.w_ = ca * cb * cc + sa * sb * sc;
+    quaternion.z_ = sa * cb * cc - ca * sb * sc;
+    quaternion.y_ = ca * sb * cc + sa * cb * sc;
+    quaternion.x_ = ca * cb * sc - sa * sb * cc;
+
+    int index = 0;
+    double max = fabs(quaternion.w_);
+
+    if (fabs(quaternion.z_) > max) { index = 1; max = fabs(quaternion.z_); }
+    if (fabs(quaternion.y_) > max) { index = 2; max = fabs(quaternion.y_); }
+    if (fabs(quaternion.x_) > max) { index = 3; max = fabs(quaternion.x_); }
+
+    if ((index == 0 && quaternion.w_ < 0) || (index == 1 && quaternion.z_ < 0) || (index == 2 && quaternion.y_ < 0) || (index == 3 && quaternion.x_ < 0))
+    {
+        quaternion.w_ = -quaternion.w_;
+        quaternion.z_ = -quaternion.z_;
+        quaternion.y_ = -quaternion.y_;
+        quaternion.x_ = -quaternion.x_;
+    }
+
+    return quaternion;
+}
+
+static inline Euler Quaternion2Euler(const Quaternion &quaternion)
+{
+    Euler euler;
+    Quaternion q(quaternion);
+
+    if (fabs(sqrt(q.w_ * q.w_ + q.x_ * q.x_ + q.y_ * q.y_ + q.z_ * q.z_) - 1) > 0.0005)
+    {
+        normalizeQuaternion(q);
+    }
+    
+    euler.c_ = atan2((q.w_ * q.x_ + q.y_ * q.z_) * 2, 1 - (q.x_ * q.x_ + q.y_ * q.y_) * 2);
+    euler.b_ = asin((q.w_ * q.y_ - q.z_ * q.x_) * 2);
+    euler.a_ = atan2((q.w_ * q.z_ + q.x_ * q.y_) * 2, 1 - (q.y_ * q.y_ + q.z_ * q.z_) * 2);
+    return euler;
 }
 
 //------------------------------------------------------------------------------

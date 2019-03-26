@@ -258,6 +258,8 @@ typedef unsigned long long int ErrorCode;
 
 
 //The error codes generated from the external component(safety_board)
+#define SAFETY_BOARD_CABINET_RESET (unsigned long long int)0x0001000200C80000   /*the safety board detects cabinet reset.*/
+
 #define SAFETY_BOARD_RELAY_DUAL_FAULTY (unsigned long long int)0x0001000B00C80001   /*the safety board detects the relay has dual faulty.*/
 #define SAFETY_BOARD_EXTERNAL_STOP (unsigned long long int)0x0001000B00C80002   /*the safety board detects external stop signal.*/
 #define SAFETY_BOARD_SAFETY_DOOR_STOP (unsigned long long int)0x0001000B00C80003   /*the safety board detects safty door stop signal.*/
@@ -273,7 +275,6 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY (unsigned long long int)0x0001000B00C8000D   /*the safety board detects the first relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000E   /*the safety board detects the second relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CABINET_STOP (unsigned long long int)0x0001000B00C8000F   /*the safety board detects cabinet estop signal.*/
-#define SAFETY_BOARD_CABINET_RESET (unsigned long long int)0x0001000200C80010   /*the safety board detects cabinet reset.*/
 
 #define PARAM_MANAGER_INIT_FAILED (unsigned long long int)0x0011000200B30001   /*param manager load param failed*/
 #define PARAM_MANAGER_SET_PARAM_FAILED (unsigned long long int)0x0011000200B30002   /*param manager set param failed*/

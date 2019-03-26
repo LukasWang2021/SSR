@@ -4,6 +4,9 @@ project(path_traj_alg)
 find_package(catkin REQUIRED COMPONENTS
     basic_alg
     log_manager
+    coordinate_manager
+    #tool_manager
+    transformation
     kinematics_alg
 )
 
@@ -25,6 +28,9 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/log_manager/include
     ${depend_PATH_INC}/basic_alg/include 
     ${depend_PATH_INC}/motion_control/include
+    ${depend_PATH_INC}/coordinate_manager/include
+    ${depend_PATH_INC}/tool_manager/include
+    ${depend_PATH_INC}/transformation/include
     ${depend_PATH_INC}/kinematics_alg/include
     ${depend_PATH_INC}/parameter_manager/include 
 )
@@ -32,6 +38,9 @@ set(catkin_INCLUDE_DIRS
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES path_traj_alg
+    DEPENDS coordinate_manager
+    DEPENDS tool_manager
+    DEPENDS transformation
     DEPENDS kinematics_alg
 )
 
@@ -52,6 +61,9 @@ add_library(path_traj_alg
 target_link_libraries(path_traj_alg
     ${catkin_LIBRARIES}
     logger
+    coordinate_manager
+    tool_manager
+    transformation
     kinematics_alg
 )
 
@@ -63,6 +75,9 @@ add_executable(alg_test
 target_link_libraries(alg_test
     ${catkin_LIBRARIES}
     path_traj_alg
+    coordinate_manager
+    tool_manager
+    transformation
     kinematics_alg
     basic_alg
     parameter_manager

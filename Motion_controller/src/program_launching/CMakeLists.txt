@@ -45,6 +45,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/device_manager/include
     ${depend_PATH_INC}/protos/include
     ${depend_PATH_INC}/basic_alg/include
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
     )
 
 catkin_package(
@@ -61,6 +63,8 @@ catkin_package(
     DEPENDS modbus_manager
     DEPENDS fst_io_device
     DEPENDS basic_alg
+    DEPENDS nvram 
+    DEPENDS fst_spi 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")

@@ -56,6 +56,8 @@ typedef unsigned long long int ErrorCode;
 #define REG_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A40007   /*RegManager has invalid argument*/
 #define REG_MANAGER_REG_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A40008   /*RegManager failed to write reg config file*/
 #define REG_MANAGER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A40009   /*RegManager failed to initialize internal variables*/
+#define REG_MANAGER_LOAD_NVRAM_FAILED (unsigned long long int)0x0011000B00A4000A   /*RegManager load param failed in initialization phase*/
+
 #define DEVICE_MANAGER_LOG (unsigned long long int)0x0001000100A50000   /*DeviceManager log{0}*/
 #define DEVICE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A50001   /*DeviceManager load param failed in initialization phase*/
 #define DEVICE_MANAGER_LOAD_DEVICE_CONFIG_FAILED (unsigned long long int)0x0011000B00A50002   /*DeviceManager load device config failed in initialization phase*/
@@ -239,7 +241,7 @@ typedef unsigned long long int ErrorCode;
 #define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*invalid motion type*/
 #define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*invalid smooth in index*/
 #define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*ik failed*/
-
+#define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000400B20006   /*pause failed*/
 
 #define SYSTEM_MANAGER_LOG (unsigned long long int)0x0001000100B30000   /*SystemManager log{0}*/
 #define SYS_EXTRACT_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30001   /*fail to extract the archive when restoring the backup files.*/
@@ -253,12 +255,6 @@ typedef unsigned long long int ErrorCode;
 #define SYS_COMPRESS_WRITE_FILE_FAIL (unsigned long long int)0x0001000600B30009   /*ail to write the archive when compress*/
 #define SYS_NO_FREE_DISK (unsigned long long int)0x0001000600B3000A   /*not enough space for file operation*/
 #define SYS_START_THREAD_FAIL (unsigned long long int)0x0001000600B3000B   /*failed to start thread to execute*/
-
-/*New error codes feed here.*/
-
-
-
-
 
 
 //The error codes generated from the external component(safety_board)
@@ -277,6 +273,7 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY (unsigned long long int)0x0001000B00C8000D   /*the safety board detects the first relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000E   /*the safety board detects the second relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CABINET_STOP (unsigned long long int)0x0001000B00C8000F   /*the safety board detects cabinet estop signal.*/
+#define SAFETY_BOARD_CABINET_RESET (unsigned long long int)0x0001000200C80010   /*the safety board detects cabinet reset.*/
 
 #define PARAM_MANAGER_INIT_FAILED (unsigned long long int)0x0011000200B30001   /*param manager load param failed*/
 #define PARAM_MANAGER_SET_PARAM_FAILED (unsigned long long int)0x0011000200B30002   /*param manager set param failed*/

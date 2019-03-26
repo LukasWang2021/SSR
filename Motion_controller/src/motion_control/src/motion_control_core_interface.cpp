@@ -161,7 +161,17 @@ bool BareCoreInterface::setConfigData(int id, const vector<double> &data)
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
     memcpy(&req.req_buff[8], (char*)&data[0], len * sizeof(double));
-    //return sendRequest(jtac_param_interface_ , req);
+    return sendRequest(command_interface_ , req);
+}
+
+bool BareCoreInterface::setConfigData(int id, const vector<int> &data)
+{
+    ServiceRequest req;
+    req.req_id = WRITE_BY_ID;
+    int len = data.size();
+    memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
+    memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
+    memcpy(&req.req_buff[8], (char*)&data[0], len * sizeof(int));
     return sendRequest(command_interface_ , req);
 }
 

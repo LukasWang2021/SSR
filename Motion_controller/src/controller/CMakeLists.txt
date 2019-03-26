@@ -78,6 +78,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/file_manager/include 
     ${depend_PATH_INC}/system_manager/include 
     ${depend_PATH_INC}/param_manager/include 
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
 )
 
 catkin_package(
@@ -95,6 +97,8 @@ catkin_package(
     DEPENDS system_manager
     DEPENDS param_manager
     DEPENDS transformation
+    DEPENDS nvram 
+    DEPENDS fst_spi 
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")

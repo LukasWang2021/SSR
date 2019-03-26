@@ -15,9 +15,11 @@ using namespace fst_parameter;
 
 PrReg::PrReg(RegManagerParam* param_ptr):
     BaseReg(REG_TYPE_PR, param_ptr->pr_reg_number_), 
-        param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_)
+        param_ptr_(param_ptr), file_path_(param_ptr->reg_info_dir_),
+        nvram_obj_(NVRAM_AREA_LENGTH)
 {
     file_path_ += param_ptr_->pr_reg_file_name_;
+    use_nvram_ += param_ptr_->use_nvram_;
 }
 
 PrReg::~PrReg()
@@ -27,6 +29,7 @@ PrReg::~PrReg()
 
 ErrorCode PrReg::init()
 {
+	NVRamPrRegData objNVRamPrRegData ;
     data_list_.resize(getListSize());    // id=0 is not used, id start from 1
 
     /*if(access(file_path_.c_str(), 0) != 0)
@@ -42,11 +45,23 @@ ErrorCode PrReg::init()
         return REG_MANAGER_LOAD_PR_FAILED;
     }
     
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		nvram_obj_.openNvram();
+		for(unsigned int i=0; i < data_list_.size(); i++)
+		{
+			memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+			nvram_obj_.read((uint8_t*)&objNVRamPrRegData, 
+				NVRAM_PR_AREA + i * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+			data_list_[i] = objNVRamPrRegData.value ;
+		}
+	}
     return SUCCESS;
 }
 
 ErrorCode PrReg::addReg(void* data_ptr)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
         return REG_MANAGER_INVALID_ARG;
@@ -100,11 +115,22 @@ ErrorCode PrReg::addReg(void* data_ptr)
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = reg_data.id;
+		objNVRamPrRegData.value = data_list_[reg_data.id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + reg_data.id * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+		usleep(30000);
+	}
     return SUCCESS;
 }
 
 ErrorCode PrReg::deleteReg(int id)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(!isDeleteInputValid(id))
     {
         return REG_MANAGER_INVALID_ARG;
@@ -135,6 +161,16 @@ ErrorCode PrReg::deleteReg(int id)
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = reg_data.id;
+		objNVRamPrRegData.value = data_list_[id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + reg_data.id * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+		usleep(30000);
+	}
     return SUCCESS;
 }
 
@@ -174,6 +210,7 @@ ErrorCode PrReg::getReg(int id, void* data_ptr)
 
 ErrorCode PrReg::updateReg(void* data_ptr)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
         return REG_MANAGER_INVALID_ARG;
@@ -229,6 +266,16 @@ ErrorCode PrReg::updateReg(void* data_ptr)
     {
         return REG_MANAGER_REG_FILE_WRITE_FAILED;
     }
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = reg_data.id;
+		objNVRamPrRegData.value = data_list_[reg_data.id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + reg_data.id * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+		usleep(30000);
+	}
     return SUCCESS;
 }
 
@@ -267,6 +314,7 @@ void* PrReg::getRegValueById(int id)
 
 bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
 {
+	NVRamPrRegData objNVRamPrRegData ;
     if(data_ptr == NULL)
     {
         return false;
@@ -292,7 +340,20 @@ bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
         return false;
     }
     memcpy(&data_list_[data_ptr->id].pos[0], &data_ptr->pos[0], 9*sizeof(double));
-    return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+	
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+		objNVRamPrRegData.id    = data_ptr->id;
+		objNVRamPrRegData.value = data_list_[data_ptr->id];
+		nvram_obj_.write((uint8_t*)&objNVRamPrRegData, 
+			NVRAM_PR_AREA + data_ptr->id * sizeof(objNVRamPrRegData), sizeof(objNVRamPrRegData));
+		usleep(30000);
+    }
+	else
+	{
+    	return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
+    }
 }
 
 bool PrReg::getRegPos(int id, PrRegDataIpc* data_ptr)
@@ -309,7 +370,8 @@ bool PrReg::getRegPos(int id, PrRegDataIpc* data_ptr)
 
 
 PrReg::PrReg():
-    BaseReg(REG_TYPE_INVALID, 0)
+    BaseReg(REG_TYPE_INVALID, 0),
+    nvram_obj_(NVRAM_AREA_LENGTH)
 {
 
 }

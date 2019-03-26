@@ -113,9 +113,9 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         FST_ERROR("Fail to read joint-mask from record file, err=0x%llx", result);
         return result;
     }
-    if (stat.size() != NUM_OF_JOINT)
+    if (stat.size() != joint_num_)
     {
-        FST_ERROR("Invalid array size of joint-mask, except %d but get %d", NUM_OF_JOINT, stat.size());
+        FST_ERROR("Invalid array size of joint-mask, except %d but get %d", joint_num_, stat.size());
         return INVALID_PARAMETER;
     }
     FST_INFO("Recorded-Masks: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE));
@@ -130,9 +130,9 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         FST_ERROR("Fail to read joint-flag from record file, err=0x%llx", result);
         return result;
     }
-    if (stat.size() != NUM_OF_JOINT)
+    if (stat.size() != joint_num_)
     {
-        FST_ERROR("Invalid array size of joint-flag, except %d but get %d", NUM_OF_JOINT, stat.size());
+        FST_ERROR("Invalid array size of joint-flag, except %d but get %d", joint_num_, stat.size());
         return INVALID_PARAMETER;
     }
     FST_INFO("Recorded-Flags: %s", printDBLine(&stat[0], buffer, LOG_TEXT_SIZE));
@@ -154,9 +154,9 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
             FST_ERROR("Fail to read threshold from config file, err=0x%llx", result);
             return result;
         }
-        if (data.size() != NUM_OF_JOINT)
+        if (data.size() != joint_num_)
         {
-            FST_ERROR("Invalid array size of normal threshold, except %d but get %d", NUM_OF_JOINT, data.size());
+            FST_ERROR("Invalid array size of normal threshold, except %d but get %d", joint_num_, data.size());
             return INVALID_PARAMETER;
         }
         FST_INFO("Threshold-normal: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
@@ -166,9 +166,9 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
 
         data.clear();
         params.getParam("calibrator/lost_offset_threshold", data);
-        if (data.size() != NUM_OF_JOINT)
+        if (data.size() != joint_num_)
         {
-            FST_ERROR("Invalid array size of lost threshold, except %d but get %d", NUM_OF_JOINT, data.size());
+            FST_ERROR("Invalid array size of lost threshold, except %d but get %d", joint_num_, data.size());
             return INVALID_PARAMETER;
         }
         FST_INFO("Threshold-lost: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
@@ -183,6 +183,23 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
         return result;
     }
 
+    // 下发关节数量到裸核
+    FST_INFO("ID of activated-motor-number: 0x%x", 0x0140);
+    FST_INFO("Send activated-motor-number: %d", joint_num_);
+    vector<int> data_of_joint_num;
+    data_of_joint_num.push_back(joint_num_);
+    result = sendConfigData(0x0140, data_of_joint_num);
+
+    if (result != SUCCESS)
+    {
+        FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
+        return result;
+    }
+    
+    FST_INFO("Success.");
+    usleep(50 * 1000);
+    
+
     // 加载传动比配置文件，并检查数据
     // 检查无误后将数据下发到裸核
     data.clear();
@@ -193,26 +210,19 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     {
         if (gear_ratio_param_.getParam("gear_ratio/id", id) && gear_ratio_param_.getParam("gear_ratio/data", data))
         {
-            if (data.size() == NUM_OF_JOINT)
-            {
-                FST_INFO("ID of gear ratio: 0x%x", id);
-                FST_INFO("Send gear ratio: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-                result = sendConfigData(id, data);
+            FST_INFO("ID of gear ratio: 0x%x", id);
+            FST_INFO("Send gear ratio: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+            result = sendConfigData(id, data);
 
-                if (result == SUCCESS)
-                {
-                    FST_INFO("Success.");
-                }
-                else
-                {
-                    FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
-                    return result;
-                }
+            if (result == SUCCESS)
+            {
+                FST_INFO("Success.");
+                usleep(50 * 1000);
             }
             else
             {
-                FST_ERROR("Invalid array size of gear ratio, except %d but get %d", NUM_OF_JOINT, data.size());
-                return INVALID_PARAMETER;
+                FST_ERROR("Fail to send gear-ratio to barecore, code = 0x%llx", result);
+                return result;
             }
         }
         else
@@ -238,27 +248,25 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     {
         if (coupling_param_.getParam("coupling_coeff/id", id) && coupling_param_.getParam("coupling_coeff/data", data))
         {
-            if (data.size() == 15)
-            {
-                FST_INFO("ID of coupling coefficient: 0x%x", id);
-                FST_INFO("Send coupling coefficient: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f",
-                         data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14]);
-                result = sendConfigData(id, data);
+            FST_INFO("ID of coupling coefficient: 0x%x", id);
+            FST_INFO("Send coupling coefficient:");
 
-                if (result == SUCCESS)
-                {
-                    FST_INFO("Success.");
-                }
-                else
-                {
-                    FST_ERROR("Fail to send coupling coefficient to barecore, code = 0x%llx", result);
-                    return result;
-                }
+            for (size_t i = 0; i < joint_num; i++)
+            {
+                FST_INFO("  axis-%d: %s", i, printDBLine(&data[0] + 8 * i, buffer, LOG_TEXT_SIZE));
+            }
+            
+            result = sendConfigData(id, data);
+
+            if (result == SUCCESS)
+            {
+                FST_INFO("Success.");
+                usleep(50 * 1000);
             }
             else
             {
-                FST_ERROR("Invalid array size of coupling coefficient, except %d but get %d", 15, data.size());
-                return INVALID_PARAMETER;
+                FST_ERROR("Fail to send coupling coefficient to barecore, code = 0x%llx", result);
+                return result;
             }
         }
         else
@@ -284,33 +292,26 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     {
         if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
         {
-            if (data.size() == NUM_OF_JOINT)
-            {
-                FST_INFO("ID of offset: 0x%x", id);
-                FST_INFO("Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
-                result = sendConfigData(id, data);
+            FST_INFO("ID of offset: 0x%x", id);
+            FST_INFO("Send offset: %s", printDBLine(&data[0], buffer, LOG_TEXT_SIZE));
+            result = sendConfigData(id, data);
 
-                if (result == SUCCESS)
-                {
-                    Joint cur_jnt;
-                    ServoState servo_state;
-                    char buffer[LOG_TEXT_SIZE];
-                    usleep(256 * 1000);
-                    bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
-                    memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
-                    FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
-                    FST_INFO("Success.");
-                }
-                else
-                {
-                    FST_ERROR("Fail to send offset to barecore, code = 0x%llx", result);
-                    return result;
-                }
+            if (result == SUCCESS)
+            {
+                Joint cur_jnt;
+                ServoState servo_state;
+                char buffer[LOG_TEXT_SIZE];
+                usleep(256 * 1000);
+                bare_core_ptr_->getLatestJoint(cur_jnt, servo_state);
+                memcpy(zero_offset_, &data[0], joint_num_ * sizeof(data[0]));
+                FST_INFO("Current joint: %s", printDBLine(&cur_jnt[0], buffer, LOG_TEXT_SIZE));
+                FST_INFO("Success.");
+                usleep(50 * 1000);
             }
             else
             {
-                FST_ERROR("Invalid array size of zero offset, except %d but get %d", NUM_OF_JOINT, data.size());
-                return INVALID_PARAMETER;
+                FST_ERROR("Fail to send offset to barecore, code = 0x%llx", result);
+                return result;
             }
         }
         else
@@ -386,7 +387,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
         // 获取记录文件中各关节的位置
         if (robot_recorder_.getParam("joint", joint))
         {
-            if (joint.size() == NUM_OF_JOINT)
+            if (joint.size() == joint_num_)
             {
                 FST_INFO("Last-joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
                 FST_INFO("Mask-flags: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
@@ -426,9 +427,9 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
                     // 更新记录文件中的零位标志
                     FST_INFO("Update offset state into recorder.");
 
-                    vector<int> stat; stat.resize(NUM_OF_JOINT);
+                    vector<int> stat;
 
-                    for (size_t i = 0; i < NUM_OF_JOINT; i++)
+                    for (size_t i = 0; i < joint_num_; i++)
                     {
                         stat[i] = int(state[i]);
                     }
@@ -590,7 +591,7 @@ ErrorCode Calibrator::calibrateOffset(const size_t *pindex, size_t length)
     // 检查需要标定的轴标号
     for (size_t i = 0; i < length; i++)
     {
-        if (pindex[i] < NUM_OF_JOINT)
+        if (pindex[i] < joint_num_)
         {
             FST_INFO("  joint index=%d", pindex[i]);
         }
@@ -667,18 +668,12 @@ ErrorCode Calibrator::saveOffset(void)
     if (need_save)
     {
         // 更新配置文件
-        vector<double> data; data.resize(NUM_OF_JOINT);
+        vector<double> data;
 
         if (!offset_param_.getParam("zero_offset/data", data))
         {
             FST_ERROR("Fail to get offset from config file;");
             return offset_param_.getLastError();
-        }
-
-        if (data.size() != NUM_OF_JOINT)
-        {
-            FST_ERROR("Wrong array size of offset in config file.");
-            return  INVALID_PARAMETER;
         }
 
         char buffer[LOG_TEXT_SIZE];
@@ -727,14 +722,14 @@ ErrorCode Calibrator::saveOffset(void)
                 return robot_recorder_.getLastError();
             }
 
-            if (jnt.size() != NUM_OF_JOINT)
+            if (jnt.size() != joint_num_)
             {
                 FST_ERROR("Wrong array size of last joint in recorder.");
                 return INVALID_PARAMETER;
             }
 
-            vector<int> flag;   flag.resize(NUM_OF_JOINT);
-            vector<int> mask;   mask.resize(NUM_OF_JOINT);
+            vector<int> flag;   flag.resize(joint_num_);
+            vector<int> mask;   mask.resize(joint_num_);
 
             for (size_t i = 0; i < joint_num_; i++)
             {
@@ -837,7 +832,7 @@ ErrorCode Calibrator::saveJoint(void)
 //------------------------------------------------------------------------------
 ErrorCode Calibrator::saveGivenJoint(const Joint &joint)
 {
-    vector<double> data(&joint[0], &joint[0] + NUM_OF_JOINT);
+    vector<double> data(&joint[0], &joint[0] + joint_num_);
     time_t time_now = time(NULL);
     tm *local = localtime(&time_now);
     char buffer[LOG_TEXT_SIZE];
@@ -864,7 +859,7 @@ ErrorCode Calibrator::saveGivenJoint(const Joint &joint)
 ErrorCode Calibrator::maskOffsetLostError(void)
 {
     char buffer[LOG_TEXT_SIZE];
-    vector<int> mask;   mask.resize(NUM_OF_JOINT);
+    vector<int> mask;   mask.resize(joint_num_);
 
     FST_INFO("Mask all lost-offset errors.");
     FST_INFO("  mask flag: %s", printDBLine((int*)offset_mask_, buffer, LOG_TEXT_SIZE));
@@ -888,7 +883,7 @@ ErrorCode Calibrator::maskOffsetLostError(void)
     {
         FST_INFO("Saving mask flags ...");
 
-        for (size_t i = joint_num_; i < NUM_OF_JOINT; i++)
+        for (size_t i = joint_num_; i < joint_num_; i++)
         {
             mask[i] = OFFSET_UNMASK;
         }
@@ -931,10 +926,10 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
     if (index < joint_num_)
     {
         bool update_joint = false;
-        vector<int>     flag;   flag.resize(NUM_OF_JOINT);
-        vector<double>  joint;  joint.resize(NUM_OF_JOINT);
+        vector<int>     flag;   flag.resize(joint_num_);
+        vector<double>  joint;  joint.resize(joint_num_);
 
-        for (int i = 0; i < NUM_OF_JOINT; i++)
+        for (int i = 0; i < joint_num_; i++)
         {
             flag[i] = int(offset_stat_[i]);
         }
@@ -1176,7 +1171,7 @@ ErrorCode Calibrator::saveReference(void)
         return BARE_CORE_TIMEOUT;
     }
 
-    vector<double> ref_joint(&joint[0], &joint[0] + NUM_OF_JOINT);
+    vector<double> ref_joint(&joint[0], &joint[0] + joint_num_);
     FST_INFO("  joint:  %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
 
     vector<double> ref_offset;
@@ -1351,7 +1346,7 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
             params.getParam("reference_encoder", ref_encoder) &&
             jtac.getParam("gear_ratio/data", gear_ratio))
         {
-            if (ref_offset.size() == NUM_OF_JOINT && ref_encoder.size() == NUM_OF_JOINT && gear_ratio.size() == NUM_OF_JOINT)
+            if (ref_offset.size() == joint_num_ && ref_encoder.size() == joint_num_ && gear_ratio.size() == joint_num_)
             {
                 char buffer[LOG_TEXT_SIZE];
                 vector<int> cur_encoder; cur_encoder.resize(joint_num_);
@@ -1383,12 +1378,12 @@ ErrorCode Calibrator::fastCalibrate(const size_t *pindex, size_t length)
             }
             else
             {
-                if (ref_offset.size() != NUM_OF_JOINT)
-                    FST_ERROR("Invalid array size of reference offset, size is %d but %d wanted.", ref_offset.size(), NUM_OF_JOINT);
-                else if (ref_encoder.size() != NUM_OF_JOINT)
-                    FST_ERROR("Invalid array size of reference encoder, size is %d but %d wanted.", ref_encoder.size(), NUM_OF_JOINT);
+                if (ref_offset.size() != joint_num_)
+                    FST_ERROR("Invalid array size of reference offset, size is %d but %d wanted.", ref_offset.size(), joint_num_);
+                else if (ref_encoder.size() != joint_num_)
+                    FST_ERROR("Invalid array size of reference encoder, size is %d but %d wanted.", ref_encoder.size(), joint_num_);
                 else
-                    FST_ERROR("Invalid array size of gear ratio, size is %d but %d wanted.", gear_ratio.size(), NUM_OF_JOINT);
+                    FST_ERROR("Invalid array size of gear ratio, size is %d but %d wanted.", gear_ratio.size(), joint_num_);
 
                 return INVALID_PARAMETER;
             }
@@ -1462,6 +1457,15 @@ ErrorCode Calibrator::sendConfigData(int id, const vector<double> &data)
 }
 
 //------------------------------------------------------------------------------
+// 方法：  sendConfigData
+// 摘要：  使用service形式向裸核发送参数id和数据；
+//------------------------------------------------------------------------------
+ErrorCode Calibrator::sendConfigData(int id, const vector<int> &data)
+{
+    return bare_core_ptr_->setConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
+}
+
+//------------------------------------------------------------------------------
 // 方法：  sendOffsetToBareCore
 // 摘要：  从配置文件中提取零位参数，并使用service形式向裸核发送这些参数；
 //------------------------------------------------------------------------------
@@ -1487,9 +1491,8 @@ ErrorCode Calibrator::sendOffsetToBareCore(void)
 ErrorCode Calibrator::getOffsetFromBareCore(vector<double> &data)
 {
     int id;
-    data.resize(NUM_OF_JOINT);
 
-    if (offset_param_.getParam("zero_offset/id", id))
+    if (offset_param_.getParam("zero_offset/id", id) && offset_param_.getParam("zero_offset/data", data))
     {
         return bare_core_ptr_->getConfigData(id, data) ? SUCCESS : BARE_CORE_TIMEOUT;
     }

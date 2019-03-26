@@ -33,6 +33,8 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/motion_control/include
     ${depend_PATH_INC}/io_mapping/include 
     ${depend_PATH_INC}/basic_alg/include 
+    ${depend_PATH_INC}/nvram/include
+    ${depend_PATH_INC}/fst_spi/include
 )
 
 catkin_package(
@@ -41,6 +43,8 @@ catkin_package(
     DEPENDS parameter_manager
     DEPENDS log_manager
     DEPENDS fst_io_device 
+    DEPENDS nvram 
+    DEPENDS fst_spi 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")

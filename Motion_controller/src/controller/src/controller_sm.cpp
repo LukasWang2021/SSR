@@ -455,8 +455,16 @@ void ControllerSm::processSafety()
             last_unknown_user_op_mode_time_.tv_usec = current_time.tv_usec;
         }
         
+        //check safety_board status
         safety_device_ptr_->checkSafetyBoardAlarm();
+        //get the safety_board alarm for TP
         safety_alarm_ = safety_device_ptr_->getExcitorStop();
+        //get the cabinet reset
+        if (safety_device_ptr_->isCabinetResetRequest())
+        {
+            callReset();
+            ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);//add info code for TP.
+        }
     }
     else
     {

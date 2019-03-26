@@ -46,6 +46,7 @@ class BareCoreInterface
     bool resetBareCore(void);
     bool stopBareCore(void);
 
+    bool setConfigData(int id, const std::vector<int> &data);
     bool setConfigData(int id, const std::vector<double> &data);
     bool getConfigData(int id, std::vector<double> &data);
     bool getEncoder(std::vector<int> &data);

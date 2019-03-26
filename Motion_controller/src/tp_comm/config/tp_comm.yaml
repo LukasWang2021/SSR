@@ -2,5 +2,5 @@ log_level: 1
 cycle_time: 10000 #ms
 recv_buffer_size: 65535
 send_buffer_size: 65535
-rpc_list_max_size: 10
+rpc_list_max_size: 3
 #END

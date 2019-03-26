@@ -258,7 +258,7 @@ typedef unsigned long long int ErrorCode;
 
 
 //The error codes generated from the external component(safety_board)
-#define SAFETY_BOARD_CABINET_RESET (unsigned long long int)0x0001000200C80000   /*the safety board detects cabinet reset.*/
+#define SAFETY_BOARD_CABINET_RESET (unsigned long long int)0x0001000200C80000   /*the cabinet reset button is triggered by the user.*/
 
 #define SAFETY_BOARD_RELAY_DUAL_FAULTY (unsigned long long int)0x0001000B00C80001   /*the safety board detects the relay has dual faulty.*/
 #define SAFETY_BOARD_EXTERNAL_STOP (unsigned long long int)0x0001000B00C80002   /*the safety board detects external stop signal.*/

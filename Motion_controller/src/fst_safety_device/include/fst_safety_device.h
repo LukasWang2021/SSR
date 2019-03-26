@@ -396,13 +396,12 @@ public:
     bool isSafetyVirtual(void);
 
 	//  -----------------------------------------------------------------------
-	//  Function:		isExcitorStopRequest
-	//  Description: is the excitor stop request valid?
-	//  return:  true  -> the excitor stop request is valid.
-	//           false -> invalid stop request
+	//  Function:		isCabinetResetRequest
+	//  Description: is the request valid?
+	//  return:  true  -> the request is valid.
+	//           false -> invalid request
 	//  ----------------------------------------------------------------------
-	bool isExcitorStopRequest(void);
-    //bool isSafetyAlarm();
+	bool isCabinetResetRequest(void);
 
 	void getSafetyBoardVersion(int &version);
 

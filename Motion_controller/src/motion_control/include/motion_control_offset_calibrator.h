@@ -249,6 +249,7 @@ class Calibrator
     double calculateOffset(double current_offset, double current_joint, double target_joint);
     double calculateOffsetEasy(double gear_ratio, double ref_offset, unsigned int ref_encoder, unsigned int cur_encoder);
     ErrorCode saveGivenJoint(const basic_alg::Joint &joint);
+    ErrorCode sendConfigData(int id, const std::vector<int> &data);
     ErrorCode sendConfigData(int id, const std::vector<double> &data);
     ErrorCode buildRecordFile(const std::string &file);
     ErrorCode sendOffsetToBareCore(void);

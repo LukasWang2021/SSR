@@ -398,14 +398,13 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
     target.euler_.b_ = dir[4] == STANDING ? start.euler_.b_ : (dir[4] == INCREASE ? start.euler_.b_ + step_orientation_ : start.euler_.b_ - step_orientation_);
     target.euler_.c_ = dir[5] == STANDING ? start.euler_.c_ : (dir[5] == INCREASE ? start.euler_.c_ + step_orientation_ : start.euler_.c_ - step_orientation_);
 
-    FST_INFO("  start-pose  = %.4f %.4f %.4f - %.4f %.4f %.4f",
-             start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
-    FST_INFO("  target-pose = %.4f %.4f %.4f - %.4f %.4f %.4f",
-             target.point_.x_, target.point_.y_, target.point_.z_, target.euler_.a_, target.euler_.b_, target.euler_.c_);
+    FST_INFO("  start-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
+    FST_INFO("  target-pose = %.4f %.4f %.4f - %.4f %.4f %.4f", target.point_.x_, target.point_.y_, target.point_.z_, target.euler_.a_, target.euler_.b_, target.euler_.c_);
 
+    /*
     ErrorCode err;
     Joint target_joint;
-
+    
     switch (traj.frame)
     {
         case BASE:
@@ -430,7 +429,7 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
 
     FST_INFO("  target joint = %s", printDBLine(&target_joint[0], buffer, LOG_TEXT_SIZE));
 
-    if (joint_constraint_ptr_->isJointInConstraint(traj.joint_ending))
+    if (joint_constraint_ptr_->isJointInConstraint(target_joint))
     {
         traj.joint_ending = target_joint;
     }
@@ -440,6 +439,7 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
         FST_ERROR("Target joint out of constraint, err=0x%llx", err);
         return err;
     }
+    */
 
     double dis = (dir[0] != STANDING || dir[1] != STANDING || dir[2] != STANDING) ? step_position_ : 0;
     double spd = position_vel_reference_ * vel_ratio_;

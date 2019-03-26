@@ -71,11 +71,6 @@ class BaseGroup
     ServoState getServoState(void);
     ErrorCode  getServoVersion(std::string &version);
 
-    // Frame handle APIs:
-    virtual ErrorCode setToolFrame(const basic_alg::PoseEuler &tf);
-    virtual ErrorCode setUserFrame(const basic_alg::PoseEuler &uf);
-    virtual ErrorCode setWorldFrame(const basic_alg::PoseEuler &wf);
-
     // Off-line trajectory
     virtual ErrorCode moveOffLineTrajectory(int id, const std::string &file_name);
 
@@ -117,6 +112,19 @@ class BaseGroup
     virtual size_t getNumberOfJoint(void) = 0;
     virtual size_t getFIFOLength(void) = 0;
     virtual void getTypeOfAxis(AxisType *types);
+
+    // Frame handle APIs:
+    void setUserFrame(const basic_alg::PoseEuler &uf);
+    void setToolFrame(const basic_alg::PoseEuler &tf);
+    void setWorldFrame(const basic_alg::PoseEuler &wf);
+    const basic_alg::PoseEuler& getUserFrame(void);
+    const basic_alg::PoseEuler& getToolFrame(void);
+    const basic_alg::PoseEuler& getWorldFrame(void);
+
+    ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, const basic_alg::PoseEuler &uf, const basic_alg::PoseEuler &tf, basic_alg::Joint &joint);
+    ErrorCode convertJointToCart(const basic_alg::Joint &joint, const basic_alg::PoseEuler &uf, const basic_alg::PoseEuler &tf, basic_alg::PoseEuler &pose);
+    ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, basic_alg::Joint &joint);
+    ErrorCode convertJointToCart(const basic_alg::Joint &joint, basic_alg::PoseEuler &pose);
 
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
     virtual Calibrator* getCalibratorPtr(void);
@@ -190,6 +198,9 @@ class BaseGroup
     Constraint  soft_constraint_;
     Constraint  firm_constraint_;
 
+    basic_alg::PoseEuler world_frame_;
+    basic_alg::PoseEuler user_frame_;
+    basic_alg::PoseEuler tool_frame_;
     basic_alg::Joint  joint_tracking_accuracy_;
     basic_alg::Joint  servo_joint_;
     basic_alg::Joint  start_joint_;

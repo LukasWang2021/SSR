@@ -399,6 +399,13 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return MOTION_INTERNAL_FAULT;
     }
 
+    // 初始化坐标变换模块
+    if (!transformation_.init(kinematics_ptr_))
+    {
+        FST_ERROR("Fail to init transformation for ArmGroup.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
     // 初始化手动示教模块
     FST_INFO("Initializing manual teach of ScaraGroup ...");
     err = manual_teach_.init(kinematics_ptr_, &soft_constraint_, log_ptr_, path + "scara_manual_teach.yaml");

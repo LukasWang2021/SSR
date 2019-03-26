@@ -339,7 +339,6 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         return INVALID_SEQUENCE;
     }
 
-    /* For test only
     if (target.type == MOTION_LINE || target.type == MOTION_CIRCLE)
     {
         if (user_frame_id_ != target.user_frame_id)
@@ -354,7 +353,6 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
             return INVALID_PARAMETER;
         }
     }
-    */
 
     return group_ptr_->autoMove(id, target);
 }
@@ -559,112 +557,104 @@ ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_fram
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint) ? SUCCESS : IK_FAIL;     // transform from user to base
+        return group_ptr_->convertCartToJoint(pose, joint);
+    }
+
+    PoseEuler tf, uf;
+
+    if (user_frame_id == 0)
+    {
+        memset(&uf, 0, sizeof(uf));
     }
     else
     {
-        //Matrix tf, uf;
+        CoordInfo uf_info;
+        ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
 
-        if (user_frame_id == 0)
+        if (err_user == SUCCESS && uf_info.is_valid)
         {
-            //uf.eye();
+            uf = uf_info.data;
         }
         else
         {
-            CoordInfo uf_info;
-            ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
-
-            if (err_user == SUCCESS && uf_info.is_valid)
-            {
-                //uf = uf_info.data;
-            }
-            else
-            {
-                FST_ERROR("Fail to get user frame from given ID.");
-                return err_user;
-            }
+            FST_ERROR("Fail to get user frame from given ID.");
+            return err_user;
         }
-
-        if (tool_frame_id == 0)
-        {
-            //tf.eye();
-        }
-        else
-        {
-            ToolInfo tf_info;
-            ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
-
-            if (err_tool == SUCCESS && tf_info.is_valid)
-            {
-                //tf = tf_info.data;
-            }
-            else
-            {
-                FST_ERROR("Fail to get tool frame from given id");
-                return err_tool;
-            }
-        }
-
-       // return group_ptr_->getKinematicsPtr()->inverseKinematics(pose, uf, tf, group_ptr_->getLatestJoint(), joint);
-       return group_ptr_->getKinematicsPtr()->doIK(pose, group_ptr_->getLatestJoint(), joint) ? SUCCESS : IK_FAIL;  // transform uf tf to base
     }
+
+    if (tool_frame_id == 0)
+    {
+        memset(&tf, 0, sizeof(tf));
+    }
+    else
+    {
+        ToolInfo tf_info;
+        ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
+
+        if (err_tool == SUCCESS && tf_info.is_valid)
+        {
+            tf = tf_info.data;
+        }
+        else
+        {
+            FST_ERROR("Fail to get tool frame from given id");
+            return err_tool;
+        }
+    }
+
+    return group_ptr_->convertCartToJoint(pose, uf, tf, joint);
 }
 
 ErrorCode MotionControl::convertJointToCart(const Joint &joint, int user_frame_id, int tool_frame_id, PoseEuler &pose)
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
     {
-        group_ptr_->getKinematicsPtr()->doFK(joint, pose);  // transform from base to user
-        return SUCCESS;
+        return group_ptr_->convertJointToCart(joint, pose);  // transform from base to user
+    }
+
+    PoseEuler tf, uf;
+
+    if (user_frame_id == 0)
+    {
+        memset(&uf, 0, sizeof(uf));
     }
     else
     {
-        //Matrix tf, uf;
+        CoordInfo uf_info;
+        ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
 
-        if (user_frame_id == 0)
+        if (err_user == SUCCESS && uf_info.is_valid)
         {
-            //uf.eye();
+            uf = uf_info.data;
         }
         else
         {
-            CoordInfo uf_info;
-            ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
-
-            if (err_user == SUCCESS && uf_info.is_valid)
-            {
-                //uf = uf_info.data;
-            }
-            else
-            {
-                FST_ERROR("Fail to get user frame from given ID.");
-                return err_user;
-            }
+            FST_ERROR("Fail to get user frame from given ID.");
+            return err_user;
         }
-
-        if (tool_frame_id == 0)
-        {
-            //tf.eye();
-        }
-        else
-        {
-            ToolInfo tf_info;
-            ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
-
-            if (err_tool == SUCCESS && tf_info.is_valid)
-            {
-                //tf = tf_info.data;
-            }
-            else
-            {
-                FST_ERROR("Fail to get tool frame from given id");
-                return err_tool;
-            }
-        }
-
-        //group_ptr_->getKinematicsPtr()->forwardKinematics(joint, uf, tf, pose);
-        group_ptr_->getKinematicsPtr()->doFK(joint, pose);      // transform base to uf tf
-        return SUCCESS;
     }
+
+    if (tool_frame_id == 0)
+    {
+        memset(&tf, 0, sizeof(tf));
+    }
+    else
+    {
+        ToolInfo tf_info;
+        ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
+
+        if (err_tool == SUCCESS && tf_info.is_valid)
+        {
+            tf = tf_info.data;
+        }
+        else
+        {
+            FST_ERROR("Fail to get tool frame from given id");
+            return err_tool;
+        }
+    }
+
+    return group_ptr_->convertJointToCart(joint, uf, tf, pose);
 }
 
 Posture MotionControl::getPostureFromJoint(const Joint &joint)
@@ -762,22 +752,12 @@ ErrorCode MotionControl::setToolFrame(int id)
     {
         if (id == 0)
         {
-            //Matrix tf;
-            ErrorCode err = SUCCESS;
-            // TODO
-            // ErrorCode err = group_ptr_->getKinematicsPtr()->setToolFrame(tf.eye());
+            PoseEuler tf = {0, 0, 0, 0, 0, 0};
+            group_ptr_->setToolFrame(tf);
+            tool_frame_id_ = id;
+            FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
+            return SUCCESS;
 
-            if (err == SUCCESS)
-            {
-                tool_frame_id_ = id;
-                FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to set tool frame.");
-                return err;
-            }
         }
         else
         {
@@ -786,20 +766,10 @@ ErrorCode MotionControl::setToolFrame(int id)
 
             if (err == SUCCESS && tf_info.is_valid)
             {
-                // TODO
-                // err = group_ptr_->getKinematicsPtr()->setToolFrame(tf_info.data);
-
-                if (err == SUCCESS)
-                {
-                    tool_frame_id_ = id;
-                    FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
-                    return SUCCESS;
-                }
-                else
-                {
-                    FST_ERROR("Fail to set tool frame.");
-                    return err;
-                }
+                group_ptr_->setToolFrame(tf_info.data);
+                tool_frame_id_ = id;
+                FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
+                return SUCCESS;
             }
             else
             {
@@ -828,22 +798,11 @@ ErrorCode MotionControl::setUserFrame(int id)
     {
         if (id == 0)
         {
-            //Matrix uf;
-            // TODO
-            // ErrorCode err = group_ptr_->getKinematicsPtr()->setUserFrame(uf.eye());
-            ErrorCode err = SUCCESS;
-
-            if (err == SUCCESS)
-            {
-                user_frame_id_ = id;
-                FST_INFO("Success, current user frame id is %d", user_frame_id_);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to set user frame.");
-                return err;
-            }
+            PoseEuler uf = {0, 0, 0, 0, 0, 0};
+            group_ptr_->setUserFrame(uf);
+            user_frame_id_ = id;
+            FST_INFO("Success, current user frame id is %d", user_frame_id_);
+            return SUCCESS;
         }
         else
         {
@@ -852,20 +811,10 @@ ErrorCode MotionControl::setUserFrame(int id)
 
             if (err == SUCCESS && uf_info.is_valid)
             {
-                // TODO
-                // err = group_ptr_->getKinematicsPtr()->setUserFrame(uf_info.data);
-
-                if (err == SUCCESS)
-                {
-                    user_frame_id_ = id;
-                    FST_INFO("Success, current user frame ID switch to %d", user_frame_id_);
-                    return SUCCESS;
-                }
-                else
-                {
-                    FST_ERROR("Fail to set user frame.");
-                    return err;
-                }
+                group_ptr_->setUserFrame(uf_info.data);
+                user_frame_id_ = id;
+                FST_INFO("Success, current user frame ID switch to %d", user_frame_id_);
+                return SUCCESS;
             }
             else
             {

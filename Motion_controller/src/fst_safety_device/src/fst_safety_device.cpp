@@ -353,23 +353,17 @@ bool FstSafetyDevice::isSafetyVirtual()
 {
     return is_virtual_;
 }
-bool FstSafetyDevice::isExcitorStopRequest()
+bool FstSafetyDevice::isCabinetResetRequest()
 {
-    static char pre_stop = 1;
-
-    char stop = getExcitorStop();    
-    if (stop != pre_stop)
+    static char pre_value = 1;
+    char current_value = getCabinetReset();    
+    if ((pre_value == 0) && (current_value == 1))
     {
-        FST_INFO("cur stop:%d, pre_stop:%d\n",stop, pre_stop);
-    }
-
-    if ((pre_stop == 0) && (stop == 1))
-    {
-        pre_stop = stop;
+        pre_value = current_value;
         return true;
     }
 
-    pre_stop = stop;
+    pre_value = current_value;
     return false;
 }
 
@@ -460,27 +454,6 @@ void FstSafetyDevice::checkSafetyBoardAlarm(void)
 }
 
 
-/*
-bool FstSafetyDevice::isSafetyAlarm()
-{
-    static char pre_alarm = 1;
-
-    char alarm = getExcitorStop();    
-    if (alarm != pre_alarm)
-    {
-        FST_INFO("cur alarm:%d, pre_alarm:%d\n",alarm, pre_alarm);
-    }
-
-    if ((pre_alarm == 0) && (alarm == 1))
-    {
-        pre_alarm = alarm;
-        return true;
-    }
-
-    pre_alarm = alarm;
-    return false;
-}
-*/
 
 //------------------------------------------------------------
 // Function:    startThread

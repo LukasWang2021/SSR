@@ -383,77 +383,77 @@ void FstSafetyDevice::getSafetyBoardVersion(int &version)
 //generate the error codes from the external component(safety_board)
 void FstSafetyDevice::checkSafetyBoardAlarm(void)
 {
-    if (getDualFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_RELAY_DUAL_FAULTY);
-    }
-    if (getDIExtEStop())
-    {
-        //printf("getDIExtEStop=%d\n",getDIExtEStop());
-        ErrorMonitor::instance()->add(SAFETY_BOARD_EXTERNAL_STOP);
-    }
-    if (getDISafetyDoorStop())
-    {
-        //printf("getDISafetyDoorStop=%d\n",getDISafetyDoorStop());
-        ErrorMonitor::instance()->add(SAFETY_BOARD_SAFETY_DOOR_STOP);
-    }
-    if (getDILimitedStop())
-    {
-        //printf("getDILimitedStop=%d\n",getDILimitedStop());
-        ErrorMonitor::instance()->add(SAFETY_BOARD_LIMITED_STOP);
-    }
-    if (getDIDeadmanNormal())
-    {
-        //printf("getDIdeadmanonrmal=%d\n",getDIDeadmanNormal());
-        ErrorMonitor::instance()->add(SAFETY_BOARD_DEADMAN_NORMAL_FAULTY);
-    }
-    if (getDIDeadmanPanic())
-    {
-        //printf("getDIDeadmanPanic=%d\n",getDIDeadmanPanic());
-        ErrorMonitor::instance()->add(SAFETY_BOARD_DEADMAN_PANIC);
-    }
-    if (getDITPEStop())
-    {
-        //printf("getDITPEStop=%d\n",getDITPEStop());
-        ErrorMonitor::instance()->add(SAFETY_BOARD_TP_ESTOP);
-    }
-    if (getModeFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_OP_MODE_FAULTY);
-    }
-    if (getDIContactorFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_MAIN_CONTACTOR_FAULTY);
-    }
-    if (getBrake1RelayFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY);
-    }
-    if (getBrake2RelayFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY);
-    }
-    if (getBrake3RelayFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY);
-    }
-    if (getContactor0RelayFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY);
-    }
-    if (getContactor1RelayFaulty())
-    {
-        ErrorMonitor::instance()->add(SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY);
-    }
-    if (getDICabinetStop())
-    {
-        //printf("getDICabinetStop=%d\n",getDICabinetStop());
-        ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_STOP);
-    }
+    char current_value = 0;
 
+    static char pre_dual_faulty = 0;
+    current_value = getDualFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_RELAY_DUAL_FAULTY, pre_dual_faulty);
+
+    static char pre_ext_estop = 0;
+    current_value = getDIExtEStop();
+    isRisingEdge(current_value, SAFETY_BOARD_EXTERNAL_STOP, pre_ext_estop);
+    
+    static char pre_door_stop = 0;
+    current_value = getDISafetyDoorStop();
+    isRisingEdge(current_value, SAFETY_BOARD_SAFETY_DOOR_STOP, pre_door_stop);
+
+    static char pre_limited_stop = 0;
+    current_value = getDILimitedStop();
+    isRisingEdge(current_value, SAFETY_BOARD_LIMITED_STOP, pre_limited_stop);
+
+    static char pre_deadman_normal = 0;
+    current_value = getDIDeadmanNormal();
+    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_NORMAL_FAULTY, pre_deadman_normal);
+
+    static char pre_deadman_panic = 0;
+    current_value = getDIDeadmanPanic();
+    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_PANIC, pre_deadman_panic);
+
+    static char pre_tp_estop = 0;
+    current_value = getDITPEStop();
+    isRisingEdge(current_value, SAFETY_BOARD_TP_ESTOP, pre_tp_estop);
+
+    static char pre_mode_faulty = 0;
+    current_value = getModeFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_OP_MODE_FAULTY, pre_mode_faulty);
+
+    static char pre_contactor_faulty = 0;
+    current_value = getDIContactorFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_MAIN_CONTACTOR_FAULTY, pre_contactor_faulty);
+
+    static char pre_brake1_relay = 0;
+    current_value = getBrake1RelayFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY, pre_brake1_relay);
+
+    static char pre_brake2_relay = 0;
+    current_value = getBrake2RelayFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY, pre_brake2_relay);
+
+    static char pre_brake3_relay = 0;
+    current_value = getBrake3RelayFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY, pre_brake3_relay);
+
+    static char pre_contactor0_relay = 0;
+    current_value = getContactor0RelayFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY, pre_contactor0_relay);
+    
+    static char pre_contactor1_relay = 0;
+    current_value = getContactor1RelayFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY, pre_contactor1_relay);
+    
+    static char pre_cabinet_stop = 0;
+    current_value = getDICabinetStop();
+    isRisingEdge(current_value, SAFETY_BOARD_CABINET_STOP, pre_cabinet_stop);
 }
 
-
+inline void FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)
+{
+    if (pre_value == 0 && value == 1)
+    {
+        ErrorMonitor::instance()->add(code);
+    }
+    pre_value = value;
+}
 
 //------------------------------------------------------------
 // Function:    startThread

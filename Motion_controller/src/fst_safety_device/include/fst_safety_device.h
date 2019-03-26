@@ -407,9 +407,10 @@ public:
 
 	void checkSafetyBoardAlarm(void);
 
-
 	
 private:
+    inline void isRisingEdge(char value, ErrorCode code, char &pre_value);
+
     FstSafetyDeviceParam* param_ptr_;
     fst_log::Logger* log_ptr_;
 

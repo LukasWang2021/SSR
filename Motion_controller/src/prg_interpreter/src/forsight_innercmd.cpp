@@ -1643,8 +1643,8 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 
 	get_token(objThreadCntrolBlock);
-	memset(objThreadCntrolBlock->instrSet->target.filename, 0x00, 128);
-	strcpy(objThreadCntrolBlock->instrSet->target.filename, objThreadCntrolBlock->token);
+	// memset(objThreadCntrolBlock->instrSet->target.filename, 0x00, 128);
+	// strcpy(objThreadCntrolBlock->instrSet->target.filename, objThreadCntrolBlock->token);
 
 	
 // 	#ifdef USE_XPATH

@@ -45,15 +45,18 @@ ErrorCode MrReg::init()
     
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
-		nvram_obj_.openNvram();
-		for(unsigned int i=0; i < data_list_.size(); i++)
+		ErrCode error = nvram_obj_.openNvram();
+		if(error == FST_NVRAM_OK)
 		{
-			memset(&objNVRamMrRegData, 0x00, sizeof(NVRamMrRegData));
-			nvram_obj_.read((uint8_t*)&objNVRamMrRegData, 
-				NVRAM_MR_AREA + i * sizeof(NVRamMrRegData), sizeof(NVRamMrRegData));
-			
-			printf("\n MrReg::init: %d .\n", objNVRamMrRegData.value);
-			data_list_[i] = objNVRamMrRegData.value ;
+			for(unsigned int i=0; i < data_list_.size(); i++)
+			{
+				memset(&objNVRamMrRegData, 0x00, sizeof(NVRamMrRegData));
+				nvram_obj_.read((uint8_t*)&objNVRamMrRegData, 
+					NVRAM_MR_AREA + i * sizeof(NVRamMrRegData), sizeof(NVRamMrRegData));
+				
+				printf("\n MrReg::init: %d .\n", objNVRamMrRegData.value);
+				data_list_[i] = objNVRamMrRegData.value ;
+			}
 		}
 	}
     return SUCCESS;

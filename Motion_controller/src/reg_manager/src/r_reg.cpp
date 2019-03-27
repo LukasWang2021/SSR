@@ -46,15 +46,18 @@ ErrorCode RReg::init()
 	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
-		nvram_obj_.openNvram();
-		for(unsigned int i=0; i < data_list_.size(); i++)
+		ErrCode error = nvram_obj_.openNvram();
+		if(error == FST_NVRAM_OK)
 		{
-			memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
-			nvram_obj_.read((uint8_t*)&objNVRamRRegData, 
-				NVRAM_R_AREA + i * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
-			
-			printf("\nRReg::init: %f .\n", objNVRamRRegData.value);
-			data_list_[i] = objNVRamRRegData.value ;
+			for(unsigned int i=0; i < data_list_.size(); i++)
+			{
+				memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
+				nvram_obj_.read((uint8_t*)&objNVRamRRegData, 
+					NVRAM_R_AREA + i * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
+				
+				printf("\nRReg::init: %f .\n", objNVRamRRegData.value);
+				data_list_[i] = objNVRamRRegData.value ;
+			}
 		}
 	}
     

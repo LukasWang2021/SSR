@@ -47,13 +47,16 @@ ErrorCode PrReg::init()
     
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
-		nvram_obj_.openNvram();
-		for(unsigned int i=0; i < data_list_.size(); i++)
+		ErrCode error = nvram_obj_.openNvram();
+		if(error == FST_NVRAM_OK)
 		{
-			memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
-			nvram_obj_.read((uint8_t*)&objNVRamPrRegData, 
-				NVRAM_PR_AREA + i * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
-			data_list_[i] = objNVRamPrRegData.value ;
+			for(unsigned int i=0; i < data_list_.size(); i++)
+			{
+				memset(&objNVRamPrRegData, 0x00, sizeof(NVRamPrRegData));
+				nvram_obj_.read((uint8_t*)&objNVRamPrRegData, 
+					NVRAM_PR_AREA + i * sizeof(NVRamPrRegData), sizeof(NVRamPrRegData));
+				data_list_[i] = objNVRamPrRegData.value ;
+			}
 		}
 	}
     return SUCCESS;

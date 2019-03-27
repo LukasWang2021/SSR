@@ -35,6 +35,8 @@ StopWatch g_structStopWatch[MAX_STOPWATCH_NUM];
 int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
 int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
 int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
+int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
+
 int call_Timer(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
 int call_UserAlarm(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
 int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
@@ -52,6 +54,7 @@ struct intern_cmd_type {
     (char *)"movel",      0, call_MoveL,
     (char *)"movej",      0, call_MoveJ,
     (char *)"movec",      0, call_MoveC,
+    (char *)"moveX",      0, call_MoveXPos,
     // left
     (char *)"timer",      1, call_Timer,
     (char *)"useralarm",  1, call_UserAlarm,
@@ -1547,6 +1550,102 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			objThreadCntrolBlock->instrSet->add_num    = 1 ;
 		}
 	}
+	
+// 	#ifdef USE_XPATH
+// 		FST_INFO("setInstruction MOTION_CURVE at %s", instr.line);
+// 	#else
+// 		FST_INFO("setInstruction MOTION_CURVE at %d", instr.line);
+// 	#endif
+	bool bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+	while(bRet == false)
+	{
+		bRet = setInstruction(objThreadCntrolBlock, objThreadCntrolBlock->instrSet);
+#ifdef WIN32
+		Sleep(1);
+#else
+        usleep(1000);
+#endif
+	}
+    return 1;     
+}
+
+
+/************************************************* 
+	Function:		call_MoveXPos
+	Description:	Execute MOVEL
+	                FORMAT: MOVEL P[1], 250 CNT -1  +¸½¼Ó²ÎÊý
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
+int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
+{  
+    MoveCommandDestination movCmdDst ;
+	eval_value value;
+//	int boolValue;
+	
+	char commandParam[1024];
+    Instruction instr;
+    char * commandParamptr = commandParam;
+	instr.type = MOTION ;
+	instr.target.type = MOTION_XPOS;
+#ifdef USE_XPATH
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+		sprintf(instr.line, "%s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	else
+		sprintf(instr.line, "OutRange with %d", iLineNum);
+#else
+	FST_INFO("call_MoveJ XPATH at %d", iLineNum);
+	instr.line = iLineNum;
+#endif
+	// Save start position
+	// memset(&movCmdDst ,0x00, sizeof(MoveCommandDestination));
+	getMoveCommandDestination(movCmdDst);
+	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
+	{
+	    FST_INFO("call_MoveL Run XPATH: %d: %s", iLineNum, objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	    // FST_INFO("call_MoveL Run movCmdDst: %08X with(%08X, %08X, %08X, %08X)", 
+		//  	movCmdDst.type, MOTION_NONE, MOTION_JOINT, MOTION_LINE, MOTION_CIRCLE);
+		if(movCmdDst.type != MOTION_NONE)
+		{
+			if(objThreadCntrolBlock->start_mov_position.find(iLineNum)
+				==objThreadCntrolBlock->start_mov_position.end())
+			{
+			//    FST_INFO("move from POSE and insert:(%f, %f, %f, %f, %f, %f) in MovL", 
+			//		movCmdDst.pose_target.position.x,    movCmdDst.pose_target.position.y, 
+			//		movCmdDst.pose_target.position.z,    movCmdDst.pose_target.orientation.a, 
+			//		movCmdDst.pose_target.orientation.b, movCmdDst.pose_target.orientation.c);
+				try
+				{
+					objThreadCntrolBlock->start_mov_position.insert(
+						map<int, MoveCommandDestination>::value_type(iLineNum, 
+											movCmdDst));
+				}
+				catch (std::exception& e)
+				{
+				    std::cerr << "Exception catched : " << e.what() << std::endl;
+				}
+			}
+			else
+			{
+	            FST_INFO("call_MoveL Run XPATH: %s exists ", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+			}
+		}
+		else
+		{
+			; // FST_INFO("call_MoveL XPATH without movCmdDst");
+		}
+	}
+	else
+	{
+		FST_ERROR("call_MoveL XPATH out of range at %d", iLineNum);
+	}
+	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+
+	get_token(objThreadCntrolBlock);
+	memset(objThreadCntrolBlock->instrSet->target.filename, 0x00, 128);
+	strcpy(objThreadCntrolBlock->instrSet->target.filename, objThreadCntrolBlock->token);
+
 	
 // 	#ifdef USE_XPATH
 // 		FST_INFO("setInstruction MOTION_CURVE at %s", instr.line);

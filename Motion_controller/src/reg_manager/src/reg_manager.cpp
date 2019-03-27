@@ -115,14 +115,18 @@ ErrorCode RegManager::init()
 	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
-		nvram_obj_.openNvram();
-		nvram_obj_.read((uint8_t*)&uiMagic, NVRAM_HEAD, sizeof(unsigned int));
-	    FST_INFO("RegManager::init nvram_obj_.read = %08X", uiMagic);
-		if(NVRAM_Magic_NUM != uiMagic)
+		ErrCode error = nvram_obj_.openNvram();
+		    FST_INFO("RegManager::init nvram_obj_.openNvram = %08X", error);
+		if(error == FST_NVRAM_OK)
 		{
-			initNVRam();
-	    	FST_INFO("RegManager::init initNVRam = %08X", uiMagic);
-	       return REG_MANAGER_LOAD_NVRAM_FAILED;
+			nvram_obj_.read((uint8_t*)&uiMagic, NVRAM_HEAD, sizeof(unsigned int));
+		    FST_INFO("RegManager::init nvram_obj_.read = %08X", uiMagic);
+			if(NVRAM_Magic_NUM != uiMagic)
+			{
+				initNVRam();
+		    	FST_INFO("RegManager::init initNVRam = %08X", uiMagic);
+		       return REG_MANAGER_LOAD_NVRAM_FAILED;
+			}
 		}
 	}
     return SUCCESS;

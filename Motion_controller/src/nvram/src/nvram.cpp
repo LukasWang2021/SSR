@@ -48,7 +48,7 @@ ErrCode Nvram::openNvram() {
     if(recv_ == NULL) {
         return FST_NVRAM_ALLOC_F;
     }
-
+	return FST_NVRAM_OK ;
 }
 
 void Nvram::setAddress(uint32_t addr) {

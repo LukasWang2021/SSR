@@ -89,7 +89,7 @@ public:
     int getSafetyAlarm();  
 
     ErrorCode setUserOpMode(UserOpMode mode);
-    bool checkOffsetState();
+    ErrorCode checkOffsetState();
     ErrorCode callEstop();
     ErrorCode callReset();
     ErrorCode callShutdown();

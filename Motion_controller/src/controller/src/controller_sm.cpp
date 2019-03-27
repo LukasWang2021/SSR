@@ -167,7 +167,7 @@ ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
     }
 }
 
-bool ControllerSm::checkOffsetState()
+ErrorCode ControllerSm::checkOffsetState()
 {
     CalibrateState calib_state;
     OffsetState offset_state[NUM_OF_JOINT];
@@ -175,7 +175,7 @@ bool ControllerSm::checkOffsetState()
     ErrorCode error_code = motion_control_ptr_->checkOffset(calib_state, offset_state);
     if (error_code != SUCCESS)
     {
-        return false;
+        return error_code;
     }
 
     if(calib_state != MOTION_NORMAL)
@@ -198,11 +198,11 @@ bool ControllerSm::checkOffsetState()
     
         if(calib_state == MOTION_FORBIDDEN)
         {
-            return false;
+            return CONTROLLER_INVALID_OPERATION;
         }
     }
     
-    return true;
+    return SUCCESS;
 }
 
 ErrorCode ControllerSm::callEstop()
@@ -233,7 +233,8 @@ ErrorCode ControllerSm::callReset()
         is_unknown_user_op_mode_exist_ = false;
         ErrorMonitor::instance()->clear();
         clearInstruction();
-        if(checkOffsetState())
+        ErrorCode error_code = checkOffsetState();
+        if(error_code == SUCCESS)
         {
             //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");//todo comment
             ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
@@ -245,7 +246,7 @@ ErrorCode ControllerSm::callReset()
             motion_control_ptr_->abortMove();
             FST_ERROR("controller check offset failed");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
-            return CONTROLLER_INVALID_OPERATION;
+            return error_code;
         }
         safety_device_ptr_->reset();
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.

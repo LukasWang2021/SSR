@@ -245,7 +245,7 @@ ErrorCode ControllerSm::callReset()
             motion_control_ptr_->abortMove();
             FST_ERROR("controller check offset failed");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
-            return SUCCESS;
+            return CONTROLLER_INVALID_OPERATION;
         }
         safety_device_ptr_->reset();
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.
@@ -462,8 +462,11 @@ void ControllerSm::processSafety()
         //get the cabinet reset
         if (safety_device_ptr_->isCabinetResetRequest())
         {
-            callReset();
-            ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);//add info code for TP.
+            ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);
+            if (callReset() == SUCCESS)
+            {
+                ErrorMonitor::instance()->add(CABINET_RESET_SUCCESS);
+            }
         }
     }
     else

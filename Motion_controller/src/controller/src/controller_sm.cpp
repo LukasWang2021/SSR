@@ -112,7 +112,7 @@ void ControllerSm::processStateMachine()
     processUIUO();
 }
 
-fst_ctrl::UserOpMode ControllerSm::getUserOpMode()
+fst_hal::UserOpMode ControllerSm::getUserOpMode()
 {
     return user_op_mode_;
 }
@@ -147,8 +147,9 @@ int ControllerSm::getSafetyAlarm()
     return safety_alarm_;
 }
 
-ErrorCode ControllerSm::setUserOpMode(fst_ctrl::UserOpMode mode)
+ErrorCode ControllerSm::setUserOpMode(fst_hal::UserOpMode mode)
 {
+    // the function should be called when Safety_Board is not existed and for TP_simulation
     if (safety_device_ptr_->isValid())
     {
         return CONTROLLER_INVALID_OPERATION;
@@ -219,15 +220,15 @@ ErrorCode ControllerSm::callEstop()
         motion_control_ptr_->abortMove();
         FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
+        return SUCCESS;
     } 
-   
-    return SUCCESS;
+    return CONTROLLER_INVALID_OPERATION;
 }
 
 ErrorCode ControllerSm::callReset()
 {
     if(init_state_ == false)
-        return SUCCESS;
+        return CONTROLLER_INIT_OBJECT_FAILED;
 
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
@@ -236,12 +237,7 @@ ErrorCode ControllerSm::callReset()
         ErrorMonitor::instance()->clear();
         clearInstruction();
         ErrorCode error_code = checkOffsetState();
-        if(error_code == SUCCESS)
-        {
-            //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");//todo comment
-            ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
-        }
-        else
+        if(error_code != SUCCESS)
         {
             controller_client_ptr_->abort();
             motion_control_ptr_->stopGroup();
@@ -250,12 +246,16 @@ ErrorCode ControllerSm::callReset()
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
             return error_code;
         }
+        //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");//todo comment
+        ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
+        
         safety_device_ptr_->reset();
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.
         motion_control_ptr_->resetGroup();  
-        ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;    
+        ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;  
+        return SUCCESS;  
     }
-    return SUCCESS;
+    return CONTROLLER_INVALID_OPERATION;
 }
 
 ErrorCode ControllerSm::callShutdown()
@@ -332,7 +332,7 @@ bool ControllerSm::isNextInstructionNeeded()
     }
 }
 
-fst_ctrl::UserOpMode* ControllerSm::getUserOpModePtr()
+fst_hal::UserOpMode* ControllerSm::getUserOpModePtr()
 {
     return &user_op_mode_;
 }

@@ -20,13 +20,14 @@
 namespace fst_ctrl
 {
 
-typedef enum
-{
-    USER_OP_MODE_NONE             = 0,
-    USER_OP_MODE_AUTO             = 1,
-    USER_OP_MODE_SLOWLY_MANUAL    = 2,
-    USER_OP_MODE_UNLIMITED_MANUAL = 3,
-}UserOpMode;
+//define move to fst_safety_device
+//typedef enum
+//{
+//    USER_OP_MODE_NONE             = 0,
+//    USER_OP_MODE_AUTO             = 1,
+//    USER_OP_MODE_SLOWLY_MANUAL    = 2,
+//    USER_OP_MODE_UNLIMITED_MANUAL = 3,
+//}UserOpMode;
 
 typedef enum
 {
@@ -80,7 +81,7 @@ public:
     ControllerParam* getParam();
     void processStateMachine();
     
-    UserOpMode getUserOpMode();
+    fst_hal::UserOpMode getUserOpMode();
     RunningState getRunningState();
     InterpreterState getInterpreterState();
     RobotState getRobotState();
@@ -88,7 +89,7 @@ public:
     fst_mc::ServoState getServoState();
     int getSafetyAlarm();  
 
-    ErrorCode setUserOpMode(UserOpMode mode);
+    ErrorCode setUserOpMode(fst_hal::UserOpMode mode);
     ErrorCode checkOffsetState();
     ErrorCode callEstop();
     ErrorCode callReset();
@@ -102,7 +103,7 @@ public:
     bool isNextInstructionNeeded();
 
     // for publish data
-    UserOpMode* getUserOpModePtr();
+    fst_hal::UserOpMode* getUserOpModePtr();
     RunningState* getRunningStatePtr();
     InterpreterState* getInterpreterStatePtr();
     RobotState* getRobotStatePtr();
@@ -127,7 +128,7 @@ private:
     ProgramLaunching* program_launching_ptr_;
 
     // mode and status
-    UserOpMode user_op_mode_;
+    fst_hal::UserOpMode user_op_mode_;
     RunningState running_state_;
     InterpreterState interpreter_state_;
     RobotState robot_state_;

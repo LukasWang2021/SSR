@@ -112,7 +112,7 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     }
     
     controller_client_ptr_->pause(); 
-    //motion_control_ptr->pauseMove();//todo add.
+    motion_control_ptr_->pauseMove();
     rs_data_ptr->data.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
 }

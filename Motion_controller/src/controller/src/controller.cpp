@@ -222,9 +222,11 @@ ErrorCode Controller::init()
         recordLog(CONTROLLER_INIT_OBJECT_FAILED, error_code, "Controller motion control initialization failed");
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
-    if(!state_machine_.checkOffsetState())
+
+    error_code = state_machine_.checkOffsetState();
+    if(error_code != SUCCESS)
     {
-        FST_ERROR("controller check offset failed");
+        FST_ERROR("controller init check offset failed");
     }  
 
     if(!heartbeat_thread_.run(&heartbeatThreadFunc, this, param_ptr_->heartbeat_thread_priority_))

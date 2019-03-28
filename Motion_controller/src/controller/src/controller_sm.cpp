@@ -175,6 +175,7 @@ ErrorCode ControllerSm::checkOffsetState()
     ErrorCode error_code = motion_control_ptr_->checkOffset(calib_state, offset_state);
     if (error_code != SUCCESS)
     {
+        ErrorMonitor::instance()->add(error_code);
         return error_code;
     }
 
@@ -198,6 +199,7 @@ ErrorCode ControllerSm::checkOffsetState()
     
         if(calib_state == MOTION_FORBIDDEN)
         {
+            ErrorMonitor::instance()->add(CONTROLLER_INVALID_OPERATION);
             return CONTROLLER_INVALID_OPERATION;
         }
     }

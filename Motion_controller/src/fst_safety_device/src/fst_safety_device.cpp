@@ -21,7 +21,22 @@ FstSafetyDevice::FstSafetyDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_FST_SAFETY),
     log_ptr_(NULL),
     param_ptr_(NULL),
-    is_virtual_(false)
+    is_virtual_(false),
+    pre_dual_faulty_(0),
+	pre_ext_estop_(0),
+	pre_door_stop_(0),
+	pre_limited_stop_(0),
+	pre_deadman_normal_(0),
+	pre_deadman_panic_(0),
+	pre_tp_estop_(0),
+	pre_mode_faulty_(0),
+	pre_contactor_faulty_(0),
+	pre_main_brake_relay_(0),
+	pre_brake1_relay_(0),
+	pre_brake2_relay_(0),
+	pre_contactor0_relay_(0),
+	pre_contactor1_relay_(0),
+	pre_cabinet_stop_(0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new FstSafetyDeviceParam();
@@ -108,6 +123,10 @@ uint32_t FstSafetyDevice::getDOFrm1()
 }
 
 //------------- input byte1------------------//
+char FstSafetyDevice::getDIMainBrake()
+{
+    return din_frm1_.load().byte1.main_brake;
+}
 char FstSafetyDevice::getDIBrake1()
 {
     return din_frm1_.load().byte1.brake1;
@@ -115,10 +134,6 @@ char FstSafetyDevice::getDIBrake1()
 char FstSafetyDevice::getDIBrake2()
 {
     return din_frm1_.load().byte1.brake2;
-}
-char FstSafetyDevice::getDIBrake3()
-{
-    return din_frm1_.load().byte1.brake3;
 }
 char FstSafetyDevice::getDIContactor0()
 {
@@ -216,6 +231,10 @@ char FstSafetyDevice::getModeFaulty()
 {
     return din_frm1_.load().byte4.mode_faulty; 
 }
+char FstSafetyDevice::getMainBrakeRelayFaulty()
+{
+    return din_frm1_.load().byte4.main_brake_relay_faulty;
+}
 char FstSafetyDevice::getBrake1RelayFaulty()
 {
     return din_frm1_.load().byte4.brake1_relay_faulty;
@@ -223,10 +242,6 @@ char FstSafetyDevice::getBrake1RelayFaulty()
 char FstSafetyDevice::getBrake2RelayFaulty()
 {
     return din_frm1_.load().byte4.brake2_relay_faulty;
-}
-char FstSafetyDevice::getBrake3RelayFaulty()
-{
-    return din_frm1_.load().byte4.brake3_relay_faulty;
 }
 char FstSafetyDevice::getContactor0RelayFaulty()
 {
@@ -347,6 +362,21 @@ void FstSafetyDevice::reset()
     setDOType0Stop(0);
     setDOType1Stop(0);
     setDOType2Stop(0);
+    pre_dual_faulty_ = 0;
+	pre_ext_estop_ = 0;
+	pre_door_stop_ = 0;
+	pre_limited_stop_ = 0;
+	pre_deadman_normal_ = 0;
+	pre_deadman_panic_ = 0;
+	pre_tp_estop_ = 0;
+	pre_mode_faulty_ = 0;
+	pre_contactor_faulty_ = 0;
+	pre_main_brake_relay_ = 0;
+	pre_brake1_relay_ = 0;
+	pre_brake2_relay_ = 0;
+	pre_contactor0_relay_ = 0;
+	pre_contactor1_relay_ = 0;
+	pre_cabinet_stop_ = 0;
 }
 
 bool FstSafetyDevice::isSafetyVirtual()
@@ -385,65 +415,50 @@ void FstSafetyDevice::checkSafetyBoardAlarm(void)
 {
     char current_value = 0;
 
-    static char pre_dual_faulty = 0;
     current_value = getDualFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_RELAY_DUAL_FAULTY, pre_dual_faulty);
+    isRisingEdge(current_value, SAFETY_BOARD_RELAY_DUAL_FAULTY, pre_dual_faulty_);
 
-    static char pre_ext_estop = 0;
     current_value = getDIExtEStop();
-    isRisingEdge(current_value, SAFETY_BOARD_EXTERNAL_STOP, pre_ext_estop);
+    isRisingEdge(current_value, SAFETY_BOARD_EXTERNAL_STOP, pre_ext_estop_);
     
-    static char pre_door_stop = 0;
     current_value = getDISafetyDoorStop();
-    isRisingEdge(current_value, SAFETY_BOARD_SAFETY_DOOR_STOP, pre_door_stop);
+    isRisingEdge(current_value, SAFETY_BOARD_SAFETY_DOOR_STOP, pre_door_stop_);
 
-    static char pre_limited_stop = 0;
     current_value = getDILimitedStop();
-    isRisingEdge(current_value, SAFETY_BOARD_LIMITED_STOP, pre_limited_stop);
+    isRisingEdge(current_value, SAFETY_BOARD_LIMITED_STOP, pre_limited_stop_);
 
-    static char pre_deadman_normal = 0;
     current_value = getDIDeadmanNormal();
-    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_NORMAL_FAULTY, pre_deadman_normal);
+    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_NORMAL_FAULTY, pre_deadman_normal_);
 
-    static char pre_deadman_panic = 0;
     current_value = getDIDeadmanPanic();
-    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_PANIC, pre_deadman_panic);
+    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_PANIC, pre_deadman_panic_);
 
-    static char pre_tp_estop = 0;
     current_value = getDITPEStop();
-    isRisingEdge(current_value, SAFETY_BOARD_TP_ESTOP, pre_tp_estop);
+    isRisingEdge(current_value, SAFETY_BOARD_TP_ESTOP, pre_tp_estop_);
 
-    static char pre_mode_faulty = 0;
     current_value = getModeFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_OP_MODE_FAULTY, pre_mode_faulty);
+    isRisingEdge(current_value, SAFETY_BOARD_OP_MODE_FAULTY, pre_mode_faulty_);
 
-    static char pre_contactor_faulty = 0;
     current_value = getDIContactorFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_MAIN_CONTACTOR_FAULTY, pre_contactor_faulty);
+    isRisingEdge(current_value, SAFETY_BOARD_MAIN_CONTACTOR_FAULTY, pre_contactor_faulty_);
 
-    static char pre_brake1_relay = 0;
+    current_value = getMainBrakeRelayFaulty();
+    isRisingEdge(current_value, SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY, pre_main_brake_relay_);
+
     current_value = getBrake1RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY, pre_brake1_relay);
+    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY, pre_brake1_relay_);
 
-    static char pre_brake2_relay = 0;
     current_value = getBrake2RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY, pre_brake2_relay);
+    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY, pre_brake2_relay_);
 
-    static char pre_brake3_relay = 0;
-    current_value = getBrake3RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY, pre_brake3_relay);
-
-    static char pre_contactor0_relay = 0;
     current_value = getContactor0RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY, pre_contactor0_relay);
+    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY, pre_contactor0_relay_);
     
-    static char pre_contactor1_relay = 0;
     current_value = getContactor1RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY, pre_contactor1_relay);
+    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY, pre_contactor1_relay_);
     
-    static char pre_cabinet_stop = 0;
     current_value = getDICabinetStop();
-    isRisingEdge(current_value, SAFETY_BOARD_CABINET_STOP, pre_cabinet_stop);
+    isRisingEdge(current_value, SAFETY_BOARD_CABINET_STOP, pre_cabinet_stop_);
 }
 
 inline void FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)

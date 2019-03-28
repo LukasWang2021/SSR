@@ -16,9 +16,9 @@ namespace fst_hal
 //qianjin update with new register def
 typedef struct _InputByte1
 {
-	char brake1:1;//brake base
-	char brake2:1;//brake aux1
-	char brake3:1;//brake aux2
+	char main_brake:1;//main brake
+	char brake1:1;//brake aux1
+	char brake2:1;//brake aux2
 	char contactor0:1;
 	char contactor1:1;
 	char D5:1;
@@ -53,9 +53,9 @@ typedef struct _InputByte3
 typedef struct _InputByte4
 {
 	char mode_faulty:1;
+    char main_brake_relay_faulty:1;
     char brake1_relay_faulty:1;
     char brake2_relay_faulty:1;
-    char brake3_relay_faulty:1;
     char contactor0_relay_faulty:1;
     char contactor1_relay_faulty:1;
 	char contactor_faulty:1;
@@ -136,22 +136,22 @@ public:
     uint32_t getDOFrm1(void);
 
     //  -----------------------------------------------------------------------
-	//  Function:		getDIBrake1
+	//  Function:		getDIMainBrake
 	//  Description: the brake on main axles 1-6
+	//  -----------------------------------------------------------------------
+    char getDIMainBrake(void);
+
+    //  -----------------------------------------------------------------------
+	//  Function:		getDIBrake1
+	//  Description: the brake on aux axle 1
 	//  -----------------------------------------------------------------------
     char getDIBrake1(void);
 
     //  -----------------------------------------------------------------------
 	//  Function:		getDIBrake2
-	//  Description: the brake on aux axle 1
-	//  -----------------------------------------------------------------------
-    char getDIBrake2(void);
-
-    //  -----------------------------------------------------------------------
-	//  Function:		getDIBrake3
 	//  Description: the brake on aux axle 2
 	//  -----------------------------------------------------------------------
-    char getDIBrake3(void);
+    char getDIBrake2(void);
 
     //  -----------------------------------------------------------------------
 	//  Function:		getDIContactor0
@@ -268,6 +268,12 @@ public:
     char getModeFaulty(void);
 
 	//  -----------------------------------------------------------------------
+	//  Function:		getMainBrakeRelayFaulty
+	//  Description: the faulty status from main brake relay.
+	//  -----------------------------------------------------------------------
+    char getMainBrakeRelayFaulty(void);
+
+	//  -----------------------------------------------------------------------
 	//  Function:		getBrake1RelayFaulty
 	//  Description: the faulty status from brake1 relay.
 	//  -----------------------------------------------------------------------
@@ -278,12 +284,6 @@ public:
 	//  Description: the faulty status from brake2 relay.
 	//  -----------------------------------------------------------------------
     char getBrake2RelayFaulty(void);
-
-	//  -----------------------------------------------------------------------
-	//  Function:		getBrake3RelayFaulty
-	//  Description: the faulty status from brake3 relay.
-	//  -----------------------------------------------------------------------
-    char getBrake3RelayFaulty(void);
 
 	//  -----------------------------------------------------------------------
 	//  Function:		getContactor0RelayFaulty
@@ -425,6 +425,23 @@ private:
 	bool is_virtual_;
     std::atomic<SafetyBoardDIFrm1>  din_frm1_;
     std::atomic<SafetyBoardDOFrm1>  dout_frm1_;
+
+	//safety_alarm
+	char pre_dual_faulty_;
+	char pre_ext_estop_;
+	char pre_door_stop_;
+	char pre_limited_stop_;
+	char pre_deadman_normal_;
+	char pre_deadman_panic_;
+	char pre_tp_estop_;
+	char pre_mode_faulty_;
+	char pre_contactor_faulty_;
+	char pre_main_brake_relay_;
+	char pre_brake1_relay_;
+	char pre_brake2_relay_;
+	char pre_contactor0_relay_;
+	char pre_contactor1_relay_;
+	char pre_cabinet_stop_;
 };
 
 }

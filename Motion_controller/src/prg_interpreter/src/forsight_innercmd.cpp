@@ -54,7 +54,7 @@ struct intern_cmd_type {
     (char *)"movel",      0, call_MoveL,
     (char *)"movej",      0, call_MoveJ,
     (char *)"movec",      0, call_MoveC,
-    (char *)"moveX",      0, call_MoveXPos,
+    (char *)"movex",      0, call_MoveXPos,
     // left
     (char *)"timer",      1, call_Timer,
     (char *)"useralarm",  1, call_UserAlarm,
@@ -1203,7 +1203,6 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #endif	
 	}
 	
-	
 	get_token(objThreadCntrolBlock);
     get_exp(objThreadCntrolBlock, &value, &boolValue);
     instr.target.vel                  = value.getFloatValue();
@@ -1582,7 +1581,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 {  
     MoveCommandDestination movCmdDst ;
 	eval_value value;
-//	int boolValue;
+	int boolValue;
 	
 	char commandParam[1024];
     Instruction instr;
@@ -1641,11 +1640,98 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 		FST_ERROR("call_MoveL XPATH out of range at %d", iLineNum);
 	}
 	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
-
+	memset(&objThreadCntrolBlock->instrSet->target.prPos, 0x00, PR_POS_LEN * sizeof(int));
 	get_token(objThreadCntrolBlock);
-	// memset(objThreadCntrolBlock->instrSet->target.filename, 0x00, 128);
-	// strcpy(objThreadCntrolBlock->instrSet->target.filename, objThreadCntrolBlock->token);
-
+	int prPosIdx = 0 ;
+	while(strcmp(objThreadCntrolBlock->token, "pr") == 0)
+	{
+		get_token(objThreadCntrolBlock);
+		if(objThreadCntrolBlock->token[0] == '['){
+			get_exp(objThreadCntrolBlock, &value, &boolValue);
+			objThreadCntrolBlock->instrSet->target.prPos[prPosIdx] = (int)value.getFloatValue();
+			prPosIdx++;
+			get_token(objThreadCntrolBlock);
+			if(objThreadCntrolBlock->token[0] != ']'){
+				serror(objThreadCntrolBlock, 0);
+				break;
+			}
+			// Jump ","
+			get_token(objThreadCntrolBlock);
+			// Get next PR
+			get_token(objThreadCntrolBlock);
+		}
+		else{
+			serror(objThreadCntrolBlock, 0);
+			break;
+		}
+	}
+	
+	putback(objThreadCntrolBlock);
+	// Not set PR and use default 21 - 30
+	if(prPosIdx == 0)
+	{
+		for (prPosIdx = 0; prPosIdx < 10; prPosIdx++)
+		{
+			objThreadCntrolBlock->instrSet->target.prPos[prPosIdx] = 21 + prPosIdx;
+		}
+	}
+	// We had jump ","
+	// get_token(objThreadCntrolBlock);
+    get_exp(objThreadCntrolBlock, &value, &boolValue);
+    instr.target.vel                  = value.getFloatValue();
+	
+	get_token(objThreadCntrolBlock);
+	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
+    {
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		FST_INFO("instr.target.cnt = %f setInstruction.", value.getFloatValue());
+		if(objThreadCntrolBlock->prog_mode == STEP_MODE)
+		{
+			instr.target.cnt = -1;
+		}
+		else
+		{
+			if(value.getFloatValue() < 0) // == -1
+			{
+				instr.target.cnt = -1.0000;
+				FST_INFO("instr.target.cnt = %f in the FINE.", instr.target.cnt);
+			}
+			else 
+				instr.target.cnt = value.getFloatValue() / 100;
+		}
+    }
+    else
+    {
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+        instr.target.cnt = value.getFloatValue() / 100;
+    }
+	// instr.target.acc = -1 ;
+	// Set to instrSet
+	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
+	
+	get_token(objThreadCntrolBlock);
+	// result.size() > MOVJ_COMMAND_PARAM_MIN
+	if(objThreadCntrolBlock->token_type == DELIMITER)
+	{
+		char * instrSetPtr = 
+			(char *)objThreadCntrolBlock->instrSet
+			+ sizeof(Instruction) - sizeof(char) ;
+		objThreadCntrolBlock->instrSet->is_additional = true ;
+		if(*(objThreadCntrolBlock->token) == ';')
+		{
+			objThreadCntrolBlock->instrSet->add_num    =  
+				getAditionalInfomation(objThreadCntrolBlock, instrSetPtr);
+		}
+		else
+		{
+			AdditionalInfomation additionalInfomation ;
+			additionalInfomation.type = ACC ;
+			additionalInfomation.acc_speed = 100 ;
+			memcpy(instrSetPtr, &additionalInfomation, sizeof(AdditionalInfomation));
+			
+			objThreadCntrolBlock->instrSet->add_num    = 1 ;
+		}
+	}
 	
 // 	#ifdef USE_XPATH
 // 		FST_INFO("setInstruction MOTION_CURVE at %s", instr.line);

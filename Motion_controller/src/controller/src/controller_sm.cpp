@@ -465,11 +465,11 @@ void ControllerSm::processSafety()
         //get the cabinet reset
         if (safety_device_ptr_->isCabinetResetRequest())
         {
-            ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);
             if (callReset() == SUCCESS)
             {
                 ErrorMonitor::instance()->add(CABINET_RESET_SUCCESS);
             }
+            ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);
         }
     }
     else

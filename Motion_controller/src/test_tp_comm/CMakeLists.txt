@@ -724,9 +724,9 @@ target_link_libraries(test_interpreter_backward ${catkin_LIBRARIES} ${PROTOBUF_L
 install(TARGETS test_interpreter_backward RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
 
 ######### for test interpreter #########
-add_executable(test_interpreter_debug ${SRC_LIST} src/test_interpreter/test_interpreter_debug.cpp)
-target_link_libraries(test_interpreter_debug ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
-install(TARGETS test_interpreter_debug RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
+add_executable(test_interpreter_launch ${SRC_LIST} src/test_interpreter/test_interpreter_launch.cpp)
+target_link_libraries(test_interpreter_launch ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS test_interpreter_launch RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
 
 ######### for test interpreter #########
 add_executable(test_interpreter_foward ${SRC_LIST} src/test_interpreter/test_interpreter_foward.cpp)
@@ -752,11 +752,6 @@ install(TARGETS test_interpreter_resume RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN
 add_executable(test_interpreter_start ${SRC_LIST} src/test_interpreter/test_interpreter_start.cpp)
 target_link_libraries(test_interpreter_start ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_interpreter_start RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
-
-######### for test interpreter #########
-add_executable(test_interpreter_switch_step ${SRC_LIST} src/test_interpreter/test_interpreter_switch_step.cpp)
-target_link_libraries(test_interpreter_switch_step ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
-install(TARGETS test_interpreter_switch_step RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/interpreter)
 
 
 ######### for test interpreter #########

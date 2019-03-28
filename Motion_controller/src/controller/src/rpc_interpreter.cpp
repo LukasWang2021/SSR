@@ -22,24 +22,24 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/start"));
 }
 
-// "/rpc/interpreter/debug"
-void ControllerRpc::handleRpc0x000102D7(void* request_data_ptr, void* response_data_ptr)
+// "/rpc/interpreter/launch"
+void ControllerRpc::handleRpc0x000072D8(void* request_data_ptr, void* response_data_ptr)
 {
     RequestMessageType_String* rq_data_ptr = static_cast<RequestMessageType_String*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
-        || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
-        || state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
+    if(state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
 
-    controller_client_ptr_->debug(std::string(rq_data_ptr->data.data)); 
+    controller_client_ptr_->launch(std::string(rq_data_ptr->data.data)); 
     rs_data_ptr->data.data = SUCCESS;
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/debug"));
+
+    // state_machine_ptr_->transferRobotStateToRunning();
+    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/launch"));
 }
 
 // "/rpc/interpreter/forward"
@@ -142,22 +142,5 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
     motion_control_ptr_->abortMove();
     rs_data_ptr->data.data = SUCCESS;
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));
-}
-
-// "/rpc/interpreter/switchStep"
-void ControllerRpc::handleRpc0x000140F0(void* request_data_ptr, void* response_data_ptr)
-{
-    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
-    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-    
-    if(state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
-    {        
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
-        return;
-    }
-
-    controller_client_ptr_->switchStep(rq_data_ptr->data.data); 
-    rs_data_ptr->data.data = SUCCESS;
-    recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/switchStep"));
 }
 

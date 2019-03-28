@@ -169,9 +169,6 @@ private:
     /********rpc/controller/getErrorCodeList, RequestMessageType_Void**********/
     void handleRequest0x00015F44(int recv_bytes);
 
-    /********rpc/interpreter/switchStep, RequestMessageType_Int32**********/
-    void handleRequest0x000140F0(int recv_bytes);
-
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
     /********tool_manager/deleteTool, RequestMessageType_Int32**********/
@@ -313,8 +310,6 @@ private:
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
     void handleRequest0x00006154(int recv_bytes);
-    /********rpc/interpreter/debug, RequestMessageType_String**********/
-    void handleRequest0x000102D7(int recv_bytes);
     /********rpc/interpreter/forward, RequestMessageType_Void**********/
     void handleRequest0x0000D974(int recv_bytes);
     /********rpc/interpreter/backward, RequestMessageType_Void**********/
@@ -327,6 +322,8 @@ private:
     void handleRequest0x0000CF55(int recv_bytes);
     /********rpc/interpreter/abort, RequestMessageType_Void**********/
     void handleRequest0x000086F4(int recv_bytes);
+    /********rpc/interpreter/resume, RequestMessageType_Void**********/
+    void handleRequest0x000072D8(int recv_bytes);
 
     /********rpc/publish/addTopic, RequestMessageType_Topic**********/
     void handleRequest0x000050E3(int recv_bytes);
@@ -751,8 +748,8 @@ private:
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/interpreter/debug, ResponseMessageType_Bool**********/
-    void handleResponse0x000102D7(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/interpreter/launch, ResponseMessageType_Uint64**********/
+    void handleResponse0x000072D8(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/interpreter/forward, ResponseMessageType_Bool**********/
     void handleResponse0x0000D974(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/interpreter/backward, ResponseMessageType_Bool**********/
@@ -765,8 +762,6 @@ private:
     void handleResponse0x0000CF55(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/interpreter/abort, ResponseMessageType_Bool**********/
     void handleResponse0x000086F4(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
-    /********rpc/interpreter/switchStep, ResponseMessageType_Uint64**********/
-    void handleResponse0x000140F0(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/setStartMode, ResponseMessageType_Uint64**********/
     void handleResponse0x00010225(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getStartMode, ResponseMessageType_Uint64_Int32**********/

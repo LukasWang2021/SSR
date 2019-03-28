@@ -257,7 +257,6 @@ void setProgMode(struct thread_control_block * objThdCtrlBlockPtr, ProgMode prog
 {
     FST_INFO("setProgMode to %d at %d", (int)progMode, objThdCtrlBlockPtr->is_main_thread);
  	objThdCtrlBlockPtr->prog_mode   = progMode ;
-	g_interpreter_publish.progMode = progMode ;
 }
 
 
@@ -668,7 +667,6 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 	static fst_base::InterpreterServerCmd lastCmd ;
 #endif
 //	UserOpMode userOpMode ;
-	AutoMode   autoMode ;
 	int        program_code ;
     thread_control_block * objThdCtrlBlockPtr = NULL;
 
@@ -685,7 +683,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
         case fst_base::INTERPRETER_SERVER_CMD_LOAD:
             // FST_INFO("load file_name");
             break;
-        case fst_base::INTERPRETER_SERVER_CMD_DEBUG:
+        case fst_base::INTERPRETER_SERVER_CMD_LAUNCH:
 			memcpy(intprt_ctrl.start_ctrl, requestDataPtr, 256);
             FST_INFO("start debug %s ...", intprt_ctrl.start_ctrl);
 			if(strcmp(getProgramName(), intprt_ctrl.start_ctrl) == 0)
@@ -701,8 +699,6 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 			// Clear last lineNum
 			setCurLine(objThdCtrlBlockPtr, (char *)"", 0);
 			
-       //     objThdCtrlBlockPtr->prog_mode = STEP_MODE;
-  	   //	  g_interpreter_publish.progMode  = STEP_MODE;
   			setProgMode(objThdCtrlBlockPtr, STEP_MODE);
 			objThdCtrlBlockPtr->execute_direction = EXECUTE_FORWARD ;
 			if(strlen(intprt_ctrl.start_ctrl) == 0)
@@ -785,24 +781,6 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				setWarning(FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER);
 			}
 			break;
-        case fst_base::INTERPRETER_SERVER_CMD_SWITCH_STEP:
-			memcpy(&intprt_ctrl.step_mode, requestDataPtr, sizeof(int));
-            FST_INFO("switch Step at %d with %d", 
-				getCurrentThreadSeq(), intprt_ctrl.step_mode);
-			if(getCurrentThreadSeq() < 0) break ;
-			if(g_basic_interpreter_handle[getCurrentThreadSeq()] == 0)
-			{
-            	FST_ERROR("Thread exits at %d ", getPrgmState());
-				break;
-			}
-			// objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
-		    objThdCtrlBlockPtr = getThreadControlBlock();
-			if(objThdCtrlBlockPtr == NULL) break ;
-            FST_INFO("SWITCH_STEP with %d", intprt_ctrl.step_mode);
-            // objThdCtrlBlockPtr->prog_mode = (ProgMode)intprt_ctrl.step_mode;
-  			// g_interpreter_publish.progMode  = (ProgMode)intprt_ctrl.step_mode;
-  			setProgMode(objThdCtrlBlockPtr, (ProgMode)intprt_ctrl.step_mode);
-            break;
         case fst_base::INTERPRETER_SERVER_CMD_FORWARD:
             FST_INFO("step forward at %d ", getCurrentThreadSeq());
 			if(getCurrentThreadSeq() < 0) break ;
@@ -955,6 +933,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				// Not Change program mode  
 				// objThdCtrlBlockPtr->prog_mode = FULL_MODE;
 	            setPrgmState(objThdCtrlBlockPtr, INTERPRETER_EXECUTE);
+  			    setProgMode(objThdCtrlBlockPtr, FULL_MODE);
 			}
 			else
 			    setWarning(FAIL_INTERPRETER_NOT_IN_PAUSE);
@@ -982,6 +961,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 //                objThdCtrlBlockPtr->prog_mode = STEP_MODE ;
 //            }
             setPrgmState(objThdCtrlBlockPtr, INTERPRETER_PAUSED); 
+  			setProgMode(objThdCtrlBlockPtr, STEP_MODE);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_ABORT:
             FST_ERROR("abort motion");
@@ -1008,13 +988,6 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
   			FST_INFO("reset ProgramName And LineNum.");
 			
 			resetProgramNameAndLineNum(objThdCtrlBlockPtr);
-            break;
-        case fst_base::INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE:
-			memcpy(&intprt_ctrl.autoMode, requestDataPtr, sizeof(AutoMode));
-			// intprt_ctrl.RegMap.
-			autoMode = intprt_ctrl.autoMode ;
-			// Move to Controller
-			// deal_auto_mode(autoMode);
             break;
         case fst_base::INTERPRETER_SERVER_CMD_CODE_START:
 			memcpy(&intprt_ctrl.program_code, requestDataPtr, sizeof(AutoMode));

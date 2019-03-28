@@ -82,13 +82,14 @@ bool ControllerClient::start(std::string data)
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 
-bool ControllerClient::debug(std::string data)
+bool ControllerClient::launch(std::string data)
 {
+    FST_INFO("ControllerClient::launch %s ...", data.c_str());
     if(!controller_server_ptr_->isInterpreterServerReady()
         || data.size() >= 256
-        || !sendRequest(INTERPRETER_SERVER_CMD_DEBUG, data.c_str(), 256)
+        || !sendRequest(INTERPRETER_SERVER_CMD_LAUNCH, data.c_str(), 256)
         || !recvResponse(sizeof(bool))
-        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_DEBUG)
+        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_LAUNCH)
     {
         return false;
     }
@@ -185,32 +186,6 @@ bool ControllerClient::getNextInstruction(Instruction* instruction_ptr)
         return false;
     }
    
-    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
-}
-
-bool ControllerClient::setAutoStartMode(int start_mode)
-{
-    if(!controller_server_ptr_->isInterpreterServerReady()
-        || !sendRequest(INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE, &start_mode, sizeof(int))
-        || !recvResponse(sizeof(bool))
-        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_SET_AUTO_START_MODE)
-    {
-        return false;
-    }
-    
-    return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
-}
-
-bool ControllerClient::switchStep(int data)
-{
-    if(!controller_server_ptr_->isInterpreterServerReady()
-        || !sendRequest(INTERPRETER_SERVER_CMD_SWITCH_STEP, &data, sizeof(int))
-        || !recvResponse(sizeof(bool))
-        || *((unsigned int*)recv_buffer_ptr_) != INTERPRETER_SERVER_CMD_SWITCH_STEP)
-    {
-        return false;
-    }
-
     return *((bool*)(recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE));
 }
 

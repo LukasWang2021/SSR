@@ -349,8 +349,8 @@ private:
     /* interpreter rpc */
     // "/rpc/interpreter/start"
     void handleRpc0x00006154(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/interpreter/debug"
-    void handleRpc0x000102D7(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/interpreter/launch"
+    void handleRpc0x000072D8(void* request_data_ptr, void* response_data_ptr);	
     // "/rpc/interpreter/forward"
     void handleRpc0x0000D974(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/interpreter/backward"
@@ -363,8 +363,6 @@ private:
     void handleRpc0x0000CF55(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/interpreter/abort"
     void handleRpc0x000086F4(void* request_data_ptr, void* response_data_ptr);
-    // "/rpc/interpreter/switchStep"
-    void handleRpc0x000140F0(void* request_data_ptr, void* response_data_ptr);
 
     /* io mapping rpc */
     // "/rpc/io_mapping/getDIByBit"

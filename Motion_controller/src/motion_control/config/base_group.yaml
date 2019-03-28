@@ -12,6 +12,7 @@ time_out_cycle:
     standby_to_auto: 150
     auto_to_standby: 250
     manual_to_standby: 250
+    auto_to_pause: 250
     trajectory_flow: 50
     servo_update: 50
 

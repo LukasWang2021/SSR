@@ -83,11 +83,15 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     vel_ratio_ = 0;
     acc_ratio_ = 0;
 
+    pause_status_.pause_valid = false;
+    pause_status_.pause_index = 0;
+
     stop_request_ = false;
     reset_request_ = false;
     abort_request_ = false;
     clear_request_ = false;
     error_request_ = false;
+    auto_to_pause_request_ = false;
     auto_to_standby_request_ = false;
     manual_to_standby_request_ = false;
     memset(&user_frame_, 0, sizeof(user_frame_));
@@ -793,6 +797,109 @@ void BaseGroup::linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj
     }
 }
 
+ErrorCode BaseGroup::pauseMove(void)
+{
+    FST_INFO("Pause move request received.");
+
+    if (group_state_ != AUTO)
+    {
+        FST_WARN("Group state is %d", group_state_);
+        return SUCCESS;
+    }
+
+    pthread_mutex_lock(&cache_list_mutex_);
+
+    if (traj_list_ptr_ == NULL)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_WARN("Trajectory cache list is empty.");
+        return SUCCESS;
+    }
+
+    JointState pause_state;
+    int pause_index = traj_list_ptr_->pick_index;
+    TrajectoryCache &traj_cache = traj_list_ptr_->trajectory_cache;
+
+    if (traj_cache.smooth_out_index == -1 && pause_index >= traj_cache.cache_length)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_INFO("Near ending point, do not need plan pause trajectory.");
+        return SUCCESS;
+    }
+    else if (traj_cache.smooth_out_index != -1 && pause_index >= traj_cache.smooth_out_index)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_ERROR("Near smooth point, cannot pause right now.");
+        return TRAJ_PLANNING_PAUSE_FAILED;
+    }
+    
+    sampleBlockEnding(traj_cache.cache[pause_index], pause_state);
+    TrajectoryCacheList *pause_traj_cache_lise_ptr = traj_cache_pool_.getCachePtr();
+
+    if (pause_traj_cache_lise_ptr == NULL)
+    {
+        FST_ERROR("No traj-cache available, set more caches in config file.");
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    int paused_on_index = pause_index;
+    TrajectoryCache &pause_traj_cache = pause_traj_cache_lise_ptr->trajectory_cache;
+    ErrorCode err = planPauseTrajectory(*traj_cache.path_cache_ptr, pause_state, acc_ratio_, pause_traj_cache, paused_on_index);
+
+    if (err != SUCCESS)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        traj_cache_pool_.freeCachePtr(pause_traj_cache_lise_ptr);
+        FST_ERROR("Fail to plan pause trajectory, code = 0x%llx", err);
+        return err;
+    }
+
+    // 放弃pause_index之后的轨迹段
+    traj_cache.smooth_out_index = pause_index;
+    // 放弃后面的轨迹缓存
+    TrajectoryCacheList *this_ptr = traj_list_ptr_->next_ptr;
+    TrajectoryCacheList *next_ptr;
+
+    while (this_ptr)
+    {
+        next_ptr = this_ptr->next_ptr;
+        traj_cache_pool_.freeCachePtr(this_ptr);
+        this_ptr = next_ptr;
+    }
+
+    pause_traj_cache.smooth_out_index = -1;
+    pause_traj_cache.path_cache_ptr = NULL;
+    pause_traj_cache_lise_ptr->pick_index = 0;
+    pause_traj_cache_lise_ptr->pick_from_block = 0;
+    pause_traj_cache_lise_ptr->time_from_start = traj_cache.cache[pause_index].time_from_start + traj_cache.cache[pause_index].duration;
+    pause_traj_cache_lise_ptr->next_ptr = NULL;
+    updateTimeFromStart(*pause_traj_cache_lise_ptr);
+    traj_list_ptr_->next_ptr = pause_traj_cache_lise_ptr;
+    pause_status_.pause_valid = true;
+    pause_status_.pause_index = paused_on_index;
+    pthread_mutex_unlock(&cache_list_mutex_);
+    sampleBlockEnding(pause_traj_cache.cache[pause_traj_cache.cache_length - 1], pause_state);
+    start_joint_ = pause_state.angle;
+
+#ifdef OUTPUT_TRAJ_CACHE
+    g_traj_output_array[g_traj_output_index] = *traj_ptr;
+    g_traj_output_index = (g_traj_output_index + 1) % OUTPUT_TRAJ_CACHE_SIZE;
+#endif
+    // ------- for test only -------- //
+    // for (size_t i = 0; i < path_ptr->path_cache.cache_length; i++)
+    // {
+    //     g_path_point[g_path_index] = path_ptr->path_cache.cache[i].pose;
+    //     g_path_index = (g_path_index + 1) % 10000;
+    // }
+    // ------- for test only -------- //
+
+    auto_to_pause_request_ = true;
+    FST_INFO("Pause trajectory planning success.");
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::restartMove(void)
+{}
 
 ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 {
@@ -2350,6 +2457,7 @@ void BaseGroup::doStateMachine(void)
     static size_t standby_to_auto_cnt = 0;
     static size_t auto_to_standby_cnt = 0;
     static size_t manual_to_standby_cnt = 0;
+    static size_t auto_to_pause_cnt = 0;
 
     auto servo_state = getServoState();
 
@@ -2434,6 +2542,8 @@ void BaseGroup::doStateMachine(void)
             traj_ptr = traj_list_ptr_;
         }
 
+        pause_status_.pause_valid = false;
+        pause_status_.pause_index = 0;
         pthread_mutex_unlock(&cache_list_mutex_);
         auto_time_ = 0;
         traj_fifo_.clear();
@@ -2453,6 +2563,11 @@ void BaseGroup::doStateMachine(void)
     if (stop_request_ && group_state_ == DISABLE)
     {
         stop_request_ = false;
+    }
+
+    if (auto_to_pause_request_ && group_state_ != AUTO)
+    {
+        auto_to_pause_request_ = false;
     }
 
     switch (group_state_)
@@ -2504,6 +2619,13 @@ void BaseGroup::doStateMachine(void)
                 group_state_ = AUTO_TO_STANDBY;
             }
 
+            if (auto_to_pause_request_)
+            {
+                auto_to_pause_request_ = false;
+                auto_to_pause_cnt = 0;
+                group_state_ = AUTO_TO_PAUSE;
+            }
+
             if (stop_request_)
             {
                 stop_request_ = false;
@@ -2528,6 +2650,12 @@ void BaseGroup::doStateMachine(void)
                 error_request_ = true;
             }
 
+            break;
+        }
+
+        case PAUSE:
+        {
+            // TODO
             break;
         }
 
@@ -2654,6 +2782,39 @@ void BaseGroup::doStateMachine(void)
             if (manual_to_standby_cnt > manual_to_standby_timeout_)
             {
                 FST_ERROR("Manual to standby timeout, error-request asserted.");
+                reportError(BARE_CORE_TIMEOUT);
+                error_request_ = true;
+            }
+
+            break;
+        }
+
+        case AUTO_TO_PAUSE:
+        {
+            if (servo_state == SERVO_IDLE)
+            {
+                // 检查是否停稳，停稳后切换到pause
+                if (fine_waiter_.isEnable())
+                {
+                    if (fine_waiter_.isStable())
+                    {
+                        fine_waiter_.disableWaiter();
+                        group_state_ = PAUSE;
+                        FST_WARN("Group-state switch to pause.");
+                    }
+                }
+                else
+                {
+                    group_state_ = PAUSE;
+                    FST_WARN("Group-state switch to pause.");
+                }
+            }
+
+            auto_to_pause_cnt ++;
+
+            if (auto_to_pause_cnt > auto_to_pause_timeout_)
+            {
+                FST_ERROR("Auto to pause timeout, error-request asserted.");
                 reportError(BARE_CORE_TIMEOUT);
                 error_request_ = true;
             }
@@ -2864,7 +3025,7 @@ void BaseGroup::setFineWaiter(void)
 
 void BaseGroup::loopFineWaiter(void)
 {
-    if (fine_waiter_.isEnable() && group_state_ == AUTO_TO_STANDBY && servo_state_ == SERVO_IDLE)
+    if (fine_waiter_.isEnable() && (group_state_ == AUTO_TO_STANDBY || group_state_ == AUTO_TO_PAUSE) && servo_state_ == SERVO_IDLE)
     {  
         PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
         kinematics_ptr_->doFK(getLatestJoint(), fcp_in_base);
@@ -2944,7 +3105,14 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         if (points[length - 1].level == POINT_ENDING)
         {
             // 取到了ENDING-POINT，意味着轨迹结束，需要切状态机
-            auto_to_standby_request_ = true;
+            if (pause_status_.pause_valid)
+            {
+                auto_to_pause_request_ = true;
+            }
+            else
+            {
+                auto_to_standby_request_ = true;
+            }
         }
     }
 
@@ -3018,7 +3186,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     static size_t error_cnt = 0;
     ErrorCode err = SUCCESS;
 
-    if (group_state_ == AUTO && !auto_to_standby_request_)
+    if (group_state_ == AUTO && !auto_to_standby_request_ && !auto_to_pause_request_)
     {
         err = sendAutoTrajectoryFlow();
     }
@@ -3026,7 +3194,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     {
         err = sendManualTrajectoryFlow();
     }
-    else if (group_state_ == AUTO_TO_STANDBY || group_state_ == MANUAL_TO_STANDBY)
+    else if (group_state_ == AUTO_TO_STANDBY || group_state_ == AUTO_TO_PAUSE || group_state_ == MANUAL_TO_STANDBY)
     {
         if (!bare_core_.isPointCacheEmpty())
         {

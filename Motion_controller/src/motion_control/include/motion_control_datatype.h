@@ -56,7 +56,6 @@ struct MotionTarget     // 用于move指令的数据结构
         basic_alg::Joint        joint_target;   // 关节目标点，moveJ时使用
         basic_alg::PoseEuler    pose_target;    // 位姿目标点，moveL时使用
         CircleTarget            circle_target;  // 2个位姿目标点，moveC时使用
-        int                     pr_idx[32];
     };
 };
 

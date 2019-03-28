@@ -51,6 +51,12 @@ class FineWaiter
     basic_alg::PoseQuaternion    waiting_pose_;
 };
 
+struct PauseStatus
+{
+    bool    pause_valid;
+    size_t  pause_index;
+};
+
 class BaseGroup
 {
   public:
@@ -77,6 +83,8 @@ class BaseGroup
     // Auto move APIs:
     virtual ErrorCode autoMove(int id, const MotionTarget &target);
     virtual ErrorCode abortMove(void);
+    virtual ErrorCode pauseMove(void);
+    virtual ErrorCode restartMove(void);
     virtual bool nextMovePermitted(void);
 
     // Manual teach APIs:
@@ -219,6 +227,7 @@ class BaseGroup
     FineWaiter  fine_waiter_;
     ManualFrame manual_frame_;
     ManualTeach manual_teach_;
+    PauseStatus pause_status_;
 
     ManualTrajectory        manual_traj_;
     BareCoreInterface       bare_core_;
@@ -244,6 +253,7 @@ class BaseGroup
     bool abort_request_;
     bool clear_request_;
     bool error_request_;
+    bool auto_to_pause_request_;
     bool auto_to_standby_request_;
     bool manual_to_standby_request_;
 
@@ -252,9 +262,12 @@ class BaseGroup
     size_t  standby_to_auto_timeout_;
     size_t  auto_to_standby_timeout_;
     size_t  manual_to_standby_timeout_;
+    size_t  auto_to_pause_timeout_;
     size_t  trajectory_flow_timeout_;
     size_t  servo_update_timeout_;
 };
+
+
 
 
 

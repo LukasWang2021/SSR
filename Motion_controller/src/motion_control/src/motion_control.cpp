@@ -362,6 +362,11 @@ ErrorCode MotionControl::abortMove(void)
     return group_ptr_->abortMove();
 }
 
+ErrorCode MotionControl::pauseMove(void)
+{
+    return group_ptr_->pauseMove();
+}
+
 bool MotionControl::nextMovePermitted(void)
 {
     return group_ptr_->nextMovePermitted();

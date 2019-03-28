@@ -313,6 +313,16 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
     }
 
+    if (param.getParam("time_out_cycle/auto_to_pause", time_out) && time_out > 0)
+    {
+        auto_to_pause_timeout_ = time_out;
+    }
+    else
+    {
+        FST_ERROR("Fail loading auto->pause timeout from config file");
+        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
+    }
+
     if (param.getParam("time_out_cycle/trajectory_flow", time_out) && time_out > 0)
     {
         trajectory_flow_timeout_ = time_out;

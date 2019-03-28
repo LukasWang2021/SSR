@@ -148,12 +148,13 @@ void setProgramName(struct thread_control_block * objThdCtrlBlockPtr, char * pro
 	Input:			NULL
 	Return: 		a free thread_control_block object 
 *************************************************/ 
-struct thread_control_block *  getThreadControlBlock()
+struct thread_control_block *  getThreadControlBlock(bool isUploadError)
 {
 	if(getCurrentThreadSeq() < 0)
     {
         FST_ERROR("getThreadControlBlock failed from %d", getCurrentThreadSeq());
-		setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
+		if(isUploadError)
+			setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
 		return NULL;
 	}
 	else
@@ -169,10 +170,13 @@ struct thread_control_block *  getThreadControlBlock()
 	Input:			NULL
 	Return: 		a free thread_control_block object index
 *************************************************/ 
-int getCurrentThreadSeq()
+int getCurrentThreadSeq(bool isUploadError)
 {
 	if(g_iCurrentThreadSeq < 0)
-		setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
+	{
+		if(isUploadError)
+			setWarning(INFO_INTERPRETER_THREAD_NOT_EXIST);
+	}
 	return g_iCurrentThreadSeq ;
 }
 
@@ -965,9 +969,9 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
             break;
         case fst_base::INTERPRETER_SERVER_CMD_ABORT:
             FST_ERROR("abort motion");
-			if(getCurrentThreadSeq() < 0) break ;
+			if(getCurrentThreadSeq(false) < 0) break ;
 		    // objThdCtrlBlockPtr = &g_thread_control_block[getCurrentThreadSeq()];
-		    objThdCtrlBlockPtr = getThreadControlBlock();
+		    objThdCtrlBlockPtr = getThreadControlBlock(false);
 			if(objThdCtrlBlockPtr == NULL) break ;
 			
   			FST_INFO("set abort motion flag.");

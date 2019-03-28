@@ -41,6 +41,7 @@ struct CircleTarget     // moveC的目标点，由2个点位姿点构成
     basic_alg::PoseEuler pose2;
 };
 
+#define     PR_POS_LEN           128
 struct MotionTarget     // 用于move指令的数据结构
 {
     MotionType  type;   // 指令的运动类型
@@ -56,6 +57,7 @@ struct MotionTarget     // 用于move指令的数据结构
         basic_alg::Joint        joint_target;   // 关节目标点，moveJ时使用
         basic_alg::PoseEuler    pose_target;    // 位姿目标点，moveL时使用
         CircleTarget            circle_target;  // 2个位姿目标点，moveC时使用
+        int                     prPos[PR_POS_LEN];
     };
 };
 

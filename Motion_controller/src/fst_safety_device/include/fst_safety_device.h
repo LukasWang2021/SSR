@@ -106,8 +106,15 @@ typedef struct _SafetyBoardDOFrm2
 	char reserve3;
 	char reserve4;
 }SafetyBoardDOFrm2;
+
+typedef enum
+{
+    USER_OP_MODE_NONE             = 0,
+    USER_OP_MODE_AUTO             = 1,
+    USER_OP_MODE_SLOWLY_MANUAL    = 2,
+    USER_OP_MODE_UNLIMITED_MANUAL = 3,
+}UserOpMode;
 	
-//#define RESET_SAFETY_DELAY      (200)   //delay for reset safety board  (ms)
 
 class FstSafetyDevice : public BaseDevice
 {

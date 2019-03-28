@@ -176,19 +176,19 @@ char FstSafetyDevice::getDITPAuto()
 //qianjin add for user mode
 int FstSafetyDevice::getDITPUserMode()
 {
-    int val;
-    val = 0;
+    int val = 0;
     if( din_frm1_.load().byte2.usermode_auto) val |= 0x1;
-    if( din_frm1_.load().byte2.usermode_man) val |= 0x2;
-    if( din_frm1_.load().byte2.usermode_limit) val |= 0x4;
+    if( din_frm1_.load().byte2.usermode_limit) val |= 0x2;
+    if( din_frm1_.load().byte2.usermode_man) val |= 0x4;
+    
 
     //FST_INFO("getDITPUserMode: safety_interface_ :: din_frm1_: %08X", *(uint32_t*)&din_frm1_);
 	//FST_INFO("getDITPUserMode: safety_interface_ :: val: %d", val);
 
-    if(val == 0x1) return 1; //auto mode
-    if(val == 0x2) return 3; //manual mode
-    if(val == 0x4) return 2; //limit mode
-    return 0;
+    if(val == 0x1) return USER_OP_MODE_AUTO; //auto mode
+    if(val == 0x2) return USER_OP_MODE_SLOWLY_MANUAL; //limit manual mode
+    if(val == 0x4) return USER_OP_MODE_UNLIMITED_MANUAL; //unlimit manual mode
+    return USER_OP_MODE_NONE;
 }
 
 //----------------input byte3----------------------//

@@ -543,6 +543,7 @@ void startFile(struct thread_control_block * objThdCtrlBlockPtr,
 	// Refresh InterpreterPublish project_name
 	
 	setProgramName(objThdCtrlBlockPtr, proj_name); 
+	setCurLine(objThdCtrlBlockPtr, "", 0);
 	// Start thread
 	basic_thread_create(idx, objThdCtrlBlockPtr);
 	// intprt_ctrl.cmd = LOAD ;
@@ -1161,6 +1162,36 @@ void updateHomePoseMgr()
 
 checkHomePoseResult checkSingleHomePoseByCurrentJoint(int idx, Joint currentJoint)
 {
+	Joint joint      = g_home_pose_mgr_ptr->homePoseList[idx].joint ;
+	Joint jointFloat = g_home_pose_mgr_ptr->homePoseList[idx].jointFloat ;
+	
+#ifndef WIN32
+		printf("Get JOINT: %d :: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", idx, 
+			joint.j1_, joint.j2_, joint.j3_, 
+			joint.j4_, joint.j5_, joint.j6_,  
+			joint.j7_, joint.j8_, joint.j9_);
+		printf("with jointFloat:(%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			jointFloat.j1_, jointFloat.j2_, jointFloat.j3_, 
+			jointFloat.j4_, jointFloat.j5_, jointFloat.j6_, 
+			jointFloat.j7_, jointFloat.j8_, jointFloat.j9_);
+		printf("Get currentJoint: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			currentJoint.j1_, currentJoint.j2_, currentJoint.j3_, 
+			currentJoint.j4_, currentJoint.j5_, currentJoint.j6_,  
+			currentJoint.j7_, currentJoint.j8_, currentJoint.j9_);
+#else
+		printf("Get JOINT: %d :: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", idx, 
+			joint.j1, joint.j2, joint.j3, 
+			joint.j4, joint.j5, joint.j6,  
+			joint.j7, joint.j8, joint.j9);
+		printf("with jointFloat:(%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			jointFloat.j1, jointFloat.j2, jointFloat.j3, 
+			jointFloat.j4, jointFloat.j5, jointFloat.j6, 
+			jointFloat.j7, jointFloat.j8, jointFloat.j9);
+		printf("Get currentJoint: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			currentJoint.j1, currentJoint.j2, currentJoint.j3, 
+			currentJoint.j4, currentJoint.j5, currentJoint.j6,  
+			currentJoint.j7, currentJoint.j8, currentJoint.j9);
+#endif
 	return g_home_pose_mgr_ptr->checkSingleHomePoseByJoint(idx, currentJoint);
 }
 

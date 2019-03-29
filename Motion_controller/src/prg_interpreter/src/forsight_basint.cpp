@@ -496,6 +496,7 @@ checkHomePoseResult check_home_pose(struct thread_control_block* objThreadCntrol
 
 	// 
 	objThreadCntrolBlock->prog = home_pose_exp ;
+	// strcpy(home_pose_exp, " 0 OR 0 ");
 	get_exp(objThreadCntrolBlock, &value, &boolValue);
 	// Restore prog to original program
 	objThreadCntrolBlock->prog     = proglabelsScan;
@@ -571,6 +572,17 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  }
 	  // Call in the first time to load major P[*]
 	  forgesight_registers_manager_get_joint(objThreadCntrolBlock->currentJoint);
+#ifndef WIN32
+		printf("call_interpreter Get JOINT: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			objThreadCntrolBlock->currentJoint.j1_, objThreadCntrolBlock->currentJoint.j2_, objThreadCntrolBlock->currentJoint.j3_, 
+			objThreadCntrolBlock->currentJoint.j4_, objThreadCntrolBlock->currentJoint.j5_, objThreadCntrolBlock->currentJoint.j6_,  
+			objThreadCntrolBlock->currentJoint.j7_, objThreadCntrolBlock->currentJoint.j8_, objThreadCntrolBlock->currentJoint.j9_);
+#else
+		printf("call_interpreter Get JOINT: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+			objThreadCntrolBlock->currentJoint.j1, objThreadCntrolBlock->currentJoint.j2, objThreadCntrolBlock->currentJoint.j3, 
+			objThreadCntrolBlock->currentJoint.j4, objThreadCntrolBlock->currentJoint.j5, objThreadCntrolBlock->currentJoint.j6,  
+			objThreadCntrolBlock->currentJoint.j7, objThreadCntrolBlock->currentJoint.j8, objThreadCntrolBlock->currentJoint.j9);
+#endif
 	  memset(objThreadCntrolBlock->home_pose_exp, 0x00, LAB_LEN);
   	  append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
 	  checkHomePoseResult checkRet = check_home_pose(objThreadCntrolBlock) ;
@@ -3672,6 +3684,10 @@ void primitive(struct thread_control_block * objThreadCntrolBlock,
 	if(result->getFloatValue() != 0.0)
 	{
 		*boolValue = 1.0 ;
+	}
+	else
+	{
+		*boolValue = 0.0 ;
 	}
     get_token(objThreadCntrolBlock);
     return;

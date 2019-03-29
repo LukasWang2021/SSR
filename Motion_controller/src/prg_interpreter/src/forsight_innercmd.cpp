@@ -2296,7 +2296,7 @@ void generateXPathVector(
 /************************************************* 
 	Function:		getLineNumFromXPathVector
 	Description:	get line number by XPath 
-	Input:			xPath                  - XPath
+	Input:			xPath                  - XPath (ProgramName:XPath)
 	Return: 		i                      - line number
 *************************************************/ 
 int getLineNumFromXPathVector(
@@ -2304,6 +2304,8 @@ int getLineNumFromXPathVector(
 {
     for(unsigned int i = 0; i < (int)objThreadCntrolBlock->vector_XPath.size(); ++i)  
     {  
+	//    FST_INFO("getLineNumFromXPathVector Try:: %s ", 
+	//		objThreadCntrolBlock->vector_XPath[i].c_str());
         if(objThreadCntrolBlock->vector_XPath[i] == string(xPath))
         	return i ;
     }

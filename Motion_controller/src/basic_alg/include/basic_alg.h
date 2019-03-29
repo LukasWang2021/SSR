@@ -1343,6 +1343,16 @@ static inline double getOrientationAngle(const Quaternion &q1, const Quaternion 
     return acos(t);
 }
 
+static inline double getOrientationAngle(const Euler &e1, const Euler &e2)
+{
+    double t = innerProductQuatern(Euler2Quaternion(e1), Euler2Quaternion(e2));
+
+    if (t > 1.0)        t =  1.0;
+    else if (t < -1.0)  t = -1.0;
+
+    return acos(t);
+}
+
 static inline double getOrientationAngle(const PoseQuaternion &pose1, const PoseQuaternion &pose2)
 {
     return getOrientationAngle(pose1.quaternion_, pose2.quaternion_);

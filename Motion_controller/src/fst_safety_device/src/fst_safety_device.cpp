@@ -411,63 +411,69 @@ void FstSafetyDevice::getSafetyBoardVersion(int &version)
 }
 
 //generate the error codes from the external component(safety_board)
-void FstSafetyDevice::checkSafetyBoardAlarm(void)
+bool FstSafetyDevice::checkSafetyBoardAlarm(void)
 {
     char current_value = 0;
+    bool ret = false;
 
     current_value = getDualFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_RELAY_DUAL_FAULTY, pre_dual_faulty_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_RELAY_DUAL_FAULTY, pre_dual_faulty_);
 
     current_value = getDIExtEStop();
-    isRisingEdge(current_value, SAFETY_BOARD_EXTERNAL_STOP, pre_ext_estop_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_EXTERNAL_STOP, pre_ext_estop_);
     
     current_value = getDISafetyDoorStop();
-    isRisingEdge(current_value, SAFETY_BOARD_SAFETY_DOOR_STOP, pre_door_stop_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_SAFETY_DOOR_STOP, pre_door_stop_);
 
     current_value = getDILimitedStop();
-    isRisingEdge(current_value, SAFETY_BOARD_LIMITED_STOP, pre_limited_stop_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_LIMITED_STOP, pre_limited_stop_);
 
     current_value = getDIDeadmanNormal();
-    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_NORMAL_FAULTY, pre_deadman_normal_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_NORMAL_FAULTY, pre_deadman_normal_);
 
     current_value = getDIDeadmanPanic();
-    isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_PANIC, pre_deadman_panic_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_PANIC, pre_deadman_panic_);
 
     current_value = getDITPEStop();
-    isRisingEdge(current_value, SAFETY_BOARD_TP_ESTOP, pre_tp_estop_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_TP_ESTOP, pre_tp_estop_);
 
     current_value = getModeFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_OP_MODE_FAULTY, pre_mode_faulty_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_OP_MODE_FAULTY, pre_mode_faulty_);
 
     current_value = getDIContactorFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_MAIN_CONTACTOR_FAULTY, pre_contactor_faulty_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_MAIN_CONTACTOR_FAULTY, pre_contactor_faulty_);
 
     current_value = getMainBrakeRelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY, pre_main_brake_relay_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY, pre_main_brake_relay_);
 
     current_value = getBrake1RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY, pre_brake1_relay_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY, pre_brake1_relay_);
 
     current_value = getBrake2RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY, pre_brake2_relay_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_AUX_BRAKE_RELAY_TWO_FAULTY, pre_brake2_relay_);
 
     current_value = getContactor0RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY, pre_contactor0_relay_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY, pre_contactor0_relay_);
     
     current_value = getContactor1RelayFaulty();
-    isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY, pre_contactor1_relay_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY, pre_contactor1_relay_);
     
     current_value = getDICabinetStop();
-    isRisingEdge(current_value, SAFETY_BOARD_CABINET_STOP, pre_cabinet_stop_);
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_CABINET_STOP, pre_cabinet_stop_);
+
+    return ret;
 }
 
-inline void FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)
+bool FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)
 {
     if (pre_value == 0 && value == 1)
     {
+        pre_value = value;
         ErrorMonitor::instance()->add(code);
+        return true;
     }
     pre_value = value;
+    return false;
 }
 
 //------------------------------------------------------------

@@ -1475,9 +1475,9 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
         }
         case MOTION_JOINT:
         {
-            updateMovJVia2InTrajP(path_cache, via, traj_pva_in_index);
+            updateMovJVia2InTrajP(path_cache, start_state.angle, via, traj_pva_in_index);
             updateMovJIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
-            updateMovJVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
+            updateMovJVia2EndTrajT(path_cache, start_state.angle, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
             break;
         }
         case MOTION_CIRCLE:
@@ -1495,7 +1495,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
             return TRAJ_PLANNING_INVALID_MOTION_TYPE;
         }
     }
-
+#if 1
     // it is not necessary to initialize the position of S_StartPointState and S_EndPointState,
     // because they are not used in updateTrajPVA.    
     updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajJ0,
@@ -1516,8 +1516,9 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
 
     int traj_pva_size_out2in, traj_t_size_out2in;
     int traj_path_cache_index_out2in[25];
-    updateSmoothOut2InTrajP(path_cache, via, traj_path_cache_index_out2in, traj_pva_size_out2in);
-    updateSmoothOut2InTrajT(path_cache, via, cmd_vel, traj_path_cache_index_out2in, traj_pva_size_out2in, traj_t_size_out2in);
+    Joint start_joint = start_state.angle;
+    updateSmoothOut2InTrajP(path_cache, via, start_joint, traj_path_cache_index_out2in, traj_pva_size_out2in);
+    updateSmoothOut2InTrajT(path_cache, via, start_joint, cmd_vel, traj_path_cache_index_out2in, traj_pva_size_out2in, traj_t_size_out2in);
     updateOutAndInPointState(start_state, traj_pva_in_index);
     
     updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
@@ -1539,7 +1540,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
                         traj_path_cache_index_in2end, traj_pva_size_via2end, S_TrajCoeffJ0A0, S_TrajT, traj_t_size_via2end,
                         traj_pva_in_index, traj_pva_out_index,
                         traj_cache);
-
+#endif
     return SUCCESS;
 }
 ErrorCode planPauseTrajectory(const PathCache &path_cache,
@@ -3178,18 +3179,36 @@ inline void updateMovJTrajP(const PathCache& path_cache, int* traj_path_cache_in
 
 inline bool updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
 {
+    PoseEuler pose_euler_via;
+    if (via.type == MOTION_JOINT)
+    {
+        convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+    }
+    else if (via.type == MOTION_LINE)
+    {   
+        pose_euler_via =  via.pose_target;
+    }
+    else if(via.type == MOTION_CIRCLE)
+    {   
+        pose_euler_via = via.circle_target.pose2;
+    }
+    else
+    {
+        return false;
+    }
+
     int i, j;
     // compute path vector and quatern for via2in
     double path_vector_via2in[3];
     double path_length_via2in;
-    getMoveLPathVector(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, path_vector_via2in, path_length_via2in);
+    getMoveLPathVector(pose_euler_via.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, path_vector_via2in, path_length_via2in);
     double via_quatern[4], in_quatern[4];
-    getMoveEulerToQuatern(via.pose_target.euler_, via_quatern);
+    getMoveEulerToQuatern(pose_euler_via.euler_, via_quatern);
     getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.quaternion_, in_quatern);
     double angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
     // compute via joint
     Joint joint_via;
-    if(!segment_alg_param.kinematics_ptr->doIK(via.pose_target, path_cache.cache[0].joint, joint_via))
+    if(!segment_alg_param.kinematics_ptr->doIK(pose_euler_via, path_cache.cache[0].joint, joint_via))
     {
         return false;
     }
@@ -3211,7 +3230,7 @@ inline bool updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
         int traj_p_address;
         for(i = 0; i <= traj_pva_in_index; ++i)
         {
-            getMoveLPathPoint(via.pose_target.point_, path_vector_via2in, length_distance_to_via, pose.point_);
+            getMoveLPathPoint(pose_euler_via.point_, path_vector_via2in, length_distance_to_via, pose.point_);
             getQuaternPoint(via_quatern, in_quatern, angle_via2in, angle_distance_to_via, pose.quaternion_);
             if(!segment_alg_param.kinematics_ptr->doIK(pose, joint_ref, joint_result))
             {
@@ -3231,15 +3250,32 @@ inline bool updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
     return true;
 }
 
-inline void updateMovJVia2InTrajP(const PathCache& path_cache, const MotionTarget& via, int& traj_pva_in_index)
+inline void updateMovJVia2InTrajP(const PathCache& path_cache, const Joint &start, const MotionTarget& via, int& traj_pva_in_index)
 {
+    Joint joint_via;
+    if (via.type == MOTION_JOINT)
+    {
+        joint_via = via.joint_target;
+    }
+    else if (via.type == MOTION_LINE)
+    {   
+        convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+    }
+    else if(via.type == MOTION_CIRCLE)
+    {   
+        convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+    }
+    else
+    {
+    }
+
     int i, j;
     // compute max delta joint for via2in
     double delta_joint_max_via2in = 0;
     double delta_linear_max_via2in = 0;
     for(int i = 0; i < model.link_num; ++i)
     {
-        stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - via.joint_target[i]);
+        stack[S_DeltaJointVector + i] = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - joint_via[i]);
         if(seg_axis_type[i] == ROTARY_AXIS)
         {
             if(stack[S_DeltaJointVector + i] > delta_joint_max_via2in)
@@ -3271,10 +3307,10 @@ inline void updateMovJVia2InTrajP(const PathCache& path_cache, const MotionTarge
         traj_pva_in_index = ceil(traj_piece_ideal_via2in);
         for(i = 0; i < model.link_num; ++i)
         {
-            joint_step_via2in = (path_cache.cache[path_cache.smooth_in_index].joint[i] - via.joint_target[i]) / traj_pva_in_index;
+            joint_step_via2in = (path_cache.cache[path_cache.smooth_in_index].joint[i] - joint_via[i]) / traj_pva_in_index;
             for(j = 0; j <= traj_pva_in_index; ++j)
             {
-                stack[traj_p_address + j] = via.joint_target[i] + j * joint_step_via2in;
+                stack[traj_p_address + j] = joint_via[i] + j * joint_step_via2in;
             }
             traj_p_address += 75;
         }       
@@ -3283,20 +3319,39 @@ inline void updateMovJVia2InTrajP(const PathCache& path_cache, const MotionTarge
 
 inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index)
 {
+    PoseEuler pose_euler_via;
+    if (via.type == MOTION_JOINT)
+    {
+        convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+    }
+    else if (via.type == MOTION_LINE)
+    {   
+        pose_euler_via = via.pose_target;
+    }
+    else if(via.type == MOTION_CIRCLE)
+    {   
+        //moveC2C
+        pose_euler_via = via.circle_target.pose2;
+    }
+    else
+    {
+        return false;
+    }
+
     int i, j;
     // compute path vector and quatern for via2in
     double circle_angle_via2in = 0;
-    getCircleCenterAngle(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_angle_via2in);
+    getCircleCenterAngle(pose_euler_via.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_angle_via2in);
     stack[S_CircleAngleVia2In] = circle_angle_via2in;
 
     double via_quatern[4], in_quatern[4];
-    getMoveEulerToQuatern(via.pose_target.euler_, via_quatern);
+    getMoveEulerToQuatern(pose_euler_via.euler_, via_quatern);
     getQuaternToQuaternVector4(path_cache.cache[path_cache.smooth_in_index].pose.quaternion_, in_quatern);
     double quatern_angle_via2in = getQuaternsIntersectionAngle(via_quatern, in_quatern);
 
    // compute via joint
     Joint joint_via;
-    if(!segment_alg_param.kinematics_ptr->doIK(via.pose_target, path_cache.cache[0].joint, joint_via))
+    if(!segment_alg_param.kinematics_ptr->doIK(pose_euler_via, path_cache.cache[0].joint, joint_via))
     {
         return false;
     }
@@ -3579,62 +3634,218 @@ inline void updateMovJTrajT(const PathCache& path_cache, double cmd_vel,
     stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
 }
 
-inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTarget& via, int* traj_path_cache_index_out2in, int& traj_pva_size_out2in)
+inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTarget& via, const Joint start, int* traj_path_cache_index_out2in, int& traj_pva_size_out2in)
 {
     double traj_piece_ideal_out2in;
     switch(path_cache.target.type)
     {
         case MOTION_LINE:
         {
-            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-            double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
-            traj_piece_ideal_out2in = (path_length_out2via + path_length_via2in) * stack[S_PathCountFactorCartesian];
+            if (via.type == MOTION_LINE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                traj_piece_ideal_out2in = (path_length_out2via + path_length_via2in) * stack[S_PathCountFactorCartesian];
+            }
+            else if (via.type == MOTION_JOINT)
+            {
+                PoseEuler pose_euler_via;
+                convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+                double path_length_via2in = getPointsDistance(pose_euler_via.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double traj_piece_ideal_via2in = path_length_via2in * stack[S_PathCountFactorCartesian];
+
+                double delta_joint_max_out2via = 0;
+                double delta_linear_max_out2via = 0;
+                double delta_joint_out2via;
+
+                for(int i = 0; i < model.link_num; ++i)
+                {
+                    delta_joint_out2via = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]);
+                    if(seg_axis_type[i] == ROTARY_AXIS)
+                    {
+                        if(delta_joint_out2via > delta_joint_max_out2via)
+                        {
+                            delta_joint_max_out2via = delta_joint_out2via;
+                        }
+                    }
+                    else if(seg_axis_type[i] == LINEAR_AXIS)
+                    {
+                        if(delta_joint_out2via > delta_linear_max_out2via)
+                        {
+                            delta_linear_max_out2via = delta_joint_out2via;
+                        }
+                    }
+                }
+                double traj_piece_ideal_joint_out2via = delta_joint_max_out2via * stack[S_PathCountFactorJoint];
+                double traj_piece_ideal_linear_out2via = delta_linear_max_out2via * stack[S_PathCountFactorCartesian];
+                double traj_piece_ideal_out2via = (traj_piece_ideal_joint_out2via >= traj_piece_ideal_linear_out2via) ? traj_piece_ideal_joint_out2via : traj_piece_ideal_linear_out2via;
+                traj_piece_ideal_out2in = traj_piece_ideal_via2in + traj_piece_ideal_out2via;
+            }
+            else if(via.type == MOTION_CIRCLE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
+                double traj_piece_ideal_out2via = path_length_out2via * 1.4 *stack[S_PathCountFactorCartesian];
+                double path_length_via2in = getPointsDistance(via.circle_target.pose2.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double traj_piece_ideal_via2in = path_length_via2in *  stack[S_PathCountFactorCartesian];
+                traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
+            }
             break;
         }
         case MOTION_JOINT:
         {
-            double delta_joint_max_out2in = 0;
-            double delta_linear_max_out2in = 0;
-            double delta_joint_out2in;
-            int out_path_index;
-            if(path_cache.smooth_out_index == -1)
+            if (via.type == MOTION_JOINT)
             {
-                out_path_index = path_cache.cache_length - 1;
-            }
-            else
-            {
-                out_path_index = path_cache.smooth_out_index;
-            }
+                double delta_joint_max_out2in = 0;
+                double delta_linear_max_out2in = 0;
+                double delta_joint_out2in;
+                int out_path_index;
+                if(path_cache.smooth_out_index == -1)
+                {
+                    out_path_index = path_cache.cache_length - 1;
+                }
+                else
+                {
+                    out_path_index = path_cache.smooth_out_index;
+                }
 
-            for(int i = 0; i < model.link_num; ++i)
-            {
-                delta_joint_out2in = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]);
-                if(seg_axis_type[i] == ROTARY_AXIS)
+                for(int i = 0; i < model.link_num; ++i)
                 {
-                    if(delta_joint_out2in > delta_joint_max_out2in)
+                    delta_joint_out2in = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]);
+                    if(seg_axis_type[i] == ROTARY_AXIS)
                     {
-                        delta_joint_max_out2in = delta_joint_out2in;
+                        if(delta_joint_out2in > delta_joint_max_out2in)
+                        {
+                            delta_joint_max_out2in = delta_joint_out2in;
+                        }
+                    }
+                    else if(seg_axis_type[i] == LINEAR_AXIS)
+                    {
+                        if(delta_joint_out2in > delta_linear_max_out2in)
+                        {
+                            delta_linear_max_out2in = delta_joint_out2in;
+                        }
                     }
                 }
-                else if(seg_axis_type[i] == LINEAR_AXIS)
-                {
-                    if(delta_joint_out2in > delta_linear_max_out2in)
-                    {
-                        delta_linear_max_out2in = delta_joint_out2in;
-                    }
-                }
+                double traj_piece_ideal_joint_out2in = delta_joint_max_out2in * stack[S_PathCountFactorJoint];
+                double traj_piece_ideal_linear_out2in = delta_linear_max_out2in * stack[S_PathCountFactorCartesian];
+                traj_piece_ideal_out2in = (traj_piece_ideal_joint_out2in >= traj_piece_ideal_linear_out2in) ? traj_piece_ideal_joint_out2in : traj_piece_ideal_linear_out2in;
             }
-            double traj_piece_ideal_joint_out2in = delta_joint_max_out2in * stack[S_PathCountFactorJoint];
-            double traj_piece_ideal_linear_out2in = delta_linear_max_out2in * stack[S_PathCountFactorCartesian];
-            traj_piece_ideal_out2in = (traj_piece_ideal_joint_out2in >= traj_piece_ideal_linear_out2in) ? traj_piece_ideal_joint_out2in : traj_piece_ideal_linear_out2in;
+            else if (via.type == MOTION_LINE)
+            {
+                double path_length_out2via = getPointsDistance(via.pose_target.point_, path_cache.cache[0].pose.point_);
+                double traj_piece_ideal_out2via = path_length_out2via * stack[S_PathCountFactorCartesian];
+
+                double delta_joint_max_via2in = 0;
+                double delta_linear_max_via2in = 0;
+                double delta_joint_via2in;
+
+                Joint joint_via;
+                convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+
+                for(int i = 0; i < model.link_num; ++i)
+                {
+                    delta_joint_via2in = fabs(joint_via[i] - path_cache.cache[0].joint[i]);
+                    if(seg_axis_type[i] == ROTARY_AXIS)
+                    {
+                        if(delta_joint_via2in > delta_joint_max_via2in)
+                        {
+                            delta_joint_max_via2in = delta_joint_via2in;
+                        }
+                    }
+                    else if(seg_axis_type[i] == LINEAR_AXIS)
+                    {
+                        if(delta_joint_via2in > delta_linear_max_via2in)
+                        {
+                            delta_linear_max_via2in = delta_joint_via2in;
+                        }
+                    }
+                }
+                double traj_piece_ideal_joint_via2in = delta_joint_max_via2in * stack[S_PathCountFactorJoint];
+                double traj_piece_ideal_linear_via2in = delta_linear_max_via2in * stack[S_PathCountFactorCartesian];
+                double traj_piece_ideal_via2in = (traj_piece_ideal_joint_via2in >= traj_piece_ideal_linear_via2in) ? traj_piece_ideal_joint_via2in : traj_piece_ideal_linear_via2in;
+                traj_piece_ideal_out2in = traj_piece_ideal_via2in + traj_piece_ideal_out2via;
+            }
+            else if(via.type == MOTION_CIRCLE)
+            {
+                double path_length_out2via = getPointsDistance(via.circle_target.pose2.point_, path_cache.cache[0].pose.point_);
+                double traj_piece_ideal_out2via = path_length_out2via * 1.4 * stack[S_PathCountFactorCartesian];
+
+                double delta_joint_max_via2in = 0;
+                double delta_linear_max_via2in = 0;
+                double delta_joint_via2in;
+                Joint joint_via;
+                convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+                for(int i = 0; i < model.link_num; ++i)
+                {
+                    delta_joint_via2in = fabs(joint_via[i] - path_cache.cache[0].joint[i]);
+                    if(seg_axis_type[i] == ROTARY_AXIS)
+                    {
+                        if(delta_joint_via2in > delta_joint_max_via2in)
+                        {
+                            delta_joint_max_via2in = delta_joint_via2in;
+                        }
+                    }
+                    else if(seg_axis_type[i] == LINEAR_AXIS)
+                    {
+                        if(delta_joint_via2in > delta_linear_max_via2in)
+                        {
+                            delta_linear_max_via2in = delta_joint_via2in;
+                        }
+                    }
+                }
+                double traj_piece_ideal_joint_via2in = delta_joint_max_via2in * stack[S_PathCountFactorJoint];
+                double traj_piece_ideal_linear_via2in = delta_linear_max_via2in * stack[S_PathCountFactorCartesian];
+                double traj_piece_ideal_via2in = (traj_piece_ideal_joint_via2in >= traj_piece_ideal_linear_via2in) ? traj_piece_ideal_joint_via2in : traj_piece_ideal_linear_via2in;
+                traj_piece_ideal_out2in = traj_piece_ideal_via2in + traj_piece_ideal_out2via;
+            }
             break;
         }
         case MOTION_CIRCLE:
         {
-            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-            double traj_piece_ideal_out2via = path_length_out2via * stack[S_PathCountFactorCartesian];
-            double traj_piece_ideal_via2in = stack[S_CircleAngleVia2In] * stack[S_PathCountFactorJoint];
-            traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
+            if (via.type == MOTION_JOINT)
+            {
+                double delta_joint_max_out2via = 0;
+                double delta_linear_max_out2via = 0;
+                double delta_joint_out2via;
+
+                for(int i = 0; i < model.link_num; ++i)
+                {
+                    delta_joint_out2via = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]);
+                    if(seg_axis_type[i] == ROTARY_AXIS)
+                    {
+                        if(delta_joint_out2via > delta_joint_max_out2via)
+                        {
+                            delta_joint_max_out2via = delta_joint_out2via;
+                        }
+                    }
+                    else if(seg_axis_type[i] == LINEAR_AXIS)
+                    {
+                        if(delta_joint_out2via > delta_linear_max_out2via)
+                        {
+                            delta_linear_max_out2via = delta_joint_out2via;
+                        }
+                    }
+                }
+                double traj_piece_ideal_joint_out2via = delta_joint_max_out2via * stack[S_PathCountFactorJoint];
+                double traj_piece_ideal_linear_out2via = delta_linear_max_out2via * stack[S_PathCountFactorCartesian];
+                double traj_piece_ideal_out2via = (traj_piece_ideal_joint_out2via >= traj_piece_ideal_linear_out2via) ? traj_piece_ideal_joint_out2via : traj_piece_ideal_linear_out2via;
+                double traj_piece_ideal_via2in = stack[S_CircleAngleVia2In] * stack[S_PathCountFactorJoint];
+                traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
+            }
+            else if (via.type == MOTION_LINE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double traj_piece_ideal_out2via = path_length_out2via * stack[S_PathCountFactorCartesian];
+                double traj_piece_ideal_via2in = stack[S_CircleAngleVia2In] * stack[S_PathCountFactorJoint];
+                traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
+            }
+            else if(via.type == MOTION_CIRCLE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
+                double traj_piece_ideal_out2via = path_length_out2via * 1.4 * stack[S_PathCountFactorCartesian];
+                double traj_piece_ideal_via2in = stack[S_CircleAngleVia2In] * stack[S_PathCountFactorJoint];
+                traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
+            }
             break;
         }
     }
@@ -3645,10 +3856,26 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
                                    int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                    int& traj_t_size)
 {
+    PoseEuler pose_euler_via;
+    if (via.type == MOTION_JOINT)
+    {
+        convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+    }
+    else if (via.type == MOTION_LINE)
+    {   
+        pose_euler_via =  via.pose_target;
+    }
+    else if(via.type == MOTION_CIRCLE)
+    {   
+        pose_euler_via = via.circle_target.pose2;
+    }
+    else
+    {}
+
     int i;
     // compute time span
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double path_length_via2end = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
+    double path_length_via2end = getPointsDistance(pose_euler_via.point_, path_cache.cache[path_cache_length_minus_1].pose.point_);
     double critical_length = cmd_vel * cmd_vel / segment_alg_param.max_cartesian_acc;
     double time_span_via2end;
     if(path_length_via2end > critical_length) // can reach vel
@@ -3660,7 +3887,7 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
         time_span_via2end = 2 * sqrt(path_length_via2end / segment_alg_param.max_cartesian_acc);
     }
     // compute time duration for each traj piece, via2in
-    double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+    double path_length_via2in = getPointsDistance(pose_euler_via.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
     double time_span_via2in = time_span_via2end * path_length_via2in / path_length_via2end;    
     double time_duration_via2in = time_span_via2in / traj_pva_in_index;
     for(i = 0; i < traj_pva_in_index; ++i)
@@ -3701,10 +3928,26 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
 }
 
-inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel,
+inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const Joint &start, const MotionTarget& via, double cmd_vel,
                                   int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                   int& traj_t_size)
 {
+    Joint joint_via;
+    if (via.type == MOTION_JOINT)
+    {
+        joint_via = via.joint_target;
+    }
+    else if (via.type == MOTION_LINE)
+    {   
+        convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+    }
+    else if(via.type == MOTION_CIRCLE)
+    {   
+        convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+    }
+    else
+    {
+    }
     int i;
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
     // get max delta joint & max time span of all axes
@@ -3715,7 +3958,7 @@ inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     int delta_joint_max_id = 0;
     for(i = 0; i < model.link_num; ++i)
     {
-        delta_joint_via2end = fabs(path_cache.cache[path_cache_length_minus_1].joint[i] - via.joint_target[i]);
+        delta_joint_via2end = fabs(path_cache.cache[path_cache_length_minus_1].joint[i] - joint_via[i]);
         if(delta_joint_via2end > delta_joint_via2end_max)
         {
             delta_joint_via2end_max = delta_joint_via2end;
@@ -3727,9 +3970,9 @@ inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const MotionTarg
             time_span_via2end_max = time_span_via2end;
         }
     }
- 
+
     // compute time duration for each traj piece, via2in
-    double delta_joint_via2in_max = fabs(path_cache.cache[path_cache.smooth_in_index].joint[delta_joint_max_id] - via.joint_target[delta_joint_max_id]);
+    double delta_joint_via2in_max = fabs(path_cache.cache[path_cache.smooth_in_index].joint[delta_joint_max_id] - joint_via[delta_joint_max_id]);
     double time_span_via2in = delta_joint_via2in_max * time_span_via2end_max / delta_joint_via2end_max;
     double time_duration_via2in = time_span_via2in / traj_pva_in_index;
     for(i = 0; i < traj_pva_in_index; ++i)
@@ -3837,7 +4080,7 @@ inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fs
 }
 
 
-inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel, 
+inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTarget& via, const Joint start, const double cmd_vel, 
                                            int* traj_path_cache_index_out2in, int traj_pva_size_out2in, 
                                            int& traj_t_size_out2in)
 {
@@ -3847,45 +4090,153 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
     {
         case MOTION_LINE:
         {
-            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-            double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
-            time_span_out2in = (path_length_out2via + path_length_via2in) / cmd_vel;
+            if (via.type == MOTION_LINE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                time_span_out2in = (path_length_out2via + path_length_via2in) / cmd_vel;
+            }
+            else if (via.type == MOTION_JOINT)
+            {
+                PoseEuler pose_euler_via;
+                convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+
+                double path_length_via2in = getPointsDistance(pose_euler_via.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double time_span_via2in = path_length_via2in  / cmd_vel;
+
+                double time_span_out2via = 0;
+                double time_span_out2via_tmp;
+                 for(int i = 0; i < model.link_num; ++i)
+                {
+                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                    if(time_span_out2via_tmp > time_span_out2via)
+                    {
+                        time_span_out2via = time_span_out2via_tmp;
+                    }
+                }
+                time_span_out2in = time_span_via2in + time_span_out2via;
+            }
+            else if(via.type == MOTION_CIRCLE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
+                double time_span_out2via = path_length_out2via * 1.4 / cmd_vel;
+                double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double time_span_via2in = path_length_via2in / cmd_vel;
+                time_span_out2in = time_span_out2via + time_span_via2in;
+            }
             break;
         }
         case MOTION_JOINT:
         {
-            time_span_out2in = 0;
-            double time_span_out2in_tmp;
-            int out_path_index;
-            if(path_cache.smooth_out_index == -1)
+            if (via.type == MOTION_LINE)
             {
-                out_path_index = path_cache.cache_length - 1;
-            }
-            else
-            {
-                out_path_index = path_cache.smooth_out_index;
-            }
-            for(int i = 0; i < model.link_num; ++i)
-            {
-                time_span_out2in_tmp = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
-                if(time_span_out2in_tmp > time_span_out2in)
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double time_span_out2via = path_length_out2via / cmd_vel;
+
+                Joint joint_via;
+                convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+
+                double time_span_via2in = 0;
+                double time_span_via2in_tmp;
+                int out_path_index;
+
+                for(int i = 0; i < model.link_num; ++i)
                 {
-                    time_span_out2in = time_span_out2in_tmp;
+                    time_span_via2in_tmp = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - joint_via[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                    if(time_span_via2in_tmp > time_span_via2in)
+                    {
+                        time_span_via2in = time_span_via2in_tmp;
+                    }
                 }
+
+                time_span_out2in = time_span_out2via + time_span_via2in;
+            }
+            else if (via.type == MOTION_JOINT)
+            {
+                time_span_out2in = 0;
+                double time_span_out2in_tmp;
+                int out_path_index;
+                if(path_cache.smooth_out_index == -1)
+                {
+                    out_path_index = path_cache.cache_length - 1;
+                }
+                else
+                {
+                    out_path_index = path_cache.smooth_out_index;
+                }
+                for(int i = 0; i < model.link_num; ++i)
+                {
+                    time_span_out2in_tmp = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                    if(time_span_out2in_tmp > time_span_out2in)
+                    {
+                        time_span_out2in = time_span_out2in_tmp;
+                    }
+                }
+                break;
+            }
+            else if(via.type == MOTION_CIRCLE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
+                double time_span_out2via = path_length_out2via * 1.4 / cmd_vel;
+
+                Joint joint_via;
+                convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+
+                double time_span_via2in = 0;
+                double time_span_via2in_tmp;
+                int out_path_index;
+
+                for(int i = 0; i < model.link_num; ++i)
+                {
+                    time_span_via2in_tmp = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - joint_via[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                    if(time_span_via2in_tmp > time_span_via2in)
+                    {
+                        time_span_via2in = time_span_via2in_tmp;
+                    }
+                }
+
+                time_span_out2in = time_span_out2via + time_span_via2in;
             }
             break;
         }
         case MOTION_CIRCLE:
         {
-            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-            double time_out2via = path_length_out2via * 1.4 / cmd_vel;
-            double time_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius]/ cmd_vel;
-            time_span_out2in = time_out2via + time_via2in;
+            if (via.type == MOTION_LINE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double time_span_out2via = path_length_out2via / cmd_vel;
+                double time_span_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
+                time_span_out2in = time_span_out2via + time_span_via2in;
+                break;
+            }
+            else if (via.type == MOTION_JOINT)
+            {
+                double time_span_out2via = 0;
+                double time_span_out2via_tmp;
+                 for(int i = 0; i < model.link_num; ++i)
+                {
+                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                    if(time_span_out2via_tmp > time_span_out2via)
+                    {
+                        time_span_out2via = time_span_out2via_tmp;
+                    }
+                }
+
+                double time_span_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
+                time_span_out2in = time_span_via2in + time_span_out2via;
+            }
+            else if(via.type == MOTION_CIRCLE)
+            {
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double time_out2via = path_length_out2via * 1.4 / cmd_vel;
+                double time_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
+                time_span_out2in = time_out2via + time_via2in;
+            }
             break;
         }
     }
 
-    double time_duration_out2in = time_span_out2in / traj_t_size_out2in;  
+    double time_duration_out2in = time_span_out2in / traj_t_size_out2in;
     for(int i = 0; i < traj_t_size_out2in; ++i)
     {
         stack[S_TrajT_Smooth + i] = time_duration_out2in;

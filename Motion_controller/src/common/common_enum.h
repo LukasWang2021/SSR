@@ -14,6 +14,7 @@ enum MotionType
     MOTION_JOINT  = 1,
     MOTION_LINE   = 2,
     MOTION_CIRCLE = 3,
+    MOTION_XPOS   = 4,
 };
 
 enum PointType

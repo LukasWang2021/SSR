@@ -158,10 +158,10 @@ void initStack(int link_num, double joint_vel_max[9])
     stack[S_PathCountFactorCartesian] = segment_alg_param.accuracy_cartesian_factor / 100.0;
     stack[S_PathCountFactorJoint] = segment_alg_param.accuracy_joint_factor / PI;
 
-    stack[S_PAUSE_TIME_FACTOR] = 1.2;
-    stack[S_PAUSE_PATH_LENGTH_FACTOR] = 1.2;
-    stack[S_PAUSE_ACC_CARTESIAN] = 500;
-    stack[S_PAUSE_ACC_JOINT] = 50;
+    stack[S_PauseTimeFactor] = 1.2;
+    stack[S_PausePathLengthFactor] = 1.2;
+    stack[S_PauseAccCartesian] = 500;
+    stack[S_PauseAccJoint] = 50;
 
     // init start and end point vel and acc state
     int start_point_address = S_StartPointState0;
@@ -1202,18 +1202,18 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     //---------------compute in point--------------------------//
     double uint_vector_n[3];
     getUintVector3(center_position, point_via, uint_vector_n);
-    stack[S_Circle_VectorN] =  uint_vector_n[0];
-    stack[S_Circle_VectorN+1] =  uint_vector_n[1];
-    stack[S_Circle_VectorN+2] =  uint_vector_n[2];
+    stack[S_CircleVectorN] =  uint_vector_n[0];
+    stack[S_CircleVectorN+1] =  uint_vector_n[1];
+    stack[S_CircleVectorN+2] =  uint_vector_n[2];
 
     double uint_vector_a[3];
     getUintVector3(cross_vector, uint_vector_a);
 
     double uint_vector_o[3];
     getVector3CrossProduct(uint_vector_a, uint_vector_n, uint_vector_o);
-    stack[S_Circle_VectorO] =  uint_vector_o[0];
-    stack[S_Circle_VectorO+1] =  uint_vector_o[1];
-    stack[S_Circle_VectorO+2] =  uint_vector_o[2];
+    stack[S_CircleVectorO] =  uint_vector_o[0];
+    stack[S_CircleVectorO+1] =  uint_vector_o[1];
+    stack[S_CircleVectorO+2] =  uint_vector_o[2];
 
     Point point_in;
     Quaternion quatern_in;
@@ -1532,26 +1532,23 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
         updateTrajTByPieceRescaleFactor(S_TrajT_Smooth, traj_t_size_out2in);
         updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
                       &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
-    }    
+    }
 
     updateTrajCoeff(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajT_Smooth, traj_t_size_out2in, S_TrajJ0, S_TrajCoeffJ0A0_Smooth);
     packTrajCacheSmooth(traj_path_cache_index_out2in, traj_pva_size_out2in, S_TrajCoeffJ0A0_Smooth, S_TrajT_Smooth, traj_t_size_out2in, 
                         traj_path_cache_index_in2end, traj_pva_size_via2end, S_TrajCoeffJ0A0, S_TrajT, traj_t_size_via2end,
                         traj_pva_in_index, traj_pva_out_index,
                         traj_cache);
-    
+
     return SUCCESS;
 }
-
-ErrorCode planPauseTrajectory(const PathCache &path_cache, 
-                                    const JointState &start_state, 
-                                    double acc_ratio, 
-                                    TrajectoryCache &traj_cache, 
-                                    int &path_stop_index)
+ErrorCode planPauseTrajectory(const PathCache &path_cache,
+                              const JointState &start_state,
+                              double acc_ratio,
+                              TrajectoryCache &traj_cache,
+                              int &path_stop_index)
 {
-    if(path_stop_index < 0
-    || path_cache.cache_length < 4
-    || path_cache.cache_length < path_stop_index)
+    if (path_stop_index < 0 || path_cache.cache_length < 4 || path_cache.cache_length < path_stop_index)
     {
         return TRAJ_PLANNING_INVALID_PATHCACHE;
     }
@@ -1562,50 +1559,53 @@ ErrorCode planPauseTrajectory(const PathCache &path_cache,
     int left_path_num = path_cache.cache_length - path_stop_index + 1;
     int path_end_index = 0;
 
-    if(path_cache.smooth_in_index == -1 
-        || (path_cache.smooth_in_index < path_stop_index && path_stop_index < path_cache.cache_length))
+    if (path_cache.smooth_in_index == -1 || (path_cache.smooth_in_index < path_stop_index && path_stop_index < path_cache.cache_length))
     {
-        if (!canBePause(path_cache, start_state, path_stop_index, left_path_num, path_end_index)) return TRAJ_PLANNING_PAUSE_FAILED;
+        if (!canBePause(path_cache, start_state, path_stop_index, left_path_num, path_end_index))
+            return TRAJ_PLANNING_PAUSE_FAILED;
     }
     else if (0 < path_stop_index && path_stop_index < path_cache.smooth_in_index)
     {
-        if (!canBePauseStartBetweenIn2out(path_cache, start_state, path_stop_index, left_path_num, path_end_index)) return TRAJ_PLANNING_PAUSE_FAILED; // TRAJ_PLANNING_PAUSE_FAILED
+        if (!canBePauseStartBetweenIn2out(path_cache, start_state, path_stop_index, left_path_num, path_end_index))
+            return TRAJ_PLANNING_PAUSE_FAILED; // TRAJ_PLANNING_PAUSE_FAILED
     }
     else
     {
         return TRAJ_PLANNING_PAUSE_FAILED;
     }
 
-    switch(path_cache.target.type)
+    switch (path_cache.target.type)
     {
-        case MOTION_LINE:
-            updatePauseMovLTrajP(path_cache, traj_path_cache_index, traj_pva_size, path_stop_index, path_end_index);
-            break;
-        case MOTION_JOINT:
-            updatePauseMovJTrajP(path_cache, traj_path_cache_index, traj_pva_size, path_stop_index, path_end_index);
-            break;
-        case MOTION_CIRCLE:
-            updatePauseMovCTrajP(path_cache, traj_path_cache_index, traj_pva_size, path_stop_index, path_end_index);
-            break;
-        default:
-            return TRAJ_PLANNING_INVALID_MOTION_TYPE;
+    case MOTION_LINE:
+        updatePauseMovLTrajP(path_cache, traj_path_cache_index, traj_pva_size, path_stop_index, path_end_index);
+        break;
+    case MOTION_JOINT:
+        updatePauseMovJTrajP(path_cache, traj_path_cache_index, traj_pva_size, path_stop_index, path_end_index);
+        break;
+    case MOTION_CIRCLE:
+        updatePauseMovCTrajP(path_cache, traj_path_cache_index, traj_pva_size, path_stop_index, path_end_index);
+        break;
+    default:
+        return TRAJ_PLANNING_INVALID_MOTION_TYPE;
     }
 
     updatePauseTrajT(start_state, traj_pva_size, traj_t_size);
 
+    updatePausePointState(start_state);
+    updateEndPointStateForPause(traj_pva_size - 1);
     updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
-                &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
+                  &stack[S_TrajT], traj_t_size, S_PausePointState0, S_EndPointState0);
     updateConstraintJoint(S_TrajP0, S_TrajV0, traj_pva_size);
     updateTrajPieceA(S_TrajA0, traj_pva_size, acc_ratio);
 
     updateTrajPieceV(S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, 1);
     updateTrajPieceRescaleFactor(traj_t_size);
 
-    if(isRescaleNeeded(traj_t_size))
+    if (isRescaleNeeded(traj_t_size))
     {
         updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size);
         updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
-                        &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
+                      &stack[S_TrajT], traj_t_size, S_PausePointState0, S_EndPointState0);
     }
     updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, traj_t_size, S_TrajJ0, S_TrajCoeffJ0A0);
     packPauseTrajCache(traj_path_cache_index, traj_pva_size, S_TrajCoeffJ0A0, S_TrajT, traj_t_size, traj_cache);
@@ -1625,18 +1625,18 @@ bool canBePause(const PathCache &path_cache, const fst_mc::JointState &stop_stat
     {
         if(seg_axis_type[i] == ROTARY_AXIS)
         {
-            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PAUSE_ACC_JOINT]));
-            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PAUSE_ACC_JOINT]);
+            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PauseAccJoint]));
+            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PauseAccJoint]);
         }
         else if (seg_axis_type[i] == LINEAR_AXIS)
         {
-            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PAUSE_ACC_CARTESIAN]));
-            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PAUSE_ACC_CARTESIAN]);
+            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PauseAccCartesian]));
+            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PauseAccCartesian]);
         }
 
         pause2end_offset = fabs(path_cache.cache[path_stop_index + left_path_number - 1].joint[i] - stop_state.angle[i]);
 
-        //if (pause2end_offset <= pre_offset_angle_stop2end[i] * stack[S_PAUSE_PATH_LENGTH_FACTOR]) 
+        //if (pause2end_offset <= pre_offset_angle_stop2end[i] * stack[S_PausePathLengthFactor]) 
         if (pause2end_offset <= pre_offset_angle_stop2end[i])  return false;
         if (max_stop_time < pre_time_stop2end[i]) 
         {
@@ -1645,7 +1645,7 @@ bool canBePause(const PathCache &path_cache, const fst_mc::JointState &stop_stat
         }
     }
 
-    double joint_offset_angle = pre_offset_angle_stop2end[joint_index_of_max_time_stop2end] * stack[S_PAUSE_PATH_LENGTH_FACTOR];
+    double joint_offset_angle = pre_offset_angle_stop2end[joint_index_of_max_time_stop2end] * stack[S_PausePathLengthFactor];
 
     double angle_offset = 0.0;
 
@@ -1677,18 +1677,18 @@ inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, co
     {
         if(seg_axis_type[i] == ROTARY_AXIS)
         {
-            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PAUSE_ACC_JOINT]));
-            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PAUSE_ACC_JOINT]);
+            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PauseAccJoint]));
+            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PauseAccJoint]);
         }
         else if (seg_axis_type[i] == LINEAR_AXIS)
         {
-            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PAUSE_ACC_CARTESIAN]));
-            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PAUSE_ACC_CARTESIAN]);
+            pre_offset_angle_stop2end[i] = fabs(stop_state.omega[i] * stop_state.omega[i] / (2 * stack[S_PauseAccCartesian]));
+            pre_time_stop2end[i] = fabs(stop_state.omega[i] / stack[S_PauseAccCartesian]);
         }
 
         pause2end_offset = fabs(path_cache.cache[path_stop_index + left_path_number - 1].joint[i] - stop_state.angle[i]);
 
-        //if (pause2end_offset <= pre_offset_angle_stop2end[i] * stack[S_PAUSE_PATH_LENGTH_FACTOR]) 
+        //if (pause2end_offset <= pre_offset_angle_stop2end[i] * stack[S_PausePathLengthFactor]) 
         if (pause2end_offset <= pre_offset_angle_stop2end[i]) return false;
         if (max_stop_time < pre_time_stop2end[i]) 
         {
@@ -1697,7 +1697,7 @@ inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, co
         }
     }
 
-    double joint_offset_angle = pre_offset_angle_stop2end[joint_index_of_max_time_stop2end] * stack[S_PAUSE_PATH_LENGTH_FACTOR];
+    double joint_offset_angle = pre_offset_angle_stop2end[joint_index_of_max_time_stop2end] * stack[S_PausePathLengthFactor];
 
     double joint_offset_angle_stop2in = fabs(path_cache.cache[path_cache.smooth_in_index].joint[joint_index_of_max_time_stop2end] - 
         path_cache.cache[path_stop_index].joint[joint_index_of_max_time_stop2end]);
@@ -1762,7 +1762,7 @@ inline void updatePauseMovLTrajP(const fst_mc::PathCache& path_cache, int* traj_
         updateTrajPSingleItem(S_TrajP0 + i, path_cache.cache[traj_path_cache_index[i]].joint);
     }
     updateTrajPSingleItem(S_TrajP0 + traj_pva_size_minus_1, path_cache.cache[path_end_index].joint);
-    traj_path_cache_index[traj_pva_size_minus_1] = left_path_cache_length_minus_1;
+    traj_path_cache_index[traj_pva_size_minus_1] = path_end_index;
 }
 
 
@@ -1864,8 +1864,6 @@ inline void updatePauseMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_
     traj_path_cache_index[traj_pva_size_minus_1] = path_end_index;
 }
 
-
-
 #if 0
 inline void updatePauseTrajP(const fst_mc::PathCache &path_cache, const int &path_stop_index, const int &path_end_index,
     int &traj_stop_index, int &traj_end_index, int &traj_pva_size, int* traj_path_cache_index)
@@ -1898,11 +1896,6 @@ inline void updatePauseTrajP(const fst_mc::PathCache &path_cache, const int &pat
     }
     updateTrajPSingleItem(S_TrajP0 + traj_pva_size_minus_1, path_cache.cache[path_cache_length_minus_1].joint); 
     traj_path_cache_index[traj_pva_size_minus_1] = path_cache_length_minus_1;
-
-
-
-
-
 
     int traj_index_temp = 0;
     int traj_inde_temp_1 = 0;
@@ -2003,18 +1996,18 @@ inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pv
             else if(seg_axis_type[joint_index] == ROTARY_AXIS)
             {
                 joint_offset_time[joint_index] = (joint_omega[joint_index] 
-                    + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PAUSE_ACC_JOINT]))
-                    / stack[S_PAUSE_ACC_CARTESIAN];
+                    + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PauseAccJoint]))
+                    / stack[S_PauseAccCartesian];
 
-                joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PAUSE_ACC_JOINT];
+                joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PauseAccJoint];
             }
             else if (seg_axis_type[joint_index] == LINEAR_AXIS)
             {
                 joint_offset_time[joint_index] = (joint_omega[joint_index] 
-                    + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PAUSE_ACC_CARTESIAN]))
-                    / stack[S_PAUSE_ACC_CARTESIAN];
+                    + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PauseAccCartesian]))
+                    / stack[S_PauseAccCartesian];
 
-                joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PAUSE_ACC_CARTESIAN];
+                joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PauseAccCartesian];
             }
 
             if (joint_offset_time_max < joint_offset_time[joint_index])
@@ -2022,7 +2015,7 @@ inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pv
                 joint_offset_time_max = joint_offset_time[joint_index];
             }
         }
-        stack[S_TrajT + i] = joint_offset_time_max * stack[S_PAUSE_TIME_FACTOR];
+        stack[S_TrajT + i] = joint_offset_time_max * stack[S_PauseTimeFactor];
         joint_offset_time_max = 0.0;
     }
 }
@@ -3016,9 +3009,9 @@ inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_
             double circle_angle_in2out = 0.0;
             getCircleCenterAngle(path_cache.cache[path_cache.smooth_in_index].pose.point_,
                 path_cache.cache[path_cache.smooth_out_index].pose.point_, circle_angle_in2out);
-            stack[S_CircleAngle_In2Out] = circle_angle_in2out;
+            stack[S_CircleAngleIn2Out] = circle_angle_in2out;
 
-            traj_piece_ideal_in2out = stack[S_CircleAngle_In2Out] * stack[S_PathCountFactorJoint];
+            traj_piece_ideal_in2out = stack[S_CircleAngleIn2Out] * stack[S_PathCountFactorJoint];
             break;
         }
     }
@@ -3294,7 +3287,7 @@ inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst
     // compute path vector and quatern for via2in
     double circle_angle_via2in = 0;
     getCircleCenterAngle(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_, circle_angle_via2in);
-    stack[S_CircleAngle_Via2In] = circle_angle_via2in;
+    stack[S_CircleAngleVia2In] = circle_angle_via2in;
 
     double via_quatern[4], in_quatern[4];
     getMoveEulerToQuatern(via.pose_target.euler_, via_quatern);
@@ -3326,14 +3319,14 @@ inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst
 
         double circle_angle_radius = stack[S_CircleRadius];
         double uint_vector_n[3];
-        uint_vector_n[0] = stack[S_Circle_VectorN];
-        uint_vector_n[1] = stack[S_Circle_VectorN+1];
-        uint_vector_n[2] = stack[S_Circle_VectorN+2];
+        uint_vector_n[0] = stack[S_CircleVectorN];
+        uint_vector_n[1] = stack[S_CircleVectorN+1];
+        uint_vector_n[2] = stack[S_CircleVectorN+2];
 
         double uint_vector_o[3];
-        uint_vector_o[0] = stack[S_Circle_VectorO];
-        uint_vector_o[1] = stack[S_Circle_VectorO+1];
-        uint_vector_o[2] = stack[S_Circle_VectorO+2];
+        uint_vector_o[0] = stack[S_CircleVectorO];
+        uint_vector_o[1] = stack[S_CircleVectorO+1];
+        uint_vector_o[2] = stack[S_CircleVectorO+2];
 
         Point center_position;
         center_position.x_ = stack[S_CircleCenter];
@@ -3425,7 +3418,7 @@ inline void updateMovCIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end)
 {
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
-    double circle_angle_in2end = stack[S_CircleAngle] - stack[S_CircleAngle_Via2In];
+    double circle_angle_in2end = stack[S_CircleAngle] - stack[S_CircleAngleVia2In];
 
     double traj_piece_ideal_in2end = circle_angle_in2end * stack[S_PathCountFactorJoint];
     if(path_cache.smooth_out_index == -1
@@ -3612,7 +3605,7 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
             {
                 out_path_index = path_cache.smooth_out_index;
             }
-                
+
             for(int i = 0; i < model.link_num; ++i)
             {
                 delta_joint_out2in = fabs(path_cache.cache[path_cache.smooth_in_index].joint[i] - path_cache.cache[out_path_index].joint[i]);
@@ -3634,6 +3627,14 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
             double traj_piece_ideal_joint_out2in = delta_joint_max_out2in * stack[S_PathCountFactorJoint];
             double traj_piece_ideal_linear_out2in = delta_linear_max_out2in * stack[S_PathCountFactorCartesian];
             traj_piece_ideal_out2in = (traj_piece_ideal_joint_out2in >= traj_piece_ideal_linear_out2in) ? traj_piece_ideal_joint_out2in : traj_piece_ideal_linear_out2in;
+            break;
+        }
+        case MOTION_CIRCLE:
+        {
+            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+            double traj_piece_ideal_out2via = path_length_out2via * stack[S_PathCountFactorCartesian];
+            double traj_piece_ideal_via2in = stack[S_CircleAngleVia2In] * stack[S_PathCountFactorJoint];
+            traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
             break;
         }
     }
@@ -3792,7 +3793,7 @@ inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fs
     }
 
     // compute time duration for each traj piece, via2in
-    double time_span_via2in = time_span_via2end * stack[S_CircleAngle_Via2In] / stack[S_CircleAngle];
+    double time_span_via2in = time_span_via2end * stack[S_CircleAngleVia2In] / stack[S_CircleAngle];
     double time_duration_via2in = time_span_via2in / traj_pva_in_index;
     for(i = 0; i < traj_pva_in_index; ++i)
     {
@@ -3811,13 +3812,13 @@ inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fs
     }
     else
     {
-        double circle_angle_in2out = stack[S_CircleAngle_In2Out];
+        double circle_angle_in2out = stack[S_CircleAngleIn2Out];
 
         double circle_angle = stack[S_CircleAngle];
         double time_span_in2out = time_span_via2end * circle_angle_in2out / circle_angle;
         double time_duration_in2out = time_span_in2out / (traj_pva_out_index - traj_pva_in_index);
 
-        double circle_angle_out2end = stack[S_CircleAngle] - stack[S_CircleAngle_Via2In] - stack[S_CircleAngle_In2Out];
+        double circle_angle_out2end = stack[S_CircleAngle] - stack[S_CircleAngleVia2In] - stack[S_CircleAngleIn2Out];
         double time_span_out2end = time_span_via2end * circle_angle_out2end / circle_angle;
         double time_duration_out2end = time_span_out2end / (traj_pva_size_via2end - traj_pva_out_index - 1);
 
@@ -3852,7 +3853,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             break;
         }
         case MOTION_JOINT:
-        {            
+        {
             time_span_out2in = 0;
             double time_span_out2in_tmp;
             int out_path_index;
@@ -3872,6 +3873,14 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
                     time_span_out2in = time_span_out2in_tmp;
                 }
             }
+            break;
+        }
+        case MOTION_CIRCLE:
+        {
+            double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+            double time_out2via = path_length_out2via * 1.4 / cmd_vel;
+            double time_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius]/ cmd_vel;
+            time_span_out2in = time_out2via + time_via2in;
             break;
         }
     }
@@ -4149,6 +4158,20 @@ inline void updateTrajPieceRescaleFactor(int traj_piece_size)
     }
 }
 
+inline void updateEndPointStateForPause(int traj_pva_end_index)
+{
+    int end_state_address = S_EndPointState0;
+    int traj_p_address = S_TrajP0;
+    for (int i = 0; i < model.link_num; ++i)
+    {
+        stack[end_state_address] = stack[traj_p_address + traj_pva_end_index];
+        stack[end_state_address + 1] = 0;
+        stack[end_state_address + 2] = 0;
+        end_state_address += 3;
+        traj_p_address += 75;
+    }
+}
+
 inline void updateTrajTByPieceRescaleFactor(int traj_t_address, int traj_t_size)
 {
     for(int i = 0; i < traj_t_size; ++i)
@@ -4177,6 +4200,18 @@ inline void updateOutAndInPointState(const JointState& out_state, int traj_pva_i
         traj_p_address += 75;
         traj_v_address += 75;
         traj_a_address += 75;
+    }
+}
+
+inline void updatePausePointState(const JointState &pause_state)
+{
+    int pause_point_state_address = S_PausePointState0;
+    for (int i = 0; i < model.link_num; ++i)
+    {
+        stack[pause_point_state_address] = pause_state.angle[i];
+        stack[pause_point_state_address + 1] = pause_state.omega[i];
+        stack[pause_point_state_address + 2] = pause_state.alpha[i];
+        pause_point_state_address += 3;
     }
 }
 

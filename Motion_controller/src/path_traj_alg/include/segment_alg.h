@@ -126,21 +126,31 @@ typedef enum
 
     S_CircleAngle = 53,    // double
     S_CircleRadius = 54,    // double
-    S_CircleAngle_Via2In = 55,
-    S_CircleAngle_In2Out = 56,
+    S_CircleAngleVia2In = 55,
+    S_CircleAngleIn2Out = 56,
 
     S_CircleCenter = 60,    // double
-    S_Circle_VectorN = 65, //65/66/67
-    S_Circle_VectorO = 68, // 
+    S_CircleVectorN = 65, //65/66/67
+    S_CircleVectorO = 68, // 
 
-    S_PAUSE_TIME_FACTOR = 100,    // double
-    S_PAUSE_PATH_LENGTH_FACTOR = 101,    // double
-    S_PAUSE_ACC_CARTESIAN = 102,
-    S_PAUSE_ACC_JOINT = 103,
+    S_PauseTimeFactor = 100,    // double
+    S_PausePathLengthFactor = 101,    // double
+    S_PauseAccCartesian = 102,
+    S_PauseAccJoint = 103,
 
     // basic matrix operation
     S_TransMatrix = 200,  // matrix[4][4]
     S_HomoTransMatrix = 216, // matrix[4][4]
+
+    S_PausePointState0 = 236, // vector in size 3
+    S_PausePointState1 = 239,
+    S_PausePointState2 = 242,
+    S_PausePointState3 = 245,
+    S_PausePointState4 = 248,
+    S_PausePointState5 = 251,
+    S_PausePointState6 = 254,
+    S_PausePointState7 = 257,
+    S_PausePointState8 = 260, 
 
     // tmp variable, vector, matrix 
     S_TmpDouble_1 = 500,    // double
@@ -518,8 +528,6 @@ ErrorCode planTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::Join
 ErrorCode planTrajectorySmooth(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, const fst_mc::MotionTarget &via, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
 ErrorCode planPauseTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double acc_ratio, fst_mc::TrajectoryCache &traj_cache, int &path_stop_index);
 
-// bool planPauseTrajectoryFine();
-// bool planPauseTrajectorySmooth();
 /***********************************************************************************************/
 /*
 Function:   getNorm
@@ -879,6 +887,8 @@ inline double getMaxOfAllAxes(int traj_piece_address);
 inline void updateTrajPieceRescaleFactor(int traj_piece_size);
 inline void updateTrajTByPieceRescaleFactor(int traj_t_address, int traj_t_size);
 inline void updateOutAndInPointState(const fst_mc::JointState& out_state, int traj_pva_in_index);
+inline void updatePausePointState(const fst_mc::JointState& pause_state);
+inline void updateEndPointStateForPause(int traj_pva_end_index);
 inline bool isRescaleNeeded(int traj_piece_size);
 inline void updateTrajCoeff(int traj_p_address, int traj_v_address, int traj_a_address, int traj_pva_size, 
                                 int traj_t_address, int traj_t_size, int traj_j_address, int traj_coeff_address);
@@ -895,4 +905,3 @@ void printTraj(fst_mc::TrajectoryCache &traj_cache, int index, double time_step,
 
 
 #endif
-

@@ -341,13 +341,13 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 
     if (target.type == MOTION_LINE || target.type == MOTION_CIRCLE)
     {
-        if (user_frame_id_ != target.user_frame_id)
+        if (user_frame_id_ != target.user_frame_id && target.user_frame_id != -1)
         {
             FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", target.user_frame_id, user_frame_id_);
             return INVALID_PARAMETER;
         }
 
-        if (tool_frame_id_ != target.tool_frame_id)
+        if (tool_frame_id_ != target.tool_frame_id && target.tool_frame_id != -1)
         {
             FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
             return INVALID_PARAMETER;

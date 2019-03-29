@@ -163,6 +163,8 @@ class BaseGroup
     virtual ErrorCode autoStableCircle(const basic_alg::Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
     virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
 
+    virtual ErrorCode replanPathCache(void);
+
     virtual ErrorCode computeInverseKinematicsOnPathCache(const basic_alg::Joint &start, PathCache &path);
     virtual bool checkPath(const PathCache &path);
     virtual bool checkTrajectory(const TrajectoryCache &trajectory);
@@ -254,8 +256,10 @@ class BaseGroup
     bool clear_request_;
     bool error_request_;
     bool auto_to_pause_request_;
+    bool pause_to_auto_request_;
     bool auto_to_standby_request_;
     bool manual_to_standby_request_;
+    bool pause_return_to_standby_request_;
 
     size_t  disable_to_standby_timeout_;
     size_t  standby_to_disable_timeout_;

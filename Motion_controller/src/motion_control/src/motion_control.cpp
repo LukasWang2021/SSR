@@ -347,7 +347,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
             return INVALID_PARAMETER;
         }
 
-        if (tool_frame_id_ != target.tool_frame_id && target.tool_frame_id != -1)
+        if (tool_frame_id_ != target.tool_frame_id && target.user_frame_id != -1)
         {
             FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
             return INVALID_PARAMETER;
@@ -365,6 +365,11 @@ ErrorCode MotionControl::abortMove(void)
 ErrorCode MotionControl::pauseMove(void)
 {
     return group_ptr_->pauseMove();
+}
+
+ErrorCode MotionControl::restartMove(void)
+{
+    return group_ptr_->restartMove();
 }
 
 bool MotionControl::nextMovePermitted(void)

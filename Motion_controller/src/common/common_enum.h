@@ -14,7 +14,6 @@ enum MotionType
     MOTION_JOINT  = 1,
     MOTION_LINE   = 2,
     MOTION_CIRCLE = 3,
-    MOTION_XPOS   = 4,
 };
 
 enum PointType
@@ -85,6 +84,7 @@ enum GroupState
     MANUAL = 0x3,
     AUTO = 0x4,
     PAUSE = 0x5,
+    PAUSE_RETURN = 0x6,
 
     DISABLE_TO_STANDBY = 0x12,
     STANDBY_TO_DISABLE = 0x21,
@@ -93,7 +93,8 @@ enum GroupState
     AUTO_TO_STANDBY = 0x42,
     STANDBY_TO_AUTO = 0x24,
     AUTO_TO_PAUSE = 0x45,
-    PAUSE_TO_AUTO = 0x54,
+    PAUSE_RETURN_TO_STANDBY = 0x62,
+    PAUSE_TO_PAUSE_RETURN = 0x56,
 };
 
 }

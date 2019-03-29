@@ -49,6 +49,7 @@ public:
     // API for auto run
     ErrorCode autoMove(int id, const MotionTarget &target);
     ErrorCode abortMove(void);
+    ErrorCode restartMove(void);
     ErrorCode pauseMove(void);
     bool nextMovePermitted(void);
 

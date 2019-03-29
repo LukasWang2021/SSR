@@ -92,8 +92,10 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     clear_request_ = false;
     error_request_ = false;
     auto_to_pause_request_ = false;
+    pause_to_auto_request_ = false;
     auto_to_standby_request_ = false;
     manual_to_standby_request_ = false;
+    pause_return_to_standby_request_ = false;
     memset(&user_frame_, 0, sizeof(user_frame_));
     memset(&tool_frame_, 0, sizeof(tool_frame_));
 }
@@ -820,13 +822,13 @@ ErrorCode BaseGroup::pauseMove(void)
     int pause_index = traj_list_ptr_->pick_index;
     TrajectoryCache &traj_cache = traj_list_ptr_->trajectory_cache;
 
-    if (traj_cache.smooth_out_index == -1 && pause_index >= traj_cache.cache_length)
+    if (traj_cache.smooth_out_index == -1 && pause_index >= (int)traj_cache.cache_length)
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         FST_INFO("Near ending point, do not need plan pause trajectory.");
         return SUCCESS;
     }
-    else if (traj_cache.smooth_out_index != -1 && pause_index >= traj_cache.smooth_out_index)
+    else if (traj_cache.smooth_out_index != -1 && pause_index >= (int)traj_cache.smooth_out_index)
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         FST_ERROR("Near smooth point, cannot pause right now.");
@@ -838,6 +840,7 @@ ErrorCode BaseGroup::pauseMove(void)
 
     if (pause_traj_cache_lise_ptr == NULL)
     {
+        pthread_mutex_unlock(&cache_list_mutex_);
         FST_ERROR("No traj-cache available, set more caches in config file.");
         return MOTION_INTERNAL_FAULT;
     }
@@ -899,7 +902,108 @@ ErrorCode BaseGroup::pauseMove(void)
 }
 
 ErrorCode BaseGroup::restartMove(void)
-{}
+{
+    FST_INFO("Restart move request received.");
+
+    if (group_state_ != PAUSE)
+    {
+        FST_WARN("Group state is %d", group_state_);
+        return INVALID_SEQUENCE;
+    }
+
+    pthread_mutex_lock(&cache_list_mutex_);
+    ErrorCode err = SUCCESS;
+    Joint start = start_joint_;
+    Joint pause = path_list_ptr_->path_cache.cache[pause_status_.pause_index].joint;
+    PoseEuler fcp_start_pose, fcp_pause_pose, tcp_start_pose, tcp_pause_pose;
+    kinematics_ptr_->doFK(start, fcp_start_pose);
+    kinematics_ptr_->doFK(pause, fcp_pause_pose);
+    transformation_.convertFcpToTcp(fcp_start_pose, tool_frame_, tcp_start_pose);
+    transformation_.convertFcpToTcp(fcp_pause_pose, tool_frame_, tcp_pause_pose);
+
+    if (getDistance(tcp_start_pose.point_, tcp_pause_pose.point_) > 0.1 || getOrientationAngle(tcp_start_pose.euler_, tcp_pause_pose.euler_) > 0.1)
+    {
+        // 位置或姿态角偏出暂停点，需要先回到暂停点
+        char buffer[LOG_TEXT_SIZE];
+        FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("Pause-joint: %s", printDBLine(&pause[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", tcp_start_pose.point_.x_, tcp_start_pose.point_.y_, tcp_start_pose.point_.z_, tcp_start_pose.euler_.a_, tcp_start_pose.euler_.b_, tcp_start_pose.euler_.c_);
+        FST_INFO("Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", tcp_pause_pose.point_.x_, tcp_pause_pose.point_.y_, tcp_pause_pose.point_.z_, tcp_pause_pose.euler_.a_, tcp_pause_pose.euler_.b_, tcp_pause_pose.euler_.c_);
+        FST_INFO("Start-pose different with pause-pose, move back to pause-pose.");
+        
+        PathCacheList *path_cache_lise_ptr = path_cache_pool_.getCachePtr();
+        TrajectoryCacheList *traj_cache_lise_ptr = traj_cache_pool_.getCachePtr();
+
+        if (path_cache_lise_ptr == NULL || traj_cache_lise_ptr == NULL)
+        {
+            pthread_mutex_unlock(&cache_list_mutex_);
+            FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_cache_lise_ptr, traj_cache_lise_ptr);
+            path_cache_pool_.freeCachePtr(path_cache_lise_ptr);
+            traj_cache_pool_.freeCachePtr(traj_cache_lise_ptr);
+            return MOTION_INTERNAL_FAULT;
+        }
+        
+        MotionTarget target;
+        target.type = MOTION_JOINT;
+        target.cnt = -1;
+        target.vel = 0.0625;
+        target.joint_target = pause;
+        
+        err = autoStableJoint(start, target, path_cache_lise_ptr->path_cache, traj_cache_lise_ptr->trajectory_cache);
+
+        if (err != SUCCESS)
+        {
+            pthread_mutex_unlock(&cache_list_mutex_);
+            path_cache_pool_.freeCachePtr(path_cache_lise_ptr);
+            traj_cache_pool_.freeCachePtr(traj_cache_lise_ptr);
+            FST_ERROR("Fail to plan trajectory back to pause-pose, code = 0x%llx", err);
+            return MOTION_INTERNAL_FAULT;
+        }
+
+        path_cache_pool_.freeCachePtr(path_cache_lise_ptr);
+        traj_cache_lise_ptr->pick_index = 0;
+        traj_cache_lise_ptr->pick_from_block = 0;
+        traj_cache_lise_ptr->time_from_start = 0;
+        traj_cache_lise_ptr->next_ptr = NULL;
+        traj_cache_lise_ptr->trajectory_cache.path_cache_ptr = NULL;
+        traj_list_ptr_ = traj_cache_lise_ptr;
+        JointState joint_state;
+        sampleBlockEnding(traj_cache_lise_ptr->trajectory_cache.cache[traj_cache_lise_ptr->trajectory_cache.cache_length - 1], joint_state);
+        start_joint_ = joint_state.angle;
+    }
+
+    pause_to_auto_request_ = true;
+    pthread_mutex_unlock(&cache_list_mutex_);
+    return SUCCESS;
+}
+
+ErrorCode BaseGroup::replanPathCache(void)
+{
+    pthread_mutex_lock(&cache_list_mutex_);
+    PathCacheList *path_ptr = path_list_ptr_;
+    path_list_ptr_ = NULL;
+    pthread_mutex_unlock(&cache_list_mutex_);
+
+    while (path_ptr)
+    {
+        FST_INFO("Replan path cache: %p", path_ptr);
+        int id = path_ptr->id;
+        MotionTarget target = path_ptr->path_cache.target;
+        PathCacheList *ptr = path_ptr;
+        path_ptr = path_ptr->next_ptr;
+        path_cache_pool_.freeCachePtr(ptr);
+        ErrorCode err = autoMove(id, target);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("Fail to replan path cache: %p, code = 0x%llx", path_ptr, err);
+            return err;
+        }
+    }
+    
+    FST_INFO("All path cache replanned successfully.");
+    return SUCCESS;
+}
 
 ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 {
@@ -1985,6 +2089,12 @@ bool BaseGroup::nextMovePermitted(void)
         return false;
     }
 
+    if (group_state_ == PAUSE || group_state_ == PAUSE_RETURN || group_state_ == AUTO_TO_PAUSE || group_state_ == PAUSE_TO_PAUSE_RETURN || group_state_ == PAUSE_RETURN_TO_STANDBY)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        return false;
+    }
+
     auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
 
     if (group_state_ == STANDBY && last_traj_ptr != NULL)
@@ -2458,6 +2568,8 @@ void BaseGroup::doStateMachine(void)
     static size_t auto_to_standby_cnt = 0;
     static size_t manual_to_standby_cnt = 0;
     static size_t auto_to_pause_cnt = 0;
+    static size_t pause_to_pause_return_cnt = 0;
+    static size_t pause_return_to_standby_cnt = 0;
 
     auto servo_state = getServoState();
 
@@ -2570,6 +2682,11 @@ void BaseGroup::doStateMachine(void)
         auto_to_pause_request_ = false;
     }
 
+    if (pause_to_auto_request_ && group_state_ != PAUSE)
+    {
+        pause_to_auto_request_ = false;
+    }
+
     switch (group_state_)
     {
         case DISABLE:
@@ -2655,7 +2772,106 @@ void BaseGroup::doStateMachine(void)
 
         case PAUSE:
         {
-            // TODO
+            if (pause_to_auto_request_)
+            {
+                pause_to_auto_request_ = false;
+
+                if (traj_list_ptr_ != NULL)
+                {
+                    pause_to_pause_return_cnt = 0;
+                    group_state_ = PAUSE_TO_PAUSE_RETURN;
+                    auto_time_ = 0;
+                }
+                else
+                {
+                    group_state_ = PAUSE_RETURN;
+                    FST_WARN("Group-state switch to pause-return.");
+                }
+            }
+            break;
+        }
+
+        case PAUSE_RETURN:
+        {
+            if (pause_return_to_standby_request_)
+            {
+                pause_return_to_standby_request_ = false;
+                pause_return_to_standby_cnt = 0;
+                group_state_ = PAUSE_RETURN_TO_STANDBY;
+            }
+
+            break;
+        }
+
+        case PAUSE_RETURN_TO_STANDBY:
+        {
+            if (servo_state == SERVO_IDLE)
+            {
+                // 检查是否停稳，停稳后切换到standby
+                if (fine_waiter_.isEnable())
+                {
+                    if (fine_waiter_.isStable())
+                    {
+                        fine_waiter_.disableWaiter();
+                        pause_status_.pause_valid = false;
+                        group_state_ = STANDBY;
+                        FST_WARN("Group-state switch to standby.");
+                    }
+                }
+                else
+                {
+                    group_state_ = STANDBY;
+                    pause_status_.pause_valid = false;
+                    FST_WARN("Group-state switch to standby.");
+                }
+            }
+
+            pause_return_to_standby_cnt ++;
+
+            if (pause_return_to_standby_cnt > auto_to_standby_timeout_)
+            {
+                FST_ERROR("Auto to standby timeout, error-request asserted.");
+                reportError(BARE_CORE_TIMEOUT);
+                error_request_ = true;
+            }
+
+            if (group_state_ == STANDBY)
+            {
+                // replan path cache
+                FST_INFO("Pause return finished, replan path cache.");
+                ErrorCode err = replanPathCache();
+
+                if (err != SUCCESS)
+                {
+                    reportError(err);
+                    error_request_ = true;
+                    FST_WARN("Fail to replan path cache, code = 0x%llx.", err);
+                }
+
+                FST_INFO("Replan path cache success.");
+            }
+
+            break;
+        }
+
+        case PAUSE_TO_PAUSE_RETURN:
+        {
+            pause_to_pause_return_cnt ++;
+
+            if (traj_fifo_.full() || (pause_to_pause_return_cnt > 100 && !traj_fifo_.empty()))
+            {
+                auto_time_ = 0;
+                group_state_ = PAUSE_RETURN;
+                FST_WARN("Group-state switch to pause-return, fifo-size = %d, counter = %d", traj_fifo_.size(), standby_to_auto_cnt);
+            }
+            
+            if (pause_to_pause_return_cnt > standby_to_auto_timeout_ && traj_fifo_.empty())
+            {
+                group_state_ = PAUSE;
+                FST_WARN("Group-state switch to pause.");
+                FST_WARN("Pause to pause-return time-out but trajectory-fifo still empty.");
+            }
+
             break;
         }
 
@@ -2903,7 +3119,7 @@ bool BaseGroup::updateStartJoint(void)
 
 void BaseGroup::fillTrajectoryFifo(void)
 {
-    if (group_state_ == AUTO || group_state_ == STANDBY_TO_AUTO)
+    if (group_state_ == AUTO || group_state_ == STANDBY_TO_AUTO || group_state_ == PAUSE_TO_PAUSE_RETURN || group_state_ == PAUSE_RETURN)
     {
         pthread_mutex_lock(&cache_list_mutex_);
 
@@ -2995,9 +3211,14 @@ void BaseGroup::freeFirstCacheList(void)
 {
     auto *path_ptr = path_list_ptr_;
     auto *traj_ptr = traj_list_ptr_;
-    path_list_ptr_ = path_list_ptr_->next_ptr;
+
+    if (traj_ptr->trajectory_cache.path_cache_ptr)
+    {
+        path_list_ptr_ = path_list_ptr_->next_ptr;
+        path_cache_pool_.freeCachePtr(path_ptr);
+    }
+
     traj_list_ptr_ = traj_list_ptr_->next_ptr;
-    path_cache_pool_.freeCachePtr(path_ptr);
     traj_cache_pool_.freeCachePtr(traj_ptr);
 }
 
@@ -3105,13 +3326,20 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         if (points[length - 1].level == POINT_ENDING)
         {
             // 取到了ENDING-POINT，意味着轨迹结束，需要切状态机
-            if (pause_status_.pause_valid)
+            if (group_state_ == AUTO)
             {
-                auto_to_pause_request_ = true;
+                if (pause_status_.pause_valid)
+                {
+                    auto_to_pause_request_ = true;
+                }
+                else
+                {
+                    auto_to_standby_request_ = true;
+                }
             }
-            else
+            else if (group_state_ == PAUSE_RETURN)
             {
-                auto_to_standby_request_ = true;
+                pause_return_to_standby_request_ = true;
             }
         }
     }
@@ -3187,6 +3415,10 @@ void BaseGroup::sendTrajectoryFlow(void)
     ErrorCode err = SUCCESS;
 
     if (group_state_ == AUTO && !auto_to_standby_request_ && !auto_to_pause_request_)
+    {
+        err = sendAutoTrajectoryFlow();
+    }
+    else if (group_state_ == PAUSE_RETURN && !pause_return_to_standby_request_)
     {
         err = sendAutoTrajectoryFlow();
     }

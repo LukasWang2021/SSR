@@ -84,9 +84,17 @@ void ControllerRpc::handleRpc0x00007074(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    rs_data_ptr->data.data = io_mapping_ptr_->setDOByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    FST_INFO("rpc-setDOByBit: user_port=%d, value=%d, ret=%x\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1],rs_data_ptr->data.data);
-
+    //TP can not control ouput if the setting of isAvailableInAutoMode is false.
+    if ((!io_mapping_ptr_->isEnableInAutoMode()) && (state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO))
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+    }
+    else
+    {
+        rs_data_ptr->data.data = io_mapping_ptr_->setDOByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        FST_INFO("rpc-setDOByBit: user_port=%d, value=%d, ret=%x\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1],rs_data_ptr->data.data);
+    }
+    
     if (rs_data_ptr->data.data != SUCCESS)
         recordLog(IO_MAPPING_LOG, rs_data_ptr->data.data, std::string("/rpc/io_mapping/setDOByBit"));
 }
@@ -173,9 +181,17 @@ void ControllerRpc::handleRpc0x00012274(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = INVALID_PARAMETER;
     }
 
-    rs_data_ptr->data.data = io_mapping_ptr_->setROByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
-    FST_INFO("rpc-setROByBit: user_port=%d, value=%d, ret =%x\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1], rs_data_ptr->data.data);
-
+    //TP can not control ouput if the setting of isAvailableInAutoMode is false.
+    if ((!io_mapping_ptr_->isEnableInAutoMode()) && (state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO))
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+    }
+    else
+    {
+        rs_data_ptr->data.data = io_mapping_ptr_->setROByBit(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        FST_INFO("rpc-setROByBit: user_port=%d, value=%d, ret =%x\n", rq_data_ptr->data.data[0], rq_data_ptr->data.data[1], rs_data_ptr->data.data);
+    }
+    
     if (rs_data_ptr->data.data != SUCCESS)
         recordLog(IO_MAPPING_LOG, rs_data_ptr->data.data, std::string("/rpc/io_mapping/setROByBit"));
 }

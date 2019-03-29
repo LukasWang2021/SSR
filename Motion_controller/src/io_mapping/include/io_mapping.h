@@ -186,6 +186,8 @@ public:
 	//------------------------------------------------------------
     uint32_t getIOPhysicsID(string key) {return io_mapper_[key];}
 
+	bool isEnableInAutoMode(void);
+
 private:
 	void loadProgramsPath(void);
 	char * getProgramsPath(void);

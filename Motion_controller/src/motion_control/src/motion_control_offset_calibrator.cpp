@@ -431,7 +431,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
                     for (size_t i = 0; i < joint_num_; i++)
                     {
-                        stat[i] = int(state[i]);
+                        stat.push_back((int)state[i]);
                     }
 
                     if (robot_recorder_.setParam("state", stat) && robot_recorder_.dumpParamFile())

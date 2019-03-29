@@ -129,6 +129,7 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
         return;
     }
     
+    motion_control_ptr_->restartMove();
     controller_client_ptr_->resume(); 
     rs_data_ptr->data.data = SUCCESS;
     state_machine_ptr_->transferRobotStateToRunning();

@@ -413,6 +413,11 @@ ErrorCode IoMapping::setUOByBit(uint32_t user_port, uint8_t value)
 	return IO_INVALID_PARAM_ID;
 }
 
+bool IoMapping::isEnableInAutoMode(void)
+{
+	return param_ptr_->enable_in_auto_;
+}
+
 
 
 void IoMapping::loadProgramsPath()

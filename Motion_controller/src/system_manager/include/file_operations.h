@@ -9,6 +9,20 @@ Summary:
 #ifndef SYSTEM_MANAGER_FILE_OPERATIONS_H_
 #define SYSTEM_MANAGER_FILE_OPERATIONS_H_
 
+#define SYSTEM_MANAGER_LOG (unsigned long long int)0x0001000100B30000   /*SystemManager log{0}*/
+#define SYS_EXTRACT_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30001   /*fail to extract the archive when restoring the backup files.*/
+#define SYS_EXTRACT_OPEN_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30002   /*fail to open the archive when extract*/
+#define SYS_EXTRACT_READ_ARCHIVE_FAIL (unsigned long long int)0x0001000600B30003   /*fail to read the file when extract*/
+#define SYS_EXTRACT_WRITE_FILE_HEADER_FAIL (unsigned long long int)0x0001000600B30004   /*fail to write the file header when extract*/
+#define SYS_EXTRACT_WRITE_FILE_DATA_FAIL (unsigned long long int)0x0001000600B30005   /*fail to write the file data when extract*/
+#define SYS_COMPRESS_FILE_FAIL (unsigned long long int)0x0001000600B30006   /*fail to compress when backup*/
+#define SYS_COMPRESS_OPEN_FILE_FAIL (unsigned long long int)0x0001000600B30007   /*fail to open the file when compres*/
+#define SYS_COMPRESS_READ_FILE_HEADER_FAIL (unsigned long long int)0x0001000600B30008   /*fail to read the file header when compress*/
+#define SYS_COMPRESS_WRITE_FILE_FAIL (unsigned long long int)0x0001000600B30009   /*ail to write the archive when compress*/
+#define SYS_NO_FREE_DISK (unsigned long long int)0x0001000600B3000A   /*not enough space for file operation*/
+#define SYS_START_THREAD_FAIL (unsigned long long int)0x0001000600B3000B   /*failed to start thread to execute*/
+
+
 #include "error_code.h"
 #include <string>
 #include <vector>

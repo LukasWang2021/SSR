@@ -246,10 +246,15 @@ ErrorCode ControllerSm::callReset()
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
             return error_code;
         }
-        //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");//todo comment
-        ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;
-        
+
         safety_device_ptr_->reset();
+        if (safety_device_ptr_->checkSafetyBoardAlarm())
+        {
+            return CONTROLLER_INVALID_OPERATION;
+        }
+
+        //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
+        ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;  
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.
         motion_control_ptr_->resetGroup();  
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;  

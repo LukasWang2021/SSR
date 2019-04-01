@@ -180,7 +180,7 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         ros_basic_ptr_->initRosBasic();
     }
 
-    ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr);
+    ErrorCode  err = group_ptr_->initGroup(error_monitor_ptr, coordinate_manager_ptr_, tool_manager_ptr_);
 
     if (err == SUCCESS)
     {
@@ -339,22 +339,34 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         return INVALID_SEQUENCE;
     }
 
-    if (target.type == MOTION_LINE || target.type == MOTION_CIRCLE)
+    MotionTarget motion_target = target;
+
+    if (motion_target.user_frame_id == -1)
     {
-        if (user_frame_id_ != target.user_frame_id && target.user_frame_id != -1)
+        motion_target.user_frame_id = user_frame_id_;
+    }
+
+    if (motion_target.tool_frame_id == -1)
+    {
+        motion_target.tool_frame_id = tool_frame_id_;
+    }
+
+    if (motion_target.type == MOTION_LINE || motion_target.type == MOTION_CIRCLE)
+    {
+        if (user_frame_id_ != motion_target.user_frame_id)
         {
-            FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", target.user_frame_id, user_frame_id_);
+            FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", motion_target.user_frame_id, user_frame_id_);
             return INVALID_PARAMETER;
         }
 
-        if (tool_frame_id_ != target.tool_frame_id && target.user_frame_id != -1)
+        if (tool_frame_id_ != motion_target.tool_frame_id)
         {
-            FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
+            FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", motion_target.tool_frame_id, tool_frame_id_);
             return INVALID_PARAMETER;
         }
     }
 
-    return group_ptr_->autoMove(id, target);
+    return group_ptr_->autoMove(id, motion_target);
 }
 
 ErrorCode MotionControl::abortMove(void)

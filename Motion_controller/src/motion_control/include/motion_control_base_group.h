@@ -22,6 +22,8 @@
 #include <motion_control_cache_pool.h>
 #include <dynamics_interface.h>
 #include <transformation.h>
+#include <coordinate_manager.h>
+#include <tool_manager.h>
 
 
 #define AUTO_CACHE_SIZE     5
@@ -63,7 +65,7 @@ class BaseGroup
     BaseGroup(fst_log::Logger* plog);
     virtual ~BaseGroup();
 
-    virtual ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr) = 0;
+    virtual ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr, fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr) = 0;
     virtual ErrorCode stopGroup(void);
     virtual ErrorCode resetGroup(void);
     virtual ErrorCode clearGroup(void);
@@ -235,6 +237,8 @@ class BaseGroup
     BareCoreInterface       bare_core_;
     fst_log::Logger         *log_ptr_;
     fst_base::ErrorMonitor  *error_monitor_ptr_;
+    fst_ctrl::CoordinateManager *coordinate_manager_ptr_;
+    fst_ctrl::ToolManager   *tool_manager_ptr_;
     basic_alg::Kinematics   *kinematics_ptr_;
     basic_alg::Transformation   transformation_;
     fst_algorithm::DynamicsInterface  *dynamics_ptr_;

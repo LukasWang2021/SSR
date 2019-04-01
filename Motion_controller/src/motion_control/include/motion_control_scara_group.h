@@ -23,7 +23,7 @@ class ScaraGroup : public BaseGroup
     ScaraGroup(fst_log::Logger* plog) : BaseGroup(plog) {};
     ~ScaraGroup() {};
 
-    ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr);
+    ErrorCode initGroup(fst_base::ErrorMonitor *error_monitor_ptr, fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr);
 
     size_t getNumberOfJoint(void);
     size_t getFIFOLength(void);

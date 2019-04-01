@@ -42,7 +42,6 @@ struct CircleTarget     // moveC的目标点，由2个点位姿点构成
 };
 
 #define     PR_POS_LEN           64
-// NOTICE: sizeof(MotionTarget) < 512 Bytes
 struct MotionTarget     // 用于move指令的数据结构
 {
     MotionType  type;   // 指令的运动类型

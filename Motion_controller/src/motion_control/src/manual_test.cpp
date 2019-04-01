@@ -87,7 +87,7 @@ void test1(void)
     Logger log;
     ArmGroup arm(&log);
     ErrorMonitor error_monitor;
-    arm.initGroup(&error_monitor);
+    arm.initGroup(&error_monitor, NULL, NULL);
 
     double data[] = {0, 0, 0, 0, 0, PI / 2, 0, 0, 0};
     //Joint joint = {PI / 2, PI / 4, PI / 8, PI / 16, PI / 16, PI / 16, 0, 0, 0};
@@ -139,7 +139,7 @@ void test2(void)
     ThreadHelp rt_thread, nrt_thread;
     cout << "begin" << endl;
 
-    arm.initGroup(&error_monitor);
+    arm.initGroup(&error_monitor, NULL, NULL);
     g_thread_running = true;
     rt_thread.run(&rtTask, &arm, 80);
     nrt_thread.run(&nrtTask, &arm, 78);
@@ -184,7 +184,7 @@ void test3(void)
     ThreadHelp rt_thread, nrt_thread;
     cout << "begin" << endl;
 
-    arm.initGroup(&error_monitor);
+    arm.initGroup(&error_monitor, NULL, NULL);
     g_thread_running = true;
     rt_thread.run(&rtTask, &arm, 80);
     nrt_thread.run(&nrtTask, &arm, 78);
@@ -243,7 +243,7 @@ void test4(void)
     Logger log;
     ArmGroup arm(&log);
     ErrorMonitor error_monitor;
-    arm.initGroup(&error_monitor);
+    arm.initGroup(&error_monitor, NULL, NULL);
     ofstream  kout("kinematics.csv");
 
     PoseQuaternion pose;
@@ -306,7 +306,7 @@ void test6(void)
     ErrorMonitor error_monitor;
     ThreadHelp rt_thread;
 
-    arm.initGroup(&error_monitor);
+    arm.initGroup(&error_monitor, NULL, NULL);
 
     p.point_.x_ = -29.04;
     p.point_.y_ = 167.96;

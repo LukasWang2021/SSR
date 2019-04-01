@@ -18,6 +18,7 @@
 
 
 using namespace std;
+using namespace fst_ctrl;
 using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
@@ -28,7 +29,7 @@ extern ComplexAxisGroupModel model;
 namespace fst_mc
 {
 
-ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
+ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr)
 {
     vel_ratio_ = 0.0625;
     acc_ratio_ = 0.0625;
@@ -36,15 +37,18 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 
     FST_INFO("Error monitor addr: 0x%x", error_monitor_ptr);
-    if (error_monitor_ptr == NULL)
+    if (error_monitor_ptr == NULL || coordinate_manager_ptr == NULL || tool_manager_ptr == NULL)
     {
-        FST_ERROR("Invalid pointer of error-monitor.");
+        FST_ERROR("Invalid pointer of error-monitor or coordinate-manager or tool-manager.");
         return MOTION_INTERNAL_FAULT;
     }
     else
     {
         error_monitor_ptr_ = error_monitor_ptr;
     }
+
+    coordinate_manager_ptr_ = coordinate_manager_ptr;
+    tool_manager_ptr_ = tool_manager_ptr;
 
     FST_INFO("Initializing mutex ...");
     if (pthread_mutex_init(&cache_list_mutex_, NULL) != 0 ||
@@ -467,6 +471,8 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
     SegmentAlgParam seg_param;
     seg_param.kinematics_ptr = kinematics_ptr_;
     seg_param.dynamics_ptr = dynamics_ptr_;
+    seg_param.coordinate_manager_ptr = coordinate_manager_ptr_;
+    seg_param.tool_manager_ptr = tool_manager_ptr_;
 
     if (param.loadParamFile(path + "segment_alg.yaml"))
     {
@@ -482,7 +488,9 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
             param.getParam("time_factor_last", seg_param.time_factor_last) &&
             param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
             param.getParam("max_cartesian_acc", seg_param.max_cartesian_acc))
-        {}
+        {
+            initSegmentAlgParam(&seg_param, JOINT_OF_ARM, type_of_axis_, omega);
+        }
         else
         {
             FST_ERROR("Fail to load segment algorithm config, code = 0x%llx", param.getLastError());
@@ -495,9 +503,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr)
         return param.getLastError();
     }
 
-    
-    initSegmentAlgParam(&seg_param, JOINT_OF_ARM, type_of_axis_, omega);
-
+    FST_WARN("ArmGroup init success.");
     return SUCCESS;
 }
 

@@ -1855,7 +1855,7 @@ inline void updatePauseMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_
     double path_index_ideal = path_stop_index;
     updateTrajPSingleItem(S_TrajP0, path_cache.cache[path_stop_index].joint);
     traj_path_cache_index[0] = path_stop_index;
-    for(int i = path_stop_index; i < traj_pva_size_minus_1; ++i)
+    for(int i = 1; i < traj_pva_size_minus_1; ++i)
     {
         path_index_ideal += stack[S_PathIndexStep_Start2End];
         traj_path_cache_index[i] = round(path_index_ideal);

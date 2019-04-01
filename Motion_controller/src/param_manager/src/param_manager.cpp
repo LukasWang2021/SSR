@@ -19,6 +19,9 @@ using namespace fst_parameter;
 #define USER_PARAM_NAME_9 "io mapping max number"
 #define USER_PARAM_NAME_10 "enable set IO in auto mode"
 #define USER_PARAM_NAME_11 "enable set velocity in auto mode"
+#define USER_PARAM_NAME_12 "auto mode DO port number"
+#define USER_PARAM_NAME_13 "limited manual mode DO port number"
+#define USER_PARAM_NAME_14 "manual mode DO port number"
 
 #define MANU_PARAM_NAME_1 "trajectory fifo size"
 #define MANU_PARAM_NAME_2 "duration of segment in trajectory fifo"
@@ -70,6 +73,9 @@ using namespace fst_parameter;
 #define USER_PARAM_DATA_9 "max_mapping_number"
 #define USER_PARAM_DATA_10 "enable_set_io_in_auto"
 #define USER_PARAM_DATA_11 "enable_set_vel_in_auto"
+#define USER_PARAM_DATA_12 "auto_mode_DO"
+#define USER_PARAM_DATA_13 "limited_manual_mode_DO"
+#define USER_PARAM_DATA_14 "manual_mode_DO"
 
 #define MANU_PARAM_DATA_1 "trajectory_fifo_size"
 #define MANU_PARAM_DATA_2 "duration_of_segment_in_trajectory_fifo"
@@ -95,6 +101,7 @@ using namespace fst_parameter;
 #define FILE_SEGMENT_ALG (std::string(COMPONENT_PARAM_FILE_DIR) + "segment_alg.yaml")
 #define FILE_SERVO_PARAM (std::string(SERVO_DIR) + "servo_param.yaml")
 #define FILE_CONTROLLER (std::string(COMPONENT_PARAM_FILE_DIR) + "controller.yaml")
+#define FILE_FST_SAFETY_DEVICE (std::string(COMPONENT_PARAM_FILE_DIR) + "fst_safety_device.yaml")
 
 ParamManager::ParamManager()
 {
@@ -208,6 +215,26 @@ ErrorCode ParamManager::init()
     param_info.type = PARAM_INFO_BOOL;
     memcpy(param_info.data, &data_int, sizeof(bool));
     user_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.loadParamFile(FILE_FST_SAFETY_DEVICE)) return PARAM_MANAGER_INIT_FAILED;
+    
+    if(!yaml_help_.getParam(USER_PARAM_DATA_12, data_int)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, USER_PARAM_NAME_12);
+    param_info.type = PARAM_INFO_INT;
+    memcpy(param_info.data, &data_int, sizeof(int));
+    user_param_list_.push_back(param_info); 
+
+    if(!yaml_help_.getParam(USER_PARAM_DATA_13, data_int)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, USER_PARAM_NAME_13);
+    param_info.type = PARAM_INFO_INT;
+    memcpy(param_info.data, &data_int, sizeof(int));
+    user_param_list_.push_back(param_info);
+
+    if(!yaml_help_.getParam(USER_PARAM_DATA_14, data_int)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, USER_PARAM_NAME_14);
+    param_info.type = PARAM_INFO_INT;
+    memcpy(param_info.data, &data_int, sizeof(int));
+    user_param_list_.push_back(param_info);  
 
     // manu param
     if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)) return PARAM_MANAGER_INIT_FAILED;
@@ -1250,6 +1277,42 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
                 memcpy(user_param_list_[10].data, &data_bool, sizeof(bool));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, USER_PARAM_NAME_12) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_FST_SAFETY_DEVICE)
+                    || !yaml_help_.setParam(USER_PARAM_DATA_12, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_FST_SAFETY_DEVICE)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(user_param_list_[11].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, USER_PARAM_NAME_13) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_FST_SAFETY_DEVICE)
+                    || !yaml_help_.setParam(USER_PARAM_DATA_13, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_FST_SAFETY_DEVICE)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(user_param_list_[12].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, USER_PARAM_NAME_14) == 0)
+            {
+                data_int = *((int*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_FST_SAFETY_DEVICE)
+                    || !yaml_help_.setParam(USER_PARAM_DATA_14, data_int)
+                    || !yaml_help_.dumpParamFile(FILE_FST_SAFETY_DEVICE)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(user_param_list_[13].data, &data_int, sizeof(int));
                 return SUCCESS;
             }
 

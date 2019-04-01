@@ -157,7 +157,7 @@ ErrorCode ControllerSm::setUserOpMode(fst_hal::UserOpMode mode)
 
     if(mode == USER_OP_MODE_AUTO
         || mode == USER_OP_MODE_SLOWLY_MANUAL
-        || mode == USER_OP_MODE_UNLIMITED_MANUAL)
+        || mode == USER_OP_MODE_MANUAL)
     {
         user_op_mode_ = mode;
         return SUCCESS;
@@ -476,6 +476,26 @@ void ControllerSm::processSafety()
             }
             ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);
         }
+
+        //DO output according to the user mode.
+        uint32_t port_offset = 0;
+        uint8_t value = 0;
+        bool ret = safety_device_ptr_->getAutoModeDo(port_offset, value);
+        if (ret == true)
+        {
+            io_mapping_ptr_->getDOByBit(port_offset, value);
+        }
+        ret = safety_device_ptr_->getLimitedManualModeDo(port_offset, value);
+        if (ret == true)
+        {
+            io_mapping_ptr_->getDOByBit(port_offset, value);
+        }
+        ret = safety_device_ptr_->getManualModeDo(port_offset, value);
+        if (ret == true)
+        {
+            io_mapping_ptr_->getDOByBit(port_offset, value);
+        }
+
     }
     else
     {

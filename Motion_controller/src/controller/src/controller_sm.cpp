@@ -483,17 +483,17 @@ void ControllerSm::processSafety()
         bool ret = safety_device_ptr_->getAutoModeDo(port_offset, value);
         if (ret == true)
         {
-            io_mapping_ptr_->getDOByBit(port_offset, value);
+            io_mapping_ptr_->setDOByBit(port_offset, value);
         }
         ret = safety_device_ptr_->getLimitedManualModeDo(port_offset, value);
         if (ret == true)
         {
-            io_mapping_ptr_->getDOByBit(port_offset, value);
+            io_mapping_ptr_->setDOByBit(port_offset, value);
         }
         ret = safety_device_ptr_->getManualModeDo(port_offset, value);
         if (ret == true)
         {
-            io_mapping_ptr_->getDOByBit(port_offset, value);
+            io_mapping_ptr_->setDOByBit(port_offset, value);
         }
 
     }

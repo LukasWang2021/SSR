@@ -415,7 +415,7 @@ ErrorCode IoMapping::setUOByBit(uint32_t user_port, uint8_t value)
 
 bool IoMapping::isEnableInAutoMode(void)
 {
-	return param_ptr_->enable_in_auto_;
+	return param_ptr_->enable_set_io_in_auto_;
 }
 
 

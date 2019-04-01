@@ -23,7 +23,8 @@ ControllerParam::ControllerParam():
     max_continuous_manual_move_timeout_(0),
     max_unknown_user_op_mode_timeout_(0),
     max_limited_global_vel_ratio_(0),
-    max_limited_global_acc_ratio_(0)
+    max_limited_global_acc_ratio_(0),
+    enable_set_vel_in_auto_(false)
 {
     file_path_ += "controller.yaml";
 }
@@ -52,7 +53,8 @@ bool ControllerParam::loadParam()
         || !yaml_help_.getParam("max_continuous_manual_move_timeout", max_continuous_manual_move_timeout_)
         || !yaml_help_.getParam("max_unknown_user_op_mode_timeout", max_unknown_user_op_mode_timeout_)
         || !yaml_help_.getParam("max_limited_global_vel_ratio", max_limited_global_vel_ratio_)
-        || !yaml_help_.getParam("max_limited_global_acc_ratio", max_limited_global_acc_ratio_))
+        || !yaml_help_.getParam("max_limited_global_acc_ratio", max_limited_global_acc_ratio_)
+        || !yaml_help_.getParam("enable_set_vel_in_auto", enable_set_vel_in_auto_))
     {
         return false;
     }
@@ -81,6 +83,7 @@ bool ControllerParam::saveParam()
         || !yaml_help_.setParam("max_unknown_user_op_mode_timeout", max_unknown_user_op_mode_timeout_)
         || !yaml_help_.setParam("max_limited_global_vel_ratio", max_limited_global_vel_ratio_)
         || !yaml_help_.setParam("max_limited_global_acc_ratio", max_limited_global_acc_ratio_)
+        || !yaml_help_.setParam("enable_set_vel_in_auto", enable_set_vel_in_auto_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

@@ -18,7 +18,7 @@ public:
     // param to load & save
     int log_level_;
     int max_mapping_number_;
-    bool enable_in_auto_;
+    bool enable_set_io_in_auto_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

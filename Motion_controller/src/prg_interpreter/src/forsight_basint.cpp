@@ -248,6 +248,13 @@ void* basic_interpreter(void* arg)
 	//  {
 	//  	resetRunningMacroInstr(objThreadCntrolBlock->project_name);
 	//  }
+	
+    setPrgmState(objThreadCntrolBlock, INTERPRETER_PAUSE_TO_IDLE);
+#ifdef WIN32
+	Sleep(1);
+#else
+    usleep(1000);
+#endif
 	setPrgmState(objThreadCntrolBlock, INTERPRETER_IDLE);
 	// clear ProgramName and leave line path
   	setProgramName(objThreadCntrolBlock, (char *)""); 
@@ -696,7 +703,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	InterpreterState interpreterState  = getPrgmState();
 	while(interpreterState == INTERPRETER_PAUSED)
 	{
-		FST_INFO("interpreterState is PAUSED_R.");
+		FST_INFO("interpreterState is PAUSED_R with %d.", (int)interpreterState);
 #ifdef WIN32
 		interpreterState =  INTERPRETER_EXECUTE;
 		Sleep(1000);
@@ -706,7 +713,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 #endif
 	}
   	if((objThreadCntrolBlock->prog_mode == STEP_MODE)
-		&& (isExecuteEmptyLine == 0))
+		&& (isExecuteEmptyLine == 0)
+		&& (objThreadCntrolBlock->is_abort == false))
   	{
   	    // Get curent Line
 	    memset(cLineContent, 0x00, LINE_CONTENT_LEN);
@@ -731,7 +739,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			// Set the iLineNum as the number of executed line
 			// and prog had point to the next line. 
 			// So Calling calc_line_from_prog to get the lineNum is forbidden here
-			setLinenum(objThreadCntrolBlock, iLinenum);
+			// Lujiaming comment at 190401
+			// setLinenum(objThreadCntrolBlock, iLinenum);
 			waitInterpreterStateleftPaused(objThreadCntrolBlock);
             FST_INFO("call_interpreter : Left  waitInterpreterStateleftPaused %d ", iLinenum);
 			

@@ -685,7 +685,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     else if(via.type == MOTION_CIRCLE)
     {   
         //moveC2J
-        ErrorCode err = convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        ErrorCode err = convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
         if (err != SUCCESS)
         {
             return err;

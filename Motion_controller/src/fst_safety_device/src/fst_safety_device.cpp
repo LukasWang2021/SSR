@@ -187,7 +187,7 @@ int FstSafetyDevice::getDITPUserMode()
 
     if(val == 0x1) return USER_OP_MODE_AUTO; //auto mode
     if(val == 0x2) return USER_OP_MODE_SLOWLY_MANUAL; //limit manual mode
-    if(val == 0x4) return USER_OP_MODE_UNLIMITED_MANUAL; //unlimit manual mode
+    if(val == 0x4) return USER_OP_MODE_MANUAL; //unlimit manual mode
     return USER_OP_MODE_NONE;
 }
 
@@ -409,6 +409,74 @@ void FstSafetyDevice::getSafetyBoardVersion(int &version)
         version = 0;
     }
 }
+
+
+bool FstSafetyDevice::getAutoModeDo(uint32_t &port_offset, uint8_t &value)
+{
+    // if setting is 0, do not set DO output.
+    if (param_ptr_->auto_mode_DO_ == 0)
+    {
+        return false;
+    }
+
+    port_offset = port_offset = param_ptr_->auto_mode_DO_;
+
+    int mode = getDITPUserMode();
+    if (mode == USER_OP_MODE_AUTO)
+    {
+        value = 1;
+    }
+    else
+    {
+        value = 0;
+    }
+    return true;
+}
+
+bool FstSafetyDevice::getLimitedManualModeDo(uint32_t &port_offset, uint8_t &value)
+{
+    // if setting is 0, do not set DO output.
+    if (param_ptr_->limited_manual_mode_DO_ == 0)
+    {
+        return false;
+    }
+
+    port_offset = port_offset = param_ptr_->limited_manual_mode_DO_;
+
+    int mode = getDITPUserMode();
+    if (mode == USER_OP_MODE_SLOWLY_MANUAL)
+    {
+        value = 1;
+    }
+    else
+    {
+        value = 0;
+    }
+    return true;
+}
+
+bool FstSafetyDevice::getManualModeDo(uint32_t &port_offset, uint8_t &value)
+{
+    // if setting is 0, do not set DO output.
+    if (param_ptr_->manual_mode_DO_ == 0)
+    {
+        return false;
+    }
+
+    port_offset = port_offset = param_ptr_->manual_mode_DO_;
+
+    int mode = getDITPUserMode();
+    if (mode == USER_OP_MODE_MANUAL)
+    {
+        value = 1;
+    }
+    else
+    {
+        value = 0;
+    }
+    return true;
+}
+
 
 //generate the error codes from the external component(safety_board)
 bool FstSafetyDevice::checkSafetyBoardAlarm(void)

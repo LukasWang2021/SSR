@@ -112,7 +112,7 @@ typedef enum
     USER_OP_MODE_NONE             = 0,
     USER_OP_MODE_AUTO             = 1,
     USER_OP_MODE_SLOWLY_MANUAL    = 2,
-    USER_OP_MODE_UNLIMITED_MANUAL = 3,
+    USER_OP_MODE_MANUAL = 3,
 }UserOpMode;
 	
 
@@ -410,9 +410,26 @@ public:
 	//  ----------------------------------------------------------------------
 	bool isCabinetResetRequest(void);
 
+    //  -----------------------------------------------------------------------
+	//  Function:		getSafetyBoardVersion
+	//  Description: get safety_board version
+	//  return:  None
+	//  ----------------------------------------------------------------------
 	void getSafetyBoardVersion(int &version);
 
+	//  -----------------------------------------------------------------------
+	//  Function:		get*ModeDo
+	//  Description: get the DO output according to the user mode.
+	//  return:  true -> DO is set.
+	//           bool -> DO is not set.
+	//  ----------------------------------------------------------------------
+	bool getAutoModeDo(uint32_t &port_offset, uint8_t &value);
+	bool getLimitedManualModeDo(uint32_t &port_offset, uint8_t &value);
+	bool getManualModeDo(uint32_t &port_offset, uint8_t &value);
+
+    //check safety_board
 	bool checkSafetyBoardAlarm(void);
+
 
 	
 private:

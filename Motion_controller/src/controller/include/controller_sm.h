@@ -26,7 +26,7 @@ namespace fst_ctrl
 //    USER_OP_MODE_NONE             = 0,
 //    USER_OP_MODE_AUTO             = 1,
 //    USER_OP_MODE_SLOWLY_MANUAL    = 2,
-//    USER_OP_MODE_UNLIMITED_MANUAL = 3,
+//    USER_OP_MODE_MANUAL = 3,
 //}UserOpMode;
 
 typedef enum

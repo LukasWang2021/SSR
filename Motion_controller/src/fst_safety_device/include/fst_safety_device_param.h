@@ -19,6 +19,9 @@ public:
     int log_level_;
     int cycle_time_;    // thread cycle time, ms
     bool is_virtual_;
+    int auto_mode_DO_;
+    int limited_manual_mode_DO_;
+    int manual_mode_DO_;
 
 private:
     fst_parameter::ParamGroup yaml_help_;

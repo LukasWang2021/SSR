@@ -138,6 +138,10 @@ ErrorCode IoMapping::updateSimFile()
 
 ErrorCode IoMapping::getDIByBit(uint32_t user_port, uint8_t &value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "DI[user_port]" */
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DI", user_port);
@@ -168,6 +172,10 @@ ErrorCode IoMapping::getDIByBit(uint32_t user_port, uint8_t &value)
 
 ErrorCode IoMapping::setDIByBit(uint32_t user_port, uint8_t value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	// make a string "DO[user_port]"
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DI", user_port);
@@ -182,6 +190,10 @@ ErrorCode IoMapping::setDIByBit(uint32_t user_port, uint8_t value)
 
 ErrorCode IoMapping::getDOByBit(uint32_t user_port, uint8_t &value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "DO[user_port]" */
     char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DO", user_port);
@@ -205,6 +217,10 @@ ErrorCode IoMapping::getDOByBit(uint32_t user_port, uint8_t &value)
 
 ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "DO[user_port]" */
     char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "DO", user_port);
@@ -229,6 +245,10 @@ ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 
 ErrorCode IoMapping::getRIByBit(uint32_t user_port, uint8_t &value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "RI[user_port]" */
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RI", user_port);
@@ -261,6 +281,10 @@ ErrorCode IoMapping::getRIByBit(uint32_t user_port, uint8_t &value)
 
 ErrorCode IoMapping::setRIByBit(uint32_t user_port, uint8_t value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "RO[user_port]" */
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RI", user_port);
@@ -274,6 +298,10 @@ ErrorCode IoMapping::setRIByBit(uint32_t user_port, uint8_t value)
 
 ErrorCode IoMapping::getROByBit(uint32_t user_port, uint8_t &value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "RO[user_port]" */
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RO", user_port);
@@ -299,6 +327,10 @@ ErrorCode IoMapping::getROByBit(uint32_t user_port, uint8_t &value)
 
 ErrorCode IoMapping::setROByBit(uint32_t user_port, uint8_t value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	// make a string "RO[user_port]"
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "RO", user_port);
@@ -324,6 +356,10 @@ ErrorCode IoMapping::setROByBit(uint32_t user_port, uint8_t value)
 
 ErrorCode IoMapping::getUIByBit(uint32_t user_port, uint8_t &value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "UI[user_port]" */
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "UI", user_port);
@@ -354,6 +390,10 @@ ErrorCode IoMapping::getUIByBit(uint32_t user_port, uint8_t &value)
 
 ErrorCode IoMapping::setUIByBit(uint32_t user_port, uint8_t yes_or_no)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	// make a string "UI[user_port]"
 	char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "UI", user_port);
@@ -368,6 +408,10 @@ ErrorCode IoMapping::setUIByBit(uint32_t user_port, uint8_t yes_or_no)
 
 ErrorCode IoMapping::getUOByBit(uint32_t user_port, uint8_t &value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "UO[user_port]" */
     char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "UO", user_port);
@@ -391,6 +435,10 @@ ErrorCode IoMapping::getUOByBit(uint32_t user_port, uint8_t &value)
 
 ErrorCode IoMapping::setUOByBit(uint32_t user_port, uint8_t value)
 {
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
 	/* make a string "UO[user_port]" */
     char cTemp[16] = {};
 	sprintf(cTemp, "%s[%d]", "UO", user_port);

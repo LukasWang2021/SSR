@@ -22,7 +22,7 @@ bool IoMappingParam::loadParam()
     if (!yaml_help_.loadParamFile(file_path_.c_str())
         || !yaml_help_.getParam("log_level", log_level_)
         || !yaml_help_.getParam("max_mapping_number", max_mapping_number_)
-        || !yaml_help_.getParam("enable_in_auto", enable_in_auto_))
+        || !yaml_help_.getParam("enable_set_io_in_auto", enable_set_io_in_auto_))
     {
         return false;
     }
@@ -36,7 +36,7 @@ bool IoMappingParam::saveParam()
 {
     if(!yaml_help_.setParam("log_level", log_level_)
         || !yaml_help_.setParam("max_mapping_number", max_mapping_number_)
-        || !yaml_help_.setParam("enable_in_auto", enable_in_auto_)
+        || !yaml_help_.setParam("enable_set_io_in_auto", enable_set_io_in_auto_)
         || !yaml_help_.dumpParamFile(file_path_.c_str()))
     {
         return false;

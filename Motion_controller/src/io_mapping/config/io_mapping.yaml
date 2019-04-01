@@ -1,4 +1,4 @@
 log_level: 1
 max_mapping_number: 1024
-enable_in_auto: true
+enable_set_io_in_auto: true
 #END

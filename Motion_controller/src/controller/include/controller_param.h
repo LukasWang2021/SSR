@@ -34,6 +34,7 @@ public:
     int max_unknown_user_op_mode_timeout_;  //us
     double max_limited_global_vel_ratio_;  // 0~1
     double max_limited_global_acc_ratio_;  // 0~1
+    bool enable_set_vel_in_auto_;
 private:
     fst_parameter::ParamGroup yaml_help_;
     std::string file_path_;

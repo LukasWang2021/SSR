@@ -17,6 +17,8 @@ using namespace fst_parameter;
 #define USER_PARAM_NAME_7 "user coordinate max number"
 #define USER_PARAM_NAME_8 "tool coordinate max number"
 #define USER_PARAM_NAME_9 "io mapping max number"
+#define USER_PARAM_NAME_10 "enable set IO in auto mode"
+#define USER_PARAM_NAME_11 "enable set velocity in auto mode"
 
 #define MANU_PARAM_NAME_1 "trajectory fifo size"
 #define MANU_PARAM_NAME_2 "duration of segment in trajectory fifo"
@@ -66,6 +68,8 @@ using namespace fst_parameter;
 #define USER_PARAM_DATA_7 "max_number_of_coords"
 #define USER_PARAM_DATA_8 "max_number_of_tools"
 #define USER_PARAM_DATA_9 "max_mapping_number"
+#define USER_PARAM_DATA_10 "enable_set_io_in_auto"
+#define USER_PARAM_DATA_11 "enable_set_vel_in_auto"
 
 #define MANU_PARAM_DATA_1 "trajectory_fifo_size"
 #define MANU_PARAM_DATA_2 "duration_of_segment_in_trajectory_fifo"
@@ -90,6 +94,7 @@ using namespace fst_parameter;
 #define FILE_IO_MAPPING (std::string(COMPONENT_PARAM_FILE_DIR) + "io_mapping.yaml")
 #define FILE_SEGMENT_ALG (std::string(COMPONENT_PARAM_FILE_DIR) + "segment_alg.yaml")
 #define FILE_SERVO_PARAM (std::string(SERVO_DIR) + "servo_param.yaml")
+#define FILE_CONTROLLER (std::string(COMPONENT_PARAM_FILE_DIR) + "controller.yaml")
 
 ParamManager::ParamManager()
 {
@@ -189,6 +194,20 @@ ErrorCode ParamManager::init()
     param_info.type = PARAM_INFO_INT;
     memcpy(param_info.data, &data_int, sizeof(int));
     user_param_list_.push_back(param_info);    
+
+    if(!yaml_help_.getParam(USER_PARAM_DATA_10, data_bool)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, USER_PARAM_NAME_10);
+    param_info.type = PARAM_INFO_BOOL;
+    memcpy(param_info.data, &data_int, sizeof(bool));
+    user_param_list_.push_back(param_info);  
+
+    if(!yaml_help_.loadParamFile(FILE_CONTROLLER)) return PARAM_MANAGER_INIT_FAILED;
+
+    if(!yaml_help_.getParam(USER_PARAM_DATA_11, data_bool)) return PARAM_MANAGER_INIT_FAILED;
+    strcpy(param_info.name, USER_PARAM_NAME_11);
+    param_info.type = PARAM_INFO_BOOL;
+    memcpy(param_info.data, &data_int, sizeof(bool));
+    user_param_list_.push_back(param_info); 
 
     // manu param
     if(!yaml_help_.loadParamFile(FILE_SEGMENT_ALG)) return PARAM_MANAGER_INIT_FAILED;
@@ -1207,6 +1226,30 @@ ErrorCode ParamManager::setParamInfo(ParamGroup_e param_group, ParamInfo_t& para
                     return PARAM_MANAGER_SET_PARAM_FAILED;
                 }
                 memcpy(user_param_list_[8].data, &data_int, sizeof(int));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, USER_PARAM_NAME_10) == 0)
+            {
+                data_bool = *((bool*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_IO_MAPPING)
+                    || !yaml_help_.setParam(USER_PARAM_DATA_10, data_bool)
+                    || !yaml_help_.dumpParamFile(FILE_IO_MAPPING)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(user_param_list_[9].data, &data_bool, sizeof(bool));
+                return SUCCESS;
+            }
+            if(strcmp(param_info.name, USER_PARAM_NAME_11) == 0)
+            {
+                data_bool = *((bool*)param_info.data);
+                if(!yaml_help_.loadParamFile(FILE_CONTROLLER)
+                    || !yaml_help_.setParam(USER_PARAM_DATA_11, data_bool)
+                    || !yaml_help_.dumpParamFile(FILE_CONTROLLER)) 
+                {
+                    return PARAM_MANAGER_SET_PARAM_FAILED;
+                }
+                memcpy(user_param_list_[10].data, &data_bool, sizeof(bool));
                 return SUCCESS;
             }
 

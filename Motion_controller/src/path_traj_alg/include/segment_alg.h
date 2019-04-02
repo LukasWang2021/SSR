@@ -823,7 +823,7 @@ inline void updateMovLTrajP(const fst_mc::PathCache& path_cache, int* traj_path_
 inline void updateMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline void updateMovCTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline bool updateMovLVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
-inline void updateMovJVia2InTrajP(const fst_mc::PathCache& path_cache, const basic_alg::Joint &start, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
+inline bool updateMovJVia2InTrajP(const fst_mc::PathCache& path_cache, const basic_alg::Joint &start, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
 inline void updateMovLIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
@@ -858,10 +858,10 @@ inline void updateMovJTrajT(const fst_mc::PathCache& path_cache, double cmd_vel,
 inline void updateMovCTrajT(const fst_mc::PathCache& path_cache, double cmd_vel, 
                                 int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size, 
                                 int& traj_t_size);
-inline void updateMovLVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
+inline bool updateMovLVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
                                 int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                 int& traj_t_size);
-inline void updateMovJVia2EndTrajT(const fst_mc::PathCache& path_cache,const basic_alg::Joint &start, const fst_mc::MotionTarget& via, double cmd_vel,
+inline bool updateMovJVia2EndTrajT(const fst_mc::PathCache& path_cache,const basic_alg::Joint &start, const fst_mc::MotionTarget& via, double cmd_vel,
                                 int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                 int& traj_t_size);
 inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,

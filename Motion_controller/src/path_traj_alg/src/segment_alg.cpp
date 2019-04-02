@@ -1470,14 +1470,23 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
                 return TRAJ_PLANNING_INVALID_IK_FAILED;
             }
             updateMovLIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
-            updateMovLVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
+            if(!updateMovLVia2EndTrajT(path_cache, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end))
+            {
+                return TRAJ_PLANNING_INVALID_IK_FAILED;
+            }
             break;
         }
         case MOTION_JOINT:
         {
-            updateMovJVia2InTrajP(path_cache, start_state.angle, via, traj_pva_in_index);
+            if(!updateMovJVia2InTrajP(path_cache, start_state.angle, via, traj_pva_in_index))
+            {
+                return TRAJ_PLANNING_INVALID_IK_FAILED;
+            }
             updateMovJIn2EndTrajP(path_cache, traj_pva_in_index, traj_path_cache_index_in2end, traj_pva_out_index, traj_pva_size_via2end);
-            updateMovJVia2EndTrajT(path_cache, start_state.angle, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end);
+            if (!updateMovJVia2EndTrajT(path_cache, start_state.angle, via, cmd_vel, traj_path_cache_index_in2end, traj_pva_in_index, traj_pva_out_index, traj_pva_size_via2end, traj_t_size_via2end) != SUCCESS)
+            {
+                return TRAJ_PLANNING_INVALID_IK_FAILED;
+            }
             break;
         }
         case MOTION_CIRCLE:
@@ -3250,7 +3259,7 @@ inline bool updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
     return true;
 }
 
-inline void updateMovJVia2InTrajP(const PathCache& path_cache, const Joint &start, const MotionTarget& via, int& traj_pva_in_index)
+inline bool updateMovJVia2InTrajP(const PathCache& path_cache, const Joint &start, const MotionTarget& via, int& traj_pva_in_index)
 {
     Joint joint_via;
     if (via.type == MOTION_JOINT)
@@ -3259,14 +3268,17 @@ inline void updateMovJVia2InTrajP(const PathCache& path_cache, const Joint &star
     }
     else if (via.type == MOTION_LINE)
     {   
-        convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        if (convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+            return false;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
-        convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        if (convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+            return false;
     }
     else
     {
+        return false;
     }
 
     int i, j;
@@ -3315,6 +3327,7 @@ inline void updateMovJVia2InTrajP(const PathCache& path_cache, const Joint &star
             traj_p_address += 75;
         }       
     }
+    return true;
 }
 
 inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index)
@@ -3322,7 +3335,8 @@ inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst
     PoseEuler pose_euler_via;
     if (via.type == MOTION_JOINT)
     {
-        convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+        if (convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via) != SUCCESS)
+            return false;
     }
     else if (via.type == MOTION_LINE)
     {   
@@ -3390,7 +3404,7 @@ inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst
 
         for(i = 0; i <= traj_pva_in_index; ++i)
         {
-            getCirclePoint(circle_angle_radius, circle_angle_via2in, uint_vector_n, uint_vector_o,
+            getCirclePoint(circle_angle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
                 center_position, pose.point_);
             getQuaternPoint(via_quatern, in_quatern, quatern_angle_via2in, quatern_angle_distance_to_via, pose.quaternion_);
             if(!segment_alg_param.kinematics_ptr->doIK(pose, joint_ref, joint_result))
@@ -3852,14 +3866,15 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
     getTrajPFromPathOut2In(path_cache, traj_piece_ideal_out2in, traj_path_cache_index_out2in, traj_pva_size_out2in);
 }
 
-inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel,
+inline bool updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarget& via, double cmd_vel,
                                    int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                    int& traj_t_size)
 {
     PoseEuler pose_euler_via;
     if (via.type == MOTION_JOINT)
     {
-        convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+        if (convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via) != SUCCESS)
+            return false;
     }
     else if (via.type == MOTION_LINE)
     {   
@@ -3870,7 +3885,9 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
         pose_euler_via = via.circle_target.pose2;
     }
     else
-    {}
+    {
+        return false;
+    }
 
     int i;
     // compute time span
@@ -3926,9 +3943,10 @@ inline void updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     // adjust first and last piece of time
     stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
     stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
+    return true;
 }
 
-inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const Joint &start, const MotionTarget& via, double cmd_vel,
+inline bool updateMovJVia2EndTrajT(const PathCache& path_cache, const Joint &start, const MotionTarget& via, double cmd_vel,
                                   int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                   int& traj_t_size)
 {
@@ -3939,14 +3957,17 @@ inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const Joint &sta
     }
     else if (via.type == MOTION_LINE)
     {   
-        convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        if (convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+            return false;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
-        convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        if (convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+            return false;
     }
     else
     {
+        return false;
     }
     int i;
     int path_cache_length_minus_1 = path_cache.cache_length - 1;
@@ -4012,6 +4033,8 @@ inline void updateMovJVia2EndTrajT(const PathCache& path_cache, const Joint &sta
     // adjust first and last piece of time
     stack[S_TrajT] = segment_alg_param.time_factor_first * stack[S_TrajT];
     stack[S_TrajT + traj_t_size - 1] = segment_alg_param.time_factor_last * stack[S_TrajT + traj_t_size - 1];
+
+    return true;
 }
 
 inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
@@ -4108,7 +4131,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
                 double time_span_out2via_tmp;
                  for(int i = 0; i < model.link_num; ++i)
                 {
-                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (via.vel * stack[S_ConstraintJointVelMax + i]);
                     if(time_span_out2via_tmp > time_span_out2via)
                     {
                         time_span_out2via = time_span_out2via_tmp;
@@ -4119,7 +4142,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
-                double time_span_out2via = path_length_out2via * 1.4 / cmd_vel;
+                double time_span_out2via = path_length_out2via * 1.4 / via.vel;
                 double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double time_span_via2in = path_length_via2in / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
@@ -4131,7 +4154,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             if (via.type == MOTION_LINE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-                double time_span_out2via = path_length_out2via / cmd_vel;
+                double time_span_out2via = path_length_out2via / via.vel;
 
                 Joint joint_via;
                 convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
@@ -4177,7 +4200,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
-                double time_span_out2via = path_length_out2via * 1.4 / cmd_vel;
+                double time_span_out2via = path_length_out2via * 1.4 / via.vel;
 
                 Joint joint_via;
                 convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
@@ -4204,7 +4227,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             if (via.type == MOTION_LINE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-                double time_span_out2via = path_length_out2via / cmd_vel;
+                double time_span_out2via = path_length_out2via / via.vel;
                 double time_span_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
                 break;
@@ -4215,7 +4238,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
                 double time_span_out2via_tmp;
                  for(int i = 0; i < model.link_num; ++i)
                 {
-                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (cmd_vel * stack[S_ConstraintJointVelMax + i]);
+                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (via.vel * stack[S_ConstraintJointVelMax + i]);
                     if(time_span_out2via_tmp > time_span_out2via)
                     {
                         time_span_out2via = time_span_out2via_tmp;
@@ -4228,7 +4251,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-                double time_out2via = path_length_out2via * 1.4 / cmd_vel;
+                double time_out2via = path_length_out2via * 1.4 / via.vel;
                 double time_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
                 time_span_out2in = time_out2via + time_via2in;
             }

@@ -15,8 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
 #set(controller_MAIN_VERSION 1) #uncommemt if release version
 set(VERSION_MAJOR 3)
 set(VERSION_MINOR 3)
-set(VERSION_PATCH 7)
-set(VERSION_COMMIT \"5484268d\") #from gitlab commit number.
+set(VERSION_PATCH 8)
+set(VERSION_COMMIT \"68d76f1b\") #from gitlab commit number.
 string(TIMESTAMP BUILD_DATE \"%Y%m%d\")
 string(TIMESTAMP BUILD_TIME \"%H:%M:%S\")
 

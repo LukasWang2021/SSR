@@ -158,10 +158,10 @@ void initStack(int link_num, double joint_vel_max[9])
     stack[S_PathCountFactorCartesian] = segment_alg_param.accuracy_cartesian_factor / 100.0;
     stack[S_PathCountFactorJoint] = segment_alg_param.accuracy_joint_factor / PI;
 
-    stack[S_PauseTimeFactor] = 1.2;
+    stack[S_PauseTimeFactor] = 1.5;
     stack[S_PausePathLengthFactor] = 1.2;
     stack[S_PauseAccCartesian] = 500;
-    stack[S_PauseAccJoint] = 20;
+    stack[S_PauseAccJoint] = 3.1415926;
 
     // init start and end point vel and acc state
     int start_point_address = S_StartPointState0;
@@ -1437,7 +1437,6 @@ ErrorCode planTrajectory(const PathCache &path_cache,
     updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, traj_t_size, S_TrajJ0, S_TrajCoeffJ0A0);
     packTrajCache(traj_path_cache_index, traj_pva_out_index, traj_pva_size, S_TrajCoeffJ0A0, S_TrajT, traj_t_size, traj_cache);  
 
-    memcpy(traj_index, traj_path_cache_index, sizeof(int) * 25);
     return SUCCESS;
 }
 
@@ -1619,6 +1618,7 @@ ErrorCode planPauseTrajectory(const PathCache &path_cache,
     updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, traj_t_size, S_TrajJ0, S_TrajCoeffJ0A0);
     packPauseTrajCache(traj_path_cache_index, traj_pva_size, S_TrajCoeffJ0A0, S_TrajT, traj_t_size, traj_cache);
     path_stop_index = path_end_index;
+
     return SUCCESS;
 }
 
@@ -1987,12 +1987,35 @@ inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pv
 
     Joint joint_offset_time;
     double joint_offset_time_max = 0.0;
+    Joint joint_offset_real;
+    Joint joint_offset_min;
     Joint joint_omega = start_state.omega;
+    double joint_omega_coefficient = 1;
+
+    for (int joint_index = 0; joint_index < model.link_num; ++joint_index)
+    {
+        if (seg_axis_type[joint_index] == ROTARY_AXIS)
+        {
+            joint_offset_real[joint_index] = fabs(stack[S_TrajP0 + 75 *joint_index] - stack[S_TrajP0 + traj_pva_size - 1 + 75 *joint_index]);
+            joint_offset_min[joint_index] = fabs(joint_omega[joint_index] * joint_omega[joint_index] / (2 * stack[S_PauseAccJoint]));
+            joint_omega_coefficient = joint_offset_real[joint_index] / joint_offset_min[joint_index];
+            joint_omega[joint_index] = joint_omega[joint_index] * sqrt(joint_omega_coefficient);
+        }
+        else if(seg_axis_type[joint_index] == LINEAR_AXIS)
+        {
+            joint_offset_real[joint_index] = fabs(stack[S_TrajP0 + 75 *joint_index] - stack[S_TrajP0 + traj_pva_size - 1 + 75 *joint_index]);
+            joint_offset_min[joint_index] = fabs(joint_omega[joint_index] * joint_omega[joint_index] / (2 * stack[S_PauseAccCartesian]));
+            joint_omega_coefficient = joint_offset_real[joint_index] / joint_offset_min[joint_index];
+            joint_omega[joint_index] = joint_omega[joint_index] * sqrt(joint_omega_coefficient);
+        }
+    }
 
     // for stop point
     Joint joint_offset;
     int joint_index;
     int joint_index_temp;
+    double joint_angle_max;
+    double mid_param;
 
     for (int i = 0; i < traj_t_size; ++i)
     {
@@ -2000,37 +2023,74 @@ inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pv
         {
             joint_offset[joint_index] = fabs(stack[S_TrajP0 + i + 1 + 75 *joint_index] - stack[S_TrajP0 + i + 75 *joint_index]);
 
-            if (joint_offset[joint_index] == 0)
+            if (joint_offset[joint_index] == 0 
+                || -1 * DOUBLE_ACCURACY <= joint_omega[joint_index] && joint_omega[joint_index] <= DOUBLE_ACCURACY)
             {
                  joint_offset_time[joint_index] = 0;
             }
             else if(seg_axis_type[joint_index] == ROTARY_AXIS)
             {
-                joint_offset_time[joint_index] = (joint_omega[joint_index] 
-                    + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PauseAccJoint]))
-                    / stack[S_PauseAccJoint];
+                mid_param = joint_omega[joint_index] - sqrt(joint_omega[joint_index] * joint_omega[joint_index] - 2* stack[S_PauseAccJoint]* joint_offset[joint_index]);
+                if (DOUBLE_ACCURACY < mid_param) 
+                {
+                    joint_offset_time[joint_index] = mid_param / stack[S_PauseAccJoint];
+                }
+                else
+                {
+                    joint_offset_time[joint_index] = (joint_omega[joint_index] 
+                        + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PauseAccJoint]))
+                        / stack[S_PauseAccJoint];
+                }
 
-                joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PauseAccJoint];
+                if (joint_omega[joint_index] < DOUBLE_ACCURACY)
+                {
+                    joint_omega[joint_index] = joint_omega[joint_index] + joint_offset_time[joint_index] * stack[S_PauseAccJoint];
+                    if (DOUBLE_ACCURACY < joint_omega[joint_index]) joint_omega[joint_index] = 0.0;
+                }
+                else
+                {
+                    joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PauseAccJoint];
+                    if (joint_omega[joint_index] < DOUBLE_ACCURACY) joint_omega[joint_index] = 0.0;
+                }
             }
             else if (seg_axis_type[joint_index] == LINEAR_AXIS)
             {
-                joint_offset_time[joint_index] = (joint_omega[joint_index] 
-                    + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PauseAccCartesian]))
-                    / stack[S_PauseAccCartesian];
+                mid_param = joint_omega[joint_index] - sqrt(joint_omega[joint_index] * joint_omega[joint_index] - 2* stack[S_PauseAccCartesian]* joint_offset[joint_index]);
+ 
+                if (DOUBLE_ACCURACY < mid_param
+                || -1 * DOUBLE_ACCURACY <= joint_omega[joint_index] && joint_omega[joint_index] <= DOUBLE_ACCURACY)
+                {
+                    joint_offset_time[joint_index] = mid_param / stack[S_PauseAccCartesian];
+                }
+                else
+                {
+                    joint_offset_time[joint_index] = (joint_omega[joint_index] 
+                        + sqrt(joint_omega[joint_index] * joint_omega[joint_index] + 2 * joint_offset[joint_index] * stack[S_PauseAccCartesian]))
+                        / stack[S_PauseAccCartesian];
+                }
 
-                joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PauseAccCartesian];
+                if (joint_omega[joint_index] < DOUBLE_ACCURACY)
+                {
+                    joint_omega[joint_index] = joint_omega[joint_index] + joint_offset_time[joint_index] * stack[S_PauseAccCartesian];
+                    if (DOUBLE_ACCURACY < joint_omega[joint_index]) joint_omega[joint_index] = 0.0;
+                }
+                else
+                {
+                    joint_omega[joint_index] = joint_omega[joint_index] - joint_offset_time[joint_index] * stack[S_PauseAccCartesian];
+                    if (joint_omega[joint_index] < DOUBLE_ACCURACY) joint_omega[joint_index] = 0.0;
+                }
             }
 
             if (joint_offset_time_max < joint_offset_time[joint_index])
             {
                 joint_offset_time_max = joint_offset_time[joint_index];
                 joint_index_temp = joint_index;
+                joint_angle_max = joint_offset[joint_index];
             }
         }
 
-        printf("joint_index_temp = %d\n", joint_index_temp);
         stack[S_TrajT + i] = joint_offset_time_max * stack[S_PauseTimeFactor];
-        printf("stack[S_TrajT + %d] = %lf\n", i, stack[S_TrajT + i]);
+
         joint_offset_time_max = 0.0;
     }
 }
@@ -4686,7 +4746,6 @@ inline void packPauseTrajCache(int* traj_path_cache_index, int traj_pva_size,
     {
         traj_cache.cache[i].index_in_path_cache = traj_path_cache_index[i + 1];
         traj_cache.cache[i].duration = stack[traj_t_address + i];
-        printf("traj_cache.cache[%d].duration = %lf\n", i, traj_cache.cache[i].duration);
         traj_coeff_address_local = traj_coeff_address;
         for(int j = 0; j < model.link_num; ++j)
         {

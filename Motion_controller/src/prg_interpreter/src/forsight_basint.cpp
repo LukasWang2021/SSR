@@ -248,13 +248,6 @@ void* basic_interpreter(void* arg)
 	//  {
 	//  	resetRunningMacroInstr(objThreadCntrolBlock->project_name);
 	//  }
-	
-    setPrgmState(objThreadCntrolBlock, INTERPRETER_PAUSE_TO_IDLE);
-#ifdef WIN32
-	Sleep(1);
-#else
-    usleep(1000);
-#endif
 	setPrgmState(objThreadCntrolBlock, INTERPRETER_IDLE);
 	// clear ProgramName and leave line path
   	setProgramName(objThreadCntrolBlock, (char *)""); 
@@ -533,6 +526,7 @@ checkHomePoseResult check_home_pose(struct thread_control_block* objThreadCntrol
 *************************************************/ 
 int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode)
 {
+  bool ret = true;
   int isExecuteEmptyLine ;
   bool bRet = 0;
   int iRet = 0;
@@ -712,6 +706,24 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		sleep(1);
 #endif
 	}
+	// Wait Trajectory
+#ifndef WIN32
+    ret = g_objRegManagerInterface->isNextInstructionNeeded();
+#else
+    ret = true;
+#endif
+    while (ret == false)
+    {
+#ifdef WIN32
+		Sleep(1);
+		break ;
+#else
+        usleep(1000);
+#endif
+#ifndef WIN32
+    	ret = g_objRegManagerInterface->isNextInstructionNeeded();
+#endif
+    }
   	if((objThreadCntrolBlock->prog_mode == STEP_MODE)
 		&& (isExecuteEmptyLine == 0)
 		&& (objThreadCntrolBlock->is_abort == false))

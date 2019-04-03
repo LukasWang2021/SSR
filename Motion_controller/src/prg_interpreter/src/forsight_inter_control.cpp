@@ -987,9 +987,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 #else
 	        usleep(1000);
 #endif
-// 			FST_INFO("setPrgmState(IDLE_R).");
-// The commented code is not necessory, is_abort = true would finish this job.	
-//		    setPrgmState(objThdCtrlBlockPtr, INTERPRETER_IDLE);
+ 			FST_INFO("setPrgmState(IDLE_R).");
+		    setPrgmState(objThdCtrlBlockPtr, INTERPRETER_IDLE);
 
 		    // clear line path and ProgramName
   			FST_INFO("reset ProgramName And LineNum.");

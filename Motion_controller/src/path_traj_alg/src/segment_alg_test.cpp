@@ -32,7 +32,7 @@ void doIK(Kinematics* kinematics_ptr, PathCache& path_cache, Joint& start_joint)
     }
 }
 
-int main(void)
+int main_tool(void)
 {
     std::string file_path = AXIS_GROUP_DIR;
     Kinematics* kinematics_ptr = new KinematicsRTM(file_path);

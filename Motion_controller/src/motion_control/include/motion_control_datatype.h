@@ -12,6 +12,7 @@
 #include <basic_alg_datatype.h>
 #include <basic_constants.h>
 #include <common_enum.h>
+//#include <kinematics.h>
 
 namespace fst_mc
 {
@@ -34,6 +35,20 @@ struct JointConstraint  // 关节限位
     basic_alg::Joint upper;    // 上限
     basic_alg::Joint lower;    // 下限
 };
+
+/*
+struct TargetPoint
+{
+    CoordinateType  type;
+    //Posture         posture;
+
+    union
+    {
+        basic_alg::Joint        joint;
+        basic_alg::PoseEuler    pose;
+    };
+};
+*/
 
 struct CircleTarget     // moveC的目标点，由2个点位姿点构成
 {

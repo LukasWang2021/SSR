@@ -17,6 +17,12 @@ enum MotionType
     MOTION_XPOS   = 4,
 };
 
+enum CoordinateType
+{
+    COORDINATE_JOINT = 0,
+    COORDINATE_CARTESIAN = 1,
+};
+
 enum PointType
 {
     PATH_POINT = 0,
@@ -79,13 +85,15 @@ enum AxisType
 
 enum GroupState
 {
-    UNKNOW = 0x0,
+    UNKNOW  = 0x0,
     DISABLE = 0x1,
     STANDBY = 0x2,
-    MANUAL = 0x3,
-    AUTO = 0x4,
-    PAUSE = 0x5,
+    MANUAL  = 0x3,
+    AUTO    = 0x4,
+    PAUSE   = 0x5,
     PAUSE_RETURN = 0x6,
+    PAUSE_MANUAL = 0x7,
+    PAUSING = 0x8,
 
     DISABLE_TO_STANDBY = 0x12,
     STANDBY_TO_DISABLE = 0x21,
@@ -96,6 +104,8 @@ enum GroupState
     AUTO_TO_PAUSE = 0x45,
     PAUSE_RETURN_TO_STANDBY = 0x62,
     PAUSE_TO_PAUSE_RETURN = 0x56,
+    PAUSE_TO_PAUSE_MANUAL = 0x57,
+    PAUSE_MANUAL_TO_PAUSE = 0x75,
 };
 
 }

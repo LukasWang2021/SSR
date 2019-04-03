@@ -264,6 +264,7 @@ class BaseGroup
     bool auto_to_standby_request_;
     bool manual_to_standby_request_;
     bool pause_return_to_standby_request_;
+    bool pausing_to_pause_request_;
 
     size_t  disable_to_standby_timeout_;
     size_t  standby_to_disable_timeout_;

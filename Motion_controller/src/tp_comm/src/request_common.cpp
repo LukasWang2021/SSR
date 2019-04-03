@@ -162,7 +162,6 @@ void TpComm::handleRequestNonexistentHash(int hash, int recv_bytes)
 
     if(request_data_ptr == NULL)
     {
-        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
         FST_ERROR("Can't allocate memory for request_data");
         return;
     }
@@ -170,7 +169,6 @@ void TpComm::handleRequestNonexistentHash(int hash, int recv_bytes)
     ResponseMessageType_Void* response_data_ptr = new ResponseMessageType_Void;
     if(response_data_ptr == NULL)
     {
-        recordLog(TP_COMM_LOG, TP_COMM_MEMORY_OPERATION_FAILED, "/rpc/tp_comm/getPublishTable");
         FST_ERROR("Can't allocate memory for response_data");
         delete request_data_ptr;
         return;

@@ -30,6 +30,7 @@ typedef struct
     int accuracy_cartesian_factor;  // define the number of trajectory points on per 100mm cartesian path
     int accuracy_joint_factor;      // define the number of trajectory points on per PI joint path
     int max_traj_points_num;    // max traj points per trajectory, up to 20 points
+    int min_path_num_left;
     double path_interval;       // path points interval in mm
     double joint_interval;      // joint angle interval in rad
     double angle_interval;    // quatern angle interval in rad

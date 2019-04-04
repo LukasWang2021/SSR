@@ -3128,7 +3128,7 @@ inline void getTrajPFromPathIn2Out2End(const PathCache& path_cache, double traj_
             traj_pva_size_via2end = ceil(traj_piece_ideal_via2end) + 1;
         }
         int traj_piece_real_via2end = traj_pva_size_via2end - 1;
-        int traj_piece_real_in2out = traj_piece_real_via2end - traj_pva_in_index - traj_piece_real_out2end - 1;
+        int traj_piece_real_in2out = traj_piece_real_via2end - traj_pva_in_index - traj_piece_real_out2end;
         int traj_piece_real_in2end = traj_piece_real_in2out + traj_piece_real_out2end;
         traj_pva_out_index = traj_pva_in_index + traj_piece_real_in2out;
         stack[S_PathIndexStep_In2Out] = (path_cache.smooth_out_index - path_cache.smooth_in_index) / (double)traj_piece_real_in2out;

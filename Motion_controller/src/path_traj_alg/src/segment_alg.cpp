@@ -1681,6 +1681,7 @@ inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, co
     int &path_end_index)
 {
     double pause2end_offset = 0.0;
+    double mid_pause2end_offset = 0.0;
     double max_stop_time = 0;
     double joint_index_of_max_time_stop2end = 0;
     Joint pre_time_stop2end;
@@ -1713,11 +1714,17 @@ inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, co
 
     double joint_offset_angle_stop2in = fabs(path_cache.cache[path_cache.smooth_in_index].joint[joint_index_of_max_time_stop2end] - 
         path_cache.cache[path_stop_index].joint[joint_index_of_max_time_stop2end]);
+
+    int path_mid_in2end_index = floor((path_cache.cache_length + path_stop_index ) / 2) ;
+    double joint_offset_angle_mid_in2end = fabs(path_cache.cache[path_mid_in2end_index].joint[joint_index_of_max_time_stop2end] - 
+        path_cache.cache[path_cache.smooth_in_index].joint[joint_index_of_max_time_stop2end]);
+
     double joint_offset_angle_stop2end = fabs(path_cache.cache[path_cache.cache_length - 1].joint[joint_index_of_max_time_stop2end] - 
         path_cache.cache[path_stop_index].joint[joint_index_of_max_time_stop2end]);
 
     int max_path_index = 0;
     if (joint_offset_angle < joint_offset_angle_stop2in) max_path_index = path_cache.smooth_in_index;
+    else if (joint_offset_angle < joint_offset_angle_mid_in2end) max_path_index = path_mid_in2end_index;
     else if (joint_offset_angle <= joint_offset_angle_stop2end) max_path_index = path_cache.cache_length -1;
     else return false;
 
@@ -1728,7 +1735,7 @@ inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, co
         if (joint_offset_angle <= angle_offset)
         {
             if (path_cache.cache_length - 1 < path_index + 4) return false;
-            if (path_index - path_stop_index < 4) path_end_index = path_stop_index + 5;
+            if (path_index - path_stop_index < 4) path_end_index = path_stop_index + 4;
             else path_end_index = path_index;
             return true;
         }

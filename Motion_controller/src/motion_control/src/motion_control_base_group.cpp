@@ -1224,6 +1224,7 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
 ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
 {
+    /*
     if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
     {
         Joint control_joint, current_joint;
@@ -1255,6 +1256,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
             return BARE_CORE_TIMEOUT;
         }
     }
+    */
 
     if (!soft_constraint_.isJointInConstraint(start_joint))
     {

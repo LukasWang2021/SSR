@@ -161,7 +161,7 @@ void initStack(int link_num, double joint_vel_max[9])
     stack[S_PauseTimeFactor] = 1.5;
     stack[S_PausePathLengthFactor] = 1.2;
     stack[S_PauseAccCartesian] = 500;
-    stack[S_PauseAccJoint] = 3.1415926;
+    stack[S_PauseAccJoint] = 1;
 
     // init start and end point vel and acc state
     int start_point_address = S_StartPointState0;
@@ -1627,6 +1627,7 @@ bool canBePause(const PathCache &path_cache, const fst_mc::JointState &stop_stat
 {
     int i = 0;
     double pause2end_offset = 0.0;
+    double mid_pause2end_offset = 0.0;
     double max_stop_time = 0;
     double joint_index_of_max_time_stop2end = 0;
     Joint pre_time_stop2end;
@@ -1645,9 +1646,10 @@ bool canBePause(const PathCache &path_cache, const fst_mc::JointState &stop_stat
         }
 
         pause2end_offset = fabs(path_cache.cache[path_stop_index + left_path_number - 1].joint[i] - stop_state.angle[i]);
-
+        int mid_pause2end_index = ceil((path_stop_index + left_path_number - 1 + path_stop_index) / 2);
+        mid_pause2end_offset = fabs(path_cache.cache[mid_pause2end_index].joint[i] - stop_state.angle[i]);
         //if (pause2end_offset <= pre_offset_angle_stop2end[i] * stack[S_PausePathLengthFactor]) 
-        if (pause2end_offset <= pre_offset_angle_stop2end[i])  return false;
+        if (pause2end_offset <= pre_offset_angle_stop2end[i] && mid_pause2end_offset <= pre_offset_angle_stop2end[i] )  return false;
         if (max_stop_time < pre_time_stop2end[i]) 
         {
             max_stop_time = pre_time_stop2end[i];
@@ -1991,23 +1993,23 @@ inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pv
     Joint joint_offset_min;
     Joint joint_omega = start_state.omega;
     double joint_omega_coefficient = 1;
+    Joint joint_time_coefficient;
 
     for (int joint_index = 0; joint_index < model.link_num; ++joint_index)
     {
+        joint_offset_real[joint_index] = fabs(stack[S_TrajP0 + 75 *joint_index] - stack[S_TrajP0 + traj_pva_size - 1 + 75 *joint_index]);
         if (seg_axis_type[joint_index] == ROTARY_AXIS)
         {
-            joint_offset_real[joint_index] = fabs(stack[S_TrajP0 + 75 *joint_index] - stack[S_TrajP0 + traj_pva_size - 1 + 75 *joint_index]);
             joint_offset_min[joint_index] = fabs(joint_omega[joint_index] * joint_omega[joint_index] / (2 * stack[S_PauseAccJoint]));
-            joint_omega_coefficient = joint_offset_real[joint_index] / joint_offset_min[joint_index];
-            joint_omega[joint_index] = joint_omega[joint_index] * sqrt(joint_omega_coefficient);
+
         }
         else if(seg_axis_type[joint_index] == LINEAR_AXIS)
         {
-            joint_offset_real[joint_index] = fabs(stack[S_TrajP0 + 75 *joint_index] - stack[S_TrajP0 + traj_pva_size - 1 + 75 *joint_index]);
             joint_offset_min[joint_index] = fabs(joint_omega[joint_index] * joint_omega[joint_index] / (2 * stack[S_PauseAccCartesian]));
-            joint_omega_coefficient = joint_offset_real[joint_index] / joint_offset_min[joint_index];
-            joint_omega[joint_index] = joint_omega[joint_index] * sqrt(joint_omega_coefficient);
         }
+
+        joint_omega_coefficient = joint_offset_real[joint_index] / joint_offset_min[joint_index];
+        joint_omega[joint_index] = joint_omega[joint_index] * sqrt(joint_omega_coefficient);    
     }
 
     // for stop point
@@ -2023,7 +2025,7 @@ inline void updatePauseTrajT(const fst_mc::JointState &start_state, int &traj_pv
         {
             joint_offset[joint_index] = fabs(stack[S_TrajP0 + i + 1 + 75 *joint_index] - stack[S_TrajP0 + i + 75 *joint_index]);
 
-            if (joint_offset[joint_index] == 0 
+            if (joint_offset[joint_index] < DOUBLE_ACCURACY 
                 || -1 * DOUBLE_ACCURACY <= joint_omega[joint_index] && joint_omega[joint_index] <= DOUBLE_ACCURACY)
             {
                  joint_offset_time[joint_index] = 0;

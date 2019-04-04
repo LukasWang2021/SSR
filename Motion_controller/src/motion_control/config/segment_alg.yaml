@@ -5,7 +5,7 @@ path_interval: 1.0
 joint_interval: 0.01745
 angle_interval: 0.01745
 angle_valve: 0.8727
-conservative_acc: 10000.0
+conservative_acc: 1000.0
 time_factor_first: 2.5
 time_factor_last: 2.5
 is_fake_dynamics: true

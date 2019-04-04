@@ -28,57 +28,40 @@ using namespace basic_alg;
 
 void test0(void)
 {
-    Joint angle;
-    Joint omega;
-    Joint alpha_upper, alpha_lower;
-    clock_t start, end;
-    DynamicsInterface dynamics;
-    float alpha[2][6];
+    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    ErrorCode err = SUCCESS;
+    Joint reference;
+    Transformation transformation;
+    transformation.init(&kinematics);
+    PoseQuaternion tcp_in_user, tcp_in_base, fcp_in_base;
+    PoseEuler user_frame_, tool_frame_;
+    tcp_in_user.point_.x_ = 250;
+    tcp_in_user.point_.y_ = 342;
+    tcp_in_user.point_.z_ = 310;
+    tcp_in_user.quaternion_.w_ = 0.000046;
+    tcp_in_user.quaternion_.x_ = 1;
+    tcp_in_user.quaternion_.y_ = 0;
+    tcp_in_user.quaternion_.z_ = 0;
+    memset(&user_frame_, 0, sizeof(user_frame_));
+    memset(&tool_frame_, 0, sizeof(tool_frame_));
 
-    angle[0] = 0.9;
-    angle[1] = 0.4;
-    angle[2] = -0.2;
-    angle[3] = 1.1;
-    angle[4] = -1.4;
-    angle[5] = 0.3;
-    omega[0] = 2.5;
-    omega[1] = 1.3;
-    omega[2] = -3.4;
-    omega[3] = -1.2;
-    omega[4] = 0.4;
-    omega[5] = -0.9;
 
-    float jnt[6] = {0, 0, 0, 1.1, 0, 0.3};
-    float omg[6] = {0, 0, 0, 0, 0, 0};
+    transformation.convertPoseFromUserToBase(tcp_in_user, user_frame_, tcp_in_base);
+    transformation.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
+    //err = kinematics.doIK(fcp_in_base, reference, path.cache[i].joint) ? SUCCESS : IK_FAIL;
 
-    start = clock();
-    for (size_t i = 0; i < 22; i++)
-        dynamics.computeAccMax(jnt , omg, alpha);
-    end = clock();
-    double seconds  =(double)(end - start)/CLOCKS_PER_SEC;
-    printf("dynamics using time: %.6f ms\n", seconds * 1000);
+    
+        char buffer[LOG_TEXT_SIZE];
+        PoseQuaternion &pose = tcp_in_user;
+        PoseEuler tcp_user = Pose2PoseEuler(pose);
+        PoseEuler fcp_base = Pose2PoseEuler(fcp_in_base);
+        printf("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
+        printf("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
+        printf("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
+        printf("  tcp-in-user: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", tcp_user.point_.x_, tcp_user.point_.y_, tcp_user.point_.z_, tcp_user.euler_.a_, tcp_user.euler_.b_, tcp_user.euler_.c_);
+        printf("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", fcp_base.point_.x_, fcp_base.point_.y_, fcp_base.point_.z_, fcp_base.euler_.a_, fcp_base.euler_.b_, fcp_base.euler_.c_);
+        //printf("  reference: %s\n", printDBLine(&reference[0], buffer, LOG_TEXT_SIZE));
 
-/*
-    printf("result = %llx\n", err);
-    printf("angle = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", angle[0], angle[1], angle[2], angle[3], angle[4], angle[5]);
-    printf("omega = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", omega[0], omega[1], omega[2], omega[3], omega[4], omega[5]);
-    printf("alpha-upper = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", alpha_upper[0], alpha_upper[1], alpha_upper[2], alpha_upper[3], alpha_upper[4], alpha_upper[5]);
-    printf("alpha-lower = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", alpha_lower[0], alpha_lower[1], alpha_lower[2], alpha_lower[3], alpha_lower[4], alpha_lower[5]);
-    printf("produce:\n");
-    printf("  m = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[0][0], product.m[0][1], product.m[0][2], product.m[0][3], product.m[0][4], product.m[0][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[1][0], product.m[1][1], product.m[1][2], product.m[1][3], product.m[1][4], product.m[1][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[2][0], product.m[2][1], product.m[2][2], product.m[2][3], product.m[2][4], product.m[2][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[3][0], product.m[3][1], product.m[3][2], product.m[3][3], product.m[3][4], product.m[3][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[4][0], product.m[4][1], product.m[4][2], product.m[4][3], product.m[4][4], product.m[4][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.m[5][0], product.m[5][1], product.m[5][2], product.m[5][3], product.m[5][4], product.m[5][5]);
-    printf("  c = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[0][0], product.c[0][1], product.c[0][2], product.c[0][3], product.c[0][4], product.c[0][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[1][0], product.c[1][1], product.c[1][2], product.c[1][3], product.c[1][4], product.c[1][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[2][0], product.c[2][1], product.c[2][2], product.c[2][3], product.c[2][4], product.c[2][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[3][0], product.c[3][1], product.c[3][2], product.c[3][3], product.c[3][4], product.c[3][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[4][0], product.c[4][1], product.c[4][2], product.c[4][3], product.c[4][4], product.c[4][5]);
-    printf("      %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.c[5][0], product.c[5][1], product.c[5][2], product.c[5][3], product.c[5][4], product.c[5][5]);
-    printf("  g = %.12f, %.12f, %.12f, %.12f, %.12f, %.12f\n", product.g[0], product.g[1], product.g[2], product.g[3], product.g[4], product.g[5]);
-    */
 }
 
 
@@ -474,7 +457,7 @@ void test9(void)
 
 int main(int argc, char **argv)
 {
-    //test0();
+    test0();
     //test1();
     //test2();
     //test3();
@@ -483,7 +466,7 @@ int main(int argc, char **argv)
     //test6();
     //test7();
     //test8();
-    test9();
+    //test9();
 
     return 0;
 }

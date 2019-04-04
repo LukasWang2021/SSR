@@ -1006,12 +1006,75 @@ ErrorCode BaseGroup::replanPathCache(void)
     path_list_ptr_ = NULL;
     pthread_mutex_unlock(&cache_list_mutex_);
 
+    FST_INFO("Replan path cache: %p", path_ptr);
+    PathCacheList *path_cache_ptr = path_cache_pool_.getCachePtr();
+    TrajectoryCacheList *traj_cache_ptr = traj_cache_pool_.getCachePtr();
+
+    if (path_cache_ptr == NULL || traj_cache_ptr == NULL)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        path_list_ptr_ = path_ptr;
+        FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_cache_ptr, traj_cache_ptr);
+        path_cache_pool_.freeCachePtr(path_cache_ptr);
+        traj_cache_pool_.freeCachePtr(traj_cache_ptr);
+        return MOTION_INTERNAL_FAULT;
+    }
+
+    
+    int offset = pause_status_.pause_index + 1;
+    path_cache_ptr->id = path_ptr->id;
+    path_cache_ptr->next_ptr = NULL;
+    path_cache_ptr->path_cache.target = path_ptr->path_cache.target;
+    path_cache_ptr->path_cache.smooth_in_index = -1;
+    path_cache_ptr->path_cache.cache_length = path_ptr->path_cache.cache_length - offset;
+    path_cache_ptr->path_cache.smooth_out_index = path_ptr->path_cache.smooth_out_index == -1 ? -1 : path_ptr->path_cache.smooth_out_index - offset;
+    memcpy(path_cache_ptr->path_cache.cache, path_ptr->path_cache.cache + offset - 1, (path_cache_ptr->path_cache.cache_length + 1) * sizeof(PathBlock));
+
+    JointState start_state;
+    start_state.angle = start_joint_;
+    memset(&start_state.omega, 0, sizeof(start_state.omega));
+    memset(&start_state.alpha, 0, sizeof(start_state.alpha));
+    char buffer[LOG_TEXT_SIZE];
+    FST_INFO("start-joint: %s", printDBLine(&start_state.angle.j1_, buffer, LOG_TEXT_SIZE));
+    ErrorCode err = planTrajectory(path_cache_ptr->path_cache, start_state, vel_ratio_, acc_ratio_, traj_cache_ptr->trajectory_cache);
+
+    if (err != SUCCESS)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        path_list_ptr_ = path_ptr;
+        path_cache_pool_.freeCachePtr(path_cache_ptr);
+        traj_cache_pool_.freeCachePtr(traj_cache_ptr);
+        FST_ERROR("Trajectory plan failed, code = 0x%llx", err);
+        return err;
+    }
+    
+    traj_cache_ptr->pick_index = 0;
+    traj_cache_ptr->pick_from_block = 0;
+    traj_cache_ptr->time_from_start = 0;
+    traj_cache_ptr->next_ptr = NULL;
+    traj_cache_ptr->trajectory_cache.path_cache_ptr = &path_cache_ptr->path_cache;
+
+    FST_INFO("Traj-cache-length: %d", traj_cache_ptr->trajectory_cache.cache_length);
+    FST_INFO("New-start-joint: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("auto-time: %.4f", auto_time_);
+   
+    start_joint_ = path_cache_ptr->path_cache.cache[path_cache_ptr->path_cache.cache_length - 1].joint;
+    updateTimeFromStart(*traj_cache_ptr);
+    linkCacheList(path_cache_ptr, traj_cache_ptr);
+    pthread_mutex_unlock(&cache_list_mutex_);
+    FST_INFO("Planning success.");
+    
+
+    PathCacheList *ptr = path_ptr;
+    path_ptr = path_ptr->next_ptr;
+    path_cache_pool_.freeCachePtr(ptr);
+
     while (path_ptr)
     {
         FST_INFO("Replan path cache: %p", path_ptr);
         int id = path_ptr->id;
         MotionTarget target = path_ptr->path_cache.target;
-        PathCacheList *ptr = path_ptr;
+        ptr = path_ptr;
         path_ptr = path_ptr->next_ptr;
         path_cache_pool_.freeCachePtr(ptr);
         ErrorCode err = autoMove(id, target);
@@ -1019,6 +1082,14 @@ ErrorCode BaseGroup::replanPathCache(void)
         if (err != SUCCESS)
         {
             FST_ERROR("Fail to replan path cache: %p, code = 0x%llx", path_ptr, err);
+
+            while (path_ptr)
+            {
+                ptr = path_ptr;
+                path_ptr = path_ptr->next_ptr;
+                path_cache_pool_.freeCachePtr(ptr);
+            }
+
             return err;
         }
     }

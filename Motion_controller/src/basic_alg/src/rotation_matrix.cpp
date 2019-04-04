@@ -7,17 +7,6 @@
 using namespace std;
 using namespace basic_alg;
 
-
-RotationMatrix::RotationMatrix()
-{
-
-}
-
-RotationMatrix::~RotationMatrix()
-{
-
-}
-
 void RotationMatrix::initByStandardDh(double alpha, double theta)
 {
     double sin_theta = sin(theta);

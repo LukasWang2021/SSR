@@ -10,7 +10,6 @@ double stack[20000];
 SegmentAlgParam segment_alg_param;
 AxisType seg_axis_type[9];
 int traj_index[25];
-
 #if 0
 void initComplexAxisGroupModel()
 {
@@ -195,7 +194,7 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, f
     segment_alg_param.kinematics_ptr = segment_alg_param_ptr->kinematics_ptr;
     segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
     segment_alg_param.max_cartesian_acc = segment_alg_param_ptr->max_cartesian_acc;
-
+    segment_alg_param.min_path_num_left = 10;
     initStack(link_num, joint_vel_max);
     model.link_num = link_num;    
     for(int i = 0; i < model.link_num; ++i)
@@ -1670,6 +1669,8 @@ bool canBePause(const PathCache &path_cache, const fst_mc::JointState &stop_stat
             if (path_cache.cache_length - 1 < path_index + 4) return false;
             if (path_index - path_stop_index < 4) path_end_index = path_stop_index + 4;
             else path_end_index = path_index;
+
+            if (path_cache.cache_length - path_end_index < segment_alg_param.min_path_num_left) return false;
             return true;
         }
     }
@@ -1723,8 +1724,8 @@ inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, co
         path_cache.cache[path_stop_index].joint[joint_index_of_max_time_stop2end]);
 
     int max_path_index = 0;
-    if (joint_offset_angle < joint_offset_angle_stop2in) max_path_index = path_cache.smooth_in_index;
-    else if (joint_offset_angle < joint_offset_angle_mid_in2end) max_path_index = path_mid_in2end_index;
+    if (joint_offset_angle < joint_offset_angle_stop2in) max_path_index = path_cache.smooth_in_index + 1;
+    else if (joint_offset_angle < joint_offset_angle_mid_in2end) max_path_index = path_mid_in2end_index + 1;
     else if (joint_offset_angle <= joint_offset_angle_stop2end) max_path_index = path_cache.cache_length -1;
     else return false;
 
@@ -1737,6 +1738,8 @@ inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, co
             if (path_cache.cache_length - 1 < path_index + 4) return false;
             if (path_index - path_stop_index < 4) path_end_index = path_stop_index + 4;
             else path_end_index = path_index;
+
+            if (path_cache.cache_length - path_end_index < segment_alg_param.min_path_num_left) return false;
             return true;
         }
     }

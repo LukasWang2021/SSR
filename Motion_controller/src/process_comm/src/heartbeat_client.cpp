@@ -93,7 +93,7 @@ void HeartbeatClient::sendHeartbeat()
             int send_bytes = nn_send(req_resp_socket_, &request_data_, sizeof(HeartbeatClientRequestResponseData), 0);
             if(send_bytes == -1 || send_bytes != sizeof(HeartbeatClientRequestResponseData))
             {
-                FST_ERROR("sendHeartbeat: send heartbeat request failed, nn_error = %d", nn_errno());
+                FST_ERROR("sendHeartbeat: send heartbeat request failed, %s", nn_strerror(errno));
                 return;
             }
             else

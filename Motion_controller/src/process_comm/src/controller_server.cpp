@@ -185,7 +185,7 @@ void ControllerServer::handleResponseList()
         int send_bytes = nn_send(req_resp_socket_, send_buffer_ptr_, send_buffer_size, 0); // block send
         if(send_bytes == -1)
         {
-            FST_ERROR("handleResponseList: send response failed, nn_error = %d", nn_errno());
+            FST_ERROR("handleResponseList: send response failed, %s", nn_strerror(errno));
         }
     }
     response_list_.clear();

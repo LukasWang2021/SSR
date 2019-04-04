@@ -7,6 +7,17 @@
 using namespace std;
 using namespace basic_alg;
 
+
+RotationMatrix::RotationMatrix()
+{
+
+}
+
+RotationMatrix::~RotationMatrix()
+{
+
+}
+
 void RotationMatrix::initByStandardDh(double alpha, double theta)
 {
     double sin_theta = sin(theta);
@@ -27,10 +38,10 @@ void RotationMatrix::initByStandardDh(double alpha, double theta)
 
 void RotationMatrix::convertToQuaternion(basic_alg::Quaternion& quaternion) const
 {
-    quaternion.x_ = sqrt(matrix_[0][0] - matrix_[1][1] - matrix_[2][2] + 1) / 2;
-    quaternion.y_ = sqrt(matrix_[1][1] - matrix_[0][0] - matrix_[2][2] + 1) / 2;
-    int max_id = 0;
-    double tmp = 0;
+    quaternion.x_ = sqrt(fabs(matrix_[0][0] - matrix_[1][1] - matrix_[2][2] + 1)) / 2;
+    quaternion.y_ = sqrt(fabs(matrix_[1][1] - matrix_[0][0] - matrix_[2][2] + 1)) / 2;
+    int max_id;
+    double tmp;
     if(quaternion.y_ > quaternion.x_)
     {
         tmp = quaternion.y_;
@@ -41,13 +52,13 @@ void RotationMatrix::convertToQuaternion(basic_alg::Quaternion& quaternion) cons
         tmp = quaternion.x_;
         max_id = 0;
     }
-    quaternion.z_ = sqrt(matrix_[2][2] - matrix_[0][0] - matrix_[1][1] + 1) / 2;
+    quaternion.z_ = sqrt(fabs(matrix_[2][2] - matrix_[0][0] - matrix_[1][1] + 1)) / 2;
     if(quaternion.z_ > tmp)
     {
         tmp = quaternion.z_;
         max_id = 2;
     }
-    quaternion.w_ = sqrt(matrix_[0][0] + matrix_[1][1] + matrix_[2][2] + 1) / 2;
+    quaternion.w_ = sqrt(fabs(matrix_[0][0] + matrix_[1][1] + matrix_[2][2] + 1)) / 2;
     if(quaternion.w_ > tmp)
     {
         max_id = 3;

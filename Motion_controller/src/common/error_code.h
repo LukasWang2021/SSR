@@ -36,17 +36,17 @@ typedef unsigned long long int ErrorCode;
 #define INVALID_SERVICE_ID (unsigned long long int)0x00000002006F044D   /*invalid service ID received from other processes.*/
 #define SEND_RESP_FAIL (unsigned long long int)0x00000002006F044E   /*fail to send response to other processes within limited tries.*/
 #define MCS_TIMEOUT (unsigned long long int)0x00000002006F044F   /*no heartbeat from Motion Controller within a limited time.*/
-#define TOOL_MANAGER_LOG (unsigned long long int)0x0001000100A20000   /*ToolManager log{0}*/
+#define TOOL_MANAGER_LOG (unsigned long long int)0x0000000100A20000   /*ToolManager log{0}*/
 #define TOOL_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A20001   /*ToolManager load param failed in initialization phase*/
 #define TOOL_MANAGER_LOAD_TOOLINFO_FAILED (unsigned long long int)0x0011000B00A20002   /*ToolManager load tool info failed in initialization phase*/
 #define TOOL_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A20003   /*ToolManager has invalid argument*/
 #define TOOL_MANAGER_TOOLINFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A20004   /*ToolManager failed to write ToolInfo config file*/
-#define COORDINATE_MANAGER_LOG (unsigned long long int)0x0001000100A30000   /*CoordinateManager log{0}*/
+#define COORDINATE_MANAGER_LOG (unsigned long long int)0x0000000100A30000   /*CoordinateManager log{0}*/
 #define COORDINATE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A30001   /*CoordinateManager load param failed in initialization phase*/
 #define COORDINATE_MANAGER_LOAD_COORDINFO_FAILED (unsigned long long int)0x0011000B00A30002   /*CoordinateManager load user cooridnate info failed in initialization phase*/
 #define COORDINATE_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A30003   /*CoordinateManager has invalid argument*/
 #define COORDINATE_MANAGER_COORDINFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200A30004   /*CoordinateManager failed to write ToolInfo config file*/
-#define REG_MANAGER_LOG (unsigned long long int)0x0001000100A40000   /*RegManager log{0}*/
+#define REG_MANAGER_LOG (unsigned long long int)0x0000000100A40000   /*RegManager log{0}*/
 #define REG_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A40001   /*RegManager load param failed in initialization phase*/
 #define REG_MANAGER_LOAD_PR_FAILED (unsigned long long int)0x0011000B00A40002   /*RegManager load PrReg info failed in initialization phase*/
 #define REG_MANAGER_LOAD_HR_FAILED (unsigned long long int)0x0011000B00A40003   /*RegManager load HrReg info failed in initialization phase*/
@@ -58,7 +58,7 @@ typedef unsigned long long int ErrorCode;
 #define REG_MANAGER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A40009   /*RegManager failed to initialize internal variables*/
 #define REG_MANAGER_LOAD_NVRAM_FAILED (unsigned long long int)0x0011000B00A4000A   /*RegManager load param failed in initialization phase*/
 
-#define DEVICE_MANAGER_LOG (unsigned long long int)0x0001000100A50000   /*DeviceManager log{0}*/
+#define DEVICE_MANAGER_LOG (unsigned long long int)0x0000000100A50000   /*DeviceManager log{0}*/
 #define DEVICE_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A50001   /*DeviceManager load param failed in initialization phase*/
 #define DEVICE_MANAGER_LOAD_DEVICE_CONFIG_FAILED (unsigned long long int)0x0011000B00A50002   /*DeviceManager load device config failed in initialization phase*/
 #define DEVICE_MANAGER_INVALID_DEVICE_TYPE (unsigned long long int)0x0011000B00A50003   /*DeviceManager load invalid type of device from device config file in initialization phase*/
@@ -75,7 +75,7 @@ typedef unsigned long long int ErrorCode;
 #define PROCESS_COMM_INTERPRETER_SERVER_OPEN_FAILED (unsigned long long int)0x0011000B00A60008   /*InterpreterServer open failed*/
 #define PROCESS_COMM_HEARTBEAT_CLIENT_INIT_FAILED (unsigned long long int)0x0011000B00A60009   /*HeartbeatClient init failed*/
 #define PROCESS_COMM_OPERATION_FAILED (unsigned long long int)0x0000000200A6000A   /*ProcessComm operation failed*/
-#define TP_COMM_LOG (unsigned long long int)0x0001000100A70000   /*TpComm log{0}*/
+#define TP_COMM_LOG (unsigned long long int)0x0000000100A70000   /*TpComm log{0}*/
 #define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm load param failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A70002   /*TpComm failed to initialize internal variables*/
 #define TP_COMM_OPEN_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm open failed*/
@@ -87,7 +87,7 @@ typedef unsigned long long int ErrorCode;
 #define TP_COMM_SEND_FAILED (unsigned long long int)0x0001000200A70009   /*TpComm failed to send package*/
 #define TP_COMM_RECEIVE_FAILED (unsigned long long int)0x0001000200A7000A   /*TpComm failed to receive package*/
 #define TP_COMM_RPC_OVERLOAD (unsigned long long int)0x0000000200A7000B   /*"TpComm failed to handle too much rpc request"*/
-#define CONTROLLER_LOG (unsigned long long int)0x0001000100A80000   /*Controller log{0}*/
+#define CONTROLLER_LOG (unsigned long long int)0x0000000100A80000   /*Controller log{0}*/
 #define CONTROLLER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A80001   /*Controller load param failed in initialization phase*/
 #define CONTROLLER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A80002   /*Controller failed to initialize internal object*/
 #define CONTROLLER_CREATE_ROUTINE_THREAD_FAILED (unsigned long long int)0x0011000B00A80003   /*Controller failed to create routine thread*/
@@ -140,7 +140,7 @@ typedef unsigned long long int ErrorCode;
 #define FAIL_INTERPRETER_USER_ALARM9 (unsigned long long int)0x0001000900AA0109   /*User Alarm 9*/
 #define FAIL_INTERPRETER_USER_ALARM10 (unsigned long long int)0x0001000900AA010A   /*User Alarm 10*/
 #define FAIL_INTERPRETER_NOT_IN_PAUSE (unsigned long long int)0x0001000900AA010B   /*Not in PAUSE*/
-#define MOTION_CONTROL_LOG (unsigned long long int)0x0001000100A90000   /*MotionControl log{0}*/
+#define MOTION_CONTROL_LOG (unsigned long long int)0x0000000100A90000   /*MotionControl log{0}*/
 #define IK_FAIL (unsigned long long int)0x0001000400A903E9   /*IK failed*/
 #define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903EA   /*IK failed for Axis 2~6*/
 #define FK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903F3   /*joint out of limit computing FK*/
@@ -195,19 +195,19 @@ typedef unsigned long long int ErrorCode;
 #define IO_INIT_FAIL (unsigned long long int)0x0011000600AC03F3   /*fail to initialize the IO module.*/
 #define IO_INVALID_PARAM_ID (unsigned long long int)0x0001000600AC03F4   /*invalid parameter id as function argument.*/
 #define IO_INVALID_PORT_SEQ (unsigned long long int)0x0001000600AC03F5   /*invalid port sequence number as function argument.*/
-#define IO_MAPPING_LOG (unsigned long long int)0x0001000100AD0000   /*IoMapping log{0}*/
+#define IO_MAPPING_LOG (unsigned long long int)0x0000000100AD0000   /*IoMapping log{0}*/
 #define IO_MAPPING_LOAD_PARAM_FAILED (unsigned long long int)0x0010000200AD0001   /*failed to load io_mapping yaml paramters*/
 #define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0010000200AD0002   /*failed to load io_mapping json files*/
 #define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0010000200AD0003   /*failed to load simused status json files*/
-#define IO_MANAGER_LOG (unsigned long long int)0x0001000100AF0000   /*IoManager log{0}*/
-#define PROGRAM_LAUNCHING_LOG (unsigned long long int)0x0001000100B00000   /*ProgramLaunching log{0}*/
+#define IO_MANAGER_LOG (unsigned long long int)0x0000000100AF0000   /*IoManager log{0}*/
+#define PROGRAM_LAUNCHING_LOG (unsigned long long int)0x0000000100B00000   /*ProgramLaunching log{0}*/
 #define PROGRAM_LAUNCHING_LOAD_PARAM_FAILED (unsigned long long int)0x0011000200B00001   /*failed to load program_launching yaml paramters*/
 #define PROGRAM_LANNCHING_LOAD_MODE_FILE_FAILED (unsigned long long int)0x0011000200B00002   /*failed to load launch_mode_setting json files*/
 #define PROGRAM_LAUNCHING_LOAD_MACRO_FILE_FAILED (unsigned long long int)0x0011000200B00003   /*failed to load macro_io_launch json files*/
 #define FILE_MANAGER_READ_FILE_FAILED (unsigned long long int)0x0010000200B10001   /*failed to read file*/
 #define FILE_MANAGER_WRITE_FILE_FAILED (unsigned long long int)0x0010000200B10002   /*failed to write file*/
 
-#define MODBUS_LOG (unsigned long long int)0x0011000200AE0000   /*ModbusManager log{0}*/																										
+#define MODBUS_LOG (unsigned long long int)0x0010000200AE0000   /*ModbusManager log{0}*/																										
 #define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0001   /*modbus start mode error*/																										
 #define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus manager save param failed*/																										
 #define MODBUS_INVALID (unsigned long long int)0x0001000200AE0003   /*modbus be invalid*/																										

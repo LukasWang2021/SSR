@@ -117,6 +117,15 @@ ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_l
         return config.getLastError();
     }
 
+    if (!config.getParam("reference/axis/move_to_point_velocity", data, joint_num_))
+    {
+        FST_ERROR("Fail to load reference velocity in move-to-point of each axis, code = 0x%llx", config.getLastError());
+        return config.getLastError();
+    }
+
+    memcpy(move_to_point_vel_, data, joint_num_ * sizeof(double));
+    FST_INFO("Axis vel in move-to-point: %s", printDBLine(move_to_point_vel_, buffer, LOG_TEXT_SIZE));
+
     if (!config.getParam("reference/axis/velocity", data, joint_num_))
     {
         FST_ERROR("Fail to load reference velocity of each axis, code = 0x%llx", config.getLastError());
@@ -963,7 +972,8 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
     {
         trips[i] = fabs(target[i] - traj.joint_start[i]);
         alpha[i] = axis_acc_[i] * acc_ratio_;
-        omega[i] = axis_vel_[i] * vel_ratio_;
+        //omega[i] = axis_vel_[i] * vel_ratio_;
+        omega[i] = move_to_point_vel_[i] * vel_ratio_;
         delta[i] = trips[i] - omega[i] * omega[i] / alpha[i];
         t_min[i] = delta[i] > 0 ? (omega[i] / alpha[i] + trips[i] / omega[i]) : (sqrt(trips[i] / alpha[i]) * 2);
         //FST_INFO("  J%d: trip=%.8f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);

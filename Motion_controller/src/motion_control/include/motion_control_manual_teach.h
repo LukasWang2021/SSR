@@ -61,6 +61,7 @@ private:
     double vel_ratio_;
     double acc_ratio_;
 
+    double move_to_point_vel_[NUM_OF_JOINT];
     double axis_vel_[NUM_OF_JOINT];
     double axis_acc_[NUM_OF_JOINT];
     double position_vel_reference_;

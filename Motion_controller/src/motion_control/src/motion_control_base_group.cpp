@@ -819,6 +819,26 @@ ErrorCode BaseGroup::pauseMove(void)
         return SUCCESS;
     }
 
+    FST_INFO("Path list:");
+    PathCacheList *path_ptr = path_list_ptr_;
+
+    while (path_ptr)
+    {
+        PathCache &cache = path_ptr->path_cache;
+        FST_INFO("  %p: id = %d, next-ptr = %p, length = %d, smooth-in = %d, smooth-out = %d", path_ptr, path_ptr->id, path_ptr->next_ptr, cache.cache_length, cache.smooth_in_index, cache.smooth_out_index);
+        path_ptr = path_ptr->next_ptr;
+    }
+
+    FST_INFO("Trajectory list:");
+    TrajectoryCacheList *traj_ptr = traj_list_ptr_;
+
+    while (traj_ptr)
+    {
+        TrajectoryCache &cache = traj_ptr->trajectory_cache;
+        FST_INFO("  %p: pick = %d, next-ptr = %p, length = %d, smooth-out = %d, path-ptr = %p", traj_ptr, traj_ptr->pick_index, traj_ptr->next_ptr, cache.cache_length, cache.smooth_out_index, cache.path_cache_ptr);
+        traj_ptr = traj_ptr->next_ptr;
+    }
+
     char buffer[LOG_TEXT_SIZE];
     JointState pause_state;
     int pause_index = traj_list_ptr_->pick_index;
@@ -838,9 +858,9 @@ ErrorCode BaseGroup::pauseMove(void)
     }
     
     sampleBlockEnding(traj_cache.cache[pause_index], pause_state);
-    TrajectoryCacheList *pause_traj_cache_lise_ptr = traj_cache_pool_.getCachePtr();
+    TrajectoryCacheList *pause_traj_ptr = traj_cache_pool_.getCachePtr();
 
-    if (pause_traj_cache_lise_ptr == NULL)
+    if (pause_traj_ptr == NULL)
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         FST_ERROR("No traj-cache available, set more caches in config file.");
@@ -848,14 +868,14 @@ ErrorCode BaseGroup::pauseMove(void)
     }
 
     int paused_on_index = traj_cache.cache[pause_index].index_in_path_cache;
-    TrajectoryCache &pause_traj_cache = pause_traj_cache_lise_ptr->trajectory_cache;
+    TrajectoryCache &pause_traj_cache = pause_traj_ptr->trajectory_cache;
     ErrorCode err = planPauseTrajectory(*traj_cache.path_cache_ptr, pause_state, acc_ratio_, pause_traj_cache, paused_on_index);
     
     FST_INFO("angle: %s", printDBLine(&pause_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("omega: %s", printDBLine(&pause_state.omega[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("alpha: %s", printDBLine(&pause_state.alpha[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Path cache length: %d, pause index: %d, paused index: %d", traj_cache.path_cache_ptr->cache_length, traj_cache.cache[pause_index].index_in_path_cache, paused_on_index);
-    FST_INFO("Pause traj cache length: %d, pick = %d", pause_traj_cache.cache_length, pause_traj_cache_lise_ptr->pick_index);
+    FST_INFO("Pause traj cache length: %d", pause_traj_cache.cache_length);
 
     for (size_t i = 0; i < pause_traj_cache.cache_length; i++)
     {
@@ -865,7 +885,7 @@ ErrorCode BaseGroup::pauseMove(void)
     if (err != SUCCESS)
     {
         pthread_mutex_unlock(&cache_list_mutex_);
-        traj_cache_pool_.freeCachePtr(pause_traj_cache_lise_ptr);
+        traj_cache_pool_.freeCachePtr(pause_traj_ptr);
         FST_ERROR("Fail to plan pause trajectory, code = 0x%llx", err);
         return err;
     }
@@ -885,42 +905,34 @@ ErrorCode BaseGroup::pauseMove(void)
 
     pause_traj_cache.smooth_out_index = pause_traj_cache.cache_length - 1;
     pause_traj_cache.path_cache_ptr = NULL;
-    pause_traj_cache_lise_ptr->pick_index = 0;
-    pause_traj_cache_lise_ptr->pick_from_block = 0;
-    pause_traj_cache_lise_ptr->time_from_start = traj_cache.cache[pause_index].time_from_start + traj_cache.cache[pause_index].duration;
-    pause_traj_cache_lise_ptr->next_ptr = NULL;
-    updateTimeFromStart(*pause_traj_cache_lise_ptr);
+    pause_traj_ptr->pick_index = 0;
+    pause_traj_ptr->pick_from_block = 0;
+    pause_traj_ptr->time_from_start = traj_cache.cache[pause_index].time_from_start + traj_cache.cache[pause_index].duration;
+    pause_traj_ptr->next_ptr = NULL;
+    updateTimeFromStart(*pause_traj_ptr);
     traj_list_ptr_->trajectory_cache.path_cache_ptr = NULL;
-    traj_list_ptr_->next_ptr = pause_traj_cache_lise_ptr;
+    traj_list_ptr_->next_ptr = pause_traj_ptr;
     pause_status_.pause_valid = true;
     pause_status_.pause_index = paused_on_index;
 
     this_ptr = traj_list_ptr_;
     while (this_ptr)
     {
-        FST_INFO("Cache: %p, pick-index = %d, pick_from_block = %f, time_from_start = %f, length = %d", this_ptr, this_ptr->pick_index, this_ptr->pick_from_block, this_ptr->time_from_start, this_ptr->trajectory_cache.cache_length);
+        FST_INFO("Cache: %p, pick-index = %d, time-from-start = %f, length = %d", this_ptr, this_ptr->pick_index, this_ptr->time_from_start, this_ptr->trajectory_cache.cache_length);
         this_ptr = this_ptr->next_ptr;
     }
 
-    pthread_mutex_unlock(&cache_list_mutex_);
     sampleBlockEnding(pause_traj_cache.cache[pause_traj_cache.cache_length - 1], pause_state);
     start_joint_ = pause_state.angle;
-    FST_INFO("We will pause on joint: %s", printDBLine(&pause_state.angle[0], buffer, LOG_TEXT_SIZE));
+    auto_to_pause_request_ = true;
+    pthread_mutex_unlock(&cache_list_mutex_);
+    FST_INFO("Pause trajectory planning success, going to pause at: %s", printDBLine(&pause_state.angle[0], buffer, LOG_TEXT_SIZE));
 
 #ifdef OUTPUT_TRAJ_CACHE
     g_traj_output_array[g_traj_output_index] = *traj_ptr;
     g_traj_output_index = (g_traj_output_index + 1) % OUTPUT_TRAJ_CACHE_SIZE;
 #endif
-    // ------- for test only -------- //
-    // for (size_t i = 0; i < path_ptr->path_cache.cache_length; i++)
-    // {
-    //     g_path_point[g_path_index] = path_ptr->path_cache.cache[i].pose;
-    //     g_path_index = (g_path_index + 1) % 10000;
-    // }
-    // ------- for test only -------- //
 
-    auto_to_pause_request_ = true;
-    FST_INFO("Pause trajectory planning success.");
     return SUCCESS;
 }
 
@@ -930,8 +942,8 @@ ErrorCode BaseGroup::restartMove(void)
 
     if (group_state_ != PAUSE)
     {
-        FST_WARN("Group state is %d", group_state_);
-        return INVALID_SEQUENCE;
+        FST_WARN("Group state is %d, restart request refused.", group_state_);
+        return SUCCESS;
     }
 
     pthread_mutex_lock(&cache_list_mutex_);
@@ -1006,35 +1018,44 @@ ErrorCode BaseGroup::replanPathCache(void)
     path_list_ptr_ = NULL;
     pthread_mutex_unlock(&cache_list_mutex_);
 
+    PathCacheList *p = path_ptr;
+    while (p) {FST_INFO("Path cahce: %p", p); p = p->next_ptr;}
+
     FST_INFO("Replan path cache: %p", path_ptr);
     PathCacheList *path_cache_ptr = path_cache_pool_.getCachePtr();
     TrajectoryCacheList *traj_cache_ptr = traj_cache_pool_.getCachePtr();
 
     if (path_cache_ptr == NULL || traj_cache_ptr == NULL)
     {
-        pthread_mutex_unlock(&cache_list_mutex_);
         path_list_ptr_ = path_ptr;
+        pthread_mutex_unlock(&cache_list_mutex_);
         FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_cache_ptr, traj_cache_ptr);
         path_cache_pool_.freeCachePtr(path_cache_ptr);
         traj_cache_pool_.freeCachePtr(traj_cache_ptr);
         return MOTION_INTERNAL_FAULT;
     }
-
     
-    int offset = pause_status_.pause_index + 1;
+    char buffer[LOG_TEXT_SIZE];
     path_cache_ptr->id = path_ptr->id;
     path_cache_ptr->next_ptr = NULL;
     path_cache_ptr->path_cache.target = path_ptr->path_cache.target;
     path_cache_ptr->path_cache.smooth_in_index = -1;
-    path_cache_ptr->path_cache.cache_length = path_ptr->path_cache.cache_length - offset;
-    path_cache_ptr->path_cache.smooth_out_index = path_ptr->path_cache.smooth_out_index == -1 ? -1 : path_ptr->path_cache.smooth_out_index - offset;
-    memcpy(path_cache_ptr->path_cache.cache, path_ptr->path_cache.cache + offset - 1, (path_cache_ptr->path_cache.cache_length + 1) * sizeof(PathBlock));
+    path_cache_ptr->path_cache.cache_length = path_ptr->path_cache.cache_length - pause_status_.pause_index;
+    path_cache_ptr->path_cache.smooth_out_index = path_ptr->path_cache.smooth_out_index == -1 ? -1 : path_ptr->path_cache.smooth_out_index - pause_status_.pause_index;
+    memcpy(path_cache_ptr->path_cache.cache, path_ptr->path_cache.cache + pause_status_.pause_index, path_cache_ptr->path_cache.cache_length * sizeof(PathBlock));
+
+    FST_INFO("pause-index=%d", pause_status_.pause_index);
+    FST_INFO("start-joint: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+    //FST_INFO("target: %s", printDBLine(&path_cache_ptr->path_cache.target.joint_target.j1_, buffer, LOG_TEXT_SIZE));
+    //FST_INFO("old-cache-length = %d, new-cache-length = %d", path_ptr->path_cache.cache_length, path_cache_ptr->path_cache.cache_length);
+    //FST_INFO("old-last-joint: %s", printDBLine(&path_ptr->path_cache.cache[path_ptr->path_cache.cache_length - 1].joint.j1_, buffer, LOG_TEXT_SIZE));
+    //FST_INFO("new-last-joint: %s", printDBLine(&path_cache_ptr->path_cache.cache[path_cache_ptr->path_cache.cache_length - 1].joint.j1_, buffer, LOG_TEXT_SIZE));
 
     JointState start_state;
     start_state.angle = start_joint_;
     memset(&start_state.omega, 0, sizeof(start_state.omega));
     memset(&start_state.alpha, 0, sizeof(start_state.alpha));
-    char buffer[LOG_TEXT_SIZE];
+    
     FST_INFO("start-joint: %s", printDBLine(&start_state.angle.j1_, buffer, LOG_TEXT_SIZE));
     ErrorCode err = planTrajectory(path_cache_ptr->path_cache, start_state, vel_ratio_, acc_ratio_, traj_cache_ptr->trajectory_cache);
 
@@ -1053,18 +1074,17 @@ ErrorCode BaseGroup::replanPathCache(void)
     traj_cache_ptr->time_from_start = 0;
     traj_cache_ptr->next_ptr = NULL;
     traj_cache_ptr->trajectory_cache.path_cache_ptr = &path_cache_ptr->path_cache;
+    start_joint_ = path_cache_ptr->path_cache.cache[path_cache_ptr->path_cache.cache_length - 1].joint;
 
     FST_INFO("Traj-cache-length: %d", traj_cache_ptr->trajectory_cache.cache_length);
     FST_INFO("New-start-joint: %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
     FST_INFO("auto-time: %.4f", auto_time_);
    
-    start_joint_ = path_cache_ptr->path_cache.cache[path_cache_ptr->path_cache.cache_length - 1].joint;
     updateTimeFromStart(*traj_cache_ptr);
     linkCacheList(path_cache_ptr, traj_cache_ptr);
     pthread_mutex_unlock(&cache_list_mutex_);
     FST_INFO("Planning success.");
     
-
     PathCacheList *ptr = path_ptr;
     path_ptr = path_ptr->next_ptr;
     path_cache_pool_.freeCachePtr(ptr);
@@ -1498,7 +1518,7 @@ bool BaseGroup::checkTrajectory(const TrajectoryCache &trajectory)
 
     for (size_t i = 0; i < trajectory.cache_length; i++)
     {
-        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 16)
+        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 50)
         {
             FST_ERROR("trajectory-block %d: duration = %.6f", i, trajectory.cache[i].duration);
             return false;
@@ -2184,7 +2204,7 @@ bool BaseGroup::nextMovePermitted(void)
         return false;
     }
 
-    if (group_state_ == PAUSE || group_state_ == PAUSE_RETURN || group_state_ == AUTO_TO_PAUSE || group_state_ == PAUSE_TO_PAUSE_RETURN || group_state_ == PAUSE_RETURN_TO_STANDBY)
+    if (group_state_ == PAUSE || group_state_ == PAUSING || group_state_ == PAUSE_RETURN || group_state_ == AUTO_TO_PAUSE || group_state_ == PAUSE_TO_PAUSE_RETURN || group_state_ == PAUSE_RETURN_TO_STANDBY)
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         return false;
@@ -2667,6 +2687,14 @@ void BaseGroup::doStateMachine(void)
     static size_t pause_return_to_standby_cnt = 0;
 
     auto servo_state = getServoState();
+
+    if (abort_request_)
+    {
+        FST_INFO("Abort group request received, group-state = %d.", group_state_);
+        abort_request_ = false;
+        clear_request_ = true;
+    }
+    
 
     /*
     if (abort_request_)

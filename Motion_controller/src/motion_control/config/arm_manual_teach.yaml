@@ -11,6 +11,13 @@ step:
     orientation: 0.1
 reference:
     axis:
+        move_to_point_velocity:
+            - 0.174533
+            - 0.174533
+            - 0.174533
+            - 0.174533
+            - 0.174533
+            - 0.174533
         velocity:
             - 3.0
             - 2.5

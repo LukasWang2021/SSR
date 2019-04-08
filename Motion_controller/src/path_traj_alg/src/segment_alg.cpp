@@ -246,6 +246,11 @@ ErrorCode planPathJoint(const Joint &start,
     {
         path_count_minus_1 = PATH_CACHE_SIZE - 2;
     }
+    if(path_count_minus_1 < 4)
+    {
+        path_count_minus_1 = 4;
+    }
+
     path_cache.cache_length = path_count_minus_1 + 1;
   
     double joint_step_start2end, joint_distance_to_start;
@@ -308,6 +313,10 @@ ErrorCode planPathLine(const PoseEuler &start,
     if(max_count_start2end > (PATH_CACHE_SIZE - 2))
     {
         max_count_start2end = PATH_CACHE_SIZE - 2;
+    }
+    if(max_count_start2end < 4)
+    {
+        max_count_start2end = 4;
     }
 
     // find Pout distance to end point
@@ -424,6 +433,10 @@ ErrorCode planPathCircle(const PoseEuler &start,
     if(max_count_start2end > (PATH_CACHE_SIZE - 2))
     {
         max_count_start2end = PATH_CACHE_SIZE - 2;
+    }
+    if(max_count_start2end < 4)
+    {
+        max_count_start2end = 4;
     }
 
     double uint_vector_n[3];

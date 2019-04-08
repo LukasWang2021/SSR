@@ -128,18 +128,18 @@ typedef unsigned long long int ErrorCode;
 #define INFO_INTERPRETER_OVERRUN_HOME_POSE     (unsigned long long int)0x0001000200AA001C   /*Overrun home pose */
 #define INFO_INTERPRETER_HOME_POSE_NOT_EXIST   (unsigned long long int)0x0001000200AA001D   /*Home pose not exist */
 
-#define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000900AA0100   /*User Alarm BASE*/
-#define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000900AA0101   /*User Alarm 1*/
-#define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000900AA0102   /*User Alarm 2*/
-#define FAIL_INTERPRETER_USER_ALARM3 (unsigned long long int)0x0001000900AA0103   /*User Alarm 3*/
-#define FAIL_INTERPRETER_USER_ALARM4 (unsigned long long int)0x0001000900AA0104   /*User Alarm 4*/
-#define FAIL_INTERPRETER_USER_ALARM5 (unsigned long long int)0x0001000900AA0105   /*User Alarm 5*/
-#define FAIL_INTERPRETER_USER_ALARM6 (unsigned long long int)0x0001000900AA0106   /*User Alarm 6*/
-#define FAIL_INTERPRETER_USER_ALARM7 (unsigned long long int)0x0001000900AA0107   /*User Alarm 7*/
-#define FAIL_INTERPRETER_USER_ALARM8 (unsigned long long int)0x0001000900AA0108   /*User Alarm 8*/
-#define FAIL_INTERPRETER_USER_ALARM9 (unsigned long long int)0x0001000900AA0109   /*User Alarm 9*/
-#define FAIL_INTERPRETER_USER_ALARM10 (unsigned long long int)0x0001000900AA010A   /*User Alarm 10*/
-#define FAIL_INTERPRETER_NOT_IN_PAUSE (unsigned long long int)0x0001000900AA010B   /*Not in PAUSE*/
+#define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0001000200AA0100   /*User Alarm BASE*/
+#define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000200AA0101   /*User Alarm 1*/
+#define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000200AA0102   /*User Alarm 2*/
+#define FAIL_INTERPRETER_USER_ALARM3 (unsigned long long int)0x0001000200AA0103   /*User Alarm 3*/
+#define FAIL_INTERPRETER_USER_ALARM4 (unsigned long long int)0x0001000200AA0104   /*User Alarm 4*/
+#define FAIL_INTERPRETER_USER_ALARM5 (unsigned long long int)0x0001000200AA0105   /*User Alarm 5*/
+#define FAIL_INTERPRETER_USER_ALARM6 (unsigned long long int)0x0001000200AA0106   /*User Alarm 6*/
+#define FAIL_INTERPRETER_USER_ALARM7 (unsigned long long int)0x0001000200AA0107   /*User Alarm 7*/
+#define FAIL_INTERPRETER_USER_ALARM8 (unsigned long long int)0x0001000200AA0108   /*User Alarm 8*/
+#define FAIL_INTERPRETER_USER_ALARM9 (unsigned long long int)0x0001000200AA0109   /*User Alarm 9*/
+#define FAIL_INTERPRETER_USER_ALARM10 (unsigned long long int)0x0001000200AA010A   /*User Alarm 10*/
+#define FAIL_INTERPRETER_NOT_IN_PAUSE (unsigned long long int)0x0001000200AA010B   /*Not in PAUSE*/
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0000000100A90000   /*MotionControl log{0}*/
 #define IK_FAIL (unsigned long long int)0x0001000400A903E9   /*IK failed*/
 #define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903EA   /*IK failed for Axis 2~6*/

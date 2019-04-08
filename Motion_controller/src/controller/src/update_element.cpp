@@ -23,39 +23,64 @@ void ControllerPublish::updateAxisGroupJointFeedback()
 
 void ControllerPublish::updateAxisGroupTcpWorldCartesian()
 {
+    Joint joint_feedback = motion_control_ptr_->getServoJoint();
+    PoseEuler pose;
+    memset(&pose, 0, sizeof(pose));
+
+    int tool_frame_id = 0;
+    motion_control_ptr_->getToolFrame(tool_frame_id);
+
+    motion_control_ptr_->convertJointToCart(joint_feedback, 0, tool_frame_id, pose);
     tcp_world_cartesian_.data1.data = 1;
     tcp_world_cartesian_.data2.data_count = 6;
-    tcp_world_cartesian_.data2.data[0] = 111;
-    tcp_world_cartesian_.data2.data[1] = 222;
-    tcp_world_cartesian_.data2.data[2] = 333;
-    tcp_world_cartesian_.data2.data[3] = 1.11;
-    tcp_world_cartesian_.data2.data[4] = 2.22;
-    tcp_world_cartesian_.data2.data[5] = 3.33;
+    tcp_world_cartesian_.data2.data[0] = pose.point_.x_;
+    tcp_world_cartesian_.data2.data[1] = pose.point_.y_;
+    tcp_world_cartesian_.data2.data[2] = pose.point_.z_;
+    tcp_world_cartesian_.data2.data[3] = pose.euler_.a_;
+    tcp_world_cartesian_.data2.data[4] = pose.euler_.b_;
+    tcp_world_cartesian_.data2.data[5] = pose.euler_.c_;
 }
 
 void ControllerPublish::updateAxisGroupTcpBaseCartesian()
 {
+    Joint joint_feedback = motion_control_ptr_->getServoJoint();
+    PoseEuler pose;
+    memset(&pose, 0, sizeof(pose));
+
+    int tool_frame_id = 0;
+    motion_control_ptr_->getToolFrame(tool_frame_id);
+
+    motion_control_ptr_->convertJointToCart(joint_feedback, 0, tool_frame_id, pose);
     tcp_base_cartesian_.data1.data = 1;
     tcp_base_cartesian_.data2.data_count = 6;
-    tcp_base_cartesian_.data2.data[0] = 111;
-    tcp_base_cartesian_.data2.data[1] = 222;
-    tcp_base_cartesian_.data2.data[2] = 333;
-    tcp_base_cartesian_.data2.data[3] = 1.11;
-    tcp_base_cartesian_.data2.data[4] = 2.22;
-    tcp_base_cartesian_.data2.data[5] = 3.33;
+    tcp_base_cartesian_.data2.data[0] = pose.point_.x_;
+    tcp_base_cartesian_.data2.data[1] = pose.point_.y_;
+    tcp_base_cartesian_.data2.data[2] = pose.point_.z_;
+    tcp_base_cartesian_.data2.data[3] = pose.euler_.a_;
+    tcp_base_cartesian_.data2.data[4] = pose.euler_.b_;
+    tcp_base_cartesian_.data2.data[5] = pose.euler_.c_;
 }
 
 void ControllerPublish::updateAxisGroupTcpCurrentCartesian()
 {
-    PoseEuler pos_feedback = motion_control_ptr_->getCurrentPose();
+    Joint joint_feedback = motion_control_ptr_->getServoJoint();
+    PoseEuler pose;
+    memset(&pose, 0, sizeof(pose));
+
+    int user_frame_id = 0;
+    int tool_frame_id = 0;
+    motion_control_ptr_->getUserFrame(user_frame_id);
+    motion_control_ptr_->getToolFrame(tool_frame_id);
+
+    motion_control_ptr_->convertJointToCart(joint_feedback, user_frame_id, tool_frame_id, pose);
     tcp_current_cartesian_.data1.data = 1;
     tcp_current_cartesian_.data2.data_count = 6;
-    tcp_current_cartesian_.data2.data[0] = pos_feedback.point_.x_;
-    tcp_current_cartesian_.data2.data[1] = pos_feedback.point_.y_;
-    tcp_current_cartesian_.data2.data[2] = pos_feedback.point_.z_;
-    tcp_current_cartesian_.data2.data[3] = pos_feedback.euler_.a_;
-    tcp_current_cartesian_.data2.data[4] = pos_feedback.euler_.b_;
-    tcp_current_cartesian_.data2.data[5] = pos_feedback.euler_.c_;
+    tcp_current_cartesian_.data2.data[0] = pose.point_.x_;
+    tcp_current_cartesian_.data2.data[1] = pose.point_.y_;
+    tcp_current_cartesian_.data2.data[2] = pose.point_.z_;
+    tcp_current_cartesian_.data2.data[3] = pose.euler_.a_;
+    tcp_current_cartesian_.data2.data[4] = pose.euler_.b_;
+    tcp_current_cartesian_.data2.data[5] = pose.euler_.c_;
 }
 
 void ControllerPublish::updateAxisGroupCurrentCoordinate()
@@ -101,7 +126,6 @@ void ControllerPublish::updateTpProgramStatus()
 
 void ControllerPublish::updateSafetyBoardStatus()
 {
-    //todo new
     uint32_t data = safety_device_ptr_->getDIFrm1();  //old board is getDIfrm2; new board is getDiFrm1
     memcpy(&safety_board_status_.data, &data, sizeof(data));
 }

@@ -582,6 +582,11 @@ install(TARGETS get_axis_group_info_list RUNTIME DESTINATION ${CATKIN_PACKAGE_BI
 add_executable(zero_point_single_offset_set ${SRC_LIST} src/test_motion_control/axis_group/zero_point_single_offset_set.cpp)
 target_link_libraries(zero_point_single_offset_set ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS zero_point_single_offset_set RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+######### for test motion control #########
+
+add_executable(fcp_pose_from_base ${SRC_LIST} src/test_motion_control/axis_group/fcp_pose_from_base.cpp)
+target_link_libraries(fcp_pose_from_base ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS fcp_pose_from_base RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
 #///////////////////////////////////////
 
 

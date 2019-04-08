@@ -123,7 +123,8 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     if(state_machine_ptr_->getInterpreterState() != INTERPRETER_PAUSED
-        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
+        || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED
+        || state_machine_ptr_->getRobotState() != ROBOT_IDLE)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;

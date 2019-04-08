@@ -101,7 +101,7 @@ void ControllerRpc::handleRpc0x0000A904(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -130,7 +130,7 @@ void ControllerRpc::handleRpc0x00008CE4(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -240,7 +240,7 @@ void ControllerRpc::handleRpc0x00001774(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -269,7 +269,7 @@ void ControllerRpc::handleRpc0x00015CF4(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -380,7 +380,7 @@ void ControllerRpc::handleRpc0x00004834(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -409,7 +409,7 @@ void ControllerRpc::handleRpc0x00009854(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -530,7 +530,7 @@ void ControllerRpc::handleRpc0x0000B454(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -559,7 +559,7 @@ void ControllerRpc::handleRpc0x00009354(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -677,7 +677,7 @@ void ControllerRpc::handleRpc0x00012974(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;
@@ -706,7 +706,7 @@ void ControllerRpc::handleRpc0x00006B54(void* request_data_ptr, void* response_d
             strncpy(rs_data_ptr->data.summary[i].name, summary_list[i].name.c_str(), 31);
             rs_data_ptr->data.summary[i].name[31] = 0;
             strncpy(rs_data_ptr->data.summary[i].comment, summary_list[i].comment.c_str(), 255);
-            rs_data_ptr->data.summary[i].comment[31] = 0;
+            rs_data_ptr->data.summary[i].comment[255] = 0;
         }
         rs_data_ptr->data.summary_count = summary_list.size();
         rs_data_ptr->error_code.data = SUCCESS;

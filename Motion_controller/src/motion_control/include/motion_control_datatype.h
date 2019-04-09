@@ -12,7 +12,7 @@
 #include <basic_alg_datatype.h>
 #include <basic_constants.h>
 #include <common_enum.h>
-//#include <kinematics.h>
+#include <kinematics.h>
 
 namespace fst_mc
 {
@@ -36,24 +36,21 @@ struct JointConstraint  // 关节限位
     basic_alg::Joint lower;    // 下限
 };
 
-/*
+struct PoseAndPosture
+{
+    basic_alg::PoseEuler    pose;
+    basic_alg::Posture      posture;
+};
+
 struct TargetPoint
 {
     CoordinateType  type;
-    //Posture         posture;
-
+    
     union
     {
-        basic_alg::Joint        joint;
-        basic_alg::PoseEuler    pose;
+        basic_alg::Joint    joint;
+        PoseAndPosture      pose;
     };
-};
-*/
-
-struct CircleTarget     // moveC的目标点，由2个点位姿点构成
-{
-    basic_alg::PoseEuler pose1;
-    basic_alg::PoseEuler pose2;
 };
 
 #define     PR_POS_LEN           64
@@ -67,13 +64,9 @@ struct MotionTarget     // 用于move指令的数据结构
     int user_frame_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
     int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
 
-    union               // 根据type指定的运动类型，使用相应的目标数据
-    {
-        basic_alg::Joint        joint_target;   // 关节目标点，moveJ时使用
-        basic_alg::PoseEuler    pose_target;    // 位姿目标点，moveL时使用
-        CircleTarget            circle_target;  // 2个位姿目标点，moveC时使用
-        int                     prPos[PR_POS_LEN];
-    };
+    int prPos[PR_POS_LEN];
+    TargetPoint target;   // moveJ和moveL时使用
+    TargetPoint via;      // moveC时用作中间一个辅助点
 };
 
 struct PathBlock    // 路径点的数据结构

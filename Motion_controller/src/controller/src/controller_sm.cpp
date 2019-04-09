@@ -230,6 +230,12 @@ ErrorCode ControllerSm::callReset()
     if(init_state_ == false)
         return CONTROLLER_INIT_OBJECT_FAILED;
 
+    if (ctrl_state_ == CTRL_ENGAGED)
+    {
+        ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
+        return SUCCESS;
+    }
+
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
     {
@@ -472,7 +478,7 @@ void ControllerSm::processSafety()
         {
             if (callReset() == SUCCESS)
             {
-                ErrorMonitor::instance()->add(CABINET_RESET_SUCCESS);
+                ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
             }
             ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);
         }

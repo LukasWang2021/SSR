@@ -709,21 +709,12 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	// Wait Trajectory
 #ifndef WIN32
     ret = g_objRegManagerInterface->isNextInstructionNeeded();
-#else
-    ret = true;
-#endif
     while (ret == false)
     {
-#ifdef WIN32
-		Sleep(1);
-		break ;
-#else
         usleep(1000);
-#endif
-#ifndef WIN32
     	ret = g_objRegManagerInterface->isNextInstructionNeeded();
-#endif
     }
+#endif
   	if((objThreadCntrolBlock->prog_mode == STEP_MODE)
 		&& (isExecuteEmptyLine == 0)
 		&& (objThreadCntrolBlock->is_abort == false))

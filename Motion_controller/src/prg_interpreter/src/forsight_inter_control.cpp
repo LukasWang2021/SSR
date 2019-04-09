@@ -448,23 +448,14 @@ bool setInstruction(struct thread_control_block * objThdCtrlBlockPtr, Instructio
     // Wait until finish 
 #ifndef WIN32
     ret = g_objRegManagerInterface->isNextInstructionNeeded();
-#else
-    ret = true;
-#endif
     FST_INFO("wait ctrl_status.is_permitted == false");
     while (ret == false)
     {
-#ifdef WIN32
-		Sleep(1);
-		break ;
-#else
         usleep(1000);
-#endif
-#ifndef WIN32
     	ret = g_objRegManagerInterface->isNextInstructionNeeded();
-#endif
     }
     FST_INFO("ctrl_status.is_permitted == true");
+#endif
 
     return true;
 }

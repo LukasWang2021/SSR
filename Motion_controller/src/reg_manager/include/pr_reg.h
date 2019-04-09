@@ -39,7 +39,7 @@ typedef struct
 typedef struct
 {
     int id;
-    double pos[9];
+    PrValue value;
 }PrRegDataIpc;
 
 class PrReg:public BaseReg

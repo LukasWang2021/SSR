@@ -324,15 +324,15 @@ bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
     }
 
     if(!isUpdateInputValid(data_ptr->id)
-        || data_ptr->pos[0] > param_ptr_->pr_value_limit_ || data_ptr->pos[0] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[1] > param_ptr_->pr_value_limit_ || data_ptr->pos[1] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[2] > param_ptr_->pr_value_limit_ || data_ptr->pos[2] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[3] > param_ptr_->pr_value_limit_ || data_ptr->pos[3] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[4] > param_ptr_->pr_value_limit_ || data_ptr->pos[4] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[5] > param_ptr_->pr_value_limit_ || data_ptr->pos[5] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[6] > param_ptr_->pr_value_limit_ || data_ptr->pos[6] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[7] > param_ptr_->pr_value_limit_ || data_ptr->pos[7] < -param_ptr_->pr_value_limit_
-        || data_ptr->pos[8] > param_ptr_->pr_value_limit_ || data_ptr->pos[8] < -param_ptr_->pr_value_limit_)
+        || data_ptr->value.pos[0] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[0] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[1] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[1] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[2] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[2] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[3] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[3] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[4] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[4] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[5] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[5] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[6] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[6] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[7] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[7] < -param_ptr_->pr_value_limit_
+        || data_ptr->value.pos[8] > param_ptr_->pr_value_limit_ || data_ptr->value.pos[8] < -param_ptr_->pr_value_limit_)
     {
         return false;
     }
@@ -342,7 +342,7 @@ bool PrReg::updateRegPos(PrRegDataIpc* data_ptr)
     {
         return false;
     }
-    memcpy(&data_list_[data_ptr->id].pos[0], &data_ptr->pos[0], 9*sizeof(double));
+    memcpy(&data_list_[data_ptr->id].pos[0], &data_ptr->value.pos[0], 9*sizeof(double));
 	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
@@ -367,7 +367,8 @@ bool PrReg::getRegPos(int id, PrRegDataIpc* data_ptr)
     }
 
     data_ptr->id = id;
-    memcpy(&data_ptr->pos[0], &data_list_[data_ptr->id].pos[0], 9*sizeof(double));
+//    memcpy(&data_ptr->value.pos[0], &data_list_[data_ptr->id].pos[0], 9*sizeof(double));
+	data_ptr->value = data_list_[data_ptr->id];
     return true;
 }
 

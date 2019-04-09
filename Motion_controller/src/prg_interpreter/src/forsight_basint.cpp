@@ -746,7 +746,12 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 			// setLinenum(objThreadCntrolBlock, iLinenum);
 			waitInterpreterStateleftPaused(objThreadCntrolBlock);
             FST_INFO("call_interpreter : Left  waitInterpreterStateleftPaused %d ", iLinenum);
-			
+			if(objThreadCntrolBlock->is_abort == true)
+			{
+				// setPrgmState(objThreadCntrolBlock, PAUSE_TO_IDLE_T) ;
+		  		FST_INFO("objThreadCntrolBlock->is_abort == true.");
+		        break ; // return 0 ; // NULL ;
+			}
 			// use the iLineNum which had been set in the BACKWARD/FORWARD/JUMP
 			iLinenum = getLinenum(objThreadCntrolBlock) ; // objThreadCntrolBlock->iLineNum ;
 			// 

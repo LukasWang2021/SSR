@@ -1334,9 +1334,37 @@ void ControllerRpc::handleRpc0x000016B5(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data[5] = pose.euler_.c_; 
     }
     rs_data_ptr->data.data_count = 6; 
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/fcp_base_pose"));
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getFcpBasePose"));
 }
 
+//"/rpc/motion_control/axis_group/getTcpCurrentPose"	
+void ControllerRpc::handleRpc0x00003B45(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
+
+    Joint joint_feedback = motion_control_ptr_->getServoJoint();
+    PoseEuler pose;
+    memset(&pose, 0, sizeof(pose));
+
+    int user_frame_id = 0;
+    int tool_frame_id = 0;
+    motion_control_ptr_->getUserFrame(user_frame_id);
+    motion_control_ptr_->getToolFrame(tool_frame_id);
+
+    rs_data_ptr->error_code.data = motion_control_ptr_->convertJointToCart(joint_feedback, user_frame_id, tool_frame_id, pose);
+    if (rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->data.data[0] = pose.point_.x_;
+        rs_data_ptr->data.data[1] = pose.point_.y_;
+        rs_data_ptr->data.data[2] = pose.point_.z_;
+        rs_data_ptr->data.data[3] = pose.euler_.a_; 
+        rs_data_ptr->data.data[4] = pose.euler_.b_;
+        rs_data_ptr->data.data[5] = pose.euler_.c_; 
+    }
+    rs_data_ptr->data.data_count = 6; 
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getTcpCurrentPose"));
+}
 
 //"/rpc/motion_control/getPostureByJoint"
 void ControllerRpc::handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr)

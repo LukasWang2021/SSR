@@ -1969,9 +1969,13 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #ifdef WIN32
 			Sleep(1000);
 #else
-			sleep(1);
+			usleep(200000);
 #endif
 			now = time(0);
+			if(objThreadCntrolBlock->is_abort == true)
+			{
+				break ;
+			}
 		}
 	    FST_INFO("call_Wait timeWaitSeconds = %d at %lld.", timeWaitSeconds, time(NULL));
 		timeWaitMicroSeconds = (int)(value.getFloatValue() * 1000000 - timeWaitSeconds * 1000000);
@@ -2000,7 +2004,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #ifdef WIN32
 				Sleep(100);
 #else
-				sleep(1);
+			    usleep(200000);
 #endif
 			    now = time(0);
 
@@ -2008,6 +2012,11 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 				cond = calc_conditions(objThreadCntrolBlock);
 				while(now - timeStart > outTime)
 					break ;
+					
+				if(objThreadCntrolBlock->is_abort == true)
+				{
+					break ;
+				}
 			}
 		}
 		// with dealing method when timeout
@@ -2027,7 +2036,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #ifdef WIN32
 				Sleep(100);
 #else
-				sleep(1);
+			    usleep(200000);
 #endif
 			    now = time(0);
 				objThreadCntrolBlock->prog = wait_stack.while_loc;
@@ -2035,6 +2044,10 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 				if(now - timeStart > outTime)
 				{
 	    			FST_INFO("cond Timeout.");
+					break ;
+				}
+				if(objThreadCntrolBlock->is_abort == true)
+				{
 					break ;
 				}
 			}
@@ -2126,6 +2139,7 @@ int call_Abort(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	setPrgmState(objThreadCntrolBlock, INTERPRETER_IDLE);
   // clear line path and ProgramName
 	resetProgramNameAndLineNum(objThreadCntrolBlock);
+    objThreadCntrolBlock->is_abort = true;
 #ifdef WIN32
 	Sleep(100);
     return 0; 

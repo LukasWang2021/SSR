@@ -379,7 +379,7 @@ int main_tool(void)
     std::cout<<"-delta_time = "<<delta<<std::endl;
 #endif
 //planPathSmoothJoint
-#if 1
+#if 0
     basic_alg::Joint js, jv, je;
     js[0] = 0; jv[0] = M_PI/2; je[0] = M_PI;
     js[1] = 0; jv[1] = 0;    je[1] = M_PI;
@@ -393,7 +393,7 @@ int main_tool(void)
     //L2J
     PoseEuler temp_pose;
     segment_alg_param.kinematics_ptr->doFK(jv, temp_pose);
-    via.pose_target = temp_pose;
+    via.target.pose.pose = temp_pose;
     via.cnt = 0.5;
     via.vel = 500;
     via.type = MOTION_LINE;

@@ -214,7 +214,7 @@ ErrorCode planPathJoint(const Joint &start,
     double max_delta_linear_start2end = 0;
     for(i = 0; i < model.link_num; ++i)
     {
-        delta_joint_start2end = fabs(end.joint_target[i] - start[i]);
+        delta_joint_start2end = fabs(end.target.joint[i] - start[i]);
         if(seg_axis_type[i] == ROTARY_AXIS)
         {            
             if(delta_joint_start2end > max_delta_joint_start2end)
@@ -259,7 +259,7 @@ ErrorCode planPathJoint(const Joint &start,
     {
         path_cache.cache[0].joint[i] = start[i];
         packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[0]);
-        joint_step_start2end = (end.joint_target[i] - start[i]) / path_count_minus_1;
+        joint_step_start2end = (end.target.joint[i] - start[i]) / path_count_minus_1;
         joint_distance_to_start = 0; 
         for(j = 1; j < path_count_minus_1; ++j)
         {
@@ -267,7 +267,7 @@ ErrorCode planPathJoint(const Joint &start,
             path_cache.cache[j].joint[i] = start[i] + joint_distance_to_start;
             packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[j]);
         }
-        path_cache.cache[path_count_minus_1].joint[i] = end.joint_target[i];
+        path_cache.cache[path_count_minus_1].joint[i] = end.target.joint[i];
         packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[path_count_minus_1]);    
     }
 
@@ -294,12 +294,12 @@ ErrorCode planPathLine(const PoseEuler &start,
     // compute MoveL length
     double path_length_start2end;
     double path_vector_start2end[3];
-    getMoveLPathVector(start.point_, end.pose_target.point_, path_vector_start2end, path_length_start2end);   // MoveL length
+    getMoveLPathVector(start.point_, end.target.pose.pose.point_, path_vector_start2end, path_length_start2end);   // MoveL length
 
     // compute MoveL quatern angle
     double start_quatern[4], end_quatern[4];
     getMoveEulerToQuatern(start.euler_, start_quatern);
-    getMoveEulerToQuatern(end.pose_target.euler_, end_quatern);
+    getMoveEulerToQuatern(end.target.pose.pose.euler_, end_quatern);
     double angle_start2end = getQuaternsIntersectionAngle(start_quatern, end_quatern);    // MoveL quatern angle
 
     if((path_length_start2end < DOUBLE_ACCURACY) && (angle_start2end < DOUBLE_ACCURACY))
@@ -364,7 +364,7 @@ ErrorCode planPathLine(const PoseEuler &start,
             getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.point_, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
+        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
     }
     else    // cnt is invalid
@@ -407,7 +407,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
     // compute MoveC quatern angle
     double start_quatern[4], end_quatern[4];
     getMoveEulerToQuatern(start.euler_, start_quatern);
-    getMoveEulerToQuatern(end.circle_target.pose2.euler_, end_quatern);
+    getMoveEulerToQuatern(end.target.pose.pose.euler_, end_quatern);
 
     double quatern_angle_start2pose2 = getQuaternsIntersectionAngle(start_quatern, end_quatern);
     int quatern_angle_count_ideal_start2end = ceil(quatern_angle_start2pose2 / segment_alg_param.angle_interval);
@@ -504,7 +504,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
             getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.circle_target.pose2.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
+        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
         packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[max_count_start2end]);
     }
     else    // cnt is invalid
@@ -534,7 +534,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
             getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.circle_target.pose2.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
+        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
         packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[max_count_start2end]);
     }
 
@@ -545,18 +545,18 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
     double &angle, basic_alg::Point &circle_center_position, double &circle_radius, double* cross_vector)
 {
     double vector_start_to_pose1[3];
-    getVector3(start.point_, end.circle_target.pose1.point_, vector_start_to_pose1);
+    getVector3(start.point_, end.via.pose.pose.point_, vector_start_to_pose1);
 
     double vector_pose1_to_pose2[3];
-    getVector3(end.circle_target.pose1.point_, end.circle_target.pose2.point_, vector_pose1_to_pose2);
+    getVector3(end.via.pose.pose.point_, end.target.pose.pose.point_, vector_pose1_to_pose2);
 
     getVector3CrossProduct(vector_start_to_pose1, vector_pose1_to_pose2, cross_vector);
 
     double midpoint_start_to_pose1[3];
-    getMidPoint(start.point_, end.circle_target.pose1.point_, midpoint_start_to_pose1);
+    getMidPoint(start.point_, end.via.pose.pose.point_, midpoint_start_to_pose1);
 
     double midpoint_pose1_to_pose2[3];
-    getMidPoint(end.circle_target.pose1.point_, end.circle_target.pose2.point_, midpoint_pose1_to_pose2);
+    getMidPoint(end.via.pose.pose.point_, end.target.pose.pose.point_, midpoint_pose1_to_pose2);
 
     double cross_vector_pose12[3];
     getVector3CrossProduct(cross_vector, vector_start_to_pose1, cross_vector_pose12);
@@ -580,9 +580,9 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
     stack[S_CircleRadius] = circle_radius;
 
     double unit_vestor_pose2_to_circle_center[3];
-    unit_vestor_pose2_to_circle_center[0] = (end.circle_target.pose2.point_.x_ - circle_center_position.x_) / circle_radius;
-    unit_vestor_pose2_to_circle_center[1] = (end.circle_target.pose2.point_.y_ - circle_center_position.y_) / circle_radius;
-    unit_vestor_pose2_to_circle_center[2] = (end.circle_target.pose2.point_.z_ - circle_center_position.z_) / circle_radius;
+    unit_vestor_pose2_to_circle_center[0] = (end.target.pose.pose.point_.x_ - circle_center_position.x_) / circle_radius;
+    unit_vestor_pose2_to_circle_center[1] = (end.target.pose.pose.point_.y_ - circle_center_position.y_) / circle_radius;
+    unit_vestor_pose2_to_circle_center[2] = (end.target.pose.pose.point_.z_ - circle_center_position.z_) / circle_radius;
 
     double unit_vestor_start_to_circle_center[3];
     unit_vestor_start_to_circle_center[0] = (start.point_.x_ - circle_center_position.x_) / circle_radius;
@@ -683,12 +683,12 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     if (via.type == MOTION_JOINT)
     {
         //moveJ2J
-        joint_via = via.joint_target;
+        joint_via = via.target.joint;
     }
     else if (via.type == MOTION_LINE)
     {   
         //moveL2J
-        ErrorCode err = convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        ErrorCode err = convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via);
         if (err != SUCCESS)
         {
             return err;
@@ -697,7 +697,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     else if(via.type == MOTION_CIRCLE)
     {   
         //moveC2J
-        ErrorCode err = convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+        ErrorCode err = convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via);
         if (err != SUCCESS)
         {
             return err;
@@ -715,7 +715,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     double max_delta_linear_via2end = 0;
     for(i = 0; i < model.link_num; ++i)
     {
-        delta_joint_via2end = fabs(end.joint_target[i] - joint_via[i]);
+        delta_joint_via2end = fabs(end.target.joint[i] - joint_via[i]);
         if(seg_axis_type[i] == ROTARY_AXIS)
         {            
             if(delta_joint_via2end > max_delta_joint_via2end)
@@ -752,7 +752,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     Joint joint_in;
     for(i = 0; i < model.link_num; ++i)
     {
-        joint_step_via2end = (end.joint_target[i] - joint_via[i]) /  path_piece_via2end;
+        joint_step_via2end = (end.target.joint[i] - joint_via[i]) /  path_piece_via2end;
         joint_in[i] = joint_via[i] + joint_step_via2end * path_piece_via2in;
     }
 
@@ -847,7 +847,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     double joint_distance_to_in;
     for(i = 0; i < model.link_num; ++i)
     {      
-        joint_step_via2end = (end.joint_target[i] - joint_in[i]) / path_piece_in2end;
+        joint_step_via2end = (end.target.joint[i] - joint_in[i]) / path_piece_in2end;
         joint_distance_to_in = 0; 
         for(j = path_cache.smooth_in_index + 1; j < path_cache_length_minus_1; ++j)
         {
@@ -855,7 +855,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
             path_cache.cache[j].joint[i] = joint_in[i] + joint_distance_to_in;
             packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[j]);
         }
-        path_cache.cache[path_cache_length_minus_1].joint[i] = end.joint_target[i];
+        path_cache.cache[path_cache_length_minus_1].joint[i] = end.target.joint[i];
         packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[path_cache_length_minus_1]);    
     }
 
@@ -873,7 +873,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     {
         //moveJ2L
         PoseEuler pose_euler_via;
-        ErrorCode err = convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+        ErrorCode err = convertJointToCartByUserFrame(via.target.joint, via.user_frame_id, via.tool_frame_id, pose_euler_via);
         if (err != SUCCESS)
         {
             return err;
@@ -884,14 +884,14 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     else if (via.type == MOTION_LINE)
     {   
         //moveL2L
-        euler_via = via.pose_target.euler_;
-        point_via = via.pose_target.point_;
+        euler_via = via.target.pose.pose.euler_;
+        point_via = via.target.pose.pose.point_;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
         //moveC2L
-        euler_via = via.circle_target.pose2.euler_;
-        point_via = via.circle_target.pose2.point_;
+        euler_via = via.target.pose.pose.euler_;
+        point_via = via.target.pose.pose.point_;
     }
     else
     {
@@ -903,7 +903,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     double path_length_start2via = getPointsDistance(start.point_, point_via);
     double path_length_via2target;
     double path_vector_via2target[3];
-    getMoveLPathVector(point_via, end.pose_target.point_, path_vector_via2target, path_length_via2target);
+    getMoveLPathVector(point_via, end.target.pose.pose.point_, path_vector_via2target, path_length_via2target);
     double path_length_via2in = path_length_via2target / 2;
     
     if(path_length_start2via < path_length_via2in)
@@ -921,7 +921,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     double quatern_start[4], quatern_via[4], quatern_in[4], quatern_target[4];
     getMoveEulerToQuatern(start.euler_, quatern_start);
     getMoveEulerToQuatern(euler_via, quatern_via);
-    getMoveEulerToQuatern(end.pose_target.euler_, quatern_target);
+    getMoveEulerToQuatern(end.target.pose.pose.euler_, quatern_target);
     double angle_start2via = getQuaternsIntersectionAngle(quatern_start, quatern_via);   
     double angle_via2target = getQuaternsIntersectionAngle(quatern_via, quatern_target);
     double angle_count_ideal_start2via = ceil(angle_start2via / segment_alg_param.angle_interval);    
@@ -1046,7 +1046,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
+        packPoseByPointAndQuatern(end.target.pose.pose.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
     }
     else
@@ -1101,7 +1101,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             getQuaternPoint(quatern_in, quatern_target, angle_in2target, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.pose_target.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
+        packPoseByPointAndQuatern(end.target.pose.pose.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
     }
 
@@ -1120,7 +1120,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     {
         //moveJ2C
         PoseEuler pose_euler_via;
-        ErrorCode err = convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+        ErrorCode err = convertJointToCartByUserFrame(via.target.joint, via.user_frame_id, via.tool_frame_id, pose_euler_via);
         if (err != SUCCESS)
         {
             return err;
@@ -1131,14 +1131,14 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     else if (via.type == MOTION_LINE)
     {   
         //moveL2C
-        euler_via = via.pose_target.euler_;
-        point_via = via.pose_target.point_;
+        euler_via = via.target.poe.pose.euler_;
+        point_via = via.target.poe.pose.point_;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
         //moveC2C
-        euler_via = via.circle_target.pose2.euler_;
-        point_via = via.circle_target.pose2.point_;
+        euler_via = via.target.poe.pose.euler_;
+        point_via = via.target.poe.pose.point_;
     }
     else
     {
@@ -1149,7 +1149,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     double start_quatern[4], via_quatern[4], end_quatern[4];
     getMoveEulerToQuatern(start.euler_, start_quatern);
     getMoveEulerToQuatern(euler_via, via_quatern);
-    getMoveEulerToQuatern(end.circle_target.pose2.euler_, end_quatern);
+    getMoveEulerToQuatern(end.target.pose.pose.euler_, end_quatern);
     double path_length_start2via = getPointsDistance(start.point_, point_via);
     int path_count_ideal_start2via = ceil(path_length_start2via / segment_alg_param.path_interval);//todo what if circle path?
 
@@ -1384,7 +1384,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
             getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.circle_target.pose2.point_, end_quatern, path_cache.cache[path_cache_length_minus_1].pose);
+        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[path_cache_length_minus_1]);
     }
           
@@ -3281,15 +3281,15 @@ inline bool updateMovLVia2InTrajP(const PathCache& path_cache, const MotionTarge
     PoseEuler pose_euler_via;
     if (via.type == MOTION_JOINT)
     {
-        convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+        convertJointToCartByUserFrame(via.target.joint, via.user_frame_id, via.tool_frame_id, pose_euler_via);
     }
     else if (via.type == MOTION_LINE)
     {   
-        pose_euler_via =  via.pose_target;
+        pose_euler_via =  via.target.pose.pose;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
-        pose_euler_via = via.circle_target.pose2;
+        pose_euler_via = via.target.pose.pose;
     }
     else
     {
@@ -3354,16 +3354,16 @@ inline bool updateMovJVia2InTrajP(const PathCache& path_cache, const Joint &star
     Joint joint_via;
     if (via.type == MOTION_JOINT)
     {
-        joint_via = via.joint_target;
+        joint_via = via.target.joint;
     }
     else if (via.type == MOTION_LINE)
     {   
-        if (convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+        if (convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
             return false;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
-        if (convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+        if (convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
             return false;
     }
     else
@@ -3425,17 +3425,17 @@ inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst
     PoseEuler pose_euler_via;
     if (via.type == MOTION_JOINT)
     {
-        if (convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via) != SUCCESS)
+        if (convertJointToCartByUserFrame(via.target.joint, via.user_frame_id, via.tool_frame_id, pose_euler_via) != SUCCESS)
             return false;
     }
     else if (via.type == MOTION_LINE)
     {   
-        pose_euler_via = via.pose_target;
+        pose_euler_via = via.target.pose.pose;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
         //moveC2C
-        pose_euler_via = via.circle_target.pose2;
+        pose_euler_via = via.target.pose.pose;
     }
     else
     {
@@ -3671,7 +3671,7 @@ inline void updateMovLTrajT(const PathCache& path_cache, double cmd_vel,
         for(i = 0; i < traj_t_size; ++i)
         {
             stack[S_TrajT + i] = time_duration_start2end;
-        }        
+        }
     }
     else
     {
@@ -3747,14 +3747,14 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
         {
             if (via.type == MOTION_LINE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-                double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
+                double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 traj_piece_ideal_out2in = (path_length_out2via + path_length_via2in) * stack[S_PathCountFactorCartesian];
             }
             else if (via.type == MOTION_JOINT)
             {
                 PoseEuler pose_euler_via;
-                convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+                convertJointToCartByUserFrame(via.target.joint, via.user_frame_id, via.tool_frame_id, pose_euler_via);
                 double path_length_via2in = getPointsDistance(pose_euler_via.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double traj_piece_ideal_via2in = path_length_via2in * stack[S_PathCountFactorCartesian];
 
@@ -3764,7 +3764,7 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
 
                 for(int i = 0; i < model.link_num; ++i)
                 {
-                    delta_joint_out2via = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]);
+                    delta_joint_out2via = fabs(via.target.joint[i] - path_cache.cache[0].joint[i]);
                     if(seg_axis_type[i] == ROTARY_AXIS)
                     {
                         if(delta_joint_out2via > delta_joint_max_out2via)
@@ -3787,9 +3787,9 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
             }
             else if(via.type == MOTION_CIRCLE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
                 double traj_piece_ideal_out2via = path_length_out2via * 1.4 *stack[S_PathCountFactorCartesian];
-                double path_length_via2in = getPointsDistance(via.circle_target.pose2.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double traj_piece_ideal_via2in = path_length_via2in *  stack[S_PathCountFactorCartesian];
                 traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
             }
@@ -3836,7 +3836,7 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
             }
             else if (via.type == MOTION_LINE)
             {
-                double path_length_out2via = getPointsDistance(via.pose_target.point_, path_cache.cache[0].pose.point_);
+                double path_length_out2via = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[0].pose.point_);
                 double traj_piece_ideal_out2via = path_length_out2via * stack[S_PathCountFactorCartesian];
 
                 double delta_joint_max_via2in = 0;
@@ -3844,7 +3844,7 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
                 double delta_joint_via2in;
 
                 Joint joint_via;
-                convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+                convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via);
 
                 for(int i = 0; i < model.link_num; ++i)
                 {
@@ -3871,14 +3871,14 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
             }
             else if(via.type == MOTION_CIRCLE)
             {
-                double path_length_out2via = getPointsDistance(via.circle_target.pose2.point_, path_cache.cache[0].pose.point_);
+                double path_length_out2via = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[0].pose.point_);
                 double traj_piece_ideal_out2via = path_length_out2via * 1.4 * stack[S_PathCountFactorCartesian];
 
                 double delta_joint_max_via2in = 0;
                 double delta_linear_max_via2in = 0;
                 double delta_joint_via2in;
                 Joint joint_via;
-                convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+                convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via);
                 for(int i = 0; i < model.link_num; ++i)
                 {
                     delta_joint_via2in = fabs(joint_via[i] - path_cache.cache[0].joint[i]);
@@ -3914,7 +3914,7 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
 
                 for(int i = 0; i < model.link_num; ++i)
                 {
-                    delta_joint_out2via = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]);
+                    delta_joint_out2via = fabs(via.target.joint[i] - path_cache.cache[0].joint[i]);
                     if(seg_axis_type[i] == ROTARY_AXIS)
                     {
                         if(delta_joint_out2via > delta_joint_max_out2via)
@@ -3938,14 +3938,14 @@ inline void updateSmoothOut2InTrajP(const PathCache& path_cache, const MotionTar
             }
             else if (via.type == MOTION_LINE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
                 double traj_piece_ideal_out2via = path_length_out2via * stack[S_PathCountFactorCartesian];
                 double traj_piece_ideal_via2in = stack[S_CircleAngleVia2In] * stack[S_PathCountFactorJoint];
                 traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
             }
             else if(via.type == MOTION_CIRCLE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
                 double traj_piece_ideal_out2via = path_length_out2via * 1.4 * stack[S_PathCountFactorCartesian];
                 double traj_piece_ideal_via2in = stack[S_CircleAngleVia2In] * stack[S_PathCountFactorJoint];
                 traj_piece_ideal_out2in = traj_piece_ideal_out2via + traj_piece_ideal_via2in;
@@ -3963,16 +3963,16 @@ inline bool updateMovLVia2EndTrajT(const PathCache& path_cache, const MotionTarg
     PoseEuler pose_euler_via;
     if (via.type == MOTION_JOINT)
     {
-        if (convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via) != SUCCESS)
+        if (convertJointToCartByUserFrame(via.target.joint, via.user_frame_id, via.tool_frame_id, pose_euler_via) != SUCCESS)
             return false;
     }
     else if (via.type == MOTION_LINE)
     {   
-        pose_euler_via =  via.pose_target;
+        pose_euler_via =  via.target.pose.pose;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
-        pose_euler_via = via.circle_target.pose2;
+        pose_euler_via = via.target.pose.pose;
     }
     else
     {
@@ -4043,16 +4043,16 @@ inline bool updateMovJVia2EndTrajT(const PathCache& path_cache, const Joint &sta
     Joint joint_via;
     if (via.type == MOTION_JOINT)
     {
-        joint_via = via.joint_target;
+        joint_via = via.target.joint;
     }
     else if (via.type == MOTION_LINE)
     {   
-        if (convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+        if (convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
             return false;
     }
     else if(via.type == MOTION_CIRCLE)
     {   
-        if (convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
+        if (convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via) != SUCCESS)
             return false;
     }
     else
@@ -4203,14 +4203,14 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
         {
             if (via.type == MOTION_LINE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
-                double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
+                double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 time_span_out2in = (path_length_out2via + path_length_via2in) / cmd_vel;
             }
             else if (via.type == MOTION_JOINT)
             {
                 PoseEuler pose_euler_via;
-                convertJointToCartByUserFrame(via.joint_target, via.user_frame_id, via.tool_frame_id, pose_euler_via);
+                convertJointToCartByUserFrame(via.target.joint, via.user_frame_id, via.tool_frame_id, pose_euler_via);
 
                 double path_length_via2in = getPointsDistance(pose_euler_via.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double time_span_via2in = path_length_via2in  / cmd_vel;
@@ -4219,7 +4219,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
                 double time_span_out2via_tmp;
                  for(int i = 0; i < model.link_num; ++i)
                 {
-                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (via.vel * stack[S_ConstraintJointVelMax + i]);
+                    time_span_out2via_tmp = fabs(via.target.joint[i] - path_cache.cache[0].joint[i]) / (via.vel * stack[S_ConstraintJointVelMax + i]);
                     if(time_span_out2via_tmp > time_span_out2via)
                     {
                         time_span_out2via = time_span_out2via_tmp;
@@ -4231,7 +4231,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
                 double time_span_out2via = path_length_out2via * 1.4 / via.vel;
-                double path_length_via2in = getPointsDistance(via.pose_target.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double time_span_via2in = path_length_via2in / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
             }
@@ -4241,11 +4241,11 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
         {
             if (via.type == MOTION_LINE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
                 double time_span_out2via = path_length_out2via / via.vel;
 
                 Joint joint_via;
-                convertCartToJointByUserFrame(via.pose_target, start, via.user_frame_id, via.tool_frame_id, joint_via);
+                convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via);
 
                 double time_span_via2in = 0;
                 double time_span_via2in_tmp;
@@ -4287,11 +4287,11 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             }
             else if(via.type == MOTION_CIRCLE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.circle_target.pose2.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
                 double time_span_out2via = path_length_out2via * 1.4 / via.vel;
 
                 Joint joint_via;
-                convertCartToJointByUserFrame(via.circle_target.pose2, start, via.user_frame_id, via.tool_frame_id, joint_via);
+                convertCartToJointByUserFrame(via.target.pose.pose, start, via.user_frame_id, via.tool_frame_id, joint_via);
 
                 double time_span_via2in = 0;
                 double time_span_via2in_tmp;
@@ -4314,7 +4314,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
         {
             if (via.type == MOTION_LINE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
                 double time_span_out2via = path_length_out2via / via.vel;
                 double time_span_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
@@ -4326,7 +4326,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
                 double time_span_out2via_tmp;
                  for(int i = 0; i < model.link_num; ++i)
                 {
-                    time_span_out2via_tmp = fabs(via.joint_target[i] - path_cache.cache[0].joint[i]) / (via.vel * stack[S_ConstraintJointVelMax + i]);
+                    time_span_out2via_tmp = fabs(via.target.joint[i] - path_cache.cache[0].joint[i]) / (via.vel * stack[S_ConstraintJointVelMax + i]);
                     if(time_span_out2via_tmp > time_span_out2via)
                     {
                         time_span_out2via = time_span_out2via_tmp;
@@ -4338,7 +4338,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionTar
             }
             else if(via.type == MOTION_CIRCLE)
             {
-                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.pose_target.point_);
+                double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
                 double time_out2via = path_length_out2via * 1.4 / via.vel;
                 double time_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
                 time_span_out2in = time_out2via + time_via2in;

@@ -517,16 +517,16 @@ extern fst_mc::AxisType seg_axis_type[9];
 //void initComplexAxisGroupModel();
 void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, fst_mc::AxisType axis_type[NUM_OF_JOINT], double joint_vel_max[NUM_OF_JOINT]);
 
-ErrorCode planPathJoint(const basic_alg::Joint &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
-ErrorCode planPathLine(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
-ErrorCode planPathCircle(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathJoint(const basic_alg::Joint &start, const fst_mc::MotionInfo &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathLine(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathCircle(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &end, fst_mc::PathCache &path_cache);
 
-ErrorCode planPathSmoothJoint(const basic_alg::Joint &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
-ErrorCode planPathSmoothLine(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
-ErrorCode planPathSmoothCircle(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &via, const fst_mc::MotionTarget &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathSmoothJoint(const basic_alg::Joint &start, const fst_mc::MotionInfo &via, const fst_mc::MotionInfo &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathSmoothLine(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &via, const fst_mc::MotionInfo &end, fst_mc::PathCache &path_cache);
+ErrorCode planPathSmoothCircle(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &via, const fst_mc::MotionInfo &end, fst_mc::PathCache &path_cache);
 
 ErrorCode planTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
-ErrorCode planTrajectorySmooth(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, const fst_mc::MotionTarget &via, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
+ErrorCode planTrajectorySmooth(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, const fst_mc::MotionInfo &via, double vel_ratio, double acc_ratio, fst_mc::TrajectoryCache &traj_cache);
 ErrorCode planPauseTrajectory(const fst_mc::PathCache &path_cache, const fst_mc::JointState &start_state, double acc_ratio, fst_mc::TrajectoryCache &traj_cache, int &path_stop_index);
 
 /***********************************************************************************************/
@@ -795,18 +795,12 @@ inline void getQuaternPoint(double* start_quatern, double* end_quartern, double 
 inline void packPoseByPointAndQuatern(basic_alg::Point point, double quatern[4], basic_alg::PoseQuaternion& pose);
 inline void packPathBlockType(fst_mc::PointType point_type, fst_mc::MotionType motion_type, fst_mc::PathBlock& path_block);
 
-inline void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, 
+inline void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &end, 
     double &angle, basic_alg::Point &circle_center_position, double &circle_radius, double* cross_vector);
 inline void getCirclePoint(double &circle_radius, double &angle, double* n_vector, double* o_vector,
     basic_alg::Point &circle_center_point, basic_alg::Point &circle_point);
 
-inline void getCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionTarget &end, double &angle);
-
-//dealing with uf, tf
-inline ErrorCode convertJointToCartByUserFrame(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose);
-inline ErrorCode convertCartToJointByUserFrame(const basic_alg::PoseEuler &pose, const basic_alg::Joint &ref_joint, 
-                                               int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
-
+inline void getCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &end, double &angle);
 
 inline void updateTrajPSingleItem(int traj_p_address, const basic_alg::Joint& joint);
 inline void getTrajPFromPathStart2End(const fst_mc::PathCache& path_cache, double traj_piece_ideal_start2end, 
@@ -823,9 +817,9 @@ inline void getTrajPFromPathOut2In(const fst_mc::PathCache& path_cache, double t
 inline void updateMovLTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline void updateMovJTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
 inline void updateMovCTrajP(const fst_mc::PathCache& path_cache, int* traj_path_cache_index, int& traj_pva_out_index, int& traj_pva_size);
-inline bool updateMovLVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
-inline bool updateMovJVia2InTrajP(const fst_mc::PathCache& path_cache, const basic_alg::Joint &start, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
-inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, int& traj_pva_in_index);
+inline bool updateMovLVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionInfo& via, int& traj_pva_in_index);
+inline bool updateMovJVia2InTrajP(const fst_mc::PathCache& path_cache, const basic_alg::Joint &start, const fst_mc::MotionInfo& via, int& traj_pva_in_index);
+inline bool updateMovCVia2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionInfo& via, int& traj_pva_in_index);
 inline void updateMovLIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
                                         int* traj_path_cache_index_in2end, int& traj_pva_out_index, int& traj_pva_size_via2end);
 inline void updateMovJIn2EndTrajP(const fst_mc::PathCache& path_cache, int traj_pva_in_index, 
@@ -859,18 +853,18 @@ inline void updateMovJTrajT(const fst_mc::PathCache& path_cache, double cmd_vel,
 inline void updateMovCTrajT(const fst_mc::PathCache& path_cache, double cmd_vel, 
                                 int* traj_path_cache_index, int traj_pva_out_index, int traj_pva_size, 
                                 int& traj_t_size);
-inline bool updateMovLVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
+inline bool updateMovLVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionInfo& via, double cmd_vel,
                                 int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                 int& traj_t_size);
-inline bool updateMovJVia2EndTrajT(const fst_mc::PathCache& path_cache,const basic_alg::Joint &start, const fst_mc::MotionTarget& via, double cmd_vel,
+inline bool updateMovJVia2EndTrajT(const fst_mc::PathCache& path_cache,const basic_alg::Joint &start, const fst_mc::MotionInfo& via, double cmd_vel,
                                 int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                 int& traj_t_size);
-inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, double cmd_vel,
+inline void updateMovCVia2EndTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionInfo& via, double cmd_vel,
                                 int* traj_path_cache_index_in2end, int traj_pva_in_index, int traj_pva_out_index, int traj_pva_size_via2end,
                                 int& traj_t_size);
 
-inline void updateSmoothOut2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, const basic_alg::Joint start, int* traj_path_cache_index_out2in, int& traj_pva_size_out2in);
-inline void updateSmoothOut2InTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionTarget& via, const basic_alg::Joint start, double cmd_vel, 
+inline void updateSmoothOut2InTrajP(const fst_mc::PathCache& path_cache, const fst_mc::MotionInfo& via, const basic_alg::Joint start, int* traj_path_cache_index_out2in, int& traj_pva_size_out2in);
+inline void updateSmoothOut2InTrajT(const fst_mc::PathCache& path_cache, const fst_mc::MotionInfo& via, const basic_alg::Joint start, double cmd_vel, 
                                            int* traj_path_cache_index_out2in, int traj_pva_size_out2in, 
                                            int& traj_t_size_out2in);
 

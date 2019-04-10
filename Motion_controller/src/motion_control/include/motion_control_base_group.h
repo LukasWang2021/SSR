@@ -136,6 +136,7 @@ class BaseGroup
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, basic_alg::PoseEuler &pose);
 
+    virtual basic_alg::Transformation* getTransformationPtr(void);
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
     virtual Calibrator* getCalibratorPtr(void);
     virtual Constraint* getSoftConstraintPtr(void);
@@ -155,15 +156,15 @@ class BaseGroup
 
     virtual ErrorCode autoJoint(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
     virtual ErrorCode autoStableJoint(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothJoint(const JointState &start_state, const MotionTarget &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothJoint(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
     
     virtual ErrorCode autoLine(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
     virtual ErrorCode autoStableLine(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothLine(const JointState &start_state, const MotionTarget &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothLine(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
     
     virtual ErrorCode autoCircle(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
     virtual ErrorCode autoStableCircle(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
 
     virtual ErrorCode replanPathCache(void);
 

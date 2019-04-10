@@ -374,22 +374,22 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         PoseEuler fcp_in_base, tcp_in_base;
         motion_info.target.joint = target.target.joint;
         motion_info.target.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(target.target.joint);
-        kinematics_ptr_->doFK(target.target.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, motion_info.target.tool_frame, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, motion_info.target.user_frame, motion_info.target.pose.pose);
+        group_ptr_->getKinematicsPtr()->doFK(target.target.joint, fcp_in_base);
+        group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, motion_info.target.tool_frame, tcp_in_base);
+        group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, motion_info.target.user_frame, motion_info.target.pose.pose);
     }
     else
     {
         PoseEuler fcp_in_base, tcp_in_base;
         motion_info.target.pose = target.target.pose;
-        transformation_.convertPoseFromUserToBase(target.target.pose.pose, motion_info.target.user_frame, tcp_in_base);
-        transformation_.convertTcpToFcp(tcp_in_base, motion_info.target.tool_frame, fcp_in_base);
+        group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(target.target.pose.pose, motion_info.target.user_frame, tcp_in_base);
+        group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, motion_info.target.tool_frame, fcp_in_base);
         
         if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, target.target.pose.posture, motion_info.target.joint))
         {
-            PoseEuler &pose = target.target.pose.pose;
-            PoseEuler *tf = motion_info.target.tool_frame;
-            PoseEuler *uf = motion_info.target.user_frame;
+            const PoseEuler &pose = target.target.pose.pose;
+            const PoseEuler &tf = motion_info.target.tool_frame;
+            const PoseEuler &uf = motion_info.target.user_frame;
             FST_ERROR("IK of target pose failed.");
             FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
             FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
@@ -409,22 +409,22 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
             PoseEuler fcp_in_base, tcp_in_base;
             motion_info.via.joint = target.via.joint;
             motion_info.via.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(target.via.joint);
-            kinematics_ptr_->doFK(target.via.joint, fcp_in_base);
-            transformation_.convertFcpToTcp(fcp_in_base, motion_info.via.tool_frame, tcp_in_base);
-            transformation_.convertPoseFromBaseToUser(tcp_in_base, motion_info.via.user_frame, motion_info.via.pose.pose);
+            group_ptr_->getKinematicsPtr()->doFK(target.via.joint, fcp_in_base);
+            group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, motion_info.via.tool_frame, tcp_in_base);
+            group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, motion_info.via.user_frame, motion_info.via.pose.pose);
         }
         else
         {
             PoseEuler fcp_in_base, tcp_in_base;
             motion_info.via.pose = target.via.pose;
-            transformation_.convertPoseFromUserToBase(target.via.pose.pose, motion_info.via.user_frame, tcp_in_base);
-            transformation_.convertTcpToFcp(tcp_in_base, motion_info.via.tool_frame, fcp_in_base);
+            group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(target.via.pose.pose, motion_info.via.user_frame, tcp_in_base);
+            group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, motion_info.via.tool_frame, fcp_in_base);
             
             if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, target.via.pose.posture, motion_info.via.joint))
             {
-                PoseEuler &pose = target.via.pose.pose;
-                PoseEuler *tf = motion_info.via.tool_frame;
-                PoseEuler *uf = motion_info.via.user_frame;
+                const PoseEuler &pose = target.via.pose.pose;
+                const PoseEuler &tf = motion_info.via.tool_frame;
+                const PoseEuler &uf = motion_info.via.user_frame;
                 FST_ERROR("IK of via pose failed.");
                 FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
                 FST_ERROR("Posture: %d, %d, %d, %d", target.via.pose.posture.arm, target.via.pose.posture.elbow, target.via.pose.posture.wrist, target.via.pose.posture.flip);

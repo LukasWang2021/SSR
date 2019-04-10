@@ -978,12 +978,18 @@ ErrorCode BaseGroup::restartMove(void)
             return MOTION_INTERNAL_FAULT;
         }
         
-        MotionTarget target;
+        MotionInfo target;
         target.type = MOTION_JOINT;
         target.cnt = 0;
         target.vel = 0.0625;
-        target.target.type = COORDINATE_JOINT;
         target.target.joint = pause;
+        target.target.user_frame = user_frame_;
+        target.target.tool_frame = tool_frame_;
+        target.target.pose.posture = kinematics_ptr_->getPostureByJoint(pause);
+        PoseEuler fcp_in_base, tcp_in_base;
+        kinematics_ptr_->doFK(pause, fcp_in_base);
+        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
+        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, target.target.pose.pose);
         
         err = autoStableJoint(start, target, path_cache_ptr->path_cache, traj_cache_ptr->trajectory_cache);
         path_cache_pool_.freeCachePtr(path_cache_ptr);
@@ -1094,7 +1100,7 @@ ErrorCode BaseGroup::replanPathCache(void)
     {
         FST_INFO("Replan path cache: %p", path_ptr);
         int id = path_ptr->id;
-        MotionTarget target = path_ptr->path_cache.target;
+        MotionInfo target = path_ptr->path_cache.target;
         ptr = path_ptr;
         path_ptr = path_ptr->next_ptr;
         path_cache_pool_.freeCachePtr(ptr);
@@ -1245,7 +1251,7 @@ ErrorCode BaseGroup::autoMove(int id, const MotionInfo &info)
 
 ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
 {
-    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE && traj_list_ptr_ = NULL && path_list_ptr_ == NULL)
+    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE && traj_list_ptr_ == NULL && path_list_ptr_ == NULL)
     {
         Joint control_joint, current_joint;
         getLatestJoint(current_joint);
@@ -1314,7 +1320,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
 
     Joint target_joint;
     PoseEuler start_pose;
-    PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
+    PoseEuler fcp_in_base, tcp_in_base;
     kinematics_ptr_->doFK(start_joint_, fcp_in_base);
     transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
@@ -1340,6 +1346,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
 
     if (getDistance(start_pose.point_, info.target.pose.pose.point_) < MINIMUM_E3 && getOrientationAngle(start_pose.euler_, info.target.pose.pose.euler_) < MINIMUM_E3)
     {
+        char buffer[LOG_TEXT_SIZE];
         const Joint &target_joint = info.target.joint;
         const PoseEuler &target_pose = info.target.pose.pose;
         FST_WARN("Target pose coincidence with start.");
@@ -1372,6 +1379,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
 
         if (getDistance(start_pose.point_, info.via.pose.pose.point_) < MINIMUM_E3 && getOrientationAngle(start_pose.euler_, info.via.pose.pose.euler_) < MINIMUM_E3)
         {
+            char buffer[LOG_TEXT_SIZE];
             const Joint &via_joint = info.via.joint;
             const PoseEuler &via_pose = info.via.pose.pose;
             FST_WARN("Via pose coincidence with start.");
@@ -1382,10 +1390,12 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             return TARGET_COINCIDENCE;
         }
 
-        if (getDistance(target_pose.point_, info.via.pose.pose.point_) < MINIMUM_E3 && getOrientationAngle(target_pose.euler_, info.via.pose.pose.euler_) < MINIMUM_E3)
+        if (getDistance(info.target.pose.pose.point_, info.via.pose.pose.point_) < MINIMUM_E3 && getOrientationAngle(info.target.pose.pose.euler_, info.via.pose.pose.euler_) < MINIMUM_E3)
         {
+            char buffer[LOG_TEXT_SIZE];
             const Joint &via_joint = info.via.joint;
             const PoseEuler &via_pose = info.via.pose.pose;
+            const PoseEuler &target_pose = info.target.pose.pose;
             FST_WARN("Via pose coincidence with target.");
             FST_WARN("  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
             FST_WARN("  target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
@@ -1551,8 +1561,8 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionInfo &info,
     clock_t start_clock, end_clock;
     double  path_plan_time, traj_plan_time;
     const PoseEuler &pose = info.target.pose.pose;
-    const Poseture &posture = info.target.pose.posture;
-    FST_INFO("autoStableJoint: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    const Posture &posture = info.target.pose.posture;
+    FST_INFO("autoStableJoint: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
     FST_INFO("start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("target-joint: %s", printDBLine(&info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
     FST_INFO("target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f,", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
@@ -1562,7 +1572,7 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionInfo &info,
     ErrorCode err = planPathJoint(start, info, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-    path.target = target;
+    path.target = info;
 
     if (err != SUCCESS)
     {
@@ -1608,7 +1618,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state, const Motion
 {
     char buffer[LOG_TEXT_SIZE];
     const PoseEuler &pose = target.target.pose.pose;
-    const Poseture &posture = target.target.pose.posture;
+    const Posture &posture = target.target.pose.posture;
     FST_INFO("autoSmoothJoint: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
     FST_INFO("Start-angle: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
@@ -1815,7 +1825,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionInfo &info, 
 
     const Posture &posture = info.target.pose.posture;
     const PoseEuler &target_pose = info.target.pose.pose;
-    FST_INFO("autoStableLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    FST_INFO("autoStableLine: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
     FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
     FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_,target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
@@ -1881,7 +1891,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionInfo &info, 
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionInfo &via, const MotionInfo &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
     clock_t start_clock, end_clock;
@@ -1891,8 +1901,8 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionI
     transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
     const PoseEuler &via_pose = via.target.pose.pose;
-    const PoseEuler &target_pose = target.target.pose.pose;
-    FST_INFO("autoSmoothLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    const PoseEuler &target_pose = info.target.pose.pose;
+    FST_INFO("autoSmoothLine: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
     FST_INFO("Start-joint: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
@@ -1900,13 +1910,13 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionI
     FST_INFO("Via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
     FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
     FST_INFO("Via-joint: %s", printDBLine(&via.target.joint[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("Target-joint: %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Target-joint: %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
 
     start_clock = clock();
-    ErrorCode err = planPathSmoothLine(start_pose, via, motion_target, path);
+    ErrorCode err = planPathSmoothLine(start_pose, via, info, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-    path.target = target;
+    path.target = info;
 
     if (err != SUCCESS)
     {
@@ -2005,7 +2015,7 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionInfo &info
 
     const PoseEuler &via_pose = info.via.pose.pose;
     const PoseEuler &target_pose = info.target.pose.pose;
-    FST_INFO("autoStableCircle: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    FST_INFO("autoStableCircle: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
     FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
     FST_INFO("Via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
@@ -3609,6 +3619,11 @@ void BaseGroup::getTypeOfAxis(AxisType *types)
     {
         types[i] = type_of_axis_[i];
     }
+}
+
+Transformation* BaseGroup::getTransformationPtr(void)
+{
+    return &transformation_;
 }
 
 Kinematics* BaseGroup::getKinematicsPtr(void)

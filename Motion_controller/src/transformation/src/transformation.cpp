@@ -217,6 +217,80 @@ bool Transformation::convertFcpToTcp(const PoseQuaternion& pose_fcp, const PoseE
     return true;
 }
 
+bool Transformation::addToolOffsetForTcp(const PoseEuler& pose_tcp, const PoseEuler& tool_offset, PoseEuler& new_pose_tcp)
+{
+    TransMatrix trans_tool_offset_inverse;
+    if(!getInverse(tool_offset, trans_tool_offset_inverse))
+    {
+        return false;
+    }
+    TransMatrix trans_pose_tcp;
+    pose_tcp.convertToTransMatrix(trans_pose_tcp);
+    TransMatrix trans_new_pose_tcp;
+    trans_tool_offset_inverse.rightMultiply(trans_pose_tcp, trans_new_pose_tcp);
+    trans_new_pose_tcp.convertToPoseEuler(new_pose_tcp);
+    return true;
+}
+
+bool Transformation::deleteToolOffsetForTcp(const PoseEuler& pose_tcp, const PoseEuler& tool_offset, PoseEuler& new_pose_tcp)
+{
+    TransMatrix trans_tool_offset;
+    tool_offset.convertToTransMatrix(trans_tool_offset);
+    TransMatrix trans_pose_tcp;
+    pose_tcp.convertToTransMatrix(trans_pose_tcp);
+    TransMatrix trans_new_pose_tcp;
+    trans_tool_offset.rightMultiply(trans_pose_tcp, trans_new_pose_tcp);
+    trans_new_pose_tcp.convertToPoseEuler(new_pose_tcp);
+    return true;
+}
+
+bool Transformation::addToolOffsetForTcp(const PoseQuaternion& pose_tcp, const PoseEuler& tool_offset, PoseQuaternion& new_pose_tcp)
+{
+    TransMatrix trans_tool_offset_inverse;
+    if(!getInverse(tool_offset, trans_tool_offset_inverse))
+    {
+        return false;
+    }
+    TransMatrix trans_pose_tcp;
+    pose_tcp.convertToTransMatrix(trans_pose_tcp);
+    TransMatrix trans_new_pose_tcp;
+    trans_tool_offset_inverse.rightMultiply(trans_pose_tcp, trans_new_pose_tcp);
+    trans_new_pose_tcp.convertToPoseQuaternion(new_pose_tcp);
+    return true;
+}
+
+bool Transformation::deleteToolOffsetForTcp(const PoseQuaternion& pose_tcp, const PoseEuler& tool_offset, PoseQuaternion& new_pose_tcp)
+{
+    TransMatrix trans_tool_offset;
+    tool_offset.convertToTransMatrix(trans_tool_offset);
+    TransMatrix trans_pose_tcp;
+    pose_tcp.convertToTransMatrix(trans_pose_tcp);
+    TransMatrix trans_new_pose_tcp;
+    trans_tool_offset.rightMultiply(trans_pose_tcp, trans_new_pose_tcp);
+    trans_new_pose_tcp.convertToPoseQuaternion(new_pose_tcp);
+    return true;
+}
+
+bool Transformation::addOffset(const PoseEuler& pose, const PoseEuler& offset, PoseEuler& new_pose)
+{
+    return addToolOffsetForTcp(pose, offset, new_pose);
+}
+
+bool Transformation::deleteOffset(const PoseEuler& pose, const PoseEuler& offset, PoseEuler& new_pose)
+{
+    return deleteToolOffsetForTcp(pose, offset, new_pose);
+}
+
+bool Transformation::addOffset(const PoseQuaternion& pose, const PoseEuler& offset, PoseQuaternion& new_pose)
+{
+    return addToolOffsetForTcp(pose, offset, new_pose);
+}
+
+bool Transformation::deleteOffset(const PoseQuaternion& pose, const PoseEuler& offset, PoseQuaternion& new_pose)
+{
+    return deleteToolOffsetForTcp(pose, offset, new_pose);
+}
+
 bool Transformation::getInverse(const PoseEuler& pose, TransMatrix& inverse_trans)
 {
     TransMatrix trans;

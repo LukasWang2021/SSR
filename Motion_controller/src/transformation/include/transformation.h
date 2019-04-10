@@ -33,6 +33,16 @@ public:
     bool convertTcpToFcp(const PoseQuaternion& pose_tcp, const PoseEuler& tool_frame, PoseQuaternion& pose_fcp);
     bool convertFcpToTcp(const PoseQuaternion& pose_fcp, const PoseEuler& tool_frame, PoseQuaternion& pose_tcp);    
 
+    bool addToolOffsetForTcp(const PoseEuler& pose_tcp, const PoseEuler& tool_offset, PoseEuler& new_pose_tcp);
+    bool deleteToolOffsetForTcp(const PoseEuler& pose_tcp, const PoseEuler& tool_offset, PoseEuler& new_pose_tcp);
+    bool addToolOffsetForTcp(const PoseQuaternion& pose_tcp, const PoseEuler& tool_offset, PoseQuaternion& new_pose_tcp);
+    bool deleteToolOffsetForTcp(const PoseQuaternion& pose_tcp, const PoseEuler& tool_offset, PoseQuaternion& new_pose_tcp);
+
+    bool addOffset(const PoseEuler& pose, const PoseEuler& offset, PoseEuler& new_pose);
+    bool deleteOffset(const PoseEuler& pose, const PoseEuler& offset, PoseEuler& new_pose);
+    bool addOffset(const PoseQuaternion& pose, const PoseEuler& offset, PoseQuaternion& new_pose);
+    bool deleteOffset(const PoseQuaternion& pose, const PoseEuler& offset, PoseQuaternion& new_pose);
+
 private:
     Kinematics* kinematics_ptr_;
 

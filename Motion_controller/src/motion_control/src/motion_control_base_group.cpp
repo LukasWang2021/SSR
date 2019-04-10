@@ -1119,9 +1119,9 @@ ErrorCode BaseGroup::replanPathCache(void)
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
+ErrorCode BaseGroup::autoMove(int id, const MotionInfo &info)
 {
-    FST_INFO("Auto move request received, ID = %d, type = %d", id, target.type);
+    FST_INFO("Auto move request received, ID = %d, type = %d", id, info.type);
     Joint start = start_joint_;
 
     ErrorCode err = checkStartState(start);
@@ -1132,13 +1132,13 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
         return err;
     }
 
-    err = checkMotionTarget(target);
+    err = checkMotionTarget(info);
 
     if (err != SUCCESS)
     {
         // moveJ或者movel时如果目标点和起始点重合，直接跳过这条指令的规划执行，什么也不做
         // 如果是其他错误则报错，提前结束运动规划
-        if (err == TARGET_COINCIDENCE && target.type != MOTION_TYPE)
+        if (err == TARGET_COINCIDENCE && info.type != MOTION_CIRCLE)
         {
             FST_WARN("Target coincidence with start, nothing to do.");
             return SUCCESS;
@@ -1161,21 +1161,21 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
         return MOTION_INTERNAL_FAULT;
     }
 
-    if (target.type == MOTION_JOINT)
+    if (info.type == MOTION_JOINT)
     {
-        err = autoJoint(start, target, *path_ptr, *traj_ptr);
+        err = autoJoint(start, info, *path_ptr, *traj_ptr);
     }
-    else if (target.type == MOTION_LINE)
+    else if (info.type == MOTION_LINE)
     {
-        err = autoLine(start, target, *path_ptr, *traj_ptr);
+        err = autoLine(start, info, *path_ptr, *traj_ptr);
     }
-    else if (target.type == MOTION_CIRCLE)
+    else if (info.type == MOTION_CIRCLE)
     {
-        err = autoCircle(start, target, *path_ptr, *traj_ptr);
+        err = autoCircle(start, info, *path_ptr, *traj_ptr);
     }
     else
     {
-        FST_ERROR("Invalid motion type = %d, autoMove aborted.", target.type);
+        FST_ERROR("Invalid motion type = %d, autoMove aborted.", info.type);
         err = INVALID_PARAMETER;
     }
 
@@ -1245,8 +1245,7 @@ ErrorCode BaseGroup::autoMove(int id, const MotionTarget &target)
 
 ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
 {
-    /*
-    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE)
+    if (group_state_ == STANDBY && servo_state_ == SERVO_IDLE && traj_list_ptr_ = NULL && path_list_ptr_ == NULL)
     {
         Joint control_joint, current_joint;
         getLatestJoint(current_joint);
@@ -1277,7 +1276,6 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
             return BARE_CORE_TIMEOUT;
         }
     }
-    */
 
     if (!soft_constraint_.isJointInConstraint(start_joint))
     {
@@ -1292,121 +1290,90 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
+ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
 {
-    if (target.type != MOTION_JOINT && target.type != MOTION_LINE && target.type != MOTION_CIRCLE)
+    if (info.type != MOTION_JOINT && info.type != MOTION_LINE && info.type != MOTION_CIRCLE)
     {
-        FST_ERROR("Invalid motion type: %d", target.type);
+        FST_ERROR("Invalid motion type: %d", info.type);
         return INVALID_PARAMETER;
     }
     
     // CNT ∈ [0, 1] U CNT = -1
-    if (fabs(target.cnt + 1) > MINIMUM_E9 && (target.cnt < -MINIMUM_E9 || target.cnt > 1 + MINIMUM_E9))
+    if (fabs(info.cnt + 1) > MINIMUM_E9 && (info.cnt < -MINIMUM_E9 || info.cnt > 1 + MINIMUM_E9))
     {
-        FST_ERROR("Invalid CNT: %.12f", target.cnt);
+        FST_ERROR("Invalid CNT: %.12f", info.cnt);
         return INVALID_PARAMETER;
     }
 
-    if (  ((target.type == MOTION_JOINT) && (target.vel < MINIMUM_E6 || target.vel > 1 + MINIMUM_E6)) ||
-          ((target.type == MOTION_LINE || target.type == MOTION_CIRCLE) && (target.vel < cartesian_vel_min_ || target.vel > cartesian_vel_max_))  )
+    if (  ((info.type == MOTION_JOINT) && (info.vel < MINIMUM_E6 || info.vel > 1 + MINIMUM_E6)) ||
+          ((info.type == MOTION_LINE || info.type == MOTION_CIRCLE) && (info.vel < cartesian_vel_min_ || info.vel > cartesian_vel_max_))  )
     {
-        FST_ERROR("Invalid vel: %.6f", target.vel);
+        FST_ERROR("Invalid vel: %.6f", info.vel);
         return INVALID_PARAMETER;
     }
 
     Joint target_joint;
-    PoseEuler start_pose, target_pose;
+    PoseEuler start_pose;
     PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
     kinematics_ptr_->doFK(start_joint_, fcp_in_base);
     transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
-    
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        target_joint = target.target.joint;
-        kinematics_ptr_->doFK(target_joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, target_pose);
-    }
-    else
-    {
-        target_pose = target.target.pose.pose;
-        transformation_.convertPoseFromUserToBase(target.target.pose.pose, user_frame_, tcp_in_base);
-        transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
 
-        if (!kinematics_ptr_->doIK(fcp_in_base, target.target.pose.posture, target_joint))
-        {
-            PoseEuler &pose = target.target.pose.pose;
-            FST_ERROR("IK of target pose failed.");
-            FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
-            FST_ERROR("Tool frame: %.6f, %.6f, %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-            FST_ERROR("User frame: %.6f, %.6f, %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-            return IK_FAIL;
-        }
-    }
-
-    if (!soft_constraint_.isJointInConstraint(target_joint))
+    if (!soft_constraint_.isJointInConstraint(info.target.joint))
     {
         char buffer[LOG_TEXT_SIZE];
+        const Posture &posture = info.target.pose.posture;
+        const PoseEuler &pose = info.target.pose.pose;
+        const PoseEuler &uf = info.target.user_frame;
+        const PoseEuler &tf = info.target.tool_frame;
+
         FST_ERROR("Target joint out of soft constraint.");
-
-        if (target.target.type == COORDINATE_CARTESIAN)
-        {
-            FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
-            FST_ERROR("Tool frame: %.6f, %.6f, %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-            FST_ERROR("User frame: %.6f, %.6f, %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-        }
-
-        FST_ERROR("  joint = %s", printDBLine(&target.joint_target[0], buffer, LOG_TEXT_SIZE));
-        FST_ERROR("  upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-        FST_ERROR("  lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+        FST_ERROR("Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+        FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+        FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+        FST_ERROR("Joint = %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    if (getDistance(start_pose.point_, target_pose.point_) < MINIMUM_E3 && getOrientationAngle(start_pose.euler_, target_pose.euler_) < MINIMUM_E3)
+    if (getDistance(start_pose.point_, info.target.pose.pose.point_) < MINIMUM_E3 && getOrientationAngle(start_pose.euler_, info.target.pose.pose.euler_) < MINIMUM_E3)
     {
+        const Joint &target_joint = info.target.joint;
+        const PoseEuler &target_pose = info.target.pose.pose;
         FST_WARN("Target pose coincidence with start.");
-        FST_WARN("  start-pose  = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-        FST_WARN("  target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
-        FST_WARN("  start-joint  = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
-        FST_WARN("  target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
+        FST_WARN("Start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+        FST_WARN("Target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+        FST_WARN("Start-joint = %s", printDBLine(&start_joint_.j1_, buffer, LOG_TEXT_SIZE));
+        FST_WARN("Target-joint = %s", printDBLine(&target_joint.j1_, buffer, LOG_TEXT_SIZE));
         return TARGET_COINCIDENCE;
     }
 
-    if (target.type == MOTION_CIRCLE)
+    if (info.type == MOTION_CIRCLE)
     {
-        Joint via_joint;
-        PoseEuler via_pose;
-
-        if (target.via.type == COORDINATE_JOINT)
+        if (!soft_constraint_.isJointInConstraint(info.via.joint))
         {
-            via_joint = target.via.joint;
-            kinematics_ptr_->doFK(via_joint, fcp_in_base);
-            transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-            transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, via_pose);
-        }
-        else
-        {
-            via_pose = target.via.pose.pose;
-            transformation_.convertPoseFromUserToBase(target.via.pose.pose, user_frame_, tcp_in_base);
-            transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-
-            if (!kinematics_ptr_->doIK(fcp_in_base, target.via.pose.posture, via_joint))
-            {
-                PoseEuler &pose = target.via.pose.pose;
-                FST_ERROR("IK of via pose failed.");
-                FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-                FST_ERROR("Posture: %d, %d, %d, %d", target.via.pose.posture.arm, target.via.pose.posture.elbow, target.via.pose.posture.wrist, target.via.pose.posture.flip);
-                FST_ERROR("Tool frame: %.6f, %.6f, %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-                FST_ERROR("User frame: %.6f, %.6f, %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-                return IK_FAIL;
-            }
+            char buffer[LOG_TEXT_SIZE];
+            const Posture &posture = info.via.pose.posture;
+            const PoseEuler &pose = info.via.pose.pose;
+            const PoseEuler &uf = info.via.user_frame;
+            const PoseEuler &tf = info.via.tool_frame;
+            FST_ERROR("Vis joint out of soft constraint.");
+            FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            FST_ERROR("Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+            FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+            FST_ERROR("Joint = %s", printDBLine(&info.via.joint[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+            return JOINT_OUT_OF_CONSTRAINT;
         }
 
-        if (getDistance(start_pose.point_, via_pose.point_) < MINIMUM_E3 && getOrientationAngle(start_pose.euler_, via_pose.euler_) < MINIMUM_E3)
+        if (getDistance(start_pose.point_, info.via.pose.pose.point_) < MINIMUM_E3 && getOrientationAngle(start_pose.euler_, info.via.pose.pose.euler_) < MINIMUM_E3)
         {
+            const Joint &via_joint = info.via.joint;
+            const PoseEuler &via_pose = info.via.pose.pose;
             FST_WARN("Via pose coincidence with start.");
             FST_WARN("  start-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
             FST_WARN("  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
@@ -1415,8 +1382,10 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionTarget &target)
             return TARGET_COINCIDENCE;
         }
 
-        if (getDistance(target_pose.point_, via_pose.point_) < MINIMUM_E3 && getOrientationAngle(target_pose.euler_, via_pose.euler_) < MINIMUM_E3)
+        if (getDistance(target_pose.point_, info.via.pose.pose.point_) < MINIMUM_E3 && getOrientationAngle(target_pose.euler_, info.via.pose.pose.euler_) < MINIMUM_E3)
         {
+            const Joint &via_joint = info.via.joint;
+            const PoseEuler &via_pose = info.via.pose.pose;
             FST_WARN("Via pose coincidence with target.");
             FST_WARN("  via-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
             FST_WARN("  target-pose = %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
@@ -1541,7 +1510,7 @@ bool BaseGroup::checkTrajectory(const TrajectoryCache &trajectory)
     return true;
 }
 
-ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
+ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
     MotionTime start_time = 0;
     pthread_mutex_lock(&cache_list_mutex_);
@@ -1565,60 +1534,32 @@ ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionTarget &target, P
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
         FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, trajectory.time_from_start);
-        return autoSmoothJoint(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
+        return autoSmoothJoint(start_state, traj_cache.path_cache_ptr->target, info, path.path_cache, trajectory.trajectory_cache);
     }
     else
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
         FST_INFO("Last motion without smooth, start from stable");
-        return autoStableJoint(start, target, path.path_cache, trajectory.trajectory_cache);
+        return autoStableJoint(start, info, path.path_cache, trajectory.trajectory_cache);
     }
 }
 
-ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
     clock_t start_clock, end_clock;
     double  path_plan_time, traj_plan_time;
-
-    MotionTarget motion_target = target;
-
-    if (motion_target.target.type == COORDINATE_CARTESIAN)
-    {
-        Joint target_joint;
-        PoseEuler fcp_in_base, tcp_in_base;
-        transformation_.convertPoseFromUserToBase(motion_target.target.pose.pose, user_frame_, tcp_in_base);
-        transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-
-        if (!kinematics_ptr_->doIK(fcp_in_base, target.target.pose.posture, target_joint))
-        {
-            PoseEuler &pose = motion_target.target.pose.pose;
-            FST_ERROR("IK of target pose failed.");
-            FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
-            FST_ERROR("Tool frame: %.6f, %.6f, %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-            FST_ERROR("User frame: %.6f, %.6f, %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-            return IK_FAIL;
-        }
-
-        motion_target.target.type = COORDINATE_JOINT;
-        motion_target.target.joint = target_joint;
-    }
-
+    const PoseEuler &pose = info.target.pose.pose;
+    const Poseture &posture = info.target.pose.posture;
     FST_INFO("autoStableJoint: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
-    FST_INFO("  start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  target-joint: %s", printDBLine(&motion_target.target.joint.j1_, buffer, LOG_TEXT_SIZE));
-
-    if (target.target.type == COORDINATE_CARTESIAN)
-    {
-        PoseEuler &pose = target.target.pose.pose;
-        FST_INFO("target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f,", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-        FST_INFO("target-posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
-    }
+    FST_INFO("start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("target-joint: %s", printDBLine(&info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
+    FST_INFO("target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f,", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+    FST_INFO("target-posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
 
     start_clock = clock();
-    ErrorCode err = planPathJoint(start, motion_target, path);
+    ErrorCode err = planPathJoint(start, info, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
     path.target = target;
@@ -1634,7 +1575,6 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &tar
         FST_ERROR("Data in path cache is invalid.");
         return MOTION_INTERNAL_FAULT;
     }
-
     
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d", path.cache_length, path.smooth_in_index, path.smooth_out_index);
 
@@ -1664,75 +1604,21 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionTarget &tar
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
-                                     const MotionTarget &via,
-                                     const MotionTarget &target,
-                                     PathCache &path,
-                                     TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state, const MotionInfo &via, const MotionInfo &target, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
-    MotionTarget motion_via = via;
-    MotionTarget motion_target = target;
-
-    if (motion_target.target.type == COORDINATE_CARTESIAN)
-    {
-        Joint target_joint;
-        PoseEuler fcp_in_base, tcp_in_base;
-        transformation_.convertPoseFromUserToBase(motion_target.target.pose.pose, user_frame_, tcp_in_base);
-        transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-
-        if (!kinematics_ptr_->doIK(fcp_in_base, target.target.pose.posture, target_joint))
-        {
-            PoseEuler &pose = motion_target.target.pose.pose;
-            FST_ERROR("IK of target pose failed.");
-            FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
-            FST_ERROR("Tool frame: %.6f, %.6f, %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-            FST_ERROR("User frame: %.6f, %.6f, %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-            return IK_FAIL;
-        }
-
-        motion_target.target.type = COORDINATE_JOINT;
-        motion_target.target.joint = target_joint;
-    }
-
-    if (motion_via.target.type == COORDINATE_CARTESIAN)
-    {
-        Joint via_joint;
-        PoseEuler fcp_in_base, tcp_in_base;
-        transformation_.convertPoseFromUserToBase(motion_via.target.pose.pose, user_frame_, tcp_in_base);
-        transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-
-        if (!kinematics_ptr_->doIK(fcp_in_base, via.target.pose.posture, via_joint))
-        {
-            PoseEuler &pose = motion_via.target.pose.pose;
-            FST_ERROR("IK of target pose failed.");
-            FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-            FST_ERROR("Posture: %d, %d, %d, %d", via.target.pose.posture.arm, via.target.pose.posture.elbow, via.target.pose.posture.wrist, via.target.pose.posture.flip);
-            FST_ERROR("Tool frame: %.6f, %.6f, %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-            FST_ERROR("User frame: %.6f, %.6f, %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-            return IK_FAIL;
-        }
-
-        motion_via.target.type = COORDINATE_JOINT;
-        motion_via.target.joint = via_joint;
-    }
-
+    const PoseEuler &pose = target.target.pose.pose;
+    const Poseture &posture = target.target.pose.posture;
     FST_INFO("autoSmoothJoint: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
-    FST_INFO("  start angle = %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("        omega = %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("        alpha = %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  via    = %s", printDBLine(&motion_via.target.joint[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  target = %s", printDBLine(&motion_target.target.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-angle: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Via-joint: %s", printDBLine(&via.target.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Target-joint = %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f,", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+    FST_INFO("target-posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
 
-    if (target.target.type == COORDINATE_CARTESIAN)
-    {
-        PoseEuler &pose = target.target.pose.pose;
-        FST_INFO("target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f,", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-        FST_INFO("target-posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
-    }
-
-    ErrorCode err = planPathSmoothJoint(start_state.angle, motion_via, motion_target, path);
+    ErrorCode err = planPathSmoothJoint(start_state.angle, via, target, path);
     path.target = target;
 
     if (err != SUCCESS)
@@ -1747,11 +1633,8 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state,
         return MOTION_INTERNAL_FAULT;
     }
 
-    path.target = target;
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",path.cache_length, path.smooth_in_index, path.smooth_out_index);
-    
-
-    err = planTrajectorySmooth(path, start_state, motion_via, vel_ratio_, acc_ratio_, trajectory);
+    err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
 
     if (err != SUCCESS)
     {
@@ -1885,7 +1768,7 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
     return err;
 }
 
-ErrorCode BaseGroup::autoLine(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
+ErrorCode BaseGroup::autoLine(const Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
     MotionTime start_time = 0;
     pthread_mutex_lock(&cache_list_mutex_);
@@ -1909,18 +1792,18 @@ ErrorCode BaseGroup::autoLine(const Joint &start, const MotionTarget &target, Pa
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
         FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, start_time);
-        return autoSmoothLine(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
+        return autoSmoothLine(start_state, traj_cache.path_cache_ptr->target, info, path.path_cache, trajectory.trajectory_cache);
     }
     else
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
         FST_INFO("Last motion without smooth, start from stable");
-        return autoStableLine(start, target, path.path_cache, trajectory.trajectory_cache);
+        return autoStableLine(start, info, path.path_cache, trajectory.trajectory_cache);
     }
 }
 
-ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
     clock_t start_clock, end_clock;
@@ -1929,36 +1812,21 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
     kinematics_ptr_->doFK(start, fcp_in_base);
     transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
-    MotionTarget motion_target = target;
 
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        PoseEuler target_pose;
-        kinematics_ptr_->doFK(target.target.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, target_pose);
-        motion_target.target.type = COORDINATE_CARTESIAN;
-        motion_target.target.pose.pose = target_pose;
-        motion_target.target.pose.posture = kinematics_ptr_->getPostureByJoint(target.target.joint);
-    }
-
+    const Posture &posture = info.target.pose.posture;
+    const PoseEuler &target_pose = info.target.pose.pose;
     FST_INFO("autoStableLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
-    FST_INFO("  start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-    FST_INFO("  target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", motion_target.target.pose.pose.point_.x_, motion_target.target.pose.pose.point_.y_, motion_target.target.pose.pose.point_.z_, 
-                                                                   motion_target.target.pose.pose.euler_.a_, motion_target.target.pose.pose.euler_.b_, motion_target.target.pose.pose.euler_.c_);
-    FST_INFO("  target-posture: %d, %d, %d, %d", motion_target.target.pose.posture.arm, motion_target.target.pose.posture.elbow, motion_target.target.pose.posture.wrist, motion_target.target.pose.posture.flip);
-
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        FST_INFO("target-joint: %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
-    }
+    FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+    FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_,target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+    FST_INFO("Target-posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+    FST_INFO("Target-joint: %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
 
     start_clock = clock();
-    ErrorCode err = planPathLine(start_pose, target, path);
+    ErrorCode err = planPathLine(start_pose, info, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-    path.target = target;
+    path.target = info;
 
     if (err != SUCCESS)
     {
@@ -1972,8 +1840,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
         return MOTION_INTERNAL_FAULT;
     }
     
-    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
 
     start_clock = clock();
     err = computeInverseKinematicsOnPathCache(start, path);
@@ -2014,7 +1881,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionTarget &targ
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionInfo &via, const MotionInfo &target, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
     clock_t start_clock, end_clock;
@@ -2023,53 +1890,20 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionT
     kinematics_ptr_->doFK(start_state.angle, fcp_in_base);
     transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
-    MotionTarget motion_via = via;
-    MotionTarget motion_target = target;
-
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        PoseEuler target_pose;
-        kinematics_ptr_->doFK(target.target.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, target_pose);
-        motion_target.target.type = COORDINATE_CARTESIAN;
-        motion_target.target.pose.pose = target_pose;
-        motion_target.target.pose.posture = kinematics_ptr_->getPostureByJoint(target.target.joint);
-    }
-
-    if (via.target.type == COORDINATE_JOINT)
-    {
-        PoseEuler via_pose;
-        kinematics_ptr_->doFK(via.target.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, via_pose);
-        motion_via.target.type = COORDINATE_CARTESIAN;
-        motion_via.target.pose.pose = via_pose;
-        motion_via.target.pose.posture = kinematics_ptr_->getPostureByJoint(via.target.joint);
-    }
-
+    const PoseEuler &via_pose = via.target.pose.pose;
+    const PoseEuler &target_pose = target.target.pose.pose;
     FST_INFO("autoSmoothLine: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
-    FST_INFO("  start-joint: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-    FST_INFO("  via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", motion_via.target.pose.pose.point_.x_, motion_via.target.pose.pose.point_.y_, motion_via.target.pose.pose.point_.z_, 
-                                                                motion_via.target.pose.pose.euler_.a_, motion_via.target.pose.pose.euler_.b_, motion_via.target.pose.pose.euler_.c_);
-    FST_INFO("  target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", motion_target.target.pose.pose.point_.x_, motion_target.target.pose.pose.point_.y_, motion_target.target.pose.pose.point_.z_, 
-                                                                   motion_target.target.pose.pose.euler_.a_, motion_target.target.pose.pose.euler_.b_, motion_target.target.pose.pose.euler_.c_);
-
-    if (via.target.type == COORDINATE_JOINT)
-    {
-        FST_INFO("via-joint: %s", printDBLine(&via.target.joint[0], buffer, LOG_TEXT_SIZE));
-    }
-
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        FST_INFO("target-joint: %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
-    }
+    FST_INFO("Start-joint: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+    FST_INFO("Via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
+    FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+    FST_INFO("Via-joint: %s", printDBLine(&via.target.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Target-joint: %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
 
     start_clock = clock();
-    ErrorCode err = planPathSmoothLine(start_pose, motion_via, motion_target, path);
+    ErrorCode err = planPathSmoothLine(start_pose, via, motion_target, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
     path.target = target;
@@ -2086,8 +1920,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionT
         return MOTION_INTERNAL_FAULT;
     }
 
-    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
 
     start_clock = clock();
     err = computeInverseKinematicsOnPathCache(start_state.angle, path);
@@ -2103,7 +1936,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionT
     FST_INFO("Inverse kinematics success, plan trajectory ...");
 
     start_clock = clock();
-    err = planTrajectorySmooth(path, start_state, motion_via, vel_ratio_, acc_ratio_, trajectory);
+    err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
     end_clock = clock();
     traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 
@@ -2124,7 +1957,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionT
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoCircle(const Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory)
+ErrorCode BaseGroup::autoCircle(const Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory)
 {
     MotionTime start_time = 0;
     pthread_mutex_lock(&cache_list_mutex_);
@@ -2148,19 +1981,19 @@ ErrorCode BaseGroup::autoCircle(const Joint &start, const MotionTarget &target, 
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
         FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, start_time);
-        return autoSmoothCircle(start_state, traj_cache.path_cache_ptr->target, target, path.path_cache, trajectory.trajectory_cache);
+        return autoSmoothCircle(start_state, traj_cache.path_cache_ptr->target, info, path.path_cache, trajectory.trajectory_cache);
     }
     else
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
         FST_INFO("Last motion without smooth, start from stable");
-        return autoStableCircle(start, target, path.path_cache, trajectory.trajectory_cache);
+        return autoStableCircle(start, info, path.path_cache, trajectory.trajectory_cache);
     }
 }
 
 
-ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
     clock_t start_clock, end_clock;
@@ -2169,55 +2002,22 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionTarget &ta
     kinematics_ptr_->doFK(start, fcp_in_base);
     transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
-    MotionTarget motion_target = target;
 
-    if (target.via.type == COORDINATE_JOINT)
-    {
-        PoseEuler via_pose;
-        kinematics_ptr_->doFK(target.via.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, via_pose);
-        motion_target.via.type = COORDINATE_CARTESIAN;
-        motion_target.via.pose.pose = via_pose;
-        motion_target.via.pose.posture = kinematics_ptr_->getPostureByJoint(target.via.joint);
-    }
-
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        PoseEuler target_pose;
-        kinematics_ptr_->doFK(target.target.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, target_pose);
-        motion_target.target.type = COORDINATE_CARTESIAN;
-        motion_target.target.pose.pose = target_pose;
-        motion_target.target.pose.posture = kinematics_ptr_->getPostureByJoint(target.target.joint);
-    }
-
+    const PoseEuler &via_pose = info.via.pose.pose;
+    const PoseEuler &target_pose = info.target.pose.pose;
     FST_INFO("autoStableCircle: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
-    FST_INFO("  start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-    FST_INFO("  via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             motion_target.via.pose.pose.point_.x_, motion_target.via.pose.pose.point_.y_, motion_target.via.pose.pose.point_.z_, 
-             motion_target.via.pose.pose.euler_.a_, motion_target.via.pose.pose.euler_.b_, motion_target.via.pose.pose.euler_.c_);
-    FST_INFO("  target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             motion_target.target.pose.pose.point_.x_, motion_target.target.pose.pose.point_.y_, motion_target.target.pose.pose.point_.z_, 
-             motion_target.target.pose.pose.euler_.a_, motion_target.target.pose.pose.euler_.b_, motion_target.target.pose.pose.euler_.c_);
-
-    if (target.via.type == COORDINATE_JOINT)
-    {
-        FST_INFO("  via-joint: %s", printDBLine(&target.via.joint[0], buffer, LOG_TEXT_SIZE));
-    }
-
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        FST_INFO("  target-joint: %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
-    }
+    FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+    FST_INFO("Via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
+    FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+    FST_INFO("Via-joint: %s", printDBLine(&info.via.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Target-joint: %s", printDBLine(&info.target.joint[0], buffer, LOG_TEXT_SIZE));
 
     start_clock = clock();
-    ErrorCode err = planPathCircle(start_pose, motion_target, path);
+    ErrorCode err = planPathCircle(start_pose, info, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-    path.target = target;
+    path.target = info;
 
     if (err != SUCCESS)
     {
@@ -2231,8 +2031,7 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionTarget &ta
         return MOTION_INTERNAL_FAULT;
     }
 
-    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
 
     start_clock = clock();
     err = computeInverseKinematicsOnPathCache(start, path);
@@ -2280,7 +2079,7 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionTarget &ta
 }
 
 
-ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory)
+ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const MotionInfo &via, const MotionInfo &target, PathCache &path, TrajectoryCache &trajectory)
 {
     char buffer[LOG_TEXT_SIZE];
     clock_t start_clock, end_clock;
@@ -2289,73 +2088,24 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const Motio
     kinematics_ptr_->doFK(start_state.angle, fcp_in_base);
     transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
-    MotionTarget motion_via = via;
-    MotionTarget motion_target = target;
-
-    if (via.target.type == COORDINATE_JOINT)
-    {
-        PoseEuler via_pose;
-        kinematics_ptr_->doFK(via.target.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, via_pose);
-        motion_via.target.type = COORDINATE_CARTESIAN;
-        motion_via.target.pose.pose = via_pose;
-        motion_via.target.pose.posture = kinematics_ptr_->getPostureByJoint(via.target.joint);
-    }
-
-    if (target.via.type == COORDINATE_JOINT)
-    {
-        PoseEuler via_pose;
-        kinematics_ptr_->doFK(target.via.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, via_pose);
-        motion_target.via.type = COORDINATE_CARTESIAN;
-        motion_target.via.pose.pose = via_pose;
-        motion_target.via.pose.posture = kinematics_ptr_->getPostureByJoint(target.via.joint);
-    }
-
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        PoseEuler target_pose;
-        kinematics_ptr_->doFK(target.target.joint, fcp_in_base);
-        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, target_pose);
-        motion_target.target.type = COORDINATE_CARTESIAN;
-        motion_target.target.pose.pose = target_pose;
-        motion_target.target.pose.posture = kinematics_ptr_->getPostureByJoint(target.target.joint);
-    }
-
+    
+    const PoseEuler &last_pose = via.target.pose.pose;
+    const PoseEuler &via_pose = target.via.pose.pose;
+    const PoseEuler &target_pose = target.target.pose.pose;
     FST_INFO("autoSmoothCircle: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
-    FST_INFO("  start-joint: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
-    FST_INFO("  start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
-    FST_INFO("  via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             motion_target.via.pose.pose.point_.x_, motion_target.via.pose.pose.point_.y_, motion_target.via.pose.pose.point_.z_, 
-             motion_target.via.pose.pose.euler_.a_, motion_target.via.pose.pose.euler_.b_, motion_target.via.pose.pose.euler_.c_);
-    FST_INFO("  target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", 
-             motion_target.target.pose.pose.point_.x_, motion_target.target.pose.pose.point_.y_, motion_target.target.pose.pose.point_.z_, 
-             motion_target.target.pose.pose.euler_.a_, motion_target.target.pose.pose.euler_.b_, motion_target.target.pose.pose.euler_.c_);
-
-    FST_INFO("  last-target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", motion_via.target.pose.pose.point_.x_, motion_via.target.pose.pose.point_.y_, motion_via.target.pose.pose.point_.z_, 
-                                                                        motion_via.target.pose.pose.euler_.a_, motion_via.target.pose.pose.euler_.b_, motion_via.target.pose.pose.euler_.c_);
-    if (via.target.type == COORDINATE_JOINT)
-    {
-        FST_INFO("  last-target-joint: %s", printDBLine(&via.target.joint[0], buffer, LOG_TEXT_SIZE));
-    }
-
-    if (target.via.type == COORDINATE_JOINT)
-    {
-        FST_INFO("  via-joint: %s", printDBLine(&target.via.joint[0], buffer, LOG_TEXT_SIZE));
-    }
-
-    if (target.target.type == COORDINATE_JOINT)
-    {
-        FST_INFO("  target-joint: %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
-    }
+    FST_INFO("Start-joint: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
+    FST_INFO("Via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
+    FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_, target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
+    FST_INFO("Last-target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", last_pose.point_.x_, last_pose.point_.y_, last_pose.point_.z_, last_pose.euler_.a_, last_pose.euler_.b_, last_pose.euler_.c_);
+    FST_INFO("Via-joint: %s", printDBLine(&target.via.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Target-joint: %s", printDBLine(&target.target.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Last-target-joint: %s", printDBLine(&via.target.joint[0], buffer, LOG_TEXT_SIZE));
 
     start_clock = clock();
-    ErrorCode err = planPathSmoothCircle(start_pose, motion_via, motion_target, path);
+    ErrorCode err = planPathSmoothCircle(start_pose, via, target, path);
     end_clock = clock();
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
     path.target = target;
@@ -2372,8 +2122,7 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const Motio
         return MOTION_INTERNAL_FAULT;
     }
         
-    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...",
-                    path.cache_length, path.smooth_in_index, path.smooth_out_index);
+    FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
 
     start_clock = clock();
     err = computeInverseKinematicsOnPathCache(start_state.angle, path);
@@ -2389,7 +2138,7 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const Motio
     FST_INFO("Inverse kinematics success, plan trajectory ...");
     
     start_clock = clock();
-    err = planTrajectorySmooth(path, start_state, motion_via, vel_ratio_, acc_ratio_, trajectory);
+    err = planTrajectorySmooth(path, start_state, via, vel_ratio_, acc_ratio_, trajectory);
     end_clock = clock();
     traj_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
 

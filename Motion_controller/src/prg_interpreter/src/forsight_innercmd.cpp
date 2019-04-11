@@ -895,7 +895,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 				!=objThreadCntrolBlock->start_mov_position.end())
 			{
 			    instr.target.target.joint
-				 	= objThreadCntrolBlock->start_mov_position[iLineNum].target.joint;
+				 	= objThreadCntrolBlock->start_mov_position[iLineNum].joint_target;
 			}
 			else
 			{
@@ -1174,9 +1174,9 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
 		instr.target.target.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
 	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ",
-			instr.target.target.pose.pose.j1_, instr.target.target.pose.pose.j2_, 
-			instr.target.target.pose.pose.j3_, instr.target.target.pose.pose.j4_, 
-			instr.target.target.pose.pose.j5_, instr.target.target.pose.pose.j6_);
+			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
+			instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
+			instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
 #endif	
 	}
 	
@@ -1191,7 +1191,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			if(objThreadCntrolBlock->start_mov_position.find(iLineNum)
 				!=objThreadCntrolBlock->start_mov_position.end())
 			{
-			    instr.target.pose_target
+			    instr.target.target.pose.pose
 				 	= objThreadCntrolBlock->start_mov_position[iLineNum].pose_target;
 			}
 			else

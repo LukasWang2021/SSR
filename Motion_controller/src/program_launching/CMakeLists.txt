@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
         io_mapping
         process_comm
         modbus_manager
+        kinematics_alg
         )
 
 if(catkin_CROSS)
@@ -47,6 +48,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/basic_alg/include
     ${depend_PATH_INC}/nvram/include
     ${depend_PATH_INC}/fst_spi/include
+    ${depend_PATH_INC}/kinematics_alg/include
     )
 
 catkin_package(
@@ -65,6 +67,7 @@ catkin_package(
     DEPENDS basic_alg
     DEPENDS nvram 
     DEPENDS fst_spi 
+    DEPENDS kinematics_alg 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -94,6 +97,7 @@ target_link_libraries(program_launching
         modbus_manager
         io_manager
         basic_alg
+        kinematics_alg
         )
 
 add_executable(macro_test

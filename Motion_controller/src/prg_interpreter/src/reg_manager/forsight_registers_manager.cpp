@@ -134,7 +134,7 @@ int forgesight_registers_manager_get_register(
 
 	PoseEuler objPoseEuler ;
     Joint     objJoint;
-    int       iType ;
+//    int       iType ;
     
     std::string    strSrValue;
 	

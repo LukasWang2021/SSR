@@ -838,6 +838,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose = value.getPoseValue();
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
+		instr.target.target.pose.posture = value.getPosture();
 		
 		// instr.target.pose_target = value.getPoseValue();
 	    FST_INFO("value.getType() == TYPE_POSE in MovJ");
@@ -1135,6 +1136,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose = value.getPoseValue();
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
+		instr.target.target.pose.posture = value.getPosture();
 		
 #ifndef WIN32
 	    FST_INFO("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
@@ -1150,7 +1152,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	}
 	else if(value.getType() == TYPE_JOINT)
 	{
-		instr.target.target.type      = COORDINATE_CARTESIAN ;
+		instr.target.target.type      = COORDINATE_JOINT ;
 		instr.target.target.joint     = value.getJointValue();
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
@@ -1422,6 +1424,10 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.target.type      = COORDINATE_CARTESIAN ;
 		instr.target.target.pose.pose = value.getPoseValue();
+		instr.target.target.pose.posture = value.getPosture();
+		
+		instr.target.user_frame_id = value.getUFIndex();
+		instr.target.tool_frame_id = value.getTFIndex();
 #ifndef WIN32
 	    FST_INFO("move to POSE:(%f, %f, %f, %f, %f, %f) in MovC", 
 			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
@@ -1504,6 +1510,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.via.type      = COORDINATE_CARTESIAN ;
 		instr.target.via.pose.pose = value.getPoseValue();
+		
+		instr.target.via.pose.posture = value.getPosture();
 	}
 	else if(value.getType() == TYPE_JOINT)
 	{

@@ -22,8 +22,15 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc <= 8)
+    {
+        printf("nine parameter is needed: user_port and port_value\n");
+        return -1;
+    }
+
+
     TpCommTest test;
     if (!test.initRpcSocket())
     {
@@ -41,15 +48,15 @@ int main()
     send_msg.property.authority = Comm_Authority_TP;
     send_msg.data1.data = 1;
     send_msg.data2.data_count = 9;
-    send_msg.data2.data[0] = 1.1;
-    send_msg.data2.data[1] = 1.2;
-    send_msg.data2.data[2] = 1.3;
-    send_msg.data2.data[3] = 1.4;
-    send_msg.data2.data[4] = 1.5;
-    send_msg.data2.data[5] = 1.6;
-    send_msg.data2.data[6] = 1.7;
-    send_msg.data2.data[7] = 1.8;
-    send_msg.data2.data[8] = 1.9;
+    send_msg.data2.data[0] = atof(argv[1]);
+    send_msg.data2.data[1] = atof(argv[2]);
+    send_msg.data2.data[2] = atof(argv[3]);
+    send_msg.data2.data[3] = atof(argv[4]);
+    send_msg.data2.data[4] = atof(argv[5]);
+    send_msg.data2.data[5] = atof(argv[6]);
+    send_msg.data2.data[6] = atof(argv[7]);
+    send_msg.data2.data[7] = atof(argv[8]);
+    send_msg.data2.data[8] = atof(argv[9]);
 
     if (!test.generateRequestMessageType(hash_value, (void*)&send_msg, RequestMessageType_Int32_DoubleList_fields, buf, buf_size))
     {

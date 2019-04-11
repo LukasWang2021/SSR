@@ -589,6 +589,11 @@ target_link_libraries(fcp_pose_from_base ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIE
 install(TARGETS fcp_pose_from_base RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
 #///////////////////////////////////////
 
+add_executable(tcp_current_pose_get ${SRC_LIST} src/test_motion_control/axis_group/tcp_current_pose_get.cpp)
+target_link_libraries(tcp_current_pose_get ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS tcp_current_pose_get RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/motion_control/axis_group)
+#///////////////////////////////////////
+
 
 ######### for test io mapping  #########
 add_executable(get_di ${SRC_LIST} src/test_io_mapping/get_di.cpp)

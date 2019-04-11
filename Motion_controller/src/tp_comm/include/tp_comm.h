@@ -309,6 +309,8 @@ private:
     void handleRequest0x00006D10(int recv_bytes);
     /********rpc/motion_control/axis_group/getFcpBasePose, RequestMessageType_Int32**********/
     void handleRequest0x000016B5(int recv_bytes);
+    /********rpc/motion_control/axis_group/getTcpCurrentPose, RequestMessageType_Int32**********/
+    void handleRequest0x00003B45(int recv_bytes);
 
 
     /********rpc/interpreter/start, RequestMessageType_String**********/
@@ -751,6 +753,8 @@ private:
     void handleResponse0x00006D10(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/motion_control/axis_group/getFcpBasePose, ResponseMessageType_Uint64_DoubleList(count=6)**********/
     void handleResponse0x000016B5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/motion_control/axis_group/getTcpCurrentPose, ResponseMessageType_Uint64_DoubleList(count=6)**********/
+    void handleResponse0x00003B45(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********rpc/interpreter/start, ResponseMessageType_Bool**********/
     void handleResponse0x00006154(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

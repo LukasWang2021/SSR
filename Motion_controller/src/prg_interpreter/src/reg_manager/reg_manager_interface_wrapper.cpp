@@ -673,7 +673,7 @@ bool reg_manager_interface_getMr(int *ptr, uint16_t num)
 		MrRegDataIpc objMrRegDataIpc ;
 		*ptr = 0.0;
 		bRet = g_objRegManagerInterface->getMrReg(num, &objMrRegDataIpc);
-		FST_INFO("getMR: value = (%f) at %d with %s", 
+		FST_INFO("getMR: value = (%d) at %d with %s", 
 			objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 		*ptr = objMrRegDataIpc.value ;
 	}
@@ -770,7 +770,7 @@ bool reg_manager_interface_setValueMr(int *ptr, uint16_t num)
 		objMrRegDataIpc.id    = num;
 		objMrRegDataIpc.value = *ptr;
 		bRet = g_objRegManagerInterface->setMrReg(&objMrRegDataIpc);
-		FST_INFO("setValueMr:(%f) at %d with %s", objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
+		FST_INFO("setValueMr:(%d) at %d with %s", objMrRegDataIpc.value, num, bRet?"TRUE":"FALSE");
 	}
 	else
 	{

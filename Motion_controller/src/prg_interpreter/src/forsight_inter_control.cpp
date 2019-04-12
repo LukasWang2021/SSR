@@ -985,7 +985,8 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
   			FST_INFO("reset ProgramName And LineNum.");
 			// Keep LineNum and Line xPath
 			// resetProgramNameAndLineNum(objThdCtrlBlockPtr);
-			setProgramName(objThdCtrlBlockPtr, (char *)""); 
+			// 
+			// setProgramName(objThdCtrlBlockPtr, (char *)""); 
             break;
         case fst_base::INTERPRETER_SERVER_CMD_CODE_START:
 			memcpy(&intprt_ctrl.program_code, requestDataPtr, sizeof(AutoMode));

@@ -490,7 +490,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
         }
 
         path_cache.smooth_out_index = circle_angle_count_start2out;
-        int circle_angle_count_total_minus_1 = circle_angle_count_start2out + circle_angle_count_out2end;
+        int circle_angle_count_total_minus_1 = circle_angle_count_start2out + circle_angle_count_out2end - 1;
         path_cache.cache_length = circle_angle_count_total_minus_1 + 1;
 
         for(; i < circle_angle_count_total_minus_1; ++i)
@@ -504,8 +504,8 @@ ErrorCode planPathCircle(const PoseEuler &start,
             getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[max_count_start2end]);
+        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[circle_angle_count_total_minus_1].pose);
+        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[circle_angle_count_total_minus_1]);
     }
     else    // cnt is invalid
     {
@@ -3904,7 +3904,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via * 1.4 / via.vel;
+                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
                 double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double time_span_via2in = path_length_via2in / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
@@ -3916,7 +3916,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             if (via.type == MOTION_LINE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via / via.vel;
+                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
 
                 Joint joint_via = via.target.joint;
 
@@ -3961,7 +3961,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via * 1.4 / via.vel;
+                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
 
                 Joint joint_via = via.target.joint;
 
@@ -3987,7 +3987,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             if (via.type == MOTION_LINE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via / via.vel;
+                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
                 double time_span_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
                 break;
@@ -3996,7 +3996,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             {
                 double time_span_out2via = 0;
                 double time_span_out2via_tmp;
-                 for(int i = 0; i < model.link_num; ++i)
+                for(int i = 0; i < model.link_num; ++i)
                 {
                     time_span_out2via_tmp = fabs(via.target.joint[i] - path_cache.cache[0].joint[i]) / (via.vel * stack[S_ConstraintJointVelMax + i]);
                     if(time_span_out2via_tmp > time_span_out2via)
@@ -4011,8 +4011,10 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_out2via = path_length_out2via * 1.4 / via.vel;
-                double time_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
+                double out_cmd_vel = via.vel * via.cnt;
+                double time_out2via = path_length_out2via / out_cmd_vel;
+                double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
+                double time_via2in = path_length_via2in / cmd_vel; 
                 time_span_out2in = time_out2via + time_via2in;
             }
             break;

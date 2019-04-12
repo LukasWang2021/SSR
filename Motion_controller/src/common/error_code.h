@@ -78,7 +78,7 @@ typedef unsigned long long int ErrorCode;
 #define TP_COMM_LOG (unsigned long long int)0x0000000100A70000   /*TpComm log{0}*/
 #define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm load param failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A70002   /*TpComm failed to initialize internal variables*/
-#define TP_COMM_OPEN_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm open failed*/
+#define TP_COMM_CREATE_ROUTINE_THREAD_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm failed to create routine thread*/
 #define TP_COMM_INVALID_REQUEST (unsigned long long int)0x0001000200A70004   /*TpComm receive invalid hash for RPC*/
 #define TP_COMM_ENCODE_FAILED (unsigned long long int)0x0001000200A70005   /*TpComm failed to encode data to send out*/
 #define TP_COMM_DECODE_FAILED (unsigned long long int)0x0001000200A70006   /*TpComm failed to decode data that has been received*/
@@ -86,7 +86,7 @@ typedef unsigned long long int ErrorCode;
 #define TP_COMM_AUTHORITY_CHECK_FAILED (unsigned long long int)0x0001000200A70008   /*TpComm failed to run unauthorized operation*/
 #define TP_COMM_SEND_FAILED (unsigned long long int)0x0001000200A70009   /*TpComm failed to send package*/
 #define TP_COMM_RECEIVE_FAILED (unsigned long long int)0x0001000200A7000A   /*TpComm failed to receive package*/
-#define TP_COMM_RPC_OVERLOAD (unsigned long long int)0x0000000200A7000B   /*"TpComm failed to handle too much rpc request"*/
+#define TP_COMM_RPC_OVERLOAD (unsigned long long int)0x0000000200A7000B   /*TpComm failed to handle too much rpc request*/
 #define CONTROLLER_LOG (unsigned long long int)0x0000000100A80000   /*Controller log{0}*/
 #define CONTROLLER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A80001   /*Controller load param failed in initialization phase*/
 #define CONTROLLER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A80002   /*Controller failed to initialize internal object*/
@@ -226,7 +226,8 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_CLIENT_ID_NOT_EXISTED (unsigned long long int)0x0001000200AE0034   /*modbus client be not existed*/																										
 #define MODBUS_CLIENT_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200AE0035   /*modbus client invalid param*/																										
 #define MODBUS_CLIENT_NOT_ALL_CLOSED (unsigned long long int)0x0001000200AE0036   /*modbus client be not all closed */																										
-#define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
+//#define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
+#define MODBUS_SERVER_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server closed*/
 #define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server save param failed*/																										
 #define MODBUS_SERVER_INVALID_ARG (unsigned long long int)0x0001000200AE001C   /*modbus server invalid param*/																										
 #define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server load param failed*/																										
@@ -236,12 +237,12 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server init failed*/
 #define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server init failed*/
 
-#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0001000400B20001   /*the expected target point is invalid*/
-#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0001000400B20002   /*invalid path cache*/
-#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*invalid motion type*/
-#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*invalid smooth in index*/
-#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*ik failed*/
-#define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000400B20006   /*pause failed*/
+#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0001000400B20001   /*PathTrajAlg detected the expected target point is invalid*/
+#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0001000400B20002   /*PathTrajAlg detected path cache invalid*/
+#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*PathTrajAlg detected motion type invalid*/
+#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*PathTrajAlg detected smooth in index invalid */
+#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*PathTrajAlg detected ik failed*/
+#define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000400B20006   /*PathTrajAlg failed to pause */
 
 
 //The error codes generated from the external component(safety_board)

@@ -426,11 +426,11 @@ void printCurrentLine(struct thread_control_block* objThreadCntrolBlock, int iId
 	{
 		*cLineContentPtr++=*cLineContentProgPtr++;
 	}
-	FST_INFO("\t(0X%08X - 0X%08X)(%d): (%s) at 0X%08X", 
+	FST_INFO("\t(0X%08X - 0X%08X)(%d): (%s) at 0X%08X(%d)", 
 		objThreadCntrolBlock->prog_jmp_line[iIdx].start_prog_pos, 
 		objThreadCntrolBlock->prog_jmp_line[iIdx].end_prog_pos, 
 		objThreadCntrolBlock->iLineNum, cLineContent, 
-		objThreadCntrolBlock->prog);
+		objThreadCntrolBlock->prog, objThreadCntrolBlock->iThreadIdx);
 }
 
 /************************************************* 

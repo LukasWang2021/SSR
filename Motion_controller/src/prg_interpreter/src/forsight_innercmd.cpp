@@ -872,12 +872,18 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.joint.j5 = value.getPrRegDataValue().value.joint_pos[4];
 		instr.target.target.joint.j6 = value.getPrRegDataValue().value.joint_pos[5];
 #else
+		instr.target.target.type      = value.getPrRegDataValue().value.pos_type ;
 		instr.target.target.joint.j1_ = value.getPrRegDataValue().value.pos[0];
 		instr.target.target.joint.j2_ = value.getPrRegDataValue().value.pos[1];
 		instr.target.target.joint.j3_ = value.getPrRegDataValue().value.pos[2];
 		instr.target.target.joint.j4_ = value.getPrRegDataValue().value.pos[3];
 		instr.target.target.joint.j5_ = value.getPrRegDataValue().value.pos[4];
 		instr.target.target.joint.j6_ = value.getPrRegDataValue().value.pos[5];
+		instr.target.target.pose.posture.arm   = value.getPrRegDataValue().value.posture[0];
+		instr.target.target.pose.posture.elbow = value.getPrRegDataValue().value.posture[1];
+		instr.target.target.pose.posture.wrist = value.getPrRegDataValue().value.posture[2];
+		instr.target.target.pose.posture.flip  = value.getPrRegDataValue().value.posture[3];
+		
 	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
 			instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
 			instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
@@ -1175,6 +1181,11 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose.euler_.a_    = value.getPrRegDataValue().value.pos[3];
 		instr.target.target.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
 		instr.target.target.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
+		
+		instr.target.target.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
+		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
+		instr.target.target.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
+		instr.target.target.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
 	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ",
 			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
 			instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 

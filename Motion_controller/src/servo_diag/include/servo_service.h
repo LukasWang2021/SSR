@@ -110,7 +110,7 @@ class ServoService {
     // Out:      res,numofres
     // Return:  ERROR Code
     //------------------------------------------------------------   
-    ErrorCode readErrCode(int size_of_codelist,int* res,int* numofres);
+    ErrorCode readErrCode(int max_list_size, unsigned long long int *data, int *list_size);
 
     //------------------------------------------------------------
     // Function:    servoCmd

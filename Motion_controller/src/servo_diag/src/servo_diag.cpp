@@ -93,7 +93,7 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
             }
             case PC_READSERVODTC:
             {
-                ErrorCode err = service->readErrCode((int)(SERVO_CMD_SEG_LENGTH-sizeof(int))/4,(int*)&pkg.data[4],(int*)&pkg.data[0]);
+                ErrorCode err = service->readErrCode((int)(SERVO_CMD_SEG_LENGTH - sizeof(int)) / sizeof(unsigned long long int), (unsigned long long int*)&pkg.data[4],(int*)&pkg.data[0]);
                 if(SUCCESS!=err)  
                 {
                     std::cout<<"Read Err Code failed!"<<std::endl;

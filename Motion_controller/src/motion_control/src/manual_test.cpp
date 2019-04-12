@@ -177,6 +177,7 @@ void test3(void)
     arm.resetGroup();
     usleep(100 * 1000);
 
+    /*
     MotionTarget target;
     target.type = MOTION_JOINT;
     target.vel = 0.5;
@@ -188,9 +189,9 @@ void test3(void)
     //target.joint_target.j5 = -1.5708;
     target.joint_target.j5_ = 0.0;
     target.joint_target.j6_ = 0.0;
-    arm.autoMove(10, target);
+    //arm.autoMove(10, target);
 
-    /*
+    
     while (!arm.nextMovePermitted())
     {
         cout << "not permitted" << endl;

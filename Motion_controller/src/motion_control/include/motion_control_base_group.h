@@ -83,7 +83,7 @@ class BaseGroup
     virtual ErrorCode moveOffLineTrajectory(int id, const std::string &file_name);
 
     // Auto move APIs:
-    virtual ErrorCode autoMove(int id, const MotionTarget &target);
+    virtual ErrorCode autoMove(int id, const MotionInfo &info);
     virtual ErrorCode abortMove(void);
     virtual ErrorCode pauseMove(void);
     virtual ErrorCode restartMove(void);
@@ -136,6 +136,7 @@ class BaseGroup
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, basic_alg::PoseEuler &pose);
 
+    virtual basic_alg::Transformation* getTransformationPtr(void);
     virtual basic_alg::Kinematics* getKinematicsPtr(void);
     virtual Calibrator* getCalibratorPtr(void);
     virtual Constraint* getSoftConstraintPtr(void);
@@ -153,17 +154,17 @@ class BaseGroup
     virtual ErrorCode sendAutoTrajectoryFlow(void);
     virtual ErrorCode sendManualTrajectoryFlow(void);
 
-    virtual ErrorCode autoJoint(const basic_alg::Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableJoint(const basic_alg::Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothJoint(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoJoint(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
+    virtual ErrorCode autoStableJoint(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothJoint(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
     
-    virtual ErrorCode autoLine(const basic_alg::Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableLine(const basic_alg::Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothLine(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoLine(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
+    virtual ErrorCode autoStableLine(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothLine(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
     
-    virtual ErrorCode autoCircle(const basic_alg::Joint &start, const MotionTarget &target, PathCacheList &path, TrajectoryCacheList &trajectory);
-    virtual ErrorCode autoStableCircle(const basic_alg::Joint &start, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
-    virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionTarget &via, const MotionTarget &target, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoCircle(const basic_alg::Joint &start, const MotionInfo &info, PathCacheList &path, TrajectoryCacheList &trajectory);
+    virtual ErrorCode autoStableCircle(const basic_alg::Joint &start, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
+    virtual ErrorCode autoSmoothCircle(const JointState &start_state, const MotionInfo &via, const MotionInfo &info, PathCache &path, TrajectoryCache &trajectory);
 
     virtual ErrorCode replanPathCache(void);
 
@@ -176,7 +177,7 @@ class BaseGroup
     virtual ErrorCode pickPointsFromManualJoint(TrajectoryPoint *points, size_t &length);
     virtual ErrorCode pickPointsFromManualCartesian(TrajectoryPoint *points, size_t &length);
 
-    inline  ErrorCode checkMotionTarget(const MotionTarget &target);
+    inline  ErrorCode checkMotionTarget(const MotionInfo &info);
     inline  ErrorCode checkStartState(const basic_alg::Joint &start_joint);
 
     inline void reportError(const ErrorCode &error);

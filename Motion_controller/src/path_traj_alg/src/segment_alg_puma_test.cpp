@@ -170,7 +170,7 @@ int main(void)
 #endif
 
 /************* test movej fine  ****************/
-#if 1
+#if 0
     // start_joint[0] = 0;
     // start_joint[1] = 0;
     // start_joint[2] = 0;

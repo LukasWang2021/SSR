@@ -929,7 +929,7 @@ ErrorCode Calibrator::setOffsetState(size_t index, OffsetState stat)
         vector<int>     flag;   flag.resize(joint_num_);
         vector<double>  joint;  joint.resize(joint_num_);
 
-        for (int i = 0; i < joint_num_; i++)
+        for (size_t i = 0; i < joint_num_; i++)
         {
             flag[i] = int(offset_stat_[i]);
         }

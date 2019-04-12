@@ -333,40 +333,109 @@ ErrorCode MotionControl::manualStop(void)
 
 ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 {
+    FST_INFO("MotionControl::autoMove called.");
+
     if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
         FST_ERROR("Offset of the group is abnormal, auto move is forbidden, calibrator-state = %d.", group_ptr_->getCalibratorPtr()->getCalibrateState());
         return INVALID_SEQUENCE;
     }
 
-    MotionTarget motion_target = target;
-
-    if (motion_target.user_frame_id == -1)
+    if (target.type != MOTION_JOINT && target.type != MOTION_LINE && target.type != MOTION_CIRCLE)
     {
-        motion_target.user_frame_id = user_frame_id_;
+        FST_ERROR("Invalid motion type = %d, autoMove aborted.", target.type);
+        return INVALID_PARAMETER;
     }
 
-    if (motion_target.tool_frame_id == -1)
+    if (target.type == MOTION_LINE || target.type == MOTION_CIRCLE)
     {
-        motion_target.tool_frame_id = tool_frame_id_;
-    }
-
-    if (motion_target.type == MOTION_LINE || motion_target.type == MOTION_CIRCLE)
-    {
-        if (user_frame_id_ != motion_target.user_frame_id)
+        if (target.user_frame_id != user_frame_id_ && target.user_frame_id != -1)
         {
-            FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", motion_target.user_frame_id, user_frame_id_);
+            FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", target.user_frame_id, user_frame_id_);
             return INVALID_PARAMETER;
         }
 
-        if (tool_frame_id_ != motion_target.tool_frame_id)
+        if (target.tool_frame_id != tool_frame_id_ && target.tool_frame_id != -1)
         {
-            FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", motion_target.tool_frame_id, tool_frame_id_);
+            FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
             return INVALID_PARAMETER;
         }
     }
 
-    return group_ptr_->autoMove(id, motion_target);
+    MotionInfo motion_info;
+    motion_info.type = target.type;
+    motion_info.cnt = target.cnt;
+    motion_info.vel = target.vel;
+    motion_info.target.user_frame = group_ptr_->getUserFrame();
+    motion_info.target.tool_frame = group_ptr_->getToolFrame();
+
+    if (target.target.type == COORDINATE_JOINT)
+    {
+        PoseEuler fcp_in_base, tcp_in_base;
+        motion_info.target.joint = target.target.joint;
+        motion_info.target.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(target.target.joint);
+        group_ptr_->getKinematicsPtr()->doFK(target.target.joint, fcp_in_base);
+        group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, motion_info.target.tool_frame, tcp_in_base);
+        group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, motion_info.target.user_frame, motion_info.target.pose.pose);
+    }
+    else
+    {
+        PoseEuler fcp_in_base, tcp_in_base;
+        motion_info.target.pose = target.target.pose;
+        group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(target.target.pose.pose, motion_info.target.user_frame, tcp_in_base);
+        group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, motion_info.target.tool_frame, fcp_in_base);
+        
+        if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, target.target.pose.posture, motion_info.target.joint))
+        {
+            const PoseEuler &pose = target.target.pose.pose;
+            const PoseEuler &tf = motion_info.target.tool_frame;
+            const PoseEuler &uf = motion_info.target.user_frame;
+            FST_ERROR("IK of target pose failed.");
+            FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+            FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
+            FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+            FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+            return IK_FAIL;
+        }
+    }
+
+    if (target.type == MOTION_CIRCLE)
+    {
+        motion_info.via.user_frame = group_ptr_->getUserFrame();
+        motion_info.via.tool_frame = group_ptr_->getToolFrame();
+
+        if (target.via.type == COORDINATE_JOINT)
+        {
+            PoseEuler fcp_in_base, tcp_in_base;
+            motion_info.via.joint = target.via.joint;
+            motion_info.via.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(target.via.joint);
+            group_ptr_->getKinematicsPtr()->doFK(target.via.joint, fcp_in_base);
+            group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, motion_info.via.tool_frame, tcp_in_base);
+            group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, motion_info.via.user_frame, motion_info.via.pose.pose);
+        }
+        else
+        {
+            PoseEuler fcp_in_base, tcp_in_base;
+            motion_info.via.pose = target.via.pose;
+            group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(target.via.pose.pose, motion_info.via.user_frame, tcp_in_base);
+            group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, motion_info.via.tool_frame, fcp_in_base);
+            
+            if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, target.via.pose.posture, motion_info.via.joint))
+            {
+                const PoseEuler &pose = target.via.pose.pose;
+                const PoseEuler &tf = motion_info.via.tool_frame;
+                const PoseEuler &uf = motion_info.via.user_frame;
+                FST_ERROR("IK of via pose failed.");
+                FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+                FST_ERROR("Posture: %d, %d, %d, %d", target.via.pose.posture.arm, target.via.pose.posture.elbow, target.via.pose.posture.wrist, target.via.pose.posture.flip);
+                FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+                FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+                return IK_FAIL;
+            }
+        }
+    }
+
+    return group_ptr_->autoMove(id, motion_info);
 }
 
 ErrorCode MotionControl::abortMove(void)

@@ -12,7 +12,7 @@
 #include <basic_alg_datatype.h>
 #include <basic_constants.h>
 #include <common_enum.h>
-//#include <kinematics.h>
+#include <kinematics.h>
 
 namespace fst_mc
 {
@@ -36,24 +36,39 @@ struct JointConstraint  // 关节限位
     basic_alg::Joint lower;    // 下限
 };
 
-/*
+struct PoseAndPosture
+{
+    basic_alg::PoseEuler    pose;
+    basic_alg::Posture      posture;
+};
+
 struct TargetPoint
 {
     CoordinateType  type;
-    //Posture         posture;
-
+    
     union
     {
-        basic_alg::Joint        joint;
-        basic_alg::PoseEuler    pose;
+        basic_alg::Joint    joint;
+        PoseAndPosture      pose;
     };
 };
-*/
 
-struct CircleTarget     // moveC的目标点，由2个点位姿点构成
+struct IntactPoint
 {
-    basic_alg::PoseEuler pose1;
-    basic_alg::PoseEuler pose2;
+    basic_alg::Joint joint;
+    PoseAndPosture   pose;
+    basic_alg::PoseEuler user_frame;
+    basic_alg::PoseEuler tool_frame;
+};
+
+struct MotionInfo
+{
+    MotionType  type;   // 指令的运动类型
+    double      cnt;    // 平滑语句的CNT范围 ： 0.0 - 1.0， FINE语句的CNT    : < 0
+    double      vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
+                        //          如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+    IntactPoint target;
+    IntactPoint via;
 };
 
 #define     PR_POS_LEN           64
@@ -67,13 +82,9 @@ struct MotionTarget     // 用于move指令的数据结构
     int user_frame_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
     int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
 
-    union               // 根据type指定的运动类型，使用相应的目标数据
-    {
-        basic_alg::Joint        joint_target;   // 关节目标点，moveJ时使用
-        basic_alg::PoseEuler    pose_target;    // 位姿目标点，moveL时使用
-        CircleTarget            circle_target;  // 2个位姿目标点，moveC时使用
-        int                     prPos[PR_POS_LEN];
-    };
+    int prPos[PR_POS_LEN];
+    TargetPoint target;   // moveJ和moveL时使用
+    TargetPoint via;      // moveC时用作中间一个辅助点
 };
 
 struct PathBlock    // 路径点的数据结构
@@ -87,11 +98,11 @@ struct PathBlock    // 路径点的数据结构
 
 struct PathCache    // 路径缓存
 {
-    MotionTarget    target;                 // 运动指令的目标
-    int             smooth_in_index;        // 如果上一条指令带平滑，index指示了过度路径切入本条路径的位置，否则index应为-1，在过渡段的最后一个点
-    int             smooth_out_index;       // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1，在路径上的最后一个点
-    size_t          cache_length;           // 路径缓存中的有效路径点数
-    PathBlock       cache[PATH_CACHE_SIZE]; // 由一系列连续有序的路径点构成的路径
+    MotionInfo  target;                 // 运动指令的目标
+    int         smooth_in_index;        // 如果上一条指令带平滑，index指示了过度路径切入本条路径的位置，否则index应为-1，在过渡段的最后一个点
+    int         smooth_out_index;       // 如果本条指令带平滑，index指示了由本条路径切出到过度路径的位置，否则index应为-1，在路径上的最后一个点
+    size_t      cache_length;           // 路径缓存中的有效路径点数
+    PathBlock   cache[PATH_CACHE_SIZE]; // 由一系列连续有序的路径点构成的路径
 };
 
 struct PathCacheList    // 路径缓存链表

@@ -539,7 +539,7 @@ ErrorCode ModbusServer::writeCoils(int addr, int nb, uint8_t *dest)
     }
 
     if (!is_running_)
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     tab_bit_mutex_.lock();
     for (unsigned int i = addr; i < addr + nb; i++)
@@ -563,7 +563,7 @@ ErrorCode ModbusServer::readCoils(int addr, int nb, uint8_t *dest)
     }
 
     if (!is_running_)
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     tab_bit_mutex_.lock();
     for (unsigned int i = addr; i < addr + nb; i++)
@@ -586,7 +586,7 @@ ErrorCode ModbusServer::readDiscreteInputs(int addr, int nb, uint8_t *dest)
     }
 
     if (!is_running_)
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     tab_input_bit_mutex_.lock();
     for (unsigned int i = addr; i < addr + nb; i++)
@@ -610,7 +610,7 @@ ErrorCode ModbusServer::writeHoldingRegs(int addr, int nb, uint16_t *dest)
     }
 
     if (!is_running_)
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     tab_reg_mutex_.lock();
     for (unsigned int i = addr; i < addr + nb; i++)
@@ -634,7 +634,7 @@ ErrorCode ModbusServer::readHoldingRegs(int addr, int nb, uint16_t *dest)
     }
 
     if (!is_running_)
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     tab_reg_mutex_.lock();
     for (unsigned int i = addr; i < addr + nb; i++)
@@ -658,7 +658,7 @@ ErrorCode ModbusServer::readInputRegs(int addr, int nb, uint16_t *dest)
     }
 
     if (!is_running_)
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     tab_input_reg_mutex_.lock();
     for (unsigned int i = addr; i < addr + nb; i++)
@@ -683,7 +683,7 @@ ErrorCode ModbusServer::writeInputRegs(int addr, int nb, uint16_t *dest)
     }
 
     if (!is_running_)
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     tab_input_reg_mutex_.lock();
     for (unsigned int i = addr; i < addr + nb; i++)

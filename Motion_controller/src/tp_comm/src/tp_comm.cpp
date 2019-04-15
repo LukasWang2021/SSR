@@ -123,7 +123,7 @@ unsigned long long int TpComm::open()
     if(!thread_ptr_.run(&tpCommRoutineThreadFunc, this, 50))
     {
         FST_ERROR("Failed to open tpcomm");
-        return TP_COMM_OPEN_FAILED;
+        return TP_COMM_CREATE_ROUTINE_THREAD_FAILED;
     }
 
     return SUCCESS;

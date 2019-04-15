@@ -151,7 +151,7 @@ ErrorCode ModbusManager::writeCoilsToServer(int addr, int nb, uint8_t *dest)
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     return server_->writeCoils(addr, nb, dest);
 }
@@ -162,7 +162,7 @@ ErrorCode ModbusManager::readCoilsFromServer(int addr, int nb, uint8_t *dest)
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     return server_->readCoils(addr, nb, dest);
 }
@@ -173,7 +173,7 @@ ErrorCode ModbusManager::readDiscreteInputsFromServer(int addr, int nb, uint8_t 
         return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     return server_->readDiscreteInputs(addr, nb, dest);
 }
@@ -184,7 +184,7 @@ ErrorCode ModbusManager::writeHoldingRegsToServer(int addr, int nb, uint16_t *de
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     return server_->writeHoldingRegs(addr, nb, dest);
 }
@@ -195,7 +195,7 @@ ErrorCode ModbusManager::readHoldingRegsFromServer(int addr, int nb, uint16_t *d
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     return server_->readHoldingRegs(addr, nb, dest);
 }
@@ -206,7 +206,7 @@ ErrorCode ModbusManager::readInputRegsFromServer(int addr, int nb, uint16_t *des
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     return server_->readInputRegs(addr, nb, dest);
 }
@@ -217,7 +217,7 @@ ErrorCode ModbusManager::writeInputRegsToServer(int addr, int nb, uint16_t *dest
        return MODBUS_START_MODE_ERROR;
 
     if (!server_->isRunning())
-        return MODBUS_SERVER_BE_NOT_OPENED;
+        return MODBUS_SERVER_NOT_OPENED;
 
     return server_->writeInputRegs(addr, nb, dest);
 }

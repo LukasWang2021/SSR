@@ -23,7 +23,6 @@ public:
     virtual void updateLoadParam(DynamicAlgLoadParam load_param);
 
     virtual bool isValid();
-    //initDynamicAlgParam(DynamicAlgParam dynamics_alg_param_ptr);
 
     virtual ErrorCode getTorqueInverseDynamics(const Joint joint, const JointVelocity vel, const JointAcceleration acc, 
                                                JointTorque &torque);
@@ -31,10 +30,10 @@ public:
     virtual ErrorCode getAccDirectDynamics(const Joint joint, const JointVelocity vel, const JointTorque torque, 
                                            JointAcceleration &acc);
 
-    const static double DOUBLE_ACCURACY = 1e-6;
-    const static double G = 9.81;
-    const static int LINKS = 6;
-    const static int PARAM_SET = 52;
+    static const double DOUBLE_ACCURACY = 1e-6;
+    static const double G = 9.81;
+    static const int LINKS = 6;
+    static const int PARAM_SET = 52;
 
 private:
 

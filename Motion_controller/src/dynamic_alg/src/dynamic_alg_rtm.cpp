@@ -51,13 +51,16 @@ ErrorCode DynamicAlgRTM::initDynamicAlgRTM(std::string file_path, DynamicAlgPara
             param_.getParam("arm_dh/axis-5/alpha", arm_dh_[5].alpha) &&
             param_.getParam("arm_dh/axis-5/offset", arm_dh_[5].offset))
         {
-            TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);
-            a2 = matrix_base.trans_vector_.x_/1000;
+            //TransMatrix matrix_base(base_dh_.d, base_dh_.a, base_dh_.alpha, base_dh_.offset);//delete
+            //a2 = matrix_base.trans_vector_.x_/1000;//delete
+            a2 = arm_dh_[0].a/1000;
             a3 = arm_dh_[1].a/1000;
             a4 = arm_dh_[2].a/1000;
             d4 = arm_dh_[3].d/1000;
             d6 = arm_dh_[5].d/1000;
-            is_valid_ = true;          
+            is_valid_ = true; 
+            //print
+            //printf("a2=%f, a3=%f, a4=%f,d4=%f,d6=%f\n",a2, a3, a4, d4, d6);         
         }
         else
         {
@@ -132,6 +135,17 @@ ErrorCode DynamicAlgRTM::getTorqueInverseDynamics(const Joint joint, const Joint
                        //Y6
                        {DG1XX6, DG2XX6, DG3XX6, DG4XX6, DG5XX6, DG6XX6}, {DG1XY6, DG2XY6, DG3XY6, DG4XY6, DG5XY6, DG6XY6}, {DG1XZ6, DG2XZ6, DG3XZ6, DG4XZ6, DG5XZ6, DG6XZ6}, {DG1YZ6, DG2YZ6, DG3YZ6, DG4YZ6, DG5YZ6, DG6YZ6}, {DG1ZZ6, DG2ZZ6, DG3ZZ6, DG4ZZ6, DG5ZZ6, DG6ZZ6}, 
                        {DG1MX6, DG2MX6, DG3MX6, DG4MX6, DG5MX6, DG6MX6}, {DG1MY6, DG2MY6, DG3MY6, DG4MY6, DG5MY6, DG6MY6}, {0, 0, 0, 0, 0, DG6Im6}, {0, 0, 0, 0, 0, DG6FS6}, {0, 0, 0, 0, 0, DG6FV6}};
+    /*
+    printf("A:\n");
+    for(int i = 0; i < LINKS; ++i)
+    {
+        printf("A[%d] = ", i);
+        for (int j = 0; j < PARAM_SET; ++j)
+        {
+            printf(" %f ", A[j][i]);
+        }
+        printf("\n");
+    }*/
 
     //compute tau = A*pai
     double temp_torque[LINKS] = {0};
@@ -1161,19 +1175,15 @@ void DynamicAlgRTM::computeMatrixElementInverseDynamics(const Joint joint, const
 
 int DynamicAlgRTM::sign(double value)
 {
-    if (value > DOUBLE_ACCURACY)
+    if (value >= 0)
     {
         return 1;
     }
-    else if (value < (- DOUBLE_ACCURACY))
+    else if (value < 0)
     {
         return -1;
     }
-    else 
-    {
-        return 0;
-    }
-    
+
 }
 
 bool DynamicAlgRTM::getMatrixInverse(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS])

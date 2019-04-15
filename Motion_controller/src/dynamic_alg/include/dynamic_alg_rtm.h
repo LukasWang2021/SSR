@@ -32,7 +32,7 @@ public:
                                            JointAcceleration &acc);
 
     const static double DOUBLE_ACCURACY = 1e-6;
-    const static double G = -9.81;
+    const static double G = 9.81;
     const static int LINKS = 6;
     const static int PARAM_SET = 52;
 

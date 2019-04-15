@@ -11,7 +11,7 @@ int main(int argc, char** argv)
     printf("begin\n");
     vector<string> v;
     ifstream infile("matlab.txt");//定义文件流对象
-    ofstream outfile("output.txt");
+    ofstream outfile("output_variable_declare.txt");
     string line;
 
     while(getline(infile, line))

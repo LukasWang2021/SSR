@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include "dynamic_alg_rtm.h"
+#include <sys/time.h>
 
 using namespace std;
 using namespace basic_alg;
@@ -104,6 +105,11 @@ int main(int argc, char** argv)
     acc.a5_ = -1.2982;
     acc.a6_ = 0.49317;
 
+    //compute time
+    struct timeval t_start, t_end;
+    long cost_time = 0;
+    gettimeofday(&t_start, NULL);
+
     err = dyn.getTorqueInverseDynamics(joint, vel, acc, torque);
     if (err != 0)
     {
@@ -111,7 +117,11 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    printf("1 : \n %f\n%f\n%f\n%f\n%f\n%f\n", torque.t1_, torque.t2_, torque.t3_, torque.t4_, torque.t5_, torque.t6_);
+    gettimeofday(&t_end, NULL);
+    cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);
+    printf("1: time = %d us\n", cost_time);
+
+    printf("%f\n%f\n%f\n%f\n%f\n%f\n", torque.t1_, torque.t2_, torque.t3_, torque.t4_, torque.t5_, torque.t6_);
 
 
     joint.j1_ = -2.4462;
@@ -129,9 +139,12 @@ int main(int argc, char** argv)
     acc.a1_ = -6.86E-05;
     acc.a2_ = -4.74E-06;
     acc.a3_ = 5.40E-05;
-    acc.a4_ =-8.10E-06;
+    acc.a4_ = -8.10E-06;
     acc.a5_ = 2.80E-05;
     acc.a6_ = -0.00016941;
+    
+    //compute time
+    gettimeofday(&t_start, NULL);
 
     err = dyn.getTorqueInverseDynamics(joint, vel, acc, torque);
     if (err != 0)
@@ -140,7 +153,11 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    printf("2 :\n %f\n%f\n%f\n%f\n%f\n%f\n", torque.t1_, torque.t2_, torque.t3_, torque.t4_, torque.t5_, torque.t6_);
+    gettimeofday(&t_end, NULL);
+    cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);
+    printf("2: time = %d us\n", cost_time);
+
+    printf("%f\n%f\n%f\n%f\n%f\n%f\n", torque.t1_, torque.t2_, torque.t3_, torque.t4_, torque.t5_, torque.t6_);
 
 
     printf("end\n");

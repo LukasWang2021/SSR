@@ -66,3 +66,16 @@ target_link_libraries(test_inverse
 install(TARGETS	test_inverse
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+add_executable(test_inverse_time
+    test/test_inverse_time.cpp
+)
+
+target_link_libraries(test_inverse_time
+    ${catkin_LIBRARIES}
+    dynamic_alg
+)
+
+install(TARGETS	test_inverse_time
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

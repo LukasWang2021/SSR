@@ -233,7 +233,7 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server load param failed*/																										
 #define MODBUS_SERVER_OPEN_FAILED (unsigned long long int)0x0001000200AE001E   /*modbus server open failed*/																										
 #define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0001000200AE001F   /*modbus server init failed*/																										
-#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000300AE0022   /*modbus server is running*/
+#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0X0001000200AE0022   /*modbus server is running*/
 #define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server init failed*/
 #define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server init failed*/
 

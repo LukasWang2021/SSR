@@ -58,9 +58,7 @@ ErrorCode DynamicAlgRTM::initDynamicAlgRTM(std::string file_path, DynamicAlgPara
             a4 = arm_dh_[2].a/1000;
             d4 = arm_dh_[3].d/1000;
             d6 = arm_dh_[5].d/1000;
-            is_valid_ = true; 
-            //print
-            //printf("a2=%f, a3=%f, a4=%f,d4=%f,d6=%f\n",a2, a3, a4, d4, d6);         
+            is_valid_ = true;      
         }
         else
         {
@@ -111,12 +109,6 @@ ErrorCode DynamicAlgRTM::getTorqueInverseDynamics(const Joint joint, const Joint
     double pai[PARAM_SET] = {ZZR1, FS1, FV1, XXR2, XY2, XZR2, YZ2, ZZR2, MXR2, MY2, FS2, FV2, XXR3, XYR3, XZ3, YZ3, ZZR3, MXR3, MYR3, Im3, FS3, FV3,
                       XXR4, XY4, XZ4, YZ4, ZZR4, MX4, MYR4, Im4, FS4, FV4, XXR5, XY5, XZ5, YZ5, ZZR5, MX5, MYR5, Im5, FS5, FV5,
                       XXR6, XY6, XZ6, YZ6, ZZ6, MX6, MY6, Im6, FS6, FV6};
-    //print
-    /*printf("pai:\n");
-    for(int i = 0; i < PARAM_SET; ++i)
-    {
-        printf("%f\n", pai[i]);
-    }*/
 
     //A[52][6]                   //Y1
     double A[PARAM_SET][LINKS] = {{DG1ZZ1,0,0,0,0,0}, {DG1FS1,0,0,0,0,0}, {DG1FV1,0,0,0,0,0},
@@ -262,7 +254,7 @@ ErrorCode DynamicAlgRTM::getAccDirectDynamics(const Joint joint, const JointVelo
     //compute with J^T (q) h_e
     for (int i = 0; i < LINKS; ++i)
     {
-        temp[i] = - tau_he[i];
+        temp[i] += - tau_he[i];
     }
 
     //compute with M^(-1) (q)
@@ -1189,7 +1181,7 @@ int DynamicAlgRTM::sign(double value)
 bool DynamicAlgRTM::getMatrixInverse(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS])
 {
     double rank = getMatrixRank(src, n);
-    if (rank < DOUBLE_ACCURACY)
+    if (rank < DOUBLE_ACCURACY && rank > -DOUBLE_ACCURACY)
     {
         return false;
     }

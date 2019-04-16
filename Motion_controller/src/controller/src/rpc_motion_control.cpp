@@ -36,13 +36,13 @@ void ControllerRpc::handleRpc0x000005EF(void* request_data_ptr, void* response_d
     if (state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO
         && state_machine_ptr_->getParam()->enable_set_vel_in_auto_ == false)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_VEL;
     }
 
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_SLOWLY_MANUAL
         && rq_data_ptr->data.data > state_machine_ptr_->getParam()->max_limited_global_vel_ratio_)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_VEL;
     }
     else
     {
@@ -70,7 +70,7 @@ void ControllerRpc::handleRpc0x0000271F(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_SLOWLY_MANUAL
         && rq_data_ptr->data.data > state_machine_ptr_->getParam()->max_limited_global_acc_ratio_)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_ACC;
     }
     else
     {
@@ -135,7 +135,7 @@ void ControllerRpc::handleRpc0x000085D5(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getRobotState() != ROBOT_IDLE
         || state_machine_ptr_->getInterpreterState() == INTERPRETER_EXECUTE)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_MOVE_STEP;
         return;
     }
 
@@ -177,7 +177,7 @@ void ControllerRpc::handleRpc0x0000D3F5(void* request_data_ptr, void* response_d
         || !state_machine_ptr_->updateContinuousManualMoveRpcTime()
         || state_machine_ptr_->getInterpreterState() == INTERPRETER_EXECUTE)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_MOVE_CONTINUOUS;
         return;
     }
 
@@ -218,7 +218,7 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED
         || state_machine_ptr_->getInterpreterState() == INTERPRETER_EXECUTE)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_GOTO_CARTESIAN;
         return;
     }
 
@@ -256,7 +256,7 @@ void ControllerRpc::handleRpc0x00008075(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED
         || state_machine_ptr_->getInterpreterState() == INTERPRETER_EXECUTE)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_GOTO_JOINT;
         return;
     }
 
@@ -296,7 +296,7 @@ void ControllerRpc::handleRpc0x0000A9A0(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_MANUAL_STOP;
         return;
     }
 

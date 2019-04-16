@@ -11,7 +11,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_START;
         return;
     }
 
@@ -31,7 +31,7 @@ void ControllerRpc::handleRpc0x000072D8(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getInterpreterState() != INTERPRETER_IDLE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_LAUNCH;
         return;
     }
 
@@ -51,7 +51,7 @@ void ControllerRpc::handleRpc0x0000D974(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_FORWARD;
         return;
     }
 
@@ -70,7 +70,7 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_BACKWARD;
         return;
     }
 
@@ -90,7 +90,7 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getUserOpMode() == USER_OP_MODE_NONE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_JUMP;
         return;
     }
 
@@ -107,7 +107,7 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     if(state_machine_ptr_->getInterpreterState() != INTERPRETER_EXECUTE
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_PAUSE;
         return;
     }
     
@@ -126,7 +126,7 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED
         || state_machine_ptr_->getRobotState() != ROBOT_IDLE)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_RESUME;
         return;
     }
     

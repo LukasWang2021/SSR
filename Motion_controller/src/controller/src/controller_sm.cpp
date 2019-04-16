@@ -176,7 +176,6 @@ ErrorCode ControllerSm::checkOffsetState()
     ErrorCode error_code = motion_control_ptr_->checkOffset(calib_state, offset_state);
     if (error_code != SUCCESS)
     {
-        ErrorMonitor::instance()->add(error_code);
         return error_code;
     }
 
@@ -200,8 +199,7 @@ ErrorCode ControllerSm::checkOffsetState()
     
         if(calib_state == MOTION_FORBIDDEN)
         {
-            ErrorMonitor::instance()->add(CONTROLLER_INVALID_OPERATION);
-            return CONTROLLER_INVALID_OPERATION;
+            return CONTROLLER_OFFSET_NEED_CALIBRATE;
         }
     }
     
@@ -256,7 +254,7 @@ ErrorCode ControllerSm::callReset()
         safety_device_ptr_->reset();
         if (safety_device_ptr_->checkSafetyBoardAlarm())
         {
-            return CONTROLLER_INVALID_OPERATION;
+            return CONTROLLER_SAFETY_NOT_READY;
         }
 
         //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
@@ -266,7 +264,7 @@ ErrorCode ControllerSm::callReset()
         ctrl_reset_count_ =  param_ptr_->reset_max_time_ / param_ptr_->routine_cycle_time_;  
         return SUCCESS;  
     }
-    return CONTROLLER_INVALID_OPERATION;
+    return CONTROLLER_INVALID_OPERATION_RESET;
 }
 
 ErrorCode ControllerSm::callShutdown()

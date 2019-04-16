@@ -13,6 +13,12 @@ void ControllerRpc::handleRpc0x000167C5(void* request_data_ptr, void* response_d
     RequestMessageType_Uint64* rq_data_ptr = static_cast<RequestMessageType_Uint64*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if(state_machine_ptr_->getCtrlState() != CTRL_ESTOP)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_TIME;
+        return;
+    }
+
     struct timeval time_val;
     time_val.tv_sec = rq_data_ptr->data.data;
     time_val.tv_usec = 0;
@@ -22,7 +28,7 @@ void ControllerRpc::handleRpc0x000167C5(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_TIME;
     }
 }
 

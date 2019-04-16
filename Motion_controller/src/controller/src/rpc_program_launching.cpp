@@ -15,7 +15,7 @@ void ControllerRpc::handleRpc0x00011544(void* request_data_ptr, void* response_d
     }
     else
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_LAUNCH;
     }  
 
     FST_INFO("rpc-setMethod: value=%d\n", rq_data_ptr->data.data);

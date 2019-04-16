@@ -200,7 +200,7 @@ void ControllerRpc::handleRpc0x0000BD83(void* request_data_ptr, void* response_d
 
     if (rq_data_ptr->data2.number != rq_data_ptr->data2.value_count)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_ARG;
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/writeCoils"));
     }
 
@@ -288,7 +288,7 @@ void ControllerRpc::handleRpc0x00008C43(void* request_data_ptr, void* response_d
 
     if (rq_data_ptr->data2.number != rq_data_ptr->data2.value_count)
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_ARG;
         recordLog(MODBUS_LOG, rs_data_ptr->data.data, std::string("/rpc/modbus/writeHoldingRegs"));
     }
 

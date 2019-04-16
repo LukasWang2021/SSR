@@ -87,7 +87,7 @@ void ControllerRpc::handleRpc0x00007074(void* request_data_ptr, void* response_d
     //TP can not control ouput if the setting of isAvailableInAutoMode is false.
     if ((!io_mapping_ptr_->isEnableInAutoMode()) && (state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO))
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_IO;
     }
     else
     {
@@ -184,7 +184,7 @@ void ControllerRpc::handleRpc0x00012274(void* request_data_ptr, void* response_d
     //TP can not control ouput if the setting of isAvailableInAutoMode is false.
     if ((!io_mapping_ptr_->isEnableInAutoMode()) && (state_machine_ptr_->getUserOpMode() == USER_OP_MODE_AUTO))
     {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_IO;
     }
     else
     {

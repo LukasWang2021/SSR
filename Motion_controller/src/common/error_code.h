@@ -98,6 +98,27 @@ typedef unsigned long long int ErrorCode;
 #define CONTROLLER_INVALID_OPERATION (unsigned long long int)0x0001000200A80007   /*Controller failed to operate command because of invalid pre-condition*/
 #define CONTROLLER_UNKNOWN_USER_OP_MODE (unsigned long long int)0x0001000B00A80008   /*User Op Mode is in unknown state*/
 #define CONTROLLER_PUBLISH_NONE (unsigned long long int)0x0001000200A80009   /*Controller failed to find the publishing elements of request*/
+#define CONTROLLER_INVALID_OPERATION_SET_TIME (unsigned long long int)0x0001000200A8000A   /*Controller failed to set the time.*/
+#define CONTROLLER_INVALID_OPERATION_START (unsigned long long int)0x0001000200A8000B   /*Controller failed to start the program.*/
+#define CONTROLLER_INVALID_OPERATION_LAUNCH (unsigned long long int)0x0001000200A8000C   /*Controller failed to launch the program.*/
+#define CONTROLLER_INVALID_OPERATION_FORWARD (unsigned long long int)0x0001000200A8000D   /*Controller failed to forward the program.*/
+#define CONTROLLER_INVALID_OPERATION_BACKWARD (unsigned long long int)0x0001000200A8000E   /*Controller failed to backward the program.*/
+#define CONTROLLER_INVALID_OPERATION_JUMP (unsigned long long int)0x0001000200A8000F   /*Controller failed to jump the program.*/
+#define CONTROLLER_INVALID_OPERATION_PAUSE (unsigned long long int)0x0001000200A80010   /*Controller failed to pause the program.*/
+#define CONTROLLER_INVALID_OPERATION_RESUME (unsigned long long int)0x0001000200A80011   /*Controller failed to resume the program.*/
+#define CONTROLLER_INVALID_OPERATION_SET_IO (unsigned long long int)0x0001000200A80012   /*Controller failed to set IO*/
+#define CONTROLLER_INVALID_OPERATION_SET_LAUNCH (unsigned long long int)0x0001000200A80013   /*Controller failed to set launching mode*/
+#define CONTROLLER_INVALID_OPERATION_SET_VEL (unsigned long long int)0x0001000200A80014   /*Controller failed to set global velocity ratio*/
+#define CONTROLLER_INVALID_OPERATION_SET_ACC (unsigned long long int)0x0001000200A80015   /*Controller failed to set global acceleration ratio*/
+#define CONTROLLER_INVALID_OPERATION_MOVE_STEP (unsigned long long int)0x0001000200A80016   /*Controller failed to do step manual move*/
+#define CONTROLLER_INVALID_OPERATION_MOVE_CONTINUOUS (unsigned long long int)0x0001000200A80017   /*Controller failed to docontinuous manual move*/
+#define CONTROLLER_INVALID_OPERATION_GOTO_CARTESIAN (unsigned long long int)0x0001000200A80018   /*Controller failed to goto cartesian point in manual mode*/
+#define CONTROLLER_INVALID_OPERATION_GOTO_JOINT (unsigned long long int)0x0001000200A80019   /*Controller failed to goto joint point in manual mode*/
+#define CONTROLLER_INVALID_OPERATION_MANUAL_STOP (unsigned long long int)0x0001000200A8001A   /*Controller failed to do manual stop*/
+#define CONTROLLER_INVALID_OPERATION_RESET (unsigned long long int)0x0001000200A8001B   /*Controller failed to do reset*/
+#define CONTROLLER_OFFSET_NEED_CALIBRATE (unsigned long long int)0x0001000200A8001C   /*Controller needs to calibrate the offset */
+#define CONTROLLER_SAFETY_NOT_READY (unsigned long long int)0x0001000200A8001D   /*Controller detects the safety board is not ready when reset operation*/
+
 #define INTERPRETER_LOG       (unsigned long long int)0x0001000100AA0000   /*Interpreter log{0}*/
 #define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0001   /*No syntax*/
 #define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0002   /*unbalanced parentheses*/

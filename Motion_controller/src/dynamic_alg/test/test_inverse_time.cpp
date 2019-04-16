@@ -114,8 +114,12 @@ int main(int argc, char** argv)
         num_str = ""; 
         for (int j = 0; j < line.length(); ++j)
         {
-            if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1)) // can not read the final char "E-8"
+            if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1)) // can not read the final char "e-8"
             {
+                if (j == (line.length() - 1))
+                {
+                    num_str += line[j];
+                }
                 position_vector.push_back(atof(num_str.c_str()));
                 num_str = "";    
             }
@@ -135,6 +139,10 @@ int main(int argc, char** argv)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
+                if (j == (line.length() - 1))
+                {
+                    num_str += line[j];
+                }
                 velocity_vector.push_back(atof(num_str.c_str()));
                 num_str = "";    
             }
@@ -154,6 +162,10 @@ int main(int argc, char** argv)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
+                if (j == (line.length() - 1))
+                {
+                    num_str += line[j];
+                }
                 accelerate_vector.push_back(atof(num_str.c_str()));
                 num_str = "";    
             }
@@ -175,6 +187,7 @@ int main(int argc, char** argv)
             printf("\n");
         }
     }
+
     for (int k = 0; k < velocity_vector.size(); ++k)
     {
         printf("%f, ", velocity_vector[k]);
@@ -219,9 +232,9 @@ int main(int argc, char** argv)
             printf("acc=%f, %f, %f, %f, %f, %f,\n",acc[0],acc[1],acc[2],acc[3],acc[4],acc[5]);
             printf("torque=%f, %f, %f, %f, %f, %f,\n",torque[0],torque[1],torque[2],torque[3],torque[4],torque[5]);
         }
-
-        outfile<<torque.t1_<<endl<< torque.t2_<<endl<< torque.t3_<<endl<< torque.t4_<<endl<< torque.t5_<<endl<< torque.t6_<<endl;
-        */
+*/
+        //outfile<<torque.t1_<<endl<< torque.t2_<<endl<< torque.t3_<<endl<< torque.t4_<<endl<< torque.t5_<<endl<< torque.t6_<<endl;
+        
     }
     
     gettimeofday(&t_end, NULL);

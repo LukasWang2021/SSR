@@ -114,8 +114,12 @@ int main(int argc, char** argv)
         num_str = ""; 
         for (int j = 0; j < line.length(); ++j)
         {
-            if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1)) // can not read the final char "E-8"
+            if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1)) 
             {
+                if (j == (line.length() - 1))
+                {
+                    num_str += line[j];
+                }
                 position_vector.push_back(atof(num_str.c_str()));
                 num_str = "";    
             }
@@ -135,6 +139,10 @@ int main(int argc, char** argv)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
+                if (j == (line.length() - 1))
+                {
+                    num_str += line[j];
+                }
                 velocity_vector.push_back(atof(num_str.c_str()));
                 num_str = "";    
             }
@@ -154,6 +162,10 @@ int main(int argc, char** argv)
         {
             if (line[j] == ',' || line[j] == ' ' || j == (line.length() - 1))
             {
+                if (j == (line.length() - 1))
+                {
+                    num_str += line[j];
+                }
                 tau_vector.push_back(atof(num_str.c_str()));
                 num_str = "";    
             }

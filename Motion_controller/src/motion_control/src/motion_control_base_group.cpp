@@ -661,6 +661,13 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
                 manual_traj_.cart_start = tcp_in_base;
+                //FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+                //FST_INFO("FCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
+                //FST_INFO("TCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
+                //FST_INFO("Tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
+                //transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
+                //FST_INFO("FCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
+                break;
             case USER:
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
@@ -2626,9 +2633,11 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             break;
         }
 
-        // char buffer[LOG_TEXT_SIZE];
-        // FST_INFO("  >> pose : %.4f, %.4f, %.4f, %.4f, %.4f, %.4f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
-        // FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
+        //char buffer[LOG_TEXT_SIZE];
+        //FST_INFO("  >> pose : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+        //FST_INFO("  >> tf : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
+        //FST_INFO("  >> fcp_in_base : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
+        //FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
         picked_num ++;
 
         if (manual_time_ >= manual_traj_.duration)

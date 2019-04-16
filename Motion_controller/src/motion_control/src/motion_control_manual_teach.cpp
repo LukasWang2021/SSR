@@ -571,11 +571,12 @@ ErrorCode ManualTeach::manualContinuousByDirect(const ManualDirection *direction
         case BASE:
         case USER:
         case WORLD:
+        case TOOL:
             err = manualCartesianContinuous(directions, time, traj);
             break;
-        case TOOL:
-            //err = manualCartesianContinuousInToolFrame(directions, time, traj);
-            break;
+        //case TOOL:
+        //    err = manualCartesianContinuousInToolFrame(directions, time, traj);
+        //    break;
         default:
             err = MOTION_INTERNAL_FAULT;
             FST_ERROR("Unsupported manual frame: %d", traj.frame);

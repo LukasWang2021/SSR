@@ -847,6 +847,7 @@ ErrorCode MotionControl::setToolFrame(int id)
             group_ptr_->setToolFrame(tf);
             tool_frame_id_ = id;
             FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
+            FST_INFO("Using tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
             return SUCCESS;
 
         }
@@ -860,6 +861,7 @@ ErrorCode MotionControl::setToolFrame(int id)
                 group_ptr_->setToolFrame(tf_info.data);
                 tool_frame_id_ = id;
                 FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
+                FST_INFO("Using tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf_info.data.point_.x_, tf_info.data.point_.y_, tf_info.data.point_.z_, tf_info.data.euler_.a_, tf_info.data.euler_.b_, tf_info.data.euler_.c_);
                 return SUCCESS;
             }
             else
@@ -893,6 +895,7 @@ ErrorCode MotionControl::setUserFrame(int id)
             group_ptr_->setUserFrame(uf);
             user_frame_id_ = id;
             FST_INFO("Success, current user frame id is %d", user_frame_id_);
+            FST_INFO("Using user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
             return SUCCESS;
         }
         else
@@ -905,6 +908,7 @@ ErrorCode MotionControl::setUserFrame(int id)
                 group_ptr_->setUserFrame(uf_info.data);
                 user_frame_id_ = id;
                 FST_INFO("Success, current user frame ID switch to %d", user_frame_id_);
+                FST_INFO("Using user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf_info.data.point_.x_, uf_info.data.point_.y_, uf_info.data.point_.z_, uf_info.data.euler_.a_, uf_info.data.euler_.b_, uf_info.data.euler_.c_);
                 return SUCCESS;
             }
             else

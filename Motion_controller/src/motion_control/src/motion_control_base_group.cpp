@@ -72,7 +72,6 @@ BaseGroup::BaseGroup(fst_log::Logger* plog)
     log_ptr_ = plog;
     auto_time_ = 0;
     manual_time_ = 0;
-    manual_frame_ = JOINT;
 
     path_list_ptr_ = NULL;
     traj_list_ptr_ = NULL;
@@ -313,19 +312,19 @@ ErrorCode BaseGroup::convertJointToCart(const Joint &joint, PoseEuler &pose)
 
 ManualFrame BaseGroup::getManualFrame(void)
 {
-    //FST_INFO("Get manual frame = %d", manual_frame_);
-    return manual_frame_;
+    //FST_INFO("Get manual frame = %d", manual_traj_.frame);
+    return manual_traj_.frame;
 }
 
 ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
 {
-    FST_INFO("Set manual frame = %d, current frame is %d", frame, manual_frame_);
+    FST_INFO("Set manual frame = %d, current frame is %d", frame, manual_traj_.frame);
 
-    if (frame != manual_frame_)
+    if (frame != manual_traj_.frame)
     {
         if (group_state_ == STANDBY || group_state_ == DISABLE)
         {
-            manual_frame_ = frame;
+            manual_traj_.frame = frame;
             FST_INFO("Done.");
             return SUCCESS;
         }
@@ -381,42 +380,40 @@ ErrorCode BaseGroup::setManualStepOrientation(double step)
     return manual_teach_.setManualStepOrientation(step);
 }
 
-ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
+ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 {
     char buffer[LOG_TEXT_SIZE];
-    FST_INFO("Manual to target joint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Manual to target point:");
 
     if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
         FST_ERROR("Cannot manual to target in current group-state = %d, servo-state = %d", group_state_, servo_state_);
-        return SUCCESS;
-    }
-
-    if (manual_frame_ != JOINT)
-    {
-        FST_ERROR("Cannot manual to target in current frame = %d", manual_frame_);
-        return INVALID_SEQUENCE;
+        return MC_FAIL_MANUAL_TO_POINT;
     }
 
     manual_traj_.joint_start = start_joint_;
-    FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Joint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.pose.pose.point_.x_, point.pose.pose.point_.y_, point.pose.pose.point_.z_, point.pose.pose.euler_.a_, point.pose.pose.euler_.b_, point.pose.pose.euler_.c_);
+    FST_INFO("Posture: %d, %d, %d, %d", point.pose.posture.arm, point.pose.posture.elbow, point.pose.posture.wrist, point.pose.posture.flip);
+    FST_INFO("UserFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.user_frame.point_.x_, point.user_frame.point_.y_, point.user_frame.point_.z_, point.user_frame.euler_.a_, point.user_frame.euler_.b_, point.user_frame.euler_.c_);
+    FST_INFO("ToolFrame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", point.tool_frame.point_.x_, point.tool_frame.point_.y_, point.tool_frame.point_.z_, point.tool_frame.euler_.a_, point.tool_frame.euler_.b_, point.tool_frame.euler_.c_);
+    FST_INFO("Start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
-        FST_ERROR("start-joint is out of soft constraint, manual-mode-apoint is disabled.");
+        FST_ERROR("Start-joint is out of soft constraint, manual-mode-apoint is disabled.");
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
-    if (!soft_constraint_.isJointInConstraint(joint))
+    if (!soft_constraint_.isJointInConstraint(point.joint))
     {
-        FST_ERROR("target-joint out of constraint: %s", printDBLine(&joint[0], buffer, LOG_TEXT_SIZE));
+        FST_ERROR("Target-joint out of constraint: %s", printDBLine(&point.joint[0], buffer, LOG_TEXT_SIZE));
         return JOINT_OUT_OF_CONSTRAINT;
     }
 
     manual_time_ = 0;
     manual_traj_.mode = APOINT;
-    manual_traj_.frame = JOINT;
-    ErrorCode err = manual_teach_.manualByTarget(joint, manual_time_, manual_traj_);
+    ErrorCode err = manual_teach_.manualByTarget(point.joint, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
     {
@@ -426,11 +423,14 @@ ErrorCode BaseGroup::manualMoveToPoint(const Joint &joint)
     else
     {
         FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
+        ManualFrame frame = manual_traj_.frame;
         memset(&manual_traj_, 0, sizeof(ManualTrajectory));
+        manual_traj_.frame = frame;
         return err;
     }
 }
 
+/*
 ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
 {
     ErrorCode err;
@@ -444,9 +444,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
         return SUCCESS;
     }
 
-    if (manual_frame_ != BASE && manual_frame_ != USER && manual_frame_ != WORLD)
+    if (manual_traj_.frame != BASE && manual_traj_.frame != USER && manual_traj_.frame != WORLD)
     {
-        FST_ERROR("Cannot manual to target in current frame = %d", manual_frame_);
+        FST_ERROR("Cannot manual to target in current frame = %d", manual_traj_.frame);
         return INVALID_SEQUENCE;
     }
 
@@ -465,7 +465,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
 
     transformation_.convertTcpToFcp(pose, tool_frame_, pose_of_fcp);
 
-    switch (manual_frame_)
+    switch (manual_traj_.frame)
     {
         case BASE:
             err = kinematics_ptr_->doIK(pose_of_fcp, ref_joint, res_joint) ? SUCCESS : IK_FAIL;
@@ -479,7 +479,7 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
             err = kinematics_ptr_->doIK(fcp_in_base, ref_joint, res_joint) ? SUCCESS : IK_FAIL;    // TODO: transform from world frame to base frame
             break;
         default:
-            FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_frame_);
+            FST_ERROR("Invalid manual frame = %d in manual to pose mode", manual_traj_.frame);
             return MOTION_INTERNAL_FAULT;
     }
 
@@ -497,7 +497,8 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
 
     manual_time_ = 0;
     manual_traj_.mode = APOINT;
-    manual_traj_.frame = JOINT;
+    //TODO
+    //manual_traj_.frame = JOINT;
     err = manual_teach_.manualByTarget(res_joint, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -508,29 +509,31 @@ ErrorCode BaseGroup::manualMoveToPoint(const PoseEuler &pose)
     else
     {
         FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
+        ManualFrame = frame = manual_traj_.frame;
         memset(&manual_traj_, 0, sizeof(ManualTrajectory));
+        manual_traj_.frame = frame;
         return err;
     }
 }
+*/
 
 ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 {
-    char buffer[LOG_TEXT_SIZE];
-    PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
-    FST_INFO("Manual step frame=%d by direction.", manual_frame_);
+    FST_INFO("Manual step frame=%d by direction.", manual_traj_.frame);
 
     if (group_state_ != STANDBY || servo_state_ != SERVO_IDLE)
     {
         FST_ERROR("Cannot manual step in current group-state = %d, servo-state = %d", group_state_, servo_state_);
-        return SUCCESS;
+        return MC_FAIL_MANUAL_STEP;
     }
 
+    char buffer[LOG_TEXT_SIZE];
     manual_traj_.joint_start = start_joint_;
     FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
     if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
     {
-        if (manual_frame_ == JOINT)
+        if (manual_traj_.frame == JOINT)
         {
             for (size_t i = 0; i < getNumberOfJoint(); i++)
             {
@@ -538,24 +541,26 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
                 {
                     FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
                               i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                    return INVALID_PARAMETER;
+                    return MC_FAIL_MANUAL_STEP;
                 }
                 else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
                 {
                     FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
                               i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                    return INVALID_PARAMETER;
+                    return MC_FAIL_MANUAL_STEP;
                 }
             }
         }
         else
         {
             FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
-            return INVALID_SEQUENCE;
+            return MC_FAIL_MANUAL_STEP;
         }
     }
 
-    switch (manual_frame_)
+    PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
+
+    switch (manual_traj_.frame)
     {
         case JOINT:
             break;
@@ -581,13 +586,12 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
             memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
             break;
         default:
-            FST_ERROR("Unsupported manual frame: %d", manual_frame_);
+            FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
             return MOTION_INTERNAL_FAULT;
     }
 
     manual_time_ = 0;
     manual_traj_.mode = STEP;
-    manual_traj_.frame = manual_frame_;
     ErrorCode err = manual_teach_.manualStepByDirect(direction, manual_time_, manual_traj_);
 
     if (err == SUCCESS)
@@ -598,7 +602,9 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
     else
     {
         FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
+        ManualFrame frame = manual_traj_.frame;
         memset(&manual_traj_, 0, sizeof(ManualTrajectory));
+        manual_traj_.frame = frame;
         return err;
     }
 }
@@ -606,54 +612,47 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 {
     char buffer[LOG_TEXT_SIZE];
-    PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
-    FST_INFO("Manual continuous frame=%d by direction.", manual_frame_);
+    FST_INFO("Manual continuous frame=%d by direction.", manual_traj_.frame);
 
-    if (group_state_ != STANDBY && group_state_ != MANUAL)
+    if (group_state_ != STANDBY && group_state_ != MANUAL || group_state_ == STANDBY && servo_state_ != SERVO_IDLE)
     {
-        FST_ERROR("Cannot manual continuous in current state = %d", group_state_);
-        return INVALID_SEQUENCE;
+        FST_ERROR("Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state_, servo_state_);
+        return MC_FAIL_MANUAL_CONTINUOUS;
     }
 
     if (group_state_ == STANDBY)
     {
-        if (servo_state_ != SERVO_IDLE)
-        {
-            FST_ERROR("Cannot manual continuous in current grp-state = %d,  servo-state = %d", group_state_, servo_state_);
-            return SUCCESS;
-        }
-
         manual_traj_.joint_start = start_joint_;
         FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
 
         if (!soft_constraint_.isJointInConstraint(manual_traj_.joint_start))
         {
-            if (manual_frame_ == JOINT)
+            if (manual_traj_.frame == JOINT)
             {
                 for (size_t i = 0; i < getNumberOfJoint(); i++)
                 {
                     if (manual_traj_.joint_start[i] > soft_constraint_.upper()[i] + MINIMUM_E9 && direction[i] == INCREASE)
                     {
-                        FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).",
-                                  i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                        return INVALID_PARAMETER;
+                        FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (increase).", i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
+                        return MC_FAIL_MANUAL_CONTINUOUS;
                     }
                     else if (manual_traj_.joint_start[i] < soft_constraint_.lower()[i] - MINIMUM_E9 && direction[i] == DECREASE)
                     {
-                        FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).",
-                                  i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
-                        return INVALID_PARAMETER;
+                        FST_ERROR("J%d = %.4f out of range [%.4f, %.4f], cannot move as given direction (decrease).", i + 1, manual_traj_.joint_start[i], soft_constraint_.lower()[i], soft_constraint_.upper()[i]);
+                        return MC_FAIL_MANUAL_CONTINUOUS;
                     }
                 }
             }
             else
             {
                 FST_ERROR("start-joint is out of soft constraint, manual-frame-cartesian is disabled.");
-                return INVALID_SEQUENCE;
+                return MC_FAIL_MANUAL_CONTINUOUS;
             }
         }
 
-        switch (manual_frame_)
+        PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
+
+        switch (manual_traj_.frame)
         {
             case JOINT:
                 break;
@@ -686,13 +685,12 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
                 break;
             default:
-                FST_ERROR("Unsupported manual frame: %d", manual_frame_);
+                FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
                 return MOTION_INTERNAL_FAULT;
         }
 
         manual_time_ = 0;
         manual_traj_.mode = CONTINUOUS;
-        manual_traj_.frame = manual_frame_;
         ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
 
         if (err == SUCCESS)
@@ -703,7 +701,9 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         else
         {
             FST_ERROR("Fail to create manual trajectory, error-code = 0x%llx", err);
+            ManualFrame frame = manual_traj_.frame;
             memset(&manual_traj_, 0, sizeof(ManualTrajectory));
+            manual_traj_.frame = frame;
             return err;
         }
     }
@@ -726,8 +726,8 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
     }
     else
     {
-        FST_ERROR("Cannot manual now, current state = %d", group_state_);
-        return INVALID_SEQUENCE;
+        FST_ERROR("Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state_, servo_state_);
+        return MC_FAIL_MANUAL_CONTINUOUS;
     }
 }
 

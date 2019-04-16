@@ -312,10 +312,19 @@ ErrorCode MotionControl::doGotoPointManualMove(const Joint &joint)
         return INVALID_SEQUENCE;
     }
 
-    return group_ptr_->manualMoveToPoint(joint);
+    IntactPoint point;
+    point.joint = joint;
+    point.tool_frame = group_ptr_->getToolFrame();
+    point.user_frame = group_ptr_->getUserFrame();
+    PoseEuler tcp_in_base, fcp_in_base;
+    group_ptr_->getKinematicsPtr()->doFK(point.joint, fcp_in_base);
+    group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, point.tool_frame, tcp_in_base);
+    group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, point.user_frame, point.pose.pose);
+    point.pose.posture = group_ptr_->getKinematicsPtr()->getPostureByJoint(point.joint);
+    return group_ptr_->manualMoveToPoint(point);
 }
 
-ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
+ErrorCode MotionControl::doGotoPointManualMove(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id)
 {
     if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
@@ -323,7 +332,46 @@ ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
         return INVALID_SEQUENCE;
     }
 
-    return group_ptr_->manualMoveToPoint(pose);
+    if (user_frame_id != user_frame_id_ && user_frame_id != -1)
+    {
+        FST_ERROR("manualMove: user frame ID = %d mismatch with activated user frame = %d.", user_frame_id, user_frame_id_);
+        return INVALID_PARAMETER;
+    }
+
+    if (tool_frame_id != tool_frame_id_ && tool_frame_id != -1)
+    {
+        FST_ERROR("manualMove: tool frame ID = %d mismatch with activated tool frame = %d.", tool_frame_id, tool_frame_id_);
+        return INVALID_PARAMETER;
+    }
+
+    IntactPoint point;
+    point.pose = pose;
+    point.tool_frame = group_ptr_->getToolFrame();
+    point.user_frame = group_ptr_->getUserFrame();
+    PoseEuler tcp_in_base, fcp_in_base;
+    group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(point.pose.pose, point.user_frame, tcp_in_base);
+    group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, point.tool_frame, fcp_in_base);
+
+    if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, point.pose.posture, point.joint))
+    {
+        const PoseEuler &pe = point.pose.pose;
+        const PoseEuler &tf = point.tool_frame;
+        const PoseEuler &uf = point.user_frame;
+        FST_ERROR("IK of manual target pose failed.");
+        FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pe.point_.x_, pe.point_.y_, pe.point_.z_, pe.euler_.a_, pe.euler_.b_, pe.euler_.c_);
+        FST_ERROR("Posture: %d, %d, %d, %d", point.pose.posture.arm, point.pose.posture.elbow, point.pose.posture.wrist, point.pose.posture.flip);
+        FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+        FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+        return IK_FAIL;
+    }
+
+    return group_ptr_->manualMoveToPoint(point);
+}
+
+ErrorCode MotionControl::doGotoPointManualMove(const PoseEuler &pose)
+{
+    // To delete
+    return SUCCESS;
 }
 
 ErrorCode MotionControl::manualStop(void)

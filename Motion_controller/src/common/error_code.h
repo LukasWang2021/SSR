@@ -26,6 +26,7 @@ typedef unsigned long long int ErrorCode;
 #define BM_DTC_E10 (unsigned long long int)0x0001000900A1000A   /*Acceleration is over limit*/
 #define BM_DTC_E11 (unsigned long long int)0x0001000900A1000B   /*Time stamp error*/
 #define BM_DTC_E12 (unsigned long long int)0x0001000900A1000C   /*Motor Setpoint Speed over limit*/
+#define BM_DTC_E13 (unsigned long long int)0x0001000900A1000D   /*Core 1 waiting servo down timeout*/
 #define OPEN_CORE_MEM_FAIL (unsigned long long int)0x0011000B007103E9   /*fail to open sharedmem of cores when initialization,interaction between cores is not available.*/
 #define WRITE_CORE_MEM_FAIL (unsigned long long int)0x00000002007103EA   /*fail to write data on sharedmem of cores.*/
 #define READ_CORE_MEM_FAIL (unsigned long long int)0x00000002007103EB   /*fail to read date from sharedmem of cores.*/
@@ -78,7 +79,7 @@ typedef unsigned long long int ErrorCode;
 #define TP_COMM_LOG (unsigned long long int)0x0000000100A70000   /*TpComm log{0}*/
 #define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm load param failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A70002   /*TpComm failed to initialize internal variables*/
-#define TP_COMM_CREATE_ROUTINE_THREAD_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm failed to create routine thread*/
+#define TP_COMM_OPEN_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm open failed*/
 #define TP_COMM_INVALID_REQUEST (unsigned long long int)0x0001000200A70004   /*TpComm receive invalid hash for RPC*/
 #define TP_COMM_ENCODE_FAILED (unsigned long long int)0x0001000200A70005   /*TpComm failed to encode data to send out*/
 #define TP_COMM_DECODE_FAILED (unsigned long long int)0x0001000200A70006   /*TpComm failed to decode data that has been received*/
@@ -86,7 +87,7 @@ typedef unsigned long long int ErrorCode;
 #define TP_COMM_AUTHORITY_CHECK_FAILED (unsigned long long int)0x0001000200A70008   /*TpComm failed to run unauthorized operation*/
 #define TP_COMM_SEND_FAILED (unsigned long long int)0x0001000200A70009   /*TpComm failed to send package*/
 #define TP_COMM_RECEIVE_FAILED (unsigned long long int)0x0001000200A7000A   /*TpComm failed to receive package*/
-#define TP_COMM_RPC_OVERLOAD (unsigned long long int)0x0000000200A7000B   /*TpComm failed to handle too much rpc request*/
+#define TP_COMM_RPC_OVERLOAD (unsigned long long int)0x0000000200A7000B   /*"TpComm failed to handle too much rpc request"*/
 #define CONTROLLER_LOG (unsigned long long int)0x0000000100A80000   /*Controller log{0}*/
 #define CONTROLLER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A80001   /*Controller load param failed in initialization phase*/
 #define CONTROLLER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A80002   /*Controller failed to initialize internal object*/
@@ -162,6 +163,9 @@ typedef unsigned long long int ErrorCode;
 #define TRAJECTORY_FIFO_FULL (unsigned long long int)0x0001000400A90BB9   /*trajectory FIFO is full*/
 #define TRAJECTORY_SEGMENT_ERROR (unsigned long long int)0x0001000400A90BBA   /*trajectory segment is invalid*/
 #define TARGET_COINCIDENCE (unsigned long long int)0x0001000200A90BC2   /*target coincidence with start or another target*/
+#define MC_FAIL_MANUAL_TO_POINT (unsigned long long int)0x0001000400A90FA0   /*fail to manual move to target point*/
+#define MC_FAIL_MANUAL_STEP (unsigned long long int)0x0001000400A90FA1   /*fail to manual move step*/
+#define MC_FAIL_MANUAL_CONTINUOUS (unsigned long long int)0x0001000400A90FA2   /*fail to manual move continuous*/
 
 #define PARAM_LENGTH_ERROR (unsigned long long int)0x00010002007903F5   /*array index beyond range*/
 #define PARAM_INTERNAL_FAULT (unsigned long long int)0x0001000B00790001   /*program internal fault*/
@@ -226,23 +230,22 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_CLIENT_ID_NOT_EXISTED (unsigned long long int)0x0001000200AE0034   /*modbus client be not existed*/																										
 #define MODBUS_CLIENT_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200AE0035   /*modbus client invalid param*/																										
 #define MODBUS_CLIENT_NOT_ALL_CLOSED (unsigned long long int)0x0001000200AE0036   /*modbus client be not all closed */																										
-//#define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
-#define MODBUS_SERVER_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server closed*/
+#define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
 #define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server save param failed*/																										
 #define MODBUS_SERVER_INVALID_ARG (unsigned long long int)0x0001000200AE001C   /*modbus server invalid param*/																										
 #define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server load param failed*/																										
 #define MODBUS_SERVER_OPEN_FAILED (unsigned long long int)0x0001000200AE001E   /*modbus server open failed*/																										
 #define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0001000200AE001F   /*modbus server init failed*/																										
-#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000200AE0022   /*modbus server is running*/
+#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000300AE0022   /*modbus server is running*/
 #define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server init failed*/
 #define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server init failed*/
 
-#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0001000400B20001   /*PathTrajAlg detected the expected target point is invalid*/
-#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0001000400B20002   /*PathTrajAlg detected path cache invalid*/
-#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*PathTrajAlg detected motion type invalid*/
-#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*PathTrajAlg detected smooth in index invalid */
-#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*PathTrajAlg detected ik failed*/
-#define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000400B20006   /*PathTrajAlg failed to pause */
+#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0001000400B20001   /*the expected target point is invalid*/
+#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0001000400B20002   /*invalid path cache*/
+#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*invalid motion type*/
+#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*invalid smooth in index*/
+#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*ik failed*/
+#define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000400B20006   /*pause failed*/
 
 
 //The error codes generated from the external component(safety_board)

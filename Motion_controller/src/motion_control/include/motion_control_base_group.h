@@ -100,8 +100,7 @@ class BaseGroup
     virtual ErrorCode setManualStepOrientation(double step);
     virtual ErrorCode manualMoveStep(const ManualDirection *direction);
     virtual ErrorCode manualMoveContinuous(const ManualDirection *direction);
-    virtual ErrorCode manualMoveToPoint(const basic_alg::Joint &joint);
-    virtual ErrorCode manualMoveToPoint(const basic_alg::PoseEuler &pose);
+    virtual ErrorCode manualMoveToPoint(const IntactPoint &point);
     virtual ErrorCode manualStop(void);
 
     // Constraints handle APIs:
@@ -230,7 +229,6 @@ class BaseGroup
 
     Calibrator  calibrator_;
     FineWaiter  fine_waiter_;
-    ManualFrame manual_frame_;
     ManualTeach manual_teach_;
     PauseStatus pause_status_;
 

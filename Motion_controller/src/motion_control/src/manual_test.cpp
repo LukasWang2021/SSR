@@ -141,7 +141,7 @@ void test2(void)
     Joint target;
     double data[] = {0.1, 0.3, 1.05, -0.5, -1.0, -0.2, 0, 0, 0};
     memcpy(&target, data, sizeof(target));
-    arm.manualMoveToPoint(target);
+    //arm.manualMoveToPoint(target);
     usleep(100 * 1000);
 
     while (arm.getGroupState() != STANDBY)

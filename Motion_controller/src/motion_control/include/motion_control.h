@@ -44,6 +44,7 @@ public:
     ErrorCode doContinuousManualMove(const GroupDirection &direction);
     ErrorCode doGotoPointManualMove(const basic_alg::Joint &joint);
     ErrorCode doGotoPointManualMove(const basic_alg::PoseEuler &pose);
+    ErrorCode doGotoPointManualMove(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id);
     ErrorCode manualStop(void);
 
     // API for auto run

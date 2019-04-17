@@ -224,14 +224,22 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
 
     if(rq_data_ptr->data2.data_count == 6)
     {
-        PoseEuler pos;
-        pos.point_.x_ = rq_data_ptr->data2.data[0];
-        pos.point_.y_ = rq_data_ptr->data2.data[1];
-        pos.point_.z_ = rq_data_ptr->data2.data[2];
-        pos.euler_.a_ = rq_data_ptr->data2.data[3];
-        pos.euler_.b_ = rq_data_ptr->data2.data[4];
-        pos.euler_.c_ = rq_data_ptr->data2.data[5];
-        rs_data_ptr->data.data = motion_control_ptr_->doGotoPointManualMove(pos);
+        PoseAndPosture pose_postrue;
+        pose_postrue.pose.point_.x_ = rq_data_ptr->data2.data[0];
+        pose_postrue.pose.point_.y_ = rq_data_ptr->data2.data[1];
+        pose_postrue.pose.point_.z_ = rq_data_ptr->data2.data[2];
+        pose_postrue.pose.euler_.a_ = rq_data_ptr->data2.data[3];
+        pose_postrue.pose.euler_.b_ = rq_data_ptr->data2.data[4];
+        pose_postrue.pose.euler_.c_ = rq_data_ptr->data2.data[5];
+        
+        pose_postrue.posture.arm = rq_data_ptr->data2.data[6];
+        pose_postrue.posture.elbow = rq_data_ptr->data2.data[7];
+        pose_postrue.posture.wrist = rq_data_ptr->data2.data[8];
+        pose_postrue.posture.flip = rq_data_ptr->data2.data[9];
+
+        int user_frame_id = rq_data_ptr->data2.data[10];
+        int tool_frame_id = rq_data_ptr->data2.data[11];
+        rs_data_ptr->data.data = motion_control_ptr_->doGotoPointManualMove(pose_postrue, user_frame_id, tool_frame_id);
         if(rs_data_ptr->data.data == SUCCESS)
         {
             state_machine_ptr_->transferRobotStateToTeaching();

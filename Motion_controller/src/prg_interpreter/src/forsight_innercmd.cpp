@@ -850,6 +850,8 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.target.type      = COORDINATE_JOINT ;
 		instr.target.target.joint = value.getJointValue();
+		instr.target.user_frame_id = value.getUFIndex();
+		instr.target.tool_frame_id = value.getTFIndex();
 		
 	    FST_INFO("Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
 #ifndef WIN32
@@ -879,6 +881,10 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.joint.j4_ = value.getPrRegDataValue().value.pos[3];
 		instr.target.target.joint.j5_ = value.getPrRegDataValue().value.pos[4];
 		instr.target.target.joint.j6_ = value.getPrRegDataValue().value.pos[5];
+		
+		instr.target.user_frame_id = value.getUFIndex();
+		instr.target.tool_frame_id = value.getTFIndex();
+		
 		instr.target.target.pose.posture.arm   = value.getPrRegDataValue().value.posture[0];
 		instr.target.target.pose.posture.elbow = value.getPrRegDataValue().value.posture[1];
 		instr.target.target.pose.posture.wrist = value.getPrRegDataValue().value.posture[2];
@@ -1182,6 +1188,9 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
 		instr.target.target.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
 		
+		instr.target.user_frame_id                 = value.getUFIndex();
+		instr.target.tool_frame_id                 = value.getTFIndex();
+		
 		instr.target.target.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
 		instr.target.target.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
@@ -1473,6 +1482,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose.euler_.a_    = value.getPrRegDataValue().value.pos[3];
 		instr.target.target.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
 		instr.target.target.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
+		instr.target.user_frame_id                 = value.getUFIndex();
+		instr.target.tool_frame_id                 = value.getTFIndex();
 		
 		instr.target.target.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];

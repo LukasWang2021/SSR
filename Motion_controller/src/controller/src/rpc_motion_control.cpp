@@ -223,7 +223,7 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
         return;
     }
 
-    if(rq_data_ptr->data2.data_count == 6)
+    if(rq_data_ptr->data2.data_count == 12)
     {
         PoseAndPosture pose_postrue;
         pose_postrue.pose.point_.x_ = rq_data_ptr->data2.data[0];

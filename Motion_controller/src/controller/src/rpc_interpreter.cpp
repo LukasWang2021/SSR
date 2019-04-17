@@ -12,6 +12,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_START;
+        recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/start"));
         return;
     }
 
@@ -33,6 +34,7 @@ void ControllerRpc::handleRpc0x000072D8(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_LAUNCH;
+        recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/launch"));
         return;
     }
 
@@ -52,6 +54,7 @@ void ControllerRpc::handleRpc0x0000D974(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_FORWARD;
+        recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/forward"));
         return;
     }
 
@@ -71,6 +74,7 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_BACKWARD;
+        recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/backward"));
         return;
     }
 
@@ -91,6 +95,7 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_JUMP;
+        recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/jump"));
         return;
     }
 
@@ -108,6 +113,7 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getCtrlState() != CTRL_ENGAGED)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_PAUSE;
+        recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
         return;
     }
     
@@ -127,6 +133,7 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
         || state_machine_ptr_->getRobotState() != ROBOT_IDLE)
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_RESUME;
+        recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/resume"));
         return;
     }
     

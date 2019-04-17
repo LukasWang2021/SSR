@@ -457,7 +457,6 @@ void ControllerServer::handleResponseJointToCart(std::vector<ProcessCommRequestR
 void ControllerServer::handleResponseUserOpMode(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
 {
     copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_OP_MODE, task->response_data_ptr, sizeof(int), send_buffer_size);
-    
     if(task->response_data_ptr != NULL)
     {
         delete (int*)task->response_data_ptr;

@@ -545,6 +545,18 @@ ErrorCode InterpreterClient::jointToCart(basic_alg::Joint joint, basic_alg::Pose
     return SUCCESS;
 }
 
+//userOpMode
+ErrorCode InterpreterClient::getUserOpMode(int &mode)
+{
+    if(!sendRequest(CONTROLLER_SERVER_CMD_OP_MODE, NULL, 0)
+       || !recvResponse(sizeof(int))
+       || *((unsigned int*)recv_buffer_ptr_) != CONTROLLER_SERVER_CMD_OP_MODE)
+    {
+        return PROCESS_COMM_OPERATION_FAILED;
+    }
+    memcpy(&mode, recv_buffer_ptr_ + PROCESS_COMM_CMD_ID_SIZE, sizeof(int));
+    return SUCCESS;
+}
 
 
 bool InterpreterClient::sendRequest(unsigned int cmd_id, void* data_ptr, int send_size)

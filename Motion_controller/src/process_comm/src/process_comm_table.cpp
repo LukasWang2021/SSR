@@ -39,6 +39,7 @@ void ControllerServer::initRpcTable()
     rpc_service = {CONTROLLER_SERVER_CMD_GET_CART, &ControllerServer::handleRequestGetCart, &ControllerServer::handleResponseGetCart}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_CART_TO_JOINT, &ControllerServer::handleRequestCartToJoint, &ControllerServer::handleResponseCartToJoint}; rpc_table_.push_back(rpc_service);
     rpc_service = {CONTROLLER_SERVER_CMD_JOINT_TO_CART, &ControllerServer::handleRequestJointToCart, &ControllerServer::handleResponseJointToCart}; rpc_table_.push_back(rpc_service);
+    rpc_service = {CONTROLLER_SERVER_CMD_OP_MODE, &ControllerServer::handleRequestUserOpMode, &ControllerServer::handleResponseUserOpMode}; rpc_table_.push_back(rpc_service);
 
 }
 

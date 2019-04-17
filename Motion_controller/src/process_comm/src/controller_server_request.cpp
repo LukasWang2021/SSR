@@ -639,3 +639,15 @@ void ControllerServer::handleRequestJointToCart()
     copyRecvBufferToRequestData(request_data_ptr, sizeof(Joint));
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_JOINT_TO_CART, (void*)request_data_ptr, (void*)response_data_ptr);
 }
+
+//UserOpMode
+void ControllerServer::handleRequestUserOpMode()
+{
+    int* response_data_ptr = new int;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        return;
+    }
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_OP_MODE, NULL, (void*)response_data_ptr);
+}

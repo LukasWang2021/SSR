@@ -14,3 +14,9 @@ void ControllerIpc::handleIpcSetInterpreterServerStatus(void* request_data_ptr, 
     *rs_data_ptr = controller_server_ptr_->setInterpreterServerStatus(*rq_data_ptr);    
 }
 
+void ControllerIpc::handleIpcUserOpMode(void* request_data_ptr, void* response_data_ptr)
+{
+    int* rs_data_ptr = static_cast<int*>(response_data_ptr);
+    *rs_data_ptr = state_machine_ptr_->getUserOpMode(); 
+}
+

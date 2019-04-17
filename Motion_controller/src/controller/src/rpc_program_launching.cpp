@@ -43,6 +43,5 @@ void ControllerRpc::handleRpc0x00016B27(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data = program_launching_->updateFileMacroConfig();
 
-    if (rs_data_ptr->data.data != SUCCESS)
-        recordLog(PROGRAM_LAUNCHING_LOG, rs_data_ptr->data.data, std::string("/rpc/program_launching/syncFileMacroConfig"));
+    recordLog(PROGRAM_LAUNCHING_LOG, rs_data_ptr->data.data, std::string("/rpc/program_launching/syncFileMacroConfig"));
 }

@@ -135,16 +135,23 @@ ControllerRpc::HandleRpcFuncPtr ControllerRpc::getRpcHandlerByHash(unsigned int 
 
 void ControllerRpc::recordLog(ErrorCode log_code, ErrorCode error_code, std::string rpc_path)
 {
+    std::stringstream stream;
     std::string log_str("run ");
     log_str += rpc_path;
     if(error_code == SUCCESS)
     {
         log_str += " success";
+        stream<<"Log_Code: 0x"<<std::hex<<log_code<<" : "<<log_str;
+        FST_INFO(stream.str().c_str());
+
         ServerAlarmApi::GetInstance()->sendOneAlarm(log_code, log_str);
     }
     else
     {
         log_str += " failed";
+        stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
+        FST_ERROR(stream.str().c_str());
+
         ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
     }    
 }

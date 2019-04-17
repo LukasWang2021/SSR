@@ -22,8 +22,9 @@ void ControllerRpc::handleRpc0x0000A545(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data.size = 0;
     }
-
-    FST_INFO("rpc-readFile: %s, ret = 0x%llx\n", &rq_data_ptr->data.data, rs_data_ptr->error_code.data);
+    
+    //if (rs_data_ptr->error_code.data != SUCCESS)
+        FST_INFO("rpc-readFile: %s, ret = 0x%llx\n", &rq_data_ptr->data.data, rs_data_ptr->error_code.data);
 }
 
 //"/rpc/file_manager/writeFile"
@@ -42,6 +43,7 @@ void ControllerRpc::handleRpc0x00010D95(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = FILE_MANAGER_WRITE_FILE_FAILED;
     }
    
-    FST_INFO("rpc-writeFile: %s, ret = 0x%llx\n", &rq_data_ptr->data1.data, rs_data_ptr->data.data);
+    //if (rs_data_ptr->data.data != SUCCESS)
+        FST_INFO("rpc-writeFile: %s, ret = 0x%llx\n", &rq_data_ptr->data1.data, rs_data_ptr->data.data);
 }
 

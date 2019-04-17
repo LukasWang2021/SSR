@@ -22,7 +22,8 @@ void ControllerRpc::handleRpc0x0000BFE4(void* request_data_ptr, void* response_d
     }
     
     if (rs_data_ptr->error_code.data != SUCCESS)
-        recordLog(IO_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/io_manager/getDIByBit"));
+        FST_INFO("/rpc/io_manager/getDIByBit, dev_type=%d, address=%d, port_type=%d, port_offset=%d, ret = 0x%llx\n", 
+                 id.info.dev_type, id.info.address, id.info.port_type, id.info.port, rs_data_ptr->error_code.data);
 }
 
 //"/rpc/io_manager/setDIByBit"	
@@ -41,7 +42,8 @@ void ControllerRpc::handleRpc0x00018684(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = io_manager_ptr_->setBitValue(id, value);
 
     if (rs_data_ptr->data.data != SUCCESS)
-        recordLog(IO_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/io_manager/setDIByBit"));
+        FST_INFO("/rpc/io_manager/setDIByBit, dev_type=%d, address=%d, port_type=%d, port_offset=%d, ret = 0x%llx\n", 
+                 id.info.dev_type, id.info.address, id.info.port_type, id.info.port, rs_data_ptr->data.data);
 }
 
 //"/rpc/io_manager/getDOByBit"	
@@ -62,10 +64,10 @@ void ControllerRpc::handleRpc0x0000B4C4(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = value;
     }
-    
-    if (rs_data_ptr->error_code.data != SUCCESS)
-        recordLog(IO_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/io_manager/getDOyBit"));
 
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        FST_INFO("/rpc/io_manager/getDOyBit, dev_type=%d, address=%d, port_type=%d, port_offset=%d, ret = 0x%llx\n", 
+                 id.info.dev_type, id.info.address, id.info.port_type, id.info.port, rs_data_ptr->error_code.data);
 }
 //"/rpc/io_manager/setDOByBit"	
 void ControllerRpc::handleRpc0x00017B64(void* request_data_ptr, void* response_data_ptr)
@@ -83,7 +85,7 @@ void ControllerRpc::handleRpc0x00017B64(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = io_manager_ptr_->setBitValue(id, value);
 
     if (rs_data_ptr->data.data != SUCCESS)
-        recordLog(IO_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/io_manager/setDOByBit"));
-
+        FST_INFO("/rpc/io_manager/setDOByBit, dev_type=%d, address=%d, port_type=%d, port_offset=%d, ret = 0x%llx\n", 
+                 id.info.dev_type, id.info.address, id.info.port_type, id.info.port, rs_data_ptr->data.data);
 }
 

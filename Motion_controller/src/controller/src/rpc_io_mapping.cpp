@@ -272,7 +272,7 @@ void ControllerRpc::handleRpc0x0000BA73(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data =io_mapping_ptr_->updateSimFile();
 
-    if (rs_data_ptr->data.data != SUCCESS)
+    //if (rs_data_ptr->data.data != SUCCESS)
         recordLog(IO_MAPPING_LOG, rs_data_ptr->data.data, std::string("/rpc/io_mapping/syncFileIoMapping"));
 }
 
@@ -284,6 +284,6 @@ void ControllerRpc::handleRpc0x0000C2A7(void* request_data_ptr, void* response_d
 
     rs_data_ptr->data.data =io_mapping_ptr_->updateMappingFile();
 
-    if (rs_data_ptr->data.data != SUCCESS)
+    //if (rs_data_ptr->data.data != SUCCESS)
         recordLog(IO_MAPPING_LOG, rs_data_ptr->data.data, std::string("/rpc/io_mapping/syncFileIoMapping"));
 }

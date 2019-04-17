@@ -46,7 +46,7 @@ void ControllerRpc::handleRpc0x0000F0B4(void* request_data_ptr, void* response_d
     
     rs_data_ptr->error_code.data = SUCCESS;
 
-    FST_INFO("/rpc/param_manager/getParamInfoList runs");
+    FST_INFO("/rpc/param_manager/getParamInfoList runs, ret = %llx\n", rs_data_ptr->error_code.data);
 }
 //"/rpc/param_manager/setParamInfo"	
 void ControllerRpc::handleRpc0x0001393F(void* request_data_ptr, void* response_data_ptr)
@@ -66,6 +66,6 @@ void ControllerRpc::handleRpc0x0001393F(void* request_data_ptr, void* response_d
     printf("rpc set:rq_data=%d name=%s,type=%d, data=%02x-%02x-%02x-%02x |%02x-%02x-%02x-%02x \n", rq_data_ptr->data1.data, info.name, info.type, 
          info.data[7],info.data[6],info.data[5],info.data[4], info.data[3],info.data[2],info.data[1],info.data[0]);
     */
-    FST_INFO("/rpc/param_manager/setParamInfo runs");
+    FST_INFO("/rpc/param_manager/setParamInfo runs, ret = %llx\n", rs_data_ptr->data.data);
 }
 

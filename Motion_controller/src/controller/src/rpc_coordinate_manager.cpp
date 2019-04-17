@@ -119,6 +119,8 @@ void ControllerRpc::handleRpc0x0001838F(void* request_data_ptr, void* response_d
     }
     rs_data_ptr->data.user_coord_summary_count = info_list.size();    
     rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"));
+    
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getAllValidUserCoordSummaryInfo"));
 }
 

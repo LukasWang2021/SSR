@@ -4,6 +4,7 @@
 #include "motion_control_datatype.h"
 #include "error_code.h"
 #include <cstring>
+#include <math.h>
 
 using namespace fst_ctrl;
 using namespace fst_mc;
@@ -232,13 +233,13 @@ void ControllerRpc::handleRpc0x00010C05(void* request_data_ptr, void* response_d
         pose_postrue.pose.euler_.b_ = rq_data_ptr->data2.data[4];
         pose_postrue.pose.euler_.c_ = rq_data_ptr->data2.data[5];
         
-        pose_postrue.posture.arm = rq_data_ptr->data2.data[6];
-        pose_postrue.posture.elbow = rq_data_ptr->data2.data[7];
-        pose_postrue.posture.wrist = rq_data_ptr->data2.data[8];
-        pose_postrue.posture.flip = rq_data_ptr->data2.data[9];
+        pose_postrue.posture.arm = round(rq_data_ptr->data2.data[6]);
+        pose_postrue.posture.elbow = round(rq_data_ptr->data2.data[7]);
+        pose_postrue.posture.wrist = round(rq_data_ptr->data2.data[8]);
+        pose_postrue.posture.flip = round(rq_data_ptr->data2.data[9]);
 
-        int user_frame_id = rq_data_ptr->data2.data[10];
-        int tool_frame_id = rq_data_ptr->data2.data[11];
+        int user_frame_id = round(rq_data_ptr->data2.data[10]);
+        int tool_frame_id = round(rq_data_ptr->data2.data[11]);
         rs_data_ptr->data.data = motion_control_ptr_->doGotoPointManualMove(pose_postrue, user_frame_id, tool_frame_id);
         if(rs_data_ptr->data.data == SUCCESS)
         {
@@ -1066,15 +1067,7 @@ void ControllerRpc::handleRpc0x000124E4(void* request_data_ptr, void* response_d
                 strncpy(rs_data_ptr->data.positive_list[i].unit, "mm", 31); rs_data_ptr->data.positive_list[i].unit[31] = 0;
             }
         }
-        //strncpy(rs_data_ptr->data.positive_list[0].unit, "rad", 31); rs_data_ptr->data.positive_list[0].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[1].unit, "rad", 31); rs_data_ptr->data.positive_list[1].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[2].unit, "rad", 31); rs_data_ptr->data.positive_list[2].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[3].unit, "rad", 31); rs_data_ptr->data.positive_list[3].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[4].unit, "rad", 31); rs_data_ptr->data.positive_list[4].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[5].unit, "rad", 31); rs_data_ptr->data.positive_list[5].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[6].unit, "rad", 31); rs_data_ptr->data.positive_list[6].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[7].unit, "rad", 31); rs_data_ptr->data.positive_list[7].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[8].unit, "rad", 31); rs_data_ptr->data.positive_list[8].unit[31] = 0;
+        
         rs_data_ptr->data.negative_list_count = 9;
         rs_data_ptr->data.negative_list[0].data = constraint.lower.j1_;
         rs_data_ptr->data.negative_list[1].data = constraint.lower.j2_;
@@ -1096,15 +1089,7 @@ void ControllerRpc::handleRpc0x000124E4(void* request_data_ptr, void* response_d
                 strncpy(rs_data_ptr->data.negative_list[i].unit, "mm", 31); rs_data_ptr->data.negative_list[i].unit[31] = 0;
             }
         }
-        //strncpy(rs_data_ptr->data.negative_list[0].unit, "rad", 31); rs_data_ptr->data.negative_list[0].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[1].unit, "rad", 31); rs_data_ptr->data.negative_list[1].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[2].unit, "rad", 31); rs_data_ptr->data.negative_list[2].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[3].unit, "rad", 31); rs_data_ptr->data.negative_list[3].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[4].unit, "rad", 31); rs_data_ptr->data.negative_list[4].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[5].unit, "rad", 31); rs_data_ptr->data.negative_list[5].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[6].unit, "rad", 31); rs_data_ptr->data.negative_list[6].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[7].unit, "rad", 31); rs_data_ptr->data.negative_list[7].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[8].unit, "rad", 31); rs_data_ptr->data.negative_list[8].unit[31] = 0;
+        
     }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getManuSoftLimitWithUnit"));
 }
@@ -1143,15 +1128,7 @@ void ControllerRpc::handleRpc0x000092B4(void* request_data_ptr, void* response_d
                 strncpy(rs_data_ptr->data.positive_list[i].unit, "mm", 31); rs_data_ptr->data.positive_list[i].unit[31] = 0;
             }
         }
-        //strncpy(rs_data_ptr->data.positive_list[0].unit, "rad", 31); rs_data_ptr->data.positive_list[0].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[1].unit, "rad", 31); rs_data_ptr->data.positive_list[1].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[2].unit, "rad", 31); rs_data_ptr->data.positive_list[2].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[3].unit, "rad", 31); rs_data_ptr->data.positive_list[3].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[4].unit, "rad", 31); rs_data_ptr->data.positive_list[4].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[5].unit, "rad", 31); rs_data_ptr->data.positive_list[5].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[6].unit, "rad", 31); rs_data_ptr->data.positive_list[6].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[7].unit, "rad", 31); rs_data_ptr->data.positive_list[7].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.positive_list[8].unit, "rad", 31); rs_data_ptr->data.positive_list[8].unit[31] = 0;
+        
         rs_data_ptr->data.negative_list_count = 9;
         rs_data_ptr->data.negative_list[0].data = constraint.lower.j1_;
         rs_data_ptr->data.negative_list[1].data = constraint.lower.j2_;
@@ -1173,15 +1150,7 @@ void ControllerRpc::handleRpc0x000092B4(void* request_data_ptr, void* response_d
                 strncpy(rs_data_ptr->data.negative_list[i].unit, "mm", 31); rs_data_ptr->data.negative_list[i].unit[31] = 0;
             }
         }
-        //strncpy(rs_data_ptr->data.negative_list[0].unit, "rad", 31); rs_data_ptr->data.negative_list[0].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[1].unit, "rad", 31); rs_data_ptr->data.negative_list[1].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[2].unit, "rad", 31); rs_data_ptr->data.negative_list[2].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[3].unit, "rad", 31); rs_data_ptr->data.negative_list[3].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[4].unit, "rad", 31); rs_data_ptr->data.negative_list[4].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[5].unit, "rad", 31); rs_data_ptr->data.negative_list[5].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[6].unit, "rad", 31); rs_data_ptr->data.negative_list[6].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[7].unit, "rad", 31); rs_data_ptr->data.negative_list[7].unit[31] = 0;
-        //strncpy(rs_data_ptr->data.negative_list[8].unit, "rad", 31); rs_data_ptr->data.negative_list[8].unit[31] = 0;
+        
     }
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getHardLimitWithUnit"));
 }
@@ -1239,15 +1208,7 @@ void ControllerRpc::handleRpc0x00018470(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     double steps[NUM_OF_JOINT] = {0};
-    /*steps[0] = rq_data_ptr->data2.data[0];
-    steps[1] = rq_data_ptr->data2.data[1];
-    steps[2] = rq_data_ptr->data2.data[2];
-    steps[3] = rq_data_ptr->data2.data[3];
-    steps[4] = rq_data_ptr->data2.data[4];
-    steps[5] = rq_data_ptr->data2.data[5];
-    steps[6] = rq_data_ptr->data2.data[6];
-    steps[7] = rq_data_ptr->data2.data[7];
-    steps[8] = rq_data_ptr->data2.data[8];*/
+    
     int num = (rq_data_ptr->data2.data_count < NUM_OF_JOINT ? rq_data_ptr->data2.data_count : NUM_OF_JOINT);
     for (int i = 0;i < num; ++i)
     {

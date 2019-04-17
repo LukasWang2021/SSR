@@ -527,8 +527,10 @@ checkHomePoseResult check_home_pose(struct thread_control_block* objThreadCntrol
 	Output: 		NULL
 	Return: 		NULL
 *************************************************/ 
+#define INTERPRETER_USER_OP_MODE_AUTO          1 
 int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode)
 {
+  int iMode = INTERPRETER_USER_OP_MODE_AUTO ;
   bool ret = true;
   int isExecuteEmptyLine ;
   bool bRet = 0;
@@ -575,32 +577,42 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 	  	// exit(1);
 		return -1;
 	  }
-	  // Call in the first time to load major P[*]
-	  forgesight_registers_manager_get_joint(objThreadCntrolBlock->currentJoint);
+	  FST_INFO("get_user_opmode = %d before ", iMode);
+	  bRet = forgesight_registers_manager_get_user_opmode(iMode);
+	  FST_INFO("get_user_opmode = %d after ", iMode);
+	  if(iMode == INTERPRETER_USER_OP_MODE_AUTO)
+	  {
+		  // Call in the first time to load major P[*]
+		  forgesight_registers_manager_get_joint(objThreadCntrolBlock->currentJoint);
 #ifndef WIN32
-		FST_INFO("call_interpreter Get JOINT: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
-			objThreadCntrolBlock->currentJoint.j1_, objThreadCntrolBlock->currentJoint.j2_, objThreadCntrolBlock->currentJoint.j3_, 
-			objThreadCntrolBlock->currentJoint.j4_, objThreadCntrolBlock->currentJoint.j5_, objThreadCntrolBlock->currentJoint.j6_,  
-			objThreadCntrolBlock->currentJoint.j7_, objThreadCntrolBlock->currentJoint.j8_, objThreadCntrolBlock->currentJoint.j9_);
+			FST_INFO("call_interpreter Get JOINT: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+				objThreadCntrolBlock->currentJoint.j1_, objThreadCntrolBlock->currentJoint.j2_, objThreadCntrolBlock->currentJoint.j3_, 
+				objThreadCntrolBlock->currentJoint.j4_, objThreadCntrolBlock->currentJoint.j5_, objThreadCntrolBlock->currentJoint.j6_,  
+				objThreadCntrolBlock->currentJoint.j7_, objThreadCntrolBlock->currentJoint.j8_, objThreadCntrolBlock->currentJoint.j9_);
 #else
-		FST_INFO("call_interpreter Get JOINT: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
-			objThreadCntrolBlock->currentJoint.j1, objThreadCntrolBlock->currentJoint.j2, objThreadCntrolBlock->currentJoint.j3, 
-			objThreadCntrolBlock->currentJoint.j4, objThreadCntrolBlock->currentJoint.j5, objThreadCntrolBlock->currentJoint.j6,  
-			objThreadCntrolBlock->currentJoint.j7, objThreadCntrolBlock->currentJoint.j8, objThreadCntrolBlock->currentJoint.j9);
+			FST_INFO("call_interpreter Get JOINT: (%f, %f, %f, %f, %f, %f, %f, %f, %f) \n", 
+				objThreadCntrolBlock->currentJoint.j1, objThreadCntrolBlock->currentJoint.j2, objThreadCntrolBlock->currentJoint.j3, 
+				objThreadCntrolBlock->currentJoint.j4, objThreadCntrolBlock->currentJoint.j5, objThreadCntrolBlock->currentJoint.j6,  
+				objThreadCntrolBlock->currentJoint.j7, objThreadCntrolBlock->currentJoint.j8, objThreadCntrolBlock->currentJoint.j9);
 #endif
-	  memset(objThreadCntrolBlock->home_pose_exp, 0x00, LAB_LEN);
-  	  append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
-	  checkHomePoseResult checkRet = check_home_pose(objThreadCntrolBlock) ;
-	  if(checkRet == HOME_POSE_NOT_WITHIN_CUR_POS) 
-	  {
-		  serror(objThreadCntrolBlock, 27); /* Overrun home pose */
-		  return -1;
+		  memset(objThreadCntrolBlock->home_pose_exp, 0x00, LAB_LEN);
+	  	  append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
+		  checkHomePoseResult checkRet = check_home_pose(objThreadCntrolBlock) ;
+		  if(checkRet == HOME_POSE_NOT_WITHIN_CUR_POS) 
+		  {
+			  serror(objThreadCntrolBlock, 27); /* Overrun home pose */
+			  return -1;
+		  }
+		  else if(checkRet == HOME_POSE_NOT_EXIST) 
+		  {
+		  //  setWarning(INFO_INTERPRETER_HOME_POSE_NOT_EXIST);
+			  serror(objThreadCntrolBlock, 28); /* Home pose not exist */
+			  return -1;
+		  }
 	  }
-	  else if(checkRet == HOME_POSE_NOT_EXIST) 
+	  else
 	  {
-	  //  setWarning(INFO_INTERPRETER_HOME_POSE_NOT_EXIST);
-		  serror(objThreadCntrolBlock, 28); /* Home pose not exist */
-		  return -1;
+	      FST_INFO("get_user_opmode = %d and skip check_home_pose", iMode);
 	  }
 	  
 	  objThreadCntrolBlock->prog = objThreadCntrolBlock->p_buf;

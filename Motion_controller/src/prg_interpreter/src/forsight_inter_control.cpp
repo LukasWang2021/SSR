@@ -985,7 +985,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
   			FST_INFO("reset ProgramName And LineNum.");
 			// Keep LineNum and Line xPath
 			// resetProgramNameAndLineNum(objThdCtrlBlockPtr);
-			// 
+			// Clear here will get a bug .
 			// setProgramName(objThdCtrlBlockPtr, (char *)""); 
             break;
         case fst_base::INTERPRETER_SERVER_CMD_CODE_START:

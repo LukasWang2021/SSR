@@ -22,7 +22,8 @@ void ControllerRpc::handleRpc0x0000C1E0(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.device_info_count = device_list.size();
 
-    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getDeviceList"));
+    //if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getDeviceList"));
 }
 
 // "/rpc/device_manager/get_FRP8A_IoDeviceInfo"
@@ -61,8 +62,9 @@ void ControllerRpc::handleRpc0x00006BAF(void* request_data_ptr, void* response_d
         }
         rs_data_ptr->error_code.data = IO_INVALID_PARAM_ID;
     }
-
-    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/get_FRP8A_IoDeviceInfo"));
+    
+    //if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/get_FRP8A_IoDeviceInfo"));
 }
 
 // "/rpc/device_manager/getModbusIoDeviceInfo"
@@ -103,7 +105,8 @@ void ControllerRpc::handleRpc0x0001421F(void* request_data_ptr, void* response_d
         rs_data_ptr->error_code.data = IO_INVALID_PARAM_ID;
     }
 
-    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/get_FRP8A_IoDeviceInfo"));
+    //if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/get_FRP8A_IoDeviceInfo"));
 }
 
 //"/rpc/device_manager/getIoDeviceInfoList"	
@@ -137,7 +140,9 @@ void ControllerRpc::handleRpc0x000024A4(void* request_data_ptr, void* response_d
     }
 
     rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getIoDeviceInfoList"));
+
+    //if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getIoDeviceInfoList"));
 }
 
 //"/rpc/device_manager/getDeviceVersionList"
@@ -157,6 +162,8 @@ void ControllerRpc::handleRpc0x0000F574(void* request_data_ptr, void* response_d
     }
 
     rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getDeviceVersionList"));
+
+    //if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(DEVICE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/device_manager/getDeviceVersionList"));
 }
 

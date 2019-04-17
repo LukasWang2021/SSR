@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <string>
+#include <sstream>
 #include "basic_alg_datatype.h"
 #include "basic_constants.h"
 
@@ -222,7 +223,7 @@ ErrorCode ControllerSm::callEstop()
         controller_client_ptr_->abort();
         motion_control_ptr_->stopGroup();
         motion_control_ptr_->abortMove();
-        FST_INFO("---callEstop: ctrl_state-->CTRL_ANY_TO_ESTOP");
+        recordLog("Controller transfer to ANY_TO_ESTOP by rpc-callEstop");
         ctrl_state_ = CTRL_ANY_TO_ESTOP;
         return SUCCESS;
     } 
@@ -252,7 +253,7 @@ ErrorCode ControllerSm::callReset()
             controller_client_ptr_->abort();
             motion_control_ptr_->stopGroup();
             motion_control_ptr_->abortMove();
-            FST_ERROR("controller check offset failed");
+            recordLog(error_code, "Controller transfer to ANY_TO_ESTOP for offset failure when reset");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
             return error_code;
         }
@@ -263,7 +264,7 @@ ErrorCode ControllerSm::callReset()
             return CONTROLLER_SAFETY_NOT_READY;
         }
 
-        //FST_INFO("---callReset: ctrl_state-->CTRL_ESTOP_TO_ENGAGED");
+        recordLog("Controller transfer to ESTOP_TO_ENGAGED by rpc-callReset");
         ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;  
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.
         motion_control_ptr_->resetGroup();  
@@ -290,6 +291,7 @@ void ControllerSm::transferRobotStateToTeaching()
 {
     if(robot_state_ == ROBOT_IDLE)
     {
+        recordLog("Robot transfer from IDLE to IDLE_TO_TEACHING");
         robot_state_ = ROBOT_IDLE_TO_TEACHING;
     }
 }
@@ -298,6 +300,7 @@ void ControllerSm::transferRobotStateToRunning()
 {
     if(robot_state_ == ROBOT_IDLE)
     {
+        recordLog("Robot transfer from IDLE to IDLE_TO_RUNNING");
         robot_state_ = ROBOT_IDLE_TO_RUNNING;
     }
 }
@@ -482,7 +485,7 @@ void ControllerSm::processSafety()
         {
             if (callReset() == SUCCESS)
             {
-                ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
+                ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);//info tp to clear its errors.
             }
             ErrorMonitor::instance()->add(SAFETY_BOARD_CABINET_RESET);
         }
@@ -607,7 +610,7 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ != SERVO_RUNNING)
             {
                 motion_control_ptr_->saveJoint();
-                recordLog("Controller transfer to ESTOP");
+                recordLog("Controller transfer from ANY_TO_ESTOP to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
             }
             break;
@@ -616,12 +619,12 @@ void ControllerSm::transferCtrlState()
                 && servo_state_ == SERVO_IDLE
                 && !is_error_exist_)
             {
-                recordLog("Controller transfer to ENGAGED");
+                recordLog("Controller transfer from ESTOP_TO_ENGAGED to ENGAGED");
                 ctrl_state_ = CTRL_ENGAGED;
             }
             else if((--ctrl_reset_count_) < 0)
             {
-                recordLog("Controller transfer to ESTOP");
+                recordLog("Controller transfer from ESTOP_TO_ENGAGED to ESTOP for reset timeout");
                 ctrl_state_ = CTRL_ESTOP;
             }
             break;
@@ -629,7 +632,7 @@ void ControllerSm::transferCtrlState()
             if(robot_state_ == ROBOT_IDLE)
             {
                 motion_control_ptr_->saveJoint();
-                recordLog("Controller transfer to TERMINATED");
+                recordLog("Controller transfer from ESTOP_TO_TERMINATE to TERMINATED");
                 ctrl_state_ = CTRL_TERMINATED;
                 shutdown();
             }
@@ -640,6 +643,7 @@ void ControllerSm::transferCtrlState()
                 controller_client_ptr_->abort();
                 motion_control_ptr_->stopGroup();
                 motion_control_ptr_->abortMove();
+                recordLog("Controller transfer from ENGAGED to CTRL_ANY_TO_ESTOP");
                 ctrl_state_ = CTRL_ANY_TO_ESTOP;
             }
             break;
@@ -658,22 +662,22 @@ void ControllerSm::transferRobotState()
         case ROBOT_IDLE_TO_RUNNING:
             if(is_error_exist_)
             {
-                recordLog("Robot transfer to RUNNING_TO_IDLE");
+                recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING_TO_IDLE for error");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             else if(interpreter_state_ == INTERPRETER_EXECUTE)
             {
-                recordLog("Robot transfer to RUNNING");
+                recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING");
                 robot_state_ = ROBOT_RUNNING;
             }
             else if((--robot_state_timeout_count_) < 0)
             {
-                recordLog("Robot transfer to RUNNING_TO_IDLE");
+                recordLog("Robot transfer from IDLE_TO_RUNNING to RUNNING_TO_IDLE for timeout");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             break;
         case ROBOT_IDLE_TO_TEACHING:
-            recordLog("Robot transfer to TEACHING");
+            recordLog("Robot transfer from IDLE_TO_TEACHING to TEACHING");
             robot_state_ = ROBOT_TEACHING;
             break;
         case ROBOT_RUNNING_TO_IDLE:
@@ -681,7 +685,7 @@ void ControllerSm::transferRobotState()
                 && servo_state_ != SERVO_RUNNING)
             {
                 robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
-                recordLog("Robot transfer to IDLE");
+                recordLog("Robot transfer from RUNNING_TO_IDLE to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
             break;
@@ -691,13 +695,14 @@ void ControllerSm::transferRobotState()
                 is_continuous_manual_move_timeout_ = false;
                 memset(&last_continuous_manual_move_rpc_time_, 0, sizeof(struct timeval));
                 robot_state_timeout_count_ = param_ptr_->robot_state_timeout_ / param_ptr_->routine_cycle_time_;
-                recordLog("Robot transfer to IDLE");
+                recordLog("Robot transfer from TEACHING_TO_IDLE to IDLE");
                 robot_state_ = ROBOT_IDLE;
             }
             break;
         case ROBOT_RUNNING:
             if(interpreter_state_ != INTERPRETER_EXECUTE)
             {
+                recordLog("Robot transfer from RUNNING to RUNNING_TO_IDLE");
                 robot_state_ = ROBOT_RUNNING_TO_IDLE;
             }
             break;
@@ -708,7 +713,8 @@ void ControllerSm::transferRobotState()
                 if (group_state == fst_mc::STANDBY || group_state == fst_mc::DISABLE)
                 //if(virtual_core1_ptr_->getArmState() == 1)
                 {
-                     robot_state_ = ROBOT_TEACHING_TO_IDLE;
+                    recordLog("Robot transfer from TEACHING to TEACHING_TO_IDLE");
+                    robot_state_ = ROBOT_TEACHING_TO_IDLE;
                 }
                 break;
             }
@@ -832,16 +838,29 @@ void ControllerSm::clearInstruction()
 
 void ControllerSm::recordLog(std::string log_str)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<CONTROLLER_LOG<<" : "<<log_str;
+    FST_INFO(stream.str().c_str());
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);
 }
 
 void ControllerSm::recordLog(ErrorCode error_code)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<error_code;
+    if (error_code != INFO_RESET_SUCCESS)
+        FST_ERROR(stream.str().c_str());
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
 }
 
 void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
+    FST_ERROR(stream.str().c_str());
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }
 

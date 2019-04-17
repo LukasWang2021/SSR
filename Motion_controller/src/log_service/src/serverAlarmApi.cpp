@@ -40,7 +40,7 @@ int ServerAlarmApi::sendOneAlarm(unsigned long long log_code, string param)
 {
     if(!enabled)
     {
-        std::cout<<"LogService: 0x"<<std::hex<<log_code<<": "<<param<<std::endl;
+        //std::cout<<"LogService: 0x"<<std::hex<<log_code<<": "<<param<<std::endl;
         return 0;
     }
     pthread_mutex_lock(&m_lock);
@@ -57,7 +57,7 @@ int ServerAlarmApi::sendOneAlarm(unsigned long long log_code)
 {
     if(!enabled)
     {
-        std::cout<<"LogService: 0x"<<std::hex<<log_code<<std::endl;
+        //std::cout<<"LogService: 0x"<<std::hex<<log_code<<std::endl;
         return 0;
     }
     sprintf(m_buf, "%016llX", log_code);

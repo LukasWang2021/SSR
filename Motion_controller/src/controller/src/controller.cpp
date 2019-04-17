@@ -80,7 +80,6 @@ ErrorCode Controller::init()
     
     if(!param_ptr_->loadParam())
     {
-        FST_ERROR("Failed to load controller component parameters");
         recordLog(CONTROLLER_LOAD_PARAM_FAILED, "Failed to load controller component parameters");
         return CONTROLLER_LOAD_PARAM_FAILED;
     } 
@@ -294,11 +293,19 @@ void Controller::runHeartbeatThreadFunc()
 
 void Controller::recordLog(std::string log_str)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<CONTROLLER_LOG<<" : "<<log_str<<std::endl;
+    FST_INFO(stream.str().c_str());
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);
 }
 
 void Controller::recordLog(ErrorCode error_code, std::string log_str)
 {
+    std::stringstream stream;
+    stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
+    FST_ERROR(stream.str().c_str());
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }
 
@@ -308,6 +315,10 @@ void Controller::recordLog(ErrorCode major_error_code, ErrorCode minor_error_cod
     ss << log_str <<": 0x";
     ss << std::hex << minor_error_code;
     std::string str = ss.str();
+
+    ss<<"Log_Code: 0x"<<std::hex<<major_error_code<<" : "<<str;
+    FST_ERROR(ss.str().c_str());
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(major_error_code, str);
 }
 

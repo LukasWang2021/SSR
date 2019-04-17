@@ -89,8 +89,9 @@ void ControllerRpc::handleRpc0x00002ED5(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = state_machine_ptr_->setUserOpMode((fst_hal::UserOpMode)rq_data_ptr->data.data);
-
-    recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setUserOpMode"));
+    
+    if (rs_data_ptr->data.data != SUCCESS)
+        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setUserOpMode"));
 }
 
 // "/rpc/controller/shutdown"

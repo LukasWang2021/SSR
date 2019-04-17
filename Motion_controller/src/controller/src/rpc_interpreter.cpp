@@ -19,6 +19,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = SUCCESS;
 
     state_machine_ptr_->transferRobotStateToRunning();
+    
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/start"));
 }
 
@@ -38,7 +39,6 @@ void ControllerRpc::handleRpc0x000072D8(void* request_data_ptr, void* response_d
     controller_client_ptr_->launch(std::string(rq_data_ptr->data.data)); 
     rs_data_ptr->data.data = SUCCESS;
 
-    // state_machine_ptr_->transferRobotStateToRunning();
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/launch"));
 }
 

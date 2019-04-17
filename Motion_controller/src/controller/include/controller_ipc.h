@@ -82,6 +82,7 @@ private:
     void handleIpcGetCart(void* request_data_ptr, void* response_data_ptr);
     void handleIpcCartToJoint(void* request_data_ptr, void* response_data_ptr);
     void handleIpcJointToCart(void* request_data_ptr, void* response_data_ptr);
+    void handleIpcUserOpMode(void* request_data_ptr, void* response_data_ptr);
 
 };
 

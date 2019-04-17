@@ -54,6 +54,7 @@ public:
     ErrorCode getCart(int id, basic_alg::PoseEuler &pos);
     ErrorCode cartToJoint(basic_alg::PoseEuler pos, basic_alg::Joint &joint);
     ErrorCode jointToCart(basic_alg::Joint joint, basic_alg::PoseEuler &pos);
+    ErrorCode getUserOpMode(int &mode);
     
 private:
     fst_log::Logger* log_ptr_;

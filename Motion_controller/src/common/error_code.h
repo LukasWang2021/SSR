@@ -77,17 +77,17 @@ typedef unsigned long long int ErrorCode;
 #define PROCESS_COMM_HEARTBEAT_CLIENT_INIT_FAILED (unsigned long long int)0x0011000B00A60009   /*HeartbeatClient init failed*/
 #define PROCESS_COMM_OPERATION_FAILED (unsigned long long int)0x0000000200A6000A   /*ProcessComm operation failed*/
 #define TP_COMM_LOG (unsigned long long int)0x0000000100A70000   /*TpComm log{0}*/
-#define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm load param failed in initialization phase*/
+#define TP_COMM_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A70001   /*TpComm loading param is failed in initialization phase*/
 #define TP_COMM_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A70002   /*TpComm failed to initialize internal variables*/
-#define TP_COMM_OPEN_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm open failed*/
-#define TP_COMM_INVALID_REQUEST (unsigned long long int)0x0001000200A70004   /*TpComm receive invalid hash for RPC*/
+#define TP_COMM_CREATE_ROUTINE_THREAD_FAILED (unsigned long long int)0x0011000B00A70003   /*TpComm failed to create routine thread*/
+#define TP_COMM_INVALID_REQUEST (unsigned long long int)0x0001000200A70004   /*TpComm receives a invalid hash for RPC*/
 #define TP_COMM_ENCODE_FAILED (unsigned long long int)0x0001000200A70005   /*TpComm failed to encode data to send out*/
 #define TP_COMM_DECODE_FAILED (unsigned long long int)0x0001000200A70006   /*TpComm failed to decode data that has been received*/
 #define TP_COMM_MEMORY_OPERATION_FAILED (unsigned long long int)0x0001000200A70007   /*TpComm failed to operate memory*/
-#define TP_COMM_AUTHORITY_CHECK_FAILED (unsigned long long int)0x0001000200A70008   /*TpComm failed to run unauthorized operation*/
-#define TP_COMM_SEND_FAILED (unsigned long long int)0x0001000200A70009   /*TpComm failed to send package*/
-#define TP_COMM_RECEIVE_FAILED (unsigned long long int)0x0001000200A7000A   /*TpComm failed to receive package*/
-#define TP_COMM_RPC_OVERLOAD (unsigned long long int)0x0000000200A7000B   /*"TpComm failed to handle too much rpc request"*/
+#define TP_COMM_AUTHORITY_CHECK_FAILED (unsigned long long int)0x0001000200A70008   /*TpComm failed to run a unauthorized operation*/
+#define TP_COMM_SEND_FAILED (unsigned long long int)0x0001000200A70009   /*TpComm failed to send a package*/
+#define TP_COMM_RECEIVE_FAILED (unsigned long long int)0x0001000200A7000A   /*TpComm failed to receive a package*/
+#define TP_COMM_RPC_OVERLOAD (unsigned long long int)0x0000000200A7000B   /*TpComm failed to handle too much rpc request*/
 #define CONTROLLER_LOG (unsigned long long int)0x0000000100A80000   /*Controller log{0}*/
 #define CONTROLLER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A80001   /*Controller load param failed in initialization phase*/
 #define CONTROLLER_INIT_OBJECT_FAILED (unsigned long long int)0x0011000B00A80002   /*Controller failed to initialize internal object*/
@@ -233,40 +233,40 @@ typedef unsigned long long int ErrorCode;
 #define FILE_MANAGER_WRITE_FILE_FAILED (unsigned long long int)0x0010000200B10002   /*failed to write file*/
 
 #define MODBUS_LOG (unsigned long long int)0x0010000200AE0000   /*ModbusManager log{0}*/																										
-#define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0001   /*modbus start mode error*/																										
-#define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus manager save param failed*/																										
-#define MODBUS_INVALID (unsigned long long int)0x0001000200AE0003   /*modbus be invalid*/																										
-#define MODBUS_CLIENT_ENABLED (unsigned long long int)0x0001000200AE0028   /*modbus client enabled*/																										
-#define MODBUS_CLIENT_DISABLED (unsigned long long int)0x0001000200AE0029   /*modbus client disabled*/																										
-#define MODBUS_CLIENT_CONNECTED (unsigned long long int)0x0001000200AE002A   /*modbus client connected*/																										
-#define MODBUS_CLIENT_NOT_CONNECT (unsigned long long int)0x0001000200AE002B   /*modbus client be not connect*/																										
-#define MODBUS_CLIENT_INVALID_ARG (unsigned long long int)0x0001000200AE002C   /*modbus client invalid param*/																										
-#define MODBUS_CLIENT_ENABLE_FAILED (unsigned long long int)0x0001000200AE002D   /*modbus client enable failed*/																										
-#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0001000200AE002E   /*modbus client init failed*/																										
-#define MODBUS_CLIENT_CONNECT_FAILED (unsigned long long int)0x0001000200AE002F   /*modbus client connect failed*/																										
-#define MODBUS_CLIENT_OPERATION_FAILED (unsigned long long int)0x0001000200AE0030   /*modbus client read failed*/																										
-#define MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0001000200AE0031   /*modbus client manager load param failed*/																										
-#define MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0032   /*modbus client manager save param failed*/																										
-#define MODBUS_CLIENT_ID_EXISTED (unsigned long long int)0x0001000200AE0033   /*modbus client existed*/																										
-#define MODBUS_CLIENT_ID_NOT_EXISTED (unsigned long long int)0x0001000200AE0034   /*modbus client be not existed*/																										
-#define MODBUS_CLIENT_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200AE0035   /*modbus client invalid param*/																										
-#define MODBUS_CLIENT_NOT_ALL_CLOSED (unsigned long long int)0x0001000200AE0036   /*modbus client be not all closed */																										
-#define MODBUS_SERVER_BE_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is not be opened*/																										
-#define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server save param failed*/																										
-#define MODBUS_SERVER_INVALID_ARG (unsigned long long int)0x0001000200AE001C   /*modbus server invalid param*/																										
-#define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server load param failed*/																										
-#define MODBUS_SERVER_OPEN_FAILED (unsigned long long int)0x0001000200AE001E   /*modbus server open failed*/																										
-#define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0001000200AE001F   /*modbus server init failed*/																										
-#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000300AE0022   /*modbus server is running*/
-#define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server init failed*/
-#define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server init failed*/
+#define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0001   /*modbus start mode error*/
+#define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus manager failed to save parameters*/
+#define MODBUS_INVALID (unsigned long long int)0x0001000200AE0003   /*modbus is invalid*/
+#define MODBUS_SERVER_NOT_OPENED (unsigned long long int)0x0001000200AE0019   /*modbus server is closed*/
+#define MODBUS_SERVER_SAVE_PARAM_FALIED (unsigned long long int)0x0001000200AE001A   /*modbus server failed to save parameter*/
+#define MODBUS_SERVER_INVALID_ARG (unsigned long long int)0x0001000200AE001C   /*modbus server has invalid parameters*/
+#define MODBUS_SERVER_LOAD_PARAM_FALIED (unsigned long long int)0x0001000200AE001D   /*modbus server failed to load parameters*/
+#define MODBUS_SERVER_OPEN_FAILED (unsigned long long int)0x0001000200AE001E   /*modbus server failed to open*/
+#define MODBUS_SERVER_INIT_FAILED (unsigned long long int)0x0001000200AE001F   /*modbus server initialization failed*/
+#define MODBUS_SERVER_ENABLED (unsigned long long int)0x0001000200AE0020   /*modbus server is enabled*/
+#define MODBUS_SERVER_DISABLED (unsigned long long int)0x0001000200AE0021   /*modbus server is disabled */
+#define MODBUS_SERVER_IS_RUNNING (unsigned long long int)0x0001000200AE0022   /*modbus server is running*/
+#define MODBUS_CLIENT_ENABLED (unsigned long long int)0x0001000200AE0028   /*modbus client is enabled*/
+#define MODBUS_CLIENT_DISABLED (unsigned long long int)0x0001000200AE0029   /*modbus client is disabled*/
+#define MODBUS_CLIENT_CONNECTED (unsigned long long int)0x0001000200AE002A   /*modbus client is connected*/
+#define MODBUS_CLIENT_NOT_CONNECT (unsigned long long int)0x0001000200AE002B   /*modbus client is not connected*/
+#define MODBUS_CLIENT_INVALID_ARG (unsigned long long int)0x0001000200AE002C   /*modbus client has received a invalid parameter */
+#define MODBUS_CLIENT_ENABLE_FAILED (unsigned long long int)0x0001000200AE002D   /*modbus client failed to enable*/
+#define MODBUS_CLIENT_INIT_FAILED (unsigned long long int)0x0001000200AE002E   /*modbus client initialization failed*/
+#define MODBUS_CLIENT_CONNECT_FAILED (unsigned long long int)0x0001000200AE002F   /*modbus client failed to connect*/
+#define MODBUS_CLIENT_OPERATION_FAILED (unsigned long long int)0x0001000200AE0030   /*modbus client failed to read or write data*/
+#define MODBUS_CLIENT_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0001000200AE0031   /*modbus client manager failed to load parameter*/
+#define MODBUS_CLIENT_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0032   /*modbus client manager failed to save parameter*/
+#define MODBUS_CLIENT_ID_EXISTED (unsigned long long int)0x0001000200AE0033   /*modbus client is existing*/
+#define MODBUS_CLIENT_ID_NOT_EXISTED (unsigned long long int)0x0001000200AE0034   /*modbus client can't be found existing*/
+#define MODBUS_CLIENT_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200AE0035   /*modbus client received a invalid parameter*/
+#define MODBUS_CLIENT_NOT_ALL_CLOSED (unsigned long long int)0x0001000200AE0036   /*modbus clients are not all closed*/
 
-#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0001000400B20001   /*the expected target point is invalid*/
-#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0001000400B20002   /*invalid path cache*/
-#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*invalid motion type*/
-#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*invalid smooth in index*/
-#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*ik failed*/
-#define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000400B20006   /*pause failed*/
+#define PATH_PLANNING_INVALID_TARGET (unsigned long long int)0x0001000400B20001   /*PathTrajAlg detected that the expected target point is invalid*/
+#define TRAJ_PLANNING_INVALID_PATHCACHE (unsigned long long int)0x0001000400B20002   /*PathTrajAlg detected a invalid path that was not in a RPC table. */
+#define TRAJ_PLANNING_INVALID_MOTION_TYPE (unsigned long long int)0x0001000400B20003   /*PathTrajAlg detected a invalid motion type*/
+#define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*PathTrajAlg detected that smooth_in index was invalid */
+#define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*PathTrajAlg detected that ik failed*/
+#define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000400B20006   /*PathTrajAlg failed to pause */
 
 
 //The error codes generated from the external component(safety_board)

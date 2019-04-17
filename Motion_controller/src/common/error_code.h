@@ -164,11 +164,9 @@ typedef unsigned long long int ErrorCode;
 #define FAIL_INTERPRETER_NOT_IN_PAUSE (unsigned long long int)0x0001000200AA010B   /*Not in PAUSE*/
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0000000100A90000   /*MotionControl log{0}*/
 #define IK_FAIL (unsigned long long int)0x0001000400A903E9   /*IK failed*/
-#define IK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903EA   /*IK failed for Axis 2~6*/
-#define FK_JOINT_OUT_OF_LIMIT (unsigned long long int)0x0001000400A903F3   /*joint out of limit computing FK*/
-#define AXIS_APPROACHING_LIMIT (unsigned long long int)0x0001000400A90408   /*axis approaching and going to crash a limit*/
 #define MOTION_INTERNAL_FAULT (unsigned long long int)0x0001000400A90001   /*program internal fault*/
-#define MOTION_FAIL_IN_INIT (unsigned long long int)0x0011000200A903E9   /*initialization failed*/
+#define MOTION_FAIL_IN_INIT (unsigned long long int)0x0011000200A90002   /*initialization failed*/
+#define MC_NO_ENOUGH_CACHE (unsigned long long int)0x0011000200A90003   /*no enough path or trajectory cache*/
 #define FAIL_LOADING_PARAMETER (unsigned long long int)0x0011000200A903EB   /*load parameter failed*/
 #define JOINT_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F3   /*joint out of constraint*/
 #define TARGET_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F4   /*target joint out of constraint*/

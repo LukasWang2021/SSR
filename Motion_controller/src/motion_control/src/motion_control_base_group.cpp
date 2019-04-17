@@ -733,12 +733,10 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
 ErrorCode BaseGroup::manualStop(void)
 {
-    FST_INFO("Manual stop request received.");
+    FST_INFO("Manual stop, grp-state: %d, manual-mode: %d, manual-frame: %d", group_state_, manual_traj_.mode, manual_traj_.frame);
 
     if (group_state_ == MANUAL)
     {
-        FST_INFO("Manual mode = %d, frame = %d", manual_traj_.mode, manual_traj_.frame);
-
         if (manual_traj_.mode == CONTINUOUS)
         {
             ManualDirection direction[NUM_OF_JOINT] = {STANDING};
@@ -773,7 +771,7 @@ ErrorCode BaseGroup::manualStop(void)
         else
         {
             FST_INFO("Cannot stop manual motion in step mode, the group will stop in %.4fs", manual_traj_.duration - manual_time_);
-            return INVALID_SEQUENCE;
+            return SUCCESS;
         }
     }
     else
@@ -871,7 +869,7 @@ ErrorCode BaseGroup::pauseMove(void)
     {
         pthread_mutex_unlock(&cache_list_mutex_);
         FST_ERROR("No traj-cache available, set more caches in config file.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_NO_ENOUGH_CACHE;
     }
 
     int paused_on_index = traj_cache.cache[pause_index].index_in_path_cache;
@@ -982,7 +980,7 @@ ErrorCode BaseGroup::restartMove(void)
             FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_cache_ptr, traj_cache_ptr);
             path_cache_pool_.freeCachePtr(path_cache_ptr);
             traj_cache_pool_.freeCachePtr(traj_cache_ptr);
-            return MOTION_INTERNAL_FAULT;
+            return MC_NO_ENOUGH_CACHE;
         }
         
         MotionInfo target;
@@ -1046,7 +1044,7 @@ ErrorCode BaseGroup::replanPathCache(void)
         FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_cache_ptr, traj_cache_ptr);
         path_cache_pool_.freeCachePtr(path_cache_ptr);
         traj_cache_pool_.freeCachePtr(traj_cache_ptr);
-        return MOTION_INTERNAL_FAULT;
+        return MC_NO_ENOUGH_CACHE;
     }
     
     char buffer[LOG_TEXT_SIZE];
@@ -1171,7 +1169,7 @@ ErrorCode BaseGroup::autoMove(int id, const MotionInfo &info)
         FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_ptr, traj_ptr);
         path_cache_pool_.freeCachePtr(path_ptr);
         traj_cache_pool_.freeCachePtr(traj_ptr);
-        return MOTION_INTERNAL_FAULT;
+        return MC_NO_ENOUGH_CACHE;
     }
 
     if (info.type == MOTION_JOINT)

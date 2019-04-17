@@ -208,6 +208,12 @@ ErrorCode ControllerSm::checkOffsetState()
 
 ErrorCode ControllerSm::callEstop()
 {
+    // the function can be called when Safety_Board is not existed and for TP_simulation
+    if (safety_device_ptr_->isValid())
+    {
+        return CONTROLLER_INVALID_OPERATION;
+    }
+
     if(ctrl_state_ == CTRL_ENGAGED
         || ctrl_state_ == CTRL_ESTOP_TO_ENGAGED
         || ctrl_state_ == CTRL_INIT)

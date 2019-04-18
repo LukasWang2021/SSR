@@ -917,7 +917,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		}
 		else
 		{
-			FST_ERROR("call_MoveJ XPATH out of range at %d", iLineNum);
+			FST_INFO("call_MoveJ XPATH out of range at %d", iLineNum);
 		}
 		 
 #ifndef WIN32
@@ -1079,7 +1079,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	}
 	else
 	{
-		FST_ERROR("call_MoveL XPATH out of range at %d", iLineNum);
+		FST_INFO("call_MoveL XPATH out of range at %d", iLineNum);
 	}
 	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	
@@ -1381,10 +1381,108 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	}
 	else
 	{
-		FST_ERROR("call_MoveC XPATH out of range at %d", iLineNum);
+		FST_INFO("call_MoveC XPATH out of range at %d", iLineNum);
 	}
 
     // result.size() == MOVJ_COMMAND_PARAM_MIN
+    get_exp(objThreadCntrolBlock, &value, &boolValue);
+	
+	if(value.getType() == TYPE_NONE)
+	{
+		find_eol(objThreadCntrolBlock);
+		return 0;
+	}
+	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
+	{
+		instr.target.via.type      = COORDINATE_CARTESIAN ;
+#ifndef WIN32
+		instr.target.via.pose.pose.point_.x_    = value.getFloatValue();
+#else
+		instr.target.via.pose.pose.position.x    = value.getFloatValue();
+#endif	
+		get_token(objThreadCntrolBlock);
+
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+#ifndef WIN32
+		instr.target.via.pose.pose.point_.y_    = value.getFloatValue();
+#else
+		instr.target.via.pose.pose.position.y    = value.getFloatValue();
+#endif	
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+#ifndef WIN32
+		instr.target.via.pose.pose.point_.z_    = value.getFloatValue();
+#else
+		instr.target.via.pose.pose.position.z    = value.getFloatValue();
+#endif	
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+#ifndef WIN32
+		instr.target.via.pose.pose.euler_.a_ = value.getFloatValue();
+#else
+		instr.target.via.pose.pose.orientation.a = value.getFloatValue();
+#endif	
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+#ifndef WIN32
+		instr.target.via.pose.pose.euler_.b_ = value.getFloatValue();
+#else
+		instr.target.via.pose.pose.orientation.b = value.getFloatValue();
+#endif	
+		get_token(objThreadCntrolBlock);
+		
+	    get_exp(objThreadCntrolBlock, &value, &boolValue);
+#ifndef WIN32
+		instr.target.via.pose.pose.euler_.c_ = value.getFloatValue();
+#else
+		instr.target.via.pose.pose.orientation.c = value.getFloatValue();
+#endif	
+	}
+	else if(value.getType() == TYPE_POSE)
+	{
+		instr.target.via.type      = COORDINATE_CARTESIAN ;
+		instr.target.via.pose.pose = value.getPoseValue();
+		
+		instr.target.via.pose.posture = value.getPosture();
+	}
+	else if(value.getType() == TYPE_JOINT)
+	{
+		instr.target.via.type      = COORDINATE_JOINT ;
+		instr.target.via.joint     = value.getJointValue();
+	//  instr.target.joint_target = value.getJointValue();
+	//	find_eol(objThreadCntrolBlock);
+    //	return 0;
+	}
+	else if(value.getType() == TYPE_PR)
+	{
+#ifdef WIN32
+		instr.target.via.pose.pose.position    = value.getPrRegDataValue().value.cartesian_pos.position ;
+		instr.target.via.pose.pose.orientation = value.getPrRegDataValue().value.cartesian_pos.orientation;
+#else
+		instr.target.via.type      = value.getPrRegDataValue().value.pos_type ;
+		instr.target.via.pose.pose.point_.x_    = value.getPrRegDataValue().value.pos[0];
+		instr.target.via.pose.pose.point_.y_    = value.getPrRegDataValue().value.pos[1];
+		instr.target.via.pose.pose.point_.z_    = value.getPrRegDataValue().value.pos[2];
+		instr.target.via.pose.pose.euler_.a_    = value.getPrRegDataValue().value.pos[3];
+		instr.target.via.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
+		instr.target.via.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
+		
+		instr.target.via.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
+		instr.target.via.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
+		instr.target.via.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
+		instr.target.via.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
+	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ",
+			instr.target.via.pose.pose.point_.x_, instr.target.via.pose.pose.point_.y_, 
+			instr.target.via.pose.pose.point_.z_, instr.target.via.pose.pose.euler_.a_, 
+			instr.target.via.pose.pose.euler_.b_, instr.target.via.pose.pose.euler_.c_);
+#endif	
+	}
+	
+	get_token(objThreadCntrolBlock);
+
     get_exp(objThreadCntrolBlock, &value, &boolValue);
 	if(value.getType() == TYPE_NONE)
 	{
@@ -1496,103 +1594,6 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #endif	
 	}
 	
-	get_token(objThreadCntrolBlock);
-
-    get_exp(objThreadCntrolBlock, &value, &boolValue);
-	if(value.getType() == TYPE_NONE)
-	{
-		find_eol(objThreadCntrolBlock);
-		return 0;
-	}
-	else if((value.getType() == TYPE_INT) || (value.getType() == TYPE_FLOAT))
-	{
-		instr.target.via.type      = COORDINATE_CARTESIAN ;
-#ifndef WIN32
-		instr.target.via.pose.pose.point_.x_    = value.getFloatValue();
-#else
-		instr.target.via.pose.pose.position.x    = value.getFloatValue();
-#endif	
-		get_token(objThreadCntrolBlock);
-
-	    get_exp(objThreadCntrolBlock, &value, &boolValue);
-#ifndef WIN32
-		instr.target.via.pose.pose.point_.y_    = value.getFloatValue();
-#else
-		instr.target.via.pose.pose.position.y    = value.getFloatValue();
-#endif	
-		get_token(objThreadCntrolBlock);
-		
-	    get_exp(objThreadCntrolBlock, &value, &boolValue);
-#ifndef WIN32
-		instr.target.via.pose.pose.point_.z_    = value.getFloatValue();
-#else
-		instr.target.via.pose.pose.position.z    = value.getFloatValue();
-#endif	
-		get_token(objThreadCntrolBlock);
-		
-	    get_exp(objThreadCntrolBlock, &value, &boolValue);
-#ifndef WIN32
-		instr.target.via.pose.pose.euler_.a_ = value.getFloatValue();
-#else
-		instr.target.via.pose.pose.orientation.a = value.getFloatValue();
-#endif	
-		get_token(objThreadCntrolBlock);
-		
-	    get_exp(objThreadCntrolBlock, &value, &boolValue);
-#ifndef WIN32
-		instr.target.via.pose.pose.euler_.b_ = value.getFloatValue();
-#else
-		instr.target.via.pose.pose.orientation.b = value.getFloatValue();
-#endif	
-		get_token(objThreadCntrolBlock);
-		
-	    get_exp(objThreadCntrolBlock, &value, &boolValue);
-#ifndef WIN32
-		instr.target.via.pose.pose.euler_.c_ = value.getFloatValue();
-#else
-		instr.target.via.pose.pose.orientation.c = value.getFloatValue();
-#endif	
-	}
-	else if(value.getType() == TYPE_POSE)
-	{
-		instr.target.via.type      = COORDINATE_CARTESIAN ;
-		instr.target.via.pose.pose = value.getPoseValue();
-		
-		instr.target.via.pose.posture = value.getPosture();
-	}
-	else if(value.getType() == TYPE_JOINT)
-	{
-		instr.target.via.type      = COORDINATE_JOINT ;
-		instr.target.via.joint     = value.getJointValue();
-	//  instr.target.joint_target = value.getJointValue();
-	//	find_eol(objThreadCntrolBlock);
-    //	return 0;
-	}
-	else if(value.getType() == TYPE_PR)
-	{
-#ifdef WIN32
-		instr.target.via.pose.pose.position    = value.getPrRegDataValue().value.cartesian_pos.position ;
-		instr.target.via.pose.pose.orientation = value.getPrRegDataValue().value.cartesian_pos.orientation;
-#else
-		instr.target.via.type      = value.getPrRegDataValue().value.pos_type ;
-		instr.target.via.pose.pose.point_.x_    = value.getPrRegDataValue().value.pos[0];
-		instr.target.via.pose.pose.point_.y_    = value.getPrRegDataValue().value.pos[1];
-		instr.target.via.pose.pose.point_.z_    = value.getPrRegDataValue().value.pos[2];
-		instr.target.via.pose.pose.euler_.a_    = value.getPrRegDataValue().value.pos[3];
-		instr.target.via.pose.pose.euler_.b_    = value.getPrRegDataValue().value.pos[4];
-		instr.target.via.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
-		
-		instr.target.via.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
-		instr.target.via.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
-		instr.target.via.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
-		instr.target.via.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
-	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ",
-			instr.target.via.pose.pose.point_.x_, instr.target.via.pose.pose.point_.y_, 
-			instr.target.via.pose.pose.point_.z_, instr.target.via.pose.pose.euler_.a_, 
-			instr.target.via.pose.pose.euler_.b_, instr.target.via.pose.pose.euler_.c_);
-#endif	
-	}
-	
 	// Use start point in revert mode  
 	if(objThreadCntrolBlock->execute_direction == EXECUTE_BACKWARD)
 	{
@@ -1610,14 +1611,14 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
     {
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
-    //	if(objThreadCntrolBlock->prog_mode == STEP_MODE)
-    //	{
+    	if(objThreadCntrolBlock->prog_mode == STEP_MODE)
+    	{
         	instr.target.cnt = -1;
-    //	}
-	//    else
-	//    {
-	//        instr.target.cnt = value.getFloatValue() / 100;
-	//    }
+    	}
+	    else
+	    {
+	        instr.target.cnt = value.getFloatValue() / 100;
+	    }
     }
     else
     {
@@ -1739,7 +1740,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 	}
 	else
 	{
-		FST_ERROR("call_MoveL XPATH out of range at %d", iLineNum);
+		FST_INFO("call_MoveL XPATH out of range at %d", iLineNum);
 	}
 	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	memset(&objThreadCntrolBlock->instrSet->target.prPos, 0x00, PR_POS_LEN * sizeof(int));

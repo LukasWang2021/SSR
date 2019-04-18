@@ -1617,7 +1617,13 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     	}
 	    else
 	    {
-	        instr.target.cnt = value.getFloatValue() / 100;
+	        if(value.getFloatValue() < 0) // == -1
+	    	{
+	        	instr.target.cnt = -1.0000;
+	     		FST_INFO("instr.target.cnt = %f in the FINE.", instr.target.cnt);
+	    	}
+	        else 
+	            instr.target.cnt = value.getFloatValue() / 100;
 	    }
     }
     else

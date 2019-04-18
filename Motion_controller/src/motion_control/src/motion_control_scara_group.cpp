@@ -40,7 +40,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
     if (error_monitor_ptr == NULL || coordinate_manager_ptr == NULL || tool_manager_ptr == NULL)
     {
         FST_ERROR("Invalid pointer of error-monitor or coordinate-manager or tool-manager.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
     else
     {
@@ -56,7 +56,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
         pthread_mutex_init(&servo_mutex_, NULL) != 0)
     {
         FST_ERROR("Fail to initialize mutex.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     ParamGroup param;
@@ -170,7 +170,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
         else
         {
             FST_ERROR("Fail to initialize trajectory fifo.");
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
     }
     else
@@ -210,7 +210,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
         else
         {
             FST_ERROR("Fail to initialize path cache.");
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
 
         FST_INFO("Initializing trajectory cache ... capacity = %d", traj_cache_size);
@@ -222,7 +222,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
         else
         {
             FST_ERROR("Fail to initialize trajectory cache.");
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
     }
     else
@@ -400,7 +400,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
     if (!kinematics_ptr_->isValid())
     {
         FST_ERROR("Fail to create kinematics for this Group.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     // 初始化动力学模块
@@ -410,14 +410,14 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
     if (dynamics_ptr_ == NULL)
     {
         FST_ERROR("Fail to create dynamics for ScaraGroup.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     // 初始化坐标变换模块
     if (!transformation_.init(kinematics_ptr_))
     {
         FST_ERROR("Fail to init transformation for ArmGroup.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     // 初始化手动示教模块

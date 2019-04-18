@@ -52,7 +52,7 @@ void test0(void)
     {
         //transformation.convertPoseFromUserToBase(tcp_in_user, user_frame_, tcp_in_base);
         //transformation.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-        err = kinematics.doIK(fcp_in_base, posture, res_joint) ? SUCCESS : IK_FAIL;
+        err = kinematics.doIK(fcp_in_base, posture, res_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
     }
     
     clock_t end_clock = clock();
@@ -322,7 +322,7 @@ void test6(void)
 
     clock_t start = clock();
     for (size_t i = 0; i < 1000; i++)
-        ErrorCode err = arm.getKinematicsPtr()->doIK(p, ref, res) ? SUCCESS : IK_FAIL;
+        ErrorCode err = arm.getKinematicsPtr()->doIK(p, ref, res) ? SUCCESS : MC_COMPUTE_IK_FAIL;
     clock_t end = clock();
 
     double seconds  = (double)(end - start)/CLOCKS_PER_SEC;

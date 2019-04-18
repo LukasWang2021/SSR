@@ -57,7 +57,7 @@ ErrorCode ManualTeach::init(Kinematics *kinematics_ptr, Constraint *pcons, fst_l
     }
     else
     {
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     int  joint_num;
@@ -272,14 +272,12 @@ ErrorCode ManualTeach::manualStepByDirect(const ManualDirection *directions, Mot
         case BASE:
         case USER:
         case WORLD:
+        case TOOL:
             err = manualCartesianStep(directions, time, traj);
             break;
 
-        case TOOL:
-            //
-            //break;
         default:
-            err = MOTION_INTERNAL_FAULT;
+            err = MC_INTERNAL_FAULT;
             FST_ERROR("Unsupported manual frame: %d", traj.frame);
             break;
     }
@@ -417,16 +415,16 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
     switch (traj.frame)
     {
         case BASE:
-            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : IK_FAIL;
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
             break;
         case USER:
-            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : IK_FAIL;    // transfrom from user to base
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;    // transfrom from user to base
             break;
         case WORLD:
-            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : IK_FAIL;    // transfrom from world to base
+            err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;    // transfrom from world to base
             break;
         default:
-            err = MOTION_INTERNAL_FAULT;
+            err = MC_INTERNAL_FAULT;
             break;
     }
 
@@ -578,7 +576,7 @@ ErrorCode ManualTeach::manualContinuousByDirect(const ManualDirection *direction
         //    err = manualCartesianContinuousInToolFrame(directions, time, traj);
         //    break;
         default:
-            err = MOTION_INTERNAL_FAULT;
+            err = MC_INTERNAL_FAULT;
             FST_ERROR("Unsupported manual frame: %d", traj.frame);
             break;
     }

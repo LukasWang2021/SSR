@@ -37,14 +37,14 @@ class CachePool
     {
         if (pool_ptr_ != NULL || capacity < 2 || capacity > 32 || pthread_mutex_init(&mutex_, NULL) != 0)
         {
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
 
         pool_ptr_ = new T[capacity];
 
         if (pool_ptr_ == NULL)
         {
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
 
         pthread_mutex_lock(&mutex_);

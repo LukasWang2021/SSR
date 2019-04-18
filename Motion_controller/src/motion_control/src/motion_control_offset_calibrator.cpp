@@ -58,7 +58,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     else
     {
         FST_INFO("initCalibrator: invalid parameter, joint-number = %d, bare-core-ptr = %p, log-ptr = %p", joint_num, pcore, plog);
-        return MOTION_FAIL_IN_INIT;
+        return MC_FAIL_IN_INIT;
     }
 
     int id;
@@ -72,7 +72,7 @@ ErrorCode Calibrator::initCalibrator(size_t joint_num, BareCoreInterface *pcore,
     if (nvram_ptr_ == NULL)
     {
         FST_INFO("Fail to create nvram.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     ErrorCode err = nvram_ptr_->openNvram();

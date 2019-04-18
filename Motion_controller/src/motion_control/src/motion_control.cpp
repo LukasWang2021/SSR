@@ -116,19 +116,19 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     
     if (log_ptr_ == NULL || param_ptr_ == NULL)
     {
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     if (!log_ptr_->initLogger("MotionControl"))
     {
         FST_ERROR("Lost communication with log server, init MotionControl abort.");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     if(!param_ptr_->loadParam())
     {
         FST_ERROR("Failed to load MotionControl component parameters");
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     FST_INFO("Log-level of MotionControl setted to: %d", param_ptr_->log_level_);
@@ -145,13 +145,13 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     else
     {
         FST_ERROR("Invalid model name: %s", param_ptr_->model_name_.c_str());
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     if (group_ptr_ == NULL)
     {
         FST_ERROR("Fail to create control group of %s", param_ptr_->model_name_.c_str());
-        return MOTION_INTERNAL_FAULT;
+        return MC_INTERNAL_FAULT;
     }
 
     //if (device_manager_ptr && axis_group_manager_ptr && coordinate_manager_ptr && tool_manager_ptr && error_monitor_ptr)
@@ -194,7 +194,7 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         {
             FST_ERROR("Fail to create real-time task.");
             rt_thread_running_ = false;
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
 
         usleep(50 * 1000);
@@ -208,7 +208,7 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
         {
             FST_ERROR("Fail to create non-real-time task.");
             non_rt_thread_running_ = false;
-            return MOTION_INTERNAL_FAULT;
+            return MC_INTERNAL_FAULT;
         }
 
         FST_INFO("Initialize motion group success.");
@@ -362,7 +362,7 @@ ErrorCode MotionControl::doGotoPointManualMove(const PoseAndPosture &pose, int u
         FST_ERROR("Posture: %d, %d, %d, %d", point.pose.posture.arm, point.pose.posture.elbow, point.pose.posture.wrist, point.pose.posture.flip);
         FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
         FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-        return IK_FAIL;
+        return MC_COMPUTE_IK_FAIL;
     }
 
     return group_ptr_->manualMoveToPoint(point);
@@ -443,7 +443,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
             FST_ERROR("Posture: %d, %d, %d, %d", target.target.pose.posture.arm, target.target.pose.posture.elbow, target.target.pose.posture.wrist, target.target.pose.posture.flip);
             FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
             FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-            return IK_FAIL;
+            return MC_COMPUTE_IK_FAIL;
         }
     }
 
@@ -478,7 +478,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
                 FST_ERROR("Posture: %d, %d, %d, %d", target.via.pose.posture.arm, target.via.pose.posture.elbow, target.via.pose.posture.wrist, target.via.pose.posture.flip);
                 FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
                 FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
-                return IK_FAIL;
+                return MC_COMPUTE_IK_FAIL;
             }
         }
     }

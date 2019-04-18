@@ -31,7 +31,7 @@ ErrorCode TrajectoryFifo::initTrajectoryFifo(size_t capacity, size_t joint_num)
     trajectory_segment_.time_from_start = 0;
     trajectory_segment_.time_from_block = 0;
     trajectory_segment_.duration = -99.99;
-    return trajectory_fifo_.init(capacity) ? SUCCESS : MOTION_INTERNAL_FAULT;
+    return trajectory_fifo_.init(capacity) ? SUCCESS : MC_INTERNAL_FAULT;
 }
 
 ErrorCode TrajectoryFifo::pushTrajectorySegment(const TrajectorySegment &segment)

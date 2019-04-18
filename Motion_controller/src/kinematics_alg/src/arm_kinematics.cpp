@@ -57,7 +57,7 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
     {
         //FST_ERROR("IK fail solving theta1.");
         //FST_ERROR("  px = %lf, py = %lf, DH[2][2] = %lf", px, py, dh_matrix_[2][2]);
-        return IK_FAIL;
+        return MC_COMPUTE_IK_FAIL;
     }
 
     double t1_part1 = atan2(dh_matrix_[2][2], (mn1 - mn2) / 2);
@@ -100,7 +100,7 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, const Joint &re
         //FST_ERROR("  DH[0][2] = %lf, DH[1][1] = %lf, DH[3][1] = %lf, DH[3][2] = %lf, DH[2][1] = %lf",
         //          dh_matrix_[0][2], dh_matrix_[1][1], dh_matrix_[3][1], dh_matrix_[3][2], dh_matrix_[2][1]);
         //FST_ERROR("  k1 = %lf, k2=%lf, mp1 = %lf, mp6 = %lf, mp2 = %lf", k1, k2, mp1, mp6, mp2);
-        return IK_FAIL;
+        return MC_COMPUTE_IK_FAIL;
     }
 
     double mp7 = sqrt(mp1 - mp2);
@@ -225,7 +225,7 @@ ErrorCode ArmKinematics::inverseKinematics(const Matrix &matrix, Joint (&solutio
     {
         //FST_ERROR("IK fail solving theta1.");
         //FST_ERROR("  px = %lf, py = %lf, DH[2][2] = %lf", px, py, dh_matrix_[2][2]);
-        return IK_FAIL;
+        return MC_COMPUTE_IK_FAIL;
     }
 
     double t1_part1 = atan2(dh_matrix_[2][2], (mn1 - mn2) / 2);

@@ -149,6 +149,7 @@ class BaseGroup
     void doStateMachine(void);
     void fillTrajectoryFifo(void);
     bool updateStartJoint(void);
+    void updateJointRecorder(void);
 
     virtual ErrorCode sendAutoTrajectoryFlow(void);
     virtual ErrorCode sendManualTrajectoryFlow(void);
@@ -273,6 +274,8 @@ class BaseGroup
     size_t  auto_to_pause_timeout_;
     size_t  trajectory_flow_timeout_;
     size_t  servo_update_timeout_;
+    size_t  joint_record_update_timeout_;
+    size_t  joint_record_update_cycle_;
 };
 
 

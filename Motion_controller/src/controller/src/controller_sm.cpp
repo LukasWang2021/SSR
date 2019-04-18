@@ -609,7 +609,7 @@ void ControllerSm::transferCtrlState()
             if(robot_state_ == ROBOT_IDLE
                 && servo_state_ != SERVO_RUNNING)
             {
-                motion_control_ptr_->saveJoint();
+                //motion_control_ptr_->saveJoint();
                 recordLog("Controller transfer from ANY_TO_ESTOP to ESTOP");
                 ctrl_state_ = CTRL_ESTOP;
             }
@@ -631,7 +631,7 @@ void ControllerSm::transferCtrlState()
         case CTRL_ESTOP_TO_TERMINATE:
             if(robot_state_ == ROBOT_IDLE)
             {
-                motion_control_ptr_->saveJoint();
+                //motion_control_ptr_->saveJoint();
                 recordLog("Controller transfer from ESTOP_TO_TERMINATE to TERMINATED");
                 ctrl_state_ = CTRL_TERMINATED;
                 shutdown();

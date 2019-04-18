@@ -3,6 +3,9 @@ path_cache_size: 16
 trajectory_cache_size: 16
 trajectory_fifo_size: 30
 duration_of_segment_in_trajectory_fifo: 0.01
+joint_record:
+    update_cycle: 250
+    update_timeout: 1000
 stable_with_fine:
     cycle: 5            # 判断位置稳定时，位置误差连续小于门限值的次数
     threshold: 0.1      # mm
@@ -49,8 +52,8 @@ manual:
 joint_tracking_accuracy: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
 
 calibrator:
-    normal_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
-    lost_offset_threshold: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    normal_offset_threshold: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    lost_offset_threshold: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
 
 #END

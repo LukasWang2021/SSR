@@ -30,6 +30,7 @@ Controller::Controller():
 
 Controller::~Controller()
 {
+    /*
     ErrorCode error_code = motion_control_.saveJoint();
     if(error_code == SUCCESS)
     {
@@ -39,7 +40,7 @@ Controller::~Controller()
     {
         recordLog(error_code, "save joint failed");
     }
-    
+    */
 
     routine_thread_.join();
     heartbeat_thread_.join();

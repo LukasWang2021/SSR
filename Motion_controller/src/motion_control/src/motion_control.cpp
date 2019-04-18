@@ -531,10 +531,13 @@ CalibrateState MotionControl::getCalibrateState(void)
     return group_ptr_->getCalibratorPtr()->getCalibrateState();
 }
 
+/*
 ErrorCode MotionControl::saveJoint(void)
 {
-    return group_ptr_->getCalibratorPtr()->saveJoint();
+    //return group_ptr_->getCalibratorPtr()->saveJoint();
+    return SUCCESS;
 }
+*/
 
 ErrorCode MotionControl::saveOffset(void)
 {

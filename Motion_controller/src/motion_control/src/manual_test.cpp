@@ -30,7 +30,7 @@ void test0(void)
 {
     KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
     ErrorCode err = SUCCESS;
-    Joint reference;
+    Joint reference, res_joint;
     Transformation transformation;
     transformation.init(&kinematics);
     PoseQuaternion tcp_in_user, tcp_in_base, fcp_in_base;
@@ -44,23 +44,31 @@ void test0(void)
     tcp_in_user.quaternion_.z_ = 0;
     memset(&user_frame_, 0, sizeof(user_frame_));
     memset(&tool_frame_, 0, sizeof(tool_frame_));
+    memset(&reference, 0, sizeof(Joint));
+    clock_t start_clock = clock();
+    Posture posture = {1, 1, 1, 0};
 
-
-    transformation.convertPoseFromUserToBase(tcp_in_user, user_frame_, tcp_in_base);
-    transformation.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-    //err = kinematics.doIK(fcp_in_base, reference, path.cache[i].joint) ? SUCCESS : IK_FAIL;
-
+    for (size_t i = 0; i < 1000; i++)
+    {
+        //transformation.convertPoseFromUserToBase(tcp_in_user, user_frame_, tcp_in_base);
+        //transformation.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
+        err = kinematics.doIK(fcp_in_base, posture, res_joint) ? SUCCESS : IK_FAIL;
+    }
     
-        char buffer[LOG_TEXT_SIZE];
-        PoseQuaternion &pose = tcp_in_user;
-        PoseEuler tcp_user = Pose2PoseEuler(pose);
-        PoseEuler fcp_base = Pose2PoseEuler(fcp_in_base);
-        printf("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
-        printf("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-        printf("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-        printf("  tcp-in-user: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", tcp_user.point_.x_, tcp_user.point_.y_, tcp_user.point_.z_, tcp_user.euler_.a_, tcp_user.euler_.b_, tcp_user.euler_.c_);
-        printf("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", fcp_base.point_.x_, fcp_base.point_.y_, fcp_base.point_.z_, fcp_base.euler_.a_, fcp_base.euler_.b_, fcp_base.euler_.c_);
-        //printf("  reference: %s\n", printDBLine(&reference[0], buffer, LOG_TEXT_SIZE));
+    clock_t end_clock = clock();
+    double used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    printf("used time: %.6f\n", used_time);
+    
+    char buffer[LOG_TEXT_SIZE];
+    PoseQuaternion &pose = tcp_in_user;
+    PoseEuler tcp_user = Pose2PoseEuler(pose);
+    PoseEuler fcp_base = Pose2PoseEuler(fcp_in_base);
+    printf("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
+    printf("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
+    printf("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
+    printf("  tcp-in-user: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", tcp_user.point_.x_, tcp_user.point_.y_, tcp_user.point_.z_, tcp_user.euler_.a_, tcp_user.euler_.b_, tcp_user.euler_.c_);
+    printf("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f\n", fcp_base.point_.x_, fcp_base.point_.y_, fcp_base.point_.z_, fcp_base.euler_.a_, fcp_base.euler_.b_, fcp_base.euler_.c_);
+    //printf("  reference: %s\n", printDBLine(&reference[0], buffer, LOG_TEXT_SIZE));
 
 }
 

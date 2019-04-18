@@ -15,6 +15,7 @@
 #include <common_log.h>
 #include <motion_control_core_interface.h>
 #include <parameter_manager/parameter_manager_param_group.h>
+#include <nvram.h>
 
 namespace fst_mc
 {
@@ -61,7 +62,7 @@ class Calibrator
     // 输出：  None
     // 返回：  错误代码，详见报警代码表
     //------------------------------------------------------------------------------
-    ErrorCode initCalibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog, const std::string &path = "/opt/fst_controller/runtime/");
+    ErrorCode initCalibrator(size_t joint_num, BareCoreInterface *pcore, fst_log::Logger *plog);
 
     //------------------------------------------------------------------------------
     // 方法：  checkOffset
@@ -248,12 +249,18 @@ class Calibrator
     void checkOffset(basic_alg::Joint curr_jnt, basic_alg::Joint last_jnt, OffsetState *offset_stat);
     double calculateOffset(double current_offset, double current_joint, double target_joint);
     double calculateOffsetEasy(double gear_ratio, double ref_offset, unsigned int ref_encoder, unsigned int cur_encoder);
-    ErrorCode saveGivenJoint(const basic_alg::Joint &joint);
     ErrorCode sendConfigData(int id, const std::vector<int> &data);
     ErrorCode sendConfigData(int id, const std::vector<double> &data);
-    ErrorCode buildRecordFile(const std::string &file);
     ErrorCode sendOffsetToBareCore(void);
     ErrorCode getOffsetFromBareCore(std::vector<double> &data);
+    ErrorCode writeOffsetJoint(const basic_alg::Joint &joint);
+    ErrorCode writeOffsetMask(const OffsetMask (&mask)[NUM_OF_JOINT]);
+    ErrorCode writeOffsetState(const OffsetState (&state)[NUM_OF_JOINT]);
+    ErrorCode writeNvRam(const void *array, uint32_t addr, uint32_t length);
+    ErrorCode readOffsetJoint(basic_alg::Joint &joint);
+    ErrorCode readOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT]);
+    ErrorCode readOffsetState(OffsetState (&state)[NUM_OF_JOINT]);
+    ErrorCode readNvRam(void *array, uint32_t addr, uint32_t length);
 
     inline char* printDBLine(const int *data, char *buffer, size_t length);
     inline char* printDBLine(const double *data, char *buffer, size_t length);
@@ -265,6 +272,7 @@ class Calibrator
     fst_parameter::ParamGroup   offset_param_;
     fst_parameter::ParamGroup   robot_recorder_;
 
+    Nvram       *nvram_ptr_;
 
     double      normal_threshold_[NUM_OF_JOINT];
     double      lost_threshold_[NUM_OF_JOINT];

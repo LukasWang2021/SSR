@@ -614,7 +614,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Manual continuous frame=%d by direction.", manual_traj_.frame);
 
-    if (group_state_ != STANDBY && group_state_ != MANUAL || group_state_ == STANDBY && servo_state_ != SERVO_IDLE)
+    if ((group_state_ != STANDBY && group_state_ != MANUAL) || (group_state_ == STANDBY && servo_state_ != SERVO_IDLE))
     {
         FST_ERROR("Cannot manual continuous in current grp-state = %d, servo-state = %d", group_state_, servo_state_);
         return MC_FAIL_MANUAL_CONTINUOUS;
@@ -1729,41 +1729,15 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
     ErrorCode err = SUCCESS;
     Joint reference = start;
     PoseQuaternion tcp_in_base, fcp_in_base;
+    Posture posture = path.target.target.pose.posture;
 
     for (size_t i = 0; i < path.cache_length; i++)
     {
         transformation_.convertPoseFromUserToBase(path.cache[i].pose, user_frame_, tcp_in_base);
         transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-        err = kinematics_ptr_->doIK(fcp_in_base, reference, path.cache[i].joint) ? SUCCESS : IK_FAIL;
+        err = kinematics_ptr_->doIK(fcp_in_base, posture, path.cache[i].joint) ? SUCCESS : IK_FAIL;
 
-        if (err == SUCCESS)
-        {
-            if (soft_constraint_.isJointInConstraint(path.cache[i].joint))
-            {
-                reference = path.cache[i].joint;
-                continue;
-            }
-            else
-            {
-                char buffer[LOG_TEXT_SIZE];
-                PoseQuaternion &pose = path.cache[i].pose;
-                PoseEuler fcp_base = Pose2PoseEuler(fcp_in_base);
-                PoseEuler tcp_user = Pose2PoseEuler(pose);
-                FST_ERROR("IK result out of soft constraint:");
-                FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
-                FST_ERROR("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
-                FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-                FST_ERROR("  tcp-in-user: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_user.point_.x_, tcp_user.point_.y_, tcp_user.point_.z_, tcp_user.euler_.a_, tcp_user.euler_.b_, tcp_user.euler_.c_);
-                FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_base.point_.x_, fcp_base.point_.y_, fcp_base.point_.z_, fcp_base.euler_.a_, fcp_base.euler_.b_, fcp_base.euler_.c_);
-                FST_ERROR("  reference: %s", printDBLine(&reference[0], buffer, LOG_TEXT_SIZE));
-                FST_ERROR("  joint: %s", printDBLine(&path.cache[i].joint[0], buffer, LOG_TEXT_SIZE));
-                FST_ERROR("  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-                FST_ERROR("  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
-                err = JOINT_OUT_OF_CONSTRAINT;
-                break;
-            }
-        }
-        else
+        if (err != SUCCESS)
         {
             char buffer[LOG_TEXT_SIZE];
             PoseQuaternion &pose = path.cache[i].pose;
@@ -1775,7 +1749,29 @@ ErrorCode BaseGroup::computeInverseKinematicsOnPathCache(const Joint &start, Pat
             FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
             FST_ERROR("  tcp-in-user: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_user.point_.x_, tcp_user.point_.y_, tcp_user.point_.z_, tcp_user.euler_.a_, tcp_user.euler_.b_, tcp_user.euler_.c_);
             FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_base.point_.x_, fcp_base.point_.y_, fcp_base.point_.z_, fcp_base.euler_.a_, fcp_base.euler_.b_, fcp_base.euler_.c_);
-            FST_ERROR("  reference: %s", printDBLine(&reference[0], buffer, LOG_TEXT_SIZE));
+            //FST_ERROR("  reference: %s", printDBLine(&reference[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("  posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            break;
+        }
+
+        if (!soft_constraint_.isJointInConstraint(path.cache[i].joint))
+        {
+            char buffer[LOG_TEXT_SIZE];
+            PoseQuaternion &pose = path.cache[i].pose;
+            PoseEuler fcp_base = Pose2PoseEuler(fcp_in_base);
+            PoseEuler tcp_user = Pose2PoseEuler(pose);
+            FST_ERROR("IK result out of soft constraint:");
+            FST_ERROR("  pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
+            FST_ERROR("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
+            FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
+            FST_ERROR("  tcp-in-user: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_user.point_.x_, tcp_user.point_.y_, tcp_user.point_.z_, tcp_user.euler_.a_, tcp_user.euler_.b_, tcp_user.euler_.c_);
+            FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_base.point_.x_, fcp_base.point_.y_, fcp_base.point_.z_, fcp_base.euler_.a_, fcp_base.euler_.b_, fcp_base.euler_.c_);
+            //FST_ERROR("  reference: %s", printDBLine(&reference[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("  posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+            FST_ERROR("  joint: %s", printDBLine(&path.cache[i].joint[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
+            err = JOINT_OUT_OF_CONSTRAINT;
             break;
         }
     }
@@ -3391,8 +3387,29 @@ void BaseGroup::updateTimeFromStart(TrajectoryCacheList &cache)
 
 void BaseGroup::doCommonLoop(void)
 {
+    updateJointRecorder();
     doStateMachine();
     fillTrajectoryFifo();
+}
+
+void BaseGroup::updateJointRecorder(void)
+{
+    static size_t loop_cnt = 0;
+
+    if (++loop_cnt > joint_record_update_cycle_)
+    {
+        if (calibrator_.saveJoint() == SUCCESS)
+        {
+            loop_cnt = 0;
+        }
+    }
+
+    if (loop_cnt > joint_record_update_timeout_)
+    {
+        loop_cnt = 0;
+        FST_ERROR("Record timeout, cannot save joint into NvRam.");
+        reportError(MC_RECORD_JOINT_TIMEOUT);
+    }
 }
 
 void BaseGroup::updateServoStateAndJoint(void)

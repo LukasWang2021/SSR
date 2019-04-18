@@ -61,7 +61,7 @@ public:
     void getOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT]);
     CalibrateState getCalibrateState(void);
 
-    ErrorCode saveJoint(void);
+    //ErrorCode saveJoint(void);
     ErrorCode saveOffset(void);
     ErrorCode checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT]);
     ErrorCode maskOffsetLostError(void);

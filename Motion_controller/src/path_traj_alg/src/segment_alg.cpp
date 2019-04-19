@@ -595,8 +595,10 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
 
     if (fabs(dot_cos) < DOUBLE_ACCURACY) dot_cos = 0;
 
-    double dot_sin = sqrt(1 - pow(dot_cos, 2));
+    double dot_sin_pow = 1 - pow(dot_cos, 2);
+    if (fabs(dot_sin_pow) < DOUBLE_ACCURACY) dot_sin_pow = 0;
 
+    double dot_sin = sqrt(dot_sin_pow);
     angle = atan2(dot_sin, dot_cos);
     stack[S_CircleAngle] = angle;
 }

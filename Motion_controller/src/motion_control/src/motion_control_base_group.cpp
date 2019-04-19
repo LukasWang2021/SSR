@@ -320,24 +320,22 @@ ErrorCode BaseGroup::setManualFrame(ManualFrame frame)
 {
     FST_INFO("Set manual frame = %d, current frame is %d", frame, manual_traj_.frame);
 
+    if (group_state_ != STANDBY && group_state_ != DISABLE)
+    {
+        FST_ERROR("Cannot set frame in current state = %d", group_state_);
+        return INVALID_SEQUENCE;
+    }
+
+    pthread_mutex_lock(&manual_traj_mutex_);
+
     if (frame != manual_traj_.frame)
     {
-        if (group_state_ == STANDBY || group_state_ == DISABLE)
-        {
-            manual_traj_.frame = frame;
-            FST_INFO("Done.");
-            return SUCCESS;
-        }
-        else
-        {
-            FST_ERROR("Cannot set frame in current state = %d", group_state_);
-            return INVALID_SEQUENCE;
-        }
+        manual_traj_.frame = frame;
     }
-    else
-    {
-        return SUCCESS;
-    }
+
+    pthread_mutex_unlock(&manual_traj_mutex_);
+    FST_INFO("Done.");
+    return SUCCESS;
 }
 
 void BaseGroup::getManualStepAxis(double *steps)
@@ -413,7 +411,9 @@ ErrorCode BaseGroup::manualMoveToPoint(const IntactPoint &point)
 
     manual_time_ = 0;
     manual_traj_.mode = APOINT;
+    pthread_mutex_lock(&manual_traj_mutex_);
     ErrorCode err = manual_teach_.manualByTarget(point.joint, manual_time_, manual_traj_);
+    pthread_mutex_unlock(&manual_traj_mutex_);
 
     if (err == SUCCESS)
     {
@@ -592,7 +592,9 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
 
     manual_time_ = 0;
     manual_traj_.mode = STEP;
+    pthread_mutex_lock(&manual_traj_mutex_);
     ErrorCode err = manual_teach_.manualStepByDirect(direction, manual_time_, manual_traj_);
+    pthread_mutex_unlock(&manual_traj_mutex_);
 
     if (err == SUCCESS)
     {
@@ -660,6 +662,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
                 manual_traj_.cart_start = tcp_in_base;
+                manual_traj_.cart_ending = tcp_in_base;
                 //FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
                 //FST_INFO("FCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
                 //FST_INFO("TCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
@@ -672,17 +675,20 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
                 transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, tcp_in_user);
                 manual_traj_.cart_start = tcp_in_user;
+                manual_traj_.cart_ending = tcp_in_user;
                 break;
             case WORLD:
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
                 transformation_.convertPoseFromBaseToUser(tcp_in_base, world_frame_, tcp_in_user);
                 manual_traj_.cart_start = tcp_in_user;
+                manual_traj_.cart_ending = tcp_in_user;
                 break;
             case TOOL:
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 manual_traj_.tool_coordinate = fcp_in_base;
                 memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
+                memset(&manual_traj_.cart_ending, 0, sizeof(manual_traj_.cart_start));
                 break;
             default:
                 FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
@@ -691,7 +697,9 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
 
         manual_time_ = 0;
         manual_traj_.mode = CONTINUOUS;
+        pthread_mutex_lock(&manual_traj_mutex_);
         ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
+        pthread_mutex_unlock(&manual_traj_mutex_);
 
         if (err == SUCCESS)
         {
@@ -713,7 +721,10 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
         {
             if (manual_traj_.direction[i] != direction[i])
             {
-                return manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
+                pthread_mutex_lock(&manual_traj_mutex_);
+                ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
+                pthread_mutex_unlock(&manual_traj_mutex_);
+                return err;
             }
             else
             {
@@ -740,7 +751,9 @@ ErrorCode BaseGroup::manualStop(void)
         if (manual_traj_.mode == CONTINUOUS)
         {
             ManualDirection direction[NUM_OF_JOINT] = {STANDING};
+            pthread_mutex_lock(&manual_traj_mutex_);
             ErrorCode err = manual_teach_.manualContinuousByDirect(direction, manual_time_, manual_traj_);
+            pthread_mutex_unlock(&manual_traj_mutex_);
 
             if (err == SUCCESS)
             {
@@ -755,7 +768,9 @@ ErrorCode BaseGroup::manualStop(void)
         }
         else if (manual_traj_.mode == APOINT)
         {
+            pthread_mutex_lock(&manual_traj_mutex_);
             ErrorCode err = manual_teach_.manualStop(manual_time_, manual_traj_);
+            pthread_mutex_unlock(&manual_traj_mutex_);
 
             if (err == SUCCESS)
             {
@@ -2387,7 +2402,9 @@ double BaseGroup::getGlobalAccRatio(void)
 
 ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, size_t &length)
 {
+    pthread_mutex_lock(&manual_traj_mutex_);
     ErrorCode err = (manual_traj_.frame == JOINT || manual_traj_.mode == APOINT) ? pickPointsFromManualJoint(points, length) : pickPointsFromManualCartesian(points, length);
+    pthread_mutex_unlock(&manual_traj_mutex_);
 
     if (err == SUCCESS)
     {

@@ -1351,7 +1351,7 @@ ErrorCode Calibrator::readOffsetState(OffsetState (&state)[NUM_OF_JOINT])
             state[i] = OffsetState(data[i]);
         }
     }
-    else if (err == INVALID_PARAMETER)
+    else if (err == MC_NVRAM_DATA_INVALID)
     {
         FST_WARN("Offset state in NvRam is lost, reset state in NvRam.");
         memset(data, OFFSET_LOST, NUM_OF_JOINT);
@@ -1383,7 +1383,7 @@ ErrorCode Calibrator::readOffsetMask(OffsetMask (&mask)[NUM_OF_JOINT])
             mask[i] = OffsetMask(data[i]);
         }
     }
-    else if (err == INVALID_PARAMETER)
+    else if (err == MC_NVRAM_DATA_INVALID)
     {
         FST_WARN("Offset mask in NvRam is lost, reset mask in NvRam.");
         memset(data, OFFSET_UNMASK, NUM_OF_JOINT);
@@ -1411,7 +1411,7 @@ ErrorCode Calibrator::readOffsetJoint(Joint &joint)
     {
         memcpy(&joint, data, sizeof(joint));
     }
-    else if (err == INVALID_PARAMETER)
+    else if (err == MC_NVRAM_DATA_INVALID)
     {
         FST_WARN("Offset joint in NvRam is lost, reset joint in NvRam.");
         memset(data, 0, sizeof(data));

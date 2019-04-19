@@ -13,6 +13,7 @@ Summary:    dealing with service
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <signal.h>
 #include <iostream>
 #include "error_code.h"
 
@@ -27,13 +28,18 @@ namespace fst_service_manager
 // Out:     None
 // Return:  None 
 //------------------------------------------------------------
-ServiceManager::ServiceManager()
+ServiceManager::ServiceManager():
+    log_ptr_(NULL),
+    handle_core_(0),
+    loop_count_core_(0),
+    loop_count_mcs_(0),
+    check_mcs_enable_(false),
+    running_sid_ (0),
+    is_exit_(false)
 {
-    handle_core_ = 0;
-    loop_count_core_ = 0;
-    loop_count_mcs_ = 0;
-    check_mcs_enable_ = false;
-    running_sid_ = 0;
+    log_ptr_ = new fst_log::Logger();
+    response_action_ptr_ = new fst_response_action::ResponseAction(log_ptr_);
+    FST_LOG_INIT("ServiceManager");
 }
 
 //------------------------------------------------------------
@@ -45,6 +51,14 @@ ServiceManager::ServiceManager()
 //------------------------------------------------------------
 ServiceManager::~ServiceManager()
 {
+    if(response_action_ptr_ != NULL){
+        delete response_action_ptr_;
+        response_action_ptr_ = NULL;
+    }
+    if(log_ptr_ != NULL){
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
 }
 
 //------------------------------------------------------------
@@ -65,26 +79,26 @@ ErrorCode ServiceManager::init(void)
     ErrorCode result = comm_test_.createChannel(COMM_REP, COMM_IPC, "test");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in CommMonito::init(): fail to create modbus channel."<<std::endl;
+        FST_ERROR("Error in ServiceManager::init(): fail to create servo_diag channel.");
         return CREATE_CHANNEL_FAIL;
     }
     result = comm_mcs_.createChannel(COMM_REP, COMM_IPC, "JTAC");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in CommMonito::init(): fail to create mcs channel."<<std::endl;
+        FST_ERROR("Error in ServiceManager::init(): fail to create mcs channel.");
         return CREATE_CHANNEL_FAIL;
     }
     result = comm_param_.createChannel(COMM_REP, COMM_IPC, "servo_param");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in CommMonito::init(): fail to create servo param channel."<<std::endl;
+        FST_ERROR("Error in ServiceManager::init(): fail to create servo param channel.");
         return CREATE_CHANNEL_FAIL;
     }
 
     result = comm_tp_heartbeat_.createChannel(COMM_REP, COMM_IPC, "heartbeat");
     if (result == CREATE_CHANNEL_FAIL)
     {
-        std::cout<<"Error in ServiceManager::init(): fail to create tp heartBeat channel."<<std::endl;
+        FST_ERROR("Error in ServiceManager::init(): fail to create tp heartBeat channel.");
         return CREATE_CHANNEL_FAIL;
     }
 
@@ -130,8 +144,8 @@ bool ServiceManager::receiveRequest(void)
     if (check_mcs_enable_ == true)
         ++loop_count_mcs_;
 
-    if (request_fifo_.size())
-        printf("request size:%d\n", request_fifo_.size());
+    //if (request_fifo_.size())
+    //   printf("request size:%d\n", request_fifo_.size());
     // Stop receive any request if there is any service in fifo.
     if (!response_fifo_.empty() || !request_fifo_.empty()) 
         return false;
@@ -212,7 +226,7 @@ bool ServiceManager::addRequest(void)
         int stop = 1;
         memcpy(&req.req_buff[0], &stop, sizeof(stop));
         request_fifo_.push_back(req);
-        std::cout<<"||====No heartbeat from MCS, a stop command was sent.====||"<<std::endl;
+        FST_ERROR("||====No heartbeat from MCS, a stop command was sent.====||");
 
         //store the motion controller timeout error.
         ErrorCode mcs_timeout = MCS_TIMEOUT;
@@ -245,15 +259,15 @@ bool ServiceManager::addRequest(void)
 //------------------------------------------------------------
 bool ServiceManager::dtcSurvey(void)
 {
-    if (response_action_.getDtcFlag() == 0)
+    if (response_action_ptr_->getDtcFlag() == 0)
     {
         return false;
     }
-    else if (response_action_.getDtcFlag() == 1)
+    else if (response_action_ptr_->getDtcFlag() == 1)
     {
         ServiceRequest dtc_req = {READ_DTC_SID,""};
         request_fifo_.push_back(dtc_req);
-        response_action_.clearDtcFlag();
+        response_action_ptr_->clearDtcFlag();
     }
     return true;
 }
@@ -275,7 +289,7 @@ bool ServiceManager::checkRequest(ServiceRequest req)
     return true;
     
     // Push the non-heartbeat request into this fifo.
-/*    if (response_action_.searchServiceTableIndex(req.req_id) != -1)
+/*    if (response_action_ptr_->searchServiceTableIndex(req.req_id) != -1)
     {
         request_fifo_.push_back(req);
         return true;
@@ -330,7 +344,8 @@ bool ServiceManager::fillLocalHeartbeat(void)
             ErrorCode error = error_fifo_[0];
             memcpy(&(heartbeat_local_.res_buff[8 + i*8]), &error, sizeof(error));
             deleteFirstElement(&error_fifo_);
-            printf("local heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", heartbeat_local_.res_id, (unsigned char)heartbeat_local_.res_buff[7+8+ i*8],(unsigned char)heartbeat_local_.res_buff[6+8+ i*8],(unsigned char)heartbeat_local_.res_buff[5+8+ i*8],(unsigned char)heartbeat_local_.res_buff[4+8+ i*8],(unsigned char)heartbeat_local_.res_buff[3+8+ i*8],(unsigned char)heartbeat_local_.res_buff[2+8+ i*8],(unsigned char)heartbeat_local_.res_buff[1+8+ i*8],(unsigned char)heartbeat_local_.res_buff[0+8+ i*8]);
+            FST_INFO("local heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X", heartbeat_local_.res_id, (unsigned char)heartbeat_local_.res_buff[7+8+ i*8],(unsigned char)heartbeat_local_.res_buff[6+8+ i*8],(unsigned char)heartbeat_local_.res_buff[5+8+ i*8],(unsigned char)heartbeat_local_.res_buff[4+8+ i*8],(unsigned char)heartbeat_local_.res_buff[3+8+ i*8],(unsigned char)heartbeat_local_.res_buff[2+8+ i*8],(unsigned char)heartbeat_local_.res_buff[1+8+ i*8],(unsigned char)heartbeat_local_.res_buff[0+8+ i*8]);
+            //printf("local heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n", heartbeat_local_.res_id, (unsigned char)heartbeat_local_.res_buff[7+8+ i*8],(unsigned char)heartbeat_local_.res_buff[6+8+ i*8],(unsigned char)heartbeat_local_.res_buff[5+8+ i*8],(unsigned char)heartbeat_local_.res_buff[4+8+ i*8],(unsigned char)heartbeat_local_.res_buff[3+8+ i*8],(unsigned char)heartbeat_local_.res_buff[2+8+ i*8],(unsigned char)heartbeat_local_.res_buff[1+8+ i*8],(unsigned char)heartbeat_local_.res_buff[0+8+ i*8]);
 
         }
     } else if (size == 0)
@@ -529,11 +544,11 @@ bool ServiceManager::manageResponse(void)
 bool ServiceManager::manageLocalResponse(void)
 {
     ServiceResponse temp_response = response_fifo_[0];
-    int index = response_action_.searchResponseLocalTableIndex(temp_response.res_id);
+    int index = response_action_ptr_->searchResponseLocalTableIndex(temp_response.res_id);
     if (index != -1) 
     {
         extractErrorCode(temp_response);
-        response_action_.response_local_table[index].function(&temp_response);
+        response_action_ptr_->response_local_table[index].function(&temp_response);
     }
     deleteFirstElement(&response_fifo_);
     return true;
@@ -588,7 +603,7 @@ bool ServiceManager::extractErrorCode(ServiceResponse resp)
         for (unsigned int i = 0;  i < size; ++i)
         {
             memcpy(&error_code, &resp.res_buff[8 + i*8], 8);
-            printf("extract error code = %016llX\n", error_code);
+            FST_ERROR("extract error code = %016llX", error_code);
             storeError(error_code);
         }
         return true;
@@ -636,7 +651,7 @@ bool ServiceManager::deleteFirstElement(T *fifo)
 {
     if (fifo->size() == 0)
     {
-        std::cout<<"Error when delete fifo fist element."<<std::endl;
+        FST_ERROR("Error when delete fifo fist element.");
         return false;
     }
     fifo->erase(fifo->begin());
@@ -651,17 +666,32 @@ bool ServiceManager::deleteFirstElement(T *fifo)
 // Return:  None.
 //------------------------------------------------------------
 void ServiceManager::runLoop(void)
+{ 
+    receiveRequest();
+    interactBareCore();
+    manageResponse();
+    usleep(LOOP_TIME);
+
+}
+
+void ServiceManager::setExit(void)
 {
-    while (true)
-    {
-        receiveRequest();
-        interactBareCore();
-        manageResponse();
-        usleep(LOOP_TIME);
-    }
+    is_exit_ = true;
+}
+bool ServiceManager::isExit(void)
+{
+    return is_exit_;
 }
 
 } //namespace fst_service_manager
+
+
+fst_service_manager::ServiceManager* g_service_manager_ptr_ = NULL;
+
+void serviceManagerExit(int dunno)
+{
+    g_service_manager_ptr_->setExit();
+}
 
 
 int main(int argc, char** argv)
@@ -702,17 +732,31 @@ int main(int argc, char** argv)
         }
 
     }else
-*/    {
-
+*/  
+    /*
     fst_service_manager::ServiceManager cm;
     ErrorCode init_result = cm.init();
     if (init_result != 0) 
         return false;
+    */
 
-    cm.runLoop();
+    fst_service_manager::ServiceManager* service_manager_ptr= new fst_service_manager::ServiceManager();
+    ErrorCode init_result = service_manager_ptr->init();
+    if (init_result != 0) 
+        return false;
 
+    g_service_manager_ptr_ = service_manager_ptr;
+
+    signal(SIGINT, serviceManagerExit);
+    signal(SIGTERM, serviceManagerExit);
+
+    while(!service_manager_ptr->isExit())
+    {
+        service_manager_ptr->runLoop();
     }
-
+ 
+    delete service_manager_ptr;
+    std::cout<<"service_manager exit"<<std::endl;
 }
 
 

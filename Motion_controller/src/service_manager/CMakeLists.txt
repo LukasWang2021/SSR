@@ -19,10 +19,12 @@ set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
     ${depend_PATH_INC}/middleware_to_mem/include
     ${depend_PATH_INC}/common 
+    ${depend_PATH_INC}/log_manager/include
 )
 
 catkin_package(
     DEPENDS middleware_to_mem
+    DEPENDS log_manager
 )
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -g -O0 -DPB_FIELD_32BIT -DSIMMULATION")
@@ -46,6 +48,7 @@ target_link_libraries(service_manager
     ${catkin_LIBRARIES}
     middleware_to_mem
     comm_interface
+    logger
 )
 
 #############

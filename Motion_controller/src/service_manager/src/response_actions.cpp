@@ -41,6 +41,7 @@ const int ResponseAction::service_table[SERVICE_TABLE_LEN] =
 };
 
 int ResponseAction::dtc_flag = 0;
+fst_log::Logger* ResponseAction::log_ptr_ = NULL;
 
 //------------------------------------------------------------
 // Function:  ResponseAction
@@ -49,8 +50,9 @@ int ResponseAction::dtc_flag = 0;
 // Out:     None.
 // Return:  None. 
 //------------------------------------------------------------
-ResponseAction::ResponseAction()
+ResponseAction::ResponseAction(fst_log::Logger *logger)
 {
+    log_ptr_ = logger;
 }
 
 //------------------------------------------------------------
@@ -143,7 +145,7 @@ void ResponseAction::clearDtcFlag(void)
 //------------------------------------------------------------
 int ResponseAction::versionInfo(const ServiceResponse *resp)
 {
-    printf("CORE1 Version:\n%s\n", (*resp).res_buff);
+    FST_INFO("CORE1 Version:%s", (*resp).res_buff);
     return true;
 }
 
@@ -158,12 +160,13 @@ int ResponseAction::heartbeatResponse(const ServiceResponse *resp)
 {  
     if((*resp).res_buff[0] !=0)
     {
-        std::cout<<"New Diagnostice infomation!"<<std::endl;
+        FST_INFO("New Diagnostice infomation!");
         dtc_flag = 1;
     }
     if ((*resp).res_buff[1] == 1)
     {
-        std::cout << &((*resp).res_buff[2])<<std::endl;
+        FST_INFO(&((*resp).res_buff[2]));
+        //std::cout << &((*resp).res_buff[2])<<std::endl;
     }
     
     return true;
@@ -182,12 +185,12 @@ int ResponseAction::dtcResponse(const ServiceResponse *resp)
     const char *buf;
     if (size > 0)
     {
-        std::cout<<size<<" Diagnostice infomation(s)!"<<std::endl;
+        FST_ERROR("%d Diagnostice infomation(s)!",size);
     }
     for (unsigned int i = 0; i < size; ++i)
     {
         buf = &(*resp).res_buff[8 + i*8];
-        printf(": %02X%02X%02X%02X%02X%02X%02X%02X \n", (unsigned char)buf[7], (unsigned char)buf[6], (unsigned char)buf[5], (unsigned char)buf[4], (unsigned char)buf[3], (unsigned char)buf[2], (unsigned char)buf[1], (unsigned char)buf[0]);
+        FST_ERROR(": %02X%02X%02X%02X%02X%02X%02X%02X ", (unsigned char)buf[7], (unsigned char)buf[6], (unsigned char)buf[5], (unsigned char)buf[4], (unsigned char)buf[3], (unsigned char)buf[2], (unsigned char)buf[1], (unsigned char)buf[0]);
     }
     return true;
 }

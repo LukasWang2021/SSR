@@ -10,6 +10,7 @@ Summary:    The actions according to corresponding service id.
 #define MIDDLEWARE_TO_MEM_RESPONSE_ACTIONS_H_
 
 #include "struct_to_mem/struct_service_response.h"
+#include "common_log.h"
 
 #define CREATE_SERVICE_ITEM(sid, service_fun) {((int)sid), (fst_response_action::ResponseAction::service_fun)}
 
@@ -50,7 +51,7 @@ public:
     // Out:     None.
     // Return:  None. 
     //------------------------------------------------------------
-    ResponseAction();
+    ResponseAction(fst_log::Logger *logger);
 
     //------------------------------------------------------------
     // Function:  ~ResponseAction
@@ -133,7 +134,8 @@ public:
     static const int service_table[SERVICE_TABLE_LEN];
 
 private:
-
+    
+    static fst_log::Logger* log_ptr_;
     // To mark whether there is error code in BARE CORE.
     static int dtc_flag;
 };

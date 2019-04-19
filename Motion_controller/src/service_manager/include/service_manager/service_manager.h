@@ -17,7 +17,7 @@ Summary:    dealing with service
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
 #include "service_actions/response_actions.h"
-
+#include "common_log.h"
 
 namespace fst_service_manager
 {
@@ -258,6 +258,9 @@ public:
     //------------------------------------------------------------
     void runLoop(void);
 
+    void setExit(void);
+    bool isExit(void);
+
     // The max number of loops to send heartbeat request to BARE CORE.
     static const int HEARTBEAT_INTERVAL_CORE = 100; // 1ms * 100.
 
@@ -280,6 +283,11 @@ public:
 
     static const int BYTE_LEN = 8;
 private:
+     
+    fst_log::Logger* log_ptr_;
+    fst_response_action::ResponseAction* response_action_ptr_;
+
+    bool is_exit_;
 
     // Used to manipulate shared memory of cores.
     int handle_core_;
@@ -321,7 +329,7 @@ private:
     std::vector<ErrorCode> error_fifo_;
 
     // Used to respond local services from BARE CORE.
-    fst_response_action::ResponseAction response_action_;
+    //fst_response_action::ResponseAction response_action_;
 };
 } //namespace fst_service_manager
 

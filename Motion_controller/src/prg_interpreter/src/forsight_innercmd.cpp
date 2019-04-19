@@ -844,7 +844,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	    FST_INFO("value.getType() == TYPE_POSE in MovJ");
 	//	serror(objThreadCntrolBlock, 16);
 	//	find_eol(objThreadCntrolBlock);
-    	return 0;
+    //	return 0;
 	}
 	else if(value.getType() == TYPE_JOINT)
 	{
@@ -853,7 +853,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
 		
-	    FST_INFO("Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
+	    FST_INFO("Forward movej to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
 #ifndef WIN32
 			instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
 			instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
@@ -890,7 +890,8 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture.wrist = value.getPrRegDataValue().value.posture[2];
 		instr.target.target.pose.posture.flip  = value.getPrRegDataValue().value.posture[3];
 		
-	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
+	    FST_INFO("TYPE_PR: Forward movej to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ", 
+			value.getPrRegDataValue().value.pos_type, 
 			instr.target.target.joint.j1_, instr.target.target.joint.j2_, 
 			instr.target.target.joint.j3_, instr.target.target.joint.j4_, 
 			instr.target.target.joint.j5_, instr.target.target.joint.j6_);
@@ -1151,12 +1152,12 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture = value.getPosture();
 		
 #ifndef WIN32
-	    FST_INFO("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
+	    FST_INFO("Forward movel to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
 			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
 			instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
 			instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
 #else
-	    FST_INFO("Forward move to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
+	    FST_INFO("Forward movel to POSE:(%f, %f, %f, %f, %f, %f) in MovL", 
 			instr.target.target.pose.pose.position.x, instr.target.target.pose.pose.position.y, 
 			instr.target.target.pose.pose.position.z, instr.target.target.pose.pose.orientation.a, 
 			instr.target.target.pose.pose.orientation.b, instr.target.target.pose.pose.orientation.c);
@@ -1195,7 +1196,8 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
 		instr.target.target.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
 		instr.target.target.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
-	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ",
+	    FST_INFO("TYPE_PR: Forward movel to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ",
+			value.getPrRegDataValue().value.pos_type, 
 			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
 			instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
 			instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);
@@ -1474,7 +1476,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.via.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
 		instr.target.via.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
 		instr.target.via.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
-	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ",
+	    FST_INFO("TYPE_PR: Forward movec via to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ",
+			value.getPrRegDataValue().value.pos_type, 
 			instr.target.via.pose.pose.point_.x_, instr.target.via.pose.pose.point_.y_, 
 			instr.target.via.pose.pose.point_.z_, instr.target.via.pose.pose.euler_.a_, 
 			instr.target.via.pose.pose.euler_.b_, instr.target.via.pose.pose.euler_.c_);
@@ -1587,7 +1590,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
 		instr.target.target.pose.posture.wrist     = value.getPrRegDataValue().value.posture[2];
 		instr.target.target.pose.posture.flip      = value.getPrRegDataValue().value.posture[3];
-	    FST_INFO("TYPE_PR: Forward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ",
+	    FST_INFO("TYPE_PR: Forward movec target to TYPE_PR:(%d)(%f, %f, %f, %f, %f, %f) in MovJ",
+			value.getPrRegDataValue().value.pos_type, 
 			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
 			instr.target.target.pose.pose.point_.z_, instr.target.target.pose.pose.euler_.a_, 
 			instr.target.target.pose.pose.euler_.b_, instr.target.target.pose.pose.euler_.c_);

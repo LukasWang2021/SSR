@@ -178,15 +178,7 @@ ErrorCode DynamicAlgRTM::getAccDirectDynamics(const Joint joint, const JointVelo
     }
 
     double C[LINKS][LINKS] = {0};
-// //time start
-//     struct timeval t_start, t_end;
-//     long cost_time = 0;
-//     gettimeofday(&t_start, NULL);
-    computeCExpression(joint, vel, C);//3-4ms
-// //time end
-//     gettimeofday(&t_end, NULL);
-//     cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);
-//     printf("C_time = %d us\n", cost_time);
+    computeCExpression(joint, vel, C);//2-3ms
 
     double g[LINKS] = {0};
     computeGExpression(joint, g);//70us

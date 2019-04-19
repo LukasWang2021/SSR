@@ -45,9 +45,16 @@ private:
     void computeMatrixElementInverseDynamics(const Joint joint, const JointVelocity vel, const JointAcceleration acc);
     
     int sign(double value);
+    //matrix inverse alg
     bool getMatrixInverse(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS]);
     double getMatrixRank(const double src[LINKS][LINKS], int n);
     void getAdjointMatrix(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS]);
+
+    //matrix LU alg
+    bool getMatrixLUInverse(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS]);
+    bool matrixLUPDecomposition(double A[LINKS*LINKS], double L[LINKS*LINKS], double U[LINKS*LINKS], int P[LINKS]);
+    bool matrixLUPSolve(const double L[LINKS*LINKS], const double U[LINKS*LINKS], const int P[LINKS], const double b[LINKS], double inv_A_column[LINKS]);
+    bool matrixTranspose(double matrix[LINKS*LINKS], int m, int n);
 
     DH base_dh_;
     DH arm_dh_[6];

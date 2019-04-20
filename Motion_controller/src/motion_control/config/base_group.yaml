@@ -52,7 +52,7 @@ manual:
 joint_tracking_accuracy: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
 
 calibrator:
-    normal_offset_threshold: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    normal_offset_threshold: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
     lost_offset_threshold: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
 

@@ -66,6 +66,7 @@ public:
     ErrorCode checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT]);
     ErrorCode maskOffsetLostError(void);
     ErrorCode setOffsetState(size_t index, OffsetState stat);
+    void getOffsetState(OffsetState (&offset_stat)[NUM_OF_JOINT]);
 
     ErrorCode calibrateOffset(void);
     ErrorCode calibrateOffset(size_t index);

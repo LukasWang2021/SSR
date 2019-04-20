@@ -98,6 +98,39 @@ void test1(void)
     //printf("joint output = %.9f, %.9f, %.9f, %.9f, %.9f, %.9f\n", res[0], res[1], res[2], res[3], res[4], res[5]);
 }
 
+void test3(void)
+{
+    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    Posture posture;
+    posture.arm = 1;
+    posture.elbow = 1;
+    posture.wrist = 1;
+    posture.flip = 0;
+
+    PoseEuler p1;
+    p1.point_.x_ = 452.9034;
+    p1.point_.y_ = 20.5927;
+    p1.point_.z_ = 482.9139;
+    p1.euler_.a_ = 1.6152;
+    p1.euler_.b_ = 0.0001;
+    p1.euler_.c_ = -3.0414;
+
+    PoseEuler p2;
+    p2.point_.x_ = 452.9034;
+    p2.point_.y_ = 20.5122;
+    p2.point_.z_ = 482.9139;
+    p2.euler_.a_ = 1.6152;
+    p2.euler_.b_ = 0.0001;
+    p2.euler_.c_ = -3.0414;
+
+    Joint j1, j2;
+    kinematics.doIK(p1, posture, j1);
+    kinematics.doIK(p2, posture, j2);
+
+    j1.print("j1:");
+    j2.print("j2:");
+}
+
 static bool g_thread_running = false;
 
 static void rtTask(void *group)
@@ -166,7 +199,7 @@ void test2(void)
     nrt_thread.join();
     sleep(1);
 }
-
+/*
 void test3(void)
 {
     Logger log;
@@ -185,7 +218,7 @@ void test3(void)
     arm.resetGroup();
     usleep(100 * 1000);
 
-    /*
+    
     MotionTarget target;
     target.type = MOTION_JOINT;
     target.vel = 0.5;
@@ -225,10 +258,11 @@ void test3(void)
         cout << "not permitted" << endl;
         usleep(100 * 1000);
     }
-    */
+    
 
     sleep(5);
 }
+*/
 
 void test4(void)
 {
@@ -466,10 +500,10 @@ void test9(void)
 
 int main(int argc, char **argv)
 {
-    test0();
+    //test0();
     //test1();
     //test2();
-    //test3();
+    test3();
     //test4();
     //test5();
     //test6();

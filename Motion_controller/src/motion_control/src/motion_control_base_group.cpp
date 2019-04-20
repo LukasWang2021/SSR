@@ -2433,7 +2433,7 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
     double *angle_ptr, *start_ptr, *target_ptr;
     double tm, omega;
     
-    // FST_INFO("Pick from manual joint, manual-time = %.4f", manual_time_);
+    //FST_INFO("Pick from manual joint, manual-time = %.4f", manual_time_);
 
     for (size_t i = 0 ; i < length; i++)
     {
@@ -2507,16 +2507,18 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
 {
     ErrorCode err = SUCCESS;
     PoseEuler pose, tcp_in_base, fcp_in_base;
-    Joint ref_joint;
+    //Joint ref_joint;
     double tim, vel;
     double *axis_ptr, *start_ptr, *target_ptr;
     size_t picked_num = 0;
     
-    // FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
+    //FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
+    Posture posture = kinematics_ptr_->getPostureByJoint(getLatestJoint());
+    FST_INFO("posture: %d,%d,%d,%d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+    //ref_joint = getLatestJoint();
 
     for (size_t i = 0; i < length; i++)
     {
-        ref_joint = getLatestJoint();
         points[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
         memset(&points[i].omega, 0, sizeof(Joint));
         memset(&points[i].alpha, 0, sizeof(Joint));
@@ -2572,21 +2574,21 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         {
             case BASE:
                 transformation_.convertTcpToFcp(pose, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, ref_joint, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
             case USER:
                 transformation_.convertPoseFromUserToBase(pose, user_frame_, tcp_in_base);
                 transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, ref_joint, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
             case WORLD:
                 transformation_.convertPoseFromUserToBase(pose, world_frame_, tcp_in_base);
                 transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, ref_joint, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
             case TOOL:
                 transformation_.convertPoseFromToolToBase(pose, manual_traj_.tool_coordinate, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, ref_joint, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
             case JOINT:
             default:
@@ -2613,7 +2615,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             FST_ERROR("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
             FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
             FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-            FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
+            //FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
             break;
         }
 
@@ -2636,7 +2638,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             FST_ERROR("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
             FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
             FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-            FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
+            //FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
@@ -2644,12 +2646,13 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             break;
         }
 
-        //char buffer[LOG_TEXT_SIZE];
+        char buffer[LOG_TEXT_SIZE];
         //FST_INFO("  >> pose : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
         //FST_INFO("  >> tf : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-        //FST_INFO("  >> fcp_in_base : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-        //FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("  >> fcp_in_base : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
+        FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
         picked_num ++;
+        //ref_joint = points[i].angle;
 
         if (manual_time_ >= manual_traj_.duration)
         {
@@ -2658,6 +2661,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         }
     }
 
+    //FST_INFO("Pick from manual cartesian, %d picked", picked_num);
     length = picked_num;
     return err;
 }

@@ -600,6 +600,11 @@ ErrorCode MotionControl::maskOffsetLostError(void)
     }
 }
 
+void MotionControl::getOffsetState(OffsetState (&offset_stat)[NUM_OF_JOINT])
+{
+    //TODO
+}
+
 ErrorCode MotionControl::setOffsetState(size_t index, OffsetState stat)
 {
     return group_ptr_->getCalibratorPtr()->setOffsetState(index, stat);

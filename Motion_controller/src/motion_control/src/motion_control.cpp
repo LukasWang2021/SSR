@@ -541,6 +541,11 @@ ErrorCode MotionControl::saveJoint(void)
 
 ErrorCode MotionControl::saveOffset(void)
 {
+    if (group_ptr_->getGroupState() != DISABLE || group_ptr_->getServoState() != SERVO_DISABLE)
+    {
+        return INVALID_SEQUENCE;
+    }
+    
     ErrorCode err = group_ptr_->getCalibratorPtr()->saveOffset();
 
     if (err == SUCCESS)
@@ -569,11 +574,21 @@ ErrorCode MotionControl::saveOffset(void)
 
 ErrorCode MotionControl::checkOffset(CalibrateState &cali_stat, OffsetState (&offset_stat)[NUM_OF_JOINT])
 {
+    if (group_ptr_->getGroupState() != DISABLE || group_ptr_->getServoState() != SERVO_DISABLE)
+    {
+        return INVALID_SEQUENCE;
+    }
+
     return group_ptr_->getCalibratorPtr()->checkOffset(cali_stat, offset_stat);
 }
 
 ErrorCode MotionControl::maskOffsetLostError(void)
 {
+    if (group_ptr_->getGroupState() != DISABLE || group_ptr_->getServoState() != SERVO_DISABLE)
+    {
+        return INVALID_SEQUENCE;
+    }
+
     ErrorCode err = group_ptr_->getCalibratorPtr()->maskOffsetLostError();
 
     if (err == SUCCESS)
@@ -602,26 +617,46 @@ ErrorCode MotionControl::maskOffsetLostError(void)
 
 void MotionControl::getOffsetState(OffsetState (&offset_stat)[NUM_OF_JOINT])
 {
-    //TODO
+    return group_ptr_->getCalibratorPtr()->getOffsetState(offset_stat);
 }
 
 ErrorCode MotionControl::setOffsetState(size_t index, OffsetState stat)
 {
+    if (group_ptr_->getGroupState() != DISABLE || group_ptr_->getServoState() != SERVO_DISABLE)
+    {
+        return INVALID_SEQUENCE;
+    }
+
     return group_ptr_->getCalibratorPtr()->setOffsetState(index, stat);
 }
 
 ErrorCode MotionControl::calibrateOffset(void)
 {
+    if (group_ptr_->getGroupState() != DISABLE || group_ptr_->getServoState() != SERVO_DISABLE)
+    {
+        return INVALID_SEQUENCE;
+    }
+
     return group_ptr_->getCalibratorPtr()->calibrateOffset();
 }
 
 ErrorCode MotionControl::calibrateOffset(size_t index)
 {
+    if (group_ptr_->getGroupState() != DISABLE || group_ptr_->getServoState() != SERVO_DISABLE)
+    {
+        return INVALID_SEQUENCE;
+    }
+
     return group_ptr_->getCalibratorPtr()->calibrateOffset(index);
 }
 
 ErrorCode MotionControl::calibrateOffset(const size_t *pindex, size_t length)
 {
+    if (group_ptr_->getGroupState() != DISABLE || group_ptr_->getServoState() != SERVO_DISABLE)
+    {
+        return INVALID_SEQUENCE;
+    }
+
     return group_ptr_->getCalibratorPtr()->calibrateOffset(pindex, length);
 }
 

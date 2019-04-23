@@ -17,6 +17,7 @@ Summary:    dealing with service
 #include <iostream>
 
 using namespace fst_service_manager;
+using namespace fst_mc;
 
 //------------------------------------------------------------
 // Function:  addBareCoreRequest
@@ -106,12 +107,12 @@ bool ServiceManager::fillLocalHeartbeat(void)
             ErrorCode error = error_fifo_[0];
             memcpy(&(heartbeat_local_resp_.res_buff[8 + i*8]), &error, sizeof(error));
             deleteFirstElement(&error_fifo_);
-            FST_INFO("local heartbeat:id = %d, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X", 
-                      heartbeat_local_resp_.res_id, 
-                      (unsigned char)heartbeat_local_resp_.res_buff[7+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[6+8+ i*8],
-                      (unsigned char)heartbeat_local_resp_.res_buff[5+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[4+8+ i*8],
-                      (unsigned char)heartbeat_local_resp_.res_buff[3+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[2+8+ i*8],
-                      (unsigned char)heartbeat_local_resp_.res_buff[1+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[0+8+ i*8]);
+            //FST_INFO("local heartbeat:id = 0x%X, %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X", 
+            //          heartbeat_local_resp_.res_id, 
+            //          (unsigned char)heartbeat_local_resp_.res_buff[7+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[6+8+ i*8],
+            //          (unsigned char)heartbeat_local_resp_.res_buff[5+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[4+8+ i*8],
+            //          (unsigned char)heartbeat_local_resp_.res_buff[3+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[2+8+ i*8],
+            //          (unsigned char)heartbeat_local_resp_.res_buff[1+8+ i*8],(unsigned char)heartbeat_local_resp_.res_buff[0+8+ i*8]);
         }
     } else if (size == 0)
     {

@@ -15,7 +15,7 @@ Summary:    dealing with service
 #include "comm_interface/comm_interface.h"
 #include "struct_to_mem/struct_service_request.h"
 #include "struct_to_mem/struct_service_response.h"
-#include "service_actions/response_actions.h"
+#include "common_enum.h"
 #include "error_code.h"
 #include "common_log.h"
 #include "service_manager_param.h"
@@ -87,20 +87,8 @@ public:
     void setExit(void);
     bool isExit(void);
 
-    // The max number of loops to send heartbeat request to BARE CORE.
-    //static const int HEARTBEAT_INTERVAL_CORE = 100; // 1ms * 100.
-
-    // The attempt number to communicate with barecore.
-    //static const int HEARTBEAT_CORE_TIMEOUT_COUNT = 5;
-
-    // The attempt time to send response to other processes.
-    //static const int SEND_RESP_ATTEMPTS = 10;
-
     // The converting number from second to microsecond.
     static const unsigned int SEC_TO_USEC = 1000000;  
-
-    // The cycle time of the main loop. Then unit is usec.
-    //static const unsigned int LOOP_TIME = 1000;
 
 private:
      
@@ -129,10 +117,9 @@ private:
 
     // Used to communicate with other processes.
     fst_comm_interface::CommInterface comm_mcs_;
-    fst_comm_interface::CommInterface comm_param_;//todo delete
     fst_comm_interface::CommInterface comm_controller_heartbeat_;
-    fst_comm_interface::CommInterface comm_test_;
     fst_comm_interface::CommInterface comm_servo_diag_;
+    fst_comm_interface::CommInterface comm_param_;//todo delete
 
     // The heartbeat request to BARE CORE.
     ServiceRequest heartbeat_core_req_;

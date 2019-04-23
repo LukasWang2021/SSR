@@ -18,6 +18,7 @@ Summary:    dealing with service
 
 
 using namespace fst_service_manager;
+using namespace fst_mc;
 
 ServiceManager::ServiceManager():
     log_ptr_(NULL),
@@ -77,7 +78,7 @@ ErrorCode ServiceManager::init(void)
         return CREATE_CHANNEL_FAIL;
     }
     // Establish the communication channel with servo_diag processes.
-    result = comm_test_.createChannel(COMM_REP, COMM_IPC, "test");//to change name "servo_diag"->servo_diag.cpp
+    result = comm_servo_diag_.createChannel(COMM_REP, COMM_IPC, "servo_diag");
     if (result == CREATE_CHANNEL_FAIL)
     {
         FST_ERROR("Error in ServiceManager::init(): fail to create servo_diag channel.");
@@ -128,10 +129,9 @@ bool ServiceManager::receiveRequest(void)
     ServiceRequest request;
     //receive service request from the motion_control processes.
     ErrorCode result = comm_mcs_.recv(&request, sizeof(request), COMM_DONTWAIT);
-    if (result == 0)
+    if (result == SUCCESS)
     {
         FST_INFO("recv controller request success with 0x%X, buff[0-3] = 0x%X", request.req_id, request.req_buff[0]);
-        //push the request into fifo.
         if (addRequest(request)) 
         {
             channel_flag_ = MCS_CHANNEL;
@@ -140,10 +140,9 @@ bool ServiceManager::receiveRequest(void)
     }
     //receive service request from the controller heartbeat processes.
     result = comm_controller_heartbeat_.recv(&request, sizeof(request), COMM_DONTWAIT);
-    if (result == 0)
+    if (result == SUCCESS)
     {
         //printf("recv controller heartbeat success with 0x%X\n", request.req_id);
-        //push the request into fifo.
         if (addRequest(request)) 
         {
             channel_flag_ = CONTROLLER_HEARTBEAT_CHANNEL;
@@ -151,11 +150,10 @@ bool ServiceManager::receiveRequest(void)
         }
     }
     //receive service request from the servo_diag processes.
-    result = comm_test_.recv(&request, sizeof(request), COMM_DONTWAIT);
-    if (result == 0)
+    result = comm_servo_diag_.recv(&request, sizeof(request), COMM_DONTWAIT);
+    if (result == SUCCESS)
     {
-        FST_INFO("recv servo_diag success with 0x%X", request.req_id);
-        //push the request into fifo.
+        //FST_INFO("recv servo_diag success with 0x%X", request.req_id);
         if (addRequest(request)) 
         {
             channel_flag_ = SERVO_DIAG_CHANNEL;
@@ -165,10 +163,9 @@ bool ServiceManager::receiveRequest(void)
 
     //todo delete
     result = comm_param_.recv(&request, sizeof(request), COMM_DONTWAIT);
-    if (result == 0)
+    if (result == SUCCESS)
     {
-        FST_INFO("recv unkonw servoparam success with 0x%X", request.req_id);
-        //push the request into fifo.
+        FST_INFO("---------------recv unkonw servoparam success with 0x%X------------", request.req_id);
         if (addRequest(request)) 
         {
             channel_flag_ = PARAM_CHANNEL;
@@ -262,7 +259,7 @@ bool ServiceManager::manageResponse(void)
             transmitResponse(comm_controller_heartbeat_);
             break;
         case SERVO_DIAG_CHANNEL:
-            transmitResponse(comm_test_);
+            transmitResponse(comm_servo_diag_);
             break;
         case PARAM_CHANNEL://todo delete
             transmitResponse(comm_param_);

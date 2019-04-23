@@ -46,7 +46,7 @@ void ServoDiag::servoDiagThread(Servconf *servconf,
 
         
     ServoCommand_Pkg_t pkg;
-    ServoService::initComm("test");
+    ServoService::initComm("servo_diag");
     while(comm_.recv(&pkg, sizeof(pkg), COMM_WAIT)!=RECV_MSG_FAIL)
     {
         switch(pkg.id)
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
     DataMonitor* pmonitor = new DataMonitor(ip,ServoDiag::DATAMONITOR_PORT);
     pmonitor->initDataMonitor();
     ServoService* pservice = new ServoService();
-    pservice->initComm("test");
+    pservice->initComm("servo_diag");
     
     if (1 == argc)
     {

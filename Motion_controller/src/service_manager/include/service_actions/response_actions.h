@@ -12,6 +12,7 @@ Summary:    The actions according to corresponding service id.
 #include "struct_to_mem/struct_service_response.h"
 
 //Bellow add the sevice id number.
+/*
 enum ServiceID
 {
     JTAC_CMD_SID = 0x01,
@@ -27,5 +28,5 @@ enum ServiceID
     MONITOR_HEARTBEAT_SID = 0xA1,
 
 };
-
+*/
 #endif  

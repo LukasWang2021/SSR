@@ -40,7 +40,7 @@ public:
 
     ~ServiceManager();
 
-    ErrorCode init(void);
+    bool init(void);
 
     //------------------------------------------------------------
     // Function:  receiveRequest
@@ -61,7 +61,7 @@ public:
     // Return:  0 -> success to send a request and receive a response.
     //          BARE_CORE_TIMEOUT -> timeout. 
     //------------------------------------------------------------
-    ErrorCode interactBareCore(void);
+    bool interactBareCore(void);
 
     //------------------------------------------------------------
     // Function:  manageResponse

@@ -46,15 +46,15 @@ ServiceManager::~ServiceManager()
     }
 }
 
-ErrorCode ServiceManager::init(void)
+bool ServiceManager::init(void)
 {
     handle_core_ = openMem(MEM_CORE);
-    if (handle_core_ == -1) return OPEN_CORE_MEM_FAIL;
+    if (handle_core_ == -1) return false;
     clearSharedmem(MEM_CORE);
 
     if(!param_ptr_->loadParam()){
         FST_ERROR("Failed to load service_manager component parameters");
-        return 1;
+        return false;
     }else{
         FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
         FST_INFO("Success to load service_manager component parameters");
@@ -69,21 +69,21 @@ ErrorCode ServiceManager::init(void)
     if (result == CREATE_CHANNEL_FAIL)
     {
         FST_ERROR("Error in ServiceManager::init(): fail to create mcs channel.");
-        return CREATE_CHANNEL_FAIL;
+        return false;
     }
     // Establish the communication channel with controller heartbeat processes.
     result = comm_controller_heartbeat_.createChannel(COMM_REP, COMM_IPC, "heartbeat");
     if (result == CREATE_CHANNEL_FAIL)
     {
         FST_ERROR("Error in ServiceManager::init(): fail to create controller heartBeat channel.");
-        return CREATE_CHANNEL_FAIL;
+        return false;
     }
     // Establish the communication channel with servo_diag processes.
     result = comm_servo_diag_.createChannel(COMM_REP, COMM_IPC, "servo_diag");
     if (result == CREATE_CHANNEL_FAIL)
     {
         FST_ERROR("Error in ServiceManager::init(): fail to create servo_diag channel.");
-        return CREATE_CHANNEL_FAIL;
+        return false;
     }
     
     //not used. todo delete
@@ -91,7 +91,7 @@ ErrorCode ServiceManager::init(void)
     if (result == CREATE_CHANNEL_FAIL)
     {
         FST_ERROR("Error in ServiceManager::init(): fail to create servo param channel.");
-        return CREATE_CHANNEL_FAIL;
+        return false;
     }
     
     // Init the heartbeat_info request
@@ -107,7 +107,7 @@ ErrorCode ServiceManager::init(void)
 
     channel_flag_ = LOCAL_CHANNEL;
     
-    return SUCCESS;
+    return true;
 }
 
 //------------------------------------------------------------
@@ -194,13 +194,13 @@ bool ServiceManager::receiveRequest(void)
 // Return:  0 -> success to send a request and receive a response.
 //          BARE_CORE_TIMEOUT -> timeout. 
 //------------------------------------------------------------
-ErrorCode ServiceManager::interactBareCore(void)
+bool ServiceManager::interactBareCore(void)
 {
     if (request_fifo_.empty())
-        return SUCCESS;  
+        return true;  
 
     if (!response_fifo_.empty())
-        return SUCCESS;
+        return true;
 
     ServiceRequest request = request_fifo_[0];
     int req_result = false;
@@ -226,10 +226,10 @@ ErrorCode ServiceManager::interactBareCore(void)
             FST_ERROR("interactBareCore: handle request(0x%x), send result = %d, receive result = %d", request.req_id, req_result, res_result);
             ErrorCode timeout_error = BARE_CORE_TIMEOUT;
             storeError(timeout_error);
-            return BARE_CORE_TIMEOUT;
+            return false;
         }
     }
-    return FST_SUCCESS;
+    return true;
 }
 
 
@@ -308,8 +308,8 @@ void serviceManagerOnExit(int dunno)
 int main(int argc, char** argv)
 {
     fst_service_manager::ServiceManager* service_manager_ptr= new fst_service_manager::ServiceManager();
-    ErrorCode ret = service_manager_ptr->init();
-    if (ret != 0) 
+    bool ret = service_manager_ptr->init();
+    if (ret == false) 
         return false;
 
     g_service_manager_ptr_ = service_manager_ptr;

@@ -54,6 +54,7 @@ ErrorCode ServiceManager::init(void)
 
     if(!param_ptr_->loadParam()){
         FST_ERROR("Failed to load service_manager component parameters");
+        return 1;
     }else{
         FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
         FST_INFO("Success to load service_manager component parameters");

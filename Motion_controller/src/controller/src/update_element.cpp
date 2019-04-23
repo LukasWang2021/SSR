@@ -73,6 +73,7 @@ void ControllerPublish::updateAxisGroupTcpCurrentCartesian()
     motion_control_ptr_->getToolFrame(tool_frame_id);
 
     motion_control_ptr_->convertJointToCart(joint_feedback, user_frame_id, tool_frame_id, pose);
+
     tcp_current_cartesian_.data1.data = 1;
     tcp_current_cartesian_.data2.data_count = 6;
     tcp_current_cartesian_.data2.data[0] = pose.point_.x_;

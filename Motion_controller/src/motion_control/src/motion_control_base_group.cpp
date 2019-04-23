@@ -1299,7 +1299,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
         else
         {
             FST_ERROR("Cannot get control position from bare core.");
-            return BARE_CORE_TIMEOUT;
+            return MC_COMMUNICATION_WITH_BARECORE_FAIL;
         }
     }
 
@@ -2268,7 +2268,7 @@ ErrorCode BaseGroup::moveOffLineTrajectory(int id, const string &file_name)
         else
         {
             FST_ERROR("Cannot get control position from bare core.");
-            return BARE_CORE_TIMEOUT;
+            return MC_COMMUNICATION_WITH_BARECORE_FAIL;
         }
     }
     else
@@ -2342,7 +2342,7 @@ ErrorCode BaseGroup::getServoVersion(std::string &version)
     else
     {
         version.clear();
-        return BARE_CORE_TIMEOUT;
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
 }
 
@@ -2964,7 +2964,7 @@ void BaseGroup::doStateMachine(void)
             if (pause_return_to_standby_cnt > auto_to_standby_timeout_)
             {
                 FST_ERROR("Auto to standby timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3103,7 +3103,7 @@ void BaseGroup::doStateMachine(void)
             if (auto_to_standby_cnt > auto_to_standby_timeout_)
             {
                 FST_ERROR("Auto to standby timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3131,7 +3131,7 @@ void BaseGroup::doStateMachine(void)
             if (manual_to_standby_cnt > manual_to_standby_timeout_)
             {
                 FST_ERROR("Manual to standby timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3164,7 +3164,7 @@ void BaseGroup::doStateMachine(void)
             if (auto_to_pause_cnt > auto_to_pause_timeout_)
             {
                 FST_ERROR("Auto to pause timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3450,6 +3450,7 @@ void BaseGroup::updateServoStateAndJoint(void)
         servo_state_ = barecore_state;
         servo_joint_ = barecore_joint;
         pthread_mutex_unlock(&servo_mutex_);
+        fail_cnt = 0;
     }
     else
     {
@@ -3457,7 +3458,7 @@ void BaseGroup::updateServoStateAndJoint(void)
         {
             fail_cnt = 0;
             FST_ERROR("Fail to update joint and state from bare core.");
-            reportError(BARE_CORE_TIMEOUT);
+            reportError(MC_COMMUNICATION_WITH_BARECORE_FAIL);
             error_request_ = true;
         }
     }
@@ -3497,7 +3498,7 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         }
     }
 
-    return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+    return bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
 }
 
 ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length)
@@ -3559,7 +3560,7 @@ ErrorCode BaseGroup::sendManualTrajectoryFlow(void)
         bare_core_.fillPointCache(points, length, POINT_POS);
     }
 
-    return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+    return bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
 }
 
 void BaseGroup::sendTrajectoryFlow(void)
@@ -3587,7 +3588,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
-            err = bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+            err = bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
         }
     }
 
@@ -3597,7 +3598,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     }
     else
     {
-        if (err == BARE_CORE_TIMEOUT)
+        if (err == MC_COMMUNICATION_WITH_BARECORE_FAIL)
         {
             error_cnt ++;
 
@@ -3605,7 +3606,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             {
                 error_cnt = 0;
                 error_request_ = true;
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_COMMUNICATION_WITH_BARECORE_FAIL);
                 FST_ERROR("sendTrajectoryFlow: bare core time-out.");
             }
         }

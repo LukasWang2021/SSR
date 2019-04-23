@@ -855,15 +855,14 @@ void ControllerRpc::handleRpc0x000102F3(void* request_data_ptr, void* response_d
     //RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
     ResponseMessageType_Uint64_Int32List* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32List*>(response_data_ptr);
 
-    CalibrateState dummy;
     OffsetState offset_state[NUM_OF_JOINT];
-    rs_data_ptr->error_code.data = motion_control_ptr_->checkOffset(dummy, offset_state);   
+    motion_control_ptr_->getOffsetState(offset_state);  
     rs_data_ptr->data.data_count = NUM_OF_JOINT;
     for(int i=0; i<NUM_OF_JOINT; ++i)
     {
         rs_data_ptr->data.data[i] = (int32_t)offset_state[i];
     }
-
+    rs_data_ptr->error_code.data = SUCCESS;
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/getAllZeroPointStatus"));
 }
 

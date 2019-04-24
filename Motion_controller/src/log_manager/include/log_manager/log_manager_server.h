@@ -54,8 +54,8 @@ int initLogSpace(void);
 int initShareMemory(void);
 int initServerLog(void);
 
-bool lockFile(std::string &file);
-bool unlockFile(std::string &file);
+//bool lockFile(std::string &file);
+//bool unlockFile(std::string &file);
 
 void public_thread(void);
 void receive_thread(void);

@@ -847,6 +847,7 @@ int initServerLog(void)
     }
 }
 
+/*
 bool lockFile(string &file)
 {
     string cmd;
@@ -900,6 +901,7 @@ bool unlockFile(string &file)
         return false;
     }
 }
+*/
 
 int main(int argc, char **argv)
 {

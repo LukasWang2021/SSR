@@ -11,6 +11,7 @@ Summary:    dealing with IO module
 #define IO_MANAGER_H_
 
 #include <vector>
+#include <mutex>
 #include "common_log.h"
 #include "io_manager_param.h"
 #include "base_device.h"
@@ -37,6 +38,11 @@ typedef union PhysicsID
     }info;
 }PhysicsID;
 
+typedef struct{
+    PhysicsID id;
+    int time;               //the unit is ms.
+}IOPulseInfo;
+
 
 class IoManager
 {
@@ -58,13 +64,13 @@ public:
     std::map<int, int> getIoBoardVersion(void);
 
     //------------------------------------------------------------
-    // Function:  ioManagerThreadFunc
+    // Function:  routineThreadFunc
     // Summary: thread to update the data of io board.
     // In:      None
     // Out:     None
     // Return:  None
     //------------------------------------------------------------
-    void ioManagerThreadFunc();
+    void routineThreadFunc();
 
     //------------------------------------------------------------
     // Function:  isRunning
@@ -94,6 +100,16 @@ public:
     // Return:  ErrorCode
     //------------------------------------------------------------
     ErrorCode setBitValue(PhysicsID phy_id, uint8_t value);
+
+    //------------------------------------------------------------
+    // Function:  setBitPulse
+    // Summary: set the value.
+    // In:      phy_id -> internal id.
+    //          time -> unit is second.
+    // Out:     None
+    // Return:  ErrorCode
+    //------------------------------------------------------------
+    ErrorCode setBitPulse(PhysicsID phy_id, double time);
 
     //------------------------------------------------------------
     // Function:  getIODeviceInfoList
@@ -162,8 +178,12 @@ private:
     ErrorCode setUiValue(PhysicsID phy_id, uint8_t value);
     ErrorCode setUoValue(PhysicsID phy_id, uint8_t value);
 
+    ErrorCode setDoPulse(PhysicsID phy_id, double time);
+    ErrorCode setRoPulse(PhysicsID phy_id, double time);
+
     BaseDevice* getDevicePtr(PhysicsID phy_id);
     ErrorCode updateIoDevicesData(void);
+    void handlePulse(void);
 
     ErrorCode getDiValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
     ErrorCode getDoValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
@@ -171,12 +191,14 @@ private:
 
     int cycle_time_;
     bool is_running_;
+    std::vector<IOPulseInfo> pulse_vec_;
+    std::mutex pulse_mutex_;//to lock pulse_vec_
 
     IoManagerParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     fst_hal::DeviceManager* device_manager_ptr_;
     std::vector<fst_hal::DeviceInfo> device_list_;
-    fst_base::ThreadHelp thread_ptr_;
+    fst_base::ThreadHelp thread_routine_ptr_;
 
 };
 } //namespace

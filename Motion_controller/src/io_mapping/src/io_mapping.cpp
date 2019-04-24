@@ -461,6 +461,63 @@ ErrorCode IoMapping::setUOByBit(uint32_t user_port, uint8_t value)
 	return IO_INVALID_PARAM_ID;
 }
 
+ErrorCode IoMapping::setDOPulse(uint32_t user_port, double time)
+{
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
+	/* make a string "DO[user_port]" */
+    char cTemp[16] = {};
+	sprintf(cTemp, "%s[%d]", "DO", user_port);
+
+	/* get physics ID by a map. */
+	string strKey;
+	strKey.assign(cTemp);
+
+	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		return io_manager_ptr_->setBitPulse(physics_id, time);
+	}
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
+
+	return IO_INVALID_PARAM_ID;
+}
+
+ErrorCode IoMapping::setROPulse(uint32_t user_port, double time)
+{
+	if (user_port > param_ptr_->max_mapping_number_)
+	{
+		return IO_INVALID_PARAM_ID;
+	}
+	// make a string "RO[user_port]"
+	char cTemp[16] = {};
+	sprintf(cTemp, "%s[%d]", "RO", user_port);
+
+	// get physics ID by a map.
+	string strKey;
+	strKey.assign(cTemp);
+
+	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+
+	if (iter != io_mapper_.end())
+	{
+		PhysicsID physics_id;
+		physics_id.number = iter->second;
+
+		return io_manager_ptr_->setBitPulse(physics_id, time);
+	}
+
+	FST_WARN("invalid strKey = %s\n", strKey.c_str());
+	return IO_INVALID_PARAM_ID;
+}
+
+
 bool IoMapping::isEnableInAutoMode(void)
 {
 	return param_ptr_->enable_set_io_in_auto_;

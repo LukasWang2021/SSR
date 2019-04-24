@@ -175,6 +175,19 @@ public:
 	//------------------------------------------------------------
     ErrorCode setUOByBit(uint32_t user_port, uint8_t value);
 
+    
+	//------------------------------------------------------------
+	// Function:    setDOPulse
+	// Summary: Set the output to the the port.
+	// In:      user_port  -> the port defined by the user.
+	//          time      -> unit is second.
+	// Out:     None.
+	// Return:  ErrorCode   -> error codes.
+	//------------------------------------------------------------
+    ErrorCode setDOPulse(uint32_t user_port, double time);
+
+	ErrorCode setROPulse(uint32_t user_port, double time);
+
 
 	//------------------------------------------------------------
 	// Function:    getIOPhysicsID

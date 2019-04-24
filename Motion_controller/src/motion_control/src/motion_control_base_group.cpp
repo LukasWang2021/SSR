@@ -1299,7 +1299,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
         else
         {
             FST_ERROR("Cannot get control position from bare core.");
-            return BARE_CORE_TIMEOUT;
+            return MC_COMMUNICATION_WITH_BARECORE_FAIL;
         }
     }
 
@@ -2268,7 +2268,7 @@ ErrorCode BaseGroup::moveOffLineTrajectory(int id, const string &file_name)
         else
         {
             FST_ERROR("Cannot get control position from bare core.");
-            return BARE_CORE_TIMEOUT;
+            return MC_COMMUNICATION_WITH_BARECORE_FAIL;
         }
     }
     else
@@ -2342,7 +2342,7 @@ ErrorCode BaseGroup::getServoVersion(std::string &version)
     else
     {
         version.clear();
-        return BARE_CORE_TIMEOUT;
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
 }
 
@@ -2514,7 +2514,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
     
     //FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
     Posture posture = kinematics_ptr_->getPostureByJoint(getLatestJoint());
-    FST_INFO("posture: %d,%d,%d,%d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+    //FST_INFO("posture: %d,%d,%d,%d", posture.arm, posture.elbow, posture.wrist, posture.flip);
     //ref_joint = getLatestJoint();
 
     for (size_t i = 0; i < length; i++)
@@ -2646,11 +2646,11 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             break;
         }
 
-        char buffer[LOG_TEXT_SIZE];
+        //char buffer[LOG_TEXT_SIZE];
         //FST_INFO("  >> pose : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
         //FST_INFO("  >> tf : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
-        FST_INFO("  >> fcp_in_base : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-        FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
+        //FST_INFO("  >> fcp_in_base : %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
+        //FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
         picked_num ++;
         //ref_joint = points[i].angle;
 
@@ -2964,7 +2964,7 @@ void BaseGroup::doStateMachine(void)
             if (pause_return_to_standby_cnt > auto_to_standby_timeout_)
             {
                 FST_ERROR("Auto to standby timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3103,7 +3103,7 @@ void BaseGroup::doStateMachine(void)
             if (auto_to_standby_cnt > auto_to_standby_timeout_)
             {
                 FST_ERROR("Auto to standby timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3131,7 +3131,7 @@ void BaseGroup::doStateMachine(void)
             if (manual_to_standby_cnt > manual_to_standby_timeout_)
             {
                 FST_ERROR("Manual to standby timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3164,7 +3164,7 @@ void BaseGroup::doStateMachine(void)
             if (auto_to_pause_cnt > auto_to_pause_timeout_)
             {
                 FST_ERROR("Auto to pause timeout, error-request asserted.");
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
             }
 
@@ -3450,6 +3450,7 @@ void BaseGroup::updateServoStateAndJoint(void)
         servo_state_ = barecore_state;
         servo_joint_ = barecore_joint;
         pthread_mutex_unlock(&servo_mutex_);
+        fail_cnt = 0;
     }
     else
     {
@@ -3457,7 +3458,7 @@ void BaseGroup::updateServoStateAndJoint(void)
         {
             fail_cnt = 0;
             FST_ERROR("Fail to update joint and state from bare core.");
-            reportError(BARE_CORE_TIMEOUT);
+            reportError(MC_COMMUNICATION_WITH_BARECORE_FAIL);
             error_request_ = true;
         }
     }
@@ -3497,7 +3498,7 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         }
     }
 
-    return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+    return bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
 }
 
 ErrorCode BaseGroup::pickPointsFromTrajectoryFifo(TrajectoryPoint *points, size_t &length)
@@ -3559,7 +3560,7 @@ ErrorCode BaseGroup::sendManualTrajectoryFlow(void)
         bare_core_.fillPointCache(points, length, POINT_POS);
     }
 
-    return bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+    return bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
 }
 
 void BaseGroup::sendTrajectoryFlow(void)
@@ -3587,7 +3588,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     {
         if (!bare_core_.isPointCacheEmpty())
         {
-            err = bare_core_.sendPoint() ? SUCCESS : BARE_CORE_TIMEOUT;
+            err = bare_core_.sendPoint() ? SUCCESS : MC_COMMUNICATION_WITH_BARECORE_FAIL;
         }
     }
 
@@ -3597,7 +3598,7 @@ void BaseGroup::sendTrajectoryFlow(void)
     }
     else
     {
-        if (err == BARE_CORE_TIMEOUT)
+        if (err == MC_COMMUNICATION_WITH_BARECORE_FAIL)
         {
             error_cnt ++;
 
@@ -3605,7 +3606,7 @@ void BaseGroup::sendTrajectoryFlow(void)
             {
                 error_cnt = 0;
                 error_request_ = true;
-                reportError(BARE_CORE_TIMEOUT);
+                reportError(MC_COMMUNICATION_WITH_BARECORE_FAIL);
                 FST_ERROR("sendTrajectoryFlow: bare core time-out.");
             }
         }

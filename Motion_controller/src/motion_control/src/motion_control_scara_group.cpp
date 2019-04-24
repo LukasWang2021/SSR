@@ -364,7 +364,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
     if (!bare_core_.initInterface())
     {
         FST_ERROR("Fail to create communication with bare core.");
-        return BARE_CORE_TIMEOUT;
+        return MC_FAIL_IN_INIT;
     }
 
     // 初始化零位校验模块

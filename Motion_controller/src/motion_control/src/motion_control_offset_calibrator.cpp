@@ -892,6 +892,18 @@ void Calibrator::getOffset(double *offset)
 // 方法：  getOffsetMask
 // 摘要：  获取所有轴的错误屏蔽标志，注意确保数组长度不小于实际轴数；
 //------------------------------------------------------------------------------
+void Calibrator::getOffsetState(OffsetState *state)
+{
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        state[i] = offset_stat_[i];
+    }
+}
+
+//------------------------------------------------------------------------------
+// 方法：  getOffsetMask
+// 摘要：  获取所有轴的错误屏蔽标志，注意确保数组长度不小于实际轴数；
+//------------------------------------------------------------------------------
 void Calibrator::getOffsetMask(OffsetMask *mask)
 {
     for (size_t i = 0; i < joint_num_; i++)

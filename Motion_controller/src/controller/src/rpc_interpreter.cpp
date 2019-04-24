@@ -116,10 +116,12 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
         recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
         return;
     }
-    
-    controller_client_ptr_->pause(); 
-    motion_control_ptr_->pauseMove();
-    rs_data_ptr->data.data = SUCCESS;
+
+    rs_data_ptr->data.data = motion_control_ptr_->pauseMove();
+    if (rs_data_ptr->data.data == SUCCESS)
+    {
+        controller_client_ptr_->pause(); 
+    }
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
 }
 
@@ -137,10 +139,12 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
         return;
     }
     
-    motion_control_ptr_->restartMove();
-    controller_client_ptr_->resume(); 
-    rs_data_ptr->data.data = SUCCESS;
-    state_machine_ptr_->transferRobotStateToRunning();
+    rs_data_ptr->data.data = motion_control_ptr_->restartMove();
+    if (rs_data_ptr->data.data == SUCCESS)
+    {
+        controller_client_ptr_->resume(); 
+        state_machine_ptr_->transferRobotStateToRunning();
+    }
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/resume"));
 }
 
@@ -148,9 +152,13 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-    controller_client_ptr_->abort(); 
-    motion_control_ptr_->abortMove();
-    rs_data_ptr->data.data = SUCCESS;
+
+    rs_data_ptr->data.data = motion_control_ptr_->abortMove();
+    if (rs_data_ptr->data.data == SUCCESS)
+    {
+        controller_client_ptr_->abort(); 
+    }
+
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));
 }
 

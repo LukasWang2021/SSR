@@ -596,7 +596,12 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 				objThreadCntrolBlock->currentJoint.j7, objThreadCntrolBlock->currentJoint.j8, objThreadCntrolBlock->currentJoint.j9);
 #endif
 		  memset(objThreadCntrolBlock->home_pose_exp, 0x00, LAB_LEN);
-	  	  append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
+	  }
+	  
+      append_program_prop_mapper(objThreadCntrolBlock, objThreadCntrolBlock->project_name, true);
+	  
+	  if(iMode == INTERPRETER_USER_OP_MODE_AUTO)
+	  {
 		  checkHomePoseResult checkRet = check_home_pose(objThreadCntrolBlock) ;
 		  if(checkRet == HOME_POSE_NOT_WITHIN_CUR_POS) 
 		  {

@@ -37,7 +37,7 @@ IoManager::IoManager():
 IoManager::~IoManager()
 {
     is_running_ = false;//stop thread running
-    thread_ptr_.join();
+    thread_routine_ptr_.join();
     
     if(log_ptr_ != NULL){
         delete log_ptr_;
@@ -72,9 +72,9 @@ ErrorCode IoManager::init(fst_hal::DeviceManager* device_manager_ptr)
 
     // start a thread to update IO data.
     is_running_ = true;
-    if(!thread_ptr_.run(&ioManagerRoutineThreadFunc, this, 20))
+    if(!thread_routine_ptr_.run(&ioManagerRoutineThreadFunc, this, 20))
     {
-        FST_ERROR("Failed to open io_manager thread");
+        FST_ERROR("Failed to open io_manager routine thread");
         ErrorMonitor::instance()->add(IO_INIT_FAIL);
         return IO_INIT_FAIL;
     }
@@ -115,17 +115,19 @@ std::map<int, int> IoManager::getIoBoardVersion(void)
 }
 
 //------------------------------------------------------------
-// Function:  ioManagerThreadFunc
+// Function:  routineThreadFunc
 // Summary: thread to update the data of io board.
 // In:      None
 // Out:     None
 // Return:  None
 //------------------------------------------------------------
-void IoManager::ioManagerThreadFunc()
+void IoManager::routineThreadFunc()
 {
     updateIoDevicesData();
+    handlePulse();
     usleep(cycle_time_);
 }
+
 
 //------------------------------------------------------------
 // Function:  isRunning
@@ -179,6 +181,16 @@ ErrorCode IoManager::setBitValue(PhysicsID phy_id, uint8_t value)
         case MessageType_IoType_RO: return setRoValue(phy_id, value);
         case MessageType_IoType_UI: return setUiValue(phy_id, value); 
         case MessageType_IoType_UO: return setUoValue(phy_id, value);
+        default: return IO_INVALID_PARAM_ID;
+    }
+}
+
+ErrorCode IoManager::setBitPulse(PhysicsID phy_id, double time)
+{
+    switch(phy_id.info.port_type)
+    {
+        case MessageType_IoType_DO: return setDoPulse(phy_id, time); 
+        case MessageType_IoType_RO: return setRoPulse(phy_id, time);
         default: return IO_INVALID_PARAM_ID;
     }
 }
@@ -686,6 +698,67 @@ ErrorCode IoManager::setUoValue(PhysicsID phy_id, uint8_t value)
 }
 
 
+//setDoPulse
+ErrorCode IoManager::setDoPulse(PhysicsID phy_id, double time)
+{
+    //get device_ptr
+    BaseDevice* device_ptr = getDevicePtr(phy_id);
+    if (device_ptr == NULL || DEVICE_TYPE_FST_IO != phy_id.info.dev_type)
+    {
+        FST_ERROR("IOManager::setDoPulse(): Invalid physics id - 0x%lx", phy_id);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
+        return IO_INVALID_PARAM_ID;
+    }
+    //set output first in case the other error.
+    FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+    ErrorCode ret = io_device_ptr->setDoValue(phy_id.info.port, 1);
+    if(ret != SUCCESS)
+    {
+        return ret;
+    }
+    
+    //push the pulse for the thread to handle
+    IOPulseInfo pulse;
+    pulse.id = phy_id;
+    pulse.time = time * 1000;
+    printf("setDoPulse, id=%d, time=%d ms\n",phy_id, time);
+
+    pulse_mutex_.lock();
+    pulse_vec_.push_back(pulse);
+    pulse_mutex_.unlock();
+    return SUCCESS;
+}
+//setRoPulse
+ErrorCode IoManager::setRoPulse(PhysicsID phy_id, double time)
+{
+    //get device_ptr
+    BaseDevice* device_ptr = getDevicePtr(phy_id);
+    if (device_ptr == NULL || DEVICE_TYPE_FST_IO != phy_id.info.dev_type)
+    {
+        FST_ERROR("IOManager::setRoPulse(): Invalid physics id - 0x%lx", phy_id);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PARAM_ID);
+        return IO_INVALID_PARAM_ID;
+    }
+    //set output first in case the other error.
+    FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+    ErrorCode ret = io_device_ptr->setRoValue(phy_id.info.port, 1);
+    if(ret != SUCCESS)
+    {
+        return ret;
+    }
+    
+    //push the pulse for the thread to handle
+    IOPulseInfo pulse;
+    pulse.id = phy_id;
+    pulse.time = time * 1000;
+    printf("setRoPulse, id=%d, time=%d ms\n",phy_id, time);
+
+    pulse_mutex_.lock();
+    pulse_vec_.push_back(pulse);
+    pulse_mutex_.unlock();
+    return SUCCESS;
+}
+
 //get device ptr
 BaseDevice* IoManager::getDevicePtr(PhysicsID phy_id)
 {
@@ -730,6 +803,40 @@ ErrorCode IoManager::updateIoDevicesData(void)
     }
 
     return ret;
+}
+
+//deal with DO/RO pulse
+void IoManager::handlePulse()
+{
+    if (pulse_vec_.size() == 0)
+    {
+        return;
+    }
+
+    std::vector<IOPulseInfo>::iterator it;
+    pulse_mutex_.lock();
+    for (it = pulse_vec_.begin(); it != pulse_vec_.end(); ++it)
+    {    
+        it->time -= cycle_time_;
+        if (it->time < 0)
+        {
+            BaseDevice* device_ptr = getDevicePtr(it->id);
+            FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+            if (it->id.info.port_type == MessageType_IoType_DO)
+            {
+                io_device_ptr->setDoValue(it->id.info.port, 0);
+                it = pulse_vec_.erase(it);
+            }
+            else if (it->id.info.port_type == MessageType_IoType_RO)
+            {
+                io_device_ptr->setRoValue(it->id.info.port, 0);
+                it = pulse_vec_.erase(it);
+            }           
+        }
+    }
+    pulse_mutex_.unlock();
+
+    usleep(cycle_time_);
 }
 
 //------------------------------------------------------------
@@ -836,11 +943,10 @@ void ioManagerRoutineThreadFunc(void* arg)
     IoManager* io_manager = static_cast<IoManager*>(arg);
     while(io_manager->isRunning())
     {
-        io_manager->ioManagerThreadFunc();
+        io_manager->routineThreadFunc();
     }
     std::cout<<"io_manager routine thread exit"<<std::endl;
 }
-
 
 
 #endif //IO_MANAGER_IO_MANAGER_CPP_

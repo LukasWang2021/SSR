@@ -328,6 +328,57 @@ bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Posture& posture
     // compute q4
     TransMatrix trans_matrix_1to3;
     doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
+    Point x3, y3, z3, x4, y4, z4;
+    trans_matrix_1to3.rotation_matrix_.getVectorN(x3);
+    trans_matrix_1to3.rotation_matrix_.getVectorS(y3);
+    trans_matrix_1to3.rotation_matrix_.getVectorA(z3);  
+    z3.crossProduct(vector_a, z4);  
+    if(!z4.normalize()
+        || z4.isParallel(vector_a))
+    {
+        return false;
+    }
+    if(posture.wrist < 0)
+    {
+        z4.reverse();
+    }
+    double sin_q4, cos_q4;
+    sin_q4 = -z4.dotProduct(x3);
+    cos_q4 = z4.dotProduct(y3);
+    joint.j4_ = atan2(sin_q4, cos_q4) - arm_dh_[3].offset;
+    scaleResultJoint(joint.j4_);
+
+    // compute q5
+    TransMatrix trans_matrix_1to4;
+    doFK(joint, trans_matrix_1to4, 1, 4);
+    trans_matrix_1to4.rotation_matrix_.getVectorN(x4);
+    trans_matrix_1to4.rotation_matrix_.getVectorS(y4);
+    double sin_q5, cos_q5;
+    sin_q5 = vector_a.dotProduct(x4);
+    cos_q5 = -vector_a.dotProduct(y4);
+    joint.j5_ = atan2(sin_q5, cos_q5) - arm_dh_[4].offset;
+    scaleResultJoint(joint.j5_);
+
+    // check if wrist is abnormal
+    /*if(cos_q4 * sin_q5 >= 0)
+    {
+        if(posture.wrist < 0)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if(posture.wrist > 0)
+        {
+            return false;
+        }
+    }*/
+
+#if 0
+    // compute q4
+    TransMatrix trans_matrix_1to3;
+    doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
     Point z3, z4, x_vector, y_vector;
     trans_matrix_1to3.rotation_matrix_.getVectorA(z3);  
     z3.crossProduct(vector_a, z4);
@@ -373,13 +424,14 @@ bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Posture& posture
     cos_j = -vector_a.dotProduct(y_vector);     
     joint.j5_ = atan2(sin_j, cos_j) - arm_dh_[4].offset;
     scaleResultJoint(joint.j5_);
-
+#endif
     // compute q6
     TransMatrix trans_matrix_1to5;
     doFK(joint, trans_matrix_1to5, 1, 5);
-    trans_matrix_1to5.rotation_matrix_.getVectorS(y_vector);    
-    sin_j = vector_n.dotProduct(y_vector);
-    cos_j = vector_s.dotProduct(y_vector);
+    Point y6;
+    trans_matrix_1to5.rotation_matrix_.getVectorS(y6);    
+    sin_j = vector_n.dotProduct(y6);
+    cos_j = vector_s.dotProduct(y6);
     joint.j6_ = atan2(sin_j, cos_j) - arm_dh_[5].offset;
     scaleResultJoint(joint.j6_);
 
@@ -482,6 +534,59 @@ bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Posture& posture
     scaleResultJoint(joint.j3_);
 
     // compute q4
+    double sin_q4, cos_q4;
+    TransMatrix trans_matrix_1to3;
+    doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
+    Point x3, y3, z3, x4, y4, z4;
+    trans_matrix_1to3.rotation_matrix_.getVectorN(x3);
+    trans_matrix_1to3.rotation_matrix_.getVectorS(y3);
+    trans_matrix_1to3.rotation_matrix_.getVectorA(z3);  
+    z3.crossProduct(vector_a, z4);  
+    if(!z4.normalize()
+        || z4.isParallel(vector_a))
+    {
+        joint.j4_ = ref_joint.j4_;
+        goto IK_Q5;
+    }
+    if(posture.wrist < 0)
+    {
+        z4.reverse();
+    }
+    
+    sin_q4 = -z4.dotProduct(x3);
+    cos_q4 = z4.dotProduct(y3);
+    joint.j4_ = atan2(sin_q4, cos_q4) - arm_dh_[3].offset;
+    scaleResultJoint(joint.j4_);
+IK_Q5:
+    // compute q5
+    TransMatrix trans_matrix_1to4;
+    doFK(joint, trans_matrix_1to4, 1, 4);
+    trans_matrix_1to4.rotation_matrix_.getVectorN(x4);
+    trans_matrix_1to4.rotation_matrix_.getVectorS(y4);
+    double sin_q5, cos_q5;
+    sin_q5 = vector_a.dotProduct(x4);
+    cos_q5 = -vector_a.dotProduct(y4);
+    joint.j5_ = atan2(sin_q5, cos_q5) - arm_dh_[4].offset;
+    scaleResultJoint(joint.j5_);
+
+    // check if wrist is abnormal
+    /*if(cos_q4 * sin_q5 >= 0)
+    {
+        if(posture.wrist < 0)
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if(posture.wrist > 0)
+        {
+            return false;
+        }
+    }*/
+
+#if 0
+    // compute q4
     double omega;
     TransMatrix trans_matrix_1to3;
     doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
@@ -531,13 +636,15 @@ IK_Q5:
     cos_j = -vector_a.dotProduct(y_vector);     
     joint.j5_ = atan2(sin_j, cos_j) - arm_dh_[4].offset;
     scaleResultJoint(joint.j5_);
+#endif
 
     // compute q6
     TransMatrix trans_matrix_1to5;
     doFK(joint, trans_matrix_1to5, 1, 5);
-    trans_matrix_1to5.rotation_matrix_.getVectorS(y_vector);    
-    sin_j = vector_n.dotProduct(y_vector);
-    cos_j = vector_s.dotProduct(y_vector);
+    Point y6;
+    trans_matrix_1to5.rotation_matrix_.getVectorS(y6);    
+    sin_j = vector_n.dotProduct(y6);
+    cos_j = vector_s.dotProduct(y6);
     joint.j6_ = atan2(sin_j, cos_j) - arm_dh_[5].offset;
     scaleResultJoint(joint.j6_);
 
@@ -580,6 +687,27 @@ Posture KinematicsRTM::getPostureByJoint(const Joint& joint, double valve)
     }
 
     // wrist
+    TransMatrix trans_matrix_1to3;
+    doFK(joint, trans_matrix_1to3, 1, 3);
+    Point y3;
+    trans_matrix_1to3.rotation_matrix_.getVectorS(y3);
+    TransMatrix trans_matrix_1to4;
+    doFK(joint, trans_matrix_1to4, 1, 4);
+    Point x4, z4;
+    trans_matrix_1to4.rotation_matrix_.getVectorN(x4);
+    trans_matrix_1to4.rotation_matrix_.getVectorA(z4);
+    double cos_q4 = z4.dotProduct(y3);
+    double sin_q5 = vector_a6.dotProduct(x4);
+    if(cos_q4*sin_q5 >= 0)
+    {
+        posture.wrist = 1;
+    }
+    else
+    {
+        posture.wrist = -1;
+    }
+#if 0
+    // wrist
     TransMatrix trans_matrix_1to4;
     doFK(joint, trans_matrix_1to4, 1, 4);
     Point z4;
@@ -601,6 +729,7 @@ Posture KinematicsRTM::getPostureByJoint(const Joint& joint, double valve)
     {
         posture.wrist = -1;
     }    
+#endif
 
     posture.flip = flip_;
     

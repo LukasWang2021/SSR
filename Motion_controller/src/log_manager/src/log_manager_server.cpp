@@ -285,7 +285,7 @@ char buildLogControlBlock(string &name)
 
                     if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
                         g_lcb_ptr_queue[i]->working = true;
-                        lockFile(g_lcb_ptr_queue[i]->file_name);
+                        //lockFile(g_lcb_ptr_queue[i]->file_name);
                         info(" -Success!");
                         return g_lcb_ptr_queue[i]->id;
                     }
@@ -394,7 +394,7 @@ void public_thread(void)
                                  g_lcb_ptr_queue[i]->id, g_lcb_ptr_queue[i]->name.c_str());
 
                             if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
-                                unlockFile(g_lcb_ptr_queue[i]->file_name);
+                                //unlockFile(g_lcb_ptr_queue[i]->file_name);
                                 g_lcb_ptr_queue[i]->file_handle.close();
                             }
                         
@@ -585,7 +585,7 @@ void io_thread(void)
 
                         checkLogSpace(path);
 
-                        unlockFile(g_lcb_ptr_queue[i]->file_name);
+                        //unlockFile(g_lcb_ptr_queue[i]->file_name);
 
                         g_lcb_ptr_queue[i]->file_name = file_name;
                         g_lcb_ptr_queue[i]->character_cnt = 0;
@@ -594,7 +594,7 @@ void io_thread(void)
                         g_lcb_ptr_queue[i]->file_handle.open(file_name.c_str(), std::ios::app);
 
                         if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
-                            lockFile(g_lcb_ptr_queue[i]->file_name);
+                            //lockFile(g_lcb_ptr_queue[i]->file_name);
                             log(" -Success!");
                         }
                         else {
@@ -817,7 +817,7 @@ int initServerLog(void)
             g_server_log.working = true;
             info("Server log initialized, logging to file:");
             info("%s", g_server_log.file_name.c_str());
-            lockFile(g_server_log.file_name);
+            //lockFile(g_server_log.file_name);
             return 0;
         }
         else {
@@ -942,14 +942,14 @@ int main(int argc, char **argv)
         if (g_lcb_ptr_queue[i] != NULL) {
             if (g_lcb_ptr_queue[i]->file_handle.is_open())
                 g_lcb_ptr_queue[i]->file_handle.close();
-            unlockFile(g_lcb_ptr_queue[i]->file_name);
+            //unlockFile(g_lcb_ptr_queue[i]->file_name);
             delete g_lcb_ptr_queue[i];
             g_lcb_ptr_queue[i] = NULL;
         }
     }
 
     warn("Log server exit.");
-    unlockFile(g_server_log.file_name);
+    //unlockFile(g_server_log.file_name);
     g_server_log.file_handle.close();
     
     return 0;

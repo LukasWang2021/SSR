@@ -21,7 +21,7 @@
 
 #define MAX_LOG_CONTROL_BLOCK           200     // MAX_LOG_CONTROL_BLOCK should less than 256,
                                                 // cause there are 256 IDs at most, and ID=0 is reserved
-#define SERVER_ITEM_POOL_SIZE           10000
+#define SERVER_ITEM_POOL_SIZE           1000
 namespace fst_log {
 
 struct LogControlBlock {

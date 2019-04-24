@@ -419,7 +419,7 @@ bool FstSafetyDevice::getAutoModeDo(uint32_t &port_offset, uint8_t &value)
         return false;
     }
 
-    port_offset = port_offset = param_ptr_->auto_mode_DO_;
+    port_offset = param_ptr_->auto_mode_DO_;
 
     int mode = getDITPUserMode();
     if (mode == USER_OP_MODE_AUTO)
@@ -441,7 +441,7 @@ bool FstSafetyDevice::getLimitedManualModeDo(uint32_t &port_offset, uint8_t &val
         return false;
     }
 
-    port_offset = port_offset = param_ptr_->limited_manual_mode_DO_;
+    port_offset = param_ptr_->limited_manual_mode_DO_;
 
     int mode = getDITPUserMode();
     if (mode == USER_OP_MODE_SLOWLY_MANUAL)
@@ -463,7 +463,7 @@ bool FstSafetyDevice::getManualModeDo(uint32_t &port_offset, uint8_t &value)
         return false;
     }
 
-    port_offset = port_offset = param_ptr_->manual_mode_DO_;
+    port_offset = param_ptr_->manual_mode_DO_;
 
     int mode = getDITPUserMode();
     if (mode == USER_OP_MODE_MANUAL)

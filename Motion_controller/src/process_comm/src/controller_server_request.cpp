@@ -651,3 +651,43 @@ void ControllerServer::handleRequestUserOpMode()
     }
     pushTaskToRequestList(CONTROLLER_SERVER_CMD_OP_MODE, NULL, (void*)response_data_ptr);
 }
+
+//SetDoPulse
+void ControllerServer::handleRequestSetDoPulse()
+{
+    RequestSetPulse* request_data_ptr = new RequestSetPulse;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    unsigned long long* response_data_ptr = new unsigned long long;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetPulse));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_DO_PULSE, (void*)request_data_ptr, (void*)response_data_ptr); 
+}
+
+//SetRoPulse
+void ControllerServer::handleRequestSetRoPulse()
+{
+    RequestSetPulse* request_data_ptr = new RequestSetPulse;
+    if(request_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for request_data");
+        return;
+    }
+    unsigned long long* response_data_ptr = new unsigned long long;
+    if(response_data_ptr == NULL)
+    {
+        FST_ERROR("handleRequest: can't allocate memory for response_data");
+        delete request_data_ptr;
+        return;
+    }
+    copyRecvBufferToRequestData(request_data_ptr, sizeof(RequestSetPulse));
+    pushTaskToRequestList(CONTROLLER_SERVER_CMD_SET_RO_PULSE, (void*)request_data_ptr, (void*)response_data_ptr); 
+}

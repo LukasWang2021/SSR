@@ -7,7 +7,7 @@ import tornado.httpclient
 
 
 def send_one_alarm(event_record):
-    """·¢ÆðpostÇëÇó£®"""
+    """ï¿½ï¿½ï¿½ï¿½postï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"""
 
     one_record = dict()
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -33,7 +33,7 @@ def send_one_alarm(event_record):
             execute_result = server_response['param']
             status_code = server_response['statusCode']
             if server_response['statusCode'] != 1000:
-                print('send_one_alarm error:', json.dumps(execute_result))
+                #print('send_one_alarm error:', json.dumps(execute_result))
 
     except tornado.httpclient.HTTPError as e:
         if '599' in str(e):

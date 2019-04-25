@@ -41,5 +41,7 @@ void ControllerIpc::initIpcTable()
     ipc_service = {CONTROLLER_SERVER_CMD_CART_TO_JOINT, &ControllerIpc::handleIpcCartToJoint}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_JOINT_TO_CART, &ControllerIpc::handleIpcJointToCart}; ipc_table_.push_back(ipc_service);
     ipc_service = {CONTROLLER_SERVER_CMD_OP_MODE, &ControllerIpc::handleIpcUserOpMode}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_DO_PULSE, &ControllerIpc::handleIpcSetDoPulse}; ipc_table_.push_back(ipc_service);
+    ipc_service = {CONTROLLER_SERVER_CMD_SET_RO_PULSE, &ControllerIpc::handleIpcSetRoPulse}; ipc_table_.push_back(ipc_service);
 }
 

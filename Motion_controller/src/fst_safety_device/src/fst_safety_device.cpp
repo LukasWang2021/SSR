@@ -26,7 +26,7 @@ FstSafetyDevice::FstSafetyDevice(int address):
 	pre_ext_estop_(0),
 	pre_door_stop_(0),
 	pre_limited_stop_(0),
-	pre_deadman_normal_(0),
+	pre_deadman_normal_(1),
 	pre_deadman_panic_(0),
 	pre_tp_estop_(0),
 	pre_mode_faulty_(0),

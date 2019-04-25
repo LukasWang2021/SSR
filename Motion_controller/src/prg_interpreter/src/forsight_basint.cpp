@@ -578,7 +578,7 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		return -1;
 	  }
 	  FST_INFO("get_user_opmode = %d before ", iMode);
-	  bRet = forgesight_registers_manager_get_user_opmode(iMode);
+	  forgesight_registers_manager_get_user_opmode(iMode);
 	  FST_INFO("get_user_opmode = %d after ", iMode);
 	  if(iMode == INTERPRETER_USER_OP_MODE_AUTO)
 	  {

@@ -1715,7 +1715,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 	getMoveCommandDestination(movCmdDst);
 	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
 	{
-	    FST_INFO("call_MoveL Run XPATH: %d: %s", iLineNum, objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	    FST_INFO("call_MoveXPos Run XPATH: %d: %s", iLineNum, objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	    // FST_INFO("call_MoveL Run movCmdDst: %08X with(%08X, %08X, %08X, %08X)", 
 		//  	movCmdDst.type, MOTION_NONE, MOTION_JOINT, MOTION_LINE, MOTION_CIRCLE);
 		if(movCmdDst.type != MOTION_NONE)
@@ -1740,7 +1740,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 			}
 			else
 			{
-	            FST_INFO("call_MoveL Run XPATH: %s exists ", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
+	            FST_INFO("call_MoveXPos Run XPATH: %s exists ", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 			}
 		}
 		else
@@ -1750,7 +1750,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 	}
 	else
 	{
-		FST_INFO("call_MoveL XPATH out of range at %d", iLineNum);
+		FST_INFO("call_MoveXPos XPATH out of range at %d", iLineNum);
 	}
 	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
 	memset(&objThreadCntrolBlock->instrSet->target.prPos, 0x00, PR_POS_LEN * sizeof(int));

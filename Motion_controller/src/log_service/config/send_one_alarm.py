@@ -33,7 +33,7 @@ def send_one_alarm(event_record):
             execute_result = server_response['param']
             status_code = server_response['statusCode']
             if server_response['statusCode'] != 1000:
-                #print('send_one_alarm error:', json.dumps(execute_result))
+                print('send_one_alarm error:', json.dumps(execute_result))
 
     except tornado.httpclient.HTTPError as e:
         if '599' in str(e):

@@ -246,7 +246,10 @@ int forgesight_set_io_status(
 #ifdef WIN32
 		bRet = SUCCESS;
 #else
-		bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
+		if(valueStart.getPulse() == true)
+			bRet = g_objRegManagerInterface->setDoPulse(iIOIdx, (int)valueStart.getFloatValue());
+		else
+			bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
 #endif
 	}
 	else if(!strcmp(io_name, TXT_RI))
@@ -262,7 +265,10 @@ int forgesight_set_io_status(
 #ifdef WIN32
 		bRet = SUCCESS;
 #else
-		bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
+		if(valueStart.getPulse() == true)
+			bRet = g_objRegManagerInterface->setRoPulse(iIOIdx, (int)valueStart.getFloatValue());
+		else
+			bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
 #endif
 	}
 	else if(!strcmp(io_name, TXT_SI))

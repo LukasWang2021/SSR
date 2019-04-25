@@ -78,7 +78,7 @@ Controller* Controller::getInstance()
 
 ErrorCode Controller::init()
 {
-    
+    FST_INFO("Controller::init()");
     if(!param_ptr_->loadParam())
     {
         recordLog(CONTROLLER_LOAD_PARAM_FAILED, "Failed to load controller component parameters");
@@ -195,6 +195,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
+    FST_INFO("init param_manager_");
     error_code = param_manager_.init();
     if(error_code != SUCCESS)
     {
@@ -203,6 +204,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
+    FST_INFO("init state_machine_");
     state_machine_.init(log_ptr_, param_ptr_, &motion_control_, &virtual_core1_, 
                         process_comm_ptr_->getControllerClientPtr(), &device_manager_, &io_mapping_, &program_launching_);
     ipc_.init(log_ptr_, param_ptr_, process_comm_ptr_->getControllerServerPtr(), 
@@ -215,6 +217,7 @@ ErrorCode Controller::init()
     publish_.init(log_ptr_, param_ptr_, &virtual_core1_, &tp_comm_, &state_machine_, &motion_control_, &reg_manager_,
                     process_comm_ptr_->getControllerClientPtr(), &io_mapping_, &device_manager_, &io_manager_);
 
+    FST_INFO("init motion_contro_");
     error_code = motion_control_.init(&device_manager_, NULL, &coordinate_manager_, &tool_manager_, ErrorMonitor::instance());
     if(error_code != SUCCESS)
     {
@@ -223,6 +226,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
+    FST_INFO("init check offset");
     error_code = state_machine_.checkOffsetState();
     if(error_code != SUCCESS)
     {
@@ -241,6 +245,7 @@ ErrorCode Controller::init()
         return CONTROLLER_CREATE_HEARTBEAT_THREAD_FAILED;
     }
 
+    FST_INFO("init tp_comm_");
     error_code = tp_comm_.init();
     if(error_code != SUCCESS)
     {
@@ -259,6 +264,7 @@ ErrorCode Controller::init()
 
     state_machine_.setInitState(true);
     recordLog("Controller initialization success");
+    FST_INFO("Controller::init success");
     return SUCCESS;
 }
 

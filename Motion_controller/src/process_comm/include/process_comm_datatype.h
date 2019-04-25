@@ -43,6 +43,8 @@ typedef enum
     CONTROLLER_SERVER_CMD_CART_TO_JOINT = 30,
     CONTROLLER_SERVER_CMD_JOINT_TO_CART = 31,
     CONTROLLER_SERVER_CMD_OP_MODE = 32,
+    CONTROLLER_SERVER_CMD_SET_DO_PULSE = 33,
+    CONTROLLER_SERVER_CMD_SET_RO_PULSE = 34,
 }ControllerServerCmd;
 
 typedef enum
@@ -108,6 +110,11 @@ typedef struct
     uint32_t value;
 }RequestSetDi,RequestSetRi,RequestSetUi,RequestSetDo,RequestSetRo;
 
+typedef struct
+{
+    uint32_t port_offset;
+    double time;
+}RequestSetPulse;
 
 }
 

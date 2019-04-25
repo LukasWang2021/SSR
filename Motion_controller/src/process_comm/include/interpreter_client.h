@@ -55,6 +55,8 @@ public:
     ErrorCode cartToJoint(basic_alg::PoseEuler pos, basic_alg::Joint &joint);
     ErrorCode jointToCart(basic_alg::Joint joint, basic_alg::PoseEuler &pos);
     ErrorCode getUserOpMode(int &mode);
+    ErrorCode setDoPulse(uint32_t port_offset, double time);
+    ErrorCode setRoPulse(uint32_t port_offset, double time);
     
 private:
     fst_log::Logger* log_ptr_;

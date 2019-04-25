@@ -462,3 +462,32 @@ void ControllerServer::handleResponseUserOpMode(std::vector<ProcessCommRequestRe
         delete (int*)task->response_data_ptr;
     }
 }
+
+//SetDoPulse
+void ControllerServer::handleResponseSetDoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_DO_PULSE, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetPulse*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+}
+
+//SetRoPulse
+void ControllerServer::handleResponseSetRoPulse(std::vector<ProcessCommRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    copyResponseDataToSendBuffer(CONTROLLER_SERVER_CMD_SET_RO_PULSE, task->response_data_ptr, sizeof(unsigned long long), send_buffer_size);
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestSetPulse*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (unsigned long long*)task->response_data_ptr;
+    }
+
+}

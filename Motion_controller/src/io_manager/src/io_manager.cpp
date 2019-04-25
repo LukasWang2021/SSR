@@ -720,8 +720,7 @@ ErrorCode IoManager::setDoPulse(PhysicsID phy_id, double time)
     //push the pulse for the thread to handle
     IOPulseInfo pulse;
     pulse.id = phy_id;
-    pulse.time = time * 1000;
-    printf("setDoPulse, id=%d, time=%d ms\n",phy_id, time);
+    pulse.time = (int)(time * 1000);
 
     pulse_mutex_.lock();
     pulse_vec_.push_back(pulse);
@@ -750,8 +749,7 @@ ErrorCode IoManager::setRoPulse(PhysicsID phy_id, double time)
     //push the pulse for the thread to handle
     IOPulseInfo pulse;
     pulse.id = phy_id;
-    pulse.time = time * 1000;
-    printf("setRoPulse, id=%d, time=%d ms\n",phy_id, time);
+    pulse.time = (int)(time * 1000);
 
     pulse_mutex_.lock();
     pulse_vec_.push_back(pulse);
@@ -815,9 +813,9 @@ void IoManager::handlePulse()
 
     std::vector<IOPulseInfo>::iterator it;
     pulse_mutex_.lock();
-    for (it = pulse_vec_.begin(); it != pulse_vec_.end(); ++it)
+    for (it = pulse_vec_.begin(); it != pulse_vec_.end(); )
     {    
-        it->time -= cycle_time_;
+        it->time -= cycle_time_/1000;
         if (it->time < 0)
         {
             BaseDevice* device_ptr = getDevicePtr(it->id);
@@ -833,10 +831,12 @@ void IoManager::handlePulse()
                 it = pulse_vec_.erase(it);
             }           
         }
+        else
+        {
+            ++it;
+        }
     }
     pulse_mutex_.unlock();
-
-    usleep(cycle_time_);
 }
 
 //------------------------------------------------------------

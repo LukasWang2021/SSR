@@ -28,6 +28,7 @@ ControllerSm::ControllerSm():
     io_mapping_ptr_(NULL),
     program_launching_ptr_(NULL),
     user_op_mode_(USER_OP_MODE_AUTO),
+    pre_user_op_mode_(USER_OP_MODE_AUTO),
     running_state_(RUNNING_STATUS_LIMITED),
     interpreter_state_(INTERPRETER_IDLE),
     robot_state_(ROBOT_IDLE),
@@ -258,10 +259,16 @@ ErrorCode ControllerSm::callReset()
             return error_code;
         }
 
+        //check safety_board status
         safety_device_ptr_->reset();
         if (safety_device_ptr_->checkSafetyBoardAlarm())
         {
             return CONTROLLER_SAFETY_NOT_READY;
+        }
+        error_code = safety_device_ptr_->checkDeadmanNormal();
+        if (error_code != SUCCESS)
+        {
+            return error_code;
         }
 
         recordLog("Controller transfer to ESTOP_TO_ENGAGED by rpc-callReset");
@@ -478,6 +485,20 @@ void ControllerSm::processSafety()
         
         //check safety_board status
         safety_device_ptr_->checkSafetyBoardAlarm();
+        //check deadman normal
+        ErrorCode result = safety_device_ptr_->checkDeadmanNormal();
+        if (result != SUCCESS && ctrl_state_ == CTRL_ENGAGED && pre_user_op_mode_ == user_op_mode_)//no key switches.
+        {
+            ErrorMonitor::instance()->add(result);
+        }
+        //check if key switches under engaged.
+        if (pre_user_op_mode_ != user_op_mode_ && ctrl_state_ == CTRL_ENGAGED)
+        {
+            ErrorMonitor::instance()->add(SAFETY_BOARD_KEY_SWITCH_UNDER_ENGAGED);
+            pre_user_op_mode_ = user_op_mode_;
+        }
+        pre_user_op_mode_ = user_op_mode_;
+
         //get the safety_board alarm for TP
         safety_alarm_ = safety_device_ptr_->getExcitorStop();
         //get the cabinet reset

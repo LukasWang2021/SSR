@@ -71,7 +71,7 @@ void ControllerRpc::handleRpc0x00013940(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64* data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     data_ptr->data.data = state_machine_ptr_->callEstop();
-    recordLog(CONTROLLER_LOG, data_ptr->data.data, std::string("/rpc/controller/callEstop"));
+    //recordLog(CONTROLLER_LOG, data_ptr->data.data, std::string("/rpc/controller/callEstop"));
 }
 
 // "/rpc/controller/callReset"
@@ -79,7 +79,7 @@ void ControllerRpc::handleRpc0x000161E4(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64* data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     data_ptr->data.data = state_machine_ptr_->callReset();
-    recordLog(CONTROLLER_LOG, data_ptr->data.data, std::string("/rpc/controller/callReset"));
+    //recordLog(CONTROLLER_LOG, data_ptr->data.data, std::string("/rpc/controller/callReset"));
 }
 
 // "/rpc/controller/setUserOpMode"
@@ -89,9 +89,8 @@ void ControllerRpc::handleRpc0x00002ED5(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
     rs_data_ptr->data.data = state_machine_ptr_->setUserOpMode((fst_hal::UserOpMode)rq_data_ptr->data.data);
-    
-    if (rs_data_ptr->data.data != SUCCESS)
-        recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setUserOpMode"));
+
+    //recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/setUserOpMode"));
 }
 
 // "/rpc/controller/shutdown"
@@ -99,6 +98,6 @@ void ControllerRpc::handleRpc0x0000899E(void* request_data_ptr, void* response_d
 {
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
     rs_data_ptr->data.data = state_machine_ptr_->callShutdown();
-    recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/shutdown"));
+    //recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/shutdown"));
 }
 

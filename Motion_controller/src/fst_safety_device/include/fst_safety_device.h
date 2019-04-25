@@ -35,7 +35,7 @@ typedef struct _InputByte2
 	char usermode_man:1;
 	char usermode_limit:1;
 	char usermode_auto:1;
-	char D7:1;
+	char comm_err:1; //communication between FPGA and MCU
 }InputByte2;
 
 typedef struct _InputByte3
@@ -223,6 +223,8 @@ public:
 	//          2  ->  limited manual
 	//  -----------------------------------------------------------------------
     int getDITPUserMode(void);
+
+	char getDICommError(void);
 
 	//  -----------------------------------------------------------------------
 	//  Function:		getDITPEStop
@@ -430,6 +432,9 @@ public:
     //check safety_board
 	bool checkSafetyBoardAlarm(void);
 
+	//check deadman normal
+	ErrorCode checkDeadmanNormal(void);
+
 
 	
 private:
@@ -466,6 +471,9 @@ private:
 	char pre_contactor0_relay_;
 	char pre_contactor1_relay_;
 	char pre_cabinet_stop_;
+
+	//comm error safety_alarm
+	char pre_comm_err_;
 };
 
 }

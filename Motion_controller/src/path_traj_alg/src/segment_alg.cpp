@@ -606,7 +606,8 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
     getCircleCenterAngle(end.via.pose.pose.point_, end.target.pose.pose.point_, angle_via2end);
     getCircleCenterAngle(start.point_, end.via.pose.pose.point_, angle_start2via);
 
-    if (angle <= angle_via2end + angle_start2via) angle = 2 * M_PI - angle;
+    double angle_offset = angle_via2end + angle_start2via - angle;
+    if (DOUBLE_ACCURACY < angle) angle = 2 * M_PI - angle;
     stack[S_CircleAngle] = angle;
 }
 
@@ -4570,7 +4571,7 @@ void printTraj(TrajectoryCache &traj_cache, int index, double time_step, int end
 void fkToTraj(TrajectoryCache &traj_cache)
 {
     int end_segment = traj_cache.cache_length;
-    double time_step = 0.001;
+    double time_step = 0.1;
 
     double absolute_time_vector[50];
     absolute_time_vector[0] = 0;

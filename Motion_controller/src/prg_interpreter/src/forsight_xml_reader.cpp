@@ -463,8 +463,9 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 			for(nodeSubValueElement = nodeValueElement->children; 
 			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
 				if(xmlStrcasecmp(nodeSubValueElement->name,BAD_CAST"element")==0){ 
-					value = xmlNodeGetContent(nodeSubValueElement);
-					sprintf(label_str, "%s%s[%s] ", label_str, name, (char*)value);
+					memset(label_output, 0x00, 1024);
+					generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
+					sprintf(label_str, "%s %s[%s]", label_str, name, (char*)label_output);
 					// toupper
 					string strRet = string(label_str);
 					transform(strRet.begin(), strRet.end(), strRet.begin(), ::toupper);  
@@ -473,17 +474,20 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 			}
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"io_val")==0){ 
-			value = xmlNodeGetContent(nodeValueElement);
-			sprintf(label_str, "%s%s ", label_str, (char*)value);
+			memset(label_output, 0x00, 1024);
+			generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
+			sprintf(label_str, "%s%s ", label_str, (char*)label_output);
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"string")==0){ 
-			value = xmlNodeGetContent(nodeValueElement);
+			memset(label_output, 0x00, 1024);
+			generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
 			// printBASCode(objLineInfo, " \"%s\" ", (char*)value);
-			sprintf(label_str, "%s\"%s\"", label_str, (char*)value);
+			sprintf(label_str, "%s\"%s\"", label_str, (char*)label_output);
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"command")==0){ 
-			value = xmlNodeGetContent(nodeValueElement);
-			printBASCode(objLineInfo, " %s ", (char*)value);
+			memset(label_output, 0x00, 1024);
+			generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
+			printBASCode(objLineInfo, " %s ", (char*)label_output);
 		}
 		else { 
 			FST_ERROR("Wrong Type (%s) in element. \n", (char *)name);

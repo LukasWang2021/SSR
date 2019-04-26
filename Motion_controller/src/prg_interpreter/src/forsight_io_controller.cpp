@@ -124,7 +124,7 @@ eval_value forgesight_get_io_status(
 	else if(!strcmp(io_name, TXT_DI))
 	{
 #ifdef WIN32
-		bRet = true;
+		bRet = SUCCESS;
 #else
 		bRet = g_objRegManagerInterface->getDi(iIOIdx, iValue);
 #endif
@@ -132,7 +132,7 @@ eval_value forgesight_get_io_status(
 	else if(!strcmp(io_name, TXT_DO))
 	{
 #ifdef WIN32
-		bRet = true;
+		bRet = SUCCESS;
 #else
 		bRet = g_objRegManagerInterface->getDo(iIOIdx, iValue);
 #endif
@@ -140,7 +140,7 @@ eval_value forgesight_get_io_status(
 	else if(!strcmp(io_name, TXT_RI))
 	{
 #ifdef WIN32
-		bRet = true;
+		bRet = SUCCESS;
 #else
 		bRet = g_objRegManagerInterface->getRi(iIOIdx, iValue);
 #endif
@@ -148,7 +148,7 @@ eval_value forgesight_get_io_status(
 	else if(!strcmp(io_name, TXT_RO))
 	{
 #ifdef WIN32
-		bRet = true;
+		bRet = SUCCESS;
 #else
 		bRet = g_objRegManagerInterface->getRo(iIOIdx, iValue);
 #endif
@@ -247,7 +247,7 @@ int forgesight_set_io_status(
 		bRet = SUCCESS;
 #else
 		if(valueStart.getPulse() == true)
-			bRet = g_objRegManagerInterface->setDoPulse(iIOIdx, (int)valueStart.getFloatValue());
+			bRet = g_objRegManagerInterface->setDoPulse(iIOIdx, valueStart.getFloatValue());
 		else
 			bRet = g_objRegManagerInterface->setDo(iIOIdx, (int)valueStart.getFloatValue());
 #endif
@@ -266,7 +266,7 @@ int forgesight_set_io_status(
 		bRet = SUCCESS;
 #else
 		if(valueStart.getPulse() == true)
-			bRet = g_objRegManagerInterface->setRoPulse(iIOIdx, (int)valueStart.getFloatValue());
+			bRet = g_objRegManagerInterface->setRoPulse(iIOIdx, valueStart.getFloatValue());
 		else
 			bRet = g_objRegManagerInterface->setRo(iIOIdx, (int)valueStart.getFloatValue());
 #endif

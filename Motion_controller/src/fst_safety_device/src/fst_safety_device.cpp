@@ -637,8 +637,8 @@ ErrorCode FstSafetyDevice::updateSafetyData()
     }else{
         if (pre_err != result){
             ErrorMonitor::instance()->add(result);
-            pre_err = result;
         }
     }
+    pre_err = result;
     return result;
 }

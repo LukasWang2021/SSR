@@ -24,9 +24,8 @@ public:
     bool convertPoseFromBaseToUser(const PoseQuaternion& pose_by_base, const PoseEuler& user_frame, PoseQuaternion& pose_by_user);
     bool convertPoseFromUserToBase(const PoseQuaternion& pose_by_user, const PoseEuler& user_frame, PoseQuaternion& pose_by_base);
 
-
-    bool convertPoseFromBaseToTool(const PoseEuler& pose_by_base, const PoseEuler& pose_fcp_by_base, const PoseEuler& tool_frame, PoseEuler& pose_by_tool);
-    bool convertPoseFromToolToBase(const PoseEuler& pose_by_tool, const PoseEuler& pose_fcp_by_base, const PoseEuler& tool_frame, PoseEuler& pose_by_base);
+    bool convertPoseFromBaseToTool(const PoseEuler& pose_by_base, const PoseEuler& pose_tcp_by_base, PoseEuler& pose_by_tool);
+    bool convertPoseFromToolToBase(const PoseEuler& pose_by_tool, const PoseEuler& pose_tcp_by_base, PoseEuler& pose_by_base);
 
     bool convertTcpToFcp(const PoseEuler& pose_tcp, const PoseEuler& tool_frame, PoseEuler& pose_fcp);
     bool convertFcpToTcp(const PoseEuler& pose_fcp, const PoseEuler& tool_frame, PoseEuler& pose_tcp);

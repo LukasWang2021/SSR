@@ -128,37 +128,28 @@ bool Transformation::convertPoseFromUserToBase(const PoseQuaternion& pose_by_use
 
 
 
-bool Transformation::convertPoseFromBaseToTool(const PoseEuler& pose_by_base, const PoseEuler& pose_fcp_by_base, const PoseEuler& tool_frame, PoseEuler& pose_by_tool)
+bool Transformation::convertPoseFromBaseToTool(const PoseEuler& pose_by_base, const PoseEuler& pose_tcp_by_base, PoseEuler& pose_by_tool)
 {
-    TransMatrix trans_tool_frame_inverse;
-    if(!getInverse(tool_frame, trans_tool_frame_inverse))
-    {
-        return false;
-    }
-    TransMatrix trans_pose_fcp_by_base_inverse;
-    if(!getInverse(pose_fcp_by_base, trans_pose_fcp_by_base_inverse))
+    TransMatrix trans_pose_tcp_by_base_inverse;
+    if(!getInverse(pose_tcp_by_base, trans_pose_tcp_by_base_inverse))
     {
         return false;
     }
     TransMatrix trans_pose_by_base, trans_pose_by_tool;
     pose_by_base.convertToTransMatrix(trans_pose_by_base);
-    trans_tool_frame_inverse.rightMultiply(trans_pose_fcp_by_base_inverse, trans_pose_by_tool);
-    trans_pose_by_tool.rightMultiply(trans_pose_by_base);
+    trans_pose_tcp_by_base_inverse.rightMultiply(trans_pose_by_base, trans_pose_by_tool);
     trans_pose_by_tool.convertToPoseEuler(pose_by_tool);
     return true;
 }
 
-bool Transformation::convertPoseFromToolToBase(const PoseEuler& pose_by_tool, const PoseEuler& pose_fcp_by_base, const PoseEuler& tool_frame, PoseEuler& pose_by_base)
+bool Transformation::convertPoseFromToolToBase(const PoseEuler& pose_by_tool, const PoseEuler& pose_tcp_by_base, PoseEuler& pose_by_base)
 {
-    TransMatrix trans_pose_fcp_by_base;
-    pose_fcp_by_base.convertToTransMatrix(trans_pose_fcp_by_base);
-    TransMatrix trans_tool_frame;
-    tool_frame.convertToTransMatrix(trans_tool_frame);
+    TransMatrix trans_pose_tcp_by_base;
+    pose_tcp_by_base.convertToTransMatrix(trans_pose_tcp_by_base);
     TransMatrix trans_pose_by_tool;
     pose_by_tool.convertToTransMatrix(trans_pose_by_tool);
     TransMatrix trans_pose_by_base;
-    trans_pose_fcp_by_base.rightMultiply(trans_tool_frame, trans_pose_by_base);
-    trans_pose_by_base.rightMultiply(trans_pose_by_tool);
+    trans_pose_tcp_by_base.rightMultiply(trans_pose_by_tool, trans_pose_by_base);
     trans_pose_by_base.convertToPoseEuler(pose_by_base);
     return true;
 }

@@ -1,6 +1,6 @@
 log_level: 1
 cycle_time: 1000
-max_barecore_timeout_count: 10
+max_barecore_timeout_count: 500
 heartbeat_with_barecore_count: 100
 max_send_resp_count: 10
 #END

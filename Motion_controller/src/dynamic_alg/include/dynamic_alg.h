@@ -60,10 +60,10 @@ public:
 
     virtual bool isValid() = 0;
 
-    virtual ErrorCode getTorqueInverseDynamics(const Joint joint, const JointVelocity vel, const JointAcceleration acc, 
+    virtual ErrorCode getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                JointTorque &torque) = 0;
 
-    virtual ErrorCode getAccDirectDynamics(const Joint joint, const JointVelocity vel, const JointTorque torque,
+    virtual ErrorCode getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
                                             JointAcceleration &acc) = 0;
 
 };

@@ -129,6 +129,7 @@ private:
 
     // mode and status
     fst_hal::UserOpMode user_op_mode_;
+    fst_hal::UserOpMode pre_user_op_mode_;
     RunningState running_state_;
     InterpreterState interpreter_state_;
     RobotState robot_state_;

@@ -109,10 +109,10 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_EXTERNAL_STOP (unsigned long long int)0x0001000B00C80002   /*the safety board detects external stop signal.*/
 #define SAFETY_BOARD_SAFETY_DOOR_STOP (unsigned long long int)0x0001000B00C80003   /*the safety board detects safty door stop signal.*/
 #define SAFETY_BOARD_LIMITED_STOP (unsigned long long int)0x0001000B00C80004   /*the safety board detects limited stop signal.*/
-#define SAFETY_BOARD_DEADMAN_NORMAL_FAULTY (unsigned long long int)0x0001000B00C80005   /*the safety board detects deadman normal is abnormal when manaul mode.*/
+#define SAFETY_BOARD_DEADMAN_NORMAL_FAULTY (unsigned long long int)0x0001000600C80005   /*the safety board detects deadman normal is abnormal when manaul mode.*/
 #define SAFETY_BOARD_DEADMAN_PANIC (unsigned long long int)0x0001000B00C80006   /*the safety board detects deadman panic signal.*/
 #define SAFETY_BOARD_TP_ESTOP (unsigned long long int)0x0001000B00C80007   /*the safety board detects TP-ESTOP signal.*/
-#define SAFETY_BOARD_OP_MODE_FAULTY (unsigned long long int)0x0001000B00C80008   /*the safety board detects abnormal operation mode.*/
+#define SAFETY_BOARD_OP_MODE_FAULTY (unsigned long long int)0x0001000600C80008   /*the safety board detects abnormal operation mode.*/
 #define SAFETY_BOARD_MAIN_CONTACTOR_FAULTY (unsigned long long int)0x0001000B00C80009   /*the safety board detects the main contactor is abnormal.*/
 #define SAFETY_BOARD_MAIN_BRAKE_RELAY_FAULTY (unsigned long long int)0x0001000B00C8000A   /*the safety board detects the relays on 1-6 axes are abnormal.*/
 #define SAFETY_BOARD_AUX_BRAKE_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000B   /*the safety board detects the relays of the first auxiliary axis is abnormal.*/
@@ -120,6 +120,8 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY (unsigned long long int)0x0001000B00C8000D   /*the safety board detects the first relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000E   /*the safety board detects the second relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CABINET_STOP (unsigned long long int)0x0001000B00C8000F   /*the safety board detects cabinet estop signal.*/
+#define SAFETY_BOARD_COMM_ERROR (unsigned long long int)0x0001000B00C80010   /*the safety board detects data error between FPGA and safety_board.*/
+#define SAFETY_BOARD_KEY_SWITCH_UNDER_ENGAGED (unsigned long long int)0x0001000600C80011   /*the safety board detects key switch under engaged*/
 #define TOOL_MANAGER_LOG (unsigned long long int)0x0000000100A20000   /*ToolManager log{0}*/
 #define TOOL_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A20001   /*ToolManager load param failed in initialization phase*/
 #define TOOL_MANAGER_LOAD_TOOLINFO_FAILED (unsigned long long int)0x0011000B00A20002   /*ToolManager load tool info failed in initialization phase*/

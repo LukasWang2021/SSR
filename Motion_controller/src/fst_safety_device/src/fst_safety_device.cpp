@@ -26,7 +26,7 @@ FstSafetyDevice::FstSafetyDevice(int address):
 	pre_ext_estop_(0),
 	pre_door_stop_(0),
 	pre_limited_stop_(0),
-	pre_deadman_normal_(1),
+	pre_deadman_normal_(1),//for initial 
 	pre_deadman_panic_(0),
 	pre_tp_estop_(0),
 	pre_mode_faulty_(0),
@@ -36,7 +36,8 @@ FstSafetyDevice::FstSafetyDevice(int address):
 	pre_brake2_relay_(0),
 	pre_contactor0_relay_(0),
 	pre_contactor1_relay_(0),
-	pre_cabinet_stop_(0)
+	pre_cabinet_stop_(0),
+    pre_comm_err_(0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new FstSafetyDeviceParam();
@@ -189,6 +190,11 @@ int FstSafetyDevice::getDITPUserMode()
     if(val == 0x2) return USER_OP_MODE_SLOWLY_MANUAL; //limit manual mode
     if(val == 0x4) return USER_OP_MODE_MANUAL; //unlimit manual mode
     return USER_OP_MODE_NONE;
+}
+
+char FstSafetyDevice::getDICommError(void)
+{
+    return din_frm1_.load().byte2.comm_err;
 }
 
 //----------------input byte3----------------------//
@@ -496,17 +502,14 @@ bool FstSafetyDevice::checkSafetyBoardAlarm(void)
     current_value = getDILimitedStop();
     ret |= isRisingEdge(current_value, SAFETY_BOARD_LIMITED_STOP, pre_limited_stop_);
 
-    current_value = getDIDeadmanNormal();
-    ret |= isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_NORMAL_FAULTY, pre_deadman_normal_);
-
     current_value = getDIDeadmanPanic();
     ret |= isRisingEdge(current_value, SAFETY_BOARD_DEADMAN_PANIC, pre_deadman_panic_);
 
     current_value = getDITPEStop();
     ret |= isRisingEdge(current_value, SAFETY_BOARD_TP_ESTOP, pre_tp_estop_);
 
-    current_value = getModeFaulty();
-    ret |= isRisingEdge(current_value, SAFETY_BOARD_OP_MODE_FAULTY, pre_mode_faulty_);
+    //current_value = getModeFaulty();
+    //ret |= isRisingEdge(current_value, SAFETY_BOARD_OP_MODE_FAULTY, pre_mode_faulty_);
 
     current_value = getDIContactorFaulty();
     ret |= isRisingEdge(current_value, SAFETY_BOARD_MAIN_CONTACTOR_FAULTY, pre_contactor_faulty_);
@@ -529,7 +532,23 @@ bool FstSafetyDevice::checkSafetyBoardAlarm(void)
     current_value = getDICabinetStop();
     ret |= isRisingEdge(current_value, SAFETY_BOARD_CABINET_STOP, pre_cabinet_stop_);
 
+    //comm error 
+    current_value = getDICommError();
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_COMM_ERROR, pre_comm_err_);
+
     return ret;
+}
+
+ErrorCode FstSafetyDevice::checkDeadmanNormal(void)
+{
+    char current_value = getDIDeadmanNormal();
+    if (pre_deadman_normal_ == 0 && current_value == 1)
+    {
+        pre_deadman_normal_ = current_value;
+        return SAFETY_BOARD_DEADMAN_NORMAL_FAULTY;
+    }
+    pre_deadman_normal_ = current_value;
+    return SUCCESS;
 }
 
 bool FstSafetyDevice::isRisingEdge(char value, ErrorCode code, char &pre_value)

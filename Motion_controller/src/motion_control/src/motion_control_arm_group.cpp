@@ -32,7 +32,8 @@ namespace fst_mc
 ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager *coordinate_manager_ptr, ToolManager *tool_manager_ptr)
 {
     vel_ratio_ = 0.0625;
-    acc_ratio_ = 0.0625;
+    acc_ratio_ = 1.0;
+    //acc_ratio_ = 0.0625;
     cycle_time_ = 0.001;
     memset(&manual_traj_, 0, sizeof(ManualTrajectory));
 

@@ -582,8 +582,10 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
             break;
         case TOOL:
             kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
-            manual_traj_.tool_coordinate = fcp_in_base;
+            transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
+            manual_traj_.tool_coordinate = tcp_in_base;
             memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
+            memset(&manual_traj_.cart_ending, 0, sizeof(manual_traj_.cart_start));
             break;
         default:
             FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
@@ -686,9 +688,16 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 break;
             case TOOL:
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
-                manual_traj_.tool_coordinate = fcp_in_base;
+                transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
+                manual_traj_.tool_coordinate = tcp_in_base;
                 memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
                 memset(&manual_traj_.cart_ending, 0, sizeof(manual_traj_.cart_start));
+                //FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
+                //FST_INFO("FCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
+                //FST_INFO("TCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
+                //memset(&tcp_in_user, 0, sizeof(tcp_in_user));
+                //transformation_.convertPoseFromToolToBase(tcp_in_user, manual_traj_.tool_coordinate, tcp_in_base);
+                //FST_INFO("TCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
                 break;
             default:
                 FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
@@ -1530,7 +1539,7 @@ bool BaseGroup::checkTrajectory(const TrajectoryCache &trajectory)
 
     for (size_t i = 0; i < trajectory.cache_length; i++)
     {
-        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 50)
+        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 150)
         {
             FST_ERROR("trajectory-block %d: duration = %.6f", i, trajectory.cache[i].duration);
             return false;
@@ -2587,7 +2596,8 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
             case TOOL:
-                transformation_.convertPoseFromToolToBase(pose, manual_traj_.tool_coordinate, tool_frame_, fcp_in_base);
+                transformation_.convertPoseFromToolToBase(pose, manual_traj_.tool_coordinate, tcp_in_base);
+                transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
                 err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
             case JOINT:

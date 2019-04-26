@@ -15,6 +15,7 @@
 #include <segment_alg.h>
 #include <fstream>
 #include <parameter_manager/parameter_manager_param_group.h>
+#include <transformation.h>
 
 
 using namespace std;
@@ -266,6 +267,31 @@ void test3(void)
 
 void test4(void)
 {
+    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    Transformation transformation;
+    transformation.init(&kinematics);
+    Joint joint_start = {0.2, -0.1, 0.15, 0, -1.47, 0};
+    PoseEuler pose_fcp_by_base, pose_by_tool, pose_by_base, tool_frame;
+    kinematics.doFK(joint_start, pose_fcp_by_base);
+    memset(&pose_by_tool, 0, sizeof(pose_by_tool));
+    tool_frame.point_.x_ = 10;
+    tool_frame.point_.y_ = 10;
+    tool_frame.point_.z_ = 10;
+    tool_frame.euler_.a_ = 0;
+    tool_frame.euler_.b_ = 0;
+    tool_frame.euler_.c_ = 0;
+
+    transformation.convertPoseFromToolToBase(pose_by_tool, pose_fcp_by_base, pose_by_base);
+    printf("joint: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint_start.j1_, joint_start.j2_, joint_start.j3_, joint_start.j4_, joint_start.j5_, joint_start.j6_);
+    printf("pose_fcp_by_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose_fcp_by_base.point_.x_, pose_fcp_by_base.point_.y_, pose_fcp_by_base.point_.z_, pose_fcp_by_base.euler_.a_, pose_fcp_by_base.euler_.b_, pose_fcp_by_base.euler_.c_);
+    printf("pose_by_tool: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose_by_tool.point_.x_, pose_by_tool.point_.y_, pose_by_tool.point_.z_, pose_by_tool.euler_.a_, pose_by_tool.euler_.b_, pose_by_tool.euler_.c_);
+    printf("tool_frame: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
+    printf("pose_by_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose_by_base.point_.x_, pose_by_base.point_.y_, pose_by_base.point_.z_, pose_by_base.euler_.a_, pose_by_base.euler_.b_, pose_by_base.euler_.c_);
+}
+
+/*
+void test4(void)
+{
     Logger log;
     ArmGroup arm(&log);
     ErrorMonitor error_monitor;
@@ -322,6 +348,7 @@ void test4(void)
     cout << "kinematics.csv" << endl;
     kout.close();
 }
+*/
 
 void test6(void)
 {
@@ -503,8 +530,8 @@ int main(int argc, char **argv)
     //test0();
     //test1();
     //test2();
-    test3();
-    //test4();
+    //test3();
+    test4();
     //test5();
     //test6();
     //test7();

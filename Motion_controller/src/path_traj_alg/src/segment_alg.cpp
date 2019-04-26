@@ -600,6 +600,13 @@ void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::M
 
     double dot_sin = sqrt(dot_sin_pow);
     angle = atan2(dot_sin, dot_cos);
+
+    double angle_via2end = 0.0;
+    double angle_start2via = 0.0;
+    getCircleCenterAngle(end.via.pose.pose.point_, end.target.pose.pose.point_, angle_via2end);
+    getCircleCenterAngle(start.point_, end.via.pose.pose.point_, angle_start2via);
+
+    if (angle <= angle_via2end + angle_start2via) angle = 2 * M_PI - angle;
     stack[S_CircleAngle] = angle;
 }
 

@@ -800,7 +800,7 @@ inline void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fs
 inline void getCirclePoint(double &circle_radius, double &angle, double* n_vector, double* o_vector,
     basic_alg::Point &circle_center_point, basic_alg::Point &circle_point);
 
-inline void getCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &end, double &angle);
+inline void getCircleCenterAngle(const basic_alg::Point &start, const basic_alg::Point &end, double &angle);
 
 inline void updateTrajPSingleItem(int traj_p_address, const basic_alg::Joint& joint);
 inline void getTrajPFromPathStart2End(const fst_mc::PathCache& path_cache, double traj_piece_ideal_start2end, 

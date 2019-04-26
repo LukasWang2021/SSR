@@ -24,10 +24,10 @@ public:
 
     virtual bool isValid();
 
-    virtual ErrorCode getTorqueInverseDynamics(const Joint joint, const JointVelocity vel, const JointAcceleration acc, 
+    virtual ErrorCode getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                JointTorque &torque);
 
-    virtual ErrorCode getAccDirectDynamics(const Joint joint, const JointVelocity vel, const JointTorque torque, 
+    virtual ErrorCode getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque, 
                                            JointAcceleration &acc);
 
     static const double DOUBLE_ACCURACY = 1e-6;
@@ -38,11 +38,11 @@ public:
 private:
 
     void computePaiElementInverseDynamics(DynamicAlgParam* dynamics_alg_param_ptr, size_t link_num);
-    void computeMExpression(const Joint joint, double m[LINKS][LINKS]);
-    void computeCExpression(const Joint joint, const JointVelocity vel, double c[LINKS][LINKS]);
-    void computeGExpression(const Joint joint, double g[LINKS]);
-    void computeTauHe(const Joint joint, double tau_he[LINKS]);
-    void computeMatrixElementInverseDynamics(const Joint joint, const JointVelocity vel, const JointAcceleration acc);
+    void computeMExpression(const Joint& joint, double m[LINKS][LINKS]);
+    void computeCExpression(const Joint& joint, const JointVelocity& vel, double c[LINKS][LINKS]);
+    void computeGExpression(const Joint& joint, double g[LINKS]);
+    void computeTauHe(const Joint& joint, double tau_he[LINKS]);
+    void computeMatrixElementInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc);
     
     int sign(double value);
     //matrix inverse alg

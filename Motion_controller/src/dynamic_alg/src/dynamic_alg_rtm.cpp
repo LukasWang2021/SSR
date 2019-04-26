@@ -102,7 +102,7 @@ bool DynamicAlgRTM::isValid()
     return is_valid_;
 }
 
-ErrorCode DynamicAlgRTM::getTorqueInverseDynamics(const Joint joint, const JointVelocity vel, const JointAcceleration acc, 
+ErrorCode DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                   JointTorque &torque)
 {
     //prepare variable
@@ -162,7 +162,7 @@ ErrorCode DynamicAlgRTM::getTorqueInverseDynamics(const Joint joint, const Joint
     return SUCCESS;
 }
 
-ErrorCode DynamicAlgRTM::getAccDirectDynamics(const Joint joint, const JointVelocity vel, const JointTorque torque,
+ErrorCode DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
                                               JointAcceleration &acc)
 {
     //prepare variable.
@@ -347,7 +347,7 @@ void DynamicAlgRTM::computePaiElementInverseDynamics(DynamicAlgParam* dynamics_a
     
 }
 
-void DynamicAlgRTM::computeMExpression(const Joint joint, double m[LINKS][LINKS])
+void DynamicAlgRTM::computeMExpression(const Joint& joint, double m[LINKS][LINKS])
 {
     //prepare the variable
     q1 = joint.j1_;
@@ -413,7 +413,7 @@ void DynamicAlgRTM::computeMExpression(const Joint joint, double m[LINKS][LINKS]
 
 }
 
-void DynamicAlgRTM::computeCExpression(const Joint joint, const JointVelocity vel, double c[LINKS][LINKS])
+void DynamicAlgRTM::computeCExpression(const Joint& joint, const JointVelocity& vel, double c[LINKS][LINKS])
 {
     //prepare the variable
     q1 = joint.j1_;
@@ -486,7 +486,7 @@ void DynamicAlgRTM::computeCExpression(const Joint joint, const JointVelocity ve
    
 }
 
-void DynamicAlgRTM::computeGExpression(const Joint joint, double g[LINKS])
+void DynamicAlgRTM::computeGExpression(const Joint& joint, double g[LINKS])
 {
     //prepare the variable
     q1 = joint.j1_;
@@ -521,7 +521,7 @@ void DynamicAlgRTM::computeGExpression(const Joint joint, double g[LINKS])
 
 }
 
-void DynamicAlgRTM::computeTauHe(const Joint joint, double tau_he[LINKS])
+void DynamicAlgRTM::computeTauHe(const Joint& joint, double tau_he[LINKS])
 {
     //prepare the variable
     q1 = joint.j1_;
@@ -557,7 +557,7 @@ void DynamicAlgRTM::computeTauHe(const Joint joint, double tau_he[LINKS])
 
 }
 
-void DynamicAlgRTM::computeMatrixElementInverseDynamics(const Joint joint, const JointVelocity vel, const JointAcceleration acc)
+void DynamicAlgRTM::computeMatrixElementInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc)
 { 
     //prepare the variable
     q1 = joint.j1_;

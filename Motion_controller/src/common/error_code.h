@@ -35,6 +35,7 @@ typedef unsigned long long int ErrorCode;
 #define MC_NVRAM_DATA_INVALID (unsigned long long int)0x0001000400A90005   /*data in NVRAM is invalid*/
 #define MC_RECORD_JOINT_TIMEOUT (unsigned long long int)0x0001000400A90006   /*record joint to nvram timeout*/
 #define MC_SWITCH_STATE_TIMEOUT (unsigned long long int)0x0001000400A90007   /*group switch from one state to other timeout*/
+#define MC_JOINT_TRACKING_ERROR (unsigned long long int)0x0001000400A90008   /*joint tracking error beyond threshold*/
 #define MC_COMPUTE_IK_FAIL (unsigned long long int)0x0001000400A903E9   /*compute IK failed*/
 #define FAIL_LOADING_PARAMETER (unsigned long long int)0x0011000200A903EB   /*load parameter failed*/
 #define JOINT_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F3   /*joint out of constraint*/
@@ -49,9 +50,12 @@ typedef unsigned long long int ErrorCode;
 #define TRAJECTORY_FIFO_EMPTY (unsigned long long int)0x0001000400A90BB8   /*trajectory fifo is empty*/
 #define TRAJECTORY_SEGMENT_ERROR (unsigned long long int)0x0001000400A90BBA   /*duration of trajectory segment is invalid*/
 #define TARGET_COINCIDENCE (unsigned long long int)0x0001000200A90BC2   /*target pose is same as target or start pose*/
+#define MC_PATH_PLANNING_FAIL (unsigned long long int)0x0001000400A90BBB   /*fail to plan a valid path*/
+#define MC_TRAJECTORY_PLANNING_FAIL (unsigned long long int)0x0001000400A90BBC   /*fail to plan a valid trajectory*/
 #define MC_FAIL_MANUAL_TO_POINT (unsigned long long int)0x0001000400A90FA0   /*fail to manual move to target point*/
 #define MC_FAIL_MANUAL_STEP (unsigned long long int)0x0001000400A90FA1   /*fail to manual move step*/
 #define MC_FAIL_MANUAL_CONTINUOUS (unsigned long long int)0x0001000400A90FA2   /*fail to manual move continuous*/
+#define MC_MANUAL_FRAME_ERROR (unsigned long long int)0x0001000400A90FA3   /*invalid manual frame*/
 #define PARAM_LENGTH_ERROR (unsigned long long int)0x00010002007903F5   /*array index beyond range*/
 #define PARAM_INTERNAL_FAULT (unsigned long long int)0x0001000B00790001   /*program internal fault*/
 #define PARAM_FAIL_IN_INIT (unsigned long long int)0x00010002007903E9   /*initialization failed*/

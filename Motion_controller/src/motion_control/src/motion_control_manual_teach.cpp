@@ -277,7 +277,7 @@ ErrorCode ManualTeach::manualStepByDirect(const ManualDirection *directions, Mot
             break;
 
         default:
-            err = MC_INTERNAL_FAULT;
+            err = MC_FAIL_MANUAL_STEP;
             FST_ERROR("Unsupported manual frame: %d", traj.frame);
             break;
     }
@@ -424,7 +424,7 @@ ErrorCode ManualTeach::manualCartesianStep(const ManualDirection *dir, MotionTim
             err = kinematics_ptr_->doIK(target, traj.joint_start, target_joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;    // transfrom from world to base
             break;
         default:
-            err = MC_INTERNAL_FAULT;
+            err = MC_FAIL_MANUAL_STEP;
             break;
     }
 
@@ -576,7 +576,7 @@ ErrorCode ManualTeach::manualContinuousByDirect(const ManualDirection *direction
         //    err = manualCartesianContinuousInToolFrame(directions, time, traj);
         //    break;
         default:
-            err = MC_INTERNAL_FAULT;
+            err = MC_FAIL_MANUAL_CONTINUOUS;
             FST_ERROR("Unsupported manual frame: %d", traj.frame);
             break;
     }

@@ -589,7 +589,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
             break;
         default:
             FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
-            return MC_INTERNAL_FAULT;
+            return MC_MANUAL_FRAME_ERROR;
     }
 
     manual_time_ = 0;
@@ -701,7 +701,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 break;
             default:
                 FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
-                return MC_INTERNAL_FAULT;
+                return MC_MANUAL_FRAME_ERROR;
         }
 
         manual_time_ = 0;
@@ -1028,7 +1028,7 @@ ErrorCode BaseGroup::restartMove(void)
             pthread_mutex_unlock(&cache_list_mutex_);
             traj_cache_pool_.freeCachePtr(traj_cache_ptr);
             FST_ERROR("Fail to plan trajectory back to pause-pose, code = 0x%llx", err);
-            return MC_INTERNAL_FAULT;
+            return err;
         }
         
         traj_cache_ptr->pick_index = 0;
@@ -1293,7 +1293,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
                 FST_ERROR("Control-position different with current-position, it might be a trouble.");
                 FST_ERROR("control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-                return MC_INTERNAL_FAULT;
+                return MC_JOINT_TRACKING_ERROR;
             }
 
             if (!isSameJoint(start_joint, control_joint, joint_tracking_accuracy_))
@@ -1302,7 +1302,7 @@ ErrorCode BaseGroup::checkStartState(const Joint &start_joint)
                 FST_ERROR("Control-position different with start-position, it might be a trouble.");
                 FST_ERROR("control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("start-position:   %s", printDBLine(&start_joint[0], buffer, LOG_TEXT_SIZE));
-                return MC_INTERNAL_FAULT;
+                return MC_JOINT_TRACKING_ERROR;
             }
         }
         else
@@ -1612,7 +1612,7 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionInfo &info,
     if (!checkPath(path))
     {
         FST_ERROR("Data in path cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_PATH_PLANNING_FAIL;
     }
     
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d", path.cache_length, path.smooth_in_index, path.smooth_out_index);
@@ -1635,7 +1635,7 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionInfo &info,
     if (!checkTrajectory(trajectory))
     {
         FST_ERROR("Data in trajectory cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_TRAJECTORY_PLANNING_FAIL;
     }
 
     FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
@@ -1669,7 +1669,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state, const Motion
     if (!checkPath(path))
     {
         FST_ERROR("Data in path cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_PATH_PLANNING_FAIL;
     }
 
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d",path.cache_length, path.smooth_in_index, path.smooth_out_index);
@@ -1684,7 +1684,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state, const Motion
     if (!checkTrajectory(trajectory))
     {
         FST_ERROR("Data in trajectory cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_TRAJECTORY_PLANNING_FAIL;
     }
 
     FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
@@ -1872,7 +1872,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionInfo &info, 
     if (!checkPath(path))
     {
         FST_ERROR("Data in path cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_PATH_PLANNING_FAIL;
     }
     
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
@@ -1908,7 +1908,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionInfo &info, 
     if (!checkTrajectory(trajectory))
     {
         FST_ERROR("Data in trajectory cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_TRAJECTORY_PLANNING_FAIL;
     }
     
     FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
@@ -1952,7 +1952,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionI
     if (!checkPath(path))
     {
         FST_ERROR("Data in path cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_PATH_PLANNING_FAIL;
     }
 
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
@@ -1984,7 +1984,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionI
     if (!checkTrajectory(trajectory))
     {
         FST_ERROR("Data in trajectory cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_TRAJECTORY_PLANNING_FAIL;
     }
     
     FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
@@ -2063,7 +2063,7 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionInfo &info
     if (!checkPath(path))
     {
         FST_ERROR("Data in path cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_PATH_PLANNING_FAIL;
     }
 
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
@@ -2077,12 +2077,6 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionInfo &info
     {
         FST_ERROR("Inverse kinematics failed, code = 0x%llx", err);
         return err;
-    }
-
-    if (!checkPath(path))
-    {
-        FST_ERROR("Data in path cache is invalid.");
-        return MC_INTERNAL_FAULT;
     }
 
     FST_INFO("Inverse kinematics success, plan trajectory ...");
@@ -2105,7 +2099,7 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionInfo &info
     if (!checkTrajectory(trajectory))
     {
         FST_ERROR("Data in trajectory cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_TRAJECTORY_PLANNING_FAIL;
     }
         
     FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
@@ -2154,7 +2148,7 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const Motio
     if (!checkPath(path))
     {
         FST_ERROR("Data in path cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_PATH_PLANNING_FAIL;
     }
         
     FST_INFO("Path plan success, total-point = %d, smooth-in = %d, smooth-out = %d, inverse kinematics ...", path.cache_length, path.smooth_in_index, path.smooth_out_index);
@@ -2186,7 +2180,7 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const Motio
     if (!checkTrajectory(trajectory))
     {
         FST_ERROR("Data in trajectory cache is invalid.");
-        return MC_INTERNAL_FAULT;
+        return MC_TRAJECTORY_PLANNING_FAIL;
     }
 
     FST_INFO("Trajectory plan success, total-segment = %d, smooth-out = %d,", trajectory.cache_length, trajectory.smooth_out_index);
@@ -2271,7 +2265,7 @@ ErrorCode BaseGroup::moveOffLineTrajectory(int id, const string &file_name)
                 FST_ERROR("Control-position different with current-position, it might be a trouble.");
                 FST_ERROR("Control-position: %s", printDBLine(&control_joint[0], buffer, LOG_TEXT_SIZE));
                 FST_ERROR("Current-position: %s", printDBLine(&current_joint[0], buffer, LOG_TEXT_SIZE));
-                return MC_INTERNAL_FAULT;
+                return MC_JOINT_TRACKING_ERROR;
             }
         }
         else
@@ -2602,7 +2596,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 break;
             case JOINT:
             default:
-                err = MC_INTERNAL_FAULT;
+                err = MC_MANUAL_FRAME_ERROR;
                 break;
         }
 
@@ -3194,6 +3188,8 @@ void BaseGroup::doStateMachine(void)
                 //bare_core_.stopBareCore();
                 FST_ERROR("Group-state is UNKNOW but servo-state is %d", servo_state);
                 reportError(MC_INTERNAL_FAULT);
+                //FST_WARN("Group-state switch to disable.");
+                //group_state_ = DISABLE;
             }
 
             break;

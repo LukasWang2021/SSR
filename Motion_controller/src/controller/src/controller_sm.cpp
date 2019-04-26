@@ -272,6 +272,7 @@ ErrorCode ControllerSm::callReset()
         }
 
         recordLog("Controller transfer to ESTOP_TO_ENGAGED by rpc-callReset");
+        ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
         ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;  
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.
         motion_control_ptr_->resetGroup();  
@@ -485,17 +486,18 @@ void ControllerSm::processSafety()
         
         //check safety_board status
         safety_device_ptr_->checkSafetyBoardAlarm();
-        //check deadman normal
-        ErrorCode result = safety_device_ptr_->checkDeadmanNormal();
-        if (result != SUCCESS && ctrl_state_ == CTRL_ENGAGED && pre_user_op_mode_ == user_op_mode_)//no key switches.
+        //check deadman normal and key switch under engage.
+        if (ctrl_state_ == CTRL_ENGAGED)
         {
-            ErrorMonitor::instance()->add(result);
-        }
-        //check if key switches under engaged.
-        if (pre_user_op_mode_ != user_op_mode_ && ctrl_state_ == CTRL_ENGAGED)
-        {
-            ErrorMonitor::instance()->add(SAFETY_BOARD_KEY_SWITCH_UNDER_ENGAGED);
-            pre_user_op_mode_ = user_op_mode_;
+            if (pre_user_op_mode_ != user_op_mode_)
+            {
+                ErrorMonitor::instance()->add(SAFETY_BOARD_KEY_SWITCH_UNDER_ENGAGED); 
+            }
+            ErrorCode result = safety_device_ptr_->checkDeadmanNormal();
+            if (result != SUCCESS && pre_user_op_mode_ == user_op_mode_)
+            {
+                ErrorMonitor::instance()->add(result);
+            }
         }
         pre_user_op_mode_ = user_op_mode_;
 

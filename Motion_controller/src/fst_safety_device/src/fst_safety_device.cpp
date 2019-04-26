@@ -532,9 +532,9 @@ bool FstSafetyDevice::checkSafetyBoardAlarm(void)
     current_value = getDICabinetStop();
     ret |= isRisingEdge(current_value, SAFETY_BOARD_CABINET_STOP, pre_cabinet_stop_);
 
-    //comm error should be used soon
-    //current_value = getDICommError();
-    //ret |= isRisingEdge(current_value, SAFETY_BOARD_COMM_ERROR, pre_comm_err_);
+    //comm error 
+    current_value = getDICommError();
+    ret |= isRisingEdge(current_value, SAFETY_BOARD_COMM_ERROR, pre_comm_err_);
 
     return ret;
 }

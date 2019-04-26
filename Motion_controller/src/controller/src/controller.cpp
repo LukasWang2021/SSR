@@ -226,6 +226,8 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
+    // wait state mathine of motion control start work 
+    usleep(100 * 1000);
     FST_INFO("init check offset");
     error_code = state_machine_.checkOffsetState();
     if(error_code != SUCCESS)

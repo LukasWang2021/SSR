@@ -36,12 +36,15 @@ int main()
 
     unsigned int hash_value = 0x00003B45;
 
-    RequestMessageType_Int32 msg;
+    RequestMessageType_Int32List msg;
     msg.header.time_stamp = 122;
     msg.property.authority = Comm_Authority_TP;
-    msg.data.data = 10;
+    //msg.data.data = 10;
+    msg.data.data_count = 2;
+    msg.data.data[0] = 0;
+    msg.data.data[1] = 0;
 
-    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32_fields, buf, buf_size))
+    if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_fields, buf, buf_size))
     {
         cout << "Request : encode buf failed" << endl;
         return -1;

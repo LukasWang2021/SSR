@@ -2379,23 +2379,31 @@ void getQuaternToRotationMatrix33(double* quatern, double* rotation)
     rotation[8] = 2 * (stack[S_TmpDouble_7] + quatern[2] * quatern[2]) - 1; // r[2][2] = 2*(w^2+z^2)-1
 }
 
+
 void getRotationMatrix33ToQuatern(double* rotation, double* quatern)
 {
-    int max_id = 0;
-    quatern[0] = sqrt(rotation[0] - rotation[4] - rotation[8] + 1) / 2; // x
-    quatern[1] = sqrt(rotation[4] - rotation[0] - rotation[8] + 1) / 2; // y
+    int max_id;
+    quatern[0] = sqrt(fabs(rotation[0] - rotation[4] - rotation[8] + 1)) / 2; // x
+    quatern[1] = sqrt(fabs(rotation[4] - rotation[0] - rotation[8] + 1)) / 2; // y
+
     if(quatern[1] > quatern[0])
     {
         stack[S_TmpDouble_1] = quatern[1];  // store max value of {x,y,z,s}
         max_id = 1;
     }
-    quatern[2] = sqrt(rotation[8] - rotation[0] - rotation[4] + 1) / 2; // z
+    else
+    {
+        stack[S_TmpDouble_1] = quatern[0]; 
+        max_id = 0;
+    }
+
+    quatern[2] = sqrt(fabs(rotation[8] - rotation[0] - rotation[4] + 1)) / 2; // z
     if(quatern[2] > stack[S_TmpDouble_1])
     {
         stack[S_TmpDouble_1] = quatern[2];
         max_id = 2;
     }
-    quatern[3] = sqrt(rotation[0] + rotation[4] + rotation[8] + 1) / 2; // w
+    quatern[3] = sqrt(fabs(rotation[0] + rotation[4] + rotation[8] + 1)) / 2; // w
     if(quatern[3] > stack[S_TmpDouble_1])
     {
         max_id = 3;

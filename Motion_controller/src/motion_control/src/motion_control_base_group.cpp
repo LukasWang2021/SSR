@@ -1943,6 +1943,15 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionI
     path_plan_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
     path.target = info;
 
+    /*
+    for (size_t i = 0; i < path.cache_length; i++)
+    {
+        PoseQuaternion &pose = path.cache[i].pose;
+        if (fabs(pose.quaternion_.x_) > 1 || fabs(pose.quaternion_.y_) > 1 || fabs(pose.quaternion_.z_) > 1 || fabs(pose.quaternion_.w_) > 1)
+            FST_INFO("pose%d: %.6f,%.6f,%.6f,  %.6f,%.6f,%.6f,%.6f", i, pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
+    }
+    */
+
     if (err != SUCCESS)
     {
         FST_ERROR("Path plan failed, code = 0x%llx", err);

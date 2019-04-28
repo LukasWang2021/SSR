@@ -350,6 +350,49 @@ void test4(void)
 }
 */
 
+void test5(void)
+{
+    PathCache path_cache;
+    MotionInfo via, target;
+    PoseEuler start_pose;
+
+    start_pose.point_.x_ = 261.7164;
+    start_pose.point_.y_ = -133.4895;
+    start_pose.point_.z_ = 533.6744;
+    start_pose.euler_.a_ = -0.6651;
+    start_pose.euler_.b_ = -0.1726;
+    start_pose.euler_.c_ = 2.7489;
+
+    target.type = MOTION_LINE;
+    target.cnt = 0.25;
+    target.vel = 1200;
+    target.target.pose.pose.point_.x_ = 565.3530;
+    target.target.pose.pose.point_.y_ = -84.3829;
+    target.target.pose.pose.point_.z_ = 489.7908;
+    target.target.pose.pose.euler_.a_ = -0.0007;
+    target.target.pose.pose.euler_.b_ = 0.0053;
+    target.target.pose.pose.euler_.c_ = 3.1414;
+
+    via.type = MOTION_LINE;
+    via.cnt = 0.6;
+    via.vel = 1000;
+    via.target.pose.pose.point_.x_ = 204.4835;
+    via.target.pose.pose.point_.y_ = -290.8357;
+    via.target.pose.pose.point_.z_ = 467.5943;
+    via.target.pose.pose.euler_.a_ = -0.9580;
+    via.target.pose.pose.euler_.b_ = -0.0338;
+    via.target.pose.pose.euler_.c_ = 3.1416;
+
+    ErrorCode err = planPathSmoothLine(start_pose, via, target, path_cache);
+    printf("planPathSmoothLine return %llx", err);
+
+    for (size_t i = 0; i < path_cache.cache_length; i++)
+    {
+        PoseQuaternion &pose = path_cache.cache[i].pose;
+        printf("%.6f,%.6f,%.6f,  %.6f,%.6f,%.6f,%.6f\n", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
+    }
+}
+
 void test6(void)
 {
     PoseEuler p;
@@ -531,8 +574,8 @@ int main(int argc, char **argv)
     //test1();
     //test2();
     //test3();
-    test4();
-    //test5();
+    //test4();
+    test5();
     //test6();
     //test7();
     //test8();

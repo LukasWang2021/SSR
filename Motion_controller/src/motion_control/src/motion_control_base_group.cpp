@@ -134,8 +134,8 @@ BaseGroup::~BaseGroup()
         if (path_cache.target.type == MOTION_JOINT)
         {
             g_path_out << "move-joint,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
-                       << ",target[0]=" << path_cache.target.joint_target[0] << ",target[1]=" << path_cache.target.joint_target[1] << ",target[2]=" << path_cache.target.joint_target[2]
-                       << ",target[3]=" << path_cache.target.joint_target[3] << ",target[4]=" << path_cache.target.joint_target[4] << ",target[5]=" << path_cache.target.joint_target[5] << endl;
+                       << ",target[0]=" << path_cache.target.target.joint[0] << ",target[1]=" << path_cache.target.target.joint[1] << ",target[2]=" << path_cache.target.target.joint[2]
+                       << ",target[3]=" << path_cache.target.target.joint[3] << ",target[4]=" << path_cache.target.target.joint[4] << ",target[5]=" << path_cache.target.target.joint[5] << endl;
             
             for (size_t j = 0; j < path_cache.cache_length; j++)
             {
@@ -150,16 +150,16 @@ BaseGroup::~BaseGroup()
             if (path_cache.target.type == MOTION_LINE)
             {
                 g_path_out << "move-line,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
-                           << ",target-x=" << path_cache.target.pose_target.point_.x_ << ",target-y=" << path_cache.target.pose_target.point_.y_ << ",target-z=" << path_cache.target.pose_target.point_.z_
-                           << ",target-a=" << path_cache.target.pose_target.euler_.a_ << ",target-b=" << path_cache.target.pose_target.euler_.b_ << ",target-c=" << path_cache.target.pose_target.euler_.c_ << endl;
+                           << ",target-x=" << path_cache.target.target.pose.pose.point_.x_ << ",target-y=" << path_cache.target.target.pose.pose.point_.y_ << ",target-z=" << path_cache.target.target.pose.pose.point_.z_
+                           << ",target-a=" << path_cache.target.target.pose.pose.euler_.a_ << ",target-b=" << path_cache.target.target.pose.pose.euler_.b_ << ",target-c=" << path_cache.target.target.pose.pose.euler_.c_ << endl;
             }
             else if (path_cache.target.type == MOTION_CIRCLE)
             {
                 g_path_out << "move-circle,cnt=" << path_cache.target.cnt << ",vel=" << path_cache.target.vel 
-                           << ",via-x=" << path_cache.target.circle_target.pose1.point_.x_ << ",via-y=" << path_cache.target.circle_target.pose1.point_.y_ << ",via-z=" << path_cache.target.circle_target.pose1.point_.z_
-                           << ",via-a=" << path_cache.target.circle_target.pose1.euler_.a_ << ",via-b=" << path_cache.target.circle_target.pose1.euler_.b_ << ",via-c=" << path_cache.target.circle_target.pose1.euler_.c_
-                           << ",target-x=" << path_cache.target.circle_target.pose2.point_.x_ << ",target-y=" << path_cache.target.circle_target.pose2.point_.y_ << ",target-z=" << path_cache.target.circle_target.pose2.point_.z_
-                           << ",target-a=" << path_cache.target.circle_target.pose2.euler_.a_ << ",target-b=" << path_cache.target.circle_target.pose2.euler_.b_ << ",target-c=" << path_cache.target.circle_target.pose2.euler_.c_ << endl;
+                           << ",via-x=" << path_cache.target.via.pose.pose.point_.x_ << ",via-y=" << path_cache.target.via.pose.pose.point_.y_ << ",via-z=" << path_cache.target.via.pose.pose.point_.z_
+                           << ",via-a=" << path_cache.target.via.pose.pose.euler_.a_ << ",via-b=" << path_cache.target.via.pose.pose.euler_.b_ << ",via-c=" << path_cache.target.via.pose.pose.euler_.c_
+                           << ",target-x=" << path_cache.target.target.pose.pose.point_.x_ << ",target-y=" << path_cache.target.target.pose.pose.point_.y_ << ",target-z=" << path_cache.target.target.pose.pose.point_.z_
+                           << ",target-a=" << path_cache.target.target.pose.pose.euler_.a_ << ",target-b=" << path_cache.target.target.pose.pose.euler_.b_ << ",target-c=" << path_cache.target.target.pose.pose.euler_.c_ << endl;
             }
             else
             {
@@ -172,7 +172,9 @@ BaseGroup::~BaseGroup()
                 PathBlock &block = path_cache.cache[j];
                 g_path_out << "block-" << j << ",point-type=" << block.point_type << ",motion-type=" << block.motion_type 
                            << ",x=" << block.pose.point_.x_ << ",y=" << block.pose.point_.y_ << ",z=" << block.pose.point_.z_ 
-                           << ",ow=" << block.pose.quaternion_.w_ << ",ox=" << block.pose.quaternion_.x_ << ",oy=" << block.pose.quaternion_.y_ << ",oz=" << block.pose.quaternion_.z_ << endl;
+                           << ",ow=" << block.pose.quaternion_.w_ << ",ox=" << block.pose.quaternion_.x_ << ",oy=" << block.pose.quaternion_.y_ << ",oz=" << block.pose.quaternion_.z_ 
+                           << ",joint[0]=" << block.joint[0] << ",joint[1]=" << block.joint[1] << ",joint[2]=" << block.joint[2] 
+                           << ",joint[3]=" << block.joint[3] << ",joint[4]=" << block.joint[4] << ",joint[5]=" << block.joint[5] << endl;
             }
         }
     }
@@ -1262,7 +1264,7 @@ ErrorCode BaseGroup::autoMove(int id, const MotionInfo &info)
         else
         {
             pthread_mutex_unlock(&cache_list_mutex_);
-            FST_ERROR("Start-time of this motion not equal with smooth-out-time of last motion.");
+            FST_ERROR("Start-time %.4f of this motion not equal with smooth-out-time %.4f of last motion.", start_time, traj_ptr->time_from_start);
             path_cache_pool_.freeCachePtr(path_ptr);
             traj_cache_pool_.freeCachePtr(traj_ptr);
             return MC_INTERNAL_FAULT;

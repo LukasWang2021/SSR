@@ -474,35 +474,17 @@ int generateElementStr(xmlNodePtr nodeValueElement, LineInfo objLineInfo, char *
 			}
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"io_val")==0){ 
-			for(nodeSubValueElement = nodeValueElement->children; 
-			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
-				if(xmlStrcasecmp(nodeSubValueElement->name,BAD_CAST"element")==0){ 
-					memset(label_output, 0x00, 1024);
-					generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
-					sprintf(label_str, "%s%s ", label_str, (char*)label_output);
-				}
-			}
+			value = xmlNodeGetContent(nodeValueElement);
+			sprintf(label_str, "%s%s ", label_str, (char*)value);
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"string")==0){ 
-			for(nodeSubValueElement = nodeValueElement->children; 
-			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
-				if(xmlStrcasecmp(nodeSubValueElement->name,BAD_CAST"element")==0){ 
-					memset(label_output, 0x00, 1024);
-					generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
-					// printBASCode(objLineInfo, " \"%s\" ", (char*)value);
-					sprintf(label_str, "%s\"%s\"", label_str, (char*)label_output);
-				}
-			}
+			value = xmlNodeGetContent(nodeValueElement);
+			// printBASCode(objLineInfo, " \"%s\" ", (char*)value);
+			sprintf(label_str, "%s\"%s\"", label_str, (char*)value);
 		}
 		else if(xmlStrcasecmp(name, BAD_CAST"command")==0){ 
-			for(nodeSubValueElement = nodeValueElement->children; 
-			nodeSubValueElement; nodeSubValueElement = nodeSubValueElement->next){
-				if(xmlStrcasecmp(nodeSubValueElement->name,BAD_CAST"element")==0){ 
-					memset(label_output, 0x00, 1024);
-					generateElementStr(nodeSubValueElement, objLineInfoTemp, label_output);
-					printBASCode(objLineInfo, " %s ", (char*)label_output);
-				}
-			}
+			value = xmlNodeGetContent(nodeValueElement);
+			printBASCode(objLineInfo, " %s ", (char*)value);
 		}
 		else { 
 			FST_ERROR("Wrong Type (%s) in element. \n", (char *)name);

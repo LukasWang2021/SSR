@@ -1349,7 +1349,6 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         return INVALID_PARAMETER;
     }
 
-    Joint target_joint;
     PoseEuler start_pose;
     PoseEuler fcp_in_base, tcp_in_base;
     kinematics_ptr_->doFK(start_joint_, fcp_in_base);
@@ -1397,7 +1396,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
             const PoseEuler &pose = info.via.pose.pose;
             const PoseEuler &uf = info.via.user_frame;
             const PoseEuler &tf = info.via.tool_frame;
-            FST_ERROR("Vis joint out of soft constraint.");
+            FST_ERROR("Via joint out of soft constraint.");
             FST_ERROR("Pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
             FST_ERROR("Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
             FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
@@ -1425,6 +1424,7 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         {
             char buffer[LOG_TEXT_SIZE];
             const Joint &via_joint = info.via.joint;
+            const Joint &target_joint = info.target.joint;
             const PoseEuler &via_pose = info.via.pose.pose;
             const PoseEuler &target_pose = info.target.pose.pose;
             FST_WARN("Via pose coincidence with target.");

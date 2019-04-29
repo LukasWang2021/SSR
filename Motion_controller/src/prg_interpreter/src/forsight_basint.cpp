@@ -66,7 +66,7 @@ enum var_inner_type { FORSIGHT_CHAR, FORSIGHT_INT, FORSIGHT_FLOAT };
 
 #define FORSIGHT_RETURN_VALUE   "forsight_return_value"
 #define FORSIGHT_CURRENT_JOINT  "j_pos"
-#define FORSIGHT_CURRENT_POS    "c_pos"
+#define FORSIGHT_CURRENT_POS    "l_pos"
 	
 #define FORSIGHT_REGISTER_ON    "on"
 #define FORSIGHT_REGISTER_OFF   "off"

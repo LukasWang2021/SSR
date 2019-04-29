@@ -1265,6 +1265,7 @@ ErrorCode BaseGroup::autoMove(int id, const MotionInfo &info)
         {
             pthread_mutex_unlock(&cache_list_mutex_);
             FST_ERROR("Start-time %.4f of this motion not equal with smooth-out-time %.4f of last motion.", start_time, traj_ptr->time_from_start);
+            FST_ERROR("Last-traj-ptr: %p, smooth-out-index: %d", last_traj_ptr, (last_traj_ptr ? last_traj_ptr->trajectory_cache.smooth_out_index : -1));
             path_cache_pool_.freeCachePtr(path_ptr);
             traj_cache_pool_.freeCachePtr(traj_ptr);
             return MC_INTERNAL_FAULT;
@@ -3121,6 +3122,23 @@ void BaseGroup::doStateMachine(void)
                 FST_ERROR("Auto to standby timeout, error-request asserted.");
                 reportError(MC_SWITCH_STATE_TIMEOUT);
                 error_request_ = true;
+                
+                if (servo_state == SERVO_IDLE)
+                {
+                    PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
+                    kinematics_ptr_->doFK(getLatestJoint(), fcp_in_base);
+                    transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
+                    transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, tcp_in_user);
+                    PoseQuaternion pose = PoseEuler2Pose(tcp_in_user);
+                    PoseQuaternion wait = fine_waiter_.getWaitingPose();
+                    FST_INFO("Current pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.quaternion_.w_, pose.quaternion_.x_, pose.quaternion_.y_, pose.quaternion_.z_);
+                    FST_INFO("Waiting pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f, %.4f", wait.point_.x_, wait.point_.y_, wait.point_.z_, wait.quaternion_.w_, wait.quaternion_.x_, wait.quaternion_.y_, wait.quaternion_.z_);
+                }
+                else
+                {
+                    FST_ERROR("Servo-state: %d", servo_state);
+                }
+                
             }
 
             break;
@@ -3938,6 +3956,11 @@ bool FineWaiter::isEnable(void)
 bool FineWaiter::isStable(void)
 {
     return stable_cnt_ == stable_cycle_;
+}
+
+const PoseQuaternion FineWaiter::getWaitingPose(void)
+{
+    return waiting_pose_;
 }
 
 

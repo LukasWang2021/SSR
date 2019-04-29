@@ -45,6 +45,8 @@ class FineWaiter
     bool isEnable(void);
     bool isStable(void);
 
+    const basic_alg::PoseQuaternion getWaitingPose(void);
+
   private:
     bool    enable_;
     double  threshold_;

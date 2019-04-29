@@ -1443,7 +1443,8 @@ bool BaseGroup::isLastMotionSmooth(void)
 {
     // 上一条指令未走完且上一条指令的CNT介于0 ~ 1之间
     TrajectoryCache *traj_ptr = getLastTrajectoryCachePtr();
-    return traj_ptr != NULL && traj_ptr->path_cache_ptr->target.cnt > -MINIMUM_E3;
+    //return traj_ptr != NULL && traj_ptr->path_cache_ptr->target.cnt > -MINIMUM_E3;
+    return ((traj_ptr != NULL) && (traj_ptr->smooth_out_index != -1));
 }
 
 PathCache* BaseGroup::getLastPathCachePtr(void)
@@ -1574,7 +1575,7 @@ ErrorCode BaseGroup::autoJoint(const Joint &start, const MotionInfo &info, PathC
         auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
-        FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, trajectory.time_from_start);
+        FST_INFO("Last motion with smooth, cnt: %.4f, time-of-smooth: %.4f", last_cnt, start_time);
         return autoSmoothJoint(start_state, traj_cache.path_cache_ptr->target, info, path.path_cache, trajectory.trajectory_cache);
     }
     else
@@ -1828,7 +1829,7 @@ ErrorCode BaseGroup::autoLine(const Joint &start, const MotionInfo &info, PathCa
         auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
-        FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, start_time);
+        FST_INFO("Last motion with smooth, cnt: %.4f, time-of-smooth: %.4f", last_cnt, start_time);
         return autoSmoothLine(start_state, traj_cache.path_cache_ptr->target, info, path.path_cache, trajectory.trajectory_cache);
     }
     else
@@ -2026,7 +2027,7 @@ ErrorCode BaseGroup::autoCircle(const Joint &start, const MotionInfo &info, Path
         auto last_cnt = traj_cache.path_cache_ptr->target.cnt;
         pthread_mutex_unlock(&cache_list_mutex_);
         trajectory.time_from_start = start_time;
-        FST_INFO("Last motion with smooth, cnt = %.4f, time-of-smooth", last_cnt, start_time);
+        FST_INFO("Last motion with smooth, cnt: %.4f, time-of-smooth: %.4f", last_cnt, start_time);
         return autoSmoothCircle(start_state, traj_cache.path_cache_ptr->target, info, path.path_cache, trajectory.trajectory_cache);
     }
     else

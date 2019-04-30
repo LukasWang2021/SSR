@@ -157,10 +157,10 @@ void initStack(int link_num, double joint_vel_max[9])
     stack[S_PathCountFactorCartesian] = segment_alg_param.accuracy_cartesian_factor / 100.0;
     stack[S_PathCountFactorJoint] = segment_alg_param.accuracy_joint_factor / PI;
 
-    stack[S_PauseTimeFactor] = 1.5;
+    stack[S_PauseTimeFactor] = 1.2;
     stack[S_PausePathLengthFactor] = 1.2;
     stack[S_PauseAccCartesian] = 500;
-    stack[S_PauseAccJoint] = 1;
+    stack[S_PauseAccJoint] = 2;
 
     // init start and end point vel and acc state
     int start_point_address = S_StartPointState0;
@@ -1564,6 +1564,14 @@ ErrorCode planPauseTrajectory(const PathCache &path_cache,
 bool canBePause(const PathCache &path_cache, const fst_mc::JointState &stop_state, const int &path_stop_index, const int &left_path_number, 
     int &path_end_index)
 {
+    bool omega_not_zero_flag = false;
+    for (int i = 0; i != model.link_num; ++i)
+    {
+        if (DOUBLE_ACCURACY < stop_state.omega[i] || stop_state.omega[i] < -1 * DOUBLE_ACCURACY) omega_not_zero_flag = true;
+    }
+
+    if (!omega_not_zero_flag) return false;
+
     int i = 0;
     double pause2end_offset = 0.0;
     double mid_pause2end_offset = 0.0;
@@ -1621,6 +1629,14 @@ bool canBePause(const PathCache &path_cache, const fst_mc::JointState &stop_stat
 inline bool canBePauseStartBetweenIn2out(const fst_mc::PathCache &path_cache, const fst_mc::JointState &stop_state, const int &path_stop_index, const int &left_path_number, 
     int &path_end_index)
 {
+    bool omega_not_zero_flag = false;
+    for (int i = 0; i != model.link_num; ++i)
+    {
+        if (DOUBLE_ACCURACY < stop_state.omega[i] || stop_state.omega[i] < -1 * DOUBLE_ACCURACY) omega_not_zero_flag = true;
+    }
+
+    if (!omega_not_zero_flag) return false;
+
     double pause2end_offset = 0.0;
     double mid_pause2end_offset = 0.0;
     double max_stop_time = 0;

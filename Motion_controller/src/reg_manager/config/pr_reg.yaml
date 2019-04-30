@@ -14,9 +14,9 @@ PR1:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR2:
     id: 2
@@ -34,9 +34,9 @@ PR2:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR3:
     id: 3
@@ -54,9 +54,9 @@ PR3:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR4:
     id: 4
@@ -74,9 +74,9 @@ PR4:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR5:
     id: 5
@@ -94,9 +94,9 @@ PR5:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR6:
     id: 6
@@ -114,9 +114,9 @@ PR6:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR7:
     id: 7
@@ -134,9 +134,9 @@ PR7:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR8:
     id: 8
@@ -154,9 +154,9 @@ PR8:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR9:
     id: 9
@@ -174,9 +174,9 @@ PR9:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR10:
     id: 10
@@ -194,9 +194,9 @@ PR10:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR11:
     id: 11
@@ -214,9 +214,9 @@ PR11:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR12:
     id: 12
@@ -234,9 +234,9 @@ PR12:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR13:
     id: 13
@@ -254,9 +254,9 @@ PR13:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR14:
     id: 14
@@ -274,9 +274,9 @@ PR14:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR15:
     id: 15
@@ -294,9 +294,9 @@ PR15:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR16:
     id: 16
@@ -314,9 +314,9 @@ PR16:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR17:
     id: 17
@@ -334,9 +334,9 @@ PR17:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR18:
     id: 18
@@ -354,9 +354,9 @@ PR18:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR19:
     id: 19
@@ -374,9 +374,9 @@ PR19:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR20:
     id: 20
@@ -394,9 +394,9 @@ PR20:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR21:
     id: 21
@@ -414,9 +414,9 @@ PR21:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR22:
     id: 22
@@ -434,9 +434,9 @@ PR22:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR23:
     id: 23
@@ -454,9 +454,9 @@ PR23:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR24:
     id: 24
@@ -474,9 +474,9 @@ PR24:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR25:
     id: 25
@@ -494,9 +494,9 @@ PR25:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR26:
     id: 26
@@ -514,9 +514,9 @@ PR26:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR27:
     id: 27
@@ -534,9 +534,9 @@ PR27:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR28:
     id: 28
@@ -554,9 +554,9 @@ PR28:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR29:
     id: 29
@@ -574,9 +574,9 @@ PR29:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 PR30:
     id: 30
@@ -594,8 +594,8 @@ PR30:
     pos7: 0.0 
     pos8: 0.0 
     pos9: 0.0 
-    posture1: 0
-    posture2: 0
-    posture3: 0
+    posture1: 1
+    posture2: 1
+    posture3: -1
     posture4: 0
 #END

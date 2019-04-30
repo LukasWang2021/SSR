@@ -4136,9 +4136,9 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 	if(!strcmp(vname, FORSIGHT_CURRENT_JOINT))
 	{
 		getMoveCommandDestination(movCmdDst);
-	    value.setJointValue(&movCmdDst.joint_target);
+	        value.setJointValue(&movCmdDst.joint_target);
 		
-		value.setPrRegDataWithJointValue(&movCmdDst.joint_target);
+       //	value.setPrRegDataWithJointValue(&movCmdDst.joint_target);
 		return value ;
 	}
 	else if(!strcmp(vname, FORSIGHT_CURRENT_POS))
@@ -4146,7 +4146,7 @@ eval_value find_var(struct thread_control_block * objThreadCntrolBlock,
 		getMoveCommandDestination(movCmdDst);
 		value.setPoseValue(&movCmdDst.pose_target);
 		
-		value.setPrRegDataWithPoseEulerValue(&movCmdDst.pose_target);
+	//	value.setPrRegDataWithPoseEulerValue(&movCmdDst.pose_target);
 		return value ;
 	}
 	else if(!strcmp(vname, FORSIGHT_TIMER_START))

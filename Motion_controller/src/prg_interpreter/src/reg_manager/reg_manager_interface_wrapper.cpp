@@ -265,6 +265,7 @@ bool reg_manager_interface_setPosePr(PoseEuler *ptr, uint16_t num)
 	{
 		PrRegDataIpc objPrRegDataIpc ;
 		objPrRegDataIpc.id     = num ;
+        objPrRegDataIpc.value.pos_type     = PR_REG_POS_TYPE_CARTESIAN ;
 #ifndef WIN32
 		objPrRegDataIpc.value.pos[0] = ptr->point_.x_   ;
 		objPrRegDataIpc.value.pos[1] = ptr->point_.y_   ;
@@ -360,6 +361,7 @@ bool reg_manager_interface_setJointPr(Joint *ptr, uint16_t num)
 		bRet = g_objRegManagerInterface->getPrReg(num, &objPrRegDataIpc);
 		if(bRet)
 		{
+            objPrRegDataIpc.value.pos_type     = PR_REG_POS_TYPE_JOINT;
 #ifndef WIN32 
 			objPrRegDataIpc.value.pos[0] = ptr->j1_;
 			objPrRegDataIpc.value.pos[1] = ptr->j2_;

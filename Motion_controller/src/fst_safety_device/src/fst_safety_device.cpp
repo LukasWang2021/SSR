@@ -37,7 +37,7 @@ FstSafetyDevice::FstSafetyDevice(int address):
 	pre_contactor0_relay_(0),
 	pre_contactor1_relay_(0),
 	pre_cabinet_stop_(0),
-    pre_comm_err_(0)
+    pre_comm_err_(1)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new FstSafetyDeviceParam();

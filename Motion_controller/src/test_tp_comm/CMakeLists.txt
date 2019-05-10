@@ -163,6 +163,26 @@ add_executable(test_controller_set_system_time  ${SRC_LIST}  src/test_controller
 target_link_libraries(test_controller_set_system_time ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
 install(TARGETS test_controller_set_system_time RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
 
+######### for test client #########
+add_executable(backup_done  ${SRC_LIST}  src/test_controller/test_controller_backup_done.cpp)
+target_link_libraries(backup_done ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS backup_done RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
+add_executable(backup_is_available  ${SRC_LIST}  src/test_controller/test_controller_backup_is_available.cpp)
+target_link_libraries(backup_is_available ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS backup_is_available RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
+add_executable(restore_done  ${SRC_LIST}  src/test_controller/test_controller_restore_done.cpp)
+target_link_libraries(restore_done ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_done RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
+######### for test client #########
+add_executable(restore_is_available  ${SRC_LIST}  src/test_controller/test_controller_restore_is_available.cpp)
+target_link_libraries(restore_is_available ${catkin_LIBRARIES} ${PROTOBUF_LIBRARIES} test_tp_comm protos)
+install(TARGETS restore_is_available RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/controller)
+
 
 ######### for test client #########
 add_executable(test_tool_add ${SRC_LIST}  src/test_frame/test_tool_add.cpp)

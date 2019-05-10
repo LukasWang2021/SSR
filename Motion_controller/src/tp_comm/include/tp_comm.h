@@ -168,6 +168,14 @@ private:
     void handleRequest0x000093EE(int recv_bytes);
     /********rpc/controller/getErrorCodeList, RequestMessageType_Void**********/
     void handleRequest0x00015F44(int recv_bytes);
+    /********rpc/controller/isBackupAvailable, RequestMessageType_Void**********/
+    void handleRequest0x00003EB5(int recv_bytes);
+    /********rpc/controller/backupDone, RequestMessageType_Void**********/
+    void handleRequest0x000143E5(int recv_bytes);
+    /********rpc/controller/isRestoreAvailable, RequestMessageType_Void**********/
+    void handleRequest0x0000C7A5(int recv_bytes);
+    /********rpc/controller/restoreDone, RequestMessageType_Void**********/
+    void handleRequest0x000079F5(int recv_bytes);
 
     /********tool_manager/addTool, RequestMessageType_ToolInfo**********/
     void handleRequest0x0000A22C(int recv_bytes);
@@ -609,6 +617,14 @@ private:
     void handleResponse0x000093EE(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
     /********rpc/controller/getErrorCodeList, ResponseMessageType_Uint64_Uint64List(count = 64)**********/
     void handleResponse0x00015F44(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/isBackupAvailable, ResponseMessageType_Uint64**********/
+    void handleResponse0x00003EB5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/backupDone, ResponseMessageType_Uint64**********/
+    void handleResponse0x000143E5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/isRestoreAvailable, ResponseMessageType_Uint64**********/
+    void handleResponse0x0000C7A5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
+    /********rpc/controller/restoreDone, ResponseMessageType_Uint64**********/
+    void handleResponse0x000079F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);
 
     /********getRpcTable, ResponseMessageType_RpcTable**********/
     void handleResponse0x00004FA5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size);

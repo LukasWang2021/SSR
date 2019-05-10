@@ -294,3 +294,68 @@ void TpComm::handleResponse0x00015F44(std::vector<TpRequestResponse>::iterator& 
         delete (ResponseMessageType_Uint64_Uint64List*)task->response_data_ptr;
     }
 }
+
+//"/rpc/controller/isBackupAvailable"
+void TpComm::handleResponse0x00003EB5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+//"/rpc/controller/backupDone"
+void TpComm::handleResponse0x000143E5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+//"/rpc/controller/isRestoreAvailable"
+void TpComm::handleResponse0x0000C7A5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}
+//"/rpc/controller/restoreDone"
+void TpComm::handleResponse0x000079F5(std::vector<TpRequestResponse>::iterator& task, int& send_buffer_size)
+{
+    if(!encodeResponsePackage(task->hash, ResponseMessageType_Uint64_fields, task->response_data_ptr, send_buffer_size))
+    {
+        FST_ERROR("handleResponse: failed to encode response package");// send
+    }
+    if(task->request_data_ptr != NULL)
+    {
+        delete (RequestMessageType_Void*)task->request_data_ptr;
+    }
+    if(task->response_data_ptr != NULL)
+    {
+        delete (ResponseMessageType_Uint64*)task->response_data_ptr;
+    }
+}

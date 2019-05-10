@@ -127,6 +127,15 @@ private:
     void handleRpc0x000093EE(void* request_data_ptr, void* response_data_ptr);
     // "/rpc/controller/getErrorCodeList"
     void handleRpc0x00015F44(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/isBackupAvailable"	
+    void handleRpc0x00003EB5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/backupDone"	
+    void handleRpc0x000143E5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/isRestoreAvailable"	
+    void handleRpc0x0000C7A5(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/controller/restoreDone"	
+    void handleRpc0x000079F5(void* request_data_ptr, void* response_data_ptr);
+
 
     /* tool manager rpc */
     // "/rpc/tool_manager/addTool"

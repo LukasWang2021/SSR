@@ -30,6 +30,10 @@ void ControllerRpc::initRpcTable()
     rpc_service = {"/rpc/controller/getSystemTime", 0x000003F5, &ControllerRpc::handleRpc0x000003F5}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getVersion", 0x000093EE, &ControllerRpc::handleRpc0x000093EE}; rpc_table_.push_back(rpc_service);
     rpc_service = {"/rpc/controller/getErrorCodeList", 0x00015F44, &ControllerRpc::handleRpc0x00015F44}; rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/isBackupAvailable",	0x00003EB5,	&ControllerRpc::handleRpc0x00003EB5	};	rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/backupDone",	0x000143E5,	&ControllerRpc::handleRpc0x000143E5	};	rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/isRestoreAvailable",	0x0000C7A5,	&ControllerRpc::handleRpc0x0000C7A5	};	rpc_table_.push_back(rpc_service);
+    rpc_service = {"/rpc/controller/restoreDone",	0x000079F5,	&ControllerRpc::handleRpc0x000079F5	};	rpc_table_.push_back(rpc_service);
 
 
     rpc_service = {"/rpc/tool_manager/addTool", 0x0000A22C, &ControllerRpc::handleRpc0x0000A22C}; rpc_table_.push_back(rpc_service);

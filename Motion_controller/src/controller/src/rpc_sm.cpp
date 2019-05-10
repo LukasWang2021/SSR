@@ -101,3 +101,44 @@ void ControllerRpc::handleRpc0x0000899E(void* request_data_ptr, void* response_d
     //recordLog(CONTROLLER_LOG, rs_data_ptr->data.data, std::string("/rpc/controller/shutdown"));
 }
 
+//"/rpc/controller/isBackupAvailable"	
+void ControllerRpc::handleRpc0x00003EB5(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    if(state_machine_ptr_->getCtrlState() != CTRL_ESTOP)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+    state_machine_ptr_->setInitState(false);
+    rs_data_ptr->data.data = SUCCESS;
+}
+
+//"/rpc/controller/backupDone"	
+void ControllerRpc::handleRpc0x000143E5(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    state_machine_ptr_->setInitState(true);
+    rs_data_ptr->data.data = SUCCESS;
+}
+
+//"/rpc/controller/isRestoreAvailable"	
+void ControllerRpc::handleRpc0x0000C7A5(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    if(state_machine_ptr_->getCtrlState() != CTRL_ESTOP)
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        return;
+    }
+    state_machine_ptr_->setInitState(false);
+    rs_data_ptr->data.data = SUCCESS;
+}
+
+//"/rpc/controller/restoreDone"	
+void ControllerRpc::handleRpc0x000079F5(void* request_data_ptr, void* response_data_ptr)
+{
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    state_machine_ptr_->setInitState(true);
+    rs_data_ptr->data.data = SUCCESS;
+}

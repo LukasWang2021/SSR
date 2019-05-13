@@ -569,7 +569,13 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
         case BASE:
             kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
             transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-            manual_traj_.cart_start = tcp_in_base;
+            manual_traj_.tool_coordinate.euler_ = tcp_in_base.euler_;
+            memset(&manual_traj_.tool_coordinate.point_, 0, sizeof(manual_traj_.tool_coordinate.point_));
+            manual_traj_.cart_start.point_ = tcp_in_base.point_;
+            manual_traj_.cart_ending.point_ = manual_traj_.cart_start.point_;
+            memset(&manual_traj_.cart_start.euler_, 0, sizeof(manual_traj_.cart_start.euler_));
+            memset(&manual_traj_.cart_ending.euler_, 0, sizeof(manual_traj_.cart_ending.euler_));
+            break;
         case USER:
             kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
             transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
@@ -587,7 +593,7 @@ ErrorCode BaseGroup::manualMoveStep(const ManualDirection *direction)
             transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
             manual_traj_.tool_coordinate = tcp_in_base;
             memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
-            memset(&manual_traj_.cart_ending, 0, sizeof(manual_traj_.cart_start));
+            memset(&manual_traj_.cart_ending, 0, sizeof(manual_traj_.cart_ending));
             break;
         default:
             FST_ERROR("Unsupported manual frame: %d", manual_traj_.frame);
@@ -665,8 +671,12 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
             case BASE:
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
-                manual_traj_.cart_start = tcp_in_base;
-                manual_traj_.cart_ending = tcp_in_base;
+                manual_traj_.tool_coordinate.euler_ = tcp_in_base.euler_;
+                memset(&manual_traj_.tool_coordinate.point_, 0, sizeof(manual_traj_.tool_coordinate.point_));
+                manual_traj_.cart_start.point_ = tcp_in_base.point_;
+                manual_traj_.cart_ending.point_ = manual_traj_.cart_start.point_;
+                memset(&manual_traj_.cart_start.euler_, 0, sizeof(manual_traj_.cart_start.euler_));
+                memset(&manual_traj_.cart_ending.euler_, 0, sizeof(manual_traj_.cart_ending.euler_));
                 //FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
                 //FST_INFO("FCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
                 //FST_INFO("TCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
@@ -693,7 +703,7 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
                 manual_traj_.tool_coordinate = tcp_in_base;
                 memset(&manual_traj_.cart_start, 0, sizeof(manual_traj_.cart_start));
-                memset(&manual_traj_.cart_ending, 0, sizeof(manual_traj_.cart_start));
+                memset(&manual_traj_.cart_ending, 0, sizeof(manual_traj_.cart_ending));
                 //FST_INFO("start-joint = %s", printDBLine(&manual_traj_.joint_start[0], buffer, LOG_TEXT_SIZE));
                 //FST_INFO("FCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
                 //FST_INFO("TCP-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
@@ -2589,7 +2599,9 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
         switch (manual_traj_.frame)
         {
             case BASE:
-                transformation_.convertTcpToFcp(pose, tool_frame_, fcp_in_base);
+                transformation_.convertPoseFromUserToBase(manual_traj_.tool_coordinate, pose, tcp_in_base);
+                //tcp_in_base.point_ = manual_traj_.tool_coordinate.point_;
+                transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
                 err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
             case USER:

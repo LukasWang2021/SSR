@@ -863,7 +863,7 @@ void ControllerRpc::handleRpc0x000102F3(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data[i] = (int32_t)offset_state[i];
     }
     rs_data_ptr->error_code.data = SUCCESS;
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/getAllZeroPointStatus"));
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getAllZeroPointStatus"));
 }
 
 // "/rpc/motion_control/axis_group/calibrateAllZeroPointOffsets"

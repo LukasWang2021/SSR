@@ -3226,9 +3226,9 @@ void BaseGroup::doStateMachine(void)
             }
             else
             {
-                //FST_WARN("Group-state is unknow but servo-state is %d, send stop request to servo.", servo_state);
-                //bare_core_.stopBareCore();
-                FST_ERROR("Group-state is UNKNOW but servo-state is %d", servo_state);
+                FST_WARN("Group-state is unknow but servo-state is %d, send stop request to barecore.", servo_state);
+                bare_core_.stopBareCore();
+                //FST_ERROR("Group-state is UNKNOW but servo-state is %d", servo_state);
                 reportError(MC_INTERNAL_FAULT);
                 //FST_WARN("Group-state switch to disable.");
                 //group_state_ = DISABLE;

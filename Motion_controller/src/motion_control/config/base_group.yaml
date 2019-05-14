@@ -23,10 +23,6 @@ cartesian_vel_limit:
     min: 0.1
     max: 4000.0
 
-simulator:
-    enable: false
-    cycle_per_publish: 25
-
 cartesian:
     velocity:
         min: 1.0                            # mm/s

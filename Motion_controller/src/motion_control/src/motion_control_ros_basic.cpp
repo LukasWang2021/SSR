@@ -15,6 +15,7 @@ namespace fst_mc
 
 void RosBasic::initRosBasic(void)
 {
+    printf(">>>>>>>>>>>>>>>> initRosBasic <<<<<<<<<<<<<<<<<<<\n");
     int argc = 1;
     char buf[16] = {"MotionControl"};
     char *bufs[] = {buf};

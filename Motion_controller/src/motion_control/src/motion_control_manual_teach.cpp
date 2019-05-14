@@ -793,19 +793,15 @@ ErrorCode ManualTeach::manualJointContinuous(const ManualDirection *dir, MotionT
 ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, MotionTime time, ManualTrajectory &traj)
 {
     char buffer[LOG_TEXT_SIZE];
-
+    PoseEuler &start = traj.cart_start;
+    PoseEuler &target = traj.cart_ending;
     FST_INFO("manual-Cartesian-Continuous: directions = %s, planning trajectory ...", printDBLine((int*)dir, buffer, LOG_TEXT_SIZE));
     FST_INFO("  manual-time = %.4f, vel-ratio = %.0f%%, acc-ratio = %.0f%%", time, vel_ratio_ * 100, acc_ratio_ * 100);
     FST_INFO("  start-joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
-
-    PoseEuler &start = traj.cart_start;
-    PoseEuler target = traj.cart_start;
-
-    FST_INFO("  start-pose  = %.2f %.2f %.2f - %.4f %.4f %.4f",
-             start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
+    FST_INFO("  start-pose  = %.2f %.2f %.2f - %.4f %.4f %.4f", start.point_.x_, start.point_.y_, start.point_.z_, start.euler_.a_, start.euler_.b_, start.euler_.c_);
 
     double spd, acc;
-
+    
     for (size_t i = 0; i < 6; i++)
     {
         spd = (i < 3 ? position_vel_reference_ : orientation_omega_reference_) * vel_ratio_;
@@ -835,7 +831,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].start_alpha = 0;
                 traj.coeff[i].brake_alpha = 0;
                 traj.direction[i] = STANDING;
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i);
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i);
             }
             else if (time < traj.coeff[i].stable_time)
             {
@@ -844,7 +840,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tm;
                 traj.direction[i] = STANDING;
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i) + traj.coeff[i].start_alpha * tm * tm;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + traj.coeff[i].start_alpha * tm * tm;
             }
             else if (time < traj.coeff[i].brake_time)
             {
@@ -853,9 +849,9 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tim;
                 traj.direction[i] = STANDING;
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i) + omg * tim;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                *(&traj.cart_ending.point_.x_ + i) += omg * tim;
+                *(&target.point_.x_ + i) += omg * tim;
             }
             else
             {
@@ -872,11 +868,11 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].stable_time = time + spd / acc;
                 traj.coeff[i].brake_time = 32 - spd / acc;
                 traj.coeff[i].stop_time = 32;
-                traj.coeff[i].start_alpha = dir[i] == INCREASE ? acc : -acc;
-                traj.coeff[i].brake_alpha = -traj.coeff[i].start_alpha;
                 traj.direction[i] = dir[i];
                 double trip = spd * spd / acc + (32 - spd / acc * 2) * spd;
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i) + (dir[i] == INCREASE ? trip : -trip);
+                traj.coeff[i].start_alpha = dir[i] == INCREASE ? acc : -acc;
+                traj.coeff[i].brake_alpha = -traj.coeff[i].start_alpha;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + (dir[i] == INCREASE ? trip : -trip);
             }
             else
             {
@@ -900,7 +896,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].stop_time = time;
                 traj.coeff[i].start_alpha = 0;
                 traj.coeff[i].brake_alpha = 0;
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i);
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i);
             }
             else if (time < traj.coeff[i].stable_time)
             {
@@ -908,7 +904,7 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 traj.coeff[i].stable_time = time;
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tm;
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i) + traj.coeff[i].start_alpha * tm * tm;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + traj.coeff[i].start_alpha * tm * tm;
             }
             else if (time < traj.coeff[i].brake_time)
             {
@@ -916,9 +912,9 @@ ErrorCode ManualTeach::manualCartesianContinuous(const ManualDirection *dir, Mot
                 double omg = tim * traj.coeff[i].start_alpha;
                 traj.coeff[i].brake_time = time;
                 traj.coeff[i].stop_time = time + tim;
-                *(&traj.cart_ending.point_.x_ + i) = *(&traj.cart_start.point_.x_ + i) + omg * tim;
+                *(&target.point_.x_ + i) = *(&start.point_.x_ + i) + omg * tim;
                 tim = time - traj.coeff[i].stable_time;
-                *(&traj.cart_ending.point_.x_ + i) += omg * tim;
+                *(&target.point_.x_ + i) += omg * tim;
             }
             else
             {

@@ -287,6 +287,28 @@ void test4(void)
     printf("pose_by_tool: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose_by_tool.point_.x_, pose_by_tool.point_.y_, pose_by_tool.point_.z_, pose_by_tool.euler_.a_, pose_by_tool.euler_.b_, pose_by_tool.euler_.c_);
     printf("tool_frame: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
     printf("pose_by_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", pose_by_base.point_.x_, pose_by_base.point_.y_, pose_by_base.point_.z_, pose_by_base.euler_.a_, pose_by_base.euler_.b_, pose_by_base.euler_.c_);
+
+    PoseQuaternion pose, tcp_in_base, fcp_in_base;
+    pose.point_.x_ = 650;
+    pose.point_.y_ = 10;
+    pose.point_.z_ = 500;
+    pose.quaternion_.w_ = 0;
+    pose.quaternion_.x_ = 1;
+    pose.quaternion_.y_ = 0;
+    pose.quaternion_.z_ = 0;
+    clock_t start = clock();
+
+    for (size_t i = 0; i < 1000; i++)
+    {
+        transformation.convertPoseFromUserToBase(pose, tool_frame, tcp_in_base);
+        transformation.convertTcpToFcp(tcp_in_base, tool_frame, fcp_in_base);
+    }
+
+    clock_t ending = clock();
+    double seconds  = (double)(ending - start)/CLOCKS_PER_SEC;
+    printf("kinematics using time: %.6f ms\n", seconds * 1000);
+
+    
 }
 
 /*
@@ -574,8 +596,8 @@ int main(int argc, char **argv)
     //test1();
     //test2();
     //test3();
-    //test4();
-    test5();
+    test4();
+    //test5();
     //test6();
     //test7();
     //test8();

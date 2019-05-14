@@ -45,6 +45,7 @@ void signalInterrupt(int signo)
 int main(int  argc, char *argv[])
 {
 	InterpreterControl intprt_ctrl; 
+	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
 #ifndef WIN32
 	signal(SIGINT, signalInterrupt);
 	if(log_ptr_ == NULL)
@@ -52,13 +53,12 @@ int main(int  argc, char *argv[])
 		log_ptr_ = new fst_log::Logger();
     	FST_LOG_INIT("Interpreter");
 	}
-#endif
-	initInterpreter();
-	memset(&intprt_ctrl, 0x00, sizeof(intprt_ctrl));
-#ifdef WIN32
-	append_io_mapping();
+#else
+	//	append_io_mapping();
 	intprt_ctrl.cmd = fst_base::INTERPRETER_SERVER_CMD_LAUNCH ;
 #endif
+	initInterpreter();
+
 	bool bRet = load_register_data();
 	if(bRet)
 	{

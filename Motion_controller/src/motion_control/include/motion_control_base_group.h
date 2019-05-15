@@ -132,8 +132,10 @@ class BaseGroup
     const basic_alg::PoseEuler& getToolFrame(void);
     const basic_alg::PoseEuler& getWorldFrame(void);
 
+    ErrorCode convertCartToJoint(const PoseAndPosture &pose, const basic_alg::PoseEuler &uf, const basic_alg::PoseEuler &tf, basic_alg::Joint &joint);
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, const basic_alg::PoseEuler &uf, const basic_alg::PoseEuler &tf, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, const basic_alg::PoseEuler &uf, const basic_alg::PoseEuler &tf, basic_alg::PoseEuler &pose);
+    ErrorCode convertCartToJoint(const PoseAndPosture &pose, basic_alg::Joint &joint);
     ErrorCode convertCartToJoint(const basic_alg::PoseEuler &pose, basic_alg::Joint &joint);
     ErrorCode convertJointToCart(const basic_alg::Joint &joint, basic_alg::PoseEuler &pose);
 

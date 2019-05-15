@@ -735,6 +735,58 @@ ErrorCode MotionControl::clearGroup(void)
     return group_ptr_->clearGroup();
 }
 
+ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id, Joint &joint)
+{
+    if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
+    {
+        return group_ptr_->convertCartToJoint(pose, joint);
+    }
+
+    PoseEuler tf, uf;
+
+    if (user_frame_id == 0)
+    {
+        memset(&uf, 0, sizeof(uf));
+    }
+    else
+    {
+        CoordInfo uf_info;
+        ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
+
+        if (err_user == SUCCESS && uf_info.is_valid)
+        {
+            uf = uf_info.data;
+        }
+        else
+        {
+            FST_ERROR("Fail to get user frame from given ID.");
+            return err_user;
+        }
+    }
+
+    if (tool_frame_id == 0)
+    {
+        memset(&tf, 0, sizeof(tf));
+    }
+    else
+    {
+        ToolInfo tf_info;
+        ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
+
+        if (err_tool == SUCCESS && tf_info.is_valid)
+        {
+            tf = tf_info.data;
+        }
+        else
+        {
+            FST_ERROR("Fail to get tool frame from given id");
+            return err_tool;
+        }
+    }
+
+    return group_ptr_->convertCartToJoint(pose, uf, tf, joint);
+}
+
 ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_frame_id, int tool_frame_id, Joint &joint)
 {
     if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)

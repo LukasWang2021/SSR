@@ -278,6 +278,14 @@ const PoseEuler& BaseGroup::getWorldFrame(void)
     return world_frame_;
 }
 
+ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, const PoseEuler &uf, const PoseEuler &tf, Joint &joint)
+{
+    PoseEuler tcp_in_base, fcp_in_base;
+    transformation_.convertPoseFromUserToBase(pose.pose, uf, tcp_in_base);
+    transformation_.convertTcpToFcp(tcp_in_base, tf, fcp_in_base);
+    return kinematics_ptr_->doIK(fcp_in_base, pose.posture, joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+}
+
 ErrorCode BaseGroup::convertCartToJoint(const PoseEuler &pose, const PoseEuler &uf, const PoseEuler &tf, Joint &joint)
 {
     PoseEuler tcp_in_base, fcp_in_base;
@@ -293,6 +301,14 @@ ErrorCode BaseGroup::convertJointToCart(const Joint &joint, const PoseEuler &uf,
     transformation_.convertFcpToTcp(fcp_in_base, tf, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, uf, pose);
     return SUCCESS;
+}
+
+ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, Joint &joint)
+{
+    PoseEuler tcp_in_base, fcp_in_base;
+    transformation_.convertPoseFromUserToBase(pose.pose, user_frame_, tcp_in_base);
+    transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
+    return kinematics_ptr_->doIK(fcp_in_base, pose.posture, joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
 }
 
 ErrorCode BaseGroup::convertCartToJoint(const PoseEuler &pose, Joint &joint)

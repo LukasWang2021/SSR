@@ -1,12 +1,12 @@
 log_level: 1
 number_of_links: 6
 max_torque:
-    - 1.1
-    - 2.2
-    - 3.3
-    - 4.4
-    - 5.5
-    - 6.6
+    - 677.16
+    - 674.68
+    - 361.26
+    - 134.4
+    - 74.0
+    - 59.55
 m_load: 0.0
 lcx_load: 0.0
 lcy_load: 0.0

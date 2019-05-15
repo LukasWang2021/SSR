@@ -6,12 +6,14 @@
 #include "dynamic_alg_rtm.h"
 #include <sys/time.h>
 
+
 using namespace std;
 using namespace basic_alg;
 #define LINKS 6
 
 int main(int argc, char** argv)
 {
+
     printf("begin\n");
     //----------prepare param-----------//
     DynamicAlgParam dynamics_alg_param_ptr[LINKS];
@@ -78,10 +80,10 @@ int main(int argc, char** argv)
 
     //--------------init dynamics----------------------//
     DynamicAlgRTM dyn;
-    dyn.initDynamicAlgRTM("/root/install/share/runtime/axis_group/", dynamics_alg_param_ptr, LINKS);
+    dyn.initDynamicAlgRTM("/root/install/share/runtime/axis_group/");
     printf("valid = %d\n", dyn.isValid());
-    dyn.updateLoadParam(load_param);
-    unsigned long long err = 0;
+    //dyn.updateLoadParam(load_param);
+    bool err = false;
     Joint joint;
     JointVelocity vel;
     JointAcceleration acc;
@@ -219,7 +221,7 @@ int main(int argc, char** argv)
             acc[j] = accelerate_vector[i*6 + j];
         }
         err = dyn.getTorqueInverseDynamics(joint, vel, acc, torque);
-        if (err != 0)
+        if (err == false)
         {
             printf("failed inverse dynamics\n");
             return 0;

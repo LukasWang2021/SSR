@@ -92,3 +92,12 @@ target_link_libraries(test_direct_time
 install(TARGETS	test_direct_time
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+install(FILES config/dynamic_alg_rtm.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+)
+
+install(DIRECTORY config
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+

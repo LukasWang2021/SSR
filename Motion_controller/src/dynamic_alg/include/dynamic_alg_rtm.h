@@ -3,10 +3,8 @@
 
 #include "axis_group_model.h"
 #include "dynamic_alg.h"
+#include "dynamic_alg_rtm_param.h"
 #include "parameter_manager/parameter_manager_param_group.h"
-
-#define DYNAMICS_INVALID_PARAM 0x1234;
-#define DYNAMICS_DIRECT_FAILED 0x123456;
 
 
 namespace basic_alg
@@ -18,16 +16,18 @@ public:
     DynamicAlgRTM();
     ~DynamicAlgRTM();
 
-    virtual ErrorCode initDynamicAlgRTM(std::string file_path, DynamicAlgParam* dynamics_alg_param_ptr, uint32_t link_num);
+    virtual bool initDynamicAlgRTM(std::string file_path);
 
-    virtual void updateLoadParam(DynamicAlgLoadParam load_param);
+    virtual bool updateLoadParam(void);
+    virtual bool updateLoadParam(DynamicAlgLoadParam load_param);
 
     virtual bool isValid();
 
-    virtual ErrorCode getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
+    virtual bool getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                JointTorque &torque);
 
-    virtual ErrorCode getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque, 
+    virtual bool getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc);
+    virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque, 
                                            JointAcceleration &acc);
 
     static const double DOUBLE_ACCURACY = 1e-6;
@@ -38,6 +38,7 @@ public:
 private:
 
     void computePaiElementInverseDynamics(DynamicAlgParam* dynamics_alg_param_ptr, size_t link_num);
+    void computePaiElementInverseDynamics(void);
     void computeMExpression(const Joint& joint, double m[LINKS][LINKS]);
     void computeCExpression(const Joint& joint, const JointVelocity& vel, double c[LINKS][LINKS]);
     void computeGExpression(const Joint& joint, double g[LINKS]);
@@ -58,6 +59,7 @@ private:
 
     DH base_dh_;
     DH arm_dh_[6];
+    DynamicAlgRTMParam* param_ptr_;
     fst_parameter::ParamGroup param_;
     std::string file_path_;
     bool is_valid_;

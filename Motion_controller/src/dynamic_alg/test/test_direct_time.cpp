@@ -78,10 +78,14 @@ int main(int argc, char** argv)
 
     //--------------init dynamics----------------------//
     DynamicAlgRTM dyn;
-    dyn.initDynamicAlgRTM("/root/install/share/runtime/axis_group/", dynamics_alg_param_ptr, LINKS);
+    bool ret = dyn.initDynamicAlgRTM("/root/install/share/runtime/axis_group/");
     printf("valid = %d\n", dyn.isValid());
-    dyn.updateLoadParam(load_param);
-    unsigned long long err = 0;
+    if(ret == false)
+    {
+        return -1;
+    }
+    //dyn.updateLoadParam(load_param);
+    bool err = false;
     Joint joint;
     JointVelocity vel;
     JointAcceleration acc;
@@ -213,9 +217,9 @@ int main(int argc, char** argv)
             torque[j] = tau_vector[i*6 + j];
         }
         err = dyn.getAccDirectDynamics(joint, vel, torque, acc);
-        if (err != 0)
+        if (err == false)
         {
-            printf("failed inverse dynamics\n");
+            printf("failed direct dynamics\n");
             return 0;
         }
         

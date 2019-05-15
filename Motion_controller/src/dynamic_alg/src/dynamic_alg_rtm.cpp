@@ -10,18 +10,28 @@ namespace basic_alg
 {
 
 DynamicAlgRTM::DynamicAlgRTM():
+    param_ptr_(NULL),
     is_valid_(false)
 {
-
+    param_ptr_ = new DynamicAlgRTMParam();
 }
 
 DynamicAlgRTM::~DynamicAlgRTM()
 {
-    
+    if(param_ptr_ != NULL){
+        delete param_ptr_;
+        param_ptr_ = NULL;
+    }
 }
 
-ErrorCode DynamicAlgRTM::initDynamicAlgRTM(std::string file_path, DynamicAlgParam* dynamics_alg_param_ptr, uint32_t link_num)
+bool DynamicAlgRTM::initDynamicAlgRTM(std::string file_path)
 {
+    if(!param_ptr_->loadParam()){
+        printf("Failed to load dynamic_alg_rtm component parameters\n");
+        is_valid_ = false;
+        return false;
+    }
+
     file_path_ = file_path + "arm_dh.yaml";
     if (param_.loadParamFile(file_path_))
     {
@@ -66,35 +76,82 @@ ErrorCode DynamicAlgRTM::initDynamicAlgRTM(std::string file_path, DynamicAlgPara
         else
         {
             is_valid_ = false;
+            return false;
         }
     }
     else
     {
         is_valid_ = false;
+        return false;
     }  
 
-    if (link_num < LINKS || dynamics_alg_param_ptr == NULL)
+    if (param_ptr_->number_of_links_ < LINKS)
     {
-        return DYNAMICS_INVALID_PARAM;
+        return false;
     }
 
-    computePaiElementInverseDynamics(dynamics_alg_param_ptr, link_num);
-
-    return SUCCESS;
+    m_load = param_ptr_->m_load_;
+    lcx_load = param_ptr_->lcx_load_;
+    lcy_load = param_ptr_->lcy_load_;
+    lcz_load = param_ptr_->lcz_load_;
+    Ixx_load = param_ptr_->Ixx_load_;
+    Iyy_load = param_ptr_->Iyy_load_;
+    Izz_load = param_ptr_->Izz_load_;
+    Ixy_load = param_ptr_->Ixy_load_;
+    Ixz_load = param_ptr_->Ixz_load_;
+    Iyz_load = param_ptr_->Iyz_load_;
+    computePaiElementInverseDynamics();
+    
+    return true;
 }
 
-void DynamicAlgRTM::updateLoadParam(DynamicAlgLoadParam load_param)
+bool DynamicAlgRTM::updateLoadParam(void)
 {
-    m_load = load_param.m_load;
-    lcx_load = load_param.lcx_load;
-    lcy_load = load_param.lcy_load;
-    lcz_load = load_param.lcz_load;
-    Ixx_load = load_param.Ixx_load;
-    Iyy_load = load_param.Iyy_load;
-    Izz_load = load_param.Izz_load;
-    Ixy_load = load_param.Ixy_load;
-    Ixz_load = load_param.Ixz_load;
-    Iyz_load = load_param.Iyz_load;
+    if(!param_ptr_->loadParam()){
+        printf("Failed to load dynamic_alg_rtm component parameters");
+        return false;
+    }
+    m_load = param_ptr_->m_load_;
+    lcx_load = param_ptr_->lcx_load_;
+    lcy_load = param_ptr_->lcy_load_;
+    lcz_load = param_ptr_->lcz_load_;
+    Ixx_load = param_ptr_->Ixx_load_;
+    Iyy_load = param_ptr_->Iyy_load_;
+    Izz_load = param_ptr_->Izz_load_;
+    Ixy_load = param_ptr_->Ixy_load_;
+    Ixz_load = param_ptr_->Ixz_load_;
+    Iyz_load = param_ptr_->Iyz_load_;
+    return true;
+}
+
+bool DynamicAlgRTM::updateLoadParam(DynamicAlgLoadParam load_param)
+{
+    param_ptr_->m_load_ = load_param.m_load;
+    param_ptr_->lcx_load_ = load_param.lcx_load;
+    param_ptr_->lcy_load_ = load_param.lcy_load;
+    param_ptr_->lcz_load_ = load_param.lcz_load;
+    param_ptr_->Ixx_load_ = load_param.Ixx_load;
+    param_ptr_->Iyy_load_ = load_param.Iyy_load;
+    param_ptr_->Izz_load_ = load_param.Izz_load;
+    param_ptr_->Ixy_load_ = load_param.Ixy_load;
+    param_ptr_->Ixz_load_ = load_param.Ixz_load;
+    param_ptr_->Iyz_load_ = load_param.Iyz_load;
+    if(!param_ptr_->saveParam()){
+        printf("Failed to save dynamic_alg_rtm component parameters");
+        return false;
+    }
+
+    m_load = param_ptr_->m_load_;
+    lcx_load = param_ptr_->lcx_load_;
+    lcy_load = param_ptr_->lcy_load_;
+    lcz_load = param_ptr_->lcz_load_;
+    Ixx_load = param_ptr_->Ixx_load_;
+    Iyy_load = param_ptr_->Iyy_load_;
+    Izz_load = param_ptr_->Izz_load_;
+    Ixy_load = param_ptr_->Ixy_load_;
+    Ixz_load = param_ptr_->Ixz_load_;
+    Iyz_load = param_ptr_->Iyz_load_;
+    return true;
 }
 
 bool DynamicAlgRTM::isValid()
@@ -102,7 +159,7 @@ bool DynamicAlgRTM::isValid()
     return is_valid_;
 }
 
-ErrorCode DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
+bool DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                   JointTorque &torque)
 {
     //prepare variable
@@ -159,10 +216,23 @@ ErrorCode DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const Join
     torque.t5_ = temp_torque[4];
     torque.t6_ = temp_torque[5];
 
-    return SUCCESS;
+    return true;
 }
 
-ErrorCode DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
+bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc)
+{
+    JointTorque torq;
+    torq.t1_ = param_ptr_->max_torque_[0];
+    torq.t2_ = param_ptr_->max_torque_[1];
+    torq.t3_ = param_ptr_->max_torque_[2];
+    torq.t4_ = param_ptr_->max_torque_[3];
+    torq.t5_ = param_ptr_->max_torque_[4];
+    torq.t6_ = param_ptr_->max_torque_[5];
+
+    return getAccDirectDynamics(joint, vel, torq, acc);
+}
+
+bool DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
                                               JointAcceleration &acc)
 {
     //prepare variable.
@@ -174,7 +244,7 @@ ErrorCode DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVel
     //bool ret = getMatrixInverse(M, LINKS, M_inverse);//伴随矩阵法,4ms,deprecated by LU.
     if (ret == false)
     {
-        return DYNAMICS_DIRECT_FAILED;
+        return false;
     }
 
     double C[LINKS][LINKS] = {0};
@@ -282,68 +352,69 @@ ErrorCode DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVel
     acc.a5_ = final_ans[4];
     acc.a6_ = final_ans[5];
 
-    return SUCCESS;
+    return true;
 }
 
-void DynamicAlgRTM::computePaiElementInverseDynamics(DynamicAlgParam* dynamics_alg_param_ptr, size_t link_num)
+void DynamicAlgRTM::computePaiElementInverseDynamics()
 {
-    ZZR1 = dynamics_alg_param_ptr[0].ZZR;
-    FS1 = dynamics_alg_param_ptr[0].FS;
-    FV1 = dynamics_alg_param_ptr[0].FV;
+    
+    ZZR1 = param_ptr_->ZZR1;
+    FS1 = param_ptr_->FS1;
+    FV1 = param_ptr_->FV1;
 
-    XXR2 = dynamics_alg_param_ptr[1].XXR;
-    XY2 = dynamics_alg_param_ptr[1].XY;
-    XZR2  = dynamics_alg_param_ptr[1].XZR;
-    YZ2 = dynamics_alg_param_ptr[1].YZ;
-    ZZR2 = dynamics_alg_param_ptr[1].ZZR;
-    MXR2 = dynamics_alg_param_ptr[1].MXR;
-    MY2  = dynamics_alg_param_ptr[1].MY;
-    FS2 = dynamics_alg_param_ptr[1].FS;
-    FV2 = dynamics_alg_param_ptr[1].FV;
+    XXR2 = param_ptr_->XXR2;
+    XY2 = param_ptr_->XY2;
+    XZR2  = param_ptr_->XZR2;
+    YZ2 = param_ptr_->YZ2;
+    ZZR2 = param_ptr_->ZZR2;
+    MXR2 = param_ptr_->MXR2;
+    MY2  = param_ptr_->MY2;
+    FS2 = param_ptr_->FS2;
+    FV2 = param_ptr_->FV2;
 
-    XXR3 = dynamics_alg_param_ptr[2].XXR;
-    XYR3 = dynamics_alg_param_ptr[2].XYR;
-    XZ3 = dynamics_alg_param_ptr[2].XZ;
-    YZ3 = dynamics_alg_param_ptr[2].YZ;
-    ZZR3 = dynamics_alg_param_ptr[2].ZZR; 
-    MXR3 = dynamics_alg_param_ptr[2].MXR;
-    MYR3 = dynamics_alg_param_ptr[2].MYR; 
-    Im3 = dynamics_alg_param_ptr[2].Im; 
-    FS3 = dynamics_alg_param_ptr[2].FS; 
-    FV3 = dynamics_alg_param_ptr[2].FV;
+    XXR3 = param_ptr_->XXR3;
+    XYR3 = param_ptr_->XYR3;
+    XZ3 = param_ptr_->XZ3;
+    YZ3 = param_ptr_->YZ3;
+    ZZR3 = param_ptr_->ZZR3; 
+    MXR3 = param_ptr_->MXR3;
+    MYR3 = param_ptr_->MYR3; 
+    Im3 = param_ptr_->Im3; 
+    FS3 = param_ptr_->FS3; 
+    FV3 = param_ptr_->FV3;
 
-    XXR4 = dynamics_alg_param_ptr[3].XXR; 
-    XY4 = dynamics_alg_param_ptr[3].XY; 
-    XZ4 = dynamics_alg_param_ptr[3].XZ; 
-    YZ4 = dynamics_alg_param_ptr[3].YZ; 
-    ZZR4 = dynamics_alg_param_ptr[3].ZZR; 
-    MX4 = dynamics_alg_param_ptr[3].MX; 
-    MYR4 = dynamics_alg_param_ptr[3].MYR; 
-    Im4 = dynamics_alg_param_ptr[3].Im; 
-    FS4 = dynamics_alg_param_ptr[3].FS; 
-    FV4 = dynamics_alg_param_ptr[3].FV; 
+    XXR4 = param_ptr_->XXR4; 
+    XY4 = param_ptr_->XY4; 
+    XZ4 = param_ptr_->XZ4; 
+    YZ4 = param_ptr_->YZ4; 
+    ZZR4 = param_ptr_->ZZR4; 
+    MX4 = param_ptr_->MX4; 
+    MYR4 = param_ptr_->MYR4; 
+    Im4 = param_ptr_->Im4; 
+    FS4 = param_ptr_->FS4; 
+    FV4 = param_ptr_->FV4; 
 
-    XXR5 = dynamics_alg_param_ptr[4].XXR; 
-    XY5 = dynamics_alg_param_ptr[4].XY; 
-    XZ5 = dynamics_alg_param_ptr[4].XZ;
-    YZ5 = dynamics_alg_param_ptr[4].YZ; 
-    ZZR5 = dynamics_alg_param_ptr[4].ZZR; 
-    MX5 = dynamics_alg_param_ptr[4].MX; 
-    MYR5 = dynamics_alg_param_ptr[4].MYR; 
-    Im5 = dynamics_alg_param_ptr[4].Im; 
-    FS5 = dynamics_alg_param_ptr[4].FS; 
-    FV5 = dynamics_alg_param_ptr[4].FV;
+    XXR5 = param_ptr_->XXR5; 
+    XY5 = param_ptr_->XY5; 
+    XZ5 = param_ptr_->XZ5;
+    YZ5 = param_ptr_->YZ5; 
+    ZZR5 = param_ptr_->ZZR5; 
+    MX5 = param_ptr_->MX5; 
+    MYR5 = param_ptr_->MYR5; 
+    Im5 = param_ptr_->Im5; 
+    FS5 = param_ptr_->FS5; 
+    FV5 = param_ptr_->FV5;
 
-    XXR6 = dynamics_alg_param_ptr[5].XXR; 
-    XY6 = dynamics_alg_param_ptr[5].XY; 
-    XZ6 = dynamics_alg_param_ptr[5].XZ; 
-    YZ6 = dynamics_alg_param_ptr[5].YZ; 
-    ZZ6 = dynamics_alg_param_ptr[5].ZZ; 
-    MX6 = dynamics_alg_param_ptr[5].MX; 
-    MY6 = dynamics_alg_param_ptr[5].MY; 
-    Im6 = dynamics_alg_param_ptr[5].Im; 
-    FS6 = dynamics_alg_param_ptr[5].FS; 
-    FV6 = dynamics_alg_param_ptr[5].FV;
+    XXR6 = param_ptr_->XXR6; 
+    XY6 = param_ptr_->XY6; 
+    XZ6 = param_ptr_->XZ6; 
+    YZ6 = param_ptr_->YZ6; 
+    ZZ6 = param_ptr_->ZZ6; 
+    MX6 = param_ptr_->MX6; 
+    MY6 = param_ptr_->MY6; 
+    Im6 = param_ptr_->Im6; 
+    FS6 = param_ptr_->FS6; 
+    FV6 = param_ptr_->FV6;
     
 }
 

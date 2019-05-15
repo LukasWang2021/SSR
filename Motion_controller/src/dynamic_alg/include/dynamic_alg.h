@@ -54,16 +54,18 @@ class DynamicAlg
 public:
     virtual ~DynamicAlg(){}
 
-    virtual ErrorCode initDynamicAlgRTM(std::string file_path, DynamicAlgParam* dynamics_alg_param_ptr, uint32_t link_num) = 0;
+    virtual bool initDynamicAlgRTM(std::string file_path) = 0;
     
-    virtual void updateLoadParam(DynamicAlgLoadParam load_param) = 0;
+    virtual bool updateLoadParam() = 0;
+    virtual bool updateLoadParam(DynamicAlgLoadParam load_param) = 0;
 
     virtual bool isValid() = 0;
 
-    virtual ErrorCode getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
+    virtual bool getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                JointTorque &torque) = 0;
 
-    virtual ErrorCode getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
+    virtual bool getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc) = 0;
+    virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
                                             JointAcceleration &acc) = 0;
 
 };

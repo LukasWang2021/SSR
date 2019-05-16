@@ -74,8 +74,10 @@ void ControllerSm::processUIUO()
         {
             if(level == true)
             {
-                callReset();
-                setUO(static_cast<uint32_t>(UO_FAULT), false);//UO[3]=false signal no_fault 
+                if (callReset() == SUCCESS)
+                {
+                    setUO(static_cast<uint32_t>(UO_FAULT), false);//UO[3]=false signal no_fault 
+                }
             }     
         }
 
@@ -103,25 +105,30 @@ void ControllerSm::processUIUO()
         if((level == false) && (getInterpreterState() == INTERPRETER_EXECUTE) && (getCtrlState() == CTRL_ENGAGED))
         {
             FST_INFO("----UI call pause.");
-            controller_client_ptr_->pause();
-            setUO(static_cast<uint32_t>(UO_PAUSED), true);//UO[2]=true Paused signal
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
+            if(motion_control_ptr_->pauseMove() == SUCCESS)
+            {
+                FST_INFO("----UI call pause success.");
+                controller_client_ptr_->pause();
+                setUO(static_cast<uint32_t>(UO_PAUSED), true);//UO[2]=true Paused signal
+                setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
+            }  
         }   
-
     }
- 
     
     //if UI[4] is pulse down, start&restart (resume)
     if (isFallingEdge(static_cast<uint32_t>(UI_START)))
     {
-        if((getInterpreterState() == INTERPRETER_PAUSED) && (getCtrlState() == CTRL_ENGAGED))
+        if((getInterpreterState() == INTERPRETER_PAUSED) && (getCtrlState() == CTRL_ENGAGED) && (getRobotState() == ROBOT_IDLE))
         {
             FST_INFO("----UI call resume.");
-            controller_client_ptr_->resume();
-            transferRobotStateToRunning();
-
-            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), true);//UO[4]=true signal program running 
+            if(motion_control_ptr_->restartMove() == SUCCESS)
+            {
+                FST_INFO("----UI call resume success.");
+                controller_client_ptr_->resume();
+                transferRobotStateToRunning();
+                setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
+                setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), true);//UO[4]=true signal program running 
+            } 
         }      
     }
 
@@ -131,10 +138,13 @@ void ControllerSm::processUIUO()
         if((level == false) && (getInterpreterState() != INTERPRETER_IDLE))
         {
             FST_INFO("----UI call Abort.");
-            controller_client_ptr_->abort(); 
-            motion_control_ptr_->abortMove();
-            setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
-            setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
+            if (motion_control_ptr_->abortMove() == SUCCESS)
+            {
+                FST_INFO("----UI call Abort success.");
+                controller_client_ptr_->abort(); 
+                setUO(static_cast<uint32_t>(UO_PAUSED), false);//UO[2]=false signal unpaused
+                setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), false);//UO[4]=false signal no program running
+            }
         }
     }
 

@@ -662,17 +662,23 @@ void ControllerRpc::handleRpc0x00010FD4(void* request_data_ptr, void* response_d
     ResponseMessageType_Uint64_DoubleList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_DoubleList*>(response_data_ptr);
 
     if(rq_data_ptr->data1.data_count == 3
-        && rq_data_ptr->data2.data_count == 6)
+        && rq_data_ptr->data2.data_count == 10)
     {
-        PoseEuler pos;
+        PoseAndPosture pos;
         Joint joint;
         memset(&joint, 0, sizeof(joint));
-        pos.point_.x_ = rq_data_ptr->data2.data[0];
-        pos.point_.y_ = rq_data_ptr->data2.data[1];
-        pos.point_.z_ = rq_data_ptr->data2.data[2];
-        pos.euler_.a_ = rq_data_ptr->data2.data[3];
-        pos.euler_.b_ = rq_data_ptr->data2.data[4];
-        pos.euler_.c_ = rq_data_ptr->data2.data[5];
+        pos.pose.point_.x_ = rq_data_ptr->data2.data[0];
+        pos.pose.point_.y_ = rq_data_ptr->data2.data[1];
+        pos.pose.point_.z_ = rq_data_ptr->data2.data[2];
+        pos.pose.euler_.a_ = rq_data_ptr->data2.data[3];
+        pos.pose.euler_.b_ = rq_data_ptr->data2.data[4];
+        pos.pose.euler_.c_ = rq_data_ptr->data2.data[5];
+
+        pos.posture.arm = rq_data_ptr->data2.data[6];
+        pos.posture.elbow = rq_data_ptr->data2.data[7];
+        pos.posture.wrist = rq_data_ptr->data2.data[8];
+        pos.posture.flip = rq_data_ptr->data2.data[9];
+
         rs_data_ptr->error_code.data = motion_control_ptr_->convertCartToJoint(pos, rq_data_ptr->data1.data[2], rq_data_ptr->data1.data[1], joint);
         rs_data_ptr->data.data_count = 9;
         if(rs_data_ptr->error_code.data == SUCCESS)

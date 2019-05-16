@@ -78,9 +78,13 @@ void ControllerRpc::handleRpc0x00008E74(void* request_data_ptr, void* response_d
         return;
     }
 
-    controller_client_ptr_->backward(); 
-    rs_data_ptr->data.data = SUCCESS;
-    state_machine_ptr_->transferRobotStateToRunning();
+    rs_data_ptr->data.data = motion_control_ptr_->abortMove();
+    if (rs_data_ptr->data.data == SUCCESS)
+    {
+        controller_client_ptr_->backward();
+        state_machine_ptr_->transferRobotStateToRunning();
+    }
+
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/backward"));
 }
 
@@ -99,8 +103,12 @@ void ControllerRpc::handleRpc0x00015930(void* request_data_ptr, void* response_d
         return;
     }
 
-    controller_client_ptr_->jump(std::string(rq_data_ptr->data.data)); 
-    rs_data_ptr->data.data = SUCCESS;
+    rs_data_ptr->data.data = motion_control_ptr_->abortMove(); 
+    if (rs_data_ptr->data.data == SUCCESS)
+    {
+        controller_client_ptr_->jump(std::string(rq_data_ptr->data.data));
+    }
+  
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/jump"));
 }
 

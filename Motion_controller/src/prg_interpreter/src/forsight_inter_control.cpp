@@ -167,15 +167,6 @@ struct thread_control_block *  getThreadControlBlock(bool isUploadError)
 	}
 	else
     {
-#ifndef WIN32
-    	if(g_basic_interpreter_handle[getCurrentThreadSeq()] != NULL)
-    	{
-        	FST_ERROR("g_basic_interpreter_handle[%d] != NULL", getCurrentThreadSeq());
-			if(isUploadError)
-				setWarning(FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO);
-			return NULL;
-		}
-#endif 
     	FST_INFO("getThreadControlBlock at %d", getCurrentThreadSeq());
 		return &g_thread_control_block[getCurrentThreadSeq()] ;
 	}
@@ -755,6 +746,7 @@ void parseCtrlComand(InterpreterControl intprt_ctrl, void * requestDataPtr)
 				{
             		FST_ERROR("Can not BACKWARD to %d(%d).",
 						iLineNum, objThdCtrlBlockPtr->prog_jmp_line[iLineNum].type);
+				    setWarning(INFO_INTERPRETER_BACK_TO_LOGIC) ;
 					break ;
 				}
 				// In fact, It does nothing

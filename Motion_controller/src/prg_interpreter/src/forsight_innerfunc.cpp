@@ -59,6 +59,7 @@ bool call_log10(eval_value *result, const char * valFirst,const char * valSecond
 bool call_ceil (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
 bool call_floor(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
 bool call_fabs (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
+bool call_abs (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
 // bool call_frexp(char * valFirst, char * valSecond, char * valThird);
 bool call_ldexp(eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
 bool call_modf (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird);
@@ -126,6 +127,7 @@ struct intern_func_type {
 	(char *)"ceil",       1, call_ceil ,
 	(char *)"floor",      1, call_floor,
 	(char *)"fabs",       1, call_fabs ,
+	(char *)"abs",        1, call_abs ,
 //  (char *)"frexp",      2, call_frexp,
 	(char *)"ldexp",      2, call_ldexp,
 	(char *)"modf",       2, call_modf ,
@@ -316,6 +318,13 @@ bool call_fabs (eval_value *result, const char * valFirst,const char * valSecond
 {
 	double val = atof(valFirst);
 	result->setFloatValue(fabs(val));
+    return true ;
+}
+
+bool call_abs (eval_value *result, const char * valFirst,const char * valSecond,const char * valThird)
+{
+	double val = atof(valFirst);
+	result->setFloatValue(abs(val));
     return true ;
 }
 

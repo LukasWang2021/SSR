@@ -258,47 +258,31 @@ char buildLogControlBlock(string &name)
                 g_lcb_ptr_queue[i]->id      = i + 1;
                 g_lcb_ptr_queue[i]->working = false;
                 g_lcb_ptr_queue[i]->name    = name;
-
-                char buf[DIRECTORY_BUF_SIZE] = {0};
-                int length = readlink("/proc/self/exe", buf, sizeof(buf));
     
-                if (length > 0 && length < sizeof(buf)) {
-                    boost::filesystem::path path(buf);
-                    path = path.parent_path().parent_path().parent_path();
-                    path = path / "/log/";
-                    string file_name = path.string();
-                
-                    memset(buf, 0, sizeof(buf));
-        
-                    time_t time_now = time(NULL);
-                    tm *local = localtime(&time_now);
-                    strftime(buf, 64, "_%Y%m%d%H%M%S", local);
-                    file_name = file_name + name + buf + ".log";
-    
-                    checkLogSpace(path);
+                char buf[64] = {0};
+                time_t time_now = time(NULL);
+                tm *local = localtime(&time_now);
+                strftime(buf, 64, "_%Y%m%d%H%M%S", local);
+                boost::filesystem::path path = "/root/log/";
+                string file_name = path.string();
+                file_name = file_name + name + buf + ".log";
 
-                    g_lcb_ptr_queue[i]->file_name = file_name;
-                    g_lcb_ptr_queue[i]->character_cnt = 0;
-                    g_lcb_ptr_queue[i]->file_create_time = time_now;
-                    g_lcb_ptr_queue[i]->file_handle.open(file_name.c_str(), std::ios::app);
-                    g_lcb_ptr_queue[i]->serial_num = 0;
+                checkLogSpace(path);
 
-                    if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
-                        g_lcb_ptr_queue[i]->working = true;
-                        //lockFile(g_lcb_ptr_queue[i]->file_name);
-                        info(" -Success!");
-                        return g_lcb_ptr_queue[i]->id;
-                    }
-                    else {
-                        error(" -Fail to open a log file");
-                        delete g_lcb_ptr_queue[i];
-                        g_lcb_ptr_queue[i] = NULL;
+                g_lcb_ptr_queue[i]->file_name = file_name;
+                g_lcb_ptr_queue[i]->character_cnt = 0;
+                g_lcb_ptr_queue[i]->file_create_time = time_now;
+                g_lcb_ptr_queue[i]->file_handle.open(file_name.c_str(), std::ios::app);
+                g_lcb_ptr_queue[i]->serial_num = 0;
 
-                        return 0;
-                    }
+                if (g_lcb_ptr_queue[i]->file_handle.is_open()) {
+                    g_lcb_ptr_queue[i]->working = true;
+                    //lockFile(g_lcb_ptr_queue[i]->file_name);
+                    info(" -Success!");
+                    return g_lcb_ptr_queue[i]->id;
                 }
                 else {
-                    error(" -Fail to read link");
+                    error(" -Fail to open a log file");
                     delete g_lcb_ptr_queue[i];
                     g_lcb_ptr_queue[i] = NULL;
 
@@ -570,15 +554,10 @@ void io_thread(void)
 
                         char buf[DIRECTORY_BUF_SIZE] = {0};
 
-                        readlink("/proc/self/exe", buf, sizeof(buf));
+                        
 
-                        boost::filesystem::path path(buf);
-                        path = path.parent_path().parent_path().parent_path();
-                        path = path / "/log/";
+                        boost::filesystem::path path = "/root/log/";
                         string file_name = path.string();
-
-                        memset(buf, 0, sizeof(buf));
-
                         tm *local = localtime(&time_now);
                         strftime(buf, 64, "_%Y%m%d%H%M%S", local);
                         file_name = file_name + g_lcb_ptr_queue[i]->name + buf + ".log";
@@ -699,52 +678,29 @@ static void sigintHandle(int num)
 int initLogSpace(void)
 {
     char buf[DIRECTORY_BUF_SIZE] = {0};
-    int length = readlink("/proc/self/exe", buf, sizeof(buf));
+    boost::filesystem::path path = "/root/log/";
+    info("Log directory: %s", path.string().c_str());
 
-    if (length > 0 && length < sizeof(buf)) {
-        boost::filesystem::path path(buf);
-        path = path.parent_path().parent_path().parent_path();
-        path += "/log/";
-        
-        info("Log directory: %s", path.string().c_str());
-
-        if (!boost::filesystem::is_directory(path)) {
-            boost::filesystem::create_directories(path);
-            warn("log directory not exist ... created");
-        }
-
-        double used = (double)totalLogFileSize(path) / 1024 / 1024;
-        int total   = MAX_LOG_FILE_SPACE / 1024 / 1024;
-        info("Log space usage (used / total): %.1fMB / %dMB", used, total);
-        
-        checkLogSpace(path);
-        
-        if (used > MAX_LOG_FILE_SPACE) {
-            used = totalLogFileSize(path);
-            info("Log space usage (used / total): %dMB / %dMB",
-                 used / 1024 / 1024,
-                 MAX_LOG_FILE_SPACE / 1024 / 1024
-            );
-        }
-
-        return 0;
+    if (!boost::filesystem::is_directory(path)) {
+        boost::filesystem::create_directories(path);
+        warn("log directory not exist ... created");
     }
-    else if (length >= sizeof(buf)) {
-        buf[DIRECTORY_BUF_SIZE] = 0;
 
-        error("Log path=%s", buf);
-        error("Path overflow");
-        log("The length of log-path too long, %d characters permitted but %d characters in fact",
-           DIRECTORY_BUF_SIZE - 1, length);
-        
-        return -2;
+    double used = (double)totalLogFileSize(path) / 1024 / 1024;
+    int total   = MAX_LOG_FILE_SPACE / 1024 / 1024;
+    info("Log space usage (used / total): %.1fMB / %dMB", used, total);
+    
+    checkLogSpace(path);
+    
+    if (used > MAX_LOG_FILE_SPACE) {
+        used = totalLogFileSize(path);
+        info("Log space usage (used / total): %dMB / %dMB",
+                used / 1024 / 1024,
+                MAX_LOG_FILE_SPACE / 1024 / 1024
+        );
     }
-    else {
-        error("internal fault while getting work directory");
-        log("'Readlink()' returns a negative num: %d", length);
 
-        return -3;
-    }
+    return 0;
 }
 
 int initShareMemory(void)
@@ -793,57 +749,29 @@ int initServerLog(void)
     g_server_log.working = false;
 
     char buf[DIRECTORY_BUF_SIZE] = {0};
-    int length = readlink("/proc/self/exe", buf, sizeof(buf));
+    boost::filesystem::path path = "/root/log/";
+    string file_name = path.string();
+    time_t time_now = time(NULL);
+    tm *local = localtime(&time_now);
+    strftime(buf, 64, "_%Y%m%d%H%M%S", local);
+    file_name = file_name + g_server_log.name + buf + ".log";
 
-    if (length > 0 && length < sizeof(buf)) {
-        boost::filesystem::path path(buf);
-        path = path.parent_path().parent_path().parent_path();
-        path = path / "/log/";
-        string file_name = path.string();
+    g_server_log.file_name = file_name;
+    g_server_log.character_cnt = 0;
+    g_server_log.file_create_time = time_now;
+    g_server_log.file_handle.open(file_name.c_str(), std::ios::app);
 
-        memset(buf, 0, sizeof(buf));
-
-        time_t time_now = time(NULL);
-        tm *local = localtime(&time_now);
-        strftime(buf, 64, "_%Y%m%d%H%M%S", local);
-        file_name = file_name + g_server_log.name + buf + ".log";
-
-        g_server_log.file_name = file_name;
-        g_server_log.character_cnt = 0;
-        g_server_log.file_create_time = time_now;
-        g_server_log.file_handle.open(file_name.c_str(), std::ios::app);
-
-        if (g_server_log.file_handle.is_open()) {
-            g_server_log.working = true;
-            info("Server log initialized, logging to file:");
-            info("%s", g_server_log.file_name.c_str());
-            //lockFile(g_server_log.file_name);
-            return 0;
-        }
-        else {
-            g_server_log.working = false;
-            error("Fail to open server log file, all logs from server will lost");
-
-            return -1;
-        }
-    }
-    else if (length >= sizeof(buf)) {
-        buf[DIRECTORY_BUF_SIZE] = 0;
-
-        error("Log path=%s", buf);
-        error("Path overflow");
-        log("The length of log-path too long, %d characters permitted but %d characters in fact",
-           DIRECTORY_BUF_SIZE - 1, length);
-        
-        return -2;
+    if (g_server_log.file_handle.is_open()) {
+        g_server_log.working = true;
+        info("Server log initialized, logging to file: %s", g_server_log.file_name.c_str());
+        //lockFile(g_server_log.file_name);
+        return 0;
     }
     else {
-        error("Fail to initialize server log, all logs from server will lost");
         g_server_log.working = false;
-        error("internal fault while getting work directory");
-        log("'Readlink()' returns a negative num: %d", length);
+        error("Fail to open server log file, all logs from server will lost");
 
-        return -3;
+        return -1;
     }
 }
 

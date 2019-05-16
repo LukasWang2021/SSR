@@ -263,6 +263,8 @@ typedef unsigned long long int ErrorCode;
 #define INFO_INTERPRETER_WAIT_TIMEOUT (unsigned long long int)0x0001000900AA001B   /*WAIT Timeout in the program*/
 #define INFO_INTERPRETER_OVERRUN_HOME_POSE (unsigned long long int)0x0001000900AA001C   /*Home Pose of program out of range*/
 #define INFO_INTERPRETER_HOME_POSE_NOT_EXIST (unsigned long long int)0x0001000900AA001D   /*Home Pose of program does not exist*/
+#define FAIL_INTERPRETER_DUPLICATE_START     (unsigned long long int)0x0001000900AA001E   /*Duplicate START is executing*/
+#define FAIL_INTERPRETER_DUPLICATE_LAUNCH    (unsigned long long int)0x0001000900AA001F   /*Duplicate LAUNCH is executing*/
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0000000200AA0100   /*User defined WARNING：User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000200AA0101   /*User defined WARNING：User Alarm 1*/
 #define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000200AA0102   /*User defined WARNING：User Alarm 2*/

@@ -928,14 +928,19 @@ ErrorCode MotionControl::getServoVersion(std::string &version)
 
 PoseEuler MotionControl::getCurrentPose(void)
 {
-    PoseEuler pose;
-    group_ptr_->getKinematicsPtr()->doFK(group_ptr_->getLatestJoint(), pose);   // transform from base to user
+    PoseEuler pose, tcp_in_base, fcp_in_base;
+    group_ptr_->getKinematicsPtr()->doFK(group_ptr_->getLatestJoint(), fcp_in_base);
+    group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, group_ptr_->getToolFrame(), tcp_in_base);
+    group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, group_ptr_->getUserFrame(), pose);
     return pose;
 }
 
 void MotionControl::getCurrentPose(PoseEuler &pose)
 {
-    group_ptr_->getKinematicsPtr()->doFK(group_ptr_->getLatestJoint(), pose);   // transform from base to user
+    PoseEuler tcp_in_base, fcp_in_base;
+    group_ptr_->getKinematicsPtr()->doFK(group_ptr_->getLatestJoint(), fcp_in_base);
+    group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, group_ptr_->getToolFrame(), tcp_in_base);
+    group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, group_ptr_->getUserFrame(), pose);
 }
 
 Joint MotionControl::getServoJoint(void)

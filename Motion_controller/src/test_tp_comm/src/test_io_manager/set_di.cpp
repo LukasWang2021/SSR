@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 {
     if (argc <= 3)
     {
-        printf("Two parameter is needed: user_port and port_value\n");
+        printf("Four parameters are needed: devtype, address, user_port and port_value\n");
         return -1;
     }
 
@@ -44,18 +44,19 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32List msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
 
-    msg.data.data_count = 3;
+    msg.data.data_count = 4;
     printf("msg.data.data_count = %d\n", msg.data.data_count);
 
     msg.data.data[0] = atoi(argv[1]);
     msg.data.data[1] = atoi(argv[2]);
     msg.data.data[2] = atoi(argv[3]);
+    msg.data.data[3] = atoi(argv[4]);
 
     for (int i = 0; i != msg.data.data_count; ++i)
     {
-        printf("msg.data.data[%d] = %d\n", msg.data.data[i]);
+        printf("msg.data.data[%d] = %d\n", i, msg.data.data[i]);
     }
 
     if (!test.generateRequestMessageType(hash_value, (void*)&msg, RequestMessageType_Int32List_fields, buf, buf_size))

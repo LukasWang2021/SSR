@@ -22,30 +22,22 @@ void RosBasic::initRosBasic(void)
     ros::init(argc, bufs, "fst_mc");
     ros_node_ptr_ = new ros::NodeHandle;
     //build this topic to publish current joint state, "/fst_feedback_joint_states" topic will subscribe this topic
-    joint_state_pub_ = ros_node_ptr_->advertise<sensor_msgs::JointState>("fst_feedback_joint_states", 1);
-    //joint_state_pub_ = ros_node_ptr_->advertise<sensor_msgs::JointState>("joint_states", 1);
+    //joint_state_pub_ = ros_node_ptr_->advertise<sensor_msgs::JointState>("fst_feedback_joint_states", 1);
+    joint_state_pub_ = ros_node_ptr_->advertise<sensor_msgs::JointState>("joint_states", 1);
 
     std::vector<std::string> joint_name;
     
     joint_name.resize(6);
-    joint_name[0] = "j1";
-    joint_name[1] = "j2";
-    joint_name[2] = "j3";
-    joint_name[3] = "j4";
-    joint_name[4] = "j5";
-    joint_name[5] = "j6";
-    /*
-    joint_name.resize(4);
     joint_name[0] = "joint1";
     joint_name[1] = "joint2";
     joint_name[2] = "joint3";
     joint_name[3] = "joint4";
-    */
+    joint_name[4] = "joint5";
+    joint_name[5] = "joint6";
 
     js_.name = joint_name;
     js_.header.seq = 0;
     js_.position.resize(6);
-    //js_.position.resize(4);
 }
 
 

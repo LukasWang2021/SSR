@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 {
     if (argc <= 3)
     {
-        printf("Two parameter is needed: user_port and port_value\n");
+        printf("Three parameter is needed: devtype, address and port_offset\n");
         return -1;
     }
     TpCommTest test;
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 
     RequestMessageType_Int32List msg;
     msg.header.time_stamp = 122;
-    msg.property.authority = Comm_Authority_TP;
+    msg.property.authority = Comm_Authority_TP_SIMMULATOR;
     msg.data.data_count = 3;
     printf("msg.data.data_count = %d\n", msg.data.data_count);
 
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i != msg.data.data_count; ++i)
     {
-        printf("msg.data.data[%d] = %d\n", msg.data.data[i]);
+        printf("msg.data.data[%d] = %d\n", i, msg.data.data[i]);
     }
 
 

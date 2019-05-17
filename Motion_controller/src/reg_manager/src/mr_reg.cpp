@@ -37,11 +37,6 @@ ErrorCode MrReg::init()
             return false;
         }
     }*/
-
-    if(!readAllRegDataFromYaml())
-    {
-        return REG_MANAGER_LOAD_MR_FAILED;
-    }
     
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
@@ -58,6 +53,13 @@ ErrorCode MrReg::init()
 				data_list_[i] = objNVRamMrRegData.value ;
 			}
 		}
+	}
+	else 
+	{
+	    if(!readAllRegDataFromYaml())
+	    {
+	        return REG_MANAGER_LOAD_MR_FAILED;
+	    }
 	}
     return SUCCESS;
 }
@@ -84,10 +86,6 @@ ErrorCode MrReg::addReg(void* data_ptr)
         return REG_MANAGER_INVALID_ARG;
     }
     data_list_[reg_data.id] = reg_ptr->value;
-    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
-    {
-        return REG_MANAGER_REG_FILE_WRITE_FAILED;
-    }
 	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
@@ -97,6 +95,13 @@ ErrorCode MrReg::addReg(void* data_ptr)
 		nvram_obj_.write((uint8_t*)&objNVRamMrRegData, 
 			NVRAM_MR_AREA + reg_data.id * sizeof(NVRamMrRegData), sizeof(NVRamMrRegData));
 		usleep(30000);
+	}
+	else 
+	{
+	    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+	    {
+	        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+	    }
 	}
     return SUCCESS;
 }
@@ -116,10 +121,6 @@ ErrorCode MrReg::deleteReg(int id)
         return REG_MANAGER_INVALID_ARG;
     }
     data_list_[id] = 0;
-    if(!writeRegDataToYaml(reg_data, data_list_[id]))
-    {
-        return REG_MANAGER_REG_FILE_WRITE_FAILED;
-    }
 	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
@@ -130,6 +131,13 @@ ErrorCode MrReg::deleteReg(int id)
 			NVRAM_MR_AREA + reg_data.id * sizeof(NVRamMrRegData), sizeof(NVRamMrRegData));
 		usleep(30000);
     }
+	else
+	{
+	    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+	    {
+	        return REG_MANAGER_REG_FILE_WRITE_FAILED;
+	    }
+	}
     return SUCCESS;
 }
 
@@ -162,37 +170,41 @@ ErrorCode MrReg::updateReg(void* data_ptr)
     {
         return REG_MANAGER_INVALID_ARG;
     }
+	MrRegData* reg_ptr = reinterpret_cast<MrRegData*>(data_ptr);
 
-    MrRegData* reg_ptr = reinterpret_cast<MrRegData*>(data_ptr);
-    if(!isUpdateInputValid(reg_ptr->id)
-        || reg_ptr->value > param_ptr_->mr_value_limit_
-        || reg_ptr->value < -param_ptr_->mr_value_limit_)
-    {
-        return REG_MANAGER_INVALID_ARG;
-    }
-        
-    BaseRegData reg_data;
-    packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
-    if(!setRegList(reg_data))
-    {
-        return REG_MANAGER_INVALID_ARG;
-    }    
-    data_list_[reg_data.id] = reg_ptr->value;
-    if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
-    {
-        return REG_MANAGER_REG_FILE_WRITE_FAILED;
-    }
-	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
+		data_list_[reg_ptr->id] = reg_ptr->value;
 		memset(&objNVRamMrRegData, 0x00, sizeof(NVRamMrRegData));
-		objNVRamMrRegData.id    = reg_data.id;
-		objNVRamMrRegData.value = data_list_[reg_data.id];
+		objNVRamMrRegData.id    = reg_ptr->id;
+		objNVRamMrRegData.value = data_list_[reg_ptr->id];
 		nvram_obj_.write((uint8_t*)&objNVRamMrRegData, 
-			NVRAM_MR_AREA + reg_data.id * sizeof(NVRamMrRegData), sizeof(NVRamMrRegData));
+			NVRAM_MR_AREA + reg_ptr->id * sizeof(NVRamMrRegData), sizeof(NVRamMrRegData));
 		usleep(30000);
 		// printf("\nMrReg::updateReg: %d .\n", objNVRamMrRegData.value);
     }
+	else
+	{
+		if(!isUpdateInputValid(reg_ptr->id)
+			|| reg_ptr->value > param_ptr_->mr_value_limit_
+			|| reg_ptr->value < -param_ptr_->mr_value_limit_)
+		{
+			return REG_MANAGER_INVALID_ARG;
+		}
+			
+		BaseRegData reg_data;
+		packSetRegData(reg_data, reg_ptr->id, reg_ptr->name, reg_ptr->comment);
+		if(!setRegList(reg_data))
+		{
+			return REG_MANAGER_INVALID_ARG;
+		}	 
+		data_list_[reg_data.id] = reg_ptr->value;
+		if(!writeRegDataToYaml(reg_data, data_list_[reg_data.id]))
+		{
+			return REG_MANAGER_REG_FILE_WRITE_FAILED;
+		}
+
+	}
     return SUCCESS;
 }
 
@@ -237,22 +249,10 @@ bool MrReg::updateRegValue(MrRegDataIpc* data_ptr)
         return false;
     }
 
-    if(!isUpdateInputValid(data_ptr->id)
-        || data_ptr->value > param_ptr_->mr_value_limit_
-        || data_ptr->value < -param_ptr_->mr_value_limit_)
-    {
-        return false;
-    }
-        
-    BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
-    if(reg_data_ptr == NULL)
-    {
-        return false;
-    }
-    data_list_[data_ptr->id] = data_ptr->value;
 	
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
+	    data_list_[data_ptr->id] = data_ptr->value;
 		memset(&objNVRamMrRegData, 0x00, sizeof(objNVRamMrRegData));
 		objNVRamMrRegData.id    = data_ptr->id;
 		objNVRamMrRegData.value = data_list_[data_ptr->id];
@@ -263,6 +263,19 @@ bool MrReg::updateRegValue(MrRegDataIpc* data_ptr)
     }
 	else
 	{
+	    if(!isUpdateInputValid(data_ptr->id)
+	        || data_ptr->value > param_ptr_->mr_value_limit_
+	        || data_ptr->value < -param_ptr_->mr_value_limit_)
+	    {
+	        return false;
+	    }
+	        
+	    BaseRegData* reg_data_ptr = getBaseRegDataById(data_ptr->id);
+	    if(reg_data_ptr == NULL)
+	    {
+	        return false;
+	    }
+	    data_list_[data_ptr->id] = data_ptr->value;
     	return writeRegDataToYaml(*reg_data_ptr, data_list_[data_ptr->id]);
     }
 }

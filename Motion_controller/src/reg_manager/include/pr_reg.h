@@ -64,8 +64,8 @@ private:
     fst_parameter::ParamGroup yaml_help_;
     std::vector<PrValue> data_list_;
 
-	Nvram nvram_obj_ ;
-    int use_nvram_;
+//	Nvram nvram_obj_ ;
+//    int use_nvram_;
 
     PrReg();
     bool createYaml();

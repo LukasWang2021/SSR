@@ -395,19 +395,16 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         return INVALID_PARAMETER;
     }
 
-    if (target.type == MOTION_LINE || target.type == MOTION_CIRCLE)
+    if (target.user_frame_id != user_frame_id_ && target.user_frame_id != -1)
     {
-        if (target.user_frame_id != user_frame_id_ && target.user_frame_id != -1)
-        {
-            FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", target.user_frame_id, user_frame_id_);
-            return INVALID_PARAMETER;
-        }
+        FST_ERROR("autoMove: user frame ID = %d mismatch with activated user frame = %d.", target.user_frame_id, user_frame_id_);
+        return INVALID_PARAMETER;
+    }
 
-        if (target.tool_frame_id != tool_frame_id_ && target.tool_frame_id != -1)
-        {
-            FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
-            return INVALID_PARAMETER;
-        }
+    if (target.tool_frame_id != tool_frame_id_ && target.tool_frame_id != -1)
+    {
+        FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
+        return INVALID_PARAMETER;
     }
 
     MotionInfo motion_info;

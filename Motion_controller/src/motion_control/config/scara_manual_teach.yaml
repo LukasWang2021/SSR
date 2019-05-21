@@ -9,22 +9,29 @@ step:
     orientation: 0.1
 reference:
     axis:
+        move_to_point_velocity:
+            - 20.0
+            - 0.174533
+            - 0.174533
+            - 0.174533
+            - 0.174533
+            - 0.174533
         velocity:
             - 200.0
             - 2.5
             - 2.5
-            - 15.0
+            - 2.5
         acceleration:
             - 1500.0
             - 18.0
             - 18.0
-            - 100.0
+            - 18.0
     position:
-        velocity: 500.0
-        acceleration: 5000.0
+        velocity: 100.0
+        acceleration: 2000.0
     orientation:
-        omega: 2.0
-        alpha: 20.0
+        omega: 0.5
+        alpha: 10.0
 
 
 #END

@@ -10,6 +10,7 @@
 #include <error_monitor.h>
 #include <error_code.h>
 #include <thread_help.h>
+#include "reg_manager.h"
 #include <motion_control_ros_basic.h>
 #include <motion_control_datatype.h>
 #include <motion_control_param.h>
@@ -28,7 +29,7 @@ public:
 
     ErrorCode init(fst_hal::DeviceManager *device_manager_ptr, AxisGroupManager *axis_group_manager_ptr,
                    fst_ctrl::CoordinateManager *coordinate_manager_ptr, fst_ctrl::ToolManager *tool_manager_ptr,
-                   fst_base::ErrorMonitor *error_monitor_ptr);
+                   fst_ctrl::RegManager *reg_manager_ptr, fst_base::ErrorMonitor *error_monitor_ptr);
 
     // API for teaching
     ManualFrame getManualFrame(void);
@@ -87,14 +88,12 @@ public:
     ErrorCode setFirmConstraint(const JointConstraint &firm_constraint);
     ErrorCode setHardConstraint(const JointConstraint &hard_constraint);
 
-
     // API for Axis Group Enable/Disable/Halt/Stop/Reset
     ErrorCode stopGroup(void);
     ErrorCode resetGroup(void);
     ErrorCode clearGroup(void);
 
     // more API
-    ErrorCode  convertCartToJoint(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
     ErrorCode  convertCartToJoint(const basic_alg::PoseEuler &pose, int user_frame_id, int tool_frame_id, basic_alg::Joint &joint);
     ErrorCode  convertJointToCart(const basic_alg::Joint &joint, int user_frame_id, int tool_frame_id, basic_alg::PoseEuler &pose);
     basic_alg::Posture getPostureFromJoint(const basic_alg::Joint &joint);
@@ -142,6 +141,7 @@ private:
     AxisGroupManager* axis_group_manager_ptr_;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr_;
     fst_ctrl::ToolManager* tool_manager_ptr_;
+    fst_ctrl::RegManager* reg_manager_ptr_;
     fst_base::ErrorMonitor *error_monitor_ptr_;
     BaseGroup *group_ptr_;
     fst_base::ThreadHelp rt_thread_;

@@ -23,6 +23,10 @@ cartesian_vel_limit:
     min: 0.1
     max: 4000.0
 
+simulator:
+    enable: false
+    cycle_per_publish: 25
+
 cartesian:
     velocity:
         min: 1.0                            # mm/s
@@ -45,11 +49,11 @@ manual:
         position: 1.0                       # mm
         orientation: 0.01                   # rad
 
-joint_tracking_accuracy: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+joint_tracking_accuracy: [0.01, 0.01, 0.01, 0.01]
 
 calibrator:
-    normal_offset_threshold: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
-    lost_offset_threshold: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    normal_offset_threshold: [1500.0, 6.28, 6.28, 6.28]
+    lost_offset_threshold: [1500.0, 6.28, 6.28, 6.28]
 
 
 #END

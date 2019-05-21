@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
     path_traj_alg
     nvram
     fst_spi
+    reg_manager
 )
 
 if(catkin_CROSS)
@@ -63,6 +64,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/transformation/include
     ${depend_PATH_INC}/nvram/include
     ${depend_PATH_INC}/fst_spi/include
+    ${depend_PATH_INC}/reg_manager/include
 )
 
 catkin_package(
@@ -85,6 +87,7 @@ catkin_package(
     DEPENDS transformation
     DEPENDS nvram
     DEPENDS fst_spi
+    DEPENDS reg_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -137,6 +140,7 @@ target_link_libraries(motion_control
     path_traj_alg
     nvram
     fst_spi
+    reg_manager
 )
 
 target_link_libraries(manual_test

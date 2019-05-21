@@ -590,71 +590,18 @@ void test9(void)
     
 }
 
-void test10(void)
-{
-    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
-    Transformation transformation;
-    transformation.init(&kinematics);
-
-    PoseEuler fcp_in_base, tcp_in_base, pose, tool_frame, user_frame;
-    Posture posture = {1, 1, -1, 0};
-    Joint joint;
-    
-    pose.point_.x_ = 550;
-    pose.point_.y_ = -150;
-    pose.point_.z_ = 610;
-    pose.euler_.a_ = 0;
-    pose.euler_.b_ = 0;
-    pose.euler_.c_ = 3.141593;
-
-    tool_frame.point_.x_ = 0;
-    tool_frame.point_.y_ = 0;
-    tool_frame.point_.z_ = 0;
-    tool_frame.euler_.a_ = 0;
-    tool_frame.euler_.b_ = 0;
-    tool_frame.euler_.c_ = 0;
-
-    
-    user_frame.point_.x_ = 0;
-    user_frame.point_.y_ = 0;
-    user_frame.point_.z_ = 0;
-    user_frame.euler_.a_ = 0;
-    user_frame.euler_.b_ = 0;
-    user_frame.euler_.c_ = 0;
-
-    transformation.convertPoseFromUserToBase(pose, user_frame, tcp_in_base);
-    transformation.convertTcpToFcp(tcp_in_base, tool_frame, fcp_in_base);
-    
-    if (!kinematics.doIK(fcp_in_base, posture, joint))
-    {
-        printf("error!!\n");
-        printf("tcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
-        printf("fcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-        printf("tool_frame: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
-    
-    }
-    
-    printf("tcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
-    printf("fcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-    printf("tool_frame: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
-    printf("joint: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint.j1_, joint.j2_, joint.j3_, joint.j4_, joint.j5_, joint.j6_);
-    
-    
-}
-
 int main(int argc, char **argv)
 {
     //test0();
     //test1();
     //test2();
     //test3();
-    //test4();
+    test4();
     //test5();
     //test6();
     //test7();
     //test8();
     //test9();
-    test10();
 
     return 0;
 }

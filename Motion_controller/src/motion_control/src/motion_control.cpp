@@ -77,6 +77,7 @@ MotionControl::MotionControl()
     axis_group_manager_ptr_ = NULL;
     coordinate_manager_ptr_ = NULL;
     tool_manager_ptr_ = NULL;
+    reg_manager_ptr_ = NULL;
     error_monitor_ptr_ = NULL;
     log_ptr_ = NULL;
     param_ptr_ = NULL;
@@ -109,7 +110,7 @@ MotionControl::~MotionControl()
 
 ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGroupManager* axis_group_manager_ptr,
                               fst_ctrl::CoordinateManager* coordinate_manager_ptr, fst_ctrl::ToolManager* tool_manager_ptr,
-                              fst_base::ErrorMonitor *error_monitor_ptr)
+                              fst_ctrl::RegManager *reg_manager_ptr, fst_base::ErrorMonitor *error_monitor_ptr)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new MotionControlParam();
@@ -155,21 +156,21 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
     }
 
     //if (device_manager_ptr && axis_group_manager_ptr && coordinate_manager_ptr && tool_manager_ptr && error_monitor_ptr)
-    if (coordinate_manager_ptr && tool_manager_ptr && error_monitor_ptr)
+    if (coordinate_manager_ptr && tool_manager_ptr && error_monitor_ptr && reg_manager_ptr)
     {
         //device_manager_ptr_ = device_manager_ptr;
         //axis_group_manager_ptr_ = axis_group_manager_ptr;
         coordinate_manager_ptr_ = coordinate_manager_ptr;
         tool_manager_ptr_ = tool_manager_ptr;
         error_monitor_ptr_ = error_monitor_ptr;
+        reg_manager_ptr_ = reg_manager_ptr;
     }
     else
     {
-        FST_ERROR("device-manger: %x, group-manager: %x, coordinate-manager: %x, tool-manager: %x, error-monitor: %x",
-                  device_manager_ptr, axis_group_manager_ptr, coordinate_manager_ptr, tool_manager_ptr, error_monitor_ptr);
+        FST_ERROR("device-manger: %x, group-manager: %x, coordinate-manager: %x, tool-manager: %x, error-monitor: %x, reg_manager: %x",
+                  device_manager_ptr, axis_group_manager_ptr, coordinate_manager_ptr, tool_manager_ptr, error_monitor_ptr, reg_manager_ptr);
         return INVALID_PARAMETER;
     }
-
 
     user_frame_id_ = 0;
     tool_frame_id_ = 0;
@@ -381,7 +382,7 @@ ErrorCode MotionControl::manualStop(void)
 
 ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 {
-    FST_INFO("MotionControl::autoMove called.");
+    FST_INFO("MotionControl::autoMove type = %d.", target.type);
 
     if (group_ptr_->getCalibratorPtr()->getCalibrateState() != MOTION_NORMAL)
     {
@@ -389,7 +390,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         return INVALID_SEQUENCE;
     }
 
-    if (target.type != MOTION_JOINT && target.type != MOTION_LINE && target.type != MOTION_CIRCLE)
+    if (target.type != MOTION_JOINT && target.type != MOTION_LINE && target.type != MOTION_CIRCLE && target.type != MOTION_XPOS)
     {
         FST_ERROR("Invalid motion type = %d, autoMove aborted.", target.type);
         return INVALID_PARAMETER;
@@ -405,6 +406,80 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
     {
         FST_ERROR("autoMove: tool frame ID = %d mismatch with activated tool frame = %d.", target.tool_frame_id, tool_frame_id_);
         return INVALID_PARAMETER;
+    }
+
+    if (target.type == MOTION_XPOS)
+    {
+        ErrorCode err;
+        Joint joint;
+        vector<Joint> joints;
+        PrRegData pr_reg_data;
+        int pr_reg_id;
+
+        for (size_t i = 0; i < PR_POS_LEN; i++)
+        {
+            pr_reg_id = target.prPos[i];
+            if (pr_reg_id <= 0) break;
+            err = reg_manager_ptr_->getPrReg(pr_reg_id, &pr_reg_data);
+
+            if(err != SUCCESS)
+            {
+                FST_ERROR("Fail to get pr[%d], code = 0x%llx", pr_reg_id, err);
+                return err;
+            }
+
+            const PrValue &pr_date = pr_reg_data.value;
+
+            if (pr_date.pos_type == COORDINATE_JOINT)
+            {
+                joint.j1_ = pr_date.pos[0];
+                joint.j2_ = pr_date.pos[1];
+                joint.j3_ = pr_date.pos[2];
+                joint.j4_ = pr_date.pos[3];
+                joints.push_back(joint);
+                FST_INFO("Target[%d]: type = Joint, joint = %.6f, %.6f, %.6f, %.6f", i, joint.j1_, joint.j2_, joint.j3_, joint.j4_);
+            }
+            else
+            {
+                Posture posture = {pr_date.posture[0], pr_date.posture[1], pr_date.posture[2], pr_date.posture[3]};
+                PoseEuler pose, fcp_in_base, tcp_in_base;
+                PoseEuler user_frame = group_ptr_->getUserFrame();
+                PoseEuler tool_frame = group_ptr_->getToolFrame();
+                pose.point_.x_ = pr_date.pos[0];
+                pose.point_.y_ = pr_date.pos[1];
+                pose.point_.z_ = pr_date.pos[2];
+                pose.euler_.a_ = pr_date.pos[3];
+                pose.euler_.b_ = pr_date.pos[4];
+                pose.euler_.c_ = pr_date.pos[5];
+                group_ptr_->getTransformationPtr()->convertPoseFromUserToBase(pose, user_frame, tcp_in_base);
+                group_ptr_->getTransformationPtr()->convertTcpToFcp(tcp_in_base, tool_frame, fcp_in_base);
+                
+                if (!group_ptr_->getKinematicsPtr()->doIK(fcp_in_base, posture, joint))
+                {
+                    FST_ERROR("IK of target[%d] failed.", i);
+                    FST_ERROR("Pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+                    FST_ERROR("Posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+                    FST_ERROR("Tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
+                    FST_ERROR("User frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame.point_.x_, user_frame.point_.y_, user_frame.point_.z_, user_frame.euler_.a_, user_frame.euler_.b_, user_frame.euler_.c_);
+                    return MC_COMPUTE_IK_FAIL;
+                }
+                
+                joints.push_back(joint);
+                FST_INFO("Target[%d]: type = Cart, joint = %.6f, %.6f, %.6f, %.6f", i, joint.j1_, joint.j2_, joint.j3_, joint.j4_);
+                FST_INFO("  pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
+                FST_INFO("  posture: %d, %d, %d, %d", posture.arm, posture.elbow, posture.wrist, posture.flip);
+                FST_INFO("  tool frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
+                FST_INFO("  user frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame.point_.x_, user_frame.point_.y_, user_frame.point_.z_, user_frame.euler_.a_, user_frame.euler_.b_, user_frame.euler_.c_);
+            }
+        }
+        
+        if (joints.empty())
+        {
+            FST_ERROR("No target points.");
+            return INVALID_PARAMETER;
+        }
+
+        return group_ptr_->autoMoveX(joints, target.vel);
     }
 
     MotionInfo motion_info;
@@ -730,58 +805,6 @@ ErrorCode MotionControl::resetGroup(void)
 ErrorCode MotionControl::clearGroup(void)
 {
     return group_ptr_->clearGroup();
-}
-
-ErrorCode MotionControl::convertCartToJoint(const PoseAndPosture &pose, int user_frame_id, int tool_frame_id, Joint &joint)
-{
-    if (user_frame_id == user_frame_id_ && tool_frame_id == tool_frame_id_)
-    {
-        return group_ptr_->convertCartToJoint(pose, joint);
-    }
-
-    PoseEuler tf, uf;
-
-    if (user_frame_id == 0)
-    {
-        memset(&uf, 0, sizeof(uf));
-    }
-    else
-    {
-        CoordInfo uf_info;
-        ErrorCode err_user = coordinate_manager_ptr_->getCoordInfoById(user_frame_id, uf_info);
-
-        if (err_user == SUCCESS && uf_info.is_valid)
-        {
-            uf = uf_info.data;
-        }
-        else
-        {
-            FST_ERROR("Fail to get user frame from given ID.");
-            return err_user;
-        }
-    }
-
-    if (tool_frame_id == 0)
-    {
-        memset(&tf, 0, sizeof(tf));
-    }
-    else
-    {
-        ToolInfo tf_info;
-        ErrorCode err_tool = tool_manager_ptr_->getToolInfoById(tool_frame_id, tf_info);
-
-        if (err_tool == SUCCESS && tf_info.is_valid)
-        {
-            tf = tf_info.data;
-        }
-        else
-        {
-            FST_ERROR("Fail to get tool frame from given id");
-            return err_tool;
-        }
-    }
-
-    return group_ptr_->convertCartToJoint(pose, uf, tf, joint);
 }
 
 ErrorCode MotionControl::convertCartToJoint(const PoseEuler &pose, int user_frame_id, int tool_frame_id, Joint &joint)

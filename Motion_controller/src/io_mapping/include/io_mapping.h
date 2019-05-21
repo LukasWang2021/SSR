@@ -197,7 +197,7 @@ public:
 	// Out:     None.
 	// Return:  uint32_t   -> the physics id.
 	//------------------------------------------------------------
-    uint32_t getIOPhysicsID(string key) {return io_mapper_[key];}
+    uint64_t getIOPhysicsID(string key) {return io_mapper_[key];}
 
 	bool isEnableInAutoMode(void);
 
@@ -217,7 +217,7 @@ private:
     IoSimulation* sim_ptr_;
 	IoBypass* bypass_ptr_;
 	fst_hal::IoManager* io_manager_ptr_;
-    map<string, uint32_t> io_mapper_; // to do uint32_t tobe PhysicsID
+    map<string, uint64_t> io_mapper_; // to do uint64_t tobe PhysicsID
 	std::string files_manager_data_path_ = "";
 };
 

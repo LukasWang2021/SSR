@@ -29,12 +29,13 @@ namespace fst_hal
 
 typedef union PhysicsID
 {
-    uint32_t number;
+    uint64_t number;
     struct{
-        uint8_t port:8;      //port offset
+        uint32_t port:32;      //port offset
         uint8_t port_type:8; //such as DI DO RI RO
         uint8_t address:8;   //physical id switches
         uint8_t dev_type:8;  //such as io_board, modbus
+        uint8_t reserve:8;
     }info;
 }PhysicsID;
 
@@ -185,9 +186,9 @@ private:
     ErrorCode updateIoDevicesData(void);
     void handlePulse(void);
 
-    ErrorCode getDiValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
-    ErrorCode getDoValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
-    ErrorCode setDoValueToModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
+    ErrorCode getDiValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);
+    ErrorCode getDoValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);
+    ErrorCode setDoValueToModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);
 
     ErrorCode getUiValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);
     ErrorCode getUoValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);

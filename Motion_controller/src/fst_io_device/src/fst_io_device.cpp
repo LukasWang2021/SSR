@@ -139,7 +139,7 @@ IODevicePortValues FstIoDevice::getDeviceValues(void)
     return values;
 }
 
-ErrorCode FstIoDevice::getDiValue(uint8_t port_offset, uint8_t &value)
+ErrorCode FstIoDevice::getDiValue(uint32_t port_offset, uint8_t &value)
 {
     if (port_offset > param_ptr_->max_DI_number_ || port_offset == 0)
     {
@@ -157,7 +157,7 @@ ErrorCode FstIoDevice::getDiValue(uint8_t port_offset, uint8_t &value)
     return SUCCESS;
 }
 
-ErrorCode FstIoDevice::getDoValue(uint8_t port_offset, uint8_t &value)
+ErrorCode FstIoDevice::getDoValue(uint32_t port_offset, uint8_t &value)
 {
     if (port_offset > param_ptr_->max_DO_number_ || port_offset == 0)
     {
@@ -175,7 +175,7 @@ ErrorCode FstIoDevice::getDoValue(uint8_t port_offset, uint8_t &value)
     return SUCCESS;
 }
 
-ErrorCode FstIoDevice::getRiValue(uint8_t port_offset, uint8_t &value)
+ErrorCode FstIoDevice::getRiValue(uint32_t port_offset, uint8_t &value)
 {
     if (port_offset > param_ptr_->max_RI_number_ || port_offset == 0)
     {
@@ -193,7 +193,7 @@ ErrorCode FstIoDevice::getRiValue(uint8_t port_offset, uint8_t &value)
     return SUCCESS;
 }
 
-ErrorCode FstIoDevice::getRoValue(uint8_t port_offset, uint8_t &value)
+ErrorCode FstIoDevice::getRoValue(uint32_t port_offset, uint8_t &value)
 {
     if (port_offset > param_ptr_->max_RO_number_ || port_offset == 0)
     {
@@ -212,18 +212,18 @@ ErrorCode FstIoDevice::getRoValue(uint8_t port_offset, uint8_t &value)
 }
 
 
-ErrorCode FstIoDevice::getUiValue(uint8_t port_offset, uint8_t &value)
+ErrorCode FstIoDevice::getUiValue(uint32_t port_offset, uint8_t &value)
 {
     return getDiValue(port_offset, value);
 }
 
-ErrorCode FstIoDevice::getUoValue(uint8_t port_offset, uint8_t &value)
+ErrorCode FstIoDevice::getUoValue(uint32_t port_offset, uint8_t &value)
 {
     return getDoValue(port_offset, value);
 }
 
 
-ErrorCode FstIoDevice::setDoValue(uint8_t port_offset, uint8_t value)
+ErrorCode FstIoDevice::setDoValue(uint32_t port_offset, uint8_t value)
 {
     if((port_offset > param_ptr_->max_DO_number_) || port_offset == 0) 
     {
@@ -245,7 +245,7 @@ ErrorCode FstIoDevice::setDoValue(uint8_t port_offset, uint8_t value)
     return SUCCESS;
 }
 
-ErrorCode FstIoDevice::setRoValue(uint8_t port_offset, uint8_t value)
+ErrorCode FstIoDevice::setRoValue(uint32_t port_offset, uint8_t value)
 {
     if((port_offset > param_ptr_->max_RO_number_) || port_offset == 0) 
     {
@@ -268,7 +268,7 @@ ErrorCode FstIoDevice::setRoValue(uint8_t port_offset, uint8_t value)
 }
 
 
-ErrorCode FstIoDevice::setUoValue(uint8_t port_offset, uint8_t value)
+ErrorCode FstIoDevice::setUoValue(uint32_t port_offset, uint8_t value)
 {
     return setDoValue(port_offset, value);
 }

@@ -532,7 +532,7 @@ void IoMapping::loadProgramsPath()
 	if(getenv("ROBOT_DATA_PREFIX") != NULL)
 		files_manager_data_path_ = string(getenv("ROBOT_DATA_PREFIX")); //ROBOT_DATA_PREFIX=/root
 	else
-		files_manager_data_path_ = "/home/fst/fortest"; // for self test only.
+		files_manager_data_path_ = "/root"; // for self test only.
 
 	files_manager_data_path_ += "/robot_data/io/io_mapping";
 	FST_INFO("io_mapping_load_programs_path: %s", files_manager_data_path_.c_str());

@@ -1,6 +1,6 @@
 #include "virtual_io_device.h"
 #include <string.h>
-
+#include "error_monitor.h"
 
 using namespace fst_hal;
 
@@ -62,34 +62,55 @@ IODeviceInfo VirtualIoDevice::getDeviceInfo(void)
     return dev_info_;
 }
 
-ErrorCode VirtualIoDevice::getDiValue(uint8_t port_offset, uint8_t &value)
+ErrorCode VirtualIoDevice::getDiValue(uint32_t port_offset, uint8_t &value)
 {
+    if (port_offset > param_ptr_->max_DI_number_ || port_offset == 0)
+    {
+        FST_ERROR("VirtualIoDevice::getDiValue(): invalid port seq for DI - %d", port_offset);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PORT_SEQ);
+        return IO_INVALID_PORT_SEQ;
+    }
+
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
     value = (virtual_DI_[frame] >> shift) & 0x01;
     return SUCCESS;
 }
 
-ErrorCode VirtualIoDevice::getDoValue(uint8_t port_offset, uint8_t &value)
+ErrorCode VirtualIoDevice::getDoValue(uint32_t port_offset, uint8_t &value)
 {
+    if (port_offset > param_ptr_->max_DO_number_ || port_offset == 0)
+    {
+        FST_ERROR("VirtualIoDevice::getDoValue(): invalid port seq for DO - %d", port_offset);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PORT_SEQ);
+        return IO_INVALID_PORT_SEQ;
+    }
+
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
     value = (virtual_DO_[frame] >> shift) & 0x01;
     return SUCCESS;
 }
 
-ErrorCode VirtualIoDevice::getUiValue(uint8_t port_offset, uint8_t &value)
+ErrorCode VirtualIoDevice::getUiValue(uint32_t port_offset, uint8_t &value)
 {
     return getDiValue(port_offset, value);
 }
 
-ErrorCode VirtualIoDevice::getUoValue(uint8_t port_offset, uint8_t &value)
+ErrorCode VirtualIoDevice::getUoValue(uint32_t port_offset, uint8_t &value)
 {
     return getDoValue(port_offset, value);
 }
 
-ErrorCode VirtualIoDevice::setDiValue(uint8_t port_offset, uint8_t value)
+ErrorCode VirtualIoDevice::setDiValue(uint32_t port_offset, uint8_t value)
 {
+    if (port_offset > param_ptr_->max_DI_number_ || port_offset == 0)
+    {
+        FST_ERROR("VirtualIoDevice::setDiValue(): invalid port seq for DI - %d", port_offset);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PORT_SEQ);
+        return IO_INVALID_PORT_SEQ;
+    }
+
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
     
@@ -105,8 +126,15 @@ ErrorCode VirtualIoDevice::setDiValue(uint8_t port_offset, uint8_t value)
     return SUCCESS;
 }
     
-ErrorCode VirtualIoDevice::setDoValue(uint8_t port_offset, uint8_t value)
+ErrorCode VirtualIoDevice::setDoValue(uint32_t port_offset, uint8_t value)
 {
+    if (port_offset > param_ptr_->max_DO_number_ || port_offset == 0)
+    {
+        FST_ERROR("VirtualIoDevice::setDoValue(): invalid port seq for DO - %d", port_offset);
+        fst_base::ErrorMonitor::instance()->add(IO_INVALID_PORT_SEQ);
+        return IO_INVALID_PORT_SEQ;
+    }
+
     int frame = (port_offset - 1) / 8;
     int shift = (port_offset - 1) % 8;
     
@@ -122,12 +150,12 @@ ErrorCode VirtualIoDevice::setDoValue(uint8_t port_offset, uint8_t value)
     return SUCCESS;
 }
 
-ErrorCode VirtualIoDevice::setUiValue(uint8_t port_offset, uint8_t value)
+ErrorCode VirtualIoDevice::setUiValue(uint32_t port_offset, uint8_t value)
 {
     return setDiValue(port_offset, value);
 }
 
-ErrorCode VirtualIoDevice::setUoValue(uint8_t port_offset, uint8_t value)
+ErrorCode VirtualIoDevice::setUoValue(uint32_t port_offset, uint8_t value)
 {
     return setDoValue(port_offset, value);
 }

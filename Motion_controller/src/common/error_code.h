@@ -124,7 +124,7 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_CONTACTOR_RELAY_ZERO_FAULTY (unsigned long long int)0x0001000B00C8000D   /*the safety board detects the first relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CONTACTOR_RELAY_ONE_FAULTY (unsigned long long int)0x0001000B00C8000E   /*the safety board detects the second relay of the main contactor is abnormal.*/
 #define SAFETY_BOARD_CABINET_STOP (unsigned long long int)0x0001000B00C8000F   /*the safety board detects cabinet estop signal.*/
-#define SAFETY_BOARD_COMM_ERROR (unsigned long long int)0x0001000B00C80010   /*the safety board detects data error between FPGA and safety_board.*/
+#define SAFETY_BOARD_COMM_ERROR (unsigned long long int)0x0001000B00C80010   /*the safety board detects FPGA internal data error.*/
 #define SAFETY_BOARD_KEY_SWITCH_UNDER_ENGAGED (unsigned long long int)0x0001000600C80011   /*the safety board detects key switch under engaged*/
 #define TOOL_MANAGER_LOG (unsigned long long int)0x0000000100A20000   /*ToolManager log{0}*/
 #define TOOL_MANAGER_LOAD_PARAM_FAILED (unsigned long long int)0x0011000B00A20001   /*ToolManager load param failed in initialization phase*/

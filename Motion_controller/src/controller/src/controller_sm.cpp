@@ -265,6 +265,24 @@ ErrorCode ControllerSm::callReset()
             return error_code;
         }
 
+        //check io_board
+        std::vector<fst_hal::DeviceInfo> device_list = device_manager_ptr_->getDeviceList();
+        for(unsigned int i = 0; i < device_list.size(); ++i)
+        {
+            if (device_list[i].type == DEVICE_TYPE_FST_IO)
+            {
+                BaseDevice* device_ptr = device_manager_ptr_->getDevicePtrByDeviceIndex(device_list[i].index);
+                if (device_ptr == NULL) continue;
+                FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
+                bool ret = io_device_ptr->isValid();
+                if (ret != true)
+                {
+                    ErrorMonitor::instance()->add(IO_DEVICE_UNFOUND);
+                    return IO_DEVICE_UNFOUND;
+                }                
+            }
+        }
+
         recordLog("Controller transfer to ESTOP_TO_ENGAGED by rpc-callReset");
         ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
         ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;  

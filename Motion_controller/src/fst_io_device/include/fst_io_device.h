@@ -72,16 +72,16 @@ public:
     IODeviceInfo getDeviceInfo(void);
     IODevicePortValues getDeviceValues(void);
 
-    ErrorCode getDiValue(uint8_t port_offset, uint8_t &value);
-    ErrorCode getDoValue(uint8_t port_offset, uint8_t &value);
-    ErrorCode getRiValue(uint8_t port_offset, uint8_t &value);
-    ErrorCode getRoValue(uint8_t port_offset, uint8_t &value);
-    ErrorCode getUiValue(uint8_t port_offset, uint8_t &value);
-    ErrorCode getUoValue(uint8_t port_offset, uint8_t &value);
+    ErrorCode getDiValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getDoValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getRiValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getRoValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getUiValue(uint32_t port_offset, uint8_t &value);
+    ErrorCode getUoValue(uint32_t port_offset, uint8_t &value);
 
-    ErrorCode setDoValue(uint8_t port_offset, uint8_t value);
-    ErrorCode setRoValue(uint8_t port_offset, uint8_t value);
-    ErrorCode setUoValue(uint8_t port_offset, uint8_t value);
+    ErrorCode setDoValue(uint32_t port_offset, uint8_t value);
+    ErrorCode setRoValue(uint32_t port_offset, uint8_t value);
+    ErrorCode setUoValue(uint32_t port_offset, uint8_t value);
 
     ErrorCode updateDeviceData(void);
     
@@ -98,6 +98,9 @@ private:
     IODeviceInfo dev_info_;
     IODevicePortValues dev_values_;
     uint8_t output_[IO_DATAFRAME_MAX];
+
+    ErrorCode error_code_;
+    ErrorCode pre_code_;
 
     FstIoDevice();
 

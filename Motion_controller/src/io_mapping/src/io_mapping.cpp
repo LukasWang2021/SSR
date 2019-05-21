@@ -158,7 +158,7 @@ ErrorCode IoMapping::getDIByBit(uint32_t user_port, uint8_t &value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -202,7 +202,7 @@ ErrorCode IoMapping::getDOByBit(uint32_t user_port, uint8_t &value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -229,7 +229,7 @@ ErrorCode IoMapping::setDOByBit(uint32_t user_port, uint8_t value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -265,7 +265,7 @@ ErrorCode IoMapping::getRIByBit(uint32_t user_port, uint8_t &value)
 	string  strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -311,7 +311,7 @@ ErrorCode IoMapping::getROByBit(uint32_t user_port, uint8_t &value)
 	strKey.assign(cTemp);
 
 	ErrorCode ret = SUCCESS;
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 
 	if (iter != io_mapper_.end())
 	{
@@ -339,7 +339,7 @@ ErrorCode IoMapping::setROByBit(uint32_t user_port, uint8_t value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 
 	if (iter != io_mapper_.end())
 	{
@@ -376,7 +376,7 @@ ErrorCode IoMapping::getUIByBit(uint32_t user_port, uint8_t &value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -420,7 +420,7 @@ ErrorCode IoMapping::getUOByBit(uint32_t user_port, uint8_t &value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -447,7 +447,7 @@ ErrorCode IoMapping::setUOByBit(uint32_t user_port, uint8_t value)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -475,7 +475,7 @@ ErrorCode IoMapping::setDOPulse(uint32_t user_port, double time)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 	if (iter != io_mapper_.end())
 	{
 		PhysicsID physics_id;
@@ -503,7 +503,7 @@ ErrorCode IoMapping::setROPulse(uint32_t user_port, double time)
 	string strKey;
 	strKey.assign(cTemp);
 
-	map<string, uint32_t>::iterator iter = io_mapper_.find(strKey);
+	map<string, uint64_t>::iterator iter = io_mapper_.find(strKey);
 
 	if (iter != io_mapper_.end())
 	{
@@ -589,9 +589,9 @@ bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
 
         string strKey;
         strKey.assign(cTemp);
-        FST_INFO("iomapping:strkey = %s  , physics id=%x", strKey.c_str(), id.number);
+        FST_INFO("iomapping:strkey = %s  , physics id=%llx", strKey.c_str(), id.number);
 
-        io_mapper_.insert(map<string, uint32_t>::value_type(strKey, id.number));
+        io_mapper_.insert(map<string, uint64_t>::value_type(strKey, id.number));
         id.info.port++;
     }
 
@@ -688,7 +688,7 @@ bool IoMapping::printIOMapper()
 	printf("\t\tobjThreadCntrolBlock->io_mapper_ has %d elements \n", 
 		io_mapper_.size());
 
-	map<string, uint32_t>::iterator it;
+	map<string, uint64_t>::iterator it;
 	for (it = io_mapper_.begin(); it != io_mapper_.end(); ++it)
 		printf("\t\t%s :: 0x%x \n", it->first.c_str(), it->second);
 

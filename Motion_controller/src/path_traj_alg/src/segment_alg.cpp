@@ -258,17 +258,17 @@ ErrorCode planPathJoint(const Joint &start,
     for(i = 0; i < model.link_num; ++i)
     {
         path_cache.cache[0].joint[i] = start[i];
-        packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[0]);
+        packPathBlockType(PATH_POINT, COORDINATE_JOINT, path_cache.cache[0]);
         joint_step_start2end = (end.target.joint[i] - start[i]) / path_count_minus_1;
         joint_distance_to_start = 0; 
         for(j = 1; j < path_count_minus_1; ++j)
         {
             joint_distance_to_start += joint_step_start2end;
             path_cache.cache[j].joint[i] = start[i] + joint_distance_to_start;
-            packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[j]);
+            packPathBlockType(PATH_POINT, COORDINATE_JOINT, path_cache.cache[j]);
         }
         path_cache.cache[path_count_minus_1].joint[i] = end.target.joint[i];
-        packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[path_count_minus_1]);    
+        packPathBlockType(PATH_POINT, COORDINATE_JOINT, path_cache.cache[path_count_minus_1]);    
     }
 
     if(end.cnt > DOUBLE_ACCURACY)
@@ -344,14 +344,14 @@ ErrorCode planPathLine(const PoseEuler &start,
         double angle_step_out2end = (1.0 - angle_distance_start2out) / path_count_out2end;
 
         packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
         for(i = 1; i <= path_count_start2out; ++i)
         {
             point_distance_to_start += path_step_start2out;
             angle_distance_to_start += angle_step_start2out;            
             getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
             getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         path_cache.smooth_out_index = path_count_start2out;
         int path_count_total_minus_1 = path_count_start2out + path_count_out2end;
@@ -362,10 +362,10 @@ ErrorCode planPathLine(const PoseEuler &start,
             angle_distance_to_start += angle_step_out2end;
             getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
             getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
     }
     else    // cnt is invalid
     {    
@@ -381,17 +381,17 @@ ErrorCode planPathLine(const PoseEuler &start,
         double path_step_start2end = path_length_start2end / max_count_start2end;
         double angle_step_start2end = 1.0 / max_count_start2end;
         packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
         for(i = 1; i < max_count_start2end; ++i)
         {
             point_distance_to_start += path_step_start2end;
             angle_distance_to_start += angle_step_start2end;
             getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
             getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[max_count_start2end]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[max_count_start2end]);
     }
     
     return SUCCESS;
@@ -474,7 +474,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
         double quatern_angle_step_out2end = (1.0 - quatern_angle_step_start2out) / circle_angle_count_out2end;
 
         packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[0]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
 
         int i = 1;
         for(; i <= circle_angle_count_start2out; ++i)
@@ -486,7 +486,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
                 center_position, path_cache.cache[i].pose.point_);
 
             getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
 
         path_cache.smooth_out_index = circle_angle_count_start2out;
@@ -502,10 +502,10 @@ ErrorCode planPathCircle(const PoseEuler &start,
                 center_position, path_cache.cache[i].pose.point_);
 
             getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[circle_angle_count_total_minus_1].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[circle_angle_count_total_minus_1]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[circle_angle_count_total_minus_1]);
     }
     else    // cnt is invalid
     {
@@ -522,7 +522,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
 
         double quatern_angle_step_start2end = 1.0 / max_count_start2end; // %0 - %100
         packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[0]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
         for(int i = 1; i < max_count_start2end; ++i)
         {
             circle_angle_distance_to_start += circle_angle_step_start2end;
@@ -532,10 +532,10 @@ ErrorCode planPathCircle(const PoseEuler &start,
                 center_position, path_cache.cache[i].pose.point_);
 
             getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[max_count_start2end]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[max_count_start2end]);
     }
 
     return SUCCESS;
@@ -791,7 +791,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
 
     updateTransitionBSpLineJointResult(2, start_joint, mid_joint, end_joint, path_cache.smooth_in_index);
     path_cache.cache[0].joint = start;
-    packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[0]);
+    packPathBlockType(TRANSITION_POINT, COORDINATE_JOINT, path_cache.cache[0]);
     int joint_address_base;
     for(i = 1; i < path_cache.smooth_in_index; ++i)
     {
@@ -801,10 +801,10 @@ ErrorCode planPathSmoothJoint(const Joint &start,
             path_cache.cache[i].joint[j] = stack[joint_address_base + i];
             joint_address_base += 1000;
         }
-        packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[i]);
+        packPathBlockType(TRANSITION_POINT, COORDINATE_JOINT, path_cache.cache[i]);
     }
     path_cache.cache[path_cache.smooth_in_index].joint = joint_in;
-    packPathBlockType(TRANSITION_POINT, MOTION_JOINT, path_cache.cache[path_cache.smooth_in_index]);
+    packPathBlockType(TRANSITION_POINT, COORDINATE_JOINT, path_cache.cache[path_cache.smooth_in_index]);
 
     // find smooth_out_index
     int path_cache_length_minus_1 = path_cache.smooth_in_index + path_piece_in2end;
@@ -836,10 +836,10 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         {
             joint_distance_to_in += joint_step_via2end;
             path_cache.cache[j].joint[i] = joint_in[i] + joint_distance_to_in;
-            packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[j]);
+            packPathBlockType(PATH_POINT, COORDINATE_JOINT, path_cache.cache[j]);
         }
         path_cache.cache[path_cache_length_minus_1].joint[i] = end.target.joint[i];
-        packPathBlockType(PATH_POINT, MOTION_JOINT, path_cache.cache[path_cache_length_minus_1]);    
+        packPathBlockType(PATH_POINT, COORDINATE_JOINT, path_cache.cache[path_cache_length_minus_1]);    
     }
 
     return 0;
@@ -967,7 +967,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
         packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);        
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
             path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
@@ -975,10 +975,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
             getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
-        packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[path_cache.smooth_in_index]);  
+        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
 
         // compute in2out path
         for(i = path_cache.smooth_in_index + 1; i < path_cache.smooth_out_index; ++i)
@@ -987,10 +987,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             angle_distance_to_in += angle_step_in2out;
             getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
             getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_out, quatern_out, path_cache.cache[path_cache.smooth_out_index].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache.smooth_out_index]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_out_index]);
 
         // compute out2target path
         for(i = path_cache.smooth_out_index + 1; i < path_cache_length_minus_1; ++i)
@@ -999,10 +999,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             angle_distance_to_out += angle_step_out2target;
             getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
             getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
     }
     else
     {       
@@ -1034,7 +1034,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
         packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]);        
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);        
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
             path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
@@ -1042,10 +1042,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
             getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
-        packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[path_cache.smooth_in_index]);          
+        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);          
 
         // compute in2target path
         for(i = path_cache.smooth_in_index + 1; i < path_cache_length_minus_1; ++i)
@@ -1054,10 +1054,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             angle_distance_to_in += angle_step_in2target;
             getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
             getQuaternPoint(quatern_in, quatern_target, angle_in2target, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[path_cache_length_minus_1]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
     }
 
     return SUCCESS;
@@ -1225,7 +1225,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
         updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
         packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]); 
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]); 
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
             path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
@@ -1233,10 +1233,10 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
             path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
             getQuaternPoint(start_quatern, in_quatern, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, in_quatern, path_cache.cache[path_cache.smooth_in_index].pose);
-        packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[path_cache.smooth_in_index]);  
+        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
 
         //compute in2out path.
         for(i = path_cache.smooth_in_index + 1; i < path_cache.smooth_out_index; ++i)
@@ -1247,10 +1247,10 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
             getCirclePoint(circle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
                 center_position, path_cache.cache[i].pose.point_);        
             getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_out, out_quatern, path_cache.cache[path_cache.smooth_out_index].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[path_cache.smooth_out_index]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_out_index]);
 
         //compute out2end path.
         for(i = path_cache.smooth_out_index + 1; i < path_cache_length_minus_1; ++i)
@@ -1261,10 +1261,10 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
             getCirclePoint(circle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
                 center_position, path_cache.cache[i].pose.point_);        
             getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_cache_length_minus_1].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[path_cache_length_minus_1]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
     }
     else
     {
@@ -1287,7 +1287,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
         updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
 
         packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, MOTION_LINE, path_cache.cache[0]); 
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]); 
         for(i = 1; i < path_cache.smooth_in_index; ++i)
         {
             path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
@@ -1295,10 +1295,10 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
             path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
             angle_distance_to_start += angle_step_transition;
             getQuaternPoint(start_quatern, in_quatern, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[i]);
+            packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(point_in, in_quatern, path_cache.cache[path_cache.smooth_in_index].pose);
-        packPathBlockType(TRANSITION_POINT, MOTION_LINE, path_cache.cache[path_cache.smooth_in_index]);  
+        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
 
         //compute in2end path.
         for(i = path_cache.smooth_in_index + 1; i < path_cache_length_minus_1; ++i)
@@ -1309,10 +1309,10 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
             getCirclePoint(circle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
                 center_position, path_cache.cache[i].pose.point_);        
             getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[i]);
+            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_cache_length_minus_1].pose);
-        packPathBlockType(PATH_POINT, MOTION_CIRCLE, path_cache.cache[path_cache_length_minus_1]);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
     }
           
     return SUCCESS;
@@ -2712,10 +2712,10 @@ inline void packPoseByPointAndQuatern(Point point, double quatern[4], PoseQuater
     pose.quaternion_.w_ = quatern[3];
 }
 
-inline void packPathBlockType(PointType point_type, MotionType motion_type, PathBlock& path_block)
+inline void packPathBlockType(PointType point_type, CoordinateType coord_type, PathBlock& path_block)
 {
     path_block.point_type = point_type;
-    path_block.motion_type = motion_type;
+    path_block.coord_type = coord_type;
 }
 
 inline void updateTrajPSingleItem(int traj_p_address, const Joint& joint)

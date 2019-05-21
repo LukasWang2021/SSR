@@ -793,7 +793,7 @@ inline void getQuaternToQuaternVector4(const basic_alg::Quaternion quatern, doub
 inline void getMovePointToVector3(const basic_alg::Point& point, double* pos_vector);
 inline void getQuaternPoint(double* start_quatern, double* end_quartern, double angle, double angle_distance_to_start, basic_alg::Quaternion& target_quatern);
 inline void packPoseByPointAndQuatern(basic_alg::Point point, double quatern[4], basic_alg::PoseQuaternion& pose);
-inline void packPathBlockType(fst_mc::PointType point_type, fst_mc::MotionType motion_type, fst_mc::PathBlock& path_block);
+inline void packPathBlockType(fst_mc::PointType point_type, fst_mc::CoordinateType coord_type, fst_mc::PathBlock& path_block);
 
 inline void getMoveCircleCenterAngle(const basic_alg::PoseEuler &start, const fst_mc::MotionInfo &end, 
     double &angle, basic_alg::Point &circle_center_position, double &circle_radius, double* cross_vector);

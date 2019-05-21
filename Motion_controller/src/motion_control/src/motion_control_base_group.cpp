@@ -140,7 +140,7 @@ BaseGroup::~BaseGroup()
             for (size_t j = 0; j < path_cache.cache_length; j++)
             {
                 PathBlock &block = path_cache.cache[j];
-                g_path_out << "block-" << j << ",point-type=" << block.point_type << ",motion-type=" << block.motion_type 
+                g_path_out << "block-" << j << ",point-type=" << block.point_type << ",coordinate-type=" << block.coord_type 
                            << ",joint[0]=" << block.joint[0] << ",joint[1]=" << block.joint[1] << ",joint[2]=" << block.joint[2] 
                            << ",joint[3]=" << block.joint[3] << ",joint[4]=" << block.joint[4] << ",joint[5]=" << block.joint[5] << endl;
             }
@@ -170,7 +170,7 @@ BaseGroup::~BaseGroup()
             for (size_t j = 0; j < path_cache.cache_length; j++)
             {
                 PathBlock &block = path_cache.cache[j];
-                g_path_out << "block-" << j << ",point-type=" << block.point_type << ",motion-type=" << block.motion_type 
+                g_path_out << "block-" << j << ",point-type=" << block.point_type << ",coordinate-type=" << block.coord_type 
                            << ",x=" << block.pose.point_.x_ << ",y=" << block.pose.point_.y_ << ",z=" << block.pose.point_.z_ 
                            << ",ow=" << block.pose.quaternion_.w_ << ",ox=" << block.pose.quaternion_.x_ << ",oy=" << block.pose.quaternion_.y_ << ",oz=" << block.pose.quaternion_.z_ 
                            << ",joint[0]=" << block.joint[0] << ",joint[1]=" << block.joint[1] << ",joint[2]=" << block.joint[2] 
@@ -3426,7 +3426,7 @@ void BaseGroup::setFineWaiter(void)
     PoseQuaternion target;
     auto &block = path_list_ptr_->path_cache.cache[path_list_ptr_->path_cache.cache_length - 1];
 
-    if (block.motion_type == MOTION_JOINT)
+    if (block.coord_type == MOTION_JOINT)
     {
         PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
         kinematics_ptr_->doFK(block.joint, fcp_in_base);

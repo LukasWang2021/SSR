@@ -89,8 +89,8 @@ struct MotionTarget     // 用于move指令的数据结构
 
 struct PathBlock    // 路径点的数据结构
 {
-    PointType   point_type;     // 路径点所属的区段, 路径点或者过渡点
-    MotionType  motion_type;    // 路径点的类型，关节类型或者笛卡尔类型
+    PointType       point_type;     // 路径点所属的区段, 路径点或者过渡点
+    CoordinateType  coord_type;     // 路径点的类型，关节类型或者笛卡尔类型
 
     basic_alg::PoseQuaternion   pose;   // 路径点的笛卡尔空间位姿表示
     basic_alg::Joint            joint;  // 路径点的关节空间表示

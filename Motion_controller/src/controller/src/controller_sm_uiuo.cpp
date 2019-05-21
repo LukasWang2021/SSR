@@ -69,10 +69,17 @@ void ControllerSm::processUIUO()
         setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_4), false);//UO[11]
         setUO(static_cast<uint32_t>(UO_PROGRAM_CONFIRM_5), false);//UO[12]
 
-        //if UI[3] is ON, reset
-        if (getUI(static_cast<uint32_t>(UI_RESET), level))
+        //UO[3] is on if error is exist
+        if(is_error_exist_)
         {
-            if(level == true)
+            setUO(static_cast<uint32_t>(UO_FAULT), true);//UO[3] signal fault
+        }
+
+        //if UI[3] is ON, reset
+        bool enable_level = false;
+        if (getUI(static_cast<uint32_t>(UI_RESET), level) && getUI(static_cast<uint32_t>(UI_SERVO_ENABLE), enable_level))
+        {
+            if(level == true && enable_level == true)
             {
                 if (callReset() == SUCCESS)
                 {
@@ -80,7 +87,6 @@ void ControllerSm::processUIUO()
                 }
             }     
         }
-
         return;
     }
     else
@@ -116,7 +122,7 @@ void ControllerSm::processUIUO()
     }
     
     //if UI[4] is pulse down, start&restart (resume)
-    if (isFallingEdge(static_cast<uint32_t>(UI_START)))
+    if (isFallingEdgeStart(static_cast<uint32_t>(UI_START)))
     {
         if((getInterpreterState() == INTERPRETER_PAUSED) && (getCtrlState() == CTRL_ENGAGED) && (getRobotState() == ROBOT_IDLE))
         {
@@ -133,9 +139,9 @@ void ControllerSm::processUIUO()
     }
 
     //if UI[5] is OFF, abort
-    if (getUI(static_cast<uint32_t>(UI_ABORT_PROGRAM), level))
+    if (isFallingEdgeAbort(static_cast<uint32_t>(UI_ABORT_PROGRAM)))
     {
-        if((level == false) && (getInterpreterState() != INTERPRETER_IDLE))
+        if(getInterpreterState() != INTERPRETER_IDLE)
         {
             FST_INFO("----UI call Abort.");
             if (motion_control_ptr_->abortMove() == SUCCESS)
@@ -217,7 +223,24 @@ void ControllerSm::processUIUO()
 }
 
 // UI check if there is falling edge.
-bool ControllerSm::isFallingEdge(uint32_t user_port)
+bool ControllerSm::isFallingEdgeStart(uint32_t user_port)
+{
+    static uint8_t pre_value = 0;
+    uint8_t current_value = 0;
+    if (io_mapping_ptr_->getUIByBit(user_port, current_value) == SUCCESS)
+    {
+        if (pre_value == 1 && current_value == 0)
+        {
+            pre_value = current_value;
+            return true;
+        }
+        pre_value = current_value;
+        return false;
+    }
+    return false;
+}
+
+bool ControllerSm::isFallingEdgeAbort(uint32_t user_port)
 {
     static uint8_t pre_value = 0;
     uint8_t current_value = 0;

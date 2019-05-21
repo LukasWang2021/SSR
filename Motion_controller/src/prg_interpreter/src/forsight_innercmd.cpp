@@ -17,6 +17,12 @@
 #include <execinfo.h>
 #endif
 
+#ifdef USE_FORSIGHT_REGISTERS_MANAGER
+#include "reg_manager/forsight_registers_manager.h"
+#else
+#include "reg-shmi/forsight_registers.h"
+#endif
+
 #define FILE_PATH_LEN       1024
 #define MAX_STOPWATCH_NUM   128
 
@@ -1753,7 +1759,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 		FST_INFO("call_MoveXPos XPATH out of range at %d", iLineNum);
 	}
 	// FST_INFO("call_MoveL Run XPATH: %s", objThreadCntrolBlock->vector_XPath[iLineNum].c_str());
-	memset(&objThreadCntrolBlock->instrSet->target.prPos, 0x00, PR_POS_LEN * sizeof(int));
+	memset(&instr.target.prPos, 0x00, PR_POS_LEN * sizeof(int));
 	get_token(objThreadCntrolBlock);
 	int prPosIdx = 0 ;
 	while(strcmp(objThreadCntrolBlock->token, "pr") == 0)
@@ -1761,7 +1767,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 		get_token(objThreadCntrolBlock);
 		if(objThreadCntrolBlock->token[0] == '['){
 			get_exp(objThreadCntrolBlock, &value, &boolValue);
-			objThreadCntrolBlock->instrSet->target.prPos[prPosIdx] = (int)value.getFloatValue();
+			instr.target.prPos[prPosIdx] = (int)value.getFloatValue();
 			prPosIdx++;
 			get_token(objThreadCntrolBlock);
 			if(objThreadCntrolBlock->token[0] != ']'){
@@ -1785,13 +1791,13 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 	{
 		for (prPosIdx = 0; prPosIdx < 10; prPosIdx++)
 		{
-			objThreadCntrolBlock->instrSet->target.prPos[prPosIdx] = 21 + prPosIdx;
+			instr.target.prPos[prPosIdx] = 21 + prPosIdx;
 		}
 	}
 	// We had jump ","
 	// get_token(objThreadCntrolBlock);
     get_exp(objThreadCntrolBlock, &value, &boolValue);
-    instr.target.vel                  = value.getFloatValue();
+    instr.target.vel                  = value.getFloatValue() / 100;
 	
 	get_token(objThreadCntrolBlock);
 	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
@@ -1845,6 +1851,11 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 			objThreadCntrolBlock->instrSet->add_num    = 1 ;
 		}
 	}
+	FST_INFO("prPos = {%d, %d, %d, %d }.", 
+		objThreadCntrolBlock->instrSet->target.prPos[0], 
+		objThreadCntrolBlock->instrSet->target.prPos[1], 
+		objThreadCntrolBlock->instrSet->target.prPos[2], 
+		objThreadCntrolBlock->instrSet->target.prPos[3]);
 	
 // 	#ifdef USE_XPATH
 // 		FST_INFO("setInstruction MOTION_CURVE at %s", instr.line);

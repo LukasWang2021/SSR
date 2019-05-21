@@ -1860,6 +1860,7 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 			}
 			else { 
 				FST_ERROR("Wrong Command (%s) in logical Command. \n", (char *)name);
+				setWarning(INFO_INTERPRETER_XML_WRONG_ELEMENT);
 			}
         }
 		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"comment")==0){ 
@@ -1925,6 +1926,7 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 		}
 		else { 
 			FST_ERROR("Wrong Command (%s) in FunctionBody. \n", (char *)nodeStatement->name);
+			setWarning(INFO_INTERPRETER_XML_WRONG_ELEMENT);
 		}
 	}
 	return 1 ;

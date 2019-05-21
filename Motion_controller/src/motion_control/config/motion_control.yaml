@@ -1,5 +1,5 @@
-model_name: "SCARA"
-#model_name: "PUMA"
+#model_name: "SCARA"
+model_name: "PUMA"
 realtime_task:
     cycle_time: 2       # ms
 non_realtime_task:

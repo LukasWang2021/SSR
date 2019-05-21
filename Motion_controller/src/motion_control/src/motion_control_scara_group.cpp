@@ -347,28 +347,6 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
         return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
     }
 
-    int cycles;
-
-    if (param.getParam("joint_record/update_cycle", cycles) && cycles > 0)
-    {
-        joint_record_update_cycle_ = cycles;
-    }
-    else
-    {
-        FST_ERROR("Fail loading record cycle from config file");
-        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
-    }
-
-    if (param.getParam("joint_record/update_timeout", cycles) && cycles > 0)
-    {
-        joint_record_update_timeout_ = cycles;
-    }
-    else
-    {
-        FST_ERROR("Fail loading record timeout from config file");
-        return param.getLastError() != SUCCESS ? param.getLastError() : INVALID_PARAMETER;
-    }
-
     // 从配置文件中加载关节位置跟随误差门限
     double tracking_accuracy[JOINT_OF_SCARA];
 

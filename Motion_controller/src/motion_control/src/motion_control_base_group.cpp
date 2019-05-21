@@ -278,6 +278,14 @@ const PoseEuler& BaseGroup::getWorldFrame(void)
     return world_frame_;
 }
 
+ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, const PoseEuler &uf, const PoseEuler &tf, Joint &joint)
+{
+    PoseEuler tcp_in_base, fcp_in_base;
+    transformation_.convertPoseFromUserToBase(pose.pose, uf, tcp_in_base);
+    transformation_.convertTcpToFcp(tcp_in_base, tf, fcp_in_base);
+    return kinematics_ptr_->doIK(fcp_in_base, pose.posture, joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+}
+
 ErrorCode BaseGroup::convertCartToJoint(const PoseEuler &pose, const PoseEuler &uf, const PoseEuler &tf, Joint &joint)
 {
     PoseEuler tcp_in_base, fcp_in_base;
@@ -293,6 +301,14 @@ ErrorCode BaseGroup::convertJointToCart(const Joint &joint, const PoseEuler &uf,
     transformation_.convertFcpToTcp(fcp_in_base, tf, tcp_in_base);
     transformation_.convertPoseFromBaseToUser(tcp_in_base, uf, pose);
     return SUCCESS;
+}
+
+ErrorCode BaseGroup::convertCartToJoint(const PoseAndPosture &pose, Joint &joint)
+{
+    PoseEuler tcp_in_base, fcp_in_base;
+    transformation_.convertPoseFromUserToBase(pose.pose, user_frame_, tcp_in_base);
+    transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
+    return kinematics_ptr_->doIK(fcp_in_base, pose.posture, joint) ? SUCCESS : MC_COMPUTE_IK_FAIL;
 }
 
 ErrorCode BaseGroup::convertCartToJoint(const PoseEuler &pose, Joint &joint)
@@ -843,13 +859,219 @@ void BaseGroup::linkCacheList(PathCacheList *path_ptr, TrajectoryCacheList *traj
 
 ErrorCode BaseGroup::pauseMove(void)
 {
-    FST_INFO("BaseGroup::pauseMove, group state is %d, pause return success.", group_state_);
+    FST_INFO("Pause move request received.");
+
+    if (group_state_ != AUTO)
+    {
+        FST_WARN("Group state is %d, pause request refused.", group_state_);
+        return SUCCESS;
+    }
+
+    pthread_mutex_lock(&cache_list_mutex_);
+
+    if (traj_list_ptr_ == NULL)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_WARN("Trajectory cache list is empty.");
+        return SUCCESS;
+    }
+
+    FST_INFO("Path list:");
+    PathCacheList *path_ptr = path_list_ptr_;
+
+    while (path_ptr)
+    {
+        PathCache &cache = path_ptr->path_cache;
+        FST_INFO("  %p: id = %d, next-ptr = %p, length = %d, smooth-in = %d, smooth-out = %d", path_ptr, path_ptr->id, path_ptr->next_ptr, cache.cache_length, cache.smooth_in_index, cache.smooth_out_index);
+        path_ptr = path_ptr->next_ptr;
+    }
+
+    FST_INFO("Trajectory list:");
+    TrajectoryCacheList *traj_ptr = traj_list_ptr_;
+
+    while (traj_ptr)
+    {
+        TrajectoryCache &cache = traj_ptr->trajectory_cache;
+        FST_INFO("  %p: pick = %d, next-ptr = %p, length = %d, smooth-out = %d, path-ptr = %p", traj_ptr, traj_ptr->pick_index, traj_ptr->next_ptr, cache.cache_length, cache.smooth_out_index, cache.path_cache_ptr);
+        traj_ptr = traj_ptr->next_ptr;
+    }
+
+    char buffer[LOG_TEXT_SIZE];
+    JointState pause_state;
+    int pause_index = traj_list_ptr_->pick_index;
+    TrajectoryCache &traj_cache = traj_list_ptr_->trajectory_cache;
+
+    if (traj_cache.smooth_out_index == -1 && pause_index >= (int)traj_cache.cache_length)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_INFO("Near ending point, do not need plan pause trajectory.");
+        return SUCCESS;
+    }
+    else if (traj_cache.smooth_out_index != -1 && pause_index >= (int)traj_cache.smooth_out_index)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_ERROR("Near smooth point, cannot pause right now.");
+        return TRAJ_PLANNING_PAUSE_FAILED;
+    }
+    
+    sampleBlockEnding(traj_cache.cache[pause_index], pause_state);
+    TrajectoryCacheList *pause_traj_ptr = traj_cache_pool_.getCachePtr();
+
+    if (pause_traj_ptr == NULL)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        FST_ERROR("No traj-cache available, set more caches in config file.");
+        return MC_NO_ENOUGH_CACHE;
+    }
+
+    int paused_on_index = traj_cache.cache[pause_index].index_in_path_cache;
+    TrajectoryCache &pause_traj_cache = pause_traj_ptr->trajectory_cache;
+    ErrorCode err = planPauseTrajectory(*traj_cache.path_cache_ptr, pause_state, acc_ratio_, pause_traj_cache, paused_on_index);
+    
+    FST_INFO("angle: %s", printDBLine(&pause_state.angle[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("omega: %s", printDBLine(&pause_state.omega[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("alpha: %s", printDBLine(&pause_state.alpha[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("Path cache length: %d, pause index: %d, paused index: %d", traj_cache.path_cache_ptr->cache_length, traj_cache.cache[pause_index].index_in_path_cache, paused_on_index);
+    FST_INFO("Pause traj cache length: %d", pause_traj_cache.cache_length);
+
+    for (size_t i = 0; i < pause_traj_cache.cache_length; i++)
+    {
+        FST_INFO("  duration of block-%d = %.4f", i, pause_traj_cache.cache[i].duration);
+    }
+
+    if (err != SUCCESS)
+    {
+        pthread_mutex_unlock(&cache_list_mutex_);
+        traj_cache_pool_.freeCachePtr(pause_traj_ptr);
+        FST_ERROR("Fail to plan pause trajectory, code = 0x%llx", err);
+        return err;
+    }
+
+    // 放弃pause_index之后的轨迹段
+    traj_cache.smooth_out_index = pause_index;
+    // 放弃后面的轨迹缓存
+    TrajectoryCacheList *this_ptr = traj_list_ptr_->next_ptr;
+    TrajectoryCacheList *next_ptr;
+
+    while (this_ptr)
+    {
+        next_ptr = this_ptr->next_ptr;
+        traj_cache_pool_.freeCachePtr(this_ptr);
+        this_ptr = next_ptr;
+    }
+
+    pause_traj_cache.smooth_out_index = pause_traj_cache.cache_length - 1;
+    pause_traj_cache.path_cache_ptr = NULL;
+    pause_traj_ptr->pick_index = 0;
+    pause_traj_ptr->pick_from_block = 0;
+    pause_traj_ptr->time_from_start = traj_cache.cache[pause_index].time_from_start + traj_cache.cache[pause_index].duration;
+    pause_traj_ptr->next_ptr = NULL;
+    updateTimeFromStart(*pause_traj_ptr);
+    traj_list_ptr_->trajectory_cache.path_cache_ptr = NULL;
+    traj_list_ptr_->next_ptr = pause_traj_ptr;
+    pause_status_.pause_valid = true;
+    pause_status_.pause_index = paused_on_index;
+
+    this_ptr = traj_list_ptr_;
+    while (this_ptr)
+    {
+        FST_INFO("Cache: %p, pick-index = %d, time-from-start = %f, length = %d", this_ptr, this_ptr->pick_index, this_ptr->time_from_start, this_ptr->trajectory_cache.cache_length);
+        this_ptr = this_ptr->next_ptr;
+    }
+
+    sampleBlockEnding(pause_traj_cache.cache[pause_traj_cache.cache_length - 1], pause_state);
+    start_joint_ = pause_state.angle;
+    auto_to_pause_request_ = true;
+    pthread_mutex_unlock(&cache_list_mutex_);
+    FST_INFO("Pause trajectory planning success, going to pause at: %s", printDBLine(&pause_state.angle[0], buffer, LOG_TEXT_SIZE));
+
+#ifdef OUTPUT_TRAJ_CACHE
+    g_traj_output_array[g_traj_output_index] = *traj_ptr;
+    g_traj_output_index = (g_traj_output_index + 1) % OUTPUT_TRAJ_CACHE_SIZE;
+#endif
+
     return SUCCESS;
 }
 
 ErrorCode BaseGroup::restartMove(void)
 {
-    FST_INFO("BaseGroup::restartMove, group state is %d, restart return success.", group_state_);
+    FST_INFO("Restart move request received.");
+
+    if (group_state_ != PAUSE)
+    {
+        FST_WARN("Group state is %d, restart request refused.", group_state_);
+        return SUCCESS;
+    }
+
+    pthread_mutex_lock(&cache_list_mutex_);
+    ErrorCode err = SUCCESS;
+    Joint start = start_joint_;
+    Joint pause = path_list_ptr_->path_cache.cache[pause_status_.pause_index].joint;
+    PoseEuler fcp_start_pose, fcp_pause_pose, tcp_start_pose, tcp_pause_pose;
+    kinematics_ptr_->doFK(start, fcp_start_pose);
+    kinematics_ptr_->doFK(pause, fcp_pause_pose);
+    transformation_.convertFcpToTcp(fcp_start_pose, tool_frame_, tcp_start_pose);
+    transformation_.convertFcpToTcp(fcp_pause_pose, tool_frame_, tcp_pause_pose);
+
+    if (getDistance(tcp_start_pose.point_, tcp_pause_pose.point_) > 0.1 || getOrientationAngle(tcp_start_pose.euler_, tcp_pause_pose.euler_) > 0.1)
+    {
+        // 位置或姿态角偏出暂停点，需要先回到暂停点
+        char buffer[LOG_TEXT_SIZE];
+        FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("Pause-joint: %s", printDBLine(&pause[0], buffer, LOG_TEXT_SIZE));
+        FST_INFO("Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", tcp_start_pose.point_.x_, tcp_start_pose.point_.y_, tcp_start_pose.point_.z_, tcp_start_pose.euler_.a_, tcp_start_pose.euler_.b_, tcp_start_pose.euler_.c_);
+        FST_INFO("Start-pose: %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", tcp_pause_pose.point_.x_, tcp_pause_pose.point_.y_, tcp_pause_pose.point_.z_, tcp_pause_pose.euler_.a_, tcp_pause_pose.euler_.b_, tcp_pause_pose.euler_.c_);
+        FST_INFO("Start-pose different with pause-pose, move back to pause-pose.");
+        
+        PathCacheList *path_cache_ptr = path_cache_pool_.getCachePtr();
+        TrajectoryCacheList *traj_cache_ptr = traj_cache_pool_.getCachePtr();
+
+        if (path_cache_ptr == NULL || traj_cache_ptr == NULL)
+        {
+            pthread_mutex_unlock(&cache_list_mutex_);
+            FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_cache_ptr, traj_cache_ptr);
+            path_cache_pool_.freeCachePtr(path_cache_ptr);
+            traj_cache_pool_.freeCachePtr(traj_cache_ptr);
+            return MC_NO_ENOUGH_CACHE;
+        }
+        
+        MotionInfo target;
+        target.type = MOTION_JOINT;
+        target.cnt = 0;
+        target.vel = 0.0625;
+        target.target.joint = pause;
+        target.target.user_frame = user_frame_;
+        target.target.tool_frame = tool_frame_;
+        target.target.pose.posture = kinematics_ptr_->getPostureByJoint(pause);
+        PoseEuler fcp_in_base, tcp_in_base;
+        kinematics_ptr_->doFK(pause, fcp_in_base);
+        transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
+        transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, target.target.pose.pose);
+        
+        err = autoStableJoint(start, target, path_cache_ptr->path_cache, traj_cache_ptr->trajectory_cache);
+        path_cache_pool_.freeCachePtr(path_cache_ptr);
+
+        if (err != SUCCESS)
+        {
+            pthread_mutex_unlock(&cache_list_mutex_);
+            traj_cache_pool_.freeCachePtr(traj_cache_ptr);
+            FST_ERROR("Fail to plan trajectory back to pause-pose, code = 0x%llx", err);
+            return err;
+        }
+        
+        traj_cache_ptr->pick_index = 0;
+        traj_cache_ptr->pick_from_block = 0;
+        traj_cache_ptr->time_from_start = 0;
+        traj_cache_ptr->next_ptr = NULL;
+        traj_cache_ptr->trajectory_cache.path_cache_ptr = NULL;
+        traj_list_ptr_ = traj_cache_ptr;
+        JointState joint_state;
+        sampleBlockEnding(traj_cache_ptr->trajectory_cache.cache[traj_cache_ptr->trajectory_cache.cache_length - 1], joint_state);
+        start_joint_ = joint_state.angle;
+    }
+
+    pause_to_auto_request_ = true;
+    pthread_mutex_unlock(&cache_list_mutex_);
     return SUCCESS;
 }
 
@@ -960,121 +1182,9 @@ ErrorCode BaseGroup::replanPathCache(void)
     return SUCCESS;
 }
 
-ErrorCode BaseGroup::autoMoveX(const vector<Joint> &joints, double vel)
-{
-    char buffer[LOG_TEXT_SIZE];
-    vector<Joint> joint_path;
-    joint_path.push_back(start_joint_);
-    FST_INFO("BaseGroup::autoMoveX, type = moveX, vel = %.4f", vel);
-    FST_INFO("start-joint: %s", printDBLine(&joint_path.front().j1_, buffer, LOG_TEXT_SIZE));
-    ErrorCode err = checkStartState(joint_path.front());
-
-    if (err != SUCCESS)
-    {
-        FST_ERROR("Start state check failed, code = 0x%llx", err);
-        return err;
-    }
-
-    if (vel < MINIMUM_E6 || vel > 1 + MINIMUM_E6)
-    {
-        FST_ERROR("Invalid vel: %.6f", vel);
-        return INVALID_PARAMETER;
-    }
-
-    for (vector<Joint>::const_iterator it = joints.begin(); it != joints.end(); ++it)
-    {
-        if (!soft_constraint_.isJointInConstraint(*it))
-        {
-            FST_ERROR("Target joint out of soft constraint.");
-            FST_ERROR("Joint = %s", printDBLine(&it->j1_, buffer, LOG_TEXT_SIZE));
-            FST_ERROR("Upper = %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
-            FST_ERROR("Lower = %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
-            return JOINT_OUT_OF_CONSTRAINT;
-        }
-
-        joint_path.push_back(*it);
-    }
-
-    auto *path_ptr = path_cache_pool_.getCachePtr();
-    auto *traj_ptr = traj_cache_pool_.getCachePtr();
-    
-    if (path_ptr == NULL || traj_ptr == NULL)
-    {
-        FST_ERROR("No path-cache (=%p) or traj-cache (=%p) available, set more caches in config file.", path_ptr, traj_ptr);
-        path_cache_pool_.freeCachePtr(path_ptr);
-        traj_cache_pool_.freeCachePtr(traj_ptr);
-        return MC_NO_ENOUGH_CACHE;
-    }
-
-    err = planTrajectoryMovX(joint_path, vel * vel_ratio_, acc_ratio_, traj_ptr->trajectory_cache);
-
-    if (err == SUCCESS)
-    {
-        path_ptr->id = 0;
-        path_ptr->path_cache.cache_length = joint_path.size();
-
-        for (size_t i = 0; i < path_ptr->path_cache.cache_length; i++)
-        {
-            path_ptr->path_cache.cache[i].point_type = PATH_POINT;
-            path_ptr->path_cache.cache[i].coord_type = COORDINATE_JOINT;
-            path_ptr->path_cache.cache[i].joint = joint_path[i];
-        }
-
-        // 上一条指令不带平滑时traj_ptr->time_from_start应该是0，否则它应该等于上一条指令的平滑切出时间
-        MotionTime start_time = 0;
-        pthread_mutex_lock(&cache_list_mutex_);
-        auto *last_traj_ptr = getLastTrajectoryCacheListPtr();
-
-        if (last_traj_ptr != NULL && last_traj_ptr->trajectory_cache.smooth_out_index != -1)
-        {
-            last_traj_ptr->trajectory_cache.smooth_out_index = last_traj_ptr->trajectory_cache.cache_length - 1;
-            auto &smooth_out_block = last_traj_ptr->trajectory_cache.cache[last_traj_ptr->trajectory_cache.smooth_out_index];
-            start_time = smooth_out_block.time_from_start + smooth_out_block.duration;
-        }
-
-        traj_ptr->pick_index = 0;
-        traj_ptr->pick_from_block = 0;
-        traj_ptr->time_from_start = start_time;
-        traj_ptr->next_ptr = NULL;
-        traj_ptr->trajectory_cache.path_cache_ptr = &path_ptr->path_cache;
-
-        // 更新start-joint
-        start_joint_ = joints.back();
-        updateTimeFromStart(*traj_ptr);
-        linkCacheList(path_ptr, traj_ptr);
-        pthread_mutex_unlock(&cache_list_mutex_);
-
-#ifdef OUTPUT_PATH_CACHE
-        g_path_output_array[g_path_output_index] = *path_ptr;
-        g_path_output_index = (g_path_output_index + 1) % OUTPUT_PATH_CACHE_SIZE;
-#endif
-#ifdef OUTPUT_TRAJ_CACHE
-        g_traj_output_array[g_traj_output_index] = *traj_ptr;
-        g_traj_output_index = (g_traj_output_index + 1) % OUTPUT_TRAJ_CACHE_SIZE;
-#endif
-        // ------- for test only -------- //
-        // for (size_t i = 0; i < path_ptr->path_cache.cache_length; i++)
-        // {
-        //     g_path_point[g_path_index] = path_ptr->path_cache.cache[i].pose;
-        //     g_path_index = (g_path_index + 1) % 10000;
-        // }
-        // ------- for test only -------- //
-
-        FST_INFO("Planning success.");
-        return SUCCESS;
-    }
-    else
-    {
-        FST_ERROR("Planning failed with code = 0x%llx, autoMove aborted.", err);
-        path_cache_pool_.freeCachePtr(path_ptr);
-        traj_cache_pool_.freeCachePtr(traj_ptr);
-        return err;
-    }
-}
-
 ErrorCode BaseGroup::autoMove(int id, const MotionInfo &info)
 {
-    FST_INFO("BaseGroup::autoMove, type = %d", info.type);
+    FST_INFO("Auto move request received, ID = %d, type = %d", id, info.type);
     Joint start = start_joint_;
 
     ErrorCode err = checkStartState(start);
@@ -1459,16 +1569,7 @@ bool BaseGroup::checkTrajectory(const TrajectoryCache &trajectory)
 
     for (size_t i = 0; i < trajectory.cache_length; i++)
     {
-        if (trajectory.cache[i].duration <= 0)
-        {
-            FST_ERROR("trajectory-block %d: duration = %.6f", i, trajectory.cache[i].duration);
-            return false;
-        }
-        else if (trajectory.cache[i].duration > 32)
-        {
-            FST_WARN("trajectory-block %d: duration = %.6f", i, trajectory.cache[i].duration);
-        }
-        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 600)
+        if (trajectory.cache[i].duration <= 0 || trajectory.cache[i].duration > 150)
         {
             FST_ERROR("trajectory-block %d: duration = %.6f", i, trajectory.cache[i].duration);
             return false;
@@ -3141,7 +3242,7 @@ void BaseGroup::doStateMachine(void)
             }
             else
             {
-                FST_WARN("Group-state is unknow but servo-state is %d, send stop request to servo.", servo_state);
+                FST_WARN("Group-state is unknow but servo-state is %d, send stop request to barecore.", servo_state);
                 bare_core_.stopBareCore();
                 //FST_ERROR("Group-state is UNKNOW but servo-state is %d", servo_state);
                 reportError(MC_INTERNAL_FAULT);
@@ -3325,7 +3426,7 @@ void BaseGroup::setFineWaiter(void)
     PoseQuaternion target;
     auto &block = path_list_ptr_->path_cache.cache[path_list_ptr_->path_cache.cache_length - 1];
 
-    if (block.coord_type == COORDINATE_JOINT)
+    if (block.coord_type == MOTION_JOINT)
     {
         PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
         kinematics_ptr_->doFK(block.joint, fcp_in_base);

@@ -99,6 +99,9 @@ private:
     IODevicePortValues dev_values_;
     uint8_t output_[IO_DATAFRAME_MAX];
 
+    ErrorCode error_code_;
+    ErrorCode pre_code_;
+
     FstIoDevice();
 
     void initIODeviceData(IODeviceData &data);

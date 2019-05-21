@@ -448,7 +448,9 @@ ErrorCode IoManager::getUiValue(PhysicsID phy_id, uint8_t &value)
         }
         case DEVICE_TYPE_MODBUS:
         {
-            //todo modbus
+            //code for modbus
+            ModbusManager* modbus_manager_ptr = static_cast<ModbusManager*>(device_ptr);
+            return getUiValueFromModbusServer(phy_id.info.port, value, modbus_manager_ptr);
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
@@ -485,7 +487,9 @@ ErrorCode IoManager::getUoValue(PhysicsID phy_id, uint8_t &value)
         }
         case DEVICE_TYPE_MODBUS:
         {
-        //todo modbus
+            //code for modbus
+            ModbusManager* modbus_manager_ptr = static_cast<ModbusManager*>(device_ptr);
+            return getUoValueFromModbusServer(phy_id.info.port, value, modbus_manager_ptr);
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
@@ -680,7 +684,9 @@ ErrorCode IoManager::setUoValue(PhysicsID phy_id, uint8_t value)
         }
         case DEVICE_TYPE_MODBUS:
         {
-            //todo modbus
+            //code for modbus
+            ModbusManager* modbus_manager_ptr = static_cast<ModbusManager*>(device_ptr);
+            return setUoValueToModbusServer(phy_id.info.port, value, modbus_manager_ptr);
         }
         case DEVICE_TYPE_VIRTUAL_IO:
         {
@@ -772,7 +778,6 @@ BaseDevice* IoManager::getDevicePtr(PhysicsID phy_id)
 ErrorCode IoManager::updateIoDevicesData(void)
 {
     ErrorCode ret = SUCCESS;
-    static ErrorCode pre_ret = SUCCESS;
     for(unsigned int i = 0; i < device_list_.size(); ++i)
     {
         switch(device_list_[i].type)
@@ -784,15 +789,9 @@ ErrorCode IoManager::updateIoDevicesData(void)
                 FstIoDevice* io_device_ptr = static_cast<FstIoDevice*>(device_ptr);
                 ret = io_device_ptr->updateDeviceData();
                 if (ret != SUCCESS)
-                {
-                    //only upload error one time.
-                    if (pre_ret != ret) 
-                    {     
-                        //FST_ERROR("Failed to get io data");                  
-                        ErrorMonitor::instance()->add(ret);
-                    }
+                {                  
+                    ErrorMonitor::instance()->add(ret);
                 }
-                pre_ret = ret;
                 break;
             }
             case DEVICE_TYPE_MODBUS: break;//no need to update for modbus.
@@ -893,6 +892,8 @@ ErrorCode IoManager::getModbusDeviceInfo(fst_hal::IODeviceInfo &info, ModbusMana
 ErrorCode IoManager::getDiValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager)
 {
     if (modbus_manager == NULL) return MODBUS_INVALID;
+    //fresh valid
+    modbus_manager->isModbusValid();
 
     if (!modbus_manager->isValid()
         || modbus_manager->getStartMode() != MODBUS_SERVER)
@@ -908,6 +909,8 @@ ErrorCode IoManager::getDiValueFromModbusServer(uint8_t port, uint8_t &value, Mo
 ErrorCode IoManager::getDoValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager)
 {
     if (modbus_manager == NULL) return MODBUS_INVALID;
+    //fresh valid
+    modbus_manager->isModbusValid();
 
     if (!modbus_manager->isValid()
         || modbus_manager->getStartMode() != MODBUS_SERVER)
@@ -924,6 +927,8 @@ ErrorCode IoManager::getDoValueFromModbusServer(uint8_t port, uint8_t &value, Mo
 ErrorCode IoManager::setDoValueToModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager)
 {
     if (modbus_manager == NULL) return MODBUS_INVALID;
+    //fresh valid
+    modbus_manager->isModbusValid();
 
     if (!modbus_manager->isValid()
         || modbus_manager->getStartMode() != MODBUS_SERVER)
@@ -934,6 +939,21 @@ ErrorCode IoManager::setDoValueToModbusServer(uint8_t port, uint8_t &value, Modb
     int server_id = 0;
     int addr = static_cast<int>(port);
     return modbus_manager->writeCoils(server_id, addr, 1, &value);
+}
+
+ErrorCode IoManager::getUiValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager)
+{
+    return getDiValueFromModbusServer(port, value, modbus_manager);
+}
+
+ErrorCode IoManager::getUoValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager)
+{
+    return getDoValueFromModbusServer(port, value, modbus_manager);
+}
+
+ErrorCode IoManager::setUoValueToModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager)
+{
+    return setDoValueToModbusServer(port, value, modbus_manager);
 }
 
 // thread function

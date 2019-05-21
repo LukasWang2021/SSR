@@ -189,6 +189,11 @@ private:
     ErrorCode getDoValueFromModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
     ErrorCode setDoValueToModbusServer(uint8_t port, uint8_t &value, ModbusManager* modbus_manager);
 
+    ErrorCode getUiValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);
+    ErrorCode getUoValueFromModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);
+    ErrorCode setUoValueToModbusServer(uint32_t port, uint8_t &value, ModbusManager* modbus_manager);
+
+
     int cycle_time_;
     bool is_running_;
     std::vector<IOPulseInfo> pulse_vec_;

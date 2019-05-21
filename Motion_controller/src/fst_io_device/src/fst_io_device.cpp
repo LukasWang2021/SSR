@@ -28,6 +28,8 @@ FstIoDevice::FstIoDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_FST_IO),
     log_ptr_(NULL),
     param_ptr_(NULL),
+    error_code_(0),
+    pre_code_(0),
     address_(address)
 {
     log_ptr_ = new fst_log::Logger();
@@ -280,8 +282,8 @@ ErrorCode FstIoDevice::updateDeviceData(void)
     memcpy(data.output, output_, sizeof(data.output));
     data_mutex_.unlock();
 
-    ErrorCode ret = getDeviceDataFromMem(data);
-    if(ret == SUCCESS)
+    error_code_ = getDeviceDataFromMem(data);
+    if(error_code_ == SUCCESS)
     {
         data_mutex_.lock();
         memcpy(&dev_values_.DI, &data.input, 4);    // DI contains 4 bytes
@@ -289,17 +291,25 @@ ErrorCode FstIoDevice::updateDeviceData(void)
         memcpy(&dev_values_.RI, &data.input[4], 1); // RI contains 1 bytes
         memcpy(&dev_values_.RO, &data.output[4], 1);
         data_mutex_.unlock();
+        setValid(true);
     }
-    else if (ret == GET_IO_FAIL)
+    else if (error_code_ == GET_IO_FAIL)
     {
         setValid(false);
     }
-    else if (ret == IO_DEVICE_UNFOUND)
+    else if (error_code_ == IO_DEVICE_UNFOUND)
     {
         setValid(false);
     }
+    //only upload error one time.
+    if ((pre_code_ != error_code_) && (error_code_ != SUCCESS))
+    {
+        pre_code_ = error_code_;
+        return error_code_;
+    }
+    pre_code_ = error_code_;
 
-    return ret;
+    return SUCCESS;
 }
 
 

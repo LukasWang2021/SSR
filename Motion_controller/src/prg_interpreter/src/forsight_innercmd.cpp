@@ -57,16 +57,16 @@ struct intern_cmd_type {
     int (*p)(int , struct thread_control_block* );   // pointer to the function   
 } intern_cmd[] = {   
     // move on the top
-    (char *)"movel",      0, call_MoveL,
-    (char *)"movej",      0, call_MoveJ,
-    (char *)"movec",      0, call_MoveC,
-    (char *)"movex",      0, call_MoveXPos,
+    (char *)"movel",          0, call_MoveL,
+    (char *)"movej",          0, call_MoveJ,
+    (char *)"movec",          0, call_MoveC,
+    (char *)"movex",          0, call_MoveXPos,
     // left
-    (char *)"timer",      1, call_Timer,
-    (char *)"useralarm",  1, call_UserAlarm,
-    (char *)"wait",       1, call_Wait,
-    (char *)"pause",      1, call_Pause,
-    (char *)"abort",      1, call_Abort,
+    (char *)FORSIGHT_TIMER,   1, call_Timer,
+    (char *)"useralarm",      1, call_UserAlarm,
+    (char *)"wait",           1, call_Wait,
+    (char *)"pause",          1, call_Pause,
+    (char *)"abort",          1, call_Abort,
     (char *)"", 0  // null terminate the list   
 };
 
@@ -126,6 +126,13 @@ static char * get_cmd_param(char * prog, char* temp)
   return prog;
 }
 
+time_t get_timer_start_time(int iIdx)
+{
+	if(iIdx >= MAX_STOPWATCH_NUM)
+		return time(0);
+	else
+		return g_structStopWatch[iIdx].start_time;
+}
 /************************************************* 
 	Function:		find_internal_cmd
 	Description:	find internal cmd in the intern_cmd.
@@ -1958,17 +1965,17 @@ int execute_Timer(struct thread_control_block* objThreadCntrolBlock, char *vname
 	{
 		FST_INFO("%d: call_Timer  start", __LINE__);
 		g_structStopWatch[iTimerIdx].start_time = time(0);
-		value.setFloatValue(0); // 0.0; 
+		// value.setFloatValue(0); // 0.0; 
 		erase_var(objThreadCntrolBlock, vname);
-	//	assign_var(objThreadCntrolBlock, vname, value); // 0.0);
+		assign_global_var(objThreadCntrolBlock, vname, value); // 0.0);
 	}
 	else if(value.getFloatValue() == TIMER_RESET_VALUE)
 	{
 		FST_INFO("%d: call_Timer restart", __LINE__);
 		g_structStopWatch[iTimerIdx].start_time = time(0);
-		value.setFloatValue(0); // 0.0; 
+		// value.setFloatValue(0); // 0.0; 
 		erase_var(objThreadCntrolBlock, vname);
-	//	assign_var(objThreadCntrolBlock, vname, value); // 0.0);
+		assign_global_var(objThreadCntrolBlock, vname, value); // 0.0);
 	}
 	else if(value.getFloatValue() == TIMER_STOP_VALUE)
 	{
@@ -2014,7 +2021,7 @@ int call_Timer(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		if(timerNumber >= MAX_STOPWATCH_NUM)
 			return 0;
 		
-		sprintf(var, "timer[%d]", timerNumber);
+		sprintf(var, "%s[%d]", FORSIGHT_TIMER, timerNumber);
 		get_token(objThreadCntrolBlock);
         FST_INFO("%d: call_Timer  enter %s ", __LINE__, objThreadCntrolBlock->token);
 		if(strcmp(objThreadCntrolBlock->token, "start") == 0)

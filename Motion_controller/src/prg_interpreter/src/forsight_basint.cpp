@@ -71,7 +71,7 @@ enum var_inner_type { FORSIGHT_CHAR, FORSIGHT_INT, FORSIGHT_FLOAT };
 #define FORSIGHT_REGISTER_ON    "on"
 #define FORSIGHT_REGISTER_OFF   "off"
 
-#define FORSIGHT_TIMER          "timer"
+// #define FORSIGHT_TIMER          "timer"
 #define FORSIGHT_TIMER_START    "start"
 #define FORSIGHT_TIMER_STOP     "stop"
 #define FORSIGHT_TIMER_RESET    "reset"
@@ -254,7 +254,7 @@ void* basic_interpreter(void* arg)
   	setProgramName(objThreadCntrolBlock, (char *)""); 
 
 	// free(objThreadCntrolBlock->instrSet);
-	objThreadCntrolBlock->instrSet = 0 ;
+	// objThreadCntrolBlock->instrSet = 0 ;
 
 	// iIdx = g_thread_control_block[0].iThreadIdx ;
 	iIdx = objThreadCntrolBlock->iThreadIdx ;
@@ -4039,7 +4039,7 @@ void assign_var(struct thread_control_block * objThreadCntrolBlock, char *vname,
 			}
 		}
     }
-	else if(strcmp(FORSIGHT_TIMER, array_name) == 0)
+	else if(strcmp("timer", array_name) == 0)
     {
 		if(strchr(vname, '['))
 		{

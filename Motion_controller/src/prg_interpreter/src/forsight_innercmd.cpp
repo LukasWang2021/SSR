@@ -837,6 +837,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #else
 		instr.target.target.joint.j6 = value.getFloatValue();
 #endif
+		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
@@ -1448,6 +1449,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #else
 		instr.target.via.pose.pose.orientation.c = value.getFloatValue();
 #endif	
+		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
@@ -1794,6 +1796,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 			instr.target.prPos[prPosIdx] = 21 + prPosIdx;
 		}
 	}
+	instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
 	// We had jump ","
 	// get_token(objThreadCntrolBlock);
     get_exp(objThreadCntrolBlock, &value, &boolValue);

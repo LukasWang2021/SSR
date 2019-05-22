@@ -233,53 +233,54 @@ typedef unsigned long long int ErrorCode;
 #define MODBUS_CLIENT_ID_NOT_EXISTED (unsigned long long int)0x0001000200AE0034   /*modbus client can't be found existing*/
 #define MODBUS_CLIENT_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200AE0035   /*modbus client received a invalid parameter*/
 #define MODBUS_CLIENT_NOT_ALL_CLOSED (unsigned long long int)0x0001000200AE0036   /*modbus clients are not all closed*/
-#define INTERPRETER_LOG (unsigned long long int)0x0000000100AA0000   /*Interpreter log{0}*/
-#define FAIL_INTERPRETER_SYNTAX_ERROR (unsigned long long int)0x0001000900AA0001   /*not a syntax in the program*/
-#define FAIL_INTERPRETER_UNBALANCED_PARENTHESES (unsigned long long int)0x0001000900AA0002   /*unbalanced parentheses in the program*/
-#define FAIL_INTERPRETER_NO_EXPRESSION_PRESENT (unsigned long long int)0x0001000900AA0003   /*no expression present in the program*/
-#define FAIL_INTERPRETER_EQUALS_SIGN_EXPECTED (unsigned long long int)0x0001000900AA0004   /*expected equals sign in the program*/
-#define FAIL_INTERPRETER_NOT_A_VARIABLE (unsigned long long int)0x0001000900AA0005   /*not a defined or initialized variable in the program*/
-#define FAIL_INTERPRETER_LABEL_TABLE_FULL (unsigned long long int)0x0001000900AA0006   /*defined too much variables in the program*/
-#define FAIL_INTERPRETER_DUPLICATE_SUB_LABEL (unsigned long long int)0x0001000900AA0007   /*duplicate function in the program*/
-#define FAIL_INTERPRETER_UNDEFINED_SUB_LABEL (unsigned long long int)0x0001000900AA0008   /*undefined function in the program*/
-#define FAIL_INTERPRETER_THEN_EXPECTED (unsigned long long int)0x0001000900AA0009   /*THEN expected after IF in the program*/
-#define FAIL_INTERPRETER_TO_EXPECTED (unsigned long long int)0x0001000900AA000A   /*TO expected after FOR in the program*/
-#define FAIL_INTERPRETER_TOO_MANY_NESTED_FOR_LOOPS (unsigned long long int)0x0001000900AA000B   /*too many nested FOR loops in the program*/
-#define FAIL_INTERPRETER_NEXT_WITHOUT_FOR (unsigned long long int)0x0001000900AA000C   /*NEXT expected after WHILE in the program*/
-#define FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB (unsigned long long int)0x0001000900AA000D   /*too many nested GOSUBs*/
-#define FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB (unsigned long long int)0x0001000900AA000E   /*Without RETURN in the GOSUB in the program*/
-#define FAIL_INTERPRETER_FILE_NOT_FOUND (unsigned long long int)0x0001000900AA000F   /*Program file does not exist*/
-#define FAIL_INTERPRETER_MOVL_WITH_JOINT (unsigned long long int)0x0001000900AA0010   /*movl with joint in the program*/
-#define FAIL_INTERPRETER_MOVJ_WITH_POINT (unsigned long long int)0x0001000900AA0011   /*movj with point in the program*/
-#define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER (unsigned long long int)0x0001000900AA0012   /*Illegal Line Number*/
-#define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH (unsigned long long int)0x0001000900AA0013   /*Function params mismatch in the program*/
-#define FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO (unsigned long long int)0x0001000900AA0014   /*Duplicate Macro is executing*/
-#define INFO_INTERPRETER_BACK_TO_BEGIN (unsigned long long int)0x0001000200AA0015   /*reverted executing to begin*/
-#define INFO_INTERPRETER_THREAD_NOT_EXIST (unsigned long long int)0x0001000200AA0016   /*Program thread does not exist*/
-#define INFO_INTERPRETER_TOO_MANY_IMPORT (unsigned long long int)0x0001000900AA0017   /*Too many import file in the program*/
-#define INFO_INTERPRETER_TOO_LONG_PROJECT_NAME (unsigned long long int)0x0001000900AA0018   /*Project name does too long*/
-#define INFO_INTERPRETER_ARITHMETIC_EXCEPTION (unsigned long long int)0x0001000900AA0019   /*Arithm Exception(Ex:Division By Zero)*/
-#define INFO_INTERPRETER_UNKNOWN_ARITHM (unsigned long long int)0x0001000900AA001A   /*Unknown Arithm Operator in the program*/
-#define INFO_INTERPRETER_WAIT_TIMEOUT (unsigned long long int)0x0001000900AA001B   /*WAIT Timeout in the program*/
-#define INFO_INTERPRETER_OVERRUN_HOME_POSE (unsigned long long int)0x0001000900AA001C   /*Home Pose of program out of range*/
-#define INFO_INTERPRETER_HOME_POSE_NOT_EXIST (unsigned long long int)0x0001000900AA001D   /*Home Pose of program does not exist*/
-#define FAIL_INTERPRETER_DUPLICATE_START     (unsigned long long int)0x0001000900AA001E   /*Duplicate START is executing*/
-#define FAIL_INTERPRETER_DUPLICATE_LAUNCH    (unsigned long long int)0x0001000900AA001F   /*Duplicate LAUNCH is executing*/
-#define INFO_INTERPRETER_BACK_TO_LOGIC       (unsigned long long int)0x0001000900AA0020   /*reverted executing to logic statement*/
-#define INFO_INTERPRETER_XML_WRONG_ELEMENT   (unsigned long long int)0x0001000900AA0021   /*Wrong Command in FunctionBody*/
+#define INTERPRETER_LOG                                 (unsigned long long int)0x0000000100AA0000   /*Interpreter log{0}*/
+#define FAIL_INTERPRETER_SYNTAX_ERROR                   (unsigned long long int)0x0001000900AA0001   /*not a syntax in the program*/
+#define FAIL_INTERPRETER_UNBALANCED_PARENTHESES         (unsigned long long int)0x0001000900AA0002   /*unbalanced parentheses in the program*/
+#define FAIL_INTERPRETER_NO_EXPRESSION_PRESENT          (unsigned long long int)0x0001000900AA0003   /*no expression present in the program*/
+#define FAIL_INTERPRETER_EQUALS_SIGN_EXPECTED           (unsigned long long int)0x0001000900AA0004   /*expected equals sign in the program*/
+#define FAIL_INTERPRETER_NOT_A_VARIABLE                 (unsigned long long int)0x0001000900AA0005   /*not a defined or initialized variable in the program*/
+#define FAIL_INTERPRETER_LABEL_TABLE_FULL               (unsigned long long int)0x0001000900AA0006   /*defined too much variables in the program*/
+#define FAIL_INTERPRETER_DUPLICATE_SUB_LABEL            (unsigned long long int)0x0001000900AA0007   /*duplicate function in the program*/
+#define FAIL_INTERPRETER_UNDEFINED_SUB_LABEL            (unsigned long long int)0x0001000900AA0008   /*undefined function in the program*/
+#define FAIL_INTERPRETER_THEN_EXPECTED                  (unsigned long long int)0x0001000900AA0009   /*THEN expected after IF in the program*/
+#define FAIL_INTERPRETER_TO_EXPECTED                    (unsigned long long int)0x0001000900AA000A   /*TO expected after FOR in the program*/
+#define FAIL_INTERPRETER_TOO_MANY_NESTED_FOR_LOOPS      (unsigned long long int)0x0001000900AA000B   /*too many nested FOR loops in the program*/
+#define FAIL_INTERPRETER_NEXT_WITHOUT_FOR               (unsigned long long int)0x0001000900AA000C   /*NEXT expected after WHILE in the program*/
+#define FAIL_INTERPRETER_TOO_MANY_NESTED_GOSUB          (unsigned long long int)0x0001000900AA000D   /*too many nested GOSUBs*/
+#define FAIL_INTERPRETER_RETURN_WITHOUT_GOSUB           (unsigned long long int)0x0001000900AA000E   /*Without RETURN in the GOSUB in the program*/
+#define FAIL_INTERPRETER_FILE_NOT_FOUND                 (unsigned long long int)0x0001000900AA000F   /*Program file does not exist*/
+#define FAIL_INTERPRETER_MOVL_WITH_JOINT                (unsigned long long int)0x0001000900AA0010   /*movl with joint in the program*/
+#define FAIL_INTERPRETER_MOVJ_WITH_POINT                (unsigned long long int)0x0001000900AA0011   /*movj with point in the program*/
+#define FAIL_INTERPRETER_ILLEGAL_LINE_NUMBER            (unsigned long long int)0x0001000900AA0012   /*Illegal Line Number*/
+#define FAIL_INTERPRETER_FUNC_PARAMS_MISMATCH           (unsigned long long int)0x0001000900AA0013   /*Function params mismatch in the program*/
+#define FAIL_INTERPRETER_DUPLICATE_EXEC_MACRO           (unsigned long long int)0x0001000900AA0014   /*Duplicate Macro is executing*/
+#define INFO_INTERPRETER_BACK_TO_BEGIN                  (unsigned long long int)0x0001000200AA0015   /*reverted executing to begin*/
+#define INFO_INTERPRETER_THREAD_NOT_EXIST               (unsigned long long int)0x0001000200AA0016   /*Program thread does not exist*/
+#define INFO_INTERPRETER_TOO_MANY_IMPORT                (unsigned long long int)0x0001000900AA0017   /*Too many import file in the program*/
+#define INFO_INTERPRETER_TOO_LONG_PROJECT_NAME          (unsigned long long int)0x0001000900AA0018   /*Project name does too long*/
+#define INFO_INTERPRETER_ARITHMETIC_EXCEPTION           (unsigned long long int)0x0001000900AA0019   /*Arithm Exception(Ex:Division By Zero)*/
+#define INFO_INTERPRETER_UNKNOWN_ARITHM                 (unsigned long long int)0x0001000900AA001A   /*Unknown Arithm Operator in the program*/
+#define INFO_INTERPRETER_WAIT_TIMEOUT                   (unsigned long long int)0x0001000900AA001B   /*WAIT Timeout in the program*/
+#define INFO_INTERPRETER_OVERRUN_HOME_POSE              (unsigned long long int)0x0001000900AA001C   /*Home Pose of program out of range*/
+#define INFO_INTERPRETER_HOME_POSE_NOT_EXIST            (unsigned long long int)0x0001000900AA001D   /*Home Pose of program does not exist*/
+#define FAIL_INTERPRETER_DUPLICATE_START                (unsigned long long int)0x0001000900AA001E   /*Duplicate START is executing*/
+#define FAIL_INTERPRETER_DUPLICATE_LAUNCH               (unsigned long long int)0x0001000900AA001F   /*Duplicate LAUNCH is executing*/
 
-#define FAIL_INTERPRETER_ALARM_EXEC_BASE (unsigned long long int)0x0000000200AA0100   /*User defined WARNING：User Alarm BASE*/
-#define FAIL_INTERPRETER_USER_ALARM1 (unsigned long long int)0x0001000200AA0101   /*User defined WARNING：User Alarm 1*/
-#define FAIL_INTERPRETER_USER_ALARM2 (unsigned long long int)0x0001000200AA0102   /*User defined WARNING：User Alarm 2*/
-#define FAIL_INTERPRETER_USER_ALARM3 (unsigned long long int)0x0001000200AA0103   /*User defined WARNING：User Alarm 3*/
-#define FAIL_INTERPRETER_USER_ALARM4 (unsigned long long int)0x0001000200AA0104   /*User defined WARNING：User Alarm 4*/
-#define FAIL_INTERPRETER_USER_ALARM5 (unsigned long long int)0x0001000200AA0105   /*User defined WARNING：User Alarm 5*/
-#define FAIL_INTERPRETER_USER_ALARM6 (unsigned long long int)0x0001000200AA0106   /*User defined WARNING：User Alarm 6*/
-#define FAIL_INTERPRETER_USER_ALARM7 (unsigned long long int)0x0001000200AA0107   /*User defined WARNING：User Alarm 7*/
-#define FAIL_INTERPRETER_USER_ALARM8 (unsigned long long int)0x0001000200AA0108   /*User defined WARNING：User Alarm 8*/
-#define FAIL_INTERPRETER_USER_ALARM9 (unsigned long long int)0x0001000200AA0109   /*User defined WARNING：User Alarm 9*/
-#define FAIL_INTERPRETER_USER_ALARM10 (unsigned long long int)0x0001000200AA010A   /*User defined WARNING：User Alarm 10*/
-#define FAIL_INTERPRETER_NOT_IN_PAUSE (unsigned long long int)0x0001000200AA010B   /*Can not continue to execute while program is not in the PAUSE status*/
+#define FAIL_INTERPRETER_ALARM_EXEC_BASE                (unsigned long long int)0x0000000200AA0100   /*User defined WARNING：User Alarm BASE*/
+#define FAIL_INTERPRETER_USER_ALARM1                    (unsigned long long int)0x0001000200AA0101   /*User defined WARNING：User Alarm 1*/
+#define FAIL_INTERPRETER_USER_ALARM2                    (unsigned long long int)0x0001000200AA0102   /*User defined WARNING：User Alarm 2*/
+#define FAIL_INTERPRETER_USER_ALARM3                    (unsigned long long int)0x0001000200AA0103   /*User defined WARNING：User Alarm 3*/
+#define FAIL_INTERPRETER_USER_ALARM4                    (unsigned long long int)0x0001000200AA0104   /*User defined WARNING：User Alarm 4*/
+#define FAIL_INTERPRETER_USER_ALARM5                    (unsigned long long int)0x0001000200AA0105   /*User defined WARNING：User Alarm 5*/
+#define FAIL_INTERPRETER_USER_ALARM6                    (unsigned long long int)0x0001000200AA0106   /*User defined WARNING：User Alarm 6*/
+#define FAIL_INTERPRETER_USER_ALARM7                    (unsigned long long int)0x0001000200AA0107   /*User defined WARNING：User Alarm 7*/
+#define FAIL_INTERPRETER_USER_ALARM8                    (unsigned long long int)0x0001000200AA0108   /*User defined WARNING：User Alarm 8*/
+#define FAIL_INTERPRETER_USER_ALARM9                    (unsigned long long int)0x0001000200AA0109   /*User defined WARNING：User Alarm 9*/
+#define FAIL_INTERPRETER_USER_ALARM10                   (unsigned long long int)0x0001000200AA010A   /*User defined WARNING：User Alarm 10*/
+#define FAIL_INTERPRETER_NOT_IN_PAUSE                   (unsigned long long int)0x0001000200AA010B   /*Can not continue to execute while program is not in the PAUSE status*/
+#define INFO_INTERPRETER_XML_WRONG_ELEMENT              (unsigned long long int)0x0001000200AA010C   /*Wrong Command in FunctionBody*/
+#define INFO_INTERPRETER_BACK_TO_LOGIC                  (unsigned long long int)0x0001000200AA010D   /*reverted executing to logic statement*/
+
 #define PARAM_MANAGER_LOG (unsigned long long int)0x0000000100B30000   /*ParamManager log{0}*/
 #define PARAM_MANAGER_INIT_FAILED (unsigned long long int)0x0011000200B30001   /*Param Manager load parameters failed*/
 #define PARAM_MANAGER_SET_PARAM_FAILED (unsigned long long int)0x0001000200B30002   /*Param Manager set parameter failed*/

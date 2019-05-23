@@ -548,6 +548,7 @@ bool IoMapping::generateIOInfo(IOMapJsonInfo &objInfo, const char * strIOType)
     vector<string> string_array = split(objInfo.module, "/"); //use "/" to split 
     // '3' in "RS485/DIGITAL_IN_OUT_DEVICE/3" or "IMB00401/RS485/1(address)/IN/25(port_offset)" 
     PhysicsID id;
+	memset(&id, 0, sizeof(id));
 
 	//add address value
     id.info.address = atoi(string_array[2].c_str());

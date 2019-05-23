@@ -984,42 +984,31 @@ ErrorCode MotionControl::setToolFrame(int id)
 {
     FST_INFO("Set tool frame: id = %d, current is %d", id, tool_frame_id_);
 
-    if (id != tool_frame_id_)
+    if (id == 0)
     {
-        if (id == 0)
-        {
-            PoseEuler tf = {0, 0, 0, 0, 0, 0};
-            group_ptr_->setToolFrame(tf);
-            tool_frame_id_ = id;
-            FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
-            FST_INFO("Using tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
-            return SUCCESS;
-
-        }
-        else
-        {
-            ToolInfo  tf_info;
-            ErrorCode err = tool_manager_ptr_->getToolInfoById(id, tf_info);
-
-            if (err == SUCCESS && tf_info.is_valid)
-            {
-                group_ptr_->setToolFrame(tf_info.data);
-                tool_frame_id_ = id;
-                FST_INFO("Success, current tool frame id is %d", tool_frame_id_);
-                FST_INFO("Using tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tf_info.data.point_.x_, tf_info.data.point_.y_, tf_info.data.point_.z_, tf_info.data.euler_.a_, tf_info.data.euler_.b_, tf_info.data.euler_.c_);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to get tool frame from given id");
-                return err;
-            }
-        }
+        PoseEuler tf = {0, 0, 0, 0, 0, 0};
+        group_ptr_->setToolFrame(tf);
+        tool_frame_id_ = id;
+        FST_INFO("Using tool-frame-%d: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_id_, tf.point_.x_, tf.point_.y_, tf.point_.z_, tf.euler_.a_, tf.euler_.b_, tf.euler_.c_);
+        return SUCCESS;
     }
     else
     {
-        FST_INFO("Success!");
-        return SUCCESS;
+        ToolInfo  tf_info;
+        ErrorCode err = tool_manager_ptr_->getToolInfoById(id, tf_info);
+
+        if (err == SUCCESS && tf_info.is_valid)
+        {
+            group_ptr_->setToolFrame(tf_info.data);
+            tool_frame_id_ = id;
+            FST_INFO("Using tool-frame-%d: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_id_, tf_info.data.point_.x_, tf_info.data.point_.y_, tf_info.data.point_.z_, tf_info.data.euler_.a_, tf_info.data.euler_.b_, tf_info.data.euler_.c_);
+            return SUCCESS;
+        }
+        else
+        {
+            FST_ERROR("Fail to get tool frame from given id");
+            return err;
+        }
     }
 }
 
@@ -1032,41 +1021,31 @@ ErrorCode MotionControl::setUserFrame(int id)
 {
     FST_INFO("Set user frame id = %d, current is %d", id, user_frame_id_);
 
-    if (id != user_frame_id_)
+    if (id == 0)
     {
-        if (id == 0)
+        PoseEuler uf = {0, 0, 0, 0, 0, 0};
+        group_ptr_->setUserFrame(uf);
+        user_frame_id_ = id;
+        FST_INFO("Using user-frame-%d: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_id_, uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+        return SUCCESS;
+    }
+    else
+    {
+        CoordInfo uf_info;
+        ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(id, uf_info);
+
+        if (err == SUCCESS && uf_info.is_valid)
         {
-            PoseEuler uf = {0, 0, 0, 0, 0, 0};
-            group_ptr_->setUserFrame(uf);
+            group_ptr_->setUserFrame(uf_info.data);
             user_frame_id_ = id;
-            FST_INFO("Success, current user frame id is %d", user_frame_id_);
-            FST_INFO("Using user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf.point_.x_, uf.point_.y_, uf.point_.z_, uf.euler_.a_, uf.euler_.b_, uf.euler_.c_);
+            FST_INFO("Using user-frame-%d: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_id_, uf_info.data.point_.x_, uf_info.data.point_.y_, uf_info.data.point_.z_, uf_info.data.euler_.a_, uf_info.data.euler_.b_, uf_info.data.euler_.c_);
             return SUCCESS;
         }
         else
         {
-            CoordInfo uf_info;
-            ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(id, uf_info);
-
-            if (err == SUCCESS && uf_info.is_valid)
-            {
-                group_ptr_->setUserFrame(uf_info.data);
-                user_frame_id_ = id;
-                FST_INFO("Success, current user frame ID switch to %d", user_frame_id_);
-                FST_INFO("Using user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", uf_info.data.point_.x_, uf_info.data.point_.y_, uf_info.data.point_.z_, uf_info.data.euler_.a_, uf_info.data.euler_.b_, uf_info.data.euler_.c_);
-                return SUCCESS;
-            }
-            else
-            {
-                FST_ERROR("Fail to get user frame from given id");
-                return err;
-            }
+            FST_ERROR("Fail to get user frame from given id");
+            return err;
         }
-    }
-    else
-    {
-        FST_INFO("Success!");
-        return SUCCESS;
     }
 }
 

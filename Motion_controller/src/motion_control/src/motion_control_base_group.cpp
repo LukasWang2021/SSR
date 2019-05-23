@@ -3426,7 +3426,7 @@ void BaseGroup::setFineWaiter(void)
     PoseQuaternion target;
     auto &block = path_list_ptr_->path_cache.cache[path_list_ptr_->path_cache.cache_length - 1];
 
-    if (block.coord_type == MOTION_JOINT)
+    if (block.coord_type == COORDINATE_JOINT)
     {
         PoseEuler fcp_in_base, tcp_in_base, tcp_in_user;
         kinematics_ptr_->doFK(block.joint, fcp_in_base);

@@ -37,7 +37,7 @@ ControllerSm::ControllerSm():
     safety_alarm_(0),
     ctrl_reset_count_(0),
     robot_state_timeout_count_(100000),
-    init_state_(false),
+    valid_state_(false),
     program_code_(0),
     interpreter_warning_code_(0),
     error_level_(0),
@@ -227,8 +227,8 @@ ErrorCode ControllerSm::callEstop()
 
 ErrorCode ControllerSm::callReset()
 {
-    if(init_state_ == false)
-        return CONTROLLER_INIT_OBJECT_FAILED;
+    if(valid_state_ == false)
+        return CONTROLLER_INVALID_OPERATION_RESET;
 
     if (ctrl_state_ == CTRL_ENGAGED)
     {
@@ -899,14 +899,14 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }
 
-void ControllerSm::setInitState(bool state)
+void ControllerSm::setState(bool state)
 {
-    init_state_ = state;
+    valid_state_ = state;
 }
 
-bool ControllerSm::getInitState()
+bool ControllerSm::getState()
 {
-    return init_state_;
+    return valid_state_;
 } 
 
 

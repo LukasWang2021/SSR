@@ -54,6 +54,12 @@ void ControllerRpc::handleRpc0x0001393F(void* request_data_ptr, void* response_d
     RequestMessageType_Int32_ParamInfo* rq_data_ptr = static_cast<RequestMessageType_Int32_ParamInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/param_manager/setParamInfo can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     ParamInfo_t info;
     strcpy(info.name, rq_data_ptr->data2.name);
     info.type = rq_data_ptr->data2.type;

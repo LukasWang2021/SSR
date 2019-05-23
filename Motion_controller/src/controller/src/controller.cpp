@@ -248,7 +248,7 @@ ErrorCode Controller::init()
         return CONTROLLER_INIT_OBJECT_FAILED;
     }
 
-    state_machine_.setInitState(true);
+    state_machine_.setState(true);
     recordLog("Controller initialization success");
     FST_INFO("Controller::init success");
     return SUCCESS;

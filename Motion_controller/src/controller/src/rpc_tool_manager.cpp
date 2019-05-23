@@ -72,7 +72,7 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
 
     int current_id = 0;
     motion_control_ptr_->getToolFrame(current_id);
-    if (current_id == rq_data_ptr->data.id)
+    if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
     {
         rs_data_ptr->data.data = motion_control_ptr_->setToolFrame(current_id);
     }

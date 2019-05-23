@@ -12,6 +12,12 @@ void ControllerRpc::handleRpc0x0000A22C(void* request_data_ptr, void* response_d
     RequestMessageType_ToolInfo* rq_data_ptr = static_cast<RequestMessageType_ToolInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/tool_manager/addTool can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     ToolInfo info;
     info.id = rq_data_ptr->data.id;
     info.name = rq_data_ptr->data.name;
@@ -44,6 +50,12 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
     RequestMessageType_ToolInfo* rq_data_ptr = static_cast<RequestMessageType_ToolInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/tool_manager/updateTool can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     ToolInfo info;
     info.id = rq_data_ptr->data.id;
     info.name = rq_data_ptr->data.name;
@@ -57,6 +69,14 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
     info.data.euler_.b_ = rq_data_ptr->data.data.b;
     info.data.euler_.c_ = rq_data_ptr->data.data.c;
     rs_data_ptr->data.data = tool_manager_ptr_->updateTool(info);
+
+    int current_id = 0;
+    motion_control_ptr_->getToolFrame(current_id);
+    if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+    {
+        rs_data_ptr->data.data = motion_control_ptr_->setToolFrame(current_id);
+    }
+
     recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/updateTool"));
 }
 

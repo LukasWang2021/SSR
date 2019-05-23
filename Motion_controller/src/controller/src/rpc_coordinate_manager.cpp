@@ -10,6 +10,12 @@ void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_d
     RequestMessageType_UserCoordInfo* rq_data_ptr = static_cast<RequestMessageType_UserCoordInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/coordinate_manager/addUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     CoordInfo info;
     info.id = rq_data_ptr->data.id;
     info.name = rq_data_ptr->data.name;
@@ -42,6 +48,12 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
     RequestMessageType_UserCoordInfo* rq_data_ptr = static_cast<RequestMessageType_UserCoordInfo*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/coordinate_manager/updateUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+    }
+
     CoordInfo info;
     info.id = rq_data_ptr->data.id;
     info.name = rq_data_ptr->data.name;
@@ -55,6 +67,14 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
     info.data.euler_.b_ = rq_data_ptr->data.data.b;
     info.data.euler_.c_ = rq_data_ptr->data.data.c;
     rs_data_ptr->data.data = coordinate_manager_ptr_->updateCoord(info);
+
+    int current_id = 0;
+    motion_control_ptr_->getUserFrame(current_id);
+    if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+    {
+        rs_data_ptr->data.data = motion_control_ptr_->setUserFrame(current_id);
+    }
+
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/updateUserCoord"));
 }
 

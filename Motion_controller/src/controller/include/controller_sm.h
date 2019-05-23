@@ -112,8 +112,8 @@ public:
     int* getSafetyAlarmPtr();  
 
 
-    void setInitState(bool state);
-    bool getInitState();  
+    void setState(bool state);
+    bool getState();  
     
 private:
     fst_log::Logger* log_ptr_;
@@ -138,7 +138,7 @@ private:
     int safety_alarm_;
     int ctrl_reset_count_;
     int robot_state_timeout_count_;
-    bool init_state_;
+    bool valid_state_;
     int program_code_; //program launching code
 
     // manual rpc related

@@ -110,7 +110,7 @@ void ControllerRpc::handleRpc0x00003EB5(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
-    state_machine_ptr_->setInitState(false);
+    state_machine_ptr_->setState(false);
     rs_data_ptr->data.data = SUCCESS;
 }
 
@@ -118,7 +118,7 @@ void ControllerRpc::handleRpc0x00003EB5(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000143E5(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-    state_machine_ptr_->setInitState(true);
+    state_machine_ptr_->setState(true);
     rs_data_ptr->data.data = SUCCESS;
 }
 
@@ -131,7 +131,7 @@ void ControllerRpc::handleRpc0x0000C7A5(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         return;
     }
-    state_machine_ptr_->setInitState(false);
+    state_machine_ptr_->setState(false);
     rs_data_ptr->data.data = SUCCESS;
 }
 
@@ -139,6 +139,6 @@ void ControllerRpc::handleRpc0x0000C7A5(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000079F5(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
-    state_machine_ptr_->setInitState(true);
+    state_machine_ptr_->setState(true);
     rs_data_ptr->data.data = SUCCESS;
 }

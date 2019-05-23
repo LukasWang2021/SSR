@@ -1713,6 +1713,10 @@ static int jumpout_one_block_in_loc(struct thread_control_block * objThreadCntro
 			}
 			return JUMP_OUT_OK ;
 	    }
+		else
+		{
+			return JUMP_OUT_RANGE ;
+		}
 
 		if(objThreadCntrolBlock->prog > loc)
 		{
@@ -3166,7 +3170,8 @@ void serror(struct thread_control_block * objThreadCntrolBlock, int error)
 		FAIL_INTERPRETER_DUPLICATE_START   	      , 	"Duplicate START is executing",          // 29
 		FAIL_INTERPRETER_DUPLICATE_LAUNCH   	  , 	"Duplicate LAUNCH is executing",         // 30
 		INFO_INTERPRETER_BACK_TO_LOGIC   	      , 	"reverted executing to logic statement", // 31
-		INFO_INTERPRETER_XML_WRONG_ELEMENT   	  , 	"Wrong Command in FunctionBody"          // 32
+		INFO_INTERPRETER_XML_WRONG_ELEMENT   	  , 	"Wrong Command in FunctionBody",         // 32
+		FAIL_INTERPRETER_SPECIAL_CHARACTER   	  , 	"Finding special character"              // 33
   };
   if(error > (int)(sizeof(errInfo)/sizeof(ErrInfo))) {
   	FST_ERROR("\t NOTICE : Error out of range %d ", error);
@@ -3385,6 +3390,11 @@ int get_token(struct thread_control_block * objThreadCntrolBlock)
 	{
 	   objThreadCntrolBlock->token_type = VARIABLE;
 	}
+  }
+  else
+  {
+	  FST_ERROR("get_token error :: objThreadCntrolBlock->prog =  '%s'", objThreadCntrolBlock->prog);
+	  serror(objThreadCntrolBlock, 33);
   }
   return objThreadCntrolBlock->token_type;
 }

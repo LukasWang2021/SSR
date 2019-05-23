@@ -265,6 +265,9 @@ typedef unsigned long long int ErrorCode;
 #define INFO_INTERPRETER_HOME_POSE_NOT_EXIST            (unsigned long long int)0x0001000900AA001D   /*Home Pose of program does not exist*/
 #define FAIL_INTERPRETER_DUPLICATE_START                (unsigned long long int)0x0001000900AA001E   /*Duplicate START is executing*/
 #define FAIL_INTERPRETER_DUPLICATE_LAUNCH               (unsigned long long int)0x0001000900AA001F   /*Duplicate LAUNCH is executing*/
+#define INFO_INTERPRETER_BACK_TO_LOGIC                  (unsigned long long int)0x0001000200AA0020   /*reverted executing to logic statement*/
+#define INFO_INTERPRETER_XML_WRONG_ELEMENT              (unsigned long long int)0x0001000200AA0021   /*Wrong Command in FunctionBody*/
+#define FAIL_INTERPRETER_SPECIAL_CHARACTER              (unsigned long long int)0x0001000900AA0022   /*Finding special character*/
 
 #define FAIL_INTERPRETER_ALARM_EXEC_BASE                (unsigned long long int)0x0000000200AA0100   /*User defined WARNING：User Alarm BASE*/
 #define FAIL_INTERPRETER_USER_ALARM1                    (unsigned long long int)0x0001000200AA0101   /*User defined WARNING：User Alarm 1*/
@@ -278,8 +281,6 @@ typedef unsigned long long int ErrorCode;
 #define FAIL_INTERPRETER_USER_ALARM9                    (unsigned long long int)0x0001000200AA0109   /*User defined WARNING：User Alarm 9*/
 #define FAIL_INTERPRETER_USER_ALARM10                   (unsigned long long int)0x0001000200AA010A   /*User defined WARNING：User Alarm 10*/
 #define FAIL_INTERPRETER_NOT_IN_PAUSE                   (unsigned long long int)0x0001000200AA010B   /*Can not continue to execute while program is not in the PAUSE status*/
-#define INFO_INTERPRETER_XML_WRONG_ELEMENT              (unsigned long long int)0x0001000200AA010C   /*Wrong Command in FunctionBody*/
-#define INFO_INTERPRETER_BACK_TO_LOGIC                  (unsigned long long int)0x0001000200AA010D   /*reverted executing to logic statement*/
 
 #define PARAM_MANAGER_LOG (unsigned long long int)0x0000000100B30000   /*ParamManager log{0}*/
 #define PARAM_MANAGER_INIT_FAILED (unsigned long long int)0x0011000200B30001   /*Param Manager load parameters failed*/

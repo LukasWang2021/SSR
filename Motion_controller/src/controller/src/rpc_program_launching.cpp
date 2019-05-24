@@ -32,7 +32,7 @@ void ControllerRpc::handleRpc0x00010944(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
    
     FST_INFO("rpc-getMethod: value=%d\n", rs_data_ptr->data.data);
-    recordLog(PROGRAM_LAUNCHING_LOG, rs_data_ptr->data.data, std::string("/rpc/program_launching/getMethod"));
+    recordLog(PROGRAM_LAUNCHING_LOG, rs_data_ptr->error_code.data, std::string("/rpc/program_launching/getMethod"));
 }
 
 // "/rpc/program_launching/syncFileMacroConfig"

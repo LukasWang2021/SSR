@@ -34,6 +34,13 @@ enum MotionType
     MOTION_XPOS   = 4,
 };
 
+enum SmoothType
+{
+    SMOOTH_NONE = 0,
+    SMOOTH_DISTANCE = 1,
+    SMOOTH_VELOCITY = 2,
+};
+
 enum CoordinateType
 {
     COORDINATE_JOINT = 0,

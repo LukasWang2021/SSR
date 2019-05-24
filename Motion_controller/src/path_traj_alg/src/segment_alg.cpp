@@ -977,7 +977,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
+
+        getQuaternPoint(quatern_in, quatern_out, angle_in2out, 0.0, path_cache.cache[path_cache.smooth_in_index].pose.quaternion_);
+        path_cache.cache[path_cache.smooth_in_index].pose.point_ = point_in;
+        //packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
         packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
 
         // compute in2out path
@@ -989,7 +992,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(point_out, quatern_out, path_cache.cache[path_cache.smooth_out_index].pose);
+
+        getQuaternPoint(quatern_out, quatern_target, angle_out2target, 0.0, path_cache.cache[path_cache.smooth_out_index].pose.quaternion_);
+        path_cache.cache[path_cache.smooth_out_index].pose.point_ = point_out;
+        //packPoseByPointAndQuatern(point_out, quatern_out, path_cache.cache[path_cache.smooth_out_index].pose);
         packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_out_index]);
 
         // compute out2target path
@@ -1025,7 +1031,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         else
         {
             path_cache.smooth_out_index = -1;
-        }  
+        }
 
         // compute transition path
         getMovePointToVector3(start.point_, start_point);
@@ -1044,7 +1050,10 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
             packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
         }
-        packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
+
+        getQuaternPoint(quatern_in, quatern_target, angle_in2target, 0.0, path_cache.cache[path_cache.smooth_in_index].pose.quaternion_);
+        path_cache.cache[path_cache.smooth_in_index].pose.point_ = point_in;
+        //packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
         packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);          
 
         // compute in2target path
@@ -4641,4 +4650,92 @@ void fkToTraj(TrajectoryCache &traj_cache)
 
         cur_time += time_step;
     }
+}
+
+
+
+void getOutPVA(TrajectoryCache &traj_cache, basic_alg::Joint& angle, basic_alg::Joint& omega, basic_alg::Joint& alpha)
+{
+    int end_segment = traj_cache.smooth_out_index + 1;
+    double time_step = 0.01;
+
+    double absolute_time_vector[50];
+    absolute_time_vector[0] = 0;
+    printf("traj_cache.smooth_out_index = %d\n", traj_cache.smooth_out_index);
+
+    for(int i = 1; i < traj_cache.smooth_out_index + 1; ++i)
+    {
+        absolute_time_vector[i] = absolute_time_vector[i - 1] + traj_cache.cache[i - 1].duration;
+    }
+
+    int segment_index;
+    double cur_time = 0;
+    double delta_time = 0;
+    Joint p_value;
+    Joint v_value;
+    Joint a_value;
+    Joint joint_to_fk;
+#if 0
+    while(cur_time < absolute_time_vector[end_segment])
+    {
+        for(segment_index = end_segment - 1; segment_index >= 0; --segment_index)
+        {
+            if(cur_time >= absolute_time_vector[segment_index])
+            {
+                break;
+            }
+        }
+
+        delta_time = cur_time - absolute_time_vector[segment_index];
+
+        for (int index = 0; index != model.link_num; ++index)
+        {
+            p_value[index] = traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[3] * delta_time * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[2] * delta_time * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[1] * delta_time
+                  + traj_cache.cache[segment_index].axis[index].data[0];
+
+            v_value[index] = 5 * traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time * delta_time
+                      + 4 * traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time * delta_time
+                      + 3 * traj_cache.cache[segment_index].axis[index].data[3] * delta_time * delta_time
+                      + 2 * traj_cache.cache[segment_index].axis[index].data[2] * delta_time
+                      + traj_cache.cache[segment_index].axis[index].data[1];
+            a_value[index] = 20 * traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time
+                      + 12 * traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time
+                      + 6 * traj_cache.cache[segment_index].axis[index].data[3] * delta_time
+                      + 2 * traj_cache.cache[segment_index].axis[index].data[2];
+        }
+
+
+        cur_time += time_step;
+    }
+#endif
+    segment_index = traj_cache.smooth_out_index;
+    delta_time = traj_cache.cache[segment_index].duration;
+
+    for (int index = 0; index != model.link_num; ++index)
+    {
+        p_value[index] = traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time * delta_time * delta_time
+                + traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time * delta_time * delta_time
+                + traj_cache.cache[segment_index].axis[index].data[3] * delta_time * delta_time * delta_time
+                + traj_cache.cache[segment_index].axis[index].data[2] * delta_time * delta_time
+                + traj_cache.cache[segment_index].axis[index].data[1] * delta_time
+                + traj_cache.cache[segment_index].axis[index].data[0];
+
+        v_value[index] = 5 * traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time * delta_time
+                    + 4 * traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time * delta_time
+                    + 3 * traj_cache.cache[segment_index].axis[index].data[3] * delta_time * delta_time
+                    + 2 * traj_cache.cache[segment_index].axis[index].data[2] * delta_time
+                    + traj_cache.cache[segment_index].axis[index].data[1];
+        a_value[index] = 20 * traj_cache.cache[segment_index].axis[index].data[5] * delta_time * delta_time * delta_time
+                    + 12 * traj_cache.cache[segment_index].axis[index].data[4] * delta_time * delta_time
+                    + 6 * traj_cache.cache[segment_index].axis[index].data[3] * delta_time
+                    + 2 * traj_cache.cache[segment_index].axis[index].data[2];
+    }
+
+    angle = p_value;
+    omega = v_value;
+    alpha = a_value;
 }

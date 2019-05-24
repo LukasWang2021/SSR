@@ -19,25 +19,25 @@ reference:
             - 0.174533
             - 0.174533
         velocity:
-            - 3.0
-            - 2.5
-            - 2.5
-            - 3.5
-            - 3.5
-            - 3.5
+            - 1.0
+            - 1.0
+            - 1.0
+            - 1.0
+            - 1.0
+            - 1.0
         acceleration:
-            - 32.0
-            - 18.0
-            - 18.0
-            - 32.0
-            - 32.0
-            - 32.0
+            - 10.0
+            - 10.0
+            - 10.0
+            - 10.0
+            - 10.0
+            - 10.0
     position:
-        velocity: 1600.0
-        acceleration: 16000.0
+        velocity: 200.0
+        acceleration: 2000.0
     orientation:
-        omega: 2.0
-        alpha: 20.0
+        omega: 0.5
+        alpha: 5.0
 
 
 #END

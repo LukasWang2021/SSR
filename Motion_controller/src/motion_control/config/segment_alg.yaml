@@ -10,5 +10,6 @@ time_factor_first: 2.5
 time_factor_last: 2.5
 is_fake_dynamics: true
 max_cartesian_acc: 8000.0
+time_rescale_falg: 0  # 0: rescale time; 1: do not rescale time; 2: return error code if rescale time needed
 
 #END

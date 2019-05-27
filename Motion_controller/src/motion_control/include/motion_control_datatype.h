@@ -64,9 +64,11 @@ struct IntactPoint
 struct MotionInfo
 {
     MotionType  type;   // 指令的运动类型
-    double      cnt;    // 平滑语句的CNT范围 ： 0.0 - 1.0， FINE语句的CNT    : < 0
-    double      vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
-                        //          如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+    SmoothType  smooth_type;    // 指令的平滑类型
+
+    double  cnt;    // 平滑语句的CNT范围 ： 速度平滑[0.0, 1.0]，距离平滑[0.0, +∞]， FINE语句的CNT < 0
+    double  vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
+                    //            如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
     IntactPoint target;
     IntactPoint via;
 };

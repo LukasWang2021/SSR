@@ -205,6 +205,11 @@ typedef unsigned long long int ErrorCode;
 #define TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX (unsigned long long int)0x0001000400B20004   /*PathTrajAlg detected that smooth_in index was invalid */
 #define TRAJ_PLANNING_INVALID_IK_FAILED (unsigned long long int)0x0001000400B20005   /*PathTrajAlg detected that ik failed*/
 #define TRAJ_PLANNING_PAUSE_FAILED (unsigned long long int)0x0001000200B20006   /*PathTrajAlg failed to pause */
+#define PATH_PLANNING_SMOOTH_TYPE_ERROR (unsigned long long int)0x0001000400B20007   /*PathTrajAlg detected that the smooth type is invalid*/
+#define TRAJ_PLANNING_TIME_RESCALE_NEEDED (unsigned long long int)0x0001000200B20008   /*PathTrajAlg detected that the time need to be rescaled*/
+#define TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR (unsigned long long int)0x0001000400B20009   /*PathTrajAlg detected that the falg is invalid whether time need to be rescaled */
+
+
 #define MODBUS_LOG (unsigned long long int)0x0000000100AE0000   /*ModbusManager log{0}*/
 #define MODBUS_START_MODE_ERROR (unsigned long long int)0x0001000200AE0001   /*modbus start mode error*/
 #define MODBUS_MANAGER_SAVE_PARAM_FAILED (unsigned long long int)0x0001000200AE0002   /*modbus manager failed to save parameters*/

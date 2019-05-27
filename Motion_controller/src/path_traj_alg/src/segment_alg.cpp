@@ -299,7 +299,7 @@ ErrorCode planPathJoint(const Joint &start,
         }
         else
         {
-            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
         }
     }
     else
@@ -364,7 +364,7 @@ ErrorCode planPathLine(const PoseEuler &start,
         }
         else
         {
-            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
         }
 
         if(path_length_out2end > max_path_length_out2end)
@@ -505,7 +505,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
         }
         else
         {
-            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
         }
 
         double max_circle_angle_out2end = circle_angle / 2;
@@ -808,7 +808,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     }
     else
     {
-        return 0x12345678; //PATH_PLANNING_SMOOTH_TYPE_ERROR
+        return PATH_PLANNING_SMOOTH_TYPE_ERROR;
     }
 
     int path_piece_via2in = floor(end_ratio * path_piece_via2end / 2.0);
@@ -912,7 +912,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         }
         else
         {
-            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
         }
     }
     else
@@ -1023,7 +1023,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         }
         else
         {
-            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
         }
 
         if(path_length_out2target > max_path_length_out2target)
@@ -1316,7 +1316,7 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
         }
         else
         {
-            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
         }
 
         //compute out2end path.
@@ -1523,12 +1523,12 @@ ErrorCode planTrajectory(const PathCache &path_cache,
 
         if(isRescaleNeeded(traj_t_size))
         {
-            return 0x910111213; // TRAJ_PLANNING_TIME_RESCALE_NEEDED
+            return TRAJ_PLANNING_TIME_RESCALE_NEEDED;
         }
     }
     else if (segment_alg_param.time_rescale_falg != 1)
     {
-        return 0x14151617; // TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR
+        return TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR;
     }
 
     updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, traj_t_size, S_TrajJ0, S_TrajCoeffJ0A0);
@@ -1557,7 +1557,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     if (via.smooth_type != SMOOTH_DISTANCE && via.smooth_type != SMOOTH_VELOCITY
         || path_cache.target.smooth_type != SMOOTH_DISTANCE && path_cache.target.smooth_type != SMOOTH_VELOCITY)
     {
-        return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+        return PATH_PLANNING_SMOOTH_TYPE_ERROR;
     }
 
     double cmd_vel = path_cache.target.vel * vel_ratio;
@@ -1634,12 +1634,12 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
 
         if(isRescaleNeeded(traj_t_size_via2end))
         {
-            return 0x910111213; // TRAJ_PLANNING_TIME_RESCALE_NEEDED
+            return TRAJ_PLANNING_TIME_RESCALE_NEEDED;
         }
     }
     else if (segment_alg_param.time_rescale_falg != 1)
     {
-        return 0x14151617; // TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR
+        return TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR;
     }
 
     updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajT, traj_t_size_via2end, S_TrajJ0, S_TrajCoeffJ0A0);
@@ -1675,12 +1675,12 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
 
         if(isRescaleNeeded(traj_t_size_out2in))
         {
-            return 0x910111213; // TRAJ_PLANNING_TIME_RESCALE_NEEDED
+            return TRAJ_PLANNING_TIME_RESCALE_NEEDED;
         }
     }
     else if (segment_alg_param.time_rescale_falg != 1)
     {
-        return 0x14151617; // TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR
+        return TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR;
     }
 
     updateTrajCoeff(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajT_Smooth, traj_t_size_out2in, S_TrajJ0, S_TrajCoeffJ0A0_Smooth);

@@ -30,6 +30,10 @@
 #define   MOVL_COMMAND_PARAM_MIN     8
 #define   MOVC_COMMAND_PARAM_MIN     14
 
+#define   SMOOTH_TYPE_CNT      "cnt"
+#define   SMOOTH_TYPE_SD       "sd"
+#define   SMOOTH_TYPE_SV       "sv"
+
 typedef struct _StopWatch
 {
     time_t start_time;
@@ -955,7 +959,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     instr.target.vel        = value.getFloatValue() / 100;
 	
 	get_token(objThreadCntrolBlock);
-	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
+	if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_CNT) == 0)
     {
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
     	if(objThreadCntrolBlock->prog_mode == STEP_MODE)
@@ -975,6 +979,18 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     }
     else
     {
+		if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SD) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_DISTANCE;
+		}
+		else if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SV) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_VELOCITY;
+		}
+		else 
+		{
+			instr.target.smooth_type = SMOOTH_NONE;
+		}
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
@@ -1260,7 +1276,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     instr.target.vel                  = value.getFloatValue();
 
 	get_token(objThreadCntrolBlock);
-	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
+	if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_CNT) == 0)
     {
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
 	     FST_INFO("instr.target.cnt = %f setInstruction.", value.getFloatValue());
@@ -1281,6 +1297,18 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     }
     else
     {
+		if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SD) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_DISTANCE;
+		}
+		else if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SV) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_VELOCITY;
+		}
+		else 
+		{
+			instr.target.smooth_type = SMOOTH_NONE;
+		}
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
@@ -1627,7 +1655,7 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     instr.target.vel                  = value.getFloatValue();
 
 	get_token(objThreadCntrolBlock);
-	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
+	if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_CNT) == 0)
     {
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
     	if(objThreadCntrolBlock->prog_mode == STEP_MODE)
@@ -1647,6 +1675,18 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     }
     else
     {
+		if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SD) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_DISTANCE;
+		}
+		else if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SV) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_VELOCITY;
+		}
+		else 
+		{
+			instr.target.smooth_type = SMOOTH_NONE;
+		}
     	get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }
@@ -1810,7 +1850,7 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
     instr.target.vel                  = value.getFloatValue() / 100;
 	
 	get_token(objThreadCntrolBlock);
-	if(strcmp(objThreadCntrolBlock->token, "cnt") == 0)
+	if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_CNT) == 0)
     {
 		get_exp(objThreadCntrolBlock, &value, &boolValue);
 		FST_INFO("instr.target.cnt = %f setInstruction.", value.getFloatValue());
@@ -1831,6 +1871,18 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
     }
     else
     {
+		if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SD) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_DISTANCE;
+		}
+		else if(strcmp(objThreadCntrolBlock->token, SMOOTH_TYPE_SV) == 0)
+		{
+			instr.target.smooth_type = SMOOTH_VELOCITY;
+		}
+		else 
+		{
+			instr.target.smooth_type = SMOOTH_NONE;
+		}
 		get_exp(objThreadCntrolBlock, &value, &boolValue);
         instr.target.cnt = value.getFloatValue() / 100;
     }

@@ -1362,12 +1362,37 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         return INVALID_PARAMETER;
     }
     
-    // CNT ∈ [0, 1] U CNT = -1
-    if (fabs(info.cnt + 1) > MINIMUM_E9 && (info.cnt < -MINIMUM_E9 || info.cnt > 1 + MINIMUM_E9))
+    if (info.smooth_type == SMOOTH_DISTANCE)
     {
-        FST_ERROR("Invalid CNT: %.12f", info.cnt);
-        return INVALID_PARAMETER;
+        if (info.cnt < -MINIMUM_E9)
+        {
+            FST_ERROR("Invalid CNT by smooth-distance: %.12f", info.cnt);
+            return INVALID_PARAMETER;
+        }
     }
+    else if (info.smooth_type == SMOOTH_VELOCITY)
+    {
+        if (info.cnt < -MINIMUM_E9 || info.cnt > 1 + MINIMUM_E9)
+        {
+            FST_ERROR("Invalid CNT by smooth-velocity: %.12f", info.cnt);
+            return INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        if (fabs(info.cnt + 1) > MINIMUM_E9)
+        {
+            FST_ERROR("Invalid CNT by smooth-none: %.12f", info.cnt);
+            return INVALID_PARAMETER;
+        }
+    }
+
+    // CNT ∈ [0, 1] U CNT = -1
+    //if (fabs(info.cnt + 1) > MINIMUM_E9 && (info.cnt < -MINIMUM_E9 || info.cnt > 1 + MINIMUM_E9))
+    //{
+    //    FST_ERROR("Invalid CNT: %.12f", info.cnt);
+    //    return INVALID_PARAMETER;
+    //}
 
     if (  ((info.type == MOTION_JOINT) && (info.vel < MINIMUM_E6 || info.vel > 1 + MINIMUM_E6)) ||
           ((info.type == MOTION_LINE || info.type == MOTION_CIRCLE) && (info.vel < cartesian_vel_min_ || info.vel > cartesian_vel_max_))  )

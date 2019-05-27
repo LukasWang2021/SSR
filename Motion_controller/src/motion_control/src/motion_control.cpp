@@ -408,6 +408,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
     }
 
     MotionInfo motion_info;
+    motion_info.smooth_type = target.smooth_type;
     motion_info.type = target.type;
     motion_info.cnt = target.cnt;
     motion_info.vel = target.vel;

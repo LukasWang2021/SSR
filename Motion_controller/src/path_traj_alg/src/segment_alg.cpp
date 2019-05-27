@@ -194,6 +194,7 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, f
     segment_alg_param.kinematics_ptr = segment_alg_param_ptr->kinematics_ptr;
     segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
     segment_alg_param.max_cartesian_acc = segment_alg_param_ptr->max_cartesian_acc;
+    segment_alg_param.time_rescale_falg = segment_alg_param_ptr->time_rescale_falg;
     segment_alg_param.min_path_num_left = 10;
     initStack(link_num, joint_vel_max);
     model.link_num = link_num;    
@@ -273,7 +274,33 @@ ErrorCode planPathJoint(const Joint &start,
 
     if(end.cnt > DOUBLE_ACCURACY)
     {
-        path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end.cnt / 2.0);
+        if (end.smooth_type == SMOOTH_DISTANCE)
+        {
+            PoseEuler start_point, end_point;
+            segment_alg_param.kinematics_ptr->doFK(start, start_point);
+            segment_alg_param.kinematics_ptr->doFK(end.target.joint, end_point);
+
+            double path_length_start2end = fabs(getDistance(start_point.point_, end_point.point_));
+            // path_length_start2end = fabs(path_length_start2end);
+            double end_ratio = 0.0;
+            if (path_length_start2end < DOUBLE_ACCURACY)
+            {
+                path_cache.smooth_out_index = -1; // -1 / path_count ?
+            }
+            else 
+            {
+                end_ratio = fabs(2 * end.cnt / path_length_start2end);
+                path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end_ratio);
+            }
+        }
+        else if (end.smooth_type == SMOOTH_VELOCITY)
+        {
+             path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end.cnt / 2.0);
+        }
+        else
+        {
+            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+        }
     }
     else
     {
@@ -324,9 +351,22 @@ ErrorCode planPathLine(const PoseEuler &start,
     double angle_distance_to_start = 0; // scale to [0,1]
     if(end.cnt >= DOUBLE_ACCURACY)    // cnt is valid
     {
-        double path_out_vel = end.vel * end.cnt;
+        double path_length_out2end = 0.0;
         double max_path_length_out2end = path_length_start2end / 2;
-        double path_length_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);        
+        if (end.smooth_type == SMOOTH_VELOCITY)
+        {
+            double path_out_vel = end.vel * end.cnt;
+            path_length_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);     
+        }
+        else if (end.smooth_type == SMOOTH_DISTANCE)
+        {
+            path_length_out2end = end.cnt;
+        }
+        else
+        {
+            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+        }
+
         if(path_length_out2end > max_path_length_out2end)
         {
             path_length_out2end = max_path_length_out2end;
@@ -453,8 +493,20 @@ ErrorCode planPathCircle(const PoseEuler &start,
     double quatern_angle_distance_to_start = 0; // scale to [0,1]
     if(end.cnt >= DOUBLE_ACCURACY)    // cnt is valid
     {
-        double path_out_vel = end.vel * end.cnt;
-        double circle_angle_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc * circle_radius);
+        double circle_angle_out2end = 0.0;
+        if (end.smooth_type == SMOOTH_DISTANCE)
+        {
+            circle_angle_out2end = end.cnt / circle_radius;
+        }
+        else if (end.smooth_type == SMOOTH_VELOCITY)
+        {
+            double path_out_vel = end.vel * end.cnt;
+            circle_angle_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc * circle_radius);
+        }
+        else
+        {
+            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+        }
 
         double max_circle_angle_out2end = circle_angle / 2;
         if(circle_angle_out2end > max_circle_angle_out2end)
@@ -729,7 +781,37 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         path_piece_via2end = (int)(PATH_CACHE_SIZE*0.8);
     }
     
-    int path_piece_via2in = floor(via.cnt * path_piece_via2end / 2.0);
+    double end_ratio = 0.0;
+    double path_length_start2end = 0.0;
+    if (via.smooth_type == SMOOTH_DISTANCE)
+    {
+        PoseEuler via_point, end_point;
+        segment_alg_param.kinematics_ptr->doFK(via.target.joint, via_point);
+        segment_alg_param.kinematics_ptr->doFK(end.target.joint, end_point);
+
+        double path_length_via2end = fabs(getDistance(via_point.point_, end_point.point_));
+        // path_length_start2end = fabs(path_length_start2end);
+        
+        if (path_length_via2end < DOUBLE_ACCURACY)
+        {
+            end_ratio = 1.0;
+        }
+        else 
+        {
+            double end_ratio = fabs(via.cnt / path_length_via2end);
+            if (end_ratio > 1.0) end_ratio = 1.0;
+        }
+    }
+    else if (via.smooth_type == SMOOTH_VELOCITY)
+    {
+        end_ratio = via.cnt;
+    }
+    else
+    {
+        return 0x12345678; //PATH_PLANNING_SMOOTH_TYPE_ERROR
+    }
+
+    int path_piece_via2in = floor(end_ratio * path_piece_via2end / 2.0);
     int path_piece_in2end = path_piece_via2end - path_piece_via2in;
     double joint_step_via2end;
     Joint joint_in;
@@ -811,8 +893,27 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     path_cache.cache_length = path_cache_length_minus_1 + 1;
     if(end.cnt > DOUBLE_ACCURACY)
     {
-        int path_piece_out2end = floor(end.cnt * path_piece_via2end / 2.0);    
-        path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
+        if (end.smooth_type == SMOOTH_DISTANCE)
+        {
+            if (path_length_start2end < DOUBLE_ACCURACY)
+            {
+                path_cache.smooth_out_index = -1;
+            }
+            else 
+            {
+                int path_piece_out2end = floor(end_ratio * path_piece_via2end / 2.0);
+                path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
+            }
+        }
+        else if (via.smooth_type == SMOOTH_VELOCITY)
+        {
+            int path_piece_out2end = floor(end.cnt * path_piece_via2end / 2.0);
+            path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
+        }
+        else
+        {
+            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+        }
     }
     else
     {
@@ -824,7 +925,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         {
             path_cache.smooth_out_index = -1;
         }
-    }    
+    }
 
     // compute path in2end
     double joint_distance_to_in;
@@ -866,7 +967,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         path_length_via2in = path_length_start2via;
     }   
     double path_length_in2target = path_length_via2target - path_length_via2in;
-        
+
     int path_count_ideal_start2via = ceil(path_length_start2via / segment_alg_param.path_interval);
     int path_count_ideal_via2in = ceil(path_length_via2in / segment_alg_param.path_interval);
     Point point_in;
@@ -909,14 +1010,27 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     if(end.cnt >= DOUBLE_ACCURACY)
     {   // FIXME: small cnt will cause pulse in vel and acc of traj
         // compute path in2out and out2target 
-        double path_out_vel = end.vel * end.cnt;
+        double path_length_out2target = 0.0;
         double max_path_length_out2target = path_length_via2target / 2;
-        double path_length_out2target = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
+        if (end.smooth_type == SMOOTH_VELOCITY)
+        {
+            double path_out_vel = end.vel * end.cnt;
+            path_length_out2target = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
+        }
+        else if (end.smooth_type == SMOOTH_DISTANCE)
+        {
+            path_length_out2target = end.cnt;
+        }
+        else
+        {
+            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+        }
+
         if(path_length_out2target > max_path_length_out2target)
         {
             path_length_out2target = max_path_length_out2target;
         }
-        
+
         double path_length_in2out = path_length_in2target - path_length_out2target;        
         Point point_out;
         getMoveLPathPoint(point_in, path_vector_via2target, path_length_in2out, point_out);
@@ -1011,7 +1125,7 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
     }
     else
-    {       
+    {
         // compute in2target settings
         int path_count_ideal_in2target = ceil(path_length_in2target / segment_alg_param.path_interval);
         int angle_count_ideal_in2target = ceil(angle_in2target / segment_alg_param.angle_interval);
@@ -1190,9 +1304,23 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     int i = 1;
     if(end.cnt >= DOUBLE_ACCURACY)
     {
+        double circle_angle_out2end = 0.0;
+        if (end.smooth_type == SMOOTH_VELOCITY)
+        {
+            double path_out_vel = end.vel * end.cnt;
+            circle_angle_out2end = path_out_vel * path_out_vel/ (2 * segment_alg_param.conservative_acc * circle_radius);
+        }
+        else if (end.smooth_type == SMOOTH_DISTANCE)
+        {
+            circle_angle_out2end = end.cnt / circle_radius;
+        }
+        else
+        {
+            return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
+        }
+
         //compute out2end path.
-        double path_out_vel = end.vel * end.cnt;
-        double circle_angle_out2end = path_out_vel * path_out_vel/ (2 * segment_alg_param.conservative_acc * circle_radius);
+
         double max_circle_angle_out2end = circle_angle / 2;
         if(circle_angle_out2end > max_circle_angle_out2end)
         {
@@ -1371,17 +1499,38 @@ ErrorCode planTrajectory(const PathCache &path_cache,
     // because they are not used in updateTrajPVA.
     updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
                   &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
-    updateConstraintJoint(S_TrajP0, S_TrajV0, traj_pva_size);
-    updateTrajPieceA(S_TrajA0, traj_pva_size, acc_ratio);
-    updateTrajPieceV(S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, vel_ratio);
-    updateTrajPieceRescaleFactor(traj_t_size);
 
-    if(isRescaleNeeded(traj_t_size))
+    if (segment_alg_param.time_rescale_falg == 0)
     {
-        updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size);
-        updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
-                      &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
+        updateConstraintJoint(S_TrajP0, S_TrajV0, traj_pva_size);
+        updateTrajPieceA(S_TrajA0, traj_pva_size, acc_ratio);
+        updateTrajPieceV(S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, vel_ratio);
+        updateTrajPieceRescaleFactor(traj_t_size);
+
+        if(isRescaleNeeded(traj_t_size))
+        {
+            updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size);
+            updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
+                          &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
+        }
     }
+    else if (segment_alg_param.time_rescale_falg == 2)
+    {
+        updateConstraintJoint(S_TrajP0, S_TrajV0, traj_pva_size);
+        updateTrajPieceA(S_TrajA0, traj_pva_size, acc_ratio);
+        updateTrajPieceV(S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, vel_ratio);
+        updateTrajPieceRescaleFactor(traj_t_size);
+
+        if(isRescaleNeeded(traj_t_size))
+        {
+            return 0x910111213; // TRAJ_PLANNING_TIME_RESCALE_NEEDED
+        }
+    }
+    else if (segment_alg_param.time_rescale_falg != 1)
+    {
+        return 0x14151617; // TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR
+    }
+
     updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajT, traj_t_size, S_TrajJ0, S_TrajCoeffJ0A0);
     packTrajCache(traj_path_cache_index, traj_pva_out_index, traj_pva_size, S_TrajCoeffJ0A0, S_TrajT, traj_t_size, traj_cache);  
 
@@ -1403,6 +1552,12 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     if(path_cache.smooth_in_index == -1)
     {
         return TRAJ_PLANNING_INVALID_SMOOTH_IN_INDEX;
+    }
+
+    if (via.smooth_type != SMOOTH_DISTANCE && via.smooth_type != SMOOTH_VELOCITY
+        || path_cache.target.smooth_type != SMOOTH_DISTANCE && path_cache.target.smooth_type != SMOOTH_VELOCITY)
+    {
+        return 0x12345678; // PATH_PLANNING_SMOOTH_TYPE_ERROR
     }
 
     double cmd_vel = path_cache.target.vel * vel_ratio;
@@ -1456,17 +1611,37 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajJ0,
                   &stack[S_TrajT], traj_t_size_via2end, S_StartPointState0, S_EndPointState0); 
    
-    updateConstraintJoint(S_TrajP0, S_TrajV0, traj_t_size_via2end);
-    updateTrajPieceA(S_TrajA0, traj_t_size_via2end, acc_ratio);       
-    updateTrajPieceV(S_TrajV0, S_TrajA0, traj_t_size_via2end, S_TrajT, vel_ratio);
-    updateTrajPieceRescaleFactor(traj_t_size_via2end);
-
-    if(isRescaleNeeded(traj_t_size_via2end))
+    if (segment_alg_param.time_rescale_falg == 0)
     {
-        updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size_via2end);
-        updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajJ0,
-                      &stack[S_TrajT], traj_t_size_via2end, S_StartPointState0, S_EndPointState0);
+        updateConstraintJoint(S_TrajP0, S_TrajV0, traj_t_size_via2end);
+        updateTrajPieceA(S_TrajA0, traj_t_size_via2end, acc_ratio);       
+        updateTrajPieceV(S_TrajV0, S_TrajA0, traj_t_size_via2end, S_TrajT, vel_ratio);
+        updateTrajPieceRescaleFactor(traj_t_size_via2end);
+
+        if(isRescaleNeeded(traj_t_size_via2end))
+        {
+            updateTrajTByPieceRescaleFactor(S_TrajT, traj_t_size_via2end);
+            updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajJ0,
+                          &stack[S_TrajT], traj_t_size_via2end, S_StartPointState0, S_EndPointState0);
+        }
     }
+    else if (segment_alg_param.time_rescale_falg == 2)
+    {
+        updateConstraintJoint(S_TrajP0, S_TrajV0, traj_t_size_via2end);
+        updateTrajPieceA(S_TrajA0, traj_t_size_via2end, acc_ratio);       
+        updateTrajPieceV(S_TrajV0, S_TrajA0, traj_t_size_via2end, S_TrajT, vel_ratio);
+        updateTrajPieceRescaleFactor(traj_t_size_via2end);
+
+        if(isRescaleNeeded(traj_t_size_via2end))
+        {
+            return 0x910111213; // TRAJ_PLANNING_TIME_RESCALE_NEEDED
+        }
+    }
+    else if (segment_alg_param.time_rescale_falg != 1)
+    {
+        return 0x14151617; // TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR
+    }
+
     updateTrajCoeff(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajT, traj_t_size_via2end, S_TrajJ0, S_TrajCoeffJ0A0);
 
     int traj_pva_size_out2in, traj_t_size_out2in;
@@ -1479,15 +1654,33 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
                   &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
 
-    updateConstraintJoint(S_TrajP0_Smooth, S_TrajV0_Smooth, traj_t_size_out2in);
-    updateTrajPieceA(S_TrajA0_Smooth, traj_pva_size_out2in, acc_ratio);
-    updateTrajPieceRescaleFactor(traj_t_size_out2in);
-
-    if(isRescaleNeeded(traj_t_size_out2in))
+    if (segment_alg_param.time_rescale_falg == 0)
     {
-        updateTrajTByPieceRescaleFactor(S_TrajT_Smooth, traj_t_size_out2in);
-        updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
+        updateConstraintJoint(S_TrajP0_Smooth, S_TrajV0_Smooth, traj_t_size_out2in);
+        updateTrajPieceA(S_TrajA0_Smooth, traj_pva_size_out2in, acc_ratio);
+        updateTrajPieceRescaleFactor(traj_t_size_out2in);
+
+        if(isRescaleNeeded(traj_t_size_out2in))
+        {
+            updateTrajTByPieceRescaleFactor(S_TrajT_Smooth, traj_t_size_out2in);
+            updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
                       &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
+        }
+    }
+    else if (segment_alg_param.time_rescale_falg == 2)
+    {
+        updateConstraintJoint(S_TrajP0_Smooth, S_TrajV0_Smooth, traj_t_size_out2in);
+        updateTrajPieceA(S_TrajA0_Smooth, traj_pva_size_out2in, acc_ratio);
+        updateTrajPieceRescaleFactor(traj_t_size_out2in);
+
+        if(isRescaleNeeded(traj_t_size_out2in))
+        {
+            return 0x910111213; // TRAJ_PLANNING_TIME_RESCALE_NEEDED
+        }
+    }
+    else if (segment_alg_param.time_rescale_falg != 1)
+    {
+        return 0x14151617; // TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR
     }
 
     updateTrajCoeff(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajT_Smooth, traj_t_size_out2in, S_TrajJ0, S_TrajCoeffJ0A0_Smooth);
@@ -1498,6 +1691,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
 
     return SUCCESS;
 }
+
 ErrorCode planPauseTrajectory(const PathCache &path_cache,
                               const JointState &start_state,
                               double acc_ratio,
@@ -3947,7 +4141,23 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+
+                double time_span_out2via = 0.0;
+                if (via.smooth_type == SMOOTH_DISTANCE)
+                {
+                    double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.point_, 
+                        path_cache.cache[path_cache.cache_length - 1].pose.point_);
+                    double path_length_via2end_half = getPointsDistance(via.target.pose.pose.point_, 
+                        path_cache.cache[path_cache.cache_length - 1].pose.point_) / 2;
+                    double via_ratio = path_length_out2end / path_length_via2end_half;
+
+                    time_span_out2via = path_length_out2via / (via.vel * via_ratio);
+                }
+                else
+                {
+                     time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+                }
+
                 double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double time_span_via2in = path_length_via2in / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
@@ -3959,7 +4169,24 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             if (via.type == MOTION_LINE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+
+                double time_span_out2via = 0.0;
+                if (via.smooth_type == SMOOTH_DISTANCE)
+                {
+                    double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.point_, 
+                        path_cache.cache[path_cache.cache_length - 1].pose.point_);
+                    double path_length_via2end_half = getPointsDistance(via.target.pose.pose.point_, 
+                        path_cache.cache[path_cache.cache_length - 1].pose.point_) / 2;
+                    double via_ratio = path_length_out2end / path_length_via2end_half;
+
+                    time_span_out2via = path_length_out2via / (via.vel * via_ratio);
+                }
+                else
+                {
+                     time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+                }
+
+                //double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
 
                 Joint joint_via = via.target.joint;
 
@@ -4004,7 +4231,19 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+
+                double time_span_out2via = 0.0;
+                if (via.smooth_type == SMOOTH_DISTANCE)
+                {
+                    double via_ratio = fabs(2 * (stack[S_CircleAngle] - stack[S_CircleAngleVia2In] - stack[S_CircleAngleIn2Out]) / stack [S_CircleAngle]);
+                    time_span_out2via = path_length_out2via / (via.vel * via_ratio);
+                }
+                else
+                {
+                     time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+                }
+
+                //double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
 
                 Joint joint_via = via.target.joint;
 
@@ -4030,7 +4269,24 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             if (via.type == MOTION_LINE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+
+                double time_span_out2via = 0.0;
+                if (via.smooth_type == SMOOTH_DISTANCE)
+                {
+                    double path_length_out2end = getPointsDistance(path_cache.cache[path_cache.smooth_out_index].pose.point_, 
+                        path_cache.cache[path_cache.cache_length - 1].pose.point_);
+                    double path_length_via2end_half = getPointsDistance(via.target.pose.pose.point_, 
+                        path_cache.cache[path_cache.cache_length - 1].pose.point_) / 2;
+                    double via_ratio = path_length_out2end / path_length_via2end_half;
+
+                    time_span_out2via = path_length_out2via / (via.vel * via_ratio);
+                }
+                else
+                {
+                     time_span_out2via = path_length_out2via / (via.vel * via.cnt);
+                }
+
+                //double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
                 double time_span_via2in = stack[S_CircleAngleVia2In] * stack[S_CircleRadius] / cmd_vel;
                 time_span_out2in = time_span_out2via + time_span_via2in;
                 break;
@@ -4054,8 +4310,23 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
             else if(via.type == MOTION_CIRCLE)
             {
                 double path_length_out2via = getPointsDistance(path_cache.cache[0].pose.point_, via.target.pose.pose.point_);
-                double out_cmd_vel = via.vel * via.cnt;
-                double time_out2via = path_length_out2via / out_cmd_vel;
+
+                // double via_ratio = fabs(2* (stack[S_CircleAngle] - stack[S_CircleAngleVia2In] - stack[S_CircleAngleIn2Out]) / stack [S_CircleAngle]);
+                // time_span_out2via = path_length_out2via / (via.vel * via_ratio);
+
+                double time_out2via = 0.0;
+                if (via.smooth_type == SMOOTH_DISTANCE)
+                {
+                    double via_ratio = fabs(2 * (stack[S_CircleAngle] - stack[S_CircleAngleVia2In] - stack[S_CircleAngleIn2Out]) / stack [S_CircleAngle]);
+                    double out_cmd_vel = via.vel * via_ratio;
+                    time_out2via = path_length_out2via / out_cmd_vel;
+                }
+                else
+                {
+                    double out_cmd_vel = via.vel * via.cnt;
+                    time_out2via = path_length_out2via / out_cmd_vel;
+                }
+
                 double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
                 double time_via2in = path_length_via2in / cmd_vel; 
                 time_span_out2in = time_out2via + time_via2in;

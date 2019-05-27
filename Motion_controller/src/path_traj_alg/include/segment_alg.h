@@ -40,6 +40,7 @@ typedef struct
     double time_factor_first;   // the time factor of the first piece
     double time_factor_last;   // the time factor of the last piece
     double max_cartesian_acc;   // mm/s^2
+    int time_rescale_falg;
     fst_ctrl::CoordinateManager* coordinate_manager_ptr;
     fst_ctrl::ToolManager* tool_manager_ptr;
     basic_alg::Kinematics* kinematics_ptr;

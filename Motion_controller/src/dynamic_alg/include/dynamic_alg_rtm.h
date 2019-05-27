@@ -4,6 +4,7 @@
 #include "axis_group_model.h"
 #include "dynamic_alg.h"
 #include "dynamic_alg_rtm_param.h"
+#include "common_log.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 
 
@@ -60,6 +61,7 @@ private:
     DH base_dh_;
     DH arm_dh_[6];
     DynamicAlgRTMParam* param_ptr_;
+    fst_log::Logger* log_ptr_;
     fst_parameter::ParamGroup param_;
     std::string file_path_;
     bool is_valid_;

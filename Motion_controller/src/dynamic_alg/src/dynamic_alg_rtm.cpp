@@ -10,14 +10,21 @@ namespace basic_alg
 {
 
 DynamicAlgRTM::DynamicAlgRTM():
+    log_ptr_(NULL),
     param_ptr_(NULL),
     is_valid_(false)
 {
+    log_ptr_ = new fst_log::Logger();
     param_ptr_ = new DynamicAlgRTMParam();
+    FST_LOG_INIT("dynamic_alg_rtm");
 }
 
 DynamicAlgRTM::~DynamicAlgRTM()
 {
+    if(log_ptr_ != NULL){
+        delete log_ptr_;
+        log_ptr_ = NULL;
+    }
     if(param_ptr_ != NULL){
         delete param_ptr_;
         param_ptr_ = NULL;
@@ -27,10 +34,13 @@ DynamicAlgRTM::~DynamicAlgRTM()
 bool DynamicAlgRTM::initDynamicAlgRTM(std::string file_path)
 {
     if(!param_ptr_->loadParam()){
-        printf("Failed to load dynamic_alg_rtm component parameters\n");
+        FST_ERROR("Failed to load dynamic_alg_rtm component parameters");
         is_valid_ = false;
         return false;
+    } else {
+	FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
     }
+
 
     file_path_ = file_path + "arm_dh.yaml";
     if (param_.loadParamFile(file_path_))
@@ -108,7 +118,7 @@ bool DynamicAlgRTM::initDynamicAlgRTM(std::string file_path)
 bool DynamicAlgRTM::updateLoadParam(void)
 {
     if(!param_ptr_->loadParam()){
-        printf("Failed to load dynamic_alg_rtm component parameters");
+        FST_ERROR("Failed to load dynamic_alg_rtm component parameters");
         return false;
     }
     m_load = param_ptr_->m_load_;
@@ -137,7 +147,7 @@ bool DynamicAlgRTM::updateLoadParam(DynamicAlgLoadParam load_param)
     param_ptr_->Ixz_load_ = load_param.Ixz_load;
     param_ptr_->Iyz_load_ = load_param.Iyz_load;
     if(!param_ptr_->saveParam()){
-        printf("Failed to save dynamic_alg_rtm component parameters");
+        FST_ERROR("Failed to save dynamic_alg_rtm component parameters");
         return false;
     }
 
@@ -244,6 +254,7 @@ bool DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity
     //bool ret = getMatrixInverse(M, LINKS, M_inverse);//伴随矩阵法,4ms,deprecated by LU.
     if (ret == false)
     {
+        FST_ERROR("Failed to compute direct dynamics to get acceleration for invalid inverse M.");
         return false;
     }
 

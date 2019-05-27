@@ -21,6 +21,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/common
     ${depend_PATH_INC}/basic_alg/include
     ${depend_PATH_INC}/parameter_manager/include
+    ${depend_PATH_INC}/log_manager/include
 )
 
 catkin_package(
@@ -28,6 +29,7 @@ catkin_package(
     LIBRARIES dynamic_alg
     DEPENDS basic_alg
     DEPENDS parameter_manager
+    DEPENDS log_manager
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -48,6 +50,7 @@ target_link_libraries(dynamic_alg
     ${catkin_LIBRARIES}
     basic_alg
     parameter_manager
+    logger
 )
 
 install(TARGETS dynamic_alg

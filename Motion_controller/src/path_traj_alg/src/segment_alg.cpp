@@ -194,8 +194,8 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, f
     segment_alg_param.kinematics_ptr = segment_alg_param_ptr->kinematics_ptr;
     segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
     segment_alg_param.max_cartesian_acc = segment_alg_param_ptr->max_cartesian_acc;
-    segment_alg_param.time_rescale_falg = segment_alg_param_ptr->time_rescale_falg;
-    printf("segment_alg_param.time_rescale_falg = %d\n", segment_alg_param.time_rescale_falg);
+    segment_alg_param.time_rescale_flag = segment_alg_param_ptr->time_rescale_flag;
+    printf("segment_alg_param.time_rescale_flag = %d\n", segment_alg_param.time_rescale_flag);
     segment_alg_param.min_path_num_left = 10;
     initStack(link_num, joint_vel_max);
     model.link_num = link_num;    
@@ -1516,7 +1516,7 @@ ErrorCode planTrajectory(const PathCache &path_cache,
     updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size, S_TrajJ0,
                   &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
 
-    if (segment_alg_param.time_rescale_falg == 0)
+    if (segment_alg_param.time_rescale_flag == 0)
     {
         updateConstraintJoint(S_TrajP0, S_TrajV0, traj_pva_size);
         updateTrajPieceA(S_TrajA0, traj_pva_size, acc_ratio);
@@ -1530,7 +1530,7 @@ ErrorCode planTrajectory(const PathCache &path_cache,
                           &stack[S_TrajT], traj_t_size, S_StartPointState0, S_EndPointState0);
         }
     }
-    else if (segment_alg_param.time_rescale_falg == 2)
+    else if (segment_alg_param.time_rescale_flag == 2)
     {
         updateConstraintJoint(S_TrajP0, S_TrajV0, traj_pva_size);
         updateTrajPieceA(S_TrajA0, traj_pva_size, acc_ratio);
@@ -1542,7 +1542,7 @@ ErrorCode planTrajectory(const PathCache &path_cache,
             return TRAJ_PLANNING_TIME_RESCALE_NEEDED;
         }
     }
-    else if (segment_alg_param.time_rescale_falg != 1)
+    else if (segment_alg_param.time_rescale_flag != 1)
     {
         return TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR;
     }
@@ -1629,7 +1629,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateTrajPVA(S_TrajP0, S_TrajV0, S_TrajA0, traj_pva_size_via2end, S_TrajJ0,
                   &stack[S_TrajT], traj_t_size_via2end, S_StartPointState0, S_EndPointState0); 
    
-    if (segment_alg_param.time_rescale_falg == 0)
+    if (segment_alg_param.time_rescale_flag == 0)
     {
         updateConstraintJoint(S_TrajP0, S_TrajV0, traj_t_size_via2end);
         updateTrajPieceA(S_TrajA0, traj_t_size_via2end, acc_ratio);       
@@ -1643,7 +1643,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
                           &stack[S_TrajT], traj_t_size_via2end, S_StartPointState0, S_EndPointState0);
         }
     }
-    else if (segment_alg_param.time_rescale_falg == 2)
+    else if (segment_alg_param.time_rescale_flag == 2)
     {
         updateConstraintJoint(S_TrajP0, S_TrajV0, traj_t_size_via2end);
         updateTrajPieceA(S_TrajA0, traj_t_size_via2end, acc_ratio);       
@@ -1655,7 +1655,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
             return TRAJ_PLANNING_TIME_RESCALE_NEEDED;
         }
     }
-    else if (segment_alg_param.time_rescale_falg != 1)
+    else if (segment_alg_param.time_rescale_flag != 1)
     {
         return TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR;
     }
@@ -1672,7 +1672,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
                   &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
 
-    if (segment_alg_param.time_rescale_falg == 0)
+    if (segment_alg_param.time_rescale_flag == 0)
     {
         updateConstraintJoint(S_TrajP0_Smooth, S_TrajV0_Smooth, traj_t_size_out2in);
         updateTrajPieceA(S_TrajA0_Smooth, traj_pva_size_out2in, acc_ratio);
@@ -1685,7 +1685,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
                       &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
         }
     }
-    else if (segment_alg_param.time_rescale_falg == 2)
+    else if (segment_alg_param.time_rescale_flag == 2)
     {
         updateConstraintJoint(S_TrajP0_Smooth, S_TrajV0_Smooth, traj_t_size_out2in);
         updateTrajPieceA(S_TrajA0_Smooth, traj_pva_size_out2in, acc_ratio);
@@ -1696,7 +1696,7 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
             return TRAJ_PLANNING_TIME_RESCALE_NEEDED;
         }
     }
-    else if (segment_alg_param.time_rescale_falg != 1)
+    else if (segment_alg_param.time_rescale_flag != 1)
     {
         return TRAJ_PLANNING_TIME_RESCALE_FLAG_ERROR;
     }

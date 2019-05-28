@@ -510,7 +510,8 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager
             param.getParam("time_factor_first", seg_param.time_factor_first) &&
             param.getParam("time_factor_last", seg_param.time_factor_last) &&
             param.getParam("is_fake_dynamics", seg_param.is_fake_dynamics) &&
-            param.getParam("max_cartesian_acc", seg_param.max_cartesian_acc))
+            param.getParam("max_cartesian_acc", seg_param.max_cartesian_acc) &&
+            param.getParam("time_rescale_falg", seg_param.time_rescale_falg))
         {
             initSegmentAlgParam(&seg_param, JOINT_OF_ARM, type_of_axis_, omega);
         }

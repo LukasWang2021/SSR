@@ -220,7 +220,7 @@ bool BareCoreInterface::getEncoder(vector<int> &data)
     return false;
 }
 
-bool BareCoreInterface::getEncoderError(std::vector<int> &data)
+bool BareCoreInterface::getEncoderError(vector<int> &data)
 {
     ServiceRequest req;
     req.req_id = GET_ENCODER_ERR_SID;

@@ -798,7 +798,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         }
         else 
         {
-            double end_ratio = fabs(via.cnt / path_length_via2end);
+            end_ratio = fabs(via.cnt / path_length_via2end);
             if (end_ratio > 1.0) end_ratio = 1.0;
         }
     }
@@ -1555,7 +1555,9 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     }
 
     if (via.smooth_type != SMOOTH_DISTANCE && via.smooth_type != SMOOTH_VELOCITY
-        || path_cache.target.smooth_type != SMOOTH_DISTANCE && path_cache.target.smooth_type != SMOOTH_VELOCITY)
+        || path_cache.target.smooth_type != SMOOTH_DISTANCE 
+        && path_cache.target.smooth_type != SMOOTH_VELOCITY
+        && path_cache.target.smooth_type != SMOOTH_NONE)
     {
         return PATH_PLANNING_SMOOTH_TYPE_ERROR;
     }
@@ -4242,9 +4244,7 @@ inline void updateSmoothOut2InTrajT(const PathCache& path_cache, const MotionInf
                 {
                      time_span_out2via = path_length_out2via / (via.vel * via.cnt);
                 }
-
                 //double time_span_out2via = path_length_out2via / (via.vel * via.cnt);
-
                 Joint joint_via = via.target.joint;
 
                 double time_span_via2in = 0;

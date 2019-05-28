@@ -1,8 +1,10 @@
 #include <string.h>
 #include <servo_service.h>
 #include <data_monitor.h>
+#include <common_enum.h>
 
 using namespace fst_comm_interface;
+using namespace fst_mc;
 
 CommInterface* fst_controller::ServoService::p_comm_;
 int fst_controller::ServoService::counter_ = 0;

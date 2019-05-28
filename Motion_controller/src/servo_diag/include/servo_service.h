@@ -20,17 +20,6 @@
 namespace fst_controller {
 // Brief class for controller. This class include many default settings and functions to make life easier.
 
-enum ServiceID
-{ 
-  READ_SERVO_DATA_BY_ADDR            =0x14,  
-  WRITE_SERVO_DATA_BY_ADDR         = 0x24,
-  READ_SERVO_DTC_SID                = 0x31,
-  LOG_CONTROL_SID                   =0x40,
-  LOG_GETLIST_SID                   =0x41,
-  SERVO_CMD_SID                     =0x60
-};
-
-
 class ServoService {
   // -----------------------------public functions---------------------------------------------
 

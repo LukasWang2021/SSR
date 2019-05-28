@@ -195,6 +195,7 @@ void initSegmentAlgParam(SegmentAlgParam* segment_alg_param_ptr, int link_num, f
     segment_alg_param.dynamics_ptr = segment_alg_param_ptr->dynamics_ptr;
     segment_alg_param.max_cartesian_acc = segment_alg_param_ptr->max_cartesian_acc;
     segment_alg_param.time_rescale_falg = segment_alg_param_ptr->time_rescale_falg;
+    printf("segment_alg_param.time_rescale_falg = %d\n", segment_alg_param.time_rescale_falg);
     segment_alg_param.min_path_num_left = 10;
     initStack(link_num, joint_vel_max);
     model.link_num = link_num;    
@@ -272,9 +273,9 @@ ErrorCode planPathJoint(const Joint &start,
         packPathBlockType(PATH_POINT, COORDINATE_JOINT, path_cache.cache[path_count_minus_1]);    
     }
 
-    if(end.cnt > DOUBLE_ACCURACY)
+    if (end.smooth_type == SMOOTH_DISTANCE)
     {
-        if (end.smooth_type == SMOOTH_DISTANCE)
+        if (end.cnt > DOUBLE_ACCURACY)
         {
             PoseEuler start_point, end_point;
             segment_alg_param.kinematics_ptr->doFK(start, start_point);
@@ -293,21 +294,35 @@ ErrorCode planPathJoint(const Joint &start,
                 path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end_ratio);
             }
         }
-        else if (end.smooth_type == SMOOTH_VELOCITY)
+        else
         {
-             path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end.cnt / 2.0);
+            path_cache.smooth_out_index = -1;
+        }
+
+        return SUCCESS;
+    }
+
+    if (end.smooth_type == SMOOTH_VELOCITY)
+    {
+        if (end.cnt > DOUBLE_ACCURACY)
+        {
+            path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end.cnt / 2.0);
         }
         else
         {
-            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
+            path_cache.smooth_out_index = -1;
         }
-    }
-    else
-    {
-        path_cache.smooth_out_index = -1;
+
+        return SUCCESS;
     }
 
-    return SUCCESS;
+    if (end.smooth_type == SMOOTH_NONE)
+    {
+        path_cache.smooth_out_index = -1;
+        return SUCCESS;
+    }
+
+    return PATH_PLANNING_SMOOTH_TYPE_ERROR;
 }
 
 ErrorCode planPathLine(const PoseEuler &start, 
@@ -349,67 +364,11 @@ ErrorCode planPathLine(const PoseEuler &start,
     // find Pout distance to end point
     double point_distance_to_start = 0; // not scaled
     double angle_distance_to_start = 0; // scale to [0,1]
-    if(end.cnt >= DOUBLE_ACCURACY)    // cnt is valid
+
+    if (end.cnt < DOUBLE_ACCURACY)
     {
-        double path_length_out2end = 0.0;
-        double max_path_length_out2end = path_length_start2end / 2;
-        if (end.smooth_type == SMOOTH_VELOCITY)
-        {
-            double path_out_vel = end.vel * end.cnt;
-            path_length_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);     
-        }
-        else if (end.smooth_type == SMOOTH_DISTANCE)
-        {
-            path_length_out2end = end.cnt;
-        }
-        else
-        {
-            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
-        }
-
-        if(path_length_out2end > max_path_length_out2end)
-        {
-            path_length_out2end = max_path_length_out2end;
-        }
-
-        int path_count_out2end = ceil(path_length_out2end * max_count_start2end / path_length_start2end);
-        double path_step_out2end = path_length_out2end / path_count_out2end;        
-
-        double path_length_start2out = path_length_start2end - path_length_out2end;
-        double angle_distance_start2out = path_length_start2out / path_length_start2end;
-        int path_count_start2out = ceil(angle_distance_start2out * max_count_start2end);
-        double path_step_start2out = path_length_start2out / path_count_start2out;
-
-        double angle_step_start2out = angle_distance_start2out / path_count_start2out;
-        double angle_step_out2end = (1.0 - angle_distance_start2out) / path_count_out2end;
-
-        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
-        for(i = 1; i <= path_count_start2out; ++i)
-        {
-            point_distance_to_start += path_step_start2out;
-            angle_distance_to_start += angle_step_start2out;            
-            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-        path_cache.smooth_out_index = path_count_start2out;
-        int path_count_total_minus_1 = path_count_start2out + path_count_out2end;
-        path_cache.cache_length = path_count_total_minus_1 + 1;
-        for(; i < path_count_total_minus_1; ++i)
-        {
-            point_distance_to_start += path_step_out2end;
-            angle_distance_to_start += angle_step_out2end;
-            getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
-            getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-    }
-    else    // cnt is invalid
-    {    
-        if(end.cnt >= -DOUBLE_ACCURACY)  // cnt = 0
+        if ((end.smooth_type == SMOOTH_DISTANCE || end.smooth_type == SMOOTH_VELOCITY)
+            && -DOUBLE_ACCURACY < end.cnt)
         {
             path_cache.smooth_out_index = max_count_start2end;
         }
@@ -417,6 +376,7 @@ ErrorCode planPathLine(const PoseEuler &start,
         {
             path_cache.smooth_out_index = -1;
         }
+
         path_cache.cache_length = max_count_start2end + 1;
         double path_step_start2end = path_length_start2end / max_count_start2end;
         double angle_step_start2end = 1.0 / max_count_start2end;
@@ -432,8 +392,68 @@ ErrorCode planPathLine(const PoseEuler &start,
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
         packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[max_count_start2end]);
+
+        return SUCCESS;
     }
-    
+
+
+    double path_length_out2end = 0.0;
+    double max_path_length_out2end = path_length_start2end / 2;
+
+    if (end.smooth_type == SMOOTH_DISTANCE)
+    {
+        path_length_out2end = end.cnt;
+    }
+    else if (end.smooth_type == SMOOTH_VELOCITY)
+    {
+        double path_out_vel = end.vel * end.cnt;
+        path_length_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
+    }
+    else
+    {
+        return PATH_PLANNING_SMOOTH_TYPE_ERROR;
+    }
+
+    if(path_length_out2end > max_path_length_out2end)
+    {
+        path_length_out2end = max_path_length_out2end;
+    }
+
+    int path_count_out2end = ceil(path_length_out2end * max_count_start2end / path_length_start2end);
+    double path_step_out2end = path_length_out2end / path_count_out2end;        
+
+    double path_length_start2out = path_length_start2end - path_length_out2end;
+    double angle_distance_start2out = path_length_start2out / path_length_start2end;
+    int path_count_start2out = ceil(angle_distance_start2out * max_count_start2end);
+    double path_step_start2out = path_length_start2out / path_count_start2out;
+
+    double angle_step_start2out = angle_distance_start2out / path_count_start2out;
+    double angle_step_out2end = (1.0 - angle_distance_start2out) / path_count_out2end;
+
+    packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
+    for(i = 1; i <= path_count_start2out; ++i)
+    {
+        point_distance_to_start += path_step_start2out;
+        angle_distance_to_start += angle_step_start2out;            
+        getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+        getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+    path_cache.smooth_out_index = path_count_start2out;
+    int path_count_total_minus_1 = path_count_start2out + path_count_out2end;
+    path_cache.cache_length = path_count_total_minus_1 + 1;
+    for(; i < path_count_total_minus_1; ++i)
+    {
+        point_distance_to_start += path_step_out2end;
+        angle_distance_to_start += angle_step_out2end;
+        getMoveLPathPoint(start.point_, path_vector_start2end, point_distance_to_start, path_cache.cache[i].pose.point_);
+        getQuaternPoint(start_quatern, end_quatern, angle_start2end, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+    packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_count_total_minus_1].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+
     return SUCCESS;
 }
 
@@ -491,77 +511,11 @@ ErrorCode planPathCircle(const PoseEuler &start,
     // find Pout distance to end point
     double circle_angle_distance_to_start = 0; // not scaled
     double quatern_angle_distance_to_start = 0; // scale to [0,1]
-    if(end.cnt >= DOUBLE_ACCURACY)    // cnt is valid
+
+    if (end.cnt < DOUBLE_ACCURACY)
     {
-        double circle_angle_out2end = 0.0;
-        if (end.smooth_type == SMOOTH_DISTANCE)
-        {
-            circle_angle_out2end = end.cnt / circle_radius;
-        }
-        else if (end.smooth_type == SMOOTH_VELOCITY)
-        {
-            double path_out_vel = end.vel * end.cnt;
-            circle_angle_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc * circle_radius);
-        }
-        else
-        {
-            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
-        }
-
-        double max_circle_angle_out2end = circle_angle / 2;
-        if(circle_angle_out2end > max_circle_angle_out2end)
-        {
-            circle_angle_out2end = max_circle_angle_out2end;
-        }
-
-        int circle_angle_count_out2end = ceil(circle_angle_out2end * max_count_start2end / circle_angle);
-        double circle_angle_step_out2end = circle_angle_out2end / circle_angle_count_out2end;
-
-        double circle_angle_start2out = circle_angle - circle_angle_out2end;
-        double quatern_angle_distance_start2out = circle_angle_start2out / circle_angle;
-        int circle_angle_count_start2out = ceil(quatern_angle_distance_start2out * max_count_start2end);
-        double circle_angle_step_start2out = circle_angle_start2out / circle_angle_count_start2out;
-
-        double quatern_angle_step_start2out = quatern_angle_distance_start2out / circle_angle_count_start2out;
-        double quatern_angle_step_out2end = (1.0 - quatern_angle_step_start2out) / circle_angle_count_out2end;
-
-        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
-
-        int i = 1;
-        for(; i <= circle_angle_count_start2out; ++i)
-        {
-            circle_angle_distance_to_start += circle_angle_step_start2out;
-            quatern_angle_distance_to_start += quatern_angle_step_start2out;
-
-            getCirclePoint(circle_radius, circle_angle_distance_to_start, uint_vector_n, uint_vector_o,
-                center_position, path_cache.cache[i].pose.point_);
-
-            getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-
-        path_cache.smooth_out_index = circle_angle_count_start2out;
-        int circle_angle_count_total_minus_1 = circle_angle_count_start2out + circle_angle_count_out2end - 1;
-        path_cache.cache_length = circle_angle_count_total_minus_1 + 1;
-
-        for(; i < circle_angle_count_total_minus_1; ++i)
-        {
-            circle_angle_distance_to_start += circle_angle_step_out2end;
-            quatern_angle_distance_to_start += quatern_angle_step_out2end;
-
-            getCirclePoint(circle_radius, circle_angle_distance_to_start, uint_vector_n, uint_vector_o,
-                center_position, path_cache.cache[i].pose.point_);
-
-            getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[circle_angle_count_total_minus_1].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[circle_angle_count_total_minus_1]);
-    }
-    else    // cnt is invalid
-    {
-        if(end.cnt >= -DOUBLE_ACCURACY)  // cnt = 0
+        if ((end.smooth_type == SMOOTH_DISTANCE || end.smooth_type == SMOOTH_VELOCITY)
+            && -DOUBLE_ACCURACY < end.cnt)
         {
             path_cache.smooth_out_index = max_count_start2end;
         }
@@ -569,6 +523,7 @@ ErrorCode planPathCircle(const PoseEuler &start,
         {
             path_cache.smooth_out_index = -1;
         }
+
         path_cache.cache_length = max_count_start2end + 1;
         double circle_angle_step_start2end = circle_angle / max_count_start2end;
 
@@ -588,7 +543,75 @@ ErrorCode planPathCircle(const PoseEuler &start,
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[max_count_start2end].pose);
         packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[max_count_start2end]);
+
+        return SUCCESS;
     }
+
+    double circle_angle_out2end = 0.0;
+    if (end.smooth_type == SMOOTH_DISTANCE)
+    {
+       circle_angle_out2end = end.cnt / circle_radius;
+    }
+    else if (end.smooth_type == SMOOTH_VELOCITY)
+    {
+        double path_out_vel = end.vel * end.cnt;
+        circle_angle_out2end = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc * circle_radius);
+    }
+    else
+    {
+        return PATH_PLANNING_SMOOTH_TYPE_ERROR;
+    }
+
+    double max_circle_angle_out2end = circle_angle / 2;
+    if(circle_angle_out2end > max_circle_angle_out2end)
+    {
+        circle_angle_out2end = max_circle_angle_out2end;
+    }
+
+    int circle_angle_count_out2end = ceil(circle_angle_out2end * max_count_start2end / circle_angle);
+    double circle_angle_step_out2end = circle_angle_out2end / circle_angle_count_out2end;
+
+    double circle_angle_start2out = circle_angle - circle_angle_out2end;
+    double quatern_angle_distance_start2out = circle_angle_start2out / circle_angle;
+    int circle_angle_count_start2out = ceil(quatern_angle_distance_start2out * max_count_start2end);
+    double circle_angle_step_start2out = circle_angle_start2out / circle_angle_count_start2out;
+
+    double quatern_angle_step_start2out = quatern_angle_distance_start2out / circle_angle_count_start2out;
+    double quatern_angle_step_out2end = (1.0 - quatern_angle_step_start2out) / circle_angle_count_out2end;
+
+    packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);
+
+    int i = 1;
+    for(; i <= circle_angle_count_start2out; ++i)
+    {
+        circle_angle_distance_to_start += circle_angle_step_start2out;
+        quatern_angle_distance_to_start += quatern_angle_step_start2out;
+
+        getCirclePoint(circle_radius, circle_angle_distance_to_start, uint_vector_n, uint_vector_o,
+            center_position, path_cache.cache[i].pose.point_);
+
+        getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+
+    path_cache.smooth_out_index = circle_angle_count_start2out;
+    int circle_angle_count_total_minus_1 = circle_angle_count_start2out + circle_angle_count_out2end - 1;
+    path_cache.cache_length = circle_angle_count_total_minus_1 + 1;
+
+    for(; i < circle_angle_count_total_minus_1; ++i)
+    {
+        circle_angle_distance_to_start += circle_angle_step_out2end;
+        quatern_angle_distance_to_start += quatern_angle_step_out2end;
+
+        getCirclePoint(circle_radius, circle_angle_distance_to_start, uint_vector_n, uint_vector_o,
+            center_position, path_cache.cache[i].pose.point_);
+
+        getQuaternPoint(start_quatern, end_quatern, quatern_angle_start2pose2, quatern_angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+    packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[circle_angle_count_total_minus_1].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[circle_angle_count_total_minus_1]);
 
     return SUCCESS;
 }
@@ -782,16 +805,11 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     }
     
     double end_ratio = 0.0;
-    double path_length_start2end = 0.0;
+    double path_length_via2end = 0.0;
+
     if (via.smooth_type == SMOOTH_DISTANCE)
     {
-        PoseEuler via_point, end_point;
-        segment_alg_param.kinematics_ptr->doFK(via.target.joint, via_point);
-        segment_alg_param.kinematics_ptr->doFK(end.target.joint, end_point);
-
-        double path_length_via2end = fabs(getDistance(via_point.point_, end_point.point_));
-        // path_length_start2end = fabs(path_length_start2end);
-        
+        path_length_via2end = getDistance(via.target.pose.pose.point_, end.target.pose.pose.point_);
         if (path_length_via2end < DOUBLE_ACCURACY)
         {
             end_ratio = 1.0;
@@ -891,39 +909,33 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     // find smooth_out_index
     int path_cache_length_minus_1 = path_cache.smooth_in_index + path_piece_in2end;
     path_cache.cache_length = path_cache_length_minus_1 + 1;
-    if(end.cnt > DOUBLE_ACCURACY)
+
+    if (end.smooth_type == SMOOTH_NONE || end.cnt < -DOUBLE_ACCURACY)
     {
-        if (end.smooth_type == SMOOTH_DISTANCE)
-        {
-            if (path_length_start2end < DOUBLE_ACCURACY)
-            {
-                path_cache.smooth_out_index = -1;
-            }
-            else 
-            {
-                int path_piece_out2end = floor(end_ratio * path_piece_via2end / 2.0);
-                path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
-            }
-        }
-        else if (via.smooth_type == SMOOTH_VELOCITY)
-        {
-            int path_piece_out2end = floor(end.cnt * path_piece_via2end / 2.0);
-            path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
-        }
-        else
-        {
-            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
-        }
+        path_cache.smooth_out_index = -1;
     }
-    else
+    else if (end.smooth_type == SMOOTH_DISTANCE)
     {
-        if(end.cnt > -DOUBLE_ACCURACY)  // end.cnt == 0
+        if (end.cnt < DOUBLE_ACCURACY || path_length_via2end < DOUBLE_ACCURACY)
         {
             path_cache.smooth_out_index = path_cache_length_minus_1;
         }
         else
         {
-            path_cache.smooth_out_index = -1;
+            int path_piece_out2end = floor(end_ratio * path_piece_via2end / 2.0);
+            path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
+        }
+    }
+    else
+    {
+        if (end.cnt < DOUBLE_ACCURACY)
+        {
+            path_cache.smooth_out_index = path_cache_length_minus_1;
+        }
+        else
+        {
+            int path_piece_out2end = floor(end.cnt * path_piece_via2end / 2.0);
+            path_cache.smooth_out_index = path_cache_length_minus_1 - path_piece_out2end;
         }
     }
 
@@ -1007,124 +1019,8 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
     double angle_distance_to_in = 0; // scale to [0,1]
     double angle_distance_to_out = 0; // scale to [0,1]
     double start_point[3], via_point[3], in_point[3];
-    if(end.cnt >= DOUBLE_ACCURACY)
-    {   // FIXME: small cnt will cause pulse in vel and acc of traj
-        // compute path in2out and out2target 
-        double path_length_out2target = 0.0;
-        double max_path_length_out2target = path_length_via2target / 2;
-        if (end.smooth_type == SMOOTH_VELOCITY)
-        {
-            double path_out_vel = end.vel * end.cnt;
-            path_length_out2target = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
-        }
-        else if (end.smooth_type == SMOOTH_DISTANCE)
-        {
-            path_length_out2target = end.cnt;
-        }
-        else
-        {
-            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
-        }
 
-        if(path_length_out2target > max_path_length_out2target)
-        {
-            path_length_out2target = max_path_length_out2target;
-        }
-
-        double path_length_in2out = path_length_in2target - path_length_out2target;        
-        Point point_out;
-        getMoveLPathPoint(point_in, path_vector_via2target, path_length_in2out, point_out);
-        int path_count_ideal_in2out = 0;
-        if(path_length_in2out > DOUBLE_ACCURACY)
-        {
-            path_count_ideal_in2out = ceil(path_length_in2out / segment_alg_param.path_interval);
-        }
-        int path_count_ideal_out2target = ceil(path_length_out2target / segment_alg_param.path_interval);       
-        // compute angle in2out and out2target
-        double angle_distance_in2out = path_length_in2out / path_length_in2target;
-        double quatern_out[4];
-        getQuaternVector4(quatern_in, quatern_target, angle_in2target, angle_distance_in2out, quatern_out);
-        double angle_in2out = getQuaternsIntersectionAngle(quatern_in, quatern_out);
-        double angle_out2target = angle_in2target - angle_in2out;
-        int angle_count_ideal_in2out = 0;
-        if(angle_in2out > DOUBLE_ACCURACY)
-        {
-            angle_count_ideal_in2out = ceil(angle_in2out / segment_alg_param.angle_interval);
-        }
-        int angle_count_ideal_out2target = ceil(angle_out2target / segment_alg_param.angle_interval);
-
-        // determine path count
-        int path_count_in2out = (path_count_ideal_in2out > angle_count_ideal_in2out ? path_count_ideal_in2out : angle_count_ideal_in2out);
-        if(path_count_in2out > (PATH_CACHE_SIZE*0.6))
-        {
-            path_count_in2out = (int)(PATH_CACHE_SIZE*0.6);
-        }
-        int path_count_out2target = (path_count_ideal_out2target > angle_count_ideal_out2target ? path_count_ideal_out2target : angle_count_ideal_out2target);
-        if(path_count_out2target > (PATH_CACHE_SIZE*0.2))
-        {
-            path_count_out2target = (int)(PATH_CACHE_SIZE*0.2);
-        }
-        path_cache.smooth_out_index = path_cache.smooth_in_index + path_count_in2out;
-        int path_cache_length_minus_1 = path_count_transition + path_count_in2out + path_count_out2target;
-        path_cache.cache_length = path_cache_length_minus_1 + 1;
-
-        // determine step
-        double path_step_in2out = path_length_in2out / path_count_in2out;
-        double path_step_out2target = path_length_out2target / path_count_out2target;
-        double angle_step_in2out = 1.0 / path_count_in2out;
-        double angle_step_out2target = 1.0 / path_count_out2target;
-
-        // compute transition path
-        getMovePointToVector3(start.point_, start_point);
-        getMovePointToVector3(point_via, via_point);
-        getMovePointToVector3(point_in, in_point);
-        updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
-
-        packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);        
-        for(i = 1; i < path_cache.smooth_in_index; ++i)
-        {
-            path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
-            path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
-            path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
-            angle_distance_to_start += angle_step_transition;
-            getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-
-        getQuaternPoint(quatern_in, quatern_out, angle_in2out, 0.0, path_cache.cache[path_cache.smooth_in_index].pose.quaternion_);
-        path_cache.cache[path_cache.smooth_in_index].pose.point_ = point_in;
-        //packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
-        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
-
-        // compute in2out path
-        for(i = path_cache.smooth_in_index + 1; i < path_cache.smooth_out_index; ++i)
-        {
-            point_distance_to_in += path_step_in2out;
-            angle_distance_to_in += angle_step_in2out;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
-            getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-
-        getQuaternPoint(quatern_out, quatern_target, angle_out2target, 0.0, path_cache.cache[path_cache.smooth_out_index].pose.quaternion_);
-        path_cache.cache[path_cache.smooth_out_index].pose.point_ = point_out;
-        //packPoseByPointAndQuatern(point_out, quatern_out, path_cache.cache[path_cache.smooth_out_index].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_out_index]);
-
-        // compute out2target path
-        for(i = path_cache.smooth_out_index + 1; i < path_cache_length_minus_1; ++i)
-        {
-            point_distance_to_in += path_step_out2target;
-            angle_distance_to_out += angle_step_out2target;
-            getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
-            getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-        packPoseByPointAndQuatern(end.target.pose.pose.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
-    }
-    else
+    if (end.cnt < DOUBLE_ACCURACY)
     {
         // compute in2target settings
         int path_count_ideal_in2target = ceil(path_length_in2target / segment_alg_param.path_interval);
@@ -1135,17 +1031,19 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
             path_count_in2target = (int)(PATH_CACHE_SIZE*0.8);
         }
         int path_cache_length_minus_1 = path_count_transition + path_count_in2target;
-        path_cache.cache_length = path_cache_length_minus_1 + 1;       
-        double path_step_in2target = path_length_in2target / path_count_in2target;
-        double angle_step_in2target = 1.0 / path_count_in2target;
-        if(end.cnt >= -DOUBLE_ACCURACY)  // cnt = 0
-        {
-            path_cache.smooth_out_index = path_cache_length_minus_1;
-        }
-        else
+        path_cache.cache_length = path_cache_length_minus_1 + 1;
+
+        if (end.smooth_type == SMOOTH_NONE || end.cnt < -DOUBLE_ACCURACY)
         {
             path_cache.smooth_out_index = -1;
         }
+        else
+        {
+            path_cache.smooth_out_index = path_cache_length_minus_1;
+        }
+
+        double path_step_in2target = path_length_in2target / path_count_in2target;
+        double angle_step_in2target = 1.0 / path_count_in2target;
 
         // compute transition path
         getMovePointToVector3(start.point_, start_point);
@@ -1181,7 +1079,124 @@ ErrorCode planPathSmoothLine(const PoseEuler &start,
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
+
+        return SUCCESS;
     }
+
+    double path_length_out2target = 0.0;
+    double max_path_length_out2target = path_length_via2target / 2;
+    if (end.smooth_type == SMOOTH_DISTANCE)
+    {
+        path_length_out2target = end.cnt;
+    }
+    else if (end.smooth_type == SMOOTH_VELOCITY)
+    {
+        double path_out_vel = end.vel * end.cnt;
+        path_length_out2target = path_out_vel * path_out_vel / (2 * segment_alg_param.conservative_acc);
+    }
+    else
+    {
+        return PATH_PLANNING_SMOOTH_TYPE_ERROR;
+    }
+
+    if(path_length_out2target > max_path_length_out2target)
+    {
+        path_length_out2target = max_path_length_out2target;
+    }
+
+
+    double path_length_in2out = path_length_in2target - path_length_out2target;        
+    Point point_out;
+    getMoveLPathPoint(point_in, path_vector_via2target, path_length_in2out, point_out);
+    int path_count_ideal_in2out = 0;
+    if(path_length_in2out > DOUBLE_ACCURACY)
+    {
+        path_count_ideal_in2out = ceil(path_length_in2out / segment_alg_param.path_interval);
+    }
+    int path_count_ideal_out2target = ceil(path_length_out2target / segment_alg_param.path_interval);       
+    // compute angle in2out and out2target
+    double angle_distance_in2out = path_length_in2out / path_length_in2target;
+    double quatern_out[4];
+    getQuaternVector4(quatern_in, quatern_target, angle_in2target, angle_distance_in2out, quatern_out);
+    double angle_in2out = getQuaternsIntersectionAngle(quatern_in, quatern_out);
+    double angle_out2target = angle_in2target - angle_in2out;
+    int angle_count_ideal_in2out = 0;
+    if(angle_in2out > DOUBLE_ACCURACY)
+    {
+        angle_count_ideal_in2out = ceil(angle_in2out / segment_alg_param.angle_interval);
+    }
+    int angle_count_ideal_out2target = ceil(angle_out2target / segment_alg_param.angle_interval);
+
+    // determine path count
+    int path_count_in2out = (path_count_ideal_in2out > angle_count_ideal_in2out ? path_count_ideal_in2out : angle_count_ideal_in2out);
+    if(path_count_in2out > (PATH_CACHE_SIZE*0.6))
+    {
+        path_count_in2out = (int)(PATH_CACHE_SIZE*0.6);
+    }
+    int path_count_out2target = (path_count_ideal_out2target > angle_count_ideal_out2target ? path_count_ideal_out2target : angle_count_ideal_out2target);
+    if(path_count_out2target > (PATH_CACHE_SIZE*0.2))
+    {
+        path_count_out2target = (int)(PATH_CACHE_SIZE*0.2);
+    }
+    path_cache.smooth_out_index = path_cache.smooth_in_index + path_count_in2out;
+    int path_cache_length_minus_1 = path_count_transition + path_count_in2out + path_count_out2target;
+    path_cache.cache_length = path_cache_length_minus_1 + 1;
+
+    // determine step
+    double path_step_in2out = path_length_in2out / path_count_in2out;
+    double path_step_out2target = path_length_out2target / path_count_out2target;
+    double angle_step_in2out = 1.0 / path_count_in2out;
+    double angle_step_out2target = 1.0 / path_count_out2target;
+
+    // compute transition path
+    getMovePointToVector3(start.point_, start_point);
+    getMovePointToVector3(point_via, via_point);
+    getMovePointToVector3(point_in, in_point);
+    updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
+
+    packPoseByPointAndQuatern(start.point_, quatern_start, path_cache.cache[0].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]);        
+    for(i = 1; i < path_cache.smooth_in_index; ++i)
+    {
+        path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
+        path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
+        path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
+        angle_distance_to_start += angle_step_transition;
+        getQuaternPoint(quatern_start, quatern_in, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+
+    getQuaternPoint(quatern_in, quatern_out, angle_in2out, 0.0, path_cache.cache[path_cache.smooth_in_index].pose.quaternion_);
+    path_cache.cache[path_cache.smooth_in_index].pose.point_ = point_in;
+    //packPoseByPointAndQuatern(point_in, quatern_in, path_cache.cache[path_cache.smooth_in_index].pose);
+    packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
+
+    // compute in2out path
+    for(i = path_cache.smooth_in_index + 1; i < path_cache.smooth_out_index; ++i)
+    {
+        point_distance_to_in += path_step_in2out;
+        angle_distance_to_in += angle_step_in2out;
+        getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+        getQuaternPoint(quatern_in, quatern_out, angle_in2out, angle_distance_to_in, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+
+    getQuaternPoint(quatern_out, quatern_target, angle_out2target, 0.0, path_cache.cache[path_cache.smooth_out_index].pose.quaternion_);
+    path_cache.cache[path_cache.smooth_out_index].pose.point_ = point_out;
+    //packPoseByPointAndQuatern(point_out, quatern_out, path_cache.cache[path_cache.smooth_out_index].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_out_index]);
+
+    // compute out2target path
+    for(i = path_cache.smooth_out_index + 1; i < path_cache_length_minus_1; ++i)
+    {
+        point_distance_to_in += path_step_out2target;
+        angle_distance_to_out += angle_step_out2target;
+        getMoveLPathPoint(point_in, path_vector_via2target, point_distance_to_in, path_cache.cache[i].pose.point_);
+        getQuaternPoint(quatern_out, quatern_target, angle_out2target, angle_distance_to_out, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+    packPoseByPointAndQuatern(end.target.pose.pose.point_, quatern_target, path_cache.cache[path_cache_length_minus_1].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
 
     return SUCCESS;
 }
@@ -1302,120 +1317,21 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
     double quatern_angle_distance_to_via = quatern_angle_distance_via2in;//scale [0-1]
     double start_point[3], via_point[3], in_point[3];
     int i = 1;
-    if(end.cnt >= DOUBLE_ACCURACY)
-    {
-        double circle_angle_out2end = 0.0;
-        if (end.smooth_type == SMOOTH_VELOCITY)
-        {
-            double path_out_vel = end.vel * end.cnt;
-            circle_angle_out2end = path_out_vel * path_out_vel/ (2 * segment_alg_param.conservative_acc * circle_radius);
-        }
-        else if (end.smooth_type == SMOOTH_DISTANCE)
-        {
-            circle_angle_out2end = end.cnt / circle_radius;
-        }
-        else
-        {
-            return PATH_PLANNING_SMOOTH_TYPE_ERROR;
-        }
 
-        //compute out2end path.
-
-        double max_circle_angle_out2end = circle_angle / 2;
-        if(circle_angle_out2end > max_circle_angle_out2end)
-        {
-            circle_angle_out2end = max_circle_angle_out2end;
-        }
-        int circle_angle_count_out2end = ceil(circle_angle_out2end * max_count_via2end / circle_angle);
-        double circle_angle_step_out2end = circle_angle_out2end / circle_angle_count_out2end;
-
-        double quatern_angle_distance_out2end = circle_angle_out2end / circle_angle;
-        double quatern_angle_step_out2end = quatern_angle_distance_out2end / circle_angle_count_out2end;
-        
-        //compute in2out path
-        double circle_angle_in2out = circle_angle - circle_angle_via2in - circle_angle_out2end;
-        int circle_angle_count_in2out = circle_angle_count_in2end - circle_angle_count_out2end;
-        double circle_angle_step_in2out = circle_angle_in2out / circle_angle_count_in2out;
-
-        double quatern_angle_distance_in2out = circle_angle_in2out / circle_angle;
-        double quatern_angle_step_in2out = quatern_angle_distance_in2out / circle_angle_count_in2out;
-
-        //compute out point.
-        Point point_out;
-        Quaternion quatern_out;
-        double circle_angle_via2out = circle_angle - circle_angle_out2end;
-        double quatern_angle_distance_via2out = circle_angle_via2out / circle_angle;
-        getCirclePoint(circle_radius, circle_angle_via2out, uint_vector_n, uint_vector_o, center_position, point_out);
-        getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_via2out, quatern_out);
-        double out_quatern[4];
-        getQuaternToQuaternVector4(quatern_out, out_quatern);
-
-        //compute index.
-        path_cache.smooth_out_index = path_cache.smooth_in_index + circle_angle_count_in2out;
-        int path_cache_length_minus_1 = path_cache.smooth_out_index + circle_angle_count_out2end;
-        path_cache.cache_length = path_cache_length_minus_1 + 1;
-
-        //compute transition path.
-        getMovePointToVector3(start.point_, start_point);
-        getMovePointToVector3(point_via, via_point);//todo not sure pose_target or circle_target!
-        getMovePointToVector3(point_in, in_point);
-        updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
-
-        packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]); 
-        for(i = 1; i < path_cache.smooth_in_index; ++i)
-        {
-            path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
-            path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
-            path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
-            angle_distance_to_start += angle_step_transition;
-            getQuaternPoint(start_quatern, in_quatern, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-        packPoseByPointAndQuatern(point_in, in_quatern, path_cache.cache[path_cache.smooth_in_index].pose);
-        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
-
-        //compute in2out path.
-        for(i = path_cache.smooth_in_index + 1; i < path_cache.smooth_out_index; ++i)
-        {
-            circle_angle_distance_to_via += circle_angle_step_in2out;
-            quatern_angle_distance_to_via += quatern_angle_step_in2out;
-
-            getCirclePoint(circle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
-                center_position, path_cache.cache[i].pose.point_);        
-            getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-        packPoseByPointAndQuatern(point_out, out_quatern, path_cache.cache[path_cache.smooth_out_index].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_out_index]);
-
-        //compute out2end path.
-        for(i = path_cache.smooth_out_index + 1; i < path_cache_length_minus_1; ++i)
-        {
-            circle_angle_distance_to_via += circle_angle_step_out2end;
-            quatern_angle_distance_to_via += quatern_angle_step_out2end;
-
-            getCirclePoint(circle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
-                center_position, path_cache.cache[i].pose.point_);        
-            getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
-            packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
-        }
-        packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_cache_length_minus_1].pose);
-        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
-    }
-    else
+    if (end.cnt < DOUBLE_ACCURACY)
     {
         //compute in2end path and index.
         int path_cache_length_minus_1 = path_count_transition + circle_angle_count_in2end;
         path_cache.cache_length = path_cache_length_minus_1 + 1; 
-        if(end.cnt >= -DOUBLE_ACCURACY)  // cnt = 0
+
+        if (end.smooth_type == SMOOTH_NONE || end.cnt < -DOUBLE_ACCURACY)
         {
-            path_cache.smooth_out_index = path_cache_length_minus_1;
+            path_cache.smooth_out_index = -1;
         }
         else
         {
-            path_cache.smooth_out_index = -1;
-        } 
+            path_cache.smooth_out_index = path_cache_length_minus_1;
+        }
 
         //compute transition path.
         getMovePointToVector3(start.point_, start_point);
@@ -1450,8 +1366,108 @@ ErrorCode planPathSmoothCircle(const PoseEuler &start,
         }
         packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_cache_length_minus_1].pose);
         packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
+
+        return SUCCESS;
     }
-          
+
+    double circle_angle_out2end = 0.0;
+    if (end.smooth_type == SMOOTH_DISTANCE)
+    {
+         circle_angle_out2end = end.cnt / circle_radius;
+    }
+    else if (end.smooth_type == SMOOTH_VELOCITY)
+    {
+        double path_out_vel = end.vel * end.cnt;
+        circle_angle_out2end = path_out_vel * path_out_vel/ (2 * segment_alg_param.conservative_acc * circle_radius);
+    }
+    else
+    {
+        return PATH_PLANNING_SMOOTH_TYPE_ERROR;
+    }
+
+    //compute out2end path.
+    double max_circle_angle_out2end = circle_angle / 2;
+    if(circle_angle_out2end > max_circle_angle_out2end)
+    {
+        circle_angle_out2end = max_circle_angle_out2end;
+    }
+    int circle_angle_count_out2end = ceil(circle_angle_out2end * max_count_via2end / circle_angle);
+    double circle_angle_step_out2end = circle_angle_out2end / circle_angle_count_out2end;
+
+    double quatern_angle_distance_out2end = circle_angle_out2end / circle_angle;
+    double quatern_angle_step_out2end = quatern_angle_distance_out2end / circle_angle_count_out2end;
+    
+    //compute in2out path
+    double circle_angle_in2out = circle_angle - circle_angle_via2in - circle_angle_out2end;
+    int circle_angle_count_in2out = circle_angle_count_in2end - circle_angle_count_out2end;
+    double circle_angle_step_in2out = circle_angle_in2out / circle_angle_count_in2out;
+
+    double quatern_angle_distance_in2out = circle_angle_in2out / circle_angle;
+    double quatern_angle_step_in2out = quatern_angle_distance_in2out / circle_angle_count_in2out;
+
+    //compute out point.
+    Point point_out;
+    Quaternion quatern_out;
+    double circle_angle_via2out = circle_angle - circle_angle_out2end;
+    double quatern_angle_distance_via2out = circle_angle_via2out / circle_angle;
+    getCirclePoint(circle_radius, circle_angle_via2out, uint_vector_n, uint_vector_o, center_position, point_out);
+    getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_via2out, quatern_out);
+    double out_quatern[4];
+    getQuaternToQuaternVector4(quatern_out, out_quatern);
+
+    //compute index.
+    path_cache.smooth_out_index = path_cache.smooth_in_index + circle_angle_count_in2out;
+    int path_cache_length_minus_1 = path_cache.smooth_out_index + circle_angle_count_out2end;
+    path_cache.cache_length = path_cache_length_minus_1 + 1;
+
+    //compute transition path.
+    getMovePointToVector3(start.point_, start_point);
+    getMovePointToVector3(point_via, via_point);//todo not sure pose_target or circle_target!
+    getMovePointToVector3(point_in, in_point);
+    updateTransitionBSpLineCartResult(2, start_point, via_point, in_point, path_cache.smooth_in_index);
+
+    packPoseByPointAndQuatern(start.point_, start_quatern, path_cache.cache[0].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[0]); 
+    for(i = 1; i < path_cache.smooth_in_index; ++i)
+    {
+        path_cache.cache[i].pose.point_.x_ = stack[S_BSpLineResultXBase + i];
+        path_cache.cache[i].pose.point_.y_ = stack[S_BSpLineResultYBase + i];
+        path_cache.cache[i].pose.point_.z_ = stack[S_BSpLineResultZBase + i];
+        angle_distance_to_start += angle_step_transition;
+        getQuaternPoint(start_quatern, in_quatern, angle_transition, angle_distance_to_start, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+    packPoseByPointAndQuatern(point_in, in_quatern, path_cache.cache[path_cache.smooth_in_index].pose);
+    packPathBlockType(TRANSITION_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_in_index]);  
+
+    //compute in2out path.
+    for(i = path_cache.smooth_in_index + 1; i < path_cache.smooth_out_index; ++i)
+    {
+        circle_angle_distance_to_via += circle_angle_step_in2out;
+        quatern_angle_distance_to_via += quatern_angle_step_in2out;
+
+        getCirclePoint(circle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
+            center_position, path_cache.cache[i].pose.point_);        
+        getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+    packPoseByPointAndQuatern(point_out, out_quatern, path_cache.cache[path_cache.smooth_out_index].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache.smooth_out_index]);
+
+    //compute out2end path.
+    for(i = path_cache.smooth_out_index + 1; i < path_cache_length_minus_1; ++i)
+    {
+        circle_angle_distance_to_via += circle_angle_step_out2end;
+        quatern_angle_distance_to_via += quatern_angle_step_out2end;
+
+        getCirclePoint(circle_radius, circle_angle_distance_to_via, uint_vector_n, uint_vector_o,
+            center_position, path_cache.cache[i].pose.point_);        
+        getQuaternPoint(via_quatern, end_quatern, quatern_angle_via2end, quatern_angle_distance_to_via, path_cache.cache[i].pose.quaternion_);
+        packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[i]);
+    }
+    packPoseByPointAndQuatern(end.target.pose.pose.point_, end_quatern, path_cache.cache[path_cache_length_minus_1].pose);
+    packPathBlockType(PATH_POINT, COORDINATE_CARTESIAN, path_cache.cache[path_cache_length_minus_1]);
+
     return SUCCESS;
 }
 

@@ -17,13 +17,6 @@ namespace fst_mc
 {
 
 const static size_t MAX_ATTEMPTS = 100;
-const static unsigned char READ_VERSION = 0x10;
-const static unsigned char WRITE_BY_ID  = 0x2D;
-const static unsigned char GET_ENCODER  = 0x70;
-const static unsigned char GET_CONTROL_POS  = 0x80;
-const static unsigned char READ_BY_ADDR     = 0x14;
-const static unsigned char READ_BY_ID       = 0x1D;
-const static unsigned char WRITE_BY_ADDR    = 0x24;
 
 
 BareCoreInterface::BareCoreInterface(void)
@@ -156,7 +149,7 @@ bool BareCoreInterface::stopBareCore(void)
 bool BareCoreInterface::setConfigData(int id, const vector<double> &data)
 {
     ServiceRequest req;
-    req.req_id = WRITE_BY_ID;
+    req.req_id = WRTIE_DATA_BY_ID;
     int len = data.size();
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
@@ -167,7 +160,7 @@ bool BareCoreInterface::setConfigData(int id, const vector<double> &data)
 bool BareCoreInterface::setConfigData(int id, const vector<int> &data)
 {
     ServiceRequest req;
-    req.req_id = WRITE_BY_ID;
+    req.req_id = WRTIE_DATA_BY_ID;
     int len = data.size();
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
@@ -178,7 +171,7 @@ bool BareCoreInterface::setConfigData(int id, const vector<int> &data)
 bool BareCoreInterface::getConfigData(int id, vector<double> &data)
 {
     ServiceRequest req;
-    req.req_id = READ_BY_ID;
+    req.req_id = READ_DATA_BY_ID;
     int len = data.size();
     memcpy(&req.req_buff[0], (char*)&id, sizeof(id));
     memcpy(&req.req_buff[4], (char*)&len, sizeof(len));
@@ -204,9 +197,9 @@ bool BareCoreInterface::getConfigData(int id, vector<double> &data)
 bool BareCoreInterface::getEncoder(vector<int> &data)
 {
     ServiceRequest req;
-    req.req_id = GET_ENCODER;
+    req.req_id = GET_ENCODER_SID;
     int len = data.size();
-    memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
+    memcpy(&req.req_buff[0], (void*)&len, sizeof(len));
 
     //if (sendRequest(jtac_param_interface_, req))
     if (sendRequest(command_interface_, req))
@@ -227,13 +220,59 @@ bool BareCoreInterface::getEncoder(vector<int> &data)
     return false;
 }
 
+bool BareCoreInterface::getEncoderError(std::vector<int> &data)
+{
+    ServiceRequest req;
+    req.req_id = GET_ENCODER_ERR_SID;
+    int len = data.size();
+    memcpy(&req.req_buff[0], (void*)&len, sizeof(len));
+
+    //if (sendRequest(jtac_param_interface_, req))
+    if (sendRequest(command_interface_, req))
+    {
+        ServiceResponse res;
+
+        //if (recvResponse(jtac_param_interface_, res))
+        if (recvResponse(command_interface_, res))
+        {
+            if (*((int*)(&res.res_buff[0])) == len)
+            {
+                memcpy(&data[0], &res.res_buff[4], len * sizeof(int));
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool BareCoreInterface::resetEncoderError(void)
+{
+    ServiceRequest req;
+    req.req_id = RESET_ENCODER_ERR_SID;
+
+    //if (sendRequest(jtac_param_interface_, req))
+    if (sendRequest(command_interface_, req))
+    {
+        ServiceResponse res;
+
+        //if (recvResponse(jtac_param_interface_, res))
+        if (recvResponse(command_interface_, res))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool BareCoreInterface::getControlPosition(double *data, size_t size)
 {
     if (size > NUM_OF_JOINT) return false;
 
     int len = size;
     ServiceRequest req;
-    req.req_id = GET_CONTROL_POS;
+    req.req_id = GET_CONTROL_POS_SID;
     memcpy(&req.req_buff[0], (char*)&len, sizeof(len));
 
     //if (sendRequest(jtac_param_interface_, req))
@@ -258,7 +297,7 @@ bool BareCoreInterface::getControlPosition(double *data, size_t size)
 bool BareCoreInterface::readVersion(char *buffer, size_t size)
 {
     ServiceRequest req;
-    req.req_id = READ_VERSION;
+    req.req_id = READ_VERSION_SID;
     if (sendRequest(command_interface_, req))
     {
         ServiceResponse res;

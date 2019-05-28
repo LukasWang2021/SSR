@@ -50,6 +50,8 @@ class BareCoreInterface
     bool setConfigData(int id, const std::vector<double> &data);
     bool getConfigData(int id, std::vector<double> &data);
     bool getEncoder(std::vector<int> &data);
+    bool getEncoderError(std::vector<int> &data);
+    bool resetEncoderError(void);
     bool getControlPosition(double *data, size_t len);
     bool readVersion(char *buffer, size_t size);
 

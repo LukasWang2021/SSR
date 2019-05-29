@@ -712,7 +712,7 @@ void ControllerSm::transferRobotState()
             }
             break;
         case ROBOT_IDLE_TO_TEACHING:
-            recordLog("Robot transfer from IDLE_TO_TEACHING to TEACHING");
+            FST_INFO("Robot transfer from IDLE_TO_TEACHING to TEACHING");//record_log will delay 
             robot_state_ = ROBOT_TEACHING;
             break;
         case ROBOT_RUNNING_TO_IDLE:

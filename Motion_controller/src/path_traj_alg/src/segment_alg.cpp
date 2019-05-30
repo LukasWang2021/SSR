@@ -284,12 +284,13 @@ ErrorCode planPathJoint(const Joint &start,
             double end_ratio = 0.0;
             if (path_length_start2end < DOUBLE_ACCURACY)
             {
-                path_cache.smooth_out_index = -1; // -1 / path_count ?
+                path_cache.smooth_out_index = path_count_minus_1;
             }
             else
             {
                 end_ratio = fabs(2 * end.cnt / path_length_start2end);
-                path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end_ratio);
+                if (1.0 < end_ratio) path_cache.smooth_out_index = path_count_minus_1;
+                else path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end_ratio);
             }
         }
         else
@@ -802,8 +803,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
         else
         {
             end_ratio = fabs(via.cnt / path_length_via2end);
-            if (end_ratio > 1.0)
-                end_ratio = 1.0;
+            if (1.0 < end_ratio) end_ratio = 1.0;
         }
     }
     else if (via.smooth_type == SMOOTH_VELOCITY)
@@ -902,7 +902,7 @@ ErrorCode planPathSmoothJoint(const Joint &start,
     }
     else if (end.smooth_type == SMOOTH_DISTANCE)
     {
-        if (end.cnt < DOUBLE_ACCURACY || path_length_via2end < DOUBLE_ACCURACY)
+        if (end.cnt < DOUBLE_ACCURACY)
         {
             path_cache.smooth_out_index = path_cache_length_minus_1;
         }

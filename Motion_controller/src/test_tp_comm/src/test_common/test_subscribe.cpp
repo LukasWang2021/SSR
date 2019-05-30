@@ -32,10 +32,6 @@ int main()
     if(!test.enablePublishTopic(hash_value)) return -1;
     printf("Subscribe : enable topic = %x\n", hash_value);
 
-    unsigned int hash_value_one = 0x12345611;
-    if(!test.enablePublishTopic(hash_value_one)) return -1;
-    printf("Subscribe : enable topic = %x\n", hash_value_one);
-
     int i = 0;
 
     for (;;) 
@@ -66,6 +62,21 @@ int main()
         {
             switch(msg.element[i].hash)
             {
+                case 0x00009D8E:
+                {
+                    MessageType_Int32_DoubleList pose;
+                    if(!test.decodeMessageType(msg.element[i].data.bytes, msg.element[i].data.size, 
+                        (void*)&pose, MessageType_Int32_DoubleList_fields))
+                    {
+                        printf("Sub : parse data msg failed !!\n");
+                    }
+                    else 
+                    {
+                        printf("Sub : parse data msg success, hash = 0x%x, group = %d, x=%lf, y=%lf, z=%lf, a=%lf, b=%lf, c=%lf\n",
+                            msg.element[i].hash, pose.data1.data, pose.data2.data[0],pose.data2.data[1],pose.data2.data[2],pose.data2.data[3],pose.data2.data[4],pose.data2.data[5]);
+                    }
+                }
+                    break;
                 case 0x000123C3:
                 {
                     MessageType_Uint32 uint32_data;
@@ -76,7 +87,7 @@ int main()
                     }
                     else 
                     {
-                        printf("Sub : parse data msg success, hash = 0x%x, data = %d\n",
+                        printf("Sub : parse data msg success, hash = 0x%x, data = 0x%x\n",
                             msg.element[i].hash, uint32_data.data);
                     }
                 }
@@ -93,16 +104,17 @@ int main()
                     {
                         printf("Sub : parse data msg success, hash = 0x%x, io_board_count = %d\n",
                             msg.element[i].hash, io.io_board_count);
-
+                        
                         for (int i = 0; i != io.io_board_count; ++i)
                         {
-                            printf("io_board[%d].id = %d\n", i, io.io_board[i].id);
-                            printf("io_board[%d].DI = %d\n", i, io.io_board[i].DI);
-                            printf("io_board[%d].DO = %d\n", i, io.io_board[i].DO);
-                            printf("io_board[%d].RI = %d\n", i, io.io_board[i].RI);
-                            printf("io_board[%d].RO = %d\n", i, io.io_board[i].RO);
+                            //printf("io_board[%d].id = 0x%x\n", i, io.io_board[i].id);
+                            //printf("io_board[%d].DI = 0x%x\n", i, io.io_board[i].DI);
+                            //printf("io_board[%d].DO = 0x%x\n", i, io.io_board[i].DO);
+                            //printf("io_board[%d].RI = 0x%x\n", i, io.io_board[i].RI);
+                            //printf("io_board[%d].RO = 0x%x\n", i, io.io_board[i].RO);
                             printf("io_board[%d].valid = %d\n", i, io.io_board[i].valid);
                         }
+                        
                     }
                 }
                     break;
@@ -114,7 +126,7 @@ int main()
                         printf("Sub : parse data msg failed !!\n");
                     else
                     {
-                        printf("Sub : parse data msg success, hash = %x, data = %d\n",
+                        printf("Sub : parse data msg success, hash = %x, data = 0x%x\n",
                             msg.element[i].hash, int32_data.data);
                     }
                 }

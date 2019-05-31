@@ -87,6 +87,8 @@ public:
     
     // only open sharemem onece.
     static bool is_mem_init_;
+    
+    static int io_dev_count_;
 
 private:
     FstIoDeviceParam* param_ptr_;
@@ -98,7 +100,7 @@ private:
     IODeviceInfo dev_info_;
     IODevicePortValues dev_values_;
     uint8_t output_[IO_DATAFRAME_MAX];
-
+    std::map<int, int> addr_map_;
     ErrorCode error_code_;
     ErrorCode pre_code_;
 

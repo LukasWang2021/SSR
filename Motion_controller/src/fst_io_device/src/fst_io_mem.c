@@ -104,7 +104,11 @@ int ioWriteDownload(struct IODeviceData *io)
 	uint8_t *p_wRo = (uint8_t *)piodev->p_wRo + (io->offset << IO_OFFSET_BYTES);
 	uint8_t *p_wDo = (uint8_t *)piodev->p_wDo + (io->offset << IO_OFFSET_BYTES);
 
-	memcpy(p_wRo, &io->output[IO_DODI_LENGTH], IO_RORI_LENGTH);
+	uint32_t write_output = 0;
+	memcpy(&write_output, &io->output[IO_DODI_LENGTH], IO_RORI_LENGTH);
+	write_output = write_output & 0x000000FF;
+	memcpy(p_wRo, &write_output, sizeof(write_output));
+
 	memcpy(p_wDo, &io->output, IO_DODI_LENGTH);
 
 	return 0;

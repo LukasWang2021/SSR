@@ -4226,6 +4226,7 @@ inline void updateSmoothOut2InTrajT(const PathCache &path_cache, const MotionInf
             }
 
             time_span_out2in = time_span_out2in * 2;
+            if (time_span_out2in < DOUBLE_ACCURACY) time_span_out2in = 0.1;
             break;
         }
         else if (via.type == MOTION_CIRCLE)
@@ -4330,6 +4331,7 @@ inline void updateSmoothOut2InTrajT(const PathCache &path_cache, const MotionInf
             double path_length_via2in = getPointsDistance(via.target.pose.pose.point_, path_cache.cache[path_cache.smooth_in_index].pose.point_);
             double time_via2in = path_length_via2in / cmd_vel;
             time_span_out2in = time_out2via + time_via2in;
+            if (time_span_out2in < DOUBLE_ACCURACY) time_span_out2in = 0.1;
         }
         break;
     }

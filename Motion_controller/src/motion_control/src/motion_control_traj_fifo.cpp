@@ -25,8 +25,9 @@ TrajectoryFifo::TrajectoryFifo(void)
 TrajectoryFifo::~TrajectoryFifo(void)
 {}
 
-ErrorCode TrajectoryFifo::initTrajectoryFifo(size_t capacity, size_t joint_num)
+ErrorCode TrajectoryFifo::initTrajectoryFifo(size_t capacity, size_t joint_num, fst_log::Logger *plog)
 {
+    log_ptr_ = plog;
     joint_num_ = joint_num;
     trajectory_segment_.time_from_start = 0;
     trajectory_segment_.time_from_block = 0;
@@ -66,6 +67,11 @@ ErrorCode TrajectoryFifo::pickTrajectoryPoint(MotionTime time, TrajectoryPoint &
 
 ErrorCode TrajectoryFifo::fetchSegmentByTime(MotionTime time)
 {
+    if (trajectory_segment_.duration < 0 && !trajectory_fifo_.empty())
+    {
+        trajectory_fifo_.fetch(trajectory_segment_);
+    }
+
     while (trajectory_segment_.time_from_start + trajectory_segment_.duration < time && !trajectory_fifo_.empty())
     {
         trajectory_fifo_.fetch(trajectory_segment_);
@@ -82,7 +88,7 @@ ErrorCode TrajectoryFifo::fetchSegmentByTime(MotionTime time)
     }
     else
     {
-        printf("\033[31mError by fetchSegmentByTime: %.6f - %.6f - %.6f\033[0m\n", trajectory_segment_.time_from_start, trajectory_segment_.duration, trajectory_segment_.time_from_block);
+        FST_ERROR("Error by fetchSegmentByTime: fifo-size = %d, time = %.6f, %.6f, %.6f, %.6f", trajectory_fifo_.size(), time, trajectory_segment_.time_from_start, trajectory_segment_.duration, trajectory_segment_.time_from_block);
         return TRAJECTORY_SEGMENT_ERROR;
     }
 }

@@ -163,7 +163,7 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
     {
         FST_INFO("Initializing trajectory fifo ... capacity = %d", traj_fifo_size);
 
-        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_SCARA) == SUCCESS)
+        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_SCARA, log_ptr_) == SUCCESS)
         {
             FST_INFO("Success.");
         }

@@ -164,7 +164,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager
     {
         FST_INFO("Initializing trajectory fifo ... capacity = %d", traj_fifo_size);
 
-        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM) == SUCCESS)
+        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM, log_ptr_) == SUCCESS)
         {
             FST_INFO("Success.");
         }

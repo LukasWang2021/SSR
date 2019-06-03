@@ -9,6 +9,7 @@
 #define _MOTION_PLAN_TRAJ_FIFO_H
 
 #include <error_code.h>
+#include <common_log.h>
 #include <lock_free_fifo.h>
 #include <motion_control_datatype.h>
 
@@ -24,7 +25,7 @@ class TrajectoryFifo
     TrajectoryFifo(void);
     ~TrajectoryFifo(void);
 
-    ErrorCode initTrajectoryFifo(size_t capacity, size_t joint_num);
+    ErrorCode initTrajectoryFifo(size_t capacity, size_t joint_num, fst_log::Logger *plog);
     ErrorCode pushTrajectorySegment(const TrajectorySegment &segment);
     ErrorCode pickTrajectoryPoint(MotionTime time, TrajectoryPoint &point);
 
@@ -39,6 +40,7 @@ class TrajectoryFifo
     void sampleEndingPointFromSegment(TrajectoryPoint &point);
 
     size_t  joint_num_;
+    fst_log::Logger     *log_ptr_;
     TrajectorySegment   trajectory_segment_;
     LockFreeFIFO<TrajectorySegment>   trajectory_fifo_;
 };

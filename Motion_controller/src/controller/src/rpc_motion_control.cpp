@@ -61,7 +61,7 @@ void ControllerRpc::handleRpc0x0001578F(void* request_data_ptr, void* response_d
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = motion_control_ptr_->getGlobalVelRatio();
 
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/getGlobalVelRatio"));
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/getGlobalVelRatio"));
 }
 
 // "/rpc/motion_control/setGlobalAccRatio"
@@ -90,7 +90,7 @@ void ControllerRpc::handleRpc0x00016D9F(void* request_data_ptr, void* response_d
     
     rs_data_ptr->error_code.data = SUCCESS;
     rs_data_ptr->data.data = motion_control_ptr_->getGlobalAccRatio();
-    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/getGlobalAccRatio"));
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/getGlobalAccRatio"));
 }
 
 // "/rpc/motion_control/getAxisGroupInfoList"

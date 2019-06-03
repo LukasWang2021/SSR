@@ -72,5 +72,13 @@ install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+add_executable(iodev_test
+    src/fst_io_mem.c
+    test/iodev_test.cpp
+)
+install(TARGETS iodev_test
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 
 

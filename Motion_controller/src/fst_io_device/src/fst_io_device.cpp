@@ -23,6 +23,7 @@ using namespace fst_hal;
 using namespace fst_base;
 
 bool FstIoDevice::is_mem_init_ = false;
+int FstIoDevice::io_dev_count_ = 0;
 
 FstIoDevice::FstIoDevice(int address):
     BaseDevice(address, fst_hal::DEVICE_TYPE_FST_IO),
@@ -35,14 +36,19 @@ FstIoDevice::FstIoDevice(int address):
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new FstIoDeviceParam();
     FST_LOG_INIT("fst_io_device");
+    address_ = address_ & 0x0F;//address is 0-15.
 }
 
 FstIoDevice::~FstIoDevice()
 {
     if(is_mem_init_ == true)
     {
-        ioClose();
-        is_mem_init_ = false;
+        io_dev_count_--;
+        if (io_dev_count_ == 0)
+        {
+            ioClose();
+            is_mem_init_ = false;
+        }
     }
     if(log_ptr_ != NULL)
     {
@@ -87,9 +93,21 @@ bool FstIoDevice::init()
     memset(&output_, 0, sizeof(output_));
     setValid(true);
 
+    //map between address and id, id is used to find the sharemem address according to protocol.
+    addr_map_[address_] = io_dev_count_;
+    io_dev_count_++;
+    if(io_dev_count_ > IO_BOARD_NUM_MAX)
+    {
+        FST_ERROR("exceed the max io_board number.");
+        return false;
+    }
+
     // init the sharemem only one time for serveral io_boards
     if(is_mem_init_ == true)
+    {
+        ioWriteId(addr_map_[address_], address_);
         return true;
+    }
 
     if (is_virtual_ == false)
     {
@@ -97,6 +115,7 @@ bool FstIoDevice::init()
         if (result == 0)
         {
             is_mem_init_ = true;
+            ioWriteId(addr_map_[address_], address_);
             FST_INFO("Use real IO");
         }else
         {
@@ -117,7 +136,7 @@ void FstIoDevice::getIoBoardVersion(int &version)
 {
     if (is_virtual_ == false)
     {
-        getIoBoardVersionFromMem(&version);
+        ioBoardVersionFromMem(addr_map_[address_], &version);
     }
     else
     {
@@ -225,6 +244,11 @@ ErrorCode FstIoDevice::getUoValue(uint32_t port_offset, uint8_t &value)
 
 ErrorCode FstIoDevice::setDoValue(uint32_t port_offset, uint8_t value)
 {
+    if (error_code_ == IO_DEVICE_UNFOUND)
+    {
+        return error_code_;
+    }
+
     if((port_offset > param_ptr_->max_DO_number_) || port_offset == 0) 
     {
         FST_ERROR("FstIoDevice::setDoValue(): invalid port seq for DO - %d", port_offset);
@@ -247,6 +271,11 @@ ErrorCode FstIoDevice::setDoValue(uint32_t port_offset, uint8_t value)
 
 ErrorCode FstIoDevice::setRoValue(uint32_t port_offset, uint8_t value)
 {
+    if (error_code_ == IO_DEVICE_UNFOUND)
+    {
+        return error_code_;
+    }
+
     if((port_offset > param_ptr_->max_RO_number_) || port_offset == 0) 
     {
         FST_ERROR("FstIoDevice::setRoValue(): invalid port seq for RO - %d", port_offset);
@@ -301,6 +330,7 @@ ErrorCode FstIoDevice::updateDeviceData(void)
     {
         setValid(false);
     }
+    
     //only upload error one time.
     if ((pre_code_ != error_code_) && (error_code_ != SUCCESS))
     {
@@ -317,7 +347,7 @@ ErrorCode FstIoDevice::updateDeviceData(void)
 
 void FstIoDevice::initIODeviceData(IODeviceData &data)
 {
-    data.id = address_;
+    data.offset = addr_map_[address_];
     data.model = 0;
     data.enable = 1;
     data.verify = 1;
@@ -330,7 +360,7 @@ void FstIoDevice::initIODeviceData(IODeviceData &data)
 ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
 {
     if (is_virtual_ == true) {
-        data.input[0] = 0x0;// simulation input as binary 00011011
+        data.input[0] = 0x0;
         data.input[1] = 0xAA;// simulation input as binary 10101010
         data.input[2] = 0xAA;
         data.input[3] = 0xAA;
@@ -338,23 +368,18 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
         return SUCCESS;
     }
 
-    uint8_t id = data.id;
     // fetch data from memory.
     if (!readWriteMem(data))
         return GET_IO_FAIL;
 
-    // check enable and id.
-    if (data.enable == 0x0 || id != data.id)
+    // check enable.
+    if (data.enable == 0)
     {
-        //printf("IODeviceData ID=%x, enable=%x, verify=%x, model=%x, input[]=%x-%x-%x-%x-%x,output=%x-%x-%x-%x-%x\n",
-        //      data.id, data.enable, data.verify, data.model,
-        //      data.input[4],data.input[3],data.input[2],data.input[1],data.input[0],
-        //     data.output[4],data.output[3],data.output[2],data.output[1],data.output[0]);
         return IO_DEVICE_UNFOUND;
     }    
     if (data.verify == 0)
     {
-        //printf("IODeviceData verify=%x\n", data.verify);
+        //FST_INFO("id = %d, IODeviceData verify failed", address_);
         return IO_VERIFY_FALSE;
     }
     return SUCCESS; 
@@ -362,65 +387,14 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
 
 bool FstIoDevice::readWriteMem(IODeviceData &data)
 {
-    static uint8_t seq = 1; // the flags to read and write FPGA.
-    static int read_counter = 0; // the counter for the error times of reading FPGA.
-    static int write_counter = 0; // the counter for the error times of writing FPGA.
-
-    if (seq >= 15)
-        seq = 1;
-
-    uint8_t id = data.id;
-    //step1: write download data(output).
-    if (ioWriteDownload(&data) != 0) {
-        //std::cout<<"ioWriteDownload() failed."<<std::endl;
+    //new protocol from 201905
+    if (ioWriteDownload(&data) != 0) 
+    {
         return false;
     }
-
-    uint8_t idseq = id;
-    idseq = idseq << 4;
-    idseq += seq;
-
-    //step2: write ID&seq.
-    if (ioSetIdSeq(idseq) != 0) {
-        //std::cout<<"ioSetIdSeq() failed."<<std::endl;
+    if (ioReadUpload(&data) != 0) 
+    {
         return false;
     }
-
-    // wait for FPGA reply.
-    usleep(200);
-
-    //step3:get upload and download seq.
-    uint8_t  read_seq;
-    if (ioGetSeq(&read_seq) != 0) {
-        //std::cout<<"ioGetSeq() failed."<<std::endl;
-        return false;
-    }
-
-    uint8_t upload_seq = read_seq & 0x0F;
-    uint8_t download_seq = (read_seq >> 4) & 0x0F;
-    //printf("seq=%x, upload_seq=%x, download_seq=%x\n",seq,upload_seq,download_seq);
-
-    //step4:read upload data(input)
-    if (upload_seq == seq) {
-        if (ioReadUpload(&data) != 0) {
-            //std::cout<<"ioReadUpload() failed."<<std::endl;
-            return false;
-        }
-        read_counter = 0;
-    } else {
-        ++read_counter;
-    }
-
-    if (download_seq == seq)
-        write_counter = 0;
-    else
-        ++write_counter;
-        
-    if (read_counter > comm_tolerance_ || write_counter > comm_tolerance_) {
-        //std::cout<<"read write io with FPGA failed too many."<<std::endl;
-        return false;
-    }
-
-    ++seq;
     return true;
 }

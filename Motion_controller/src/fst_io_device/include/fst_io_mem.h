@@ -1,6 +1,6 @@
 
-#ifndef IOBOARD_IOBOARD_H_
-#define IOBOARD_IOBOARD_H_
+#ifndef FST_IO_MEM_H_
+#define FST_IO_MEM_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,10 +9,9 @@ extern "C" {
 #include <stdint.h>
 
 #define IO_DATAFRAME_MAX 5
-#define IOERROR (-1)
 
 struct IODeviceData {
-	uint8_t	id;
+	uint8_t	offset;
 	uint8_t enable;
 	uint8_t verify;
 	uint8_t model;
@@ -22,39 +21,33 @@ struct IODeviceData {
 
 #define IO_BASE 0xC0090000
 #define IO_LENGTH 0x1000
-#define ADDR_FLAG_WRITE 0x30
-#define ADDR_FLAG_READ 0x38
-#define ADDR_DATA_WRITE 0x50
-#define ADDR_DATA_READ 0x40
-#define ADDR_IO_VERSION 0x64 // for version
+#define IO_ADDR_WRITE_ID 0x0C
+#define IO_ADDR_WRITE_RO 0x14
+#define IO_ADDR_WRITE_DO 0x10
+#define IO_ADDR_READ_STATE 0x28
+#define IO_ADDR_READ_DI 0x18
+#define IO_ADDR_READ_DO 0x20
+#define IO_ADDR_READ_VERSION 0x2C
+#define IO_ADDR_SEND_ENABLE 4
 
-#define START_FRAME_VALUE 0x3C
-
-#define OF_START 0x0
-#define OF_ID 0xC
-#define OF_ENABLE 0x19
-#define OF_VERIFY 0x18
-#define OF_MODEL 0x8
-#define OF_FRAME_INPUT 0x4
-#define OF_FRAME_OUTPUT 0xB
-
-#define MASK_ID (0x0f << OF_ID)
-#define MASK_ENABLE	(0x01 << OF_ENABLE)
-#define MASK_VERIFY (0x01 << OF_VERIFY)
-#define MASK_MODEL (0x0f << OF_MODEL)
+#define IO_BOARD_NUM_MAX 4
+#define IO_OFFSET_BYTES 5
+//from IO_ADDR_READ_STATE
+#define IO_OFFSET_ENABLE 4
+#define IO_OFFSET_MODEL 16
+#define IO_RORI_LENGTH 1
+#define IO_DODI_LENGTH 4
 
 
 int ioInit(void);
 
-int ioSetIdSeq(uint8_t idseq);
+int ioWriteId(uint8_t offset, uint8_t address);
 
-int ioGetSeq(uint8_t *seq);
+int ioWriteDownload(struct IODeviceData *io);
 
-int ioWriteDownload(struct IODeviceData *idd);
+int ioReadUpload(struct IODeviceData *io);
 
-int ioReadUpload(struct IODeviceData *idd);
-
-void getIoBoardVersionFromMem(int *version);
+int ioBoardVersionFromMem(uint8_t offset, int *version);
 
 void ioClose(void);
 

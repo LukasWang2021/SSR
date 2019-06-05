@@ -187,13 +187,13 @@ ErrorCode ControllerSm::checkOffsetState()
         {
             if(offset_state[i] == OFFSET_LOST)
             {
-                std::string log_str("offset lost: joint ");
+                std::string log_str("No.");
                 log_str.append(std::to_string(i+1));
                 recordLog(ZERO_OFFSET_LOST, log_str);
             }
             else if(offset_state[i] == OFFSET_DEVIATE)
             {
-                std::string log_str("offset deviate: joint ");
+                std::string log_str("No.");
                 log_str.append(std::to_string(i+1));
                 recordLog(ZERO_OFFSET_DEVIATE, log_str);
             }

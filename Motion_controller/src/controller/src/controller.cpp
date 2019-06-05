@@ -250,7 +250,6 @@ ErrorCode Controller::init()
 
     state_machine_.setState(true);
     recordLog("Controller initialization success");
-    FST_INFO("Controller::init success");
     return SUCCESS;
 }
 
@@ -287,7 +286,7 @@ void Controller::runHeartbeatThreadFunc()
 void Controller::recordLog(std::string log_str)
 {
     std::stringstream stream;
-    stream<<"Log_Code: 0x"<<std::hex<<CONTROLLER_LOG<<" : "<<log_str<<std::endl;
+    stream<<"Log_Code: 0x"<<std::hex<<CONTROLLER_LOG<<" : "<<log_str;
     FST_INFO(stream.str().c_str());
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(CONTROLLER_LOG, log_str);

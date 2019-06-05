@@ -183,17 +183,17 @@ ErrorCode ControllerSm::checkOffsetState()
 
     if(calib_state != MOTION_NORMAL)
     {
-        for(int i=0; i<NUM_OF_JOINT; ++i)
+        for(int i=0; i < JOINT_OF_ARM; ++i)
         {
             if(offset_state[i] == OFFSET_LOST)
             {
-                std::string log_str("No.");
+                std::string log_str("");
                 log_str.append(std::to_string(i+1));
                 recordLog(ZERO_OFFSET_LOST, log_str);
             }
             else if(offset_state[i] == OFFSET_DEVIATE)
             {
-                std::string log_str("No.");
+                std::string log_str("");
                 log_str.append(std::to_string(i+1));
                 recordLog(ZERO_OFFSET_DEVIATE, log_str);
             }
@@ -248,7 +248,7 @@ ErrorCode ControllerSm::callReset()
             controller_client_ptr_->abort();
             motion_control_ptr_->stopGroup();
             motion_control_ptr_->abortMove();
-            recordLog(error_code, "Controller transfer to ANY_TO_ESTOP for offset failure when reset");
+            recordLog("Controller transfer to ANY_TO_ESTOP for offset failure when reset");
             ctrl_state_ = CTRL_ANY_TO_ESTOP;
             return error_code;
         }

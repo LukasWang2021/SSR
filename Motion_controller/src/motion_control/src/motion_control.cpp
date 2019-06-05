@@ -7,7 +7,7 @@
 #include "../../tool_manager/include/tool_manager.h"
 
 
-
+using namespace std;
 using namespace basic_alg;
 using namespace fst_base;
 using namespace basic_alg;

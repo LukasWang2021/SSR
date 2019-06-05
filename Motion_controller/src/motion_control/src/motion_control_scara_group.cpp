@@ -403,15 +403,23 @@ ErrorCode ScaraGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManag
         return MC_INTERNAL_FAULT;
     }
 
+    /*
     // 初始化动力学模块
-    FST_INFO("Initializing dynamics of ScaraGroup ...");
-    dynamics_ptr_ = new DynamicsInterface();
+    FST_INFO("Initializing dynamics of ArmGroup ...");
+    dynamics_ptr_ = new DynamicAlgRTM();
 
     if (dynamics_ptr_ == NULL)
     {
-        FST_ERROR("Fail to create dynamics for ScaraGroup.");
+        FST_ERROR("Fail to create dynamics for ArmGroup.");
         return MC_INTERNAL_FAULT;
     }
+
+    if (!dynamics_ptr_->initDynamicAlg(path))
+    {
+        FST_ERROR("Fail to init dynamics for ArmGroup.");
+        return MC_FAIL_IN_INIT;
+    }
+    */
 
     // 初始化坐标变换模块
     if (!transformation_.init(kinematics_ptr_))

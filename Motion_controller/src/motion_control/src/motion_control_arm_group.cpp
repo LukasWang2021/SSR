@@ -15,6 +15,7 @@
 #include <error_monitor.h>
 #include <common_file_path.h>
 #include <segment_alg.h>
+#include <dynamic_alg_rtm.h>
 
 
 using namespace std;

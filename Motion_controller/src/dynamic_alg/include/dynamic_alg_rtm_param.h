@@ -1,5 +1,5 @@
-#ifndef IO_MANAGER_PARAM_H
-#define IO_MANAGER_PARAM_H
+#ifndef DYNAMIC_ALG_RTM_PARAM_H
+#define DYNAMIC_ALG_RTM_PARAM_H
 
 
 #include "parameter_manager/parameter_manager_param_group.h"

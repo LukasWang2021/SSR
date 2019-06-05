@@ -245,7 +245,7 @@ class BaseGroup
     fst_ctrl::ToolManager   *tool_manager_ptr_;
     basic_alg::Kinematics   *kinematics_ptr_;
     basic_alg::Transformation   transformation_;
-    fst_algorithm::DynamicsInterface  *dynamics_ptr_;
+    basic_alg::DynamicAlg   *dynamics_ptr_;
 
     CachePool<PathCacheList>        path_cache_pool_;
     CachePool<TrajectoryCacheList>  traj_cache_pool_;

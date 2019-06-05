@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
     //--------------init dynamics----------------------//
     DynamicAlgRTM dyn;
-    dyn.initDynamicAlgRTM("/root/install/share/runtime/axis_group/");
+    dyn.initDynamicAlg("/root/install/share/runtime/axis_group/");
     printf("valid = %d\n", dyn.isValid());
     //dyn.updateLoadParam(load_param);
     bool err = false;

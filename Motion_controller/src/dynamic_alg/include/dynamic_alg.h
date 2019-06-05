@@ -54,7 +54,7 @@ class DynamicAlg
 public:
     virtual ~DynamicAlg(){}
 
-    virtual bool initDynamicAlgRTM(std::string file_path) = 0;
+    virtual bool initDynamicAlg(std::string file_path) = 0;
     
     virtual bool updateLoadParam() = 0;
     virtual bool updateLoadParam(DynamicAlgLoadParam load_param) = 0;

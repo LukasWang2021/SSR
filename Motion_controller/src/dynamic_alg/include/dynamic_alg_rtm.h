@@ -17,7 +17,7 @@ public:
     DynamicAlgRTM();
     ~DynamicAlgRTM();
 
-    virtual bool initDynamicAlgRTM(std::string file_path);
+    virtual bool initDynamicAlg(std::string file_path);
 
     virtual bool updateLoadParam(void);
     virtual bool updateLoadParam(DynamicAlgLoadParam load_param);

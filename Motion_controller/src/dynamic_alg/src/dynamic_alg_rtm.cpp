@@ -31,7 +31,7 @@ DynamicAlgRTM::~DynamicAlgRTM()
     }
 }
 
-bool DynamicAlgRTM::initDynamicAlgRTM(std::string file_path)
+bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
 {
     if(!param_ptr_->loadParam()){
         FST_ERROR("Failed to load dynamic_alg_rtm component parameters");

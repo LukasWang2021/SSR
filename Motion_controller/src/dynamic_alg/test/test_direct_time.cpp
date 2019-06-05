@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 
     //--------------init dynamics----------------------//
     DynamicAlgRTM dyn;
-    bool ret = dyn.initDynamicAlgRTM("/root/install/share/runtime/axis_group/");
+    bool ret = dyn.initDynamicAlg("/root/install/share/runtime/axis_group/");
     printf("valid = %d\n", dyn.isValid());
     if(ret == false)
     {

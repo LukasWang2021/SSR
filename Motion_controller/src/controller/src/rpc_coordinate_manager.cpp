@@ -22,12 +22,12 @@ void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_d
     info.comment = rq_data_ptr->data.comment;
     info.is_valid = false;  // not used, but initialized
     info.group_id = rq_data_ptr->data.group_id;
-    info.data.point_.x_ = rq_data_ptr->data.data.x;
-    info.data.point_.y_ = rq_data_ptr->data.data.y;
-    info.data.point_.z_ = rq_data_ptr->data.data.z;
-    info.data.euler_.a_ = rq_data_ptr->data.data.a;
-    info.data.euler_.b_ = rq_data_ptr->data.data.b;
-    info.data.euler_.c_ = rq_data_ptr->data.data.c;
+    info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+    info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+    info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+    info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+    info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+    info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
     rs_data_ptr->data.data = coordinate_manager_ptr_->addCoord(info);
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/addUserCoord"));
 }
@@ -60,12 +60,12 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
     info.comment = rq_data_ptr->data.comment;
     info.is_valid = false;  // not used, but initialized
     info.group_id = rq_data_ptr->data.group_id;
-    info.data.point_.x_ = rq_data_ptr->data.data.x;
-    info.data.point_.y_ = rq_data_ptr->data.data.y;
-    info.data.point_.z_ = rq_data_ptr->data.data.z;
-    info.data.euler_.a_ = rq_data_ptr->data.data.a;
-    info.data.euler_.b_ = rq_data_ptr->data.data.b;
-    info.data.euler_.c_ = rq_data_ptr->data.data.c;
+    info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+    info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+    info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+    info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+    info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+    info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
     rs_data_ptr->data.data = coordinate_manager_ptr_->updateCoord(info);
 
     int current_id = 0;
@@ -111,12 +111,12 @@ void ControllerRpc::handleRpc0x00004324(void* request_data_ptr, void* response_d
         strncpy(rs_data_ptr->data.comment, info.comment.c_str(), 255);
         rs_data_ptr->data.comment[255] = 0;
         rs_data_ptr->data.group_id = info.group_id;
-        rs_data_ptr->data.data.x = info.data.point_.x_;
-        rs_data_ptr->data.data.y = info.data.point_.y_;
-        rs_data_ptr->data.data.z = info.data.point_.z_;
-        rs_data_ptr->data.data.a = info.data.euler_.a_;
-        rs_data_ptr->data.data.b = info.data.euler_.b_;
-        rs_data_ptr->data.data.c = info.data.euler_.c_;
+        rs_data_ptr->data.data.data[0] = info.data.point_.x_;
+        rs_data_ptr->data.data.data[1] = info.data.point_.y_;
+        rs_data_ptr->data.data.data[2] = info.data.point_.z_;
+        rs_data_ptr->data.data.data[3] = info.data.euler_.a_;
+        rs_data_ptr->data.data.data[4] = info.data.euler_.b_;
+        rs_data_ptr->data.data.data[5] = info.data.euler_.c_;
     }
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/coordinate_manager/getUserCoordInfoById"));
 }

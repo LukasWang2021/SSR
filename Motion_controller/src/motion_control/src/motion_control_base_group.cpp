@@ -704,15 +704,23 @@ ErrorCode BaseGroup::manualMoveContinuous(const ManualDirection *direction)
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
                 transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, tcp_in_user);
-                manual_traj_.cart_start = tcp_in_user;
-                manual_traj_.cart_ending = tcp_in_user;
+                manual_traj_.tool_coordinate.euler_ = tcp_in_user.euler_;
+                memset(&manual_traj_.tool_coordinate.point_, 0, sizeof(manual_traj_.tool_coordinate.point_));
+                manual_traj_.cart_start.point_ = tcp_in_user.point_;
+                manual_traj_.cart_ending.point_ = manual_traj_.cart_start.point_;
+                memset(&manual_traj_.cart_start.euler_, 0, sizeof(manual_traj_.cart_start.euler_));
+                memset(&manual_traj_.cart_ending.euler_, 0, sizeof(manual_traj_.cart_ending.euler_));
                 break;
             case WORLD:
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
                 transformation_.convertFcpToTcp(fcp_in_base, tool_frame_, tcp_in_base);
                 transformation_.convertPoseFromBaseToUser(tcp_in_base, world_frame_, tcp_in_user);
-                manual_traj_.cart_start = tcp_in_user;
-                manual_traj_.cart_ending = tcp_in_user;
+                manual_traj_.tool_coordinate.euler_ = tcp_in_user.euler_;
+                memset(&manual_traj_.tool_coordinate.point_, 0, sizeof(manual_traj_.tool_coordinate.point_));
+                manual_traj_.cart_start.point_ = tcp_in_user.point_;
+                manual_traj_.cart_ending.point_ = manual_traj_.cart_start.point_;
+                memset(&manual_traj_.cart_start.euler_, 0, sizeof(manual_traj_.cart_start.euler_));
+                memset(&manual_traj_.cart_ending.euler_, 0, sizeof(manual_traj_.cart_ending.euler_));
                 break;
             case TOOL:
                 kinematics_ptr_->doFK(manual_traj_.joint_start, fcp_in_base);
@@ -1401,6 +1409,12 @@ ErrorCode BaseGroup::checkMotionTarget(const MotionInfo &info)
         return INVALID_PARAMETER;
     }
 
+    if (info.acc < MINIMUM_E6 || info.acc > 1 + MINIMUM_E6)
+    {
+        FST_ERROR("Invalid acc: %.6f", info.acc);
+        return INVALID_PARAMETER;
+    }
+
     PoseEuler start_pose;
     PoseEuler fcp_in_base, tcp_in_base;
     kinematics_ptr_->doFK(start_joint_, fcp_in_base);
@@ -1646,7 +1660,7 @@ ErrorCode BaseGroup::autoStableJoint(const Joint &start, const MotionInfo &info,
     double  path_plan_time, traj_plan_time;
     const PoseEuler &pose = info.target.pose.pose;
     const Posture &posture = info.target.pose.posture;
-    FST_INFO("autoStableJoint: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
+    FST_INFO("autoStableJoint: vel = %.4f, acc = %.4f, cnt = %.4f", info.vel, info.acc, info.cnt);
     FST_INFO("start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("target-joint: %s", printDBLine(&info.target.joint.j1_, buffer, LOG_TEXT_SIZE));
     FST_INFO("target-pose: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f,", pose.point_.x_, pose.point_.y_, pose.point_.z_, pose.euler_.a_, pose.euler_.b_, pose.euler_.c_);
@@ -1703,7 +1717,7 @@ ErrorCode BaseGroup::autoSmoothJoint(const JointState &start_state, const Motion
     char buffer[LOG_TEXT_SIZE];
     const PoseEuler &pose = target.target.pose.pose;
     const Posture &posture = target.target.pose.posture;
-    FST_INFO("autoSmoothJoint: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    FST_INFO("autoSmoothJoint: vel = %.4f, acc = %.4f, cnt = %.4f", target.vel, target.acc, target.cnt);
     FST_INFO("Start-angle: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
@@ -1905,7 +1919,7 @@ ErrorCode BaseGroup::autoStableLine(const Joint &start, const MotionInfo &info, 
 
     const Posture &posture = info.target.pose.posture;
     const PoseEuler &target_pose = info.target.pose.pose;
-    FST_INFO("autoStableLine: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
+    FST_INFO("autoStableLine: vel = %.4f, acc = %.4f, cnt = %.4f", info.vel, info.acc, info.cnt);
     FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
     FST_INFO("Target-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", target_pose.point_.x_, target_pose.point_.y_,target_pose.point_.z_, target_pose.euler_.a_, target_pose.euler_.b_, target_pose.euler_.c_);
@@ -1982,7 +1996,7 @@ ErrorCode BaseGroup::autoSmoothLine(const JointState &start_state, const MotionI
     transformation_.convertPoseFromBaseToUser(tcp_in_base, user_frame_, start_pose);
     const PoseEuler &via_pose = via.target.pose.pose;
     const PoseEuler &target_pose = info.target.pose.pose;
-    FST_INFO("autoSmoothLine: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
+    FST_INFO("autoSmoothLine: vel = %.4f, acc = %.4f, cnt = %.4f", info.vel, info.acc, info.cnt);
     FST_INFO("Start-joint: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
@@ -2104,7 +2118,7 @@ ErrorCode BaseGroup::autoStableCircle(const Joint &start, const MotionInfo &info
 
     const PoseEuler &via_pose = info.via.pose.pose;
     const PoseEuler &target_pose = info.target.pose.pose;
-    FST_INFO("autoStableCircle: vel = %.4f, cnt = %.4f", info.vel, info.cnt);
+    FST_INFO("autoStableCircle: vel = %.4f, acc = %.4f, cnt = %.4f", info.vel, info.acc, info.cnt);
     FST_INFO("Start-joint: %s", printDBLine(&start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", start_pose.point_.x_, start_pose.point_.y_, start_pose.point_.z_, start_pose.euler_.a_, start_pose.euler_.b_, start_pose.euler_.c_);
     FST_INFO("Via-pose: %.4f, %.4f, %.4f - %.4f, %.4f, %.4f", via_pose.point_.x_, via_pose.point_.y_, via_pose.point_.z_, via_pose.euler_.a_, via_pose.euler_.b_, via_pose.euler_.c_);
@@ -2185,7 +2199,7 @@ ErrorCode BaseGroup::autoSmoothCircle(const JointState &start_state, const Motio
     const PoseEuler &last_pose = via.target.pose.pose;
     const PoseEuler &via_pose = target.via.pose.pose;
     const PoseEuler &target_pose = target.target.pose.pose;
-    FST_INFO("autoSmoothCircle: vel = %.4f, cnt = %.4f", target.vel, target.cnt);
+    FST_INFO("autoSmoothCircle: vel = %.4f, acc = %.4f, cnt = %.4f", target.vel, target.acc, target.cnt);
     FST_INFO("Start-joint: %s", printDBLine(&start_state.angle[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-omega: %s", printDBLine(&start_state.omega[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("Start-alpha: %s", printDBLine(&start_state.alpha[0], buffer, LOG_TEXT_SIZE));
@@ -2637,29 +2651,54 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             ++ target_ptr;
         }
 
+        TransMatrix trans, trans_tmp, trans_uf, trans_pose_by_tmp, trans_pose_by_base, trans_fcp_by_base, trans_tf_inverse;
+
         switch (manual_traj_.frame)
         {
             case BASE:
-                transformation_.convertPoseFromUserToBase(manual_traj_.tool_coordinate, pose, tcp_in_base);
-                //tcp_in_base.point_ = manual_traj_.tool_coordinate.point_;
-                transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                manual_traj_.tool_coordinate.convertToTransMatrix(trans_pose_by_tmp);
+                tool_frame_.convertToTransMatrix(trans_tf_inverse);
+                trans_tf_inverse.inverse();
+                pose.convertToTransMatrix(trans_tmp);
+                trans_tmp.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
+                trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
+
             case USER:
-                transformation_.convertPoseFromUserToBase(pose, user_frame_, tcp_in_base);
-                transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                manual_traj_.tool_coordinate.convertToTransMatrix(trans_pose_by_tmp);
+                tool_frame_.convertToTransMatrix(trans_tf_inverse);
+                trans_tf_inverse.inverse();
+                user_frame_.convertToTransMatrix(trans_uf);
+                pose.convertToTransMatrix(trans_tmp);
+                trans_uf.rightMultiply(trans_tmp, trans);
+                trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
+                trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
+                
             case WORLD:
-                transformation_.convertPoseFromUserToBase(pose, world_frame_, tcp_in_base);
-                transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                manual_traj_.tool_coordinate.convertToTransMatrix(trans_pose_by_tmp);
+                tool_frame_.convertToTransMatrix(trans_tf_inverse);
+                trans_tf_inverse.inverse();
+                world_frame_.convertToTransMatrix(trans_uf);
+                pose.convertToTransMatrix(trans_tmp);
+                trans_uf.rightMultiply(trans_tmp, trans);
+                trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
+                trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
+
             case TOOL:
-                transformation_.convertPoseFromToolToBase(pose, manual_traj_.tool_coordinate, tcp_in_base);
-                transformation_.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
-                err = kinematics_ptr_->doIK(fcp_in_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                manual_traj_.tool_coordinate.convertToTransMatrix(trans);
+                pose.convertToTransMatrix(trans_pose_by_tmp);
+                tool_frame_.convertToTransMatrix(trans_tf_inverse);
+                trans_tf_inverse.inverse();
+                trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
+                trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
+
             case JOINT:
             default:
                 err = MC_MANUAL_FRAME_ERROR;

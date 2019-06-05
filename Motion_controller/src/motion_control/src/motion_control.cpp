@@ -412,6 +412,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
     motion_info.type = target.type;
     motion_info.cnt = target.cnt;
     motion_info.vel = target.vel;
+    motion_info.acc = target.acc;
     motion_info.target.user_frame = group_ptr_->getUserFrame();
     motion_info.target.tool_frame = group_ptr_->getToolFrame();
 

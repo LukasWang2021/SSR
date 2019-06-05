@@ -69,6 +69,8 @@ struct MotionInfo
     double  cnt;    // 平滑语句的CNT范围 ： 速度平滑[0.0, 1.0]，距离平滑[0.0, +∞]， FINE语句的CNT < 0
     double  vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
                     //            如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+    double  acc;    // 指令加速度： 附加指令中的加速度是百分比，范围: 0.0 - 1.0
+    
     IntactPoint target;
     IntactPoint via;
 };
@@ -81,7 +83,8 @@ struct MotionTarget     // 用于move指令的数据结构
 
     double  cnt;    // 平滑参数的范围 ： 速度平滑[0.0, 1.0]，距离平滑[0.0, +∞]， 如果是FINE语句CNT应为-1
     double  vel;    // 指令速度： 如果是moveJ，指令速度是百分比, 范围: 0.0 - 1.0
-                        //           如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+                    //          如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
+    double  acc;    // 指令加速度： 附加指令中的加速度是百分比，范围: 0.0 - 1.0
     
     int user_frame_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
     int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf

@@ -89,12 +89,12 @@ int main(int argc, char* argv[])
     cout << "Reply : msg.data.name = " << recv_msg.data.name << endl;
     cout << "Reply : msg.data.comment = " << recv_msg.data.comment << endl;
     cout << "Reply : msg.data.group_id = " << recv_msg.data.group_id << endl;
-    cout << "Reply : msg.data.data.x = " << recv_msg.data.data.x << endl;
-    cout << "Reply : msg.data.data.y = " << recv_msg.data.data.y << endl;
-    cout << "Reply : msg.data.data.z = " << recv_msg.data.data.z << endl;
-    cout << "Reply : msg.data.data.a = " << recv_msg.data.data.a << endl;
-    cout << "Reply : msg.data.data.b = " << recv_msg.data.data.b << endl;
-    cout << "Reply : msg.data.data.c = " << recv_msg.data.data.c << endl;
+    cout << "Reply : msg.data.data.x = " << recv_msg.data.data.data[0] << endl;
+    cout << "Reply : msg.data.data.y = " << recv_msg.data.data.data[1] << endl;
+    cout << "Reply : msg.data.data.z = " << recv_msg.data.data.data[2] << endl;
+    cout << "Reply : msg.data.data.a = " << recv_msg.data.data.data[3] << endl;
+    cout << "Reply : msg.data.data.b = " << recv_msg.data.data.data[4] << endl;
+    cout << "Reply : msg.data.data.c = " << recv_msg.data.data.data[5] << endl;
 
     usleep(200000);
 

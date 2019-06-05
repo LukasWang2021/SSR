@@ -6,6 +6,7 @@
 #include "dynamic_alg_rtm_param.h"
 #include "common_log.h"
 #include "parameter_manager/parameter_manager_param_group.h"
+#include "kinematics_rtm.h"
 
 
 namespace basic_alg
@@ -31,7 +32,7 @@ public:
     virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque, 
                                            JointAcceleration &acc);
 
-    static const double DOUBLE_ACCURACY = 1e-6;
+    static const double DYN_DOUBLE_ACCURACY = 1e-6;
     static const double G = 9.81;
     static const int LINKS = 6;
     static const int PARAM_SET = 52;

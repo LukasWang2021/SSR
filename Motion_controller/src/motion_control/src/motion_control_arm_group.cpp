@@ -23,7 +23,7 @@ using namespace fst_ctrl;
 using namespace fst_base;
 using namespace basic_alg;
 using namespace fst_parameter;
-using namespace fst_algorithm;
+//using namespace fst_algorithm;should delete
 
 extern ComplexAxisGroupModel model;
 

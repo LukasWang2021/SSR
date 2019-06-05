@@ -40,7 +40,7 @@ typedef struct
     double Ixz_load;
     double Iyz_load;
 }DynamicAlgLoadParam;
-
+/*
 typedef struct
 {
     double d;
@@ -48,7 +48,7 @@ typedef struct
     double alpha;
     double offset;
 }DH;
-
+*/
 class DynamicAlg
 {
 public:

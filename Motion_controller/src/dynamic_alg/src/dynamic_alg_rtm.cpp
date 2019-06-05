@@ -1326,7 +1326,7 @@ bool DynamicAlgRTM::getMatrixInverse(const double src[LINKS][LINKS], int n, doub
 {
     double rank = getMatrixRank(src, n);
 
-    if (rank < DOUBLE_ACCURACY && rank > -DOUBLE_ACCURACY)
+    if (rank < DYN_DOUBLE_ACCURACY && rank > -DYN_DOUBLE_ACCURACY)
     {
         return false;
     }

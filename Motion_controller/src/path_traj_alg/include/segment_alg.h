@@ -15,7 +15,7 @@ Important Note: all APIs provided by this source are not support multi thread op
 #include "tool_manager.h"
 #include "transformation.h"
 #include "kinematics.h"
-#include "dynamics_interface.h"
+#include "dynamic_alg_rtm.h"
 #include "error_code.h"
 #include <basic_alg.h>
 
@@ -44,7 +44,7 @@ typedef struct
     fst_ctrl::CoordinateManager* coordinate_manager_ptr;
     fst_ctrl::ToolManager* tool_manager_ptr;
     basic_alg::Kinematics* kinematics_ptr;
-    fst_algorithm::DynamicsInterface* dynamics_ptr;
+    basic_alg::DynamicAlgRTM* dynamics_ptr;
 }SegmentAlgParam;
 
 typedef enum

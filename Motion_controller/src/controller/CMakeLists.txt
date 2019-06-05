@@ -80,6 +80,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/param_manager/include 
     ${depend_PATH_INC}/nvram/include
     ${depend_PATH_INC}/fst_spi/include
+    ${depend_PATH_INC}/dynamic_alg/include
 )
 
 catkin_package(
@@ -99,6 +100,7 @@ catkin_package(
     DEPENDS transformation
     DEPENDS nvram 
     DEPENDS fst_spi 
+    DEPENDS dynamic_alg
 )
  
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION")
@@ -148,6 +150,7 @@ target_link_libraries(controller
     system_manager
     param_manager
     transformation
+    dynamic_alg
 )
 
 #############

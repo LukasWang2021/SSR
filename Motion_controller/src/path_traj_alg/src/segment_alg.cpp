@@ -4414,6 +4414,7 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
     }
     else
     {
+        /*
         float joint[6], omega[6], alpha[2][6];
         int traj_p_address_local, traj_v_address_local;
         for (i = 0; i < traj_pva_size; ++i)
@@ -4438,6 +4439,7 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
                 constraint_joint_neg_acc_address += 50;
             }
         }
+        */
     }
 }
 

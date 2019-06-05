@@ -33,6 +33,7 @@ set(catkin_INCLUDE_DIRS
     ${depend_PATH_INC}/transformation/include
     ${depend_PATH_INC}/kinematics_alg/include
     ${depend_PATH_INC}/parameter_manager/include 
+    ${depend_PATH_INC}/dynamic_alg/include
 )
 
 catkin_package(
@@ -42,6 +43,7 @@ catkin_package(
     DEPENDS tool_manager
     DEPENDS transformation
     DEPENDS kinematics_alg
+    DEPENDS dynamic_alg
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -65,6 +67,7 @@ target_link_libraries(path_traj_alg
     tool_manager
     transformation
     kinematics_alg
+    dynamic_alg
 )
 
 
@@ -85,6 +88,7 @@ target_link_libraries(alg_test
     kinematics_alg
     basic_alg
     parameter_manager
+    dynamic_alg
 )
 
 target_link_libraries(alg_puma_test
@@ -96,6 +100,7 @@ target_link_libraries(alg_puma_test
     kinematics_alg
     basic_alg
     parameter_manager
+    dynamic_alg
 )
 
 

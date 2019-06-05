@@ -2,7 +2,8 @@
 #include "kinematics.h"
 #include "kinematics_rtm.h"
 #include "kinematics_toll.h"
-#include "dynamics_interface.h"
+//#include "dynamics_interface.h"
+#include "dynamic_alg_rtm.h"
 #include "basic_alg_datatype.h"
 #include "common_file_path.h"
 #include <iostream>
@@ -12,18 +13,21 @@
 
 using namespace fst_mc;
 using namespace basic_alg;
-using namespace fst_algorithm;
+//using namespace fst_algorithm;
 
 extern double stack[20000];
 extern ComplexAxisGroupModel model;
 extern SegmentAlgParam segment_alg_param;
 
-extern DynamicsInterface dynamics;
+//extern DynamicAlgRTM dynamics;
 
 
 int main(void)
 {
-DH base_dh;
+    DynamicAlgRTM dynamics;
+    dynamics.initDynamicAlg("/root/install/share/runtime/axis_group/");
+
+    DH base_dh;
 
     DH arm_dh[6];
 

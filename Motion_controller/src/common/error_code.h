@@ -31,7 +31,7 @@ typedef unsigned long long int ErrorCode;
 #define MC_INTERNAL_FAULT (unsigned long long int)0x0001000400A90001   /*program internal fault*/
 #define MC_FAIL_IN_INIT (unsigned long long int)0x0011000200A90002   /*initialization failed*/
 #define MC_NO_ENOUGH_CACHE (unsigned long long int)0x0001000400A90003   /*no enough path or trajectory cache*/
-#define MC_COMMUNICATION_WITH_BARECORE_FAIL (unsigned long long int)0x0001000400A90004   /*lost service communication with barecore*/
+#define MC_COMMUNICATION_WITH_BARECORE_FAIL (unsigned long long int)0x0001000500A90004   /*lost service communication with barecore*/
 #define MC_NVRAM_DATA_INVALID (unsigned long long int)0x0001000400A90005   /*data in NVRAM is invalid*/
 #define MC_RECORD_JOINT_TIMEOUT (unsigned long long int)0x0001000400A90006   /*record joint to nvram timeout*/
 #define MC_SWITCH_STATE_TIMEOUT (unsigned long long int)0x0001000400A90007   /*group switch from one state to other timeout*/

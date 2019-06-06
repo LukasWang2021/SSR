@@ -64,7 +64,7 @@ public:
     virtual bool getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                JointTorque &torque) = 0;
 
-    virtual bool getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc) = 0;
+    virtual bool getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg) = 0;
     virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,
                                             JointAcceleration &acc) = 0;
 

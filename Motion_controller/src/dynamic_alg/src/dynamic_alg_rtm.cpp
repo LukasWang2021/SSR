@@ -229,17 +229,33 @@ bool DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelo
     return true;
 }
 
-bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc)
+bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg)
 {
-    JointTorque torq;
-    torq.t1_ = param_ptr_->max_torque_[0];
-    torq.t2_ = param_ptr_->max_torque_[1];
-    torq.t3_ = param_ptr_->max_torque_[2];
-    torq.t4_ = param_ptr_->max_torque_[3];
-    torq.t5_ = param_ptr_->max_torque_[4];
-    torq.t6_ = param_ptr_->max_torque_[5];
+    JointTorque torq_pos;
+    torq_pos.t1_ = param_ptr_->max_torque_[0];
+    torq_pos.t2_ = param_ptr_->max_torque_[1];
+    torq_pos.t3_ = param_ptr_->max_torque_[2];
+    torq_pos.t4_ = param_ptr_->max_torque_[3];
+    torq_pos.t5_ = param_ptr_->max_torque_[4];
+    torq_pos.t6_ = param_ptr_->max_torque_[5];
 
-    return getAccDirectDynamics(joint, vel, torq, acc);
+    JointTorque torq_neg;
+    torq_neg.t1_ = - torq_pos.t1_;
+    torq_neg.t2_ = - torq_pos.t2_;
+    torq_neg.t3_ = - torq_pos.t3_;
+    torq_neg.t4_ = - torq_pos.t4_;
+    torq_neg.t5_ = - torq_pos.t5_;
+    torq_neg.t6_ = - torq_pos.t6_;
+
+    bool ret = getAccDirectDynamics(joint, vel, torq_pos, acc_pos);
+    if (ret ==  false)
+        return false;
+
+    ret = getAccDirectDynamics(joint, vel, torq_neg, acc_neg);
+    if (ret == false)
+        return false;
+
+    return ret;
 }
 
 bool DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,

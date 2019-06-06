@@ -4414,7 +4414,57 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
     }
     else
     {
-        /*
+        printf("--------------------------dyn begin\n");
+        Joint joint;
+        JointVelocity omega;
+        JointAcceleration alpha_pos, alpha_neg;
+        int traj_p_address_local, traj_v_address_local;
+        bool ret = false;
+        for (i = 0; i < traj_pva_size; ++i)
+        {
+            traj_p_address_local = traj_p_address;
+            traj_v_address_local = traj_v_address;
+            printf("[joint   ]:");
+            for (j = 0; j < 6; ++j)
+            {
+                joint[j] = stack[traj_p_address_local + i];
+                omega[j] = stack[traj_v_address_local + i];
+                traj_p_address_local += 75;
+                traj_v_address_local += 75;
+                printf("%.4lf,",joint[j]);
+            }
+            printf("\n");
+            printf("[velocity]:");
+            for (j = 0; j < 6; ++j)
+            {
+                printf("%.4lf,",omega[j]);
+            }
+            printf("\n");
+            printf("acc------->");
+            ret = segment_alg_param.dynamics_ptr->getAccMax(joint, omega, alpha_pos, alpha_neg);
+            if (ret == false)
+            {
+                printf("failed to get acceleration from dynamics.The default setting is -100&100\n");
+                for(int i = 0; i < 6; ++i)
+                {
+                    alpha_pos[i] = 100;
+                    alpha_neg[i] = -100;
+                }
+            }
+            constraint_joint_pos_acc_address = S_ConstraintJointPosA0;
+            constraint_joint_neg_acc_address = S_ConstraintJointNegA0;
+            for (j = 0; j < 6; ++j)
+            {
+                stack[constraint_joint_pos_acc_address + i] = alpha_pos[j];
+                stack[constraint_joint_neg_acc_address + i] = alpha_neg[j];
+                printf("(%lf|%lf), ", stack[constraint_joint_pos_acc_address + i], stack[constraint_joint_neg_acc_address + i]);
+                constraint_joint_pos_acc_address += 50;
+                constraint_joint_neg_acc_address += 50;
+            }
+            printf("\n");
+        }
+        printf("----------------------------dyn end\n");
+        /* before 201905
         float joint[6], omega[6], alpha[2][6];
         int traj_p_address_local, traj_v_address_local;
         for (i = 0; i < traj_pva_size; ++i)
@@ -4424,9 +4474,9 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
             for (j = 0; j < 6; ++j)
             {
                 joint[j] = (float)stack[traj_p_address_local + i];
-                omega[j] = (float)stack[traj_p_address_local + i];
+                omega[j] = (float)stack[traj_v_address_local + i];
                 traj_p_address_local += 75;
-                traj_p_address_local += 75;
+                traj_v_address_local += 75;
             }
             segment_alg_param.dynamics_ptr->computeAccMax(joint, omega, alpha);
             constraint_joint_pos_acc_address = S_ConstraintJointPosA0;

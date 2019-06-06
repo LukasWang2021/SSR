@@ -4419,6 +4419,7 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
         JointVelocity omega;
         JointAcceleration alpha_pos, alpha_neg;
         int traj_p_address_local, traj_v_address_local;
+        bool ret = false;
         for (i = 0; i < traj_pva_size; ++i)
         {
             traj_p_address_local = traj_p_address;
@@ -4426,8 +4427,8 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
             printf("[joint   ]:");
             for (j = 0; j < 6; ++j)
             {
-                joint[j] = (float)stack[traj_p_address_local + i];
-                omega[j] = (float)stack[traj_v_address_local + i];
+                joint[j] = stack[traj_p_address_local + i];
+                omega[j] = stack[traj_v_address_local + i];
                 traj_p_address_local += 75;
                 traj_v_address_local += 75;
                 printf("%.4lf,",joint[j]);
@@ -4440,14 +4441,23 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
             }
             printf("\n");
             printf("acc------->");
-            segment_alg_param.dynamics_ptr->getAccMax(joint, omega, alpha_pos, alpha_neg);
+            ret = segment_alg_param.dynamics_ptr->getAccMax(joint, omega, alpha_pos, alpha_neg);
+            if (ret == false)
+            {
+                printf("failed to get acceleration from dynamics.The default setting is -100&100\n");
+                for(int i = 0; i < 6; ++i)
+                {
+                    alpha_pos[i] = 100;
+                    alpha_neg[i] = -100;
+                }
+            }
             constraint_joint_pos_acc_address = S_ConstraintJointPosA0;
             constraint_joint_neg_acc_address = S_ConstraintJointNegA0;
             for (j = 0; j < 6; ++j)
             {
-                stack[constraint_joint_pos_acc_address + i] = (double)alpha_pos[j];
-                stack[constraint_joint_neg_acc_address + i] = (double)alpha_neg[j];
-                printf("(%lf | %lf), ", stack[constraint_joint_pos_acc_address + i], stack[constraint_joint_neg_acc_address + i]);
+                stack[constraint_joint_pos_acc_address + i] = alpha_pos[j];
+                stack[constraint_joint_neg_acc_address + i] = alpha_neg[j];
+                printf("(%lf|%lf), ", stack[constraint_joint_pos_acc_address + i], stack[constraint_joint_neg_acc_address + i]);
                 constraint_joint_pos_acc_address += 50;
                 constraint_joint_neg_acc_address += 50;
             }

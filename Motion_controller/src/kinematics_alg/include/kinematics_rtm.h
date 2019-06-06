@@ -33,7 +33,7 @@ public:
     virtual bool doIK(const PoseQuaternion& pose_quaternion, const Posture& posture, Joint& joint, double valve = 0.001);
     virtual bool doIK(const TransMatrix& trans_matrix, const Posture& posture, Joint& joint, double valve = 0.001);
 
-    /*find the solution accroding to posture implied by the ref point, return false when singularity or out-of-range happens*/
+    /*find the most close solution accroding to the ref point, return false when out-of-range happens*/
     virtual bool doIK(const PoseEuler& pose_euler, const Joint& ref_joint, Joint& joint, double valve = 0.001);
     virtual bool doIK(const PoseQuaternion& pose_quaternion, const Joint& ref_joint, Joint& joint, double valve = 0.001);
     virtual bool doIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& joint, double valve = 0.001);
@@ -50,6 +50,7 @@ private:
     KinematicsRTM();
     inline void scaleResultJoint(double& angle);
     inline bool isPostureValid(const Posture& posture);
+    inline double getMostCloseJoint(double joint1, double joint2, double ref_joint, int& posture1);
 
     DH base_dh_;
     DH arm_dh_[6];

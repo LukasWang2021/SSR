@@ -359,72 +359,6 @@ bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Posture& posture
     joint.j5_ = atan2(sin_q5, cos_q5) - arm_dh_[4].offset;
     scaleResultJoint(joint.j5_);
 
-    // check if wrist is abnormal
-    /*if(cos_q4 * sin_q5 >= 0)
-    {
-        if(posture.wrist < 0)
-        {
-            return false;
-        }
-    }
-    else
-    {
-        if(posture.wrist > 0)
-        {
-            return false;
-        }
-    }*/
-
-#if 0
-    // compute q4
-    TransMatrix trans_matrix_1to3;
-    doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
-    Point z3, z4, x_vector, y_vector;
-    trans_matrix_1to3.rotation_matrix_.getVectorA(z3);  
-    z3.crossProduct(vector_a, z4);
-    if(!z4.normalize()
-        || z4.isParallel(vector_a))
-    {
-        return false;
-    }
-    double omega = vector_s.dotProduct(z4);
-    if(fabs(omega) < valve)
-    {
-        omega = vector_n.dotProduct(z4);
-    }
-    double m;
-    if(omega > 0)
-    {
-        m = posture.wrist;
-    }
-    else
-    {
-        m = -posture.wrist;
-    }    
-    trans_matrix_1to3.rotation_matrix_.getVectorN(x_vector);
-    trans_matrix_1to3.rotation_matrix_.getVectorS(y_vector);
-    sin_j = -m * z4.dotProduct(x_vector);
-    cos_j = m * z4.dotProduct(y_vector);
-    if(posture.flip == 0)
-    {
-        joint.j4_ = atan2(sin_j, cos_j) - arm_dh_[3].offset;
-    }
-    else
-    {
-        joint.j4_ = atan2(sin_j, cos_j) - arm_dh_[3].offset + M_PI;
-    }
-    scaleResultJoint(joint.j4_);
-
-    // compute q5
-    TransMatrix trans_matrix_1to4;
-    doFK(joint, trans_matrix_1to4, 1, 4);    
-    trans_matrix_1to4.rotation_matrix_.getVectorN(x_vector);
-    trans_matrix_1to4.rotation_matrix_.getVectorS(y_vector);
-    sin_j = vector_a.dotProduct(x_vector);
-    cos_j = -vector_a.dotProduct(y_vector);     
-    joint.j5_ = atan2(sin_j, cos_j) - arm_dh_[4].offset;
-    scaleResultJoint(joint.j5_);
-#endif
     // compute q6
     TransMatrix trans_matrix_1to5;
     doFK(joint, trans_matrix_1to5, 1, 5);
@@ -440,20 +374,140 @@ bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Posture& posture
 
 bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const Joint& ref_joint, Joint& joint, double valve)
 {
-    Posture posture = getPostureByJoint(ref_joint);
-    return doIK(pose_euler, posture, joint, valve);
+    TransMatrix trans_matrix;
+    pose_euler.convertToTransMatrix(trans_matrix);
+    return doIK(trans_matrix, ref_joint, joint, valve);
 }
 
 bool KinematicsRTM::doIK(const PoseQuaternion& pose_quaternion, const Joint& ref_joint, Joint& joint, double valve)
 {
-    Posture posture = getPostureByJoint(ref_joint);
-    return doIK(pose_quaternion, posture, joint, valve);
+    TransMatrix trans_matrix;
+    pose_quaternion.convertToTransMatrix(trans_matrix);
+    return doIK(trans_matrix, ref_joint, joint, valve);
 }
 
 bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& joint, double valve)
 {
     Posture posture = getPostureByJoint(ref_joint);
-    return doIK(trans_matrix, posture, joint, valve);
+
+    TransMatrix trans_matrix_1to6;
+    TransMatrix* trans_matrix_ptr = const_cast<TransMatrix*>(&trans_matrix);
+    trans_matrix_ptr->leftMultiply(matrix_base_inv_, trans_matrix_1to6);
+    Point vector_n, vector_s, vector_a;
+    double joint_tmp1, joint_tmp2;
+    trans_matrix_1to6.rotation_matrix_.getVectorN(vector_n);
+    trans_matrix_1to6.rotation_matrix_.getVectorS(vector_s);
+    trans_matrix_1to6.rotation_matrix_.getVectorA(vector_a);   
+    Point p_vector = trans_matrix_1to6.trans_vector_ - vector_a * arm_dh_[5].d;
+    
+    // compute q1
+    if(fabs(p_vector.x_) > valve 
+        || fabs(p_vector.y_) > valve)
+    {
+        joint_tmp1 = atan2(posture.arm * p_vector.y_, posture.arm * p_vector.x_) - arm_dh_[0].offset;
+        scaleResultJoint(joint_tmp1);
+        joint_tmp2 = atan2(-posture.arm * p_vector.y_, -posture.arm * p_vector.x_) - arm_dh_[0].offset;
+        scaleResultJoint(joint_tmp2);
+        joint.j1_ = getMostCloseJoint(joint_tmp1, joint_tmp2, ref_joint.j1_, posture.arm);
+    }
+    else
+    {
+        joint.j1_ = ref_joint.j1_;
+    }
+
+    // compute q2
+    double r = sqrt(p_vector.x_ * p_vector.x_ + p_vector.y_ * p_vector.y_) - (posture.arm * arm_dh_[0].a);
+    double R = sqrt(r * r + p_vector.z_ * p_vector.z_);
+    double sin_alpha = p_vector.z_ / R;
+    double cos_alpha = posture.arm * r / R; 
+    double alpha = atan2(sin_alpha, cos_alpha);    
+    double cos_beta = (arm_dh_[1].a * arm_dh_[1].a + R * R - arm_dh_[3].d * arm_dh_[3].d - arm_dh_[2].a * arm_dh_[2].a) / (2.0 * arm_dh_[1].a * R);
+    if(cos_beta < -1 || cos_beta > 1)
+    {
+        return false;
+    }
+    double sin_beta = sqrt(1 - cos_beta * cos_beta);
+    double beta = atan2(sin_beta, cos_beta);
+    double k = posture.arm * posture.elbow;
+    joint_tmp1 = alpha + k * beta - arm_dh_[1].offset;
+    scaleResultJoint(joint_tmp1);
+    joint_tmp2 = alpha - k * beta - arm_dh_[1].offset;
+    scaleResultJoint(joint_tmp2);
+    joint.j2_ = getMostCloseJoint(joint_tmp1, joint_tmp2, ref_joint.j2_, posture.elbow);
+
+    // compute q3
+    double d4_a3 = sqrt(arm_dh_[3].d * arm_dh_[3].d + arm_dh_[2].a * arm_dh_[2].a);
+    cos_alpha = (arm_dh_[1].a * arm_dh_[1].a + d4_a3 * d4_a3 - R * R) / (2.0 * arm_dh_[1].a * d4_a3);
+    if(cos_alpha < -1 || cos_alpha > 1)
+    {
+        return false;
+    }
+    sin_alpha = -k * sqrt(1 - cos_alpha * cos_alpha);
+    sin_beta = arm_dh_[3].d / d4_a3;
+    alpha = atan2(sin_alpha, cos_alpha);
+    sin_beta = arm_dh_[3].d / d4_a3;
+    cos_beta = fabs(arm_dh_[2].a) / d4_a3;
+    beta = atan2(sin_beta, cos_beta);
+    double sin_j = -sin(beta - alpha);
+    double cos_j = -cos(beta - alpha);
+    joint.j3_ = atan2(sin_j, cos_j) - arm_dh_[2].offset;
+    scaleResultJoint(joint.j3_);
+
+    // compute q4
+    double sin_q4, cos_q4;
+    TransMatrix trans_matrix_1to3;
+    doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
+    Point x3, y3, z3, x4, y4, z4, z4_tmp1, z4_tmp2;
+    trans_matrix_1to3.rotation_matrix_.getVectorN(x3);
+    trans_matrix_1to3.rotation_matrix_.getVectorS(y3);
+    trans_matrix_1to3.rotation_matrix_.getVectorA(z3);  
+    z3.crossProduct(vector_a, z4);  
+    if(!z4.normalize()
+        || z4.isParallel(vector_a))
+    {
+        joint.j4_ = ref_joint.j4_;
+        goto IK_Q5;
+    }
+
+    // wrist == -1
+    z4_tmp1 = z4;
+    z4_tmp1.reverse();
+    sin_q4 = -z4_tmp1.dotProduct(x3);
+    cos_q4 = z4_tmp1.dotProduct(y3);
+    joint_tmp1 = atan2(sin_q4, cos_q4) - arm_dh_[3].offset;
+    scaleResultJoint(joint_tmp1);
+    // wrist ==1
+    z4_tmp2 = z4;
+    sin_q4 = -z4_tmp2.dotProduct(x3);
+    cos_q4 = z4_tmp2.dotProduct(y3);
+    joint_tmp2 = atan2(sin_q4, cos_q4) - arm_dh_[3].offset;
+    scaleResultJoint(joint_tmp2);
+    // get the most close joint
+    joint.j4_ = getMostCloseJoint(joint_tmp1, joint_tmp2, ref_joint.j4_, posture.wrist);    // wrist is not used later
+
+IK_Q5:
+    // compute q5
+    TransMatrix trans_matrix_1to4;
+    doFK(joint, trans_matrix_1to4, 1, 4);
+    trans_matrix_1to4.rotation_matrix_.getVectorN(x4);
+    trans_matrix_1to4.rotation_matrix_.getVectorS(y4);
+    double sin_q5, cos_q5;
+    sin_q5 = vector_a.dotProduct(x4);
+    cos_q5 = -vector_a.dotProduct(y4);
+    joint.j5_ = atan2(sin_q5, cos_q5) - arm_dh_[4].offset;
+    scaleResultJoint(joint.j5_);
+
+    // compute q6
+    TransMatrix trans_matrix_1to5;
+    doFK(joint, trans_matrix_1to5, 1, 5);
+    Point y6;
+    trans_matrix_1to5.rotation_matrix_.getVectorS(y6);    
+    sin_j = vector_n.dotProduct(y6);
+    cos_j = vector_s.dotProduct(y6);
+    joint.j6_ = atan2(sin_j, cos_j) - arm_dh_[5].offset;
+    scaleResultJoint(joint.j6_);
+
+    return true;
 }
 
 bool KinematicsRTM::doIK(const PoseEuler& pose_euler, const Posture& posture, const Joint& ref_joint, Joint& joint, double valve)
@@ -569,75 +623,6 @@ IK_Q5:
     joint.j5_ = atan2(sin_q5, cos_q5) - arm_dh_[4].offset;
     scaleResultJoint(joint.j5_);
 
-    // check if wrist is abnormal
-    /*if(cos_q4 * sin_q5 >= 0)
-    {
-        if(posture.wrist < 0)
-        {
-            return false;
-        }
-    }
-    else
-    {
-        if(posture.wrist > 0)
-        {
-            return false;
-        }
-    }*/
-
-#if 0
-    // compute q4
-    double omega;
-    TransMatrix trans_matrix_1to3;
-    doFK(joint, trans_matrix_1to3, 1, 3);    // trans_matrix_tmp is from joint 1 to joint 3
-    Point z3, z4, x_vector, y_vector;
-    trans_matrix_1to3.rotation_matrix_.getVectorA(z3);  
-    z3.crossProduct(vector_a, z4);
-    if(!z4.normalize()
-        || z4.isParallel(vector_a))
-    {
-        joint.j4_ = ref_joint.j4_;
-        goto IK_Q5;
-    }
-    omega = vector_s.dotProduct(z4);
-    if(fabs(omega) < valve)
-    {
-        omega = vector_n.dotProduct(z4);
-    }
-    double m;
-    if(omega > 0)
-    {
-        m = posture.wrist;
-    }
-    else
-    {
-        m = -posture.wrist;
-    }    
-    trans_matrix_1to3.rotation_matrix_.getVectorN(x_vector);
-    trans_matrix_1to3.rotation_matrix_.getVectorS(y_vector);
-    sin_j = -m * z4.dotProduct(x_vector);
-    cos_j = m * z4.dotProduct(y_vector);
-    if(posture.flip == 0)
-    {
-        joint.j4_ = atan2(sin_j, cos_j) - arm_dh_[3].offset;
-    }
-    else
-    {
-        joint.j4_ = atan2(sin_j, cos_j) - arm_dh_[3].offset + M_PI;
-    }
-    scaleResultJoint(joint.j4_);
-IK_Q5:
-    // compute q5
-    TransMatrix trans_matrix_1to4;
-    doFK(joint, trans_matrix_1to4, 1, 4);    
-    trans_matrix_1to4.rotation_matrix_.getVectorN(x_vector);
-    trans_matrix_1to4.rotation_matrix_.getVectorS(y_vector);
-    sin_j = vector_a.dotProduct(x_vector);
-    cos_j = -vector_a.dotProduct(y_vector);     
-    joint.j5_ = atan2(sin_j, cos_j) - arm_dh_[4].offset;
-    scaleResultJoint(joint.j5_);
-#endif
-
     // compute q6
     TransMatrix trans_matrix_1to5;
     doFK(joint, trans_matrix_1to5, 1, 5);
@@ -706,30 +691,6 @@ Posture KinematicsRTM::getPostureByJoint(const Joint& joint, double valve)
     {
         posture.wrist = -1;
     }
-#if 0
-    // wrist
-    TransMatrix trans_matrix_1to4;
-    doFK(joint, trans_matrix_1to4, 1, 4);
-    Point z4;
-    trans_matrix_1to4.rotation_matrix_.getVectorA(z4);
-    Point vector_s;
-    trans_matrix_1to6.rotation_matrix_.getVectorS(vector_s);
-    double tmp = vector_s.dotProduct(z4);
-    if(tmp < valve)
-    {
-        Point vector_n;
-        trans_matrix_1to6.rotation_matrix_.getVectorN(vector_n);
-        tmp = vector_n.dotProduct(z4);
-    }
-    if(tmp >= 0)
-    {
-        posture.wrist = 1;
-    }
-    else
-    {
-        posture.wrist = -1;
-    }    
-#endif
 
     posture.flip = flip_;
     
@@ -763,4 +724,26 @@ inline bool KinematicsRTM::isPostureValid(const Posture& posture)
     }
 }
 
+inline double KinematicsRTM::getMostCloseJoint(double joint1, double joint2, double ref_joint, int& posture1)
+{
+    double delta1 = fabs(joint1 - ref_joint);
+    if(delta1 > M_PI)
+    {
+        delta1 = fabs(delta1 - 2 * M_PI);
+    }
+    double delta2 = fabs(joint2 - ref_joint);
+    if(delta2 > M_PI)
+    {
+        delta2 = fabs(delta2 - 2 * M_PI);
+    }
+    if(delta1 > delta2)
+    {
+        posture1 = -posture1;
+        return joint2;
+    }
+    else
+    {
+        return joint1;
+    }
+}
 

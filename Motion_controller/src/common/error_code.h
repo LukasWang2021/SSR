@@ -52,9 +52,9 @@ typedef unsigned long long int ErrorCode;
 #define TARGET_COINCIDENCE (unsigned long long int)0x0001000200A90BC2   /*target pose is same as target or start pose*/
 #define MC_PATH_PLANNING_FAIL (unsigned long long int)0x0001000400A90BBB   /*fail to plan a valid path*/
 #define MC_TRAJECTORY_PLANNING_FAIL (unsigned long long int)0x0001000400A90BBC   /*fail to plan a valid trajectory*/
-#define MC_FAIL_MANUAL_TO_POINT (unsigned long long int)0x0001000400A90FA0   /*fail to manual move to target point*/
-#define MC_FAIL_MANUAL_STEP (unsigned long long int)0x0001000400A90FA1   /*fail to manual move step*/
-#define MC_FAIL_MANUAL_CONTINUOUS (unsigned long long int)0x0001000400A90FA2   /*fail to manual move continuous*/
+#define MC_FAIL_MANUAL_TO_POINT (unsigned long long int)0x0001000200A90FA0   /*fail to manual move to target point*/
+#define MC_FAIL_MANUAL_STEP (unsigned long long int)0x0001000200A90FA1   /*fail to manual move step*/
+#define MC_FAIL_MANUAL_CONTINUOUS (unsigned long long int)0x0001000200A90FA2   /*fail to manual move continuous*/
 #define MC_MANUAL_FRAME_ERROR (unsigned long long int)0x0001000400A90FA3   /*invalid manual frame*/
 #define PARAM_LENGTH_ERROR (unsigned long long int)0x00010002007903F5   /*array index beyond range*/
 #define PARAM_INTERNAL_FAULT (unsigned long long int)0x0001000B00790001   /*program internal fault*/

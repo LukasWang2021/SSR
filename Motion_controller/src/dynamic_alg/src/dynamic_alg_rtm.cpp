@@ -12,7 +12,8 @@ namespace basic_alg
 DynamicAlgRTM::DynamicAlgRTM():
     log_ptr_(NULL),
     param_ptr_(NULL),
-    is_valid_(false)
+    is_valid_(false),
+    acc_scale_factor_(1.0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new DynamicAlgRTMParam();
@@ -111,6 +112,12 @@ bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
     Ixz_load = param_ptr_->Ixz_load_;
     Iyz_load = param_ptr_->Iyz_load_;
     computePaiElementInverseDynamics();
+
+    acc_scale_factor_ = param_ptr_->acc_scale_factor_;
+    if (acc_scale_factor_ >= 1.0 || acc_scale_factor_ < 0)
+    {
+        acc_scale_factor_ = 1.0;
+    }
     
     return true;
 }
@@ -231,6 +238,7 @@ bool DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelo
 
 bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg)
 {
+    
     JointTorque torq_pos;
     torq_pos.t1_ = param_ptr_->max_torque_[0];
     torq_pos.t2_ = param_ptr_->max_torque_[1];
@@ -247,6 +255,149 @@ bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, Join
     torq_neg.t5_ = - torq_pos.t5_;
     torq_neg.t6_ = - torq_pos.t6_;
 
+    //prepare variable.
+    double M[LINKS][LINKS] = {0};
+    computeMExpression(joint, M);//400us
+
+    double M_inverse[LINKS][LINKS] = {0};
+    bool ret = getMatrixLUInverse(M, LINKS, M_inverse);//LU, 100-400us
+    //bool ret = getMatrixInverse(M, LINKS, M_inverse);//伴随矩阵法,4ms,deprecated by LU.
+    if (ret == false)
+    {
+        FST_ERROR("Failed to compute direct dynamics to get acceleration for invalid inverse M.");
+        return false;
+    }
+
+    double C[LINKS][LINKS] = {0};
+    computeCExpression(joint, vel, C);//2-3ms
+
+    double g[LINKS] = {0};
+    computeGExpression(joint, g);//70us
+
+    double Fv[LINKS][LINKS] = {0};
+    Fv[0][0] = FV1;
+    Fv[1][1] = FV2;
+    Fv[2][2] = FV3;
+    Fv[3][3] = FV4;
+    Fv[4][4] = FV5;
+    Fv[5][5] = FV6;
+
+    double Fs[LINKS][LINKS] = {0};
+    Fs[0][0] = FS1;
+    Fs[1][1] = FS2;
+    Fs[2][2] = FS3;
+    Fs[3][3] = FS4;
+    Fs[4][4] = FS5;
+    Fs[5][5] = FS6;
+
+    double sign_vel[LINKS] = {0};
+    for (int i = 0; i < LINKS; ++i)
+    {
+        sign_vel[i] = sign(vel[i]);
+    }
+
+    double tau_he[LINKS] = {0};
+    computeTauHe(joint, tau_he);//300-400us
+
+
+    // compute q ̈=M^(-1) (q)(τ-C(q,q ̇ ) q ̇-F_v q ̇-F_s sgn(q ̇ )-g(q)-J^T (q) h_e)
+    double temp_pos[LINKS] = {0};
+    double temp_neg[LINKS] = {0};
+
+    //compute with τ
+    for (int i = 0; i < LINKS; ++i)
+    {
+        temp_pos[i] += torq_pos[i];
+        temp_neg[i] += torq_neg[i];
+    }
+
+    //  compute with C(q,q ̇ ) q ̇
+    for (int i = 0; i < LINKS; ++i)
+    {
+        double C_multiply_vel = 0;
+        for (int j = 0; j < LINKS; ++j)
+        {
+            C_multiply_vel += C[i][j] * vel[j];
+        }
+        temp_pos[i] += - C_multiply_vel;
+        temp_neg[i] += - C_multiply_vel;
+    }
+
+    //compute with F_v q ̇
+    for (int i = 0; i < LINKS; ++i)
+    {
+        double fv_multiply_vel = 0;
+        for (int j = 0; j < LINKS; ++j)
+        {
+            fv_multiply_vel += Fv[i][j] * vel[j];
+        }
+        temp_pos[i] += - fv_multiply_vel;
+        temp_neg[i] += - fv_multiply_vel;
+    }
+
+    //compute with F_s sgn(q ̇ )
+    for (int i = 0; i < LINKS; ++i)
+    {
+        double fs_multiply_sign_vel = 0;
+        for (int j = 0; j < LINKS; ++j)
+        {
+            fs_multiply_sign_vel += Fs[i][j] * sign_vel[j];
+        }
+        temp_pos[i] += - fs_multiply_sign_vel;
+        temp_neg[i] += - fs_multiply_sign_vel;
+    }
+
+    //compute with g(q)
+    for (int i = 0; i < LINKS; ++i)
+    {
+        temp_pos[i] += - g[i];
+        temp_neg[i] += - g[i];
+    }
+
+    //compute with J^T (q) h_e
+    for (int i = 0; i < LINKS; ++i)
+    {
+        temp_pos[i] += - tau_he[i];
+        temp_neg[i] += - tau_he[i];
+    }
+
+    //compute with M^(-1) (q)
+    double final_ans_pos[LINKS] = {0};
+    double final_ans_neg[LINKS] = {0};
+    for (int i = 0; i < LINKS; ++i)
+    {
+        double M_multiply_tau_pos = 0;
+        double M_multiply_tau_neg = 0;
+        for (int j = 0; j < LINKS; ++j)
+        {
+            M_multiply_tau_pos += M_inverse[i][j] * temp_pos[j];
+            M_multiply_tau_neg += M_inverse[i][j] * temp_neg[j];
+        }
+        final_ans_pos[i] += M_multiply_tau_pos;
+        final_ans_pos[i] = final_ans_pos[i] * acc_scale_factor_;
+        final_ans_neg[i] += M_multiply_tau_neg;
+        final_ans_neg[i] = final_ans_neg[i] * acc_scale_factor_;
+    }
+    
+    //compute final answer.
+    acc_pos.a1_ = final_ans_pos[0];
+    acc_pos.a2_ = final_ans_pos[1];
+    acc_pos.a3_ = final_ans_pos[2];
+    acc_pos.a4_ = final_ans_pos[3];
+    acc_pos.a5_ = final_ans_pos[4];
+    acc_pos.a6_ = final_ans_pos[5];
+
+    acc_neg.a1_ = final_ans_neg[0];
+    acc_neg.a2_ = final_ans_neg[1];
+    acc_neg.a3_ = final_ans_neg[2];
+    acc_neg.a4_ = final_ans_neg[3];
+    acc_neg.a5_ = final_ans_neg[4];
+    acc_neg.a6_ = final_ans_neg[5];
+     
+    return true;
+
+
+/*
     bool ret = getAccDirectDynamics(joint, vel, torq_pos, acc_pos);
     if (ret ==  false)
         return false;
@@ -256,6 +407,7 @@ bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, Join
         return false;
 
     return ret;
+    */
 }
 
 bool DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,

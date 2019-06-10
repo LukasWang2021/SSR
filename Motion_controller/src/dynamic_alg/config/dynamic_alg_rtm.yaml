@@ -1,5 +1,6 @@
 log_level: 1
 number_of_links: 6
+acc_scale_factor: 0.5 #0.01~1.0
 max_torque:
     - 677.16
     - 674.68

@@ -66,6 +66,7 @@ private:
     fst_parameter::ParamGroup param_;
     std::string file_path_;
     bool is_valid_;
+    double acc_scale_factor_;
 
     //input values.
     double q1, q2, q3, q4, q5, q6, q7, q8, q9;

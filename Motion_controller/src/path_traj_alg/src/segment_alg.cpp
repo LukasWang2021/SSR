@@ -4424,23 +4424,23 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
         {
             traj_p_address_local = traj_p_address;
             traj_v_address_local = traj_v_address;
-            printf("[joint   ]:");
+            //printf("[joint   ]:");
             for (j = 0; j < 6; ++j)
             {
                 joint[j] = stack[traj_p_address_local + i];
                 omega[j] = stack[traj_v_address_local + i];
                 traj_p_address_local += 75;
                 traj_v_address_local += 75;
-                printf("%.4lf,",joint[j]);
+                //printf("%.4lf,",joint[j]);
             }
-            printf("\n");
-            printf("[velocity]:");
-            for (j = 0; j < 6; ++j)
-            {
-                printf("%.4lf,",omega[j]);
-            }
-            printf("\n");
-            printf("acc------->");
+            //printf("\n");
+            //printf("[velocity]:");
+            //for (j = 0; j < 6; ++j)
+            //{
+            //    printf("%.4lf,",omega[j]);
+            //}
+            //printf("\n");
+            //printf("acc------->");
             ret = segment_alg_param.dynamics_ptr->getAccMax(joint, omega, alpha_pos, alpha_neg);
             if (ret == false)
             {
@@ -4457,13 +4457,13 @@ inline void updateConstraintJoint(int traj_p_address, int traj_v_address, int tr
             {
                 stack[constraint_joint_pos_acc_address + i] = alpha_pos[j];
                 stack[constraint_joint_neg_acc_address + i] = alpha_neg[j];
-                printf("(%lf|%lf), ", stack[constraint_joint_pos_acc_address + i], stack[constraint_joint_neg_acc_address + i]);
+                //printf("(%lf|%lf), ", stack[constraint_joint_pos_acc_address + i], stack[constraint_joint_neg_acc_address + i]);
                 constraint_joint_pos_acc_address += 50;
                 constraint_joint_neg_acc_address += 50;
             }
-            printf("\n");
+            //printf("\n");
         }
-        printf("----------------------------dyn end\n");
+        //printf("----------------------------dyn end\n");
         /* before 201905
         float joint[6], omega[6], alpha[2][6];
         int traj_p_address_local, traj_v_address_local;

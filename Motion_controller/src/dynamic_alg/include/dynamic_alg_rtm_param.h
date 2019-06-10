@@ -18,6 +18,7 @@ public:
     // param to load & save
     int log_level_;
     int number_of_links_;
+    double acc_scale_factor_;
     std::vector<double> max_torque_;
     double m_load_, lcx_load_, lcy_load_, lcz_load_, Ixx_load_, Iyy_load_, Izz_load_, Ixy_load_, Ixz_load_, Iyz_load_;
     double ZZR1, FS1, FV1, XXR2, XY2, XZR2, YZ2, ZZR2, MXR2, MY2, FS2, FV2, XXR3, XYR3, XZ3, YZ3, ZZR3, MXR3, MYR3, Im3, FS3, FV3,

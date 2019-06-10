@@ -379,7 +379,7 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
     }    
     if (data.verify == 0)
     {
-        //FST_INFO("id = %d, IODeviceData verify failed", address_);
+        FST_WARN("id = %d, IODeviceData verify failed, err = 0x%llx", address_, IO_VERIFY_FALSE);
         return IO_VERIFY_FALSE;
     }
     return SUCCESS; 

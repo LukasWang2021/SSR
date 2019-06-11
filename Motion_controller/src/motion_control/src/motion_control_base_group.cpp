@@ -106,16 +106,17 @@ BaseGroup::~BaseGroup()
 #ifdef OUTPUT_JOINT_POINT
     PoseEuler pose;
     printf("正在将缓存中的轨迹点录入文件：jout.csv ... 请稍后\n");
-    g_joint_out << "level,time,angle[0],angle[1],angle[2],angle[3],angle[4],angle[5],omega[0],omega[1],omega[2],omega[3],omega[4],omega[5],alpha[0],alpha[1],alpha[2],alpha[3],alpha[4],alpha[5],x,y,z,a,b,c" << endl;
+    g_joint_out << "level,time,pos[0],pos[1],pos[2],pos[3],pos[4],pos[5],vel[0],vel[1],vel[2],vel[3],vel[4],vel[5],acc[0],acc[1],acc[2],acc[3],acc[4],acc[5],tor[0],tor[1],tor[2],tor[3],tor[4],tor[5],x,y,z,a,b,c" << endl;
 
     for (size_t i = 0; i < g_joint_output_index; i++)
     {
         auto &point = g_joint_output_array[i].point;
-        kinematics_ptr_->doFK(point.angle, pose);
+        kinematics_ptr_->doFK(point.pos, pose);
         g_joint_out << point.level << "," << g_joint_output_array[i].time << ","
-                    << point.angle[0] << "," << point.angle[1] << "," << point.angle[2] << "," << point.angle[3] << "," << point.angle[4] << "," << point.angle[5] << ","
-                    << point.omega[0] << "," << point.omega[1] << "," << point.omega[2] << "," << point.omega[3] << "," << point.omega[4] << "," << point.omega[5] << ","
-                    << point.alpha[0] << "," << point.alpha[1] << "," << point.alpha[2] << "," << point.alpha[3] << "," << point.alpha[4] << "," << point.alpha[5] << ","
+                    << point.pos[0] << "," << point.pos[1] << "," << point.pos[2] << "," << point.pos[3] << "," << point.pos[4] << "," << point.pos[5] << ","
+                    << point.vel[0] << "," << point.vel[1] << "," << point.vel[2] << "," << point.vel[3] << "," << point.vel[4] << "," << point.vel[5] << ","
+                    << point.acc[0] << "," << point.acc[1] << "," << point.acc[2] << "," << point.acc[3] << "," << point.acc[4] << "," << point.acc[5] << ","
+                    << point.torque[0] << "," << point.torque[1] << "," << point.torque[2] << "," << point.torque[3] << "," << point.torque[4] << "," << point.torque[5] << ","
                     << pose.point_.x_ << "," << pose.point_.y_ << "," << pose.point_.z_ << "," << pose.euler_.a_ << "," << pose.euler_.b_ << "," << pose.euler_.c_ << endl;
     }
 
@@ -2493,9 +2494,9 @@ ErrorCode BaseGroup::pickPointsFromManualTrajectory(TrajectoryPoint *points, siz
         {
             char buffer[LOG_TEXT_SIZE];
             manual_to_standby_request_ = true;
-            FST_INFO("Get ending-point: %.4f - %s", manual_time_, printDBLine(&points[length - 1].angle[0], buffer, LOG_TEXT_SIZE));
+            FST_INFO("Get ending-point: %.4f - %s", manual_time_, printDBLine(&points[length - 1].pos[0], buffer, LOG_TEXT_SIZE));
             resetManualTrajectory();
-            start_joint_ = points[length - 1].angle;
+            start_joint_ = points[length - 1].pos;
         }
 
         return SUCCESS;
@@ -2519,11 +2520,11 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
     for (size_t i = 0 ; i < length; i++)
     {
         points[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
-        memset(&points[i].omega, 0, sizeof(Joint));
-        memset(&points[i].alpha, 0, sizeof(Joint));
-        memset(&points[i].ma_cv_g, 0, sizeof(Joint));
+        memset(&points[i].vel, 0, sizeof(JointVelocity));
+        memset(&points[i].acc, 0, sizeof(JointAcceleration));
+        memset(&points[i].torque, 0, sizeof(JointTorque));
 
-        angle_ptr  = (double*)&points[i].angle;
+        angle_ptr  = (double*)&points[i].pos;
         start_ptr  = (double*)&manual_traj_.joint_start;
         target_ptr = (double*)&manual_traj_.joint_ending;
 
@@ -2570,7 +2571,7 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
         }
 
         //char buffer[LOG_TEXT_SIZE];
-        //FST_INFO("  >> joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
+        //FST_INFO("  >> joint: %s", printDBLine(&points[i].pos[0], buffer, LOG_TEXT_SIZE));
         picked_num ++;
 
         if (manual_time_ >= manual_traj_.duration)
@@ -2630,9 +2631,9 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
     for (size_t i = 0; i < length; i++)
     {
         points[i].level = manual_time_ > MINIMUM_E6 ? POINT_MIDDLE : POINT_START;
-        memset(&points[i].omega, 0, sizeof(Joint));
-        memset(&points[i].alpha, 0, sizeof(Joint));
-        memset(&points[i].ma_cv_g, 0, sizeof(Joint));
+        memset(&points[i].vel, 0, sizeof(JointVelocity));
+        memset(&points[i].acc, 0, sizeof(JointAcceleration));
+        memset(&points[i].torque, 0, sizeof(JointTorque));
 
         axis_ptr   = (double *) &pose.point_.x_;
         start_ptr  = (double *) &manual_traj_.cart_start.point_.x_;
@@ -2686,7 +2687,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 pose.convertToTransMatrix(trans_tmp);
                 trans_tmp.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
 
             case USER:
@@ -2694,7 +2695,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 trans_uf.rightMultiply(trans_tmp, trans);
                 trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
                 
             case WORLD:
@@ -2702,14 +2703,14 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 trans_uf.rightMultiply(trans_tmp, trans);
                 trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
 
             case TOOL:
                 pose.convertToTransMatrix(trans_pose_by_tmp);
                 trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].angle) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
 
             case JOINT:
@@ -2741,7 +2742,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             break;
         }
 
-        if (!soft_constraint_.isJointInConstraint(points[i].angle))
+        if (!soft_constraint_.isJointInConstraint(points[i].pos))
         {
             char buffer[LOG_TEXT_SIZE];
             FST_ERROR("IK result out of soft constraint:");
@@ -2761,7 +2762,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
             //FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
             //FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
-            FST_ERROR("  joint: %s", printDBLine(&points[i].angle[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("  joint: %s", printDBLine(&points[i].pos[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));
             err = JOINT_OUT_OF_CONSTRAINT;

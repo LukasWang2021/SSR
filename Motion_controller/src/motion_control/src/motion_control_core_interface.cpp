@@ -64,10 +64,10 @@ bool BareCoreInterface::fillPointCache(TrajectoryPoint *points, size_t length, P
     {
         for (size_t i = 0; i < length; i++)
         {
-            memcpy(point_cache_.cache.points[i].angle, &points[i].angle, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].omega, &points[i].omega, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].alpha, &points[i].alpha, JOINT_NUM * sizeof(double));
-            memcpy(point_cache_.cache.points[i].inertia, &points[i].ma_cv_g, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].angle, &points[i].pos, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].omega, &points[i].vel, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].alpha, &points[i].acc, JOINT_NUM * sizeof(double));
+            memcpy(point_cache_.cache.points[i].inertia, &points[i].torque, JOINT_NUM * sizeof(double));
             point_cache_.cache.points[i].point_position = points[i].level;
         }
 

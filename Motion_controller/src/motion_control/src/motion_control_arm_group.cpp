@@ -150,6 +150,32 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager
     FST_INFO("  firm-upper: %s", printDBLine(&firm_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  hard-upper: %s", printDBLine(&hard_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
 
+    // 初始化运动学模块
+    FST_INFO("Initializing kinematics of ArmGroup ...");
+    kinematics_ptr_ = new KinematicsRTM(path);
+
+    if (kinematics_ptr_ == NULL || !kinematics_ptr_->isValid())
+    {
+        FST_ERROR("Fail to create kinematics for this Group.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    // 初始化动力学模块
+    FST_INFO("Initializing dynamics of ArmGroup ...");
+    dynamics_ptr_ = new DynamicAlgRTM();
+
+    if (dynamics_ptr_ == NULL)
+    {
+        FST_ERROR("Fail to create dynamics for ArmGroup.");
+        return MC_INTERNAL_FAULT;
+    }
+
+    if (!dynamics_ptr_->initDynamicAlg(path))
+    {
+        FST_ERROR("Fail to init dynamics for ArmGroup.");
+        return MC_FAIL_IN_INIT;
+    }
+
     // 加载motion_control参数设置
     param.reset();
 
@@ -165,7 +191,7 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager
     {
         FST_INFO("Initializing trajectory fifo ... capacity = %d", traj_fifo_size);
 
-        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM, log_ptr_) == SUCCESS)
+        if (traj_fifo_.initTrajectoryFifo(traj_fifo_size, JOINT_OF_ARM, log_ptr_, dynamics_ptr_) == SUCCESS)
         {
             FST_INFO("Success.");
         }
@@ -416,32 +442,6 @@ ErrorCode ArmGroup::initGroup(ErrorMonitor *error_monitor_ptr, CoordinateManager
     }
 
     soft_constraint_.setMask(index, length);
-
-    // 初始化运动学模块
-    FST_INFO("Initializing kinematics of ArmGroup ...");
-    kinematics_ptr_ = new KinematicsRTM(path);
-
-    if (!kinematics_ptr_->isValid())
-    {
-        FST_ERROR("Fail to create kinematics for this Group.");
-        return MC_INTERNAL_FAULT;
-    }
-
-    // 初始化动力学模块
-    FST_INFO("Initializing dynamics of ArmGroup ...");
-    dynamics_ptr_ = new DynamicAlgRTM();
-
-    if (dynamics_ptr_ == NULL)
-    {
-        FST_ERROR("Fail to create dynamics for ArmGroup.");
-        return MC_INTERNAL_FAULT;
-    }
-
-    if (!dynamics_ptr_->initDynamicAlg(path))
-    {
-        FST_ERROR("Fail to init dynamics for ArmGroup.");
-        return MC_FAIL_IN_INIT;
-    }
 
     // 初始化坐标变换模块
     if (!transformation_.init(kinematics_ptr_))

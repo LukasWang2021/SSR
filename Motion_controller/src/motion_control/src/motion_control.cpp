@@ -424,6 +424,7 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
         group_ptr_->getKinematicsPtr()->doFK(target.target.joint, fcp_in_base);
         group_ptr_->getTransformationPtr()->convertFcpToTcp(fcp_in_base, motion_info.target.tool_frame, tcp_in_base);
         group_ptr_->getTransformationPtr()->convertPoseFromBaseToUser(tcp_in_base, motion_info.target.user_frame, motion_info.target.pose.pose);
+        FST_INFO("%.6f %.6f %.6f", motion_info.target.pose.pose.point_.x_, motion_info.target.pose.pose.point_.y_, motion_info.target.pose.pose.point_.z_);
     }
     else
     {

@@ -86,7 +86,7 @@ struct MotionTarget     // 用于move指令的数据结构
                     //          如果是moveL或moveC，指令速度是mm/s, 范围： 0.0 - MAX_VEL
     double  acc;    // 指令加速度： 附加指令中的加速度是百分比，范围: 0.0 - 1.0
     
-    int user_frame_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
+    int user_frame_id;  // 需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
     int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
 
     int user_frame_offset_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
@@ -163,10 +163,10 @@ struct TrajectorySegment
 
 struct TrajectoryPoint  // 差值得到的轨迹点
 {
-    basic_alg::Joint   angle;      // 轨迹点的位置
-    basic_alg::Joint   omega;      // 轨迹点的速度
-    basic_alg::Joint   alpha;      // 轨迹点的加速度
-    basic_alg::Joint   ma_cv_g;    // 轨迹点的力矩
+    basic_alg::Joint pos;               // 轨迹点的位置
+    basic_alg::JointVelocity vel;       // 轨迹点的速度
+    basic_alg::JointAcceleration acc;   // 轨迹点的加速度
+    basic_alg::JointTorque torque;      // 轨迹点的力矩
     PointLevel  level;  // 轨迹点位置，起始点、中间点或者结束点
 };
 

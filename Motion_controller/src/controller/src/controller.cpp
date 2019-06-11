@@ -297,6 +297,7 @@ void Controller::recordLog(ErrorCode error_code, std::string log_str)
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
     FST_ERROR(stream.str().c_str());
+    state_machine_.setSafetyStop(error_code);
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }

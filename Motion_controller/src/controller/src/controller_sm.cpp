@@ -307,6 +307,24 @@ ErrorCode ControllerSm::callShutdown()
     }
 }
 
+void ControllerSm::setSafetyStop(ErrorCode error_code)
+{
+    //STOP process: write bit to the safety_board.
+    if (ErrorMonitor::instance()->isCore0Error(error_code))
+    {
+        int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+        // define error type to stop(0,1,2)
+        if (level == 7 || level == 10 || level == 11)
+        {
+            safety_device_ptr_->setDOType0Stop(1);
+        } 
+        else if (level >= 4)
+        {
+            safety_device_ptr_->setDOType1Stop(1);
+        }
+    }
+}
+
 void ControllerSm::transferRobotStateToTeaching()
 {
     if(robot_state_ == ROBOT_IDLE)
@@ -589,25 +607,6 @@ void ControllerSm::processError()
     while(ErrorMonitor::instance()->pop(error_code))
     {
         recordLog(error_code);
-    
-        //STOP process: write bit to the safety_board.
-        if (ErrorMonitor::instance()->isCore0Error(error_code))
-        {
-            int level = ErrorMonitor::instance()->getErrorLevel(error_code);
-            // define error type to stop(0,1,2)
-            if (level == 7 || level == 10 || level == 11)
-            {
-                safety_device_ptr_->setDOType0Stop(1);
-            } 
-            else if (level >= 4)
-            {
-                safety_device_ptr_->setDOType1Stop(1);
-            }
-            else
-            {
-            }
-        }
-
     }
 }
 
@@ -887,6 +886,8 @@ void ControllerSm::recordLog(ErrorCode error_code)
     if (error_code != INFO_RESET_SUCCESS)
         FST_ERROR(stream.str().c_str());
 
+    setSafetyStop(error_code);
+
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code);
 }
 
@@ -895,6 +896,7 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
     FST_ERROR(stream.str().c_str());
+    setSafetyStop(error_code);
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }

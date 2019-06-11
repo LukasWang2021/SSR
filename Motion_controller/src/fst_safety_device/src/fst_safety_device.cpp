@@ -274,12 +274,12 @@ char FstSafetyDevice::getDOType0Stop()
 ErrorCode FstSafetyDevice::setDOType0Stop(char data)
 {
     if (isSafetyVirtual() == true){
-        // FST_INFO("setDOType0Stop Error set %c", data);
+        FST_WARN("setDOType0Stop set 0x%x", data);
         return SUCCESS;
     }
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte1.core0_sw0 = data;
-    FST_INFO("setDOType0Stop set 0x%X", *(int*)&out);
+    FST_WARN("setDOType0Stop set 0x%X", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
@@ -290,12 +290,12 @@ char FstSafetyDevice::getDOType1Stop()
 ErrorCode FstSafetyDevice::setDOType1Stop(char data)
 {
     if (isSafetyVirtual() == true){
-        // FST_INFO("setDOType1Stop Error set %c", data);
+        FST_WARN("setDOType1Stop set 0x%x", data);
         return SUCCESS;
     }
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte1.core0_sw1 = data;
-    FST_INFO("setDOType1Stop set 0x%X", *(int*)&out);
+    FST_WARN("setDOType1Stop set 0x%X", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 
@@ -306,12 +306,12 @@ char FstSafetyDevice::getDOType2Stop()
 ErrorCode FstSafetyDevice::setDOType2Stop(char data)
 {
     if (isSafetyVirtual() == true){
-        // FST_INFO("setDOType2Stop Error set %c", data);
+        FST_WARN("setDOType2Stop set 0x%x", data);
         return SUCCESS;
     }
     SafetyBoardDOFrm1 out = dout_frm1_;
     out.byte1.core0_sw2 = data;
-    FST_INFO("setDOType2Stop set 0x%X", *(int*)&out);
+    FST_WARN("setDOType2Stop set 0x%X", *(int*)&out);
     return setSafety(*(int*)&out, SAFETY_OUTPUT_FIRSTFRAME);
 }
 

@@ -151,6 +151,7 @@ void ControllerRpc::recordLog(ErrorCode log_code, ErrorCode error_code, std::str
         log_str += " failed";
         stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
         FST_ERROR(stream.str().c_str());
+        state_machine_ptr_->setSafetyStop(error_code);
 
         ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
     }    

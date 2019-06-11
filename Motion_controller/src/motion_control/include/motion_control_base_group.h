@@ -20,7 +20,7 @@
 #include <kinematics_rtm.h>
 #include <kinematics_toll.h>
 #include <motion_control_cache_pool.h>
-#include "dynamic_alg_rtm.h"
+#include <dynamic_alg.h>
 #include <transformation.h>
 #include <coordinate_manager.h>
 #include <tool_manager.h>

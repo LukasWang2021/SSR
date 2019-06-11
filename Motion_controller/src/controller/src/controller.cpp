@@ -297,6 +297,7 @@ void Controller::recordLog(ErrorCode error_code, std::string log_str)
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
     FST_ERROR(stream.str().c_str());
+    state_machine_.setSafetyStop(error_code);
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);
 }
@@ -310,6 +311,7 @@ void Controller::recordLog(ErrorCode major_error_code, ErrorCode minor_error_cod
 
     ss<<"Log_Code: 0x"<<std::hex<<major_error_code<<" : "<<str;
     FST_ERROR(ss.str().c_str());
+    state_machine_.setSafetyStop(major_error_code);
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(major_error_code, str);
 }

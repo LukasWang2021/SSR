@@ -94,6 +94,7 @@ public:
     ErrorCode callEstop();
     ErrorCode callReset();
     ErrorCode callShutdown();
+    void setSafetyStop(ErrorCode error_code);
 
     void transferRobotStateToTeaching();
     void transferRobotStateToRunning();

@@ -388,7 +388,11 @@ bool KinematicsRTM::doIK(const PoseQuaternion& pose_quaternion, const Joint& ref
 
 bool KinematicsRTM::doIK(const TransMatrix& trans_matrix, const Joint& ref_joint, Joint& joint, double valve)
 {
-    Posture posture = getPostureByJoint(ref_joint);
+    Posture posture;
+    posture.arm = 1;
+    posture.elbow = 1;
+    posture.wrist = 1;
+    posture.flip = flip_;
 
     TransMatrix trans_matrix_1to6;
     TransMatrix* trans_matrix_ptr = const_cast<TransMatrix*>(&trans_matrix);
@@ -506,7 +510,7 @@ IK_Q5:
     cos_j = vector_s.dotProduct(y6);
     joint.j6_ = atan2(sin_j, cos_j) - arm_dh_[5].offset;
     scaleResultJoint(joint.j6_);
-
+    
     return true;
 }
 

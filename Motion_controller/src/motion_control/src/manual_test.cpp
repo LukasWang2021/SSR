@@ -565,7 +565,7 @@ void test9(void)
 {
     PoseEuler pose = {600, 100, 500, 0, 0, 3.14159};
     PoseEuler pose_res;
-    Joint ref = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
     Joint res;
     KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
     
@@ -580,14 +580,47 @@ void test9(void)
     ArmKinematics kinematics2;
     kinematics2.initKinematics(dh_matrix);
     */
-
+    /*
     kinematics.doFK(ref, pose_res);
     cout << "kinematics FK:" << pose_res.point_.x_ << "," << pose_res.point_.y_ << "," << pose_res.point_.z_ << "," << pose_res.euler_.a_ << "," << pose_res.euler_.b_ << "," << pose_res.euler_.c_ << endl;
     kinematics.doIK(pose, ref, res);
     cout << "kinematics IK:" << res[0] << "," << res[1] << "," << res[2] << "," << res[3] << "," << res[4] << "," << res[5] << endl;
     kinematics.doFK(res, pose_res);
     cout << "kinematics FK:" << pose_res.point_.x_ << "," << pose_res.point_.y_ << "," << pose_res.point_.z_ << "," << pose_res.euler_.a_ << "," << pose_res.euler_.b_ << "," << pose_res.euler_.c_ << endl;
-    
+    */
+
+    Joint joint = {0.2345235, -0.62435254, 0.3254626, -1.3473245, -1.4542366, 2.542656737};
+    Posture posture;
+    clock_t start_clock = clock();
+    for (size_t i = 0; i < 1; i++)
+    {
+        //transformation.convertPoseFromUserToBase(tcp_in_user, user_frame_, tcp_in_base);
+        //transformation.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
+        posture = kinematics.getPostureByJoint(joint);
+    }
+    clock_t end_clock = clock();
+    double used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    printf("getPostureByJoint used time: %.6f\n", used_time);
+
+    start_clock = clock();
+    for (size_t i = 0; i < 1000; i++)
+    {
+        kinematics.doIK(pose, ref, joint);
+    }
+    end_clock = clock();
+    used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    printf("doIK used time: %.6f\n", used_time);
+    printf("doIK result: %.6f %.6f %.6f %.6f %.6f %.6f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
+
+    start_clock = clock();
+    for (size_t i = 0; i < 1000; i++)
+    {
+        kinematics.doIK(pose, posture, joint);
+    }
+    end_clock = clock();
+    used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
+    printf("doIK used time: %.6f\n", used_time);
+    printf("doIK result: %.6f %.6f %.6f %.6f %.6f %.6f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
 }
 
 void test10(void)
@@ -653,8 +686,8 @@ int main(int argc, char **argv)
     //test6();
     //test7();
     //test8();
-    //test9();
-    test10();
+    test9();
+    //test10();
 
     return 0;
 }

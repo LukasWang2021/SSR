@@ -2588,8 +2588,8 @@ ErrorCode BaseGroup::pickPointsFromManualJoint(TrajectoryPoint *points, size_t &
 ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size_t &length)
 {
     ErrorCode err = SUCCESS;
+    Joint ref_joint = getLatestJoint();
     PoseEuler pose;
-    //Joint ref_joint;
     double tim, vel;
     double *axis_ptr, *start_ptr, *target_ptr;
     size_t picked_num = 0;
@@ -2624,7 +2624,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
     }
     
     //FST_INFO("Pick from manual cartesian, manual-time = %.4f", manual_time_);
-    Posture posture = kinematics_ptr_->getPostureByJoint(getLatestJoint());
+    //Posture posture = kinematics_ptr_->getPostureByJoint(getLatestJoint());
     //FST_INFO("posture: %d,%d,%d,%d", posture.arm, posture.elbow, posture.wrist, posture.flip);
     //ref_joint = getLatestJoint();
 
@@ -2687,7 +2687,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 pose.convertToTransMatrix(trans_tmp);
                 trans_tmp.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, ref_joint, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
 
             case USER:
@@ -2695,7 +2695,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 trans_uf.rightMultiply(trans_tmp, trans);
                 trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, ref_joint, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
                 
             case WORLD:
@@ -2703,14 +2703,14 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
                 trans_uf.rightMultiply(trans_tmp, trans);
                 trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, ref_joint, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
 
             case TOOL:
                 pose.convertToTransMatrix(trans_pose_by_tmp);
                 trans.rightMultiply(trans_pose_by_tmp, trans_pose_by_base);
                 trans_pose_by_base.rightMultiply(trans_tf_inverse, trans_fcp_by_base);
-                err = kinematics_ptr_->doIK(trans_fcp_by_base, posture, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
+                err = kinematics_ptr_->doIK(trans_fcp_by_base, ref_joint, points[i].pos) ? SUCCESS : MC_COMPUTE_IK_FAIL;
                 break;
 
             case JOINT:
@@ -2738,7 +2738,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             FST_ERROR("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
             FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
             //FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-            //FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
             break;
         }
 
@@ -2761,7 +2761,7 @@ ErrorCode BaseGroup::pickPointsFromManualCartesian(TrajectoryPoint *points, size
             FST_ERROR("  user-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", user_frame_.point_.x_, user_frame_.point_.y_, user_frame_.point_.z_, user_frame_.euler_.a_, user_frame_.euler_.b_, user_frame_.euler_.c_);
             FST_ERROR("  tool-frame: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", tool_frame_.point_.x_, tool_frame_.point_.y_, tool_frame_.point_.z_, tool_frame_.euler_.a_, tool_frame_.euler_.b_, tool_frame_.euler_.c_);
             //FST_ERROR("  fcp-in-base: %.6f, %.6f, %.6f - %.6f, %.6f, %.6f", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-            //FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
+            FST_ERROR("  reference: %s", printDBLine(&ref_joint[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  joint: %s", printDBLine(&points[i].pos[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  upper: %s", printDBLine(&soft_constraint_.upper()[0], buffer, LOG_TEXT_SIZE));
             FST_ERROR("  lower: %s", printDBLine(&soft_constraint_.lower()[0], buffer, LOG_TEXT_SIZE));

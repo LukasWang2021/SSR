@@ -13,68 +13,6 @@ using namespace basic_alg;
 int main(int argc, char** argv)
 {
     printf("begin\n");
-    //----------prepare param-----------//
-    DynamicAlgParam dynamics_alg_param_ptr[LINKS];
-    dynamics_alg_param_ptr[0].ZZR = 4.4422;
-    dynamics_alg_param_ptr[0].FS = 18.098;
-    dynamics_alg_param_ptr[0].FV = 20.904;
-
-    dynamics_alg_param_ptr[1].XXR = 2.8681;
-    dynamics_alg_param_ptr[1].XY = -1.8825;
-    dynamics_alg_param_ptr[1].XZR = -2.766;
-    dynamics_alg_param_ptr[1].YZ = -0.30968;
-    dynamics_alg_param_ptr[1].ZZR = 6.8069;
-    dynamics_alg_param_ptr[1].MXR = -0.48049;
-    dynamics_alg_param_ptr[1].MY = -5.3694;
-    dynamics_alg_param_ptr[1].FS = 9.8725;
-    dynamics_alg_param_ptr[1].FV = 48.124;
-
-    dynamics_alg_param_ptr[2].XXR = 0.16869;
-    dynamics_alg_param_ptr[2].XYR = -0.64756;
-    dynamics_alg_param_ptr[2].XZ = -1.2098;
-    dynamics_alg_param_ptr[2].YZ = -1.0284;
-    dynamics_alg_param_ptr[2].ZZR = 1.8109; 
-    dynamics_alg_param_ptr[2].MXR = -1.5038;
-    dynamics_alg_param_ptr[2].MYR = -1.0835; 
-    dynamics_alg_param_ptr[2].Im = 0.11902; 
-    dynamics_alg_param_ptr[2].FS = 6.2768; 
-    dynamics_alg_param_ptr[2].FV = 18.144;
-
-    dynamics_alg_param_ptr[3].XXR = 0.75468; 
-    dynamics_alg_param_ptr[3].XY = 0.77181; 
-    dynamics_alg_param_ptr[3].XZ = -0.096175; 
-    dynamics_alg_param_ptr[3].YZ = -1.0139; 
-    dynamics_alg_param_ptr[3].ZZR = -1.5587; 
-    dynamics_alg_param_ptr[3].MX = -0.049204; 
-    dynamics_alg_param_ptr[3].MYR = -0.59913; 
-    dynamics_alg_param_ptr[3].Im = 1.0685; 
-    dynamics_alg_param_ptr[3].FS = 1.6369; 
-    dynamics_alg_param_ptr[3].FV = 7.2242; 
-
-    dynamics_alg_param_ptr[4].XXR = 2.011; 
-    dynamics_alg_param_ptr[4].XY = 0.16856; 
-    dynamics_alg_param_ptr[4].XZ = -0.16502;
-    dynamics_alg_param_ptr[4].YZ = 0.65657; 
-    dynamics_alg_param_ptr[4].ZZR = 1.892; 
-    dynamics_alg_param_ptr[4].MX = 0.74715; 
-    dynamics_alg_param_ptr[4].MYR = 0.7456; 
-    dynamics_alg_param_ptr[4].Im = 1.3378; 
-    dynamics_alg_param_ptr[4].FS = 3.0259; 
-    dynamics_alg_param_ptr[4].FV = 10.963;
-
-    dynamics_alg_param_ptr[5].XXR = -0.3696; 
-    dynamics_alg_param_ptr[5].XY = -0.26786; 
-    dynamics_alg_param_ptr[5].XZ = -0.28879; 
-    dynamics_alg_param_ptr[5].YZ = -0.26229; 
-    dynamics_alg_param_ptr[5].ZZ = 0.61266; 
-    dynamics_alg_param_ptr[5].MX = 0.16604; 
-    dynamics_alg_param_ptr[5].MY = -0.0917; 
-    dynamics_alg_param_ptr[5].Im = -0.33699; 
-    dynamics_alg_param_ptr[5].FS = 3.4088; 
-    dynamics_alg_param_ptr[5].FV = 3.8218;
-
-    DynamicAlgLoadParam load_param;
-    memset(&load_param, 0 , sizeof(load_param));
 
     //--------------init dynamics----------------------//
     DynamicAlgRTM dyn;
@@ -158,7 +96,7 @@ int main(int argc, char** argv)
     }
     printf("velocity size=%d\n", velocity_vector.size());
     //read tau.txt
-    for (int i = 0; i < count*6; ++i)
+    for (int i = 0; i < count; ++i)
     {
         getline(tau_file, line);
         num_str = ""; 
@@ -200,7 +138,11 @@ int main(int argc, char** argv)
     }
     for (int k = 0; k < tau_vector.size(); ++k)
     {
-        printf("%f\n", tau_vector[k]);
+        printf("%f,", tau_vector[k]);
+        if ((k+1) % 6 == 0)
+        {
+            printf("\n");
+        }
     }
 */  
     //compute time
@@ -223,7 +165,7 @@ int main(int argc, char** argv)
             return 0;
         }
         
-        //outfile<<acc.a1_<<","<< acc.a2_<<","<< acc.a3_<<","<< acc.a4_<<","<< acc.a5_<<","<< acc.a6_<<endl;
+        outfile<<acc.a1_<<","<< acc.a2_<<","<< acc.a3_<<","<< acc.a4_<<","<< acc.a5_<<","<< acc.a6_<<endl;
         
     }
     

@@ -98,6 +98,7 @@ bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
 
     if (param_ptr_->number_of_links_ < LINKS)
     {
+        is_valid_ = false;
         return false;
     }
 

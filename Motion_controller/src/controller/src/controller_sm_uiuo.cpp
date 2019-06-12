@@ -13,37 +13,6 @@ using namespace fst_base;
 using namespace fst_mc;
 using namespace fst_hal;
 
-typedef enum
-{
-    UI_SERVO_ENABLE        = 1,
-    UI_PAUSE_REQUEST       = 2,
-    UI_RESET               = 3,
-    UI_START               = 4,
-    UI_ABORT_PROGRAM       = 5,
-    UI_SELECTION_STROBE    = 6,
-    UI_MPLCS_START         = 7,
-    UI_PROGRAM_SELECTION_1 = 8,
-    UI_PROGRAM_SELECTION_2 = 9,
-    UI_PROGRAM_SELECTION_3 = 10,
-    UI_PROGRAM_SELECTION_4 = 11,
-    UI_PROGRAM_SELECTION_5 = 12,
-}UICommand;
-
-typedef enum
-{
-    UO_CMD_ENABLE              = 1,
-    UO_PAUSED                  = 2,
-    UO_FAULT                   = 3,
-    UO_PROGRAM_RUNNING         = 4,
-    UO_SERVO_STATUS            = 5,
-    UO_SELECTION_CHECK_REQUEST = 6,
-    UO_MPLCS_START_DONE        = 7,
-    UO_PROGRAM_CONFIRM_1       = 8,
-    UO_PROGRAM_CONFIRM_2       = 9,
-    UO_PROGRAM_CONFIRM_3       = 10,
-    UO_PROGRAM_CONFIRM_4       = 11,
-    UO_PROGRAM_CONFIRM_5       = 12,
-}UOCommand;
 
 
 void ControllerSm::processUIUO()

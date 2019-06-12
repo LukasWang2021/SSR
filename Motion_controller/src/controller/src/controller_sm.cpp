@@ -808,6 +808,17 @@ void ControllerSm::processMacroLaunching()
     }
 }
 
+void ControllerSm::processModbusClientList()
+{
+    ErrorCode error_code = modbus_manager_ptr_->scanAllClientDataArea();
+    if (error_code != SUCCESS)
+    {
+        ErrorMonitor::instance()->add(error_code);
+    }
+}
+
+
+
 long long ControllerSm::computeTimeElapse(struct timeval &current_time, struct timeval &last_time)
 {
     long long delta_tv_sec = current_time.tv_sec - last_time.tv_sec;
@@ -855,14 +866,6 @@ void ControllerSm::handleContinuousManualRpcTimeout()
     }
 }
 
-void ControllerSm::processModbusClientList()
-{
-    ErrorCode error_code = modbus_manager_ptr_->scanAllClientDataArea();
-    if (error_code != SUCCESS)
-    {
-        ErrorMonitor::instance()->add(error_code);
-    }
-}
 
 void ControllerSm::clearInstruction()
 {

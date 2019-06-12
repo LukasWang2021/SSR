@@ -101,7 +101,7 @@ bool IoBypass::setBypass(const char * userString, bool yes_or_no)
         if (iter != value_map_.end())
         {
             io_bypass_[key] = iter->second;
-            FST_INFO("setBypass = %s, map_size is = %d\n", key.c_str(), io_bypass_.size());
+            FST_INFO("setBypass = %s, map_size is = %d", key.c_str(), io_bypass_.size());
             return true;
         }
         return false;
@@ -112,7 +112,7 @@ bool IoBypass::setBypass(const char * userString, bool yes_or_no)
         if (iter != io_bypass_.end())
         {
             io_bypass_.erase(key);
-            FST_INFO("withDrawBypass = %s, map_size is = %d\n", key.c_str(), io_bypass_.size());
+            FST_INFO("withDrawBypass = %s, map_size is = %d", key.c_str(), io_bypass_.size());
             return true;
         }
     }

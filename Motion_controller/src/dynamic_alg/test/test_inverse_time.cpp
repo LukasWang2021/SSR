@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 
     printf("begin\n");
     //----------prepare param-----------//
-    DynamicAlgParam dynamics_alg_param_ptr[LINKS];
+/*    DynamicAlgParam dynamics_alg_param_ptr[LINKS];
     dynamics_alg_param_ptr[0].ZZR = 4.4422;
     dynamics_alg_param_ptr[0].FS = 18.098;
     dynamics_alg_param_ptr[0].FV = 20.904;
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 
     DynamicAlgLoadParam load_param;
     memset(&load_param, 0 , sizeof(load_param));
-
+*/
     //--------------init dynamics----------------------//
     DynamicAlgRTM dyn;
     dyn.initDynamicAlg("/root/install/share/runtime/axis_group/");
@@ -179,8 +179,7 @@ int main(int argc, char** argv)
     }
     printf("accelerate size=%d\n", accelerate_vector.size());
 /*
-  //print position, velocity, accelerate values
-    printf("position_size = %d\n", position_vector.size());
+    //print position, velocity, accelerate values
     for (int k = 0; k < position_vector.size(); ++k)
     {
         printf("%f, ", position_vector[k]);
@@ -235,7 +234,7 @@ int main(int argc, char** argv)
             printf("torque=%f, %f, %f, %f, %f, %f,\n",torque[0],torque[1],torque[2],torque[3],torque[4],torque[5]);
         }
 */
-        //outfile<<torque.t1_<<endl<< torque.t2_<<endl<< torque.t3_<<endl<< torque.t4_<<endl<< torque.t5_<<endl<< torque.t6_<<endl;
+        outfile<<torque.t1_<<","<< torque.t2_<<","<< torque.t3_<<","<< torque.t4_<<","<< torque.t5_<<","<< torque.t6_<<endl;
         
     }
     

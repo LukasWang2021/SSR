@@ -82,6 +82,7 @@ typedef enum
     UI_PROGRAM_SELECTION_3 = 10,
     UI_PROGRAM_SELECTION_4 = 11,
     UI_PROGRAM_SELECTION_5 = 12,
+    UI_PROGRAM_SELECTION_6 = 13,
 }UICommand;
 
 typedef enum
@@ -98,6 +99,7 @@ typedef enum
     UO_PROGRAM_CONFIRM_3       = 10,
     UO_PROGRAM_CONFIRM_4       = 11,
     UO_PROGRAM_CONFIRM_5       = 12,
+    UO_PROGRAM_CONFIRM_6       = 13,
 }UOCommand;
 
 
@@ -144,9 +146,15 @@ public:
     fst_mc::ServoState* getServoStatePtr();
     int* getSafetyAlarmPtr();  
 
-
     void setState(bool state);
     bool getState();  
+
+    //UO
+    void setUoPausedOn(void);//UO[2]
+    void setUoPausedOff(void);
+    void setUoProgramRunOn(void);//UO[4]
+    void setUoProgramRunOff(void);
+
     
 private:
     fst_log::Logger* log_ptr_;
@@ -191,6 +199,10 @@ private:
     long long int interpreter_warning_code_;
     int error_level_;
     bool is_error_exist_;
+
+    //for UIUO 
+    bool ui_servo_enable_;
+    bool uo_cmd_enable_;
     
     // state machine transfer
     void processInterpreter();
@@ -205,16 +217,13 @@ private:
     void processUIUO();
     
     // setUO
-    void setUoEnableOn(void);
+    void setUoEnableOn(void);//UO[1]
     void setUoEnableOff(void);
-    void setUoPausedOn(void);
-    void setUoPausedOff(void);
-    void setUoFaultOn(void);
+    void setUoFaultOn(void);//UO[3]
     void setUoFaultOff(void);
-    void setUoProgramRunOn(void);
-    void setUoProgramRunOff(void);
-    void setUoServoOn(void);
+    void setUoServoOn(void);//UO[5]
     void setUoServoOff(void);
+    void setUoAllOff(void);//UO all
 
     // UI check if there is falling/rising edge.
     bool isFallingEdgeStart(uint32_t user_port);

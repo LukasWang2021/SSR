@@ -2,7 +2,6 @@
 #include "kinematics.h"
 #include "kinematics_rtm.h"
 #include "kinematics_toll.h"
-//#include "dynamics_interface.h"
 #include "dynamic_alg_rtm.h"
 #include "basic_alg_datatype.h"
 #include "common_file_path.h"
@@ -15,7 +14,7 @@ using namespace fst_mc;
 using namespace basic_alg;
 //using namespace fst_algorithm;
 
-extern double stack[20000];
+extern double stack[50000];
 extern ComplexAxisGroupModel model;
 extern SegmentAlgParam segment_alg_param;
 
@@ -76,7 +75,7 @@ int main_tool(void)
     //double joint_vel_max[4] = {1200, 4.67, 5.81, 7.85};
     //AxisType axis_type[9] = {LINEAR_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS, ROTARY_AXIS};
     //initSegmentAlgParam(&segment_alg_param, 4, axis_type, joint_vel_max);
-           
+
     basic_alg::PoseEuler start;
     fst_mc::MotionTarget via;
     fst_mc::MotionTarget target;

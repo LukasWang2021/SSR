@@ -27,6 +27,8 @@ int main(int argc, char** argv)
     Joint joint;
     JointVelocity vel;
     JointAcceleration acc;
+    JointAcceleration acc_pos;
+    JointAcceleration acc_neg;
     JointTorque torque;
 
     //--------read nposiont.txt, push to a vector------------//
@@ -118,7 +120,7 @@ int main(int argc, char** argv)
         }
     }
     printf("tau size=%d\n", tau_vector.size());
-/*
+
   //print position, velocity, tau values
     for (int k = 0; k < position_vector.size(); ++k)
     {
@@ -136,7 +138,7 @@ int main(int argc, char** argv)
             printf("\n");
         }
     }
-    for (int k = 0; k < tau_vector.size(); ++k)
+ /*   for (int k = 0; k < tau_vector.size(); ++k)
     {
         printf("%f,", tau_vector[k]);
         if ((k+1) % 6 == 0)
@@ -144,12 +146,12 @@ int main(int argc, char** argv)
             printf("\n");
         }
     }
-*/  
+  */
     //compute time
     struct timeval t_start, t_end;
     long cost_time = 0;
     gettimeofday(&t_start, NULL);
-
+/*
     for (int i = 0; i < count; ++i)
     {
         for(int j = 0; j < 6; ++j)
@@ -166,6 +168,31 @@ int main(int argc, char** argv)
         }
         
         outfile<<acc.a1_<<","<< acc.a2_<<","<< acc.a3_<<","<< acc.a4_<<","<< acc.a5_<<","<< acc.a6_<<endl;
+        
+    }
+*/
+    //under max torque
+    for (int i = 0; i < count; ++i)
+    {
+        for(int j = 0; j < 6; ++j)
+        {
+            joint[j] = position_vector[i*6 + j];
+            vel[j] = velocity_vector[i*6 +j];
+            //torque[j] = tau_vector[i*6 + j];
+        }
+        err = dyn.getAccMax(joint, vel,acc_pos, acc_neg);
+        if (err == false)
+        {
+            printf("failed direct dynamics\n");
+            return 0;
+        }
+        
+        outfile<<acc_pos.a1_<<","<<acc_neg.a1_<<","
+               << acc_pos.a2_<<","<<acc_neg.a2_<<","
+               << acc_pos.a3_<<","<<acc_neg.a3_<<","
+               << acc_pos.a4_<<","<<acc_neg.a4_<<","
+               << acc_pos.a5_<<","<<acc_neg.a5_<<","
+               << acc_pos.a6_<<","<<acc_neg.a6_<<endl;
         
     }
     

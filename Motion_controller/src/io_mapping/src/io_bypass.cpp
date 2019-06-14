@@ -31,7 +31,6 @@ ErrorCode IoBypass::init()
     if (ret != SUCCESS)
         return ret;
 
-    printIOMapper();//todo delete
     return SUCCESS;
 }
 
@@ -101,7 +100,7 @@ bool IoBypass::setBypass(const char * userString, bool yes_or_no)
         if (iter != value_map_.end())
         {
             io_bypass_[key] = iter->second;
-            FST_INFO("setBypass = %s, map_size is = %d", key.c_str(), io_bypass_.size());
+            FST_INFO("setBypass = %s, map_size is = %d, vaule= %d", key.c_str(), io_bypass_.size(), io_bypass_[key]);
             return true;
         }
         return false;
@@ -157,7 +156,8 @@ int IoBypass::generateIOInfo(IOStatusJsonBypass &objInfo, const char * strIOType
     value_map_.insert(map<string, bool>::value_type(strKey, bypassValue));
 
     //get the setting bypass.
-    if (strcasecmp(objInfo.useBypass, "YES") == 0)
+    //if (strcasecmp(objInfo.useBypass, "YES") == 0 || strcasecmp(objInfo.useBypass, "NO") == 0)
+    if (objInfo.userPort == 1 || objInfo.userPort == 2 || objInfo.userPort == 5)
     {      
         io_bypass_.insert(map<string, bool>::value_type(strKey, bypassValue));
         FST_INFO("bypass: strkey = %s    , bypassValue = %d",strKey.c_str(), bypassValue);

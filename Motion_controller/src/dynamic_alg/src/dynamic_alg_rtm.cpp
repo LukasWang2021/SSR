@@ -408,7 +408,7 @@ bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, Join
         return false;
 
     return ret;
-    */
+    */    
 }
 
 bool DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque,

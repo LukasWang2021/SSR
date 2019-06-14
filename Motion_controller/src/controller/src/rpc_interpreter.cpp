@@ -20,6 +20,7 @@ void ControllerRpc::handleRpc0x00006154(void* request_data_ptr, void* response_d
     rs_data_ptr->data.data = SUCCESS;
 
     state_machine_ptr_->transferRobotStateToRunning();
+    state_machine_ptr_->setUoProgramRunOn();//UO[4]=on
     
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/start"));
 }
@@ -129,6 +130,8 @@ void ControllerRpc::handleRpc0x0000BA55(void* request_data_ptr, void* response_d
     if (rs_data_ptr->data.data == SUCCESS)
     {
         controller_client_ptr_->pause(); 
+        state_machine_ptr_->setUoPausedOn();//UO[2]=on
+        state_machine_ptr_->setUoProgramRunOff();//UO[4]=off
     }
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/pause"));
 }
@@ -152,6 +155,8 @@ void ControllerRpc::handleRpc0x0000CF55(void* request_data_ptr, void* response_d
     {
         controller_client_ptr_->resume(); 
         state_machine_ptr_->transferRobotStateToRunning();
+        state_machine_ptr_->setUoPausedOff();//UO[2]=off
+        state_machine_ptr_->setUoProgramRunOn();//UO[4]=on
     }
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/resume"));
 }
@@ -165,6 +170,8 @@ void ControllerRpc::handleRpc0x000086F4(void* request_data_ptr, void* response_d
     if (rs_data_ptr->data.data == SUCCESS)
     {
         controller_client_ptr_->abort(); 
+        state_machine_ptr_->setUoPausedOff();//UO[2]=off
+        state_machine_ptr_->setUoProgramRunOff();//UO[4]=off
     }
 
     recordLog(INTERPRETER_LOG, rs_data_ptr->data.data, std::string("/rpc/interpreter/abort"));

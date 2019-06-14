@@ -1858,6 +1858,12 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 					 (char *)xmlGetNodePath(nodeStatement));
 				generateLogicalLOOP(nodeStatement, objLineInfoTemp);
 			}
+			else if(xmlStrcasecmp(name,BAD_CAST"skip")==0){
+				;
+			}
+			else if(xmlStrcasecmp(name,BAD_CAST"text")==0){
+				;
+			}
 			else { 
 				FST_ERROR("Wrong Command (%s) in logical Command. \n", (char *)name);
 				setWarning(INFO_INTERPRETER_XML_WRONG_ELEMENT);
@@ -1921,6 +1927,9 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 					 (char *)xmlGetNodePath(nodeStatement));
 			exportBASCode(objLineInfoTemp, "EXPORT: ", "END \n", "");
         }
+		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"skip")==0){
+			;
+		}
 		else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"text")==0){
 			;
 		}

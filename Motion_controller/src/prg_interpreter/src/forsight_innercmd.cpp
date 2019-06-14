@@ -52,6 +52,7 @@ int call_UserAlarm(int iLineNum, struct thread_control_block* objThreadCntrolBlo
 int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
 int call_Pause(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
 int call_Abort(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
+int call_BLDC_CTRL(int iLineNum, struct thread_control_block* objThreadCntrolBlock);
 
 // This structure links a library function name   
 // with a pointer to that function.   
@@ -71,6 +72,7 @@ struct intern_cmd_type {
     (char *)"wait",           1, call_Wait,
     (char *)"pause",          1, call_Pause,
     (char *)"abort",          1, call_Abort,
+    (char *)"bldc_ctrl",  1, call_BLDC_CTRL,
     (char *)"", 0  // null terminate the list   
 };
 
@@ -2477,6 +2479,71 @@ int call_Abort(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #else
 	sleep(1);
     return END_COMMND_RET;   
+#endif
+}
+
+/************************************************* 
+	Function:		call_BLDC_CTRL
+	Description:	Execute Abort
+	                FORMAT: ABORT
+	Input:			iLineNum               - Line Number
+	Input:			thread_control_block   - interpreter info
+	Return: 		1        -    Success ;
+*************************************************/ 
+int call_BLDC_CTRL(int iLineNum, struct thread_control_block* objThreadCntrolBlock) 
+{  
+	bool bRet = false ;
+	eval_value value;
+	int boolValue;
+	uint8_t iDir = 0, iVel = 0 ;
+#if 1
+	get_exp(objThreadCntrolBlock, &value, &boolValue);
+	iVel = (int)value.getFloatValue() ;
+#else
+	get_token(objThreadCntrolBlock);
+	if(strcmp(objThreadCntrolBlock->token, "dir") == 0)
+	{
+		/* get the equals sign */
+		get_token(objThreadCntrolBlock);
+		if(*(objThreadCntrolBlock->token)!=EQ) {
+			serror(objThreadCntrolBlock, 3);
+			return false;
+		}
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		iDir = (int)value.getFloatValue() ;
+	}
+
+	get_token(objThreadCntrolBlock);
+	if(strcmp(objThreadCntrolBlock->token, "vel") == 0)
+	{
+		/* get the equals sign */
+		get_token(objThreadCntrolBlock);
+		if(*(objThreadCntrolBlock->token)!=EQ) {
+			serror(objThreadCntrolBlock, 3);
+			return false;
+		}
+		get_exp(objThreadCntrolBlock, &value, &boolValue);
+		iVel = (int)value.getFloatValue() ;
+	}
+	iVel = iDir * 128 + iVel ;  
+#endif
+
+#ifdef WIN32
+    return 0; 
+#else
+	if(g_objRegManagerInterface)
+	{
+//		bRet = g_objRegManagerInterface->setBLDC(iVel);
+		if(bRet)
+		{
+			return bRet ;
+		}
+	}
+	else
+	{
+		FST_ERROR("g_objRegManagerInterface is NULL");
+	}
+    return 1;   
 #endif
 }
 

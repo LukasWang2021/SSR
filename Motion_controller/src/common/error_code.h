@@ -26,16 +26,20 @@ typedef unsigned long long int ErrorCode;
 #define BM_DTC_E10 (unsigned long long int)0x0001000900A1000A   /*Acceleration is over limit*/
 #define BM_DTC_E11 (unsigned long long int)0x0001000900A1000B   /*Time stamp error*/
 #define BM_DTC_E12 (unsigned long long int)0x0001000900A1000C   /*Motor Setpoint Speed over limit*/
-#define BM_DTC_E13 (unsigned long long int)0x0001000900A1000D   /*Core 1 waiting servo down timeout*/
+#define BM_DTC_E13 (unsigned long long int)0x0001000900A1000D   /*time out while waiting servo down*/
+#define BM_DTC_E14 (unsigned long long int)0x0001000900A1000E   /*time out while waiting servo ready*/
+#define BM_DTC_E15 (unsigned long long int)0x0001000900A1000F   /*invalid axis state while core1 in idle*/
+#define BM_DTC_E16 (unsigned long long int)0x0001000900A10010   /*invalid axis state while core1 in running*/
+#define BM_DTC_E17 (unsigned long long int)0x0001000900A10011   /*time out while running to idle*/
 #define MOTION_CONTROL_LOG (unsigned long long int)0x0000000100A90000   /*MotionControl log{0}*/
 #define MC_INTERNAL_FAULT (unsigned long long int)0x0001000400A90001   /*program internal fault*/
 #define MC_FAIL_IN_INIT (unsigned long long int)0x0011000200A90002   /*initialization failed*/
 #define MC_NO_ENOUGH_CACHE (unsigned long long int)0x0001000400A90003   /*no enough path or trajectory cache*/
 #define MC_COMMUNICATION_WITH_BARECORE_FAIL (unsigned long long int)0x0001000500A90004   /*lost service communication with barecore*/
-#define MC_NVRAM_DATA_INVALID (unsigned long long int)0x0001000400A90005   /*data in NVRAM is invalid*/
-#define MC_RECORD_JOINT_TIMEOUT (unsigned long long int)0x0001000400A90006   /*record joint to nvram timeout*/
-#define MC_SWITCH_STATE_TIMEOUT (unsigned long long int)0x0001000400A90007   /*group switch from one state to other timeout*/
-#define MC_JOINT_TRACKING_ERROR (unsigned long long int)0x0001000400A90008   /*joint tracking error beyond threshold*/
+#define MC_NVRAM_DATA_INVALID (unsigned long long int)0x0001000600A90005   /*data in NVRAM is invalid*/
+#define MC_RECORD_JOINT_TIMEOUT (unsigned long long int)0x0001000700A90006   /*record joint to nvram timeout*/
+#define MC_SWITCH_STATE_TIMEOUT (unsigned long long int)0x0001000700A90007   /*group switch from one state to other timeout*/
+#define MC_JOINT_TRACKING_ERROR (unsigned long long int)0x0001000700A90008   /*joint tracking error beyond threshold*/
 #define MC_COMPUTE_IK_FAIL (unsigned long long int)0x0001000400A903E9   /*compute IK failed*/
 #define FAIL_LOADING_PARAMETER (unsigned long long int)0x0011000200A903EB   /*load parameter failed*/
 #define JOINT_OUT_OF_CONSTRAINT (unsigned long long int)0x0001000400A903F3   /*joint out of constraint*/

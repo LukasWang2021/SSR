@@ -99,6 +99,14 @@ typedef unsigned long long int ErrorCode;
 #define IO_MAPPING_LOAD_MAP_FILE_FAILED (unsigned long long int)0x0011000200AD0002   /*IoMapping failed to load io_mapping json files*/
 #define IO_MAPPING_LOAD_SIM_FILE_FAILED (unsigned long long int)0x0011000200AD0003   /*IoMapping failed to load simused status json files*/
 #define IO_MAPPING_LOG (unsigned long long int)0x0000000100AD0000   /*IoMapping log{0}*/
+#define UI_SERVO_ENABLE_OFF (unsigned long long int)0x0001000A00AD0004   /*UI servo enable is off*/
+#define UI_PAUSE_INFO (unsigned long long int)0x0001000200AD0005   /*UI triggers to pause program*/
+#define UI_RESET_INFO (unsigned long long int)0x0001000200AD0006   /*UI triggers to reset*/
+#define UI_START_INFO (unsigned long long int)0x0001000200AD0007   /*UI triggers to start program*/
+#define UI_RESUME_INFO (unsigned long long int)0x0001000200AD0008   /*UI triggers to resume program*/
+#define UI_ABORT_INFO (unsigned long long int)0x0001000200AD0009   /*UI triggers to abort program*/
+#define UI_SELECT_PROGRAM_INFO (unsigned long long int)0x0001000200AD000A   /*UI triggers to select the program code*/
+#define UI_CODE_PROGRAM_START_INFO (unsigned long long int)0x0001000200AD000B   /*UI triggers to start program code*/
 #define IO_MANAGER_LOG (unsigned long long int)0x0000000100AF0000   /*IoManager log{0}*/
 #define IO_INVALID_PARAM_ID (unsigned long long int)0x0001000600AC0001   /*IoManager invalid parameter pysical_id*/
 #define PROGRAM_LAUNCHING_LOG (unsigned long long int)0x0000000100B00000   /*ProgramLaunching log{0}*/

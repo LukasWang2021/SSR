@@ -236,13 +236,7 @@ ErrorCode ControllerSm::callReset()
         return CONTROLLER_INVALID_OPERATION_RESET;
 
     if (ui_servo_enable_ == false)
-        return CONTROLLER_INVALID_OPERATION_RESET;//todo UI_SERVO_ENABLE_OFF
-
-    if (ctrl_state_ == CTRL_ENGAGED)
-    {
-        ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
-        return SUCCESS;
-    }
+        return UI_SERVO_ENABLE_OFF;
 
     if(ctrl_state_ == CTRL_ESTOP
         || ctrl_state_ == CTRL_INIT)
@@ -440,6 +434,11 @@ int* ControllerSm::getSafetyAlarmPtr()
 void ControllerSm::processInterpreter()
 {
     interpreter_state_ = (fst_ctrl::InterpreterState)controller_client_ptr_->getInterpreterPublishPtr()->status;
+    std::string name = controller_client_ptr_->getInterpreterPublishPtr()->program_name;
+    if (strcasecmp(name.c_str(), "") != 0)
+    {
+        program_name_ = name;
+    }
 
     if(interpreter_state_ == INTERPRETER_EXECUTE)
     {
@@ -622,14 +621,14 @@ void ControllerSm::processError()
 void ControllerSm::transferServoState()
 {
     servo_state_ = motion_control_ptr_->getServoState();
-    //UO[5] is off if servo_off
+    //UO[5]Servo_Status is off if servo_off
     if(servo_state_ == SERVO_DISABLE)
     {
-        setUoServoOff();//UO[5] signal servo_off
+        setUoServoOff();
     }
     else if(servo_state_ == SERVO_IDLE)
     {
-        setUoServoOn();//UO[5] signal servo_on
+        setUoServoOn();
     }
     //servo_state_ = (ServoState)virtual_core1_ptr_->getServoState();
     if(ctrl_state_ == CTRL_ENGAGED
@@ -896,8 +895,6 @@ void ControllerSm::setUoAllOff(void)
     setUoFaultOff();
     setUoProgramRunOff();
     setUoServoOff();
-
-
 }
 
 
@@ -968,8 +965,15 @@ void ControllerSm::recordLog(ErrorCode error_code)
 {
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code;
-    if (error_code != INFO_RESET_SUCCESS)
+    int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+    if (level >= 4)
+    {
         FST_ERROR(stream.str().c_str());
+    }
+    else
+    {
+        FST_WARN(stream.str().c_str());
+    }
 
     setSafetyStop(error_code);
 
@@ -980,7 +984,15 @@ void ControllerSm::recordLog(ErrorCode error_code, std::string log_str)
 {
     std::stringstream stream;
     stream<<"Log_Code: 0x"<<std::hex<<error_code<<" : "<<log_str;
-    FST_ERROR(stream.str().c_str());
+    int level = ErrorMonitor::instance()->getErrorLevel(error_code);
+    if (level >= 4)
+    {
+        FST_ERROR(stream.str().c_str());
+    }
+    else
+    {
+        FST_WARN(stream.str().c_str());
+    }
     setSafetyStop(error_code);
 
     ServerAlarmApi::GetInstance()->sendOneAlarm(error_code, log_str);

@@ -361,10 +361,10 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
 {
     if (is_virtual_ == true) {
         data.input[0] = 0x0;
-        data.input[1] = 0xAA;// simulation input as binary 10101010
-        data.input[2] = 0xAA;
-        data.input[3] = 0xAA;
-        data.input[4] = 0x2A;
+        data.input[1] = 0x0;// simulation input as binary 10101010
+        data.input[2] = 0x0;
+        data.input[3] = 0x0;
+        data.input[4] = 0x0;
         return SUCCESS;
     }
 
@@ -379,7 +379,7 @@ ErrorCode FstIoDevice::getDeviceDataFromMem(IODeviceData &data)
     }    
     if (data.verify == 0)
     {
-        FST_WARN("id = %d, IODeviceData verify failed, err = 0x%llx", address_, IO_VERIFY_FALSE);
+        //FST_WARN("id = %d, IODeviceData verify failed, err = 0x%llx", address_, IO_VERIFY_FALSE);
         return IO_VERIFY_FALSE;
     }
     return SUCCESS; 

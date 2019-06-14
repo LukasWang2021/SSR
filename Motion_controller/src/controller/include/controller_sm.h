@@ -180,7 +180,6 @@ private:
     int ctrl_reset_count_;
     int robot_state_timeout_count_;
     bool valid_state_;
-    int program_code_; //program launching code
 
     // manual rpc related
     bool is_continuous_manual_move_timeout_;
@@ -203,6 +202,8 @@ private:
     //for UIUO 
     bool ui_servo_enable_;
     bool uo_cmd_enable_;
+    std::string program_name_;
+    int program_code_;
     
     // state machine transfer
     void processInterpreter();
@@ -228,7 +229,7 @@ private:
     // UI check if there is falling/rising edge.
     bool isFallingEdgeStart(uint32_t user_port);
     bool isFallingEdgeAbort(uint32_t user_port);
-    bool isRisingEdge(uint32_t user_port);
+    bool isRisingEdgeCodeStart(uint32_t user_port);
     // UI get and UO set program launching code.
     int getSetProgramCode();
     // getUI, setUO

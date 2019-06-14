@@ -156,7 +156,8 @@ int IoBypass::generateIOInfo(IOStatusJsonBypass &objInfo, const char * strIOType
     value_map_.insert(map<string, bool>::value_type(strKey, bypassValue));
 
     //get the setting bypass.
-    if (strcasecmp(objInfo.useBypass, "YES") == 0 || strcasecmp(objInfo.useBypass, "NO") == 0)
+    //if (strcasecmp(objInfo.useBypass, "YES") == 0 || strcasecmp(objInfo.useBypass, "NO") == 0)
+    if (objInfo.userPort == 1 || objInfo.userPort == 2 || objInfo.userPort == 5)
     {      
         io_bypass_.insert(map<string, bool>::value_type(strKey, bypassValue));
         FST_INFO("bypass: strkey = %s    , bypassValue = %d",strKey.c_str(), bypassValue);

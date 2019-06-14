@@ -15,33 +15,34 @@ using namespace fst_hal;
 
 void ControllerSm::processUIUO()
 {
-    //UO[1] singles whether enable to start
+    //UO[1]CMDENBLE singles whether enable to start
     if((getUserOpMode() == USER_OP_MODE_AUTO) 
        && (getCtrlState() == CTRL_ENGAGED)
        && (getInterpreterState() == INTERPRETER_IDLE))
     {
-        setUoEnableOn();//UO[1]=on
+        setUoEnableOn();
     }else
     {
-        setUoEnableOff();//UO[1]=off
+        setUoEnableOff();
     }
 
-    //UO[3] is on if error is exist
+    //UO[3]FAULT is on if error is exist
     if(is_error_exist_)
     {
-        setUoFaultOn();//UO[3] signal fault
+        setUoFaultOn();
     }
 
     bool level = false;
-    //if UI[1] is OFF, 0-stop.
+    //if UI[1]ServoEnable is OFF, 0-stop.
     if (getUI(static_cast<uint32_t>(UI_SERVO_ENABLE), level))
     {
         if(level == false)
         {
             if(callEstop() == SUCCESS)
             {
+                FST_INFO("UI[1]ServoEnable call ----> Estop success.");
                 ui_servo_enable_ = false;
-                //recordLog(UI_SERVO_ENABLE_OFF);
+                recordLog(UI_SERVO_ENABLE_OFF);
             }
         }else
         {
@@ -49,71 +50,75 @@ void ControllerSm::processUIUO()
         }
     }
 
-    //if UI[2] is OFF, pause
+    //if UI[2]Pause is OFF, pause
     if (getUI(static_cast<uint32_t>(UI_PAUSE_REQUEST), level))
     {
         if((level == false) && (getInterpreterState() == INTERPRETER_EXECUTE) && (getCtrlState() == CTRL_ENGAGED))
         {
-            FST_INFO("----UI call pause.");
+            FST_INFO("UI[2]Pause call ----> pause.");
             if(motion_control_ptr_->pauseMove() == SUCCESS)
             {
-                FST_INFO("----UI call pause success.");
+                FST_INFO("UI[2]Pause call ----> pause success.");
                 controller_client_ptr_->pause();
-                setUoPausedOn();//UO[2]=on
-                setUoProgramRunOff();//UO[4]=off
-                //recordLog(UI_Pause_INFO);
+                setUoPausedOn();
+                setUoProgramRunOff();
+                recordLog(UI_PAUSE_INFO);
             }  
         }   
     }
 
-    //if UI[3] is ON, reset
+    //if UI[3]Reset is ON, reset
     if (getUI(static_cast<uint32_t>(UI_RESET), level))
     {
-        if(level == true)
+        if((level == true) && (getCtrlState() != CTRL_ENGAGED))
         {
-            callReset();
+            if (callReset() == SUCCESS)
+            {
+                FST_INFO("UI[3]Reset call ----> reset success.");
+                recordLog(UI_RESET_INFO);
+            }
         }     
     }
 
-    //if UI[4] is pulse down, start&restart (resume)
+    //if UI[4]Start&Resume is pulse down, start&resume
     if (isFallingEdgeStart(static_cast<uint32_t>(UI_START)))
     {
         if((getInterpreterState() == INTERPRETER_PAUSED) && (getCtrlState() == CTRL_ENGAGED) && (getRobotState() == ROBOT_IDLE))
         {
-            FST_INFO("----UI call resume.");
+            FST_INFO("UI[4] call ----> resume.");
             if(motion_control_ptr_->restartMove() == SUCCESS)
             {
-                FST_INFO("----UI call resume success.");
+                FST_INFO("UI[4] call ----> resume success.");
                 controller_client_ptr_->resume();
                 transferRobotStateToRunning();
-                setUoPausedOff();//UO[2]=off
-                setUoProgramRunOn();//UO[4]=on
+                setUoPausedOff();
+                setUoProgramRunOn();
+                recordLog(UI_RESUME_INFO);
             } 
         } 
         else if((getInterpreterState() == INTERPRETER_IDLE) && (getCtrlState() == CTRL_ENGAGED))
         {
-            InterpreterPublish* data_ptr = controller_client_ptr_->getInterpreterPublishPtr();
-            std:string program_name = data_ptr->program_name;
-            FST_INFO("----UI[4] call to start program: %s --- %s", program_name.c_str(), data_ptr->program_name);
-            controller_client_ptr_->start(program_name);
+            FST_INFO("UI[4] call ----> start program: %s", program_name_.c_str());
+            controller_client_ptr_->start(program_name_);
             transferRobotStateToRunning();
-            setUoPausedOff();//UO[2]=off
-            setUoProgramRunOn();//UO[4]=on
+            setUoProgramRunOn();
+            recordLog(UI_START_INFO);
         }     
     }
     
-    //if UI[5] is OFF, abort
-    if (isFallingEdgeAbort(static_cast<uint32_t>(UI_ABORT_PROGRAM)))
+    //if UI[5]Abort is OFF, abort
+    if (getUI(static_cast<uint32_t>(UI_ABORT_PROGRAM), level))
     {
-        if(getInterpreterState() != INTERPRETER_IDLE)
+        if((level == false) && (getInterpreterState() != INTERPRETER_IDLE))
         {
-            FST_INFO("----UI call Abort.");
+            FST_INFO("UI[5] call ----> abort.");
             if (motion_control_ptr_->abortMove() == SUCCESS)
             {
-                FST_INFO("----UI call Abort success.");
+                FST_INFO("UI[5] call ----> abort success.");
                 controller_client_ptr_->abort(); 
-                setUoPausedOff();//UO[2]=off
-                setUoProgramRunOff();//UO[4]=off
+                setUoPausedOff();
+                setUoProgramRunOff();
+                recordLog(UI_ABORT_INFO);
             }
         }
     }
@@ -129,17 +134,17 @@ void ControllerSm::processUIUO()
         return;
     }
 
-    //if UI[6] is ON, read UI[8-13] to get and set progarm code.
+    //if UI[6]Selection is ON, read UI[8-13] to get and set progarm code.
     if (getUI(static_cast<uint32_t>(UI_SELECTION_STROBE), level)
         && getInterpreterState() == INTERPRETER_IDLE)
     {
         if(level == true)
         {
             program_code_ = getSetProgramCode();
-            //FST_INFO("----UI call to select program:%d", program_code_);//todo comment
+            //FST_INFO("UI[6] call ----> select program code:%d", program_code_);
             if (program_code_ != -1)
             {
-                setUO(static_cast<uint32_t>(UO_SELECTION_CHECK_REQUEST), true);//UO[6]=true signals code reading is finished
+                setUO(static_cast<uint32_t>(UO_SELECTION_CHECK_REQUEST), true);//code reading finished
             }
 
         }
@@ -156,8 +161,8 @@ void ControllerSm::processUIUO()
         }
     }
 
-    //if UI[7] is ON, call prg to start program running.
-    if (isRisingEdge(static_cast<uint32_t>(UI_MPLCS_START)))
+    //if UI[7]MPLCS_Start is ON, call prg to start program running.
+    if (isRisingEdgeCodeStart(static_cast<uint32_t>(UI_MPLCS_START)))
     {
         if((getUserOpMode() == USER_OP_MODE_AUTO)
             && (getInterpreterState() == INTERPRETER_IDLE)
@@ -165,12 +170,12 @@ void ControllerSm::processUIUO()
             && (getRobotState() == ROBOT_IDLE))
         {
             //send prg code.
-            FST_INFO("----UI call to start program.");
+            FST_INFO("UI[7]MPLCS_Start call ----> start program code: %d", program_code_);
             controller_client_ptr_->codeStart(program_code_);
             transferRobotStateToRunning();
-            
-            setUoProgramRunOn();//UO[4]=on//setUO(static_cast<uint32_t>(UO_PROGRAM_RUNNING), true);
+            setUoProgramRunOn();
             setUO(static_cast<uint32_t>(UO_MPLCS_START_DONE), true);//UO[7]=true signals sending code to prg.
+            recordLog(UI_CODE_PROGRAM_START_INFO);
         }
     }
 
@@ -389,7 +394,7 @@ bool ControllerSm::isFallingEdgeAbort(uint32_t user_port)
 }
 
 // check if there is rising edge.
-bool ControllerSm::isRisingEdge(uint32_t user_port)
+bool ControllerSm::isRisingEdgeCodeStart(uint32_t user_port)
 {
     static uint8_t pre_value = 1;
     uint8_t current_value = 1;

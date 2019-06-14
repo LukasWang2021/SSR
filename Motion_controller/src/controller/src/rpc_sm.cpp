@@ -1,4 +1,5 @@
 #include "controller_rpc.h"
+#include "error_monitor.h"
 
 using namespace fst_ctrl;
 
@@ -78,6 +79,12 @@ void ControllerRpc::handleRpc0x00013940(void* request_data_ptr, void* response_d
 void ControllerRpc::handleRpc0x000161E4(void* request_data_ptr, void* response_data_ptr)
 {
     ResponseMessageType_Uint64* data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+    if (state_machine_ptr_->getCtrlState() == CTRL_ENGAGED)
+    {
+        data_ptr->data.data = SUCCESS;
+        fst_base::ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
+        return;
+    }
     data_ptr->data.data = state_machine_ptr_->callReset();
     //recordLog(CONTROLLER_LOG, data_ptr->data.data, std::string("/rpc/controller/callReset"));
 }

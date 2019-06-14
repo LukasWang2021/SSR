@@ -280,7 +280,7 @@ ErrorCode planPathJoint(const Joint &start,
 
     if (end.smooth_type == SMOOTH_DISTANCE)
     {
-        if (end.cnt > DOUBLE_ACCURACY)
+        if (DOUBLE_ACCURACY < end.cnt)
         {
             PoseEuler start_point, end_point;
             segment_alg_param.kinematics_ptr->doFK(start, start_point);
@@ -300,9 +300,13 @@ ErrorCode planPathJoint(const Joint &start,
                 else path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end_ratio);
             }
         }
-        else
+        else if (end.cnt < -DOUBLE_ACCURACY)
         {
             path_cache.smooth_out_index = -1;
+        }
+        else
+        {
+            path_cache.smooth_out_index = path_count_minus_1;
         }
 
         return SUCCESS;
@@ -310,13 +314,17 @@ ErrorCode planPathJoint(const Joint &start,
 
     if (end.smooth_type == SMOOTH_VELOCITY)
     {
-        if (end.cnt > DOUBLE_ACCURACY)
+        if (DOUBLE_ACCURACY < end.cnt)
         {
             path_cache.smooth_out_index = path_count_minus_1 - ceil(path_cache.cache_length * end.cnt / 2.0);
         }
-        else
+        else if (end.cnt < -DOUBLE_ACCURACY)
         {
             path_cache.smooth_out_index = -1;
+        }
+        else
+        {
+            path_cache.smooth_out_index = path_count_minus_1;
         }
 
         return SUCCESS;
@@ -1705,8 +1713,18 @@ ErrorCode planTrajectorySmooth(const PathCache &path_cache,
     updateSmoothOut2InTrajP(path_cache, via, start_joint, traj_path_cache_index_out2in, traj_pva_size_out2in);
     updateSmoothOut2InTrajT(path_cache, via, start_joint, cmd_vel, traj_path_cache_index_out2in, traj_pva_size_out2in, traj_t_size_out2in);
     updateOutAndInPointState(start_state, traj_pva_in_index);
-    updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
-                  &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
+
+    if (segment_alg_param.select_algorithm == 1)
+    {
+        updateCubicSplineTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
+                    &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
+    }
+    else
+    {
+        updateTrajPVA(S_TrajP0_Smooth, S_TrajV0_Smooth, S_TrajA0_Smooth, traj_pva_size_out2in, S_TrajJ0,
+                    &stack[S_TrajT_Smooth], traj_t_size_out2in, S_OutPointState0, S_InPointState0);
+    }
+
     if (segment_alg_param.time_rescale_flag == 0)
     {
         updateConstraintJoint(S_TrajP0_Smooth, S_TrajV0_Smooth, traj_t_size_out2in);

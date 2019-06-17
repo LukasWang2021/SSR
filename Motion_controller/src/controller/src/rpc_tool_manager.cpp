@@ -113,6 +113,7 @@ void ControllerRpc::handleRpc0x00009E34(void* request_data_ptr, void* response_d
         strncpy(rs_data_ptr->data.comment, info.comment.c_str(), 255);
         rs_data_ptr->data.comment[255] = 0;
         rs_data_ptr->data.group_id = info.group_id;
+        rs_data_ptr->data.data.data_cout = 6;
         rs_data_ptr->data.data.data[0] = info.data.point_.x_;
         rs_data_ptr->data.data.data[1] = info.data.point_.y_;
         rs_data_ptr->data.data.data[2] = info.data.point_.z_;

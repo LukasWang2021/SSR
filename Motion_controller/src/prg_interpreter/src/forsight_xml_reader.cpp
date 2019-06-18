@@ -1858,6 +1858,16 @@ int generateFunctionBody(xmlNodePtr nodeFunctionBody, LineInfo objLineInfo)
 					 (char *)xmlGetNodePath(nodeStatement));
 				generateLogicalLOOP(nodeStatement, objLineInfoTemp);
 			}
+			else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"comment")==0){ 
+				sprintf(objLineInfoTemp.xPath, "%s", 
+					(char *)xmlGetNodePath(nodeStatement));
+				FST_INFO("Omit comment");
+			}
+			else if(xmlStrcasecmp(nodeStatement->name,BAD_CAST"nop")==0){ 
+				sprintf(objLineInfoTemp.xPath, "%s", 
+					(char *)xmlGetNodePath(nodeStatement));
+				FST_INFO("Omit nop ");
+			}
 			else if(xmlStrcasecmp(name,BAD_CAST"skip")==0){
 				;
 			}

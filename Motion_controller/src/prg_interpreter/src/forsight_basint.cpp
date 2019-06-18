@@ -2448,13 +2448,19 @@ void exec_case(struct thread_control_block * objThreadCntrolBlock)
 
   get_exp(objThreadCntrolBlock, &x, &boolValue); /* get expression */
 
-  if(x.getFloatValue() == select_stack.target.getFloatValue()) { 
+  boolValue = x.calcEQ(&select_stack.target);
+  if(boolValue == EVAL_CMP_ERROR)
+  {
+	  serror(objThreadCntrolBlock, 25);
+  }
+  // if(x.getFloatValue() == select_stack.target.getFloatValue()) { 
+  else if(boolValue == EVAL_CMP_TRUE) {
 	 /* is true so process target of CASE */
      select_and_cycle_push(objThreadCntrolBlock, select_stack);  // Use of END SELECt
      find_eol(objThreadCntrolBlock);
      return;
   }
-  else
+  else if(boolValue == EVAL_CMP_FALSE)
   {
      select_and_cycle_push(objThreadCntrolBlock, select_stack);
      while(1)

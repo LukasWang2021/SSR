@@ -237,6 +237,90 @@ bool DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelo
     return true;
 }
 
+bool DynamicAlgRTM::getTorqueMax(const Joint& joint, const JointVelocity& vel, JointTorque &torq_pos, JointTorque &torq_neg)
+{
+
+    torq_pos.t1_ = param_ptr_->max_torque_[0];
+    torq_pos.t2_ = param_ptr_->max_torque_[1];
+    torq_pos.t3_ = param_ptr_->max_torque_[2];
+    torq_pos.t4_ = param_ptr_->max_torque_[3];
+    torq_pos.t5_ = param_ptr_->max_torque_[4];
+    torq_pos.t6_ = param_ptr_->max_torque_[5];
+
+    torq_neg.t1_ = - torq_pos.t1_;
+    torq_neg.t2_ = - torq_pos.t2_;
+    torq_neg.t3_ = - torq_pos.t3_;
+    torq_neg.t4_ = - torq_pos.t4_;
+    torq_neg.t5_ = - torq_pos.t5_;
+    torq_neg.t6_ = - torq_pos.t6_;
+
+    //prepare varibles.
+    double Fs[LINKS][LINKS] = {0};
+    Fs[0][0] = FS1;
+    Fs[1][1] = FS2;
+    Fs[2][2] = FS3;
+    Fs[3][3] = FS4;
+    Fs[4][4] = FS5;
+    Fs[5][5] = FS6;
+    
+    double sign_vel[LINKS] = {0};
+    for (int i = 0; i < LINKS; ++i)
+    {
+        sign_vel[i] = sign(vel[i]);
+    }
+
+    double g[LINKS] = {0};
+    computeGExpression(joint, g);//70us
+
+    // compute τ=τ- ̇F_s sgn(q ̇ )-g(q)
+    double temp_pos[LINKS] = {0};
+    double temp_neg[LINKS] = {0};
+    //compute with τ
+    for (int i = 0; i < LINKS; ++i)
+    {
+        temp_pos[i] += torq_pos[i];
+        temp_neg[i] += torq_neg[i];
+    }
+
+    //compute with F_s sgn(q ̇ )
+    for (int i = 0; i < LINKS; ++i)
+    {
+        double fs_multiply_sign_vel = 0;
+        for (int j = 0; j < LINKS; ++j)
+        {
+            fs_multiply_sign_vel += Fs[i][j] * sign_vel[j];
+        }
+        temp_pos[i] += - fs_multiply_sign_vel;
+        temp_neg[i] += - fs_multiply_sign_vel;
+    }
+
+    //compute with g(q)
+    for (int i = 0; i < LINKS; ++i)
+    {
+        temp_pos[i] += - g[i];
+        temp_neg[i] += - g[i];
+    }
+
+    //compute final answer.
+    torq_pos.t1_ = temp_pos[0];
+    torq_pos.t2_ = temp_pos[1];
+    torq_pos.t3_ = temp_pos[2];
+    torq_pos.t4_ = temp_pos[3];
+    torq_pos.t5_ = temp_pos[4];
+    torq_pos.t6_ = temp_pos[5];
+
+    torq_neg.t1_ = temp_neg[0];
+    torq_neg.t2_ = temp_neg[1];
+    torq_neg.t3_ = temp_neg[2];
+    torq_neg.t4_ = temp_neg[3];
+    torq_neg.t5_ = temp_neg[4];
+    torq_neg.t6_ = temp_neg[5];
+
+    return true;
+}
+
+
+
 bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg)
 {
     

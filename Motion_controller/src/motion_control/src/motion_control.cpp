@@ -416,6 +416,52 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
     motion_info.target.user_frame = group_ptr_->getUserFrame();
     motion_info.target.tool_frame = group_ptr_->getToolFrame();
 
+    if (target.user_frame_offset_id > 0)
+    {
+        CoordInfo uf_offset_info;
+        ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(target.user_frame_offset_id, uf_offset_info);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("Fail to get user frame offset from given id");
+            return err;
+        }
+
+        if (!uf_offset_info.is_valid)
+        {
+            FST_ERROR("User frame offset indicated by given id is invalid");
+            return INVALID_PARAMETER;
+        }
+        
+        TransMatrix trans_uf, trans_uf_offset;
+        motion_info.target.user_frame.convertToTransMatrix(trans_uf);
+        uf_offset_info.data.convertToTransMatrix(trans_uf_offset);
+        trans_uf.rightMultiply(trans_uf_offset).convertToPoseEuler(motion_info.target.user_frame);
+    }
+
+    if (target.tool_frame_offset_id > 0)
+    {
+        CoordInfo tf_offset_info;
+        ErrorCode err = coordinate_manager_ptr_->getCoordInfoById(target.tool_frame_offset_id, tf_offset_info);
+
+        if (err != SUCCESS)
+        {
+            FST_ERROR("Fail to get tool frame offset from given id");
+            return err;
+        }
+
+        if (!tf_offset_info.is_valid)
+        {
+            FST_ERROR("Tool frame offset indicated by given id is invalid");
+            return INVALID_PARAMETER;
+        }
+        
+        TransMatrix trans_tf, trans_tf_offset;
+        motion_info.target.tool_frame.convertToTransMatrix(trans_tf);
+        tf_offset_info.data.convertToTransMatrix(trans_tf_offset);
+        trans_tf.rightMultiply(trans_tf_offset).convertToPoseEuler(motion_info.target.tool_frame);
+    }
+
     if (target.target.type == COORDINATE_JOINT)
     {
         PoseEuler fcp_in_base, tcp_in_base;
@@ -449,8 +495,8 @@ ErrorCode MotionControl::autoMove(int id, const MotionTarget &target)
 
     if (target.type == MOTION_CIRCLE)
     {
-        motion_info.via.user_frame = group_ptr_->getUserFrame();
-        motion_info.via.tool_frame = group_ptr_->getToolFrame();
+        motion_info.via.user_frame = motion_info.target.user_frame;
+        motion_info.via.tool_frame = motion_info.target.tool_frame;
 
         if (target.via.type == COORDINATE_JOINT)
         {

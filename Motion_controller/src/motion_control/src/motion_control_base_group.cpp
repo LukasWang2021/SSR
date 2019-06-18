@@ -3621,6 +3621,7 @@ ErrorCode BaseGroup::sendAutoTrajectoryFlow(void)
         }
 
         bare_core_.fillPointCache(points, length, POINT_POS_VEL);
+        FST_LOG(">>>fill trajectory");
 
         if (points[length - 1].level == POINT_ENDING)
         {
@@ -3736,6 +3737,7 @@ void BaseGroup::sendTrajectoryFlow(void)
 
     if (err == SUCCESS)
     {
+        FST_LOG(">>>send trajectory, cycle=%d", error_cnt);
         error_cnt = 0;
     }
     else

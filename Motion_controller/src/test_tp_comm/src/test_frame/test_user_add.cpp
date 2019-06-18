@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
     memcpy(msg.data.name, name, sizeof(name));
     memcpy(msg.data.comment, name, sizeof(name));
     msg.data.group_id = atoi(argv[2]);
+    msg.data.data.data_count = 6;
     msg.data.data.data[0] = 500.1;
     msg.data.data.data[1] = 0.0;
     msg.data.data.data[2] = 500.1;

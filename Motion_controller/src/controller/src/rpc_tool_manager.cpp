@@ -18,19 +18,27 @@ void ControllerRpc::handleRpc0x0000A22C(void* request_data_ptr, void* response_d
         FST_INFO("/rpc/tool_manager/addTool can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
     }
 
-    ToolInfo info;
-    info.id = rq_data_ptr->data.id;
-    info.name = rq_data_ptr->data.name;
-    info.comment = rq_data_ptr->data.comment;
-    info.is_valid = false;  // not used, but initialized
-    info.group_id = rq_data_ptr->data.group_id;
-    info.data.point_.x_ = rq_data_ptr->data.data.data[0];
-    info.data.point_.y_ = rq_data_ptr->data.data.data[1];
-    info.data.point_.z_ = rq_data_ptr->data.data.data[2];
-    info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
-    info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
-    info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
-    rs_data_ptr->data.data = tool_manager_ptr_->addTool(info);
+    if (rq_data_ptr->data.data.data_count == 6)
+    {
+        ToolInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.name = rq_data_ptr->data.name;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false;  // not used, but initialized
+        info.group_id = rq_data_ptr->data.group_id;
+        info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+        info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+        info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+        info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+        info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+        info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
+        rs_data_ptr->data.data = tool_manager_ptr_->addTool(info);
+    }
+    else
+    {
+        rs_data_ptr->data.data = TOOL_MANAGER_INVALID_ARG;
+    }
+
     recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/addTool"));
 }
 
@@ -56,25 +64,33 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
         FST_INFO("/rpc/tool_manager/updateTool can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
     }
 
-    ToolInfo info;
-    info.id = rq_data_ptr->data.id;
-    info.name = rq_data_ptr->data.name;
-    info.comment = rq_data_ptr->data.comment;
-    info.is_valid = false;  // not used, but initialized
-    info.group_id = rq_data_ptr->data.group_id;
-    info.data.point_.x_ = rq_data_ptr->data.data.data[0];
-    info.data.point_.y_ = rq_data_ptr->data.data.data[1];
-    info.data.point_.z_ = rq_data_ptr->data.data.data[2];
-    info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
-    info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
-    info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
-    rs_data_ptr->data.data = tool_manager_ptr_->updateTool(info);
-
-    int current_id = 0;
-    motion_control_ptr_->getToolFrame(current_id);
-    if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+    if (rq_data_ptr->data.data.data_count == 6)
     {
-        rs_data_ptr->data.data = motion_control_ptr_->setToolFrame(current_id);
+        ToolInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.name = rq_data_ptr->data.name;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false;  // not used, but initialized
+        info.group_id = rq_data_ptr->data.group_id;
+        info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+        info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+        info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+        info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+        info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+        info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
+        rs_data_ptr->data.data = tool_manager_ptr_->updateTool(info);
+
+        int current_id = 0;
+        motion_control_ptr_->getToolFrame(current_id);
+        if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+        {
+            rs_data_ptr->data.data = motion_control_ptr_->setToolFrame(current_id);
+        }
+        
+    }
+    else
+    {
+        rs_data_ptr->data.data = TOOL_MANAGER_INVALID_ARG;
     }
 
     recordLog(TOOL_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/tool_manager/updateTool"));

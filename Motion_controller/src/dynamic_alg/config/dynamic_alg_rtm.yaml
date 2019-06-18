@@ -1,13 +1,27 @@
 log_level: 1
 number_of_links: 6
 acc_scale_factor: 1.0 #0.01~1.0
+motor_torque:
+    - 8.36
+    - 6.68
+    - 4.46
+    - 2.24
+    - 1.11
+    - 1.11
+gear_ratio:
+    - 81.0
+    - 101.0
+    - 81.0
+    - 60.0
+    - 66.6666667
+    - 44.6428571
 max_torque:
     - 677.16
     - 674.68
     - 361.26
     - 134.4
     - 74.0
-    - 59.55
+    - 49.55
 m_load: 0.0
 lcx_load: 0.0
 lcy_load: 0.0

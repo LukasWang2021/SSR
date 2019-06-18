@@ -16,19 +16,27 @@ void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_d
         FST_INFO("/rpc/coordinate_manager/addUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
     }
 
-    CoordInfo info;
-    info.id = rq_data_ptr->data.id;
-    info.name = rq_data_ptr->data.name;
-    info.comment = rq_data_ptr->data.comment;
-    info.is_valid = false;  // not used, but initialized
-    info.group_id = rq_data_ptr->data.group_id;
-    info.data.point_.x_ = rq_data_ptr->data.data.data[0];
-    info.data.point_.y_ = rq_data_ptr->data.data.data[1];
-    info.data.point_.z_ = rq_data_ptr->data.data.data[2];
-    info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
-    info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
-    info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
-    rs_data_ptr->data.data = coordinate_manager_ptr_->addCoord(info);
+    if (rq_data_ptr->data.data.data_count == 6)
+    {
+        CoordInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.name = rq_data_ptr->data.name;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false;  // not used, but initialized
+        info.group_id = rq_data_ptr->data.group_id;
+        info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+        info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+        info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+        info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+        info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+        info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
+        rs_data_ptr->data.data = coordinate_manager_ptr_->addCoord(info);
+    }
+    else
+    {
+        rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
+    }
+
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/addUserCoord"));
 }
 
@@ -54,25 +62,33 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
         FST_INFO("/rpc/coordinate_manager/updateUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
     }
 
-    CoordInfo info;
-    info.id = rq_data_ptr->data.id;
-    info.name = rq_data_ptr->data.name;
-    info.comment = rq_data_ptr->data.comment;
-    info.is_valid = false;  // not used, but initialized
-    info.group_id = rq_data_ptr->data.group_id;
-    info.data.point_.x_ = rq_data_ptr->data.data.data[0];
-    info.data.point_.y_ = rq_data_ptr->data.data.data[1];
-    info.data.point_.z_ = rq_data_ptr->data.data.data[2];
-    info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
-    info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
-    info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
-    rs_data_ptr->data.data = coordinate_manager_ptr_->updateCoord(info);
-
-    int current_id = 0;
-    motion_control_ptr_->getUserFrame(current_id);
-    if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+    if (rq_data_ptr->data.data.data_count == 6)
     {
-        rs_data_ptr->data.data = motion_control_ptr_->setUserFrame(current_id);
+        CoordInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.name = rq_data_ptr->data.name;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false;  // not used, but initialized
+        info.group_id = rq_data_ptr->data.group_id;
+        info.data.point_.x_ = rq_data_ptr->data.data.data[0];
+        info.data.point_.y_ = rq_data_ptr->data.data.data[1];
+        info.data.point_.z_ = rq_data_ptr->data.data.data[2];
+        info.data.euler_.a_ = rq_data_ptr->data.data.data[3];
+        info.data.euler_.b_ = rq_data_ptr->data.data.data[4];
+        info.data.euler_.c_ = rq_data_ptr->data.data.data[5];
+        rs_data_ptr->data.data = coordinate_manager_ptr_->updateCoord(info);
+
+        int current_id = 0;
+        motion_control_ptr_->getUserFrame(current_id);
+        if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+        {
+            rs_data_ptr->data.data = motion_control_ptr_->setUserFrame(current_id);
+        }
+
+    }
+    else
+    {
+        rs_data_ptr->data.data = COORDINATE_MANAGER_INVALID_ARG;
     }
 
     recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->data.data, std::string("/rpc/coordinate_manager/updateUserCoord"));

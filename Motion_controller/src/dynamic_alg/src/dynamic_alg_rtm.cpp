@@ -1,6 +1,7 @@
 #include "dynamic_alg_rtm.h"
 #include <math.h>
 #include <basic_alg_datatype.h>
+#include <basic_constants.h>
 #include <sys/time.h>
 #include <string.h>
 #include <iostream>
@@ -237,6 +238,7 @@ bool DynamicAlgRTM::getTorqueInverseDynamics(const Joint& joint, const JointVelo
     return true;
 }
 
+//todo delete
 bool DynamicAlgRTM::getTorqueMax(const Joint& joint, const JointVelocity& vel, JointTorque &torq_pos, JointTorque &torq_neg)
 {
 
@@ -323,14 +325,16 @@ bool DynamicAlgRTM::getTorqueMax(const Joint& joint, const JointVelocity& vel, J
 
 bool DynamicAlgRTM::getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg)
 {
+    JointTorque torq_curve;
+    getTorqueFromCurve(vel, torq_curve);
     
     JointTorque torq_pos;
-    torq_pos.t1_ = param_ptr_->max_torque_[0];
-    torq_pos.t2_ = param_ptr_->max_torque_[1];
-    torq_pos.t3_ = param_ptr_->max_torque_[2];
-    torq_pos.t4_ = param_ptr_->max_torque_[3];
-    torq_pos.t5_ = param_ptr_->max_torque_[4];
-    torq_pos.t6_ = param_ptr_->max_torque_[5];
+    torq_pos.t1_ = torq_curve.t1_;
+    torq_pos.t2_ = torq_curve.t2_;
+    torq_pos.t3_ = torq_curve.t3_;
+    torq_pos.t4_ = torq_curve.t4_;
+    torq_pos.t5_ = torq_curve.t5_;
+    torq_pos.t6_ = torq_curve.t6_;
 
     JointTorque torq_neg;
     torq_neg.t1_ = - torq_pos.t1_;
@@ -1571,6 +1575,124 @@ int DynamicAlgRTM::sign(double value)
     else if (value < 0)
     {
         return -1;
+    }
+
+}
+
+void DynamicAlgRTM::getTorqueFromCurve(const JointVelocity& vel, JointTorque &torque)
+{
+    //Joint 1 motor is 750w.
+    double velocity = vel.v1_;
+    double ratio = param_ptr_->gear_ratio_[0];
+    double torq = param_ptr_->motor_torque_[0];
+    velocity = (30 * velocity * ratio) / PI;
+    velocity = (velocity / 1000) - 3.5;
+    if (velocity <= 0)
+    {
+        torque.t1_ = torq * ratio;
+    }
+    else if (velocity >= 2.5)
+    {
+        torque.t1_ = 0;
+    }
+    else
+    {
+        torque.t1_ = (-2.56 * velocity + torq) * ratio;
+    }
+
+    //Joint 2 motor is 600w.
+    velocity = vel.v2_;
+    ratio = param_ptr_->gear_ratio_[1];
+    torq = param_ptr_->motor_torque_[1];
+    velocity = (30 * velocity * ratio) / PI;
+    velocity = (velocity / 1000) - 3.5;
+    if (velocity <= 0)
+    {
+        torque.t2_ = torq * ratio;
+    }
+    else if (velocity >= 2.5)
+    {
+        torque.t2_ = 0;
+    }
+    else
+    {
+        torque.t2_ = (-2.16 * velocity + torq) * ratio;
+    }
+
+    //Joint 3 motor is 400w.
+    velocity = vel.v3_;
+    ratio = param_ptr_->gear_ratio_[2];
+    torq = param_ptr_->motor_torque_[2];
+    velocity = (30 * velocity * ratio) / PI;
+    velocity = (velocity / 1000) - 2.5;
+    if (velocity <= 0)
+    {
+        torque.t3_ = torq * ratio;
+    }
+    else if (velocity >= 3.5)
+    {
+        torque.t3_ = 0;
+    }
+    else
+    {
+        torque.t3_ = (0.198 * velocity * velocity - 1.795 * velocity + torq) * ratio;
+    }
+
+    //Joint 4 motor is 200w.
+    velocity = vel.v4_;
+    ratio = param_ptr_->gear_ratio_[3];
+    torq = param_ptr_->motor_torque_[3];
+    velocity = (30 * velocity * ratio) / PI;
+    velocity = (velocity / 1000) - 3;
+    if (velocity <= 0)
+    {
+        torque.t4_ = torq * ratio;
+    }
+    else if (velocity >= 3.0)
+    {
+        torque.t4_ = 0;
+    }
+    else
+    {
+        torque.t4_ = (0.0916 * velocity * velocity - 0.7917 * velocity + torq) * ratio;
+    }
+
+    //Joint 5 motor is 100w.
+    velocity = vel.v5_;
+    ratio = param_ptr_->gear_ratio_[4];
+    torq = param_ptr_->motor_torque_[4];
+    velocity = (30 * velocity * ratio) / PI;
+    velocity = (velocity / 1000) - 2.7;
+    if (velocity <= 0)
+    {
+        torque.t5_ = torq * ratio;
+    }
+    else if (velocity >= 3.3)
+    {
+        torque.t5_ = 0;
+    }
+    else
+    {
+        torque.t5_ = (0.03625 * velocity * velocity - 0.332 * velocity + torq) * ratio;
+    }
+
+    //Joint 6 motor is 100w.
+    velocity = vel.v6_;
+    ratio = param_ptr_->gear_ratio_[5];
+    torq = param_ptr_->motor_torque_[5];
+    velocity = (30 * velocity * ratio) / PI;
+    velocity = (velocity / 1000) - 2.7;
+    if (velocity <= 0)
+    {
+        torque.t6_ = torq * ratio;
+    }
+    else if (velocity >= 3.3)
+    {
+        torque.t6_ = 0;
+    }
+    else
+    {
+        torque.t6_ = (0.03625 * velocity * velocity - 0.332 * velocity + torq) * ratio;
     }
 
 }

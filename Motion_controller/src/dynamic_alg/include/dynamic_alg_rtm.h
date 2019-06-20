@@ -28,7 +28,7 @@ public:
     virtual bool getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
                                                JointTorque &torque);
 
-    bool getTorqueMax(const Joint& joint, const JointVelocity& vel, JointTorque &torq_pos, JointTorque &torq_neg);
+    bool getTorqueMax(const Joint& joint, const JointVelocity& vel, JointTorque &torq_pos, JointTorque &torq_neg);//todo delete
 
     virtual bool getAccMax(const Joint& joint, const JointVelocity& vel, JointAcceleration &acc_pos, JointAcceleration &acc_neg);
     virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque, 
@@ -50,6 +50,7 @@ private:
     void computeMatrixElementInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc);
     
     int sign(double value);
+    void getTorqueFromCurve(const JointVelocity& vel, JointTorque &torque);
     //matrix inverse alg
     bool getMatrixInverse(const double src[LINKS][LINKS], int n, double dest[LINKS][LINKS]);
     double getMatrixRank(const double src[LINKS][LINKS], int n);

@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     }
     printf("accelerate size=%d\n", accelerate_vector.size());
 
-  //print position, velocity, tau values
+  //print position, velocity, acc values
     for (int k = 0; k < position_vector.size(); ++k)
     {
         printf("%f, ", position_vector[k]);
@@ -169,26 +169,22 @@ int main(int argc, char** argv)
     struct timeval t_start, t_end;
     long cost_time = 0;
     gettimeofday(&t_start, NULL);
-/*
+
     for (int i = 0; i < count; ++i)
     {
         for(int j = 0; j < 6; ++j)
         {
             joint[j] = position_vector[i*6 + j];
             vel[j] = velocity_vector[i*6 +j];
-            torque[j] = tau_vector[i*6 + j];
         }
-        err = dyn.getAccDirectDynamics(joint, vel, torque, acc);
-        if (err == false)
-        {
-            printf("failed direct dynamics\n");
-            return 0;
-        }
+        //err = dyn.getAccDirectDynamics(joint, vel, torque, acc);
+        //dyn.getTorqueFromCurve(vel, torque);
         
-        outfile<<acc.a1_<<","<< acc.a2_<<","<< acc.a3_<<","<< acc.a4_<<","<< acc.a5_<<","<< acc.a6_<<endl;
+        //outfile<<(30*vel.v1_*81/3.1415926)<<","<< (30*vel.v2_*101/3.1415926)<<","<< (30*vel.v3_*81/3.1415926)<<","<< (30*vel.v4_*60/3.1415926)<<","<< (30*vel.v5_*66.67/3.1415926)<<","<< (30*vel.v6_*44.64/3.1415926)<<","
+        //       <<torque.t1_/81<<","<<torque.t2_/101<<","<<torque.t3_/81<<","<<torque.t4_/60<<","<<torque.t5_/66.67<<","<<torque.t6_/44.64<<","<<endl;
         
     }
-*/
+/*
     //under max torque
     double scale[6] = {0}; 
     for (int i = 0; i < count; ++i)
@@ -274,8 +270,7 @@ int main(int argc, char** argv)
                <<scale[0]<<","<<scale[1]<<","<<scale[2]<<","<<scale[3]<<","<<scale[4]<<","<<scale[5]<<","<<endl;
         
     }
-
-
+*/
 
     gettimeofday(&t_end, NULL);
     cost_time = (t_end.tv_sec - t_start.tv_sec) * 1000000 + (t_end.tv_usec - t_start.tv_usec);

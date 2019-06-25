@@ -1,4 +1,6 @@
 #include <string.h>
+#include <fstream>
+#include <time.h>
 #include <motion_control_ros_basic.h>
 #include <motion_control.h>
 #include <tool_manager.h>
@@ -59,15 +61,59 @@ void MotionControl::ringCommonTask(void)
 
 void MotionControl::ringPriorityTask(void)
 {
+    size_t cycle = 0;
+    size_t total = 100 * 1800;
+
+    struct timeval *start_time = new struct timeval[total];
+    struct timeval *middle_time = new struct timeval[total];
+    struct timeval *end_time = new struct timeval[total];
+
+    //clock_t start, middle, end;
+    //float *work_duration = new float[total];
+    //float *idle_duration = new float[total];
+
     FST_WARN("Realtime task start.");
 
     while (rt_thread_running_)
     {
+        //start = clock();
+        gettimeofday(&start_time[cycle], NULL);
+
         group_ptr_->doPriorityLoop();
+
+        //middle = clock();
+        gettimeofday(&middle_time[cycle], NULL);
+
         usleep(param_ptr_->rt_cycle_time_ * 1000);
+
+        //end = clock();
+        gettimeofday(&end_time[cycle], NULL);
+
+        //work_duration[cycle] = (float)(middle - start) / CLOCKS_PER_SEC * 1000;
+        //idle_duration[cycle] = (float)(end - middle) / CLOCKS_PER_SEC * 1000;
+        cycle = (cycle + 1 == total) ? 0 : cycle + 1;
     }
 
     FST_WARN("Realtime task quit.");
+
+    /*
+    char buffer[1024];
+    ofstream  time_out("/root/time.csv");
+    time_out << "start-time,middle-time,end-time,work-duration,idle-duration" << endl;
+
+    for (size_t i = 0; i < total; i++)
+    {
+        //sprintf(buffer, "%d.%06d,%d.%06d,%d.%06d,%.6f,%.6f", start_time[i].tv_sec, start_time[i].tv_usec, middle_time[i].tv_sec, middle_time[i].tv_usec, end_time[i].tv_sec, end_time[i].tv_usec, work_duration[i], idle_duration[i]);
+        sprintf(buffer, "%d.%06d,%d.%06d,%d.%06d", start_time[i].tv_sec, start_time[i].tv_usec, middle_time[i].tv_sec, middle_time[i].tv_usec, end_time[i].tv_sec, end_time[i].tv_usec);
+        time_out << buffer << endl;
+    }
+
+    time_out.close();
+    */
+
+    delete [] start_time;
+    delete [] middle_time;
+    delete [] end_time;
 }
 
 

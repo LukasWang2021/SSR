@@ -1,4 +1,4 @@
-accuracy_cartesian_factor: 1
+accuracy_cartesian_factor: 3
 accuracy_joint_factor: 6
 max_traj_points_num: 20
 path_interval: 1.0
@@ -7,8 +7,8 @@ angle_interval: 0.01745
 angle_valve: 0.8727
 conservative_acc: 1000.0
 time_factor_first: 2.5
-time_factor_last: 3.0
-is_fake_dynamics: false
+time_factor_last: 2.5
+is_fake_dynamics: true
 max_cartesian_acc: 8000.0
 time_rescale_flag: 0  # 0: rescale time; 1: do not rescale time; 2: return error code if rescale time needed
 

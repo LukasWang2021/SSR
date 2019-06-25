@@ -325,8 +325,20 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 {
     ServoState servo_state;
     Joint cur_jnt, old_jnt;
+    vector<int> encoder_err;
+    encoder_err.resize(joint_num_);
     char buffer[LOG_TEXT_SIZE];
     FST_INFO("Check zero offset.");
+
+    // 获取编码器错误标志
+    if (!bare_core_ptr_->getEncoderError(encoder_err))
+    {
+        current_state_ = MOTION_LIMITED;
+        cali_stat = current_state_;
+        memcpy(offset_stat, offset_stat_, sizeof(offset_stat));
+        FST_ERROR("Fail to get encoder error from bare core, code = 0x%llx", MC_COMMUNICATION_WITH_BARECORE_FAIL);
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
+    }
 
     // 获取NvRam中各关节的位置
     ErrorCode err = readOffsetJoint(old_jnt);
@@ -358,8 +370,16 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
     // 当前各关节位置和记录文件中各关节位置进行比对
     OffsetState state[NUM_OF_JOINT];
     checkOffset(cur_jnt, old_jnt, state);
-
     FST_INFO("Curr-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
+
+    for (size_t i = 0; i < joint_num_; i++)
+    {
+        OffsetState tmp_state = (encoder_err[i] == -2 || encoder_err[i] == -3) ? OFFSET_LOST : OFFSET_NORMAL;
+        state[i] = (state[i] >= tmp_state) ? state[i] : tmp_state;
+    }
+
+    FST_INFO("Encoder-err: %s", printDBLine(&encoder_err[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("New-state: %s", printDBLine((int*)state, buffer, LOG_TEXT_SIZE));
 
     bool recorder_need_update = false;
 
@@ -660,6 +680,14 @@ ErrorCode Calibrator::saveOffset(void)
     {
         FST_ERROR("Fail to update recorder.");
         return FST_NVRAM_R_TIMEOUT_F;
+    }
+
+    FST_INFO("Reset encoder error flags ...");
+
+    if (!bare_core_ptr_->resetEncoderError())
+    {
+        FST_ERROR("Fail to reset encoder errors.");
+        return MC_COMMUNICATION_WITH_BARECORE_FAIL;
     }
 
     for (size_t i = 0; i < joint_num_; i++)

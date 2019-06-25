@@ -957,7 +957,8 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
 
     FST_INFO("manual-Joint-APOINT: planning trajectory ...");
     FST_INFO("  vel-ratio = %.0f%%, acc-ratio = %.0f%%", vel_ratio_ * 100, acc_ratio_ * 100);
-    FST_INFO("  start  joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  axis-vel = %s", printDBLine(&move_to_point_vel_[0], buffer, LOG_TEXT_SIZE));
+    FST_INFO("  start joint = %s", printDBLine(&traj.joint_start[0], buffer, LOG_TEXT_SIZE));
     FST_INFO("  target joint = %s", printDBLine(&target[0], buffer, LOG_TEXT_SIZE));
 
     double trips[NUM_OF_JOINT], alpha[NUM_OF_JOINT], omega[NUM_OF_JOINT], t_min[NUM_OF_JOINT], delta[NUM_OF_JOINT];
@@ -968,7 +969,8 @@ ErrorCode ManualTeach::manualJointAPoint(const Joint &target, MotionTime time, M
         trips[i] = fabs(target[i] - traj.joint_start[i]);
         alpha[i] = axis_acc_[i] * acc_ratio_;
         //omega[i] = axis_vel_[i] * vel_ratio_;
-        omega[i] = move_to_point_vel_[i] * vel_ratio_;
+        //omega[i] = move_to_point_vel_[i] * vel_ratio_;
+        omega[i] = move_to_point_vel_[i];
         delta[i] = trips[i] - omega[i] * omega[i] / alpha[i];
         t_min[i] = delta[i] > 0 ? (omega[i] / alpha[i] + trips[i] / omega[i]) : (sqrt(trips[i] / alpha[i]) * 2);
         //FST_INFO("  J%d: trip=%.8f omega=%f, alpha=%f, delta=%f, tmin=%f", i + 1, trips[i], omega[i], alpha[i], delta[i], t_min[i]);

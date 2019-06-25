@@ -68,6 +68,7 @@ ErrorCode RReg::init()
 	    				packAddRegData(reg_data, objNVRamRRegData.id, "", "");
 					    if(!setRegList(reg_data))
 					    {
+						     printf("\nRReg::init: %d:%d .\n", objNVRamRRegData.id, i);
 					        return REG_MANAGER_INVALID_ARG;
 					    }
 				    }	

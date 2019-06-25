@@ -63,6 +63,7 @@ ErrorCode RReg::init()
 				    }	
 					if(objNVRamRRegData.id > 0)
 					{
+						printf("\nRReg::init: %d:%d .\n", objNVRamRRegData.id, i);
 					    BaseRegData reg_data;
 	    				packAddRegData(reg_data, objNVRamRRegData.id, "", "");
 					    if(!setRegList(reg_data))

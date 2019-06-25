@@ -60,6 +60,7 @@ void RegManager::initNVRam()
 	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
 	usleep(30000);
 
+    FST_INFO("RegManager::initNVRam Starting ...... ");
 	memset(mr_buf, 0x00, sizeof(NVRamMrRegData));
 	for(int i =0; i < NVRAM_MR_NUM; i++)
 	{
@@ -68,6 +69,7 @@ void RegManager::initNVRam()
 		pWriteAddr += sizeof(NVRamMrRegData);
 	}
 	
+    FST_INFO("RegManager::initNVRam Starting 30% ...... ");
 	memset(r_buf, 0x00, sizeof(NVRamRRegData));
 	for(int i =0; i < NVRAM_R_NUM; i++)
 	{
@@ -76,6 +78,7 @@ void RegManager::initNVRam()
 		pWriteAddr += sizeof(NVRamRRegData);
 	}
 	
+    FST_INFO("RegManager::initNVRam Starting 60% ...... ");
 	memset(pr_buf, 0x00, sizeof(NVRamPrRegData));
 	for(int i =0; i < NVRAM_PR_NUM; i++)
 	{
@@ -83,6 +86,7 @@ void RegManager::initNVRam()
 		usleep(30000);
 		pWriteAddr += sizeof(NVRamPrRegData);
 	}
+    FST_INFO("RegManager::initNVRam Starting 100% ...... ");
 	
 	uiWrite = 0 ;
 	pWriteAddr = NVRAM_HEAD ;
@@ -121,7 +125,7 @@ ErrorCode RegManager::init()
 				{
 					initNVRam();
 			    	FST_INFO("RegManager::init initNVRam = %08X", uiMagic);
-			       return REG_MANAGER_LOAD_NVRAM_FAILED;
+			    //    return REG_MANAGER_LOAD_NVRAM_FAILED;
 				}
 			}
 		}

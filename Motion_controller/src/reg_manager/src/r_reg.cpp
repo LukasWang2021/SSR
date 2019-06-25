@@ -49,14 +49,29 @@ ErrorCode RReg::init()
 		ErrCode error = nvram_obj_.openNvram();
 		if(error == FST_NVRAM_OK)
 		{
-			for(unsigned int i=0; i < data_list_.size(); i++)
+			error = nvram_obj_.isNvramReady();
+			if(error == FST_NVRAM_OK)
 			{
-				memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
-				nvram_obj_.read((uint8_t*)&objNVRamRRegData, 
-					NVRAM_R_AREA + i * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
-				
-			//	printf("\nRReg::init: %f .\n", objNVRamRRegData.value);
-				data_list_[i] = objNVRamRRegData.value ;
+				for(unsigned int i=0; i < data_list_.size(); i++)
+				{
+					memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
+					nvram_obj_.read((uint8_t*)&objNVRamRRegData, 
+						NVRAM_R_AREA + i * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
+				    if(i < 10)	
+					{
+					   printf("\nRReg::init: %d:%f .\n", objNVRamRRegData.id, objNVRamRRegData.value);
+				    }	
+					if(objNVRamRRegData.id > 0)
+					{
+					    BaseRegData reg_data;
+	    				packAddRegData(reg_data, objNVRamRRegData.id, "", "");
+					    if(!setRegList(reg_data))
+					    {
+					        return REG_MANAGER_INVALID_ARG;
+					    }
+				    }	
+					data_list_[i] = objNVRamRRegData.value ;
+				}
 			}
 		}
 	}

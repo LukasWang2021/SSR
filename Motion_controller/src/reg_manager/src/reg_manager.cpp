@@ -18,7 +18,6 @@ RegManager::RegManager():
     }
     FST_LOG_INIT("RegManager");
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);
-    use_nvram_ = param_ptr_->use_nvram_;
 }
 
 RegManager::~RegManager()
@@ -44,11 +43,17 @@ void RegManager::initNVRam()
 	char * pWriteAddr = NVRAM_HEAD ;
 	unsigned int uiWrite = NVRAM_Magic_NUM;
 	
-    FST_INFO("RegManager::initNVRam  = %08X at %08X", uiWrite, pWriteAddr);
+    FST_INFO("RegManager::initNVRam write = %08X at %08X", uiWrite, pWriteAddr);
 	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
 	usleep(30000);
-	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(unsigned int));
-    FST_INFO("RegManager::initNVRam return = %08X", uiWrite);
+	uiWrite = 0 ;
+    FST_INFO("RegManager::initNVRam reset to = %08X", uiWrite);
+	nvram_obj_.read((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	if(uiWrite != NVRAM_Magic_NUM)
+	{
+		FST_INFO("RegManager::initNVRam read NG = %08X", uiWrite);
+		return ;
+	}
 	
 	uiWrite = NVRAM_VERSION;
 	pWriteAddr += sizeof(unsigned int);
@@ -78,6 +83,12 @@ void RegManager::initNVRam()
 		usleep(30000);
 		pWriteAddr += sizeof(NVRamPrRegData);
 	}
+	
+	uiWrite = 0 ;
+	pWriteAddr = NVRAM_HEAD ;
+    FST_INFO("RegManager::initNVRam reset to = %08X", uiWrite);
+	nvram_obj_.read((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+    FST_INFO("RegManager::initNVRam read = %08X at %08X", uiWrite, pWriteAddr);
 }
 
 ErrorCode RegManager::init()
@@ -89,6 +100,33 @@ ErrorCode RegManager::init()
         return REG_MANAGER_LOAD_PARAM_FAILED;
     } 
     FST_LOG_SET_LEVEL((fst_log::MessageLevel)param_ptr_->log_level_);   
+
+    use_nvram_ = param_ptr_->use_nvram_;
+	FST_INFO("RegManager::init use_nvram_ = %d", use_nvram_);
+	if(use_nvram_ == REG_USE_NVRAM)
+	{
+		ErrCode error = nvram_obj_.openNvram();
+		FST_INFO("RegManager::init nvram_obj_.openNvram = %08X", error);
+		if(error == FST_NVRAM_OK)
+		{
+			error = nvram_obj_.isNvramReady();
+			if(error == FST_NVRAM_OK)
+			{
+				char * pReadAddr = NVRAM_HEAD ;
+				ErrCode error = nvram_obj_.read(
+					(uint8_t*)&uiMagic, pReadAddr, sizeof(unsigned int));
+			    FST_INFO("RegManager::init nvram_obj_.read = %08X at %08X return %08X",
+					uiMagic, pReadAddr, error);
+				if(NVRAM_Magic_NUM != uiMagic)
+				{
+					initNVRam();
+			    	FST_INFO("RegManager::init initNVRam = %08X", uiMagic);
+			       return REG_MANAGER_LOAD_NVRAM_FAILED;
+				}
+			}
+		}
+	}
+	FST_INFO("RegManager::init param_ptr_->use_nvram_ = %d", param_ptr_->use_nvram_);
 
     reg_ptr_[REG_TYPE_PR] = new PrReg(param_ptr_);
     reg_ptr_[REG_TYPE_HR] = new HrReg(param_ptr_);
@@ -104,31 +142,16 @@ ErrorCode RegManager::init()
             error_code = reg_ptr_[i]->init();
             if(error_code != SUCCESS)
             {
+ 				FST_INFO("RegManager::init[%d] error_code = %08X", i, error_code);
                 return error_code;
             }
         }
         else
         {
+			FST_INFO("RegManager::init REG_MANAGER_INIT_OBJECT_FAILED");
             return REG_MANAGER_INIT_OBJECT_FAILED;
         }
     }
-	
-	if(use_nvram_ == REG_USE_NVRAM)
-	{
-		ErrCode error = nvram_obj_.openNvram();
-		    FST_INFO("RegManager::init nvram_obj_.openNvram = %08X", error);
-		if(error == FST_NVRAM_OK)
-		{
-			nvram_obj_.read((uint8_t*)&uiMagic, NVRAM_HEAD, sizeof(unsigned int));
-		    FST_INFO("RegManager::init nvram_obj_.read = %08X", uiMagic);
-			if(NVRAM_Magic_NUM != uiMagic)
-			{
-				initNVRam();
-		    	FST_INFO("RegManager::init initNVRam = %08X", uiMagic);
-		       return REG_MANAGER_LOAD_NVRAM_FAILED;
-			}
-		}
-	}
     return SUCCESS;
 }
 

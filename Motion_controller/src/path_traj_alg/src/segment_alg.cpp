@@ -198,7 +198,7 @@ void initSegmentAlgParam(SegmentAlgParam *segment_alg_param_ptr, int link_num, f
     segment_alg_param.time_rescale_flag = segment_alg_param_ptr->time_rescale_flag;
 
     segment_alg_param.min_path_num_left = 10;
-    segment_alg_param.select_algorithm = 1; // segment_alg_param_ptr->select_algorithm;
+    segment_alg_param.select_algorithm = 0; // segment_alg_param_ptr->select_algorithm;
     segment_alg_param.accuracy_cartesian_circle_factor = 32; //segment_alg_param_ptr->accuracy_cartesian_circle_factor;
     segment_alg_param.max_cartesian_circle_acc = 500; // segment_alg_param_ptr->max_cartesian_circle_acc;
     segment_alg_param.is_constraint_dynamic = false; // segment_alg_param_ptr->is_constraint_dynamic;

@@ -232,6 +232,7 @@ ErrorCode ControllerSm::callEstop()
 
 ErrorCode ControllerSm::callReset()
 {
+    recordLog(INFO_RESET_SUCCESS);
     if(valid_state_ == false)
         return CONTROLLER_INVALID_OPERATION_RESET;
 
@@ -265,7 +266,7 @@ ErrorCode ControllerSm::callReset()
         error_code = safety_device_ptr_->checkDeadmanNormal();
         if (error_code != SUCCESS)
         {
-            return error_code;
+            return SAFETY_BOARD_DEADMAN_NORMAL_INFO;
         }
 
         //check io_board
@@ -287,7 +288,7 @@ ErrorCode ControllerSm::callReset()
         }
 
         recordLog("Controller transfer to ESTOP_TO_ENGAGED by rpc-callReset");
-        ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);
+        //ErrorMonitor::instance()->add(INFO_RESET_SUCCESS);//delete
         ctrl_state_ = CTRL_ESTOP_TO_ENGAGED;  
         usleep(10000);//reset safety_board bit before sending RESET to bare_core.
         motion_control_ptr_->resetGroup();  

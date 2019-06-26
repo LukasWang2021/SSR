@@ -62,8 +62,7 @@ Controller::~Controller()
         delete param_ptr_;
         param_ptr_ = NULL;
     }
-    
-    ServerAlarmApi::GetInstance()->pyDecref();
+
     
 }
 

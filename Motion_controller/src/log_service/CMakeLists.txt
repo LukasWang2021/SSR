@@ -18,13 +18,11 @@ endif()
 
 set(catkin_INCLUDE_DIRS
     ${catkin_INCLUDE_DIRS}
-    /usr/include/python2.7 
 )
 
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES log_service
-    DEPENDS python2.7 
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -g -Wno-unused-but-set-variable -Wno-unused-local-typedefs -O0 -fpermissive -DPB_FIELD_32BIT -DSIMMULATION -DPRINT")
@@ -35,6 +33,13 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+#MESSAGE(${PROJECT_BINARY_DIR})
+#link_directories(
+    #${catkin_LIB_DIRS} lib
+    #${PROJECT_BINARY_DIR} lib
+    #/home/fst/gitlab_newSafety_macro_1205/Application/Motion_controller/src/log_service/lib/
+#)
+
 aux_source_directory(src BASE_SRCS)
 
 add_library(log_service
@@ -43,15 +48,8 @@ add_library(log_service
 
 target_link_libraries(log_service
     ${catkin_LIBRARIES}
-    python2.7
-)
-
-install(FILES config/send_one_alarm.py 
-    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/python/
 )
 
 install(TARGETS log_service
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
-
-

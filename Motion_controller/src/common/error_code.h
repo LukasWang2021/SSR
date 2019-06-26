@@ -93,6 +93,7 @@ typedef unsigned long long int ErrorCode;
 #define ERR_SAFETY_PTHREAD_LOCK (unsigned long long int)0x0001000B00AB0007   /*SafetyDevice Mutex lock is failed*/
 #define ERR_SAFETY_PTHREAD_UNLOCK (unsigned long long int)0x0001000B00AB0008   /*SafetyDevice Mutex unlock is failed*/
 #define ERR_SAFETY_FRAME (unsigned long long int)0x0001000B00AB0009   /*SafetyDevice inner safety param is out of range*/
+#define ERR_SAFETY_COMM_DATA_FAULTY (unsigned long long int)0x0001000B00AB000A   /*SafetyDevice has data faulty between FPGA and MCU*/
 #define LOAD_IO_CONFIG_FAIL (unsigned long long int)0x0011000600AC0001   /*IoDevice fail to load IO configuration file，the device can not be used.*/
 #define IO_INIT_FAIL (unsigned long long int)0x0011000600AC0002   /*Iodevice fail to initialize the sharedmem.*/
 #define GET_IO_FAIL (unsigned long long int)0x0001000600AC0003   /*IoDevice fail to get IO data.*/
@@ -126,6 +127,7 @@ typedef unsigned long long int ErrorCode;
 #define SAFETY_BOARD_SAFETY_DOOR_STOP (unsigned long long int)0x0001000B00C80003   /*the safety board detects safty door stop signal.*/
 #define SAFETY_BOARD_LIMITED_STOP (unsigned long long int)0x0001000B00C80004   /*the safety board detects limited stop signal.*/
 #define SAFETY_BOARD_DEADMAN_NORMAL_FAULTY (unsigned long long int)0x0001000600C80005   /*the safety board detects deadman normal is abnormal when manaul mode.*/
+#define SAFETY_BOARD_DEADMAN_NORMAL_INFO (unsigned long long int)0x0001000100C80005   /*the safety board detects deadman normal is release*/
 #define SAFETY_BOARD_DEADMAN_PANIC (unsigned long long int)0x0001000B00C80006   /*the safety board detects deadman panic signal.*/
 #define SAFETY_BOARD_TP_ESTOP (unsigned long long int)0x0001000B00C80007   /*the safety board detects TP-ESTOP signal.*/
 #define SAFETY_BOARD_OP_MODE_FAULTY (unsigned long long int)0x0001000600C80008   /*the safety board detects abnormal operation mode.*/

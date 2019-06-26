@@ -39,11 +39,13 @@ set(catkin_LIBRARYS_CROSS
                 #${CROSS_ROOT}/usr/local/lib/libarchive.so                     #for system_manager
                 #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libbz2.so           #for system_manager
                 #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libcrypto.so        #for system_manager
-                #${CROSS_ROOT}/usr/local/lib/libcurl.so                        #for log_service
-                #${CROSS_ROOT}/lib/arm-linux-gnueabihf/libssl.so.1.0.0         #for log_service
-                #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libgcrypt.so        #for log_service
-                #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libgpg-error.so     #for log_service
-                #${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libcom_err.so       #for log_service
+                ${CROSS_ROOT}/usr/local/lib/libcurl.so                        #for log_service
+                ${CROSS_ROOT}/lib/arm-linux-gnueabihf/libssl.so.1.0.0         #for log_service
+		${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libcrypto.so        #for log_service
+                ${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libgcrypt.so        #for log_service
+                ${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libgpg-error.so     #for log_service
+                ${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libcom_err.so       #for log_service
+		${CROSS_ROOT}/usr/lib/arm-linux-gnueabihf/libtasn1.so.6       #for log_service
 		)
 
 set(catkin_INCLUDE_DIRS_CROSS

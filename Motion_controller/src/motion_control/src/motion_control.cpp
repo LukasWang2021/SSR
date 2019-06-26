@@ -1,6 +1,10 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <sched.h>
+#include <sys/mman.h>
 #include <string.h>
 #include <fstream>
-#include <time.h>
 #include <motion_control_ros_basic.h>
 #include <motion_control.h>
 #include <tool_manager.h>
@@ -21,10 +25,15 @@ using namespace fst_ctrl;
 
 static void runRealTimeTask(void *mc)
 {
+    ((MotionControl*)mc)->ringRealTimeTask();
+}
+
+static void runPriorityTask(void *mc)
+{
     ((MotionControl*)mc)->ringPriorityTask();
 }
 
-static void runNonRealTimeTask(void *mc)
+static void runCommonTask(void *mc)
 {
     ((MotionControl*)mc)->ringCommonTask();
 }
@@ -35,9 +44,9 @@ void MotionControl::ringCommonTask(void)
     int ros_publish_cnt = 0;
     memset(&servo_joint, 0, sizeof(servo_joint));
 
-    FST_WARN("Non-Realtime task start.");
+    FST_WARN("Common task start.");
 
-    while (non_rt_thread_running_)
+    while (common_thread_running_)
     {
         group_ptr_->doCommonLoop();
         
@@ -56,64 +65,139 @@ void MotionControl::ringCommonTask(void)
         usleep(param_ptr_->non_rt_cycle_time_ * 1000);
     }
 
-    FST_WARN("Non-Realtime task quit.");
+    FST_WARN("Common task quit.");
+}
+
+#define MAIN_PRIORITY 80
+#define MAX_SAFE_STACK (1 * 1024 * 1024)    /* The maximum stack size which is
+                                                guaranteed safe to access without
+                                                faulting */
+
+
+bool setPriority(int prio)
+{
+    struct sched_param param;
+    param.sched_priority = prio; 
+    if (sched_setscheduler(getpid(), SCHED_RR, &param) == -1) //set priority
+    { 
+        //FST_ERROR("sched_setscheduler() failed"); 
+        return false;  
+    } 
+    return true;
+}
+
+void stack_prefault(void) {
+        unsigned char dummy[MAX_SAFE_STACK];
+        memset(dummy, 0, MAX_SAFE_STACK);
+        return;
+}
+
+
+void MotionControl::ringRealTimeTask(void)
+{
+    /*
+    size_t cycle = 0;
+    size_t total = 150000;
+
+    struct timeval start_time, middle_time, end_time;
+    float *start_to_middle = new float[total];
+    float *middle_to_end = new float[total];
+
+    size_t zone_0_5 = 0;
+    size_t zone_5_10 = 0;
+    size_t zone_10_15 = 0;
+    size_t zone_15_20 = 0;
+    size_t zone_over_20 = 0;
+    */
+    
+    /*
+    if (!setPriority(MAIN_PRIORITY))
+    {
+        FST_ERROR("setPriority() failed");
+        return MC_FAIL_IN_INIT; 
+    }
+    */
+    
+    if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) 
+    {
+        FST_ERROR("mlockall failed");
+        return MC_FAIL_IN_INIT; 
+    }
+
+    //Pre-fault our stack
+    stack_prefault();
+
+    FST_WARN("Realtime task start.");
+
+    while (realtime_thread_running_)
+    {
+        //gettimeofday(&start_time, NULL);
+        group_ptr_->doRealtimeLoop();
+        //gettimeofday(&middle_time, NULL);
+        usleep(param_ptr_->rt_cycle_time_ * 1000);
+        //gettimeofday(&end_time, NULL);
+        //start_to_middle[cycle] = (float)(middle_time.tv_sec - start_time.tv_sec) + (float)(middle_time.tv_usec - start_time.tv_usec) / 1000000;
+        //middle_to_end[cycle] = (float)(end_time.tv_sec - middle_time.tv_sec) + (float)(end_time.tv_usec - middle_time.tv_usec) / 1000000;
+        /*
+        if (middle_to_end[cycle] < 0.005)
+        {
+            zone_0_5++;
+        }
+        else if (middle_to_end[cycle] < 0.01)
+        {
+            zone_5_10++;
+        }
+        else if (middle_to_end[cycle] < 0.015)
+        {
+            zone_10_15++;
+        }
+        else if (middle_to_end[cycle] < 0.02)
+        {
+            zone_15_20++;
+        }
+        else
+        {
+            zone_over_20++;
+        }
+
+        cycle = (cycle + 1 == total) ? 0 : cycle + 1;
+        */
+    }
+
+    FST_WARN("Realtime task quit.");
+    /*
+    FST_WARN("0-5: %d", zone_0_5);
+    FST_WARN("5-10: %d", zone_5_10);
+    FST_WARN("10-15: %d", zone_10_15);
+    FST_WARN("15-20: %d", zone_15_20);
+    FST_WARN("over 20: %d", zone_over_20);
+
+    ofstream  time_out("/root/time.csv");
+
+    for (size_t i = 0; i < total; i++)
+    {
+        time_out << start_to_middle[i] << "," << middle_to_end[i] << endl;
+        //sprintf(buffer, "%d.%06d,%d.%06d,%d.%06d", start_time[i].tv_sec, start_time[i].tv_usec, middle_time[i].tv_sec, middle_time[i].tv_usec, end_time[i].tv_sec, end_time[i].tv_usec);
+        //time_out << buffer << endl;
+    }
+
+    time_out.close();
+    delete [] start_to_middle;
+    delete [] middle_to_end;
+    */
 }
 
 void MotionControl::ringPriorityTask(void)
 {
-    size_t cycle = 0;
-    size_t total = 100 * 1800;
+    FST_WARN("Priority task start.");
 
-    struct timeval *start_time = new struct timeval[total];
-    struct timeval *middle_time = new struct timeval[total];
-    struct timeval *end_time = new struct timeval[total];
-
-    //clock_t start, middle, end;
-    //float *work_duration = new float[total];
-    //float *idle_duration = new float[total];
-
-    FST_WARN("Realtime task start.");
-
-    while (rt_thread_running_)
+    while (priority_thread_running_)
     {
-        //start = clock();
-        gettimeofday(&start_time[cycle], NULL);
-
         group_ptr_->doPriorityLoop();
-
-        //middle = clock();
-        gettimeofday(&middle_time[cycle], NULL);
-
         usleep(param_ptr_->rt_cycle_time_ * 1000);
-
-        //end = clock();
-        gettimeofday(&end_time[cycle], NULL);
-
-        //work_duration[cycle] = (float)(middle - start) / CLOCKS_PER_SEC * 1000;
-        //idle_duration[cycle] = (float)(end - middle) / CLOCKS_PER_SEC * 1000;
-        cycle = (cycle + 1 == total) ? 0 : cycle + 1;
     }
 
-    FST_WARN("Realtime task quit.");
-
-    /*
-    char buffer[1024];
-    ofstream  time_out("/root/time.csv");
-    time_out << "start-time,middle-time,end-time,work-duration,idle-duration" << endl;
-
-    for (size_t i = 0; i < total; i++)
-    {
-        //sprintf(buffer, "%d.%06d,%d.%06d,%d.%06d,%.6f,%.6f", start_time[i].tv_sec, start_time[i].tv_usec, middle_time[i].tv_sec, middle_time[i].tv_usec, end_time[i].tv_sec, end_time[i].tv_usec, work_duration[i], idle_duration[i]);
-        sprintf(buffer, "%d.%06d,%d.%06d,%d.%06d", start_time[i].tv_sec, start_time[i].tv_usec, middle_time[i].tv_sec, middle_time[i].tv_usec, end_time[i].tv_sec, end_time[i].tv_usec);
-        time_out << buffer << endl;
-    }
-
-    time_out.close();
-    */
-
-    delete [] start_time;
-    delete [] middle_time;
-    delete [] end_time;
+    FST_WARN("Priority task quit.");
 }
 
 
@@ -127,24 +211,31 @@ MotionControl::MotionControl()
     log_ptr_ = NULL;
     param_ptr_ = NULL;
 
-    rt_thread_running_ = false;
-    non_rt_thread_running_ = false;
+    common_thread_running_ = false;
+    priority_thread_running_ = false;
+    realtime_thread_running_ = false;
 
     ros_basic_ptr_ = NULL;
 }
 
 MotionControl::~MotionControl()
 {
-    if (non_rt_thread_running_)
+    if (common_thread_running_)
     {
-        non_rt_thread_running_ = false;
-        non_rt_thread_.join();
+        common_thread_running_ = false;
+        common_thread_.join();
     }
 
-    if (rt_thread_running_)
+    if (priority_thread_running_)
     {
-        rt_thread_running_ = false;
-        rt_thread_.join();
+        priority_thread_running_ = false;
+        priority_thread_.join();
+    }
+
+    if (realtime_thread_running_)
+    {
+        realtime_thread_running_ = false;
+        realtime_thread_.join();
     }
 
     if (group_ptr_ != NULL)     {delete group_ptr_; group_ptr_ = NULL;};
@@ -230,30 +321,43 @@ ErrorCode MotionControl::init(fst_hal::DeviceManager* device_manager_ptr, AxisGr
 
     if (err == SUCCESS)
     {
-        rt_thread_running_ = true;
+        realtime_thread_running_ = true;
 
-        if (rt_thread_.run(&runRealTimeTask, this, 80))
+        if (realtime_thread_.run(&runRealTimeTask, this, 80))
         {
             FST_INFO("Startup real-time task success.");
         }
         else
         {
             FST_ERROR("Fail to create real-time task.");
-            rt_thread_running_ = false;
+            realtime_thread_running_ = false;
+            return MC_INTERNAL_FAULT;
+        }
+
+        priority_thread_running_ = true;
+
+        if (priority_thread_.run(&runPriorityTask, this, 70))
+        {
+            FST_INFO("Startup priority task success.");
+        }
+        else
+        {
+            FST_ERROR("Fail to create priority task.");
+            priority_thread_running_ = false;
             return MC_INTERNAL_FAULT;
         }
 
         usleep(50 * 1000);
-        non_rt_thread_running_ = true;
+        common_thread_running_ = true;
 
-        if (non_rt_thread_.run(&runNonRealTimeTask, this, 40))
+        if (common_thread_.run(&runCommonTask, this, 40))
         {
-            FST_INFO("Startup non-real-time task success.");
+            FST_INFO("Startup common task success.");
         }
         else
         {
-            FST_ERROR("Fail to create non-real-time task.");
-            non_rt_thread_running_ = false;
+            FST_ERROR("Fail to create common task.");
+            common_thread_running_ = false;
             return MC_INTERNAL_FAULT;
         }
 

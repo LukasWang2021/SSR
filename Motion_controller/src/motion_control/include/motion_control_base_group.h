@@ -146,6 +146,7 @@ class BaseGroup
 
     virtual void doCommonLoop(void);
     virtual void doPriorityLoop(void);
+    virtual void doRealtimeLoop(void);
 
   protected:
     void sendTrajectoryFlow(void);

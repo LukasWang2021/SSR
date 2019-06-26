@@ -3320,10 +3320,18 @@ void BaseGroup::doStateMachine(void)
             }
             else
             {
-                FST_WARN("Group-state is unknow but servo-state is %d, send stop request to barecore.", servo_state);
-                bare_core_.stopBareCore();
-                //FST_ERROR("Group-state is UNKNOW but servo-state is %d", servo_state);
-                reportError(MC_INTERNAL_FAULT);
+                static size_t unknow_cnt = 0;
+                unknow_cnt++;
+
+                if (unknow_cnt > 1000)
+                {
+                    unknow_cnt = 0;
+                    FST_WARN("Group-state is unknow but servo-state is %d, send stop request to barecore.", servo_state);
+                    bare_core_.stopBareCore();
+                    //FST_ERROR("Group-state is UNKNOW but servo-state is %d", servo_state);
+                    reportError(MC_INTERNAL_FAULT);
+                }
+                
                 //FST_WARN("Group-state switch to disable.");
                 //group_state_ = DISABLE;
             }
@@ -3555,6 +3563,17 @@ void BaseGroup::doCommonLoop(void)
     fillTrajectoryFifo();
 }
 
+void BaseGroup::doRealtimeLoop(void)
+{
+    sendTrajectoryFlow();
+}
+
+void BaseGroup::doPriorityLoop(void)
+{
+    updateServoStateAndJoint();
+    loopFineWaiter();
+}
+
 void BaseGroup::updateJointRecorder(void)
 {
     static size_t loop_cnt = 0;
@@ -3777,13 +3796,6 @@ void BaseGroup::sendTrajectoryFlow(void)
             error_cnt = 0;
         }
     }
-}
-
-void BaseGroup::doPriorityLoop(void)
-{
-    updateServoStateAndJoint();
-    sendTrajectoryFlow();
-    loopFineWaiter();
 }
 
 bool BaseGroup::isSameJoint(const Joint &joint1, const Joint &joint2, double thres)

@@ -5,15 +5,21 @@
 	> Created Time: 2018年08月08日 星期三 17时27分48秒
  ************************************************************************/
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <sched.h>
+#include <sys/mman.h>
+#include <string.h>
+#include <fstream>
+
 #include <unistd.h>
 #include <pthread.h>
 #include <iostream>
 #include <motion_control_arm_group.h>
 #include "thread_help.h"
-#include <time.h>
 #include <motion_control_cache_pool.h>
 #include <segment_alg.h>
-#include <fstream>
 #include <parameter_manager/parameter_manager_param_group.h>
 #include <transformation.h>
 
@@ -567,7 +573,7 @@ void test9(void)
     PoseEuler pose_res;
     Joint ref = {0, 0, 0, 0, -1, 0, 0, 0, 0};
     Joint res;
-    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    static KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
     
     /*
     double dh_matrix[NUM_OF_JOINT][4] = {{0.0, 0.0, 365.0, 0.0}, 
@@ -592,7 +598,7 @@ void test9(void)
     Joint joint = {0.2345235, -0.62435254, 0.3254626, -1.3473245, -1.4542366, 2.542656737};
     Posture posture;
     clock_t start_clock = clock();
-    for (size_t i = 0; i < 1; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         //transformation.convertPoseFromUserToBase(tcp_in_user, user_frame_, tcp_in_base);
         //transformation.convertTcpToFcp(tcp_in_base, tool_frame_, fcp_in_base);
@@ -600,32 +606,32 @@ void test9(void)
     }
     clock_t end_clock = clock();
     double used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-    printf("getPostureByJoint used time: %.6f\n", used_time);
+    //printf("getPostureByJoint used time: %.6f\n", used_time);
 
     start_clock = clock();
-    for (size_t i = 0; i < 1000; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         kinematics.doIK(pose, ref, joint);
     }
     end_clock = clock();
     used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-    printf("doIK used time: %.6f\n", used_time);
-    printf("doIK result: %.6f %.6f %.6f %.6f %.6f %.6f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
+    //printf("doIK used time: %.6f\n", used_time);
+    //printf("doIK result: %.6f %.6f %.6f %.6f %.6f %.6f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
 
     start_clock = clock();
-    for (size_t i = 0; i < 1000; i++)
+    for (size_t i = 0; i < 10; i++)
     {
         kinematics.doIK(pose, posture, joint);
     }
     end_clock = clock();
     used_time = (double)(end_clock - start_clock) / CLOCKS_PER_SEC * 1000;
-    printf("doIK used time: %.6f\n", used_time);
-    printf("doIK result: %.6f %.6f %.6f %.6f %.6f %.6f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
+    //printf("doIK used time: %.6f\n", used_time);
+    //printf("doIK result: %.6f %.6f %.6f %.6f %.6f %.6f\n", joint[0], joint[1], joint[2], joint[3], joint[4], joint[5]);
 }
 
 void test10(void)
 {
-    KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
+    static KinematicsRTM kinematics("/root/install/share/runtime/axis_group/");
     Transformation transformation;
     transformation.init(&kinematics);
 
@@ -667,16 +673,80 @@ void test10(void)
     
     }
     
-    printf("tcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
-    printf("fcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
-    printf("tool_frame: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
-    printf("joint: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint.j1_, joint.j2_, joint.j3_, joint.j4_, joint.j5_, joint.j6_);
+    //printf("tcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tcp_in_base.point_.x_, tcp_in_base.point_.y_, tcp_in_base.point_.z_, tcp_in_base.euler_.a_, tcp_in_base.euler_.b_, tcp_in_base.euler_.c_);
+    //printf("fcp_in_base: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", fcp_in_base.point_.x_, fcp_in_base.point_.y_, fcp_in_base.point_.z_, fcp_in_base.euler_.a_, fcp_in_base.euler_.b_, fcp_in_base.euler_.c_);
+    //printf("tool_frame: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", tool_frame.point_.x_, tool_frame.point_.y_, tool_frame.point_.z_, tool_frame.euler_.a_, tool_frame.euler_.b_, tool_frame.euler_.c_);
+    //printf("joint: %.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n", joint.j1_, joint.j2_, joint.j3_, joint.j4_, joint.j5_, joint.j6_);
     
     
 }
 
+
+#define MAIN_PRIORITY 80
+#define MAX_SAFE_STACK (1 * 1024 * 1024)    /* The maximum stack size which is
+                                                guaranteed safe to access without
+                                                faulting */
+
+bool run_flag = true;
+
+
+
+static void runTask1(void *null)
+{
+    printf("run task1\n");
+
+    while (run_flag)
+    {
+        test9();
+        usleep(2000);
+    }
+
+    printf("task1 quit\n");
+}
+
+static void runTask2(void *null)
+{
+    printf("run task2\n");
+
+    while (run_flag)
+    {
+        test10();
+        usleep(1000);
+    }
+
+    printf("task2 quit\n");
+}
+
 int main(int argc, char **argv)
 {
+
+    fst_base::ThreadHelp thread1, thread2;
+
+    if (thread1.run(&runTask1, NULL, 80))
+    {
+        printf("Startup task success.\n");
+    }
+    else
+    {
+        printf("Fail to create task.\n");
+        return -2;
+    }
+
+    if (thread2.run(&runTask2, NULL, 79))
+    {
+        printf("Startup task2 success.\n");
+    }
+    else
+    {
+        printf("Fail to create task2.\n");
+        return -2;
+    }
+
+    
+    thread1.join();
+    thread2.join();
+
+
     //test0();
     //test1();
     //test2();
@@ -686,7 +756,7 @@ int main(int argc, char **argv)
     //test6();
     //test7();
     //test8();
-    test9();
+    //test9();
     //test10();
 
     return 0;

@@ -127,14 +127,16 @@ public:
     // ...
 
     void ringCommonTask(void);
+    void ringRealTimeTask(void);
     void ringPriorityTask(void);
     
 private:
     int  user_frame_id_;
     int  tool_frame_id_;
 
-    bool rt_thread_running_;
-    bool non_rt_thread_running_;
+    bool realtime_thread_running_;
+    bool priority_thread_running_;
+    bool common_thread_running_;
 
     MotionControlParam* param_ptr_;
     fst_log::Logger* log_ptr_;
@@ -144,8 +146,9 @@ private:
     fst_ctrl::ToolManager* tool_manager_ptr_;
     fst_base::ErrorMonitor *error_monitor_ptr_;
     BaseGroup *group_ptr_;
-    fst_base::ThreadHelp rt_thread_;
-    fst_base::ThreadHelp non_rt_thread_;
+    fst_base::ThreadHelp realtime_thread_;
+    fst_base::ThreadHelp priority_thread_;
+    fst_base::ThreadHelp common_thread_;
 
     RosBasic        *ros_basic_ptr_;
 };

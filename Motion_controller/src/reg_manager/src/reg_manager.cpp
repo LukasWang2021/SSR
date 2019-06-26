@@ -44,11 +44,11 @@ void RegManager::initNVRam()
 	unsigned int uiWrite = NVRAM_Magic_NUM;
 	
     FST_INFO("RegManager::initNVRam write = %08X at %08X", uiWrite, pWriteAddr);
-	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	nvram_obj_.writeSync((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
 	usleep(30000);
 	uiWrite = 0 ;
     FST_INFO("RegManager::initNVRam reset to = %08X", uiWrite);
-	nvram_obj_.read((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(unsigned int));
 	if(uiWrite != NVRAM_Magic_NUM)
 	{
 		FST_INFO("RegManager::initNVRam read NG = %08X", uiWrite);
@@ -60,38 +60,38 @@ void RegManager::initNVRam()
 	nvram_obj_.write((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
 	usleep(30000);
 
-    FST_INFO("RegManager::initNVRam Starting ...... ");
+    FST_INFO("RegManager::initNVRam Starting 30% ...... ");
 	memset(mr_buf, 0x00, sizeof(NVRamMrRegData));
 	for(int i =0; i < NVRAM_MR_NUM; i++)
 	{
-		nvram_obj_.write((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
-		usleep(30000);
+		nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
+		usleep(10000);
 		pWriteAddr += sizeof(NVRamMrRegData);
 	}
 	
-    FST_INFO("RegManager::initNVRam Starting 30% ...... ");
+    FST_INFO("RegManager::initNVRam Starting 60% ...... ");
 	memset(r_buf, 0x00, sizeof(NVRamRRegData));
 	for(int i =0; i < NVRAM_R_NUM; i++)
 	{
-		nvram_obj_.write((uint8_t*)r_buf, pWriteAddr, sizeof(NVRamRRegData));
-		usleep(30000);
+		nvram_obj_.writeSync((uint8_t*)r_buf, pWriteAddr, sizeof(NVRamRRegData));
+		usleep(10000);
 		pWriteAddr += sizeof(NVRamRRegData);
 	}
 	
-    FST_INFO("RegManager::initNVRam Starting 60% ...... ");
-	memset(pr_buf, 0x00, sizeof(NVRamPrRegData));
-	for(int i =0; i < NVRAM_PR_NUM; i++)
-	{
-		nvram_obj_.write((uint8_t*)pr_buf, pWriteAddr, sizeof(NVRamPrRegData));
-		usleep(30000);
-		pWriteAddr += sizeof(NVRamPrRegData);
-	}
     FST_INFO("RegManager::initNVRam Starting 100% ...... ");
+//  These code would crash the data at NVRAM_HEAD
+//	memset(pr_buf, 0x00, sizeof(NVRamPrRegData));
+//	for(int i =0; i < NVRAM_PR_NUM; i++)
+//	{
+//		nvram_obj_.writeSync((uint8_t*)pr_buf, pWriteAddr, sizeof(NVRamPrRegData));
+//		usleep(10000);
+//		pWriteAddr += sizeof(NVRamPrRegData);
+//	}
+//    FST_INFO("RegManager::initNVRam Starting 100% ...... ");
 	
 	uiWrite = 0 ;
-	pWriteAddr = NVRAM_HEAD ;
-    FST_INFO("RegManager::initNVRam reset to = %08X", uiWrite);
-	nvram_obj_.read((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+    FST_INFO("RegManager::initNVRam NVRamPrRegData reset to = %08X", uiWrite);
+	nvram_obj_.read((uint8_t*)&uiWrite, NVRAM_HEAD, sizeof(unsigned int));
     FST_INFO("RegManager::initNVRam read = %08X at %08X", uiWrite, pWriteAddr);
 }
 

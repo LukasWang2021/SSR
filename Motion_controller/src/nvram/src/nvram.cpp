@@ -155,6 +155,39 @@ void Nvram::writeRoutine() {
         spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, len);
         spi_->unlockSpi();
     }
+	else  {
+	    printf("writeRoutine spi_->trylockSpi() failed \n");
+    }
+}
+
+bool Nvram::writeSync(uint8_t *src, uint32_t addr, uint32_t length) {
+    data_len_ = length;
+    address_ = addr;
+
+    for(uint32_t cnt = 0; cnt < data_len_; ++cnt)
+    {
+        xmit_->data[cnt] = src[cnt];
+    }
+
+    xmit_->instruction = NVRAM_INS_WRITE;
+    setAddress(address_);
+
+//    std::thread w_routin(&Nvram::writeRoutine, this);
+//    w_routin.detach();
+    uint32_t len;
+    len = data_len_ + additional_len_;
+
+    if(spi_->trylockSpi()) {
+        spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, len);
+        setAddress((uint32_t)NVRAM_BLK_2_BASE + address_);
+        spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, len);
+        spi_->unlockSpi();
+		return true ;
+    }
+	else  {
+	    printf("writeSync spi_->trylockSpi() failed \n");
+		return false ;
+    }
 }
 
 void Nvram::write(uint8_t *src, uint32_t addr, uint32_t length) {

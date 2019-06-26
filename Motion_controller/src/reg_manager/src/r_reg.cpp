@@ -187,6 +187,7 @@ ErrorCode RReg::updateReg(void* data_ptr)
     }
 	RRegData* reg_ptr = reinterpret_cast<RRegData*>(data_ptr);
 	
+	printf("RegManager::init use_nvram_ = %d\n", use_nvram_);
 	if(use_nvram_ == REG_USE_NVRAM)
 	{
 	    data_list_[reg_ptr->id] = reg_ptr->value;

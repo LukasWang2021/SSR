@@ -55,6 +55,7 @@ public:
     /* read from or write to Nvram */
     ErrCode read(uint8_t* dest, uint32_t addr, uint32_t length);
     void write(uint8_t* src, uint32_t addr, uint32_t length);
+    bool writeSync(uint8_t* src, uint32_t addr, uint32_t length);
 
     /* functions in a initialization-step */
     ErrCode openNvram();

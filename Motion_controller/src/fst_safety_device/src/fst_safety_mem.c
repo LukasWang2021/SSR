@@ -208,7 +208,7 @@ unsigned long long int checkStatus(void)
     comm_data = comm_data >> 4;
     if (comm_data != 0)
     {
-        return ERR_SAFETY_COMM_DATA_FAULTY;
+        //return ERR_SAFETY_COMM_DATA_FAULTY;
     }
 
     //check core1_pulse.

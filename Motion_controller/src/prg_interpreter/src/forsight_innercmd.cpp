@@ -852,6 +852,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.joint.j6 = value.getFloatValue();
 #endif
 		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
@@ -861,6 +862,7 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.tool_frame_id = value.getTFIndex();
 		instr.target.target.pose.posture = value.getPosture();
 		
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 		// instr.target.pose_target = value.getPoseValue();
 	    FST_INFO("value.getType() == TYPE_POSE in MovJ");
 	//	serror(objThreadCntrolBlock, 16);
@@ -873,6 +875,8 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.joint = value.getJointValue();
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
+		
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 		
 	    FST_INFO("Forward movej to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ", 
 #ifndef WIN32
@@ -905,6 +909,8 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
+		
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 		
 		instr.target.target.pose.posture.arm   = value.getPrRegDataValue().value.posture[0];
 		instr.target.target.pose.posture.elbow = value.getPrRegDataValue().value.posture[1];
@@ -1209,6 +1215,7 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #endif
 
 		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
@@ -1216,6 +1223,9 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose = value.getPoseValue();
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
+		
 		instr.target.target.pose.posture = value.getPosture();
 		
 #ifndef WIN32
@@ -1236,6 +1246,9 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.joint     = value.getJointValue();
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
+		
 		// instr.target.joint_target = value.getJointValue();
 	    FST_INFO("value.getType() == TYPE_JOINT in MovL");
 	//	serror(objThreadCntrolBlock, 15);
@@ -1258,6 +1271,8 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		
 		instr.target.user_frame_id                 = value.getUFIndex();
 		instr.target.tool_frame_id                 = value.getTFIndex();
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 		
 		instr.target.target.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];
@@ -1558,6 +1573,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.via.pose.pose.orientation.c = value.getFloatValue();
 #endif	
 		instr.target.user_frame_id = instr.target.tool_frame_id = -1 ;
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
@@ -1656,6 +1673,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 #else
 		instr.target.target.pose.pose.orientation.c = value.getFloatValue();
 #endif	
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 	}
 	else if(value.getType() == TYPE_POSE)
 	{
@@ -1665,6 +1684,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		
 		instr.target.user_frame_id = value.getUFIndex();
 		instr.target.tool_frame_id = value.getTFIndex();
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 #ifndef WIN32
 	    FST_INFO("move to POSE:(%f, %f, %f, %f, %f, %f) in MovC", 
 			instr.target.target.pose.pose.point_.x_, instr.target.target.pose.pose.point_.y_, 
@@ -1681,6 +1702,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	{
 		instr.target.target.type      = COORDINATE_JOINT ;
 		instr.target.target.joint     = value.getJointValue();
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 		// instr.target.joint_target = value.getJointValue();
 	    FST_INFO("value.getType() == TYPE_JOINT in MovC");
 	//	find_eol(objThreadCntrolBlock);
@@ -1701,6 +1724,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		instr.target.target.pose.pose.euler_.c_    = value.getPrRegDataValue().value.pos[5];
 		instr.target.user_frame_id                 = value.getUFIndex();
 		instr.target.tool_frame_id                 = value.getTFIndex();
+
+		instr.target.user_frame_offset_id = instr.target.tool_frame_offset_id = 0;
 		
 		instr.target.target.pose.posture.arm       = value.getPrRegDataValue().value.posture[0];
 		instr.target.target.pose.posture.elbow     = value.getPrRegDataValue().value.posture[1];

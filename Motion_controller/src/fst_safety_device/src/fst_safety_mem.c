@@ -203,6 +203,14 @@ unsigned long long int checkStatus(void)
         return ERR_SAFETY_FPGA_MCU_NOT_CONNECT;
     }
 
+    //check communicated data between FPGA and MCU
+    char comm_data = *pstatus;
+    comm_data = comm_data >> 4;
+    if (comm_data != 0)
+    {
+        return ERR_SAFETY_COMM_DATA_FAULTY;
+    }
+
     //check core1_pulse.
     char pulse = *(pstatus + 2);
     char core1_pulse = (pulse >> 3) & 0x01; 

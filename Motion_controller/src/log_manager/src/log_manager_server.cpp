@@ -62,7 +62,7 @@ void log(const char *format, ...)
     char buf[LOG_ITEM_SIZE];
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[  LOG][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+    int len = sprintf(buf, "[  LOG][%ld.%06ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
@@ -85,7 +85,7 @@ void info(const char *format, ...)
     char buf[LOG_ITEM_SIZE];
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ INFO][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+    int len = sprintf(buf, "[ INFO][%ld.%06ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
@@ -108,7 +108,7 @@ void warn(const char *format, ...)
     char buf[LOG_ITEM_SIZE] = {0};
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ WARN][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+    int len = sprintf(buf, "[ WARN][%ld.%06ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
@@ -131,7 +131,7 @@ void error(const char *format, ...)
     char buf[LOG_ITEM_SIZE] = {0};
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ERROR][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+    int len = sprintf(buf, "[ERROR][%ld.%06ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
@@ -468,27 +468,27 @@ void io_thread(void)
                 switch (items[i].level)
                 {
                     case MSG_LEVEL_LOG:
-                        len = sprintf(buf, "[  LOG][%ld.%6ld]%s",
+                        len = sprintf(buf, "[  LOG][%ld.%06ld]%s",
                                       items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
                         break;
 
                     case MSG_LEVEL_INFO:
-                        len = sprintf(buf, "[ INFO][%ld.%6ld]%s",
+                        len = sprintf(buf, "[ INFO][%ld.%06ld]%s",
                                       items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
                         break;
 
                     case MSG_LEVEL_WARN:
-                        len = sprintf(buf, "[ WARN][%ld.%6ld]%s",
+                        len = sprintf(buf, "[ WARN][%ld.%06ld]%s",
                                       items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
                         break;
 
                     case MSG_LEVEL_ERROR:
-                        len = sprintf(buf, "[ERROR][%ld.%6ld]%s",
+                        len = sprintf(buf, "[ERROR][%ld.%06ld]%s",
                                       items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
                         break;
 
                     default:
-                        len = sprintf(buf, "[OTHER][%ld.%6ld]%s",
+                        len = sprintf(buf, "[OTHER][%ld.%06ld]%s",
                                       items[i].stamp.tv_sec, items[i].stamp.tv_usec, items[i].text);
                 }
 
@@ -510,7 +510,7 @@ void io_thread(void)
                             num = 65536 + items[i].number - (plcb->serial_num + 1);
 
                         char tmp[LOG_ITEM_SIZE] = {0};
-                        int tmp_len = sprintf(tmp, "[  LOG][%ld.%6ld]",
+                        int tmp_len = sprintf(tmp, "[  LOG][%ld.%06ld]",
                                         items[i].stamp.tv_sec, items[i].stamp.tv_usec);
                         tmp_len = tmp_len + sprintf(tmp + tmp_len, "<<<%d items have been lost here>>>\n", num);
                         
@@ -594,27 +594,27 @@ void io_thread(void)
         switch (g_item_pool[pool_out].level)
         {
             case MSG_LEVEL_LOG:
-                len = sprintf(buf, "[  LOG][%ld.%6ld]",
+                len = sprintf(buf, "[  LOG][%ld.%06ld]",
                               g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
                 break;
 
             case MSG_LEVEL_INFO:
-                len = sprintf(buf, "[ INFO][%ld.%6ld]",
+                len = sprintf(buf, "[ INFO][%ld.%06ld]",
                               g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
                 break;
 
             case MSG_LEVEL_WARN:
-                len = sprintf(buf, "[ WARN][%ld.%6ld]",
+                len = sprintf(buf, "[ WARN][%ld.%06ld]",
                               g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
                 break;
 
             case MSG_LEVEL_ERROR:
-                len = sprintf(buf, "[ERROR][%ld.%6ld]",
+                len = sprintf(buf, "[ERROR][%ld.%06ld]",
                               g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
                 break;
 
             default:
-                len = sprintf(buf, "[OTHER][%ld.%6ld]",
+                len = sprintf(buf, "[OTHER][%ld.%06ld]",
                               g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
         }
 
@@ -633,7 +633,7 @@ void io_thread(void)
                     num = 65536 + g_item_pool[pool_out].number - (plcb->serial_num + 1);
 
                 char tmp[LOG_ITEM_SIZE] = {0};
-                int tmp_len = sprintf(tmp, "[  LOG][%ld.%6ld]",
+                int tmp_len = sprintf(tmp, "[  LOG][%ld.%06ld]",
                                       g_item_pool[pool_out].stamp.tv_sec, g_item_pool[pool_out].stamp.tv_usec);
                 tmp_len = tmp_len + sprintf(tmp + tmp_len, "<<<%d items have been lost here>>>\n", num);
 

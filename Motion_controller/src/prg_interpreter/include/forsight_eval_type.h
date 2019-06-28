@@ -773,10 +773,24 @@ public:
 
 	PoseEuler calcCartesianPosAdd(PoseEuler & opt, PoseEuler & optAnd) 
 	{
+		opt.point_.x_ += optAnd.point_.x_ ;
+		opt.point_.y_ += optAnd.point_.y_ ;
+		opt.point_.z_ += optAnd.point_.z_ ;
+		
+		opt.euler_.a_ += optAnd.euler_.a_ ;
+		opt.euler_.b_ += optAnd.euler_.b_ ;
+		opt.euler_.c_ += optAnd.euler_.c_ ;
 		return opt ;
 	}
 	PoseEuler calcCartesianPosSubtract(PoseEuler & opt, PoseEuler & optAnd) 
 	{
+		opt.point_.x_ -= optAnd.point_.x_ ;
+		opt.point_.y_ -= optAnd.point_.y_ ;
+		opt.point_.z_ -= optAnd.point_.z_ ;
+		
+		opt.euler_.a_ -= optAnd.euler_.a_ ;
+		opt.euler_.b_ -= optAnd.euler_.b_ ;
+		opt.euler_.c_ -= optAnd.euler_.c_ ;
 		return opt ;
 	}
 	

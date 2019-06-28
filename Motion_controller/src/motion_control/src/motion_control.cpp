@@ -62,7 +62,7 @@ void MotionControl::ringCommonTask(void)
             }
         }
 
-        usleep(param_ptr_->non_rt_cycle_time_ * 1000);
+        usleep(param_ptr_->common_cycle_time_ * 1000);
     }
 
     FST_WARN("Common task quit.");
@@ -134,7 +134,7 @@ void MotionControl::ringRealTimeTask(void)
         //gettimeofday(&start_time, NULL);
         group_ptr_->doRealtimeLoop();
         //gettimeofday(&middle_time, NULL);
-        usleep(param_ptr_->rt_cycle_time_ * 1000);
+        usleep(param_ptr_->realtime_cycle_time_ * 1000);
         //gettimeofday(&end_time, NULL);
         //start_to_middle[cycle] = (float)(middle_time.tv_sec - start_time.tv_sec) + (float)(middle_time.tv_usec - start_time.tv_usec) / 1000000;
         //middle_to_end[cycle] = (float)(end_time.tv_sec - middle_time.tv_sec) + (float)(end_time.tv_usec - middle_time.tv_usec) / 1000000;
@@ -194,7 +194,7 @@ void MotionControl::ringPriorityTask(void)
     while (priority_thread_running_)
     {
         group_ptr_->doPriorityLoop();
-        usleep(param_ptr_->rt_cycle_time_ * 1000);
+        usleep(param_ptr_->priority_cycle_time_ * 1000);
     }
 
     FST_WARN("Priority task quit.");

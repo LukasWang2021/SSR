@@ -374,7 +374,7 @@ ErrorCode Calibrator::checkOffset(CalibrateState &cali_stat, OffsetState (&offse
 
     for (size_t i = 0; i < joint_num_; i++)
     {
-        OffsetState tmp_state = (encoder_err[i] == -2 || encoder_err[i] == -3) ? OFFSET_LOST : OFFSET_NORMAL;
+        OffsetState tmp_state = (encoder_err[i] == -1 || encoder_err[i] == -3) ? OFFSET_LOST : OFFSET_NORMAL;
         state[i] = (state[i] >= tmp_state) ? state[i] : tmp_state;
     }
 

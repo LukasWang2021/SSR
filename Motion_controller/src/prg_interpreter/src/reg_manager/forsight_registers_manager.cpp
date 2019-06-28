@@ -184,6 +184,26 @@ int forgesight_registers_manager_get_register(
 			else
 			{
 				value->setPrRegDataValue(&objPrRegData);
+				if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_JOINT)
+				{
+					objPoseEuler.point_.x_  = objPrRegData.value.pos[0];
+                    objPoseEuler.point_.y_  = objPrRegData.value.pos[1];
+                    objPoseEuler.point_.z_  = objPrRegData.value.pos[2];
+                    objPoseEuler.euler_.a_  = objPrRegData.value.pos[3];
+                    objPoseEuler.euler_.b_  = objPrRegData.value.pos[4];
+                    objPoseEuler.euler_.c_  = objPrRegData.value.pos[5];
+					value->setPoseValue(&objPoseEuler);
+				}
+				else if(objPrRegData.value.pos_type == PR_REG_POS_TYPE_CARTESIAN)
+				{
+					objJoint.j1_ = objPrRegData.value.pos[0];
+                    objJoint.j2_ = objPrRegData.value.pos[1];
+                    objJoint.j3_ = objPrRegData.value.pos[2];
+                    objJoint.j4_ = objPrRegData.value.pos[3];
+                    objJoint.j5_ = objPrRegData.value.pos[4];
+                    objJoint.j6_ = objPrRegData.value.pos[5];
+					value->setJointValue(&objJoint);
+				}
 			}
 #else
 			value->setPrRegDataValue(&objPrRegData);

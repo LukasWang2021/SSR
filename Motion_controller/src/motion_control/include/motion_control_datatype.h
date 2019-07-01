@@ -23,6 +23,7 @@ typedef double  MotionTime;
 #define PATH_CACHE_SIZE         1024
 #define TRAJECTORY_CACHE_SIZE   128
 
+
 struct JointState
 {
 	basic_alg::Joint angle;
@@ -40,6 +41,7 @@ struct PoseAndPosture
 {
     basic_alg::PoseEuler    pose;
     basic_alg::Posture      posture;
+    int                     turn[6];
 };
 
 struct TargetPoint
@@ -59,6 +61,20 @@ struct IntactPoint
     PoseAndPosture   pose;
     basic_alg::PoseEuler user_frame;
     basic_alg::PoseEuler tool_frame;
+};
+
+struct FrameOffset
+{
+    bool valid;                     // false -> 不需要坐标偏移， true -> 需要坐标偏移
+    int offset_frame_id;            // 在offset_frame_id指定的基准坐标系内进行偏移,
+                                    // 0 -> 基于极坐标系进行偏移，　-1 -> 基于当前坐标系进行偏移
+    CoordinateType coord_type;      // 在关节空间或者笛卡尔空间进行偏移
+
+    union
+    {
+        basic_alg::Joint offset_joint;      // 关节空间偏移量
+        basic_alg::PoseEuler offset_pose;   // 笛卡尔空间偏移量
+    };
 };
 
 struct MotionInfo
@@ -89,8 +105,13 @@ struct MotionTarget     // 用于move指令的数据结构
     int user_frame_id;  // 需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
     int tool_frame_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
 
+    FrameOffset user_frame_offset;
+    FrameOffset tool_frame_offset;
+
+    // -------------------- to be deleted ---------------------------------------------------------------------------
     int user_frame_offset_id;  // 如果是moveL或者moveC，需要指定目标点所处的用户坐标系标号和所用工具的标号，反解时需要
     int tool_frame_offset_id;  // 如果用户坐标系标号和工具标号与当前的在用标号不符时直接报错，如果是-1则使用当前激活的uf和tf
+    // --------------------------------------------------------------------------------------------------------------
 
     int prPos[PR_POS_LEN];
     TargetPoint target;   // moveJ和moveL时使用

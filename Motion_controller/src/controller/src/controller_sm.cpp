@@ -465,28 +465,12 @@ void ControllerSm::processInterpreter()
                 }
                 case SET_OVC:
                 {//FST_ERROR("---Instruction SetOvc");
-                    if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL
-                        && instruction_.current_ovc > param_ptr_->max_limited_global_vel_ratio_)
-                    {
-                        error_code = motion_control_ptr_->setGlobalVelRatio(param_ptr_->max_limited_global_vel_ratio_);
-                    }
-                    else
-                    {
-                        error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
-                    }
+                    error_code = motion_control_ptr_->setGlobalVelRatio(instruction_.current_ovc);
                     break;
                 }
                 case SET_OAC:
                 {//FST_ERROR("---Instruction SetOac");
-                    if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL
-                        && instruction_.current_oac > param_ptr_->max_limited_global_acc_ratio_)
-                    {
-                        error_code = motion_control_ptr_->setGlobalAccRatio(param_ptr_->max_limited_global_acc_ratio_);
-                    }
-                    else
-                    {
-                        error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_oac);
-                    }
+                    error_code = motion_control_ptr_->setGlobalAccRatio(instruction_.current_oac);
                     break;
                 }
                 default:
@@ -582,6 +566,7 @@ void ControllerSm::processSafety()
     }
 
     // business logic process
+    /*
     if(user_op_mode_ == USER_OP_MODE_SLOWLY_MANUAL)
     {
         ErrorCode error_code;
@@ -601,7 +586,8 @@ void ControllerSm::processSafety()
                 ErrorMonitor::instance()->add(error_code);
             }
         }            
-    }    
+    }  
+    */  
 }
 
 void ControllerSm::processError()

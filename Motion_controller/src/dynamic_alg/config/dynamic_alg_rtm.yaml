@@ -1,6 +1,6 @@
 log_level: 1
 number_of_links: 6
-current_payload_id: 1
+current_payload_id: 0
 acc_scale_factor: 1.0 #0.01~1.0
 motor_torque:
     - 8.36 #750w

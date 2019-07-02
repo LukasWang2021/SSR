@@ -14,10 +14,12 @@ DynamicAlgRTM::DynamicAlgRTM():
     log_ptr_(NULL),
     param_ptr_(NULL),
     is_valid_(false),
+    current_payload_id_(0),
     acc_scale_factor_(1.0)
 {
     log_ptr_ = new fst_log::Logger();
     param_ptr_ = new DynamicAlgRTMParam();
+    payload_ptr_ = new DynamicAlgPayload(log_ptr_);
     FST_LOG_INIT("dynamic_alg_rtm");
 }
 
@@ -30,6 +32,10 @@ DynamicAlgRTM::~DynamicAlgRTM()
     if(param_ptr_ != NULL){
         delete param_ptr_;
         param_ptr_ = NULL;
+    }
+    if(payload_ptr_ != NULL){
+        delete payload_ptr_;
+        payload_ptr_ = NULL;
     }
 }
 
@@ -87,32 +93,47 @@ bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
         }
         else
         {
+            FST_ERROR("Failed to load dynamic_alg_rtm DH parameters");
             is_valid_ = false;
             return false;
         }
     }
     else
     {
+        FST_ERROR("Failed to load dynamic_alg_rtm DH file");
         is_valid_ = false;
         return false;
     }  
 
     if (param_ptr_->number_of_links_ < LINKS)
     {
+        FST_ERROR("The parameters(number_of_links) in dynamic_alg_rtm is invalid");
         is_valid_ = false;
         return false;
     }
 
-    m_load = param_ptr_->m_load_;
-    lcx_load = param_ptr_->lcx_load_;
-    lcy_load = param_ptr_->lcy_load_;
-    lcz_load = param_ptr_->lcz_load_;
-    Ixx_load = param_ptr_->Ixx_load_;
-    Iyy_load = param_ptr_->Iyy_load_;
-    Izz_load = param_ptr_->Izz_load_;
-    Ixy_load = param_ptr_->Ixy_load_;
-    Ixz_load = param_ptr_->Ixz_load_;
-    Iyz_load = param_ptr_->Iyz_load_;
+    if (payload_ptr_->init() ==  false)
+    {
+        return false;
+    }
+
+    //setting payload
+    m_load = lcx_load = lcy_load = lcz_load = Ixx_load = Iyy_load = Izz_load = Ixy_load = Ixz_load = Iyz_load = 0;
+    PayloadInfo info;
+    memset(&info, 0, sizeof(info));
+    current_payload_id_ = param_ptr_->current_payload_id_;
+    ErrorCode err = payload_ptr_->getPayloadInfoById(current_payload_id_, info);
+    if (err == SUCCESS && info.is_valid)
+    {
+        m_load = info.m_load;
+        lcx_load = info.lcx_load;
+        lcy_load = info.lcy_load;
+        lcz_load = info.lcz_load;
+        Ixx_load = info.Ixx_load;
+        Iyy_load = info.Iyy_load;
+        Izz_load = info.Izz_load;
+    }
+
     computePaiElementInverseDynamics();
 
     acc_scale_factor_ = param_ptr_->acc_scale_factor_;
@@ -121,55 +142,6 @@ bool DynamicAlgRTM::initDynamicAlg(std::string file_path)
         acc_scale_factor_ = 1.0;
     }
     
-    return true;
-}
-
-bool DynamicAlgRTM::updateLoadParam(void)
-{
-    if(!param_ptr_->loadParam()){
-        FST_ERROR("Failed to load dynamic_alg_rtm component parameters");
-        return false;
-    }
-    m_load = param_ptr_->m_load_;
-    lcx_load = param_ptr_->lcx_load_;
-    lcy_load = param_ptr_->lcy_load_;
-    lcz_load = param_ptr_->lcz_load_;
-    Ixx_load = param_ptr_->Ixx_load_;
-    Iyy_load = param_ptr_->Iyy_load_;
-    Izz_load = param_ptr_->Izz_load_;
-    Ixy_load = param_ptr_->Ixy_load_;
-    Ixz_load = param_ptr_->Ixz_load_;
-    Iyz_load = param_ptr_->Iyz_load_;
-    return true;
-}
-
-bool DynamicAlgRTM::updateLoadParam(DynamicAlgLoadParam load_param)
-{
-    param_ptr_->m_load_ = load_param.m_load;
-    param_ptr_->lcx_load_ = load_param.lcx_load;
-    param_ptr_->lcy_load_ = load_param.lcy_load;
-    param_ptr_->lcz_load_ = load_param.lcz_load;
-    param_ptr_->Ixx_load_ = load_param.Ixx_load;
-    param_ptr_->Iyy_load_ = load_param.Iyy_load;
-    param_ptr_->Izz_load_ = load_param.Izz_load;
-    param_ptr_->Ixy_load_ = load_param.Ixy_load;
-    param_ptr_->Ixz_load_ = load_param.Ixz_load;
-    param_ptr_->Iyz_load_ = load_param.Iyz_load;
-    if(!param_ptr_->saveParam()){
-        FST_ERROR("Failed to save dynamic_alg_rtm component parameters");
-        return false;
-    }
-
-    m_load = param_ptr_->m_load_;
-    lcx_load = param_ptr_->lcx_load_;
-    lcy_load = param_ptr_->lcy_load_;
-    lcz_load = param_ptr_->lcz_load_;
-    Ixx_load = param_ptr_->Ixx_load_;
-    Iyy_load = param_ptr_->Iyy_load_;
-    Izz_load = param_ptr_->Izz_load_;
-    Ixy_load = param_ptr_->Ixy_load_;
-    Ixz_load = param_ptr_->Ixz_load_;
-    Iyz_load = param_ptr_->Iyz_load_;
     return true;
 }
 
@@ -622,6 +594,66 @@ bool DynamicAlgRTM::getAccDirectDynamics(const Joint& joint, const JointVelocity
 
     return true;
 }
+
+//payload related
+ErrorCode DynamicAlgRTM::setPayload(int id)
+{
+    PayloadInfo info;
+    ErrorCode err = payload_ptr_->getPayloadInfoById(id, info);
+    if (err == SUCCESS && info.is_valid)
+    {
+        m_load = info.m_load;
+        lcx_load = info.lcx_load;
+        lcy_load = info.lcy_load;
+        lcz_load = info.lcz_load;
+        Ixx_load = info.Ixx_load;
+        Iyy_load = info.Iyy_load;
+        Izz_load = info.Izz_load;
+
+        current_payload_id_ = id;
+        param_ptr_->current_payload_id_ = current_payload_id_;
+        if(!param_ptr_->saveParam()){
+            FST_ERROR("Failed to save dynamic_alg_rtm component parameters");
+        }
+    }
+    return err;
+}
+
+void DynamicAlgRTM::getPayload(int &id)
+{
+    id = current_payload_id_;
+}
+
+ErrorCode DynamicAlgRTM::addPayload(PayloadInfo& info)
+{
+    return payload_ptr_->addPayload(info);
+}
+
+ErrorCode DynamicAlgRTM::deletePayload(int id)
+{
+    return payload_ptr_->deletePayload(id);
+}
+
+ErrorCode DynamicAlgRTM::updatePayload(PayloadInfo& info)
+{
+    return payload_ptr_->updatePayload(info);
+}
+
+ErrorCode DynamicAlgRTM::movePayload(int expect_id, int original_id)
+{
+    return payload_ptr_->movePayload(expect_id, original_id);
+}
+
+ErrorCode DynamicAlgRTM::getPayloadInfoById(int id, PayloadInfo& info)
+{
+    return payload_ptr_->getPayloadInfoById(id, info);
+}
+
+std::vector<PayloadSummaryInfo> DynamicAlgRTM::getAllValidPayloadSummaryInfo(void)
+{
+    return payload_ptr_->getAllValidPayloadSummaryInfo();
+}
+//end payload related
 
 void DynamicAlgRTM::computePaiElementInverseDynamics()
 {

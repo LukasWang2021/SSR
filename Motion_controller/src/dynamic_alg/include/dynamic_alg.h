@@ -56,9 +56,6 @@ public:
 
     virtual bool initDynamicAlg(std::string file_path) = 0;
     
-    virtual bool updateLoadParam() = 0;
-    virtual bool updateLoadParam(DynamicAlgLoadParam load_param) = 0;
-
     virtual bool isValid() = 0;
 
     virtual bool getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 

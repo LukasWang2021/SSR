@@ -312,5 +312,8 @@ typedef unsigned long long int ErrorCode;
 #define DEVICE_MANAGER_DEVICE_ALREADY_EXIST (unsigned long long int)0x0001000200A50005   /*DeviceManager failed to add device because the device has already been exist*/
 #define DEVICE_MANAGER_INVALID_ARG (unsigned long long int)0x0001000200A50006   /*DeviceManager has invalid argument*/
 
+#define DYNAMIC_PAYLOAD_INVALID_ARG (unsigned long long int)0x0001000200B40001   /*Dynamic payload has invalid argument*/
+#define DYNAMIC_PAYLOAD_INFO_FILE_WRITE_FAILED (unsigned long long int)0x0001000200B40002   /*Dynamic payload failed to write file*/
+
 #endif
 

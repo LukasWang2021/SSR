@@ -40,15 +40,7 @@ void ControllerRpc::handleRpc0x000005EF(void* request_data_ptr, void* response_d
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_VEL;
     }
 
-    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_SLOWLY_MANUAL
-        && rq_data_ptr->data.data > state_machine_ptr_->getParam()->max_limited_global_vel_ratio_)
-    {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_VEL;
-    }
-    else
-    {
-        rs_data_ptr->data.data = motion_control_ptr_->setGlobalVelRatio(rq_data_ptr->data.data);
-    }
+    rs_data_ptr->data.data = motion_control_ptr_->setGlobalVelRatio(rq_data_ptr->data.data);
 
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/setGlobalVelRatio"));
 }
@@ -70,15 +62,7 @@ void ControllerRpc::handleRpc0x0000271F(void* request_data_ptr, void* response_d
     RequestMessageType_Double* rq_data_ptr = static_cast<RequestMessageType_Double*>(request_data_ptr);
     ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
 
-    if(state_machine_ptr_->getUserOpMode() == USER_OP_MODE_SLOWLY_MANUAL
-        && rq_data_ptr->data.data > state_machine_ptr_->getParam()->max_limited_global_acc_ratio_)
-    {
-        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION_SET_ACC;
-    }
-    else
-    {
-        rs_data_ptr->data.data = motion_control_ptr_->setGlobalAccRatio(rq_data_ptr->data.data);
-    }
+    rs_data_ptr->data.data = motion_control_ptr_->setGlobalAccRatio(rq_data_ptr->data.data);
 
     recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/setGlobalAccRatio"));
 }

@@ -89,27 +89,25 @@ ErrCode Nvram::isNvramReady() {
     
     uint32_t temp_data_len = data_len_;
     data_len_ = sizeof(uint32_t);
-
-    xmit_->instruction = NVRAM_INS_WRITE;
-    setAddress((uint32_t)POWER_ON_TEST);
-    *(uint32_t *)xmit_->data = input_random;
     
     if(spi_->trylockSpi()) {
+        xmit_->instruction = NVRAM_INS_WRITE;
+        setAddress((uint32_t)POWER_ON_TEST);
+        *(uint32_t *)xmit_->data = input_random;
         spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, data_len_ + additional_len_);
         xmit_->instruction = NVRAM_INS_READ;
         spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, data_len_ + additional_len_);
+        if(*(uint32_t *)recv_->data != input_random) {
+            ret = FST_NVRAM_NOT_READY_F;
+        }
+        else
+        {
+            is_Checked_Ready_ = true;
+        }
         spi_->unlockSpi();
     }else
     {
         ret = FST_NVRAM_R_TIMEOUT_F;
-    }
-    
-    if(*(uint32_t *)recv_->data != input_random) {
-        ret = FST_NVRAM_NOT_READY_F;
-    }
-    else
-    {
-        is_Checked_Ready_ = true;
     }
 
     data_len_ = temp_data_len;
@@ -126,20 +124,19 @@ ErrCode Nvram::read(uint8_t* dest, uint32_t addr, uint32_t length) {
     uint32_t len;
     len = data_len_ + additional_len_;
 
-    xmit_->instruction = NVRAM_INS_READ;
-    setAddress(address_);
-    
     if(!spi_->trylockSpi()) {
         ret = FST_NVRAM_R_TIMEOUT_F;
     }
 
     if (ret == FST_NVRAM_OK) {
+        xmit_->instruction = NVRAM_INS_READ;
+        setAddress(address_);
         spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, len);
-        spi_->unlockSpi();
         for(uint32_t cnt = 0; cnt < data_len_; ++cnt)
         {
             dest[cnt] = recv_->data[cnt];
         }
+        spi_->unlockSpi();
     }
     
     return ret;
@@ -164,20 +161,19 @@ bool Nvram::writeSync(uint8_t *src, uint32_t addr, uint32_t length) {
     data_len_ = length;
     address_ = addr;
 
-    for(uint32_t cnt = 0; cnt < data_len_; ++cnt)
-    {
-        xmit_->data[cnt] = src[cnt];
-    }
-
-    xmit_->instruction = NVRAM_INS_WRITE;
-    setAddress(address_);
-
 //    std::thread w_routin(&Nvram::writeRoutine, this);
 //    w_routin.detach();
     uint32_t len;
     len = data_len_ + additional_len_;
 
     if(spi_->trylockSpi()) {
+        for(uint32_t cnt = 0; cnt < data_len_; ++cnt)
+        {
+            xmit_->data[cnt] = src[cnt];
+        }
+
+        xmit_->instruction = NVRAM_INS_WRITE;
+        setAddress(address_);
         spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, len);
         setAddress((uint32_t)NVRAM_BLK_2_BASE + address_);
         spi_->transferData((uint8_t *)xmit_, (uint8_t *)recv_, len);

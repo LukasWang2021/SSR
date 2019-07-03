@@ -36,6 +36,7 @@ RegManager::~RegManager()
 
 void RegManager::initNVRam()
 {
+    bool bWriteSync = false ;
 	char mr_buf[sizeof(NVRamMrRegData)];
 	char r_buf[sizeof(NVRamRRegData)];
 	char pr_buf[sizeof(NVRamPrRegData)];
@@ -44,7 +45,13 @@ void RegManager::initNVRam()
 	unsigned int uiWrite = NVRAM_Magic_NUM;
 	
     FST_INFO("RegManager::initNVRam write = %08X at %08X", uiWrite, pWriteAddr);
-	nvram_obj_.writeSync((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+	while(bWriteSync == false)
+	{
+    	FST_ERROR("writeSync NVRAM_HEAD failed");
+		bWriteSync = nvram_obj_.writeSync((uint8_t*)&uiWrite, pWriteAddr, sizeof(unsigned int));
+		usleep(10000);
+	}
 	usleep(30000);
 	uiWrite = 0 ;
     FST_INFO("RegManager::initNVRam reset to = %08X", uiWrite);
@@ -64,7 +71,13 @@ void RegManager::initNVRam()
 	memset(mr_buf, 0x00, sizeof(NVRamMrRegData));
 	for(int i =0; i < NVRAM_MR_NUM; i++)
 	{
-		nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
+		bWriteSync = nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
+		while(bWriteSync == false)
+		{
+	    	FST_ERROR("writeSync NVRamMrRegData failed");
+			bWriteSync = nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
+			usleep(10000);
+		}
 		usleep(10000);
 		pWriteAddr += sizeof(NVRamMrRegData);
 	}
@@ -73,7 +86,13 @@ void RegManager::initNVRam()
 	memset(r_buf, 0x00, sizeof(NVRamRRegData));
 	for(int i =0; i < NVRAM_R_NUM; i++)
 	{
-		nvram_obj_.writeSync((uint8_t*)r_buf, pWriteAddr, sizeof(NVRamRRegData));
+		bWriteSync = nvram_obj_.writeSync((uint8_t*)r_buf, pWriteAddr, sizeof(NVRamRRegData));
+		while(bWriteSync == false)
+		{
+	    	FST_ERROR("writeSync NVRamRRegData failed");
+			bWriteSync = nvram_obj_.writeSync((uint8_t*)mr_buf, pWriteAddr, sizeof(NVRamMrRegData));
+			usleep(10000);
+		}
 		usleep(10000);
 		pWriteAddr += sizeof(NVRamRRegData);
 	}

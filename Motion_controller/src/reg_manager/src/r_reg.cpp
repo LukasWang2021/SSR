@@ -57,13 +57,10 @@ ErrorCode RReg::init()
 					memset(&objNVRamRRegData, 0x00, sizeof(NVRamRRegData));
 					nvram_obj_.read((uint8_t*)&objNVRamRRegData, 
 						NVRAM_R_AREA + i * sizeof(NVRamRRegData), sizeof(NVRamRRegData));
-				    if(i < 10)	
-					{
-					   printf("RReg::init: %d:%f .\n", objNVRamRRegData.id, objNVRamRRegData.value);
-				    }	
+	
 					if(objNVRamRRegData.id > 0)
 					{
-					//	printf("\nRReg::init: %d:%d .\n", objNVRamRRegData.id, i);
+						printf("RReg::init: %d:%d .\n", objNVRamRRegData.id, i);
 					    BaseRegData reg_data;
 	    				packAddRegData(reg_data, objNVRamRRegData.id, "", "");
 					    if(!setRegList(reg_data))

@@ -565,6 +565,8 @@ int call_interpreter(struct thread_control_block* objThreadCntrolBlock, int mode
 		FST_ERROR("allocation failure");
 		exit(1);
 	  }
+	  memset(objThreadCntrolBlock->instrSet, 0x00, sizeof(Instruction) + 
+		  sizeof(AdditionalInfomation) * ADD_INFO_NUM);
 	
 	  objThreadCntrolBlock->iSubProgNum = 0 ;
 	  memset(objThreadCntrolBlock->sub_prog, 0x00, sizeof(char *) * NUM_SUBROUTINE);

@@ -686,6 +686,8 @@ int getAditionalInfomation(struct thread_control_block* objThreadCntrolBlock,
 int set_global_TF(int iLineNum, int iTFNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = SET_TF ;
 #ifdef USE_XPATH
 	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
@@ -729,6 +731,8 @@ int set_global_TF(int iLineNum, int iTFNum, struct thread_control_block* objThre
 int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = SET_UF ;
 #ifdef USE_XPATH
 	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
@@ -772,6 +776,8 @@ int set_global_UF(int iLineNum, int iUFNum, struct thread_control_block* objThre
 int set_OVC(int iLineNum, double dOVCNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = SET_OVC ;
 #ifdef USE_XPATH
 	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
@@ -815,6 +821,8 @@ int set_OVC(int iLineNum, double dOVCNum, struct thread_control_block* objThread
 int set_OAC(int iLineNum, double dOACNum, struct thread_control_block* objThreadCntrolBlock)
 {
     Instruction instr;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = SET_OAC ;
 #ifdef USE_XPATH
 	if(iLineNum < (int)objThreadCntrolBlock->vector_XPath.size())
@@ -865,6 +873,8 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	char commandParam[1024];
     Instruction instr;
     char * commandParamPtr = commandParam;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = MOTION ;
 	instr.target.type = MOTION_JOINT;
 #ifdef USE_XPATH
@@ -1168,6 +1178,8 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	// Set to instrSet
 	memcpy(objThreadCntrolBlock->instrSet, &instr, sizeof(Instruction));
 	objThreadCntrolBlock->instrSet->target.acc = 1.0 ;
+	objThreadCntrolBlock->instrSet->target.user_frame_offset.valid = false;
+	objThreadCntrolBlock->instrSet->target.tool_frame_offset.valid = false;
 	
 	get_token(objThreadCntrolBlock);
 	// result.size() > MOVJ_COMMAND_PARAM_MIN
@@ -1190,6 +1202,101 @@ int call_MoveJ(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 			memcpy(instrSetPtr, &additionalInfomation, sizeof(AdditionalInfomation));
 			
 			objThreadCntrolBlock->instrSet->add_num    = 1 ;
+		}
+	}
+	
+	if(objThreadCntrolBlock->instrSet->target.user_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+	}
+	if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
 		}
 	}
 	
@@ -1232,6 +1339,8 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	char commandParam[1024];
     Instruction instr;
     char * commandParamptr = commandParam;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = MOTION ;
 	instr.target.type = MOTION_LINE;
 #ifdef USE_XPATH
@@ -1548,6 +1657,101 @@ int call_MoveL(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	}
 	// FST_INFO("MOVL: instr.target.accleration = %f .", instr.target.acc);
 	
+	if(objThreadCntrolBlock->instrSet->target.user_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+	}
+	if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovL with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
+		}
+	}
+	
 // 	#ifdef USE_XPATH
 // 		FST_INFO("setInstruction MOTION_LINE at %s", instr.line);
 // 	#else
@@ -1589,6 +1793,8 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 	char commandParam[1024];
     Instruction instr;
     char * commandParamptr = commandParam;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = MOTION ;
 	instr.target.type = MOTION_CIRCLE;
 #ifdef USE_XPATH
@@ -1961,6 +2167,196 @@ int call_MoveC(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
 		}
 	}
 	
+	if(objThreadCntrolBlock->instrSet->target.user_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+	}
+	if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("Backward move to JOINT:(%f, %f, %f, %f, %f, %f) in MovJ with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
+		}
+	}
+	
+	if(objThreadCntrolBlock->instrSet->target.user_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.user_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("user_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.user_frame_offset.offset_frame_id);
+#endif	
+		}
+	}
+	if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.valid)
+	{
+		if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("tool_frame_offset to JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j1, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j2, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j3, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j4, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j5, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_joint.j6, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
+		}
+		else if(objThreadCntrolBlock->instrSet->target.tool_frame_offset.coord_type == COORDINATE_JOINT)
+		{
+#ifndef WIN32
+	    FST_INFO("tool_frame_offset JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.x_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.y_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.point_.z_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.a_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.b_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.euler_.c_, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#else
+	    FST_INFO("tool_frame_offset JOINT:(%f, %f, %f, %f, %f, %f) in MovC with %d", 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.x, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.y, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.position.z, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.a, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.b, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_pose.orientation.c, 
+			objThreadCntrolBlock->instrSet->target.tool_frame_offset.offset_frame_id);
+#endif	
+		}
+	}
+	
 // 	#ifdef USE_XPATH
 // 		FST_INFO("setInstruction MOTION_CURVE at %s", instr.line);
 // 	#else
@@ -2000,6 +2396,8 @@ int call_MoveXPos(int iLineNum, struct thread_control_block* objThreadCntrolBloc
 	char commandParam[1024];
     Instruction instr;
     char * commandParamptr = commandParam;
+	
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	instr.type = MOTION ;
 	instr.target.type = MOTION_XPOS;
 #ifdef USE_XPATH
@@ -2406,6 +2804,7 @@ int call_Wait(int iLineNum, struct thread_control_block* objThreadCntrolBlock)
     struct select_and_cycle_stack wait_stack;
     
     Instruction instr;
+	memset((char *)&instr, 0x00, sizeof(Instruction));
 	
 	instr.target.type = MOTION_JOINT;
 #ifdef USE_XPATH

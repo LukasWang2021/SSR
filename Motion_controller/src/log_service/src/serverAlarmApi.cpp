@@ -63,7 +63,6 @@ void ServerAlarmApi::parseResponse(char *response)
     {
         if (1000 != res_status_code->valueint)
         {
-            printf("response: %s. res_status_code=%d\n", response, res_status_code->valueint);
             printf("\033[31;40m%s\033[0m\r\n", "controller send log to service failed!");
             cJSON *res_param = cJSON_GetObjectItem(res_root , "param");
             cJSON *res_result = cJSON_GetObjectItem(res_param , "result");

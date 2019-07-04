@@ -358,6 +358,24 @@ private:
     void handleRpc0x00003B45(void* request_data_ptr, void* response_data_ptr);
     //"/rpc/motion_control/getPostureByJoint"
     void handleRpc0x0000EC64(void* request_data_ptr, void* response_data_ptr);
+
+    //"/rpc/motion_control/axis_group/getPayload"	
+    void handleRpc0x000112A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/setPayload"	
+    void handleRpc0x000052A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/addPayload"	
+    void handleRpc0x000178A4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/deletePayload"	
+    void handleRpc0x00014F84(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/updatePayload"	
+    void handleRpc0x00017074(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/movePayload"	
+    void handleRpc0x00006CE4(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getPayloadInfoById"	
+    void handleRpc0x00010C34(void* request_data_ptr, void* response_data_ptr);
+    //"/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"	
+    void handleRpc0x00010C8F(void* request_data_ptr, void* response_data_ptr);
+
     
     /* interpreter rpc */
     // "/rpc/interpreter/start"

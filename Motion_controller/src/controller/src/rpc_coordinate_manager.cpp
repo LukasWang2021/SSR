@@ -14,6 +14,7 @@ void ControllerRpc::handleRpc0x00016764(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         FST_INFO("/rpc/coordinate_manager/addUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
     }
 
     if (rq_data_ptr->data.data.data_count == 6)
@@ -60,6 +61,7 @@ void ControllerRpc::handleRpc0x0000EC14(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         FST_INFO("/rpc/coordinate_manager/updateUserCoord can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
     }
 
     if (rq_data_ptr->data.data.data_count == 6)

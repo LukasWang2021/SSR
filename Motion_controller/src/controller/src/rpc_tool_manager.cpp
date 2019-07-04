@@ -16,6 +16,7 @@ void ControllerRpc::handleRpc0x0000A22C(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         FST_INFO("/rpc/tool_manager/addTool can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
     }
 
     if (rq_data_ptr->data.data.data_count == 6)
@@ -62,6 +63,7 @@ void ControllerRpc::handleRpc0x0000C78C(void* request_data_ptr, void* response_d
     {
         rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
         FST_INFO("/rpc/tool_manager/updateTool can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
     }
 
     if (rq_data_ptr->data.data.data_count == 6)

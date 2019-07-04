@@ -27,8 +27,9 @@ public:
     //servo control bin
     void getServoControlVersion(std::string &name, std::string &version);
 
-    //hand off version
+    //hand off & Uboot version
     void getHandOffVersion(std::string &name, std::string &version);
+    void getUbootVersion(std::string &name, std::string &version);
 
     //rbf version
     void getRbfVersion(std::string &name, std::string &version);
@@ -56,7 +57,7 @@ private:
     int *rbf_ptr_;                                 //for version
     static const unsigned int HAND_OFF_ADDR   = 0x38800000; //for version
     static const unsigned int RBF_ADDR        = 0xFF210000;//0xc0010000;//0xff210000; //for version
-    static const int HAND_OFF_LENGTH = 0x04;       //for version
+    static const int HAND_OFF_LENGTH = 0x08;       //for version of handoff and U-Boot
     static const int RBF_LENGTH      = 0x04;       //for version
 
 };

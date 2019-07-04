@@ -7,6 +7,7 @@
 #include "common_log.h"
 #include "parameter_manager/parameter_manager_param_group.h"
 #include "kinematics_rtm.h"
+#include "dynamic_alg_payload.h"
 
 
 namespace basic_alg
@@ -20,9 +21,6 @@ public:
 
     virtual bool initDynamicAlg(std::string file_path);
 
-    virtual bool updateLoadParam(void);
-    virtual bool updateLoadParam(DynamicAlgLoadParam load_param);
-
     virtual bool isValid();
 
     virtual bool getTorqueInverseDynamics(const Joint& joint, const JointVelocity& vel, const JointAcceleration& acc, 
@@ -34,6 +32,16 @@ public:
     virtual bool getAccDirectDynamics(const Joint& joint, const JointVelocity& vel, const JointTorque& torque, 
                                            JointAcceleration &acc);
 
+    ErrorCode setPayload(int id);
+    void getPayload(int &id);
+
+    ErrorCode addPayload(PayloadInfo& info);
+    ErrorCode deletePayload(int id);
+    ErrorCode updatePayload(PayloadInfo& info);
+    ErrorCode movePayload(int expect_id, int original_id);
+    ErrorCode getPayloadInfoById(int id, PayloadInfo& info);
+    std::vector<PayloadSummaryInfo> getAllValidPayloadSummaryInfo(void);  
+    
     static const double DYN_DOUBLE_ACCURACY = 1e-6;
     static const double G = -9.81;
     static const int LINKS = 6;
@@ -67,8 +75,10 @@ private:
     DynamicAlgRTMParam* param_ptr_;
     fst_log::Logger* log_ptr_;
     fst_parameter::ParamGroup param_;
+    DynamicAlgPayload* payload_ptr_;
     std::string file_path_;
     bool is_valid_;
+    int current_payload_id_;
     double acc_scale_factor_;
 
     //input values.

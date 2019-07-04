@@ -131,11 +131,9 @@ char *ServerAlarmApi::constructEventInfo(unsigned long long event_code, string e
     cJSON *detailEn = cJSON_CreateArray();
     cJSON *detailCn = cJSON_CreateArray();
 
-    if (event_param == "")
-    {
-        cJSON_AddItemToArray(detailEn, cJSON_CreateString(event_param.c_str()));
-        cJSON_AddItemToArray(detailCn, cJSON_CreateString(event_param.c_str()));
-    }
+    cJSON_AddItemToArray(detailEn, cJSON_CreateString(event_param.c_str()));
+    cJSON_AddItemToArray(detailCn, cJSON_CreateString(event_param.c_str()));
+
     cJSON_AddItemToObject(param, "detailEn", detailEn);
     cJSON_AddItemToObject(param, "detailCn", detailCn);
     char *tmpValue = cJSON_Print(root);

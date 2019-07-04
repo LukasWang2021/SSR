@@ -773,6 +773,14 @@ public:
 
 	PoseEuler calcCartesianPosAdd(PoseEuler & opt, PoseEuler & optAnd) 
 	{
+#ifdef WIN32
+		opt.position.x    += optAnd.position.x;
+		opt.position.y    += optAnd.position.y;
+		opt.position.z    += optAnd.position.z;
+		opt.orientation.a += optAnd.orientation.a;
+		opt.orientation.b += optAnd.orientation.b;
+		opt.orientation.c += optAnd.orientation.c;
+#else
 		opt.point_.x_ += optAnd.point_.x_ ;
 		opt.point_.y_ += optAnd.point_.y_ ;
 		opt.point_.z_ += optAnd.point_.z_ ;
@@ -780,10 +788,19 @@ public:
 		opt.euler_.a_ += optAnd.euler_.a_ ;
 		opt.euler_.b_ += optAnd.euler_.b_ ;
 		opt.euler_.c_ += optAnd.euler_.c_ ;
+#endif
 		return opt ;
 	}
 	PoseEuler calcCartesianPosSubtract(PoseEuler & opt, PoseEuler & optAnd) 
 	{
+#ifdef WIN32
+		opt.position.x    -= optAnd.position.x;
+		opt.position.y    -= optAnd.position.y;
+		opt.position.z    -= optAnd.position.z;
+		opt.orientation.a -= optAnd.orientation.a;
+		opt.orientation.b -= optAnd.orientation.b;
+		opt.orientation.c -= optAnd.orientation.c;
+#else
 		opt.point_.x_ -= optAnd.point_.x_ ;
 		opt.point_.y_ -= optAnd.point_.y_ ;
 		opt.point_.z_ -= optAnd.point_.z_ ;
@@ -791,6 +808,7 @@ public:
 		opt.euler_.a_ -= optAnd.euler_.a_ ;
 		opt.euler_.b_ -= optAnd.euler_.b_ ;
 		opt.euler_.c_ -= optAnd.euler_.c_ ;
+#endif
 		return opt ;
 	}
 	

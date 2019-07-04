@@ -114,6 +114,10 @@ install(FILES config/dynamic_alg_rtm.yaml
     DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
 )
 
+install(FILES config/dynamic_payload_info.yaml
+    DESTINATION ${CATKIN_GLOBAL_SHARE_DESTINATION}/runtime/component_param/
+)
+
 install(DIRECTORY config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

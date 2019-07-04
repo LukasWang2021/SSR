@@ -1321,7 +1321,7 @@ void ParamGroup::info(const char *format, ...)
     char buf[MSG_BUFFER_SIZE];
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ INFO][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+    int len = sprintf(buf, "[ INFO][%ld.%06ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
@@ -1337,7 +1337,7 @@ void ParamGroup::warn(const char *format, ...)
     char buf[MSG_BUFFER_SIZE];
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ WARN][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+    int len = sprintf(buf, "[ WARN][%ld.%06ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);
@@ -1353,7 +1353,7 @@ void ParamGroup::error(const char *format, ...)
     char buf[MSG_BUFFER_SIZE];
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
-    int len = sprintf(buf, "[ERROR][%ld.%6ld]", time_now.tv_sec, time_now.tv_usec);
+    int len = sprintf(buf, "[ERROR][%ld.%06ld]", time_now.tv_sec, time_now.tv_usec);
 
     va_list vp;
     va_start(vp, format);

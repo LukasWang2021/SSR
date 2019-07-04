@@ -1408,4 +1408,199 @@ void ControllerRpc::handleRpc0x0000EC64(void* request_data_ptr, void* response_d
 }
 
 
+//"/rpc/motion_control/axis_group/getPayload"	
+void ControllerRpc::handleRpc0x000112A4(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_Int32* rs_data_ptr = static_cast<ResponseMessageType_Uint64_Int32*>(response_data_ptr);
+
+    rs_data_ptr->error_code.data = SUCCESS;
+    //motion_control_ptr_->getPayload(rs_data_ptr->data.data);
+
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getPayload"));
+}
+
+//"/rpc/motion_control/axis_group/setPayload"	
+void ControllerRpc::handleRpc0x000052A4(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        //rs_data_ptr->data.data = motion_control_ptr_->setPayload(rq_data_ptr->data.data[1]);
+        rs_data_ptr->data.data = SUCCESS;//todo delete
+    }
+    else
+    {
+        rs_data_ptr->data.data = INVALID_PARAMETER;
+    }
+
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/setPayload"));
+}
+
+//"/rpc/motion_control/axis_group/addPayload"	
+void ControllerRpc::handleRpc0x000178A4(void* request_data_ptr, void* response_data_ptr)
+{
+    /*
+    RequestMessageType_PayloadInfo* rq_data_ptr = static_cast<RequestMessageType_PayloadInfo*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/motion_control/axis_group/addPayload can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
+    }
+
+    if (rq_data_ptr->data.data.data_count == 7)
+    {
+        PayloadInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false; 
+        info.data.m_load = rq_data_ptr->data.data.data[0];
+        info.data.lcx_load = rq_data_ptr->data.data.data[1];
+        info.data.lcy_load = rq_data_ptr->data.data.data[2];
+        info.data.lcz_load = rq_data_ptr->data.data.data[3];
+        info.data.Ixx_load = rq_data_ptr->data.data.data[4];
+        info.data.Iyy_load = rq_data_ptr->data.data.data[5];
+        info.data.Izz_load = rq_data_ptr->data.data.data[6];
+        rs_data_ptr->data.data = motion_control_ptr_->addPayload(info);
+    }
+    else
+    {
+        rs_data_ptr->data.data = DYNAMIC_PAYLOAD_INVALID_ARG;
+    }
+    
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/addPayload"));
+    */
+}
+
+//"/rpc/motion_control/axis_group/deletePayload"	
+void ControllerRpc::handleRpc0x00014F84(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    //rs_data_ptr->data.data = motion_control_ptr_->deletePayload(rq_data_ptr->data.data);
+    rs_data_ptr->data.data = SUCCESS;//todo delete
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/deletePayload"));
+}
+
+//"/rpc/motion_control/axis_group/updatePayload"	
+void ControllerRpc::handleRpc0x00017074(void* request_data_ptr, void* response_data_ptr)
+{
+    /*
+    RequestMessageType_PayloadInfo* rq_data_ptr = static_cast<RequestMessageType_PayloadInfo*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if (false == state_machine_ptr_->getState())
+    {
+        rs_data_ptr->data.data = CONTROLLER_INVALID_OPERATION;
+        FST_INFO("/rpc/motion_control/axis_group/updatePayload can't run when backup/restore, ret = %llx\n", rs_data_ptr->data.data);
+        return;
+    }
+
+    if (rq_data_ptr->data.data.data_count == 7)
+    {
+        PayloadInfo info;
+        info.id = rq_data_ptr->data.id;
+        info.comment = rq_data_ptr->data.comment;
+        info.is_valid = false;
+        info.data.m_load = rq_data_ptr->data.data.data[0];
+        info.data.lcx_load = rq_data_ptr->data.data.data[1];
+        info.data.lcy_load = rq_data_ptr->data.data.data[2];
+        info.data.lcz_load = rq_data_ptr->data.data.data[3];
+        info.data.Ixx_load = rq_data_ptr->data.data.data[4];
+        info.data.Iyy_load = rq_data_ptr->data.data.data[5];
+        info.data.Izz_load = rq_data_ptr->data.data.data[6];
+        rs_data_ptr->data.data = motion_control_ptr_->updatePayload(info);
+
+        //set to activate the param.
+        int current_id = 0;
+        motion_control_ptr_->getPayload(current_id);
+        if (current_id == rq_data_ptr->data.id && rs_data_ptr->data.data == SUCCESS)
+        {
+            rs_data_ptr->data.data = motion_control_ptr_->setPayload(current_id);
+        }
+
+    }
+    else
+    {
+        rs_data_ptr->data.data = DYNAMIC_PAYLOAD_INVALID_ARG;
+    }
+    
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/updatePayload"));
+    */
+}
+
+//"/rpc/motion_control/axis_group/movePayload"	
+void ControllerRpc::handleRpc0x00006CE4(void* request_data_ptr, void* response_data_ptr)
+{
+    RequestMessageType_Int32List* rq_data_ptr = static_cast<RequestMessageType_Int32List*>(request_data_ptr);
+    ResponseMessageType_Uint64* rs_data_ptr = static_cast<ResponseMessageType_Uint64*>(response_data_ptr);
+
+    if(rq_data_ptr->data.data_count == 2)
+    {
+        //rs_data_ptr->data.data = motion_control_ptr_->movePayload(rq_data_ptr->data.data[0], rq_data_ptr->data.data[1]);
+        rs_data_ptr->data.data = SUCCESS;//todo delete
+    }
+    else
+    {
+        rs_data_ptr->data.data = DYNAMIC_PAYLOAD_INVALID_ARG;
+    }
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->data.data, std::string("/rpc/motion_control/axis_group/movePayload"));
+}
+
+//"/rpc/motion_control/axis_group/getPayloadInfoById"	
+void ControllerRpc::handleRpc0x00010C34(void* request_data_ptr, void* response_data_ptr)
+{
+    /*
+    RequestMessageType_Int32* rq_data_ptr = static_cast<RequestMessageType_Int32*>(request_data_ptr);
+    ResponseMessageType_Uint64_PayloadInfo* rs_data_ptr = static_cast<ResponseMessageType_Uint64_PayloadInfo*>(response_data_ptr);
+
+    PayloadInfo info;
+    rs_data_ptr->error_code.data = motion_control_ptr_->getPayloadInfoById(rq_data_ptr->data.data, info);
+    if(rs_data_ptr->error_code.data == SUCCESS)
+    {
+        rs_data_ptr->data.id = info.id;
+        strncpy(rs_data_ptr->data.comment, info.comment.c_str(), 255);
+        rs_data_ptr->data.comment[255] = 0;
+        rs_data_ptr->data.data.data_count = 7;
+        rs_data_ptr->data.data.data[0] = info.data.m_load;
+        rs_data_ptr->data.data.data[1] = info.data.lcx_load;
+        rs_data_ptr->data.data.data[2] = info.data.lcy_load;
+        rs_data_ptr->data.data.data[3] = info.data.lcz_load;
+        rs_data_ptr->data.data.data[4] = info.data.Ixx_load;
+        rs_data_ptr->data.data.data[5] = info.data.Iyy_load;
+        rs_data_ptr->data.data.data[6] = info.data.Iyy_load;
+    }
+    
+    recordLog(MOTION_CONTROL_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getPayloadInfoById"));
+    */
+}
+
+//"/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"	
+void ControllerRpc::handleRpc0x00010C8F(void* request_data_ptr, void* response_data_ptr)
+{
+    /*
+    ResponseMessageType_Uint64_PayloadSummaryList* rs_data_ptr = static_cast<ResponseMessageType_Uint64_PayloadSummaryList*>(response_data_ptr);
+
+    std::vector<PayloadSummaryInfo> info_list;
+    info_list = motion_control_ptr_->getAllValidPayloadSummaryInfo();
+    for(unsigned int i = 0; i < info_list.size(); ++i)
+    {
+        rs_data_ptr->data.user_coord_summary[i].id = info_list[i].id;
+        strncpy(rs_data_ptr->data.user_coord_summary[i].comment, info_list[i].comment.c_str(), 255);
+        rs_data_ptr->data.user_coord_summary[i].comment[255] = 0;
+    }
+    rs_data_ptr->data.payload_summary_count = info_list.size();    
+    rs_data_ptr->error_code.data = SUCCESS;
+    
+    if (rs_data_ptr->error_code.data != SUCCESS)
+        recordLog(COORDINATE_MANAGER_LOG, rs_data_ptr->error_code.data, std::string("/rpc/motion_control/axis_group/getAllValidPayloadSummaryInfo"));
+    */
+}
+
 

@@ -104,6 +104,11 @@ std::map<std::string, std::string> DeviceVersion::getDeviceVersionList(void)
     getHandOffVersion(name, version);
     version_map.insert(std::pair<std::string, std::string>(name, version)); 
 
+    // get U-Boot software version
+    name.clear();version.clear();
+    getUbootVersion(name, version);
+    version_map.insert(std::pair<std::string, std::string>(name, version)); 
+
     // get rbf version
     name.clear();version.clear();
     getRbfVersion(name, version);
@@ -147,6 +152,20 @@ void DeviceVersion::getHandOffVersion(std::string &name, std::string &version)
     }
     char temp[16];
     sprintf(temp, "%lx", *hand_off_ptr_);
+    version = temp;
+}
+//uboot version
+void DeviceVersion::getUbootVersion(std::string &name, std::string &version)
+{
+    name = "U-Boot";
+    //uboot version is located after handoff.
+    if (hand_off_ptr_ == NULL || hand_off_ptr_ == MAP_FAILED)
+    {
+        version = "NONE";
+        return;
+    }
+    char temp[16];
+    sprintf(temp, "%lx", *(hand_off_ptr_ + 1));
     version = temp;
 }
 

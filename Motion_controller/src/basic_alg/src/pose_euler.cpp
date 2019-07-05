@@ -5,7 +5,7 @@
 using namespace std;
 using namespace basic_alg;
 
-bool PoseEuler::isEqual(PoseEuler& pose_euler, double valve) const
+bool PoseEuler::isEqual(const PoseEuler& pose_euler, double valve) const
 {
     if(point_.isEqual(pose_euler.point_, valve)
         && euler_.isEqual(pose_euler.euler_, valve))

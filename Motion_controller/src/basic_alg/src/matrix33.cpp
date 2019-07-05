@@ -7,7 +7,7 @@ using namespace std;
 using namespace basic_alg;
 
 
-bool Matrix33::isEqual(Matrix33& matrix, double valve) const
+bool Matrix33::isEqual(const Matrix33& matrix, double valve) const
 {
     if(fabs(matrix_[0][0] - matrix.matrix_[0][0]) < valve
         && fabs(matrix_[0][1] - matrix.matrix_[0][1]) < valve
@@ -27,7 +27,7 @@ bool Matrix33::isEqual(Matrix33& matrix, double valve) const
     }
 }
 
-Matrix33& Matrix33::leftMultiply(Matrix33& left_matrix)
+Matrix33& Matrix33::leftMultiply(const Matrix33& left_matrix)
 {
     Matrix33 tmp_matrix;
     multiply(left_matrix, *this, tmp_matrix);
@@ -35,7 +35,7 @@ Matrix33& Matrix33::leftMultiply(Matrix33& left_matrix)
     return *this;   
 }
 
-void Matrix33::leftMultiply(Matrix33& left_matrix, Matrix33& result_matrix)
+void Matrix33::leftMultiply(const Matrix33& left_matrix, Matrix33& result_matrix)
 {
     if(&result_matrix != this)
     {
@@ -49,7 +49,7 @@ void Matrix33::leftMultiply(Matrix33& left_matrix, Matrix33& result_matrix)
     }
 }
 
-Matrix33& Matrix33::rightMultiply(Matrix33& right_matrix)
+Matrix33& Matrix33::rightMultiply(const Matrix33& right_matrix)
 {
     Matrix33 tmp_matrix;
     multiply(*this, right_matrix, tmp_matrix);
@@ -57,7 +57,7 @@ Matrix33& Matrix33::rightMultiply(Matrix33& right_matrix)
     return *this;
 }
 
-void Matrix33::rightMultiply(Matrix33& right_matrix, Matrix33& result_matrix)
+void Matrix33::rightMultiply(const Matrix33& right_matrix, Matrix33& result_matrix)
 {
     if(&result_matrix != this)
     {
@@ -89,7 +89,7 @@ void Matrix33::print(std::string comment) const
     std::cout<<std::endl;
 }
 
-void Matrix33::multiply(Matrix33& left_matrix, Matrix33& right_matrix, Matrix33& result_matrix)
+void Matrix33::multiply(const Matrix33& left_matrix, const Matrix33& right_matrix, Matrix33& result_matrix)
 {
     result_matrix.matrix_[0][0] = left_matrix.matrix_[0][0] * right_matrix.matrix_[0][0] 
                                 + left_matrix.matrix_[0][1] * right_matrix.matrix_[1][0]

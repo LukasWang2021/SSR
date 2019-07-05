@@ -16,11 +16,11 @@ public:
     double y_;
     double z_;
 
-    bool isEqual(Point& point, double valve = 0.001) const;
-    bool isParallel(Point& point, double valve = 0.001) const;
-    bool isVertical(Point& point, double valve = 0.001) const;
+    bool isEqual(const Point& point, double valve = 0.001) const;
+    bool isParallel(const Point& point, double valve = 0.001) const;
+    bool isVertical(const Point& point, double valve = 0.001) const;
     void reverse();
-    double distanceToPoint(Point& point) const;
+    double distanceToPoint(const Point& point) const;
     double norm() const;
     bool normalize(double valve = 0.001);
     double dotProduct(const Point& point) const;

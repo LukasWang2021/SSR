@@ -19,7 +19,7 @@ bool Quaternion::isValid(double valve) const
     }
 }
 
-bool Quaternion::isEqual(Quaternion& quaternion, double valve) const
+bool Quaternion::isEqual(const Quaternion& quaternion, double valve) const
 {
     if(fabs(x_ - quaternion.x_) < valve
         && fabs(y_ - quaternion.y_) < valve
@@ -70,7 +70,7 @@ void Quaternion::convertToRotationMatrix(RotationMatrix& matrix) const
     matrix.matrix_[2][2] = 2 * (ww + z_ * z_) - 1; // r[2][2] = 2*(w^2+z^2)-1
 }
 
-double Quaternion::getIncludedAngle(Quaternion& quaternion, bool auto_reverse) const
+double Quaternion::getIncludedAngle(const Quaternion& quaternion, bool auto_reverse) const
 {
     double dot_product = x_ * quaternion.x_ + y_ * quaternion.y_ + z_ * quaternion.z_ + w_ * quaternion.w_;
     if(dot_product < 0)

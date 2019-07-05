@@ -17,7 +17,7 @@ public:
     Point point_;
     Euler euler_;
 
-    bool isEqual(PoseEuler& pose_euler, double valve = 0.001) const;
+    bool isEqual(const PoseEuler& pose_euler, double valve = 0.001) const;
     void convertToPoseQuaternion(basic_alg::PoseQuaternion& pose_quaternion) const;
     void convertToTransMatrix(basic_alg::TransMatrix& matrix) const;  
 

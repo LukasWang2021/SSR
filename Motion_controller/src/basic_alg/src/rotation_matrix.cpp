@@ -94,7 +94,7 @@ void RotationMatrix::convertToEuler(basic_alg::Euler& euler) const
     }
 }
 
-void RotationMatrix::multiplyByTransVector(Point& trans_vector, Point& result_vector) const
+void RotationMatrix::multiplyByTransVector(const Point& trans_vector, Point& result_vector) const
 {
     if(&trans_vector != &result_vector)
     {

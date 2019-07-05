@@ -19,7 +19,7 @@ public:
     void convertToQuaternion(basic_alg::Quaternion& quaternion) const;
     void convertToEuler(basic_alg::Euler& euler) const; 
 
-    void multiplyByTransVector(Point& trans_vector, Point& result_vector) const;
+    void multiplyByTransVector(const Point& trans_vector, Point& result_vector) const;
     void getVectorN(Point& n_vector) const;
     void getVectorS(Point& s_vector) const;
     void getVectorA(Point& a_vector) const;

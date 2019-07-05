@@ -7,7 +7,7 @@ using namespace std;
 using namespace basic_alg;
 
 
-bool Point::isEqual(Point& point, double valve) const
+bool Point::isEqual(const Point& point, double valve) const
 {
     if(fabs(x_ - point.x_) < valve
         && fabs(y_ - point.y_) < valve
@@ -21,7 +21,7 @@ bool Point::isEqual(Point& point, double valve) const
     }
 }
 
-bool Point::isParallel(Point& point, double valve) const
+bool Point::isParallel(const Point& point, double valve) const
 {
     double max1, max2;
     int max_index;
@@ -100,7 +100,7 @@ bool Point::isParallel(Point& point, double valve) const
     }
 }
 
-bool Point::isVertical(Point& point, double valve) const
+bool Point::isVertical(const Point& point, double valve) const
 {
     if(fabs(x_ * point.x_ + y_ * point.y_ + z_ * point.z_) > valve)
     {
@@ -119,7 +119,7 @@ void Point::reverse()
     z_ = -z_;
 }
 
-double Point::distanceToPoint(Point& point) const
+double Point::distanceToPoint(const Point& point) const
 {
     double delta_x = x_ - point.x_;
     double delta_y = y_ - point.y_;

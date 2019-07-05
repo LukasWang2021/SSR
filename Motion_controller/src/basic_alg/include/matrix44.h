@@ -11,16 +11,16 @@ class Matrix44
 public:
     double matrix_[4][4];
 
-    bool isEqual(Matrix44& matrix, double valve = 0.001) const;
-    Matrix44& leftMultiply(Matrix44& left_matrix);
-    void leftMultiply(Matrix44& left_matrix, Matrix44& result_matrix);
-    Matrix44& rightMultiply(Matrix44& right_matrix);
-    void rightMultiply(Matrix44& right_matrix, Matrix44& result_matrix);
+    bool isEqual(const Matrix44& matrix, double valve = 0.001) const;
+    Matrix44& leftMultiply(const Matrix44& left_matrix);
+    void leftMultiply(const Matrix44& left_matrix, Matrix44& result_matrix);
+    Matrix44& rightMultiply(const Matrix44& right_matrix);
+    void rightMultiply(const Matrix44& right_matrix, Matrix44& result_matrix);
 
     Matrix44& operator=(const Matrix44& matrix);
     void print(std::string comment = "") const;
 private:    
-    void multiply(Matrix44& left_matrix, Matrix44& right_matrix, Matrix44& result_matrix);
+    void multiply(const Matrix44& left_matrix, const Matrix44& right_matrix, Matrix44& result_matrix);
 };
 
 }

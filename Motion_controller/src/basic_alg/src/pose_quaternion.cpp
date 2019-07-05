@@ -5,7 +5,7 @@
 using namespace std;
 using namespace basic_alg;
 
-bool PoseQuaternion::isEqual(PoseQuaternion& pose_quaternion, double valve) const
+bool PoseQuaternion::isEqual(const PoseQuaternion& pose_quaternion, double valve) const
 {
     if(point_.isEqual(pose_quaternion.point_, valve)
         && quaternion_.isEqual(pose_quaternion.quaternion_, valve))

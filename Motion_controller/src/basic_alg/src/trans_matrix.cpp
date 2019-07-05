@@ -26,7 +26,7 @@ TransMatrix::~TransMatrix()
 
 }
 
-bool TransMatrix::isEqual(TransMatrix& matrix, double valve) const
+bool TransMatrix::isEqual(const TransMatrix& matrix, double valve) const
 {
     if(trans_vector_.isEqual(matrix.trans_vector_, valve)
         && rotation_matrix_.isEqual(matrix.rotation_matrix_, valve))
@@ -51,7 +51,7 @@ void TransMatrix::convertToPoseQuaternion(PoseQuaternion& pose_quaternion) const
     rotation_matrix_.convertToQuaternion(pose_quaternion.quaternion_);
 }
 
-TransMatrix& TransMatrix::leftMultiply(TransMatrix& left_matrix)
+TransMatrix& TransMatrix::leftMultiply(const TransMatrix& left_matrix)
 {
     TransMatrix tmp_matrix;
     multiply(left_matrix, *this, tmp_matrix);
@@ -59,7 +59,7 @@ TransMatrix& TransMatrix::leftMultiply(TransMatrix& left_matrix)
     return *this;
 }
 
-void TransMatrix::leftMultiply(TransMatrix& left_matrix, TransMatrix& result_matrix)
+void TransMatrix::leftMultiply(const TransMatrix& left_matrix, TransMatrix& result_matrix)
 {
     if(&result_matrix != this)
     {
@@ -73,7 +73,7 @@ void TransMatrix::leftMultiply(TransMatrix& left_matrix, TransMatrix& result_mat
     }
 }
 
-TransMatrix& TransMatrix::rightMultiply(TransMatrix& right_matrix)
+TransMatrix& TransMatrix::rightMultiply(const TransMatrix& right_matrix)
 {
     TransMatrix tmp_matrix;
     multiply(*this, right_matrix, tmp_matrix);
@@ -81,7 +81,7 @@ TransMatrix& TransMatrix::rightMultiply(TransMatrix& right_matrix)
     return *this;
 }
 
-void TransMatrix::rightMultiply(TransMatrix& right_matrix, TransMatrix& result_matrix)
+void TransMatrix::rightMultiply(const TransMatrix& right_matrix, TransMatrix& result_matrix)
 {
     if(&result_matrix != this)
     {
@@ -155,7 +155,7 @@ void TransMatrix::print(std::string comment) const
     trans_vector_.print("trans vector:");
 }
 
-void TransMatrix::multiply(TransMatrix& left_matrix, TransMatrix& right_matrix, TransMatrix& result_matrix)
+void TransMatrix::multiply(const TransMatrix& left_matrix, const TransMatrix& right_matrix, TransMatrix& result_matrix)
 {
     Point result_trans_vector;
     left_matrix.rotation_matrix_.rightMultiply(right_matrix.rotation_matrix_, result_matrix.rotation_matrix_);

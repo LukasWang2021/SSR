@@ -248,6 +248,7 @@ ErrorCode Controller::init()
     }
 
     state_machine_.setState(true);
+    isOkLed();
     recordLog("Controller initialization success");
     return SUCCESS;
 }
@@ -337,3 +338,28 @@ void heartbeatThreadFunc(void* arg)
     std::cout<<"heartbeat thread exit"<<std::endl;
 }
 
+void Controller::isOkLed()
+{
+	// sent a message outside to hint the controller ok
+	int fd_ok_led;
+	fd_ok_led = open("/dev/mem", O_RDWR);
+	if (fd_ok_led == -1)
+		printf("The _ok_led-message cann't be sent. fd = %d\n", fd_ok_led);
+	enum msg_ok_led {
+		OK_LED_BASE = 0xff300000,
+		OK_LED_OFFSET = 0x0020,
+		OK_LED_LEN = 0x1000,
+	};
+	void *ptr_ok_led;
+	ptr_ok_led = mmap(NULL, OK_LED_LEN, PROT_READ|PROT_WRITE, MAP_SHARED, fd_ok_led, OK_LED_BASE);
+	if (ptr_ok_led == MAP_FAILED)
+	{
+		printf("The ok_led-message cann't be sent. mmap = %d\n", (void *)ptr_ok_led);
+	}
+	else
+	{
+		uint32_t *p_ok_led;
+		p_ok_led = (uint32_t *)((uint8_t*)ptr_ok_led + 0x0020);
+		*p_ok_led |= (1 << 2);
+	}
+}

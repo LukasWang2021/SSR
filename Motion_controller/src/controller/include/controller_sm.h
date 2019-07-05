@@ -16,6 +16,7 @@
 #include <string>
 #include <sys/time.h>
 #include <mutex>
+#include <cstdint>
 
 namespace fst_ctrl
 {

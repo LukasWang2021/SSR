@@ -788,9 +788,9 @@ void ControllerSm::shutdown()
 	}
 	else
 	{
-		int *pshutdown;
-		pshutdown = (int *)((uint8_t*)ptrshutdown + 0x0020);
-		*pshutdown = 1;
+		uint32_t *pshutdown;
+		pshutdown = (uint32_t *)((uint8_t*)ptrshutdown + 0x0020);
+		*pshutdown |= (1 << 1);
 	}
 
 	system("shutdown -h now");
